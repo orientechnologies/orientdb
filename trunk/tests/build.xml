@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir="." default="release" name="orient-commons">
+	<property environment="env" />
+	<property name="vendor" value="Orient Technologies" />
+	<property name="product" value="Orient Commons" />
+	<property name="version" value="1.0.0alpha" />
+	<property name="project.release" value="../releases/${version}" />
+	<property name="project.lib" value="${project.release}/lib" />
+
+	<path id="project.class.path">
+		<dirset dir="bin" />
+		<fileset file="lib/testng-5.10-jdk15.jar" />
+	</path>
+
+	<taskdef resource="testngtasks" classpath="lib/testng-5.10-jdk15.jar" />
+
+	<target name="release">
+		<mkdir dir="${project.release}" />
+		<mkdir dir="${project.lib}" />
+
+		<delete file="${project.lib}/orient-commons.jar" />
+		<jar compress="true" basedir="bin" destfile="${project.lib}/orient-commons.jar">
+			<manifest>
+				<attribute name="Implementation-Vendor" value="${vendor}" />
+				<attribute name="Implementation-Title" value="${product}" />
+				<attribute name="Implementation-Version" value="${version}" />
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="test">
+		<testng annotations="JDK" classpathref="project.class.path" outputDir="test-output" haltOnFailure="true" verbose="2">
+			<sysproperty key="URL" value="remote:stream-tx:localhost:8000/petshop?mode=rw" />
+			<classfileset dir="bin" includes="**/auto/*.class" />
+		</testng>
+	</target>
+
+	<target name="reports" depends="test">
+		<mkdir dir="" />
+		<junitreport todir="test-output">
+			<fileset dir="test-output">
+				<include name="*.xml" />
+			</fileset>
+			<report format="noframes" todir="test-output" />
+		</junitreport>
+	</target>
+
+</project>

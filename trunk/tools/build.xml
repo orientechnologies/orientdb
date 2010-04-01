@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<project basedir="." default="install" name="orient-database-tools">
+	<property environment="env" />
+	<property name="project.src" value="src" />
+	<property name="project.dist" value="dist" />
+	<property name="project.depends" value="" />
+	<property name="project.mainclass" value="" />
+
+	<path id="project.classpath">
+		<pathelement location="${project.build}">
+		</pathelement>
+		<fileset dir="${project.lib.compile}" includes="**/*.jar" />
+		<fileset dir="${project.lib.runtime}" includes="**/*.jar" />
+	</path>
+	<target name="init">
+		<mkdir dir="${project.build}">
+		</mkdir>
+	</target>
+	<target name="clean">
+		<delete dir="${project.build}">
+		</delete>
+	</target>
+	<target depends="init" name="compile">
+		<echo message="${ant.project.name}: ${ant.file}">
+		</echo>
+
+		<javac destdir="${project.build}">
+			<src path="${project.src}">
+			</src>
+			<classpath refid="project.classpath">
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="install-zip">
+		<mkdir dir="${project.dist}">
+		</mkdir>
+		<delete file="${project.dist}/${ant.project.name}.zip">
+		</delete>
+		<zip destfile="${project.dist}/${ant.project.name}.zip" basedir="." excludes="**.svn/">
+		</zip>
+	</target>
+
+	<target name="install">
+		<mkdir dir="${project.dist}">
+		</mkdir>
+		<delete file="${project.dist}/${ant.project.name}.war">
+		</delete>
+		<jar compress="true" destfile="${project.dist}/${ant.project.name}.jar">
+		</jar>
+	</target>
+
+</project>
+
