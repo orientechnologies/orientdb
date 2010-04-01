@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir="." default="release" name="orient-ant">
+	<property environment="env" />
+	<property name="vendor" value="Orient Technologies" />
+	<property name="product" value="Orient Database" />
+	<property name="version" value="0.9.2" />
+	<property name="project.release" value="../releases/${version}" />
+	<property name="project.lib" value="${project.release}/lib" />
+
+	<target name="release">
+	
+	                                                          
+  <echo>           .                                              </echo>
+  <echo>          .`        `                                     </echo>
+  <echo>          ,      `:.                                      </echo>
+  <echo>         `,`    ,:`                                       </echo>
+  <echo>         .,.   :,,                                        </echo>
+  <echo>         .,,  ,,,                                         </echo>
+  <echo>    .    .,.:::::  ````                                   </echo>
+  <echo>    ,`   .::,,,,::.,,,,,,`;;                      .:      </echo>
+  <echo>    `,.  ::,,,,,,,:.,,.`  `                       .:      </echo>
+  <echo>     ,,:,:,,,,,,,,::.   `        `         ``     .:      </echo>
+  <echo>      ,,:.,,,,,,,,,: `::, ,,   ::,::`   : :,::`  ::::     </echo>
+  <echo>       ,:,,,,,,,,,,::,:   ,,  :.    :   ::    :   .:      </echo>
+  <echo>        :,,,,,,,,,,:,::   ,,  :      :  :     :   .:      </echo>
+  <echo>  `     :,,,,,,,,,,:,::,  ,, .::::::::  :     :   .:      </echo>
+  <echo>  `,...,,:,,,,,,,,,: .:,. ,, ,,         :     :   .:      </echo>
+  <echo>    .,,,,::,,,,,,,:  `: , ,,  :     `   :     :   .:      </echo>
+  <echo>      ...,::,,,,::.. `:  .,,  :,    :   :     :   .:      </echo>
+  <echo>           ,::::,,,. `:   ,,   :::::    :     :   .:      </echo>
+  <echo>           ,,:` `,,.                                      </echo>
+  <echo>          ,,,    .,`                                      </echo>
+  <echo>         ,,.     `,                 D A T A B A S E       </echo>
+  <echo>       ``        `.                                       </echo>
+  <echo>                 ``                                       </echo>
+  <echo>                 `                                        </echo>
+  <echo>                                                          </echo>
+
+		<mkdir dir="${project.release}" />
+		<mkdir dir="${project.lib}" />
+		<mkdir dir="${project.release}/databases" />
+
+		<delete file="${project.lib}/orient-database-core.jar" />
+		<jar compress="true" basedir="core/bin" destfile="${project.lib}/orient-database-core.jar">
+      <manifest>
+        <attribute name="Implementation-Vendor" value="${vendor}"/>
+        <attribute name="Implementation-Title" value="${product}"/>
+        <attribute name="Implementation-Version" value="${version}"/>
+        <attribute name="Class-Path" value="orient-commons.jar"/>
+      </manifest>
+		</jar>
+
+		<delete file="${project.lib}/orient-database-enterprise.jar" />
+		<jar compress="true" basedir="enterprise/bin" destfile="${project.lib}/orient-database-enterprise.jar">
+      <manifest>
+        <attribute name="Implementation-Vendor" value="${vendor}"/>
+        <attribute name="Implementation-Title" value="${product}"/>
+        <attribute name="Implementation-Version" value="${version}"/>
+        <attribute name="Class-Path" value="orient-database-core.jar"/>
+      </manifest>
+		</jar>
+
+		<delete file="${project.lib}/orient-database-client.jar" />
+		<jar compress="true" basedir="client/bin" destfile="${project.lib}/orient-database-client.jar">
+      <manifest>
+        <attribute name="Implementation-Vendor" value="${vendor}"/>
+        <attribute name="Implementation-Title" value="${product}"/>
+        <attribute name="Implementation-Version" value="${version}"/>
+        <attribute name="Class-Path" value="orient-database-enterprise.jar"/>
+      </manifest>
+		</jar>
+
+		<delete file="${project.lib}/orient-database-server.jar" />
+		<jar compress="true" basedir="server/bin" destfile="${project.lib}/orient-database-server.jar">
+      <manifest>
+        <attribute name="Implementation-Vendor" value="${vendor}"/>
+        <attribute name="Implementation-Title" value="${product}"/>
+        <attribute name="Implementation-Version" value="${version}"/>
+        <attribute name="Main-Class" value="com.orientechnologies.orient.server.OServerMain"/>
+        <attribute name="Class-Path" value="orient-database-enterprise.jar"/>
+      </manifest>
+		</jar>
+
+		<delete file="${project.lib}/orient-database-kv.jar" />
+		<jar compress="true" basedir="kv/bin" destfile="${project.lib}/orient-database-kv.jar">
+      <manifest>
+        <attribute name="Implementation-Vendor" value="${vendor}"/>
+        <attribute name="Implementation-Title" value="${product}"/>
+        <attribute name="Implementation-Version" value="${version}"/>
+        <attribute name="Main-Class" value="com.orientechnologies.orient.server.OServerMain"/>
+        <attribute name="Class-Path" value="orient-database-server.jar"/>
+      </manifest>
+		</jar>
+
+		<delete file="${project.lib}/orient-database-tools.jar" />
+		<jar compress="true" basedir="tools/bin" destfile="${project.lib}/orient-database-tools.jar">
+      <manifest>
+        <attribute name="Implementation-Vendor" value="${vendor}"/>
+        <attribute name="Implementation-Title" value="${product}"/>
+        <attribute name="Implementation-Version" value="${version}"/>
+        <attribute name="Main-Class" value="com.orientechnologies.utility.console.OConsoleDatabaseApp"/>
+        <attribute name="Class-Path" value="orient-database-client.jar"/>
+      </manifest>
+		</jar>
+
+		<delete file="${project.lib}/orient-database-tests.jar" />
+		<jar compress="true" basedir="tests/bin" destfile="${project.lib}/orient-database-tests.jar">
+      <manifest>
+        <attribute name="Implementation-Vendor" value="${vendor}"/>
+        <attribute name="Implementation-Title" value="${product}"/>
+        <attribute name="Implementation-Version" value="${version}"/>
+        <attribute name="Class-Path" value="orient-database-client.jar"/>
+      </manifest>
+		</jar>
+
+    <copy todir="${project.lib}" flatten="true">
+      <fileset dir="." includes="**/*.jar" excludes="studio/** roma-persistence-orient/libs/**"/>
+    </copy>
+
+    <copy todir="${project.release}/bin" flatten="true">
+      <fileset dir="." includes="**/*.bat **/*.sh" excludes="studio/** roma-persistence-orient/**"/>
+    </copy>
+
+    <copy todir="${project.release}/config" flatten="true">
+      <fileset dir="." includes="**/*.config" excludes="studio/** roma-persistence-orient/**"/>
+    </copy>
+    
+    <copy todir="${project.release}/www">
+      <fileset dir="kv/www"/>
+    </copy>
+
+	</target>
+
+</project>
