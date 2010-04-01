@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.record.impl.ORecordCSV;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
@@ -36,38 +35,38 @@ public class OClassDictionary {
 	private static final OClassDictionary	instance	= new OClassDictionary();
 
 	@SuppressWarnings("unchecked")
-	public <T extends ORecord<?>> Class<T> getClassByCode(final char iType) {
+	public Class<?> getClassByCode(final char iType) {
 		switch (iType) {
 		case '0':
-			return (Class<T>) ORecordVObject.class;
+			return (Class<?>) ORecordVObject.class;
 		case '1':
-			return (Class<T>) ORecordCSV.class;
+			return (Class<?>) ORecordCSV.class;
 		case '2':
-			return (Class<T>) ORecordFlat.class;
+			return (Class<?>) ORecordFlat.class;
 		case '3':
-			return (Class<T>) ORecordBytes.class;
+			return (Class<?>) ORecordBytes.class;
 
 		case '4':
-			return (Class<T>) OClass.class;
+			return (Class<?>) OClass.class;
 		case '5':
-			return (Class<T>) OProperty.class;
+			return (Class<?>) OProperty.class;
 		case '6':
-			return (Class<T>) OUser.class;
+			return (Class<?>) OUser.class;
 
 		case '7':
-			return (Class<T>) OStorageConfiguration.class;
+			return (Class<?>) OStorageConfiguration.class;
 		case '8':
-			return (Class<T>) OStoragePhysicalClusterConfiguration.class;
+			return (Class<?>) OStoragePhysicalClusterConfiguration.class;
 		case '9':
-			return (Class<T>) OStorageDataConfiguration.class;
+			return (Class<?>) OStorageDataConfiguration.class;
 		case 'a':
-			return (Class<T>) OStorageClusterHoleConfiguration.class;
+			return (Class<?>) OStorageClusterHoleConfiguration.class;
 		case 'b':
-			return (Class<T>) OStorageDataHoleConfiguration.class;
+			return (Class<?>) OStorageDataHoleConfiguration.class;
 		case 'c':
-			return (Class<T>) OStorageSegmentConfiguration.class;
+			return (Class<?>) OStorageSegmentConfiguration.class;
 		case 'd':
-			return (Class<T>) OStorageFileConfiguration.class;
+			return (Class<?>) OStorageFileConfiguration.class;
 		}
 
 		throw new OConfigurationException("Unsupported record type: " + iType);

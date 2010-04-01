@@ -173,7 +173,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		if (recordClass == null)
 			throw new OConfigurationException("Can't create record since no record class was specified");
 
-		return ORecordFactory.instance().newInstance(this, recordClass);
+		return (REC) ORecordFactory.instance().newInstance(this, recordClass);
 	}
 
 	public REC newInstance(final Class<REC> iType) {

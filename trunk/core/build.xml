@@ -24,7 +24,8 @@
 		<delete dir="${project.build}">
 		</delete>
 	</target>
-	<target depends="init" name="compile">
+	
+	<target name="compile" depends="init">
 		<echo message="${ant.project.name}: ${ant.file}">
 		</echo>
 

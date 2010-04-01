@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project basedir="." default="release" name="orient-ant">
+  <!-- Copyright (c) 1999-2010 Luca Garulli - LICENSE: Apache 2.0 -->
 	<property environment="env" />
 	<property name="vendor" value="Orient Technologies" />
 	<property name="product" value="Orient Database" />
@@ -8,7 +9,6 @@
 	<property name="project.lib" value="${project.release}/lib" />
 
 	<target name="release">
-	
 	                                                          
   <echo>           .                                              </echo>
   <echo>          .`        `                                     </echo>

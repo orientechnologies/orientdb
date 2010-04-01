@@ -135,7 +135,7 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase, REC extends
 	}
 
 	public <DBTYPE extends ODatabase> DBTYPE checkSecurity(final String iResource, final int iOperation) {
-		return underlying.checkSecurity(iResource, iOperation);
+		return (DBTYPE) underlying.checkSecurity(iResource, iOperation);
 	}
 
 	public DB getUnderlying() {
