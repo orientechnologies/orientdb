@@ -167,7 +167,7 @@ public class ORecordVObject extends ORecordVirtualAbstract<Object> implements It
 				linkedRecord.load();
 
 			// CALL MYSELF RECURSIVELY BY CROSSING ALL THE OBJECTS
-			return linkedRecord.field(iPropertyName.substring(separatorPos + 1));
+			return (RET) linkedRecord.field(iPropertyName.substring(separatorPos + 1));
 		}
 
 		RET value = (RET) fields.get(iPropertyName);

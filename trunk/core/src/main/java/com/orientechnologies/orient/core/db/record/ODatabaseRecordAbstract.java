@@ -177,7 +177,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 	}
 
 	public REC newInstance(final Class<REC> iType) {
-		return ORecordFactory.instance().newInstance(this, iType);
+		return (REC) ORecordFactory.instance().newInstance(this, iType);
 	}
 
 	@Override
