@@ -106,7 +106,8 @@ public class OEntityManager {
 		final File[] files = directory.listFiles();
 		for (File file : files) {
 			if (file.isDirectory()) {
-				assert !file.getName().contains(CLASS_SEPARATOR);
+				if (file.getName().contains(CLASS_SEPARATOR))
+					continue;
 				classes.putAll(findClasses(file, packageName + CLASS_SEPARATOR + file.getName()));
 			} else if (file.getName().endsWith(CLASS_EXTENSION)) {
 				className = file.getName().substring(0, file.getName().length() - CLASS_EXTENSION.length());

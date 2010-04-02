@@ -21,6 +21,9 @@ import java.net.Socket;
 import java.net.SocketException;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.vobject.ODatabaseVObjectTx;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -60,6 +63,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 	private String									user;
 	private String									passwd;
+	private ODatabaseRaw						underlyingDatabase;
 
 	public ONetworkProtocolBinary() {
 		super(OServer.getThreadGroup(), "net-protocol-binary");
@@ -99,6 +103,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				if (connection.database.isClosed())
 					connection.database.open(user, passwd);
 
+				underlyingDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
+
 				if (!loadUserFromSchema(user, passwd)) {
 					sendError(new OSecurityAccessException("Access denied to database '" + connection.database.getName() + "' for user: "
 							+ user));
@@ -121,6 +127,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 				connection.database = new ODatabaseVObjectTx("local:" + OServerMain.server().getStoragePath(dbName));
 				connection.database.create(storageMode);
+				underlyingDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
 
 				sendOk();
 				break;
@@ -155,15 +162,14 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				break;
 
 			case OChannelBinaryProtocol.RECORD_LOAD:
-				Object[] record = connection.database.getUnderlying().getUnderlying().read(channel.readShort(), channel.readLong());
+				Object[] record = underlyingDatabase.read(channel.readShort(), channel.readLong());
 				sendOk();
 				channel.writeBytes((byte[]) record[0]);
 				channel.writeInt((Integer) record[1]);
 				break;
 
 			case OChannelBinaryProtocol.RECORD_CREATE:
-				long location = connection.database.getUnderlying().getUnderlying().save(channel.readShort(), ORID.CLUSTER_POS_INVALID,
-						channel.readBytes(), -1);
+				long location = underlyingDatabase.save(channel.readShort(), ORID.CLUSTER_POS_INVALID, channel.readBytes(), -1);
 				sendOk();
 				channel.writeLong(location);
 				break;
@@ -172,8 +178,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				int clusterId = channel.readShort();
 				long position = channel.readLong();
 
-				long newVersion = connection.database.getUnderlying().getUnderlying().save(clusterId, position, channel.readBytes(),
-						channel.readInt());
+				long newVersion = underlyingDatabase.save(clusterId, position, channel.readBytes(), channel.readInt());
 
 				// TODO: Handle it by using triggers
 				if (clusterId == connection.database.getMetadata().getSchemaClusterId())
@@ -188,7 +193,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				break;
 
 			case OChannelBinaryProtocol.RECORD_DELETE:
-				connection.database.getUnderlying().getUnderlying().delete(channel.readShort(), channel.readLong(), channel.readInt());
+				underlyingDatabase.delete(channel.readShort(), channel.readLong(), channel.readInt());
 				sendOk();
 				break;
 
@@ -309,7 +314,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			case OChannelBinaryProtocol.TX_COMMIT:
 				((OStorageLocal) connection.database.getStorage()).commit(connection.database.getId(), new OTransactionOptimisticProxy(
-						connection.database.getUnderlying(), channel));
+						(ODatabaseRecordTx) connection.database.getUnderlying(), channel));
 
 				sendOk();
 				break;

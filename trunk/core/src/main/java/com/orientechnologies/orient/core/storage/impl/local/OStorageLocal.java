@@ -161,6 +161,10 @@ public class OStorageLocal extends OStorageAbstract {
 
 			open = true;
 
+			File storageFolder = new File(storagePath);
+			if (!storageFolder.exists())
+				storageFolder.mkdir();
+
 			addDataSegment(OStorage.DEFAULT_SEGMENT);
 
 			// ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF

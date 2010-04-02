@@ -163,6 +163,8 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		if (database == null)
 			throw new ODatabaseException("No database assigned to current record");
 
+		OSerializationThreadLocal.INSTANCE.get().clear();
+
 		database.save(this, iClusterName);
 		return this;
 	}

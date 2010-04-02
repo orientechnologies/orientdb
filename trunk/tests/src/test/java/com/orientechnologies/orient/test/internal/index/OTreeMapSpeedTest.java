@@ -45,7 +45,7 @@ public class OTreeMapSpeedTest extends SpeedTestMonoThread {
 
 		System.out.println("Navigate the tree in ascending order...");
 		int counter = 0;
-		for (Comparable k : tree.navigableKeySet()) {
+		for (Comparable<Integer> k : tree.navigableKeySet()) {
 			++counter;
 		}
 		data.printSnapshot();

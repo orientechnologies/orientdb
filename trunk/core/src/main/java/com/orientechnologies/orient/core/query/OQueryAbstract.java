@@ -15,15 +15,12 @@
  */
 package com.orientechnologies.orient.core.query;
 
-import java.util.Map;
-
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
 public abstract class OQueryAbstract<REC extends ORecordInternal<?>> implements OQueryInternal<REC> {
 	protected String								requesterId;
 	protected ODatabaseRecord<REC>	database;
-	protected Map<String, String>		configuration;
 	protected REC										record;
 
 	protected int										limit	= -1;
@@ -36,14 +33,6 @@ public abstract class OQueryAbstract<REC extends ORecordInternal<?>> implements 
 		database = iDatabase;
 		if (record != null)
 			record.setDatabase(iDatabase);
-	}
-
-	public void setConfiguration(Map<String, String> configuration) {
-		this.configuration = configuration;
-	}
-
-	public Map<String, String> getConfiguration() {
-		return configuration;
 	}
 
 	public void setRecord(REC record) {

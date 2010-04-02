@@ -55,7 +55,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 			return fromString(iDatabase, OBinaryProtocol.bytes2string(iSource), iRecord);
 		} finally {
 
-			OProfiler.getInstance().stopChrono("ORecordFormatCSVAbstract.fromStream", timer);
+			OProfiler.getInstance().stopChrono("ORecordSerializerStringAbstract.fromStream", timer);
 		}
 	}
 
@@ -66,7 +66,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 			return OBinaryProtocol.string2bytes(toString((ORecordSchemaAware<?>) iRecord, iDatabase, OSerializationThreadLocal.INSTANCE.get()));
 		} finally {
 
-			OProfiler.getInstance().stopChrono("ORecordFormatCSVAbstract.toStream", timer);
+			OProfiler.getInstance().stopChrono("ORecordSerializerStringAbstract.toStream", timer);
 		}
 	}
 

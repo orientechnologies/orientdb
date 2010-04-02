@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -84,6 +85,8 @@ public class OObjectSerializerHelper {
 
 	public static Object fromStream(final ORecordVObject iRecord, final Object iPojo, final OEntityManager iEntityManager,
 			final OUserObject2RecordHandler iObj2RecHandler) {
+		long timer = OProfiler.getInstance().startChrono();
+
 		Class<?> c = iPojo.getClass();
 
 		Object fieldValue;
@@ -101,6 +104,9 @@ public class OObjectSerializerHelper {
 
 			setFieldValue(iPojo, f.getName(), fieldValue);
 		}
+
+		OProfiler.getInstance().stopChrono("Object.fromStream", timer);
+
 		return iPojo;
 	}
 
@@ -115,6 +121,8 @@ public class OObjectSerializerHelper {
 	 */
 	public static ORecordVObject toStream(final Object iPojo, final ORecordVObject iRecord, final OEntityManager iEntityManager,
 			final OClass schemaClass, final OUserObject2RecordHandler iObj2RecHandler) {
+		long timer = OProfiler.getInstance().startChrono();
+
 		OProperty schemaProperty;
 
 		Class<?> c = iPojo.getClass();
@@ -135,6 +143,9 @@ public class OObjectSerializerHelper {
 
 			iRecord.field(f.getName(), fieldValue);
 		}
+
+		OProfiler.getInstance().stopChrono("Object.toStream", timer);
+
 		return iRecord;
 	}
 

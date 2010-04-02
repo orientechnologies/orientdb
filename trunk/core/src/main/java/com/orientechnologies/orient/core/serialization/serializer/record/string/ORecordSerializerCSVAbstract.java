@@ -128,7 +128,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 	public String fieldToStream(final ORecordVObject iRecord, final ODatabaseRecord iDatabase,
 			final OUserObject2RecordHandler iObjHandler, final OType iType, final OClass iLinkedClass, final OType iLinkedType,
 			final String iName, final Object iValue, final Map<ORecordInternal<?>, ORecordId> iMarshalledRecords) {
-		StringBuilder buffer = new StringBuilder(COLLECTION_BEGIN);
+		StringBuilder buffer = new StringBuilder();
 
 		switch (iType) {
 		case EMBEDDED:

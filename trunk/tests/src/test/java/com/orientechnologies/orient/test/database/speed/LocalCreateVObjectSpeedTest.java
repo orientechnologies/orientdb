@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
+import java.util.ArrayList;
+
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.profiler.OProfiler;
@@ -52,8 +54,11 @@ public class LocalCreateVObjectSpeedTest extends OrientMonoThreadTest {
 		record.reset();
 
 		record.setClassName("Person");
+		record.field("parent", null);
 		record.field("name", "Luca");
 		record.field("surname", "Garulli");
+		record.field("children", new ArrayList<Object>());
+		record.field("city", null);
 
 		record.save();
 

@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.query;
 
-import java.util.Map;
-
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
@@ -27,9 +25,6 @@ public interface OQueryInternal<REC extends ORecordInternal<?>> extends OQuery<R
 	public REC getRecord();
 
 	public void setRecord(REC record);
-
-	// TODO: REMOVE IT?
-	public Map<String, String> getConfiguration();
 
 	public void setDatabase(ODatabaseRecord<REC> iDatabase);
 }

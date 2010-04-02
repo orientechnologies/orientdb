@@ -22,13 +22,12 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecordPositional;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
 @SuppressWarnings("unchecked")
-public class OTransactionOptimisticProxy<REC extends ORecordPositional<?>> extends OTransactionAbstract<REC> {
+public class OTransactionOptimisticProxy extends OTransactionAbstract<OTransactionRecordProxy> {
 	private OTransactionEntryProxy	entry					= new OTransactionEntryProxy();
 	private int											size;
 	private OChannelBinary					channel;
@@ -42,12 +41,12 @@ public class OTransactionOptimisticProxy<REC extends ORecordPositional<?>> exten
 		size = iChannel.readInt();
 	}
 
-	public Iterable<? extends OTransactionEntry<REC>> getEntries() {
+	public Iterable<? extends OTransactionEntry<OTransactionRecordProxy>> getEntries() {
 
-		return new Iterable<OTransactionEntry<REC>>() {
+		return new Iterable<OTransactionEntry<OTransactionRecordProxy>>() {
 
-			public Iterator<OTransactionEntry<REC>> iterator() {
-				return new Iterator<OTransactionEntry<REC>>() {
+			public Iterator<OTransactionEntry<OTransactionRecordProxy>> iterator() {
+				return new Iterator<OTransactionEntry<OTransactionRecordProxy>>() {
 					private int	current	= 1;
 
 					public boolean hasNext() {
@@ -61,7 +60,7 @@ public class OTransactionOptimisticProxy<REC extends ORecordPositional<?>> exten
 						return current <= size;
 					}
 
-					public OTransactionEntry<REC> next() {
+					public OTransactionEntry<OTransactionRecordProxy> next() {
 						ORecordId rid = (ORecordId) entry.record.getIdentity();
 
 						try {
@@ -91,7 +90,7 @@ public class OTransactionOptimisticProxy<REC extends ORecordPositional<?>> exten
 
 							current++;
 
-							return (OTransactionEntry<REC>) entry;
+							return entry;
 						} catch (IOException e) {
 							throw new OSerializationException("Can't read transaction record from the network", e);
 						}
@@ -122,19 +121,19 @@ public class OTransactionOptimisticProxy<REC extends ORecordPositional<?>> exten
 		throw new UnsupportedOperationException("createRecord");
 	}
 
-	public long createRecord(final REC iContent) {
+	public long createRecord(final OTransactionRecordProxy iContent) {
 		throw new UnsupportedOperationException("createRecord");
 	}
 
-	public void delete(final REC iRecord) {
+	public void delete(final OTransactionRecordProxy iRecord) {
 		throw new UnsupportedOperationException("createRecord");
 	}
 
-	public REC load(final int iClusterId, final long iPosition, final REC iRecord) {
+	public OTransactionRecordProxy load(final int iClusterId, final long iPosition, final OTransactionRecordProxy iRecord) {
 		throw new UnsupportedOperationException("createRecord");
 	}
 
-	public void save(final REC iContent, final String iClusterName) {
+	public void save(final OTransactionRecordProxy iContent, final String iClusterName) {
 		throw new UnsupportedOperationException("createRecord");
 	}
 }
