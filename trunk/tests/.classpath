@@ -5,6 +5,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/orient-database-client"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/orient-database-core"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/orient-commons"/>
-	<classpathentry kind="lib" path="/orient-commons/lib/testng-5.10-jdk15.jar"/>
+	<classpathentry kind="lib" path="lib/testng-5.10-jdk15.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

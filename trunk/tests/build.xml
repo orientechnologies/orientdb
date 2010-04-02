@@ -1,32 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project basedir="." default="release" name="orient-commons">
-	<property environment="env" />
-	<property name="vendor" value="Orient Technologies" />
-	<property name="product" value="Orient Commons" />
-	<property name="version" value="1.0.0alpha" />
-	<property name="project.release" value="../releases/${version}" />
-	<property name="project.lib" value="${project.release}/lib" />
-
-	<path id="project.class.path">
-		<dirset dir="bin" />
-		<fileset file="lib/testng-5.10-jdk15.jar" />
-	</path>
+<!-- Copyright (c) 1999-2010 Luca Garulli - LICENSE: Apache 2.0 -->
+<project basedir="." default="release" name="orient-database-tests">
+	<import file="../_base/base-build.xml" />
 
 	<taskdef resource="testngtasks" classpath="lib/testng-5.10-jdk15.jar" />
-
-	<target name="release">
-		<mkdir dir="${project.release}" />
-		<mkdir dir="${project.lib}" />
-
-		<delete file="${project.lib}/orient-commons.jar" />
-		<jar compress="true" basedir="bin" destfile="${project.lib}/orient-commons.jar">
-			<manifest>
-				<attribute name="Implementation-Vendor" value="${vendor}" />
-				<attribute name="Implementation-Title" value="${product}" />
-				<attribute name="Implementation-Version" value="${version}" />
-			</manifest>
-		</jar>
-	</target>
 
 	<target name="test">
 		<testng annotations="JDK" classpathref="project.class.path" outputDir="test-output" haltOnFailure="true" verbose="2">
