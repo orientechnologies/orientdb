@@ -3,30 +3,30 @@
 # Copyright (c) 1999-2010 Luca Garulli
 #
 
-echo           .                                              
-echo          .`        `                                     
-echo          ,      `:.                                      
-echo         `,`    ,:`                                       
-echo         .,.   :,,                                        
-echo         .,,  ,,,                                         
-echo    .    .,.:::::  ````                                   
-echo    ,`   .::,,,,::.,,,,,,`;;                      .:      
-echo    `,.  ::,,,,,,,:.,,.`  `                       .:      
-echo     ,,:,:,,,,,,,,::.   `        `         ``     .:      
-echo      ,,:.,,,,,,,,,: `::, ,,   ::,::`   : :,::`  ::::     
-echo       ,:,,,,,,,,,,::,:   ,,  :.    :   ::    :   .:      
-echo        :,,,,,,,,,,:,::   ,,  :      :  :     :   .:      
-echo  `     :,,,,,,,,,,:,::,  ,, .::::::::  :     :   .:      
-echo  `,...,,:,,,,,,,,,: .:,. ,, ,,         :     :   .:      
-echo    .,,,,::,,,,,,,:  `: , ,,  :     `   :     :   .:      
-echo      ...,::,,,,::.. `:  .,,  :,    :   :     :   .:      
-echo           ,::::,,,. `:   ,,   :::::    :     :   .:      
-echo           ,,:` `,,.                                      
-echo          ,,,    .,`                                      
-echo         ,,.     `,  K E Y - V A L U E   S E R V E R        
-echo       ``        `.                                       
-echo                 ``                                       
-echo                 `                                        
+echo "           .                                              "
+echo "          .\`        \`                                     "
+echo "          ,      \`:.                                      "
+echo "         \`,\`    ,:\`                                       "
+echo "         .,.   :,,                                        "
+echo "         .,,  ,,,                                         "
+echo "    .    .,.:::::  \`\`\`\`                                   "
+echo "    ,\`   .::,,,,::.,,,,,,\`;;                      .:      "
+echo "    \`,.  ::,,,,,,,:.,,.\`  \`                       .:      "
+echo "     ,,:,:,,,,,,,,::.   \`        \`         \`\`     .:      "
+echo "      ,,:.,,,,,,,,,: \`::, ,,   ::,::\`   : :,::\`  ::::     "
+echo "       ,:,,,,,,,,,,::,:   ,,  :.    :   ::    :   .:      "
+echo "        :,,,,,,,,,,:,::   ,,  :      :  :     :   .:      "
+echo "  \`     :,,,,,,,,,,:,::,  ,, .::::::::  :     :   .:      "
+echo "  \`,...,,:,,,,,,,,,: .:,. ,, ,,         :     :   .:      "
+echo "    .,,,,::,,,,,,,:  \`: , ,,  :     \`   :     :   .:      "
+echo "      ...,::,,,,::.. \`:  .,,  :,    :   :     :   .:      "
+echo "           ,::::,,,. \`:   ,,   :::::    :     :   .:      "
+echo "           ,,:\` \`,,.                                      "
+echo "          ,,,    .,\`                                      "
+echo "         ,,.     \`,                      S E R V E R        "
+echo "       \`\`        \`.                                       "
+echo "                 \`\`                                       "
+echo "                 \`                                        "
 
 # resolve links - $0 may be a softlink
 PRG="$0"
@@ -51,4 +51,4 @@ CONFIG_FILE=$ORIENT_HOME/config/orient-kv.config
 LOG_LEVEL=warning
 WWW_PATH=$ORIENT_HOME/www
 
-"$JAVA_HOME/bin/java" -server -Xms1024m -Xmx1024m -XX:+UseParallelGC -XX:+AggressiveOpts -XX:CompileThreshold=200 -Dorient.config.file="$CONFIG_FILE" -Dorient.www.path="$WWW_PATH" -Dorient.log.level=$LOG_LEVEL -jar $ORIENT_HOME/lib/orient-database-kv.jar
+java -server -Xms1024m -Xmx1024m -XX:+UseParallelGC -XX:+AggressiveOpts -XX:CompileThreshold=200 -Dorient.config.file="$CONFIG_FILE" -Dorient.www.path="$WWW_PATH" -Dorient.log.level=$LOG_LEVEL -jar $ORIENT_HOME/lib/orient-database-kv.jar
