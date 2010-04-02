@@ -23,10 +23,12 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCacheRecord;
 import com.orientechnologies.orient.core.config.OStorageLogicalClusterConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.logical.OClusterLogical;
 
@@ -230,7 +232,13 @@ public class ODatabaseRaw implements ODatabase {
 		return storage.getClusterIdByName(OStorage.DEFAULT_SEGMENT);
 	}
 
-	public void declareIntent(String iIntentType, Object... iParams) {
+	public void declareIntent(final OIntent iIntent, final Object... iParams) {
+		ODatabaseComplex<?> ownerDb = databaseOwner;
+
+		while (ownerDb.getDatabaseOwner() != null && ownerDb.getDatabaseOwner() != ownerDb)
+			ownerDb = ownerDb.getDatabaseOwner();
+
+		iIntent.activate(ownerDb, iParams);
 	}
 
 	public <DB extends ODatabase> DB checkSecurity(String iResource, int iOperation) {

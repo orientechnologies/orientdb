@@ -19,6 +19,7 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
+import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 import com.orientechnologies.orient.test.domain.business.Person;
@@ -34,7 +35,7 @@ public class LocalCreateObjectSpeedTest extends OrientMonoThreadTest {
 	}
 
 	public LocalCreateObjectSpeedTest() throws InstantiationException, IllegalAccessException {
-		super(10000);
+		super(1000000);
 	}
 
 	@Override
@@ -44,6 +45,7 @@ public class LocalCreateObjectSpeedTest extends OrientMonoThreadTest {
 		database = new ODatabaseObjectTx(System.getProperty("url")).open("admin", "admin");
 
 		database.begin(TXTYPE.NOTX);
+		database.declareIntent(new OIntentMassiveInsert());
 	}
 
 	public void cycle() {

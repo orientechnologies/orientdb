@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ORecordVObject;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelper;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
 @SuppressWarnings("unchecked")
@@ -47,6 +48,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseVObject
 	private HashMap<ORecordVObject, Object>	records2Objects	= new HashMap<ORecordVObject, Object>();
 	private ODictionary<Object>							dictionary;
 	private OEntityManager									entityManager		= new OEntityManager();
+	private boolean													retainObjects		= true;
 
 	public ODatabaseObjectTx(final String iURL) {
 		super(new ODatabaseVObjectTx(iURL));
@@ -137,6 +139,8 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseVObject
 		if (iPojo == null)
 			return this;
 
+		OSerializationThreadLocal.INSTANCE.get().clear();
+
 		// GET THE ASSOCIATED VOBJECT
 		ORecordVObject record = objects2Records.get(iPojo);
 		if (record == null)
@@ -214,8 +218,10 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseVObject
 	 * Register a new POJO
 	 */
 	private void registerPojo(final Object iObject, final ORecordVObject iRecord) {
-		objects2Records.put(iObject, iRecord);
-		records2Objects.put(iRecord, iObject);
+		if (retainObjects) {
+			objects2Records.put(iObject, iRecord);
+			records2Objects.put(iRecord, iObject);
+		}
 	}
 
 	private void unregisterPojo(final Object iObject, final ORecordVObject iRecord) {
@@ -259,5 +265,13 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseVObject
 
 	public OEntityManager getEntityManager() {
 		return entityManager;
+	}
+
+	public ODatabaseVObject getUnderlying() {
+		return underlying;
+	}
+
+	public void setRetainObjects(final boolean iValue) {
+		retainObjects = iValue;
 	}
 }

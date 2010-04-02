@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.db;
 import java.util.Collection;
 
 import com.orientechnologies.orient.core.cache.OCacheRecord;
+import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
@@ -39,7 +40,7 @@ public interface ODatabase {
 
 	public <DB extends ODatabase> DB create(final String iStorageMode);
 
-	public void declareIntent(String iIntentType, Object... iParams);
+	public void declareIntent(OIntent iIntent, Object... iParams);
 
 	public boolean exists();
 
@@ -70,7 +71,7 @@ public interface ODatabase {
 	public long countClusterElements(String iClassName);
 
 	public int addLogicalCluster(String iClassName, int iPhyClusterContainerId);
-	
+
 	public int addPhysicalCluster(String iClusterName, String iClusterFileName, int iStartSize);
 
 	public int addDataSegment(String iSegmentName, String iSegmentFileName);

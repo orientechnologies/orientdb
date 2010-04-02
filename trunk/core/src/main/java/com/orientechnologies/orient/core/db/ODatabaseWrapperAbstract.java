@@ -20,6 +20,7 @@ import java.util.Collection;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.cache.OCacheRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -129,17 +130,17 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase, REC extends
 		return underlying.getDefaultClusterId();
 	}
 
-	public void declareIntent(final String iIntentType, final Object... iParams) {
+	public void declareIntent(final OIntent iIntent, final Object... iParams) {
 		checkOpeness();
-		underlying.declareIntent(iIntentType, iParams);
+		underlying.declareIntent(iIntent, iParams);
 	}
 
 	public <DBTYPE extends ODatabase> DBTYPE checkSecurity(final String iResource, final int iOperation) {
 		return (DBTYPE) underlying.checkSecurity(iResource, iOperation);
 	}
 
-	public DB getUnderlying() {
-		return underlying;
+	public <DBTYPE extends ODatabase> DBTYPE getUnderlying() {
+		return (DBTYPE) underlying;
 	}
 
 	protected void checkOpeness() {

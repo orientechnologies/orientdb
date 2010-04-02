@@ -29,4 +29,6 @@ public interface ODatabaseObject extends ODatabaseSchemaAware<Object> {
 	public <T> T newInstance(Class<T> iType);
 
 	public OEntityManager getEntityManager();
+
+	public void setRetainObjects(boolean iValue);
 }

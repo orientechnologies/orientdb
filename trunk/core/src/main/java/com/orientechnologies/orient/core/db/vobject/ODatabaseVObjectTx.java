@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ORecordVObject;
 
-@SuppressWarnings("unchecked")
 public class ODatabaseVObjectTx extends ODatabaseRecordWrapperAbstract<ODatabaseRecordTx<ORecordVObject>, ORecordVObject> implements
 		ODatabaseVObject {
 
