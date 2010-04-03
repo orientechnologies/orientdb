@@ -34,7 +34,6 @@ import com.orientechnologies.orient.core.record.impl.ORecordVObject;
 public class OClassDictionary {
 	private static final OClassDictionary	instance	= new OClassDictionary();
 
-	@SuppressWarnings("unchecked")
 	public Class<?> getClassByCode(final char iType) {
 		switch (iType) {
 		case '0':

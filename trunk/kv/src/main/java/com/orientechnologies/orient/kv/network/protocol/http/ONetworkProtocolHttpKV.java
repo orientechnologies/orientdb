@@ -81,7 +81,7 @@ public class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstract {
 	}
 
 	private void directAccess(final String iURI) {
-		String wwwPath = System.getProperty("orient.www.path", "www");
+		String wwwPath = System.getProperty("orient.www.path", "src/site");
 
 		InputStream bufferedFile = null;
 		try {

@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.dictionary;
 
+import java.util.Map.Entry;
 
 /**
  * Main TreeMap to handle pairs of Key/Values. This is the entry point for all the root objects.<br/>
@@ -30,7 +31,7 @@ package com.orientechnologies.orient.core.dictionary;
  * @author luca
  * 
  */
-public interface ODictionary<T extends Object> {
+public interface ODictionary<T extends Object> extends Iterable<Entry<String, T>> {
 	/**
 	 * Get a record by its key.
 	 * 

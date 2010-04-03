@@ -31,6 +31,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.query.OAsynchQueryResultListener;
 import com.orientechnologies.orient.core.query.sql.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.record.impl.ORecordVObject;
+import com.orientechnologies.utility.impexp.OConsoleDatabaseExport;
+import com.orientechnologies.utility.impexp.ODatabaseExportException;
 
 public class OConsoleDatabaseApp extends OrientConsole {
 	protected ODatabaseVObject			currentDatabase;
@@ -265,6 +267,22 @@ public class OConsoleDatabaseApp extends OrientConsole {
 		displayObject(null);
 
 		out.println("OK");
+	}
+
+	@ConsoleCommand(description = "Export a database")
+	public void export(@ConsoleParameter(name = "output-file", description = "Output file path") final String iOutputFilePath)
+			throws IOException {
+		out.println("Exporting current database to: " + iOutputFilePath + "...");
+
+		try {
+			new OConsoleDatabaseExport(currentDatabase, iOutputFilePath).exportDatabase();
+			out.println("OK");
+		} catch (ODatabaseExportException e) {
+			out.println("ERROR: " + e.toString());
+			e.printStackTrace();
+		}
+
+		connect(iOutputFilePath);
 	}
 
 	@Override

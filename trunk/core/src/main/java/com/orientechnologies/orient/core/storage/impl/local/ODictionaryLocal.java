@@ -16,11 +16,14 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.Map.Entry;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionaryInternal;
+import com.orientechnologies.orient.core.dictionary.ODictionaryIterator;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OTreeMapPersistent;
@@ -87,4 +90,7 @@ public class ODictionaryLocal<T extends Object> implements ODictionaryInternal<T
 		return tree;
 	}
 
+	public Iterator<Entry<String, T>> iterator() {
+		return new ODictionaryIterator<T>(tree);
+	}
 }

@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.core.dictionary;
 
+import java.util.Iterator;
+import java.util.Map.Entry;
+
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.vobject.ODatabaseVObject;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -56,7 +59,13 @@ public class ODictionaryWrapper implements ODictionary<Object> {
 		return database.getUserObjectByRecord(record);
 	}
 
+	public Iterator<Entry<String, Object>> iterator() {
+		return new ODictionaryIteratorWrapper(recordDatabase, (ODictionaryIterator<ORecordVObject>) recordDatabase.getDictionary()
+				.iterator());
+	}
+
 	public int size() {
 		return recordDatabase.getDictionary().size();
 	}
+
 }

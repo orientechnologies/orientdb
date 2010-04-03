@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.client.dictionary;
 
+import java.util.Iterator;
+import java.util.Map.Entry;
+
 import com.orientechnologies.orient.client.storage.OStorageRemote;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionaryInternal;
@@ -72,5 +75,9 @@ public class ODictionaryClient<T extends Object> implements ODictionaryInternal<
 	}
 
 	public void load() {
+	}
+
+	public Iterator<Entry<String, T>> iterator() {
+		return null;
 	}
 }

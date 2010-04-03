@@ -328,8 +328,9 @@ public class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> implement
 	public V setValue(final V value) {
 		markDirty();
 
+		V oldValue = super.setValue(value);
 		serializedValues[tree.getPageIndex()] = null;
-		return super.setValue(value);
+		return oldValue;
 	}
 
 	/**

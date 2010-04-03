@@ -145,6 +145,8 @@ public class ORecordVObject extends ORecordVirtualAbstract<Object> implements It
 	}
 
 	public String[] fields() {
+		checkForFields();
+		
 		String[] result = new String[fields.keySet().size()];
 		return fields.keySet().toArray(result);
 	}
