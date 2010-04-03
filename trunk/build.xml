@@ -81,7 +81,7 @@
   <target name="release" depends="init">
 		<delegate target="release"/>
 		
-    <copy todir="${global.dist}">
+    <copy todir="${global.release}">
      <fileset dir=".">
        <include name="*.txt"/>
      </fileset>
