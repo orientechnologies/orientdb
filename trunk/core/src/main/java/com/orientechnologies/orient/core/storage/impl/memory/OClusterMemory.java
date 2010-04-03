@@ -61,8 +61,8 @@ public class OClusterMemory extends OSharedResource implements OCluster {
 		return entries.size();
 	}
 
-	public long addPhysicalPosition(final int iDataSegmentId, final long iRecordPosition) {
-		entries.add(new OPhysicalPosition(iDataSegmentId, iRecordPosition));
+	public long addPhysicalPosition(final int iDataSegmentId, final long iRecordPosition, final byte iRecordType) {
+		entries.add(new OPhysicalPosition(iDataSegmentId, iRecordPosition, iRecordType));
 		return entries.size() - 1;
 	}
 
@@ -81,10 +81,11 @@ public class OClusterMemory extends OSharedResource implements OCluster {
 		entries.set((int) iPosition, null);
 	}
 
-	public void setPhysicalPosition(final long iPosition, final int iDataId, final long iDataPosition) {
+	public void setPhysicalPosition(final long iPosition, final int iDataId, final long iDataPosition, final byte iRecordType) {
 		final OPhysicalPosition ppos = entries.get((int) iPosition);
 		ppos.dataSegment = iDataId;
 		ppos.dataPosition = iDataPosition;
+		ppos.type = iRecordType;
 	}
 
 	public void synch() {

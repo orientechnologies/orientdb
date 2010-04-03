@@ -34,9 +34,11 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
  */
 @SuppressWarnings("unchecked")
 public class ORecordCSV extends ORecordAbstract<String> implements ORecordStringable<String>, ORecordPositional<String> {
-	protected List<String>	values		= new ArrayList<String>();
-	protected char					separator	= ORecordSerializerCSVAbstract.RECORD_SEPARATOR_AS_CHAR;
-	protected int						cursor		= 0;
+	protected List<String>		values			= new ArrayList<String>();
+	protected char						separator		= ORecordSerializerCSVAbstract.RECORD_SEPARATOR_AS_CHAR;
+	protected int							cursor			= 0;
+
+	public static final byte	RECORD_TYPE	= 'c';
 
 	public ORecordCSV() {
 		setup();
@@ -186,5 +188,9 @@ public class ORecordCSV extends ORecordAbstract<String> implements ORecordString
 	protected void setup() {
 		super.setup();
 		recordFormat = ORecordSerializerFactory.instance().getDefaultRecordFormat();
+	}
+
+	public byte getRecordType() {
+		return RECORD_TYPE;
 	}
 }

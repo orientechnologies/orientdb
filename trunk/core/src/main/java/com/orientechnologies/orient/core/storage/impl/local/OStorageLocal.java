@@ -50,6 +50,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
@@ -394,20 +395,20 @@ public class OStorageLocal extends OStorageAbstract {
 		}
 	}
 
-	public long createRecord(final int iClusterId, final byte[] iContent) {
+	public long createRecord(final int iClusterId, final byte[] iContent, final byte iRecordType) {
 		checkOpeness();
-		return createRecord(getCluster(iClusterId), iContent);
+		return createRecord(getCluster(iClusterId), iContent, iRecordType);
 	}
 
-	public Object[] readRecord(final int iRequesterId, final int iClusterId, final long iPosition) {
+	public ORawBuffer readRecord(final int iRequesterId, final int iClusterId, final long iPosition) {
 		checkOpeness();
 		return readRecord(iRequesterId, getCluster(iClusterId), iPosition, true);
 	}
 
 	public int updateRecord(final int iRequesterId, final int iClusterId, final long iPosition, final byte[] iContent,
-			final int iVersion) {
+			final int iVersion, final byte iRecordType) {
 		checkOpeness();
-		return updateRecord(iRequesterId, getCluster(iClusterId), iPosition, iContent, iVersion);
+		return updateRecord(iRequesterId, getCluster(iClusterId), iPosition, iContent, iVersion, iRecordType);
 	}
 
 	public void deleteRecord(final int iRequesterId, final int iClusterId, final long iPosition, final int iVersion) {
@@ -457,7 +458,7 @@ public class OStorageLocal extends OStorageAbstract {
 
 	private void browseCluster(final int iRequesterId, final ORecordBrowsingListener iListener, final ORecordInternal<?> iRecord,
 			OCluster cluster, int iClusterId) throws IOException {
-		Object[] recordBuffer;
+		ORawBuffer recordBuffer;
 		long positionInPhyCluster;
 
 		try {
@@ -475,7 +476,7 @@ public class OStorageLocal extends OStorageAbstract {
 					continue;
 
 				iRecord.setIdentity(iClusterId, positionInPhyCluster);
-				iRecord.fromStream((byte[]) recordBuffer[0]);
+				iRecord.fromStream(recordBuffer.buffer);
 				if (!iListener.foreach(iRecord))
 					// LISTENER HAS INTERRUPTED THE EXECUTION
 					break;
@@ -720,7 +721,7 @@ public class OStorageLocal extends OStorageAbstract {
 		return 0;
 	}
 
-	protected long createRecord(final OCluster iClusterSegment, final byte[] iContent) {
+	protected long createRecord(final OCluster iClusterSegment, final byte[] iContent, final byte iRecordType) {
 		checkOpeness();
 
 		if (iContent == null)
@@ -734,12 +735,12 @@ public class OStorageLocal extends OStorageAbstract {
 			final int dataSegment = getDataSegmentForRecord(iClusterSegment, iContent);
 			ODataLocal data = getDataSegment(dataSegment);
 
-			final long clusterPosition = iClusterSegment.addPhysicalPosition(-1, -1);
+			final long clusterPosition = iClusterSegment.addPhysicalPosition(-1, -1, iRecordType);
 
 			final long dataOffset = data.addRecord(iClusterSegment.getId(), clusterPosition, iContent);
 
 			// UPDATE THE POSITION IN CLUSTER WITH THE POSITION OF RECORD IN DATA
-			iClusterSegment.setPhysicalPosition(clusterPosition, dataSegment, dataOffset);
+			iClusterSegment.setPhysicalPosition(clusterPosition, dataSegment, dataOffset, iRecordType);
 
 			return clusterPosition;
 
@@ -754,7 +755,7 @@ public class OStorageLocal extends OStorageAbstract {
 		}
 	}
 
-	protected Object[] readRecord(final int iRequesterId, final OCluster iClusterSegment, final long iPosition, boolean iAtomicLock) {
+	protected ORawBuffer readRecord(final int iRequesterId, final OCluster iClusterSegment, final long iPosition, boolean iAtomicLock) {
 		if (iPosition < 0)
 			throw new IllegalArgumentException("Can't read the record because the position #" + iPosition + " is invalid");
 
@@ -774,7 +775,7 @@ public class OStorageLocal extends OStorageAbstract {
 				return null;
 
 			final ODataLocal data = getDataSegment(ppos.dataSegment);
-			return new Object[] { data.getRecord(ppos.dataPosition), ppos.version };
+			return new ORawBuffer(data.getRecord(ppos.dataPosition), ppos.version, ppos.type);
 
 		} catch (IOException e) {
 
@@ -789,7 +790,7 @@ public class OStorageLocal extends OStorageAbstract {
 	}
 
 	protected int updateRecord(final int iRequesterId, final OCluster iClusterSegment, final long iPosition, final byte[] iContent,
-			final int iVersion) {
+			final int iVersion, final byte iRecordType) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		final String recId = ORecordId.generateString(iClusterSegment.getId(), iPosition);
@@ -818,7 +819,7 @@ public class OStorageLocal extends OStorageAbstract {
 
 			if (newDataSegmentOffset != ppos.dataPosition)
 				// UPDATE DATA SEGMENT OFFSET WITH THE NEW PHYSICAL POSITION
-				iClusterSegment.setPhysicalPosition(iPosition, ppos.dataSegment, newDataSegmentOffset);
+				iClusterSegment.setPhysicalPosition(iPosition, ppos.dataSegment, newDataSegmentOffset, iRecordType);
 
 			return ppos.version;
 

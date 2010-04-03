@@ -20,6 +20,7 @@ import java.util.List;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
 
 /**
  * Per-database cache containing all the record buffers parked in memory to improve access. The cache is of type LRU to keep the
@@ -30,8 +31,8 @@ import com.orientechnologies.common.profiler.OProfiler;
  */
 @SuppressWarnings("serial")
 public class OCacheRecord extends OSharedResourceAdaptive {
-	private final int												maxSize;
-	private LinkedHashMap<String, Object[]>	cache;
+	private final int													maxSize;
+	private LinkedHashMap<String, ORawBuffer>	cache;
 
 	/**
 	 * Create the cache of iMaxSize size.
@@ -42,15 +43,15 @@ public class OCacheRecord extends OSharedResourceAdaptive {
 	public OCacheRecord(final int iMaxSize) {
 		maxSize = iMaxSize;
 
-		cache = new LinkedHashMap<String, Object[]>(iMaxSize, 0.75f, true) {
+		cache = new LinkedHashMap<String, ORawBuffer>(iMaxSize, 0.75f, true) {
 			@Override
-			protected boolean removeEldestEntry(java.util.Map.Entry<String, Object[]> iEldest) {
+			protected boolean removeEldestEntry(java.util.Map.Entry<String, ORawBuffer> iEldest) {
 				return size() > maxSize;
 			}
 		};
 	}
 
-	public void addRecord(final String iRecord, Object[] iContent) {
+	public void addRecord(final String iRecord, ORawBuffer iContent) {
 		if (maxSize == 0)
 			return;
 
@@ -71,7 +72,7 @@ public class OCacheRecord extends OSharedResourceAdaptive {
 	 *          String instance
 	 * @return The record buffer if found, otherwise null
 	 */
-	public Object[] getRecord(final String iRecord) {
+	public ORawBuffer getRecord(final String iRecord) {
 		if (maxSize == 0)
 			return null;
 
@@ -85,14 +86,14 @@ public class OCacheRecord extends OSharedResourceAdaptive {
 		}
 	}
 
-	public Object[] findRecord(final String iRecord) {
+	public ORawBuffer findRecord(final String iRecord) {
 		if (maxSize == 0)
 			return null;
 
 		final boolean locked = acquireExclusiveLock();
 
 		try {
-			Object[] buffer = cache.remove(iRecord);
+			ORawBuffer buffer = cache.remove(iRecord);
 
 			if (buffer != null)
 				OProfiler.getInstance().updateStatistic("Cache.reused", +1);

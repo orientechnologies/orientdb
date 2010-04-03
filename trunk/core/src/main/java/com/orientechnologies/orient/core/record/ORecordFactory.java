@@ -23,13 +23,10 @@ import com.orientechnologies.orient.core.record.impl.ORecordCSV;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.record.impl.ORecordVObject;
 
+@SuppressWarnings("unchecked")
 public class ORecordFactory {
 	private static final ORecordFactory	instance	= new ORecordFactory();
 
-	public ORecordFactory() {
-	}
-
-	@SuppressWarnings("unchecked")
 	public <T extends ORecord<?>> T newInstance(final ODatabaseRecord iDatabase, final Class<?> iClass) {
 		if (iClass == null)
 			return null;
@@ -57,5 +54,17 @@ public class ORecordFactory {
 
 	public static ORecordFactory instance() {
 		return instance;
+	}
+
+	public static ORecord<?> getRecord(final byte iRecordType) {
+		if (iRecordType == ORecordVObject.RECORD_TYPE)
+			return new ORecordVObject();
+		if (iRecordType == ORecordFlat.RECORD_TYPE)
+			return new ORecordFlat();
+		if (iRecordType == ORecordBytes.RECORD_TYPE)
+			return new ORecordBytes();
+		if (iRecordType == ORecordCSV.RECORD_TYPE)
+			return new ORecordCSV();
+		return null;
 	}
 }

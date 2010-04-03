@@ -20,6 +20,7 @@ import java.io.UnsupportedEncodingException;
 
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
 
 public class ReadAllClusterObjectsSpeedTest extends SpeedTestMonoThread {
 	private static final String	CLUSTER_NAME	= "Animal";
@@ -36,7 +37,7 @@ public class ReadAllClusterObjectsSpeedTest extends SpeedTestMonoThread {
 	}
 
 	public void cycle() throws UnsupportedEncodingException {
-		Object[] buffer;
+		ORawBuffer buffer;
 		objectsRead = 0;
 
 		int clusterId = db.getClusterIdByName(CLUSTER_NAME);

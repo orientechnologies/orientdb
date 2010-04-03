@@ -134,7 +134,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 
 	@Override
 	public String toString() {
-		return "@" + recordId + "[" + Arrays.toString(source) + "]";
+		return "@" + (recordId.isValid() ? recordId : "") + "[" + Arrays.toString(source) + "]";
 	}
 
 	public int getVersion() {

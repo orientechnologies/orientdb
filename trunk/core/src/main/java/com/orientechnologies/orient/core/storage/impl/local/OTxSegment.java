@@ -389,7 +389,7 @@ public class OTxSegment extends OSingleFileSegment {
 			ppos.dataPosition = oldDataOffset;
 
 			// UPDATE THE PPOS WITH THE COORDS OF THE OLD RECORD
-			storage.getCluster(clusterId).setPhysicalPosition(clusterOffset, ppos.dataSegment, oldDataOffset);
+			storage.getCluster(clusterId).setPhysicalPosition(clusterOffset, ppos.dataSegment, oldDataOffset, ppos.type);
 
 			// CREATE A HOLE
 			storage.getDataSegment(ppos.dataSegment).createHole(newPosition, newSize);

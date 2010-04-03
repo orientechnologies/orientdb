@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorMultiCluster;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ORecordVObject;
 
@@ -35,7 +34,7 @@ public class ODatabaseVObjectTx extends ODatabaseRecordWrapperAbstract<ODatabase
 
 	@Override
 	public ORecordVObject newInstance() {
-		return ORecordFactory.instance().newInstance(this, ORecordVObject.class);
+		return new ORecordVObject(this);
 	}
 
 	public ORecordVObject newInstance(final String iClassName) {

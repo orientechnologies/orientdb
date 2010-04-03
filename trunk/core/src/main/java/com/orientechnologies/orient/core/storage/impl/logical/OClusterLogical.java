@@ -100,11 +100,12 @@ public class OClusterLogical implements OCluster {
 	/**
 	 * Change the PhysicalPosition of the logical record iPosition.
 	 */
-	public void setPhysicalPosition(final long iPosition, final int iDataId, final long iDataPosition) {
+	public void setPhysicalPosition(final long iPosition, final int iDataId, final long iDataPosition, final byte iRecordType) {
 		Long key = new Long(iPosition);
 		final OPhysicalPosition ppos = map.get(key);
 		ppos.dataSegment = iDataId;
 		ppos.dataPosition = iDataPosition;
+		ppos.type = iRecordType;
 		map.put(key, ppos);
 	}
 
@@ -127,9 +128,9 @@ public class OClusterLogical implements OCluster {
 	 * 
 	 * @throws IOException
 	 */
-	public long addPhysicalPosition(final int iDataSegmentId, final long iRecordPosition) throws IOException {
+	public long addPhysicalPosition(final int iDataSegmentId, final long iRecordPosition, final byte iRecordType) throws IOException {
 		long pos = getAvailablePosition();
-		map.put(new Long(pos), new OPhysicalPosition(iDataSegmentId, iRecordPosition));
+		map.put(new Long(pos), new OPhysicalPosition(iDataSegmentId, iRecordPosition, iRecordType));
 		return pos;
 	}
 

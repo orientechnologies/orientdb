@@ -27,6 +27,9 @@ import com.orientechnologies.orient.core.record.ORecordAbstract;
  */
 @SuppressWarnings("unchecked")
 public class ORecordBytes extends ORecordAbstract<byte[]> {
+
+	public static final byte	RECORD_TYPE	= 'b';
+
 	public ORecordBytes() {
 		setup();
 	}
@@ -63,5 +66,9 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 	@Override
 	public byte[] toStream() {
 		return source;
+	}
+
+	public byte getRecordType() {
+		return RECORD_TYPE;
 	}
 }

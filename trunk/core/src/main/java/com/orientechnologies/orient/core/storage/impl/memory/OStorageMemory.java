@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.storage.impl.logical.OClusterLogical;
@@ -120,21 +121,21 @@ public class OStorageMemory extends OStorageAbstract {
 		return true;
 	}
 
-	public long createRecord(final int iClusterId, final byte[] iContent) {
+	public long createRecord(final int iClusterId, final byte[] iContent, final byte iRecordType) {
 		long offset = data.createRecord(iContent);
 		OClusterMemory cluster = clusters.get(iClusterId);
-		return cluster.addPhysicalPosition(0, offset);
+		return cluster.addPhysicalPosition(0, offset, iRecordType);
 	}
 
-	public Object[] readRecord(final int iRequesterId, final int iClusterId, final long iPosition) {
+	public ORawBuffer readRecord(final int iRequesterId, final int iClusterId, final long iPosition) {
 		OClusterMemory cluster = clusters.get(iClusterId);
 		OPhysicalPosition ppos = cluster.getPhysicalPosition(iPosition, new OPhysicalPosition());
 
-		return new Object[] { data.readRecord(ppos.dataPosition), ppos.version };
+		return new ORawBuffer(data.readRecord(ppos.dataPosition), ppos.version, ppos.type);
 	}
 
 	public int updateRecord(final int iRequesterId, final int iClusterId, final long iPosition, final byte[] iContent,
-			final int iVersion) {
+			final int iVersion, final byte iRecordType) {
 		OClusterMemory cluster = clusters.get(iClusterId);
 		OPhysicalPosition ppos = cluster.getPhysicalPosition(iPosition, new OPhysicalPosition());
 

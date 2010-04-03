@@ -31,4 +31,6 @@ public interface ORecordInternal<T> extends ORecord<T>, OSerializableStream {
 	public void unsetDirty();
 
 	public void setStatus(STATUS iStatus);
+
+	public byte getRecordType();
 }

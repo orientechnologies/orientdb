@@ -24,22 +24,26 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 public class OPhysicalPosition implements OSerializableStream {
 	public int	dataSegment;	// ID OF DATA SEGMENT
 	public long	dataPosition; // OFFSET IN BYTES INSIDE THE DATA SEGMENT
-	public int	recordSize;	// SIZE IN BYTES OF THE RECORD
+	public byte	type;				// RECORD TYPE
 	public int	version	= 0;	// RECORD VERSION
+
+	public int	recordSize;	// SIZE IN BYTES OF THE RECORD. USED ONLY IN MEMORY
 
 	public OPhysicalPosition() {
 	}
 
-	public OPhysicalPosition(final int iDataSegment, final long iPosition) {
+	public OPhysicalPosition(final int iDataSegment, final long iPosition, final byte iRecordType) {
 		dataSegment = iDataSegment;
 		dataPosition = iPosition;
+		type = iRecordType;
 	}
 
 	public void copyTo(final OPhysicalPosition iDest) {
 		iDest.dataSegment = dataSegment;
 		iDest.dataPosition = dataPosition;
-		iDest.recordSize = recordSize;
+		iDest.type = type;
 		iDest.version = version;
+		iDest.recordSize = recordSize;
 	}
 
 	public void copyFrom(final OPhysicalPosition iSource) {
@@ -48,7 +52,8 @@ public class OPhysicalPosition implements OSerializableStream {
 
 	@Override
 	public String toString() {
-		return "dataSegment=" + dataSegment + ", recordPosition=" + dataPosition + ", recordSize=" + recordSize + ", v=" + version;
+		return "dataSegment=" + dataSegment + ", recordPosition=" + dataPosition + ", type=" + type + ", recordSize=" + recordSize
+				+ ", v=" + version;
 	}
 
 	public OSerializableStream fromStream(byte[] iStream) throws IOException {
@@ -60,6 +65,9 @@ public class OPhysicalPosition implements OSerializableStream {
 		dataPosition = OBinaryProtocol.bytes2long(iStream, pos);
 		pos += OConstants.SIZE_LONG;
 
+		type = iStream[pos];
+		pos += OConstants.SIZE_BYTE;
+
 		recordSize = OBinaryProtocol.bytes2int(iStream, pos);
 		pos += OConstants.SIZE_INT;
 
@@ -69,7 +77,8 @@ public class OPhysicalPosition implements OSerializableStream {
 	}
 
 	public byte[] toStream() throws IOException {
-		byte[] buffer = new byte[OConstants.SIZE_INT + OConstants.SIZE_LONG + OConstants.SIZE_INT + OConstants.SIZE_INT];
+		byte[] buffer = new byte[OConstants.SIZE_INT + OConstants.SIZE_LONG + OConstants.SIZE_BYTE + OConstants.SIZE_INT
+				+ OConstants.SIZE_INT];
 		int pos = 0;
 
 		OBinaryProtocol.int2bytes(dataSegment, buffer, pos);
@@ -77,6 +86,9 @@ public class OPhysicalPosition implements OSerializableStream {
 
 		OBinaryProtocol.long2bytes(dataPosition, buffer, pos);
 		pos += OConstants.SIZE_LONG;
+
+		buffer[pos] = type;
+		pos += OConstants.SIZE_BYTE;
 
 		OBinaryProtocol.int2bytes(recordSize, buffer, pos);
 		pos += OConstants.SIZE_INT;

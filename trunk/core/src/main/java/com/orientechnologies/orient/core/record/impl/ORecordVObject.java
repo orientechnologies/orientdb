@@ -38,6 +38,9 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
  */
 @SuppressWarnings("unchecked")
 public class ORecordVObject extends ORecordVirtualAbstract<Object> implements Iterable<Entry<String, Object>> {
+
+	public static final byte	RECORD_TYPE	= 'v';
+
 	public ORecordVObject() {
 		setup();
 	}
@@ -109,7 +112,8 @@ public class ORecordVObject extends ORecordVirtualAbstract<Object> implements It
 
 		if (recordId != null) {
 			buffer.append("@");
-			buffer.append(recordId);
+			if (recordId != null && recordId.isValid())
+				buffer.append(recordId);
 		}
 
 		boolean first = true;
@@ -146,7 +150,7 @@ public class ORecordVObject extends ORecordVirtualAbstract<Object> implements It
 
 	public String[] fields() {
 		checkForFields();
-		
+
 		String[] result = new String[fields.keySet().size()];
 		return fields.keySet().toArray(result);
 	}
@@ -232,5 +236,9 @@ public class ORecordVObject extends ORecordVirtualAbstract<Object> implements It
 	@Override
 	public boolean containsField(String iFieldName) {
 		return fields.containsKey(iFieldName);
+	}
+
+	public byte getRecordType() {
+		return RECORD_TYPE;
 	}
 }

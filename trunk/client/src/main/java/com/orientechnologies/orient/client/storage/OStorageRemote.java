@@ -48,6 +48,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.storage.impl.logical.OClusterLogical;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -151,7 +152,7 @@ public class OStorageRemote extends OStorageAbstract {
 		}
 	}
 
-	public long createRecord(final int iClusterId, final byte[] iContent) {
+	public long createRecord(final int iClusterId, final byte[] iContent, final byte iRecordType) {
 		checkDatabase();
 
 		do {
@@ -160,6 +161,7 @@ public class OStorageRemote extends OStorageAbstract {
 			try {
 				network.writeByte(OChannelBinaryProtocol.RECORD_CREATE);
 				network.writeShort((short) iClusterId);
+				network.writeByte(iRecordType);
 				network.writeBytes((byte[]) iContent);
 				network.flush();
 
@@ -176,7 +178,7 @@ public class OStorageRemote extends OStorageAbstract {
 		return -1;
 	}
 
-	public Object[] readRecord(final int iRequesterId, final int iClusterId, final long iPosition) {
+	public ORawBuffer readRecord(final int iRequesterId, final int iClusterId, final long iPosition) {
 		checkDatabase();
 
 		if (OStorageRemoteThreadLocal.INSTANCE.get())
@@ -193,7 +195,7 @@ public class OStorageRemote extends OStorageAbstract {
 				network.flush();
 
 				readStatus();
-				return new Object[] { network.readBytes(), network.readInt() };
+				return new ORawBuffer(network.readBytes(), network.readInt(), network.readByte());
 			} catch (Exception e) {
 				if (handleException("Error on read record: " + iClusterId + ":" + iPosition, e))
 					break;
@@ -206,7 +208,7 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public int updateRecord(final int iRequesterId, final int iClusterId, final long iPosition, final byte[] iContent,
-			final int iVersion) {
+			final int iVersion, final byte iRecordType) {
 		checkDatabase();
 
 		do {
@@ -217,6 +219,7 @@ public class OStorageRemote extends OStorageAbstract {
 				network.writeShort((short) iClusterId);
 				network.writeLong(iPosition);
 				network.writeInt(iVersion);
+				network.writeByte(iRecordType);
 				network.writeBytes((byte[]) iContent);
 				network.flush();
 

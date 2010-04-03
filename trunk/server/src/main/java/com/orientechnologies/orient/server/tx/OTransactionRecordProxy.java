@@ -25,9 +25,11 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
 public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
-	protected int			version;
-	protected byte[]	stream;
-	protected ORID		recordId	= new ORecordId();
+	protected int							version;
+	protected byte[]					stream;
+	protected ORID						recordId		= new ORecordId();
+
+	private static final char	RECORD_TYPE	= 'p';
 
 	public OTransactionRecordProxy() {
 	}
@@ -116,5 +118,9 @@ public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
 
 	public ORecordInternal<byte[]> fill(ODatabaseRecord<?> iDatabase, int iClusterId, long iPosition, int iVersion) {
 		return this;
+	}
+
+	public byte getRecordType() {
+		return RECORD_TYPE;
 	}
 }

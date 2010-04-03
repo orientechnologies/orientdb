@@ -28,7 +28,9 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
  */
 @SuppressWarnings("unchecked")
 public class ORecordFlat extends ORecordAbstract<String> implements ORecordStringable<String> {
-	protected String	value;
+	protected String					value;
+
+	public static final byte	RECORD_TYPE	= 'f';
 
 	public ORecordFlat() {
 		setup();
@@ -105,5 +107,9 @@ public class ORecordFlat extends ORecordAbstract<String> implements ORecordStrin
 	public int size() {
 		final String v = value();
 		return v != null ? v.length() : 0;
+	}
+
+	public byte getRecordType() {
+		return RECORD_TYPE;
 	}
 }

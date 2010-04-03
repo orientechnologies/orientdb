@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.record.impl.ORecordVObject;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
@@ -162,14 +163,16 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				break;
 
 			case OChannelBinaryProtocol.RECORD_LOAD:
-				Object[] record = underlyingDatabase.read(channel.readShort(), channel.readLong());
+				ORawBuffer record = underlyingDatabase.read(channel.readShort(), channel.readLong());
 				sendOk();
-				channel.writeBytes((byte[]) record[0]);
-				channel.writeInt((Integer) record[1]);
+				channel.writeBytes(record.buffer);
+				channel.writeInt(record.version);
+				channel.writeByte(record.recordType);
 				break;
 
 			case OChannelBinaryProtocol.RECORD_CREATE:
-				long location = underlyingDatabase.save(channel.readShort(), ORID.CLUSTER_POS_INVALID, channel.readBytes(), -1);
+				long location = underlyingDatabase.save(channel.readShort(), ORID.CLUSTER_POS_INVALID, channel.readBytes(), -1, channel
+						.readByte());
 				sendOk();
 				channel.writeLong(location);
 				break;
@@ -178,7 +181,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				int clusterId = channel.readShort();
 				long position = channel.readLong();
 
-				long newVersion = underlyingDatabase.save(clusterId, position, channel.readBytes(), channel.readInt());
+				long newVersion = underlyingDatabase.save(clusterId, position, channel.readBytes(), channel.readInt(), channel.readByte());
 
 				// TODO: Handle it by using triggers
 				if (clusterId == connection.database.getMetadata().getSchemaClusterId())

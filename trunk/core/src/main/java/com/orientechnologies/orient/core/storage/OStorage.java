@@ -44,15 +44,16 @@ public interface OStorage {
 	public boolean isClosed();
 
 	// CRUD OPERATIONS
-	public long createRecord(int iClusterId, byte[] iContent);
+	public long createRecord(int iClusterId, byte[] iContent, final byte iRecordType);
 
-	public Object[] readRecord(int iRequesterId, ORID iRecordId);
+	public ORawBuffer readRecord(int iRequesterId, ORID iRecordId);
 
-	public Object[] readRecord(int iRequesterId, int iClusterId, long iPosition);
+	public ORawBuffer readRecord(int iRequesterId, int iClusterId, long iPosition);
 
-	public int updateRecord(int iRequesterId, int iClusterId, long iPosition, byte[] iContent, final int iVersion);
+	public int updateRecord(int iRequesterId, int iClusterId, long iPosition, byte[] iContent, final int iVersion,
+			final byte iRecordType);
 
-	public int updateRecord(int iRequesterId, ORID iRecordId, byte[] iContent, final int iVersion);
+	public int updateRecord(int iRequesterId, ORID iRecordId, byte[] iContent, final int iVersion, final byte iRecordType);
 
 	public void deleteRecord(int iRequesterId, ORID iRecordId, final int iVersion);
 

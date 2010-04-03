@@ -23,6 +23,7 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -49,7 +50,7 @@ public class OStorageConfiguration implements OSerializableStream {
 	private transient byte[]													record;
 
 	public OStorageConfiguration load() throws IOException {
-		record = (byte[]) storage.readRecord(-1, storage.getClusterIdByName(OMetadata.CLUSTER_METADATA_NAME), 0)[0];
+		record = storage.readRecord(-1, storage.getClusterIdByName(OMetadata.CLUSTER_METADATA_NAME), 0).buffer;
 		fromStream(record);
 		return this;
 	}
@@ -59,12 +60,12 @@ public class OStorageConfiguration implements OSerializableStream {
 			return;
 
 		record = toStream();
-		storage.updateRecord(-1, storage.getClusterIdByName(OMetadata.CLUSTER_METADATA_NAME), 0, record, -1);
+		storage.updateRecord(-1, storage.getClusterIdByName(OMetadata.CLUSTER_METADATA_NAME), 0, record, -1, ORecordBytes.RECORD_TYPE);
 	}
 
 	public void create() throws IOException {
 		record = toStream();
-		storage.createRecord(storage.getClusterIdByName(OMetadata.CLUSTER_METADATA_NAME), record);
+		storage.createRecord(storage.getClusterIdByName(OMetadata.CLUSTER_METADATA_NAME), record, ORecordBytes.RECORD_TYPE);
 	}
 
 	public OStorageConfiguration(final OStorage iStorage) {

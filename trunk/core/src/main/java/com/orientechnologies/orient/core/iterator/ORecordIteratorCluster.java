@@ -86,11 +86,12 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 	 * @return the next record found, otherwise NULL when no more records are found.
 	 */
 	public REC next() {
-		final REC record = getRecord();
+		REC record = getRecord();
 
 		// ITERATE UNTIL THE NEXT GOOD RECORD
 		while (hasNext()) {
-			if (readCurrentRecord(record, +1) != null)
+			record = readCurrentRecord(record, +1);
+			if (record != null)
 				// FOUND
 				return record;
 		}
@@ -185,14 +186,15 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 	 * @param iRecord
 	 * @return
 	 */
-	private REC readCurrentRecord(final REC iRecord, final int iMovement) {
+	private REC readCurrentRecord(REC iRecord, final int iMovement) {
 		if (limit > -1 && browsedRecords >= limit)
 			// LIMIT REACHED
 			return null;
 
 		currentClusterPosition += iMovement;
 
-		if (lowLevelDatabase.executeReadRecord(currentClusterId, currentClusterPosition, iRecord) != null)
+		iRecord = lowLevelDatabase.executeReadRecord(currentClusterId, currentClusterPosition, iRecord);
+		if (iRecord != null)
 			browsedRecords++;
 
 		return iRecord;

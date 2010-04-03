@@ -58,16 +58,6 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 	}
 
 	@Override
-	public ORecordAbstract<T> fromStream(byte[] iRecordBuffer) {
-		return super.fromStream(iRecordBuffer);
-	}
-
-	@Override
-	public byte[] toStream() {
-		return super.toStream();
-	}
-
-	@Override
 	protected void checkForFields() {
 		if (fields == null)
 			fields = new LinkedHashMap<String, T>();

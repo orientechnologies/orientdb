@@ -37,6 +37,11 @@ public interface OCluster {
 	public void close() throws IOException;
 
 	/**
+	 * Add a new entry.
+	 */
+	public long addPhysicalPosition(int iDataSegmentId, long iPosition, final byte iRecordType) throws IOException;
+
+	/**
 	 * Fill and return the PhysicalPosition object received as parameter with the physical position of logical record iPosition
 	 * 
 	 * @throws IOException
@@ -46,17 +51,12 @@ public interface OCluster {
 	/**
 	 * Change the PhysicalPosition of the logical record iPosition.
 	 */
-	public void setPhysicalPosition(long iPosition, int iDataSegment, long iDataPosition) throws IOException;
+	public void setPhysicalPosition(long iPosition, int iDataSegment, long iDataPosition, final byte iRecordType) throws IOException;
 
 	/**
 	 * Remove the Logical Position entry.
 	 */
 	public void removePhysicalPosition(long iPosition, OPhysicalPosition iPPosition) throws IOException;
-
-	/**
-	 * Add a new entry.
-	 */
-	public long addPhysicalPosition(int iDataSegmentId, long iPosition) throws IOException;
 
 	public void updateVersion(long iPosition, int iVersion) throws IOException;
 

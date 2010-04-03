@@ -64,13 +64,13 @@ public interface ODatabase {
 
 	public boolean isClosed();
 
-	public long countClusterElements(int currentClusterId);
+	public long countClusterElements(int iCurrentClusterId);
 
 	public long countClusterElements(int[] iClusterIds);
 
-	public long countClusterElements(String iClassName);
+	public long countClusterElements(String iClusterName);
 
-	public int addLogicalCluster(String iClassName, int iPhyClusterContainerId);
+	public int addLogicalCluster(String iClusterName, int iPhyClusterContainerId);
 
 	public int addPhysicalCluster(String iClusterName, String iClusterFileName, int iStartSize);
 

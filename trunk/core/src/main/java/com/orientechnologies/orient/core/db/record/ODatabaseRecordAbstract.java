@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> extends ODatabaseWrapperAbstract<ODatabaseRaw, REC>
@@ -120,7 +121,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 	 * Update the record without checking the version.
 	 */
 	public ODatabaseRecord<REC> save(final REC iContent) {
-		executeSaveRecord(iContent, null, iContent.getVersion());
+		executeSaveRecord(iContent, null, iContent.getVersion(), iContent.getRecordType());
 		return this;
 	}
 
@@ -128,7 +129,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 	 * Update the record in the requested cluster without checking the version.
 	 */
 	public ODatabaseRecord<REC> save(final REC iContent, final String iClusterName) {
-		executeSaveRecord(iContent, iClusterName, iContent.getVersion());
+		executeSaveRecord(iContent, iClusterName, iContent.getVersion(), iContent.getRecordType());
 		return this;
 	}
 
@@ -213,19 +214,28 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		return dictionary;
 	}
 
-	public REC executeReadRecord(final int iClusterId, final long iPosition, final REC iRecord) {
+	public REC executeReadRecord(final int iClusterId, final long iPosition, REC iRecord) {
 		checkOpeness();
 
 		try {
 			checkSecurity(OUser.CLUSTER + "." + iClusterId, OUser.READ);
 
-			final Object[] recordBuffer = underlying.read(iClusterId, iPosition);
+			final ORawBuffer recordBuffer = underlying.read(iClusterId, iPosition);
 			if (recordBuffer == null)
 				return null;
 
+			if (iRecord.getRecordType() != recordBuffer.recordType) {
+				iRecord = (REC) ORecordFactory.getRecord(recordBuffer.recordType);
+			}
+
 			iRecord.unsetDirty();
-			iRecord.fill(iRecord.getDatabase(), iClusterId, iPosition, (Integer) recordBuffer[1]);
-			iRecord.fromStream((byte[]) recordBuffer[0]);
+
+			ODatabaseRecord<?> currDb = iRecord.getDatabase();
+			if (currDb == null)
+				currDb = (ODatabaseRecord<?>) databaseOwner;
+
+			iRecord.fill(currDb, iClusterId, iPosition, recordBuffer.version);
+			iRecord.fromStream(recordBuffer.buffer);
 			iRecord.setStatus(STATUS.LOADED);
 
 			return (REC) iRecord;
@@ -242,7 +252,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		return null;
 	}
 
-	public void executeSaveRecord(final REC iContent, String iClusterName, final int iVersion) {
+	public void executeSaveRecord(final REC iContent, String iClusterName, final int iVersion, final byte iRecordType) {
 		checkOpeness();
 
 		if (!iContent.isDirty())
@@ -274,7 +284,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 
 			final byte[] stream = iContent.toStream();
 
-			long clusterPosition = underlying.save(clusterId, rid.getClusterPosition(), stream, iVersion);
+			long clusterPosition = underlying.save(clusterId, rid.getClusterPosition(), stream, iVersion, iContent.getRecordType());
 
 			if (clusterPosition < -1)
 				iContent.fill(iContent.getDatabase(), rid.getClusterId(), rid.getClusterPosition(), (int) clusterPosition * -1 - 2);
@@ -286,7 +296,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 
 			// ADD/UPDATE IT IN CACHE IF IT'S PINNED
 			if (iContent.isPinned())
-				getCache().addRecord(rid.toString(), new Object[] { stream, iVersion });
+				getCache().addRecord(rid.toString(), new ORawBuffer(stream, iVersion, iRecordType));
 
 			iContent.unsetDirty();
 		} catch (ODatabaseException e) {

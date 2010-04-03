@@ -23,12 +23,12 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCacheRecord;
 import com.orientechnologies.orient.core.config.OStorageLogicalClusterConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntent;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.logical.OClusterLogical;
 
@@ -41,6 +41,8 @@ public class ODatabaseRaw implements ODatabase {
 	protected STATUS						status;
 
 	private ODatabaseRecord<?>	databaseOwner;
+
+	private boolean							useCache	= true;
 
 	public enum STATUS {
 		OPEN, CLOSED
@@ -105,19 +107,20 @@ public class ODatabaseRaw implements ODatabase {
 		return storage.count(iClusterIds);
 	}
 
-	public Object[] read(final int iClusterId, final long iPosition) {
+	public ORawBuffer read(final int iClusterId, final long iPosition) {
 		try {
 
 			final String recId = ORecordId.generateString(iClusterId, iPosition);
 
 			// SEARCH IT IN CACHE
-			Object[] result = getCache().findRecord(recId);
+			ORawBuffer result = getCache().findRecord(recId);
 			if (result != null)
 				return result;
 
 			result = storage.readRecord(id, iClusterId, iPosition);
 
-			getCache().addRecord(recId, result);
+			if (useCache)
+				getCache().addRecord(recId, result);
 
 			return result;
 
@@ -129,12 +132,12 @@ public class ODatabaseRaw implements ODatabase {
 		return null;
 	}
 
-	public long save(final int iClusterId, final long iPosition, final byte[] iContent, final int iVersion) {
+	public long save(final int iClusterId, final long iPosition, final byte[] iContent, final int iVersion, final byte iRecordType) {
 		try {
 			if (iPosition == ORID.CLUSTER_POS_INVALID)
-				return storage.createRecord(iClusterId, iContent);
+				return storage.createRecord(iClusterId, iContent, iRecordType);
 
-			int newVersion = storage.updateRecord(id, iClusterId, iPosition, iContent, iVersion);
+			int newVersion = storage.updateRecord(id, iClusterId, iPosition, iContent, iVersion, iRecordType);
 			if (newVersion > -1)
 				return newVersion * -1 - 2;
 
@@ -233,12 +236,7 @@ public class ODatabaseRaw implements ODatabase {
 	}
 
 	public void declareIntent(final OIntent iIntent, final Object... iParams) {
-		ODatabaseComplex<?> ownerDb = databaseOwner;
-
-		while (ownerDb.getDatabaseOwner() != null && ownerDb.getDatabaseOwner() != ownerDb)
-			ownerDb = ownerDb.getDatabaseOwner();
-
-		iIntent.activate(ownerDb, iParams);
+		iIntent.activate(this, iParams);
 	}
 
 	public <DB extends ODatabase> DB checkSecurity(String iResource, int iOperation) {
@@ -248,8 +246,20 @@ public class ODatabaseRaw implements ODatabase {
 		return null;
 	}
 
+	public ODatabaseRecord<?> getDatabaseOwner() {
+		return databaseOwner;
+	}
+
 	public ODatabaseRaw setOwner(final ODatabaseRecord<?> iOwner) {
 		databaseOwner = iOwner;
 		return this;
+	}
+
+	public boolean isUseCache() {
+		return useCache;
+	}
+
+	public void setUseCache(boolean useCache) {
+		this.useCache = useCache;
 	}
 }

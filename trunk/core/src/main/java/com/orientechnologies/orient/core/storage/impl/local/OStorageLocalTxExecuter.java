@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionEntry;
 
@@ -51,8 +52,8 @@ public class OStorageLocalTxExecuter {
 		txSegment.close();
 	}
 
-	protected long createRecord(final int iRequesterId, final int iTxId, final OCluster iClusterSegment, final byte[] iContent)
-			throws IOException {
+	protected long createRecord(final int iRequesterId, final int iTxId, final OCluster iClusterSegment, final byte[] iContent,
+			final byte iRecordType) throws IOException {
 		long recordPosition = -1;
 
 		try {
@@ -63,7 +64,7 @@ public class OStorageLocalTxExecuter {
 
 			// REFERENCE IN THE CLUSTER THE DATA JUST CREATED. IF TX FAILS AT THIS POINT ???
 			// TODO
-			recordPosition = iClusterSegment.addPhysicalPosition(dataSegment, dataOffset);
+			recordPosition = iClusterSegment.addPhysicalPosition(dataSegment, dataOffset, iRecordType);
 
 			// SAVE INTO THE LOG THE POSITION OF THE RECORD JUST CREATED. IF TX FAILS AT THIS POINT ???
 			// TODO
@@ -79,20 +80,20 @@ public class OStorageLocalTxExecuter {
 	}
 
 	protected void updateRecord(final int iRequesterId, final int iTxId, final OCluster iClusterSegment, final long iPosition,
-			final byte[] iContent, final int iVersion) {
+			final byte[] iContent, final int iVersion, final byte iRecordType) {
 		try {
 			// READ CURRENT RECORD CONTENT
-			final Object[] buffer = storage.readRecord(iRequesterId, iClusterSegment, iPosition, true);
+			final ORawBuffer buffer = storage.readRecord(iRequesterId, iClusterSegment, iPosition, true);
 
 			// CREATE A COPY OF IT IN DATASEGMENT. IF TX FAILS AT THIS POINT UN-REFERENCED DATA WILL REMAIN UNTIL NEXT DEFRAG
-			final long dataOffset = storage.getDataSegment(storage.getDataSegmentForRecord(iClusterSegment, (byte[]) buffer[0]))
-					.addRecord(-1, -1, (byte[]) buffer[0]);
+			final long dataOffset = storage.getDataSegment(storage.getDataSegmentForRecord(iClusterSegment, buffer.buffer)).addRecord(-1,
+					-1, buffer.buffer);
 
 			// SAVE INTO THE LOG THE POSITION OF THE RECORD JUST DELETED. IF TX FAILS AT THIS POINT AS ABOVE
 			txSegment.addLog(OTxSegment.OPERATION_UPDATE, iRequesterId, iTxId, iClusterSegment.getId(), iPosition, dataOffset);
 
 			// UPDATE THE RECORD FOR REAL. IF TX FAILS AT THIS POINT CAN BE RECOVERED THANKS TO THE TX-LOG
-			storage.updateRecord(iRequesterId, iClusterSegment, iPosition, iContent, iVersion);
+			storage.updateRecord(iRequesterId, iClusterSegment, iPosition, iContent, iVersion, iRecordType);
 		} catch (IOException e) {
 
 			OLogManager.instance().error(this, "Error on updating entry #" + iPosition + " in log segment: " + iClusterSegment, e,
@@ -136,7 +137,7 @@ public class OStorageLocalTxExecuter {
 		for (OTransactionEntry<? extends ORecord<?>> txEntry : iTx.getEntries()) {
 			if (txEntry.record.isPinned())
 				storage.getCache().addRecord(txEntry.record.getIdentity().toString(),
-						new Object[] { txEntry.record.toStream(), txEntry.record.getVersion() });
+						new ORawBuffer(txEntry.record.toStream(), txEntry.record.getVersion(), txEntry.record.getRecordType()));
 		}
 	}
 
@@ -156,16 +157,17 @@ public class OStorageLocalTxExecuter {
 		case OTransactionEntry.LOADED:
 			break;
 
+		case OTransactionEntry.CREATED:
+			rid.clusterPosition = createRecord(iRequesterId, iTxId, cluster, txEntry.record.toStream(), txEntry.record.getRecordType());
+			break;
+
 		case OTransactionEntry.UPDATED:
-			updateRecord(iRequesterId, iTxId, cluster, rid.clusterPosition, txEntry.record.toStream(), txEntry.record.getVersion());
+			updateRecord(iRequesterId, iTxId, cluster, rid.clusterPosition, txEntry.record.toStream(), txEntry.record.getVersion(),
+					txEntry.record.getRecordType());
 			break;
 
 		case OTransactionEntry.DELETED:
 			deleteRecord(iRequesterId, iTxId, cluster, rid.clusterPosition, txEntry.record.getVersion());
-			break;
-
-		case OTransactionEntry.CREATED:
-			rid.clusterPosition = createRecord(iRequesterId, iTxId, cluster, txEntry.record.toStream());
 			break;
 		}
 	}

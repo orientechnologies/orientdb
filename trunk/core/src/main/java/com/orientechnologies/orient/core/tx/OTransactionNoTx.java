@@ -43,7 +43,7 @@ public class OTransactionNoTx<REC extends ORecordInternal<?>> extends OTransacti
 	 * Update the record without checking the version coherence.
 	 */
 	public void save(final REC iContent, final String iClusterName) {
-		database.executeSaveRecord(iContent, iClusterName, -1);
+		database.executeSaveRecord(iContent, iClusterName, -1, iContent.getRecordType());
 	}
 
 	/**
