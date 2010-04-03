@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.record.impl.ORecordVObject;
 import com.orientechnologies.utility.impexp.OConsoleDatabaseExport;
 import com.orientechnologies.utility.impexp.ODatabaseExportException;
 
-public class OConsoleDatabaseApp extends OrientConsole {
+public class OConsoleDatabaseApp extends OrientConsole implements OCommandListener {
 	protected ODatabaseVObject			currentDatabase;
 	protected String								currentDatabaseName;
 	protected ORecordVObject				currentRecord;
@@ -148,8 +148,7 @@ public class OConsoleDatabaseApp extends OrientConsole {
 
 		long start = System.currentTimeMillis();
 		currentDatabase.query(new OSQLAsynchQuery<ORecordVObject>(iQuery, new OAsynchQueryResultListener<ORecordVObject>() {
-			@Override
-			public boolean result(ORecordVObject iRecord) {
+			public boolean result(final ORecordVObject iRecord) {
 				if (currentResultSet.size() > RESULTSET_LIMIT) {
 					printHeaderLine(columns);
 					out.println("\nResultset contains more items not displayed (max=" + RESULTSET_LIMIT + ")");
@@ -173,7 +172,7 @@ public class OConsoleDatabaseApp extends OrientConsole {
 
 	@ConsoleCommand(aliases = { "display" }, description = "Display current object's attributes")
 	public void displayObject(
-			@ConsoleParameter(name = "number", description = "The number of the record in the last result set") String iRecordNumber) {
+			@ConsoleParameter(name = "number", description = "The number of the record in the last result set") final String iRecordNumber) {
 		checkCurrentDatabase();
 
 		if (iRecordNumber == null)
@@ -260,7 +259,7 @@ public class OConsoleDatabaseApp extends OrientConsole {
 	}
 
 	@ConsoleCommand(description = "Loookup for a record using the dictionary and if found set it as the current one.")
-	public void lookup(@ConsoleParameter(name = "key", description = "The key to search") String iKey) {
+	public void lookup(@ConsoleParameter(name = "key", description = "The key to search") final String iKey) {
 		checkCurrentDatabase();
 
 		currentRecord = (ORecordVObject) currentDatabase.getDictionary().get(iKey);
@@ -275,14 +274,11 @@ public class OConsoleDatabaseApp extends OrientConsole {
 		out.println("Exporting current database to: " + iOutputFilePath + "...");
 
 		try {
-			new OConsoleDatabaseExport(currentDatabase, iOutputFilePath).exportDatabase();
-			out.println("OK");
+			new OConsoleDatabaseExport(currentDatabase, iOutputFilePath, this).exportDatabase();
 		} catch (ODatabaseExportException e) {
 			out.println("ERROR: " + e.toString());
 			e.printStackTrace();
 		}
-
-		connect(iOutputFilePath);
 	}
 
 	@Override
@@ -367,5 +363,9 @@ public class OConsoleDatabaseApp extends OrientConsole {
 			out.printf("%20s : %-20s\n", fieldName, currentRecord.field(fieldName));
 		}
 		out.println("--------------------------------------------------");
+	}
+
+	public void onMessage(String iText) {
+		out.print(iText);
 	}
 }

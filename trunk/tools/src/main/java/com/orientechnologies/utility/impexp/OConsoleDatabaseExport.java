@@ -23,18 +23,29 @@ import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.vobject.ODatabaseVObject;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
+import com.orientechnologies.orient.core.intent.OIntentDefault;
+import com.orientechnologies.orient.core.intent.OIntentMassiveRead;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.record.impl.ORecordCSV;
+import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.record.impl.ORecordVObject;
+import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+import com.orientechnologies.utility.console.OCommandListener;
 
 public class OConsoleDatabaseExport {
 	private ODatabaseVObject	database;
 	private String						fileName;
 	private OJSONWriter				writer;
+	private OCommandListener	listener;
 
-	public OConsoleDatabaseExport(final ODatabaseVObject database, final String iFileName) {
+	public OConsoleDatabaseExport(final ODatabaseVObject database, final String iFileName, final OCommandListener iListener) {
 		this.database = database;
 		this.fileName = iFileName;
+		listener = iListener;
 	}
 
 	public void exportDatabase() {
@@ -42,12 +53,20 @@ public class OConsoleDatabaseExport {
 		try {
 			writer = new OJSONWriter(new FileWriter(fileName));
 
-			writer.beginSection(0, true, "");
+			writer.beginObject();
+
+			database.declareIntent(new OIntentMassiveRead());
+
 			exportInfo();
 			exportDictionary();
 			exportSchema();
 			exportClusters();
-			writer.endSection(0, true);
+
+			database.declareIntent(new OIntentDefault());
+
+			writer.endObject();
+
+			listener.onMessage("\nExport of database completed.");
 
 			writer.flush();
 		} catch (Exception e) {
@@ -62,102 +81,175 @@ public class OConsoleDatabaseExport {
 	}
 
 	private void exportInfo() throws IOException {
-		writer.beginSection(1, true, "info");
+		listener.onMessage("\nExporting database info...");
+
+		writer.beginObject(1, true, "info");
 		writer.writeAttribute(2, true, "name", database.getName());
 		writer.writeAttribute(2, true, "default-cluster-id", database.getDefaultClusterId());
-		writer.endSection(1, true);
+		writer.endObject(1, true);
+
+		listener.onMessage("OK");
 	}
 
 	private void exportDictionary() throws IOException {
-		writer.beginSection(1, true, "dictionary");
+		listener.onMessage("\nExporting dictionary...");
+
+		writer.beginObject(1, true, "dictionary");
 		ODictionary<ORecordVObject> d = database.getDictionary();
 		if (d != null) {
 			Entry<String, ORecordVObject> entry;
 			for (Iterator<Entry<String, ORecordVObject>> iterator = d.iterator(); iterator.hasNext();) {
 				entry = iterator.next();
 				writer.writeAttribute(2, true, "key", entry.getKey());
-				writer.writeAttribute(0, false, "value", entry.getValue());
+				writer.writeAttribute(0, false, "value", OJSONWriter.writeValue(entry.getValue()));
 			}
 		}
-		writer.endSection(1, true);
+		writer.endObject(1, true);
+
+		listener.onMessage("OK");
 	}
 
 	private void exportSchema() throws IOException {
-		writer.beginSection(1, true, "schema");
+		listener.onMessage("\nExporting schema...");
+
+		writer.beginObject(1, true, "schema");
 		OSchema s = database.getMetadata().getSchema();
 		writer.writeAttribute(2, true, "version", s.getVersion());
-		writer.endSection(1, true);
-	}
 
-	@SuppressWarnings("unchecked")
-	private void exportClusters() throws IOException {
-		writer.beginSection(1, true, "clusters");
-		Collection<String> clusterNames = database.getClusterNames();
-		for (String clusterName : clusterNames) {
-			writer.beginSection(2, true, "cluster");
-			writer.writeAttribute(3, true, "name", clusterName);
-			writer.writeAttribute(3, true, "id", database.getClusterIdByName(clusterName));
+		if (s.getClasses().size() > 0) {
+			writer.beginCollection(2, true, "classes");
+			for (OClass cls : s.getClasses()) {
+				writer.beginObject(3, true, "class");
+				writer.writeAttribute(0, false, "name", cls.getName());
+				writer.writeAttribute(0, false, "id", cls.getId());
+				writer.writeAttribute(0, false, "default-cluster-id", cls.getDefaultClusterId());
+				writer.writeAttribute(0, false, "cluster-ids", cls.getClusterIds());
 
-			writer.beginSection(3, true, "content");
-			for (ORecord<?> rec : database.browseCluster(clusterName)) {
-				writer.beginSection(4, true, rec.getIdentity());
-				writer.writeAttribute(5, true, "version", rec.getVersion());
-
-				if (rec instanceof ORecordVObject) {
-					ORecordVObject vobj = (ORecordVObject) rec;
-					if (vobj.getIdentity().isValid())
-						vobj.load();
-
-					writer.writeAttribute(0, false, "type", "v");
-
-					Object value;
-					if (vobj.fields() != null && vobj.fields().length > 0) {
-						writer.beginSection(5, true, "fields");
-						for (String f : vobj.fields()) {
-							value = vobj.field(f);
-
-							if (value != null)
-								if (value instanceof ORecordVObject) {
-									value = getOutputValue(value);
-								} else if (value instanceof Collection<?>) {
-									Collection<Object> coll = (Collection<Object>) value;
-
-									StringBuilder buffer = new StringBuilder();
-									buffer.append("[");
-									for (Object v : coll) {
-										if (buffer.length() > 1)
-											buffer.append(", ");
-
-										v = getOutputValue(v);
-
-										buffer.append(v);
-									}
-									buffer.append("]");
-									
-									value = buffer.toString();
-								}
-
-							writer.writeAttribute(6, true, f, value);
-						}
-						writer.endSection(5, true);
+				if (cls.properties().size() > 0) {
+					writer.beginCollection(4, true, "properties");
+					for (OProperty p : cls.properties()) {
+						writer.beginObject(5, true, "property");
+						writer.writeAttribute(0, false, "name", p.getName());
+						writer.writeAttribute(0, false, "id", p.getId());
+						writer.writeAttribute(0, false, "type", p.getType());
+						if (p.getLinkedClass() != null)
+							writer.writeAttribute(0, false, "linked-class", p.getLinkedClass().getName());
+						if (p.getLinkedType() != null)
+							writer.writeAttribute(0, false, "linked-type", p.getLinkedType());
+						if (p.getMin() != null)
+							writer.writeAttribute(0, false, "min", p.getMin());
+						if (p.getMax() != null)
+							writer.writeAttribute(0, false, "max", p.getMax());
 					}
+					writer.endCollection(4, true);
 				}
 
-				writer.endSection(4, true);
+				writer.endObject(3, true);
 			}
-			writer.endSection(3, true);
-
-			writer.endSection(2, true);
+			writer.endCollection(2, true);
 		}
-		writer.endSection(1, true);
+
+		writer.endObject(1, true);
+
+		listener.onMessage("OK");
 	}
 
-	private Object getOutputValue(Object iValue) {
-		ORecordVObject linked = (ORecordVObject) iValue;
-		if (linked.getIdentity().isValid())
-			iValue = linked.getIdentity().toString();
-		else
-			iValue = linked.toString();
+	private void exportClusters() throws IOException {
+		listener.onMessage("\nExporting clusters...");
+
+		writer.beginObject(1, true, "clusters");
+		Collection<String> clusterNames = database.getClusterNames();
+		for (String clusterName : clusterNames) {
+			long recordTot = database.countClusterElements(clusterName);
+			listener.onMessage("\n- Exporting cluster '" + clusterName + "' (records=" + recordTot + ") -> ");
+
+			writer.beginObject(2, true, "cluster");
+			writer.writeAttribute(0, false, "name", clusterName);
+			writer.writeAttribute(0, false, "id", database.getClusterIdByName(clusterName));
+
+			if (recordTot > 0) {
+				writer.beginObject(3, true, "records");
+
+				long recordNum = 0;
+				for (ORecord<?> rec : database.browseCluster(clusterName))
+					exportRecord(recordTot, recordNum, rec);
+
+				writer.endObject(3, true);
+			}
+
+			listener.onMessage("OK");
+
+			writer.endObject(2, true);
+		}
+		writer.endObject(1, true);
+	}
+
+	private void exportRecord(long recordTot, long recordNum, ORecord<?> rec) throws IOException {
+		if (rec == null)
+			return;
+
+		writer.beginObject(4, true, rec.getIdentity());
+		writer.writeAttribute(0, false, "version", rec.getVersion());
+
+		if (rec.getIdentity().isValid())
+			rec.load();
+
+		if (rec instanceof ORecordVObject) {
+			ORecordVObject vobj = (ORecordVObject) rec;
+
+			writer.writeAttribute(0, false, "type", "v");
+
+			Object value;
+			if (vobj.fields() != null && vobj.fields().length > 0) {
+				writer.beginObject(5, true, "fields");
+				for (String f : vobj.fields()) {
+					value = vobj.field(f);
+
+					writer.writeAttribute(6, true, f, value);
+				}
+				writer.endObject(5, true);
+			}
+		} else if (rec instanceof ORecordCSV) {
+			ORecordCSV csv = (ORecordCSV) rec;
+
+			writer.writeAttribute(0, false, "type", "c");
+
+			if (csv.size() > 0) {
+				writer.beginCollection(5, true, "values");
+				for (int i = 0; i < csv.size(); ++i) {
+					writer.writeValue(6, true, csv.field(i));
+				}
+				writer.endCollection(5, true);
+			}
+		} else if (rec instanceof ORecordFlat) {
+			ORecordFlat flat = (ORecordFlat) rec;
+
+			writer.writeAttribute(0, false, "type", "f");
+			writer.writeAttribute(6, true, "value", flat.value());
+		} else if (rec instanceof ORecordBytes) {
+
+			ORecordBytes bytes = (ORecordBytes) rec;
+
+			writer.writeAttribute(0, false, "type", "b");
+			writer.writeAttribute(6, true, "value", bytes.toStream());
+		}
+
+		writer.endObject(4, true);
+
+		recordNum++;
+
+		if (recordTot > 10 && (recordNum + 1) % (recordTot / 10) == 0)
+			listener.onMessage(".");
+	}
+
+	private Object getOutput(Object iValue) {
+		if (iValue instanceof ORecord<?>) {
+			ORecord<?> linked = (ORecord<?>) iValue;
+			if (linked.getIdentity().isValid())
+				iValue = linked.getIdentity().toString();
+			else
+				iValue = linked.toString();
+		}
 		return iValue;
 	}
 }
