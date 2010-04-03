@@ -21,7 +21,6 @@
 		  	<fileset dir="server"     includes="build.xml" />
 		  	<fileset dir="tools"      includes="build.xml" />
 		  	<fileset dir="kv"         includes="build.xml" />
-		  	<fileset dir="tests"      includes="build.xml" />
 	    </subant>
 	    
       <echo>   ___   ___  ____    _  </echo>  
@@ -68,6 +67,7 @@
 
 	<target name="clean" depends="init">
 		<delegate target="clean"/>
+    <delete dir="${global.release}" />
 	</target>
 
 	<target name="compile" depends="init">
