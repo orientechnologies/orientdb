@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.query.OAsynchQueryResultListener;
 import com.orientechnologies.orient.core.query.sql.OSQLAsynchQuery;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ORecordVObject;
 import com.orientechnologies.utility.impexp.OConsoleDatabaseExport;
 import com.orientechnologies.utility.impexp.ODatabaseExportException;
@@ -116,7 +117,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		out.println("OK");
 	}
 
-	@ConsoleCommand(description = "Load a record in memory and set it as the current one.")
+	@ConsoleCommand(description = "Load a record in memory and set it as the current one")
 	public void loadRecord(
 			@ConsoleParameter(name = "cluster-name", description = "The name of the cluster") String iClusterName,
 			@ConsoleParameter(name = "oid", description = "The unique Record Id to load the object directly. If you don't have the Record Id use the query system") String iRecordId) {
@@ -258,7 +259,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 			out.println("No database selected yet.");
 	}
 
-	@ConsoleCommand(description = "Loookup for a record using the dictionary and if found set it as the current one.")
+	@ConsoleCommand(description = "Loookup for a record using the dictionary and if found set it as the current one")
 	public void lookup(@ConsoleParameter(name = "key", description = "The key to search") final String iKey) {
 		checkCurrentDatabase();
 
@@ -338,6 +339,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 			value = iRecord.field(colName);
 			if (value instanceof Collection<?>)
 				value = "[" + ((Collection<?>) value).size() + "]";
+			else if (value instanceof ORecord<?>)
+				value = ((ORecord<?>) value).getIdentity().toString();
 			vargs.add(value);
 		}
 
