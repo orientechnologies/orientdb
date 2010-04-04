@@ -1,9 +1,9 @@
 <!DOCTYPE suite SYSTEM "http://beust.com/testng/testng-1.0.dtd">
 <suite name="Test Suite Example" verbose="1">
-	<parameter name="url" value="local:../../releases/0.9.2/databases/petshop/petshop" />
+	<parameter name="url" value="local:../../releases/0.9.3/databases/petshop/petshop" />
 
 	<test name="Setup">
-		<parameter name="path" value="../../releases/0.9.2/databases/petshop" />
+		<parameter name="path" value="../../releases/0.9.3/databases/petshop" />
 		<classes>
 			<class name="com.orientechnologies.orient.test.database.base.DeleteDirectory" />
 		</classes>

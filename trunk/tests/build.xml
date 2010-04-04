@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Copyright (c) 1999-2010 Luca Garulli - LICENSE: Apache 2.0 -->
-<project basedir="." default="release" name="orient-database-tests">
+<project basedir="." default="compile" name="orient-database-tests">
 	<import file="../_base/base-build.xml" />
 
 	<taskdef resource="testngtasks" classpath="lib/testng-5.10-jdk15.jar" />

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project basedir="." default="release" name="orient-ant">
+<project basedir="." default="install" name="orient-ant">
   <!-- Copyright (c) 1999-2010 Luca Garulli - LICENSE: Apache 2.0 -->
   
 	<property environment="env" />
 	<property name="vendor"         value="Orient Technologies" />
 	<property name="product"        value="Orient Database" />
-	<property name="version"        value="0.9.2" />
+	<property name="version"        value="0.9.3" />
 	<property name="global.release" value="../releases/${version}" />
 	<property name="global.lib"     value="${global.release}/lib" />
 
@@ -78,8 +78,8 @@
 		<delegate target="javadoc"/>
 	</target>
 
-  <target name="release" depends="init">
-		<delegate target="release"/>
+  <target name="install" depends="init">
+		<delegate target="install"/>
 		
     <copy todir="${global.release}">
      <fileset dir=".">
@@ -100,4 +100,9 @@
     </copy>
 	</target>
 
+  <target name="release" depends="init">
+		<delete file="../releases/orient-database-${version}.zip" />
+		<zip destfile="../releases/orient-database-${version}.zip" basedir="${global.release}" level="9" update="false" excludes="*.log" />
+	</target>
+    
 </project>

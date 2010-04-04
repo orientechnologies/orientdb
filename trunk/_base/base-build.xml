@@ -31,7 +31,7 @@
 		</javac>
 	</target>
 
-	<target name="install" depends="compile">
+	<target name="jar" depends="compile">
 		<mkdir dir="${project.dist}" />
 		<delete file="${project.dist}/${ant.project.name}.jar" />
 		<jar compress="true" basedir="${project.build}" destfile="${project.dist}/${ant.project.name}.jar">
@@ -48,7 +48,7 @@
 		</copy>
 	</target>
 
-	<target name="release" depends="install">
+	<target name="install" depends="jar">
 		<copy todir="${global.lib}">
 			<fileset dir="${project.dist}" includes="*.jar" />
 		</copy>
