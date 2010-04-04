@@ -22,6 +22,6 @@ public class OConstants {
 	public static final int			SIZE_INT				= 4;
 	public static final int			SIZE_LONG				= 8;
 
-	public static final String	ORIENT_VERSION	= "0.9.2";
+	public static final String	ORIENT_VERSION	= "0.9.3";
 	public static final String	ORIENT_URL			= "www.orientechnologies.com";
 }
