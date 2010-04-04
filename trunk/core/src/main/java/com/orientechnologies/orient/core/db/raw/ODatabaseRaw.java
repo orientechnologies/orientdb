@@ -54,7 +54,7 @@ public class ODatabaseRaw implements ODatabase {
 			id = serialId++;
 			status = STATUS.CLOSED;
 		} catch (Throwable t) {
-			OLogManager.instance().error(this, "Error on opening database '" + iURL + "'", t, ODatabaseException.class);
+			throw new ODatabaseException("Error on opening database '" + iURL + "'", t);
 		}
 	}
 
@@ -73,7 +73,7 @@ public class ODatabaseRaw implements ODatabase {
 			}
 
 		} catch (Exception e) {
-			OLogManager.instance().error(this, "Can't open database", e, ODatabaseException.class);
+			throw new ODatabaseException("Can't open database", e);
 		}
 		return (DB) this;
 	}
@@ -83,7 +83,7 @@ public class ODatabaseRaw implements ODatabase {
 			storage.create(iStorageMode);
 			status = STATUS.OPEN;
 		} catch (Exception e) {
-			OLogManager.instance().error(this, "Can't create database", e, ODatabaseException.class);
+			throw new ODatabaseException("Can't create database", e);
 		}
 		return (DB) this;
 	}
@@ -125,11 +125,9 @@ public class ODatabaseRaw implements ODatabase {
 			return result;
 
 		} catch (Throwable t) {
-			OLogManager.instance().error(this,
-					"Error on retrieving record #" + iPosition + " in cluster '" + storage.getPhysicalClusterNameById(iClusterId) + "'", t,
-					ODatabaseException.class);
+			throw new ODatabaseException("Error on retrieving record #" + iPosition + " in cluster '"
+					+ storage.getPhysicalClusterNameById(iClusterId) + "'", t);
 		}
-		return null;
 	}
 
 	public long save(final int iClusterId, final long iPosition, final byte[] iContent, final int iVersion, final byte iRecordType) {
@@ -142,8 +140,7 @@ public class ODatabaseRaw implements ODatabase {
 				return newVersion * -1 - 2;
 
 		} catch (Throwable t) {
-			OLogManager.instance().error(this, "Error on saving record in cluster id: " + iClusterId + ", position: " + iPosition, t,
-					ODatabaseException.class);
+			throw new ODatabaseException("Error on saving record in cluster id: " + iClusterId + ", position: " + iPosition, t);
 		}
 		return ORID.CLUSTER_POS_INVALID;
 	}

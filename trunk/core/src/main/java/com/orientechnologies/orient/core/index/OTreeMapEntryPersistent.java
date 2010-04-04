@@ -478,9 +478,6 @@ public class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> implement
 		if (record == null)
 			return;
 
-		if (record.isDirty() == true)
-			return;
-
 		record.setDirty();
 		tree.getListener().signalNodeChanged(this);
 	}

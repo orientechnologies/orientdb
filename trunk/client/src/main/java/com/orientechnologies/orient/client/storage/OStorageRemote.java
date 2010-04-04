@@ -30,7 +30,6 @@ import com.orientechnologies.orient.client.dictionary.ODictionaryClient;
 import com.orientechnologies.orient.client.query.OSQLAsynchQueryRemoteExecutor;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -44,6 +43,7 @@ import com.orientechnologies.orient.core.query.OQueryInternal;
 import com.orientechnologies.orient.core.query.sql.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.query.sql.OSQLQuery;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
@@ -87,7 +87,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 		} catch (Exception e) {
 			close();
-			OLogManager.instance().error(this, "Can't open the remote storage: " + name, e, OStorageException.class);
+			throw new OStorageException("Can't open the remote storage: " + name, e);
 		} finally {
 
 			releaseExclusiveLock(locked);
@@ -195,7 +195,11 @@ public class OStorageRemote extends OStorageAbstract {
 				network.flush();
 
 				readStatus();
-				return new ORawBuffer(network.readBytes(), network.readInt(), network.readByte());
+				if (network.readByte() == 1)
+					return new ORawBuffer(network.readBytes(), network.readInt(), network.readByte());
+				else
+					return null;
+
 			} catch (Exception e) {
 				if (handleException("Error on read record: " + iClusterId + ":" + iPosition, e))
 					break;
@@ -698,6 +702,29 @@ public class OStorageRemote extends OStorageAbstract {
 		return new ODictionaryClient(iDatabase, this);
 	}
 
+	public Set<String> dictionaryKeys() {
+		checkDatabase();
+
+		do {
+			boolean locked = acquireExclusiveLock();
+
+			try {
+				network.writeByte(OChannelBinaryProtocol.DICTIONARY_KEYS);
+				network.flush();
+
+				readStatus();
+				return network.readStringSet();
+			} catch (Exception e) {
+				if (handleException("Error on getting keys of database's dictionary", e))
+					break;
+
+			} finally {
+				releaseExclusiveLock(locked);
+			}
+		} while (true);
+		return null;
+	}
+
 	public void synch() {
 	}
 
@@ -720,12 +747,12 @@ public class OStorageRemote extends OStorageAbstract {
 		final byte result = network.readByte();
 
 		if (result == OChannelBinaryProtocol.ERROR)
-			OLogManager.instance().error(this, network.readString(), null, OStorageException.class);
+			throw new OStorageException(network.readString(), null);
 	}
 
 	protected boolean handleException(final String iMessage, final Exception iException) {
 		if (!(iException instanceof IOException))
-			OLogManager.instance().error(this, iMessage, iException, OStorageException.class);
+			throw new OStorageException(iMessage, iException);
 
 		if (retry < clientConfiguration.connectionRetry) {
 			// WAIT THE DELAY BEFORE TO RETRY
@@ -754,7 +781,7 @@ public class OStorageRemote extends OStorageAbstract {
 			retry = 0;
 
 			// RECONNECTION FAILED: THROW+LOG THE ORIGINAL EXCEPTION
-			OLogManager.instance().error(this, iMessage, iException, OStorageException.class);
+			throw new OStorageException(iMessage, iException);
 		}
 		return false;
 	}
@@ -806,7 +833,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 	private void checkDatabase() {
 		if (network == null)
-			OLogManager.instance().error(this, "Database is closed", ODatabaseException.class);
+			throw new ODatabaseException("Database is closed");
 	}
 
 	private ORecord<?> readRecordFromNetwork(ODatabaseRecord<?> iDatabase) throws IOException {
@@ -814,7 +841,16 @@ public class OStorageRemote extends OStorageAbstract {
 		if (classId == OChannelBinaryProtocol.RECORD_NULL)
 			return null;
 
-		return (ORecord<?>) ((ORecordSchemaAware<?>) ((ODatabaseRecordTx) iDatabase).newInstance()).fill(iDatabase, classId,
-				network.readShort(), network.readLong(), network.readInt()).fromStream(network.readBytes());
+		ORecordInternal<?> record = ORecordFactory.getRecord(network.readByte());
+
+		if (record instanceof ORecordSchemaAware<?>)
+			((ORecordSchemaAware<?>) record).fill(iDatabase, classId, network.readShort(), network.readLong(), network.readInt())
+					.fromStream(network.readBytes());
+		else {
+			network.readShort();
+			record.fill(iDatabase, classId, network.readLong(), network.readInt()).fromStream(network.readBytes());
+		}
+
+		return record;
 	}
 }

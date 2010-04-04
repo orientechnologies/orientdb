@@ -241,15 +241,4 @@ public class OConsoleDatabaseExport {
 		if (recordTot > 10 && (recordNum + 1) % (recordTot / 10) == 0)
 			listener.onMessage(".");
 	}
-
-	private Object getOutput(Object iValue) {
-		if (iValue instanceof ORecord<?>) {
-			ORecord<?> linked = (ORecord<?>) iValue;
-			if (linked.getIdentity().isValid())
-				iValue = linked.getIdentity().toString();
-			else
-				iValue = linked.toString();
-		}
-		return iValue;
-	}
 }

@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.storage.impl.local;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.Map.Entry;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -92,5 +93,9 @@ public class ODictionaryLocal<T extends Object> implements ODictionaryInternal<T
 
 	public Iterator<Entry<String, T>> iterator() {
 		return new ODictionaryIterator<T>(tree);
+	}
+
+	public Set<String> keySet() {
+		return tree.keySet();
 	}
 }

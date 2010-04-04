@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.dictionary;
 
 import java.util.Iterator;
+import java.util.Set;
 import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
@@ -68,4 +69,7 @@ public class ODictionaryWrapper implements ODictionary<Object> {
 		return recordDatabase.getDictionary().size();
 	}
 
+	public Set<String> keySet() {
+		return recordDatabase.getDictionary().keySet();
+	}
 }

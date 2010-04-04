@@ -61,7 +61,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			metadata = new OMetadata(this);
 			dictionary = (ODictionaryInternal) getStorage().createDictionary(this);
 		} catch (Throwable t) {
-			OLogManager.instance().error(this, "Error on opening database '" + getName() + "'", t, ODatabaseException.class);
+			throw new ODatabaseException("Error on opening database '" + getName() + "'", t);
 		}
 	}
 
@@ -82,7 +82,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			recordFormat = DEF_RECORD_FORMAT;
 			dictionary.load();
 		} catch (Exception e) {
-			OLogManager.instance().error(this, "Can't open database", e, ODatabaseException.class);
+			throw new ODatabaseException("Can't open database", e);
 		}
 		return (DB) this;
 	}
@@ -100,7 +100,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			dictionary.create();
 			recordFormat = iStorageMode;
 		} catch (Exception e) {
-			OLogManager.instance().error(this, "Can't create database", e, ODatabaseException.class);
+			throw new ODatabaseException("Can't create database", e);
 		}
 		return (DB) this;
 	}
@@ -161,9 +161,8 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			return query;
 
 		} catch (Exception e) {
-			OLogManager.instance().error(this, "Error on query execution", e, ODatabaseException.class);
+			throw new ODatabaseException("Error on query execution", e);
 		}
-		return null;
 	}
 
 	public Class<? extends REC> getRecordType() {
@@ -247,7 +246,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			// WRAP IT AS ODATABASE EXCEPTION
 			OLogManager.instance().error(this,
 					"Error on retrieving record #" + iPosition + " in cluster '" + getStorage().getPhysicalClusterNameById(iClusterId) + "'",
-					t, ODatabaseException.class);
+					t);
 		}
 		return null;
 	}
@@ -304,8 +303,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			throw e;
 		} catch (Throwable t) {
 			// WRAP IT AS ODATABASE EXCEPTION
-			OLogManager.instance().error(this, "Error on saving record in cluster #" + iContent.getIdentity().getClusterId(), t,
-					ODatabaseException.class);
+			throw new ODatabaseException("Error on saving record in cluster #" + iContent.getIdentity().getClusterId(), t);
 		}
 	}
 
@@ -332,8 +330,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 
 		} catch (Throwable t) {
 			// WRAP IT AS ODATABASE EXCEPTION
-			OLogManager.instance().error(this, "Error on deleting record in cluster #" + iContent.getIdentity().getClusterId(), t,
-					ODatabaseException.class);
+			throw new ODatabaseException("Error on deleting record in cluster #" + iContent.getIdentity().getClusterId(), t);
 		}
 	}
 
@@ -352,6 +349,6 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 
 	protected void checkOpeness() {
 		if (isClosed())
-			OLogManager.instance().error(this, "Database is closed", ODatabaseException.class);
+			throw new ODatabaseException("Database is closed");
 	}
 }

@@ -17,7 +17,6 @@ package com.orientechnologies.orient.core.db;
 
 import java.util.Collection;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.cache.OCacheRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.intent.OIntent;
@@ -145,7 +144,7 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase, REC extends
 
 	protected void checkOpeness() {
 		if (isClosed())
-			OLogManager.instance().error(this, "Database is closed", ODatabaseException.class);
+			throw new ODatabaseException("Database is closed");
 	}
 
 	public ODatabaseComplex<?> getDatabaseOwner() {

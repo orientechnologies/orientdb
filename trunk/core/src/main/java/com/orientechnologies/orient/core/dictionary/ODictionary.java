@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.dictionary;
 
+import java.util.Set;
 import java.util.Map.Entry;
 
 /**
@@ -75,4 +76,9 @@ public interface ODictionary<T extends Object> extends Iterable<Entry<String, T>
 	 * Return the total number of elements in the dictionary.
 	 */
 	public int size();
+
+	/**
+	 * Return the set of all the keys.
+	 */
+	public Set<String> keySet();
 }

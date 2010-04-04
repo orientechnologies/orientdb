@@ -25,7 +25,7 @@ public class OChannelBinaryProtocol {
 	public static final byte	DB_CREATE						= 6;
 	public static final byte	DB_CLOSE						= 7;
 	public static final byte	DB_EXIST						= 8;
-	
+
 	public static final byte	CLUSTER_ADD					= 10;
 	public static final byte	CLUSTER_REMOVE			= 11;
 	public static final byte	CLUSTER_COUNT				= 12;
@@ -46,6 +46,7 @@ public class OChannelBinaryProtocol {
 	public static final byte	DICTIONARY_PUT			= 51;
 	public static final byte	DICTIONARY_REMOVE		= 52;
 	public static final byte	DICTIONARY_SIZE			= 53;
+	public static final byte	DICTIONARY_KEYS			= 54;
 
 	public static final byte	TX_COMMIT						= 100;
 

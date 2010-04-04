@@ -165,9 +165,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			case OChannelBinaryProtocol.RECORD_LOAD:
 				ORawBuffer record = underlyingDatabase.read(channel.readShort(), channel.readLong());
 				sendOk();
-				channel.writeBytes(record.buffer);
-				channel.writeInt(record.version);
-				channel.writeByte(record.recordType);
+				if (record != null) {
+					channel.writeByte((byte) 1);
+					channel.writeBytes(record.buffer);
+					channel.writeInt(record.version);
+					channel.writeByte(record.recordType);
+				} else
+					channel.writeByte((byte) 0);
 				break;
 
 			case OChannelBinaryProtocol.RECORD_CREATE:
@@ -315,6 +319,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				break;
 			}
 
+			case OChannelBinaryProtocol.DICTIONARY_KEYS: {
+				sendOk();
+				channel.writeCollectionString(connection.database.getDictionary().keySet());
+				break;
+			}
+
 			case OChannelBinaryProtocol.TX_COMMIT:
 				((OStorageLocal) connection.database.getStorage()).commit(connection.database.getId(), new OTransactionOptimisticProxy(
 						(ODatabaseRecordTx) connection.database.getUnderlying(), channel));
@@ -385,6 +395,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			channel.writeShort((short) (iRecord instanceof ORecordSchemaAware<?>
 					&& ((ORecordSchemaAware<?>) iRecord).getSchemaClass() != null ? ((ORecordSchemaAware<?>) iRecord).getSchemaClass()
 					.getId() : -1));
+			channel.writeByte(iRecord.getRecordType());
 			channel.writeShort((short) iRecord.getIdentity().getClusterId());
 			channel.writeLong(iRecord.getIdentity().getClusterPosition());
 			channel.writeInt(iRecord.getVersion());

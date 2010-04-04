@@ -94,7 +94,8 @@ public class ORecordVObject extends ORecordVirtualAbstract<Object> implements It
 		cloned.status = status;
 		cloned.recordFormat = recordFormat;
 
-		cloned.fields = new LinkedHashMap<String, Object>(fields);
+		if (fields != null)
+			cloned.fields = new LinkedHashMap<String, Object>(fields);
 
 		return cloned;
 	}

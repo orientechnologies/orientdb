@@ -56,7 +56,7 @@ public class ORecordFactory {
 		return instance;
 	}
 
-	public static ORecord<?> getRecord(final byte iRecordType) {
+	public static ORecordInternal<?> getRecord(final byte iRecordType) {
 		if (iRecordType == ORecordVObject.RECORD_TYPE)
 			return new ORecordVObject();
 		if (iRecordType == ORecordFlat.RECORD_TYPE)

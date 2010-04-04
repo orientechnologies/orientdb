@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.query.sql.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.query.sql.OSQLAsynchQueryLocalExecutor;
 import com.orientechnologies.orient.core.query.sql.OSQLSynchQuery;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ORecordVObject;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -473,6 +474,10 @@ public class OStorageLocal extends OStorageAbstract {
 				// READ THE RAW RECORD WITHOUT LOCKING THE CLUSTER SINCE IT HAS BEEN MADE HERE
 				recordBuffer = readRecord(iRequesterId, cluster, positionInPhyCluster, false);
 				if (recordBuffer == null)
+					continue;
+
+				if (recordBuffer.recordType != ORecordVObject.RECORD_TYPE)
+					// WRONG RECORD TYPE: JUMP IT
 					continue;
 
 				iRecord.setIdentity(iClusterId, positionInPhyCluster);

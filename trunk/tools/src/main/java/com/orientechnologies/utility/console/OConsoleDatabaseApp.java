@@ -263,9 +263,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		checkCurrentDatabase();
 
 		currentRecord = (ORecordVObject) currentDatabase.getDictionary().get(iKey);
-		displayObject(null);
-
-		out.println("OK");
+		if (currentRecord == null)
+			out.println("Entry not found in dictionary.");
+		else
+			displayObject(null);
 	}
 
 	@ConsoleCommand(description = "Export a database")
@@ -277,7 +278,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 			new OConsoleDatabaseExport(currentDatabase, iOutputFilePath, this).exportDatabase();
 		} catch (ODatabaseExportException e) {
 			out.println("ERROR: " + e.toString());
-			e.printStackTrace();
 		}
 	}
 

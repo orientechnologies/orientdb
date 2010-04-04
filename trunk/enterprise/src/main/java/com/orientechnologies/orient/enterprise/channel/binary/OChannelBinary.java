@@ -21,7 +21,9 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 
@@ -67,12 +69,24 @@ public abstract class OChannelBinary extends OChannel {
 		return new String(buffer);
 	}
 
-	public List<String> readCollectionString() throws IOException {
+	public List<String> readStringList() throws IOException {
 		int size = in.readInt();
 		if (size < 0)
 			return null;
 
 		List<String> result = new ArrayList<String>();
+		for (int i = 0; i < size; ++i)
+			result.add(readString());
+
+		return result;
+	}
+
+	public Set<String> readStringSet() throws IOException {
+		int size = in.readInt();
+		if (size < 0)
+			return null;
+
+		Set<String> result = new HashSet<String>();
 		for (int i = 0; i < size; ++i)
 			result.add(readString());
 
@@ -122,8 +136,11 @@ public abstract class OChannelBinary extends OChannel {
 		else {
 			writeInt(iCollection.size());
 
-			for (String s : iCollection)
+			int i = 0;
+			for (String s : iCollection) {
 				writeString(s);
+				i++;
+			}
 		}
 
 		return this;
