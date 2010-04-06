@@ -20,7 +20,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
-import com.orientechnologies.orient.core.db.vobject.ODatabaseVObject;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
@@ -55,24 +55,24 @@ public class ORecordVObject extends ORecordVirtualAbstract<Object> implements It
 		setClassName(iClassName);
 	}
 
-	public ORecordVObject(ODatabaseVObject iDatabase) {
+	public ORecordVObject(ODatabaseRecord<?> iDatabase) {
 		super(iDatabase);
 		setup();
 	}
 
-	public ORecordVObject(ODatabaseVObject iDatabase, ORID iRID) {
+	public ORecordVObject(ODatabaseRecord<?> iDatabase, ORID iRID) {
 		this(iDatabase);
 		recordId = (ORecordId) iRID;
 		status = STATUS.NOT_LOADED;
 	}
 
-	public ORecordVObject(ODatabaseVObject iDatabase, String iClassName, ORID iRID) {
+	public ORecordVObject(ODatabaseRecord<?> iDatabase, String iClassName, ORID iRID) {
 		this(iDatabase, iClassName);
 		recordId = (ORecordId) iRID;
 		status = STATUS.NOT_LOADED;
 	}
 
-	public ORecordVObject(ODatabaseVObject iDatabase, String iClassName) {
+	public ORecordVObject(ODatabaseRecord<?> iDatabase, String iClassName) {
 		super(iDatabase, iClassName);
 		setup();
 	}

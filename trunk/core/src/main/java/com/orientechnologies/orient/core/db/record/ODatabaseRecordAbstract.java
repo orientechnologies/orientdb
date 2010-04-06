@@ -110,7 +110,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 	}
 
 	public REC load(final ORID iRecordId) {
-		return load(iRecordId.getClusterId(), iRecordId.getClusterPosition(), newInstance());
+		return load(iRecordId.getClusterId(), iRecordId.getClusterPosition(), (REC) databaseOwner.newInstance());
 	}
 
 	public REC load(final int iClusterId, final long iPosition, final REC iRecord) {

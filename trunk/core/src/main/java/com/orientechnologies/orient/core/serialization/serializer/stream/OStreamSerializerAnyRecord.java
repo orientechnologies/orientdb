@@ -64,20 +64,22 @@ public class OStreamSerializerAnyRecord extends OStreamSerializerAbstract {
 			for (Constructor<?> c : cls.getDeclaredConstructors()) {
 				Class<?>[] params = c.getParameterTypes();
 
-				if (params.length == 2 && ODatabaseRecord.class.isAssignableFrom(params[0]) && params[1].equals(ORID.class)) {
+				if (params.length == 2 && params[0].isAssignableFrom(database.getClass()) && params[1].equals(ORID.class)) {
 					ORecord<?> rec = (ORecord<?>) c.newInstance(database, new ORecordId(content.toString()));
 					rec.load();
 					return rec;
 				}
 			}
-
-			throw new OSerializationException("Can'r unmarshall the record since the serialized object of class " + cls.getName()
-					+ " has no a constructor with right parameters: " + cls.getName() + "(ODatabaseRecord, ORecordId)");
-
 		} catch (Exception e) {
-			OLogManager.instance().error(this, "Error on unmarshalling content. Class %s", e, OSerializationException.class,
-					cls.getName());
+			OLogManager.instance().exception("Error on unmarshalling content. Class %s", e, OSerializationException.class, cls.getName());
 		}
+
+		OLogManager
+				.instance()
+				.exception(
+						"Can'r unmarshall the record since the serialized object of class %s has no a constructor with right parameters: %s(%s, ORID)",
+						null, OSerializationException.class, cls.getSimpleName(), cls.getSimpleName(), database.getClass().getSimpleName());
+
 		return null;
 	}
 

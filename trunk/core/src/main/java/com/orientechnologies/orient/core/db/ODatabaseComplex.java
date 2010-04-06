@@ -22,6 +22,8 @@ import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
 public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObject2RecordHandler {
 
+	public T newInstance();
+
 	public T load(final T iObject);
 
 	public T load(final ORID iObjectId);

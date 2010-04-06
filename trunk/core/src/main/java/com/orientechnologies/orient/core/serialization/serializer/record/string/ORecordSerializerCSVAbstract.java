@@ -100,8 +100,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					}
 				}
 
-				coll.add(new ORecordVObject((ODatabaseVObject) iDatabase, iLinkedClass != null ? iLinkedClass.getName() : null,
-						new ORecordId(item)));
+				coll.add(new ORecordVObject(iDatabase, iLinkedClass != null ? iLinkedClass.getName() : null, new ORecordId(item)));
 			}
 
 			return coll;
@@ -118,7 +117,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				throw new IllegalArgumentException("Linked class not specified in ORID field: " + iValue);
 
 			ORecordId recId = new ORecordId(iValue.substring(pos + 1));
-			return new ORecordVObject((ODatabaseVObject) iDatabase, iLinkedClass.getName(), recId);
+			return new ORecordVObject(iDatabase, iLinkedClass.getName(), recId);
 
 		default:
 			return fieldTypeFromStream(iType, iValue);

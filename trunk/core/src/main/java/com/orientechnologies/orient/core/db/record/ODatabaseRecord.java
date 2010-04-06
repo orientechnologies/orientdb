@@ -24,8 +24,6 @@ public interface ODatabaseRecord<REC extends ORecordInternal<?>> extends ODataba
 
 	public ORecordIteratorCluster<REC> browseCluster(String iClusterName);
 
-	public REC newInstance();
-
 	public OQuery<REC> query(OQuery<REC> iQuery);
 
 	public Class<? extends REC> getRecordType();

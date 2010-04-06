@@ -352,10 +352,9 @@ public class OStorageRemote extends OStorageAbstract {
 
 				// ASYNCH: READ ONE RECORD AT TIME
 				while (network.readByte() == 1) {
-					ORecordSchemaAware<?> record = ((ORecordSchemaAware<?>) ((OQueryInternal<?>) iQuery).getRecordClass().newInstance());
-
-					record.fill(iQuery.getDatabase(), network.readShort(), network.readShort(), network.readLong(), network.readInt())
-							.fromStream(network.readBytes());
+					ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) readRecordFromNetwork(iQuery.getDatabase());
+					if (record == null)
+						break;
 
 					// INVOKE THE LISTENER
 					try {
@@ -847,6 +846,7 @@ public class OStorageRemote extends OStorageAbstract {
 			((ORecordSchemaAware<?>) record).fill(iDatabase, classId, network.readShort(), network.readLong(), network.readInt())
 					.fromStream(network.readBytes());
 		else {
+			// DISCARD CLASS ID
 			network.readShort();
 			record.fill(iDatabase, classId, network.readLong(), network.readInt()).fromStream(network.readBytes());
 		}

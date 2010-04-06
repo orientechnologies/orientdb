@@ -274,4 +274,8 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseVObject
 	public void setRetainObjects(final boolean iValue) {
 		retainObjects = iValue;
 	}
+
+	public Object newInstance() {
+		return new ORecordVObject(underlying);
+	}
 }

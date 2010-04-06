@@ -37,7 +37,6 @@ import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.query.sql.OSQLSynchQuery;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
-import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.record.impl.ORecordVObject;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
@@ -303,9 +302,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			case OChannelBinaryProtocol.DICTIONARY_REMOVE: {
 				String key = channel.readString();
-				ORecordInternal<?> value = new ORecordFlat(connection.database, new ORecordId(channel.readString()));
-
-				value = connection.database.getDictionary().remove(key);
+				ORecordInternal<?> value = connection.database.getDictionary().remove(key);
 
 				sendOk();
 
@@ -388,6 +385,18 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		return allow;
 	}
 
+	/**
+	 * Write a record using this format:<br/>
+	 * - 2 bytes: class id [-2=no record, -1=no class id, > -1 = valid] <br/>
+	 * - 1 byte: record type [v,c,b] <br/>
+	 * - 2 bytes: cluster id <br/>
+	 * - 8 bytes: position in cluster <br/>
+	 * - 4 bytes: record version <br/>
+	 * - x bytes: record vontent <br/>
+	 * 
+	 * @param iRecord
+	 * @throws IOException
+	 */
 	private void writeRecord(ORecordInternal<?> iRecord) throws IOException {
 		if (iRecord == null) {
 			channel.writeShort((short) OChannelBinaryProtocol.RECORD_NULL);
@@ -395,6 +404,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			channel.writeShort((short) (iRecord instanceof ORecordSchemaAware<?>
 					&& ((ORecordSchemaAware<?>) iRecord).getSchemaClass() != null ? ((ORecordSchemaAware<?>) iRecord).getSchemaClass()
 					.getId() : -1));
+
 			channel.writeByte(iRecord.getRecordType());
 			channel.writeShort((short) iRecord.getIdentity().getClusterId());
 			channel.writeLong(iRecord.getIdentity().getClusterPosition());

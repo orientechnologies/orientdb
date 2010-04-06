@@ -60,7 +60,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 		} else
 			iMarshalledRecords.put(iRecord, ORecordId.EMPTY_RECORD_ID);
 
-		ODatabaseVObject database = (ODatabaseVObject) record.getDatabase();
+		ODatabaseRecord<?> database = (ODatabaseRecord<?>) record.getDatabase();
 
 		final StringBuilder buffer = new StringBuilder();
 
