@@ -25,8 +25,8 @@ import java.io.ObjectOutputStream;
 import java.util.Date;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.vobject.ODatabaseVObject;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -34,15 +34,15 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
-import com.orientechnologies.orient.core.record.impl.ORecordVObject;
+import com.orientechnologies.orient.core.record.impl.ORecordDocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 
-public class ORecordSerializerVObject2Binary implements ORecordSerializer {
-	public static final String	NAME	= "ORecordVObject2binary";
+public class ORecordSerializerDocument2Binary implements ORecordSerializer {
+	public static final String	NAME	= "ORecordDocument2binary";
 
 	protected ORecordSchemaAware<?> newObject(ODatabaseRecord<?> iDatabase, String iClassName) throws InstantiationException,
 			IllegalAccessException {
-		return new ORecordVObject((ODatabaseVObject) iDatabase);
+		return new ORecordDocument((ODatabaseDocument) iDatabase);
 	}
 
 	public ORecordInternal<?> fromStream(ODatabaseRecord<?> iDatabase, byte[] iSource) {
@@ -51,11 +51,11 @@ public class ORecordSerializerVObject2Binary implements ORecordSerializer {
 	}
 
 	public ORecordInternal<?> fromStream(ODatabaseRecord<?> iDatabase, byte[] iSource, ORecordInternal<?> iRecord) {
-		ORecordVObject record = (ORecordVObject) iRecord;
-		ODatabaseVObject database = (ODatabaseVObject) iDatabase;
+		ORecordDocument record = (ORecordDocument) iRecord;
+		ODatabaseDocument database = (ODatabaseDocument) iDatabase;
 
 		if (iRecord == null)
-			record = new ORecordVObject(database);
+			record = new ORecordDocument(database);
 
 		ByteArrayInputStream stream = null;
 		ObjectInput in = null;
@@ -99,7 +99,7 @@ public class ORecordSerializerVObject2Binary implements ORecordSerializer {
 						// != NULL
 						buffer = new byte[length];
 						in.read(buffer);
-						value = new ORecordVObject(database, p.getLinkedClass().getName()).fromStream(buffer);
+						value = new ORecordDocument(database, p.getLinkedClass().getName()).fromStream(buffer);
 					}
 					break;
 				case EMBEDDEDLIST:
@@ -149,7 +149,7 @@ public class ORecordSerializerVObject2Binary implements ORecordSerializer {
 	}
 
 	public byte[] toStream(ODatabaseRecord<?> iDatabase, ORecordInternal<?> iRecord) {
-		ORecordVObject record = (ORecordVObject) iRecord;
+		ORecordDocument record = (ORecordDocument) iRecord;
 
 		ByteArrayOutputStream stream = null;
 		ObjectOutput out = null;

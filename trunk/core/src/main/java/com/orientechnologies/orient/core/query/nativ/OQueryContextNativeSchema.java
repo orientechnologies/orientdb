@@ -15,15 +15,23 @@
  */
 package com.orientechnologies.orient.core.query.nativ;
 
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 
 @SuppressWarnings("unchecked")
 public class OQueryContextNativeSchema<T extends ORecordSchemaAware<?>> extends OQueryContextNative<T> {
 	public OQueryContextNativeSchema column(String iName) {
+		field(iName);
+		return this;
+	}
+
+	public OQueryContextNativeSchema field(String iName) {
 		if (result != null && result.booleanValue())
 			return this;
 
-		currentValue = record.field(iName);
+		T currentRecord = currentValue != null && currentValue instanceof ORecord<?> ? (T) currentValue : record;
+
+		currentValue = currentRecord.field(iName);
 		return this;
 	}
 

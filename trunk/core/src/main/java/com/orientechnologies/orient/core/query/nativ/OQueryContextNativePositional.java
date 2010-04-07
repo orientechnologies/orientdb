@@ -16,18 +16,21 @@
 package com.orientechnologies.orient.core.query.nativ;
 
 import com.orientechnologies.orient.core.exception.OQueryExecutionException;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordPositional;
 
 @SuppressWarnings("unchecked")
 public class OQueryContextNativePositional<T extends ORecordPositional<?>> extends OQueryContextNative<T> {
-	public OQueryContextNativePositional column(int iIndex) {
+	public OQueryContextNativePositional column(final int iIndex) {
 		if (result != null && result.booleanValue())
 			return this;
 
-		if (iIndex >= record.size())
-			throw new OQueryExecutionException("Column " + iIndex + " not exists. Columns range is: 0-" + (record.size() - 1));
+		T currentRecord = currentValue != null && currentValue instanceof ORecord<?> ? (T) currentValue : record;
 
-		currentValue = ((ORecordPositional<?>) record).field(iIndex);
+		if (iIndex >= currentRecord.size())
+			throw new OQueryExecutionException("Column " + iIndex + " not exists. Columns range is: 0-" + (currentRecord.size() - 1));
+
+		currentValue = currentRecord.field(iIndex);
 		return this;
 	}
 
@@ -38,55 +41,55 @@ public class OQueryContextNativePositional<T extends ORecordPositional<?>> exten
 	}
 
 	@Override
-	public OQueryContextNativePositional between(Object iFrom, Object iTo) {
+	public OQueryContextNativePositional between(final Object iFrom, final Object iTo) {
 		super.between(iFrom, iTo);
 		return this;
 	}
 
 	@Override
-	public OQueryContextNativePositional different(Object iValue) {
+	public OQueryContextNativePositional different(final Object iValue) {
 		super.different(iValue);
 		return this;
 	}
 
 	@Override
-	public OQueryContextNativePositional eq(Object iValue) {
+	public OQueryContextNativePositional eq(final Object iValue) {
 		super.eq(iValue);
 		return this;
 	}
 
 	@Override
-	public OQueryContextNativePositional like(String iValue) {
+	public OQueryContextNativePositional like(final String iValue) {
 		super.like(iValue);
 		return this;
 	}
 
 	@Override
-	public OQueryContextNativePositional major(Object iValue) {
+	public OQueryContextNativePositional major(final Object iValue) {
 		super.major(iValue);
 		return this;
 	}
 
 	@Override
-	public OQueryContextNativePositional majorEq(Object iValue) {
+	public OQueryContextNativePositional majorEq(final Object iValue) {
 		super.majorEq(iValue);
 		return this;
 	}
 
 	@Override
-	public OQueryContextNativePositional matches(Object iValue) {
+	public OQueryContextNativePositional matches(final Object iValue) {
 		super.matches(iValue);
 		return this;
 	}
 
 	@Override
-	public OQueryContextNativePositional minor(Object iValue) {
+	public OQueryContextNativePositional minor(final Object iValue) {
 		super.minor(iValue);
 		return this;
 	}
 
 	@Override
-	public OQueryContextNativePositional minorEq(Object iValue) {
+	public OQueryContextNativePositional minorEq(final Object iValue) {
 		super.minorEq(iValue);
 		return this;
 	}

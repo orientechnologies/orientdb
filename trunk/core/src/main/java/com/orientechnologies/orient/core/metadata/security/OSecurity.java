@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.metadata.security.OUser.MODE;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.record.impl.ORecordCSV;
+import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 
 public class OSecurity extends ORecordBytes {
 	protected Map<String, OUser>	users								= new LinkedHashMap<String, OUser>();
@@ -61,7 +61,7 @@ public class OSecurity extends ORecordBytes {
 	}
 
 	public OSecurity fromStream(byte[] buffer) {
-		ORecordCSV record = new ORecordCSV(database, buffer);
+		ORecordColumn record = new ORecordColumn(database, buffer);
 
 		Map<OUser, String> userInheritance = new HashMap<OUser, String>();
 
@@ -101,7 +101,7 @@ public class OSecurity extends ORecordBytes {
 	}
 
 	public byte[] toStream() {
-		ORecordCSV record = new ORecordCSV(database);
+		ORecordColumn record = new ORecordColumn(database);
 
 		// WRITE USERS
 		record.add(String.valueOf(users.size()));

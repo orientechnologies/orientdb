@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
-import com.orientechnologies.orient.core.record.impl.ORecordCSV;
+import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 
 public class ORecordSerializerPositional2CSV extends ORecordSerializerCSVAbstract {
 	public static final String	NAME	= "ORecordCSV2csv";
@@ -33,13 +33,13 @@ public class ORecordSerializerPositional2CSV extends ORecordSerializerCSVAbstrac
 	}
 
 	public ORecordInternal<?> fromStream(final ODatabaseRecord<?> iDatabase, final byte[] iSource) {
-		return fromStream(iDatabase, iSource, new ORecordCSV());
+		return fromStream(iDatabase, iSource, new ORecordColumn());
 	}
 
 	@Override
 	protected ORecordInternal<?> fromString(final ODatabaseRecord<?> iDatabase, final String iContent,
 			final ORecordInternal<?> iRecord) {
-		return fromString(iDatabase, iContent, new ORecordCSV());
+		return fromString(iDatabase, iContent, new ORecordColumn());
 	}
 
 	@Override

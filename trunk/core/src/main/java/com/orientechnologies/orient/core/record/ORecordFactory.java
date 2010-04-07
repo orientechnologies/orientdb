@@ -15,13 +15,13 @@
  */
 package com.orientechnologies.orient.core.record;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.vobject.ODatabaseVObject;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.record.impl.ORecordCSV;
+import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
-import com.orientechnologies.orient.core.record.impl.ORecordVObject;
+import com.orientechnologies.orient.core.record.impl.ORecordDocument;
 
 @SuppressWarnings("unchecked")
 public class ORecordFactory {
@@ -32,8 +32,8 @@ public class ORecordFactory {
 			return null;
 
 		try {
-			if (iClass.equals(ORecordVObject.class))
-				return (T) new ORecordVObject((ODatabaseVObject) iDatabase);
+			if (iClass.equals(ORecordDocument.class))
+				return (T) new ORecordDocument((ODatabaseDocument) iDatabase);
 
 			else if (iClass.equals(ORecordFlat.class))
 				return (T) new ORecordFlat(iDatabase);
@@ -41,8 +41,8 @@ public class ORecordFactory {
 			else if (iClass.equals(ORecordBytes.class))
 				return (T) new ORecordBytes(iDatabase);
 
-			else if (iClass.equals(ORecordCSV.class))
-				return (T) new ORecordCSV(iDatabase);
+			else if (iClass.equals(ORecordColumn.class))
+				return (T) new ORecordColumn(iDatabase);
 
 			return (T) iClass.newInstance();
 
@@ -57,14 +57,14 @@ public class ORecordFactory {
 	}
 
 	public static ORecordInternal<?> getRecord(final byte iRecordType) {
-		if (iRecordType == ORecordVObject.RECORD_TYPE)
-			return new ORecordVObject();
+		if (iRecordType == ORecordDocument.RECORD_TYPE)
+			return new ORecordDocument();
 		if (iRecordType == ORecordFlat.RECORD_TYPE)
 			return new ORecordFlat();
 		if (iRecordType == ORecordBytes.RECORD_TYPE)
 			return new ORecordBytes();
-		if (iRecordType == ORecordCSV.RECORD_TYPE)
-			return new ORecordCSV();
+		if (iRecordType == ORecordColumn.RECORD_TYPE)
+			return new ORecordColumn();
 		return null;
 	}
 }

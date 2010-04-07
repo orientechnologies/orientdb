@@ -37,53 +37,53 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
  * population and serialization occurs always in lazy way.
  */
 @SuppressWarnings("unchecked")
-public class ORecordVObject extends ORecordVirtualAbstract<Object> implements Iterable<Entry<String, Object>> {
+public class ORecordDocument extends ORecordVirtualAbstract<Object> implements Iterable<Entry<String, Object>> {
 
 	public static final byte	RECORD_TYPE	= 'v';
 
-	public ORecordVObject() {
+	public ORecordDocument() {
 		setup();
 	}
 
-	public ORecordVObject(byte[] iSource) {
+	public ORecordDocument(byte[] iSource) {
 		super(iSource);
 		setup();
 	}
 
-	public ORecordVObject(String iClassName) {
+	public ORecordDocument(String iClassName) {
 		setup();
 		setClassName(iClassName);
 	}
 
-	public ORecordVObject(ODatabaseRecord<?> iDatabase) {
+	public ORecordDocument(ODatabaseRecord<?> iDatabase) {
 		super(iDatabase);
 		setup();
 	}
 
-	public ORecordVObject(ODatabaseRecord<?> iDatabase, ORID iRID) {
+	public ORecordDocument(ODatabaseRecord<?> iDatabase, ORID iRID) {
 		this(iDatabase);
 		recordId = (ORecordId) iRID;
 		status = STATUS.NOT_LOADED;
 	}
 
-	public ORecordVObject(ODatabaseRecord<?> iDatabase, String iClassName, ORID iRID) {
+	public ORecordDocument(ODatabaseRecord<?> iDatabase, String iClassName, ORID iRID) {
 		this(iDatabase, iClassName);
 		recordId = (ORecordId) iRID;
 		status = STATUS.NOT_LOADED;
 	}
 
-	public ORecordVObject(ODatabaseRecord<?> iDatabase, String iClassName) {
+	public ORecordDocument(ODatabaseRecord<?> iDatabase, String iClassName) {
 		super(iDatabase, iClassName);
 		setup();
 	}
 
-	public ORecordVObject(OClass iLinkedClass) {
+	public ORecordDocument(OClass iLinkedClass) {
 		setup();
 		clazz = iLinkedClass;
 	}
 
-	public ORecordVObject copy() {
-		ORecordVObject cloned = new ORecordVObject();
+	public ORecordDocument copy() {
+		ORecordDocument cloned = new ORecordDocument();
 		cloned.source = source;
 		cloned.database = database;
 		cloned.recordId = recordId.copy();
@@ -134,7 +134,7 @@ public class ORecordVObject extends ORecordVirtualAbstract<Object> implements It
 	}
 
 	@Override
-	public ORecordVObject fromStream(byte[] iRecordBuffer) {
+	public ORecordDocument fromStream(byte[] iRecordBuffer) {
 		super.fromStream(iRecordBuffer);
 		deserializeFields();
 		return this;
@@ -165,11 +165,11 @@ public class ORecordVObject extends ORecordVirtualAbstract<Object> implements It
 			String fieldName = iPropertyName.substring(0, separatorPos);
 			Object linkedObject = fields.get(fieldName);
 
-			if (linkedObject == null || !(linkedObject instanceof ORecordVObject))
+			if (linkedObject == null || !(linkedObject instanceof ORecordDocument))
 				// IGNORE IT BY RETURNING NULL
 				return null;
 
-			ORecordVObject linkedRecord = (ORecordVObject) linkedObject;
+			ORecordDocument linkedRecord = (ORecordDocument) linkedObject;
 			if (linkedRecord.getStatus() == STATUS.NOT_LOADED)
 				linkedRecord.load();
 

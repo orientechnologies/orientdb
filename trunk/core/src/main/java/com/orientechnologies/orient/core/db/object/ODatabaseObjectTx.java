@@ -20,9 +20,9 @@ import java.util.HashMap;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
-import com.orientechnologies.orient.core.db.vobject.ODatabaseVObject;
-import com.orientechnologies.orient.core.db.vobject.ODatabaseVObjectTx;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.dictionary.ODictionaryWrapper;
 import com.orientechnologies.orient.core.entity.OEntityManager;
@@ -35,23 +35,23 @@ import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
-import com.orientechnologies.orient.core.record.impl.ORecordVObject;
+import com.orientechnologies.orient.core.record.impl.ORecordDocument;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
 @SuppressWarnings("unchecked")
-public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseVObject, ORecordVObject> implements ODatabaseObject,
+public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocument, ORecordDocument> implements ODatabaseObject,
 		OUserObject2RecordHandler {
 
-	private HashMap<Object, ORecordVObject>	objects2Records	= new HashMap<Object, ORecordVObject>();
-	private HashMap<ORecordVObject, Object>	records2Objects	= new HashMap<ORecordVObject, Object>();
+	private HashMap<Object, ORecordDocument>	objects2Records	= new HashMap<Object, ORecordDocument>();
+	private HashMap<ORecordDocument, Object>	records2Objects	= new HashMap<ORecordDocument, Object>();
 	private ODictionary<Object>							dictionary;
 	private OEntityManager									entityManager		= new OEntityManager();
 	private boolean													retainObjects		= true;
 
 	public ODatabaseObjectTx(final String iURL) {
-		super(new ODatabaseVObjectTx(iURL));
+		super(new ODatabaseDocumentTx(iURL));
 		underlying.setDatabaseOwner(this);
 	}
 
@@ -93,7 +93,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseVObject
 	public <RET> OObjectIteratorMultiCluster<RET> browseClass(final String iClassName) {
 		checkSecurity(OUser.CLASS + "." + iClassName, OUser.READ);
 
-		return new OObjectIteratorMultiCluster<RET>(this, (ODatabaseRecordAbstract<ORecordVObject>) getUnderlying().getUnderlying(),
+		return new OObjectIteratorMultiCluster<RET>(this, (ODatabaseRecordAbstract<ORecordDocument>) getUnderlying().getUnderlying(),
 				getMetadata().getSchema().getClass(iClassName).getClusterIds());
 	}
 
@@ -101,15 +101,15 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseVObject
 		checkSecurity(OUser.CLUSTER + "." + iClusterName, OUser.READ);
 
 		return (OObjectIteratorCluster<RET>) new OObjectIteratorCluster<Object>(this,
-				(ODatabaseRecordAbstract<ORecordVObject>) getUnderlying().getUnderlying(), getClusterIdByName(iClusterName));
+				(ODatabaseRecordAbstract<ORecordDocument>) getUnderlying().getUnderlying(), getClusterIdByName(iClusterName));
 	}
 
 	public ODatabaseObjectTx load(Object iPojo) {
 		if (iPojo == null)
 			return this;
 
-		// GET THE ASSOCIATED VOBJECT
-		final ORecordVObject record = getRecordByUserObject(iPojo, true);
+		// GET THE ASSOCIATED DOCUMENT
+		final ORecordDocument record = getRecordByUserObject(iPojo, true);
 
 		underlying.load(record);
 
@@ -141,8 +141,8 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseVObject
 
 		OSerializationThreadLocal.INSTANCE.get().clear();
 
-		// GET THE ASSOCIATED VOBJECT
-		ORecordVObject record = objects2Records.get(iPojo);
+		// GET THE ASSOCIATED DOCUMENT
+		ORecordDocument record = objects2Records.get(iPojo);
 		if (record == null)
 			record = underlying.newInstance(iPojo.getClass().getSimpleName());
 
@@ -160,7 +160,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseVObject
 		if (iContent == null)
 			return this;
 
-		final ORecordVObject record = getRecordByUserObject(iContent, true);
+		final ORecordDocument record = getRecordByUserObject(iContent, true);
 
 		underlying.delete(record);
 
@@ -173,8 +173,8 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseVObject
 		return underlying.countClass(iClassName);
 	}
 
-	public ORecordVObject getRecordByUserObject(final Object iPojo, boolean iIsMandatory) {
-		ORecordVObject record = objects2Records.get(iPojo);
+	public ORecordDocument getRecordByUserObject(final Object iPojo, boolean iIsMandatory) {
+		ORecordDocument record = objects2Records.get(iPojo);
 
 		if (record == null) {
 			if (iIsMandatory)
@@ -192,10 +192,10 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseVObject
 	}
 
 	public Object getUserObjectByRecord(final ORecord<?> iRecord) {
-		if (!(iRecord instanceof ORecordVObject))
+		if (!(iRecord instanceof ORecordDocument))
 			return null;
 
-		ORecordVObject record = (ORecordVObject) iRecord;
+		ORecordDocument record = (ORecordDocument) iRecord;
 
 		Object pojo = records2Objects.get(iRecord);
 
@@ -217,14 +217,14 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseVObject
 	/**
 	 * Register a new POJO
 	 */
-	private void registerPojo(final Object iObject, final ORecordVObject iRecord) {
+	private void registerPojo(final Object iObject, final ORecordDocument iRecord) {
 		if (retainObjects) {
 			objects2Records.put(iObject, iRecord);
 			records2Objects.put(iRecord, iObject);
 		}
 	}
 
-	private void unregisterPojo(final Object iObject, final ORecordVObject iRecord) {
+	private void unregisterPojo(final Object iObject, final ORecordDocument iRecord) {
 		if (iObject != null)
 			objects2Records.remove(iObject);
 
@@ -267,7 +267,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseVObject
 		return entityManager;
 	}
 
-	public ODatabaseVObject getUnderlying() {
+	public ODatabaseDocument getUnderlying() {
 		return underlying;
 	}
 
@@ -276,6 +276,6 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseVObject
 	}
 
 	public Object newInstance() {
-		return new ORecordVObject(underlying);
+		return new ORecordDocument(underlying);
 	}
 }

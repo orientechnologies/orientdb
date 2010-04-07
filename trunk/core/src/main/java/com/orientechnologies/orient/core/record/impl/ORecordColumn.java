@@ -33,35 +33,35 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
  * using the reset() at every re-use.
  */
 @SuppressWarnings("unchecked")
-public class ORecordCSV extends ORecordAbstract<String> implements ORecordStringable<String>, ORecordPositional<String> {
+public class ORecordColumn extends ORecordAbstract<String> implements ORecordStringable<String>, ORecordPositional<String> {
 	protected List<String>		values			= new ArrayList<String>();
 	protected char						separator		= ORecordSerializerCSVAbstract.RECORD_SEPARATOR_AS_CHAR;
 	protected int							cursor			= 0;
 
 	public static final byte	RECORD_TYPE	= 'c';
 
-	public ORecordCSV() {
+	public ORecordColumn() {
 		setup();
 	}
 
-	public ORecordCSV(ODatabaseRecord<?> iDatabase) {
+	public ORecordColumn(ODatabaseRecord<?> iDatabase) {
 		super(iDatabase);
 		setup();
 	}
 
-	public ORecordCSV(ODatabaseRecord<?> iDatabase, byte[] iSource) {
+	public ORecordColumn(ODatabaseRecord<?> iDatabase, byte[] iSource) {
 		super(iDatabase, iSource);
 		setup();
 
 		extractValues(OBinaryProtocol.bytes2string(iSource));
 	}
 
-	public ORecordCSV(ODatabaseRecord<?> iDatabase, ORID iRID) {
+	public ORecordColumn(ODatabaseRecord<?> iDatabase, ORID iRID) {
 		this(iDatabase);
 		recordId = (ORecordId) iRID;
 	}
 
-	public ORecordCSV value(String iValue) {
+	public ORecordColumn value(String iValue) {
 		setDirty();
 		extractValues(iValue);
 
@@ -70,15 +70,15 @@ public class ORecordCSV extends ORecordAbstract<String> implements ORecordString
 	}
 
 	@Override
-	public ORecordCSV reset() {
+	public ORecordColumn reset() {
 		super.reset();
 		values.clear();
 		cursor = 0;
 		return this;
 	}
 
-	public ORecordCSV copy() {
-		ORecordCSV cloned = new ORecordCSV();
+	public ORecordColumn copy() {
+		ORecordColumn cloned = new ORecordColumn();
 		cloned.source = source;
 		cloned.values = values;
 		cloned.database = database;
@@ -161,7 +161,7 @@ public class ORecordCSV extends ORecordAbstract<String> implements ORecordString
 	}
 
 	@Override
-	public ORecordCSV fromStream(byte[] iRecordBuffer) {
+	public ORecordColumn fromStream(byte[] iRecordBuffer) {
 		super.fromStream(iRecordBuffer);
 		extractValues(OBinaryProtocol.bytes2string(source));
 		return this;

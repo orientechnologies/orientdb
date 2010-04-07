@@ -20,13 +20,13 @@ import java.util.NoSuchElementException;
 
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 
-public class OCSVIterator implements Iterator<String>, Iterable<String> {
+public class OColumnIterator implements Iterator<String>, Iterable<String> {
 	private char			separator	= ORecordSerializerStringAbstract.RECORD_SEPARATOR_AS_CHAR;
 	private String		buffer;
 	private int				cursor		= 0;
 	private String[]	values;
 
-	public OCSVIterator(String iBuffer) {
+	public OColumnIterator(String iBuffer) {
 		this.buffer = iBuffer;
 	}
 

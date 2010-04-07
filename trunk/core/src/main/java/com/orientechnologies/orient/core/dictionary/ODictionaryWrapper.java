@@ -19,19 +19,19 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
-import com.orientechnologies.orient.core.db.vobject.ODatabaseVObject;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ORecordVObject;
+import com.orientechnologies.orient.core.record.impl.ORecordDocument;
 
 /**
  * Wrapper of dictionary instance that convert values in records.
  */
 public class ODictionaryWrapper implements ODictionary<Object> {
 	private ODatabaseObject		database;
-	private ODatabaseVObject	recordDatabase;
+	private ODatabaseDocument	recordDatabase;
 
-	public ODictionaryWrapper(final ODatabaseObject iDatabase, final ODatabaseVObject iRecordDatabase) {
+	public ODictionaryWrapper(final ODatabaseObject iDatabase, final ODatabaseDocument iRecordDatabase) {
 		this.database = iDatabase;
 		this.recordDatabase = iRecordDatabase;
 	}
@@ -47,9 +47,9 @@ public class ODictionaryWrapper implements ODictionary<Object> {
 	}
 
 	public Object put(final String iKey, final Object iValue) {
-		ORecordVObject record = (ORecordVObject) database.getRecordByUserObject(iValue, false);
+		ORecordDocument record = (ORecordDocument) database.getRecordByUserObject(iValue, false);
 
-		ORecord<?> oldRecord = recordDatabase.getDictionary().put(iKey, (ORecordVObject) record);
+		ORecord<?> oldRecord = recordDatabase.getDictionary().put(iKey, (ORecordDocument) record);
 
 		return database.getUserObjectByRecord(oldRecord);
 	}
@@ -61,7 +61,7 @@ public class ODictionaryWrapper implements ODictionary<Object> {
 	}
 
 	public Iterator<Entry<String, Object>> iterator() {
-		return new ODictionaryIteratorWrapper(recordDatabase, (ODictionaryIterator<ORecordVObject>) recordDatabase.getDictionary()
+		return new ODictionaryIteratorWrapper(recordDatabase, (ODictionaryIterator<ORecordDocument>) recordDatabase.getDictionary()
 				.iterator());
 	}
 

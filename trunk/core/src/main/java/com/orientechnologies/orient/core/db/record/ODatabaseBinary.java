@@ -15,15 +15,15 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import com.orientechnologies.orient.core.record.impl.ORecordCSV;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
 /**
- * CSV specialization of transactional database.
+ * Binary specialization of transactional database.
  * 
  */
-public class ODatabaseRecordCSV extends ODatabaseRecordTx<ORecordCSV> {
+public class ODatabaseBinary extends ODatabaseRecordTx<ORecordBytes> {
 
-	public ODatabaseRecordCSV(String iURL) {
-		super(iURL, ORecordCSV.class);
+	public ODatabaseBinary(String iURL) {
+		super(iURL, ORecordBytes.class);
 	}
 }

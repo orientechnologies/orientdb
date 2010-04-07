@@ -15,15 +15,15 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 
 /**
- * Binary specialization of transactional database.
+ * Delegates all the CRUD operations to the current transaction.
  * 
  */
-public class ODatabaseRecordBinary extends ODatabaseRecordTx<ORecordBytes> {
+public class ODatabaseFlat extends ODatabaseRecordTx<ORecordFlat> {
 
-	public ODatabaseRecordBinary(String iURL) {
-		super(iURL, ORecordBytes.class);
+	public ODatabaseFlat(String iURL) {
+		super(iURL, ORecordFlat.class);
 	}
 }

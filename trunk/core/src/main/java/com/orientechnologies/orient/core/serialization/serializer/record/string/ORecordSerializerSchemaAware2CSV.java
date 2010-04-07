@@ -24,9 +24,9 @@ import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.vobject.ODatabaseVObject;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -34,14 +34,14 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
-import com.orientechnologies.orient.core.record.impl.ORecordVObject;
+import com.orientechnologies.orient.core.record.impl.ORecordDocument;
 
 public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstract {
-	public static final String	NAME	= "ORecordVObject2csv";
+	public static final String	NAME	= "ORecordDocument2csv";
 
 	@Override
 	public ORecordSchemaAware<?> newObject(ODatabaseRecord<?> iDatabase, String iClassName) {
-		return new ORecordVObject((ODatabaseVObject) iDatabase, iClassName);
+		return new ORecordDocument((ODatabaseDocument) iDatabase, iClassName);
 	}
 
 	@Override
@@ -52,7 +52,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 	@Override
 	protected String toString(ORecordSchemaAware<?> iRecord, final OUserObject2RecordHandler iObjHandler,
 			final Map<ORecordInternal<?>, ORecordId> iMarshalledRecords) {
-		final ORecordVObject record = (ORecordVObject) iRecord;
+		final ORecordDocument record = (ORecordDocument) iRecord;
 
 		// CHECK IF THE RECORD IS PENDING TO BE MARSHALLED
 		if (iMarshalledRecords.containsKey(iRecord)) {
@@ -156,7 +156,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 				}
 			}
 
-			fieldValue = fieldToStream((ORecordVObject) iRecord, iRecord.getDatabase(), iObjHandler, type, linkedClass, linkedType, f
+			fieldValue = fieldToStream((ORecordDocument) iRecord, iRecord.getDatabase(), iObjHandler, type, linkedClass, linkedType, f
 					.getKey(), f.getValue(), iMarshalledRecords);
 
 			buffer.append(f.getKey());

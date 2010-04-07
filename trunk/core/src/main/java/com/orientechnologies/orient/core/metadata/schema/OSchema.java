@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.record.impl.ORecordCSV;
+import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 
 public class OSchema extends ORecordBytes {
 	protected Map<String, OClass>	classesMap							= new LinkedHashMap<String, OClass>();
@@ -92,7 +92,7 @@ public class OSchema extends ORecordBytes {
 	}
 
 	public OSchema fromStream(final byte[] iStream) {
-		ORecordCSV record = new ORecordCSV().fromStream(iStream);
+		ORecordColumn record = new ORecordColumn().fromStream(iStream);
 
 		// READ CURRENT SCHEMA VERSION
 		int schemaVersion = Integer.parseInt(record.next());
@@ -113,7 +113,7 @@ public class OSchema extends ORecordBytes {
 	}
 
 	public byte[] toStream() {
-		ORecordCSV record = new ORecordCSV();
+		ORecordColumn record = new ORecordColumn();
 
 		// WRITE CURRENT SCHEMA VERSION
 		record.add(String.valueOf(CURRENT_VERSION_NUMBER));

@@ -4,20 +4,20 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 
 import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.db.vobject.ODatabaseVObject;
-import com.orientechnologies.orient.core.record.impl.ORecordVObject;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.record.impl.ORecordDocument;
 
 public class ODictionaryIteratorWrapper implements Iterator<Entry<String, Object>> {
-	private ODatabaseVObject										database;
-	private ODictionaryIterator<ORecordVObject>	wrapped;
+	private ODatabaseDocument										database;
+	private ODictionaryIterator<ORecordDocument>	wrapped;
 
-	public ODictionaryIteratorWrapper(final ODatabaseVObject iDatabase, final ODictionaryIterator<ORecordVObject> iToWrapper) {
+	public ODictionaryIteratorWrapper(final ODatabaseDocument iDatabase, final ODictionaryIterator<ORecordDocument> iToWrapper) {
 		database = iDatabase;
 		wrapped = iToWrapper;
 	}
 
 	public Entry<String, Object> next() {
-		Entry<String, ORecordVObject> entry = wrapped.next();
+		Entry<String, ORecordDocument> entry = wrapped.next();
 		return (Entry<String, Object>) new OPair<String, Object>(entry.getKey(), database.getUserObjectByRecord(entry.getValue()));
 	}
 

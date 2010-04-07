@@ -27,9 +27,9 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.record.impl.ORecordCSV;
+import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
-import com.orientechnologies.orient.core.record.impl.ORecordVObject;
+import com.orientechnologies.orient.core.record.impl.ORecordDocument;
 
 public class OClassDictionary {
 	private static final OClassDictionary	instance	= new OClassDictionary();
@@ -37,9 +37,9 @@ public class OClassDictionary {
 	public Class<?> getClassByCode(final char iType) {
 		switch (iType) {
 		case '0':
-			return (Class<?>) ORecordVObject.class;
+			return (Class<?>) ORecordDocument.class;
 		case '1':
-			return (Class<?>) ORecordCSV.class;
+			return (Class<?>) ORecordColumn.class;
 		case '2':
 			return (Class<?>) ORecordFlat.class;
 		case '3':
@@ -72,9 +72,9 @@ public class OClassDictionary {
 	}
 
 	public Character getCodeByClass(final Class<?> iClass) {
-		if (iClass.equals(ORecordVObject.class))
+		if (iClass.equals(ORecordDocument.class))
 			return '0';
-		if (iClass.equals(ORecordCSV.class))
+		if (iClass.equals(ORecordColumn.class))
 			return '1';
 		if (iClass.equals(ORecordFlat.class))
 			return '2';

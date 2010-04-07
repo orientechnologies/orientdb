@@ -15,15 +15,15 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import com.orientechnologies.orient.core.record.impl.ORecordFlat;
+import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 
 /**
- * Delegates all the CRUD operations to the current transaction.
+ * Column based transactional database.
  * 
  */
-public class ODatabaseRecordFlat extends ODatabaseRecordTx<ORecordFlat> {
+public class ODatabaseColumn extends ODatabaseRecordTx<ORecordColumn> {
 
-	public ODatabaseRecordFlat(String iURL) {
-		super(iURL, ORecordFlat.class);
+	public ODatabaseColumn(String iURL) {
+		super(iURL, ORecordColumn.class);
 	}
 }

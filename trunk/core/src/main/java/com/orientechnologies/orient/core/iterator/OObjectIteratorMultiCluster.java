@@ -20,17 +20,17 @@ import java.util.Iterator;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
-import com.orientechnologies.orient.core.record.impl.ORecordVObject;
+import com.orientechnologies.orient.core.record.impl.ORecordDocument;
 
 @SuppressWarnings("unchecked")
 public class OObjectIteratorMultiCluster<T> implements Iterator<T>, Iterable<T> {
 	private ODatabaseObject															database;
-	private ORecordIteratorMultiCluster<ORecordVObject>	underlying;
+	private ORecordIteratorMultiCluster<ORecordDocument>	underlying;
 
 	public OObjectIteratorMultiCluster(final ODatabaseObject iDatabase,
-			final ODatabaseRecordAbstract<ORecordVObject> iUnderlyingDatabase, final int[] iClusterIds) {
+			final ODatabaseRecordAbstract<ORecordDocument> iUnderlyingDatabase, final int[] iClusterIds) {
 		database = iDatabase;
-		underlying = new ORecordIteratorMultiCluster<ORecordVObject>((ODatabaseRecord<ORecordVObject>) iDatabase.getUnderlying(),
+		underlying = new ORecordIteratorMultiCluster<ORecordDocument>((ODatabaseRecord<ORecordDocument>) iDatabase.getUnderlying(),
 				iUnderlyingDatabase, iClusterIds);
 	}
 
@@ -39,7 +39,7 @@ public class OObjectIteratorMultiCluster<T> implements Iterator<T>, Iterable<T> 
 	}
 
 	public T next() {
-		ORecordVObject record = underlying.next();
+		ORecordDocument record = underlying.next();
 
 		if (record == null)
 			return null;
