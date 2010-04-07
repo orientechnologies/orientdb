@@ -24,7 +24,7 @@ import java.net.SocketTimeoutException;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordBinary;
+import com.orientechnologies.orient.core.db.record.ODatabaseBinary;
 import com.orientechnologies.orient.core.index.OTreeMapPersistent;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerString;
@@ -51,7 +51,7 @@ public class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstract {
 			String content;
 			String value;
 
-			ODatabaseRecordBinary db = acquireDatabase(dbName);
+			ODatabaseBinary db = acquireDatabase(dbName);
 
 			try {
 				OTreeMapPersistent<String, String> bucketTree = getBucket(db, bucket);
@@ -126,7 +126,7 @@ public class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstract {
 		String value;
 
 		try {
-			ODatabaseRecordBinary db = acquireDatabase(dbName);
+			ODatabaseBinary db = acquireDatabase(dbName);
 
 			try {
 				OTreeMapPersistent<String, String> bucketTree = getBucket(db, bucket);
@@ -160,7 +160,7 @@ public class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstract {
 		String key = parts[2];
 
 		try {
-			ODatabaseRecordBinary db = acquireDatabase(dbName);
+			ODatabaseBinary db = acquireDatabase(dbName);
 
 			int code;
 			String reason;
@@ -207,7 +207,7 @@ public class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstract {
 		String key = parts[2];
 
 		try {
-			ODatabaseRecordBinary db = acquireDatabase(dbName);
+			ODatabaseBinary db = acquireDatabase(dbName);
 
 			int code;
 			String reason;
