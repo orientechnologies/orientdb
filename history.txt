@@ -1,0 +1,48 @@
+           .                                          
+          .`        `                                 
+          ,      `:.                                  
+         `,`    ,:`                                   
+         .,.   :,,                                    
+         .,,  ,,,                                     
+    .    .,.:::::  ````                               
+    ,`   .::,,,,::.,,,,,,`;;                      .:  
+    `,.  ::,,,,,,,:.,,.`  `                       .:  
+     ,,:,:,,,,,,,,::.   `        `         ``     .:  
+      ,,:.,,,,,,,,,: `::, ,,   ::,::`   : :,::`  :::: 
+       ,:,,,,,,,,,,::,:   ,,  :.    :   ::    :   .:  
+        :,,,,,,,,,,:,::   ,,  :      :  :     :   .:  
+  `     :,,,,,,,,,,:,::,  ,, .::::::::  :     :   .:  
+  `,...,,:,,,,,,,,,: .:,. ,, ,,         :     :   .:  
+    .,,,,::,,,,,,,:  `: , ,,  :     `   :     :   .:  
+      ...,::,,,,::.. `:  .,,  :,    :   :     :   .:  
+           ,::::,,,. `:   ,,   :::::    :     :   .:  
+           ,,:` `,,.                                  
+          ,,,    .,`                                  
+         ,,.     `,                 D A T A B A S E   
+       ``        `.                                   
+                 ``                                   
+                 `                                    
+*******************************************************************************
+                                  ORIENT DATABASE
+                         http://www.orientechnologies.com
+*******************************************************************************
+
+This document enlist the last changes to the Orient Database project.
+
+-------------------------------------------------------------------------------
+VERSION 0.9.3 (beta) - beta (April, 6th 2010)
+-------------------------------------------------------------------------------
+- Added new console commands:
+  - dictionary keys
+  - dictionary get
+  - dictionary put
+  - load record
+  - display record
+- Fixed minor bug on serialization
+
+-------------------------------------------------------------------------------
+VERSION 0.9.2 (beta) - beta (April, 2nd 2010)
+-------------------------------------------------------------------------------
+First public release created by the knowledge acquired by Orient ODBMS. The new
+engine was totally rewritten in Java (before it was in C++) with a lot of
+improvement and new functionalities.

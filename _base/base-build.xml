@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Copyright (c) 1999-2010 Luca Garulli - LICENSE: Apache 2.0 -->
+<project basedir="." >
+	<property name="project.src" value="src/main/java" />
+	<property name="project.lib" value="lib" />
+	<property name="project.doc" value="doc" />
+	<property name="project.build" value="bin" />
+	<property name="project.dist" value="dist" />
+	<property name="project.is-debug" value="on" />
+	<property name="project.debug-level" value="lines, vars, source" />
+	<property name="project.target-comp" value="1.5" />
+
+	<path id="project.classpath">
+		<fileset dir="${project.lib}" includes="**/*.jar" />
+		<fileset dir=".." includes="**/dist/*.jar" />
+	</path>
+
+	<target name="init">
+		<mkdir dir="${project.build}" />
+	</target>
+
+	<target name="clean">
+		<delete dir="${project.build}" />
+		<delete dir="${project.dist}" />
+	</target>
+
+	<target name="compile" depends="init">
+		<javac destdir="${project.build}" debug="${project.is-debug}" debuglevel="${project.debug-level}" target="${project.target-comp}">
+			<src path="${project.src}" />
+			<classpath refid="project.classpath" />
+		</javac>
+	</target>
+
+	<target name="jar" depends="compile">
+		<mkdir dir="${project.dist}" />
+		<delete file="${project.dist}/${ant.project.name}.jar" />
+		<jar compress="true" basedir="${project.build}" destfile="${project.dist}/${ant.project.name}.jar">
+			<manifest>
+				<attribute name="Implementation-Vendor" value="${vendor}" />
+				<attribute name="Implementation-Title" value="${product}" />
+				<attribute name="Implementation-Version" value="${version}" />
+				<attribute name="Main-Class" value="${project.jar-mainclass}" />
+				<attribute name="Class-Path" value="${project.jar-classpath}" />
+			</manifest>
+		</jar>
+		<copy todir="${project.dist}">
+			<fileset dir="${project.lib}" includes="*.jar" />
+		</copy>
+	</target>
+
+	<target name="install" depends="jar">
+		<copy todir="${global.lib}">
+			<fileset dir="${project.dist}" includes="*.jar" />
+		</copy>
+	</target>
+
+	<target name="javadocs">
+		<javadoc classpathref="project.classpath" sourcepath="${project.src}" packagenames="com.orientechnologies.*" destdir="${project.doc}" private="true">
+			<doclet name="org.umlgraph.doclet.UmlGraphDoc" path="${project.lib}/UMLGraph.jar">
+				<param name="-hide" value="java.*" />
+				<param name="-collpackages" value="java.util.*" />
+				<param name="-qualify" />
+				<param name="-postfixpackage" />
+				<param name="-nodefontsize" value="9" />
+				<param name="-nodefontpackagesize" value="7" />
+				<param name="-link" value="http://java.sun.com/j2se/1.5.0/docs/guide/javadoc/doclet/spec" />
+				<param name="-link" value="http://java.sun.com/j2se/1.5/docs/api" />
+			</doclet>
+		</javadoc>
+	</target>
+
+	<target name="install-zip">
+		<mkdir dir="${project.dist}" />
+		<delete file="${project.dist}/${ant.project.name}.zip" />
+		<zip destfile="${project.dist}/${ant.project.name}.zip" basedir="." excludes="**.svn/" />
+	</target>
+
+</project>
