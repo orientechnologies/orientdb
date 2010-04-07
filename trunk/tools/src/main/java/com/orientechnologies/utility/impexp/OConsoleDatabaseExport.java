@@ -21,7 +21,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import com.orientechnologies.orient.core.db.vobject.ODatabaseVObject;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.intent.OIntentDefault;
 import com.orientechnologies.orient.core.intent.OIntentMassiveRead;
@@ -30,19 +30,19 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.record.impl.ORecordCSV;
+import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
-import com.orientechnologies.orient.core.record.impl.ORecordVObject;
+import com.orientechnologies.orient.core.record.impl.ORecordDocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.utility.console.OCommandListener;
 
 public class OConsoleDatabaseExport {
-	private ODatabaseVObject	database;
+	private ODatabaseDocument	database;
 	private String						fileName;
 	private OJSONWriter				writer;
 	private OCommandListener	listener;
 
-	public OConsoleDatabaseExport(final ODatabaseVObject database, final String iFileName, final OCommandListener iListener) {
+	public OConsoleDatabaseExport(final ODatabaseDocument database, final String iFileName, final OCommandListener iListener) {
 		this.database = database;
 		this.fileName = iFileName;
 		listener = iListener;
@@ -95,10 +95,10 @@ public class OConsoleDatabaseExport {
 		listener.onMessage("\nExporting dictionary...");
 
 		writer.beginObject(1, true, "dictionary");
-		ODictionary<ORecordVObject> d = database.getDictionary();
+		ODictionary<ORecordDocument> d = database.getDictionary();
 		if (d != null) {
-			Entry<String, ORecordVObject> entry;
-			for (Iterator<Entry<String, ORecordVObject>> iterator = d.iterator(); iterator.hasNext();) {
+			Entry<String, ORecordDocument> entry;
+			for (Iterator<Entry<String, ORecordDocument>> iterator = d.iterator(); iterator.hasNext();) {
 				entry = iterator.next();
 				writer.writeAttribute(2, true, "key", entry.getKey());
 				writer.writeAttribute(0, false, "value", OJSONWriter.writeValue(entry.getValue()));
@@ -194,8 +194,8 @@ public class OConsoleDatabaseExport {
 		if (rec.getIdentity().isValid())
 			rec.load();
 
-		if (rec instanceof ORecordVObject) {
-			ORecordVObject vobj = (ORecordVObject) rec;
+		if (rec instanceof ORecordDocument) {
+			ORecordDocument vobj = (ORecordDocument) rec;
 
 			writer.writeAttribute(0, false, "type", "v");
 
@@ -209,8 +209,8 @@ public class OConsoleDatabaseExport {
 				}
 				writer.endObject(5, true);
 			}
-		} else if (rec instanceof ORecordCSV) {
-			ORecordCSV csv = (ORecordCSV) rec;
+		} else if (rec instanceof ORecordColumn) {
+			ORecordColumn csv = (ORecordColumn) rec;
 
 			writer.writeAttribute(0, false, "type", "c");
 

@@ -19,27 +19,30 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.client.admin.OServerAdmin;
-import com.orientechnologies.orient.core.db.vobject.ODatabaseVObject;
-import com.orientechnologies.orient.core.db.vobject.ODatabaseVObjectTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.query.OAsynchQueryResultListener;
 import com.orientechnologies.orient.core.query.sql.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ORecordVObject;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ORecordFlat;
+import com.orientechnologies.orient.core.record.impl.ORecordDocument;
 import com.orientechnologies.utility.impexp.OConsoleDatabaseExport;
 import com.orientechnologies.utility.impexp.ODatabaseExportException;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandListener {
-	protected ODatabaseVObject			currentDatabase;
+	protected ODatabaseDocument			currentDatabase;
 	protected String								currentDatabaseName;
-	protected ORecordVObject				currentRecord;
-	protected List<ORecordVObject>	currentResultSet;
+	protected ORecordInternal<?>		currentRecord;
+	protected List<ORecordDocument>	currentResultSet;
 
 	private static final int				RESULTSET_LIMIT	= 20;
 
@@ -56,7 +59,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 			@ConsoleParameter(name = "database-url", description = "The url of the database to connect") String iDatabaseURL) {
 		out.print("Connecting to database [" + iDatabaseURL + "]...");
 
-		currentDatabase = new ODatabaseVObjectTx(iDatabaseURL);
+		currentDatabase = new ODatabaseDocumentTx(iDatabaseURL);
 		if (currentDatabase == null)
 			throw new OException("Database " + iDatabaseURL + " not found.");
 		currentDatabase.open("admin", "admin");
@@ -119,12 +122,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 
 	@ConsoleCommand(description = "Load a record in memory and set it as the current one")
 	public void loadRecord(
-			@ConsoleParameter(name = "cluster-name", description = "The name of the cluster") String iClusterName,
-			@ConsoleParameter(name = "oid", description = "The unique Record Id to load the object directly. If you don't have the Record Id use the query system") String iRecordId) {
+			@ConsoleParameter(name = "record-id", description = "The unique Record Id of the record to load. If you don't have the Record Id execute a query first") String iRecordId) {
 		checkCurrentDatabase();
 
 		currentRecord = currentDatabase.load(new ORecordId(iRecordId));
-		displayObject(null);
+		displayRecord(null);
 
 		out.println("OK");
 	}
@@ -143,13 +145,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 
 		iQuery = "select " + iQuery;
 
-		currentResultSet = new ArrayList<ORecordVObject>();
+		currentResultSet = new ArrayList<ORecordDocument>();
 
 		final List<String> columns = new ArrayList<String>();
 
 		long start = System.currentTimeMillis();
-		currentDatabase.query(new OSQLAsynchQuery<ORecordVObject>(iQuery, new OAsynchQueryResultListener<ORecordVObject>() {
-			public boolean result(final ORecordVObject iRecord) {
+		currentDatabase.query(new OSQLAsynchQuery<ORecordDocument>(iQuery, new OAsynchQueryResultListener<ORecordDocument>() {
+			public boolean result(final ORecordDocument iRecord) {
 				if (currentResultSet.size() > RESULTSET_LIMIT) {
 					printHeaderLine(columns);
 					out.println("\nResultset contains more items not displayed (max=" + RESULTSET_LIMIT + ")");
@@ -171,8 +173,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 
 	}
 
-	@ConsoleCommand(aliases = { "display" }, description = "Display current object's attributes")
-	public void displayObject(
+	@ConsoleCommand(aliases = { "display" }, description = "Display current record's attributes")
+	public void displayRecord(
 			@ConsoleParameter(name = "number", description = "The number of the record in the last result set") final String iRecordNumber) {
 		checkCurrentDatabase();
 
@@ -259,15 +261,61 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 			out.println("No database selected yet.");
 	}
 
-	@ConsoleCommand(description = "Loookup for a record using the dictionary and if found set it as the current one")
-	public void lookup(@ConsoleParameter(name = "key", description = "The key to search") final String iKey) {
+	@ConsoleCommand(description = "Display all the keys in the database dictionary")
+	public void dictionaryKeys() {
 		checkCurrentDatabase();
 
-		currentRecord = (ORecordVObject) currentDatabase.getDictionary().get(iKey);
+		Set<String> keys = currentDatabase.getDictionary().keySet();
+
+		out.println("Found " + keys.size() + " keys:");
+
+		int i = 0;
+		for (String k : keys) {
+			out.print(String.format("#%d: %s\n", i++, k));
+		}
+	}
+
+	@ConsoleCommand(description = "Loookup for a record using the dictionary. If found set it as the current record")
+	public void dictionaryGet(@ConsoleParameter(name = "key", description = "The key to search") final String iKey) {
+		checkCurrentDatabase();
+
+		currentRecord = currentDatabase.getDictionary().get(iKey);
 		if (currentRecord == null)
 			out.println("Entry not found in dictionary.");
-		else
-			displayObject(null);
+		else {
+			currentRecord.load();
+			displayRecord(null);
+		}
+	}
+
+	@ConsoleCommand(description = "Insert or modify an entry in the database dictionary. The entry is composed by key=String, value=record-id")
+	public void dictionaryPut(
+			@ConsoleParameter(name = "key", description = "The key to bind") final String iKey,
+			@ConsoleParameter(name = "record-id", description = "The record-id of the record to bind to the key passes") final String iRecordId) {
+		checkCurrentDatabase();
+
+		currentRecord = currentDatabase.load(new ORecordId(iRecordId));
+		if (currentRecord == null)
+			out.println("Error: record with id '" + iRecordId + "' was not found in database");
+		else {
+			currentDatabase.getDictionary().put(iKey, (ORecordDocument) currentRecord);
+			displayRecord(null);
+			out.println("The entry " + iKey + "=" + iRecordId + " has been inserted in the database dictionary");
+		}
+	}
+
+	@ConsoleCommand(description = "Remove the association in the dictionary")
+	public void dictionaryRemove(@ConsoleParameter(name = "key", description = "The key to remove") final String iKey) {
+		checkCurrentDatabase();
+
+		currentRecord = currentDatabase.getDictionary().remove(iKey);
+		if (currentRecord == null)
+			out.println("Entry not found in dictionary.");
+		else {
+			out.println("Entry removed from the dictionary. Last value of entry was: ");
+			displayRecord(null);
+		}
+		currentRecord = null;
 	}
 
 	@ConsoleCommand(description = "Export a database")
@@ -297,7 +345,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 			throw new OException("The is no current object selected: create a new one or load it");
 	}
 
-	protected void dumpRecordInTable(final int iIndex, final ORecordVObject iRecord, final List<String> iColumns) {
+	protected void dumpRecordInTable(final int iIndex, final ORecordDocument iRecord, final List<String> iColumns) {
 		// CHECK IF HAVE TO ADD NEW COLUMN (BECAUSE IT CAN BE SCHEMA-LESS)
 		for (String fieldName : iRecord.fields()) {
 			boolean foundCol = false;
@@ -358,14 +406,27 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 	}
 
 	private void dumpRecordDetails() {
-		out.println("--------------------------------------------------");
-		out.printf("Class: %s   id: %s   v.%d\n", currentRecord.getClassName(), currentRecord.getIdentity().toString(), currentRecord
-				.getVersion());
-		out.println("--------------------------------------------------");
-		for (String fieldName : currentRecord.fields()) {
-			out.printf("%20s : %-20s\n", fieldName, currentRecord.field(fieldName));
+		if (currentRecord instanceof ORecordDocument) {
+			ORecordDocument rec = (ORecordDocument) currentRecord;
+			out.println("--------------------------------------------------");
+			out.printf("VObject - Class: %s   id: %s   v.%d\n", rec.getClassName(), rec.getIdentity().toString(), rec.getVersion());
+			out.println("--------------------------------------------------");
+			for (String fieldName : rec.fields()) {
+				out.printf("%20s : %-20s\n", fieldName, rec.field(fieldName));
+			}
+			out.println("--------------------------------------------------");
+		} else if (currentRecord instanceof ORecordFlat) {
+			ORecordFlat rec = (ORecordFlat) currentRecord;
+			out.println("--------------------------------------------------");
+			out.printf("Flat - record id: %s   v.%d\n", rec.getIdentity().toString(), rec.getVersion());
+			out.println("--------------------------------------------------");
+			out.println(rec.value());
+		} else {
+			out.println("--------------------------------------------------");
+			out.printf("%s - record id: %s   v.%d\n", currentRecord.getClass().getSimpleName(), currentRecord.getIdentity().toString(),
+					currentRecord.getVersion());
+			out.println("--------------------------------------------------");
 		}
-		out.println("--------------------------------------------------");
 	}
 
 	public void onMessage(String iText) {
