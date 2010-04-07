@@ -20,30 +20,30 @@ import java.io.UnsupportedEncodingException;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.test.SpeedTestMonoThread;
-import com.orientechnologies.orient.core.db.vobject.ODatabaseVObjectTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.query.OAsynchQueryResultListener;
 import com.orientechnologies.orient.core.query.sql.OSQLAsynchQuery;
-import com.orientechnologies.orient.core.record.impl.ORecordVObject;
+import com.orientechnologies.orient.core.record.impl.ORecordDocument;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 
 @Test(enabled = false)
-public class SQLAsynchQuerySpeedTest extends SpeedTestMonoThread implements OAsynchQueryResultListener<ORecordVObject> {
+public class SQLAsynchQuerySpeedTest extends SpeedTestMonoThread implements OAsynchQueryResultListener<ORecordDocument> {
 	protected int								resultCount	= 0;
-	private ODatabaseVObjectTx	database;
+	private ODatabaseDocumentTx	database;
 
 	public SQLAsynchQuerySpeedTest(String iURL) {
 		super(1);
-		database = new ODatabaseVObjectTx(iURL);
+		database = new ODatabaseDocumentTx(iURL);
 	}
 
 	public void cycle() throws UnsupportedEncodingException {
 		System.out.println("1 -----------------------");
 		OrientTest.printRecords(database.query(
-				new OSQLAsynchQuery<ORecordVObject>("select * from animal where column(0) < 5 or column(0) >= 3 and column(5) < 7", this))
+				new OSQLAsynchQuery<ORecordDocument>("select * from animal where column(0) < 5 or column(0) >= 3 and column(5) < 7", this))
 				.execute());
 	}
 
-	public boolean result(ORecordVObject iRecord) {
+	public boolean result(ORecordDocument iRecord) {
 		OrientTest.printRecord(resultCount++, iRecord);
 		return true;
 	}

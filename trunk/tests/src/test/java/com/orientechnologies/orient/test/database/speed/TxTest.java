@@ -19,19 +19,19 @@ import java.io.UnsupportedEncodingException;
 
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordFlat;
+import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 
 @Test(enabled = false)
 public class TxTest extends OrientMonoThreadTest {
-	private ODatabaseRecordFlat	database;
+	private ODatabaseFlat	database;
 	private ORecordFlat					record;
 
 	public TxTest() throws InstantiationException, IllegalAccessException {
 		super(10);
-		database = new ODatabaseRecordFlat(System.getProperty("url")).open("admin", "admin");
+		database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
 		record = database.newInstance();
 
 		database.begin(TXTYPE.OPTIMISTIC);

@@ -20,15 +20,15 @@ import java.io.UnsupportedEncodingException;
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.orient.client.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.vobject.ODatabaseVObjectTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.query.OAsynchQueryResultListener;
 import com.orientechnologies.orient.core.query.nativ.ONativeAsynchQuery;
 import com.orientechnologies.orient.core.query.nativ.OQueryContextNativeSchema;
-import com.orientechnologies.orient.core.record.impl.ORecordVObject;
+import com.orientechnologies.orient.core.record.impl.ORecordDocument;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 
-public class NativeAsynchQuerySpeedTest extends SpeedTestMonoThread implements OAsynchQueryResultListener<ORecordVObject> {
-	private ODatabaseVObjectTx	database;
+public class NativeAsynchQuerySpeedTest extends SpeedTestMonoThread implements OAsynchQueryResultListener<ORecordDocument> {
+	private ODatabaseDocumentTx	database;
 	protected int								resultCount	= 0;
 
 	public NativeAsynchQuerySpeedTest() {
@@ -38,18 +38,18 @@ public class NativeAsynchQuerySpeedTest extends SpeedTestMonoThread implements O
 
 	public void cycle() throws UnsupportedEncodingException {
 		database.query(
-				new ONativeAsynchQuery<ORecordVObject, OQueryContextNativeSchema<ORecordVObject>>("Animal",
-						new OQueryContextNativeSchema<ORecordVObject>(), this) {
+				new ONativeAsynchQuery<ORecordDocument, OQueryContextNativeSchema<ORecordDocument>>("Animal",
+						new OQueryContextNativeSchema<ORecordDocument>(), this) {
 
 					@Override
-					public boolean filter(OQueryContextNativeSchema<ORecordVObject> iRecord) {
+					public boolean filter(OQueryContextNativeSchema<ORecordDocument> iRecord) {
 						return iRecord.column("id").toInt().minor(10).go();
 					}
 
 				}).execute();
 	}
 
-	public boolean result(ORecordVObject iRecord) {
+	public boolean result(ORecordDocument iRecord) {
 		OrientTest.printRecord(resultCount++, iRecord);
 		return true;
 	}

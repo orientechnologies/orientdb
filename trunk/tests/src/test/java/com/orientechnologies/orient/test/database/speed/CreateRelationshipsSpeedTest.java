@@ -19,11 +19,11 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
 import com.orientechnologies.common.test.SpeedTestMonoThread;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordFlat;
+import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 
 public class CreateRelationshipsSpeedTest extends SpeedTestMonoThread {
-	private ODatabaseRecordFlat	database;
+	private ODatabaseFlat	database;
 	private ORecordFlat					record;
 
 	public CreateRelationshipsSpeedTest() {

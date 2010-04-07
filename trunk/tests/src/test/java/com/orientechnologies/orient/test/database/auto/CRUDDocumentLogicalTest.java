@@ -23,22 +23,22 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.vobject.ODatabaseVObject;
-import com.orientechnologies.orient.core.db.vobject.ODatabaseVObjectTx;
-import com.orientechnologies.orient.core.record.impl.ORecordVObject;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.impl.ORecordDocument;
 
 @Test(groups = { "crud", "record-vobject" }, sequential = true)
 @SuppressWarnings("unchecked")
-public class CRUDVObjectLogicalTest {
+public class CRUDDocumentLogicalTest {
 
-	private ODatabaseVObject	database;
-	private ORecordVObject		record;
+	private ODatabaseDocument	database;
+	private ORecordDocument		record;
 
 	protected long						startRecordNumber;
 
 	@Parameters(value = "url")
-	public CRUDVObjectLogicalTest(String iURL) {
-		database = new ODatabaseVObjectTx(iURL);
+	public CRUDDocumentLogicalTest(String iURL) {
+		database = new ODatabaseDocumentTx(iURL);
 		record = database.newInstance();
 	}
 
@@ -51,9 +51,9 @@ public class CRUDVObjectLogicalTest {
 		record.setClassName("AnimalType");
 		record.field("name", "Cat");
 
-		Set<ORecordVObject> races = new HashSet<ORecordVObject>();
-		races.add((ORecordVObject) database.newInstance("AnimalRace").field("name", "European"));
-		races.add((ORecordVObject) database.newInstance("AnimalRace").field("name", "Siamese"));
+		Set<ORecordDocument> races = new HashSet<ORecordDocument>();
+		races.add((ORecordDocument) database.newInstance("AnimalRace").field("name", "European"));
+		races.add((ORecordDocument) database.newInstance("AnimalRace").field("name", "Siamese"));
 		record.field("races", races);
 
 		record.save();
@@ -78,7 +78,7 @@ public class CRUDVObjectLogicalTest {
 		record = database.browseClass("AnimalType").last().previous();
 
 		Assert.assertEquals(record.field("name"), "Cat");
-		Assert.assertTrue(((List<ORecordVObject>) record.field("races")).size() == 2);
+		Assert.assertTrue(((List<ORecordDocument>) record.field("races")).size() == 2);
 
 		database.close();
 	}
@@ -91,8 +91,8 @@ public class CRUDVObjectLogicalTest {
 
 		record = database.browseClass("AnimalType").last().previous();
 
-		List<ORecordVObject> races = record.field("races");
-		races.add((ORecordVObject) database.newInstance("AnimalRace").field("name", "Egyptian"));
+		List<ORecordDocument> races = record.field("races");
+		races.add((ORecordDocument) database.newInstance("AnimalRace").field("name", "Egyptian"));
 		record.setDirty();
 
 		record.save();
@@ -109,7 +109,7 @@ public class CRUDVObjectLogicalTest {
 		record = database.browseClass("AnimalType").last().previous();
 
 		Assert.assertEquals(record.field("name"), "Cat");
-		Assert.assertTrue(((List<ORecordVObject>) record.field("races")).size() == 3);
+		Assert.assertTrue(((List<ORecordDocument>) record.field("races")).size() == 3);
 
 		database.close();
 	}

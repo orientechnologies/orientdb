@@ -21,14 +21,14 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.client.admin.OServerAdmin;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordFlat;
+import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 
 @Test(groups = "db")
 public class DbCreationTest {
 	public static final String			STORAGE_MODE	= "csv";
 
 	private String									url;
-	private ODatabaseRecordFlat	database;
+	private ODatabaseFlat	database;
 
 	@Parameters(value = "url")
 	public DbCreationTest(String iURL) {
@@ -39,7 +39,7 @@ public class DbCreationTest {
 		if (url.startsWith("remote"))
 			new OServerAdmin(url).connect().createDatabase("admin", "admin", STORAGE_MODE).close();
 		else {
-			database = new ODatabaseRecordFlat(url);
+			database = new ODatabaseFlat(url);
 			database.create(STORAGE_MODE);
 			database.close();
 		}
@@ -47,7 +47,7 @@ public class DbCreationTest {
 
 	@Test(dependsOnMethods = { "testDbCreation" })
 	public void testDbOpen() {
-		database = new ODatabaseRecordFlat(url);
+		database = new ODatabaseFlat(url);
 		database.open("admin", "admin");
 		database.close();
 	}

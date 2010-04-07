@@ -23,7 +23,7 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.client.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordFlat;
+import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 
 @Test(groups = "dictionary")
@@ -38,10 +38,10 @@ public class TransactionAtomicTest {
 
 	@Test
 	public void testTransactionAtomic() throws IOException {
-		ODatabaseRecordFlat db1 = new ODatabaseRecordFlat(url);
+		ODatabaseFlat db1 = new ODatabaseFlat(url);
 		db1.open("admin", "admin");
 
-		ODatabaseRecordFlat db2 = new ODatabaseRecordFlat(url);
+		ODatabaseFlat db2 = new ODatabaseFlat(url);
 		db2.open("admin", "admin");
 
 		ORecordFlat record1 = new ORecordFlat(db1);

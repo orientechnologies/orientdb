@@ -19,21 +19,22 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordFlat;
-import com.orientechnologies.orient.core.iterator.ORecordIterator;
-import com.orientechnologies.orient.core.record.impl.ORecordFlat;
+import com.orientechnologies.orient.core.db.record.ODatabaseColumn;
+import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 
 @Test(groups = { "crud", "record-csv" }, sequential = true)
-public class CRUDRecordDocumentPhysicalTest {
-	private static final String	CLUSTER_NAME	= "binary";
-	protected static final int	TOT_RECORDS		= 1000;
-	protected long							startRecordNumber;
-	private ODatabaseRecordFlat	database;
-	private ORecordFlat					record;
+public class CRUDColumnPhysicalTest {
+	protected static final String	CLUSTER_NAME	= "csv";
+	protected static final int		TOT_RECORDS		= 1000;
+
+	private ODatabaseColumn				database;
+	private ORecordColumn					record;
+
+	protected long								startRecordNumber;
 
 	@Parameters(value = "url")
-	public CRUDRecordDocumentPhysicalTest(String iURL) {
-		database = new ODatabaseRecordFlat(iURL);
+	public CRUDColumnPhysicalTest(String iURL) {
+		database = new ODatabaseColumn(iURL);
 		record = database.newInstance();
 	}
 
@@ -44,7 +45,7 @@ public class CRUDRecordDocumentPhysicalTest {
 
 		for (long i = startRecordNumber; i < startRecordNumber + TOT_RECORDS; ++i) {
 			record.reset();
-			record.value(i + "-binary test").save(CLUSTER_NAME);
+			record.value(i + ",Gipsy,Cat,European,Italy," + (i + 300) + ".00").save(CLUSTER_NAME);
 		}
 
 		database.close();
@@ -60,17 +61,17 @@ public class CRUDRecordDocumentPhysicalTest {
 	}
 
 	@Test(dependsOnMethods = "testCreateRaw")
-	public void readRawWithExpressiveForwardIterator() {
+	public void readRaw() {
 		database.open("admin", "admin");
 
-		String[] fields;
-
 		int i = 0;
-		ORecordIterator<ORecordFlat> it = database.browseCluster(CLUSTER_NAME);
-		for (ORecordFlat rec = it.begin().next(); rec != null; rec = it.next()) {
-			fields = rec.value().split("-");
-
-			Assert.assertEquals(Integer.parseInt(fields[0]), i);
+		for (ORecordColumn rec : database.browseCluster(CLUSTER_NAME)) {
+			Assert.assertEquals(Integer.parseInt(rec.next()), i);
+			Assert.assertEquals(rec.next(), "Gipsy");
+			Assert.assertEquals(rec.next(), "Cat");
+			Assert.assertEquals(rec.next(), "European");
+			Assert.assertEquals(rec.next(), "Italy");
+			Assert.assertEquals(Float.parseFloat(rec.next()), i + 300f);
 
 			i++;
 		}
@@ -80,17 +81,18 @@ public class CRUDRecordDocumentPhysicalTest {
 		database.close();
 	}
 
-	@Test(dependsOnMethods = "readRawWithExpressiveForwardIterator")
+	@Test(dependsOnMethods = "readRaw")
 	public void updateRaw() {
 		database.open("admin", "admin");
 
 		int i = 0;
-		for (ORecordFlat rec : database.browseCluster(CLUSTER_NAME)) {
+		for (ORecordColumn rec : database.browseCluster(CLUSTER_NAME)) {
 
-			if (i % 2 == 0) {
-				rec.value(rec.value() + "+");
-				rec.save();
-			}
+			if (i % 2 == 0)
+				rec.field(4, "Spain");
+
+			rec.field(5, String.valueOf(Float.parseFloat(rec.field(5)) + 100f));
+			rec.save();
 
 			i++;
 		}
@@ -102,18 +104,20 @@ public class CRUDRecordDocumentPhysicalTest {
 	public void testUpdateRaw() {
 		database.open("admin", "admin");
 
-		String[] fields;
-
 		int i = 0;
-		for (ORecordFlat rec : database.browseCluster(CLUSTER_NAME)) {
-			fields = rec.value().split("-");
+		for (ORecordColumn rec : database.browseCluster(CLUSTER_NAME)) {
 
-			Assert.assertEquals(Integer.parseInt(fields[0]), i);
+			Assert.assertEquals(Integer.parseInt(rec.next()), i);
+			Assert.assertEquals(rec.next(), "Gipsy");
+			Assert.assertEquals(rec.next(), "Cat");
+			Assert.assertEquals(rec.next(), "European");
 
 			if (i % 2 == 0)
-				Assert.assertTrue(fields[1].endsWith("+"));
+				Assert.assertEquals(rec.next(), "Spain");
 			else
-				Assert.assertFalse(fields[1].endsWith("+"));
+				Assert.assertEquals(rec.next(), "Italy");
+
+			Assert.assertEquals(Float.parseFloat(rec.next()), i + 400f);
 
 			i++;
 		}

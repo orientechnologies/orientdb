@@ -19,22 +19,21 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordCSV;
-import com.orientechnologies.orient.core.record.impl.ORecordCSV;
+import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
+import com.orientechnologies.orient.core.iterator.ORecordIterator;
+import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 
 @Test(groups = { "crud", "record-csv" }, sequential = true)
-public class CRUDCSVPhysicalTest {
-	protected static final String	CLUSTER_NAME	= "csv";
-	protected static final int		TOT_RECORDS		= 1000;
-
-	private ODatabaseRecordCSV		database;
-	private ORecordCSV						record;
-
-	protected long								startRecordNumber;
+public class CRUDFlatPhysicalTest {
+	private static final String	CLUSTER_NAME	= "binary";
+	protected static final int	TOT_RECORDS		= 1000;
+	protected long							startRecordNumber;
+	private ODatabaseFlat	database;
+	private ORecordFlat					record;
 
 	@Parameters(value = "url")
-	public CRUDCSVPhysicalTest(String iURL) {
-		database = new ODatabaseRecordCSV(iURL);
+	public CRUDFlatPhysicalTest(String iURL) {
+		database = new ODatabaseFlat(iURL);
 		record = database.newInstance();
 	}
 
@@ -45,7 +44,7 @@ public class CRUDCSVPhysicalTest {
 
 		for (long i = startRecordNumber; i < startRecordNumber + TOT_RECORDS; ++i) {
 			record.reset();
-			record.value(i + ",Gipsy,Cat,European,Italy," + (i + 300) + ".00").save(CLUSTER_NAME);
+			record.value(i + "-binary test").save(CLUSTER_NAME);
 		}
 
 		database.close();
@@ -61,17 +60,17 @@ public class CRUDCSVPhysicalTest {
 	}
 
 	@Test(dependsOnMethods = "testCreateRaw")
-	public void readRaw() {
+	public void readRawWithExpressiveForwardIterator() {
 		database.open("admin", "admin");
 
+		String[] fields;
+
 		int i = 0;
-		for (ORecordCSV rec : database.browseCluster(CLUSTER_NAME)) {
-			Assert.assertEquals(Integer.parseInt(rec.next()), i);
-			Assert.assertEquals(rec.next(), "Gipsy");
-			Assert.assertEquals(rec.next(), "Cat");
-			Assert.assertEquals(rec.next(), "European");
-			Assert.assertEquals(rec.next(), "Italy");
-			Assert.assertEquals(Float.parseFloat(rec.next()), i + 300f);
+		ORecordIterator<ORecordFlat> it = database.browseCluster(CLUSTER_NAME);
+		for (ORecordFlat rec = it.begin().next(); rec != null; rec = it.next()) {
+			fields = rec.value().split("-");
+
+			Assert.assertEquals(Integer.parseInt(fields[0]), i);
 
 			i++;
 		}
@@ -81,19 +80,18 @@ public class CRUDCSVPhysicalTest {
 		database.close();
 	}
 
-	@Test(dependsOnMethods = "readRaw")
+	@Test(dependsOnMethods = "readRawWithExpressiveForwardIterator")
 	public void updateRaw() {
 		database.open("admin", "admin");
 
 		int i = 0;
-		for (ORecordCSV rec : database.browseCluster(CLUSTER_NAME)) {
+		for (ORecordFlat rec : database.browseCluster(CLUSTER_NAME)) {
 
-			if (i % 2 == 0)
-				rec.field(4, "Spain");
+			if (i % 2 == 0) {
+				rec.value(rec.value() + "+");
+				rec.save();
+			}
 
-			rec.field(5, String.valueOf(Float.parseFloat(rec.field(5)) + 100f));
-			rec.save();
-			
 			i++;
 		}
 
@@ -104,21 +102,19 @@ public class CRUDCSVPhysicalTest {
 	public void testUpdateRaw() {
 		database.open("admin", "admin");
 
-		int i = 0;
-		for (ORecordCSV rec : database.browseCluster(CLUSTER_NAME)) {
+		String[] fields;
 
-			Assert.assertEquals(Integer.parseInt(rec.next()), i);
-			Assert.assertEquals(rec.next(), "Gipsy");
-			Assert.assertEquals(rec.next(), "Cat");
-			Assert.assertEquals(rec.next(), "European");
+		int i = 0;
+		for (ORecordFlat rec : database.browseCluster(CLUSTER_NAME)) {
+			fields = rec.value().split("-");
+
+			Assert.assertEquals(Integer.parseInt(fields[0]), i);
 
 			if (i % 2 == 0)
-				Assert.assertEquals(rec.next(), "Spain");
+				Assert.assertTrue(fields[1].endsWith("+"));
 			else
-				Assert.assertEquals(rec.next(), "Italy");
+				Assert.assertFalse(fields[1].endsWith("+"));
 
-			Assert.assertEquals(Float.parseFloat(rec.next()), i + 400f);
-			
 			i++;
 		}
 

@@ -24,28 +24,28 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.vobject.ODatabaseVObject;
-import com.orientechnologies.orient.core.db.vobject.ODatabaseVObjectTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.query.sql.OSQLSynchQuery;
-import com.orientechnologies.orient.core.record.impl.ORecordVObject;
+import com.orientechnologies.orient.core.record.impl.ORecordDocument;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 
 @Test(groups = "query", sequential = true)
-public class QueryTest {
-	private ODatabaseVObject	database;
-	private ORecordVObject		record;
+public class SQLQueryTest {
+	private ODatabaseDocument	database;
+	private ORecordDocument		record;
 
 	@Parameters(value = "url")
-	public QueryTest(String iURL) {
-		database = new ODatabaseVObjectTx(iURL);
+	public SQLQueryTest(String iURL) {
+		database = new ODatabaseDocumentTx(iURL);
 	}
 
 	@Test
 	public void querySchemaAndLike() {
 		database.open("admin", "admin");
 
-		List<ORecordVObject> result = database.query(
-				new OSQLSynchQuery<ORecordVObject>("select * from Animal where ID = 10 and name like 'G%'")).execute();
+		List<ORecordDocument> result = database.query(
+				new OSQLSynchQuery<ORecordDocument>("select * from Animal where ID = 10 and name like 'G%'")).execute();
 
 		System.out.println("select * from Animal where ID = 10 and name like 'G%'");
 
@@ -66,8 +66,8 @@ public class QueryTest {
 	public void queryColumnOrAndRange() {
 		database.open("admin", "admin");
 
-		List<ORecordVObject> result = database.query(
-				new OSQLSynchQuery<ORecordVObject>("SELECT * FROM animal WHERE column(0) < 5 OR column(0) >= 3 AND column(5) < 7"))
+		List<ORecordDocument> result = database.query(
+				new OSQLSynchQuery<ORecordDocument>("SELECT * FROM animal WHERE column(0) < 5 OR column(0) >= 3 AND column(5) < 7"))
 				.execute();
 
 		System.out.println("SELECT * FROM animal WHERE column(0) < 5 OR column(0) >= 3 AND column(5) < 7");
@@ -88,8 +88,8 @@ public class QueryTest {
 	public void queryColumnAndOrRange() {
 		database.open("admin", "admin");
 
-		List<ORecordVObject> result = database.query(
-				new OSQLSynchQuery<ORecordVObject>("SELECT * FROM animal WHERE column(0) < 5 AND column(0) >= 3 OR column(5) <= 403"))
+		List<ORecordDocument> result = database.query(
+				new OSQLSynchQuery<ORecordDocument>("SELECT * FROM animal WHERE column(0) < 5 AND column(0) >= 3 OR column(5) <= 403"))
 				.execute();
 
 		System.out.println("SELECT * FROM animal WHERE column(0) < 5 AND column(0) >= 3 OR column(5) <= 403");
@@ -117,8 +117,8 @@ public class QueryTest {
 		Date rangeFromDate = database.getStorage().getConfiguration().getDateFormatInstance().parse(rangeFrom);
 		Date rangeToDate = database.getStorage().getConfiguration().getDateFormatInstance().parse(rangeTo);
 
-		List<ORecordVObject> result = database.query(
-				new OSQLSynchQuery<ORecordVObject>("select * from Order where date > '" + rangeFrom + "' and date < '" + rangeTo + "'"))
+		List<ORecordDocument> result = database.query(
+				new OSQLSynchQuery<ORecordDocument>("select * from Order where date > '" + rangeFrom + "' and date < '" + rangeTo + "'"))
 				.execute();
 
 		for (int i = 0; i < result.size(); ++i) {
@@ -139,8 +139,8 @@ public class QueryTest {
 	public void queryCollectionContainsLowerCaseSubStringIgnoreCase() {
 		database.open("admin", "admin");
 
-		List<ORecordVObject> result = database.query(
-				new OSQLSynchQuery<ORecordVObject>(
+		List<ORecordDocument> result = database.query(
+				new OSQLSynchQuery<ORecordDocument>(
 						"select * from animaltype where races contains (name.toLowerCase().subString(0,1) = 'e')")).execute();
 
 		System.out.println("select * from animaltype where races contains (name.toLowercase().substring(0,1) = 'e')");
@@ -153,9 +153,9 @@ public class QueryTest {
 			Assert.assertTrue(record.getClassName().equalsIgnoreCase("animaltype"));
 			Assert.assertNotNull(record.field("races"));
 
-			Collection<ORecordVObject> races = record.field("races");
+			Collection<ORecordDocument> races = record.field("races");
 			boolean found = false;
-			for (ORecordVObject race : races) {
+			for (ORecordDocument race : races) {
 				if (((String) race.field("name")).toLowerCase().substring(0, 1).equals("e")) {
 					found = true;
 					break;
@@ -171,8 +171,8 @@ public class QueryTest {
 	public void queryCollectionContainsIn() {
 		database.open("admin", "admin");
 
-		List<ORecordVObject> result = database.query(
-				new OSQLSynchQuery<ORecordVObject>("select * from animaltype where races contains (name in ['European','Asiatic'])"))
+		List<ORecordDocument> result = database.query(
+				new OSQLSynchQuery<ORecordDocument>("select * from animaltype where races contains (name in ['European','Asiatic'])"))
 				.execute();
 
 		System.out.println("select * from animaltype where races contains (name in ['European','Asiatic'])");
@@ -185,9 +185,9 @@ public class QueryTest {
 			Assert.assertTrue(record.getClassName().equalsIgnoreCase("animaltype"));
 			Assert.assertNotNull(record.field("races"));
 
-			Collection<ORecordVObject> races = record.field("races");
+			Collection<ORecordDocument> races = record.field("races");
 			boolean found = false;
-			for (ORecordVObject race : races) {
+			for (ORecordDocument race : races) {
 				if (((String) race.field("name")).equals("European") || ((String) race.field("name")).equals("Asiatic")) {
 					found = true;
 					break;

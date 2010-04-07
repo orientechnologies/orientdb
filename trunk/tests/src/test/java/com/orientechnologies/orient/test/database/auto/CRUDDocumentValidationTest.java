@@ -18,20 +18,20 @@ package com.orientechnologies.orient.test.database.auto;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.vobject.ODatabaseVObjectTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OValidationException;
-import com.orientechnologies.orient.core.record.impl.ORecordVObject;
+import com.orientechnologies.orient.core.record.impl.ORecordDocument;
 
 @Test(groups = { "crud", "record-vobject" }, sequential = true)
-public class CRUDVObjectValidationTest {
+public class CRUDDocumentValidationTest {
 	protected static final int	TOT_RECORDS	= 1000;
 	protected long							startRecordNumber;
-	private ODatabaseVObjectTx	database;
-	private ORecordVObject			record;
+	private ODatabaseDocumentTx	database;
+	private ORecordDocument			record;
 
 	@Parameters(value = "url")
-	public CRUDVObjectValidationTest(String iURL) {
-		database = new ODatabaseVObjectTx(iURL);
+	public CRUDDocumentValidationTest(String iURL) {
+		database = new ODatabaseDocumentTx(iURL);
 	}
 
 	@Test

@@ -18,7 +18,7 @@ package com.orientechnologies.orient.test.database.speed;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordFlat;
+import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMultiThreadTest;
@@ -26,7 +26,7 @@ import com.orientechnologies.orient.test.database.base.OrientThreadTest;
 
 @Test(enabled = false)
 public class LocalCreateFlatMultiThreadSpeedTest extends OrientMultiThreadTest {
-	protected ODatabaseRecordFlat	database;
+	protected ODatabaseFlat	database;
 	private long									foundObjects;
 
 	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
@@ -39,19 +39,19 @@ public class LocalCreateFlatMultiThreadSpeedTest extends OrientMultiThreadTest {
 	}
 
 	public void init() {
-		database = new ODatabaseRecordFlat(System.getProperty("url")).open("admin", "admin");
+		database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
 		foundObjects = database.countClusterElements("Animal");
 
 		System.out.println("\nTotal objects in Animal cluster before the test: " + foundObjects);
 	}
 
 	public static class CreateObjectsThread extends OrientThreadTest {
-		protected ODatabaseRecordFlat	database;
+		protected ODatabaseFlat	database;
 		protected ORecordFlat					record	= new ORecordFlat();
 
 		@Override
 		public void init() {
-			database = new ODatabaseRecordFlat(System.getProperty("url")).open("admin", "admin");
+			database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
 			record = database.newInstance();
 
 			database.begin(TXTYPE.NOTX);

@@ -20,17 +20,17 @@ import java.io.UnsupportedEncodingException;
 import java.util.Random;
 
 import com.orientechnologies.common.test.SpeedTestMonoThread;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordCSV;
+import com.orientechnologies.orient.core.db.record.ODatabaseColumn;
 import com.orientechnologies.orient.core.query.nativ.ONativeSynchQuery;
 import com.orientechnologies.orient.core.query.nativ.OQueryContextNativePositional;
-import com.orientechnologies.orient.core.record.impl.ORecordCSV;
+import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 
 public class RandomNoTxSpeedTest extends SpeedTestMonoThread {
 	private static final String	CLUSTER_NAME	= "Animal";
 
-	private ODatabaseRecordCSV	database;
+	private ODatabaseColumn	database;
 	private Random							random;
-	private ORecordCSV					record;
+	private ORecordColumn					record;
 
 	public RandomNoTxSpeedTest() {
 		super(1000000);
@@ -65,11 +65,11 @@ public class RandomNoTxSpeedTest extends SpeedTestMonoThread {
 			final int counter = random.nextInt((int) (clusterCount - 1));
 
 			database.query(
-					new ONativeSynchQuery<ORecordCSV, OQueryContextNativePositional<ORecordCSV>>(CLUSTER_NAME,
-							new OQueryContextNativePositional<ORecordCSV>()) {
+					new ONativeSynchQuery<ORecordColumn, OQueryContextNativePositional<ORecordColumn>>(CLUSTER_NAME,
+							new OQueryContextNativePositional<ORecordColumn>()) {
 
 						@Override
-						public boolean filter(OQueryContextNativePositional<ORecordCSV> iRecord) {
+						public boolean filter(OQueryContextNativePositional<ORecordColumn> iRecord) {
 							return iRecord.column(0).toInt().eq(counter).go();
 						}
 

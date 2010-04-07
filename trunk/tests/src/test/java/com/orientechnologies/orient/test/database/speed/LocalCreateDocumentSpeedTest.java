@@ -20,23 +20,23 @@ import java.util.ArrayList;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.orient.core.db.vobject.ODatabaseVObject;
-import com.orientechnologies.orient.core.db.vobject.ODatabaseVObjectTx;
-import com.orientechnologies.orient.core.record.impl.ORecordVObject;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.impl.ORecordDocument;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 
 @Test(enabled = false)
-public class LocalCreateVObjectSpeedTest extends OrientMonoThreadTest {
-	private ODatabaseVObject	database;
-	private ORecordVObject		record;
+public class LocalCreateDocumentSpeedTest extends OrientMonoThreadTest {
+	private ODatabaseDocument	database;
+	private ORecordDocument		record;
 
 	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
-		LocalCreateVObjectSpeedTest test = new LocalCreateVObjectSpeedTest();
+		LocalCreateDocumentSpeedTest test = new LocalCreateDocumentSpeedTest();
 		test.data.go(test);
 	}
 
-	public LocalCreateVObjectSpeedTest() throws InstantiationException, IllegalAccessException {
+	public LocalCreateDocumentSpeedTest() throws InstantiationException, IllegalAccessException {
 		super(1000000);
 	}
 
@@ -44,7 +44,7 @@ public class LocalCreateVObjectSpeedTest extends OrientMonoThreadTest {
 	public void init() {
 		OProfiler.getInstance().startRecording();
 
-		database = new ODatabaseVObjectTx(System.getProperty("url")).open("admin", "admin");
+		database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
 		record = database.newInstance();
 
 		database.begin(TXTYPE.NOTX);

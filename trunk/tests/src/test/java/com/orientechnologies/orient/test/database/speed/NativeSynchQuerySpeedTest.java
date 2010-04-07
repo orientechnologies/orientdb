@@ -20,15 +20,15 @@ import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 import com.orientechnologies.common.test.SpeedTestMonoThread;
-import com.orientechnologies.orient.core.db.vobject.ODatabaseVObjectTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.query.nativ.ONativeSynchQuery;
 import com.orientechnologies.orient.core.query.nativ.OQueryContextNativeSchema;
-import com.orientechnologies.orient.core.record.impl.ORecordVObject;
+import com.orientechnologies.orient.core.record.impl.ORecordDocument;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 
 public class NativeSynchQuerySpeedTest extends SpeedTestMonoThread {
-	private ODatabaseVObjectTx		database;
-	private List<ORecordVObject>	result;
+	private ODatabaseDocumentTx		database;
+	private List<ORecordDocument>	result;
 
 	public NativeSynchQuerySpeedTest() {
 		super(1);
@@ -36,11 +36,11 @@ public class NativeSynchQuerySpeedTest extends SpeedTestMonoThread {
 
 	public void cycle() throws UnsupportedEncodingException {
 		result = database.query(
-				new ONativeSynchQuery<ORecordVObject, OQueryContextNativeSchema<ORecordVObject>>("Animal",
-						new OQueryContextNativeSchema<ORecordVObject>()) {
+				new ONativeSynchQuery<ORecordDocument, OQueryContextNativeSchema<ORecordDocument>>("Animal",
+						new OQueryContextNativeSchema<ORecordDocument>()) {
 
 					@Override
-					public boolean filter(OQueryContextNativeSchema<ORecordVObject> iRecord) {
+					public boolean filter(OQueryContextNativeSchema<ORecordDocument> iRecord) {
 						return iRecord.column("race").like("Euro%").and().column("race").like("%an").and().column("id").toInt().eq(10).go();
 					}
 

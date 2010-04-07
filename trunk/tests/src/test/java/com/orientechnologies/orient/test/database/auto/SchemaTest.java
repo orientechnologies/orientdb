@@ -19,7 +19,7 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordFlat;
+import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 
 @Test(groups = "schema")
 public class SchemaTest {
-	private ODatabaseRecordFlat	database;
+	private ODatabaseFlat	database;
 	private String							url;
 
 	@Parameters(value = "url")
@@ -36,7 +36,7 @@ public class SchemaTest {
 	}
 
 	public void createSchema() {
-		database = new ODatabaseRecordFlat(url);
+		database = new ODatabaseFlat(url);
 		database.open("admin", "admin");
 
 		if (database.getMetadata().getSchema().existsClass("Animal"))
@@ -81,7 +81,7 @@ public class SchemaTest {
 
 	@Test(dependsOnMethods = "createSchema")
 	public void checkSchema() {
-		database = new ODatabaseRecordFlat(url);
+		database = new ODatabaseFlat(url);
 		database.open("admin", "admin");
 
 		OSchema schema = database.getMetadata().getSchema();
@@ -121,7 +121,7 @@ public class SchemaTest {
 
 	@Test(dependsOnMethods = "checkSchema")
 	public void checkSchemaApi() {
-		database = new ODatabaseRecordFlat(url);
+		database = new ODatabaseFlat(url);
 		database.open("admin", "admin");
 
 		OSchema schema = database.getMetadata().getSchema();
@@ -137,7 +137,7 @@ public class SchemaTest {
 
 	@Test(dependsOnMethods = "checkSchemaApi")
 	public void checkClusters() {
-		database = new ODatabaseRecordFlat(url);
+		database = new ODatabaseFlat(url);
 		database.open("admin", "admin");
 
 		for (OClass cls : database.getMetadata().getSchema().classes()) {

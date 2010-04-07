@@ -17,14 +17,14 @@ package com.orientechnologies.orient.test.database.speed;
 
 import com.orientechnologies.orient.client.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordFlat;
+import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMultiThreadTest;
 import com.orientechnologies.orient.test.database.base.OrientThreadTest;
 
 public class TxRemoteCreateObjectsMultiThreadSpeedTest extends OrientMultiThreadTest {
-	protected ODatabaseRecordFlat	database;
+	protected ODatabaseFlat	database;
 	protected long								foundObjects;
 
 	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
@@ -38,7 +38,7 @@ public class TxRemoteCreateObjectsMultiThreadSpeedTest extends OrientMultiThread
 	}
 
 	public void init() {
-		database = new ODatabaseRecordFlat(System.getProperty("url")).open("admin", "admin");
+		database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
 
 		if (!database.getStorage().getClusterNames().contains("Animal"))
 			database.getStorage().addCluster("Animal");
@@ -48,12 +48,12 @@ public class TxRemoteCreateObjectsMultiThreadSpeedTest extends OrientMultiThread
 	}
 
 	public static class CreateObjectsThread extends OrientThreadTest {
-		protected ODatabaseRecordFlat	database;
+		protected ODatabaseFlat	database;
 		protected ORecordFlat					record	= new ORecordFlat();
 
 		@Override
 		public void init() {
-			database = new ODatabaseRecordFlat(System.getProperty("url")).open("admin", "admin");
+			database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
 			record = database.newInstance();
 
 			database.begin(TXTYPE.NOTX);

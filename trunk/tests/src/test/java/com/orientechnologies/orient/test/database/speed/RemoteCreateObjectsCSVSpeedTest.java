@@ -21,12 +21,12 @@ import java.io.UnsupportedEncodingException;
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.orient.client.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordCSV;
-import com.orientechnologies.orient.core.record.impl.ORecordCSV;
+import com.orientechnologies.orient.core.db.record.ODatabaseColumn;
+import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 
 public class RemoteCreateObjectsCSVSpeedTest extends SpeedTestMonoThread {
-	private ODatabaseRecordCSV	database;
-	private ORecordCSV					record;
+	private ODatabaseColumn	database;
+	private ORecordColumn					record;
 
 	public RemoteCreateObjectsCSVSpeedTest() {
 		super(1000000);

@@ -20,13 +20,13 @@ import java.io.UnsupportedEncodingException;
 
 import com.orientechnologies.orient.client.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordCSV;
-import com.orientechnologies.orient.core.record.impl.ORecordCSV;
+import com.orientechnologies.orient.core.db.record.ODatabaseColumn;
+import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 import com.orientechnologies.orient.test.database.base.OrientTxSpeedTest;
 
 public class TxLocalCreateObjectsSpeedTest extends OrientTxSpeedTest {
-	private ODatabaseRecordCSV	database;
-	private ORecordCSV					record;
+	private ODatabaseColumn	database;
+	private ORecordColumn					record;
 
 	public TxLocalCreateObjectsSpeedTest(String iURL) {
 		super(1000000);

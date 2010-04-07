@@ -20,14 +20,14 @@ import org.testng.annotations.Test;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.client.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordFlat;
+import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 
 @Test(enabled = false)
 public class DictionaryPutSpeedTest extends OrientMonoThreadTest {
-	private ODatabaseRecordFlat	database;
+	private ODatabaseFlat	database;
 	private ORecordFlat					record;
 	private long								startNum;
 
@@ -41,7 +41,7 @@ public class DictionaryPutSpeedTest extends OrientMonoThreadTest {
 		Orient.instance().registerEngine(new OEngineRemote());
 		// String url = "remote:localhost:8000/petshop";
 		String url = System.getProperty("url");
-		database = new ODatabaseRecordFlat(url).open("admin", "admin");
+		database = new ODatabaseFlat(url).open("admin", "admin");
 		record = database.newInstance();
 		startNum = 0;// database.countClusterElements("Animal");
 

@@ -21,32 +21,32 @@ import java.util.List;
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.orient.client.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.vobject.ODatabaseVObjectTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.query.OAsynchQueryResultListener;
 import com.orientechnologies.orient.core.query.sql.OSQLSynchQuery;
-import com.orientechnologies.orient.core.record.impl.ORecordVObject;
+import com.orientechnologies.orient.core.record.impl.ORecordDocument;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 
-public class SQLSynchQuerySpeedTest extends SpeedTestMonoThread implements OAsynchQueryResultListener<ORecordVObject> {
+public class SQLSynchQuerySpeedTest extends SpeedTestMonoThread implements OAsynchQueryResultListener<ORecordDocument> {
 	protected int								resultCount	= 0;
-	private ODatabaseVObjectTx	database;
+	private ODatabaseDocumentTx	database;
 
 	public SQLSynchQuerySpeedTest(String iURL) {
 		super(1);
 		Orient.instance().registerEngine(new OEngineRemote());
-		database = new ODatabaseVObjectTx(iURL);
+		database = new ODatabaseDocumentTx(iURL);
 	}
 
 	public void cycle() throws UnsupportedEncodingException {
 		System.out.println("1 ----------------------");
-		List<ORecordVObject> result = database.query(
-				new OSQLSynchQuery<ORecordVObject>("select * from animal where id = 10 and name like 'G%'")).execute();
+		List<ORecordDocument> result = database.query(
+				new OSQLSynchQuery<ORecordDocument>("select * from animal where id = 10 and name like 'G%'")).execute();
 
 		OrientTest.printRecords(result);
 
 		System.out.println("2 ----------------------");
 		result = database.query(
-				new OSQLSynchQuery<ORecordVObject>("select * from animal where column(0) < 5 or column(0) >= 3 and column(5) < 7"))
+				new OSQLSynchQuery<ORecordDocument>("select * from animal where column(0) < 5 or column(0) >= 3 and column(5) < 7"))
 				.execute();
 
 		OrientTest.printRecords(result);
@@ -57,7 +57,7 @@ public class SQLSynchQuerySpeedTest extends SpeedTestMonoThread implements OAsyn
 		 */
 	}
 
-	public boolean result(ORecordVObject iRecord) {
+	public boolean result(ORecordDocument iRecord) {
 		OrientTest.printRecord(resultCount++, iRecord);
 		return true;
 	}

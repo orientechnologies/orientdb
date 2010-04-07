@@ -23,7 +23,7 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.client.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordFlat;
+import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 
@@ -39,7 +39,7 @@ public class TransactionOptimisticTest {
 
 	@Test
 	public void testTransactionOptimisticRollback() throws IOException {
-		ODatabaseRecordFlat db1 = new ODatabaseRecordFlat(url);
+		ODatabaseFlat db1 = new ODatabaseFlat(url);
 		db1.open("admin", "admin");
 
 		long rec = db1.countClusterElements("binary");
@@ -58,7 +58,7 @@ public class TransactionOptimisticTest {
 
 	@Test(dependsOnMethods = "testTransactionOptimisticRollback")
 	public void testTransactionOptimisticCommit() throws IOException {
-		ODatabaseRecordFlat db1 = new ODatabaseRecordFlat(url);
+		ODatabaseFlat db1 = new ODatabaseFlat(url);
 		db1.open("admin", "admin");
 
 		long tot = db1.countClusterElements("binary");
@@ -77,10 +77,10 @@ public class TransactionOptimisticTest {
 
 	@Test(dependsOnMethods = "testTransactionOptimisticCommit")
 	public void testTransactionOptimisticCuncurrentException() throws IOException {
-		ODatabaseRecordFlat db1 = new ODatabaseRecordFlat(url);
+		ODatabaseFlat db1 = new ODatabaseFlat(url);
 		db1.open("admin", "admin");
 
-		ODatabaseRecordFlat db2 = new ODatabaseRecordFlat(url);
+		ODatabaseFlat db2 = new ODatabaseFlat(url);
 		db2.open("admin", "admin");
 
 		ORecordFlat record1 = new ORecordFlat(db1);

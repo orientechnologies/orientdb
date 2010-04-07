@@ -23,8 +23,8 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.client.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.vobject.ODatabaseVObjectTx;
-import com.orientechnologies.orient.core.record.impl.ORecordVObject;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.impl.ORecordDocument;
 
 @Test(groups = "dictionary")
 public class TransactionConsistencyTest {
@@ -38,14 +38,14 @@ public class TransactionConsistencyTest {
 
 	@Test
 	public void setup() throws IOException {
-		ODatabaseVObjectTx database = new ODatabaseVObjectTx(url);
+		ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
 		database.open("admin", "admin");
 
 		long tot = database.countClass("Animal");
 
 		// DELETE ALL THE ANIMAL OBJECTS
 		int i = 0;
-		for (ORecordVObject rec : database.browseClass("Animal")) {
+		for (ORecordDocument rec : database.browseClass("Animal")) {
 			rec.delete();
 			i++;
 		}
@@ -58,16 +58,16 @@ public class TransactionConsistencyTest {
 
 	@Test(dependsOnMethods = "setup")
 	public void createRecords() throws IOException {
-		ODatabaseVObjectTx database = new ODatabaseVObjectTx(url);
+		ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
 		database.open("admin", "admin");
 
-		ORecordVObject record1 = new ORecordVObject(database, "Animal");
+		ORecordDocument record1 = new ORecordDocument(database, "Animal");
 		record1.field("name", "Creation test").save();
 
-		ORecordVObject record2 = new ORecordVObject(database, "Animal");
+		ORecordDocument record2 = new ORecordDocument(database, "Animal");
 		record2.field("name", "Update test").save();
 
-		ORecordVObject record3 = new ORecordVObject(database, "Animal");
+		ORecordDocument record3 = new ORecordDocument(database, "Animal");
 		record3.field("name", "Delete test").save();
 
 		database.close();
@@ -75,17 +75,17 @@ public class TransactionConsistencyTest {
 
 	@Test(dependsOnMethods = "createRecords")
 	public void testTransactionRecovery() throws IOException {
-		ODatabaseVObjectTx db1 = new ODatabaseVObjectTx(url);
+		ODatabaseDocumentTx db1 = new ODatabaseDocumentTx(url);
 		db1.open("admin", "admin");
 
 		// long tot = db1.countClass("Animal");
 
 		db1.begin();
 
-		ORecordVObject record1 = db1.newInstance("Animal");
+		ORecordDocument record1 = db1.newInstance("Animal");
 		record1.field("location", "This is the first version").save();
 
-		ORecordVObject record2 = db1.newInstance("Animal");
+		ORecordDocument record2 = db1.newInstance("Animal");
 		record2.field("location", "This is the first version").save();
 
 		db1.commit();

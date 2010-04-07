@@ -19,20 +19,20 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.vobject.ODatabaseVObjectTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.iterator.ORecordIterator;
-import com.orientechnologies.orient.core.record.impl.ORecordVObject;
+import com.orientechnologies.orient.core.record.impl.ORecordDocument;
 
 @Test(groups = { "crud", "record-vobject" }, sequential = true)
-public class CRUDVObjectPhysicalTest {
+public class CRUDDocumentPhysicalTest {
 	protected static final int	TOT_RECORDS	= 1000;
 	protected long							startRecordNumber;
-	private ODatabaseVObjectTx	database;
-	private ORecordVObject			record;
+	private ODatabaseDocumentTx	database;
+	private ORecordDocument			record;
 
 	@Parameters(value = "url")
-	public CRUDVObjectPhysicalTest(String iURL) {
-		database = new ODatabaseVObjectTx(iURL);
+	public CRUDDocumentPhysicalTest(String iURL) {
+		database = new ODatabaseDocumentTx(iURL);
 		record = database.newInstance();
 	}
 
@@ -43,7 +43,7 @@ public class CRUDVObjectPhysicalTest {
 		startRecordNumber = database.countClusterElements("Animal");
 
 		// DELETE ALL THE RECORD IN THE CLUSTER
-		for (ORecordVObject rec : database.browseCluster("Animal"))
+		for (ORecordDocument rec : database.browseCluster("Animal"))
 			rec.delete();
 
 		Assert.assertEquals(database.countClusterElements("Animal"), 0);
@@ -91,8 +91,8 @@ public class CRUDVObjectPhysicalTest {
 
 		// BROWSE IN THE OPPOSITE ORDER
 		int i = 0;
-		ORecordIterator<ORecordVObject> it = database.browseCluster("Animal");
-		for (ORecordVObject rec = it.last().previous(); rec != null; rec = it.previous()) {
+		ORecordIterator<ORecordDocument> it = database.browseCluster("Animal");
+		for (ORecordDocument rec = it.last().previous(); rec != null; rec = it.previous()) {
 
 			Assert.assertTrue((Integer) rec.field("id") == i);
 			Assert.assertEquals(rec.field("name"), "Gipsy");
@@ -117,7 +117,7 @@ public class CRUDVObjectPhysicalTest {
 		record.reset();
 
 		int i = 0;
-		for (ORecordVObject rec : database.browseCluster("Animal")) {
+		for (ORecordDocument rec : database.browseCluster("Animal")) {
 
 			if (i % 2 == 0)
 				rec.field("location", "Spain");
@@ -137,7 +137,7 @@ public class CRUDVObjectPhysicalTest {
 		database.open("admin", "admin");
 
 		int i = 0;
-		for (ORecordVObject rec : database.browseCluster("Animal")) {
+		for (ORecordDocument rec : database.browseCluster("Animal")) {
 
 			if (i % 2 == 0)
 				Assert.assertEquals(rec.field("location"), "Spain");

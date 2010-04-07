@@ -21,18 +21,18 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordFlat;
+import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.storage.impl.local.ODictionaryLocal;
 
 @Test(groups = "dictionary")
 public class DictionaryTest {
-	private ODatabaseRecordFlat	database;
+	private ODatabaseFlat	database;
 	private ORecordFlat					record;
 
 	@Parameters(value = "url")
 	public DictionaryTest(String iURL) {
-		database = new ODatabaseRecordFlat(iURL);
+		database = new ODatabaseFlat(iURL);
 		record = database.newInstance();
 	}
 

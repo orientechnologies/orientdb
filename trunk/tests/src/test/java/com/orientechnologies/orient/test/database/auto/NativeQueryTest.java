@@ -15,36 +15,55 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.List;
+
+import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.query.sql.OSQLSynchQuery;
+import com.orientechnologies.orient.core.query.nativ.ONativeSynchQuery;
+import com.orientechnologies.orient.core.query.nativ.OQueryContextNativeSchema;
 import com.orientechnologies.orient.core.record.impl.ORecordDocument;
+import com.orientechnologies.orient.test.database.base.OrientTest;
 
 @Test(groups = "query", sequential = true)
-public class WrongQueryTest {
+public class NativeQueryTest {
 	private ODatabaseDocument	database;
+	private ORecordDocument		record;
 
 	@Parameters(value = "url")
-	public WrongQueryTest(String iURL) {
+	public NativeQueryTest(String iURL) {
 		database = new ODatabaseDocumentTx(iURL);
 	}
 
 	@Test
-	public void queryOpen() {
+	public void querySchemaAndLike() {
 		database.open("admin", "admin");
-	}
 
-	@Test(dependsOnMethods = "queryOpen", expectedExceptions = OQueryParsingException.class)
-	public void queryFieldOperatorNotSupported() {
-		database.query(new OSQLSynchQuery<ORecordDocument>("select * from Animal where name.not() like 'G%'")).execute();
-	}
+		List<ORecordDocument> result = database.query(
 
-	@Test(dependsOnMethods = "queryFieldOperatorNotSupported")
-	public void queryEnd() {
+				new ONativeSynchQuery<ORecordDocument, OQueryContextNativeSchema<ORecordDocument>>("Person",
+						new OQueryContextNativeSchema<ORecordDocument>()) {
+
+					@Override
+					public boolean filter(OQueryContextNativeSchema<ORecordDocument> iRecord) {
+						return iRecord.field("city").field("name").eq("Rome").and().field("name").like("G%").go();
+					};
+
+				}).execute();
+
+		for (int i = 0; i < result.size(); ++i) {
+			record = result.get(i);
+
+			OrientTest.printRecord(i, record);
+
+			Assert.assertTrue(record.getClassName().equalsIgnoreCase("Person"));
+			Assert.assertEquals(((ORecordDocument) record.field("city")).field("name"), "Rome");
+			Assert.assertTrue(record.field("name").toString().startsWith("G"));
+		}
+
 		database.close();
 	}
 }
