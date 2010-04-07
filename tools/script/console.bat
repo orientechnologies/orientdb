@@ -30,6 +30,6 @@ goto setArgs
 
 :doneSetArgs
 
-call "%JAVA_HOME%\bin\java" -server -jar "%ORIENT_HOME%\lib\orient-database-tools.jar" %CMD_LINE_ARGS%
+call "%JAVA_HOME%\bin\java" -client -jar "%ORIENT_HOME%\lib\orient-database-tools.jar" %CMD_LINE_ARGS%
 
 :end
