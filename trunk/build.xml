@@ -5,7 +5,7 @@
 	<property environment="env" />
 	<property name="vendor"         value="Orient Technologies" />
 	<property name="product"        value="Orient Database" />
-	<property name="version"        value="0.9.3" />
+	<property name="version"        value="0.9.4_snapshot" />
 	<property name="global.release" value="../releases/${version}" />
 	<property name="global.lib"     value="${global.release}/lib" />
 
@@ -15,6 +15,7 @@
       <subant target="@{target}">
         <property name="global.lib" value="../${global.lib}"/>
         
+		  	<fileset dir="commons"    includes="build.xml" />
 		  	<fileset dir="core"       includes="build.xml" />
 		  	<fileset dir="enterprise" includes="build.xml" />
 		  	<fileset dir="client"     includes="build.xml" />
