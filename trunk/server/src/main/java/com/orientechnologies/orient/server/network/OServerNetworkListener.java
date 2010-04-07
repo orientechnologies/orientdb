@@ -22,6 +22,7 @@ import java.net.Socket;
 import java.net.SocketException;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
@@ -86,8 +87,10 @@ public class OServerNetworkListener {
 			serverSocket = new java.net.ServerSocket(iHostPort);
 
 			if (serverSocket.isBound()) {
-				OLogManager.instance().config(this,
-						"Orient Database Server listening connection on " + inboundAddr.getHostName() + ":" + inboundAddr.getPort());
+				OLogManager.instance().config(
+						this,
+						"Orient Database Server v" + OConstants.ORIENT_VERSION + " is listening connections on " + inboundAddr.getHostName()
+								+ ":" + inboundAddr.getPort());
 			}
 		} catch (SocketException se) {
 			OLogManager.instance().error(this, "Unable to create socket", se);

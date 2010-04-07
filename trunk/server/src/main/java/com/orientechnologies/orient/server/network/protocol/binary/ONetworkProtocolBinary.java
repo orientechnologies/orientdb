@@ -22,9 +22,9 @@ import java.net.SocketException;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
-import com.orientechnologies.orient.core.db.vobject.ODatabaseVObjectTx;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -37,7 +37,7 @@ import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.query.sql.OSQLSynchQuery;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
-import com.orientechnologies.orient.core.record.impl.ORecordVObject;
+import com.orientechnologies.orient.core.record.impl.ORecordDocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -99,7 +99,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				user = channel.readString();
 				passwd = channel.readString();
 
-				connection.database = new ODatabaseVObjectTx("local:" + OServerMain.server().getStoragePath(dbName));
+				connection.database = new ODatabaseDocumentTx("local:" + OServerMain.server().getStoragePath(dbName));
 				if (connection.database.isClosed())
 					connection.database.open(user, passwd);
 
@@ -125,7 +125,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				String dbName = dbURL.substring(dbURL.lastIndexOf(":") + 1);
 				String storageMode = channel.readString();
 
-				connection.database = new ODatabaseVObjectTx("local:" + OServerMain.server().getStoragePath(dbName));
+				connection.database = new ODatabaseDocumentTx("local:" + OServerMain.server().getStoragePath(dbName));
 				connection.database.create(storageMode);
 				underlyingDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
 
@@ -249,7 +249,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 					}
 				});
 
-				connection.database.query((OQuery<ORecordVObject>) query).execute(limit);
+				connection.database.query((OQuery<ORecordDocument>) query).execute(limit);
 
 				if (empty.length() == 0)
 					try {
@@ -263,9 +263,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			case OChannelBinaryProtocol.QUERY_FIRST: {
 				String queryText = channel.readString();
 
-				OSQLSynchQuery<ORecordVObject> query = new OSQLSynchQuery<ORecordVObject>(queryText);
+				OSQLSynchQuery<ORecordDocument> query = new OSQLSynchQuery<ORecordDocument>(queryText);
 
-				query.setRecord(new ORecordVObject());
+				query.setRecord(new ORecordDocument());
 				query.setDatabase(connection.database);
 
 				// SET THE CONFIGURATION BEFORE TO EXECUTE THE QUERY
@@ -290,7 +290,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			case OChannelBinaryProtocol.DICTIONARY_PUT: {
 				String key = channel.readString();
-				ORecordVObject value = new ORecordVObject(connection.database, new ORecordId(channel.readString()));
+				ORecordDocument value = new ORecordDocument(connection.database, new ORecordId(channel.readString()));
 
 				value = connection.database.getDictionary().put(key, value);
 

@@ -17,16 +17,16 @@ package com.orientechnologies.orient.server.network.protocol;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.orient.core.db.ODatabasePool;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordBinary;
+import com.orientechnologies.orient.core.db.record.ODatabaseBinary;
 import com.orientechnologies.orient.server.OServerMain;
 
 public abstract class ONetworkProtocolDatabaseShared extends ONetworkProtocol {
 	// TODO: ALLOW ONLY 1 BECAUSE THE TREE IS NOT YET FULLY TRANSACTIONAL
-	private static final ODatabasePool<ODatabaseRecordBinary>	dbPool	= new ODatabasePool<ODatabaseRecordBinary>(1) {
+	private static final ODatabasePool<ODatabaseBinary>	dbPool	= new ODatabasePool<ODatabaseBinary>(1) {
 
-																																			public ODatabaseRecordBinary createNewResource(
+																																			public ODatabaseBinary createNewResource(
 																																					String iDatabaseName) {
-																																				return new ODatabaseRecordBinary("local:"
+																																				return new ODatabaseBinary("local:"
 																																						+ OServerMain.server().getStoragePath(iDatabaseName))
 																																						.open("admin", "admin");
 																																			}
@@ -36,11 +36,11 @@ public abstract class ONetworkProtocolDatabaseShared extends ONetworkProtocol {
 		super(group, name);
 	}
 
-	public ODatabaseRecordBinary acquireDatabase(String iName) throws OLockException, InterruptedException {
+	public ODatabaseBinary acquireDatabase(String iName) throws OLockException, InterruptedException {
 		return dbPool.acquireDatabase(iName);
 	}
 
-	public void releaseDatabase(final String iName, final ODatabaseRecordBinary iDatabase) throws OLockException,
+	public void releaseDatabase(final String iName, final ODatabaseBinary iDatabase) throws OLockException,
 			InterruptedException {
 		dbPool.releaseDatabase(iName, iDatabase);
 	}
