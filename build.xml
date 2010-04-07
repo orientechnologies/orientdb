@@ -90,7 +90,7 @@
     </copy>
 
     <copy todir="${global.release}/bin/" flatten="true">
-      <fileset dir="." includes="**/*.bat **/*.sh" />
+      <fileset dir="." includes="**/script/*.bat **/script/*.sh" />
     </copy>
 
     <copy todir="${global.release}/config/" flatten="true">
@@ -99,6 +99,10 @@
 
     <copy todir="${global.release}/www/">
       <fileset dir="kv/src/site"/>
+    </copy>
+
+    <copy todir="${global.release}/benchmarks" flatten="true">
+      <fileset dir="." includes="**/benchmarks/*"/>
     </copy>
 	</target>
 
