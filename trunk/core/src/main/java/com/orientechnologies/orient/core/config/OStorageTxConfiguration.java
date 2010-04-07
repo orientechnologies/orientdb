@@ -45,4 +45,12 @@ public class OStorageTxConfiguration extends OStorageFileConfiguration {
 	public boolean isSynchTx() {
 		return synchTx;
 	}
+
+	public void setSynchRecord(boolean synchRecord) {
+		this.synchRecord = synchRecord;
+	}
+
+	public void setSynchTx(boolean synchTx) {
+		this.synchTx = synchTx;
+	}
 }
