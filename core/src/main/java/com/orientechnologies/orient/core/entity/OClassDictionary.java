@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
-import com.orientechnologies.orient.core.record.impl.ORecordDocument;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OClassDictionary {
 	private static final OClassDictionary	instance	= new OClassDictionary();
@@ -37,7 +37,7 @@ public class OClassDictionary {
 	public Class<?> getClassByCode(final char iType) {
 		switch (iType) {
 		case '0':
-			return (Class<?>) ORecordDocument.class;
+			return (Class<?>) ODocument.class;
 		case '1':
 			return (Class<?>) ORecordColumn.class;
 		case '2':
@@ -72,7 +72,7 @@ public class OClassDictionary {
 	}
 
 	public Character getCodeByClass(final Class<?> iClass) {
-		if (iClass.equals(ORecordDocument.class))
+		if (iClass.equals(ODocument.class))
 			return '0';
 		if (iClass.equals(ORecordColumn.class))
 			return '1';

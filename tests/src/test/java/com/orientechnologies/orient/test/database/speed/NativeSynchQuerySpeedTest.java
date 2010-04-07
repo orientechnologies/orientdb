@@ -23,28 +23,29 @@ import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.query.nativ.ONativeSynchQuery;
 import com.orientechnologies.orient.core.query.nativ.OQueryContextNativeSchema;
-import com.orientechnologies.orient.core.record.impl.ORecordDocument;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 
 public class NativeSynchQuerySpeedTest extends SpeedTestMonoThread {
-	private ODatabaseDocumentTx		database;
-	private List<ORecordDocument>	result;
+	private ODatabaseDocumentTx	database;
+	private List<ODocument>			result;
 
 	public NativeSynchQuerySpeedTest() {
 		super(1);
 	}
 
 	public void cycle() throws UnsupportedEncodingException {
-		result = database.query(
-				new ONativeSynchQuery<ORecordDocument, OQueryContextNativeSchema<ORecordDocument>>("Animal",
-						new OQueryContextNativeSchema<ORecordDocument>()) {
+		result = database
+				.query(
+						new ONativeSynchQuery<ODocument, OQueryContextNativeSchema<ODocument>>("Animal",
+								new OQueryContextNativeSchema<ODocument>()) {
 
-					@Override
-					public boolean filter(OQueryContextNativeSchema<ORecordDocument> iRecord) {
-						return iRecord.column("race").like("Euro%").and().column("race").like("%an").and().column("id").toInt().eq(10).go();
-					}
+							@Override
+							public boolean filter(OQueryContextNativeSchema<ODocument> iRecord) {
+								return iRecord.column("race").like("Euro%").and().column("race").like("%an").and().column("id").toInt().eq(10).go();
+							}
 
-				}).execute();
+						}).execute();
 	}
 
 	public void deinit() throws IOException {

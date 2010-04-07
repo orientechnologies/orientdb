@@ -34,14 +34,14 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
-import com.orientechnologies.orient.core.record.impl.ORecordDocument;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstract {
 	public static final String	NAME	= "ORecordDocument2csv";
 
 	@Override
 	public ORecordSchemaAware<?> newObject(ODatabaseRecord<?> iDatabase, String iClassName) {
-		return new ORecordDocument((ODatabaseDocument) iDatabase, iClassName);
+		return new ODocument((ODatabaseDocument) iDatabase, iClassName);
 	}
 
 	@Override
@@ -52,7 +52,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 	@Override
 	protected String toString(ORecordSchemaAware<?> iRecord, final OUserObject2RecordHandler iObjHandler,
 			final Map<ORecordInternal<?>, ORecordId> iMarshalledRecords) {
-		final ORecordDocument record = (ORecordDocument) iRecord;
+		final ODocument record = (ODocument) iRecord;
 
 		// CHECK IF THE RECORD IS PENDING TO BE MARSHALLED
 		if (iMarshalledRecords.containsKey(iRecord)) {
@@ -156,7 +156,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 				}
 			}
 
-			fieldValue = fieldToStream((ORecordDocument) iRecord, iRecord.getDatabase(), iObjHandler, type, linkedClass, linkedType, f
+			fieldValue = fieldToStream((ODocument) iRecord, iRecord.getDatabase(), iObjHandler, type, linkedClass, linkedType, f
 					.getKey(), f.getValue(), iMarshalledRecords);
 
 			buffer.append(f.getKey());

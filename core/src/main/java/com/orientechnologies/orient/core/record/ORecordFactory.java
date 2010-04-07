@@ -21,7 +21,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
-import com.orientechnologies.orient.core.record.impl.ORecordDocument;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings("unchecked")
 public class ORecordFactory {
@@ -32,8 +32,8 @@ public class ORecordFactory {
 			return null;
 
 		try {
-			if (iClass.equals(ORecordDocument.class))
-				return (T) new ORecordDocument((ODatabaseDocument) iDatabase);
+			if (iClass.equals(ODocument.class))
+				return (T) new ODocument((ODatabaseDocument) iDatabase);
 
 			else if (iClass.equals(ORecordFlat.class))
 				return (T) new ORecordFlat(iDatabase);
@@ -57,8 +57,8 @@ public class ORecordFactory {
 	}
 
 	public static ORecordInternal<?> getRecord(final byte iRecordType) {
-		if (iRecordType == ORecordDocument.RECORD_TYPE)
-			return new ORecordDocument();
+		if (iRecordType == ODocument.RECORD_TYPE)
+			return new ODocument();
 		if (iRecordType == ORecordFlat.RECORD_TYPE)
 			return new ORecordFlat();
 		if (iRecordType == ORecordBytes.RECORD_TYPE)

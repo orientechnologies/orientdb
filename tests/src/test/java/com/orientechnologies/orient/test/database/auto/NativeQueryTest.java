@@ -25,13 +25,13 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.query.nativ.ONativeSynchQuery;
 import com.orientechnologies.orient.core.query.nativ.OQueryContextNativeSchema;
-import com.orientechnologies.orient.core.record.impl.ORecordDocument;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 
 @Test(groups = "query", sequential = true)
 public class NativeQueryTest {
 	private ODatabaseDocument	database;
-	private ORecordDocument		record;
+	private ODocument					record;
 
 	@Parameters(value = "url")
 	public NativeQueryTest(String iURL) {
@@ -42,17 +42,16 @@ public class NativeQueryTest {
 	public void querySchemaAndLike() {
 		database.open("admin", "admin");
 
-		List<ORecordDocument> result = database.query(
+		List<ODocument> result = database.query(
 
-				new ONativeSynchQuery<ORecordDocument, OQueryContextNativeSchema<ORecordDocument>>("Person",
-						new OQueryContextNativeSchema<ORecordDocument>()) {
+		new ONativeSynchQuery<ODocument, OQueryContextNativeSchema<ODocument>>("Person", new OQueryContextNativeSchema<ODocument>()) {
 
-					@Override
-					public boolean filter(OQueryContextNativeSchema<ORecordDocument> iRecord) {
-						return iRecord.field("city").field("name").eq("Rome").and().field("name").like("G%").go();
-					};
+			@Override
+			public boolean filter(OQueryContextNativeSchema<ODocument> iRecord) {
+				return iRecord.field("city").field("name").eq("Rome").and().field("name").like("G%").go();
+			};
 
-				}).execute();
+		}).execute();
 
 		for (int i = 0; i < result.size(); ++i) {
 			record = result.get(i);
@@ -60,7 +59,7 @@ public class NativeQueryTest {
 			OrientTest.printRecord(i, record);
 
 			Assert.assertTrue(record.getClassName().equalsIgnoreCase("Person"));
-			Assert.assertEquals(((ORecordDocument) record.field("city")).field("name"), "Rome");
+			Assert.assertEquals(((ODocument) record.field("city")).field("name"), "Rome");
 			Assert.assertTrue(record.field("name").toString().startsWith("G"));
 		}
 

@@ -22,7 +22,7 @@ import java.util.Map.Entry;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ORecordDocument;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Wrapper of dictionary instance that convert values in records.
@@ -47,9 +47,9 @@ public class ODictionaryWrapper implements ODictionary<Object> {
 	}
 
 	public Object put(final String iKey, final Object iValue) {
-		ORecordDocument record = (ORecordDocument) database.getRecordByUserObject(iValue, false);
+		ODocument record = (ODocument) database.getRecordByUserObject(iValue, false);
 
-		ORecord<?> oldRecord = recordDatabase.getDictionary().put(iKey, (ORecordDocument) record);
+		ORecord<?> oldRecord = recordDatabase.getDictionary().put(iKey, (ODocument) record);
 
 		return database.getUserObjectByRecord(oldRecord);
 	}
@@ -61,7 +61,7 @@ public class ODictionaryWrapper implements ODictionary<Object> {
 	}
 
 	public Iterator<Entry<String, Object>> iterator() {
-		return new ODictionaryIteratorWrapper(recordDatabase, (ODictionaryIterator<ORecordDocument>) recordDatabase.getDictionary()
+		return new ODictionaryIteratorWrapper(recordDatabase, (ODictionaryIterator<ODocument>) recordDatabase.getDictionary()
 				.iterator());
 	}
 

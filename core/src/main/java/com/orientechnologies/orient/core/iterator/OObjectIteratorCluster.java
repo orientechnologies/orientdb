@@ -20,17 +20,17 @@ import java.util.Iterator;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
-import com.orientechnologies.orient.core.record.impl.ORecordDocument;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings("unchecked")
 public class OObjectIteratorCluster<T> implements Iterator<T>, Iterable<T> {
 	private ODatabaseObject													database;
-	private ORecordIteratorCluster<ORecordDocument>	underlying;
+	private ORecordIteratorCluster<ODocument>	underlying;
 
 	public OObjectIteratorCluster(final ODatabaseObject iDatabase, final ODatabaseRecordAbstract iUnderlyingDatabase,
 			final int iClusterId) {
 		database = iDatabase;
-		underlying = new ORecordIteratorCluster<ORecordDocument>((ODatabaseRecord<ORecordDocument>) iDatabase.getUnderlying(),
+		underlying = new ORecordIteratorCluster<ODocument>((ODatabaseRecord<ODocument>) iDatabase.getUnderlying(),
 				iUnderlyingDatabase, iClusterId);
 	}
 
@@ -39,7 +39,7 @@ public class OObjectIteratorCluster<T> implements Iterator<T>, Iterable<T> {
 	}
 
 	public T next() {
-		ORecordDocument record = underlying.next();
+		ODocument record = underlying.next();
 
 		if (record == null)
 			return null;

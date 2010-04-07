@@ -24,7 +24,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.client.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ORecordDocument;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @Test(groups = "dictionary")
 public class TransactionConsistencyTest {
@@ -45,7 +45,7 @@ public class TransactionConsistencyTest {
 
 		// DELETE ALL THE ANIMAL OBJECTS
 		int i = 0;
-		for (ORecordDocument rec : database.browseClass("Animal")) {
+		for (ODocument rec : database.browseClass("Animal")) {
 			rec.delete();
 			i++;
 		}
@@ -61,13 +61,13 @@ public class TransactionConsistencyTest {
 		ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
 		database.open("admin", "admin");
 
-		ORecordDocument record1 = new ORecordDocument(database, "Animal");
+		ODocument record1 = new ODocument(database, "Animal");
 		record1.field("name", "Creation test").save();
 
-		ORecordDocument record2 = new ORecordDocument(database, "Animal");
+		ODocument record2 = new ODocument(database, "Animal");
 		record2.field("name", "Update test").save();
 
-		ORecordDocument record3 = new ORecordDocument(database, "Animal");
+		ODocument record3 = new ODocument(database, "Animal");
 		record3.field("name", "Delete test").save();
 
 		database.close();
@@ -82,10 +82,10 @@ public class TransactionConsistencyTest {
 
 		db1.begin();
 
-		ORecordDocument record1 = db1.newInstance("Animal");
+		ODocument record1 = db1.newInstance("Animal");
 		record1.field("location", "This is the first version").save();
 
-		ORecordDocument record2 = db1.newInstance("Animal");
+		ODocument record2 = db1.newInstance("Animal");
 		record2.field("location", "This is the first version").save();
 
 		db1.commit();

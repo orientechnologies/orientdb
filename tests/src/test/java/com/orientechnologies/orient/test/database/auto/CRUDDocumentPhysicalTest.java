@@ -21,14 +21,14 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.iterator.ORecordIterator;
-import com.orientechnologies.orient.core.record.impl.ORecordDocument;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @Test(groups = { "crud", "record-vobject" }, sequential = true)
 public class CRUDDocumentPhysicalTest {
 	protected static final int	TOT_RECORDS	= 1000;
 	protected long							startRecordNumber;
 	private ODatabaseDocumentTx	database;
-	private ORecordDocument			record;
+	private ODocument						record;
 
 	@Parameters(value = "url")
 	public CRUDDocumentPhysicalTest(String iURL) {
@@ -43,7 +43,7 @@ public class CRUDDocumentPhysicalTest {
 		startRecordNumber = database.countClusterElements("Animal");
 
 		// DELETE ALL THE RECORD IN THE CLUSTER
-		for (ORecordDocument rec : database.browseCluster("Animal"))
+		for (ODocument rec : database.browseCluster("Animal"))
 			rec.delete();
 
 		Assert.assertEquals(database.countClusterElements("Animal"), 0);
@@ -91,8 +91,8 @@ public class CRUDDocumentPhysicalTest {
 
 		// BROWSE IN THE OPPOSITE ORDER
 		int i = 0;
-		ORecordIterator<ORecordDocument> it = database.browseCluster("Animal");
-		for (ORecordDocument rec = it.last().previous(); rec != null; rec = it.previous()) {
+		ORecordIterator<ODocument> it = database.browseCluster("Animal");
+		for (ODocument rec = it.last().previous(); rec != null; rec = it.previous()) {
 
 			Assert.assertTrue((Integer) rec.field("id") == i);
 			Assert.assertEquals(rec.field("name"), "Gipsy");
@@ -117,7 +117,7 @@ public class CRUDDocumentPhysicalTest {
 		record.reset();
 
 		int i = 0;
-		for (ORecordDocument rec : database.browseCluster("Animal")) {
+		for (ODocument rec : database.browseCluster("Animal")) {
 
 			if (i % 2 == 0)
 				rec.field("location", "Spain");
@@ -137,7 +137,7 @@ public class CRUDDocumentPhysicalTest {
 		database.open("admin", "admin");
 
 		int i = 0;
-		for (ORecordDocument rec : database.browseCluster("Animal")) {
+		for (ODocument rec : database.browseCluster("Animal")) {
 
 			if (i % 2 == 0)
 				Assert.assertEquals(rec.field("location"), "Spain");

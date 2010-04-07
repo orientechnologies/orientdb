@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ORecordDocument;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings("unchecked")
 public class OObjectSerializerHelper {
@@ -83,7 +83,7 @@ public class OObjectSerializerHelper {
 		}
 	}
 
-	public static Object fromStream(final ORecordDocument iRecord, final Object iPojo, final OEntityManager iEntityManager,
+	public static Object fromStream(final ODocument iRecord, final Object iPojo, final OEntityManager iEntityManager,
 			final OUserObject2RecordHandler iObj2RecHandler) {
 		long timer = OProfiler.getInstance().startChrono();
 
@@ -94,7 +94,7 @@ public class OObjectSerializerHelper {
 		for (Field f : c.getDeclaredFields()) {
 			fieldValue = iRecord.field(f.getName());
 
-			if (fieldValue instanceof ORecordDocument && !OType.isSimpleType(f.getClass())) {
+			if (fieldValue instanceof ODocument && !OType.isSimpleType(f.getClass())) {
 				fieldClass = iEntityManager.getEntityClass(f.getType().getSimpleName());
 				if (fieldClass != null) {
 					// RECOGNIZED TYPE
@@ -119,7 +119,7 @@ public class OObjectSerializerHelper {
 	 *          Record where to update
 	 * @param iObj2RecHandler
 	 */
-	public static ORecordDocument toStream(final Object iPojo, final ORecordDocument iRecord, final OEntityManager iEntityManager,
+	public static ODocument toStream(final Object iPojo, final ODocument iRecord, final OEntityManager iEntityManager,
 			final OClass schemaClass, final OUserObject2RecordHandler iObj2RecHandler) {
 		long timer = OProfiler.getInstance().startChrono();
 

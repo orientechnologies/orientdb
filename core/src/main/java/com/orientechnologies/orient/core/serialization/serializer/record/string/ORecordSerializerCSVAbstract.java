@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
-import com.orientechnologies.orient.core.record.impl.ORecordDocument;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelper;
 
 @SuppressWarnings("unchecked")
@@ -61,7 +61,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			if (iLinkedClass != null)
 				// EMBEDDED OBJECTS
 				for (String item : items) {
-					coll.add(fromString(iDatabase, item, new ORecordDocument((ODatabaseDocument) iDatabase, iLinkedClass.getName())));
+					coll.add(fromString(iDatabase, item, new ODocument((ODatabaseDocument) iDatabase, iLinkedClass.getName())));
 				}
 			else {
 				if (iLinkedType == null)
@@ -100,7 +100,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					}
 				}
 
-				coll.add(new ORecordDocument(iDatabase, iLinkedClass != null ? iLinkedClass.getName() : null, new ORecordId(item)));
+				coll.add(new ODocument(iDatabase, iLinkedClass != null ? iLinkedClass.getName() : null, new ORecordId(item)));
 			}
 
 			return coll;
@@ -117,21 +117,21 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				throw new IllegalArgumentException("Linked class not specified in ORID field: " + iValue);
 
 			ORecordId recId = new ORecordId(iValue.substring(pos + 1));
-			return new ORecordDocument(iDatabase, iLinkedClass.getName(), recId);
+			return new ODocument(iDatabase, iLinkedClass.getName(), recId);
 
 		default:
 			return fieldTypeFromStream(iType, iValue);
 		}
 	}
 
-	public String fieldToStream(final ORecordDocument iRecord, final ODatabaseRecord iDatabase,
+	public String fieldToStream(final ODocument iRecord, final ODatabaseRecord iDatabase,
 			final OUserObject2RecordHandler iObjHandler, final OType iType, final OClass iLinkedClass, final OType iLinkedType,
 			final String iName, final Object iValue, final Map<ORecordInternal<?>, ORecordId> iMarshalledRecords) {
 		StringBuilder buffer = new StringBuilder();
 
 		switch (iType) {
 		case EMBEDDED:
-			buffer.append(toString((ORecordDocument) iValue, iObjHandler, iMarshalledRecords));
+			buffer.append(toString((ODocument) iValue, iObjHandler, iMarshalledRecords));
 			break;
 
 		case LINK: {
@@ -146,16 +146,16 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			int items = 0;
 			if (iLinkedClass != null) {
 				// EMBEDDED OBJECTS
-				ORecordDocument record;
+				ODocument record;
 				for (Object o : (Collection<?>) iValue) {
 					if (items > 0)
 						buffer.append(RECORD_SEPARATOR);
 
 					if (o != null) {
-						if (o instanceof ORecordDocument)
-							record = (ORecordDocument) o;
+						if (o instanceof ODocument)
+							record = (ODocument) o;
 						else
-							record = OObjectSerializerHelper.toStream(o, new ORecordDocument(o.getClass().getSimpleName()),
+							record = OObjectSerializerHelper.toStream(o, new ODocument(o.getClass().getSimpleName()),
 									iDatabase instanceof ODatabaseObjectTx ? ((ODatabaseObjectTx) iDatabase).getEntityManager()
 											: OEntityManagerInternal.INSTANCE, iLinkedClass, iObjHandler != null ? iObjHandler
 											: new OUserObject2RecordHandler() {
@@ -165,7 +165,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 												}
 
 												public ORecord<?> getRecordByUserObject(Object iPojo, boolean iIsMandatory) {
-													return new ORecordDocument(iLinkedClass);
+													return new ODocument(iLinkedClass);
 												}
 											});
 

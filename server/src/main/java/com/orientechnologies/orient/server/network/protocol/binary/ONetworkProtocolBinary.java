@@ -37,7 +37,7 @@ import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.query.sql.OSQLSynchQuery;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
-import com.orientechnologies.orient.core.record.impl.ORecordDocument;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -249,7 +249,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 					}
 				});
 
-				connection.database.query((OQuery<ORecordDocument>) query).execute(limit);
+				connection.database.query((OQuery<ODocument>) query).execute(limit);
 
 				if (empty.length() == 0)
 					try {
@@ -263,9 +263,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			case OChannelBinaryProtocol.QUERY_FIRST: {
 				String queryText = channel.readString();
 
-				OSQLSynchQuery<ORecordDocument> query = new OSQLSynchQuery<ORecordDocument>(queryText);
+				OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(queryText);
 
-				query.setRecord(new ORecordDocument());
+				query.setRecord(new ODocument());
 				query.setDatabase(connection.database);
 
 				// SET THE CONFIGURATION BEFORE TO EXECUTE THE QUERY
@@ -290,7 +290,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			case OChannelBinaryProtocol.DICTIONARY_PUT: {
 				String key = channel.readString();
-				ORecordDocument value = new ORecordDocument(connection.database, new ORecordId(channel.readString()));
+				ODocument value = new ODocument(connection.database, new ORecordId(channel.readString()));
 
 				value = connection.database.getDictionary().put(key, value);
 

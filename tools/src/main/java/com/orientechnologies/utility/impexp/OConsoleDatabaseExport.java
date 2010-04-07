@@ -29,10 +29,10 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
-import com.orientechnologies.orient.core.record.impl.ORecordDocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.utility.console.OCommandListener;
 
@@ -95,10 +95,10 @@ public class OConsoleDatabaseExport {
 		listener.onMessage("\nExporting dictionary...");
 
 		writer.beginObject(1, true, "dictionary");
-		ODictionary<ORecordDocument> d = database.getDictionary();
+		ODictionary<ODocument> d = database.getDictionary();
 		if (d != null) {
-			Entry<String, ORecordDocument> entry;
-			for (Iterator<Entry<String, ORecordDocument>> iterator = d.iterator(); iterator.hasNext();) {
+			Entry<String, ODocument> entry;
+			for (Iterator<Entry<String, ODocument>> iterator = d.iterator(); iterator.hasNext();) {
 				entry = iterator.next();
 				writer.writeAttribute(2, true, "key", entry.getKey());
 				writer.writeAttribute(0, false, "value", OJSONWriter.writeValue(entry.getValue()));
@@ -194,8 +194,8 @@ public class OConsoleDatabaseExport {
 		if (rec.getIdentity().isValid())
 			rec.load();
 
-		if (rec instanceof ORecordDocument) {
-			ORecordDocument vobj = (ORecordDocument) rec;
+		if (rec instanceof ODocument) {
+			ODocument vobj = (ODocument) rec;
 
 			writer.writeAttribute(0, false, "type", "v");
 

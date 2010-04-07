@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
-import com.orientechnologies.orient.core.record.impl.ORecordDocument;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 
 public class ORecordSerializerDocument2Binary implements ORecordSerializer {
@@ -42,7 +42,7 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
 
 	protected ORecordSchemaAware<?> newObject(ODatabaseRecord<?> iDatabase, String iClassName) throws InstantiationException,
 			IllegalAccessException {
-		return new ORecordDocument((ODatabaseDocument) iDatabase);
+		return new ODocument((ODatabaseDocument) iDatabase);
 	}
 
 	public ORecordInternal<?> fromStream(ODatabaseRecord<?> iDatabase, byte[] iSource) {
@@ -51,11 +51,11 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
 	}
 
 	public ORecordInternal<?> fromStream(ODatabaseRecord<?> iDatabase, byte[] iSource, ORecordInternal<?> iRecord) {
-		ORecordDocument record = (ORecordDocument) iRecord;
+		ODocument record = (ODocument) iRecord;
 		ODatabaseDocument database = (ODatabaseDocument) iDatabase;
 
 		if (iRecord == null)
-			record = new ORecordDocument(database);
+			record = new ODocument(database);
 
 		ByteArrayInputStream stream = null;
 		ObjectInput in = null;
@@ -99,7 +99,7 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
 						// != NULL
 						buffer = new byte[length];
 						in.read(buffer);
-						value = new ORecordDocument(database, p.getLinkedClass().getName()).fromStream(buffer);
+						value = new ODocument(database, p.getLinkedClass().getName()).fromStream(buffer);
 					}
 					break;
 				case EMBEDDEDLIST:
@@ -149,7 +149,7 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
 	}
 
 	public byte[] toStream(ODatabaseRecord<?> iDatabase, ORecordInternal<?> iRecord) {
-		ORecordDocument record = (ORecordDocument) iRecord;
+		ODocument record = (ODocument) iRecord;
 
 		ByteArrayOutputStream stream = null;
 		ObjectOutput out = null;

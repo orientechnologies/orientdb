@@ -24,10 +24,10 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.query.OAsynchQueryResultListener;
 import com.orientechnologies.orient.core.query.sql.OSQLSynchQuery;
-import com.orientechnologies.orient.core.record.impl.ORecordDocument;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 
-public class SQLSynchQuerySpeedTest extends SpeedTestMonoThread implements OAsynchQueryResultListener<ORecordDocument> {
+public class SQLSynchQuerySpeedTest extends SpeedTestMonoThread implements OAsynchQueryResultListener<ODocument> {
 	protected int								resultCount	= 0;
 	private ODatabaseDocumentTx	database;
 
@@ -39,14 +39,14 @@ public class SQLSynchQuerySpeedTest extends SpeedTestMonoThread implements OAsyn
 
 	public void cycle() throws UnsupportedEncodingException {
 		System.out.println("1 ----------------------");
-		List<ORecordDocument> result = database.query(
-				new OSQLSynchQuery<ORecordDocument>("select * from animal where id = 10 and name like 'G%'")).execute();
+		List<ODocument> result = database.query(
+				new OSQLSynchQuery<ODocument>("select * from animal where id = 10 and name like 'G%'")).execute();
 
 		OrientTest.printRecords(result);
 
 		System.out.println("2 ----------------------");
 		result = database.query(
-				new OSQLSynchQuery<ORecordDocument>("select * from animal where column(0) < 5 or column(0) >= 3 and column(5) < 7"))
+				new OSQLSynchQuery<ODocument>("select * from animal where column(0) < 5 or column(0) >= 3 and column(5) < 7"))
 				.execute();
 
 		OrientTest.printRecords(result);
@@ -57,7 +57,7 @@ public class SQLSynchQuerySpeedTest extends SpeedTestMonoThread implements OAsyn
 		 */
 	}
 
-	public boolean result(ORecordDocument iRecord) {
+	public boolean result(ODocument iRecord) {
 		OrientTest.printRecord(resultCount++, iRecord);
 		return true;
 	}

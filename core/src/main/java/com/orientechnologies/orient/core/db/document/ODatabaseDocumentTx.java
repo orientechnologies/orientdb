@@ -23,43 +23,43 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorMultiCluster;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
-import com.orientechnologies.orient.core.record.impl.ORecordDocument;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabaseRecordTx<ORecordDocument>, ORecordDocument> implements
+public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabaseRecordTx<ODocument>, ODocument> implements
 		ODatabaseDocument {
 
 	public ODatabaseDocumentTx(final String iURL) {
-		super(new ODatabaseRecordTx<ORecordDocument>(iURL, ORecordDocument.class));
+		super(new ODatabaseRecordTx<ODocument>(iURL, ODocument.class));
 	}
 
 	@Override
-	public ORecordDocument newInstance() {
-		return new ORecordDocument(this);
+	public ODocument newInstance() {
+		return new ODocument(this);
 	}
 
-	public ORecordDocument newInstance(final String iClassName) {
+	public ODocument newInstance(final String iClassName) {
 		checkSecurity(OUser.CLASS + "." + iClassName, OUser.CREATE);
 
-		return new ORecordDocument(this, iClassName);
+		return new ODocument(this, iClassName);
 	}
 
-	public ORecordIteratorMultiCluster<ORecordDocument> browseClass(final String iClassName) {
+	public ORecordIteratorMultiCluster<ODocument> browseClass(final String iClassName) {
 		checkSecurity(OUser.CLASS + "." + iClassName, OUser.READ);
 
-		return new ORecordIteratorMultiCluster<ORecordDocument>(this, underlying, getMetadata().getSchema().getClass(iClassName)
+		return new ORecordIteratorMultiCluster<ODocument>(this, underlying, getMetadata().getSchema().getClass(iClassName)
 				.getClusterIds());
 	}
 
-	public ORecordIteratorCluster<ORecordDocument> browseCluster(final String iClusterName) {
+	public ORecordIteratorCluster<ODocument> browseCluster(final String iClusterName) {
 		checkSecurity(OUser.CLUSTER + "." + iClusterName, OUser.READ);
 
-		return new ORecordIteratorCluster<ORecordDocument>(this, underlying, getClusterIdByName(iClusterName));
+		return new ORecordIteratorCluster<ODocument>(this, underlying, getClusterIdByName(iClusterName));
 	}
 
 	/**
 	 * If the record is new and a class was specified, the configured cluster id will be used to store the class.
 	 */
-	public ODatabaseDocumentTx save(final ORecordDocument iContent) {
+	public ODatabaseDocumentTx save(final ODocument iContent) {
 		try {
 			if (!iContent.getIdentity().isValid()) {
 				// NEW RECORD
@@ -96,7 +96,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 	 * 
 	 * @see ORecordSchemaAware#validate()
 	 */
-	public ODatabaseDocumentTx save(final ORecordDocument iContent, String iClusterName) {
+	public ODatabaseDocumentTx save(final ODocument iContent, String iClusterName) {
 		if (!iContent.getIdentity().isValid()) {
 			if (iClusterName == null && iContent.getSchemaClass() != null)
 				// FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
@@ -124,7 +124,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 		return this;
 	}
 
-	public ODatabaseDocumentTx delete(final ORecordDocument iContent) {
+	public ODatabaseDocumentTx delete(final ODocument iContent) {
 		// CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
 		if (iContent.getClassName() != null)
 			checkSecurity(OUser.CLASS + "." + iContent.getClassName(), OUser.DELETE);

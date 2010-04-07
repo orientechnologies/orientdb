@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.query.sql.OSQLSynchQuery;
-import com.orientechnologies.orient.core.record.impl.ORecordDocument;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @Test(groups = "query", sequential = true)
 public class WrongQueryTest {
@@ -40,7 +40,7 @@ public class WrongQueryTest {
 
 	@Test(dependsOnMethods = "queryOpen", expectedExceptions = OQueryParsingException.class)
 	public void queryFieldOperatorNotSupported() {
-		database.query(new OSQLSynchQuery<ORecordDocument>("select * from Animal where name.not() like 'G%'")).execute();
+		database.query(new OSQLSynchQuery<ODocument>("select * from Animal where name.not() like 'G%'")).execute();
 	}
 
 	@Test(dependsOnMethods = "queryFieldOperatorNotSupported")

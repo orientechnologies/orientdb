@@ -20,14 +20,14 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OValidationException;
-import com.orientechnologies.orient.core.record.impl.ORecordDocument;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @Test(groups = { "crud", "record-vobject" }, sequential = true)
 public class CRUDDocumentValidationTest {
 	protected static final int	TOT_RECORDS	= 1000;
 	protected long							startRecordNumber;
 	private ODatabaseDocumentTx	database;
-	private ORecordDocument			record;
+	private ODocument						record;
 
 	@Parameters(value = "url")
 	public CRUDDocumentValidationTest(String iURL) {

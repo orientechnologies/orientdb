@@ -25,14 +25,14 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ORecordDocument;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @Test(groups = { "crud", "record-vobject" }, sequential = true)
 @SuppressWarnings("unchecked")
 public class CRUDDocumentLogicalTest {
 
 	private ODatabaseDocument	database;
-	private ORecordDocument		record;
+	private ODocument					record;
 
 	protected long						startRecordNumber;
 
@@ -51,9 +51,9 @@ public class CRUDDocumentLogicalTest {
 		record.setClassName("AnimalType");
 		record.field("name", "Cat");
 
-		Set<ORecordDocument> races = new HashSet<ORecordDocument>();
-		races.add((ORecordDocument) database.newInstance("AnimalRace").field("name", "European"));
-		races.add((ORecordDocument) database.newInstance("AnimalRace").field("name", "Siamese"));
+		Set<ODocument> races = new HashSet<ODocument>();
+		races.add((ODocument) database.newInstance("AnimalRace").field("name", "European"));
+		races.add((ODocument) database.newInstance("AnimalRace").field("name", "Siamese"));
 		record.field("races", races);
 
 		record.save();
@@ -78,7 +78,7 @@ public class CRUDDocumentLogicalTest {
 		record = database.browseClass("AnimalType").last().previous();
 
 		Assert.assertEquals(record.field("name"), "Cat");
-		Assert.assertTrue(((List<ORecordDocument>) record.field("races")).size() == 2);
+		Assert.assertTrue(((List<ODocument>) record.field("races")).size() == 2);
 
 		database.close();
 	}
@@ -91,8 +91,8 @@ public class CRUDDocumentLogicalTest {
 
 		record = database.browseClass("AnimalType").last().previous();
 
-		List<ORecordDocument> races = record.field("races");
-		races.add((ORecordDocument) database.newInstance("AnimalRace").field("name", "Egyptian"));
+		List<ODocument> races = record.field("races");
+		races.add((ODocument) database.newInstance("AnimalRace").field("name", "Egyptian"));
 		record.setDirty();
 
 		record.save();
@@ -109,7 +109,7 @@ public class CRUDDocumentLogicalTest {
 		record = database.browseClass("AnimalType").last().previous();
 
 		Assert.assertEquals(record.field("name"), "Cat");
-		Assert.assertTrue(((List<ORecordDocument>) record.field("races")).size() == 3);
+		Assert.assertTrue(((List<ODocument>) record.field("races")).size() == 3);
 
 		database.close();
 	}

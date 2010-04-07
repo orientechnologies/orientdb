@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.ORecordVirtualAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
@@ -37,53 +36,53 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
  * population and serialization occurs always in lazy way.
  */
 @SuppressWarnings("unchecked")
-public class ORecordDocument extends ORecordVirtualAbstract<Object> implements Iterable<Entry<String, Object>> {
+public class ODocument extends ORecordVirtualAbstract<Object> implements Iterable<Entry<String, Object>> {
 
-	public static final byte	RECORD_TYPE	= 'v';
+	public static final byte	RECORD_TYPE	= 'd';
 
-	public ORecordDocument() {
+	public ODocument() {
 		setup();
 	}
 
-	public ORecordDocument(byte[] iSource) {
+	public ODocument(byte[] iSource) {
 		super(iSource);
 		setup();
 	}
 
-	public ORecordDocument(String iClassName) {
+	public ODocument(String iClassName) {
 		setup();
 		setClassName(iClassName);
 	}
 
-	public ORecordDocument(ODatabaseRecord<?> iDatabase) {
+	public ODocument(ODatabaseRecord<?> iDatabase) {
 		super(iDatabase);
 		setup();
 	}
 
-	public ORecordDocument(ODatabaseRecord<?> iDatabase, ORID iRID) {
+	public ODocument(ODatabaseRecord<?> iDatabase, ORID iRID) {
 		this(iDatabase);
 		recordId = (ORecordId) iRID;
 		status = STATUS.NOT_LOADED;
 	}
 
-	public ORecordDocument(ODatabaseRecord<?> iDatabase, String iClassName, ORID iRID) {
+	public ODocument(ODatabaseRecord<?> iDatabase, String iClassName, ORID iRID) {
 		this(iDatabase, iClassName);
 		recordId = (ORecordId) iRID;
 		status = STATUS.NOT_LOADED;
 	}
 
-	public ORecordDocument(ODatabaseRecord<?> iDatabase, String iClassName) {
+	public ODocument(ODatabaseRecord<?> iDatabase, String iClassName) {
 		super(iDatabase, iClassName);
 		setup();
 	}
 
-	public ORecordDocument(OClass iLinkedClass) {
+	public ODocument(OClass iLinkedClass) {
 		setup();
 		clazz = iLinkedClass;
 	}
 
-	public ORecordDocument copy() {
-		ORecordDocument cloned = new ORecordDocument();
+	public ODocument copy() {
+		ODocument cloned = new ODocument();
 		cloned.source = source;
 		cloned.database = database;
 		cloned.recordId = recordId.copy();
@@ -134,7 +133,7 @@ public class ORecordDocument extends ORecordVirtualAbstract<Object> implements I
 	}
 
 	@Override
-	public ORecordDocument fromStream(byte[] iRecordBuffer) {
+	public ODocument fromStream(byte[] iRecordBuffer) {
 		super.fromStream(iRecordBuffer);
 		deserializeFields();
 		return this;
@@ -165,11 +164,11 @@ public class ORecordDocument extends ORecordVirtualAbstract<Object> implements I
 			String fieldName = iPropertyName.substring(0, separatorPos);
 			Object linkedObject = fields.get(fieldName);
 
-			if (linkedObject == null || !(linkedObject instanceof ORecordDocument))
+			if (linkedObject == null || !(linkedObject instanceof ODocument))
 				// IGNORE IT BY RETURNING NULL
 				return null;
 
-			ORecordDocument linkedRecord = (ORecordDocument) linkedObject;
+			ODocument linkedRecord = (ODocument) linkedObject;
 			if (linkedRecord.getStatus() == STATUS.NOT_LOADED)
 				linkedRecord.load();
 
@@ -210,7 +209,7 @@ public class ORecordDocument extends ORecordVirtualAbstract<Object> implements I
 			record.load();
 	}
 
-	public ORecordSchemaAware<Object> field(String iPropertyName, Object iPropertyValue) {
+	public ODocument field(String iPropertyName, Object iPropertyValue) {
 		checkForFields();
 		if (clazz != null) {
 			OProperty prop = clazz.getProperty(iPropertyName);

@@ -22,14 +22,14 @@ import org.testng.annotations.Test;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ORecordDocument;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 
 @Test(enabled = false)
 public class LocalCreateDocumentSpeedTest extends OrientMonoThreadTest {
 	private ODatabaseDocument	database;
-	private ORecordDocument		record;
+	private ODocument					record;
 
 	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
 		LocalCreateDocumentSpeedTest test = new LocalCreateDocumentSpeedTest();

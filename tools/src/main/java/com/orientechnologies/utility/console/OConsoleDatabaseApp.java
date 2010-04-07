@@ -33,18 +33,18 @@ import com.orientechnologies.orient.core.query.OAsynchQueryResultListener;
 import com.orientechnologies.orient.core.query.sql.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
-import com.orientechnologies.orient.core.record.impl.ORecordDocument;
 import com.orientechnologies.utility.impexp.OConsoleDatabaseExport;
 import com.orientechnologies.utility.impexp.ODatabaseExportException;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandListener {
-	protected ODatabaseDocument			currentDatabase;
-	protected String								currentDatabaseName;
-	protected ORecordInternal<?>		currentRecord;
-	protected List<ORecordDocument>	currentResultSet;
+	protected ODatabaseDocument		currentDatabase;
+	protected String							currentDatabaseName;
+	protected ORecordInternal<?>	currentRecord;
+	protected List<ODocument>			currentResultSet;
 
-	private static final int				RESULTSET_LIMIT	= 20;
+	private static final int			RESULTSET_LIMIT	= 20;
 
 	public static void main(String[] args) {
 		new OConsoleDatabaseApp(args);
@@ -145,13 +145,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 
 		iQuery = "select " + iQuery;
 
-		currentResultSet = new ArrayList<ORecordDocument>();
+		currentResultSet = new ArrayList<ODocument>();
 
 		final List<String> columns = new ArrayList<String>();
 
 		long start = System.currentTimeMillis();
-		currentDatabase.query(new OSQLAsynchQuery<ORecordDocument>(iQuery, new OAsynchQueryResultListener<ORecordDocument>() {
-			public boolean result(final ORecordDocument iRecord) {
+		currentDatabase.query(new OSQLAsynchQuery<ODocument>(iQuery, new OAsynchQueryResultListener<ODocument>() {
+			public boolean result(final ODocument iRecord) {
 				if (currentResultSet.size() > RESULTSET_LIMIT) {
 					printHeaderLine(columns);
 					out.println("\nResultset contains more items not displayed (max=" + RESULTSET_LIMIT + ")");
@@ -298,7 +298,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		if (currentRecord == null)
 			out.println("Error: record with id '" + iRecordId + "' was not found in database");
 		else {
-			currentDatabase.getDictionary().put(iKey, (ORecordDocument) currentRecord);
+			currentDatabase.getDictionary().put(iKey, (ODocument) currentRecord);
 			displayRecord(null);
 			out.println("The entry " + iKey + "=" + iRecordId + " has been inserted in the database dictionary");
 		}
@@ -345,7 +345,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 			throw new OException("The is no current object selected: create a new one or load it");
 	}
 
-	protected void dumpRecordInTable(final int iIndex, final ORecordDocument iRecord, final List<String> iColumns) {
+	protected void dumpRecordInTable(final int iIndex, final ODocument iRecord, final List<String> iColumns) {
 		// CHECK IF HAVE TO ADD NEW COLUMN (BECAUSE IT CAN BE SCHEMA-LESS)
 		for (String fieldName : iRecord.fields()) {
 			boolean foundCol = false;
@@ -406,8 +406,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 	}
 
 	private void dumpRecordDetails() {
-		if (currentRecord instanceof ORecordDocument) {
-			ORecordDocument rec = (ORecordDocument) currentRecord;
+		if (currentRecord instanceof ODocument) {
+			ODocument rec = (ODocument) currentRecord;
 			out.println("--------------------------------------------------");
 			out.printf("VObject - Class: %s   id: %s   v.%d\n", rec.getClassName(), rec.getIdentity().toString(), rec.getVersion());
 			out.println("--------------------------------------------------");

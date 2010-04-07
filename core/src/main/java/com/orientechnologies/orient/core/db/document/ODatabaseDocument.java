@@ -18,10 +18,10 @@ package com.orientechnologies.orient.core.db.document;
 import com.orientechnologies.orient.core.db.ODatabaseSchemaAware;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorMultiCluster;
-import com.orientechnologies.orient.core.record.impl.ORecordDocument;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public interface ODatabaseDocument extends ODatabaseRecord<ORecordDocument>, ODatabaseSchemaAware<ORecordDocument> {
+public interface ODatabaseDocument extends ODatabaseRecord<ODocument>, ODatabaseSchemaAware<ODocument> {
 	
-	public ORecordIteratorMultiCluster<ORecordDocument> browseClass(String iClassName);
+	public ORecordIteratorMultiCluster<ODocument> browseClass(String iClassName);
 	
 }

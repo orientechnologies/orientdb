@@ -24,7 +24,7 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.query.sql.OSQLSynchQuery;
-import com.orientechnologies.orient.core.record.impl.ORecordDocument;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.test.domain.business.City;
 import com.orientechnologies.orient.test.domain.business.Person;
 
@@ -87,11 +87,10 @@ public class ObjectTreeTest {
 
 	@Test(dependsOnMethods = "testSaveCircularLink")
 	public void testQueryCircular() {
-		List<ORecordDocument> result = database.getUnderlying().query(new OSQLSynchQuery<ORecordDocument>("select * from Person"))
-				.execute();
+		List<ODocument> result = database.getUnderlying().query(new OSQLSynchQuery<ODocument>("select * from Person")).execute();
 
-		ORecordDocument parent;
-		for (ORecordDocument r : result) {
+		ODocument parent;
+		for (ODocument r : result) {
 
 			System.out.println(r.field("name") + " " + r.field("surname"));
 
@@ -118,14 +117,14 @@ public class ObjectTreeTest {
 	public void testQueryMultiCircular() {
 		Assert.assertEquals(database.countClusterElements("Person"), startRecordNumber + 3);
 
-		List<ORecordDocument> result = database.getUnderlying().query(
-				new OSQLSynchQuery<ORecordDocument>("select * from Person where name = 'Barack' and surname = 'Obama'")).execute();
+		List<ODocument> result = database.getUnderlying().query(
+				new OSQLSynchQuery<ODocument>("select * from Person where name = 'Barack' and surname = 'Obama'")).execute();
 
 		Assert.assertEquals(result.size(), 1);
 
-		ORecordDocument parent;
-		List<ORecordDocument> children;
-		for (ORecordDocument r : result) {
+		ODocument parent;
+		List<ODocument> children;
+		for (ODocument r : result) {
 
 			System.out.println(r.field("name") + " " + r.field("surname"));
 
@@ -137,8 +136,8 @@ public class ObjectTreeTest {
 			children = r.field("children");
 
 			if (children != null) {
-				for (ORecordDocument c : children) {
-					parent = (ORecordDocument) c.field("parent");
+				for (ODocument c : children) {
+					parent = (ODocument) c.field("parent");
 
 					Assert.assertEquals(r, parent);
 
