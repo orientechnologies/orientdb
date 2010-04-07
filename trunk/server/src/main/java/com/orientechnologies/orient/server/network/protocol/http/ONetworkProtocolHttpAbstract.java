@@ -106,7 +106,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocolDatab
 		channel.flush();
 	}
 
-	protected void sendBinaryContent(final int iCode, final String iReason, final String iContentType, final InputStream iContent) throws IOException {
+	protected void sendBinaryContent(final int iCode, final String iReason, final String iContentType, final InputStream iContent)
+			throws IOException {
 		sendStatus(iCode, iReason);
 		sendResponseHeaders(iContentType);
 		writeLine(null);
@@ -207,14 +208,17 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocolDatab
 			char c = (char) channel.inStream.read();
 
 			if (channel.inStream.available() == 0) {
-				connectionClosed();
+				// connectionClosed();
 				return;
 			}
 
 			timer = OProfiler.getInstance().startChrono();
 
 			request.setLength(0);
-			request.append(c);
+
+			if (c != '\n')
+				// AVOID INITIAL /N
+				request.append(c);
 
 			while (!channel.socket.isInputShutdown()) {
 				c = (char) channel.inStream.read();
