@@ -30,6 +30,13 @@
 This document enlist the last changes to the Orient Database project.
 
 -------------------------------------------------------------------------------
+VERSION 0.9.4 (beta) - beta (April, 8th 2010)
+-------------------------------------------------------------------------------
+- Fixed bug on Key/Value Server in HTTP protocol parsing
+- New benchmarks folder to test performance of the Key/Value Server
+- Renamed many classes to the final names
+
+-------------------------------------------------------------------------------
 VERSION 0.9.3 (beta) - beta (April, 6th 2010)
 -------------------------------------------------------------------------------
 - Added new console commands:
