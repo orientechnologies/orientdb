@@ -109,6 +109,8 @@ public class OQueryItemField implements OQueryItemValue {
 				} else if (operator == OQueryItemFieldOperator.SUBSTRING.id)
 					result = result != null ? result.toString().substring(Integer.parseInt(op.value[0]), Integer.parseInt(op.value[1]))
 							: null;
+				else if (operator == OQueryItemFieldOperator.FORMAT.id)
+					result = result != null ? String.format(op.value[0], result) : null;
 				else if (operator == OQueryItemFieldOperator.LEFT.id)
 					result = result != null ? result.toString().substring(0, Integer.parseInt(op.value[0])) : null;
 				else if (operator == OQueryItemFieldOperator.RIGHT.id)
