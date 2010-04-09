@@ -150,7 +150,7 @@ public class ConsoleApplication {
 
 				syntaxError(cmd.toString(), m);
 			} catch (Exception e) {
-				e.printStackTrace();
+				//e.printStackTrace();
 
 				err.println();
 				if (e.getCause() != null)
@@ -192,9 +192,11 @@ public class ConsoleApplication {
 					continue;
 				}
 			} else if (c == separator && stringBeginChar == ' ') {
-				// SEPARATOR (OUTSIDE A STRING): PUSH
-				fields.add(buffer.toString());
-				buffer.setLength(0);
+				if (buffer.length() > 0) {
+					// SEPARATOR (OUTSIDE A STRING): PUSH
+					fields.add(buffer.toString());
+					buffer.setLength(0);
+				}
 				continue;
 			}
 

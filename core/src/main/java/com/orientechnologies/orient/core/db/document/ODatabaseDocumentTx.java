@@ -44,6 +44,9 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 	}
 
 	public ORecordIteratorMultiCluster<ODocument> browseClass(final String iClassName) {
+		if (getMetadata().getSchema().getClass(iClassName) == null)
+			throw new IllegalArgumentException("Class '" + iClassName + "' not found in current database");
+
 		checkSecurity(OUser.CLASS + "." + iClassName, OUser.READ);
 
 		return new ORecordIteratorMultiCluster<ODocument>(this, underlying, getMetadata().getSchema().getClass(iClassName)

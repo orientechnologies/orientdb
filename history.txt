@@ -30,6 +30,15 @@
 This document enlist the last changes to the Orient Database project.
 
 -------------------------------------------------------------------------------
+VERSION 0.9.5 (beta) - beta (April, 9th 2010)
+-------------------------------------------------------------------------------
+- Improved the speed of Key/Value Server +35%
+- New console commands: get, set, properties, browse class, browse cluster,
+                        export record
+- The console now is able to display any kind of record
+- New method ODocument.toJSON() that export in JSON format
+
+-------------------------------------------------------------------------------
 VERSION 0.9.4 (beta) - beta (April, 8th 2010)
 -------------------------------------------------------------------------------
 - Fixed bug on Key/Value Server in HTTP protocol parsing

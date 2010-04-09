@@ -16,6 +16,7 @@
 package com.orientechnologies.utility.console;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -29,13 +30,16 @@ import com.orientechnologies.orient.client.admin.OServerAdmin;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.iterator.ORecordIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.query.OAsynchQueryResultListener;
 import com.orientechnologies.orient.core.query.sql.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.record.ORecordSchemaAwareAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
@@ -44,10 +48,10 @@ import com.orientechnologies.utility.impexp.OConsoleDatabaseExport;
 import com.orientechnologies.utility.impexp.ODatabaseExportException;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandListener {
-	protected ODatabaseDocument		currentDatabase;
-	protected String							currentDatabaseName;
-	protected ORecordInternal<?>	currentRecord;
-	protected List<ODocument>			currentResultSet;
+	protected ODatabaseDocument					currentDatabase;
+	protected String										currentDatabaseName;
+	protected ORecordInternal<?>				currentRecord;
+	protected List<ORecordInternal<?>>	currentResultSet;
 
 	public static void main(String[] args) {
 		new OConsoleDatabaseApp(args);
@@ -60,6 +64,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 	@Override
 	protected void onBefore() {
 		super.onBefore();
+
+		currentResultSet = new ArrayList<ORecordInternal<?>>();
+
 		properties.put("limit", "20");
 	}
 
@@ -154,7 +161,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 
 		iQuery = "select " + iQuery;
 
-		currentResultSet = new ArrayList<ODocument>();
+		currentResultSet.clear();
 
 		final List<String> columns = new ArrayList<String>();
 
@@ -181,7 +188,37 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 
 		out.println(currentResultSet.size() + " item(s) found. Query executed in " + (float) (System.currentTimeMillis() - start)
 				/ 1000 + " sec(s).");
+	}
 
+	@ConsoleCommand(description = "Browse all the records of a class")
+	public void browseClass(@ConsoleParameter(name = "class-name", description = "The name of the class") final String iClassName) {
+		checkCurrentDatabase();
+
+		currentResultSet.clear();
+
+		final List<String> columns = new ArrayList<String>();
+
+		final int limit = Integer.parseInt((String) properties.get("limit"));
+
+		ORecordIterator<?> it = currentDatabase.browseClass(iClassName);
+
+		browseRecords(columns, limit, it);
+	}
+
+	@ConsoleCommand(description = "Browse all the records of a cluster")
+	public void browseCluster(
+			@ConsoleParameter(name = "cluster-name", description = "The name of the cluster") final String iClusterName) {
+		checkCurrentDatabase();
+
+		currentResultSet.clear();
+
+		final List<String> columns = new ArrayList<String>();
+
+		final int limit = Integer.parseInt((String) properties.get("limit"));
+
+		ORecordIterator<?> it = currentDatabase.browseCluster(iClusterName);
+
+		browseRecords(columns, limit, it);
 	}
 
 	@ConsoleCommand(aliases = { "display" }, description = "Display current record's attributes")
@@ -193,7 +230,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 			checkCurrentObject();
 		else {
 			int recNumber = Integer.parseInt(iRecordNumber);
-			if (currentResultSet == null)
+			if (currentResultSet.size() == 0)
 				throw new OException("No result set where to find the requested record. Execute a query first.");
 
 			if (currentResultSet.size() <= recNumber)
@@ -360,7 +397,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		}
 
 		try {
-			out.println(((ORecordSerializerStringAbstract) serializer).toString((ORecordSchemaAware<?>) currentRecord));
+			out.println(((ORecordSerializerStringAbstract) serializer).toString(currentRecord));
 		} catch (ODatabaseExportException e) {
 			out.println("ERROR: " + e.toString());
 		}
@@ -416,9 +453,19 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 			throw new OException("The is no current object selected: create a new one or load it");
 	}
 
-	protected void dumpRecordInTable(final int iIndex, final ODocument iRecord, final List<String> iColumns) {
+	protected void dumpRecordInTable(final int iIndex, final ORecordSchemaAwareAbstract<?> iRecord, final List<String> iColumns) {
 		// CHECK IF HAVE TO ADD NEW COLUMN (BECAUSE IT CAN BE SCHEMA-LESS)
-		for (String fieldName : iRecord.fields()) {
+		List<String> recordColumns = new ArrayList<String>();
+		for (String fieldName : iRecord.fields())
+			recordColumns.add(fieldName);
+
+		dumpRecordInTable(iIndex, iRecord, recordColumns, iColumns);
+	}
+
+	protected void dumpRecordInTable(final int iIndex, final ORecordInternal<?> iRecord, final List<String> iRecordColumns,
+			final List<String> iColumns) {
+		// CHECK IF HAVE TO ADD NEW COLUMN (BECAUSE IT CAN BE SCHEMA-LESS)
+		for (String fieldName : iRecordColumns) {
 			boolean foundCol = false;
 			for (String colName : iColumns) {
 				if (fieldName.equals(colName)) {
@@ -452,10 +499,15 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		vargs.add(iIndex);
 		vargs.add(iRecord.getIdentity());
 
-		Object value;
+		Object value = null;
 		for (String colName : iColumns) {
 			format.append("|%-20s");
-			value = iRecord.field(colName);
+
+			if (iRecord instanceof ORecordSchemaAwareAbstract<?>)
+				value = ((ORecordSchemaAwareAbstract<?>) iRecord).field(colName);
+			else if (iRecord instanceof ORecordColumn)
+				value = ((ORecordColumn) iRecord).field(Integer.parseInt(colName));
+
 			if (value instanceof Collection<?>)
 				value = "[" + ((Collection<?>) value).size() + "]";
 			else if (value instanceof ORecord<?>)
@@ -467,11 +519,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 	}
 
 	private void printHeaderLine(final List<String> iColumns) {
-		out.print("---+--------");
-		for (int i = 0; i < iColumns.size(); ++i) {
-			out.print("+");
-			for (int k = 0; k < 20; ++k)
-				out.print("-");
+		if (iColumns.size() > 0) {
+			out.print("---+--------");
+			for (int i = 0; i < iColumns.size(); ++i) {
+				out.print("+");
+				for (int k = 0; k < 20; ++k)
+					out.print("-");
+			}
 		}
 		out.print("\n");
 	}
@@ -480,24 +534,46 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		if (currentRecord instanceof ODocument) {
 			ODocument rec = (ODocument) currentRecord;
 			out.println("--------------------------------------------------");
-			out.printf("VObject - Class: %s   id: %s   v.%d\n", rec.getClassName(), rec.getIdentity().toString(), rec.getVersion());
+			out.printf("ODocument - Class: %s   id: %s   v.%d\n", rec.getClassName(), rec.getIdentity().toString(), rec.getVersion());
 			out.println("--------------------------------------------------");
 			for (String fieldName : rec.fields()) {
 				out.printf("%20s : %-20s\n", fieldName, rec.field(fieldName));
 			}
+
+		} else if (currentRecord instanceof ORecordColumn) {
+			ORecordColumn rec = (ORecordColumn) currentRecord;
 			out.println("--------------------------------------------------");
+			out.printf("Column - id: %s   v.%d\n", rec.getIdentity().toString(), rec.getVersion());
+			out.println("--------------------------------------------------");
+			for (int i = 0; i < rec.size(); ++i) {
+				if (i > 0)
+					out.print(", ");
+				out.print(rec.field(i));
+			}
+
 		} else if (currentRecord instanceof ORecordFlat) {
 			ORecordFlat rec = (ORecordFlat) currentRecord;
 			out.println("--------------------------------------------------");
 			out.printf("Flat - record id: %s   v.%d\n", rec.getIdentity().toString(), rec.getVersion());
 			out.println("--------------------------------------------------");
-			out.println(rec.value());
+			out.print(rec.value());
+
+		} else if (currentRecord instanceof ORecordBytes) {
+			ORecordBytes rec = (ORecordBytes) currentRecord;
+			out.println("--------------------------------------------------");
+			out.printf("Flat - record id: %s   v.%d\n", rec.getIdentity().toString(), rec.getVersion());
+			out.println("--------------------------------------------------");
+			byte[] value = rec.toStream();
+			for (int i = 0; i < Array.getLength(value); ++i) {
+				out.printf("%03d", Array.getByte(value, i));
+			}
+
 		} else {
 			out.println("--------------------------------------------------");
 			out.printf("%s - record id: %s   v.%d\n", currentRecord.getClass().getSimpleName(), currentRecord.getIdentity().toString(),
 					currentRecord.getVersion());
-			out.println("--------------------------------------------------");
 		}
+		out.println();
 	}
 
 	public void onMessage(String iText) {
@@ -511,5 +587,34 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 			if (s instanceof ORecordSerializerStringAbstract)
 				out.println("- " + s.toString());
 		}
+	}
+
+	private void browseRecords(final List<String> columns, final int limit, ORecordIterator<?> it) {
+		while (it.hasNext()) {
+			currentRecord = it.next();
+
+			if (currentRecord instanceof ORecordSchemaAwareAbstract<?>)
+				dumpRecordInTable(currentResultSet.size(), (ORecordSchemaAwareAbstract<?>) currentRecord, columns);
+			else if (currentRecord instanceof ORecordColumn) {
+				// CREATE NUMBERED COLUMNS
+				List<String> cols = new ArrayList<String>();
+				for (int i = 0; i < ((ORecordColumn) currentRecord).size(); ++i)
+					cols.add(String.valueOf(i));
+				dumpRecordInTable(currentResultSet.size(), (ORecordColumn) currentRecord, cols, columns);
+			} else if (currentRecord != null) {
+				dumpRecordDetails();
+				out.println();
+			}
+
+			currentResultSet.add(currentRecord);
+
+			if (currentResultSet.size() >= limit) {
+				printHeaderLine(columns);
+				out.println("\nResultset contains more items not displayed (max=" + limit + ")");
+				return;
+			}
+		}
+
+		printHeaderLine(columns);
 	}
 }
