@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.kv.network.protocol.http;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,8 +24,8 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseBinary;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.index.OTreeMapPersistent;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerString;
@@ -87,8 +88,9 @@ public class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstract {
 		try {
 			String url = "/".equals(iURI) ? url = "/www/index.htm" : iURI;
 			url = wwwPath + url.substring("www".length() + 1, url.length());
-
-			bufferedFile = new BufferedInputStream(new FileInputStream(url));
+			File inputFile = new File(url);
+			if (!inputFile.exists())
+				return;
 
 			String type = null;
 			if (url.endsWith(".htm") || url.endsWith(".html"))
@@ -102,7 +104,9 @@ public class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstract {
 			else if (url.endsWith(".css"))
 				type = "text/css";
 
-			sendBinaryContent(200, null, type, bufferedFile);
+			bufferedFile = new BufferedInputStream(new FileInputStream(inputFile));
+
+			sendBinaryContent(200, "OK", type, bufferedFile, inputFile.length());
 
 		} catch (IOException e) {
 			e.printStackTrace();

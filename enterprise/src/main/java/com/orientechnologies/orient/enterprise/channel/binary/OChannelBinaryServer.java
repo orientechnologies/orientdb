@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-  /*
+/*
  * Copyright 1999-2010 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,7 @@
  */
 package com.orientechnologies.orient.enterprise.channel.binary;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -40,7 +41,8 @@ public class OChannelBinaryServer extends OChannelBinary {
 	public OChannelBinaryServer(Socket iSocket) throws IOException {
 		super(iSocket);
 
-		connect();
+		inStream = new BufferedInputStream(socket.getInputStream(), DEFAULT_BUFFER_SIZE);
+		outStream = socket.getOutputStream();
 
 		out = new ObjectOutputStream(outStream);
 		in = new ObjectInputStream(inStream);

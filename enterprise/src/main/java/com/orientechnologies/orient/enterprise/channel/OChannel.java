@@ -15,27 +15,21 @@
  */
 package com.orientechnologies.orient.enterprise.channel;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
 public abstract class OChannel {
-	public Socket							socket;
+	public Socket								socket;
 
-	public InputStream				inStream;
-	public OutputStream				outStream;
+	public InputStream					inStream;
+	public OutputStream					outStream;
 
-	private static final int	DEFAULT_BUFFER_SIZE	= 4096;
+	protected static final int	DEFAULT_BUFFER_SIZE	= 16384;
 
 	public OChannel(Socket iSocket) throws IOException {
 		socket = iSocket;
-	}
-
-	public void connect() throws IOException {
-		inStream = new BufferedInputStream(socket.getInputStream(), DEFAULT_BUFFER_SIZE);
-		outStream = socket.getOutputStream();
 	}
 
 	public void flush() throws IOException {
