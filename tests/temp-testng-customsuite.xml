@@ -1,0 +1,8 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="orient-database-tests" parallel="">
+  <test verbose="2" name="com.orientechnologies.orient.test.database.speed.LocalCreateDocumentSpeedTest" annotations="JDK">
+    <classes>
+      <class name="com.orientechnologies.orient.test.database.speed.LocalCreateDocumentSpeedTest"/>
+    </classes>
+  </test>
+</suite>
