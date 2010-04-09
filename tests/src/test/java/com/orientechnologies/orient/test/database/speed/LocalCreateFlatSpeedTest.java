@@ -19,6 +19,7 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
+import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
@@ -26,7 +27,7 @@ import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 @Test(enabled = false)
 public class LocalCreateFlatSpeedTest extends OrientMonoThreadTest {
 	private ODatabaseFlat	database;
-	private ORecordFlat					record;
+	private ORecordFlat		record;
 
 	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
 		LocalCreateFlatSpeedTest test = new LocalCreateFlatSpeedTest();
@@ -44,6 +45,7 @@ public class LocalCreateFlatSpeedTest extends OrientMonoThreadTest {
 		database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
 		record = database.newInstance();
 
+		database.declareIntent(new OIntentMassiveInsert());
 		database.begin(TXTYPE.NOTX);
 	}
 

@@ -44,8 +44,8 @@ public class LocalCreateObjectSpeedTest extends OrientMonoThreadTest {
 
 		database = new ODatabaseObjectTx(System.getProperty("url")).open("admin", "admin");
 
-		database.begin(TXTYPE.NOTX);
 		database.declareIntent(new OIntentMassiveInsert());
+		database.begin(TXTYPE.NOTX);
 	}
 
 	public void cycle() {
