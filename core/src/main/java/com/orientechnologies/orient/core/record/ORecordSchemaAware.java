@@ -28,6 +28,8 @@ public interface ORecordSchemaAware<T> extends ORecordInternal<T> {
 
 	public ORecordSchemaAware<T> field(String iPropertyName, Object iValue);
 
+	public String[] fields();
+
 	public int size();
 
 	public String getClassName();

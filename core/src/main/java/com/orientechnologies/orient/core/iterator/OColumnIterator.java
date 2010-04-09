@@ -18,10 +18,10 @@ package com.orientechnologies.orient.core.iterator;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 public class OColumnIterator implements Iterator<String>, Iterable<String> {
-	private char			separator	= ORecordSerializerStringAbstract.RECORD_SEPARATOR_AS_CHAR;
+	private char			separator	= OStringSerializerHelper.RECORD_SEPARATOR_AS_CHAR;
 	private String		buffer;
 	private int				cursor		= 0;
 	private String[]	values;
@@ -36,7 +36,7 @@ public class OColumnIterator implements Iterator<String>, Iterable<String> {
 
 	public boolean hasNext() {
 		if (values == null)
-			values = ORecordSerializerStringAbstract.split(buffer, separator);
+			values = OStringSerializerHelper.split(buffer, separator);
 
 		return cursor < values.length;
 	}

@@ -143,11 +143,6 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		return fields.size();
 	}
 
-	protected void setup() {
-		super.setup();
-		recordFormat = ORecordSerializerFactory.instance().getFormat(ORecordSerializerSchemaAware2CSV.NAME);
-	}
-
 	public String[] fields() {
 		checkForFields();
 
@@ -198,17 +193,6 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		return value;
 	}
 
-	/**
-	 * Lazy load the record
-	 * 
-	 * @param <RET>
-	 * @param record
-	 */
-	private <RET> void lazyLoadRecord(ORecord<?> record) {
-		if (record.getStatus() == STATUS.NOT_LOADED)
-			record.load();
-	}
-
 	public ODocument field(String iPropertyName, Object iPropertyValue) {
 		checkForFields();
 		if (clazz != null) {
@@ -240,5 +224,21 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 
 	public byte getRecordType() {
 		return RECORD_TYPE;
+	}
+
+	protected void setup() {
+		super.setup();
+		recordFormat = ORecordSerializerFactory.instance().getFormat(ORecordSerializerSchemaAware2CSV.NAME);
+	}
+
+	/**
+	 * Lazy load the record
+	 * 
+	 * @param <RET>
+	 * @param record
+	 */
+	private <RET> void lazyLoadRecord(ORecord<?> record) {
+		if (record.getStatus() == STATUS.NOT_LOADED)
+			record.load();
 	}
 }

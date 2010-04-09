@@ -44,6 +44,6 @@ public abstract class OrientConsole extends ConsoleApplication {
 
 	private void printClusterInfo() {
 		out.println("ORIENT database v." + OConstants.ORIENT_VERSION + " " + OConstants.ORIENT_URL);
-		out.println("Type 'help' to display all the commands supported");
+		out.println("Type 'help' to display all the commands supported.");
 	}
 }

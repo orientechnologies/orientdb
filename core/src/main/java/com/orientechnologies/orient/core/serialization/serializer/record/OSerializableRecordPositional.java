@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.serialization;
+package com.orientechnologies.orient.core.serialization.serializer.record;
 
 import com.orientechnologies.orient.core.record.ORecordPositional;
 

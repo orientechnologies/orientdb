@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelper;
 
 @SuppressWarnings("unchecked")
@@ -56,7 +57,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 			ArrayList<Object> coll = new ArrayList<Object>();
 
-			String[] items = split(value, RECORD_SEPARATOR_AS_CHAR);
+			String[] items = OStringSerializerHelper.split(value, OStringSerializerHelper.RECORD_SEPARATOR_AS_CHAR);
 
 			if (iLinkedClass != null)
 				// EMBEDDED OBJECTS
@@ -70,7 +71,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 				// EMBEDDED LITERALS
 				for (String item : items) {
-					coll.add(fieldTypeFromStream(iLinkedType, item));
+					coll.add(OStringSerializerHelper.fieldTypeFromStream(iLinkedType, item));
 				}
 			}
 
@@ -87,11 +88,11 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 			ArrayList<ORecord<?>> coll = new ArrayList<ORecord<?>>();
 
-			String[] items = split(value, RECORD_SEPARATOR_AS_CHAR);
+			String[] items = OStringSerializerHelper.split(value, OStringSerializerHelper.RECORD_SEPARATOR_AS_CHAR);
 
 			for (String item : items) {
 				// GET THE CLASS NAME IF ANY
-				int classSeparatorPos = value.indexOf(CLASS_SEPARATOR);
+				int classSeparatorPos = value.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
 				if (classSeparatorPos > -1) {
 					String className = value.substring(1, classSeparatorPos);
 					if (className != null) {
@@ -107,9 +108,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		}
 
 		case LINK:
-			int pos = iValue.indexOf(CLASS_SEPARATOR);
+			int pos = iValue.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
 			if (pos > -1)
-				iLinkedClass = iDatabase.getMetadata().getSchema().getClass(iValue.substring(LINK.length(), pos));
+				iLinkedClass = iDatabase.getMetadata().getSchema().getClass(iValue.substring(OStringSerializerHelper.LINK.length(), pos));
 			else
 				pos = 0;
 
@@ -120,7 +121,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			return new ODocument(iDatabase, iLinkedClass.getName(), recId);
 
 		default:
-			return fieldTypeFromStream(iType, iValue);
+			return OStringSerializerHelper.fieldTypeFromStream(iType, iValue);
 		}
 	}
 
@@ -141,7 +142,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 		case EMBEDDEDLIST:
 		case EMBEDDEDSET: {
-			buffer.append(COLLECTION_BEGIN);
+			buffer.append(OStringSerializerHelper.COLLECTION_BEGIN);
 
 			int items = 0;
 			if (iLinkedClass != null) {
@@ -149,7 +150,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				ODocument record;
 				for (Object o : (Collection<?>) iValue) {
 					if (items > 0)
-						buffer.append(RECORD_SEPARATOR);
+						buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
 					if (o != null) {
 						if (o instanceof ODocument)
@@ -178,26 +179,26 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				// EMBEDDED LITERALS
 				for (Object o : (Collection<?>) iValue) {
 					if (items > 0)
-						buffer.append(RECORD_SEPARATOR);
+						buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
-					buffer.append(fieldTypeToString(iLinkedType, o));
+					buffer.append(OStringSerializerHelper.fieldTypeToString(iLinkedType, o));
 					items++;
 				}
 
-			buffer.append(COLLECTION_END);
+			buffer.append(OStringSerializerHelper.COLLECTION_END);
 			break;
 		}
 
 		case LINKLIST:
 		case LINKSET: {
-			buffer.append(COLLECTION_BEGIN);
+			buffer.append(OStringSerializerHelper.COLLECTION_BEGIN);
 
 			int items = 0;
 			if (iLinkedClass != null) {
 				// LINKED OBJECTS
 				for (ORecordSchemaAware<?> record : (Collection<ORecordSchemaAware<?>>) iValue) {
 					if (items++ > 0)
-						buffer.append(RECORD_SEPARATOR);
+						buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
 					// ASSURE THE OBJECT IS SAVED
 					if (record.getDatabase() == null)
@@ -207,12 +208,12 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				}
 			}
 
-			buffer.append(COLLECTION_END);
+			buffer.append(OStringSerializerHelper.COLLECTION_END);
 			break;
 		}
 
 		default:
-			return fieldTypeToString(iType, iValue);
+			return OStringSerializerHelper.fieldTypeToString(iType, iValue);
 		}
 
 		return buffer.toString();
@@ -224,11 +225,11 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			// STORE THE TRAVERSED OBJECT TO KNOW THE RECORD ID
 			record.getDatabase().save((ORecordInternal) record);
 
-		buffer.append(LINK);
+		buffer.append(OStringSerializerHelper.LINK);
 
 		if (record.getClassName() != null) {
 			buffer.append(record.getClassName());
-			buffer.append(CLASS_SEPARATOR);
+			buffer.append(OStringSerializerHelper.CLASS_SEPARATOR);
 		}
 
 		buffer.append(link.toString());

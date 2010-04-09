@@ -35,11 +35,17 @@ public class OJSONWriter {
 		this.out = out;
 	}
 
-	public void beginObject() throws IOException {
+	public OJSONWriter beginObject() throws IOException {
 		beginObject(0, false, null);
+		return this;
 	}
 
-	public void beginObject(final int iIdentLevel, final boolean iNewLine, final Object iName) throws IOException {
+	public OJSONWriter beginObject(final Object iName) throws IOException {
+		beginObject(0, false, iName);
+		return this;
+	}
+
+	public OJSONWriter beginObject(final int iIdentLevel, final boolean iNewLine, final Object iName) throws IOException {
 		if (!firstAttribute)
 			out.append(", ");
 
@@ -48,22 +54,25 @@ public class OJSONWriter {
 		if (iName != null)
 			out.append("'" + iName.toString() + "':");
 
-		out.append(" {");
+		out.append("{");
 
 		firstAttribute = true;
+		return this;
 	}
 
-	public void endObject() throws IOException {
+	public OJSONWriter endObject() throws IOException {
 		format(0, true);
 		out.append("}");
+		return this;
 	}
 
-	public void endObject(final int iIdentLevel, final boolean iNewLine) throws IOException {
+	public OJSONWriter endObject(final int iIdentLevel, final boolean iNewLine) throws IOException {
 		format(iIdentLevel, iNewLine);
 		out.append("}");
+		return this;
 	}
 
-	public void beginCollection(final int iIdentLevel, final boolean iNewLine, final String iName) throws IOException {
+	public OJSONWriter beginCollection(final int iIdentLevel, final boolean iNewLine, final String iName) throws IOException {
 		if (!firstAttribute)
 			out.append(", ");
 
@@ -73,14 +82,16 @@ public class OJSONWriter {
 		out.append(": [");
 
 		firstAttribute = true;
+		return this;
 	}
 
-	public void endCollection(final int iIdentLevel, final boolean iNewLine) throws IOException {
+	public OJSONWriter endCollection(final int iIdentLevel, final boolean iNewLine) throws IOException {
 		format(iIdentLevel, iNewLine);
 		out.append("]");
+		return this;
 	}
 
-	public void writeAttribute(final int iIdentLevel, final boolean iNewLine, final String iName, final Object iValue)
+	public OJSONWriter writeAttribute(final int iIdentLevel, final boolean iNewLine, final String iName, final Object iValue)
 			throws IOException {
 		if (!firstAttribute)
 			out.append(", ");
@@ -92,9 +103,10 @@ public class OJSONWriter {
 		out.append(writeValue(iValue));
 
 		firstAttribute = false;
+		return this;
 	}
 
-	public void writeValue(final int iIdentLevel, final boolean iNewLine, final Object iValue) throws IOException {
+	public OJSONWriter writeValue(final int iIdentLevel, final boolean iNewLine, final Object iValue) throws IOException {
 		if (!firstAttribute)
 			out.append(", ");
 
@@ -103,6 +115,7 @@ public class OJSONWriter {
 		out.append(writeValue(iValue));
 
 		firstAttribute = false;
+		return this;
 	}
 
 	public static String writeValue(final Object iValue) throws IOException {
@@ -173,24 +186,37 @@ public class OJSONWriter {
 		return buffer.toString();
 	}
 
-	public void flush() throws IOException {
+	public OJSONWriter flush() throws IOException {
 		out.flush();
+		return this;
 	}
 
-	public void close() throws IOException {
+	public OJSONWriter close() throws IOException {
 		out.close();
+		return this;
 	}
 
-	private void format(final int iIdentLevel, final boolean iNewLine) throws IOException {
+	private OJSONWriter format(final int iIdentLevel, final boolean iNewLine) throws IOException {
 		if (iNewLine)
 			out.append("\n");
 
 		if (prettyPrint)
 			for (int i = 0; i < iIdentLevel; ++i)
 				out.append("  ");
+		return this;
 	}
 
-	public void append(final String iText) throws IOException {
+	public OJSONWriter append(final String iText) throws IOException {
 		out.append(iText);
+		return this;
+	}
+
+	public boolean isPrettyPrint() {
+		return prettyPrint;
+	}
+
+	public OJSONWriter setPrettyPrint(boolean prettyPrint) {
+		this.prettyPrint = prettyPrint;
+		return this;
 	}
 }

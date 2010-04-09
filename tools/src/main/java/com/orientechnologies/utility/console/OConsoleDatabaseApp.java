@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
@@ -33,8 +34,12 @@ import com.orientechnologies.orient.core.query.OAsynchQueryResultListener;
 import com.orientechnologies.orient.core.query.sql.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.utility.impexp.OConsoleDatabaseExport;
 import com.orientechnologies.utility.impexp.ODatabaseExportException;
 
@@ -44,8 +49,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 	protected ORecordInternal<?>	currentRecord;
 	protected List<ODocument>			currentResultSet;
 
-	private static final int			RESULTSET_LIMIT	= 20;
-
 	public static void main(String[] args) {
 		new OConsoleDatabaseApp(args);
 	}
@@ -54,9 +57,15 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		super(args);
 	}
 
+	@Override
+	protected void onBefore() {
+		super.onBefore();
+		properties.put("limit", "20");
+	}
+
 	@ConsoleCommand(aliases = { "use database" }, description = "Connect to a database")
 	public void connect(
-			@ConsoleParameter(name = "database-url", description = "The url of the database to connect") String iDatabaseURL) {
+			@ConsoleParameter(name = "database-url", description = "The url of the database to connect in the format connect <mode>:<path>") String iDatabaseURL) {
 		out.print("Connecting to database [" + iDatabaseURL + "]...");
 
 		currentDatabase = new ODatabaseDocumentTx(iDatabaseURL);
@@ -140,7 +149,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 
 		iQuery = iQuery.trim();
 
-		if (iQuery.length() == 0)
+		if (iQuery.length() == 0 || iQuery.equalsIgnoreCase("select"))
 			return;
 
 		iQuery = "select " + iQuery;
@@ -149,12 +158,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 
 		final List<String> columns = new ArrayList<String>();
 
+		final int limit = Integer.parseInt((String) properties.get("limit"));
+
 		long start = System.currentTimeMillis();
 		currentDatabase.query(new OSQLAsynchQuery<ODocument>(iQuery, new OAsynchQueryResultListener<ODocument>() {
 			public boolean result(final ODocument iRecord) {
-				if (currentResultSet.size() > RESULTSET_LIMIT) {
+				if (currentResultSet.size() > limit - 1) {
 					printHeaderLine(columns);
-					out.println("\nResultset contains more items not displayed (max=" + RESULTSET_LIMIT + ")");
+					out.println("\nResultset contains more items not displayed (max=" + limit + ")");
 					return false;
 				}
 
@@ -163,9 +174,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 				return true;
 			}
 
-		})).execute(RESULTSET_LIMIT + 1);
+		})).execute(limit + 1);
 
-		if (currentResultSet.size() > 0 && currentResultSet.size() <= RESULTSET_LIMIT)
+		if (currentResultSet.size() > 0 && currentResultSet.size() <= limit)
 			printHeaderLine(columns);
 
 		out.println(currentResultSet.size() + " item(s) found. Query executed in " + (float) (System.currentTimeMillis() - start)
@@ -319,7 +330,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 	}
 
 	@ConsoleCommand(description = "Export a database")
-	public void export(@ConsoleParameter(name = "output-file", description = "Output file path") final String iOutputFilePath)
+	public void exportDatabase(@ConsoleParameter(name = "output-file", description = "Output file path") final String iOutputFilePath)
 			throws IOException {
 		out.println("Exporting current database to: " + iOutputFilePath + "...");
 
@@ -330,9 +341,69 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		}
 	}
 
-	@Override
-	public String toString() {
-		return "database";
+	@ConsoleCommand(description = "Export the current record in the requested format")
+	public void exportRecord(@ConsoleParameter(name = "format", description = "Format, such as 'json'") final String iFormat)
+			throws IOException {
+		checkCurrentDatabase();
+		checkCurrentObject();
+
+		final ORecordSerializer serializer = ORecordSerializerFactory.instance().getFormat(iFormat.toLowerCase());
+
+		if (serializer == null) {
+			out.println("ERROR: Format '" + iFormat + "' was not found.");
+			printSupportedSerializerFormat();
+			return;
+		} else if (!(serializer instanceof ORecordSerializerStringAbstract)) {
+			out.println("ERROR: Format '" + iFormat + "' doesn't export as text.");
+			printSupportedSerializerFormat();
+			return;
+		}
+
+		try {
+			out.println(((ORecordSerializerStringAbstract) serializer).toString((ORecordSchemaAware<?>) currentRecord));
+		} catch (ODatabaseExportException e) {
+			out.println("ERROR: " + e.toString());
+		}
+	}
+
+	@ConsoleCommand(description = "Return all the configured properties")
+	public void properties() {
+		out.println("PROPERTIES:");
+		out.println("+---------------------+----------------------+");
+		out.printf("| %-20s| %-20s |\n", "NAME", "VALUE");
+		out.println("+---------------------+----------------------+");
+		for (Entry<String, Object> p : properties.entrySet()) {
+			out.printf("| %-20s= %-20s |\n", p.getKey(), p.getValue());
+		}
+		out.println("+---------------------+----------------------+");
+	}
+
+	@ConsoleCommand(description = "Return the value of a property")
+	public void get(@ConsoleParameter(name = "property-name", description = "Name of the property") final String iPropertyName) {
+		Object value = properties.get(iPropertyName);
+
+		out.println();
+
+		if (value == null)
+			out.println("Property '" + iPropertyName + "' is not setted");
+		else
+			out.println(iPropertyName + " = " + value);
+	}
+
+	@ConsoleCommand(description = "Change the value of a property")
+	public void set(@ConsoleParameter(name = "property-name", description = "Name of the property") final String iPropertyName,
+			@ConsoleParameter(name = "property-value", description = "Value to set") final String iPropertyValue) {
+		Object prevValue = properties.get(iPropertyName);
+
+		out.println();
+
+		if (prevValue != null)
+			out.println("Previous value was: " + prevValue);
+
+		properties.put(iPropertyName, iPropertyValue);
+
+		out.println();
+		out.println(iPropertyName + " = " + iPropertyValue);
 	}
 
 	protected void checkCurrentDatabase() {
@@ -431,5 +502,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 
 	public void onMessage(String iText) {
 		out.print(iText);
+	}
+
+	private void printSupportedSerializerFormat() {
+		out.println("Supported formats are:");
+
+		for (ORecordSerializer s : ORecordSerializerFactory.instance().getFormats()) {
+			if (s instanceof ORecordSerializerStringAbstract)
+				out.println("- " + s.toString());
+		}
 	}
 }

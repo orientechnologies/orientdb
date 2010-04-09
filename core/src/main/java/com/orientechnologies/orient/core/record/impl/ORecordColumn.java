@@ -25,8 +25,8 @@ import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordPositional;
 import com.orientechnologies.orient.core.record.ORecordStringable;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerCSVAbstract;
 
 /**
  * It's schema less. Use this if you need to store Strings at low level. The object can be reused across calls to the database by
@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 @SuppressWarnings("unchecked")
 public class ORecordColumn extends ORecordAbstract<String> implements ORecordStringable<String>, ORecordPositional<String> {
 	protected List<String>		values			= new ArrayList<String>();
-	protected char						separator		= ORecordSerializerCSVAbstract.RECORD_SEPARATOR_AS_CHAR;
+	protected char						separator		= OStringSerializerHelper.RECORD_SEPARATOR_AS_CHAR;
 	protected int							cursor			= 0;
 
 	public static final byte	RECORD_TYPE	= 'c';
@@ -177,7 +177,7 @@ public class ORecordColumn extends ORecordAbstract<String> implements ORecordStr
 	}
 
 	private void extractValues(String iValue) {
-		String[] strings = ORecordSerializerCSVAbstract.split(iValue, separator);
+		String[] strings = OStringSerializerHelper.split(iValue, separator);
 
 		values.clear();
 		for (String s : strings)

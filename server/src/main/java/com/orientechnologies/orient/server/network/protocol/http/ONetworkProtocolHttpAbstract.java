@@ -24,6 +24,7 @@ import java.util.Date;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.text.OChannelTextServer;
@@ -36,8 +37,8 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolExce
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocolDatabaseShared {
 	private static final String			CONTENT_LENGTH			= "Content-Length: ";
 	private static final byte[]			EOL									= { (byte) '\r', (byte) '\n' };
-	private static final String			ORIENT_SERVER_KV		= "Orient Key Value";
-	private static final int				MAX_CONTENT_LENGTH	= 10000;												// MAX = 10Kb
+	private static final String			ORIENT_SERVER_KV		= "Orient Key Value v." + OConstants.ORIENT_VERSION;
+	private static final int				MAX_CONTENT_LENGTH	= 10000;																							// MAX = 10Kb
 	private static final int				TCP_DEFAULT_TIMEOUT	= 5000;
 
 	protected OClientConnection			connection;
@@ -102,20 +103,22 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocolDatab
 			writeLine(iContent);
 		}
 
-		channel.outStream.flush();
 		channel.flush();
 	}
 
-	protected void sendBinaryContent(final int iCode, final String iReason, final String iContentType, final InputStream iContent)
-			throws IOException {
+	protected void sendBinaryContent(final int iCode, final String iReason, final String iContentType, final InputStream iContent,
+			final long iSize) throws IOException {
 		sendStatus(iCode, iReason);
 		sendResponseHeaders(iContentType);
+		writeLine(CONTENT_LENGTH + (iSize + 2));
 		writeLine(null);
 
-		while (iContent.available() > 0)
+		int i = 0;
+		while (iContent.available() > 0) {
 			channel.outStream.write((byte) iContent.read());
+			++i;
+		}
 
-		channel.outStream.flush();
 		channel.flush();
 	}
 
@@ -141,7 +144,6 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocolDatab
 	protected String readAllContent() throws IOException {
 		StringBuilder request = new StringBuilder();
 		char currChar;
-		char prevChar = 0;
 		int contentLength = -1;
 		boolean endOfHeaders = false;
 		while (!channel.socket.isInputShutdown()) {
@@ -160,6 +162,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocolDatab
 					}
 				}
 
+				// CONSUME /r or /n
+				channel.inStream.read();
+
 				if (!endOfHeaders && request.length() == 0) {
 					if (contentLength <= 0)
 						return null;
@@ -168,8 +173,6 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocolDatab
 					endOfHeaders = true;
 				}
 
-				// CONSUME /r
-				channel.inStream.read();
 				request.setLength(0);
 
 			} else if (endOfHeaders && request.length() == 0 && currChar != '\r' && currChar != '\n') {
@@ -180,8 +183,6 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocolDatab
 				return new String(buffer);
 			} else
 				request.append(currChar);
-
-			prevChar = currChar;
 		}
 
 		if (OLogManager.instance().isDebugEnabled())

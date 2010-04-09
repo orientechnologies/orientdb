@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.query.OQueryExecutor;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerCSVAbstract;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 public class OSQLAsynchQueryLocalExecutor implements OQueryExecutor {
@@ -56,7 +56,7 @@ public class OSQLAsynchQueryLocalExecutor implements OQueryExecutor {
 
 			if (Character.isDigit(firstCluster.charAt(0)))
 				// GET THE CLUSTER NUMBER
-				clusterIds = ORecordSerializerCSVAbstract.splitIntArray(firstCluster);
+				clusterIds = OStringSerializerHelper.splitIntArray(firstCluster);
 			else {
 				// GET THE CLUSTER NUMBER BY THE CLASS NAME
 				clusterIds = new int[] { query.getDatabase().getClusterIdByName(firstCluster.toLowerCase()) };

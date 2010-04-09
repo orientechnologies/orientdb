@@ -48,7 +48,7 @@ public class ORecordSerializerPositional2CSV extends ORecordSerializerCSVAbstrac
 	}
 
 	@Override
-	protected String toString(final ORecordSchemaAware<?> iRecord, final OUserObject2RecordHandler iObjHandler,
+	protected String toString(final ORecordInternal<?> iRecord, final OUserObject2RecordHandler iObjHandler,
 			Map<ORecordInternal<?>, ORecordId> iMarshalledRecords) {
 		return null;
 	}

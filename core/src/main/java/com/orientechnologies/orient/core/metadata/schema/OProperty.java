@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.common.collection.OTreeMap;
 import com.orientechnologies.orient.core.record.ORecordPositional;
-import com.orientechnologies.orient.core.serialization.OSerializableRecordPositional;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializableRecordPositional;
 
 public class OProperty implements OSerializableRecordPositional {
 	private OClass					owner;

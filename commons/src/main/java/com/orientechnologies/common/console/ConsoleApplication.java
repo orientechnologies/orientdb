@@ -8,19 +8,22 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 
 public class ConsoleApplication {
 
-	protected InputStream	in								= System.in;
-	protected PrintStream	out								= System.out;
-	protected PrintStream	err								= System.err;
-	protected String			commandSeparator	= ";";
-	protected String			wordSeparator			= " ";
-	protected String[]		helpCommands			= { "help", "?" };
-	protected String[]		exitCommands			= { "exit", "bye", "quit" };
+	protected InputStream					in								= System.in;
+	protected PrintStream					out								= System.out;
+	protected PrintStream					err								= System.err;
+	protected String							commandSeparator	= ";";
+	protected String							wordSeparator			= " ";
+	protected String[]						helpCommands			= { "help", "?" };
+	protected String[]						exitCommands			= { "exit", "bye", "quit" };
+	protected Map<String, Object>	properties				= new HashMap<String, Object>();
 
 	public ConsoleApplication(String[] args) {
 		boolean interactiveMode = isInteractiveMode(args);
@@ -134,11 +137,21 @@ public class ConsoleApplication {
 
 			try {
 				m.invoke(this, methodArgs);
+
 			} catch (IllegalArgumentException e) {
-				syntaxError(iCommand, m);
+
+				// GET THE COMMAND NAME
+				StringBuilder cmd = new StringBuilder();
+				for (int i = 0; i < commandWordCount; ++i) {
+					if (cmd.length() > 0)
+						cmd.append(" ");
+					cmd.append(commandWords[i]);
+				}
+
+				syntaxError(cmd.toString(), m);
 			} catch (Exception e) {
 				e.printStackTrace();
-				
+
 				err.println();
 				if (e.getCause() != null)
 					onException(e.getCause());
@@ -196,7 +209,7 @@ public class ConsoleApplication {
 	}
 
 	protected void syntaxError(String iCommand, Method m) {
-		out.print("!Wrong syntax. Expected: " + iCommand.split(" ")[0] + " ");
+		out.print("!Wrong syntax. Expected: " + iCommand + " ");
 
 		String paramName = null;
 		String paramDescription = null;
@@ -221,6 +234,7 @@ public class ConsoleApplication {
 
 			if (paramDescription != null)
 				buffer.append(String.format("%-15s", paramDescription));
+			buffer.append("\n");
 		}
 
 		out.println(buffer);

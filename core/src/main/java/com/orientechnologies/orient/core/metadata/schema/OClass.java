@@ -23,8 +23,8 @@ import java.util.Map;
 
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.record.ORecordPositional;
-import com.orientechnologies.orient.core.serialization.OSerializableRecordPositional;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerCSVAbstract;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializableRecordPositional;
 
 public class OClass implements OSerializableRecordPositional {
 	protected int											id;
@@ -138,7 +138,7 @@ public class OClass implements OSerializableRecordPositional {
 		defaultClusterId = Integer.parseInt(iRecord.next());
 
 		// READ CLUSTER IDS
-		clusterIds = ORecordSerializerCSVAbstract.splitIntArray(iRecord.next());
+		clusterIds = OStringSerializerHelper.splitIntArray(iRecord.next());
 
 		// READ PROPERTIES
 		int propsNum = Integer.parseInt(iRecord.next());
@@ -156,7 +156,7 @@ public class OClass implements OSerializableRecordPositional {
 		iRecord.add(String.valueOf(defaultClusterId));
 
 		// WRITE CLUSTER IDS
-		iRecord.add(ORecordSerializerCSVAbstract.joinIntArray(clusterIds));
+		iRecord.add(OStringSerializerHelper.joinIntArray(clusterIds));
 
 		// WRITE PROPERTIES
 		iRecord.add(String.valueOf(properties.size()));

@@ -37,10 +37,14 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.utility.console.OCommandListener;
 
 public class OConsoleDatabaseExport {
-	private ODatabaseDocument	database;
-	private String						fileName;
-	private OJSONWriter				writer;
-	private OCommandListener	listener;
+	private ODatabaseDocument		database;
+	private String							fileName;
+	private OJSONWriter					writer;
+	private OCommandListener		listener;
+
+	private static final String	ATTRIBUTE_TYPE		= "_type";
+	private static final String	ATTRIBUTE_VERSION	= "_version";
+	private static final String	ATTRIBUTE_RECID		= "_recid";
 
 	public OConsoleDatabaseExport(final ODatabaseDocument database, final String iFileName, final OCommandListener iListener) {
 		this.database = database;
@@ -128,7 +132,7 @@ public class OConsoleDatabaseExport {
 				if (cls.properties().size() > 0) {
 					writer.beginCollection(4, true, "properties");
 					for (OProperty p : cls.properties()) {
-						writer.beginObject(5, true, "property");
+						writer.beginObject(5, true, null);
 						writer.writeAttribute(0, false, "name", p.getName());
 						writer.writeAttribute(0, false, "id", p.getId());
 						writer.writeAttribute(0, false, "type", p.getType());
@@ -140,6 +144,7 @@ public class OConsoleDatabaseExport {
 							writer.writeAttribute(0, false, "min", p.getMin());
 						if (p.getMax() != null)
 							writer.writeAttribute(0, false, "max", p.getMax());
+						writer.endObject(0, false);
 					}
 					writer.endCollection(4, true);
 				}
@@ -164,17 +169,17 @@ public class OConsoleDatabaseExport {
 			listener.onMessage("\n- Exporting cluster '" + clusterName + "' (records=" + recordTot + ") -> ");
 
 			writer.beginObject(2, true, "cluster");
-			writer.writeAttribute(0, false, "name", clusterName);
+			writer.writeAttribute(3, true, "name", clusterName);
 			writer.writeAttribute(0, false, "id", database.getClusterIdByName(clusterName));
 
 			if (recordTot > 0) {
-				writer.beginObject(3, true, "records");
+				writer.beginCollection(3, true, "records");
 
 				long recordNum = 0;
 				for (ORecord<?> rec : database.browseCluster(clusterName))
 					exportRecord(recordTot, recordNum, rec);
 
-				writer.endObject(3, true);
+				writer.endCollection(3, true);
 			}
 
 			listener.onMessage("OK");
@@ -188,8 +193,9 @@ public class OConsoleDatabaseExport {
 		if (rec == null)
 			return;
 
-		writer.beginObject(4, true, rec.getIdentity());
-		writer.writeAttribute(0, false, "version", rec.getVersion());
+		writer.beginObject(4, true, null);
+		writer.writeAttribute(0, false, ATTRIBUTE_RECID, rec.getIdentity());
+		writer.writeAttribute(0, false, ATTRIBUTE_VERSION, rec.getVersion());
 
 		if (rec.getIdentity().isValid())
 			rec.load();
@@ -197,7 +203,7 @@ public class OConsoleDatabaseExport {
 		if (rec instanceof ODocument) {
 			ODocument vobj = (ODocument) rec;
 
-			writer.writeAttribute(0, false, "type", "v");
+			writer.writeAttribute(0, false, ATTRIBUTE_TYPE, "v");
 
 			Object value;
 			if (vobj.fields() != null && vobj.fields().length > 0) {
@@ -212,7 +218,7 @@ public class OConsoleDatabaseExport {
 		} else if (rec instanceof ORecordColumn) {
 			ORecordColumn csv = (ORecordColumn) rec;
 
-			writer.writeAttribute(0, false, "type", "c");
+			writer.writeAttribute(0, false, ATTRIBUTE_TYPE, "c");
 
 			if (csv.size() > 0) {
 				writer.beginCollection(5, true, "values");
@@ -224,13 +230,13 @@ public class OConsoleDatabaseExport {
 		} else if (rec instanceof ORecordFlat) {
 			ORecordFlat flat = (ORecordFlat) rec;
 
-			writer.writeAttribute(0, false, "type", "f");
+			writer.writeAttribute(0, false, ATTRIBUTE_TYPE, "f");
 			writer.writeAttribute(6, true, "value", flat.value());
 		} else if (rec instanceof ORecordBytes) {
 
 			ORecordBytes bytes = (ORecordBytes) rec;
 
-			writer.writeAttribute(0, false, "type", "b");
+			writer.writeAttribute(0, false, ATTRIBUTE_TYPE, "b");
 			writer.writeAttribute(6, true, "value", bytes.toStream());
 		}
 

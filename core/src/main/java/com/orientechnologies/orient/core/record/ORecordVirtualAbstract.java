@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 
 /**
  * Abstract implementation for record-free implementations. The object can be reused across calls to the database by using the
@@ -57,14 +58,8 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 		return this;
 	}
 
-	@Override
-	protected void checkForFields() {
-		if (fields == null)
-			fields = new LinkedHashMap<String, T>();
-
-		if (status == STATUS.LOADED && (fields == null || size() == 0))
-			// POPULATE FIELDS LAZY
-			deserializeFields();
+	public String toJSON() {
+		return ORecordSerializerJSON.INSTANCE.toString(this);
 	}
 
 	@Override
@@ -133,5 +128,15 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 		}
 
 		return true;
+	}
+
+	@Override
+	protected void checkForFields() {
+		if (fields == null)
+			fields = new LinkedHashMap<String, T>();
+
+		if (status == STATUS.LOADED && (fields == null || size() == 0))
+			// POPULATE FIELDS LAZY
+			deserializeFields();
 	}
 }
