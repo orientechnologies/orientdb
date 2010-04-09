@@ -17,8 +17,6 @@
     </style>
   </head>
   
-  <script type="text/javascript">orient_google_stats();</script>
-
   <script type="text/javascript">
 
     function sendGet(key, value){
@@ -62,99 +60,99 @@
       </div>
       
       <div class="row">
-        <div class="cell">
-          <div class="table">
-            <div class="row">
-              <div class="cell-double-spaced column3"></div>
-              <div class="cell-double-spaced column1 title centered">Welcome in the Orient KeyValue Server homepage.</div>
-            </div>
-            <div class="row">
-              <div class="cell-double-spaced column1">To start using this Orient KeyValue you can store your information just using the HTTP protocol. Example:<br/>
-              <ol>
-                <li><b>HTTP POST</b> to http://localhost:8000/petshop/demo/1 passing the value "Test1"</li>
-                <li><b>HTTP GET</b>  to http://localhost:8000/petshop/demo/1: you'll receive back the value inserted, namely "Test1"</li>
-              </ol>
-              <br/>
-              Syntax:<br/>
-              <b>http://&lt;server&gt;:&lt;port&gt;/&lt;bucket&gt;/&lt;key&gt;</b>
-              <br/><br/>
+        <div class="table">
+          <div class="row">
+            <div class="cell-double-spaced column3"></div>
+            <div class="cell-double-spaced column1 title centered">Welcome in the Orient KeyValue Server homepage.</div>
+          </div>
+          <div class="row">
+            <div class="cell-double-spaced column1">To start using this Orient KeyValue you can store your information just using the HTTP protocol. Example:<br/>
+            <ol>
+              <li><b>HTTP POST</b> to http://localhost:8000/petshop/demo/1 passing the value "Test1"</li>
+              <li><b>HTTP GET</b>  to http://localhost:8000/petshop/demo/1: you'll receive back the value inserted, namely "Test1"</li>
+            </ol>
+            <br/>
+            Syntax:<br/>
+            <b>http://&lt;server&gt;:&lt;port&gt;/&lt;bucket&gt;/&lt;key&gt;</b>
+            <br/><br/>
 
-              <table style="font-size: 13px;">
-                <tr>
-                  <td><b>HTTP Method</b></td>
-                  <td><b>Purpose</b></td>
-                  <td><b>Note</b></td>
-                  <td><b>Try it</b></td>
-                </tr>
-                <tr>
-                  <td>POST</td>
-                  <td>Insert the content in the bucket with the key specified</td>
-                  <td>If the key already exists, an error will be returned.</td>
-                  <td>
-                    <form name="post" method="post" action="">
-                    <table style="font-size: 13px;">
-                      <tr colspan="2">
-                        <td>Key</td><td><input id="post-key" type="input" size="8" /></td>
-                        <td><a href="javascript:sendPost( document.getElementById('post-key').value, document.getElementById('post-value').value )">Submit</a></td>
-                      </tr>
-                      <tr>
-                        <td>Value</td><td><input id="post-value" type="input" size="8" /></td>
-                      </tr>
-                    </table>
-                    </form>
-                  </td>
-                </tr>
-                <tr>
-                  <td>GET</td>
-                  <td>Retrieve the content of the key in the bucket specified</td>
-                  <td>If the key doesn't exists an error will be returned.</td>
-                  <td>
-                    <form name="get" method="get" action="">
-                    <table style="font-size: 13px;">
-                      <tr>
-                        <td>Key</td><td><input id="get-key" type="input" size="8" /></td>
-                        <td><a href="javascript:sendGet( document.getElementById('get-key').value )">Submit</a></td>
-                      </tr>
-                    </table>
-                    </form>
-                  </td>
-                </tr>
-                <tr>
-                  <td>PUT</td>
-                  <td>Update the content in the bucket with the key specified</td>
-                  <td>If the key doesn't exists an error will be returned.</td>
-                  <td>
-                    <form name="put" method="put" action="">
-                    <table style="font-size: 13px;">
-                      <tr colspan="2">
-                        <td>Key</td><td><input id="put-key" type="input" size="8" /></td>
-                        <td><a href="javascript:sendPut( document.getElementById('put-key').value, document.getElementById('put-value').value )">Submit</a></td>
-                      </tr>
-                      <tr>
-                        <td>Value</td><td><input id="put-value" type="input" size="8" /></td>
-                      </tr>
-                    </table>
-                    </form>
-                  </td>
-                </tr>
-                <tr>
-                  <td>DELETE</td>
-                  <td>Delete the key in the bucket specified</td>
-                  <td>If the key doesn't exists an error will be returned.</td>
-                  <td>
-                    <form name="delete" method="delete" action="">
-                    <table style="font-size: 13px;">
-                      <tr>
-                        <td>Key</td><td><input id="delete-key" type="input" size="8" /></td>
-                        <td><a href="javascript:sendDelete( document.getElementById('delete-key').value )">Submit</a></td>
-                      </tr>
-                    </table>
-                    </form>
-                  </td>
-                </tr>
-              </table>
-              </div>
+            <table style="font-size: 13px;">
+              <tr>
+                <td><b>HTTP Method</b></td>
+                <td><b>Purpose</b></td>
+                <td><b>Note</b></td>
+                <td><b>Try it</b></td>
+              </tr>
+              <tr>
+                <td>POST</td>
+                <td>Insert the content in the bucket with the key specified</td>
+                <td>If the key already exists, an error will be returned.</td>
+                <td>
+                  <form name="post" method="post" action="">
+                  <table style="font-size: 13px;">
+                    <tr colspan="2">
+                      <td width="60">Key</td><td><input id="post-key" type="input" size="8" /></td>
+                      <td><a href="javascript:sendPost( document.getElementById('post-key').value, document.getElementById('post-value').value )">Submit</a></td>
+                    </tr>
+                    <tr>
+                      <td>Value</td><td><input id="post-value" type="input" size="8" /></td>
+                    </tr>
+                  </table>
+                  </form>
+                </td>
+              </tr>
+              <tr>
+                <td>GET</td>
+                <td>Retrieve the content of the key in the bucket specified</td>
+                <td>If the key doesn't exists an error will be returned.</td>
+                <td>
+                  <form name="get" method="get" action="">
+                  <table style="font-size: 13px;">
+                    <tr>
+                      <td width="60">Key</td><td><input id="get-key" type="input" size="8" /></td>
+                      <td><a href="javascript:sendGet( document.getElementById('get-key').value )">Submit</a></td>
+                    </tr>
+                  </table>
+                  </form>
+                </td>
+              </tr>
+              <tr>
+                <td>PUT</td>
+                <td>Update the content in the bucket with the key specified</td>
+                <td>If the key doesn't exists an error will be returned.</td>
+                <td>
+                  <form name="put" method="put" action="">
+                  <table style="font-size: 13px;">
+                    <tr colspan="2">
+                      <td width="60">Key</td><td><input id="put-key" type="input" size="8" /></td>
+                      <td><a href="javascript:sendPut( document.getElementById('put-key').value, document.getElementById('put-value').value )">Submit</a></td>
+                    </tr>
+                    <tr>
+                      <td>Value</td><td><input id="put-value" type="input" size="8" /></td>
+                    </tr>
+                  </table>
+                  </form>
+                </td>
+              </tr>
+              <tr>
+                <td>DELETE</td>
+                <td>Delete the key in the bucket specified</td>
+                <td>If the key doesn't exists an error will be returned.</td>
+                <td>
+                  <form name="delete" method="delete" action="">
+                  <table style="font-size: 13px;">
+                    <tr>
+                      <td width="60">Key</td><td><input id="delete-key" type="input" size="8" /></td>
+                      <td><a href="javascript:sendDelete( document.getElementById('delete-key').value )">Submit</a></td>
+                    </tr>
+                  </table>
+                  </form>
+                </td>
+              </tr>
+            </table>
             </div>
+          </div>
+          <div class="row">
             <table style="font-size: 13px;">
               <tr>
                 <td>Response</td>
@@ -165,13 +163,14 @@
                 <td><input id="status-code" size="5" disabled /><input id="status-text" size="105" disabled /></td>
               </tr>
             </table>
-            
-            <div class="row">
-              <div class="cell-double-spaced column1">To know more information visit: <a href="http://www.orientechnologies.com">http://www.orientechnologies.com</a><br><br></div>
-            </div>           
-          </div>
+          </div>           
         </div>
+        <div class="row">
+          <div class="cell-double-spaced column1 centered">To know more information visit: <a href="http://www.orientechnologies.com">http://www.orientechnologies.com</a></div>
+        </div>           
       </div>
     </div>
   </body>
+  <script type="text/javascript">orient_google_stats();</script>
+  
 </html>
