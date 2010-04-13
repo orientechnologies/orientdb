@@ -17,30 +17,31 @@ package com.orientechnologies.orient.server.network.protocol;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseBinary;
 import com.orientechnologies.orient.server.OServerMain;
 
-public abstract class ONetworkProtocolDatabaseShared extends ONetworkProtocol {
+public class OSharedDatabase {
 	// TODO: ALLOW ONLY 1 BECAUSE THE TREE IS NOT YET FULLY TRANSACTIONAL
 	private static final ODatabasePool<ODatabaseBinary>	dbPool	= new ODatabasePool<ODatabaseBinary>(1) {
 
-																																			public ODatabaseBinary createNewResource(
-																																					String iDatabaseName) {
-																																				return new ODatabaseBinary("local:"
-																																						+ OServerMain.server().getStoragePath(iDatabaseName))
-																																						.open("admin", "admin");
-																																			}
-																																		};
+																																public ODatabaseBinary createNewResource(String iDatabaseName) {
+																																	ODatabaseBinary db = new ODatabaseBinary("local:"
+																																			+ OServerMain.server().getStoragePath(iDatabaseName)).open(
+																																			"admin", "admin");
 
-	protected ONetworkProtocolDatabaseShared(ThreadGroup group, String name) {
-		super(group, name);
-	}
+																																	// DISABLE CACHE SINCE THERE IS HAZELCAST FOR IT
+																																	((ODatabaseRaw) db.getUnderlying()).setUseCache(false);
 
-	public ODatabaseBinary acquireDatabase(String iName) throws OLockException, InterruptedException {
+																																	return db;
+																																}
+																															};
+
+	public static ODatabaseBinary acquireDatabase(String iName) throws OLockException, InterruptedException {
 		return dbPool.acquireDatabase(iName);
 	}
 
-	public void releaseDatabase(final String iName, final ODatabaseBinary iDatabase) throws OLockException,
+	public static void releaseDatabase(final String iName, final ODatabaseBinary iDatabase) throws OLockException,
 			InterruptedException {
 		dbPool.releaseDatabase(iName, iDatabase);
 	}

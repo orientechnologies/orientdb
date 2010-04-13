@@ -23,13 +23,9 @@ import java.io.InputStream;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.IMap;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.record.ODatabaseBinary;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.index.OTreeMapPersistent;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerString;
-import com.orientechnologies.orient.core.storage.impl.local.ODictionaryLocal;
 import com.orientechnologies.orient.enterprise.channel.text.OChannelTextServer;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolException;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
@@ -42,31 +38,20 @@ public class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstract {
 			return;
 		}
 
-		String parts[] = getRequestParameters(iURI);
+		String parts[] = ONetworkProtocolHttpKV.getRequestParameters(iURI);
 
 		String dbName = parts[0];
 		String bucket = parts[1];
 		String key = parts[2];
 
 		try {
-			String content;
-			String value;
 
-			ODatabaseBinary db = acquireDatabase(dbName);
-
-			try {
-				OTreeMapPersistent<String, String> bucketTree = getBucket(db, bucket);
-
-				value = bucketTree.get(key);
-
-			} finally {
-
-				releaseDatabase(dbName, db);
-			}
+			IMap<String, String> bucketMap = Hazelcast.getMap(dbName + "/" + bucket);
+			String value = bucketMap.get(iURI);
 
 			int code = value == null ? 404 : 200;
 			String reason = value == null ? "Not Found" : "Ok";
-			content = value == null ? "The key '" + key + "' was not found in database '" + dbName + "'" : value.toString();
+			String content = value == null ? "The key '" + key + "' was not found in database '" + dbName + "'" : value.toString();
 
 			sendTextContent(code, reason, "text/plain", content);
 		} catch (SocketException e) {
@@ -79,6 +64,140 @@ public class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstract {
 			OLogManager.instance().error(this, "Error on retrieving key '" + key + "' from database '" + dbName + "'", e,
 					ONetworkProtocolException.class);
 		}
+	}
+
+	@Override
+	public void doPut(String iURI, String iContent, OChannelTextServer iChannel) throws ONetworkProtocolException {
+		String parts[] = getRequestParameters(iURI);
+
+		String dbName = parts[0];
+		String bucket = parts[1];
+		String key = parts[2];
+
+		try {
+			IMap<String, String> bucketMap = Hazelcast.getMap(dbName + "/" + bucket);
+
+			int code;
+			String reason;
+			String content;
+
+			if (bucketMap.containsKey(iURI)) {
+				code = 200;
+				reason = "Ok";
+				content = null;
+
+				bucketMap.put(iURI, iContent);
+			} else {
+				code = 503;
+				reason = "Entry not exists. Use HTTP POST instead.";
+				content = "The entry with key: " + key + " not exists in the bucket '" + bucket + "'";
+			}
+
+			sendTextContent(code, reason, "text/plain", content);
+
+		} catch (SocketTimeoutException e) {
+			timeout();
+
+		} catch (SocketException e) {
+			connectionError();
+
+		} catch (Exception e) {
+			OLogManager.instance().error(this, "Error on retrieving key '" + key + "' from database '" + dbName + "'", e,
+					ONetworkProtocolException.class);
+		}
+	}
+
+	@Override
+	public void doPost(String iURI, String iContent, OChannelTextServer iChannel) throws ONetworkProtocolException {
+		String parts[] = getRequestParameters(iURI);
+
+		String dbName = parts[0];
+		String bucket = parts[1];
+		String key = parts[2];
+
+		try {
+			IMap<String, String> bucketMap = Hazelcast.getMap(dbName + "/" + bucket);
+
+			int code;
+			String reason;
+			String content;
+
+			if (bucketMap.containsKey(iURI)) {
+				code = 503;
+				reason = "Entry already exists";
+				content = "The entry with key: " + key + " already exists in the bucket '" + bucket + "'";
+			} else {
+				code = 200;
+				reason = "Ok";
+				content = null;
+
+				bucketMap.put(iURI, iContent);
+			}
+
+			sendTextContent(code, reason, "text/plain", content);
+		} catch (SocketTimeoutException e) {
+			timeout();
+
+		} catch (SocketException e) {
+			connectionError();
+
+		} catch (Exception e) {
+			OLogManager.instance().error(this, "Error on retrieving key '" + key + "' from database '" + dbName + "'", e,
+					ONetworkProtocolException.class);
+		}
+	}
+
+	@Override
+	public void doDelete(String iURI, String iContent, OChannelTextServer iChannel) throws ONetworkProtocolException {
+		String parts[] = getRequestParameters(iURI);
+
+		String dbName = parts[0];
+		String bucket = parts[1];
+		String key = parts[2];
+
+		try {
+			IMap<String, String> bucketMap = Hazelcast.getMap(dbName + "/" + bucket);
+
+			int code;
+			String reason;
+			String content;
+
+			if (!bucketMap.containsKey(iURI)) {
+				code = 503;
+				reason = "Key not found";
+				content = "The entry with key: " + key + " was not found in the bucket '" + bucket + "'";
+			} else {
+				code = 200;
+				reason = "Ok";
+				content = bucketMap.remove(iURI);
+			}
+
+			sendTextContent(code, reason, "text/plain", content);
+		} catch (SocketTimeoutException e) {
+			timeout();
+
+		} catch (SocketException e) {
+			connectionError();
+
+		} catch (Exception e) {
+			OLogManager.instance().error(this, "Error on retrieving key '" + key + "' from database '" + dbName + "'", e,
+					ONetworkProtocolException.class);
+		}
+	}
+
+	public static String[] getRequestParameters(String iParameters) {
+		if (iParameters == null || iParameters.length() <= 1)
+			throw new ONetworkProtocolException("Requested URI is invalid: " + iParameters);
+
+		// REMOVE THE FIRST /
+		iParameters = iParameters.substring(1);
+
+		String[] pars = iParameters.split("/");
+
+		if (pars == null || pars.length < 3)
+			throw new ONetworkProtocolException("Requested URI is invalid: " + iParameters);
+
+		return pars;
 	}
 
 	private void directAccess(final String iURI) {
@@ -118,168 +237,5 @@ public class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstract {
 				} catch (IOException e) {
 				}
 		}
-	}
-
-	@Override
-	public void doPut(String iURI, String iContent, OChannelTextServer iChannel) throws ONetworkProtocolException {
-		String parts[] = getRequestParameters(iURI);
-
-		String dbName = parts[0];
-		String bucket = parts[1];
-		String key = parts[2];
-		String value;
-
-		try {
-			ODatabaseBinary db = acquireDatabase(dbName);
-
-			try {
-				OTreeMapPersistent<String, String> bucketTree = getBucket(db, bucket);
-
-				value = bucketTree.put(key, iContent);
-			} finally {
-
-				releaseDatabase(dbName, db);
-			}
-
-			sendTextContent(200, "Ok", "text/plain", value);
-
-		} catch (SocketTimeoutException e) {
-			timeout();
-
-		} catch (SocketException e) {
-			connectionError();
-
-		} catch (Exception e) {
-			OLogManager.instance().error(this, "Error on retrieving key '" + key + "' from database '" + dbName + "'", e,
-					ONetworkProtocolException.class);
-		}
-	}
-
-	@Override
-	public void doPost(String iURI, String iContent, OChannelTextServer iChannel) throws ONetworkProtocolException {
-		String parts[] = getRequestParameters(iURI);
-
-		String dbName = parts[0];
-		String bucket = parts[1];
-		String key = parts[2];
-
-		try {
-			ODatabaseBinary db = acquireDatabase(dbName);
-
-			int code;
-			String reason;
-			String content;
-
-			try {
-				OTreeMapPersistent<String, String> bucketTree = getBucket(db, bucket);
-
-				if (bucketTree.containsKey(key)) {
-					code = 503;
-					reason = "Entry already exists";
-					content = "The entry with key: " + key + " already exists in the bucket '" + bucket + "'";
-				} else {
-					code = 200;
-					reason = "Ok";
-					content = null;
-
-					bucketTree.put(key, iContent);
-				}
-			} finally {
-
-				releaseDatabase(dbName, db);
-			}
-
-			sendTextContent(code, reason, "text/plain", content);
-		} catch (SocketTimeoutException e) {
-			timeout();
-
-		} catch (SocketException e) {
-			connectionError();
-
-		} catch (Exception e) {
-			OLogManager.instance().error(this, "Error on retrieving key '" + key + "' from database '" + dbName + "'", e,
-					ONetworkProtocolException.class);
-		}
-	}
-
-	@Override
-	public void doDelete(String iURI, String iContent, OChannelTextServer iChannel) throws ONetworkProtocolException {
-		String parts[] = getRequestParameters(iURI);
-
-		String dbName = parts[0];
-		String bucket = parts[1];
-		String key = parts[2];
-
-		try {
-			ODatabaseBinary db = acquireDatabase(dbName);
-
-			int code;
-			String reason;
-			String content;
-
-			try {
-				OTreeMapPersistent<String, String> bucketTree = getBucket(db, bucket);
-
-				if (!bucketTree.containsKey(key)) {
-					code = 503;
-					reason = "Key not found";
-					content = "The entry with key: " + key + " was not found in the bucket '" + bucket + "'";
-				} else {
-					code = 200;
-					reason = "Ok";
-					content = bucketTree.remove(key);
-				}
-			} finally {
-
-				releaseDatabase(dbName, db);
-			}
-
-			sendTextContent(code, reason, "text/plain", content);
-		} catch (SocketTimeoutException e) {
-			timeout();
-
-		} catch (SocketException e) {
-			connectionError();
-
-		} catch (Exception e) {
-			OLogManager.instance().error(this, "Error on retrieving key '" + key + "' from database '" + dbName + "'", e,
-					ONetworkProtocolException.class);
-		}
-	}
-
-	private OTreeMapPersistent<String, String> getBucket(ODatabaseRecord<ORecordBytes> db, String bucket) throws IOException {
-		ORecordBytes rec = db.getDictionary().get(bucket);
-
-		OTreeMapPersistent<String, String> bucketTree = null;
-
-		if (rec != null) {
-			bucketTree = new OTreeMapPersistent<String, String>(db, ODictionaryLocal.DICTIONARY_DEF_CLUSTER_NAME, rec.getIdentity());
-			bucketTree.load();
-		}
-
-		if (bucketTree == null) {
-			// CREATE THE BUCKET
-			bucketTree = new OTreeMapPersistent<String, String>(db, ODictionaryLocal.DICTIONARY_DEF_CLUSTER_NAME,
-					OStreamSerializerString.INSTANCE, OStreamSerializerString.INSTANCE);
-			bucketTree.save();
-
-			db.getDictionary().put(bucket, bucketTree.getRecord());
-		}
-		return bucketTree;
-	}
-
-	private String[] getRequestParameters(String iParameters) {
-		if (iParameters == null || iParameters.length() <= 1)
-			throw new ONetworkProtocolException("Requested URI is invalid: " + iParameters);
-
-		// REMOVE THE FIRST /
-		iParameters = iParameters.substring(1);
-
-		String[] pars = iParameters.split("/");
-
-		if (pars == null || pars.length < 3)
-			throw new ONetworkProtocolException("Requested URI is invalid: " + iParameters);
-
-		return pars;
 	}
 }

@@ -31,10 +31,10 @@ import com.orientechnologies.orient.enterprise.channel.text.OChannelTextServer;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
-import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolDatabaseShared;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolException;
 
-public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocolDatabaseShared {
+public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 	private static final String			CONTENT_LENGTH			= "Content-Length: ";
 	private static final byte[]			EOL									= { (byte) '\r', (byte) '\n' };
 	private static final String			ORIENT_SERVER_KV		= "Orient Key Value v." + OConstants.ORIENT_VERSION;
