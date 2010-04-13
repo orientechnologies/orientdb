@@ -73,7 +73,7 @@ public class OConfigurationLoaderXml {
 		}
 	}
 
-	public void save(OServerConfiguration iRootObject) throws IOException {
+	public void save(final OServerConfiguration iRootObject) throws IOException {
 		try {
 			context = JAXBContext.newInstance(rootClass);
 			Marshaller marshaller = context.createMarshaller();

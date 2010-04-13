@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.network;
 
 import java.io.IOException;
+import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -33,8 +34,9 @@ public class OServerNetworkListener {
 	private volatile int			connectionSerial	= 0;
 	private volatile boolean	active						= true;
 
-	public OServerNetworkListener(String iHostName, int iHostPort, Class<? extends ONetworkProtocol> iProtocol) {
-		listen(iHostName, iHostPort);
+	public OServerNetworkListener(final String iHostName, final String iHostPortRange,
+			final Class<? extends ONetworkProtocol> iProtocol) {
+		listen(iHostName, iHostPortRange);
 
 		ONetworkProtocol protocol;
 		OClientConnection connection;
@@ -78,28 +80,59 @@ public class OServerNetworkListener {
 	/**
 	 * Initialize a server socket for communicating with the client.
 	 * 
-	 * @param iHostPort
+	 * @param iHostPortRange
 	 * @param iHostName
 	 */
-	private void listen(String iHostName, int iHostPort) {
-		inboundAddr = new InetSocketAddress(iHostName, iHostPort);
-		try {
-			serverSocket = new java.net.ServerSocket(iHostPort);
+	private void listen(String iHostName, String iHostPortRange) {
+		int[] ports;
 
-			if (serverSocket.isBound()) {
-				OLogManager.instance().config(
-						this,
-						"Orient Database Server v" + OConstants.ORIENT_VERSION + " is listening connections on " + inboundAddr.getHostName()
-								+ ":" + inboundAddr.getPort());
+		if (iHostPortRange.contains(",")) {
+			// MULTIPLE ENUMERATED PORTS
+			String[] portValues = iHostPortRange.split(",");
+			ports = new int[portValues.length];
+			for (int i = 0; i < portValues.length; ++i)
+				ports[i] = Integer.parseInt(portValues[i]);
+
+		} else if (iHostPortRange.contains("-")) {
+			// MULTIPLE RANGE PORTS
+			String[] limits = iHostPortRange.split("-");
+			int lowerLimit = Integer.parseInt(limits[0]);
+			int upperLimit = Integer.parseInt(limits[1]);
+			ports = new int[upperLimit - lowerLimit + 1];
+			for (int i = 0; i < upperLimit - lowerLimit + 1; ++i)
+				ports[i] = lowerLimit + i;
+
+		} else
+			// SINGLE PORT SPECIFIED
+			ports = new int[] { Integer.parseInt(iHostPortRange) };
+
+		for (int port : ports) {
+			inboundAddr = new InetSocketAddress(iHostName, port);
+			try {
+				serverSocket = new java.net.ServerSocket(port);
+
+				if (serverSocket.isBound()) {
+					OLogManager.instance().config(
+							this,
+							"Orient Database Server v" + OConstants.ORIENT_VERSION + " is listening connections on " + inboundAddr.getHostName()
+									+ ":" + inboundAddr.getPort());
+					return;
+				}
+			} catch (BindException be) {
+				OLogManager.instance().info(this, "Port %s:%d busy, trying the next available...", iHostName, port);
+			} catch (SocketException se) {
+				OLogManager.instance().error(this, "Unable to create socket", se);
+				System.exit(1);
+			} catch (IOException ioe) {
+				OLogManager.instance().error(this, "Unable to read data from an open socket", ioe);
+				System.err.println("Unable to read data from an open socket.");
+				System.exit(1);
 			}
-		} catch (SocketException se) {
-			OLogManager.instance().error(this, "Unable to create socket", se);
-			System.exit(1);
-		} catch (IOException ioe) {
-			OLogManager.instance().error(this, "Unable to read data from an open socket", ioe);
-			System.err.println("Unable to read data from an open socket.");
-			System.exit(1);
 		}
+
+		OLogManager.instance().error(this, "Unable to listen connection using the configured ports '%s' on host '%s'", iHostPortRange,
+				iHostName);
+		System.exit(1);
 	}
 
 	public boolean isActive() {

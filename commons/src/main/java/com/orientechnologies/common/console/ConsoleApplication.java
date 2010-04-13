@@ -150,8 +150,6 @@ public class ConsoleApplication {
 
 				syntaxError(cmd.toString(), m);
 			} catch (Exception e) {
-				//e.printStackTrace();
-
 				err.println();
 				if (e.getCause() != null)
 					onException(e.getCause());

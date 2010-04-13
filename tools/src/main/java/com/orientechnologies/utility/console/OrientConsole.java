@@ -28,7 +28,11 @@ public abstract class OrientConsole extends ConsoleApplication {
 
 	@Override
 	protected void onException(Throwable e) {
-		err.println("Error: " + e.toString());
+		Throwable current = e;
+		while (current != null) {
+			err.println("Error: " + current.getMessage());
+			current = current.getCause();
+		}
 	}
 
 	@Override

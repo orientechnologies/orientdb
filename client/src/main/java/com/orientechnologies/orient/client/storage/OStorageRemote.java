@@ -100,7 +100,7 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public boolean exists() {
-		checkDatabase();
+		checkConnection();
 
 		do {
 			boolean locked = acquireExclusiveLock();
@@ -140,7 +140,7 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public Set<String> getClusterNames() {
-		checkDatabase();
+		checkConnection();
 
 		boolean locked = acquireSharedLock();
 
@@ -153,7 +153,7 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public long createRecord(final int iClusterId, final byte[] iContent, final byte iRecordType) {
-		checkDatabase();
+		checkConnection();
 
 		do {
 			boolean locked = acquireExclusiveLock();
@@ -179,7 +179,7 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public ORawBuffer readRecord(final int iRequesterId, final int iClusterId, final long iPosition) {
-		checkDatabase();
+		checkConnection();
 
 		if (OStorageRemoteThreadLocal.INSTANCE.get())
 			// PENDING NETWORK OPERATION, CAN'T EXECUTE IT NOW
@@ -213,7 +213,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 	public int updateRecord(final int iRequesterId, final int iClusterId, final long iPosition, final byte[] iContent,
 			final int iVersion, final byte iRecordType) {
-		checkDatabase();
+		checkConnection();
 
 		do {
 			boolean locked = acquireExclusiveLock();
@@ -244,7 +244,7 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public void deleteRecord(final int iRequesterId, final int iClusterId, final long iPosition, final int iVersion) {
-		checkDatabase();
+		checkConnection();
 
 		do {
 			boolean locked = acquireExclusiveLock();
@@ -273,7 +273,7 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public long count(final int[] iClusterIds) {
-		checkDatabase();
+		checkConnection();
 
 		do {
 			boolean locked = acquireExclusiveLock();
@@ -299,7 +299,7 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public long count(final String iClassName) {
-		checkDatabase();
+		checkConnection();
 
 		do {
 			boolean locked = acquireExclusiveLock();
@@ -326,7 +326,7 @@ public class OStorageRemote extends OStorageAbstract {
 	 * Execute the query into the server side and get back the resultset.
 	 */
 	public <T extends ORecordSchemaAware<?>> List<T> query(final OQuery<T> iQuery, final int iLimit) {
-		checkDatabase();
+		checkConnection();
 
 		if (!(iQuery instanceof OSerializableStream))
 			throw new OQueryExecutionException("Can't serialize the query to being executed to the server side.");
@@ -389,7 +389,7 @@ public class OStorageRemote extends OStorageAbstract {
 	 * Execute the query into the server side and get back the result.
 	 */
 	public ORecordSchemaAware<?> queryFirst(final OQuery<?> iQuery) {
-		checkDatabase();
+		checkConnection();
 
 		if (!(iQuery instanceof OSerializableStream))
 			throw new OQueryExecutionException("Can't serialize the query to being executed to the server side.");
@@ -424,7 +424,7 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public void commit(final int iRequesterId, final OTransaction<?> iTx) {
-		checkDatabase();
+		checkConnection();
 
 		do {
 			boolean locked = acquireExclusiveLock();
@@ -474,7 +474,7 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public int getClusterIdByName(final String iClusterName) {
-		checkDatabase();
+		checkConnection();
 
 		if (iClusterName == null)
 			return -1;
@@ -496,7 +496,7 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public int addLogicalCluster(OClusterLogical iClusterLogical) {
-		checkDatabase();
+		checkConnection();
 
 		do {
 			boolean locked = acquireExclusiveLock();
@@ -529,7 +529,7 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public int addClusterSegment(final String iClusterName, final String iClusterFileName, final int iFileSize) {
-		checkDatabase();
+		checkConnection();
 
 		do {
 			boolean locked = acquireExclusiveLock();
@@ -560,7 +560,7 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public int addDataSegment(final String iSegmentName, final String iSegmentFileName) {
-		checkDatabase();
+		checkConnection();
 
 		do {
 			boolean locked = acquireExclusiveLock();
@@ -596,7 +596,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 	public <REC extends ORecordInternal<?>> REC dictionaryPut(ODatabaseRecord<REC> iDatabase, final String iKey,
 			final ORecord<?> iRecord) {
-		checkDatabase();
+		checkConnection();
 
 		do {
 			boolean locked = acquireExclusiveLock();
@@ -623,7 +623,7 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public <REC extends ORecordInternal<?>> REC dictionaryLookup(ODatabaseRecord<REC> iDatabase, final String iKey) {
-		checkDatabase();
+		checkConnection();
 
 		do {
 			boolean locked = acquireExclusiveLock();
@@ -649,7 +649,7 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public <REC extends ORecordInternal<?>> REC dictionaryRemove(ODatabaseRecord<REC> iDatabase, Object iKey) {
-		checkDatabase();
+		checkConnection();
 
 		do {
 			boolean locked = acquireExclusiveLock();
@@ -675,7 +675,7 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public int dictionarySize(ODatabaseRecord iDatabase) {
-		checkDatabase();
+		checkConnection();
 
 		do {
 			boolean locked = acquireExclusiveLock();
@@ -702,7 +702,7 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public Set<String> dictionaryKeys() {
-		checkDatabase();
+		checkConnection();
 
 		do {
 			boolean locked = acquireExclusiveLock();
@@ -830,9 +830,9 @@ public class OStorageRemote extends OStorageAbstract {
 		network = new OChannelBinaryClient(remoteHost, remotePort, clientConfiguration.connectionTimeout);
 	}
 
-	private void checkDatabase() {
+	protected void checkConnection() {
 		if (network == null)
-			throw new ODatabaseException("Database is closed");
+			throw new ODatabaseException("Connection is closed");
 	}
 
 	private ORecord<?> readRecordFromNetwork(ODatabaseRecord<?> iDatabase) throws IOException {

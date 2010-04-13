@@ -27,6 +27,7 @@ import java.util.Set;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
@@ -73,7 +74,7 @@ public class OStorageLocal extends OStorageAbstract {
 	public OStorageLocal(final String iName, final String iFilePath, final String iMode) throws IOException {
 		super(iName, iFilePath, iMode);
 
-		storagePath = OFileUtils.getPath(new File(fileURL).getParent());
+		storagePath = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(fileURL).getParent()));
 
 		configuration = new OStorageConfiguration(this);
 		variableParser = new OStorageVariableParser(storagePath);

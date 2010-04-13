@@ -54,7 +54,7 @@ public class Orient extends OSharedResource {
 		// SEARCH FOR ENGINE
 		int pos = iURL.indexOf(':');
 		if (pos <= 0)
-			throw new OConfigurationException("Error on opening database: the engine was not specified. Syntax is: " + URL_SYNTAX
+			throw new OConfigurationException("Error in database URL: the engine was not specified. Syntax is: " + URL_SYNTAX
 					+ ". URL was: " + iURL);
 
 		String engineName = iURL.substring(0, pos);

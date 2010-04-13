@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.server.config.OConfigurationLoaderXml;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
+import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerNetworkListenerConfiguration;
 import com.orientechnologies.orient.server.config.OServerNetworkProtocolConfiguration;
 import com.orientechnologies.orient.server.managed.OrientServer;
@@ -49,9 +50,11 @@ public class OServer {
 
 	protected ReentrantReadWriteLock													lock									= new ReentrantReadWriteLock();
 
+	protected OConfigurationLoaderXml													configurationLoader;
 	protected OServerConfiguration														configuration;
 	protected OServerShutdownHook															shutdownHook;
 
+	protected List<Object>																		handlers							= new ArrayList<Object>();
 	protected Map<String, Class<? extends ONetworkProtocol>>	protocols							= new HashMap<String, Class<? extends ONetworkProtocol>>();
 	protected List<OServerNetworkListener>										listeners							= new ArrayList<OServerNetworkListener>();
 
@@ -79,6 +82,12 @@ public class OServer {
 		Orient.instance();
 		Orient.instance().removeShutdownHook();
 
+		if (configuration.handlers != null)
+			// ACTIVATE HANDLERS
+			for (OServerHandlerConfiguration h : configuration.handlers) {
+				handlers.add(Class.forName(h.clazz).newInstance());
+			}
+
 		// REGISTER PROTOCOLS
 		for (OServerNetworkProtocolConfiguration p : configuration.network.protocols) {
 			protocols.put(p.name, (Class<? extends ONetworkProtocol>) Class.forName(p.implementation));
@@ -86,7 +95,7 @@ public class OServer {
 
 		// STARTUP LISTENERS
 		for (OServerNetworkListenerConfiguration l : configuration.network.listeners) {
-			listeners.add(new OServerNetworkListener(l.ipAddress, l.port, protocols.get(l.protocol)));
+			listeners.add(new OServerNetworkListener(l.ipAddress, l.portRange, protocols.get(l.protocol)));
 		}
 	}
 
@@ -116,6 +125,7 @@ public class OServer {
 
 		if (dbPath == null)
 			throw new OConfigurationException("Database '" + iURL + "' is not configured on server");
+
 		return dbPath;
 	}
 
@@ -129,10 +139,23 @@ public class OServer {
 			if (System.getProperty(PROPERTY_CONFIG_FILE) != null)
 				config = System.getProperty(PROPERTY_CONFIG_FILE);
 
-			configuration = (OServerConfiguration) new OConfigurationLoaderXml(OServerConfiguration.class, config).load();
+			configurationLoader = new OConfigurationLoaderXml(OServerConfiguration.class, config);
+			configuration = configurationLoader.load();
 		} catch (IOException e) {
 			OLogManager.instance().error(this, "Error on reading server configuration.", OConfigurationException.class);
 		}
+	}
+
+	public boolean existsStoragePath(final String iURL) {
+		return configuration.getStoragePath(iURL) != null;
+	}
+
+	public OServerConfiguration getConfiguration() {
+		return configuration;
+	}
+
+	public void saveConfiguration() throws IOException {
+		configurationLoader.save(configuration);
 	}
 
 	public static ThreadGroup getThreadGroup() {

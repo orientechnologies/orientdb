@@ -31,6 +31,10 @@ public class OServerConfiguration {
 
 	public String															location;
 
+	@XmlElementWrapper
+	@XmlElementRef(type = OServerHandlerConfiguration.class)
+	public List<OServerHandlerConfiguration>	handlers;
+
 	@XmlElementRef(type = OServerNetworkConfiguration.class)
 	public OServerNetworkConfiguration				network;
 
@@ -40,7 +44,7 @@ public class OServerConfiguration {
 
 	@XmlElementWrapper
 	@XmlElementRef(type = OStorageEntryConfiguration.class)
-	public List<OStorageEntryConfiguration>					properties;
+	public List<OStorageEntryConfiguration>		properties;
 
 	/**
 	 * Empty constructor for JAXB

@@ -22,9 +22,18 @@ import javax.xml.bind.annotation.XmlType;
 @XmlRootElement(name = "storage")
 @XmlType(propOrder = { "name", "path" })
 public class OServerStorageConfiguration {
+
 	@XmlAttribute
 	public String	name;
 
 	@XmlAttribute
 	public String	path;
+
+	public OServerStorageConfiguration() {
+	}
+
+	public OServerStorageConfiguration(final String iName, final String iPath) {
+		name = iName;
+		path = iPath;
+	}
 }

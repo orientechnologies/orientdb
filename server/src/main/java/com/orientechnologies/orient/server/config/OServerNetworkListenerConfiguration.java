@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-  package com.orientechnologies.orient.server.config;
+package com.orientechnologies.orient.server.config;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "listener")
-@XmlType(propOrder = { "ipAddress", "port", "protocol" })
+@XmlType(propOrder = { "ipAddress", "portRange", "protocol" })
 public class OServerNetworkListenerConfiguration {
 
 	@XmlAttribute(name = "ip-address", required = true)
 	public String	ipAddress	= "127.0.0.1";
 
-	@XmlAttribute
-	public int		port			= 5000;
+	@XmlAttribute(name = "port-range")
+	public String	portRange	= "8000-8010";
 
 	@XmlAttribute
 	public String	protocol	= "binary";

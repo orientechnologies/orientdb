@@ -16,54 +16,35 @@
 package com.orientechnologies.orient.client.admin;
 
 import java.io.IOException;
-import java.net.UnknownHostException;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.client.storage.OStorageRemote;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 /**
  * Remote admin of Orient Servers.
  */
-public class OServerAdmin {
-	private String									url;
-
-	// private String userName;
-	// private String userPassword;
-	protected OChannelBinaryClient	network;
-	protected int										sessionId;
-
+public class OServerAdmin extends OStorageRemote {
 	public OServerAdmin(String iURL) throws IOException {
-		url = iURL;
-
-		// CONNECT
+		super(iURL, "");
 	}
 
 	public OServerAdmin connect() throws IOException {
-		try {
-			createNetworkConnection();
-
-			network.writeByte((byte) OChannelBinaryProtocol.CONNECT);
-			network.flush();
-
-			readStatus();
-
-			sessionId = network.readInt();
-
-		} catch (Exception e) {
-			OLogManager.instance().error(this, "Can't connect the remote server: " + url, e, OStorageException.class);
-			close();
-		}
+		createNetworkConnection();
 		return this;
 	}
 
 	public OServerAdmin createDatabase(String iDatabaseName, String iDatabasePath, String iStorageMode) throws IOException {
+		checkConnection();
+
 		try {
 			if (iStorageMode == null)
 				iStorageMode = "csv";
 
 			network.writeByte(OChannelBinaryProtocol.DB_CREATE);
+			network.writeString(iDatabaseName);
+			network.writeString(iDatabasePath);
 			network.writeString(iStorageMode);
 			network.flush();
 
@@ -74,37 +55,5 @@ public class OServerAdmin {
 			close();
 		}
 		return this;
-	}
-
-	public void close() throws IOException {
-		network.socket.close();
-	}
-
-	protected void readStatus() throws IOException {
-		byte result = network.readByte();
-
-		if (result == OChannelBinaryProtocol.ERROR)
-			OLogManager.instance().error(this, network.readString(), null, OStorageException.class);
-	}
-
-	protected void createNetworkConnection() throws IOException, UnknownHostException {
-		String remoteHost;
-		int remotePort = 8000;
-
-		int pos = url.indexOf("/");
-		if (pos == -1) {
-			remoteHost = "localhost";
-		} else {
-			int posRemotePort = url.indexOf(":");
-
-			if (posRemotePort != -1) {
-				remoteHost = url.substring(0, posRemotePort);
-				remotePort = Integer.parseInt(url.substring(posRemotePort + 1, pos));
-			} else {
-				remoteHost = url.substring(0, pos);
-			}
-		}
-
-		network = new OChannelBinaryClient(remoteHost, remotePort, remotePort);
 	}
 }

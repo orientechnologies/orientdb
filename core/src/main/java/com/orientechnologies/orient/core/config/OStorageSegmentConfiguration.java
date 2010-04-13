@@ -19,12 +19,12 @@ public class OStorageSegmentConfiguration {
 	public transient OStorageConfiguration	root;
 
 	public String														name;
-	public String														maxSize				= "0";
-	public String														fileType			= "mmap";
-	public String														fileStartSize	= "8Mb";
-	public String														fileMaxSize		= "500Mb";
+	public String														maxSize						= "0";
+	public String														fileType					= "mmap";
+	public String														fileStartSize			= "500Kb";
+	public String														fileMaxSize				= "500Mb";
 	public String														fileIncrementSize	= "50%";
-	public String														defrag				= "auto";
+	public String														defrag						= "auto";
 
 	public OStorageFileConfiguration[]			infoFiles;
 

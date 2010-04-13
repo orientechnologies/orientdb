@@ -19,15 +19,20 @@ public class OStoragePhysicalClusterConfiguration extends OStorageSegmentConfigu
 
 	public OStorageFileConfiguration	holeFile;
 
+	private static final String				START_SIZE	= "1Mb";
+
 	public OStoragePhysicalClusterConfiguration() {
+		fileStartSize = START_SIZE;
 	}
 
 	public OStoragePhysicalClusterConfiguration(String iClusterName) {
 		super(iClusterName);
+		fileStartSize = START_SIZE;
 	}
 
 	public OStoragePhysicalClusterConfiguration(OStorageConfiguration iRoot, String iSegmentName) {
 		super(iRoot, iSegmentName);
+		fileStartSize = START_SIZE;
 	}
 
 	@Override

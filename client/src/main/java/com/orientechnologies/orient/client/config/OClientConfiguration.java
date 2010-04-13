@@ -24,9 +24,9 @@ import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 
 @XmlRootElement(name = "orient-client")
 public class OClientConfiguration {
-	public int												connectionTimeout			= 5000;
-	public int												connectionRetry				= 5;
-	public long												connectionRetryDelay	= 500;
+	public int															connectionTimeout			= 5000;
+	public int															connectionRetry				= 5;
+	public long															connectionRetryDelay	= 500;
 
 	public List<OStorageEntryConfiguration>	properties						= new ArrayList<OStorageEntryConfiguration>();
 }

@@ -26,6 +26,7 @@ import java.util.Map.Entry;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.client.OEngineRemote;
 import com.orientechnologies.orient.client.admin.OServerAdmin;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -103,37 +104,38 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 	public void createDatabase(
 			@ConsoleParameter(name = "database-name", description = "The name of the database to create") String iDatabaseName)
 			throws IOException {
-		out.println("Creating database [" + iDatabaseName + "] in current server node...");
+		out.println("Creating database [" + iDatabaseName + "]...");
 
-		new OServerAdmin(currentDatabaseName).createDatabase(iDatabaseName, iDatabaseName, "csv").close();
+		if (iDatabaseName.startsWith(OEngineRemote.NAME)) {
+			// REMOTE CONNECTION
+			final String dbURL = iDatabaseName.substring(OEngineRemote.NAME.length() + 1);
+			final String dbName = dbURL.substring(dbURL.indexOf("/") + 1);
+			new OServerAdmin(dbURL).connect().createDatabase(dbName, dbName, "csv").close();
+			connect(iDatabaseName);
 
-		out.println("OK.");
+		} else {
+			// LOCAL CONNECTION
+			currentDatabase = new ODatabaseDocumentTx(iDatabaseName);
+			currentDatabase.create("csv");
+		}
 
-		connect(iDatabaseName);
+		out.println("Database created successfully.");
+		out.println("\nCurrent database is: " + iDatabaseName);
 	}
 
-	@ConsoleCommand(description = "Create a new cluster inside a database")
+	@ConsoleCommand(description = "Create a new cluster in the current database. The cluster can be physical or logical.")
 	public void createCluster(
-			@ConsoleParameter(name = "cluster-name", description = "The name of the cluster to create") String iClassName) {
+			@ConsoleParameter(name = "cluster-name", description = "The name of the cluster to create") String iClusterName,
+			@ConsoleParameter(name = "cluster-type", description = "Cluster type: 'physical' or 'logical'") String iClusterType) {
 		checkCurrentDatabase();
 
-		out.println("Creating class [" + iClassName + "] in database " + currentDatabaseName + "...");
+		out.println("Creating cluster [" + iClusterName + "] in database " + currentDatabaseName + "...");
 
-		int clusterId = currentDatabase.getStorage().addCluster(iClassName);
+		int clusterId = iClusterType.equalsIgnoreCase("physical") ? currentDatabase.addPhysicalCluster(iClusterName, iClusterName, -1)
+				: currentDatabase.addLogicalCluster(iClusterName, -1);
 
-		out.println("OK. Assigned id #" + clusterId);
-	}
-
-	@ConsoleCommand(description = "Create a new record")
-	public void createRecord(@ConsoleParameter(name = "cluster-name", description = "The name of the cluster") String iClusterName,
-			@ConsoleParameter(name = "content", description = "Record's content") String iContent) {
-		checkCurrentDatabase();
-
-		out.println("Creating a new record in cluster [" + iClusterName + "]...");
-
-		currentRecord = currentDatabase.newInstance(iContent);
-
-		out.println("OK");
+		out.println((iClusterType.equalsIgnoreCase("physical") ? "Physical" : "Logical") + " cluster created correctly with id #"
+				+ clusterId);
 	}
 
 	@ConsoleCommand(description = "Load a record in memory and set it as the current one")
@@ -189,6 +191,20 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		out.println(currentResultSet.size() + " item(s) found. Query executed in " + (float) (System.currentTimeMillis() - start)
 				/ 1000 + " sec(s).");
 	}
+
+	//
+	// @ConsoleCommand(splitInWords = false, description = "Insert a new record in the database")
+	// public void insert(@ConsoleParameter(name = "query-text", description = "The query to execute") String iQuery) {
+	// checkCurrentDatabase();
+	//
+	// if (iQuery == null)
+	// return;
+	//
+	// iQuery = iQuery.trim();
+	//
+	// if (iQuery.length() == 0 || iQuery.equalsIgnoreCase("insert"))
+	// return;
+	// }
 
 	@ConsoleCommand(description = "Browse all the records of a class")
 	public void browseClass(@ConsoleParameter(name = "class-name", description = "The name of the class") final String iClassName) {
