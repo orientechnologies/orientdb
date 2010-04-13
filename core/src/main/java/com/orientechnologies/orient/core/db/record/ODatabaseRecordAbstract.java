@@ -294,7 +294,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			}
 
 			// ADD/UPDATE IT IN CACHE IF IT'S PINNED
-			if (iContent.isPinned())
+			if (underlying.isUseCache() && iContent.isPinned())
 				getCache().addRecord(rid.toString(), new ORawBuffer(stream, iVersion, iRecordType));
 
 			iContent.unsetDirty();
@@ -321,7 +321,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			underlying.delete(iContent.getIdentity().getClusterId(), iContent.getIdentity().getClusterPosition(), iVersion);
 
 			// DELETE IT ALSO IN CACHE
-			if (iContent.isPinned())
+			if (underlying.isUseCache())
 				getCache().removeRecord(rid.toString());
 
 		} catch (ODatabaseException e) {

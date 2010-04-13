@@ -113,9 +113,15 @@ public class ODatabaseRaw implements ODatabase {
 			final String recId = ORecordId.generateString(iClusterId, iPosition);
 
 			// SEARCH IT IN CACHE
-			ORawBuffer result = getCache().findRecord(recId);
-			if (result != null)
-				return result;
+			ORawBuffer result;
+
+			if (useCache) {
+				result = getCache().findRecord(recId);
+
+				if (result != null)
+					return result;
+			} else
+				result = null;
 
 			result = storage.readRecord(id, iClusterId, iPosition);
 
