@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir="." default="install" name="orient-ant">
+  <!-- Copyright (c) 1999-2010 Luca Garulli - LICENSE: Apache 2.0 -->
+  
+	<property environment="env" />
+	<property name="vendor"         value="Orient Technologies" />
+	<property name="product"        value="Orient Key/Value Server" />
+	<property name="version"        value="0.9.6" />
+	<property name="global.release" value="../releases/${version}" />
+	<property name="kv.release"     value="../releases/${version}/kv" />
+
+  <macrodef name="delegate">
+		<attribute name="target"/>
+		<sequential>
+      <subant target="@{target}">
+        <property name="global.lib" value="../${kv.release}/lib"/>
+        
+		  	<fileset dir="kv"    includes="build.xml" />
+	    </subant>
+	    
+      <echo>   ___   ___  ____    _  </echo>  
+   		<echo> .'   `.|_  ||_  _|  | | </echo>
+  		<echo>/  .-.  \ | |_/ /    | | </echo>
+  		<echo>| |   | | |  __'.    |_| </echo>
+  		<echo>\  `-'  /_| |  \ \_   _  </echo>
+  		<echo> `.___.'|____||____| (_) </echo>
+    </sequential>
+    
+  </macrodef>
+  
+	<target name="init">
+    <echo>           .                                              </echo>
+    <echo>          .`        `                                     </echo>
+    <echo>          ,      `:.                                      </echo>
+    <echo>         `,`    ,:`                                       </echo>
+    <echo>         .,.   :,,                                        </echo>
+    <echo>         .,,  ,,,                                         </echo>
+    <echo>    .    .,.:::::  ````                                   </echo>
+    <echo>    ,`   .::,,,,::.,,,,,,`;;                      .:      </echo>
+    <echo>    `,.  ::,,,,,,,:.,,.`  `                       .:      </echo>
+    <echo>     ,,:,:,,,,,,,,::.   `        `         ``     .:      </echo>
+    <echo>      ,,:.,,,,,,,,,: `::, ,,   ::,::`   : :,::`  ::::     </echo>
+    <echo>       ,:,,,,,,,,,,::,:   ,,  :.    :   ::    :   .:      </echo>
+    <echo>        :,,,,,,,,,,:,::   ,,  :      :  :     :   .:      </echo>
+    <echo>  `     :,,,,,,,,,,:,::,  ,, .::::::::  :     :   .:      </echo>
+    <echo>  `,...,,:,,,,,,,,,: .:,. ,, ,,         :     :   .:      </echo>
+    <echo>    .,,,,::,,,,,,,:  `: , ,,  :     `   :     :   .:      </echo>
+    <echo>      ...,::,,,,::.. `:  .,,  :,    :   :     :   .:      </echo>
+    <echo>           ,::::,,,. `:   ,,   :::::    :     :   .:      </echo>
+    <echo>           ,,:` `,,.                                      </echo>
+    <echo>          ,,,    .,`                                      </echo>
+    <echo>         ,,.     `,                 KEY/VALUE SERVER      </echo>
+    <echo>       ``        `.                                       </echo>
+    <echo>                 ``                                       </echo>
+    <echo>                 `                                        </echo>
+    <echo>                                                          </echo>
+  
+		<mkdir dir="${global.release}" />
+		<mkdir dir="${kv.release}" />
+		<mkdir dir="${kv.release}/databases" />
+  </target>
+
+	<target name="clean" depends="init">
+		<delegate target="clean"/>
+    <delete dir="${kv.release}" />
+	</target>
+
+	<target name="compile" depends="init">
+		<delegate target="compile"/>
+	</target>
+
+	<target name="javadoc" depends="init">
+		<delegate target="javadoc"/>
+	</target>
+
+  <target name="install" depends="init">
+		<delegate target="install"/>
+		
+    <copy todir="${kv.release}"              file="license.txt" />
+    <copy tofile="${kv.release}/readme.txt"  file="readme-kv.txt" />
+    <copy tofile="${kv.release}/history.txt" file="history-kv.txt" />
+
+    <copy todir="${kv.release}/bin/" flatten="true">
+      <fileset dir="." includes="kv/script/*" />
+    </copy>
+
+    <copy todir="${kv.release}/config/" flatten="true">
+      <fileset dir="." includes="kv/config/*" />
+    </copy>
+    
+    <copy todir="${kv.release}/lib/" flatten="true">
+      <fileset dir="." includes="core/dist/* tools/dist/* enterprise/dist/* server/dist/* commons/dist/orient-* kv/dist/hazelcast*.jar" />
+    </copy>
+    
+    <copy todir="${kv.release}/www/">
+      <fileset dir="kv/src/site"/>
+    </copy>
+
+    <copy todir="${kv.release}/benchmarks" flatten="true">
+      <fileset dir="." includes="**/benchmarks/*"/>
+    </copy>
+	</target>
+
+  <target name="release" depends="install">
+		<delete file="../releases/orient-kv-server-${version}.zip" />
+		<zip destfile="../releases/orient-kv-server-${version}.zip" basedir="${kv.release}" level="9" update="false" excludes="*.log" />
+	</target>
+    
+</project>

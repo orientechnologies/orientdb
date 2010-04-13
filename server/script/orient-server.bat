@@ -24,7 +24,7 @@ echo      ...,::,,,,::.. `:  .,,  :,    :   :     :   .:
 echo           ,::::,,,. `:   ,,   :::::    :     :   .:      
 echo           ,,:` `,,.                                      
 echo          ,,,    .,`                                      
-echo         ,,.     `,                      S E R V E R        
+echo         ,,.     `,                D B   S E R V E R        
 echo       ``        `.                                       
 echo                 ``                                       
 echo                 `                                        

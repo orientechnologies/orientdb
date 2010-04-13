@@ -5,15 +5,15 @@
 	<property environment="env" />
 	<property name="vendor"         value="Orient Technologies" />
 	<property name="product"        value="Orient Database" />
-	<property name="version"        value="0.9.5" />
+	<property name="version"        value="0.9.7" />
 	<property name="global.release" value="../releases/${version}" />
-	<property name="global.lib"     value="${global.release}/lib" />
+	<property name="db.release"     value="../releases/${version}/db" />
 
   <macrodef name="delegate">
 		<attribute name="target"/>
 		<sequential>
       <subant target="@{target}">
-        <property name="global.lib" value="../${global.lib}"/>
+        <property name="global.lib" value="../${db.release}/lib"/>
         
 		  	<fileset dir="commons"    includes="build.xml" />
 		  	<fileset dir="core"       includes="build.xml" />
@@ -21,7 +21,6 @@
 		  	<fileset dir="client"     includes="build.xml" />
 		  	<fileset dir="server"     includes="build.xml" />
 		  	<fileset dir="tools"      includes="build.xml" />
-		  	<fileset dir="kv"         includes="build.xml" />
 	    </subant>
 	    
       <echo>   ___   ___  ____    _  </echo>  
@@ -62,13 +61,13 @@
     <echo>                                                          </echo>
   
 		<mkdir dir="${global.release}" />
-		<mkdir dir="${global.lib}" />
-		<mkdir dir="${global.release}/databases" />
+		<mkdir dir="${db.release}" />
+		<mkdir dir="${db.release}/databases" />
   </target>
 
 	<target name="clean" depends="init">
 		<delegate target="clean"/>
-    <delete dir="${global.release}" />
+    <delete dir="${db.release}" />
 	</target>
 
 	<target name="compile" depends="init">
@@ -82,33 +81,22 @@
   <target name="install" depends="init">
 		<delegate target="install"/>
 		
-    <copy todir="${global.release}">
-     <fileset dir=".">
-       <include name="*.txt"/>
-       <include name="*.xml"/>
-     </fileset>
-    </copy>
+    <copy todir="${db.release}"              file="license.txt" />
+    <copy tofile="${db.release}/readme.txt"  file="readme-db.txt" />
+    <copy tofile="${db.release}/history.txt" file="history-db.txt" />
 
-    <copy todir="${global.release}/bin/" flatten="true">
-      <fileset dir="." includes="**/script/*.bat **/script/*.sh" />
+    <copy todir="${db.release}/bin/" flatten="true">
+      <fileset dir="." includes="tools/script/* server/script/*" />
     </copy>
-
-    <copy todir="${global.release}/config/" flatten="true">
-      <fileset dir="." includes="**/*.config" />
+    
+    <copy todir="${db.release}/config/" flatten="true">
+      <fileset dir="." includes="server/config/*.config" />
     </copy>    
-
-    <copy todir="${global.release}/www/">
-      <fileset dir="kv/src/site"/>
-    </copy>
-
-    <copy todir="${global.release}/benchmarks" flatten="true">
-      <fileset dir="." includes="**/benchmarks/*"/>
-    </copy>
 	</target>
 
-  <target name="release" depends="init">
+  <target name="release" depends="install">
 		<delete file="../releases/orient-database-${version}.zip" />
-		<zip destfile="../releases/orient-database-${version}.zip" basedir="${global.release}" level="9" update="false" excludes="*.log" />
+		<zip destfile="../releases/orient-database-${version}.zip" basedir="${db.release}" level="9" update="false" excludes="*.log" />
 	</target>
     
 </project>
