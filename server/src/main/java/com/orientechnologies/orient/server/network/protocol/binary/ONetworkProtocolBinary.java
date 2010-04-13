@@ -21,6 +21,7 @@ import java.net.Socket;
 import java.net.SocketException;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
@@ -51,19 +52,18 @@ import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
-import com.orientechnologies.orient.server.config.OServerConfiguration;
+import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 
 public class ONetworkProtocolBinary extends ONetworkProtocol {
-	protected OClientConnection			connection;
-	protected OServerConfiguration	configuration;
-	protected OChannelBinary				channel;
-	protected OUser									account;
+	protected OClientConnection	connection;
+	protected OChannelBinary		channel;
+	protected OUser							account;
 
-	private String									user;
-	private String									passwd;
-	private ODatabaseRaw						underlyingDatabase;
+	private String							user;
+	private String							passwd;
+	private ODatabaseRaw				underlyingDatabase;
 
 	public ONetworkProtocolBinary() {
 		super(OServer.getThreadGroup(), "net-protocol-binary");
@@ -72,7 +72,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	public void config(final Socket iSocket, final OClientConnection iConnection) throws IOException {
 		channel = (OChannelBinary) new OChannelBinaryServer(iSocket);
 		connection = iConnection;
-		configuration = new OServerConfiguration();
 
 		start();
 	}
@@ -122,11 +121,24 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			case OChannelBinaryProtocol.DB_CREATE: {
 				String dbURL = channel.readString();
-				String dbName = dbURL.substring(dbURL.lastIndexOf(":") + 1);
+				String dbName = dbURL.substring(channel.readString().lastIndexOf(":") + 1);
 				String storageMode = channel.readString();
 
-				connection.database = new ODatabaseDocumentTx("local:" + OServerMain.server().getStoragePath(dbName));
+				if (OServerMain.server().existsStoragePath(dbName))
+					throw new IllegalArgumentException("Database '" + dbName + "' already exists.");
+
+				final String path = "${ORIENT_HOME}/databases/" + dbName + "/" + dbName;
+				final String realPath = OSystemVariableResolver.resolveSystemVariables("${ORIENT_HOME}") + "/databases/" + dbName + "/"
+						+ dbName;
+
+				connection.database = new ODatabaseDocumentTx("local:" + realPath);
 				connection.database.create(storageMode);
+				connection.database.close();
+
+				OServerMain.server().getConfiguration().storages.add(new OServerStorageConfiguration(dbName, path));
+
+				OServerMain.server().saveConfiguration();
+
 				underlyingDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
 
 				sendOk();
