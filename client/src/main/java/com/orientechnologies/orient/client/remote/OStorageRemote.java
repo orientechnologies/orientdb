@@ -888,9 +888,10 @@ public class OStorageRemote extends OStorageAbstract {
 
 	protected void createNetworkConnection() throws IOException, UnknownHostException {
 		for (OPair<String, String[]> server : serverURLs) {
-			OLogManager.instance().debug(this, "Trying to connect to the remote host %s:%d...", server.getKey(), server.getValue());
+			OLogManager.instance().debug(this, "Trying to connect to the remote host %s:%d...", server.getKey(), server.getValue()[1]);
 			try {
-				network = new OChannelBinaryClient(server.getKey(), 8000, clientConfiguration.connectionTimeout);
+				network = new OChannelBinaryClient(server.getKey(), Integer.parseInt(server.getValue()[1]),
+						clientConfiguration.connectionTimeout);
 				return;
 			} catch (Exception e) {
 			}
