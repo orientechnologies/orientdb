@@ -77,13 +77,13 @@ public class OServerClusterMember implements InstanceListener, MembershipListene
 			OLogManager.instance().config(this, "The new member is the current node, assure to store all the keys", iEvent);
 		}
 
-		IMap<?, ?> map = (IMap<?, ?>) iEvent.getSource();
-
-		PartitionService partitionService = Hazelcast.getPartitionService();
-		Set<?> localKeys = map.localKeySet();
-		for (Object localKey : localKeys) {
-			if (partitionService.getPartition(localKey).getPartitionId() == partitionId) {
-			}
-		}
+//		IMap<?, ?> map = (IMap<?, ?>) iEvent.getSource();
+//
+//		PartitionService partitionService = Hazelcast.getPartitionService();
+//		Set<?> localKeys = map.localKeySet();
+//		for (Object localKey : localKeys) {
+//			if (partitionService.getPartition(localKey).getPartitionId() == partitionId) {
+//			}
+//		}
 	}
 }
