@@ -26,8 +26,9 @@ import java.util.Map.Entry;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.client.OEngineRemote;
 import com.orientechnologies.orient.client.admin.OServerAdmin;
+import com.orientechnologies.orient.client.remote.OEngineRemote;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -69,6 +70,12 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		currentResultSet = new ArrayList<ORecordInternal<?>>();
 
 		properties.put("limit", "20");
+	}
+
+	@Override
+	protected void onAfter() {
+		super.onAfter();
+		Orient.instance().shutdown();
 	}
 
 	@ConsoleCommand(aliases = { "use database" }, description = "Connect to a database")

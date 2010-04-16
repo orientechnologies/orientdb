@@ -61,7 +61,8 @@ public class LocalCreateFlatSpeedTest extends OrientMonoThreadTest {
 
 	@Override
 	public void deinit() {
-		database.close();
+		if (database != null)
+			database.close();
 		super.deinit();
 	}
 }

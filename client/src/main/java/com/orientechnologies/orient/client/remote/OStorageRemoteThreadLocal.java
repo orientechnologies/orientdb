@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.client.storage;
+package com.orientechnologies.orient.client.remote;
 
 public class OStorageRemoteThreadLocal extends ThreadLocal<Boolean> {
 	public static OStorageRemoteThreadLocal	INSTANCE	= new OStorageRemoteThreadLocal();

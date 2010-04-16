@@ -13,25 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.client;
+package com.orientechnologies.orient.client.distributed;
 
 import java.util.Map;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.client.storage.OStorageRemote;
+import com.orientechnologies.orient.client.distributed.hazelcast.OStorageDistributedHazelcast;
 import com.orientechnologies.orient.core.engine.OEngineAbstract;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-public class OEngineRemote extends OEngineAbstract {
-	public static final String	NAME	= "remote";
+public class OEngineDistributed extends OEngineAbstract {
+	public static final String	NAME	= "distributed";
 
-	public OEngineRemote() {
+	public OEngineDistributed() {
 	}
 
-	public OStorage getStorage(String iURL, Map<String, String> iConfiguration) {
+	public OStorage getStorage(final String iURL, final Map<String, String> iConfiguration) {
 		try {
-			return new OStorageRemote(iURL, "rw");
+			return new OStorageDistributedHazelcast(iURL, iURL, "rw");
 		} catch (Throwable t) {
 			OLogManager.instance().error(this, "Error on opening database: " + iURL, t, ODatabaseException.class);
 		}

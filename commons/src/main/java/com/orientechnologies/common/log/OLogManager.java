@@ -103,7 +103,7 @@ public class OLogManager {
 	}
 
 	public void config(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
-		log(iRequester, Level.CONFIG, iMessage, null).flush();
+		log(iRequester, Level.CONFIG, iMessage, null, iAdditionalArgs).flush();
 	}
 
 	public void error(final Object iRequester, final String iMessage, final Throwable iException,

@@ -18,7 +18,7 @@ package com.orientechnologies.orient.test.database.speed;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.orient.client.OEngineRemote;
+import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;

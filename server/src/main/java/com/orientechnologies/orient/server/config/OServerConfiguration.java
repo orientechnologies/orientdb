@@ -21,6 +21,7 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 
@@ -29,6 +30,7 @@ public class OServerConfiguration {
 	public static final String								FILE_NAME	= "server.config";
 	// private static final String HEADER = "Orient DBMS Server configuration";
 
+	@XmlTransient
 	public String															location;
 
 	@XmlElementWrapper

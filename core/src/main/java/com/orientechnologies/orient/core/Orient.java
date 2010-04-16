@@ -31,14 +31,14 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 public class Orient extends OSharedResource {
-	public static final String						URL_SYNTAX		= "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
+	public static final String			URL_SYNTAX		= "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
 
-	protected Map<String, OEngine>				engines				= new HashMap<String, OEngine>();
-	protected Map<String, OStorageLocal>	storages			= new HashMap<String, OStorageLocal>();
-	protected OrientShutdownHook					shutdownHook	= new OrientShutdownHook();
-	protected volatile boolean						active				= false;
+	protected Map<String, OEngine>	engines				= new HashMap<String, OEngine>();
+	protected Map<String, OStorage>	storages			= new HashMap<String, OStorage>();
+	protected OrientShutdownHook		shutdownHook	= new OrientShutdownHook();
+	protected volatile boolean			active				= false;
 
-	protected static Orient								instance			= new Orient();
+	protected static Orient					instance			= new Orient();
 
 	protected Orient() {
 		// REGISTER THE EMBEDDED ENGINE
@@ -99,14 +99,28 @@ public class Orient extends OSharedResource {
 		}
 	}
 
-	public OStorageLocal accessToLocalStorage(String iURL, String iMode) throws IOException {
+	public void registerStorage(final OStorage iStorage) throws IOException {
 		try {
 			acquireExclusiveLock();
 
-			OStorageLocal storage = storages.get(iURL);
+			if (storages.containsKey(iStorage.getName()))
+				throw new IllegalStateException("Storage " + iStorage + " has been already registered");
+
+			storages.put(iStorage.getName(), iStorage);
+
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
+
+	public OStorage accessToLocalStorage(String iDbName, String iMode) throws IOException {
+		try {
+			acquireExclusiveLock();
+
+			OStorage storage = storages.get(iDbName);
 			if (storage == null) {
-				storage = new OStorageLocal(iURL, iURL, iMode);
-				storages.put(iURL, storage);
+				storage = new OStorageLocal(iDbName, iDbName, iMode);
+				storages.put(iDbName, storage);
 			}
 
 			return storage;
@@ -138,7 +152,11 @@ public class Orient extends OSharedResource {
 		}
 	}
 
-	public Collection<OStorageLocal> getStorages() {
+	public void unregisterStorage(final OStorage iStorage) {
+		storages.remove(iStorage.getName());
+	}
+
+	public Collection<OStorage> getStorages() {
 		try {
 			acquireSharedLock();
 

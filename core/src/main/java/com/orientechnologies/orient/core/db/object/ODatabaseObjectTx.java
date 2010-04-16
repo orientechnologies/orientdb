@@ -46,9 +46,9 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 
 	private HashMap<Object, ODocument>	objects2Records	= new HashMap<Object, ODocument>();
 	private HashMap<ODocument, Object>	records2Objects	= new HashMap<ODocument, Object>();
-	private ODictionary<Object>							dictionary;
-	private OEntityManager									entityManager		= new OEntityManager();
-	private boolean													retainObjects		= true;
+	private ODictionary<Object>					dictionary;
+	private OEntityManager							entityManager		= new OEntityManager();
+	private boolean											retainObjects		= true;
 
 	public ODatabaseObjectTx(final String iURL) {
 		super(new ODatabaseDocumentTx(iURL));
@@ -62,7 +62,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 		super.close();
 	}
 
-	public <T> T newInstance(Class<T> iType) {
+	public <T> T newInstance(final Class<T> iType) {
 		return (T) newInstance(iType.getName());
 	}
 
@@ -83,7 +83,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 		return null;
 	}
 
-	public <RET> OObjectIteratorMultiCluster<RET> browseClass(Class<RET> iClusterClass) {
+	public <RET> OObjectIteratorMultiCluster<RET> browseClass(final Class<RET> iClusterClass) {
 		if (iClusterClass == null)
 			return null;
 
@@ -104,7 +104,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 				(ODatabaseRecordAbstract<ODocument>) getUnderlying().getUnderlying(), getClusterIdByName(iClusterName));
 	}
 
-	public ODatabaseObjectTx load(Object iPojo) {
+	public ODatabaseObjectTx load(final Object iPojo) {
 		if (iPojo == null)
 			return this;
 
@@ -118,7 +118,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 		return this;
 	}
 
-	public Object load(ORID iRecordId) {
+	public Object load(final ORID iRecordId) {
 		return this;
 	}
 
@@ -135,7 +135,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 	 * 
 	 * @see ORecordSchemaAware#validate()
 	 */
-	public ODatabaseObject save(final Object iPojo, String iClusterName) {
+	public ODatabaseObject save(final Object iPojo, final String iClusterName) {
 		if (iPojo == null)
 			return this;
 
@@ -173,7 +173,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 		return underlying.countClass(iClassName);
 	}
 
-	public ODocument getRecordByUserObject(final Object iPojo, boolean iIsMandatory) {
+	public ODocument getRecordByUserObject(final Object iPojo, final boolean iIsMandatory) {
 		ODocument record = objects2Records.get(iPojo);
 
 		if (record == null) {
@@ -237,7 +237,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 		return this;
 	}
 
-	public ODatabaseObjectTx begin(TXTYPE iStatus) {
+	public ODatabaseObjectTx begin(final TXTYPE iStatus) {
 		underlying.begin(iStatus);
 		return this;
 	}

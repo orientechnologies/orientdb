@@ -7,6 +7,5 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/roma-core"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/orient-commons"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/orient-database-enterprise"/>
-	<classpathentry kind="lib" path="lib/hazelcast.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

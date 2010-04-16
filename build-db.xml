@@ -5,7 +5,7 @@
 	<property environment="env" />
 	<property name="vendor"         value="Orient Technologies" />
 	<property name="product"        value="Orient Database" />
-	<property name="version"        value="0.9.7" />
+	<property name="version"        value="0.9.8" />
 	<property name="global.release" value="../releases/${version}" />
 	<property name="db.release"     value="../releases/${version}/db" />
 
@@ -88,9 +88,13 @@
     <copy todir="${db.release}/bin/" flatten="true">
       <fileset dir="." includes="tools/script/* server/script/*" />
     </copy>
+
+    <copy todir="${db.release}/lib/" flatten="true">
+      <fileset dir="." includes="db/dist/hazelcast*.jar" />
+    </copy>
     
     <copy todir="${db.release}/config/" flatten="true">
-      <fileset dir="." includes="server/config/*.config" />
+      <fileset dir="." includes="server/config/*" />
     </copy>    
 	</target>
 

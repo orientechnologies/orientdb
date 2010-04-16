@@ -19,7 +19,7 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.Map.Entry;
 
-import com.orientechnologies.orient.client.storage.OStorageRemote;
+import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionaryInternal;
 import com.orientechnologies.orient.core.record.ORecord;

@@ -5,7 +5,7 @@
 	<property environment="env" />
 	<property name="vendor"         value="Orient Technologies" />
 	<property name="product"        value="Orient Key/Value Server" />
-	<property name="version"        value="0.9.6" />
+	<property name="version"        value="0.9.8" />
 	<property name="global.release" value="../releases/${version}" />
 	<property name="kv.release"     value="../releases/${version}/kv" />
 
@@ -89,7 +89,7 @@
     </copy>
     
     <copy todir="${kv.release}/lib/" flatten="true">
-      <fileset dir="." includes="core/dist/* tools/dist/* enterprise/dist/* server/dist/* commons/dist/orient-* kv/dist/hazelcast*.jar" />
+      <fileset dir="." includes="core/dist/* tools/dist/* enterprise/dist/* server/dist/* commons/dist/orient-*" />
     </copy>
     
     <copy todir="${kv.release}/www/">

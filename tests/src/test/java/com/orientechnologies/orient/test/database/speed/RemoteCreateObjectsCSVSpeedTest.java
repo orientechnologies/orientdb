@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
 import com.orientechnologies.common.test.SpeedTestMonoThread;
-import com.orientechnologies.orient.client.OEngineRemote;
+import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.ODatabaseColumn;
 import com.orientechnologies.orient.core.record.impl.ORecordColumn;

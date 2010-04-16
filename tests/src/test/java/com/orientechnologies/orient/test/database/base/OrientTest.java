@@ -19,7 +19,7 @@ import java.util.List;
 
 import org.testng.annotations.Parameters;
 
-import com.orientechnologies.orient.client.OEngineRemote;
+import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.ORecord;
 

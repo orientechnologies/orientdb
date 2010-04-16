@@ -48,8 +48,7 @@ PRGDIR=`dirname "$PRG"`
 [ -z "$ORIENT_HOME" ] && ORIENT_HOME=`cd "$PRGDIR/.." ; pwd`
 
 CONFIG_FILE=$ORIENT_HOME/config/orient-kv.config
-HAZELCAST_FILE=$ORIENT_HOME/config/hazelcast.xml
 LOG_LEVEL=warning
 WWW_PATH=$ORIENT_HOME/www
 
-java -server -Xms1024m -Xmx1024m -XX:+UseParallelGC -XX:+AggressiveOpts -XX:CompileThreshold=200 -Dhazelcast.config="$HAZELCAST_FILE" -Dorient.config.file="$CONFIG_FILE" -Dorient.www.path="$WWW_PATH" -Dorient.log.level=$LOG_LEVEL -jar "$ORIENT_HOME/lib/orient-database-kv.jar"
+java -server -Xms1024m -Xmx1024m -XX:+UseParallelGC -XX:+AggressiveOpts -XX:CompileThreshold=200 -Dorient.config.file="$CONFIG_FILE" -Dorient.www.path="$WWW_PATH" -Dorient.log.level=$LOG_LEVEL -jar "$ORIENT_HOME/lib/orient-database-kv.jar"

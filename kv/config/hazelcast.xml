@@ -1,7 +1,7 @@
 <hazelcast>
 	<group>
-		<name>dev</name>
-		<password>dev-pass</password>
+		<name>orient</name>
+		<password>orient</password>
 	</group>
 	<network>
 		<port auto-increment="true">5701</port>
@@ -67,7 +67,7 @@
 			<!--
 				OrientDB implementation.
 			-->
-			<class-name>com.orientechnologies.orient.kv.hazelcast.OMapLoaderStore</class-name>
+			<class-name>com.orientechnologies.orient.server.distributed.hazelcast.OMapLoaderStore</class-name>
 			<!--
 				Number of seconds to delay to call the MapStore.store(key, value). If the value is zero then it is write-through so
 				MapStore.store(key, value) will be called as soon as the entry is updated. Otherwise it is write-behind so updates will be
@@ -83,12 +83,12 @@
 		<!--
 			Valid values are: NONE (no eviction), LRU (Least Recently Used), LFU (Least Frequently Used). NONE is the default.
 		-->
-		<eviction-policy>NONE</eviction-policy>
+		<eviction-policy>LRU</eviction-policy>
 		<!--
 			Maximum size of the map. When max size is reached, map is evicted based on the policy defined. Any integer between 0 and
 			Integer.MAX_VALUE. 0 means Integer.MAX_VALUE. Default is 0.
 		-->
-		<max-size>0</max-size>
+		<max-size>5000</max-size>
 		<!--
 			When max. size is reached, specified percentage of the map will be evicted. Any integer between 0 and 100. If 25 is set for
 			example, 25% of the entries will get evicted.

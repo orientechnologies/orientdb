@@ -16,7 +16,8 @@
 package com.orientechnologies.utility.console;
 
 import com.orientechnologies.common.console.ConsoleApplication;
-import com.orientechnologies.orient.client.OEngineRemote;
+import com.orientechnologies.orient.client.distributed.OEngineDistributed;
+import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 
@@ -30,7 +31,7 @@ public abstract class OrientConsole extends ConsoleApplication {
 	protected void onException(Throwable e) {
 		Throwable current = e;
 		while (current != null) {
-			err.println("Error: " + current.getMessage());
+			err.println("Error: " + (current.getMessage() != null ? current.getMessage() : current.toString()));
 			current = current.getCause();
 		}
 	}
@@ -38,6 +39,7 @@ public abstract class OrientConsole extends ConsoleApplication {
 	@Override
 	protected void onBefore() {
 		Orient.instance().registerEngine(new OEngineRemote());
+		Orient.instance().registerEngine(new OEngineDistributed());
 		printClusterInfo();
 	}
 

@@ -19,7 +19,8 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.test.SpeedTestMonoThread;
-import com.orientechnologies.orient.client.OEngineRemote;
+import com.orientechnologies.orient.client.distributed.OEngineDistributed;
+import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
 
 @Test(enabled = false)
@@ -27,6 +28,7 @@ public abstract class OrientMonoThreadTest extends SpeedTestMonoThread {
 	public OrientMonoThreadTest(int iCycles) {
 		super(iCycles);
 		Orient.instance().registerEngine(new OEngineRemote());
+		Orient.instance().registerEngine(new OEngineDistributed());
 	}
 
 	public void deinit() {

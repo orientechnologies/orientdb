@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.client.storage;
+package com.orientechnologies.orient.client.remote;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -25,14 +25,17 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.config.OClientConfiguration;
 import com.orientechnologies.orient.client.dictionary.ODictionaryClient;
 import com.orientechnologies.orient.client.query.OSQLAsynchQueryRemoteExecutor;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OIOException;
 import com.orientechnologies.orient.core.exception.OQueryExecutionException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -61,13 +64,18 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
  */
 @SuppressWarnings("unchecked")
 public class OStorageRemote extends OStorageAbstract {
-	private String												userName;
-	private String												userPassword;
-	private final OClientConfiguration		clientConfiguration;
-	protected OChannelBinaryClient				network;
-	protected String											sessionId;
-	protected final Map<String, Integer>	clusters	= new HashMap<String, Integer>();
-	protected int													retry			= 0;
+	private static final String							DEFAULT_HOST			= "localhost";
+	private static final String[]						DEFAULT_PORTS			= new String[] { "8000" };
+	private static final String							ADDRESS_SEPARATOR	= ";";
+
+	private String													userName;
+	private String													userPassword;
+	protected List<OPair<String, String[]>>	serverURLs				= new ArrayList<OPair<String, String[]>>();
+	private final OClientConfiguration			clientConfiguration;
+	protected OChannelBinaryClient					network;
+	protected String												sessionId;
+	protected final Map<String, Integer>		clusters					= new HashMap<String, Integer>();
+	protected int														retry							= 0;
 
 	public OStorageRemote(final String iURL, final String iMode) throws IOException {
 		super(iURL, iURL, iMode);
@@ -84,6 +92,8 @@ public class OStorageRemote extends OStorageAbstract {
 
 			openRemoteDatabase();
 			addUser();
+
+			Orient.instance().registerStorage(this);
 
 		} catch (Exception e) {
 			close();
@@ -132,6 +142,9 @@ public class OStorageRemote extends OStorageAbstract {
 			network.socket.close();
 
 			open = false;
+
+			Orient.instance().unregisterStorage(this);
+
 		} catch (Exception e) {
 
 		} finally {
@@ -787,6 +800,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 	protected void openRemoteDatabase() throws IOException {
 		// CONNECT TO THE SERVER
+		parseServerURLs();
 		createNetworkConnection();
 
 		network.out.writeByte(OChannelBinaryProtocol.DB_OPEN);
@@ -805,29 +819,84 @@ public class OStorageRemote extends OStorageAbstract {
 		open = true;
 	}
 
-	protected void createNetworkConnection() throws IOException, UnknownHostException {
-		final String remoteHost;
-		int remotePort = 8000;
-		final String dbName;
+	/**
+	 * Parse the URL in the following formats:<br/>
+	 * <ul>
+	 * <li>
+	 * 
+	 * <pre>
+	 * <protocol>:<>
+	 * </pre>
+	 * 
+	 * </li>
+	 * <li>
+	 * 
+	 * <pre>
+	 * <db-sename>
+	 * </pre>
+	 * 
+	 * , to connect to the localhost, default port 8000</li>
+	 * </ul>
+	 */
+	protected void parseServerURLs() {
+		String remoteHost;
+		String[] remotePorts;
 
-		int pos = fileURL.indexOf("/");
-		if (pos == -1) {
-			dbName = fileURL;
-			remoteHost = "localhost";
+		int dbPos = fileURL.indexOf("/");
+		if (dbPos == -1) {
+			// SHORT FORM
+			name = fileURL;
+			remoteHost = getDefaultHost();
+			remotePorts = getDefaultPort();
 		} else {
-			dbName = fileURL.substring(pos + 1);
-			int posRemotePort = fileURL.indexOf(":");
+			name = fileURL.substring(dbPos + 1);
 
-			if (posRemotePort != -1) {
-				remoteHost = fileURL.substring(0, posRemotePort);
-				remotePort = Integer.parseInt(fileURL.substring(posRemotePort + 1, pos));
-			} else {
-				remoteHost = fileURL.substring(0, pos);
+			int startPos = 0;
+			int endPos = 0;
+
+			while (endPos < dbPos) {
+				if (fileURL.indexOf(ADDRESS_SEPARATOR, startPos) > -1)
+					endPos = fileURL.indexOf(ADDRESS_SEPARATOR, startPos);
+				else
+					endPos = dbPos;
+
+				int posRemotePort = fileURL.indexOf(":", startPos);
+
+				if (posRemotePort != -1 && posRemotePort < endPos) {
+					remoteHost = fileURL.substring(startPos, posRemotePort);
+					remotePorts = fileURL.substring(posRemotePort + 1, endPos).split("_");
+					startPos = endPos + 1;
+				} else {
+					remoteHost = fileURL.substring(startPos, endPos);
+					remotePorts = getDefaultPort();
+					startPos = endPos + 1;
+				}
+
+				// REGISTER THE REMOTE SERVER+PORT
+				serverURLs.add(new OPair<String, String[]>(remoteHost, remotePorts));
 			}
 		}
-		name = dbName;
+	}
 
-		network = new OChannelBinaryClient(remoteHost, remotePort, clientConfiguration.connectionTimeout);
+	protected String getDefaultHost() {
+		return DEFAULT_HOST;
+	}
+
+	protected String[] getDefaultPort() {
+		return DEFAULT_PORTS;
+	}
+
+	protected void createNetworkConnection() throws IOException, UnknownHostException {
+		for (OPair<String, String[]> server : serverURLs) {
+			OLogManager.instance().debug(this, "Trying to connect to the remote host %s:%d...", server.getKey(), server.getValue());
+			try {
+				network = new OChannelBinaryClient(server.getKey(), 8000, clientConfiguration.connectionTimeout);
+				return;
+			} catch (Exception e) {
+			}
+		}
+
+		throw new OIOException("Can't connect to any configured remote nodes: " + serverURLs);
 	}
 
 	protected void checkConnection() {

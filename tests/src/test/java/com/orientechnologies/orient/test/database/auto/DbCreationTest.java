@@ -20,8 +20,8 @@ import java.io.IOException;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.client.OEngineRemote;
 import com.orientechnologies.orient.client.admin.OServerAdmin;
+import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 
 @Test(groups = "db")

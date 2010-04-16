@@ -18,7 +18,7 @@ package com.orientechnologies.orient.client.admin;
 import java.io.IOException;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.client.storage.OStorageRemote;
+import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
@@ -31,6 +31,7 @@ public class OServerAdmin extends OStorageRemote {
 	}
 
 	public OServerAdmin connect() throws IOException {
+		parseServerURLs();
 		createNetworkConnection();
 		return this;
 	}

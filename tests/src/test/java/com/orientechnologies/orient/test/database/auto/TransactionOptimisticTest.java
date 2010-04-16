@@ -21,7 +21,7 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.client.OEngineRemote;
+import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;

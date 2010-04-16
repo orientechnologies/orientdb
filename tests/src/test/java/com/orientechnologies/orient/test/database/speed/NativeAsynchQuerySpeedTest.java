@@ -18,7 +18,7 @@ package com.orientechnologies.orient.test.database.speed;
 import java.io.UnsupportedEncodingException;
 
 import com.orientechnologies.common.test.SpeedTestMonoThread;
-import com.orientechnologies.orient.client.OEngineRemote;
+import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.query.OAsynchQueryResultListener;

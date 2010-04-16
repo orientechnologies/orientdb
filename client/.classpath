@@ -6,5 +6,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/orient-database-enterprise"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/orient-database-core"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/orient-commons"/>
+	<classpathentry kind="lib" path="lib/hazelcast-client.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -17,7 +17,7 @@ package com.orientechnologies.orient.client.query;
 
 import java.util.List;
 
-import com.orientechnologies.orient.client.storage.OStorageRemote;
+import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.query.OQueryExecutor;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;

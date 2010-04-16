@@ -22,9 +22,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.util.Map;
 
 import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.IMap;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.enterprise.channel.text.OChannelTextServer;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolException;
@@ -46,7 +46,7 @@ public class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstract {
 
 		try {
 
-			IMap<String, String> bucketMap = Hazelcast.getMap(dbName + "/" + bucket);
+			Map<String, String> bucketMap = Hazelcast.getMap(dbName + "/" + bucket);
 			String value = bucketMap.get(iURI);
 
 			int code = value == null ? 404 : 200;
@@ -75,7 +75,7 @@ public class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstract {
 		String key = parts[2];
 
 		try {
-			IMap<String, String> bucketMap = Hazelcast.getMap(dbName + "/" + bucket);
+			Map<String, String> bucketMap = Hazelcast.getMap(dbName + "/" + bucket);
 
 			int code;
 			String reason;
@@ -116,7 +116,7 @@ public class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstract {
 		String key = parts[2];
 
 		try {
-			IMap<String, String> bucketMap = Hazelcast.getMap(dbName + "/" + bucket);
+			Map<String, String> bucketMap = Hazelcast.getMap(dbName + "/" + bucket);
 
 			int code;
 			String reason;
@@ -156,7 +156,7 @@ public class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstract {
 		String key = parts[2];
 
 		try {
-			IMap<String, String> bucketMap = Hazelcast.getMap(dbName + "/" + bucket);
+			Map<String, String> bucketMap = Hazelcast.getMap(dbName + "/" + bucket);
 
 			int code;
 			String reason;
