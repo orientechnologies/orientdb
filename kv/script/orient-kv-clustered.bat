@@ -57,7 +57,7 @@ goto setArgs
 
 :doneSetArgs
 
-set CONFIG_FILE=%ORIENT_HOME%/config/orient-kv.config
+set CONFIG_FILE=%ORIENT_HOME%/config/orient-kv-clustered.config
 set LOG_LEVEL=warning
 set HAZELCAST_FILE=%ORIENT_HOME%/config/hazelcast.xml
 set WWW_PATH=%ORIENT_HOME%/www

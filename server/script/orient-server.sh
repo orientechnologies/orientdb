@@ -49,7 +49,6 @@ PRGDIR=`dirname "$PRG"`
 
 CONFIG_FILE=$ORIENT_HOME/config/orient-server.config
 LOG_LEVEL=warning
-HAZELCAST_FILE=$ORIENT_HOME/config/hazelcast.xml
 export ORIENT_HOME=$ORIENT_HOME
 
-java -server -Xms1024m -Xmx1024m -XX:+UseParallelGC -XX:+AggressiveOpts -XX:CompileThreshold=200 -Dhazelcast.config="$HAZELCAST_FILE" -Dorient.config.file="$CONFIG_FILE" -Dorient.log.level=$LOG_LEVEL -jar $ORIENT_HOME/lib/orient-database-server.jar
+java -server -Xms1024m -Xmx1024m -XX:+UseParallelGC -XX:+AggressiveOpts -XX:CompileThreshold=200 -Dorient.config.file="$CONFIG_FILE" -Dorient.log.level=$LOG_LEVEL -jar $ORIENT_HOME/lib/orient-database-server.jar

@@ -57,7 +57,7 @@ goto setArgs
 
 :doneSetArgs
 
-set CONFIG_FILE=%ORIENT_HOME%/config/orient-server.config
+set CONFIG_FILE=%ORIENT_HOME%/config/orient-server-clustered.config
 set LOG_LEVEL=warning
 set HAZELCAST_FILE=%ORIENT_HOME%/config/hazelcast.xml
 
