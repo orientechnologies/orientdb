@@ -113,6 +113,9 @@ public class OMapLoaderStore implements MapLoader<ODistributedRecordId, ORawBuff
 	}
 
 	private OStorage getLocalStorage(final String iDbName) throws IOException {
-		return Orient.instance().accessToLocalStorage(OServerMain.server().getStoragePath(iDbName), "rw");
+		OStorage stg = Orient.instance().accessToLocalStorage(OServerMain.server().getStoragePath(iDbName), "rw");
+		if (stg.isClosed())
+			stg.open(0, null, null);
+		return stg;
 	}
 }
