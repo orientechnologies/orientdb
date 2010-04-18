@@ -31,11 +31,17 @@ This document enlist the last changes to the Orient Database project.
 
 
 -------------------------------------------------------------------------------
+VERSION 0.9.8 (beta) - beta (April, 18th 2010)
+-------------------------------------------------------------------------------
+- Fixed issue #20 (http://code.google.com/p/orient/issues/detail?id=20)
+- Minor refactoring to support partitioning in Key/Value Server
+
+-------------------------------------------------------------------------------
 VERSION 0.9.7 (beta) - beta (April, 14th 2010)
 -------------------------------------------------------------------------------
 - Fixed problem on 'create database' and 'create cluster' console commands.
 - Removed buggy 'create record' command in favor of new SQL 'insert' available
-  in the next days.
+  in the next days
 
 -------------------------------------------------------------------------------
 VERSION 0.9.6 (beta) - beta (April, 12nd 2010)

@@ -31,6 +31,12 @@ This document enlist the last changes to the Orient Key/Value Server project.
 
 
 -------------------------------------------------------------------------------
+VERSION 0.9.8 (beta) - beta (April, 18th 2010)
+-------------------------------------------------------------------------------
+- Partitioned version now works and it's able to catch failure in the grid and
+  save the records on working nodes.
+
+-------------------------------------------------------------------------------
 VERSION 0.9.6 (beta) - beta (April, 12nd 2010)
 -------------------------------------------------------------------------------
 - First release splitted from the main Orient distribution. Starting from
