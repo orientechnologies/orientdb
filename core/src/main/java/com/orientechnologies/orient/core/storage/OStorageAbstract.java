@@ -30,7 +30,11 @@ public abstract class OStorageAbstract extends OSharedResourceAdaptive implement
 	protected boolean								open	= false;
 
 	public OStorageAbstract(final String iName, final String iFilePath, final String iMode) {
-		name = iName;
+		if (iName.contains("/"))
+			name = iName.substring(iName.lastIndexOf("/") + 1);
+		else
+			name = iName;
+		
 		fileURL = iFilePath;
 		mode = iMode;
 	}
