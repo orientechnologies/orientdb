@@ -22,7 +22,7 @@ public abstract class OStorageDistributed extends OStorageRemote {
 	protected abstract Map<Object, Object> getDistributedDatabaseMap();
 
 	public long createRecord(final int iClusterId, final byte[] iContent, final byte iRecordType) {
-		final ODistributedRecordId key = new ODistributedRecordId(name);
+		final ODistributedRecordId key = new ODistributedRecordId(name, iClusterId);
 
 		getDistributedDatabaseMap().put(key, new ORawBuffer(iContent, 0, iRecordType));
 

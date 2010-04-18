@@ -21,19 +21,19 @@ public class ODistributedRecordId implements DataSerializable {
 	public ODistributedRecordId() {
 	}
 
-	public ODistributedRecordId(final String iDbName, final ORID iRID, final int iVersion) {
-		dbName = iDbName;
-		rid = (ORecordId) iRID;
-		version = iVersion;
-	}
-
-	public ODistributedRecordId(final String iDbName) {
-		dbName = iDbName;
+	public ODistributedRecordId(final String iDbName, final int iClusterId) {
+		this(iDbName, new ORecordId(iClusterId), 0);
 	}
 
 	public ODistributedRecordId(final String iDbName, final int iRequesterId, final ORecordId iRecordId, final int iVersion) {
 		this(iDbName, iRecordId, iVersion);
 		requesterId = iRequesterId;
+	}
+
+	public ODistributedRecordId(final String iDbName, final ORID iRID, final int iVersion) {
+		dbName = iDbName;
+		rid = (ORecordId) iRID;
+		version = iVersion;
 	}
 
 	@Override

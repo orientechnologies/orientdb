@@ -25,10 +25,9 @@ echo           ,::::,,,. `:   ,,   :::::    :     :   .:
 echo           ,,:` `,,.                                      
 echo          ,,,    .,`                                      
 echo         ,,.     `,                D B   S E R V E R        
-echo       ``        `.                                       
-echo                 ``                                       
-echo                 `                                        
-
+echo       ``        `.                                            
+echo                 ``                          
+echo                 ` (CLUSTERING POWERED BY HAZELCAST)                                       
 rem Guess ORIENT_HOME if not defined
 set CURRENT_DIR=%cd%
 

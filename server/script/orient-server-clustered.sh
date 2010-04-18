@@ -26,7 +26,8 @@ echo "          ,,,    .,\`                                      "
 echo "         ,,.     \`,                      S E R V E R        "
 echo "       \`\`        \`.                                       "
 echo "                 \`\`                                       "
-echo "                 \`                                        "
+echo "                 \` (CLUSTERING POWERED BY HAZELCAST) "
+echo " "
 
 # resolve links - $0 may be a softlink
 PRG="$0"

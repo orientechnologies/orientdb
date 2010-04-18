@@ -72,7 +72,7 @@ public class OStorageDistributedHazelcast extends OStorageDistributed {
 			addresses[i++] = server.getKey() + ":" + server.getValue()[0];
 		}
 
-		OLogManager.instance().debug(this, "Trying to connect to the cluster node %s...", (Object[]) addresses);
-		client = HazelcastClient.newHazelcastClient(CLUSTER_NAME, CLUSTER_PASSWORD, false, addresses);
+		OLogManager.instance().debug(this, "Trying to connect to the cluster node %s...", addresses[0]);
+		client = HazelcastClient.newHazelcastClient(CLUSTER_NAME, CLUSTER_PASSWORD, addresses[0]);
 	}
 }

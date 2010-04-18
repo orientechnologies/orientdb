@@ -174,8 +174,8 @@ public class OStorageRemote extends OStorageAbstract {
 			try {
 				network.writeByte(OChannelBinaryProtocol.RECORD_CREATE);
 				network.writeShort((short) iClusterId);
-				network.writeByte(iRecordType);
 				network.writeBytes((byte[]) iContent);
+				network.writeByte(iRecordType);
 				network.flush();
 
 				readStatus();
@@ -887,11 +887,14 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	protected void createNetworkConnection() throws IOException, UnknownHostException {
+		int port;
+
 		for (OPair<String, String[]> server : serverURLs) {
-			OLogManager.instance().debug(this, "Trying to connect to the remote host %s:%d...", server.getKey(), server.getValue()[1]);
+			port = Integer.parseInt(server.getValue()[server.getValue().length - 1]);
+
+			OLogManager.instance().debug(this, "Trying to connect to the remote host %s:%d...", server.getKey(), port);
 			try {
-				network = new OChannelBinaryClient(server.getKey(), Integer.parseInt(server.getValue()[1]),
-						clientConfiguration.connectionTimeout);
+				network = new OChannelBinaryClient(server.getKey(), port, clientConfiguration.connectionTimeout);
 				return;
 			} catch (Exception e) {
 			}

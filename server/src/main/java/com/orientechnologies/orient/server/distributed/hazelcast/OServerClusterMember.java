@@ -19,17 +19,24 @@ import java.util.Set;
 
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.IMap;
+import com.hazelcast.core.Instance;
 import com.hazelcast.core.InstanceEvent;
 import com.hazelcast.core.InstanceListener;
 import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
+import com.hazelcast.core.Instance.InstanceType;
 import com.hazelcast.partition.MigrationEvent;
 import com.hazelcast.partition.MigrationListener;
 import com.hazelcast.partition.PartitionService;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.enterprise.distributed.ODistributedException;
+import com.orientechnologies.orient.enterprise.distributed.hazelcast.ODistributedRecordId;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
 
+@SuppressWarnings("unchecked")
 public class OServerClusterMember implements InstanceListener, MembershipListener, MigrationListener {
 
 	public OServerClusterMember() {
@@ -54,36 +61,58 @@ public class OServerClusterMember implements InstanceListener, MembershipListene
 	}
 
 	public void memberAdded(MembershipEvent iEvent) {
-		OLogManager.instance().debug(this, "Orient Server member added: %s", iEvent);
+		OLogManager.instance().config(this, "Orient Server member added: %s", iEvent);
 	}
 
 	public void memberRemoved(MembershipEvent iEvent) {
-		OLogManager.instance().debug(this, "Orient Server member removed: %s", iEvent);
+		OLogManager.instance().config(this, "Orient Server member removed: %s", iEvent);
 	}
 
 	public void migrationStarted(MigrationEvent iEvent) {
-		OLogManager.instance().config(this, "Orient Server migration started for partition %d from %s to %s", iEvent.getPartitionId(),
+		OLogManager.instance().debug(this, "Orient Server migration started for partition %d from %s to %s", iEvent.getPartitionId(),
 				iEvent.getOldOwner(), iEvent.getNewOwner());
 	}
 
 	public void migrationCompleted(MigrationEvent iEvent) {
-		OLogManager.instance().config(this, "Orient Server migration completed for partition %d from %s to %s",
-				iEvent.getPartitionId(), iEvent.getOldOwner(), iEvent.getNewOwner());
+		OLogManager.instance().debug(this, "Orient Server migration completed for partition %d from %s to %s", iEvent.getPartitionId(),
+				iEvent.getOldOwner(), iEvent.getNewOwner());
 
 		final int partitionId = iEvent.getPartitionId();
 
-		if (iEvent.getNewOwner().equals(Hazelcast.getCluster().getLocalMember())) {
-			// PARTITION MIGRATED TO MYSELF: PERSIST ALL THE ENTRIES
-			OLogManager.instance().config(this, "The new member is the current node, assure to store all the keys", iEvent);
-		}
+		if (!iEvent.getNewOwner().equals(Hazelcast.getCluster().getLocalMember()))
+			// PARTITION MIGRATED NOT TO MYSELF: PERSIST ALL THE ENTRIES
+			return;
 
-//		IMap<?, ?> map = (IMap<?, ?>) iEvent.getSource();
-//
-//		PartitionService partitionService = Hazelcast.getPartitionService();
-//		Set<?> localKeys = map.localKeySet();
-//		for (Object localKey : localKeys) {
-//			if (partitionService.getPartition(localKey).getPartitionId() == partitionId) {
-//			}
-//		}
+		ORawBuffer buffer;
+
+		for (Instance instance : Hazelcast.getInstances()) {
+			if (instance.getInstanceType() == InstanceType.MAP) {
+				IMap<ODistributedRecordId, ORawBuffer> map = (IMap<ODistributedRecordId, ORawBuffer>) instance;
+
+				PartitionService partitionService = Hazelcast.getPartitionService();
+				Set<ODistributedRecordId> localKeys = map.localKeySet();
+				for (ODistributedRecordId localKey : localKeys) {
+
+					if (partitionService.getPartition(localKey).getPartitionId() == partitionId) {
+						// MY OWN ENTRY: STORE IT
+						buffer = (ORawBuffer) map.get(localKey);
+
+						try {
+							OStorage storage = OMapLoaderStore.getLocalStorage(localKey.dbName);
+
+							if (localKey.rid.isValid())
+								storage.updateRecord(0, localKey.rid, buffer.buffer, buffer.version, buffer.recordType);
+							else
+								storage.createRecord(0, buffer.buffer, buffer.recordType);
+
+							OLogManager.instance().config(this, "Catched node failure, saving record on this node: " + localKey.rid, iEvent);
+
+						} catch (Exception e) {
+							throw new ODistributedException("Error on saving record: " + localKey, e);
+						}
+					}
+				}
+			}
+		}
 	}
 }
