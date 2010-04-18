@@ -12,7 +12,7 @@ public class OIntentMassiveInsert implements OIntent {
 		while (ownerDb.getDatabaseOwner() != null && ownerDb.getDatabaseOwner() != ownerDb)
 			ownerDb = ownerDb.getDatabaseOwner();
 
-		if (iDatabase instanceof ODatabaseObject)
-			((ODatabaseObject) iDatabase).setRetainObjects(false);
+		if (ownerDb instanceof ODatabaseObject)
+			((ODatabaseObject) ownerDb).setRetainObjects(false);
 	}
 }

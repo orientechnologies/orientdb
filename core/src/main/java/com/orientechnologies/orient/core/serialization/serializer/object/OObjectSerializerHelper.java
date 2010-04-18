@@ -21,6 +21,7 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -36,50 +37,55 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings("unchecked")
+/**
+ * Helper class to manage POJO by using the reflection. 
+ */
 public class OObjectSerializerHelper {
-	private static final Class<?>[]	NO_ARGS	= new Class<?>[] {};
+	private static final Class<?>[]							NO_ARGS	= new Class<?>[] {};
+
+	private static HashMap<String, List<Field>>	classes	= new HashMap<String, List<Field>>();
+	private static HashMap<String, Object>			getters	= new HashMap<String, Object>();
+	private static HashMap<String, Object>			setters	= new HashMap<String, Object>();
 
 	public static Object getFieldValue(final Object iPojo, final String iProperty) {
-		Class<?> c = iPojo.getClass();
+		final Class<?> c = iPojo.getClass();
+		final String className = c.getName();
 
-		// TRY TO GET THE VALUE BY THE GETTER (IF ANY)
+		if (!classes.containsKey(className))
+			registerClass(c);
+
 		try {
-			String getterName = "get" + Character.toUpperCase(iProperty.charAt(0)) + iProperty.substring(1);
-			Method m = c.getMethod(getterName, NO_ARGS);
-			return m.invoke(iPojo);
-		} catch (Exception e) {
-			// TRY TO GET THE VALUE BY ACCESSING DIRECTLY TO THE PROPERTY
-			try {
-				Field f = c.getDeclaredField(iProperty);
-				if (!f.isAccessible())
-					f.setAccessible(true);
+			Object o = getters.get(className + "." + iProperty);
 
-				return f.get(iPojo);
-			} catch (Exception e1) {
-				throw new OSchemaException("Can't access to the property: " + iProperty, e1);
-			}
+			if (o instanceof Method)
+				return ((Method) o).invoke(iPojo);
+			else if (o instanceof Field)
+				return ((Field) o).get(iPojo);
+			return null;
+		} catch (Exception e) {
+
+			throw new OSchemaException("Can't access to the property: " + iProperty, e);
 		}
 	}
 
 	public static void setFieldValue(final Object iPojo, final String iProperty, final Object iValue) {
-		Class<?> c = iPojo.getClass();
+		final Class<?> c = iPojo.getClass();
+		final String className = c.getName();
 
-		// TRY TO SET THE VALUE BY THE SETTER (IF ANY)
+		if (!classes.containsKey(className))
+			registerClass(c);
+
 		try {
-			String setterName = "set" + Character.toUpperCase(iProperty.charAt(0)) + iProperty.substring(1);
-			Method m = c.getMethod(setterName, new Class<?>[] { iValue.getClass() });
-			m.invoke(iPojo, iValue);
-		} catch (Exception e) {
-			// TRY TO SET THE VALUE BY ACCESSING DIRECTLY TO THE PROPERTY
-			try {
-				Field f = c.getDeclaredField(iProperty);
-				if (!f.isAccessible())
-					f.setAccessible(true);
+			Object o = setters.get(className + "." + iProperty);
 
-				f.set(iPojo, iValue);
-			} catch (Exception e1) {
-				throw new OSchemaException("Can't access to the property: " + iProperty, e1);
-			}
+			if (o instanceof Method)
+				((Method) o).invoke(iPojo, iValue);
+			else if (o instanceof Field)
+				((Field) o).set(iPojo, iValue);
+
+		} catch (Exception e) {
+
+			throw new OSchemaException("Can't access to the property: " + iProperty, e);
 		}
 	}
 
@@ -89,20 +95,27 @@ public class OObjectSerializerHelper {
 
 		Class<?> c = iPojo.getClass();
 
+		List<Field> properties = classes.get(c.getName());
+		if (properties == null)
+			properties = registerClass(c);
+
+		String fieldName;
 		Object fieldValue;
 		Class<?> fieldClass;
-		for (Field f : c.getDeclaredFields()) {
-			fieldValue = iRecord.field(f.getName());
 
-			if (fieldValue instanceof ODocument && !OType.isSimpleType(f.getClass())) {
-				fieldClass = iEntityManager.getEntityClass(f.getType().getSimpleName());
+		for (Field p : properties) {
+			fieldName = p.getName();
+			fieldValue = iRecord.field(fieldName);
+
+			if (fieldValue instanceof ODocument && !OType.isSimpleType(p.getClass())) {
+				fieldClass = iEntityManager.getEntityClass(p.getType().getSimpleName());
 				if (fieldClass != null) {
 					// RECOGNIZED TYPE
 					fieldValue = iObj2RecHandler.getUserObjectByRecord((ORecord<?>) fieldValue);
 				}
 			}
 
-			setFieldValue(iPojo, f.getName(), fieldValue);
+			setFieldValue(iPojo, fieldName, fieldValue);
 		}
 
 		OProfiler.getInstance().stopChrono("Object.fromStream", timer);
@@ -127,21 +140,23 @@ public class OObjectSerializerHelper {
 
 		Class<?> c = iPojo.getClass();
 
+		List<Field> properties = classes.get(c.getName());
+		if (properties == null)
+			properties = registerClass(c);
+
+		String fieldName;
 		Object fieldValue;
-		int fieldModifier;
-		for (Field f : c.getDeclaredFields()) {
-			fieldModifier = f.getModifiers();
-			if (Modifier.isStatic(fieldModifier) || Modifier.isNative(fieldModifier) || Modifier.isTransient(fieldModifier))
-				continue;
 
-			fieldValue = getFieldValue(iPojo, f.getName());
+		for (Field p : properties) {
+			fieldName = p.getName();
+			fieldValue = getFieldValue(iPojo, fieldName);
 
-			schemaProperty = schemaClass != null ? schemaClass.getProperty(f.getName()) : null;
+			schemaProperty = schemaClass != null ? schemaClass.getProperty(fieldName) : null;
 
 			fieldValue = typeToStream(fieldValue, schemaProperty != null ? schemaProperty.getType() : null, iEntityManager,
 					iObj2RecHandler);
 
-			iRecord.field(f.getName(), fieldValue);
+			iRecord.field(fieldName, fieldValue);
 		}
 
 		OProfiler.getInstance().stopChrono("Object.toStream", timer);
@@ -217,5 +232,55 @@ public class OObjectSerializerHelper {
 		}
 
 		return result;
+	}
+
+	private static List<Field> registerClass(Class<?> c) {
+		synchronized (classes) {
+			if (classes.containsKey(c.getName()))
+				return classes.get(c.getName());
+
+			List<Field> properties = new ArrayList<Field>();
+			classes.put(c.getName(), properties);
+
+			String fieldName;
+			int fieldModifier;
+
+			for (Field f : c.getDeclaredFields()) {
+				fieldModifier = f.getModifiers();
+				if (Modifier.isStatic(fieldModifier) || Modifier.isNative(fieldModifier) || Modifier.isTransient(fieldModifier))
+					continue;
+
+				properties.add(f);
+
+				fieldName = f.getName();
+
+				// TRY TO GET THE VALUE BY THE GETTER (IF ANY)
+				try {
+					String getterName = "get" + Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1);
+					Method m = c.getMethod(getterName, NO_ARGS);
+					getters.put(c.getName() + "." + fieldName, m);
+				} catch (Exception e) {
+					// TRY TO GET THE VALUE BY ACCESSING DIRECTLY TO THE PROPERTY
+					if (!f.isAccessible())
+						f.setAccessible(true);
+
+					getters.put(c.getName() + "." + fieldName, f);
+				}
+
+				// TRY TO GET THE VALUE BY THE SETTER (IF ANY)
+				try {
+					String getterName = "set" + Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1);
+					Method m = c.getMethod(getterName, NO_ARGS);
+					getters.put(c.getName() + "." + fieldName, m);
+				} catch (Exception e) {
+					// TRY TO GET THE VALUE BY ACCESSING DIRECTLY TO THE PROPERTY
+					if (!f.isAccessible())
+						f.setAccessible(true);
+
+					setters.put(c.getName() + "." + fieldName, f);
+				}
+			}
+			return properties;
+		}
 	}
 }
