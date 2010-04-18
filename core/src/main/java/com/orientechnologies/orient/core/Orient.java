@@ -26,6 +26,7 @@ import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
+import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
@@ -43,6 +44,7 @@ public class Orient extends OSharedResource {
 	protected Orient() {
 		// REGISTER THE EMBEDDED ENGINE
 		registerEngine(new OEngineLocal());
+		registerEngine(new OEngineMemory());
 
 		active = true;
 	}

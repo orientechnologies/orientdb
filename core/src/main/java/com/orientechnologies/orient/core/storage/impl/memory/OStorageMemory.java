@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.storage.impl.memory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -25,7 +26,9 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.query.OQueryExecutor;
 import com.orientechnologies.orient.core.query.sql.OSQLAsynchQuery;
@@ -37,6 +40,7 @@ import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.storage.impl.logical.OClusterLogical;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -52,33 +56,42 @@ import com.orientechnologies.orient.core.tx.OTransaction;
  * 
  */
 public class OStorageMemory extends OStorageAbstract {
-	private final List<OClusterMemory>	clusters				= new ArrayList<OClusterMemory>();
-	private final List<OClusterLogical>	logicalClusters	= new ArrayList<OClusterLogical>();
-	private final ODataSegmentMemory		data						= new ODataSegmentMemory();
+	private final List<OClusterMemory>	physicalClusters	= new ArrayList<OClusterMemory>();
+	private final List<OClusterLogical>	logicalClusters		= new ArrayList<OClusterLogical>();
+	private final ODataSegmentMemory		data							= new ODataSegmentMemory();
+	private int													defaultCluster;
 
 	public OStorageMemory() {
 		super("Memory", "Memory", "rw");
 	}
 
-	public void open(final int iRequesterId, final String iUserName, final String iUserPassword) {
-		configuration = new OStorageConfiguration(this);
-		addCluster("index");
-
-		open = true;
+	public void create(final String iStorageMode) {
+		open(-1, "", "");
 	}
 
-	public void create(final String iStorageMode) {
+	public void open(final int iRequesterId, final String iUserName, final String iUserPassword) {
+		addUser();
 		configuration = new OStorageConfiguration(this);
+
+		addDataSegment(OStorage.DEFAULT_SEGMENT);
+
+		// ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
+		addCluster(OMetadata.CLUSTER_METADATA_NAME);
+
+		// ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING
 		addCluster("index");
+
+		// ADD THE DEFAULT CLUSTER
+		defaultCluster = addCluster(OStorage.DEFAULT_SEGMENT);
 
 		open = true;
 	}
 
 	public void close() {
 		// CLOSE ALL THE CLUSTERS
-		for (OClusterMemory c : clusters)
+		for (OClusterMemory c : physicalClusters)
 			c.close();
-		clusters.clear();
+		physicalClusters.clear();
 
 		// CLOSE THE DATA SEGMENT
 		data.close();
@@ -97,8 +110,8 @@ public class OStorageMemory extends OStorageAbstract {
 	}
 
 	public int addClusterSegment(final String iClusterName, final String iClusterFileName, final int iStartSize) {
-		clusters.add(new OClusterMemory(clusters.size(), iClusterName));
-		return clusters.size() - 1;
+		physicalClusters.add(new OClusterMemory(physicalClusters.size(), iClusterName));
+		return physicalClusters.size() - 1;
 	}
 
 	public int addDataSegment(final String iDataSegmentName) {
@@ -123,86 +136,109 @@ public class OStorageMemory extends OStorageAbstract {
 
 	public long createRecord(final int iClusterId, final byte[] iContent, final byte iRecordType) {
 		long offset = data.createRecord(iContent);
-		OClusterMemory cluster = clusters.get(iClusterId);
-		return cluster.addPhysicalPosition(0, offset, iRecordType);
+		OCluster cluster = getCluster(iClusterId);
+		try {
+			return cluster.addPhysicalPosition(0, offset, iRecordType);
+		} catch (IOException e) {
+			throw new OStorageException("Error on create record in cluster: " + iClusterId, e);
+		}
 	}
 
 	public ORawBuffer readRecord(final int iRequesterId, final int iClusterId, final long iPosition) {
-		OClusterMemory cluster = clusters.get(iClusterId);
-		OPhysicalPosition ppos = cluster.getPhysicalPosition(iPosition, new OPhysicalPosition());
+		OCluster cluster = getCluster(iClusterId);
+		try {
+			OPhysicalPosition ppos = cluster.getPhysicalPosition(iPosition, new OPhysicalPosition());
 
-		return new ORawBuffer(data.readRecord(ppos.dataPosition), ppos.version, ppos.type);
+			return new ORawBuffer(data.readRecord(ppos.dataPosition), ppos.version, ppos.type);
+		} catch (IOException e) {
+			throw new OStorageException("Error on read record in cluster: " + iClusterId, e);
+		}
 	}
 
 	public int updateRecord(final int iRequesterId, final int iClusterId, final long iPosition, final byte[] iContent,
 			final int iVersion, final byte iRecordType) {
-		OClusterMemory cluster = clusters.get(iClusterId);
-		OPhysicalPosition ppos = cluster.getPhysicalPosition(iPosition, new OPhysicalPosition());
+		OCluster cluster = getCluster(iClusterId);
+		try {
+			OPhysicalPosition ppos = cluster.getPhysicalPosition(iPosition, new OPhysicalPosition());
 
-		// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-		if (iVersion > -1 && ppos.version != iVersion)
-			throw new OConcurrentModificationException(
-					"Can't update record #"
-							+ ORecordId.generateString(iClusterId, iPosition)
-							+ " because it was modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
+			// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
+			if (iVersion > -1 && ppos.version != iVersion)
+				throw new OConcurrentModificationException(
+						"Can't update record #"
+								+ ORecordId.generateString(iClusterId, iPosition)
+								+ " because it was modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
 
-		data.updateRecord(ppos.dataPosition, iContent);
+			data.updateRecord(ppos.dataPosition, iContent);
 
-		return ++ppos.version;
+			return ++ppos.version;
+
+		} catch (IOException e) {
+			throw new OStorageException("Error on update record in cluster: " + iClusterId, e);
+		}
 	}
 
 	public void deleteRecord(final int iRequesterId, final int iClusterId, final long iPosition, final int iVersion) {
-		OClusterMemory cluster = clusters.get(iClusterId);
-		OPhysicalPosition ppos = cluster.getPhysicalPosition(iPosition, new OPhysicalPosition());
+		OCluster cluster = getCluster(iClusterId);
 
-		// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-		if (iVersion > -1 && ppos.version != iVersion)
-			throw new OConcurrentModificationException(
-					"Can't update record #"
-							+ ORecordId.generateString(iClusterId, iPosition)
-							+ " because it was modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
+		try {
+			OPhysicalPosition ppos = cluster.getPhysicalPosition(iPosition, new OPhysicalPosition());
 
-		data.deleteRecord(ppos.dataPosition);
-		cluster.removePhysicalPosition(iClusterId, null);
+			// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
+			if (iVersion > -1 && ppos.version != iVersion)
+				throw new OConcurrentModificationException(
+						"Can't update record #"
+								+ ORecordId.generateString(iClusterId, iPosition)
+								+ " because it was modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
+
+			data.deleteRecord(ppos.dataPosition);
+			cluster.removePhysicalPosition(iClusterId, null);
+
+		} catch (IOException e) {
+			throw new OStorageException("Error on delete record in cluster: " + iClusterId, e);
+		}
 	}
 
 	public long count(final int iClusterId) {
-		OClusterMemory cluster = clusters.get(iClusterId);
-		return cluster.getElements();
+		OCluster cluster = getCluster(iClusterId);
+		try {
+			return cluster.getElements();
+		} catch (IOException e) {
+			throw new OStorageException("Error on count record in cluster: " + iClusterId, e);
+		}
 	}
 
 	public long count(final int[] iClusterIds) {
 		long tot = 0;
 		for (int i = 0; i < iClusterIds.length; ++i)
-			tot += clusters.get(iClusterIds[i]).getElements();
+			tot += physicalClusters.get(iClusterIds[i]).getElements();
 		return tot;
 	}
 
 	public OCluster getClusterByName(final String iClusterName) {
-		for (int i = 0; i < clusters.size(); ++i)
-			if (clusters.get(i).getName().equals(iClusterName))
-				return clusters.get(i);
+		for (int i = 0; i < physicalClusters.size(); ++i)
+			if (getCluster(i).getName().equals(iClusterName))
+				return getCluster(i);
 		return null;
 	}
 
 	public int getClusterIdByName(final String iClusterName) {
-		for (int i = 0; i < clusters.size(); ++i)
-			if (clusters.get(i).getName().equals(iClusterName))
-				return clusters.get(i).getId();
+		for (int i = 0; i < physicalClusters.size(); ++i)
+			if (getCluster(i).getName().equals(iClusterName))
+				return getCluster(i).getId();
 		return -1;
 	}
 
 	public String getPhysicalClusterNameById(final int iClusterId) {
-		for (int i = 0; i < clusters.size(); ++i)
-			if (clusters.get(i).getId() == iClusterId)
-				return clusters.get(i).getName();
+		for (int i = 0; i < physicalClusters.size(); ++i)
+			if (getCluster(i).getId() == iClusterId)
+				return getCluster(i).getName();
 		return null;
 	}
 
 	public Set<String> getClusterNames() {
 		Set<String> result = new HashSet<String>();
-		for (int i = 0; i < clusters.size(); ++i)
-			result.add(clusters.get(i).getName());
+		for (int i = 0; i < physicalClusters.size(); ++i)
+			result.add(getCluster(i).getName());
 		return result;
 	}
 
@@ -244,5 +280,9 @@ public class OStorageMemory extends OStorageAbstract {
 
 	public boolean exists() {
 		return true;
+	}
+
+	private OCluster getCluster(final int iClusterId) {
+		return iClusterId >= 0 ? physicalClusters.get(iClusterId) : logicalClusters.get(getLogicalClusterIndex(iClusterId));
 	}
 }

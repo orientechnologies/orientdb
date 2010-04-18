@@ -72,7 +72,8 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 
 			metadata.load();
 
-			if (getMetadata().getSecurity().getUser(iUserName).checkPassword(iUserPassword)) {
+			OUser user = getMetadata().getSecurity().getUser(iUserName);
+			if (user != null && user.checkPassword(iUserPassword)) {
 				user = getMetadata().getSecurity().getUser(iUserName);
 			} else
 				throw new OSecurityAccessException("Error on opening the database. User and/or password are not valid");
