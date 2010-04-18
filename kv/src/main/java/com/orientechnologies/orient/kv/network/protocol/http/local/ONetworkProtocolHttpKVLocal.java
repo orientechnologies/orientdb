@@ -17,9 +17,7 @@ package com.orientechnologies.orient.kv.network.protocol.http.local;
 
 import java.util.Map;
 
-import com.hazelcast.core.Hazelcast;
 import com.orientechnologies.orient.core.db.record.ODatabaseBinary;
-import com.orientechnologies.orient.core.index.OTreeMapPersistent;
 import com.orientechnologies.orient.kv.OSharedDatabase;
 import com.orientechnologies.orient.kv.network.protocol.http.ONetworkProtocolHttpKV;
 import com.orientechnologies.orient.kv.network.protocol.http.partitioned.ODistributedException;
@@ -32,11 +30,8 @@ public class ONetworkProtocolHttpKVLocal extends ONetworkProtocolHttpKV {
 
 		try {
 			db = OSharedDatabase.acquireDatabase(dbName);
-			OTreeMapPersistent<String, String> bucket = OServerClusterMember.getDictionaryBucket(db, iBucketName);
+			return OServerClusterMember.getDictionaryBucket(db, iBucketName);
 
-			Map<String, String> bucketMap = Hazelcast.getMap(dbName + URL_SEPARATOR + bucket);
-
-			return bucketMap;
 		} catch (Exception e) {
 			throw new ODistributedException("Error on retrieving bucket '" + iBucketName + "' in database: " + dbName, e);
 		} finally {
