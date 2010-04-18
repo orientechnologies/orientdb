@@ -1,6 +1,6 @@
 <hazelcast>
 	<group>
-		<name>orient</name>
+		<name>orientkv</name>
 		<password>orient</password>
 	</group>
 	<network>
@@ -14,8 +14,8 @@
 				<interface>127.0.0.1</interface>
 			</tcp-ip>
 		</join>
-		<interfaces enabled="false">
-			<interface>10.10.1.*</interface>
+		<interfaces enabled="true">
+			<interface>127.0.0.1</interface>
 		</interfaces>
 		<symmetric-encryption enabled="false">
 			<!--
@@ -65,9 +65,9 @@
 	<map name="default">
 		<map-store enabled="true">
 			<!--
-				OrientDB implementation.
+				OrientDB implementation (www.orientechnologies.com). It's very fast, Open Source with Apache 2 license.
 			-->
-			<class-name>com.orientechnologies.orient.server.distributed.hazelcast.OMapLoaderStore</class-name>
+			<class-name>com.orientechnologies.orient.kv.network.protocol.http.partitioned.OMapLoaderStore</class-name>
 			<!--
 				Number of seconds to delay to call the MapStore.store(key, value). If the value is zero then it is write-through so
 				MapStore.store(key, value) will be called as soon as the entry is updated. Otherwise it is write-behind so updates will be

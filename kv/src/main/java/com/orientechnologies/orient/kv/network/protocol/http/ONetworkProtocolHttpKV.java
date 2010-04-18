@@ -24,34 +24,39 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.Map;
 
-import com.hazelcast.core.Hazelcast;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.enterprise.channel.text.OChannelTextServer;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolException;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 
-public class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstract {
+public abstract class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstract {
+	protected static final String	URL_SEPARATOR	= "/";
+
+	protected abstract Map<String, String> getBucket(String dbName, String bucket);
+
+	protected abstract String getKey(String key);
+
 	@Override
-	public void doGet(String iURI, String iContent, OChannelTextServer iChannel) throws ONetworkProtocolException {
-		if ("/".equals(iURI) || iURI.startsWith("/www")) {
+	public void doGet(final String iURI, final String iContent, final OChannelTextServer iChannel) throws ONetworkProtocolException {
+		if (URL_SEPARATOR.equals(iURI) || iURI.startsWith("/www")) {
 			directAccess(iURI);
 			return;
 		}
 
-		String parts[] = ONetworkProtocolHttpKV.getRequestParameters(iURI);
+		final String parts[] = ONetworkProtocolHttpKV.getDbBucketKey(iURI);
 
-		String dbName = parts[0];
-		String bucket = parts[1];
-		String key = parts[2];
+		final String dbName = parts[0];
+		final String bucket = parts[1];
+		final String key = getKey(iURI);
 
 		try {
 
-			Map<String, String> bucketMap = Hazelcast.getMap(dbName + "/" + bucket);
-			String value = bucketMap.get(iURI);
+			final Map<String, String> bucketMap = getBucket(dbName, bucket);
+			final String value = bucketMap.get(key);
 
-			int code = value == null ? 404 : 200;
-			String reason = value == null ? "Not Found" : "Ok";
-			String content = value == null ? "The key '" + key + "' was not found in database '" + dbName + "'" : value.toString();
+			final int code = value == null ? 404 : 200;
+			final String reason = value == null ? "Not Found" : "Ok";
+			final String content = value == null ? "The key '" + key + "' was not found in database '" + dbName + "'" : value.toString();
 
 			sendTextContent(code, reason, "text/plain", content);
 		} catch (SocketException e) {
@@ -67,26 +72,26 @@ public class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstract {
 	}
 
 	@Override
-	public void doPut(String iURI, String iContent, OChannelTextServer iChannel) throws ONetworkProtocolException {
-		String parts[] = getRequestParameters(iURI);
+	public void doPut(final String iURI, final String iContent, final OChannelTextServer iChannel) throws ONetworkProtocolException {
+		final String parts[] = getDbBucketKey(iURI);
 
-		String dbName = parts[0];
-		String bucket = parts[1];
-		String key = parts[2];
+		final String dbName = parts[0];
+		final String bucket = parts[1];
+		final String key = getKey(iURI);
 
 		try {
-			Map<String, String> bucketMap = Hazelcast.getMap(dbName + "/" + bucket);
+			final Map<String, String> bucketMap = getBucket(dbName, bucket);
 
-			int code;
-			String reason;
-			String content;
+			final int code;
+			final String reason;
+			final String content;
 
-			if (bucketMap.containsKey(iURI)) {
+			if (bucketMap.containsKey(key)) {
 				code = 200;
 				reason = "Ok";
 				content = null;
 
-				bucketMap.put(iURI, iContent);
+				bucketMap.put(key, iContent);
 			} else {
 				code = 503;
 				reason = "Entry not exists. Use HTTP POST instead.";
@@ -108,21 +113,21 @@ public class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstract {
 	}
 
 	@Override
-	public void doPost(String iURI, String iContent, OChannelTextServer iChannel) throws ONetworkProtocolException {
-		String parts[] = getRequestParameters(iURI);
+	public void doPost(final String iURI, final String iContent, final OChannelTextServer iChannel) throws ONetworkProtocolException {
+		final String parts[] = getDbBucketKey(iURI);
 
-		String dbName = parts[0];
-		String bucket = parts[1];
-		String key = parts[2];
+		final String dbName = parts[0];
+		final String bucket = parts[1];
+		final String key = getKey(iURI);
 
 		try {
-			Map<String, String> bucketMap = Hazelcast.getMap(dbName + "/" + bucket);
+			Map<String, String> bucketMap = getBucket(dbName, bucket);
 
-			int code;
-			String reason;
-			String content;
+			final int code;
+			final String reason;
+			final String content;
 
-			if (bucketMap.containsKey(iURI)) {
+			if (bucketMap.containsKey(key)) {
 				code = 503;
 				reason = "Entry already exists";
 				content = "The entry with key: " + key + " already exists in the bucket '" + bucket + "'";
@@ -131,7 +136,7 @@ public class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstract {
 				reason = "Ok";
 				content = null;
 
-				bucketMap.put(iURI, iContent);
+				bucketMap.put(key, iContent);
 			}
 
 			sendTextContent(code, reason, "text/plain", content);
@@ -149,27 +154,27 @@ public class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstract {
 
 	@Override
 	public void doDelete(String iURI, String iContent, OChannelTextServer iChannel) throws ONetworkProtocolException {
-		String parts[] = getRequestParameters(iURI);
+		final String parts[] = getDbBucketKey(iURI);
 
-		String dbName = parts[0];
-		String bucket = parts[1];
-		String key = parts[2];
+		final String dbName = parts[0];
+		final String bucket = parts[1];
+		final String key = getKey(iURI);
 
 		try {
-			Map<String, String> bucketMap = Hazelcast.getMap(dbName + "/" + bucket);
+			final Map<String, String> bucketMap = getBucket(dbName, bucket);
 
-			int code;
-			String reason;
-			String content;
+			final int code;
+			final String reason;
+			final String content;
 
-			if (!bucketMap.containsKey(iURI)) {
+			if (!bucketMap.containsKey(key)) {
 				code = 503;
 				reason = "Key not found";
 				content = "The entry with key: " + key + " was not found in the bucket '" + bucket + "'";
 			} else {
 				code = 200;
 				reason = "Ok";
-				content = bucketMap.remove(iURI);
+				content = bucketMap.remove(key);
 			}
 
 			sendTextContent(code, reason, "text/plain", content);
@@ -185,29 +190,33 @@ public class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstract {
 		}
 	}
 
-	public static String[] getRequestParameters(String iParameters) {
-		if (iParameters == null || iParameters.length() <= 1)
-			throw new ONetworkProtocolException("Requested URI is invalid: " + iParameters);
+	public static String[] getDbBucketKey(String iParameters) {
+		if (iParameters == null || iParameters.length() < 5)
+			throw new ONetworkProtocolException("Requested URI '" + iParameters + "' is invalid. Expected db/bucket/key");
 
 		// REMOVE THE FIRST /
-		iParameters = iParameters.substring(1);
+		if (iParameters.startsWith(URL_SEPARATOR))
+			iParameters = iParameters.substring(1);
 
-		String[] pars = iParameters.split("/");
+		if (iParameters.endsWith(URL_SEPARATOR))
+			iParameters = iParameters.substring(0, iParameters.length() - 2);
+
+		final String[] pars = iParameters.split(URL_SEPARATOR);
 
 		if (pars == null || pars.length < 3)
-			throw new ONetworkProtocolException("Requested URI is invalid: " + iParameters);
+			throw new ONetworkProtocolException("Requested URI '" + iParameters + "' is invalid. Expected db/bucket/key");
 
 		return pars;
 	}
 
 	private void directAccess(final String iURI) {
-		String wwwPath = System.getProperty("orient.www.path", "src/site");
+		final String wwwPath = System.getProperty("orient.www.path", "src/site");
 
 		InputStream bufferedFile = null;
 		try {
-			String url = "/".equals(iURI) ? url = "/www/index.htm" : iURI;
+			String url = URL_SEPARATOR.equals(iURI) ? url = "/www/index.htm" : iURI;
 			url = wwwPath + url.substring("www".length() + 1, url.length());
-			File inputFile = new File(url);
+			final File inputFile = new File(url);
 			if (!inputFile.exists())
 				return;
 

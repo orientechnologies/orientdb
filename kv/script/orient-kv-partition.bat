@@ -26,8 +26,8 @@ echo           ,,:` `,,.
 echo          ,,,    .,`                                      
 echo         ,,.     `,  K E Y - V A L U E   S E R V E R        
 echo       ``        `.                                       
-echo                 ``                                       
-echo                 ` (CLUSTERING POWERED BY HAZELCAST)  
+echo                 ``    (CLUSTER-PARTITION POWERED
+echo                 `             HAZELCAST)  
 
 rem Guess ORIENT_HOME if not defined
 set CURRENT_DIR=%cd%
@@ -57,7 +57,7 @@ goto setArgs
 
 :doneSetArgs
 
-set CONFIG_FILE=%ORIENT_HOME%/config/orient-kv-clustered.config
+set CONFIG_FILE=%ORIENT_HOME%/config/orient-kv-partition.config
 set LOG_LEVEL=warning
 set HAZELCAST_FILE=%ORIENT_HOME%/config/hazelcast.xml
 set WWW_PATH=%ORIENT_HOME%/www
