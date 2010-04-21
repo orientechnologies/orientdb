@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.record.ORecord;
+
 /**
  * Generic representation of a type.
  * 
@@ -29,39 +31,39 @@ import java.util.Set;
  * 
  */
 public enum OType {
-	BOOLEAN("Boolean", 0, false, true, 1, Boolean.TYPE, new Class<?>[] { Boolean.class }) {
+	BOOLEAN("Boolean", 0, false, true, 1, new Class<?>[] { Boolean.TYPE, Boolean.class }, new Class<?>[] { Boolean.class }) {
 	},
-	INTEGER("Integer", 1, false, true, 4, Integer.TYPE, new Class<?>[] { Number.class }) {
+	INTEGER("Integer", 1, false, true, 4, new Class<?>[] { Integer.TYPE, Integer.class }, new Class<?>[] { Number.class }) {
 	},
-	SHORT("Short", 2, false, true, 2, Short.TYPE, new Class<?>[] { Number.class }) {
+	SHORT("Short", 2, false, true, 2, new Class<?>[] { Short.TYPE, Short.class }, new Class<?>[] { Number.class }) {
 	},
-	LONG("Long", 3, false, true, 8, Long.TYPE, new Class<?>[] { Number.class }) {
+	LONG("Long", 3, false, true, 8, new Class<?>[] { Long.TYPE, Long.class }, new Class<?>[] { Number.class }) {
 	},
-	FLOAT("Float", 4, false, true, 4, Float.TYPE, new Class<?>[] { Number.class }) {
+	FLOAT("Float", 4, false, true, 4, new Class<?>[] { Float.TYPE, Float.class }, new Class<?>[] { Number.class }) {
 	},
-	DOUBLE("Double", 5, false, true, 8, Double.TYPE, new Class<?>[] { Number.class }) {
+	DOUBLE("Double", 5, false, true, 8, new Class<?>[] { Double.TYPE, Double.class }, new Class<?>[] { Number.class }) {
 	},
-	DATE("Date", 6, false, true, 8, Date.class, new Class<?>[] { Date.class }) {
+	DATE("Date", 6, false, true, 8, new Class<?>[] { Date.class }, new Class<?>[] { Date.class }) {
 	},
-	STRING("String", 7, false, false, 8, String.class, new Class<?>[] { String.class }) {
+	STRING("String", 7, false, false, 8, new Class<?>[] { String.class }, new Class<?>[] { String.class }) {
 	},
-	BINARY("Binary", 8, false, false, 8, Byte.TYPE, new Class<?>[] { Array.class }) {
+	BINARY("Binary", 8, false, false, 8, new Class<?>[] { Byte.TYPE, Byte.class }, new Class<?>[] { Array.class }) {
 	},
-	EMBEDDED("Embedded", 9, true, false, 8, Object.class, new Class<?>[] {}) {
+	EMBEDDED("Embedded", 9, true, false, 8, new Class<?>[] { Object.class }, new Class<?>[] {}) {
 	},
-	EMBEDDEDLIST("List", 10, true, false, 8, List.class, new Class<?>[] { Collection.class }) {
+	EMBEDDEDLIST("List", 10, true, false, 8, new Class<?>[] { List.class }, new Class<?>[] { Collection.class }) {
 	},
-	EMBEDDEDSET("Set", 11, true, false, 8, Set.class, new Class<?>[] { Collection.class }) {
+	EMBEDDEDSET("Set", 11, true, false, 8, new Class<?>[] { Set.class }, new Class<?>[] { Collection.class }) {
 	},
-	EMBEDDEDMAP("Map", 12, true, false, 8, Map.class, new Class<?>[] { Map.class }) {
+	EMBEDDEDMAP("Map", 12, true, false, 8, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
 	},
-	LINK("Link", 13, true, true, 8, Object.class, new Class<?>[] {}) {
+	LINK("Link", 13, true, true, 8, new Class<?>[] { Object.class }, new Class<?>[] { ORecord.class }) {
 	},
-	LINKLIST("List", 14, true, false, 8, List.class, new Class<?>[] { Collection.class }) {
+	LINKLIST("List", 14, true, false, 8, new Class<?>[] { List.class }, new Class<?>[] { Collection.class }) {
 	},
-	LINKSET("Set", 15, true, false, 8, Set.class, new Class<?>[] { Collection.class }) {
+	LINKSET("Set", 15, true, false, 8, new Class<?>[] { Set.class }, new Class<?>[] { Collection.class }) {
 	},
-	LINKMAP("Map", 16, true, false, 8, Map.class, new Class<?>[] { Map.class }) {
+	LINKMAP("Map", 16, true, false, 8, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
 	};
 
 	protected static final OType[]	TYPES	= new OType[] { BOOLEAN, INTEGER, SHORT, LONG, FLOAT, DOUBLE, DATE, STRING, BINARY,
@@ -72,17 +74,17 @@ public enum OType {
 	protected boolean								complex;
 	protected boolean								fixedSize;
 	protected int										size;
-	protected Class<?>							javaType;
+	protected Class<?>[]						javaTypes;
 	protected Class<?>[]						allowAssignmentFrom;
 
 	private OType(final String iName, final int iId, final boolean iComplex, final boolean iFixedSize, final int iSize,
-			final Class<?> iJavaType, final Class<?>[] iAllowAssignmentBy) {
+			final Class<?>[] iJavaTypes, final Class<?>[] iAllowAssignmentBy) {
 		name = iName;
 		id = iId;
 		complex = iComplex;
 		fixedSize = iFixedSize;
 		size = iSize;
-		javaType = iJavaType;
+		javaTypes = iJavaTypes;
 		allowAssignmentFrom = iAllowAssignmentBy;
 	}
 
@@ -109,6 +111,9 @@ public enum OType {
 	 * @return true if it's assignable, otherwise false
 	 */
 	public boolean isAssignableFrom(final Object iPropertyValue) {
+		if (iPropertyValue == null)
+			return true;
+
 		for (int i = 0; i < allowAssignmentFrom.length; ++i) {
 			if (allowAssignmentFrom[i].isAssignableFrom(iPropertyValue.getClass()))
 				return true;
@@ -124,6 +129,26 @@ public enum OType {
 	 * @return OType instance if found, otherwise null
 	 */
 	public static OType getTypeByClass(final Class<?> iClass) {
+		if (iClass == null)
+			return null;
+
+		for (OType type : TYPES)
+			for (int i = 0; i < type.javaTypes.length; ++i) {
+				if (type.javaTypes[i] == iClass)
+					return type;
+			}
+
+		return null;
+	}
+
+	/**
+	 * Return the correspondent type by checking the "assignability" of the class received as parameter.
+	 * 
+	 * @param iClass
+	 *          Class to check
+	 * @return OType instance if found, otherwise null
+	 */
+	public static OType getTypeByAssignability(final Class<?> iClass) {
 		if (iClass == null)
 			return null;
 
