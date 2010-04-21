@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorMultiCluster;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -63,6 +64,8 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 	 * If the record is new and a class was specified, the configured cluster id will be used to store the class.
 	 */
 	public ODatabaseDocumentTx save(final ODocument iContent) {
+		iContent.validate();
+
 		try {
 			if (!iContent.getIdentity().isValid()) {
 				// NEW RECORD
@@ -143,7 +146,12 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 		return this;
 	}
 
-	public long countClass(String iClassName) {
+	public long countClass(final String iClassName) {
+		OClass cls = getMetadata().getSchema().getClass(iClassName);
+
+		if (cls == null)
+			throw new IllegalArgumentException("Class '" + iClassName + "' not found in database");
+
 		return countClusterElements(getMetadata().getSchema().getClass(iClassName).getClusterIds());
 	}
 }
