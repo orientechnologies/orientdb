@@ -61,7 +61,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			OJSONWriter json = new OJSONWriter(buffer);
 
 			json.beginObject();
-			for (String fieldName : record.fields()) {
+			for (String fieldName : record.fieldNames()) {
 				json.writeAttribute(1, true, fieldName, record.field(fieldName));
 			}
 			json.endObject();
