@@ -54,21 +54,6 @@
 		</copy>
 	</target>
 
-	<target name="javadocs">
-		<javadoc classpathref="project.classpath" sourcepath="${project.src}" packagenames="com.orientechnologies.*" destdir="${project.doc}" private="true">
-			<doclet name="org.umlgraph.doclet.UmlGraphDoc" path="${project.lib}/UMLGraph.jar">
-				<param name="-hide" value="java.*" />
-				<param name="-collpackages" value="java.util.*" />
-				<param name="-qualify" />
-				<param name="-postfixpackage" />
-				<param name="-nodefontsize" value="9" />
-				<param name="-nodefontpackagesize" value="7" />
-				<param name="-link" value="http://java.sun.com/j2se/1.5.0/docs/guide/javadoc/doclet/spec" />
-				<param name="-link" value="http://java.sun.com/j2se/1.5/docs/api" />
-			</doclet>
-		</javadoc>
-	</target>
-
 	<target name="install-zip">
 		<mkdir dir="${project.dist}" />
 		<delete file="${project.dist}/${ant.project.name}.zip" />
