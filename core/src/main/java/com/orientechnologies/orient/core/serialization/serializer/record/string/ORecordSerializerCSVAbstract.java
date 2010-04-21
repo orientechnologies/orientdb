@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.serialization.serializer.record.string
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
@@ -52,10 +53,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			// REMOVE BEGIN & END COLLECTIONS CHARACTERS
 			String value = iValue.substring(1, iValue.length() - 1);
 
-			if (value.length() == 0)
-				return null;
+			Collection<Object> coll = iType == OType.EMBEDDEDLIST ? new ArrayList<Object>() : new HashSet<Object>();
 
-			ArrayList<Object> coll = new ArrayList<Object>();
+			if (value.length() == 0)
+				return coll;
 
 			String[] items = OStringSerializerHelper.split(value, OStringSerializerHelper.RECORD_SEPARATOR_AS_CHAR);
 
@@ -86,7 +87,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			// REMOVE BEGIN & END COLLECTIONS CHARACTERS
 			String value = iValue.substring(1, iValue.length() - 1);
 
-			ArrayList<ORecord<?>> coll = new ArrayList<ORecord<?>>();
+			Collection<Object> coll = iType == OType.LINKLIST ? new ArrayList<Object>() : new HashSet<Object>();
+
+			if (value.length() == 0)
+				return coll;
 
 			String[] items = OStringSerializerHelper.split(value, OStringSerializerHelper.RECORD_SEPARATOR_AS_CHAR);
 
@@ -132,7 +136,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 		switch (iType) {
 		case EMBEDDED:
-			buffer.append(toString((ODocument) iValue, iObjHandler, iMarshalledRecords));
+			if (iValue instanceof ODocument)
+				buffer.append(toString((ODocument) iValue, iObjHandler, iMarshalledRecords));
+			else if (iValue != null)
+				buffer.append(iValue.toString());
 			break;
 
 		case LINK: {
