@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.query.operator;
 
 import java.util.Collection;
 
+import com.orientechnologies.orient.core.query.sql.OSQLCondition;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 
 /**
@@ -32,18 +33,18 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
 	}
 
 	@SuppressWarnings("unchecked")
-	protected boolean evaluateExpression(final Object iLeft, final Object iRight) {
+	protected boolean evaluateExpression(final OSQLCondition iCondition, final Object iLeft, final Object iRight) {
 		if (iLeft instanceof Collection<?>) {
 			Collection<ORecordSchemaAware<?>> collection = (Collection<ORecordSchemaAware<?>>) iLeft;
 			for (ORecordSchemaAware<?> o : collection) {
-				if ((Boolean) evaluate(o, iRight) == Boolean.TRUE)
+				if ((Boolean) ((OSQLCondition) iCondition.getRight()).evaluate(o) == Boolean.TRUE)
 					return true;
 			}
 		} else if (iRight instanceof Collection<?>) {
 
 			Collection<ORecordSchemaAware<?>> collection = (Collection<ORecordSchemaAware<?>>) iRight;
 			for (ORecordSchemaAware<?> o : collection) {
-				if ((Boolean) evaluate(o, iLeft) == Boolean.TRUE)
+				if ((Boolean) ((OSQLCondition) iCondition.getLeft()).evaluate(o) == Boolean.TRUE)
 					return true;
 			}
 		}

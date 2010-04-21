@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.query.operator;
 
+import com.orientechnologies.orient.core.query.sql.OSQLCondition;
+
 /**
  * AND operator.
  * 
@@ -27,7 +29,7 @@ public class OQueryOperatorAnd extends OQueryOperator {
 		super("AND", 7, true);
 	}
 
-	public boolean evaluate(final Object iLeft, final Object iRight) {
+	public boolean evaluate(final OSQLCondition iCondition, final Object iLeft, final Object iRight) {
 		if (iLeft == null)
 			return false;
 		return (Boolean) iLeft && (Boolean) iRight;

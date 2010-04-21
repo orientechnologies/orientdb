@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.query.operator;
 
+import com.orientechnologies.orient.core.query.sql.OSQLCondition;
+
 /**
  * Query Operators. Remember to handle the operator in OQueryItemCondition.
  * 
@@ -35,7 +37,7 @@ public abstract class OQueryOperator {
 		logical = iLogical;
 	}
 
-	public abstract boolean evaluate(final Object iLeft, final Object iRight);
+	public abstract boolean evaluate(final OSQLCondition iCondition, final Object iLeft, final Object iRight);
 
 	@Override
 	public String toString() {

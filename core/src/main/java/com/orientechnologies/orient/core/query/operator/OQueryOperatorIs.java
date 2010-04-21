@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.query.operator;
 
+import com.orientechnologies.orient.core.query.sql.OSQLCondition;
+
 /**
  * IS operator. Different by EQUALS since works also for null. Example "IS null"
  * 
@@ -27,7 +29,7 @@ public class OQueryOperatorIs extends OQueryOperatorEquality {
 		super("IS", 5, false);
 	}
 
-	protected boolean evaluateExpression(final Object iLeft, final Object iRight) {
+	protected boolean evaluateExpression(OSQLCondition iCondition, final Object iLeft, final Object iRight) {
 		return iLeft == iRight;
 	}
 }

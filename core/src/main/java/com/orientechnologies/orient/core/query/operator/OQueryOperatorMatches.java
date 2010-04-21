@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.query.operator;
 
+import com.orientechnologies.orient.core.query.sql.OSQLCondition;
+
 /**
  * MATCHES operator. Matches the left value against the regular expression contained in the second one.
  * 
@@ -27,7 +29,7 @@ public class OQueryOperatorMatches extends OQueryOperatorEqualityNotNulls {
 		super("MATCHES", 5, false);
 	}
 
-	protected boolean evaluateExpression(final Object iLeft, final Object iRight) {
+	protected boolean evaluateExpression(OSQLCondition iCondition, final Object iLeft, final Object iRight) {
 		return iLeft.toString().matches((String) iRight);
 	}
 }

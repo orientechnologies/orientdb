@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.query.operator;
 
+import com.orientechnologies.orient.core.query.sql.OSQLCondition;
+
 /**
  * Base equality operator that not admit NULL in the LEFT and in the RIGHT operator. Abstract class.
  * 
@@ -27,10 +29,10 @@ public abstract class OQueryOperatorEqualityNotNulls extends OQueryOperatorEqual
 		super(iKeyword, iPrecedence, iLogical);
 	}
 
-	public boolean evaluate(final Object iLeft, final Object iRight) {
+	public boolean evaluate(final OSQLCondition iCondition, final Object iLeft, final Object iRight) {
 		if (iLeft == null || iRight == null)
 			return false;
 
-		return super.evaluate(iLeft, iRight);
+		return super.evaluate(iCondition, iLeft, iRight);
 	}
 }

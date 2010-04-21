@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.query.operator;
 
+import com.orientechnologies.orient.core.query.sql.OSQLCondition;
+
 /**
  * NOT operator.
  * 
@@ -27,7 +29,7 @@ public class OQueryOperatorNot extends OQueryOperator {
 		super("NOT", 10, true);
 	}
 
-	public boolean evaluate(final Object iLeft, final Object iRight) {
+	public boolean evaluate(final OSQLCondition iCondition, final Object iLeft, final Object iRight) {
 		if (iLeft == null)
 			return false;
 		return !(Boolean) iLeft;

@@ -108,7 +108,7 @@ public class OSQLField implements OSQLValue {
 					result = result != null ? result.toString().trim() : null;
 
 				// OTHER OPERATORS
-				if (operator == OSQLFieldOperator.CHARAT.id) {
+				else if (operator == OSQLFieldOperator.CHARAT.id) {
 					int index = Integer.parseInt(op.value[0]);
 					result = result != null ? result.toString().substring(index, index + 1) : null;
 

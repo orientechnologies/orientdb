@@ -51,7 +51,7 @@ public class OSQLCondition {
 			r = convertedValues[1];
 		}
 
-		return operator.evaluate(l, r);
+		return operator.evaluate(this, l, r);
 	}
 
 	private Object[] checkForConversion(Object l, Object r) {
@@ -134,5 +134,13 @@ public class OSQLCondition {
 		buffer.append(')');
 
 		return buffer.toString();
+	}
+
+	public Object getLeft() {
+		return left;
+	}
+
+	public Object getRight() {
+		return right;
 	}
 }

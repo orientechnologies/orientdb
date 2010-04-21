@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.query.operator;
 
 import com.orientechnologies.orient.core.query.OQueryHelper;
+import com.orientechnologies.orient.core.query.sql.OSQLCondition;
 
 /**
  * LIKE operator.
@@ -29,7 +30,7 @@ public class OQueryOperatorLike extends OQueryOperatorEqualityNotNulls {
 		super("LIKE", 5, false);
 	}
 
-	protected boolean evaluateExpression(final Object iLeft, final Object iRight) {
+	protected boolean evaluateExpression(OSQLCondition iCondition, final Object iLeft, final Object iRight) {
 		return OQueryHelper.like(iLeft.toString(), iRight.toString());
 	}
 }
