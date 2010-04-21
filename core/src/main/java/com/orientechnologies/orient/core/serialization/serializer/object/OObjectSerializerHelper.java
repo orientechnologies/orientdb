@@ -25,9 +25,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
+import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -35,6 +37,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 @SuppressWarnings("unchecked")
 /**
@@ -64,7 +67,7 @@ public class OObjectSerializerHelper {
 			return null;
 		} catch (Exception e) {
 
-			throw new OSchemaException("Can't access to the property: " + iProperty, e);
+			throw new OSchemaException("Can't get the value of the property: " + iProperty, e);
 		}
 	}
 
@@ -85,7 +88,7 @@ public class OObjectSerializerHelper {
 
 		} catch (Exception e) {
 
-			throw new OSchemaException("Can't access to the property: " + iProperty, e);
+			throw new OSchemaException("Can't set the value '" + iValue + "' to the property: " + iProperty, e);
 		}
 	}
 
@@ -113,6 +116,38 @@ public class OObjectSerializerHelper {
 					// RECOGNIZED TYPE
 					fieldValue = iObj2RecHandler.getUserObjectByRecord((ORecord<?>) fieldValue);
 				}
+			} else if (p.getType().isAssignableFrom(List.class)) {
+
+				Collection<? extends ODocument> list = (Collection<? extends ODocument>) fieldValue;
+				List<Object> targetList = new OLazyList<Object>((ODatabaseObjectTx) iRecord.getDatabase().getDatabaseOwner());
+				fieldValue = targetList;
+
+				if (list != null && list.size() > 0) {
+					targetList.addAll(list);
+				}
+
+			} else if (p.getType().isAssignableFrom(Set.class)) {
+				Collection<? extends ODocument> set = (Collection<? extends ODocument>) fieldValue;
+
+				HashSet<Object> target = new HashSet<Object>();
+				fieldValue = target;
+
+				if (set != null && set.size() > 0) {
+					// NO LAZY: CONVERT ALL NOW
+
+					ODatabaseObjectTx database = (ODatabaseObjectTx) iRecord.getDatabase().getDatabaseOwner();
+					for (ODocument item : set) {
+						Object pojo = database.getUserObjectByRecord(item);
+
+						target.add(pojo);
+					}
+				}
+
+			} else {
+				// GENERIC TYPE
+				OType type = OType.getTypeByClass(p.getType());
+				if (type != null)
+					fieldValue = OStringSerializerHelper.fieldTypeFromStream(type, fieldValue);
 			}
 
 			setFieldValue(iPojo, fieldName, fieldValue);
@@ -177,7 +212,7 @@ public class OObjectSerializerHelper {
 				iFieldValue = listToStream(Arrays.asList(iFieldValue), iType, iEntityManager, iObj2RecHandler);
 			} else if (Collection.class.isAssignableFrom(fieldClass)) {
 				// COLLECTION (LIST OR SET)
-				iFieldValue = listToStream((List<Object>) iFieldValue, iType, iEntityManager, iObj2RecHandler);
+				iFieldValue = listToStream((Collection<Object>) iFieldValue, iType, iEntityManager, iObj2RecHandler);
 			} else if (Map.class.isAssignableFrom(fieldClass)) {
 				// MAP
 			} else {
@@ -270,8 +305,8 @@ public class OObjectSerializerHelper {
 				// TRY TO GET THE VALUE BY THE SETTER (IF ANY)
 				try {
 					String getterName = "set" + Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1);
-					Method m = c.getMethod(getterName, NO_ARGS);
-					getters.put(c.getName() + "." + fieldName, m);
+					Method m = c.getMethod(getterName, f.getType());
+					setters.put(c.getName() + "." + fieldName, m);
 				} catch (Exception e) {
 					// TRY TO GET THE VALUE BY ACCESSING DIRECTLY TO THE PROPERTY
 					if (!f.isAccessible())
