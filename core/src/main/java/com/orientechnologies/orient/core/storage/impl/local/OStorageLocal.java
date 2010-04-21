@@ -371,6 +371,9 @@ public class OStorageLocal extends OStorageAbstract {
 	}
 
 	public long count(final int iClusterId) {
+		if (iClusterId == -1)
+			throw new OStorageException("Cluster Id is invalid: " + iClusterId);
+
 		if (iClusterId < -1)
 			// LOGICAL CLUSTER
 			return logicalClusters.get(getLogicalClusterIndex(iClusterId)).getElements();
