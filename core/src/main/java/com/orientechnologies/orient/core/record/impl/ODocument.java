@@ -121,7 +121,12 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			buffer.append(first ? "{" : ",");
 			buffer.append(f.getKey());
 			buffer.append(":");
-			buffer.append(f.getValue());
+			if (f.getValue() instanceof Collection<?>) {
+				buffer.append("[");
+				buffer.append(((Collection<?>) f.getValue()).size());
+				buffer.append("]");
+			} else
+				buffer.append(f.getValue());
 
 			if (first)
 				first = false;
@@ -143,11 +148,18 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		return fields.size();
 	}
 
-	public String[] fields() {
+	public String[] fieldNames() {
 		checkForFields();
 
 		String[] result = new String[fields.keySet().size()];
 		return fields.keySet().toArray(result);
+	}
+
+	public Object[] fieldValues() {
+		checkForFields();
+
+		String[] result = new String[fields.keySet().size()];
+		return fields.values().toArray(result);
 	}
 
 	public <RET> RET field(final String iPropertyName) {
@@ -219,7 +231,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 
 	@Override
 	public boolean containsField(String iFieldName) {
-		return fields.containsKey(iFieldName);
+		return fields != null ? fields.containsKey(iFieldName) : false;
 	}
 
 	public byte getRecordType() {

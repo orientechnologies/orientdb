@@ -479,7 +479,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 	protected void dumpRecordInTable(final int iIndex, final ORecordSchemaAwareAbstract<?> iRecord, final List<String> iColumns) {
 		// CHECK IF HAVE TO ADD NEW COLUMN (BECAUSE IT CAN BE SCHEMA-LESS)
 		List<String> recordColumns = new ArrayList<String>();
-		for (String fieldName : iRecord.fields())
+		for (String fieldName : iRecord.fieldNames())
 			recordColumns.add(fieldName);
 
 		dumpRecordInTable(iIndex, iRecord, recordColumns, iColumns);
@@ -559,7 +559,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 			out.println("--------------------------------------------------");
 			out.printf("ODocument - Class: %s   id: %s   v.%d\n", rec.getClassName(), rec.getIdentity().toString(), rec.getVersion());
 			out.println("--------------------------------------------------");
-			for (String fieldName : rec.fields()) {
+			for (String fieldName : rec.fieldNames()) {
 				out.printf("%20s : %-20s\n", fieldName, rec.field(fieldName));
 			}
 

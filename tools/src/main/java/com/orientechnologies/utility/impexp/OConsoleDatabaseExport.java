@@ -206,9 +206,9 @@ public class OConsoleDatabaseExport {
 			writer.writeAttribute(0, false, ATTRIBUTE_TYPE, "v");
 
 			Object value;
-			if (vobj.fields() != null && vobj.fields().length > 0) {
+			if (vobj.fieldNames() != null && vobj.fieldNames().length > 0) {
 				writer.beginObject(5, true, "fields");
-				for (String f : vobj.fields()) {
+				for (String f : vobj.fieldNames()) {
 					value = vobj.field(f);
 
 					writer.writeAttribute(6, true, f, value);
