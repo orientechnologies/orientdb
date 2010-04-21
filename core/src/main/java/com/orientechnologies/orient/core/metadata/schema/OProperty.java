@@ -15,7 +15,10 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import java.text.ParseException;
+
 import com.orientechnologies.common.collection.OTreeMap;
+import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.record.ORecordPositional;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializableRecordPositional;
 
@@ -80,8 +83,8 @@ public class OProperty implements OSerializableRecordPositional {
 		type = OType.getById(Integer.parseInt(iRecord.next()));
 		offset = Integer.parseInt(iRecord.next());
 
-		mandatory = Boolean.parseBoolean(iRecord.next());
-		notNull = Boolean.parseBoolean(iRecord.next());
+		mandatory = iRecord.next().equals("1");
+		notNull = iRecord.next().equals("1");
 		min = iRecord.next();
 		if (min.length() == 0)
 			min = null;
@@ -152,6 +155,7 @@ public class OProperty implements OSerializableRecordPositional {
 
 	public OProperty setMin(String min) {
 		this.min = min;
+		checkForDateFormat(min);
 		return this;
 	}
 
@@ -161,6 +165,7 @@ public class OProperty implements OSerializableRecordPositional {
 
 	public OProperty setMax(String max) {
 		this.max = max;
+		checkForDateFormat(max);
 		return this;
 	}
 
@@ -171,5 +176,15 @@ public class OProperty implements OSerializableRecordPositional {
 	@Override
 	public String toString() {
 		return name + " (id=" + id + ", " + type + ")";
+	}
+
+	private void checkForDateFormat(String min) {
+		if (type == OType.DATE) {
+			try {
+				owner.owner.getDatabase().getStorage().getConfiguration().getDateTimeFormatInstance().parse(min);
+			} catch (ParseException e) {
+				throw new OSchemaException("Invalid date format setted", e);
+			}
+		}
 	}
 }
