@@ -23,6 +23,15 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
 
+/**
+ * SQL asynchronous query. When executed the caller doesn't wait the the execution, rather the listener will be called foreach item
+ * found in the query. OSQLAsynchQuery has been built on top of this.
+ * 
+ * @author luca
+ * 
+ * @param <T>
+ * @see OSQLSynchQuery
+ */
 public class OSQLAsynchQuery<T extends ORecordSchemaAware<?>> extends OSQLQuery<T> implements OAsynchQuery<T>,
 		ORecordBrowsingListener {
 	protected OAsynchQueryResultListener<T>	resultListener;

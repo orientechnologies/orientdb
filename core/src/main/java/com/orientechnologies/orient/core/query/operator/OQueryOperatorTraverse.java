@@ -13,12 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.query.sql;
+package com.orientechnologies.orient.core.query.operator;
 
-import com.orientechnologies.orient.core.record.ORecordInternal;
+/**
+ * TRAVERSE operator.
+ * 
+ * @author luca
+ * 
+ */
+public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 
-public interface OQueryItemValue {
+	public OQueryOperatorTraverse() {
+		super("TRAVERSE", 5, false);
+	}
 
-	public Object getValue(ORecordInternal<?> iRecord);
+	@SuppressWarnings("unchecked")
+	protected boolean evaluateExpression(final Object iLeft, final Object iRight) {
 
+		return false;
+	}
 }

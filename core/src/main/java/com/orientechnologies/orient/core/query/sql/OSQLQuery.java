@@ -19,14 +19,42 @@ import java.io.IOException;
 import java.util.List;
 
 import com.orientechnologies.orient.core.query.OQueryAbstract;
+import com.orientechnologies.orient.core.query.operator.OQueryOperator;
+import com.orientechnologies.orient.core.query.operator.OQueryOperatorAnd;
+import com.orientechnologies.orient.core.query.operator.OQueryOperatorContains;
+import com.orientechnologies.orient.core.query.operator.OQueryOperatorContainsAll;
+import com.orientechnologies.orient.core.query.operator.OQueryOperatorEquals;
+import com.orientechnologies.orient.core.query.operator.OQueryOperatorIn;
+import com.orientechnologies.orient.core.query.operator.OQueryOperatorIs;
+import com.orientechnologies.orient.core.query.operator.OQueryOperatorLike;
+import com.orientechnologies.orient.core.query.operator.OQueryOperatorMajor;
+import com.orientechnologies.orient.core.query.operator.OQueryOperatorMajorEquals;
+import com.orientechnologies.orient.core.query.operator.OQueryOperatorMinor;
+import com.orientechnologies.orient.core.query.operator.OQueryOperatorMinorEquals;
+import com.orientechnologies.orient.core.query.operator.OQueryOperatorNot;
+import com.orientechnologies.orient.core.query.operator.OQueryOperatorOr;
+import com.orientechnologies.orient.core.query.operator.OQueryOperatorTraverse;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
+/**
+ * SQL query implementation.
+ * 
+ * @author luca
+ * 
+ * @param <T>
+ *          Record type to return.
+ */
 public abstract class OSQLQuery<T extends ORecordSchemaAware<?>> extends OQueryAbstract<T> implements OSerializableStream {
-	public static final String	NAME	= "sql";
+	public static final String				NAME			= "sql";
 
-	protected String						text;
+	protected String									text;
+
+	protected static OQueryOperator[]	OPERATORS	= { new OQueryOperatorAnd(), new OQueryOperatorOr(), new OQueryOperatorNot(),
+			new OQueryOperatorEquals(), new OQueryOperatorMinor(), new OQueryOperatorMajorEquals(), new OQueryOperatorMajor(),
+			new OQueryOperatorMinorEquals(), new OQueryOperatorLike(), new OQueryOperatorIs(), new OQueryOperatorIn(),
+			new OQueryOperatorContains(), new OQueryOperatorContainsAll(), new OQueryOperatorTraverse() };
 
 	public OSQLQuery(String iText) {
 		text = iText;
@@ -65,5 +93,15 @@ public abstract class OSQLQuery<T extends ORecordSchemaAware<?>> extends OQueryA
 
 	public byte[] toStream() throws IOException {
 		return OBinaryProtocol.string2bytes(text);
+	}
+
+	public static void registerOperator(final OQueryOperator iOperator) {
+		OQueryOperator[] ops = new OQueryOperator[OPERATORS.length + 1];
+		System.arraycopy(OPERATORS, 0, ops, 0, OPERATORS.length);
+		OPERATORS = ops;
+	}
+
+	public static OQueryOperator[] getOperators() {
+		return OPERATORS;
 	}
 }

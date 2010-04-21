@@ -23,8 +23,15 @@ import java.util.Map;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.query.OQueryHelper;
+import com.orientechnologies.orient.core.query.operator.OQueryOperator;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 
+/**
+ * Parsed query. It's built once a query is parsed.
+ * 
+ * @author luca
+ * 
+ */
 public class OSQLQueryCompiled {
 	private static final String		CLASS_PREFIX		= "class:";
 	private static final String		CLUSTER_PREFIX	= "cluster:";
@@ -35,7 +42,7 @@ public class OSQLQueryCompiled {
 	protected List<String>				projections			= new ArrayList<String>();
 	protected Map<String, String>	clusters				= new HashMap<String, String>();
 	protected Map<String, String>	classes					= new HashMap<String, String>();
-	protected OQueryItemCondition	rootCondition;
+	protected OSQLCondition				rootCondition;
 	protected List<String>				recordTransformed;
 
 	protected static final String	KEYWORD_SELECT	= "SELECT";
@@ -136,37 +143,37 @@ public class OSQLQueryCompiled {
 		return whereDefined;
 	}
 
-	private OQueryItemCondition extractConditions(OQueryItemCondition iParentCondition) {
-		OQueryItemCondition currentCondition = extractCondition();
+	private OSQLCondition extractConditions(OSQLCondition iParentCondition) {
+		OSQLCondition currentCondition = extractCondition();
 
 		// CHECK IF THERE IS ANOTHER CONDITION ON RIGHT
 		if (!jumpWhiteSpaces())
 			// END OF TEXT
 			return currentCondition;
 
-		OQueryItemOperator nextOperator = extractConditionOperator();
+		OQueryOperator nextOperator = extractConditionOperator();
 
-		OQueryItemCondition parentCondition = new OQueryItemCondition(currentCondition, nextOperator);
+		OSQLCondition parentCondition = new OSQLCondition(currentCondition, nextOperator);
 
 		parentCondition.right = extractConditions(parentCondition);
 
 		return parentCondition;
 	}
 
-	protected OQueryItemCondition extractCondition() {
+	protected OSQLCondition extractCondition() {
 		if (!jumpWhiteSpaces())
 			// END OF TEXT
 			return null;
 
 		// CREATE THE CONDITION OBJECT
-		return new OQueryItemCondition(extractConditionItem(), extractConditionOperator(), extractConditionItem());
+		return new OSQLCondition(extractConditionItem(), extractConditionOperator(), extractConditionItem());
 	}
 
-	private OQueryItemOperator extractConditionOperator() {
+	private OQueryOperator extractConditionOperator() {
 		String word;
 		word = nextWord(true);
 
-		for (OQueryItemOperator op : OQueryItemOperator.OPERATORS) {
+		for (OQueryOperator op : OSQLQuery.getOperators()) {
 			if (word.equals(op.keyword)) {
 				return op;
 			}
@@ -185,8 +192,7 @@ public class OSQLQueryCompiled {
 			// SUB-CONDITION
 			currentPos = currentPos - words[0].length() + 1;
 
-			OQueryItemCondition subCondition = new OQueryItemCondition(extractConditionItem(), extractConditionOperator(),
-					extractConditionItem());
+			OSQLCondition subCondition = new OSQLCondition(extractConditionItem(), extractConditionOperator(), extractConditionItem());
 
 			currentPos++;
 
@@ -215,7 +221,7 @@ public class OSQLQueryCompiled {
 			String[] parameters = OQueryHelper.getParameters(words[0]);
 			if (parameters.length != 1)
 				throw new OQueryParsingException("Missed column number", text, currentPos);
-			result = new OQueryItemColumn(Integer.parseInt(parameters[0]));
+			result = new OSQLItemColumn(Integer.parseInt(parameters[0]));
 		} else
 			result = getValue(words);
 
@@ -232,7 +238,7 @@ public class OSQLQueryCompiled {
 				return new Integer(words[0]);
 		}
 
-		return new OQueryItemField(this, words[1]);
+		return new OSQLField(this, words[1]);
 	}
 
 	public List<String> getProjections() {

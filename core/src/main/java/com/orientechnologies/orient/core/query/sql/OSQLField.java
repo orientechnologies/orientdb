@@ -25,12 +25,18 @@ import com.orientechnologies.orient.core.query.OQueryHelper;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 
-public class OQueryItemField implements OQueryItemValue {
+/**
+ * Represent an object field as value in the query condition.
+ * 
+ * @author luca
+ * 
+ */
+public class OSQLField implements OSQLValue {
 	private String													name;
 	private List<OPair<Integer, String[]>>	operationsChain	= null;
 
-	public OQueryItemField(final OSQLQueryCompiled iQueryCompiled, final String iName) {
-		int pos = iName.indexOf(OQueryItemFieldOperator.CHAIN_SEPARATOR);
+	public OSQLField(final OSQLQueryCompiled iQueryCompiled, final String iName) {
+		int pos = iName.indexOf(OSQLFieldOperator.CHAIN_SEPARATOR);
 		if (pos > -1) {
 			// GET ALL SPECIAL OPERATIONS
 			name = iName.substring(0, pos);
@@ -38,9 +44,9 @@ public class OQueryItemField implements OQueryItemValue {
 			String part = iName.toUpperCase();
 
 			while (pos > -1) {
-				part = part.substring(pos + OQueryItemFieldOperator.CHAIN_SEPARATOR.length());
+				part = part.substring(pos + OSQLFieldOperator.CHAIN_SEPARATOR.length());
 
-				for (OQueryItemFieldOperator op : OQueryItemFieldOperator.OPERATORS)
+				for (OSQLFieldOperator op : OSQLFieldOperator.OPERATORS)
 					if (part.startsWith(op.keyword)) {
 						final String arguments[];
 
@@ -58,19 +64,19 @@ public class OQueryItemField implements OQueryItemValue {
 
 						operationsChain.add(new OPair<Integer, String[]>(op.id, arguments));
 
-						pos = part.indexOf(OQueryHelper.CLOSED_BRACE) + OQueryItemFieldOperator.CHAIN_SEPARATOR.length();
+						pos = part.indexOf(OQueryHelper.CLOSED_BRACE) + OSQLFieldOperator.CHAIN_SEPARATOR.length();
 						break;
 					}
 
 				if (operationsChain == null)
 					throw new OQueryParsingException(iQueryCompiled.text,
-							"Syntax error: field operator not recognized between the supported ones (" + OQueryItemFieldOperator.OPERATORS + ")",
+							"Syntax error: field operator not recognized between the supported ones (" + OSQLFieldOperator.OPERATORS + ")",
 							iQueryCompiled.currentPos + pos);
 
 				if (pos >= part.length())
 					return;
 
-				pos = part.indexOf(OQueryItemFieldOperator.CHAIN_SEPARATOR, pos);
+				pos = part.indexOf(OSQLFieldOperator.CHAIN_SEPARATOR, pos);
 			}
 		} else
 			name = iName;
@@ -86,34 +92,34 @@ public class OQueryItemField implements OQueryItemValue {
 				operator = op.key.intValue();
 
 				// NO ARGS OPERATORS
-				if (operator == OQueryItemFieldOperator.SIZE.id)
+				if (operator == OSQLFieldOperator.SIZE.id)
 					result = result != null ? ((Collection<?>) result).size() : 0;
 
-				else if (operator == OQueryItemFieldOperator.LENGTH.id)
+				else if (operator == OSQLFieldOperator.LENGTH.id)
 					result = result != null ? result.toString().length() : 0;
 
-				else if (operator == OQueryItemFieldOperator.TOUPPERCASE.id)
+				else if (operator == OSQLFieldOperator.TOUPPERCASE.id)
 					result = result != null ? result.toString().toUpperCase() : 0;
 
-				else if (operator == OQueryItemFieldOperator.TOLOWERCASE.id)
+				else if (operator == OSQLFieldOperator.TOLOWERCASE.id)
 					result = result != null ? result.toString().toLowerCase() : 0;
 
-				else if (operator == OQueryItemFieldOperator.TRIM.id)
+				else if (operator == OSQLFieldOperator.TRIM.id)
 					result = result != null ? result.toString().trim() : null;
 
 				// OTHER OPERATORS
-				if (operator == OQueryItemFieldOperator.CHARAT.id) {
+				if (operator == OSQLFieldOperator.CHARAT.id) {
 					int index = Integer.parseInt(op.value[0]);
 					result = result != null ? result.toString().substring(index, index + 1) : null;
 
-				} else if (operator == OQueryItemFieldOperator.SUBSTRING.id)
+				} else if (operator == OSQLFieldOperator.SUBSTRING.id)
 					result = result != null ? result.toString().substring(Integer.parseInt(op.value[0]), Integer.parseInt(op.value[1]))
 							: null;
-				else if (operator == OQueryItemFieldOperator.FORMAT.id)
+				else if (operator == OSQLFieldOperator.FORMAT.id)
 					result = result != null ? String.format(op.value[0], result) : null;
-				else if (operator == OQueryItemFieldOperator.LEFT.id)
+				else if (operator == OSQLFieldOperator.LEFT.id)
 					result = result != null ? result.toString().substring(0, Integer.parseInt(op.value[0])) : null;
-				else if (operator == OQueryItemFieldOperator.RIGHT.id)
+				else if (operator == OSQLFieldOperator.RIGHT.id)
 					result = result != null ? result.toString().substring(Integer.parseInt(op.value[0])) : null;
 			}
 		}

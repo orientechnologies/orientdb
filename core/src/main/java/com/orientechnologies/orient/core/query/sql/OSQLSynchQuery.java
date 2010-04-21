@@ -21,6 +21,14 @@ import java.util.List;
 import com.orientechnologies.orient.core.query.OAsynchQueryResultListener;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 
+/**
+ * SQL synchronous query. When executed the caller wait for the result.
+ * 
+ * @author luca
+ * 
+ * @param <T>
+ * @see OSQLAsynchQuery
+ */
 public class OSQLSynchQuery<T extends ORecordSchemaAware<?>> extends OSQLAsynchQuery<T> implements OAsynchQueryResultListener<T> {
 	protected final List<T>	result	= new ArrayList<T>();
 

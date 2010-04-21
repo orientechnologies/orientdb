@@ -20,15 +20,21 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordPositional;
 
-public class OQueryItemColumn implements OQueryItemValue {
+/**
+ * Represent a column (as positional order) as value in the query condition.
+ * 
+ * @author luca
+ * 
+ */
+public class OSQLItemColumn implements OSQLValue {
 	protected String	name;
 	protected int			number	= -1;
 
-	public OQueryItemColumn(int iNumber) {
+	public OSQLItemColumn(int iNumber) {
 		this.number = iNumber;
 	}
 
-	public OQueryItemColumn(OSQLQueryCompiled iQueryCompiled, String iName) {
+	public OSQLItemColumn(OSQLQueryCompiled iQueryCompiled, String iName) {
 		name = iName;
 
 		for (String className : iQueryCompiled.getClusters().keySet()) {
