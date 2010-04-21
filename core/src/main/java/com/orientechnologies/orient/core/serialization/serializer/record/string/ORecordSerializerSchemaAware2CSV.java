@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.serialization.serializer.record.string
 
 import java.text.DecimalFormatSymbols;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -101,7 +102,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
 			} else {
 				// NOT FOUND: TRY TO DETERMINE THE TYPE FROM ITS CONTENT
-				type = OType.STRING;
+				type = OType.EMBEDDED;
 				linkedClass = null;
 				linkedType = null;
 
@@ -124,7 +125,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 								type = OType.LINKLIST;
 
 						} else {
-							linkedType = OType.getTypeByClass(firstValue.getClass());
+							linkedType = OType.getTypeByAssignability(firstValue.getClass());
 
 							if (linkedType != OType.LINK) {
 								// EMBEDDED FOR SURE SINCE IT CONTAINS JAVA TYPES
@@ -158,6 +159,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 					// DETERMINE THE FIELD TYPE
 					type = OType.LINK;
 					linkedClass = getLinkInfo(database, fieldClassName);
+				} else if (fieldValue instanceof Date) {
+					type = OType.DATE;
 				}
 			}
 
