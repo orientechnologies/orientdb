@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -25,8 +26,10 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.query.sql.OSQLSynchQuery;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.test.domain.business.Address;
 import com.orientechnologies.orient.test.domain.business.City;
-import com.orientechnologies.orient.test.domain.business.Person;
+import com.orientechnologies.orient.test.domain.business.Country;
+import com.orientechnologies.orient.test.domain.whiz.Profile;
 
 @Test(groups = { "record-object" }, sequential = true)
 public class ObjectTreeTest {
@@ -43,16 +46,17 @@ public class ObjectTreeTest {
 	public void testPersonSaving() {
 		database.open("admin", "admin");
 
-		Person garibaldi = new Person("Giuseppe", "Garibaldi");
-		garibaldi.city = new City("Rome");
+		Country italy = new Country("Italy");
+
+		Profile garibaldi = new Profile("GGaribaldi", "Giuseppe", "Garibaldi", null);
+		garibaldi.setLocation(new Address("Residence", new City(italy, "Rome"), "Piazza Navona, 1"));
 		database.save(garibaldi);
 
-		Person bonaparte = new Person("Napoleone", "Bonaparte");
-		bonaparte.city = garibaldi.city;
-		bonaparte.setParent(garibaldi);
+		Profile bonaparte = new Profile("NBonaparte", "Napoleone", "Bonaparte", garibaldi);
+		bonaparte.setLocation(new Address("Residence", garibaldi.getLocation().getCity(), "Piazza di Spagna, 111"));
 		database.save(bonaparte);
 
-		Assert.assertEquals(database.countClusterElements("Person"), 2);
+		Assert.assertEquals(database.countClusterElements("Profile"), 2);
 	}
 
 	@Test(dependsOnMethods = "testPersonSaving")
@@ -62,39 +66,39 @@ public class ObjectTreeTest {
 
 	@Test(dependsOnMethods = "testCitySaving")
 	public void testCityEquality() {
-		Iterator<Person> iter = database.browseClass(Person.class);
+		Iterator<Profile> iter = database.browseClass(Profile.class);
 
-		Person emp1 = iter.next();
-		Person emp2 = iter.next();
+		Profile p1 = iter.next();
+		Profile p2 = iter.next();
 
-		Assert.assertNotSame(emp1, emp2);
-		Assert.assertEquals(emp1.city, emp2.city);
+		Assert.assertNotSame(p1, p2);
+		Assert.assertEquals(p1.getLocation().getCity(), p2.getLocation().getCity());
 	}
 
 	@Test(dependsOnMethods = "testCityEquality")
 	public void testSaveCircularLink() {
-		Person winston = new Person("Winston", "Churcill");
-		winston.city = new City("London");
+		Profile winston = new Profile("WChurcill", "Winston", "Churcill", null);
+		winston.setLocation(new Address("Residence", new City(new Country("England"), "London"), "unknown"));
 
-		Person nicholas = new Person("Nicholas ", "Churcill");
-		nicholas.city = winston.city;
+		Profile nicholas = new Profile("NChurcill", "Nicholas ", "Churcill", winston);
+		nicholas.setLocation(winston.getLocation());
 
-		nicholas.setParent(winston);
-		winston.setParent(nicholas);
+		nicholas.setInvitedBy(winston);
+		winston.setInvitedBy(nicholas);
 
 		database.save(nicholas);
 	}
 
 	@Test(dependsOnMethods = "testSaveCircularLink")
 	public void testQueryCircular() {
-		List<ODocument> result = database.getUnderlying().query(new OSQLSynchQuery<ODocument>("select * from Person")).execute();
+		List<ODocument> result = database.getUnderlying().query(new OSQLSynchQuery<ODocument>("select * from Profile")).execute();
 
 		ODocument parent;
 		for (ODocument r : result) {
 
 			System.out.println(r.field("name") + " " + r.field("surname"));
 
-			parent = r.field("parent");
+			parent = r.field("invitedBy");
 
 			if (parent != null)
 				System.out.println("- parent: " + parent.field("name") + " " + parent.field("surname"));
@@ -103,46 +107,39 @@ public class ObjectTreeTest {
 
 	@Test(dependsOnMethods = "testQueryCircular")
 	public void testSaveMultiCircular() {
-		startRecordNumber = database.countClusterElements("Person");
+		startRecordNumber = database.countClusterElements("Profile");
 
-		Person bObama = new Person("Barack", "Obama");
-		bObama.city = new City("Honolulu");
-		bObama.addChild(new Person("Malia Ann", "Obama"));
-		bObama.addChild(new Person("Natasha", "Obama"));
+		Profile bObama = new Profile("ThePresident", "Barack", "Obama", null);
+		bObama.setLocation(new Address("Residence", new City(new Country("Hawaii"), "Honolulu"), "unknown"));
+		bObama.addFollower(new Profile("PresidentSon1", "Malia Ann", "Obama", bObama));
+		bObama.addFollower(new Profile("PresidentSon2", "Natasha", "Obama", bObama));
 
 		database.save(bObama);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test(dependsOnMethods = "testSaveMultiCircular")
 	public void testQueryMultiCircular() {
-		Assert.assertEquals(database.countClusterElements("Person"), startRecordNumber + 3);
+		Assert.assertEquals(database.countClusterElements("Profile"), startRecordNumber + 3);
 
 		List<ODocument> result = database.getUnderlying().query(
-				new OSQLSynchQuery<ODocument>("select * from Person where name = 'Barack' and surname = 'Obama'")).execute();
+				new OSQLSynchQuery<ODocument>("select * from Profile where name = 'Barack' and surname = 'Obama'")).execute();
 
 		Assert.assertEquals(result.size(), 1);
 
-		ODocument parent;
-		List<ODocument> children;
-		for (ODocument r : result) {
+		List<ODocument> followers;
+		for (ODocument profile : result) {
 
-			System.out.println(r.field("name") + " " + r.field("surname"));
+			System.out.println(profile.field("name") + " " + profile.field("surname"));
 
-			parent = r.field("parent");
+			followers = profile.field("followers");
 
-			if (parent != null)
-				System.out.println("- parent: " + parent.field("name") + " " + parent.field("surname"));
+			if (followers != null) {
+				for (ODocument follower : followers) {
+					Assert.assertTrue(((Collection<ODocument>) follower.field("followings")).contains(profile));
 
-			children = r.field("children");
-
-			if (children != null) {
-				for (ODocument c : children) {
-					parent = (ODocument) c.field("parent");
-
-					Assert.assertEquals(r, parent);
-
-					System.out.println("- child: " + c.field("name") + " " + c.field("surname") + " (parent: " + parent.field("name") + " "
-							+ parent.field("surname") + ")");
+					System.out.println("- follower: " + follower.field("name") + " " + follower.field("surname") + " (parent: "
+							+ follower.field("name") + " " + follower.field("surname") + ")");
 				}
 			}
 		}

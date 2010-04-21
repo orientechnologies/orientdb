@@ -51,9 +51,8 @@ public class LocalCreateFlatSpeedTest extends OrientMonoThreadTest {
 
 	public void cycle() {
 		record.reset();
-		record.value(
-				"id:" + data.getCyclesDone() + ",name:'Gipsy',type:'Cat',race:'European',country:'Italy',price:"
-						+ (data.getCyclesDone() + 300) + ".00").save("Animal");
+		record.value("id:" + data.getCyclesDone() + ",name:'Luca',surname:'Garulli',salary:" + (data.getCyclesDone() + 3000) + ".00")
+				.save("flat");
 
 		if (data.getCyclesDone() == data.getCycles() - 1)
 			database.commit();

@@ -44,11 +44,11 @@ public class NativeQueryTest {
 
 		List<ODocument> result = database.query(
 
-		new ONativeSynchQuery<ODocument, OQueryContextNativeSchema<ODocument>>("Person", new OQueryContextNativeSchema<ODocument>()) {
+		new ONativeSynchQuery<ODocument, OQueryContextNativeSchema<ODocument>>("Account", new OQueryContextNativeSchema<ODocument>()) {
 
 			@Override
 			public boolean filter(OQueryContextNativeSchema<ODocument> iRecord) {
-				return iRecord.field("city").field("name").eq("Rome").and().field("name").like("G%").go();
+				return iRecord.field("location").field("city").field("name").eq("Rome").and().field("name").like("G%").go();
 			};
 
 		}).execute();

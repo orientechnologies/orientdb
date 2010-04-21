@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -22,12 +25,13 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-@Test(groups = { "crud", "record-vobject" }, sequential = true)
+@Test(groups = { "crud", "record-document" }, sequential = true)
 public class CRUDDocumentValidationTest {
 	protected static final int	TOT_RECORDS	= 1000;
 	protected long							startRecordNumber;
 	private ODatabaseDocumentTx	database;
 	private ODocument						record;
+	private ODocument						account;
 
 	@Parameters(value = "url")
 	public CRUDDocumentValidationTest(String iURL) {
@@ -37,42 +41,48 @@ public class CRUDDocumentValidationTest {
 	@Test
 	public void openDb() {
 		database.open("admin", "admin");
-		record = database.newInstance("Animal");
+		record = database.newInstance("Whiz");
+
+		account = database.browseClass("Profile").begin().next();
 	}
 
 	@Test(dependsOnMethods = "openDb", expectedExceptions = OValidationException.class)
 	public void validationMandatory() {
 		record.reset();
-		record.field("type", "ciao!");
-		record.save("Animal");
+		record.save();
 	}
 
 	@Test(dependsOnMethods = "validationMandatory", expectedExceptions = OValidationException.class)
 	public void validationMinString() {
 		record.reset();
+		record.field("account", account);
 		record.field("id", 23723);
-		record.field("name", "c");
-		record.save("Animal");
+		record.field("text", "");
+		record.save();
 	}
 
 	@Test(dependsOnMethods = "validationMinString", expectedExceptions = OValidationException.class, expectedExceptionsMessageRegExp = ".*more.*than.*")
 	public void validationMaxString() {
 		record.reset();
+		record.field("account", account);
 		record.field("id", 23723);
-		record.field("name", "clfdkkjsd hfsdkjhf fjdkghjkfdhgjdfh gfdgjfdkhgfd");
-		record.save("Animal");
+		record
+				.field(
+						"text",
+						"clfdkkjsd hfsdkjhf fjdkghjkfdhgjdfh gfdgjfdkhgfd skdjaksdjf skdjf sdkjfsd jfkldjfkjsdf kljdk fsdjf kldjgjdhjg khfdjgk hfjdg hjdfhgjkfhdgj kfhdjghrjg");
+		record.save();
 	}
 
-	@Test(dependsOnMethods = "validationMaxString", expectedExceptions = OValidationException.class, expectedExceptionsMessageRegExp = ".*minor.*")
-	public void validationMinFloat() {
+	@Test(dependsOnMethods = "validationMaxString", expectedExceptions = OValidationException.class, expectedExceptionsMessageRegExp = ".*before.*")
+	public void validationMinDate() throws ParseException {
 		record.reset();
-		record.field("id", 23723);
-		record.field("name", "Lucas");
-		record.field("price", -38923);
-		record.save("Animal");
+		record.field("account", account);
+		record.field("date", new SimpleDateFormat("dd/MM/yyyy").parse("01/01/1976"));
+		record.field("text", "test");
+		record.save();
 	}
 
-	@Test(dependsOnMethods = "validationMinFloat")
+	@Test(dependsOnMethods = "validationMinDate")
 	public void closeDb() {
 		database.close();
 	}

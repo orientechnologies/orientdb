@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
-import java.util.ArrayList;
+import java.util.Date;
 
 import org.testng.annotations.Test;
 
@@ -31,6 +31,7 @@ import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 public class LocalCreateDocumentSpeedTest extends OrientMonoThreadTest {
 	private ODatabaseDocument	database;
 	private ODocument					record;
+	private Date							date	= new Date();
 
 	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
 		LocalCreateDocumentSpeedTest test = new LocalCreateDocumentSpeedTest();
@@ -55,12 +56,12 @@ public class LocalCreateDocumentSpeedTest extends OrientMonoThreadTest {
 	public void cycle() {
 		record.reset();
 
-		record.setClassName("Person");
-		record.field("parent", null);
+		record.setClassName("Account");
+		record.field("id", data.getCyclesDone());
 		record.field("name", "Luca");
 		record.field("surname", "Garulli");
-		record.field("children", new ArrayList<Object>());
-		record.field("city", null);
+		record.field("birthDay", date);
+		record.field("salary", 3000f + data.getCyclesDone());
 
 		record.save();
 

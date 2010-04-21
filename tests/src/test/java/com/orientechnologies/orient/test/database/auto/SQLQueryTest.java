@@ -195,4 +195,32 @@ public class SQLQueryTest {
 
 		database.close();
 	}
+
+	@Test
+	public void queryAnyOperator() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from animal where any() = 'Cat'")).execute();
+
+		System.out.println("select from animal where any() = 'Cat'");
+
+		for (int i = 0; i < result.size(); ++i) {
+			record = result.get(i);
+
+			OrientTest.printRecord(i, record);
+
+			Assert.assertTrue(record.getClassName().equalsIgnoreCase("animal"));
+
+			boolean found = false;
+			for (Object fieldValue : record.fieldValues()) {
+				if (fieldValue != null && fieldValue.toString().equals("Cat")) {
+					found = true;
+					break;
+				}
+			}
+			Assert.assertTrue(found);
+		}
+
+		database.close();
+	}
 }

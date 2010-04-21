@@ -40,13 +40,13 @@ public class CRUDDocumentPhysicalTest {
 	public void cleanAll() {
 		database.open("admin", "admin");
 
-		startRecordNumber = database.countClusterElements("Animal");
+		startRecordNumber = database.countClusterElements("Account");
 
 		// DELETE ALL THE RECORD IN THE CLUSTER
-		for (ODocument rec : database.browseCluster("Animal"))
+		for (ODocument rec : database.browseCluster("Account"))
 			rec.delete();
 
-		Assert.assertEquals(database.countClusterElements("Animal"), 0);
+		Assert.assertEquals(database.countClusterElements("Account"), 0);
 
 		database.close();
 	}
@@ -55,22 +55,20 @@ public class CRUDDocumentPhysicalTest {
 	public void create() {
 		database.open("admin", "admin");
 
-		startRecordNumber = database.countClusterElements("Animal");
+		startRecordNumber = database.countClusterElements("Account");
 
-		record.setClassName("Animal");
+		record.setClassName("Account");
 
 		for (long i = startRecordNumber; i < startRecordNumber + TOT_RECORDS; ++i) {
 			record.reset();
 
 			record.field("id", i);
 			record.field("name", "Gipsy");
-			record.field("type", "Cat");
-			record.field("race", "European");
 			record.field("location", "Italy");
-			record.field("price", (i + 300));
+			record.field("salary", (i + 300));
 			record.field("extra", "This is an extra field not included in the schema");
 
-			record.save("Animal");
+			record.save("Account");
 		}
 
 		database.close();
@@ -80,7 +78,7 @@ public class CRUDDocumentPhysicalTest {
 	public void testCreate() {
 		database.open("admin", "admin");
 
-		Assert.assertEquals(database.countClusterElements("Animal") - startRecordNumber, TOT_RECORDS);
+		Assert.assertEquals(database.countClusterElements("Account") - startRecordNumber, TOT_RECORDS);
 
 		database.close();
 	}
@@ -91,15 +89,13 @@ public class CRUDDocumentPhysicalTest {
 
 		// BROWSE IN THE OPPOSITE ORDER
 		int i = 0;
-		ORecordIterator<ODocument> it = database.browseCluster("Animal");
+		ORecordIterator<ODocument> it = database.browseCluster("Account");
 		for (ODocument rec = it.last().previous(); rec != null; rec = it.previous()) {
 
-			Assert.assertTrue((Integer) rec.field("id") == i);
+			Assert.assertTrue(((Integer) rec.field("id")).intValue() == i);
 			Assert.assertEquals(rec.field("name"), "Gipsy");
-			Assert.assertEquals(rec.field("type"), "Cat");
-			Assert.assertEquals(rec.field("race"), "European");
 			Assert.assertEquals(rec.field("location"), "Italy");
-			Assert.assertTrue((Float) rec.field("price") == i + 300f);
+			Assert.assertEquals(Float.parseFloat((String) rec.field("salary")), i + 300f);
 			Assert.assertNotNull(rec.field("extra"));
 
 			i++;
@@ -117,7 +113,7 @@ public class CRUDDocumentPhysicalTest {
 		record.reset();
 
 		int i = 0;
-		for (ODocument rec : database.browseCluster("Animal")) {
+		for (ODocument rec : database.browseCluster("Account")) {
 
 			if (i % 2 == 0)
 				rec.field("location", "Spain");
@@ -137,14 +133,14 @@ public class CRUDDocumentPhysicalTest {
 		database.open("admin", "admin");
 
 		int i = 0;
-		for (ODocument rec : database.browseCluster("Animal")) {
+		for (ODocument rec : database.browseCluster("Account")) {
 
 			if (i % 2 == 0)
 				Assert.assertEquals(rec.field("location"), "Spain");
 			else
 				Assert.assertEquals(rec.field("location"), "Italy");
 
-			Assert.assertTrue((Float) rec.field("price") == i + 100f);
+			Assert.assertEquals(Float.parseFloat((String) rec.field("price")), i + 100f);
 
 			i++;
 		}

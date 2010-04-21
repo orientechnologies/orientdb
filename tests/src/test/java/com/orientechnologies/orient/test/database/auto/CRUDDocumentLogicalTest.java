@@ -45,10 +45,10 @@ public class CRUDDocumentLogicalTest {
 	public void create() {
 		database.open("admin", "admin");
 
-		startRecordNumber = database.countClass("AnimalType");
+		startRecordNumber = database.countClass("City");
 
 		record.reset();
-		record.setClassName("AnimalType");
+		record.setClassName("City");
 		record.field("name", "Cat");
 
 		Set<ODocument> races = new HashSet<ODocument>();
@@ -65,7 +65,7 @@ public class CRUDDocumentLogicalTest {
 	public void testCreate() {
 		database.open("admin", "admin");
 
-		Assert.assertEquals(database.countClass("AnimalType") - startRecordNumber, 1);
+		Assert.assertEquals(database.countClass("City") - startRecordNumber, 1);
 
 		database.close();
 	}
@@ -75,7 +75,7 @@ public class CRUDDocumentLogicalTest {
 		database.open("admin", "admin");
 
 		// LOAD THE LAST ENTRY JUST CREATED
-		record = database.browseClass("AnimalType").last().previous();
+		record = database.browseClass("City").last().previous();
 
 		Assert.assertEquals(record.field("name"), "Cat");
 		Assert.assertTrue(((List<ODocument>) record.field("races")).size() == 2);
@@ -89,7 +89,7 @@ public class CRUDDocumentLogicalTest {
 
 		record.reset();
 
-		record = database.browseClass("AnimalType").last().previous();
+		record = database.browseClass("City").last().previous();
 
 		List<ODocument> races = record.field("races");
 		races.add((ODocument) database.newInstance("AnimalRace").field("name", "Egyptian"));
@@ -106,7 +106,7 @@ public class CRUDDocumentLogicalTest {
 
 		record.reset();
 
-		record = database.browseClass("AnimalType").last().previous();
+		record = database.browseClass("City").last().previous();
 
 		Assert.assertEquals(record.field("name"), "Cat");
 		Assert.assertTrue(((List<ODocument>) record.field("races")).size() == 3);
@@ -118,12 +118,12 @@ public class CRUDDocumentLogicalTest {
 	public void delete() {
 		database.open("admin", "admin");
 
-		startRecordNumber = database.countClass("AnimalType");
+		startRecordNumber = database.countClass("City");
 
-		record = database.browseClass("AnimalType").last().previous();
+		record = database.browseClass("City").last().previous();
 		record.delete();
 
-		Assert.assertEquals(database.countClass("AnimalType"), startRecordNumber - 1);
+		Assert.assertEquals(database.countClass("City"), startRecordNumber - 1);
 
 		database.close();
 	}

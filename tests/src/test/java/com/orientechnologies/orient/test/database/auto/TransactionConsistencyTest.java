@@ -41,17 +41,17 @@ public class TransactionConsistencyTest {
 		ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
 		database.open("admin", "admin");
 
-		long tot = database.countClass("Animal");
+		long tot = database.countClass("Account");
 
-		// DELETE ALL THE ANIMAL OBJECTS
+		// DELETE ALL THE Account OBJECTS
 		int i = 0;
-		for (ODocument rec : database.browseClass("Animal")) {
+		for (ODocument rec : database.browseClass("Account")) {
 			rec.delete();
 			i++;
 		}
 
 		Assert.assertEquals(i, tot);
-		Assert.assertEquals(database.countClass("Animal"), 0);
+		Assert.assertEquals(database.countClass("Account"), 0);
 
 		database.close();
 	}
@@ -61,13 +61,13 @@ public class TransactionConsistencyTest {
 		ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
 		database.open("admin", "admin");
 
-		ODocument record1 = new ODocument(database, "Animal");
+		ODocument record1 = new ODocument(database, "Account");
 		record1.field("name", "Creation test").save();
 
-		ODocument record2 = new ODocument(database, "Animal");
+		ODocument record2 = new ODocument(database, "Account");
 		record2.field("name", "Update test").save();
 
-		ODocument record3 = new ODocument(database, "Animal");
+		ODocument record3 = new ODocument(database, "Account");
 		record3.field("name", "Delete test").save();
 
 		database.close();
@@ -78,19 +78,19 @@ public class TransactionConsistencyTest {
 		ODatabaseDocumentTx db1 = new ODatabaseDocumentTx(url);
 		db1.open("admin", "admin");
 
-		// long tot = db1.countClass("Animal");
+		// long tot = db1.countClass("Account");
 
 		db1.begin();
 
-		ODocument record1 = db1.newInstance("Animal");
+		ODocument record1 = db1.newInstance("Account");
 		record1.field("location", "This is the first version").save();
 
-		ODocument record2 = db1.newInstance("Animal");
+		ODocument record2 = db1.newInstance("Account");
 		record2.field("location", "This is the first version").save();
 
 		db1.commit();
 
-		// Assert.assertEquals(db1.getClusterSize(db1.getMetadata().getSchema().getClass("Animal").getDefaultClusterId()), rec);
+		// Assert.assertEquals(db1.getClusterSize(db1.getMetadata().getSchema().getClass("Account").getDefaultClusterId()), rec);
 
 		db1.close();
 	}

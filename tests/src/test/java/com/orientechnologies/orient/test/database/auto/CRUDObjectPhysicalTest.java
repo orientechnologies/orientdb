@@ -15,21 +15,26 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.Date;
+
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.iterator.OObjectIteratorCluster;
-import com.orientechnologies.orient.test.domain.animal.Animal;
-import com.orientechnologies.orient.test.domain.animal.AnimalRace;
-import com.orientechnologies.orient.test.domain.animal.AnimalType;
+import com.orientechnologies.orient.test.domain.business.Account;
+import com.orientechnologies.orient.test.domain.business.Address;
+import com.orientechnologies.orient.test.domain.business.City;
+import com.orientechnologies.orient.test.domain.business.Country;
+import com.orientechnologies.orient.test.domain.whiz.Profile;
 
 @Test(groups = { "crud", "record-vobject" }, sequential = true)
 public class CRUDObjectPhysicalTest {
 	protected static final int	TOT_RECORDS	= 1000;
 	protected long							startRecordNumber;
 	private ODatabaseObjectTx		database;
+	private City								rome				= new City(new Country("Italy"), "Rome");
 
 	@Parameters(value = "url")
 	public CRUDObjectPhysicalTest(String iURL) {
@@ -38,39 +43,19 @@ public class CRUDObjectPhysicalTest {
 	}
 
 	@Test
-	public void cleanAll() {
-		database.open("admin", "admin");
-
-		startRecordNumber = database.countClusterElements("Animal");
-
-		// DELETE ALL THE RECORD IN THE CLUSTER
-		for (Object obj : database.browseCluster("Animal"))
-			database.delete(obj);
-
-		Assert.assertEquals(database.countClusterElements("Animal"), 0);
-
-		database.close();
-	}
-
-	@Test(dependsOnMethods = "cleanAll")
 	public void create() {
 		database.open("admin", "admin");
 
-		startRecordNumber = database.countClusterElements("Animal");
+		startRecordNumber = database.countClusterElements("Account");
 
-		Animal animal;
+		Account account;
 
 		for (long i = startRecordNumber; i < startRecordNumber + TOT_RECORDS; ++i) {
-			animal = database.newInstance(Animal.class);
-
-			animal.setId((int) i);
-			animal.setName("Gipsy");
-			animal.setType("Cat");
-			animal.setRace("European");
-			animal.setLocation("Italy");
-			animal.setPrice(i + 300);
-
-			database.save(animal);
+			account = new Account((int) i, "Bill", "Gates");
+			account.setBirthDate(new Date());
+			account.setSalary(i + 300f);
+			account.getAddresses().add(new Address("Residence", rome, "Piazza Navona, 1"));
+			database.save(account);
 		}
 
 		database.close();
@@ -80,7 +65,7 @@ public class CRUDObjectPhysicalTest {
 	public void testCreate() {
 		database.open("admin", "admin");
 
-		Assert.assertEquals(database.countClusterElements("Animal") - startRecordNumber, TOT_RECORDS);
+		Assert.assertEquals(database.countClusterElements("Account") - startRecordNumber, TOT_RECORDS);
 
 		database.close();
 	}
@@ -91,14 +76,15 @@ public class CRUDObjectPhysicalTest {
 
 		// BROWSE ALL THE OBJECTS
 		int i = 0;
-		for (Animal a : database.browseClass(Animal.class)) {
+		for (Account a : database.browseClass(Account.class)) {
 
 			Assert.assertTrue(a.getId() == i);
-			Assert.assertEquals(a.getName(), "Gipsy");
-			Assert.assertEquals(a.getType(), "Cat");
-			Assert.assertEquals(a.getRace(), "European");
-			Assert.assertEquals(a.getLocation(), "Italy");
-			Assert.assertTrue(a.getPrice() == i + 300f);
+			Assert.assertEquals(a.getName(), "Bill");
+			Assert.assertEquals(a.getSurname(), "Gates");
+			Assert.assertTrue(a.getSalary() == i + 300f);
+			Assert.assertEquals(a.getAddresses().size(), 1);
+			Assert.assertEquals(a.getAddresses().get(0).getCity().getName(), rome.getName());
+			Assert.assertEquals(a.getAddresses().get(0).getCity().getCountry().getName(), rome.getCountry().getName());
 
 			i++;
 		}
@@ -113,14 +99,14 @@ public class CRUDObjectPhysicalTest {
 		database.open("admin", "admin");
 
 		int i = 0;
-		Animal a;
-		for (Object o : database.browseCluster("Animal")) {
-			a = (Animal) o;
+		Account a;
+		for (Object o : database.browseCluster("Account")) {
+			a = (Account) o;
 
 			if (i % 2 == 0)
-				a.setLocation("Spain");
+				a.getAddresses().set(0, new Address("work", new City(new Country("Spain"), "Madrid"), "Plaza central"));
 
-			a.setPrice(i + 100);
+			a.setSalary(i + 100);
 
 			database.save(a);
 
@@ -135,16 +121,16 @@ public class CRUDObjectPhysicalTest {
 		database.open("admin", "admin");
 
 		int i = 0;
-		Animal a;
-		for (OObjectIteratorCluster<Animal> iterator = database.browseCluster("Animal"); iterator.hasNext();) {
+		Account a;
+		for (OObjectIteratorCluster<Account> iterator = database.browseCluster("Account"); iterator.hasNext();) {
 			a = iterator.next();
 
 			if (i % 2 == 0)
-				Assert.assertEquals(a.getLocation(), "Spain");
+				Assert.assertEquals(a.getAddresses().get(0).getCity().getCountry().getName(), "Spain");
 			else
-				Assert.assertEquals(a.getLocation(), "Italy");
+				Assert.assertEquals(a.getAddresses().get(0).getCity().getCountry().getName(), "Italy");
 
-			Assert.assertEquals(a.getPrice(), i + 100f);
+			Assert.assertEquals(a.getSalary(), i + 100f);
 
 			i++;
 		}
@@ -156,13 +142,13 @@ public class CRUDObjectPhysicalTest {
 	public void delete() {
 		database.open("admin", "admin");
 
-		startRecordNumber = database.countClusterElements("Animal");
+		startRecordNumber = database.countClusterElements("Account");
 
 		// DELETE ALL THE RECORD IN THE CLUSTER
-		for (Object obj : database.browseCluster("Animal"))
+		for (Object obj : database.browseCluster("Account"))
 			database.delete(obj);
 
-		Assert.assertEquals(database.countClusterElements("Animal"), 0);
+		Assert.assertEquals(database.countClusterElements("Account"), 0);
 
 		database.close();
 	}
@@ -171,18 +157,15 @@ public class CRUDObjectPhysicalTest {
 	public void createLinked() {
 		database.open("admin", "admin");
 
-		long animalTypes = database.countClass("AnimalType");
-		long animalRaces = database.countClass("AnimalRace");
+		long profiles = database.countClass("Profile");
 
-		AnimalType animalType = new AnimalType();
-		animalType.setName("Cat");
-		animalType.getRaces().add(new AnimalRace("European"));
-		animalType.getRaces().add(new AnimalRace("Siamese"));
+		Profile neo = new Profile("Neo");
+		neo.addFollowing(new Profile("Morpheus"));
+		neo.addFollowing(new Profile("Trinity"));
 
-		database.save(animalType);
+		database.save(neo);
 
-		Assert.assertEquals(database.countClass("AnimalType"), animalTypes + 1);
-		Assert.assertEquals(database.countClass("AnimalRace"), animalRaces);
+		Assert.assertEquals(database.countClass("Profile"), profiles + 3);
 
 		database.close();
 	}
@@ -191,10 +174,29 @@ public class CRUDObjectPhysicalTest {
 	public void queryLinked() {
 		database.open("admin", "admin");
 
-		for (AnimalType obj : database.browseClass(AnimalType.class)) {
-			Assert.assertEquals(obj.getRaces().size(), 2);
+		for (Profile obj : database.browseClass(Profile.class)) {
+			if (obj.getNick().equals("Neo"))
+				Assert.assertEquals(obj.getFollowings().size(), 2);
+			else if (obj.getNick().equals("Morpheus") || obj.getNick().equals("Trinity"))
+				Assert.assertEquals(obj.getFollowings().size(), 0);
 		}
 
 		database.close();
 	}
+
+	@Test(dependsOnMethods = "queryLinked")
+	public void cleanAll() {
+		database.open("admin", "admin");
+
+		startRecordNumber = database.countClusterElements("Account");
+
+		// DELETE ALL THE RECORD IN THE CLUSTER
+		for (Object obj : database.browseCluster("Account"))
+			database.delete(obj);
+
+		Assert.assertEquals(database.countClusterElements("Account"), 0);
+
+		database.close();
+	}
+
 }

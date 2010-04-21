@@ -17,12 +17,14 @@ package com.orientechnologies.orient.test.domain.business;
 
 public class City {
 	private String	name;
+	private Country	country;
 
 	public City() {
 	}
 
-	public City(String string) {
-		name = string;
+	public City(Country iCountry, String iName) {
+		country = iCountry;
+		name = iName;
 	}
 
 	public String getName() {
@@ -31,5 +33,13 @@ public class City {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public Country getCountry() {
+		return country;
+	}
+
+	public Object setCountry(Country iCountry) {
+		return country = iCountry;
 	}
 }

@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
+import java.util.Date;
+
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.profiler.OProfiler;
@@ -22,12 +24,13 @@ import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
-import com.orientechnologies.orient.test.domain.business.Person;
+import com.orientechnologies.orient.test.domain.business.Account;
 
 @Test(enabled = false)
 public class LocalCreateObjectSpeedTest extends OrientMonoThreadTest {
 	private ODatabaseObjectTx	database;
-	private Person						p;
+	private Account						account;
+	private Date							date	= new Date();
 
 	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
 		LocalCreateObjectSpeedTest test = new LocalCreateObjectSpeedTest();
@@ -49,18 +52,16 @@ public class LocalCreateObjectSpeedTest extends OrientMonoThreadTest {
 	}
 
 	public void cycle() {
-		p = new Person();
+		account = new Account((int) data.getCyclesDone(), "Luca", "Garulli");
+		account.setBirthDate(date);
+		account.setSalary(3000f + data.getCyclesDone());
 
-		p.name = "Luca";
-		p.surname = "Garulli";
-		p.city = null;
-
-		database.save(p);
+		database.save(account);
 
 		if (data.getCyclesDone() == data.getCycles() - 1)
 			database.commit();
 
-		p = null;
+		account = null;
 	}
 
 	@Override
