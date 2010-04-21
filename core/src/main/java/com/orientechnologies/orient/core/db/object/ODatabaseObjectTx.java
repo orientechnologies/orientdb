@@ -202,9 +202,9 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 		if (pojo == null) {
 			try {
 				pojo = entityManager.createPojo(record.getClassName());
-				OObjectSerializerHelper.fromStream(record, pojo, getEntityManager(), this);
-
 				registerPojo(pojo, record);
+
+				OObjectSerializerHelper.fromStream(record, pojo, getEntityManager(), this);
 
 			} catch (Exception e) {
 				throw new OConfigurationException("Can't retrieve pojo from the record " + record, e);
