@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.record;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -71,10 +72,13 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 				if (field.getKey() != null)
 					result += field.getKey().hashCode();
 
-				// AVOID TO GET THE HASH-CODE OF THE VALUE TO AVOID STACK OVERFLOW FOR CIRCULAR REFS
 				if (field.getValue() != null)
 					if (field.getValue() instanceof ORecord<?>)
+						// AVOID TO GET THE HASH-CODE OF THE VALUE TO AVOID STACK OVERFLOW FOR CIRCULAR REFS
 						result += 31 * ((ORecord<T>) field.getValue()).getIdentity().hashCode();
+					else if (field.getValue() instanceof Collection<?>)
+						// AVOID TO GET THE HASH-CODE OF THE VALUE TO AVOID STACK OVERFLOW FOR CIRCULAR REFS
+						result += ((Collection<?>) field.getValue()).size() * 31;
 					else
 						result += field.getValue().hashCode();
 			}
