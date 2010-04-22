@@ -15,7 +15,11 @@
  */
 package com.orientechnologies.orient.core.query.operator;
 
+import java.util.Collection;
+
 import com.orientechnologies.orient.core.query.sql.OSQLCondition;
+import com.orientechnologies.orient.core.query.sql.OSQLValueMultiAbstract;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * TRAVERSE operator.
@@ -29,9 +33,42 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 		super("TRAVERSE", 5, false);
 	}
 
-	@SuppressWarnings("unchecked")
 	protected boolean evaluateExpression(OSQLCondition iCondition, final Object iLeft, final Object iRight) {
+		final OSQLCondition condition;
+		final Object target;
 
+		if (iCondition.getLeft() instanceof OSQLCondition) {
+			condition = (OSQLCondition) iCondition.getLeft();
+			target = iRight;
+		} else {
+			condition = (OSQLCondition) iCondition.getRight();
+			target = iRight;
+		}
+
+		return traverse(condition, target);
+	}
+
+	@SuppressWarnings("unchecked")
+	private boolean traverse(final OSQLCondition condition, final Object target) {
+		if (target instanceof ODocument) {
+			if ((Boolean) condition.evaluate((ODocument) target) == Boolean.TRUE)
+				return true;
+
+		} else if (target instanceof OSQLValueMultiAbstract) {
+
+			OSQLValueMultiAbstract multi = (OSQLValueMultiAbstract) target;
+			for (Object o : multi.values) {
+				if (traverse(condition, o) == Boolean.TRUE)
+					return true;
+			}
+		} else if (target instanceof Collection<?>) {
+
+			Collection<ODocument> collection = (Collection<ODocument>) target;
+			for (ODocument o : collection) {
+				if (traverse(condition, o) == Boolean.TRUE)
+					return true;
+			}
+		}
 		return false;
 	}
 }
