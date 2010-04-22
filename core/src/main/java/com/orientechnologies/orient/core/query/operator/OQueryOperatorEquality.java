@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.query.operator;
 
-import com.orientechnologies.orient.core.query.sql.OSQLAllValues;
+import com.orientechnologies.orient.core.query.sql.OSQLValueAll;
 import com.orientechnologies.orient.core.query.sql.OSQLCondition;
 import com.orientechnologies.orient.core.query.sql.OSQLValueAny;
 
@@ -34,9 +34,9 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
 	protected abstract boolean evaluateExpression(final OSQLCondition iCondition, final Object iLeft, final Object iRight);
 
 	public boolean evaluate(final OSQLCondition iCondition, final Object iLeft, final Object iRight) {
-		if (iLeft instanceof OSQLAllValues) {
+		if (iLeft instanceof OSQLValueAll) {
 			// ALL VALUES
-			final OSQLAllValues allValues = (OSQLAllValues) iLeft;
+			final OSQLValueAll allValues = (OSQLValueAll) iLeft;
 			if (allValues.values.length == 0)
 				return false;
 
@@ -44,9 +44,9 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
 				if (v == null || !evaluateExpression(iCondition, v, iRight))
 					return false;
 			return true;
-		} else if (iRight instanceof OSQLAllValues) {
+		} else if (iRight instanceof OSQLValueAll) {
 			// ALL VALUES
-			final OSQLAllValues allValues = (OSQLAllValues) iRight;
+			final OSQLValueAll allValues = (OSQLValueAll) iRight;
 			if (allValues.values.length == 0)
 				return false;
 

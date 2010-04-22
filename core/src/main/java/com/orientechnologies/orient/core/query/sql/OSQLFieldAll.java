@@ -25,27 +25,26 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
  * 
  */
 public class OSQLFieldAll implements OSQLValue {
-	private String[]	names;
+	private String[]						names;
+	public static final String	NAME	= "ALL";
 
 	public OSQLFieldAll(final OSQLQueryCompiled iQueryCompiled, final String[] iNames) {
 		names = iNames;
 	}
 
 	public Object getValue(final ORecordInternal<?> iRecord) {
-		if (names == null || names.length == 0)
-			return null;
-
 		if (names.length == 1)
 			// NO MATTER OF TYPE: RETURN THE SINGLE FIELD VALUE TO SIMPLIFY
 			return ((ORecordSchemaAware<?>) iRecord).field(names[0]);
 
-		return new OSQLAllValues(((ORecordSchemaAware<?>) iRecord).fieldValues());
+		return new OSQLValueAll(((ORecordSchemaAware<?>) iRecord).fieldValues());
 	}
 
 	@Override
 	public String toString() {
 		StringBuilder buffer = new StringBuilder();
-		buffer.append("ALL(");
+		buffer.append(NAME);
+		buffer.append("(");
 		if (names != null) {
 			int i = 0;
 			for (String n : names) {

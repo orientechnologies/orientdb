@@ -44,6 +44,7 @@ public class OSQLQueryCompiled {
 	protected Map<String, String>	classes					= new HashMap<String, String>();
 	protected OSQLCondition				rootCondition;
 	protected List<String>				recordTransformed;
+	private int										braces;
 
 	protected static final String	KEYWORD_SELECT	= "SELECT";
 	protected static final String	KEYWORD_FROM		= "FROM";
@@ -165,6 +166,8 @@ public class OSQLQueryCompiled {
 			// END OF TEXT
 			return null;
 
+		braces = 0;
+
 		// CREATE THE CONDITION OBJECT
 		return new OSQLCondition(extractConditionItem(), extractConditionOperator(), extractConditionItem());
 	}
@@ -189,12 +192,18 @@ public class OSQLQueryCompiled {
 			return null;
 
 		if (words[0].startsWith(OQueryHelper.OPEN_BRACE)) {
+			braces++;
+
 			// SUB-CONDITION
 			currentPos = currentPos - words[0].length() + 1;
 
 			OSQLCondition subCondition = new OSQLCondition(extractConditionItem(), extractConditionOperator(), extractConditionItem());
 
+			jumpWhiteSpaces();
+
 			currentPos++;
+
+			braces--;
 
 			return subCondition;
 		} else if (words[0].startsWith(OQueryHelper.OPEN_COLLECTION)) {
@@ -218,10 +227,22 @@ public class OSQLQueryCompiled {
 
 			return coll;
 		} else if (words[0].startsWith(KEYWORD_COLUMN)) {
+
 			String[] parameters = OQueryHelper.getParameters(words[0]);
 			if (parameters.length != 1)
 				throw new OQueryParsingException("Missed column number", text, currentPos);
 			result = new OSQLItemColumn(Integer.parseInt(parameters[0]));
+
+		} else if (words[0].startsWith(OSQLFieldAll.NAME + "(")) {
+
+			String[] parameters = OQueryHelper.getParameters(words[0]);
+			result = new OSQLFieldAll(this, parameters);
+
+		} else if (words[0].startsWith(OSQLFieldAny.NAME + "(")) {
+
+			String[] parameters = OQueryHelper.getParameters(words[0]);
+			result = new OSQLFieldAny(this, parameters);
+
 		} else
 			result = getValue(words);
 
@@ -234,7 +255,7 @@ public class OSQLQueryCompiled {
 		else if (Character.isDigit(words[0].charAt(0)) || words[0].charAt(0) == '+' || words[0].charAt(0) == '-') {
 			if (words[0].contains("."))
 				return new Float(words[0]);
-			else if (Character.isDigit(words[0].charAt(0)))
+			else
 				return new Integer(words[0]);
 		}
 
@@ -304,7 +325,8 @@ public class OSQLQueryCompiled {
 				}
 			} else if (c == ' ' && openBraces == 0) {
 				break;
-			} else if (!Character.isLetter(c) && !Character.isDigit(c) && c != '.' && openBraces == 0 && openBraket == 0) {
+			} else if (!Character.isLetter(c) && !Character.isDigit(c) && c != '.' && c != '-' && c != '+' && openBraces == 0
+					&& openBraket == 0) {
 				if (iAdvanceWhenNotFound)
 					currentPos++;
 				break;

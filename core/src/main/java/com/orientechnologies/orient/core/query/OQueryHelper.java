@@ -61,7 +61,17 @@ public class OQueryHelper {
 		if (closePos == -1)
 			return EMPTY_PARAMETERS;
 
-		return iText.substring(openPos + 1, closePos).split(PARAMETER_SEPARATOR);
+		if (closePos - openPos == 1)
+			// EMPTY STRING: TREATS AS EMPTY
+			return EMPTY_PARAMETERS;
+
+		String[] pars = iText.substring(openPos + 1, closePos).split(PARAMETER_SEPARATOR);
+
+		// REMOVE TAIL AND END SPACES
+		for (int i = 0; i < pars.length; ++i)
+			pars[i] = pars[i].trim();
+
+		return pars;
 	}
 
 	public static Object getCollection(final String iText) {

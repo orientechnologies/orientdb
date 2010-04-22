@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.query.operator;
 
 import java.util.Collection;
 
+import com.orientechnologies.orient.core.exception.OQueryExecutionException;
 import com.orientechnologies.orient.core.query.sql.OSQLCondition;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 
@@ -34,17 +35,26 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
 
 	@SuppressWarnings("unchecked")
 	protected boolean evaluateExpression(final OSQLCondition iCondition, final Object iLeft, final Object iRight) {
+		OSQLCondition condition;
+		
+		try {
+			condition = (OSQLCondition) (iCondition.getLeft() instanceof OSQLCondition ? iCondition.getLeft() : iCondition.getRight());
+		} catch (Exception e) {
+			throw new OQueryExecutionException("Operator contains needs a condition to apply", e);
+		}
+
 		if (iLeft instanceof Collection<?>) {
+
 			Collection<ORecordSchemaAware<?>> collection = (Collection<ORecordSchemaAware<?>>) iLeft;
 			for (ORecordSchemaAware<?> o : collection) {
-				if ((Boolean) ((OSQLCondition) iCondition.getRight()).evaluate(o) == Boolean.TRUE)
+				if ((Boolean) condition.evaluate(o) == Boolean.TRUE)
 					return true;
 			}
 		} else if (iRight instanceof Collection<?>) {
 
 			Collection<ORecordSchemaAware<?>> collection = (Collection<ORecordSchemaAware<?>>) iRight;
 			for (ORecordSchemaAware<?> o : collection) {
-				if ((Boolean) ((OSQLCondition) iCondition.getLeft()).evaluate(o) == Boolean.TRUE)
+				if ((Boolean) condition.evaluate(o) == Boolean.TRUE)
 					return true;
 			}
 		}
