@@ -200,26 +200,41 @@ public class SQLQueryTest {
 	public void queryAnyOperator() {
 		database.open("admin", "admin");
 
-		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from animal where any() = 'Cat'")).execute();
+		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from Profile where any() like 'N%'")).execute();
 
-		System.out.println("select from animal where any() = 'Cat'");
+		System.out.println("select from Profile where any() like 'N%'");
+
+		Assert.assertTrue(result.size() > 0);
 
 		for (int i = 0; i < result.size(); ++i) {
 			record = result.get(i);
 
 			OrientTest.printRecord(i, record);
 
-			Assert.assertTrue(record.getClassName().equalsIgnoreCase("animal"));
+			Assert.assertTrue(record.getClassName().equalsIgnoreCase("Profile"));
 
 			boolean found = false;
 			for (Object fieldValue : record.fieldValues()) {
-				if (fieldValue != null && fieldValue.toString().equals("Cat")) {
+				if (fieldValue != null && fieldValue.toString().startsWith("N")) {
 					found = true;
 					break;
 				}
 			}
 			Assert.assertTrue(found);
 		}
+
+		database.close();
+	}
+
+	@Test
+	public void queryAllOperator() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from Account where all() is null")).execute();
+
+		System.out.println("select from Account where all() is null");
+
+		Assert.assertTrue(result.size() == 0);
 
 		database.close();
 	}
