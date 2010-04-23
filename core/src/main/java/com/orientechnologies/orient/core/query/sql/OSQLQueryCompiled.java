@@ -177,8 +177,16 @@ public class OSQLQueryCompiled {
 		word = nextWord(true);
 
 		for (OQueryOperator op : OSQLQuery.getOperators()) {
-			if (word.equals(op.keyword)) {
-				return op;
+			if (word.startsWith(op.keyword)) {
+				String[] params = null;
+
+				// CHECK FOR PARAMETERS
+				if (word.endsWith("(")) {
+					params = OQueryHelper.getParameters(text, currentPos - 1);
+					currentPos = text.indexOf(")", currentPos) + 1;
+				}
+
+				return op.configure(params);
 			}
 		}
 

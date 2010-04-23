@@ -52,9 +52,9 @@ public abstract class OSQLQuery<T extends ORecordSchemaAware<?>> extends OQueryA
 	protected String									text;
 
 	protected static OQueryOperator[]	OPERATORS	= { new OQueryOperatorAnd(), new OQueryOperatorOr(), new OQueryOperatorNot(),
-			new OQueryOperatorEquals(), new OQueryOperatorMinor(), new OQueryOperatorMajorEquals(), new OQueryOperatorMajor(),
-			new OQueryOperatorMinorEquals(), new OQueryOperatorLike(), new OQueryOperatorIs(), new OQueryOperatorIn(),
-			new OQueryOperatorContains(), new OQueryOperatorContainsAll(), new OQueryOperatorTraverse() };
+			new OQueryOperatorEquals(), new OQueryOperatorMinorEquals(), new OQueryOperatorMinor(), new OQueryOperatorMajorEquals(),
+			new OQueryOperatorContainsAll(), new OQueryOperatorMajor(), new OQueryOperatorLike(), new OQueryOperatorIs(),
+			new OQueryOperatorIn(), new OQueryOperatorContains(), new OQueryOperatorTraverse() };
 
 	public OSQLQuery(String iText) {
 		text = iText;

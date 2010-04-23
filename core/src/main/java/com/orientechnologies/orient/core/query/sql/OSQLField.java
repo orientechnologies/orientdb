@@ -53,11 +53,12 @@ public class OSQLField implements OSQLValue {
 					if (partUpperCase.startsWith(op.keyword)) {
 						final String arguments[];
 
-						if (op.arguments > 0) {
+						if (op.minArguments > 0) {
 							arguments = OQueryHelper.getParameters(part);
-							if (arguments.length != op.arguments)
+							if (arguments.length < op.minArguments || arguments.length > op.maxArguments)
 								throw new OQueryParsingException(iQueryCompiled.text, "Syntax error: field operator '" + op.keyword + "' needs "
-										+ op.arguments + " arguments while has been received " + arguments.length, iQueryCompiled.currentPos + pos);
+										+ (op.minArguments == op.maxArguments ? op.minArguments : op.minArguments + "-" + op.maxArguments)
+										+ " argument(s) while has been received " + arguments.length, iQueryCompiled.currentPos + pos);
 						} else
 							arguments = null;
 
@@ -119,11 +120,12 @@ public class OSQLField implements OSQLValue {
 					result = result != null ? result.toString().substring(index, index + 1) : null;
 				} else if (operator == OSQLFieldOperator.INDEXOF.id && op.value[0].length() > 2) {
 					String toFind = op.value[0].substring(1, op.value[0].length() - 1);
-					result = result != null ? result.toString().indexOf(toFind) : null;
-				} else if (operator == OSQLFieldOperator.SUBSTRING.id)
-					result = result != null ? result.toString().substring(Integer.parseInt(op.value[0]), Integer.parseInt(op.value[1]))
-							: null;
-				else if (operator == OSQLFieldOperator.FORMAT.id)
+					int startIndex = op.value.length > 1 ? Integer.parseInt(op.value[1]) : 0;
+					result = result != null ? result.toString().indexOf(toFind, startIndex) : null;
+				} else if (operator == OSQLFieldOperator.SUBSTRING.id) {
+					int endIndex = op.value.length > 1 ? Integer.parseInt(op.value[1]) : op.value[0].length();
+					result = result != null ? result.toString().substring(Integer.parseInt(op.value[0]), endIndex) : null;
+				} else if (operator == OSQLFieldOperator.FORMAT.id)
 					result = result != null ? String.format(op.value[0], result) : null;
 				else if (operator == OSQLFieldOperator.LEFT.id)
 					result = result != null ? result.toString().substring(0, Integer.parseInt(op.value[0])) : null;

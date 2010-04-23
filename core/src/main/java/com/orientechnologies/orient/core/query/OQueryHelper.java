@@ -53,7 +53,11 @@ public class OQueryHelper {
 	}
 
 	public static String[] getParameters(final String iText) {
-		int openPos = iText.indexOf(OPEN_BRACE);
+		return getParameters(iText, 0);
+	}
+
+	public static String[] getParameters(final String iText, final int iBeginPosition) {
+		int openPos = iText.indexOf(OPEN_BRACE, iBeginPosition);
 		if (openPos == -1)
 			return EMPTY_PARAMETERS;
 

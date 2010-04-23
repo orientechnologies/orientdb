@@ -24,9 +24,6 @@ import com.orientechnologies.orient.core.query.sql.OSQLCondition;
  * 
  */
 public abstract class OQueryOperator {
-	// protected static final OQueryItemOperator[] OPERATORS = { AND, OR, NOT, EQUALS, MINOR, MAJOR_EQUALS, MAJOR, MINOR_EQUALS, LIKE,
-	// IS, IN, CONTAINS, CONTAINSALL, TRAVERSE };
-
 	public String		keyword;
 	public int			precedence;
 	public boolean	logical;
@@ -42,5 +39,15 @@ public abstract class OQueryOperator {
 	@Override
 	public String toString() {
 		return keyword;
+	}
+
+	/**
+	 * Default State-less implementation: return itself
+	 * 
+	 * @param params
+	 * @return
+	 */
+	public OQueryOperator configure(String[] params) {
+		return this;
 	}
 }

@@ -28,12 +28,20 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
+	private int	startDeepLevel	= 0;	// FIRST
+	private int	endDeepLevel		= -1; // INFINITE
 
 	public OQueryOperatorTraverse() {
 		super("TRAVERSE", 5, false);
 	}
 
-	protected boolean evaluateExpression(OSQLCondition iCondition, final Object iLeft, final Object iRight) {
+	public OQueryOperatorTraverse(final int startDeepLevel, final int endDeepLevel) {
+		this();
+		this.startDeepLevel = startDeepLevel;
+		this.endDeepLevel = endDeepLevel;
+	}
+
+	protected boolean evaluateExpression(final OSQLCondition iCondition, final Object iLeft, final Object iRight) {
 		final OSQLCondition condition;
 		final Object target;
 
@@ -45,30 +53,54 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 			target = iRight;
 		}
 
-		return traverse(condition, target);
+		return traverse(condition, target, 0);
 	}
 
 	@SuppressWarnings("unchecked")
-	private boolean traverse(final OSQLCondition condition, final Object target) {
+	private boolean traverse(final OSQLCondition condition, final Object target, final int iLevel) {
 		if (target instanceof ODocument) {
-			if ((Boolean) condition.evaluate((ODocument) target) == Boolean.TRUE)
+			if (iLevel >= startDeepLevel && (Boolean) condition.evaluate((ODocument) target) == Boolean.TRUE)
 				return true;
 
-		} else if (target instanceof OSQLValueMultiAbstract) {
+		} else {
+			if (iLevel >= endDeepLevel)
+				return false;
 
-			OSQLValueMultiAbstract multi = (OSQLValueMultiAbstract) target;
-			for (Object o : multi.values) {
-				if (traverse(condition, o) == Boolean.TRUE)
-					return true;
-			}
-		} else if (target instanceof Collection<?>) {
+			if (target instanceof OSQLValueMultiAbstract) {
 
-			Collection<ODocument> collection = (Collection<ODocument>) target;
-			for (ODocument o : collection) {
-				if (traverse(condition, o) == Boolean.TRUE)
-					return true;
+				OSQLValueMultiAbstract multi = (OSQLValueMultiAbstract) target;
+				for (Object o : multi.values) {
+					if (traverse(condition, o, iLevel + 1) == Boolean.TRUE)
+						return true;
+				}
+			} else if (target instanceof Collection<?>) {
+
+				Collection<ODocument> collection = (Collection<ODocument>) target;
+				for (ODocument o : collection) {
+					if (traverse(condition, o, iLevel + 1) == Boolean.TRUE)
+						return true;
+				}
 			}
 		}
 		return false;
+	}
+
+	@Override
+	public OQueryOperator configure(String[] params) {
+		if (params == null)
+			return this;
+
+		final int start = params.length > 0 ? Integer.parseInt(params[0]) : startDeepLevel;
+		final int end = params.length > 1 ? Integer.parseInt(params[1]) : endDeepLevel;
+
+		return new OQueryOperatorTraverse(start, end);
+	}
+
+	public int getStartDeepLevel() {
+		return startDeepLevel;
+	}
+
+	public int getEndDeepLevel() {
+		return endDeepLevel;
 	}
 }
