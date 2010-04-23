@@ -26,6 +26,8 @@ import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.exception.OQueryExecutionException;
+import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -351,6 +353,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			shutdown();
 		} catch (SocketException e) {
 			shutdown();
+		} catch (OQueryParsingException e) {
+			sendError(e);
+		} catch (OQueryExecutionException e) {
+			sendError(e);
 		} catch (Throwable t) {
 			OLogManager.instance().error(this, "Error on executing request", t);
 			sendError(t);
