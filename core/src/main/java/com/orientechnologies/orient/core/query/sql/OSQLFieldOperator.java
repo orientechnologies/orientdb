@@ -23,16 +23,17 @@ package com.orientechnologies.orient.core.query.sql;
  */
 public enum OSQLFieldOperator {
 	SIZE(0, "SIZE"), LENGTH(1, "LENGTH"), TOUPPERCASE(2, "TOUPPERCASE"), TOLOWERCASE(3, "TOLOWERCASE"), TRIM(4, "TRIM"), LEFT(5,
-			"LEFT", 1), RIGHT(6, "RIGHT", 1), SUBSTRING(7, "SUBSTRING", 2), CHARAT(8, "CHARAT", 1), FORMAT(9, "FORMAT", 1);
+			"LEFT", 1), RIGHT(6, "RIGHT", 1), SUBSTRING(7, "SUBSTRING", 2), CHARAT(8, "CHARAT", 1), INDEXOF(9, "INDEXOF", 1), FORMAT(10,
+			"FORMAT", 1);
 
 	protected static final OSQLFieldOperator[]	OPERATORS				= { SIZE, LENGTH, TOUPPERCASE, TOLOWERCASE, TRIM, LEFT, RIGHT,
-			SUBSTRING, CHARAT, FORMAT																		};
+			SUBSTRING, CHARAT, INDEXOF, FORMAT											};
 
-	public static final String												CHAIN_SEPARATOR	= ".";
+	public static final String									CHAIN_SEPARATOR	= ".";
 
-	public final int																	id;
-	public final String																keyword;
-	public final int																	arguments;
+	public final int														id;
+	public final String													keyword;
+	public final int														arguments;
 
 	OSQLFieldOperator(final int iId, final String iKeyword) {
 		this(iId, iKeyword, 0);

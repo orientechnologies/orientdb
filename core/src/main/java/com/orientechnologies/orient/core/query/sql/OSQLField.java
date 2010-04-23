@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.query.sql;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -24,6 +25,7 @@ import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.query.OQueryHelper;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.record.ORecord.STATUS;
 
 /**
  * Represent an object field as value in the query condition.
@@ -41,13 +43,14 @@ public class OSQLField implements OSQLValue {
 			// GET ALL SPECIAL OPERATIONS
 			name = iName.substring(0, pos);
 
-			String part = iName.toUpperCase();
+			String part = iName;
+			String partUpperCase = part.toUpperCase();
 
 			while (pos > -1) {
-				part = part.substring(pos + OSQLFieldOperator.CHAIN_SEPARATOR.length());
+				partUpperCase = partUpperCase.substring(pos + OSQLFieldOperator.CHAIN_SEPARATOR.length());
 
 				for (OSQLFieldOperator op : OSQLFieldOperator.OPERATORS)
-					if (part.startsWith(op.keyword)) {
+					if (partUpperCase.startsWith(op.keyword)) {
 						final String arguments[];
 
 						if (op.arguments > 0) {
@@ -64,25 +67,28 @@ public class OSQLField implements OSQLValue {
 
 						operationsChain.add(new OPair<Integer, String[]>(op.id, arguments));
 
-						pos = part.indexOf(OQueryHelper.CLOSED_BRACE) + OSQLFieldOperator.CHAIN_SEPARATOR.length();
+						pos = partUpperCase.indexOf(OQueryHelper.CLOSED_BRACE) + OSQLFieldOperator.CHAIN_SEPARATOR.length();
 						break;
 					}
 
 				if (operationsChain == null)
 					throw new OQueryParsingException(iQueryCompiled.text,
-							"Syntax error: field operator not recognized between the supported ones (" + OSQLFieldOperator.OPERATORS + ")",
-							iQueryCompiled.currentPos + pos);
+							"Syntax error: field operator not recognized between the supported ones: "
+									+ Arrays.toString(OSQLFieldOperator.OPERATORS), iQueryCompiled.currentPos + pos);
 
-				if (pos >= part.length())
+				if (pos >= partUpperCase.length())
 					return;
 
-				pos = part.indexOf(OSQLFieldOperator.CHAIN_SEPARATOR, pos);
+				pos = partUpperCase.indexOf(OSQLFieldOperator.CHAIN_SEPARATOR, pos);
 			}
 		} else
 			name = iName;
 	}
 
 	public Object getValue(final ORecordInternal<?> iRecord) {
+		if (iRecord.getStatus() == STATUS.NOT_LOADED)
+			iRecord.load();
+
 		Object result = ((ORecordSchemaAware<?>) iRecord).field(name);
 
 		if (result != null && operationsChain != null) {
@@ -111,7 +117,9 @@ public class OSQLField implements OSQLValue {
 				else if (operator == OSQLFieldOperator.CHARAT.id) {
 					int index = Integer.parseInt(op.value[0]);
 					result = result != null ? result.toString().substring(index, index + 1) : null;
-
+				} else if (operator == OSQLFieldOperator.INDEXOF.id && op.value[0].length() > 2) {
+					String toFind = op.value[0].substring(1, op.value[0].length() - 1);
+					result = result != null ? result.toString().indexOf(toFind) : null;
 				} else if (operator == OSQLFieldOperator.SUBSTRING.id)
 					result = result != null ? result.toString().substring(Integer.parseInt(op.value[0]), Integer.parseInt(op.value[1]))
 							: null;
