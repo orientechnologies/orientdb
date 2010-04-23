@@ -158,7 +158,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	public Object[] fieldValues() {
 		checkForFields();
 
-		String[] result = new String[fields.keySet().size()];
+		Object[] result = new Object[fields.values().size()];
 		return fields.values().toArray(result);
 	}
 
