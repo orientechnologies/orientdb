@@ -31,6 +31,18 @@ This document enlist the last changes to the Orient Database project.
 
 
 -------------------------------------------------------------------------------
+VERSION 0.9.9 (beta) - beta (April, 21st 2010)
+-------------------------------------------------------------------------------
+- Refactored SQL query engine to support external custom operators
+- Improved POJO <-> ODocument conversion and performance
+- New operators in test: any(), all() and traverse()
+- Migrated demo database from petshop to demo with a Twitter-like app called
+  "Whiz", specially useful to test traverse of graphs
+- Implemented constraints on date (min/max)
+- Fixed bug on circular references problem
+- New Lazy-loaded list of pojo from ODocument converted only upon request
+
+-------------------------------------------------------------------------------
 VERSION 0.9.8 (beta) - beta (April, 18th 2010)
 -------------------------------------------------------------------------------
 - Fixed issue #20 (http://code.google.com/p/orient/issues/detail?id=20)
