@@ -26,6 +26,8 @@ import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.engine.local.OEngineLocal;
+import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OQueryExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -45,7 +47,9 @@ import com.orientechnologies.orient.core.serialization.serializer.record.OSerial
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -100,20 +104,29 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				user = channel.readString();
 				passwd = channel.readString();
 
-				connection.database = new ODatabaseDocumentTx("local:" + OServerMain.server().getStoragePath(dbName));
+				// SEARCH THE DB IN MEMORY FIRST
+				connection.database = OServerMain.server().getMemoryDatabases().get(dbName);
+
+				if (connection.database == null)
+					// SEARCH THE DB IN LOCAL FS
+					connection.database = new ODatabaseDocumentTx(OServerMain.server().getStoragePath(dbName));
+
 				if (connection.database.isClosed())
-					connection.database.open(user, passwd);
+					if (connection.database.getStorage() instanceof OStorageMemory)
+						connection.database.create();
+					else
+						connection.database.open(user, passwd);
 
 				underlyingDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
 
-				if (!loadUserFromSchema(user, passwd)) {
+				if (!(underlyingDatabase.getStorage() instanceof OStorageMemory) && !loadUserFromSchema(user, passwd)) {
 					sendError(new OSecurityAccessException("Access denied to database '" + connection.database.getName() + "' for user: "
 							+ user));
 				} else {
 					sendOk();
 					channel.writeString(connection.id);
 					channel.writeInt(connection.database.getClusterNames().size());
-					for (OCluster c : ((OStorageLocal) connection.database.getStorage()).getClusters()) {
+					for (OCluster c : ((OStorage) connection.database.getStorage()).getClusters()) {
 						channel.writeString(c.getName());
 						channel.writeInt(c.getId());
 					}
@@ -126,20 +139,38 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				String dbName = dbURL.substring(channel.readString().lastIndexOf(":") + 1);
 				String storageMode = channel.readString();
 
-				if (OServerMain.server().existsStoragePath(dbName))
-					throw new IllegalArgumentException("Database '" + dbName + "' already exists.");
+				final String path;
+				final String realPath;
 
-				final String path = "${ORIENT_HOME}/databases/" + dbName + "/" + dbName;
-				final String realPath = OSystemVariableResolver.resolveSystemVariables("${ORIENT_HOME}") + "/databases/" + dbName + "/"
-						+ dbName;
+				if (storageMode.equals(OEngineLocal.NAME)) {
+					if (OServerMain.server().existsStoragePath(dbName))
+						throw new IllegalArgumentException("Database '" + dbName + "' already exists.");
 
-				connection.database = new ODatabaseDocumentTx("local:" + realPath);
-				connection.database.create(storageMode);
-				connection.database.close();
+					path = storageMode + ":${ORIENT_HOME}/databases/" + dbName + "/" + dbName;
+					realPath = OSystemVariableResolver.resolveSystemVariables(path);
+				} else if (storageMode.equals(OEngineMemory.NAME)) {
+					if (OServerMain.server().getMemoryDatabases().containsKey(dbName))
+						throw new IllegalArgumentException("Database '" + dbName + "' already exists.");
 
-				OServerMain.server().getConfiguration().storages.add(new OServerStorageConfiguration(dbName, path));
+					path = storageMode + ":" + dbName;
+					realPath = path;
+				} else
+					throw new IllegalArgumentException("Can't create databse: storage mode '" + storageMode + "' is not supported.");
 
-				OServerMain.server().saveConfiguration();
+				connection.database = new ODatabaseDocumentTx(realPath);
+				connection.database.create();
+
+				if (storageMode.equals(OEngineLocal.NAME)) {
+					connection.database.close();
+
+					// SAVE THE DB IN DISK CONFIGURATION
+					OServerMain.server().getConfiguration().storages.add(new OServerStorageConfiguration(dbName, path));
+					OServerMain.server().saveConfiguration();
+
+				} else if (storageMode.equals(OEngineMemory.NAME)) {
+					// SAVE THE DB IN MEMORY
+					OServerMain.server().getMemoryDatabases().put(dbName, connection.database);
+				}
 
 				underlyingDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
 

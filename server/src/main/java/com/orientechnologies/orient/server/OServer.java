@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.server;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
@@ -31,8 +32,10 @@ import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.server.config.OConfigurationLoaderXml;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
@@ -57,6 +60,7 @@ public class OServer {
 	protected List<Object>																		handlers							= new ArrayList<Object>();
 	protected Map<String, Class<? extends ONetworkProtocol>>	protocols							= new HashMap<String, Class<? extends ONetworkProtocol>>();
 	protected List<OServerNetworkListener>										listeners							= new ArrayList<OServerNetworkListener>();
+	protected Map<String, ODatabaseDocumentTx>								memoryDatabases				= new HashMap<String, ODatabaseDocumentTx>();
 
 	protected static ThreadGroup															threadGroup;
 
@@ -120,11 +124,19 @@ public class OServer {
 		OLogManager.instance().config(this, "Orient Database Server shutdown complete");
 	}
 
-	public String getStoragePath(final String iURL) {
-		String dbPath = configuration.getStoragePath(iURL);
+	public String getStoragePath(final String iName) {
+		// SEARCH IN CONFIGURED PATHS
+		String dbPath = configuration.getStoragePath(iName);
 
-		if (dbPath == null)
-			throw new OConfigurationException("Database '" + iURL + "' is not configured on server");
+		if (dbPath == null) {
+			// SEARCH IN DEFAULT DATABASE DIRECTORY
+			dbPath = OSystemVariableResolver.resolveSystemVariables("${ORIENT_HOME}/databases/" + iName + "/");
+			File f = new File(dbPath + "default.odh");
+			if (!f.exists())
+				throw new OConfigurationException("Database '" + iName + "' is not configured on server");
+
+			dbPath = "local:" + dbPath + iName;
+		}
 
 		return dbPath;
 	}
@@ -160,5 +172,9 @@ public class OServer {
 
 	public static ThreadGroup getThreadGroup() {
 		return threadGroup;
+	}
+
+	public Map<String, ODatabaseDocumentTx> getMemoryDatabases() {
+		return memoryDatabases;
 	}
 }
