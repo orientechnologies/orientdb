@@ -29,6 +29,17 @@
 
 This document enlist the last changes to the Orient Database project.
 
+-------------------------------------------------------------------------------
+VERSION 0.9.10 (beta) - beta (April, 24th 2010)
+-------------------------------------------------------------------------------
+- Operator traverse now accepts optional parameters to limit deep of
+  recursivity: traverse(minDeep, maxDeep)
+- any() and all() can accept chain of field operators such. Example:
+  select from Profile where any() traverse(0,3) (any().indexOf( 'Navona' ) >-1)
+- Orient Server loads any db placed in $ORIENT_HOME/databases directory without
+  the need to configure them
+- Memory databases can be used and shared on any Orient Server instances."temp"
+  is the memory database pre-configured by default
 
 -------------------------------------------------------------------------------
 VERSION 0.9.9 (beta) - beta (April, 21st 2010)

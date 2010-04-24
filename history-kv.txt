@@ -29,6 +29,14 @@
 
 This document enlist the last changes to the Orient Key/Value Server project.
 
+-------------------------------------------------------------------------------
+VERSION 0.9.10 (beta) - beta (April, 24th 2010)
+-------------------------------------------------------------------------------
+- Improved welcome page: nicer and more useful than before
+- Orient KV Server loads any db placed in $ORIENT_HOME/databases directory
+  without the need to configure them
+- Memory databases can be used and shared on any Orient KV Server instances.
+  "temp" is the memory database pre-configured by default
 
 -------------------------------------------------------------------------------
 VERSION 0.9.8 (beta) - beta (April, 18th 2010)
