@@ -13,20 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.query.nativ;
+package com.orientechnologies.orient.core.query.sql;
 
-import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecordPositional;
 
-public class OQueryContext<T extends ORecordInternal<?>> {
-	protected T					record;
-	protected OQuery<T>	sourceQuery;
+/**
+ * Represent a column (as positional order) as value in the query condition.
+ * 
+ * @author luca
+ * 
+ */
+public class OSQLDefinitionItemColumn extends OSQLDefinitionItemAbstract {
+	protected int	number	= -1;
 
-	public void setRecord(T iRecord) {
-		this.record = iRecord;
+	public OSQLDefinitionItemColumn(final OSQLDefinition iQueryCompiled, final String iName) {
+		super(iQueryCompiled, iName);
+		number = Integer.parseInt(iName);
 	}
 
-	public void setSourceQuery(OQuery<T> sourceQuery) {
-		this.sourceQuery = sourceQuery;
+	public Object getValue(final ORecordInternal<?> iRecord) {
+		return transformValue(((ORecordPositional<?>) iRecord).field(number));
+	}
+
+	@Override
+	public String toString() {
+		return "column(" + number + ")";
 	}
 }

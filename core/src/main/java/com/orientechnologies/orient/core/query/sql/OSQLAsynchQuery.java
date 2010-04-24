@@ -36,7 +36,7 @@ public class OSQLAsynchQuery<T extends ORecordSchemaAware<?>> extends OSQLQuery<
 		ORecordBrowsingListener {
 	protected OAsynchQueryResultListener<T>	resultListener;
 	protected int														resultCount	= 0;
-	protected OSQLQueryCompiled							compiled;
+	protected OSQLDefinition							compiled;
 
 	/**
 	 * Empty constructor for unmarshalling.
@@ -100,6 +100,6 @@ public class OSQLAsynchQuery<T extends ORecordSchemaAware<?>> extends OSQLQuery<
 
 	protected void parse() {
 		if (compiled == null)
-			compiled = new OSQLQueryCompiled(this, text);
+			compiled = new OSQLDefinition(this, text);
 	}
 }

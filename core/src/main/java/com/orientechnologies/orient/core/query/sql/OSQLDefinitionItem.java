@@ -15,15 +15,16 @@
  */
 package com.orientechnologies.orient.core.query.sql;
 
+import com.orientechnologies.orient.core.record.ORecordInternal;
+
 /**
- * Represent any value between the values contained. Used in query evaluations where at least one items must satisfy the following
- * condition. Works such as the OR operator by repeating the condition against all the fields.
+ * Represent a value inside a query condition.
  * 
  * @author luca
  * 
  */
-public class OSQLValueAny extends OSQLValueMultiAbstract {
-	public OSQLValueAny(final Object[] iValues) {
-		super(iValues);
-	}
+public interface OSQLDefinitionItem {
+
+	public Object getValue(ORecordInternal<?> iRecord);
+
 }

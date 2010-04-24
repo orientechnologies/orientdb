@@ -17,8 +17,8 @@ package com.orientechnologies.orient.core.query.operator;
 
 import java.util.Collection;
 
-import com.orientechnologies.orient.core.query.sql.OSQLCondition;
-import com.orientechnologies.orient.core.query.sql.OSQLValueMultiAbstract;
+import com.orientechnologies.orient.core.query.sql.OSQLDefinitionCondition;
+import com.orientechnologies.orient.core.query.sql.OSQLRuntimeValueMulti;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -41,15 +41,15 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 		this.endDeepLevel = endDeepLevel;
 	}
 
-	protected boolean evaluateExpression(final OSQLCondition iCondition, final Object iLeft, final Object iRight) {
-		final OSQLCondition condition;
+	protected boolean evaluateExpression(final OSQLDefinitionCondition iCondition, final Object iLeft, final Object iRight) {
+		final OSQLDefinitionCondition condition;
 		final Object target;
 
-		if (iCondition.getLeft() instanceof OSQLCondition) {
-			condition = (OSQLCondition) iCondition.getLeft();
+		if (iCondition.getLeft() instanceof OSQLDefinitionCondition) {
+			condition = (OSQLDefinitionCondition) iCondition.getLeft();
 			target = iRight;
 		} else {
-			condition = (OSQLCondition) iCondition.getRight();
+			condition = (OSQLDefinitionCondition) iCondition.getRight();
 			target = iRight;
 		}
 
@@ -57,7 +57,7 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 	}
 
 	@SuppressWarnings("unchecked")
-	private boolean traverse(final OSQLCondition condition, final Object target, final int iLevel) {
+	private boolean traverse(final OSQLDefinitionCondition condition, final Object target, final int iLevel) {
 		if (target instanceof ODocument) {
 			if (iLevel >= startDeepLevel && (Boolean) condition.evaluate((ODocument) target) == Boolean.TRUE)
 				return true;
@@ -66,9 +66,9 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 			if (iLevel >= endDeepLevel)
 				return false;
 
-			if (target instanceof OSQLValueMultiAbstract) {
+			if (target instanceof OSQLRuntimeValueMulti) {
 
-				OSQLValueMultiAbstract multi = (OSQLValueMultiAbstract) target;
+				OSQLRuntimeValueMulti multi = (OSQLRuntimeValueMulti) target;
 				for (Object o : multi.values) {
 					if (traverse(condition, o, iLevel + 1) == Boolean.TRUE)
 						return true;

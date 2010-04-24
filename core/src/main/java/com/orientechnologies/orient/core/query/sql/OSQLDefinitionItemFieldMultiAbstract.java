@@ -24,26 +24,22 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
  * @author luca
  * 
  */
-public class OSQLFieldAny implements OSQLValue {
-	private String[]						names;
-	public static final String	NAME	= "ANY";
+public abstract class OSQLDefinitionItemFieldMultiAbstract extends OSQLDefinitionItemAbstract {
+	private String[]	names;
 
-	public OSQLFieldAny(final OSQLQueryCompiled iQueryCompiled, final String[] iNames) {
+	public OSQLDefinitionItemFieldMultiAbstract(final OSQLDefinition iQueryCompiled, final String iName, final String[] iNames) {
+		super(iQueryCompiled, iName);
 		names = iNames;
 	}
 
 	public Object getValue(final ORecordInternal<?> iRecord) {
-		if (names.length == 1)
-			// NO MATTER OF TYPE: RETURN THE SINGLE FIELD VALUE TO SIMPLIFY
-			return ((ORecordSchemaAware<?>) iRecord).field(names[0]);
-
-		return new OSQLValueAny(((ORecordSchemaAware<?>) iRecord).fieldValues());
+		return new OSQLRuntimeValueMulti(this, ((ORecordSchemaAware<?>) iRecord).fieldValues());
 	}
 
 	@Override
 	public String toString() {
 		StringBuilder buffer = new StringBuilder();
-		buffer.append(NAME);
+		buffer.append(name);
 		buffer.append("(");
 		if (names != null) {
 			int i = 0;

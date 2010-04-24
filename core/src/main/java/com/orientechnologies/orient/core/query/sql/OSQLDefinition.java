@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
  * @author luca
  * 
  */
-public class OSQLQueryCompiled {
+public class OSQLDefinition {
 	private static final String		CLASS_PREFIX		= "class:";
 	private static final String		CLUSTER_PREFIX	= "cluster:";
 	protected OSQLQuery<?>				query;
@@ -42,7 +42,7 @@ public class OSQLQueryCompiled {
 	protected List<String>				projections			= new ArrayList<String>();
 	protected Map<String, String>	clusters				= new HashMap<String, String>();
 	protected Map<String, String>	classes					= new HashMap<String, String>();
-	protected OSQLCondition				rootCondition;
+	protected OSQLDefinitionCondition				rootCondition;
 	protected List<String>				recordTransformed;
 	private int										braces;
 
@@ -51,7 +51,7 @@ public class OSQLQueryCompiled {
 	protected static final String	KEYWORD_WHERE		= "WHERE";
 	protected static final String	KEYWORD_COLUMN	= "COLUMN";
 
-	public OSQLQueryCompiled(OSQLQuery<?> iQuery, String iText) {
+	public OSQLDefinition(OSQLQuery<?> iQuery, String iText) {
 		try {
 			query = iQuery;
 			text = iText.trim();
@@ -144,8 +144,8 @@ public class OSQLQueryCompiled {
 		return whereDefined;
 	}
 
-	private OSQLCondition extractConditions(OSQLCondition iParentCondition) {
-		OSQLCondition currentCondition = extractCondition();
+	private OSQLDefinitionCondition extractConditions(OSQLDefinitionCondition iParentCondition) {
+		OSQLDefinitionCondition currentCondition = extractCondition();
 
 		// CHECK IF THERE IS ANOTHER CONDITION ON RIGHT
 		if (!jumpWhiteSpaces())
@@ -154,14 +154,14 @@ public class OSQLQueryCompiled {
 
 		OQueryOperator nextOperator = extractConditionOperator();
 
-		OSQLCondition parentCondition = new OSQLCondition(currentCondition, nextOperator);
+		OSQLDefinitionCondition parentCondition = new OSQLDefinitionCondition(currentCondition, nextOperator);
 
 		parentCondition.right = extractConditions(parentCondition);
 
 		return parentCondition;
 	}
 
-	protected OSQLCondition extractCondition() {
+	protected OSQLDefinitionCondition extractCondition() {
 		if (!jumpWhiteSpaces())
 			// END OF TEXT
 			return null;
@@ -169,7 +169,7 @@ public class OSQLQueryCompiled {
 		braces = 0;
 
 		// CREATE THE CONDITION OBJECT
-		return new OSQLCondition(extractConditionItem(), extractConditionOperator(), extractConditionItem());
+		return new OSQLDefinitionCondition(extractConditionItem(), extractConditionOperator(), extractConditionItem());
 	}
 
 	private OQueryOperator extractConditionOperator() {
@@ -181,9 +181,9 @@ public class OSQLQueryCompiled {
 				String[] params = null;
 
 				// CHECK FOR PARAMETERS
-				if (word.endsWith("(")) {
+				if (word.endsWith(OQueryHelper.OPEN_BRACE)) {
 					params = OQueryHelper.getParameters(text, currentPos - 1);
-					currentPos = text.indexOf(")", currentPos) + 1;
+					currentPos = text.indexOf(OQueryHelper.CLOSED_BRACE, currentPos) + 1;
 				}
 
 				return op.configure(params);
@@ -205,7 +205,7 @@ public class OSQLQueryCompiled {
 			// SUB-CONDITION
 			currentPos = currentPos - words[0].length() + 1;
 
-			OSQLCondition subCondition = new OSQLCondition(extractConditionItem(), extractConditionOperator(), extractConditionItem());
+			OSQLDefinitionCondition subCondition = new OSQLDefinitionCondition(extractConditionItem(), extractConditionOperator(), extractConditionItem());
 
 			jumpWhiteSpaces();
 
@@ -239,17 +239,21 @@ public class OSQLQueryCompiled {
 			String[] parameters = OQueryHelper.getParameters(words[0]);
 			if (parameters.length != 1)
 				throw new OQueryParsingException("Missed column number", text, currentPos);
-			result = new OSQLItemColumn(Integer.parseInt(parameters[0]));
+			result = new OSQLDefinitionItemColumn(this, parameters[0]);
 
-		} else if (words[0].startsWith(OSQLFieldAll.NAME + "(")) {
-
-			String[] parameters = OQueryHelper.getParameters(words[0]);
-			result = new OSQLFieldAll(this, parameters);
-
-		} else if (words[0].startsWith(OSQLFieldAny.NAME + "(")) {
+		} else if (words[0].startsWith(OSQLDefinitionItemFieldAll.NAME + OQueryHelper.OPEN_BRACE)) {
 
 			String[] parameters = OQueryHelper.getParameters(words[0]);
-			result = new OSQLFieldAny(this, parameters);
+
+			// IF THE FIELD IS ONLY ONE, THEN USE THE FIELD CLASS IN PLACE OF MULTI FIELD IMPL
+			result = parameters.length == 1 ? getValue(words) : new OSQLDefinitionItemFieldAll(this, parameters);
+
+		} else if (words[0].startsWith(OSQLDefinitionItemFieldAny.NAME + OQueryHelper.OPEN_BRACE)) {
+
+			String[] parameters = OQueryHelper.getParameters(words[0]);
+
+			// IF THE FIELD IS ONLY ONE, THEN USE THE FIELD CLASS IN PLACE OF MULTI FIELD IMPL
+			result = parameters.length == 1 ? getValue(words) : new OSQLDefinitionItemFieldAny(this, parameters);
 
 		} else
 			result = getValue(words);
@@ -267,7 +271,7 @@ public class OSQLQueryCompiled {
 				return new Integer(words[0]);
 		}
 
-		return new OSQLField(this, words[1]);
+		return new OSQLDefinitionItemField(this, words[1]);
 	}
 
 	public List<String> getProjections() {

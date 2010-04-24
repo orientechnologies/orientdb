@@ -15,15 +15,17 @@
  */
 package com.orientechnologies.orient.core.query.sql;
 
+
 /**
- * Represent all the values between the values contained. Used in query evaluations where all the items must satisfy the following
- * condition. Works such as the AND operator by repeating the condition against all the fields.
+ * Represent one or more object fields as value in the query condition.
  * 
  * @author luca
  * 
  */
-public class OSQLValueAll extends OSQLValueMultiAbstract {
-	public OSQLValueAll(final Object[] iValues) {
-		super(iValues);
+public class OSQLDefinitionItemFieldAny extends OSQLDefinitionItemFieldMultiAbstract {
+	public static final String	NAME	= "ANY";
+
+	public OSQLDefinitionItemFieldAny(final OSQLDefinition iQueryCompiled, final String[] iNames) {
+		super(iQueryCompiled, NAME, iNames);
 	}
 }

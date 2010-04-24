@@ -15,16 +15,17 @@
  */
 package com.orientechnologies.orient.core.query.sql;
 
-import com.orientechnologies.orient.core.record.ORecordInternal;
 
 /**
- * Represent a value inside a query condition.
+ * Represent one or more object fields as value in the query condition.
  * 
  * @author luca
  * 
  */
-public interface OSQLValue {
+public class OSQLDefinitionItemFieldAll extends OSQLDefinitionItemFieldMultiAbstract {
+	public static final String	NAME	= "ALL";
 
-	public Object getValue(ORecordInternal<?> iRecord);
-
+	public OSQLDefinitionItemFieldAll(final OSQLDefinition iQueryCompiled, final String[] iNames) {
+		super(iQueryCompiled, NAME, iNames);
+	}
 }

@@ -15,9 +15,9 @@
  */
 package com.orientechnologies.orient.core.query.operator;
 
-import com.orientechnologies.orient.core.query.sql.OSQLValueAll;
-import com.orientechnologies.orient.core.query.sql.OSQLCondition;
-import com.orientechnologies.orient.core.query.sql.OSQLValueAny;
+import com.orientechnologies.orient.core.query.sql.OSQLDefinitionCondition;
+import com.orientechnologies.orient.core.query.sql.OSQLDefinitionItemFieldAll;
+import com.orientechnologies.orient.core.query.sql.OSQLRuntimeValueMulti;
 
 /**
  * Base equality operator. It's an abstract class able to compare the equality between two values.
@@ -31,54 +31,52 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
 		super(iKeyword, iPrecedence, iLogical);
 	}
 
-	protected abstract boolean evaluateExpression(final OSQLCondition iCondition, final Object iLeft, final Object iRight);
+	protected abstract boolean evaluateExpression(final OSQLDefinitionCondition iCondition, final Object iLeft, final Object iRight);
 
-	public boolean evaluate(final OSQLCondition iCondition, final Object iLeft, final Object iRight) {
-		if (iLeft instanceof OSQLValueAll) {
-			// ALL VALUES
-			final OSQLValueAll allValues = (OSQLValueAll) iLeft;
-			if (allValues.values.length == 0)
+	public boolean evaluate(final OSQLDefinitionCondition iCondition, final Object iLeft, final Object iRight) {
+		if (iLeft instanceof OSQLRuntimeValueMulti) {
+			// LEFT = MULTI
+			OSQLRuntimeValueMulti left = (OSQLRuntimeValueMulti) iLeft;
+
+			if (left.values.length == 0)
 				return false;
 
-			for (Object v : allValues.values)
-				if (v == null || !evaluateExpression(iCondition, v, iRight))
-					return false;
-			return true;
-		} else if (iRight instanceof OSQLValueAll) {
-			// ALL VALUES
-			final OSQLValueAll allValues = (OSQLValueAll) iRight;
-			if (allValues.values.length == 0)
+			if (left.getDefinition().getName().equals(OSQLDefinitionItemFieldAll.NAME)) {
+				// ALL VALUES
+				for (Object v : left.values)
+					if (v == null || !evaluateExpression(iCondition, v, iRight))
+						return false;
+				return true;
+			} else {
+				// ANY VALUES
+				for (Object v : left.values)
+					if (v != null && evaluateExpression(iCondition, iRight, v))
+						return true;
+				return false;
+			}
+
+		} else if (iRight instanceof OSQLRuntimeValueMulti) {
+			// RIGHT = MULTI
+			OSQLRuntimeValueMulti right = (OSQLRuntimeValueMulti) iRight;
+
+			if (right.values.length == 0)
 				return false;
 
-			for (Object v : allValues.values)
-				if (v == null || !evaluateExpression(iCondition, v, iLeft))
-					return false;
-			return true;
-
-		} else if (iLeft instanceof OSQLValueAny) {
-			// ANY VALUES
-			final OSQLValueAny anyValue = (OSQLValueAny) iLeft;
-			if (anyValue.values.length == 0)
+			if (right.getDefinition().getName().equals(OSQLDefinitionItemFieldAll.NAME)) {
+				// ALL VALUES
+				for (Object v : right.values)
+					if (v == null || !evaluateExpression(iCondition, v, iLeft))
+						return false;
+				return true;
+			} else {
+				// ANY VALUES
+				for (Object v : right.values)
+					if (v != null && evaluateExpression(iCondition, iLeft, v))
+						return true;
 				return false;
-
-			for (Object v : anyValue.values)
-				if (v != null && evaluateExpression(iCondition, iRight, v))
-					return true;
-			return false;
-		} else if (iRight instanceof OSQLValueAny) {
-			// ANY VALUES
-			final OSQLValueAny anyValue = (OSQLValueAny) iRight;
-			if (anyValue.values.length == 0)
-				return false;
-
-			for (Object v : anyValue.values)
-				if (v != null && evaluateExpression(iCondition, iLeft, v))
-					return true;
-			return false;
-
+			}
 		} else
 			// SINGLE SIMPLE ITEM
 			return evaluateExpression(iCondition, iLeft, iRight);
 	}
-
 }

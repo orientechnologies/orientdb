@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.query.nativ;
 import java.util.Date;
 
 import com.orientechnologies.orient.core.exception.OQueryExecutionException;
+import com.orientechnologies.orient.core.query.OQueryContext;
 import com.orientechnologies.orient.core.query.OQueryHelper;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 

@@ -13,35 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.query.sql;
+package com.orientechnologies.orient.core.query;
 
-/**
- * Represent multiple values in query.
- * 
- * @author luca
- * 
- */
-public class OSQLValueMultiAbstract {
-	public Object[]	values;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 
-	public OSQLValueMultiAbstract(final Object[] iValues) {
-		values = iValues;
+public class OQueryContext<T extends ORecordInternal<?>> {
+	protected T					record;
+	protected OQuery<T>	sourceQuery;
+
+	public void setRecord(T iRecord) {
+		this.record = iRecord;
 	}
 
-	@Override
-	public String toString() {
-		if (values == null)
-			return "";
-
-		StringBuilder buffer = new StringBuilder();
-		buffer.append("[");
-		int i = 0;
-		for (Object v : values) {
-			if (i++ > 0)
-				buffer.append(",");
-			buffer.append(v);
-		}
-		buffer.append("]");
-		return buffer.toString();
+	public void setSourceQuery(OQuery<T> sourceQuery) {
+		this.sourceQuery = sourceQuery;
 	}
 }

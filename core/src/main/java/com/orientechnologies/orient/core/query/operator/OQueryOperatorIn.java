@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.query.operator;
 
 import java.util.Collection;
 
-import com.orientechnologies.orient.core.query.sql.OSQLCondition;
+import com.orientechnologies.orient.core.query.sql.OSQLDefinitionCondition;
 
 /**
  * IN operator.
@@ -32,7 +32,7 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
 	}
 
 	@SuppressWarnings("unchecked")
-	protected boolean evaluateExpression(OSQLCondition iCondition, final Object iLeft, final Object iRight) {
+	protected boolean evaluateExpression(OSQLDefinitionCondition iCondition, final Object iLeft, final Object iRight) {
 		if (iLeft instanceof Collection<?>) {
 			Collection<Object> collection = (Collection<Object>) iLeft;
 			for (Object o : collection) {

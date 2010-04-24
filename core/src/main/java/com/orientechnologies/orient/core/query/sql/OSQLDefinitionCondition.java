@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.query.sql;
 
 import com.orientechnologies.orient.core.query.operator.OQueryOperator;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.record.ORecord.STATUS;
 
 /**
  * Run-time query condition evaluator.
@@ -24,18 +25,18 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
  * @author luca
  * 
  */
-public class OSQLCondition {
+public class OSQLDefinitionCondition {
 	private static final String	NULL_VALUE	= "null";
 	protected Object						left;
 	protected OQueryOperator		operator;
 	protected Object						right;
 
-	public OSQLCondition(Object iLeft, OQueryOperator iOperator) {
+	public OSQLDefinitionCondition(Object iLeft, OQueryOperator iOperator) {
 		this.left = iLeft;
 		this.operator = iOperator;
 	}
 
-	public OSQLCondition(Object iLeft, OQueryOperator iOperator, Object iRight) {
+	public OSQLDefinitionCondition(Object iLeft, OQueryOperator iOperator, Object iRight) {
 		this.left = iLeft;
 		this.operator = iOperator;
 		this.right = iRight;
@@ -110,12 +111,16 @@ public class OSQLCondition {
 	}
 
 	protected Object evaluate(ORecordSchemaAware<?> iRecord, Object iValue) {
-		if (iValue instanceof OSQLValue)
-			return ((OSQLValue) iValue).getValue(iRecord);
+		if (iValue instanceof OSQLDefinitionItem) {
+			if (iRecord.getStatus() == STATUS.NOT_LOADED)
+				iRecord.load();
 
-		if (iValue instanceof OSQLCondition)
+			return ((OSQLDefinitionItem) iValue).getValue(iRecord);
+		}
+
+		if (iValue instanceof OSQLDefinitionCondition)
 			// NESTED CONDITION: EVALUATE IT RECURSIVELY
-			return ((OSQLCondition) iValue).evaluate(iRecord);
+			return ((OSQLDefinitionCondition) iValue).evaluate(iRecord);
 
 		// SIMPLE VALUE: JUST RETURN IT
 		return iValue;

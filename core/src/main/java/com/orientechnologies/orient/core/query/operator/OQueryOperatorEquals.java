@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.query.operator;
 
-import com.orientechnologies.orient.core.query.sql.OSQLCondition;
+import com.orientechnologies.orient.core.query.sql.OSQLDefinitionCondition;
 
 /**
  * EQUALS operator.
@@ -29,7 +29,7 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
 		super("=", 5, false);
 	}
 
-	protected boolean evaluateExpression(OSQLCondition iCondition, final Object iLeft, final Object iRight) {
+	protected boolean evaluateExpression(OSQLDefinitionCondition iCondition, final Object iLeft, final Object iRight) {
 		return iLeft.equals(iRight);
 	}
 

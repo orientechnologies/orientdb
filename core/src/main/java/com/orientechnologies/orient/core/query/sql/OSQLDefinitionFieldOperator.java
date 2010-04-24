@@ -21,12 +21,12 @@ package com.orientechnologies.orient.core.query.sql;
  * @author luca
  * 
  */
-public enum OSQLFieldOperator {
+public enum OSQLDefinitionFieldOperator {
 	SIZE(0, "SIZE"), LENGTH(1, "LENGTH"), TOUPPERCASE(2, "TOUPPERCASE"), TOLOWERCASE(3, "TOLOWERCASE"), TRIM(4, "TRIM"), LEFT(5,
 			"LEFT", 1), RIGHT(6, "RIGHT", 1), SUBSTRING(7, "SUBSTRING", 1, 2), CHARAT(8, "CHARAT", 1), INDEXOF(9, "INDEXOF", 1, 2), FORMAT(
 			10, "FORMAT", 1);
 
-	protected static final OSQLFieldOperator[]	OPERATORS				= { SIZE, LENGTH, TOUPPERCASE, TOLOWERCASE, TRIM, LEFT, RIGHT,
+	protected static final OSQLDefinitionFieldOperator[]	OPERATORS				= { SIZE, LENGTH, TOUPPERCASE, TOLOWERCASE, TRIM, LEFT, RIGHT,
 			SUBSTRING, CHARAT, INDEXOF, FORMAT											};
 
 	public static final String									CHAIN_SEPARATOR	= ".";
@@ -36,18 +36,18 @@ public enum OSQLFieldOperator {
 	public final int														minArguments;
 	public final int														maxArguments;
 
-	OSQLFieldOperator(final int iId, final String iKeyword) {
+	OSQLDefinitionFieldOperator(final int iId, final String iKeyword) {
 		this(iId, iKeyword, 0, 0);
 	}
 
-	OSQLFieldOperator(final int iId, final String iKeyword, int iExactArgs) {
+	OSQLDefinitionFieldOperator(final int iId, final String iKeyword, int iExactArgs) {
 		id = iId;
 		keyword = iKeyword;
 		minArguments = iExactArgs;
 		maxArguments = iExactArgs;
 	}
 
-	OSQLFieldOperator(final int iId, final String iKeyword, int iMinArgs, int iMaxArgs) {
+	OSQLDefinitionFieldOperator(final int iId, final String iKeyword, int iMinArgs, int iMaxArgs) {
 		id = iId;
 		keyword = iKeyword;
 		minArguments = iMinArgs;

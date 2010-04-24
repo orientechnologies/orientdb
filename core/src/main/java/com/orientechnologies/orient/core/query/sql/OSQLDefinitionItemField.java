@@ -19,42 +19,17 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 
 /**
- * Represent one or more object fields as value in the query condition.
+ * Represent an object field as value in the query condition.
  * 
  * @author luca
  * 
  */
-public class OSQLFieldAll implements OSQLValue {
-	private String[]						names;
-	public static final String	NAME	= "ALL";
-
-	public OSQLFieldAll(final OSQLQueryCompiled iQueryCompiled, final String[] iNames) {
-		names = iNames;
+public class OSQLDefinitionItemField extends OSQLDefinitionItemAbstract {
+	public OSQLDefinitionItemField(final OSQLDefinition iQueryCompiled, final String iName) {
+		super(iQueryCompiled, iName);
 	}
 
 	public Object getValue(final ORecordInternal<?> iRecord) {
-		if (names.length == 1)
-			// NO MATTER OF TYPE: RETURN THE SINGLE FIELD VALUE TO SIMPLIFY
-			return ((ORecordSchemaAware<?>) iRecord).field(names[0]);
-
-		return new OSQLValueAll(((ORecordSchemaAware<?>) iRecord).fieldValues());
-	}
-
-	@Override
-	public String toString() {
-		StringBuilder buffer = new StringBuilder();
-		buffer.append(NAME);
-		buffer.append("(");
-		if (names != null) {
-			int i = 0;
-			for (String n : names) {
-				if (i++ > 0)
-					buffer.append(", ");
-				buffer.append(n);
-			}
-		}
-		buffer.append(")");
-
-		return buffer.toString();
+		return transformValue(((ORecordSchemaAware<?>) iRecord).field(name));
 	}
 }
