@@ -18,15 +18,27 @@ package com.orientechnologies.orient.kv;
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseBinary;
+import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.server.OServerMain;
 
 public class OSharedDatabase {
 	// TODO: ALLOW ONLY 1 BECAUSE THE TREE IS NOT YET FULLY TRANSACTIONAL
 	private static final ODatabasePool<ODatabaseBinary>	dbPool	= new ODatabasePool<ODatabaseBinary>(1) {
 
-																																public ODatabaseBinary createNewResource(String iDatabaseName) {
-																																	ODatabaseBinary db = new ODatabaseBinary(OServerMain.server()
-																																			.getStoragePath(iDatabaseName)).open("admin", "admin");
+																																public ODatabaseBinary createNewResource(final String iDatabaseName) {
+																																	final String path = OServerMain.server().getStoragePath(
+																																			iDatabaseName);
+
+																																	final ODatabaseBinary db = new ODatabaseBinary(path);
+
+																																	if (path.startsWith(OEngineMemory.NAME)) {
+																																		// CREATE AND PUT IN THE MEMORY MAPTABLE TO AVOID LOCKING (IT'S
+																																		// THREAD SAFE)
+																																		db.create();
+																																		OServerMain.server().getMemoryDatabases()
+																																				.put(iDatabaseName, db);
+																																	} else
+																																		db.open("admin", "admin");
 
 																																	// DISABLE CACHE SINCE THERE IS HAZELCAST FOR IT
 																																	((ODatabaseRaw) db.getUnderlying()).setUseCache(false);

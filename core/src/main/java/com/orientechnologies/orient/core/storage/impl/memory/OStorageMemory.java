@@ -168,6 +168,8 @@ public class OStorageMemory extends OStorageAbstract {
 		OCluster cluster = getCluster(iClusterId);
 		try {
 			OPhysicalPosition ppos = cluster.getPhysicalPosition(iPosition, new OPhysicalPosition());
+			if (ppos == null)
+				return -1;
 
 			// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
 			if (iVersion > -1 && ppos.version != iVersion)
@@ -198,8 +200,8 @@ public class OStorageMemory extends OStorageAbstract {
 								+ ORecordId.generateString(iClusterId, iPosition)
 								+ " because it was modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
 
+			cluster.removePhysicalPosition(iPosition, null);
 			data.deleteRecord(ppos.dataPosition);
-			cluster.removePhysicalPosition(iClusterId, null);
 
 		} catch (IOException e) {
 			throw new OStorageException("Error on delete record in cluster: " + iClusterId, e);
