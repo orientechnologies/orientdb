@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.storage;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.cache.OCacheRecord;
@@ -33,7 +34,7 @@ public interface OStorage {
 
 	public void open(int iRequesterId, String iUserName, String iUserPassword);
 
-	public void create(String iStorageMode);
+	public void create();
 
 	public boolean exists();
 
@@ -65,6 +66,8 @@ public interface OStorage {
 	public OStorageConfiguration getConfiguration();
 
 	public Set<String> getClusterNames();
+
+	public Collection<OCluster> getClusters();
 
 	/**
 	 * Add a new cluster in the default segment directory and with filename equals to the cluster name.

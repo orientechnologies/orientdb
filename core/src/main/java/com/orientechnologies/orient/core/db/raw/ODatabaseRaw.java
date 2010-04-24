@@ -78,9 +78,9 @@ public class ODatabaseRaw implements ODatabase {
 		return (DB) this;
 	}
 
-	public <DB extends ODatabase> DB create(final String iStorageMode) {
+	public <DB extends ODatabase> DB create() {
 		try {
-			storage.create(iStorageMode);
+			storage.create();
 			status = STATUS.OPEN;
 		} catch (Exception e) {
 			throw new ODatabaseException("Can't create database", e);

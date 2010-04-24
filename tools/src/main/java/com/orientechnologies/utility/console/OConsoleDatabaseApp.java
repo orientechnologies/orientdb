@@ -80,7 +80,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 
 	@ConsoleCommand(aliases = { "use database" }, description = "Connect to a database")
 	public void connect(
-			@ConsoleParameter(name = "database-url", description = "The url of the database to connect in the format connect <mode>:<path>") String iDatabaseURL) {
+			@ConsoleParameter(name = "database-url", description = "The url of the database to connect in the format '<mode>:<path>'") String iDatabaseURL) {
 		out.print("Connecting to database [" + iDatabaseURL + "]...");
 
 		currentDatabase = new ODatabaseDocumentTx(iDatabaseURL);
@@ -109,25 +109,26 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 
 	@ConsoleCommand(description = "Create a new database")
 	public void createDatabase(
-			@ConsoleParameter(name = "database-name", description = "The name of the database to create") String iDatabaseName)
+			@ConsoleParameter(name = "database-url", description = "The url of the database to create in the format '<mode>:<path>'") String iDatabaseURL,
+			@ConsoleParameter(name = "storage-type", description = "The type of the storage between 'local' for disk-based database and 'memory' for in memory only database.") String iStorageType)
 			throws IOException {
-		out.println("Creating database [" + iDatabaseName + "]...");
+		out.println("Creating database [" + iDatabaseURL + "] using the storage type [" + iStorageType + "]...");
 
-		if (iDatabaseName.startsWith(OEngineRemote.NAME)) {
+		if (iDatabaseURL.startsWith(OEngineRemote.NAME)) {
 			// REMOTE CONNECTION
-			final String dbURL = iDatabaseName.substring(OEngineRemote.NAME.length() + 1);
+			final String dbURL = iDatabaseURL.substring(OEngineRemote.NAME.length() + 1);
 			final String dbName = dbURL.substring(dbURL.indexOf("/") + 1);
-			new OServerAdmin(dbURL).connect().createDatabase(dbName, dbName, "csv").close();
-			connect(iDatabaseName);
+			new OServerAdmin(dbURL).connect().createDatabase(dbName, dbName, iStorageType).close();
+			connect(iDatabaseURL);
 
 		} else {
 			// LOCAL CONNECTION
-			currentDatabase = new ODatabaseDocumentTx(iDatabaseName);
-			currentDatabase.create("csv");
+			currentDatabase = new ODatabaseDocumentTx(iDatabaseURL);
+			currentDatabase.create();
 		}
 
 		out.println("Database created successfully.");
-		out.println("\nCurrent database is: " + iDatabaseName);
+		out.println("\nCurrent database is: " + iDatabaseURL);
 	}
 
 	@ConsoleCommand(description = "Create a new cluster in the current database. The cluster can be physical or logical.")

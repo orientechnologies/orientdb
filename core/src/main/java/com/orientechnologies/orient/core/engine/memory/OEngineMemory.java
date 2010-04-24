@@ -31,7 +31,7 @@ public class OEngineMemory extends OEngineAbstract {
 
 	public OStorage getStorage(String iURL, Map<String, String> iConfiguration) {
 		try {
-			return new OStorageMemory();
+			return new OStorageMemory(iURL);
 		} catch (Throwable t) {
 			OLogManager.instance().error(this, "Error on opening in memory storage: " + iURL, t, ODatabaseException.class);
 		}

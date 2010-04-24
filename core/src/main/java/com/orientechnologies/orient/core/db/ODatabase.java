@@ -38,7 +38,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 public interface ODatabase {
 	public <DB extends ODatabase> DB open(final String iUserName, final String iUserPassword);
 
-	public <DB extends ODatabase> DB create(final String iStorageMode);
+	public <DB extends ODatabase> DB create();
 
 	public void declareIntent(OIntent iIntent, Object... iParams);
 

@@ -50,7 +50,7 @@ public class OStorageConfiguration implements OSerializableStream {
 	private transient byte[]													record;
 
 	public OStorageConfiguration load() throws IOException {
-		record = storage.readRecord(-1, storage.getClusterIdByName(OMetadata.CLUSTER_METADATA_NAME), 0).buffer;
+		record = storage.readRecord(-1, storage.getClusterIdByName(OMetadata.CLUSTER_METADATA_NAME), CONFIG_RECORD_NUM).buffer;
 		fromStream(record);
 		return this;
 	}

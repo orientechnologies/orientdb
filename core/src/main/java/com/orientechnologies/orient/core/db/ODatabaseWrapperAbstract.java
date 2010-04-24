@@ -45,8 +45,8 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase, REC extends
 		return (THISDB) this;
 	}
 
-	public <THISDB extends ODatabase> THISDB create(final String iStorageMode) {
-		underlying.create(iStorageMode);
+	public <THISDB extends ODatabase> THISDB create() {
+		underlying.create();
 		return (THISDB) this;
 	}
 

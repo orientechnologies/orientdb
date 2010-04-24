@@ -18,6 +18,7 @@ package com.orientechnologies.orient.client.remote;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +52,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
+import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.storage.impl.logical.OClusterLogical;
@@ -104,7 +106,7 @@ public class OStorageRemote extends OStorageAbstract {
 		}
 	}
 
-	public void create(final String iStorageMode) {
+	public void create() {
 		throw new UnsupportedOperationException(
 				"Can't create a database in a remote server. Please use the console or the OServerAdmin class.");
 	}
@@ -925,5 +927,9 @@ public class OStorageRemote extends OStorageAbstract {
 		}
 
 		return record;
+	}
+
+	public Collection<OCluster> getClusters() {
+		return null;
 	}
 }

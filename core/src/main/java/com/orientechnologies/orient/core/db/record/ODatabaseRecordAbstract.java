@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> extends ODatabaseWrapperAbstract<ODatabaseRaw, REC>
@@ -72,11 +73,13 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 
 			metadata.load();
 
-			OUser user = getMetadata().getSecurity().getUser(iUserName);
-			if (user != null && user.checkPassword(iUserPassword)) {
+			if (!(getStorage() instanceof OStorageMemory)) {
 				user = getMetadata().getSecurity().getUser(iUserName);
-			} else
-				throw new OSecurityAccessException("Error on opening the database. User and/or password are not valid");
+				if (user != null && user.checkPassword(iUserPassword)) {
+					user = getMetadata().getSecurity().getUser(iUserName);
+				} else
+					throw new OSecurityAccessException("Error on opening the database. User and/or password are not valid");
+			}
 
 			checkSecurity(OUser.DATABASE, OUser.READ);
 
@@ -89,9 +92,9 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 	}
 
 	@Override
-	public <DB extends ODatabase> DB create(final String iStorageMode) {
+	public <DB extends ODatabase> DB create() {
 		try {
-			super.create(iStorageMode);
+			super.create();
 
 			// CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
 			metadata.create();
@@ -99,7 +102,6 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			metadata.getSecurity().save();
 
 			dictionary.create();
-			recordFormat = iStorageMode;
 		} catch (Exception e) {
 			throw new ODatabaseException("Can't create database", e);
 		}

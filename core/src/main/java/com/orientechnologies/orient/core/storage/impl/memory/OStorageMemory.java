@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.storage.impl.memory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -59,13 +60,14 @@ public class OStorageMemory extends OStorageAbstract {
 	private final List<OClusterMemory>	physicalClusters	= new ArrayList<OClusterMemory>();
 	private final List<OClusterLogical>	logicalClusters		= new ArrayList<OClusterLogical>();
 	private final ODataSegmentMemory		data							= new ODataSegmentMemory();
-	private int													defaultCluster;
+	private int													defaultCluster		= 0;
+	private ODatabaseRecord<?>					database;
 
-	public OStorageMemory() {
-		super("Memory", "Memory", "rw");
+	public OStorageMemory(final String iURL) {
+		super(iURL, iURL, "rw");
 	}
 
-	public void create(final String iStorageMode) {
+	public void create() {
 		open(-1, "", "");
 	}
 
@@ -83,6 +85,12 @@ public class OStorageMemory extends OStorageAbstract {
 
 		// ADD THE DEFAULT CLUSTER
 		defaultCluster = addCluster(OStorage.DEFAULT_SEGMENT);
+
+		try {
+			configuration = new OStorageConfiguration(this);
+			configuration.create();
+		} catch (IOException e) {
+		}
 
 		open = true;
 	}
@@ -262,7 +270,7 @@ public class OStorageMemory extends OStorageAbstract {
 
 	@SuppressWarnings("unchecked")
 	public ODictionary<?> createDictionary(final ODatabaseRecord<?> iDatabase) throws Exception {
-		return new ODictionaryMemory();
+		return new ODictionaryMemory(iDatabase);
 	}
 
 	public void browse(int iRequesterId, int[] iClusterId, ORecordBrowsingListener iListener, ORecord<?> iRecord) {
@@ -284,5 +292,12 @@ public class OStorageMemory extends OStorageAbstract {
 
 	private OCluster getCluster(final int iClusterId) {
 		return iClusterId >= 0 ? physicalClusters.get(iClusterId) : logicalClusters.get(getLogicalClusterIndex(iClusterId));
+	}
+
+	public Collection<OCluster> getClusters() {
+		ArrayList<OCluster> clusters = new ArrayList<OCluster>();
+		clusters.addAll(physicalClusters);
+		clusters.addAll(logicalClusters);
+		return clusters;
 	}
 }

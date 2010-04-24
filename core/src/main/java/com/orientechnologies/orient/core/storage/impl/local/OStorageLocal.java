@@ -150,7 +150,7 @@ public class OStorageLocal extends OStorageAbstract {
 		}
 	}
 
-	public void create(final String iStorageMode) {
+	public void create() {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		addUser();

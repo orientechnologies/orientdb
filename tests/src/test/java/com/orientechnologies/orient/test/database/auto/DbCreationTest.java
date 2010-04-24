@@ -26,10 +26,8 @@ import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 
 @Test(groups = "db")
 public class DbCreationTest {
-	public static final String	STORAGE_MODE	= "csv";
-
-	private String							url;
-	private ODatabaseFlat				database;
+	private String				url;
+	private ODatabaseFlat	database;
 
 	@Parameters(value = "url")
 	public DbCreationTest(String iURL) {
@@ -38,10 +36,10 @@ public class DbCreationTest {
 
 	public void testDbCreation() throws IOException {
 		if (url.startsWith(OEngineRemote.NAME))
-			new OServerAdmin(url).connect().createDatabase("admin", "admin", STORAGE_MODE).close();
+			new OServerAdmin(url).connect().createDatabase("admin", "admin", "local").close();
 		else {
 			database = new ODatabaseFlat(url);
-			database.create(STORAGE_MODE);
+			database.create();
 			database.close();
 		}
 	}

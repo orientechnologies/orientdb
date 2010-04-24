@@ -18,11 +18,18 @@ package com.orientechnologies.orient.core.storage.impl.memory;
 import java.util.Iterator;
 
 import com.orientechnologies.common.collection.OTreeMapMemory;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionaryInternal;
 import com.orientechnologies.orient.core.dictionary.ODictionaryIterator;
 
 @SuppressWarnings("serial")
 public class ODictionaryMemory<T extends Object> extends OTreeMapMemory<String, T> implements ODictionaryInternal<T> {
+
+	private ODatabaseRecord<?>	database;
+
+	public ODictionaryMemory(final ODatabaseRecord<?> iDatabase) {
+		database = iDatabase;
+	}
 
 	public void create() {
 	}

@@ -29,8 +29,6 @@ public class OMetadata {
 	protected OSchema							schema;
 	protected OSecurity						security;
 
-	public static final int				CONFIG_RECORD_NUM			= 0;
-
 	public OMetadata(ODatabaseRecord<?> iDatabase) {
 		this.database = iDatabase;
 	}
