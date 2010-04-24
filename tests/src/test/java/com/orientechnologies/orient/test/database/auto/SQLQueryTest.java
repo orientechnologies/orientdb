@@ -47,8 +47,6 @@ public class SQLQueryTest {
 		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select * from Animal where ID = 10 and name like 'G%'"))
 				.execute();
 
-		System.out.println("select * from Animal where ID = 10 and name like 'G%'");
-
 		for (int i = 0; i < result.size(); ++i) {
 			record = result.get(i);
 
@@ -69,8 +67,6 @@ public class SQLQueryTest {
 		List<ODocument> result = database.query(
 				new OSQLSynchQuery<ODocument>("SELECT * FROM animal WHERE column(0) < 5 OR column(0) >= 3 AND column(5) < 7")).execute();
 
-		System.out.println("SELECT * FROM animal WHERE column(0) < 5 OR column(0) >= 3 AND column(5) < 7");
-
 		for (int i = 0; i < result.size(); ++i) {
 			record = result.get(i);
 
@@ -89,8 +85,6 @@ public class SQLQueryTest {
 
 		List<ODocument> result = database.query(
 				new OSQLSynchQuery<ODocument>("SELECT * FROM animal WHERE column(0) < 5 AND column(0) >= 3 OR column(5) <= 403")).execute();
-
-		System.out.println("SELECT * FROM animal WHERE column(0) < 5 AND column(0) >= 3 OR column(5) <= 403");
 
 		for (int i = 0; i < result.size(); ++i) {
 			record = result.get(i);
@@ -141,8 +135,6 @@ public class SQLQueryTest {
 				new OSQLSynchQuery<ODocument>("select * from animaltype where races contains (name.toLowerCase().subString(0,1) = 'e')"))
 				.execute();
 
-		System.out.println("select * from animaltype where races contains (name.toLowercase().substring(0,1) = 'e')");
-
 		for (int i = 0; i < result.size(); ++i) {
 			record = result.get(i);
 
@@ -172,8 +164,6 @@ public class SQLQueryTest {
 		List<ODocument> result = database.query(
 				new OSQLSynchQuery<ODocument>("select * from animaltype where races contains (name in ['European','Asiatic'])")).execute();
 
-		System.out.println("select * from animaltype where races contains (name in ['European','Asiatic'])");
-
 		for (int i = 0; i < result.size(); ++i) {
 			record = result.get(i);
 
@@ -202,8 +192,6 @@ public class SQLQueryTest {
 
 		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from Profile where any() like 'N%'")).execute();
 
-		System.out.println("select from Profile where any() like 'N%'");
-
 		Assert.assertTrue(result.size() > 0);
 
 		for (int i = 0; i < result.size(); ++i) {
@@ -227,12 +215,31 @@ public class SQLQueryTest {
 	}
 
 	@Test
+	public void queryTraverseAnyOperator() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.query(
+				new OSQLSynchQuery<ODocument>("select from Profile where any() traverse( 0,3 ) ( any().indexOf( 'Navona' ) > -1 )"))
+				.execute();
+
+		Assert.assertTrue(result.size() > 0);
+
+		for (int i = 0; i < result.size(); ++i) {
+			record = result.get(i);
+
+			OrientTest.printRecord(i, record);
+
+			Assert.assertTrue(record.getClassName().equalsIgnoreCase("Profile"));
+		}
+
+		database.close();
+	}
+
+	@Test
 	public void queryAllOperator() {
 		database.open("admin", "admin");
 
 		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from Account where all() is null")).execute();
-
-		System.out.println("select from Account where all() is null");
 
 		Assert.assertTrue(result.size() == 0);
 

@@ -33,23 +33,23 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
  * 
  */
 public class OSQLDefinition {
-	private static final String		CLASS_PREFIX		= "class:";
-	private static final String		CLUSTER_PREFIX	= "cluster:";
-	protected OSQLQuery<?>				query;
-	protected String							text;
-	protected String							textUpperCase;
-	protected int									currentPos			= 0;
-	protected List<String>				projections			= new ArrayList<String>();
-	protected Map<String, String>	clusters				= new HashMap<String, String>();
-	protected Map<String, String>	classes					= new HashMap<String, String>();
-	protected OSQLDefinitionCondition				rootCondition;
-	protected List<String>				recordTransformed;
-	private int										braces;
+	private static final String				CLASS_PREFIX		= "class:";
+	private static final String				CLUSTER_PREFIX	= "cluster:";
+	protected OSQLQuery<?>						query;
+	protected String									text;
+	protected String									textUpperCase;
+	protected int											currentPos			= 0;
+	protected List<String>						projections			= new ArrayList<String>();
+	protected Map<String, String>			clusters				= new HashMap<String, String>();
+	protected Map<String, String>			classes					= new HashMap<String, String>();
+	protected OSQLDefinitionCondition	rootCondition;
+	protected List<String>						recordTransformed;
+	private int												braces;
 
-	protected static final String	KEYWORD_SELECT	= "SELECT";
-	protected static final String	KEYWORD_FROM		= "FROM";
-	protected static final String	KEYWORD_WHERE		= "WHERE";
-	protected static final String	KEYWORD_COLUMN	= "COLUMN";
+	protected static final String			KEYWORD_SELECT	= "SELECT";
+	protected static final String			KEYWORD_FROM		= "FROM";
+	protected static final String			KEYWORD_WHERE		= "WHERE";
+	protected static final String			KEYWORD_COLUMN	= "COLUMN";
 
 	public OSQLDefinition(OSQLQuery<?> iQuery, String iText) {
 		try {
@@ -205,7 +205,8 @@ public class OSQLDefinition {
 			// SUB-CONDITION
 			currentPos = currentPos - words[0].length() + 1;
 
-			OSQLDefinitionCondition subCondition = new OSQLDefinitionCondition(extractConditionItem(), extractConditionOperator(), extractConditionItem());
+			OSQLDefinitionCondition subCondition = new OSQLDefinitionCondition(extractConditionItem(), extractConditionOperator(),
+					extractConditionItem());
 
 			jumpWhiteSpaces();
 
@@ -243,17 +244,11 @@ public class OSQLDefinition {
 
 		} else if (words[0].startsWith(OSQLDefinitionItemFieldAll.NAME + OQueryHelper.OPEN_BRACE)) {
 
-			String[] parameters = OQueryHelper.getParameters(words[0]);
-
-			// IF THE FIELD IS ONLY ONE, THEN USE THE FIELD CLASS IN PLACE OF MULTI FIELD IMPL
-			result = parameters.length == 1 ? getValue(words) : new OSQLDefinitionItemFieldAll(this, parameters);
+			result = new OSQLDefinitionItemFieldAll(this, words[1]);
 
 		} else if (words[0].startsWith(OSQLDefinitionItemFieldAny.NAME + OQueryHelper.OPEN_BRACE)) {
 
-			String[] parameters = OQueryHelper.getParameters(words[0]);
-
-			// IF THE FIELD IS ONLY ONE, THEN USE THE FIELD CLASS IN PLACE OF MULTI FIELD IMPL
-			result = parameters.length == 1 ? getValue(words) : new OSQLDefinitionItemFieldAny(this, parameters);
+			result = new OSQLDefinitionItemFieldAny(this, words[1]);
 
 		} else
 			result = getValue(words);

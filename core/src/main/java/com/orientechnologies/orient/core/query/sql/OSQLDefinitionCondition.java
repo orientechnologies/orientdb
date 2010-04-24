@@ -56,29 +56,26 @@ public class OSQLDefinitionCondition {
 	}
 
 	private Object[] checkForConversion(Object l, Object r) {
-		Object[] result = new Object[] { l, r };
+		Object[] result = null;
 
 		// INTEGERS
 		if (r instanceof Integer && !(l instanceof Integer)) {
 			if (l instanceof String && ((String) l).indexOf(".") > -1)
-				result[0] = new Float((String) l).intValue();
-			else
-				result[0] = getInteger(l);
+				result = new Object[] { new Float((String) l).intValue(), r };
+			else if (!(l instanceof OSQLRuntimeValueMulti))
+				result = new Object[] { getInteger(l), r };
 		} else if (l instanceof Integer && !(r instanceof Integer)) {
 			if (r instanceof String && ((String) r).indexOf(".") > -1)
-				result[1] = new Float((String) r).intValue();
-			else
-				result[1] = getInteger(r);
+				result = new Object[] { l, new Float((String) r).intValue() };
+			else if (!(r instanceof OSQLRuntimeValueMulti))
+				result = new Object[] { l, getInteger(r) };
 		}
 
 		// FLOATS
 		else if (r instanceof Float && !(l instanceof Float))
-			result[0] = getFloat(l);
+			result = new Object[] { getFloat(l), r };
 		else if (l instanceof Float && !(r instanceof Float))
-			result[1] = getFloat(r);
-		else
-			// AVOID COPY SINCE NO CONVERSION HAPPENED
-			return null;
+			result = new Object[] { l, getFloat(r) };
 
 		return result;
 	}

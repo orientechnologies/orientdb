@@ -84,8 +84,8 @@ public abstract class OSQLDefinitionItemAbstract implements OSQLDefinitionItem {
 			name = iName;
 	}
 
-	public Object transformValue(Object result) {
-		if (result != null && operationsChain != null) {
+	public Object transformValue(Object iResult) {
+		if (iResult != null && operationsChain != null) {
 			// APPLY OPERATIONS FOLLOWING THE STACK ORDER
 			int operator;
 			for (OPair<Integer, String[]> op : operationsChain) {
@@ -93,47 +93,51 @@ public abstract class OSQLDefinitionItemAbstract implements OSQLDefinitionItem {
 
 				// NO ARGS OPERATORS
 				if (operator == OSQLDefinitionFieldOperator.SIZE.id)
-					result = result != null ? ((Collection<?>) result).size() : 0;
+					iResult = iResult != null ? ((Collection<?>) iResult).size() : 0;
 
 				else if (operator == OSQLDefinitionFieldOperator.LENGTH.id)
-					result = result != null ? result.toString().length() : 0;
+					iResult = iResult != null ? iResult.toString().length() : 0;
 
 				else if (operator == OSQLDefinitionFieldOperator.TOUPPERCASE.id)
-					result = result != null ? result.toString().toUpperCase() : 0;
+					iResult = iResult != null ? iResult.toString().toUpperCase() : 0;
 
 				else if (operator == OSQLDefinitionFieldOperator.TOLOWERCASE.id)
-					result = result != null ? result.toString().toLowerCase() : 0;
+					iResult = iResult != null ? iResult.toString().toLowerCase() : 0;
 
 				else if (operator == OSQLDefinitionFieldOperator.TRIM.id)
-					result = result != null ? result.toString().trim() : null;
+					iResult = iResult != null ? iResult.toString().trim() : null;
 
 				// OTHER OPERATORS
 				else if (operator == OSQLDefinitionFieldOperator.CHARAT.id) {
 					int index = Integer.parseInt(op.value[0]);
-					result = result != null ? result.toString().substring(index, index + 1) : null;
-					
+					iResult = iResult != null ? iResult.toString().substring(index, index + 1) : null;
+
 				} else if (operator == OSQLDefinitionFieldOperator.INDEXOF.id && op.value[0].length() > 2) {
 					String toFind = op.value[0].substring(1, op.value[0].length() - 1);
 					int startIndex = op.value.length > 1 ? Integer.parseInt(op.value[1]) : 0;
-					result = result != null ? result.toString().indexOf(toFind, startIndex) : null;
-					
+					iResult = iResult != null ? iResult.toString().indexOf(toFind, startIndex) : null;
+
 				} else if (operator == OSQLDefinitionFieldOperator.SUBSTRING.id) {
-					
+
 					int endIndex = op.value.length > 1 ? Integer.parseInt(op.value[1]) : op.value[0].length();
-					result = result != null ? result.toString().substring(Integer.parseInt(op.value[0]), endIndex) : null;
+					iResult = iResult != null ? iResult.toString().substring(Integer.parseInt(op.value[0]), endIndex) : null;
 				} else if (operator == OSQLDefinitionFieldOperator.FORMAT.id)
-					
-					result = result != null ? String.format(op.value[0], result) : null;
+
+					iResult = iResult != null ? String.format(op.value[0], iResult) : null;
 				else if (operator == OSQLDefinitionFieldOperator.LEFT.id)
-					
-					result = result != null ? result.toString().substring(0, Integer.parseInt(op.value[0])) : null;
+
+					iResult = iResult != null ? iResult.toString().substring(0, Integer.parseInt(op.value[0])) : null;
 				else if (operator == OSQLDefinitionFieldOperator.RIGHT.id)
-					
-					result = result != null ? result.toString().substring(Integer.parseInt(op.value[0])) : null;
+
+					iResult = iResult != null ? iResult.toString().substring(Integer.parseInt(op.value[0])) : null;
 			}
 		}
 
-		return result;
+		return iResult;
+	}
+
+	public boolean hasChainOperators() {
+		return operationsChain != null;
 	}
 
 	@Override

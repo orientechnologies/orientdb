@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.query.sql;
 
+import com.orientechnologies.orient.core.query.OQueryHelper;
 
 /**
  * Represent one or more object fields as value in the query condition.
@@ -25,7 +26,7 @@ package com.orientechnologies.orient.core.query.sql;
 public class OSQLDefinitionItemFieldAll extends OSQLDefinitionItemFieldMultiAbstract {
 	public static final String	NAME	= "ALL";
 
-	public OSQLDefinitionItemFieldAll(final OSQLDefinition iQueryCompiled, final String[] iNames) {
-		super(iQueryCompiled, NAME, iNames);
+	public OSQLDefinitionItemFieldAll(final OSQLDefinition iQueryCompiled, final String iName) {
+		super(iQueryCompiled, iName, OQueryHelper.getParameters(iName));
 	}
 }

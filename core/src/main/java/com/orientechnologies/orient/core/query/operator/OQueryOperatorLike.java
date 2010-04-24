@@ -31,6 +31,6 @@ public class OQueryOperatorLike extends OQueryOperatorEqualityNotNulls {
 	}
 
 	protected boolean evaluateExpression(OSQLDefinitionCondition iCondition, final Object iLeft, final Object iRight) {
-		return OQueryHelper.like(iRight.toString(), iLeft.toString());
+		return OQueryHelper.like(iLeft.toString(), iRight.toString());
 	}
 }

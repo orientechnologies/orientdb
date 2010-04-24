@@ -50,7 +50,7 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
 			} else {
 				// ANY VALUES
 				for (Object v : left.values)
-					if (v != null && evaluateExpression(iCondition, iRight, v))
+					if (v != null && evaluateExpression(iCondition, v, iRight))
 						return true;
 				return false;
 			}
@@ -65,7 +65,7 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
 			if (right.getDefinition().getName().equals(OSQLDefinitionItemFieldAll.NAME)) {
 				// ALL VALUES
 				for (Object v : right.values)
-					if (v == null || !evaluateExpression(iCondition, v, iLeft))
+					if (v == null || !evaluateExpression(iCondition, iLeft, v))
 						return false;
 				return true;
 			} else {

@@ -33,24 +33,17 @@ public abstract class OSQLDefinitionItemFieldMultiAbstract extends OSQLDefinitio
 	}
 
 	public Object getValue(final ORecordInternal<?> iRecord) {
-		return new OSQLRuntimeValueMulti(this, ((ORecordSchemaAware<?>) iRecord).fieldValues());
-	}
+		if (names.length == 1)
+			return transformValue(((ORecordSchemaAware<?>) iRecord).field(names[0]));
 
-	@Override
-	public String toString() {
-		StringBuilder buffer = new StringBuilder();
-		buffer.append(name);
-		buffer.append("(");
-		if (names != null) {
-			int i = 0;
-			for (String n : names) {
-				if (i++ > 0)
-					buffer.append(", ");
-				buffer.append(n);
-			}
+		Object[] values = ((ORecordSchemaAware<?>) iRecord).fieldValues();
+
+		if (hasChainOperators()) {
+			// TRANSFORM ALL THE VALUES
+			for (int i = 0; i < values.length; ++i)
+				values[i] = transformValue(values[i]);
 		}
-		buffer.append(")");
 
-		return buffer.toString();
+		return new OSQLRuntimeValueMulti(this, values);
 	}
 }

@@ -50,7 +50,7 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 			target = iRight;
 		} else {
 			condition = (OSQLDefinitionCondition) iCondition.getRight();
-			target = iRight;
+			target = iLeft;
 		}
 
 		return traverse(condition, target, 0);
