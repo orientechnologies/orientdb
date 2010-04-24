@@ -1,9 +1,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
-<title>Orient Key-Value Server</title>
-<meta name="title" content="DBMS | Database | Java" />
-<meta name="description" content="Orient KeyValue Server" />
+<title>Orient Key/Value Server (www.orientechnologies.com)</title>
+<meta name="title" content="Key/Value | DBMS | Database | Java" />
+<meta name="description" content="Orient Key/Value Server" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
 <script src="/www/js/jquery.js" type="text/javascript"></script>
@@ -11,7 +11,6 @@
 <script src="/www/js/orient.js" type="text/javascript"></script>
 
 <link type="text/css" rel="stylesheet" href="/www/styles/style.css">
-</head>
 <style>
 #logo_text {
 	position: absolute;
@@ -19,32 +18,43 @@
 	left: 170px;
 	z-index: 1;
 }
-
-#coming_soon {
-	position: absolute;
-	top: 0px;
-	left: 550px;
-	z-index: 1;
-}
 </style>
-</head>
 
 <script type="text/javascript">
-
-    function sendGet(key, value){
-      jQuery.ajax({ type: 'GET', url: '/demo/default/' + key, cache: false, processData: false, success: response, error: error });
+    function sendGet(){
+      var db = document.getElementById('database').value;
+      var bucket = document.getElementById('bucket').value;
+      var key = document.getElementById('key').value;
+      var value = document.getElementById('value').value;
+      
+      jQuery.ajax({ type: 'GET', url: '/' + db + '/' + bucket + '/' + key, cache: false, processData: false, success: response, error: error });
     }
 
-    function sendPost(key, value){
-      jQuery.ajax({ type: 'POST', url: '/demo/default/' + key, data: value, dataType: "text", cache: false, processData: false, success: response, error: error });
+    function sendPost(){
+        var db = document.getElementById('database').value;
+        var bucket = document.getElementById('bucket').value;
+        var key = document.getElementById('key').value;
+        var value = document.getElementById('value').value;
+
+        jQuery.ajax({ type: 'POST', url: '/' + db + '/' + bucket + '/' + key, data: value, dataType: "text", cache: false, processData: false, success: response, error: error });
     }
     
-    function sendPut(key, value){
-      jQuery.ajax({ type: 'PUT', url: '/demo/default/' + key, data: value, dataType: "text", cache: false, processData: false, success: response, error: error });
+    function sendPut(){
+        var db = document.getElementById('database').value;
+        var bucket = document.getElementById('bucket').value;
+        var key = document.getElementById('key').value;
+        var value = document.getElementById('value').value;
+
+        jQuery.ajax({ type: 'PUT', url: '/' + db + '/' + bucket + '/' + key, data: value, dataType: "text", cache: false, processData: false, success: response, error: error });
     }
     
-    function sendDelete(key){
-      jQuery.ajax({ type: 'DELETE', url: '/demo/default/' + key, cache: false, processData: false, success: response, error: error });
+    function sendDelete(){
+        var db = document.getElementById('database').value;
+        var bucket = document.getElementById('bucket').value;
+        var key = document.getElementById('key').value;
+        var value = document.getElementById('value').value;
+
+        jQuery.ajax({ type: 'DELETE', url: '/' + db + '/' + bucket + '/' + key, cache: false, processData: false, success: response, error: error });
     }
     
     function response(content, status, obj){
@@ -59,110 +69,63 @@
       $('#status-text').val(content.statusText);
     }
   </script>
+</head>
 
 <body onload="orient_init()">
 <div id="body-table" class="table-main">
 <div class="row">
-<div class="cell" id="spacer-top" style="width: 300px; height: 80px;"><img id="logo_sun" src="/www/images/orient_sun_logo.png" border="0" /></div>
+<div class="cell" id="spacer-top"><img id="logo_sun" src="/www/images/orient_sun_logo.png" border="0" /></div>
 <div class="cell"><img id="logo_text" src="/www/images/orient_text_logo.png" border="0" /></div>
-</div>
+<div id="spacer-left"></div>
+<div id="header" class="cell">
+<center>
+<h1>Orient Key/Value Server</h1>
+</center>
+The Orient Key/Value Server interface is REST over HTTP protocol. In this page you can execute the basic commands to get acquainted with.<br />
+<br />
+To use directly the URL is: <b>http://&lt;server&gt;:&lt;port&gt;/&lt;database&gt;&lt;bucket&gt;/&lt;key&gt;</b></div>
 
 <div class="row">
-<div class="table">
-<div class="row">
-<div class="cell-double-spaced column3"></div>
-<div class="cell-double-spaced column1 title centered">Welcome in the Orient KeyValue Server homepage.</div>
-</div>
-<div class="row">
-<div class="cell-double-spaced column1">To start using this Orient KeyValue you can store your information just using the HTTP protocol.
-Example:<br />
-<ol>
-	<li><b>HTTP POST</b> to http://localhost:8000/demo/default/1 passing the value "Test1"</li>
-	<li><b>HTTP GET</b> to http://localhost:8000/demo/default/1: you'll receive back the value inserted, namely "Test1"</li>
-</ol>
+<div class="cell-double-spaced column1">
+<h2>Basic Console</h2>
+<center>
+<table style="font-size: 13px; width: 100%;">
+	<tr>
+		<td align="center"></td>
+		<td align="center">(Database)</td>
+		<td align="center">(Bucket)</td>
+		<td align="center">(Key)</td>
+		<td align="center">(Value)</td>
+	</tr>
+	<tr>
+		<td>http://localhost:8020/</td>
+		<td><input id="database" size="20" value="demo" />/</td>
+		<td><input id="bucket" size="20" value="default" />/</td>
+		<td><input id="key" size="20" value="" />/</td>
+		<td><input id="value" size="20" value="" /></td>
+	</tr>
+</table>
+</center>
 <br />
-Syntax:<br />
-<b>http://&lt;server&gt;:&lt;port&gt;/&lt;bucket&gt;/&lt;key&gt;</b> <br />
 <br />
-
-<table style="font-size: 13px;">
+<table style="font-size: 13px; cell-spacing: 3px; width: 100%;">
 	<tr>
-		<td><b>HTTP Method</b></td>
-		<td><b>Purpose</b></td>
-		<td><b>Note</b></td>
-		<td><b>Try it</b></td>
+		<td width="25%" align="center"><a href="javascript:sendPost()"><img border="0" src="/www/images/post.png" /></a></td>
+		<td width="25%" align="center"><a href="javascript:sendGet()"><img border="0" src="/www/images/get.png" /></a></td>
+		<td width="25%" align="center"><a href="javascript:sendPut()"><img border="0" src="/www/images/put.png" /></a></td>
+		<td width="25%" align="center"><a href="javascript:sendDelete()"><img border="0" src="/www/images/delete.png" /></a></td>
 	</tr>
 	<tr>
-		<td>POST</td>
-		<td>Insert the content in the bucket with the key specified</td>
-		<td>If the key already exists, an error will be returned.</td>
-		<td>
-		<form name="post" method="post" action="">
-		<table style="font-size: 13px;">
-			<tr colspan="2">
-				<td width="60">Key</td>
-				<td><input id="post-key" type="input" size="8" /></td>
-				<td><a href="javascript:sendPost( document.getElementById('post-key').value, document.getElementById('post-value').value )">Submit</a></td>
-			</tr>
-			<tr>
-				<td>Value</td>
-				<td><input id="post-value" type="input" size="8" /></td>
-			</tr>
-		</table>
-		</form>
-		</td>
+		<td align="center">POST</td>
+		<td align="center">GET</td>
+		<td align="center">PUT</td>
+		<td align="center">DELETE</td>
 	</tr>
 	<tr>
-		<td>GET</td>
-		<td>Retrieve the content of the key in the bucket specified</td>
-		<td>If the key doesn't exists an error will be returned.</td>
-		<td>
-		<form name="get" method="get" action="">
-		<table style="font-size: 13px;">
-			<tr>
-				<td width="60">Key</td>
-				<td><input id="get-key" type="input" size="8" /></td>
-				<td><a href="javascript:sendGet( document.getElementById('get-key').value )">Submit</a></td>
-			</tr>
-		</table>
-		</form>
-		</td>
-	</tr>
-	<tr>
-		<td>PUT</td>
-		<td>Update the content in the bucket with the key specified</td>
-		<td>If the key doesn't exists an error will be returned.</td>
-		<td>
-		<form name="put" method="put" action="">
-		<table style="font-size: 13px;">
-			<tr colspan="2">
-				<td width="60">Key</td>
-				<td><input id="put-key" type="input" size="8" /></td>
-				<td><a href="javascript:sendPut( document.getElementById('put-key').value, document.getElementById('put-value').value )">Submit</a></td>
-			</tr>
-			<tr>
-				<td>Value</td>
-				<td><input id="put-value" type="input" size="8" /></td>
-			</tr>
-		</table>
-		</form>
-		</td>
-	</tr>
-	<tr>
-		<td>DELETE</td>
-		<td>Delete the key in the bucket specified</td>
-		<td>If the key doesn't exists an error will be returned.</td>
-		<td>
-		<form name="delete" method="delete" action="">
-		<table style="font-size: 13px;">
-			<tr>
-				<td width="60">Key</td>
-				<td><input id="delete-key" type="input" size="8" /></td>
-				<td><a href="javascript:sendDelete( document.getElementById('delete-key').value )">Submit</a></td>
-			</tr>
-		</table>
-		</form>
-		</td>
+		<td valign="top">Insert a key/value entry</td>
+		<td valign="top">Retrieve the value of the key</td>
+		<td valign="top">Update the value of the key</td>
+		<td valign="top">Delete the key/value entry</td>
 	</tr>
 </table>
 </div>
@@ -182,7 +145,6 @@ Syntax:<br />
 </div>
 <div class="row">
 <div class="cell-double-spaced column1 centered">To know more information visit: <a href="http://www.orientechnologies.com">http://www.orientechnologies.com</a></div>
-</div>
 </div>
 </div>
 </body>
