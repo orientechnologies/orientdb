@@ -22,6 +22,7 @@ import com.orientechnologies.orient.kv.OSharedDatabase;
 import com.orientechnologies.orient.kv.network.protocol.http.ONetworkProtocolHttpKV;
 import com.orientechnologies.orient.kv.network.protocol.http.partitioned.ODistributedException;
 import com.orientechnologies.orient.kv.network.protocol.http.partitioned.OServerClusterMember;
+import com.orientechnologies.orient.server.OServerMain;
 
 public class ONetworkProtocolHttpKVLocal extends ONetworkProtocolHttpKV {
 	@Override
@@ -29,7 +30,12 @@ public class ONetworkProtocolHttpKVLocal extends ONetworkProtocolHttpKV {
 		ODatabaseBinary db = null;
 
 		try {
-			db = OSharedDatabase.acquireDatabase(dbName);
+			// CHECK FOR IN-MEMORY DB
+			db = (ODatabaseBinary) OServerMain.server().getMemoryDatabases().get(dbName);
+			if (db == null)
+				// CHECK FOR DISK DB
+				db = OSharedDatabase.acquireDatabase(dbName);
+
 			return OServerClusterMember.getDictionaryBucket(db, iBucketName);
 
 		} catch (Exception e) {

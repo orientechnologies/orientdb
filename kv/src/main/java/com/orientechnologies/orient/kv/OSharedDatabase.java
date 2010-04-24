@@ -25,9 +25,8 @@ public class OSharedDatabase {
 	private static final ODatabasePool<ODatabaseBinary>	dbPool	= new ODatabasePool<ODatabaseBinary>(1) {
 
 																																public ODatabaseBinary createNewResource(String iDatabaseName) {
-																																	ODatabaseBinary db = new ODatabaseBinary("local:"
-																																			+ OServerMain.server().getStoragePath(iDatabaseName)).open(
-																																			"admin", "admin");
+																																	ODatabaseBinary db = new ODatabaseBinary(OServerMain.server()
+																																			.getStoragePath(iDatabaseName)).open("admin", "admin");
 
 																																	// DISABLE CACHE SINCE THERE IS HAZELCAST FOR IT
 																																	((ODatabaseRaw) db.getUnderlying()).setUseCache(false);

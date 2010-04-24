@@ -105,7 +105,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				passwd = channel.readString();
 
 				// SEARCH THE DB IN MEMORY FIRST
-				connection.database = OServerMain.server().getMemoryDatabases().get(dbName);
+				connection.database = (ODatabaseDocumentTx) OServerMain.server().getMemoryDatabases().get(dbName);
 
 				if (connection.database == null)
 					// SEARCH THE DB IN LOCAL FS

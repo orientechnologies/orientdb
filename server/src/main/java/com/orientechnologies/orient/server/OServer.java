@@ -35,7 +35,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.server.config.OConfigurationLoaderXml;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
@@ -60,7 +60,7 @@ public class OServer {
 	protected List<Object>																		handlers							= new ArrayList<Object>();
 	protected Map<String, Class<? extends ONetworkProtocol>>	protocols							= new HashMap<String, Class<? extends ONetworkProtocol>>();
 	protected List<OServerNetworkListener>										listeners							= new ArrayList<OServerNetworkListener>();
-	protected Map<String, ODatabaseDocumentTx>								memoryDatabases				= new HashMap<String, ODatabaseDocumentTx>();
+	protected Map<String, ODatabaseRecord<?>>									memoryDatabases				= new HashMap<String, ODatabaseRecord<?>>();
 
 	protected static ThreadGroup															threadGroup;
 
@@ -174,7 +174,7 @@ public class OServer {
 		return threadGroup;
 	}
 
-	public Map<String, ODatabaseDocumentTx> getMemoryDatabases() {
+	public Map<String, ODatabaseRecord<?>> getMemoryDatabases() {
 		return memoryDatabases;
 	}
 }
