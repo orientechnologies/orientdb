@@ -28,6 +28,7 @@
       var value = document.getElementById('value').value;
       
       jQuery.ajax({ type: 'GET', url: '/' + db + '/' + bucket + '/' + key, cache: false, processData: false, success: response, error: error });
+      $('#value').val( $('#response-text').val() );     
     }
 
     function sendPost(){
@@ -57,6 +58,10 @@
         jQuery.ajax({ type: 'DELETE', url: '/' + db + '/' + bucket + '/' + key, cache: false, processData: false, success: response, error: error });
     }
     
+    function clear(){
+      document.getElementById('value').value='';
+    }
+    
     function response(content, status, obj){
       $('#response-text').val(obj.responseText);
       $('#status-code').val(status);
@@ -84,30 +89,28 @@
 The Orient Key/Value Server interface is REST over HTTP protocol. In this page you can execute the basic commands to get acquainted with.<br />
 <br />
 To use directly the URL is: <b>http://&lt;server&gt;:&lt;port&gt;/&lt;database&gt;&lt;bucket&gt;/&lt;key&gt;</b></div>
-
 <div class="row">
-<div class="cell-double-spaced column1">
-<h2>Basic Console</h2>
+<div class="cell-double-spaced column1"><b><i>Basic Console</i></b>
 <center>
-<table style="font-size: 13px; width: 100%;">
+<table style="width: 100%;">
 	<tr>
 		<td align="center"></td>
 		<td align="center">(Database)</td>
 		<td align="center">(Bucket)</td>
 		<td align="center">(Key)</td>
-		<td align="center">(Value)</td>
 	</tr>
 	<tr>
 		<td>http://localhost:8020/</td>
 		<td><input id="database" size="20" value="demo" />/</td>
-		<td><input id="bucket" size="20" value="default" />/</td>
-		<td><input id="key" size="20" value="" />/</td>
-		<td><input id="value" size="20" value="" /></td>
+		<td><input id="bucket" size="20" value="space" />/</td>
+		<td><input id="key" size="35" value="starwars" /></td>
+	</tr>
+	<tr>
+		<td valign="top" colspan="4"><textarea id="value" cols="88" rows="5" title="value">Star Wars is an epic  space opera franchise conceived by George Lucas. The first film in the franchise was originally released on May 25, 1977, by 20th Century Fox, and became a worldwide pop culture phenomenon, spawning two immediate sequels, released at three-year intervals. Sixteen years after the release of the trilogy's final film, the first in a new prequel trilogy of films was released, again released at three-year intervals, with the final film released on May 19, 2005.</textarea>
+		<a href="javascript:clear()"><img border="0" src="/www/images/clear.png" /></a></td>
 	</tr>
 </table>
 </center>
-<br />
-<br />
 <table style="font-size: 13px; cell-spacing: 3px; width: 100%;">
 	<tr>
 		<td width="25%" align="center"><a href="javascript:sendPost()"><img border="0" src="/www/images/post.png" /></a></td>
