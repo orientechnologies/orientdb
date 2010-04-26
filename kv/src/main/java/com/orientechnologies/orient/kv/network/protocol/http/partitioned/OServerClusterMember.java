@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.kv.network.protocol.http.partitioned;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Set;
 
 import com.hazelcast.core.Hazelcast;
@@ -89,7 +90,7 @@ public class OServerClusterMember implements InstanceListener, MembershipListene
 			return;
 
 		String parts[];
-		OTreeMapPersistent<String, String> bucket;
+		Map<String, String> bucket;
 
 		for (Instance instance : Hazelcast.getInstances()) {
 			if (instance.getInstanceType() == InstanceType.MAP) {
@@ -102,7 +103,7 @@ public class OServerClusterMember implements InstanceListener, MembershipListene
 					if (partitionService.getPartition(localKey).getPartitionId() == partitionId) {
 						// MY OWN ENTRY: STORE IT
 						try {
-							parts = ONetworkProtocolHttpKV.getDbBucketKey(localKey);
+							parts = ONetworkProtocolHttpKV.getDbBucketKey(localKey, 3);
 							ODatabaseBinary db = OSharedDatabase.acquireDatabase(parts[0]);
 
 							bucket = getDictionaryBucket(db, parts[1]);
@@ -121,8 +122,7 @@ public class OServerClusterMember implements InstanceListener, MembershipListene
 		}
 	}
 
-	public static OTreeMapPersistent<String, String> getDictionaryBucket(final ODatabaseBinary iDatabase, final String iName)
-			throws IOException {
+	public static Map<String, String> getDictionaryBucket(final ODatabaseBinary iDatabase, final String iName) throws IOException {
 		ORecordBytes record = iDatabase.getDictionary().get(iName);
 
 		OTreeMapPersistent<String, String> bucket;

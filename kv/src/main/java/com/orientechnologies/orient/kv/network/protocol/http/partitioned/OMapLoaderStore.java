@@ -41,10 +41,10 @@ public class OMapLoaderStore implements MapLoader<String, String>, MapStore<Stri
 		ODatabaseBinary db = null;
 
 		try {
-			String[] parts = ONetworkProtocolHttpKV.getDbBucketKey(iKey);
+			String[] parts = ONetworkProtocolHttpKV.getDbBucketKey(iKey, 3);
 
 			db = OSharedDatabase.acquireDatabase(parts[0]);
-			OTreeMapPersistent<String, String> bucket = OServerClusterMember.getDictionaryBucket(db, parts[1]);
+			Map<String, String> bucket = OServerClusterMember.getDictionaryBucket(db, parts[1]);
 			return bucket.get(parts[2]);
 
 		} catch (Exception e) {
@@ -65,10 +65,10 @@ public class OMapLoaderStore implements MapLoader<String, String>, MapStore<Stri
 		ODatabaseBinary db = null;
 
 		try {
-			String[] parts = ONetworkProtocolHttpKV.getDbBucketKey(iKey);
+			String[] parts = ONetworkProtocolHttpKV.getDbBucketKey(iKey, 3);
 
 			db = OSharedDatabase.acquireDatabase(parts[0]);
-			OTreeMapPersistent<String, String> bucket = OServerClusterMember.getDictionaryBucket(db, parts[1]);
+			Map<String, String> bucket = OServerClusterMember.getDictionaryBucket(db, parts[1]);
 
 			bucket.put(parts[2], iValue);
 
@@ -90,10 +90,10 @@ public class OMapLoaderStore implements MapLoader<String, String>, MapStore<Stri
 		ODatabaseBinary db = null;
 
 		try {
-			String[] parts = ONetworkProtocolHttpKV.getDbBucketKey(iKey);
+			String[] parts = ONetworkProtocolHttpKV.getDbBucketKey(iKey, 3);
 
 			db = OSharedDatabase.acquireDatabase(parts[0]);
-			OTreeMapPersistent<String, String> bucket = OServerClusterMember.getDictionaryBucket(db, parts[1]);
+			Map<String, String> bucket = OServerClusterMember.getDictionaryBucket(db, parts[1]);
 			bucket.remove(parts[2]);
 
 		} catch (Exception e) {

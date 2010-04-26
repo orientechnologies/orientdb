@@ -35,7 +35,7 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolException;
 
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
-	private static final String			CONTENT_LENGTH			= "Content-Length: ";
+	private static final String			CONTENT_LENGTH			= "CONTENT-LENGTH: ";
 	private static final byte[]			EOL									= { (byte) '\r', (byte) '\n' };
 	private static final String			ORIENT_SERVER_KV		= "Orient Key Value v." + OConstants.ORIENT_VERSION;
 	private static final int				MAX_CONTENT_LENGTH	= 10000;																							// MAX = 10Kb
@@ -110,7 +110,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 			final long iSize) throws IOException {
 		sendStatus(iCode, iReason);
 		sendResponseHeaders(iContentType);
-		writeLine(CONTENT_LENGTH + (iSize + 2));
+		writeLine(CONTENT_LENGTH + (iSize));
 		writeLine(null);
 
 		int i = 0;
@@ -143,15 +143,20 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
 	protected String readAllContent() throws IOException {
 		StringBuilder request = new StringBuilder();
+		int in;
 		char currChar;
 		int contentLength = -1;
 		boolean endOfHeaders = false;
 		while (!channel.socket.isInputShutdown()) {
-			currChar = (char) channel.inStream.read();
+			in = channel.inStream.read();
+			if (in == -1)
+				break;
+
+			currChar = (char) in;
 
 			if (currChar == '\r') {
-				if (contentLength == -1) {
-					String line = request.toString();
+				if (request.length() > 0 && contentLength == -1) {
+					String line = request.toString().toUpperCase();
 					if (line.startsWith(CONTENT_LENGTH)) {
 						contentLength = Integer.parseInt(line.substring(CONTENT_LENGTH.length()));
 						if (contentLength > MAX_CONTENT_LENGTH)
@@ -163,7 +168,11 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 				}
 
 				// CONSUME /r or /n
-				channel.inStream.read();
+				in = channel.inStream.read();
+				if (in == -1)
+					break;
+
+				currChar = (char) in;
 
 				if (!endOfHeaders && request.length() == 0) {
 					if (contentLength <= 0)
@@ -174,7 +183,6 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 				}
 
 				request.setLength(0);
-
 			} else if (endOfHeaders && request.length() == 0 && currChar != '\r' && currChar != '\n') {
 				// END OF HEADERS
 				byte[] buffer = new byte[contentLength];

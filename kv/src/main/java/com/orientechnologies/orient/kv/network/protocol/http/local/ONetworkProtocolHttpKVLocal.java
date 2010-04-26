@@ -15,26 +15,51 @@
  */
 package com.orientechnologies.orient.kv.network.protocol.http.local;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseBinary;
+import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.kv.OSharedDatabase;
 import com.orientechnologies.orient.kv.network.protocol.http.ONetworkProtocolHttpKV;
 import com.orientechnologies.orient.kv.network.protocol.http.partitioned.ODistributedException;
 import com.orientechnologies.orient.kv.network.protocol.http.partitioned.OServerClusterMember;
 import com.orientechnologies.orient.server.OServerMain;
+import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
 
 public class ONetworkProtocolHttpKVLocal extends ONetworkProtocolHttpKV {
+	private static Map<String, Map<String, Map<String, String>>>	memoryDatabases	= new HashMap<String, Map<String, Map<String, String>>>();
+
+	static {
+		// CREATE IN-MEMORY DATABASES EARLY
+		for (OServerStorageConfiguration stg : OServerMain.server().getConfiguration().storages) {
+			if (stg.path.startsWith(OEngineMemory.NAME)) {
+				ODatabaseBinary db = new ODatabaseBinary(stg.path);
+
+				// CREATE AND PUT IN THE MEMORY MAPTABLE TO AVOID LOCKING (IT'S THREAD SAFE)
+				db.create();
+				OServerMain.server().getMemoryDatabases().put(stg.name, db);
+			}
+		}
+	}
+
 	@Override
 	protected Map<String, String> getBucket(final String dbName, final String iBucketName) {
 		ODatabaseBinary db = null;
 
+		// CHECK FOR IN-MEMORY DB
+		db = (ODatabaseBinary) OServerMain.server().getMemoryDatabases().get(dbName);
+		if (db != null)
+			return getBucketFromMemory(dbName, iBucketName);
+		else
+			return getBucketFromDatabase(dbName, iBucketName);
+	}
+
+	protected Map<String, String> getBucketFromDatabase(final String dbName, final String iBucketName) {
+		ODatabaseBinary db = null;
+
 		try {
-			// CHECK FOR IN-MEMORY DB
-			db = (ODatabaseBinary) OServerMain.server().getMemoryDatabases().get(dbName);
-			if (db == null)
-				// CHECK FOR DISK DB
-				db = OSharedDatabase.acquireDatabase(dbName);
+			db = OSharedDatabase.acquireDatabase(dbName);
 
 			return OServerClusterMember.getDictionaryBucket(db, iBucketName);
 
@@ -47,8 +72,26 @@ public class ONetworkProtocolHttpKVLocal extends ONetworkProtocolHttpKV {
 		}
 	}
 
+	protected Map<String, String> getBucketFromMemory(final String dbName, final String iBucketName) {
+		Map<String, Map<String, String>> db = memoryDatabases.get(dbName);
+		if (db == null) {
+			db = new HashMap<String, Map<String, String>>();
+			memoryDatabases.put(dbName, db);
+		}
+
+		Map<String, String> bucket = db.get(iBucketName);
+		if (bucket == null) {
+			bucket = new HashMap<String, String>();
+			db.put(iBucketName, bucket);
+		}
+		return bucket;
+	}
+
 	@Override
 	protected String getKey(final String iDbBucketKey) {
-		return getDbBucketKey(iDbBucketKey)[2];
+		final String[] parts = getDbBucketKey(iDbBucketKey, 2);
+		if (parts.length > 2)
+			return parts[2];
+		return null;
 	}
 }

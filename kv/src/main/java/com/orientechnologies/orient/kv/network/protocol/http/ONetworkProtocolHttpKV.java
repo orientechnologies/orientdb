@@ -43,16 +43,28 @@ public abstract class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstrac
 			return;
 		}
 
-		final String parts[] = ONetworkProtocolHttpKV.getDbBucketKey(iURI);
+		final String parts[] = ONetworkProtocolHttpKV.getDbBucketKey(iURI, 2);
 
 		final String dbName = parts[0];
 		final String bucket = parts[1];
 		final String key = getKey(iURI);
 
 		try {
+			String value;
 
+			// SEARCH THE BUCKET
 			final Map<String, String> bucketMap = getBucket(dbName, bucket);
-			final String value = bucketMap.get(key);
+			if (key != null)
+				// SEARCH THE KEY
+				value = bucketMap.get(key);
+			else {
+				// BROWSE ALL THE KEYS
+				final StringBuilder buffer = new StringBuilder();
+				for (String k : bucketMap.keySet()) {
+					buffer.append(k + "\n");
+				}
+				value = buffer.toString();
+			}
 
 			final int code = value == null ? 404 : 200;
 			final String reason = value == null ? "Not Found" : "Ok";
@@ -73,7 +85,7 @@ public abstract class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstrac
 
 	@Override
 	public void doPut(final String iURI, final String iContent, final OChannelTextServer iChannel) throws ONetworkProtocolException {
-		final String parts[] = getDbBucketKey(iURI);
+		final String parts[] = getDbBucketKey(iURI, 3);
 
 		final String dbName = parts[0];
 		final String bucket = parts[1];
@@ -114,7 +126,7 @@ public abstract class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstrac
 
 	@Override
 	public void doPost(final String iURI, final String iContent, final OChannelTextServer iChannel) throws ONetworkProtocolException {
-		final String parts[] = getDbBucketKey(iURI);
+		final String parts[] = getDbBucketKey(iURI, 3);
 
 		final String dbName = parts[0];
 		final String bucket = parts[1];
@@ -154,7 +166,7 @@ public abstract class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstrac
 
 	@Override
 	public void doDelete(String iURI, String iContent, OChannelTextServer iChannel) throws ONetworkProtocolException {
-		final String parts[] = getDbBucketKey(iURI);
+		final String parts[] = getDbBucketKey(iURI, 3);
 
 		final String dbName = parts[0];
 		final String bucket = parts[1];
@@ -190,7 +202,7 @@ public abstract class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstrac
 		}
 	}
 
-	public static String[] getDbBucketKey(String iParameters) {
+	public static String[] getDbBucketKey(String iParameters, final int iMin) {
 		if (iParameters == null || iParameters.length() < 5)
 			throw new ONetworkProtocolException("Requested URI '" + iParameters + "' is invalid. Expected db/bucket/key");
 
@@ -199,12 +211,12 @@ public abstract class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstrac
 			iParameters = iParameters.substring(1);
 
 		if (iParameters.endsWith(URL_SEPARATOR))
-			iParameters = iParameters.substring(0, iParameters.length() - 2);
+			iParameters = iParameters.substring(0, iParameters.length() - 1);
 
 		final String[] pars = iParameters.split(URL_SEPARATOR);
 
-		if (pars == null || pars.length < 3)
-			throw new ONetworkProtocolException("Requested URI '" + iParameters + "' is invalid. Expected db/bucket/key");
+		if (pars == null || pars.length < iMin)
+			throw new ONetworkProtocolException("Requested URI '" + iParameters + "' is invalid. Expected db/bucket[/key]");
 
 		return pars;
 	}

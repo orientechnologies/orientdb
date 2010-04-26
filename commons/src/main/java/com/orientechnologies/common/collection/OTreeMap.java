@@ -274,6 +274,9 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 	}
 
 	final OTreeMapEntry<K, V> getEntry(Object key, boolean iGetContainer) {
+		if (key == null)
+			return null;
+
 		pageItemFound = false;
 
 		// Offload comparator-based version for sake of performance
