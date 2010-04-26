@@ -13,29 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.storage.impl.memory;
-
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map.Entry;
+package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.dictionary.ODictionaryInternal;
-import com.orientechnologies.orient.core.dictionary.ODictionaryIterator;
 
-@SuppressWarnings("serial")
-public class ODictionaryMemory<T extends Object> extends HashMap<String, T> implements ODictionaryInternal<T> {
+/**
+ * SQL DELETE command.
+ * 
+ * @author luca
+ * 
+ */
+public class OCommandSQLDelete extends OCommandSQLAbstract {
 
-	public ODictionaryMemory(final ODatabaseRecord<?> iDatabase) {
+	public OCommandSQLDelete(final String iText, final String iTextUpperCase, final ODatabaseRecord<?> iDatabase) {
+		super(iText, iTextUpperCase);
 	}
 
-	public void create() {
+	public Object execute() {
+		return null;
 	}
 
-	public void load() {
-	}
-
-	public Iterator<Entry<String, T>> iterator() {
-		return new ODictionaryIterator<T>(this);
-	}
 }

@@ -13,21 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.db.record;
+package com.orientechnologies.orient.core.sql.filter;
 
-import com.orientechnologies.orient.core.command.OCommand;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
-import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 
-public interface ODatabaseRecord<REC extends ORecordInternal<?>> extends ODatabaseComplex<REC> {
+/**
+ * Represent an object field as value in the query condition.
+ * 
+ * @author luca
+ * 
+ */
+public class OSQLFilterItemField extends OSQLFilterItemAbstract {
+	public OSQLFilterItemField(final OSQLFilter iQueryCompiled, final String iName) {
+		super(iQueryCompiled, iName);
+	}
 
-	public ORecordIteratorCluster<REC> browseCluster(String iClusterName);
-
-	public OCommand command(OCommand iCommand);
-
-	public OQuery<REC> query(OQuery<REC> iQuery);
-
-	public Class<? extends REC> getRecordType();
+	public Object getValue(final ORecordInternal<?> iRecord) {
+		return transformValue(((ORecordSchemaAware<?>) iRecord).field(name));
+	}
 }

@@ -23,8 +23,8 @@ import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.query.OAsynchQueryResultListener;
-import com.orientechnologies.orient.core.query.sql.OSQLSynchQuery;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 
 public class SQLSynchQuerySpeedTest extends SpeedTestMonoThread implements OAsynchQueryResultListener<ODocument> {

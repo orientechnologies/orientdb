@@ -22,8 +22,8 @@ import org.testng.annotations.Test;
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.query.OAsynchQueryResultListener;
-import com.orientechnologies.orient.core.query.sql.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 
 @Test(enabled = false)

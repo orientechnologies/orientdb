@@ -44,14 +44,14 @@ import com.orientechnologies.orient.core.query.OAsynchQuery;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.query.OQueryExecutor;
 import com.orientechnologies.orient.core.query.OQueryInternal;
-import com.orientechnologies.orient.core.query.sql.OSQLAsynchQuery;
-import com.orientechnologies.orient.core.query.sql.OSQLQuery;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
+import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
+import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
@@ -387,7 +387,7 @@ public class OStorageRemote extends OStorageAbstract {
 				break;
 
 			} catch (Exception e) {
-				if (handleException("Error on executing query: " + ((OSQLQuery<?>) iQuery).text(), e))
+				if (handleException("Error on executing query: " + ((OSQLQuery<?>) iQuery).getText(), e))
 					break;
 
 			} finally {
@@ -428,7 +428,7 @@ public class OStorageRemote extends OStorageAbstract {
 							network.readLong(), network.readInt()).fromStream(network.readBytes());
 				}
 			} catch (Exception e) {
-				if (handleException("Error on executing query: " + ((OSQLQuery<?>) iQuery).text(), e))
+				if (handleException("Error on executing query: " + ((OSQLQuery<?>) iQuery).getText(), e))
 					break;
 
 			} finally {

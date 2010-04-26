@@ -13,15 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.db.document;
+package com.orientechnologies.orient.core.sql.operator;
 
-import com.orientechnologies.orient.core.db.ODatabaseSchemaAware;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.iterator.ORecordIteratorMultiCluster;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
-public interface ODatabaseDocument extends ODatabaseRecord<ODocument>, ODatabaseSchemaAware<ODocument> {
+/**
+ * IS operator. Different by EQUALS since works also for null. Example "IS null"
+ * 
+ * @author luca
+ * 
+ */
+public class OQueryOperatorIs extends OQueryOperatorEquality {
 
-	public ORecordIteratorMultiCluster<ODocument> browseClass(String iClassName);
+	public OQueryOperatorIs() {
+		super("IS", 5, false);
+	}
 
+	protected boolean evaluateExpression(OSQLFilterCondition iCondition, final Object iLeft, final Object iRight) {
+		return iLeft == iRight;
+	}
 }

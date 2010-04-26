@@ -23,7 +23,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 public interface OQuery<T extends ORecordInternal<?>> {
 
 	/**
-	 * Execute the query without limit about the resultset. The limit will be bound to the maximum allowed.
+	 * Execute the query without limit about the result set. The limit will be bound to the maximum allowed.
 	 * 
 	 * @return List of records if any record matches the query constraints, otherwise an empty List.
 	 */

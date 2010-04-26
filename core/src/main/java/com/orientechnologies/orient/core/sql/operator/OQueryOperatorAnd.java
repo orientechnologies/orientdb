@@ -13,15 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.db.document;
+package com.orientechnologies.orient.core.sql.operator;
 
-import com.orientechnologies.orient.core.db.ODatabaseSchemaAware;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.iterator.ORecordIteratorMultiCluster;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
-public interface ODatabaseDocument extends ODatabaseRecord<ODocument>, ODatabaseSchemaAware<ODocument> {
+/**
+ * AND operator.
+ * 
+ * @author luca
+ * 
+ */
+public class OQueryOperatorAnd extends OQueryOperator {
 
-	public ORecordIteratorMultiCluster<ODocument> browseClass(String iClassName);
+	public OQueryOperatorAnd() {
+		super("AND", 7, true);
+	}
 
+	public boolean evaluate(final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight) {
+		if (iLeft == null)
+			return false;
+		return (Boolean) iLeft && (Boolean) iRight;
+	}
 }

@@ -16,6 +16,8 @@
 package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.command.OCommand;
+import com.orientechnologies.orient.core.command.OCommandInternal;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
@@ -148,6 +150,21 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		checkSecurity(OUser.CLUSTER + "." + iClusterName, OUser.READ);
 
 		return new ORecordIteratorCluster<REC>(this, this, getClusterIdByName(iClusterName));
+	}
+
+	public OCommand command(final OCommand iCommand) {
+		checkSecurity(OUser.COMMAND, OUser.READ);
+
+		OCommandInternal command = (OCommandInternal) iCommand;
+
+		try {
+			command.setDatabase((ODatabaseRecord<REC>) getDatabaseOwner());
+
+			return command;
+
+		} catch (Exception e) {
+			throw new ODatabaseException("Error on command execution", e);
+		}
 	}
 
 	public OQuery<REC> query(final OQuery<REC> iQuery) {

@@ -13,29 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.storage.impl.memory;
-
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map.Entry;
+package com.orientechnologies.orient.core.command;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.dictionary.ODictionaryInternal;
-import com.orientechnologies.orient.core.dictionary.ODictionaryIterator;
 
-@SuppressWarnings("serial")
-public class ODictionaryMemory<T extends Object> extends HashMap<String, T> implements ODictionaryInternal<T> {
+/**
+ * Internal specialization of generic OCommand interface.
+ * 
+ * @author luca
+ * 
+ * @param <T>
+ */
+public interface OCommandInternal extends OCommand {
+	public ODatabaseRecord<?> getDatabase();
 
-	public ODictionaryMemory(final ODatabaseRecord<?> iDatabase) {
-	}
-
-	public void create() {
-	}
-
-	public void load() {
-	}
-
-	public Iterator<Entry<String, T>> iterator() {
-		return new ODictionaryIterator<T>(this);
-	}
+	public void setDatabase(final ODatabaseRecord<?> iDatabase);
 }

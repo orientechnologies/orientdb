@@ -21,14 +21,16 @@
 </style>
 
 <script type="text/javascript">
+    var reqType = "";
+    
     function sendGet(){
       var db = document.getElementById('database').value;
       var bucket = document.getElementById('bucket').value;
       var key = document.getElementById('key').value;
       var value = document.getElementById('value').value;
+      reqType = "get";
       
       jQuery.ajax({ type: 'GET', url: '/' + db + '/' + bucket + '/' + key, cache: false, processData: false, success: response, error: error });
-      $('#value').val( $('#response-text').val() );     
     }
 
     function sendPost(){
@@ -36,6 +38,7 @@
         var bucket = document.getElementById('bucket').value;
         var key = document.getElementById('key').value;
         var value = document.getElementById('value').value;
+        reqType = "post";
 
         jQuery.ajax({ type: 'POST', url: '/' + db + '/' + bucket + '/' + key, data: value, dataType: "text", cache: false, processData: false, success: response, error: error });
     }
@@ -45,6 +48,7 @@
         var bucket = document.getElementById('bucket').value;
         var key = document.getElementById('key').value;
         var value = document.getElementById('value').value;
+        reqType = "put";
 
         jQuery.ajax({ type: 'PUT', url: '/' + db + '/' + bucket + '/' + key, data: value, dataType: "text", cache: false, processData: false, success: response, error: error });
     }
@@ -54,6 +58,7 @@
         var bucket = document.getElementById('bucket').value;
         var key = document.getElementById('key').value;
         var value = document.getElementById('value').value;
+        reqType = "delete";
 
         jQuery.ajax({ type: 'DELETE', url: '/' + db + '/' + bucket + '/' + key, cache: false, processData: false, success: response, error: error });
     }
@@ -63,9 +68,15 @@
     }
     
     function response(content, status, obj){
-      $('#response-text').val(obj.responseText);
+      $('#response-text').val(content);
       $('#status-code').val(status);
-      $('#status-text').val(obj.statusText);
+      if( obj != null )
+        $('#status-text').val(obj.statusText);
+      else
+        $('#status-text').val("");
+
+      if( reqType == "get" )
+        $('#value').val( content );
     }
     
     function error(content, status, obj){
@@ -113,20 +124,20 @@ To use directly the URL is: <b>http://&lt;server&gt;:&lt;port&gt;/&lt;database&g
 </center>
 <table style="font-size: 13px; cell-spacing: 3px; width: 100%;">
 	<tr>
-		<td width="25%" align="center"><a href="javascript:sendPost()"><img border="0" src="/www/images/post.png" /></a></td>
 		<td width="25%" align="center"><a href="javascript:sendGet()"><img border="0" src="/www/images/get.png" /></a></td>
+        <td width="25%" align="center"><a href="javascript:sendPost()"><img border="0" src="/www/images/post.png" /></a></td>
 		<td width="25%" align="center"><a href="javascript:sendPut()"><img border="0" src="/www/images/put.png" /></a></td>
 		<td width="25%" align="center"><a href="javascript:sendDelete()"><img border="0" src="/www/images/delete.png" /></a></td>
 	</tr>
 	<tr>
-		<td align="center">POST</td>
 		<td align="center">GET</td>
+        <td align="center">POST</td>
 		<td align="center">PUT</td>
 		<td align="center">DELETE</td>
 	</tr>
 	<tr>
-		<td valign="top">Insert a key/value entry</td>
 		<td valign="top">Retrieve the value of the key</td>
+        <td valign="top">Insert a key/value entry</td>
 		<td valign="top">Update the value of the key</td>
 		<td valign="top">Delete the key/value entry</td>
 	</tr>

@@ -13,15 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.db.document;
+package com.orientechnologies.orient.core.sql.filter;
 
-import com.orientechnologies.orient.core.db.ODatabaseSchemaAware;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.iterator.ORecordIteratorMultiCluster;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.query.OQueryHelper;
 
-public interface ODatabaseDocument extends ODatabaseRecord<ODocument>, ODatabaseSchemaAware<ODocument> {
+/**
+ * Represent one or more object fields as value in the query condition.
+ * 
+ * @author luca
+ * 
+ */
+public class OSQLFilterItemFieldAny extends OSQLFilterItemFieldMultiAbstract {
+	public static final String	NAME	= "ANY";
 
-	public ORecordIteratorMultiCluster<ODocument> browseClass(String iClassName);
-
+	public OSQLFilterItemFieldAny(final OSQLFilter iQueryCompiled, final String iName) {
+		super(iQueryCompiled, iName, OQueryHelper.getParameters(iName));
+	}
 }

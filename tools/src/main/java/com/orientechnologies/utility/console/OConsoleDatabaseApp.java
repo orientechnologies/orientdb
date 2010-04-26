@@ -35,7 +35,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.query.OAsynchQueryResultListener;
-import com.orientechnologies.orient.core.query.sql.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAwareAbstract;
@@ -46,6 +45,8 @@ import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.utility.impexp.OConsoleDatabaseExport;
 import com.orientechnologies.utility.impexp.ODatabaseExportException;
 
@@ -157,19 +158,41 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		out.println("OK");
 	}
 
-	@ConsoleCommand(splitInWords = false, description = "Execute a query against the database and display the results")
-	public void select(@ConsoleParameter(name = "query-text", description = "The query to execute") String iQuery) {
+	@ConsoleCommand(splitInWords = false, description = "Insert a new record into the database")
+	public void insert(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
 		checkCurrentDatabase();
 
-		if (iQuery == null)
+		if (iCommandText == null)
 			return;
 
-		iQuery = iQuery.trim();
+		iCommandText = iCommandText.trim();
 
-		if (iQuery.length() == 0 || iQuery.equalsIgnoreCase("select"))
+		if (iCommandText.length() == 0 || iCommandText.equalsIgnoreCase("insert"))
 			return;
 
-		iQuery = "select " + iQuery;
+		iCommandText = "insert " + iCommandText;
+
+		currentResultSet.clear();
+
+		long start = System.currentTimeMillis();
+		int records = (Integer) currentDatabase.command(new OCommandSQL(iCommandText)).execute();
+
+		out.printf("Inserted %d records in %f sec(s).", records, (float) (System.currentTimeMillis() - start) / 1000);
+	}
+
+	@ConsoleCommand(splitInWords = false, description = "Execute a query against the database and display the results")
+	public void select(@ConsoleParameter(name = "query-text", description = "The query to execute") String iQueryText) {
+		checkCurrentDatabase();
+
+		if (iQueryText == null)
+			return;
+
+		iQueryText = iQueryText.trim();
+
+		if (iQueryText.length() == 0 || iQueryText.equalsIgnoreCase("select"))
+			return;
+
+		iQueryText = "select " + iQueryText;
 
 		currentResultSet.clear();
 
@@ -178,7 +201,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		final int limit = Integer.parseInt((String) properties.get("limit"));
 
 		long start = System.currentTimeMillis();
-		currentDatabase.query(new OSQLAsynchQuery<ODocument>(iQuery, new OAsynchQueryResultListener<ODocument>() {
+		currentDatabase.query(new OSQLAsynchQuery<ODocument>(iQueryText, new OAsynchQueryResultListener<ODocument>() {
 			public boolean result(final ODocument iRecord) {
 				if (currentResultSet.size() > limit - 1) {
 					printHeaderLine(columns);
@@ -199,20 +222,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		out.println(currentResultSet.size() + " item(s) found. Query executed in " + (float) (System.currentTimeMillis() - start)
 				/ 1000 + " sec(s).");
 	}
-
-	//
-	// @ConsoleCommand(splitInWords = false, description = "Insert a new record in the database")
-	// public void insert(@ConsoleParameter(name = "query-text", description = "The query to execute") String iQuery) {
-	// checkCurrentDatabase();
-	//
-	// if (iQuery == null)
-	// return;
-	//
-	// iQuery = iQuery.trim();
-	//
-	// if (iQuery.length() == 0 || iQuery.equalsIgnoreCase("insert"))
-	// return;
-	// }
 
 	@ConsoleCommand(description = "Browse all the records of a class")
 	public void browseClass(@ConsoleParameter(name = "class-name", description = "The name of the class") final String iClassName) {

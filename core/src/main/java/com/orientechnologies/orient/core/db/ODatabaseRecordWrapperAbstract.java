@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.db;
 
 import java.util.Iterator;
 
+import com.orientechnologies.orient.core.command.OCommand;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
@@ -38,7 +39,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord<
 		return (ODatabaseRecord<REC>) underlying.begin();
 	}
 
-	public ODatabaseRecord<REC> begin(TXTYPE iType) {
+	public ODatabaseRecord<REC> begin(final TXTYPE iType) {
 		return (ODatabaseRecord<REC>) underlying.begin(iType);
 	}
 
@@ -62,14 +63,15 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord<
 		return underlying.getRecordType();
 	}
 
-	public Iterator<REC> browseCluster(String iClusterName) {
+	public Iterator<REC> browseCluster(final String iClusterName) {
 		return underlying.browseCluster(iClusterName);
 	}
 
-	public OQuery<REC> query(OQuery<REC> iQuery) {
-		// OQueryInternal<REC> query = (OQueryInternal<REC>) iQuery;
-		// query.setRecord(((ODatabaseRecord<REC>) getDatabaseOwner()).newInstance());
+	public OCommand command(final OCommand iCommand) {
+		return underlying.command(iCommand);
+	}
 
+	public OQuery<REC> query(final OQuery<REC> iQuery) {
 		return underlying.query(iQuery);
 	}
 
@@ -77,25 +79,25 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord<
 		return underlying.newInstance();
 	}
 
-	public ODatabaseRecordWrapperAbstract<?, ?> delete(REC iRecord) {
+	public ODatabaseRecordWrapperAbstract<?, ?> delete(final REC iRecord) {
 		underlying.delete(iRecord);
 		return this;
 	}
 
-	public REC load(ORID iRecordId) {
+	public REC load(final ORID iRecordId) {
 		return underlying.load(iRecordId);
 	}
 
-	public REC load(REC iRecord) {
+	public REC load(final REC iRecord) {
 		return underlying.load(iRecord);
 	}
 
-	public ODatabaseRecordWrapperAbstract<?, ?> save(REC iRecord, String iClusterName) {
+	public ODatabaseRecordWrapperAbstract<?, ?> save(final REC iRecord, final String iClusterName) {
 		underlying.save(iRecord, iClusterName);
 		return this;
 	}
 
-	public ODatabaseRecordWrapperAbstract<?, ?> save(REC iRecord) {
+	public ODatabaseRecordWrapperAbstract<?, ?> save(final REC iRecord) {
 		underlying.save(iRecord);
 		return this;
 	}

@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.query;
 
+import java.util.List;
+
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
@@ -24,6 +26,10 @@ public abstract class OQueryAbstract<REC extends ORecordInternal<?>> implements 
 	protected REC										record;
 
 	protected int										limit	= -1;
+
+	public List<REC> execute() {
+		return execute(-1);
+	}
 
 	public ODatabaseRecord<REC> getDatabase() {
 		return database;

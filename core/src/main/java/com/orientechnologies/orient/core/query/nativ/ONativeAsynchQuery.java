@@ -59,10 +59,6 @@ public abstract class ONativeAsynchQuery<T extends ORecordInternal<?>, CTX exten
 		return true;
 	}
 
-	public List<T> execute() {
-		return execute(-1);
-	}
-
 	public List<T> execute(int iLimit) {
 		limit = iLimit;
 		queryRecord.setSourceQuery(this);
