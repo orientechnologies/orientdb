@@ -41,6 +41,7 @@ public class OUser {
 	public final static String		CLASS							= "database.class";
 	public final static String		ALL_CLASSES				= "database.class.*";
 	public static final String		QUERY							= "database.query";
+	public static final String		COMMAND						= "database.command";
 	public final static String		SERVER_ADMIN			= "server.admin";
 
 	protected final static int		ACL_OPERATION_NUM	= 4;
