@@ -30,6 +30,13 @@
 This document enlist the last changes to the Orient Database project.
 
 -------------------------------------------------------------------------------
+VERSION 0.9.11 (beta) - beta (April, 28th 2010)
+-------------------------------------------------------------------------------
+- New support for SQL commands INSERT, UPDATE and DELETE. Now everybody that
+  knows SQL can start using OrientDB without the need to learn a complex syntax
+  or, at worst, a Map/Reduce!
+
+-------------------------------------------------------------------------------
 VERSION 0.9.10 (beta) - beta (April, 24th 2010)
 -------------------------------------------------------------------------------
 - Operator traverse now accepts optional parameters to limit deep of

@@ -30,6 +30,12 @@
 This document enlist the last changes to the Orient Key/Value Server project.
 
 -------------------------------------------------------------------------------
+VERSION 0.9.11 (beta) - beta (April, 28th 2010)
+-------------------------------------------------------------------------------
+- Support for browsing keys inside a bucket
+- Improved speed on loading of static resources
+
+-------------------------------------------------------------------------------
 VERSION 0.9.10 (beta) - beta (April, 24th 2010)
 -------------------------------------------------------------------------------
 - Improved welcome page: nicer and more useful than before
