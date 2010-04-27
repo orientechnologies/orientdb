@@ -43,6 +43,8 @@ public abstract class OCommandSQLAbstract implements OCommandInternal, OSerializ
 		database = iDatabase;
 	}
 
+	public abstract void parse();
+
 	public String getText() {
 		return text;
 	}

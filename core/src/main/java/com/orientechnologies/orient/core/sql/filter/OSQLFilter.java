@@ -104,12 +104,14 @@ public class OSQLFilter {
 			if (subjectToMatch.startsWith(OSQLHelper.CLASS_PREFIX))
 				// REGISTER AS CLASS
 				classes.put(subjectName.substring(OSQLHelper.CLASS_PREFIX.length()), alias);
-			else if (subjectToMatch.startsWith(OSQLHelper.CLUSTER_PREFIX))
-				// REGISTER AS CLUSTER
-				clusters.put(subjectName.substring(OSQLHelper.CLUSTER_PREFIX.length()), alias);
-			else
+			else {
+				if (subjectToMatch.startsWith(OSQLHelper.CLUSTER_PREFIX))
+					// REGISTER AS CLUSTER
+					subjectName = subjectName.substring(OSQLHelper.CLUSTER_PREFIX.length());
+
 				// DEFAULT: REGISTER AS CLUSTER
 				clusters.put(subjectName, alias);
+			}
 		}
 
 		if (whereDefined)

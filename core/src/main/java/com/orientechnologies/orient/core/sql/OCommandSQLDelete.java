@@ -33,4 +33,8 @@ public class OCommandSQLDelete extends OCommandSQLAbstract {
 		return null;
 	}
 
+	@Override
+	public void parse() {
+	}
+
 }

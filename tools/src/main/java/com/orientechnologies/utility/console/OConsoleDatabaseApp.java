@@ -545,6 +545,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 				value = "[" + ((Collection<?>) value).size() + "]";
 			else if (value instanceof ORecord<?>)
 				value = ((ORecord<?>) value).getIdentity().toString();
+
 			vargs.add(value);
 		}
 

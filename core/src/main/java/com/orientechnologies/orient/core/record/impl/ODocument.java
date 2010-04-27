@@ -44,41 +44,41 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		setup();
 	}
 
-	public ODocument(byte[] iSource) {
+	public ODocument(final byte[] iSource) {
 		super(iSource);
 		setup();
 	}
 
-	public ODocument(String iClassName) {
+	public ODocument(final String iClassName) {
 		setup();
 		setClassName(iClassName);
 	}
 
-	public ODocument(ODatabaseRecord<?> iDatabase) {
+	public ODocument(final ODatabaseRecord<?> iDatabase) {
 		super(iDatabase);
 		setup();
 	}
 
-	public ODocument(ODatabaseRecord<?> iDatabase, ORID iRID) {
+	public ODocument(final ODatabaseRecord<?> iDatabase, final ORID iRID) {
 		this(iDatabase);
 		recordId = (ORecordId) iRID;
 		status = STATUS.NOT_LOADED;
 	}
 
-	public ODocument(ODatabaseRecord<?> iDatabase, String iClassName, ORID iRID) {
+	public ODocument(final ODatabaseRecord<?> iDatabase, final String iClassName, final ORID iRID) {
 		this(iDatabase, iClassName);
 		recordId = (ORecordId) iRID;
 		status = STATUS.NOT_LOADED;
 	}
 
-	public ODocument(ODatabaseRecord<?> iDatabase, String iClassName) {
+	public ODocument(final ODatabaseRecord<?> iDatabase, final String iClassName) {
 		super(iDatabase, iClassName);
 		setup();
 	}
 
-	public ODocument(OClass iLinkedClass) {
+	public ODocument(final OClass iClass) {
 		setup();
-		clazz = iLinkedClass;
+		clazz = iClass;
 	}
 
 	public ODocument copy() {
@@ -138,7 +138,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	}
 
 	@Override
-	public ODocument fromStream(byte[] iRecordBuffer) {
+	public ODocument fromStream(final byte[] iRecordBuffer) {
 		super.fromStream(iRecordBuffer);
 		deserializeFields();
 		return this;
@@ -205,7 +205,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		return value;
 	}
 
-	public ODocument field(String iPropertyName, Object iPropertyValue) {
+	public ODocument field(final String iPropertyName, final Object iPropertyValue) {
 		checkForFields();
 		if (clazz != null) {
 			OProperty prop = clazz.getProperty(iPropertyName);
@@ -230,7 +230,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	}
 
 	@Override
-	public boolean containsField(String iFieldName) {
+	public boolean containsField(final String iFieldName) {
 		return fields != null ? fields.containsKey(iFieldName) : false;
 	}
 
@@ -249,7 +249,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 * @param <RET>
 	 * @param record
 	 */
-	private <RET> void lazyLoadRecord(ORecord<?> record) {
+	private <RET> void lazyLoadRecord(final ORecord<?> record) {
 		if (record.getStatus() == STATUS.NOT_LOADED)
 			record.load();
 	}

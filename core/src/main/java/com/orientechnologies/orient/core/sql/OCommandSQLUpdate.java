@@ -33,4 +33,10 @@ public class OCommandSQLUpdate extends OCommandSQLAbstract {
 		return null;
 	}
 
+	@Override
+	public void parse() {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

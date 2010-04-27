@@ -26,14 +26,18 @@ public class OCommandSQL extends OCommandSQLAbstract {
 
 	public OCommandSQL(final String iText) {
 		super(iText, iText.toUpperCase());
-		parse();
 	}
 
 	public Object execute() {
+		parse();
 		return commandToDelegate.execute();
 	}
 
-	private void parse() {
+	public void parse() {
+		if (commandToDelegate != null)
+			// ALREADY PARSED
+			return;
+
 		if (text == null || text.length() == 0)
 			throw new IllegalArgumentException("Invalid SQL command");
 
@@ -45,6 +49,7 @@ public class OCommandSQL extends OCommandSQLAbstract {
 			commandToDelegate = new OCommandSQLDelete(text, textUpperCase, database);
 		else if (textUpperCase.startsWith(OSQLHelper.KEYWORD_SELECT)) {
 			// TODO: WHAT TODO WITH SELECT?
+			return;
 		}
 	}
 }
