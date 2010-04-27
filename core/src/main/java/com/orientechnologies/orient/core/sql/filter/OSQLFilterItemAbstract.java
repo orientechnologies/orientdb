@@ -124,12 +124,16 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 				} else if (operator == OSQLFilterFieldOperator.FORMAT.id)
 
 					iResult = iResult != null ? String.format(op.value[0], iResult) : null;
-				else if (operator == OSQLFilterFieldOperator.LEFT.id)
 
-					iResult = iResult != null ? iResult.toString().substring(0, Integer.parseInt(op.value[0])) : null;
-				else if (operator == OSQLFilterFieldOperator.RIGHT.id)
-
-					iResult = iResult != null ? iResult.toString().substring(Integer.parseInt(op.value[0])) : null;
+				else if (operator == OSQLFilterFieldOperator.LEFT.id) {
+					final int len = Integer.parseInt(op.value[0]);
+					iResult = iResult != null ? iResult.toString().substring(0,
+							len <= iResult.toString().length() ? len : iResult.toString().length()) : null;
+				} else if (operator == OSQLFilterFieldOperator.RIGHT.id) {
+					final int offset = Integer.parseInt(op.value[0]);
+					iResult = iResult != null ? iResult.toString().substring(
+							offset <= iResult.toString().length() - 1 ? offset : iResult.toString().length() - 1) : null;
+				}
 			}
 		}
 
