@@ -24,6 +24,7 @@ import java.net.SocketException;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
@@ -45,19 +46,23 @@ public class OServerNetworkListener {
 			while (active) {
 				try {
 					// listen for and accept a client connection to serverSocket
-					Socket sock = serverSocket.accept();
+					Socket socket = serverSocket.accept();
+
+					socket.setPerformancePreferences(0, 2, 1);
+					socket.setSendBufferSize(OChannelBinary.DEFAULT_BUFFER_SIZE);
+					socket.setReceiveBufferSize(OChannelBinary.DEFAULT_BUFFER_SIZE);
 
 					// CREATE A NEW PROTOCOL INSTANCE
 					protocol = iProtocol.newInstance();
 
 					// CTEARE THE CLIENT CONNECTION
-					connection = new OClientConnection(connectionSerial++, sock, protocol);
+					connection = new OClientConnection(connectionSerial++, socket, protocol);
 
 					// CONFIGURE THE PROTOCOL FOR THE INCOMING CONNECTION
-					protocol.config(sock, connection);
+					protocol.config(socket, connection);
 
 					// EXECUTE THE CONNECTION
-					OClientConnectionManager.instance().connect(sock, connection);
+					OClientConnectionManager.instance().connect(socket, connection);
 
 				} catch (Throwable e) {
 					OLogManager.instance().error(this, "Error on client connection", e);

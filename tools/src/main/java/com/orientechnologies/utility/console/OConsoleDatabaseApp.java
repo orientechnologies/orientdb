@@ -227,8 +227,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 
 		})).execute(limit + 1);
 
-		// if (currentResultSet.size() > 0 && currentResultSet.size() <= limit)
-		// printHeaderLine(columns);
+		if (currentResultSet.size() > 0 && currentResultSet.size() < limit)
+			printHeaderLine(columns);
 
 		out.println(currentResultSet.size() + " item(s) found. Query executed in " + (float) (System.currentTimeMillis() - start)
 				/ 1000 + " sec(s).");
