@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorAnd;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContains;
@@ -89,5 +90,44 @@ public class OSQLHelper {
 		OQueryOperator[] ops = new OQueryOperator[OPERATORS.length + 1];
 		System.arraycopy(OPERATORS, 0, ops, 0, OPERATORS.length);
 		OPERATORS = ops;
+	}
+
+	/**
+	 * Convert fields from text to real value. Supports: String, RID, Float and Integer.
+	 * 
+	 * @param values
+	 * @return
+	 */
+	public static Object[] convertValues(String[] values) {
+		String value;
+		Object fieldValue;
+
+		Object[] fieldValues = new Object[values.length];
+
+		for (int i = 0; i < values.length; ++i) {
+			value = values[i];
+			fieldValue = null;
+
+			if (value != null) {
+				if (value.startsWith("'") && value.endsWith("'"))
+					// STRING
+					fieldValue = value.substring(1, value.length() - 1);
+				else if (value.indexOf(":") > -1)
+					// RID
+					fieldValue = new ORecordId(value);
+				else {
+					// NUMBER
+					if (value.contains("."))
+						// FLOAT/DOUBLE
+						fieldValue = new Float(value);
+					else
+						fieldValue = new Integer(value);
+				}
+			}
+
+			fieldValues[i] = fieldValue;
+		}
+
+		return fieldValues;
 	}
 }

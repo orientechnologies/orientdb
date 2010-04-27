@@ -28,11 +28,12 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public class OCommandSQLInsert extends OCommandSQLAbstract {
 
-	private static final String	KEYWORD_INTO	= "INTO";
-	private String							clusterName		= null;
-	private String							className			= null;
-	private String[]						values;
-	private String[]						fields;
+	private static final String	KEYWORD_VALUES	= "VALUES";
+	private static final String	KEYWORD_INTO		= "INTO";
+	private String							clusterName			= null;
+	private String							className				= null;
+	private String[]						fieldNames;
+	Object[]										fieldValues;
 
 	protected OCommandSQLInsert(final String iText, final String iTextUpperCase, final ODatabaseRecord<?> iDatabase) {
 		super(iText, iTextUpperCase, iDatabase);
@@ -75,12 +76,12 @@ public class OCommandSQLInsert extends OCommandSQLAbstract {
 		if (endFields == -1)
 			throw new OCommandSQLParsingException("Missed closed brace", text, beginFields);
 
-		fields = OQueryHelper.getParameters(text, beginFields);
-		if (fields.length == 0)
+		fieldNames = OQueryHelper.getParameters(text, beginFields);
+		if (fieldNames.length == 0)
 			throw new OCommandSQLParsingException("Set of fields is empty. Example: (name, surname)", text, endFields);
 
 		pos = OSQLHelper.nextWord(text, textUpperCase, endFields + 1, word, true);
-		if (pos == -1 || !word.toString().equals("VALUES"))
+		if (pos == -1 || !word.toString().equals(KEYWORD_VALUES))
 			throw new OCommandSQLParsingException("Missed VALUES keyword", text, endFields);
 
 		final int beginValues = OSQLHelper.jumpWhiteSpaces(text, pos + 1);
@@ -91,12 +92,14 @@ public class OCommandSQLInsert extends OCommandSQLAbstract {
 		if (endValues == -1)
 			throw new OCommandSQLParsingException("Missed closed brace", text, beginValues);
 
-		values = OQueryHelper.getParameters(text, beginValues);
+		String[] values = OQueryHelper.getParameters(text, beginValues);
 		if (values.length == 0)
 			throw new OCommandSQLParsingException("Set of values is empty. Example: ('Bill', 'Stuart', 300)", text, beginValues);
 
-		if (values.length != fields.length)
+		if (values.length != fieldNames.length)
 			throw new OCommandSQLParsingException("Fields not match with values", text, beginValues);
+
+		fieldValues = OSQLHelper.convertValues(values);
 	}
 
 	public Object execute() {
@@ -107,8 +110,9 @@ public class OCommandSQLInsert extends OCommandSQLAbstract {
 		// CREATE NEW DOCUMENT
 		ODocument doc = className != null ? new ODocument(database, className) : new ODocument(database);
 
-		for (int i = 0; i < fields.length; ++i) {
-			doc.field(fields[i], values[i]);
+		// BIND VALUES
+		for (int i = 0; i < fieldNames.length; ++i) {
+			doc.field(fieldNames[i], fieldValues[i]);
 		}
 
 		doc.save(clusterName);
