@@ -484,6 +484,7 @@ public class OStorageLocal extends OStorageAbstract {
 					// WRONG RECORD TYPE: JUMP IT
 					continue;
 
+				iRecord.reset();
 				iRecord.setIdentity(iClusterId, positionInPhyCluster);
 				iRecord.fromStream(recordBuffer.buffer);
 				if (!iListener.foreach(iRecord))
