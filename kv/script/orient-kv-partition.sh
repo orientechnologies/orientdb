@@ -25,7 +25,7 @@ echo "           ,,:\` \`,,.                                      "
 echo "          ,,,    .,\`                                      "
 echo "         ,,.     \`,                      S E R V E R        "
 echo "       \`\`        \`.                                       "
-echo "                 \`\`            (CLUSTER-PARTITION POWERED"
+echo "                 \`\`           (CLUSTER-PARTITION POWERED BY"
 echo "                 \`                       HAZELCAST)"
 echo " "
 

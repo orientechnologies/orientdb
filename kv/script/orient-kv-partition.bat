@@ -26,8 +26,8 @@ echo           ,,:` `,,.
 echo          ,,,    .,`                                      
 echo         ,,.     `,  K E Y - V A L U E   S E R V E R        
 echo       ``        `.                                       
-echo                 ``    (CLUSTER-PARTITION POWERED
-echo                 `             HAZELCAST)  
+echo                 ``    (CLUSTER-PARTITION POWERED BY
+echo                 `              HAZELCAST)  
 
 rem Guess ORIENT_HOME if not defined
 set CURRENT_DIR=%cd%
