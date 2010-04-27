@@ -1,7 +1,7 @@
 var angle = 0;
 var speed = -0.2;
 var acceleration = 0;
-var homepage = "http://www.orientechnologies.com";
+var homepage = "http://www.orientechnologies.com/orient-kv.htm";
 
 function orient_init() {
 	orient_start_sun_animation();

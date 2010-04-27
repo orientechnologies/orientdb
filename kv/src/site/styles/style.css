@@ -15,6 +15,12 @@ td {
 	color: #444;
 }
 
+.small {
+	font-family: Trebuchet MS;
+	font-size: 14px;
+	color: #444;
+}
+
 a:link {
 	text-decoration: underlined;
 	color: gray;
