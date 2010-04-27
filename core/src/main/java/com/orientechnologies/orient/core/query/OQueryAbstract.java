@@ -35,14 +35,17 @@ public abstract class OQueryAbstract<REC extends ORecordInternal<?>> implements 
 		return database;
 	}
 
-	public void setDatabase(ODatabaseRecord<REC> iDatabase) {
+	public OQueryInternal<REC> setDatabase(ODatabaseRecord<REC> iDatabase) {
 		database = iDatabase;
 		if (record != null)
 			record.setDatabase(iDatabase);
+
+		return this;
 	}
 
-	public void setRecord(REC record) {
+	public OQueryInternal<REC> setRecord(REC record) {
 		this.record = record;
+		return this;
 	}
 
 	@SuppressWarnings("unchecked")

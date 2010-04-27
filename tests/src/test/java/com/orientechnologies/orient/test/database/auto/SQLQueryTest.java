@@ -27,6 +27,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 
@@ -44,8 +45,8 @@ public class SQLQueryTest {
 	public void querySchemaAndLike() {
 		database.open("admin", "admin");
 
-		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select * from Animal where ID = 10 and name like 'G%'"))
-				.execute();
+		List<ODocument> result = database.query(
+				new OSQLSynchQuery<ODocument>("select * from cluster:Animal where ID = 10 and name like 'G%'")).execute();
 
 		for (int i = 0; i < result.size(); ++i) {
 			record = result.get(i);
@@ -65,7 +66,8 @@ public class SQLQueryTest {
 		database.open("admin", "admin");
 
 		List<ODocument> result = database.query(
-				new OSQLSynchQuery<ODocument>("SELECT * FROM animal WHERE column(0) < 5 OR column(0) >= 3 AND column(5) < 7")).execute();
+				new OSQLSynchQuery<ODocument>("SELECT * FROM cluster:animal WHERE column(0) < 5 OR column(0) >= 3 AND column(5) < 7"))
+				.execute();
 
 		for (int i = 0; i < result.size(); ++i) {
 			record = result.get(i);
@@ -84,7 +86,8 @@ public class SQLQueryTest {
 		database.open("admin", "admin");
 
 		List<ODocument> result = database.query(
-				new OSQLSynchQuery<ODocument>("SELECT * FROM animal WHERE column(0) < 5 AND column(0) >= 3 OR column(5) <= 403")).execute();
+				new OSQLSynchQuery<ODocument>("SELECT * FROM cluster:animal WHERE column(0) < 5 AND column(0) >= 3 OR column(5) <= 403"))
+				.execute();
 
 		for (int i = 0; i < result.size(); ++i) {
 			record = result.get(i);
@@ -110,7 +113,7 @@ public class SQLQueryTest {
 		Date rangeToDate = database.getStorage().getConfiguration().getDateFormatInstance().parse(rangeTo);
 
 		List<ODocument> result = database.query(
-				new OSQLSynchQuery<ODocument>("select * from Order where date > '" + rangeFrom + "' and date < '" + rangeTo + "'"))
+				new OSQLSynchQuery<ODocument>("select * from cluster:Order where date > '" + rangeFrom + "' and date < '" + rangeTo + "'"))
 				.execute();
 
 		for (int i = 0; i < result.size(); ++i) {
@@ -132,8 +135,8 @@ public class SQLQueryTest {
 		database.open("admin", "admin");
 
 		List<ODocument> result = database.query(
-				new OSQLSynchQuery<ODocument>("select * from animaltype where races contains (name.toLowerCase().subString(0,1) = 'e')"))
-				.execute();
+				new OSQLSynchQuery<ODocument>(
+						"select * from cluster:animaltype where races contains (name.toLowerCase().subString(0,1) = 'e')")).execute();
 
 		for (int i = 0; i < result.size(); ++i) {
 			record = result.get(i);
@@ -162,7 +165,8 @@ public class SQLQueryTest {
 		database.open("admin", "admin");
 
 		List<ODocument> result = database.query(
-				new OSQLSynchQuery<ODocument>("select * from animaltype where races contains (name in ['European','Asiatic'])")).execute();
+				new OSQLSynchQuery<ODocument>("select * from cluster:animaltype where races contains (name in ['European','Asiatic'])"))
+				.execute();
 
 		for (int i = 0; i < result.size(); ++i) {
 			record = result.get(i);
@@ -242,6 +246,59 @@ public class SQLQueryTest {
 		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from Account where all() is null")).execute();
 
 		Assert.assertTrue(result.size() == 0);
+
+		database.close();
+	}
+
+	@Test
+	public void insertOperator() {
+		database.open("admin", "admin");
+
+		ODocument doc = (ODocument) database.command(
+				new OCommandSQL("insert into Profile (name, surname, salary, location) values ('Luca','Smith', 109.9, -3:3)")).execute();
+
+		Assert.assertTrue(doc != null);
+
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "insertOperator")
+	public void updateWithWhereOperator() {
+		database.open("admin", "admin");
+
+		Integer records = (Integer) database.command(
+				new OCommandSQL("update Profile set salary = 120.30, location = -3:2 where surname = 'Smith'")).execute();
+
+		Assert.assertTrue(records == 1);
+
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "updateWithWhereOperator")
+	public void updateAllOperator() {
+		database.open("admin", "admin");
+
+		Long total = database.countClass("Profile");
+
+		Integer records = (Integer) database.command(new OCommandSQL("update Profile set sex = 'male'")).execute();
+
+		Assert.assertEquals(records.intValue(), total.intValue());
+
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "updateAllOperator")
+	public void deleteWithWhereOperator() {
+		database.open("admin", "admin");
+
+		Long total = database.countClass("Profile");
+
+		Integer records = (Integer) database.command(new OCommandSQL("delete from Profile set sex = 'male' where salary > 100"))
+				.execute();
+
+		Assert.assertEquals(records.intValue(), 1);
+
+		Assert.assertEquals(database.countClass("Profile"), total - 1);
 
 		database.close();
 	}

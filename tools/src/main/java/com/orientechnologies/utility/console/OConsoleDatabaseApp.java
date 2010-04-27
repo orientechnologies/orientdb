@@ -160,24 +160,35 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 
 	@ConsoleCommand(splitInWords = false, description = "Insert a new record into the database")
 	public void insert(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-		checkCurrentDatabase();
-
-		if (iCommandText == null)
-			return;
-
-		iCommandText = iCommandText.trim();
-
-		if (iCommandText.length() == 0 || iCommandText.equalsIgnoreCase("insert"))
-			return;
-
-		iCommandText = "insert " + iCommandText;
-
-		currentResultSet.clear();
-
 		long start = System.currentTimeMillis();
-		int records = (Integer) currentDatabase.command(new OCommandSQL(iCommandText)).execute();
 
-		out.printf("Inserted %d records in %f sec(s).", records, (float) (System.currentTimeMillis() - start) / 1000);
+		currentRecord = (ODocument) sqlCommand("insert", iCommandText);
+		if (currentRecord == null)
+			return;
+
+		out.printf("Inserted record in %f sec(s).", (float) (System.currentTimeMillis() - start) / 1000);
+	}
+
+	@ConsoleCommand(splitInWords = false, description = "Update records in the database")
+	public void update(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
+		long start = System.currentTimeMillis();
+
+		Integer records = (Integer) sqlCommand("update", iCommandText);
+		if (records == null)
+			return;
+
+		out.printf("Updated %d record(s) in %f sec(s).", records, (float) (System.currentTimeMillis() - start) / 1000);
+	}
+
+	@ConsoleCommand(splitInWords = false, description = "Delete records from the database")
+	public void delete(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
+		long start = System.currentTimeMillis();
+
+		Integer records = (Integer) sqlCommand("delete", iCommandText);
+		if (records == null)
+			return;
+
+		out.printf("Delete %d record(s) in %f sec(s).", records, (float) (System.currentTimeMillis() - start) / 1000);
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Execute a query against the database and display the results")
@@ -216,8 +227,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 
 		})).execute(limit + 1);
 
-		if (currentResultSet.size() > 0 && currentResultSet.size() <= limit)
-			printHeaderLine(columns);
+		// if (currentResultSet.size() > 0 && currentResultSet.size() <= limit)
+		// printHeaderLine(columns);
 
 		out.println(currentResultSet.size() + " item(s) found. Query executed in " + (float) (System.currentTimeMillis() - start)
 				/ 1000 + " sec(s).");
@@ -650,5 +661,18 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		}
 
 		printHeaderLine(columns);
+	}
+
+	private Object sqlCommand(final String iExpectedCommand, String iReceivedCommand) {
+		checkCurrentDatabase();
+
+		if (iReceivedCommand == null)
+			return null;
+
+		iReceivedCommand = iExpectedCommand + " " + iReceivedCommand.trim();
+
+		currentResultSet.clear();
+
+		return new OCommandSQL(iReceivedCommand).setDatabase(currentDatabase).execute();
 	}
 }

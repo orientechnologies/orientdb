@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.command;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Internal specialization of generic OCommand interface.
@@ -25,7 +26,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
  * @param <T>
  */
 public interface OCommandInternal extends OCommand {
-	public ODatabaseRecord<?> getDatabase();
+	public ODatabaseRecord<ODocument> getDatabase();
 
-	public void setDatabase(final ODatabaseRecord<?> iDatabase);
+	public OCommandInternal setDatabase(final ODatabaseRecord<ODocument> iDatabase);
 }

@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import com.orientechnologies.orient.core.command.OCommandInternal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
@@ -29,15 +30,15 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  * 
  */
 public abstract class OCommandSQLAbstract implements OCommandInternal, OSerializableStream {
-	protected String							text;
-	protected String							textUpperCase;
-	protected ODatabaseRecord<?>	database;
+	protected String											text;
+	protected String											textUpperCase;
+	protected ODatabaseRecord<ODocument>	database;
 
 	public OCommandSQLAbstract(final String iText, final String iTextUpperCase) {
 		this(iText, iTextUpperCase, null);
 	}
 
-	public OCommandSQLAbstract(final String iText, final String iTextUpperCase, final ODatabaseRecord<?> iDatabase) {
+	public OCommandSQLAbstract(final String iText, final String iTextUpperCase, final ODatabaseRecord<ODocument> iDatabase) {
 		text = iText;
 		textUpperCase = iTextUpperCase;
 		database = iDatabase;
@@ -63,11 +64,12 @@ public abstract class OCommandSQLAbstract implements OCommandInternal, OSerializ
 		return getClass().getSimpleName() + " [text=" + text + "]";
 	}
 
-	public ODatabaseRecord<?> getDatabase() {
+	public ODatabaseRecord<ODocument> getDatabase() {
 		return database;
 	}
 
-	public void setDatabase(ODatabaseRecord<?> database) {
+	public OCommandInternal setDatabase(final ODatabaseRecord<ODocument> database) {
 		this.database = database;
+		return this;
 	}
 }

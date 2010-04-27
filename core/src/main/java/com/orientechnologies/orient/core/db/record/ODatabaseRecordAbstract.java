@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.query.OQueryInternal;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecord.STATUS;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -158,7 +159,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		OCommandInternal command = (OCommandInternal) iCommand;
 
 		try {
-			command.setDatabase((ODatabaseRecord<REC>) getDatabaseOwner());
+			command.setDatabase((ODatabaseRecord<ODocument>) getDatabaseOwner());
 
 			return command;
 

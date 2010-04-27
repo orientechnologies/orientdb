@@ -27,34 +27,35 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public class OCommandSQLInsert extends OCommandSQLAbstract {
-
 	private static final String	KEYWORD_VALUES	= "VALUES";
 	private static final String	KEYWORD_INTO		= "INTO";
-	private String							clusterName			= null;
 	private String							className				= null;
 	private String[]						fieldNames;
-	Object[]										fieldValues;
+	private Object[]						fieldValues;
 
-	protected OCommandSQLInsert(final String iText, final String iTextUpperCase, final ODatabaseRecord<?> iDatabase) {
+	protected OCommandSQLInsert(final String iText, final String iTextUpperCase, final ODatabaseRecord<ODocument> iDatabase) {
 		super(iText, iTextUpperCase, iDatabase);
 	}
 
 	@Override
 	public void parse() {
-		if (clusterName != null || className != null)
+		if (className != null)
 			// ALREADY PARSED
 			return;
 
-		int pos = textUpperCase.indexOf(KEYWORD_INTO);
-		if (pos == -1)
+		StringBuilder word = new StringBuilder();
+
+		int pos = OSQLHelper.nextWord(text, textUpperCase, 0, word, true);
+		if (pos == -1 || !word.toString().equals(OSQLHelper.KEYWORD_INSERT))
+			throw new OCommandSQLParsingException("Keyword " + OSQLHelper.KEYWORD_INSERT + " not found", text, 0);
+
+		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+		if (pos == -1 || !word.toString().equals(KEYWORD_INTO))
 			throw new OCommandSQLParsingException("Keyword " + KEYWORD_INTO + " not found", text, 0);
 
-		pos += KEYWORD_INTO.length() + 1;
-
-		StringBuilder word = new StringBuilder();
 		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		if (pos == -1)
-			throw new OCommandSQLParsingException("Invalid cluster/class name", text, pos);
+			throw new OCommandSQLParsingException("Invalid class name", text, pos);
 
 		String subjectName = word.toString();
 
@@ -99,13 +100,17 @@ public class OCommandSQLInsert extends OCommandSQLAbstract {
 		if (values.length != fieldNames.length)
 			throw new OCommandSQLParsingException("Fields not match with values", text, beginValues);
 
-		fieldValues = OSQLHelper.convertValues(values);
+		// TRANSFORM FIELD VALUES
+		fieldValues = new Object[values.length];
+		for (int i = 0; i < values.length; ++i)
+			fieldValues[i] = OSQLHelper.convertValue(values[i]);
 	}
 
+	/**
+	 * Execute the INSERT and return the ODocument object created.
+	 */
 	public Object execute() {
 		parse();
-
-		int records = 0;
 
 		// CREATE NEW DOCUMENT
 		ODocument doc = className != null ? new ODocument(database, className) : new ODocument(database);
@@ -115,8 +120,8 @@ public class OCommandSQLInsert extends OCommandSQLAbstract {
 			doc.field(fieldNames[i], fieldValues[i]);
 		}
 
-		doc.save(clusterName);
+		doc.save();
 
-		return records;
+		return doc;
 	}
 }

@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.query.OQueryHelper;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
-import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 
 /**
  * Parsed query. It's built once a query is parsed.
@@ -35,7 +34,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLQuery;
  * 
  */
 public class OSQLFilter {
-	protected OSQLQuery<?>				query;
 	protected String							text;
 	protected String							textUpperCase;
 	protected int									currentPos	= 0;
@@ -45,9 +43,8 @@ public class OSQLFilter {
 	protected List<String>				recordTransformed;
 	private int										braces;
 
-	public OSQLFilter(final OSQLQuery<?> iQuery, final String iText) {
+	public OSQLFilter(final String iText) {
 		try {
-			query = iQuery;
 			text = iText.trim();
 			textUpperCase = text.toUpperCase();
 
@@ -101,16 +98,16 @@ public class OSQLFilter {
 			}
 
 			subjectToMatch = subjectName.toUpperCase();
-			if (subjectToMatch.startsWith(OSQLHelper.CLASS_PREFIX))
-				// REGISTER AS CLASS
-				classes.put(subjectName.substring(OSQLHelper.CLASS_PREFIX.length()), alias);
+			if (subjectToMatch.startsWith(OSQLHelper.CLUSTER_PREFIX))
+				// REGISTER AS CLUSTER
+				clusters.put(subjectName.substring(OSQLHelper.CLUSTER_PREFIX.length()), alias);
 			else {
-				if (subjectToMatch.startsWith(OSQLHelper.CLUSTER_PREFIX))
-					// REGISTER AS CLUSTER
-					subjectName = subjectName.substring(OSQLHelper.CLUSTER_PREFIX.length());
+				if (subjectToMatch.startsWith(OSQLHelper.CLASS_PREFIX))
+					// REGISTER AS CLASS
+					subjectName = subjectName.substring(OSQLHelper.CLASS_PREFIX.length());
 
-				// DEFAULT: REGISTER AS CLUSTER
-				clusters.put(subjectName, alias);
+				// REGISTER AS CLASS
+				classes.put(subjectName, alias);
 			}
 		}
 

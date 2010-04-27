@@ -24,7 +24,7 @@ public interface OQueryInternal<REC extends ORecordInternal<?>> extends OQuery<R
 
 	public REC getRecord();
 
-	public void setRecord(REC record);
+	public OQueryInternal<REC> setRecord(REC record);
 
-	public void setDatabase(ODatabaseRecord<REC> iDatabase);
+	public OQueryInternal<REC> setDatabase(ODatabaseRecord<REC> iDatabase);
 }

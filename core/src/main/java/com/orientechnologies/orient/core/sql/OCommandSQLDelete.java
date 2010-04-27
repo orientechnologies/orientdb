@@ -16,25 +16,52 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.query.OAsynchQueryResultListener;
+import com.orientechnologies.orient.core.query.OQuery;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 
 /**
- * SQL DELETE command.
+ * SQL UPDATE command.
  * 
  * @author luca
  * 
  */
-public class OCommandSQLDelete extends OCommandSQLAbstract {
+public class OCommandSQLDelete extends OCommandSQLAbstract implements OAsynchQueryResultListener<ODocument> {
+	private OQuery<ODocument>	query;
+	private int								recordCount	= 0;
 
-	public OCommandSQLDelete(final String iText, final String iTextUpperCase, final ODatabaseRecord<?> iDatabase) {
-		super(iText, iTextUpperCase);
-	}
-
-	public Object execute() {
-		return null;
+	public OCommandSQLDelete(final String iText, final String iTextUpperCase, final ODatabaseRecord<ODocument> iDatabase) {
+		super(iText, iTextUpperCase, iDatabase);
 	}
 
 	@Override
 	public void parse() {
+		if (query != null)
+			// ALREADY PARSED
+			return;
+
+		StringBuilder word = new StringBuilder();
+
+		int pos = OSQLHelper.nextWord(text, textUpperCase, 0, word, true);
+		if (pos == -1 || !word.toString().equals(OSQLHelper.KEYWORD_DELETE))
+			throw new OCommandSQLParsingException("Keyword " + OSQLHelper.KEYWORD_DELETE + " not found", text, 0);
+
+		query = database.query(new OSQLAsynchQuery<ODocument>("select " + text.substring(pos), this));
 	}
 
+	public Object execute() {
+		parse();
+		query.execute();
+		return recordCount;
+	}
+
+	/**
+	 * Delete the current record.
+	 */
+	public boolean result(final ODocument iRecord) {
+		iRecord.delete();
+		recordCount++;
+		return true;
+	}
 }

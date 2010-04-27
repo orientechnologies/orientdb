@@ -98,36 +98,28 @@ public class OSQLHelper {
 	 * @param values
 	 * @return
 	 */
-	public static Object[] convertValues(String[] values) {
-		String value;
+	public static Object convertValue(final String iValue) {
 		Object fieldValue;
 
-		Object[] fieldValues = new Object[values.length];
+		fieldValue = null;
 
-		for (int i = 0; i < values.length; ++i) {
-			value = values[i];
-			fieldValue = null;
-
-			if (value != null) {
-				if (value.startsWith("'") && value.endsWith("'"))
-					// STRING
-					fieldValue = value.substring(1, value.length() - 1);
-				else if (value.indexOf(":") > -1)
-					// RID
-					fieldValue = new ORecordId(value);
-				else {
-					// NUMBER
-					if (value.contains("."))
-						// FLOAT/DOUBLE
-						fieldValue = new Float(value);
-					else
-						fieldValue = new Integer(value);
-				}
+		if (iValue != null) {
+			if (iValue.startsWith("'") && iValue.endsWith("'"))
+				// STRING
+				fieldValue = iValue.substring(1, iValue.length() - 1);
+			else if (iValue.indexOf(":") > -1)
+				// RID
+				fieldValue = new ORecordId(iValue);
+			else {
+				// NUMBER
+				if (iValue.contains("."))
+					// FLOAT/DOUBLE
+					fieldValue = new Float(iValue);
+				else
+					fieldValue = new Integer(iValue);
 			}
-
-			fieldValues[i] = fieldValue;
 		}
 
-		return fieldValues;
+		return fieldValue;
 	}
 }

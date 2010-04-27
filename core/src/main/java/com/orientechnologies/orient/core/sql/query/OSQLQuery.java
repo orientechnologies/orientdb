@@ -44,14 +44,15 @@ public abstract class OSQLQuery<T extends ORecordSchemaAware<?>> extends OQueryA
 	public OSQLQuery() {
 	}
 
-	public OSQLQuery(String iText) {
+	public OSQLQuery(final String iText) {
 		text = iText;
 	}
 
 	/**
 	 * Delegates to the OQueryExecutor the query execution.
 	 */
-	public List<T> execute(int iLimit) {
+	public List<T> execute(final int iLimit) {
+		limit = iLimit;
 		return database.getStorage().getQueryExecutor(this).execute(this, iLimit);
 	}
 
@@ -75,7 +76,7 @@ public abstract class OSQLQuery<T extends ORecordSchemaAware<?>> extends OQueryA
 			if (pos == -1)
 				return;
 
-			compiledFilter = new OSQLFilter(this, text.substring(pos));
+			compiledFilter = new OSQLFilter(text.substring(pos));
 		}
 	}
 
@@ -116,7 +117,7 @@ public abstract class OSQLQuery<T extends ORecordSchemaAware<?>> extends OQueryA
 		return "OSQLQuery [text=" + text + "]";
 	}
 
-	public OSerializableStream fromStream(byte[] iStream) throws IOException {
+	public OSerializableStream fromStream(final byte[] iStream) throws IOException {
 		text = OBinaryProtocol.bytes2string(iStream);
 		return this;
 	}
