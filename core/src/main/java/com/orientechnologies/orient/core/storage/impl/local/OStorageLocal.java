@@ -820,7 +820,7 @@ public class OStorageLocal extends OStorageAbstract {
 				throw new OConcurrentModificationException(
 						"Can't update record #"
 								+ recId
-								+ " because it was modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
+								+ " because it has been modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
 
 			iClusterSegment.updateVersion(iPosition, ++ppos.version);
 
