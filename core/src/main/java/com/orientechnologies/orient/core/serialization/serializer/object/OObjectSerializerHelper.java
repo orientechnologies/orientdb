@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
@@ -105,6 +106,9 @@ public class OObjectSerializerHelper {
 		String fieldName;
 		Object fieldValue;
 		Class<?> fieldClass;
+
+		if (iRecord.getStatus() == STATUS.NOT_LOADED)
+			iRecord.load();
 
 		for (Field p : properties) {
 			fieldName = p.getName();
