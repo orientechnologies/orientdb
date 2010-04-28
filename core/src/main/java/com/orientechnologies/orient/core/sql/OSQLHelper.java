@@ -99,25 +99,34 @@ public class OSQLHelper {
 	 * @return
 	 */
 	public static Object convertValue(final String iValue) {
-		Object fieldValue;
+		if (iValue == null)
+			return null;
 
-		fieldValue = null;
+		Object fieldValue = null;
 
-		if (iValue != null) {
-			if (iValue.startsWith("'") && iValue.endsWith("'"))
-				// STRING
-				fieldValue = iValue.substring(1, iValue.length() - 1);
-			else if (iValue.indexOf(":") > -1)
-				// RID
-				fieldValue = new ORecordId(iValue);
-			else {
-				// NUMBER
-				if (iValue.contains("."))
-					// FLOAT/DOUBLE
-					fieldValue = new Float(iValue);
-				else
-					fieldValue = new Integer(iValue);
-			}
+		if (iValue.startsWith("'") && iValue.endsWith("'"))
+			// STRING
+			fieldValue = iValue.substring(1, iValue.length() - 1);
+		else if (iValue.indexOf(":") > -1)
+			// RID
+			fieldValue = new ORecordId(iValue);
+		else {
+			String upperCase = iValue.toUpperCase();
+			if (upperCase.equals("NULL"))
+				// NULL
+				fieldValue = null;
+			if (upperCase.equals("TRUE"))
+				// BOOLEAN, TRUE
+				fieldValue = Boolean.TRUE;
+			else if (upperCase.equals("FALSE"))
+				// BOOLEAN, FALSE
+				fieldValue = Boolean.FALSE;
+			// NUMBER
+			else if (iValue.contains("."))
+				// FLOAT/DOUBLE
+				fieldValue = new Float(iValue);
+			else
+				fieldValue = new Integer(iValue);
 		}
 
 		return fieldValue;
