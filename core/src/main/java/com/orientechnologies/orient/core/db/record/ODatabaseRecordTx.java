@@ -48,7 +48,7 @@ public class ODatabaseRecordTx<REC extends ORecordInternal<?>> extends ODatabase
 
 		switch (iType) {
 		case NOTX:
-			currentTx = new OTransactionNoTx(this, txSerial++);
+			setDefaultTransactionMode();
 			break;
 
 		case OPTIMISTIC:
@@ -65,11 +65,13 @@ public class ODatabaseRecordTx<REC extends ORecordInternal<?>> extends ODatabase
 
 	public ODatabaseRecord<REC> commit() {
 		currentTx.commit();
+		setDefaultTransactionMode();
 		return this;
 	}
 
 	public ODatabaseRecord<REC> rollback() {
 		currentTx.rollback();
+		setDefaultTransactionMode();
 		return this;
 	}
 
@@ -117,5 +119,10 @@ public class ODatabaseRecordTx<REC extends ORecordInternal<?>> extends ODatabase
 
 	public Object getUserObjectByRecord(final ORecord<?> record) {
 		return record;
+	}
+
+	private void setDefaultTransactionMode() {
+		if (!(currentTx instanceof OTransactionNoTx))
+			currentTx = new OTransactionNoTx(this, txSerial++);
 	}
 }
