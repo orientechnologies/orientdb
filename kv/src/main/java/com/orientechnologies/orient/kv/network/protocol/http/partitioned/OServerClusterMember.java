@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.index.OTreeMapPersistent;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerString;
 import com.orientechnologies.orient.kv.OSharedDatabase;
+import com.orientechnologies.orient.kv.index.OTreeMapPersistentAsynch;
 import com.orientechnologies.orient.kv.network.protocol.http.ONetworkProtocolHttpKV;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
@@ -106,7 +107,7 @@ public class OServerClusterMember implements InstanceListener, MembershipListene
 							parts = ONetworkProtocolHttpKV.getDbBucketKey(localKey, 3);
 							ODatabaseBinary db = OSharedDatabase.acquireDatabase(parts[0]);
 
-							bucket = getDictionaryBucket(db, parts[1]);
+							bucket = getDictionaryBucket(db, parts[1], false);
 
 							bucket.put(localKey, map.get(localKey));
 
@@ -122,20 +123,30 @@ public class OServerClusterMember implements InstanceListener, MembershipListene
 		}
 	}
 
-	public static Map<String, String> getDictionaryBucket(final ODatabaseBinary iDatabase, final String iName) throws IOException {
+	public static synchronized Map<String, String> getDictionaryBucket(final ODatabaseBinary iDatabase, final String iName,
+			final boolean iAsynchMode) throws IOException {
 		ORecordBytes record = iDatabase.getDictionary().get(iName);
 
 		OTreeMapPersistent<String, String> bucket;
 
 		if (record == null) {
 			// CREATE THE BUCKET TRANSPARENTLY
-			bucket = new OTreeMapPersistent<String, String>(iDatabase, DEFAULT_CLUSTER_NAME, OStreamSerializerString.INSTANCE,
-					OStreamSerializerString.INSTANCE);
+			if (iAsynchMode)
+				bucket = new OTreeMapPersistentAsynch<String, String>(iDatabase, DEFAULT_CLUSTER_NAME, OStreamSerializerString.INSTANCE,
+						OStreamSerializerString.INSTANCE);
+			else
+				bucket = new OTreeMapPersistent<String, String>(iDatabase, DEFAULT_CLUSTER_NAME, OStreamSerializerString.INSTANCE,
+						OStreamSerializerString.INSTANCE);
+
 			bucket.save();
 			// REGISTER THE NEW BUCKET
 			iDatabase.getDictionary().put(iName, bucket.getRecord());
 		} else {
-			bucket = new OTreeMapPersistent<String, String>(iDatabase, DEFAULT_CLUSTER_NAME, record.getIdentity());
+			if (iAsynchMode)
+				bucket = new OTreeMapPersistentAsynch<String, String>(iDatabase, DEFAULT_CLUSTER_NAME, record.getIdentity());
+			else
+				bucket = new OTreeMapPersistent<String, String>(iDatabase, DEFAULT_CLUSTER_NAME, record.getIdentity());
+
 			bucket.load();
 		}
 

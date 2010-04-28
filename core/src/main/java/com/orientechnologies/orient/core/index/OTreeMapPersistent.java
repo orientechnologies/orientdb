@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.index;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -23,6 +24,7 @@ import java.util.Set;
 import com.orientechnologies.common.collection.OTreeMap;
 import com.orientechnologies.common.collection.OTreeMapEntry;
 import com.orientechnologies.common.collection.OTreeMapEventListener;
+import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -40,6 +42,7 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 
 @SuppressWarnings("serial")
 public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMapEventListener<K, V>, OSerializableStream {
+	private OSharedResourceExternal											lock						= new OSharedResourceExternal();
 	protected ODatabaseRecord<?>												database;
 
 	protected OStreamSerializer													keySerializer;
@@ -89,6 +92,8 @@ public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMap
 	public void clear() {
 		final long timer = OProfiler.getInstance().startChrono();
 
+		lock.acquireExclusiveLock();
+
 		try {
 			if (root != null)
 				((OTreeMapEntryPersistent<K, V>) root).delete();
@@ -101,6 +106,8 @@ public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMap
 			OLogManager.instance().error(this, "Error on deleting the tree: " + record.getIdentity(), e, ODatabaseException.class);
 		} finally {
 
+			lock.releaseExclusiveLock();
+
 			OProfiler.getInstance().stopChrono("OTreeMapPersistent.clear", timer);
 		}
 	}
@@ -108,6 +115,8 @@ public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMap
 	@Override
 	public V put(final K key, final V value) {
 		final long timer = OProfiler.getInstance().startChrono();
+
+		lock.acquireExclusiveLock();
 
 		try {
 			ORecord<?> record;
@@ -131,6 +140,8 @@ public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMap
 			return v;
 		} finally {
 
+			lock.releaseExclusiveLock();
+
 			OProfiler.getInstance().stopChrono("OTreeMapPersistent.put", timer);
 		}
 	}
@@ -139,10 +150,15 @@ public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMap
 	public void putAll(final Map<? extends K, ? extends V> map) {
 		final long timer = OProfiler.getInstance().startChrono();
 
+		lock.acquireExclusiveLock();
+
 		try {
 			super.putAll(map);
 			commitChanges();
+
 		} finally {
+
+			lock.releaseExclusiveLock();
 
 			OProfiler.getInstance().stopChrono("OTreeMapPersistent.putAll", timer);
 		}
@@ -152,11 +168,15 @@ public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMap
 	public V remove(final Object key) {
 		final long timer = OProfiler.getInstance().startChrono();
 
+		lock.acquireExclusiveLock();
+
 		try {
 			V v = super.remove(key);
 			commitChanges();
 			return v;
 		} finally {
+
+			lock.releaseExclusiveLock();
 
 			OProfiler.getInstance().stopChrono("remove", timer);
 		}
@@ -167,7 +187,11 @@ public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMap
 
 		ORecordId rid = null;
 
+		lock.acquireExclusiveLock();
+
 		try {
+//			database.begin();
+
 			if (recordsToCommit.size() > 0) {
 				// COMMIT BEFORE THE NEW RECORDS (TO ASSURE RID IN RELATIONSHIPS)
 				for (OTreeMapEntryPersistent<K, V> node : recordsToCommit) {
@@ -193,10 +217,16 @@ public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMap
 				// TREE IS CHANGES AS WELL
 				save();
 
+//			database.commit();
+
 		} catch (IOException e) {
 			OLogManager.instance().error(this, "Error on saving the tree", e, ODatabaseException.class);
 
+			database.rollback();
+
 		} finally {
+
+			lock.releaseExclusiveLock();
 
 			OProfiler.getInstance().stopChrono("OTreeMapPersistent.commitChanges", timer);
 		}
@@ -275,15 +305,30 @@ public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMap
 	}
 
 	public OTreeMapPersistent<K, V> load() throws IOException {
-		record.load();
-		fromStream(record.toStream());
-		return this;
+		lock.acquireExclusiveLock();
+
+		try {
+			record.load();
+			fromStream(record.toStream());
+			return this;
+
+		} finally {
+			lock.releaseExclusiveLock();
+		}
 	}
 
 	public OTreeMapPersistent<K, V> save() throws IOException {
-		record.fromStream(toStream());
-		record.save(clusterName);
-		return this;
+
+		lock.acquireExclusiveLock();
+
+		try {
+			record.fromStream(toStream());
+			record.save(clusterName);
+			return this;
+
+		} finally {
+			lock.releaseExclusiveLock();
+		}
 	}
 
 	public ORecordBytes getRecord() {
@@ -294,5 +339,77 @@ public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMap
 		lastPageSize = (int) (size * 0.2 / 100);
 		if (lastPageSize < 256)
 			lastPageSize = 256;
+	}
+
+	@Override
+	public V get(Object key) {
+		lock.acquireSharedLock();
+
+		try {
+			return super.get(key);
+
+		} finally {
+			lock.releaseSharedLock();
+		}
+	}
+
+	@Override
+	public boolean containsKey(Object key) {
+		lock.acquireSharedLock();
+
+		try {
+			return super.containsKey(key);
+
+		} finally {
+			lock.releaseSharedLock();
+		}
+	}
+
+	@Override
+	public boolean containsValue(Object value) {
+		lock.acquireSharedLock();
+
+		try {
+			return super.containsValue(value);
+
+		} finally {
+			lock.releaseSharedLock();
+		}
+	}
+
+	@Override
+	public Set<java.util.Map.Entry<K, V>> entrySet() {
+		lock.acquireSharedLock();
+
+		try {
+			return super.entrySet();
+
+		} finally {
+			lock.releaseSharedLock();
+		}
+	}
+
+	@Override
+	public Set<K> keySet() {
+		lock.acquireSharedLock();
+
+		try {
+			return super.keySet();
+
+		} finally {
+			lock.releaseSharedLock();
+		}
+	}
+
+	@Override
+	public Collection<V> values() {
+		lock.acquireSharedLock();
+
+		try {
+			return super.values();
+
+		} finally {
+			lock.releaseSharedLock();
+		}
 	}
 }

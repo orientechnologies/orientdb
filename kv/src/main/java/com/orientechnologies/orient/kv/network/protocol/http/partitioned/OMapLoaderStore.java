@@ -44,7 +44,7 @@ public class OMapLoaderStore implements MapLoader<String, String>, MapStore<Stri
 			String[] parts = ONetworkProtocolHttpKV.getDbBucketKey(iKey, 3);
 
 			db = OSharedDatabase.acquireDatabase(parts[0]);
-			Map<String, String> bucket = OServerClusterMember.getDictionaryBucket(db, parts[1]);
+			Map<String, String> bucket = OServerClusterMember.getDictionaryBucket(db, parts[1], false);
 			return bucket.get(parts[2]);
 
 		} catch (Exception e) {
@@ -68,7 +68,7 @@ public class OMapLoaderStore implements MapLoader<String, String>, MapStore<Stri
 			String[] parts = ONetworkProtocolHttpKV.getDbBucketKey(iKey, 3);
 
 			db = OSharedDatabase.acquireDatabase(parts[0]);
-			Map<String, String> bucket = OServerClusterMember.getDictionaryBucket(db, parts[1]);
+			Map<String, String> bucket = OServerClusterMember.getDictionaryBucket(db, parts[1], false);
 
 			bucket.put(parts[2], iValue);
 
@@ -93,7 +93,7 @@ public class OMapLoaderStore implements MapLoader<String, String>, MapStore<Stri
 			String[] parts = ONetworkProtocolHttpKV.getDbBucketKey(iKey, 3);
 
 			db = OSharedDatabase.acquireDatabase(parts[0]);
-			Map<String, String> bucket = OServerClusterMember.getDictionaryBucket(db, parts[1]);
+			Map<String, String> bucket = OServerClusterMember.getDictionaryBucket(db, parts[1], false);
 			bucket.remove(parts[2]);
 
 		} catch (Exception e) {

@@ -25,6 +25,5 @@ public abstract class OPollerThread extends OSoftThread {
 	@Override
 	protected void afterExecution() throws InterruptedException {
 		pauseCurrentThread(delay);
-		return;
 	}
 }

@@ -18,9 +18,11 @@ package com.orientechnologies.orient.kv.network.protocol.http.local;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseBinary;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.kv.OSharedDatabase;
+import com.orientechnologies.orient.kv.index.OTreeMapPersistentAsynchThread;
 import com.orientechnologies.orient.kv.network.protocol.http.ONetworkProtocolHttpKV;
 import com.orientechnologies.orient.kv.network.protocol.http.partitioned.ODistributedException;
 import com.orientechnologies.orient.kv.network.protocol.http.partitioned.OServerClusterMember;
@@ -28,9 +30,23 @@ import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
 
 public class ONetworkProtocolHttpKVLocal extends ONetworkProtocolHttpKV {
-	private static Map<String, Map<String, Map<String, String>>>	memoryDatabases	= new HashMap<String, Map<String, Map<String, String>>>();
+	private static Map<String, Map<String, Map<String, String>>>	memoryDatabases					= new HashMap<String, Map<String, Map<String, String>>>();
+	private static final String																		ASYNCH_COMMIT_DELAY_PAR	= "asynch-commit-delay";
+	@SuppressWarnings("unused")
+	private static boolean																				asynchMode							= false;
 
 	static {
+		// START ASYNCH THREAD IF CONFIGURED
+		if (OServerMain.server().getConfiguration().properties != null)
+			for (OStorageEntryConfiguration entry : OServerMain.server().getConfiguration().properties) {
+				if (entry.name.equals(ASYNCH_COMMIT_DELAY_PAR)) {
+					OTreeMapPersistentAsynchThread.getInstance().setDelay(Integer.parseInt(entry.value));
+					OTreeMapPersistentAsynchThread.getInstance().start();
+					asynchMode = true;
+					break;
+				}
+			}
+
 		// CREATE IN-MEMORY DATABASES EARLY
 		for (OServerStorageConfiguration stg : OServerMain.server().getConfiguration().storages) {
 			if (stg.path.startsWith(OEngineMemory.NAME)) {
@@ -61,7 +77,7 @@ public class ONetworkProtocolHttpKVLocal extends ONetworkProtocolHttpKV {
 		try {
 			db = OSharedDatabase.acquireDatabase(dbName);
 
-			return OServerClusterMember.getDictionaryBucket(db, iBucketName);
+			return OServerClusterMember.getDictionaryBucket(db, iBucketName, asynchMode);
 
 		} catch (Exception e) {
 			throw new ODistributedException("Error on retrieving bucket '" + iBucketName + "' in database: " + dbName, e);
