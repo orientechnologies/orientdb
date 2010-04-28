@@ -79,7 +79,7 @@ public class OStorageLocalTxExecuter {
 		return recordPosition;
 	}
 
-	protected void updateRecord(final int iRequesterId, final int iTxId, final OCluster iClusterSegment, final long iPosition,
+	protected int updateRecord(final int iRequesterId, final int iTxId, final OCluster iClusterSegment, final long iPosition,
 			final byte[] iContent, final int iVersion, final byte iRecordType) {
 		try {
 			// READ CURRENT RECORD CONTENT
@@ -93,12 +93,13 @@ public class OStorageLocalTxExecuter {
 			txSegment.addLog(OTxSegment.OPERATION_UPDATE, iRequesterId, iTxId, iClusterSegment.getId(), iPosition, dataOffset);
 
 			// UPDATE THE RECORD FOR REAL. IF TX FAILS AT THIS POINT CAN BE RECOVERED THANKS TO THE TX-LOG
-			storage.updateRecord(iRequesterId, iClusterSegment, iPosition, iContent, iVersion, iRecordType);
+			return storage.updateRecord(iRequesterId, iClusterSegment, iPosition, iContent, iVersion, iRecordType);
 		} catch (IOException e) {
 
 			OLogManager.instance().error(this, "Error on updating entry #" + iPosition + " in log segment: " + iClusterSegment, e,
 					OTransactionException.class);
 		}
+		return -1;
 	}
 
 	protected void deleteRecord(final int iRequesterId, final int iTxId, final OCluster iClusterSegment, final long iPosition,
@@ -159,11 +160,12 @@ public class OStorageLocalTxExecuter {
 
 		case OTransactionEntry.CREATED:
 			rid.clusterPosition = createRecord(iRequesterId, iTxId, cluster, txEntry.record.toStream(), txEntry.record.getRecordType());
+			rid.clusterId = cluster.getId();
 			break;
 
 		case OTransactionEntry.UPDATED:
-			updateRecord(iRequesterId, iTxId, cluster, rid.clusterPosition, txEntry.record.toStream(), txEntry.record.getVersion(),
-					txEntry.record.getRecordType());
+			txEntry.record.setVersion(updateRecord(iRequesterId, iTxId, cluster, rid.clusterPosition, txEntry.record.toStream(),
+					txEntry.record.getVersion(), txEntry.record.getRecordType()));
 			break;
 
 		case OTransactionEntry.DELETED:

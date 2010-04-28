@@ -46,6 +46,10 @@ public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
 		return version;
 	}
 
+	public void setVersion(int iVersion) {
+		version = iVersion;
+	}
+
 	public boolean isDirty() {
 		return true;
 	}

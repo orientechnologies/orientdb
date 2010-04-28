@@ -141,6 +141,10 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		return version;
 	}
 
+	public void setVersion(final int iVersion) {
+		version = iVersion;
+	}
+
 	public ORecordAbstract<T> load() {
 		if (database == null)
 			throw new ODatabaseException("No database assigned to current record");
