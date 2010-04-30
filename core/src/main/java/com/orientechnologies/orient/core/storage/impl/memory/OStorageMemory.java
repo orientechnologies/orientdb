@@ -26,17 +26,14 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.query.OCommandExecutor;
 import com.orientechnologies.orient.core.query.OQuery;
-import com.orientechnologies.orient.core.query.OQueryExecutor;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
-import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
-import com.orientechnologies.orient.core.sql.query.OSQLAsynchQueryLocalExecutor;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.query.OCommandLocalExecutor;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -117,7 +114,7 @@ public class OStorageMemory extends OStorageAbstract {
 		return iClusterLogical.getId();
 	}
 
-	public int addClusterSegment(final String iClusterName, final String iClusterFileName, final int iStartSize) {
+	public int addPhysicalCluster(final String iClusterName, final String iClusterFileName, final int iStartSize) {
 		physicalClusters.add(new OClusterMemory(physicalClusters.size(), iClusterName));
 		return physicalClusters.size() - 1;
 	}
@@ -144,7 +141,7 @@ public class OStorageMemory extends OStorageAbstract {
 
 	public long createRecord(final int iClusterId, final byte[] iContent, final byte iRecordType) {
 		long offset = data.createRecord(iContent);
-		OCluster cluster = getCluster(iClusterId);
+		OCluster cluster = getClusterById(iClusterId);
 		try {
 			return cluster.addPhysicalPosition(0, offset, iRecordType);
 		} catch (IOException e) {
@@ -153,7 +150,7 @@ public class OStorageMemory extends OStorageAbstract {
 	}
 
 	public ORawBuffer readRecord(final int iRequesterId, final int iClusterId, final long iPosition) {
-		OCluster cluster = getCluster(iClusterId);
+		OCluster cluster = getClusterById(iClusterId);
 		try {
 			OPhysicalPosition ppos = cluster.getPhysicalPosition(iPosition, new OPhysicalPosition());
 
@@ -165,7 +162,7 @@ public class OStorageMemory extends OStorageAbstract {
 
 	public int updateRecord(final int iRequesterId, final int iClusterId, final long iPosition, final byte[] iContent,
 			final int iVersion, final byte iRecordType) {
-		OCluster cluster = getCluster(iClusterId);
+		OCluster cluster = getClusterById(iClusterId);
 		try {
 			OPhysicalPosition ppos = cluster.getPhysicalPosition(iPosition, new OPhysicalPosition());
 			if (ppos == null)
@@ -188,7 +185,7 @@ public class OStorageMemory extends OStorageAbstract {
 	}
 
 	public void deleteRecord(final int iRequesterId, final int iClusterId, final long iPosition, final int iVersion) {
-		OCluster cluster = getCluster(iClusterId);
+		OCluster cluster = getClusterById(iClusterId);
 
 		try {
 			OPhysicalPosition ppos = cluster.getPhysicalPosition(iPosition, new OPhysicalPosition());
@@ -209,7 +206,7 @@ public class OStorageMemory extends OStorageAbstract {
 	}
 
 	public long count(final int iClusterId) {
-		OCluster cluster = getCluster(iClusterId);
+		OCluster cluster = getClusterById(iClusterId);
 		try {
 			return cluster.getElements();
 		} catch (IOException e) {
@@ -226,29 +223,29 @@ public class OStorageMemory extends OStorageAbstract {
 
 	public OCluster getClusterByName(final String iClusterName) {
 		for (int i = 0; i < physicalClusters.size(); ++i)
-			if (getCluster(i).getName().equals(iClusterName))
-				return getCluster(i);
+			if (getClusterById(i).getName().equals(iClusterName))
+				return getClusterById(i);
 		return null;
 	}
 
 	public int getClusterIdByName(final String iClusterName) {
 		for (int i = 0; i < physicalClusters.size(); ++i)
-			if (getCluster(i).getName().equals(iClusterName))
-				return getCluster(i).getId();
+			if (getClusterById(i).getName().equals(iClusterName))
+				return getClusterById(i).getId();
 		return -1;
 	}
 
 	public String getPhysicalClusterNameById(final int iClusterId) {
 		for (int i = 0; i < physicalClusters.size(); ++i)
-			if (getCluster(i).getId() == iClusterId)
-				return getCluster(i).getName();
+			if (getClusterById(i).getId() == iClusterId)
+				return getClusterById(i).getName();
 		return null;
 	}
 
 	public Set<String> getClusterNames() {
 		Set<String> result = new HashSet<String>();
 		for (int i = 0; i < physicalClusters.size(); ++i)
-			result.add(getCluster(i).getName());
+			result.add(getClusterById(i).getName());
 		return result;
 	}
 
@@ -278,21 +275,15 @@ public class OStorageMemory extends OStorageAbstract {
 	public void browse(int iRequesterId, int[] iClusterId, ORecordBrowsingListener iListener, ORecord<?> iRecord) {
 	}
 
-	public OQueryExecutor getQueryExecutor(OQuery<?> iQuery) {
-		if (iQuery instanceof OSQLAsynchQuery<?>)
-			return OSQLAsynchQueryLocalExecutor.INSTANCE;
-
-		else if (iQuery instanceof OSQLSynchQuery<?>)
-			return OSQLAsynchQueryLocalExecutor.INSTANCE;
-
-		throw new OConfigurationException("Query executor not configured for query type: " + iQuery.getClass());
+	public OCommandExecutor getCommandExecutor() {
+		return OCommandLocalExecutor.INSTANCE;
 	}
 
 	public boolean exists() {
 		return true;
 	}
 
-	private OCluster getCluster(final int iClusterId) {
+	public OCluster getClusterById(final int iClusterId) {
 		return iClusterId >= 0 ? physicalClusters.get(iClusterId) : logicalClusters.get(getLogicalClusterIndex(iClusterId));
 	}
 

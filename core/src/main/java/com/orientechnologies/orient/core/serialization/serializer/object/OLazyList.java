@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.serialization.serializer.object;
 import java.util.ArrayList;
 
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
-import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings( { "unchecked", "serial" })
@@ -80,6 +80,6 @@ public class OLazyList<TYPE> extends ArrayList<TYPE> {
 		Object o = super.get(iIndex);
 
 		if (o != null && o instanceof ODocument)
-			super.set(iIndex, (TYPE) database.getUserObjectByRecord((ORecord<?>) o));
+			super.set(iIndex, (TYPE) database.getUserObjectByRecord((ORecordInternal<?>) o));
 	}
 }

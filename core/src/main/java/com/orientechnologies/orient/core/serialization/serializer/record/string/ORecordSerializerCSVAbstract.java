@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -168,11 +167,11 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 											: OEntityManagerInternal.INSTANCE, iLinkedClass, iObjHandler != null ? iObjHandler
 											: new OUserObject2RecordHandler() {
 
-												public Object getUserObjectByRecord(ORecord<?> iRecord) {
+												public Object getUserObjectByRecord(ORecordInternal<?> iRecord) {
 													return iRecord;
 												}
 
-												public ORecord<?> getRecordByUserObject(Object iPojo, boolean iIsMandatory) {
+												public ORecordInternal<?> getRecordByUserObject(Object iPojo, boolean iIsMandatory) {
 													return new ODocument(iLinkedClass);
 												}
 											});

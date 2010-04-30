@@ -78,7 +78,13 @@ public class OTransactionOptimistic<REC extends ORecordInternal<?>> extends OTra
 
 		String key = clusterId + ORID.SEPARATOR;
 		if (position == -1) {
-			// NEW RECORD: ASSIGN A UNIQUE SERIAL TEMPORARY ID
+			// NEW RECORD: CHECK IF IT'S ALREADY IN
+			for (OTransactionEntry<REC> entry : entries.values()) {
+				if (entry.record == iRecord)
+					return;
+			}
+
+			// ASSIGN A UNIQUE SERIAL TEMPORARY ID
 			position = newObjectCounter++;
 			key += position + "+";
 		} else

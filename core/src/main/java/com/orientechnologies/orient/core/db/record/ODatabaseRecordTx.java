@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.orient.core.exception.OTransactionException;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
@@ -113,11 +112,11 @@ public class ODatabaseRecordTx<REC extends ORecordInternal<?>> extends ODatabase
 		currentTx = new OTransactionNoTx(this, -1);
 	}
 
-	public ORecord<?> getRecordByUserObject(final Object iUserObject, final boolean iIsMandatory) {
-		return (ORecord<?>) iUserObject;
+	public ORecordInternal<?> getRecordByUserObject(final Object iUserObject, final boolean iIsMandatory) {
+		return (ORecordInternal<?>) iUserObject;
 	}
 
-	public Object getUserObjectByRecord(final ORecord<?> record) {
+	public Object getUserObjectByRecord(final ORecordInternal<?> record) {
 		return record;
 	}
 

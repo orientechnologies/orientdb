@@ -53,14 +53,14 @@ public abstract class OSQLQuery<T extends ORecordSchemaAware<?>> extends OQueryA
 	 */
 	public List<T> execute(final int iLimit) {
 		limit = iLimit;
-		return database.getStorage().getQueryExecutor(this).execute(this, iLimit);
+		return database.getStorage().getCommandExecutor().execute(this, iLimit);
 	}
 
 	/**
 	 * Delegates to the OQueryExecutor the query execution.
 	 */
 	public T executeFirst() {
-		return database.getStorage().getQueryExecutor(this).executeFirst(this);
+		return database.getStorage().getCommandExecutor().executeFirst(this);
 	}
 
 	public List<String> getProjections() {

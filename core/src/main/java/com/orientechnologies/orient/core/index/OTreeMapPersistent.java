@@ -214,7 +214,7 @@ public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMap
 			}
 
 			if (record.isDirty())
-				// TREE IS CHANGES AS WELL
+				// TREE IS CHANGED AS WELL
 				save();
 
 //			database.commit();

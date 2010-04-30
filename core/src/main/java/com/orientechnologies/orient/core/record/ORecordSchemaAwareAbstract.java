@@ -53,12 +53,10 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	 * @see OProperty
 	 */
 	public void validate() throws OValidationException {
-		if (clazz == null)
-			throw new OValidationException("Class not specified");
-
-		for (OProperty p : clazz.properties()) {
-			validateField(this, p);
-		}
+		if (clazz != null)
+			for (OProperty p : clazz.properties()) {
+				validateField(this, p);
+			}
 	}
 
 	public OClass getSchemaClass() {

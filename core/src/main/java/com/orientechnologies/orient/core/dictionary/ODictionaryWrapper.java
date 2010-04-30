@@ -21,7 +21,7 @@ import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
-import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -41,21 +41,25 @@ public class ODictionaryWrapper implements ODictionary<Object> {
 	}
 
 	public Object get(final Object iKey) {
-		ORecord<?> record = recordDatabase.getDictionary().get(iKey);
+		ORecordInternal<?> record = recordDatabase.getDictionary().get(iKey);
 
 		return database.getUserObjectByRecord(record);
+	}
+
+	public ORecordInternal<?> putRecord(String iKey, ORecordInternal<?> iValue) {
+		return (ORecordInternal<?>) put(iKey, iValue);
 	}
 
 	public Object put(final String iKey, final Object iValue) {
 		ODocument record = (ODocument) database.getRecordByUserObject(iValue, false);
 
-		ORecord<?> oldRecord = recordDatabase.getDictionary().put(iKey, (ODocument) record);
+		ORecordInternal<?> oldRecord = recordDatabase.getDictionary().put(iKey, (ODocument) record);
 
 		return database.getUserObjectByRecord(oldRecord);
 	}
 
 	public Object remove(final Object iKey) {
-		ORecord<?> record = recordDatabase.getDictionary().remove(iKey);
+		ORecordInternal<?> record = recordDatabase.getDictionary().remove(iKey);
 
 		return database.getUserObjectByRecord(record);
 	}

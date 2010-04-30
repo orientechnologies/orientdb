@@ -36,7 +36,7 @@ public class DbCreationTest {
 
 	public void testDbCreation() throws IOException {
 		if (url.startsWith(OEngineRemote.NAME))
-			new OServerAdmin(url).connect().createDatabase("admin", "admin", "local").close();
+			new OServerAdmin(url).connect().createDatabase("local").close();
 		else {
 			database = new ODatabaseFlat(url);
 			database.create();

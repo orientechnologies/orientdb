@@ -20,16 +20,16 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.orient.core.command.OCommandInternal;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
-import com.orientechnologies.orient.core.exception.OQueryExecutionException;
-import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -39,16 +39,19 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.query.OAsynchQuery;
 import com.orientechnologies.orient.core.query.OAsynchQueryResultListener;
 import com.orientechnologies.orient.core.query.OQuery;
+import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyRuntime;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.logical.OClusterLogical;
 import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
@@ -58,7 +61,6 @@ import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
-import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 
@@ -135,8 +137,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			}
 
 			case OChannelBinaryProtocol.DB_CREATE: {
-				String dbURL = channel.readString();
-				String dbName = dbURL.substring(channel.readString().lastIndexOf(":") + 1);
+				String dbName = channel.readString();
 				String storageMode = channel.readString();
 
 				final String path;
@@ -161,11 +162,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				connection.database.create();
 
 				if (storageMode.equals(OEngineLocal.NAME)) {
+					// CLOSE IT BECAUSE IT WILL BE OPEN AT FIRST USE
 					connection.database.close();
-
-					// SAVE THE DB IN DISK CONFIGURATION
-					OServerMain.server().getConfiguration().storages.add(new OServerStorageConfiguration(dbName, path));
-					OServerMain.server().saveConfiguration();
 
 				} else if (storageMode.equals(OEngineMemory.NAME)) {
 					// SAVE THE DB IN MEMORY
@@ -199,15 +197,26 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				channel.writeLong(count);
 				break;
 
-			case OChannelBinaryProtocol.CLUSTER_ADD:
-				int num = connection.database.addPhysicalCluster(channel.readString(), channel.readString(), channel.readInt());
+			case OChannelBinaryProtocol.CLUSTER_PHYSICAL_ADD: {
+				final int num = connection.database.addPhysicalCluster(channel.readString(), channel.readString(), channel.readInt());
 
 				sendOk();
 				channel.writeShort((short) num);
 				break;
+			}
+
+			case OChannelBinaryProtocol.CLUSTER_LOGICAL_ADD: {
+				final int num = connection.database.addLogicalCluster(channel.readString(), connection.database.getDefaultClusterId());
+
+				sendOk();
+				OClusterLogical cluster = (OClusterLogical) connection.database.getStorage().getClusterById(num);
+				channel.writeShort((short) num);
+				channel.writeString(cluster.getRID().toString());
+				break;
+			}
 
 			case OChannelBinaryProtocol.RECORD_LOAD:
-				ORawBuffer record = underlyingDatabase.read(channel.readShort(), channel.readLong());
+				final ORawBuffer record = underlyingDatabase.read(channel.readShort(), channel.readLong());
 				sendOk();
 				if (record != null) {
 					channel.writeByte((byte) 1);
@@ -219,15 +228,15 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				break;
 
 			case OChannelBinaryProtocol.RECORD_CREATE:
-				long location = underlyingDatabase.save(channel.readShort(), ORID.CLUSTER_POS_INVALID, channel.readBytes(), -1, channel
-						.readByte());
+				final long location = underlyingDatabase.save(channel.readShort(), ORID.CLUSTER_POS_INVALID, channel.readBytes(), -1,
+						channel.readByte());
 				sendOk();
 				channel.writeLong(location);
 				break;
 
 			case OChannelBinaryProtocol.RECORD_UPDATE:
-				int clusterId = channel.readShort();
-				long position = channel.readLong();
+				final int clusterId = channel.readShort();
+				final long position = channel.readLong();
 
 				long newVersion = underlyingDatabase.save(clusterId, position, channel.readBytes(), channel.readInt(), channel.readByte());
 
@@ -240,7 +249,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 				sendOk();
 
-				channel.writeInt((int) (newVersion * -1 + 2));
+				channel.writeInt((int) (newVersion * -1 - 2));
 				break;
 
 			case OChannelBinaryProtocol.RECORD_DELETE:
@@ -249,13 +258,23 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				break;
 
 			case OChannelBinaryProtocol.COUNT: {
-				String clusterName = channel.readString();
-
-				long size = connection.database.countClusterElements(clusterName);
+				final String clusterName = channel.readString();
+				final long size = connection.database.countClusterElements(clusterName);
 
 				sendOk();
 
 				channel.writeLong(size);
+				break;
+			}
+
+			case OChannelBinaryProtocol.COMMAND: {
+				OCommandInternal command = (OCommandInternal) OStreamSerializerAnyStreamable.INSTANCE.fromStream(channel.readBytes());
+
+				Object result = connection.database.command(command).execute();
+
+				sendOk();
+
+				channel.writeBytes(OStreamSerializerAnyRuntime.INSTANCE.toStream(result));
 				break;
 			}
 
@@ -278,7 +297,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 							} catch (IOException e1) {
 							}
 
-						if (items > limit)
+						if (limit > -1 && items > limit)
 							return false;
 
 						try {
@@ -305,6 +324,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				channel.writeByte((byte) 0);
 				break;
 			}
+
 			case OChannelBinaryProtocol.QUERY_FIRST: {
 				String queryText = channel.readString();
 
@@ -335,9 +355,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			case OChannelBinaryProtocol.DICTIONARY_PUT: {
 				String key = channel.readString();
-				ODocument value = new ODocument(connection.database, new ORecordId(channel.readString()));
+				ORecordInternal<?> value = ORecordFactory.getRecord(channel.readByte());
+				
+				final ORecordId rid = new ORecordId(channel.readString());				
+				value.setIdentity(rid.clusterId, rid.clusterPosition);
+				value.setDatabase(connection.database);
 
-				value = connection.database.getDictionary().put(key, value);
+				value = connection.database.getDictionary().putRecord(key, value);
 
 				sendOk();
 
@@ -384,9 +408,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			shutdown();
 		} catch (SocketException e) {
 			shutdown();
-		} catch (OQueryParsingException e) {
-			sendError(e);
-		} catch (OQueryExecutionException e) {
+		} catch (OException e) {
 			sendError(e);
 		} catch (Throwable t) {
 			OLogManager.instance().error(this, "Error on executing request", t);
@@ -416,6 +438,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 	protected void sendError(Throwable t) throws IOException {
 		channel.writeByte(OChannelBinaryProtocol.ERROR);
+		channel.writeString(t.getClass().getName());
 		channel.writeString(t != null ? t.getMessage() : null);
 
 		channel.clearInput();

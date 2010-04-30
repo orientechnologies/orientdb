@@ -152,15 +152,17 @@ public class OStorageLocalTxExecuter {
 		ORecordId rid = (ORecordId) txEntry.record.getIdentity();
 
 		final OCluster cluster = txEntry.clusterName != null ? storage.getClusterByName(txEntry.clusterName) : storage
-				.getCluster(rid.clusterId);
+				.getClusterById(rid.clusterId);
 
 		switch (txEntry.status) {
 		case OTransactionEntry.LOADED:
 			break;
 
 		case OTransactionEntry.CREATED:
-			rid.clusterPosition = createRecord(iRequesterId, iTxId, cluster, txEntry.record.toStream(), txEntry.record.getRecordType());
-			rid.clusterId = cluster.getId();
+			if (!txEntry.record.getIdentity().isValid()) {
+				rid.clusterPosition = createRecord(iRequesterId, iTxId, cluster, txEntry.record.toStream(), txEntry.record.getRecordType());
+				rid.clusterId = cluster.getId();
+			}
 			break;
 
 		case OTransactionEntry.UPDATED:

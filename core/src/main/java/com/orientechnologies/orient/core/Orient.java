@@ -105,10 +105,8 @@ public class Orient extends OSharedResource {
 		try {
 			acquireExclusiveLock();
 
-			if (storages.containsKey(iStorage.getName()))
-				throw new IllegalStateException("Storage " + iStorage + " has been already registered");
-
-			storages.put(iStorage.getName(), iStorage);
+			if (!storages.containsKey(iStorage.getName()))
+				storages.put(iStorage.getName(), iStorage);
 
 		} finally {
 			releaseExclusiveLock();

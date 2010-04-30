@@ -118,8 +118,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		if (iDatabaseURL.startsWith(OEngineRemote.NAME)) {
 			// REMOTE CONNECTION
 			final String dbURL = iDatabaseURL.substring(OEngineRemote.NAME.length() + 1);
-			final String dbName = dbURL.substring(dbURL.indexOf("/") + 1);
-			new OServerAdmin(dbURL).connect().createDatabase(dbName, dbName, iStorageType).close();
+			new OServerAdmin(dbURL).connect().createDatabase(iStorageType).close();
 			connect(iDatabaseURL);
 
 		} else {

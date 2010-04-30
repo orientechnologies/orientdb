@@ -18,6 +18,7 @@ package com.orientechnologies.orient.client.admin;
 import java.io.IOException;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -28,6 +29,9 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 public class OServerAdmin extends OStorageRemote {
 	public OServerAdmin(String iURL) throws IOException {
 		super(iURL, "");
+
+		if (iURL.startsWith(OEngineRemote.NAME))
+			fileURL = iURL.substring(OEngineRemote.NAME.length() + 1);
 	}
 
 	public OServerAdmin connect() throws IOException {
@@ -36,7 +40,7 @@ public class OServerAdmin extends OStorageRemote {
 		return this;
 	}
 
-	public OServerAdmin createDatabase(String iDatabaseName, String iDatabasePath, String iStorageMode) throws IOException {
+	public OServerAdmin createDatabase(String iStorageMode) throws IOException {
 		checkConnection();
 
 		try {
@@ -44,15 +48,14 @@ public class OServerAdmin extends OStorageRemote {
 				iStorageMode = "csv";
 
 			network.writeByte(OChannelBinaryProtocol.DB_CREATE);
-			network.writeString(iDatabaseName);
-			network.writeString(iDatabasePath);
+			network.writeString(name);
 			network.writeString(iStorageMode);
 			network.flush();
 
 			readStatus();
 
 		} catch (Exception e) {
-			OLogManager.instance().error(this, "Can't create the remote storage: " + iDatabaseName, e, OStorageException.class);
+			OLogManager.instance().error(this, "Can't create the remote storage: " + name, e, OStorageException.class);
 			close();
 		}
 		return this;

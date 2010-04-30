@@ -33,7 +33,9 @@ public class OSQLFilterItemColumn extends OSQLFilterItemAbstract {
 	}
 
 	public Object getValue(final ORecordInternal<?> iRecord) {
-		return transformValue(((ORecordPositional<?>) iRecord).field(number));
+		if (iRecord instanceof ORecordPositional<?>)
+			return transformValue(((ORecordPositional<?>) iRecord).field(number));
+		return null;
 	}
 
 	@Override

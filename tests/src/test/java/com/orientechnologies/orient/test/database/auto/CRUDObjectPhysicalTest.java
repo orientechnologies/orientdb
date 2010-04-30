@@ -21,6 +21,8 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.client.remote.OEngineRemote;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.test.domain.business.Account;
@@ -38,6 +40,8 @@ public class CRUDObjectPhysicalTest {
 
 	@Parameters(value = "url")
 	public CRUDObjectPhysicalTest(String iURL) {
+		Orient.instance().registerEngine(new OEngineRemote());
+
 		database = new ODatabaseObjectTx(iURL);
 		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain");
 	}

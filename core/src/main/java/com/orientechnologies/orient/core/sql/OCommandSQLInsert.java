@@ -33,7 +33,7 @@ public class OCommandSQLInsert extends OCommandSQLAbstract {
 	private String[]						fieldNames;
 	private Object[]						fieldValues;
 
-	protected OCommandSQLInsert(final String iText, final String iTextUpperCase, final ODatabaseRecord<ODocument> iDatabase) {
+	public OCommandSQLInsert(final String iText, final String iTextUpperCase, final ODatabaseRecord<ODocument> iDatabase) {
 		super(iText, iTextUpperCase, iDatabase);
 	}
 

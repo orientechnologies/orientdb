@@ -22,6 +22,7 @@ import java.util.Map.Entry;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionaryInternal;
 import com.orientechnologies.orient.core.dictionary.ODictionaryIterator;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 
 @SuppressWarnings("serial")
 public class ODictionaryMemory<T extends Object> extends HashMap<String, T> implements ODictionaryInternal<T> {
@@ -37,5 +38,10 @@ public class ODictionaryMemory<T extends Object> extends HashMap<String, T> impl
 
 	public Iterator<Entry<String, T>> iterator() {
 		return new ODictionaryIterator<T>(this);
+	}
+
+	@SuppressWarnings("unchecked")
+	public ORecordInternal<?> putRecord(String iKey, ORecordInternal<?> iValue) {
+		return (ORecordInternal<?>) put(iKey, (T) iValue);
 	}
 }

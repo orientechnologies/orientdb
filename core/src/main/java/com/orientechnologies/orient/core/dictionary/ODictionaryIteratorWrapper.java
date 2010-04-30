@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class ODictionaryIteratorWrapper implements Iterator<Entry<String, Object>> {
-	private ODatabaseDocument										database;
+	private ODatabaseDocument								database;
 	private ODictionaryIterator<ODocument>	wrapped;
 
 	public ODictionaryIteratorWrapper(final ODatabaseDocument iDatabase, final ODictionaryIterator<ODocument> iToWrapper) {

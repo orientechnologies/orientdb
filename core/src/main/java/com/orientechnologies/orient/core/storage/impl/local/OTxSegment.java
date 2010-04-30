@@ -363,7 +363,7 @@ public class OTxSegment extends OSingleFileSegment {
 	private void recoverTransactionEntry(byte status, byte operation, int reqId, int txId, int clusterId, long clusterOffset,
 			long oldDataOffset, OPhysicalPosition ppos) throws IOException {
 
-		OClusterLocal cluster = (OClusterLocal) storage.getCluster(clusterId);
+		OClusterLocal cluster = (OClusterLocal) storage.getClusterById(clusterId);
 
 		OLogManager.instance().info(this,
 				"Recovering tx <%d> by req <%d>. Operation <%d> was in status <%d> on record %d:%d in data space %d...", txId, reqId,
@@ -389,7 +389,7 @@ public class OTxSegment extends OSingleFileSegment {
 			ppos.dataPosition = oldDataOffset;
 
 			// UPDATE THE PPOS WITH THE COORDS OF THE OLD RECORD
-			storage.getCluster(clusterId).setPhysicalPosition(clusterOffset, ppos.dataSegment, oldDataOffset, ppos.type);
+			storage.getClusterById(clusterId).setPhysicalPosition(clusterOffset, ppos.dataSegment, oldDataOffset, ppos.type);
 
 			// CREATE A HOLE
 			storage.getDataSegment(ppos.dataSegment).createHole(newPosition, newSize);
@@ -414,7 +414,7 @@ public class OTxSegment extends OSingleFileSegment {
 	}
 
 	private void synchTx() {
-		if (((OStorageTxConfiguration) config).isSynchRecord())
+		if (((OStorageTxConfiguration) config).isSynchTx())
 			file.synch();
 	}
 }

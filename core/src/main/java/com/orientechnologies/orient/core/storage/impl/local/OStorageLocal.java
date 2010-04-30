@@ -42,13 +42,12 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.query.OCommandExecutor;
 import com.orientechnologies.orient.core.query.OQuery;
-import com.orientechnologies.orient.core.query.OQueryExecutor;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
-import com.orientechnologies.orient.core.sql.query.OSQLAsynchQueryLocalExecutor;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.record.impl.ORecordColumn;
+import com.orientechnologies.orient.core.sql.query.OCommandLocalExecutor;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -305,7 +304,7 @@ public class OStorageLocal extends OStorageAbstract {
 	/**
 	 * Add a new cluster into the storage.
 	 */
-	public int addClusterSegment(final String iClusterName, String iClusterFileName, final int iStartSize) {
+	public int addPhysicalCluster(final String iClusterName, String iClusterFileName, final int iStartSize) {
 		checkOpeness();
 
 		final boolean locked = acquireExclusiveLock();
@@ -402,23 +401,23 @@ public class OStorageLocal extends OStorageAbstract {
 
 	public long createRecord(final int iClusterId, final byte[] iContent, final byte iRecordType) {
 		checkOpeness();
-		return createRecord(getCluster(iClusterId), iContent, iRecordType);
+		return createRecord(getClusterById(iClusterId), iContent, iRecordType);
 	}
 
 	public ORawBuffer readRecord(final int iRequesterId, final int iClusterId, final long iPosition) {
 		checkOpeness();
-		return readRecord(iRequesterId, getCluster(iClusterId), iPosition, true);
+		return readRecord(iRequesterId, getClusterById(iClusterId), iPosition, true);
 	}
 
 	public int updateRecord(final int iRequesterId, final int iClusterId, final long iPosition, final byte[] iContent,
 			final int iVersion, final byte iRecordType) {
 		checkOpeness();
-		return updateRecord(iRequesterId, getCluster(iClusterId), iPosition, iContent, iVersion, iRecordType);
+		return updateRecord(iRequesterId, getClusterById(iClusterId), iPosition, iContent, iVersion, iRecordType);
 	}
 
 	public void deleteRecord(final int iRequesterId, final int iClusterId, final long iPosition, final int iVersion) {
 		checkOpeness();
-		deleteRecord(iRequesterId, getCluster(iClusterId), iPosition, iVersion);
+		deleteRecord(iRequesterId, getClusterById(iClusterId), iPosition, iVersion);
 	}
 
 	/**
@@ -446,7 +445,7 @@ public class OStorageLocal extends OStorageAbstract {
 			OCluster cluster;
 
 			for (int clusterId : iClusterId) {
-				cluster = getCluster(clusterId);
+				cluster = getClusterById(clusterId);
 
 				browseCluster(iRequesterId, iListener, iRecord, cluster, clusterId);
 			}
@@ -480,7 +479,7 @@ public class OStorageLocal extends OStorageAbstract {
 				if (recordBuffer == null)
 					continue;
 
-				if (recordBuffer.recordType != ODocument.RECORD_TYPE)
+				if (recordBuffer.recordType != ODocument.RECORD_TYPE && recordBuffer.recordType != ORecordColumn.RECORD_TYPE)
 					// WRONG RECORD TYPE: JUMP IT
 					continue;
 
@@ -601,7 +600,7 @@ public class OStorageLocal extends OStorageAbstract {
 		return configuration;
 	}
 
-	public OCluster getCluster(int iClusterId) {
+	public OCluster getClusterById(int iClusterId) {
 		if (iClusterId == ORID.CLUSTER_ID_INVALID)
 			// GET THE DEFAULT CLUSTER
 			iClusterId = defaultCluster;
@@ -632,14 +631,8 @@ public class OStorageLocal extends OStorageAbstract {
 		return new ODictionaryLocal(iDatabase);
 	}
 
-	public OQueryExecutor getQueryExecutor(OQuery<?> iQuery) {
-		if (iQuery instanceof OSQLAsynchQuery<?>)
-			return OSQLAsynchQueryLocalExecutor.INSTANCE;
-
-		else if (iQuery instanceof OSQLSynchQuery<?>)
-			return OSQLAsynchQueryLocalExecutor.INSTANCE;
-
-		throw new OConfigurationException("Query executor not configured for query type: " + iQuery.getClass());
+	public OCommandExecutor getCommandExecutor() {
+		return OCommandLocalExecutor.INSTANCE;
 	}
 
 	public String getStoragePath() {

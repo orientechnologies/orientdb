@@ -16,6 +16,8 @@
 package com.orientechnologies.orient.client.remote;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,32 +27,33 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.config.OClientConfiguration;
 import com.orientechnologies.orient.client.dictionary.ODictionaryClient;
-import com.orientechnologies.orient.client.query.OSQLAsynchQueryRemoteExecutor;
+import com.orientechnologies.orient.client.query.OCommandRemoteExecutor;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandInternal;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OIOException;
 import com.orientechnologies.orient.core.exception.OQueryExecutionException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.query.OAsynchQuery;
+import com.orientechnologies.orient.core.query.OCommandExecutor;
 import com.orientechnologies.orient.core.query.OQuery;
-import com.orientechnologies.orient.core.query.OQueryExecutor;
 import com.orientechnologies.orient.core.query.OQueryInternal;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyRuntime;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
-import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -237,9 +240,9 @@ public class OStorageRemote extends OStorageAbstract {
 				network.writeByte(OChannelBinaryProtocol.RECORD_UPDATE);
 				network.writeShort((short) iClusterId);
 				network.writeLong(iPosition);
+				network.writeBytes((byte[]) iContent);
 				network.writeInt(iVersion);
 				network.writeByte(iRecordType);
-				network.writeBytes((byte[]) iContent);
 				network.flush();
 
 				readStatus();
@@ -335,6 +338,52 @@ public class OStorageRemote extends OStorageAbstract {
 			}
 		} while (true);
 		return -1;
+	}
+
+	/**
+	 * Execute the command into the server side and get back the return.
+	 * 
+	 * @param iCommand
+	 *          Command to execute
+	 * @return Result value of the command execution.
+	 */
+	public Object command(final OCommandInternal iCommand) {
+		checkConnection();
+
+		if (!(iCommand instanceof OSerializableStream))
+			throw new OQueryExecutionException("Can't serialize the command to being executed to the server side.");
+
+		OSerializableStream command = (OSerializableStream) iCommand;
+
+		Object result = null;
+
+		do {
+			boolean locked = acquireExclusiveLock();
+
+			OStorageRemoteThreadLocal.INSTANCE.set(Boolean.TRUE);
+
+			try {
+				network.writeByte(OChannelBinaryProtocol.COMMAND);
+				network.writeBytes(OStreamSerializerAnyStreamable.INSTANCE.toStream(command));
+				network.flush();
+
+				readStatus();
+
+				result = OStreamSerializerAnyRuntime.INSTANCE.fromStream(network.readBytes());
+				break;
+
+			} catch (Exception e) {
+				if (handleException("Error on executing command: " + command, e))
+					break;
+
+			} finally {
+				OStorageRemoteThreadLocal.INSTANCE.set(Boolean.FALSE);
+
+				releaseExclusiveLock(locked);
+			}
+		} while (true);
+
+		return result;
 	}
 
 	/**
@@ -502,7 +551,8 @@ public class OStorageRemote extends OStorageAbstract {
 		try {
 			final Integer id = clusters.get(iClusterName.toLowerCase());
 			if (id == null)
-				throw new IllegalArgumentException("Cluster " + iClusterName + " id not defined in database " + name);
+				return -1;
+
 			return id;
 
 		} finally {
@@ -517,7 +567,7 @@ public class OStorageRemote extends OStorageAbstract {
 			boolean locked = acquireExclusiveLock();
 
 			try {
-				network.writeByte(OChannelBinaryProtocol.CLUSTER_ADD);
+				network.writeByte(OChannelBinaryProtocol.CLUSTER_LOGICAL_ADD);
 				network.writeString(iClusterLogical.getName());
 				network.flush();
 
@@ -543,14 +593,14 @@ public class OStorageRemote extends OStorageAbstract {
 		return iClusterLogical.getId();
 	}
 
-	public int addClusterSegment(final String iClusterName, final String iClusterFileName, final int iFileSize) {
+	public int addPhysicalCluster(final String iClusterName, final String iClusterFileName, final int iFileSize) {
 		checkConnection();
 
 		do {
 			boolean locked = acquireExclusiveLock();
 
 			try {
-				network.writeByte(OChannelBinaryProtocol.CLUSTER_ADD);
+				network.writeByte(OChannelBinaryProtocol.CLUSTER_PHYSICAL_ADD);
 				network.writeString(iClusterName).writeString(iClusterFileName).writeInt(iFileSize);
 				network.flush();
 
@@ -610,7 +660,7 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public <REC extends ORecordInternal<?>> REC dictionaryPut(ODatabaseRecord<REC> iDatabase, final String iKey,
-			final ORecord<?> iRecord) {
+			final ORecordInternal<?> iRecord) {
 		checkConnection();
 
 		do {
@@ -619,6 +669,7 @@ public class OStorageRemote extends OStorageAbstract {
 			try {
 				network.writeByte(OChannelBinaryProtocol.DICTIONARY_PUT);
 				network.writeString(iKey);
+				network.writeByte(iRecord.getRecordType());
 				network.writeString(iRecord.getIdentity().toString());
 				network.flush();
 
@@ -750,21 +801,43 @@ public class OStorageRemote extends OStorageAbstract {
 		return null;
 	}
 
-	public OQueryExecutor getQueryExecutor(OQuery<?> iQuery) {
-		if (iQuery instanceof OSQLAsynchQuery<?>)
-			return OSQLAsynchQueryRemoteExecutor.INSTANCE;
-
-		throw new OConfigurationException("Query executor not configured for query type: " + iQuery.getClass());
+	public OCommandExecutor getCommandExecutor() {
+		return OCommandRemoteExecutor.INSTANCE;
 	}
 
 	protected void readStatus() throws IOException {
 		final byte result = network.readByte();
 
-		if (result == OChannelBinaryProtocol.ERROR)
-			throw new OStorageException(network.readString(), null);
+		if (result == OChannelBinaryProtocol.ERROR) {
+			final String excClassName = network.readString();
+			final String excMessage = network.readString();
+
+			Constructor c = null;
+
+			try {
+				final Class<RuntimeException> excClass = (Class<RuntimeException>) Class.forName(excClassName);
+				c = excClass.getConstructor(String.class);
+			} catch (Exception e) {
+				// UNABLE TO REPRODUCE THE SAME SERVER-SIZE EXCEPTION: THROW A STORAGE EXCEPTION
+				throw new OStorageException(excMessage, null);
+			}
+
+			if (c != null)
+				try {
+					throw (RuntimeException) c.newInstance(excMessage);
+				} catch (IllegalArgumentException e) {
+				} catch (InstantiationException e) {
+				} catch (IllegalAccessException e) {
+				} catch (InvocationTargetException e) {
+				}
+		}
 	}
 
 	protected boolean handleException(final String iMessage, final Exception iException) {
+		if (iException instanceof OException)
+			// RE-THROW IT
+			throw (OException) iException;
+
 		if (!(iException instanceof IOException))
 			throw new OStorageException(iMessage, iException);
 
@@ -930,6 +1003,10 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public Collection<OCluster> getClusters() {
-		return null;
+		throw new UnsupportedOperationException("getClusters()");
+	}
+
+	public OCluster getClusterById(final int iId) {
+		throw new UnsupportedOperationException("getClusterById()");
 	}
 }

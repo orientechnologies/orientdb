@@ -13,12 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.db;
+package com.orientechnologies.orient.core.query;
 
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import java.util.List;
 
-public interface OUserObject2RecordHandler {
-	public ORecordInternal<?> getRecordByUserObject(Object iPojo, boolean iIsMandatory);
+import com.orientechnologies.orient.core.command.OCommandInternal;
+import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 
-	public Object getUserObjectByRecord(ORecordInternal<?> iRecord);
+public interface OCommandExecutor {
+	public Object execute(OCommandInternal iCommand);
+
+	public <R extends ORecordSchemaAware<?>> List<R> execute(OQuery<R> iQuery, int iLimit);
+
+	public <R extends ORecordSchemaAware<?>> R executeFirst(OQuery<R> iQuery);
+
 }

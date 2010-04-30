@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OTreeMapPersistent;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyRecord;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerString;
 
@@ -52,6 +53,10 @@ public class ODictionaryLocal<T extends Object> implements ODictionaryInternal<T
 
 	public boolean containsKey(Object iKey) {
 		return tree.containsKey(iKey);
+	}
+
+	public ORecordInternal<?> putRecord(String iKey, ORecordInternal<?> iValue) {
+		return (ORecordInternal<?>) tree.put(iKey, (T) iValue);
 	}
 
 	public T put(String iKey, T iValue) {

@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.query.OQuery;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
@@ -102,14 +101,14 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord<
 		return this;
 	}
 
-	public ORecord<?> getRecordByUserObject(final Object iUserObject, boolean iMandatory) {
+	public ORecordInternal<?> getRecordByUserObject(final Object iUserObject, boolean iMandatory) {
 		if (databaseOwner != this)
 			return getDatabaseOwner().getRecordByUserObject(iUserObject, false);
 
-		return (ORecord<?>) iUserObject;
+		return (ORecordInternal<?>) iUserObject;
 	}
 
-	public Object getUserObjectByRecord(final ORecord<?> iRecord) {
+	public Object getUserObjectByRecord(final ORecordInternal<?> iRecord) {
 		if (databaseOwner != this)
 			return getDatabaseOwner().getUserObjectByRecord(iRecord);
 

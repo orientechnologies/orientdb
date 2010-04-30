@@ -22,7 +22,7 @@ import java.util.Map.Entry;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionaryInternal;
-import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 
 @SuppressWarnings("unchecked")
 public class ODictionaryClient<T extends Object> implements ODictionaryInternal<T> {
@@ -38,18 +38,24 @@ public class ODictionaryClient<T extends Object> implements ODictionaryInternal<
 		if (iKey == null)
 			return null;
 
-		ORecord<?> record = storage.dictionaryLookup(database, (String) iKey);
+		ORecordInternal<?> record = storage.dictionaryLookup(database, (String) iKey);
 
 		return (T) database.getUserObjectByRecord(record);
 	}
 
-	public T put(final String iKey, final T iValue) {
+	public ORecordInternal<?> putRecord(String iKey, ORecordInternal<?> iValue) {
+		return (ORecordInternal<?>) put(iKey, iValue);
+	}
+
+	public T put(final String iKey, final Object iValue) {
 		if (iKey == null)
 			return null;
 
-		ORecord<?> record = database.getRecordByUserObject(iValue, false);
+		ORecordInternal<?> record = database.getRecordByUserObject(iValue, false);
+		if (record.isDirty())
+			record.save();
 
-		ORecord<?> oldRecord = storage.dictionaryPut(database, iKey, record);
+		ORecordInternal<?> oldRecord = storage.dictionaryPut(database, iKey, record);
 
 		return (T) database.getUserObjectByRecord(oldRecord);
 	}

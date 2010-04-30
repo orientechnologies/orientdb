@@ -405,31 +405,31 @@ public class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> implement
 	public final byte[] toStream() throws IOException {
 		final long timer = OProfiler.getInstance().startChrono();
 
-		OMemoryOutputStream record = persistentTree.entryRecordBuffer;
+		OMemoryOutputStream stream = persistentTree.entryRecordBuffer;
 
 		try {
-			record.add((short) pageSize);
-			record.add(leftRid.toStream());
-			record.add(rightRid.toStream());
+			stream.add((short) pageSize);
+			stream.add(leftRid.toStream());
+			stream.add(rightRid.toStream());
 
-			record.add(color);
-			record.add((short) size);
+			stream.add(color);
+			stream.add((short) size);
 
 			serializeNewKeys();
 			serializeNewValues();
 
 			for (int i = 0; i < size; ++i)
-				record.add(serializedKeys[i]);
+				stream.add(serializedKeys[i]);
 
 			for (int i = 0; i < size; ++i)
-				record.add(serializedValues[i]);
+				stream.add(serializedValues[i]);
 
-			record.flush();
+			stream.flush();
 
-			return record.getByteArray();
+			return stream.getByteArray();
 
 		} finally {
-			record.close();
+			stream.close();
 
 			OProfiler.getInstance().stopChrono("OTreeMapEntryP.toStream", timer);
 		}

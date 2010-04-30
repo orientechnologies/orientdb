@@ -19,6 +19,8 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.client.remote.OEngineRemote;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.ODatabaseColumn;
 import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 
@@ -34,6 +36,7 @@ public class CRUDColumnPhysicalTest {
 
 	@Parameters(value = "url")
 	public CRUDColumnPhysicalTest(String iURL) {
+		Orient.instance().registerEngine(new OEngineRemote());
 		database = new ODatabaseColumn(iURL);
 		record = database.newInstance();
 	}

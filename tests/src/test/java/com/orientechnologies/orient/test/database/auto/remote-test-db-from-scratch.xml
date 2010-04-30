@@ -1,6 +1,12 @@
 <!DOCTYPE suite SYSTEM "http://beust.com/testng/testng-1.0.dtd">
 <suite name="Test Suite Example" verbose="1">
+    <!--   
+	<parameter name="url" value="remote:localhost/demo" />
+	-->
+	
+	<!--  --> 
 	<parameter name="url" value="local:../../releases/0.9.12/db/databases/demo/demo" />
+	 
 
 	<test name="Setup">
 		<parameter name="path" value="../../releases/0.9.12/db/databases/demo" />
@@ -24,11 +30,11 @@
 			<class name="com.orientechnologies.orient.test.database.auto.CRUDFlatPhysicalTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.CRUDColumnPhysicalTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentLogicalTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentPhysicalTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.CRUDObjectPhysicalTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentPhysicalTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.CRUDObjectPhysicalTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.CRUDFlatPhysicalTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentValidationTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.ObjectTreeTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.ObjectTreeTest" />
 		</classes>
 	</test>
 	<test name="Tx">
@@ -44,12 +50,12 @@
 		</classes>
 	</test>
 	<test name="Query">
-        <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.NativeQueryTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.SQLQueryTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.WrongQueryTest" />
-        </classes>
-    </test>
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.NativeQueryTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.SQLQueryTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.WrongQueryTest" />
+		</classes>
+	</test>
 	<test name="End">
 		<classes>
 			<class name="com.orientechnologies.orient.test.database.auto.DbClosedTest" />

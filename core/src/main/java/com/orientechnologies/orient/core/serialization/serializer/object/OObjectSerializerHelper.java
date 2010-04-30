@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -118,7 +118,7 @@ public class OObjectSerializerHelper {
 				fieldClass = iEntityManager.getEntityClass(p.getType().getSimpleName());
 				if (fieldClass != null) {
 					// RECOGNIZED TYPE
-					fieldValue = iObj2RecHandler.getUserObjectByRecord((ORecord<?>) fieldValue);
+					fieldValue = iObj2RecHandler.getUserObjectByRecord((ORecordInternal<?>) fieldValue);
 				}
 			} else if (p.getType().isAssignableFrom(List.class)) {
 

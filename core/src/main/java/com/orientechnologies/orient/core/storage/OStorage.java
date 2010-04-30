@@ -24,8 +24,7 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.query.OQuery;
-import com.orientechnologies.orient.core.query.OQueryExecutor;
+import com.orientechnologies.orient.core.query.OCommandExecutor;
 import com.orientechnologies.orient.core.storage.impl.logical.OClusterLogical;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
@@ -67,6 +66,8 @@ public interface OStorage {
 
 	public Set<String> getClusterNames();
 
+	public OCluster getClusterById(int iId);
+
 	public Collection<OCluster> getClusters();
 
 	/**
@@ -83,7 +84,7 @@ public interface OStorage {
 	 * 
 	 * @throws IOException
 	 */
-	public int addClusterSegment(String iClusterName, String iClusterFileName, int iStartSize);
+	public int addPhysicalCluster(String iClusterName, String iClusterFileName, int iStartSize);
 
 	/**
 	 * Add a new data segment in the default segment directory and with filename equals to the cluster name.
@@ -116,5 +117,5 @@ public interface OStorage {
 
 	public OCacheRecord getCache();
 
-	public OQueryExecutor getQueryExecutor(OQuery<?> iQuery);
+	public OCommandExecutor getCommandExecutor();
 }

@@ -22,7 +22,9 @@ package com.orientechnologies.orient.core.sql;
  * 
  */
 public class OCommandSQL extends OCommandSQLAbstract {
-	private OCommandSQLAbstract	commandToDelegate;
+	public OCommandSQL() {
+		super(null, null);
+	}
 
 	public OCommandSQL(final String iText) {
 		super(iText, iText.toUpperCase());
@@ -30,26 +32,9 @@ public class OCommandSQL extends OCommandSQLAbstract {
 
 	public Object execute() {
 		parse();
-		return commandToDelegate.execute();
+		return database.getStorage().getCommandExecutor().execute(this);
 	}
 
 	public void parse() {
-		if (commandToDelegate != null)
-			// ALREADY PARSED
-			return;
-
-		if (text == null || text.length() == 0)
-			throw new IllegalArgumentException("Invalid SQL command");
-
-		if (textUpperCase.startsWith(OSQLHelper.KEYWORD_INSERT))
-			commandToDelegate = new OCommandSQLInsert(text, textUpperCase, database);
-		else if (textUpperCase.startsWith(OSQLHelper.KEYWORD_UPDATE))
-			commandToDelegate = new OCommandSQLUpdate(text, textUpperCase, database);
-		else if (textUpperCase.startsWith(OSQLHelper.KEYWORD_DELETE))
-			commandToDelegate = new OCommandSQLDelete(text, textUpperCase, database);
-		else if (textUpperCase.startsWith(OSQLHelper.KEYWORD_SELECT)) {
-			// TODO: WHAT TODO WITH SELECT?
-			return;
-		}
 	}
 }

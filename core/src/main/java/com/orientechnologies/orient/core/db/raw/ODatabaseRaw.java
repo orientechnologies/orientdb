@@ -219,7 +219,7 @@ public class ODatabaseRaw implements ODatabase {
 	}
 
 	public int addPhysicalCluster(String iClusterName, String iClusterFileName, int iStartSize) {
-		return storage.addClusterSegment(iClusterName, iClusterFileName, iStartSize);
+		return storage.addPhysicalCluster(iClusterName, iClusterFileName, iStartSize);
 	}
 
 	public int addDataSegment(String iSegmentName, String iSegmentFileName) {

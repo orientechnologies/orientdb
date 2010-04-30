@@ -72,7 +72,7 @@ public abstract class OStorageAbstract extends OSharedResourceAdaptive implement
 	 * Add a new cluster in the default segment directory and with filename equals to the cluster name.
 	 */
 	public int addCluster(final String iClusterName) {
-		return addClusterSegment(iClusterName, null, -1);
+		return addPhysicalCluster(iClusterName, null, -1);
 	}
 
 	@Override

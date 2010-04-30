@@ -19,6 +19,8 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.client.remote.OEngineRemote;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.iterator.ORecordIterator;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
@@ -28,11 +30,13 @@ public class CRUDFlatPhysicalTest {
 	private static final String	CLUSTER_NAME	= "binary";
 	protected static final int	TOT_RECORDS		= 1000;
 	protected long							startRecordNumber;
-	private ODatabaseFlat	database;
+	private ODatabaseFlat				database;
 	private ORecordFlat					record;
 
 	@Parameters(value = "url")
 	public CRUDFlatPhysicalTest(String iURL) {
+		Orient.instance().registerEngine(new OEngineRemote());
+
 		database = new ODatabaseFlat(iURL);
 		record = database.newInstance();
 	}

@@ -18,6 +18,8 @@ package com.orientechnologies.orient.core.dictionary;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import com.orientechnologies.orient.core.record.ORecordInternal;
+
 /**
  * Main TreeMap to handle pairs of Key/Values. This is the entry point for all the root objects.<br/>
  * <br/>
@@ -81,4 +83,6 @@ public interface ODictionary<T extends Object> extends Iterable<Entry<String, T>
 	 * Return the set of all the keys.
 	 */
 	public Set<String> keySet();
+
+	public ORecordInternal<?> putRecord(String iKey, ORecordInternal<?> iValue);
 }

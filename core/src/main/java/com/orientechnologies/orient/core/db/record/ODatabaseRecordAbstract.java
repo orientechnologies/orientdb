@@ -287,7 +287,8 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		try {
 			final int clusterId;
 
-			if (!rid.isValid()) {
+			boolean isNew = !rid.isValid();
+			if (isNew) {
 				clusterId = iClusterName != null ? getClusterIdByName(iClusterName) : getDefaultClusterId();
 
 				// CHECK ACCESS ON CLUSTER
@@ -314,9 +315,9 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 				rid.clusterPosition = clusterPosition;
 			}
 
-			// ADD/UPDATE IT IN CACHE IF IT'S PINNED
-			if (underlying.isUseCache() && iContent.isPinned())
-				getCache().addRecord(rid.toString(), new ORawBuffer(stream, iVersion, iRecordType));
+			// ADD/UPDATE IT IN CACHE
+			if (underlying.isUseCache())
+				getCache().addRecord(rid.toString(), new ORawBuffer(stream, isNew ? 0 : iVersion, iRecordType));
 
 			iContent.unsetDirty();
 		} catch (ODatabaseException e) {

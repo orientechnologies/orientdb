@@ -60,6 +60,9 @@ public abstract class ONativeAsynchQuery<T extends ORecordInternal<?>, CTX exten
 	}
 
 	public List<T> execute(int iLimit) {
+		if (!(database.getStorage() instanceof OStorageLocal))
+			throw new OQueryExecutionException("Native queries can run only in embedded-local version. Not in the remote one.");
+
 		limit = iLimit;
 		queryRecord.setSourceQuery(this);
 
