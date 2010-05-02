@@ -39,15 +39,14 @@ public class SQLSynchQuerySpeedTest extends SpeedTestMonoThread implements OAsyn
 
 	public void cycle() throws UnsupportedEncodingException {
 		System.out.println("1 ----------------------");
-		List<ODocument> result = database.query(
-				new OSQLSynchQuery<ODocument>("select * from animal where id = 10 and name like 'G%'")).execute();
+		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select * from animal where id = 10 and name like 'G%'"))
+				.execute();
 
 		OrientTest.printRecords(result);
 
 		System.out.println("2 ----------------------");
 		result = database.query(
-				new OSQLSynchQuery<ODocument>("select * from animal where column(0) < 5 or column(0) >= 3 and column(5) < 7"))
-				.execute();
+				new OSQLSynchQuery<ODocument>("select * from animal where column(0) < 5 or column(0) >= 3 and column(5) < 7")).execute();
 
 		OrientTest.printRecords(result);
 

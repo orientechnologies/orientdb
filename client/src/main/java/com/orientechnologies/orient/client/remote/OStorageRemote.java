@@ -416,7 +416,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 				// ASYNCH: READ ONE RECORD AT TIME
 				while (network.readByte() == 1) {
-					ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) readRecordFromNetwork(iQuery.getDatabase());
+					ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) readRecordFromNetwork((ODatabaseRecord<?>) iQuery.getDatabase());
 					if (record == null)
 						break;
 
@@ -473,8 +473,8 @@ public class OStorageRemote extends OStorageAbstract {
 
 					ORecordSchemaAware<?> record = ((ORecordSchemaAware<?>) ((OQueryInternal<?>) iQuery).getRecordClass().newInstance());
 
-					return (ORecordSchemaAware<?>) record.fill(iQuery.getDatabase(), network.readShort(), network.readShort(),
-							network.readLong(), network.readInt()).fromStream(network.readBytes());
+					return (ORecordSchemaAware<?>) record.fill((ODatabaseRecord<?>) iQuery.getDatabase(), network.readShort(),
+							network.readShort(), network.readLong(), network.readInt()).fromStream(network.readBytes());
 				}
 			} catch (Exception e) {
 				if (handleException("Error on executing query: " + ((OSQLQuery<?>) iQuery).getText(), e))

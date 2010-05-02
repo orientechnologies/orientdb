@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.db.object;
 import java.util.HashMap;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.command.OCommand;
 import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -33,6 +34,7 @@ import com.orientechnologies.orient.core.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.core.iterator.OObjectIteratorMultiCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -277,5 +279,13 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 
 	public Object newInstance() {
 		return new ODocument(underlying);
+	}
+
+	public OCommand command(OCommand iCommand) {
+		return null;
+	}
+
+	public <RET> OObjectIteratorCluster<RET> query(OQuery<Object> iQuery) {
+		return null;
 	}
 }

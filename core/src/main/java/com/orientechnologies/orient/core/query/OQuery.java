@@ -17,10 +17,9 @@ package com.orientechnologies.orient.core.query;
 
 import java.util.List;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
 
-public interface OQuery<T extends ORecordInternal<?>> {
+public interface OQuery<T extends Object> {
 
 	/**
 	 * Execute the query without limit about the result set. The limit will be bound to the maximum allowed.
@@ -46,5 +45,5 @@ public interface OQuery<T extends ORecordInternal<?>> {
 	 */
 	public T executeFirst();
 
-	public ODatabaseRecord<T> getDatabase();
+	public ODatabaseComplex<T> getDatabase();
 }
