@@ -13,38 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.sql;
+package com.orientechnologies.orient.core.command;
 
 import java.io.IOException;
 
-import com.orientechnologies.orient.core.command.OCommandInternal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
 /**
- * SQL command implementation.
+ * Text based Command Request abstract class.
  * 
  * @author luca
  * 
  */
-public abstract class OCommandSQLAbstract implements OCommandInternal, OSerializableStream {
-	protected String											text;
-	protected String											textUpperCase;
-	protected ODatabaseRecord<ODocument>	database;
+public abstract class OCommandRequestAbstract<T extends Object> implements OCommandRequestInternal<ODatabaseRecord<?>> {
+	protected String									text;
+	protected ODatabaseRecord<?>			database;
+	protected int											limit	= -1;
+	protected OCommandResultListener	resultListener;
 
-	public OCommandSQLAbstract(final String iText, final String iTextUpperCase) {
-		this(iText, iTextUpperCase, null);
+	protected OCommandRequestAbstract() {
 	}
 
-	public OCommandSQLAbstract(final String iText, final String iTextUpperCase, final ODatabaseRecord<ODocument> iDatabase) {
+	protected OCommandRequestAbstract(final String iText) {
+		this(iText, null);
+	}
+
+	protected OCommandRequestAbstract(final String iText, final ODatabaseRecord<ODocument> iDatabase) {
 		text = iText;
-		textUpperCase = iTextUpperCase;
 		database = iDatabase;
 	}
-
-	public abstract void parse();
 
 	public String getText() {
 		return text;
@@ -64,12 +64,28 @@ public abstract class OCommandSQLAbstract implements OCommandInternal, OSerializ
 		return getClass().getSimpleName() + " [text=" + text + "]";
 	}
 
-	public ODatabaseRecord<ODocument> getDatabase() {
+	public ODatabaseRecord<?> getDatabase() {
 		return database;
 	}
 
-	public OCommandInternal setDatabase(final ODatabaseRecord<ODocument> database) {
-		this.database = database;
+	public OCommandRequestInternal<ODatabaseRecord<?>> setDatabase(final ODatabaseRecord<?> iDatabase) {
+		this.database = iDatabase;
 		return this;
+	}
+
+	public int getLimit() {
+		return limit;
+	}
+
+	public void setLimit(int limit) {
+		this.limit = limit;
+	}
+
+	public OCommandResultListener getResultListener() {
+		return resultListener;
+	}
+
+	public void setResultListener(OCommandResultListener iListener) {
+		resultListener = iListener;
 	}
 }

@@ -15,18 +15,8 @@
  */
 package com.orientechnologies.orient.core.command;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+public interface OCommandRequestAsynch extends OCommandRequest {
+	public OCommandResultListener getResultListener();
 
-/**
- * Internal specialization of generic OCommand interface.
- * 
- * @author luca
- * 
- * @param <T>
- */
-public interface OCommandInternal extends OCommand {
-	public ODatabaseRecord<ODocument> getDatabase();
-
-	public OCommandInternal setDatabase(final ODatabaseRecord<ODocument> iDatabase);
+	public void setResultListener(OCommandResultListener iListener);
 }

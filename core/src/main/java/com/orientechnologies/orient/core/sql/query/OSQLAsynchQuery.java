@@ -15,11 +15,8 @@
  */
 package com.orientechnologies.orient.core.sql.query;
 
-import com.orientechnologies.orient.core.query.OAsynchQuery;
-import com.orientechnologies.orient.core.query.OAsynchQueryResultListener;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
-import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
 
 /**
  * SQL asynchronous query. When executed the caller doesn't wait the the execution, rather the listener will be called foreach item
@@ -30,10 +27,8 @@ import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
  * @param <T>
  * @see OSQLSynchQuery
  */
-public class OSQLAsynchQuery<T extends ORecordSchemaAware<?>> extends OSQLQuery<T> implements OAsynchQuery<T>,
-		ORecordBrowsingListener {
-	protected OAsynchQueryResultListener<T>	resultListener;
-	protected int														resultCount	= 0;
+public class OSQLAsynchQuery<T extends ORecordSchemaAware<?>> extends OSQLQuery<T> {
+	protected int	resultCount	= 0;
 
 	/**
 	 * Empty constructor for unmarshalling.
@@ -45,49 +40,24 @@ public class OSQLAsynchQuery<T extends ORecordSchemaAware<?>> extends OSQLQuery<
 		this(iText, null);
 	}
 
-	public OSQLAsynchQuery(final String iText, final OAsynchQueryResultListener<T> iResultListener) {
+	public OSQLAsynchQuery(final String iText, final OCommandResultListener iResultListener) {
 		super(iText);
 		resultListener = iResultListener;
 	}
 
-	public Object execute(final String iText) {
-		return execute(iText, -1);
+	public OSQLAsynchQuery(final String iText, final int iLimit, final OCommandResultListener iResultListener) {
+		super(iText);
+		resultListener = iResultListener;
 	}
 
-	public Object execute(final String iText, final int iLimit) {
-		compiledFilter = null;
-		return execute(iLimit);
+	@SuppressWarnings("unchecked")
+	public <RET> RET execute(final String iText, final Object... iArgs) {
+		text = iText;
+		return (RET) execute(iArgs);
 	}
 
 	public T executeFirst() {
 		execute(1);
 		return null;
-	}
-
-	@SuppressWarnings("unchecked")
-	public boolean foreach(final ORecordInternal<?> iRecord) {
-		T record = (T) iRecord;
-
-		if (filter(record)) {
-			resultCount++;
-			resultListener.result((T) record.copy());
-
-			if (limit > -1 && resultCount == limit)
-				// BREAK THE EXECUTION
-				return false;
-		}
-		return true;
-	}
-
-	protected boolean filter(final T iRecord) {
-		return compiledFilter.evaluate(database, iRecord);
-	}
-
-	public OAsynchQueryResultListener<T> getResultListener() {
-		return resultListener;
-	}
-
-	public void setResultListener(final OAsynchQueryResultListener<T> resultListener) {
-		this.resultListener = resultListener;
 	}
 }

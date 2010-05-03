@@ -17,12 +17,11 @@ package com.orientechnologies.orient.core.db;
 
 import java.util.Iterator;
 
-import com.orientechnologies.orient.core.command.OCommand;
+import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.OMetadata;
-import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
@@ -66,12 +65,8 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord<
 		return underlying.browseCluster(iClusterName);
 	}
 
-	public OCommand command(final OCommand iCommand) {
+	public OCommandRequest command(final OCommandRequest iCommand) {
 		return underlying.command(iCommand);
-	}
-
-	public OQuery<REC> query(final OQuery<REC> iQuery) {
-		return underlying.query(iQuery);
 	}
 
 	public REC newInstance() {

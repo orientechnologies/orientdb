@@ -29,12 +29,12 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.client.admin.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.query.OAsynchQueryResultListener;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAwareAbstract;
@@ -211,20 +211,22 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		final int limit = Integer.parseInt((String) properties.get("limit"));
 
 		long start = System.currentTimeMillis();
-		currentDatabase.query(new OSQLAsynchQuery<ODocument>(iQueryText, new OAsynchQueryResultListener<ODocument>() {
-			public boolean result(final ODocument iRecord) {
+		currentDatabase.command(new OSQLAsynchQuery<ODocument>(iQueryText, limit + 1, new OCommandResultListener() {
+			public boolean result(final Object iRecord) {
 				if (currentResultSet.size() > limit - 1) {
 					printHeaderLine(columns);
 					out.println("\nResultset contains more items not displayed (max=" + limit + ")");
 					return false;
 				}
 
-				dumpRecordInTable(currentResultSet.size(), iRecord, columns);
-				currentResultSet.add(iRecord);
+				ORecordSchemaAwareAbstract<?> record = (ORecordSchemaAwareAbstract<?>) iRecord;
+
+				dumpRecordInTable(currentResultSet.size(), record, columns);
+				currentResultSet.add(record);
 				return true;
 			}
 
-		})).execute(limit + 1);
+		})).execute();
 
 		if (currentResultSet.size() > 0 && currentResultSet.size() < limit)
 			printHeaderLine(columns);

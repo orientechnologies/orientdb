@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.query.nativ;
 
-import com.orientechnologies.orient.core.exception.OQueryExecutionException;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordPositional;
 
@@ -28,7 +28,7 @@ public class OQueryContextNativePositional<T extends ORecordPositional<?>> exten
 		T currentRecord = currentValue != null && currentValue instanceof ORecord<?> ? (T) currentValue : record;
 
 		if (iIndex >= currentRecord.size())
-			throw new OQueryExecutionException("Column " + iIndex + " not exists. Columns range is: 0-" + (currentRecord.size() - 1));
+			throw new OCommandExecutionException("Column " + iIndex + " not exists. Columns range is: 0-" + (currentRecord.size() - 1));
 
 		currentValue = currentRecord.field(iIndex);
 		return this;

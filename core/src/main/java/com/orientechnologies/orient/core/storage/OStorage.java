@@ -20,14 +20,21 @@ import java.util.Collection;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.cache.OCacheRecord;
+import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.query.OCommandExecutor;
 import com.orientechnologies.orient.core.storage.impl.logical.OClusterLogical;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
+/**
+ * This is the gateway interface between the Database side and the storage. Provided implementations are: Local, Remote and Memory.
+ * 
+ * @see OStorageLocal, OStorageMemory
+ * @author luca
+ * 
+ */
 public interface OStorage {
 	public static final String	DEFAULT_SEGMENT	= "default";
 
@@ -117,5 +124,5 @@ public interface OStorage {
 
 	public OCacheRecord getCache();
 
-	public OCommandExecutor getCommandExecutor();
+	public Object command(OCommandRequestInternal<ODatabaseRecord<?>> iCommand);
 }

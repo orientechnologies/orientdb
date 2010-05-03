@@ -45,7 +45,7 @@ public class SQLQueryTest {
 	public void querySchemaAndLike() {
 		database.open("admin", "admin");
 
-		List<ODocument> result = database.query(
+		List<ODocument> result = database.command(
 				new OSQLSynchQuery<ODocument>("select * from cluster:Animal where ID = 10 and name like 'G%'")).execute();
 
 		for (int i = 0; i < result.size(); ++i) {
@@ -65,7 +65,7 @@ public class SQLQueryTest {
 	public void queryColumnOrAndRange() {
 		database.open("admin", "admin");
 
-		List<ODocument> result = database.query(
+		List<ODocument> result = database.command(
 				new OSQLSynchQuery<ODocument>("SELECT * FROM cluster:animal WHERE column(0) < 5 OR column(0) >= 3 AND column(5) < 7"))
 				.execute();
 
@@ -85,7 +85,7 @@ public class SQLQueryTest {
 	public void queryColumnAndOrRange() {
 		database.open("admin", "admin");
 
-		List<ODocument> result = database.query(
+		List<ODocument> result = database.command(
 				new OSQLSynchQuery<ODocument>("SELECT * FROM cluster:animal WHERE column(0) < 5 AND column(0) >= 3 OR column(5) <= 403"))
 				.execute();
 
@@ -112,7 +112,7 @@ public class SQLQueryTest {
 		Date rangeFromDate = database.getStorage().getConfiguration().getDateFormatInstance().parse(rangeFrom);
 		Date rangeToDate = database.getStorage().getConfiguration().getDateFormatInstance().parse(rangeTo);
 
-		List<ODocument> result = database.query(
+		List<ODocument> result = database.command(
 				new OSQLSynchQuery<ODocument>("select * from cluster:Order where date > '" + rangeFrom + "' and date < '" + rangeTo + "'"))
 				.execute();
 
@@ -134,7 +134,7 @@ public class SQLQueryTest {
 	public void queryCollectionContainsLowerCaseSubStringIgnoreCase() {
 		database.open("admin", "admin");
 
-		List<ODocument> result = database.query(
+		List<ODocument> result = database.command(
 				new OSQLSynchQuery<ODocument>(
 						"select * from cluster:animaltype where races contains (name.toLowerCase().subString(0,1) = 'e')")).execute();
 
@@ -164,7 +164,7 @@ public class SQLQueryTest {
 	public void queryCollectionContainsIn() {
 		database.open("admin", "admin");
 
-		List<ODocument> result = database.query(
+		List<ODocument> result = database.command(
 				new OSQLSynchQuery<ODocument>("select * from cluster:animaltype where races contains (name in ['European','Asiatic'])"))
 				.execute();
 
@@ -194,7 +194,7 @@ public class SQLQueryTest {
 	public void queryAnyOperator() {
 		database.open("admin", "admin");
 
-		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from Profile where any() like 'N%'")).execute();
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where any() like 'N%'")).execute();
 
 		Assert.assertTrue(result.size() > 0);
 
@@ -222,7 +222,7 @@ public class SQLQueryTest {
 	public void queryTraverseAnyOperator() {
 		database.open("admin", "admin");
 
-		List<ODocument> result = database.query(
+		List<ODocument> result = database.command(
 				new OSQLSynchQuery<ODocument>("select from Profile where any() traverse( 0,3 ) ( any().indexOf( 'Navona' ) > -1 )"))
 				.execute();
 
@@ -243,7 +243,7 @@ public class SQLQueryTest {
 	public void queryAllOperator() {
 		database.open("admin", "admin");
 
-		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from Account where all() is null")).execute();
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Account where all() is null")).execute();
 
 		Assert.assertTrue(result.size() == 0);
 

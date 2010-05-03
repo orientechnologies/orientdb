@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.sql.query;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.orientechnologies.orient.core.query.OAsynchQueryResultListener;
+import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 
 /**
@@ -29,7 +29,8 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
  * @param <T>
  * @see OSQLAsynchQuery
  */
-public class OSQLSynchQuery<T extends ORecordSchemaAware<?>> extends OSQLAsynchQuery<T> implements OAsynchQueryResultListener<T> {
+@SuppressWarnings("unchecked")
+public class OSQLSynchQuery<T extends ORecordSchemaAware<?>> extends OSQLAsynchQuery<T> implements OCommandResultListener {
 	protected final List<T>	result	= new ArrayList<T>();
 
 	public OSQLSynchQuery() {
@@ -41,14 +42,18 @@ public class OSQLSynchQuery<T extends ORecordSchemaAware<?>> extends OSQLAsynchQ
 		resultListener = this;
 	}
 
-	public boolean result(final T iRecord) {
-		result.add(iRecord);
+	public boolean result(final Object iRecord) {
+		result.add((T) iRecord);
 		return true;
 	}
 
 	@Override
-	public List<T> execute(final int iLimit) {
-		super.execute(iLimit);
+	public List<T> execute(Object... iArgs) {
+		super.execute(iArgs);
+		return result;
+	}
+
+	public Object getResult() {
 		return result;
 	}
 }

@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.query.nativ;
 
 import java.util.Date;
 
-import com.orientechnologies.orient.core.exception.OQueryExecutionException;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.query.OQueryContext;
 import com.orientechnologies.orient.core.query.OQueryHelper;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -161,7 +161,7 @@ public class OQueryContextNative<T extends ORecordInternal<?>> extends OQueryCon
 			return false;
 
 		if (currentValue == null)
-			throw new OQueryExecutionException("Can't execute operators if no value was selected. Use column() to obtain a value");
+			throw new OCommandExecutionException("Can't execute operators if no value was selected. Use column() to obtain a value");
 
 		return true;
 	}

@@ -39,7 +39,7 @@ public class OrientTest {
 		}
 	}
 
-	public static void printRecord(int i, ORecord<?> iRecord) {
+	public static void printRecord(int i, final Object iRecord) {
 		if (iRecord != null)
 			System.out.println(String.format("%-3d: %s", i, iRecord.toString()));
 	}

@@ -41,8 +41,6 @@ public class OChannelBinaryProtocol {
 
 	public static final byte	COUNT									= 40;
 	public static final byte	COMMAND								= 41;
-	public static final byte	QUERY									= 42;
-	public static final byte	QUERY_FIRST						= 43;
 
 	public static final byte	DICTIONARY_LOOKUP			= 50;
 	public static final byte	DICTIONARY_PUT				= 51;

@@ -13,18 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.query;
+package com.orientechnologies.orient.core.command;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-
-public interface OQueryInternal<REC extends ORecordInternal<?>> extends OQuery<REC> {
-
-	public Class<REC> getRecordClass();
-
-	public REC getRecord();
-
-	public OQueryInternal<REC> setRecord(REC record);
-
-	public OQueryInternal<REC> setDatabase(ODatabaseRecord<REC> iDatabase);
+/**
+ * Callback interface called when the command returns results.
+ * 
+ * @author luca
+ * 
+ */
+public interface OCommandResultListener {
+	public boolean result(Object iRecord);
 }

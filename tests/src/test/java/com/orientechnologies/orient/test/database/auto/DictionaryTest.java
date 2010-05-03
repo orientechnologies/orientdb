@@ -23,12 +23,11 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
-import com.orientechnologies.orient.core.storage.impl.local.ODictionaryLocal;
 
 @Test(groups = "dictionary")
 public class DictionaryTest {
 	private ODatabaseFlat	database;
-	private ORecordFlat					record;
+	private ORecordFlat		record;
 
 	@Parameters(value = "url")
 	public DictionaryTest(String iURL) {
@@ -93,7 +92,7 @@ public class DictionaryTest {
 		final int originalSize = database.getDictionary().size();
 
 		// ASSURE TO STORE THE PAGE-SIZE + 3 FORCING THE CREATION OF LEFT AND RIGHT
-		final int total = ((ODictionaryLocal<ORecordFlat>) database.getDictionary()).getTree().getPageSize() * 3;
+		final int total = 1000;
 
 		for (int i = total; i > 0; --i) {
 			database.getDictionary().put("key-" + (originalSize + i), database.newInstance().value("test-dictionary-" + i));

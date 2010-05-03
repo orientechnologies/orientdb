@@ -13,10 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.query;
+package com.orientechnologies.orient.core.command;
 
-import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
-public interface OAsynchQueryResultListener<T extends ORecord<?>> {
-	public boolean result(T iRecord);
+/**
+ * Generic GOF command pattern implementation. Execute a command passing the optional arguments "iArgs" and returns an Object.
+ * 
+ * @author luca
+ * 
+ * @param <T>
+ */
+public interface OCommandRequest extends OSerializableStream {
+	public <RET> RET execute(Object... iArgs);
 }

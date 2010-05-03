@@ -18,26 +18,28 @@ package com.orientechnologies.orient.core.query.nativ;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.orientechnologies.orient.core.query.OAsynchQueryResultListener;
+import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
 public abstract class ONativeSynchQuery<T extends ORecordInternal<?>, CTX extends OQueryContextNative<T>> extends
-		ONativeAsynchQuery<T, CTX> implements OAsynchQueryResultListener<T> {
+		ONativeAsynchQuery<T, CTX> implements OCommandResultListener {
 	protected final List<T>	result	= new ArrayList<T>();
 
-	public ONativeSynchQuery(final String iCluster, final CTX iQueryRecordImpl) {
-		super(iCluster, iQueryRecordImpl, null);
+	public ONativeSynchQuery(final ODatabaseRecord<T> iDatabase, final String iCluster, final CTX iQueryRecordImpl) {
+		super(iDatabase, iCluster, iQueryRecordImpl, null);
 		resultListener = this;
 	}
 
-	public boolean result(final T iRecord) {
-		result.add(iRecord);
+	@SuppressWarnings("unchecked")
+	public boolean result(final Object iRecord) {
+		result.add((T) iRecord);
 		return true;
 	}
 
 	@Override
-	public List<T> execute(final int iLimit) {
-		super.execute(iLimit);
+	public List<T> execute(Object... iArgs) {
+		super.execute(iArgs);
 		return result;
 	}
 }

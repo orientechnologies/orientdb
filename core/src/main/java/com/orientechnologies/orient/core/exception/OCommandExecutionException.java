@@ -13,15 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.command;
+package com.orientechnologies.orient.core.exception;
 
-/**
- * Generic GOF command pattern implementation.
- * 
- * @author luca
- * 
- * @param <T>
- */
-public interface OCommand {
-	public Object execute();
+import com.orientechnologies.common.exception.OException;
+
+public class OCommandExecutionException extends OException {
+
+	private static final long	serialVersionUID	= -7430575036316163711L;
+
+	public OCommandExecutionException(String message, Throwable cause) {
+		super(message, cause);
+	}
+
+	public OCommandExecutionException(String message) {
+		super(message);
+	}
+
 }

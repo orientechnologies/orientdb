@@ -17,8 +17,6 @@ package com.orientechnologies.orient.core.query;
 
 import java.util.List;
 
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
-
 public interface OQuery<T extends Object> {
 
 	/**
@@ -26,24 +24,12 @@ public interface OQuery<T extends Object> {
 	 * 
 	 * @return List of records if any record matches the query constraints, otherwise an empty List.
 	 */
-	public List<T> execute();
-
-	/**
-	 * Execute the query setting a limit of results.
-	 * 
-	 * @param iLimit
-	 *          -1 = the limit will be bound to the maximum allowed, otherwise set the limit of the result.
-	 * @return List of records if any record matches the query constraints, otherwise an empty List. The List can be of maximum iLimit
-	 *         elements
-	 */
-	public List<T> execute(int iLimit);
+	public List<T> execute(Object... iArgs);
 
 	/**
 	 * Return the first occurrence found if any
 	 * 
 	 * @return Record if found, otherwise null
 	 */
-	public T executeFirst();
-
-	public ODatabaseComplex<T> getDatabase();
+	public T executeFirst(Object... iArgs);
 }

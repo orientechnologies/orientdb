@@ -28,9 +28,9 @@ import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 public class RandomNoTxSpeedTest extends SpeedTestMonoThread {
 	private static final String	CLUSTER_NAME	= "Animal";
 
-	private ODatabaseColumn	database;
+	private ODatabaseColumn			database;
 	private Random							random;
-	private ORecordColumn					record;
+	private ORecordColumn				record;
 
 	public RandomNoTxSpeedTest() {
 		super(1000000);
@@ -64,16 +64,15 @@ public class RandomNoTxSpeedTest extends SpeedTestMonoThread {
 			// QUERY RECORDS
 			final int counter = random.nextInt((int) (clusterCount - 1));
 
-			database.query(
-					new ONativeSynchQuery<ORecordColumn, OQueryContextNativePositional<ORecordColumn>>(CLUSTER_NAME,
-							new OQueryContextNativePositional<ORecordColumn>()) {
+			new ONativeSynchQuery<ORecordColumn, OQueryContextNativePositional<ORecordColumn>>(database, CLUSTER_NAME,
+					new OQueryContextNativePositional<ORecordColumn>()) {
 
-						@Override
-						public boolean filter(OQueryContextNativePositional<ORecordColumn> iRecord) {
-							return iRecord.column(0).toInt().eq(counter).go();
-						}
+				@Override
+				public boolean filter(OQueryContextNativePositional<ORecordColumn> iRecord) {
+					return iRecord.column(0).toInt().eq(counter).go();
+				}
 
-					}).execute();
+			}.execute();
 			break;
 		}
 

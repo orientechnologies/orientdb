@@ -29,6 +29,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
 import com.orientechnologies.orient.core.config.OStorageLogicalClusterConfiguration;
@@ -42,12 +43,16 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadata;
-import com.orientechnologies.orient.core.query.OCommandExecutor;
-import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordColumn;
-import com.orientechnologies.orient.core.sql.query.OCommandLocalExecutor;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelete;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLInsert;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLUpdate;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.OSQLHelper;
+import com.orientechnologies.orient.core.sql.query.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -631,10 +636,6 @@ public class OStorageLocal extends OStorageAbstract {
 		return new ODictionaryLocal(iDatabase);
 	}
 
-	public OCommandExecutor getCommandExecutor() {
-		return OCommandLocalExecutor.INSTANCE;
-	}
-
 	public String getStoragePath() {
 		return storagePath;
 	}
@@ -891,5 +892,29 @@ public class OStorageLocal extends OStorageAbstract {
 		result.addAll(logicalClusters);
 
 		return result;
+	}
+
+	public Object command(OCommandRequestInternal<ODatabaseRecord<?>> iCommand) {
+		if (iCommand instanceof OCommandSQL) {
+			OCommandSQL sql = (OCommandSQL) iCommand;
+			final String text = sql.getText();
+			final String textUpperCase = text.toUpperCase();
+
+			OCommandExecutorSQLAbstract command;
+
+			if (textUpperCase.startsWith(OSQLHelper.KEYWORD_INSERT))
+				command = new OCommandExecutorSQLInsert().parse(iCommand);
+			else if (textUpperCase.startsWith(OSQLHelper.KEYWORD_UPDATE))
+				command = new OCommandExecutorSQLUpdate().parse(iCommand);
+			else if (textUpperCase.startsWith(OSQLHelper.KEYWORD_DELETE))
+				command = new OCommandExecutorSQLDelete().parse(iCommand);
+			else if (textUpperCase.startsWith(OSQLHelper.KEYWORD_SELECT))
+				command = new OCommandExecutorSQLSelect().parse(iCommand);
+			else
+				throw new IllegalArgumentException("Can't find a command executor for the command request: " + iCommand);
+
+			return command.execute();
+		}
+		throw new IllegalArgumentException("Can't find a command executor for the command request: " + iCommand);
 	}
 }

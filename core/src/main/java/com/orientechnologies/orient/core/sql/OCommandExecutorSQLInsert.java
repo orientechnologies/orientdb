@@ -15,7 +15,9 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.query.OQueryHelper;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -26,22 +28,19 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author luca
  * 
  */
-public class OCommandSQLInsert extends OCommandSQLAbstract {
+public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 	private static final String	KEYWORD_VALUES	= "VALUES";
 	private static final String	KEYWORD_INTO		= "INTO";
 	private String							className				= null;
 	private String[]						fieldNames;
 	private Object[]						fieldValues;
 
-	public OCommandSQLInsert(final String iText, final String iTextUpperCase, final ODatabaseRecord<ODocument> iDatabase) {
-		super(iText, iTextUpperCase, iDatabase);
-	}
+	public OCommandExecutorSQLInsert parse(final OCommandRequestInternal<ODatabaseRecord<?>> iRequest) {
+		init(iRequest.getDatabase(), iRequest.getText());
 
-	@Override
-	public void parse() {
-		if (className != null)
-			// ALREADY PARSED
-			return;
+		className = null;
+		fieldNames = null;
+		fieldValues = null;
 
 		StringBuilder word = new StringBuilder();
 
@@ -104,13 +103,16 @@ public class OCommandSQLInsert extends OCommandSQLAbstract {
 		fieldValues = new Object[values.length];
 		for (int i = 0; i < values.length; ++i)
 			fieldValues[i] = OSQLHelper.convertValue(values[i]);
+
+		return this;
 	}
 
 	/**
 	 * Execute the INSERT and return the ODocument object created.
 	 */
-	public Object execute() {
-		parse();
+	public Object execute(final Object... iArgs) {
+		if (fieldNames == null)
+			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
 
 		// CREATE NEW DOCUMENT
 		ODocument doc = className != null ? new ODocument(database, className) : new ODocument(database);

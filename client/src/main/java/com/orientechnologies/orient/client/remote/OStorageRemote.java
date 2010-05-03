@@ -32,29 +32,23 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.config.OClientConfiguration;
 import com.orientechnologies.orient.client.dictionary.ODictionaryClient;
-import com.orientechnologies.orient.client.query.OCommandRemoteExecutor;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.command.OCommandInternal;
+import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OIOException;
-import com.orientechnologies.orient.core.exception.OQueryExecutionException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.query.OAsynchQuery;
-import com.orientechnologies.orient.core.query.OCommandExecutor;
-import com.orientechnologies.orient.core.query.OQuery;
-import com.orientechnologies.orient.core.query.OQueryInternal;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyRuntime;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
-import com.orientechnologies.orient.core.sql.query.OSQLQuery;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
@@ -341,21 +335,17 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	/**
-	 * Execute the command into the server side and get back the return.
-	 * 
-	 * @param iCommand
-	 *          Command to execute
-	 * @return Result value of the command execution.
+	 * Execute the command remotely and get the results back.
 	 */
-	public Object command(final OCommandInternal iCommand) {
+	public Object command(final OCommandRequestInternal iCommand) {
 		checkConnection();
 
 		if (!(iCommand instanceof OSerializableStream))
-			throw new OQueryExecutionException("Can't serialize the command to being executed to the server side.");
+			throw new OCommandExecutionException("Can't serialize the command to being executed to the server side.");
 
 		OSerializableStream command = (OSerializableStream) iCommand;
 
-		Object result = null;
+		final List<Object> result = new ArrayList<Object>();
 
 		do {
 			boolean locked = acquireExclusiveLock();
@@ -363,60 +353,17 @@ public class OStorageRemote extends OStorageAbstract {
 			OStorageRemoteThreadLocal.INSTANCE.set(Boolean.TRUE);
 
 			try {
+				OCommandSQL aquery = (OCommandSQL) iCommand;
+
 				network.writeByte(OChannelBinaryProtocol.COMMAND);
 				network.writeBytes(OStreamSerializerAnyStreamable.INSTANCE.toStream(command));
 				network.flush();
 
 				readStatus();
 
-				result = OStreamSerializerAnyRuntime.INSTANCE.fromStream(network.readBytes());
-				break;
-
-			} catch (Exception e) {
-				if (handleException("Error on executing command: " + command, e))
-					break;
-
-			} finally {
-				OStorageRemoteThreadLocal.INSTANCE.set(Boolean.FALSE);
-
-				releaseExclusiveLock(locked);
-			}
-		} while (true);
-
-		return result;
-	}
-
-	/**
-	 * Execute the query into the server side and get back the resultset.
-	 */
-	public <T extends ORecordSchemaAware<?>> List<T> query(final OQuery<T> iQuery, final int iLimit) {
-		checkConnection();
-
-		if (!(iQuery instanceof OSerializableStream))
-			throw new OQueryExecutionException("Can't serialize the query to being executed to the server side.");
-
-		OSerializableStream query = (OSerializableStream) iQuery;
-
-		final List<T> result = new ArrayList<T>();
-
-		do {
-			boolean locked = acquireExclusiveLock();
-
-			OStorageRemoteThreadLocal.INSTANCE.set(Boolean.TRUE);
-
-			try {
-				OAsynchQuery<ORecordSchemaAware<?>> aquery = (OAsynchQuery<ORecordSchemaAware<?>>) iQuery;
-
-				network.writeByte(OChannelBinaryProtocol.QUERY);
-				network.writeInt(iLimit);
-				network.writeBytes(OStreamSerializerAnyStreamable.INSTANCE.toStream(query));
-				network.flush();
-
-				readStatus();
-
 				// ASYNCH: READ ONE RECORD AT TIME
 				while (network.readByte() == 1) {
-					ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) readRecordFromNetwork((ODatabaseRecord<?>) iQuery.getDatabase());
+					ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) readRecordFromNetwork((ODatabaseRecord<?>) iCommand.getDatabase());
 					if (record == null)
 						break;
 
@@ -436,7 +383,7 @@ public class OStorageRemote extends OStorageAbstract {
 				break;
 
 			} catch (Exception e) {
-				if (handleException("Error on executing query: " + ((OSQLQuery<?>) iQuery).getText(), e))
+				if (handleException("Error on executing command: " + iCommand, e))
 					break;
 
 			} finally {
@@ -447,44 +394,6 @@ public class OStorageRemote extends OStorageAbstract {
 		} while (true);
 
 		return result;
-	}
-
-	/**
-	 * Execute the query into the server side and get back the result.
-	 */
-	public ORecordSchemaAware<?> queryFirst(final OQuery<?> iQuery) {
-		checkConnection();
-
-		if (!(iQuery instanceof OSerializableStream))
-			throw new OQueryExecutionException("Can't serialize the query to being executed to the server side.");
-
-		OSerializableStream query = (OSerializableStream) iQuery;
-
-		do {
-			boolean locked = acquireExclusiveLock();
-
-			try {
-				if (iQuery instanceof OSQLQuery<?>) {
-					network.writeByte(OChannelBinaryProtocol.QUERY_FIRST);
-					network.writeBytes(query.toStream());
-					network.flush();
-
-					readStatus();
-
-					ORecordSchemaAware<?> record = ((ORecordSchemaAware<?>) ((OQueryInternal<?>) iQuery).getRecordClass().newInstance());
-
-					return (ORecordSchemaAware<?>) record.fill((ODatabaseRecord<?>) iQuery.getDatabase(), network.readShort(),
-							network.readShort(), network.readLong(), network.readInt()).fromStream(network.readBytes());
-				}
-			} catch (Exception e) {
-				if (handleException("Error on executing query: " + ((OSQLQuery<?>) iQuery).getText(), e))
-					break;
-
-			} finally {
-				releaseExclusiveLock(locked);
-			}
-		} while (true);
-		return null;
 	}
 
 	public void commit(final int iRequesterId, final OTransaction<?> iTx) {
@@ -799,10 +708,6 @@ public class OStorageRemote extends OStorageAbstract {
 				return clusterEntry.getKey();
 		}
 		return null;
-	}
-
-	public OCommandExecutor getCommandExecutor() {
-		return OCommandRemoteExecutor.INSTANCE;
 	}
 
 	protected void readStatus() throws IOException {

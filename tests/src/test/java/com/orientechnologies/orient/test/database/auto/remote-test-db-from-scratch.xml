@@ -1,12 +1,12 @@
 <!DOCTYPE suite SYSTEM "http://beust.com/testng/testng-1.0.dtd">
 <suite name="Test Suite Example" verbose="1">
-    <!--   
+    <!--   -->
 	<parameter name="url" value="remote:localhost/demo" />
-	-->
 	
-	<!--  --> 
+	
+	<!--  
 	<parameter name="url" value="local:../../releases/0.9.12/db/databases/demo/demo" />
-	 
+	 --> 
 
 	<test name="Setup">
 		<parameter name="path" value="../../releases/0.9.12/db/databases/demo" />

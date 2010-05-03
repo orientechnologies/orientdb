@@ -35,17 +35,15 @@ public class NativeSynchQuerySpeedTest extends SpeedTestMonoThread {
 	}
 
 	public void cycle() throws UnsupportedEncodingException {
-		result = database
-				.query(
-						new ONativeSynchQuery<ODocument, OQueryContextNativeSchema<ODocument>>("Animal",
-								new OQueryContextNativeSchema<ODocument>()) {
+		new ONativeSynchQuery<ODocument, OQueryContextNativeSchema<ODocument>>(database, "Animal",
+				new OQueryContextNativeSchema<ODocument>()) {
 
-							@Override
-							public boolean filter(OQueryContextNativeSchema<ODocument> iRecord) {
-								return iRecord.column("race").like("Euro%").and().column("race").like("%an").and().column("id").toInt().eq(10).go();
-							}
+			@Override
+			public boolean filter(OQueryContextNativeSchema<ODocument> iRecord) {
+				return iRecord.column("race").like("Euro%").and().column("race").like("%an").and().column("id").toInt().eq(10).go();
+			}
 
-						}).execute();
+		}.execute();
 	}
 
 	public void deinit() throws IOException {

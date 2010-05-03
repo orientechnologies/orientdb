@@ -17,24 +17,27 @@ package com.orientechnologies.orient.core.query.nativ;
 
 import java.util.List;
 
-import com.orientechnologies.orient.core.exception.OQueryExecutionException;
+import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.query.OAsynchQueryResultListener;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 public abstract class ONativeAsynchQuery<T extends ORecordInternal<?>, CTX extends OQueryContextNative<T>> extends
 		ONativeQuery<T, CTX> implements ORecordBrowsingListener {
-	protected OAsynchQueryResultListener<T>	resultListener;
-	protected int														resultCount	= 0;
+	protected OCommandResultListener	resultListener;
+	protected int											resultCount	= 0;
+	protected ORecordInternal<?>			record;
 
-	public ONativeAsynchQuery(String iCluster, CTX iQueryRecordImpl) {
-		this(iCluster, iQueryRecordImpl, null);
+	public ONativeAsynchQuery(final ODatabaseRecord<T> iDatabase, final String iCluster, final CTX iQueryRecordImpl) {
+		this(iDatabase, iCluster, iQueryRecordImpl, null);
 	}
 
-	public ONativeAsynchQuery(String iCluster, CTX iQueryRecordImpl, OAsynchQueryResultListener<T> iResultListener) {
-		super(iCluster);
+	public ONativeAsynchQuery(final ODatabaseRecord<T> iDatabase, final String iCluster, final CTX iQueryRecordImpl,
+			final OCommandResultListener iResultListener) {
+		super(iDatabase, iCluster);
 		resultListener = iResultListener;
 		queryRecord = iQueryRecordImpl;
 	}
@@ -44,7 +47,7 @@ public abstract class ONativeAsynchQuery<T extends ORecordInternal<?>, CTX exten
 	}
 
 	@SuppressWarnings("unchecked")
-	public boolean foreach(ORecordInternal<?> iRecord) {
+	public boolean foreach(final ORecordInternal<?> iRecord) {
 		T record = (T) iRecord;
 		queryRecord.setRecord(record);
 
@@ -59,32 +62,31 @@ public abstract class ONativeAsynchQuery<T extends ORecordInternal<?>, CTX exten
 		return true;
 	}
 
-	public List<T> execute(int iLimit) {
+	public List<T> execute(final Object... iArgs) {
 		if (!(database.getStorage() instanceof OStorageLocal))
-			throw new OQueryExecutionException("Native queries can run only in embedded-local version. Not in the remote one.");
+			throw new OCommandExecutionException("Native queries can run only in embedded-local version. Not in the remote one.");
 
-		limit = iLimit;
 		queryRecord.setSourceQuery(this);
 
 		// CHECK IF A CLASS WAS CREATED
 		OClass cls = database.getMetadata().getSchema().getClass(cluster);
 		if (cls == null)
-			throw new OQueryExecutionException("Cluster " + cluster + " was not found");
+			throw new OCommandExecutionException("Cluster " + cluster + " was not found");
 
 		((OStorageLocal) database.getStorage()).browse(database.getId(), cls.getClusterIds(), this, record);
 		return null;
 	}
 
-	public T executeFirst() {
+	public T executeFirst(final Object... iArgs) {
 		execute(1);
 		return null;
 	}
 
-	public OAsynchQueryResultListener<T> getResultListener() {
+	public OCommandResultListener getResultListener() {
 		return resultListener;
 	}
 
-	public void setResultListener(OAsynchQueryResultListener<T> resultListener) {
+	public void setResultListener(final OCommandResultListener resultListener) {
 		this.resultListener = resultListener;
 	}
 }

@@ -15,26 +15,27 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.orient.core.command.OCommandRequestAbstract;
+
 /**
- * SQL command implementation.
+ * SQL command request implementation. It just stores the request and delegated the execution to the configured OCommandExecutor.
  * 
  * @author luca
  * 
  */
-public class OCommandSQL extends OCommandSQLAbstract {
+@SuppressWarnings("unchecked")
+public class OCommandSQL extends OCommandRequestAbstract {
 	public OCommandSQL() {
-		super(null, null);
 	}
 
 	public OCommandSQL(final String iText) {
-		super(iText, iText.toUpperCase());
+		super(iText);
 	}
 
-	public Object execute() {
-		parse();
-		return database.getStorage().getCommandExecutor().execute(this);
-	}
-
-	public void parse() {
+	/**
+	 * Delegates the execution to the configured command executor.
+	 */
+	public <RET> RET execute(final Object... iArgs) {
+		return (RET) database.getStorage().command(this);
 	}
 }

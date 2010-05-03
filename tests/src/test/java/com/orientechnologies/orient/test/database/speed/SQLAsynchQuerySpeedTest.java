@@ -16,18 +16,20 @@
 package com.orientechnologies.orient.test.database.speed;
 
 import java.io.UnsupportedEncodingException;
+import java.util.List;
 
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.test.SpeedTestMonoThread;
+import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.query.OAsynchQueryResultListener;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 
 @Test(enabled = false)
-public class SQLAsynchQuerySpeedTest extends SpeedTestMonoThread implements OAsynchQueryResultListener<ODocument> {
+public class SQLAsynchQuerySpeedTest extends SpeedTestMonoThread implements OCommandResultListener {
 	protected int								resultCount	= 0;
 	private ODatabaseDocumentTx	database;
 
@@ -36,14 +38,15 @@ public class SQLAsynchQuerySpeedTest extends SpeedTestMonoThread implements OAsy
 		database = new ODatabaseDocumentTx(iURL);
 	}
 
+	@SuppressWarnings("unchecked")
 	public void cycle() throws UnsupportedEncodingException {
 		System.out.println("1 -----------------------");
-		OrientTest.printRecords(database.query(
+		OrientTest.printRecords((List<? extends ORecord<?>>) database.command(
 				new OSQLAsynchQuery<ODocument>("select * from animal where column(0) < 5 or column(0) >= 3 and column(5) < 7", this))
 				.execute());
 	}
 
-	public boolean result(ODocument iRecord) {
+	public boolean result(final Object iRecord) {
 		OrientTest.printRecord(resultCount++, iRecord);
 		return true;
 	}

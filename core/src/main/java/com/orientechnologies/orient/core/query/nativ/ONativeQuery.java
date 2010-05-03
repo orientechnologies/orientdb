@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.query.nativ;
 
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.query.OQueryAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
@@ -24,7 +25,8 @@ public abstract class ONativeQuery<T extends ORecordInternal<?>, CTX extends OQu
 
 	public abstract boolean filter(CTX iRecord);
 
-	public ONativeQuery(String iCluster) {
+	protected ONativeQuery(final ODatabaseRecord<T> iDatabase, final String iCluster) {
+		super(iDatabase);
 		cluster = iCluster;
 	}
 }

@@ -41,7 +41,7 @@ public class ObjectTreeTest {
 	@Parameters(value = "url")
 	public ObjectTreeTest(String iURL) {
 		Orient.instance().registerEngine(new OEngineRemote());
-		
+
 		database = new ODatabaseObjectTx(iURL);
 		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain");
 	}
@@ -95,7 +95,7 @@ public class ObjectTreeTest {
 
 	@Test(dependsOnMethods = "testSaveCircularLink")
 	public void testQueryCircular() {
-		List<ODocument> result = database.getUnderlying().query(new OSQLSynchQuery<ODocument>("select * from Profile")).execute();
+		List<ODocument> result = database.getUnderlying().command(new OSQLSynchQuery<ODocument>("select * from Profile")).execute();
 
 		ODocument parent;
 		for (ODocument r : result) {
@@ -126,7 +126,7 @@ public class ObjectTreeTest {
 	public void testQueryMultiCircular() {
 		Assert.assertEquals(database.countClusterElements("Profile"), startRecordNumber + 3);
 
-		List<ODocument> result = database.getUnderlying().query(
+		List<ODocument> result = database.getUnderlying().command(
 				new OSQLSynchQuery<ODocument>("select * from Profile where name = 'Barack' and surname = 'Obama'")).execute();
 
 		Assert.assertEquals(result.size(), 1);

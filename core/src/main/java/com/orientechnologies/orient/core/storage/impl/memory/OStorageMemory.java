@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
@@ -29,11 +30,9 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadata;
-import com.orientechnologies.orient.core.query.OCommandExecutor;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
-import com.orientechnologies.orient.core.sql.query.OCommandLocalExecutor;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -275,10 +274,6 @@ public class OStorageMemory extends OStorageAbstract {
 	public void browse(int iRequesterId, int[] iClusterId, ORecordBrowsingListener iListener, ORecord<?> iRecord) {
 	}
 
-	public OCommandExecutor getCommandExecutor() {
-		return OCommandLocalExecutor.INSTANCE;
-	}
-
 	public boolean exists() {
 		return true;
 	}
@@ -292,5 +287,9 @@ public class OStorageMemory extends OStorageAbstract {
 		clusters.addAll(physicalClusters);
 		clusters.addAll(logicalClusters);
 		return clusters;
+	}
+
+	public Object command(OCommandRequestInternal iCommand) {
+		return null;
 	}
 }

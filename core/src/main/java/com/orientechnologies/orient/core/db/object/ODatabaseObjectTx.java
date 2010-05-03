@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.db.object;
 import java.util.HashMap;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.command.OCommand;
+import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -281,7 +281,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 		return new ODocument(underlying);
 	}
 
-	public OCommand command(OCommand iCommand) {
+	public OCommandRequest command(OCommandRequest iCommand) {
 		return null;
 	}
 

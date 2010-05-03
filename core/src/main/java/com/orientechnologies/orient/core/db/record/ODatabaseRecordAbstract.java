@@ -16,8 +16,8 @@
 package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.command.OCommand;
-import com.orientechnologies.orient.core.command.OCommandInternal;
+import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
@@ -32,8 +32,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.query.OQuery;
-import com.orientechnologies.orient.core.query.OQueryInternal;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecord.STATUS;
@@ -153,10 +151,10 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		return new ORecordIteratorCluster<REC>(this, this, getClusterIdByName(iClusterName));
 	}
 
-	public OCommand command(final OCommand iCommand) {
+	public OCommandRequest command(final OCommandRequest iCommand) {
 		checkSecurity(OUser.COMMAND, OUser.READ);
 
-		OCommandInternal command = (OCommandInternal) iCommand;
+		OCommandRequestInternal command = (OCommandRequestInternal) iCommand;
 
 		try {
 			command.setDatabase((ODatabaseRecord<ODocument>) getDatabaseOwner());
@@ -168,23 +166,24 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		}
 	}
 
-	public OQuery<REC> query(final OQuery<REC> iQuery) {
-		checkSecurity(OUser.QUERY, OUser.READ);
-
-		OQueryInternal<REC> query = (OQueryInternal<REC>) iQuery;
-
-		try {
-			query.setDatabase((ODatabaseRecord<REC>) getDatabaseOwner());
-
-			if (query.getRecord() == null)
-				query.setRecord((REC) getDatabaseOwner().newInstance());
-
-			return query;
-
-		} catch (Exception e) {
-			throw new ODatabaseException("Error on query execution", e);
-		}
-	}
+	//
+	// public OQuery<REC> query(final OQuery<REC> iQuery) {
+	// checkSecurity(OUser.QUERY, OUser.READ);
+	//
+	// OQueryInternal<REC> query = (OQueryInternal<REC>) iQuery;
+	//
+	// try {
+	// query.setDatabase((ODatabaseRecord<REC>) getDatabaseOwner());
+	//
+	// if (query.getRecord() == null)
+	// query.setRecord((REC) getDatabaseOwner().newInstance());
+	//
+	// return query;
+	//
+	// } catch (Exception e) {
+	// throw new ODatabaseException("Error on query execution", e);
+	// }
+	// }
 
 	public Class<? extends REC> getRecordType() {
 		return recordClass;

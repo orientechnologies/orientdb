@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.exception;
+package com.orientechnologies.orient.core.command;
 
-import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 
-public class OQueryExecutionException extends OException {
+/**
+ * Internal specialization of generic OCommand interface.
+ * 
+ * @author luca
+ * 
+ * @param <T>
+ */
+public interface OCommandRequestInternal<DB extends ODatabaseRecord<?>> extends OCommandRequestAsynch {
+	public String getText();
 
-	private static final long	serialVersionUID	= -7430575036316163711L;
+	public DB getDatabase();
 
-	public OQueryExecutionException(String message, Throwable cause) {
-		super(message, cause);
-	}
-
-	public OQueryExecutionException(String message) {
-		super(message);
-	}
-
+	public OCommandRequestInternal<DB> setDatabase(final DB iDatabase);
 }

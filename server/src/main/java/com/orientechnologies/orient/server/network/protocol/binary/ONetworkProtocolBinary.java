@@ -23,10 +23,13 @@ import java.net.SocketException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
-import com.orientechnologies.orient.core.command.OCommandInternal;
+import com.orientechnologies.orient.core.command.OCommandRequestAbstract;
+import com.orientechnologies.orient.core.command.OCommandRequestInternal;
+import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
@@ -36,17 +39,11 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.query.OAsynchQuery;
-import com.orientechnologies.orient.core.query.OAsynchQueryResultListener;
-import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyRuntime;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -268,28 +265,15 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			}
 
 			case OChannelBinaryProtocol.COMMAND: {
-				OCommandInternal command = (OCommandInternal) OStreamSerializerAnyStreamable.INSTANCE.fromStream(channel.readBytes());
-
-				Object result = connection.database.command(command).execute();
-
-				sendOk();
-
-				channel.writeBytes(OStreamSerializerAnyRuntime.INSTANCE.toStream(result));
-				break;
-			}
-
-			case OChannelBinaryProtocol.QUERY: {
-				final int limit = channel.readInt();
-
-				OAsynchQuery<ORecordInternal<?>> query = (OAsynchQuery<ORecordInternal<?>>) OStreamSerializerAnyStreamable.INSTANCE
+				final OCommandRequestAbstract<?> command = (OCommandRequestAbstract<?>) OStreamSerializerAnyStreamable.INSTANCE
 						.fromStream(channel.readBytes());
 
 				final StringBuilder empty = new StringBuilder();
 
-				query.setResultListener(new OAsynchQueryResultListener<ORecordInternal<?>>() {
+				command.setResultListener(new OCommandResultListener() {
 					private int	items	= 0;
 
-					public boolean result(ORecordInternal<?> iRecord) {
+					public boolean result(final Object iRecord) {
 						if (items == 0)
 							try {
 								sendOk();
@@ -297,13 +281,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 							} catch (IOException e1) {
 							}
 
-						if (limit > -1 && items > limit)
+						if (command.getLimit() > -1 && items > command.getLimit())
 							return false;
 
 						try {
 							channel.writeByte((byte) 1);
 							items++;
-							writeRecord(iRecord);
+							writeRecord((ORecordInternal<?>) iRecord);
 							channel.flush();
 						} catch (IOException e) {
 							return false;
@@ -313,7 +297,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 					}
 				});
 
-				connection.database.query((OQuery<ODocument>) query).execute(limit);
+				((OCommandRequestInternal<ODatabaseRecord<?>>) connection.database.command(command)).execute();
 
 				if (empty.length() == 0)
 					try {
@@ -322,23 +306,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 					}
 
 				channel.writeByte((byte) 0);
-				break;
-			}
-
-			case OChannelBinaryProtocol.QUERY_FIRST: {
-				String queryText = channel.readString();
-
-				OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(queryText);
-
-				query.setRecord(new ODocument());
-				query.setDatabase(connection.database);
-
-				// SET THE CONFIGURATION BEFORE TO EXECUTE THE QUERY
-				ORecordInternal<?> result = connection.database.query(query).executeFirst();
-
-				sendOk();
-
-				writeRecord(result);
 				break;
 			}
 
@@ -356,8 +323,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			case OChannelBinaryProtocol.DICTIONARY_PUT: {
 				String key = channel.readString();
 				ORecordInternal<?> value = ORecordFactory.getRecord(channel.readByte());
-				
-				final ORecordId rid = new ORecordId(channel.readString());				
+
+				final ORecordId rid = new ORecordId(channel.readString());
 				value.setIdentity(rid.clusterId, rid.clusterPosition);
 				value.setDatabase(connection.database);
 

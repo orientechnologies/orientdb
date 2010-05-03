@@ -18,10 +18,12 @@ package com.orientechnologies.orient.core.sql;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.command.OCommandRequestInternal;
+import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.query.OAsynchQueryResultListener;
-import com.orientechnologies.orient.core.query.OQuery;
+import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 
@@ -31,24 +33,22 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
  * @author luca
  * 
  */
-public class OCommandSQLUpdate extends OCommandSQLAbstract implements OAsynchQueryResultListener<ODocument> {
+public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract implements OCommandResultListener {
 	private static final String	KEYWORD_SET		= "SET";
 	private String							className			= null;
 	private Map<String, Object>	fieldEntries	= new HashMap<String, Object>();
-	private OQuery<ODocument>		query;
+	private OCommandSQL					query;
 	private int									recordCount		= 0;
 
-	public OCommandSQLUpdate(final String iText, final String iTextUpperCase, final ODatabaseRecord<ODocument> iDatabase) {
-		super(iText, iTextUpperCase, iDatabase);
-	}
+	public OCommandExecutorSQLUpdate parse(final OCommandRequestInternal<ODatabaseRecord<?>> iRequest) {
+		init(iRequest.getDatabase(), iRequest.getText());
 
-	@Override
-	public void parse() {
-		if (className != null)
-			// ALREADY PARSED
-			return;
+		className = null;
+		fieldEntries.clear();
+		query = null;
+		recordCount = 0;
 
-		StringBuilder word = new StringBuilder();
+		final StringBuilder word = new StringBuilder();
 
 		int pos = OSQLHelper.nextWord(text, textUpperCase, 0, word, true);
 		if (pos == -1 || !word.toString().equals(OSQLHelper.KEYWORD_UPDATE))
@@ -117,14 +117,17 @@ public class OCommandSQLUpdate extends OCommandSQLAbstract implements OAsynchQue
 		String whereCondition = word.toString();
 
 		if (whereCondition.equals(OSQLHelper.KEYWORD_WHERE))
-			query = database.query(new OSQLAsynchQuery<ODocument>("select from " + className + text.substring(pos), this));
+			query = database.command(new OSQLAsynchQuery<ODocument>("select from " + className + text.substring(pos), this));
 		else
-			query = database.query(new OSQLAsynchQuery<ODocument>("select from " + className, this));
+			query = database.command(new OSQLAsynchQuery<ODocument>("select from " + className, this));
 
+		return this;
 	}
 
-	public Object execute() {
-		parse();
+	public Object execute(final Object... iArgs) {
+		if (className == null)
+			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
+
 		query.execute();
 		return recordCount;
 	}
@@ -132,12 +135,14 @@ public class OCommandSQLUpdate extends OCommandSQLAbstract implements OAsynchQue
 	/**
 	 * Update current record.
 	 */
-	public boolean result(final ODocument iRecord) {
+	public boolean result(final Object iRecord) {
+		ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) iRecord;
+
 		// BIND VALUES
 		for (Map.Entry<String, Object> entry : fieldEntries.entrySet())
-			iRecord.field(entry.getKey(), entry.getValue());
+			record.field(entry.getKey(), entry.getValue());
 
-		iRecord.save();
+		record.save();
 		recordCount++;
 		return true;
 	}

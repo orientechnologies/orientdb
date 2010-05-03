@@ -15,19 +15,16 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import com.orientechnologies.orient.core.command.OCommand;
+import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
-import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
 public interface ODatabaseRecord<REC extends ORecordInternal<?>> extends ODatabaseComplex<REC> {
 
 	public ORecordIteratorCluster<REC> browseCluster(String iClusterName);
 
-	public OCommand command(OCommand iCommand);
-
-	public OQuery<REC> query(OQuery<REC> iQuery);
+	public <T extends OCommandRequest> T command(T iCommand);
 
 	public Class<? extends REC> getRecordType();
 }

@@ -15,53 +15,25 @@
  */
 package com.orientechnologies.orient.core.query;
 
-import java.util.List;
-
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
-public abstract class OQueryAbstract<REC extends ORecordInternal<?>> implements OQueryInternal<REC> {
-	protected String								requesterId;
-	protected ODatabaseRecord<REC>	database;
-	protected REC										record;
+public abstract class OQueryAbstract<REC extends ORecordInternal<?>> implements OQuery<REC> {
+	protected ODatabaseRecord<?>	database;
+	protected int									limit	= -1;
 
-	protected int										limit	= -1;
-
-	public List<REC> execute() {
-		return execute(-1);
+	protected OQueryAbstract() {
 	}
 
-	public ODatabaseRecord<REC> getDatabase() {
-		return database;
+	protected OQueryAbstract(final ODatabaseRecord<REC> iDatabase) {
+		this.database = iDatabase;
 	}
 
-	public OQueryInternal<REC> setDatabase(ODatabaseRecord<REC> iDatabase) {
-		database = iDatabase;
-		if (record != null)
-			record.setDatabase(iDatabase);
-
-		return this;
+	public int getLimit() {
+		return limit;
 	}
 
-	public OQueryInternal<REC> setRecord(REC record) {
-		this.record = record;
-		return this;
-	}
-
-	@SuppressWarnings("unchecked")
-	public Class<REC> getRecordClass() {
-		return (Class<REC>) (record == null ? null : record.getClass());
-	}
-
-	public String getRequester() {
-		return requesterId;
-	}
-
-	public void setRequester(String iRequester) {
-		requesterId = iRequester;
-	}
-
-	public REC getRecord() {
-		return record;
+	public void setLimit(int limit) {
+		this.limit = limit;
 	}
 }

@@ -42,16 +42,16 @@ public class NativeQueryTest {
 	public void querySchemaAndLike() {
 		database.open("admin", "admin");
 
-		List<ODocument> result = database.query(
+		List<ODocument> result =
 
-		new ONativeSynchQuery<ODocument, OQueryContextNativeSchema<ODocument>>("Account", new OQueryContextNativeSchema<ODocument>()) {
+		new ONativeSynchQuery<ODocument, OQueryContextNativeSchema<ODocument>>(database, "Account", new OQueryContextNativeSchema<ODocument>()) {
 
 			@Override
 			public boolean filter(OQueryContextNativeSchema<ODocument> iRecord) {
 				return iRecord.field("location").field("city").field("name").eq("Rome").and().field("name").like("G%").go();
 			};
 
-		}).execute();
+		}.execute();
 
 		for (int i = 0; i < result.size(); ++i) {
 			record = result.get(i);

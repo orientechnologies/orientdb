@@ -15,11 +15,14 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.orient.core.command.OCommandRequestInternal;
+import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.query.OAsynchQueryResultListener;
-import com.orientechnologies.orient.core.query.OQuery;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
+import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 
 /**
  * SQL UPDATE command.
@@ -27,19 +30,18 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
  * @author luca
  * 
  */
-public class OCommandSQLDelete extends OCommandSQLAbstract implements OAsynchQueryResultListener<ODocument> {
-	private OQuery<ODocument>	query;
-	private int								recordCount	= 0;
+public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract implements OCommandResultListener {
+	private OSQLQuery<ODocument>	query;
+	private int										recordCount	= 0;
 
-	public OCommandSQLDelete(final String iText, final String iTextUpperCase, final ODatabaseRecord<ODocument> iDatabase) {
-		super(iText, iTextUpperCase, iDatabase);
+	public OCommandExecutorSQLDelete() {
 	}
 
-	@Override
-	public void parse() {
-		if (query != null)
-			// ALREADY PARSED
-			return;
+	public OCommandExecutorSQLDelete parse(final OCommandRequestInternal<ODatabaseRecord<?>> iRequest) {
+		init(iRequest.getDatabase(), iRequest.getText());
+
+		query = null;
+		recordCount = 0;
 
 		StringBuilder word = new StringBuilder();
 
@@ -47,11 +49,15 @@ public class OCommandSQLDelete extends OCommandSQLAbstract implements OAsynchQue
 		if (pos == -1 || !word.toString().equals(OSQLHelper.KEYWORD_DELETE))
 			throw new OCommandSQLParsingException("Keyword " + OSQLHelper.KEYWORD_DELETE + " not found", text, 0);
 
-		query = database.query(new OSQLAsynchQuery<ODocument>("select " + text.substring(pos), this));
+		query = database.command(new OSQLAsynchQuery<ODocument>("select " + text.substring(pos), this));
+
+		return this;
 	}
 
-	public Object execute() {
-		parse();
+	public Object execute(final Object... iArgs) {
+		if (query == null)
+			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
+
 		query.execute();
 		return recordCount;
 	}
@@ -59,8 +65,9 @@ public class OCommandSQLDelete extends OCommandSQLAbstract implements OAsynchQue
 	/**
 	 * Delete the current record.
 	 */
-	public boolean result(final ODocument iRecord) {
-		iRecord.delete();
+	@SuppressWarnings("unchecked")
+	public boolean result(final Object iRecord) {
+		((ORecordAbstract<Object>) iRecord).delete();
 		recordCount++;
 		return true;
 	}

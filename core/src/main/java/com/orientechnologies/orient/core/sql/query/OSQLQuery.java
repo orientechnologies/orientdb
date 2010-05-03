@@ -16,16 +16,14 @@
 package com.orientechnologies.orient.core.sql.query;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
-import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.query.OQueryAbstract;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
+import com.orientechnologies.orient.core.serialization.OMemoryOutputStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
-import com.orientechnologies.orient.core.sql.OSQLHelper;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 /**
  * SQL query implementation.
@@ -35,11 +33,9 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
  * @param <T>
  *          Record type to return.
  */
-public abstract class OSQLQuery<T extends ORecordSchemaAware<?>> extends OQueryAbstract<T> implements OSerializableStream {
-	protected String				text;
-
-	protected OSQLFilter		compiledFilter;
-	protected List<String>	projections	= new ArrayList<String>();
+public abstract class OSQLQuery<T extends ORecordInternal<?>> extends OCommandSQL {
+	protected String		text;
+	protected Object[]	parameters;
 
 	public OSQLQuery() {
 	}
@@ -51,61 +47,19 @@ public abstract class OSQLQuery<T extends ORecordSchemaAware<?>> extends OQueryA
 	/**
 	 * Delegates to the OQueryExecutor the query execution.
 	 */
-	public List<T> execute(final int iLimit) {
-		limit = iLimit;
-		return database.getStorage().getCommandExecutor().execute(this, iLimit);
+	@SuppressWarnings("unchecked")
+	public List<T> execute(final Object... iArgs) {
+		parameters = iArgs;
+		return (List<T>) database.getStorage().command(this);
 	}
 
 	/**
-	 * Delegates to the OQueryExecutor the query execution.
+	 * Returns only the first record if any.
 	 */
-	public T executeFirst() {
-		return database.getStorage().getCommandExecutor().executeFirst(this);
-	}
-
-	public List<String> getProjections() {
-		return projections;
-	}
-
-	/**
-	 * Compile the filter conditions only the first time.
-	 */
-	public void parse() {
-		if (compiledFilter == null) {
-			int pos = extractProjections();
-			if (pos == -1)
-				return;
-
-			compiledFilter = new OSQLFilter(text.substring(pos));
-		}
-	}
-
-	protected int extractProjections() {
-		final String textUpperCase = text.toUpperCase();
-
-		int currentPos = 0;
-
-		StringBuilder word = new StringBuilder();
-
-		currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
-		if (!word.toString().equals(OSQLHelper.KEYWORD_SELECT))
-			return -1;
-
-		int fromPosition = textUpperCase.indexOf(OSQLHelper.KEYWORD_FROM, currentPos);
-		if (fromPosition == -1)
-			throw new OQueryParsingException("Missed " + OSQLHelper.KEYWORD_FROM, text, currentPos);
-
-		String[] items = textUpperCase.substring(currentPos, fromPosition).split(",");
-		if (items == null || items.length == 0)
-			throw new OQueryParsingException("No projections found between " + OSQLHelper.KEYWORD_SELECT + " and "
-					+ OSQLHelper.KEYWORD_FROM, text, currentPos);
-
-		for (String i : items)
-			projections.add(i.trim());
-
-		currentPos = fromPosition + OSQLHelper.KEYWORD_FROM.length() + 1;
-
-		return currentPos;
+	public T executeFirst(final Object... iArgs) {
+		setLimit(1);
+		final List<T> result = execute(iArgs);
+		return result != null && result.size() > 0 ? result.get(0) : null;
 	}
 
 	public String getText() {
@@ -118,11 +72,25 @@ public abstract class OSQLQuery<T extends ORecordSchemaAware<?>> extends OQueryA
 	}
 
 	public OSerializableStream fromStream(final byte[] iStream) throws IOException {
-		text = OBinaryProtocol.bytes2string(iStream);
+		OMemoryInputStream buffer = new OMemoryInputStream(iStream);
+		text = buffer.getAsString();
+		limit = buffer.getAsInteger();
 		return this;
 	}
 
 	public byte[] toStream() throws IOException {
-		return OBinaryProtocol.string2bytes(text);
+		OMemoryOutputStream buffer = new OMemoryOutputStream();
+		buffer.add(text);
+		buffer.add(limit);
+		return buffer.toByteArray();
+	}
+
+	public ODatabaseRecord<?> getDatabase() {
+		return database;
+	}
+
+	public OSQLQuery<T> setDatabase(final ODatabaseRecord<?> iDatabase) {
+		database = iDatabase;
+		return this;
 	}
 }

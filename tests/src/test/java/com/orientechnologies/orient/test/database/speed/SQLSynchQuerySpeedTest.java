@@ -21,13 +21,13 @@ import java.util.List;
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.query.OAsynchQueryResultListener;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 
-public class SQLSynchQuerySpeedTest extends SpeedTestMonoThread implements OAsynchQueryResultListener<ODocument> {
+public class SQLSynchQuerySpeedTest extends SpeedTestMonoThread implements OCommandResultListener {
 	protected int								resultCount	= 0;
 	private ODatabaseDocumentTx	database;
 
@@ -39,13 +39,13 @@ public class SQLSynchQuerySpeedTest extends SpeedTestMonoThread implements OAsyn
 
 	public void cycle() throws UnsupportedEncodingException {
 		System.out.println("1 ----------------------");
-		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select * from animal where id = 10 and name like 'G%'"))
-				.execute();
+		List<ODocument> result = database.command(
+				new OSQLSynchQuery<ODocument>("select * from animal where id = 10 and name like 'G%'")).execute();
 
 		OrientTest.printRecords(result);
 
 		System.out.println("2 ----------------------");
-		result = database.query(
+		result = database.command(
 				new OSQLSynchQuery<ODocument>("select * from animal where column(0) < 5 or column(0) >= 3 and column(5) < 7")).execute();
 
 		OrientTest.printRecords(result);
@@ -56,7 +56,7 @@ public class SQLSynchQuerySpeedTest extends SpeedTestMonoThread implements OAsyn
 		 */
 	}
 
-	public boolean result(ODocument iRecord) {
+	public boolean result(final Object iRecord) {
 		OrientTest.printRecord(resultCount++, iRecord);
 		return true;
 	}
