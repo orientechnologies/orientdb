@@ -66,15 +66,17 @@ public class OServer {
 
 	public OServer() throws ClassNotFoundException, MalformedObjectNameException, NullPointerException,
 			InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
-		threadGroup = new ThreadGroup("Orient Database Server");
+		threadGroup = new ThreadGroup("OrientDB Server");
+
+		System.setProperty("com.sun.management.jmxremote", "true");
 
 		// START MANAGED BEANS JAVA PLATFORM
 		MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 
 		// REGISTER PROFILER
-		mbs.registerMBean(OProfiler.getInstance().startRecording(), new ObjectName("orient:type=Profiler"));
+		mbs.registerMBean(OProfiler.getInstance().startRecording(), new ObjectName("OrientDB:type=Profiler"));
 		// REGISTER SERVER
-		mbs.registerMBean(new OrientServer(), new ObjectName("orient:type=OrientServer"));
+		mbs.registerMBean(new OrientServer(), new ObjectName("OrientDB:type=Server"));
 
 		shutdownHook = new OServerShutdownHook();
 	}
@@ -176,5 +178,13 @@ public class OServer {
 
 	public Map<String, ODatabaseRecord<?>> getMemoryDatabases() {
 		return memoryDatabases;
+	}
+
+	public Map<String, Class<? extends ONetworkProtocol>> getProtocols() {
+		return protocols;
+	}
+
+	public List<OServerNetworkListener> getListeners() {
+		return listeners;
 	}
 }

@@ -16,7 +16,13 @@
 package com.orientechnologies.orient.server.managed;
 
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.server.OClientConnection;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 
 public interface OrientServerMBean {
 	public OStorage[] getOpenedStorages();
+
+	public OClientConnection[] getConnections();
+
+	public ONetworkProtocol[] getHandlers();
 }

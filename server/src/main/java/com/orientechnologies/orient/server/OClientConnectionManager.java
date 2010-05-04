@@ -73,4 +73,12 @@ public class OClientConnectionManager {
 	public static OClientConnectionManager instance() {
 		return instance;
 	}
+
+	public Map<String, OClientConnection> getConnections() {
+		return connections;
+	}
+
+	public Map<String, ONetworkProtocol> getHandlers() {
+		return handlers;
+	}
 }
