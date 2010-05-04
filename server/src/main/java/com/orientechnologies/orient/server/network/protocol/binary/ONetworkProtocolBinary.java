@@ -262,7 +262,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 				sendOk();
 
-				channel.writeInt((int) (newVersion * -1 - 2));
+				channel.writeInt((int) newVersion);
 				break;
 
 			case OChannelBinaryProtocol.RECORD_DELETE:

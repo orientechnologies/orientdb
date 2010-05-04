@@ -116,16 +116,18 @@ public class ODatabaseRaw implements ODatabase {
 			ORawBuffer result;
 
 			if (useCache) {
+				// FIND IN CACHE
 				result = getCache().findRecord(recId);
 
 				if (result != null)
+					// FOUND: JUST RETURN IT
 					return result;
-			} else
-				result = null;
+			}
 
 			result = storage.readRecord(id, iClusterId, iPosition);
 
 			if (useCache)
+				// ADD THE RECORD TO THE LOCAL CACHE
 				getCache().addRecord(recId, result);
 
 			return result;
@@ -136,19 +138,30 @@ public class ODatabaseRaw implements ODatabase {
 		}
 	}
 
-	public long save(final int iClusterId, final long iPosition, final byte[] iContent, final int iVersion, final byte iRecordType) {
+	public long save(final int iClusterId, long iPosition, final byte[] iContent, final int iVersion, final byte iRecordType) {
 		try {
-			if (iPosition == ORID.CLUSTER_POS_INVALID)
-				return storage.createRecord(iClusterId, iContent, iRecordType);
+			if (iPosition == ORID.CLUSTER_POS_INVALID) {
+				// CREATE
+				iPosition = storage.createRecord(iClusterId, iContent, iRecordType);
 
-			int newVersion = storage.updateRecord(id, iClusterId, iPosition, iContent, iVersion, iRecordType);
-			if (newVersion > -1)
-				return newVersion * -1 - 2;
+				if (useCache)
+					// ADD/UPDATE IT IN CACHE
+					getCache().addRecord(ORecordId.generateString(iClusterId, iPosition), new ORawBuffer(iContent, 0, iRecordType));
 
+				return iPosition;
+			} else {
+				// UPDATE
+				int newVersion = storage.updateRecord(id, iClusterId, iPosition, iContent, iVersion, iRecordType);
+
+				if (useCache)
+					// ADD/UPDATE IT IN CACHE
+					getCache().addRecord(ORecordId.generateString(iClusterId, iPosition), new ORawBuffer(iContent, newVersion, iRecordType));
+
+				return newVersion;
+			}
 		} catch (Throwable t) {
 			throw new ODatabaseException("Error on saving record in cluster id: " + iClusterId + ", position: " + iPosition, t);
 		}
-		return ORID.CLUSTER_POS_INVALID;
 	}
 
 	public void delete(final String iClusterName, final long iPosition, final int iVersion) {

@@ -53,7 +53,6 @@ public class SchemaTest {
 		profile.createProperty("nick", OType.STRING).setMin("3").setMax("30");
 		profile.createProperty("name", OType.STRING).setMin("3").setMax("30");
 		profile.createProperty("surname", OType.STRING).setMin("3").setMax("30");
-		profile.createProperty("addresses", OType.EMBEDDEDLIST);
 		profile.createProperty("registeredOn", OType.DATE).setMin("2010-01-01 00:00:00");
 		profile.createProperty("lastAccessOn", OType.DATE).setMin("2010-01-01 00:00:00");
 
@@ -79,7 +78,6 @@ public class SchemaTest {
 		assert schema.getClass("Profile").getProperty("nick").getType() == OType.STRING;
 		assert schema.getClass("Profile").getProperty("name").getType() == OType.STRING;
 		assert schema.getClass("Profile").getProperty("surname").getType() == OType.STRING;
-		assert schema.getClass("Profile").getProperty("addresses").getType() == OType.EMBEDDEDLIST;
 		assert schema.getClass("Profile").getProperty("registeredOn").getType() == OType.DATE;
 		assert schema.getClass("Profile").getProperty("lastAccessOn").getType() == OType.DATE;
 

@@ -293,9 +293,6 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 				// CHECK ACCESS ON CLUSTER
 				checkSecurity(OUser.CLUSTER + "." + clusterId, OUser.CREATE);
 			} else {
-				// if (iClusterName != null)
-				// throw new IllegalArgumentException("Can't specify the cluster on update but only on creation");
-
 				clusterId = rid.clusterId;
 
 				// CHECK ACCESS ON CLUSTER
@@ -304,19 +301,15 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 
 			final byte[] stream = iContent.toStream();
 
-			long clusterPosition = underlying.save(clusterId, rid.getClusterPosition(), stream, iVersion, iContent.getRecordType());
+			// SAVE IT
+			long result = underlying.save(clusterId, rid.getClusterPosition(), stream, iVersion, iContent.getRecordType());
 
-			if (clusterPosition < -1)
-				iContent.fill(iContent.getDatabase(), rid.getClusterId(), rid.getClusterPosition(), (int) clusterPosition * -1 - 2);
-
-			if (!rid.isValid()) {
-				rid.clusterId = clusterId;
-				rid.clusterPosition = clusterPosition;
-			}
-
-			// ADD/UPDATE IT IN CACHE
-			if (underlying.isUseCache())
-				getCache().addRecord(rid.toString(), new ORawBuffer(stream, isNew ? 0 : iVersion, iRecordType));
+			if (isNew)
+				// UPDATE INFORMATION: CLUSTER ID+POSITION
+				iContent.fill(iContent.getDatabase(), clusterId, result, 0);
+			else
+				// UPDATE INFORMATION: VERSION
+				iContent.fill(iContent.getDatabase(), clusterId, rid.getClusterPosition(), (int) result);
 
 			iContent.unsetDirty();
 		} catch (ODatabaseException e) {
