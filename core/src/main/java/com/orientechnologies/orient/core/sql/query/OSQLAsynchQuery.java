@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.query;
 
+import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 
@@ -27,7 +28,7 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
  * @param <T>
  * @see OSQLSynchQuery
  */
-public class OSQLAsynchQuery<T extends ORecordSchemaAware<?>> extends OSQLQuery<T> {
+public class OSQLAsynchQuery<T extends ORecordSchemaAware<?>> extends OSQLQuery<T> implements OCommandRequestAsynch {
 	protected int	resultCount	= 0;
 
 	/**

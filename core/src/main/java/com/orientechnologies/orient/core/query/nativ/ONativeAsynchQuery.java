@@ -73,7 +73,7 @@ public abstract class ONativeAsynchQuery<T extends ORecordInternal<?>, CTX exten
 		if (cls == null)
 			throw new OCommandExecutionException("Cluster " + cluster + " was not found");
 
-		((OStorageLocal) database.getStorage()).browse(database.getId(), cls.getClusterIds(), this, record);
+		((OStorageLocal) database.getStorage()).browse(database.getId(), cls.getClusterIds(), this, record, false);
 		return null;
 	}
 

@@ -55,7 +55,7 @@ public class OStreamSerializerAnyRuntime extends OStreamSerializerAbstract {
 
 	public byte[] toStream(Object iObject) throws IOException {
 		if (iObject == null)
-			return null;
+			return new byte[0];
 		return OBinaryProtocol.string2bytes(iObject.getClass().getName() + SEPARATOR + iObject);
 	}
 }

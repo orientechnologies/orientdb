@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
  * 
  * @param <T>
  */
-public interface OCommandRequestInternal<DB extends ODatabaseRecord<?>> extends OCommandRequestAsynch {
+public interface OCommandRequestInternal<DB extends ODatabaseRecord<?>> extends OCommandRequest {
 	public String getText();
 
 	public DB getDatabase();

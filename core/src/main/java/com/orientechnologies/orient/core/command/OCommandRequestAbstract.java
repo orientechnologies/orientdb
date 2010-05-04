@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  * @author luca
  * 
  */
-public abstract class OCommandRequestAbstract<T extends Object> implements OCommandRequestInternal<ODatabaseRecord<?>> {
+public abstract class OCommandRequestAbstract implements OCommandRequestInternal<ODatabaseRecord<?>> {
 	protected String									text;
 	protected ODatabaseRecord<?>			database;
 	protected int											limit	= -1;

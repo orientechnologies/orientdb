@@ -33,6 +33,7 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.config.OClientConfiguration;
 import com.orientechnologies.orient.client.dictionary.ODictionaryClient;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -47,6 +48,7 @@ import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyRuntime;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -345,7 +347,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 		OSerializableStream command = (OSerializableStream) iCommand;
 
-		final List<Object> result = new ArrayList<Object>();
+		Object result = null;
 
 		do {
 			boolean locked = acquireExclusiveLock();
@@ -353,31 +355,52 @@ public class OStorageRemote extends OStorageAbstract {
 			OStorageRemoteThreadLocal.INSTANCE.set(Boolean.TRUE);
 
 			try {
-				OCommandSQL aquery = (OCommandSQL) iCommand;
+				final OCommandSQL aquery = (OCommandSQL) iCommand;
+
+				final boolean asynch = iCommand instanceof OCommandRequestAsynch;
 
 				network.writeByte(OChannelBinaryProtocol.COMMAND);
+				network.writeByte((byte) (asynch ? 'a' : 's')); // ASYNC / SYNC
 				network.writeBytes(OStreamSerializerAnyStreamable.INSTANCE.toStream(command));
 				network.flush();
 
 				readStatus();
 
-				// ASYNCH: READ ONE RECORD AT TIME
-				while (network.readByte() == 1) {
-					ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) readRecordFromNetwork((ODatabaseRecord<?>) iCommand.getDatabase());
-					if (record == null)
+				if (asynch) {
+					// ASYNCH: READ ONE RECORD AT TIME
+					while (network.readByte() == 1) {
+						ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) readRecordFromNetwork((ODatabaseRecord<?>) iCommand
+								.getDatabase());
+						if (record == null)
+							break;
+
+						// INVOKE THE LISTENER
+						try {
+							if (!aquery.getResultListener().result(record)) {
+								// EMPTY THE INPUT CHANNEL
+								while (network.in.available() > 0)
+									network.in.read();
+
+								break;
+							}
+						} catch (Throwable t) {
+							// ABSORBE ALL THE USER EXCEPTIONS
+						}
+					}
+				} else {
+					final byte type = network.readByte();
+					switch (type) {
+					case 'n':
+						result = null;
 						break;
 
-					// INVOKE THE LISTENER
-					try {
-						if (!aquery.getResultListener().result(record)) {
-							// EMPTY THE INPUT CHANNEL
-							while (network.in.available() > 0)
-								network.in.read();
+					case 'r':
+						result = readRecordFromNetwork((ODatabaseRecord<?>) iCommand.getDatabase());
+						break;
 
-							break;
-						}
-					} catch (Throwable t) {
-						// ABSORBE ALL THE USER EXCEPTIONS
+					case 'a':
+						result = OStreamSerializerAnyRuntime.INSTANCE.fromStream(network.readBytes());
+						break;
 					}
 				}
 				break;

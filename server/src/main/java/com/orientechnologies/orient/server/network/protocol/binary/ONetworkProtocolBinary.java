@@ -39,10 +39,12 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyRuntime;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -70,6 +72,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	private String							passwd;
 	private ODatabaseRaw				underlyingDatabase;
 
+	private int									commandType;
+
+	private int									lastCommandType						= -1;
+	private String							lastCommandDetail					= null;
+	private long								totalCommandExecutionTime	= 0;
+	private long								lastCommandExecutionTime	= 0;
+
 	public ONetworkProtocolBinary() {
 		super(OServer.getThreadGroup(), "net-protocol-binary");
 	}
@@ -84,9 +93,16 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	@SuppressWarnings("unchecked")
 	@Override
 	protected void execute() throws Exception {
+		commandType = -1;
+
+		long clock = 0;
+
 		try {
-			short type = channel.readByte();
-			switch (type) {
+			commandType = channel.readByte();
+
+			clock = System.currentTimeMillis();
+
+			switch (commandType) {
 
 			case OChannelBinaryProtocol.CONNECT: {
 				user = channel.readString();
@@ -265,47 +281,71 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			}
 
 			case OChannelBinaryProtocol.COMMAND: {
-				final OCommandRequestAbstract<?> command = (OCommandRequestAbstract<?>) OStreamSerializerAnyStreamable.INSTANCE
+				final boolean asynch = channel.readByte() == 'a';
+
+				final OCommandRequestAbstract command = (OCommandRequestAbstract) OStreamSerializerAnyStreamable.INSTANCE
 						.fromStream(channel.readBytes());
 
-				final StringBuilder empty = new StringBuilder();
+				if (asynch) {
+					// ASYNCHRONOUS
+					final StringBuilder empty = new StringBuilder();
 
-				command.setResultListener(new OCommandResultListener() {
-					private int	items	= 0;
+					command.setResultListener(new OCommandResultListener() {
+						private int	items	= 0;
 
-					public boolean result(final Object iRecord) {
-						if (items == 0)
+						public boolean result(final Object iRecord) {
+							if (items == 0)
+								try {
+									sendOk();
+									empty.append("-");
+								} catch (IOException e1) {
+								}
+
+							if (command.getLimit() > -1 && items > command.getLimit())
+								return false;
+
 							try {
-								sendOk();
-								empty.append("-");
-							} catch (IOException e1) {
+								channel.writeByte((byte) 1);
+								items++;
+								writeRecord((ORecordInternal<?>) iRecord);
+								channel.flush();
+							} catch (IOException e) {
+								return false;
 							}
 
-						if (command.getLimit() > -1 && items > command.getLimit())
-							return false;
+							return true;
+						}
+					});
 
+					((OCommandRequestInternal<ODatabaseRecord<?>>) connection.database.command(command)).execute();
+
+					if (empty.length() == 0)
 						try {
-							channel.writeByte((byte) 1);
-							items++;
-							writeRecord((ORecordInternal<?>) iRecord);
-							channel.flush();
-						} catch (IOException e) {
-							return false;
+							sendOk();
+						} catch (IOException e1) {
 						}
 
-						return true;
+					channel.writeByte((byte) 0);
+				} else {
+					// SYNCHRONOUS
+					final Object result = ((OCommandRequestInternal<ODatabaseRecord<?>>) connection.database.command(command)).execute();
+
+					sendOk();
+
+					if (result == null) {
+						// NULL VALUE
+						channel.writeByte((byte) 'n');
+						channel.writeBytes(null);
+					} else if (result instanceof ORecord<?>) {
+						// RECORD
+						channel.writeByte((byte) 'r');
+						writeRecord((ORecordInternal<?>) result);
+					} else {
+						// ANY OTHER (INCLUDING LITERALS)
+						channel.writeByte((byte) 'a');
+						channel.writeBytes(OStreamSerializerAnyRuntime.INSTANCE.toStream(result));
 					}
-				});
-
-				((OCommandRequestInternal<ODatabaseRecord<?>>) connection.database.command(command)).execute();
-
-				if (empty.length() == 0)
-					try {
-						sendOk();
-					} catch (IOException e1) {
-					}
-
-				channel.writeByte((byte) 0);
+				}
 				break;
 			}
 
@@ -366,7 +406,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				break;
 
 			default:
-				OLogManager.instance().error(this, "Request not supported. Code: " + type);
+				OLogManager.instance().error(this, "Request not supported. Code: " + commandType);
 
 				channel.clearInput();
 				sendError(null);
@@ -386,9 +426,14 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			} catch (Throwable t) {
 				OLogManager.instance().debug(this, "Error on send data over the network", t);
 			}
-		}
 
-		OSerializationThreadLocal.INSTANCE.get().clear();
+			OSerializationThreadLocal.INSTANCE.get().clear();
+
+			lastCommandExecutionTime = System.currentTimeMillis() - clock;
+			totalCommandExecutionTime += lastCommandExecutionTime;
+
+			lastCommandType = commandType;
+		}
 	}
 
 	@Override
@@ -455,5 +500,25 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	@Override
 	public OChannel getChannel() {
 		return channel;
+	}
+
+	public int getCommandType() {
+		return commandType;
+	}
+
+	public int getLastCommandType() {
+		return lastCommandType;
+	}
+
+	public String getLastCommandDetail() {
+		return lastCommandDetail;
+	}
+
+	public long getTotalWorkingTime() {
+		return totalCommandExecutionTime;
+	}
+
+	public long getLastCommandExecutionTime() {
+		return lastCommandExecutionTime;
 	}
 }

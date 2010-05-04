@@ -23,13 +23,17 @@ public class OQueryParsingException extends OException {
 	private int								position;
 	private static final long	serialVersionUID	= -7430575036316163711L;
 
-	public OQueryParsingException(String iMessage, String iText, int iPosition, Throwable cause) {
+	public OQueryParsingException(final String iMessage) {
+		super(iMessage);
+	}
+
+	public OQueryParsingException(final String iMessage, final String iText, final int iPosition, final Throwable cause) {
 		super(iMessage, cause);
 		text = iText;
 		position = iPosition;
 	}
 
-	public OQueryParsingException(String iMessage, String iText, int iPosition) {
+	public OQueryParsingException(final String iMessage, final String iText, final int iPosition) {
 		super(iMessage);
 		text = iText;
 		position = iPosition;

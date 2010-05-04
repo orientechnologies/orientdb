@@ -91,7 +91,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			}
 		}
 
-		((OStorageLocal) database.getStorage()).browse(database.getId(), clusterIds, this, record);
+		((OStorageLocal) database.getStorage()).browse(database.getId(), clusterIds, this, record, false);
 		return null;
 	}
 

@@ -439,7 +439,7 @@ public class OStorageLocal extends OStorageAbstract {
 	 *          Record passed to minimize object creation. The record will be re-used ar every read
 	 */
 	public void browse(final int iRequesterId, final int[] iClusterId, final ORecordBrowsingListener iListener,
-			final ORecordInternal<?> iRecord) {
+			final ORecordInternal<?> iRecord, final boolean iLockEntireCluster) {
 		checkOpeness();
 
 		final long timer = OProfiler.getInstance().startChrono();
@@ -452,7 +452,7 @@ public class OStorageLocal extends OStorageAbstract {
 			for (int clusterId : iClusterId) {
 				cluster = getClusterById(clusterId);
 
-				browseCluster(iRequesterId, iListener, iRecord, cluster, clusterId);
+				browseCluster(iRequesterId, iListener, iRecord, cluster, clusterId, iLockEntireCluster);
 			}
 		} catch (IOException e) {
 
@@ -466,12 +466,14 @@ public class OStorageLocal extends OStorageAbstract {
 	}
 
 	private void browseCluster(final int iRequesterId, final ORecordBrowsingListener iListener, final ORecordInternal<?> iRecord,
-			OCluster cluster, int iClusterId) throws IOException {
+			OCluster cluster, int iClusterId, final boolean iLockEntireCluster) throws IOException {
 		ORawBuffer recordBuffer;
 		long positionInPhyCluster;
 
 		try {
-			cluster.lock();
+			if (iLockEntireCluster)
+				// LOCK THE ENTIRE CLUSTER AVOIDING TO LOCK EVERY SINGLE RECORD
+				cluster.lock();
 
 			OClusterPositionIterator iterator = cluster.absoluteIterator();
 
@@ -479,8 +481,8 @@ public class OStorageLocal extends OStorageAbstract {
 			while (iterator.hasNext()) {
 				positionInPhyCluster = iterator.next();
 
-				// READ THE RAW RECORD WITHOUT LOCKING THE CLUSTER SINCE IT HAS BEEN MADE HERE
-				recordBuffer = readRecord(iRequesterId, cluster, positionInPhyCluster, false);
+				// READ THE RAW RECORD. IF iLockEntireCluster THEN THE READ WILL BE NOT-LOCKING, OTHERWISE YES
+				recordBuffer = readRecord(iRequesterId, cluster, positionInPhyCluster, !iLockEntireCluster);
 				if (recordBuffer == null)
 					continue;
 
@@ -497,7 +499,9 @@ public class OStorageLocal extends OStorageAbstract {
 			}
 		} finally {
 
-			cluster.unlock();
+			if (iLockEntireCluster)
+				// UNLOCK THE ENTIRE CLUSTER
+				cluster.unlock();
 		}
 	}
 
