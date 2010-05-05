@@ -23,6 +23,10 @@ public class OCommandSQLParsingException extends OException {
 	private int								position;
 	private static final long	serialVersionUID	= -7430575036316163711L;
 
+	public OCommandSQLParsingException(String iMessage) {
+		super(iMessage, null);
+	}
+
 	public OCommandSQLParsingException(String iMessage, String iText, int iPosition, Throwable cause) {
 		super(iMessage, cause);
 		text = iText;

@@ -87,12 +87,12 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 
 			fieldName = word.toString();
 
-			newPos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
-			if (pos == -1 || !word.toString().equals("="))
-				throw new OCommandSQLParsingException("Character '=' was expected", text, pos);
-			pos = newPos;
+			pos = OSQLHelper.jumpWhiteSpaces(text, pos);
 
-			newPos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
+			if (pos == -1 || text.charAt(pos) != '=')
+				throw new OCommandSQLParsingException("Character '=' was expected", text, pos);
+
+			newPos = OSQLHelper.nextWord(text, textUpperCase, pos+1, word, false);
 			if (pos == -1)
 				throw new OCommandSQLParsingException("Value expected", text, pos);
 

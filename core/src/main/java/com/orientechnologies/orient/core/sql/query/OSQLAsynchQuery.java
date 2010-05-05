@@ -42,12 +42,12 @@ public class OSQLAsynchQuery<T extends ORecordSchemaAware<?>> extends OSQLQuery<
 	}
 
 	public OSQLAsynchQuery(final String iText, final OCommandResultListener iResultListener) {
-		super(iText);
-		resultListener = iResultListener;
+		this(iText, -1, iResultListener);
 	}
 
 	public OSQLAsynchQuery(final String iText, final int iLimit, final OCommandResultListener iResultListener) {
 		super(iText);
+		limit = iLimit;
 		resultListener = iResultListener;
 	}
 

@@ -28,6 +28,10 @@ public class OQueryHelper {
 	public static final String[]	EMPTY_PARAMETERS			= new String[] {};
 
 	public static boolean like(String currentValue, String iValue) {
+		if (currentValue == null || currentValue.length() == 0)
+			// EMPTY FIELD
+			return false;
+
 		int anyPos = iValue.indexOf(WILDCARD_ANY);
 		int charAnyPos = iValue.indexOf(WILDCARD_ANYCHAR);
 
@@ -37,19 +41,26 @@ public class OQueryHelper {
 
 		String value = currentValue.toString();
 		if (value == null || value.length() == 0)
+			// NOTHING TO MATCH
 			return false;
 
-		if (iValue.startsWith(WILDCARD_ANY)) {
+		if (iValue.startsWith(WILDCARD_ANY) && iValue.endsWith(WILDCARD_ANY)) {
+			// %XXXXX%
+			iValue = iValue.substring(WILDCARD_ANY.length(), iValue.length() - WILDCARD_ANY.length());
+			return currentValue.indexOf(iValue) > -1;
+			
+		} else if (iValue.startsWith(WILDCARD_ANY)) {
+			// %XXXXX
 			iValue = iValue.substring(WILDCARD_ANY.length());
-			if (!value.endsWith(iValue))
-				return false;
-		}
+			return value.endsWith(iValue);
 
-		if (iValue.endsWith(WILDCARD_ANY)) {
+		} else if (iValue.endsWith(WILDCARD_ANY)) {
+			// XXXXX%
 			iValue = iValue.substring(0, iValue.length() - WILDCARD_ANY.length());
 			return value.startsWith(iValue);
-		} else
-			return true;
+		}
+
+		return false;
 	}
 
 	public static String[] getParameters(final String iText) {

@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
+import com.orientechnologies.common.parser.OStringParser;
 
 public class ConsoleApplication {
 
@@ -73,7 +74,7 @@ public class ConsoleApplication {
 
 	protected boolean execute(String iCommand) {
 		iCommand = iCommand.trim();
-		String[] commandWords = getWords(iCommand);
+		String[] commandWords = OStringParser.getWords(iCommand, wordSeparator);
 
 		for (String cmd : helpCommands)
 			if (cmd.equals(commandWords[0])) {
@@ -161,51 +162,6 @@ public class ConsoleApplication {
 
 		out.println("!Unrecognized command: " + iCommand);
 		return true;
-	}
-
-	private String[] getWords(String iRecord) {
-		iRecord = iRecord.trim();
-		char separator = wordSeparator.charAt(0);
-
-		ArrayList<String> fields = new ArrayList<String>();
-		StringBuilder buffer = new StringBuilder();
-		char stringBeginChar = ' ';
-		char c;
-
-		for (int i = 0; i < iRecord.length(); ++i) {
-			c = iRecord.charAt(i);
-			if (c == '\'' || c == '"') {
-				if (stringBeginChar != ' ') {
-					// CLOSE THE STRING?
-					if (stringBeginChar == c) {
-						// SAME CHAR AS THE BEGIN OF THE STRING: CLOSE IT AND PUSH
-						stringBeginChar = ' ';
-						fields.add(buffer.toString());
-						buffer.setLength(0);
-						continue;
-					}
-				} else {
-					// START STRING
-					stringBeginChar = c;
-					continue;
-				}
-			} else if (c == separator && stringBeginChar == ' ') {
-				if (buffer.length() > 0) {
-					// SEPARATOR (OUTSIDE A STRING): PUSH
-					fields.add(buffer.toString());
-					buffer.setLength(0);
-				}
-				continue;
-			}
-
-			buffer.append(c);
-		}
-		fields.add(buffer.toString());
-		buffer.setLength(0);
-
-		String[] result = new String[fields.size()];
-		fields.toArray(result);
-		return result;
 	}
 
 	protected void syntaxError(String iCommand, Method m) {

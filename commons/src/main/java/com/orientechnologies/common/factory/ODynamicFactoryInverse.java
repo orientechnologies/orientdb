@@ -1,4 +1,4 @@
-package com.orientechnologies.common;
+package com.orientechnologies.common.factory;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorAnd;
@@ -66,18 +67,23 @@ public class OSQLHelper {
 
 	public static int nextWord(final String iText, final String iTextUpperCase, int ioCurrentPosition, final StringBuilder ioWord,
 			final boolean iForceUpperCase) {
+		return nextWord(iText, iTextUpperCase, ioCurrentPosition, ioWord, iForceUpperCase, " =><()");
+	}
+
+	public static int nextWord(final String iText, final String iTextUpperCase, int ioCurrentPosition, final StringBuilder ioWord,
+			final boolean iForceUpperCase, final String iSeparatorChars) {
 		ioCurrentPosition = OSQLHelper.jumpWhiteSpaces(iText, ioCurrentPosition);
 		if (ioCurrentPosition >= iText.length())
 			return -1;
 
-		int begin = ioCurrentPosition;
-
-		for (; ioCurrentPosition < iText.length(); ++ioCurrentPosition)
-			if (Character.isWhitespace(iText.charAt(ioCurrentPosition)))
-				break;
+		final String word = OStringParser.getWord(iForceUpperCase ? iTextUpperCase : iText, ioCurrentPosition, iSeparatorChars);
 
 		ioWord.setLength(0);
-		ioWord.append(iForceUpperCase ? iTextUpperCase.substring(begin, ioCurrentPosition) : iText.substring(begin, ioCurrentPosition));
+
+		if (word != null && word.length() > 0) {
+			ioWord.append(word);
+			ioCurrentPosition += word.length();
+		}
 
 		return ioCurrentPosition;
 	}

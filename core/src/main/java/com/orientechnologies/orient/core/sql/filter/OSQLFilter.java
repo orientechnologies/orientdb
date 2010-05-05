@@ -147,7 +147,7 @@ public class OSQLFilter {
 
 	private OQueryOperator extractConditionOperator() {
 		String word;
-		word = nextWord(true);
+		word = nextWord(true, " 0123456789'\"");
 
 		for (OQueryOperator op : OSQLHelper.getOperators()) {
 			if (word.startsWith(op.keyword)) {
@@ -303,6 +303,12 @@ public class OSQLFilter {
 		}
 
 		return new String[] { textUpperCase.substring(begin, currentPos), text.substring(begin, currentPos) };
+	}
+
+	private String nextWord(final boolean iForceUpperCase, final String iSeparators) {
+		StringBuilder word = new StringBuilder();
+		currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, iForceUpperCase, iSeparators);
+		return word.toString();
 	}
 
 	private String nextWord(final boolean iForceUpperCase) {

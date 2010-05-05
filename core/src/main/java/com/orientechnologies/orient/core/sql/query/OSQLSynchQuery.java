@@ -42,6 +42,11 @@ public class OSQLSynchQuery<T extends ORecordSchemaAware<?>> extends OSQLAsynchQ
 		resultListener = this;
 	}
 
+	public OSQLSynchQuery(final String iText, final int iLimit) {
+		super(iText, iLimit, null);
+		resultListener = this;
+	}
+
 	public boolean result(final Object iRecord) {
 		result.add((T) iRecord);
 		return true;
