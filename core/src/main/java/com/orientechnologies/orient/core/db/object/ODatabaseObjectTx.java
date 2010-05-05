@@ -34,7 +34,6 @@ import com.orientechnologies.orient.core.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.core.iterator.OObjectIteratorMultiCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -42,6 +41,13 @@ import com.orientechnologies.orient.core.serialization.serializer.object.OObject
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
+/**
+ * Object Database instance. It's a wrapper to the class ODatabaseDocumentTx but handle the conversion between ODocument instances
+ * and POJOs.
+ * 
+ * @see ODatabaseDocumentTx
+ * @author Luca Garulli
+ */
 @SuppressWarnings("unchecked")
 public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocument, ODocument> implements ODatabaseObject,
 		OUserObject2RecordHandler {
@@ -282,10 +288,6 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 	}
 
 	public OCommandRequest command(OCommandRequest iCommand) {
-		return null;
-	}
-
-	public <RET> OObjectIteratorCluster<RET> query(OQuery<Object> iQuery) {
 		return null;
 	}
 }

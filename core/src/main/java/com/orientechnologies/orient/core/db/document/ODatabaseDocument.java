@@ -20,6 +20,11 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorMultiCluster;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+/**
+ * Generic interface for document based Database implementations.
+ * 
+ * @author Luca Garulli
+ */
 public interface ODatabaseDocument extends ODatabaseRecord<ODocument>, ODatabaseSchemaAware<ODocument> {
 
 	/**

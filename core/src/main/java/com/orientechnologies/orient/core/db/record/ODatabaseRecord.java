@@ -19,6 +19,11 @@ import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
+/**
+ * Generic interface for record based Database implementations.
+ * 
+ * @author Luca Garulli
+ */
 public interface ODatabaseRecord<REC extends ORecordInternal<?>> extends ODatabaseComplex<REC> {
 
 	/**

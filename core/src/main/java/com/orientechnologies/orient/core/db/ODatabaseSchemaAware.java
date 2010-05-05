@@ -15,9 +15,29 @@
  */
 package com.orientechnologies.orient.core.db;
 
+/**
+ * Generic interface for record based Database implementations with schema concept.
+ * 
+ * @author Luca Garulli
+ * 
+ */
 public interface ODatabaseSchemaAware<T extends Object> extends ODatabaseComplex<T> {
 
+	/**
+	 * Creates a new entity of the specified class.
+	 * 
+	 * @param iClassName
+	 *          Class name where to originate the instance
+	 * @return New instance
+	 */
 	public T newInstance(final String iClassName);
 
+	/**
+	 * Counts the entities contained in the specified class.
+	 * 
+	 * @param iClassName
+	 *          Class name
+	 * @return Total entities
+	 */
 	public long countClass(String iClassName);
 }

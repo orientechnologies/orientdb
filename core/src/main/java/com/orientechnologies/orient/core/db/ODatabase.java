@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
+ * Generic Database interface. Represents the lower level of the Database providing raw API to access to the raw records.<br/>
  * Limits:
  * <ul>
  * <li>Maximum records per cluster/class = <b>9.223.372.036 Billions</b>: 2^63 = 9.223.372.036.854.775.808 records</li>
@@ -36,45 +37,181 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * 
  */
 public interface ODatabase {
+	/**
+	 * Opens a database using the user and password received as arguments.
+	 * 
+	 * @param iUserName
+	 *          Username to login
+	 * @param iUserPassword
+	 *          Password associated to the user
+	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 */
 	public <DB extends ODatabase> DB open(final String iUserName, final String iUserPassword);
 
+	/**
+	 * Creates a new database.
+	 * 
+	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 */
 	public <DB extends ODatabase> DB create();
 
+	/**
+	 * Declares an intent to the database. Intents aim to optimize common use cases.
+	 * 
+	 * @param iIntent
+	 *          The intent
+	 * @param iParams
+	 *          Additional parameters
+	 */
 	public void declareIntent(OIntent iIntent, Object... iParams);
 
+	/**
+	 * Checks if the database exists.
+	 * 
+	 * @return True if already exists, otherwise false.
+	 */
 	public boolean exists();
 
+	/**
+	 * Closes an opened database.
+	 */
 	public void close();
 
+	/**
+	 * Returns the database id. The id is auto-generated on opening and creation and it's unique in the current JVM.
+	 * 
+	 * @return
+	 */
 	public int getId();
 
+	/**
+	 * Returns the database name.
+	 * 
+	 * @return Name of the database
+	 */
 	public String getName();
 
+	/**
+	 * Returns the underlying storage implementation.
+	 * 
+	 * @return The underlying storage implementation
+	 * @see OStorage
+	 */
 	public OStorage getStorage();
 
+	/**
+	 * Returns the database cache. Can't be null.
+	 * 
+	 * @return Current cache.
+	 */
 	public OCacheRecord getCache();
 
+	/**
+	 * Returns the default cluster id. If not specified all the new entities will be stored in the default cluster.
+	 * 
+	 * @return The default cluster id
+	 */
 	public int getDefaultClusterId();
 
+	/**
+	 * Returns all the names of the clusters.
+	 * 
+	 * @return Collection of cluster names.
+	 */
 	public Collection<String> getClusterNames();
 
+	/**
+	 * Returns the cluster id by name.
+	 * 
+	 * @param iClusterName
+	 *          Cluster name
+	 * @return The id of searched cluster.
+	 */
 	public int getClusterIdByName(String iClusterName);
 
+	/**
+	 * Returns the cluster name by id.
+	 * 
+	 * @param iClusterId
+	 *          Cluster id
+	 * @return The name of searched cluster.
+	 */
 	public String getClusterNameById(int iClusterId);
 
+	/**
+	 * Checks if the database is closed.
+	 * 
+	 * @return true if is closed, otherwise false.
+	 */
 	public boolean isClosed();
 
+	/**
+	 * Counts all the entities in the specified cluster id.
+	 * 
+	 * @param iCurrentClusterId
+	 *          Cluster id
+	 * @return Total number of entities contained in the specified cluster
+	 */
 	public long countClusterElements(int iCurrentClusterId);
 
+	/**
+	 * Counts all the entities in the specified cluster ids.
+	 * 
+	 * @param iClusterIds
+	 *          Array of cluster ids Cluster id
+	 * @return Total number of entities contained in the specified clusters
+	 */
 	public long countClusterElements(int[] iClusterIds);
 
+	/**
+	 * Counts all the entities in the specified cluster name.
+	 * 
+	 * @param iClusterName
+	 *          Cluster name
+	 * @return Total number of entities contained in the specified cluster
+	 */
 	public long countClusterElements(String iClusterName);
 
+	/**
+	 * Adds a logical cluster. Logical clusters don't need separate files since are stored inside a OTreeMap instance. Access is
+	 * slower than the physical cluster but the database size is reduced and less files are requires. This matters in some OS where a
+	 * single process has limitation for the number of files can open. Most accessed entities should be stored inside a physical
+	 * cluster.
+	 * 
+	 * @param iClusterName
+	 *          Cluster name
+	 * @param iPhyClusterContainerId
+	 *          Physical cluster where to store all the entities of this logical cluster
+	 * @return Cluster id
+	 */
 	public int addLogicalCluster(String iClusterName, int iPhyClusterContainerId);
 
+	/**
+	 * Adds a physical cluster. Physical clusters need separate files. Access is faster than the logical cluster but the database size
+	 * is higher and more files are requires. This matters in some OS where a single process has limitation for the number of files
+	 * can open. Most accessed entities should be stored inside a physical cluster.
+	 * 
+	 * @param iClusterName
+	 *          Cluster name
+	 * @param iPhyClusterContainerId
+	 *          Physical cluster where to store all the entities of this logical cluster
+	 * @return Cluster id
+	 */
 	public int addPhysicalCluster(String iClusterName, String iClusterFileName, int iStartSize);
 
+	/**
+	 * Internal. Adds a data segment where to store record content.
+	 */
 	public int addDataSegment(String iSegmentName, String iSegmentFileName);
 
+	/**
+	 * Checks if the operation on a resource is allowed fir the current user.
+	 * 
+	 * @param iResource
+	 *          Resource where to execute the operation
+	 * @param iOperation
+	 *          Operation to execute against the resource
+	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 */
 	public <DB extends ODatabase> DB checkSecurity(String iResource, int iOperation);
 }

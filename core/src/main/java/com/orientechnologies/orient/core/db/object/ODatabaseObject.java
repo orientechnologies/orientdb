@@ -19,19 +19,54 @@ import com.orientechnologies.orient.core.db.ODatabaseSchemaAware;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.core.iterator.OObjectIteratorMultiCluster;
-import com.orientechnologies.orient.core.query.OQuery;
 
+/**
+ * Generic interface for object based Database implementations. Binds to/from Document and POJOs.
+ * 
+ * @author Luca Garulli
+ */
 public interface ODatabaseObject extends ODatabaseSchemaAware<Object> {
 
+	/**
+	 * Browses all the records of the specified cluster.
+	 * 
+	 * @param iClusterName
+	 *          Cluster name to iterate
+	 * @return Iterator of Object instances
+	 */
 	public <RET> OObjectIteratorCluster<RET> browseCluster(String iClusterName);
 
+	/**
+	 * Browses all the records of the specified class.
+	 * 
+	 * @param iClusterClass
+	 *          Class name to iterate
+	 * @return Iterator of Object instances
+	 */
 	public <RET> OObjectIteratorMultiCluster<RET> browseClass(Class<RET> iClusterClass);
 
+	/**
+	 * Creates a new entity of the specified class.
+	 * 
+	 * @param iType
+	 *          Class name where to originate the instance
+	 * @return New instance
+	 */
 	public <T> T newInstance(Class<T> iType);
 
-	public <RET> OObjectIteratorCluster<RET> query(OQuery<Object> iQuery);
-
+	/**
+	 * Returns the entity manager that handle the binding from ODocuments and POJOs.
+	 * 
+	 * @return
+	 */
 	public OEntityManager getEntityManager();
 
+	/**
+	 * Specifies if retain handled objects in memory or not. Setting it to false can improve performance on large inserts. Default is
+	 * enabled.
+	 * 
+	 * @param iValue
+	 *          True to enable, false to disable it.
+	 */
 	public void setRetainObjects(boolean iValue);
 }

@@ -32,8 +32,8 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 
 /**
- * Record representation. The object can be reused across calls to the database by using the reset() at every re-use. Field
- * population and serialization occurs always in lazy way.
+ * ORecord implementation schema aware. It's able to handle records with, without or with a partial schema. Fields can be added at
+ * run-time. Instances can be reused across calls by using the reset() before to re-use.
  */
 @SuppressWarnings("unchecked")
 public class ODocument extends ORecordVirtualAbstract<Object> implements Iterable<Entry<String, Object>> {
@@ -44,43 +44,102 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		setup();
 	}
 
+	/**
+	 * Creates a new instance by the raw stream usually read from the database. New instances are not persistent until {@link #save()}
+	 * is called.
+	 * 
+	 * @param iSource
+	 *          Raw stream
+	 */
 	public ODocument(final byte[] iSource) {
 		super(iSource);
 		setup();
 	}
 
+	/**
+	 * Creates a new instance of the specified class. New instances are not persistent until {@link #save()} is called.
+	 * 
+	 * @param iClassName
+	 *          Class name
+	 */
 	public ODocument(final String iClassName) {
 		setup();
 		setClassName(iClassName);
 	}
 
+	/**
+	 * Creates a new instance and binds to the specified database. New instances are not persistent until {@link #save()} is called.
+	 * 
+	 * @param iDatabase
+	 *          Database instance
+	 */
 	public ODocument(final ODatabaseRecord<?> iDatabase) {
 		super(iDatabase);
 		setup();
 	}
 
+	/**
+	 * Creates a new instance in memory linked by the Record Id to the persistent one. New instances are not persistent until
+	 * {@link #save()} is called.
+	 * 
+	 * @param iDatabase
+	 *          Database instance
+	 * @param iRID
+	 *          Record Id
+	 */
 	public ODocument(final ODatabaseRecord<?> iDatabase, final ORID iRID) {
 		this(iDatabase);
 		recordId = (ORecordId) iRID;
 		status = STATUS.NOT_LOADED;
 	}
 
+	/**
+	 * Creates a new instance in memory of the specified class, linked by the Record Id to the persistent one. New instances are not
+	 * persistent until {@link #save()} is called.
+	 * 
+	 * @param iDatabase
+	 *          Database instance
+	 * @param iClassName
+	 *          Class name
+	 * @param iRID
+	 *          Record Id
+	 */
 	public ODocument(final ODatabaseRecord<?> iDatabase, final String iClassName, final ORID iRID) {
 		this(iDatabase, iClassName);
 		recordId = (ORecordId) iRID;
 		status = STATUS.NOT_LOADED;
 	}
 
+	/**
+	 * Creates a new instance in memory of the specified class. New instances are not persistent until {@link #save()} is called.
+	 * 
+	 * @param iDatabase
+	 *          Database instance
+	 * @param iClassName
+	 *          Class name
+	 */
 	public ODocument(final ODatabaseRecord<?> iDatabase, final String iClassName) {
 		super(iDatabase, iClassName);
 		setup();
 	}
 
+	/**
+	 * Creates a new instance in memory of the specified schema class. New instances are not persistent until {@link #save()} is
+	 * called.
+	 * 
+	 * @param iDatabase
+	 *          Database instance
+	 * @param iClass
+	 *          OClass instance
+	 */
 	public ODocument(final OClass iClass) {
 		setup();
 		clazz = iClass;
 	}
 
+	/**
+	 * Copies the current instance to a new one.
+	 */
 	public ODocument copy() {
 		ODocument cloned = new ODocument();
 		cloned.source = source;
@@ -99,6 +158,9 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		return cloned;
 	}
 
+	/**
+	 * Dumps the instance as string.
+	 */
 	@Override
 	public String toString() {
 		checkForFields();
@@ -137,6 +199,9 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		return buffer.toString();
 	}
 
+	/**
+	 * Unmarshalls the instance from the raw stream.
+	 */
 	@Override
 	public ODocument fromStream(final byte[] iRecordBuffer) {
 		super.fromStream(iRecordBuffer);
@@ -144,10 +209,16 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		return this;
 	}
 
+	/**
+	 * Returns the field number.
+	 */
 	public int size() {
 		return fields.size();
 	}
 
+	/**
+	 * Returns the array of field names.
+	 */
 	public String[] fieldNames() {
 		checkForFields();
 
@@ -155,6 +226,9 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		return fields.keySet().toArray(result);
 	}
 
+	/**
+	 * Returns the array of field values.
+	 */
 	public Object[] fieldValues() {
 		checkForFields();
 
@@ -162,6 +236,13 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		return fields.values().toArray(result);
 	}
 
+	/**
+	 * Read the field value.
+	 * 
+	 * @param iPropertyName
+	 *          field name
+	 * @return field value if defined, otherwise null
+	 */
 	public <RET> RET field(final String iPropertyName) {
 		checkForFields();
 
@@ -205,6 +286,15 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		return value;
 	}
 
+	/**
+	 * Write the field value.
+	 * 
+	 * @param iPropertyName
+	 *          field name
+	 * @param iPropertyValue
+	 *          field value
+	 * @return The Record instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 */
 	public ODocument field(final String iPropertyName, final Object iPropertyValue) {
 		checkForFields();
 		if (clazz != null) {
@@ -222,6 +312,9 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		return this;
 	}
 
+	/**
+	 * Returns the iterator against the field entries as name and value.
+	 */
 	public Iterator<Entry<String, Object>> iterator() {
 		if (fields == null)
 			return OEmptyIterator.INSTANCE;
@@ -229,22 +322,33 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		return fields.entrySet().iterator();
 	}
 
+	/**
+	 * Checks if a field exists.
+	 * 
+	 * @return True if exists, otherwise false.
+	 */
 	@Override
 	public boolean containsField(final String iFieldName) {
 		return fields != null ? fields.containsKey(iFieldName) : false;
 	}
 
+	/**
+	 * Internal.
+	 */
 	public byte getRecordType() {
 		return RECORD_TYPE;
 	}
 
+	/**
+	 * Internal.
+	 */
 	protected void setup() {
 		super.setup();
 		recordFormat = ORecordSerializerFactory.instance().getFormat(ORecordSerializerSchemaAware2CSV.NAME);
 	}
 
 	/**
-	 * Lazy load the record
+	 * Lazy loads the record.
 	 * 
 	 * @param <RET>
 	 * @param record
