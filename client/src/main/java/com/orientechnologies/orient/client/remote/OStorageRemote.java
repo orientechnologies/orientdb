@@ -66,7 +66,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 @SuppressWarnings("unchecked")
 public class OStorageRemote extends OStorageAbstract {
 	private static final String							DEFAULT_HOST			= "localhost";
-	private static final String[]						DEFAULT_PORTS			= new String[] { "8000" };
+	private static final String[]						DEFAULT_PORTS			= new String[] { "2424" };
 	private static final String							ADDRESS_SEPARATOR	= ";";
 
 	private String													userName;
@@ -753,7 +753,6 @@ public class OStorageRemote extends OStorageAbstract {
 			if (c != null)
 				try {
 					throw (RuntimeException) c.newInstance(excMessage);
-				} catch (IllegalArgumentException e) {
 				} catch (InstantiationException e) {
 				} catch (IllegalAccessException e) {
 				} catch (InvocationTargetException e) {
@@ -838,7 +837,7 @@ public class OStorageRemote extends OStorageAbstract {
 	 * <db-sename>
 	 * </pre>
 	 * 
-	 * , to connect to the localhost, default port 8000</li>
+	 * , to connect to the localhost, default port 2424</li>
 	 * </ul>
 	 */
 	protected void parseServerURLs() {

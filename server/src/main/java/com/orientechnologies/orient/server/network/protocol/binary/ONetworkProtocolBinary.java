@@ -291,22 +291,16 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 					final StringBuilder empty = new StringBuilder();
 
 					command.setResultListener(new OCommandResultListener() {
-						private int	items	= 0;
-
 						public boolean result(final Object iRecord) {
-							if (items == 0)
+							if (empty.length() == 0)
 								try {
 									sendOk();
 									empty.append("-");
 								} catch (IOException e1) {
 								}
 
-							if (command.getLimit() > -1 && items > command.getLimit())
-								return false;
-
 							try {
 								channel.writeByte((byte) 1);
-								items++;
 								writeRecord((ORecordInternal<?>) iRecord);
 								channel.flush();
 							} catch (IOException e) {

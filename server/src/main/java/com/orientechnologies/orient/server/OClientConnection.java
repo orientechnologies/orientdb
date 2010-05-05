@@ -22,9 +22,9 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 
 public class OClientConnection {
-	public String							id;
-	public ONetworkProtocol		protocol;
-	public long								since;
+	public String								id;
+	public ONetworkProtocol			protocol;
+	public long									since;
 	public ODatabaseDocumentTx	database;
 
 	public OClientConnection(final int iId, final Socket iSocket, final ONetworkProtocol iProtocol) throws IOException {

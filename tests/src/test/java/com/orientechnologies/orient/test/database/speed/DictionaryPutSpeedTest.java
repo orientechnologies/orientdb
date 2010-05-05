@@ -39,7 +39,7 @@ public class DictionaryPutSpeedTest extends OrientMonoThreadTest {
 	public DictionaryPutSpeedTest() throws InstantiationException, IllegalAccessException {
 		super(1000000);
 		Orient.instance().registerEngine(new OEngineRemote());
-		// String url = "remote:localhost:8000/petshop";
+		// String url = "remote:localhost:2424/petshop";
 		String url = System.getProperty("url");
 		database = new ODatabaseFlat(url).open("admin", "admin");
 		record = database.newInstance();

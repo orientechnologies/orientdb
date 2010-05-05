@@ -27,7 +27,7 @@ public class OServerNetworkListenerConfiguration {
 	public String	ipAddress	= "127.0.0.1";
 
 	@XmlAttribute(name = "port-range")
-	public String	portRange	= "8000-8010";
+	public String	portRange	= "2424-2430";
 
 	@XmlAttribute
 	public String	protocol	= "binary";

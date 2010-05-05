@@ -7,7 +7,7 @@
 
 	<target name="test">
 		<testng annotations="JDK" classpathref="project.class.path" outputDir="test-output" haltOnFailure="true" verbose="2">
-			<sysproperty key="URL" value="remote:stream-tx:localhost:8000/petshop?mode=rw" />
+			<sysproperty key="URL" value="remote:stream-tx:localhost:2424/petshop?mode=rw" />
 			<classfileset dir="bin" includes="**/auto/*.class" />
 		</testng>
 	</target>

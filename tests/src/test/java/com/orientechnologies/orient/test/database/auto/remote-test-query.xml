@@ -4,7 +4,7 @@
 	<test name="init">
 		<parameter name="url" value="embedded:atomic:../../releases/3.0.0alpha/databases/petshop/petshop" />
 <!--
-		<parameter name="url" value="remote:atomic:localhost:8000/petshop?mode=rw" />
+		<parameter name="url" value="remote:atomic:localhost:2424/petshop?mode=rw" />
 -->
 		<parameter name="reuseDatabase" value="true" />
 		<classes>
