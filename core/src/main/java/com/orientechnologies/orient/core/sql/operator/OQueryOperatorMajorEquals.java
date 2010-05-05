@@ -20,7 +20,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 /**
  * MAJOR EQUALS operator.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public class OQueryOperatorMajorEquals extends OQueryOperatorEqualityNotNulls {

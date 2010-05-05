@@ -21,7 +21,7 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 /**
  * Represent an object field as value in the query condition.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public class OSQLFilterItemField extends OSQLFilterItemAbstract {

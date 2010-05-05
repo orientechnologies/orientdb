@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 /**
  * SQL synchronous query. When executed the caller wait for the result.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  * @param <T>
  * @see OSQLAsynchQuery

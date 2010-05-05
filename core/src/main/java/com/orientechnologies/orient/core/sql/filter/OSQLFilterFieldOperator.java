@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.sql.filter;
 /**
  * Query operators relative a field or a set of fields.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public enum OSQLFilterFieldOperator {

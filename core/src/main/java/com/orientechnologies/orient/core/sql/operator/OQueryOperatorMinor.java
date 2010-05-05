@@ -20,7 +20,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 /**
  * MINOR operator.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public class OQueryOperatorMinor extends OQueryOperatorEqualityNotNulls {

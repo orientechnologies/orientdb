@@ -22,6 +22,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public interface ODatabaseDocument extends ODatabaseRecord<ODocument>, ODatabaseSchemaAware<ODocument> {
 
+	/**
+	 * Browse all the records of the specified class.
+	 * 
+	 * @param iClassName
+	 *          Class name to iterate
+	 * @return Iterator of ODocument instances
+	 */
 	public ORecordIteratorMultiCluster<ODocument> browseClass(String iClassName);
 
 }

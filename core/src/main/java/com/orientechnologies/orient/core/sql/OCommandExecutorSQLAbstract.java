@@ -15,46 +15,20 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import com.orientechnologies.orient.core.command.OCommandExecutor;
-import com.orientechnologies.orient.core.command.OCommandRequestInternal;
+import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 
 /**
- * SQL command implementation.
+ * SQL abstract Command Executor implementation.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
-public abstract class OCommandExecutorSQLAbstract implements OCommandExecutor<ODatabaseRecord<?>> {
-	protected String							text;
-	protected String							textUpperCase;
-	protected ODatabaseRecord<?>	database;
+public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstract {
+	protected String	textUpperCase;
 
 	public OCommandExecutorSQLAbstract init(final ODatabaseRecord<?> iDatabase, final String iText) {
-		database = iDatabase;
-		text = iText;
 		textUpperCase = iText.toUpperCase();
-		return this;
-	}
-
-	/**
-	 * Parse every time the request and execute it.
-	 */
-	public Object execute(final OCommandRequestInternal<ODatabaseRecord<?>> iRequest, final Object... iArgs) {
-		parse(iRequest);
-		return execute(iArgs);
-	}
-
-	public String getText() {
-		return text;
-	}
-
-	public ODatabaseRecord<?> getDatabase() {
-		return database;
-	}
-
-	@Override
-	public String toString() {
-		return getClass().getSimpleName() + " [text=" + text + "]";
+		return (OCommandExecutorSQLAbstract) super.init(iDatabase, iText);
 	}
 }

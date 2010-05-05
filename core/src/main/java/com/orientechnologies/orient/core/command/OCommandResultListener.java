@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.command;
 /**
  * Callback interface called when the command returns results.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public interface OCommandResultListener {

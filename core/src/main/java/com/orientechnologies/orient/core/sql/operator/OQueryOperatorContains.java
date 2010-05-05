@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 /**
  * CONTAINS operator.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {

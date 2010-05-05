@@ -20,7 +20,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldMultiAbst
 /**
  * Represent multiple values in query.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public class OQueryRuntimeValueMulti {

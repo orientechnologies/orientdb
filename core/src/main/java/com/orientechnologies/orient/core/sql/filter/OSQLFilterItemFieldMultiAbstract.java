@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 /**
  * Represent one or more object fields as value in the query condition.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public abstract class OSQLFilterItemFieldMultiAbstract extends OSQLFilterItemAbstract {

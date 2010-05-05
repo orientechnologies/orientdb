@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 /**
  * Parsed query. It's built once a query is parsed.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public class OSQLFilter {

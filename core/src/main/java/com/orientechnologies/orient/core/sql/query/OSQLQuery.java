@@ -28,14 +28,13 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 /**
  * SQL query implementation.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  * @param <T>
  *          Record type to return.
  */
 public abstract class OSQLQuery<T extends ORecordInternal<?>> extends OCommandSQL {
 	protected String		text;
-	protected Object[]	parameters;
 
 	public OSQLQuery() {
 	}

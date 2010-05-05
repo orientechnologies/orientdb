@@ -23,7 +23,7 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
  * SQL asynchronous query. When executed the caller doesn't wait the the execution, rather the listener will be called foreach item
  * found in the query. OSQLAsynchQuery has been built on top of this.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  * @param <T>
  * @see OSQLSynchQuery

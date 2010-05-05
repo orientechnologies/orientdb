@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.serialization;
 /**
  * Static helper class to transform any kind of basic data in bytes and viceversa.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public class OBinaryProtocol {

@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.db.object;
 
-import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseSchemaAware;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.iterator.OObjectIteratorCluster;
@@ -29,8 +28,6 @@ public interface ODatabaseObject extends ODatabaseSchemaAware<Object> {
 	public <RET> OObjectIteratorMultiCluster<RET> browseClass(Class<RET> iClusterClass);
 
 	public <T> T newInstance(Class<T> iType);
-
-	public OCommandRequest command(OCommandRequest iCommand);
 
 	public <RET> OObjectIteratorCluster<RET> query(OQuery<Object> iQuery);
 

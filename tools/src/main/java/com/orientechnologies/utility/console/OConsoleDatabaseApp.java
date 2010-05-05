@@ -30,6 +30,7 @@ import com.orientechnologies.orient.client.admin.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -233,6 +234,22 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 
 		out.println(currentResultSet.size() + " item(s) found. Query executed in " + (float) (System.currentTimeMillis() - start)
 				/ 1000 + " sec(s).");
+	}
+
+	@ConsoleCommand(splitInWords = false, description = "Execute a script against the current database. If the database is remote, then the script will be executed remotely.")
+	public void script(@ConsoleParameter(name = "script-text", description = "The script text to execute") final String iScriptText) {
+		checkCurrentDatabase();
+
+		if (iScriptText == null)
+			return;
+
+		long start = System.currentTimeMillis();
+
+		currentResultSet.clear();
+
+		Object result = new OCommandScript("Javascript", iScriptText).execute();
+
+		out.printf("Script executed in %f sec(s). Value returned is: %s", (float) (System.currentTimeMillis() - start) / 1000, result);
 	}
 
 	@ConsoleCommand(description = "Browse all the records of a class")

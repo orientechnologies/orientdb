@@ -20,14 +20,14 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 /**
  * Internal specialization of generic OCommand interface.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  * @param <T>
  */
-public interface OCommandRequestInternal<DB extends ODatabaseRecord<?>> extends OCommandRequest {
+public interface OCommandRequestInternal extends OCommandRequest {
 	public String getText();
 
-	public DB getDatabase();
+	public ODatabaseRecord<?> getDatabase();
 
-	public OCommandRequestInternal<DB> setDatabase(final DB iDatabase);
+	public OCommandRequestInternal setDatabase(final ODatabaseRecord<?> iDatabase);
 }

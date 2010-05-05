@@ -15,40 +15,161 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.db.object.ODatabaseObject;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
+/**
+ * Database interface that represents a complex database. It extends the base ODatabase interface adding all the higher-level APIs
+ * to treats records. Entities can be implementations of ORecord class for ODatabaseRecord or any POJO for ODatabaseObject. The
+ * behaviour of the datastore depends by the OStorage implementation used.
+ * 
+ * @author Luca Garulli
+ * 
+ * @see ODatabaseRecord
+ * @see ODatabaseObject
+ * @see OStorage
+ * @param <T>
+ */
 public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObject2RecordHandler {
 
+	/**
+	 * Creates a new entity instance.
+	 * 
+	 * @return The new instance.
+	 */
 	public T newInstance();
 
+	/**
+	 * Loads the entity and return it.
+	 * 
+	 * @param iObject
+	 *          The entity to load. If the entity was already loaded it will be reloaded and all the changes will be lost.
+	 * @return
+	 */
 	public T load(final T iObject);
 
-	public T load(final ORID iObjectId);
+	/**
+	 * Loads the entity by the Record ID.
+	 * 
+	 * @param iRecordId
+	 *          The unique record id of the entity to load.
+	 * @return
+	 */
+	public T load(final ORID iRecordId);
 
+	/**
+	 * Saves an entity. If the entity is not dirty, then the operation will be ignored. For custom entity implementations assure to
+	 * set the entity as dirty.
+	 * 
+	 * @param iObject
+	 *          The entity to save
+	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 */
 	public ODatabaseComplex<T> save(T iObject);
 
+	/**
+	 * Saves an entity in the specified cluster. If the entity is not dirty, then the operation will be ignored. For custom entity
+	 * implementations assure to set the entity as dirty. If the cluster doesn't exist, an error will be thrown.
+	 * 
+	 * @param iObject
+	 *          The entity to save
+	 * @param iClusterName
+	 *          Name of the cluster where to save
+	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 */
 	public ODatabaseComplex<T> save(T iObject, String iClusterName);
 
+	/**
+	 * Deletes an entity from the database.
+	 * 
+	 * @param iObject
+	 *          The entity to delete.
+	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 */
 	public ODatabaseComplex<T> delete(T iObject);
 
+	/**
+	 * Begins a new transaction. By default the type is OPTIMISTIC. If a previous transaction was started it will be rollbacked and
+	 * closed before to start a new one. A transaction once begun has to be closed by calling the {@link #commit()} or
+	 * {@link #rollback()}.
+	 * 
+	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 */
 	public ODatabaseComplex<T> begin();
 
+	/**
+	 * Begins a new transaction specifying the transaction type. If a previous transaction was started it will be rollbacked and
+	 * closed before to start a new one. A transaction once begun has to be closed by calling the {@link #commit()} or
+	 * {@link #rollback()}.
+	 * 
+	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 */
 	public ODatabaseComplex<T> begin(TXTYPE iStatus);
 
+	/**
+	 * Commits the current transaction. The approach is all or nothing. All changes will be permanent following the storage type. If
+	 * the operation succeed all the entities changed inside the transaction context will be effectives. If the operation fails, all
+	 * the changed entities will be restored in the datastore. Memory instances are not guaranteed to being restored as well.
+	 * 
+	 * @return
+	 */
 	public ODatabaseComplex<T> commit();
 
+	/**
+	 * Aborts the current running transaction. All the pending changed entities will be restored in the datastore. Memory instances
+	 * are not guaranteed to being restored as well.
+	 * 
+	 * @return
+	 */
 	public ODatabaseComplex<T> rollback();
 
+	/**
+	 * Execute a command against the database. A command can be a SQL statement or a Procedure. If the OStorage used is remote
+	 * (OStorageRemote) then the command will be executed remotely and the result returned back to the calling client.
+	 * 
+	 * @param iCommand
+	 *          Command request to execute.
+	 * @return The same Command request received as parameter.
+	 * @see OStorageRemote
+	 */
+	public <RET extends OCommandRequest> RET command(OCommandRequest iCommand);
+
+	/**
+	 * Return the OMetadata instance. Can't be null.
+	 * 
+	 * @return The OMetadata instance.
+	 */
 	public OMetadata getMetadata();
 
+	/**
+	 * Return the database dictionary. Can't be null.
+	 * 
+	 * @return The ODictionary instance.
+	 */
 	public ODictionary<T> getDictionary();
 
+	/**
+	 * Returns the database owner. Used in wrapped instances to know the up level ODatabase instance.
+	 * 
+	 * @return Returns the database owner.
+	 */
 	public ODatabaseComplex<?> getDatabaseOwner();
 
+	/**
+	 * Internal. Set the database owner.
+	 */
 	public ODatabaseComplex<?> setDatabaseOwner(ODatabaseComplex<?> iOwner);
 
+	/**
+	 * Return the underlying database. Used in wrapper instances to know the down level ODatabase instance.
+	 * 
+	 * @return The underlying ODatabase implementation.
+	 */
 	public <DB extends ODatabase> DB getUnderlying();
 }

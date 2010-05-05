@@ -20,7 +20,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 /**
  * Base equality operator that not admit NULL in the LEFT and in the RIGHT operator. Abstract class.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public abstract class OQueryOperatorEqualityNotNulls extends OQueryOperatorEquality {

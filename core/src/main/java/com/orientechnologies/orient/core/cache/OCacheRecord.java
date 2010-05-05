@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
  * Per-database cache containing all the record buffers parked in memory to improve access. The cache is of type LRU to keep the
  * Last Recent records in memory and evict the others.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 @SuppressWarnings("serial")

@@ -25,14 +25,15 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 /**
  * Text based Command Request abstract class.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
-public abstract class OCommandRequestAbstract implements OCommandRequestInternal<ODatabaseRecord<?>> {
+public abstract class OCommandRequestAbstract implements OCommandRequestInternal {
 	protected String									text;
 	protected ODatabaseRecord<?>			database;
 	protected int											limit	= -1;
 	protected OCommandResultListener	resultListener;
+	protected Object[]								parameters;
 
 	protected OCommandRequestAbstract() {
 	}
@@ -44,6 +45,15 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
 	protected OCommandRequestAbstract(final String iText, final ODatabaseRecord<ODocument> iDatabase) {
 		text = iText;
 		database = iDatabase;
+	}
+
+	/**
+	 * Delegates the execution to the configured command executor.
+	 */
+	@SuppressWarnings("unchecked")
+	public <RET> RET execute(final Object... iArgs) {
+		parameters = iArgs;
+		return (RET) database.getStorage().command(this);
 	}
 
 	public String getText() {
@@ -68,7 +78,7 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
 		return database;
 	}
 
-	public OCommandRequestInternal<ODatabaseRecord<?>> setDatabase(final ODatabaseRecord<?> iDatabase) {
+	public OCommandRequestInternal setDatabase(final ODatabaseRecord<?> iDatabase) {
 		this.database = iDatabase;
 		return this;
 	}
@@ -87,5 +97,9 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
 
 	public void setResultListener(OCommandResultListener iListener) {
 		resultListener = iListener;
+	}
+
+	public Object[] getParameters() {
+		return parameters;
 	}
 }

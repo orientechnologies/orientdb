@@ -20,7 +20,7 @@ import com.orientechnologies.orient.core.query.OQueryHelper;
 /**
  * Represent one or more object fields as value in the query condition.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public class OSQLFilterItemFieldAll extends OSQLFilterItemFieldMultiAbstract {

@@ -15,16 +15,23 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
 public interface ODatabaseRecord<REC extends ORecordInternal<?>> extends ODatabaseComplex<REC> {
 
+	/**
+	 * Browse all the records of the specified cluster.
+	 * 
+	 * @param iClusterName
+	 *          Cluster name to iterate
+	 * @return Iterator of ODocument instances
+	 */
 	public ORecordIteratorCluster<REC> browseCluster(String iClusterName);
 
-	public <T extends OCommandRequest> T command(T iCommand);
-
+	/**
+	 * Return the record type class.
+	 */
 	public Class<? extends REC> getRecordType();
 }

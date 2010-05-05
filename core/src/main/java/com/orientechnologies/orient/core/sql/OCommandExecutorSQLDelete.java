@@ -17,7 +17,6 @@ package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -27,7 +26,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 /**
  * SQL UPDATE command.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract implements OCommandResultListener {
@@ -37,7 +36,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
 	public OCommandExecutorSQLDelete() {
 	}
 
-	public OCommandExecutorSQLDelete parse(final OCommandRequestInternal<ODatabaseRecord<?>> iRequest) {
+	public OCommandExecutorSQLDelete parse(final OCommandRequestInternal iRequest) {
 		init(iRequest.getDatabase(), iRequest.getText());
 
 		query = null;

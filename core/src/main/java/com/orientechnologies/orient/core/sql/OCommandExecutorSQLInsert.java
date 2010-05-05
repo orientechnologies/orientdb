@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.query.OQueryHelper;
@@ -25,7 +24,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 /**
  * SQL INSERT command.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
@@ -35,7 +34,8 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 	private String[]						fieldNames;
 	private Object[]						fieldValues;
 
-	public OCommandExecutorSQLInsert parse(final OCommandRequestInternal<ODatabaseRecord<?>> iRequest) {
+	@SuppressWarnings("unchecked")
+	public OCommandExecutorSQLInsert parse(final OCommandRequestInternal iRequest) {
 		init(iRequest.getDatabase(), iRequest.getText());
 
 		className = null;

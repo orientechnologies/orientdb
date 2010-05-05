@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 /**
  * Generic representation of a type.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public enum OType {

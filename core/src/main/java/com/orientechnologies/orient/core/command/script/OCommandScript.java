@@ -13,21 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.sql;
+package com.orientechnologies.orient.core.command.script;
 
 import com.orientechnologies.orient.core.command.OCommandRequestAbstract;
 
 /**
- * SQL command request implementation. It just stores the request and delegated the execution to the configured OCommandExecutor.
+ * Script command request implementation. It just stores the request and delegated the execution to the configured OCommandExecutor.
  * 
+ * 
+ * @see OCommandExecutorScript
  * @author Luca Garulli
  * 
  */
-public class OCommandSQL extends OCommandRequestAbstract {
-	public OCommandSQL() {
+public class OCommandScript extends OCommandRequestAbstract {
+	private String	language;
+
+	public OCommandScript() {
 	}
 
-	public OCommandSQL(final String iText) {
+	public OCommandScript(final String iLanguage, final String iText) {
 		super(iText);
+		language = iLanguage;
+	}
+
+	public OCommandScript(final String iText) {
+		super(iText);
+	}
+
+	public String getLanguage() {
+		return language;
+	}
+
+	public void setLanguage(String language) {
+		this.language = language;
 	}
 }

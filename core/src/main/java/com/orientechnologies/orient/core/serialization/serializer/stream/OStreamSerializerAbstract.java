@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
  * Short form: @[type][RID] where type = 1 byte<br/>
  * Long form: org.myapp.Myrecord|[RID]<br/>
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public abstract class OStreamSerializerAbstract implements OStreamSerializer {

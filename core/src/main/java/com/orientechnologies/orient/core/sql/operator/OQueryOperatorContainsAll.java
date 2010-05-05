@@ -23,7 +23,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 /**
  * CONTAINS ALL operator.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public class OQueryOperatorContainsAll extends OQueryOperatorEqualityNotNulls {

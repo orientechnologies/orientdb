@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 /**
  * Iterator class to browse forward and backward the records of a cluster.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  * @param <T>
  *          Record Type

@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
  * Short form: @[type][RID] where type = 1 byte<br/>
  * Long form: org.myapp.Myrecord|[RID]<br/>
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public class OStreamSerializerAnyRecord extends OStreamSerializerAbstract {

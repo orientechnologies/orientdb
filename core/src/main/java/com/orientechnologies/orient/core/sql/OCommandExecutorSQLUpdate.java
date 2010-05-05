@@ -20,7 +20,6 @@ import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
@@ -30,7 +29,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 /**
  * SQL UPDATE command.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract implements OCommandResultListener {
@@ -40,7 +39,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 	private OCommandSQL					query;
 	private int									recordCount		= 0;
 
-	public OCommandExecutorSQLUpdate parse(final OCommandRequestInternal<ODatabaseRecord<?>> iRequest) {
+	@SuppressWarnings("unchecked")
+	public OCommandExecutorSQLUpdate parse(final OCommandRequestInternal iRequest) {
 		init(iRequest.getDatabase(), iRequest.getText());
 
 		className = null;
@@ -92,7 +92,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 			if (pos == -1 || text.charAt(pos) != '=')
 				throw new OCommandSQLParsingException("Character '=' was expected", text, pos);
 
-			newPos = OSQLHelper.nextWord(text, textUpperCase, pos+1, word, false);
+			newPos = OSQLHelper.nextWord(text, textUpperCase, pos + 1, word, false);
 			if (pos == -1)
 				throw new OCommandSQLParsingException("Value expected", text, pos);
 

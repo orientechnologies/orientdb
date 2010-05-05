@@ -20,7 +20,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 /**
  * MATCHES operator. Matches the left value against the regular expression contained in the second one.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public class OQueryOperatorMatches extends OQueryOperatorEqualityNotNulls {

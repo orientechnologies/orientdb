@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorTraverse;
 /**
  * SQL Helper class
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public class OSQLHelper {

@@ -22,7 +22,7 @@ import com.orientechnologies.common.test.SpeedTestMonoThread;
 /**
  * CAST: 74651ms NO CAST:
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public class EmptySpeedTest extends SpeedTestMonoThread {

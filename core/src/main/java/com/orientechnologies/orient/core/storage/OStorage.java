@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.tx.OTransaction;
  * This is the gateway interface between the Database side and the storage. Provided implementations are: Local, Remote and Memory.
  * 
  * @see OStorageLocal, OStorageMemory
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public interface OStorage {
@@ -122,7 +122,15 @@ public interface OStorage {
 
 	public ODictionary<?> createDictionary(ODatabaseRecord<?> iDatabase) throws Exception;
 
+	/**
+	 * Return the configured local Level-2 cache component. Cache component is always created even if not used.
+	 * 
+	 * @return
+	 */
 	public OCacheRecord getCache();
 
-	public Object command(OCommandRequestInternal<ODatabaseRecord<?>> iCommand);
+	/**
+	 * Execute the command request and return the result back.
+	 */
+	public Object command(OCommandRequestInternal iCommand);
 }

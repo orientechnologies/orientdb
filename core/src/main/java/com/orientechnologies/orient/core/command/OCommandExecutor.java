@@ -15,16 +15,14 @@
  */
 package com.orientechnologies.orient.core.command;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-
 /**
  * Generic GOF command pattern implementation.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  * @param <T>
  */
-public interface OCommandExecutor<DB extends ODatabaseRecord<?>> {
+public interface OCommandExecutor {
 
 	/**
 	 * Parse the request. Once parsed the command can be executed multiple times by using the execute() method.
@@ -37,7 +35,7 @@ public interface OCommandExecutor<DB extends ODatabaseRecord<?>> {
 	 * @see #execute(Object...)
 	 * @return
 	 */
-	public OCommandExecutor<DB> parse(OCommandRequestInternal<DB> iRequest);
+	public <RET extends OCommandExecutor> RET parse(OCommandRequestInternal iRequest);
 
 	/**
 	 * Execute the requested command parsed previously.
@@ -61,5 +59,5 @@ public interface OCommandExecutor<DB extends ODatabaseRecord<?>> {
 	 * @see #execute(Object...)
 	 * @return
 	 */
-	public Object execute(OCommandRequestInternal<DB> iRequest, final Object... iArgs);
+	public Object execute(OCommandRequestInternal iRequest, final Object... iArgs);
 }

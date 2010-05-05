@@ -20,7 +20,7 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 /**
  * Generic GOF command pattern implementation. Execute a command passing the optional arguments "iArgs" and returns an Object.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  * @param <T>
  */

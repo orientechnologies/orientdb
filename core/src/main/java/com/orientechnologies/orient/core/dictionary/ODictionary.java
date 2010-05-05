@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  * // RETRIEVE IT<br/>
  * company = db.getDictionary().get("company");
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public interface ODictionary<T extends Object> extends Iterable<Entry<String, T>> {

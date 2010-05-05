@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldAll;
 /**
  * Base equality operator. It's an abstract class able to compare the equality between two values.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public abstract class OQueryOperatorEquality extends OQueryOperator {

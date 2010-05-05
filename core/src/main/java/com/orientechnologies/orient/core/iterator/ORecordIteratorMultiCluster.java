@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  * cluster the iterator is browsing. If the cluster are hot removed by from the database the iterator could be invalid and throw
  * exception of cluster not found.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  * @param <T>
  *          Record Type

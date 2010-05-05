@@ -25,7 +25,7 @@ import com.orientechnologies.common.thread.OSoftThread;
  * Thread manager that synchronize all the registered maps to the database. This allow a huge speed improvement since every single
  * change can be scheduled to be persisted in asynchronous ways after a configured time.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public class OTreeMapPersistentAsynchThread extends OSoftThread {

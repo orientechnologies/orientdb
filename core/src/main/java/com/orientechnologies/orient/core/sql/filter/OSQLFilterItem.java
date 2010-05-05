@@ -20,7 +20,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 /**
  * Represent a value inside a query condition.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public interface OSQLFilterItem {

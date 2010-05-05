@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.query.OQueryHelper;
 /**
  * Represent an object field as value in the query condition.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {

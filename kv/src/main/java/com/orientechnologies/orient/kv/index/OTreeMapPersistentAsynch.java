@@ -9,7 +9,7 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
  * Wrapper class for persistent tree map. It handles the asynchronous commit of changes done by the external
  * OTreeMapPersistentAsynchThread singleton thread.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  * @param <K>
  * @param <V>

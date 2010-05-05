@@ -23,7 +23,7 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 /**
  * Run-time query condition evaluator.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public class OSQLFilterCondition {

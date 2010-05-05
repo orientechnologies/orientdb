@@ -20,7 +20,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 /**
  * IS operator. Different by EQUALS since works also for null. Example "IS null"
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public class OQueryOperatorIs extends OQueryOperatorEquality {

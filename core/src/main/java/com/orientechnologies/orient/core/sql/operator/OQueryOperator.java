@@ -20,7 +20,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 /**
  * Query Operators. Remember to handle the operator in OQueryItemCondition.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public abstract class OQueryOperator {

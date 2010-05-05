@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
@@ -311,7 +310,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 						}
 					});
 
-					((OCommandRequestInternal<ODatabaseRecord<?>>) connection.database.command(command)).execute();
+					((OCommandRequestInternal) connection.database.command(command)).execute();
 
 					if (empty.length() == 0)
 						try {
@@ -322,7 +321,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 					channel.writeByte((byte) 0);
 				} else {
 					// SYNCHRONOUS
-					final Object result = ((OCommandRequestInternal<ODatabaseRecord<?>>) connection.database.command(command)).execute();
+					final Object result = ((OCommandRequestInternal) connection.database.command(command)).execute();
 
 					sendOk();
 

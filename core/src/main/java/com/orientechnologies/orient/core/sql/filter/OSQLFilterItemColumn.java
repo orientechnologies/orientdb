@@ -21,7 +21,7 @@ import com.orientechnologies.orient.core.record.ORecordPositional;
 /**
  * Represent a column (as positional order) as value in the query condition.
  * 
- * @author luca
+ * @author Luca Garulli
  * 
  */
 public class OSQLFilterItemColumn extends OSQLFilterItemAbstract {
