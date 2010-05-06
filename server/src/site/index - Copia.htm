@@ -1,0 +1,106 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>OrientDB Server (www.orientechnologies.com)</title>
+<meta name="title" content="Document | DBMS | Database | Java" />
+<meta name="description" content="OrientDB Server" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+<link rel="stylesheet" type="text/css" media="screen" href="styles/style.css" />
+<link rel="stylesheet" type="text/css" media="screen" href="styles/start/jquery-ui-1.8.1.custom.css" />
+<link rel="stylesheet" type="text/css" media="screen" href="styles/ui.jqgrid.css" />
+
+<style>
+#logo_text {
+	position: absolute;
+	top: 0px;
+	left: 170px;
+	z-index: 1;
+}
+</style>
+
+<script src="js/jquery-1.4.2.min.js" type="text/javascript"></script>
+<script src="js/i18n/grid.locale-en.js" type="text/javascript"></script>
+<script src="js/jquery.jqGrid.min.js" type="text/javascript"></script>
+
+
+<script type="text/javascript">
+    jQuery(document).ready(function(){ 
+    	  jQuery("#list").jqGrid({
+    	    url: 'example.json',
+    	    datatype: 'json',
+    	    mtype: 'GET',
+    	    colNames:['Inv No','Date', 'Amount','Tax','Total','Notes'],
+    	    colModel :[ 
+    	      {name:'invid', index:'invid', width:55}, 
+    	      {name:'invdate', index:'invdate', width:90}, 
+    	      {name:'amount', index:'amount', width:80, align:'right'}, 
+    	      {name:'tax', index:'tax', width:80, align:'right'}, 
+    	      {name:'total', index:'total', width:80, align:'right'}, 
+    	      {name:'note', index:'note', width:150, sortable:false} 
+    	    ],
+    	    pager: '#pager',
+    	    rowNum:10,
+    	    rowList:[10,20,30],
+    	    sortname: 'invid',
+    	    sortorder: 'desc',
+    	    viewrecords: true,
+    	    caption: 'My first grid'
+    	  }); 
+    	}); 
+
+</script>
+</head>
+
+<body onload="orient_init()">
+<div id="body-table" class="table-main">
+<div class="row">
+<div class="cell" id="spacer-top"><img id="logo_sun" src="images/orient_sun_logo.png" border="0" /></div>
+<div class="cell"><img id="logo_text" src="images/orient_text_logo.png" border="0" /></div>
+<div id="spacer-left"></div>
+<div id="header" class="cell">
+<center>
+<h1>OrientDB Server</h1>
+</center>
+The OrientDB Server accepts both binary and RESTful/HTTP requests. In this page you can execute the basic commands to get acquainted with. The
+database '<i>demo</i>' is persistent while '<i>temp</i>' resides only in memory.<br />
+<p class="small">Direct URL: <b>http://&lt;server&gt;:&lt;port&gt;/&lt;command&gt;/&lt;database&gt;/&lt;operation&gt;</b></p>
+</div>
+<div class="row">
+<div class="cell-double-spaced column1"><b><i>Basic Console</i></b>
+<center>
+<table style="width: 100%;">
+	<tr>
+		<td align="left"></td>
+		<td align="left">(Operation)</td>
+		<td align="left">(Database)</td>
+		<td align="left">(Arguments)</td>
+	</tr>
+	<tr>
+		<td>http://localhost:2480/</td>
+		<td><input id="operation" size="12" value="cluster" />/</td>
+		<td><input id="database" size="15" value="demo" />/</td>
+		<td><input id="arg1" size="40" value="arguments" /></td>
+	</tr>
+	<tr>
+		<td valign="top" colspan="4">
+		<table id="list"></table>
+		<div id="pager" style="text-align: center;"></div>
+		</td>
+	</tr>
+	<tr>
+		<td valign="top" colspan="4"><textarea id="value" cols="88" rows="5" title="value"></textarea> <a href="javascript:clear()"><img border="0"
+			src="images/clear.png" /></a></td>
+	</tr>
+</table>
+</center>
+</div>
+</div>
+</div>
+<div class="row">
+<div class="cell-double-spaced column1 centered">To know more information visit: <a href="http://www.orientechnologies.com">http://www.orientechnologies.com</a></div>
+</div>
+</div>
+</body>
+<script type="text/javascript">orient_google_stats();</script>
+</html>
