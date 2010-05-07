@@ -24,7 +24,7 @@ import com.hazelcast.core.MapStore;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseBinary;
 import com.orientechnologies.orient.core.index.OTreeMapPersistent;
-import com.orientechnologies.orient.kv.OSharedDatabase;
+import com.orientechnologies.orient.kv.OSharedBinaryDatabase;
 import com.orientechnologies.orient.kv.network.protocol.http.ONetworkProtocolHttpKV;
 
 public class OMapLoaderStore implements MapLoader<String, String>, MapStore<String, String> {
@@ -43,7 +43,7 @@ public class OMapLoaderStore implements MapLoader<String, String>, MapStore<Stri
 		try {
 			String[] parts = ONetworkProtocolHttpKV.getDbBucketKey(iKey, 3);
 
-			db = OSharedDatabase.acquireDatabase(parts[0]);
+			db = OSharedBinaryDatabase.acquireDatabase(parts[0]);
 			Map<String, String> bucket = OServerClusterMember.getDictionaryBucket(db, parts[1], false);
 			return bucket.get(parts[2]);
 
@@ -52,7 +52,7 @@ public class OMapLoaderStore implements MapLoader<String, String>, MapStore<Stri
 		} finally {
 
 			if (db != null)
-				OSharedDatabase.releaseDatabase(db);
+				OSharedBinaryDatabase.releaseDatabase(db);
 		}
 	}
 
@@ -67,7 +67,7 @@ public class OMapLoaderStore implements MapLoader<String, String>, MapStore<Stri
 		try {
 			String[] parts = ONetworkProtocolHttpKV.getDbBucketKey(iKey, 3);
 
-			db = OSharedDatabase.acquireDatabase(parts[0]);
+			db = OSharedBinaryDatabase.acquireDatabase(parts[0]);
 			Map<String, String> bucket = OServerClusterMember.getDictionaryBucket(db, parts[1], false);
 
 			bucket.put(parts[2], iValue);
@@ -77,7 +77,7 @@ public class OMapLoaderStore implements MapLoader<String, String>, MapStore<Stri
 		} finally {
 
 			if (db != null)
-				OSharedDatabase.releaseDatabase(db);
+				OSharedBinaryDatabase.releaseDatabase(db);
 		}
 	}
 
@@ -92,7 +92,7 @@ public class OMapLoaderStore implements MapLoader<String, String>, MapStore<Stri
 		try {
 			String[] parts = ONetworkProtocolHttpKV.getDbBucketKey(iKey, 3);
 
-			db = OSharedDatabase.acquireDatabase(parts[0]);
+			db = OSharedBinaryDatabase.acquireDatabase(parts[0]);
 			Map<String, String> bucket = OServerClusterMember.getDictionaryBucket(db, parts[1], false);
 			bucket.remove(parts[2]);
 
@@ -101,7 +101,7 @@ public class OMapLoaderStore implements MapLoader<String, String>, MapStore<Stri
 		} finally {
 
 			if (db != null)
-				OSharedDatabase.releaseDatabase(db);
+				OSharedBinaryDatabase.releaseDatabase(db);
 		}
 	}
 

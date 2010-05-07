@@ -19,11 +19,12 @@ import java.util.Map;
 
 import com.hazelcast.core.Hazelcast;
 import com.orientechnologies.orient.kv.network.protocol.http.ONetworkProtocolHttpKV;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 public class ONetworkProtocolHttpKVPartitioned extends ONetworkProtocolHttpKV {
 	@Override
 	protected Map<String, String> getBucket(String dbName, String bucket) {
-		return Hazelcast.getMap(dbName + URL_SEPARATOR + bucket);
+		return Hazelcast.getMap(dbName + OHttpUtils.URL_SEPARATOR + bucket);
 	}
 
 	@Override

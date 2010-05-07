@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseBinary;
 import com.orientechnologies.orient.core.index.OTreeMapPersistent;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerString;
-import com.orientechnologies.orient.kv.OSharedDatabase;
+import com.orientechnologies.orient.kv.OSharedBinaryDatabase;
 import com.orientechnologies.orient.kv.index.OTreeMapPersistentAsynch;
 import com.orientechnologies.orient.kv.network.protocol.http.ONetworkProtocolHttpKV;
 import com.orientechnologies.orient.server.OServerMain;
@@ -105,7 +105,7 @@ public class OServerClusterMember implements InstanceListener, MembershipListene
 						// MY OWN ENTRY: STORE IT
 						try {
 							parts = ONetworkProtocolHttpKV.getDbBucketKey(localKey, 3);
-							ODatabaseBinary db = OSharedDatabase.acquireDatabase(parts[0]);
+							ODatabaseBinary db = OSharedBinaryDatabase.acquireDatabase(parts[0]);
 
 							bucket = getDictionaryBucket(db, parts[1], false);
 

@@ -15,11 +15,6 @@
  */
 package com.orientechnologies.orient.kv.network.protocol.http;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.Map;
@@ -27,23 +22,22 @@ import java.util.Map;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.enterprise.channel.text.OChannelTextServer;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolException;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 
 public abstract class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstract {
-	protected static final String	URL_SEPARATOR	= "/";
-
 	protected abstract Map<String, String> getBucket(String dbName, String bucket);
 
 	protected abstract String getKey(String key);
 
 	@Override
 	public void doGet(final String iURI, final String iContent, final OChannelTextServer iChannel) throws ONetworkProtocolException {
-		if (URL_SEPARATOR.equals(iURI) || iURI.startsWith("/www")) {
+		if (OHttpUtils.URL_SEPARATOR.equals(iURI) || iURI.startsWith("/www")) {
 			directAccess(iURI);
 			return;
 		}
 
-		final String parts[] = ONetworkProtocolHttpKV.getDbBucketKey(iURI, 2);
+		final String parts[] = getDbBucketKey(iURI, 2);
 
 		final String dbName = parts[0];
 		final String bucket = parts[1];
@@ -66,8 +60,8 @@ public abstract class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstrac
 				value = buffer.toString();
 			}
 
-			final int code = value == null ? 404 : 200;
-			final String reason = value == null ? "Not Found" : "Ok";
+			final int code = value == null ? 404 : OHttpUtils.STATUS_OK_CODE;
+			final String reason = value == null ? "Not Found" : OHttpUtils.STATUS_OK_DESCRIPTION;
 			final String content = value == null ? "The key '" + key + "' was not found in database '" + dbName + "'" : value.toString();
 
 			sendTextContent(code, reason, "text/plain", content);
@@ -99,8 +93,8 @@ public abstract class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstrac
 			final String content;
 
 			if (bucketMap.containsKey(key)) {
-				code = 200;
-				reason = "Ok";
+				code = OHttpUtils.STATUS_OK_CODE;
+				reason = OHttpUtils.STATUS_OK_DESCRIPTION;
 				content = null;
 
 				bucketMap.put(key, iContent);
@@ -144,8 +138,8 @@ public abstract class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstrac
 				reason = "Entry already exists";
 				content = "The entry with key: " + key + " already exists in the bucket '" + bucket + "'";
 			} else {
-				code = 200;
-				reason = "Ok";
+				code = OHttpUtils.STATUS_OK_CODE;
+				reason = OHttpUtils.STATUS_OK_DESCRIPTION;
 				content = null;
 
 				bucketMap.put(key, iContent);
@@ -184,12 +178,12 @@ public abstract class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstrac
 				reason = "Key not found";
 				content = "The entry with key: " + key + " was not found in the bucket '" + bucket + "'";
 			} else {
-				code = 200;
-				reason = "Ok";
+				code = OHttpUtils.STATUS_OK_CODE;
+				reason = OHttpUtils.STATUS_OK_DESCRIPTION;
 				content = bucketMap.remove(key);
 			}
 
-			sendTextContent(code, reason, "text/plain", content);
+			sendTextContent(code, reason, OHttpUtils.CONTENT_TEXT_PLAIN, content);
 		} catch (SocketTimeoutException e) {
 			timeout();
 
@@ -207,56 +201,17 @@ public abstract class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstrac
 			throw new ONetworkProtocolException("Requested URI '" + iParameters + "' is invalid. Expected db/bucket/key");
 
 		// REMOVE THE FIRST /
-		if (iParameters.startsWith(URL_SEPARATOR))
+		if (iParameters.startsWith(OHttpUtils.URL_SEPARATOR))
 			iParameters = iParameters.substring(1);
 
-		if (iParameters.endsWith(URL_SEPARATOR))
+		if (iParameters.endsWith(OHttpUtils.URL_SEPARATOR))
 			iParameters = iParameters.substring(0, iParameters.length() - 1);
 
-		final String[] pars = iParameters.split(URL_SEPARATOR);
+		final String[] pars = iParameters.split(OHttpUtils.URL_SEPARATOR);
 
 		if (pars == null || pars.length < iMin)
 			throw new ONetworkProtocolException("Requested URI '" + iParameters + "' is invalid. Expected db/bucket[/key]");
 
 		return pars;
-	}
-
-	private void directAccess(final String iURI) {
-		final String wwwPath = System.getProperty("orient.www.path", "src/site");
-
-		InputStream bufferedFile = null;
-		try {
-			String url = URL_SEPARATOR.equals(iURI) ? url = "/www/index.htm" : iURI;
-			url = wwwPath + url.substring("www".length() + 1, url.length());
-			final File inputFile = new File(url);
-			if (!inputFile.exists())
-				return;
-
-			String type = null;
-			if (url.endsWith(".htm") || url.endsWith(".html"))
-				type = "text/html";
-			else if (url.endsWith(".png"))
-				type = "image/png";
-			else if (url.endsWith(".jpeg"))
-				type = "image/jpeg";
-			else if (url.endsWith(".js"))
-				type = "application/x-javascript";
-			else if (url.endsWith(".css"))
-				type = "text/css";
-
-			bufferedFile = new BufferedInputStream(new FileInputStream(inputFile));
-
-			sendBinaryContent(200, "OK", type, bufferedFile, inputFile.length());
-
-		} catch (IOException e) {
-			e.printStackTrace();
-
-		} finally {
-			if (bufferedFile != null)
-				try {
-					bufferedFile.close();
-				} catch (IOException e) {
-				}
-		}
 	}
 }

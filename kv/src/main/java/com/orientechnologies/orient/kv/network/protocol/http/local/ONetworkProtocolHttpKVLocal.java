@@ -21,7 +21,7 @@ import java.util.Map;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseBinary;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
-import com.orientechnologies.orient.kv.OSharedDatabase;
+import com.orientechnologies.orient.kv.OSharedBinaryDatabase;
 import com.orientechnologies.orient.kv.index.OTreeMapPersistentAsynchThread;
 import com.orientechnologies.orient.kv.network.protocol.http.ONetworkProtocolHttpKV;
 import com.orientechnologies.orient.kv.network.protocol.http.partitioned.ODistributedException;
@@ -32,7 +32,6 @@ import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
 public class ONetworkProtocolHttpKVLocal extends ONetworkProtocolHttpKV {
 	private static Map<String, Map<String, Map<String, String>>>	memoryDatabases					= new HashMap<String, Map<String, Map<String, String>>>();
 	private static final String																		ASYNCH_COMMIT_DELAY_PAR	= "asynch-commit-delay";
-	@SuppressWarnings("unused")
 	private static boolean																				asynchMode							= false;
 
 	static {
@@ -75,7 +74,7 @@ public class ONetworkProtocolHttpKVLocal extends ONetworkProtocolHttpKV {
 		ODatabaseBinary db = null;
 
 		try {
-			db = OSharedDatabase.acquireDatabase(dbName);
+			db = OSharedBinaryDatabase.acquireDatabase(dbName);
 
 			return OServerClusterMember.getDictionaryBucket(db, iBucketName, asynchMode);
 
@@ -84,7 +83,7 @@ public class ONetworkProtocolHttpKVLocal extends ONetworkProtocolHttpKV {
 		} finally {
 
 			if (db != null)
-				OSharedDatabase.releaseDatabase(db);
+				OSharedBinaryDatabase.releaseDatabase(db);
 		}
 	}
 
