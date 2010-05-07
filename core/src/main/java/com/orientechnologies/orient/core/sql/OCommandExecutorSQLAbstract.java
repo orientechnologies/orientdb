@@ -28,6 +28,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 	protected String	textUpperCase;
 
 	public OCommandExecutorSQLAbstract init(final ODatabaseRecord<?> iDatabase, final String iText) {
+		text = iText;
 		textUpperCase = iText.toUpperCase();
 		return (OCommandExecutorSQLAbstract) super.init(iDatabase, iText);
 	}
