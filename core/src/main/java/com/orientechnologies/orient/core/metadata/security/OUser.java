@@ -44,7 +44,7 @@ public class OUser {
 	public static final String		COMMAND						= "database.command";
 	public final static String		SERVER_ADMIN			= "server.admin";
 
-	protected final static int		ACL_OPERATION_NUM	= 4;
+	protected final static int		ACL_OPERATION_NUM	= 8;
 
 	protected final static byte		DENY							= '0';
 	protected final static byte		ALLOW							= '1';
@@ -63,7 +63,7 @@ public class OUser {
 		return OSecurityManager.instance().check(iPassword, password);
 	}
 
-	public boolean allow(String iResource, int iCRUDOperation) {
+	public boolean allow(final String iResource, final int iCRUDOperation) {
 		if (iCRUDOperation >= ACL_OPERATION_NUM)
 			throw new OSecurityAccessException("Requested invalid operation '" + iCRUDOperation + "' against resource: " + iResource);
 
