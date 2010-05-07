@@ -34,6 +34,7 @@ import javax.management.ObjectName;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -83,6 +84,8 @@ public class OServer {
 
 	@SuppressWarnings("unchecked")
 	public void startup() throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+		OLogManager.instance().config(this, "Orient Database Server v" + OConstants.ORIENT_VERSION + " is starting up...");
+
 		loadConfiguration();
 
 		Orient.instance();
@@ -101,8 +104,10 @@ public class OServer {
 
 		// STARTUP LISTENERS
 		for (OServerNetworkListenerConfiguration l : configuration.network.listeners) {
-			listeners.add(new OServerNetworkListener(l.ipAddress, l.portRange, protocols.get(l.protocol)));
+			listeners.add(new OServerNetworkListener(l.ipAddress, l.portRange, l.protocol, protocols.get(l.protocol)));
 		}
+
+		OLogManager.instance().config(this, "Orient Database Server v" + OConstants.ORIENT_VERSION + " is active.");
 	}
 
 	public void shutdown() {

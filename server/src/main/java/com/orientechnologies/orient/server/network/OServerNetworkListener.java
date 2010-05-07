@@ -23,59 +23,23 @@ import java.net.Socket;
 import java.net.SocketException;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 
-public class OServerNetworkListener {
-	private ServerSocket			serverSocket;
-	private InetSocketAddress	inboundAddr;
-	private volatile int			connectionSerial	= 0;
-	private volatile boolean	active						= true;
+public class OServerNetworkListener extends Thread {
+	private ServerSocket											serverSocket;
+	private InetSocketAddress									inboundAddr;
+	private Class<? extends ONetworkProtocol>	protocolType;
+	private volatile int											connectionSerial	= 0;
+	private volatile boolean									active						= true;
 
-	public OServerNetworkListener(final String iHostName, final String iHostPortRange,
+	public OServerNetworkListener(final String iHostName, final String iHostPortRange, final String iProtocolName,
 			final Class<? extends ONetworkProtocol> iProtocol) {
-		listen(iHostName, iHostPortRange);
-
-		ONetworkProtocol protocol;
-		OClientConnection connection;
-
-		try {
-			while (active) {
-				try {
-					// listen for and accept a client connection to serverSocket
-					Socket socket = serverSocket.accept();
-
-					socket.setPerformancePreferences(0, 2, 1);
-					socket.setSendBufferSize(OChannelBinary.DEFAULT_BUFFER_SIZE);
-					socket.setReceiveBufferSize(OChannelBinary.DEFAULT_BUFFER_SIZE);
-
-					// CREATE A NEW PROTOCOL INSTANCE
-					protocol = iProtocol.newInstance();
-
-					// CTEARE THE CLIENT CONNECTION
-					connection = new OClientConnection(connectionSerial++, socket, protocol);
-
-					// CONFIGURE THE PROTOCOL FOR THE INCOMING CONNECTION
-					protocol.config(socket, connection);
-
-					// EXECUTE THE CONNECTION
-					OClientConnectionManager.instance().connect(socket, connection);
-
-				} catch (Throwable e) {
-					OLogManager.instance().error(this, "Error on client connection", e);
-				} finally {
-				}
-			}
-		} finally {
-			try {
-				if (serverSocket != null && !serverSocket.isClosed())
-					serverSocket.close();
-			} catch (IOException ioe) {
-			}
-		}
+		listen(iHostName, iHostPortRange, iProtocolName);
+		protocolType = iProtocol;
+		start();
 	}
 
 	public void shutdown() {
@@ -88,7 +52,7 @@ public class OServerNetworkListener {
 	 * @param iHostPortRange
 	 * @param iHostName
 	 */
-	private void listen(String iHostName, String iHostPortRange) {
+	private void listen(final String iHostName, final String iHostPortRange, final String iProtocolName) {
 		int[] ports;
 
 		if (iHostPortRange.contains(",")) {
@@ -117,10 +81,8 @@ public class OServerNetworkListener {
 				serverSocket = new java.net.ServerSocket(port);
 
 				if (serverSocket.isBound()) {
-					OLogManager.instance().config(
-							this,
-							"Orient Database Server v" + OConstants.ORIENT_VERSION + " is listening connections on " + inboundAddr.getHostName()
-									+ ":" + inboundAddr.getPort());
+					OLogManager.instance().config(this,
+							"Listening " + iProtocolName + " connections on " + inboundAddr.getHostName() + ":" + inboundAddr.getPort());
 					return;
 				}
 			} catch (BindException be) {
@@ -142,5 +104,45 @@ public class OServerNetworkListener {
 
 	public boolean isActive() {
 		return active;
+	}
+
+	public void run() {
+		ONetworkProtocol protocol;
+		OClientConnection connection;
+
+		try {
+			while (active) {
+				try {
+					// listen for and accept a client connection to serverSocket
+					Socket socket = serverSocket.accept();
+
+					socket.setPerformancePreferences(0, 2, 1);
+					socket.setSendBufferSize(OChannelBinary.DEFAULT_BUFFER_SIZE);
+					socket.setReceiveBufferSize(OChannelBinary.DEFAULT_BUFFER_SIZE);
+
+					// CREATE A NEW PROTOCOL INSTANCE
+					protocol = protocolType.newInstance();
+
+					// CTEARE THE CLIENT CONNECTION
+					connection = new OClientConnection(connectionSerial++, socket, protocol);
+
+					// CONFIGURE THE PROTOCOL FOR THE INCOMING CONNECTION
+					protocol.config(socket, connection);
+
+					// EXECUTE THE CONNECTION
+					OClientConnectionManager.instance().connect(socket, connection);
+
+				} catch (Throwable e) {
+					OLogManager.instance().error(this, "Error on client connection", e);
+				} finally {
+				}
+			}
+		} finally {
+			try {
+				if (serverSocket != null && !serverSocket.isClosed())
+					serverSocket.close();
+			} catch (IOException ioe) {
+			}
+		}
 	}
 }

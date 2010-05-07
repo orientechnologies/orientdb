@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
@@ -35,8 +38,6 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolException;
 
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
-	private static final String			CONTENT_LENGTH			= "CONTENT-LENGTH: ";
-	private static final byte[]			EOL									= { (byte) '\r', (byte) '\n' };
 	private static final String			ORIENT_SERVER_KV		= "Orient Key Value v." + OConstants.ORIENT_VERSION;
 	private static final int				MAX_CONTENT_LENGTH	= 10000;																							// MAX = 10Kb
 	private static final int				TCP_DEFAULT_TIMEOUT	= 5000;
@@ -48,10 +49,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 	private String									httpVersion;
 
 	public ONetworkProtocolHttpAbstract() {
-		super(OServer.getThreadGroup(), "net-protocol-http");
+		super(OServer.getThreadGroup(), "Network-http");
 	}
 
-	public void config(Socket iSocket, OClientConnection iConnection) throws IOException {
+	public void config(final Socket iSocket, final OClientConnection iConnection) throws IOException {
 		setName("HTTP-NetworkProtocol");
 
 		iSocket.setSoTimeout(TCP_DEFAULT_TIMEOUT);
@@ -62,8 +63,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 		start();
 	}
 
-	public void service(String iMethod, String iURI, String iRequest, OChannelTextServer iChannel) throws ONetworkProtocolException {
-		OProfiler.getInstance().updateStatistic("OrientKV-Server.requests", +1);
+	public void service(final String iMethod, final String iURI, final String iRequest, final OChannelTextServer iChannel)
+			throws ONetworkProtocolException {
+		OProfiler.getInstance().updateStatistic("Server.requests", +1);
 
 		if (iMethod.equals("GET")) {
 			doGet(iURI, iRequest, iChannel);
@@ -93,10 +95,11 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 	public void doDelete(String iURI, String iRequest, OChannelTextServer iChannel) throws ONetworkProtocolException {
 	}
 
-	protected void sendTextContent(int iCode, String iReason, String iContentType, String iContent) throws IOException {
+	protected void sendTextContent(final int iCode, final String iReason, final String iContentType, final String iContent)
+			throws IOException {
 		sendStatus(iCode, iReason);
 		sendResponseHeaders(iContentType);
-		writeLine(CONTENT_LENGTH + (iContent != null ? iContent.length() + 1 : 0));
+		writeLine(OHttpUtils.CONTENT_LENGTH + (iContent != null ? iContent.length() + 1 : 0));
 		writeLine(null);
 
 		if (iContent != null && iContent.length() > 0) {
@@ -110,7 +113,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 			final long iSize) throws IOException {
 		sendStatus(iCode, iReason);
 		sendResponseHeaders(iContentType);
-		writeLine(CONTENT_LENGTH + (iSize));
+		writeLine(OHttpUtils.CONTENT_LENGTH + (iSize));
 		writeLine(null);
 
 		int i = 0;
@@ -125,14 +128,14 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 	protected void writeLine(final String iContent) throws IOException {
 		if (iContent != null)
 			channel.outStream.write(iContent.getBytes());
-		channel.outStream.write(EOL);
+		channel.outStream.write(OHttpUtils.EOL);
 	}
 
-	protected void sendStatus(int iStatus, String iReason) throws IOException {
+	protected void sendStatus(final int iStatus, final String iReason) throws IOException {
 		writeLine(httpVersion + " " + iStatus + " " + iReason);
 	}
 
-	protected void sendResponseHeaders(String iContentType) throws IOException {
+	protected void sendResponseHeaders(final String iContentType) throws IOException {
 		writeLine("Cache-Control: no-cache, no-store, max-age=0, must-revalidate");
 		writeLine("Pragma: no-cache");
 		writeLine("Date: " + new Date());
@@ -157,8 +160,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 			if (currChar == '\r') {
 				if (request.length() > 0 && contentLength == -1) {
 					String line = request.toString().toUpperCase();
-					if (line.startsWith(CONTENT_LENGTH)) {
-						contentLength = Integer.parseInt(line.substring(CONTENT_LENGTH.length()));
+					if (line.startsWith(OHttpUtils.CONTENT_LENGTH)) {
+						contentLength = Integer.parseInt(line.substring(OHttpUtils.CONTENT_LENGTH.length()));
 						if (contentLength > MAX_CONTENT_LENGTH)
 							OLogManager.instance().warn(
 									this,
@@ -308,5 +311,47 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 	@Override
 	public OChannel getChannel() {
 		return null;
+	}
+
+	protected void directAccess(final String iURI) {
+		final String wwwPath = System.getProperty("orient.www.path", "src/site");
+
+		InputStream bufferedFile = null;
+		try {
+			String url = OHttpUtils.URL_SEPARATOR.equals(iURI) ? url = "/www/index.htm" : iURI;
+			url = wwwPath + url.substring("www".length() + 1, url.length());
+			final File inputFile = new File(url);
+			if (!inputFile.exists()) {
+				sendStatus(404, "File not found");
+				channel.flush();
+				return;
+			}
+
+			String type = null;
+			if (url.endsWith(".htm") || url.endsWith(".html"))
+				type = "text/html";
+			else if (url.endsWith(".png"))
+				type = "image/png";
+			else if (url.endsWith(".jpeg"))
+				type = "image/jpeg";
+			else if (url.endsWith(".js"))
+				type = "application/x-javascript";
+			else if (url.endsWith(".css"))
+				type = "text/css";
+
+			bufferedFile = new BufferedInputStream(new FileInputStream(inputFile));
+
+			sendBinaryContent(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, type, bufferedFile, inputFile.length());
+
+		} catch (IOException e) {
+			e.printStackTrace();
+
+		} finally {
+			if (bufferedFile != null)
+				try {
+					bufferedFile.close();
+				} catch (IOException e) {
+				}
+		}
 	}
 }
