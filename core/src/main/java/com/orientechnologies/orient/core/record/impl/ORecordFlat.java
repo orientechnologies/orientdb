@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
  * using the reset() at every re-use.
  */
 @SuppressWarnings("unchecked")
-public class ORecordFlat extends ORecordAbstract<String> implements ORecordStringable<String> {
+public class ORecordFlat extends ORecordAbstract<String> implements ORecordStringable {
 	protected String					value;
 
 	public static final byte	RECORD_TYPE	= 'f';

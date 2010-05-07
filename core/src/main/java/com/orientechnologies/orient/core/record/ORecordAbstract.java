@@ -19,10 +19,12 @@ import java.util.Arrays;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 
 @SuppressWarnings("unchecked")
 public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<T> {
@@ -132,6 +134,10 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		return this;
 	}
 
+	public String toJSON() {
+		return ORecordSerializerJSON.INSTANCE.toString(this);
+	}
+
 	@Override
 	public String toString() {
 		return "@" + (recordId.isValid() ? recordId : "") + "[" + Arrays.toString(source) + "]";
@@ -149,7 +155,9 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		if (database == null)
 			throw new ODatabaseException("No database assigned to current record");
 
-		database.load(this);
+		if (database.load(this) == null)
+			throw new ORecordNotFoundException("Record id: " + getIdentity());
+
 		return this;
 	}
 

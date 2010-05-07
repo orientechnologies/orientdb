@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 
 /**
  * Abstract implementation for record-free implementations. The object can be reused across calls to the database by using the
@@ -57,10 +56,6 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 		if (fields != null)
 			fields.clear();
 		return this;
-	}
-
-	public String toJSON() {
-		return ORecordSerializerJSON.INSTANCE.toString(this);
 	}
 
 	@Override

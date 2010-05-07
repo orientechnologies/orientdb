@@ -25,15 +25,19 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.record.ORecordStringable;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 
 public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
-	public static final String								NAME			= "json";
-	public static final ORecordSerializerJSON	INSTANCE	= new ORecordSerializerJSON();
+	public static final String								NAME							= "json";
+	public static final ORecordSerializerJSON	INSTANCE					= new ORecordSerializerJSON();
+
+	private static final String								ATTRIBUTE_VERSION	= "_version";
+	private static final String								ATTRIBUTE_RECID		= "_recid";
 
 	@Override
-	public ORecordInternal<?> fromString(ODatabaseRecord<?> iDatabase, String iSource, ORecordInternal<?> iRecord) {
+	public ORecordInternal<?> fromString(final ODatabaseRecord<?> iDatabase, final String iSource, final ORecordInternal<?> iRecord) {
 		try {
 			StringWriter buffer = new StringWriter();
 			OJSONWriter json = new OJSONWriter(buffer);
@@ -49,21 +53,32 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 	}
 
 	@Override
-	public String toString(ORecordInternal<?> iRecord, OUserObject2RecordHandler iObjHandler,
-			Map<ORecordInternal<?>, ORecordId> iMarshalledRecords) {
-		if (!(iRecord instanceof ORecordSchemaAware<?>))
-			throw new OSerializationException("Can't marshall a record of type " + iRecord.getClass().getSimpleName() + " to JSON");
-
-		ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) iRecord;
-
+	public String toString(final ORecordInternal<?> iRecord, final OUserObject2RecordHandler iObjHandler,
+			final Map<ORecordInternal<?>, ORecordId> iMarshalledRecords) {
 		try {
-			StringWriter buffer = new StringWriter();
-			OJSONWriter json = new OJSONWriter(buffer);
+			final StringWriter buffer = new StringWriter();
+			final OJSONWriter json = new OJSONWriter(buffer);
 
 			json.beginObject();
-			for (String fieldName : record.fieldNames()) {
-				json.writeAttribute(1, true, fieldName, record.field(fieldName));
-			}
+
+			json.writeAttribute(1, true, ATTRIBUTE_VERSION, iRecord.getVersion());
+			json.writeAttribute(1, true, ATTRIBUTE_RECID, iRecord.getIdentity());
+
+			if (iRecord instanceof ORecordSchemaAware<?>) {
+				// SCHEMA AWARE
+				final ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) iRecord;
+				for (String fieldName : record.fieldNames()) {
+					json.writeAttribute(1, true, fieldName, record.field(fieldName));
+				}
+			} else if (iRecord instanceof ORecordStringable) {
+
+				// STRINGABLE
+				final ORecordStringable record = (ORecordStringable) iRecord;
+				json.writeAttribute(1, true, "value", record.value());
+			} else
+				throw new OSerializationException("Error on marshalling record of type '" + iRecord.getClass()
+						+ "' to JSON. The record type can't be exported to JSON");
+
 			json.endObject();
 
 			return buffer.toString();

@@ -18,9 +18,9 @@ package com.orientechnologies.orient.core.record;
 /**
  * Generic record representation without a schema definition. The object can be reused across call to the database.
  */
-public interface ORecordStringable<T> {
+public interface ORecordStringable {
 
 	public String value();
 
-	public ORecordStringable<T> value(String iValue);
+	public ORecordStringable value(String iValue);
 }

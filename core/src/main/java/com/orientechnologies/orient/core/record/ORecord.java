@@ -55,4 +55,6 @@ public interface ORecord<T> {
 	public ORecord<T> save(String iCluster);
 
 	public ORecord<T> delete();
+
+	public String toJSON();
 }

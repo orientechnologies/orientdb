@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
  * using the reset() at every re-use.
  */
 @SuppressWarnings("unchecked")
-public class ORecordColumn extends ORecordAbstract<String> implements ORecordStringable<String>, ORecordPositional<String> {
+public class ORecordColumn extends ORecordAbstract<String> implements ORecordStringable, ORecordPositional<String> {
 	protected List<String>		values			= new ArrayList<String>();
 	protected char						separator		= OStringSerializerHelper.RECORD_SEPARATOR_AS_CHAR;
 	protected int							cursor			= 0;

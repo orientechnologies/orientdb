@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 
 @SuppressWarnings("unchecked")
@@ -127,18 +128,18 @@ public class OJSONWriter {
 		else if (iValue instanceof ORecord<?>) {
 			ORecord<?> linked = (ORecord<?>) iValue;
 			if (linked.getIdentity().isValid())
-				buffer.append(linked.getIdentity().toString());
+				buffer.append("\"" + linked.getIdentity().toString() + "\"");
 			else
 				buffer.append("\"" + linked.toString() + "\"");
 
 		} else if (iValue.getClass().isArray()) {
 
 			if (iValue instanceof byte[]) {
-				buffer.append("'");
+				buffer.append("\"");
 				for (int i = 0; i < Array.getLength(iValue); ++i) {
 					buffer.append(String.format("%03d", Array.getByte(iValue, i)));
 				}
-				buffer.append("'");
+				buffer.append("\"");
 			} else {
 				buffer.append("[");
 				for (int i = 0; i < Array.getLength(iValue); ++i) {
@@ -175,10 +176,10 @@ public class OJSONWriter {
 			}
 			buffer.append("}");
 
-		} else if (iValue instanceof String) {
-			buffer.append('\'');
+		} else if (iValue instanceof String || iValue instanceof ORecordId) {
+			buffer.append('"');
 			buffer.append(iValue.toString());
-			buffer.append('\'');
+			buffer.append('"');
 
 		} else
 			buffer.append(iValue.toString());
