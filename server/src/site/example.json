@@ -1,8 +1,0 @@
-{
-total: "xxx",page: "yyy", records: "zzz",
-rows : [
-{id:"1", cell:["cell11", "cell12", "cell13"]},
-{id:"2", cell:["cell21",
-"cell22",
-"cell23"]},
-]}
