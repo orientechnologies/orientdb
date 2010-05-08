@@ -18,7 +18,11 @@ package com.orientechnologies.orient.server.network.protocol.http;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -26,13 +30,13 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.enterprise.channel.text.OChannelTextServer;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolException;
 
 public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
-
 	@Override
 	public void doGet(final String iURI, final String iRequest, final OChannelTextServer iChannel) throws ONetworkProtocolException {
 		if (iURI == null || iURI.length() == 0)
@@ -50,47 +54,151 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 
 		try {
 			if (parts[0].equals("document"))
-				document(parts);
+				getDocument(parts);
 			else if (parts[0].equals("query"))
-				query(parts);
+				getQuery(parts);
 			else if (parts[0].equals("dictionary"))
-				dictionary(parts);
+				getDictionary(parts);
 			else if (parts[0].equals("cluster"))
-				cluster(parts);
+				getCluster(parts);
 			else if (parts[0].equals("class"))
-				clazz(parts);
+				getClass(parts);
 			else
 				throw new IllegalArgumentException("Operation '" + parts[0] + "' not supported");
 
 		} catch (Exception e) {
-			int errorCode = 500;
-
-			if (e instanceof ORecordNotFoundException)
-				errorCode = 404;
-			else if (e instanceof OLockException)
-				e = (Exception) e.getCause();
-
-			final String msg = e.getMessage() != null ? e.getMessage() : "Internal error";
-
-			try {
-				sendTextContent(errorCode, "Error", OHttpUtils.CONTENT_TEXT_PLAIN, msg);
-			} catch (IOException e1) {
-				sendShutdown();
-			}
+			handleError(e);
 		}
 	}
 
-	private void document(final String[] iParts) throws Exception {
-		checkSyntax(iParts, 3, "Syntax error: document/<database>/<record-id>");
+	@Override
+	public void doPost(final String iURI, final String iRequest, final OChannelTextServer iChannel) throws ONetworkProtocolException {
+		if (iURI == null || iURI.length() == 0)
+			return;
 
+		// GET THE OPERATION
+		final String[] parts = OHttpUtils.getParts(iURI);
+		if (parts.length == 0)
+			return;
+
+		try {
+			if (parts[0].equals("studio-document"))
+				postDocument(parts, iRequest);
+			else
+				throw new IllegalArgumentException("Operation '" + parts[0] + "' not supported");
+
+		} catch (Exception e) {
+			handleError(e);
+		}
+	}
+
+	@Override
+	public void doPut(final String iURI, final String iRequest, final OChannelTextServer iChannel) throws ONetworkProtocolException {
+	}
+
+	@Override
+	public void doDelete(final String iURI, final String iRequest, final OChannelTextServer iChannel)
+			throws ONetworkProtocolException {
+	}
+
+	private void getDocument(final String[] iParts) throws Exception {
 		ODatabaseDocumentTx db = null;
 
 		try {
+			checkSyntax(iParts, 3, "Syntax error: document/<database>/<record-id>");
+
 			db = OSharedDocumentDatabase.acquireDatabase(iParts[1]);
 
 			final ORecord<?> rec = db.load(new ORecordId(iParts[2]));
-
 			sendRecordContent(rec);
+		} finally {
+			if (db != null)
+				OSharedDocumentDatabase.releaseDatabase(db);
+		}
+	}
+
+	private void postDocument(final String[] iParts, final String iRequest) throws Exception {
+		ODatabaseDocumentTx db = null;
+
+		try {
+			checkSyntax(iParts, 2, "Syntax error: document/<database>");
+			db = OSharedDocumentDatabase.acquireDatabase(iParts[1]);
+
+			String req = URLDecoder.decode(iRequest, "UTF-8");
+
+			// PARSE PARAMETERS
+			String operation = null;
+			String rid = null;
+			Map<String, String> fields = new HashMap<String, String>();
+
+			String[] params = req.split("&");
+			String key;
+			String value;
+
+			for (String p : params) {
+				String[] pairs = p.split("=");
+				key = pairs[0];
+				value = pairs.length == 1 ? null : pairs[1];
+
+				if ("oper".equals(pairs[0]))
+					operation = value;
+				else if ("0".equals(pairs[0]))
+					rid = value;
+				else if (pairs[0].startsWith("_") || pairs[0].equals("id"))
+					continue;
+				else {
+					fields.put(pairs[0], value);
+				}
+			}
+
+			if ("edit".equals(operation)) {
+				if (rid == null)
+					throw new IllegalArgumentException("Record ID not found in request");
+
+				ODocument doc = new ODocument(db, new ORecordId(rid));
+				doc.load();
+
+				// BIND ALL CHANGED FIELDS
+				Object oldValue;
+				Object newValue;
+				for (Entry<String, String> f : fields.entrySet()) {
+					oldValue = doc.field(f.getKey());
+					newValue = f.getValue();
+
+					if (oldValue != null) {
+						if (oldValue instanceof ORecord<?>)
+							newValue = new ORecordId(f.getValue());
+						else if (oldValue instanceof Collection<?>) {
+							newValue = null;
+						}
+					}
+
+					doc.field(f.getKey(), newValue);
+				}
+
+				doc.save();
+				sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid + " created successfully.");
+			} else if ("add".equals(operation)) {
+				ODocument doc = new ODocument(db);
+
+				// BIND ALL CHANGED FIELDS
+				for (Entry<String, String> f : fields.entrySet())
+					doc.field(f.getKey(), f.getValue());
+
+				doc.save();
+				sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + doc.getIdentity()
+						+ " updated successfully.");
+
+			} else if ("del".equals(operation)) {
+				if (rid == null)
+					throw new IllegalArgumentException("Record ID not found in request");
+
+				ODocument doc = new ODocument(db, new ORecordId(rid));
+				doc.delete();
+				sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid + " deleted successfully.");
+
+			} else
+				sendTextContent(500, "Error", OHttpUtils.CONTENT_TEXT_PLAIN, "Operation not supported");
 
 		} finally {
 			if (db != null)
@@ -98,7 +206,7 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 		}
 	}
 
-	private void dictionary(final String[] iParts) throws Exception {
+	private void getDictionary(final String[] iParts) throws Exception {
 		checkSyntax(iParts, 3, "Syntax error: dictionary/<database>/<key>");
 
 		ODatabaseDocumentTx db = null;
@@ -119,7 +227,7 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void query(final String[] iParts) throws Exception {
+	private void getQuery(final String[] iParts) throws Exception {
 		checkSyntax(
 				iParts,
 				3,
@@ -146,7 +254,7 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 		}
 	}
 
-	private void cluster(final String[] iParts) throws Exception {
+	private void getCluster(final String[] iParts) throws Exception {
 		checkSyntax(
 				iParts,
 				3,
@@ -177,7 +285,7 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 		}
 	}
 
-	private void clazz(final String[] iParts) throws Exception {
+	private void getClass(final String[] iParts) throws Exception {
 		checkSyntax(
 				iParts,
 				3,
@@ -214,11 +322,17 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 
 		if (iRecords != null) {
 			int counter = 0;
+			String json;
 			for (ORecord<?> rec : iRecords) {
-				if (counter++ > 0)
-					buffer.append(",\r\n");
+				try {
+					json = rec.toJSON();
 
-				buffer.append(rec.toJSON());
+					if (counter++ > 0)
+						buffer.append(",\r\n");
+
+					buffer.append(json);
+				} catch (Exception e) {
+				}
 			}
 		}
 
@@ -229,24 +343,28 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 
 	private void sendRecordContent(final ORecord<?> iRecord) throws IOException {
 		if (iRecord != null)
-			sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, iRecord.toJSON());
-	}
-
-	@Override
-	public void doPost(final String iURI, final String iRequest, final OChannelTextServer iChannel) throws ONetworkProtocolException {
-	}
-
-	@Override
-	public void doPut(final String iURI, final String iRequest, final OChannelTextServer iChannel) throws ONetworkProtocolException {
-	}
-
-	@Override
-	public void doDelete(final String iURI, final String iRequest, final OChannelTextServer iChannel)
-			throws ONetworkProtocolException {
+			sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, iRecord.toJSON("id,ver,class"));
 	}
 
 	private void checkSyntax(String[] iParts, final int iArgumentCount, final String iSyntax) {
 		if (iParts.length < iArgumentCount)
 			throw new IllegalArgumentException(iSyntax);
+	}
+
+	private void handleError(Exception e) {
+		int errorCode = 500;
+
+		if (e instanceof ORecordNotFoundException)
+			errorCode = 404;
+		else if (e instanceof OLockException)
+			e = (Exception) e.getCause();
+
+		final String msg = e.getMessage() != null ? e.getMessage() : "Internal error";
+
+		try {
+			sendTextContent(errorCode, "Error", OHttpUtils.CONTENT_TEXT_PLAIN, msg);
+		} catch (IOException e1) {
+			sendShutdown();
+		}
 	}
 }

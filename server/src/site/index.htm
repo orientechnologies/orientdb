@@ -8,10 +8,15 @@
 
 <link rel="stylesheet" type="text/css" media="screen" href="/www/styles/redmond/jquery-ui-1.8.1.custom.css" />
 <link rel="stylesheet" type="text/css" media="screen" href="/www/styles/ui.jqgrid.css" />
-
 <style>
 body {
+	font-size: 10pt;
 	font-family: Arial;
+}
+
+.cell_readonly {
+	color: white;
+	background-color: #6D7B8D;
 }
 </style>
 
@@ -21,10 +26,9 @@ body {
 <script src="/www/js/jquery.jqGrid.min.js" type="text/javascript"></script>
 <script src="/www/js/jQueryRotate.js" type="text/javascript"></script>
 <script src="/www/js/orient.js" type="text/javascript"></script>
-
 <script type="text/javascript">
     function clear(component){
-    	component.value = "";
+    	   component.value = "";
     }
 
     function response(data){
@@ -34,7 +38,7 @@ body {
         // CREATE COLUMN NAMES
         for (row = 0; row < result.length; row++) {
             for (col in result[row]) {
-                if( columnNames[col] == undefined ){
+                if( !columnNames[col] ){
                     columnNames[col] = col;
                 }
             }
@@ -43,62 +47,117 @@ body {
         // CREATE COLUMN MODEL
         var columnModel = new Array();
 
-        columnModel.push( {"name" : "_recid", "index" : "_recid", "width" : 30} );
-        columnModel.push( {"name" : "_version", "index" : "version", "width" : 30} );
+        columnModel.push( {"name" : "_id", "index" : "_id", "width" : 30, "classes" : "cell_readonly"} );
+        columnModel.push( {"name" : "_ver", "index" : "_ver", "width" : 30, "classes" : "cell_readonly"} );
+        columnModel.push( {"name" : "_class", "index" : "_class", "width" : 30, "classes" : "cell_readonly"} );
         
         for (col in columnNames) {
-        	columnModel.push( {"name" : columnNames[col], "index" : columnNames[col], "width" : 80} );
+            if( col.charAt(0) !== '_'){
+        	   columnModel.push( {"name" : columnNames[col], editable: true, "index" : columnNames[col], "width" : 80} );
+            }
         }
-        
+
+        var lastsel;
         jQuery("#list").jqGrid( {
             datatype: "local",
+            editurl: getStudioDocumentURL(),
             height: 250,
             autowidth: true,
-            rownumbers: true,
             multiselect: false,
-            rowNum:10, rowList:[10,20,30], 
-            pager: '#pager',
+            pgbuttons: false,
+            pginput: false,
+            pgtext: null,
             sortname: 'id',
             viewrecords: true,
-            sortorder: "desc",
+            sortorder: "id",
             caption: "Resultset",
             colNames: columnNames,
-            colModel: columnModel });
+            colModel: columnModel,
+            onSelectRow: function(id){
+                           if(id && id!==lastsel){
+					         jQuery('#list').jqGrid('restoreRow',lastsel);
+					         lastsel = id;
+  					       }
 
-        jQuery("#list").jqGrid('navGrid','#pager', {edit:true,add:true,del:true} ); 
+                           var recId = jQuery('#list').jqGrid('getRowData', id)["_id"];
+                           jQuery('#list').jqGrid('editRow',id,true,null,null,
+                        		   getStudioDocumentURL(),
+                        		   [recId]
+                		    );
+                         }                             
+         } );
+
+        $("#newRecord").click(
+                function(){
+                	jQuery("#list").jqGrid('editGridRow',"new",
+                        	{height:280,reloadAfterSubmit:false, closeOnEscape:true, afterSubmit : function(response, postdata)
+                        {
+                        jQuery("#output").text( response.responseText );
+                        return true;
+                      }
+                    }); 
+                });  
+        $("#deleteRecord").click(
+                function(){
+                    var selectedRow = jQuery("#list").jqGrid('getGridParam', 'selrow');
+                    if( selectedRow != null ){
+                        var recId = jQuery('#list').jqGrid('getRowData', selectedRow)["_id"];
+                        jQuery("#list").jqGrid('delGridRow', selectedRow,
+                                {reloadAfterSubmit:false, closeOnEscape:true, delData: [recId], afterSubmit : function(response, postdata)
+                        	{
+                        	  jQuery("#output").text( response.responseText );
+                              return true;
+                        	}
+                    	} );
+                    }
+                    else
+                        alert("Please Select Row to delete!");
+                });  
         
         for(var i = 0; i <= result.length; i++)
           jQuery("#list").jqGrid('addRowData', i+1, result[i]);
       }
-      
+
       function error(content, status, obj){
           alert("Error: " + content.value + ", obj: " + obj);
       }
 
-    function executeQuery(){
+      function executeQuery(){
         jQuery("#list").GridUnload();
-
+        jQuery("#output").text( "" );
         $.getJSON( $('#server').val() + '/query/' + $('#database').val() + '/' + $('#queryText').val() + '/' + $('#limit').val(), response);
-    }
+      }
 
-    function clearResultset(){
-        jQuery("#list").jqGrid('clearGridData');
-    }
-    
-    jQuery(document).ready(function(){
-        $("#tabs").tabs();
-    }); 
+      function clearResultset(){
+		    jQuery("#list").jqGrid('clearGridData');
+	  }
+
+      function getStudioDocumentURL(){
+        return $('#server').val() + '/studio-document/' + $('#database').val()
+      }
+		
+	  jQuery(document).ready(function(){
+	      jQuery(document).ajaxError(function(event, request, settings, err){
+	    	jQuery("#output").text( "Error: " + request.responseText );
+	      });
+	      
+          $("#tabs").tabs();
+	}); 
 </script>
 </head>
 
 <body onload="orient_init()">
 <table align="center" width="1000">
 	<tr>
-		<td align="left"><a href="http://www.orientechnologies.com/orient-db.htm"><img border="0" src="/www/images/orient_db.png" /></a></td>
-	</tr>
-	<tr>
-		<td class="ui-widget">Server: <input class="ui-widget" id="server" size="30" value="http://localhost:2480" /> Database: <input
-			class="ui-widget" id="database" size="20" value="demo" /></td>
+		<td>
+		<table style="width: 100%;" cellpadding="0" cellspacing="2">
+			<tr>
+				<td align="left"><a href="http://www.orientechnologies.com/orient-db.htm"><img border="0" src="/www/images/orient_db.png" /></a></td>
+				<td class="ui-widget">Server: <input id="server" size="30" value="http://localhost:2480" /> Database: <input id="database" size="20"
+					value="demo" /></td>
+			</tr>
+		</table>
+		</td>
 	</tr>
 	<tr>
 		<td>
@@ -109,36 +168,46 @@ body {
 			<li><a href="#fragment-3"><span>Raw access</span></a></li>
 		</ul>
 		<div id="fragment-1">
-		<table style="width: 100%;">
+		<table style="width: 100%;" cellpadding="0" cellspacing="2">
 			<tr>
-				<td class="ui-widget" valign="top">Query</td>
-				<td class="ui-widget" valign="top"><textarea id="queryText" cols="88" rows="5" title="value">select from Address</textarea></td>
-				<td class="ui-widget" valign="top" align="left">
-				<table>
+				<td valign="top">
+				<table style="width: 100%;" cellpadding="0" cellspacing="0">
 					<tr>
-						<td class="ui-widget"><a href="javascript:clear(queryText)"><img border="0" src="/www/images/clear.png" /></a></td>
+						<td valign="top"><textarea id="queryText" cols="135" rows="4" title="value">select from Address</textarea></td>
+						<td valign="top"><a href="javascript:clear(queryText)"><img border="0" src="/www/images/clear.png" /></a>
+					</tr>
+					<tr>
+						<td>
+						<table style="width: 100%;">
+							<tr>
+								<td><a href="javascript:executeQuery()">Execute</a></td>
+								<td align="right">Limit: <input id="limit" size="5" value="20" /></td>
+							</tr>
+						</table>
+						</td>
+						<td align="right"><a href="javascript:clearResultset()"><img border="0" src="/www/images/clear.png" /></a></td>
+					</tr>
+					<tr>
+						<td valign="top" colspan="2">
+						<table id="list"></table>
+						<table>
+							<tr>
+								<td id="newRecord" valign="middle"><img border="0" src="/www/images/add.png" />New record</td>
+								<td id="deleteRecord" valign="middle"><img border="0" src="/www/images/delete.png" />Delete record</td>
+							</tr>
+						</table>
+						</td>
 					</tr>
 				</table>
 				</td>
-			</tr>
-			<tr>
-				<td class="ui-widget"><a href="javascript:executeQuery()">Execute</a></td>
-				<td class="ui-widget" align="right">Limit: <input id="limit" size="5" value="20" /></td>
-			</tr>
-			<tr>
-				<td valign="top" colspan="2">
-				<table id="list" class="ui-widget"></table>
-				<div id="pager" class="ui-widget"></div>
-				</td>
-				<td valign="top"><a href="javascript:clearResultset()"><img border="0" src="/www/images/clear.png" /></a></td>
 			</tr>
 		</table>
 		</div>
 		<div id="fragment-2">
 		<table style="width: 100%;">
 			<tr>
-				<td valign="top"><textarea id="commandText" class="ui-widget" cols="88" rows="5" title="value"></textarea> <a
-					href="javascript:clear(commandText)"><img border="0" src="/www/images/clear.png" /></a></td>
+				<td valign="top"><textarea id="commandText" cols="90" rows="4" title="value"></textarea> <a href="javascript:clear(commandText)"><img
+					border="0" src="/www/images/clear.png" /></a></td>
 			</tr>
 		</table>
 		</div>
@@ -159,6 +228,16 @@ body {
 		</table>
 		</div>
 		</div>
+		</td>
+	</tr>
+	<tr>
+		<td>
+		<table style="width: 100%;">
+			<tr>
+				<td valign="top">Output:</td>
+				<td valign="top"><textarea id="output" cols="125" rows="3" title="value" disabled="disabled"></textarea></td>
+			</tr>
+		</table>
 		</td>
 	</tr>
 	<tr>

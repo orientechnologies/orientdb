@@ -128,8 +128,11 @@ public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
 		return RECORD_TYPE;
 	}
 
+	public String toJSON(final String iFormat) {
+		return null;
+	}
+
 	public String toJSON() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 }
