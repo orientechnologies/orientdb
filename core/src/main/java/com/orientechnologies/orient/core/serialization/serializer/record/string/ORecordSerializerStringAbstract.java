@@ -28,14 +28,14 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 
 public abstract class ORecordSerializerStringAbstract implements ORecordSerializer {
-	protected abstract String toString(final ORecordInternal<?> iRecord, final OUserObject2RecordHandler iObjHandler,
-			final Map<ORecordInternal<?>, ORecordId> iMarshalledRecords);
+	protected abstract String toString(final ORecordInternal<?> iRecord, final String iFormat,
+			final OUserObject2RecordHandler iObjHandler, final Map<ORecordInternal<?>, ORecordId> iMarshalledRecords);
 
 	protected abstract ORecordInternal<?> fromString(final ODatabaseRecord<?> iDatabase, final String iContent,
 			final ORecordInternal<?> iRecord);
 
-	public String toString(ORecordInternal<?> iRecord) {
-		return toString(iRecord, iRecord.getDatabase(), OSerializationThreadLocal.INSTANCE.get());
+	public String toString(final ORecordInternal<?> iRecord, final String iFormat) {
+		return toString(iRecord, iFormat, iRecord.getDatabase(), OSerializationThreadLocal.INSTANCE.get());
 	}
 
 	public ORecordInternal<?> fromString(final ODatabaseRecord<?> iDatabase, final String iSource) {
@@ -57,7 +57,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 		final long timer = OProfiler.getInstance().startChrono();
 
 		try {
-			return OBinaryProtocol.string2bytes(toString((ORecordSchemaAware<?>) iRecord, iDatabase, OSerializationThreadLocal.INSTANCE
+			return OBinaryProtocol.string2bytes(toString((ORecordSchemaAware<?>) iRecord, null, iDatabase, OSerializationThreadLocal.INSTANCE
 					.get()));
 		} finally {
 

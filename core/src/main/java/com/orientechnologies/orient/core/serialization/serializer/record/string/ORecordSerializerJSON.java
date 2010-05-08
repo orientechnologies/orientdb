@@ -33,8 +33,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 	public static final String								NAME							= "json";
 	public static final ORecordSerializerJSON	INSTANCE					= new ORecordSerializerJSON();
 
-	private static final String								ATTRIBUTE_VERSION	= "_version";
-	private static final String								ATTRIBUTE_RECID		= "_recid";
+	private static final String								ATTRIBUTE_ID			= "_id";
+	private static final String								ATTRIBUTE_VERSION	= "_ver";
+	private static final String								ATTRIBUTE_CLASS		= "_class";
 
 	@Override
 	public ORecordInternal<?> fromString(final ODatabaseRecord<?> iDatabase, final String iSource, final ORecordInternal<?> iRecord) {
@@ -53,16 +54,43 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 	}
 
 	@Override
-	public String toString(final ORecordInternal<?> iRecord, final OUserObject2RecordHandler iObjHandler,
+	public String toString(final ORecordInternal<?> iRecord, final String iFormat, final OUserObject2RecordHandler iObjHandler,
 			final Map<ORecordInternal<?>, ORecordId> iMarshalledRecords) {
 		try {
 			final StringWriter buffer = new StringWriter();
 			final OJSONWriter json = new OJSONWriter(buffer);
 
+			boolean includeVer;
+			boolean includeId;
+			boolean includeClazz;
+
+			if (iFormat == null) {
+				includeVer = true;
+				includeId = true;
+				includeClazz = true;
+			} else {
+				includeVer = false;
+				includeId = false;
+				includeClazz = false;
+
+				String[] format = iFormat.split(",");
+				for (String f : format)
+					if (f.equals("id"))
+						includeId = true;
+					else if (f.equals("ver"))
+						includeVer = true;
+					else if (f.equals("class"))
+						includeClazz = true;
+			}
+
 			json.beginObject();
 
-			json.writeAttribute(1, true, ATTRIBUTE_VERSION, iRecord.getVersion());
-			json.writeAttribute(1, true, ATTRIBUTE_RECID, iRecord.getIdentity());
+			if (includeId)
+				json.writeAttribute(1, true, ATTRIBUTE_ID, iRecord.getIdentity());
+			if (includeVer)
+				json.writeAttribute(1, true, ATTRIBUTE_VERSION, iRecord.getVersion());
+			if (includeClazz && iRecord instanceof ORecordSchemaAware<?>)
+				json.writeAttribute(1, true, ATTRIBUTE_CLASS, ((ORecordSchemaAware<?>) iRecord).getClassName());
 
 			if (iRecord instanceof ORecordSchemaAware<?>) {
 				// SCHEMA AWARE

@@ -459,7 +459,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		}
 
 		try {
-			out.println(((ORecordSerializerStringAbstract) serializer).toString(currentRecord));
+			out.println(((ORecordSerializerStringAbstract) serializer).toString(currentRecord, null));
 		} catch (ODatabaseExportException e) {
 			out.println("ERROR: " + e.toString());
 		}

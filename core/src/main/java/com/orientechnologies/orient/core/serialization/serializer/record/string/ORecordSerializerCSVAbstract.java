@@ -136,7 +136,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		switch (iType) {
 		case EMBEDDED:
 			if (iValue instanceof ODocument)
-				buffer.append(toString((ODocument) iValue, iObjHandler, iMarshalledRecords));
+				buffer.append(toString((ODocument) iValue, null, iObjHandler, iMarshalledRecords));
 			else if (iValue != null)
 				buffer.append(iValue.toString());
 			break;
@@ -176,7 +176,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 												}
 											});
 
-						buffer.append(toString(record, iObjHandler, iMarshalledRecords));
+						buffer.append(toString(record, null, iObjHandler, iMarshalledRecords));
 					}
 
 					items++;

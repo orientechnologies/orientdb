@@ -53,7 +53,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 	}
 
 	@Override
-	protected String toString(ORecordInternal<?> iRecord, final OUserObject2RecordHandler iObjHandler,
+	protected String toString(ORecordInternal<?> iRecord, final String iFormat, final OUserObject2RecordHandler iObjHandler,
 			final Map<ORecordInternal<?>, ORecordId> iMarshalledRecords) {
 		if (!(iRecord instanceof ODocument))
 			throw new OSerializationException("Can't marshall a record of type " + iRecord.getClass().getSimpleName() + " to CSV");

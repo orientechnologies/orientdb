@@ -57,4 +57,6 @@ public interface ORecord<T> {
 	public ORecord<T> delete();
 
 	public String toJSON();
+
+	public String toJSON(String iFormat);
 }
