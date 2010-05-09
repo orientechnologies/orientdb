@@ -35,7 +35,8 @@ public class OResourcePool<K, V> {
 	public V getResource(K iKey, final long iMaxWaitMillis) throws InterruptedException, OLockException {
 
 		// First, get permission to take or create a resource
-		sem.tryAcquire(iMaxWaitMillis, TimeUnit.MILLISECONDS);
+		if (!sem.tryAcquire(iMaxWaitMillis, TimeUnit.MILLISECONDS))
+			throw new OLockException("Can't acquire lock on requested resource: " + iKey);
 
 		// Then, actually take one if available...
 		V res = resources.poll();
