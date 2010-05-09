@@ -117,6 +117,7 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private void postDocument(final String[] iParts, final String iRequest) throws Exception {
 		ODatabaseDocumentTx db = null;
 
@@ -129,6 +130,8 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 			// PARSE PARAMETERS
 			String operation = null;
 			String rid = null;
+			String className = null;
+
 			Map<String, String> fields = new HashMap<String, String>();
 
 			String[] params = req.split("&");
@@ -144,6 +147,8 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 					operation = value;
 				else if ("0".equals(pairs[0]))
 					rid = value;
+				else if ("1".equals(pairs[0]))
+					className = value;
 				else if (pairs[0].startsWith("_") || pairs[0].equals("id"))
 					continue;
 				else {
@@ -155,7 +160,7 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 				if (rid == null)
 					throw new IllegalArgumentException("Record ID not found in request");
 
-				ODocument doc = new ODocument(db, new ORecordId(rid));
+				ODocument doc = new ODocument(db, className, new ORecordId(rid));
 				doc.load();
 
 				// BIND ALL CHANGED FIELDS
@@ -169,7 +174,14 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 						if (oldValue instanceof ORecord<?>)
 							newValue = new ORecordId(f.getValue());
 						else if (oldValue instanceof Collection<?>) {
-							newValue = null;
+							newValue = new ArrayList<ODocument>();
+
+							if (f.getValue() != null) {
+								String[] items = f.getValue().split(",");
+								for (String s : items) {
+									((List<ODocument>) newValue).add(new ODocument(db, new ORecordId(s)));
+								}
+							}
 						}
 					}
 
@@ -177,9 +189,9 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 				}
 
 				doc.save();
-				sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid + " created successfully.");
+				sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid + " updated successfully.");
 			} else if ("add".equals(operation)) {
-				ODocument doc = new ODocument(db);
+				ODocument doc = new ODocument(db, className);
 
 				// BIND ALL CHANGED FIELDS
 				for (Entry<String, String> f : fields.entrySet())
