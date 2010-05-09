@@ -5,7 +5,7 @@
 	<property environment="env" />
 	<property name="vendor"         value="Orient Technologies" />
 	<property name="product"        value="Orient Database" />
-	<property name="version"        value="0.9.12" />
+	<property name="version"        value="0.9.13" />
 	<property name="global.release" value="../releases/${version}" />
 	<property name="db.release"     value="../releases/${version}/db" />
 
@@ -74,10 +74,15 @@
 		<delegate target="compile"/>
 	</target>
 
+
 	<target name="javadoc" depends="init">
-	
-		<javadoc sourcepath="." packagenames="com.orientechnologies.*" destdir="../javadoc" private="true" useexternalfile="yes">
-  		<fileset dir="." defaultexcludes="yes">
+	  <copy todir="${global.release}/javadoc" file="_base/images/orient_db.png" />
+  	<javadoc sourcepath="." packagenames="com.orientechnologies.*" destdir="${global.release}/javadoc" public="true"
+             useexternalfile="yes" linksource="yes" use="yes" verbose="no" windowtitle="OrientDB v. ${version} Javadocs"
+             header="&lt;a target='_parent' href='http://www.orientechnologies.com/orient-db.htm' &gt;&lt;img src='orient_db.png' border='0' /&gt;&lt;/a&gt;"
+             bottom="&lt;center&gt;Copyrights (c) Luca Garulli. All Rights Reserved. This software is released as Open Source using the &lt;a target='_parent' href='http://www.apache.org/licenses/LICENSE-2.0'&gt;Apache 2.0 license&lt;/a&gt;.&lt;/center&gt;"
+             overview="overview.html">
+  		<packageset dir="." defaultexcludes="yes">
         <include name="commons/src/main/java/**"/>
         <include name="core/src/main/java/**"/>
         <include name="enterprise/src/main/java/**"/>
@@ -85,6 +90,16 @@
         <include name="client/src/main/java/**"/>
         <include name="tools/src/main/java/**"/>
         <include name="kv/src/main/java/**"/>
+      </packageset>
+
+  		<fileset dir="." defaultexcludes="yes">
+        <include name="commons/src/main/java/**/*.java"/>
+        <include name="core/src/main/java/**/*.java"/>
+        <include name="enterprise/src/main/java/**/*.java"/>
+        <include name="server/src/main/java/**/*.java"/>
+        <include name="client/src/main/java/**/*.java"/>
+        <include name="tools/src/main/java/**/*.java"/>
+        <include name="kv/src/main/java/**/*.java"/>
       </fileset>
 
 			<doclet name="org.umlgraph.doclet.UmlGraphDoc" path="_base/lib/UmlGraph.jar">
@@ -94,8 +109,10 @@
 				<param name="-postfixpackage" />
 				<param name="-nodefontsize" value="9" />
 				<param name="-nodefontpackagesize" value="7" />
+<!--     -->
 				<param name="-link" value="http://java.sun.com/j2se/1.5.0/docs/guide/javadoc/doclet/spec" />
 				<param name="-link" value="http://java.sun.com/j2se/1.5/docs/api" />
+
 			</doclet>
 		</javadoc>
 

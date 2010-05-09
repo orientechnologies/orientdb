@@ -30,6 +30,24 @@
 This document enlist the last changes to the Orient Database project.
 
 -------------------------------------------------------------------------------
+VERSION 0.9.13 (beta) - beta (May, 8th 2010 ???)
+-------------------------------------------------------------------------------
+- New HTTP RESTful interface to the OrientDB Server
+- New OrientDB Server Studio GUI to manage documents. It's 100% web client-side
+  application built with HTML, CSS and JQuery
+
+-------------------------------------------------------------------------------
+VERSION 0.9.12 (beta) - beta (May, 5th 2010)
+-------------------------------------------------------------------------------
+- Full support to asynchronous remote command execution. Now only SQL has been
+  implemented (select, insert, update, delete)
+- Fixed bug on LIKE operator
+- Improved JMX monitoring support for OrientDB Server: active sessions,
+  configured handlers and protocols, status, etc.
+- Changed the default OrientDB Server port to 2424 and for OrientKV Server has
+  been assigned the 2431.
+
+-------------------------------------------------------------------------------
 VERSION 0.9.11 (beta) - beta (April, 28th 2010)
 -------------------------------------------------------------------------------
 - New support for SQL commands INSERT, UPDATE and DELETE. Now everybody that
