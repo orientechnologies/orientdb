@@ -14,6 +14,11 @@ body {
 	font-family: Arial;
 }
 
+td {
+	font-size: 10pt;
+	font-family: Arial;
+}
+
 .cell_readonly {
 	color: white;
 	background-color: #6D7B8D;
@@ -147,6 +152,42 @@ body {
       }
       
       function executeServerInfo(){
+/*          
+          $.getJSON( $('#server').val() + '/server', serverResponse);
+      }
+          	  
+      function serverResponse(data){
+    	  var result = data["connections"];
+    	  
+    	  jQuery("#serverConnections").jqGrid( {
+              datatype: "local",
+              height: 280,
+              autowidth: true,
+              multiselect: false,
+              sortname: 'id',
+              viewrecords: true,
+              sortorder: "id",
+              caption: "Resultset",
+              colNames: ["Id","Database","Protocol","Total requests","Command type","Last command type","Last command detail",
+                         "Last execution time", "Total working time", "Connected since"],
+              colModel: [
+                         {"name" : "id",                  "index" : "id", "width" : 30, "classes" : "cell_readonly"},
+                         {"name" : "db",                  "index" : "db", "width" : 30, "classes" : "cell_readonly"},
+                         {"name" : "protocol",            "index" : "protocol", "width" : 30, "classes" : "cell_readonly"},
+                         {"name" : "totalRequests",      "index" : "_id", "width" : 30, "classes" : "cell_readonly"},
+                         {"name" : "commandType",        "index" : "_id", "width" : 30, "classes" : "cell_readonly"},
+                         {"name" : "lastCommandType",   "index" : "_id", "width" : 30, "classes" : "cell_readonly"},
+                         {"name" : "lastCommandDetail", "index" : "_id", "width" : 30, "classes" : "cell_readonly"},
+                         {"name" : "lastExecutionTime", "index" : "_id", "width" : 30, "classes" : "cell_readonly"},
+                         {"name" : "totalWorkingTime",  "index" : "_id", "width" : 30, "classes" : "cell_readonly"},
+                         {"name" : "connectedSince",     "index" : "_id", "width" : 30, "classes" : "cell_readonly"}
+                         ]
+           } );
+
+    	  for(var i = 0; i <= result.length; i++)
+              jQuery("#serverConnections").jqGrid('addRowData', i+1, result[i]);
+          
+*/
           var req = $('#server').val() + '/server';
           
           $.ajax({
@@ -156,6 +197,8 @@ body {
                    var server = JSON.parse(msg);
                    var connections = server["connections"];
 
+                   $('#serverConnections').text("");
+                   
                    $('#serverConnections').append( $('<tr></tr>')
                            .append( $('<td></td>' ).text("Id") )
                            .append( $('<td></td>' ).text("Database") )
@@ -165,7 +208,7 @@ body {
                            .append( $('<td></td>' ).text("Last command type") )
                            .append( $('<td></td>' ).text("Last command detail") )
                            .append( $('<td></td>' ).text("Last execution time") )
-                           .append( $('<td></td>' ).text("Tota working time") )
+                           .append( $('<td></td>' ).text("Total working time") )
                            .append( $('<td></td>' ).text("Connected since") ) );
                    
                    for (conn in connections) {
@@ -308,13 +351,13 @@ body {
 		<table style="width: 100%;">
 			<tr>
 				<td valign="top">
-				<button onclick="javascript:executeServerInfo()" style="background-color: #F0F0F0;"><img border="0" alt="Execute"
+				<button onclick="javascript:executeServerInfo()" class="ui-button-text-icon">Refresh <img border="0" alt="Execute"
 					src="/www/images/execute.png" /></button>
 				</td>
 			</tr>
 			<tr>
 				<td valign="top">
-				<table id="serverConnections" style="width: 100%;" cellpadding="5" border="1"></table>
+				<table id="serverConnections" style="width: 100%;" cellspacing="0" cellpadding="5" border="1"></table>
 				</td>
 			</tr>
 		</table>
