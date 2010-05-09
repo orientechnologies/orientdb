@@ -1474,7 +1474,7 @@ button.ui-button::-moz-focus-inner {
 ----------------------------------*/
 .ui-tabs {
 	position: relative;
-	padding: .2em;
+	padding: .em;
 	zoom: 1;
 }
 	
@@ -1489,7 +1489,7 @@ button.ui-button::-moz-focus-inner {
 	float: left;
 	position: relative;
 	top: 1px;
-	margin: 0 .2em 1px 0;
+	margin: 0 .1em 1px 0;
 	border-bottom: 0 !important;
 	padding: 0;
 	white-space: nowrap;
