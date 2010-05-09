@@ -243,9 +243,9 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			if (recordBuffer == null)
 				return null;
 
-			if (iRecord.getRecordType() != recordBuffer.recordType) {
+			if (iRecord.getRecordType() != recordBuffer.recordType)
+				// NO SAME RECORD TYPE: CAN'T REUSE OLD ONE BUT CREATE A NEW ONE FOR IT
 				iRecord = (REC) ORecordFactory.getRecord(recordBuffer.recordType);
-			}
 
 			iRecord.unsetDirty();
 

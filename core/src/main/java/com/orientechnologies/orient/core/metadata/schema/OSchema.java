@@ -88,6 +88,9 @@ public class OSchema extends ORecordBytes {
 	}
 
 	public OClass getClass(final String iClassName) {
+		if( iClassName == null )
+			return null;
+		
 		return classesMap.get(iClassName.toLowerCase());
 	}
 
