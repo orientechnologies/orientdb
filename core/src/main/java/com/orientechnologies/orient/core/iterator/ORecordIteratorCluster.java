@@ -86,10 +86,10 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 	 * @return the next record found, otherwise NULL when no more records are found.
 	 */
 	public REC next() {
-		REC record = getRecord();
-
 		// ITERATE UNTIL THE NEXT GOOD RECORD
 		while (hasNext()) {
+			REC record = getRecord();
+
 			record = readCurrentRecord(record, +1);
 			if (record != null)
 				// FOUND
