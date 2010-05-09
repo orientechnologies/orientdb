@@ -55,10 +55,7 @@ public class OClientConnectionManager {
 		OClientConnection conn = connections.remove(iChannelId);
 		if (conn == null)
 			return;
-
-		// if (conn.database != null)
-		// conn.database.close();
-
+		
 		handlers.remove(iChannelId);
 	}
 

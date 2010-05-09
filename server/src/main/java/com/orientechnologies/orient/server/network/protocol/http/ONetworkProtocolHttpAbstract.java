@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.text.OChannelTextServer;
 import com.orientechnologies.orient.server.OClientConnection;
+import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
@@ -49,12 +50,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 	private String									httpVersion;
 
 	public ONetworkProtocolHttpAbstract() {
-		super(OServer.getThreadGroup(), "Network-http");
+		super(OServer.getThreadGroup(), "HTTP");
 	}
 
 	public void config(final Socket iSocket, final OClientConnection iConnection) throws IOException {
-		setName("HTTP-NetworkProtocol");
-
 		iSocket.setSoTimeout(TCP_DEFAULT_TIMEOUT);
 		channel = (OChannelTextServer) new OChannelTextServer(iSocket);
 		connection = iConnection;
@@ -318,6 +317,14 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
 		if (OLogManager.instance().isDebugEnabled())
 			OLogManager.instance().debug(this, "Connection shutdowned");
+	}
+
+	@Override
+	public void shutdown() {
+		sendShutdown();
+		channel.close();
+
+		OClientConnectionManager.instance().onClientDisconnection(connection.id);
 	}
 
 	@Override

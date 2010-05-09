@@ -15,12 +15,15 @@
  */
 package com.orientechnologies.orient.kv.network.protocol.http;
 
+import java.io.IOException;
+import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.Map;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.enterprise.channel.text.OChannelTextServer;
+import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolException;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
@@ -29,6 +32,12 @@ public abstract class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstrac
 	protected abstract Map<String, String> getBucket(String dbName, String bucket);
 
 	protected abstract String getKey(String key);
+
+	@Override
+	public void config(Socket iSocket, OClientConnection iConnection) throws IOException {
+		setName("HTTP-KV");
+		super.config(iSocket, iConnection);
+	}
 
 	@Override
 	public void doGet(final String iURI, final String iContent, final OChannelTextServer iChannel) throws ONetworkProtocolException {

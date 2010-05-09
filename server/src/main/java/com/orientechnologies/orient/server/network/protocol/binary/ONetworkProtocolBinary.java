@@ -72,7 +72,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	private ODatabaseRaw				underlyingDatabase;
 
 	public ONetworkProtocolBinary() {
-		super(OServer.getThreadGroup(), "net-protocol-binary");
+		super(OServer.getThreadGroup(), "Binary-DB");
 	}
 
 	public void config(final Socket iSocket, final OClientConnection iConnection) throws IOException {
@@ -91,6 +91,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 		try {
 			commandType = channel.readByte();
+			++totalRequests;
 
 			clock = System.currentTimeMillis();
 

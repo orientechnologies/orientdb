@@ -17,9 +17,13 @@ package com.orientechnologies.orient.server.network.protocol.http;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.net.Socket;
 import java.net.URLDecoder;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +46,14 @@ import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolException;
 
 public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
+	private DateFormat	dateTimeFormat	= new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+
+	@Override
+	public void config(Socket iSocket, OClientConnection iConnection) throws IOException {
+		setName("HTTP-DB");
+		super.config(iSocket, iConnection);
+	}
+
 	@Override
 	public void doGet(final String iURI, final String iRequest, final OChannelTextServer iChannel) throws ONetworkProtocolException {
 		if (iURI == null || iURI.length() == 0)
@@ -372,7 +384,7 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 				json.writeAttribute(2, true, "lastCommandDetail", c.protocol.getLastCommandDetail());
 				json.writeAttribute(2, true, "lastExecutionTime", c.protocol.getLastCommandExecutionTime());
 				json.writeAttribute(2, true, "totalWorkingTime", c.protocol.getTotalWorkingTime());
-				json.writeAttribute(2, true, "connectedOn", c.since);
+				json.writeAttribute(2, true, "connectedOn", dateTimeFormat.format(new Date(c.since)));
 				json.endObject();
 			}
 			json.endCollection(1, false);
