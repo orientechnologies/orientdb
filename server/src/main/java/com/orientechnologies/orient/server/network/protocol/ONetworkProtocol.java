@@ -23,6 +23,12 @@ import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.server.OClientConnection;
 
 public abstract class ONetworkProtocol extends OSoftThread {
+	protected int			totalRequests							= 0;
+	protected int			commandType								= -1;
+	protected int			lastCommandType						= -1;
+	protected String	lastCommandDetail					= null;
+	protected long		totalCommandExecutionTime	= 0;
+	protected long		lastCommandExecutionTime	= 0;
 
 	public ONetworkProtocol(ThreadGroup group, String name) {
 		super(group, name);
@@ -31,4 +37,28 @@ public abstract class ONetworkProtocol extends OSoftThread {
 	public abstract void config(Socket iSocket, OClientConnection iConnection) throws IOException;
 
 	public abstract OChannel getChannel();
+
+	public int getCommandType() {
+		return commandType;
+	}
+
+	public int getLastCommandType() {
+		return lastCommandType;
+	}
+
+	public String getLastCommandDetail() {
+		return lastCommandDetail;
+	}
+
+	public long getTotalWorkingTime() {
+		return totalCommandExecutionTime;
+	}
+
+	public long getLastCommandExecutionTime() {
+		return lastCommandExecutionTime;
+	}
+
+	public int getTotalRequests() {
+		return totalRequests;
+	}
 }

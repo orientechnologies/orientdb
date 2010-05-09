@@ -144,8 +144,52 @@ body {
                    jQuery("#output").text( "Command response: " + msg );
                  }
         	 });
-        }
+      }
+      
+      function executeServerInfo(){
+          var req = $('#server').val() + '/server';
+          
+          $.ajax({
+               type: $('#method').val(),
+               url: req,
+               success: function(msg){
+                   var server = JSON.parse(msg);
+                   var connections = server["connections"];
 
+                   $('#serverConnections').append( $('<tr></tr>')
+                           .append( $('<td></td>' ).text("Id") )
+                           .append( $('<td></td>' ).text("Database") )
+                           .append( $('<td></td>' ).text("Protocol") )
+                           .append( $('<td></td>' ).text("Total requests") )
+                           .append( $('<td></td>' ).text("Command type") )
+                           .append( $('<td></td>' ).text("Last command type") )
+                           .append( $('<td></td>' ).text("Last command detail") )
+                           .append( $('<td></td>' ).text("Last execution time") )
+                           .append( $('<td></td>' ).text("Tota working time") )
+                           .append( $('<td></td>' ).text("Connected since") ) );
+                   
+                   for (conn in connections) {
+                       var c = connections[conn];
+                       $('#serverConnections').append( '<tr><td>' + c.id + '</td>'
+                    		   + '<td>' + c.db + '</td>'
+                    		   + '<td>' + c.protocol + '</td>'
+                               + '<td>' + c.totalRequests + '</td>'
+                               + '<td>' + c.commandType + '</td>'
+                               + '<td>' + c.lastCommandType + '</td>'
+                               + '<td>' + c.lastCommandDetail + '</td>'
+                               + '<td>' + c.lastExecutionTime + '</td>'
+                               + '<td>' + c.totalWorkingTime + '</td>'
+                    		   + '<td>' + c.connectedOn + '</td></tr>' );
+                   }
+                    
+                   jQuery("#output").text( "Command executed" );
+               },
+               error: function(msg){
+                   jQuery("#output").text( "Command response: " + msg );
+                 }
+             });
+      }
+      
       function clear(component){
           $('#'+component).text( "" );
       }
@@ -178,8 +222,8 @@ body {
 		<div id="tabs">
 		<ul>
 			<li><a href="#fragment-1"><span>Query</span></a></li>
-			<li><a href="#fragment-2"><span>Command</span></a></li>
-			<li><a href="#fragment-3"><span>Raw access</span></a></li>
+			<li><a href="#fragment-2"><span>Raw access</span></a></li>
+			<li><a href="#fragment-3"><span>Server</span></a></li>
 		</ul>
 		<div id="fragment-1">
 		<table style="width: 100%;" cellpadding="0" cellspacing="2">
@@ -216,8 +260,8 @@ body {
 							</tr>
 							<tr>
 								<td>
-								<button id="deleteRecord" class="ui-button-text-icon" style="width: 100px; text-align: left">Delete <img border="0" alt="Delete record"
-									src="/www/images/delete.png" align="top" /></button>
+								<button id="deleteRecord" class="ui-button-text-icon" style="width: 100px; text-align: left">Delete <img border="0"
+									alt="Delete record" src="/www/images/delete.png" align="top" /></button>
 								</td>
 							</tr>
 						</table>
@@ -229,14 +273,6 @@ body {
 		</table>
 		</div>
 		<div id="fragment-2">
-		<table style="width: 100%;">
-			<tr>
-				<td valign="top"><textarea id="commandText" cols="135" rows="4" title="value"></textarea> <a href="javascript:clear( 'commandText' )"><img
-					border="0" src="/www/images/clear.png" /></a></td>
-			</tr>
-		</table>
-		</div>
-		<div id="fragment-3">
 		<table style="width: 100%;">
 			<tr>
 				<td align="left"></td>
@@ -265,6 +301,21 @@ body {
 			<tr>
 				<td colspan="6" valign="top"><textarea id="rawOutput" cols="135" rows="22" title="value" readonly="readonly"></textarea> <a
 					href="javascript:clear('rawOutput')"><img border="0" src="/www/images/clear.png" /></a></td>
+			</tr>
+		</table>
+		</div>
+		<div id="fragment-3">
+		<table style="width: 100%;">
+			<tr>
+				<td valign="top">
+				<button onclick="javascript:executeServerInfo()" style="background-color: #F0F0F0;"><img border="0" alt="Execute"
+					src="/www/images/execute.png" /></button>
+				</td>
+			</tr>
+			<tr>
+				<td valign="top">
+				<table id="serverConnections" style="width: 100%;" cellpadding="5" border="1"></table>
+				</td>
 			</tr>
 		</table>
 		</div>

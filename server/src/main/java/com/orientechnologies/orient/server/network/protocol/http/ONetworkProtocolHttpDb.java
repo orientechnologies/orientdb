@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.network.protocol.http;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,8 +32,12 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.text.OChannelTextServer;
+import com.orientechnologies.orient.server.OClientConnection;
+import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolException;
 
@@ -63,6 +68,8 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 				getCluster(parts);
 			else if (parts[0].equals("class"))
 				getClass(parts);
+			else if (parts[0].equals("server"))
+				getServer(parts);
 			else
 				throw new IllegalArgumentException("Operation '" + parts[0] + "' not supported");
 
@@ -103,6 +110,8 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 
 	private void getDocument(final String[] iParts) throws Exception {
 		ODatabaseDocumentTx db = null;
+
+		commandType = OChannelBinaryProtocol.RECORD_LOAD;
 
 		try {
 			checkSyntax(iParts, 3, "Syntax error: document/<database>/<record-id>");
@@ -157,6 +166,8 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 			}
 
 			if ("edit".equals(operation)) {
+				commandType = OChannelBinaryProtocol.RECORD_UPDATE;
+
 				if (rid == null)
 					throw new IllegalArgumentException("Record ID not found in request");
 
@@ -191,6 +202,8 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 				doc.save();
 				sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid + " updated successfully.");
 			} else if ("add".equals(operation)) {
+				commandType = OChannelBinaryProtocol.RECORD_CREATE;
+
 				ODocument doc = new ODocument(db, className);
 
 				// BIND ALL CHANGED FIELDS
@@ -202,6 +215,8 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 						+ " updated successfully.");
 
 			} else if ("del".equals(operation)) {
+				commandType = OChannelBinaryProtocol.RECORD_DELETE;
+
 				if (rid == null)
 					throw new IllegalArgumentException("Record ID not found in request");
 
@@ -219,6 +234,8 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 	}
 
 	private void getDictionary(final String[] iParts) throws Exception {
+		commandType = OChannelBinaryProtocol.DICTIONARY_LOOKUP;
+
 		checkSyntax(iParts, 3, "Syntax error: dictionary/<database>/<key>");
 
 		ODatabaseDocumentTx db = null;
@@ -240,6 +257,8 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 
 	@SuppressWarnings("unchecked")
 	private void getQuery(final String[] iParts) throws Exception {
+		commandType = OChannelBinaryProtocol.COMMAND;
+
 		checkSyntax(
 				iParts,
 				3,
@@ -267,6 +286,8 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 	}
 
 	private void getCluster(final String[] iParts) throws Exception {
+		commandType = OChannelBinaryProtocol.COMMAND;
+
 		checkSyntax(
 				iParts,
 				3,
@@ -298,6 +319,8 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 	}
 
 	private void getClass(final String[] iParts) throws Exception {
+		commandType = OChannelBinaryProtocol.COMMAND;
+
 		checkSyntax(
 				iParts,
 				3,
@@ -325,6 +348,39 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 		} finally {
 			if (db != null)
 				OSharedDocumentDatabase.releaseDatabase(db);
+		}
+	}
+
+	private void getServer(final String[] iParts) throws Exception {
+		checkSyntax(iParts, 1, "Syntax error: server");
+
+		try {
+			StringWriter jsonBuffer = new StringWriter();
+			OJSONWriter json = new OJSONWriter(jsonBuffer);
+
+			json.beginObject();
+			json.beginCollection(1, true, "connections");
+			OClientConnection[] conns = OServerMain.server().getManagedServer().getConnections();
+			for (OClientConnection c : conns) {
+				json.beginObject();
+				json.writeAttribute(2, true, "id", c.id);
+				json.writeAttribute(2, true, "db", c.database != null ? c.database.getName() : null);
+				json.writeAttribute(2, true, "protocol", c.protocol.getName());
+				json.writeAttribute(2, true, "totalRequests", c.protocol.getTotalRequests());
+				json.writeAttribute(2, true, "commandType", c.protocol.getCommandType());
+				json.writeAttribute(2, true, "lastCommandType", c.protocol.getLastCommandType());
+				json.writeAttribute(2, true, "lastCommandDetail", c.protocol.getLastCommandDetail());
+				json.writeAttribute(2, true, "lastExecutionTime", c.protocol.getLastCommandExecutionTime());
+				json.writeAttribute(2, true, "totalWorkingTime", c.protocol.getTotalWorkingTime());
+				json.writeAttribute(2, true, "connectedOn", c.since);
+				json.endObject();
+			}
+			json.endCollection(1, false);
+			json.endObject();
+
+			sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, jsonBuffer.toString());
+
+		} finally {
 		}
 	}
 

@@ -67,6 +67,14 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 			throws ONetworkProtocolException {
 		OProfiler.getInstance().updateStatistic("Server.requests", +1);
 
+		++totalRequests;
+		commandType = -1;
+		lastCommandType = -1;
+		lastCommandDetail = iURI;
+		lastCommandExecutionTime = 0;
+
+		long begin = System.currentTimeMillis();
+
 		if (iMethod.equals("GET")) {
 			doGet(iURI, iRequest, iChannel);
 		} else if (iMethod.equals("PUT")) {
@@ -81,6 +89,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 					"->" + iChannel.socket.getInetAddress().getHostAddress() + ": Error on HTTP method '" + iMethod
 							+ "'. Valid methods are [GET," + "PUT,POST,DELETE]");
 		}
+
+		lastCommandType = commandType;
+		lastCommandExecutionTime = System.currentTimeMillis() - begin;
+		totalCommandExecutionTime += lastCommandExecutionTime;
 	}
 
 	public void doGet(String iURI, String iRequest, OChannelTextServer iChannel) throws ONetworkProtocolException {

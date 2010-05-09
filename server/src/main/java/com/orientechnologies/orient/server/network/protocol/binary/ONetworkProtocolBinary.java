@@ -71,13 +71,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	private String							passwd;
 	private ODatabaseRaw				underlyingDatabase;
 
-	private int									commandType;
-
-	private int									lastCommandType						= -1;
-	private String							lastCommandDetail					= null;
-	private long								totalCommandExecutionTime	= 0;
-	private long								lastCommandExecutionTime	= 0;
-
 	public ONetworkProtocolBinary() {
 		super(OServer.getThreadGroup(), "net-protocol-binary");
 	}
@@ -493,25 +486,5 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	@Override
 	public OChannel getChannel() {
 		return channel;
-	}
-
-	public int getCommandType() {
-		return commandType;
-	}
-
-	public int getLastCommandType() {
-		return lastCommandType;
-	}
-
-	public String getLastCommandDetail() {
-		return lastCommandDetail;
-	}
-
-	public long getTotalWorkingTime() {
-		return totalCommandExecutionTime;
-	}
-
-	public long getLastCommandExecutionTime() {
-		return lastCommandExecutionTime;
 	}
 }
