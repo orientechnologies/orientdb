@@ -102,7 +102,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 						iLinkedClass = iDatabase.getMetadata().getSchema().getClass(className);
 						item = item.substring(classSeparatorPos + 1);
 					}
-				}
+				}else
+					item = item.substring(1);
 
 				coll.add(new ODocument(iDatabase, iLinkedClass != null ? iLinkedClass.getName() : null, new ORecordId(item)));
 			}
@@ -200,18 +201,16 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			buffer.append(OStringSerializerHelper.COLLECTION_BEGIN);
 
 			int items = 0;
-			if (iLinkedClass != null) {
-				// LINKED OBJECTS
-				for (ORecordSchemaAware<?> record : (Collection<ORecordSchemaAware<?>>) iValue) {
-					if (items++ > 0)
-						buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
+			// LINKED OBJECTS
+			for (ORecordSchemaAware<?> record : (Collection<ORecordSchemaAware<?>>) iValue) {
+				if (items++ > 0)
+					buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
-					// ASSURE THE OBJECT IS SAVED
-					if (record.getDatabase() == null)
-						record.setDatabase(iDatabase);
+				// ASSURE THE OBJECT IS SAVED
+				if (record.getDatabase() == null)
+					record.setDatabase(iDatabase);
 
-					linkToStream(buffer, record);
-				}
+				linkToStream(buffer, record);
 			}
 
 			buffer.append(OStringSerializerHelper.COLLECTION_END);
