@@ -30,11 +30,13 @@
 This document enlist the last changes to the Orient Database project.
 
 -------------------------------------------------------------------------------
-VERSION 0.9.13 (beta) - beta (May, 8th 2010 ???)
+VERSION 0.9.13 - beta (May, 10th 2010)
 -------------------------------------------------------------------------------
 - New HTTP RESTful interface to the OrientDB Server
-- New OrientDB Server Studio GUI to manage documents. It's 100% web client-side
+- New OrientDB Server Studio GUI to manage documents, requests and monitor the
+  active connections. It's 100% web client-side
   application built with HTML, CSS and JQuery
+- Fixed minor bugs on http-connections
 
 -------------------------------------------------------------------------------
 VERSION 0.9.12 (beta) - beta (May, 5th 2010)
