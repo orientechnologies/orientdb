@@ -30,7 +30,7 @@ td {
 <script src="/www/js/i18n/grid.locale-en.js" type="text/javascript"></script>
 <script src="/www/js/jquery.jqGrid.min.js" type="text/javascript"></script>
 <script src="/www/js/jQueryRotate.js" type="text/javascript"></script>
-<script src="/www/js/orient.js" type="text/javascript"></script>
+<script src="/www/js/orient-studio.js" type="text/javascript"></script>
 <script type="text/javascript">
     function response(data){
     	var result = data["result"];
@@ -152,126 +152,15 @@ td {
       }
       
       function askServerConnections(){
-/*          
-          $.getJSON( $('#server').val() + '/server', serverResponse);
-      }
-          	  
-      function serverResponse(data){
-    	  var result = data["connections"];
-    	  
-    	  jQuery("#serverConnections").jqGrid( {
-              datatype: "local",
-              height: 280,
-              autowidth: true,
-              multiselect: false,
-              sortname: 'id',
-              viewrecords: true,
-              sortorder: "id",
-              caption: "Resultset",
-              colNames: ["Id","Database","Protocol","Total requests","Command type","Last command type","Last command detail",
-                         "Last execution time", "Total working time", "Connected since"],
-              colModel: [
-                         {"name" : "id",                  "index" : "id", "width" : 30, "classes" : "cell_readonly"},
-                         {"name" : "db",                  "index" : "db", "width" : 30, "classes" : "cell_readonly"},
-                         {"name" : "protocol",            "index" : "protocol", "width" : 30, "classes" : "cell_readonly"},
-                         {"name" : "totalRequests",      "index" : "_id", "width" : 30, "classes" : "cell_readonly"},
-                         {"name" : "commandType",        "index" : "_id", "width" : 30, "classes" : "cell_readonly"},
-                         {"name" : "lastCommandType",   "index" : "_id", "width" : 30, "classes" : "cell_readonly"},
-                         {"name" : "lastCommandDetail", "index" : "_id", "width" : 30, "classes" : "cell_readonly"},
-                         {"name" : "lastExecutionTime", "index" : "_id", "width" : 30, "classes" : "cell_readonly"},
-                         {"name" : "totalWorkingTime",  "index" : "_id", "width" : 30, "classes" : "cell_readonly"},
-                         {"name" : "connectedSince",     "index" : "_id", "width" : 30, "classes" : "cell_readonly"}
-                         ]
-           } );
-
-    	  for(var i = 0; i <= result.length; i++)
-              jQuery("#serverConnections").jqGrid('addRowData', i+1, result[i]);
-          
-*/
-          var req = $('#server').val() + '/server';
-          
-          $.ajax({
-               type: $('#method').val(),
-               url: req,
-               success: function(msg){
-                   var server = JSON.parse(msg);
-                   var connections = server["connections"];
-
-                   $('#serverConnections').text("");
-                   
-                   $('#serverConnections').append( $('<tr></tr>')
-                           .append( $('<td></td>' ).text("Id") )
-                           .append( $('<td></td>' ).text("Database") )
-                           .append( $('<td></td>' ).text("Protocol") )
-                           .append( $('<td></td>' ).text("Total requests") )
-                           .append( $('<td></td>' ).text("Command type") )
-                           .append( $('<td></td>' ).text("Last command type") )
-                           .append( $('<td></td>' ).text("Last command detail") )
-                           .append( $('<td></td>' ).text("Last execution time") )
-                           .append( $('<td></td>' ).text("Total working time") )
-                           .append( $('<td></td>' ).text("Connected since") ) );
-                   
-                   for (conn in connections) {
-                       var c = connections[conn];
-                       $('#serverConnections').append( '<tr><td>' + c.id + '</td>'
-                    		   + '<td>' + c.db + '</td>'
-                    		   + '<td>' + c.protocol + '</td>'
-                               + '<td>' + c.totalRequests + '</td>'
-                               + '<td>' + c.commandType + '</td>'
-                               + '<td>' + c.lastCommandType + '</td>'
-                               + '<td>' + c.lastCommandDetail + '</td>'
-                               + '<td>' + c.lastExecutionTime + '</td>'
-                               + '<td>' + c.totalWorkingTime + '</td>'
-                    		   + '<td>' + c.connectedOn + '</td></tr>' );
-                   }
-                    
-                   jQuery("#output").text( "Command executed" );
-               },
-               error: function(msg){
-                   jQuery("#output").text( "Command response: " + msg );
-                 }
-             });
+    	  executeRequest( $('#server').val() + '/server', function(server){
+              fillTable( $('#serverConnections'),
+                      ['Id', 'Database', 'Protocol', 'Total requests', 'Command type',
+                       'Last command type', 'Last command detail', 'Last execution time',
+                       'Total working time', 'Connected since'],
+                       server['connections']);
+          } );
       }
 
-      function executeRequest(iRequest, iCallback){
-          $.ajax({
-              type: 'GET',
-              url: iRequest,
-              success: function(msg){
-        	      iCallback.apply( this, [JSON.parse(msg)] );
-              },
-              error: function(msg){
-                  jQuery("#output").text( "Command response: " + msg );
-                }
-            });
-      }
-
-      function fillTable( iTable, iColumns, iData ){
-        $(iTable).text("");
-
-        var line = "";
-        for( col in iColumns ){
-        	line += '<td><b>'+iColumns[col]+'</b></td>';
-        }
-        $(iTable).append( '<tr>'+line+'</tr>' );
-
-        for( row in iData ){
-            var values = iData[row];
-            
-        	var line = ""
-            var i = 0;
-            for( col in values ){
-                if( i++ >= iColumns.length )
-                    break;
-                
-            	line += '<td>'+values[col]+'</td>';
-            }
-            $(iTable).append( '<tr>'+line+'</tr>' );
-        }
-         
-        jQuery("#output").text( "Command executed" );
-      }
-      
       function askDatabaseInfo(){
           executeRequest( $('#server').val() + '/database/' + $('#database').val(), function(database){
               fillTable( $('#databaseClusters'), ['Id', 'Name'], database['clusters']);
