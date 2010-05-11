@@ -33,6 +33,8 @@ import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -78,6 +80,8 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 				getDictionary(parts);
 			else if (parts[0].equals("cluster"))
 				getCluster(parts);
+			else if (parts[0].equals("database"))
+				getDatabase(parts);
 			else if (parts[0].equals("class"))
 				getClass(parts);
 			else if (parts[0].equals("server"))
@@ -324,6 +328,68 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 			}
 
 			sendRecordsContent(response);
+		} finally {
+			if (db != null)
+				OSharedDocumentDatabase.releaseDatabase(db);
+		}
+	}
+
+	private void getDatabase(final String[] iParts) throws Exception {
+		commandType = -1;
+
+		checkSyntax(iParts, 2, "Syntax error: database/<database>");
+
+		ODatabaseDocumentTx db = null;
+
+		try {
+			db = OSharedDocumentDatabase.acquireDatabase(iParts[1]);
+
+			final StringWriter buffer = new StringWriter();
+			final OJSONWriter json = new OJSONWriter(buffer);
+
+			json.beginObject();
+			if (db.getMetadata().getSchema().getClasses() != null) {
+				json.beginCollection(1, false, "classes");
+				for (OClass cls : db.getMetadata().getSchema().getClasses()) {
+					json.beginObject(1, true, null);
+					json.writeAttribute(2, true, "id", cls.getId());
+					json.writeAttribute(2, true, "name", cls.getName());
+
+					if (cls.properties() != null && cls.properties().size() > 0) {
+						json.beginCollection(2, true, "properties");
+						for (OProperty prop : cls.properties()) {
+							json.beginObject(2, true, null);
+							json.writeAttribute(3, true, "id", prop.getId());
+							json.writeAttribute(3, true, "name", prop.getName());
+							if (prop.getLinkedClass() != null)
+								json.writeAttribute(3, true, "linkedClass", prop.getLinkedClass().getName());
+							if (prop.getLinkedType() != null)
+								json.writeAttribute(3, true, "linkedType", prop.getLinkedType());
+							json.writeAttribute(3, true, "type", prop.getType().toString());
+							json.writeAttribute(3, true, "min", prop.getMin());
+							json.writeAttribute(3, true, "max", prop.getMax());
+							json.endObject(2, true);
+						}
+						json.endCollection(1, true);
+					}
+					json.endObject(1, false);
+				}
+				json.endCollection(1, true);
+			}
+
+			if (db.getClusterNames() != null) {
+				json.beginCollection(1, false, "clusters");
+				for (String clusterName : db.getClusterNames()) {
+					json.beginObject(2, true, null);
+					json.writeAttribute(3, false, "id", db.getClusterIdByName(clusterName));
+					json.writeAttribute(3, false, "name", clusterName);
+					json.endObject(2, false);
+				}
+				json.endCollection(1, true);
+			}
+			json.endObject();
+
+			sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, buffer.toString());
 		} finally {
 			if (db != null)
 				OSharedDocumentDatabase.releaseDatabase(db);
