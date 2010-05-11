@@ -561,24 +561,28 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		vargs.add(iIndex);
 		vargs.add(iRecord.getIdentity());
 
-		Object value = null;
-		for (String colName : iColumns) {
-			format.append("|%-20s");
+		try {
+			Object value = null;
+			for (String colName : iColumns) {
+				format.append("|%-20s");
 
-			if (iRecord instanceof ORecordSchemaAwareAbstract<?>)
-				value = ((ORecordSchemaAwareAbstract<?>) iRecord).field(colName);
-			else if (iRecord instanceof ORecordColumn)
-				value = ((ORecordColumn) iRecord).field(Integer.parseInt(colName));
+				if (iRecord instanceof ORecordSchemaAwareAbstract<?>)
+					value = ((ORecordSchemaAwareAbstract<?>) iRecord).field(colName);
+				else if (iRecord instanceof ORecordColumn)
+					value = ((ORecordColumn) iRecord).field(Integer.parseInt(colName));
 
-			if (value instanceof Collection<?>)
-				value = "[" + ((Collection<?>) value).size() + "]";
-			else if (value instanceof ORecord<?>)
-				value = ((ORecord<?>) value).getIdentity().toString();
+				if (value instanceof Collection<?>)
+					value = "[" + ((Collection<?>) value).size() + "]";
+				else if (value instanceof ORecord<?>)
+					value = ((ORecord<?>) value).getIdentity().toString();
 
-			vargs.add(value);
+				vargs.add(value);
+			}
+
+			out.println(String.format(format.toString(), vargs.toArray()));
+		} catch (Throwable t) {
+			out.printf("%3d|%8s|%s\n", iIndex, iRecord.getIdentity(), "Error on loading record dued to: " + t);
 		}
-
-		out.println(String.format(format.toString(), vargs.toArray()));
 	}
 
 	private void printHeaderLine(final List<String> iColumns) {

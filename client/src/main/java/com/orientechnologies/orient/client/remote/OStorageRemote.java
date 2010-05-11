@@ -385,6 +385,7 @@ public class OStorageRemote extends OStorageAbstract {
 							}
 						} catch (Throwable t) {
 							// ABSORBE ALL THE USER EXCEPTIONS
+							t.printStackTrace();
 						}
 					}
 				} else {

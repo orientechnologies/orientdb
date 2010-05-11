@@ -21,6 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
@@ -267,7 +268,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		RET value = (RET) fields.get(iPropertyName);
 
 		if (value instanceof ORecord<?>) {
-			// RELATION 1-1
+			// RELATION X->1
 			lazyLoadRecord((ORecord<?>) value);
 
 		} else if (value instanceof Collection<?>) {
@@ -355,6 +356,10 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 */
 	private <RET> void lazyLoadRecord(final ORecord<?> record) {
 		if (record.getStatus() == STATUS.NOT_LOADED)
-			record.load();
+			try {
+				record.load();
+			} catch (ORecordNotFoundException e) {
+				// IGNORE IT CAUSE CAN BE RAISED BY NETWORK ISSUES
+			}
 	}
 }
