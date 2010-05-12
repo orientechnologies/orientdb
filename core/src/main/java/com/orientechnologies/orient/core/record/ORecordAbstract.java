@@ -101,10 +101,11 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 			dirty = false;
 	}
 
-	public void setDirty() {
+	public ORecordAbstract<T> setDirty() {
 		if (!dirty)
 			dirty = true;
 		source = null;
+		return this;
 	}
 
 	public boolean isDirty() {
@@ -115,14 +116,16 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		return pinned;
 	}
 
-	public void pin() {
+	public ORecordAbstract<T> pin() {
 		if (!pinned)
 			pinned = true;
+		return this;
 	}
 
-	public void unpin() {
+	public ORecordAbstract<T> unpin() {
 		if (pinned)
 			pinned = false;
+		return this;
 	}
 
 	public ODatabaseRecord getDatabase() {
@@ -132,6 +135,10 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	public ORecordAbstract setDatabase(final ODatabaseRecord storage) {
 		this.database = storage;
 		return this;
+	}
+
+	public <RET extends ORecord<T>> RET fromJSON(final String iSource) {
+		return (RET) ORecordSerializerJSON.INSTANCE.fromString(database, iSource, this);
 	}
 
 	public String toJSON() {
@@ -160,7 +167,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 			throw new ODatabaseException("No database assigned to current record");
 
 		if (database.load(this) == null)
-			throw new ORecordNotFoundException("Record id: " + getIdentity());
+			throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found");
 
 		return this;
 	}
