@@ -1,346 +1,448 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
-<head>
-<title>OrientDB Server (www.orientechnologies.com)</title>
-<meta name="title" content="Document | DBMS | Database | Java" />
-<meta name="description" content="OrientDB Server" />
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-
-<link rel="stylesheet" type="text/css" media="screen" href="/www/styles/redmond/jquery-ui-1.8.1.custom.css" />
-<link rel="stylesheet" type="text/css" media="screen" href="/www/styles/ui.jqgrid.css" />
-<style>
-body {
-	font-size: 10pt;
-	font-family: Arial;
-}
-
-td {
-	font-size: 10pt;
-	font-family: Arial;
-}
-
-.cell_readonly {
-	color: white;
-	background-color: #6D7B8D;
-}
-</style>
-
-<script src="/www/js/jquery-1.4.2.min.js" type="text/javascript"></script>
-<script src="/www/js/jquery-ui-1.8.1.custom.min.js" type="text/javascript"></script>
-<script src="/www/js/i18n/grid.locale-en.js" type="text/javascript"></script>
-<script src="/www/js/jquery.jqGrid.min.js" type="text/javascript"></script>
-<script src="/www/js/jQueryRotate.js" type="text/javascript"></script>
-<script src="/www/js/orient-studio.js" type="text/javascript"></script>
-<script type="text/javascript">
-    function response(data){
-    	var result = data["result"];
-        var columnNames = new Array();
-        
-        // CREATE COLUMN NAMES
-        for (row = 0; row < result.length; row++) {
-            for (col in result[row]) {
-                if( !columnNames[col] ){
-                    columnNames[col] = col;
-                }
+    <head>
+        <title>OrientDB Server (www.orientechnologies.com)</title>
+        <meta name="title" content="Document | DBMS | Database | Java" />
+        <meta name="description" content="OrientDB Server" />
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <link rel="stylesheet" type="text/css" media="screen" href="/www/styles/redmond/jquery-ui-1.8.1.custom.css" />
+        <link rel="stylesheet" type="text/css" media="screen" href="/www/styles/ui.jqgrid.css" />
+        <style>
+            body {
+                font-size: 10pt;
+                font-family: Arial;
             }
-        }
-        
-        // CREATE COLUMN MODEL
-        var columnModel = new Array();
-
-        columnModel.push( {"name" : "_id", "index" : "_id", "width" : 30, "classes" : "cell_readonly"} );
-        columnModel.push( {"name" : "_ver", "index" : "_ver", "width" : 30, "classes" : "cell_readonly"} );
-        columnModel.push( {"name" : "_class", "index" : "_class", "width" : 30, "classes" : "cell_readonly"} );
-        
-        for (col in columnNames) {
-            if( col.charAt(0) !== '_'){
-        	   columnModel.push( {"name" : columnNames[col], editable: true, "index" : columnNames[col], "width" : 80} );
+            
+            td {
+                font-size: 10pt;
+                font-family: Arial;
             }
-        }
-
-        var lastsel;
-        jQuery("#list").jqGrid( {
-            datatype: "local",
-            editurl: getStudioDocumentURL(),
-            height: 280,
-            autowidth: true,
-            multiselect: false,
-            sortname: 'id',
-            viewrecords: true,
-            sortorder: "id",
-            caption: "Resultset",
-            colNames: columnNames,
-            colModel: columnModel,
-            onSelectRow: function(id){
-                           if(id && id!==lastsel){
-					         jQuery('#list').jqGrid('restoreRow',lastsel);
-					         lastsel = id;
-  					       }
-
-                           var recId = jQuery('#list').jqGrid('getRowData', id)["_id"];
-                           jQuery('#list').jqGrid('editRow',id,true,null,
-                        		   function(response, postdata)
-                                   {
-                                   jQuery("#output").text( response.responseText );
-                                   return true;
-                                 },
-                                 getStudioDocumentURL(),
-                                 [recId]
-                		    );
-                         }                             
-         } );
-
-        $("#newRecord").click(
-                function(){
-                	jQuery("#list").jqGrid('editGridRow',"new",
-                        	{height:280,reloadAfterSubmit:false, closeOnEscape:true, afterSubmit : function(response, postdata)
-                        {
-                        jQuery("#output").text( response.responseText );
-                        return true;
-                      }
-                    }); 
-                });  
-        $("#deleteRecord").click(
-                function(){
-                    var selectedRow = jQuery("#list").jqGrid('getGridParam', 'selrow');
-                    if( selectedRow != null ){
-                        var recId = jQuery('#list').jqGrid('getRowData', selectedRow)["_id"];
-                        jQuery("#list").jqGrid('delGridRow', selectedRow,
-                                {reloadAfterSubmit:false, closeOnEscape:true, delData: [recId], afterSubmit : function(response, postdata)
-                        	{
-                        	  jQuery("#output").text( response.responseText );
-                              return true;
-                        	}
-                    	} );
+            
+            .cell_readonly {
+                color: white;
+                background-color: #6D7B8D;
+            }
+        </style>
+        <script src="/www/js/jquery-1.4.2.min.js" type="text/javascript">
+        </script>
+        <script src="/www/js/jquery-ui-1.8.1.custom.min.js" type="text/javascript">
+        </script>
+        <script src="/www/js/i18n/grid.locale-en.js" type="text/javascript">
+        </script>
+        <script src="/www/js/jquery.jqGrid.min.js" type="text/javascript">
+        </script>
+        <script src="/www/js/jQueryRotate.js" type="text/javascript">
+        </script>
+        <script src="/www/js/orient-app.js" type="text/javascript">
+        </script>
+        <script type="text/javascript">
+            function queryResponse(data){
+                var result = data["result"];
+                var columnNames = new Array();
+                
+                // CREATE COLUMN NAMES
+                for (row = 0; row < result.length; row++) {
+                    for (col in result[row]) {
+                        if (!columnNames[col]) 
+                            columnNames[col] = col;
                     }
-                    else
+                }
+                
+                // CREATE COLUMN MODEL
+                var columnModel = new Array();
+                
+                columnModel.push({
+                    "name": "_id",
+                    "index": "_id",
+                    "width": 30,
+                    "classes": "cell_readonly"
+                });
+                columnModel.push({
+                    "name": "_ver",
+                    "index": "_ver",
+                    "width": 30,
+                    "classes": "cell_readonly"
+                });
+                columnModel.push({
+                    "name": "_class",
+                    "index": "_class",
+                    "width": 30,
+                    "classes": "cell_readonly"
+                });
+                
+                for (col in columnNames) {
+                    if (col.charAt(0) !== '_') {
+                        columnModel.push({
+                            "name": columnNames[col],
+                            editable: true,
+                            "index": columnNames[col],
+                            "width": 80
+                        });
+                    }
+                }
+                
+                var lastsel;
+                
+                fillDynaTable($('#list'), "Resultset", columnNames, columnModel, result, {
+                    sortname: 'id',
+                    height: 280,
+                    editurl: getStudioDocumentURL(),
+                    onSelectRow: function(id){
+                        if (id && id !== lastsel) {
+                            jQuery('#list').jqGrid('restoreRow', lastsel);
+                            lastsel = id;
+                        }
+                        
+                        var recId = jQuery('#list').jqGrid('getRowData', id)["_id"];
+                        jQuery('#list').jqGrid('editRow', id, true, null, function(response, postdata){
+                            jQuery("#output").text(response.responseText);
+                            return true;
+                        }, getStudioDocumentURL(), [recId]);
+                    }
+                });
+                
+                $("#newRecord").click(function(){
+                    jQuery("#list").jqGrid('editGridRow', "new", {
+                        height: 280,
+                        reloadAfterSubmit: false,
+                        closeOnEscape: true,
+                        afterSubmit: function(response, postdata){
+                            jQuery("#output").text(response.responseText);
+                            return true;
+                        }
+                    });
+                });
+                $("#deleteRecord").click(function(){
+                    var selectedRow = jQuery("#list").jqGrid('getGridParam', 'selrow');
+                    if (selectedRow != null) {
+                        var recId = jQuery('#list').jqGrid('getRowData', selectedRow)["_id"];
+                        jQuery("#list").jqGrid('delGridRow', selectedRow, {
+                            reloadAfterSubmit: false,
+                            closeOnEscape: true,
+                            delData: [recId],
+                            afterSubmit: function(response, postdata){
+                                jQuery("#output").text(response.responseText);
+                                return true;
+                            }
+                        });
+                    }
+                    else 
                         alert("Please Select Row to delete!");
-                });  
-        
-        for(var i = 0; i <= result.length; i++)
-          jQuery("#list").jqGrid('addRowData', i+1, result[i]);
-      }
-
-      function executeQuery(){
-        jQuery("#list").GridUnload();
-        jQuery("#output").text( "" );
-        $.getJSON( $('#server').val() + '/query/' + $('#database').val() + '/' + $('#queryText').val() + '/' + $('#limit').val(), response);
-      }
-
-      function clearResultset(){
-		    jQuery("#list").jqGrid('clearGridData');
-	  }
-
-      function getStudioDocumentURL(){
-        return $('#server').val() + '/studio-document/' + $('#database').val()
-      }
-
-      function executeRawCommand(){
-    	  var req = $('#server').val() + '/' + $('#operation').val() + '/' + $('#database').val() + '/' + $('#args').val();
-    	  
-    	  $.ajax({
-        	   type: $('#method').val(),
-        	   url: req,
-        	   success: function(msg){
-    		       jQuery("#rawOutput").text( msg );
-    		       jQuery("#output").text( "Command executed" );
-        	   },
-        	   error: function(msg){
-                   jQuery("#output").text( "Command response: " + msg );
-                 }
-        	 });
-      }
-      
-      function askServerConnections(){
-    	  executeRequest( $('#server').val() + '/server', function(server){
-              fillTable( $('#serverConnections'),
-                      ['Id', 'Database', 'Protocol', 'Total requests', 'Command type',
-                       'Last command type', 'Last command detail', 'Last execution time',
-                       'Total working time', 'Connected since'],
-                       server['connections']);
-          } );
-      }
-
-      function askDatabaseInfo(){
-          executeRequest( $('#server').val() + '/database/' + $('#database').val(), function(database){
-              fillTable( $('#databaseClusters'), ['Id', 'Name'], database['clusters']);
-              fillTable( $('#databaseClasses'), ['Id', 'Name'], database['classes']);
-          } );
-      }
-      
-      function clear(component){
-          $('#'+component).text( "" );
-      }
-     
-	  jQuery(document).ready(function(){
-	      jQuery(document).ajaxError(function(event, request, settings, err){
-	    	jQuery("#output").text( "Error: " + request.responseText );
-	      });
-	      
-          $("#tabs").tabs();
-	}); 
-</script>
-</head>
-
-<body onload="orient_init()">
-<table align="center" width="1000">
-	<tr>
-		<td>
-		<table style="width: 100%;" cellpadding="0" cellspacing="2">
-			<tr>
-				<td align="left"><a href="http://www.orientechnologies.com/orient-db.htm"><img border="0" src="/www/images/orient_db.png" /></a></td>
-				<td class="ui-widget">Server: <input id="server" size="30" value="http://localhost:2480" /> Database: <input id="database" size="20"
-					value="demo" /></td>
-			</tr>
-		</table>
-		</td>
-	</tr>
-	<tr>
-		<td>
-		<div id="tabs">
-		<ul>
-			<li><a href="#fragment-1"><span>Database</span></a></li>
-			<li><a href="#fragment-2"><span>Query</span></a></li>
-			<li><a href="#fragment-3"><span>Raw access</span></a></li>
-			<li><a href="#fragment-4"><span>Server</span></a></li>
-		</ul>
-		<div id="fragment-1">
-		<table style="width: 100%;">
-			<tr>
-				<td valign="top">
-				<button onclick="javascript:askDatabaseInfo()" class="ui-button-text-icon">Refresh <img border="0" alt="Execute"
-					src="/www/images/execute.png" /></button>
-				</td>
-			</tr>
-			<tr>
-				<td>
-				<h2>Clusters</h2>
-				</td>
-				<td>
-				<h2>Classes</h2>
-				</td>
-			</tr>
-			<tr>
-				<td valign="top">
-				<table id="databaseClusters" style="width: 100%;" cellspacing="0" cellpadding="5" border="1"></table>
-				</td>
-				<td valign="top">
-				<table id="databaseClasses" style="width: 100%;" cellspacing="0" cellpadding="5" border="1"></table>
-				</td>
-			</tr>
-		</table>
-		</div>
-		<div id="fragment-2">
-		<table style="width: 100%;" cellpadding="0" cellspacing="2">
-			<tr>
-				<td valign="top">
-				<table style="width: 100%;" cellpadding="2" cellspacing="0">
-					<tr>
-						<td valign="top"><textarea id="queryText" cols="120" rows="4" title="value">select from Address</textarea></td>
-						<td>
-						<table style="width: 100%;">
-							<tr>
-								<td>
-								<button onclick="javascript:executeQuery()" class="ui-button-text-icon">Execute <img border="0" alt="Execute"
-									src="/www/images/execute.png" align="top" /></button>
-								</td>
-							</tr>
-							<tr>
-								<td align="right">Limit: <input id="limit" size="2" value="20" /></td>
-							</tr>
-						</table>
-						</td>
-					</tr>
-					<tr>
-						<td valign="top">
-						<table id="list"></table>
-						</td>
-						<td valign="top">
-						<table style="width: 100%;">
-							<tr>
-								<td>
-								<button id="newRecord" " class="ui-button-text-icon" style="width: 100px; text-align: left">New <img border="0" alt="New record"
-									src="/www/images/add.png" align="top" /></button>
-								</td>
-							</tr>
-							<tr>
-								<td>
-								<button id="deleteRecord" class="ui-button-text-icon" style="width: 100px; text-align: left">Delete <img border="0"
-									alt="Delete record" src="/www/images/delete.png" align="top" /></button>
-								</td>
-							</tr>
-						</table>
-						</td>
-					</tr>
-				</table>
-				</td>
-			</tr>
-		</table>
-		</div>
-		<div id="fragment-3">
-		<table style="width: 100%;">
-			<tr>
-				<td align="left"></td>
-				<td align="left">(HTTP Method)</td>
-				<td align="left">(Operation)</td>
-				<td align="left">(Database)</td>
-				<td align="left">(Arguments)</td>
-				<td align="left"></td>
-			</tr>
-			<tr>
-				<td>http://localhost:2480/</td>
-				<td><select id="method">
-					<option value='GET'>GET</option>
-					<option value='PUT'>PUT</option>
-					<option value='POST'>POST</option>
-					<option value='DELETE'>DELETE</option>
-				</select>/</td>
-				<td><input id="operation" size="12" value="cluster" />/</td>
-				<td><input id="database" size="15" value="demo" />/</td>
-				<td><input id="args" size="40" value="Address" /></td>
-				<td>
-				<button onclick="javascript:executeRawCommand()" style="background-color: #F0F0F0;"><img border="0" alt="Execute"
-					src="/www/images/execute.png" /></button>
-				</td>
-			</tr>
-			<tr>
-				<td colspan="6" valign="top"><textarea id="rawOutput" cols="135" rows="22" title="value" readonly="readonly"></textarea> <a
-					href="javascript:clear('rawOutput')"><img border="0" src="/www/images/clear.png" /></a></td>
-			</tr>
-		</table>
-		</div>
-		<div id="fragment-4">
-		<table style="width: 100%;">
-			<tr>
-				<td valign="top">
-				<button onclick="javascript:askServerConnections()" class="ui-button-text-icon">Refresh <img border="0" alt="Execute"
-					src="/www/images/execute.png" /></button>
-				</td>
-			</tr>
-			<tr>
-				<td valign="top">
-				<table id="serverConnections" style="width: 100%;" cellspacing="0" cellpadding="5" border="1"></table>
-				</td>
-			</tr>
-		</table>
-		</div>
-		</div>
-		</td>
-	</tr>
-	<tr>
-		<td>
-		<table style="width: 100%;">
-			<tr>
-				<td valign="top">Output:</td>
-				<td valign="top"><textarea id="output" cols="125" rows="3" title="value" readonly="readonly"></textarea></td>
-			</tr>
-		</table>
-		</td>
-	</tr>
-	<tr>
-		<td align="center">To know more information visit: <a href="http://www.orientechnologies.com">http://www.orientechnologies.com</a></td>
-	</tr>
-</table>
-</body>
-<script type="text/javascript">orient_google_stats();</script>
+                });
+            }
+            
+            function executeQuery(){
+                jQuery("#output").text("");
+                $.getJSON($('#server').val() + '/query/' + $('#database').val() + '/' + $('#queryText').val() + '/' + $('#limit').val(), queryResponse);
+            }
+            
+            function clearResultset(){
+                jQuery("#list").jqGrid('clearGridData');
+            }
+            
+            function getStudioDocumentURL(){
+                return $('#server').val() + '/studio-document/' + $('#database').val()
+            }
+            
+            function executeRawCommand(){
+                var req = $('#server').val() + '/' + $('#operation').val() + '/' + $('#database').val() + '/' + $('#args').val();
+                
+                $.ajax({
+                    type: $('#method').val(),
+                    url: req,
+                    success: function(msg){
+                        jQuery("#rawOutput").val(msg);
+                        jQuery("#output").text("Command executed");
+                    },
+                    data: jQuery("#rawOutput").val(),
+                    error: function(msg){
+                        jQuery("#output").text("Command response: " + msg);
+                    }
+                });
+            }
+            
+            function askServerConnections(){
+                executeRequest($('#server').val() + '/server', function(server){
+                    fillStaticTable($('#serverConnections'), ['Id', 'Database', 'Protocol', 'Total requests', 'Command type', 'Last command type', 'Last command detail', 'Last execution time', 'Total working time', 'Connected since'], server['connections']);
+                });
+            }
+            
+            var databaseInfo;
+            function askDatabaseInfo(){
+                executeRequest($('#server').val() + '/database/' + $('#database').val(), function(database){
+                    databaseInfo = database;
+                    
+                    fillDynaTable($('#databaseClusters'), "Clusters", ['id', 'name'], null, database['clusters']);
+                    fillDynaTable($('#classProperties'), "Properties", ['id', 'name', 'type', 'linkedType', 'linkedClass', 'mandatory', 'notNull', 'min', 'max'], [{
+                        name: 'id',
+                        index: 'id',
+                        width: 55
+                    }, {
+                        name: 'name',
+                        index: 'name',
+                        width: 180
+                    }, {
+                        name: 'type',
+                        index: 'type',
+                        width: 80
+                    }, {
+                        name: 'linkedType',
+                        index: 'linkedType',
+                        width: 80
+                    }, {
+                        name: 'linkedClass',
+                        index: 'linkedClass',
+                        width: 80
+                    }, {
+                        name: 'mandatory',
+                        index: 'linkedClass',
+                        width: 30
+                    }, {
+                        name: 'notNull',
+                        index: 'linkedClass',
+                        width: 30
+                    }, {
+                        name: 'min',
+                        index: 'linkedClass',
+                        width: 30
+                    }, {
+                        name: 'max',
+                        index: 'linkedClass',
+                        width: 30
+                    }], {
+                        sortname: 'id'
+                    });
+                    
+                    fillDynaTable($('#databaseClasses'), "Classes", ['id', 'name'], null, database['classes'], {
+                        sortname: 'id',
+                        onSelectRow: function(classRowNum){
+                            fillDynaTableRows($('#classProperties'), databaseInfo['classes'][classRowNum - 1]['properties']);
+                        }
+                    });
+                });
+            }
+            
+            function clear(component){
+                $('#' + component).val("");
+            }
+            
+            jQuery(document).ready(function(){
+                jQuery(document).ajaxError(function(event, request, settings, err){
+                    jQuery("#output").text("Error: " + request.responseText);
+                });
+                
+                $("#tabs").tabs();
+            });
+        </script>
+    </head>
+    <body>
+        <table align="center" width="1000">
+            <tr>
+                <td>
+                    <table style="width: 100%;" cellpadding="0" cellspacing="2">
+                        <tr>
+                            <td align="left">
+                                <a href="http://www.orientechnologies.com/orient-db.htm"><img border="0" src="/www/images/orient_db.png" /></a>
+                            </td>
+                            <td class="ui-widget">
+                                Server: <input id="server" size="30" value="http://localhost:2480" />Database: <input id="database" size="20" value="demo" />
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div id="tabs">
+                        <ul>
+                            <li>
+                                <a href="#fragment-1"><span>Database</span></a>
+                            </li>
+                            <li>
+                                <a href="#fragment-2"><span>Query</span></a>
+                            </li>
+                            <li>
+                                <a href="#fragment-3"><span>Raw access</span></a>
+                            </li>
+                            <li>
+                                <a href="#fragment-4"><span>Server</span></a>
+                            </li>
+                        </ul>
+                        <div id="fragment-1">
+                            <button onclick="javascript:askDatabaseInfo()" class="ui-button-text-icon">
+                                Refresh <img border="0" alt="Execute" src="/www/images/execute.png" />
+                            </button>
+                            <table style="width: 100%;">
+                                <tr>
+                                    <td valign="top" width="20%">
+                                        <table id="databaseClasses" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+                                        </table>
+                                    </td>
+                                    <td valign="top" width="60%">
+                                        <table id="classProperties" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td valign="top" width="20%">
+                                        <table id="databaseClusters" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div id="fragment-2">
+                            <table style="width: 100%;" cellpadding="0" cellspacing="2">
+                                <tr>
+                                    <td valign="top">
+                                        <table style="width: 100%;" cellpadding="2" cellspacing="0">
+                                            <tr>
+                                                <td valign="top">
+                                                    <textarea id="queryText" cols="120" rows="4" title="value">
+                                                        select from Address
+                                                    </textarea>
+                                                </td>
+                                                <td>
+                                                    <table style="width: 100%;">
+                                                        <tr>
+                                                            <td>
+                                                                <button onclick="javascript:executeQuery()" class="ui-button-text-icon">
+                                                                    Execute <img border="0" alt="Execute" src="/www/images/execute.png" align="top" />
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td align="right">
+                                                                Limit: <input id="limit" size="2" value="20" />
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td valign="top">
+                                                    <table id="list">
+                                                    </table>
+                                                </td>
+                                                <td valign="top">
+                                                    <table style="width: 100%;">
+                                                        <tr>
+                                                            <td>
+                                                            <button id="newRecord" " class="ui-button-text-icon" style="width: 100px;  text-align: left">New <img border="0"  alt="New record" src="/www/images/add.png" align="top" />
+                                                            </button>
+                                                        </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>
+                                                                <button id="deleteRecord" class="ui-button-text-icon" style="width: 100px; text-align: left">
+                                                                    Delete <img border="0" alt="Delete record" src="/www/images/delete.png" align="top" />
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div id="fragment-3">
+                            <table style="width: 100%;">
+                                <tr>
+                                    <td align="left">
+                                    </td>
+                                    <td align="left">
+                                        (HTTP Method)
+                                    </td>
+                                    <td align="left">
+                                        (Operation)
+                                    </td>
+                                    <td align="left">
+                                        (Database)
+                                    </td>
+                                    <td align="left">
+                                        (Arguments)
+                                    </td>
+                                    <td align="left">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        http://localhost:2480/
+                                    </td>
+                                    <td>
+                                        <select id="method">
+                                            <option value='GET'>GET</option>
+                                            <option value='PUT'>PUT</option>
+                                            <option value='POST'>POST</option>
+                                            <option value='DELETE'>DELETE</option>
+                                        </select>/
+                                    </td>
+                                    <td>
+                                        <input id="operation" size="12" value="cluster" />/
+                                    </td>
+                                    <td>
+                                        <input id="database" size="15" value="demo" />/
+                                    </td>
+                                    <td>
+                                        <input id="args" size="40" value="Address" />
+                                    </td>
+                                    <td>
+                                        <button onclick="javascript:executeRawCommand()" style="background-color: #F0F0F0;">
+                                            <img border="0" alt="Execute" src="/www/images/execute.png" />
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="6" valign="top">
+                                        <textarea id="rawOutput" cols="135" rows="22" title="value">
+                                        </textarea>
+                                        <a href="javascript:clear('rawOutput')"><img border="0" src="/www/images/clear.png" /></a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div id="fragment-4">
+                            <table style="width: 100%;">
+                                <tr>
+                                    <td valign="top">
+                                        <button onclick="javascript:askServerConnections()" class="ui-button-text-icon">
+                                            Refresh <img border="0" alt="Execute" src="/www/images/execute.png" />
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td valign="top">
+                                        <table id="serverConnections" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <table style="width: 100%;">
+                        <tr>
+                            <td valign="top">
+                                Output:
+                            </td>
+                            <td valign="top">
+                                <textarea id="output" cols="125" rows="3" title="value" readonly="readonly">
+                                </textarea>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td align="center">
+                    To know more information visit: <a href="http://www.orientechnologies.com">http://www.orientechnologies.com</a>
+                </td>
+            </tr>
+        </table>
+    </body>
 </html>
