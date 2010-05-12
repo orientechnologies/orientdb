@@ -53,5 +53,4 @@ public class ONetworkProtocolMemcache extends ONetworkProtocolHttpAbstract {
 			this.addKeyToResponse = addKeyToResponse;
 		}
 	}
-
 }

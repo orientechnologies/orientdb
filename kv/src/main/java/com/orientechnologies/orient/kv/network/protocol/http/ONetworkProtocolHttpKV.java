@@ -22,6 +22,7 @@ import java.net.SocketTimeoutException;
 import java.util.Map;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.enterprise.channel.text.OChannelTextServer;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolException;
@@ -29,6 +30,8 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 
 public abstract class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstract {
+	private static final String	ORIENT_SERVER_KV	= "Orient Key Value v." + OConstants.ORIENT_VERSION;
+
 	protected abstract Map<String, String> getBucket(String dbName, String bucket);
 
 	protected abstract String getKey(String key);
@@ -36,16 +39,26 @@ public abstract class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstrac
 	@Override
 	public void config(Socket iSocket, OClientConnection iConnection) throws IOException {
 		setName("HTTP-KV");
+		data.serverInfo = ORIENT_SERVER_KV;
 		super.config(iSocket, iConnection);
 	}
 
 	@Override
-	public void doGet(final String iURI, final String iContent, final OChannelTextServer iChannel) throws ONetworkProtocolException {
-		if (OHttpUtils.URL_SEPARATOR.equals(iURI) || iURI.startsWith("/www")) {
-			directAccess(iURI);
-			return;
-		}
+	public void service() throws ONetworkProtocolException, IOException {
+		if (request.method.equals(OHttpUtils.METHOD_GET))
+			doGet(request.url, request.content, request.channel);
+		else if (request.method.equals(OHttpUtils.METHOD_POST))
+			doPost(request.url, request.content, request.channel);
+		else if (request.method.equals(OHttpUtils.METHOD_PUT))
+			doPut(request.url, request.content, request.channel);
+		else if (request.method.equals(OHttpUtils.METHOD_DELETE))
+			doDelete(request.url, request.content, request.channel);
+		else
+			OLogManager.instance().warn(this,
+					"->" + channel.socket.getInetAddress().getHostAddress() + ": HTTP Method not supported: " + request.method);
+	}
 
+	public void doGet(final String iURI, final String iContent, final OChannelTextServer iChannel) throws ONetworkProtocolException {
 		final String parts[] = getDbBucketKey(iURI, 2);
 
 		final String dbName = parts[0];
@@ -86,7 +99,6 @@ public abstract class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstrac
 		}
 	}
 
-	@Override
 	public void doPut(final String iURI, final String iContent, final OChannelTextServer iChannel) throws ONetworkProtocolException {
 		final String parts[] = getDbBucketKey(iURI, 3);
 
@@ -127,7 +139,6 @@ public abstract class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstrac
 		}
 	}
 
-	@Override
 	public void doPost(final String iURI, final String iContent, final OChannelTextServer iChannel) throws ONetworkProtocolException {
 		final String parts[] = getDbBucketKey(iURI, 3);
 
@@ -167,7 +178,6 @@ public abstract class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstrac
 		}
 	}
 
-	@Override
 	public void doDelete(String iURI, String iContent, OChannelTextServer iChannel) throws ONetworkProtocolException {
 		final String parts[] = getDbBucketKey(iURI, 3);
 

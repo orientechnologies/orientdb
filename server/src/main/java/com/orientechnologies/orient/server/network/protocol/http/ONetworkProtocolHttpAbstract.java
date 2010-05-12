@@ -15,19 +15,17 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.net.URLDecoder;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.text.OChannelTextServer;
@@ -37,17 +35,20 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolException;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
-	private static final String			ORIENT_SERVER_KV		= "Orient Key Value v." + OConstants.ORIENT_VERSION;
-	private static final int				MAX_CONTENT_LENGTH	= 10000;																							// MAX = 10Kb
+	private static final int				MAX_CONTENT_LENGTH	= 10000;																	// MAX = 10Kb
 	private static final int				TCP_DEFAULT_TIMEOUT	= 5000;
 
 	protected OClientConnection			connection;
 	protected OServerConfiguration	configuration;
 	protected OChannelTextServer		channel;
 	protected OUser									account;
-	private String									httpVersion;
+
+	protected OHttpRequest					request;
+
+	Map<String, OServerCommand>			commands						= new HashMap<String, OServerCommand>();
 
 	public ONetworkProtocolHttpAbstract() {
 		super(OServer.getThreadGroup(), "HTTP");
@@ -59,51 +60,68 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 		connection = iConnection;
 		configuration = new OServerConfiguration();
 
+		request = new OHttpRequest(channel, data);
+
 		start();
 	}
 
-	public void service(final String iMethod, final String iURI, final String iRequest, final OChannelTextServer iChannel)
-			throws ONetworkProtocolException {
+	public void service() throws ONetworkProtocolException, IOException {
 		OProfiler.getInstance().updateStatistic("Server.requests", +1);
 
-		++totalRequests;
-		commandType = -1;
-		lastCommandType = -1;
-		lastCommandDetail = iURI;
-		lastCommandExecutionTime = 0;
+		++data.totalRequests;
+		data.commandType = -1;
+		data.lastCommandType = -1;
+		data.lastCommandDetail = request.url;
+		data.lastCommandExecutionTime = 0;
 
 		long begin = System.currentTimeMillis();
 
-		if (iMethod.equals("GET")) {
-			doGet(iURI, iRequest, iChannel);
-		} else if (iMethod.equals("PUT")) {
-			doPut(iURI, iRequest, iChannel);
-		} else if (iMethod.equals("POST")) {
-			doPost(iURI, iRequest, iChannel);
-		} else if (iMethod.equals("DELETE")) {
-			doDelete(iURI, iRequest, iChannel);
+		final String command;
+		if (request.url.length() < 2) {
+			command = "";
 		} else {
-			OLogManager.instance().warn(
-					this,
-					"->" + iChannel.socket.getInetAddress().getHostAddress() + ": Error on HTTP method '" + iMethod
-							+ "'. Valid methods are [GET," + "PUT,POST,DELETE]");
+			final int sep = request.url.indexOf("/", 1);
+			command = sep == -1 ? request.url.substring(1) : request.url.substring(1, sep);
 		}
 
-		lastCommandType = commandType;
-		lastCommandExecutionTime = System.currentTimeMillis() - begin;
-		totalCommandExecutionTime += lastCommandExecutionTime;
+		OServerCommand cmd = commands.get(request.method + "." + command);
+
+		if (cmd != null)
+			try {
+				// EXECUTE THE COMMAND
+				cmd.execute(request);
+
+			} catch (Exception e) {
+
+				final StringBuilder buffer = new StringBuilder();
+				buffer.append(e);
+				Throwable cause = e.getCause();
+				while (cause != null && cause != cause.getCause()) {
+					buffer.append("\r\n--> ");
+					buffer.append(cause);
+
+					cause = cause.getCause();
+				}
+
+				sendTextContent(500, "Unknow error", OHttpUtils.CONTENT_TEXT_PLAIN, buffer.toString());
+			}
+		else
+			OLogManager.instance()
+					.warn(this, "->" + channel.socket.getInetAddress().getHostAddress() + ": Command not found: " + command);
+
+		data.lastCommandType = data.commandType;
+		data.lastCommandExecutionTime = System.currentTimeMillis() - begin;
+		data.totalCommandExecutionTime += data.lastCommandExecutionTime;
 	}
 
-	public void doGet(String iURI, String iRequest, OChannelTextServer iChannel) throws ONetworkProtocolException {
-	}
-
-	public void doPut(String iURI, String iRequest, OChannelTextServer iChannel) throws ONetworkProtocolException {
-	}
-
-	public void doPost(String iURI, String iRequest, OChannelTextServer iChannel) throws ONetworkProtocolException {
-	}
-
-	public void doDelete(String iURI, String iRequest, OChannelTextServer iChannel) throws ONetworkProtocolException {
+	/**
+	 * Register all the names for the same instance
+	 * 
+	 * @param iServerCommandInstance
+	 */
+	protected void registerCommand(final OServerCommand iServerCommandInstance) {
+		for (String name : iServerCommandInstance.getNames())
+			commands.put(name, iServerCommandInstance);
 	}
 
 	protected void sendTextContent(final int iCode, final String iReason, final String iContentType, final String iContent)
@@ -120,22 +138,6 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 		channel.flush();
 	}
 
-	protected void sendBinaryContent(final int iCode, final String iReason, final String iContentType, final InputStream iContent,
-			final long iSize) throws IOException {
-		sendStatus(iCode, iReason);
-		sendResponseHeaders(iContentType);
-		writeLine(OHttpUtils.CONTENT_LENGTH + (iSize));
-		writeLine(null);
-
-		int i = 0;
-		while (iContent.available() > 0) {
-			channel.outStream.write((byte) iContent.read());
-			++i;
-		}
-
-		channel.flush();
-	}
-
 	protected void writeLine(final String iContent) throws IOException {
 		if (iContent != null)
 			channel.outStream.write(iContent.getBytes());
@@ -143,7 +145,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 	}
 
 	protected void sendStatus(final int iStatus, final String iReason) throws IOException {
-		writeLine(httpVersion + " " + iStatus + " " + iReason);
+		writeLine(request.httpVersion + " " + iStatus + " " + iReason);
 	}
 
 	protected void sendResponseHeaders(final String iContentType) throws IOException {
@@ -151,7 +153,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 		writeLine("Pragma: no-cache");
 		writeLine("Date: " + new Date());
 		writeLine("Content-Type: " + iContentType);
-		writeLine("Server: " + ORIENT_SERVER_KV);
+		writeLine("Server: " + data.serverInfo);
 		writeLine("Connection: Keep-Alive");
 	}
 
@@ -221,13 +223,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 			return;
 		}
 
-		String method = null;
-		String uri = null;
-
 		long timer = -1;
 
 		try {
-			StringBuilder request = new StringBuilder();
+			StringBuilder requestContent = new StringBuilder();
 			char c = (char) channel.inStream.read();
 
 			if (channel.inStream.available() == 0) {
@@ -237,41 +236,42 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
 			timer = OProfiler.getInstance().startChrono();
 
-			request.setLength(0);
+			requestContent.setLength(0);
 
 			if (c != '\n')
 				// AVOID INITIAL /N
-				request.append(c);
+				requestContent.append(c);
 
 			while (!channel.socket.isInputShutdown()) {
 				c = (char) channel.inStream.read();
 
 				if (c == '\r') {
-					String[] words = request.toString().split(" ");
+					String[] words = requestContent.toString().split(" ");
 					if (words.length < 3) {
 						OLogManager.instance().warn(this,
-								"->" + channel.socket.getInetAddress().getHostAddress() + ": Error on invalid content:\n" + request);
+								"->" + channel.socket.getInetAddress().getHostAddress() + ": Error on invalid content:\n" + requestContent);
 						break;
 					}
-
-					method = words[0];
-					uri = words[1];
-					httpVersion = words[2];
 
 					// CONSUME THE NEXT \n
 					channel.inStream.read();
 
-					service(method, uri, readAllContent(), channel);
+					request.method = words[0];
+					request.url = URLDecoder.decode(words[1], "UTF-8").trim();
+					request.httpVersion = words[2];
+					request.content = readAllContent();
+					if (request.content != null)
+						request.content = URLDecoder.decode(request.content, "UTF-8").trim();
 
+					service();
 					return;
 				}
-
-				request.append(c);
+				requestContent.append(c);
 			}
 
 			if (OLogManager.instance().isDebugEnabled())
 				OLogManager.instance().debug(this,
-						"Parsing request from client " + channel.socket.getInetAddress().getHostAddress() + ":\n" + request);
+						"Parsing request from client " + channel.socket.getInetAddress().getHostAddress() + ":\n" + requestContent);
 
 		} catch (SocketException e) {
 			connectionError();
@@ -280,9 +280,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 			timeout();
 
 		} catch (Throwable t) {
-			if (method != null && uri != null)
+			if (request.method != null && request.url != null)
 				try {
-					sendTextContent(505, "Error on excuting of " + method + " for the resource: " + uri, "text/plain", t.toString());
+					sendTextContent(505, "Error on excuting of " + request.method + " for the resource: " + request.url, "text/plain", t
+							.toString());
 				} catch (IOException e) {
 				}
 		} finally {
@@ -330,47 +331,5 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 	@Override
 	public OChannel getChannel() {
 		return null;
-	}
-
-	protected void directAccess(final String iURI) {
-		final String wwwPath = System.getProperty("orient.www.path", "src/site");
-
-		InputStream bufferedFile = null;
-		try {
-			String url = OHttpUtils.URL_SEPARATOR.equals(iURI) ? url = "/www/index.htm" : iURI;
-			url = wwwPath + url.substring("www".length() + 1, url.length());
-			final File inputFile = new File(url);
-			if (!inputFile.exists()) {
-				sendStatus(404, "File not found");
-				channel.flush();
-				return;
-			}
-
-			String type = null;
-			if (url.endsWith(".htm") || url.endsWith(".html"))
-				type = "text/html";
-			else if (url.endsWith(".png"))
-				type = "image/png";
-			else if (url.endsWith(".jpeg"))
-				type = "image/jpeg";
-			else if (url.endsWith(".js"))
-				type = "application/x-javascript";
-			else if (url.endsWith(".css"))
-				type = "text/css";
-
-			bufferedFile = new BufferedInputStream(new FileInputStream(inputFile));
-
-			sendBinaryContent(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, type, bufferedFile, inputFile.length());
-
-		} catch (IOException e) {
-			e.printStackTrace();
-
-		} finally {
-			if (bufferedFile != null)
-				try {
-					bufferedFile.close();
-				} catch (IOException e) {
-				}
-		}
 	}
 }

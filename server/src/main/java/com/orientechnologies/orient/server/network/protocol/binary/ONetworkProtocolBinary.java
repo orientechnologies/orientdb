@@ -85,17 +85,17 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	@SuppressWarnings("unchecked")
 	@Override
 	protected void execute() throws Exception {
-		commandType = -1;
+		data.commandType = -1;
 
 		long clock = 0;
 
 		try {
-			commandType = channel.readByte();
-			++totalRequests;
+			data.commandType = channel.readByte();
+			++data.totalRequests;
 
 			clock = System.currentTimeMillis();
 
-			switch (commandType) {
+			switch (data.commandType) {
 
 			case OChannelBinaryProtocol.CONNECT: {
 				user = channel.readString();
@@ -393,7 +393,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				break;
 
 			default:
-				OLogManager.instance().error(this, "Request not supported. Code: " + commandType);
+				OLogManager.instance().error(this, "Request not supported. Code: " + data.commandType);
 
 				channel.clearInput();
 				sendError(null);
@@ -416,10 +416,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			OSerializationThreadLocal.INSTANCE.get().clear();
 
-			lastCommandExecutionTime = System.currentTimeMillis() - clock;
-			totalCommandExecutionTime += lastCommandExecutionTime;
+			data.lastCommandExecutionTime = System.currentTimeMillis() - clock;
+			data.totalCommandExecutionTime += data.lastCommandExecutionTime;
 
-			lastCommandType = commandType;
+			data.lastCommandType = data.commandType;
 		}
 	}
 
