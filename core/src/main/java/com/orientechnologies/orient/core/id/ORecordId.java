@@ -44,13 +44,7 @@ public class ORecordId implements ORID {
 	}
 
 	public ORecordId(final String iRecordId) {
-		if (!iRecordId.contains(SEPARATOR))
-			throw new IllegalArgumentException("Argument is not a RecordId in form of string");
-
-		final String parts[] = iRecordId.split(SEPARATOR);
-		clusterId = Integer.parseInt(parts[0]);
-		checkClusterLimits();
-		clusterPosition = Long.parseLong(parts[1]);
+		fromString(iRecordId);
 	}
 
 	public void reset() {
@@ -125,4 +119,15 @@ public class ORecordId implements ORID {
 	public long getClusterPosition() {
 		return clusterPosition;
 	}
+
+	public void fromString(final String iRecordId) {
+		if (!iRecordId.contains(SEPARATOR))
+			throw new IllegalArgumentException("Argument is not a RecordId in form of string");
+
+		final String parts[] = iRecordId.split(SEPARATOR);
+		clusterId = Integer.parseInt(parts[0]);
+		checkClusterLimits();
+		clusterPosition = Long.parseLong(parts[1]);
+	}
+
 }
