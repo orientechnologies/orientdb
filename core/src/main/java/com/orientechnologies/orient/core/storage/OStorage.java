@@ -62,9 +62,9 @@ public interface OStorage {
 
 	public int updateRecord(int iRequesterId, ORID iRecordId, byte[] iContent, final int iVersion, final byte iRecordType);
 
-	public void deleteRecord(int iRequesterId, ORID iRecordId, final int iVersion);
+	public boolean deleteRecord(int iRequesterId, ORID iRecordId, final int iVersion);
 
-	public void deleteRecord(int iRequesterId, int iClusterId, long iPosition, final int iVersion);
+	public boolean deleteRecord(int iRequesterId, int iClusterId, long iPosition, final int iVersion);
 
 	// TX OPERATIONS
 	public void commit(int iRequesterId, OTransaction<?> iTx);

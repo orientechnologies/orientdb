@@ -80,7 +80,7 @@ public class OStorageLocal extends OStorageAbstract {
 		txManager = new OStorageLocalTxExecuter(this, configuration.txSegment);
 	}
 
-	public void open(final int iRequesterId, final String iUserName, final String iUserPassword) {
+	public synchronized void open(final int iRequesterId, final String iUserName, final String iUserPassword) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		addUser();
@@ -415,9 +415,9 @@ public class OStorageLocal extends OStorageAbstract {
 		return updateRecord(iRequesterId, getClusterById(iClusterId), iPosition, iContent, iVersion, iRecordType);
 	}
 
-	public void deleteRecord(final int iRequesterId, final int iClusterId, final long iPosition, final int iVersion) {
+	public boolean deleteRecord(final int iRequesterId, final int iClusterId, final long iPosition, final int iVersion) {
 		checkOpeness();
-		deleteRecord(iRequesterId, getClusterById(iClusterId), iPosition, iVersion);
+		return deleteRecord(iRequesterId, getClusterById(iClusterId), iPosition, iVersion);
 	}
 
 	/**
@@ -839,7 +839,7 @@ public class OStorageLocal extends OStorageAbstract {
 		return -1;
 	}
 
-	protected void deleteRecord(final int iRequesterId, final OCluster iClusterSegment, final long iPosition, final int iVersion) {
+	protected boolean deleteRecord(final int iRequesterId, final OCluster iClusterSegment, final long iPosition, final int iVersion) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		final String recId = ORecordId.generateString(iClusterSegment.getId(), iPosition);
@@ -851,7 +851,7 @@ public class OStorageLocal extends OStorageAbstract {
 
 			if (!checkForRecordValidity(ppos))
 				// ALREADY DELETED
-				return;
+				return false;
 
 			// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
 			if (iVersion > -1 && ppos.version != iVersion)
@@ -864,6 +864,8 @@ public class OStorageLocal extends OStorageAbstract {
 
 			getDataSegment(ppos.dataSegment).deleteRecord(ppos.dataPosition);
 
+			return true;
+
 		} catch (IOException e) {
 
 			OLogManager.instance().error(this, "Error on deleting record #" + iPosition + " in cluster: " + iClusterSegment, e);
@@ -873,6 +875,8 @@ public class OStorageLocal extends OStorageAbstract {
 
 			OProfiler.getInstance().stopChrono("OStorageLocal.deleteRecord", timer);
 		}
+
+		return false;
 	}
 
 	/**

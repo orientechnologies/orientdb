@@ -257,7 +257,7 @@ public class OStorageRemote extends OStorageAbstract {
 		return -1;
 	}
 
-	public void deleteRecord(final int iRequesterId, final int iClusterId, final long iPosition, final int iVersion) {
+	public boolean deleteRecord(final int iRequesterId, final int iClusterId, final long iPosition, final int iVersion) {
 		checkConnection();
 
 		do {
@@ -271,7 +271,8 @@ public class OStorageRemote extends OStorageAbstract {
 				network.flush();
 
 				readStatus();
-				break;
+
+				return network.readByte() == '1';
 			} catch (Exception e) {
 				if (handleException("Error on delete record: " + iClusterId + ":" + iPosition, e))
 					break;
@@ -280,6 +281,7 @@ public class OStorageRemote extends OStorageAbstract {
 				releaseExclusiveLock(locked);
 			}
 		} while (true);
+		return false;
 	}
 
 	public long count(final int iClusterId) {

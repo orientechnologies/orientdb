@@ -48,8 +48,8 @@ public abstract class OStorageAbstract extends OSharedResourceAdaptive implement
 		return updateRecord(iRequesterId, iRecordId.getClusterId(), iRecordId.getClusterPosition(), iContent, iVersion, iRecordType);
 	}
 
-	public void deleteRecord(final int iRequesterId, final ORID iRecordId, final int iVersion) {
-		deleteRecord(iRequesterId, iRecordId.getClusterId(), iRecordId.getClusterPosition(), iVersion);
+	public boolean deleteRecord(final int iRequesterId, final ORID iRecordId, final int iVersion) {
+		return deleteRecord(iRequesterId, iRecordId.getClusterId(), iRecordId.getClusterPosition(), iVersion);
 	}
 
 	public OStorageConfiguration getConfiguration() {
@@ -61,7 +61,7 @@ public abstract class OStorageAbstract extends OSharedResourceAdaptive implement
 	}
 
 	public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
-		return ppos.version != -1;
+		return ppos != null && ppos.version != -1;
 	}
 
 	public String getName() {

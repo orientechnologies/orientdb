@@ -183,11 +183,14 @@ public class OStorageMemory extends OStorageAbstract {
 		}
 	}
 
-	public void deleteRecord(final int iRequesterId, final int iClusterId, final long iPosition, final int iVersion) {
+	public boolean deleteRecord(final int iRequesterId, final int iClusterId, final long iPosition, final int iVersion) {
 		OCluster cluster = getClusterById(iClusterId);
 
 		try {
 			OPhysicalPosition ppos = cluster.getPhysicalPosition(iPosition, new OPhysicalPosition());
+
+			if (ppos == null)
+				return false;
 
 			// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
 			if (iVersion > -1 && ppos.version != iVersion)
@@ -198,6 +201,8 @@ public class OStorageMemory extends OStorageAbstract {
 
 			cluster.removePhysicalPosition(iPosition, null);
 			data.deleteRecord(ppos.dataPosition);
+
+			return true;
 
 		} catch (IOException e) {
 			throw new OStorageException("Error on delete record in cluster: " + iClusterId, e);
