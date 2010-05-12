@@ -157,26 +157,27 @@ public class OLogManager {
 		// FORMAT THE MESSAGE
 		String msg = String.format(iMessage, iAdditionalArgs);
 
+		Constructor<OException> c;
 		OException exceptionToThrow = null;
 		try {
 			if (iNestedException != null) {
-				Constructor<OException> c = (Constructor<OException>) iExceptionClass.getConstructor(String.class, Throwable.class);
+				c = (Constructor<OException>) iExceptionClass.getConstructor(String.class, Throwable.class);
 				exceptionToThrow = c.newInstance(msg, iNestedException);
 			}
 		} catch (Exception e) {
 		}
 
-		Constructor<OException> c;
-		try {
-			c = (Constructor<OException>) iExceptionClass.getConstructor(String.class);
-			exceptionToThrow = c.newInstance(msg);
-		} catch (SecurityException e1) {
-		} catch (NoSuchMethodException e1) {
-		} catch (IllegalArgumentException e1) {
-		} catch (InstantiationException e1) {
-		} catch (IllegalAccessException e1) {
-		} catch (InvocationTargetException e1) {
-		}
+		if (exceptionToThrow == null)
+			try {
+				c = (Constructor<OException>) iExceptionClass.getConstructor(String.class);
+				exceptionToThrow = c.newInstance(msg);
+			} catch (SecurityException e1) {
+			} catch (NoSuchMethodException e1) {
+			} catch (IllegalArgumentException e1) {
+			} catch (InstantiationException e1) {
+			} catch (IllegalAccessException e1) {
+			} catch (InvocationTargetException e1) {
+			}
 
 		if (exceptionToThrow != null)
 			throw exceptionToThrow;
