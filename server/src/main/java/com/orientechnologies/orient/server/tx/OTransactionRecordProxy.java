@@ -58,15 +58,15 @@ public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
 		return false;
 	}
 
-	public void pin() {
+	public OTransactionRecordProxy pin() {
 		throw new UnsupportedOperationException();
 	}
 
-	public void setDirty() {
+	public OTransactionRecordProxy setDirty() {
 		throw new UnsupportedOperationException();
 	}
 
-	public void unpin() {
+	public OTransactionRecordProxy unpin() {
 		throw new UnsupportedOperationException();
 	}
 
@@ -133,6 +133,10 @@ public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
 	}
 
 	public String toJSON() {
+		return null;
+	}
+
+	public ORecord<byte[]> fromJSON(String iJson) {
 		return null;
 	}
 }
