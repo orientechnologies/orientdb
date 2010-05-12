@@ -87,11 +87,9 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
 			super.save(iContent);
 
-		} catch (Throwable t) {
-			OLogManager.instance().error(
-					this,
-					"Error on saving record #" + iContent.getIdentity() + " of class '"
-							+ (iContent.getClassName() != null ? iContent.getClassName() : "?") + "'", t, ODatabaseException.class);
+		} catch (Exception e) {
+			OLogManager.instance().exception("Error on saving record #%s of class '%s'", e, ODatabaseException.class,
+					iContent.getIdentity(), (iContent.getClassName() != null ? iContent.getClassName() : "?"));
 		}
 		return this;
 	}
@@ -141,10 +139,9 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 		try {
 			underlying.delete(iContent);
 
-		} catch (Throwable t) {
-			OLogManager.instance().error(this,
-					"Error on deleting record #" + iContent.getIdentity() + " of class '" + iContent.getClassName() + "'", t,
-					ODatabaseException.class);
+		} catch (Exception e) {
+			OLogManager.instance().exception("Error on deleting record #%s of class '%s'", e, ODatabaseException.class,
+					iContent.getIdentity(), iContent.getClassName());
 		}
 		return this;
 	}

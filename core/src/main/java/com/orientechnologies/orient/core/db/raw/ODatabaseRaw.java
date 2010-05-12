@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.config.OStorageLogicalClusterConfigurat
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntent;
@@ -170,11 +171,12 @@ public class ODatabaseRaw implements ODatabase {
 
 	public void delete(final int iClusterId, final long iPosition, final int iVersion) {
 		try {
-			storage.deleteRecord(id, iClusterId, iPosition, iVersion);
-		} catch (Throwable t) {
-			OLogManager.instance().error(this,
-					"Error on deleting record #" + iPosition + " in cluster '" + storage.getPhysicalClusterNameById(iClusterId) + "'", t,
-					ODatabaseException.class);
+			if (!storage.deleteRecord(id, iClusterId, iPosition, iVersion))
+				throw new ORecordNotFoundException("The record with id '" + iClusterId + ":" + iPosition + "' was not found");
+
+		} catch (Exception e) {
+			OLogManager.instance().exception("Error on deleting record #%d in cluster '%s'", e, ODatabaseException.class, iPosition,
+					storage.getPhysicalClusterNameById(iClusterId));
 		}
 	}
 
