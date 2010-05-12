@@ -44,14 +44,18 @@ public class OStringParser {
 		return buffer.toString();
 	}
 
-	public static String[] getWords(String iRecord, final String ioWordSeparator) {
+	public static String[] getWords(String iRecord, final String iSeparatorChars) {
+		return getWords(iRecord, iSeparatorChars, " \n\r");
+	}
+
+	public static String[] getWords(String iRecord, final String iSeparatorChars, final String iJumpChars) {
 		iRecord = iRecord.trim();
-		char separator = ioWordSeparator.charAt(0);
 
 		ArrayList<String> fields = new ArrayList<String>();
 		StringBuilder buffer = new StringBuilder();
 		char stringBeginChar = ' ';
 		char c;
+		boolean charFound;
 
 		for (int i = 0; i < iRecord.length(); ++i) {
 			c = iRecord.charAt(i);
@@ -70,23 +74,48 @@ public class OStringParser {
 					stringBeginChar = c;
 					continue;
 				}
-			} else if (c == separator && stringBeginChar == ' ') {
-				if (buffer.length() > 0) {
-					// SEPARATOR (OUTSIDE A STRING): PUSH
-					fields.add(buffer.toString());
-					buffer.setLength(0);
+			} else if (stringBeginChar == ' ') {
+				charFound = false;
+				for (int sepIndex = 0; sepIndex < iSeparatorChars.length(); ++sepIndex) {
+					if (iSeparatorChars.charAt(sepIndex) == c) {
+						charFound = true;
+						if (buffer.length() > 0) {
+							// SEPARATOR (OUTSIDE A STRING): PUSH
+							fields.add(buffer.toString());
+							buffer.setLength(0);
+						}
+						break;
+					}
 				}
-				continue;
+
+				if (charFound)
+					continue;
+			}
+
+			// CHECK IF IT MUST JUMP THE CHAR
+			if (buffer.length() == 0) {
+				charFound = false;
+
+				for (int jumpIndex = 0; jumpIndex < iJumpChars.length(); ++jumpIndex) {
+					if (iJumpChars.charAt(jumpIndex) == c) {
+						charFound = true;
+						break;
+					}
+				}
+
+				if (charFound)
+					continue;
 			}
 
 			buffer.append(c);
 		}
-		fields.add(buffer.toString());
-		buffer.setLength(0);
+
+		if (buffer.length() > 0)
+			// ADD THE LAST WORD IF ANY
+			fields.add(buffer.toString());
 
 		String[] result = new String[fields.size()];
 		fields.toArray(result);
 		return result;
 	}
-
 }

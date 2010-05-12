@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Map;
 
+import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -26,6 +27,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.ORecordStringable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 
 public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
@@ -38,17 +40,48 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 	private static final String								ATTRIBUTE_CLASS		= "_class";
 
 	@Override
-	public ORecordInternal<?> fromString(final ODatabaseRecord<?> iDatabase, final String iSource, final ORecordInternal<?> iRecord) {
+	public ORecordInternal<?> fromString(final ODatabaseRecord<?> iDatabase, String iSource, final ORecordInternal<?> iRecord) {
 		try {
-			StringWriter buffer = new StringWriter();
-			OJSONWriter json = new OJSONWriter(buffer);
+			iSource = iSource.trim();
 
-			json.beginObject();
+			if (!iSource.startsWith("{") || !iSource.endsWith("}"))
+				throw new OSerializationException("Error on unmarshalling JSON content: content must be embraced by { }");
 
-			json.endObject();
+			iSource = iSource.substring(1, iSource.length() - 1).trim();
 
-		} catch (IOException e) {
-			throw new OSerializationException("Error on unmarshalling of record from JSON", e);
+			String[] fields = OStringParser.getWords(iSource, ":,");
+
+			if (fields != null && fields.length > 0) {
+				ODocument doc = (ODocument) iRecord;
+
+				boolean isNew = !doc.getIdentity().isValid();
+
+				String fieldName;
+				String fieldValue;
+
+				for (int i = 0; i < fields.length; i += 2) {
+					fieldName = fields[i];
+					fieldValue = fields[i + 1];
+					if (fieldName.equals(ATTRIBUTE_CLASS))
+						doc.setClassName(fields[i + 1]);
+					else if (fieldName.equals(ATTRIBUTE_ID)) {
+						if (isNew) {
+							// NEW RECORD: SET THE RECORD ID
+							ORecordId rid = new ORecordId(fieldValue);
+							doc.setIdentity(rid.clusterId, rid.clusterPosition);
+						}
+					} else if (fieldName.equals(ATTRIBUTE_VERSION)) {
+						if (!isNew) {
+							// UPDATE RECORD: SET THE VERSION NUMBER
+							doc.setVersion(Integer.parseInt(fieldValue));
+						}
+					} else
+						doc.field(fieldName, fieldValue);
+				}
+			}
+
+		} catch (Exception e) {
+			throw new OSerializationException("Error on unmarshalling JSON content", e);
 		}
 		return iRecord;
 	}

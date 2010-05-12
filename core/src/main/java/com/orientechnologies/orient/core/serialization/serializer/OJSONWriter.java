@@ -88,6 +88,7 @@ public class OJSONWriter {
 
 	public OJSONWriter endCollection(final int iIdentLevel, final boolean iNewLine) throws IOException {
 		format(iIdentLevel, iNewLine);
+		firstAttribute = false;
 		out.append("]");
 		return this;
 	}
