@@ -15,9 +15,11 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -296,7 +298,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 *          field value
 	 * @return The Record instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
-	public ODocument field(final String iPropertyName, final Object iPropertyValue) {
+	public ODocument field(final String iPropertyName, Object iPropertyValue) {
 		checkForFields();
 		if (clazz != null) {
 			OProperty prop = clazz.getProperty(iPropertyName);
@@ -308,6 +310,30 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		}
 
 		setDirty();
+
+		Object oldValue = fields.get(iPropertyName);
+
+		if (oldValue != null) {
+			// DETERMINE THE TYPE FROM THE PREVIOUS CONTENT
+			if (oldValue instanceof ORecord<?> && iPropertyValue instanceof String)
+				// CONVERT TO RECORD-ID
+				iPropertyValue = new ORecordId((String) iPropertyValue);
+			else if (oldValue instanceof Collection<?> && iPropertyValue instanceof String) {
+				// CONVERT TO COLLECTION
+				final List<ODocument> newValue = new ArrayList<ODocument>();
+				iPropertyValue = newValue;
+
+				final String stringValue = (String) iPropertyValue;
+
+				if (stringValue != null && stringValue.length() > 0) {
+					final String[] items = stringValue.split(",");
+					for (String s : items) {
+						newValue.add(new ODocument(database, new ORecordId(s)));
+					}
+				}
+			}
+		}
+
 		fields.put(iPropertyName, iPropertyValue);
 
 		return this;
