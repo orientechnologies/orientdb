@@ -107,7 +107,7 @@ public class OServerCommandPostStudioDocument extends OServerCommandAbstract {
 				}
 
 				doc.save();
-				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid
+				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid
 						+ " updated successfully.");
 			} else if ("add".equals(operation)) {
 				iRequest.data.commandType = OChannelBinaryProtocol.RECORD_CREATE;
@@ -119,7 +119,7 @@ public class OServerCommandPostStudioDocument extends OServerCommandAbstract {
 					doc.field(f.getKey(), f.getValue());
 
 				doc.save();
-				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + doc.getIdentity()
+				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + doc.getIdentity()
 						+ " updated successfully.");
 
 			} else if ("del".equals(operation)) {
@@ -130,11 +130,11 @@ public class OServerCommandPostStudioDocument extends OServerCommandAbstract {
 
 				final ODocument doc = new ODocument(db, new ORecordId(rid));
 				doc.delete();
-				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid
+				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid
 						+ " deleted successfully.");
 
 			} else
-				sendTextContent(iRequest, 500, "Error", OHttpUtils.CONTENT_TEXT_PLAIN, "Operation not supported");
+				sendTextContent(iRequest, 500, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Operation not supported");
 
 		} finally {
 			if (db != null)

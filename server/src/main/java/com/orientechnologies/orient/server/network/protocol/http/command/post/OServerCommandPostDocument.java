@@ -43,7 +43,7 @@ public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
 				OSharedDocumentDatabase.releaseDatabase(db);
 		}
 
-		sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, "Record "
+		sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN, "Record "
 				+ doc.getIdentity() + " created successfully.");
 	}
 

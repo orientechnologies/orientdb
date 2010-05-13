@@ -48,7 +48,7 @@ public class OServerCommandDeleteDocument extends OServerCommandDocumentAbstract
 			final ODocument doc = new ODocument(db, recorId);
 			doc.delete();
 
-			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + recorId
+			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + recorId
 					+ " deleted successfully.");
 
 		} finally {

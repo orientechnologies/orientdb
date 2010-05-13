@@ -58,7 +58,7 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 				OSharedDocumentDatabase.releaseDatabase(db);
 		}
 
-		sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid
+		sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid
 				+ " updated successfully.");
 	}
 

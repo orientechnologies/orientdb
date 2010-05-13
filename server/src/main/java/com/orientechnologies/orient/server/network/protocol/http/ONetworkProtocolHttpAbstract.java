@@ -38,17 +38,18 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolExce
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
-	private static final int				MAX_CONTENT_LENGTH	= 10000;																	// MAX = 10Kb
-	private static final int				TCP_DEFAULT_TIMEOUT	= 5000;
+	private static final int						MAX_CONTENT_LENGTH	= 10000;																	// MAX = 10Kb
+	private static final int						TCP_DEFAULT_TIMEOUT	= 5000;
 
-	protected OClientConnection			connection;
-	protected OServerConfiguration	configuration;
-	protected OChannelTextServer		channel;
-	protected OUser									account;
+	protected OClientConnection					connection;
+	protected OServerConfiguration			configuration;
+	protected OChannelTextServer				channel;
+	protected OUser											account;
 
-	protected OHttpRequest					request;
+	protected OHttpRequest							request;
 
-	Map<String, OServerCommand>			commands						= new HashMap<String, OServerCommand>();
+	private Map<String, OServerCommand>	commands						= new HashMap<String, OServerCommand>();
+	private OBase64Utils								base64							= new OBase64Utils(null, "");
 
 	public ONetworkProtocolHttpAbstract() {
 		super(OServer.getThreadGroup(), "HTTP");
@@ -157,12 +158,16 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 		writeLine("Connection: Keep-Alive");
 	}
 
-	protected String readAllContent() throws IOException {
-		StringBuilder request = new StringBuilder();
+	protected void readAllContent(final OHttpRequest iRequest) throws IOException {
+		iRequest.content = null;
+
 		int in;
 		char currChar;
 		int contentLength = -1;
 		boolean endOfHeaders = false;
+
+		final StringBuilder request = new StringBuilder();
+
 		while (!channel.socket.isInputShutdown()) {
 			in = channel.inStream.read();
 			if (in == -1)
@@ -172,9 +177,23 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
 			if (currChar == '\r') {
 				if (request.length() > 0 && contentLength == -1) {
-					String line = request.toString().toUpperCase();
-					if (line.startsWith(OHttpUtils.CONTENT_LENGTH)) {
-						contentLength = Integer.parseInt(line.substring(OHttpUtils.CONTENT_LENGTH.length()));
+					String line = request.toString();
+					String lineUpperCase = line.toUpperCase();
+					if (lineUpperCase.startsWith("AUTHORIZATION")) {
+						// STORE AUTHORIZATION INFORMATION INTO THE REQUEST
+						String auth = line.substring("AUTHORIZATION".length() + 2);
+						if (!auth.toUpperCase().startsWith("BASIC"))
+							throw new IllegalArgumentException("Only HTTP Basic authorization is supported");
+
+						iRequest.authorization = auth.substring("BASIC".length() + 1);
+
+						iRequest.authorization = base64.decodeBase64("", iRequest.authorization);
+						
+					} else if (lineUpperCase.startsWith("SESSIONID")) {
+						iRequest.sessionId = line.substring("SESSIONID".length());
+						
+					} else if (lineUpperCase.startsWith(OHttpUtils.CONTENT_LENGTH)) {
+						contentLength = Integer.parseInt(lineUpperCase.substring(OHttpUtils.CONTENT_LENGTH.length()));
 						if (contentLength > MAX_CONTENT_LENGTH)
 							OLogManager.instance().warn(
 									this,
@@ -192,7 +211,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
 				if (!endOfHeaders && request.length() == 0) {
 					if (contentLength <= 0)
-						return null;
+						return;
 
 					// FIRST BLANK LINE: END OF HEADERS
 					endOfHeaders = true;
@@ -204,7 +223,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 				byte[] buffer = new byte[contentLength];
 				buffer[0] = (byte) currChar;
 				channel.inStream.read(buffer, 1, contentLength - 1);
-				return new String(buffer);
+
+				iRequest.content = new String(buffer);
+				return;
 			} else
 				request.append(currChar);
 		}
@@ -213,7 +234,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 			OLogManager.instance().debug(this,
 					"Error on parsing HTTP content from client " + channel.socket.getInetAddress().getHostAddress() + ":\n" + request);
 
-		return null;
+		return;
 	}
 
 	@Override
@@ -259,7 +280,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 					request.method = words[0];
 					request.url = URLDecoder.decode(words[1], "UTF-8").trim();
 					request.httpVersion = words[2];
-					request.content = readAllContent();
+					readAllContent(request);
 					if (request.content != null)
 						request.content = URLDecoder.decode(request.content, "UTF-8").trim();
 

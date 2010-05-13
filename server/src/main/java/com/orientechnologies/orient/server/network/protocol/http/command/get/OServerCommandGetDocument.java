@@ -50,7 +50,7 @@ public class OServerCommandGetDocument extends OServerCommandAbstract {
 		}
 
 		if (rec == null)
-			sendTextContent(iRequest, 404, "Not Found", OHttpUtils.CONTENT_TEXT_PLAIN, "Record with id '" + urlParts[2]
+			sendTextContent(iRequest, 404, "Not Found", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Record with id '" + urlParts[2]
 					+ "' was not found.");
 		else
 			sendRecordContent(iRequest, rec);

@@ -28,10 +28,12 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 public abstract class OServerCommandAbstract implements OServerCommand {
 
-	protected void sendTextContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iContentType,
-			final String iContent) throws IOException {
+	protected void sendTextContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iHeaders,
+			final String iContentType, final String iContent) throws IOException {
 		sendStatus(iRequest, iCode, iReason);
 		sendResponseHeaders(iRequest, iContentType);
+		if (iHeaders != null)
+			writeLine(iRequest, iHeaders);
 		writeLine(iRequest, OHttpUtils.CONTENT_LENGTH + (iContent != null ? iContent.length() + 1 : 0));
 		writeLine(iRequest, null);
 
@@ -69,7 +71,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 		String[] parts = iURL.substring(1).split("/");
 		if (parts.length < iArgumentCount)
 			throw new IllegalArgumentException(iSyntax);
-		
+
 		return parts;
 	}
 
@@ -95,12 +97,13 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 
 		buffer.append("] }");
 
-		sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, buffer.toString());
+		sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, buffer.toString());
 	}
 
 	protected void sendRecordContent(final OHttpRequest iRequest, final ORecord<?> iRecord) throws IOException {
 		if (iRecord != null)
-			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, iRecord.toJSON("id,ver,class"));
+			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, iRecord
+					.toJSON("id,ver,class"));
 	}
 
 	protected void handleError(final OHttpRequest iRequest, Exception e) {
@@ -114,7 +117,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 		final String msg = e.getMessage() != null ? e.getMessage() : "Internal error";
 
 		try {
-			sendTextContent(iRequest, errorCode, "Error", OHttpUtils.CONTENT_TEXT_PLAIN, msg);
+			sendTextContent(iRequest, errorCode, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN, msg);
 		} catch (IOException e1) {
 			// TODO
 			// sendShutdown();
