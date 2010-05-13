@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.server.db;
 
+import java.util.Map;
+
+import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
@@ -44,6 +47,10 @@ public class OSharedDocumentDatabase {
 																																			return db;
 																																		}
 																																	};
+
+	public static Map<String, OResourcePool<String, ODatabaseDocumentTx>> getDatabasePools() {
+		return dbPool.getPools();
+	}
 
 	public static ODatabaseDocumentTx acquireDatabase(String iName) throws InterruptedException {
 		return dbPool.acquireDatabase(iName);
