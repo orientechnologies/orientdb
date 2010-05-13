@@ -168,12 +168,9 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	public String toString() {
 		checkForFields();
 
-		if (clazz == null)
-			return "<unknown>";
-
 		StringBuilder buffer = new StringBuilder();
 
-		buffer.append(clazz.getName());
+		buffer.append(clazz == null ? "<unknown>" : clazz.getName());
 
 		if (recordId != null) {
 			buffer.append("@");
