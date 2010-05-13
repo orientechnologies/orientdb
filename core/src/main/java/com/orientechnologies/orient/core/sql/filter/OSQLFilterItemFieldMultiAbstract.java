@@ -35,14 +35,14 @@ public abstract class OSQLFilterItemFieldMultiAbstract extends OSQLFilterItemAbs
 
 	public Object getValue(final ORecordInternal<?> iRecord) {
 		if (names.length == 1)
-			return transformValue(((ORecordSchemaAware<?>) iRecord).field(names[0]));
+			return transformValue(iRecord.getDatabase(), ((ORecordSchemaAware<?>) iRecord).field(names[0]));
 
 		Object[] values = ((ORecordSchemaAware<?>) iRecord).fieldValues();
 
 		if (hasChainOperators()) {
 			// TRANSFORM ALL THE VALUES
 			for (int i = 0; i < values.length; ++i)
-				values[i] = transformValue(values[i]);
+				values[i] = transformValue(iRecord.getDatabase(), values[i]);
 		}
 
 		return new OQueryRuntimeValueMulti(this, values);

@@ -21,8 +21,14 @@ import java.util.Collection;
 import java.util.List;
 
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.query.OQueryHelper;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Represent an object field as value in the query condition.
@@ -42,13 +48,16 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
 			String part = iName;
 			String partUpperCase = part.toUpperCase();
+			boolean operatorFound;
 
 			while (pos > -1) {
 				part = part.substring(pos + OSQLFilterFieldOperator.CHAIN_SEPARATOR.length());
 				partUpperCase = partUpperCase.substring(pos + OSQLFilterFieldOperator.CHAIN_SEPARATOR.length());
 
+				operatorFound = false;
 				for (OSQLFilterFieldOperator op : OSQLFilterFieldOperator.OPERATORS)
-					if (partUpperCase.startsWith(op.keyword)) {
+					if (partUpperCase.startsWith(op.keyword + "(")) {
+						// OPERATOR MATCH
 						final String arguments[];
 
 						if (op.minArguments > 0) {
@@ -67,13 +76,29 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 						operationsChain.add(new OPair<Integer, String[]>(op.id, arguments));
 
 						pos = partUpperCase.indexOf(OQueryHelper.CLOSED_BRACE) + OSQLFilterFieldOperator.CHAIN_SEPARATOR.length();
+						operatorFound = true;
 						break;
 					}
 
-				if (operationsChain == null)
-					throw new OQueryParsingException(iQueryCompiled.text,
-							"Syntax error: field operator not recognized between the supported ones: "
-									+ Arrays.toString(OSQLFilterFieldOperator.OPERATORS), iQueryCompiled.currentPos + pos);
+				if (!operatorFound) {
+					pos = partUpperCase.indexOf(OSQLFilterFieldOperator.CHAIN_SEPARATOR, pos);
+
+					// CHECK IF IT'S A FIELD
+					int posOpenBrace = part.indexOf("(");
+					if (posOpenBrace == -1 || posOpenBrace > pos) {
+						// YES, IT'S A FIELD
+						String chainedFieldName = pos > -1 ? part.substring(0, pos) : part;
+
+						if (operationsChain == null)
+							operationsChain = new ArrayList<OPair<Integer, String[]>>();
+
+						operationsChain.add(new OPair<Integer, String[]>(OSQLFilterFieldOperator.FIELD.id, new String[] { chainedFieldName }));
+					} else
+						// ERROR: OPERATOR NOT FOUND OR MISPELLED
+						throw new OQueryParsingException(iQueryCompiled.text,
+								"Syntax error: field operator not recognized between the supported ones: "
+										+ Arrays.toString(OSQLFilterFieldOperator.OPERATORS), iQueryCompiled.currentPos + pos);
+				}
 
 				if (pos >= partUpperCase.length())
 					return;
@@ -84,7 +109,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 			name = iName;
 	}
 
-	public Object transformValue(Object iResult) {
+	public Object transformValue(final ODatabaseRecord<?> iDatabase, Object iResult) {
 		if (iResult != null && operationsChain != null) {
 			// APPLY OPERATIONS FOLLOWING THE STACK ORDER
 			int operator;
@@ -108,7 +133,28 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 					iResult = iResult != null ? iResult.toString().trim() : null;
 
 				// OTHER OPERATORS
-				else if (operator == OSQLFilterFieldOperator.CHARAT.id) {
+				else if (operator == OSQLFilterFieldOperator.FIELD.id) {
+					if (iResult != null) {
+						
+						ODocument record;
+						if (iResult instanceof String) {
+							record = new ODocument(iDatabase, new ORecordId((String) iResult));
+						} else if (iResult instanceof ORID)
+							record = new ODocument(iDatabase, (ORID) iResult);
+						else if (iResult instanceof ORecord<?>)
+							record = (ODocument) iResult;
+						else
+							throw new IllegalArgumentException("Field " + name + " is not a ODocument object");
+
+						try {
+							record.load();
+							iResult = iResult != null ? record.field(op.value[0]) : null;
+						} catch (ORecordNotFoundException e) {
+							iResult = null;
+						}
+					}
+
+				} else if (operator == OSQLFilterFieldOperator.CHARAT.id) {
 					int index = Integer.parseInt(op.value[0]);
 					iResult = iResult != null ? iResult.toString().substring(index, index + 1) : null;
 

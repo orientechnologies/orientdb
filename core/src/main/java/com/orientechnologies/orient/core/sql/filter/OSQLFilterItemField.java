@@ -30,6 +30,6 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
 	}
 
 	public Object getValue(final ORecordInternal<?> iRecord) {
-		return transformValue(((ORecordSchemaAware<?>) iRecord).field(name));
+		return transformValue(iRecord.getDatabase(), ((ORecordSchemaAware<?>) iRecord).field(name));
 	}
 }
