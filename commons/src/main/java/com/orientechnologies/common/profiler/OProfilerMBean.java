@@ -34,9 +34,9 @@ public interface OProfilerMBean {
 
 	public String dumpChronos();
 
-	public String[] getStatistics();
+	public String[] getStatisticsAsString();
 
-	public String[] getChronos();
+	public String[] getChronosAsString();
 
 	public Date getLastReset();
 

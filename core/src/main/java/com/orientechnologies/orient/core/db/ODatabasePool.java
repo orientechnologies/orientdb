@@ -23,12 +23,18 @@ import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 
 public abstract class ODatabasePool<DB extends ODatabase> implements OResourcePoolListener<String, DB> {
-	private static final int															WAIT_TIMEOUT	= 5000;
-	private final Map<String, OResourcePool<String, DB>>	pools					= new HashMap<String, OResourcePool<String, DB>>();
+	private static final int															DEF_WAIT_TIMEOUT	= 5000;
+	private final Map<String, OResourcePool<String, DB>>	pools							= new HashMap<String, OResourcePool<String, DB>>();
 	private int																						maxSize;
+	private int																						timeout						= DEF_WAIT_TIMEOUT;
 
 	public ODatabasePool(final int iMaxSize) {
 		maxSize = iMaxSize;
+	}
+
+	public ODatabasePool(final int iMaxSize, final int iTimeout) {
+		maxSize = iMaxSize;
+		timeout = iTimeout;
 	}
 
 	public DB acquireDatabase(final String iURL) throws OLockException, InterruptedException {
@@ -42,7 +48,7 @@ public abstract class ODatabasePool<DB extends ODatabase> implements OResourcePo
 			}
 		}
 
-		return pool.getResource(iURL, WAIT_TIMEOUT);
+		return pool.getResource(iURL, timeout);
 	}
 
 	public void releaseDatabase(final String iURL, final DB iDatabase) {
@@ -51,5 +57,9 @@ public abstract class ODatabasePool<DB extends ODatabase> implements OResourcePo
 			throw new OLockException("Can't release a database URL not acquired before. URL: " + iURL);
 
 		pool.returnResource(iDatabase);
+	}
+
+	public Map<String, OResourcePool<String, DB>> getPools() {
+		return pools;
 	}
 }

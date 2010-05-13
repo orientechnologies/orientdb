@@ -24,5 +24,5 @@ public interface OrientServerMBean {
 
 	public OClientConnection[] getConnections();
 
-	public ONetworkProtocol[] getHandlers();
+	public ONetworkProtocol[] getProtocols();
 }

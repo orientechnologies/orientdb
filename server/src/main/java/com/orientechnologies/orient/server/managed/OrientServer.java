@@ -41,7 +41,7 @@ public class OrientServer implements OrientServerMBean {
 		return output;
 	}
 
-	public ONetworkProtocol[] getHandlers() {
+	public ONetworkProtocol[] getProtocols() {
 		Collection<ONetworkProtocol> handlers = OClientConnectionManager.instance().getHandlers().values();
 		ONetworkProtocol[] output = new ONetworkProtocol[handlers.size()];
 		handlers.toArray(output);

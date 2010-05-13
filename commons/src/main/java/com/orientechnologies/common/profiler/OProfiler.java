@@ -19,6 +19,7 @@ package com.orientechnologies.common.profiler;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.Map.Entry;
 
 /**
@@ -254,7 +255,7 @@ public class OProfiler implements OProfilerMBean {
 	 * 
 	 * @see com.orientechnologies.common.profiler.ProfileMBean#getStatistics()
 	 */
-	public String[] getStatistics() {
+	public String[] getStatisticsAsString() {
 		String[] output = new String[statistics.size()];
 		int i = 0;
 		for (Entry<String, Long> entry : statistics.entrySet()) {
@@ -268,7 +269,7 @@ public class OProfiler implements OProfilerMBean {
 	 * 
 	 * @see com.orientechnologies.common.profiler.ProfileMBean#getChronos()
 	 */
-	public String[] getChronos() {
+	public String[] getChronosAsString() {
 		String[] output = new String[chronos.size()];
 		int i = 0;
 		for (Entry<String, Chrono> entry : chronos.entrySet()) {
@@ -306,7 +307,15 @@ public class OProfiler implements OProfilerMBean {
 		return this;
 	}
 
-	public static OProfilerMBean getInstance() {
+	public static OProfiler getInstance() {
 		return instance;
+	}
+
+	public Set<Entry<String, Long>> getStatistics() {
+		return statistics.entrySet();
+	}
+
+	public Set<Entry<String, Chrono>> getChronos() {
+		return chronos.entrySet();
 	}
 }

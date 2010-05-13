@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.common.concur.resource;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
@@ -57,5 +59,9 @@ public class OResourcePool<K, V> {
 	public void returnResource(final V res) {
 		resources.add(res);
 		sem.release();
+	}
+
+	public Collection<V> getResources() {
+		return Collections.unmodifiableCollection(resources);
 	}
 }
