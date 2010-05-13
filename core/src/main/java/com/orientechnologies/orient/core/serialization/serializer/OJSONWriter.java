@@ -41,6 +41,11 @@ public class OJSONWriter {
 		return this;
 	}
 
+	public OJSONWriter beginObject(final int iIdentLevel) throws IOException {
+		beginObject(iIdentLevel, false, null);
+		return this;
+	}
+
 	public OJSONWriter beginObject(final Object iName) throws IOException {
 		beginObject(0, false, iName);
 		return this;
@@ -53,7 +58,7 @@ public class OJSONWriter {
 		format(iIdentLevel, iNewLine);
 
 		if (iName != null)
-			out.append("'" + iName.toString() + "':");
+			out.append("\"" + iName.toString() + "\":");
 
 		out.append("{");
 
@@ -63,6 +68,12 @@ public class OJSONWriter {
 
 	public OJSONWriter endObject() throws IOException {
 		format(0, true);
+		out.append("}");
+		return this;
+	}
+
+	public OJSONWriter endObject(final int iIdentLevel) throws IOException {
+		format(iIdentLevel, true);
 		out.append("}");
 		return this;
 	}
