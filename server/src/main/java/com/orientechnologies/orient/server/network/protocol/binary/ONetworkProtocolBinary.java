@@ -35,8 +35,6 @@ import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordFactory;
@@ -48,6 +46,7 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.ODictionaryLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.logical.OClusterLogical;
 import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
@@ -247,11 +246,15 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				long newVersion = underlyingDatabase.save(clusterId, position, channel.readBytes(), channel.readInt(), channel.readByte());
 
 				// TODO: Handle it by using triggers
-				if (clusterId == connection.database.getMetadata().getSchemaClusterId())
-					if (position == OSchema.CLASSES_RECORD_NUM)
-						connection.database.getMetadata().loadSchema();
-					else if (position == OSecurity.SECURITY_RECORD_NUM)
-						connection.database.getMetadata().loadSecurity();
+				if (connection.database.getMetadata().getSchema().getIdentity().getClusterId() == clusterId
+						&& connection.database.getMetadata().getSchema().getIdentity().getClusterPosition() == position)
+					connection.database.getMetadata().loadSchema();
+				else if (connection.database.getMetadata().getSecurity().getIdentity().getClusterId() == clusterId
+						&& connection.database.getMetadata().getSecurity().getIdentity().getClusterPosition() == position)
+					connection.database.getMetadata().loadSecurity();
+				else if (((ODictionaryLocal<?>) connection.database.getDictionary()).getTree().getRecord().getIdentity().getClusterId() == clusterId
+						&& ((ODictionaryLocal<?>) connection.database.getDictionary()).getTree().getRecord().getIdentity().getClusterPosition() == position)
+					((ODictionaryLocal<?>) connection.database.getDictionary()).load();
 
 				sendOk();
 

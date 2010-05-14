@@ -15,10 +15,10 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
+import java.lang.reflect.Array;
 import java.text.DecimalFormatSymbols;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
@@ -94,23 +94,28 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 			fieldValue = f.getValue();
 			fieldClassName = getClassName(fieldValue);
 
+			type = record.fieldType(f.getKey());
+			linkedClass = null;
+			linkedType = null;
+
 			if (prop != null) {
 				// RECOGNIZED PROPERTY
 				type = prop.getType();
 				linkedClass = prop.getLinkedClass();
 				linkedType = prop.getLinkedType();
 
-			} else {
+			} else if (fieldValue != null) {
+
 				// NOT FOUND: TRY TO DETERMINE THE TYPE FROM ITS CONTENT
-				type = OType.EMBEDDED;
-				linkedClass = null;
-				linkedType = null;
+				if (fieldValue instanceof String)
+					type = OType.STRING;
+				else if (fieldValue instanceof Collection<?> || fieldValue.getClass().isArray()) {
+					Collection<?> coll = fieldValue instanceof Collection<?> ? (Collection<?>) fieldValue : null;
 
-				if (fieldValue instanceof Collection<?>) {
-					Collection<?> coll = (Collection<?>) fieldValue;
+					int size = coll != null ? coll.size() : Array.getLength(fieldValue);
 
-					if (coll.size() > 0) {
-						Object firstValue = coll.iterator().next();
+					if (size > 0) {
+						Object firstValue = coll != null ? coll.iterator().next() : Array.get(fieldValue, 0);
 
 						if (database != null
 								&& (firstValue instanceof ORecordSchemaAware<?> || (database.getDatabaseOwner() instanceof ODatabaseObject && ((ODatabaseObject) database
@@ -119,7 +124,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 							linkedType = OType.LINK;
 							linkedClass = getLinkInfo(database, getClassName(firstValue));
 
-							if (coll instanceof Set<?>)
+							if (type == null && coll instanceof Set<?>)
 								type = OType.LINKSET;
 							else
 								type = OType.LINKLIST;
@@ -134,35 +139,52 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 									linkedClass = new OClass(firstValue.getClass());
 								}
 
-								if (coll instanceof Set<?>)
+								if (type == null && coll instanceof Set<?>)
 									type = OType.EMBEDDEDSET;
 								else
 									type = OType.EMBEDDEDLIST;
 							}
 						}
-					} else
+					} else if (type == null)
 						type = OType.EMBEDDEDLIST;
+
 				} else if (fieldValue instanceof Map<?, ?>) {
+					if (type == null)
+						type = OType.EMBEDDEDMAP;
+
 					Map<?, ?> map = (Map<?, ?>) fieldValue;
 					if (map.size() > 0) {
 						Object firstValue = map.values().iterator().next();
 
-						linkedType = OType.getTypeByClass(firstValue.getClass());
-						type = OType.EMBEDDEDMAP;
+						if (database != null
+								&& (firstValue instanceof ORecordSchemaAware<?> || (database.getDatabaseOwner() instanceof ODatabaseObject && ((ODatabaseObject) database
+										.getDatabaseOwner()).getEntityManager().getEntityClass(getClassName(firstValue)) != null))) {
+							// LINK: GET THE CLASS
+							linkedType = OType.LINK;
+							linkedClass = getLinkInfo(database, getClassName(firstValue));
+						} else
+							linkedType = OType.getTypeByClass(firstValue.getClass());
 					}
 				} else if (database != null && fieldValue instanceof ORecordSchemaAware<?>) {
-					// DETERMINE THE FIELD TYPE
-					type = OType.LINK;
+					if (type == null)
+						// DETERMINE THE FIELD TYPE
+						type = OType.LINK;
+
 					linkedClass = getLinkInfo(database, fieldClassName);
 				} else if (database != null && database.getDatabaseOwner() instanceof ODatabaseObject
 						&& ((ODatabaseObject) database.getDatabaseOwner()).getEntityManager().getEntityClass(fieldClassName) != null) {
 					// DETERMINE THE FIELD TYPE
-					type = OType.LINK;
+					if (type == null)
+						type = OType.LINK;
 					linkedClass = getLinkInfo(database, fieldClassName);
 				} else if (fieldValue instanceof Date) {
-					type = OType.DATE;
+					if (type == null)
+						type = OType.DATE;
 				}
 			}
+
+			if (type == null)
+				type = OType.EMBEDDED;
 
 			fieldValue = fieldToStream((ODocument) iRecord, iRecord.getDatabase(), iObjHandler, type, linkedClass, linkedType,
 					f.getKey(), f.getValue(), iMarshalledRecords);
@@ -207,11 +229,15 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 	protected ORecordInternal<?> fromString(final ODatabaseRecord<?> iDatabase, String iContent, final ORecordInternal<?> iRecord) {
 		iContent = iContent.trim();
 
+		if (iContent.length() == 0)
+			return iRecord;
+
 		// UNMARSHALL THE CLASS NAME
 		ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) iRecord;
 
+		int posFirstValue = iContent.indexOf(OStringSerializerHelper.ENTRY_SEPARATOR);
 		int pos = iContent.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
-		if (pos > -1) {
+		if (pos > -1 && pos < posFirstValue) {
 			record.setClassName(iContent.substring(0, pos));
 			iContent = iContent.substring(pos + 1);
 		}
@@ -221,12 +247,12 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 		String field;
 		String fieldName;
 		String fieldValue;
-		OType type;
+		OType type = null;
 		OClass linkedClass;
 		OType linkedType;
 		OProperty prop;
 
-		DecimalFormatSymbols unusualSymbols = new DecimalFormatSymbols(Locale.getDefault());
+		final DecimalFormatSymbols unusualSymbols = new DecimalFormatSymbols(iDatabase.getStorage().getConfiguration().getLocaleInstance());
 
 		// UNMARSHALL ALL THE FIELDS
 		for (int i = 0; i < fields.length; ++i) {
@@ -249,14 +275,42 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 					linkedType = prop.getLinkedType();
 
 				} else {
-					type = OType.STRING;
 					linkedClass = null;
 					linkedType = null;
 
 					// NOT FOUND: TRY TO DETERMINE THE TYPE FROM ITS CONTENT
 					if (fieldValue != null) {
-						if (fieldValue.charAt(0) == '[' && fieldValue.charAt(fieldValue.length() - 1) == ']') {
+						if (fieldValue.length() > 1 && fieldValue.charAt(0) == '"' && fieldValue.charAt(fieldValue.length() - 1) == '"') {
+							type = OType.STRING;
+						} else if (fieldValue.charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN
+								&& fieldValue.charAt(fieldValue.length() - 1) == OStringSerializerHelper.COLLECTION_END) {
 							type = OType.EMBEDDEDLIST;
+
+							String value = fieldValue.substring(1, fieldValue.length() - 1);
+
+							if (value.length() > 0) {
+								if (value.contains(ORID.SEPARATOR)) {
+									type = OType.LINKLIST;
+									linkedType = OType.LINK;
+
+									// GET THE CLASS NAME IF ANY
+									int classSeparatorPos = value.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
+									if (classSeparatorPos > -1) {
+										String className = value.substring(1, classSeparatorPos);
+										if (className != null)
+											linkedClass = iDatabase.getMetadata().getSchema().getClass(className);
+									}
+								} else if (Character.isDigit(value.charAt(0)) || value.charAt(0) == '+' || value.charAt(0) == '-') {
+									linkedType = getNumber(unusualSymbols, value);
+								} else if (value.charAt(0) == '\'' || value.charAt(0) == '"')
+									linkedType = OType.STRING;
+								else
+									linkedType = OType.EMBEDDED;
+							}
+
+						} else if (fieldValue.charAt(0) == OStringSerializerHelper.MAP_BEGIN
+								&& fieldValue.charAt(fieldValue.length() - 1) == OStringSerializerHelper.MAP_END) {
+							type = OType.EMBEDDEDMAP;
 
 							String value = fieldValue.substring(1, fieldValue.length() - 1);
 
@@ -280,11 +334,13 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 									linkedType = OType.EMBEDDED;
 							} else
 								linkedType = OType.STRING;
+
 						} else if (fieldValue.startsWith(OStringSerializerHelper.LINK))
 							type = OType.LINK;
-						else if (Character.isDigit(fieldValue.charAt(0))) {
+						else if (fieldValue.equals("true") || fieldValue.equals("false"))
+							type = OType.BOOLEAN;
+						else
 							type = getNumber(unusualSymbols, fieldValue);
-						}
 					}
 				}
 
@@ -295,14 +351,16 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 		return iRecord;
 	}
 
-	public static OType getNumber(DecimalFormatSymbols unusualSymbols, String value) {
+	public static OType getNumber(final DecimalFormatSymbols unusualSymbols, final String value) {
 		boolean integer = true;
 		char c;
 
-		for (int index = 1; index < value.length(); ++index) {
+		for (int index = 0; index < value.length(); ++index) {
 			c = value.charAt(index);
-			if (c < 0 || c > 9)
-				if (c == unusualSymbols.getDecimalSeparator())
+			if (c < '0' || c > '9')
+				if ((index == 0 && (c == '+' || c == '-')))
+					continue;
+				else if (c == unusualSymbols.getDecimalSeparator())
 					integer = false;
 				else {
 					return OType.STRING;

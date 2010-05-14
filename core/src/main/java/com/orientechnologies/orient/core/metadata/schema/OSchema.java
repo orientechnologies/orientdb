@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -23,16 +22,13 @@ import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.record.ORecordAbstract;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.record.impl.ORecordColumn;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public class OSchema extends ORecordBytes {
-	protected Map<String, OClass>	classesMap							= new LinkedHashMap<String, OClass>();
-	protected List<OClass>				classes									= new ArrayList<OClass>();
-	public static final int				CLASSES_RECORD_NUM			= 1;
-	private static final int			CURRENT_VERSION_NUMBER	= 1;
+public class OSchema extends ODocument {
+	protected Map<String, OClass>	classes									= new LinkedHashMap<String, OClass>();
+	private static final int			CURRENT_VERSION_NUMBER	= 2;
 
 	public OSchema(final ODatabaseRecord<?> iDatabaseOwner, final int schemaClusterId) {
 		super(iDatabaseOwner);
@@ -40,7 +36,7 @@ public class OSchema extends ORecordBytes {
 	}
 
 	public Collection<OClass> classes() {
-		return Collections.unmodifiableCollection(classes);
+		return Collections.unmodifiableCollection(classes.values());
 	}
 
 	public OClass createClass(final String iClassName) {
@@ -59,12 +55,11 @@ public class OSchema extends ORecordBytes {
 	public OClass createClass(final String iClassName, final int[] iClusterIds, final int iDefaultClusterId) {
 		String key = iClassName.toLowerCase();
 
-		if (classesMap.containsKey(key))
+		if (classes.containsKey(key))
 			throw new OSchemaException("Class " + iClassName + " already exists in current database");
 
-		OClass cls = new OClass(this, classesMap.size(), iClassName, iClusterIds, iDefaultClusterId);
-		classesMap.put(key, cls);
-		classes.add(cls);
+		OClass cls = new OClass(this, classes.size(), iClassName, iClusterIds, iDefaultClusterId);
+		classes.put(key, cls);
 
 		setDirty();
 
@@ -72,73 +67,72 @@ public class OSchema extends ORecordBytes {
 	}
 
 	public boolean existsClass(final String iClassName) {
-		return classesMap.containsKey(iClassName.toLowerCase());
+		return classes.containsKey(iClassName.toLowerCase());
 	}
 
 	public OClass getClassById(final int iClassId) {
 		if (iClassId == -1)
 			return null;
 
-		OClass cls = classes.get(iClassId);
+		for (OClass c : classes.values())
+			if (c.getId() == iClassId)
+				return c;
 
-		if (cls == null)
-			throw new OSchemaException("Class #" + iClassId + " was not found in current database");
-
-		return cls;
+		throw new OSchemaException("Class #" + iClassId + " was not found in current database");
 	}
 
 	public OClass getClass(final String iClassName) {
-		if( iClassName == null )
+		if (iClassName == null)
 			return null;
-		
-		return classesMap.get(iClassName.toLowerCase());
+
+		return classes.get(iClassName.toLowerCase());
 	}
 
-	public OSchema fromStream(final byte[] iStream) {
-		ORecordColumn record = new ORecordColumn().fromStream(iStream);
+	/**
+	 * Binds ODocument to POJO.
+	 */
+	@Override
+	public OSchema fromStream(final byte[] iBuffer) {
+		super.fromStream(iBuffer);
 
 		// READ CURRENT SCHEMA VERSION
-		int schemaVersion = Integer.parseInt(record.next());
+		int schemaVersion = field("schemaVersion");
 		if (schemaVersion != CURRENT_VERSION_NUMBER) {
 			// HANDLE SCHEMA UPGRADE
+			throw new OConfigurationException(
+					"Database schema is different. Please export your old database with the previous verison of Orient and reimport it using the current one.");
 		}
 
 		// REGISTER ALL THE CLASSES
 		OClass cls;
-		int classesNum = Integer.parseInt(record.next());
-		for (int c = 0; c < classesNum; ++c) {
-			cls = new OClass(this, c, record.next(), null, -1);
-			classesMap.put(cls.getName().toLowerCase(), cls);
-			classes.add(cls);
-			cls.fromStream(record);
+		List<ODocument> storedClasses = field("classes");
+		for (ODocument c : storedClasses) {
+			cls = new OClass(this).fromDocument(c);
+			classes.put(cls.getName().toLowerCase(), cls);
 		}
 		return this;
 	}
 
+	/**
+	 * Binds POJO to ODocument.
+	 */
+	@Override
 	public byte[] toStream() {
-		ORecordColumn record = new ORecordColumn();
+		field("schemaVersion", CURRENT_VERSION_NUMBER);
+		field("classes", classes.values(), OType.EMBEDDEDSET);
 
-		// WRITE CURRENT SCHEMA VERSION
-		record.add(String.valueOf(CURRENT_VERSION_NUMBER));
-
-		// WRITE CLASSES
-		record.add(String.valueOf(classesMap.size()));
-		for (OClass cls : classesMap.values()) {
-			cls.toStream(record);
-		}
-
-		return record.toStream();
+		return super.toStream();
 	}
 
 	private void registerStandardClasses() {
 	}
 
 	public Collection<OClass> getClasses() {
-		return Collections.unmodifiableCollection(classesMap.values());
+		return Collections.unmodifiableCollection(classes.values());
 	}
 
-	public ORecordAbstract<byte[]> load(final int schemaClusterId) {
-		setIdentity(schemaClusterId, CLASSES_RECORD_NUM);
-		return super.load();
+	public ODocument load() {
+		recordId.fromString(database.getStorage().getConfiguration().schemaRecordId);
+		return (ODocument) super.load();
 	}
 }

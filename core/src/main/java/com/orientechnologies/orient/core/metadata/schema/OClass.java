@@ -19,14 +19,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.record.ORecordPositional;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.serialization.serializer.record.OSerializableRecordPositional;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public class OClass implements OSerializableRecordPositional {
+public class OClass extends ODocument {
 	protected int											id;
 	protected OSchema									owner;
 	protected String									name;
@@ -36,13 +35,22 @@ public class OClass implements OSerializableRecordPositional {
 	protected int[]										clusterIds;
 	protected int											defaultClusterId;
 
-	public OClass(OSchema iOwner, int iId, String iName, String iJavaClassName, int[] iClusterIds, int iDefaultClusterId)
-			throws ClassNotFoundException {
+	/**
+	 * Constructor used in unmarshalling.
+	 */
+	public OClass(final OSchema iOwner) {
+		owner = iOwner;
+	}
+
+	public OClass(final OSchema iOwner, final int iId, final String iName, final String iJavaClassName, final int[] iClusterIds,
+			final int iDefaultClusterId) throws ClassNotFoundException {
 		this(iOwner, iId, iName, iClusterIds, iDefaultClusterId);
 		javaClass = Class.forName(iJavaClassName);
 	}
 
-	public OClass(OSchema iOwner, int iId, String iName, int[] iClusterIds, int iDefaultClusterId) {
+	public OClass(final OSchema iOwner, final int iId, final String iName, final int[] iClusterIds, final int iDefaultClusterId) {
+		super(iOwner.getDatabase());
+
 		id = iId;
 		owner = iOwner;
 		name = iName;
@@ -53,9 +61,11 @@ public class OClass implements OSerializableRecordPositional {
 	/**
 	 * Constructor called for inline OClass instances.
 	 * 
+	 * @param iDatabase
+	 * 
 	 * @param iClass
 	 */
-	public OClass(Class<?> iClass) {
+	public OClass(final Class<?> iClass) {
 		name = iClass.getSimpleName();
 	}
 
@@ -75,11 +85,11 @@ public class OClass implements OSerializableRecordPositional {
 		return Collections.unmodifiableCollection(properties.values());
 	}
 
-	public OProperty getProperty(String iPropertyName) {
+	public OProperty getProperty(final String iPropertyName) {
 		return properties.get(iPropertyName.toLowerCase());
 	}
 
-	public OProperty getProperty(int iIndex) {
+	public OProperty getProperty(final int iIndex) {
 		for (OProperty prop : properties.values())
 			if (prop.getId() == iIndex)
 				return prop;
@@ -87,14 +97,14 @@ public class OClass implements OSerializableRecordPositional {
 		throw new OSchemaException("Property with index " + iIndex + " was not found in class: " + name);
 	}
 
-	public int getPropertyIndex(String iPropertyName) {
+	public int getPropertyIndex(final String iPropertyName) {
 		OProperty prop = properties.get(iPropertyName.toLowerCase());
 		if (prop == null)
 			return -1;
 		return prop.getId();
 	}
 
-	public OProperty createProperty(String iPropertyName, OType iType) {
+	public OProperty createProperty(final String iPropertyName, final OType iType) {
 		if (iType == OType.LINK || iType == OType.LINKLIST || iType == OType.LINKSET)
 			throw new OSchemaException("Can't add property '" + iPropertyName
 					+ "' since it contains a relationship but no linked class was received");
@@ -102,13 +112,13 @@ public class OClass implements OSerializableRecordPositional {
 		return addProperty(iPropertyName, iType, fixedSize);
 	}
 
-	public OProperty createProperty(String iPropertyName, OType iType, OClass iLinkedClass) {
+	public OProperty createProperty(final String iPropertyName, final OType iType, final OClass iLinkedClass) {
 		OProperty prop = addProperty(iPropertyName, iType, fixedSize);
 		prop.setLinkedClass(iLinkedClass);
 		return prop;
 	}
 
-	public OProperty createProperty(String iPropertyName, OType iType, OType iLinkedType) {
+	public OProperty createProperty(final String iPropertyName, final OType iType, final OType iLinkedType) {
 		OProperty prop = addProperty(iPropertyName, iType, fixedSize);
 		prop.setLinkedType(iLinkedType);
 		return prop;
@@ -118,11 +128,11 @@ public class OClass implements OSerializableRecordPositional {
 		return fixedSize;
 	}
 
-	public boolean existsProperty(String iPropertyName) {
+	public boolean existsProperty(final String iPropertyName) {
 		return properties.containsKey(iPropertyName);
 	}
 
-	protected OProperty addProperty(String iName, OType iType, int iOffset) {
+	protected OProperty addProperty(final String iName, final OType iType, final int iOffset) {
 		OProperty prop = new OProperty(this, iName, iType, iOffset);
 
 		properties.put(iName.toLowerCase(), prop);
@@ -133,36 +143,33 @@ public class OClass implements OSerializableRecordPositional {
 		return prop;
 	}
 
-	public void fromStream(ORecordPositional<String> iRecord) {
+	public OClass fromDocument(final ODocument iSource) {
+		name = iSource.field("name");
+		defaultClusterId = iSource.field("defaultClusterId");
 
-		defaultClusterId = Integer.parseInt(iRecord.next());
-
-		// READ CLUSTER IDS
-		clusterIds = OStringSerializerHelper.splitIntArray(iRecord.next());
+		Collection<Integer> coll = iSource.field("clusterIds");
+		clusterIds = new int[coll.size()];
+		int i = 0;
+		for (Integer item : coll)
+			clusterIds[i++] = item;
 
 		// READ PROPERTIES
-		int propsNum = Integer.parseInt(iRecord.next());
 		OProperty prop;
-		for (int k = 0; k < propsNum; ++k) {
-			prop = new OProperty(this);
-			prop.fromStream(iRecord);
+		List<ODocument> storedProperties = iSource.field("properties");
+		for (ODocument p : storedProperties) {
+			prop = new OProperty(this).fromDocument(p);
 			properties.put(prop.getName().toLowerCase(), prop);
 		}
+
+		return this;
 	}
 
-	public void toStream(ORecordPositional<String> iRecord) {
-		iRecord.add(name);
-
-		iRecord.add(String.valueOf(defaultClusterId));
-
-		// WRITE CLUSTER IDS
-		iRecord.add(OStringSerializerHelper.joinIntArray(clusterIds));
-
-		// WRITE PROPERTIES
-		iRecord.add(String.valueOf(properties.size()));
-		for (OProperty prop : properties.values()) {
-			prop.toStream(iRecord);
-		}
+	public byte[] toStream() {
+		field("name", name);
+		field("defaultClusterId", defaultClusterId);
+		field("clusterIds", clusterIds);
+		field("properties", properties.values());
+		return super.toStream();
 	}
 
 	public Class<?> getJavaClass() {
@@ -177,7 +184,7 @@ public class OClass implements OSerializableRecordPositional {
 		return defaultClusterId;
 	}
 
-	public void setDefaultClusterId(int iDefaultClusterId) {
+	public void setDefaultClusterId(final int iDefaultClusterId) {
 		this.defaultClusterId = iDefaultClusterId;
 		owner.setDirty();
 	}
@@ -186,7 +193,7 @@ public class OClass implements OSerializableRecordPositional {
 		return clusterIds;
 	}
 
-	public OClass addClusterIds(int iId) {
+	public OClass addClusterIds(final int iId) {
 		for (int currId : clusterIds)
 			if (currId == iId)
 				return this;

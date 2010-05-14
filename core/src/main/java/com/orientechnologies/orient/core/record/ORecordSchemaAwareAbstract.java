@@ -109,9 +109,6 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 		status = STATUS.UNMARSHALLING;
 		recordFormat.fromStream(database, source, this);
 		status = STATUS.LOADED;
-
-		// RESET THE BUFFE TO FORCE SERIALIZATION AT EVERY SAVE SINCE NOT ALL CHANGES ARE TRACKED
-		source = null;
 	}
 
 	protected void setClass(final OClass iClass) {

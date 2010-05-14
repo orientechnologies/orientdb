@@ -15,47 +15,36 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 
 /**
- * Mode = ALLOW (allow all but) or DENY (deny all but)
+ * Contains the user settings about security and permissions. Each user has one or more roles associated. Roles contains the
+ * permission rules that define what the user can access and what he can't.
+ * 
+ * @author Luca Garulli
+ * 
+ * @see ORole
  */
-public class OUser {
-	public enum MODE {
-		ALLOW_ALL_BUT, DENY_ALL_BUT
+public class OUser extends ODocument {
+	protected String			name;
+	protected String			password;
+	protected Set<ORole>	roles	= new HashSet<ORole>();
+
+	/**
+	 * Constructor used in unmarshalling.
+	 */
+	public OUser(final ODatabaseRecord<?> iDatabase) {
+		super(iDatabase, "OUser");
 	}
 
-	// CRUD OPERATIONS
-	public final static int				CREATE						= 1;
-	public final static int				READ							= 2;
-	public final static int				UPDATE						= 4;
-	public final static int				DELETE						= 8;
-
-	public final static String		ALL								= "*";
-	public final static String		DATABASE					= "database";
-	public final static String		CLUSTER						= "database.cluster";
-	public final static String		CLASS							= "database.class";
-	public final static String		ALL_CLASSES				= "database.class.*";
-	public static final String		QUERY							= "database.query";
-	public static final String		COMMAND						= "database.command";
-	public final static String		SERVER_ADMIN			= "server.admin";
-
-	protected final static int		ACL_OPERATION_NUM	= 8;
-
-	protected final static byte		DENY							= '0';
-	protected final static byte		ALLOW							= '1';
-
-	protected String							name;
-	protected String							password;
-	protected byte								mode							= DENY;
-	protected OUser								inherit;
-	protected Map<String, byte[]>	acl								= new LinkedHashMap<String, byte[]>();
-
-	public OUser(String iName) {
+	public OUser(final ODatabaseRecord<?> iDatabase, final String iName) {
+		this(iDatabase);
 		name = iName;
 	}
 
@@ -63,66 +52,63 @@ public class OUser {
 		return OSecurityManager.instance().check(iPassword, password);
 	}
 
-	public boolean allow(final String iResource, final int iCRUDOperation) {
-		if (iCRUDOperation >= ACL_OPERATION_NUM)
-			throw new OSecurityAccessException("Requested invalid operation '" + iCRUDOperation + "' against resource: " + iResource);
-
-		// CHECK FOR SECURITY AS DIRECT RESOURCE
-		byte[] access = acl.get(iResource);
-		if (access != null)
-			return access[iCRUDOperation] != mode;
-
-		// CHECK FOR SECURITY IN DERIVED RESOURCES, IF ANY
-		if (iResource.startsWith(CLASS)) {
-			// CHECK FOR SECURITY IN "ALL CLASSES"
-			access = acl.get(ALL_CLASSES);
-			if (access != null)
-				return access[iCRUDOperation] != mode;
-		}
-
-		return mode == ALLOW;
-	}
-
-	public String name() {
+	public String getName() {
 		return this.name;
 	}
 
-	public MODE mode() {
-		return mode == ALLOW ? MODE.ALLOW_ALL_BUT : MODE.DENY_ALL_BUT;
-	}
-
-	public OUser mode(MODE mode) {
-		this.mode = mode == MODE.ALLOW_ALL_BUT ? ALLOW : DENY;
-		return this;
-	}
-
-	public byte internalMode() {
-		return mode;
-	}
-
-	public void internalMode(byte iMode) {
-		mode = iMode;
-	}
-
-	public OUser inherit() {
-		return inherit;
-	}
-
-	public OUser inherit(OUser inherit) {
-		this.inherit = inherit;
-		return this;
-	}
-
-	public String password() {
+	public String getPassword() {
 		return password;
 	}
 
-	public OUser password(String iPassword) {
+	public OUser setPassword(final String iPassword) {
 		this.password = OSecurityManager.instance().digest2String(iPassword);
 		return this;
 	}
 
-	public void passwordEncoded(String iPassword) {
+	public void setPasswordEncoded(String iPassword) {
 		this.password = iPassword;
+	}
+
+	public Set<ORole> getRoles() {
+		return roles;
+	}
+
+	public OUser addRole(final String iRole) {
+		if (iRole != null)
+			addRole(database.getMetadata().getSecurity().getRole(iRole));
+		return this;
+	}
+
+	public OUser addRole(final ORole iRole) {
+		if (iRole != null)
+			roles.add(iRole);
+
+		return this;
+	}
+
+	public OUser fromDocument(final ODocument iSource) {
+		name = iSource.field("name");
+		password = iSource.field("password");
+
+		ORole role;
+		List<String> storedRoles = iSource.field("roles");
+		for (String r : storedRoles) {
+			role = database.getMetadata().getSecurity().getRole(r);
+			roles.add(role);
+		}
+		return this;
+	}
+
+	public byte[] toStream() {
+		field("name", name);
+		field("password", password);
+
+		Set<String> storedRoles = new HashSet<String>();
+		for (ORole r : roles) {
+			storedRoles.add(r.getName());
+		}
+
+		field("roles", storedRoles);
+		return super.toStream();
 	}
 }

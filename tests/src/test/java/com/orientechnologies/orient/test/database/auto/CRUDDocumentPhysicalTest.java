@@ -98,7 +98,7 @@ public class CRUDDocumentPhysicalTest {
 			Assert.assertTrue(((Integer) rec.field("id")).intValue() == i);
 			Assert.assertEquals(rec.field("name"), "Gipsy");
 			Assert.assertEquals(rec.field("location"), "Italy");
-			Assert.assertEquals(Float.parseFloat((String) rec.field("salary")), i + 300f);
+			Assert.assertEquals(((Integer) rec.field("salary")).intValue(), i + 300);
 			Assert.assertNotNull(rec.field("extra"));
 
 			i++;
@@ -143,7 +143,7 @@ public class CRUDDocumentPhysicalTest {
 			else
 				Assert.assertEquals(rec.field("location"), "Italy");
 
-			Assert.assertEquals(Float.parseFloat((String) rec.field("price")), i + 100f);
+			Assert.assertEquals(((Integer) rec.field("price")).intValue(), i + 100);
 
 			i++;
 		}

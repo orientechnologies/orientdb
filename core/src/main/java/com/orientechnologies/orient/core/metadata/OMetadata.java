@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.metadata;
 
+import java.io.IOException;
+
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -49,7 +51,7 @@ public class OMetadata {
 		}
 	}
 
-	public void create() {
+	public void create() throws IOException {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		init();
@@ -57,9 +59,13 @@ public class OMetadata {
 		try {
 			// CREATE RECORD FOR SCHEMA
 			schema.save(CLUSTER_METADATA_NAME);
+			database.getStorage().getConfiguration().schemaRecordId = schema.getIdentity().toString();
 
 			// CREATE RECORD FOR SECURITY
 			security.save(CLUSTER_METADATA_NAME);
+			database.getStorage().getConfiguration().securityRecordId = security.getIdentity().toString();
+
+			database.getStorage().getConfiguration().update();
 		} finally {
 
 			OProfiler.getInstance().stopChrono("OMetadata.create", timer);
@@ -79,11 +85,11 @@ public class OMetadata {
 	}
 
 	public void loadSchema() {
-		schema.load(schemaClusterId);
+		schema.load();
 	}
 
 	public void loadSecurity() {
-		security.load(schemaClusterId);
+		security.load();
 	}
 
 	private void init() {

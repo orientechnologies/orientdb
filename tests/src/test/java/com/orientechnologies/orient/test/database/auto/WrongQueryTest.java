@@ -40,7 +40,7 @@ public class WrongQueryTest {
 
 	@Test(dependsOnMethods = "queryOpen", expectedExceptions = OQueryParsingException.class)
 	public void queryFieldOperatorNotSupported() {
-		database.command(new OSQLSynchQuery<ODocument>("select * from Animal where name.not() like 'G%'")).execute();
+		database.command(new OSQLSynchQuery<ODocument>("select * from Account where name.not() like 'G%'")).execute();
 	}
 
 	@Test(dependsOnMethods = "queryFieldOperatorNotSupported")

@@ -20,6 +20,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadata;
@@ -32,7 +33,12 @@ public class OStorageConfiguration implements OSerializableStream {
 
 	public int																				version						= 0;
 	public String																			name;
+	public String																			schemaRecordId;
+	public String																			securityRecordId;
+	public String																			dictionaryRecordId;
 
+	public String																			localeLanguage		= Locale.getDefault().getLanguage();
+	public String																			localeCountry			= Locale.getDefault().getCountry();
 	public String																			dateFormat				= "yyyy-MM-dd";
 	public String																			dateTimeFormat		= "yyyy-MM-dd hh:mm:ss";
 
@@ -44,6 +50,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
 	public List<OStorageEntryConfiguration>						properties				= new ArrayList<OStorageEntryConfiguration>();
 
+	private transient Locale													localeInstance;
 	private transient DateFormat											dateFormatInstance;
 	private transient DateFormat											dateTimeFormatInstance;
 	private transient OStorage												storage;
@@ -76,6 +83,13 @@ public class OStorageConfiguration implements OSerializableStream {
 		return physicalClusters.isEmpty();
 	}
 
+	public Locale getLocaleInstance() {
+		if (localeInstance == null)
+			localeInstance = new Locale(localeLanguage, localeCountry);
+
+		return localeInstance;
+	}
+
 	public DateFormat getDateFormatInstance() {
 		if (dateFormatInstance == null) {
 			dateFormatInstance = new SimpleDateFormat(dateFormat);
@@ -97,6 +111,13 @@ public class OStorageConfiguration implements OSerializableStream {
 		int index = 0;
 		version = Integer.parseInt(read(values[index++]));
 		name = read(values[index++]);
+
+		schemaRecordId = read(values[index++]);
+		securityRecordId = read(values[index++]);
+		dictionaryRecordId = read(values[index++]);
+
+		localeLanguage = read(values[index++]);
+		localeCountry = read(values[index++]);
 		dateFormat = read(values[index++]);
 		dateTimeFormat = read(values[index++]);
 
@@ -147,6 +168,13 @@ public class OStorageConfiguration implements OSerializableStream {
 
 		write(buffer, version);
 		write(buffer, name);
+
+		write(buffer, schemaRecordId);
+		write(buffer, securityRecordId);
+		write(buffer, dictionaryRecordId);
+
+		write(buffer, localeLanguage);
+		write(buffer, localeCountry);
 		write(buffer, dateFormat);
 		write(buffer, dateTimeFormat);
 

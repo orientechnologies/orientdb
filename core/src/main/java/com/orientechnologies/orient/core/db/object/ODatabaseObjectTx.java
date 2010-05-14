@@ -33,7 +33,8 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.core.iterator.OObjectIteratorMultiCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
-import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
+import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -81,7 +82,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 	 * @see #registerEntityClasses(String)
 	 */
 	public Object newInstance(final String iClassName) {
-		checkSecurity(OUser.CLASS + "." + iClassName, OUser.CREATE);
+		checkSecurity(ODatabaseSecurityResources.CLASS + "." + iClassName, ORole.CRUD_MODES.CREATE);
 
 		try {
 			return entityManager.createPojo(iClassName);
@@ -99,14 +100,14 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 	}
 
 	public <RET> OObjectIteratorMultiCluster<RET> browseClass(final String iClassName) {
-		checkSecurity(OUser.CLASS + "." + iClassName, OUser.READ);
+		checkSecurity(ODatabaseSecurityResources.CLASS + "." + iClassName, ORole.CRUD_MODES.READ);
 
 		return new OObjectIteratorMultiCluster<RET>(this, (ODatabaseRecordAbstract<ODocument>) getUnderlying().getUnderlying(),
 				getMetadata().getSchema().getClass(iClassName).getClusterIds());
 	}
 
 	public <RET> OObjectIteratorCluster<RET> browseCluster(final String iClusterName) {
-		checkSecurity(OUser.CLUSTER + "." + iClusterName, OUser.READ);
+		checkSecurity(ODatabaseSecurityResources.CLUSTER + "." + iClusterName, ORole.CRUD_MODES.READ);
 
 		return (OObjectIteratorCluster<RET>) new OObjectIteratorCluster<Object>(this,
 				(ODatabaseRecordAbstract<ODocument>) getUnderlying().getUnderlying(), getClusterIdByName(iClusterName));

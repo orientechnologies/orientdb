@@ -19,10 +19,15 @@ import java.text.ParseException;
 
 import com.orientechnologies.common.collection.OTreeMap;
 import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.record.ORecordPositional;
-import com.orientechnologies.orient.core.serialization.serializer.record.OSerializableRecordPositional;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public class OProperty implements OSerializableRecordPositional {
+/**
+ * Contains the description of a persistent class property.
+ * 
+ * @author Luca Garulli
+ * 
+ */
+public class OProperty extends ODocument {
 	private OClass					owner;
 
 	private int							id;
@@ -40,6 +45,12 @@ public class OProperty implements OSerializableRecordPositional {
 	private boolean					notNull;
 	private String					min;
 	private String					max;
+
+	/**
+	 * Constructor used in unmarshalling.
+	 */
+	public OProperty() {
+	}
 
 	public OProperty(OClass iOwner) {
 		owner = iOwner;
@@ -78,48 +89,37 @@ public class OProperty implements OSerializableRecordPositional {
 		return this;
 	}
 
-	public void fromStream(ORecordPositional<String> iRecord) {
-		name = iRecord.next();
-		type = OType.getById(Integer.parseInt(iRecord.next()));
-		offset = Integer.parseInt(iRecord.next());
+	public OProperty fromDocument(final ODocument iSource) {
+		name = iSource.field("name");
+		if (iSource.field("type") != null)
+			type = OType.getById((Integer) iSource.field("type"));
+		offset = iSource.field("offset");
 
-		mandatory = iRecord.next().equals("1");
-		notNull = iRecord.next().equals("1");
-		min = iRecord.next();
-		if (min.length() == 0)
-			min = null;
-		max = iRecord.next();
-		if (max.length() == 0)
-			max = null;
+		mandatory = iSource.field("mandatory");
+		notNull = iSource.field("notNull");
+		min = iSource.field("min");
+		max = iSource.field("max");
 
-		if (type == OType.EMBEDDED || type == OType.LINK || type == OType.LINKSET)
-			linkedClass = owner.owner.getClass(iRecord.next());
-		else if (type == OType.EMBEDDEDSET || type == OType.EMBEDDEDLIST) {
-			String value = iRecord.next();
-			if (value != null && value.length() > 0)
-				linkedClass = owner.owner.getClass(value);
+		linkedClass = owner.owner.getClass((String) iSource.field("linkedClass"));
+		if (field("linkedType") != null)
+			linkedType = OType.getById((Integer) iSource.field("linkedType"));
 
-			value = iRecord.next();
-			if (value != null && value.length() > 0)
-				linkedType = OType.getById(Integer.parseInt(value));
-		}
+		return this;
 	}
 
-	public void toStream(ORecordPositional<String> iRecord) {
-		iRecord.add(name);
-		iRecord.add(String.valueOf(type.id));
-		iRecord.add(String.valueOf(offset));
-		iRecord.add(mandatory ? "1" : "0");
-		iRecord.add(notNull ? "1" : "0");
-		iRecord.add(min);
-		iRecord.add(max);
+	public byte[] toStream() {
+		field("name", name);
+		field("type", type.id);
+		field("offset", offset);
+		field("mandatory", mandatory);
+		field("notNull", notNull);
+		field("min", min);
+		field("max", max);
 
-		if (type == OType.EMBEDDED || type == OType.LINK || type == OType.LINKSET)
-			iRecord.add(linkedClass.getName());
-		else if (type == OType.EMBEDDEDSET || type == OType.EMBEDDEDLIST) {
-			iRecord.add(linkedClass != null ? linkedClass.getName() : "");
-			iRecord.add(linkedType != null ? String.valueOf(linkedType.id) : "");
-		}
+		field("linkedClass", linkedClass != null ? linkedClass.getName() : null);
+		field("linkedType", linkedType != null ? linkedType.id : null);
+
+		return super.toStream();
 	}
 
 	public OType getLinkedType() {

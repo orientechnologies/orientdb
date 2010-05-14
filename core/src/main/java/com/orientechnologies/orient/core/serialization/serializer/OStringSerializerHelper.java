@@ -28,6 +28,9 @@ public abstract class OStringSerializerHelper {
 	public static final String	LINK											= "#";
 	public static final char		COLLECTION_BEGIN					= '[';
 	public static final char		COLLECTION_END						= ']';
+	public static final char		MAP_BEGIN									= '{';
+	public static final char		MAP_END										= '}';
+	public static final String	ENTRY_SEPARATOR						= ":";
 
 	public static Object fieldTypeFromStream(OType iType, Object iValue) {
 		if (iValue == null)
@@ -35,14 +38,21 @@ public abstract class OStringSerializerHelper {
 
 		switch (iType) {
 		case STRING:
-			if (iValue instanceof String)
-				return iValue;
+			if (iValue instanceof String) {
+				final String s = (String) iValue;
+				return s.substring(1, s.length() - 1);
+			}
 			return iValue.toString();
 
 		case INTEGER:
 			if (iValue instanceof Integer)
 				return iValue;
 			return new Integer(iValue.toString());
+
+		case BOOLEAN:
+			if (iValue instanceof Boolean)
+				return iValue;
+			return new Boolean(iValue.toString());
 
 		case FLOAT:
 			if (iValue instanceof Float)
@@ -84,7 +94,7 @@ public abstract class OStringSerializerHelper {
 
 		switch (iType) {
 		case STRING:
-			return "'" + (String) iValue + "'";
+			return "\"" + (String) iValue + "\"";
 
 		case INTEGER:
 		case FLOAT:
@@ -108,6 +118,7 @@ public abstract class OStringSerializerHelper {
 		char stringBeginChar = ' ';
 		char c;
 		boolean insideCollection = false;
+		boolean insideMap = false;
 
 		ArrayList<String> parts = new ArrayList<String>();
 
@@ -117,29 +128,28 @@ public abstract class OStringSerializerHelper {
 			if (stringBeginChar == ' ') {
 				// OUTSIDE A STRING
 
-				if (!insideCollection) {
+				if (!insideCollection && !insideMap) {
 					// OUTSIDE A COLLECTION
 
 					if (c == '\'' || c == '"') {
 						// START STRING
 						stringBeginChar = c;
-						continue;
-					}
-
-					if (c == iRecordSeparator) {
+					} else if (c == iRecordSeparator) {
 						// SEPARATOR (OUTSIDE A STRING): PUSH
 						parts.add(buffer.toString());
 						buffer.setLength(0);
 						continue;
-					}
-
-					if (c == '[')
+					} else if (c == COLLECTION_BEGIN)
 						insideCollection = true;
-				} else {
+					else if (c == MAP_BEGIN)
+						insideMap = true;
 
+				} else {
 					// INSIDE A COLLECTION
-					if (c == ']')
+					if (insideCollection && c == COLLECTION_END)
 						insideCollection = false;
+					else if (insideMap && c == MAP_END)
+						insideMap = false;
 				}
 
 			} else {
@@ -149,7 +159,6 @@ public abstract class OStringSerializerHelper {
 					if (stringBeginChar == c) {
 						// SAME CHAR AS THE BEGIN OF THE STRING: CLOSE IT AND PUSH
 						stringBeginChar = ' ';
-						continue;
 					}
 				}
 			}

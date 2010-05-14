@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 
 /**
  * Abstract implementation for record-free implementations. The object can be reused across calls to the database by using the
@@ -28,7 +29,8 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
  */
 @SuppressWarnings("unchecked")
 public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstract<T> {
-	protected Map<String, T>	fields;
+	protected Map<String, T>			fields;
+	protected Map<String, OType>	fieldTypes;
 
 	public ORecordVirtualAbstract() {
 	}
@@ -48,6 +50,15 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 	public ORecordVirtualAbstract(ODatabaseRecord<?> iDatabase, String iClassName) {
 		super(iDatabase);
 		setClassName(iClassName);
+	}
+
+	/**
+	 * Returns the forced field type if any.
+	 * 
+	 * @param iPropertyName
+	 */
+	public OType fieldType(final String iPropertyName) {
+		return fieldTypes != null ? fieldTypes.get(iPropertyName) : null;
 	}
 
 	@Override

@@ -17,121 +17,104 @@ package com.orientechnologies.orient.core.metadata.security;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.metadata.security.OUser.MODE;
-import com.orientechnologies.orient.core.record.ORecordAbstract;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.record.impl.ORecordColumn;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public class OSecurity extends ORecordBytes {
-	protected Map<String, OUser>	users								= new LinkedHashMap<String, OUser>();
+public class OSecurity extends ODocument {
+	protected Map<String, ORole>	roles	= new LinkedHashMap<String, ORole>();
+	protected Map<String, OUser>	users	= new LinkedHashMap<String, OUser>();
 
-	public static final int				SECURITY_RECORD_NUM	= 2;
-
-	public OSecurity(ODatabaseRecord<?> iDatabaseOwner, int schemaClusterId) {
+	public OSecurity(final ODatabaseRecord<?> iDatabaseOwner, final int schemaClusterId) {
 		super(iDatabaseOwner);
 	}
 
-	public OUser getUser(String iUserName) {
+	public OUser getUser(final String iUserName) {
 		return users.get(iUserName);
 	}
 
-	public OUser createUser(String iUserName, String iUserPassword, MODE iMode, OUser iParentUser) {
+	public OUser createUser(final String iUserName, final String iUserPassword, final String[] iRoles) {
 		String key = iUserName.toLowerCase();
 
 		if (users.containsKey(key))
 			throw new OSecurityException("User " + iUserName + " already exists in current database");
 
-		OUser user = new OUser(iUserName);
-		user.password(iUserPassword);
-		user.mode(iMode);
-		user.inherit(iParentUser);
-
+		OUser user = new OUser(database, iUserName);
 		users.put(iUserName.toLowerCase(), user);
+
+		user.setDatabase(database);
+		user.setPassword(iUserPassword);
+
+		if (iRoles != null)
+			for (String r : iRoles) {
+				user.addRole(r);
+			}
 
 		setDirty();
 
 		return user;
 	}
 
-	public OSecurity fromStream(byte[] buffer) {
-		ORecordColumn record = new ORecordColumn(database, buffer);
+	public ORole getRole(final String iRoleName) {
+		return roles.get(iRoleName);
+	}
 
-		Map<OUser, String> userInheritance = new HashMap<OUser, String>();
+	public ORole createRole(final String iRoleName, final ORole.ALLOW_MODES iAllowMode) {
+		final ORole role = new ORole(database, iRoleName, iAllowMode);
+		return createRole(role);
+	}
 
-		// REGISTER ALL USERS
-		OUser user;
-		int usersNum = Integer.parseInt(record.next());
-		int aclNum;
-		String inheritUser;
-		for (int u = 0; u < usersNum; ++u) {
-			user = new OUser(record.next());
-			users.put(user.name.toLowerCase(), user);
+	public ORole createRole(final ORole iRole) {
+		if (roles.containsKey(iRole.name))
+			throw new OConfigurationException("Role " + iRole.name + " is already defined");
 
-			// SERIALIZE PASSWORD ONLY IN STORAGE MODE (AKA TO THE STORAGE)
-			user.passwordEncoded(record.next());
+		roles.put(iRole.name, iRole);
 
-			user.internalMode((byte) record.next().charAt(0));
+		setDirty();
 
-			inheritUser = record.next();
+		return iRole;
+	}
 
-			if (inheritUser != null && inheritUser.length() > 0)
-				// SAVE THE INHERITANCE TO REBUILD DEPENDENCIES AFTER THE LOAD OF ALL USERS
-				userInheritance.put(user, inheritUser);
+	@Override
+	public OSecurity fromStream(final byte[] iBuffer) {
+		super.fromStream(iBuffer);
 
-			// REGISTER ALL ACL
-			aclNum = Integer.parseInt(record.next());
-			for (int a = 0; a < aclNum; ++a) {
-				user.acl.put(record.next(), record.next().getBytes());
-			}
+		ORole role;
+		List<ODocument> storedRoles = field("roles");
+		for (ODocument r : storedRoles) {
+			role = new ORole(database).fromDocument(r);
+			roles.put(role.name, role);
 		}
 
-		// REBUILD THE USER DEPENDENCIES
-		for (Entry<OUser, String> entry : userInheritance.entrySet()) {
-			entry.getKey().inherit(users.get(entry.getValue().toLowerCase()));
+		OUser user;
+		List<ODocument> storedUsers = field("users");
+		for (ODocument u : storedUsers) {
+			user = new OUser(database).fromDocument(u);
+			users.put(user.name, user);
 		}
 
 		return this;
 	}
 
+	@Override
 	public byte[] toStream() {
-		ORecordColumn record = new ORecordColumn(database);
-
-		// WRITE USERS
-		record.add(String.valueOf(users.size()));
-		for (OUser user : users.values()) {
-			record.add(user.name());
-			if (user.password() != null)
-				// SERIALIZE PASSWORD ONLY IN STORAGE MODE (AKA TO THE STORAGE)
-				record.add("'" + user.password() + "'");
-			else
-				record.add("");
-
-			record.add(String.valueOf((char) user.internalMode()));
-			record.add(user.inherit() != null ? user.inherit().name : "");
-
-			// WRITE ACL
-			record.add(String.valueOf(user.acl.size()));
-			for (Entry<String, byte[]> aclEntry : user.acl.entrySet()) {
-				record.add(aclEntry.getKey());
-				record.add(String.valueOf(aclEntry.getValue()));
-			}
-		}
-		return record.toStream();
+		field("roles", roles.values(), OType.EMBEDDEDSET);
+		field("users", users.values(), OType.EMBEDDEDSET);
+		return super.toStream();
 	}
 
 	public Collection<OUser> getUsers() {
 		return Collections.unmodifiableCollection(users.values());
 	}
 
-	public ORecordAbstract<byte[]> load(int schemaClusterId) {
-		setIdentity(schemaClusterId, SECURITY_RECORD_NUM);
-		return super.load();
+	public OSecurity load() {
+		recordId.fromString(database.getStorage().getConfiguration().securityRecordId);
+		return (OSecurity) super.load();
 	}
 }

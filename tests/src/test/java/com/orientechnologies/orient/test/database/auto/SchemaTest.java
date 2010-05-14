@@ -48,6 +48,7 @@ public class SchemaTest {
 
 		OClass account = database.getMetadata().getSchema().createClass("Account", database.getStorage().addCluster("account"));
 		account.createProperty("id", OType.INTEGER);
+		account.createProperty("birthDate", OType.DATE);
 
 		OClass profile = database.getMetadata().getSchema().createClass("Profile", database.getStorage().addCluster("profile"));
 		profile.createProperty("nick", OType.STRING).setMin("3").setMax("30");

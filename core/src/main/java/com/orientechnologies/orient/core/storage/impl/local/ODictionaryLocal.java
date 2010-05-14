@@ -36,7 +36,6 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 @SuppressWarnings("unchecked")
 public class ODictionaryLocal<T extends Object> implements ODictionaryInternal<T> {
 	public static final String						DICTIONARY_DEF_CLUSTER_NAME	= "index";
-	public static final int								DICTIONARY_RECORD_NUM				= 3;
 
 	private ODatabaseComplex<T>						database;
 	private OTreeMapPersistent<String, T>	tree;
@@ -73,8 +72,8 @@ public class ODictionaryLocal<T extends Object> implements ODictionaryInternal<T
 
 	public void load() {
 		try {
-			tree = new OTreeMapPersistent<String, T>((ODatabaseRecord<?>) database, clusterName, new ORecordId(database
-					.getClusterIdByName(clusterName), DICTIONARY_RECORD_NUM));
+			tree = new OTreeMapPersistent<String, T>((ODatabaseRecord<?>) database, clusterName, new ORecordId(database.getStorage()
+					.getConfiguration().dictionaryRecordId));
 			tree.load();
 		} catch (IOException e) {
 			OLogManager.instance().error(this, "Can't load tree from the database", e, ODatabaseException.class);
@@ -86,7 +85,9 @@ public class ODictionaryLocal<T extends Object> implements ODictionaryInternal<T
 			tree = new OTreeMapPersistent<String, T>((ODatabaseRecord<?>) database, clusterName, OStreamSerializerString.INSTANCE,
 					new OStreamSerializerAnyRecord((ODatabaseRecord<? extends ORecord<?>>) database));
 			tree.save();
-
+			
+			database.getStorage().getConfiguration().dictionaryRecordId = tree.getRecord().getIdentity().toString();
+			database.getStorage().getConfiguration().update();
 		} catch (Exception e) {
 			OLogManager.instance().error(this, "Can't create the local database's dictionary", e, ODatabaseException.class);
 		}

@@ -149,9 +149,9 @@ public class OObjectSerializerHelper {
 
 			} else {
 				// GENERIC TYPE
-				OType type = OType.getTypeByClass(p.getType());
-				if (type != null)
-					fieldValue = OStringSerializerHelper.fieldTypeFromStream(type, fieldValue);
+//				OType type = OType.getTypeByClass(p.getType());
+//				if (type != null)
+//					fieldValue = OStringSerializerHelper.fieldTypeFromStream(type, fieldValue);
 			}
 
 			setFieldValue(iPojo, fieldName, fieldValue);

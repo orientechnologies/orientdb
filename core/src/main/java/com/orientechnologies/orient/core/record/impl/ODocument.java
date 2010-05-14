@@ -17,9 +17,11 @@ package com.orientechnologies.orient.core.record.impl;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -29,6 +31,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordVirtualAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
@@ -40,7 +43,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
  */
 @SuppressWarnings("unchecked")
 public class ODocument extends ORecordVirtualAbstract<Object> implements Iterable<Entry<String, Object>> {
-
 	public static final byte	RECORD_TYPE	= 'd';
 
 	public ODocument() {
@@ -110,6 +112,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	public ODocument(final ODatabaseRecord<?> iDatabase, final String iClassName, final ORID iRID) {
 		this(iDatabase, iClassName);
 		recordId = (ORecordId) iRID;
+		dirty = false;
 		status = STATUS.NOT_LOADED;
 	}
 
@@ -281,6 +284,17 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 						lazyLoadRecord((ORecord<?>) o);
 				}
 			}
+		} else if (value instanceof Map<?, ?>) {
+			// RELATION 1-N
+			Map<String, ?> map = (Map<String, ?>) value;
+			if (map.size() > 0) {
+				Object o;
+				for (Iterator<?> it = map.values().iterator(); it.hasNext();) {
+					o = it.next();
+					if (o instanceof ORecord<?>)
+						lazyLoadRecord((ORecord<?>) o);
+				}
+			}
 		}
 
 		return value;
@@ -296,6 +310,21 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 * @return The Record instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	public ODocument field(final String iPropertyName, Object iPropertyValue) {
+		return field(iPropertyName, iPropertyValue, null);
+	}
+
+	/**
+	 * Write the field value forcing the type.
+	 * 
+	 * @param iPropertyName
+	 *          field name
+	 * @param iPropertyValue
+	 *          field value
+	 * @param iType
+	 *          Forced type (not auto-determined)
+	 * @return The Record instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 */
+	public ODocument field(final String iPropertyName, Object iPropertyValue, OType iType) {
 		checkForFields();
 		if (clazz != null) {
 			OProperty prop = clazz.getProperty(iPropertyName);
@@ -332,6 +361,13 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		}
 
 		fields.put(iPropertyName, iPropertyValue);
+
+		if (iType != null) {
+			// SAVE FORCED TYPE
+			if (fieldTypes == null)
+				fieldTypes = new HashMap<String, OType>();
+			fieldTypes.put(iPropertyName, iType);
+		}
 
 		return this;
 	}

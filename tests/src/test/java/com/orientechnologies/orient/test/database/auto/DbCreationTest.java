@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.io.IOException;
+import java.util.Locale;
 
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -48,6 +49,16 @@ public class DbCreationTest {
 	public void testDbOpen() {
 		database = new ODatabaseFlat(url);
 		database.open("admin", "admin");
+		database.close();
+	}
+
+	@Test(dependsOnMethods = { "testDbOpen" })
+	public void testChangeLocale() throws IOException {
+		database = new ODatabaseFlat(url);
+		database.open("admin", "admin");
+		database.getStorage().getConfiguration().localeLanguage = Locale.ENGLISH.getLanguage();
+		database.getStorage().getConfiguration().localeCountry = Locale.ENGLISH.getCountry();
+		database.getStorage().getConfiguration().update();
 		database.close();
 	}
 }

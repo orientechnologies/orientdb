@@ -20,6 +20,7 @@ import java.util.Collection;
 import com.orientechnologies.orient.core.cache.OCacheRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.intent.OIntent;
+import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -134,7 +135,7 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase, REC extends
 		underlying.declareIntent(iIntent, iParams);
 	}
 
-	public <DBTYPE extends ODatabase> DBTYPE checkSecurity(final String iResource, final int iOperation) {
+	public <DBTYPE extends ODatabase> DBTYPE checkSecurity(final String iResource, final ORole.CRUD_MODES iOperation) {
 		return (DBTYPE) underlying.checkSecurity(iResource, iOperation);
 	}
 

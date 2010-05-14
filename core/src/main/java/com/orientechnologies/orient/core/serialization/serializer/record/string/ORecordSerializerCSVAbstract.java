@@ -15,10 +15,14 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -43,6 +47,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 	public Object fieldFromStream(final ODatabaseRecord<?> iDatabase, final OType iType, OClass iLinkedClass,
 			final OType iLinkedType, final String iName, final String iValue) {
+
+		if (iValue == null)
+			return null;
+
 		switch (iType) {
 		case EMBEDDEDLIST:
 		case EMBEDDEDSET: {
@@ -102,7 +110,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 						iLinkedClass = iDatabase.getMetadata().getSchema().getClass(className);
 						item = item.substring(classSeparatorPos + 1);
 					}
-				}else
+				} else
 					item = item.substring(1);
 
 				coll.add(new ODocument(iDatabase, iLinkedClass != null ? iLinkedClass.getName() : null, new ORecordId(item)));
@@ -110,7 +118,38 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 			return coll;
 		}
+		case EMBEDDEDMAP: {
+			if (iValue.length() == 0)
+				return null;
 
+			// REMOVE BEGIN & END MAP CHARACTERS
+			String value = iValue.substring(1, iValue.length() - 1);
+
+			Map<String, Object> map = new HashMap<String, Object>();
+
+			if (value.length() == 0)
+				return map;
+
+			String[] items = OStringSerializerHelper.split(value, OStringSerializerHelper.RECORD_SEPARATOR_AS_CHAR);
+
+			if (iLinkedClass != null)
+				// EMBEDDED OBJECTS
+				for (String item : items) {
+					map.put("", fromString(iDatabase, item, new ODocument((ODatabaseDocument) iDatabase, iLinkedClass.getName())));
+				}
+			else {
+				if (iLinkedType == null)
+					throw new IllegalArgumentException(
+							"Linked type can't be null. Probably the serialized type has not stored the type along with data");
+
+				// EMBEDDED LITERALS
+				for (String item : items) {
+					map.put("", OStringSerializerHelper.fieldTypeFromStream(iLinkedType, item));
+				}
+			}
+
+			return map;
+		}
 		case LINK:
 			int pos = iValue.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
 			if (pos > -1)
@@ -151,11 +190,64 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		case EMBEDDEDSET: {
 			buffer.append(OStringSerializerHelper.COLLECTION_BEGIN);
 
+			int size = iValue instanceof Collection<?> ? ((Collection<Object>) iValue).size() : Array.getLength(iValue);
+			Iterator<Object> iterator = iValue instanceof Collection<?> ? ((Collection<Object>) iValue).iterator() : null;
+			Object o;
+
+			for (int i = 0; i < size; ++i) {
+				if (iValue instanceof Collection<?>)
+					o = iterator.next();
+				else
+					o = Array.get(iValue, i);
+
+				if (iLinkedClass != null) {
+					// EMBEDDED OBJECTS
+					ODocument record;
+
+					if (i > 0)
+						buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
+
+					if (o != null) {
+						if (o instanceof ODocument)
+							record = (ODocument) o;
+						else
+							record = OObjectSerializerHelper.toStream(o, new ODocument(o.getClass().getSimpleName()),
+									iDatabase instanceof ODatabaseObjectTx ? ((ODatabaseObjectTx) iDatabase).getEntityManager()
+											: OEntityManagerInternal.INSTANCE, iLinkedClass, iObjHandler != null ? iObjHandler
+											: new OUserObject2RecordHandler() {
+
+												public Object getUserObjectByRecord(ORecordInternal<?> iRecord) {
+													return iRecord;
+												}
+
+												public ORecordInternal<?> getRecordByUserObject(Object iPojo, boolean iIsMandatory) {
+													return new ODocument(iLinkedClass);
+												}
+											});
+
+						buffer.append(toString(record, null, iObjHandler, iMarshalledRecords));
+					}
+				} else {
+					// EMBEDDED LITERALS
+					if (i > 0)
+						buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
+
+					buffer.append(OStringSerializerHelper.fieldTypeToString(iLinkedType, o));
+				}
+			}
+
+			buffer.append(OStringSerializerHelper.COLLECTION_END);
+			break;
+		}
+
+		case EMBEDDEDMAP: {
+			buffer.append(OStringSerializerHelper.MAP_BEGIN);
+
 			int items = 0;
 			if (iLinkedClass != null) {
 				// EMBEDDED OBJECTS
 				ODocument record;
-				for (Object o : (Collection<?>) iValue) {
+				for (Entry<String, Object> o : ((Map<String, Object>) iValue).entrySet()) {
 					if (items > 0)
 						buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
@@ -184,15 +276,17 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				}
 			} else
 				// EMBEDDED LITERALS
-				for (Object o : (Collection<?>) iValue) {
+				for (Entry<String, Object> o : ((Map<String, Object>) iValue).entrySet()) {
 					if (items > 0)
 						buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
-					buffer.append(OStringSerializerHelper.fieldTypeToString(iLinkedType, o));
+					buffer.append(OStringSerializerHelper.fieldTypeToString(OType.STRING, o.getKey()));
+					buffer.append(OStringSerializerHelper.ENTRY_SEPARATOR);
+					buffer.append(OStringSerializerHelper.fieldTypeToString(iLinkedType, o.getValue()));
 					items++;
 				}
 
-			buffer.append(OStringSerializerHelper.COLLECTION_END);
+			buffer.append(OStringSerializerHelper.MAP_END);
 			break;
 		}
 

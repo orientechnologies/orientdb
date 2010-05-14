@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntent;
+import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.logical.OClusterLogical;
@@ -257,7 +258,7 @@ public class ODatabaseRaw implements ODatabase {
 		iIntent.activate(this, iParams);
 	}
 
-	public <DB extends ODatabase> DB checkSecurity(String iResource, int iOperation) {
+	public <DB extends ODatabase> DB checkSecurity(String iResource, ORole.CRUD_MODES iOperation) {
 		// TODO
 		// System.out.println("checkSecurity for [" + iResource + "], operation: " + iOperation);
 

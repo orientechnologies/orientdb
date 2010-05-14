@@ -85,7 +85,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
 					// CHECK IF IT'S A FIELD
 					int posOpenBrace = part.indexOf("(");
-					if (posOpenBrace == -1 || posOpenBrace > pos) {
+					if (posOpenBrace == -1 || posOpenBrace > pos && pos > -1 ) {
 						// YES, IT'S A FIELD
 						String chainedFieldName = pos > -1 ? part.substring(0, pos) : part;
 
