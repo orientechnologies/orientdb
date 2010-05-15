@@ -23,10 +23,12 @@ package com.orientechnologies.orient.server.network.protocol;
  */
 public class ONetworkProtocolData {
 	public int		totalRequests							= 0;
-	public int		commandType								= -1;
-	public int		lastCommandType						= -1;
+	public String	commandInfo								= null;
+	public String	commandDetail						= null;
+	public String	lastCommandInfo						= null;
 	public String	lastCommandDetail					= null;
-	public long		totalCommandExecutionTime	= 0;
 	public long		lastCommandExecutionTime	= 0;
+	public long		lastCommandReceived				= 0;
+	public long		totalCommandExecutionTime	= 0;
 	public String	serverInfo;
 }

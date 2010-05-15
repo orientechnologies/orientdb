@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
@@ -38,10 +37,12 @@ public class OServerCommandGetQuery extends OServerCommandAbstract {
 
 		final int limit = urlParts.length > 3 ? Integer.parseInt(urlParts[3]) : 20;
 		final String text = urlParts[2].trim();
+
+		iRequest.data.commandInfo = "Query";
+		iRequest.data.commandDetail = text;
+
 		if (!text.toLowerCase().startsWith("select"))
 			throw new IllegalArgumentException("Only SQL Select are valid using HTTP GET");
-
-		iRequest.data.commandType = OChannelBinaryProtocol.COMMAND;
 
 		ODatabaseDocumentTx db = null;
 
@@ -56,7 +57,7 @@ public class OServerCommandGetQuery extends OServerCommandAbstract {
 			if (db != null)
 				OSharedDocumentDatabase.releaseDatabase(db);
 		}
-		
+
 		sendRecordsContent(iRequest, response);
 	}
 

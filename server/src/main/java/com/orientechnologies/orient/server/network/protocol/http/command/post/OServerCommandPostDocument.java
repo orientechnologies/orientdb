@@ -17,7 +17,6 @@ package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -29,13 +28,13 @@ public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: document/<database>");
 
-		iRequest.data.commandType = OChannelBinaryProtocol.RECORD_CREATE;
+		iRequest.data.commandInfo = "Create document";
 
 		ODatabaseDocumentTx db = null;
 		ODocument doc = new ODocument().fromJSON(iRequest.content);
 		try {
 			db = OSharedDocumentDatabase.acquireDatabase(urlParts[1]);
-			
+
 			doc.save(db);
 
 		} finally {
@@ -43,8 +42,8 @@ public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
 				OSharedDocumentDatabase.releaseDatabase(db);
 		}
 
-		sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN, "Record "
-				+ doc.getIdentity() + " created successfully.");
+		sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN,
+				"Record " + doc.getIdentity() + " created successfully.");
 	}
 
 	public String[] getNames() {

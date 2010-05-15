@@ -31,6 +31,8 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 	static final String						WWW_PATH	= System.getProperty("orient.www.path", "src/site");
 
 	public void execute(final OHttpRequest iRequest) throws Exception {
+		iRequest.data.commandInfo = "Get static content";
+		iRequest.data.commandDetail = iRequest.url;
 
 		InputStream bufferedFile = null;
 		try {

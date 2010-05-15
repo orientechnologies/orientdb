@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
+import java.io.IOException;
 import java.io.StringWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -43,6 +44,8 @@ public class OServerCommandGetServer extends OServerCommandAbstract {
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		checkSyntax(iRequest.url, 1, "Syntax error: server");
 
+		iRequest.data.commandInfo = "Server status";
+
 		try {
 			StringWriter jsonBuffer = new StringWriter();
 			OJSONWriter json = new OJSONWriter(jsonBuffer);
@@ -53,16 +56,20 @@ public class OServerCommandGetServer extends OServerCommandAbstract {
 			OClientConnection[] conns = OServerMain.server().getManagedServer().getConnections();
 			for (OClientConnection c : conns) {
 				json.beginObject(2);
-				json.writeAttribute(2, true, "id", c.id);
-				json.writeAttribute(2, true, "db", c.database != null ? c.database.getName() : null);
-				json.writeAttribute(2, true, "protocol", c.protocol.getName());
-				json.writeAttribute(2, true, "totalRequests", c.protocol.getData().totalRequests);
-				json.writeAttribute(2, true, "commandType", c.protocol.getData().commandType);
-				json.writeAttribute(2, true, "lastCommandType", c.protocol.getData().lastCommandType);
-				json.writeAttribute(2, true, "lastCommandDetail", c.protocol.getData().lastCommandDetail);
-				json.writeAttribute(2, true, "lastExecutionTime", c.protocol.getData().lastCommandExecutionTime);
-				json.writeAttribute(2, true, "totalWorkingTime", c.protocol.getData().totalCommandExecutionTime);
-				json.writeAttribute(2, true, "connectedOn", dateTimeFormat.format(new Date(c.since)));
+				writeField(json, 2, "id", c.id);
+				writeField(json, 2, "id", c.id);
+				writeField(json, 2, "remoteAddress", c.protocol.getChannel() != null ? c.protocol.getChannel().toString() : "Disconnected");
+				writeField(json, 2, "db", c.database);
+				writeField(json, 2, "protocol", c.protocol.getName());
+				writeField(json, 2, "totalRequests", c.protocol.getData().totalRequests);
+				writeField(json, 2, "commandInfo", c.protocol.getData().commandInfo);
+				writeField(json, 2, "commandDetail", c.protocol.getData().commandDetail);
+				writeField(json, 2, "lastCommandOn", dateTimeFormat.format(new Date(c.protocol.getData().lastCommandReceived)));
+				writeField(json, 2, "lastCommandInfo", c.protocol.getData().lastCommandInfo);
+				writeField(json, 2, "lastCommandDetail", c.protocol.getData().lastCommandDetail);
+				writeField(json, 2, "lastExecutionTime", c.protocol.getData().lastCommandExecutionTime);
+				writeField(json, 2, "totalWorkingTime", c.protocol.getData().totalCommandExecutionTime);
+				writeField(json, 2, "connectedOn", dateTimeFormat.format(new Date(c.since)));
 				json.endObject(2);
 			}
 			json.endCollection(1, false);
@@ -73,9 +80,9 @@ public class OServerCommandGetServer extends OServerCommandAbstract {
 				for (ODatabaseDocumentTx db : entry.getValue().getResources()) {
 
 					json.beginObject(2);
-					json.writeAttribute(2, true, "db", db.getName());
-					json.writeAttribute(2, true, "open", !db.isClosed());
-					json.writeAttribute(2, true, "storage", db.getStorage().getClass().getSimpleName());
+					writeField(json, 2, "db", db.getName());
+					writeField(json, 2, "open", !db.isClosed());
+					writeField(json, 2, "storage", db.getStorage().getClass().getSimpleName());
 					json.endObject(2);
 				}
 			}
@@ -85,10 +92,10 @@ public class OServerCommandGetServer extends OServerCommandAbstract {
 			OStorage[] storages = OServerMain.server().getManagedServer().getOpenedStorages();
 			for (OStorage s : storages) {
 				json.beginObject(2);
-				json.writeAttribute(2, true, "name", s.getName());
-				json.writeAttribute(2, true, "type", s.getClass().getSimpleName());
-				json.writeAttribute(2, true, "path", s instanceof OStorageLocal ? ((OStorageLocal) s).getStoragePath() : "");
-				json.writeAttribute(2, true, "activeUsers", s.getUsers());
+				writeField(json, 2, "name", s.getName());
+				writeField(json, 2, "type", s.getClass().getSimpleName());
+				writeField(json, 2, "path", s instanceof OStorageLocal ? ((OStorageLocal) s).getStoragePath() : "");
+				writeField(json, 2, "activeUsers", s.getUsers());
 				json.endObject(2);
 			}
 			json.endCollection(1, false);
@@ -97,21 +104,21 @@ public class OServerCommandGetServer extends OServerCommandAbstract {
 			json.beginCollection(2, true, "stats");
 			for (Entry<String, Long> s : OProfiler.getInstance().getStatistics()) {
 				json.beginObject(3);
-				json.writeAttribute(3, true, "name", s.getKey());
-				json.writeAttribute(3, true, "value", s.getValue());
+				writeField(json, 3, "name", s.getKey());
+				writeField(json, 3, "value", s.getValue());
 				json.endObject(3);
 			}
 			json.endCollection(2, false);
 			json.beginCollection(2, true, "chronos");
 			for (Entry<String, Chrono> c : OProfiler.getInstance().getChronos()) {
 				json.beginObject(3);
-				json.writeAttribute(3, true, "name", c.getKey());
-				json.writeAttribute(3, true, "total", c.getValue().items);
-				json.writeAttribute(3, true, "averageElapsed", c.getValue().averageElapsed);
-				json.writeAttribute(3, true, "minElapsed", c.getValue().minElapsed);
-				json.writeAttribute(3, true, "maxElapsed", c.getValue().maxElapsed);
-				json.writeAttribute(3, true, "lastElapsed", c.getValue().lastElapsed);
-				json.writeAttribute(3, true, "totalElapsed", c.getValue().totalElapsed);
+				writeField(json, 3, "name", c.getKey());
+				writeField(json, 3, "total", c.getValue().items);
+				writeField(json, 3, "averageElapsed", c.getValue().averageElapsed);
+				writeField(json, 3, "minElapsed", c.getValue().minElapsed);
+				writeField(json, 3, "maxElapsed", c.getValue().maxElapsed);
+				writeField(json, 3, "lastElapsed", c.getValue().lastElapsed);
+				writeField(json, 3, "totalElapsed", c.getValue().totalElapsed);
 				json.endObject(3);
 			}
 			json.endCollection(2, false);
@@ -127,5 +134,10 @@ public class OServerCommandGetServer extends OServerCommandAbstract {
 
 	public String[] getNames() {
 		return NAMES;
+	}
+
+	private void writeField(final OJSONWriter json, final int iLevel, final String iAttributeName, final Object iAttributeValue)
+			throws IOException {
+		json.writeAttribute(iLevel, true, iAttributeName, iAttributeValue != null ? iAttributeValue.toString() : "-");
 	}
 }

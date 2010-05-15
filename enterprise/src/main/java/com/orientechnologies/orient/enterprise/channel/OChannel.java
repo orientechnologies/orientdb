@@ -21,10 +21,10 @@ import java.io.OutputStream;
 import java.net.Socket;
 
 public abstract class OChannel {
-	public Socket								socket;
+	public Socket						socket;
 
-	public InputStream					inStream;
-	public OutputStream					outStream;
+	public InputStream			inStream;
+	public OutputStream			outStream;
 
 	public static final int	DEFAULT_BUFFER_SIZE	= 16384;
 
@@ -51,5 +51,10 @@ public abstract class OChannel {
 			outStream.close();
 		} catch (IOException e) {
 		}
+	}
+
+	@Override
+	public String toString() {
+		return socket != null ? socket.getRemoteSocketAddress().toString().substring(1) : "Not connected";
 	}
 }

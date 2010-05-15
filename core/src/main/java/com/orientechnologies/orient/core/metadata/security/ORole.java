@@ -139,4 +139,9 @@ public class ORole extends ODocument {
 		field("acl", acl);
 		return super.toStream();
 	}
+
+	@Override
+	public String toString() {
+		return name;
+	}
 }

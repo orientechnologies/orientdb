@@ -111,4 +111,9 @@ public class OUser extends ODocument {
 		field("roles", storedRoles);
 		return super.toStream();
 	}
+
+	@Override
+	public String toString() {
+		return name;
+	}
 }

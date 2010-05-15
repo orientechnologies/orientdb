@@ -18,7 +18,6 @@ package com.orientechnologies.orient.server.network.protocol.http.command.put;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -30,7 +29,7 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: document/<database>/<record-id>");
 
-		iRequest.data.commandType = OChannelBinaryProtocol.RECORD_UPDATE;
+		iRequest.data.commandInfo = "Edit Document";
 
 		ODatabaseDocumentTx db = null;
 

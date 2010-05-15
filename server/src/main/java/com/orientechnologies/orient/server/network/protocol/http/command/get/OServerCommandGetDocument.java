@@ -18,7 +18,6 @@ package com.orientechnologies.orient.server.network.protocol.http.command.get;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -32,7 +31,7 @@ public class OServerCommandGetDocument extends OServerCommandAbstract {
 
 		final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: document/<database>/<record-id>");
 
-		iRequest.data.commandType = OChannelBinaryProtocol.RECORD_LOAD;
+		iRequest.data.commandInfo = "Load document";
 
 		final ORecord<?> rec;
 

@@ -9,12 +9,12 @@
         <link rel="stylesheet" type="text/css" media="screen" href="www/styles/ui.jqgrid.css" />
         <style>
             body {
-                font-size: 10pt;
+                font-size: 9pt;
                 font-family: Arial;
             }
             
             td {
-                font-size: 10pt;
+                font-size: 9pt;
                 font-family: Arial;
             }
             
@@ -177,11 +177,11 @@
             
             function askServerInfo(){
                 executeRequest($('#server').val() + '/server', function(server){
-                    fillStaticTable($('#serverConnections'), ['Id', 'Database', 'Protocol', 'Total requests', 'Command type', 'Last command type', 'Last command detail', 'Last execution time', 'Total working time', 'Connected since'], server['connections']);
+                    fillStaticTable($('#serverConnections'), ['Id', 'Remote Client', 'Database', 'Protocol', 'Total requests', 'Command info', 'Command detail', 'Last Command When', 'Last command info', 'Last command detail', 'Last execution time', 'Total working time', 'Connected since'], server['connections']);
                     fillStaticTable($('#serverDbs'), ['Database', 'Open', 'Storage'], server['dbs']);
                     fillStaticTable($('#serverStorages'), ['Name', 'Type', 'Path', 'Active users'], server['storages']);
                     fillStaticTable($('#serverProfilerStats'), ['Name', 'Value'], server['profiler']['stats']);
-                    fillStaticTable($('#serverProfilerChronos'), ['Name', 'Total', 'averageElapsed', 'minElapsed', 'maxElapsed', 'lastElapsed', 'totalElapsed'], server['profiler']['chronos']);
+                    fillStaticTable($('#serverProfilerChronos'), ['Name', 'Total', 'Average Elapsed (ms)', 'Min Elapsed (ms)', 'Max Elapsed (ms)', 'Last Elapsed (ms)', 'Total Elapsed (ms)'], server['profiler']['chronos']);
                 });
             }
             
@@ -191,6 +191,8 @@
                     databaseInfo = database;
                     
                     fillDynaTable($('#databaseClusters'), "Clusters", ['id', 'name', 'type', 'records'], null, database['clusters']);
+                    fillDynaTable($('#databaseUsers'), "Users", ['name', 'roles'], null, database['users']);
+                    fillDynaTable($('#databaseRoles'), "Roles", ['name', 'ACL'], null, database['roles']);
                     fillDynaTable($('#classProperties'), "Properties", ['id', 'name', 'type', 'linkedType', 'linkedClass', 'mandatory', 'notNull', 'min', 'max'], [{
                         name: 'id',
                         index: 'id',
@@ -251,6 +253,7 @@
                 
                 $("#tabs-main").tabs();
                 $("#tabs-db").tabs();
+                $("#tabs-security").tabs();
                 $("#tabs-server").tabs();
                 
                 $('#server').change(function(objEvent){
@@ -373,16 +376,24 @@
                                 </table>
                             </div>
                             <div id="tab-db-security">
-                                <table style="width: 100%;" cellpadding="5">
-                                    <tr>
-                                        <td valign="top" width="500">
-                                            <table id="databaseSecurity" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
-                                            </table>
-                                        </td>
-                                        <td valign="top" class="help">
-                                        </td>
-                                    </tr>
-                                </table>
+                                <div id="tabs-security">
+                                    <ul>
+                                        <li>
+                                            <a href="#tab-security-users"><span>Users</span></a>
+                                        </li>
+                                        <li>
+                                            <a href="#tab-security-roles"><span>Roles</span></a>
+                                        </li>
+                                    </ul>
+                                    <div id="tab-security-users">
+                                        <table id="databaseUsers" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+                                        </table>
+                                    </div>
+                                    <div id="tab-security-roles">
+                                        <table id="databaseRoles" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -393,12 +404,14 @@
                                     <table style="width: 100%;" cellpadding="2" cellspacing="0">
                                         <tr>
                                             <td valign="top">
-                                                <textarea id="queryText" cols="120" rows="4" title="value">select from Address where city.country.name = 'Italy'</textarea>
+                                                <textarea id="queryText" cols="120" rows="4" title="value">
+                                                    select from Address where city.country.name = 'Italy'
+                                                </textarea>
                                             </td>
                                             <td>
                                                 <table style="width: 100%;">
                                                     <tr>
-                                                        <td align="center" style="font-size: 14pt;" >
+                                                        <td align="center" style="font-size: 14pt;">
                                                             <a href="http://code.google.com/p/orient/wiki/SQLQuery" target="help">SQL Syntax</a>
                                                         </td>
                                                     </tr>
@@ -534,6 +547,12 @@
                             </ul>
                             <div id="tab-server-conns">
                                 <table style="width: 100%;">
+                                    <tr>
+                                        <td valign="top" class="help">
+                                            Below all the active connections. Keep in mind that HTTP connections are stateless, so no database is retained and usually after a short timeout (seconds) they are killed. Binary connections, instead, remain in life until the connection client closes it. Binary connections are used by the <a href="http://code.google.com/p/orient/wiki/ConsoleCommands">Orient Console</a>
+                                            tool and by any Orient Java applications that uses the native <a href="http://code.google.com/p/orient/wiki/JavaAPI">Java API</a>.
+                                        </td>
+                                    </tr>
                                     <tr>
                                         <td valign="top">
                                             <table id="serverConnections" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">

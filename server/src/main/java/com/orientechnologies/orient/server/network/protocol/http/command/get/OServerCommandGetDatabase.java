@@ -16,10 +16,13 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
 import java.io.StringWriter;
+import java.util.Arrays;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -30,15 +33,16 @@ public class OServerCommandGetDatabase extends OServerCommandAbstract {
 	private static final String[]	NAMES	= { "GET.database" };
 
 	public void execute(final OHttpRequest iRequest) throws Exception {
-		iRequest.data.commandType = -1;
-
 		String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: database/<database>");
 
-//		if (iRequest.sessionId == null) {
-//			sendTextContent(iRequest, OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION,
-//					"WWW-Authenticate: Basic realm=\"Secure Area\"", OHttpUtils.CONTENT_TEXT_PLAIN, "401 Unauthorized.");
-//			return;
-//		}
+		// if (iRequest.sessionId == null) {
+		// sendTextContent(iRequest, OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION,
+		// "WWW-Authenticate: Basic realm=\"Secure Area\"", OHttpUtils.CONTENT_TEXT_PLAIN, "401 Unauthorized.");
+		// return;
+		// }
+
+		iRequest.data.commandInfo = "Database info";
+		iRequest.data.commandDetail = urlParts[1];
 
 		ODatabaseDocumentTx db = null;
 
@@ -93,6 +97,25 @@ public class OServerCommandGetDatabase extends OServerCommandAbstract {
 				}
 				json.endCollection(1, true);
 			}
+
+			json.beginCollection(1, false, "users");
+			for (OUser user : db.getMetadata().getSecurity().getUsers()) {
+				json.beginObject(2, true, null);
+				json.writeAttribute(3, false, "name", user.getName());
+				json.writeAttribute(3, false, "roles", user.getRoles() != null ? Arrays.toString(user.getRoles().toArray()) : "null");
+				json.endObject(2, false);
+			}
+			json.endCollection(1, true);
+
+			json.beginCollection(1, false, "roles");
+			for (ORole role : db.getMetadata().getSecurity().getRoles()) {
+				json.beginObject(2, true, null);
+				json.writeAttribute(3, false, "name", role.getName());
+				json.writeAttribute(3, false, "ACL", "not supported yet");
+				json.endObject(2, false);
+			}
+			json.endCollection(1, true);
+
 			json.endObject();
 
 			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, buffer.toString());

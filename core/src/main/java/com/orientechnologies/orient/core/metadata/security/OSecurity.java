@@ -113,6 +113,10 @@ public class OSecurity extends ODocument {
 		return Collections.unmodifiableCollection(users.values());
 	}
 
+	public Collection<ORole> getRoles() {
+		return Collections.unmodifiableCollection(roles.values());
+	}
+
 	public OSecurity load() {
 		recordId.fromString(database.getStorage().getConfiguration().securityRecordId);
 		return (OSecurity) super.load();

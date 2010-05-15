@@ -38,18 +38,18 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolExce
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
-	private static final int						MAX_CONTENT_LENGTH	= 10000;																	// MAX = 10Kb
-	private static final int						TCP_DEFAULT_TIMEOUT	= 5000;
+	private static final int									MAX_CONTENT_LENGTH	= 10000;																	// MAX = 10Kb
+	private static final int									TCP_DEFAULT_TIMEOUT	= 5000;
 
-	protected OClientConnection					connection;
-	protected OServerConfiguration			configuration;
-	protected OChannelTextServer				channel;
-	protected OUser											account;
+	protected OClientConnection								connection;
+	protected OServerConfiguration						configuration;
+	protected OChannelTextServer							channel;
+	protected OUser														account;
+	protected OHttpRequest										request;
 
-	protected OHttpRequest							request;
-
-	private Map<String, OServerCommand>	commands						= new HashMap<String, OServerCommand>();
-	private OBase64Utils								base64							= new OBase64Utils(null, "");
+	private final StringBuilder								requestContent			= new StringBuilder();
+	private final Map<String, OServerCommand>	commands						= new HashMap<String, OServerCommand>();
+	private final OBase64Utils								base64							= new OBase64Utils(null, "");
 
 	public ONetworkProtocolHttpAbstract() {
 		super(OServer.getThreadGroup(), "HTTP");
@@ -70,10 +70,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 		OProfiler.getInstance().updateStatistic("Server.requests", +1);
 
 		++data.totalRequests;
-		data.commandType = -1;
-		data.lastCommandType = -1;
-		data.lastCommandDetail = request.url;
-		data.lastCommandExecutionTime = 0;
+		data.commandInfo = null;
+		data.commandDetail = null;
 
 		long begin = System.currentTimeMillis();
 
@@ -110,7 +108,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 			OLogManager.instance()
 					.warn(this, "->" + channel.socket.getInetAddress().getHostAddress() + ": Command not found: " + command);
 
-		data.lastCommandType = data.commandType;
+		data.lastCommandInfo = data.commandInfo;
+		data.lastCommandDetail = data.commandDetail;
+
 		data.lastCommandExecutionTime = System.currentTimeMillis() - begin;
 		data.totalCommandExecutionTime += data.lastCommandExecutionTime;
 	}
@@ -188,10 +188,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 						iRequest.authorization = auth.substring("BASIC".length() + 1);
 
 						iRequest.authorization = base64.decodeBase64("", iRequest.authorization);
-						
+
 					} else if (lineUpperCase.startsWith("SESSIONID")) {
 						iRequest.sessionId = line.substring("SESSIONID".length());
-						
+
 					} else if (lineUpperCase.startsWith(OHttpUtils.CONTENT_LENGTH)) {
 						contentLength = Integer.parseInt(lineUpperCase.substring(OHttpUtils.CONTENT_LENGTH.length()));
 						if (contentLength > MAX_CONTENT_LENGTH)
@@ -244,10 +244,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 			return;
 		}
 
-		long timer = -1;
+		data.commandInfo = "Listening";
+		data.commandDetail = null;
 
 		try {
-			StringBuilder requestContent = new StringBuilder();
 			char c = (char) channel.inStream.read();
 
 			if (channel.inStream.available() == 0) {
@@ -255,7 +255,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 				return;
 			}
 
-			timer = OProfiler.getInstance().startChrono();
+			data.lastCommandReceived = OProfiler.getInstance().startChrono();
 
 			requestContent.setLength(0);
 
@@ -308,8 +308,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 				} catch (IOException e) {
 				}
 		} finally {
-			if (timer > -1)
-				OProfiler.getInstance().stopChrono("ONetworkProtocolHttp.execute", timer);
+			if (data.lastCommandReceived > -1)
+				OProfiler.getInstance().stopChrono("ONetworkProtocolHttp.execute", data.lastCommandReceived);
 		}
 	}
 
@@ -333,24 +333,28 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 		super.sendShutdown();
 
 		try {
+			// FORCE SOCKET CLOSING
 			channel.socket.close();
-		} catch (IOException e) {
+		} catch (final Exception e) {
 		}
-
-		if (OLogManager.instance().isDebugEnabled())
-			OLogManager.instance().debug(this, "Connection shutdowned");
 	}
 
 	@Override
 	public void shutdown() {
-		sendShutdown();
-		channel.close();
+		try {
+			sendShutdown();
+			channel.close();
 
-		OClientConnectionManager.instance().onClientDisconnection(connection.id);
+		} finally {
+			OClientConnectionManager.instance().onClientDisconnection(connection.id);
+
+			if (OLogManager.instance().isDebugEnabled())
+				OLogManager.instance().debug(this, "Connection shutdowned");
+		}
 	}
 
 	@Override
 	public OChannel getChannel() {
-		return null;
+		return channel;
 	}
 }

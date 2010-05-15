@@ -93,6 +93,8 @@ public class OStorageRemote extends OStorageAbstract {
 
 			openRemoteDatabase();
 			addUser();
+			
+			configuration.load();
 
 			Orient.instance().registerStorage(this);
 

@@ -18,7 +18,6 @@ package com.orientechnologies.orient.server.network.protocol.http.command.delete
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -33,7 +32,7 @@ public class OServerCommandDeleteDocument extends OServerCommandDocumentAbstract
 		try {
 			final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: document/<database>/<record-id>");
 
-			iRequest.data.commandType = OChannelBinaryProtocol.RECORD_DELETE;
+			iRequest.data.commandInfo = "Delete document";
 
 			db = OSharedDocumentDatabase.acquireDatabase(urlParts[1]);
 

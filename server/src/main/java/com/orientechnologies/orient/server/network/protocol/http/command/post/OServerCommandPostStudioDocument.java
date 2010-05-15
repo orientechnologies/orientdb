@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -73,7 +72,7 @@ public class OServerCommandPostStudioDocument extends OServerCommandAbstract {
 			}
 
 			if ("edit".equals(operation)) {
-				iRequest.data.commandType = OChannelBinaryProtocol.RECORD_UPDATE;
+				iRequest.data.commandInfo = "Studio edit document";
 
 				if (rid == null)
 					throw new IllegalArgumentException("Record ID not found in request");
@@ -110,7 +109,7 @@ public class OServerCommandPostStudioDocument extends OServerCommandAbstract {
 				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid
 						+ " updated successfully.");
 			} else if ("add".equals(operation)) {
-				iRequest.data.commandType = OChannelBinaryProtocol.RECORD_CREATE;
+				iRequest.data.commandInfo = "Studio create document";
 
 				final ODocument doc = new ODocument(db, className);
 
@@ -119,11 +118,11 @@ public class OServerCommandPostStudioDocument extends OServerCommandAbstract {
 					doc.field(f.getKey(), f.getValue());
 
 				doc.save();
-				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + doc.getIdentity()
-						+ " updated successfully.");
+				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Record "
+						+ doc.getIdentity() + " updated successfully.");
 
 			} else if ("del".equals(operation)) {
-				iRequest.data.commandType = OChannelBinaryProtocol.RECORD_DELETE;
+				iRequest.data.commandInfo = "Studio delete document";
 
 				if (rid == null)
 					throw new IllegalArgumentException("Record ID not found in request");

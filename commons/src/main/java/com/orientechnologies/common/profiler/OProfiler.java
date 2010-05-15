@@ -153,7 +153,7 @@ public class OProfiler implements OProfilerMBean {
 		if (recording < 0)
 			return -1;
 
-		return new Date().getTime();
+		return System.currentTimeMillis();
 	}
 
 	// ----------------------------------------------------------------------------
@@ -167,7 +167,7 @@ public class OProfiler implements OProfilerMBean {
 		if (recording < 0)
 			return -1;
 
-		long now = new Date().getTime();
+		long now = System.currentTimeMillis();
 
 		Chrono c = chronos.get(iName);
 

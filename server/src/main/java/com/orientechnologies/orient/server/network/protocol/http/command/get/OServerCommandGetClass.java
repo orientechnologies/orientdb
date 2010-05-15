@@ -20,7 +20,6 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
@@ -29,12 +28,13 @@ public class OServerCommandGetClass extends OServerCommandAbstract {
 	private static final String[]	NAMES	= { "GET.class" };
 
 	public void execute(final OHttpRequest iRequest) throws Exception {
-		iRequest.data.commandType = OChannelBinaryProtocol.COMMAND;
-
 		String[] urlParts = checkSyntax(
 				iRequest.url,
 				3,
 				"Syntax error: class/<database>/<class-name>[/<limit>]<br/>Limit is optional and is setted to 20 by default. Set expressely to 0 to have no limits.");
+
+		iRequest.data.commandInfo = "Browse class";
+		iRequest.data.commandDetail = urlParts[2];
 
 		ODatabaseDocumentTx db = null;
 

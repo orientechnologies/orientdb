@@ -18,7 +18,6 @@ package com.orientechnologies.orient.server.network.protocol.http.command.get;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
@@ -27,7 +26,7 @@ public class OServerCommandGetDictionary extends OServerCommandAbstract {
 	private static final String[]	NAMES	= { "GET.dictionary" };
 
 	public void execute(final OHttpRequest iRequest) throws Exception {
-		iRequest.data.commandType = OChannelBinaryProtocol.DICTIONARY_LOOKUP;
+		iRequest.data.commandInfo = "Dictionary lookup";
 
 		String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: dictionary/<database>/<key>");
 
