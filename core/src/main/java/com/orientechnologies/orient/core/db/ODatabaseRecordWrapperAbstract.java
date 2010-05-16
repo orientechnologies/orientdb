@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
@@ -108,5 +109,10 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord<
 			return getDatabaseOwner().getUserObjectByRecord(iRecord);
 
 		return iRecord;
+	}
+
+	@SuppressWarnings("unchecked")
+	public <DBTYPE extends ODatabaseRecord<?>> DBTYPE checkSecurity(final String iResource, final ORole.CRUD_OPERATIONS iOperation) {
+		return (DBTYPE) underlying.checkSecurity(iResource, iOperation);
 	}
 }

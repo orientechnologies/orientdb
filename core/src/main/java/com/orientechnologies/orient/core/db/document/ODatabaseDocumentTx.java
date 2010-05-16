@@ -40,7 +40,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 	}
 
 	public ODocument newInstance(final String iClassName) {
-		checkSecurity(ODatabaseSecurityResources.CLASS + "." + iClassName, ORole.CRUD_MODES.CREATE);
+		checkSecurity(ODatabaseSecurityResources.CLASS + "." + iClassName, ORole.CRUD_OPERATIONS.CREATE);
 
 		return new ODocument(this, iClassName);
 	}
@@ -49,14 +49,14 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 		if (getMetadata().getSchema().getClass(iClassName) == null)
 			throw new IllegalArgumentException("Class '" + iClassName + "' not found in current database");
 
-		checkSecurity(ODatabaseSecurityResources.CLASS + "." + iClassName, ORole.CRUD_MODES.READ);
+		checkSecurity(ODatabaseSecurityResources.CLASS + "." + iClassName, ORole.CRUD_OPERATIONS.READ);
 
 		return new ORecordIteratorMultiCluster<ODocument>(this, underlying, getMetadata().getSchema().getClass(iClassName)
 				.getClusterIds());
 	}
 
 	public ORecordIteratorCluster<ODocument> browseCluster(final String iClusterName) {
-		checkSecurity(ODatabaseSecurityResources.CLUSTER + "." + iClusterName, ORole.CRUD_MODES.READ);
+		checkSecurity(ODatabaseSecurityResources.CLUSTER + "." + iClusterName, ORole.CRUD_OPERATIONS.READ);
 
 		return new ORecordIteratorCluster<ODocument>(this, underlying, getClusterIdByName(iClusterName));
 	}
@@ -71,7 +71,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 			if (!iContent.getIdentity().isValid()) {
 				// NEW RECORD
 				if (iContent.getClassName() != null)
-					checkSecurity(ODatabaseSecurityResources.CLASS + "." + iContent.getClassName(), ORole.CRUD_MODES.CREATE);
+					checkSecurity(ODatabaseSecurityResources.CLASS + "." + iContent.getClassName(), ORole.CRUD_OPERATIONS.CREATE);
 
 				if (iContent.getSchemaClass() != null) {
 					// CLASS FOUND: FORCE THE STORING IN THE CLUSTER CONFIGURED
@@ -83,7 +83,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 			} else {
 				// UPDATE: CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
 				if (iContent.getClassName() != null)
-					checkSecurity(ODatabaseSecurityResources.CLASS + "." + iContent.getClassName(), ORole.CRUD_MODES.UPDATE);
+					checkSecurity(ODatabaseSecurityResources.CLASS + "." + iContent.getClassName(), ORole.CRUD_OPERATIONS.UPDATE);
 			}
 
 			super.save(iContent);
@@ -135,7 +135,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 	public ODatabaseDocumentTx delete(final ODocument iContent) {
 		// CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
 		if (iContent.getClassName() != null)
-			checkSecurity(ODatabaseSecurityResources.CLASS + "." + iContent.getClassName(), ORole.CRUD_MODES.DELETE);
+			checkSecurity(ODatabaseSecurityResources.CLASS + "." + iContent.getClassName(), ORole.CRUD_OPERATIONS.DELETE);
 
 		try {
 			underlying.delete(iContent);

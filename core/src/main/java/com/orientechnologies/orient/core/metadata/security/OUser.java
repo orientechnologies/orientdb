@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.metadata.security.ORole.CRUD_OPERATIONS;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 
@@ -46,6 +48,27 @@ public class OUser extends ODocument {
 	public OUser(final ODatabaseRecord<?> iDatabase, final String iName) {
 		this(iDatabase);
 		name = iName;
+	}
+
+	/**
+	 * Check if the user has the permission to access to the requested resource for the requested operation.
+	 * 
+	 * @param iResource
+	 *          Requested resource
+	 * @param iOperation
+	 *          Requested operation
+	 */
+	public ORole allow(final String iResource, final CRUD_OPERATIONS iOperation) {
+		if (roles == null || roles.isEmpty())
+			throw new OSecurityAccessException("User '" + name + "' has no role defined");
+
+		for (ORole r : roles) {
+			if (r.allow(iResource, iOperation))
+				return r;
+		}
+
+		throw new OSecurityAccessException("User '" + name + "' has no the permission to execute the operation '" + iOperation
+				+ "' against the resource: " + iResource);
 	}
 
 	public boolean checkPassword(String iPassword) {

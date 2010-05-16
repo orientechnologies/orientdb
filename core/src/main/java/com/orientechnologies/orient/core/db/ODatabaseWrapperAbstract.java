@@ -21,14 +21,12 @@ import com.orientechnologies.orient.core.cache.OCacheRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseWrapperAbstract<DB extends ODatabase, REC extends ORecordInternal<?>> implements ODatabase {
 	protected DB									underlying;
-	protected OUser								user;
 	protected ODatabaseComplex<?>	databaseOwner;
 
 	public ODatabaseWrapperAbstract(final DB iDatabase) {
@@ -133,10 +131,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase, REC extends
 	public void declareIntent(final OIntent iIntent, final Object... iParams) {
 		checkOpeness();
 		underlying.declareIntent(iIntent, iParams);
-	}
-
-	public <DBTYPE extends ODatabase> DBTYPE checkSecurity(final String iResource, final ORole.CRUD_MODES iOperation) {
-		return (DBTYPE) underlying.checkSecurity(iResource, iOperation);
 	}
 
 	public <DBTYPE extends ODatabase> DBTYPE getUnderlying() {

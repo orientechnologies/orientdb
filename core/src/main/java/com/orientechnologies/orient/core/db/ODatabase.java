@@ -19,7 +19,7 @@ import java.util.Collection;
 
 import com.orientechnologies.orient.core.cache.OCacheRecord;
 import com.orientechnologies.orient.core.intent.OIntent;
-import com.orientechnologies.orient.core.metadata.security.ORole.CRUD_MODES;
+import com.orientechnologies.orient.core.metadata.security.ORole.CRUD_OPERATIONS;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
@@ -204,15 +204,4 @@ public interface ODatabase {
 	 * Internal. Adds a data segment where to store record content.
 	 */
 	public int addDataSegment(String iSegmentName, String iSegmentFileName);
-
-	/**
-	 * Checks if the operation on a resource is allowed fir the current user.
-	 * 
-	 * @param iResource
-	 *          Resource where to execute the operation
-	 * @param iOperation
-	 *          Operation to execute against the resource
-	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
-	 */
-	public <DB extends ODatabase> DB checkSecurity(String iResource, CRUD_MODES iOperation);
 }

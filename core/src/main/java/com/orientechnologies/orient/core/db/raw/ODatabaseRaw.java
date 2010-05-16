@@ -258,13 +258,6 @@ public class ODatabaseRaw implements ODatabase {
 		iIntent.activate(this, iParams);
 	}
 
-	public <DB extends ODatabase> DB checkSecurity(String iResource, ORole.CRUD_MODES iOperation) {
-		// TODO
-		// System.out.println("checkSecurity for [" + iResource + "], operation: " + iOperation);
-
-		return null;
-	}
-
 	public ODatabaseRecord<?> getDatabaseOwner() {
 		return databaseOwner;
 	}

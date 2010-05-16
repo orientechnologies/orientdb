@@ -19,6 +19,7 @@ import java.util.HashMap;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -82,7 +83,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 	 * @see #registerEntityClasses(String)
 	 */
 	public Object newInstance(final String iClassName) {
-		checkSecurity(ODatabaseSecurityResources.CLASS + "." + iClassName, ORole.CRUD_MODES.CREATE);
+		checkSecurity(ODatabaseSecurityResources.CLASS + "." + iClassName, ORole.CRUD_OPERATIONS.CREATE);
 
 		try {
 			return entityManager.createPojo(iClassName);
@@ -100,14 +101,14 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 	}
 
 	public <RET> OObjectIteratorMultiCluster<RET> browseClass(final String iClassName) {
-		checkSecurity(ODatabaseSecurityResources.CLASS + "." + iClassName, ORole.CRUD_MODES.READ);
+		checkSecurity(ODatabaseSecurityResources.CLASS + "." + iClassName, ORole.CRUD_OPERATIONS.READ);
 
 		return new OObjectIteratorMultiCluster<RET>(this, (ODatabaseRecordAbstract<ODocument>) getUnderlying().getUnderlying(),
 				getMetadata().getSchema().getClass(iClassName).getClusterIds());
 	}
 
 	public <RET> OObjectIteratorCluster<RET> browseCluster(final String iClusterName) {
-		checkSecurity(ODatabaseSecurityResources.CLUSTER + "." + iClusterName, ORole.CRUD_MODES.READ);
+		checkSecurity(ODatabaseSecurityResources.CLUSTER + "." + iClusterName, ORole.CRUD_OPERATIONS.READ);
 
 		return (OObjectIteratorCluster<RET>) new OObjectIteratorCluster<Object>(this,
 				(ODatabaseRecordAbstract<ODocument>) getUnderlying().getUnderlying(), getClusterIdByName(iClusterName));
@@ -290,5 +291,9 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 
 	public OCommandRequest command(OCommandRequest iCommand) {
 		return null;
+	}
+
+	public <DBTYPE extends ODatabase> DBTYPE checkSecurity(final String iResource, final ORole.CRUD_OPERATIONS iOperation) {
+		return (DBTYPE) underlying.checkSecurity(iResource, iOperation);
 	}
 }

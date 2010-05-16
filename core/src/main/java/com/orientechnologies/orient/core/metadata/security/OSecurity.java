@@ -66,7 +66,11 @@ public class OSecurity extends ODocument {
 	}
 
 	public ORole createRole(final String iRoleName, final ORole.ALLOW_MODES iAllowMode) {
-		final ORole role = new ORole(database, iRoleName, iAllowMode);
+		return createRole(iRoleName, null, iAllowMode);
+	}
+
+	public ORole createRole(final String iRoleName, final ORole iParent, final ORole.ALLOW_MODES iAllowMode) {
+		final ORole role = new ORole(database, iRoleName, iParent, iAllowMode);
 		return createRole(role);
 	}
 
