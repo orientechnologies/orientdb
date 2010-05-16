@@ -122,9 +122,15 @@ public class ORecordId implements ORID {
 
 	public void fromString(final String iRecordId) {
 		if (!iRecordId.contains(SEPARATOR))
-			throw new IllegalArgumentException("Argument is not a RecordId in form of string");
+			throw new IllegalArgumentException(
+					"Argument is not a RecordId in form of string. Format must be: <cluster-id>:<cluster-position>");
 
 		final String parts[] = iRecordId.split(SEPARATOR);
+
+		if (parts.length != 2)
+			throw new IllegalArgumentException(
+					"Argument is not a RecordId in form of string. Format must be: <cluster-id>:<cluster-position>");
+
 		clusterId = Integer.parseInt(parts[0]);
 		checkClusterLimits();
 		clusterPosition = Long.parseLong(parts[1]);
