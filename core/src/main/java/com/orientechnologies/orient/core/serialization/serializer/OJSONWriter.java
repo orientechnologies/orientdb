@@ -73,14 +73,13 @@ public class OJSONWriter {
 	}
 
 	public OJSONWriter endObject(final int iIdentLevel) throws IOException {
-		format(iIdentLevel, true);
-		out.append("}");
-		return this;
+		return endObject(iIdentLevel, true);
 	}
 
 	public OJSONWriter endObject(final int iIdentLevel, final boolean iNewLine) throws IOException {
 		format(iIdentLevel, iNewLine);
 		out.append("}");
+		firstAttribute = false;
 		return this;
 	}
 
@@ -210,12 +209,13 @@ public class OJSONWriter {
 	}
 
 	private OJSONWriter format(final int iIdentLevel, final boolean iNewLine) throws IOException {
-		if (iNewLine)
+		if (iNewLine) {
 			out.append("\n");
 
-		if (prettyPrint)
-			for (int i = 0; i < iIdentLevel; ++i)
-				out.append("  ");
+			if (prettyPrint)
+				for (int i = 0; i < iIdentLevel; ++i)
+					out.append("  ");
+		}
 		return this;
 	}
 
