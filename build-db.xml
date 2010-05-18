@@ -135,6 +135,10 @@
     
     <copy todir="${db.release}/config/" flatten="true">
       <fileset dir="." includes="server/config/*" />
+    </copy>
+    
+    <copy todir="${db.release}/benchmarks" flatten="true">
+      <fileset dir="." includes="**/benchmarks/*"/>
     </copy>    
 	</target>
 
