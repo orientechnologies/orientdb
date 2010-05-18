@@ -25,16 +25,19 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData
  * 
  */
 public class OHttpRequest {
-	public OChannelTextServer		channel;
-	public String								method;
-	public String								authorization;
-	public String								sessionId;
-	public String								url;
-	public String								httpVersion;
-	public String								content;
-	public ONetworkProtocolData	data;
+	public OChannelTextServer						channel;
+	public String												method;
+	public String												authorization;
+	public String												sessionId;
+	public String												url;
+	public String												httpVersion;
+	public String												content;
+	public ONetworkProtocolData					data;
+	public ONetworkProtocolHttpAbstract	executor;
 
-	public OHttpRequest(final OChannelTextServer iChannel, final ONetworkProtocolData iData) {
+	public OHttpRequest(final ONetworkProtocolHttpAbstract iExecutor, final OChannelTextServer iChannel,
+			final ONetworkProtocolData iData) {
+		executor = iExecutor;
 		channel = iChannel;
 		data = iData;
 	}
