@@ -113,6 +113,9 @@ public class OClass extends ODocument {
 	}
 
 	public OProperty createProperty(final String iPropertyName, final OType iType, final OClass iLinkedClass) {
+		if (iLinkedClass == null)
+			throw new OSchemaException("Missed linked class");
+
 		OProperty prop = addProperty(iPropertyName, iType, fixedSize);
 		prop.setLinkedClass(iLinkedClass);
 		return prop;
@@ -124,6 +127,16 @@ public class OClass extends ODocument {
 		return prop;
 	}
 
+	public void removeProperty(final String iPropertyName) {
+		OProperty prop = properties.remove(iPropertyName);
+
+		if (prop == null)
+			throw new OSchemaException("Property '" + iPropertyName + "' not found in class " + name + "'");
+
+		fixedSize -= prop.getType().size;
+		owner.setDirty();
+	}
+
 	public int fixedSize() {
 		return fixedSize;
 	}
@@ -132,10 +145,15 @@ public class OClass extends ODocument {
 		return properties.containsKey(iPropertyName);
 	}
 
-	protected OProperty addProperty(final String iName, final OType iType, final int iOffset) {
+	protected OProperty addProperty(String iName, final OType iType, final int iOffset) {
+		iName = iName.toLowerCase();
+
+		if (properties.containsKey(iName))
+			throw new OSchemaException("Class " + name + " already has the property '" + iName + "'");
+
 		OProperty prop = new OProperty(this, iName, iType, iOffset);
 
-		properties.put(iName.toLowerCase(), prop);
+		properties.put(iName, prop);
 		fixedSize += iType.size;
 
 		owner.setDirty();
