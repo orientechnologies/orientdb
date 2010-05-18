@@ -31,11 +31,12 @@ import com.orientechnologies.orient.core.record.ORecord;
  * 
  */
 public enum OType {
-	BOOLEAN("Boolean", 0, false, true, 1, new Class<?>[] { Boolean.TYPE, Boolean.class }, new Class<?>[] { Boolean.class, String.class }) {
+	BOOLEAN("Boolean", 0, false, true, 1, new Class<?>[] { Boolean.TYPE, Boolean.class }, new Class<?>[] { Boolean.class }) {
 	},
 	INTEGER("Integer", 1, false, true, 4, new Class<?>[] { Integer.TYPE, Integer.class }, new Class<?>[] { Number.class }) {
 	},
-	SHORT("Short", 2, false, true, 2, new Class<?>[] { Short.TYPE, Short.class }, new Class<?>[] { Number.class }) {
+	SHORT("Short", 2, false, true, 2, new Class<?>[] { Short.TYPE, Short.class, Byte.TYPE, Byte.class },
+			new Class<?>[] { Number.class }) {
 	},
 	LONG("Long", 3, false, true, 8, new Class<?>[] { Long.TYPE, Long.class }, new Class<?>[] { Number.class }) {
 	},
@@ -47,7 +48,7 @@ public enum OType {
 	},
 	STRING("String", 7, false, false, 8, new Class<?>[] { String.class }, new Class<?>[] { String.class }) {
 	},
-	BINARY("Binary", 8, false, false, 8, new Class<?>[] { Byte.TYPE, Byte.class }, new Class<?>[] { Array.class }) {
+	BINARY("Binary", 8, false, false, 8, new Class<?>[] { Array.class }, new Class<?>[] { Array.class }) {
 	},
 	EMBEDDED("Embedded", 9, true, false, 8, new Class<?>[] { Object.class }, new Class<?>[] {}) {
 	},
