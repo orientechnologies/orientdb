@@ -83,6 +83,7 @@ public class OServerCommandGetDatabase extends OServerCommandAbstract {
 			for (ORole role : db.getMetadata().getSecurity().getRoles()) {
 				json.beginObject(2, true, null);
 				json.writeAttribute(3, false, "name", role.getName());
+				json.writeAttribute(3, false, "mode", role.getMode().toString());
 
 				json.beginCollection(3, true, "rules");
 				for (Entry<String, Byte> rule : role.getRules()) {
