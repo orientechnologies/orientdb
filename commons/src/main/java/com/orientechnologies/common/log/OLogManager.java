@@ -18,24 +18,32 @@ public class OLogManager {
 	private boolean										warn									= false;
 	private boolean										info									= false;
 	private boolean										debug									= false;
+	private boolean										error									= true;
 
 	private static final OLogManager	instance							= new OLogManager();
 	private static final DateFormat		dateFormat						= new SimpleDateFormat("yyyy-MM-dd hh:mm:ss:SSS");
 
 	public OLogManager() {
-		String configLevel = System.getProperty(SYSPROPERTY_LOG_LEVEL);
+		setLevel(System.getProperty(SYSPROPERTY_LOG_LEVEL));
+	}
 
-		level = configLevel != null ? Level.parse(configLevel.toUpperCase()) : Level.INFO;
+	public void setLevel(final String iLevel) {
+		level = iLevel != null ? Level.parse(iLevel.toUpperCase()) : Level.INFO;
 		if (level.equals(Level.FINER) || level.equals(Level.FINE) || level.equals(Level.FINEST))
 			debug = info = warn = true;
 		else if (level.equals(Level.INFO))
 			info = warn = true;
 		else if (level.equals(Level.WARNING))
 			warn = true;
+		else if (level.equals(Level.SEVERE))
+			error = true;
 	}
 
 	public PrintStream log(final Object iRequester, final Level iLevel, final String iMessage, final Throwable iException,
 			final Object... iAdditionalArgs) {
+		if (iMessage == null)
+			return null;
+
 		final PrintStream stream = iLevel.equals(Level.SEVERE) ? System.err : System.out;
 
 		final StringBuilder buffer = new StringBuilder();
@@ -99,7 +107,8 @@ public class OLogManager {
 	}
 
 	public void error(final Object iRequester, final String iMessage, final Throwable iException, final Object... iAdditionalArgs) {
-		log(iRequester, Level.SEVERE, iMessage, iException, iAdditionalArgs);
+		if (isErrorEnabled())
+			log(iRequester, Level.SEVERE, iMessage, iException, iAdditionalArgs);
 	}
 
 	public void config(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
@@ -135,25 +144,12 @@ public class OLogManager {
 		}
 	}
 
-	public boolean isDebugEnabled() {
-		return debug;
-	}
-
-	public boolean isInfoEnabled() {
-		return info;
-	}
-
-	public boolean isWarnEnabled() {
-		return warn;
-	}
-
-	public static OLogManager instance() {
-		return instance;
-	}
-
 	@SuppressWarnings("unchecked")
 	public void exception(final String iMessage, final Exception iNestedException, final Class<? extends OException> iExceptionClass,
 			final Object... iAdditionalArgs) throws OException {
+		if( iMessage == null )
+			return;
+		
 		// FORMAT THE MESSAGE
 		String msg = String.format(iMessage, iAdditionalArgs);
 
@@ -183,5 +179,49 @@ public class OLogManager {
 			throw exceptionToThrow;
 		else
 			throw new IllegalArgumentException("Can't create the exception of type: " + iExceptionClass);
+	}
+
+	public Level getLevel() {
+		return level;
+	}
+
+	public boolean isWarn() {
+		return warn;
+	}
+
+	public void setWarnEnabled(boolean warn) {
+		this.warn = warn;
+	}
+
+	public void setInfoEnabled(boolean info) {
+		this.info = info;
+	}
+
+	public void setDebugEnabled(boolean debug) {
+		this.debug = debug;
+	}
+
+	public void setErrorEnabled(boolean error) {
+		this.error = error;
+	}
+
+	public boolean isDebugEnabled() {
+		return debug;
+	}
+
+	public boolean isInfoEnabled() {
+		return info;
+	}
+
+	public boolean isWarnEnabled() {
+		return warn;
+	}
+
+	public boolean isErrorEnabled() {
+		return error;
+	}
+
+	public static OLogManager instance() {
+		return instance;
 	}
 }
