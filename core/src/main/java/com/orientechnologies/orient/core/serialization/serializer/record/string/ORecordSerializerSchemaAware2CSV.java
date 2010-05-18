@@ -107,9 +107,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 			} else if (fieldValue != null) {
 
 				// NOT FOUND: TRY TO DETERMINE THE TYPE FROM ITS CONTENT
-				if (fieldValue instanceof String)
-					type = OType.STRING;
-				else if (fieldValue instanceof Collection<?> || fieldValue.getClass().isArray()) {
+				if (fieldValue instanceof Collection<?> || fieldValue.getClass().isArray()) {
 					Collection<?> coll = fieldValue instanceof Collection<?> ? (Collection<?>) fieldValue : null;
 
 					int size = coll != null ? coll.size() : Array.getLength(fieldValue);
@@ -180,7 +178,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 				} else if (fieldValue instanceof Date) {
 					if (type == null)
 						type = OType.DATE;
-				}
+				} else if (fieldValue instanceof String)
+					type = OType.STRING;
 			}
 
 			if (type == null)
@@ -252,7 +251,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 		OType linkedType;
 		OProperty prop;
 
-		final DecimalFormatSymbols unusualSymbols = new DecimalFormatSymbols(iDatabase.getStorage().getConfiguration().getLocaleInstance());
+		final DecimalFormatSymbols unusualSymbols = new DecimalFormatSymbols(iDatabase.getStorage().getConfiguration()
+				.getLocaleInstance());
 
 		// UNMARSHALL ALL THE FIELDS
 		for (int i = 0; i < fields.length; ++i) {
@@ -311,30 +311,6 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 						} else if (fieldValue.charAt(0) == OStringSerializerHelper.MAP_BEGIN
 								&& fieldValue.charAt(fieldValue.length() - 1) == OStringSerializerHelper.MAP_END) {
 							type = OType.EMBEDDEDMAP;
-
-							String value = fieldValue.substring(1, fieldValue.length() - 1);
-
-							if (value.length() > 0) {
-								if (value.contains(ORID.SEPARATOR)) {
-									type = OType.LINKLIST;
-									linkedType = OType.LINK;
-
-									// GET THE CLASS NAME IF ANY
-									int classSeparatorPos = value.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
-									if (classSeparatorPos > -1) {
-										String className = value.substring(1, classSeparatorPos);
-										if (className != null)
-											linkedClass = iDatabase.getMetadata().getSchema().getClass(className);
-									}
-								} else if (Character.isDigit(value.charAt(0)) || value.charAt(0) == '+' || value.charAt(0) == '-') {
-									linkedType = getNumber(unusualSymbols, value);
-								} else if (value.charAt(0) == '\'' || value.charAt(0) == '"')
-									linkedType = OType.STRING;
-								else
-									linkedType = OType.EMBEDDED;
-							} else
-								linkedType = OType.STRING;
-
 						} else if (fieldValue.startsWith(OStringSerializerHelper.LINK))
 							type = OType.LINK;
 						else if (fieldValue.equals("true") || fieldValue.equals("false"))
@@ -344,29 +320,10 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 					}
 				}
 
-				record.field(fieldName, fieldFromStream(iRecord.getDatabase(), type, linkedClass, linkedType, fieldName, fieldValue));
+				record.field(fieldName, fieldFromStream(iRecord.getDatabase(), type, linkedClass, linkedType, fieldName, fieldValue, unusualSymbols));
 			}
 		}
 
 		return iRecord;
-	}
-
-	public static OType getNumber(final DecimalFormatSymbols unusualSymbols, final String value) {
-		boolean integer = true;
-		char c;
-
-		for (int index = 0; index < value.length(); ++index) {
-			c = value.charAt(index);
-			if (c < '0' || c > '9')
-				if ((index == 0 && (c == '+' || c == '-')))
-					continue;
-				else if (c == unusualSymbols.getDecimalSeparator())
-					integer = false;
-				else {
-					return OType.STRING;
-				}
-		}
-
-		return integer ? OType.INTEGER : OType.FLOAT;
 	}
 }

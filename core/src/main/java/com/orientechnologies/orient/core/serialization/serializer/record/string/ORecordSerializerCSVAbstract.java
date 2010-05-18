@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
 import java.lang.reflect.Array;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -45,8 +46,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 	protected abstract ORecordSchemaAware<?> newObject(ODatabaseRecord<?> iDatabase, String iClassName);
 
-	public Object fieldFromStream(final ODatabaseRecord<?> iDatabase, final OType iType, OClass iLinkedClass,
-			final OType iLinkedType, final String iName, final String iValue) {
+	public Object fieldFromStream(final ODatabaseRecord<?> iDatabase, final OType iType, OClass iLinkedClass, OType iLinkedType,
+			final String iName, final String iValue, final DecimalFormatSymbols iUnusualSymbols) {
 
 		if (iValue == null)
 			return null;
@@ -132,19 +133,36 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 			String[] items = OStringSerializerHelper.split(value, OStringSerializerHelper.RECORD_SEPARATOR_AS_CHAR);
 
-			if (iLinkedClass != null)
-				// EMBEDDED OBJECTS
-				for (String item : items) {
-					map.put("", fromString(iDatabase, item, new ODocument((ODatabaseDocument) iDatabase, iLinkedClass.getName())));
-				}
-			else {
-				if (iLinkedType == null)
-					throw new IllegalArgumentException(
-							"Linked type can't be null. Probably the serialized type has not stored the type along with data");
+			// EMBEDDED LITERALS
+			String[] entry;
+			String mapValue;
+			for (String item : items) {
+				if (item != null && item.length() > 0) {
+					entry = item.split(OStringSerializerHelper.ENTRY_SEPARATOR);
+					if (entry.length > 0) {
+						mapValue = entry[1];
 
-				// EMBEDDED LITERALS
-				for (String item : items) {
-					map.put("", OStringSerializerHelper.fieldTypeFromStream(iLinkedType, item));
+						if (mapValue.contains(ORID.SEPARATOR)) {
+							iLinkedType = OType.LINK;
+
+							// GET THE CLASS NAME IF ANY
+							int classSeparatorPos = value.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
+							if (classSeparatorPos > -1) {
+								String className = value.substring(1, classSeparatorPos);
+								if (className != null)
+									iLinkedClass = iDatabase.getMetadata().getSchema().getClass(className);
+							}
+						} else if (Character.isDigit(mapValue.charAt(0)) || mapValue.charAt(0) == '+' || mapValue.charAt(0) == '-') {
+							iLinkedType = getNumber(iUnusualSymbols, mapValue);
+						} else if (mapValue.charAt(0) == '\'' || mapValue.charAt(0) == '"')
+							iLinkedType = OType.STRING;
+						else
+							iLinkedType = OType.EMBEDDED;
+
+						map.put((String) OStringSerializerHelper.fieldTypeFromStream(OType.STRING, entry[0]), OStringSerializerHelper
+								.fieldTypeFromStream(iLinkedType, mapValue));
+					}
+
 				}
 			}
 
@@ -316,6 +334,25 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		}
 
 		return buffer.toString();
+	}
+
+	public static OType getNumber(final DecimalFormatSymbols unusualSymbols, final String value) {
+		boolean integer = true;
+		char c;
+
+		for (int index = 0; index < value.length(); ++index) {
+			c = value.charAt(index);
+			if (c < '0' || c > '9')
+				if ((index == 0 && (c == '+' || c == '-')))
+					continue;
+				else if (c == unusualSymbols.getDecimalSeparator())
+					integer = false;
+				else {
+					return OType.STRING;
+				}
+		}
+
+		return integer ? OType.INTEGER : OType.FLOAT;
 	}
 
 	private void linkToStream(StringBuilder buffer, ORecordSchemaAware<?> record) {
