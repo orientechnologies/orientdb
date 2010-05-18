@@ -330,7 +330,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			OProperty prop = clazz.getProperty(iPropertyName);
 
 			if (prop != null) {
-				if (!prop.getType().isAssignableFrom(iPropertyValue))
+				if (!(iPropertyValue instanceof String) && !prop.getType().isAssignableFrom(iPropertyValue))
 					throw new IllegalArgumentException("Property '" + iPropertyName + "' can't accept value of " + iPropertyValue.getClass());
 			}
 		}
