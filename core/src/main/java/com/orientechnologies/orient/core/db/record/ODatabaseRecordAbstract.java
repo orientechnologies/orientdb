@@ -125,8 +125,8 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		metadata.getSecurity().createUser("reader", "reader", new String[] { readerRole.getName() });
 
 		final ORole writerRole = metadata.getSecurity().createRole("writer", ORole.ALLOW_MODES.DENY_ALL_BUT);
-		readerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.CRUD_OPERATIONS.ALL);
-		readerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.CRUD_OPERATIONS.ALL);
+		writerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.CRUD_OPERATIONS.ALL);
+		writerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.CRUD_OPERATIONS.ALL);
 		metadata.getSecurity().createUser("writer", "writer", new String[] { writerRole.getName() });
 
 		metadata.getSecurity().save();
