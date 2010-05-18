@@ -104,6 +104,8 @@ public abstract class OStringSerializerHelper {
 			return String.valueOf(iValue);
 
 		case BINARY:
+			if (iValue instanceof Byte)
+				return new String(new byte[] { ((Byte) iValue).byteValue() });
 			return new String((byte[]) iValue);
 
 		case DATE:
