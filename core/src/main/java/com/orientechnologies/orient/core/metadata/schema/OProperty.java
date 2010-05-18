@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Luca Garulli
  * 
  */
-public class OProperty extends ODocument {
+public class OProperty extends OMetadataRecord {
 	private OClass					owner;
 
 	private int							id;

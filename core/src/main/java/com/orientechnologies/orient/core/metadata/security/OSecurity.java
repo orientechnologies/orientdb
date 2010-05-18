@@ -24,10 +24,11 @@ import java.util.Map;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.metadata.schema.OMetadataRecord;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public class OSecurity extends ODocument {
+public class OSecurity extends OMetadataRecord {
 	protected Map<String, ORole>	roles	= new LinkedHashMap<String, ORole>();
 	protected Map<String, OUser>	users	= new LinkedHashMap<String, OUser>();
 

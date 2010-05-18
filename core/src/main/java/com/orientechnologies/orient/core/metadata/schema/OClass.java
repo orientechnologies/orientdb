@@ -25,7 +25,7 @@ import java.util.Map;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public class OClass extends ODocument {
+public class OClass extends OMetadataRecord {
 	protected int											id;
 	protected OSchema									owner;
 	protected String									name;

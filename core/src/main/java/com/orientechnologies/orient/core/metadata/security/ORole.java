@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.metadata.schema.OMetadataRecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -34,7 +35,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * </ul>
  * Mode = ALLOW (allow all but) or DENY (deny all but)
  */
-public class ORole extends ODocument {
+public class ORole extends OMetadataRecord {
 	public enum ALLOW_MODES {
 		DENY_ALL_BUT, ALLOW_ALL_BUT
 	}
@@ -83,6 +84,10 @@ public class ORole extends ODocument {
 		}
 
 		return mode == ALLOW_MODES.ALLOW_ALL_BUT;
+	}
+
+	public boolean hasRule(final String iResource) {
+		return rules.containsKey(iResource);
 	}
 
 	public void addRule(final String iResource, final OPERATIONS iOperation) {

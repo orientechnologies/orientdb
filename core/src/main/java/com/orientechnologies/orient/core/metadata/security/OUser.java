@@ -21,6 +21,7 @@ import java.util.Set;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.metadata.schema.OMetadataRecord;
 import com.orientechnologies.orient.core.metadata.security.ORole.OPERATIONS;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
@@ -33,7 +34,7 @@ import com.orientechnologies.orient.core.security.OSecurityManager;
  * 
  * @see ORole
  */
-public class OUser extends ODocument {
+public class OUser extends OMetadataRecord {
 	protected String			name;
 	protected String			password;
 	protected Set<ORole>	roles	= new HashSet<ORole>();
@@ -51,24 +52,58 @@ public class OUser extends ODocument {
 	}
 
 	/**
-	 * Check if the user has the permission to access to the requested resource for the requested operation.
+	 * Checks if the user has the permission to access to the requested resource for the requested operation.
 	 * 
 	 * @param iResource
 	 *          Requested resource
 	 * @param iOperation
 	 *          Requested operation
+	 * @return The role that has granted the permission if any, otherwise a OSecurityAccessException exception is raised
+	 * @exception OSecurityAccessException
 	 */
 	public ORole allow(final String iResource, final OPERATIONS iOperation) {
 		if (roles == null || roles.isEmpty())
 			throw new OSecurityAccessException("User '" + name + "' has no role defined");
 
-		for (ORole r : roles) {
+		final ORole role = checkIfAllowed(iResource, iOperation);
+
+		if (role == null)
+			throw new OSecurityAccessException("User '" + name + "' has no the permission to execute the operation '" + iOperation
+					+ "' against the resource: " + iResource);
+
+		return role;
+	}
+
+	/**
+	 * Checks if the user has the permission to access to the requested resource for the requested operation.
+	 * 
+	 * @param iResource
+	 *          Requested resource
+	 * @param iOperation
+	 *          Requested operation
+	 * @return The role that has granted the permission if any, otherwise null
+	 */
+	public ORole checkIfAllowed(final String iResource, final OPERATIONS iOperation) {
+		for (ORole r : roles)
 			if (r.allow(iResource, iOperation))
 				return r;
-		}
 
-		throw new OSecurityAccessException("User '" + name + "' has no the permission to execute the operation '" + iOperation
-				+ "' against the resource: " + iResource);
+		return null;
+	}
+
+	/**
+	 * Checks if a rule was defined for the user.
+	 * 
+	 * @param iResource
+	 *          Requested resource
+	 * @return True is a rule is defined, otherwise false
+	 */
+	public boolean isRuleDefined(final String iResource) {
+		for (ORole r : roles)
+			if (r.containsField(iResource))
+				return true;
+
+		return false;
 	}
 
 	public boolean checkPassword(String iPassword) {

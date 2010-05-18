@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public class OSchema extends ODocument {
+public class OSchema extends OMetadataRecord {
 	protected Map<String, OClass>	classes									= new LinkedHashMap<String, OClass>();
 	private static final int			CURRENT_VERSION_NUMBER	= 2;
 
