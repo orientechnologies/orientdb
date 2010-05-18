@@ -1,9 +1,22 @@
-function executeRequest(iRequest, iCallback) {
+function executeJSONRequest(iRequest, iCallback) {
 	$.ajax( {
 		type : 'GET',
 		url : iRequest,
 		success : function(msg) {
 			iCallback.apply(this, [ JSON.parse(msg) ]);
+		},
+		error : function(msg) {
+			jQuery("#output").text("Command response: " + msg);
+		}
+	});
+}
+
+function executeSimpleRequest(iRequest, iCallback) {
+	$.ajax( {
+		type : 'GET',
+		url : iRequest,
+		success : function(msg) {
+			iCallback.apply(this, [ msg ]);
 		},
 		error : function(msg) {
 			jQuery("#output").text("Command response: " + msg);

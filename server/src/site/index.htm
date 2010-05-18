@@ -45,6 +45,193 @@
             var databaseInfo; // CONTAINS THE DB INFO
             var classEnumeration; // CONTAINS THE DB CLASSES
             var selectedClassName; // CONTAINS LATEST SELECTED CLASS NAME
+            function connect(){
+                executeJSONRequest($('#server').val() + '/connect/' + $('#database').val(), function(database){
+                    databaseInfo = database;
+                    showDatabaseInfo(database);
+                    $("#tabs-main").show(200);
+                    $("#buttonConnect").hide();
+                    $("#buttonDisconnect").show();
+                });
+            }
+            
+            function disconnect(){
+                executeSimpleRequest($('#server').val() + '/disconnect', function(database){
+                    databaseInfo = null;
+                    $("#tabs-main").hide(200);
+                    $("#buttonConnect").show();
+                    $("#buttonDisconnect").hide();
+                });
+            }
+            
+            function showDatabaseInfo(database){
+                databaseInfo = database;
+                
+                fillDynaTable($('#databaseClusters'), "Clusters", ['id', 'name', 'type', 'records'], null, database['clusters']);
+                fillDynaTable($('#databaseUsers'), "Users", ['name', 'roles'], null, database['users']);
+                fillDynaTable($('#databaseRolesRules'), "Rules", ['Name', 'Create', 'Read', 'Update', 'Delete'], [{
+                    name: 'name',
+                    index: 'name',
+                    formatter: 'text',
+                    edittype: 'text',
+                    editable: false
+                }, {
+                    name: 'create',
+                    index: 'create',
+                    formatter: 'checkbox',
+                    edittype: 'checkbox',
+                    editable: true
+                }, {
+                    name: 'read',
+                    index: 'read',
+                    formatter: 'checkbox',
+                    edittype: 'checkbox',
+                    editable: true
+                }, {
+                    name: 'update',
+                    index: 'update',
+                    formatter: 'checkbox',
+                    edittype: 'checkbox',
+                    editable: true
+                }, {
+                    name: 'delete',
+                    index: 'delete',
+                    formatter: 'checkbox',
+                    edittype: 'checkbox',
+                    editable: true
+                }], null);
+                fillDynaTable($('#databaseRoles'), "Roles", ['name', 'mode'], null, database['roles'], {
+                    sortname: 'id',
+                    onSelectRow: function(roleRowNum){
+                        var role = database['roles'][roleRowNum - 1];
+                        fillDynaTableRows($('#databaseRolesRules'), role.rules);
+                    }
+                });
+                
+                classEnumeration = ":;";
+                for (cls in database['classes']) {
+                    if (classEnumeration.length > 2) 
+                        classEnumeration += ";";
+                    classEnumeration += database['classes'][cls].name + ":" + database['classes'][cls].name;
+                }
+                
+                fillDynaTable($('#classProperties'), "Properties", ['id', 'name', 'type', 'linkedType', 'linkedClass', 'mandatory', 'notNull', 'min', 'max'], [{
+                    name: 'id',
+                    index: 'id',
+                    width: 30
+                }, {
+                    name: 'name',
+                    index: 'name',
+                    width: 180,
+                    editable: true,
+                    editrules: {
+                        required: true
+                    },
+                    formoptions: {
+                        elmprefix: '(*)'
+                    }
+                }, {
+                    name: 'type',
+                    index: 'type',
+                    width: 80,
+                    edittype: "select",
+                    editoptions: {
+                        value: ":;BINARY:BINARY;BOOLEAN:BOOLEAN;EMBEDDED:EMBEDDED;EMBEDDEDLIST:EMBEDDEDLIST;EMBEDDEDMAP:EMBEDDEDMAP;EMBEDDEDSET:EMBEDDEDSET;FLOAT:FLOAT;DATE:DATE;DOUBLE:DOUBLE;INTEGER:INTEGER;LINK:LINK;LINKLIST:LINKLIST;LINKMAP:LINKMAP;LINKSET:LINKSET;LONG:LONG;SHORT:SHORT;STRING:STRING"
+                    },
+                    editable: true,
+                    editrules: {
+                        required: true
+                    },
+                    formoptions: {
+                        elmprefix: '(*)'
+                    }
+                }, {
+                    name: 'linkedType',
+                    index: 'linkedType',
+                    width: 80,
+                    edittype: "select",
+                    editoptions: {
+                        value: ":;BINARY:BINARY;BOOLEAN:BOOLEAN;EMBEDDED:EMBEDDED;EMBEDDEDLIST:EMBEDDEDLIST;EMBEDDEDMAP:EMBEDDEDMAP;EMBEDDEDSET:EMBEDDEDSET;FLOAT:FLOAT;DATE:DATE;DOUBLE:DOUBLE;INTEGER:INTEGER;LINK:LINK;LINKLIST:LINKLIST;LINKMAP:LINKMAP;LINKSET:LINKSET;LONG:LONG;SHORT:SHORT;STRING:STRING"
+                    },
+                    editable: true
+                }, {
+                    name: 'linkedClass',
+                    index: 'linkedClass',
+                    width: 80,
+                    edittype: "select",
+                    editoptions: {
+                        value: classEnumeration
+                    },
+                    editable: true
+                }, {
+                    name: 'mandatory',
+                    index: 'linkedClass',
+                    width: 30,
+                    formatter: 'checkbox',
+                    edittype: 'checkbox',
+                    editable: true
+                }, {
+                    name: 'notNull',
+                    index: 'linkedClass',
+                    width: 30,
+                    formatter: 'checkbox',
+                    edittype: 'checkbox',
+                    editable: true
+                }, {
+                    name: 'min',
+                    index: 'linkedClass',
+                    width: 30,
+                    editable: true
+                }, {
+                    name: 'max',
+                    index: 'linkedClass',
+                    width: 30,
+                    editable: true
+                }], null, {
+                    editurl: getStudioURL('classProperties'),
+                    sortname: 'id'
+                });
+                
+                $("#addProperty").click(function(){
+                    jQuery("#classProperties").jqGrid('editGridRow', "new", {
+                        height: 320,
+                        reloadAfterSubmit: false,
+                        closeOnEscape: true,
+                        closeAfterAdd: true,
+                        editData: [selectedClassName],
+                        afterSubmit: function(response, postdata){
+                            jQuery("#output").val(response.responseText);
+                            return true;
+                        }
+                    });
+                });
+                $("#deleteProperty").click(function(){
+                    var selectedRow = jQuery("#classProperties").jqGrid('getGridParam', 'selrow');
+                    if (selectedRow != null) {
+                        var propName = jQuery('#classProperties').jqGrid('getRowData', selectedRow)["name"];
+                        jQuery("#classProperties").jqGrid('delGridRow', selectedRow, {
+                            reloadAfterSubmit: false,
+                            closeOnEscape: true,
+                            delData: [selectedClassName, propName],
+                            afterSubmit: function(response, postdata){
+                                jQuery("#output").val(response.responseText);
+                                return [true, response.responseText];
+                            }
+                        });
+                    }
+                    else 
+                        alert("Please Select Row to delete!");
+                });
+                
+                fillDynaTable($('#databaseClasses'), "Classes", ['id', 'name', 'clusters', 'defaultCluster', 'records'], null, database['classes'], {
+                    sortname: 'id',
+                    onSelectRow: function(classRowNum){
+                        selectedClassName = databaseInfo['classes'][classRowNum - 1].name;
+                        fillDynaTableRows($('#classProperties'), databaseInfo['classes'][classRowNum - 1]['properties']);
+                    }
+                });
+            }
+            
             function queryResponse(data){
                 var result = data["result"];
                 var schema = data["schema"];
@@ -266,7 +453,7 @@
             }
             
             function askServerInfo(){
-                executeRequest($('#server').val() + '/server', function(server){
+                executeJSONRequest($('#server').val() + '/server', function(server){
                     fillStaticTable($('#serverConnections'), ['Id', 'Remote Client', 'Database', 'Protocol', 'Total requests', 'Command info', 'Command detail', 'Last Command When', 'Last command info', 'Last command detail', 'Last execution time', 'Total working time', 'Connected since'], server['connections']);
                     fillStaticTable($('#serverDbs'), ['Database', 'Open', 'Storage'], server['dbs']);
                     fillStaticTable($('#serverStorages'), ['Name', 'Type', 'Path', 'Active users'], server['storages']);
@@ -276,173 +463,7 @@
             }
             
             function askDatabaseInfo(){
-                executeRequest($('#server').val() + '/database/' + $('#database').val(), function(database){
-                    databaseInfo = database;
-                    
-                    fillDynaTable($('#databaseClusters'), "Clusters", ['id', 'name', 'type', 'records'], null, database['clusters']);
-                    fillDynaTable($('#databaseUsers'), "Users", ['name', 'roles'], null, database['users']);
-                    fillDynaTable($('#databaseRolesRules'), "Rules", ['Name', 'Create', 'Read', 'Update', 'Delete'], [{
-                        name: 'name',
-                        index: 'name',
-                        formatter: 'text',
-                        edittype: 'text',
-                        editable: false
-                    }, {
-                        name: 'create',
-                        index: 'create',
-                        formatter: 'checkbox',
-                        edittype: 'checkbox',
-                        editable: true
-                    }, {
-                        name: 'read',
-                        index: 'read',
-                        formatter: 'checkbox',
-                        edittype: 'checkbox',
-                        editable: true
-                    }, {
-                        name: 'update',
-                        index: 'update',
-                        formatter: 'checkbox',
-                        edittype: 'checkbox',
-                        editable: true
-                    }, {
-                        name: 'delete',
-                        index: 'delete',
-                        formatter: 'checkbox',
-                        edittype: 'checkbox',
-                        editable: true
-                    }], null);
-                    fillDynaTable($('#databaseRoles'), "Roles", ['name'], null, database['roles'], {
-                        sortname: 'id',
-                        onSelectRow: function(roleRowNum){
-                            var role = database['roles'][roleRowNum - 1];
-                            fillDynaTableRows($('#databaseRolesRules'), role.rules);
-                        }
-                    });
-                    
-                    classEnumeration = ":;";
-                    for (cls in database['classes']) {
-                        if (classEnumeration.length > 2) 
-                            classEnumeration += ";";
-                        classEnumeration += database['classes'][cls].name + ":" + database['classes'][cls].name;
-                    }
-                    
-                    fillDynaTable($('#classProperties'), "Properties", ['id', 'name', 'type', 'linkedType', 'linkedClass', 'mandatory', 'notNull', 'min', 'max'], [{
-                        name: 'id',
-                        index: 'id',
-                        width: 30
-                    }, {
-                        name: 'name',
-                        index: 'name',
-                        width: 180,
-                        editable: true,
-                        editrules: {
-                            required: true
-                        },
-                        formoptions: {
-                            elmprefix: '(*)'
-                        }
-                    }, {
-                        name: 'type',
-                        index: 'type',
-                        width: 80,
-                        edittype: "select",
-                        editoptions: {
-                            value: ":;BINARY:BINARY;BOOLEAN:BOOLEAN;EMBEDDED:EMBEDDED;EMBEDDEDLIST:EMBEDDEDLIST;EMBEDDEDMAP:EMBEDDEDMAP;EMBEDDEDSET:EMBEDDEDSET;FLOAT:FLOAT;DATE:DATE;DOUBLE:DOUBLE;INTEGER:INTEGER;LINK:LINK;LINKLIST:LINKLIST;LINKMAP:LINKMAP;LINKSET:LINKSET;LONG:LONG;SHORT:SHORT;STRING:STRING"
-                        },
-                        editable: true,
-                        editrules: {
-                            required: true
-                        },
-                        formoptions: {
-                            elmprefix: '(*)'
-                        }
-                    }, {
-                        name: 'linkedType',
-                        index: 'linkedType',
-                        width: 80,
-                        edittype: "select",
-                        editoptions: {
-                            value: ":;BINARY:BINARY;BOOLEAN:BOOLEAN;EMBEDDED:EMBEDDED;EMBEDDEDLIST:EMBEDDEDLIST;EMBEDDEDMAP:EMBEDDEDMAP;EMBEDDEDSET:EMBEDDEDSET;FLOAT:FLOAT;DATE:DATE;DOUBLE:DOUBLE;INTEGER:INTEGER;LINK:LINK;LINKLIST:LINKLIST;LINKMAP:LINKMAP;LINKSET:LINKSET;LONG:LONG;SHORT:SHORT;STRING:STRING"
-                        },
-                        editable: true
-                    }, {
-                        name: 'linkedClass',
-                        index: 'linkedClass',
-                        width: 80,
-                        edittype: "select",
-                        editoptions: {
-                            value: classEnumeration
-                        },
-                        editable: true
-                    }, {
-                        name: 'mandatory',
-                        index: 'linkedClass',
-                        width: 30,
-                        formatter: 'checkbox',
-                        edittype: 'checkbox',
-                        editable: true
-                    }, {
-                        name: 'notNull',
-                        index: 'linkedClass',
-                        width: 30,
-                        formatter: 'checkbox',
-                        edittype: 'checkbox',
-                        editable: true
-                    }, {
-                        name: 'min',
-                        index: 'linkedClass',
-                        width: 30,
-                        editable: true
-                    }, {
-                        name: 'max',
-                        index: 'linkedClass',
-                        width: 30,
-                        editable: true
-                    }], null, {
-                        editurl: getStudioURL('classProperties'),
-                        sortname: 'id'
-                    });
-                    
-                    $("#addProperty").click(function(){
-                        jQuery("#classProperties").jqGrid('editGridRow', "new", {
-                            height: 320,
-                            reloadAfterSubmit: false,
-                            closeOnEscape: true,
-                            closeAfterAdd: true,
-                            editData: [selectedClassName],
-                            afterSubmit: function(response, postdata){
-                                jQuery("#output").val(response.responseText);
-                                return true;
-                            }
-                        });
-                    });
-                    $("#deleteProperty").click(function(){
-                        var selectedRow = jQuery("#classProperties").jqGrid('getGridParam', 'selrow');
-                        if (selectedRow != null) {
-                            var propName = jQuery('#classProperties').jqGrid('getRowData', selectedRow)["name"];
-                            jQuery("#classProperties").jqGrid('delGridRow', selectedRow, {
-                                reloadAfterSubmit: false,
-                                closeOnEscape: true,
-                                delData: [selectedClassName, propName],
-                                afterSubmit: function(response, postdata){
-                                    jQuery("#output").val(response.responseText);
-                                    return [true, response.responseText];
-                                }
-                            });
-                        }
-                        else 
-                            alert("Please Select Row to delete!");
-                    });
-                    
-                    fillDynaTable($('#databaseClasses'), "Classes", ['id', 'name', 'clusters', 'defaultCluster', 'records'], null, database['classes'], {
-                        sortname: 'id',
-                        onSelectRow: function(classRowNum){
-                            selectedClassName = databaseInfo['classes'][classRowNum - 1].name;
-                            fillDynaTableRows($('#classProperties'), databaseInfo['classes'][classRowNum - 1]['properties']);
-                        }
-                    });
-                });
+                executeJSONRequest($('#server').val() + '/database/' + $('#database').val(), showDatabaseInfo);
             }
             
             function clear(component){
@@ -453,6 +474,9 @@
                 jQuery(document).ajaxError(function(event, request, settings, err){
                     jQuery("#output").val("Error: " + request.responseText);
                 });
+                
+                $("#tabs-main").hide();
+                $("#buttonDisconnect").hide();
                 
                 $("#tabs-main").tabs();
                 $("#tabs-db").tabs();
@@ -488,6 +512,12 @@
                             </td>
                             <td class="ui-widget">
                                 Server: <input id="server" size="25" value="" />&nbsp;Database: <input id="database" size="10" value="demo" />
+                                <button id="buttonConnect" onclick="javascript:connect()" class="ui-button-text-icon">
+                                    Connect <img border="0" alt="Refresh" src="www/images/connect.png" align="top" />
+                                </button>
+                                <button id="buttonDisconnect" onclick="javascript:disconnect()" class="ui-button-text-icon">
+                                    Disconnect <img border="0" alt="Refresh" src="www/images/disconnect.png" align="top" />
+                                </button>
                             </td>
                         </tr>
                     </table>
@@ -535,23 +565,17 @@
                             <div id="tab-db-schema">
                                 <table style="width: 100%;" cellpadding="5">
                                     <tr>
-                                        <td valign="top" width="500">
-                                            <table id="databaseClasses" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+                                        <td valign="top">
+                                            <table id="databaseClasses" cellspacing="0" cellpadding="5" border="1">
                                             </table>
                                         </td>
-                                        <td valign="top" class="help">
+                                        <td valign="top" class="help" width="400">
                                             Select the class to display the properties associated. Each class can store its records into one or multiple <b>Clusters</b>
-                                            (see "Structure" tab).
-                                            <br/>
-                                            <br/>
+                                            (see "Structure" tab). 
                                             A class can be <b>schema-less</b>
                                             (has no properties), <b>schema-full</b>
                                             (all properties as mandatories) 
-                                            or with a <b>partial schema</b>.
-                                            <br/>
-                                            <br/>
-                                            The <b>defaultCluster</b>
-                                            is the default place where the class record will be stored unless you want to store in a particular cluster of the class.
+                                            or with a <b>partial schema</b>. 
                                         </td>
                                     </tr>
                                     <tr>
