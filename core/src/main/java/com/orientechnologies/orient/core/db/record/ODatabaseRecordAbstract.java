@@ -108,8 +108,6 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 
 			createRolesAndUsers();
 
-			metadata.getSecurity().save();
-
 			dictionary.create();
 		} catch (Exception e) {
 			throw new ODatabaseException("Can't create database", e);
@@ -130,6 +128,8 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		readerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.CRUD_OPERATIONS.ALL);
 		readerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.CRUD_OPERATIONS.ALL);
 		metadata.getSecurity().createUser("writer", "writer", new String[] { writerRole.getName() });
+
+		metadata.getSecurity().save();
 	}
 
 	public REC load(final REC iRecord) {
