@@ -15,35 +15,49 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
+import java.util.List;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandDocumentAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
 
-public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
-	private static final String[]	NAMES	= { "POST.document" };
+public class OServerCommandPostCommand extends OServerCommandAbstract {
+	private static final String[]	NAMES	= { "POST.command" };
 
+	@SuppressWarnings("unchecked")
 	public void execute(final OHttpRequest iRequest) throws Exception {
-		String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: document/<database>");
+		String[] urlParts = checkSyntax(iRequest.url, 4, "Syntax error: command/sql/<command-text>");
 
-		iRequest.data.commandInfo = "Create document";
+		final String text = urlParts[3].trim();
+
+		iRequest.data.commandInfo = "Command";
+		iRequest.data.commandDetail = text;
 
 		ODatabaseDocumentTx db = null;
-		ODocument doc = new ODocument().fromJSON(iRequest.content);
-		try {
-			db = OSharedDocumentDatabase.acquireDatabase(urlParts[1]);
 
-			doc.save(db);
+		final Object response;
+
+		try {
+			db = OSharedDocumentDatabase.acquireDatabase(urlParts[2]);
+
+			response = db.command(new OCommandSQL(text)).execute();
 
 		} finally {
 			if (db != null)
 				OSharedDocumentDatabase.releaseDatabase(db);
 		}
 
-		sendTextContent(iRequest, 201, OHttpUtils.STATUS_OK_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN, "Record "
-				+ doc.getIdentity() + " created successfully.");
+		if (response instanceof List<?>)
+			sendRecordsContent(iRequest, (List<ORecord<?>>) response);
+		else if (response instanceof Integer)
+			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Records affected: "
+					+ response);
+		else
+			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, response.toString());
 	}
 
 	public String[] getNames() {

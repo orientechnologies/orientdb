@@ -77,3 +77,11 @@ function fillStaticTable(iTable, iColumns, iData) {
 
 	jQuery("#output").text("Command executed");
 }
+
+function linkFormatter(cellvalue, options, rowObject) {
+	return "<img src='images/link.png' />";
+}
+
+function embeddedFormatter(cellvalue, options, rowObject) {
+	return "<img src='images/embedded.png' />";
+}

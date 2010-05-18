@@ -16,59 +16,110 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 
+import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
+import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
 
 public class OServerCommandGetStaticContent extends OServerCommandAbstract {
-	private static final String[]	NAMES			= { "GET.www", "GET.", "GET.favicon.ico" };
+	private static final String[]										NAMES			= { "GET.www", "GET.", "GET.favicon.ico" };
+	private static final String											CACHE_PAR	= "static-contents-cache";
 
-	static final String						WWW_PATH	= System.getProperty("orient.www.path", "src/site");
+	static final String															WWW_PATH	= System.getProperty("orient.www.path", "src/site");
+
+	private Map<String, OStaticContentCachedEntry>	cache;
 
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		iRequest.data.commandInfo = "Get static content";
 		iRequest.data.commandDetail = iRequest.url;
 
-		InputStream bufferedFile = null;
+		if (cache == null) {
+			// CREATE THE CACHE IF ENABLED
+			for (OStorageEntryConfiguration entry : OServerMain.server().getConfiguration().properties) {
+				if (CACHE_PAR.equals(entry.name)) {
+					if (Boolean.parseBoolean(entry.value))
+						cache = new HashMap<String, OStaticContentCachedEntry>();
+					break;
+				}
+			}
+		}
+
+		InputStream is = null;
+		long contentSize = 0;
+		String type = null;
+
 		try {
 			String url = OHttpUtils.URL_SEPARATOR.equals(iRequest.url) ? url = "/www/index.htm" : iRequest.url;
 			url = WWW_PATH + url.substring("www".length() + 1, url.length());
-			final File inputFile = new File(url);
-			if (!inputFile.exists()) {
-				sendStatus(iRequest, 404, "File not found");
-				iRequest.channel.flush();
-				return;
+
+			if (cache != null) {
+				synchronized (cache) {
+					final OStaticContentCachedEntry cachedEntry = cache.get(url);
+					if (cachedEntry != null) {
+						is = new ByteArrayInputStream(cachedEntry.content);
+						contentSize = cachedEntry.size;
+						type = cachedEntry.type;
+					}
+				}
 			}
 
-			String type = null;
-			if (url.endsWith(".htm") || url.endsWith(".html"))
-				type = "text/html";
-			else if (url.endsWith(".png"))
-				type = "image/png";
-			else if (url.endsWith(".jpeg"))
-				type = "image/jpeg";
-			else if (url.endsWith(".js"))
-				type = "application/x-javascript";
-			else if (url.endsWith(".css"))
-				type = "text/css";
+			if (is == null) {
+				final File inputFile = new File(url);
+				if (!inputFile.exists()) {
+					sendStatus(iRequest, 404, "File not found");
+					iRequest.channel.flush();
+					return;
+				}
 
-			bufferedFile = new BufferedInputStream(new FileInputStream(inputFile));
+				if (url.endsWith(".htm") || url.endsWith(".html"))
+					type = "text/html";
+				else if (url.endsWith(".png"))
+					type = "image/png";
+				else if (url.endsWith(".jpeg"))
+					type = "image/jpeg";
+				else if (url.endsWith(".js"))
+					type = "application/x-javascript";
+				else if (url.endsWith(".css"))
+					type = "text/css";
 
-			sendBinaryContent(iRequest, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, type, bufferedFile, inputFile
-					.length());
+				is = new BufferedInputStream(new FileInputStream(inputFile));
+				contentSize = inputFile.length();
+
+				if (cache != null) {
+					// READ AL THE STREAM AND CACHE IT IN MEMORY
+					byte[] buffer = new byte[(int) contentSize];
+					for (int i = 0; i < contentSize; ++i)
+						buffer[i] = (byte) is.read();
+
+					OStaticContentCachedEntry cachedEntry = new OStaticContentCachedEntry();
+					cachedEntry.content = buffer;
+					cachedEntry.size = contentSize;
+					cachedEntry.type = type;
+
+					cache.put(url, cachedEntry);
+
+					is = new ByteArrayInputStream(cachedEntry.content);
+				}
+			}
+
+			sendBinaryContent(iRequest, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, type, is, contentSize);
 
 		} catch (IOException e) {
 			e.printStackTrace();
 
 		} finally {
-			if (bufferedFile != null)
+			if (is != null)
 				try {
-					bufferedFile.close();
+					is.close();
 				} catch (IOException e) {
 				}
 		}

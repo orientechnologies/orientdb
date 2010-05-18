@@ -32,11 +32,11 @@ public class OServerCommandGetQuery extends OServerCommandAbstract {
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(
 				iRequest.url,
-				3,
+				4,
 				"Syntax error: query/sql/<query-text>[/<limit>]<br/>Limit is optional and is setted to 20 by default. Set expressely to 0 to have no limits.");
 
-		final int limit = urlParts.length > 3 ? Integer.parseInt(urlParts[3]) : 20;
-		final String text = urlParts[2].trim();
+		final int limit = urlParts.length > 4 ? Integer.parseInt(urlParts[4]) : 20;
+		final String text = urlParts[3].trim();
 
 		iRequest.data.commandInfo = "Query";
 		iRequest.data.commandDetail = text;
@@ -49,7 +49,7 @@ public class OServerCommandGetQuery extends OServerCommandAbstract {
 		final List<ORecord<?>> response;
 
 		try {
-			db = OSharedDocumentDatabase.acquireDatabase(urlParts[1]);
+			db = OSharedDocumentDatabase.acquireDatabase(urlParts[2]);
 
 			response = (List<ORecord<?>>) db.command(new OSQLSynchQuery<ORecordSchemaAware<?>>(text, limit)).execute();
 

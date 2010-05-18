@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
+import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Arrays;
 
@@ -35,12 +36,6 @@ public class OServerCommandGetDatabase extends OServerCommandAbstract {
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: database/<database>");
 
-		// if (iRequest.sessionId == null) {
-		// sendTextContent(iRequest, OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION,
-		// "WWW-Authenticate: Basic realm=\"Secure Area\"", OHttpUtils.CONTENT_TEXT_PLAIN, "401 Unauthorized.");
-		// return;
-		// }
-
 		iRequest.data.commandInfo = "Database info";
 		iRequest.data.commandDetail = urlParts[1];
 
@@ -56,31 +51,7 @@ public class OServerCommandGetDatabase extends OServerCommandAbstract {
 			if (db.getMetadata().getSchema().getClasses() != null) {
 				json.beginCollection(1, false, "classes");
 				for (OClass cls : db.getMetadata().getSchema().getClasses()) {
-					json.beginObject(2, true, null);
-					json.writeAttribute(3, true, "id", cls.getId());
-					json.writeAttribute(3, true, "name", cls.getName());
-					json.writeAttribute(3, true, "clusters", cls.getClusterIds());
-					json.writeAttribute(3, true, "defaultCluster", cls.getDefaultClusterId());
-					json.writeAttribute(3, false, "records", db.countClass(cls.getName()));
-
-					if (cls.properties() != null && cls.properties().size() > 0) {
-						json.beginCollection(3, true, "properties");
-						for (OProperty prop : cls.properties()) {
-							json.beginObject(4, true, null);
-							json.writeAttribute(4, true, "id", prop.getId());
-							json.writeAttribute(4, true, "name", prop.getName());
-							if (prop.getLinkedClass() != null)
-								json.writeAttribute(4, true, "linkedClass", prop.getLinkedClass().getName());
-							if (prop.getLinkedType() != null)
-								json.writeAttribute(4, true, "linkedType", prop.getLinkedType());
-							json.writeAttribute(4, true, "type", prop.getType().toString());
-							json.writeAttribute(4, true, "min", prop.getMin());
-							json.writeAttribute(4, true, "max", prop.getMax());
-							json.endObject(3, true);
-						}
-						json.endCollection(1, true);
-					}
-					json.endObject(1, false);
+					exportClass(db, json, cls);
 				}
 				json.endCollection(1, true);
 			}
@@ -123,6 +94,36 @@ public class OServerCommandGetDatabase extends OServerCommandAbstract {
 			if (db != null)
 				OSharedDocumentDatabase.releaseDatabase(db);
 		}
+	}
+
+	public void exportClass(final ODatabaseDocumentTx db, final OJSONWriter json, final OClass cls) throws IOException {
+		json.beginObject(2, true, null);
+		json.writeAttribute(3, true, "id", cls.getId());
+		json.writeAttribute(3, true, "name", cls.getName());
+		json.writeAttribute(3, true, "clusters", cls.getClusterIds());
+		json.writeAttribute(3, true, "defaultCluster", cls.getDefaultClusterId());
+		json.writeAttribute(3, false, "records", db.countClass(cls.getName()));
+
+		if (cls.properties() != null && cls.properties().size() > 0) {
+			json.beginCollection(3, true, "properties");
+			for (OProperty prop : cls.properties()) {
+				json.beginObject(4, true, null);
+				json.writeAttribute(4, true, "id", prop.getId());
+				json.writeAttribute(4, true, "name", prop.getName());
+				if (prop.getLinkedClass() != null)
+					json.writeAttribute(4, true, "linkedClass", prop.getLinkedClass().getName());
+				if (prop.getLinkedType() != null)
+					json.writeAttribute(4, true, "linkedType", prop.getLinkedType());
+				json.writeAttribute(4, true, "type", prop.getType().toString());
+				json.writeAttribute(4, true, "mandatory", prop.isMandatory());
+				json.writeAttribute(4, true, "notNull", prop.isNotNull());
+				json.writeAttribute(4, true, "min", prop.getMin());
+				json.writeAttribute(4, true, "max", prop.getMax());
+				json.endObject(3, true);
+			}
+			json.endCollection(1, true);
+		}
+		json.endObject(1, false);
 	}
 
 	public String[] getNames() {
