@@ -34,7 +34,10 @@ public abstract class OStorageAbstract extends OSharedResourceAdaptive implement
 			name = iName.substring(iName.lastIndexOf("/") + 1);
 		else
 			name = iName;
-		
+
+		if (name.contains(":") || name.contains(","))
+			throw new IllegalArgumentException("Invalid character in storage name: " + name);
+
 		fileURL = iFilePath;
 		mode = iMode;
 	}
