@@ -92,7 +92,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 
 				String className = ((ODocument) first).getClassName();
 				final OClass cls = db.getMetadata().getSchema().getClass(className);
-				json.write("\"schema\": ");
+				json.write(" \"schema\": ");
 				exportClassSchema(db, json, cls);
 			}
 		}
@@ -141,30 +141,30 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 	}
 
 	public void exportClassSchema(final ODatabaseDocumentTx db, final OJSONWriter json, final OClass cls) throws IOException {
-		json.beginObject(2, true, null);
-		json.writeAttribute(3, true, "id", cls.getId());
-		json.writeAttribute(3, true, "name", cls.getName());
+		json.beginObject(1, false, null);
+		json.writeAttribute(2, true, "id", cls.getId());
+		json.writeAttribute(2, true, "name", cls.getName());
 
 		if (cls.properties() != null && cls.properties().size() > 0) {
-			json.beginObject(3, true, "properties");
+			json.beginObject(2, true, "properties");
 			for (OProperty prop : cls.properties()) {
-				json.beginObject(4, true, prop.getName());
-				json.writeAttribute(4, true, "id", prop.getId());
-				json.writeAttribute(4, true, "name", prop.getName());
+				json.beginObject(3, true, prop.getName());
+				json.writeAttribute(3, true, "id", prop.getId());
+				json.writeAttribute(3, true, "name", prop.getName());
 				if (prop.getLinkedClass() != null)
-					json.writeAttribute(4, true, "linkedClass", prop.getLinkedClass().getName());
+					json.writeAttribute(3, true, "linkedClass", prop.getLinkedClass().getName());
 				if (prop.getLinkedType() != null)
-					json.writeAttribute(4, true, "linkedType", prop.getLinkedType());
-				json.writeAttribute(4, true, "type", prop.getType().toString());
-				json.writeAttribute(4, true, "mandatory", prop.isMandatory());
-				json.writeAttribute(4, true, "notNull", prop.isNotNull());
-				json.writeAttribute(4, true, "min", prop.getMin());
-				json.writeAttribute(4, true, "max", prop.getMax());
+					json.writeAttribute(3, true, "linkedType", prop.getLinkedType());
+				json.writeAttribute(3, true, "type", prop.getType().toString());
+				json.writeAttribute(3, true, "mandatory", prop.isMandatory());
+				json.writeAttribute(3, true, "notNull", prop.isNotNull());
+				json.writeAttribute(3, true, "min", prop.getMin());
+				json.writeAttribute(3, true, "max", prop.getMax());
 				json.endObject(3, true);
 			}
-			json.endObject(1, true);
+			json.endObject(2, true);
 		}
-		json.endObject(1, false);
+		json.endObject(1, true);
 	}
 
 }

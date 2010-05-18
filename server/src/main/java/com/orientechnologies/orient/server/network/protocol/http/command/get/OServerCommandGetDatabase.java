@@ -18,6 +18,7 @@ package com.orientechnologies.orient.server.network.protocol.http.command.get;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Arrays;
+import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -78,12 +79,24 @@ public class OServerCommandGetDatabase extends OServerCommandAbstract {
 			}
 			json.endCollection(1, true);
 
-			json.beginCollection(1, false, "roles");
+			json.beginCollection(1, true, "roles");
 			for (ORole role : db.getMetadata().getSecurity().getRoles()) {
 				json.beginObject(2, true, null);
 				json.writeAttribute(3, false, "name", role.getName());
-				json.writeAttribute(3, false, "ACL", "not supported yet");
-				json.endObject(2, false);
+
+				json.beginCollection(3, true, "rules");
+				for (Entry<String, Byte> rule : role.getRules()) {
+					json.beginObject(4);
+					json.writeAttribute(4, true, "name", rule.getKey());
+					json.writeAttribute(4, false, "create", role.allow(rule.getKey(), ORole.CRUD_OPERATIONS.CREATE));
+					json.writeAttribute(4, false, "read", role.allow(rule.getKey(), ORole.CRUD_OPERATIONS.READ));
+					json.writeAttribute(4, false, "update", role.allow(rule.getKey(), ORole.CRUD_OPERATIONS.UPDATE));
+					json.writeAttribute(4, false, "delete", role.allow(rule.getKey(), ORole.CRUD_OPERATIONS.DELETE));
+					json.endObject(4, true);
+				}
+				json.endCollection(3, false);
+
+				json.endObject(2, true);
 			}
 			json.endCollection(1, true);
 
