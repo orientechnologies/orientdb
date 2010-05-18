@@ -29,8 +29,9 @@ import com.orientechnologies.orient.server.network.protocol.http.command.get.OSe
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetQuery;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetServer;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContent;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostCommand;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostDocument;
-import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostStudioDocument;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostStudio;
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutDocument;
 
 public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
@@ -51,8 +52,9 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 		registerCommand(new OServerCommandGetServer());
 		registerCommand(new OServerCommandGetStaticContent());
 
+		registerCommand(new OServerCommandPostCommand());
 		registerCommand(new OServerCommandPostDocument());
-		registerCommand(new OServerCommandPostStudioDocument());
+		registerCommand(new OServerCommandPostStudio());
 
 		registerCommand(new OServerCommandPutDocument());
 
