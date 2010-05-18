@@ -18,7 +18,6 @@ package com.orientechnologies.orient.kv.network.protocol.http.local;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseBinary;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.kv.OSharedBinaryDatabase;
@@ -36,15 +35,12 @@ public class ONetworkProtocolHttpKVLocal extends ONetworkProtocolHttpKV {
 
 	static {
 		// START ASYNCH THREAD IF CONFIGURED
-		if (OServerMain.server().getConfiguration().properties != null)
-			for (OStorageEntryConfiguration entry : OServerMain.server().getConfiguration().properties) {
-				if (entry.name.equals(ASYNCH_COMMIT_DELAY_PAR)) {
-					OTreeMapPersistentAsynchThread.getInstance().setDelay(Integer.parseInt(entry.value));
-					OTreeMapPersistentAsynchThread.getInstance().start();
-					asynchMode = true;
-					break;
-				}
-			}
+		String v = OServerMain.server().getConfiguration().getProperty(ASYNCH_COMMIT_DELAY_PAR);
+		if (v != null) {
+			OTreeMapPersistentAsynchThread.getInstance().setDelay(Integer.parseInt(v));
+			OTreeMapPersistentAsynchThread.getInstance().start();
+			asynchMode = true;
+		}
 
 		// CREATE IN-MEMORY DATABASES EARLY
 		for (OServerStorageConfiguration stg : OServerMain.server().getConfiguration().storages) {

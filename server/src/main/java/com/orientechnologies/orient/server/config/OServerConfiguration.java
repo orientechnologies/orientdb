@@ -67,4 +67,35 @@ public class OServerConfiguration {
 
 		return null;
 	}
+
+	/**
+	 * Returns the property value configured, if any.
+	 * 
+	 * @param iName
+	 *          Property name to find
+	 */
+	public String getProperty(final String iName) {
+		return getProperty(iName, null);
+	}
+
+	/**
+	 * Returns the property value configured, if any.
+	 * 
+	 * @param iName
+	 *          Property name to find
+	 * @param iDefaultValue
+	 *          Default value returned if not found
+	 */
+	public String getProperty(final String iName, final String iDefaultValue) {
+		if (properties == null)
+			return null;
+
+		for (OStorageEntryConfiguration p : properties) {
+			if (p.name.equals(iName))
+				return p.value;
+		}
+
+		return null;
+	}
+
 }
