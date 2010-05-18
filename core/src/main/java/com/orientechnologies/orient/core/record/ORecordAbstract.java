@@ -166,8 +166,12 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		if (database == null)
 			throw new ODatabaseException("No database assigned to current record");
 
-		if (database.load(this) == null)
-			throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found");
+		try {
+			if (database.load(this) == null)
+				throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found");
+		} catch (Exception e) {
+			throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found", e);
+		}
 
 		return this;
 	}
@@ -189,7 +193,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		OSerializationThreadLocal.INSTANCE.get().clear();
 
 		database.save(this, iClusterName);
-		
+
 		return this;
 	}
 
