@@ -128,4 +128,12 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 	public String[] getNames() {
 		return NAMES;
 	}
+
+	/**
+	 * Public access, avoid checks.
+	 */
+	@Override
+	public boolean beforeExecute(OHttpRequest iRequest) throws IOException {
+		return true;
+	}
 }

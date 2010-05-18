@@ -29,8 +29,28 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OHttpSessionManager;
 
 public abstract class OServerCommandAbstract implements OServerCommand {
+
+	public boolean beforeExecute(final OHttpRequest iRequest) throws IOException {
+		if (iRequest.executor.getAccount() == null) {
+			if (iRequest.authorization == null) {
+				// UNAUTHORIZED
+				sendTextContent(iRequest, OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION,
+						"WWW-Authenticate: Basic realm=\"Secure Area\"", OHttpUtils.CONTENT_TEXT_PLAIN, "401 Unauthorized.");
+				return false;
+			} else {
+				String[] credentials = iRequest.authorization.split(":");
+
+				// TODO: LOGIN IN DATABASE!
+
+				iRequest.sessionId = OHttpSessionManager.getInstance().createSession();
+			}
+		}
+
+		return true;
+	}
 
 	protected void sendTextContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iHeaders,
 			final String iContentType, final String iContent) throws IOException {
@@ -38,6 +58,10 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 		sendResponseHeaders(iRequest, iContentType);
 		if (iHeaders != null)
 			writeLine(iRequest, iHeaders);
+
+		if (iRequest.sessionId != null)
+			writeLine(iRequest, "sessionID: " + iRequest.sessionId);
+
 		writeLine(iRequest, OHttpUtils.CONTENT_LENGTH + (iContent != null ? iContent.length() + 1 : 0));
 		writeLine(iRequest, null);
 

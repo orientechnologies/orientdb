@@ -23,8 +23,10 @@ import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteDocument;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetClass;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetCluster;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetConnect;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDictionary;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDisconnect;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDocument;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetQuery;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetServer;
@@ -42,6 +44,9 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 		setName("HTTP-DB");
 		super.config(iSocket, iConnection);
 		data.serverInfo = ORIENT_SERVER_DB;
+
+		registerCommand(new OServerCommandGetConnect());
+		registerCommand(new OServerCommandGetDisconnect());
 
 		registerCommand(new OServerCommandGetClass());
 		registerCommand(new OServerCommandGetCluster());

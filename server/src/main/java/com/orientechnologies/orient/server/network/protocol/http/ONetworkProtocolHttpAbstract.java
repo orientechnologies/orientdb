@@ -90,8 +90,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
 		if (cmd != null)
 			try {
-				// EXECUTE THE COMMAND
-				cmd.execute(request);
+				if (cmd.beforeExecute(request)) {
+					// EXECUTE THE COMMAND
+					cmd.execute(request);
+				}
 			} catch (Exception e) {
 				handleError(e);
 			}
@@ -411,5 +413,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 	@Override
 	public OChannel getChannel() {
 		return channel;
+	}
+
+	public OUser getAccount() {
+		return account;
 	}
 }

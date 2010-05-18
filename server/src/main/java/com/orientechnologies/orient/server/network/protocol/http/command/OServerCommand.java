@@ -17,7 +17,6 @@ package com.orientechnologies.orient.server.network.protocol.http.command;
 
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 
-
 /**
  * Generic interface for server-side commands.
  * 
@@ -26,9 +25,12 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
  */
 public interface OServerCommand {
 	/**
-	 * Execute the command requested.
-	 * 
-	 * @param iURLParts
+	 * Called before to execute. Useful to make checks.
+	 */
+	public boolean beforeExecute(OHttpRequest iRequest) throws Exception;
+
+	/**
+	 * Executes the command requested.
 	 */
 	public void execute(OHttpRequest iRequest) throws Exception;
 
