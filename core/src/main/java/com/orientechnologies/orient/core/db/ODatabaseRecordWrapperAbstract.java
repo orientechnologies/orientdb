@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
@@ -48,6 +49,10 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord<
 
 	public ODatabaseRecord<REC> rollback() {
 		return (ODatabaseRecord<REC>) underlying.rollback();
+	}
+
+	public OUser getUser() {
+		return underlying.getUser();
 	}
 
 	public OMetadata getMetadata() {
@@ -114,5 +119,11 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord<
 	@SuppressWarnings("unchecked")
 	public <DBTYPE extends ODatabaseRecord<?>> DBTYPE checkSecurity(final String iResource, final ORole.OPERATIONS iOperation) {
 		return (DBTYPE) underlying.checkSecurity(iResource, iOperation);
+	}
+
+	@SuppressWarnings("unchecked")
+	public <DBTYPE extends ODatabaseRecord<?>> DBTYPE checkSecurity(final String iResourceGeneric, final ORole.OPERATIONS iOperation,
+			final Object... iResourcesSpecific) {
+		return (DBTYPE) underlying.checkSecurity(iResourceGeneric, iOperation, iResourcesSpecific);
 	}
 }

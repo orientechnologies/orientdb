@@ -17,6 +17,8 @@ package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
+import com.orientechnologies.orient.core.metadata.security.OSecurity;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.security.ORole.OPERATIONS;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
@@ -28,7 +30,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 public interface ODatabaseRecord<REC extends ORecordInternal<?>> extends ODatabaseComplex<REC> {
 
 	/**
-	 * Browse all the records of the specified cluster.
+	 * Browses all the records of the specified cluster.
 	 * 
 	 * @param iClusterName
 	 *          Cluster name to iterate
@@ -37,12 +39,19 @@ public interface ODatabaseRecord<REC extends ORecordInternal<?>> extends ODataba
 	public ORecordIteratorCluster<REC> browseCluster(String iClusterName);
 
 	/**
-	 * Return the record type class.
+	 * Returns the current user logged into the database.
+	 * 
+	 * @see OSecurity
+	 */
+	public OUser getUser();
+
+	/**
+	 * Returns the record type class.
 	 */
 	public Class<? extends REC> getRecordType();
 
 	/**
-	 * Checks if the operation on a resource is allowed fir the current user.
+	 * Checks if the operation on a resource is allowed for the current user.
 	 * 
 	 * @param iResource
 	 *          Resource where to execute the operation
@@ -51,4 +60,24 @@ public interface ODatabaseRecord<REC extends ORecordInternal<?>> extends ODataba
 	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	public <DB extends ODatabaseRecord<?>> DB checkSecurity(String iResource, OPERATIONS iOperation);
+
+	/**
+	 * Checks if the operation on a resource is allowed for the current user. The check is made in two steps:
+	 * <ol>
+	 * <li>
+	 * Access to all the resource as *</li>
+	 * <li>
+	 * Access to the specific target resource</li>
+	 * </ol>
+	 * 
+	 * @param iResourceGeneric
+	 *          Resource where to execute the operation, i.e.: database.clusters
+	 * @param iOperation
+	 *          Operation to execute against the resource
+	 * @param iResourcesTarget
+	 *          Target resources as an array of Objects, i.e.: ["employee", 2] to specify cluster name and id.
+	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 */
+	public <DB extends ODatabaseRecord<?>> DB checkSecurity(String iResourceGeneric, OPERATIONS iOperation,
+			Object... iResourcesSpecific);
 }
