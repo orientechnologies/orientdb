@@ -22,11 +22,13 @@ import java.util.Date;
 import java.util.List;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OHttpSessionManager;
@@ -50,6 +52,14 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 		}
 
 		return true;
+	}
+
+	protected ODatabaseDocumentTx getProfiledDatabaseInstance(final OHttpRequest iRequest, final String iDatabaseURL)
+			throws InterruptedException {
+		if (iRequest.authorization == null)
+			throw new OSecurityAccessException("No user and password received");
+
+		return OSharedDocumentDatabase.acquireDatabase(iDatabaseURL + ":" + iRequest.authorization);
 	}
 
 	protected void sendTextContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iHeaders,
@@ -116,7 +126,6 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 
 				String className = ((ODocument) first).getClassName();
 				final OClass cls = db.getMetadata().getSchema().getClass(className);
-				json.write(" \"schema\": ");
 				exportClassSchema(db, json, cls);
 			}
 		}
@@ -165,6 +174,10 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 	}
 
 	public void exportClassSchema(final ODatabaseDocumentTx db, final OJSONWriter json, final OClass cls) throws IOException {
+		if (cls == null)
+			return;
+
+		json.write(" \"schema\": ");
 		json.beginObject(1, false, null);
 		json.writeAttribute(2, true, "id", cls.getId());
 		json.writeAttribute(2, true, "name", cls.getName());

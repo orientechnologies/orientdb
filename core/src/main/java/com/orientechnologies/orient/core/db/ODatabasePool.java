@@ -38,12 +38,14 @@ public abstract class ODatabasePool<DB extends ODatabase> implements OResourcePo
 	}
 
 	public DB acquireDatabase(final String iURL) throws OLockException, InterruptedException {
-		OResourcePool<String, DB> pool = pools.get(iURL);
+		final String url = iURL.substring(0, iURL.lastIndexOf(":"));
+
+		OResourcePool<String, DB> pool = pools.get(url);
 		if (pool == null) {
 			synchronized (pools) {
 				if (pool == null) {
 					pool = new OResourcePool<String, DB>(maxSize, this);
-					pools.put(iURL, pool);
+					pools.put(url, pool);
 				}
 			}
 		}

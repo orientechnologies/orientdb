@@ -43,7 +43,7 @@ public class OServerCommandGetDatabase extends OServerCommandAbstract {
 		ODatabaseDocumentTx db = null;
 
 		try {
-			db = OSharedDocumentDatabase.acquireDatabase(urlParts[1]);
+			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
 
 			final StringWriter buffer = new StringWriter();
 			final OJSONWriter json = new OJSONWriter(buffer);

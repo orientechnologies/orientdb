@@ -39,7 +39,7 @@ public class OServerCommandGetDocument extends OServerCommandAbstract {
 		final String rid = parametersPos > -1 ? urlParts[2].substring(0, parametersPos) : urlParts[2];
 
 		try {
-			db = OSharedDocumentDatabase.acquireDatabase(urlParts[1]);
+			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
 
 			rec = db.load(new ORecordId(rid));
 

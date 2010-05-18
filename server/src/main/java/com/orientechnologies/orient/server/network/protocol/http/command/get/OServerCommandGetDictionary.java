@@ -33,7 +33,7 @@ public class OServerCommandGetDictionary extends OServerCommandAbstract {
 		ODatabaseDocumentTx db = null;
 
 		try {
-			db = OSharedDocumentDatabase.acquireDatabase(urlParts[1]);
+			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
 
 			final ORecord<?> record = db.getDictionary().get(urlParts[2]);
 			if (record == null)

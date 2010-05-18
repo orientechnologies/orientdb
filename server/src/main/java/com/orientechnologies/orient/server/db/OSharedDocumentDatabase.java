@@ -29,8 +29,10 @@ public class OSharedDocumentDatabase {
 
 																																		public ODatabaseDocumentTx createNewResource(
 																																				final String iDatabaseName) {
+																																			final String[] parts = iDatabaseName.split(":");
+
 																																			final String path = OServerMain.server().getStoragePath(
-																																					iDatabaseName);
+																																					parts[0]);
 
 																																			final ODatabaseDocumentTx db = new ODatabaseDocumentTx(path);
 
@@ -42,21 +44,21 @@ public class OSharedDocumentDatabase {
 																																				OServerMain.server().getMemoryDatabases().put(
 																																						iDatabaseName, db);
 																																			} else
-																																				db.open("admin", "admin");
+																																				db.open(parts[1], parts[2]);
 
 																																			return db;
 																																		}
 																																	};
 
-	public static Map<String, OResourcePool<String, ODatabaseDocumentTx>> getDatabasePools() {
-		return dbPool.getPools();
-	}
-
-	public static ODatabaseDocumentTx acquireDatabase(String iName) throws InterruptedException {
+	public static ODatabaseDocumentTx acquireDatabase(final String iName) throws InterruptedException {
 		return dbPool.acquireDatabase(iName);
 	}
 
 	public static void releaseDatabase(final ODatabaseDocumentTx iDatabase) {
-		dbPool.releaseDatabase(iDatabase.getName(), iDatabase);
+		dbPool.releaseDatabase(iDatabase.getName() + ":" + iDatabase.getUser().getName(), iDatabase);
+	}
+
+	public static Map<String, OResourcePool<String, ODatabaseDocumentTx>> getDatabasePools() {
+		return dbPool.getPools();
 	}
 }

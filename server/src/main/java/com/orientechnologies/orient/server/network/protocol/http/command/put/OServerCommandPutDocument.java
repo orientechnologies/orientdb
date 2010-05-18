@@ -42,7 +42,7 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 			throw new IllegalArgumentException("Invalid Record ID in request: " + recorId);
 
 		try {
-			db = OSharedDocumentDatabase.acquireDatabase(urlParts[1]);
+			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
 
 			final ODocument doc = new ODocument(db, rid);
 

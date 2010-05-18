@@ -24,7 +24,6 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -32,7 +31,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 
 public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 	private static final String[]										NAMES			= { "GET.www", "GET.", "GET.favicon.ico" };
-	private static final String											CACHE_PAR	= "static-contents-cache";
+	private static final String											CACHE_PAR	= "cache.static";
 
 	static final String															WWW_PATH	= System.getProperty("orient.www.path", "src/site");
 
@@ -42,16 +41,9 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 		iRequest.data.commandInfo = "Get static content";
 		iRequest.data.commandDetail = iRequest.url;
 
-		if (cache == null) {
+		if (cache == null && Boolean.parseBoolean(OServerMain.server().getConfiguration().getProperty(CACHE_PAR, "true")))
 			// CREATE THE CACHE IF ENABLED
-			for (OStorageEntryConfiguration entry : OServerMain.server().getConfiguration().properties) {
-				if (CACHE_PAR.equals(entry.name)) {
-					if (Boolean.parseBoolean(entry.value))
-						cache = new HashMap<String, OStaticContentCachedEntry>();
-					break;
-				}
-			}
-		}
+			cache = new HashMap<String, OStaticContentCachedEntry>();
 
 		InputStream is = null;
 		long contentSize = 0;

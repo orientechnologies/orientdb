@@ -42,7 +42,7 @@ public class OServerCommandPostCommand extends OServerCommandAbstract {
 		final Object response;
 
 		try {
-			db = OSharedDocumentDatabase.acquireDatabase(urlParts[2]);
+			db = getProfiledDatabaseInstance(iRequest, urlParts[2]);
 
 			response = db.command(new OCommandSQL(text)).execute();
 

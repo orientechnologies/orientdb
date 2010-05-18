@@ -39,7 +39,7 @@ public class OServerCommandGetClass extends OServerCommandAbstract {
 		ODatabaseDocumentTx db = null;
 
 		try {
-			db = OSharedDocumentDatabase.acquireDatabase(urlParts[1]);
+			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
 
 			if (db.getMetadata().getSchema().getClass(urlParts[2]) == null)
 				throw new IllegalArgumentException("Invalid class '" + urlParts[2] + "'");

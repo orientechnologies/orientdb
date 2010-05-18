@@ -49,7 +49,7 @@ public class OServerCommandGetQuery extends OServerCommandAbstract {
 		final List<ORecord<?>> response;
 
 		try {
-			db = OSharedDocumentDatabase.acquireDatabase(urlParts[2]);
+			db = getProfiledDatabaseInstance(iRequest, urlParts[2]);
 
 			response = (List<ORecord<?>>) db.command(new OSQLSynchQuery<ORecordSchemaAware<?>>(text, limit)).execute();
 

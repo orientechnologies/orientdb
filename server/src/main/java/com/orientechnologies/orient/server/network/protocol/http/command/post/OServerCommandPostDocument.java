@@ -33,7 +33,7 @@ public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
 		ODatabaseDocumentTx db = null;
 		ODocument doc = new ODocument().fromJSON(iRequest.content);
 		try {
-			db = OSharedDocumentDatabase.acquireDatabase(urlParts[1]);
+			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
 
 			doc.save(db);
 
