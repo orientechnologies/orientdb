@@ -51,15 +51,8 @@
                 
                 jQuery("#output").val("Query executed in " + stopTimer() + " sec. Returned " + result.length + " record(s)");
                 
-                var columnNames = new Array();
-                
                 // CREATE COLUMN NAMES
-                for (row = 0; row < result.length; row++) {
-                    for (col in result[row]) {
-                        if (!columnNames[col]) 
-                            columnNames[col] = col;
-                    }
-                }
+                var columnNames = buildColumnNames(result);
                 
                 // CREATE COLUMN MODEL
                 var columnModel = new Array();
@@ -288,7 +281,44 @@
                     
                     fillDynaTable($('#databaseClusters'), "Clusters", ['id', 'name', 'type', 'records'], null, database['clusters']);
                     fillDynaTable($('#databaseUsers'), "Users", ['name', 'roles'], null, database['users']);
-                    fillDynaTable($('#databaseRoles'), "Roles", ['name', 'ACL'], null, database['roles']);
+                    fillDynaTable($('#databaseRolesRules'), "Rules", ['Name', 'Create', 'Read', 'Update', 'Delete'], [{
+                        name: 'name',
+                        index: 'name',
+                        formatter: 'text',
+                        edittype: 'text',
+                        editable: false
+                    }, {
+                        name: 'create',
+                        index: 'create',
+                        formatter: 'checkbox',
+                        edittype: 'checkbox',
+                        editable: true
+                    }, {
+                        name: 'read',
+                        index: 'read',
+                        formatter: 'checkbox',
+                        edittype: 'checkbox',
+                        editable: true
+                    }, {
+                        name: 'update',
+                        index: 'update',
+                        formatter: 'checkbox',
+                        edittype: 'checkbox',
+                        editable: true
+                    }, {
+                        name: 'delete',
+                        index: 'delete',
+                        formatter: 'checkbox',
+                        edittype: 'checkbox',
+                        editable: true
+                    }], null);
+                    fillDynaTable($('#databaseRoles'), "Roles", ['name'], null, database['roles'], {
+                        sortname: 'id',
+                        onSelectRow: function(roleRowNum){
+                            var role = database['roles'][roleRowNum - 1];
+                            fillDynaTableRows($('#databaseRolesRules'), role.rules);
+                        }
+                    });
                     
                     classEnumeration = ":;";
                     for (cls in database['classes']) {
@@ -586,7 +616,17 @@
                                         </table>
                                     </div>
                                     <div id="tab-security-roles">
-                                        <table id="databaseRoles" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+                                        <table style="width: 100%;" cellpadding="5" cellspacing="0">
+                                            <tr>
+                                                <td>
+                                                    <table id="databaseRoles" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+                                                    </table>
+                                                </td>
+                                                <td>
+                                                    <table id="databaseRolesRules" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+                                                    </table>
+                                                </td>
+                                            </tr>
                                         </table>
                                     </div>
                                 </div>
@@ -661,36 +701,50 @@
                                     <table style="width: 100%;" cellpadding="2" cellspacing="0">
                                         <tr>
                                             <td valign="top">
-                                                <textarea id="commandText" cols="120" rows="4" title="value">
-                                                </textarea>
-                                            </td>
-                                            <td>
                                                 <table style="width: 100%;">
                                                     <tr>
                                                         <td>
-                                                            <button onclick="javascript:executeCommand()" class="ui-button-text-icon">
-                                                                Execute <img border="0" alt="Execute" src="www/images/execute.png" align="top" />
-                                                            </button>
+                                                            <textarea id="commandText" cols="120" rows="4" title="value">
+                                                            </textarea>
                                                         </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td align="right">
-                                                            Limit: <input id="limit" size="1" value="20" />
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td align="center" style="font-size: 14pt;">
-                                                            <a href="http://code.google.com/p/orient/wiki/SQLQuery" target="help">SQL Syntax</a>
+                                                        <td>
+                                                            <table style="width: 100%;">
+                                                                <tr>
+                                                                    <td>
+                                                                        <button onclick="javascript:executeCommand()" class="ui-button-text-icon">
+                                                                            Execute <img border="0" alt="Execute" src="www/images/execute.png" align="top" />
+                                                                        </button>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td align="right">
+                                                                        Limit: <input id="limit" size="1" value="20" />
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td align="center" style="font-size: 14pt;">
+                                                                        <a href="http://code.google.com/p/orient/wiki/SQLQuery" target="help">SQL Syntax</a>
+                                                                    </td>
+                                                                </tr>
+                                                            </table>
                                                         </td>
                                                     </tr>
                                                 </table>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td colspan="6" valign="top">
-                                                <textarea id="commandOutput" cols="135" rows="15" title="value" readonly="readonly">
-                                                </textarea>
-                                                <a href="javascript:clear('commandOutput')"><img border="0" src="www/images/clear.png" /></a>
+                                            <td>
+                                                <table style="width: 100%;">
+                                                    <tr>
+                                                        <td>
+                                                            <textarea id="commandOutput" cols="132" rows="15" title="value" readonly="readonly">
+                                                            </textarea>
+                                                        </td>
+                                                        <td valign="top">
+                                                            <a href="javascript:clear('commandOutput')"><img border="0" src="www/images/clear.png" /></a>
+                                                        </td>
+                                                    </tr>
+                                                </table>
                                             </td>
                                         </tr>
                                     </table>
@@ -762,6 +816,8 @@
                                 <td colspan="6" valign="top">
                                     <textarea id="rawOutput" cols="135" rows="22" title="value">
                                     </textarea>
+                                </td>
+                                <td valign="top">
                                     <a href="javascript:clear('rawOutput')"><img border="0" src="www/images/clear.png" /></a>
                                 </td>
                             </tr>

@@ -78,6 +78,19 @@ function fillStaticTable(iTable, iColumns, iData) {
 	jQuery("#output").text("Command executed");
 }
 
+function buildColumnNames(table) {
+	var columnNames = new Array();
+
+	// CREATE COLUMN NAMES
+	for (row = 0; row < table.length; row++) {
+		for (col in table[row]) {
+			if (!columnNames[col])
+				columnNames[col] = col;
+		}
+	}
+	return columnNames;
+}
+
 function linkFormatter(cellvalue, options, rowObject) {
 	return "<img src='images/link.png' />";
 }

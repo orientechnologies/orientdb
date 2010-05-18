@@ -164,9 +164,19 @@ public class OServerCommandPostStudio extends OServerCommandAbstract {
 				newValue = f.getValue();
 
 				if (oldValue != null) {
-					if (oldValue instanceof ORecord<?>)
-						newValue = new ORecordId(f.getValue());
-					else if (oldValue instanceof Collection<?>) {
+					if (oldValue instanceof ORecord<?>) {
+						ORecord<?> rec = (ORecord<?>) oldValue;
+						ORecordId newRid = new ORecordId(f.getValue());
+
+						if (!rec.getIdentity().equals(newRid)) {
+							// CHANGED RID
+							((ORecordId) rec.getIdentity()).fromString(f.getValue());
+
+							// RELOAD TO ASSURE IT EXISTS
+							rec.load();
+						}
+						newValue = oldValue;
+					} else if (oldValue instanceof Collection<?>) {
 						newValue = new ArrayList<ODocument>();
 
 						if (f.getValue() != null) {

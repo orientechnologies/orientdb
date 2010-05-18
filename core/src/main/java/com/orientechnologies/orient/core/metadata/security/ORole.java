@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.metadata.security;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -55,7 +56,7 @@ public class ORole extends ODocument {
 	protected String						name;
 	protected ALLOW_MODES				mode					= ALLOW_MODES.DENY_ALL_BUT;
 	protected ORole							parentRole;
-	protected Map<String, Byte>	acl						= new LinkedHashMap<String, Byte>();
+	protected Map<String, Byte>	rules					= new LinkedHashMap<String, Byte>();
 
 	/**
 	 * Constructor used in unmarshalling.
@@ -73,7 +74,7 @@ public class ORole extends ODocument {
 
 	public boolean allow(final String iResource, final CRUD_OPERATIONS iCRUDOperation) {
 		// CHECK FOR SECURITY AS DIRECT RESOURCE
-		Byte access = acl.get(iResource);
+		Byte access = rules.get(iResource);
 		if (access != null) {
 			byte mask = operation2Stream(iCRUDOperation);
 
@@ -84,7 +85,7 @@ public class ORole extends ODocument {
 	}
 
 	public void addRule(final String iResource, final CRUD_OPERATIONS iOperation) {
-		acl.put(iResource, operation2Stream(iOperation));
+		rules.put(iResource, operation2Stream(iOperation));
 	}
 
 	public String getName() {
@@ -115,9 +116,9 @@ public class ORole extends ODocument {
 
 		parentRole = database.getMetadata().getSecurity().getRole((String) iSource.field("inheritedRole"));
 
-		Map<String, String> storedAcl = iSource.field("acl");
-		for (Entry<String, String> a : storedAcl.entrySet()) {
-			acl.put(a.getKey(), Byte.parseByte(a.getValue()));
+		final Map<String, Integer> storedRules = iSource.field("rules");
+		for (Entry<String, Integer> a : storedRules.entrySet()) {
+			rules.put(a.getKey(), (byte) a.getValue().intValue());
 		}
 		return this;
 	}
@@ -126,8 +127,12 @@ public class ORole extends ODocument {
 		field("name", name);
 		field("mode", mode == ALLOW_MODES.ALLOW_ALL_BUT ? STREAM_ALLOW : STREAM_DENY);
 		field("inheritedRole", parentRole != null ? parentRole.name : null);
-		field("acl", acl);
+		field("rules", rules);
 		return super.toStream();
+	}
+
+	public Set<Entry<String, Byte>> getRules() {
+		return rules.entrySet();
 	}
 
 	@Override
