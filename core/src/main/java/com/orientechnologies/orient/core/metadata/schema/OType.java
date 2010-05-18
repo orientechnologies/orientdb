@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.record.ORecord;
  * 
  */
 public enum OType {
-	BOOLEAN("Boolean", 0, false, true, 1, new Class<?>[] { Boolean.TYPE, Boolean.class }, new Class<?>[] { Boolean.class }) {
+	BOOLEAN("Boolean", 0, false, true, 1, new Class<?>[] { Boolean.TYPE, Boolean.class }, new Class<?>[] { Boolean.class, String.class }) {
 	},
 	INTEGER("Integer", 1, false, true, 4, new Class<?>[] { Integer.TYPE, Integer.class }, new Class<?>[] { Number.class }) {
 	},
