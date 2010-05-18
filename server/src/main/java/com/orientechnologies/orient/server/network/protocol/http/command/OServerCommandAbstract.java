@@ -17,12 +17,16 @@ package com.orientechnologies.orient.server.network.protocol.http.command;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.util.Date;
 import java.util.List;
 
-import com.orientechnologies.common.concur.lock.OLockException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
@@ -76,26 +80,43 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 	}
 
 	protected void sendRecordsContent(final OHttpRequest iRequest, final List<ORecord<?>> iRecords) throws IOException {
-		StringBuilder buffer = new StringBuilder();
-		buffer.append("{ \"result\": [\r\n");
+		final StringWriter buffer = new StringWriter();
+		final OJSONWriter json = new OJSONWriter(buffer);
+		json.beginObject();
 
+		// WRITE ENTITY SCHEMA IF ANY
+		if (iRecords != null && iRecords.size() > 0) {
+			ORecord<?> first = iRecords.get(0);
+			if (first != null && first instanceof ODocument) {
+				ODatabaseDocumentTx db = (ODatabaseDocumentTx) ((ODocument) first).getDatabase();
+
+				String className = ((ODocument) first).getClassName();
+				final OClass cls = db.getMetadata().getSchema().getClass(className);
+				json.write("\"schema\": ");
+				exportClassSchema(db, json, cls);
+			}
+		}
+
+		// WRITE RECORDS
+		json.beginCollection(1, true, "result");
 		if (iRecords != null) {
 			int counter = 0;
-			String json;
+			String objectJson;
 			for (ORecord<?> rec : iRecords) {
 				try {
-					json = rec.toJSON();
+					objectJson = rec.toJSON();
 
 					if (counter++ > 0)
 						buffer.append(",\r\n");
 
-					buffer.append(json);
+					buffer.append(objectJson);
 				} catch (Exception e) {
 				}
 			}
 		}
+		json.endCollection(1, true);
 
-		buffer.append("] }");
+		json.endObject();
 
 		sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, buffer.toString());
 	}
@@ -106,24 +127,6 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 					.toJSON("id,ver,class"));
 	}
 
-	protected void handleError(final OHttpRequest iRequest, Exception e) {
-		int errorCode = 500;
-
-		if (e instanceof ORecordNotFoundException)
-			errorCode = 404;
-		else if (e instanceof OLockException)
-			e = (Exception) e.getCause();
-
-		final String msg = e.getMessage() != null ? e.getMessage() : "Internal error";
-
-		try {
-			sendTextContent(iRequest, errorCode, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN, msg);
-		} catch (IOException e1) {
-			// TODO
-			// sendShutdown();
-		}
-	}
-
 	protected void sendBinaryContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iContentType,
 			final InputStream iContent, final long iSize) throws IOException {
 		sendStatus(iRequest, iCode, iReason);
@@ -131,13 +134,37 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 		writeLine(iRequest, OHttpUtils.CONTENT_LENGTH + (iSize));
 		writeLine(iRequest, null);
 
-		int i = 0;
-		while (iContent.available() > 0) {
+		while (iContent.available() > 0)
 			iRequest.channel.outStream.write((byte) iContent.read());
-			++i;
-		}
 
 		iRequest.channel.flush();
+	}
+
+	public void exportClassSchema(final ODatabaseDocumentTx db, final OJSONWriter json, final OClass cls) throws IOException {
+		json.beginObject(2, true, null);
+		json.writeAttribute(3, true, "id", cls.getId());
+		json.writeAttribute(3, true, "name", cls.getName());
+
+		if (cls.properties() != null && cls.properties().size() > 0) {
+			json.beginObject(3, true, "properties");
+			for (OProperty prop : cls.properties()) {
+				json.beginObject(4, true, prop.getName());
+				json.writeAttribute(4, true, "id", prop.getId());
+				json.writeAttribute(4, true, "name", prop.getName());
+				if (prop.getLinkedClass() != null)
+					json.writeAttribute(4, true, "linkedClass", prop.getLinkedClass().getName());
+				if (prop.getLinkedType() != null)
+					json.writeAttribute(4, true, "linkedType", prop.getLinkedType());
+				json.writeAttribute(4, true, "type", prop.getType().toString());
+				json.writeAttribute(4, true, "mandatory", prop.isMandatory());
+				json.writeAttribute(4, true, "notNull", prop.isNotNull());
+				json.writeAttribute(4, true, "min", prop.getMin());
+				json.writeAttribute(4, true, "max", prop.getMax());
+				json.endObject(3, true);
+			}
+			json.endObject(1, true);
+		}
+		json.endObject(1, false);
 	}
 
 }
