@@ -24,8 +24,11 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.text.OChannelTextServer;
@@ -61,7 +64,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 		connection = iConnection;
 		configuration = new OServerConfiguration();
 
-		request = new OHttpRequest(channel, data);
+		request = new OHttpRequest(this, channel, data);
 
 		start();
 	}
@@ -89,30 +92,76 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 			try {
 				// EXECUTE THE COMMAND
 				cmd.execute(request);
-
 			} catch (Exception e) {
-
-				final StringBuilder buffer = new StringBuilder();
-				buffer.append(e);
-				Throwable cause = e.getCause();
-				while (cause != null && cause != cause.getCause()) {
-					buffer.append("\r\n--> ");
-					buffer.append(cause);
-
-					cause = cause.getCause();
-				}
-
-				sendTextContent(500, "Unknow error", OHttpUtils.CONTENT_TEXT_PLAIN, buffer.toString());
+				handleError(e);
 			}
-		else
-			OLogManager.instance()
-					.warn(this, "->" + channel.socket.getInetAddress().getHostAddress() + ": Command not found: " + command);
+		else {
+			try {
+				OLogManager.instance().warn(this,
+						"->" + channel.socket.getInetAddress().getHostAddress() + ": Command not found: " + command);
+
+				sendTextContent(405, "Command '" + command + "' not found", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Command not found: "
+						+ command);
+			} catch (IOException e1) {
+				sendShutdown();
+			}
+		}
 
 		data.lastCommandInfo = data.commandInfo;
 		data.lastCommandDetail = data.commandDetail;
 
 		data.lastCommandExecutionTime = System.currentTimeMillis() - begin;
 		data.totalCommandExecutionTime += data.lastCommandExecutionTime;
+	}
+
+	protected void handleError(Exception e) {
+		int errorCode = 500;
+		String errorReason = null;
+		String errorMessage = null;
+		String responseHeaders = null;
+
+		if (e instanceof ORecordNotFoundException)
+			errorCode = 404;
+		else if (e instanceof OLockException) {
+			errorCode = 423;
+			e = (Exception) e.getCause();
+		} else if (e instanceof IllegalArgumentException)
+			errorCode = 400;
+		else if (e instanceof OSecurityAccessException) {
+			if (account == null) {
+				// UNAUTHORIZED
+				errorCode = OHttpUtils.STATUS_AUTH_CODE;
+				errorReason = OHttpUtils.STATUS_AUTH_DESCRIPTION;
+				responseHeaders = "WWW-Authenticate: Basic realm=\"Secure Area\"";
+				errorMessage = "401 Unauthorized.";
+			} else {
+				// USER ACCESS DENIED
+				errorCode = 530;
+				errorReason = "Current user has not the privileges to execute the request.";
+				errorMessage = "530 User access denied";
+			}
+		}
+
+		if (errorReason == null)
+			errorReason = "Unknow error";
+		if (errorMessage == null) {
+			// FORMAT GENERIC MESSAGE BY READING THE EXCEPTION STACK
+			final StringBuilder buffer = new StringBuilder();
+			buffer.append(e);
+			Throwable cause = e.getCause();
+			while (cause != null && cause != cause.getCause()) {
+				buffer.append("\r\n--> ");
+				buffer.append(cause);
+				cause = cause.getCause();
+			}
+			errorMessage = buffer.toString();
+		}
+
+		try {
+			sendTextContent(errorCode, errorReason, responseHeaders, OHttpUtils.CONTENT_TEXT_PLAIN, errorMessage);
+		} catch (IOException e1) {
+			sendShutdown();
+		}
 	}
 
 	/**
@@ -125,10 +174,12 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 			commands.put(name, iServerCommandInstance);
 	}
 
-	protected void sendTextContent(final int iCode, final String iReason, final String iContentType, final String iContent)
-			throws IOException {
+	protected void sendTextContent(final int iCode, final String iReason, String iHeaders, final String iContentType,
+			final String iContent) throws IOException {
 		sendStatus(iCode, iReason);
 		sendResponseHeaders(iContentType);
+		if (iHeaders != null)
+			writeLine(iHeaders);
 		writeLine(OHttpUtils.CONTENT_LENGTH + (iContent != null ? iContent.length() + 1 : 0));
 		writeLine(null);
 
@@ -251,7 +302,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 			char c = (char) channel.inStream.read();
 
 			if (channel.inStream.available() == 0) {
-				// connectionClosed();
+				connectionClosed();
 				return;
 			}
 
@@ -301,12 +352,16 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 			timeout();
 
 		} catch (Throwable t) {
-			if (request.method != null && request.url != null)
+			if (request.method != null && request.url != null) {
 				try {
-					sendTextContent(505, "Error on excuting of " + request.method + " for the resource: " + request.url, "text/plain", t
-							.toString());
+					sendTextContent(505, "Error on executing of " + request.method + " for the resource: " + request.url, null, "text/plain",
+							t.toString());
 				} catch (IOException e) {
 				}
+			} else
+				sendTextContent(505, "Error on executing request", null, "text/plain", t.toString());
+
+			readAllContent(request);
 		} finally {
 			if (data.lastCommandReceived > -1)
 				OProfiler.getInstance().stopChrono("ONetworkProtocolHttp.execute", data.lastCommandReceived);

@@ -86,7 +86,7 @@ public abstract class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstrac
 			final String reason = value == null ? "Not Found" : OHttpUtils.STATUS_OK_DESCRIPTION;
 			final String content = value == null ? "The key '" + key + "' was not found in database '" + dbName + "'" : value.toString();
 
-			sendTextContent(code, reason, "text/plain", content);
+			sendTextContent(code, reason, null, "text/plain", content);
 		} catch (SocketException e) {
 			connectionError();
 
@@ -125,7 +125,7 @@ public abstract class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstrac
 				content = "The entry with key: " + key + " not exists in the bucket '" + bucket + "'";
 			}
 
-			sendTextContent(code, reason, "text/plain", content);
+			sendTextContent(code, reason, null, "text/plain", content);
 
 		} catch (SocketTimeoutException e) {
 			timeout();
@@ -165,7 +165,7 @@ public abstract class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstrac
 				bucketMap.put(key, iContent);
 			}
 
-			sendTextContent(code, reason, "text/plain", content);
+			sendTextContent(code, reason, null, "text/plain", content);
 		} catch (SocketTimeoutException e) {
 			timeout();
 
@@ -202,7 +202,7 @@ public abstract class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstrac
 				content = bucketMap.remove(key);
 			}
 
-			sendTextContent(code, reason, OHttpUtils.CONTENT_TEXT_PLAIN, content);
+			sendTextContent(code, reason, null, OHttpUtils.CONTENT_TEXT_PLAIN, content);
 		} catch (SocketTimeoutException e) {
 			timeout();
 
