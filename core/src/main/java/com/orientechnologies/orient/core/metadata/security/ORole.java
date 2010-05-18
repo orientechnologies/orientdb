@@ -75,26 +75,7 @@ public class ORole extends ODocument {
 		// CHECK FOR SECURITY AS DIRECT RESOURCE
 		Byte access = acl.get(iResource);
 		if (access != null) {
-			byte mask;
-			switch (iCRUDOperation) {
-			case CREATE:
-				mask = STREAM_CREATE;
-				break;
-			case READ:
-				mask = STREAM_READ;
-				break;
-			case UPDATE:
-				mask = STREAM_UPDATE;
-				break;
-			case DELETE:
-				mask = STREAM_DELETE;
-				break;
-			case ALL:
-				mask = STREAM_ALL;
-				break;
-			default:
-				mask = 0;
-			}
+			byte mask = operation2Stream(iCRUDOperation);
 
 			return (access.byteValue() & mask) == mask;
 		}
@@ -103,7 +84,7 @@ public class ORole extends ODocument {
 	}
 
 	public void addRule(final String iResource, final CRUD_OPERATIONS iOperation) {
-
+		acl.put(iResource, operation2Stream(iOperation));
 	}
 
 	public String getName() {
@@ -152,5 +133,29 @@ public class ORole extends ODocument {
 	@Override
 	public String toString() {
 		return name;
+	}
+
+	private byte operation2Stream(final CRUD_OPERATIONS iOperation) {
+		byte mask;
+		switch (iOperation) {
+		case CREATE:
+			mask = STREAM_CREATE;
+			break;
+		case READ:
+			mask = STREAM_READ;
+			break;
+		case UPDATE:
+			mask = STREAM_UPDATE;
+			break;
+		case DELETE:
+			mask = STREAM_DELETE;
+			break;
+		case ALL:
+			mask = STREAM_ALL;
+			break;
+		default:
+			mask = 0;
+		}
+		return mask;
 	}
 }
