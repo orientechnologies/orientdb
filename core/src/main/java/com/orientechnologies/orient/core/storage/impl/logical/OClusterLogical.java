@@ -31,12 +31,14 @@ import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * Handle a cluster using a logical structure stored into a read physical local cluster.<br/>
+ * Uses the dummy position -1 to store the total number of records.
  * 
  */
 public class OClusterLogical implements OCluster {
 	private String																			name;
 	private int																					id;
 	private OTreeMapPersistent<Long, OPhysicalPosition>	map;
+	private OPhysicalPosition														total;
 
 	private OSharedResourceExternal											lock	= new OSharedResourceExternal();
 
@@ -54,6 +56,10 @@ public class OClusterLogical implements OCluster {
 		try {
 			map = new OTreeMapPersistent<Long, OPhysicalPosition>(iDatabase, OStorage.DEFAULT_SEGMENT, OStreamSerializerLong.INSTANCE,
 					OStreamSerializerAnyStreamable.INSTANCE);
+
+			total = new OPhysicalPosition(0, 0, (byte) 0);
+			map.put(new Long(-1), total);
+
 		} catch (Exception e) {
 			throw new ODatabaseException("Error on creating internal map for logical cluster: " + iName, e);
 		}
@@ -74,6 +80,12 @@ public class OClusterLogical implements OCluster {
 		this(iName, iId);
 		map = new OTreeMapPersistent<Long, OPhysicalPosition>(iDatabase, OStorage.DEFAULT_SEGMENT, iRecordId);
 		map.load();
+
+		total = map.get(new Long(-1));
+		if (total == null) {
+			total = new OPhysicalPosition(0, map.size(), (byte) 0);
+			map.put(new Long(-1), total);
+		}
 	}
 
 	protected OClusterLogical(final String iName, final int iId) {
@@ -121,6 +133,13 @@ public class OClusterLogical implements OCluster {
 	 */
 	public void removePhysicalPosition(final long iPosition, final OPhysicalPosition iPPosition) {
 		map.remove(iPosition);
+
+		if (total.dataPosition == iPosition) {
+			// LAST ONE: SEARCH THE HIGHER POSITION TO DISCOVER TOTAL MAXIMUM TOTAL RECORDS
+			// TODO
+			total.dataPosition--;
+			map.put(new Long(-1), total);
+		}
 	}
 
 	/**
@@ -129,17 +148,22 @@ public class OClusterLogical implements OCluster {
 	 * @throws IOException
 	 */
 	public long addPhysicalPosition(final int iDataSegmentId, final long iRecordPosition, final byte iRecordType) throws IOException {
-		long pos = getAvailablePosition();
+		long pos = total.dataPosition;
 		map.put(new Long(pos), new OPhysicalPosition(iDataSegmentId, iRecordPosition, iRecordType));
+
+		total.dataPosition++;
+		map.put(new Long(-1), total);
+
 		return pos;
 	}
 
 	public long getAvailablePosition() throws IOException {
-		return map.size();
+		return total.dataPosition;
 	}
 
 	public long getElements() {
-		return map.size();
+		// RETURN THE MAP SIZE LESS THE DUMMY -1 POSITION
+		return map.size() - 1;
 	}
 
 	public int getId() {
