@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.config.OStorageLogicalClusterConfigurat
 import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -906,6 +907,13 @@ public class OStorageLocal extends OStorageAbstract {
 	public Object command(final OCommandRequestInternal iCommand) {
 		final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
 		executor.parse(iCommand);
-		return executor.execute();
+		try {
+			return executor.execute();
+		} catch (OCommandExecutionException e) {
+			// PASS THROUGHT
+			throw e;
+		} catch (Exception e) {
+			throw new OCommandExecutionException("Error on execution of command: " + iCommand, e);
+		}
 	}
 }
