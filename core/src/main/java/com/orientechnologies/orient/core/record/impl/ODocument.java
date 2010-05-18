@@ -216,7 +216,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 * Returns the field number.
 	 */
 	public int size() {
-		return fields.size();
+		return fields == null ? 0 : fields.size();
 	}
 
 	/**
