@@ -117,6 +117,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 	}
 
 	protected void handleError(Exception e) {
+		if (OLogManager.instance().isDebugEnabled())
+			OLogManager.instance().debug(this, "Caught exception", e);
+
 		int errorCode = 500;
 		String errorReason = null;
 		String errorMessage = null;
