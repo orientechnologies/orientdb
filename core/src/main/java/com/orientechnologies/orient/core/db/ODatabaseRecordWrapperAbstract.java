@@ -112,7 +112,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord<
 	}
 
 	@SuppressWarnings("unchecked")
-	public <DBTYPE extends ODatabaseRecord<?>> DBTYPE checkSecurity(final String iResource, final ORole.CRUD_OPERATIONS iOperation) {
+	public <DBTYPE extends ODatabaseRecord<?>> DBTYPE checkSecurity(final String iResource, final ORole.OPERATIONS iOperation) {
 		return (DBTYPE) underlying.checkSecurity(iResource, iOperation);
 	}
 }

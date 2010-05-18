@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
-import com.orientechnologies.orient.core.metadata.security.ORole.CRUD_OPERATIONS;
+import com.orientechnologies.orient.core.metadata.security.ORole.OPERATIONS;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
 /**
@@ -50,5 +50,5 @@ public interface ODatabaseRecord<REC extends ORecordInternal<?>> extends ODataba
 	 *          Operation to execute against the resource
 	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
-	public <DB extends ODatabaseRecord<?>> DB checkSecurity(String iResource, CRUD_OPERATIONS iOperation);
+	public <DB extends ODatabaseRecord<?>> DB checkSecurity(String iResource, OPERATIONS iOperation);
 }

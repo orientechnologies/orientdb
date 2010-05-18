@@ -88,7 +88,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 				}
 			}
 
-			checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.CRUD_OPERATIONS.READ);
+			checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.OPERATIONS.READ);
 
 			recordFormat = DEF_RECORD_FORMAT;
 			dictionary.load();
@@ -120,13 +120,18 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		user = metadata.getSecurity().createUser("admin", "admin", new String[] { role.getName() });
 
 		final ORole readerRole = metadata.getSecurity().createRole("reader", ORole.ALLOW_MODES.DENY_ALL_BUT);
-		readerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.CRUD_OPERATIONS.READ);
-		readerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.CRUD_OPERATIONS.READ);
+		readerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".metadata", ORole.OPERATIONS.NONE);
+		readerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.OPERATIONS.READ);
+		readerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.OPERATIONS.READ);
+		readerRole.addRule(ODatabaseSecurityResources.QUERY, ORole.OPERATIONS.READ);
 		metadata.getSecurity().createUser("reader", "reader", new String[] { readerRole.getName() });
 
 		final ORole writerRole = metadata.getSecurity().createRole("writer", ORole.ALLOW_MODES.DENY_ALL_BUT);
-		writerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.CRUD_OPERATIONS.ALL);
-		writerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.CRUD_OPERATIONS.ALL);
+		writerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".metadata", ORole.OPERATIONS.NONE);
+		writerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.OPERATIONS.ALL);
+		writerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.OPERATIONS.ALL);
+		readerRole.addRule(ODatabaseSecurityResources.QUERY, ORole.OPERATIONS.READ);
+		readerRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.OPERATIONS.READ);
 		metadata.getSecurity().createUser("writer", "writer", new String[] { writerRole.getName() });
 
 		metadata.getSecurity().save();
@@ -169,13 +174,13 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 	}
 
 	public ORecordIteratorCluster<REC> browseCluster(String iClusterName) {
-		checkSecurity(ODatabaseSecurityResources.CLUSTER + "." + iClusterName, ORole.CRUD_OPERATIONS.READ);
+		checkSecurity(ODatabaseSecurityResources.CLUSTER + "." + iClusterName, ORole.OPERATIONS.READ);
 
 		return new ORecordIteratorCluster<REC>(this, this, getClusterIdByName(iClusterName));
 	}
 
 	public OCommandRequest command(final OCommandRequest iCommand) {
-		checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.CRUD_OPERATIONS.READ);
+		checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.OPERATIONS.READ);
 
 		OCommandRequestInternal command = (OCommandRequestInternal) iCommand;
 
@@ -228,7 +233,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		String name;
 		for (int i = 0; i < iClusterIds.length; ++i) {
 			name = getClusterNameById(iClusterIds[i]);
-			checkSecurity(ODatabaseSecurityResources.CLUSTER + "." + name, ORole.CRUD_OPERATIONS.READ);
+			checkSecurity(ODatabaseSecurityResources.CLUSTER + "." + name, ORole.OPERATIONS.READ);
 		}
 
 		return super.countClusterElements(iClusterIds);
@@ -237,13 +242,13 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 	@Override
 	public long countClusterElements(final int iClusterId) {
 		String name = getClusterNameById(iClusterId);
-		checkSecurity(ODatabaseSecurityResources.CLUSTER + "." + name, ORole.CRUD_OPERATIONS.READ);
+		checkSecurity(ODatabaseSecurityResources.CLUSTER + "." + name, ORole.OPERATIONS.READ);
 		return super.countClusterElements(name);
 	}
 
 	@Override
 	public long countClusterElements(final String iClusterName) {
-		checkSecurity(ODatabaseSecurityResources.CLUSTER + "." + iClusterName, ORole.CRUD_OPERATIONS.READ);
+		checkSecurity(ODatabaseSecurityResources.CLUSTER + "." + iClusterName, ORole.OPERATIONS.READ);
 		return super.countClusterElements(iClusterName);
 	}
 
@@ -256,7 +261,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		return dictionary;
 	}
 
-	public <DB extends ODatabaseRecord<?>> DB checkSecurity(final String iResource, final ORole.CRUD_OPERATIONS iOperation) {
+	public <DB extends ODatabaseRecord<?>> DB checkSecurity(final String iResource, final ORole.OPERATIONS iOperation) {
 		OLogManager.instance()
 				.debug(this, "[checkSecurity] Check permissions for resource '%s', operation '%s'", iResource, iOperation);
 		if (user != null) {
@@ -271,7 +276,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		checkOpeness();
 
 		try {
-			checkSecurity(ODatabaseSecurityResources.CLUSTER + "." + iClusterId, ORole.CRUD_OPERATIONS.READ);
+			checkSecurity(ODatabaseSecurityResources.CLUSTER + "." + iClusterId, ORole.OPERATIONS.READ);
 
 			final ORawBuffer recordBuffer = underlying.read(iClusterId, iPosition);
 			if (recordBuffer == null)
@@ -325,12 +330,12 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 				clusterId = iClusterName != null ? getClusterIdByName(iClusterName) : getDefaultClusterId();
 
 				// CHECK ACCESS ON CLUSTER
-				checkSecurity(ODatabaseSecurityResources.CLUSTER + "." + clusterId, ORole.CRUD_OPERATIONS.CREATE);
+				checkSecurity(ODatabaseSecurityResources.CLUSTER + "." + clusterId, ORole.OPERATIONS.CREATE);
 			} else {
 				clusterId = rid.clusterId;
 
 				// CHECK ACCESS ON CLUSTER
-				checkSecurity(ODatabaseSecurityResources.CLUSTER + "." + clusterId, ORole.CRUD_OPERATIONS.UPDATE);
+				checkSecurity(ODatabaseSecurityResources.CLUSTER + "." + clusterId, ORole.OPERATIONS.UPDATE);
 			}
 
 			final byte[] stream = iContent.toStream();
@@ -363,7 +368,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			throw new ODatabaseException(
 					"Can't delete record because it has no identity. Probably was created from scratch or contains projections of fields rather than a full record");
 
-		checkSecurity(ODatabaseSecurityResources.CLUSTER + "." + iContent.getIdentity().getClusterId(), ORole.CRUD_OPERATIONS.DELETE);
+		checkSecurity(ODatabaseSecurityResources.CLUSTER + "." + iContent.getIdentity().getClusterId(), ORole.OPERATIONS.DELETE);
 
 		try {
 			underlying.delete(iContent.getIdentity().getClusterId(), iContent.getIdentity().getClusterPosition(), iVersion);

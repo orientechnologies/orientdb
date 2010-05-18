@@ -21,7 +21,7 @@ import java.util.Set;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.metadata.security.ORole.CRUD_OPERATIONS;
+import com.orientechnologies.orient.core.metadata.security.ORole.OPERATIONS;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 
@@ -58,7 +58,7 @@ public class OUser extends ODocument {
 	 * @param iOperation
 	 *          Requested operation
 	 */
-	public ORole allow(final String iResource, final CRUD_OPERATIONS iOperation) {
+	public ORole allow(final String iResource, final OPERATIONS iOperation) {
 		if (roles == null || roles.isEmpty())
 			throw new OSecurityAccessException("User '" + name + "' has no role defined");
 

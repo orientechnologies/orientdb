@@ -89,10 +89,10 @@ public class OServerCommandGetDatabase extends OServerCommandAbstract {
 				for (Entry<String, Byte> rule : role.getRules()) {
 					json.beginObject(4);
 					json.writeAttribute(4, true, "name", rule.getKey());
-					json.writeAttribute(4, false, "create", role.allow(rule.getKey(), ORole.CRUD_OPERATIONS.CREATE));
-					json.writeAttribute(4, false, "read", role.allow(rule.getKey(), ORole.CRUD_OPERATIONS.READ));
-					json.writeAttribute(4, false, "update", role.allow(rule.getKey(), ORole.CRUD_OPERATIONS.UPDATE));
-					json.writeAttribute(4, false, "delete", role.allow(rule.getKey(), ORole.CRUD_OPERATIONS.DELETE));
+					json.writeAttribute(4, false, "create", role.allow(rule.getKey(), ORole.OPERATIONS.CREATE));
+					json.writeAttribute(4, false, "read", role.allow(rule.getKey(), ORole.OPERATIONS.READ));
+					json.writeAttribute(4, false, "update", role.allow(rule.getKey(), ORole.OPERATIONS.UPDATE));
+					json.writeAttribute(4, false, "delete", role.allow(rule.getKey(), ORole.OPERATIONS.DELETE));
 					json.endObject(4, true);
 				}
 				json.endCollection(3, false);

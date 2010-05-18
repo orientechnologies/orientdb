@@ -39,11 +39,12 @@ public class ORole extends ODocument {
 		DENY_ALL_BUT, ALLOW_ALL_BUT
 	}
 
-	public enum CRUD_OPERATIONS {
-		CREATE, READ, UPDATE, DELETE, ALL
+	public enum OPERATIONS {
+		NONE, CREATE, READ, UPDATE, DELETE, ALL
 	}
 
 	// CRUD OPERATIONS
+	public final static int			STREAM_NONE		= 0;
 	public final static int			STREAM_CREATE	= 1;
 	public final static int			STREAM_READ		= 2;
 	public final static int			STREAM_UPDATE	= 4;
@@ -72,7 +73,7 @@ public class ORole extends ODocument {
 		mode = iAllowMode;
 	}
 
-	public boolean allow(final String iResource, final CRUD_OPERATIONS iCRUDOperation) {
+	public boolean allow(final String iResource, final OPERATIONS iCRUDOperation) {
 		// CHECK FOR SECURITY AS DIRECT RESOURCE
 		Byte access = rules.get(iResource);
 		if (access != null) {
@@ -84,7 +85,7 @@ public class ORole extends ODocument {
 		return mode == ALLOW_MODES.ALLOW_ALL_BUT;
 	}
 
-	public void addRule(final String iResource, final CRUD_OPERATIONS iOperation) {
+	public void addRule(final String iResource, final OPERATIONS iOperation) {
 		rules.put(iResource, operation2Stream(iOperation));
 	}
 
@@ -140,9 +141,12 @@ public class ORole extends ODocument {
 		return name;
 	}
 
-	private byte operation2Stream(final CRUD_OPERATIONS iOperation) {
+	private byte operation2Stream(final OPERATIONS iOperation) {
 		byte mask;
 		switch (iOperation) {
+		case NONE:
+			mask = STREAM_NONE;
+			break;
 		case CREATE:
 			mask = STREAM_CREATE;
 			break;
