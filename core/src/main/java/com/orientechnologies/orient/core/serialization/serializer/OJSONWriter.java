@@ -232,4 +232,8 @@ public class OJSONWriter {
 		this.prettyPrint = prettyPrint;
 		return this;
 	}
+
+	public void write(final String iText) throws IOException {
+		out.append(iText);
+	}
 }
