@@ -16,8 +16,9 @@
 package com.orientechnologies.orient.core.index;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -48,7 +49,7 @@ public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMap
 	protected OStreamSerializer													keySerializer;
 	protected OStreamSerializer													valueSerializer;
 
-	protected final Set<OTreeMapEntryPersistent<K, V>>	recordsToCommit	= new HashSet<OTreeMapEntryPersistent<K, V>>();
+	protected final List<OTreeMapEntryPersistent<K, V>>	recordsToCommit	= new ArrayList<OTreeMapEntryPersistent<K, V>>();
 	protected final OMemoryOutputStream									entryRecordBuffer;
 
 	protected final String															clusterName;
@@ -136,7 +137,7 @@ public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMap
 			}
 
 			final V v = super.put(key, value);
-			commitChanges();
+			commitChanges(null);
 			return v;
 		} finally {
 
@@ -154,7 +155,7 @@ public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMap
 
 		try {
 			super.putAll(map);
-			commitChanges();
+			commitChanges(null);
 
 		} finally {
 
@@ -172,7 +173,7 @@ public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMap
 
 		try {
 			V v = super.remove(key);
-			commitChanges();
+			commitChanges(null);
 			return v;
 		} finally {
 
@@ -182,7 +183,7 @@ public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMap
 		}
 	}
 
-	public void commitChanges() {
+	public void commitChanges(final ODatabaseRecord<?> iDatabase) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		ORecordId rid = null;
@@ -190,12 +191,16 @@ public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMap
 		lock.acquireExclusiveLock();
 
 		try {
-//			database.begin();
+			// database.begin();
 
 			if (recordsToCommit.size() > 0) {
 				// COMMIT BEFORE THE NEW RECORDS (TO ASSURE RID IN RELATIONSHIPS)
 				for (OTreeMapEntryPersistent<K, V> node : recordsToCommit) {
-					if (!node.record.getIdentity().isValid()) {
+					if (node.record.isDirty() && !node.record.getIdentity().isValid()) {
+						if (iDatabase != null)
+							// REPLACE THE DATABASE WITH THE NEW ACQUIRED
+							node.record.setDatabase(iDatabase);
+
 						// CREATE THE RECORD
 						node.save();
 					}
@@ -203,26 +208,37 @@ public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMap
 
 				// COMMIT THE RECORDS CHANGED
 				for (OTreeMapEntryPersistent<K, V> node : recordsToCommit) {
-					rid = (ORecordId) node.record.getIdentity();
+					if (node.record.isDirty() && node.record.getIdentity().isValid()) {
+						if (iDatabase != null)
+							// REPLACE THE DATABASE WITH THE NEW ACQUIRED
+							node.record.setDatabase(iDatabase);
 
-					if (rid.isValid())
 						// UPDATE THE RECORD
 						node.save();
+					}
 				}
 
 				recordsToCommit.clear();
 			}
 
-			if (record.isDirty())
+			if (record.isDirty()) {
 				// TREE IS CHANGED AS WELL
-				save();
+				if (iDatabase != null)
+					// REPLACE THE DATABASE WITH THE NEW ACQUIRED
+					record.setDatabase(iDatabase);
 
-//			database.commit();
+				save();
+			}
+
+			// database.commit();
 
 		} catch (IOException e) {
 			OLogManager.instance().error(this, "Error on saving the tree", e, ODatabaseException.class);
 
-			database.rollback();
+			if (iDatabase != null)
+				iDatabase.rollback();
+			else
+				database.rollback();
 
 		} finally {
 
