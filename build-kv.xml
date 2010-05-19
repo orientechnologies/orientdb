@@ -97,7 +97,7 @@
     </copy>
 
     <copy todir="${kv.release}/benchmarks" flatten="true">
-      <fileset dir="." includes="**/benchmarks/*"/>
+      <fileset dir="." includes="kv/benchmarks/*"/>
     </copy>
 	</target>
 

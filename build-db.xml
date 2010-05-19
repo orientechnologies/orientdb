@@ -138,7 +138,7 @@
     </copy>
     
     <copy todir="${db.release}/benchmarks" flatten="true">
-      <fileset dir="." includes="**/benchmarks/*"/>
+      <fileset dir="." includes="server/benchmarks/*"/>
     </copy>    
 	</target>
 
