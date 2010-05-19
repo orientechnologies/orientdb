@@ -22,13 +22,11 @@ import java.util.Date;
 import java.util.List;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
-import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
@@ -40,31 +38,23 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 		return true;
 	}
 
-	protected ODatabaseDocumentTx getProfiledDatabaseInstance(final OHttpRequest iRequest, final String iDatabaseURL)
-			throws InterruptedException {
-		if (iRequest.authorization == null)
-			throw new OSecurityAccessException("No user and password received");
-
-		return OSharedDocumentDatabase.acquireDatabase(iDatabaseURL + ":" + iRequest.authorization);
-	}
-
 	protected void sendTextContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iHeaders,
 			final String iContentType, final String iContent) throws IOException {
-		sendStatus(iRequest, iCode, iReason);
+		final boolean empty = iContent == null || iContent.length() == 0;
+
+		sendStatus(iRequest, empty && iCode == 200 ? 204 : iCode, iReason);
 		sendResponseHeaders(iRequest, iContentType);
 		if (iHeaders != null)
 			writeLine(iRequest, iHeaders);
 
 		writeLine(iRequest, "Set-Cookie: OSESSIONID=" + (iRequest.sessionId != null ? iRequest.sessionId : "-") + "; Path=/; HttpOnly");
 
-		if (iContent != null)
-			writeLine(iRequest, OHttpUtils.CONTENT_LENGTH + iContent.length());
+		writeLine(iRequest, OHttpUtils.CONTENT_LENGTH + (empty ? 0 : iContent.length()));
 
 		writeLine(iRequest, null);
 
-		if (iContent != null && iContent.length() > 0) {
+		if (!empty)
 			writeLine(iRequest, iContent);
-		}
 
 		iRequest.channel.flush();
 	}

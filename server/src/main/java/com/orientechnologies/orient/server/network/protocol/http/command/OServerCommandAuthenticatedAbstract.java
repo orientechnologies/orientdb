@@ -17,6 +17,9 @@ package com.orientechnologies.orient.server.network.protocol.http.command;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -46,5 +49,13 @@ public abstract class OServerCommandAuthenticatedAbstract extends OServerCommand
 		}
 
 		return true;
+	}
+
+	protected ODatabaseDocumentTx getProfiledDatabaseInstance(final OHttpRequest iRequest, final String iDatabaseURL)
+			throws InterruptedException {
+		if (iRequest.authorization == null)
+			throw new OSecurityAccessException("No user and password received");
+
+		return OSharedDocumentDatabase.acquireDatabase(iDatabaseURL + ":" + iRequest.authorization);
 	}
 }

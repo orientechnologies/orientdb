@@ -181,19 +181,19 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
 	protected void sendTextContent(final int iCode, final String iReason, String iHeaders, final String iContentType,
 			final String iContent) throws IOException {
-		sendStatus(iCode, iReason);
+		final boolean empty = iContent == null || iContent.length() == 0;
+
+		sendStatus(empty && iCode == 200 ? 204 : iCode, iReason);
 		sendResponseHeaders(iContentType);
 		if (iHeaders != null)
 			writeLine(iHeaders);
 
-		if (iContent != null)
-			writeLine(OHttpUtils.CONTENT_LENGTH + iContent.length());
-		
+		writeLine(OHttpUtils.CONTENT_LENGTH + (empty ? 0 : iContent.length()));
+
 		writeLine(null);
 
-		if (iContent != null && iContent.length() > 0) {
+		if (!empty)
 			writeLine(iContent);
-		}
 
 		channel.flush();
 	}
@@ -235,7 +235,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 			currChar = (char) in;
 
 			if (currChar == '\r') {
-				if (request.length() > 0 && contentLength == -1) {
+				if (request.length() > 0 && !endOfHeaders) {
 					String line = request.toString();
 					String lineUpperCase = line.toUpperCase();
 					if (lineUpperCase.startsWith("AUTHORIZATION")) {

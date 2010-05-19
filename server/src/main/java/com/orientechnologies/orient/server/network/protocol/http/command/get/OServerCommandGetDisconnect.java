@@ -41,7 +41,7 @@ public class OServerCommandGetDisconnect extends OServerCommandAbstract {
 			iRequest.sessionId = null;
 		}
 
-		sendTextContent(iRequest, 205, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Disconnected");
+		sendTextContent(iRequest, 204, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, null);
 	}
 
 	public String[] getNames() {
