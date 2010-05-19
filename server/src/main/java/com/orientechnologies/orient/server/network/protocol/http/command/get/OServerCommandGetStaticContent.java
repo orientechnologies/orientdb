@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -36,6 +37,10 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 	static final String															WWW_PATH	= System.getProperty("orient.www.path", "src/site");
 
 	private Map<String, OStaticContentCachedEntry>	cache;
+
+	public OServerCommandGetStaticContent() {
+		useCache = true;
+	}
 
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		iRequest.data.commandInfo = "Get static content";
@@ -51,7 +56,10 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 
 		try {
 			String url = OHttpUtils.URL_SEPARATOR.equals(iRequest.url) ? url = "/www/index.htm" : iRequest.url;
-			url = WWW_PATH + url.substring("www".length() + 1, url.length());
+			if (url.contains("www"))
+				url = WWW_PATH + url.substring("www".length() + 1, url.length());
+			else
+				url = WWW_PATH + url;
 
 			if (cache != null) {
 				synchronized (cache) {
@@ -67,6 +75,8 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 			if (is == null) {
 				final File inputFile = new File(url);
 				if (!inputFile.exists()) {
+					OLogManager.instance().debug(this, "Static resource not found: %s", url);
+
 					sendStatus(iRequest, 404, "File not found");
 					iRequest.channel.flush();
 					return;

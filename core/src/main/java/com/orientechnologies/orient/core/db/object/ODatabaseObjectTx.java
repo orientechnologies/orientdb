@@ -83,7 +83,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 	 * @see #registerEntityClasses(String)
 	 */
 	public Object newInstance(final String iClassName) {
-		checkSecurity(ODatabaseSecurityResources.CLASS + "." + iClassName, ORole.OPERATIONS.CREATE);
+		checkSecurity(ODatabaseSecurityResources.CLASS, ORole.OPERATIONS.CREATE, iClassName);
 
 		try {
 			return entityManager.createPojo(iClassName);
@@ -101,14 +101,14 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 	}
 
 	public <RET> OObjectIteratorMultiCluster<RET> browseClass(final String iClassName) {
-		checkSecurity(ODatabaseSecurityResources.CLASS + "." + iClassName, ORole.OPERATIONS.READ);
+		checkSecurity(ODatabaseSecurityResources.CLASS, ORole.OPERATIONS.READ, iClassName);
 
 		return new OObjectIteratorMultiCluster<RET>(this, (ODatabaseRecordAbstract<ODocument>) getUnderlying().getUnderlying(),
 				getMetadata().getSchema().getClass(iClassName).getClusterIds());
 	}
 
 	public <RET> OObjectIteratorCluster<RET> browseCluster(final String iClusterName) {
-		checkSecurity(ODatabaseSecurityResources.CLUSTER + "." + iClusterName, ORole.OPERATIONS.READ);
+		checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.OPERATIONS.READ, iClusterName);
 
 		return (OObjectIteratorCluster<RET>) new OObjectIteratorCluster<Object>(this,
 				(ODatabaseRecordAbstract<ODocument>) getUnderlying().getUnderlying(), getClusterIdByName(iClusterName));
@@ -295,5 +295,10 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 
 	public <DBTYPE extends ODatabase> DBTYPE checkSecurity(final String iResource, final ORole.OPERATIONS iOperation) {
 		return (DBTYPE) underlying.checkSecurity(iResource, iOperation);
+	}
+
+	public <DBTYPE extends ODatabase> DBTYPE checkSecurity(final String iResource, final ORole.OPERATIONS iOperation,
+			Object... iResourcesSpecific) {
+		return (DBTYPE) underlying.checkSecurity(iResource, iOperation, iResourcesSpecific);
 	}
 }

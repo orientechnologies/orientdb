@@ -97,7 +97,7 @@ public class OSQLFilter {
 				alias = subjectName;
 			}
 
-			subjectToMatch = subjectName.toUpperCase();
+			subjectToMatch = subjectName;
 			if (subjectToMatch.startsWith(OSQLHelper.CLUSTER_PREFIX))
 				// REGISTER AS CLUSTER
 				clusters.put(subjectName.substring(OSQLHelper.CLUSTER_PREFIX.length()), alias);

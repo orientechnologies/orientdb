@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -29,9 +30,9 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedAbstract;
 
-public class OServerCommandGetConnect extends OServerCommandAbstract {
+public class OServerCommandGetConnect extends OServerCommandAuthenticatedAbstract {
 	private static final String[]	NAMES	= { "GET.connect" };
 
 	public void execute(final OHttpRequest iRequest) throws Exception {
@@ -40,8 +41,11 @@ public class OServerCommandGetConnect extends OServerCommandAbstract {
 		iRequest.data.commandInfo = "Connect";
 		iRequest.data.commandDetail = urlParts[1];
 
-		ODatabaseDocumentTx db = null;
+		exec(iRequest, urlParts);
+	}
 
+	protected void exec(final OHttpRequest iRequest, String[] urlParts) throws InterruptedException, IOException {
+		ODatabaseDocumentTx db = null;
 		try {
 			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
 
@@ -60,11 +64,15 @@ public class OServerCommandGetConnect extends OServerCommandAbstract {
 			if (db.getClusterNames() != null) {
 				json.beginCollection(1, false, "clusters");
 				for (String clusterName : db.getClusterNames()) {
-					json.beginObject(2, true, null);
-					json.writeAttribute(3, false, "id", db.getClusterIdByName(clusterName));
-					json.writeAttribute(3, false, "name", clusterName);
-					json.writeAttribute(3, false, "type", db.getClusterIdByName(clusterName) > -1 ? "Physical" : "Logical");
-					json.writeAttribute(3, false, "records", db.countClusterElements(clusterName));
+					try {
+						json.beginObject(2, true, null);
+						json.writeAttribute(3, false, "id", db.getClusterIdByName(clusterName));
+						json.writeAttribute(3, false, "name", clusterName);
+						json.writeAttribute(3, false, "type", db.getClusterIdByName(clusterName) > -1 ? "Physical" : "Logical");
+						json.writeAttribute(3, false, "records", db.countClusterElements(clusterName));
+					} catch (Exception e) {
+						json.writeAttribute(3, false, "records", "? (Unauthorized)");
+					}
 					json.endObject(2, false);
 				}
 				json.endCollection(1, true);
@@ -116,7 +124,11 @@ public class OServerCommandGetConnect extends OServerCommandAbstract {
 		json.writeAttribute(3, true, "name", cls.getName());
 		json.writeAttribute(3, true, "clusters", cls.getClusterIds());
 		json.writeAttribute(3, true, "defaultCluster", cls.getDefaultClusterId());
-		json.writeAttribute(3, false, "records", db.countClass(cls.getName()));
+		try {
+			json.writeAttribute(3, false, "records", db.countClass(cls.getName()));
+		} catch (OSecurityAccessException e) {
+			json.writeAttribute(3, false, "records", "? (Unauthorized)");
+		}
 
 		if (cls.properties() != null && cls.properties().size() > 0) {
 			json.beginCollection(3, true, "properties");

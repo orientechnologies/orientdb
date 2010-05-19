@@ -239,7 +239,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 		if (pos > -1 && pos < posFirstValue) {
 			record.setClassName(iContent.substring(0, pos));
 			iContent = iContent.substring(pos + 1);
-		}
+		} else
+			record.setClassName(null);
 
 		String[] fields = OStringSerializerHelper.split(iContent, OStringSerializerHelper.RECORD_SEPARATOR_AS_CHAR);
 
@@ -320,7 +321,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 					}
 				}
 
-				record.field(fieldName, fieldFromStream(iRecord.getDatabase(), type, linkedClass, linkedType, fieldName, fieldValue, unusualSymbols));
+				record.field(fieldName, fieldFromStream(iRecord.getDatabase(), type, linkedClass, linkedType, fieldName, fieldValue,
+						unusualSymbols));
 			}
 		}
 

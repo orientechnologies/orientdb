@@ -20,9 +20,9 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedAbstract;
 
-public class OServerCommandGetDictionary extends OServerCommandAbstract {
+public class OServerCommandGetDictionary extends OServerCommandAuthenticatedAbstract {
 	private static final String[]	NAMES	= { "GET.dictionary" };
 
 	public void execute(final OHttpRequest iRequest) throws Exception {

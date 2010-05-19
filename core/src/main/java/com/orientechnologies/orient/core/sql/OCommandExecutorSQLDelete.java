@@ -18,6 +18,8 @@ package com.orientechnologies.orient.core.sql;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
+import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
@@ -36,7 +38,10 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
 	public OCommandExecutorSQLDelete() {
 	}
 
+	@SuppressWarnings("unchecked")
 	public OCommandExecutorSQLDelete parse(final OCommandRequestInternal iRequest) {
+		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.OPERATIONS.DELETE);
+
 		init(iRequest.getDatabase(), iRequest.getText());
 
 		query = null;

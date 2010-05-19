@@ -3,7 +3,7 @@ function executeJSONRequest(iRequest, iCallback) {
 		type : 'GET',
 		url : iRequest,
 		success : function(msg) {
-			iCallback.apply(this, [ JSON.parse(msg) ]);
+			iCallback.apply(this, [ jQuery.parseJSON(msg) ]);
 		},
 		error : function(msg) {
 			jQuery("#output").text("Command response: " + msg);

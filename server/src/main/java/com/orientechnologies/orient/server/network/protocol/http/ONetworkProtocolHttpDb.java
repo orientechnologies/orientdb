@@ -42,7 +42,6 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 	@Override
 	public void config(Socket iSocket, OClientConnection iConnection) throws IOException {
 		setName("HTTP-DB");
-		super.config(iSocket, iConnection);
 		data.serverInfo = ORIENT_SERVER_DB;
 
 		registerCommand(new OServerCommandGetConnect());
@@ -64,5 +63,7 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 		registerCommand(new OServerCommandPutDocument());
 
 		registerCommand(new OServerCommandDeleteDocument());
+
+		super.config(iSocket, iConnection);
 	}
 }

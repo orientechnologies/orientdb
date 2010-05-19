@@ -68,8 +68,10 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	}
 
 	public void setClassName(final String iClassName) {
-		if (database == null || iClassName == null)
+		if (database == null || iClassName == null){
+			clazz = null;
 			return;
+		}
 
 		setClass(database.getMetadata().getSchema().getClass(iClassName));
 

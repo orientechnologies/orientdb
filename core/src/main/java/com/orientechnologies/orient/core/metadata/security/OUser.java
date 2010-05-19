@@ -100,7 +100,7 @@ public class OUser extends OMetadataRecord {
 	 */
 	public boolean isRuleDefined(final String iResource) {
 		for (ORole r : roles)
-			if (r.containsField(iResource))
+			if (r.hasRule(iResource))
 				return true;
 
 		return false;

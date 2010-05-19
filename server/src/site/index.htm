@@ -46,23 +46,26 @@
             var databaseInfo; // CONTAINS THE DB INFO
             var classEnumeration; // CONTAINS THE DB CLASSES
             var selectedClassName; // CONTAINS LATEST SELECTED CLASS NAME
-            
             function connect(){
                 executeJSONRequest($('#server').val() + '/connect/' + $('#database').val(), function(database){
                     databaseInfo = database;
                     showDatabaseInfo(database);
+                    
                     $("#tabs-main").show(200);
                     $("#buttonConnect").hide();
                     $("#buttonDisconnect").show();
+                    
                 });
             }
             
             function disconnect(){
                 executeSimpleRequest($('#server').val() + '/disconnect', function(database){
                     databaseInfo = null;
+                    
                     $("#tabs-main").hide(200);
                     $("#buttonConnect").show();
                     $("#buttonDisconnect").hide();
+                    
                 });
             }
             
@@ -327,12 +330,12 @@
                     if (col.charAt(0) !== '_') {
                         columnModel.push({
                             "name": columnNames[col],
-                            editable: true,
+                            "editable": true,
                             "index": columnNames[col],
                             "width": 80,
-                            formatter: formatter,
-                            edittype: editFormatter,
-                            editoptions: editOptions,
+                            "formatter": formatter,
+                            "edittype": editFormatter,
+                            "editoptions": editOptions
                         });
                     }
                 }
@@ -394,14 +397,14 @@
             function executeQuery(){
                 startTimer();
                 
-                jQuery("#queryText").val($('#queryText').val().trim());
+                jQuery("#queryText").val(jQuery.trim($('#queryText').val()));
                 $.getJSON($('#server').val() + '/query/sql/' + $('#database').val() + '/' + $('#queryText').val() + '/' + $('#limit').val(), queryResponse);
             }
             
             function executeCommand(){
                 startTimer();
                 
-                jQuery("#commandText").val($('#commandText').val().trim());
+                jQuery("#commandText").val(jQuery.trim($('#commandText').val()));
                 
                 $.ajax({
                     type: 'POST',
@@ -477,8 +480,10 @@
                     jQuery("#output").val("Error: " + request.responseText);
                 });
                 
+                
                 $("#tabs-main").hide();
                 $("#buttonDisconnect").hide();
+                
                 
                 $("#tabs-main").tabs();
                 $("#tabs-db").tabs();
@@ -498,8 +503,8 @@
                 else 
                     $('#server').val(document.location.href);
                 
-                jQuery("#queryText").val($('#queryText').val().trim());
-                jQuery("#commandText").val($('#commandText').val().trim());
+                jQuery("#queryText").val(jQuery.trim(jQuery("#queryText").val()));
+                jQuery("#commandText").val(jQuery.trim(jQuery("#commandText").val()));
             });
         </script>
     </head>
@@ -932,7 +937,7 @@
                                 Output:
                             </td>
                             <td valign="top">
-                                <textarea id="output" cols="125" rows="3" title="value" readonly="readonly">
+                                <textarea id="output" cols="125" rows="3" title="value" readonly="readonly">User reader/reader to read records from the database. User writer/writer to read, create, update and delete records.
                                 </textarea>
                             </td>
                         </tr>

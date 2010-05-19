@@ -137,8 +137,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 				// UNAUTHORIZED
 				errorCode = OHttpUtils.STATUS_AUTH_CODE;
 				errorReason = OHttpUtils.STATUS_AUTH_DESCRIPTION;
-				responseHeaders = "WWW-Authenticate: Basic realm=\"Secure Area\"";
-				errorMessage = "401 Unauthorized.";
+				responseHeaders = "WWW-Authenticate: Basic realm=\"OrientDB Server\"";
+				errorMessage = null;
 			} else {
 				// USER ACCESS DENIED
 				errorCode = 530;
@@ -185,7 +185,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 		sendResponseHeaders(iContentType);
 		if (iHeaders != null)
 			writeLine(iHeaders);
-		writeLine(OHttpUtils.CONTENT_LENGTH + (iContent != null ? iContent.length() + 1 : 0));
+
+		if (iContent != null)
+			writeLine(OHttpUtils.CONTENT_LENGTH + iContent.length());
+		
 		writeLine(null);
 
 		if (iContent != null && iContent.length() > 0) {
@@ -245,8 +248,11 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
 						iRequest.authorization = base64.decodeBase64("", iRequest.authorization);
 
-					} else if (lineUpperCase.startsWith("SESSIONID")) {
-						iRequest.sessionId = line.substring("SESSIONID".length());
+					} else if (lineUpperCase.startsWith("COOKIE:")) {
+						String sessionPair = line.substring("COOKIE:".length() + 1);
+						String[] sessionPairItems = sessionPair.split("=");
+						if (sessionPairItems.length == 2 && "OSESSIONID".equals(sessionPairItems[0]))
+							iRequest.sessionId = sessionPairItems[1];
 
 					} else if (lineUpperCase.startsWith(OHttpUtils.CONTENT_LENGTH)) {
 						contentLength = Integer.parseInt(lineUpperCase.substring(OHttpUtils.CONTENT_LENGTH.length()));

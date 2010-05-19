@@ -31,26 +31,12 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OHttpSessionManager;
 
 public abstract class OServerCommandAbstract implements OServerCommand {
 
+	protected boolean	useCache	= false;
+
 	public boolean beforeExecute(final OHttpRequest iRequest) throws IOException {
-		if (iRequest.executor.getAccount() == null) {
-			if (iRequest.authorization == null) {
-				// UNAUTHORIZED
-				sendTextContent(iRequest, OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION,
-						"WWW-Authenticate: Basic realm=\"Secure Area\"", OHttpUtils.CONTENT_TEXT_PLAIN, "401 Unauthorized.");
-				return false;
-			} else {
-				String[] credentials = iRequest.authorization.split(":");
-
-				// TODO: LOGIN IN DATABASE!
-
-				iRequest.sessionId = OHttpSessionManager.getInstance().createSession();
-			}
-		}
-
 		return true;
 	}
 
@@ -69,10 +55,11 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 		if (iHeaders != null)
 			writeLine(iRequest, iHeaders);
 
-		if (iRequest.sessionId != null)
-			writeLine(iRequest, "sessionID: " + iRequest.sessionId);
+		writeLine(iRequest, "Set-Cookie: OSESSIONID=" + (iRequest.sessionId != null ? iRequest.sessionId : "-") + "; Path=/; HttpOnly");
 
-		writeLine(iRequest, OHttpUtils.CONTENT_LENGTH + (iContent != null ? iContent.length() + 1 : 0));
+		if (iContent != null)
+			writeLine(iRequest, OHttpUtils.CONTENT_LENGTH + iContent.length());
+
 		writeLine(iRequest, null);
 
 		if (iContent != null && iContent.length() > 0) {
@@ -87,8 +74,10 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 	}
 
 	protected void sendResponseHeaders(final OHttpRequest iRequest, final String iContentType) throws IOException {
-		writeLine(iRequest, "Cache-Control: no-cache, no-store, max-age=0, must-revalidate");
-		writeLine(iRequest, "Pragma: no-cache");
+		if (!useCache) {
+			writeLine(iRequest, "Cache-Control: no-cache, no-store, max-age=0, must-revalidate");
+			writeLine(iRequest, "Pragma: no-cache");
+		}
 		writeLine(iRequest, "Date: " + new Date());
 		writeLine(iRequest, "Content-Type: " + iContentType);
 		writeLine(iRequest, "Server: " + iRequest.data.serverInfo);
@@ -125,8 +114,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 				ODatabaseDocumentTx db = (ODatabaseDocumentTx) ((ODocument) first).getDatabase();
 
 				String className = ((ODocument) first).getClassName();
-				final OClass cls = db.getMetadata().getSchema().getClass(className);
-				exportClassSchema(db, json, cls);
+				exportClassSchema(db, json, db.getMetadata().getSchema().getClass(className));
 			}
 		}
 

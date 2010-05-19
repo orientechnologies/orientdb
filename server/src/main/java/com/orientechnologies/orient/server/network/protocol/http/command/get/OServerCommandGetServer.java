@@ -35,9 +35,9 @@ import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedAbstract;
 
-public class OServerCommandGetServer extends OServerCommandAbstract {
+public class OServerCommandGetServer extends OServerCommandAuthenticatedAbstract {
 	private static final String[]		NAMES						= { "GET.server" };
 	private final static DateFormat	dateTimeFormat	= new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 

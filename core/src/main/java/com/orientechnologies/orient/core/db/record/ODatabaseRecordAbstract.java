@@ -78,6 +78,9 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 
 			metadata.load();
 
+			recordFormat = DEF_RECORD_FORMAT;
+			dictionary.load();
+
 			if (!(getStorage() instanceof OStorageMemory)) {
 				user = getMetadata().getSecurity().getUser(iUserName);
 				if (user == null)
@@ -91,9 +94,6 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			}
 
 			checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.OPERATIONS.READ);
-
-			recordFormat = DEF_RECORD_FORMAT;
-			dictionary.load();
 		} catch (Exception e) {
 			throw new ODatabaseException("Can't open database", e);
 		}
@@ -115,30 +115,6 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			throw new ODatabaseException("Can't create database", e);
 		}
 		return (DB) this;
-	}
-
-	private void createRolesAndUsers() {
-		final ORole role = metadata.getSecurity().createRole("admin", ORole.ALLOW_MODES.ALLOW_ALL_BUT);
-		user = metadata.getSecurity().createUser("admin", "admin", new String[] { role.getName() });
-
-		final ORole readerRole = metadata.getSecurity().createRole("reader", ORole.ALLOW_MODES.DENY_ALL_BUT);
-		readerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.OPERATIONS.READ);
-		readerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".metadata", ORole.OPERATIONS.NONE);
-		readerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.OPERATIONS.READ);
-		readerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.OPERATIONS.READ);
-		readerRole.addRule(ODatabaseSecurityResources.QUERY, ORole.OPERATIONS.READ);
-		metadata.getSecurity().createUser("reader", "reader", new String[] { readerRole.getName() });
-
-		final ORole writerRole = metadata.getSecurity().createRole("writer", ORole.ALLOW_MODES.DENY_ALL_BUT);
-		writerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.OPERATIONS.ALL);
-		writerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".metadata", ORole.OPERATIONS.NONE);
-		writerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.OPERATIONS.ALL);
-		writerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.OPERATIONS.ALL);
-		readerRole.addRule(ODatabaseSecurityResources.QUERY, ORole.OPERATIONS.READ);
-		readerRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.OPERATIONS.READ);
-		metadata.getSecurity().createUser("writer", "writer", new String[] { writerRole.getName() });
-
-		metadata.getSecurity().save();
 	}
 
 	public REC load(final REC iRecord) {
@@ -186,8 +162,6 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 	}
 
 	public OCommandRequest command(final OCommandRequest iCommand) {
-		checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.OPERATIONS.READ);
-
 		OCommandRequestInternal command = (OCommandRequestInternal) iCommand;
 
 		try {
@@ -199,25 +173,6 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			throw new ODatabaseException("Error on command execution", e);
 		}
 	}
-
-	//
-	// public OQuery<REC> query(final OQuery<REC> iQuery) {
-	// checkSecurity(ORole.CRUD_MODES.QUERY, ORole.CRUD_MODES.READ);
-	//
-	// OQueryInternal<REC> query = (OQueryInternal<REC>) iQuery;
-	//
-	// try {
-	// query.setDatabase((ODatabaseRecord<REC>) getDatabaseOwner());
-	//
-	// if (query.getRecord() == null)
-	// query.setRecord((REC) getDatabaseOwner().newInstance());
-	//
-	// return query;
-	//
-	// } catch (Exception e) {
-	// throw new ODatabaseException("Error on query execution", e);
-	// }
-	// }
 
 	public Class<? extends REC> getRecordType() {
 		return recordClass;
@@ -272,9 +227,20 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		OLogManager.instance()
 				.debug(this, "[checkSecurity] Check permissions for resource '%s', operation '%s'", iResource, iOperation);
 		if (user != null) {
-			final ORole role = user.allow(iResource, iOperation);
-			OLogManager.instance().debug(this, "[checkSecurity] Granted permission for resource '%s', operation '%s' by role: %s",
-					iResource, iOperation, role.getName());
+			try {
+				final ORole role = user.allow(iResource, iOperation);
+				OLogManager.instance().debug(this, "[checkSecurity] Granted permission for resource '%s', operation '%s' by role: %s",
+						iResource, iOperation, role.getName());
+
+			} catch (OSecurityAccessException e) {
+
+				if (OLogManager.instance().isDebugEnabled())
+					OLogManager.instance().debug(this,
+							"[checkSecurity] User '%s' tried to access to the reserved resource '%s', operation '%s'", getUser(), iResource,
+							iOperation);
+
+				throw e;
+			}
 		}
 		return (DB) this;
 	}
@@ -287,18 +253,28 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 					iResourceGeneric, Arrays.toString(iResourcesSpecific), iOperation);
 
 		if (user != null) {
-			ORole role = user.allow(iResourceGeneric + "." + ODatabaseSecurityResources.ALL, iOperation);
+			try {
+				ORole role = user.allow(iResourceGeneric + "." + ODatabaseSecurityResources.ALL, iOperation);
 
-			for (Object target : iResourcesSpecific)
-				if (target != null && user.isRuleDefined(iResourceGeneric + "." + target.toString())) {
-					// RULE DEFINED: CHECK AGAINST IT
-					role = user.allow(iResourceGeneric + "." + target.toString(), iOperation);
-				}
+				for (Object target : iResourcesSpecific)
+					if (target != null && user.isRuleDefined(iResourceGeneric + "." + target.toString())) {
+						// RULE DEFINED: CHECK AGAINST IT
+						role = user.allow(iResourceGeneric + "." + target.toString(), iOperation);
+					}
 
-			if (OLogManager.instance().isDebugEnabled())
-				OLogManager.instance().debug(this,
-						"[checkSecurity] Granted permission for resource '%s', target(s) '%s', operation '%s' by role: %s", iResourceGeneric,
-						Arrays.toString(iResourcesSpecific), iOperation, role.getName());
+				if (OLogManager.instance().isDebugEnabled())
+					OLogManager.instance().debug(this,
+							"[checkSecurity] Granted permission for resource '%s', target(s) '%s', operation '%s' by role: %s", iResourceGeneric,
+							Arrays.toString(iResourcesSpecific), iOperation, role.getName());
+
+			} catch (OSecurityAccessException e) {
+				if (OLogManager.instance().isDebugEnabled())
+					OLogManager.instance().debug(this,
+							"[checkSecurity] User '%s' tried to access to the reserved resource '%s', target(s) '%s', operation '%s'", getUser(),
+							iResourceGeneric, Arrays.toString(iResourcesSpecific), iOperation);
+
+				throw e;
+			}
 		}
 		return (DB) this;
 	}
@@ -332,11 +308,10 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			// RE-THROW THE EXCEPTION
 			throw e;
 
-		} catch (Throwable t) {
+		} catch (Exception e) {
 			// WRAP IT AS ODATABASE EXCEPTION
-			OLogManager.instance().error(this,
-					"Error on retrieving record #" + iPosition + " in cluster '" + getStorage().getPhysicalClusterNameById(iClusterId) + "'",
-					t);
+			OLogManager.instance().exception("Error on retrieving record #%d in cluster '%s'", e, ODatabaseException.class, iPosition,
+					getStorage().getPhysicalClusterNameById(iClusterId));
 		}
 		return null;
 	}
@@ -439,5 +414,30 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 
 	public OUser getUser() {
 		return user;
+	}
+
+	private void createRolesAndUsers() {
+		final ORole role = metadata.getSecurity().createRole("admin", ORole.ALLOW_MODES.ALLOW_ALL_BUT);
+		user = metadata.getSecurity().createUser("admin", "admin", new String[] { role.getName() });
+
+		final ORole readerRole = metadata.getSecurity().createRole("reader", ORole.ALLOW_MODES.DENY_ALL_BUT);
+		readerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.OPERATIONS.READ);
+		readerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".metadata", ORole.OPERATIONS.NONE);
+		readerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.OPERATIONS.READ);
+		readerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.OPERATIONS.READ);
+		readerRole.addRule(ODatabaseSecurityResources.QUERY, ORole.OPERATIONS.READ);
+		readerRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.OPERATIONS.READ);
+		metadata.getSecurity().createUser("reader", "reader", new String[] { readerRole.getName() });
+
+		final ORole writerRole = metadata.getSecurity().createRole("writer", ORole.ALLOW_MODES.DENY_ALL_BUT);
+		writerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.OPERATIONS.ALL);
+		writerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".metadata", ORole.OPERATIONS.NONE);
+		writerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.OPERATIONS.ALL);
+		writerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.OPERATIONS.ALL);
+		writerRole.addRule(ODatabaseSecurityResources.QUERY, ORole.OPERATIONS.READ);
+		writerRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.OPERATIONS.ALL);
+		metadata.getSecurity().createUser("writer", "writer", new String[] { writerRole.getName() });
+
+		metadata.getSecurity().save();
 	}
 }

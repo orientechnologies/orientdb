@@ -190,6 +190,9 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 				buffer.append("[");
 				buffer.append(((Collection<?>) f.getValue()).size());
 				buffer.append("]");
+			} else if (f.getValue() instanceof ORecord<?>) {
+				buffer.append("#");
+				buffer.append(((ORecord<?>) f.getValue()).getIdentity());
 			} else
 				buffer.append(f.getValue());
 

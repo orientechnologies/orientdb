@@ -22,6 +22,8 @@ import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
+import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
@@ -43,6 +45,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	 */
 	@SuppressWarnings("unchecked")
 	public OCommandExecutorSQLSelect parse(final OCommandRequestInternal iRequest) {
+		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.OPERATIONS.READ);
+
 		init(iRequest.getDatabase(), iRequest.getText());
 
 		request = (OSQLAsynchQuery<ORecordSchemaAware<?>>) iRequest;
@@ -70,6 +74,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			if (cls == null)
 				throw new OCommandExecutionException("Class " + firstClass + " was not found");
 
+			database.checkSecurity(ODatabaseSecurityResources.CLASS, ORole.OPERATIONS.READ, cls.getName());
+
 			if (record instanceof ORecordSchemaAware<?>)
 				((ORecordSchemaAware<?>) record).setClassName(cls.getName());
 
@@ -84,10 +90,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			if (Character.isDigit(firstCluster.charAt(0)))
 				// GET THE CLUSTER NUMBER
 				clusterIds = OStringSerializerHelper.splitIntArray(firstCluster);
-			else {
+			else
 				// GET THE CLUSTER NUMBER BY THE CLASS NAME
 				clusterIds = new int[] { database.getClusterIdByName(firstCluster.toLowerCase()) };
-			}
+
+			database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.OPERATIONS.READ, firstCluster.toLowerCase(), clusterIds[0]);
 		}
 
 		((OStorageLocal) database.getStorage()).browse(database.getId(), clusterIds, this, record, false);

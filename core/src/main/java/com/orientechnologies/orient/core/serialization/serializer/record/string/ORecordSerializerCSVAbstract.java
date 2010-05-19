@@ -358,7 +358,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 	private void linkToStream(StringBuilder buffer, ORecordSchemaAware<?> record) {
 		ORID link = record.getIdentity();
 		if (!link.isValid())
-			// STORE THE TRAVERSED OBJECT TO KNOW THE RECORD ID
+			// STORE THE TRAVERSED OBJECT TO KNOW THE RECORD ID. CALL THIS VERSION TO AVOID CLEAR OF STACK IN THREAD-LOCAL
 			record.getDatabase().save((ORecordInternal) record);
 
 		buffer.append(OStringSerializerHelper.LINK);

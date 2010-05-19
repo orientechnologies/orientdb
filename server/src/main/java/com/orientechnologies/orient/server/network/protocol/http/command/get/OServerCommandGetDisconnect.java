@@ -15,12 +15,20 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
+import java.io.IOException;
+
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
 
 public class OServerCommandGetDisconnect extends OServerCommandAbstract {
 	private static final String[]	NAMES	= { "GET.disconnect" };
+
+	@Override
+	public boolean beforeExecute(OHttpRequest iRequest) throws IOException {
+		return true;
+	}
 
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		checkSyntax(iRequest.url, 1, "Syntax error: disconnect");
@@ -33,7 +41,7 @@ public class OServerCommandGetDisconnect extends OServerCommandAbstract {
 			iRequest.sessionId = null;
 		}
 
-		sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Disconnected");
+		sendTextContent(iRequest, 205, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Disconnected");
 	}
 
 	public String[] getNames() {

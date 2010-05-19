@@ -22,9 +22,9 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedAbstract;
 
-public class OServerCommandGetCluster extends OServerCommandAbstract {
+public class OServerCommandGetCluster extends OServerCommandAuthenticatedAbstract {
 	private static final String[]	NAMES	= { "GET.cluster" };
 
 	public void execute(final OHttpRequest iRequest) throws Exception {
