@@ -3,21 +3,21 @@ package com.orientechnologies.orient.kv.network.protocol.http.partitioned;
 import com.orientechnologies.common.exception.OException;
 
 @SuppressWarnings("serial")
-public class ODistributedException extends OException {
+public class OKVDistributedException extends OException {
 
-	public ODistributedException() {
+	public OKVDistributedException() {
 		super();
 	}
 
-	public ODistributedException(String message, Throwable cause) {
+	public OKVDistributedException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
-	public ODistributedException(String message) {
+	public OKVDistributedException(String message) {
 		super(message);
 	}
 
-	public ODistributedException(Throwable cause) {
+	public OKVDistributedException(Throwable cause) {
 		super(cause);
 	}
 }

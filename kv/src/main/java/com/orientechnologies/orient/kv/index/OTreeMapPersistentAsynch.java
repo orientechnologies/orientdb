@@ -1,9 +1,11 @@
 package com.orientechnologies.orient.kv.index;
 
+import com.orientechnologies.orient.core.db.record.ODatabaseBinary;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OTreeMapPersistent;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
+import com.orientechnologies.orient.kv.OSharedBinaryDatabase;
 
 /**
  * Wrapper class for persistent tree map. It handles the asynchronous commit of changes done by the external
@@ -30,20 +32,34 @@ public class OTreeMapPersistentAsynch<K, V> extends OTreeMapPersistent<K, V> {
 	}
 
 	/**
-	 * Don't commit changes since they are scheduled by the external OTreeMapPersistentAsynchThread singleton thread.
+	 * Doesn't commit changes since they are scheduled by the external OTreeMapPersistentAsynchThread singleton thread.
 	 * 
 	 * @see OTreeMapPersistentAsynchThread#execute()
 	 */
 	@Override
-	public void commitChanges() {
+	public void commitChanges(final ODatabaseRecord<?> iDatabase) {
 	}
 
 	/**
-	 * Commit changes for real. It's called by OTreeMapPersistentAsynchThread singleton thread.
+	 * Commits changes for real. It's called by OTreeMapPersistentAsynchThread singleton thread.
 	 * 
 	 * @see OTreeMapPersistentAsynchThread#execute()
 	 */
 	public void executeCommitChanges() {
-		super.commitChanges();
+		ODatabaseBinary db = null;
+
+		try {
+			db = OSharedBinaryDatabase.acquireDatabase(database.getName() + ":admin:admin");
+
+			super.commitChanges(db);
+
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+
+		} finally {
+
+			if (db != null)
+				OSharedBinaryDatabase.releaseDatabase(db);
+		}
 	}
 }

@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.kv.network.protocol.http.partitioned;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,19 +31,14 @@ import com.hazelcast.partition.MigrationListener;
 import com.hazelcast.partition.PartitionService;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseBinary;
-import com.orientechnologies.orient.core.index.OTreeMapPersistent;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerString;
 import com.orientechnologies.orient.kv.OSharedBinaryDatabase;
-import com.orientechnologies.orient.kv.index.OTreeMapPersistentAsynch;
-import com.orientechnologies.orient.kv.network.protocol.http.ONetworkProtocolHttpKV;
+import com.orientechnologies.orient.kv.network.protocol.http.OKVDictionaryBucketManager;
+import com.orientechnologies.orient.kv.network.protocol.http.command.OKVServerCommandAbstract;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
 
 @SuppressWarnings("unchecked")
 public class OServerClusterMember implements InstanceListener, MembershipListener, MigrationListener {
-
-	private static final String	DEFAULT_CLUSTER_NAME	= "default";
 
 	public OServerClusterMember() {
 		OLogManager.instance().config(this, "Orient Server starting cluster...");
@@ -91,7 +85,7 @@ public class OServerClusterMember implements InstanceListener, MembershipListene
 			return;
 
 		String parts[];
-		Map<String, String> bucket;
+		Map<String, String> bucketMap;
 
 		for (Instance instance : Hazelcast.getInstances()) {
 			if (instance.getInstanceType() == InstanceType.MAP) {
@@ -104,52 +98,24 @@ public class OServerClusterMember implements InstanceListener, MembershipListene
 					if (partitionService.getPartition(localKey).getPartitionId() == partitionId) {
 						// MY OWN ENTRY: STORE IT
 						try {
-							parts = ONetworkProtocolHttpKV.getDbBucketKey(localKey, 3);
+							parts = OKVServerCommandAbstract.getDbBucketKey(localKey, 3);
 							ODatabaseBinary db = OSharedBinaryDatabase.acquireDatabase(parts[0]);
 
-							bucket = getDictionaryBucket(db, parts[1], false);
+							bucketMap = OKVDictionaryBucketManager.getDictionaryBucket(db, parts[1], false);
 
-							bucket.put(localKey, map.get(localKey));
+							synchronized (bucketMap) {
+								bucketMap.put(localKey, map.get(localKey));
+							}
 
 							OLogManager.instance().debug(this, "Caught failure of node '%s'. Save entry with key '%s' on local node",
 									iEvent.getOldOwner().getInetSocketAddress(), localKey);
 
 						} catch (Exception e) {
-							throw new ODistributedException("Error on saving record: " + localKey, e);
+							throw new OKVDistributedException("Error on saving record: " + localKey, e);
 						}
 					}
 				}
 			}
 		}
-	}
-
-	public static synchronized Map<String, String> getDictionaryBucket(final ODatabaseBinary iDatabase, final String iName,
-			final boolean iAsynchMode) throws IOException {
-		ORecordBytes record = iDatabase.getDictionary().get(iName);
-
-		OTreeMapPersistent<String, String> bucket;
-
-		if (record == null) {
-			// CREATE THE BUCKET TRANSPARENTLY
-			if (iAsynchMode)
-				bucket = new OTreeMapPersistentAsynch<String, String>(iDatabase, DEFAULT_CLUSTER_NAME, OStreamSerializerString.INSTANCE,
-						OStreamSerializerString.INSTANCE);
-			else
-				bucket = new OTreeMapPersistent<String, String>(iDatabase, DEFAULT_CLUSTER_NAME, OStreamSerializerString.INSTANCE,
-						OStreamSerializerString.INSTANCE);
-
-			bucket.save();
-			// REGISTER THE NEW BUCKET
-			iDatabase.getDictionary().put(iName, bucket.getRecord());
-		} else {
-			if (iAsynchMode)
-				bucket = new OTreeMapPersistentAsynch<String, String>(iDatabase, DEFAULT_CLUSTER_NAME, record.getIdentity());
-			else
-				bucket = new OTreeMapPersistent<String, String>(iDatabase, DEFAULT_CLUSTER_NAME, record.getIdentity());
-
-			bucket.load();
-		}
-
-		return bucket;
 	}
 }

@@ -53,6 +53,6 @@ public class OSharedBinaryDatabase {
 	}
 
 	public static void releaseDatabase(final ODatabaseBinary iDatabase) {
-		dbPool.releaseDatabase(iDatabase.getName(), iDatabase);
+		dbPool.releaseDatabase(iDatabase.getName() + ":" + iDatabase.getUser().getName(), iDatabase);
 	}
 }

@@ -1,170 +1,259 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
-<head>
-<title>Orient Key/Value Server (www.orientechnologies.com)</title>
-<meta name="title" content="Key/Value | DBMS | Database | Java" />
-<meta name="description" content="Orient Key/Value Server" />
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-
-<script src="/www/js/jquery.js" type="text/javascript"></script>
-<script src="/www/js/jQueryRotate.js" type="text/javascript"></script>
-<script src="/www/js/orient.js" type="text/javascript"></script>
-
-<link type="text/css" rel="stylesheet" href="/www/styles/style.css">
-<style>
-#logo_text {
-	position: absolute;
-	top: 0px;
-	left: 170px;
-	z-index: 1;
-}
-</style>
-
-<script type="text/javascript">
-    var reqType = "";
-    
-    function sendGet(){
-      var db = document.getElementById('database').value;
-      var bucket = document.getElementById('bucket').value;
-      var key = document.getElementById('key').value;
-      var value = document.getElementById('value').value;
-      reqType = "get";
-      
-      jQuery.ajax({ type: 'GET', url: '/' + db + '/' + bucket + '/' + key, cache: false, processData: false, success: response, error: error });
-    }
-
-    function sendPost(){
-        var db = document.getElementById('database').value;
-        var bucket = document.getElementById('bucket').value;
-        var key = document.getElementById('key').value;
-        var value = document.getElementById('value').value;
-        reqType = "post";
-
-        jQuery.ajax({ type: 'POST', url: '/' + db + '/' + bucket + '/' + key, data: value, dataType: "text", cache: false, processData: false, success: response, error: error });
-    }
-    
-    function sendPut(){
-        var db = document.getElementById('database').value;
-        var bucket = document.getElementById('bucket').value;
-        var key = document.getElementById('key').value;
-        var value = document.getElementById('value').value;
-        reqType = "put";
-
-        jQuery.ajax({ type: 'PUT', url: '/' + db + '/' + bucket + '/' + key, data: value, dataType: "text", cache: false, processData: false, success: response, error: error });
-    }
-    
-    function sendDelete(){
-        var db = document.getElementById('database').value;
-        var bucket = document.getElementById('bucket').value;
-        var key = document.getElementById('key').value;
-        var value = document.getElementById('value').value;
-        reqType = "delete";
-
-        jQuery.ajax({ type: 'DELETE', url: '/' + db + '/' + bucket + '/' + key, cache: false, processData: false, success: response, error: error });
-    }
-    
-    function clear(){
-      document.getElementById('value').value='';
-    }
-    
-    function response(content, status, obj){
-      $('#response-text').val(content);
-      $('#status-code').val(status);
-      if( obj != null )
-        $('#status-text').val(obj.statusText);
-      else
-        $('#status-text').val("");
-
-      if( reqType == "get" )
-        $('#value').val( content );
-    }
-    
-    function error(content, status, obj){
-      $('#response-text').val(content.responseText);
-      $('#status-code').val(content.status);
-      $('#status-text').val(content.statusText);
-    }
-  </script>
-</head>
-
-<body onload="orient_init()">
-<div id="body-table" class="table-main">
-<div class="row">
-<div class="cell" id="spacer-top"><img id="logo_sun" src="/www/images/orient_sun_logo.png" border="0" /></div>
-<div class="cell"><img id="logo_text" src="/www/images/orient_text_logo.png" border="0" /></div>
-<div id="spacer-left"></div>
-<div id="header" class="cell">
-<center>
-<h1>Orient Key/Value Server</h1>
-</center>
-The Orient Key/Value Server interface is REST over HTTP protocol. In this page you can execute the basic commands to get acquainted with. The database
-'<i>demo</i>' is persistent while '<i>temp</i>' resides only in memory.<br />
-<p class="small">
-Direct URL: <b>http://&lt;server&gt;:&lt;port&gt;/&lt;database&gt;&lt;bucket&gt;/&lt;key&gt;</b>
-</p>
-</div>
-<div class="row">
-<div class="cell-double-spaced column1"><b><i>Basic Console</i></b>
-<center>
-<table style="width: 100%;">
-	<tr>
-		<td align="center"></td>
-		<td align="center">(Database)</td>
-		<td align="center">(Bucket)</td>
-		<td align="center">(Key)</td>
-	</tr>
-	<tr>
-		<td>http://localhost:2431/</td>
-		<td><input id="database" size="20" value="demo" />/</td>
-		<td><input id="bucket" size="20" value="space" />/</td>
-		<td><input id="key" size="35" value="starwars" /></td>
-	</tr>
-	<tr>
-		<td valign="top" colspan="4"><textarea id="value" cols="88" rows="5" title="value">Star Wars is an epic  space opera franchise conceived by George Lucas. The first film in the franchise was originally released on May 25, 1977, by 20th Century Fox, and became a worldwide pop culture phenomenon, spawning two immediate sequels, released at three-year intervals. Sixteen years after the release of the trilogy's final film, the first in a new prequel trilogy of films was released, again released at three-year intervals, with the final film released on May 19, 2005.</textarea>
-		<a href="javascript:clear()"><img border="0" src="/www/images/clear.png" /></a></td>
-	</tr>
-</table>
-</center>
-<table style="font-size: 13px; cell-spacing: 3px; width: 100%;">
-	<tr>
-		<td width="25%" align="center"><a href="javascript:sendGet()"><img border="0" src="/www/images/get.png" /></a></td>
-		<td width="25%" align="center"><a href="javascript:sendPost()"><img border="0" src="/www/images/post.png" /></a></td>
-		<td width="25%" align="center"><a href="javascript:sendPut()"><img border="0" src="/www/images/put.png" /></a></td>
-		<td width="25%" align="center"><a href="javascript:sendDelete()"><img border="0" src="/www/images/delete.png" /></a></td>
-	</tr>
-	<tr>
-		<td align="center">GET</td>
-		<td align="center">POST</td>
-		<td align="center">PUT</td>
-		<td align="center">DELETE</td>
-	</tr>
-	<tr>
-		<td valign="top">Retrieve the value of the key</td>
-		<td valign="top">Insert a key/value entry</td>
-		<td valign="top">Update the value of the key</td>
-		<td valign="top">Delete the key/value entry</td>
-	</tr>
-</table>
-</div>
-</div>
-<div class="row">
-<table style="font-size: 13px;">
-	<tr>
-		<td>Response</td>
-		<td><input id="response-text" size="115" disabled /></td>
-	</tr>
-	<tr>
-		<td>Status</td>
-		<td><input id="status-code" size="5" disabled /><input id="status-text" size="105" disabled /></td>
-	</tr>
-</table>
-</div>
-</div>
-<div class="row">
-<div class="cell-double-spaced column1 centered">To know more information visit: <a href="http://www.orientechnologies.com">http://www.orientechnologies.com</a></div>
-</div>
-</div>
-</body>
-<script type="text/javascript">orient_google_stats();</script>
-
+    <head>
+        <title>Orient Key/Value Server v. 0.9.14 (www.orientechnologies.com)</title>
+        <meta name="title" content="Key/Value | DBMS | Database | Java" />
+        <meta name="description" content="Orient Key/Value Server" />
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <script src="/www/js/jquery.js" type="text/javascript">
+        </script>
+        <script src="/www/js/jQueryRotate.js" type="text/javascript">
+        </script>
+        <script src="/www/js/orient.js" type="text/javascript">
+        </script>
+        <link type="text/css" rel="stylesheet" href="/www/styles/style.css">
+        <style>
+            #logo_text {
+                position: absolute;
+                top: 0px;
+                left: 170px;
+                z-index: 1;
+            }
+        </style>
+        <script type="text/javascript">
+            var reqType = "";
+            
+            function sendGet(){
+                var db = document.getElementById('database').value;
+                var bucket = document.getElementById('bucket').value;
+                var key = document.getElementById('key').value;
+                var value = document.getElementById('value').value;
+                reqType = "get";
+                
+                jQuery.ajax({
+                    type: 'GET',
+                    url: '/entry/' + db + '/' + bucket + '/' + key,
+                    cache: false,
+                    processData: false,
+                    success: response,
+                    error: error
+                });
+            }
+            
+            function sendPost(){
+                var db = document.getElementById('database').value;
+                var bucket = document.getElementById('bucket').value;
+                var key = document.getElementById('key').value;
+                var value = document.getElementById('value').value;
+                reqType = "post";
+                
+                jQuery.ajax({
+                    type: 'POST',
+                    url: '/entry/' + db + '/' + bucket + '/' + key,
+                    data: value,
+                    dataType: "text",
+                    cache: false,
+                    processData: false,
+                    success: response,
+                    error: error
+                });
+            }
+            
+            function sendPut(){
+                var db = document.getElementById('database').value;
+                var bucket = document.getElementById('bucket').value;
+                var key = document.getElementById('key').value;
+                var value = document.getElementById('value').value;
+                reqType = "put";
+                
+                jQuery.ajax({
+                    type: 'PUT',
+                    url: '/entry/' + db + '/' + bucket + '/' + key,
+                    data: value,
+                    dataType: "text",
+                    cache: false,
+                    processData: false,
+                    success: response,
+                    error: error
+                });
+            }
+            
+            function sendDelete(){
+                var db = document.getElementById('database').value;
+                var bucket = document.getElementById('bucket').value;
+                var key = document.getElementById('key').value;
+                var value = document.getElementById('value').value;
+                reqType = "delete";
+                
+                jQuery.ajax({
+                    type: 'DELETE',
+                    url: '/entry/' + db + '/' + bucket + '/' + key,
+                    cache: false,
+                    processData: false,
+                    success: response,
+                    error: error
+                });
+            }
+            
+            function clear(){
+                document.getElementById('value').value = '';
+            }
+            
+            function response(content, status, obj){
+                $('#response-text').val(content);
+                $('#status-code').val(status);
+                if (obj != null) 
+                    $('#status-text').val(obj.statusText);
+                else 
+                    $('#status-text').val("");
+                
+                if (reqType == "get") 
+                    $('#value').val(content);
+            }
+            
+            function error(content, status, obj){
+                $('#response-text').val(content.responseText);
+                $('#status-code').val(content.status);
+                $('#status-text').val(content.statusText);
+            }
+        </script>
+    </head>
+    <body onload="orient_init()">
+        <div id="body-table" class="table-main">
+            <div class="row">
+                <div class="cell" id="spacer-top">
+                    <img id="logo_sun" src="/www/images/orient_sun_logo.png" border="0" />
+                </div>
+                <div class="cell">
+                    <img id="logo_text" src="/www/images/orient_text_logo.png" border="0" />
+                </div>
+                <div id="spacer-left">
+                </div>
+                <div id="header" class="cell">
+                    <center>
+                        <h1>Orient Key/Value Server</h1>
+                    </center>
+                    The Orient Key/Value Server interface is REST over HTTP protocol. In this page you can execute the basic commands to get acquainted with. The database
+                    '<i>demo</i>' is persistent while '<i>temp</i>' resides only in memory.
+                    <br/>
+                    <p class="small">
+                        Direct URL: <b>http://&lt;server&gt;:&lt;port&gt;/entry/&lt;database&gt;/&lt;bucket&gt;/&lt;key&gt;</b>
+                    </p>
+                </div>
+                <div class="row">
+                    <div class="cell-double-spaced column1">
+                        <b><i>Basic Console</i></b>
+                        <center>
+                            <table style="width: 100%;">
+                                <tr>
+                                    <td align="center">
+                                    </td>
+                                    <td align="center">
+                                        (Database)
+                                    </td>
+                                    <td align="center">
+                                        (Bucket)
+                                    </td>
+                                    <td align="center">
+                                        (Key)
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        http://localhost:2431/entry/
+                                    </td>
+                                    <td>
+                                        <input id="database" size="20" value="demo" />/
+                                    </td>
+                                    <td>
+                                        <input id="bucket" size="20" value="space" />/
+                                    </td>
+                                    <td>
+                                        <input id="key" size="35" value="starwars" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td valign="top" colspan="4">
+                                        <textarea id="value" cols="88" rows="5" title="value">
+                                            Star Wars is an epic  space opera franchise conceived by George Lucas. The first film in the franchise was originally released on May 25, 1977, by 20th Century Fox, and became a worldwide pop culture phenomenon, spawning two immediate sequels, released at three-year intervals. Sixteen years after the release of the trilogy's final film, the first in a new prequel trilogy of films was released, again released at three-year intervals, with the final film released on May 19, 2005.
+                                        </textarea>
+                                        <a href="javascript:clear()"><img border="0" src="/www/images/clear.png" /></a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </center>
+                        <table style="font-size: 13px; cell-spacing: 3px; width: 100%;">
+                            <tr>
+                                <td width="25%" align="center">
+                                    <a href="javascript:sendGet()"><img border="0" src="/www/images/get.png" /></a>
+                                </td>
+                                <td width="25%" align="center">
+                                    <a href="javascript:sendPost()"><img border="0" src="/www/images/post.png" /></a>
+                                </td>
+                                <td width="25%" align="center">
+                                    <a href="javascript:sendPut()"><img border="0" src="/www/images/put.png" /></a>
+                                </td>
+                                <td width="25%" align="center">
+                                    <a href="javascript:sendDelete()"><img border="0" src="/www/images/delete.png" /></a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td align="center">
+                                    GET
+                                </td>
+                                <td align="center">
+                                    POST
+                                </td>
+                                <td align="center">
+                                    PUT
+                                </td>
+                                <td align="center">
+                                    DELETE
+                                </td>
+                            </tr>
+                            <tr>
+                                <td valign="top">
+                                    Retrieve the value of the key
+                                </td>
+                                <td valign="top">
+                                    Insert a key/value entry
+                                </td>
+                                <td valign="top">
+                                    Update the value of the key
+                                </td>
+                                <td valign="top">
+                                    Delete the key/value entry
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="row">
+                    <table style="font-size: 13px;">
+                        <tr>
+                            <td>
+                                Response
+                            </td>
+                            <td>
+                                <input id="response-text" size="115" disabled/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Status
+                            </td>
+                            <td>
+                                <input id="status-code" size="5" disabled/><input id="status-text" size="105" disabled/>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="row">
+                <div class="cell-double-spaced column1 centered">
+                    To know more information visit: <a href="http://www.orientechnologies.com">http://www.orientechnologies.com</a>
+                </div>
+            </div>
+        </div>
+    </body>
 </html>

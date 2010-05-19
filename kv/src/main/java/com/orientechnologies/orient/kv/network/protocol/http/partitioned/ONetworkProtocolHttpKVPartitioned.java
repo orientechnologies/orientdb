@@ -18,17 +18,21 @@ package com.orientechnologies.orient.kv.network.protocol.http.partitioned;
 import java.util.Map;
 
 import com.hazelcast.core.Hazelcast;
+import com.orientechnologies.orient.kv.network.protocol.http.OKVDictionary;
 import com.orientechnologies.orient.kv.network.protocol.http.ONetworkProtocolHttpKV;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
-public class ONetworkProtocolHttpKVPartitioned extends ONetworkProtocolHttpKV {
-	@Override
-	protected Map<String, String> getBucket(String dbName, String bucket) {
+public class ONetworkProtocolHttpKVPartitioned extends ONetworkProtocolHttpKV implements OKVDictionary {
+
+	public ONetworkProtocolHttpKVPartitioned() {
+		dictionary = this;
+	}
+
+	public Map<String, String> getBucket(final String dbName, final String iAuthorization, final String bucket) {
 		return Hazelcast.getMap(dbName + OHttpUtils.URL_SEPARATOR + bucket);
 	}
 
-	@Override
-	protected String getKey(final String iDbBucketKey) {
+	public String getKey(final String iDbBucketKey) {
 		return iDbBucketKey;
 	}
 }

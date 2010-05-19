@@ -23,9 +23,9 @@ import com.hazelcast.core.MapLoader;
 import com.hazelcast.core.MapStore;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseBinary;
-import com.orientechnologies.orient.core.index.OTreeMapPersistent;
 import com.orientechnologies.orient.kv.OSharedBinaryDatabase;
-import com.orientechnologies.orient.kv.network.protocol.http.ONetworkProtocolHttpKV;
+import com.orientechnologies.orient.kv.network.protocol.http.OKVDictionaryBucketManager;
+import com.orientechnologies.orient.kv.network.protocol.http.command.OKVServerCommandAbstract;
 
 public class OMapLoaderStore implements MapLoader<String, String>, MapStore<String, String> {
 	public OMapLoaderStore() {
@@ -41,14 +41,18 @@ public class OMapLoaderStore implements MapLoader<String, String>, MapStore<Stri
 		ODatabaseBinary db = null;
 
 		try {
-			String[] parts = ONetworkProtocolHttpKV.getDbBucketKey(iKey, 3);
+			String[] parts = OKVServerCommandAbstract.getDbBucketKey(iKey, 3);
 
 			db = OSharedBinaryDatabase.acquireDatabase(parts[0]);
-			Map<String, String> bucket = OServerClusterMember.getDictionaryBucket(db, parts[1], false);
-			return bucket.get(parts[2]);
+
+			final Map<String, String> bucketMap = OKVDictionaryBucketManager.getDictionaryBucket(db, parts[1], false);
+
+			synchronized (bucketMap) {
+				return bucketMap.get(parts[2]);
+			}
 
 		} catch (Exception e) {
-			throw new ODistributedException("Error on load the entry with key: " + iKey, e);
+			throw new OKVDistributedException("Error on load the entry with key: " + iKey, e);
 		} finally {
 
 			if (db != null)
@@ -65,15 +69,17 @@ public class OMapLoaderStore implements MapLoader<String, String>, MapStore<Stri
 		ODatabaseBinary db = null;
 
 		try {
-			String[] parts = ONetworkProtocolHttpKV.getDbBucketKey(iKey, 3);
+			final String[] parts = OKVServerCommandAbstract.getDbBucketKey(iKey, 3);
 
 			db = OSharedBinaryDatabase.acquireDatabase(parts[0]);
-			Map<String, String> bucket = OServerClusterMember.getDictionaryBucket(db, parts[1], false);
+			final Map<String, String> bucketMap = OKVDictionaryBucketManager.getDictionaryBucket(db, parts[1], false);
 
-			bucket.put(parts[2], iValue);
+			synchronized (bucketMap) {
+				bucketMap.put(parts[2], iValue);
+			}
 
 		} catch (Exception e) {
-			throw new ODistributedException("Error on save the entry with key: " + iKey, e);
+			throw new OKVDistributedException("Error on save the entry with key: " + iKey, e);
 		} finally {
 
 			if (db != null)
@@ -90,14 +96,15 @@ public class OMapLoaderStore implements MapLoader<String, String>, MapStore<Stri
 		ODatabaseBinary db = null;
 
 		try {
-			String[] parts = ONetworkProtocolHttpKV.getDbBucketKey(iKey, 3);
+			String[] parts = OKVServerCommandAbstract.getDbBucketKey(iKey, 3);
 
 			db = OSharedBinaryDatabase.acquireDatabase(parts[0]);
-			Map<String, String> bucket = OServerClusterMember.getDictionaryBucket(db, parts[1], false);
-			bucket.remove(parts[2]);
-
+			final Map<String, String> bucketMap = OKVDictionaryBucketManager.getDictionaryBucket(db, parts[1], false);
+			synchronized (bucketMap) {
+				bucketMap.remove(parts[2]);
+			}
 		} catch (Exception e) {
-			throw new ODistributedException("Error on delete the entry with key: " + iKey, e);
+			throw new OKVDistributedException("Error on delete the entry with key: " + iKey, e);
 		} finally {
 
 			if (db != null)

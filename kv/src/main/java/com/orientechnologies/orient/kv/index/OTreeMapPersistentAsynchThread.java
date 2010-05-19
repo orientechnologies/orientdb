@@ -52,7 +52,11 @@ public class OTreeMapPersistentAsynchThread extends OSoftThread {
 	protected synchronized void execute() throws Exception {
 		for (OTreeMapPersistentAsynch<?, ?> map : maps) {
 			try {
-				map.executeCommitChanges();
+				synchronized (map) {
+
+					map.executeCommitChanges();
+
+				}
 			} catch (Throwable t) {
 				OLogManager.instance().error(this, "Error on commit changes in tree map: " + map, t);
 			}

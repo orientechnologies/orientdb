@@ -18,19 +18,21 @@ package com.orientechnologies.orient.kv.network.protocol.http.local;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.record.ODatabaseBinary;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.kv.OSharedBinaryDatabase;
 import com.orientechnologies.orient.kv.index.OTreeMapPersistentAsynchThread;
+import com.orientechnologies.orient.kv.network.protocol.http.OKVDictionaryBucketManager;
+import com.orientechnologies.orient.kv.network.protocol.http.OKVDictionary;
 import com.orientechnologies.orient.kv.network.protocol.http.ONetworkProtocolHttpKV;
-import com.orientechnologies.orient.kv.network.protocol.http.partitioned.ODistributedException;
-import com.orientechnologies.orient.kv.network.protocol.http.partitioned.OServerClusterMember;
+import com.orientechnologies.orient.kv.network.protocol.http.command.OKVServerCommandAbstract;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
 
-public class ONetworkProtocolHttpKVLocal extends ONetworkProtocolHttpKV {
+public class ONetworkProtocolHttpKVLocal extends ONetworkProtocolHttpKV implements OKVDictionary {
 	private static Map<String, Map<String, Map<String, String>>>	memoryDatabases					= new HashMap<String, Map<String, Map<String, String>>>();
-	private static final String																		ASYNCH_COMMIT_DELAY_PAR	= "asynch-commit-delay";
+	private static final String																		ASYNCH_COMMIT_DELAY_PAR	= "asynch.commit.delay";
 	private static boolean																				asynchMode							= false;
 
 	static {
@@ -54,8 +56,18 @@ public class ONetworkProtocolHttpKVLocal extends ONetworkProtocolHttpKV {
 		}
 	}
 
-	@Override
-	protected Map<String, String> getBucket(final String dbName, final String iBucketName) {
+	public ONetworkProtocolHttpKVLocal() {
+		dictionary = this;
+	}
+
+	public String getKey(final String iDbBucketKey) {
+		final String[] parts = OKVServerCommandAbstract.getDbBucketKey(iDbBucketKey, 2);
+		if (parts.length > 2)
+			return parts[2];
+		return null;
+	}
+
+	public Map<String, String> getBucket(final String dbName, final String iAuthorization, final String iBucketName) {
 		ODatabaseBinary db = null;
 
 		// CHECK FOR IN-MEMORY DB
@@ -63,19 +75,23 @@ public class ONetworkProtocolHttpKVLocal extends ONetworkProtocolHttpKV {
 		if (db != null)
 			return getBucketFromMemory(dbName, iBucketName);
 		else
-			return getBucketFromDatabase(dbName, iBucketName);
+			return getBucketFromDatabase(dbName, iAuthorization, iBucketName);
 	}
 
-	protected Map<String, String> getBucketFromDatabase(final String dbName, final String iBucketName) {
+	protected Map<String, String> getBucketFromDatabase(final String dbName, String iAuthorization, final String iBucketName) {
 		ODatabaseBinary db = null;
 
-		try {
-			db = OSharedBinaryDatabase.acquireDatabase(dbName);
+		if (iAuthorization == null)
+			// NO USER/PASSWD, GO AS ADMIN
+			iAuthorization = "admin:admin";
 
-			return OServerClusterMember.getDictionaryBucket(db, iBucketName, asynchMode);
+		try {
+			db = OSharedBinaryDatabase.acquireDatabase(dbName + ":" + iAuthorization);
+
+			return OKVDictionaryBucketManager.getDictionaryBucket(db, iBucketName, asynchMode);
 
 		} catch (Exception e) {
-			throw new ODistributedException("Error on retrieving bucket '" + iBucketName + "' in database: " + dbName, e);
+			throw new OException("Error on retrieving bucket '" + iBucketName + "' in database: " + dbName, e);
 		} finally {
 
 			if (db != null)
@@ -96,13 +112,5 @@ public class ONetworkProtocolHttpKVLocal extends ONetworkProtocolHttpKV {
 			db.put(iBucketName, bucket);
 		}
 		return bucket;
-	}
-
-	@Override
-	protected String getKey(final String iDbBucketKey) {
-		final String[] parts = getDbBucketKey(iDbBucketKey, 2);
-		if (parts.length > 2)
-			return parts[2];
-		return null;
 	}
 }
