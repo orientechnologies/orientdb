@@ -138,7 +138,7 @@ public abstract class OTreeMapEntry<K, V> implements Map.Entry<K, V> {
 			return false;
 		final OTreeMapEntry<?, ?> e = (OTreeMapEntry<?, ?>) o;
 
-		return OTreeMap.valEquals(getKey(), e.getKey()) && OTreeMap.valEquals(getValue(), e.getValue());
+		return OTreeMap.valEquals(getKey(0), e.getKey(0)) && OTreeMap.valEquals(getValue(0), e.getValue(0));
 	}
 
 	@Override
