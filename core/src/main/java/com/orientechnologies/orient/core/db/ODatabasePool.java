@@ -21,6 +21,7 @@ import java.util.Map;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 
 public abstract class ODatabasePool<DB extends ODatabase> implements OResourcePoolListener<String, DB> {
 	private static final int															DEF_WAIT_TIMEOUT	= 5000;
@@ -54,6 +55,9 @@ public abstract class ODatabasePool<DB extends ODatabase> implements OResourcePo
 	}
 
 	public void releaseDatabase(final String iURL, final DB iDatabase) {
+		if (iDatabase instanceof ODatabaseRecord<?>)
+			((ODatabaseRecord<?>) iDatabase).rollback();
+
 		OResourcePool<String, DB> pool = pools.get(iURL);
 		if (pool == null)
 			throw new OLockException("Can't release a database URL not acquired before. URL: " + iURL);
