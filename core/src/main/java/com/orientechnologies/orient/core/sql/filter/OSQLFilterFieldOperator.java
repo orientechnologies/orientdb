@@ -24,10 +24,11 @@ package com.orientechnologies.orient.core.sql.filter;
 public enum OSQLFilterFieldOperator {
 	FIELD(-1, "FIELD"), SIZE(0, "SIZE"), LENGTH(1, "LENGTH"), TOUPPERCASE(2, "TOUPPERCASE"), TOLOWERCASE(3, "TOLOWERCASE"), TRIM(4,
 			"TRIM"), LEFT(5, "LEFT", 1), RIGHT(6, "RIGHT", 1), SUBSTRING(7, "SUBSTRING", 1, 2), CHARAT(8, "CHARAT", 1), INDEXOF(9,
-			"INDEXOF", 1, 2), FORMAT(10, "FORMAT", 1);
+			"INDEXOF", 1, 2), FORMAT(10, "FORMAT", 1), ASSTRING(11, "ASSTRING"), ASINTEGER(12, "ASINTEGER"), ASFLOAT(13, "ASFLOAT"), ASDATE(
+			14, "ASDATE"), ASDATETIME(15, "ASDATETIME");
 
 	protected static final OSQLFilterFieldOperator[]	OPERATORS				= { SIZE, LENGTH, TOUPPERCASE, TOLOWERCASE, TRIM, LEFT, RIGHT,
-			SUBSTRING, CHARAT, INDEXOF, FORMAT														};
+			SUBSTRING, CHARAT, INDEXOF, FORMAT, ASSTRING, ASINTEGER, ASFLOAT, ASDATE, ASDATETIME };
 
 	public static final String												CHAIN_SEPARATOR	= ".";
 
@@ -52,6 +53,14 @@ public enum OSQLFilterFieldOperator {
 		keyword = iKeyword;
 		minArguments = iMinArgs;
 		maxArguments = iMaxArgs;
+	}
+
+	public static OSQLFilterFieldOperator getById(final int iId) {
+		for (OSQLFilterFieldOperator o : OPERATORS) {
+			if (iId == o.id)
+				return o;
+		}
+		return null;
 	}
 
 	@Override
