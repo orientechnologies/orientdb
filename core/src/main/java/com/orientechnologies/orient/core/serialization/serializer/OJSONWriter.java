@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.Array;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -101,6 +102,16 @@ public class OJSONWriter {
 		firstAttribute = false;
 		out.append("]");
 		return this;
+	}
+
+	public void writeObjects(int iIdentLevel, boolean iNewLine, String iName, Object[]... iPairs) throws IOException {
+		for (int i = 0; i < iPairs.length; ++i) {
+			beginObject(iIdentLevel, true, iName);
+			for (int k = 0; k < iPairs[i].length;) {
+				writeAttribute(iIdentLevel + 1, false, (String) iPairs[i][k++], iPairs[i][k++]);
+			}
+			endObject(iIdentLevel, false);
+		}
 	}
 
 	public OJSONWriter writeAttribute(final int iIdentLevel, final boolean iNewLine, final String iName, final Object iValue)
@@ -187,7 +198,7 @@ public class OJSONWriter {
 			}
 			buffer.append("}");
 
-		} else if (iValue instanceof String || iValue instanceof ORecordId) {
+		} else if (iValue instanceof String || iValue instanceof ORecordId || iValue instanceof Date) {
 			buffer.append('"');
 			buffer.append(iValue.toString());
 			buffer.append('"');
