@@ -163,6 +163,7 @@ public class OClass extends OMetadataRecord {
 
 	public OClass fromDocument(final ODocument iSource) {
 		name = iSource.field("name");
+		id = iSource.field("id");
 		defaultClusterId = iSource.field("defaultClusterId");
 
 		Collection<Integer> coll = iSource.field("clusterIds");
@@ -185,6 +186,7 @@ public class OClass extends OMetadataRecord {
 	@Override
 	public byte[] toStream() {
 		field("name", name);
+		field("id", id);
 		field("defaultClusterId", defaultClusterId);
 		field("clusterIds", clusterIds);
 		field("properties", properties.values());

@@ -97,6 +97,11 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase, REC extends
 		return underlying.getClusterNames();
 	}
 
+	public String getClusterType(final String iClusterName) {
+		checkOpeness();
+		return underlying.getClusterType(iClusterName);
+	}
+
 	public int getClusterIdByName(final String iClusterName) {
 		checkOpeness();
 		return underlying.getClusterIdByName(iClusterName);

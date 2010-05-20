@@ -130,6 +130,15 @@ public interface ODatabase {
 	public int getClusterIdByName(String iClusterName);
 
 	/**
+	 * Returns the cluster type.
+	 * 
+	 * @param iClusterName
+	 *          Cluster name
+	 * @return The cluster type as string
+	 */
+	public String getClusterType(String iClusterName);
+
+	/**
 	 * Returns the cluster name by id.
 	 * 
 	 * @param iClusterId

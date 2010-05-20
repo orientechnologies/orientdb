@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.config;
 
 import java.io.IOException;
 import java.text.DateFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +52,7 @@ public class OStorageConfiguration implements OSerializableStream {
 	private transient Locale									localeInstance;
 	private transient DateFormat							dateFormatInstance;
 	private transient DateFormat							dateTimeFormatInstance;
+	private transient DecimalFormatSymbols		unusualSymbols;
 	private transient OStorage								storage;
 	private transient byte[]									record;
 
@@ -102,6 +104,12 @@ public class OStorageConfiguration implements OSerializableStream {
 			dateTimeFormatInstance.setLenient(false);
 		}
 		return dateTimeFormatInstance;
+	}
+
+	public DecimalFormatSymbols getUnusualSymbols() {
+		if (unusualSymbols == null)
+			unusualSymbols = new DecimalFormatSymbols(getLocaleInstance());
+		return unusualSymbols;
 	}
 
 	public OSerializableStream fromStream(byte[] iStream) throws IOException {

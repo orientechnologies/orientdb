@@ -29,6 +29,8 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OClusterLogical;
+import com.orientechnologies.orient.core.storage.impl.local.OClusterPhysical;
 
 @SuppressWarnings("unchecked")
 public class ODatabaseRaw implements ODatabase {
@@ -202,8 +204,11 @@ public class ODatabaseRaw implements ODatabase {
 		return id;
 	}
 
+	public String getClusterType(final String iClusterName) {
+		return storage.getClusterById(storage.getClusterIdByName(iClusterName)).getType();
+	}
+
 	public int getClusterIdByName(final String iClusterName) {
-		// SEARCH IT BETWEEN PHYSICAL CLUSTERS
 		return storage.getClusterIdByName(iClusterName);
 	}
 
@@ -216,11 +221,11 @@ public class ODatabaseRaw implements ODatabase {
 	}
 
 	public int addLogicalCluster(final String iClusterName, final int iPhyClusterContainerId) {
-		return storage.addCluster(iClusterName, OStorage.TYPE_LOGICAL, iPhyClusterContainerId);
+		return storage.addCluster(iClusterName, OClusterLogical.TYPE, iPhyClusterContainerId);
 	}
 
 	public int addPhysicalCluster(final String iClusterName, final String iClusterFileName, final int iStartSize) {
-		return storage.addCluster(iClusterName, OStorage.TYPE_PHYSICAL, iClusterFileName, iStartSize);
+		return storage.addCluster(iClusterName, OClusterPhysical.TYPE, iClusterFileName, iStartSize);
 	}
 
 	public int addDataSegment(final String iSegmentName, final String iSegmentFileName) {

@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
@@ -244,84 +245,87 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 		String[] fields = OStringSerializerHelper.split(iContent, OStringSerializerHelper.RECORD_SEPARATOR_AS_CHAR);
 
 		String field;
-		String fieldName;
+		String fieldName = null;
 		String fieldValue;
 		OType type = null;
 		OClass linkedClass;
 		OType linkedType;
 		OProperty prop;
 
-		final DecimalFormatSymbols unusualSymbols = new DecimalFormatSymbols(iDatabase.getStorage().getConfiguration()
-				.getLocaleInstance());
+		final DecimalFormatSymbols unusualSymbols = iDatabase.getStorage().getConfiguration().getUnusualSymbols();
 
 		// UNMARSHALL ALL THE FIELDS
 		for (int i = 0; i < fields.length; ++i) {
 			field = fields[i].trim();
 
-			pos = field.indexOf(FIELD_VALUE_SEPARATOR);
-			if (pos > -1) {
-				// GET THE FIELD NAME
-				fieldName = field.substring(0, pos);
+			try {
+				pos = field.indexOf(FIELD_VALUE_SEPARATOR);
+				if (pos > -1) {
+					// GET THE FIELD NAME
+					fieldName = field.substring(0, pos);
 
-				// GET THE FIELD VALUE
-				fieldValue = field.length() > pos + 1 ? field.substring(pos + 1) : null;
+					// GET THE FIELD VALUE
+					fieldValue = field.length() > pos + 1 ? field.substring(pos + 1) : null;
 
-				// SEARCH FOR A CONFIGURED PROPERTY
-				prop = record.getSchemaClass() != null ? record.getSchemaClass().getProperty(fieldName) : null;
-				if (prop != null) {
-					// RECOGNIZED PROPERTY
-					type = prop.getType();
-					linkedClass = prop.getLinkedClass();
-					linkedType = prop.getLinkedType();
+					// SEARCH FOR A CONFIGURED PROPERTY
+					prop = record.getSchemaClass() != null ? record.getSchemaClass().getProperty(fieldName) : null;
+					if (prop != null) {
+						// RECOGNIZED PROPERTY
+						type = prop.getType();
+						linkedClass = prop.getLinkedClass();
+						linkedType = prop.getLinkedType();
 
-				} else {
-					linkedClass = null;
-					linkedType = null;
+					} else {
+						linkedClass = null;
+						linkedType = null;
 
-					// NOT FOUND: TRY TO DETERMINE THE TYPE FROM ITS CONTENT
-					if (fieldValue != null) {
-						if (fieldValue.length() > 1 && fieldValue.charAt(0) == '"' && fieldValue.charAt(fieldValue.length() - 1) == '"') {
-							type = OType.STRING;
-						} else if (fieldValue.charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN
-								&& fieldValue.charAt(fieldValue.length() - 1) == OStringSerializerHelper.COLLECTION_END) {
-							type = OType.EMBEDDEDLIST;
+						// NOT FOUND: TRY TO DETERMINE THE TYPE FROM ITS CONTENT
+						if (fieldValue != null) {
+							if (fieldValue.length() > 1 && fieldValue.charAt(0) == '"' && fieldValue.charAt(fieldValue.length() - 1) == '"') {
+								type = OType.STRING;
+							} else if (fieldValue.charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN
+									&& fieldValue.charAt(fieldValue.length() - 1) == OStringSerializerHelper.COLLECTION_END) {
+								type = OType.EMBEDDEDLIST;
 
-							String value = fieldValue.substring(1, fieldValue.length() - 1);
+								String value = fieldValue.substring(1, fieldValue.length() - 1);
 
-							if (value.length() > 0) {
-								if (value.contains(ORID.SEPARATOR)) {
-									type = OType.LINKLIST;
-									linkedType = OType.LINK;
+								if (value.length() > 0) {
+									if (value.contains(ORID.SEPARATOR)) {
+										type = OType.LINKLIST;
+										linkedType = OType.LINK;
 
-									// GET THE CLASS NAME IF ANY
-									int classSeparatorPos = value.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
-									if (classSeparatorPos > -1) {
-										String className = value.substring(1, classSeparatorPos);
-										if (className != null)
-											linkedClass = iDatabase.getMetadata().getSchema().getClass(className);
-									}
-								} else if (Character.isDigit(value.charAt(0)) || value.charAt(0) == '+' || value.charAt(0) == '-') {
-									linkedType = getNumber(unusualSymbols, value);
-								} else if (value.charAt(0) == '\'' || value.charAt(0) == '"')
-									linkedType = OType.STRING;
-								else
-									linkedType = OType.EMBEDDED;
-							}
+										// GET THE CLASS NAME IF ANY
+										int classSeparatorPos = value.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
+										if (classSeparatorPos > -1) {
+											String className = value.substring(1, classSeparatorPos);
+											if (className != null)
+												linkedClass = iDatabase.getMetadata().getSchema().getClass(className);
+										}
+									} else if (Character.isDigit(value.charAt(0)) || value.charAt(0) == '+' || value.charAt(0) == '-') {
+										linkedType = getNumber(unusualSymbols, value);
+									} else if (value.charAt(0) == '\'' || value.charAt(0) == '"')
+										linkedType = OType.STRING;
+									else
+										linkedType = OType.EMBEDDED;
+								}
 
-						} else if (fieldValue.charAt(0) == OStringSerializerHelper.MAP_BEGIN
-								&& fieldValue.charAt(fieldValue.length() - 1) == OStringSerializerHelper.MAP_END) {
-							type = OType.EMBEDDEDMAP;
-						} else if (fieldValue.startsWith(OStringSerializerHelper.LINK))
-							type = OType.LINK;
-						else if (fieldValue.equals("true") || fieldValue.equals("false"))
-							type = OType.BOOLEAN;
-						else
-							type = getNumber(unusualSymbols, fieldValue);
+							} else if (fieldValue.charAt(0) == OStringSerializerHelper.MAP_BEGIN
+									&& fieldValue.charAt(fieldValue.length() - 1) == OStringSerializerHelper.MAP_END) {
+								type = OType.EMBEDDEDMAP;
+							} else if (fieldValue.startsWith(OStringSerializerHelper.LINK))
+								type = OType.LINK;
+							else if (fieldValue.equals("true") || fieldValue.equals("false"))
+								type = OType.BOOLEAN;
+							else
+								type = getNumber(unusualSymbols, fieldValue);
+						}
 					}
-				}
 
-				record.field(fieldName, fieldFromStream(iRecord.getDatabase(), type, linkedClass, linkedType, fieldName, fieldValue,
-						unusualSymbols));
+					record.field(fieldName, fieldFromStream(iRecord.getDatabase(), type, linkedClass, linkedType, fieldName, fieldValue,
+							unusualSymbols));
+				}
+			} catch (Exception e) {
+				OLogManager.instance().exception("Error on unmarshalling field '%s'", e, OSerializationException.class, fieldName);
 			}
 		}
 

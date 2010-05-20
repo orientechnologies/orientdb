@@ -16,7 +16,10 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.parser.OStringParser;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerCSVAbstract;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorAnd;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContains;
@@ -101,10 +104,12 @@ public class OSQLHelper {
 	/**
 	 * Convert fields from text to real value. Supports: String, RID, Float and Integer.
 	 * 
+	 * @param iDatabase
+	 * 
 	 * @param values
 	 * @return
 	 */
-	public static Object convertValue(final String iValue) {
+	public static Object convertValue(final ODatabaseRecord<?> iDatabase, final String iValue) {
 		if (iValue == null)
 			return null;
 
@@ -131,8 +136,13 @@ public class OSQLHelper {
 			else if (iValue.contains("."))
 				// FLOAT/DOUBLE
 				fieldValue = new Float(iValue);
-			else
-				fieldValue = new Integer(iValue);
+			else {
+				OType t = ORecordSerializerCSVAbstract.getNumber(iDatabase.getStorage().getConfiguration().getUnusualSymbols(), iValue);
+				if (t == OType.INTEGER)
+					fieldValue = Integer.parseInt((String) fieldValue);
+				else if (t == OType.FLOAT)
+					fieldValue = Float.parseFloat((String) fieldValue);
+			}
 		}
 
 		return fieldValue;

@@ -109,7 +109,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 				pos = newPos;
 
 			// INSERT TRANSFORMED FIELD VALUE
-			fieldEntries.put(fieldName, OSQLHelper.convertValue(fieldValue));
+			fieldEntries.put(fieldName, OSQLHelper.convertValue(database, fieldValue));
 
 			newPos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		}

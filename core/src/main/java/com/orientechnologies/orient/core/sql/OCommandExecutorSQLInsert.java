@@ -106,7 +106,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 		// TRANSFORM FIELD VALUES
 		fieldValues = new Object[values.length];
 		for (int i = 0; i < values.length; ++i)
-			fieldValues[i] = OSQLHelper.convertValue(values[i]);
+			fieldValues[i] = OSQLHelper.convertValue(database, values[i]);
 
 		return this;
 	}

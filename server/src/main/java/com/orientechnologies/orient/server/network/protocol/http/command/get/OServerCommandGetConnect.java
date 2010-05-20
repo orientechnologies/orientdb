@@ -20,6 +20,7 @@ import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Map.Entry;
 
+import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -27,6 +28,9 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.impl.local.OClusterPhysical;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -63,13 +67,25 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedAbstrac
 
 			if (db.getClusterNames() != null) {
 				json.beginCollection(1, false, "clusters");
+				OCluster cluster;
 				for (String clusterName : db.getClusterNames()) {
+					cluster = ((OStorageLocal) db.getStorage()).getClusterByName(clusterName);
+
 					try {
 						json.beginObject(2, true, null);
-						json.writeAttribute(3, false, "id", db.getClusterIdByName(clusterName));
+						json.writeAttribute(3, false, "id", cluster.getId());
 						json.writeAttribute(3, false, "name", clusterName);
-						json.writeAttribute(3, false, "type", db.getClusterIdByName(clusterName) > -1 ? "Physical" : "Logical");
-						json.writeAttribute(3, false, "records", db.countClusterElements(clusterName));
+						json.writeAttribute(3, false, "type", cluster.getType());
+						json.writeAttribute(3, false, "records", cluster.getElements());
+						if (cluster instanceof OClusterPhysical) {
+							json.writeAttribute(3, false, "size", ((OClusterPhysical) cluster).getSize());
+							json.writeAttribute(3, false, "filled", ((OClusterPhysical) cluster).getFilledUpTo());
+							json.writeAttribute(3, false, "path", "");
+						} else {
+							json.writeAttribute(3, false, "size", "-");
+							json.writeAttribute(3, false, "filled", "-");
+							json.writeAttribute(3, false, "path", "-");
+						}
 					} catch (Exception e) {
 						json.writeAttribute(3, false, "records", "? (Unauthorized)");
 					}
@@ -109,6 +125,27 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedAbstrac
 			}
 			json.endCollection(1, true);
 
+			json.beginObject(1, true, "config");
+
+			json.beginCollection(2, true, "values");
+			json.writeObjects(3, true, null,
+					new Object[] { "name", "dateFormat", "value", db.getStorage().getConfiguration().dateFormat }, new Object[] { "name",
+							"dateTimeFormat", "value", db.getStorage().getConfiguration().dateTimeFormat }, new Object[] { "name",
+							"localeCountry", "value", db.getStorage().getConfiguration().localeCountry }, new Object[] { "name",
+							"localeLanguage", "value", db.getStorage().getConfiguration().localeLanguage }, new Object[] { "name",
+							"definitionVersion", "value", db.getStorage().getConfiguration().version });
+			json.endCollection(2, true);
+
+			json.beginCollection(2, true, "properties");
+			for (OStorageEntryConfiguration entry : db.getStorage().getConfiguration().properties) {
+				json.beginObject(3, true, null);
+				json.writeAttribute(4, false, "name", entry.name);
+				json.writeAttribute(4, false, "value", entry.value);
+				json.endObject(3, true);
+			}
+			json.endCollection(2, true);
+
+			json.endObject(1, true);
 			json.endObject();
 
 			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, buffer.toString());

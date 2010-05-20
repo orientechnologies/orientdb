@@ -23,7 +23,7 @@ import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.ODatabaseColumn;
 import com.orientechnologies.orient.core.record.impl.ORecordColumn;
-import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OClusterPhysical;
 
 public class RemoteCreateObjectsCSVSpeedTest extends SpeedTestMonoThread {
 	private ODatabaseColumn	database;
@@ -38,7 +38,7 @@ public class RemoteCreateObjectsCSVSpeedTest extends SpeedTestMonoThread {
 		Orient.instance().registerEngine(new OEngineRemote());
 
 		if (!database.getStorage().getClusterNames().contains("Animal"))
-			database.getStorage().addCluster("Animal", OStorage.TYPE_PHYSICAL);
+			database.getStorage().addCluster("Animal", OClusterPhysical.TYPE);
 	}
 
 	@Override

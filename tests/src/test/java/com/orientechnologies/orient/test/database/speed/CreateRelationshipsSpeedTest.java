@@ -21,7 +21,7 @@ import java.io.UnsupportedEncodingException;
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
-import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OClusterPhysical;
 
 public class CreateRelationshipsSpeedTest extends SpeedTestMonoThread {
 	private ODatabaseFlat	database;
@@ -34,10 +34,10 @@ public class CreateRelationshipsSpeedTest extends SpeedTestMonoThread {
 	@Override
 	public void init() throws IOException {
 		if (!database.getClusterNames().contains("Animal"))
-			database.getStorage().addCluster("Animal", OStorage.TYPE_PHYSICAL);
+			database.getStorage().addCluster("Animal", OClusterPhysical.TYPE);
 
 		if (!database.getClusterNames().contains("Vaccinate"))
-			database.getStorage().addCluster("Vaccinate", OStorage.TYPE_PHYSICAL);
+			database.getStorage().addCluster("Vaccinate", OClusterPhysical.TYPE);
 	}
 
 	@Override

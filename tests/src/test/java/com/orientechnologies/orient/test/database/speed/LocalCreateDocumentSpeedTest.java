@@ -61,7 +61,7 @@ public class LocalCreateDocumentSpeedTest extends OrientMonoThreadTest {
 		record.field("id", data.getCyclesDone());
 		record.field("name", "Luca");
 		record.field("surname", "Garulli");
-		record.field("birthDay", date);
+		record.field("birthDate", date);
 		record.field("salary", 3000f + data.getCyclesDone());
 
 		record.save();

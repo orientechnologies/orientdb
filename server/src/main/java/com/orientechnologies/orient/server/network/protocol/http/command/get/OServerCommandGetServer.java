@@ -26,6 +26,7 @@ import java.util.Map.Entry;
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfiler.Chrono;
+import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -100,6 +101,15 @@ public class OServerCommandGetServer extends OServerCommandAuthenticatedAbstract
 			}
 			json.endCollection(1, false);
 
+			json.beginCollection(2, true, "properties");
+			for (OStorageEntryConfiguration entry : OServerMain.server().getConfiguration().properties) {
+				json.beginObject(3, true, null);
+				json.writeAttribute(4, false, "name", entry.name);
+				json.writeAttribute(4, false, "value", entry.value);
+				json.endObject(3, true);
+			}
+			json.endCollection(2, true);
+
 			json.beginObject(1, true, "profiler");
 			json.beginCollection(2, true, "stats");
 			for (Entry<String, Long> s : OProfiler.getInstance().getStatistics()) {
@@ -109,6 +119,7 @@ public class OServerCommandGetServer extends OServerCommandAuthenticatedAbstract
 				json.endObject(3);
 			}
 			json.endCollection(2, false);
+
 			json.beginCollection(2, true, "chronos");
 			for (Entry<String, Chrono> c : OProfiler.getInstance().getChronos()) {
 				json.beginObject(3);

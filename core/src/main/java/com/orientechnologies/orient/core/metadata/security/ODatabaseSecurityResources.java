@@ -23,13 +23,14 @@ package com.orientechnologies.orient.core.metadata.security;
  */
 public class ODatabaseSecurityResources {
 
-	public final static String	ALL						= "*";
-	public final static String	DATABASE			= "database";
-	public final static String	CLASS					= "database.class";
-	public final static String	ALL_CLASSES		= "database.class.*";
-	public final static String	CLUSTER				= "database.cluster";
-	public final static String	ALL_CLUSTERS	= "database.cluster.*";
-	public static final String	QUERY					= "database.query";
-	public static final String	COMMAND				= "database.command";
-	public final static String	SERVER_ADMIN	= "server.admin";
+	public final static String	ALL							= "*";
+	public final static String	DATABASE				= "database";
+	public final static String	CLASS						= "database.class";
+	public final static String	ALL_CLASSES			= "database.class.*";
+	public final static String	CLUSTER					= "database.cluster";
+	public final static String	ALL_CLUSTERS		= "database.cluster.*";
+	public static final String	QUERY						= "database.query";
+	public static final String	COMMAND					= "database.command";
+	public final static String	DATABASE_CONFIG	= "database.config";
+	public final static String	SERVER_ADMIN		= "server.admin";
 }
