@@ -53,7 +53,7 @@ public class ORecordId implements ORID {
 	}
 
 	public boolean isValid() {
-		return clusterId != CLUSTER_ID_INVALID && clusterPosition != CLUSTER_POS_INVALID;
+		return clusterPosition != CLUSTER_POS_INVALID;
 	}
 
 	@Override
