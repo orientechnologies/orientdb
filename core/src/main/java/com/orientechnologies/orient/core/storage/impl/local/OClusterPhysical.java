@@ -40,6 +40,7 @@ public class OClusterPhysical extends OMultiFileSegment implements OCluster {
 	private static final String				DEF_EXTENSION	= ".ocl";
 	private static final int					RECORD_SIZE		= 15;
 	private static final int					DEF_SIZE			= 1000000;
+	public static final String				TYPE					= "PHYSICAL";
 
 	private int												id;
 
@@ -249,5 +250,9 @@ public class OClusterPhysical extends OMultiFileSegment implements OCluster {
 
 	public void unlock() {
 		releaseSharedLock();
+	}
+
+	public String getType() {
+		return TYPE;
 	}
 }

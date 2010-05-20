@@ -54,6 +54,7 @@ import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.OClusterPhysical;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
@@ -510,7 +511,7 @@ public class OStorageRemote extends OStorageAbstract {
 				network.writeString(iClusterType);
 				network.writeString(iClusterName);
 
-				if (OStorage.TYPE_PHYSICAL.equals(iClusterType)) {
+				if (OClusterPhysical.TYPE.equals(iClusterType)) {
 					// FIEL PATH + START SIZE
 					network.writeString((String) iArguments[0]).writeInt((Integer) iArguments[1]);
 				} else {

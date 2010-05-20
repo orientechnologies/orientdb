@@ -45,7 +45,7 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OClusterPhysical;
 import com.orientechnologies.orient.core.storage.impl.local.ODictionaryLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
@@ -222,7 +222,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				final String name = channel.readString();
 
 				final int num;
-				if (OStorage.TYPE_PHYSICAL.equals(type))
+				if (OClusterPhysical.TYPE.equals(type))
 					num = connection.database.addPhysicalCluster(name, channel.readString(), channel.readInt());
 				else
 					num = connection.database.addLogicalCluster(name, channel.readInt());

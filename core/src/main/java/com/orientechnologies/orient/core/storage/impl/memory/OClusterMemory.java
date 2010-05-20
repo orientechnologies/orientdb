@@ -25,6 +25,8 @@ import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 
 public class OClusterMemory extends OSharedResource implements OCluster {
+	public static final String			TYPE		= "MEMORY";
+	
 	private int											id;
 	private String									name;
 	private List<OPhysicalPosition>	entries	= new ArrayList<OPhysicalPosition>();
@@ -97,5 +99,9 @@ public class OClusterMemory extends OSharedResource implements OCluster {
 
 	public void unlock() {
 		releaseSharedLock();
+	}
+
+	public String getType() {
+		return TYPE;
 	}
 }

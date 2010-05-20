@@ -41,9 +41,6 @@ public interface OStorage {
 
 	public static final String	DATA_DEFAULT_NAME			= "default";
 
-	public static final String	TYPE_PHYSICAL					= "PHYSICAL";
-	public static final String	TYPE_LOGICAL					= "LOGICAL";
-
 	public void open(int iRequesterId, String iUserName, String iUserPassword);
 
 	public void create();

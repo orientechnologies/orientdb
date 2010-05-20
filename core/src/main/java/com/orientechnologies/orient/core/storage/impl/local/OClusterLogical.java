@@ -43,6 +43,7 @@ public class OClusterLogical implements OCluster {
 	private OPhysicalPosition													total;
 
 	private OSharedResourceExternal										lock	= new OSharedResourceExternal();
+	public static final String												TYPE	= "LOGICAL";
 
 	/**
 	 * Constructor called on creation of the object.
@@ -211,5 +212,9 @@ public class OClusterLogical implements OCluster {
 
 	public void setRID(final ORID iRID) {
 		this.map.getRecord().setIdentity(iRID.getClusterId(), iRID.getClusterPosition());
+	}
+
+	public String getType() {
+		return TYPE;
 	}
 }

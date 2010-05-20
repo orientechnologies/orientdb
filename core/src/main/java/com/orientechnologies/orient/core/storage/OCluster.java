@@ -36,6 +36,8 @@ public interface OCluster {
 
 	public void close() throws IOException;
 
+	public String getType();
+
 	/**
 	 * Add a new entry.
 	 */
