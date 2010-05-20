@@ -29,6 +29,7 @@ public class OQueryOperatorNotEquals extends OQueryOperatorEqualityNotNulls {
 		super("<>", 5, false);
 	}
 
+	@Override
 	protected boolean evaluateExpression(OSQLFilterCondition iCondition, final Object iLeft, final Object iRight) {
 		return !iLeft.equals(iRight);
 	}

@@ -37,6 +37,7 @@ public class SQLSynchQuerySpeedTest extends SpeedTestMonoThread implements OComm
 		database = new ODatabaseDocumentTx(iURL);
 	}
 
+	@Override
 	public void cycle() throws UnsupportedEncodingException {
 		System.out.println("1 ----------------------");
 		List<ODocument> result = database.command(

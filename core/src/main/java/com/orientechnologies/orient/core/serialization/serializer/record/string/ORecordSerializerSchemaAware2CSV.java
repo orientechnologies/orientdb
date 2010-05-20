@@ -25,7 +25,6 @@ import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -44,7 +43,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
 	@Override
 	public ORecordSchemaAware<?> newObject(ODatabaseRecord<?> iDatabase, String iClassName) {
-		return new ODocument((ODatabaseDocument) iDatabase, iClassName);
+		return new ODocument(iDatabase, iClassName);
 	}
 
 	@Override
@@ -66,7 +65,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 		} else
 			iMarshalledRecords.put(record, ORecordId.EMPTY_RECORD_ID);
 
-		ODatabaseRecord<?> database = (ODatabaseRecord<?>) record.getDatabase();
+		ODatabaseRecord<?> database = record.getDatabase();
 
 		final StringBuilder buffer = new StringBuilder();
 

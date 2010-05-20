@@ -3,8 +3,8 @@ package com.orientechnologies.orient.kv.index;
 import com.orientechnologies.orient.core.db.record.ODatabaseBinary;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OTreeMapPersistent;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
+import com.orientechnologies.orient.core.type.tree.OTreeMapDatabase;
 import com.orientechnologies.orient.kv.OSharedBinaryDatabase;
 
 /**
@@ -18,7 +18,7 @@ import com.orientechnologies.orient.kv.OSharedBinaryDatabase;
  * @see OTreeMapPersistentAsynchThread
  */
 @SuppressWarnings("serial")
-public class OTreeMapPersistentAsynch<K, V> extends OTreeMapPersistent<K, V> {
+public class OTreeMapPersistentAsynch<K, V> extends OTreeMapDatabase<K, V> {
 
 	public OTreeMapPersistentAsynch(ODatabaseRecord<?> iDatabase, String iClusterName, OStreamSerializer iKeySerializer,
 			OStreamSerializer iValueSerializer) {

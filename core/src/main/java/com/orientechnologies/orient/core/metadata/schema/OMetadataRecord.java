@@ -19,6 +19,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 public abstract class OMetadataRecord extends ODocument {
 
@@ -56,6 +57,6 @@ public abstract class OMetadataRecord extends ODocument {
 
 	@Override
 	public ORecordAbstract<Object> save() {
-		return super.save("metadata");
+		return super.save(OStorage.CLUSTER_METADATA_NAME);
 	}
 }

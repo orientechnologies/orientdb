@@ -53,7 +53,7 @@ public abstract class ONativeAsynchQuery<T extends ORecordInternal<?>, CTX exten
 
 		if (filter(queryRecord)) {
 			resultCount++;
-			resultListener.result((T) record.copy());
+			resultListener.result(record.copy());
 
 			if (limit > -1 && resultCount == limit)
 				// BREAK THE EXECUTION

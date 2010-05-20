@@ -32,6 +32,7 @@ public class OMMapLimitsTest extends SpeedTestMonoThread {
 
 	private static final int			START_SIZE	= 100000000;
 
+	@Override
 	public void cycle() throws IOException {
 
 		System.out.println("Testing opening of " + NUMS + " mmap files of MB " + START_SIZE / 1000000 + " bytes each...");

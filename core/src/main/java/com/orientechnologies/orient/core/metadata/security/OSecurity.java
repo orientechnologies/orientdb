@@ -122,6 +122,7 @@ public class OSecurity extends OMetadataRecord {
 		return Collections.unmodifiableCollection(roles.values());
 	}
 
+	@Override
 	public OSecurity load() {
 		recordId.fromString(database.getStorage().getConfiguration().securityRecordId);
 		return (OSecurity) super.load();

@@ -53,6 +53,7 @@ public class LocalCreateDocumentSpeedTest extends OrientMonoThreadTest {
 		database.begin(TXTYPE.NOTX);
 	}
 
+	@Override
 	public void cycle() {
 		record.reset();
 

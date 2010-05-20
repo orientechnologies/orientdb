@@ -30,6 +30,7 @@ public class OQueryOperatorLike extends OQueryOperatorEqualityNotNulls {
 		super("LIKE", 5, false);
 	}
 
+	@Override
 	protected boolean evaluateExpression(OSQLFilterCondition iCondition, final Object iLeft, final Object iRight) {
 		return OQueryHelper.like(iLeft.toString(), iRight.toString());
 	}

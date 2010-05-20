@@ -21,23 +21,26 @@ import java.io.UnsupportedEncodingException;
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 public class CreateRelationshipsSpeedTest extends SpeedTestMonoThread {
 	private ODatabaseFlat	database;
-	private ORecordFlat					record;
+	private ORecordFlat		record;
 
 	public CreateRelationshipsSpeedTest() {
 		super(1000000);
 	}
 
+	@Override
 	public void init() throws IOException {
 		if (!database.getClusterNames().contains("Animal"))
-			database.getStorage().addCluster("Animal");
+			database.getStorage().addCluster("Animal", OStorage.TYPE_PHYSICAL);
 
 		if (!database.getClusterNames().contains("Vaccinate"))
-			database.getStorage().addCluster("Vaccinate");
+			database.getStorage().addCluster("Vaccinate", OStorage.TYPE_PHYSICAL);
 	}
 
+	@Override
 	public void cycle() throws UnsupportedEncodingException {
 		record.value(data.getCyclesDone() + "|" + System.currentTimeMillis() + "|AAA").save("Vaccinate");
 		record.value(

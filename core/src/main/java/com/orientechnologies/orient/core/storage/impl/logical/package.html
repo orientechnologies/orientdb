@@ -1,4 +1,0 @@
-<html>
-<head></head>
-<body>Logical implementation of OStorage interface. Logical clusters don't need separate files since are stored inside a OTreeMap instance. Access is slower than the physical cluster but the database size is reduced and less files are requires. This matters in some OS where a single process has limitation for the number of files can open. Most accessed entities should be stored inside a physical cluster.</body>
-</html>

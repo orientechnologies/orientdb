@@ -125,8 +125,14 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 		}
 	}
 
+	/**
+	 * Create a new entry with the first key/value to handle.
+	 */
 	protected abstract OTreeMapEntry<K, V> createEntry(final K key, final V value);
 
+	/**
+	 * Create a new node with the same parent of the node is splitting.
+	 */
 	protected abstract OTreeMapEntry<K, V> createEntry(final OTreeMapEntry<K, V> parent);
 
 	public int getNodes() {

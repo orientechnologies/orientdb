@@ -38,6 +38,7 @@ public class SQLAsynchQuerySpeedTest extends SpeedTestMonoThread implements OCom
 		database = new ODatabaseDocumentTx(iURL);
 	}
 
+	@Override
 	@SuppressWarnings("unchecked")
 	public void cycle() throws UnsupportedEncodingException {
 		System.out.println("1 -----------------------");

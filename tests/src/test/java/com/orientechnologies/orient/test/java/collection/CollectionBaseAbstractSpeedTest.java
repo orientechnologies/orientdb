@@ -21,6 +21,7 @@ public abstract class CollectionBaseAbstractSpeedTest extends SpeedTestMonoThrea
 	protected Object	searchedValue;
 	protected int			collectionSize;
 
+	@Override
 	public CollectionBaseAbstractSpeedTest config(Object... iParameters) {
 		searchedValue = iParameters[0];
 		collectionSize = ((Integer) iParameters[1]).intValue();

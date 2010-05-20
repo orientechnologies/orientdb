@@ -46,6 +46,7 @@ public class TxRemoteCreateFlatSpeedTest extends OrientMonoThreadTest {
 		database.begin();
 	}
 
+	@Override
 	public void cycle() {
 		record.value(
 				"{id:" + data.getCyclesDone() + ",name:'Gipsy',type:'Cat',race:'European',country:'Italy',price:"

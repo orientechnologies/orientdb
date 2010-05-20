@@ -165,7 +165,7 @@ public class OBinaryProtocol {
 	}
 
 	public static long bytes2long(byte[] b, int offset) {
-		return (long) ((0xff & b[offset + 7]) | (0xff & b[offset + 6]) << 8 | (0xff & b[offset + 5]) << 16
+		return ((0xff & b[offset + 7]) | (0xff & b[offset + 6]) << 8 | (0xff & b[offset + 5]) << 16
 				| (long) (0xff & b[offset + 4]) << 24 | (long) (0xff & b[offset + 3]) << 32 | (long) (0xff & b[offset + 2]) << 40
 				| (long) (0xff & b[offset + 1]) << 48 | (long) (0xff & b[offset]) << 56);
 	}
@@ -191,7 +191,7 @@ public class OBinaryProtocol {
 	 * @return The integer
 	 */
 	public static int bytes2int(byte[] b, int offset) {
-		return (int) ((0xff & b[offset + 3]) | (0xff & b[offset + 2]) << 8 | (0xff & b[offset + 1]) << 16 | (b[offset]) << 24);
+		return ((0xff & b[offset + 3]) | (0xff & b[offset + 2]) << 8 | (0xff & b[offset + 1]) << 16 | (b[offset]) << 24);
 	}
 
 	public static short bytes2short(byte[] b) {

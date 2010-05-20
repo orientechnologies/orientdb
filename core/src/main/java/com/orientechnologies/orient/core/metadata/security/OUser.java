@@ -157,6 +157,7 @@ public class OUser extends OMetadataRecord {
 		return this;
 	}
 
+	@Override
 	public byte[] toStream() {
 		field("name", name);
 		field("password", password);

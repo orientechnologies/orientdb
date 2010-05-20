@@ -132,8 +132,8 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		return database;
 	}
 
-	public ORecordAbstract setDatabase(final ODatabaseRecord storage) {
-		this.database = storage;
+	public ORecordAbstract setDatabase(final ODatabaseRecord iDatabase) {
+		this.database = iDatabase;
 		return this;
 	}
 

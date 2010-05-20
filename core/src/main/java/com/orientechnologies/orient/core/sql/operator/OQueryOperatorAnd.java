@@ -29,6 +29,7 @@ public class OQueryOperatorAnd extends OQueryOperator {
 		super("AND", 7, true);
 	}
 
+	@Override
 	public boolean evaluate(final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight) {
 		if (iLeft == null)
 			return false;

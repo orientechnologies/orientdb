@@ -20,6 +20,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 public class OServerCommandGetDatabase extends OServerCommandGetConnect {
 	private static final String[]	NAMES	= { "GET.database" };
 
+	@Override
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: database/<database>");
 
@@ -29,6 +30,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
 		exec(iRequest, urlParts);
 	}
 
+	@Override
 	public String[] getNames() {
 		return NAMES;
 	}

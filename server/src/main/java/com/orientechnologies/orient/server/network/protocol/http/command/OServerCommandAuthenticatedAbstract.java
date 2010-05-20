@@ -26,6 +26,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 public abstract class OServerCommandAuthenticatedAbstract extends OServerCommandAbstract {
 
+	@Override
 	public boolean beforeExecute(final OHttpRequest iRequest) throws IOException {
 		if (iRequest.sessionId == null) {
 			// NO SESSION

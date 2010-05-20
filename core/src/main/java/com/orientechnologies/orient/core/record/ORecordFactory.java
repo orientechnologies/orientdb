@@ -15,13 +15,12 @@
  */
 package com.orientechnologies.orient.core.record;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings("unchecked")
 public class ORecordFactory {
@@ -33,7 +32,7 @@ public class ORecordFactory {
 
 		try {
 			if (iClass.equals(ODocument.class))
-				return (T) new ODocument((ODatabaseDocument) iDatabase);
+				return (T) new ODocument(iDatabase);
 
 			else if (iClass.equals(ORecordFlat.class))
 				return (T) new ORecordFlat(iDatabase);

@@ -38,7 +38,7 @@ public class DictionaryTest {
 	public void testDictionaryCreate() throws IOException {
 		database.open("admin", "admin");
 
-		database.getDictionary().put("key1", (ORecordFlat) record.value("Dictionary test!"));
+		database.getDictionary().put("key1", record.value("Dictionary test!"));
 
 		database.close();
 	}

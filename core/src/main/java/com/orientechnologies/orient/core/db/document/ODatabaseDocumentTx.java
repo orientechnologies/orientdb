@@ -55,6 +55,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 				.getClusterIds());
 	}
 
+	@Override
 	public ORecordIteratorCluster<ODocument> browseCluster(final String iClusterName) {
 		checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.OPERATIONS.READ, iClusterName);
 
@@ -64,6 +65,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 	/**
 	 * If the record is new and a class was specified, the configured cluster id will be used to store the class.
 	 */
+	@Override
 	public ODatabaseDocumentTx save(final ODocument iContent) {
 		iContent.validate();
 
@@ -101,6 +103,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 	 * 
 	 * @see ORecordSchemaAware#validate()
 	 */
+	@Override
 	public ODatabaseDocumentTx save(final ODocument iContent, String iClusterName) {
 		if (!iContent.getIdentity().isValid()) {
 			if (iClusterName == null && iContent.getSchemaClass() != null)
@@ -132,6 +135,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 		return this;
 	}
 
+	@Override
 	public ODatabaseDocumentTx delete(final ODocument iContent) {
 		// CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
 		if (iContent.getClassName() != null)

@@ -17,7 +17,7 @@ public class OBase64Utils extends java.util.prefs.AbstractPreferences {
 		byte[] rawUTF8 = baos.toByteArray();
 		this.putByteArray(key, rawUTF8);
 
-		return (java.lang.String) this.encodedStore.get(key);
+		return this.encodedStore.get(key);
 	}
 
 	public java.lang.String encodeBase64(java.lang.String raw) throws java.io.UnsupportedEncodingException {
@@ -29,7 +29,7 @@ public class OBase64Utils extends java.util.prefs.AbstractPreferences {
 		byte[] rawUTF8 = baos.toByteArray();
 		this.putByteArray(raw, rawUTF8);
 
-		return (java.lang.String) this.encodedStore.get(raw);
+		return this.encodedStore.get(raw);
 	}
 
 	public java.lang.String decodeBase64(java.lang.String key, java.lang.String base64String)
@@ -47,45 +47,56 @@ public class OBase64Utils extends java.util.prefs.AbstractPreferences {
 	}
 
 	// intercept key lookup and return our own base64 encoded string to super
+	@Override
 	public String get(String key, String def) {
-		return (java.lang.String) this.encodedStore.get(key);
+		return this.encodedStore.get(key);
 	}
 
 	// intercepts put captures the base64 encoded string and returns it
+	@Override
 	public void put(String key, String value) {
 		this.encodedStore.put(key, value);// save the encoded string
 	}
 
 	// dummy implementation as AbstractPreferences is extended to get acces to protected
 	// methods and to overide put(String,String) and get(String,String)
+	@Override
 	protected java.util.prefs.AbstractPreferences childSpi(String name) {
 		return null;
 	}
 
+	@Override
 	protected String[] childrenNamesSpi() throws java.util.prefs.BackingStoreException {
 		return null;
 	}
 
+	@Override
 	protected void flushSpi() throws java.util.prefs.BackingStoreException {
 	}
 
+	@Override
 	protected String getSpi(String key) {
 		return null;
 	}
 
+	@Override
 	protected String[] keysSpi() throws java.util.prefs.BackingStoreException {
 		return null;
 	}
 
+	@Override
 	protected void putSpi(String key, String value) {
 	}
 
+	@Override
 	protected void removeNodeSpi() throws java.util.prefs.BackingStoreException {
 	}
 
+	@Override
 	protected void removeSpi(String key) {
 	}
 
+	@Override
 	protected void syncSpi() throws java.util.prefs.BackingStoreException {
 	}
 }

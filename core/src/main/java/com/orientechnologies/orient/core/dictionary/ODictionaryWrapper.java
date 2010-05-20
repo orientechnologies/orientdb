@@ -53,7 +53,7 @@ public class ODictionaryWrapper implements ODictionary<Object> {
 	public Object put(final String iKey, final Object iValue) {
 		ODocument record = (ODocument) database.getRecordByUserObject(iValue, false);
 
-		ORecordInternal<?> oldRecord = recordDatabase.getDictionary().put(iKey, (ODocument) record);
+		ORecordInternal<?> oldRecord = recordDatabase.getDictionary().put(iKey, record);
 
 		return database.getUserObjectByRecord(oldRecord);
 	}

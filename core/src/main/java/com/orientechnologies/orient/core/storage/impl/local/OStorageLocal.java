@@ -17,11 +17,9 @@ package com.orientechnologies.orient.core.storage.impl.local;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,6 +30,7 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
+import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
 import com.orientechnologies.orient.core.config.OStorageLogicalClusterConfiguration;
@@ -41,11 +40,9 @@ import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordColumn;
@@ -56,20 +53,20 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
-import com.orientechnologies.orient.core.storage.impl.logical.OClusterLogical;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
 public class OStorageLocal extends OStorageAbstract {
+	public static final String[]					TYPES							= { OStorage.TYPE_PHYSICAL, OStorage.TYPE_LOGICAL };
+
 	// private final OLockManager<String, String> lockManager = new OLockManager<String, String>();
-	protected final Map<String, OCluster>	clusterSegmentMap	= new LinkedHashMap<String, OCluster>();
-	protected OCluster[]									physicalClusters;
-	protected List<OClusterLogical>				logicalClusters		= new ArrayList<OClusterLogical>();
-	protected ODataLocal[]								dataSegments;
+	protected final Map<String, OCluster>	clusterMap				= new LinkedHashMap<String, OCluster>();
+	protected OCluster[]									clusters					= new OCluster[0];
+	protected ODataLocal[]								dataSegments			= new ODataLocal[0];
 
 	private OStorageLocalTxExecuter				txManager;
 	private String												storagePath;
 	private OStorageVariableParser				variableParser;
-	private int														defaultCluster		= -1;
+	private int														defaultClusterId	= -1;
 
 	public OStorageLocal(final String iName, final String iFilePath, final String iMode) throws IOException {
 		super(iName, iFilePath, iMode);
@@ -98,17 +95,20 @@ public class OStorageLocal extends OStorageAbstract {
 
 			// OPEN BASIC SEGMENTS
 			int pos;
-			pos = registerDataSegment(new OStorageDataConfiguration(configuration, OStorage.DEFAULT_SEGMENT));
+			pos = registerDataSegment(new OStorageDataConfiguration(configuration, OStorage.DATA_DEFAULT_NAME));
 			dataSegments[pos].open();
 
-			pos = registerClusterSegment(new OStoragePhysicalClusterConfiguration(configuration, OMetadata.CLUSTER_METADATA_NAME));
-			physicalClusters[pos].open();
+			pos = createClusterFromConfig(new OStoragePhysicalClusterConfiguration(configuration, OStorage.CLUSTER_METADATA_NAME,
+					clusters.length));
+			clusters[pos].open();
 
-			pos = registerClusterSegment(new OStoragePhysicalClusterConfiguration(configuration, "index"));
-			physicalClusters[pos].open();
+			pos = createClusterFromConfig(new OStoragePhysicalClusterConfiguration(configuration, OStorage.CLUSTER_INDEX_NAME,
+					clusters.length));
+			clusters[pos].open();
 
-			defaultCluster = registerClusterSegment(new OStoragePhysicalClusterConfiguration(configuration, OStorage.DEFAULT_SEGMENT));
-			physicalClusters[defaultCluster].open();
+			defaultClusterId = createClusterFromConfig(new OStoragePhysicalClusterConfiguration(configuration,
+					OStorage.CLUSTER_DEFAULT_NAME, clusters.length));
+			clusters[defaultClusterId].open();
 
 			configuration.load();
 
@@ -122,15 +122,15 @@ public class OStorageLocal extends OStorageAbstract {
 					dataSegments[pos].open();
 			}
 
-			// REGISTER CLUSTER SEGMENT
-			for (OStoragePhysicalClusterConfiguration cluster : configuration.physicalClusters) {
-				pos = registerClusterSegment(cluster);
+			// REGISTER CLUSTER
+			for (OStorageClusterConfiguration clusterConfig : configuration.clusters) {
+				pos = createClusterFromConfig(clusterConfig);
 
 				if (pos > -1) {
-					if (cluster.name.equals(OStorage.DEFAULT_SEGMENT))
-						defaultCluster = pos;
+					if (clusterConfig.getName().equals(OStorage.CLUSTER_DEFAULT_NAME))
+						defaultClusterId = pos;
 
-					physicalClusters[pos].open();
+					clusters[pos].open();
 				}
 			}
 
@@ -138,10 +138,9 @@ public class OStorageLocal extends OStorageAbstract {
 
 		} catch (IOException e) {
 			open = false;
-			dataSegments = null;
-			physicalClusters = null;
-			clusterSegmentMap.clear();
-			logicalClusters.clear();
+			dataSegments = new ODataLocal[0];
+			clusters = new OCluster[0];
+			clusterMap.clear();
 			throw new OStorageException("Can't open local storage: " + fileURL + ", with mode=" + mode, e);
 		} finally {
 			releaseExclusiveLock(locked);
@@ -168,16 +167,16 @@ public class OStorageLocal extends OStorageAbstract {
 			if (!storageFolder.exists())
 				storageFolder.mkdir();
 
-			addDataSegment(OStorage.DEFAULT_SEGMENT);
+			addDataSegment(OStorage.DATA_DEFAULT_NAME);
 
 			// ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
-			addCluster(OMetadata.CLUSTER_METADATA_NAME);
+			addCluster(OStorage.CLUSTER_METADATA_NAME, OStorage.TYPE_PHYSICAL);
 
 			// ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING
-			addCluster("index");
+			addCluster(OStorage.CLUSTER_INDEX_NAME, OStorage.TYPE_PHYSICAL);
 
 			// ADD THE DEFAULT CLUSTER
-			defaultCluster = addCluster(OStorage.DEFAULT_SEGMENT);
+			defaultClusterId = addCluster(OStorage.CLUSTER_DEFAULT_NAME, OStorage.TYPE_PHYSICAL);
 
 			configuration.create();
 
@@ -206,17 +205,14 @@ public class OStorageLocal extends OStorageAbstract {
 			return;
 
 		try {
-			if (physicalClusters != null)
-				for (OCluster cluster : physicalClusters)
-					cluster.close();
-			physicalClusters = null;
-			logicalClusters.clear();
-			clusterSegmentMap.clear();
+			for (OCluster cluster : clusters)
+				cluster.close();
+			clusters = new OCluster[0];
+			clusterMap.clear();
 
-			if (dataSegments != null)
-				for (ODataLocal data : dataSegments)
-					data.close();
-			dataSegments = null;
+			for (ODataLocal data : dataSegments)
+				data.close();
+			dataSegments = new ODataLocal[0];
 
 			txManager.close();
 
@@ -258,8 +254,10 @@ public class OStorageLocal extends OStorageAbstract {
 		return addDataSegment(iDataSegmentName, segmentFileName);
 	}
 
-	public int addDataSegment(final String iSegmentName, final String iSegmentFileName) {
+	public int addDataSegment(String iSegmentName, final String iSegmentFileName) {
 		checkOpeness();
+
+		iSegmentName = iSegmentName.toLowerCase();
 
 		final boolean locked = acquireExclusiveLock();
 
@@ -286,55 +284,42 @@ public class OStorageLocal extends OStorageAbstract {
 		}
 	}
 
-	public int addLogicalCluster(final OClusterLogical iCluster) {
-		int id = getLogicalClusterIndex(logicalClusters.size());
-
-		iCluster.setId(id);
-
-		try {
-			registerLogicalCluster(iCluster);
-
-			configuration.logicalClusters.add(new OStorageLogicalClusterConfiguration(iCluster.getName(), id, iCluster.getRID()));
-			configuration.update();
-			return id;
-		} catch (IOException e) {
-			throw new ODatabaseException("Error on adding the new logical cluster: " + iCluster.getName(), e);
-		}
-	}
-
 	/**
-	 * Add a new cluster into the storage.
+	 * Add a new cluster into the storage. Type can be: "physical" or "logical".
 	 */
-	public int addPhysicalCluster(final String iClusterName, String iClusterFileName, final int iStartSize) {
+	public int addCluster(String iClusterName, final String iClusterType, final Object... iParameters) {
 		checkOpeness();
 
 		final boolean locked = acquireExclusiveLock();
 
 		try {
-			if (iClusterFileName == null)
-				iClusterFileName = storagePath + "/" + iClusterName;
+			iClusterName = iClusterName.toLowerCase();
 
-			OStoragePhysicalClusterConfiguration conf = new OStoragePhysicalClusterConfiguration(configuration, iClusterName);
-			configuration.physicalClusters.add(conf);
+			if (OStorage.TYPE_PHYSICAL.equalsIgnoreCase(iClusterType)) {
+				// GET PARAMETERS
+				final String clusterFileName = (String) (iParameters.length < 1 ? storagePath + "/" + iClusterName : iParameters[0]);
+				final int startSize = (iParameters.length < 2 ? -1 : (Integer) iParameters[1]);
 
-			final int pos = registerClusterSegment(conf);
+				return addPhysicalCluster(iClusterName, clusterFileName, startSize);
+			} else if (OStorage.TYPE_LOGICAL.equalsIgnoreCase(iClusterType)) {
+				// GET PARAMETERS
+				final int physicalClusterId = (iParameters.length < 1 ? -1 : (Integer) iParameters[0]);
 
-			if (pos == -1)
-				throw new OConfigurationException("Can't add segment " + conf.name + " because already is part of the current storage");
+				return addLogicalCluster(iClusterName, physicalClusterId);
+			} else
+				OLogManager.instance().exception(
+						"Cluster type '" + iClusterType + "' is not supported. Supported types are: " + Arrays.toString(TYPES), null,
+						OStorageException.class);
 
-			physicalClusters[pos].create(iStartSize);
-			configuration.update();
-
-			return pos;
-		} catch (Throwable e) {
-			OLogManager.instance().error(this, "Error on creation of new cluster '" + iClusterName + "' in: " + iClusterFileName, e,
+		} catch (Exception e) {
+			OLogManager.instance().exception("Error in creation of new cluster '" + iClusterName + "' of type: " + iClusterType, e,
 					OStorageException.class);
-			return -1;
 
 		} finally {
 
 			releaseExclusiveLock(locked);
 		}
+		return -1;
 	}
 
 	public long count(final int[] iClusterIds) {
@@ -347,15 +332,9 @@ public class OStorageLocal extends OStorageAbstract {
 		try {
 			long tot = 0;
 
-			// COUNT LOGICAL CLUSTERS IF ANY
 			for (int i = 0; i < iClusterIds.length; ++i)
-				if (iClusterIds[i] < -1)
-					tot += logicalClusters.get(getLogicalClusterIndex(iClusterIds[i])).getElements();
+				tot += clusters[iClusterIds[i]].getElements();
 
-			// COUNT PHYSICAL CLUSTER IF ANY
-			for (int i = 0; i < iClusterIds.length; ++i)
-				if (iClusterIds[i] > -1)
-					tot += physicalClusters[iClusterIds[i]].getElements();
 			return tot;
 
 		} catch (IOException e) {
@@ -374,10 +353,6 @@ public class OStorageLocal extends OStorageAbstract {
 		if (iClusterId == -1)
 			throw new OStorageException("Cluster Id is invalid: " + iClusterId);
 
-		if (iClusterId < -1)
-			// LOGICAL CLUSTER
-			return logicalClusters.get(getLogicalClusterIndex(iClusterId)).getElements();
-
 		// COUNT PHYSICAL CLUSTER IF ANY
 		checkOpeness();
 
@@ -386,7 +361,7 @@ public class OStorageLocal extends OStorageAbstract {
 		final boolean locked = acquireSharedLock();
 
 		try {
-			return physicalClusters[iClusterId].getElements();
+			return clusters[iClusterId].getElements();
 
 		} catch (IOException e) {
 
@@ -508,7 +483,7 @@ public class OStorageLocal extends OStorageAbstract {
 
 		try {
 
-			return clusterSegmentMap.keySet();
+			return clusterMap.keySet();
 
 		} finally {
 			releaseSharedLock(locked);
@@ -530,7 +505,7 @@ public class OStorageLocal extends OStorageAbstract {
 		final boolean locked = acquireSharedLock();
 
 		try {
-			segment = clusterSegmentMap.get(iClusterName.toLowerCase());
+			segment = clusterMap.get(iClusterName.toLowerCase());
 
 		} finally {
 			releaseSharedLock(locked);
@@ -568,13 +543,11 @@ public class OStorageLocal extends OStorageAbstract {
 		final boolean locked = acquireExclusiveLock();
 
 		try {
-			if (physicalClusters != null)
-				for (OCluster cluster : physicalClusters)
-					cluster.synch();
+			for (OCluster cluster : clusters)
+				cluster.synch();
 
-			if (dataSegments != null)
-				for (ODataLocal data : dataSegments)
-					data.synch();
+			for (ODataLocal data : dataSegments)
+				data.synch();
 
 		} finally {
 			releaseExclusiveLock(locked);
@@ -586,14 +559,7 @@ public class OStorageLocal extends OStorageAbstract {
 	public String getPhysicalClusterNameById(final int iClusterId) {
 		checkOpeness();
 
-		if (iClusterId < -1) {
-			// LOGICAL CLUSTER
-			int index = getLogicalClusterIndex(iClusterId);
-			return logicalClusters.get(index).getName();
-		}
-
-		// PHYSICAL CLUSTER
-		for (OCluster cluster : physicalClusters)
+		for (OCluster cluster : clusters)
 			if (cluster.getId() == iClusterId)
 				return cluster.getName();
 
@@ -605,21 +571,25 @@ public class OStorageLocal extends OStorageAbstract {
 		return configuration;
 	}
 
+	public int getDefaultClusterId() {
+		return defaultClusterId;
+	}
+
 	public OCluster getClusterById(int iClusterId) {
 		if (iClusterId == ORID.CLUSTER_ID_INVALID)
 			// GET THE DEFAULT CLUSTER
-			iClusterId = defaultCluster;
+			iClusterId = defaultClusterId;
 
 		checkClusterSegmentIndexRange(iClusterId);
 
-		return iClusterId > -1 ? physicalClusters[iClusterId] : logicalClusters.get(getLogicalClusterIndex(iClusterId));
+		return clusters[iClusterId];
 	}
 
 	public OCluster getClusterByName(final String iClusterName) {
 		final boolean locked = acquireSharedLock();
 
 		try {
-			final OCluster cluster = clusterSegmentMap.get(iClusterName.toLowerCase());
+			final OCluster cluster = clusterMap.get(iClusterName.toLowerCase());
 
 			if (cluster == null)
 				throw new IllegalArgumentException("Cluster " + iClusterName + " not exists");
@@ -648,75 +618,76 @@ public class OStorageLocal extends OStorageAbstract {
 		return variableParser;
 	}
 
-	protected int registerDataSegment(OStorageDataConfiguration iConfig) throws IOException {
+	protected int registerDataSegment(final OStorageDataConfiguration iConfig) throws IOException {
 		checkOpeness();
 
 		int pos = 0;
 
 		// CHECK FOR DUPLICATION OF NAMES
-		if (dataSegments != null) {
-			for (ODataLocal data : dataSegments)
-				if (data.getName().equals(iConfig.name))
-					return -1;
-			pos = dataSegments.length;
-		}
+		for (ODataLocal data : dataSegments)
+			if (data.getName().equals(iConfig.name))
+				return -1;
+		pos = dataSegments.length;
 
 		// CREATE AND ADD THE NEW REF SEGMENT
 		ODataLocal segment = new ODataLocal(this, iConfig, pos);
 
-		if (dataSegments != null) {
-			dataSegments = Arrays.copyOf(dataSegments, dataSegments.length + 1);
-		} else
-			dataSegments = new ODataLocal[1];
-
+		dataSegments = Arrays.copyOf(dataSegments, dataSegments.length + 1);
 		dataSegments[pos] = segment;
 
 		return pos;
 	}
 
-	public int registerLogicalCluster(OClusterLogical iClusterLogical) {
-		final String clusterName = iClusterLogical.getName().toLowerCase();
-		if (clusterSegmentMap.containsKey(clusterName))
+	/**
+	 * Create the cluster by reading the configuration received as argument and register it assigning it the higher serial id.
+	 * 
+	 * @param iConfig
+	 *          A OStorageClusterConfiguration implementation, namely physical or logical
+	 * @return The id (physical position into the array) of the new cluster just created. First is 0.
+	 * @throws IOException
+	 * @throws IOException
+	 */
+	private int createClusterFromConfig(final OStorageClusterConfiguration iConfig) throws IOException {
+		if (clusterMap.containsKey(iConfig.getName()))
+			// ALREADY CONFIGURED
 			return -1;
 
-		clusterSegmentMap.put(clusterName, iClusterLogical);
+		final OCluster cluster;
 
-		logicalClusters.add(iClusterLogical);
-		return getLogicalClusterIndex(logicalClusters.size());
+		if (iConfig instanceof OStoragePhysicalClusterConfiguration) {
+			cluster = new OClusterPhysical(this, (OStoragePhysicalClusterConfiguration) iConfig);
+		} else
+			cluster = new OClusterLogical(this, (OStorageLogicalClusterConfiguration) iConfig);
+
+		return registerCluster(cluster);
 	}
 
-	protected int registerClusterSegment(OStoragePhysicalClusterConfiguration iConfig) throws IOException {
-		checkOpeness();
-
-		int pos = 0;
-
+	/**
+	 * Register the cluster internally.
+	 * 
+	 * @param cluster
+	 *          OCluster implementation
+	 * @return The id (physical position into the array) of the new cluster just created. First is 0.
+	 * @throws IOException
+	 */
+	private int registerCluster(final OCluster cluster) throws IOException {
 		// CHECK FOR DUPLICATION OF NAMES
-		if (physicalClusters != null) {
-			if (clusterSegmentMap.containsKey(iConfig.name.toLowerCase()))
-				return -1;
-
-			pos = physicalClusters.length;
-		}
+		if (clusterMap.containsKey(cluster.getName()))
+			throw new OConfigurationException("Can't add segment " + cluster.getName() + " because it was already registered");
 
 		// CREATE AND ADD THE NEW REF SEGMENT
-		final OCluster segment = new OClusterLocal(this, iConfig, pos, iConfig.name);
-		clusterSegmentMap.put(iConfig.name.toLowerCase(), segment);
+		clusterMap.put(cluster.getName(), cluster);
 
-		if (physicalClusters != null) {
-			physicalClusters = Arrays.copyOf(physicalClusters, physicalClusters.length + 1);
-		} else
-			physicalClusters = new OCluster[1];
+		final int id = clusters.length;
 
-		physicalClusters[pos] = segment;
+		clusters = Arrays.copyOf(clusters, id + 1);
+		clusters[id] = cluster;
 
-		return pos;
+		return id;
 	}
 
 	private void checkClusterSegmentIndexRange(final int iClusterId) {
-		if (iClusterId < -1 && getLogicalClusterIndex(iClusterId) > logicalClusters.size() - 1)
-			throw new IllegalArgumentException("Cluster segment #" + iClusterId + " not exists");
-
-		if (iClusterId > -1 && iClusterId > physicalClusters.length - 1)
+		if (iClusterId > clusters.length - 1)
 			throw new IllegalArgumentException("Cluster segment #" + iClusterId + " not exists");
 	}
 
@@ -891,12 +862,9 @@ public class OStorageLocal extends OStorageAbstract {
 	public Set<OCluster> getClusters() {
 		Set<OCluster> result = new HashSet<OCluster>();
 
-		// ADD PHYSICAL CLUSTERS
-		for (OCluster c : physicalClusters)
+		// ADD ALL THE CLUSTERS
+		for (OCluster c : clusters)
 			result.add(c);
-
-		// ADD LOGICAL CLUSTERS
-		result.addAll(logicalClusters);
 
 		return result;
 	}
@@ -915,5 +883,37 @@ public class OStorageLocal extends OStorageAbstract {
 		} catch (Exception e) {
 			throw new OCommandExecutionException("Error on execution of command: " + iCommand, e);
 		}
+	}
+
+	/**
+	 * Add a new physical cluster into the storage.
+	 * 
+	 * @throws IOException
+	 */
+	private int addPhysicalCluster(final String iClusterName, String iClusterFileName, final int iStartSize) throws IOException {
+		final OStoragePhysicalClusterConfiguration config = new OStoragePhysicalClusterConfiguration(configuration, iClusterName,
+				clusters.length);
+		configuration.clusters.add(config);
+
+		final OClusterPhysical cluster = new OClusterPhysical(this, config);
+		final int id = registerCluster(cluster);
+
+		clusters[id].create(iStartSize);
+		configuration.update();
+		return id;
+	}
+
+	private int addLogicalCluster(final String iClusterName, final int iPhysicalCluster) throws IOException {
+		final OStorageLogicalClusterConfiguration config = new OStorageLogicalClusterConfiguration(iClusterName, clusters.length,
+				iPhysicalCluster, null);
+
+		configuration.clusters.add(config);
+
+		final OClusterLogical cluster = new OClusterLogical(this, clusters.length, iClusterName, iPhysicalCluster);
+		config.map = cluster.getRID();
+		final int id = registerCluster(cluster);
+
+		configuration.update();
+		return id;
 	}
 }

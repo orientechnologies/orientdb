@@ -29,6 +29,7 @@ public class OQueryOperatorMatches extends OQueryOperatorEqualityNotNulls {
 		super("MATCHES", 5, false);
 	}
 
+	@Override
 	protected boolean evaluateExpression(OSQLFilterCondition iCondition, final Object iLeft, final Object iRight) {
 		return iLeft.toString().matches((String) iRight);
 	}

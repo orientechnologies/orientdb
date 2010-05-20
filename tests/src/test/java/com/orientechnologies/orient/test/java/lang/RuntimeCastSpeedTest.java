@@ -37,6 +37,7 @@ public class RuntimeCastSpeedTest extends SpeedTestMonoThread {
 		instance = this;
 	}
 
+	@Override
 	@Test(enabled = false)
 	public void cycle() throws IOException {
 		((RuntimeCastSpeedTest) instance).dummy();

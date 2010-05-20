@@ -31,6 +31,7 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
 		super("IN", 5, false);
 	}
 
+	@Override
 	@SuppressWarnings("unchecked")
 	protected boolean evaluateExpression(OSQLFilterCondition iCondition, final Object iLeft, final Object iRight) {
 		if (iLeft instanceof Collection<?>) {

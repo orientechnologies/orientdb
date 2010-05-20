@@ -105,7 +105,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 		if (filter(iRecord)) {
 			resultCount++;
-			request.getResultListener().result((ORecordSchemaAware<?>) record.copy());
+			request.getResultListener().result(record.copy());
 
 			if (request.getLimit() > -1 && resultCount == request.getLimit())
 				// BREAK THE EXECUTION

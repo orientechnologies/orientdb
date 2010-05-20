@@ -31,6 +31,7 @@ public class JavaMD5SpeedTest extends SpeedTestMonoThread {
 		super(1000000);
 	}
 
+	@Override
 	@Test(enabled = false)
 	public void cycle() {
 		md.reset();
@@ -41,6 +42,7 @@ public class JavaMD5SpeedTest extends SpeedTestMonoThread {
 			Assert.assertTrue(result[i] == RESULT[i]);
 	}
 
+	@Override
 	public void init() throws NoSuchAlgorithmException {
 		md = MessageDigest.getInstance("MD5");
 	}

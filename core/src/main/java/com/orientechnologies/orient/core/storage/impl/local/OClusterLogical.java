@@ -13,49 +13,56 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.storage.impl.logical;
+package com.orientechnologies.orient.core.storage.impl.local;
 
 import java.io.IOException;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.config.OStorageLogicalClusterConfiguration;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OTreeMapPersistent;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerLong;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.tree.OTreeMapStorage;
 
 /**
- * Handle a cluster using a logical structure stored into a read physical local cluster.<br/>
- * Uses the dummy position -1 to store the total number of records.
+ * Handle a cluster using a logical structure stored into a real physical local cluster.<br/>
+ * Uses the dummy position -1 to store the total number of records. It's used only by local storage implementation since it relies
+ * on OStorageLocal.
  * 
  */
 public class OClusterLogical implements OCluster {
-	private String																			name;
-	private int																					id;
-	private OTreeMapPersistent<Long, OPhysicalPosition>	map;
-	private OPhysicalPosition														total;
+	private String																		name;
+	private int																				id;
+	private int																				physicalClusterId;
+	private OTreeMapStorage<Long, OPhysicalPosition>	map;
+	private OPhysicalPosition													total;
 
-	private OSharedResourceExternal											lock	= new OSharedResourceExternal();
+	private OSharedResourceExternal										lock	= new OSharedResourceExternal();
 
 	/**
 	 * Constructor called on creation of the object.
 	 * 
-	 * @param iDatabase
+	 * @param iStorage
+	 * @param iId
 	 * @param iName
 	 * @param iId
 	 * @param iRecordId
 	 * @throws IOException
+	 * @throws IOException
 	 */
-	public OClusterLogical(final ODatabaseRecord<?> iDatabase, final String iName) throws IOException {
-		this(iName, -1);
+	public OClusterLogical(final OStorageLocal iStorage, final int iId, final String iName, final int iPhysicalClusterId)
+			throws IOException {
+		this(iName, iId, iPhysicalClusterId);
+
 		try {
-			map = new OTreeMapPersistent<Long, OPhysicalPosition>(iDatabase, OStorage.DEFAULT_SEGMENT, OStreamSerializerLong.INSTANCE,
+			map = new OTreeMapStorage<Long, OPhysicalPosition>(iStorage, OStorage.CLUSTER_DEFAULT_NAME, OStreamSerializerLong.INSTANCE,
 					OStreamSerializerAnyStreamable.INSTANCE);
+			map.getRecord().setIdentity(iPhysicalClusterId, ORID.CLUSTER_POS_INVALID);
 
 			total = new OPhysicalPosition(0, 0, (byte) 0);
 			map.put(new Long(-1), total);
@@ -69,16 +76,15 @@ public class OClusterLogical implements OCluster {
 	/**
 	 * Constructor called on loading of the object.
 	 * 
-	 * @param iDatabase
+	 * @param iStorage
 	 * @param iName
 	 * @param iId
 	 * @param iRecordId
 	 * @throws IOException
 	 */
-	public OClusterLogical(final ODatabaseRecord<?> iDatabase, final String iName, final int iId, final ORID iRecordId)
-			throws IOException {
-		this(iName, iId);
-		map = new OTreeMapPersistent<Long, OPhysicalPosition>(iDatabase, OStorage.DEFAULT_SEGMENT, iRecordId);
+	public OClusterLogical(final OStorageLocal iStorage, final OStorageLogicalClusterConfiguration iConfig) throws IOException {
+		this(iConfig.name, iConfig.id, iConfig.physicalClusterId);
+		map = new OTreeMapStorage<Long, OPhysicalPosition>(iStorage, OStorage.CLUSTER_DEFAULT_NAME, iConfig.map);
 		map.load();
 
 		total = map.get(new Long(-1));
@@ -88,9 +94,10 @@ public class OClusterLogical implements OCluster {
 		}
 	}
 
-	protected OClusterLogical(final String iName, final int iId) {
+	protected OClusterLogical(final String iName, final int iId, final int iPhysicalClusterId) {
 		name = iName;
 		id = iId;
+		physicalClusterId = iPhysicalClusterId;
 	}
 
 	public void create(final int iStartSize) throws IOException {

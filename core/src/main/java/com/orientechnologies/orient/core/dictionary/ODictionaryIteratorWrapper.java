@@ -18,7 +18,7 @@ public class ODictionaryIteratorWrapper implements Iterator<Entry<String, Object
 
 	public Entry<String, Object> next() {
 		Entry<String, ODocument> entry = wrapped.next();
-		return (Entry<String, Object>) new OPair<String, Object>(entry.getKey(), database.getUserObjectByRecord(entry.getValue()));
+		return new OPair<String, Object>(entry.getKey(), database.getUserObjectByRecord(entry.getValue()));
 	}
 
 	public boolean hasNext() {

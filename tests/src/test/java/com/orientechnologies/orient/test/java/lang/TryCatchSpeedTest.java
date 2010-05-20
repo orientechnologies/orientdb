@@ -28,6 +28,7 @@ public class TryCatchSpeedTest extends SpeedTestMonoThread {
 		super(1000000);
 	}
 
+	@Override
 	@Test(enabled = false)
 	public void cycle() throws IOException {
 		try {

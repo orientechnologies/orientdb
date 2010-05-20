@@ -33,6 +33,7 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
 
 	protected abstract boolean evaluateExpression(final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight);
 
+	@Override
 	public boolean evaluate(final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight) {
 		if (iLeft instanceof OQueryRuntimeValueMulti) {
 			// LEFT = MULTI

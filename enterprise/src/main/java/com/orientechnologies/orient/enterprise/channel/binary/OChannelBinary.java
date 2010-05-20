@@ -151,11 +151,13 @@ public abstract class OChannelBinary extends OChannel {
 			in.read();
 	}
 
+	@Override
 	public void flush() throws IOException {
 		super.flush();
 		out.flush();
 	}
 
+	@Override
 	public void close() {
 		try {
 			in.close();

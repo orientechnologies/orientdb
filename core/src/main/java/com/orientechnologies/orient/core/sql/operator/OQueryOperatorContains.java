@@ -33,6 +33,7 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
 		super("CONTAINS", 5, false);
 	}
 
+	@Override
 	@SuppressWarnings("unchecked")
 	protected boolean evaluateExpression(final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight) {
 		OSQLFilterCondition condition;

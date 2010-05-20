@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.index;
+package com.orientechnologies.orient.core.type.tree;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -29,8 +29,8 @@ import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -39,12 +39,18 @@ import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.core.serialization.OMemoryOutputStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerFactory;
+import com.orientechnologies.orient.core.storage.impl.local.OClusterLogical;
 
+/**
+ * Persistent TreeMap implementation. The difference with the class OTreeMapPersistent is the level. In facts this class works
+ * directly at the storage level, while the other at database level. This class is used for Logical Clusters. It can'be
+ * transactional.
+ * 
+ * @see OClusterLogical
+ */
 @SuppressWarnings("serial")
-public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMapEventListener<K, V>, OSerializableStream {
-	private OSharedResourceExternal											lock						= new OSharedResourceExternal();
-	protected ODatabaseRecord<?>												database;
+public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMapEventListener<K, V>, OSerializableStream {
+	protected OSharedResourceExternal										lock						= new OSharedResourceExternal();
 
 	protected OStreamSerializer													keySerializer;
 	protected OStreamSerializer													valueSerializer;
@@ -53,21 +59,19 @@ public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMap
 	protected final OMemoryOutputStream									entryRecordBuffer;
 
 	protected final String															clusterName;
-	private ORecordBytes																record;
+	protected ORecordBytes															record;
 
-	public OTreeMapPersistent(final ODatabaseRecord<?> iDatabase, final String iClusterName, final ORID iRID) {
-		this(iDatabase, iClusterName, null, null);
+	public OTreeMapPersistent(final String iClusterName, final ORID iRID) {
+		this(iClusterName, null, null);
 		record.setIdentity(iRID.getClusterId(), iRID.getClusterPosition());
 	}
 
-	public OTreeMapPersistent(final ODatabaseRecord<?> iDatabase, String iClusterName, final OStreamSerializer iKeySerializer,
-			final OStreamSerializer iValueSerializer) {
+	public OTreeMapPersistent(String iClusterName, final OStreamSerializer iKeySerializer, final OStreamSerializer iValueSerializer) {
 		// MINIMIZE I/O USING A LARGER PAGE THAN THE DEFAULT USED IN MEMORY
 		super(1024, 0.7f);
 
-		database = iDatabase;
 		clusterName = iClusterName;
-		record = new ORecordBytes(database);
+		record = new ORecordBytes();
 
 		keySerializer = iKeySerializer;
 		valueSerializer = iValueSerializer;
@@ -77,22 +81,21 @@ public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMap
 		setListener(this);
 	}
 
-	@Override
-	protected OTreeMapEntryPersistent<K, V> createEntry(final K key, final V value) {
-		adjustPageSize();
-		return new OTreeMapEntryPersistent<K, V>(this, key, value, null);
-	}
+	public abstract OTreeMapPersistent<K, V> load() throws IOException;
 
-	@Override
-	protected OTreeMapEntry<K, V> createEntry(final OTreeMapEntry<K, V> parent) {
-		adjustPageSize();
-		return new OTreeMapEntryPersistent<K, V>(parent, parent.getPageSplitItems());
-	}
+	public abstract OTreeMapPersistent<K, V> save() throws IOException;
+
+	protected abstract void serializerFromStream(OMemoryInputStream stream) throws IOException;
+
+	/**
+	 * Lazy loads a node.
+	 */
+	protected abstract OTreeMapEntryPersistent<K, V> createEntry(OTreeMapEntryPersistent<K, V> iParent, ORID iRecordId)
+			throws IOException;
 
 	@Override
 	public void clear() {
 		final long timer = OProfiler.getInstance().startChrono();
-
 		lock.acquireExclusiveLock();
 
 		try {
@@ -104,11 +107,10 @@ public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMap
 			getListener().signalTreeChanged(this);
 
 		} catch (IOException e) {
-			OLogManager.instance().error(this, "Error on deleting the tree: " + record.getIdentity(), e, ODatabaseException.class);
+			OLogManager.instance().error(this, "Error on deleting the tree: " + record.getIdentity(), e, OStorageException.class);
 		} finally {
 
 			lock.releaseExclusiveLock();
-
 			OProfiler.getInstance().stopChrono("OTreeMapPersistent.clear", timer);
 		}
 	}
@@ -116,33 +118,15 @@ public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMap
 	@Override
 	public V put(final K key, final V value) {
 		final long timer = OProfiler.getInstance().startChrono();
-
 		lock.acquireExclusiveLock();
 
 		try {
-			ORecord<?> record;
-
-			if (key instanceof ORecord<?>) {
-				// RECORD KEY: ASSURE IT'S PERSISTENT TO AVOID STORING INVALID RIDs
-				record = (ORecord<?>) key;
-				if (!record.getIdentity().isValid())
-					record.save();
-			}
-
-			if (value instanceof ORecord<?>) {
-				// RECORD VALUE: ASSURE IT'S PERSISTENT TO AVOID STORING INVALID RIDs
-				record = (ORecord<?>) value;
-				if (!record.getIdentity().isValid())
-					record.save();
-			}
-
-			final V v = super.put(key, value);
+			final V v = internalPut(key, value);
 			commitChanges(null);
 			return v;
 		} finally {
 
 			lock.releaseExclusiveLock();
-
 			OProfiler.getInstance().stopChrono("OTreeMapPersistent.put", timer);
 		}
 	}
@@ -150,17 +134,17 @@ public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMap
 	@Override
 	public void putAll(final Map<? extends K, ? extends V> map) {
 		final long timer = OProfiler.getInstance().startChrono();
-
 		lock.acquireExclusiveLock();
 
 		try {
-			super.putAll(map);
+			for (Entry<? extends K, ? extends V> entry : map.entrySet()) {
+				internalPut(entry.getKey(), entry.getValue());
+			}
 			commitChanges(null);
 
 		} finally {
 
 			lock.releaseExclusiveLock();
-
 			OProfiler.getInstance().stopChrono("OTreeMapPersistent.putAll", timer);
 		}
 	}
@@ -168,7 +152,6 @@ public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMap
 	@Override
 	public V remove(final Object key) {
 		final long timer = OProfiler.getInstance().startChrono();
-
 		lock.acquireExclusiveLock();
 
 		try {
@@ -178,21 +161,15 @@ public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMap
 		} finally {
 
 			lock.releaseExclusiveLock();
-
 			OProfiler.getInstance().stopChrono("remove", timer);
 		}
 	}
 
 	public void commitChanges(final ODatabaseRecord<?> iDatabase) {
 		final long timer = OProfiler.getInstance().startChrono();
-
-		ORecordId rid = null;
-
 		lock.acquireExclusiveLock();
 
 		try {
-			// database.begin();
-
 			if (recordsToCommit.size() > 0) {
 				// COMMIT BEFORE THE NEW RECORDS (TO ASSURE RID IN RELATIONSHIPS)
 				for (OTreeMapEntryPersistent<K, V> node : recordsToCommit) {
@@ -230,20 +207,12 @@ public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMap
 				save();
 			}
 
-			// database.commit();
-
 		} catch (IOException e) {
-			OLogManager.instance().error(this, "Error on saving the tree", e, ODatabaseException.class);
-
-			if (iDatabase != null)
-				iDatabase.rollback();
-			else
-				database.rollback();
+			OLogManager.instance().exception("Error on saving the tree", e, OStorageException.class);
 
 		} finally {
 
 			lock.releaseExclusiveLock();
-
 			OProfiler.getInstance().stopChrono("OTreeMapPersistent.commitChanges", timer);
 		}
 	}
@@ -258,12 +227,11 @@ public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMap
 			size = stream.getAsInteger();
 			lastPageSize = stream.getAsShort();
 
-			keySerializer = OStreamSerializerFactory.get(database, stream.getAsString());
-			valueSerializer = OStreamSerializerFactory.get(database, stream.getAsString());
+			serializerFromStream(stream);
 
 			// LOAD THE ROOT OBJECT AFTER ALL
 			if (rootRid.isValid())
-				root = new OTreeMapEntryPersistent<K, V>(this, null, rootRid);
+				root = createEntry(null, rootRid);
 
 			return this;
 
@@ -320,38 +288,11 @@ public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMap
 		return rid == null ? 0 : rid.hashCode();
 	}
 
-	public OTreeMapPersistent<K, V> load() throws IOException {
-		lock.acquireExclusiveLock();
-
-		try {
-			record.load();
-			fromStream(record.toStream());
-			return this;
-
-		} finally {
-			lock.releaseExclusiveLock();
-		}
-	}
-
-	public OTreeMapPersistent<K, V> save() throws IOException {
-
-		lock.acquireExclusiveLock();
-
-		try {
-			record.fromStream(toStream());
-			record.save(clusterName);
-			return this;
-
-		} finally {
-			lock.releaseExclusiveLock();
-		}
-	}
-
 	public ORecordBytes getRecord() {
 		return record;
 	}
 
-	private void adjustPageSize() {
+	protected void adjustPageSize() {
 		lastPageSize = (int) (size * 0.2 / 100);
 		if (lastPageSize < 256)
 			lastPageSize = 256;
@@ -427,5 +368,30 @@ public class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMap
 		} finally {
 			lock.releaseSharedLock();
 		}
+	}
+
+	public String getClusterName() {
+		return clusterName;
+	}
+
+	private V internalPut(final K key, final V value) {
+		ORecord<?> record;
+
+		if (key instanceof ORecord<?>) {
+			// RECORD KEY: ASSURE IT'S PERSISTENT TO AVOID STORING INVALID RIDs
+			record = (ORecord<?>) key;
+			if (!record.getIdentity().isValid())
+				record.save();
+		}
+
+		if (value instanceof ORecord<?>) {
+			// RECORD VALUE: ASSURE IT'S PERSISTENT TO AVOID STORING INVALID RIDs
+			record = (ORecord<?>) value;
+			if (!record.getIdentity().isValid())
+				record.save();
+		}
+
+		final V v = super.put(key, value);
+		return v;
 	}
 }

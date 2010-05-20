@@ -23,7 +23,7 @@ import java.net.Socket;
 import java.net.SocketException;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
@@ -106,6 +106,7 @@ public class OServerNetworkListener extends Thread {
 		return active;
 	}
 
+	@Override
 	public void run() {
 		ONetworkProtocol protocol;
 		OClientConnection connection;
@@ -117,8 +118,8 @@ public class OServerNetworkListener extends Thread {
 					Socket socket = serverSocket.accept();
 
 					socket.setPerformancePreferences(0, 2, 1);
-					socket.setSendBufferSize(OChannelBinary.DEFAULT_BUFFER_SIZE);
-					socket.setReceiveBufferSize(OChannelBinary.DEFAULT_BUFFER_SIZE);
+					socket.setSendBufferSize(OChannel.DEFAULT_BUFFER_SIZE);
+					socket.setReceiveBufferSize(OChannel.DEFAULT_BUFFER_SIZE);
 
 					// CREATE A NEW PROTOCOL INSTANCE
 					protocol = protocolType.newInstance();

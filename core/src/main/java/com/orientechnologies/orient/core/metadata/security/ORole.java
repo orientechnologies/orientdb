@@ -129,6 +129,7 @@ public class ORole extends OMetadataRecord {
 		return this;
 	}
 
+	@Override
 	public byte[] toStream() {
 		field("name", name);
 		field("mode", mode == ALLOW_MODES.ALLOW_ALL_BUT ? STREAM_ALLOW : STREAM_DENY);

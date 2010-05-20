@@ -52,6 +52,7 @@ public class DictionaryPutSpeedTest extends OrientMonoThreadTest {
 		database.begin(TXTYPE.NOTX);
 	}
 
+	@Override
 	public void cycle() {
 		int id = (int) (startNum + data.getCyclesDone());
 
@@ -64,6 +65,7 @@ public class DictionaryPutSpeedTest extends OrientMonoThreadTest {
 		database.getDictionary().put("doc-" + id, record);
 	}
 
+	@Override
 	public void deinit() {
 		System.out.println("Total element in the dictionary: " + database.getDictionary().size());
 

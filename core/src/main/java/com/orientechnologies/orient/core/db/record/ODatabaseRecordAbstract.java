@@ -39,7 +39,6 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecord.STATUS;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -165,7 +164,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		OCommandRequestInternal command = (OCommandRequestInternal) iCommand;
 
 		try {
-			command.setDatabase((ODatabaseRecord<ODocument>) getDatabaseOwner());
+			command.setDatabase(getDatabaseOwner());
 
 			return command;
 
@@ -303,7 +302,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			iRecord.fromStream(recordBuffer.buffer);
 			iRecord.setStatus(STATUS.LOADED);
 
-			return (REC) iRecord;
+			return iRecord;
 		} catch (ODatabaseException e) {
 			// RE-THROW THE EXCEPTION
 			throw e;
@@ -394,12 +393,14 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		}
 	}
 
+	@Override
 	public ODatabaseRecord<?> getDatabaseOwner() {
 		return (ODatabaseRecord<?>) databaseOwner;
 	}
 
+	@Override
 	public ODatabaseComplex<REC> setDatabaseOwner(ODatabaseComplex<?> iOwner) {
-		databaseOwner = (ODatabaseRecord<?>) iOwner;
+		databaseOwner = iOwner;
 		return this;
 	}
 
@@ -407,6 +408,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		return ORecordSerializerFactory.instance().getFormatForObject(iObject, recordFormat);
 	}
 
+	@Override
 	protected void checkOpeness() {
 		if (isClosed())
 			throw new ODatabaseException("Database is closed");

@@ -29,6 +29,7 @@ public abstract class OQueryOperatorEqualityNotNulls extends OQueryOperatorEqual
 		super(iKeyword, iPrecedence, iLogical);
 	}
 
+	@Override
 	public boolean evaluate(final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight) {
 		if (iLeft == null || iRight == null)
 			return false;

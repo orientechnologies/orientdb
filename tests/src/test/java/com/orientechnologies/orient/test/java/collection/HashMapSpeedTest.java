@@ -23,10 +23,12 @@ import org.testng.annotations.Test;
 public class HashMapSpeedTest extends CollectionBaseAbstractSpeedTest {
 	private HashMap<String, String>	map;
 
+	@Override
 	public void cycle() {
 		map.get(searchedValue);
 	}
 
+	@Override
 	public void init() {
 		map = new HashMap<String, String>();
 		for (int i = 0; i < collectionSize; ++i) {

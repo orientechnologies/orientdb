@@ -20,9 +20,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseBinary;
-import com.orientechnologies.orient.core.index.OTreeMapPersistent;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerString;
+import com.orientechnologies.orient.core.type.tree.OTreeMapDatabase;
 import com.orientechnologies.orient.kv.index.OTreeMapPersistentAsynch;
 
 /**
@@ -32,12 +32,12 @@ import com.orientechnologies.orient.kv.index.OTreeMapPersistentAsynch;
  * 
  */
 public class OKVDictionaryBucketManager {
-	private static Map<String, OTreeMapPersistent<String, String>>	bucketCache						= new HashMap<String, OTreeMapPersistent<String, String>>();
+	private static Map<String, OTreeMapDatabase<String, String>>	bucketCache						= new HashMap<String, OTreeMapDatabase<String, String>>();
 	private static final String																			DEFAULT_CLUSTER_NAME	= "default";
 
 	public static synchronized Map<String, String> getDictionaryBucket(final ODatabaseBinary iDatabase, final String iName,
 			final boolean iAsynchMode) throws IOException {
-		OTreeMapPersistent<String, String> bucket = bucketCache.get(iDatabase.getName() + ":" + iName);
+		OTreeMapDatabase<String, String> bucket = bucketCache.get(iDatabase.getName() + ":" + iName);
 
 		if (bucket != null)
 			return bucket;
@@ -50,7 +50,7 @@ public class OKVDictionaryBucketManager {
 				bucket = new OTreeMapPersistentAsynch<String, String>(iDatabase, DEFAULT_CLUSTER_NAME, OStreamSerializerString.INSTANCE,
 						OStreamSerializerString.INSTANCE);
 			else
-				bucket = new OTreeMapPersistent<String, String>(iDatabase, DEFAULT_CLUSTER_NAME, OStreamSerializerString.INSTANCE,
+				bucket = new OTreeMapDatabase<String, String>(iDatabase, DEFAULT_CLUSTER_NAME, OStreamSerializerString.INSTANCE,
 						OStreamSerializerString.INSTANCE);
 
 			bucket.save();
@@ -60,7 +60,7 @@ public class OKVDictionaryBucketManager {
 			if (iAsynchMode)
 				bucket = new OTreeMapPersistentAsynch<String, String>(iDatabase, DEFAULT_CLUSTER_NAME, record.getIdentity());
 			else
-				bucket = new OTreeMapPersistent<String, String>(iDatabase, DEFAULT_CLUSTER_NAME, record.getIdentity());
+				bucket = new OTreeMapDatabase<String, String>(iDatabase, DEFAULT_CLUSTER_NAME, record.getIdentity());
 
 			bucket.load();
 		}

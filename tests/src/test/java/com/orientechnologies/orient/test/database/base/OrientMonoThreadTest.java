@@ -29,6 +29,7 @@ public abstract class OrientMonoThreadTest extends SpeedTestMonoThread {
 		Orient.instance().registerEngine(new OEngineRemote());
 	}
 
+	@Override
 	public void deinit() {
 		System.out.println(OProfiler.getInstance().dump());
 	}

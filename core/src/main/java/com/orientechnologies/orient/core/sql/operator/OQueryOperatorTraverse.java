@@ -41,6 +41,7 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 		this.endDeepLevel = endDeepLevel;
 	}
 
+	@Override
 	protected boolean evaluateExpression(final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight) {
 		final OSQLFilterCondition condition;
 		final Object target;

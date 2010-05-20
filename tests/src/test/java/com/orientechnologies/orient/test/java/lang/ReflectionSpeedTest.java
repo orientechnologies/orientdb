@@ -34,6 +34,7 @@ public class ReflectionSpeedTest extends SpeedTestMonoThread {
 			field.setAccessible(true);
 	}
 
+	@Override
 	@Test(enabled = false)
 	public void cycle() throws IOException, IllegalArgumentException, IllegalAccessException {
 		field.set(account, "Set test");

@@ -42,7 +42,7 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
 
 	protected ORecordSchemaAware<?> newObject(ODatabaseRecord<?> iDatabase, String iClassName) throws InstantiationException,
 			IllegalAccessException {
-		return new ODocument((ODatabaseDocument) iDatabase);
+		return new ODocument(iDatabase);
 	}
 
 	public ORecordInternal<?> fromStream(ODatabaseRecord<?> iDatabase, byte[] iSource) {

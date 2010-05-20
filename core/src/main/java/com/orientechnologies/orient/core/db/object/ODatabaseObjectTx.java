@@ -277,6 +277,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 		return entityManager;
 	}
 
+	@Override
 	public ODatabaseDocument getUnderlying() {
 		return underlying;
 	}

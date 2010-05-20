@@ -53,7 +53,7 @@ public abstract class OStreamSerializerAbstract implements OStreamSerializer {
 		final int pos;
 		if (iBuffer.charAt(0) == SHORT_FORM_PREFIX) {
 			// SHORT FORM
-			cls = (Class<?>) OClassDictionary.instance().getClassByCode(iBuffer.charAt(1));
+			cls = OClassDictionary.instance().getClassByCode(iBuffer.charAt(1));
 			pos = 1;
 		} else {
 			// LONG FORM

@@ -19,7 +19,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 
 public class OStreamSerializerFactory {
-	public static OStreamSerializer get(ODatabaseRecord<?> iDatabase, String iName) {
+	public static OStreamSerializer get(final ODatabaseRecord<?> iDatabase, final String iName) {
 		try {
 			if (iName.equals(OStreamSerializerRecord.NAME))
 				return new OStreamSerializerRecord(iDatabase);

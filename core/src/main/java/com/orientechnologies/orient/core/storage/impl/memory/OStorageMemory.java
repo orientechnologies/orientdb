@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.storage.impl.memory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -29,7 +30,6 @@ import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
@@ -39,7 +39,6 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
-import com.orientechnologies.orient.core.storage.impl.logical.OClusterLogical;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
 /**
@@ -53,11 +52,9 @@ import com.orientechnologies.orient.core.tx.OTransaction;
  * 
  */
 public class OStorageMemory extends OStorageAbstract {
-	private final List<OClusterMemory>	physicalClusters	= new ArrayList<OClusterMemory>();
-	private final List<OClusterLogical>	logicalClusters		= new ArrayList<OClusterLogical>();
 	private final ODataSegmentMemory		data							= new ODataSegmentMemory();
-	private int													defaultCluster		= 0;
-	private ODatabaseRecord<?>					database;
+	private final List<OClusterMemory>	clusters					= new ArrayList<OClusterMemory>();
+	private int													defaultClusterId	= 0;
 
 	public OStorageMemory(final String iURL) {
 		super(iURL, iURL, "rw");
@@ -71,16 +68,16 @@ public class OStorageMemory extends OStorageAbstract {
 		addUser();
 		configuration = new OStorageConfiguration(this);
 
-		addDataSegment(OStorage.DEFAULT_SEGMENT);
+		addDataSegment(OStorage.CLUSTER_DEFAULT_NAME);
 
 		// ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
-		addCluster(OMetadata.CLUSTER_METADATA_NAME);
+		addCluster(OStorage.CLUSTER_METADATA_NAME, null);
 
 		// ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING
-		addCluster("index");
+		addCluster("index", null);
 
 		// ADD THE DEFAULT CLUSTER
-		defaultCluster = addCluster(OStorage.DEFAULT_SEGMENT);
+		defaultClusterId = addCluster(OStorage.CLUSTER_DEFAULT_NAME, null);
 
 		try {
 			configuration = new OStorageConfiguration(this);
@@ -93,9 +90,9 @@ public class OStorageMemory extends OStorageAbstract {
 
 	public void close() {
 		// CLOSE ALL THE CLUSTERS
-		for (OClusterMemory c : physicalClusters)
+		for (OClusterMemory c : clusters)
 			c.close();
-		physicalClusters.clear();
+		clusters.clear();
 
 		// CLOSE THE DATA SEGMENT
 		data.close();
@@ -103,19 +100,9 @@ public class OStorageMemory extends OStorageAbstract {
 		open = false;
 	}
 
-	public int addLogicalCluster(final OClusterLogical iClusterLogical) {
-		iClusterLogical.setId(getLogicalClusterIndex(logicalClusters.size()));
-		return registerLogicalCluster(iClusterLogical);
-	}
-
-	public int registerLogicalCluster(final OClusterLogical iClusterLogical) {
-		logicalClusters.add(iClusterLogical);
-		return iClusterLogical.getId();
-	}
-
-	public int addPhysicalCluster(final String iClusterName, final String iClusterFileName, final int iStartSize) {
-		physicalClusters.add(new OClusterMemory(physicalClusters.size(), iClusterName));
-		return physicalClusters.size() - 1;
+	public int addCluster(final String iClusterName, final String iClusterType, final Object... iParameters) {
+		clusters.add(new OClusterMemory(clusters.size(), iClusterName));
+		return clusters.size() - 1;
 	}
 
 	public int addDataSegment(final String iDataSegmentName) {
@@ -221,26 +208,26 @@ public class OStorageMemory extends OStorageAbstract {
 	public long count(final int[] iClusterIds) {
 		long tot = 0;
 		for (int i = 0; i < iClusterIds.length; ++i)
-			tot += physicalClusters.get(iClusterIds[i]).getElements();
+			tot += clusters.get(iClusterIds[i]).getElements();
 		return tot;
 	}
 
 	public OCluster getClusterByName(final String iClusterName) {
-		for (int i = 0; i < physicalClusters.size(); ++i)
+		for (int i = 0; i < clusters.size(); ++i)
 			if (getClusterById(i).getName().equals(iClusterName))
 				return getClusterById(i);
 		return null;
 	}
 
 	public int getClusterIdByName(final String iClusterName) {
-		for (int i = 0; i < physicalClusters.size(); ++i)
+		for (int i = 0; i < clusters.size(); ++i)
 			if (getClusterById(i).getName().equals(iClusterName))
 				return getClusterById(i).getId();
 		return -1;
 	}
 
 	public String getPhysicalClusterNameById(final int iClusterId) {
-		for (int i = 0; i < physicalClusters.size(); ++i)
+		for (int i = 0; i < clusters.size(); ++i)
 			if (getClusterById(i).getId() == iClusterId)
 				return getClusterById(i).getName();
 		return null;
@@ -248,7 +235,7 @@ public class OStorageMemory extends OStorageAbstract {
 
 	public Set<String> getClusterNames() {
 		Set<String> result = new HashSet<String>();
-		for (int i = 0; i < physicalClusters.size(); ++i)
+		for (int i = 0; i < clusters.size(); ++i)
 			result.add(getClusterById(i).getName());
 		return result;
 	}
@@ -284,14 +271,15 @@ public class OStorageMemory extends OStorageAbstract {
 	}
 
 	public OCluster getClusterById(final int iClusterId) {
-		return iClusterId >= 0 ? physicalClusters.get(iClusterId) : logicalClusters.get(getLogicalClusterIndex(iClusterId));
+		return clusters.get(iClusterId);
 	}
 
-	public Collection<OCluster> getClusters() {
-		ArrayList<OCluster> clusters = new ArrayList<OCluster>();
-		clusters.addAll(physicalClusters);
-		clusters.addAll(logicalClusters);
-		return clusters;
+	public Collection<? extends OCluster> getClusters() {
+		return Collections.unmodifiableCollection(clusters);
+	}
+
+	public int getDefaultClusterId() {
+		return defaultClusterId;
 	}
 
 	public Object command(OCommandRequestInternal iCommand) {

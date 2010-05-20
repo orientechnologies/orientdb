@@ -34,6 +34,7 @@ public class NativeSynchQuerySpeedTest extends SpeedTestMonoThread {
 		super(1);
 	}
 
+	@Override
 	public void cycle() throws UnsupportedEncodingException {
 		new ONativeSynchQuery<ODocument, OQueryContextNativeSchema<ODocument>>(database, "Animal",
 				new OQueryContextNativeSchema<ODocument>()) {
@@ -46,6 +47,7 @@ public class NativeSynchQuerySpeedTest extends SpeedTestMonoThread {
 		}.execute();
 	}
 
+	@Override
 	public void deinit() throws IOException {
 		if (result == null)
 			System.out.println("Error on execution");

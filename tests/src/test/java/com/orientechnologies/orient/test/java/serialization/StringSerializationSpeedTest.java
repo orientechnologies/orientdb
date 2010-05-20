@@ -27,6 +27,7 @@ public class StringSerializationSpeedTest extends SpeedTestMonoThread {
 		super(1000000);
 	}
 
+	@Override
 	@Test(enabled = false)
 	public void cycle() throws IOException {
 		StringBuilder buffer = new StringBuilder();

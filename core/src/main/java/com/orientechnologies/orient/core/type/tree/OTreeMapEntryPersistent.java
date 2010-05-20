@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.index;
+package com.orientechnologies.orient.core.type.tree;
 
 import java.io.IOException;
 import java.lang.ref.SoftReference;
@@ -32,15 +32,15 @@ import com.orientechnologies.orient.core.serialization.OMemoryOutputStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
 @SuppressWarnings("unchecked")
-public class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> implements OSerializableStream {
-	OTreeMapPersistent<K, V>											persistentTree;
+public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> implements OSerializableStream {
+	protected OTreeMapPersistent<K, V>						pTree;
 
 	byte[][]																			serializedKeys;
 	byte[][]																			serializedValues;
 
-	private ORID																	parentRid;
-	private ORID																	leftRid;
-	private ORID																	rightRid;
+	protected ORID																parentRid;
+	protected ORID																leftRid;
+	protected ORID																rightRid;
 
 	public ORecordBytes														record;
 
@@ -71,15 +71,15 @@ public class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> implement
 	 */
 	public OTreeMapEntryPersistent(OTreeMapEntry<K, V> iParent, int iPosition) {
 		super(iParent, iPosition);
-		persistentTree = (OTreeMapPersistent<K, V>) tree;
+		pTree = (OTreeMapPersistent<K, V>) tree;
 
 		parentRid = new ORecordId();
 		leftRid = new ORecordId();
 		rightRid = new ORecordId();
 
-		record = new ORecordBytes(persistentTree.database);
+		record = new ORecordBytes();
 
-		pageSize = persistentTree.getPageSize();
+		pageSize = pTree.getPageSize();
 
 		// COPY ALSO THE SERIALIZED KEYS/VALUES
 		serializedKeys = new byte[pageSize][];
@@ -104,29 +104,33 @@ public class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> implement
 	public OTreeMapEntryPersistent(OTreeMapPersistent<K, V> iTree, OTreeMapEntryPersistent<K, V> iParent, ORID iRecordId)
 			throws IOException {
 		super(iTree);
-		persistentTree = iTree;
-		record = new ORecordBytes(persistentTree.database, iRecordId);
+		pTree = iTree;
+		record = new ORecordBytes();
+		record.setIdentity(iRecordId.getClusterId(), iRecordId.getClusterPosition());
 		parent = new SoftReference<OTreeMapEntry<K, V>>(iParent);
-		load();
 	}
 
 	public OTreeMapEntryPersistent(OTreeMapPersistent<K, V> iTree, K key, V value, OTreeMapEntryPersistent<K, V> iParent) {
 		super(iTree, key, value, iParent);
-		persistentTree = iTree;
+		pTree = iTree;
 
 		parentRid = new ORecordId();
 		leftRid = new ORecordId();
 		rightRid = new ORecordId();
 
-		record = new ORecordBytes(iTree.database);
+		record = new ORecordBytes();
 
-		pageSize = persistentTree.getPageSize();
+		pageSize = pTree.getPageSize();
 
 		serializedKeys = new byte[pageSize][];
 		serializedValues = new byte[pageSize][];
 
 		markDirty();
 	}
+
+	public abstract OTreeMapEntryPersistent<K, V> load() throws IOException;
+
+	public abstract OTreeMapEntryPersistent<K, V> save() throws IOException;
 
 	@Override
 	public OTreeMapEntry<K, V> getParent() {
@@ -139,8 +143,7 @@ public class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> implement
 
 			try {
 				// LAZY LOADING OF THE PARENT NODE
-				OTreeMapEntryPersistent<K, V> node = (OTreeMapEntryPersistent<K, V>) new OTreeMapEntryPersistent<K, V>(persistentTree,
-						this, parentRid).load();
+				OTreeMapEntry<K, V> node = pTree.createEntry(this, parentRid).load();
 
 				parent = new SoftReference<OTreeMapEntry<K, V>>(node);
 			} catch (IOException e) {
@@ -170,8 +173,7 @@ public class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> implement
 
 			try {
 				// LAZY LOADING OF THE LEFT LEAF
-				OTreeMapEntryPersistent<K, V> node = (OTreeMapEntryPersistent<K, V>) new OTreeMapEntryPersistent<K, V>(persistentTree,
-						this, leftRid).load();
+				OTreeMapEntry<K, V> node = pTree.createEntry(this, leftRid).load();
 
 				left = new SoftReference<OTreeMapEntry<K, V>>(node);
 			} catch (IOException e) {
@@ -204,7 +206,7 @@ public class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> implement
 
 			// LAZY LOADING OF THE RIGHT LEAF
 			try {
-				OTreeMapEntry<K, V> node = new OTreeMapEntryPersistent<K, V>(persistentTree, this, rightRid).load();
+				OTreeMapEntry<K, V> node = pTree.createEntry(this, rightRid).load();
 
 				right = new SoftReference<OTreeMapEntry<K, V>>(node);
 			} catch (IOException e) {
@@ -295,7 +297,7 @@ public class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> implement
 			try {
 				OProfiler.getInstance().updateStatistic("OTreeMapEntryP.unserializeKey", 1);
 
-				keys[iIndex] = (K) persistentTree.keySerializer.fromStream(serializedKeys[iIndex]);
+				keys[iIndex] = (K) pTree.keySerializer.fromStream(serializedKeys[iIndex]);
 			} catch (IOException e) {
 
 				OLogManager.instance().error(this, "Can't lazy load the key #" + iIndex + " in tree node " + this, e,
@@ -311,7 +313,7 @@ public class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> implement
 			try {
 				OProfiler.getInstance().updateStatistic("OTreeMapEntryP.unserializeValue", 1);
 
-				values[iIndex] = (V) persistentTree.valueSerializer.fromStream(serializedValues[iIndex]);
+				values[iIndex] = (V) pTree.valueSerializer.fromStream(serializedValues[iIndex]);
 			} catch (IOException e) {
 
 				OLogManager.instance().error(this, "Can't lazy load the value #" + iIndex + " in tree node " + this, e,
@@ -405,7 +407,7 @@ public class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> implement
 	public final byte[] toStream() throws IOException {
 		final long timer = OProfiler.getInstance().startChrono();
 
-		OMemoryOutputStream stream = persistentTree.entryRecordBuffer;
+		OMemoryOutputStream stream = pTree.entryRecordBuffer;
 
 		try {
 			stream.add((short) pageSize);
@@ -445,7 +447,7 @@ public class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> implement
 			if (serializedKeys[i] == null) {
 				OProfiler.getInstance().updateStatistic("OTreeMapEntryP.serializeValue", 1);
 
-				serializedKeys[i] = persistentTree.keySerializer.toStream(keys[i]);
+				serializedKeys[i] = pTree.keySerializer.toStream(keys[i]);
 			}
 		}
 	}
@@ -460,7 +462,7 @@ public class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> implement
 			if (serializedValues[i] == null) {
 				OProfiler.getInstance().updateStatistic("OTreeMapEntryP.serializeKey", 1);
 
-				serializedValues[i] = persistentTree.valueSerializer.toStream(values[i]);
+				serializedValues[i] = pTree.valueSerializer.toStream(values[i]);
 			}
 		}
 	}
@@ -486,17 +488,5 @@ public class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> implement
 	public int hashCode() {
 		final ORID rid = record.getIdentity();
 		return rid == null ? 0 : rid.hashCode();
-	}
-
-	public OTreeMapEntry<K, V> load() throws IOException {
-		record.load();
-		fromStream(record.toStream());
-		return this;
-	}
-
-	public OTreeMapEntryPersistent<K, V> save() throws IOException {
-		record.fromStream(toStream());
-		record.save(persistentTree.clusterName);
-		return this;
 	}
 }

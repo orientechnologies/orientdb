@@ -21,10 +21,9 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 public class OMetadata {
-	public static final String		CLUSTER_METADATA_NAME	= "metadata";
-
 	protected ODatabaseRecord<?>	database;
 	protected int									schemaClusterId;
 
@@ -41,7 +40,7 @@ public class OMetadata {
 		init();
 
 		try {
-			if (schemaClusterId == -1 || database.countClusterElements(CLUSTER_METADATA_NAME) == 0)
+			if (schemaClusterId == -1 || database.countClusterElements(OStorage.CLUSTER_METADATA_NAME) == 0)
 				return;
 
 			loadSchema();
@@ -58,11 +57,11 @@ public class OMetadata {
 
 		try {
 			// CREATE RECORD FOR SCHEMA
-			schema.save(CLUSTER_METADATA_NAME);
+			schema.save(OStorage.CLUSTER_METADATA_NAME);
 			database.getStorage().getConfiguration().schemaRecordId = schema.getIdentity().toString();
 
 			// CREATE RECORD FOR SECURITY
-			security.save(CLUSTER_METADATA_NAME);
+			security.save(OStorage.CLUSTER_METADATA_NAME);
 			database.getStorage().getConfiguration().securityRecordId = security.getIdentity().toString();
 
 			database.getStorage().getConfiguration().update();
@@ -93,7 +92,7 @@ public class OMetadata {
 	}
 
 	private void init() {
-		schemaClusterId = database.getClusterIdByName(CLUSTER_METADATA_NAME);
+		schemaClusterId = database.getClusterIdByName(OStorage.CLUSTER_METADATA_NAME);
 
 		schema = new OSchema(database, schemaClusterId);
 		security = new OSecurity(database, schemaClusterId);

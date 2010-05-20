@@ -69,10 +69,12 @@ public class OTreeMapMemory<K, V> extends OTreeMap<K, V> {
 		super(m);
 	}
 
+	@Override
 	protected OTreeMapEntry<K, V> createEntry(final K key, final V value) {
 		return new OTreeMapEntryMemory<K, V>(this, key, value, null);
 	}
 
+	@Override
 	protected OTreeMapEntry<K, V> createEntry(final OTreeMapEntry<K, V> parent) {
 		return new OTreeMapEntryMemory<K, V>(parent, parent.getPageSplitItems());
 	}

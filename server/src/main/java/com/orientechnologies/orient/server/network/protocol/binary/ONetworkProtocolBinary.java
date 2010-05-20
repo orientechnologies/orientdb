@@ -48,7 +48,6 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.ODictionaryLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
-import com.orientechnologies.orient.core.storage.impl.logical.OClusterLogical;
 import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
@@ -75,8 +74,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		super(OServer.getThreadGroup(), "Binary-DB");
 	}
 
+	@Override
 	public void config(final Socket iSocket, final OClientConnection iConnection) throws IOException {
-		channel = (OChannelBinary) new OChannelBinaryServer(iSocket);
+		channel = new OChannelBinaryServer(iSocket);
 		connection = iConnection;
 
 		start();
@@ -138,7 +138,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 					sendOk();
 					channel.writeString(connection.id);
 					channel.writeInt(connection.database.getClusterNames().size());
-					for (OCluster c : ((OStorage) connection.database.getStorage()).getClusters()) {
+					for (OCluster c : (connection.database.getStorage()).getClusters()) {
 						channel.writeString(c.getName());
 						channel.writeInt(c.getId());
 					}
@@ -215,25 +215,20 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				channel.writeLong(count);
 				break;
 
-			case OChannelBinaryProtocol.CLUSTER_PHYSICAL_ADD: {
-				data.commandInfo = "Add physycal cluster";
+			case OChannelBinaryProtocol.CLUSTER_ADD: {
+				data.commandInfo = "Add cluster";
 
-				final int num = connection.database.addPhysicalCluster(channel.readString(), channel.readString(), channel.readInt());
+				final String type = channel.readString();
+				final String name = channel.readString();
+
+				final int num;
+				if (OStorage.TYPE_PHYSICAL.equals(type))
+					num = connection.database.addPhysicalCluster(name, channel.readString(), channel.readInt());
+				else
+					num = connection.database.addLogicalCluster(name, channel.readInt());
 
 				sendOk();
 				channel.writeShort((short) num);
-				break;
-			}
-
-			case OChannelBinaryProtocol.CLUSTER_LOGICAL_ADD: {
-				data.commandInfo = "Add logical cluster";
-
-				final int num = connection.database.addLogicalCluster(channel.readString(), connection.database.getDefaultClusterId());
-
-				sendOk();
-				OClusterLogical cluster = (OClusterLogical) connection.database.getStorage().getClusterById(num);
-				channel.writeShort((short) num);
-				channel.writeString(cluster.getRID().toString());
 				break;
 			}
 

@@ -42,7 +42,6 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OIOException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -53,8 +52,8 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
-import com.orientechnologies.orient.core.storage.impl.logical.OClusterLogical;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
@@ -68,7 +67,6 @@ public class OStorageRemote extends OStorageAbstract {
 	private static final String							DEFAULT_HOST			= "localhost";
 	private static final String[]						DEFAULT_PORTS			= new String[] { "2424" };
 	private static final String							ADDRESS_SEPARATOR	= ";";
-
 	private String													userName;
 	private String													userPassword;
 	protected List<OPair<String, String[]>>	serverURLs				= new ArrayList<OPair<String, String[]>>();
@@ -76,6 +74,7 @@ public class OStorageRemote extends OStorageAbstract {
 	protected OChannelBinaryClient					network;
 	protected String												sessionId;
 	protected final Map<String, Integer>		clusters					= new HashMap<String, Integer>();
+	protected int														defaultClusterId;
 	protected int														retry							= 0;
 
 	public OStorageRemote(final String iURL, final String iMode) throws IOException {
@@ -93,7 +92,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 			openRemoteDatabase();
 			addUser();
-			
+
 			configuration.load();
 
 			Orient.instance().registerStorage(this);
@@ -177,7 +176,7 @@ public class OStorageRemote extends OStorageAbstract {
 			try {
 				network.writeByte(OChannelBinaryProtocol.RECORD_CREATE);
 				network.writeShort((short) iClusterId);
-				network.writeBytes((byte[]) iContent);
+				network.writeBytes(iContent);
 				network.writeByte(iRecordType);
 				network.flush();
 
@@ -238,7 +237,7 @@ public class OStorageRemote extends OStorageAbstract {
 				network.writeByte(OChannelBinaryProtocol.RECORD_UPDATE);
 				network.writeShort((short) iClusterId);
 				network.writeLong(iPosition);
-				network.writeBytes((byte[]) iContent);
+				network.writeBytes(iContent);
 				network.writeInt(iVersion);
 				network.writeByte(iRecordType);
 				network.flush();
@@ -349,7 +348,7 @@ public class OStorageRemote extends OStorageAbstract {
 		if (!(iCommand instanceof OSerializableStream))
 			throw new OCommandExecutionException("Can't serialize the command to being executed to the server side.");
 
-		OSerializableStream command = (OSerializableStream) iCommand;
+		OSerializableStream command = iCommand;
 
 		Object result = null;
 
@@ -373,8 +372,7 @@ public class OStorageRemote extends OStorageAbstract {
 				if (asynch) {
 					// ASYNCH: READ ONE RECORD AT TIME
 					while (network.readByte() == 1) {
-						ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) readRecordFromNetwork((ODatabaseRecord<?>) iCommand
-								.getDatabase());
+						ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) readRecordFromNetwork(iCommand.getDatabase());
 						if (record == null)
 							break;
 
@@ -400,7 +398,7 @@ public class OStorageRemote extends OStorageAbstract {
 						break;
 
 					case 'r':
-						result = readRecordFromNetwork((ODatabaseRecord<?>) iCommand.getDatabase());
+						result = readRecordFromNetwork(iCommand.getDatabase());
 						break;
 
 					case 'a':
@@ -440,7 +438,7 @@ public class OStorageRemote extends OStorageAbstract {
 						// JUMP LOADED OBJECTS
 						continue;
 
-					network.writeByte((byte) txEntry.status);
+					network.writeByte(txEntry.status);
 					network.writeShort((short) txEntry.record.getIdentity().getClusterId());
 
 					switch (txEntry.status) {
@@ -497,48 +495,29 @@ public class OStorageRemote extends OStorageAbstract {
 		}
 	}
 
-	public int addLogicalCluster(OClusterLogical iClusterLogical) {
+	public int getDefaultClusterId() {
+		return defaultClusterId;
+	}
+
+	public int addCluster(final String iClusterName, final String iClusterType, final Object... iArguments) {
 		checkConnection();
 
 		do {
 			boolean locked = acquireExclusiveLock();
 
 			try {
-				network.writeByte(OChannelBinaryProtocol.CLUSTER_LOGICAL_ADD);
-				network.writeString(iClusterLogical.getName());
-				network.flush();
+				network.writeByte(OChannelBinaryProtocol.CLUSTER_ADD);
+				network.writeString(iClusterType);
+				network.writeString(iClusterName);
 
-				readStatus();
+				if (OStorage.TYPE_PHYSICAL.equals(iClusterType)) {
+					// FIEL PATH + START SIZE
+					network.writeString((String) iArguments[0]).writeInt((Integer) iArguments[1]);
+				} else {
+					// PHY CLUSTER ID
+					network.writeInt((Integer) iArguments[0]);
+				}
 
-				int clusterId = network.readShort();
-				iClusterLogical.setRID(new ORecordId(network.readString()));
-				clusters.put(iClusterLogical.getName().toLowerCase(), clusterId);
-				return clusterId;
-			} catch (Exception e) {
-				if (handleException("Error on add new cluster", e))
-					break;
-
-			} finally {
-				releaseExclusiveLock(locked);
-			}
-		} while (true);
-		return 0;
-	}
-
-	public int registerLogicalCluster(OClusterLogical iClusterLogical) {
-		clusters.put(iClusterLogical.getName().toLowerCase(), iClusterLogical.getId());
-		return iClusterLogical.getId();
-	}
-
-	public int addPhysicalCluster(final String iClusterName, final String iClusterFileName, final int iFileSize) {
-		checkConnection();
-
-		do {
-			boolean locked = acquireExclusiveLock();
-
-			try {
-				network.writeByte(OChannelBinaryProtocol.CLUSTER_PHYSICAL_ADD);
-				network.writeString(iClusterName).writeString(iClusterFileName).writeInt(iFileSize);
 				network.flush();
 
 				readStatus();
@@ -822,6 +801,8 @@ public class OStorageRemote extends OStorageAbstract {
 		int tot = network.readInt();
 		for (int i = 0; i < tot; ++i)
 			clusters.put(network.readString().toLowerCase(), network.readInt());
+
+		defaultClusterId = clusters.get(OStorage.CLUSTER_DEFAULT_NAME);
 
 		open = true;
 	}

@@ -36,18 +36,20 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
  * +----------------------+----------------------+-------------+----------------------+<br/>
  * = 15 bytes<br/>
  */
-public class OClusterLocal extends OMultiFileSegment implements OCluster {
+public class OClusterPhysical extends OMultiFileSegment implements OCluster {
 	private static final String				DEF_EXTENSION	= ".ocl";
 	private static final int					RECORD_SIZE		= 15;
-	private final int									id;
+	private static final int					DEF_SIZE			= 1000000;
+
+	private int												id;
+
 	protected final OClusterLocalHole	holeSegment;
 
-	public OClusterLocal(final OStorageLocal iStorage, final OStoragePhysicalClusterConfiguration iConfig, final int iId,
-			final String iClusterName) throws IOException {
+	public OClusterPhysical(final OStorageLocal iStorage, final OStoragePhysicalClusterConfiguration iConfig) throws IOException {
 		super(iStorage, iConfig, DEF_EXTENSION, RECORD_SIZE);
-		id = iId;
+		id = iConfig.getId();
 
-		iConfig.holeFile = new OStorageClusterHoleConfiguration(iConfig, OStorageVariableParser.DB_PATH_VARIABLE + "/" + iClusterName,
+		iConfig.holeFile = new OStorageClusterHoleConfiguration(iConfig, OStorageVariableParser.DB_PATH_VARIABLE + "/" + iConfig.name,
 				iConfig.fileType, iConfig.fileMaxSize);
 
 		holeSegment = new OClusterLocalHole(this, iStorage, iConfig.holeFile);
@@ -55,6 +57,9 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 
 	@Override
 	public void create(int iStartSize) throws IOException {
+		if (iStartSize == -1)
+			iStartSize = DEF_SIZE;
+
 		super.create(iStartSize);
 		holeSegment.create();
 	}

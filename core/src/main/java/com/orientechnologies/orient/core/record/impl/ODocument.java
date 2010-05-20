@@ -405,6 +405,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	/**
 	 * Internal.
 	 */
+	@Override
 	protected void setup() {
 		super.setup();
 		recordFormat = ORecordSerializerFactory.instance().getFormat(ORecordSerializerSchemaAware2CSV.NAME);

@@ -55,8 +55,8 @@ public class CRUDDocumentLogicalTest {
 		record.field("name", "Cat");
 
 		Set<ODocument> races = new HashSet<ODocument>();
-		races.add((ODocument) database.newInstance("AnimalRace").field("name", "European"));
-		races.add((ODocument) database.newInstance("AnimalRace").field("name", "Siamese"));
+		races.add(database.newInstance("AnimalRace").field("name", "European"));
+		races.add(database.newInstance("AnimalRace").field("name", "Siamese"));
 		record.field("races", races);
 
 		record.save();
@@ -95,7 +95,7 @@ public class CRUDDocumentLogicalTest {
 		record = database.browseClass("City").last().previous();
 
 		List<ODocument> races = record.field("races");
-		races.add((ODocument) database.newInstance("AnimalRace").field("name", "Egyptian"));
+		races.add(database.newInstance("AnimalRace").field("name", "Egyptian"));
 		record.setDirty();
 
 		record.save();

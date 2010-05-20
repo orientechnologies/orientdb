@@ -37,6 +37,7 @@ public class TxTest extends OrientMonoThreadTest {
 		database.begin(TXTYPE.OPTIMISTIC);
 	}
 
+	@Override
 	public void cycle() throws UnsupportedEncodingException {
 		record.value(data.getCyclesDone() + ",'Gipsy','Cat','European','Italy'," + (data.getCyclesDone() + 300) + ".00").save();
 

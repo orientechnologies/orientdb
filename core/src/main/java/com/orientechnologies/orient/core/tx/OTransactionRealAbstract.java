@@ -39,6 +39,7 @@ public abstract class OTransactionRealAbstract<REC extends ORecordInternal<?>> e
 		return entries.size();
 	}
 
+	@Override
 	protected void checkTransaction() {
 		if (status == TXSTATUS.INVALID)
 			throw new OTransactionException("Invalid state of the transaction. The transaction must be begun.");

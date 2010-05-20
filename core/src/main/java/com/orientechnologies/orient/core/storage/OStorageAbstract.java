@@ -71,13 +71,6 @@ public abstract class OStorageAbstract extends OSharedResourceAdaptive implement
 		return name;
 	}
 
-	/**
-	 * Add a new cluster in the default segment directory and with filename equals to the cluster name.
-	 */
-	public int addCluster(final String iClusterName) {
-		return addPhysicalCluster(iClusterName, null, -1);
-	}
-
 	@Override
 	public int removeUser() {
 		int u = super.removeUser();
@@ -94,9 +87,5 @@ public abstract class OStorageAbstract extends OSharedResourceAdaptive implement
 
 	public OCacheRecord getCache() {
 		return cache;
-	}
-
-	protected int getLogicalClusterIndex(final int iClusterId) {
-		return iClusterId * -1 - 2;
 	}
 }

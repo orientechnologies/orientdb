@@ -36,6 +36,7 @@ public abstract class OFileAbstractTest extends SpeedTestMonoThread {
 
 	protected abstract OFile getFileImpl() throws IOException;
 
+	@Override
 	public void init() throws IOException {
 		// DELETE THE TEST FILE EVERY TIME
 		File f = new File(FILE_NAME);
@@ -46,6 +47,7 @@ public abstract class OFileAbstractTest extends SpeedTestMonoThread {
 		file.create(START_SIZE);
 	}
 
+	@Override
 	public void cycle() throws IOException {
 		System.out.println("Writing " + NUMS + " integers...");
 		for (int i = 0; i < NUMS; ++i)

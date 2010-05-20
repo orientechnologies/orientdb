@@ -23,22 +23,25 @@ import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.ODatabaseColumn;
 import com.orientechnologies.orient.core.record.impl.ORecordColumn;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 public class RemoteCreateObjectsCSVSpeedTest extends SpeedTestMonoThread {
 	private ODatabaseColumn	database;
-	private ORecordColumn					record;
+	private ORecordColumn		record;
 
 	public RemoteCreateObjectsCSVSpeedTest() {
 		super(1000000);
 	}
 
+	@Override
 	public void init() throws IOException {
 		Orient.instance().registerEngine(new OEngineRemote());
 
 		if (!database.getStorage().getClusterNames().contains("Animal"))
-			database.getStorage().addCluster("Animal");
+			database.getStorage().addCluster("Animal", OStorage.TYPE_PHYSICAL);
 	}
 
+	@Override
 	public void cycle() throws UnsupportedEncodingException {
 		record.reset();
 

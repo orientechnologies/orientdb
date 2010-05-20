@@ -16,6 +16,7 @@ public abstract class SpeedTestMultiThreads extends SpeedTestAbstract {
 		threadCycles = iCycles;
 	}
 
+	@Override
 	public void cycle() {
 		SpeedTestThread t;
 		for (int i = 0; i < threads; ++i)

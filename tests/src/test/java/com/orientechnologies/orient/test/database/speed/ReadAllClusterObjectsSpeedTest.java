@@ -32,10 +32,12 @@ public class ReadAllClusterObjectsSpeedTest extends SpeedTestMonoThread {
 		super(RECORDS);
 	}
 
+	@Override
 	public void init() throws IOException {
 		db = new ODatabaseRaw("embedded:database/test");
 	}
 
+	@Override
 	public void cycle() throws UnsupportedEncodingException {
 		ORawBuffer buffer;
 		objectsRead = 0;
@@ -49,6 +51,7 @@ public class ReadAllClusterObjectsSpeedTest extends SpeedTestMonoThread {
 		}
 	}
 
+	@Override
 	public void deinit() throws IOException {
 		System.out.println("Read " + objectsRead + " objects in the cluster " + CLUSTER_NAME);
 		db.close();

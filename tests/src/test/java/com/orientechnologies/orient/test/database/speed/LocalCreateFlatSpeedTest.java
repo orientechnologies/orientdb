@@ -49,6 +49,7 @@ public class LocalCreateFlatSpeedTest extends OrientMonoThreadTest {
 		database.begin(TXTYPE.NOTX);
 	}
 
+	@Override
 	public void cycle() {
 		record.reset();
 		record.value("id:" + data.getCyclesDone() + ",name:'Luca',surname:'Garulli',salary:" + (data.getCyclesDone() + 3000) + ".00")

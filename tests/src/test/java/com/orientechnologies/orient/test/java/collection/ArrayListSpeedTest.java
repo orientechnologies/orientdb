@@ -20,6 +20,7 @@ import java.util.ArrayList;
 public class ArrayListSpeedTest extends CollectionBaseAbstractSpeedTest {
 	private ArrayList<String>	arrayList;
 
+	@Override
 	public void cycle() {
 		for (String item : arrayList) {
 			if (item.equals(searchedValue))
@@ -27,6 +28,7 @@ public class ArrayListSpeedTest extends CollectionBaseAbstractSpeedTest {
 		}
 	}
 
+	@Override
 	public void init() {
 		arrayList = new ArrayList<String>();
 		for (int i = 0; i < collectionSize; ++i) {

@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.query.nativ.ONativeAsynchQuery;
 import com.orientechnologies.orient.core.query.nativ.OQueryContextNativeSchema;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 
@@ -37,6 +36,7 @@ public class NativeAsynchQuerySpeedTest extends SpeedTestMonoThread implements O
 		Orient.instance().registerEngine(new OEngineRemote());
 	}
 
+	@Override
 	public void cycle() throws UnsupportedEncodingException {
 
 		new ONativeAsynchQuery<ODocument, OQueryContextNativeSchema<ODocument>>(database, "Animal",
@@ -50,7 +50,7 @@ public class NativeAsynchQuerySpeedTest extends SpeedTestMonoThread implements O
 	}
 
 	public boolean result(final Object iRecord) {
-		OrientTest.printRecord(resultCount++, (ORecord<?>) iRecord);
+		OrientTest.printRecord(resultCount++, iRecord);
 		return true;
 	}
 }

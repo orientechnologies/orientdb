@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.storage.impl.logical.OClusterLogical;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
 /**
@@ -36,7 +35,14 @@ import com.orientechnologies.orient.core.tx.OTransaction;
  * 
  */
 public interface OStorage {
-	public static final String	DEFAULT_SEGMENT	= "default";
+	public static final String	CLUSTER_METADATA_NAME	= "metadata";
+	public static final String	CLUSTER_INDEX_NAME		= "index";
+	public static final String	CLUSTER_DEFAULT_NAME	= "default";
+
+	public static final String	DATA_DEFAULT_NAME			= "default";
+
+	public static final String	TYPE_PHYSICAL					= "PHYSICAL";
+	public static final String	TYPE_LOGICAL					= "LOGICAL";
 
 	public void open(int iRequesterId, String iUserName, String iUserPassword);
 
@@ -75,23 +81,20 @@ public interface OStorage {
 
 	public OCluster getClusterById(int iId);
 
-	public Collection<OCluster> getClusters();
-
-	/**
-	 * Add a new cluster in the default segment directory and with filename equals to the cluster name.
-	 */
-	public int addCluster(String iClusterName);
-
-	public int registerLogicalCluster(OClusterLogical iClusterLogical);
-
-	public int addLogicalCluster(OClusterLogical iClusterLogical);
+	public Collection<? extends OCluster> getClusters();
 
 	/**
 	 * Add a new cluster into the storage.
 	 * 
+	 * @param iClusterName
+	 *          name of the cluster
+	 * @param iClusterType
+	 *          Cluster type. Type depends by the implementation.
+	 * @param iParameters
+	 *          Additional parameters to configure the cluster
 	 * @throws IOException
 	 */
-	public int addPhysicalCluster(String iClusterName, String iClusterFileName, int iStartSize);
+	public int addCluster(String iClusterName, String iClusterType, Object... iParameters);
 
 	/**
 	 * Add a new data segment in the default segment directory and with filename equals to the cluster name.
@@ -103,6 +106,8 @@ public interface OStorage {
 	public long count(int iClusterId);
 
 	public long count(int[] iClusterIds);
+
+	public int getDefaultClusterId();
 
 	public int getClusterIdByName(String iClusterName);
 

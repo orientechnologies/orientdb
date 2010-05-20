@@ -38,6 +38,7 @@ public class LocalCreateFlatMultiThreadSpeedTest extends OrientMultiThreadTest {
 		super(1000000, 2, CreateObjectsThread.class);
 	}
 
+	@Override
 	public void init() {
 		database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
 		foundObjects = database.countClusterElements("Animal");
@@ -74,6 +75,7 @@ public class LocalCreateFlatMultiThreadSpeedTest extends OrientMultiThreadTest {
 		}
 	}
 
+	@Override
 	public void deinit() {
 		System.out.println("\nTotal objects in Animal cluster after the test: " + (database.countClusterElements("Animal")));
 

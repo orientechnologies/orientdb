@@ -59,7 +59,7 @@ public class OTransactionOptimistic<REC extends ORecordInternal<?>> extends OTra
 		}
 
 		// DELEGATE TO THE STORAGE
-		return (REC) database.executeReadRecord(iClusterId, iPosition, iRecord);
+		return database.executeReadRecord(iClusterId, iPosition, iRecord);
 	}
 
 	public void delete(final REC iRecord) {

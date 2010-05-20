@@ -33,10 +33,12 @@ public class TxLocalCreateObjectsSpeedTest extends OrientTxSpeedTest {
 		Orient.instance().registerEngine(new OEngineRemote());
 	}
 
+	@Override
 	public void init() throws IOException {
 		database.begin();
 	}
 
+	@Override
 	public void cycle() throws UnsupportedEncodingException {
 		record.reset();
 		record.add(String.valueOf(data.getCyclesDone()));

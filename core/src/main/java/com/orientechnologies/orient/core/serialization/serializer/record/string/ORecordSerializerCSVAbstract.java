@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.entity.OEntityManagerInternal;
@@ -71,7 +70,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			if (iLinkedClass != null)
 				// EMBEDDED OBJECTS
 				for (String item : items) {
-					coll.add(fromString(iDatabase, item, new ODocument((ODatabaseDocument) iDatabase, iLinkedClass.getName())));
+					coll.add(fromString(iDatabase, item, new ODocument(iDatabase, iLinkedClass.getName())));
 				}
 			else {
 				if (iLinkedType == null)

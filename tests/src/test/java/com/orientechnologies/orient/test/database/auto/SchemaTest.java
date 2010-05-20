@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 @Test(groups = "schema")
 public class SchemaTest {
@@ -42,15 +43,17 @@ public class SchemaTest {
 		if (database.getMetadata().getSchema().existsClass("Account"))
 			return;
 
-		database.getStorage().addCluster("csv");
-		database.getStorage().addCluster("flat");
-		database.getStorage().addCluster("binary");
+		database.getStorage().addCluster("csv", OStorage.TYPE_PHYSICAL);
+		database.getStorage().addCluster("flat", OStorage.TYPE_PHYSICAL);
+		database.getStorage().addCluster("binary", OStorage.TYPE_PHYSICAL);
 
-		OClass account = database.getMetadata().getSchema().createClass("Account", database.getStorage().addCluster("account"));
+		OClass account = database.getMetadata().getSchema().createClass("Account",
+				database.getStorage().addCluster("account", OStorage.TYPE_PHYSICAL));
 		account.createProperty("id", OType.INTEGER);
 		account.createProperty("birthDate", OType.DATE);
 
-		OClass profile = database.getMetadata().getSchema().createClass("Profile", database.getStorage().addCluster("profile"));
+		OClass profile = database.getMetadata().getSchema().createClass("Profile",
+				database.getStorage().addCluster("profile", OStorage.TYPE_PHYSICAL));
 		profile.createProperty("nick", OType.STRING).setMin("3").setMax("30");
 		profile.createProperty("name", OType.STRING).setMin("3").setMax("30");
 		profile.createProperty("surname", OType.STRING).setMin("3").setMax("30");

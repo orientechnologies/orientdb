@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 public class OSchema extends OMetadataRecord {
 	protected Map<String, OClass>	classes									= new LinkedHashMap<String, OClass>();
@@ -43,7 +44,7 @@ public class OSchema extends OMetadataRecord {
 		int clusterId = database.getClusterIdByName(iClassName);
 		if (clusterId == -1)
 			// CREATE A NEW CLUSTER
-			clusterId = database.addLogicalCluster(iClassName, database.getDefaultClusterId());
+			clusterId = database.addLogicalCluster(iClassName, database.getClusterIdByName(OStorage.CLUSTER_METADATA_NAME));
 
 		return createClass(iClassName, clusterId);
 	}
@@ -131,6 +132,7 @@ public class OSchema extends OMetadataRecord {
 		return Collections.unmodifiableCollection(classes.values());
 	}
 
+	@Override
 	public ODocument load() {
 		recordId.fromString(database.getStorage().getConfiguration().schemaRecordId);
 		return (ODocument) super.load();

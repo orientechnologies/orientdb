@@ -29,6 +29,7 @@ public class OQueryOperatorNot extends OQueryOperator {
 		super("NOT", 10, true);
 	}
 
+	@Override
 	public boolean evaluate(final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight) {
 		if (iLeft == null)
 			return false;

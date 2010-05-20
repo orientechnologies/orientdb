@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.command;
 
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 
 /**

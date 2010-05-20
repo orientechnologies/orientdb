@@ -27,20 +27,21 @@ import com.orientechnologies.orient.core.dictionary.ODictionaryInternal;
 import com.orientechnologies.orient.core.dictionary.ODictionaryIterator;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OTreeMapPersistent;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyRecord;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerString;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.type.tree.OTreeMapDatabase;
 
 @SuppressWarnings("unchecked")
 public class ODictionaryLocal<T extends Object> implements ODictionaryInternal<T> {
-	public static final String						DICTIONARY_DEF_CLUSTER_NAME	= "index";
+	public static final String					DICTIONARY_DEF_CLUSTER_NAME	= OStorage.CLUSTER_METADATA_NAME;
 
-	private ODatabaseComplex<T>						database;
-	private OTreeMapPersistent<String, T>	tree;
+	private ODatabaseComplex<T>					database;
+	private OTreeMapDatabase<String, T>	tree;
 
-	public String													clusterName									= "metadata";
+	public String												clusterName									= DICTIONARY_DEF_CLUSTER_NAME;
 
 	public ODictionaryLocal(ODatabaseRecord<?> iDatabase) throws SecurityException, NoSuchMethodException {
 		database = (ODatabaseComplex<T>) iDatabase.getDatabaseOwner();
@@ -72,7 +73,7 @@ public class ODictionaryLocal<T extends Object> implements ODictionaryInternal<T
 
 	public void load() {
 		try {
-			tree = new OTreeMapPersistent<String, T>((ODatabaseRecord<?>) database, clusterName, new ORecordId(database.getStorage()
+			tree = new OTreeMapDatabase<String, T>((ODatabaseRecord<?>) database, clusterName, new ORecordId(database.getStorage()
 					.getConfiguration().dictionaryRecordId));
 			tree.load();
 		} catch (IOException e) {
@@ -82,10 +83,10 @@ public class ODictionaryLocal<T extends Object> implements ODictionaryInternal<T
 
 	public void create() {
 		try {
-			tree = new OTreeMapPersistent<String, T>((ODatabaseRecord<?>) database, clusterName, OStreamSerializerString.INSTANCE,
+			tree = new OTreeMapDatabase<String, T>((ODatabaseRecord<?>) database, clusterName, OStreamSerializerString.INSTANCE,
 					new OStreamSerializerAnyRecord((ODatabaseRecord<? extends ORecord<?>>) database));
 			tree.save();
-			
+
 			database.getStorage().getConfiguration().dictionaryRecordId = tree.getRecord().getIdentity().toString();
 			database.getStorage().getConfiguration().update();
 		} catch (Exception e) {
@@ -93,7 +94,7 @@ public class ODictionaryLocal<T extends Object> implements ODictionaryInternal<T
 		}
 	}
 
-	public OTreeMapPersistent<String, T> getTree() {
+	public OTreeMapDatabase<String, T> getTree() {
 		return tree;
 	}
 

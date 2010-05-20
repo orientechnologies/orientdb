@@ -46,6 +46,7 @@ public abstract class OSQLQuery<T extends ORecordInternal<?>> extends OCommandSQ
 	/**
 	 * Delegates to the OQueryExecutor the query execution.
 	 */
+	@Override
 	@SuppressWarnings("unchecked")
 	public List<T> execute(final Object... iArgs) {
 		parameters = iArgs;
@@ -61,6 +62,7 @@ public abstract class OSQLQuery<T extends ORecordInternal<?>> extends OCommandSQ
 		return result != null && result.size() > 0 ? result.get(0) : null;
 	}
 
+	@Override
 	public String getText() {
 		return text;
 	}
@@ -70,6 +72,7 @@ public abstract class OSQLQuery<T extends ORecordInternal<?>> extends OCommandSQ
 		return "OSQLQuery [text=" + text + "]";
 	}
 
+	@Override
 	public OSerializableStream fromStream(final byte[] iStream) throws IOException {
 		OMemoryInputStream buffer = new OMemoryInputStream(iStream);
 		text = buffer.getAsString();
@@ -77,6 +80,7 @@ public abstract class OSQLQuery<T extends ORecordInternal<?>> extends OCommandSQ
 		return this;
 	}
 
+	@Override
 	public byte[] toStream() throws IOException {
 		OMemoryOutputStream buffer = new OMemoryOutputStream();
 		buffer.add(text);
@@ -84,10 +88,12 @@ public abstract class OSQLQuery<T extends ORecordInternal<?>> extends OCommandSQ
 		return buffer.toByteArray();
 	}
 
+	@Override
 	public ODatabaseRecord<?> getDatabase() {
 		return database;
 	}
 
+	@Override
 	public OSQLQuery<T> setDatabase(final ODatabaseRecord<?> iDatabase) {
 		database = iDatabase;
 		return this;

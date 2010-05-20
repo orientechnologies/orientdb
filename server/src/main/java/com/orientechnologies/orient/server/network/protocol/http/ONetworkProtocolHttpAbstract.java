@@ -58,9 +58,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 		super(OServer.getThreadGroup(), "HTTP");
 	}
 
+	@Override
 	public void config(final Socket iSocket, final OClientConnection iConnection) throws IOException {
 		iSocket.setSoTimeout(TCP_DEFAULT_TIMEOUT);
-		channel = (OChannelTextServer) new OChannelTextServer(iSocket);
+		channel = new OChannelTextServer(iSocket);
 		connection = iConnection;
 		configuration = new OServerConfiguration();
 

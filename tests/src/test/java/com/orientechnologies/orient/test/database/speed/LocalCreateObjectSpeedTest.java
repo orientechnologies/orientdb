@@ -51,6 +51,7 @@ public class LocalCreateObjectSpeedTest extends OrientMonoThreadTest {
 		database.begin(TXTYPE.NOTX);
 	}
 
+	@Override
 	public void cycle() {
 		account = new Account((int) data.getCyclesDone(), "Luca", "Garulli");
 		account.setBirthDate(date);

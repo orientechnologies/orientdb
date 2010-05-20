@@ -182,6 +182,7 @@ public class OClass extends OMetadataRecord {
 		return this;
 	}
 
+	@Override
 	public byte[] toStream() {
 		field("name", name);
 		field("defaultClusterId", defaultClusterId);

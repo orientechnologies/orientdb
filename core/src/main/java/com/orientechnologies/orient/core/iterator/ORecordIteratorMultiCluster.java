@@ -50,6 +50,7 @@ public class ORecordIteratorMultiCluster<REC extends ORecordInternal<?>> extends
 		lastClusterSize = database.countClusterElements(lastClusterId);
 	}
 
+	@Override
 	public boolean hasPrevious() {
 		if (limit > -1 && browsedRecords >= limit)
 			// LIMIT REACHED
@@ -78,6 +79,7 @@ public class ORecordIteratorMultiCluster<REC extends ORecordInternal<?>> extends
 	 * 
 	 * @return the previous record found, otherwise NULL when no more records are found.
 	 */
+	@Override
 	public REC previous() {
 		final REC record = getRecord();
 
@@ -133,6 +135,7 @@ public class ORecordIteratorMultiCluster<REC extends ORecordInternal<?>> extends
 	 * 
 	 * @return The object itself
 	 */
+	@Override
 	public ORecordIterator<REC> begin() {
 		currentClusterIdx = 0;
 		currentClusterPosition = -1;
@@ -144,6 +147,7 @@ public class ORecordIteratorMultiCluster<REC extends ORecordInternal<?>> extends
 	 * 
 	 * @return The object itself
 	 */
+	@Override
 	public ORecordIterator<REC> last() {
 		currentClusterIdx = clusterIds.length - 1;
 		currentClusterPosition = liveUpdated ? database.countClusterElements(clusterIds[currentClusterIdx]) : lastClusterSize;
@@ -158,6 +162,7 @@ public class ORecordIteratorMultiCluster<REC extends ORecordInternal<?>> extends
 	 *          True to activate it, otherwise false (default)
 	 * @see #isLiveUpdated()
 	 */
+	@Override
 	public ORecordIterator<REC> setLiveUpdated(boolean iLiveUpdated) {
 		super.setLiveUpdated(iLiveUpdated);
 

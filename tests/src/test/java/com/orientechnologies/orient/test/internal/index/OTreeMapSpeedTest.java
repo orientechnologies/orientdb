@@ -27,6 +27,7 @@ public class OTreeMapSpeedTest extends SpeedTestMonoThread {
 
 	private NavigableMap<Integer, Integer>	tree	= new OTreeMapMemory<Integer, Integer>();
 
+	@Override
 	@Test(enabled = false)
 	public void cycle() {
 		final int NUMS = 1000000;

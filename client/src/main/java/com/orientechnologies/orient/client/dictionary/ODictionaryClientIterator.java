@@ -41,7 +41,7 @@ public class ODictionaryClientIterator<T> implements Iterator<Entry<String, T>> 
 
 	public Entry<String, T> next() {
 		String key = keys.get(++cursor);
-		return (Entry<String, T>) new OPair(key, database.getDictionary().get(key));
+		return new OPair(key, database.getDictionary().get(key));
 	}
 
 	public void remove() {

@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
@@ -57,7 +56,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 		final long timer = OProfiler.getInstance().startChrono();
 
 		try {
-			return OBinaryProtocol.string2bytes(toString((ORecordSchemaAware<?>) iRecord, null, iDatabase, OSerializationThreadLocal.INSTANCE
+			return OBinaryProtocol.string2bytes(toString(iRecord, null, iDatabase, OSerializationThreadLocal.INSTANCE
 					.get()));
 		} finally {
 

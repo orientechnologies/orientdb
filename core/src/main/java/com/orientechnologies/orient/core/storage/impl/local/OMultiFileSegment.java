@@ -52,7 +52,7 @@ public class OMultiFileSegment extends OSegment {
 
 		if (iRoundMaxSize > 0)
 			// ROUND THE FILE SIZE TO AVOID ERRORS ON ROUNDING BY DIVIDING FOR FIXED RECORD SIZE
-			fileMaxSize = ((int) fileMaxSize / iRoundMaxSize) * iRoundMaxSize;
+			fileMaxSize = (fileMaxSize / iRoundMaxSize) * iRoundMaxSize;
 
 		// INSTANTIATE ALL THE FILES
 		int perFileMaxSize;
@@ -62,7 +62,7 @@ public class OMultiFileSegment extends OSegment {
 			files = new OFile[1];
 			files[0] = OFileFactory.create(type, iStorage.getVariableParser().resolveVariables(
 					storage.getStoragePath() + "/" + name + "." + 0 + fileExtension), iStorage.getMode());
-			perFileMaxSize = (int) fileMaxSize;
+			perFileMaxSize = fileMaxSize;
 			files[0].setMaxSize(perFileMaxSize);
 			files[0].setIncrementSize(fileIncrementSize);
 
@@ -71,7 +71,7 @@ public class OMultiFileSegment extends OSegment {
 			for (int i = 0; i < files.length; ++i) {
 				files[i] = OFileFactory.create(type, iStorage.getVariableParser().resolveVariables(iConfig.infoFiles[i].path), iStorage
 						.getMode());
-				perFileMaxSize = (int) fileMaxSize;
+				perFileMaxSize = fileMaxSize;
 
 				files[i].setMaxSize(perFileMaxSize);
 				files[i].setIncrementSize(fileIncrementSize);

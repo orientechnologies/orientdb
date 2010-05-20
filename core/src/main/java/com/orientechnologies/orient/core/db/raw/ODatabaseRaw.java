@@ -15,13 +15,11 @@
  */
 package com.orientechnologies.orient.core.db.raw;
 
-import java.io.IOException;
 import java.util.Collection;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCacheRecord;
-import com.orientechnologies.orient.core.config.OStorageLogicalClusterConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -31,7 +29,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.logical.OClusterLogical;
 
 @SuppressWarnings("unchecked")
 public class ODatabaseRaw implements ODatabase {
@@ -67,12 +64,6 @@ public class ODatabaseRaw implements ODatabase {
 			storage.open(getId(), iUserName, iUserPassword);
 
 			status = STATUS.OPEN;
-
-			// OPEN LOGICAL CLUSTERS IF ANY
-			for (OStorageLogicalClusterConfiguration lc : storage.getConfiguration().logicalClusters) {
-				storage.registerLogicalCluster(new OClusterLogical(databaseOwner, lc.name, lc.id, lc.map));
-			}
-
 		} catch (Exception e) {
 			throw new ODatabaseException("Can't open database", e);
 		}
@@ -225,19 +216,14 @@ public class ODatabaseRaw implements ODatabase {
 	}
 
 	public int addLogicalCluster(final String iClusterName, final int iPhyClusterContainerId) {
-		try {
-			return storage.addLogicalCluster(new OClusterLogical(databaseOwner, iClusterName));
-
-		} catch (IOException e) {
-			throw new ODatabaseException("Error on adding logical cluster: " + iClusterName, e);
-		}
+		return storage.addCluster(iClusterName, OStorage.TYPE_LOGICAL, iPhyClusterContainerId);
 	}
 
-	public int addPhysicalCluster(String iClusterName, String iClusterFileName, int iStartSize) {
-		return storage.addPhysicalCluster(iClusterName, iClusterFileName, iStartSize);
+	public int addPhysicalCluster(final String iClusterName, final String iClusterFileName, final int iStartSize) {
+		return storage.addCluster(iClusterName, OStorage.TYPE_PHYSICAL, iClusterFileName, iStartSize);
 	}
 
-	public int addDataSegment(String iSegmentName, String iSegmentFileName) {
+	public int addDataSegment(final String iSegmentName, final String iSegmentFileName) {
 		return storage.addDataSegment(iSegmentName, iSegmentFileName);
 	}
 
@@ -250,7 +236,7 @@ public class ODatabaseRaw implements ODatabase {
 	}
 
 	public int getDefaultClusterId() {
-		return storage.getClusterIdByName(OStorage.DEFAULT_SEGMENT);
+		return storage.getDefaultClusterId();
 	}
 
 	public void declareIntent(final OIntent iIntent, final Object... iParams) {

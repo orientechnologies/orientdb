@@ -40,6 +40,7 @@ public class DictionaryLookupSpeedTest extends OrientMonoThreadTest {
 		database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
 	}
 
+	@Override
 	public void cycle() throws UnsupportedEncodingException {
 		ORecordFlat value = database.getDictionary().get("doc-" + data.getCyclesDone());
 		Assert.assertNotNull(value);
