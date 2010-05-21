@@ -29,6 +29,11 @@
 
 This document enlist the last changes to the Orient Key/Value Server project.
 
+VERSION 0.9.14 - beta (May, 21st 2010)
+-------------------------------------------------------------------------------
+- New database structure
+- Improved performance in high cuncurrent scenarios
+
 -------------------------------------------------------------------------------
 VERSION 0.9.13 - beta (May, 10th 2010)
 -------------------------------------------------------------------------------

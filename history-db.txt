@@ -30,6 +30,18 @@
 This document enlist the last changes to the Orient Database project.
 
 -------------------------------------------------------------------------------
+VERSION 0.9.14 - beta (May, 21st 2010)
+-------------------------------------------------------------------------------
+- New Database structure. Logical clusters now are well integrated at storage
+  level
+- Improved OrientDB Studio with authentication, user, roles, clusters,
+  db and server properties, etc.
+- New User and Role management
+- More flexible management of types in ODocument instances
+- Supported HTTP Authentication basic
+- Fixed some bugs in concurrency with high number of clients
+
+-------------------------------------------------------------------------------
 VERSION 0.9.13 - beta (May, 10th 2010)
 -------------------------------------------------------------------------------
 - New HTTP RESTful interface to the OrientDB Server
