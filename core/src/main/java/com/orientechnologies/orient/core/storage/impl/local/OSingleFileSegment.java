@@ -76,4 +76,16 @@ public class OSingleFileSegment extends OSharedResourceAdaptiveLinked {
 			releaseExclusiveLock();
 		}
 	}
+
+	public long getSize() {
+		return file.getFileSize();
+	}
+
+	public long getFilledUpTo() {
+		return file.getFilledUpTo();
+	}
+
+	public OStorageFileConfiguration getConfig() {
+		return config;
+	}
 }

@@ -916,4 +916,12 @@ public class OStorageLocal extends OStorageAbstract {
 		configuration.update();
 		return id;
 	}
+
+	public ODataLocal[] getDataSegments() {
+		return dataSegments;
+	}
+
+	public OStorageLocalTxExecuter getTxManager() {
+		return txManager;
+	}
 }

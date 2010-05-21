@@ -230,4 +230,8 @@ public class ODataLocal extends OMultiFileSegment {
 	public void createHole(long iRecordOffset, int iRecordSize) throws IOException {
 		holeSegment.createHole(iRecordOffset, iRecordSize);
 	}
+
+	public int getId() {
+		return id;
+	}
 }

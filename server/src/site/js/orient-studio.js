@@ -31,6 +31,41 @@ function disconnect() {
 function showDatabaseInfo(database) {
 	databaseInfo = database;
 
+	fillDynaTable($('#databaseDataSegments'), "Data Segments", [ 'id', 'name',
+			'size', 'filled', 'maxSize', 'files' ], [ {
+		name : 'id',
+		index : 'id',
+		width : '30px',
+		editable : false
+	}, {
+		name : 'name',
+		index : 'name',
+		width : '100px',
+		editable : false
+	}, {
+		name : 'size',
+		index : 'size',
+		width : '80px',
+		editable : false
+	}, {
+		name : 'filled',
+		index : 'filled',
+		width : '80px',
+		editable : false
+	}, {
+		name : 'maxSize',
+		index : 'maxSize',
+		width : '80px',
+		editable : false
+	}, {
+		name : 'files',
+		index : 'files',
+		width : '600px',
+		editable : false
+	} ], database['dataSegments'], {
+		height : '40px'
+	});
+
 	fillDynaTable($('#databaseClusters'), "Clusters", [ 'id', 'name', 'type',
 			'records', 'size', 'filled', 'maxSize', 'files' ], [ {
 		name : 'id',
@@ -72,9 +107,37 @@ function showDatabaseInfo(database) {
 		index : 'files',
 		width : '450px',
 		editable : false
-	}
+	} ], database['clusters']);
 
-	], database['clusters']);
+	fillDynaTable($('#databaseTxSegment'), "Tx Segment", [ 'totalLogs', 'size',
+			'filled', 'maxSize', 'file' ], [ {
+		name : 'totalLogs',
+		index : 'Total Logs',
+		width : '80px',
+		editable : false
+	}, {
+		name : 'size',
+		index : 'Size',
+		width : '80px',
+		editable : false
+	}, {
+		name : 'filled',
+		index : 'Filled',
+		width : '80px',
+		editable : false
+	}, {
+		name : 'maxSize',
+		index : 'Max Size',
+		width : '80px',
+		editable : false
+	}, {
+		name : 'file',
+		index : 'File',
+		width : '650px',
+		editable : false
+	} ], database['txSegment'], {
+		height : '25px'
+	});
 
 	fillDynaTable($('#databaseUsers'), "Users", [ 'name', 'roles' ], null,
 			database['users']);

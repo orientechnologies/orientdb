@@ -30,7 +30,9 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterPhysical;
+import com.orientechnologies.orient.core.storage.impl.local.ODataLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.local.OTxSegment;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -65,6 +67,19 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedAbstrac
 				json.endCollection(1, true);
 			}
 
+			json.beginCollection(1, false, "dataSegments");
+			for (ODataLocal data : ((OStorageLocal) db.getStorage()).getDataSegments()) {
+				json.beginObject(2, true, null);
+				json.writeAttribute(3, false, "id", data.getId());
+				json.writeAttribute(3, false, "name", data.getName());
+				json.writeAttribute(3, false, "size", data.getSize());
+				json.writeAttribute(3, false, "filled", data.getFilledUpTo());
+				json.writeAttribute(3, false, "maxSize", data.getConfig().maxSize);
+				json.writeAttribute(3, false, "files", Arrays.toString(data.getConfig().infoFiles));
+				json.endObject(2, false);
+			}
+			json.endCollection(1, true);
+
 			if (db.getClusterNames() != null) {
 				json.beginCollection(1, false, "clusters");
 				OCluster cluster;
@@ -95,6 +110,17 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedAbstrac
 				}
 				json.endCollection(1, true);
 			}
+
+			json.beginCollection(1, false, "txSegment");
+			final OTxSegment txSegment = ((OStorageLocal) db.getStorage()).getTxManager().getTxSegment();
+			json.beginObject(2, true, null);
+			json.writeAttribute(3, false, "totalLogs", txSegment.getTotalLogCount());
+			json.writeAttribute(3, false, "size", txSegment.getSize());
+			json.writeAttribute(3, false, "filled", txSegment.getFilledUpTo());
+			json.writeAttribute(3, false, "maxSize", txSegment.getConfig().maxSize);
+			json.writeAttribute(3, false, "file", txSegment.getConfig().path);
+			json.endObject(2, false);
+			json.endCollection(1, true);
 
 			json.beginCollection(1, false, "users");
 			for (OUser user : db.getMetadata().getSecurity().getUsers()) {
