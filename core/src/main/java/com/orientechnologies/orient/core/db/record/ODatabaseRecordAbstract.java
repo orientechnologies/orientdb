@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 
 @SuppressWarnings("unchecked")
@@ -419,6 +420,10 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 	}
 
 	private void createRolesAndUsers() {
+		final int metadataClusterId = getClusterIdByName(OStorage.CLUSTER_METADATA_NAME);
+		metadata.getSchema().createClass("ORole", metadataClusterId);
+		metadata.getSchema().createClass("OUser", metadataClusterId);
+
 		final ORole role = metadata.getSecurity().createRole("admin", ORole.ALLOW_MODES.ALLOW_ALL_BUT);
 		user = metadata.getSecurity().createUser("admin", "admin", new String[] { role.getName() });
 

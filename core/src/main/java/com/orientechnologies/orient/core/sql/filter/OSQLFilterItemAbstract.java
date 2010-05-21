@@ -24,6 +24,7 @@ import java.util.List;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.command.OCommandToParse;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
@@ -44,7 +45,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 	protected String													name;
 	protected List<OPair<Integer, String[]>>	operationsChain	= null;
 
-	public OSQLFilterItemAbstract(final OSQLFilter iQueryCompiled, final String iName) {
+	public OSQLFilterItemAbstract(final OCommandToParse iQueryToParse, final String iName) {
 		int pos = iName.indexOf(OSQLFilterFieldOperator.CHAIN_SEPARATOR);
 		if (pos > -1) {
 			// GET ALL SPECIAL OPERATIONS
@@ -67,9 +68,9 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 						if (op.minArguments > 0) {
 							arguments = OQueryHelper.getParameters(part);
 							if (arguments.length < op.minArguments || arguments.length > op.maxArguments)
-								throw new OQueryParsingException(iQueryCompiled.text, "Syntax error: field operator '" + op.keyword + "' needs "
+								throw new OQueryParsingException(iQueryToParse.text, "Syntax error: field operator '" + op.keyword + "' needs "
 										+ (op.minArguments == op.maxArguments ? op.minArguments : op.minArguments + "-" + op.maxArguments)
-										+ " argument(s) while has been received " + arguments.length, iQueryCompiled.currentPos + pos);
+										+ " argument(s) while has been received " + arguments.length, iQueryToParse.currentPos + pos);
 						} else
 							arguments = null;
 
@@ -99,9 +100,9 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 						operationsChain.add(new OPair<Integer, String[]>(OSQLFilterFieldOperator.FIELD.id, new String[] { chainedFieldName }));
 					} else
 						// ERROR: OPERATOR NOT FOUND OR MISPELLED
-						throw new OQueryParsingException(iQueryCompiled.text,
+						throw new OQueryParsingException(iQueryToParse.text,
 								"Syntax error: field operator not recognized between the supported ones: "
-										+ Arrays.toString(OSQLFilterFieldOperator.OPERATORS), iQueryCompiled.currentPos + pos);
+										+ Arrays.toString(OSQLFilterFieldOperator.OPERATORS), iQueryToParse.currentPos + pos);
 				}
 
 				if (pos >= partUpperCase.length())

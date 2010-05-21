@@ -35,4 +35,9 @@ public class OStorageFileConfiguration {
 		maxSize = iMaxSize;
 		incrementSize = iIncrementSize;
 	}
+
+	@Override
+	public String toString() {
+		return path;
+	}
 }

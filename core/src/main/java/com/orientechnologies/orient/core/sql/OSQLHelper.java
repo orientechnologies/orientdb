@@ -16,10 +16,12 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.parser.OStringParser;
+import com.orientechnologies.orient.core.command.OCommandToParse;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerCSVAbstract;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorAnd;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContains;
@@ -43,20 +45,22 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorTraverse;
  * 
  */
 public class OSQLHelper {
-	public static final String			NAME						= "sql";
+	public static final String			NAME							= "sql";
 
-	public static final String			CLUSTER_PREFIX	= "CLUSTER:";
-	public static final String			CLASS_PREFIX		= "CLASS:";
+	public static final String			CLUSTER_PREFIX		= "CLUSTER:";
+	public static final String			CLASS_PREFIX			= "CLASS:";
 
-	public static final String			KEYWORD_SELECT	= "SELECT";
-	public static final String			KEYWORD_INSERT	= "INSERT";
-	public static final String			KEYWORD_UPDATE	= "UPDATE";
-	public static final String			KEYWORD_DELETE	= "DELETE";
-	public static final String			KEYWORD_FROM		= "FROM";
-	public static final String			KEYWORD_WHERE		= "WHERE";
-	public static final String			KEYWORD_COLUMN	= "COLUMN";
+	public static final String			KEYWORD_SELECT		= "SELECT";
+	public static final String			KEYWORD_INSERT		= "INSERT";
+	public static final String			KEYWORD_UPDATE		= "UPDATE";
+	public static final String			KEYWORD_DELETE		= "DELETE";
+	public static final String			KEYWORD_FROM			= "FROM";
+	public static final String			KEYWORD_WHERE			= "WHERE";
+	public static final String			KEYWORD_COLUMN		= "COLUMN";
 
-	public static OQueryOperator[]	OPERATORS				= { new OQueryOperatorAnd(), new OQueryOperatorOr(), new OQueryOperatorNot(),
+	public static final String			VALUE_NOT_PARSED	= "_NOT_PARSED_";
+
+	public static OQueryOperator[]	OPERATORS					= { new OQueryOperatorAnd(), new OQueryOperatorOr(), new OQueryOperatorNot(),
 			new OQueryOperatorEquals(), new OQueryOperatorMinorEquals(), new OQueryOperatorMinor(), new OQueryOperatorMajorEquals(),
 			new OQueryOperatorContainsAll(), new OQueryOperatorMajor(), new OQueryOperatorLike(), new OQueryOperatorIs(),
 			new OQueryOperatorIn(), new OQueryOperatorContains(), new OQueryOperatorTraverse() };
@@ -75,13 +79,13 @@ public class OSQLHelper {
 
 	public static int nextWord(final String iText, final String iTextUpperCase, int ioCurrentPosition, final StringBuilder ioWord,
 			final boolean iForceUpperCase, final String iSeparatorChars) {
+		ioWord.setLength(0);
+
 		ioCurrentPosition = OSQLHelper.jumpWhiteSpaces(iText, ioCurrentPosition);
 		if (ioCurrentPosition >= iText.length())
 			return -1;
 
 		final String word = OStringParser.getWord(iForceUpperCase ? iTextUpperCase : iText, ioCurrentPosition, iSeparatorChars);
-
-		ioWord.setLength(0);
 
 		if (word != null && word.length() > 0) {
 			ioWord.append(word);
@@ -102,49 +106,62 @@ public class OSQLHelper {
 	}
 
 	/**
-	 * Convert fields from text to real value. Supports: String, RID, Float and Integer.
+	 * Convert fields from text to real value. Supports: String, RID, Boolean, Float, Integer and NULL.
 	 * 
 	 * @param iDatabase
-	 * 
-	 * @param values
-	 * @return
+	 * @param iValue
+	 *          Value to convert.
+	 * @return The value converted if recognized, otherwise VALUE_NOT_PARSED
 	 */
-	public static Object convertValue(final ODatabaseRecord<?> iDatabase, final String iValue) {
+	public static Object parseValue(final ODatabaseRecord<?> iDatabase, final String iValue) {
 		if (iValue == null)
 			return null;
 
-		Object fieldValue = null;
+		Object fieldValue = VALUE_NOT_PARSED;
 
 		if (iValue.startsWith("'") && iValue.endsWith("'"))
 			// STRING
-			fieldValue = iValue.substring(1, iValue.length() - 1);
+			fieldValue = stringContent(iValue);
 		else if (iValue.indexOf(":") > -1)
 			// RID
 			fieldValue = new ORecordId(iValue);
 		else {
+
 			String upperCase = iValue.toUpperCase();
 			if (upperCase.equals("NULL"))
 				// NULL
 				fieldValue = null;
-			if (upperCase.equals("TRUE"))
+			else if (upperCase.equals("TRUE"))
 				// BOOLEAN, TRUE
 				fieldValue = Boolean.TRUE;
 			else if (upperCase.equals("FALSE"))
 				// BOOLEAN, FALSE
 				fieldValue = Boolean.FALSE;
-			// NUMBER
-			else if (iValue.contains("."))
-				// FLOAT/DOUBLE
-				fieldValue = new Float(iValue);
 			else {
 				OType t = ORecordSerializerCSVAbstract.getNumber(iDatabase.getStorage().getConfiguration().getUnusualSymbols(), iValue);
+				// NUMBER
 				if (t == OType.INTEGER)
-					fieldValue = Integer.parseInt((String) fieldValue);
+					fieldValue = Integer.parseInt((String) iValue);
 				else if (t == OType.FLOAT)
-					fieldValue = Float.parseFloat((String) fieldValue);
+					fieldValue = Float.parseFloat((String) iValue);
 			}
 		}
 
 		return fieldValue;
+	}
+
+	public static Object parseValue(final ODatabaseRecord<?> iDatabase, final OCommandToParse iCommand, final String iWord) {
+		// TRY TO PARSE AS RAW VALUE
+		final Object v = parseValue(iDatabase, iWord);
+
+		if (v == VALUE_NOT_PARSED)
+			// PARSE FIELD
+			return new OSQLFilterItemField(iCommand, iWord);
+
+		return v;
+	}
+
+	public static String stringContent(final String iContent) {
+		return iContent.substring(1, iContent.length() - 1);
 	}
 }

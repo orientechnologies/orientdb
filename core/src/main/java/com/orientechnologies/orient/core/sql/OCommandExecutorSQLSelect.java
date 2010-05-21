@@ -56,7 +56,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		if (pos == -1)
 			return this;
 
-		compiledFilter = new OSQLFilter(text.substring(pos));
+		compiledFilter = new OSQLFilter(iRequest.getDatabase(), text.substring(pos));
 
 		record = (ORecordAbstract<?>) database.newInstance();
 

@@ -138,7 +138,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 			@ConsoleParameter(name = "cluster-type", description = "Cluster type: 'physical' or 'logical'") String iClusterType) {
 		checkCurrentDatabase();
 
-		out.println("Creating cluster [" + iClusterName + "] in database " + currentDatabaseName + "...");
+		out
+				.println("Creating cluster [" + iClusterName + "] of type '" + iClusterType + "' in database " + currentDatabaseName
+						+ "...");
 
 		int clusterId = iClusterType.equalsIgnoreCase("physical") ? currentDatabase.addPhysicalCluster(iClusterName, iClusterName, -1)
 				: currentDatabase.addLogicalCluster(iClusterName, -1);

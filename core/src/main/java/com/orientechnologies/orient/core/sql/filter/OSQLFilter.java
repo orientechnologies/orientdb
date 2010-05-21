@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.command.OCommandToParse;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.query.OQueryHelper;
@@ -33,18 +34,17 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
  * @author Luca Garulli
  * 
  */
-public class OSQLFilter {
-	protected String							text;
-	protected String							textUpperCase;
-	protected int									currentPos	= 0;
-	protected Map<String, String>	clusters		= new HashMap<String, String>();
-	protected Map<String, String>	classes			= new HashMap<String, String>();
+public class OSQLFilter extends OCommandToParse {
+	protected ODatabaseRecord<?>	database;
+	protected Map<String, String>	clusters	= new HashMap<String, String>();
+	protected Map<String, String>	classes		= new HashMap<String, String>();
 	protected OSQLFilterCondition	rootCondition;
 	protected List<String>				recordTransformed;
 	private int										braces;
 
-	public OSQLFilter(final String iText) {
+	public OSQLFilter(ODatabaseRecord<?> iDatabase, final String iText) {
 		try {
+			database = iDatabase;
 			text = iText.trim();
 			textUpperCase = text.toUpperCase();
 
@@ -199,7 +199,7 @@ public class OSQLFilter {
 			do {
 				item = nextValue(true);
 
-				v = getValue(item);
+				v = OSQLHelper.parseValue(database, this, item[1]);
 				coll.add(v);
 
 				item = nextValue(true);
@@ -224,22 +224,9 @@ public class OSQLFilter {
 			result = new OSQLFilterItemFieldAny(this, words[1]);
 
 		} else
-			result = getValue(words);
+			result = OSQLHelper.parseValue(database, this, words[1]);
 
 		return result;
-	}
-
-	private Object getValue(final String[] words) {
-		if (words[0].startsWith("'") || words[0].startsWith("\""))
-			return stringContent(words[1]);
-		else if (Character.isDigit(words[0].charAt(0)) || words[0].charAt(0) == '+' || words[0].charAt(0) == '-') {
-			if (words[0].contains("."))
-				return new Float(words[0]);
-			else
-				return new Integer(words[0]);
-		}
-
-		return new OSQLFilterItemField(this, words[1]);
 	}
 
 	public Map<String, String> getClusters() {
@@ -311,19 +298,9 @@ public class OSQLFilter {
 		return word.toString();
 	}
 
-	private String nextWord(final boolean iForceUpperCase) {
-		StringBuilder word = new StringBuilder();
-		currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, iForceUpperCase);
-		return word.toString();
-	}
-
 	private boolean jumpWhiteSpaces() {
 		currentPos = OSQLHelper.jumpWhiteSpaces(text, currentPos);
 		return currentPos < text.length();
-	}
-
-	protected String stringContent(final String iContent) {
-		return iContent.substring(1, iContent.length() - 1);
 	}
 
 	@Override

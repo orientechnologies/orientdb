@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityReso
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.query.OQueryHelper;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 
 /**
  * SQL INSERT command.
@@ -106,7 +107,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 		// TRANSFORM FIELD VALUES
 		fieldValues = new Object[values.length];
 		for (int i = 0; i < values.length; ++i)
-			fieldValues[i] = OSQLHelper.convertValue(database, values[i]);
+			fieldValues[i] = OSQLHelper.parseValue(database, this, values[i]);
 
 		return this;
 	}
@@ -122,8 +123,14 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 		ODocument doc = className != null ? new ODocument(database, className) : new ODocument(database);
 
 		// BIND VALUES
+		Object v;
 		for (int i = 0; i < fieldNames.length; ++i) {
-			doc.field(fieldNames[i], fieldValues[i]);
+			v = fieldValues[i];
+
+			if (v instanceof OSQLFilterItem)
+				v = ((OSQLFilterItem) v).getValue(doc);
+
+			doc.field(fieldNames[i], v);
 		}
 
 		doc.save();

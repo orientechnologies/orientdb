@@ -80,11 +80,13 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedAbstrac
 						if (cluster instanceof OClusterPhysical) {
 							json.writeAttribute(3, false, "size", ((OClusterPhysical) cluster).getSize());
 							json.writeAttribute(3, false, "filled", ((OClusterPhysical) cluster).getFilledUpTo());
-							json.writeAttribute(3, false, "path", "");
+							json.writeAttribute(3, false, "maxSize", ((OClusterPhysical) cluster).getConfig().maxSize);
+							json.writeAttribute(3, false, "files", Arrays.toString(((OClusterPhysical) cluster).getConfig().infoFiles));
 						} else {
 							json.writeAttribute(3, false, "size", "-");
 							json.writeAttribute(3, false, "filled", "-");
-							json.writeAttribute(3, false, "path", "-");
+							json.writeAttribute(3, false, "maxSize", "-");
+							json.writeAttribute(3, false, "files", "-");
 						}
 					} catch (Exception e) {
 						json.writeAttribute(3, false, "records", "? (Unauthorized)");

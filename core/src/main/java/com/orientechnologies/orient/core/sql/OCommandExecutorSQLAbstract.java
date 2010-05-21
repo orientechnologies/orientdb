@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
  * 
  */
 public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstract {
-	protected String	textUpperCase;
 
 	@Override
 	public OCommandExecutorSQLAbstract init(final ODatabaseRecord<?> iDatabase, final String iText) {

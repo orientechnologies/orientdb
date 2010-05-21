@@ -32,7 +32,50 @@ function showDatabaseInfo(database) {
 	databaseInfo = database;
 
 	fillDynaTable($('#databaseClusters'), "Clusters", [ 'id', 'name', 'type',
-			'records', 'size', 'filled', 'path' ], null, database['clusters']);
+			'records', 'size', 'filled', 'maxSize', 'files' ], [ {
+		name : 'id',
+		index : 'id',
+		width : '30px',
+		editable : false
+	}, {
+		name : 'name',
+		index : 'name',
+		width : '100px',
+		editable : false
+	}, {
+		name : 'type',
+		index : 'type',
+		width : '80px',
+		editable : false
+	}, {
+		name : 'records',
+		index : 'records',
+		width : '80px',
+		editable : false
+	}, {
+		name : 'size',
+		index : 'size',
+		width : '80px',
+		editable : false
+	}, {
+		name : 'filled',
+		index : 'filled',
+		width : '80px',
+		editable : false
+	}, {
+		name : 'maxSize',
+		index : 'maxSize',
+		width : '80px',
+		editable : false
+	}, {
+		name : 'files',
+		index : 'files',
+		width : '450px',
+		editable : false
+	}
+
+	], database['clusters']);
+
 	fillDynaTable($('#databaseUsers'), "Users", [ 'name', 'roles' ], null,
 			database['users']);
 	fillDynaTable($('#databaseRolesRules'), "Rules", [ 'Name', 'Create',

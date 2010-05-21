@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
+import com.orientechnologies.orient.core.command.OCommandToParse;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 
@@ -25,8 +26,8 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
  * 
  */
 public class OSQLFilterItemField extends OSQLFilterItemAbstract {
-	public OSQLFilterItemField(final OSQLFilter iQueryCompiled, final String iName) {
-		super(iQueryCompiled, iName);
+	public OSQLFilterItemField(final OCommandToParse iQueryToParse, final String iName) {
+		super(iQueryToParse, iName);
 	}
 
 	public Object getValue(final ORecordInternal<?> iRecord) {

@@ -24,8 +24,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
  * @author Luca Garulli
  * 
  */
-public abstract class OCommandExecutorAbstract implements OCommandExecutor {
-	protected String							text;
+public abstract class OCommandExecutorAbstract extends OCommandToParse implements OCommandExecutor {
 	protected ODatabaseRecord<?>	database;
 
 	public OCommandExecutorAbstract init(final ODatabaseRecord<?> iDatabase, final String iText) {

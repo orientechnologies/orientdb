@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.ORecordVirtualAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
@@ -243,7 +244,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	}
 
 	/**
-	 * Read the field value.
+	 * Reads the field value.
 	 * 
 	 * @param iPropertyName
 	 *          field name
@@ -304,7 +305,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	}
 
 	/**
-	 * Write the field value.
+	 * Writes the field value.
 	 * 
 	 * @param iPropertyName
 	 *          field name
@@ -317,7 +318,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	}
 
 	/**
-	 * Write the field value forcing the type.
+	 * Writes the field value forcing the type.
 	 * 
 	 * @param iPropertyName
 	 *          field name
@@ -372,6 +373,14 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			fieldTypes.put(iPropertyName, iType);
 		}
 
+		return this;
+	}
+
+	/**
+	 * Remove a field.
+	 */
+	public ORecordSchemaAware<Object> removeField(final String iPropertyName) {
+		fields.remove(iPropertyName);
 		return this;
 	}
 

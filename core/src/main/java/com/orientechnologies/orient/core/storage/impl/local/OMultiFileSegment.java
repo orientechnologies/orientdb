@@ -269,4 +269,8 @@ public class OMultiFileSegment extends OSegment {
 		config.infoFiles[config.infoFiles.length - 1] = new OStorageFileConfiguration(config, fileNameToStore, config.fileType,
 				config.fileMaxSize, config.fileIncrementSize);
 	}
+
+	public OStorageSegmentConfiguration getConfig() {
+		return config;
+	}
 }
