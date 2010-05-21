@@ -90,7 +90,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 				pos = parseSetFields(word, pos, newPos);
 			} else if (word.toString().equals(KEYWORD_REMOVE)) {
 				pos = parseRemoveFields(word, newPos);
-			}
+			} else
+				break;
 		}
 
 		String whereCondition = word.toString();
