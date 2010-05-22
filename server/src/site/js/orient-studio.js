@@ -574,7 +574,7 @@ function getStudioURL(context) {
 function askServerInfo() {
 	executeJSONRequest($('#server').val() + '/server', function(server) {
 		fillStaticTable($('#serverConnections'), [ 'Id', 'Remote Client',
-				'Database', 'Protocol', 'Total requests', 'Command info',
+				'Database', 'User', 'Protocol', 'Total requests', 'Command info',
 				'Command detail', 'Last Command When', 'Last command info',
 				'Last command detail', 'Last execution time',
 				'Total working time', 'Connected since' ],

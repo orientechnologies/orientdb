@@ -61,6 +61,7 @@ public class OServerCommandGetServer extends OServerCommandAuthenticatedAbstract
 				writeField(json, 2, "id", c.id);
 				writeField(json, 2, "remoteAddress", c.protocol.getChannel() != null ? c.protocol.getChannel().toString() : "Disconnected");
 				writeField(json, 2, "db", c.database != null ? c.database.getName() : "-");
+				writeField(json, 2, "user", c.database != null && c.database.getUser() != null ? c.database.getUser().getName() : "-");
 				writeField(json, 2, "protocol", c.protocol.getName());
 				writeField(json, 2, "totalRequests", c.protocol.getData().totalRequests);
 				writeField(json, 2, "commandInfo", c.protocol.getData().commandInfo);
