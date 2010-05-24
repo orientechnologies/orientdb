@@ -579,7 +579,7 @@ function askServerInfo() {
 				'Last command detail', 'Last execution time',
 				'Total working time', 'Connected since' ],
 				server['connections']);
-		fillStaticTable($('#serverDbs'), [ 'Database', 'Open', 'Storage' ],
+		fillStaticTable($('#serverDbs'), [ 'Database', 'User', 'Status', 'Storage' ],
 				server['dbs']);
 		fillStaticTable($('#serverStorages'), [ 'Name', 'Type', 'Path',
 				'Active users' ], server['storages']);
@@ -638,4 +638,5 @@ jQuery(document).ready(
 			jQuery("#queryText").val(jQuery.trim(jQuery("#queryText").val()));
 			jQuery("#commandText").val(
 					jQuery.trim(jQuery("#commandText").val()));
+			jQuery("#output").val(jQuery.trim(jQuery("#output").val()));
 		});
