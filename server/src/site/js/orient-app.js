@@ -1,10 +1,14 @@
-function executeJSONRequest(iRequest, iCallback) {
+function executeJSONRequest(iRequest, iCallback, iData, iMethod) {
+	if( !iMethod )
+		iMethod = 'GET';
+	
 	$.ajax( {
-		type : 'GET',
+		type : iMethod,
 		url : iRequest,
 		success : function(msg) {
 			iCallback.apply(this, [ jQuery.parseJSON(msg) ]);
 		},
+		data: iData,
 		error : function(msg) {
 			jQuery("#output").text("Command response: " + msg);
 		}

@@ -506,8 +506,9 @@ function executeQuery() {
 	startTimer();
 
 	jQuery("#queryText").val(jQuery.trim($('#queryText').val()));
-	$.getJSON($('#server').val() + '/query/sql/' + $('#database').val() + '/'
-			+ $('#queryText').val() + '/' + $('#limit').val(), queryResponse);
+	
+	executeJSONRequest( $('#server').val() + '/query/' + $('#database').val() + '/sql/'
+			+ $('#limit').val(), queryResponse, jQuery("#queryText").val(), 'POST' );
 }
 
 function executeCommand() {

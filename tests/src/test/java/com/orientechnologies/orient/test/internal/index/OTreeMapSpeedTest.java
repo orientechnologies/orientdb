@@ -46,7 +46,8 @@ public class OTreeMapSpeedTest extends SpeedTestMonoThread {
 
 		System.out.println("Navigate the tree in ascending order...");
 		int counter = 0;
-		for (Comparable<Integer> k : tree.navigableKeySet()) {
+		for (@SuppressWarnings("unused")
+		Comparable<Integer> k : tree.navigableKeySet()) {
 			++counter;
 		}
 		data.printSnapshot();
@@ -76,17 +77,5 @@ public class OTreeMapSpeedTest extends SpeedTestMonoThread {
 	private Integer getKey(int i) {
 		return i;
 		// return String.valueOf(i);
-	}
-
-	private void printTree() {
-		System.out.printf("%3d: ", tree.size());
-
-		Comparable prevK = "";
-		for (Comparable k : tree.navigableKeySet()) {
-			Assert.assertTrue(k.compareTo(prevK) > 0, k + " is not minor or equals than " + prevK);
-			prevK = k;
-			System.out.print(k + ",");
-		}
-		System.out.println();
 	}
 }

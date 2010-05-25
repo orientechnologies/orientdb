@@ -96,15 +96,18 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			boolean includeVer;
 			boolean includeId;
 			boolean includeClazz;
+			int identLevel;
 
 			if (iFormat == null) {
 				includeVer = true;
 				includeId = true;
 				includeClazz = true;
+				identLevel = 0;
 			} else {
 				includeVer = false;
 				includeId = false;
 				includeClazz = false;
+				identLevel = 0;
 
 				String[] format = iFormat.split(",");
 				for (String f : format)
@@ -114,33 +117,35 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 						includeVer = true;
 					else if (f.equals("class"))
 						includeClazz = true;
+					else if (f.startsWith("ident"))
+						identLevel = Integer.parseInt(f.substring(f.indexOf(":")+1));
 			}
 
-			json.beginObject();
+			json.beginObject(identLevel);
 
 			if (includeId)
-				json.writeAttribute(1, true, ATTRIBUTE_ID, iRecord.getIdentity());
+				json.writeAttribute(identLevel + 1, true, ATTRIBUTE_ID, iRecord.getIdentity());
 			if (includeVer)
-				json.writeAttribute(1, true, ATTRIBUTE_VERSION, iRecord.getVersion());
+				json.writeAttribute(identLevel + 1, true, ATTRIBUTE_VERSION, iRecord.getVersion());
 			if (includeClazz && iRecord instanceof ORecordSchemaAware<?>)
-				json.writeAttribute(1, true, ATTRIBUTE_CLASS, ((ORecordSchemaAware<?>) iRecord).getClassName());
+				json.writeAttribute(identLevel + 1, true, ATTRIBUTE_CLASS, ((ORecordSchemaAware<?>) iRecord).getClassName());
 
 			if (iRecord instanceof ORecordSchemaAware<?>) {
 				// SCHEMA AWARE
 				final ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) iRecord;
 				for (String fieldName : record.fieldNames()) {
-					json.writeAttribute(1, true, fieldName, record.field(fieldName));
+					json.writeAttribute(identLevel + 1, true, fieldName, record.field(fieldName));
 				}
 			} else if (iRecord instanceof ORecordStringable) {
 
 				// STRINGABLE
 				final ORecordStringable record = (ORecordStringable) iRecord;
-				json.writeAttribute(1, true, "value", record.value());
+				json.writeAttribute(identLevel + 1, true, "value", record.value());
 			} else
 				throw new OSerializationException("Error on marshalling record of type '" + iRecord.getClass()
 						+ "' to JSON. The record type can't be exported to JSON");
 
-			json.endObject();
+			json.endObject(identLevel);
 
 			return buffer.toString();
 		} catch (IOException e) {

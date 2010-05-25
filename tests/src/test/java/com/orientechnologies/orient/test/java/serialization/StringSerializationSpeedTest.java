@@ -37,6 +37,6 @@ public class StringSerializationSpeedTest extends SpeedTestMonoThread {
 		buffer.append(new Float(3.0f).toString());
 		buffer.append(new Long(30000000L).toString());
 
-		final byte[] bytes = buffer.toString().getBytes();
+		buffer.toString().getBytes();
 	}
 }

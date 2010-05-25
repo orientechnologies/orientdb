@@ -115,10 +115,10 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 			String objectJson;
 			for (ORecord<?> rec : iRecords) {
 				try {
-					objectJson = rec.toJSON();
+					objectJson = rec.toJSON("ident:2,id,ver,class");
 
 					if (counter++ > 0)
-						buffer.append(",\r\n");
+						buffer.append(", ");
 
 					buffer.append(objectJson);
 				} catch (Exception e) {
@@ -164,17 +164,17 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 			json.beginObject(2, true, "properties");
 			for (OProperty prop : cls.properties()) {
 				json.beginObject(3, true, prop.getName());
-				json.writeAttribute(3, true, "id", prop.getId());
-				json.writeAttribute(3, true, "name", prop.getName());
+				json.writeAttribute(4, true, "id", prop.getId());
+				json.writeAttribute(4, true, "name", prop.getName());
 				if (prop.getLinkedClass() != null)
-					json.writeAttribute(3, true, "linkedClass", prop.getLinkedClass().getName());
+					json.writeAttribute(4, true, "linkedClass", prop.getLinkedClass().getName());
 				if (prop.getLinkedType() != null)
-					json.writeAttribute(3, true, "linkedType", prop.getLinkedType());
-				json.writeAttribute(3, true, "type", prop.getType().toString());
-				json.writeAttribute(3, true, "mandatory", prop.isMandatory());
-				json.writeAttribute(3, true, "notNull", prop.isNotNull());
-				json.writeAttribute(3, true, "min", prop.getMin());
-				json.writeAttribute(3, true, "max", prop.getMax());
+					json.writeAttribute(4, true, "linkedType", prop.getLinkedType());
+				json.writeAttribute(4, true, "type", prop.getType().toString());
+				json.writeAttribute(4, true, "mandatory", prop.isMandatory());
+				json.writeAttribute(4, true, "notNull", prop.isNotNull());
+				json.writeAttribute(4, true, "min", prop.getMin());
+				json.writeAttribute(4, true, "max", prop.getMax());
 				json.endObject(3, true);
 			}
 			json.endObject(2, true);
