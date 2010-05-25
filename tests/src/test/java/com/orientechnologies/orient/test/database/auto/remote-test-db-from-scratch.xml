@@ -25,6 +25,11 @@
             <class name="com.orientechnologies.orient.test.database.auto.SchemaTest"/>
         </classes>
     </test>
+    <test name="Security">
+        <classes>
+            <class name="com.orientechnologies.orient.test.database.auto.SecurityTest"/>
+        </classes>
+    </test>
     <test name="Population">
         <classes>
             <class name="com.orientechnologies.orient.test.database.auto.CRUDFlatPhysicalTest"/>

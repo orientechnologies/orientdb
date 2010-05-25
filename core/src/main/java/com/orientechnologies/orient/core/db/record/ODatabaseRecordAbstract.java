@@ -48,6 +48,7 @@ import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> extends ODatabaseWrapperAbstract<ODatabaseRaw, REC>
 		implements ODatabaseRecord<REC> {
+
 	private ODictionaryInternal		dictionary;
 	private OMetadata							metadata;
 	private OUser									user;
@@ -95,6 +96,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 
 			checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.OPERATIONS.READ);
 		} catch (Exception e) {
+			close();
 			throw new ODatabaseException("Can't open database", e);
 		}
 		return (DB) this;
@@ -115,6 +117,12 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			throw new ODatabaseException("Can't create database", e);
 		}
 		return (DB) this;
+	}
+
+	@Override
+	public void close() {
+		super.close();
+		user = null;
 	}
 
 	public REC load(final REC iRecord) {
