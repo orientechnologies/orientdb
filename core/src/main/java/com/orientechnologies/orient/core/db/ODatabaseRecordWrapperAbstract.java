@@ -20,13 +20,14 @@ import java.util.Iterator;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
+import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.OMetadata;
-import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
+@SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord<REC>, REC extends ORecordInternal<?>> extends
 		ODatabaseWrapperAbstract<DB, REC> {
 
@@ -116,14 +117,22 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord<
 		return iRecord;
 	}
 
-	@SuppressWarnings("unchecked")
-	public <DBTYPE extends ODatabaseRecord<?>> DBTYPE checkSecurity(final String iResource, final ORole.OPERATIONS iOperation) {
+	public <DBTYPE extends ODatabaseRecord<?>> DBTYPE checkSecurity(final String iResource, final int iOperation) {
 		return (DBTYPE) underlying.checkSecurity(iResource, iOperation);
 	}
 
-	@SuppressWarnings("unchecked")
-	public <DBTYPE extends ODatabaseRecord<?>> DBTYPE checkSecurity(final String iResourceGeneric, final ORole.OPERATIONS iOperation,
+	public <DBTYPE extends ODatabaseRecord<?>> DBTYPE checkSecurity(final String iResourceGeneric, final int iOperation,
 			final Object... iResourcesSpecific) {
 		return (DBTYPE) underlying.checkSecurity(iResourceGeneric, iOperation, iResourcesSpecific);
+	}
+
+	public <DBTYPE extends ODatabaseRecord<?>> DBTYPE registerHook(final ORecordHook iHookImpl) {
+		underlying.registerHook(iHookImpl);
+		return (DBTYPE) this;
+	}
+
+	public <DBTYPE extends ODatabaseRecord<?>> DBTYPE unregisterHook(final ORecordHook iHookImpl) {
+		underlying.unregisterHook(iHookImpl);
+		return (DBTYPE) this;
 	}
 }

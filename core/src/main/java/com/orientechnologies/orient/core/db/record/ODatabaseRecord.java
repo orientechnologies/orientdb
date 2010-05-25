@@ -16,10 +16,10 @@
 package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.metadata.security.ORole.OPERATIONS;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
 /**
@@ -59,7 +59,7 @@ public interface ODatabaseRecord<REC extends ORecordInternal<?>> extends ODataba
 	 *          Operation to execute against the resource
 	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
-	public <DB extends ODatabaseRecord<?>> DB checkSecurity(String iResource, OPERATIONS iOperation);
+	public <DB extends ODatabaseRecord<?>> DB checkSecurity(String iResource, int iOperation);
 
 	/**
 	 * Checks if the operation on a resource is allowed for the current user. The check is made in two steps:
@@ -78,6 +78,23 @@ public interface ODatabaseRecord<REC extends ORecordInternal<?>> extends ODataba
 	 *          Target resources as an array of Objects, i.e.: ["employee", 2] to specify cluster name and id.
 	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
-	public <DB extends ODatabaseRecord<?>> DB checkSecurity(String iResourceGeneric, OPERATIONS iOperation,
-			Object... iResourcesSpecific);
+	public <DB extends ODatabaseRecord<?>> DB checkSecurity(String iResourceGeneric, int iOperation, Object... iResourcesSpecific);
+
+	/**
+	 * Register a hook to listen all events for Records.
+	 * 
+	 * @param iHookImpl
+	 *          ORecordHook implementation
+	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 */
+	public <DB extends ODatabaseRecord<?>> DB registerHook(ORecordHook iHookImpl);
+
+	/**
+	 * Unregister a previously registered hook.
+	 * 
+	 * @param iHookImpl
+	 *          ORecordHook implementation
+	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 */
+	public <DB extends ODatabaseRecord<?>> DB unregisterHook(ORecordHook iHookImpl);
 }

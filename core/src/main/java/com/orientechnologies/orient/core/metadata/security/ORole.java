@@ -40,25 +40,21 @@ public class ORole extends OMetadataRecord {
 		DENY_ALL_BUT, ALLOW_ALL_BUT
 	}
 
-	public enum OPERATIONS {
-		NONE, CREATE, READ, UPDATE, DELETE, ALL
-	}
-
 	// CRUD OPERATIONS
-	public final static int			STREAM_NONE		= 0;
-	public final static int			STREAM_CREATE	= 1;
-	public final static int			STREAM_READ		= 2;
-	public final static int			STREAM_UPDATE	= 4;
-	public final static int			STREAM_DELETE	= 8;
-	public final static int			STREAM_ALL		= STREAM_CREATE + STREAM_READ + STREAM_UPDATE + STREAM_DELETE;
+	public final static int			PERMISSION_NONE		= 0;
+	public final static int			PERMISSION_CREATE	= 1;
+	public final static int			PERMISSION_READ		= 2;
+	public final static int			PERMISSION_UPDATE	= 4;
+	public final static int			PERMISSION_DELETE	= 8;
+	public final static int			PERMISSION_ALL		= PERMISSION_CREATE + PERMISSION_READ + PERMISSION_UPDATE + PERMISSION_DELETE;
 
-	protected final static byte	STREAM_DENY		= 0;
-	protected final static byte	STREAM_ALLOW	= 1;
+	protected final static byte	STREAM_DENY				= 0;
+	protected final static byte	STREAM_ALLOW			= 1;
 
 	protected String						name;
-	protected ALLOW_MODES				mode					= ALLOW_MODES.DENY_ALL_BUT;
+	protected ALLOW_MODES				mode							= ALLOW_MODES.DENY_ALL_BUT;
 	protected ORole							parentRole;
-	protected Map<String, Byte>	rules					= new LinkedHashMap<String, Byte>();
+	protected Map<String, Byte>	rules							= new LinkedHashMap<String, Byte>();
 
 	/**
 	 * Constructor used in unmarshalling.
@@ -74,11 +70,11 @@ public class ORole extends OMetadataRecord {
 		mode = iAllowMode;
 	}
 
-	public boolean allow(final String iResource, final OPERATIONS iCRUDOperation) {
+	public boolean allow(final String iResource, final int iCRUDOperation) {
 		// CHECK FOR SECURITY AS DIRECT RESOURCE
 		Byte access = rules.get(iResource);
 		if (access != null) {
-			byte mask = operation2Stream(iCRUDOperation);
+			byte mask = (byte) iCRUDOperation;
 
 			return (access.byteValue() & mask) == mask;
 		}
@@ -90,8 +86,8 @@ public class ORole extends OMetadataRecord {
 		return rules.containsKey(iResource);
 	}
 
-	public void addRule(final String iResource, final OPERATIONS iOperation) {
-		rules.put(iResource, operation2Stream(iOperation));
+	public void addRule(final String iResource, final int iOperation) {
+		rules.put(iResource, (byte) iOperation);
 	}
 
 	public String getName() {
@@ -145,32 +141,5 @@ public class ORole extends OMetadataRecord {
 	@Override
 	public String toString() {
 		return name;
-	}
-
-	private byte operation2Stream(final OPERATIONS iOperation) {
-		byte mask;
-		switch (iOperation) {
-		case NONE:
-			mask = STREAM_NONE;
-			break;
-		case CREATE:
-			mask = STREAM_CREATE;
-			break;
-		case READ:
-			mask = STREAM_READ;
-			break;
-		case UPDATE:
-			mask = STREAM_UPDATE;
-			break;
-		case DELETE:
-			mask = STREAM_DELETE;
-			break;
-		case ALL:
-			mask = STREAM_ALL;
-			break;
-		default:
-			mask = 0;
-		}
-		return mask;
 	}
 }

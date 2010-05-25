@@ -13,12 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.record;
+package com.orientechnologies.orient.core.hook;
 
-public interface ORecordTrigger {
+import com.orientechnologies.orient.core.record.ORecord;
+
+/**
+ * Hook interface to catch all events regarding records.
+ * 
+ * @author Luca Garulli
+ * @see ORecordHookAbstract
+ * 
+ */
+public interface ORecordHook {
 	public enum TYPE {
 		ANY, BEFORE_CREATE, BEFORE_READ, BEFORE_UPDATE, BEFORE_DELETE, AFTER_CREATE, AFTER_READ, AFTER_UPDATE, AFTER_DELETE
 	};
 
-	public void onTrigger(int TYPE, ORecordVirtualAbstract<?> iRecord);
+	public void onTrigger(TYPE iType, ORecord<?> iRecord);
 }

@@ -22,7 +22,6 @@ import java.util.Set;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.schema.OMetadataRecord;
-import com.orientechnologies.orient.core.metadata.security.ORole.OPERATIONS;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 
@@ -61,7 +60,7 @@ public class OUser extends OMetadataRecord {
 	 * @return The role that has granted the permission if any, otherwise a OSecurityAccessException exception is raised
 	 * @exception OSecurityAccessException
 	 */
-	public ORole allow(final String iResource, final OPERATIONS iOperation) {
+	public ORole allow(final String iResource, final int iOperation) {
 		if (roles == null || roles.isEmpty())
 			throw new OSecurityAccessException("User '" + name + "' has no role defined");
 
@@ -83,7 +82,7 @@ public class OUser extends OMetadataRecord {
 	 *          Requested operation
 	 * @return The role that has granted the permission if any, otherwise null
 	 */
-	public ORole checkIfAllowed(final String iResource, final OPERATIONS iOperation) {
+	public ORole checkIfAllowed(final String iResource, final int iOperation) {
 		for (ORole r : roles)
 			if (r.allow(iResource, iOperation))
 				return r;

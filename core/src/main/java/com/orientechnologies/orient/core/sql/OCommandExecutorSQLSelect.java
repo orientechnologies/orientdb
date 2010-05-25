@@ -45,7 +45,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	 */
 	@SuppressWarnings("unchecked")
 	public OCommandExecutorSQLSelect parse(final OCommandRequestInternal iRequest) {
-		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.OPERATIONS.READ);
+		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
 		init(iRequest.getDatabase(), iRequest.getText());
 
@@ -74,7 +74,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			if (cls == null)
 				throw new OCommandExecutionException("Class " + firstClass + " was not found");
 
-			database.checkSecurity(ODatabaseSecurityResources.CLASS, ORole.OPERATIONS.READ, cls.getName());
+			database.checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, cls.getName());
 
 			if (record instanceof ORecordSchemaAware<?>)
 				((ORecordSchemaAware<?>) record).setClassName(cls.getName());
@@ -94,7 +94,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				// GET THE CLUSTER NUMBER BY THE CLASS NAME
 				clusterIds = new int[] { database.getClusterIdByName(firstCluster.toLowerCase()) };
 
-			database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.OPERATIONS.READ, firstCluster.toLowerCase(), clusterIds[0]);
+			database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, firstCluster.toLowerCase(), clusterIds[0]);
 		}
 
 		((OStorageLocal) database.getStorage()).browse(database.getId(), clusterIds, this, record, false);

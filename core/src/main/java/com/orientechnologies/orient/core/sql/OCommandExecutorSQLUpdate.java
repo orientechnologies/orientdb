@@ -48,7 +48,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 
 	@SuppressWarnings("unchecked")
 	public OCommandExecutorSQLUpdate parse(final OCommandRequestInternal iRequest) {
-		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.OPERATIONS.UPDATE);
+		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_UPDATE);
 
 		init(iRequest.getDatabase(), iRequest.getText());
 

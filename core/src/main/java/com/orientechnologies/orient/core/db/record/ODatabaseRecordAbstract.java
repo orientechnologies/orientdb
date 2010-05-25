@@ -16,6 +16,9 @@
 package com.orientechnologies.orient.core.db.record;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -29,6 +32,7 @@ import com.orientechnologies.orient.core.dictionary.ODictionaryInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
@@ -55,6 +59,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 	private static final String		DEF_RECORD_FORMAT	= "csv";
 	private Class<? extends REC>	recordClass;
 	private String								recordFormat;
+	private Set<ORecordHook>			hooks							= new HashSet<ORecordHook>();
 
 	public ODatabaseRecordAbstract(final String iURL, final Class<? extends REC> iRecordClass) {
 		super(new ODatabaseRaw(iURL));
@@ -94,7 +99,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 				}
 			}
 
-			checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.OPERATIONS.READ);
+			checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
 		} catch (Exception e) {
 			close();
 			throw new ODatabaseException("Can't open database", e);
@@ -164,7 +169,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 	public ORecordIteratorCluster<REC> browseCluster(String iClusterName) {
 		final int clusterId = getClusterIdByName(iClusterName);
 
-		checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.OPERATIONS.READ, iClusterName, clusterId);
+		checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName, clusterId);
 
 		return new ORecordIteratorCluster<REC>(this, this, clusterId);
 	}
@@ -202,7 +207,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		String name;
 		for (int i = 0; i < iClusterIds.length; ++i) {
 			name = getClusterNameById(iClusterIds[i]);
-			checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.OPERATIONS.READ, name, iClusterIds[i]);
+			checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, name, iClusterIds[i]);
 		}
 
 		return super.countClusterElements(iClusterIds);
@@ -211,14 +216,14 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 	@Override
 	public long countClusterElements(final int iClusterId) {
 		final String name = getClusterNameById(iClusterId);
-		checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.OPERATIONS.READ, name, iClusterId);
+		checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, name, iClusterId);
 		return super.countClusterElements(name);
 	}
 
 	@Override
 	public long countClusterElements(final String iClusterName) {
 		final int clusterId = getClusterIdByName(iClusterName);
-		checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.OPERATIONS.READ, iClusterName, clusterId);
+		checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName, clusterId);
 		return super.countClusterElements(iClusterName);
 	}
 
@@ -231,7 +236,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		return dictionary;
 	}
 
-	public <DB extends ODatabaseRecord<?>> DB checkSecurity(final String iResource, final ORole.OPERATIONS iOperation) {
+	public <DB extends ODatabaseRecord<?>> DB checkSecurity(final String iResource, final int iOperation) {
 		OLogManager.instance()
 				.debug(this, "[checkSecurity] Check permissions for resource '%s', operation '%s'", iResource, iOperation);
 		if (user != null) {
@@ -253,7 +258,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		return (DB) this;
 	}
 
-	public <DB extends ODatabaseRecord<?>> DB checkSecurity(final String iResourceGeneric, final ORole.OPERATIONS iOperation,
+	public <DB extends ODatabaseRecord<?>> DB checkSecurity(final String iResourceGeneric, final int iOperation,
 			final Object... iResourcesSpecific) {
 
 		if (OLogManager.instance().isDebugEnabled())
@@ -291,7 +296,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		checkOpeness();
 
 		try {
-			checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.OPERATIONS.READ, getClusterNameById(iClusterId), iClusterId);
+			checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, getClusterNameById(iClusterId), iClusterId);
 
 			final ORawBuffer recordBuffer = underlying.read(iClusterId, iPosition);
 			if (recordBuffer == null)
@@ -344,12 +349,12 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 				clusterId = iClusterName != null ? getClusterIdByName(iClusterName) : getDefaultClusterId();
 
 				// CHECK ACCESS ON CLUSTER
-				checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.OPERATIONS.CREATE, iClusterName, clusterId);
+				checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_CREATE, iClusterName, clusterId);
 			} else {
 				clusterId = rid.clusterId;
 
 				// CHECK ACCESS ON CLUSTER
-				checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.OPERATIONS.UPDATE, iClusterName, clusterId);
+				checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName, clusterId);
 			}
 
 			final byte[] stream = iContent.toStream();
@@ -383,7 +388,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 					"Can't delete record because it has no identity. Probably was created from scratch or contains projections of fields rather than a full record");
 
 		final int clusterId = iContent.getIdentity().getClusterId();
-		checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.OPERATIONS.DELETE, getClusterNameById(clusterId), clusterId);
+		checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(clusterId), clusterId);
 
 		try {
 			underlying.delete(iContent.getIdentity().getClusterId(), iContent.getIdentity().getClusterPosition(), iVersion);
@@ -427,6 +432,20 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		return user;
 	}
 
+	public <DB extends ODatabaseRecord<?>> DB registerHook(final ORecordHook iHookImpl) {
+		hooks.add(iHookImpl);
+		return (DB) this;
+	}
+
+	public <DB extends ODatabaseRecord<?>> DB unregisterHook(final ORecordHook iHookImpl) {
+		hooks.remove(iHookImpl);
+		return (DB) this;
+	}
+
+	public Set<ORecordHook> getHooks() {
+		return Collections.unmodifiableSet(hooks);
+	}
+
 	private void createRolesAndUsers() {
 		final int metadataClusterId = getClusterIdByName(OStorage.CLUSTER_METADATA_NAME);
 		metadata.getSchema().createClass("ORole", metadataClusterId);
@@ -436,21 +455,23 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		user = metadata.getSecurity().createUser("admin", "admin", new String[] { role.getName() });
 
 		final ORole readerRole = metadata.getSecurity().createRole("reader", ORole.ALLOW_MODES.DENY_ALL_BUT);
-		readerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.OPERATIONS.READ);
-		readerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".metadata", ORole.OPERATIONS.NONE);
-		readerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.OPERATIONS.READ);
-		readerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.OPERATIONS.READ);
-		readerRole.addRule(ODatabaseSecurityResources.QUERY, ORole.OPERATIONS.READ);
-		readerRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.OPERATIONS.READ);
+		readerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
+		readerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".metadata", ORole.PERMISSION_NONE);
+		readerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.PERMISSION_READ);
+		readerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.PERMISSION_READ);
+		readerRole.addRule(ODatabaseSecurityResources.QUERY, ORole.PERMISSION_READ);
+		readerRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
+		readerRole.addRule(ODatabaseSecurityResources.RECORD_HOOK, ORole.PERMISSION_READ);
 		metadata.getSecurity().createUser("reader", "reader", new String[] { readerRole.getName() });
 
 		final ORole writerRole = metadata.getSecurity().createRole("writer", ORole.ALLOW_MODES.DENY_ALL_BUT);
-		writerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.OPERATIONS.READ);
-		writerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".metadata", ORole.OPERATIONS.NONE);
-		writerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.OPERATIONS.ALL);
-		writerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.OPERATIONS.ALL);
-		writerRole.addRule(ODatabaseSecurityResources.QUERY, ORole.OPERATIONS.READ);
-		writerRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.OPERATIONS.ALL);
+		writerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
+		writerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".metadata", ORole.PERMISSION_NONE);
+		writerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.PERMISSION_ALL);
+		writerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.PERMISSION_ALL);
+		writerRole.addRule(ODatabaseSecurityResources.QUERY, ORole.PERMISSION_READ);
+		writerRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_ALL);
+		readerRole.addRule(ODatabaseSecurityResources.RECORD_HOOK, ORole.PERMISSION_ALL);
 		metadata.getSecurity().createUser("writer", "writer", new String[] { writerRole.getName() });
 
 		metadata.getSecurity().save();

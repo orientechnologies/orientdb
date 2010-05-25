@@ -85,7 +85,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 	 * @see #registerEntityClasses(String)
 	 */
 	public Object newInstance(final String iClassName) {
-		checkSecurity(ODatabaseSecurityResources.CLASS, ORole.OPERATIONS.CREATE, iClassName);
+		checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, iClassName);
 
 		try {
 			return entityManager.createPojo(iClassName);
@@ -103,14 +103,14 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 	}
 
 	public <RET> OObjectIteratorMultiCluster<RET> browseClass(final String iClassName) {
-		checkSecurity(ODatabaseSecurityResources.CLASS, ORole.OPERATIONS.READ, iClassName);
+		checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, iClassName);
 
 		return new OObjectIteratorMultiCluster<RET>(this, (ODatabaseRecordAbstract<ODocument>) getUnderlying().getUnderlying(),
 				getMetadata().getSchema().getClass(iClassName).getClusterIds());
 	}
 
 	public <RET> OObjectIteratorCluster<RET> browseCluster(final String iClusterName) {
-		checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.OPERATIONS.READ, iClusterName);
+		checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
 		return (OObjectIteratorCluster<RET>) new OObjectIteratorCluster<Object>(this,
 				(ODatabaseRecordAbstract<ODocument>) getUnderlying().getUnderlying(), getClusterIdByName(iClusterName));
@@ -319,12 +319,11 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 		return underlying.command(iCommand);
 	}
 
-	public <DBTYPE extends ODatabase> DBTYPE checkSecurity(final String iResource, final ORole.OPERATIONS iOperation) {
+	public <DBTYPE extends ODatabase> DBTYPE checkSecurity(final String iResource, final byte iOperation) {
 		return (DBTYPE) underlying.checkSecurity(iResource, iOperation);
 	}
 
-	public <DBTYPE extends ODatabase> DBTYPE checkSecurity(final String iResource, final ORole.OPERATIONS iOperation,
-			Object... iResourcesSpecific) {
+	public <DBTYPE extends ODatabase> DBTYPE checkSecurity(final String iResource, final int iOperation, Object... iResourcesSpecific) {
 		return (DBTYPE) underlying.checkSecurity(iResource, iOperation, iResourcesSpecific);
 	}
 }
