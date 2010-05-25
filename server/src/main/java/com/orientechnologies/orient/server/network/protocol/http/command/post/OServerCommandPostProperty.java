@@ -16,33 +16,43 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandDocumentAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedAbstract;
 
-public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
-	private static final String[]	NAMES	= { "POST.document" };
+public class OServerCommandPostProperty extends OServerCommandAuthenticatedAbstract {
+	private static final String[]	NAMES	= { "POST.property" };
 
 	public void execute(final OHttpRequest iRequest) throws Exception {
-		String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: document/<database>");
+		String[] urlParts = checkSyntax(iRequest.url, 4, "Syntax error: property/<database>/<class-name>/<property-name>");
 
-		iRequest.data.commandInfo = "Create document";
+		iRequest.data.commandInfo = "Create property";
+		iRequest.data.commandDetail = urlParts[2] + "." + urlParts[3];
 
 		ODatabaseDocumentTx db = null;
-		ODocument doc = new ODocument().fromJSON(iRequest.content);
+
 		try {
 			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
 
-			doc.save(db);
+			if (db.getMetadata().getSchema().getClass(urlParts[2]) == null)
+				throw new IllegalArgumentException("Invalid class '" + urlParts[2] + "'");
+
+			final OClass cls = db.getMetadata().getSchema().getClass(urlParts[2]);
+
+			final OProperty prop = cls.createProperty(urlParts[3], OType.STRING);
+
+			db.getMetadata().getSchema().save();
+
+			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, prop.getId());
 
 		} finally {
 			if (db != null)
 				OSharedDocumentDatabase.releaseDatabase(db);
 		}
-
-		sendTextContent(iRequest, 201, OHttpUtils.STATUS_OK_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN, doc.getIdentity());
 	}
 
 	public String[] getNames() {

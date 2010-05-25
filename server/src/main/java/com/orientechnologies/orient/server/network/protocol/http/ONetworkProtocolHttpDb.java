@@ -20,7 +20,10 @@ import java.net.Socket;
 
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.server.OClientConnection;
+import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteClass;
+import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteDocument;
+import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteProperty;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetClass;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetCluster;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetConnect;
@@ -28,11 +31,14 @@ import com.orientechnologies.orient.server.network.protocol.http.command.get.OSe
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDictionary;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDisconnect;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDocument;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandPostQuery;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetServer;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContent;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostClass;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostCommand;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostDocument;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostProperty;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostQuery;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostStudio;
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutDocument;
 
@@ -56,13 +62,19 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 		registerCommand(new OServerCommandGetServer());
 		registerCommand(new OServerCommandGetStaticContent());
 
+		registerCommand(new OServerCommandPostClass());
 		registerCommand(new OServerCommandPostCommand());
+		registerCommand(new OServerCommandPostDatabase());
 		registerCommand(new OServerCommandPostDocument());
+		registerCommand(new OServerCommandPostProperty());
 		registerCommand(new OServerCommandPostStudio());
 
 		registerCommand(new OServerCommandPutDocument());
 
+		registerCommand(new OServerCommandDeleteClass());
+		registerCommand(new OServerCommandDeleteDatabase());
 		registerCommand(new OServerCommandDeleteDocument());
+		registerCommand(new OServerCommandDeleteProperty());
 
 		super.config(iSocket, iConnection);
 	}

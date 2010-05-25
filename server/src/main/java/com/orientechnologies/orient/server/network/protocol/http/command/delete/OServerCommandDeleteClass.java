@@ -13,54 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.network.protocol.http.command.get;
-
-import java.util.List;
+package com.orientechnologies.orient.server.network.protocol.http.command.delete;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedAbstract;
 
-public class OServerCommandPostQuery extends OServerCommandAuthenticatedAbstract {
-	private static final String[]	NAMES	= { "POST.query" };
+public class OServerCommandDeleteClass extends OServerCommandAuthenticatedAbstract {
+	private static final String[]	NAMES	= { "DELETE.class" };
 
-	@SuppressWarnings("unchecked")
 	public void execute(final OHttpRequest iRequest) throws Exception {
-		String[] urlParts = checkSyntax(iRequest.url, 3,
-				"Syntax error: query/database/sql[/<limit>]<br/>Limit is optional and is setted to 20 by default. Set expressely to 0 to have no limits.");
+		String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: class/<database>/<class-name>");
 
-		final int limit = urlParts.length > 3 ? Integer.parseInt(urlParts[3]) : 20;
-
-		if (iRequest.content == null)
-			throw new IllegalArgumentException("No SQL expression found");
-
-		final String text = iRequest.content;
-
-		iRequest.data.commandInfo = "Query";
-		iRequest.data.commandDetail = text;
-
-		if (!text.toLowerCase().startsWith("select"))
-			throw new IllegalArgumentException("Only SQL Select are valid using HTTP POST");
+		iRequest.data.commandInfo = "Delete class";
+		iRequest.data.commandDetail = urlParts[2];
 
 		ODatabaseDocumentTx db = null;
-
-		final List<ORecord<?>> response;
 
 		try {
 			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
 
-			response = (List<ORecord<?>>) db.command(new OSQLSynchQuery<ORecordSchemaAware<?>>(text, limit)).execute();
+			if (db.getMetadata().getSchema().getClass(urlParts[2]) == null)
+				throw new IllegalArgumentException("Invalid class '" + urlParts[2] + "'");
+
+			db.getMetadata().getSchema().removeClass(urlParts[2]);
+			db.getMetadata().getSchema().save();
+
+			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, null);
 
 		} finally {
 			if (db != null)
 				OSharedDocumentDatabase.releaseDatabase(db);
 		}
-
-		sendRecordsContent(iRequest, response);
 	}
 
 	public String[] getNames() {

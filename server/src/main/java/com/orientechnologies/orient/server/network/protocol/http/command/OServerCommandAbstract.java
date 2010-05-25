@@ -39,8 +39,10 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 	}
 
 	protected void sendTextContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iHeaders,
-			final String iContentType, final String iContent) throws IOException {
-		final boolean empty = iContent == null || iContent.length() == 0;
+			final String iContentType, final Object iContent) throws IOException {
+		final String content = iContent != null ? iContent.toString() : null;
+		
+		final boolean empty = content == null || content.length() == 0;
 
 		sendStatus(iRequest, empty && iCode == 200 ? 204 : iCode, iReason);
 		sendResponseHeaders(iRequest, iContentType);
@@ -49,12 +51,12 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 
 		writeLine(iRequest, "Set-Cookie: OSESSIONID=" + (iRequest.sessionId != null ? iRequest.sessionId : "-") + "; Path=/; HttpOnly");
 
-		writeLine(iRequest, OHttpUtils.CONTENT_LENGTH + (empty ? 0 : iContent.length()));
+		writeLine(iRequest, OHttpUtils.CONTENT_LENGTH + (empty ? 0 : content.length()));
 
 		writeLine(iRequest, null);
 
 		if (!empty)
-			writeLine(iRequest, iContent);
+			writeLine(iRequest, content);
 
 		iRequest.channel.flush();
 	}

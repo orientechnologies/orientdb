@@ -61,10 +61,19 @@ public class OSchema extends OMetadataRecord {
 
 		OClass cls = new OClass(this, classes.size(), iClassName, iClusterIds, iDefaultClusterId);
 		classes.put(key, cls);
-
 		setDirty();
 
 		return cls;
+	}
+
+	public void removeClass(final String iClassName) {
+		String key = iClassName.toLowerCase();
+
+		if (!classes.containsKey(key))
+			throw new OSchemaException("Class " + iClassName + " was not found in current database");
+
+		classes.remove(key);
+		setDirty();
 	}
 
 	public boolean existsClass(final String iClassName) {

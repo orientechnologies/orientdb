@@ -167,6 +167,9 @@ public class OStorageLocal extends OStorageAbstract {
 			if (!storageFolder.exists())
 				storageFolder.mkdir();
 
+			if (new File(storagePath + "/" + OStorage.DATA_DEFAULT_NAME + ".0" + ODataLocal.DEF_EXTENSION).exists())
+				throw new OStorageException("Can't create new storage " + name + " because it already exists");
+
 			addDataSegment(OStorage.DATA_DEFAULT_NAME);
 
 			// ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
@@ -181,8 +184,11 @@ public class OStorageLocal extends OStorageAbstract {
 			configuration.create();
 
 			txManager.create();
+		} catch (OStorageException e) {
+			close();
+			throw e;
 		} catch (IOException e) {
-			open = false;
+			close();
 			throw new OStorageException("Error on creation of storage: " + name, e);
 
 		} finally {

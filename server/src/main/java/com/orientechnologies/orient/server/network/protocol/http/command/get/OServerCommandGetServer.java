@@ -97,7 +97,7 @@ public class OServerCommandGetServer extends OServerCommandAuthenticatedAbstract
 				json.beginObject(2);
 				writeField(json, 2, "name", s.getName());
 				writeField(json, 2, "type", s.getClass().getSimpleName());
-				writeField(json, 2, "path", s instanceof OStorageLocal ? ((OStorageLocal) s).getStoragePath() : "");
+				writeField(json, 2, "path", s instanceof OStorageLocal ? ((OStorageLocal) s).getStoragePath().replace('\\', '/') : "");
 				writeField(json, 2, "activeUsers", s.getUsers());
 				json.endObject(2);
 			}

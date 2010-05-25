@@ -13,36 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.network.protocol.http.command.post;
+package com.orientechnologies.orient.server.network.protocol.http.command.delete;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandDocumentAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedAbstract;
 
-public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
-	private static final String[]	NAMES	= { "POST.document" };
+public class OServerCommandDeleteDatabase extends OServerCommandAuthenticatedAbstract {
+	private static final String[]	NAMES	= { "DELETE.database" };
 
 	public void execute(final OHttpRequest iRequest) throws Exception {
-		String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: document/<database>");
+		String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: database/<database>");
 
-		iRequest.data.commandInfo = "Create document";
+		iRequest.data.commandInfo = "Delete database";
+		iRequest.data.commandDetail = urlParts[1];
 
 		ODatabaseDocumentTx db = null;
-		ODocument doc = new ODocument().fromJSON(iRequest.content);
-		try {
-			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
 
-			doc.save(db);
+		try {
+			if (!OSharedDocumentDatabase.getDatabasePools().containsKey(urlParts[1]))
+				throw new IllegalArgumentException("Invalid database '" + urlParts[1] + "'");
+
+			throw new UnsupportedOperationException("Delete database");
 
 		} finally {
 			if (db != null)
-				OSharedDocumentDatabase.releaseDatabase(db);
+				db.close();
 		}
 
-		sendTextContent(iRequest, 201, OHttpUtils.STATUS_OK_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN, doc.getIdentity());
+		// sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN,
+		// null);
 	}
 
 	public String[] getNames() {

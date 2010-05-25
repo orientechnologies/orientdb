@@ -216,7 +216,7 @@ function showDatabaseInfo(database) {
 					{
 						name : 'type',
 						index : 'type',
-						width : 80,
+						width : 100,
 						edittype : "select",
 						editoptions : {
 							value : ":;BINARY:BINARY;BOOLEAN:BOOLEAN;EMBEDDED:EMBEDDED;EMBEDDEDLIST:EMBEDDEDLIST;EMBEDDEDMAP:EMBEDDEDMAP;EMBEDDEDSET:EMBEDDEDSET;FLOAT:FLOAT;DATE:DATE;DOUBLE:DOUBLE;INTEGER:INTEGER;LINK:LINK;LINKLIST:LINKLIST;LINKMAP:LINKMAP;LINKSET:LINKSET;LONG:LONG;SHORT:SHORT;STRING:STRING"
@@ -232,7 +232,7 @@ function showDatabaseInfo(database) {
 					{
 						name : 'linkedType',
 						index : 'linkedType',
-						width : 80,
+						width : 150,
 						edittype : "select",
 						editoptions : {
 							value : ":;BINARY:BINARY;BOOLEAN:BOOLEAN;EMBEDDED:EMBEDDED;EMBEDDEDLIST:EMBEDDEDLIST;EMBEDDEDMAP:EMBEDDEDMAP;EMBEDDEDSET:EMBEDDEDSET;FLOAT:FLOAT;DATE:DATE;DOUBLE:DOUBLE;INTEGER:INTEGER;LINK:LINK;LINKLIST:LINKLIST;LINKMAP:LINKMAP;LINKSET:LINKSET;LONG:LONG;SHORT:SHORT;STRING:STRING"
@@ -241,7 +241,7 @@ function showDatabaseInfo(database) {
 					}, {
 						name : 'linkedClass',
 						index : 'linkedClass',
-						width : 80,
+						width : 150,
 						edittype : "select",
 						editoptions : {
 							value : classEnumeration
@@ -249,27 +249,27 @@ function showDatabaseInfo(database) {
 						editable : true
 					}, {
 						name : 'mandatory',
-						index : 'linkedClass',
-						width : 30,
+						index : 'mandatory',
+						width : 90,
 						formatter : 'checkbox',
 						edittype : 'checkbox',
 						editable : true
 					}, {
 						name : 'notNull',
-						index : 'linkedClass',
-						width : 30,
+						index : 'notNull',
+						width : 80,
 						formatter : 'checkbox',
 						edittype : 'checkbox',
 						editable : true
 					}, {
 						name : 'min',
-						index : 'linkedClass',
-						width : 30,
+						index : 'min',
+						width : 120,
 						editable : true
 					}, {
 						name : 'max',
-						index : 'linkedClass',
-						width : 30,
+						index : 'max',
+						width : 120,
 						editable : true
 					} ], null, {
 				editurl : getStudioURL('classProperties'),
@@ -310,18 +310,84 @@ function showDatabaseInfo(database) {
 								}
 							});
 				} else
-					alert("Please Select Row to delete!");
+					alert("Please select the property to delete!");
 			});
 
 	fillDynaTable($('#databaseClasses'), "Classes", [ 'id', 'name', 'clusters',
-			'defaultCluster', 'records' ], null, database['classes'], {
+			'defaultCluster', 'records' ], [ {
+		name : 'id',
+		index : 'id',
+		width : 30
+	}, {
+		name : 'name',
+		index : 'name',
+		width : 280,
+		editable : true,
+		editrules : {
+			required : true
+		},
+		formoptions : {
+			elmprefix : '(*)'
+		}
+	}, {
+		name : 'clusters',
+		index : 'clusters',
+		width : 80,
+		editable : false
+	}, {
+		name : 'defaultCluster',
+		index : 'defaultCluster',
+		width : 80,
+		editable : false
+	}, {
+		name : 'records',
+		index : 'records',
+		width : 150,
+		editable : false
+	} ], database['classes'], {
 		sortname : 'id',
+		editurl : getStudioURL('classes'),
 		onSelectRow : function(classRowNum) {
 			selectedClassName = databaseInfo['classes'][classRowNum - 1].name;
 			fillDynaTableRows($('#classProperties'),
 					databaseInfo['classes'][classRowNum - 1]['properties']);
 		}
 	});
+
+	$("#addClass").click(function() {
+		jQuery("#databaseClasses").jqGrid('editGridRow', "new", {
+			height : 320,
+			reloadAfterSubmit : false,
+			closeOnEscape : true,
+			closeAfterAdd : true,
+			editData : [ selectedClassName ],
+			afterSubmit : function(response, postdata) {
+				jQuery("#output").val(response.responseText);
+				return true;
+			}
+		});
+	});
+	$("#deleteClass").click(
+			function() {
+				var selectedRow = jQuery("#databaseClasses").jqGrid(
+						'getGridParam', 'selrow');
+				if (selectedRow != null) {
+					jQuery("#databaseClasses").jqGrid(
+							'delGridRow',
+							selectedRow,
+							{
+								reloadAfterSubmit : false,
+								closeOnEscape : true,
+								delData : [ selectedClassName ],
+								afterSubmit : function(response, postdata) {
+									jQuery("#output")
+											.val(response.responseText);
+									return [ true, response.responseText ];
+								}
+							});
+				} else
+					alert("Please select the class to delete!");
+			});
 
 	fillDynaTable($('#databaseConfig'), "Configuration", [ 'name', 'value' ],
 			null, database['config'].values, {
@@ -506,9 +572,10 @@ function executeQuery() {
 	startTimer();
 
 	jQuery("#queryText").val(jQuery.trim($('#queryText').val()));
-	
-	executeJSONRequest( $('#server').val() + '/query/' + $('#database').val() + '/sql/'
-			+ $('#limit').val(), queryResponse, jQuery("#queryText").val(), 'POST' );
+
+	executeJSONRequest($('#server').val() + '/query/' + $('#database').val()
+			+ '/sql/' + $('#limit').val(), queryResponse, jQuery("#queryText")
+			.val(), 'POST');
 }
 
 function executeCommand() {
@@ -536,11 +603,11 @@ function executeCommand() {
 function executeRawCommand() {
 	startTimer();
 
-	var req = $('#server').val() + '/' + $('#operation').val() + '/'
-			+ $('#database').val() + '/' + $('#args').val();
+	var req = $('#server').val() + '/' + $('#rawOperation').val() + '/'
+			+ $('#rawDatabase').val() + '/' + $('#rawArgs').val();
 
 	$.ajax( {
-		type : $('#method').val(),
+		type : $('#rawMethod').val(),
 		url : req,
 		success : function(msg) {
 			jQuery("#rawOutput").val(msg);
@@ -574,14 +641,15 @@ function getStudioURL(context) {
 
 function askServerInfo() {
 	executeJSONRequest($('#server').val() + '/server', function(server) {
-		fillStaticTable($('#serverConnections'), [ 'Id', 'Remote Client',
-				'Database', 'User', 'Protocol', 'Total requests', 'Command info',
-				'Command detail', 'Last Command When', 'Last command info',
-				'Last command detail', 'Last execution time',
-				'Total working time', 'Connected since' ],
+		fillStaticTable($('#serverConnections'),
+				[ 'Id', 'Remote Client', 'Database', 'User', 'Protocol',
+						'Total requests', 'Command info', 'Command detail',
+						'Last Command When', 'Last command info',
+						'Last command detail', 'Last execution time',
+						'Total working time', 'Connected since' ],
 				server['connections']);
-		fillStaticTable($('#serverDbs'), [ 'Database', 'User', 'Status', 'Storage' ],
-				server['dbs']);
+		fillStaticTable($('#serverDbs'), [ 'Database', 'User', 'Status',
+				'Storage' ], server['dbs']);
 		fillStaticTable($('#serverStorages'), [ 'Name', 'Type', 'Path',
 				'Active users' ], server['storages']);
 		fillStaticTable($('#serverConfigProperties'), [ 'Name', 'Value' ],

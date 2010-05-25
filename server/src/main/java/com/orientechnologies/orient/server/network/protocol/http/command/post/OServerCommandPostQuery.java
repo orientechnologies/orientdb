@@ -19,44 +19,48 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedAbstract;
 
-public class OServerCommandPostCommand extends OServerCommandAuthenticatedAbstract {
-	private static final String[]	NAMES	= { "POST.command" };
+public class OServerCommandPostQuery extends OServerCommandAuthenticatedAbstract {
+	private static final String[]	NAMES	= { "POST.query" };
 
 	@SuppressWarnings("unchecked")
 	public void execute(final OHttpRequest iRequest) throws Exception {
-		String[] urlParts = checkSyntax(iRequest.url, 4, "Syntax error: command/sql/<command-text>");
+		String[] urlParts = checkSyntax(iRequest.url, 3,
+				"Syntax error: query/<database>/sql[/<limit>]<br/>Limit is optional and is setted to 20 by default. Set expressely to 0 to have no limits.");
 
-		final String text = urlParts[3].trim();
+		final int limit = urlParts.length > 3 ? Integer.parseInt(urlParts[3]) : 20;
 
-		iRequest.data.commandInfo = "Command";
+		if (iRequest.content == null)
+			throw new IllegalArgumentException("No SQL expression found");
+
+		final String text = iRequest.content;
+
+		iRequest.data.commandInfo = "Query";
 		iRequest.data.commandDetail = text;
+
+		if (!text.toLowerCase().startsWith("select"))
+			throw new IllegalArgumentException("Only SQL Select are valid using HTTP POST");
 
 		ODatabaseDocumentTx db = null;
 
-		final Object response;
+		final List<ORecord<?>> response;
 
 		try {
-			db = getProfiledDatabaseInstance(iRequest, urlParts[2]);
+			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
 
-			response = db.command(new OCommandSQL(text)).execute();
+			response = (List<ORecord<?>>) db.command(new OSQLSynchQuery<ORecordSchemaAware<?>>(text, limit)).execute();
 
 		} finally {
 			if (db != null)
 				OSharedDocumentDatabase.releaseDatabase(db);
 		}
 
-		if (response instanceof List<?>)
-			sendRecordsContent(iRequest, (List<ORecord<?>>) response);
-		else if (response instanceof Integer)
-			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, response);
-		else
-			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, response.toString());
+		sendRecordsContent(iRequest, response);
 	}
 
 	public String[] getNames() {

@@ -123,6 +123,24 @@
                                         </td>
                                     </tr>
                                     <tr>
+                                        <td valign="top" align="left">
+                                            <table>
+                                                <tr>
+                                                    <td>
+                                                        <button id="addClass" class="ui-button-text-icon" style="text-align: left">
+                                                            Add class <img border="0" alt="New record" src="www/images/add.png" align="top" />
+                                                        </button>
+                                                    </td>
+                                                    <td>
+                                                        <button id="deleteClass" class="ui-button-text-icon" style="text-align: left">
+                                                            Delete class <img border="0" alt="Delete record" src="www/images/delete.png" align="top" />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                    <tr>
                                         <td valign="top" colspan="2">
                                             <table id="classProperties" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
                                             </table>
@@ -401,7 +419,7 @@
                                     http://localhost:2480/
                                 </td>
                                 <td>
-                                    <select id="method">
+                                    <select id="rawMethod">
                                         <option value='GET'>GET</option>
                                         <option value='PUT'>PUT</option>
                                         <option value='POST'>POST</option>
@@ -409,7 +427,7 @@
                                     </select>/
                                 </td>
                                 <td>
-                                    <select id="operation">
+                                    <select id="rawOperation">
                                         <option value='cluster'>cluster</option>
                                         <option value='class'>class</option>
                                         <option value='command'>command</option>
@@ -421,10 +439,10 @@
                                     </select>/
                                 </td>
                                 <td>
-                                    <input id="database" size="15" value="demo" />/
+                                    <input id="rawDatabase" size="15" value="demo" />/
                                 </td>
                                 <td>
-                                    <input id="args" size="40" value="Address" />
+                                    <input id="rawArgs" size="40" value="Address" />
                                 </td>
                                 <td>
                                     <button onclick="javascript:executeRawCommand()" style="background-color: #F0F0F0;">

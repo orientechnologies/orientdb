@@ -37,7 +37,7 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
  * = 14+? bytes<br/>
  */
 public class ODataLocal extends OMultiFileSegment {
-	private static final String			DEF_EXTENSION		= ".oda";
+	static final String							DEF_EXTENSION		= ".oda";
 	private static final int				DEF_START_SIZE	= 10000000;
 	private static final int				RECORD_FIX_SIZE	= 14;
 	protected final int							id;
