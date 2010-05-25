@@ -24,11 +24,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings("unchecked")
 public class OObjectIteratorMultiCluster<T> implements Iterator<T>, Iterable<T> {
-	private ODatabaseObject															database;
+	private ODatabaseObject													database;
 	private ORecordIteratorMultiCluster<ODocument>	underlying;
 
-	public OObjectIteratorMultiCluster(final ODatabaseObject iDatabase,
-			final ODatabaseRecordAbstract<ODocument> iUnderlyingDatabase, final int[] iClusterIds) {
+	public OObjectIteratorMultiCluster(final ODatabaseObject iDatabase, final ODatabaseRecordAbstract<ODocument> iUnderlyingDatabase,
+			final int[] iClusterIds) {
 		database = iDatabase;
 		underlying = new ORecordIteratorMultiCluster<ODocument>((ODatabaseRecord<ODocument>) iDatabase.getUnderlying(),
 				iUnderlyingDatabase, iClusterIds);

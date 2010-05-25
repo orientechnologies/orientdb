@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.List;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.core.serialization.OMemoryOutputStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
@@ -33,8 +32,8 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
  * @param <T>
  *          Record type to return.
  */
-public abstract class OSQLQuery<T extends ORecordInternal<?>> extends OCommandSQL {
-	protected String		text;
+public abstract class OSQLQuery<T extends Object> extends OCommandSQL {
+	protected String	text;
 
 	public OSQLQuery() {
 	}

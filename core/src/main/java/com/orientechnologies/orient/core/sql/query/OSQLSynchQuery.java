@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommandResultListener;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 
 /**
  * SQL synchronous query. When executed the caller wait for the result.
@@ -30,7 +29,7 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
  * @see OSQLAsynchQuery
  */
 @SuppressWarnings("unchecked")
-public class OSQLSynchQuery<T extends ORecordSchemaAware<?>> extends OSQLAsynchQuery<T> implements OCommandResultListener {
+public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> implements OCommandResultListener {
 	protected final List<T>	result	= new ArrayList<T>();
 
 	public OSQLSynchQuery() {

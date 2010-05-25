@@ -95,17 +95,17 @@ public class ObjectTreeTest {
 
 	@Test(dependsOnMethods = "testSaveCircularLink")
 	public void testQueryCircular() {
-		List<ODocument> result = database.getUnderlying().command(new OSQLSynchQuery<ODocument>("select * from Profile")).execute();
+		List<Profile> result = database.query(new OSQLSynchQuery<ODocument>("select * from Profile"));
 
-		ODocument parent;
-		for (ODocument r : result) {
+		Profile parent;
+		for (Profile r : result) {
 
-			System.out.println(r.field("name") + " " + r.field("surname"));
+			System.out.println(r.getName() + " " + r.getSurname());
 
-			parent = r.field("invitedBy");
+			parent = r.getInvitedBy();
 
 			if (parent != null)
-				System.out.println("- parent: " + parent.field("name") + " " + parent.field("surname"));
+				System.out.println("- parent: " + parent.getName() + " " + parent.getSurname());
 		}
 	}
 

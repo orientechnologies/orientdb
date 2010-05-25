@@ -17,7 +17,6 @@ package com.orientechnologies.orient.core.sql.query;
 
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 
 /**
  * SQL asynchronous query. When executed the caller doesn't wait the the execution, rather the listener will be called foreach item
@@ -28,7 +27,7 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
  * @param <T>
  * @see OSQLSynchQuery
  */
-public class OSQLAsynchQuery<T extends ORecordSchemaAware<?>> extends OSQLQuery<T> implements OCommandRequestAsynch {
+public class OSQLAsynchQuery<T extends Object> extends OSQLQuery<T> implements OCommandRequestAsynch {
 	protected int	resultCount	= 0;
 
 	/**

@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.core.db.object;
 
+import java.util.List;
+
+import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseSchemaAware;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.iterator.OObjectIteratorCluster;
@@ -44,6 +47,15 @@ public interface ODatabaseObject extends ODatabaseSchemaAware<Object> {
 	 * @return Iterator of Object instances
 	 */
 	public <RET> OObjectIteratorMultiCluster<RET> browseClass(Class<RET> iClusterClass);
+
+	/**
+	 * Execute a query against the database.
+	 * 
+	 * @param iCommand
+	 *          Query command
+	 * @return List of POJOs
+	 */
+	public <RET extends List<?>> RET query(final OCommandRequest iCommand);
 
 	/**
 	 * Creates a new entity of the specified class.

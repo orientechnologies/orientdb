@@ -15,7 +15,9 @@
  */
 package com.orientechnologies.orient.core.db.object;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -288,6 +290,29 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 
 	public Object newInstance() {
 		return new ODocument(underlying);
+	}
+
+	public <RET extends List<?>> RET query(final OCommandRequest iCommand) {
+		underlying.command(iCommand);
+		Object result = iCommand.execute();
+
+		if (result == null)
+			return null;
+		else if (result instanceof List<?>) {
+			final List<ODocument> resultSet = (List<ODocument>) result;
+			final List<Object> resultPojo = new ArrayList<Object>();
+			Object obj;
+			for (ODocument doc : resultSet) {
+				// GET THE ASSOCIATED DOCUMENT
+				obj = getUserObjectByRecord(doc);
+				OObjectSerializerHelper.fromStream(doc, obj, getEntityManager(), this);
+				resultPojo.add(obj);
+			}
+
+			result = resultPojo;
+		}
+
+		return (RET) result;
 	}
 
 	public OCommandRequest command(final OCommandRequest iCommand) {
