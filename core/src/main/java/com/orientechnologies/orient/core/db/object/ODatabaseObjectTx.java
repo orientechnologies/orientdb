@@ -290,8 +290,8 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 		return new ODocument(underlying);
 	}
 
-	public OCommandRequest command(OCommandRequest iCommand) {
-		return null;
+	public OCommandRequest command(final OCommandRequest iCommand) {
+		return underlying.command(iCommand);
 	}
 
 	public <DBTYPE extends ODatabase> DBTYPE checkSecurity(final String iResource, final ORole.OPERATIONS iOperation) {
