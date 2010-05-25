@@ -26,9 +26,8 @@ public class OSharedBinaryDatabase {
 	private static final ODatabasePool<ODatabaseBinary>	dbPool	= new ODatabasePool<ODatabaseBinary>(1) {
 
 																																public ODatabaseBinary createNewResource(final String iDatabaseName) {
-																																	final String[] parts = iDatabaseName.split(":");
-
-																																	final String path = OServerMain.server().getStoragePath(parts[0]);
+																																	final String path = OServerMain.server().getStoragePath(
+																																			iDatabaseName);
 
 																																	final ODatabaseBinary db = new ODatabaseBinary(path);
 
@@ -39,7 +38,7 @@ public class OSharedBinaryDatabase {
 																																		OServerMain.server().getMemoryDatabases()
 																																				.put(iDatabaseName, db);
 																																	} else
-																																		db.open(parts[1], parts[2]);
+																																		db.open("admin", "admin");
 
 																																	// DISABLE CACHE SINCE THERE IS HAZELCAST FOR IT
 																																	((ODatabaseRaw) db.getUnderlying()).setUseCache(false);
@@ -53,6 +52,6 @@ public class OSharedBinaryDatabase {
 	}
 
 	public static void releaseDatabase(final ODatabaseBinary iDatabase) {
-		dbPool.releaseDatabase(iDatabase.getName() + ":" + iDatabase.getUser().getName(), iDatabase);
+		dbPool.releaseDatabase(iDatabase.getName(), iDatabase);
 	}
 }

@@ -445,7 +445,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		metadata.getSecurity().createUser("reader", "reader", new String[] { readerRole.getName() });
 
 		final ORole writerRole = metadata.getSecurity().createRole("writer", ORole.ALLOW_MODES.DENY_ALL_BUT);
-		writerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.OPERATIONS.ALL);
+		writerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.OPERATIONS.READ);
 		writerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".metadata", ORole.OPERATIONS.NONE);
 		writerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.OPERATIONS.ALL);
 		writerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.OPERATIONS.ALL);
