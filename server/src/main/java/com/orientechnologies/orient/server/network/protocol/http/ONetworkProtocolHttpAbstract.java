@@ -311,6 +311,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 		data.commandDetail = null;
 
 		try {
+			data.lastCommandReceived = -1;
+
 			char c = (char) channel.inStream.read();
 
 			if (channel.inStream.available() == 0) {
