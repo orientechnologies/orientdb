@@ -194,7 +194,22 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 						iResult = iResult != null ? new Integer(iResult.toString()) : null;
 					else if (operator == OSQLFilterFieldOperator.ASFLOAT.id)
 						iResult = iResult != null ? new Float(iResult.toString()) : null;
-					else if (operator == OSQLFilterFieldOperator.ASDATE.id) {
+					else if (operator == OSQLFilterFieldOperator.ASBOOLEAN.id) {
+						if (iResult != null) {
+							if (iResult instanceof String)
+								iResult = new Boolean((String) iResult);
+							else if (iResult instanceof Number) {
+								final int bValue = ((Number) iResult).intValue();
+								if (bValue == 0)
+									iResult = Boolean.FALSE;
+								else if (bValue == 1)
+									iResult = Boolean.TRUE;
+								else
+									// IGNORE OTHER VALUES
+									iResult = null;
+							}
+						}
+					} else if (operator == OSQLFilterFieldOperator.ASDATE.id) {
 						if (iResult != null) {
 							if (iResult instanceof Long)
 								iResult = new Date((Long) iResult);
