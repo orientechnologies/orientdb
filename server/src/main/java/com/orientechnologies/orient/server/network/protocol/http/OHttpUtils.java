@@ -42,7 +42,7 @@ public class OHttpUtils {
 	public static final int			STATUS_ERROR							= 500;
 	public static final String	STATUS_ERROR_DESCRIPTION	= "Error";
 	public static final int			STATUS_AUTH_CODE					= 401;
-	public static final String	STATUS_AUTH_DESCRIPTION		= "Authorization Required";
+	public static final String	STATUS_AUTH_DESCRIPTION		= "Unauthorized";
 
 	public static String[] getParts(String iURI) {
 		if (iURI == null || iURI.length() == 0)

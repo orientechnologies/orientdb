@@ -22,8 +22,10 @@ import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 
-public abstract class ODatabasePool<DB extends ODatabase> implements OResourcePoolListener<String, DB> {
+public abstract class ODatabasePool<DB extends ODatabaseRecord<?>> implements OResourcePoolListener<String, DB> {
+
 	private static final int															DEF_WAIT_TIMEOUT	= 5000;
 	private final Map<String, OResourcePool<String, DB>>	pools							= new HashMap<String, OResourcePool<String, DB>>();
 	private int																						maxSize;
@@ -63,6 +65,20 @@ public abstract class ODatabasePool<DB extends ODatabase> implements OResourcePo
 			throw new OLockException("Can't release a database URL not acquired before. URL: " + iURL);
 
 		pool.returnResource(iDatabase);
+	}
+
+	public DB reuseResource(String iKey, DB iValue) {
+		final String[] parts = iKey.split(":");
+
+		if (parts.length < 3)
+			throw new IllegalArgumentException("Missed user or password");
+
+		final OUser user = iValue.getMetadata().getSecurity().getUser(parts[1]);
+		if (!user.checkPassword(parts[2]))
+			throw new IllegalArgumentException("Wrong user/password");
+
+		return null;
+
 	}
 
 	public Map<String, OResourcePool<String, DB>> getPools() {

@@ -40,16 +40,23 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 
 	protected void sendTextContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iHeaders,
 			final String iContentType, final Object iContent) throws IOException {
+		sendTextContent(iRequest, iCode, iReason, iHeaders, iContentType, iContent, true);
+	}
+
+	protected void sendTextContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iHeaders,
+			final String iContentType, final Object iContent, final boolean iKeepAlive) throws IOException {
 		final String content = iContent != null ? iContent.toString() : null;
-		
+
 		final boolean empty = content == null || content.length() == 0;
 
 		sendStatus(iRequest, empty && iCode == 200 ? 204 : iCode, iReason);
-		sendResponseHeaders(iRequest, iContentType);
+		sendResponseHeaders(iRequest, iContentType, iKeepAlive);
 		if (iHeaders != null)
 			writeLine(iRequest, iHeaders);
 
-		writeLine(iRequest, "Set-Cookie: OSESSIONID=" + (iRequest.sessionId != null ? iRequest.sessionId : "-") + "; Path=/; HttpOnly");
+		final String sessId = iRequest.sessionId != null ? iRequest.sessionId : "-";
+
+		writeLine(iRequest, "Set-Cookie: OSESSIONID=" + sessId + "; Path=/; HttpOnly");
 
 		writeLine(iRequest, OHttpUtils.CONTENT_LENGTH + (empty ? 0 : content.length()));
 
@@ -66,6 +73,11 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 	}
 
 	protected void sendResponseHeaders(final OHttpRequest iRequest, final String iContentType) throws IOException {
+		sendResponseHeaders(iRequest, iContentType, true);
+	}
+
+	protected void sendResponseHeaders(final OHttpRequest iRequest, final String iContentType, final boolean iKeepAlive)
+			throws IOException {
 		if (!useCache) {
 			writeLine(iRequest, "Cache-Control: no-cache, no-store, max-age=0, must-revalidate");
 			writeLine(iRequest, "Pragma: no-cache");
@@ -73,7 +85,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 		writeLine(iRequest, "Date: " + new Date());
 		writeLine(iRequest, "Content-Type: " + iContentType);
 		writeLine(iRequest, "Server: " + iRequest.data.serverInfo);
-		writeLine(iRequest, "Connection: Keep-Alive");
+		writeLine(iRequest, "Connection: " + (iKeepAlive ? "Keep-Alive" : "Close"));
 	}
 
 	protected void writeLine(final OHttpRequest iRequest, final String iContent) throws IOException {

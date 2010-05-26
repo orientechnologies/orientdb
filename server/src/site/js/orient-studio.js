@@ -18,13 +18,13 @@ function connect() {
 }
 
 function disconnect() {
-	executeSimpleRequest($('#server').val() + '/disconnect',
-			function(database) {
-				databaseInfo = null;
-				$("#tabs-main").hide(200);
-				$("#buttonConnect").show();
-				$("#buttonDisconnect").hide();
-			});
+	executeSimpleRequest($('#server').val() + '/disconnect', null, function(
+			database) {
+		databaseInfo = null;
+		$("#tabs-main").hide(200);
+		$("#buttonConnect").show();
+		$("#buttonDisconnect").hide();
+	});
 }
 
 function showDatabaseInfo(database) {

@@ -1,30 +1,35 @@
 function executeJSONRequest(iRequest, iCallback, iData, iMethod) {
-	if( !iMethod )
+	if (!iMethod)
 		iMethod = 'GET';
-	
+
 	$.ajax( {
 		type : iMethod,
 		url : iRequest,
 		success : function(msg) {
 			iCallback.apply(this, [ jQuery.parseJSON(msg) ]);
 		},
-		data: iData,
+		data : iData,
 		error : function(msg) {
 			jQuery("#output").text("Command response: " + msg);
 		}
 	});
 }
 
-function executeSimpleRequest(iRequest, iCallback) {
+function defaultSimpleRequestError(msg) {
+	jQuery("#output").text("Command response: " + msg);
+}
+
+function executeSimpleRequest(iRequest, iSuccessCallback, iErrorCallback) {
+	if( !iErrorCallback )
+		iErrorCallback = defaultSimpleRequestError;
+	
 	$.ajax( {
 		type : 'GET',
 		url : iRequest,
 		success : function(msg) {
-			iCallback.apply(this, [ msg ]);
+			iSuccessCallback.apply(this, [ msg ]);
 		},
-		error : function(msg) {
-			jQuery("#output").text("Command response: " + msg);
-		}
+		error : iErrorCallback
 	});
 }
 

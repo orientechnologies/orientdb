@@ -28,28 +28,53 @@ public abstract class OServerCommandAuthenticatedAbstract extends OServerCommand
 
 	@Override
 	public boolean beforeExecute(final OHttpRequest iRequest) throws IOException {
-		if (iRequest.sessionId == null) {
+		if (iRequest.sessionId == null || (iRequest.sessionId != null && iRequest.sessionId.length() == 1)) {
 			// NO SESSION
-			if (iRequest.authorization == null) {
-				// UNAUTHORIZED
-				sendTextContent(iRequest, OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION,
-						"WWW-Authenticate: Basic realm=\"OrientDB Server\"", OHttpUtils.CONTENT_TEXT_PLAIN, null);
+			if (iRequest.authorization == null || "!".equals(iRequest.sessionId)) {
+				sendAuthorizationRequest(iRequest);
 				return false;
 			} else {
-				// AUTHENTICATED: CREATE THE SESSION
-				iRequest.sessionId = OHttpSessionManager.getInstance().createSession();
+				if (iRequest.url != null) {
+					String[] urlParts = iRequest.url.substring(1).split("/");
+					if (urlParts.length > 1) {
+
+						ODatabaseDocumentTx db = null;
+						try {
+							String dbName = urlParts[1] + ":" + iRequest.authorization;
+							db = OSharedDocumentDatabase.acquireDatabase(dbName);
+						} catch (Exception e) {
+							// WRONG USER/PASSWD
+							sendAuthorizationRequest(iRequest);
+							return false;
+						} finally {
+							if (db != null)
+								OSharedDocumentDatabase.releaseDatabase(db);
+						}
+
+						// AUTHENTICATED: CREATE THE SESSION
+						iRequest.sessionId = OHttpSessionManager.getInstance().createSession();
+						return true;
+					}
+				}
 			}
 		} else {
+			// CHECK THE SESSION VALIDITY
 			if (iRequest.sessionId.length() > 1 && OHttpSessionManager.getInstance().getSession(iRequest.sessionId) == null) {
 				// SESSION EXPIRED
-				iRequest.sessionId = null;
-				sendTextContent(iRequest, OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION,
-						"WWW-Authenticate: Basic realm=\"OrientDB Server\"", OHttpUtils.CONTENT_TEXT_PLAIN, "401 Unauthorized.");
+				sendAuthorizationRequest(iRequest);
 				return false;
 			}
+			return true;
 		}
 
-		return true;
+		return false;
+	}
+
+	private void sendAuthorizationRequest(final OHttpRequest iRequest) throws IOException {
+		// UNAUTHORIZED
+		iRequest.sessionId = "-";
+		sendTextContent(iRequest, OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION,
+				"WWW-Authenticate: Basic realm=\"OrientDB Server\"", OHttpUtils.CONTENT_TEXT_PLAIN, "401 Unauthorized.", false);
 	}
 
 	protected ODatabaseDocumentTx getProfiledDatabaseInstance(final OHttpRequest iRequest, final String iDatabaseURL)

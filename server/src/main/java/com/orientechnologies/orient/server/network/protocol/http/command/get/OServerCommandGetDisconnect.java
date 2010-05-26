@@ -38,10 +38,11 @@ public class OServerCommandGetDisconnect extends OServerCommandAbstract {
 
 		if (iRequest.sessionId != null) {
 			OHttpSessionManager.getInstance().removeSession(iRequest.sessionId);
-			iRequest.sessionId = null;
+			iRequest.sessionId = "!";
 		}
 
-		sendTextContent(iRequest, 204, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, null);
+		sendTextContent(iRequest, OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN,
+				"Logged out", false);
 	}
 
 	public String[] getNames() {

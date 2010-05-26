@@ -42,8 +42,10 @@ public class OResourcePool<K, V> {
 
 		// Then, actually take one if available...
 		V res = resources.poll();
-		if (res != null)
+		if (res != null) {
+			listener.reuseResource(iKey, res);
 			return res;
+		}
 
 		// ...or create one if none available
 		try {
