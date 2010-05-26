@@ -109,8 +109,8 @@ public class OSecurity extends OMetadataRecord {
 
 	@Override
 	public byte[] toStream() {
-		field("roles", roles.values(), OType.EMBEDDEDSET);
-		field("users", users.values(), OType.EMBEDDEDSET);
+		field("roles", roles.values(), OType.LINKSET);
+		field("users", users.values(), OType.LINKSET);
 		return super.toStream();
 	}
 

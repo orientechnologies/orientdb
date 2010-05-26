@@ -132,8 +132,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				underlyingDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
 
 				if (!(underlyingDatabase.getStorage() instanceof OStorageMemory) && !loadUserFromSchema(user, passwd)) {
-					sendError(new OSecurityAccessException("Access denied to database '" + connection.database.getName() + "' for user: "
-							+ user));
+					sendError(new OSecurityAccessException(connection.database.getName(), "Access denied to database '"
+							+ connection.database.getName() + "' for user: " + user));
 				} else {
 					sendOk();
 					channel.writeString(connection.id);
@@ -489,7 +489,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	private boolean loadUserFromSchema(String iUserName, String iUserPassword) {
 		account = connection.database.getMetadata().getSecurity().getUser(iUserName);
 		if (account == null)
-			throw new OSecurityAccessException("User '" + iUserName + "' was not found in database: " + connection.database.getName());
+			throw new OSecurityAccessException(connection.database.getName(), "User '" + iUserName + "' was not found in database: "
+					+ connection.database.getName());
 
 		boolean allow = account.checkPassword(iUserPassword);
 

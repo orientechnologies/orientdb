@@ -20,12 +20,19 @@ import com.orientechnologies.common.exception.OException;
 public class OSecurityAccessException extends OException {
 
 	private static final long	serialVersionUID	= -8486291378415776372L;
+	private String						databaseName;
 
-	public OSecurityAccessException(String message, Throwable cause) {
+	public OSecurityAccessException(final String iDatabasename, final String message, final Throwable cause) {
 		super(message, cause);
+		databaseName = iDatabasename;
 	}
 
-	public OSecurityAccessException(String message) {
+	public OSecurityAccessException(final String iDatabasename, final String message) {
 		super(message);
+		databaseName = iDatabasename;
+	}
+
+	public String getDatabaseName() {
+		return databaseName;
 	}
 }

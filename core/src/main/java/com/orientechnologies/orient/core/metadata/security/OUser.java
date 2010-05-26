@@ -62,12 +62,12 @@ public class OUser extends OMetadataRecord {
 	 */
 	public ORole allow(final String iResource, final int iOperation) {
 		if (roles == null || roles.isEmpty())
-			throw new OSecurityAccessException("User '" + name + "' has no role defined");
+			throw new OSecurityAccessException(database.getName(), "User '" + name + "' has no role defined");
 
 		final ORole role = checkIfAllowed(iResource, iOperation);
 
 		if (role == null)
-			throw new OSecurityAccessException("User '" + name + "' has no the permission to execute the operation '"
+			throw new OSecurityAccessException(database.getName(), "User '" + name + "' has no the permission to execute the operation '"
 					+ ORole.permissionToString(iOperation) + "' against the resource: " + iResource);
 
 		return role;

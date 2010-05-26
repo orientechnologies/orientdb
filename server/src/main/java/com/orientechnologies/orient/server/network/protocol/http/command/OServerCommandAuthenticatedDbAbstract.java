@@ -111,7 +111,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
 	protected ODatabaseDocumentTx getProfiledDatabaseInstance(final OHttpRequest iRequest, final String iDatabaseURL)
 			throws InterruptedException {
 		if (iRequest.authorization == null)
-			throw new OSecurityAccessException("No user and password received");
+			throw new OSecurityAccessException(iDatabaseURL, "No user and password received");
 
 		return OSharedDocumentDatabase.acquireDatabase(iDatabaseURL + ":" + iRequest.authorization);
 	}

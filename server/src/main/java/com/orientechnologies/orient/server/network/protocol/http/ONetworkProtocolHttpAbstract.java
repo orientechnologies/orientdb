@@ -134,16 +134,17 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 			e = (Exception) e.getCause();
 		} else if (e instanceof IllegalArgumentException)
 			errorCode = 400;
-		else if (e instanceof ODatabaseException) {
+		else if (e instanceof ODatabaseException || e instanceof OSecurityAccessException) {
 			// GENERIC DATABASE EXCEPTION
-			final Throwable cause = e.getCause();
+			final Throwable cause = e instanceof OSecurityAccessException ? e : e.getCause();
 			if (cause instanceof OSecurityAccessException) {
 				// SECURITY EXCEPTION
 				if (account == null) {
 					// UNAUTHORIZED
 					errorCode = OHttpUtils.STATUS_AUTH_CODE;
 					errorReason = OHttpUtils.STATUS_AUTH_DESCRIPTION;
-					responseHeaders = "WWW-Authenticate: Basic realm=\"OrientDB Server\"";
+					responseHeaders = "WWW-Authenticate: Basic realm=\"OrientDB db-" + ((OSecurityAccessException) cause).getDatabaseName()
+							+ "\"";
 					errorMessage = null;
 				} else {
 					// USER ACCESS DENIED

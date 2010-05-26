@@ -90,12 +90,12 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			if (!(getStorage() instanceof OStorageMemory)) {
 				user = getMetadata().getSecurity().getUser(iUserName);
 				if (user == null)
-					throw new OSecurityAccessException("User '" + iUserName + "' was not found in database: " + getName());
+					throw new OSecurityAccessException(this.getName(), "User '" + iUserName + "' was not found in database: " + getName());
 
 				if (!user.checkPassword(iUserPassword)) {
 					// WAIT A BIT TO AVOID BRUTE FORCE
 					Thread.sleep(200);
-					throw new OSecurityAccessException("Password not valid for user: " + iUserName);
+					throw new OSecurityAccessException(this.getName(), "Password not valid for user: " + iUserName);
 				}
 			}
 
