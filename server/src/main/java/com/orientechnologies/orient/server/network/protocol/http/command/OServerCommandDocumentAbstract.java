@@ -20,7 +20,7 @@ import java.util.Map;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 
-public abstract class OServerCommandDocumentAbstract extends OServerCommandAuthenticatedAbstract {
+public abstract class OServerCommandDocumentAbstract extends OServerCommandAuthenticatedDbAbstract {
 
 	protected String bindToFields(final OHttpRequest iRequest, final Map<String, String> iFields, final ORecordId iRid)
 			throws Exception {

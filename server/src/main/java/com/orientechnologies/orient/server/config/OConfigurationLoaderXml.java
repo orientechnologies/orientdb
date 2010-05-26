@@ -52,6 +52,7 @@ public class OConfigurationLoaderXml {
 				unmarshaller.setSchema(schema);
 				OServerConfiguration obj = rootClass.cast(unmarshaller.unmarshal(file));
 				obj.location = filePath;
+
 				return obj;
 			} else
 				return rootClass.getConstructor(OConfigurationLoaderXml.class, String.class).newInstance(this, filePath);

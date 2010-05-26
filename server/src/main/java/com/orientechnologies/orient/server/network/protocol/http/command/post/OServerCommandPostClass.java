@@ -20,9 +20,9 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
-public class OServerCommandPostClass extends OServerCommandAuthenticatedAbstract {
+public class OServerCommandPostClass extends OServerCommandAuthenticatedDbAbstract {
 	private static final String[]	NAMES	= { "POST.class" };
 
 	public void execute(final OHttpRequest iRequest) throws Exception {

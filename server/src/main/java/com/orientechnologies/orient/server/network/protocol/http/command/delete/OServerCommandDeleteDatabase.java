@@ -18,9 +18,9 @@ package com.orientechnologies.orient.server.network.protocol.http.command.delete
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
-public class OServerCommandDeleteDatabase extends OServerCommandAuthenticatedAbstract {
+public class OServerCommandDeleteDatabase extends OServerCommandAuthenticatedDbAbstract {
 	private static final String[]	NAMES	= { "DELETE.database" };
 
 	public void execute(final OHttpRequest iRequest) throws Exception {

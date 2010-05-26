@@ -13,20 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.client.config;
+package com.orientechnologies.orient.core.config;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 
-import com.orientechnologies.orient.core.config.OEntryConfiguration;
+@XmlRootElement(name = "entry")
+@XmlType(propOrder = { "name", "value" })
+public class OEntryConfiguration {
+	@XmlAttribute
+	public String	name;
 
-@XmlRootElement(name = "orient-client")
-public class OClientConfiguration {
-	public int															connectionTimeout			= 5000;
-	public int															connectionRetry				= 5;
-	public long															connectionRetryDelay	= 500;
+	@XmlAttribute
+	public String	value;
 
-	public List<OEntryConfiguration>	properties						= new ArrayList<OEntryConfiguration>();
+	public OEntryConfiguration() {
+	}
+
+	public OEntryConfiguration(final String iName, final String iValue) {
+		name = iName;
+		value = iValue;
+	}
 }

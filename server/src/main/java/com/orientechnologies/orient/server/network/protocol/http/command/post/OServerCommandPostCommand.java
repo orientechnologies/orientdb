@@ -23,9 +23,9 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
-public class OServerCommandPostCommand extends OServerCommandAuthenticatedAbstract {
+public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbstract {
 	private static final String[]	NAMES	= { "POST.command" };
 
 	@SuppressWarnings("unchecked")

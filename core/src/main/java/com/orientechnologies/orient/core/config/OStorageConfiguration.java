@@ -47,7 +47,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
 	public OStorageTxConfiguration						txSegment					= new OStorageTxConfiguration();
 
-	public List<OStorageEntryConfiguration>		properties				= new ArrayList<OStorageEntryConfiguration>();
+	public List<OEntryConfiguration>		properties				= new ArrayList<OEntryConfiguration>();
 
 	private transient Locale									localeInstance;
 	private transient DateFormat							dateFormatInstance;
@@ -165,9 +165,9 @@ public class OStorageConfiguration implements OSerializableStream {
 				read(values[index++]), read(values[index++]));
 
 		size = Integer.parseInt(read(values[index++]));
-		properties = new ArrayList<OStorageEntryConfiguration>(size);
+		properties = new ArrayList<OEntryConfiguration>(size);
 		for (int i = 0; i < size; ++i) {
-			properties.add(new OStorageEntryConfiguration(read(values[index++]), read(values[index++])));
+			properties.add(new OEntryConfiguration(read(values[index++]), read(values[index++])));
 		}
 
 		return this;
@@ -211,7 +211,7 @@ public class OStorageConfiguration implements OSerializableStream {
 		write(buffer, txSegment.isSynchTx());
 
 		write(buffer, properties.size());
-		for (OStorageEntryConfiguration e : properties)
+		for (OEntryConfiguration e : properties)
 			entryToStream(buffer, e);
 
 		return buffer.toString().getBytes();
@@ -262,7 +262,7 @@ public class OStorageConfiguration implements OSerializableStream {
 		write(iBuffer, iFile.maxSize);
 	}
 
-	private void entryToStream(final StringBuilder iBuffer, final OStorageEntryConfiguration iEntry) {
+	private void entryToStream(final StringBuilder iBuffer, final OEntryConfiguration iEntry) {
 		write(iBuffer, iEntry.name);
 		write(iBuffer, iEntry.value);
 	}

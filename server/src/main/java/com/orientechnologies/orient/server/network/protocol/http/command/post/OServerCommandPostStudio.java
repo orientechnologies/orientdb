@@ -33,10 +33,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 @SuppressWarnings("unchecked")
-public class OServerCommandPostStudio extends OServerCommandAuthenticatedAbstract {
+public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstract {
 	private static final String[]	NAMES	= { "POST.studio" };
 
 	public void execute(final OHttpRequest iRequest) throws Exception {

@@ -19,10 +19,14 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 
-public class OServerCommandPostDatabase extends OServerCommandAuthenticatedAbstract {
+public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServerAbstract {
 	private static final String[]	NAMES	= { "POST.database" };
+
+	public OServerCommandPostDatabase() {
+		super("new-database");
+	}
 
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: database/<database>");

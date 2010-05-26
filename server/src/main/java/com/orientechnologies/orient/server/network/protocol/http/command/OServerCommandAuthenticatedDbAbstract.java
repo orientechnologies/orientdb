@@ -17,36 +17,55 @@ package com.orientechnologies.orient.server.network.protocol.http.command;
 
 import java.io.IOException;
 
+import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpRequestException;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
-public abstract class OServerCommandAuthenticatedAbstract extends OServerCommandAbstract {
+/**
+ * Database based authenticated command. Authenticats against the database taken as second parameter of the URL. The URL must be in
+ * this format:
+ * 
+ * <pre>
+ * <command>/<database>[/...]
+ * </pre>
+ * 
+ * @author Luca Garulli
+ * 
+ */
+public abstract class OServerCommandAuthenticatedDbAbstract extends OServerCommandAbstract {
 
 	private static final String	SESSIONID_UNAUTHORIZED	= "-";
 	private static final String	SESSIONID_LOGOUT				= "!";
 
 	@Override
 	public boolean beforeExecute(final OHttpRequest iRequest) throws IOException {
+		final String[] urlParts = iRequest.url.substring(1).split("/");
+		if (urlParts.length < 2)
+			throw new OHttpRequestException("Syntax error in URL. Expected is: <command>/<database>[/...]");
+
+		final String dbName = urlParts[1];
+
 		if (iRequest.sessionId == null || (iRequest.sessionId != null && iRequest.sessionId.length() == 1)) {
 			// NO SESSION
 			if (iRequest.authorization == null || SESSIONID_LOGOUT.equals(iRequest.sessionId)) {
-				sendAuthorizationRequest(iRequest);
+				sendAuthorizationRequest(iRequest, dbName);
 				return false;
 			} else {
 				if (iRequest.url != null)
-					return authenticate(iRequest);
+					return authenticate(iRequest, dbName);
 			}
 		} else {
 			// CHECK THE SESSION VALIDITY
 			if (iRequest.sessionId.length() > 1 && OHttpSessionManager.getInstance().getSession(iRequest.sessionId) == null) {
 				// SESSION EXPIRED
-				sendAuthorizationRequest(iRequest);
+				sendAuthorizationRequest(iRequest, dbName);
 				return false;
 			}
 			return true;
@@ -55,38 +74,38 @@ public abstract class OServerCommandAuthenticatedAbstract extends OServerCommand
 		return false;
 	}
 
-	private boolean authenticate(final OHttpRequest iRequest) throws IOException {
-		String[] urlParts = iRequest.url.substring(1).split("/");
-		if (urlParts.length > 1) {
-
-			ODatabaseDocumentTx db = null;
-			try {
-				String dbName = urlParts[1] + ":" + iRequest.authorization;
-				db = OSharedDocumentDatabase.acquireDatabase(dbName);
-			} catch (OSecurityAccessException e) {
-				// WRONG USER/PASSWD
-				sendAuthorizationRequest(iRequest);
-				return false;
-			} catch (InterruptedException e) {
-				OLogManager.instance().error(this, "Can't access to the database", ODatabaseException.class, e);
-				return false;
-			} finally {
-				if (db != null)
-					OSharedDocumentDatabase.releaseDatabase(db);
-			}
+	private boolean authenticate(final OHttpRequest iRequest, final String iDatabaseName) throws IOException {
+		ODatabaseDocumentTx db = null;
+		try {
+			String dbName = iDatabaseName + ":" + iRequest.authorization;
+			db = OSharedDocumentDatabase.acquireDatabase(dbName);
 
 			// AUTHENTICATED: CREATE THE SESSION
 			iRequest.sessionId = OHttpSessionManager.getInstance().createSession();
 			return true;
+
+		} catch (OSecurityAccessException e) {
+			// WRONG USER/PASSWD
+		} catch (OLockException e) {
+			OLogManager.instance().error(this, "Can't access to the database", ODatabaseException.class, e);
+		} catch (InterruptedException e) {
+			OLogManager.instance().error(this, "Can't access to the database", ODatabaseException.class, e);
+		} finally {
+			if (db != null)
+				OSharedDocumentDatabase.releaseDatabase(db);
+			else
+				// WRONG USER/PASSWD
+				sendAuthorizationRequest(iRequest, iDatabaseName);
 		}
 		return false;
 	}
 
-	private void sendAuthorizationRequest(final OHttpRequest iRequest) throws IOException {
+	private void sendAuthorizationRequest(final OHttpRequest iRequest, final String iDatabaseName) throws IOException {
 		// UNAUTHORIZED
 		iRequest.sessionId = SESSIONID_UNAUTHORIZED;
 		sendTextContent(iRequest, OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION,
-				"WWW-Authenticate: Basic realm=\"OrientDB Server\"", OHttpUtils.CONTENT_TEXT_PLAIN, "401 Unauthorized.", false);
+				"WWW-Authenticate: Basic realm=\"OrientDB db-" + iDatabaseName + "\"", OHttpUtils.CONTENT_TEXT_PLAIN, "401 Unauthorized.",
+				false);
 	}
 
 	protected ODatabaseDocumentTx getProfiledDatabaseInstance(final OHttpRequest iRequest, final String iDatabaseURL)

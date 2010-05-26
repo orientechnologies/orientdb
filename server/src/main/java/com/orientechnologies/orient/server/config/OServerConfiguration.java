@@ -23,12 +23,12 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
-import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
+import com.orientechnologies.orient.core.config.OEntryConfiguration;
 
 @XmlRootElement(name = "orient-server")
 public class OServerConfiguration {
 	public static final String								FILE_NAME	= "server.config";
-	// private static final String HEADER = "Orient DBMS Server configuration";
+	// private static final String HEADER = "OrientDB Server configuration";
 
 	@XmlTransient
 	public String															location;
@@ -44,9 +44,13 @@ public class OServerConfiguration {
 	@XmlElementRef(type = OServerStorageConfiguration.class)
 	public List<OServerStorageConfiguration>	storages;
 
+	@XmlElementWrapper(required = false)
+	@XmlElementRef(type = OServerUserConfiguration.class)
+	public List<OServerUserConfiguration>			users;
+
 	@XmlElementWrapper
-	@XmlElementRef(type = OStorageEntryConfiguration.class)
-	public List<OStorageEntryConfiguration>		properties;
+	@XmlElementRef(type = OEntryConfiguration.class)
+	public List<OEntryConfiguration>					properties;
 
 	/**
 	 * Empty constructor for JAXB
@@ -90,11 +94,19 @@ public class OServerConfiguration {
 		if (properties == null)
 			return null;
 
-		for (OStorageEntryConfiguration p : properties) {
+		for (OEntryConfiguration p : properties) {
 			if (p.name.equals(iName))
 				return p.value;
 		}
 
+		return null;
+	}
+
+	public OServerUserConfiguration getUser(final String iName) {
+		for (OServerUserConfiguration u : users) {
+			if (u.name.equals(iName))
+				return u;
+		}
 		return null;
 	}
 

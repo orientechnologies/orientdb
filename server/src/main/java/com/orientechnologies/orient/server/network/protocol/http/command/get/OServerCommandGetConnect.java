@@ -20,7 +20,7 @@ import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Map.Entry;
 
-import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
+import com.orientechnologies.orient.core.config.OEntryConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -36,9 +36,9 @@ import com.orientechnologies.orient.core.storage.impl.local.OTxSegment;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
-public class OServerCommandGetConnect extends OServerCommandAuthenticatedAbstract {
+public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstract {
 	private static final String[]	NAMES	= { "GET.connect" };
 
 	public void execute(final OHttpRequest iRequest) throws Exception {
@@ -165,7 +165,7 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedAbstrac
 			json.endCollection(2, true);
 
 			json.beginCollection(2, true, "properties");
-			for (OStorageEntryConfiguration entry : db.getStorage().getConfiguration().properties) {
+			for (OEntryConfiguration entry : db.getStorage().getConfiguration().properties) {
 				json.beginObject(3, true, null);
 				json.writeAttribute(4, false, "name", entry.name);
 				json.writeAttribute(4, false, "value", entry.value);

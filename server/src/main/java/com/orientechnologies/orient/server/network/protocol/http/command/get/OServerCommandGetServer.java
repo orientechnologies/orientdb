@@ -26,7 +26,7 @@ import java.util.Map.Entry;
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfiler.Chrono;
-import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
+import com.orientechnologies.orient.core.config.OEntryConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -36,11 +36,15 @@ import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 
-public class OServerCommandGetServer extends OServerCommandAuthenticatedAbstract {
+public class OServerCommandGetServer extends OServerCommandAuthenticatedServerAbstract {
 	private static final String[]		NAMES						= { "GET.server" };
 	private final static DateFormat	dateTimeFormat	= new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+
+	public OServerCommandGetServer() {
+		super("info-server");
+	}
 
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		checkSyntax(iRequest.url, 1, "Syntax error: server");
@@ -104,7 +108,7 @@ public class OServerCommandGetServer extends OServerCommandAuthenticatedAbstract
 			json.endCollection(1, false);
 
 			json.beginCollection(2, true, "properties");
-			for (OStorageEntryConfiguration entry : OServerMain.server().getConfiguration().properties) {
+			for (OEntryConfiguration entry : OServerMain.server().getConfiguration().properties) {
 				json.beginObject(3, true, null);
 				json.writeAttribute(4, false, "name", entry.name);
 				json.writeAttribute(4, false, "value", entry.value);

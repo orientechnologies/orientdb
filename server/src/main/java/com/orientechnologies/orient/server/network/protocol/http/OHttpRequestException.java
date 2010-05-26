@@ -13,26 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.config;
+package com.orientechnologies.orient.server.network.protocol.http;
 
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
+import com.orientechnologies.common.exception.OException;
 
-@XmlRootElement(name = "entry")
-@XmlType(propOrder = { "name", "value" })
-public class OStorageEntryConfiguration {
-	@XmlAttribute
-	public String	name;
+public class OHttpRequestException extends OException {
 
-	@XmlAttribute
-	public String	value;
+	private static final long	serialVersionUID	= 12132321321321L;
 
-	public OStorageEntryConfiguration() {
+	public OHttpRequestException() {
+		super();
 	}
 
-	public OStorageEntryConfiguration(final String iName, final String iValue) {
-		name = iName;
-		value = iValue;
+	public OHttpRequestException(String message, Throwable cause) {
+		super(message, cause);
+	}
+
+	public OHttpRequestException(String message) {
+		super(message);
+	}
+
+	public OHttpRequestException(Throwable cause) {
+		super(cause);
 	}
 }

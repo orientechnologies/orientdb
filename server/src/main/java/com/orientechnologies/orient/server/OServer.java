@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javax.management.InstanceAlreadyExistsException;
@@ -38,11 +39,13 @@ import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.server.config.OConfigurationLoaderXml;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerNetworkListenerConfiguration;
 import com.orientechnologies.orient.server.config.OServerNetworkProtocolConfiguration;
+import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.managed.OrientServer;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
@@ -164,9 +167,40 @@ public class OServer {
 
 			configurationLoader = new OConfigurationLoaderXml(OServerConfiguration.class, config);
 			configuration = configurationLoader.load();
+
+			if (configuration.users == null || configuration.users.size() == 0)
+				createAdminUser();
+
 		} catch (IOException e) {
 			OLogManager.instance().error(this, "Error on reading server configuration.", OConfigurationException.class);
 		}
+	}
+
+	/**
+	 * Authenticate a server user.
+	 * 
+	 * @param iUserName
+	 *          Username to authenticate
+	 * @param iPassword
+	 *          Password in clear
+	 * @return true if authentication is ok, otherwise false
+	 */
+	public boolean authenticate(final String iUserName, final String iPassword, final String iResourceToCheck) {
+		final OServerUserConfiguration user = configuration.getUser(iUserName);
+
+		if (user != null && user.password.equals(iPassword)) {
+			if (user.resources.equals("*"))
+				// ACCESS TO ALL
+				return true;
+
+			String[] resourceParts = user.resources.split(",");
+			for (String r : resourceParts)
+				if (r.equals(iResourceToCheck))
+					return true;
+		}
+
+		// WRONG PASSWORD OR NO AUTHORIZATION
+		return false;
 	}
 
 	public boolean existsStoragePath(final String iURL) {
@@ -200,4 +234,15 @@ public class OServer {
 	public OrientServer getManagedServer() {
 		return managedServer;
 	}
+
+	private void createAdminUser() throws IOException {
+		configuration.users = new ArrayList<OServerUserConfiguration>();
+
+		final long generatedPassword = new Random(System.currentTimeMillis()).nextLong();
+		String encodedPassword = OSecurityManager.instance().digest2String(String.valueOf(generatedPassword));
+
+		configuration.users.add(new OServerUserConfiguration("admin", encodedPassword, "*"));
+		configurationLoader.save(configuration);
+	}
+
 }

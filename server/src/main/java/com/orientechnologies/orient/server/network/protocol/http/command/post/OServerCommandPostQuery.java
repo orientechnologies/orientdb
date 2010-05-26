@@ -23,9 +23,9 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
-public class OServerCommandPostQuery extends OServerCommandAuthenticatedAbstract {
+public class OServerCommandPostQuery extends OServerCommandAuthenticatedDbAbstract {
 	private static final String[]	NAMES	= { "POST.query" };
 
 	@SuppressWarnings("unchecked")

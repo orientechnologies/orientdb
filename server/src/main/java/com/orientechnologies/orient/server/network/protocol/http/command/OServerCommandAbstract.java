@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpRequestException;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 public abstract class OServerCommandAbstract implements OServerCommand {
@@ -101,7 +102,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 
 		String[] parts = iURL.substring(1).split("/");
 		if (parts.length < iArgumentCount)
-			throw new IllegalArgumentException(iSyntax);
+			throw new OHttpRequestException(iSyntax);
 
 		return parts;
 	}

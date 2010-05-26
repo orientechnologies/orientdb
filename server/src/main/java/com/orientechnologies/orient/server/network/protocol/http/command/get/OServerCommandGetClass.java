@@ -22,9 +22,9 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
-public class OServerCommandGetClass extends OServerCommandAuthenticatedAbstract {
+public class OServerCommandGetClass extends OServerCommandAuthenticatedDbAbstract {
 	private static final String[]	NAMES	= { "GET.class" };
 
 	public void execute(final OHttpRequest iRequest) throws Exception {
