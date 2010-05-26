@@ -267,9 +267,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				if (connection.database.getMetadata().getSchema().getIdentity().getClusterId() == clusterId
 						&& connection.database.getMetadata().getSchema().getIdentity().getClusterPosition() == position)
 					connection.database.getMetadata().loadSchema();
-				else if (connection.database.getMetadata().getSecurity().getIdentity().getClusterId() == clusterId
-						&& connection.database.getMetadata().getSecurity().getIdentity().getClusterPosition() == position)
-					connection.database.getMetadata().loadSecurity();
 				else if (((ODictionaryLocal<?>) connection.database.getDictionary()).getTree().getRecord().getIdentity().getClusterId() == clusterId
 						&& ((ODictionaryLocal<?>) connection.database.getDictionary()).getTree().getRecord().getIdentity().getClusterPosition() == position)
 					((ODictionaryLocal<?>) connection.database.getDictionary()).load();

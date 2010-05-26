@@ -37,6 +37,8 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -46,7 +48,6 @@ import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 
 @SuppressWarnings("unchecked")
@@ -447,33 +448,39 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 	}
 
 	private void createRolesAndUsers() {
-		final int metadataClusterId = getClusterIdByName(OStorage.CLUSTER_METADATA_NAME);
-		metadata.getSchema().createClass("ORole", metadataClusterId);
-		metadata.getSchema().createClass("OUser", metadataClusterId);
+		// CREATE ROLE AND USER SCHEMA CLASSES
+		final OClass role = metadata.getSchema().createClass("ORole");
+		metadata.getSchema().createClass("OUser").createProperty("roles", OType.LINKSET, role);
+		metadata.getSchema().save();
 
-		final ORole role = metadata.getSecurity().createRole("admin", ORole.ALLOW_MODES.ALLOW_ALL_BUT);
-		user = metadata.getSecurity().createUser("admin", "admin", new String[] { role.getName() });
+		// CREATE ROLES AND USERS
+		final ORole adminRole = metadata.getSecurity().createRole("admin", ORole.ALLOW_MODES.ALLOW_ALL_BUT);
+		user = metadata.getSecurity().createUser("admin", "admin", new String[] { adminRole.getName() });
 
 		final ORole readerRole = metadata.getSecurity().createRole("reader", ORole.ALLOW_MODES.DENY_ALL_BUT);
 		readerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
 		readerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".metadata", ORole.PERMISSION_NONE);
+		readerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".ouser", ORole.PERMISSION_NONE);
+		readerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".orole", ORole.PERMISSION_NONE);
 		readerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.PERMISSION_READ);
 		readerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.PERMISSION_READ);
 		readerRole.addRule(ODatabaseSecurityResources.QUERY, ORole.PERMISSION_READ);
 		readerRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 		readerRole.addRule(ODatabaseSecurityResources.RECORD_HOOK, ORole.PERMISSION_READ);
+		readerRole.save();
 		metadata.getSecurity().createUser("reader", "reader", new String[] { readerRole.getName() });
 
 		final ORole writerRole = metadata.getSecurity().createRole("writer", ORole.ALLOW_MODES.DENY_ALL_BUT);
 		writerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
 		writerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".metadata", ORole.PERMISSION_NONE);
+		writerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".ouser", ORole.PERMISSION_NONE);
+		writerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".orole", ORole.PERMISSION_NONE);
 		writerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.PERMISSION_ALL);
 		writerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.PERMISSION_ALL);
 		writerRole.addRule(ODatabaseSecurityResources.QUERY, ORole.PERMISSION_READ);
 		writerRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_ALL);
 		writerRole.addRule(ODatabaseSecurityResources.RECORD_HOOK, ORole.PERMISSION_ALL);
+		writerRole.save();
 		metadata.getSecurity().createUser("writer", "writer", new String[] { writerRole.getName() });
-
-		metadata.getSecurity().save();
 	}
 }

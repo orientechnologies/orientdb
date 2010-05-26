@@ -27,6 +27,7 @@ import java.util.Map;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -134,7 +135,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 			e = (Exception) e.getCause();
 		} else if (e instanceof IllegalArgumentException)
 			errorCode = 400;
-		else if (e instanceof ODatabaseException || e instanceof OSecurityAccessException) {
+		else if (e instanceof ODatabaseException || e instanceof OSecurityAccessException || e instanceof OCommandExecutionException) {
 			// GENERIC DATABASE EXCEPTION
 			final Throwable cause = e instanceof OSecurityAccessException ? e : e.getCause();
 			if (cause instanceof OSecurityAccessException) {

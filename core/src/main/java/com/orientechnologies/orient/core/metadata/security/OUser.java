@@ -16,12 +16,11 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.metadata.schema.OMetadataRecord;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 
@@ -33,7 +32,7 @@ import com.orientechnologies.orient.core.security.OSecurityManager;
  * 
  * @see ORole
  */
-public class OUser extends OMetadataRecord {
+public class OUser extends ODocument {
 	protected String			name;
 	protected String			password;
 	protected Set<ORole>	roles	= new HashSet<ORole>();
@@ -119,11 +118,13 @@ public class OUser extends OMetadataRecord {
 
 	public OUser setPassword(final String iPassword) {
 		this.password = OSecurityManager.instance().digest2String(iPassword);
+		setDirty();
 		return this;
 	}
 
 	public void setPasswordEncoded(String iPassword) {
 		this.password = iPassword;
+		setDirty();
 	}
 
 	public Set<ORole> getRoles() {
@@ -139,8 +140,13 @@ public class OUser extends OMetadataRecord {
 	public OUser addRole(final ORole iRole) {
 		if (iRole != null)
 			roles.add(iRole);
-
+		setDirty();
 		return this;
+	}
+
+	@Override
+	public OUser save() {
+		return (OUser) super.save(OUser.class.getSimpleName());
 	}
 
 	public OUser fromDocument(final ODocument iSource) {
@@ -149,12 +155,12 @@ public class OUser extends OMetadataRecord {
 		name = iSource.field("name");
 		password = iSource.field("password");
 
-		ORole role;
-		List<String> storedRoles = iSource.field("roles");
-		for (String r : storedRoles) {
-			role = database.getMetadata().getSecurity().getRole(r);
-			roles.add(role);
+		roles = new HashSet<ORole>();
+		Set<ODocument> loadedRoles = iSource.field("roles");
+		for (ODocument d : loadedRoles) {
+			roles.add(database.getMetadata().getSecurity().getRole((String) d.field("name")));
 		}
+
 		return this;
 	}
 
@@ -162,13 +168,7 @@ public class OUser extends OMetadataRecord {
 	public byte[] toStream() {
 		field("name", name);
 		field("password", password);
-
-		Set<String> storedRoles = new HashSet<String>();
-		for (ORole r : roles) {
-			storedRoles.add(r.getName());
-		}
-
-		field("roles", storedRoles);
+		field("roles", roles, OType.LINKSET);
 		return super.toStream();
 	}
 

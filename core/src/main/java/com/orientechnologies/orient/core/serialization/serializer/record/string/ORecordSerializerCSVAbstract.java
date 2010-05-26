@@ -199,7 +199,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			break;
 
 		case LINK: {
-			linkToStream(buffer, (ORecordSchemaAware<?>) iValue);
+			linkToStream(buffer, iRecord, (ORecordSchemaAware<?>) iValue);
 			break;
 		}
 
@@ -321,7 +321,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				if (record.getDatabase() == null)
 					record.setDatabase(iDatabase);
 
-				linkToStream(buffer, record);
+				linkToStream(buffer, iRecord, record);
 			}
 
 			buffer.append(OStringSerializerHelper.COLLECTION_END);
@@ -354,16 +354,22 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		return integer ? OType.INTEGER : OType.FLOAT;
 	}
 
-	private void linkToStream(StringBuilder buffer, ORecordSchemaAware<?> record) {
-		ORID link = record.getIdentity();
-		if (!link.isValid())
+	private void linkToStream(final StringBuilder buffer, final ORecordSchemaAware<?> iParentRecord,
+			final ORecordSchemaAware<?> iLinkedRecord) {
+
+		ORID link = iLinkedRecord.getIdentity();
+		if (!link.isValid()) {
+			// OVERWRITE THE DATABASE TO THE SAME OF PARENT ONE
+			iLinkedRecord.setDatabase(iParentRecord.getDatabase());
+
 			// STORE THE TRAVERSED OBJECT TO KNOW THE RECORD ID. CALL THIS VERSION TO AVOID CLEAR OF STACK IN THREAD-LOCAL
-			record.getDatabase().save((ORecordInternal) record);
+			iLinkedRecord.getDatabase().save((ORecordInternal) iLinkedRecord);
+		}
 
 		buffer.append(OStringSerializerHelper.LINK);
 
-		if (record.getClassName() != null) {
-			buffer.append(record.getClassName());
+		if (iLinkedRecord.getClassName() != null) {
+			buffer.append(iLinkedRecord.getClassName());
 			buffer.append(OStringSerializerHelper.CLASS_SEPARATOR);
 		}
 

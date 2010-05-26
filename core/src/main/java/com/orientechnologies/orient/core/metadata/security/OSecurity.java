@@ -18,22 +18,37 @@ package com.orientechnologies.orient.core.metadata.security;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.metadata.schema.OMetadataRecord;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public class OSecurity extends OMetadataRecord {
+public class OSecurity {
+	private ODatabaseRecord<?>		database;
 	protected Map<String, ORole>	roles	= new LinkedHashMap<String, ORole>();
 	protected Map<String, OUser>	users	= new LinkedHashMap<String, OUser>();
 
-	public OSecurity(final ODatabaseRecord<?> iDatabaseOwner, final int schemaClusterId) {
-		super(iDatabaseOwner);
+	public OSecurity(final ODatabaseRecord<?> iDatabaseOwner) {
+		database = iDatabaseOwner;
+	}
+
+	public void load() {
+		if (database.getClusterIdByName(ORole.class.getSimpleName()) == -1)
+			return;
+
+		ODocument doc;
+		for (ORecord<?> rec : database.browseCluster(ORole.class.getSimpleName())) {
+			doc = (ODocument) rec;
+			roles.put((String) doc.field("name"), new ORole(database).fromDocument(doc));
+		}
+
+		for (ORecord<?> rec : database.browseCluster(OUser.class.getSimpleName())) {
+			doc = (ODocument) rec;
+			users.put((String) doc.field("name"), new OUser(database).fromDocument(doc));
+		}
 	}
 
 	public OUser getUser(final String iUserName) {
@@ -57,9 +72,7 @@ public class OSecurity extends OMetadataRecord {
 				user.addRole(r);
 			}
 
-		setDirty();
-
-		return user;
+		return user.save();
 	}
 
 	public ORole getRole(final String iRoleName) {
@@ -81,37 +94,7 @@ public class OSecurity extends OMetadataRecord {
 
 		roles.put(iRole.name, iRole);
 
-		setDirty();
-
-		return iRole;
-	}
-
-	@Override
-	public OSecurity fromStream(final byte[] iBuffer) {
-		super.fromStream(iBuffer);
-
-		ORole role;
-		List<ODocument> storedRoles = field("roles");
-		for (ODocument r : storedRoles) {
-			role = new ORole(database).fromDocument(r);
-			roles.put(role.name, role);
-		}
-
-		OUser user;
-		List<ODocument> storedUsers = field("users");
-		for (ODocument u : storedUsers) {
-			user = new OUser(database).fromDocument(u);
-			users.put(user.name, user);
-		}
-
-		return this;
-	}
-
-	@Override
-	public byte[] toStream() {
-		field("roles", roles.values(), OType.LINKSET);
-		field("users", users.values(), OType.LINKSET);
-		return super.toStream();
+		return iRole.save();
 	}
 
 	public Collection<OUser> getUsers() {
@@ -120,11 +103,5 @@ public class OSecurity extends OMetadataRecord {
 
 	public Collection<ORole> getRoles() {
 		return Collections.unmodifiableCollection(roles.values());
-	}
-
-	@Override
-	public OSecurity load() {
-		recordId.fromString(database.getStorage().getConfiguration().securityRecordId);
-		return (OSecurity) super.load();
 	}
 }

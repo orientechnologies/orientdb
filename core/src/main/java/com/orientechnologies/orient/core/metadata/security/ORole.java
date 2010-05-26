@@ -21,7 +21,6 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.metadata.schema.OMetadataRecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -35,7 +34,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * </ul>
  * Mode = ALLOW (allow all but) or DENY (deny all but)
  */
-public class ORole extends OMetadataRecord {
+public class ORole extends ODocument {
 	public enum ALLOW_MODES {
 		DENY_ALL_BUT, ALLOW_ALL_BUT
 	}
@@ -93,6 +92,7 @@ public class ORole extends OMetadataRecord {
 
 	public void addRule(final String iResource, final int iOperation) {
 		rules.put(iResource, (byte) iOperation);
+		setDirty();
 	}
 
 	/**
@@ -110,6 +110,7 @@ public class ORole extends OMetadataRecord {
 		currentValue |= (byte) iOperation;
 
 		rules.put(iResource, currentValue);
+		setDirty();
 	}
 
 	/**
@@ -135,6 +136,7 @@ public class ORole extends OMetadataRecord {
 		}
 
 		rules.put(iResource, currentValue);
+		setDirty();
 	}
 
 	public String getName() {
@@ -159,6 +161,11 @@ public class ORole extends OMetadataRecord {
 		return this;
 	}
 
+	@Override
+	public ORole save() {
+		return (ORole) super.save(ORole.class.getSimpleName());
+	}
+
 	public ORole fromDocument(final ODocument iSource) {
 		recordId.copyFrom(iSource.getIdentity());
 
@@ -172,6 +179,24 @@ public class ORole extends OMetadataRecord {
 			rules.put(a.getKey(), (byte) a.getValue().intValue());
 		}
 		return this;
+	}
+
+	@Override
+	public byte[] toStream() {
+		field("name", name);
+		field("mode", mode == ALLOW_MODES.ALLOW_ALL_BUT ? STREAM_ALLOW : STREAM_DENY);
+		field("inheritedRole", parentRole != null ? parentRole.name : null);
+		field("rules", rules);
+		return super.toStream();
+	}
+
+	public Set<Entry<String, Byte>> getRules() {
+		return rules.entrySet();
+	}
+
+	@Override
+	public String toString() {
+		return name;
 	}
 
 	/**
@@ -195,21 +220,4 @@ public class ORole extends OMetadataRecord {
 		return "Unknown permission: " + iPermission;
 	}
 
-	@Override
-	public byte[] toStream() {
-		field("name", name);
-		field("mode", mode == ALLOW_MODES.ALLOW_ALL_BUT ? STREAM_ALLOW : STREAM_DENY);
-		field("inheritedRole", parentRole != null ? parentRole.name : null);
-		field("rules", rules);
-		return super.toStream();
-	}
-
-	public Set<Entry<String, Byte>> getRules() {
-		return rules.entrySet();
-	}
-
-	@Override
-	public String toString() {
-		return name;
-	}
 }

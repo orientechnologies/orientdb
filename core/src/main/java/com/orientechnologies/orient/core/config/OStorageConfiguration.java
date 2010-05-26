@@ -34,7 +34,6 @@ public class OStorageConfiguration implements OSerializableStream {
 	public int																version						= 0;
 	public String															name;
 	public String															schemaRecordId;
-	public String															securityRecordId;
 	public String															dictionaryRecordId;
 
 	public String															localeLanguage		= Locale.getDefault().getLanguage();
@@ -47,7 +46,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
 	public OStorageTxConfiguration						txSegment					= new OStorageTxConfiguration();
 
-	public List<OEntryConfiguration>		properties				= new ArrayList<OEntryConfiguration>();
+	public List<OEntryConfiguration>					properties				= new ArrayList<OEntryConfiguration>();
 
 	private transient Locale									localeInstance;
 	private transient DateFormat							dateFormatInstance;
@@ -119,7 +118,6 @@ public class OStorageConfiguration implements OSerializableStream {
 		name = read(values[index++]);
 
 		schemaRecordId = read(values[index++]);
-		securityRecordId = read(values[index++]);
 		dictionaryRecordId = read(values[index++]);
 
 		localeLanguage = read(values[index++]);
@@ -180,7 +178,6 @@ public class OStorageConfiguration implements OSerializableStream {
 		write(buffer, name);
 
 		write(buffer, schemaRecordId);
-		write(buffer, securityRecordId);
 		write(buffer, dictionaryRecordId);
 
 		write(buffer, localeLanguage);

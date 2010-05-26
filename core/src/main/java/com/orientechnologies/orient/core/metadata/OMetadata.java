@@ -60,10 +60,6 @@ public class OMetadata {
 			schema.save(OStorage.CLUSTER_METADATA_NAME);
 			database.getStorage().getConfiguration().schemaRecordId = schema.getIdentity().toString();
 
-			// CREATE RECORD FOR SECURITY
-			security.save(OStorage.CLUSTER_METADATA_NAME);
-			database.getStorage().getConfiguration().securityRecordId = security.getIdentity().toString();
-
 			database.getStorage().getConfiguration().update();
 		} finally {
 
@@ -95,6 +91,6 @@ public class OMetadata {
 		schemaClusterId = database.getClusterIdByName(OStorage.CLUSTER_METADATA_NAME);
 
 		schema = new OSchema(database, schemaClusterId);
-		security = new OSecurity(database, schemaClusterId);
+		security = new OSecurity(database);
 	}
 }

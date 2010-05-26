@@ -83,6 +83,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				((ORecordSchemaAware<?>) record).setClassName(cls.getName());
 
 			clusterIds = cls.getClusterIds();
+
+			// CHECK PERMISSION TO ACCESS TO ALL THE CONFIGURED CLUSTERS
+			for (int clusterId : clusterIds)
+				database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, database.getClusterNameById(clusterId),
+						clusterId);
+
 		} else {
 			String firstCluster = compiledFilter.getClusters().size() > 0 ? compiledFilter.getClusters().keySet().iterator().next()
 					: null;
