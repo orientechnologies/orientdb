@@ -39,7 +39,7 @@ public abstract class ODatabasePool<DB extends ODatabase> implements OResourcePo
 	}
 
 	public DB acquireDatabase(final String iURL) throws OLockException, InterruptedException {
-		final String url = iURL;
+		final String url = iURL.indexOf(":") > -1 ? iURL.substring(0, iURL.lastIndexOf(":")) : iURL;
 
 		OResourcePool<String, DB> pool = pools.get(url);
 		if (pool == null) {
