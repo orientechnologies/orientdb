@@ -35,7 +35,7 @@ public class OStorageLocalTxExecuter {
 	public OStorageLocalTxExecuter(final OStorageLocal iStorage, final OStorageTxConfiguration iConfig) throws IOException {
 		storage = iStorage;
 
-		iConfig.path = OStorageVariableParser.DB_PATH_VARIABLE + "/txlog";
+		iConfig.path = OStorageVariableParser.DB_PATH_VARIABLE + "/txlog.otx";
 
 		txSegment = new OTxSegment(storage, iStorage.getConfiguration().txSegment);
 	}

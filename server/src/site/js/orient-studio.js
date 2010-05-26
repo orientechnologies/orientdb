@@ -112,7 +112,7 @@ function showDatabaseInfo(database) {
 			'filled', 'maxSize', 'file' ], [ {
 		name : 'totalLogs',
 		index : 'Total Logs',
-		width : '80px',
+		width : '100px',
 		editable : false
 	}, {
 		name : 'size',
@@ -132,7 +132,7 @@ function showDatabaseInfo(database) {
 	}, {
 		name : 'file',
 		index : 'File',
-		width : '650px',
+		width : '600px',
 		editable : false
 	} ], database['txSegment'], {
 		height : '25px'
@@ -634,8 +634,7 @@ function clearResultset() {
 }
 
 function getStudioURL(context) {
-	return $('#server').val() + '/studio/' + context + '/'
-			+ $('#database').val()
+	return $('#server').val() + '/studio/' + $('#database').val() + '/' + context;
 }
 
 function askServerInfo() {

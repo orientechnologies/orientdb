@@ -43,9 +43,9 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedAbstrac
 		ODatabaseDocumentTx db = null;
 
 		try {
-			final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: studio/<context>/<database>");
+			final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: studio/<database>/<context>");
 
-			db = getProfiledDatabaseInstance(iRequest, urlParts[2]);
+			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
 
 			final String req = iRequest.content;
 
@@ -78,7 +78,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedAbstrac
 				}
 			}
 
-			String context = urlParts[1];
+			String context = urlParts[2];
 			if ("document".equals(context))
 				executeDocument(iRequest, db, operation, rid, className, fields);
 			else if ("classes".equals(context))

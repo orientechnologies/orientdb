@@ -27,6 +27,7 @@ import java.util.Map;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -133,18 +134,23 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 			e = (Exception) e.getCause();
 		} else if (e instanceof IllegalArgumentException)
 			errorCode = 400;
-		else if (e instanceof OSecurityAccessException) {
-			if (account == null) {
-				// UNAUTHORIZED
-				errorCode = OHttpUtils.STATUS_AUTH_CODE;
-				errorReason = OHttpUtils.STATUS_AUTH_DESCRIPTION;
-				responseHeaders = "WWW-Authenticate: Basic realm=\"OrientDB Server\"";
-				errorMessage = null;
-			} else {
-				// USER ACCESS DENIED
-				errorCode = 530;
-				errorReason = "Current user has not the privileges to execute the request.";
-				errorMessage = "530 User access denied";
+		else if (e instanceof ODatabaseException) {
+			// GENERIC DATABASE EXCEPTION
+			final Throwable cause = e.getCause();
+			if (cause instanceof OSecurityAccessException) {
+				// SECURITY EXCEPTION
+				if (account == null) {
+					// UNAUTHORIZED
+					errorCode = OHttpUtils.STATUS_AUTH_CODE;
+					errorReason = OHttpUtils.STATUS_AUTH_DESCRIPTION;
+					responseHeaders = "WWW-Authenticate: Basic realm=\"OrientDB Server\"";
+					errorMessage = null;
+				} else {
+					// USER ACCESS DENIED
+					errorCode = 530;
+					errorReason = "Current user has not the privileges to execute the request.";
+					errorMessage = "530 User access denied";
+				}
 			}
 		}
 

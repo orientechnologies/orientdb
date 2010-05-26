@@ -41,20 +41,25 @@ public class ORole extends OMetadataRecord {
 	}
 
 	// CRUD OPERATIONS
-	public final static int			PERMISSION_NONE		= 0;
-	public final static int			PERMISSION_CREATE	= 1;
-	public final static int			PERMISSION_READ		= 2;
-	public final static int			PERMISSION_UPDATE	= 4;
-	public final static int			PERMISSION_DELETE	= 8;
-	public final static int			PERMISSION_ALL		= PERMISSION_CREATE + PERMISSION_READ + PERMISSION_UPDATE + PERMISSION_DELETE;
+	public final static int			PERMISSION_NONE					= 0;
+	public final static int			PERMISSION_CREATE				= 1;
+	public final static int			PERMISSION_READ					= 2;
+	public final static int			PERMISSION_UPDATE				= 4;
+	public final static int			PERMISSION_DELETE				= 8;
+	public final static int			PERMISSION_ALL					= PERMISSION_CREATE + PERMISSION_READ + PERMISSION_UPDATE + PERMISSION_DELETE;
 
-	protected final static byte	STREAM_DENY				= 0;
-	protected final static byte	STREAM_ALLOW			= 1;
+	public final static String	PERMISSION_CREATE_TEXT	= "Create";
+	public final static String	PERMISSION_READ_TEXT		= "Read";
+	public final static String	PERMISSION_UPDATE_TEXT	= "Update";
+	public final static String	PERMISSION_DELETE_TEXT	= "Delete";
+
+	protected final static byte	STREAM_DENY							= 0;
+	protected final static byte	STREAM_ALLOW						= 1;
 
 	protected String						name;
-	protected ALLOW_MODES				mode							= ALLOW_MODES.DENY_ALL_BUT;
+	protected ALLOW_MODES				mode										= ALLOW_MODES.DENY_ALL_BUT;
 	protected ORole							parentRole;
-	protected Map<String, Byte>	rules							= new LinkedHashMap<String, Byte>();
+	protected Map<String, Byte>	rules										= new LinkedHashMap<String, Byte>();
 
 	/**
 	 * Constructor used in unmarshalling.
@@ -128,7 +133,7 @@ public class ORole extends OMetadataRecord {
 			currentValue = current.byteValue();
 			currentValue &= ~(byte) iOperation;
 		}
-		
+
 		rules.put(iResource, currentValue);
 	}
 
@@ -167,6 +172,27 @@ public class ORole extends OMetadataRecord {
 			rules.put(a.getKey(), (byte) a.getValue().intValue());
 		}
 		return this;
+	}
+
+	/**
+	 * Convert the permission code to a readable string.
+	 * 
+	 * @param iPermission
+	 *          Permission to convert
+	 * @return String representation of the permission
+	 */
+	public static String permissionToString(final int iPermission) {
+		switch (iPermission) {
+		case PERMISSION_CREATE:
+			return PERMISSION_CREATE_TEXT;
+		case PERMISSION_READ:
+			return PERMISSION_READ_TEXT;
+		case PERMISSION_UPDATE:
+			return PERMISSION_UPDATE_TEXT;
+		case PERMISSION_DELETE:
+			return PERMISSION_DELETE_TEXT;
+		}
+		return "Unknown permission: " + iPermission;
 	}
 
 	@Override

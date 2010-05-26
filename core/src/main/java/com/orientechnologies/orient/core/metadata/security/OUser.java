@@ -67,8 +67,8 @@ public class OUser extends OMetadataRecord {
 		final ORole role = checkIfAllowed(iResource, iOperation);
 
 		if (role == null)
-			throw new OSecurityAccessException("User '" + name + "' has no the permission to execute the operation '" + iOperation
-					+ "' against the resource: " + iResource);
+			throw new OSecurityAccessException("User '" + name + "' has no the permission to execute the operation '"
+					+ ORole.permissionToString(iOperation) + "' against the resource: " + iResource);
 
 		return role;
 	}
