@@ -16,6 +16,8 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -32,6 +34,10 @@ public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
 
 		ODatabaseDocumentTx db = null;
 		ODocument doc = new ODocument().fromJSON(iRequest.content);
+		
+		// ASSURE TO MAKE THE RECORD ID INVALID
+		((ORecordId) doc.getIdentity()).clusterPosition = ORID.CLUSTER_POS_INVALID;
+		
 		try {
 			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
 
