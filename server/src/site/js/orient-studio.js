@@ -8,7 +8,6 @@ var selectedClassName; // CONTAINS LATEST SELECTED CLASS NAME
 function connect() {
 	executeJSONRequest($('#server').val() + '/connect/' + $('#database').val(),
 			function(database) {
-				databaseInfo = database;
 				showDatabaseInfo(database);
 
 				$("#tabs-main").show(200);
@@ -174,10 +173,10 @@ function showDatabaseInfo(database) {
 		editable : true
 	} ], null);
 	fillDynaTable($('#databaseRoles'), "Roles", [ 'name', 'mode' ], null,
-			database['roles'], {
+			databaseInfo['roles'], {
 				sortname : 'id',
 				onSelectRow : function(roleRowNum) {
-					var role = database['roles'][roleRowNum - 1];
+					var role = databaseInfo['roles'][roleRowNum - 1];
 					fillDynaTableRows($('#databaseRolesRules'), role.rules);
 				}
 			});

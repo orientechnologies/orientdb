@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
+import com.orientechnologies.orient.core.storage.tree.OSQLHelper;
 
 /**
  * SQL UPDATE command.
@@ -38,6 +39,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
  * 
  */
 public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract implements OCommandResultListener {
+	public static final String	KEYWORD_UPDATE	= "UPDATE";
 	private static final String	KEYWORD_SET			= "SET";
 	private static final String	KEYWORD_REMOVE	= "REMOVE";
 	private String							className				= null;
@@ -60,8 +62,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 		final StringBuilder word = new StringBuilder();
 
 		int pos = OSQLHelper.nextWord(text, textUpperCase, 0, word, true);
-		if (pos == -1 || !word.toString().equals(OSQLHelper.KEYWORD_UPDATE))
-			throw new OCommandSQLParsingException("Keyword " + OSQLHelper.KEYWORD_UPDATE + " not found", text, 0);
+		if (pos == -1 || !word.toString().equals(OCommandExecutorSQLUpdate.KEYWORD_UPDATE))
+			throw new OCommandSQLParsingException("Keyword " + OCommandExecutorSQLUpdate.KEYWORD_UPDATE + " not found", text, 0);
 
 		int newPos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		if (newPos == -1)
@@ -71,8 +73,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 
 		String subjectName = word.toString();
 
-		if (subjectName.startsWith(OSQLHelper.CLASS_PREFIX))
-			subjectName = subjectName.substring(OSQLHelper.CLASS_PREFIX.length());
+		if (subjectName.startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX))
+			subjectName = subjectName.substring(OCommandExecutorSQLAbstract.CLASS_PREFIX.length());
 
 		// CLASS
 		final OClass cls = database.getMetadata().getSchema().getClass(subjectName);
@@ -85,7 +87,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 		if (pos == -1 || (!word.toString().equals(KEYWORD_SET) && !word.toString().equals(KEYWORD_REMOVE)))
 			throw new OCommandSQLParsingException("Expected keyword " + KEYWORD_SET + " or " + KEYWORD_REMOVE, text, pos);
 
-		while (pos != -1 && !word.toString().equals(OSQLHelper.KEYWORD_WHERE)) {
+		while (pos != -1 && !word.toString().equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)) {
 			if (word.toString().equals(KEYWORD_SET)) {
 				pos = parseSetFields(word, pos, newPos);
 			} else if (word.toString().equals(KEYWORD_REMOVE)) {
@@ -96,7 +98,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 
 		String whereCondition = word.toString();
 
-		if (whereCondition.equals(OSQLHelper.KEYWORD_WHERE))
+		if (whereCondition.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE))
 			query = database.command(new OSQLAsynchQuery<ODocument>("select from " + className + " where " + text.substring(pos), this));
 		else
 			query = database.command(new OSQLAsynchQuery<ODocument>("select from " + className, this));

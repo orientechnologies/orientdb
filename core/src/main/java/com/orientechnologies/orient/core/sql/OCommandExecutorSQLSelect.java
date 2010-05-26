@@ -32,11 +32,14 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.tree.OSQLHelper;
 
 public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract implements ORecordBrowsingListener {
+	public static final String												KEYWORD_SELECT	= "SELECT";
+
 	protected OSQLAsynchQuery<ORecordSchemaAware<?>>	request;
 	protected OSQLFilter															compiledFilter;
-	protected List<String>														projections	= new ArrayList<String>();
+	protected List<String>														projections			= new ArrayList<String>();
 	protected ORecordAbstract<?>											record;
 	private int																				resultCount;
 
@@ -130,22 +133,22 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		StringBuilder word = new StringBuilder();
 
 		currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
-		if (!word.toString().equals(OSQLHelper.KEYWORD_SELECT))
+		if (!word.toString().equals(OCommandExecutorSQLSelect.KEYWORD_SELECT))
 			return -1;
 
-		int fromPosition = textUpperCase.indexOf(OSQLHelper.KEYWORD_FROM, currentPos);
+		int fromPosition = textUpperCase.indexOf(OCommandExecutorSQLAbstract.KEYWORD_FROM, currentPos);
 		if (fromPosition == -1)
-			throw new OQueryParsingException("Missed " + OSQLHelper.KEYWORD_FROM, text, currentPos);
+			throw new OQueryParsingException("Missed " + OCommandExecutorSQLAbstract.KEYWORD_FROM, text, currentPos);
 
 		String[] items = textUpperCase.substring(currentPos, fromPosition).split(",");
 		if (items == null || items.length == 0)
-			throw new OQueryParsingException("No projections found between " + OSQLHelper.KEYWORD_SELECT + " and "
-					+ OSQLHelper.KEYWORD_FROM, text, currentPos);
+			throw new OQueryParsingException("No projections found between " + OCommandExecutorSQLSelect.KEYWORD_SELECT + " and "
+					+ OCommandExecutorSQLAbstract.KEYWORD_FROM, text, currentPos);
 
 		for (String i : items)
 			projections.add(i.trim());
 
-		currentPos = fromPosition + OSQLHelper.KEYWORD_FROM.length() + 1;
+		currentPos = fromPosition + OCommandExecutorSQLAbstract.KEYWORD_FROM.length() + 1;
 
 		return currentPos;
 	}

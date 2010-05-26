@@ -144,6 +144,8 @@ public class OUser extends OMetadataRecord {
 	}
 
 	public OUser fromDocument(final ODocument iSource) {
+		recordId.copyFrom(iSource.getIdentity());
+
 		name = iSource.field("name");
 		password = iSource.field("password");
 

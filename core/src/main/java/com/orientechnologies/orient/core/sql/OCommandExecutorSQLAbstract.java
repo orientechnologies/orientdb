@@ -26,6 +26,13 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
  */
 public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstract {
 
+	public static final String	KEYWORD_FROM		= "FROM";
+	public static final String	KEYWORD_WHERE		= "WHERE";
+	public static final String	KEYWORD_COLUMN	= "COLUMN";
+
+	public static final String	CLUSTER_PREFIX	= "CLUSTER:";
+	public static final String	CLASS_PREFIX		= "CLASS:";
+
 	@Override
 	public OCommandExecutorSQLAbstract init(final ODatabaseRecord<?> iDatabase, final String iText) {
 		text = iText;

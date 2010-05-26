@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
+import com.orientechnologies.orient.core.storage.tree.OSQLHelper;
 
 /**
  * SQL UPDATE command.
@@ -32,8 +33,10 @@ import com.orientechnologies.orient.core.sql.query.OSQLQuery;
  * 
  */
 public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract implements OCommandResultListener {
+	public static final String		KEYWORD_DELETE	= "DELETE";
+
 	private OSQLQuery<ODocument>	query;
-	private int										recordCount	= 0;
+	private int										recordCount			= 0;
 
 	public OCommandExecutorSQLDelete() {
 	}
@@ -50,8 +53,8 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
 		StringBuilder word = new StringBuilder();
 
 		int pos = OSQLHelper.nextWord(text, textUpperCase, 0, word, true);
-		if (pos == -1 || !word.toString().equals(OSQLHelper.KEYWORD_DELETE))
-			throw new OCommandSQLParsingException("Keyword " + OSQLHelper.KEYWORD_DELETE + " not found", text, 0);
+		if (pos == -1 || !word.toString().equals(OCommandExecutorSQLDelete.KEYWORD_DELETE))
+			throw new OCommandSQLParsingException("Keyword " + OCommandExecutorSQLDelete.KEYWORD_DELETE + " not found", text, 0);
 
 		query = database.command(new OSQLAsynchQuery<ODocument>("select " + text.substring(pos), this));
 

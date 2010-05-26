@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.query.OQueryHelper;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
+import com.orientechnologies.orient.core.storage.tree.OSQLHelper;
 
 /**
  * SQL INSERT command.
@@ -31,6 +32,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
  * 
  */
 public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
+	public static final String	KEYWORD_INSERT	= "INSERT";
 	private static final String	KEYWORD_VALUES	= "VALUES";
 	private static final String	KEYWORD_INTO		= "INTO";
 	private String							className				= null;
@@ -50,8 +52,8 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 		StringBuilder word = new StringBuilder();
 
 		int pos = OSQLHelper.nextWord(text, textUpperCase, 0, word, true);
-		if (pos == -1 || !word.toString().equals(OSQLHelper.KEYWORD_INSERT))
-			throw new OCommandSQLParsingException("Keyword " + OSQLHelper.KEYWORD_INSERT + " not found", text, 0);
+		if (pos == -1 || !word.toString().equals(OCommandExecutorSQLInsert.KEYWORD_INSERT))
+			throw new OCommandSQLParsingException("Keyword " + OCommandExecutorSQLInsert.KEYWORD_INSERT + " not found", text, 0);
 
 		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_INTO))
@@ -63,8 +65,8 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 
 		String subjectName = word.toString();
 
-		if (subjectName.startsWith(OSQLHelper.CLASS_PREFIX))
-			subjectName = subjectName.substring(OSQLHelper.CLASS_PREFIX.length());
+		if (subjectName.startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX))
+			subjectName = subjectName.substring(OCommandExecutorSQLAbstract.CLASS_PREFIX.length());
 
 		// CLASS
 		final OClass cls = database.getMetadata().getSchema().getClass(subjectName);

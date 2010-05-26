@@ -136,4 +136,11 @@ public class ORecordId implements ORID {
 		clusterPosition = Long.parseLong(parts[1]);
 	}
 
+	public void copyFrom(final ORID iSource) {
+		if (iSource == null)
+			throw new IllegalArgumentException("Source is null");
+
+		clusterId = iSource.getClusterId();
+		clusterPosition = iSource.getClusterPosition();
+	}
 }

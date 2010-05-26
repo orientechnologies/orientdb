@@ -471,7 +471,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		writerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.PERMISSION_ALL);
 		writerRole.addRule(ODatabaseSecurityResources.QUERY, ORole.PERMISSION_READ);
 		writerRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_ALL);
-		readerRole.addRule(ODatabaseSecurityResources.RECORD_HOOK, ORole.PERMISSION_ALL);
+		writerRole.addRule(ODatabaseSecurityResources.RECORD_HOOK, ORole.PERMISSION_ALL);
 		metadata.getSecurity().createUser("writer", "writer", new String[] { writerRole.getName() });
 
 		metadata.getSecurity().save();

@@ -162,35 +162,27 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 
 	@ConsoleCommand(splitInWords = false, description = "Insert a new record into the database")
 	public void insert(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-		long start = System.currentTimeMillis();
-
-		currentRecord = (ODocument) sqlCommand("insert", iCommandText);
-		if (currentRecord == null)
-			return;
-
-		out.printf("Inserted record in %f sec(s).", (float) (System.currentTimeMillis() - start) / 1000);
+		sqlCommand("insert", iCommandText, "Inserted record in %f sec(s).");
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Update records in the database")
 	public void update(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-		long start = System.currentTimeMillis();
-
-		Integer records = (Integer) sqlCommand("update", iCommandText);
-		if (records == null)
-			return;
-
-		out.printf("Updated %d record(s) in %f sec(s).", records, (float) (System.currentTimeMillis() - start) / 1000);
+		sqlCommand("update", iCommandText, "Updated %d record(s) in %f sec(s).");
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Delete records from the database")
 	public void delete(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-		long start = System.currentTimeMillis();
+		sqlCommand("delete", iCommandText, "Delete %d record(s) in %f sec(s).");
+	}
 
-		Integer records = (Integer) sqlCommand("delete", iCommandText);
-		if (records == null)
-			return;
+	@ConsoleCommand(splitInWords = false, description = "Grant privileges to a role")
+	public void grant(@ConsoleParameter(name = "text", description = "Grant command") String iCommandText) {
+		sqlCommand("grant", iCommandText, "Privilege granted to the role: %s");
+	}
 
-		out.printf("Delete %d record(s) in %f sec(s).", records, (float) (System.currentTimeMillis() - start) / 1000);
+	@ConsoleCommand(splitInWords = false, description = "Revoke privileges to a role")
+	public void revoke(@ConsoleParameter(name = "text", description = "Revoke command") String iCommandText) {
+		sqlCommand("revoke", iCommandText, "Privilege revoked to the role: %s");
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Execute a query against the database and display the results")
@@ -687,16 +679,23 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		printHeaderLine(columns);
 	}
 
-	private Object sqlCommand(final String iExpectedCommand, String iReceivedCommand) {
+	private Object sqlCommand(final String iExpectedCommand, String iReceivedCommand, final String iMessage) {
 		checkCurrentDatabase();
 
 		if (iReceivedCommand == null)
 			return null;
 
+		long start = System.currentTimeMillis();
+
 		iReceivedCommand = iExpectedCommand + " " + iReceivedCommand.trim();
 
 		currentResultSet.clear();
 
-		return new OCommandSQL(iReceivedCommand).setDatabase(currentDatabase).execute();
+		final Object result = new OCommandSQL(iReceivedCommand).setDatabase(currentDatabase).execute();
+
+		if (result != null)
+			out.printf(iMessage, result, (float) (System.currentTimeMillis() - start) / 1000);
+
+		return result;
 	}
 }

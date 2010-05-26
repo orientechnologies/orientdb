@@ -45,13 +45,15 @@ public class OCommandSQLParsingException extends OException {
 		buffer.append("Error on parsing command at position #");
 		buffer.append(position);
 		buffer.append(": " + super.getMessage());
-		buffer.append("\nCommand: ");
-		buffer.append(text);
-		buffer.append("\n------");
-		for (int i = 0; i < position - 1; ++i)
-			buffer.append("-");
+		if (text != null) {
+			buffer.append("\nCommand: ");
+			buffer.append(text);
+			buffer.append("\n------");
+			for (int i = 0; i < position - 1; ++i)
+				buffer.append("-");
 
-		buffer.append("^");
+			buffer.append("^");
+		}
 		return buffer.toString();
 	}
 }

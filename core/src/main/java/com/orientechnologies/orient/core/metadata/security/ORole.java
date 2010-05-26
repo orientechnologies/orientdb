@@ -90,6 +90,48 @@ public class ORole extends OMetadataRecord {
 		rules.put(iResource, (byte) iOperation);
 	}
 
+	/**
+	 * Grant a permission to the resource.
+	 * 
+	 * @param iResource
+	 *          Requested resource
+	 * @param iOperation
+	 *          Permission to grant/add
+	 */
+	public void grant(final String iResource, final int iOperation) {
+		final Byte current = rules.get(iResource);
+		byte currentValue = current == null ? PERMISSION_NONE : current.byteValue();
+
+		currentValue |= (byte) iOperation;
+
+		rules.put(iResource, currentValue);
+	}
+
+	/**
+	 * Revoke a permission to the resource.
+	 * 
+	 * @param iResource
+	 *          Requested resource
+	 * @param iOperation
+	 *          Permission to grant/remove
+	 */
+	public void revoke(final String iResource, final int iOperation) {
+		if (iOperation == PERMISSION_NONE)
+			return;
+
+		final Byte current = rules.get(iResource);
+
+		byte currentValue;
+		if (current == null)
+			currentValue = PERMISSION_NONE;
+		else {
+			currentValue = current.byteValue();
+			currentValue &= ~(byte) iOperation;
+		}
+		
+		rules.put(iResource, currentValue);
+	}
+
 	public String getName() {
 		return this.name;
 	}
@@ -113,6 +155,8 @@ public class ORole extends OMetadataRecord {
 	}
 
 	public ORole fromDocument(final ODocument iSource) {
+		recordId.copyFrom(iSource.getIdentity());
+
 		name = iSource.field("name");
 		mode = ((Integer) iSource.field("mode")) == STREAM_ALLOW ? ALLOW_MODES.ALLOW_ALL_BUT : ALLOW_MODES.DENY_ALL_BUT;
 

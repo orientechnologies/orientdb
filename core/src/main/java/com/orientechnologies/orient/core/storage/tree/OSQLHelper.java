@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.sql;
+package com.orientechnologies.orient.core.storage.tree;
 
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandToParse;
@@ -46,17 +46,6 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorTraverse;
  */
 public class OSQLHelper {
 	public static final String			NAME							= "sql";
-
-	public static final String			CLUSTER_PREFIX		= "CLUSTER:";
-	public static final String			CLASS_PREFIX			= "CLASS:";
-
-	public static final String			KEYWORD_SELECT		= "SELECT";
-	public static final String			KEYWORD_INSERT		= "INSERT";
-	public static final String			KEYWORD_UPDATE		= "UPDATE";
-	public static final String			KEYWORD_DELETE		= "DELETE";
-	public static final String			KEYWORD_FROM			= "FROM";
-	public static final String			KEYWORD_WHERE			= "WHERE";
-	public static final String			KEYWORD_COLUMN		= "COLUMN";
 
 	public static final String			VALUE_NOT_PARSED	= "_NOT_PARSED_";
 

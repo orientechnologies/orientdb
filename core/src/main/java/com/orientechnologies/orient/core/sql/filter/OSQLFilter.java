@@ -25,8 +25,9 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.query.OQueryHelper;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
-import com.orientechnologies.orient.core.sql.OSQLHelper;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
+import com.orientechnologies.orient.core.storage.tree.OSQLHelper;
 
 /**
  * Parsed query. It's built once a query is parsed.
@@ -70,7 +71,7 @@ public class OSQLFilter extends OCommandToParse {
 
 		boolean whereDefined = true;
 
-		int wherePosition = textUpperCase.indexOf(OSQLHelper.KEYWORD_WHERE, currentPos);
+		int wherePosition = textUpperCase.indexOf(OCommandExecutorSQLAbstract.KEYWORD_WHERE, currentPos);
 		if (wherePosition == -1) {
 			// NO WHERE CONDITION: GET UNTIL THE END AND ASSURE TO RETURN FALSE IN ORDER TO AVOID PARSING OF CONDITIONS
 			whereDefined = false;
@@ -79,7 +80,7 @@ public class OSQLFilter extends OCommandToParse {
 
 		String[] items = textUpperCase.substring(currentPos, wherePosition).split(",");
 		if (items == null || items.length == 0)
-			throw new OQueryParsingException("No clusters found after " + OSQLHelper.KEYWORD_FROM, text, currentPos);
+			throw new OQueryParsingException("No clusters found after " + OCommandExecutorSQLAbstract.KEYWORD_FROM, text, currentPos);
 
 		String[] words;
 		String subjectName;
@@ -98,13 +99,13 @@ public class OSQLFilter extends OCommandToParse {
 			}
 
 			subjectToMatch = subjectName;
-			if (subjectToMatch.startsWith(OSQLHelper.CLUSTER_PREFIX))
+			if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX))
 				// REGISTER AS CLUSTER
-				clusters.put(subjectName.substring(OSQLHelper.CLUSTER_PREFIX.length()), alias);
+				clusters.put(subjectName.substring(OCommandExecutorSQLAbstract.CLUSTER_PREFIX.length()), alias);
 			else {
-				if (subjectToMatch.startsWith(OSQLHelper.CLASS_PREFIX))
+				if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX))
 					// REGISTER AS CLASS
-					subjectName = subjectName.substring(OSQLHelper.CLASS_PREFIX.length());
+					subjectName = subjectName.substring(OCommandExecutorSQLAbstract.CLASS_PREFIX.length());
 
 				// REGISTER AS CLASS
 				classes.put(subjectName, alias);
@@ -112,7 +113,7 @@ public class OSQLFilter extends OCommandToParse {
 		}
 
 		if (whereDefined)
-			currentPos = wherePosition + OSQLHelper.KEYWORD_WHERE.length() + 1;
+			currentPos = wherePosition + OCommandExecutorSQLAbstract.KEYWORD_WHERE.length() + 1;
 
 		return whereDefined;
 	}
@@ -208,7 +209,7 @@ public class OSQLFilter extends OCommandToParse {
 			currentPos++;
 
 			return coll;
-		} else if (words[0].startsWith(OSQLHelper.KEYWORD_COLUMN)) {
+		} else if (words[0].startsWith(OCommandExecutorSQLAbstract.KEYWORD_COLUMN)) {
 
 			String[] parameters = OQueryHelper.getParameters(words[0]);
 			if (parameters.length != 1)
