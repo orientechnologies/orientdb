@@ -132,14 +132,13 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 
 	/**
 	 * Creates a new instance in memory of the specified schema class. New instances are not persistent until {@link #save()} is
-	 * called.
+	 * called. The database reference is taken by the OClass instance received.
 	 * 
-	 * @param iDatabase
-	 *          Database instance
 	 * @param iClass
 	 *          OClass instance
 	 */
 	public ODocument(final OClass iClass) {
+		super(iClass.getDatabase());
 		setup();
 		clazz = iClass;
 	}

@@ -30,6 +30,16 @@
 This document enlist the last changes to the Orient Database project.
 
 -------------------------------------------------------------------------------
+VERSION 0.9.15 - beta (May, 27th 2010)
+-------------------------------------------------------------------------------
+- New management of users and roles
+- New SQL commands: GRANT and REVOKE to manage permissions
+- Enforced security in OrientDB Server with the support of Server users. The
+  Server administrator account is created at first start of the Server with
+  a random password
+- Fixed minor issues
+
+-------------------------------------------------------------------------------
 VERSION 0.9.14 - beta (May, 21st 2010)
 -------------------------------------------------------------------------------
 - New Database structure. Logical clusters now are well integrated at storage

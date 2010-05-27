@@ -5,11 +5,11 @@
     -->
     
     <!--   -->
-    <parameter name="url" value="local:../../releases/0.9.14/db/databases/demo/demo"/>
+    <parameter name="url" value="local:../../releases/0.9.15/db/databases/demo/demo"/>
     
     
     <test name="Setup">
-        <parameter name="path" value="../../releases/0.9.14/db/databases/demo"/>
+        <parameter name="path" value="../../releases/0.9.15/db/databases/demo"/>
         <classes>
             <class name="com.orientechnologies.orient.test.database.base.DeleteDirectory"/>
         </classes>
