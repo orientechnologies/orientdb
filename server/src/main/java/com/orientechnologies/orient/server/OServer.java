@@ -53,7 +53,7 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 public class OServer {
 	private static final String																PROPERTY_CONFIG_FILE	= "orient.config.file";
 
-	public static final String																DEFAULT_CONFIG_FILE		= "config/orient-server.config";
+	public static final String																DEFAULT_CONFIG_FILE		= "config/orient-server-config.xml";
 
 	protected ReentrantReadWriteLock													lock									= new ReentrantReadWriteLock();
 

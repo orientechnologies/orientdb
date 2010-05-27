@@ -48,7 +48,7 @@ export ORIENT_HOME
 # Only set CATALINA_HOME if not already set
 [ -z "$ORIENT_HOME" ] && ORIENT_HOME=`cd "$PRGDIR/.." ; pwd`
 
-CONFIG_FILE=$ORIENT_HOME/config/orient-kv.config
+CONFIG_FILE=$ORIENT_HOME/config/orient-kv-config.xml
 LOG_LEVEL=warning
 WWW_PATH=$ORIENT_HOME/www
 

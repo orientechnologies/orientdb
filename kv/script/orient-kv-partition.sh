@@ -49,7 +49,7 @@ PRGDIR=`dirname "$PRG"`
 [ -z "$ORIENT_HOME" ] && ORIENT_HOME=`cd "$PRGDIR/.." ; pwd`
 export ORIENT_HOME
 
-CONFIG_FILE=$ORIENT_HOME/config/orient-kv-partition.config
+CONFIG_FILE=$ORIENT_HOME/config/orient-kv-partition-config.xml
 HAZELCAST_FILE=$ORIENT_HOME/config/hazelcast.xml
 LOG_LEVEL=warning
 WWW_PATH=$ORIENT_HOME/www

@@ -48,7 +48,7 @@ PRGDIR=`dirname "$PRG"`
 [ -z "$ORIENT_HOME" ] && ORIENT_HOME=`cd "$PRGDIR/.." ; pwd`
 export ORIENT_HOME
 
-CONFIG_FILE=$ORIENT_HOME/config/orient-server.config
+CONFIG_FILE=$ORIENT_HOME/config/orient-server-config.xml
 LOG_LEVEL=warning
 export ORIENT_HOME=$ORIENT_HOME
 WWW_PATH=$ORIENT_HOME/www

@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.config.OEntryConfiguration;
 
 @XmlRootElement(name = "orient-server")
 public class OServerConfiguration {
-	public static final String								FILE_NAME	= "server.config";
+	public static final String								FILE_NAME	= "server-config.xml";
 	// private static final String HEADER = "OrientDB Server configuration";
 
 	@XmlTransient

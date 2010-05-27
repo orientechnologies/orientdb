@@ -38,6 +38,7 @@ VERSION 0.9.15 - beta (May, 27th 2010)
   Server administrator account is created at first start of the Server with
   a random password
 - Fixed minor issues
+- Changed *.config files to *.xml
 
 -------------------------------------------------------------------------------
 VERSION 0.9.14 - beta (May, 21st 2010)

@@ -57,7 +57,7 @@ goto setArgs
 
 :doneSetArgs
 
-set CONFIG_FILE=%ORIENT_HOME%/config/orient-server.config
+set CONFIG_FILE=%ORIENT_HOME%/config/orient-server-config.xml
 set LOG_LEVEL=warning
 set WWW_PATH=%ORIENT_HOME%/www
 
