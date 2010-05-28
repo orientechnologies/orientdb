@@ -38,8 +38,14 @@ public abstract class ONativeSynchQuery<T extends ORecordInternal<?>, CTX extend
 	}
 
 	@Override
-	public List<T> execute(Object... iArgs) {
-		super.execute(iArgs);
+	public List<T> execute(final Object... iArgs) {
+		super.execute();
 		return result;
+	}
+
+	@Override
+	public T executeFirst(final Object... iArgs) {
+		super.execute();
+		return result != null && result.size() > 0 ? result.get(0) : null;
 	}
 }

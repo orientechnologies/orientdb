@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 @Test(groups = { "crud", "record-csv" }, sequential = true)
 public class CRUDColumnPhysicalTest {
 	protected static final String	CLUSTER_NAME	= "csv";
-	protected static final int		TOT_RECORDS		= 1000;
+	protected static final int		TOT_RECORDS		= 100;
 
 	private ODatabaseColumn				database;
 	private ORecordColumn					record;

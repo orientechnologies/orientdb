@@ -44,7 +44,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 	private static final int									MAX_CONTENT_LENGTH	= 10000;																	// MAX = 10Kb
-	private static final int									TCP_DEFAULT_TIMEOUT	= 15000;
+	private static final int									TCP_DEFAULT_TIMEOUT	= 10000;
 
 	protected OClientConnection								connection;
 	protected OServerConfiguration						configuration;
@@ -135,7 +135,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 			e = (Exception) e.getCause();
 		} else if (e instanceof IllegalArgumentException)
 			errorCode = 400;
-		else if (e instanceof ODatabaseException || e instanceof OSecurityAccessException || e instanceof OCommandExecutionException) {
+
+		if (e instanceof ODatabaseException || e instanceof OSecurityAccessException || e instanceof OCommandExecutionException) {
 			// GENERIC DATABASE EXCEPTION
 			final Throwable cause = e instanceof OSecurityAccessException ? e : e.getCause();
 			if (cause instanceof OSecurityAccessException) {

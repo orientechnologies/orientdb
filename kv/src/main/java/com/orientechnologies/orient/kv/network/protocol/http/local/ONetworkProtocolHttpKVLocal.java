@@ -20,7 +20,6 @@ import java.util.Map;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.record.ODatabaseBinary;
-import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.kv.OSharedBinaryDatabase;
 import com.orientechnologies.orient.kv.index.OTreeMapPersistentAsynchThread;
 import com.orientechnologies.orient.kv.network.protocol.http.OKVDictionary;
@@ -28,7 +27,6 @@ import com.orientechnologies.orient.kv.network.protocol.http.OKVDictionaryBucket
 import com.orientechnologies.orient.kv.network.protocol.http.ONetworkProtocolHttpKV;
 import com.orientechnologies.orient.kv.network.protocol.http.command.OKVServerCommandAbstract;
 import com.orientechnologies.orient.server.OServerMain;
-import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
 
 public class ONetworkProtocolHttpKVLocal extends ONetworkProtocolHttpKV implements OKVDictionary {
 	private static Map<String, Map<String, Map<String, String>>>	memoryDatabases					= new HashMap<String, Map<String, Map<String, String>>>();
@@ -43,17 +41,17 @@ public class ONetworkProtocolHttpKVLocal extends ONetworkProtocolHttpKV implemen
 			OTreeMapPersistentAsynchThread.getInstance().start();
 			asynchMode = true;
 		}
-
-		// CREATE IN-MEMORY DATABASES EARLY
-		for (OServerStorageConfiguration stg : OServerMain.server().getConfiguration().storages) {
-			if (stg.path.startsWith(OEngineMemory.NAME)) {
-				ODatabaseBinary db = new ODatabaseBinary(stg.path);
-
-				// CREATE AND PUT IN THE MEMORY MAPTABLE TO AVOID LOCKING (IT'S THREAD SAFE)
-				db.create();
-				OServerMain.server().getMemoryDatabases().put(stg.name, db);
-			}
-		}
+		//
+		// // CREATE IN-MEMORY DATABASES EARLY
+		// for (OServerStorageConfiguration stg : OServerMain.server().getConfiguration().storages) {
+		// if (stg.path.startsWith(OEngineMemory.NAME)) {
+		// ODatabaseBinary db = new ODatabaseBinary(stg.path);
+		//
+		// // CREATE AND PUT IN THE MEMORY MAPTABLE TO AVOID LOCKING (IT'S THREAD SAFE)
+		// db.create();
+		// OServerMain.server().getMemoryDatabases().put(stg.name, db);
+		// }
+		// }
 	}
 
 	public ONetworkProtocolHttpKVLocal() {

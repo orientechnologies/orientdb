@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @Test(groups = { "crud", "record-vobject" }, sequential = true)
 public class CRUDDocumentPhysicalTest {
-	protected static final int	TOT_RECORDS	= 1000;
+	protected static final int	TOT_RECORDS	= 100;
 	protected long							startRecordNumber;
 	private ODatabaseDocumentTx	database;
 	private ODocument						record;

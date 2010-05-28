@@ -48,7 +48,8 @@ import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> extends ODatabaseWrapperAbstract<ODatabaseRaw, REC>
@@ -88,7 +89,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			recordFormat = DEF_RECORD_FORMAT;
 			dictionary.load();
 
-			if (!(getStorage() instanceof OStorageMemory)) {
+			if (getStorage() instanceof OStorageLocal) {
 				user = getMetadata().getSecurity().getUser(iUserName);
 				if (user == null)
 					throw new OSecurityAccessException(this.getName(), "User '" + iUserName + "' was not found in database: " + getName());
@@ -98,9 +99,9 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 					Thread.sleep(200);
 					throw new OSecurityAccessException(this.getName(), "Password not valid for user: " + iUserName);
 				}
-			}
 
-			checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
+				checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
+			}
 		} catch (Exception e) {
 			close();
 			throw new ODatabaseException("Can't open database", e);
@@ -116,7 +117,8 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			// CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
 			metadata.create();
 
-			createRolesAndUsers();
+			if (getStorage() instanceof OStorageLocal)
+				createRolesAndUsers();
 
 			dictionary.create();
 		} catch (Exception e) {
@@ -459,9 +461,9 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 
 		final ORole readerRole = metadata.getSecurity().createRole("reader", ORole.ALLOW_MODES.DENY_ALL_BUT);
 		readerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
-		readerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".metadata", ORole.PERMISSION_NONE);
+		readerRole.addRule(ODatabaseSecurityResources.CLUSTER + "." + OStorage.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
+		readerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".orole", ORole.PERMISSION_READ);
 		readerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".ouser", ORole.PERMISSION_NONE);
-		readerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".orole", ORole.PERMISSION_NONE);
 		readerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.PERMISSION_READ);
 		readerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.PERMISSION_READ);
 		readerRole.addRule(ODatabaseSecurityResources.QUERY, ORole.PERMISSION_READ);
@@ -472,9 +474,9 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 
 		final ORole writerRole = metadata.getSecurity().createRole("writer", ORole.ALLOW_MODES.DENY_ALL_BUT);
 		writerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
-		writerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".metadata", ORole.PERMISSION_NONE);
+		writerRole.addRule(ODatabaseSecurityResources.CLUSTER + "." + OStorage.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
+		writerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".orole", ORole.PERMISSION_READ);
 		writerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".ouser", ORole.PERMISSION_NONE);
-		writerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".orole", ORole.PERMISSION_NONE);
 		writerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.PERMISSION_ALL);
 		writerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.PERMISSION_ALL);
 		writerRole.addRule(ODatabaseSecurityResources.QUERY, ORole.PERMISSION_READ);

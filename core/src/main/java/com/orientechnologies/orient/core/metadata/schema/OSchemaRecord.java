@@ -16,47 +16,21 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorage;
 
-public abstract class OMetadataRecord extends ODocument {
+public abstract class OSchemaRecord extends ODocument {
 
-	public OMetadataRecord() {
+	public OSchemaRecord() {
 		super();
 	}
 
-	public OMetadataRecord(byte[] iSource) {
-		super(iSource);
-	}
-
-	public OMetadataRecord(OClass iClass) {
-		super(iClass);
-	}
-
-	public OMetadataRecord(ODatabaseRecord<?> iDatabase, ORID iRID) {
-		super(iDatabase, iRID);
-	}
-
-	public OMetadataRecord(ODatabaseRecord<?> iDatabase, String iClassName, ORID iRID) {
-		super(iDatabase, iClassName, iRID);
-	}
-
-	public OMetadataRecord(ODatabaseRecord<?> iDatabase, String iClassName) {
-		super(iDatabase, iClassName);
-	}
-
-	public OMetadataRecord(ODatabaseRecord<?> iDatabase) {
+	public OSchemaRecord(ODatabaseRecord<?> iDatabase) {
 		super(iDatabase);
-	}
-
-	public OMetadataRecord(String iClassName) {
-		super(iClassName);
 	}
 
 	@Override
 	public ORecordAbstract<Object> save() {
-		return super.save(OStorage.CLUSTER_METADATA_NAME);
+		return super.save(OSchema.CLUSTER_NAME);
 	}
 }

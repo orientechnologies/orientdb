@@ -38,7 +38,7 @@ import com.orientechnologies.orient.core.storage.tree.OTreeMapStorage;
 public class OClusterLogical implements OCluster {
 	private String																		name;
 	private int																				id;
-	private int																				physicalClusterId;
+	private int																				localClusterId;
 	private OTreeMapStorage<Long, OPhysicalPosition>	map;
 	private OPhysicalPosition													total;
 
@@ -98,7 +98,7 @@ public class OClusterLogical implements OCluster {
 	protected OClusterLogical(final String iName, final int iId, final int iPhysicalClusterId) {
 		name = iName;
 		id = iId;
-		physicalClusterId = iPhysicalClusterId;
+		localClusterId = iPhysicalClusterId;
 	}
 
 	public void create(final int iStartSize) throws IOException {

@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
@@ -40,6 +41,7 @@ public abstract class ONativeAsynchQuery<T extends ORecordInternal<?>, CTX exten
 		super(iDatabase, iCluster);
 		resultListener = iResultListener;
 		queryRecord = iQueryRecordImpl;
+		record = new ODocument(database);
 	}
 
 	public boolean isAsynchronous() {
@@ -78,7 +80,8 @@ public abstract class ONativeAsynchQuery<T extends ORecordInternal<?>, CTX exten
 	}
 
 	public T executeFirst(final Object... iArgs) {
-		execute(1);
+		setLimit(1);
+		execute();
 		return null;
 	}
 

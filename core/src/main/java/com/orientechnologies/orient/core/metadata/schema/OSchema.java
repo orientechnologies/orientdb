@@ -27,9 +27,11 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-public class OSchema extends OMetadataRecord {
+public class OSchema extends OSchemaRecord {
+	public static final String		CLUSTER_NAME						= "schema";
+
 	protected Map<String, OClass>	classes									= new LinkedHashMap<String, OClass>();
-	private static final int			CURRENT_VERSION_NUMBER	= 2;
+	private static final int			CURRENT_VERSION_NUMBER	= 3;
 
 	public OSchema(final ODatabaseRecord<?> iDatabaseOwner, final int schemaClusterId) {
 		super(iDatabaseOwner);
@@ -44,7 +46,7 @@ public class OSchema extends OMetadataRecord {
 		int clusterId = database.getClusterIdByName(iClassName);
 		if (clusterId == -1)
 			// CREATE A NEW CLUSTER
-			clusterId = database.addLogicalCluster(iClassName, database.getClusterIdByName(OStorage.CLUSTER_METADATA_NAME));
+			clusterId = database.addLogicalCluster(iClassName, database.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME));
 
 		return createClass(iClassName, clusterId);
 	}
@@ -110,7 +112,7 @@ public class OSchema extends OMetadataRecord {
 		if (schemaVersion != CURRENT_VERSION_NUMBER) {
 			// HANDLE SCHEMA UPGRADE
 			throw new OConfigurationException(
-					"Database schema is different. Please export your old database with the previous verison of Orient and reimport it using the current one.");
+					"Database schema is different. Please export your old database with the previous verison of OrientDB and reimport it using the current one.");
 		}
 
 		// REGISTER ALL THE CLASSES
@@ -145,5 +147,10 @@ public class OSchema extends OMetadataRecord {
 	public ODocument load() {
 		recordId.fromString(database.getStorage().getConfiguration().schemaRecordId);
 		return (ODocument) super.load();
+	}
+
+	public void create() {
+		database.addLogicalCluster(CLUSTER_NAME, database.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME));
+		save();
 	}
 }

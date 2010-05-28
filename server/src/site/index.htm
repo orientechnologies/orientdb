@@ -169,8 +169,8 @@
                                 <table style="width: 100%;" cellpadding="5">
                                     <tr>
                                         <td valign="top" class="help">
-                                            <b>Data</b>
-                                            segments are the segments that contain data pointed by Clusters.
+                                            <b><a href="http://code.google.com/p/orient/wiki/Concepts#Data_Segment">Data
+                                            segments</a></b> are the segments that contain data pointed by Clusters.
                                         </td>
                                     </tr>
                                     <tr>
@@ -181,12 +181,12 @@
                                     </tr>
                                     <tr>
                                         <td valign="top" class="help">
-                                            <b>Clusters</b>
+                                            <b><a href="http://code.google.com/p/orient/wiki/Concepts#Cluster">Clusters</a></b>
                                             are sets of records grouped by a mean. Any mean you want to assign. You can use a Cluster like a Table of the Relational DBMS world, namely to group records of the same type. Or you could want to group records by different logics.
                                             <br/>
                                             <br/>
-                                            There are two kinds of clusters: <b>Physical</b>
-                                            and <b>Logical</b>. The first one uses ad-hoc files to speed up the I/O while the second one saves more space but it's slower. The suggestion is to use Physical Clusters for the records accessed often and where you need light speed.
+                                            There are two kinds of clusters: <b><a href="http://code.google.com/p/orient/wiki/Concepts#Local_Physical_Cluster">Physical</a></b>
+                                            and <b><a href="http://code.google.com/p/orient/wiki/Concepts#Logical_Cluster">Logical</a></b>. The first one uses ad-hoc files to speed up the I/O while the second one saves more space but it's slower. The suggestion is to use Physical Clusters for the records accessed often and where you need light speed.
                                         </td>
                                     </tr>
                                     <tr>
@@ -560,7 +560,7 @@
                             </td>
                             <td valign="top">
                                 <textarea id="output" cols="125" rows="3" title="value" readonly="readonly">
-                                    For the demo database use "reader/reader" to read records from the database, and "writer/writer" to read, create, update and delete records. To access to the Server information use "admin/orient". 
+                                    For the demo database use "reader/reader" to read records from the database, and "writer/writer" to read, create, update and delete records. To access to the Server information use "admin" as user and the automatic generated password created in the file "config/orient-server-config.xml". 
                                 </textarea>
                             </td>
                         </tr>

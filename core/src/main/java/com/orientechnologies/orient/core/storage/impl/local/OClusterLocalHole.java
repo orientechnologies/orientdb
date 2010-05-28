@@ -35,9 +35,9 @@ public class OClusterLocalHole extends OSingleFileSegment {
 	private static final int	DEF_START_SIZE	= 262144;
 	private static final int	RECORD_SIZE			= 8;
 
-	private OClusterPhysical			owner;
+	private OClusterLocal			owner;
 
-	public OClusterLocalHole(final OClusterPhysical iClusterLocal, final OStorageLocal iStorage, final OStorageFileConfiguration iConfig)
+	public OClusterLocalHole(final OClusterLocal iClusterLocal, final OStorageLocal iStorage, final OStorageFileConfiguration iConfig)
 			throws IOException {
 		super(iStorage, iConfig);
 		owner = iClusterLocal;

@@ -27,9 +27,10 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.impl.local.OClusterPhysical;
+import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
 import com.orientechnologies.orient.core.storage.impl.local.ODataLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OTxSegment;
@@ -92,11 +93,11 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 						json.writeAttribute(3, false, "name", clusterName);
 						json.writeAttribute(3, false, "type", cluster.getType());
 						json.writeAttribute(3, false, "records", cluster.getElements());
-						if (cluster instanceof OClusterPhysical) {
-							json.writeAttribute(3, false, "size", ((OClusterPhysical) cluster).getSize());
-							json.writeAttribute(3, false, "filled", ((OClusterPhysical) cluster).getFilledUpTo());
-							json.writeAttribute(3, false, "maxSize", ((OClusterPhysical) cluster).getConfig().maxSize);
-							json.writeAttribute(3, false, "files", Arrays.toString(((OClusterPhysical) cluster).getConfig().infoFiles));
+						if (cluster instanceof OClusterLocal) {
+							json.writeAttribute(3, false, "size", ((OClusterLocal) cluster).getSize());
+							json.writeAttribute(3, false, "filled", ((OClusterLocal) cluster).getFilledUpTo());
+							json.writeAttribute(3, false, "maxSize", ((OClusterLocal) cluster).getConfig().maxSize);
+							json.writeAttribute(3, false, "files", Arrays.toString(((OClusterLocal) cluster).getConfig().infoFiles));
 						} else {
 							json.writeAttribute(3, false, "size", "-");
 							json.writeAttribute(3, false, "filled", "-");
@@ -123,7 +124,9 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 			json.endCollection(1, true);
 
 			json.beginCollection(1, false, "users");
-			for (OUser user : db.getMetadata().getSecurity().getUsers()) {
+			OUser user;
+			for (ODocument doc : db.getMetadata().getSecurity().getUsers()) {
+				user = new OUser(doc);
 				json.beginObject(2, true, null);
 				json.writeAttribute(3, false, "name", user.getName());
 				json.writeAttribute(3, false, "roles", user.getRoles() != null ? Arrays.toString(user.getRoles().toArray()) : "null");
@@ -132,7 +135,9 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 			json.endCollection(1, true);
 
 			json.beginCollection(1, true, "roles");
-			for (ORole role : db.getMetadata().getSecurity().getRoles()) {
+			ORole role;
+			for (ODocument doc : db.getMetadata().getSecurity().getRoles()) {
+				role = new ORole(doc);
 				json.beginObject(2, true, null);
 				json.writeAttribute(3, false, "name", role.getName());
 				json.writeAttribute(3, false, "mode", role.getMode().toString());

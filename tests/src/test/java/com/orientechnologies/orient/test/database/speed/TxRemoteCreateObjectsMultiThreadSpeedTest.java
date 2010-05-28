@@ -19,7 +19,7 @@ import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
-import com.orientechnologies.orient.core.storage.impl.local.OClusterPhysical;
+import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMultiThreadTest;
 import com.orientechnologies.orient.test.database.base.OrientThreadTest;
@@ -43,7 +43,7 @@ public class TxRemoteCreateObjectsMultiThreadSpeedTest extends OrientMultiThread
 		database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
 
 		if (!database.getStorage().getClusterNames().contains("Animal"))
-			database.getStorage().addCluster("Animal", OClusterPhysical.TYPE);
+			database.getStorage().addCluster("Animal", OClusterLocal.TYPE);
 
 		foundObjects = database.countClusterElements("Animal");
 		System.out.println("\nTotal objects in Animal cluster before the test: " + foundObjects);

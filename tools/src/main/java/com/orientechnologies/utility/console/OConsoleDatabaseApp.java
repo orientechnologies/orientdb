@@ -82,13 +82,15 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 
 	@ConsoleCommand(aliases = { "use database" }, description = "Connect to a database")
 	public void connect(
-			@ConsoleParameter(name = "database-url", description = "The url of the database to connect in the format '<mode>:<path>'") String iDatabaseURL) {
-		out.print("Connecting to database [" + iDatabaseURL + "]...");
+			@ConsoleParameter(name = "database-url", description = "The url of the database to connect in the format '<mode>:<path>'") String iDatabaseURL,
+			@ConsoleParameter(name = "user", description = "User name") String iUserName,
+			@ConsoleParameter(name = "password", description = "User password") String iUserPassword) {
+		out.print("Connecting to database [" + iDatabaseURL + "] with user '" + iUserName + "'...");
 
 		currentDatabase = new ODatabaseDocumentTx(iDatabaseURL);
 		if (currentDatabase == null)
 			throw new OException("Database " + iDatabaseURL + " not found.");
-		currentDatabase.open("admin", "admin");
+		currentDatabase.open(iUserName, iUserPassword);
 
 		currentDatabaseName = currentDatabase.getName();
 
@@ -112,6 +114,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 	@ConsoleCommand(description = "Create a new database")
 	public void createDatabase(
 			@ConsoleParameter(name = "database-url", description = "The url of the database to create in the format '<mode>:<path>'") String iDatabaseURL,
+			@ConsoleParameter(name = "user", description = "Server administrator name") String iUserName,
+			@ConsoleParameter(name = "password", description = "Server administrator password") String iUserPassword,
 			@ConsoleParameter(name = "storage-type", description = "The type of the storage between 'local' for disk-based database and 'memory' for in memory only database.") String iStorageType)
 			throws IOException {
 		out.println("Creating database [" + iDatabaseURL + "] using the storage type [" + iStorageType + "]...");
@@ -120,7 +124,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 			// REMOTE CONNECTION
 			final String dbURL = iDatabaseURL.substring(OEngineRemote.NAME.length() + 1);
 			new OServerAdmin(dbURL).connect().createDatabase(iStorageType).close();
-			connect(iDatabaseURL);
+			connect(iDatabaseURL, iUserName, iUserPassword);
 
 		} else {
 			// LOCAL CONNECTION
@@ -320,12 +324,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 			long totalElements = 0;
 			long count;
 			for (String clusterName : currentDatabase.getClusterNames()) {
-				clusterId = currentDatabase.getClusterIdByName(clusterName);
-				count = currentDatabase.countClusterElements(clusterName);
-				totalElements += count;
-
-				out.printf("%-20s|%6d|%-20s|%10d |\n", clusterName, clusterId, clusterId < -1 ? "Logical" : "Physical", count);
-
+				try {
+					clusterId = currentDatabase.getClusterIdByName(clusterName);
+					count = currentDatabase.countClusterElements(clusterName);
+					totalElements += count;
+					out.printf("%-20s|%6d|%-20s|%10d |\n", clusterName, clusterId, clusterId < -1 ? "Logical" : "Physical", count);
+				} catch (Exception e) {
+				}
 			}
 			out.println("--------------------+------+--------------------+-----------+");
 			out.printf("TOTAL                                            %10d |\n", totalElements);
@@ -345,17 +350,20 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 			long totalElements = 0;
 			long count;
 			for (OClass cls : currentDatabase.getMetadata().getSchema().getClasses()) {
-				StringBuilder clusters = new StringBuilder();
-				for (int i = 0; i < cls.getClusterIds().length; ++i) {
-					if (i > 0)
-						clusters.append(", ");
-					clusters.append(currentDatabase.getClusterNameById(cls.getClusterIds()[i]));
+				try {
+					StringBuilder clusters = new StringBuilder();
+					for (int i = 0; i < cls.getClusterIds().length; ++i) {
+						if (i > 0)
+							clusters.append(", ");
+						clusters.append(currentDatabase.getClusterNameById(cls.getClusterIds()[i]));
+					}
+
+					count = currentDatabase.countClass(cls.getName());
+					totalElements += count;
+
+					out.printf("%-20s|%6d| %-40s |%10d |\n", cls.getName(), cls.getId(), clusters, count);
+				} catch (Exception e) {
 				}
-
-				count = currentDatabase.countClass(cls.getName());
-				totalElements += count;
-
-				out.printf("%-20s|%6d| %-40s |%10d |\n", cls.getName(), cls.getId(), clusters, count);
 			}
 			out.println("--------------------+------+------------------------------------------+-----------+");
 			out.printf("TOTAL                                                                  %10d |\n", totalElements);

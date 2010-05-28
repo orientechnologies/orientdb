@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.type.tree.OTreeMapDatabase;
 
 @SuppressWarnings("unchecked")
 public class ODictionaryLocal<T extends Object> implements ODictionaryInternal<T> {
-	public static final String					DICTIONARY_DEF_CLUSTER_NAME	= OStorage.CLUSTER_METADATA_NAME;
+	public static final String					DICTIONARY_DEF_CLUSTER_NAME	= OStorage.CLUSTER_INTERNAL_NAME;
 
 	private ODatabaseComplex<T>					database;
 	private OTreeMapDatabase<String, T>	tree;

@@ -15,56 +15,45 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.List;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.query.nativ.ONativeSynchQuery;
+import com.orientechnologies.orient.core.query.nativ.OQueryContextNativeSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+/**
+ * Manages users and roles.
+ * 
+ * @author Luca Garulli
+ * 
+ */
 public class OSecurity {
-	private ODatabaseRecord<?>		database;
-	protected Map<String, ORole>	roles	= new LinkedHashMap<String, ORole>();
-	protected Map<String, OUser>	users	= new LinkedHashMap<String, OUser>();
+	private ODatabaseRecord<?>	database;
 
 	public OSecurity(final ODatabaseRecord<?> iDatabaseOwner) {
 		database = iDatabaseOwner;
 	}
 
-	public void load() {
-		if (database.getClusterIdByName(ORole.class.getSimpleName()) == -1)
-			return;
-
-		ODocument doc;
-		for (ORecord<?> rec : database.browseCluster(ORole.class.getSimpleName())) {
-			doc = (ODocument) rec;
-			roles.put((String) doc.field("name"), new ORole(database).fromDocument(doc));
-		}
-
-		for (ORecord<?> rec : database.browseCluster(OUser.class.getSimpleName())) {
-			doc = (ODocument) rec;
-			users.put((String) doc.field("name"), new OUser(database).fromDocument(doc));
-		}
-	}
-
 	public OUser getUser(final String iUserName) {
-		return users.get(iUserName);
+		ODocument result = new ONativeSynchQuery<ODocument, OQueryContextNativeSchema<ODocument>>(
+				(ODatabaseRecord<ODocument>) database, OUser.class.getSimpleName(), new OQueryContextNativeSchema<ODocument>()) {
+
+			@Override
+			public boolean filter(OQueryContextNativeSchema<ODocument> iRecord) {
+				return iRecord.field("name").eq(iUserName).go();
+			};
+
+		}.executeFirst();
+
+		if (result != null)
+			return new OUser(result);
+
+		return null;
 	}
 
 	public OUser createUser(final String iUserName, final String iUserPassword, final String[] iRoles) {
-		String key = iUserName.toLowerCase();
-
-		if (users.containsKey(key))
-			throw new OSecurityException("User " + iUserName + " already exists in current database");
-
 		OUser user = new OUser(database, iUserName);
-		users.put(iUserName.toLowerCase(), user);
-
-		user.setDatabase(database);
 		user.setPassword(iUserPassword);
 
 		if (iRoles != null)
@@ -76,7 +65,20 @@ public class OSecurity {
 	}
 
 	public ORole getRole(final String iRoleName) {
-		return roles.get(iRoleName);
+		ODocument result = new ONativeSynchQuery<ODocument, OQueryContextNativeSchema<ODocument>>(
+				(ODatabaseRecord<ODocument>) database, ORole.class.getSimpleName(), new OQueryContextNativeSchema<ODocument>()) {
+
+			@Override
+			public boolean filter(OQueryContextNativeSchema<ODocument> iRecord) {
+				return iRecord.field("name").eq(iRoleName).go();
+			};
+
+		}.executeFirst();
+
+		if (result != null)
+			return new ORole(result);
+
+		return null;
 	}
 
 	public ORole createRole(final String iRoleName, final ORole.ALLOW_MODES iAllowMode) {
@@ -89,19 +91,30 @@ public class OSecurity {
 	}
 
 	public ORole createRole(final ORole iRole) {
-		if (roles.containsKey(iRole.name))
-			throw new OConfigurationException("Role " + iRole.name + " is already defined");
-
-		roles.put(iRole.name, iRole);
-
 		return iRole.save();
 	}
 
-	public Collection<OUser> getUsers() {
-		return Collections.unmodifiableCollection(users.values());
+	public List<ODocument> getUsers() {
+		return new ONativeSynchQuery<ODocument, OQueryContextNativeSchema<ODocument>>((ODatabaseRecord<ODocument>) database,
+				OUser.class.getSimpleName(), new OQueryContextNativeSchema<ODocument>()) {
+
+			@Override
+			public boolean filter(OQueryContextNativeSchema<ODocument> iRecord) {
+				return true;
+			};
+
+		}.execute();
 	}
 
-	public Collection<ORole> getRoles() {
-		return Collections.unmodifiableCollection(roles.values());
+	public List<ODocument> getRoles() {
+		return new ONativeSynchQuery<ODocument, OQueryContextNativeSchema<ODocument>>((ODatabaseRecord<ODocument>) database,
+				ORole.class.getSimpleName(), new OQueryContextNativeSchema<ODocument>()) {
+
+			@Override
+			public boolean filter(OQueryContextNativeSchema<ODocument> iRecord) {
+				return true;
+			};
+
+		}.execute();
 	}
 }

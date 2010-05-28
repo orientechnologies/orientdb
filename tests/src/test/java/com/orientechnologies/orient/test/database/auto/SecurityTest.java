@@ -49,7 +49,7 @@ public class SecurityTest {
 		database.open("writer", "writer");
 
 		try {
-			new ODocument(database, "Profile").save("metadata");
+			new ODocument(database, "Profile").save("internal");
 			Assert.assertTrue(false);
 		} catch (ODatabaseException e) {
 			Assert.assertTrue(e.getCause() instanceof OSecurityAccessException);

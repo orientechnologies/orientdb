@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 @Test(groups = { "crud", "record-csv" }, sequential = true)
 public class CRUDFlatPhysicalTest {
 	private static final String	CLUSTER_NAME	= "binary";
-	protected static final int	TOT_RECORDS		= 1000;
+	protected static final int	TOT_RECORDS		= 100;
 	protected long							startRecordNumber;
 	private ODatabaseFlat				database;
 	private ORecordFlat					record;

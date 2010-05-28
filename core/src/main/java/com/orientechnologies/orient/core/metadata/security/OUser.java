@@ -40,6 +40,9 @@ public class OUser extends ODocument {
 	/**
 	 * Constructor used in unmarshalling.
 	 */
+	public OUser() {
+	}
+
 	public OUser(final ODatabaseRecord<?> iDatabase) {
 		super(iDatabase, "OUser");
 	}
@@ -47,6 +50,14 @@ public class OUser extends ODocument {
 	public OUser(final ODatabaseRecord<?> iDatabase, final String iName) {
 		this(iDatabase);
 		name = iName;
+	}
+
+	/**
+	 * Create the user by reading the source document.
+	 */
+	public OUser(final ODocument iSource) {
+		database = iSource.getDatabase();
+		fromDocument(iSource);
 	}
 
 	/**

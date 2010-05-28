@@ -56,7 +56,7 @@ import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
 public class OStorageLocal extends OStorageAbstract {
-	public static final String[]					TYPES							= { OClusterPhysical.TYPE, OClusterLogical.TYPE };
+	public static final String[]					TYPES							= { OClusterLocal.TYPE, OClusterLogical.TYPE };
 
 	// private final OLockManager<String, String> lockManager = new OLockManager<String, String>();
 	protected final Map<String, OCluster>	clusterMap				= new LinkedHashMap<String, OCluster>();
@@ -98,7 +98,7 @@ public class OStorageLocal extends OStorageAbstract {
 			pos = registerDataSegment(new OStorageDataConfiguration(configuration, OStorage.DATA_DEFAULT_NAME));
 			dataSegments[pos].open();
 
-			pos = createClusterFromConfig(new OStoragePhysicalClusterConfiguration(configuration, OStorage.CLUSTER_METADATA_NAME,
+			pos = createClusterFromConfig(new OStoragePhysicalClusterConfiguration(configuration, OStorage.CLUSTER_INTERNAL_NAME,
 					clusters.length));
 			clusters[pos].open();
 
@@ -173,13 +173,13 @@ public class OStorageLocal extends OStorageAbstract {
 			addDataSegment(OStorage.DATA_DEFAULT_NAME);
 
 			// ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
-			addCluster(OStorage.CLUSTER_METADATA_NAME, OClusterPhysical.TYPE);
+			addCluster(OStorage.CLUSTER_INTERNAL_NAME, OClusterLocal.TYPE);
 
 			// ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING
-			addCluster(OStorage.CLUSTER_INDEX_NAME, OClusterPhysical.TYPE);
+			addCluster(OStorage.CLUSTER_INDEX_NAME, OClusterLocal.TYPE);
 
 			// ADD THE DEFAULT CLUSTER
-			defaultClusterId = addCluster(OStorage.CLUSTER_DEFAULT_NAME, OClusterPhysical.TYPE);
+			defaultClusterId = addCluster(OStorage.CLUSTER_DEFAULT_NAME, OClusterLocal.TYPE);
 
 			configuration.create();
 
@@ -301,7 +301,7 @@ public class OStorageLocal extends OStorageAbstract {
 		try {
 			iClusterName = iClusterName.toLowerCase();
 
-			if (OClusterPhysical.TYPE.equalsIgnoreCase(iClusterType)) {
+			if (OClusterLocal.TYPE.equalsIgnoreCase(iClusterType)) {
 				// GET PARAMETERS
 				final String clusterFileName = (String) (iParameters.length < 1 ? storagePath + "/" + iClusterName : iParameters[0]);
 				final int startSize = (iParameters.length < 2 ? -1 : (Integer) iParameters[1]);
@@ -661,7 +661,7 @@ public class OStorageLocal extends OStorageAbstract {
 		final OCluster cluster;
 
 		if (iConfig instanceof OStoragePhysicalClusterConfiguration) {
-			cluster = new OClusterPhysical(this, (OStoragePhysicalClusterConfiguration) iConfig);
+			cluster = new OClusterLocal(this, (OStoragePhysicalClusterConfiguration) iConfig);
 		} else
 			cluster = new OClusterLogical(this, (OStorageLogicalClusterConfiguration) iConfig);
 
@@ -901,7 +901,7 @@ public class OStorageLocal extends OStorageAbstract {
 				clusters.length);
 		configuration.clusters.add(config);
 
-		final OClusterPhysical cluster = new OClusterPhysical(this, config);
+		final OClusterLocal cluster = new OClusterLocal(this, config);
 		final int id = registerCluster(cluster);
 
 		clusters[id].create(iStartSize);

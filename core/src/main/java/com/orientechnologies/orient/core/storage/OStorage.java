@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.tx.OTransaction;
  * 
  */
 public interface OStorage {
-	public static final String	CLUSTER_METADATA_NAME	= "metadata";
+	public static final String	CLUSTER_INTERNAL_NAME	= "internal";
 	public static final String	CLUSTER_INDEX_NAME		= "index";
 	public static final String	CLUSTER_DEFAULT_NAME	= "default";
 

@@ -54,7 +54,7 @@ import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
-import com.orientechnologies.orient.core.storage.impl.local.OClusterPhysical;
+import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
@@ -511,7 +511,7 @@ public class OStorageRemote extends OStorageAbstract {
 				network.writeString(iClusterType);
 				network.writeString(iClusterName);
 
-				if (OClusterPhysical.TYPE.equals(iClusterType)) {
+				if (OClusterLocal.TYPE.equals(iClusterType)) {
 					// FIEL PATH + START SIZE
 					network.writeString((String) iArguments[0]).writeInt((Integer) iArguments[1]);
 				} else {
@@ -718,30 +718,43 @@ public class OStorageRemote extends OStorageAbstract {
 		return null;
 	}
 
+	public Collection<OCluster> getClusters() {
+		throw new UnsupportedOperationException("getClusters()");
+	}
+
+	public OCluster getClusterById(final int iId) {
+		throw new UnsupportedOperationException("getClusterById()");
+	}
+
 	protected void readStatus() throws IOException {
 		final byte result = network.readByte();
 
 		if (result == OChannelBinaryProtocol.ERROR) {
-			final String excClassName = network.readString();
-			final String excMessage = network.readString();
+			StringBuilder buffer = new StringBuilder();
+			boolean moreDetails = false;
+			String rootClassName = null;
 
-			Constructor c = null;
+			do {
+				final String excClassName = network.readString();
+				final String excMessage = network.readString();
 
-			try {
-				final Class<RuntimeException> excClass = (Class<RuntimeException>) Class.forName(excClassName);
-				c = excClass.getConstructor(String.class);
-			} catch (Exception e) {
-				// UNABLE TO REPRODUCE THE SAME SERVER-SIZE EXCEPTION: THROW A STORAGE EXCEPTION
-				throw new OStorageException(excMessage, null);
-			}
-
-			if (c != null)
-				try {
-					throw (RuntimeException) c.newInstance(excMessage);
-				} catch (InstantiationException e) {
-				} catch (IllegalAccessException e) {
-				} catch (InvocationTargetException e) {
+				if (!moreDetails) {
+					// FIRST ONE: TAKE AS ROOT CLASS/MSG
+					rootClassName = excClassName;
+				} else {
+					// DETAIL: APPEND AS STRING SINCE EXCEPTIONS DON'T ALLOW TO BE REBUILT PROGRAMMATICALLY
+					buffer.append("\n-> ");
+					buffer.append(excClassName);
+					buffer.append(": ");
 				}
+				buffer.append(excMessage);
+
+				// READ IF MORE DETAILS ARE COMING
+				moreDetails = network.readByte() == 1;
+
+			} while (moreDetails);
+
+			throw createException(rootClassName, buffer.toString());
 		}
 	}
 
@@ -916,11 +929,25 @@ public class OStorageRemote extends OStorageAbstract {
 		return record;
 	}
 
-	public Collection<OCluster> getClusters() {
-		throw new UnsupportedOperationException("getClusters()");
-	}
+	private RuntimeException createException(final String iClassName, final String iMessage) {
+		RuntimeException rootException = null;
+		Constructor c = null;
+		try {
+			final Class<RuntimeException> excClass = (Class<RuntimeException>) Class.forName(iClassName);
+			c = excClass.getConstructor(String.class);
+		} catch (Exception e) {
+			// UNABLE TO REPRODUCE THE SAME SERVER-SIZE EXCEPTION: THROW A STORAGE EXCEPTION
+			rootException = new OStorageException(iMessage, null);
+		}
 
-	public OCluster getClusterById(final int iId) {
-		throw new UnsupportedOperationException("getClusterById()");
+		if (c != null)
+			try {
+				rootException = (RuntimeException) c.newInstance(iMessage);
+			} catch (InstantiationException e) {
+			} catch (IllegalAccessException e) {
+			} catch (InvocationTargetException e) {
+			}
+
+		return rootException;
 	}
 }

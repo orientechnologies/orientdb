@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
  * +----------------------+----------------------+-------------+----------------------+<br/>
  * = 15 bytes<br/>
  */
-public class OClusterPhysical extends OMultiFileSegment implements OCluster {
+public class OClusterLocal extends OMultiFileSegment implements OCluster {
 	private static final String				DEF_EXTENSION	= ".ocl";
 	private static final int					RECORD_SIZE		= 15;
 	private static final int					DEF_SIZE			= 1000000;
@@ -46,7 +46,7 @@ public class OClusterPhysical extends OMultiFileSegment implements OCluster {
 
 	protected final OClusterLocalHole	holeSegment;
 
-	public OClusterPhysical(final OStorageLocal iStorage, final OStoragePhysicalClusterConfiguration iConfig) throws IOException {
+	public OClusterLocal(final OStorageLocal iStorage, final OStoragePhysicalClusterConfiguration iConfig) throws IOException {
 		super(iStorage, iConfig, DEF_EXTENSION, RECORD_SIZE);
 		id = iConfig.getId();
 

@@ -40,11 +40,10 @@ public class OMetadata {
 		init();
 
 		try {
-			if (schemaClusterId == -1 || database.countClusterElements(OStorage.CLUSTER_METADATA_NAME) == 0)
+			if (schemaClusterId == -1 || database.countClusterElements(OStorage.CLUSTER_INTERNAL_NAME) == 0)
 				return;
 
 			loadSchema();
-			loadSecurity();
 		} finally {
 			OProfiler.getInstance().stopChrono("OMetadata.load", timer);
 		}
@@ -57,7 +56,7 @@ public class OMetadata {
 
 		try {
 			// CREATE RECORD FOR SCHEMA
-			schema.save(OStorage.CLUSTER_METADATA_NAME);
+			schema.create();
 			database.getStorage().getConfiguration().schemaRecordId = schema.getIdentity().toString();
 
 			database.getStorage().getConfiguration().update();
@@ -83,12 +82,8 @@ public class OMetadata {
 		schema.load();
 	}
 
-	public void loadSecurity() {
-		security.load();
-	}
-
 	private void init() {
-		schemaClusterId = database.getClusterIdByName(OStorage.CLUSTER_METADATA_NAME);
+		schemaClusterId = database.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME);
 
 		schema = new OSchema(database, schemaClusterId);
 		security = new OSecurity(database);

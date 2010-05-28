@@ -45,7 +45,7 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.impl.local.OClusterPhysical;
+import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
 import com.orientechnologies.orient.core.storage.impl.local.ODictionaryLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
@@ -222,7 +222,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				final String name = channel.readString();
 
 				final int num;
-				if (OClusterPhysical.TYPE.equals(type))
+				if (OClusterLocal.TYPE.equals(type))
 					num = connection.database.addPhysicalCluster(name, channel.readString(), channel.readInt());
 				else
 					num = connection.database.addLogicalCluster(name, channel.readInt());
@@ -475,15 +475,26 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		channel.writeByte(OChannelBinaryProtocol.OK);
 	}
 
-	protected void sendError(Throwable t) throws IOException {
+	protected void sendError(final Throwable t) throws IOException {
 		channel.writeByte(OChannelBinaryProtocol.ERROR);
-		channel.writeString(t.getClass().getName());
-		channel.writeString(t != null ? t.getMessage() : null);
+
+		Throwable current = t;
+		while (current != null) {
+			channel.writeString(current.getClass().getName());
+			channel.writeString(current != null ? current.getMessage() : null);
+
+			current = current.getCause();
+
+			if (current != null)
+				// MORE DETAILS ARE COMING
+				channel.writeByte((byte) 1);
+		}
+		channel.writeByte((byte) 0);
 
 		channel.clearInput();
 	}
 
-	private boolean loadUserFromSchema(String iUserName, String iUserPassword) {
+	private boolean loadUserFromSchema(final String iUserName, final String iUserPassword) {
 		account = connection.database.getMetadata().getSecurity().getUser(iUserName);
 		if (account == null)
 			throw new OSecurityAccessException(connection.database.getName(), "User '" + iUserName + "' was not found in database: "
@@ -509,7 +520,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	 * @param iRecord
 	 * @throws IOException
 	 */
-	private void writeRecord(ORecordInternal<?> iRecord) throws IOException {
+	private void writeRecord(final ORecordInternal<?> iRecord) throws IOException {
 		if (iRecord == null) {
 			channel.writeShort((short) OChannelBinaryProtocol.RECORD_NULL);
 		} else {

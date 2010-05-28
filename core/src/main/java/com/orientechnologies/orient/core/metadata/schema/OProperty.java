@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Luca Garulli
  * 
  */
-public class OProperty extends OMetadataRecord {
+public class OProperty extends OSchemaRecord {
 	private OClass					owner;
 
 	private int							id;

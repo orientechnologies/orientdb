@@ -121,6 +121,12 @@ public class ORecordId implements ORID {
 	}
 
 	public void fromString(final String iRecordId) {
+		if (iRecordId == null) {
+			clusterId = CLUSTER_ID_INVALID;
+			clusterPosition = CLUSTER_POS_INVALID;
+			return;
+		}
+
 		if (!iRecordId.contains(SEPARATOR))
 			throw new IllegalArgumentException(
 					"Argument is not a RecordId in form of string. Format must be: <cluster-id>:<cluster-position>");

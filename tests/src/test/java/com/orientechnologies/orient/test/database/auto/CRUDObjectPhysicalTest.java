@@ -33,7 +33,7 @@ import com.orientechnologies.orient.test.domain.whiz.Profile;
 
 @Test(groups = { "crud", "record-vobject" }, sequential = true)
 public class CRUDObjectPhysicalTest {
-	protected static final int	TOT_RECORDS	= 1000;
+	protected static final int	TOT_RECORDS	= 100;
 	protected long							startRecordNumber;
 	private ODatabaseObjectTx		database;
 	private City								rome				= new City(new Country("Italy"), "Rome");

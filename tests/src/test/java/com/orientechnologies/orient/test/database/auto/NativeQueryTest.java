@@ -42,9 +42,8 @@ public class NativeQueryTest {
 	public void querySchemaAndLike() {
 		database.open("admin", "admin");
 
-		List<ODocument> result =
-
-		new ONativeSynchQuery<ODocument, OQueryContextNativeSchema<ODocument>>(database, "Account", new OQueryContextNativeSchema<ODocument>()) {
+		List<ODocument> result = new ONativeSynchQuery<ODocument, OQueryContextNativeSchema<ODocument>>(database, "Account",
+				new OQueryContextNativeSchema<ODocument>()) {
 
 			@Override
 			public boolean filter(OQueryContextNativeSchema<ODocument> iRecord) {

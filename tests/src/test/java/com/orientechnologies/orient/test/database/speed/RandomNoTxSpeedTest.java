@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseColumn;
 import com.orientechnologies.orient.core.query.nativ.ONativeSynchQuery;
 import com.orientechnologies.orient.core.query.nativ.OQueryContextNativePositional;
 import com.orientechnologies.orient.core.record.impl.ORecordColumn;
-import com.orientechnologies.orient.core.storage.impl.local.OClusterPhysical;
+import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
 
 public class RandomNoTxSpeedTest extends SpeedTestMonoThread {
 	private static final String	CLUSTER_NAME	= "Animal";
@@ -41,7 +41,7 @@ public class RandomNoTxSpeedTest extends SpeedTestMonoThread {
 	@Override
 	public void init() throws IOException {
 		if (!database.getStorage().getClusterNames().contains(CLUSTER_NAME))
-			database.getStorage().addCluster(CLUSTER_NAME, OClusterPhysical.TYPE);
+			database.getStorage().addCluster(CLUSTER_NAME, OClusterLocal.TYPE);
 	}
 
 	@Override

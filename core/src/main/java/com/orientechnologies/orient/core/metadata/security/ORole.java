@@ -74,6 +74,14 @@ public class ORole extends ODocument {
 		mode = iAllowMode;
 	}
 
+	/**
+	 * Create the role by reading the source document.
+	 */
+	public ORole(final ODocument iSource) {
+		database = iSource.getDatabase();
+		fromDocument(iSource);
+	}
+
 	public boolean allow(final String iResource, final int iCRUDOperation) {
 		// CHECK FOR SECURITY AS DIRECT RESOURCE
 		Byte access = rules.get(iResource);

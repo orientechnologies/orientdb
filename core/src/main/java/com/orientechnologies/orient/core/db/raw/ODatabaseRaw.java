@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterLogical;
-import com.orientechnologies.orient.core.storage.impl.local.OClusterPhysical;
+import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
 
 @SuppressWarnings("unchecked")
 public class ODatabaseRaw implements ODatabase {
@@ -225,7 +225,7 @@ public class ODatabaseRaw implements ODatabase {
 	}
 
 	public int addPhysicalCluster(final String iClusterName, final String iClusterFileName, final int iStartSize) {
-		return storage.addCluster(iClusterName, OClusterPhysical.TYPE, iClusterFileName, iStartSize);
+		return storage.addCluster(iClusterName, OClusterLocal.TYPE, iClusterFileName, iStartSize);
 	}
 
 	public int addDataSegment(final String iSegmentName, final String iSegmentFileName) {

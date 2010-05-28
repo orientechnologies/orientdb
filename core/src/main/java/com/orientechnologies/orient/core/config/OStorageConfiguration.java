@@ -56,7 +56,7 @@ public class OStorageConfiguration implements OSerializableStream {
 	private transient byte[]									record;
 
 	public OStorageConfiguration load() throws IOException {
-		record = storage.readRecord(-1, storage.getClusterIdByName(OStorage.CLUSTER_METADATA_NAME), CONFIG_RECORD_NUM).buffer;
+		record = storage.readRecord(-1, storage.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME), CONFIG_RECORD_NUM).buffer;
 		fromStream(record);
 		return this;
 	}
@@ -66,12 +66,12 @@ public class OStorageConfiguration implements OSerializableStream {
 			return;
 
 		record = toStream();
-		storage.updateRecord(-1, storage.getClusterIdByName(OStorage.CLUSTER_METADATA_NAME), 0, record, -1, ORecordBytes.RECORD_TYPE);
+		storage.updateRecord(-1, storage.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME), 0, record, -1, ORecordBytes.RECORD_TYPE);
 	}
 
 	public void create() throws IOException {
 		record = toStream();
-		storage.createRecord(storage.getClusterIdByName(OStorage.CLUSTER_METADATA_NAME), record, ORecordBytes.RECORD_TYPE);
+		storage.createRecord(storage.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME), record, ORecordBytes.RECORD_TYPE);
 	}
 
 	public OStorageConfiguration(final OStorage iStorage) {

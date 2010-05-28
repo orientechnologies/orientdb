@@ -22,6 +22,7 @@ import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 
 public abstract class ODatabasePool<DB extends ODatabaseRecord<?>> implements OResourcePoolListener<String, DB> {
@@ -73,9 +74,11 @@ public abstract class ODatabasePool<DB extends ODatabaseRecord<?>> implements OR
 		if (parts.length < 3)
 			throw new IllegalArgumentException("Missed user or password");
 
-		final OUser user = iValue.getMetadata().getSecurity().getUser(parts[1]);
-		if (!user.checkPassword(parts[2]))
-			throw new IllegalArgumentException("Wrong user/password");
+		if (iValue.getUser() != null) {
+			final OUser user = iValue.getMetadata().getSecurity().getUser(parts[1]);
+			if (!user.checkPassword(parts[2]))
+				throw new OSecurityAccessException(iValue.getName(), "Wrong user/password");
+		}
 
 		return null;
 

@@ -58,12 +58,13 @@ public class ORecordFactory {
 	public static ORecordInternal<?> getRecord(final byte iRecordType) {
 		if (iRecordType == ODocument.RECORD_TYPE)
 			return new ODocument();
-		if (iRecordType == ORecordFlat.RECORD_TYPE)
+		else if (iRecordType == ORecordFlat.RECORD_TYPE)
 			return new ORecordFlat();
-		if (iRecordType == ORecordBytes.RECORD_TYPE)
+		else if (iRecordType == ORecordBytes.RECORD_TYPE)
 			return new ORecordBytes();
-		if (iRecordType == ORecordColumn.RECORD_TYPE)
+		else if (iRecordType == ORecordColumn.RECORD_TYPE)
 			return new ORecordColumn();
+
 		return null;
 	}
 }

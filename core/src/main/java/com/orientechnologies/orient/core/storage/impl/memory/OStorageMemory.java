@@ -71,7 +71,7 @@ public class OStorageMemory extends OStorageAbstract {
 		addDataSegment(OStorage.CLUSTER_DEFAULT_NAME);
 
 		// ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
-		addCluster(OStorage.CLUSTER_METADATA_NAME, null);
+		addCluster(OStorage.CLUSTER_INTERNAL_NAME, null);
 
 		// ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING
 		addCluster("index", null);

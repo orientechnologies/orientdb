@@ -43,7 +43,7 @@ public class OMapLoaderStore implements MapLoader<String, String>, MapStore<Stri
 		try {
 			String[] parts = OKVServerCommandAbstract.getDbBucketKey(iKey, 3);
 
-			db = OSharedBinaryDatabase.acquireDatabase(parts[0]);
+			db = OSharedBinaryDatabase.acquireDatabase(parts[0]+":admin:admin");
 
 			final Map<String, String> bucketMap = OKVDictionaryBucketManager.getDictionaryBucket(db, parts[1], false);
 
@@ -71,7 +71,7 @@ public class OMapLoaderStore implements MapLoader<String, String>, MapStore<Stri
 		try {
 			final String[] parts = OKVServerCommandAbstract.getDbBucketKey(iKey, 3);
 
-			db = OSharedBinaryDatabase.acquireDatabase(parts[0]);
+			db = OSharedBinaryDatabase.acquireDatabase(parts[0]+":admin:admin");
 			final Map<String, String> bucketMap = OKVDictionaryBucketManager.getDictionaryBucket(db, parts[1], false);
 
 			synchronized (bucketMap) {
@@ -98,7 +98,7 @@ public class OMapLoaderStore implements MapLoader<String, String>, MapStore<Stri
 		try {
 			String[] parts = OKVServerCommandAbstract.getDbBucketKey(iKey, 3);
 
-			db = OSharedBinaryDatabase.acquireDatabase(parts[0]);
+			db = OSharedBinaryDatabase.acquireDatabase(parts[0]+":admin:admin");
 			final Map<String, String> bucketMap = OKVDictionaryBucketManager.getDictionaryBucket(db, parts[1], false);
 			synchronized (bucketMap) {
 				bucketMap.remove(parts[2]);
