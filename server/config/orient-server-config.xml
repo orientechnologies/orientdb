@@ -1,29 +1,23 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<!-- Orient DB Server configuration -->
 <orient-server>
     <network>
         <protocols>
-            <!-- Default registered protocol. It reads commands using the binary protocol. -->
-            <protocol name="binary" implementation="com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary" />
-            <protocol name="http"   implementation="com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb" />
+            <protocol implementation="com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary" name="binary"/>
+            <protocol implementation="com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb" name="http"/>
         </protocols>
         <listeners>
-            <!-- Default listener using the BINARY protocol bound to localhost, port 2424. If the port is busy
-                 then it will try to acquire the next one up to the 2424. -->
             <listener protocol="binary" port-range="2424-2430" ip-address="127.0.0.1"/>
-            <listener protocol="http"   port-range="2480-2490" ip-address="127.0.0.1"/>
+            <listener protocol="http" port-range="2480-2490" ip-address="127.0.0.1"/>
         </listeners>
     </network>
     <storages>
-        <!-- Default in-memory storage. Data are not saved permanently. -->
         <storage path="memory:temp" name="temp"/>
     </storages>
+    <users>
+        <user resources="*" password="232C9B27C3EAC0CD537D722020C18483A30D37D5764BF1976F6AB67D57846286" name="admin"/>
+    </users>
     <properties>
-      <!-- Caches static contents. If enabled the files will be kept in memory the first time
-           are loaded. Changes to the files will be taken on the next restart -->
-      <entry name="cache.static" value="false" />
-
-      <!-- Enable/Disable logging. Levels are: finer, fine, finest, info, warning -->
-      <entry name="log.level" value="info" />
+        <entry value="false" name="cache.static"/>
+        <entry value="info" name="log.level"/>
     </properties>
 </orient-server>

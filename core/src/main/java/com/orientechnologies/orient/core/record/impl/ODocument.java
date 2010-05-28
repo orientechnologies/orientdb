@@ -206,16 +206,6 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	}
 
 	/**
-	 * Unmarshalls the instance from the raw stream.
-	 */
-	@Override
-	public ODocument fromStream(final byte[] iRecordBuffer) {
-		super.fromStream(iRecordBuffer);
-		deserializeFields();
-		return this;
-	}
-
-	/**
 	 * Returns the field number.
 	 */
 	public int size() {

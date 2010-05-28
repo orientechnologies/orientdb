@@ -37,6 +37,9 @@ public class OEntityManager {
 	 * @see #registerEntityClasses(String)
 	 */
 	public Object createPojo(final String iClassName) throws OConfigurationException {
+		if (iClassName == null)
+			throw new IllegalArgumentException("Can't create the object: class name is empty");
+
 		Class<?> entityClass = getEntityClass(iClassName);
 
 		try {

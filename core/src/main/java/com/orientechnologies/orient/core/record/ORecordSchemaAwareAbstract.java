@@ -64,6 +64,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	}
 
 	public String getClassName() {
+		checkForFields();
 		return clazz != null ? clazz.getName() : null;
 	}
 

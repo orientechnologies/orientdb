@@ -27,12 +27,12 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
  * @author Luca Garulli
  * 
  */
-public abstract class OStreamSerializerAbstract implements OStreamSerializer {
+public class OStreamSerializerHelper {
 
-	protected static final String	SEPARATOR					= "|";
+	public static final String	SEPARATOR					= "|";
 	private static final char			SHORT_FORM_PREFIX	= '!';
 
-	protected StringBuilder writeRecordType(final Class<?> cls, final StringBuilder iBuffer) {
+	public static StringBuilder writeRecordType(final Class<?> cls, final StringBuilder iBuffer) {
 		// SEARCH INTO THE SERIALIZER REGISTER IF THE IMPLEMENTATION WAS REGISTERED TO GET THE SHORT FORM (AND OPTIMIZING IN SIZE AND
 		// WRITE TIMES)
 		Character c = OClassDictionary.instance().getCodeByClass(cls);
@@ -48,7 +48,7 @@ public abstract class OStreamSerializerAbstract implements OStreamSerializer {
 		return iBuffer;
 	}
 
-	protected Class<?> readRecordType(final String iBuffer, final StringBuilder iContent) throws ClassNotFoundException {
+	public static Class<?> readRecordType(final String iBuffer, final StringBuilder iContent) throws ClassNotFoundException {
 		Class<?> cls;
 		final int pos;
 		if (iBuffer.charAt(0) == SHORT_FORM_PREFIX) {
@@ -59,7 +59,7 @@ public abstract class OStreamSerializerAbstract implements OStreamSerializer {
 			// LONG FORM
 			pos = iBuffer.indexOf(SEPARATOR);
 			if (pos < 0)
-				OLogManager.instance().error(this, "Class signature not found in the buffer: " + iBuffer, OSerializationException.class);
+				OLogManager.instance().error(null, "Class signature not found in the buffer: " + iBuffer, OSerializationException.class);
 			final String className = iBuffer.substring(0, pos);
 			cls = Class.forName(className);
 		}

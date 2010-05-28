@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
  * @author Luca Garulli
  * 
  */
-public class OStreamSerializerAnyRecord extends OStreamSerializerAbstract {
+public class OStreamSerializerAnyRecord implements OStreamSerializer {
 	public static final String										NAME	= "ar";
 
 	private ODatabaseRecord<? extends ORecord<?>>	database;
@@ -58,7 +58,7 @@ public class OStreamSerializerAnyRecord extends OStreamSerializerAbstract {
 
 		try {
 			final StringBuilder content = new StringBuilder();
-			cls = readRecordType(stream, content);
+			cls = OStreamSerializerHelper.readRecordType(stream, content);
 
 			// TRY WITH THE DATABASE CONSTRUCTOR
 			for (Constructor<?> c : cls.getDeclaredConstructors()) {
@@ -90,7 +90,7 @@ public class OStreamSerializerAnyRecord extends OStreamSerializerAbstract {
 		if (((ORecord<?>) iObject).getIdentity() == null)
 			throw new OSerializationException("Can't serialize record without identity. Store it before to serialize.");
 
-		final StringBuilder buffer = writeRecordType(iObject.getClass(), new StringBuilder());
+		final StringBuilder buffer = OStreamSerializerHelper.writeRecordType(iObject.getClass(), new StringBuilder());
 		buffer.append(((ORecord<?>) iObject).getIdentity().toString());
 
 		return OBinaryProtocol.string2bytes(buffer.toString());

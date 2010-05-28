@@ -13,24 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.metadata.schema;
+package com.orientechnologies.orient.core.serialization.serializer.string;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.record.ORecordAbstract;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+public interface OStringSerializer {
+	public String toStream(Object iSource);
 
-public abstract class OSchemaRecord extends ODocument {
+	public Object fromStream(String iSource);
 
-	public OSchemaRecord() {
-		super();
-	}
-
-	public OSchemaRecord(ODatabaseRecord<?> iDatabase) {
-		super(iDatabase);
-	}
-
-	@Override
-	public ORecordAbstract<Object> save() {
-		return this;
-	}
+	public String getName();
 }

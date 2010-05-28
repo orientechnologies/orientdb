@@ -38,8 +38,15 @@ public class OClass extends OSchemaRecord {
 	/**
 	 * Constructor used in unmarshalling.
 	 */
+	public OClass() {
+	}
+
+	/**
+	 * Constructor used in unmarshalling.
+	 */
 	public OClass(final OSchema iOwner) {
 		owner = iOwner;
+		database = iOwner.getDatabase();
 	}
 
 	public OClass(final OSchema iOwner, final int iId, final String iName, final String iJavaClassName, final int[] iClusterIds,
@@ -176,6 +183,7 @@ public class OClass extends OSchemaRecord {
 		OProperty prop;
 		List<ODocument> storedProperties = iSource.field("properties");
 		for (ODocument p : storedProperties) {
+			p.setDatabase(database);
 			prop = new OProperty(this).fromDocument(p);
 			properties.put(prop.getName().toLowerCase(), prop);
 		}
@@ -189,7 +197,7 @@ public class OClass extends OSchemaRecord {
 		field("id", id);
 		field("defaultClusterId", defaultClusterId);
 		field("clusterIds", clusterIds);
-		field("properties", properties.values());
+		field("properties", properties.values(), OType.EMBEDDEDSET);
 		return super.toStream();
 	}
 
@@ -226,6 +234,6 @@ public class OClass extends OSchemaRecord {
 
 	@Override
 	public String toString() {
-		return name + " (id=" + id + ", cluster=" + defaultClusterId + ")";
+		return name;
 	}
 }

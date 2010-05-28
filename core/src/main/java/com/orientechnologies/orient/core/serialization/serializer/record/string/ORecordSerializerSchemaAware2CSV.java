@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -118,15 +117,17 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 						if (database != null
 								&& (firstValue instanceof ORecordSchemaAware<?> || (database.getDatabaseOwner() instanceof ODatabaseObject && ((ODatabaseObject) database
 										.getDatabaseOwner()).getEntityManager().getEntityClass(getClassName(firstValue)) != null))) {
-							// LINK: GET THE CLASS
-							linkedType = OType.LINK;
 							linkedClass = getLinkInfo(database, getClassName(firstValue));
+							if (type == null) {
+								// LINK: GET THE CLASS
+								linkedType = OType.LINK;
 
-							if (type == null && coll instanceof Set<?>)
-								type = OType.LINKSET;
-							else
-								type = OType.LINKLIST;
-
+								if (coll instanceof Set<?>)
+									type = OType.LINKSET;
+								else
+									type = OType.LINKLIST;
+							} else
+								linkedType = OType.EMBEDDED;
 						} else {
 							linkedType = OType.getTypeByAssignability(firstValue.getClass());
 
@@ -137,10 +138,11 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 									linkedClass = new OClass(firstValue.getClass());
 								}
 
-								if (type == null && coll instanceof Set<?>)
-									type = OType.EMBEDDEDSET;
-								else
-									type = OType.EMBEDDEDLIST;
+								if (type == null)
+									if (coll instanceof Set<?>)
+										type = OType.EMBEDDEDSET;
+									else
+										type = OType.EMBEDDEDLIST;
 							}
 						}
 					} else if (type == null)
@@ -290,7 +292,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 								String value = fieldValue.substring(1, fieldValue.length() - 1);
 
 								if (value.length() > 0) {
-									if (value.contains(ORID.SEPARATOR)) {
+									if (value.startsWith(OStringSerializerHelper.LINK)) {
 										type = OType.LINKLIST;
 										linkedType = OType.LINK;
 
@@ -301,12 +303,12 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 											if (className != null)
 												linkedClass = iDatabase.getMetadata().getSchema().getClass(className);
 										}
+									} else if (value.charAt(0) == OStringSerializerHelper.EMBEDDED) {
+										linkedType = OType.EMBEDDED;
 									} else if (Character.isDigit(value.charAt(0)) || value.charAt(0) == '+' || value.charAt(0) == '-') {
 										linkedType = getNumber(unusualSymbols, value);
 									} else if (value.charAt(0) == '\'' || value.charAt(0) == '"')
 										linkedType = OType.STRING;
-									else
-										linkedType = OType.EMBEDDED;
 								}
 
 							} else if (fieldValue.charAt(0) == OStringSerializerHelper.MAP_BEGIN

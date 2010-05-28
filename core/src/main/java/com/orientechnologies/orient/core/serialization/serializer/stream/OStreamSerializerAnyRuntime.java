@@ -17,11 +17,17 @@ package com.orientechnologies.orient.core.serialization.serializer.stream;
 
 import java.io.IOException;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyRuntime;
 
-public class OStreamSerializerAnyRuntime extends OStreamSerializerAbstract {
+/**
+ * Delegates to the OStringSerializerAnyRuntime class but transform to/from bytes.
+ * 
+ * @see OStringSerializerAnyRuntime
+ * @author Luca Garulli
+ * 
+ */
+public class OStreamSerializerAnyRuntime implements OStreamSerializer {
 	public static final OStreamSerializerAnyRuntime	INSTANCE	= new OStreamSerializerAnyRuntime();
 	private static final String											NAME			= "au";
 
@@ -32,30 +38,18 @@ public class OStreamSerializerAnyRuntime extends OStreamSerializerAbstract {
 	/**
 	 * Re-Create any object if the class has a public constructor that accepts a String as unique parameter.
 	 */
-	public Object fromStream(byte[] iStream) throws IOException {
+	public Object fromStream(final byte[] iStream) throws IOException {
 		if (iStream == null || iStream.length == 0)
 			// NULL VALUE
 			return null;
 
-		String stream = OBinaryProtocol.bytes2string(iStream);
-		int pos = stream.indexOf(SEPARATOR);
-		if (pos < 0)
-			OLogManager.instance().error(this, "Class signature not found in ANY element: " + iStream, OSerializationException.class);
-
-		final String className = stream.substring(0, pos);
-
-		try {
-			Class<?> clazz = Class.forName(className);
-			return clazz.getDeclaredConstructor(String.class).newInstance(stream.substring(pos + 1));
-		} catch (Exception e) {
-			OLogManager.instance().error(this, "Error on unmarshalling content. Class: " + className, e, OSerializationException.class);
-		}
-		return null;
+		return OStringSerializerAnyRuntime.INSTANCE.fromStream(OBinaryProtocol.bytes2string(iStream));
 	}
 
-	public byte[] toStream(Object iObject) throws IOException {
+	public byte[] toStream(final Object iObject) throws IOException {
 		if (iObject == null)
 			return new byte[0];
-		return OBinaryProtocol.string2bytes(iObject.getClass().getName() + SEPARATOR + iObject);
+
+		return OBinaryProtocol.string2bytes(OStringSerializerAnyRuntime.INSTANCE.toStream(iObject));
 	}
 }

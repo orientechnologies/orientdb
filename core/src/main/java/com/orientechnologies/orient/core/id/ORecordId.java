@@ -20,7 +20,6 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 
 public class ORecordId implements ORID {
-	public static final char			BEGIN_CHAR							= '#';
 	public static final int				PERSISTENT_SIZE					= OConstants.SIZE_SHORT + OConstants.SIZE_LONG;
 
 	public static final ORecordId	EMPTY_RECORD_ID					= new ORecordId();

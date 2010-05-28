@@ -91,8 +91,8 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	}
 
 	public ORecordAbstract<T> fromStream(final byte[] iRecordBuffer) {
-		status = STATUS.NOT_LOADED;
 		source = iRecordBuffer;
+		status = STATUS.LOADED;
 		return this;
 	}
 

@@ -189,6 +189,7 @@ function showDatabaseInfo(database) {
 				+ database['classes'][cls].name;
 	}
 
+	jQuery($('#classProperties')).jqGrid('GridUnload');
 	fillDynaTable(
 			$('#classProperties'),
 			"Properties",
@@ -634,7 +635,8 @@ function clearResultset() {
 }
 
 function getStudioURL(context) {
-	return $('#server').val() + '/studio/' + $('#database').val() + '/' + context;
+	return $('#server').val() + '/studio/' + $('#database').val() + '/'
+			+ context;
 }
 
 function askServerInfo() {

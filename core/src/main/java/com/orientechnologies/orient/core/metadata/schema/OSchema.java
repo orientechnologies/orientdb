@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-public class OSchema extends OSchemaRecord {
+public class OSchema extends ODocument {
 	public static final String		CLUSTER_NAME						= "schema";
 
 	protected Map<String, OClass>	classes									= new LinkedHashMap<String, OClass>();
@@ -119,6 +119,7 @@ public class OSchema extends OSchemaRecord {
 		OClass cls;
 		List<ODocument> storedClasses = field("classes");
 		for (ODocument c : storedClasses) {
+			c.setDatabase(database);
 			cls = new OClass(this).fromDocument(c);
 			classes.put(cls.getName().toLowerCase(), cls);
 		}

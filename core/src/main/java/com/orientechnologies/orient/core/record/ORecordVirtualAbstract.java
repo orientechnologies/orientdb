@@ -73,7 +73,7 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 	public int hashCode() {
 		int result = super.hashCode();
 
-		if (fields != null)
+		if (!recordId.isValid() && fields != null)
 			for (Entry<String, T> field : fields.entrySet()) {
 				if (field.getKey() != null)
 					result += field.getKey().hashCode();

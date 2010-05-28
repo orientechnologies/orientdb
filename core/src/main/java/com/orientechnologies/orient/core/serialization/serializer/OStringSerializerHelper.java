@@ -18,7 +18,11 @@ package com.orientechnologies.orient.core.serialization.serializer;
 import java.util.ArrayList;
 import java.util.Date;
 
+import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 
 public abstract class OStringSerializerHelper {
 	public static final String	RECORD_SEPARATOR					= ",";
@@ -26,6 +30,7 @@ public abstract class OStringSerializerHelper {
 
 	public static final String	CLASS_SEPARATOR						= "@";
 	public static final String	LINK											= "#";
+	public static final char		EMBEDDED									= '*';
 	public static final char		COLLECTION_BEGIN					= '[';
 	public static final char		COLLECTION_END						= ']';
 	public static final char		MAP_BEGIN									= '{';
@@ -83,6 +88,16 @@ public abstract class OStringSerializerHelper {
 			if (iValue instanceof Date)
 				return iValue;
 			return new Date(Long.parseLong(iValue.toString()));
+
+		case LINK:
+			if (iValue instanceof ORID)
+				return iValue.toString();
+			else
+				return ((ORecord<?>) iValue).getIdentity().toString();
+
+		case EMBEDDED:
+			// RECORD
+			return OStringSerializerAnyStreamable.INSTANCE.fromStream((String) iValue);
 		}
 
 		throw new IllegalArgumentException("Type " + iType + " not supported to convert value: " + iValue);
@@ -110,17 +125,28 @@ public abstract class OStringSerializerHelper {
 
 		case DATE:
 			return String.valueOf(((Date) iValue).getTime());
+
+		case LINK:
+			if (iValue instanceof ORID)
+				return iValue.toString();
+			else
+				return ((ORecord<?>) iValue).getIdentity().toString();
+
+		case EMBEDDED:
+			// RECORD
+			return OStringSerializerAnyStreamable.INSTANCE.toStream(iValue);
 		}
 
-		return iValue.toString();
+		throw new IllegalArgumentException("Type " + iType + " not supported to convert value: " + iValue);
 	}
 
 	public static String[] split(String iSource, char iRecordSeparator) {
 		StringBuilder buffer = new StringBuilder();
 		char stringBeginChar = ' ';
 		char c;
-		boolean insideCollection = false;
-		boolean insideMap = false;
+		boolean insideEmbedded = false;
+		int insideCollection = 0;
+		int insideMap = 0;
 
 		ArrayList<String> parts = new ArrayList<String>();
 
@@ -130,7 +156,22 @@ public abstract class OStringSerializerHelper {
 			if (stringBeginChar == ' ') {
 				// OUTSIDE A STRING
 
-				if (!insideCollection && !insideMap) {
+				if (c == COLLECTION_BEGIN)
+					insideCollection++;
+				else if (c == MAP_BEGIN)
+					insideMap++;
+				else if (c == COLLECTION_END) {
+					if (insideCollection == 0)
+						throw new OSerializationException("Found invalid " + COLLECTION_END + " character. Assure to open and close correctly.");
+					insideCollection--;
+				} else if (c == MAP_END) {
+					if (insideMap == 0)
+						throw new OSerializationException("Found invalid " + MAP_END + " character. Assure to open and close correctly.");
+					insideMap--;
+				} else if (c == EMBEDDED)
+					insideEmbedded = !insideEmbedded;
+
+				if (insideCollection == 0 && insideMap == 0 && !insideEmbedded) {
 					// OUTSIDE A COLLECTION
 
 					if (c == '\'' || c == '"') {
@@ -141,17 +182,7 @@ public abstract class OStringSerializerHelper {
 						parts.add(buffer.toString());
 						buffer.setLength(0);
 						continue;
-					} else if (c == COLLECTION_BEGIN)
-						insideCollection = true;
-					else if (c == MAP_BEGIN)
-						insideMap = true;
-
-				} else {
-					// INSIDE A COLLECTION
-					if (insideCollection && c == COLLECTION_END)
-						insideCollection = false;
-					else if (insideMap && c == MAP_END)
-						insideMap = false;
+					}
 				}
 
 			} else {

@@ -15,11 +15,15 @@
  */
 package com.orientechnologies.orient.core.storage.tree;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandToParse;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerCSVAbstract;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
@@ -111,9 +115,20 @@ public class OSQLHelper {
 		if (iValue.startsWith("'") && iValue.endsWith("'"))
 			// STRING
 			fieldValue = stringContent(iValue);
-		else if (iValue.indexOf(":") > -1)
+		if (iValue.startsWith("[") && iValue.endsWith("]")) {
+			// COLLECTION/ARRAY
+			String[] items = OStringSerializerHelper.split(iValue.substring(1, iValue.length() - 1),
+					OStringSerializerHelper.RECORD_SEPARATOR_AS_CHAR);
+
+			List<Object> coll = new ArrayList<Object>();
+			for (String item : items) {
+				coll.add(parseValue(iDatabase, item));
+			}
+			fieldValue = coll;
+
+		} else if (iValue.indexOf(":") > -1)
 			// RID
-			fieldValue = new ORecordId(iValue);
+			fieldValue = new ORecordId(iValue.trim());
 		else {
 
 			String upperCase = iValue.toUpperCase();
