@@ -106,9 +106,11 @@ public class OSQLHelper {
 	 *          Value to convert.
 	 * @return The value converted if recognized, otherwise VALUE_NOT_PARSED
 	 */
-	public static Object parseValue(final ODatabaseRecord<?> iDatabase, final String iValue) {
+	public static Object parseValue(final ODatabaseRecord<?> iDatabase, String iValue) {
 		if (iValue == null)
 			return null;
+		
+		iValue = iValue.trim();
 
 		Object fieldValue = VALUE_NOT_PARSED;
 

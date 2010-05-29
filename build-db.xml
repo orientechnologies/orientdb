@@ -76,6 +76,7 @@
 
 
 	<target name="javadoc" depends="init">
+	  <!-- YOU NEED TO INSTALL GRAPH-VIZ TO GENERATE UML DIAGRAMS, OTHERWISE DISABLE IT TO HAVE PLAIN JAVADOCS -->
 	  <copy todir="${global.release}/javadoc" file="_base/images/orient_db.png" />
   	<javadoc sourcepath="." packagenames="com.orientechnologies.*" destdir="${global.release}/javadoc" public="true"
              useexternalfile="yes" linksource="yes" use="yes" verbose="no" windowtitle="OrientDB v. ${version} Javadocs"

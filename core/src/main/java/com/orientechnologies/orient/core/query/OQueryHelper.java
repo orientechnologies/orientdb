@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.query;
 
+
 public class OQueryHelper {
 	protected static final String	WILDCARD_ANYCHAR			= "?";
 	protected static final String	WILDCARD_ANY					= "%";
@@ -48,7 +49,7 @@ public class OQueryHelper {
 			// %XXXXX%
 			iValue = iValue.substring(WILDCARD_ANY.length(), iValue.length() - WILDCARD_ANY.length());
 			return currentValue.indexOf(iValue) > -1;
-			
+
 		} else if (iValue.startsWith(WILDCARD_ANY)) {
 			// %XXXXX
 			iValue = iValue.substring(WILDCARD_ANY.length());
