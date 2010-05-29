@@ -73,7 +73,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord<
 	}
 
 	public <RET extends OCommandRequest> RET command(final OCommandRequest iCommand) {
-		return underlying.command(iCommand);
+		return (RET) underlying.command(iCommand);
 	}
 
 	public REC newInstance() {
