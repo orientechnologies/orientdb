@@ -63,6 +63,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
 	public OCommandExecutorScript() {
 	}
 
+	@SuppressWarnings("unchecked")
 	public OCommandExecutorScript parse(final OCommandRequestInternal iRequest) {
 		request = (OCommandScript) iRequest;
 		return this;
