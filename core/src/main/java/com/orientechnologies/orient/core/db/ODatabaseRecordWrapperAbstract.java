@@ -72,7 +72,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord<
 		return underlying.browseCluster(iClusterName);
 	}
 
-	public OCommandRequest command(final OCommandRequest iCommand) {
+	public <RET extends OCommandRequest> RET command(final OCommandRequest iCommand) {
 		return underlying.command(iCommand);
 	}
 

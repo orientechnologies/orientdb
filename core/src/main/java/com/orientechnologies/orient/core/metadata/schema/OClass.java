@@ -170,8 +170,8 @@ public class OClass extends OSchemaRecord {
 
 	public OClass fromDocument(final ODocument iSource) {
 		name = iSource.field("name");
-		id = iSource.field("id");
-		defaultClusterId = iSource.field("defaultClusterId");
+		id = (Integer) iSource.field("id");
+		defaultClusterId = (Integer) iSource.field("defaultClusterId");
 
 		Collection<Integer> coll = iSource.field("clusterIds");
 		clusterIds = new int[coll.size()];

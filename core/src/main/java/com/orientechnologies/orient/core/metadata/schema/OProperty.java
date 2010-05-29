@@ -93,10 +93,10 @@ public class OProperty extends OSchemaRecord {
 		name = iSource.field("name");
 		if (iSource.field("type") != null)
 			type = OType.getById((Integer) iSource.field("type"));
-		offset = iSource.field("offset");
+		offset = (Integer) iSource.field("offset");
 
-		mandatory = iSource.field("mandatory");
-		notNull = iSource.field("notNull");
+		mandatory = (Boolean) iSource.field("mandatory");
+		notNull = (Boolean) iSource.field("notNull");
 		min = iSource.field("min");
 		max = iSource.field("max");
 
