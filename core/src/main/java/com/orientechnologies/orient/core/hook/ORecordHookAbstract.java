@@ -24,21 +24,21 @@ import com.orientechnologies.orient.core.record.ORecord;
  * @see ORecordHook
  */
 public abstract class ORecordHookAbstract implements ORecordHook {
-	public abstract void onRecordBeforeCreate(ORecord<?> iRecord);
+	public void onRecordBeforeCreate(final ORecord<?> iRecord){};
 
-	public abstract void onRecordAfterCreate(ORecord<?> iRecord);
+	public void onRecordAfterCreate(final ORecord<?> iRecord){};
 
-	public abstract void onRecordBeforeRead(ORecord<?> iRecord);
+	public void onRecordBeforeRead(final ORecord<?> iRecord){};
 
-	public abstract void onRecordAfterRead(ORecord<?> iRecord);
+	public void onRecordAfterRead(final ORecord<?> iRecord){};
 
-	public abstract void onRecordBeforeUpdate(ORecord<?> iRecord);
+	public void onRecordBeforeUpdate(final ORecord<?> iRecord){};
 
-	public abstract void onRecordAfterUpdate(ORecord<?> iRecord);
+	public void onRecordAfterUpdate(final ORecord<?> iRecord){};
 
-	public abstract void onRecordBeforeDelete(ORecord<?> iRecord);
+	public void onRecordBeforeDelete(final ORecord<?> iRecord){};
 
-	public abstract void onRecordAfterDelete(ORecord<?> iRecord);
+	public void onRecordAfterDelete(final ORecord<?> iRecord){};
 
 	public void onTrigger(final TYPE iType, final ORecord<?> iRecord) {
 		switch (iType) {
