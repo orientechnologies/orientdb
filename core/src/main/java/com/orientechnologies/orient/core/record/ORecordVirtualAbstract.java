@@ -94,18 +94,12 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-
-		if (getClass() != obj.getClass())
-			return false;
-
-		ORecordVirtualAbstract other = (ORecordVirtualAbstract) obj;
-
 		if (!super.equals(obj))
 			return false;
 
 		if (!recordId.isValid()) {
+			final ORecordVirtualAbstract other = (ORecordVirtualAbstract) obj;
+
 			// NO PERSISTENT OBJECT: COMPARE EACH FIELDS
 			if (fields == null || other.fields == null)
 				// CAN'T COMPARE FIELDS: RETURN FALSE

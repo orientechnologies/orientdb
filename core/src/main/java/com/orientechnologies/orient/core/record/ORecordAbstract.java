@@ -245,7 +245,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		ORecordAbstract other = (ORecordAbstract) obj;
+		final ORecordAbstract other = (ORecordAbstract) obj;
 		if (database == null) {
 			if (other.database != null)
 				return false;

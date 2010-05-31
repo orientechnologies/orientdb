@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public class OProperty extends OSchemaRecord {
+
 	private OClass					owner;
 
 	private int							id;
@@ -177,6 +178,31 @@ public class OProperty extends OSchemaRecord {
 	@Override
 	public String toString() {
 		return name + " (id=" + id + ", " + type + ")";
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + ((owner == null) ? 0 : owner.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		OProperty other = (OProperty) obj;
+		if (owner == null) {
+			if (other.owner != null)
+				return false;
+		} else if (!owner.equals(other.owner))
+			return false;
+		return true;
 	}
 
 	private void checkForDateFormat(String min) {
