@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.db.object;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -26,12 +27,15 @@ import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.dictionary.ODictionaryWrapper;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.core.iterator.OObjectIteratorMultiCluster;
@@ -325,5 +329,21 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 
 	public <DBTYPE extends ODatabase> DBTYPE checkSecurity(final String iResource, final int iOperation, Object... iResourcesSpecific) {
 		return (DBTYPE) underlying.checkSecurity(iResource, iOperation, iResourcesSpecific);
+	}
+
+	public Set<ORecordHook> getHooks() {
+		return underlying.getHooks();
+	}
+
+	public <DB extends ODatabaseRecord<?>> DB registerHook(ORecordHook iHookImpl) {
+		return underlying.registerHook(iHookImpl);
+	}
+
+	public <DB extends ODatabaseRecord<?>> DB unregisterHook(ORecordHook iHookImpl) {
+		return underlying.unregisterHook(iHookImpl);
+	}
+
+	public void callbackHooks(final TYPE iType, final Object iObject) {
+		underlying.callbackHooks(iType, iObject);
 	}
 }

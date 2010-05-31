@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-@SuppressWarnings("unchecked")
 public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabaseRecordTx<ODocument>, ODocument> implements
 		ODatabaseDocument {
 

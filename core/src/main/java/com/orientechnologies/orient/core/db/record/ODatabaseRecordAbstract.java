@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
@@ -42,6 +43,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecord.STATUS;
@@ -301,6 +303,8 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		try {
 			checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, getClusterNameById(iClusterId), iClusterId);
 
+			callbackHooks(TYPE.BEFORE_READ, iRecord);
+
 			final ORawBuffer recordBuffer = underlying.read(iClusterId, iPosition);
 			if (recordBuffer == null)
 				return null;
@@ -319,6 +323,8 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			iRecord.fromStream(recordBuffer.buffer);
 			iRecord.setStatus(STATUS.LOADED);
 
+			callbackHooks(TYPE.AFTER_READ, iRecord);
+
 			return iRecord;
 		} catch (ODatabaseException e) {
 			// RE-THROW THE EXCEPTION
@@ -332,13 +338,13 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		return null;
 	}
 
-	public void executeSaveRecord(final REC iContent, final String iClusterName, final int iVersion, final byte iRecordType) {
+	public void executeSaveRecord(final REC iRecord, final String iClusterName, final int iVersion, final byte iRecordType) {
 		checkOpeness();
 
-		if (!iContent.isDirty())
+		if (!iRecord.isDirty())
 			return;
 
-		final ORecordId rid = (ORecordId) iContent.getIdentity();
+		final ORecordId rid = (ORecordId) iRecord.getIdentity();
 
 		if (rid == null)
 			throw new ODatabaseException(
@@ -347,58 +353,66 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		try {
 			final int clusterId;
 
+			final byte[] stream = iRecord.toStream();
+
 			boolean isNew = !rid.isValid();
 			if (isNew) {
 				clusterId = iClusterName != null ? getClusterIdByName(iClusterName) : getDefaultClusterId();
 
 				// CHECK ACCESS ON CLUSTER
 				checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_CREATE, iClusterName, clusterId);
+				callbackHooks(TYPE.BEFORE_CREATE, iRecord);
 			} else {
 				clusterId = rid.clusterId;
 
 				// CHECK ACCESS ON CLUSTER
 				checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName, clusterId);
+				callbackHooks(TYPE.BEFORE_UPDATE, iRecord);
 			}
 
-			final byte[] stream = iContent.toStream();
-
 			// SAVE IT
-			long result = underlying.save(clusterId, rid.getClusterPosition(), stream, iVersion, iContent.getRecordType());
+			long result = underlying.save(clusterId, rid.getClusterPosition(), stream, iVersion, iRecord.getRecordType());
+			iRecord.unsetDirty();
 
-			if (isNew)
+			if (isNew) {
 				// UPDATE INFORMATION: CLUSTER ID+POSITION
-				iContent.fill(iContent.getDatabase(), clusterId, result, 0);
-			else
+				iRecord.fill(iRecord.getDatabase(), clusterId, result, 0);
+				callbackHooks(TYPE.AFTER_CREATE, iRecord);
+			} else {
 				// UPDATE INFORMATION: VERSION
-				iContent.fill(iContent.getDatabase(), clusterId, rid.getClusterPosition(), (int) result);
-
-			iContent.unsetDirty();
+				iRecord.fill(iRecord.getDatabase(), clusterId, rid.getClusterPosition(), (int) result);
+				callbackHooks(TYPE.AFTER_UPDATE, iRecord);
+			}
 		} catch (ODatabaseException e) {
 			// RE-THROW THE EXCEPTION
 			throw e;
 		} catch (Throwable t) {
 			// WRAP IT AS ODATABASE EXCEPTION
-			throw new ODatabaseException("Error on saving record in cluster #" + iContent.getIdentity().getClusterId(), t);
+			throw new ODatabaseException("Error on saving record in cluster #" + iRecord.getIdentity().getClusterId(), t);
 		}
 	}
 
-	public void executeDeleteRecord(final REC iContent, final int iVersion) {
+	public void executeDeleteRecord(final REC iRecord, final int iVersion) {
 		checkOpeness();
-		ORecordId rid = (ORecordId) iContent.getIdentity();
+		ORecordId rid = (ORecordId) iRecord.getIdentity();
 
 		if (rid == null)
 			throw new ODatabaseException(
 					"Can't delete record because it has no identity. Probably was created from scratch or contains projections of fields rather than a full record");
 
-		final int clusterId = iContent.getIdentity().getClusterId();
+		final int clusterId = iRecord.getIdentity().getClusterId();
 		checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(clusterId), clusterId);
 
 		try {
-			underlying.delete(iContent.getIdentity().getClusterId(), iContent.getIdentity().getClusterPosition(), iVersion);
+			callbackHooks(TYPE.BEFORE_DELETE, iRecord);
+
+			underlying.delete(iRecord.getIdentity().getClusterId(), iRecord.getIdentity().getClusterPosition(), iVersion);
 
 			// DELETE IT ALSO IN CACHE
 			if (underlying.isUseCache())
 				getCache().removeRecord(rid.toString());
+
+			callbackHooks(TYPE.AFTER_DELETE, iRecord);
 
 		} catch (ODatabaseException e) {
 			// RE-THROW THE EXCEPTION
@@ -406,7 +420,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 
 		} catch (Throwable t) {
 			// WRAP IT AS ODATABASE EXCEPTION
-			throw new ODatabaseException("Error on deleting record in cluster #" + iContent.getIdentity().getClusterId(), t);
+			throw new ODatabaseException("Error on deleting record in cluster #" + iRecord.getIdentity().getClusterId(), t);
 		}
 	}
 
@@ -447,6 +461,18 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 
 	public Set<ORecordHook> getHooks() {
 		return Collections.unmodifiableSet(hooks);
+	}
+
+	/**
+	 * Callback the registeted hooks if any.
+	 * 
+	 * @param iType
+	 * @param iRecord
+	 *          Record received in the callback
+	 */
+	public void callbackHooks(final TYPE iType, final Object iRecord) {
+		for (ORecordHook hook : hooks)
+			hook.onTrigger(iType, (ORecord<?>) iRecord);
 	}
 
 	private void createRolesAndUsers() {

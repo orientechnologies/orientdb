@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -79,22 +78,4 @@ public interface ODatabaseRecord<REC extends ORecordInternal<?>> extends ODataba
 	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	public <DB extends ODatabaseRecord<?>> DB checkSecurity(String iResourceGeneric, int iOperation, Object... iResourcesSpecific);
-
-	/**
-	 * Register a hook to listen all events for Records.
-	 * 
-	 * @param iHookImpl
-	 *          ORecordHook implementation
-	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
-	 */
-	public <DB extends ODatabaseRecord<?>> DB registerHook(ORecordHook iHookImpl);
-
-	/**
-	 * Unregister a previously registered hook.
-	 * 
-	 * @param iHookImpl
-	 *          ORecordHook implementation
-	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
-	 */
-	public <DB extends ODatabaseRecord<?>> DB unregisterHook(ORecordHook iHookImpl);
 }

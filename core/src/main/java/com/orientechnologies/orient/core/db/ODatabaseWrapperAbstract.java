@@ -154,5 +154,4 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase, REC extends
 		databaseOwner = iOwner;
 		return (ODatabaseComplex<?>) this;
 	}
-
 }

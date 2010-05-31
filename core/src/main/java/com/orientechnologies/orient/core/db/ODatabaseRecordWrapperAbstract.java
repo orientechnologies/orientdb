@@ -16,11 +16,13 @@
 package com.orientechnologies.orient.core.db;
 
 import java.util.Iterator;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -129,6 +131,14 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord<
 	public <DBTYPE extends ODatabaseRecord<?>> DBTYPE registerHook(final ORecordHook iHookImpl) {
 		underlying.registerHook(iHookImpl);
 		return (DBTYPE) this;
+	}
+
+	public void callbackHooks(final TYPE iType, final Object iObject) {
+		underlying.callbackHooks(iType, iObject);
+	}
+
+	public Set<ORecordHook> getHooks() {
+		return underlying.getHooks();
 	}
 
 	public <DBTYPE extends ODatabaseRecord<?>> DBTYPE unregisterHook(final ORecordHook iHookImpl) {

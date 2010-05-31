@@ -15,10 +15,14 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import java.util.Set;
+
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
+import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -162,7 +166,7 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	public ODatabaseComplex<?> getDatabaseOwner();
 
 	/**
-	 * Internal. Set the database owner.
+	 * Internal. Sets the database owner.
 	 */
 	public ODatabaseComplex<?> setDatabaseOwner(ODatabaseComplex<?> iOwner);
 
@@ -172,4 +176,38 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 * @return The underlying ODatabase implementation.
 	 */
 	public <DB extends ODatabase> DB getUnderlying();
+
+	/**
+	 * Registers a hook to listen all events for Records.
+	 * 
+	 * @param iHookImpl
+	 *          ORecordHook implementation
+	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 */
+	public <DB extends ODatabaseRecord<?>> DB registerHook(ORecordHook iHookImpl);
+
+	/**
+	 * Retrieves all the registered hooks.
+	 * 
+	 * @return A not-null unmodifiable set of ORecordHook instances. If there are no hooks registered, the Set is empty.
+	 */
+	public Set<ORecordHook> getHooks();
+
+	/**
+	 * Unregisters a previously registered hook.
+	 * 
+	 * @param iHookImpl
+	 *          ORecordHook implementation
+	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 */
+	public <DB extends ODatabaseRecord<?>> DB unregisterHook(ORecordHook iHookImpl);
+
+	/**
+	 * Invokes the callback on all the configured hooks.
+	 * 
+	 * @param iObject
+	 *          The object passed change based on the Database implementation: records for {@link ODatabaseRecord} implementations and
+	 *          POJO for {@link ODatabaseObject} implementations.
+	 */
+	public void callbackHooks(TYPE iType, Object iObject);
 }
