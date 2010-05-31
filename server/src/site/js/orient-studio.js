@@ -418,18 +418,21 @@ function queryResponse(data) {
 		"name" : "_id",
 		"index" : "_id",
 		"width" : 30,
+		search : false,
 		"classes" : "cell_readonly"
 	});
 	columnModel.push( {
 		"name" : "_ver",
 		"index" : "_ver",
 		"width" : 30,
+		search : false,
 		"classes" : "cell_readonly"
 	});
 	columnModel.push( {
 		"name" : "_class",
 		"index" : "_class",
 		"width" : 30,
+		search : false,
 		"classes" : "cell_readonly"
 	});
 	columnModel.push( {
@@ -441,6 +444,7 @@ function queryResponse(data) {
 		},
 		hidden : true,
 		editable : true,
+		search : false,
 		editrules : {
 			edithidden : true
 		}
@@ -452,6 +456,7 @@ function queryResponse(data) {
 
 	for (col in columnNames) {
 		editOptions = null;
+		unformatter = null;
 
 		if (schema && schema.properties && schema.properties[columnNames[col]]) {
 			var type = schema.properties[columnNames[col]].type;
@@ -469,7 +474,8 @@ function queryResponse(data) {
 				formatter = "embeddedFormatter";
 				break;
 			case 'LINK':
-				formatter = "linkFormatter";
+				formatter = linkFormatter;
+				unformatter = linkUnformatter;
 				break;
 			case 'EMBEDDEDLIST':
 				formatter = "embeddedListFormatter";
@@ -493,13 +499,18 @@ function queryResponse(data) {
 
 		if (col.charAt(0) !== '_') {
 			columnModel.push( {
-				"name" : columnNames[col],
-				"editable" : true,
-				"index" : columnNames[col],
-				"width" : 80,
-				"formatter" : formatter,
-				"edittype" : editFormatter,
-				"editoptions" : editOptions
+				name : columnNames[col],
+				editable : true,
+				index : columnNames[col],
+				width : 80,
+				formatter : formatter,
+				unformat : unformatter,
+				//edittype : editFormatter,
+				editoptions : editOptions,
+				search : true,
+				searchoptions : {
+					sopt : [ "cn" ]
+				}
 			});
 		}
 	}
@@ -511,7 +522,7 @@ function queryResponse(data) {
 			columnModel, result, {
 				sortname : 'id',
 				width : 400,
-				height : 330,
+				height : 300,
 				editurl : getStudioURL('document'),
 				onSelectRow : function(id) {
 					if (id && id !== lastsel) {
@@ -528,7 +539,7 @@ function queryResponse(data) {
 								return true;
 							}, getStudioURL('document'), [ recId ]);
 				}
-			});
+			}, true);
 
 	$("#newRecord").click(function() {
 		jQuery("#queryResultTable").jqGrid('editGridRow', "new", {

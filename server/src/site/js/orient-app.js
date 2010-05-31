@@ -20,9 +20,9 @@ function defaultSimpleRequestError(msg) {
 }
 
 function executeSimpleRequest(iRequest, iSuccessCallback, iErrorCallback) {
-	if( !iErrorCallback )
+	if (!iErrorCallback)
 		iErrorCallback = defaultSimpleRequestError;
-	
+
 	$.ajax( {
 		type : 'GET',
 		url : iRequest,
@@ -34,27 +34,36 @@ function executeSimpleRequest(iRequest, iSuccessCallback, iErrorCallback) {
 }
 
 function fillDynaTable(iTable, iTitle, iColumnsNames, iColumnsModel, iData,
-		iCustomConfig) {
+		iCustomConfig, iToolBar) {
 	var columnModel = iColumnsModel;
 	if (!columnModel) {
 		var columnModel = new Array();
 		for (col in iColumnsNames) {
 			columnModel.push( {
-				"name" : iColumnsNames[col],
-				"index" : iColumnsNames[col]
+				name : iColumnsNames[col],
+				index : iColumnsNames[col]
 			});
 		}
 	}
+
+	var navBar = $("#" + iTable.attr("id") + "Nav");
 
 	var config = {
 		datatype : "local",
 		autowidth : true,
 		multiselect : false,
 		viewrecords : true,
+		gridview : true,
+		sortname : "_id",
+		sortorder : "asc",
 		caption : iTitle,
+		loadonce : true,
 		colNames : iColumnsNames,
 		colModel : columnModel
 	};
+
+	if (navBar)
+		config['pager'] = "#" + iTable.attr("id") + "Nav";
 
 	if (iCustomConfig)
 		// MERGE SETTINGS
@@ -62,6 +71,16 @@ function fillDynaTable(iTable, iTitle, iColumnsNames, iColumnsModel, iData,
 			config[property] = iCustomConfig[property];
 
 	jQuery(iTable).jqGrid(config);
+
+	if (iToolBar) {
+		if (navBar)
+			jQuery(iTable).jqGrid("navGrid", navBar);
+
+		jQuery(iTable).jqGrid('filterToolbar', {
+			stringResult : true,
+			searchOnEnter : false
+		});
+	}
 
 	fillDynaTableRows(iTable, iData);
 }
@@ -114,9 +133,19 @@ function buildColumnNames(table) {
 }
 
 function linkFormatter(cellvalue, options, rowObject) {
-	return "<img src='images/link.png' />";
+	return cellvalue + " <img src='www/images/link.png' onclick=\"openLink('"
+			+ cellvalue + "');\" />";
+}
+function linkUnformatter(cellvalue, options) {
+	if (cellvalue)
+		return cellvalue.split(" ")[0];
+	
+	return "";
+}
+function embeddedFormatter(cellvalue, options, rowObject) {
+	return "<img src='www/images/embedded.png' />";
 }
 
-function embeddedFormatter(cellvalue, options, rowObject) {
-	return "<img src='images/embedded.png' />";
+function openLink(cellvalue) {
+	alert(cellvalue);
 }
