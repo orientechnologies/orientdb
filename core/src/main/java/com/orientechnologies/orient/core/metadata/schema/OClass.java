@@ -153,14 +153,14 @@ public class OClass extends OSchemaRecord {
 	}
 
 	protected OProperty addProperty(String iName, final OType iType, final int iOffset) {
-		iName = iName.toLowerCase();
+		final String lowerName = iName.toLowerCase();
 
-		if (properties.containsKey(iName))
+		if (properties.containsKey(lowerName))
 			throw new OSchemaException("Class " + name + " already has the property '" + iName + "'");
 
 		OProperty prop = new OProperty(this, iName, iType, iOffset);
 
-		properties.put(iName, prop);
+		properties.put(lowerName, prop);
 		fixedSize += iType.size;
 
 		owner.setDirty();

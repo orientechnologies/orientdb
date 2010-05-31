@@ -371,6 +371,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 	 *          Can be an instance of ORID or a Record<?>
 	 */
 	private void linkToStream(final StringBuilder buffer, final ORecordSchemaAware<?> iParentRecord, final Object iLinked) {
+		if( iLinked == null )
+			// NULL REFERENCE
+			return;
 
 		ORID rid;
 
