@@ -139,7 +139,7 @@ function linkFormatter(cellvalue, options, rowObject) {
 function linkUnformatter(cellvalue, options) {
 	if (cellvalue)
 		return cellvalue.split(" ")[0];
-	
+
 	return "";
 }
 function embeddedFormatter(cellvalue, options, rowObject) {
@@ -148,4 +148,186 @@ function embeddedFormatter(cellvalue, options, rowObject) {
 
 function openLink(cellvalue) {
 	alert(cellvalue);
+}
+
+function displayResultSet(result, schema) {
+	jQuery("#output").val(
+			"Query executed in " + stopTimer() + " sec. Returned "
+					+ result.length + " record(s)");
+
+	// CREATE COLUMN NAMES
+	var columnNames = buildColumnNames(result);
+
+	// CREATE COLUMN MODEL
+	var columnModel = new Array();
+
+	columnModel.push( {
+		"name" : "_id",
+		"index" : "_id",
+		"width" : 30,
+		"classes" : "cell_readonly",
+		searchoptions : {
+			sopt : [ "cn" ]
+		}
+	});
+	columnModel.push( {
+		"name" : "_ver",
+		"index" : "_ver",
+		"width" : 30,
+		"classes" : "cell_readonly",
+		searchoptions : {
+			sopt : [ "cn" ]
+		}
+	});
+	columnModel.push( {
+		"name" : "_class",
+		"index" : "_class",
+		"width" : 30,
+		"classes" : "cell_readonly",
+		searchoptions : {
+			sopt : [ "cn" ]
+		}
+	});
+	columnModel.push( {
+		"name" : "_class",
+		"index" : "_className",
+		edittype : "select",
+		editoptions : {
+			value : classEnumeration
+		},
+		hidden : true,
+		editable : true,
+		search : false,
+		editrules : {
+			edithidden : true
+		}
+	});
+
+	var formatter;
+	var editFormatter;
+	var editOptions;
+
+	for (col in columnNames) {
+		editOptions = null;
+		unformatter = null;
+
+		if (schema && schema.properties && schema.properties[columnNames[col]]) {
+			var type = schema.properties[columnNames[col]].type;
+			switch (type) {
+			case 'STRING':
+				formatter = "text";
+				break;
+			case 'BOOLEAN':
+				formatter = "checkbox";
+				editOptions = {
+					value : "True:False"
+				};
+				break;
+			case 'EMBEDDED':
+				formatter = "embeddedFormatter";
+				break;
+			case 'LINK':
+				formatter = linkFormatter;
+				unformatter = linkUnformatter;
+				break;
+			case 'EMBEDDEDLIST':
+				formatter = "embeddedListFormatter";
+				break;
+			case 'LINKLIST':
+				formatter = "linkListFormatter";
+				break;
+			case 'EMBEDDEDSET':
+				formatter = "embeddedSetFormatter";
+				break;
+			case 'LINKSET':
+				formatter = "linkSetFormatter";
+				break;
+			default:
+				formatter = "text";
+			}
+		} else
+			formatter = "text";
+
+		editFormatter = formatter;
+
+		if (col.charAt(0) !== '_') {
+			columnModel.push( {
+				name : columnNames[col],
+				editable : true,
+				index : columnNames[col],
+				width : 80,
+				formatter : formatter,
+				unformat : unformatter,
+				// edittype : editFormatter,
+				editoptions : editOptions,
+				search : true,
+				searchoptions : {
+					sopt : [ "cn" ]
+				}
+			});
+		}
+	}
+
+	var lastsel;
+
+	jQuery($('#queryResultTable')).jqGrid('GridUnload');
+	fillDynaTable($('#queryResultTable'), "Resultset", columnNames,
+			columnModel, result, {
+				sortname : 'id',
+				width : 400,
+				height : 300,
+				editurl : getStudioURL('document'),
+				onSelectRow : function(id) {
+					if (id && id !== lastsel) {
+						jQuery('#queryResultTable').jqGrid('restoreRow',
+								lastsel);
+						lastsel = id;
+					}
+
+					var recId = jQuery('#queryResultTable').jqGrid(
+							'getRowData', id)["_id"];
+					jQuery('#queryResultTable').jqGrid('editRow', id, true,
+							null, function(response, postdata) {
+								jQuery("#output").val(response.responseText);
+								return true;
+							}, getStudioURL('document'), [ recId ]);
+				}
+			}, true);
+
+	$("#newRecord").click(function() {
+		jQuery("#queryResultTable").jqGrid('editGridRow', "new", {
+			height : 280,
+			reloadAfterSubmit : false,
+			closeAfterAdd : true,
+			closeOnEscape : true,
+			afterSubmit : function(response, postdata) {
+				jQuery("#output").val(response.responseText);
+				return true;
+			}
+		});
+	});
+	$("#deleteRecord").click(
+			function() {
+				var selectedRow = jQuery("#queryResultTable").jqGrid(
+						'getGridParam', 'selrow');
+				if (selectedRow != null) {
+					var recId = jQuery('#queryResultTable').jqGrid(
+							'getRowData', selectedRow)["_id"];
+					jQuery("#queryResultTable").jqGrid(
+							'delGridRow',
+							selectedRow,
+							{
+								reloadAfterSubmit : false,
+								closeAfterDelete : true,
+								closeOnEscape : true,
+								delData : [ recId ],
+								afterSubmit : function(response, postdata) {
+									jQuery("#output")
+											.val(response.responseText);
+									return [ true, response.responseText ];
+								}
+							});
+				} else
+					alert("Please Select Row to delete!");
+			});
 }

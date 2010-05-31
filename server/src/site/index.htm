@@ -170,7 +170,8 @@
                                     <tr>
                                         <td valign="top" class="help">
                                             <b><a href="http://code.google.com/p/orient/wiki/Concepts#Data_Segment">Data
-                                            segments</a></b> are the segments that contain data pointed by Clusters.
+                                                    segments</a></b>
+                                            are the segments that contain data pointed by Clusters.
                                         </td>
                                     </tr>
                                     <tr>
@@ -268,12 +269,26 @@
                                     <table style="width: 100%;" cellpadding="2" cellspacing="0">
                                         <tr>
                                             <td valign="top">
-                                                <textarea id="queryText" cols="120" rows="3" title="value">
-                                                    select from Address where city.country.name = 'Italy'
-                                                </textarea>
-                                            </td>
-                                            <td>
                                                 <table style="width: 100%;">
+                                                    <tr>
+                                                        <td>
+                                                            <textarea id="queryText" cols="120" rows="2" title="value">
+                                                                select from Address where city.country.name = 'Italy'
+                                                            </textarea>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td valign="top">
+                                                            <table id="queryResultTable">
+                                                            </table>
+                                                            <div id="queryResultTableNav">
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                            <td valign="top">
+                                                <table style="width: 120px;">
                                                     <tr>
                                                         <td>
                                                             <button onclick="javascript:executeQuery()" class="ui-button-text-icon">
@@ -296,17 +311,6 @@
                                                             <a href="http://code.google.com/p/orient/wiki/SQLWhere" target="help">SQL operators</a>
                                                         </td>
                                                     </tr>
-                                                </table>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td valign="top">
-                                                <table id="queryResultTable">
-                                                </table>
-												<div id="queryResultTableNav" ></div>
-                                            </td>
-                                            <td valign="top">
-                                                <table style="width: 100%;">
                                                     <tr>
                                                         <td>
                                                         <button id="newRecord" " class="ui-button-text-icon" style="width: 100px;  text-align: left">New <img border="0"  alt="New record" src="www/images/add.png" align="top" />
