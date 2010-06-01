@@ -69,6 +69,7 @@ public class CRUDDocumentPhysicalTest {
 			record.field("name", "Gipsy");
 			record.field("location", "Italy");
 			record.field("salary", (i + 300));
+			record.field("testLong", 10000000000L); // TEST LONG
 			record.field("extra", "This is an extra field not included in the schema");
 
 			record.save("Account");
@@ -98,6 +99,7 @@ public class CRUDDocumentPhysicalTest {
 			Assert.assertTrue(((Number) rec.field("id")).intValue() == i);
 			Assert.assertEquals(rec.field("name"), "Gipsy");
 			Assert.assertEquals(rec.field("location"), "Italy");
+			Assert.assertEquals(((Number) rec.field("testLong")).longValue(), 10000000000L);
 			Assert.assertEquals(((Number) rec.field("salary")).intValue(), i + 300);
 			Assert.assertNotNull(rec.field("extra"));
 
