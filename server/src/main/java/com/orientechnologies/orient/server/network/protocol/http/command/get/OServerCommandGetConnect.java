@@ -209,7 +209,7 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 				if (prop.getLinkedClass() != null)
 					json.writeAttribute(4, true, "linkedClass", prop.getLinkedClass().getName());
 				if (prop.getLinkedType() != null)
-					json.writeAttribute(4, true, "linkedType", prop.getLinkedType());
+					json.writeAttribute(4, true, "linkedType", prop.getLinkedType().toString());
 				json.writeAttribute(4, true, "type", prop.getType().toString());
 				json.writeAttribute(4, true, "mandatory", prop.isMandatory());
 				json.writeAttribute(4, true, "notNull", prop.isNotNull());
