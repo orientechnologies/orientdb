@@ -477,8 +477,13 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 
 	private void createRolesAndUsers() {
 		// CREATE ROLE AND USER SCHEMA CLASSES
-		final OClass role = metadata.getSchema().createClass("ORole");
-		metadata.getSchema().createClass("OUser").createProperty("roles", OType.LINKSET, role);
+		final OClass roleClass = metadata.getSchema().createClass("ORole");
+		roleClass.createProperty("mode", OType.BYTE);
+		roleClass.createProperty("rules", OType.EMBEDDEDMAP, OType.BYTE);
+
+		final OClass userClass = metadata.getSchema().createClass("OUser");
+		userClass.createProperty("roles", OType.LINKSET, roleClass);
+
 		metadata.getSchema().save();
 
 		// CREATE ROLES AND USERS

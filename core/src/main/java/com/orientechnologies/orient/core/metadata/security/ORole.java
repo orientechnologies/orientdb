@@ -178,13 +178,13 @@ public class ORole extends ODocument {
 		recordId.copyFrom(iSource.getIdentity());
 
 		name = iSource.field("name");
-		mode = ((Integer) iSource.field("mode")) == STREAM_ALLOW ? ALLOW_MODES.ALLOW_ALL_BUT : ALLOW_MODES.DENY_ALL_BUT;
+		mode = ((Byte) iSource.field("mode")) == STREAM_ALLOW ? ALLOW_MODES.ALLOW_ALL_BUT : ALLOW_MODES.DENY_ALL_BUT;
 
 		parentRole = database.getMetadata().getSecurity().getRole((String) iSource.field("inheritedRole"));
 
-		final Map<String, Integer> storedRules = iSource.field("rules");
-		for (Entry<String, Integer> a : storedRules.entrySet()) {
-			rules.put(a.getKey(), (byte) a.getValue().intValue());
+		final Map<String, Byte> storedRules = iSource.field("rules");
+		for (Entry<String, Byte> a : storedRules.entrySet()) {
+			rules.put(a.getKey(), a.getValue().byteValue());
 		}
 		return this;
 	}

@@ -19,7 +19,6 @@ import java.io.IOException;
 
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 /**

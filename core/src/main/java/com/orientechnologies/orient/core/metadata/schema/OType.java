@@ -35,8 +35,7 @@ public enum OType {
 	},
 	INTEGER("Integer", 1, false, true, 4, new Class<?>[] { Integer.TYPE, Integer.class }, new Class<?>[] { Number.class }) {
 	},
-	SHORT("Short", 2, false, true, 2, new Class<?>[] { Short.TYPE, Short.class, Byte.TYPE, Byte.class },
-			new Class<?>[] { Number.class }) {
+	SHORT("Short", 2, false, true, 2, new Class<?>[] { Short.TYPE, Short.class }, new Class<?>[] { Number.class }) {
 	},
 	LONG("Long", 3, false, true, 8, new Class<?>[] { Long.TYPE, Long.class }, new Class<?>[] { Number.class }) {
 	},
@@ -65,9 +64,11 @@ public enum OType {
 	LINKSET("Set", 15, true, false, 8, new Class<?>[] { Set.class }, new Class<?>[] { Collection.class }) {
 	},
 	LINKMAP("Map", 16, true, false, 8, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
+	},
+	BYTE("Byte", 17, false, true, 1, new Class<?>[] { Byte.TYPE, Byte.class }, new Class<?>[] { Number.class }) {
 	};
 
-	protected static final OType[]	TYPES	= new OType[] { BOOLEAN, INTEGER, SHORT, LONG, FLOAT, DOUBLE, DATE, STRING, BINARY,
+	protected static final OType[]	TYPES	= new OType[] { BOOLEAN, BYTE, INTEGER, SHORT, LONG, FLOAT, DOUBLE, DATE, STRING, BINARY,
 			EMBEDDED, EMBEDDEDLIST, EMBEDDEDSET, EMBEDDEDMAP, LINK, LINKLIST, LINKSET, LINKMAP };
 
 	protected String								name;
@@ -96,7 +97,7 @@ public enum OType {
 	 *          The id to search
 	 * @return The type if any, otherwise null
 	 */
-	public static OType getById(final int iId) {
+	public static OType getById(final byte iId) {
 		for (OType t : TYPES) {
 			if (iId == t.id)
 				return t;
@@ -174,16 +175,10 @@ public enum OType {
 	 * @return The integer value if the conversion succeed, otherwise the IllegalArgumentException exception
 	 */
 	public int asInt(final Object iValue) {
-		if (iValue instanceof Integer)
+		if (iValue instanceof Number)
 			return ((Integer) iValue).intValue();
-		else if (iValue instanceof Long)
-			return ((Long) iValue).intValue();
 		else if (iValue instanceof String)
 			return Integer.valueOf((String) iValue);
-		else if (iValue instanceof Float)
-			return ((Float) iValue).intValue();
-		else if (iValue instanceof Double)
-			return ((Double) iValue).intValue();
 		else if (iValue instanceof Boolean)
 			return ((Boolean) iValue) ? 1 : 0;
 
@@ -198,16 +193,10 @@ public enum OType {
 	 * @return The long value if the conversion succeed, otherwise the IllegalArgumentException exception
 	 */
 	public long asLong(final Object iValue) {
-		if (iValue instanceof Long)
-			return ((Long) iValue).longValue();
-		else if (iValue instanceof Integer)
+		if (iValue instanceof Integer)
 			return ((Integer) iValue).longValue();
 		else if (iValue instanceof String)
 			return Long.valueOf((String) iValue);
-		else if (iValue instanceof Float)
-			return ((Float) iValue).longValue();
-		else if (iValue instanceof Double)
-			return ((Double) iValue).longValue();
 		else if (iValue instanceof Boolean)
 			return ((Boolean) iValue) ? 1 : 0;
 
@@ -222,16 +211,10 @@ public enum OType {
 	 * @return The float value if the conversion succeed, otherwise the IllegalArgumentException exception
 	 */
 	public float asFloat(final Object iValue) {
-		if (iValue instanceof Float)
-			return ((Float) iValue).intValue();
+		if (iValue instanceof Integer)
+			return ((Integer) iValue).intValue();
 		else if (iValue instanceof String)
 			return Float.valueOf((String) iValue);
-		else if (iValue instanceof Integer)
-			return ((Integer) iValue).floatValue();
-		else if (iValue instanceof Double)
-			return ((Double) iValue).floatValue();
-		else if (iValue instanceof Long)
-			return ((Long) iValue).floatValue();
 
 		throw new IllegalArgumentException("Can't convert value " + iValue + " to float for the type: " + name);
 	}
@@ -244,16 +227,10 @@ public enum OType {
 	 * @return The double value if the conversion succeed, otherwise the IllegalArgumentException exception
 	 */
 	public double asDouble(final Object iValue) {
-		if (iValue instanceof Double)
-			return ((Double) iValue).doubleValue();
+		if (iValue instanceof Integer)
+			return ((Integer) iValue).doubleValue();
 		else if (iValue instanceof String)
 			return Double.valueOf((String) iValue);
-		else if (iValue instanceof Float)
-			return ((Float) iValue).doubleValue();
-		else if (iValue instanceof Integer)
-			return ((Integer) iValue).doubleValue();
-		else if (iValue instanceof Long)
-			return ((Long) iValue).doubleValue();
 
 		throw new IllegalArgumentException("Can't convert value " + iValue + " to double for the type: " + name);
 	}
@@ -278,5 +255,61 @@ public enum OType {
 
 	public static boolean isMultiValue(final Class<?> iType) {
 		return (iType.isArray() || Collection.class.isAssignableFrom(iType) || Map.class.isAssignableFrom(iType));
+	}
+
+	/**
+	 * Convert types between numbers based on the iTargetClass parameter.
+	 * 
+	 * @param iValue
+	 *          Value to convert
+	 * @param iTargetClass
+	 *          Expected class
+	 * @return The converted value or the original if no conversion was applied
+	 */
+	public static Object convert(final Object iValue, final Class<?> iTargetClass) {
+		if (iValue == null)
+			return null;
+
+		if (iValue.getClass().equals(iTargetClass))
+			// SAME TYPE: DON'T CONVERT IT
+			return iValue;
+
+		if (iTargetClass.isAssignableFrom(iValue.getClass()))
+			// COMPATIBLE TYPES: DON'T CONVERT IT
+			return iValue;
+
+		if (iTargetClass.equals(Byte.TYPE) || iTargetClass.equals(Byte.class)) {
+			if (iValue instanceof Byte)
+				return iValue;
+			return ((Number) iValue).byteValue();
+
+		} else if (iTargetClass.equals(Short.TYPE) || iTargetClass.equals(Short.class)) {
+			if (iValue instanceof Short)
+				return iValue;
+			return ((Number) iValue).shortValue();
+
+		} else if (iTargetClass.equals(Integer.TYPE) || iTargetClass.equals(Integer.class)) {
+			if (iValue instanceof Integer)
+				return iValue;
+			return ((Number) iValue).intValue();
+
+		} else if (iTargetClass.equals(Long.TYPE) || iTargetClass.equals(Long.class)) {
+			if (iValue instanceof Long)
+				return iValue;
+			return ((Number) iValue).longValue();
+
+		} else if (iTargetClass.equals(Float.TYPE) || iTargetClass.equals(Float.class)) {
+			if (iValue instanceof Float)
+				return iValue;
+			return ((Number) iValue).floatValue();
+
+		} else if (iTargetClass.equals(Double.TYPE) || iTargetClass.equals(Double.class)) {
+			if (iValue instanceof Double)
+				return iValue;
+			return ((Number) iValue).doubleValue();
+
+		}
+
+		return null;
 	}
 }

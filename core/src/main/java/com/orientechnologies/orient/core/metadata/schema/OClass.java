@@ -170,14 +170,14 @@ public class OClass extends OSchemaRecord {
 
 	public OClass fromDocument(final ODocument iSource) {
 		name = iSource.field("name");
-		id = (Integer) iSource.field("id");
-		defaultClusterId = (Integer) iSource.field("defaultClusterId");
+		id = ((Long) iSource.field("id")).intValue();
+		defaultClusterId = ((Long) iSource.field("defaultClusterId")).intValue();
 
-		Collection<Integer> coll = iSource.field("clusterIds");
+		Collection<Long> coll = iSource.field("clusterIds");
 		clusterIds = new int[coll.size()];
 		int i = 0;
-		for (Integer item : coll)
-			clusterIds[i++] = item;
+		for (Long item : coll)
+			clusterIds[i++] = item.intValue();
 
 		// READ PROPERTIES
 		OProperty prop;

@@ -19,7 +19,6 @@ import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.storage.tree.OSQLHelper;
 
 /**
  * SQL GRANT command: Grant a privilege to a database role.

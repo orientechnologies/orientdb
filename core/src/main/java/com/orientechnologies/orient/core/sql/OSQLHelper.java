@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.storage.tree;
+package com.orientechnologies.orient.core.sql;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -109,7 +109,7 @@ public class OSQLHelper {
 	public static Object parseValue(final ODatabaseRecord<?> iDatabase, String iValue) {
 		if (iValue == null)
 			return null;
-		
+
 		iValue = iValue.trim();
 
 		Object fieldValue = VALUE_NOT_PARSED;
@@ -146,10 +146,10 @@ public class OSQLHelper {
 			else {
 				OType t = ORecordSerializerCSVAbstract.getNumber(iDatabase.getStorage().getConfiguration().getUnusualSymbols(), iValue);
 				// NUMBER
-				if (t == OType.INTEGER)
-					fieldValue = Integer.parseInt((String) iValue);
-				else if (t == OType.FLOAT)
-					fieldValue = Float.parseFloat((String) iValue);
+				if (t == OType.LONG)
+					fieldValue = Long.parseLong((String) iValue);
+				else if (t == OType.DOUBLE)
+					fieldValue = Double.parseDouble((String) iValue);
 			}
 		}
 

@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.query.OQueryHelper;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
-import com.orientechnologies.orient.core.storage.tree.OSQLHelper;
 
 /**
  * SQL INSERT command.

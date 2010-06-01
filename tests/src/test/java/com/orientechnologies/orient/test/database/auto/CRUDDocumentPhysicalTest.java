@@ -95,10 +95,10 @@ public class CRUDDocumentPhysicalTest {
 		ORecordIterator<ODocument> it = database.browseCluster("Account");
 		for (ODocument rec = it.last().previous(); rec != null; rec = it.previous()) {
 
-			Assert.assertTrue(((Integer) rec.field("id")).intValue() == i);
+			Assert.assertTrue(((Number) rec.field("id")).intValue() == i);
 			Assert.assertEquals(rec.field("name"), "Gipsy");
 			Assert.assertEquals(rec.field("location"), "Italy");
-			Assert.assertEquals(((Integer) rec.field("salary")).intValue(), i + 300);
+			Assert.assertEquals(((Number) rec.field("salary")).intValue(), i + 300);
 			Assert.assertNotNull(rec.field("extra"));
 
 			i++;
@@ -143,7 +143,7 @@ public class CRUDDocumentPhysicalTest {
 			else
 				Assert.assertEquals(rec.field("location"), "Italy");
 
-			Assert.assertEquals(((Integer) rec.field("price")).intValue(), i + 100);
+			Assert.assertEquals(((Number) rec.field("price")).intValue(), i + 100);
 
 			i++;
 		}

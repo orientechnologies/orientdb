@@ -145,25 +145,27 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					if (entry.length > 0) {
 						mapValue = entry[1];
 
-						if (mapValue.length() > 0) {
-							if (mapValue.startsWith(OStringSerializerHelper.LINK)) {
-								iLinkedType = OType.LINK;
+						if (iLinkedType == null) {
+							if (mapValue.length() > 0) {
+								if (mapValue.startsWith(OStringSerializerHelper.LINK)) {
+									iLinkedType = OType.LINK;
 
-								// GET THE CLASS NAME IF ANY
-								int classSeparatorPos = value.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
-								if (classSeparatorPos > -1) {
-									String className = value.substring(1, classSeparatorPos);
-									if (className != null)
-										iLinkedClass = iDatabase.getMetadata().getSchema().getClass(className);
-								}
-							} else if (mapValue.charAt(0) == OStringSerializerHelper.EMBEDDED) {
+									// GET THE CLASS NAME IF ANY
+									int classSeparatorPos = value.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
+									if (classSeparatorPos > -1) {
+										String className = value.substring(1, classSeparatorPos);
+										if (className != null)
+											iLinkedClass = iDatabase.getMetadata().getSchema().getClass(className);
+									}
+								} else if (mapValue.charAt(0) == OStringSerializerHelper.EMBEDDED) {
+									iLinkedType = OType.EMBEDDED;
+								} else if (Character.isDigit(mapValue.charAt(0)) || mapValue.charAt(0) == '+' || mapValue.charAt(0) == '-') {
+									iLinkedType = getNumber(iUnusualSymbols, mapValue);
+								} else if (mapValue.charAt(0) == '\'' || mapValue.charAt(0) == '"')
+									iLinkedType = OType.STRING;
+							} else
 								iLinkedType = OType.EMBEDDED;
-							} else if (Character.isDigit(mapValue.charAt(0)) || mapValue.charAt(0) == '+' || mapValue.charAt(0) == '-') {
-								iLinkedType = getNumber(iUnusualSymbols, mapValue);
-							} else if (mapValue.charAt(0) == '\'' || mapValue.charAt(0) == '"')
-								iLinkedType = OType.STRING;
-						} else
-							iLinkedType = OType.EMBEDDED;
+						}
 
 						map.put((String) OStringSerializerHelper.fieldTypeFromStream(OType.STRING, entry[0]), OStringSerializerHelper
 								.fieldTypeFromStream(iLinkedType, mapValue));
@@ -227,7 +229,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				if (i > 0)
 					buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
-				if (o instanceof ORecord<?> )
+				if (o instanceof ORecord<?>)
 					buffer.append(OStringSerializerHelper.EMBEDDED);
 
 				if (iLinkedClass != null) {
@@ -259,7 +261,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					buffer.append(OStringSerializerHelper.fieldTypeToString(iLinkedType, o));
 				}
 
-				if (o instanceof ORecord<?> )
+				if (o instanceof ORecord<?>)
 					buffer.append(OStringSerializerHelper.EMBEDDED);
 			}
 
@@ -343,23 +345,33 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		return buffer.toString();
 	}
 
-	public static OType getNumber(final DecimalFormatSymbols unusualSymbols, final String value) {
+	/**
+	 * Parse a string returning the closer type. To avoid limit exceptions, for integer numbers are returned always LONG and for
+	 * decimal ones always DOUBLE.
+	 * 
+	 * @param iUnusualSymbols
+	 *          Localized decimal number separators
+	 * @param iValue
+	 *          Value to parse
+	 * @return OType.LONG for integers, OType.DOUBLE for decimals and OType.STRING for other
+	 */
+	public static OType getNumber(final DecimalFormatSymbols iUnusualSymbols, final String iValue) {
 		boolean integer = true;
 		char c;
 
-		for (int index = 0; index < value.length(); ++index) {
-			c = value.charAt(index);
+		for (int index = 0; index < iValue.length(); ++index) {
+			c = iValue.charAt(index);
 			if (c < '0' || c > '9')
 				if ((index == 0 && (c == '+' || c == '-')))
 					continue;
-				else if (c == unusualSymbols.getDecimalSeparator())
+				else if (c == iUnusualSymbols.getDecimalSeparator())
 					integer = false;
 				else {
 					return OType.STRING;
 				}
 		}
 
-		return integer ? OType.INTEGER : OType.FLOAT;
+		return integer ? OType.LONG : OType.DOUBLE;
 	}
 
 	/**
@@ -371,7 +383,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 	 *          Can be an instance of ORID or a Record<?>
 	 */
 	private void linkToStream(final StringBuilder buffer, final ORecordSchemaAware<?> iParentRecord, final Object iLinked) {
-		if( iLinked == null )
+		if (iLinked == null)
 			// NULL REFERENCE
 			return;
 

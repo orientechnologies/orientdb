@@ -71,7 +71,7 @@ public class OObjectSerializerHelper {
 		}
 	}
 
-	public static void setFieldValue(final Object iPojo, final String iProperty, final Object iValue) {
+	public static void setFieldValue(final Object iPojo, final String iProperty, Object iValue) {
 		final Class<?> c = iPojo.getClass();
 		final String className = c.getName();
 
@@ -81,10 +81,11 @@ public class OObjectSerializerHelper {
 		try {
 			Object o = setters.get(className + "." + iProperty);
 
-			if (o instanceof Method)
-				((Method) o).invoke(iPojo, iValue);
-			else if (o instanceof Field)
-				((Field) o).set(iPojo, iValue);
+			if (o instanceof Method) {
+				((Method) o).invoke(iPojo, OType.convert(iValue, ((Method) o).getParameterTypes()[0]));
+			} else if (o instanceof Field) {
+				((Field) o).set(iPojo, OType.convert(iValue, ((Field) o).getType()));
+			}
 
 		} catch (Exception e) {
 
@@ -148,9 +149,9 @@ public class OObjectSerializerHelper {
 
 			} else {
 				// GENERIC TYPE
-//				OType type = OType.getTypeByClass(p.getType());
-//				if (type != null)
-//					fieldValue = OStringSerializerHelper.fieldTypeFromStream(type, fieldValue);
+				// OType type = OType.getTypeByClass(p.getType());
+				// if (type != null)
+				// fieldValue = OStringSerializerHelper.fieldTypeFromStream(type, fieldValue);
 			}
 
 			setFieldValue(iPojo, fieldName, fieldValue);

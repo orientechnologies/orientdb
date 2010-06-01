@@ -79,6 +79,11 @@ public abstract class OStringSerializerHelper {
 				return iValue;
 			return new Short(iValue.toString());
 
+		case BYTE:
+			if (iValue instanceof Byte)
+				return iValue;
+			return new Byte(iValue.toString());
+
 		case BINARY:
 			if (iValue instanceof byte[])
 				return iValue;
@@ -116,6 +121,7 @@ public abstract class OStringSerializerHelper {
 		case LONG:
 		case DOUBLE:
 		case SHORT:
+		case BYTE:
 			return String.valueOf(iValue);
 
 		case BINARY:

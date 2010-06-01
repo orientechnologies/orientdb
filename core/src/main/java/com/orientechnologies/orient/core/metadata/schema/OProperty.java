@@ -93,8 +93,8 @@ public class OProperty extends OSchemaRecord {
 	public OProperty fromDocument(final ODocument iSource) {
 		name = iSource.field("name");
 		if (iSource.field("type") != null)
-			type = OType.getById((Integer) iSource.field("type"));
-		offset = (Integer) iSource.field("offset");
+			type = OType.getById(((Long) iSource.field("type")).byteValue());
+		offset = ((Long) iSource.field("offset")).intValue();
 
 		mandatory = (Boolean) iSource.field("mandatory");
 		notNull = (Boolean) iSource.field("notNull");
@@ -102,8 +102,8 @@ public class OProperty extends OSchemaRecord {
 		max = iSource.field("max");
 
 		linkedClass = owner.owner.getClass((String) iSource.field("linkedClass"));
-		if (field("linkedType") != null)
-			linkedType = OType.getById((Integer) iSource.field("linkedType"));
+		if (iSource.field("linkedType") != null)
+			linkedType = OType.getById(((Long) iSource.field("linkedType")).byteValue());
 
 		return this;
 	}

@@ -108,7 +108,7 @@ public class OSchema extends ODocument {
 		super.fromStream(iBuffer);
 
 		// READ CURRENT SCHEMA VERSION
-		int schemaVersion = (Integer) field("schemaVersion");
+		int schemaVersion = ((Long) field("schemaVersion")).intValue();
 		if (schemaVersion != CURRENT_VERSION_NUMBER) {
 			// HANDLE SCHEMA UPGRADE
 			throw new OConfigurationException(

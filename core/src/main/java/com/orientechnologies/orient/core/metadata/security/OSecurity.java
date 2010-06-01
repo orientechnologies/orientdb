@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Luca Garulli
  * 
  */
+@SuppressWarnings("unchecked")
 public class OSecurity {
 	private ODatabaseRecord<?>	database;
 
