@@ -103,7 +103,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 		else {
 			try {
 				OLogManager.instance().warn(this,
-						"->" + channel.socket.getInetAddress().getHostAddress() + ": Command not found: " + command);
+						"->" + channel.socket.getInetAddress().getHostAddress() + ": Command not found: " + request.method + "." + command);
 
 				sendTextContent(405, "Command '" + command + "' not found", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Command not found: "
 						+ command);
