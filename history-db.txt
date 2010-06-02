@@ -30,9 +30,14 @@
 This document enlist the last changes to the Orient Database project.
 
 -------------------------------------------------------------------------------
+VERSION 0.9.17 - beta (?June, 4th 2010?)
+-------------------------------------------------------------------------------
+- Fixed bug on embedded type in collections
+
+-------------------------------------------------------------------------------
 VERSION 0.9.16 - beta (May, 31st 2010)
 -------------------------------------------------------------------------------
-- New Hook API. Like triggers of RDBMS but call Java app code.
+- New Hook API. Like triggers of RDBMS but call Java app code
 - Fixed all the bugs reported by the user in the last weeks (schema and
   serialization)
 

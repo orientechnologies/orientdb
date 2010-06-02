@@ -43,7 +43,7 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 	private static final String[]	NAMES	= { "GET.connect" };
 
 	public void execute(final OHttpRequest iRequest) throws Exception {
-		String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: connect/<database>");
+		String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: connect/<database>[/<user>/<password>]");
 
 		iRequest.data.commandInfo = "Connect";
 		iRequest.data.commandDetail = urlParts[1];
@@ -51,10 +51,24 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 		exec(iRequest, urlParts);
 	}
 
+	@Override
+	public boolean beforeExecute(OHttpRequest iRequest) throws IOException {
+		String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: connect/<database>[/<user>/<password>]");
+
+		if (urlParts == null || urlParts.length < 3)
+			return super.beforeExecute(iRequest);
+
+		// USER+PASSWD AS PARAMETERS
+		return true;
+	}
+
 	protected void exec(final OHttpRequest iRequest, String[] urlParts) throws InterruptedException, IOException {
 		ODatabaseDocumentTx db = null;
 		try {
-			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
+			if (urlParts.length > 2) {
+				db = OSharedDocumentDatabase.acquireDatabase(urlParts[1] + ":" + urlParts[2] + ":" + urlParts[3]);
+			} else
+				db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
 
 			final StringWriter buffer = new StringWriter();
 			final OJSONWriter json = new OJSONWriter(buffer);
