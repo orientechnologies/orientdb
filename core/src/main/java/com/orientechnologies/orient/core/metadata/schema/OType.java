@@ -25,7 +25,8 @@ import java.util.Set;
 import com.orientechnologies.orient.core.record.ORecord;
 
 /**
- * Generic representation of a type.
+ * Generic representation of a type.<br/>
+ * allowAssignmentFrom accepts any class, but Array.class means that the type accepts generic Arrays.
  * 
  * @author Luca Garulli
  * 
@@ -51,17 +52,17 @@ public enum OType {
 	},
 	EMBEDDED("Embedded", 9, true, false, 8, new Class<?>[] { Object.class }, new Class<?>[] {}) {
 	},
-	EMBEDDEDLIST("List", 10, true, false, 8, new Class<?>[] { List.class }, new Class<?>[] { Collection.class }) {
+	EMBEDDEDLIST("List", 10, true, false, 8, new Class<?>[] { List.class }, new Class<?>[] { Collection.class, Array.class }) {
 	},
-	EMBEDDEDSET("Set", 11, true, false, 8, new Class<?>[] { Set.class }, new Class<?>[] { Collection.class }) {
+	EMBEDDEDSET("Set", 11, true, false, 8, new Class<?>[] { Set.class }, new Class<?>[] { Collection.class, Array.class }) {
 	},
 	EMBEDDEDMAP("Map", 12, true, false, 8, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
 	},
 	LINK("Link", 13, true, true, 8, new Class<?>[] { Object.class }, new Class<?>[] { ORecord.class }) {
 	},
-	LINKLIST("List", 14, true, false, 8, new Class<?>[] { List.class }, new Class<?>[] { Collection.class }) {
+	LINKLIST("List", 14, true, false, 8, new Class<?>[] { List.class }, new Class<?>[] { Collection.class, Array.class }) {
 	},
-	LINKSET("Set", 15, true, false, 8, new Class<?>[] { Set.class }, new Class<?>[] { Collection.class }) {
+	LINKSET("Set", 15, true, false, 8, new Class<?>[] { Set.class }, new Class<?>[] { Collection.class, Array.class }) {
 	},
 	LINKMAP("Map", 16, true, false, 8, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
 	},
@@ -116,8 +117,14 @@ public enum OType {
 		if (iPropertyValue == null)
 			return true;
 
+		final Class<?> cls = iPropertyValue.getClass();
+
 		for (int i = 0; i < allowAssignmentFrom.length; ++i) {
-			if (allowAssignmentFrom[i].isAssignableFrom(iPropertyValue.getClass()))
+			if (allowAssignmentFrom[i].equals(Array.class) && cls.isArray())
+				// SPECIAL CASE: GET ARRAYS
+				return true;
+
+			if (allowAssignmentFrom[i].isAssignableFrom(cls))
 				return true;
 		}
 		return false;

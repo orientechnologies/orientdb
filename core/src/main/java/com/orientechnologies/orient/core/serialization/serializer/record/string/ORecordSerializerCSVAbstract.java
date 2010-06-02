@@ -71,7 +71,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			for (String item : items) {
 				if (iLinkedClass != null) {
 					// EMBEDDED OBJECT
-					coll.add(fromString(iDatabase, item, new ODocument(iDatabase, iLinkedClass.getName())));
+					if (item.length() > 2) {
+						item = item.substring(1, item.length() - 1);
+						coll.add(fromString(iDatabase, item, new ODocument(iDatabase, iLinkedClass.getName())));
+					}
 
 				} else if (item.length() > 0 && item.charAt(0) == OStringSerializerHelper.EMBEDDED) {
 					// EMBEDDED OBJECT
