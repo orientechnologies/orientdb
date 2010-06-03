@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndexerManager;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -76,6 +77,8 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 
 			metadata = new OMetadata(this);
 			dictionary = (ODictionaryInternal) getStorage().createDictionary(this);
+
+			registerHook(new OIndexerManager());
 		} catch (Throwable t) {
 			throw new ODatabaseException("Error on opening database '" + getName() + "'", t);
 		}

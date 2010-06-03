@@ -232,7 +232,7 @@ public class OProperty extends OSchemaRecord {
 		return index;
 	}
 
-	public OTreeMap<?, ?> getIndex() {
+	public OTreeMapDatabase<String, ODocument> getIndex() {
 		return index;
 	}
 
