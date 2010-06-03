@@ -131,7 +131,6 @@ public class OProperty extends OSchemaRecord {
 		return this;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public byte[] toStream() {
 		field("name", name);
@@ -234,6 +233,10 @@ public class OProperty extends OSchemaRecord {
 
 	public OTreeMapDatabase<String, ODocument> getIndex() {
 		return index;
+	}
+
+	public boolean isIndexed() {
+		return index != null;
 	}
 
 	@Override

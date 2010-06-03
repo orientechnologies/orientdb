@@ -22,13 +22,18 @@ import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
@@ -65,6 +70,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		return this;
 	}
 
+	public List<String> getProjections() {
+		return projections;
+	}
+
 	public Object execute(final Object... iArgs) {
 		// TODO: SUPPORTS MULTIPLE CLASSES LIKE A SQL JOIN
 		String firstClass = compiledFilter.getClasses().size() > 0 ? compiledFilter.getClasses().keySet().iterator().next() : null;
@@ -88,6 +97,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, database.getClusterNameById(clusterId),
 						clusterId);
 
+			List<ORecord<?>> resultSet = searchForIndexes(cls);
+
+			if (resultSet.size() > 0) {
+				// FOUND USING INDEXES
+				for (ORecord<?> record : resultSet)
+					request.getResultListener().result(record.copy());
+			} else
+				// NO INDEXES: SCAN THE ENTIRE CLUSTER
+				scanClusters(clusterIds);
+
 		} else {
 			String firstCluster = compiledFilter.getClusters().size() > 0 ? compiledFilter.getClusters().keySet().iterator().next()
 					: null;
@@ -103,14 +122,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				clusterIds = new int[] { database.getClusterIdByName(firstCluster.toLowerCase()) };
 
 			database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, firstCluster.toLowerCase(), clusterIds[0]);
+
+			scanClusters(clusterIds);
 		}
 
-		((OStorageLocal) database.getStorage()).browse(database.getId(), clusterIds, this, record, false);
 		return null;
 	}
 
 	public boolean foreach(final ORecordInternal<?> iRecord) {
-
 		if (filter(iRecord)) {
 			resultCount++;
 			request.getResultListener().result(record.copy());
@@ -122,12 +141,55 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		return true;
 	}
 
-	protected boolean filter(final ORecordInternal<?> iRecord) {
-		return compiledFilter.evaluate(database, (ORecordSchemaAware<?>) iRecord);
+	private List<ORecord<?>> searchForIndexes(final OClass iSchemaClass) {
+		return analyzeQueryBranch(new ArrayList<ORecord<?>>(), iSchemaClass, compiledFilter.getRootCondition());
 	}
 
-	public List<String> getProjections() {
-		return projections;
+	private List<ORecord<?>> analyzeQueryBranch(final List<ORecord<?>> iResultSet, final OClass iSchemaClass,
+			final OSQLFilterCondition iCondition) {
+		if (iCondition == null)
+			return iResultSet;
+
+		if (iCondition.getLeft() != null)
+			if (iCondition.getLeft() instanceof OSQLFilterCondition)
+				analyzeQueryBranch(iResultSet, iSchemaClass, (OSQLFilterCondition) iCondition.getLeft());
+
+		if (iCondition.getRight() != null)
+			if (iCondition.getRight() instanceof OSQLFilterCondition)
+				analyzeQueryBranch(iResultSet, iSchemaClass, (OSQLFilterCondition) iCondition.getRight());
+
+		searchIndexedProperty(iResultSet, iSchemaClass, iCondition, iCondition.getLeft());
+		searchIndexedProperty(iResultSet, iSchemaClass, iCondition, iCondition.getRight());
+
+		return iResultSet;
+	}
+
+	private List<ORecord<?>> searchIndexedProperty(final List<ORecord<?>> iResultSet, final OClass iSchemaClass,
+			final OSQLFilterCondition iCondition, final Object iItem) {
+		if (iItem == null || !(iItem instanceof OSQLFilterItemField))
+			return null;
+
+		OSQLFilterItemField item = (OSQLFilterItemField) iItem;
+
+		final OProperty prop = iSchemaClass.getProperty(item.getName());
+		if (prop != null && prop.isIndexed()) {
+			// ONLY EQUALS IS SUPPORTED NOW!
+			if (iCondition.getOperator() instanceof OQueryOperatorEquals) {
+				final Object value = iCondition.getLeft() == iItem ? iCondition.getRight() : iCondition.getLeft();
+				if (value != null) {
+					final ORecord<?> record = prop.getIndex().get(value.toString());
+					if (record != null)
+						// FOUND: ADD IT
+						iResultSet.add(record);
+				}
+			}
+		}
+
+		return iResultSet;
+	}
+
+	protected boolean filter(final ORecordInternal<?> iRecord) {
+		return compiledFilter.evaluate(database, (ORecordSchemaAware<?>) iRecord);
 	}
 
 	protected int extractProjections() {
@@ -156,5 +218,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		currentPos = fromPosition + OCommandExecutorSQLAbstract.KEYWORD_FROM.length() + 1;
 
 		return currentPos;
+	}
+
+	private void scanClusters(final int[] clusterIds) {
+		((OStorageLocal) database.getStorage()).browse(database.getId(), clusterIds, this, record, false);
 	}
 }

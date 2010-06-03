@@ -27,6 +27,10 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
  * 
  */
 public class OSQLFilterCondition {
+	public OQueryOperator getOperator() {
+		return operator;
+	}
+
 	private static final String	NULL_VALUE	= "null";
 	protected Object						left;
 	protected OQueryOperator		operator;

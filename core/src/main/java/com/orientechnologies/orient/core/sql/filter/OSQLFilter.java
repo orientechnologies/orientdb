@@ -17,12 +17,15 @@ package com.orientechnologies.orient.core.sql.filter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandToParse;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.query.OQueryHelper;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
@@ -37,8 +40,9 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
  */
 public class OSQLFilter extends OCommandToParse {
 	protected ODatabaseRecord<?>	database;
-	protected Map<String, String>	clusters	= new HashMap<String, String>();
-	protected Map<String, String>	classes		= new HashMap<String, String>();
+	protected Map<String, String>	clusters		= new HashMap<String, String>();
+	protected Map<String, String>	classes			= new HashMap<String, String>();
+	protected Set<OProperty>			properties	= new HashSet<OProperty>();
 	protected OSQLFilterCondition	rootCondition;
 	protected List<String>				recordTransformed;
 	private int										braces;
@@ -238,7 +242,7 @@ public class OSQLFilter extends OCommandToParse {
 		return classes;
 	}
 
-	public Object getRootCondition() {
+	public OSQLFilterCondition getRootCondition() {
 		return rootCondition;
 	}
 

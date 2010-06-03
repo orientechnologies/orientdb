@@ -430,7 +430,7 @@ public class OStorageLocal extends OStorageAbstract {
 			for (int clusterId : iClusterId) {
 				cluster = getClusterById(clusterId);
 
-				browseCluster(iRequesterId, iListener, iRecord, cluster, clusterId, iLockEntireCluster);
+				browseCluster(iRequesterId, iListener, iRecord, cluster, iLockEntireCluster);
 			}
 		} catch (IOException e) {
 
@@ -444,7 +444,7 @@ public class OStorageLocal extends OStorageAbstract {
 	}
 
 	private void browseCluster(final int iRequesterId, final ORecordBrowsingListener iListener, final ORecordInternal<?> iRecord,
-			OCluster cluster, int iClusterId, final boolean iLockEntireCluster) throws IOException {
+			OCluster cluster, final boolean iLockEntireCluster) throws IOException {
 		ORawBuffer recordBuffer;
 		long positionInPhyCluster;
 
@@ -469,7 +469,7 @@ public class OStorageLocal extends OStorageAbstract {
 					continue;
 
 				iRecord.reset();
-				iRecord.setIdentity(iClusterId, positionInPhyCluster);
+				iRecord.setIdentity(cluster.getId(), positionInPhyCluster);
 				iRecord.fromStream(recordBuffer.buffer);
 				if (!iListener.foreach(iRecord))
 					// LISTENER HAS INTERRUPTED THE EXECUTION
