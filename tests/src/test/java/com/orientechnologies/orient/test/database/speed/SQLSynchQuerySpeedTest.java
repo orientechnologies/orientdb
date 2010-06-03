@@ -18,6 +18,8 @@ package com.orientechnologies.orient.test.database.speed;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
 
+import org.testng.annotations.Test;
+
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
@@ -27,21 +29,31 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 
+@Test(enabled = false)
 public class SQLSynchQuerySpeedTest extends SpeedTestMonoThread implements OCommandResultListener {
 	protected int								resultCount	= 0;
 	private ODatabaseDocumentTx	database;
 
-	public SQLSynchQuerySpeedTest(String iURL) {
+	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
+		SQLSynchQuerySpeedTest test = new SQLSynchQuerySpeedTest();
+		test.data.go(test);
+	}
+
+	public SQLSynchQuerySpeedTest() {
 		super(1);
 		Orient.instance().registerEngine(new OEngineRemote());
-		database = new ODatabaseDocumentTx(iURL);
+		database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
+
+		System.out.println("Finding Accounts between " + database.countClass("Account") + " records");
 	}
 
 	@Override
 	public void cycle() throws UnsupportedEncodingException {
-		System.out.println("1 ----------------------");
 		List<ODocument> result = database.command(
-				new OSQLSynchQuery<ODocument>("select * from Account where id = 10 and name like 'G%'")).execute();
+				new OSQLSynchQuery<ODocument>("select * from Account where id = 10 and surname like 'G%'")).execute();
+
+		for (ODocument d : result)
+			result(d);
 	}
 
 	public boolean result(final Object iRecord) {
