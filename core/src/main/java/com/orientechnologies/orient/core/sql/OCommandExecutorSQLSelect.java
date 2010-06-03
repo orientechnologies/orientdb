@@ -159,7 +159,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				analyzeQueryBranch(iResultSet, iSchemaClass, (OSQLFilterCondition) iCondition.getRight());
 
 		searchIndexedProperty(iResultSet, iSchemaClass, iCondition, iCondition.getLeft());
-		searchIndexedProperty(iResultSet, iSchemaClass, iCondition, iCondition.getRight());
+
+		if (iResultSet.size() == 0)
+			searchIndexedProperty(iResultSet, iSchemaClass, iCondition, iCondition.getRight());
 
 		return iResultSet;
 	}

@@ -205,6 +205,14 @@ public class OProperty extends OSchemaRecord {
 		return this;
 	}
 
+	/**
+	 * Creates an index on this property. Indexes speed up queries but slow down insert and update operations. Now only unique indexes
+	 * are supported. For massive inserts we suggest to remove the index, make the massive insert and recreate it.
+	 * 
+	 * @param iUnique
+	 *          Don't allow duplicates. Now is supported only unique indexes, so pass always TRUE
+	 * @return
+	 */
 	@SuppressWarnings("unchecked")
 	public OTreeMap<?, ?> createIndex(boolean iUnique) {
 		if (!iUnique)
@@ -218,6 +226,8 @@ public class OProperty extends OSchemaRecord {
 			index = new OTreeMapDatabase<String, ODocument>((ODatabaseRecord<?>) database, OStorage.CLUSTER_INDEX_NAME,
 					OStreamSerializerString.INSTANCE, new OStreamSerializerAnyRecord((ODatabaseRecord<? extends ORecord<?>>) database));
 
+			populateIndex();
+
 			if (database != null)
 				// / SAVE ONLY IF THE PROPERTY IS ALREADY PERSISTENT
 				index.save();
@@ -229,6 +239,36 @@ public class OProperty extends OSchemaRecord {
 		}
 
 		return index;
+	}
+
+	/**
+	 * Populate the index with all the existent records.
+	 */
+	private void populateIndex() {
+		Object fieldValue;
+		ODocument document;
+		final int[] clusterIds = owner.getClusterIds();
+		for (int clusterId : clusterIds)
+			for (Object record : database.browseCluster(database.getClusterNameById(clusterId))) {
+				if (record instanceof ODocument) {
+					document = (ODocument) record;
+					fieldValue = document.field(name);
+
+					if (fieldValue != null)
+						index.put(fieldValue.toString(), document);
+				}
+			}
+	}
+
+	/**
+	 * Remove the index on property
+	 */
+	public void removeIndex() {
+		if (index != null) {
+			index.clear();
+			index.getRecord().delete();
+			index = null;
+		}
 	}
 
 	public OTreeMapDatabase<String, ODocument> getIndex() {
@@ -278,4 +318,5 @@ public class OProperty extends OSchemaRecord {
 			}
 		}
 	}
+
 }
