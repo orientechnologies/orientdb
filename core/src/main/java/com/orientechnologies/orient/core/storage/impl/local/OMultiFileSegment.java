@@ -27,15 +27,15 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
 
 public class OMultiFileSegment extends OSegment {
-	protected OFile[]											files	= new OFile[0];
-	private String												fileExtension;
-	private String												type;
-	private long													maxSize;
-	private String												defrag;
-	private int														fileStartSize;
-	private int														fileMaxSize;
-	private int														fileIncrementSize;
-	private OStorageSegmentConfiguration	config;
+	protected OStorageSegmentConfiguration	config;
+	protected OFile[]												files	= new OFile[0];
+	private String													fileExtension;
+	private String													type;
+	private long														maxSize;
+	private String													defrag;
+	private int															fileStartSize;
+	private int															fileMaxSize;
+	private int															fileIncrementSize;
 
 	public OMultiFileSegment(final OStorageLocal iStorage, final OStorageSegmentConfiguration iConfig, final String iFileExtension,
 			final int iRoundMaxSize) throws IOException {
@@ -206,6 +206,8 @@ public class OMultiFileSegment extends OSegment {
 		file = createNewFile();
 		file.allocateSpace(iRecordSize);
 
+		config.root.update();
+
 		return new int[] { files.length - 1, 0 };
 	}
 
@@ -232,7 +234,7 @@ public class OMultiFileSegment extends OSegment {
 
 		if (fileNum >= files.length)
 			throw new ODatabaseException("Record position #" + iPosition + " was bound to file #" + fileNum
-					+ " that is out if limit (current=" + files.length + ")");
+					+ " that is out of limit (current=" + (files.length - 1) + ")");
 
 		final int fileRec = (int) (iPosition % fileMaxSize);
 
@@ -257,7 +259,7 @@ public class OMultiFileSegment extends OSegment {
 		return file;
 	}
 
-	private void addInfoFileConfigEntry(final OFile file) {
+	private void addInfoFileConfigEntry(final OFile file) throws IOException {
 		OStorageFileConfiguration[] newConfigFiles = new OStorageFileConfiguration[config.infoFiles.length + 1];
 		for (int i = 0; i < config.infoFiles.length; ++i)
 			newConfigFiles[i] = config.infoFiles[i];

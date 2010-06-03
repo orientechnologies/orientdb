@@ -41,20 +41,7 @@ public class SQLSynchQuerySpeedTest extends SpeedTestMonoThread implements OComm
 	public void cycle() throws UnsupportedEncodingException {
 		System.out.println("1 ----------------------");
 		List<ODocument> result = database.command(
-				new OSQLSynchQuery<ODocument>("select * from animal where id = 10 and name like 'G%'")).execute();
-
-		OrientTest.printRecords(result);
-
-		System.out.println("2 ----------------------");
-		result = database.command(
-				new OSQLSynchQuery<ODocument>("select * from animal where column(0) < 5 or column(0) >= 3 and column(5) < 7")).execute();
-
-		OrientTest.printRecords(result);
-
-		/*
-		 * System.out.println("3 ----------------------"); printResults((List<String>) database.query(new OSQLSynchQuery<String>(
-		 * "select * from animal where column(0) < 5 and column(0) >= 3 or column(0) < 7"), 1000));
-		 */
+				new OSQLSynchQuery<ODocument>("select * from Account where id = 10 and name like 'G%'")).execute();
 	}
 
 	public boolean result(final Object iRecord) {

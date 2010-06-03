@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
 import com.orientechnologies.orient.core.config.OStorageLogicalClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -631,8 +632,11 @@ public class OStorageLocal extends OStorageAbstract {
 
 		// CHECK FOR DUPLICATION OF NAMES
 		for (ODataLocal data : dataSegments)
-			if (data.getName().equals(iConfig.name))
+			if (data.getName().equals(iConfig.name)) {
+				// OVERWRITE CONFIG
+				data.config = iConfig;
 				return -1;
+			}
 		pos = dataSegments.length;
 
 		// CREATE AND ADD THE NEW REF SEGMENT
@@ -654,9 +658,11 @@ public class OStorageLocal extends OStorageAbstract {
 	 * @throws IOException
 	 */
 	private int createClusterFromConfig(final OStorageClusterConfiguration iConfig) throws IOException {
-		if (clusterMap.containsKey(iConfig.getName()))
-			// ALREADY CONFIGURED
+		if (clusterMap.containsKey(iConfig.getName())) {
+			// ALREADY CONFIGURED, JUST OVERWRITE CONFIG
+			((OClusterLocal) clusterMap.get(iConfig.getName())).config = (OStorageSegmentConfiguration) iConfig;
 			return -1;
+		}
 
 		final OCluster cluster;
 

@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
@@ -54,6 +55,8 @@ public class OStorageConfiguration implements OSerializableStream {
 	private transient DecimalFormatSymbols		unusualSymbols;
 	private transient OStorage								storage;
 	private transient byte[]									record;
+
+	private static final int									FIXED_CONFIG_SIZE	= 20000;
 
 	public OStorageConfiguration load() throws IOException {
 		record = storage.readRecord(-1, storage.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME), CONFIG_RECORD_NUM).buffer;
@@ -136,7 +139,7 @@ public class OStorageConfiguration implements OSerializableStream {
 			clusterType = read(values[index++]);
 			// PHYSICAL CLUSTER
 			if (clusterType.equals("p")) {
-				phyCluster = new OStoragePhysicalClusterConfiguration(i);
+				phyCluster = new OStoragePhysicalClusterConfiguration(this, i);
 				index = phySegmentFromStream(values, index, phyCluster);
 				phyCluster.holeFile = new OStorageClusterHoleConfiguration(phyCluster, read(values[index++]), read(values[index++]),
 						read(values[index++]));
@@ -153,7 +156,7 @@ public class OStorageConfiguration implements OSerializableStream {
 		dataSegments = new ArrayList<OStorageDataConfiguration>(size);
 		OStorageDataConfiguration data;
 		for (int i = 0; i < size; ++i) {
-			data = new OStorageDataConfiguration();
+			data = new OStorageDataConfiguration(this);
 			index = phySegmentFromStream(values, index, data);
 			data.holeFile = new OStorageDataHoleConfiguration(data, read(values[index++]), read(values[index++]), read(values[index++]));
 			dataSegments.add(data);
@@ -210,6 +213,13 @@ public class OStorageConfiguration implements OSerializableStream {
 		write(buffer, properties.size());
 		for (OEntryConfiguration e : properties)
 			entryToStream(buffer, e);
+
+		if (buffer.length() > FIXED_CONFIG_SIZE)
+			throw new OConfigurationException("Configuration data exceeded size limit: " + FIXED_CONFIG_SIZE + " bytes");
+
+		// ALLOCATE ENOUGHT SPACE TO REUSE IT EVERY TIME
+		buffer.append("|");
+		buffer.setLength(FIXED_CONFIG_SIZE);
 
 		return buffer.toString().getBytes();
 	}

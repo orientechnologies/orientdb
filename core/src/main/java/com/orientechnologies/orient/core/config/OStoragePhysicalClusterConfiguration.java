@@ -22,7 +22,8 @@ public class OStoragePhysicalClusterConfiguration extends OStorageSegmentConfigu
 
 	private static final String				START_SIZE	= "1Mb";
 
-	public OStoragePhysicalClusterConfiguration(final int iId) {
+	public OStoragePhysicalClusterConfiguration(final OStorageConfiguration iStorageConfiguration, final int iId) {
+		root = iStorageConfiguration;
 		fileStartSize = START_SIZE;
 		id = iId;
 	}
