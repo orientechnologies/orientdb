@@ -50,6 +50,8 @@ public class ObjectTreeTest {
 	public void testPersonSaving() {
 		database.open("admin", "admin");
 
+		final long beginProfiles = database.countClusterElements("Profile");
+
 		Country italy = new Country("Italy");
 
 		Profile garibaldi = new Profile("GGaribaldi", "Giuseppe", "Garibaldi", null);
@@ -60,7 +62,7 @@ public class ObjectTreeTest {
 		bonaparte.setLocation(new Address("Residence", garibaldi.getLocation().getCity(), "Piazza di Spagna, 111"));
 		database.save(bonaparte);
 
-		Assert.assertEquals(database.countClusterElements("Profile"), 2);
+		Assert.assertEquals(database.countClusterElements("Profile"), beginProfiles + 2);
 	}
 
 	@Test(dependsOnMethods = "testPersonSaving")

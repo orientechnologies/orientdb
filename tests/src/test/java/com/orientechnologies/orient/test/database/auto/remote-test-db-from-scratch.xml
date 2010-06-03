@@ -54,6 +54,11 @@
             <class name="com.orientechnologies.orient.test.database.auto.TransactionConsistencyTest"/>
         </classes>
     </test>
+    <test name="Index">
+        <classes>
+            <class name="com.orientechnologies.orient.test.database.auto.IndexTest"/>
+        </classes>
+    </test>
     <test name="Dictionary">
         <classes>
             <class name="com.orientechnologies.orient.test.database.auto.DictionaryTest"/>

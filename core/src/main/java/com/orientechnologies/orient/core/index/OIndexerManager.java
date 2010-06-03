@@ -38,6 +38,11 @@ import com.orientechnologies.orient.core.type.tree.OTreeMapDatabase;
 public class OIndexerManager extends ORecordHookAbstract {
 
 	@Override
+	public void onRecordBeforeCreate(final ORecord<?> iRecord) {
+		checkIndexedProperties(iRecord);
+	}
+
+	@Override
 	public void onRecordAfterCreate(final ORecord<?> iRecord) {
 		final Map<OProperty, String> indexedProperties = getIndexedProperties(iRecord);
 
@@ -45,6 +50,11 @@ public class OIndexerManager extends ORecordHookAbstract {
 			for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
 				propEntry.getKey().getIndex().put(propEntry.getValue(), (ODocument) iRecord);
 			}
+	}
+
+	@Override
+	public void onRecordBeforeUpdate(final ORecord<?> iRecord) {
+		checkIndexedProperties(iRecord);
 	}
 
 	@Override
@@ -97,20 +107,19 @@ public class OIndexerManager extends ORecordHookAbstract {
 		}
 	}
 
-	protected Map<OProperty, String> getIndexedProperties(final ORecord<?> iRecord) {
+	protected void checkIndexedProperties(final ORecord<?> iRecord) {
 		if (!(iRecord instanceof ORecordSchemaAware<?>))
-			return null;
+			return;
 
 		final ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) iRecord;
 		final OClass cls = record.getSchemaClass();
 		if (cls == null)
-			return null;
+			return;
 
 		OTreeMapDatabase<String, ODocument> index;
 		Object fieldValue;
 		String fieldValueString;
 
-		Map<OProperty, String> indexedProperties = null;
 		ORecord<?> indexedRecord;
 
 		for (OProperty prop : cls.properties()) {
@@ -125,8 +134,35 @@ public class OIndexerManager extends ORecordHookAbstract {
 					if (indexedRecord != null && !indexedRecord.equals(iRecord))
 						OLogManager.instance().exception("Found duplicated key '%s' for property '%s'", null, OIndexException.class,
 								fieldValueString, prop);
+				}
+			}
+		}
+	}
 
-					// PUSh THE PROPERTY IN THE SET TO BE WORKED BY THE EXTERNAL
+	protected Map<OProperty, String> getIndexedProperties(final ORecord<?> iRecord) {
+		if (!(iRecord instanceof ORecordSchemaAware<?>))
+			return null;
+
+		final ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) iRecord;
+		final OClass cls = record.getSchemaClass();
+		if (cls == null)
+			return null;
+
+		OTreeMapDatabase<String, ODocument> index;
+		Object fieldValue;
+		String fieldValueString;
+
+		Map<OProperty, String> indexedProperties = null;
+
+		for (OProperty prop : cls.properties()) {
+			index = prop.getIndex();
+			if (index != null) {
+				fieldValue = record.field(prop.getName());
+
+				if (fieldValue != null) {
+					fieldValueString = fieldValue.toString();
+
+					// PUSH THE PROPERTY IN THE SET TO BE WORKED BY THE EXTERNAL
 					if (indexedProperties == null)
 						indexedProperties = new HashMap<OProperty, String>();
 					indexedProperties.put(prop, fieldValueString);
