@@ -44,13 +44,12 @@ public class SQLSynchQuerySpeedTest extends SpeedTestMonoThread implements OComm
 		Orient.instance().registerEngine(new OEngineRemote());
 		database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
 
-		System.out.println("Finding Accounts between " + database.countClass("Account") + " records");
+		System.out.println("Finding Accounts between " + database.countClass("Profile") + " records");
 	}
 
 	@Override
 	public void cycle() throws UnsupportedEncodingException {
-		List<ODocument> result = database.command(
-				new OSQLSynchQuery<ODocument>("select * from Account where id = 10 and surname like 'G%'")).execute();
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select * from Profile where nick = 100010")).execute();
 
 		for (ODocument d : result)
 			result(d);

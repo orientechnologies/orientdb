@@ -228,9 +228,11 @@ public class OProperty extends OSchemaRecord {
 
 			populateIndex();
 
-			if (database != null)
+			if (database != null) {
 				// / SAVE ONLY IF THE PROPERTY IS ALREADY PERSISTENT
 				index.save();
+				database.getMetadata().getSchema().save();
+			}
 
 		} catch (Exception e) {
 			OLogManager.instance().exception("Unable to create %s index for property %s", e, ODatabaseException.class,
@@ -247,6 +249,9 @@ public class OProperty extends OSchemaRecord {
 	private void populateIndex() {
 		Object fieldValue;
 		ODocument document;
+
+		index.clear();
+
 		final int[] clusterIds = owner.getClusterIds();
 		for (int clusterId : clusterIds)
 			for (Object record : database.browseCluster(database.getClusterNameById(clusterId))) {
