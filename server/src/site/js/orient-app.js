@@ -273,7 +273,7 @@ function displayResultSet(result, schema) {
 	jQuery($('#queryResultTable')).jqGrid('GridUnload');
 	fillDynaTable($('#queryResultTable'), "Resultset", columnNames,
 			columnModel, result, {
-				sortname : 'id',
+				sortname : '_id',
 				width : 400,
 				height : 300,
 				editurl : getStudioURL('document'),

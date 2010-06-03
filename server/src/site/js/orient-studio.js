@@ -174,7 +174,7 @@ function showDatabaseInfo(database) {
 	} ], null);
 	fillDynaTable($('#databaseRoles'), "Roles", [ 'name', 'mode' ], null,
 			databaseInfo['roles'], {
-				sortname : 'id',
+				sortname : 'name',
 				onSelectRow : function(roleRowNum) {
 					var role = databaseInfo['roles'][roleRowNum - 1];
 					fillDynaTableRows($('#databaseRolesRules'), role.rules);
@@ -401,7 +401,7 @@ function showDatabaseInfo(database) {
 }
 
 function queryResponse(data) {
-	displayResultSet(data["result"],data["schema"] );
+	displayResultSet(data["result"], data["schema"]);
 }
 
 function executeQuery() {
