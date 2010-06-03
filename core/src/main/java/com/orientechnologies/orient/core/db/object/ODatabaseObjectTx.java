@@ -335,12 +335,12 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 		return underlying.getHooks();
 	}
 
-	public <DB extends ODatabaseRecord<?>> DB registerHook(ORecordHook iHookImpl) {
-		return underlying.registerHook(iHookImpl);
+	public <DB extends ODatabaseRecord<?>> DB registerHook(final ORecordHook iHookImpl) {
+		return (DB) underlying.registerHook(iHookImpl);
 	}
 
-	public <DB extends ODatabaseRecord<?>> DB unregisterHook(ORecordHook iHookImpl) {
-		return underlying.unregisterHook(iHookImpl);
+	public <DB extends ODatabaseRecord<?>> DB unregisterHook(final ORecordHook iHookImpl) {
+		return (DB) underlying.unregisterHook(iHookImpl);
 	}
 
 	public void callbackHooks(final TYPE iType, final Object iObject) {
