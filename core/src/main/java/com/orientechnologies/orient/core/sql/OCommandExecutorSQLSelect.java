@@ -21,11 +21,11 @@ import java.util.List;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
@@ -97,12 +97,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, database.getClusterNameById(clusterId),
 						clusterId);
 
-			List<ORecord<?>> resultSet = searchForIndexes(cls);
+			List<ORecordId> resultSet = searchForIndexes(cls);
 
 			if (resultSet.size() > 0) {
 				// FOUND USING INDEXES
-				for (ORecord<?> record : resultSet)
-					request.getResultListener().result(record.copy());
+				for (ORecordId rid : resultSet)
+					request.getResultListener().result(database.load(rid));
 			} else
 				// NO INDEXES: SCAN THE ENTIRE CLUSTER
 				scanClusters(clusterIds);
@@ -141,11 +141,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		return true;
 	}
 
-	private List<ORecord<?>> searchForIndexes(final OClass iSchemaClass) {
-		return analyzeQueryBranch(new ArrayList<ORecord<?>>(), iSchemaClass, compiledFilter.getRootCondition());
+	private List<ORecordId> searchForIndexes(final OClass iSchemaClass) {
+		return analyzeQueryBranch(new ArrayList<ORecordId>(), iSchemaClass, compiledFilter.getRootCondition());
 	}
 
-	private List<ORecord<?>> analyzeQueryBranch(final List<ORecord<?>> iResultSet, final OClass iSchemaClass,
+	private List<ORecordId> analyzeQueryBranch(final List<ORecordId> iResultSet, final OClass iSchemaClass,
 			final OSQLFilterCondition iCondition) {
 		if (iCondition == null)
 			return iResultSet;
@@ -166,7 +166,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		return iResultSet;
 	}
 
-	private List<ORecord<?>> searchIndexedProperty(final List<ORecord<?>> iResultSet, final OClass iSchemaClass,
+	private List<ORecordId> searchIndexedProperty(final List<ORecordId> iResultSet, final OClass iSchemaClass,
 			final OSQLFilterCondition iCondition, final Object iItem) {
 		if (iItem == null || !(iItem instanceof OSQLFilterItemField))
 			return null;
@@ -179,7 +179,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			if (iCondition.getOperator() instanceof OQueryOperatorEquals) {
 				final Object value = iCondition.getLeft() == iItem ? iCondition.getRight() : iCondition.getLeft();
 				if (value != null) {
-					final ORecord<?> record = prop.getIndex().get(value.toString());
+					final ORecordId record = prop.getIndex().get(value.toString());
 					if (record != null)
 						// FOUND: ADD IT
 						iResultSet.add(record);

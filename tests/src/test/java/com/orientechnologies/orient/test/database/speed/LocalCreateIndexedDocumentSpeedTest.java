@@ -36,7 +36,7 @@ public class LocalCreateIndexedDocumentSpeedTest extends OrientMonoThreadTest {
 	}
 
 	public LocalCreateIndexedDocumentSpeedTest() throws InstantiationException, IllegalAccessException {
-		super(10000);
+		super(1000000);
 	}
 
 	@Override

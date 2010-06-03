@@ -24,12 +24,11 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyRecord;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerString;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.type.tree.OTreeMapDatabase;
+import com.orientechnologies.orient.core.type.tree.OTreeMapDatabaseLazySave;
 
 /**
  * Contains the description of a persistent class property.
@@ -39,23 +38,23 @@ import com.orientechnologies.orient.core.type.tree.OTreeMapDatabase;
  */
 public class OProperty extends OSchemaRecord {
 
-	private OClass															owner;
+	private OClass																			owner;
 
-	private int																	id;
-	private String															name;
-	private OType																type;
-	private int																	offset;
-	private int																	size;
+	private int																					id;
+	private String																			name;
+	private OType																				type;
+	private int																					offset;
+	private int																					size;
 
-	private OType																linkedType;
-	private OClass															linkedClass;
+	private OType																				linkedType;
+	private OClass																			linkedClass;
 
-	private OTreeMapDatabase<String, ODocument>	index;
+	private OTreeMapDatabaseLazySave<String, ORecordId>	index;
 
-	private boolean															mandatory;
-	private boolean															notNull;
-	private String															min;
-	private String															max;
+	private boolean																			mandatory;
+	private boolean																			notNull;
+	private String																			min;
+	private String																			max;
 
 	/**
 	 * Constructor used in unmarshalling.
@@ -121,8 +120,8 @@ public class OProperty extends OSchemaRecord {
 		// LOAD THE INDEX
 		if (indexRecord != null && indexRecord.getIdentity().isValid())
 			try {
-				index = new OTreeMapDatabase<String, ODocument>((ODatabaseRecord<?>) database, OStorage.CLUSTER_INDEX_NAME, new ORecordId(
-						indexRecord.getIdentity().toString()));
+				index = new OTreeMapDatabaseLazySave<String, ORecordId>((ODatabaseRecord<?>) database, OStorage.CLUSTER_INDEX_NAME,
+						new ORecordId(indexRecord.getIdentity().toString()));
 				index.load();
 			} catch (IOException e) {
 				OLogManager.instance().error(this, "Can't load index for property %s", e, ODatabaseException.class, toString());
@@ -223,14 +222,14 @@ public class OProperty extends OSchemaRecord {
 			throw new IllegalStateException("Index already created");
 
 		try {
-			index = new OTreeMapDatabase<String, ODocument>((ODatabaseRecord<?>) database, OStorage.CLUSTER_INDEX_NAME,
-					OStreamSerializerString.INSTANCE, new OStreamSerializerAnyRecord((ODatabaseRecord<? extends ORecord<?>>) database));
+			index = new OTreeMapDatabaseLazySave<String, ORecordId>((ODatabaseRecord<?>) database, OStorage.CLUSTER_INDEX_NAME,
+					OStreamSerializerString.INSTANCE, new OStreamSerializerRID());
 
 			populateIndex();
 
 			if (database != null) {
 				// / SAVE ONLY IF THE PROPERTY IS ALREADY PERSISTENT
-				index.save();
+				index.lazySave();
 				database.getMetadata().getSchema().save();
 			}
 
@@ -254,13 +253,13 @@ public class OProperty extends OSchemaRecord {
 
 		final int[] clusterIds = owner.getClusterIds();
 		for (int clusterId : clusterIds)
-			for (Object record : database.browseCluster(database.getClusterNameById(clusterId))) {
+			for (Object record : database.browseCluster(database.getClusterNameById(clusterId)).setReuseSameRecord(true)) {
 				if (record instanceof ODocument) {
 					document = (ODocument) record;
 					fieldValue = document.field(name);
 
 					if (fieldValue != null)
-						index.put(fieldValue.toString(), document);
+						index.put(fieldValue.toString(), (ORecordId) document.getIdentity());
 				}
 			}
 	}
@@ -276,7 +275,7 @@ public class OProperty extends OSchemaRecord {
 		}
 	}
 
-	public OTreeMapDatabase<String, ODocument> getIndex() {
+	public OTreeMapDatabaseLazySave<String, ORecordId> getIndex() {
 		return index;
 	}
 

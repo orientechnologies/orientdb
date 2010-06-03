@@ -39,6 +39,9 @@ public class OStreamSerializerFactory {
 			else if (iName.equals(OStreamSerializerAnyStatic.NAME))
 				return new OStreamSerializerAnyStatic(null);
 
+			else if (iName.equals(OStreamSerializerRID.NAME))
+				return OStreamSerializerRID.INSTANCE;
+
 			throw new OConfigurationException("Stream Serializer '" + iName + "' not registered");
 
 		} catch (Exception e) {
