@@ -54,8 +54,8 @@ public class SchemaTest {
 
 		OClass profile = database.getMetadata().getSchema().createClass("Profile",
 				database.getStorage().addCluster("profile", OClusterLocal.TYPE));
-		profile.createProperty("nick", OType.STRING).setMin("3").setMax("30");
-		profile.createProperty("name", OType.STRING).setMin("3").setMax("30").createIndex(true);
+		profile.createProperty("nick", OType.STRING).setMin("3").setMax("30").createIndex(true);
+		profile.createProperty("name", OType.STRING).setMin("3").setMax("30");
 		profile.createProperty("surname", OType.STRING).setMin("3").setMax("30");
 		profile.createProperty("registeredOn", OType.DATE).setMin("2010-01-01 00:00:00");
 		profile.createProperty("lastAccessOn", OType.DATE).setMin("2010-01-01 00:00:00");

@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.hook.ORecordHookAbstract;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
 
@@ -104,49 +105,57 @@ public class HookTest extends ORecordHookAbstract {
 	@Override
 	@Test(enabled = false)
 	public void onRecordBeforeCreate(ORecord<?> iRecord) {
-		callbackCount += 1;
+		if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName().equals("Profile"))
+			callbackCount += 1;
 	}
 
 	@Override
 	@Test(enabled = false)
 	public void onRecordAfterCreate(ORecord<?> iRecord) {
-		callbackCount += 10;
+		if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName().equals("Profile"))
+			callbackCount += 10;
 	}
 
 	@Override
 	@Test(enabled = false)
 	public void onRecordBeforeRead(ORecord<?> iRecord) {
-		callbackCount += 20;
+		if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName().equals("Profile"))
+			callbackCount += 20;
 	}
 
 	@Override
 	@Test(enabled = false)
 	public void onRecordAfterRead(ORecord<?> iRecord) {
-		callbackCount += 30;
+		if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName().equals("Profile"))
+			callbackCount += 30;
 	}
 
 	@Override
 	@Test(enabled = false)
 	public void onRecordBeforeUpdate(ORecord<?> iRecord) {
-		callbackCount += 40;
+		if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName().equals("Profile"))
+			callbackCount += 40;
 	}
 
 	@Override
 	@Test(enabled = false)
 	public void onRecordAfterUpdate(ORecord<?> iRecord) {
-		callbackCount += 50;
+		if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName().equals("Profile"))
+			callbackCount += 50;
 	}
 
 	@Override
 	@Test(enabled = false)
 	public void onRecordBeforeDelete(ORecord<?> iRecord) {
-		callbackCount += 60;
+		if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName().equals("Profile"))
+			callbackCount += 60;
 	}
 
 	@Override
 	@Test(enabled = false)
 	public void onRecordAfterDelete(ORecord<?> iRecord) {
-		callbackCount += 70;
+		if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName().equals("Profile"))
+			callbackCount += 70;
 	}
 
 }

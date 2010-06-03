@@ -154,4 +154,14 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase, REC extends
 		databaseOwner = iOwner;
 		return (ODatabaseComplex<?>) this;
 	}
+
+	@Override
+	public boolean equals(final Object iOther) {
+		if (!(iOther instanceof ODatabase))
+			return false;
+
+		final ODatabase other = (ODatabase) iOther;
+
+		return other.getName().equals(getName());
+	}
 }

@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.index;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -28,26 +29,72 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.tree.OTreeMapDatabase;
 
+/**
+ * Handles indexing when records change.
+ * 
+ * @author Luca Garulli
+ * 
+ */
 public class OIndexerManager extends ORecordHookAbstract {
 
 	@Override
 	public void onRecordAfterCreate(final ORecord<?> iRecord) {
-		Map<OProperty, String> indexedProperties = getIndexedProperties(iRecord);
+		final Map<OProperty, String> indexedProperties = getIndexedProperties(iRecord);
 
 		if (indexedProperties != null)
-			for (Entry<OProperty, String> prop : indexedProperties.entrySet()) {
-				prop.getKey().getIndex().put(prop.getValue(), (ODocument) iRecord);
+			for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
+				propEntry.getKey().getIndex().put(propEntry.getValue(), (ODocument) iRecord);
 			}
 	}
 
 	@Override
 	public void onRecordAfterUpdate(final ORecord<?> iRecord) {
+		final Map<OProperty, String> indexedProperties = getIndexedProperties(iRecord);
 
+		if (indexedProperties != null) {
+			ODocument doc = (ODocument) iRecord;
+			final Set<String> dirtyFields = doc.getDirtyFields();
+
+			if (dirtyFields != null && dirtyFields.size() > 0) {
+				// REMOVE INDEX OF ENTRIES FOR THE OLD VALUES
+				for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
+					if (dirtyFields.contains(propEntry.getKey().getName()))
+						// REMOVE IT
+						propEntry.getKey().getIndex().remove(propEntry.getValue());
+				}
+
+				// ADD INDEX OF ENTRIES FOR THE CHANGED ONLY VALUES
+				for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
+					if (dirtyFields.contains(propEntry.getKey().getName()))
+						propEntry.getKey().getIndex().put(propEntry.getValue(), (ODocument) iRecord);
+				}
+			}
+		}
 	}
 
 	@Override
 	public void onRecordAfterDelete(final ORecord<?> iRecord) {
+		final Map<OProperty, String> indexedProperties = getIndexedProperties(iRecord);
 
+		if (indexedProperties != null) {
+			ODocument doc = (ODocument) iRecord;
+			final Set<String> dirtyFields = doc.getDirtyFields();
+
+			if (dirtyFields != null && dirtyFields.size() > 0) {
+				// REMOVE INDEX OF ENTRIES FOR THE OLD VALUES
+				for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
+					if (dirtyFields.contains(propEntry.getKey().getName()))
+						// REMOVE IT
+						propEntry.getKey().getIndex().remove(propEntry.getValue());
+				}
+			}
+
+			// REMOVE INDEX OF ENTRIES FOR THE CHANGED ONLY VALUES
+			for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
+				if (doc.containsField(propEntry.getKey().getName()) && !dirtyFields.contains(propEntry.getKey().getName()))
+					propEntry.getKey().getIndex().remove(propEntry.getValue());
+			}
+		}
 	}
 
 	protected Map<OProperty, String> getIndexedProperties(final ORecord<?> iRecord) {
@@ -63,7 +110,8 @@ public class OIndexerManager extends ORecordHookAbstract {
 		Object fieldValue;
 		String fieldValueString;
 
-		final Map<OProperty, String> indexedProperties = new HashMap<OProperty, String>();
+		Map<OProperty, String> indexedProperties = null;
+		ORecord<?> indexedRecord;
 
 		for (OProperty prop : cls.properties()) {
 			index = prop.getIndex();
@@ -72,10 +120,15 @@ public class OIndexerManager extends ORecordHookAbstract {
 
 				if (fieldValue != null) {
 					fieldValueString = fieldValue.toString();
-					if (index.containsKey(fieldValueString))
+
+					indexedRecord = index.get(fieldValueString);
+					if (indexedRecord != null && !indexedRecord.equals(iRecord))
 						OLogManager.instance().exception("Found duplicated key '%s' for property '%s'", null, OIndexException.class,
 								fieldValueString, prop);
 
+					// PUSh THE PROPERTY IN THE SET TO BE WORKED BY THE EXTERNAL
+					if (indexedProperties == null)
+						indexedProperties = new HashMap<OProperty, String>();
 					indexedProperties.put(prop, fieldValueString);
 				}
 			}

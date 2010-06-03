@@ -17,11 +17,13 @@ package com.orientechnologies.orient.core.record.impl;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -158,8 +160,8 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		cloned.status = status;
 		cloned.recordFormat = recordFormat;
 
-		if (fields != null)
-			cloned.fields = new LinkedHashMap<String, Object>(fields);
+		if (fieldValues != null)
+			cloned.fieldValues = new LinkedHashMap<String, Object>(fieldValues);
 
 		return cloned;
 	}
@@ -182,7 +184,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		}
 
 		boolean first = true;
-		for (Entry<String, Object> f : fields.entrySet()) {
+		for (Entry<String, Object> f : fieldValues.entrySet()) {
 			buffer.append(first ? "{" : ",");
 			buffer.append(f.getKey());
 			buffer.append(":");
@@ -209,7 +211,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 * Returns the field number.
 	 */
 	public int size() {
-		return fields == null ? 0 : fields.size();
+		return fieldValues == null ? 0 : fieldValues.size();
 	}
 
 	/**
@@ -218,8 +220,8 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	public String[] fieldNames() {
 		checkForFields();
 
-		String[] result = new String[fields.keySet().size()];
-		return fields.keySet().toArray(result);
+		String[] result = new String[fieldValues.keySet().size()];
+		return fieldValues.keySet().toArray(result);
 	}
 
 	/**
@@ -228,8 +230,8 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	public Object[] fieldValues() {
 		checkForFields();
 
-		Object[] result = new Object[fields.values().size()];
-		return fields.values().toArray(result);
+		Object[] result = new Object[fieldValues.values().size()];
+		return fieldValues.values().toArray(result);
 	}
 
 	/**
@@ -246,7 +248,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		if (separatorPos > -1) {
 			// GET THE LINKED OBJECT IF ANY
 			String fieldName = iPropertyName.substring(0, separatorPos);
-			Object linkedObject = fields.get(fieldName);
+			Object linkedObject = fieldValues.get(fieldName);
 
 			if (linkedObject == null || !(linkedObject instanceof ODocument))
 				// IGNORE IT BY RETURNING NULL
@@ -260,7 +262,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			return (RET) linkedRecord.field(iPropertyName.substring(separatorPos + 1));
 		}
 
-		RET value = (RET) fields.get(iPropertyName);
+		RET value = (RET) fieldValues.get(iPropertyName);
 
 		if (value instanceof ORecord<?>) {
 			// RELATION X->1
@@ -319,6 +321,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 */
 	public ODocument field(final String iPropertyName, Object iPropertyValue, OType iType) {
 		checkForFields();
+
 		if (clazz != null) {
 			OProperty prop = clazz.getProperty(iPropertyName);
 
@@ -330,7 +333,11 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 
 		setDirty();
 
-		Object oldValue = fields.get(iPropertyName);
+		// SAVE THE OLD VALUE IN A SEPARATE MAP
+		final Object oldValue = fieldValues.get(iPropertyName);
+		if (fieldOriginalValues == null)
+			fieldOriginalValues = new HashMap<String, Object>();
+		fieldOriginalValues.put(iPropertyName, oldValue);
 
 		if (oldValue != null) {
 			// DETERMINE THE TYPE FROM THE PREVIOUS CONTENT
@@ -353,7 +360,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			}
 		}
 
-		fields.put(iPropertyName, iPropertyValue);
+		fieldValues.put(iPropertyName, iPropertyValue);
 
 		if (iType != null) {
 			// SAVE FORCED TYPE
@@ -366,21 +373,41 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	}
 
 	/**
-	 * Remove a field.
+	 * Removes a field.
 	 */
 	public ORecordSchemaAware<Object> removeField(final String iPropertyName) {
-		fields.remove(iPropertyName);
+		fieldValues.remove(iPropertyName);
 		return this;
+	}
+
+	/**
+	 * Returns the original value of a field before it has been changed.
+	 * 
+	 * @param iPropertyName
+	 *          Property name to retrieve the original value
+	 */
+	public Set<String> getDirtyFields() {
+		return fieldOriginalValues != null ? Collections.unmodifiableSet(fieldOriginalValues.keySet()) : null;
+	}
+
+	/**
+	 * Returns the original value of a field before it has been changed.
+	 * 
+	 * @param iPropertyName
+	 *          Property name to retrieve the original value
+	 */
+	public Object getOriginalValue(final String iPropertyName) {
+		return fieldOriginalValues != null ? fieldOriginalValues.get(iPropertyName) : null;
 	}
 
 	/**
 	 * Returns the iterator against the field entries as name and value.
 	 */
 	public Iterator<Entry<String, Object>> iterator() {
-		if (fields == null)
+		if (fieldValues == null)
 			return OEmptyIterator.INSTANCE;
 
-		return fields.entrySet().iterator();
+		return fieldValues.entrySet().iterator();
 	}
 
 	/**
@@ -390,7 +417,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 */
 	@Override
 	public boolean containsField(final String iFieldName) {
-		return fields != null ? fields.containsKey(iFieldName) : false;
+		return fieldValues != null ? fieldValues.containsKey(iFieldName) : false;
 	}
 
 	/**
