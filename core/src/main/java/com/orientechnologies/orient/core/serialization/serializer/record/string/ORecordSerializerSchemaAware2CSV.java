@@ -172,6 +172,11 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 						type = OType.LINK;
 
 					linkedClass = getLinkInfo(database, fieldClassName);
+				} else if (fieldValue instanceof ORID) {
+					if (type == null)
+						// DETERMINE THE FIELD TYPE
+						type = OType.LINK;
+
 				} else if (database != null && database.getDatabaseOwner() instanceof ODatabaseObject
 						&& ((ODatabaseObject) database.getDatabaseOwner()).getEntityManager().getEntityClass(fieldClassName) != null) {
 					// DETERMINE THE FIELD TYPE

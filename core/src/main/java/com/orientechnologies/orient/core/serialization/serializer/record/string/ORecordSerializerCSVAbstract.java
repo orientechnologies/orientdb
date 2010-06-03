@@ -180,17 +180,20 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			return map;
 		}
 		case LINK:
-			int pos = iValue.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
-			if (pos > -1)
-				iLinkedClass = iDatabase.getMetadata().getSchema().getClass(iValue.substring(OStringSerializerHelper.LINK.length(), pos));
-			else
-				pos = 0;
+			if (iValue.length() > 1) {
+				int pos = iValue.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
+				if (pos > -1)
+					iLinkedClass = iDatabase.getMetadata().getSchema().getClass(iValue.substring(OStringSerializerHelper.LINK.length(), pos));
+				else
+					pos = 0;
 
-			if (iLinkedClass == null)
-				throw new IllegalArgumentException("Linked class not specified in ORID field: " + iValue);
+				// if (iLinkedClass == null)
+				// throw new IllegalArgumentException("Linked class not specified in ORID field: " + iValue);
 
-			ORecordId recId = new ORecordId(iValue.substring(pos + 1));
-			return new ODocument(iDatabase, iLinkedClass.getName(), recId);
+				ORecordId recId = new ORecordId(iValue.substring(pos + 1));
+				return new ODocument(iDatabase, iLinkedClass != null ? iLinkedClass.getName() : null, recId);
+			} else
+				return null;
 
 		default:
 			return OStringSerializerHelper.fieldTypeFromStream(iType, iValue);
@@ -211,7 +214,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			break;
 
 		case LINK: {
-			linkToStream(buffer, iRecord, (ORecordSchemaAware<?>) iValue);
+			linkToStream(buffer, iRecord, iValue);
 			break;
 		}
 
@@ -419,6 +422,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			}
 		}
 
-		buffer.append(rid.toString());
+		if (rid.isValid())
+			buffer.append(rid.toString());
 	}
 }
