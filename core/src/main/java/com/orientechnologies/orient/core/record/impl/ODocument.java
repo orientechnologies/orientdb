@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -322,6 +323,27 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	public ODocument field(final String iPropertyName, Object iPropertyValue, OType iType) {
 		checkForFields();
 
+		boolean knownProperty = fieldValues.containsKey(iPropertyName);
+
+		final Object oldValue = fieldValues.get(iPropertyName);
+
+		if (knownProperty)
+			// CHECK IF IS REALLY CHANGED
+			if (iPropertyValue == null) {
+				if (oldValue == null)
+					// BOTH NULL: UNCHANGED
+					return this;
+			} else {
+				try {
+					if (iPropertyValue == oldValue)
+						// BOTH NULL: UNCHANGED
+						return this;
+				} catch (Exception e) {
+					OLogManager.instance().warn(this, "Error on checking the value of property %s against the record %s", e, iPropertyName,
+							getIdentity());
+				}
+			}
+
 		if (clazz != null) {
 			OProperty prop = clazz.getProperty(iPropertyName);
 
@@ -331,13 +353,14 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			}
 		}
 
-		setDirty();
+		if (knownProperty) {
+			// SAVE THE OLD VALUE IN A SEPARATE MAP
+			if (fieldOriginalValues == null)
+				fieldOriginalValues = new HashMap<String, Object>();
+			fieldOriginalValues.put(iPropertyName, oldValue);
+		}
 
-		// SAVE THE OLD VALUE IN A SEPARATE MAP
-		final Object oldValue = fieldValues.get(iPropertyName);
-		if (fieldOriginalValues == null)
-			fieldOriginalValues = new HashMap<String, Object>();
-		fieldOriginalValues.put(iPropertyName, oldValue);
+		setDirty();
 
 		if (oldValue != null) {
 			// DETERMINE THE TYPE FROM THE PREVIOUS CONTENT

@@ -21,11 +21,10 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.hook.ORecordHookAbstract;
+import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.tree.OTreeMapDatabase;
@@ -36,15 +35,15 @@ import com.orientechnologies.orient.core.type.tree.OTreeMapDatabase;
  * @author Luca Garulli
  * 
  */
-public class OIndexerManager extends ORecordHookAbstract {
+public class OIndexerManager extends ODocumentHookAbstract {
 
 	@Override
-	public void onRecordBeforeCreate(final ORecord<?> iRecord) {
+	public void onRecordBeforeCreate(final ODocument iRecord) {
 		checkIndexedProperties(iRecord);
 	}
 
 	@Override
-	public void onRecordAfterCreate(final ORecord<?> iRecord) {
+	public void onRecordAfterCreate(final ODocument iRecord) {
 		final Map<OProperty, String> indexedProperties = getIndexedProperties(iRecord);
 
 		if (indexedProperties != null)
@@ -55,24 +54,23 @@ public class OIndexerManager extends ORecordHookAbstract {
 	}
 
 	@Override
-	public void onRecordBeforeUpdate(final ORecord<?> iRecord) {
+	public void onRecordBeforeUpdate(final ODocument iRecord) {
 		checkIndexedProperties(iRecord);
 	}
 
 	@Override
-	public void onRecordAfterUpdate(final ORecord<?> iRecord) {
+	public void onRecordAfterUpdate(final ODocument iRecord) {
 		final Map<OProperty, String> indexedProperties = getIndexedProperties(iRecord);
 
 		if (indexedProperties != null) {
-			ODocument doc = (ODocument) iRecord;
-			final Set<String> dirtyFields = doc.getDirtyFields();
+			final Set<String> dirtyFields = iRecord.getDirtyFields();
 
 			if (dirtyFields != null && dirtyFields.size() > 0) {
 				// REMOVE INDEX OF ENTRIES FOR THE OLD VALUES
 				for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
 					if (dirtyFields.contains(propEntry.getKey().getName())) {
 						// REMOVE IT
-						propEntry.getKey().getIndex().remove(propEntry.getValue());
+						propEntry.getKey().getIndex().remove(iRecord.getOriginalValue(propEntry.getKey().getName()));
 						propEntry.getKey().getIndex().lazySave();
 					}
 				}
@@ -89,12 +87,11 @@ public class OIndexerManager extends ORecordHookAbstract {
 	}
 
 	@Override
-	public void onRecordAfterDelete(final ORecord<?> iRecord) {
+	public void onRecordAfterDelete(final ODocument iRecord) {
 		final Map<OProperty, String> indexedProperties = getIndexedProperties(iRecord);
 
 		if (indexedProperties != null) {
-			ODocument doc = (ODocument) iRecord;
-			final Set<String> dirtyFields = doc.getDirtyFields();
+			final Set<String> dirtyFields = iRecord.getDirtyFields();
 
 			if (dirtyFields != null && dirtyFields.size() > 0) {
 				// REMOVE INDEX OF ENTRIES FOR THE OLD VALUES
@@ -109,18 +106,16 @@ public class OIndexerManager extends ORecordHookAbstract {
 
 			// REMOVE INDEX OF ENTRIES FOR THE CHANGED ONLY VALUES
 			for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
-				if (doc.containsField(propEntry.getKey().getName()) && !dirtyFields.contains(propEntry.getKey().getName()))
+				if (iRecord.containsField(propEntry.getKey().getName()) && !dirtyFields.contains(propEntry.getKey().getName())) {
 					propEntry.getKey().getIndex().remove(propEntry.getValue());
+					propEntry.getKey().getIndex().lazySave();
+				}
 			}
 		}
 	}
 
-	protected void checkIndexedProperties(final ORecord<?> iRecord) {
-		if (!(iRecord instanceof ORecordSchemaAware<?>))
-			return;
-
-		final ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) iRecord;
-		final OClass cls = record.getSchemaClass();
+	protected void checkIndexedProperties(final ODocument iRecord) {
+		final OClass cls = iRecord.getSchemaClass();
 		if (cls == null)
 			return;
 
@@ -133,7 +128,7 @@ public class OIndexerManager extends ORecordHookAbstract {
 		for (OProperty prop : cls.properties()) {
 			index = prop.getIndex();
 			if (index != null) {
-				fieldValue = record.field(prop.getName());
+				fieldValue = iRecord.field(prop.getName());
 
 				if (fieldValue != null) {
 					fieldValueString = fieldValue.toString();
@@ -147,10 +142,7 @@ public class OIndexerManager extends ORecordHookAbstract {
 		}
 	}
 
-	protected Map<OProperty, String> getIndexedProperties(final ORecord<?> iRecord) {
-		if (!(iRecord instanceof ORecordSchemaAware<?>))
-			return null;
-
+	protected Map<OProperty, String> getIndexedProperties(final ODocument iRecord) {
 		final ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) iRecord;
 		final OClass cls = record.getSchemaClass();
 		if (cls == null)

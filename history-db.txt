@@ -32,6 +32,8 @@ This document enlist the last changes to the Orient Database project.
 -------------------------------------------------------------------------------
 VERSION 0.9.17 - beta (?June, 4th 2010?)
 -------------------------------------------------------------------------------
+- New Index API to create a unique index for each property. This speed up the
+  performance of queries but slow down updates, inserts and deletes
 - Fixed bug on embedded type in collections
 
 -------------------------------------------------------------------------------

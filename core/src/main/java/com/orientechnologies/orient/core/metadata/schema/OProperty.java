@@ -97,6 +97,7 @@ public class OProperty extends OSchemaRecord {
 
 	public OProperty setLinkedClass(OClass linkedClass) {
 		this.linkedClass = linkedClass;
+		setDirty();
 		return this;
 	}
 
@@ -163,6 +164,7 @@ public class OProperty extends OSchemaRecord {
 
 	public OProperty setLinkedType(OType linkedType) {
 		this.linkedType = linkedType;
+		setDirty();
 		return this;
 	}
 
@@ -172,6 +174,7 @@ public class OProperty extends OSchemaRecord {
 
 	public OProperty setNotNull(boolean iNotNull) {
 		notNull = iNotNull;
+		setDirty();
 		return this;
 	}
 
@@ -181,6 +184,7 @@ public class OProperty extends OSchemaRecord {
 
 	public OProperty setMandatory(boolean mandatory) {
 		this.mandatory = mandatory;
+		setDirty();
 		return this;
 	}
 
@@ -191,6 +195,7 @@ public class OProperty extends OSchemaRecord {
 	public OProperty setMin(String min) {
 		this.min = min;
 		checkForDateFormat(min);
+		setDirty();
 		return this;
 	}
 
@@ -201,6 +206,7 @@ public class OProperty extends OSchemaRecord {
 	public OProperty setMax(String max) {
 		this.max = max;
 		checkForDateFormat(max);
+		setDirty();
 		return this;
 	}
 
@@ -212,7 +218,6 @@ public class OProperty extends OSchemaRecord {
 	 *          Don't allow duplicates. Now is supported only unique indexes, so pass always TRUE
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
 	public OTreeMap<?, ?> createIndex(boolean iUnique) {
 		if (!iUnique)
 			throw new UnsupportedOperationException(
@@ -224,6 +229,7 @@ public class OProperty extends OSchemaRecord {
 		try {
 			index = new OTreeMapDatabaseLazySave<String, ORecordId>((ODatabaseRecord<?>) database, OStorage.CLUSTER_INDEX_NAME,
 					OStreamSerializerString.INSTANCE, new OStreamSerializerRID());
+			setDirty();
 
 			populateIndex();
 
@@ -272,6 +278,7 @@ public class OProperty extends OSchemaRecord {
 			index.clear();
 			index.getRecord().delete();
 			index = null;
+			setDirty();
 		}
 	}
 
@@ -284,8 +291,16 @@ public class OProperty extends OSchemaRecord {
 	}
 
 	@Override
+	public OProperty setDirty() {
+		super.setDirty();
+		if (owner != null)
+			owner.setDirty();
+		return this;
+	}
+
+	@Override
 	public String toString() {
-		return name + " (id=" + id + ", " + type + ")";
+		return name + " (type=" + type + ")";
 	}
 
 	@Override
@@ -322,5 +337,4 @@ public class OProperty extends OSchemaRecord {
 			}
 		}
 	}
-
 }

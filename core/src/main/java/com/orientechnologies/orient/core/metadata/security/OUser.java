@@ -128,9 +128,13 @@ public class OUser extends ODocument {
 	}
 
 	public OUser setPassword(final String iPassword) {
-		this.password = OSecurityManager.instance().digest2String(iPassword);
+		this.password = encryptPassword(iPassword);
 		setDirty();
 		return this;
+	}
+
+	public static final String encryptPassword(final String iPassword) {
+		return OSecurityManager.instance().digest2String(iPassword);
 	}
 
 	public void setPasswordEncoded(String iPassword) {

@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.metadata.security.OUserTrigger;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -78,7 +79,9 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			metadata = new OMetadata(this);
 			dictionary = (ODictionaryInternal) getStorage().createDictionary(this);
 
+			registerHook(new OUserTrigger());
 			registerHook(new OIndexerManager());
+
 		} catch (Throwable t) {
 			throw new ODatabaseException("Error on opening database '" + getName() + "'", t);
 		}
@@ -354,37 +357,57 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 					"Can't create record because it has no identity. Probably is not a regular record or contains projections of fields rather than a full record");
 
 		try {
-			final int clusterId;
-
+			// STREAM.LENGTH = 0 -> RECORD IN STACK: WILL BE SAVED AFTER
 			final byte[] stream = iRecord.toStream();
 
 			boolean isNew = !rid.isValid();
-			if (isNew) {
-				clusterId = iClusterName != null ? getClusterIdByName(iClusterName) : getDefaultClusterId();
 
-				// CHECK ACCESS ON CLUSTER
-				checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_CREATE, iClusterName, clusterId);
-				callbackHooks(TYPE.BEFORE_CREATE, iRecord);
-			} else {
+			final int clusterId;
+			if (isNew)
+				clusterId = iClusterName != null ? getClusterIdByName(iClusterName) : getDefaultClusterId();
+			else
 				clusterId = rid.clusterId;
 
-				// CHECK ACCESS ON CLUSTER
-				checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName, clusterId);
-				callbackHooks(TYPE.BEFORE_UPDATE, iRecord);
+			if (stream.length > 0) {
+				if (isNew) {
+					// CHECK ACCESS ON CLUSTER
+					checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_CREATE, iClusterName, clusterId);
+					callbackHooks(TYPE.BEFORE_CREATE, iRecord);
+				} else {
+					// CHECK ACCESS ON CLUSTER
+					checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName, clusterId);
+					callbackHooks(TYPE.BEFORE_UPDATE, iRecord);
+				}
+
+				if (!iRecord.isDirty()) {
+					// RECORD SAVED DURING PREVIOUS STREAMING PHASE: THIS HAPPENS FOR CIRCULAR REFERENCED RECORDS
+					if (underlying.isUseCache())
+						// ADD/UPDATE IT IN CACHE
+						getCache().addRecord(iRecord.getIdentity().toString(),
+								new ORawBuffer(iRecord.toStream(), iRecord.getVersion(), iRecordType));
+					return;
+				}
 			}
 
 			// SAVE IT
 			long result = underlying.save(clusterId, rid.getClusterPosition(), stream, iVersion, iRecord.getRecordType());
-			iRecord.unsetDirty();
+
+			if (stream.length > 0)
+				// FILLED RECORD
+				iRecord.unsetDirty();
 
 			if (isNew) {
 				// UPDATE INFORMATION: CLUSTER ID+POSITION
 				iRecord.fill(iRecord.getDatabase(), clusterId, result, 0);
-				callbackHooks(TYPE.AFTER_CREATE, iRecord);
+				iRecord.setStatus(STATUS.LOADED);
+				if (stream.length > 0)
+					callbackHooks(TYPE.AFTER_CREATE, iRecord);
 			} else {
 				// UPDATE INFORMATION: VERSION
 				iRecord.fill(iRecord.getDatabase(), clusterId, rid.getClusterPosition(), (int) result);
-				callbackHooks(TYPE.AFTER_UPDATE, iRecord);
+				iRecord.setStatus(STATUS.LOADED);
+				if (stream.length > 0)
+					callbackHooks(TYPE.AFTER_UPDATE, iRecord);
 			}
 		} catch (ODatabaseException e) {
 			// RE-THROW THE EXCEPTION

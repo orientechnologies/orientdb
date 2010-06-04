@@ -62,7 +62,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
 		// CHECK IF THE RECORD IS PENDING TO BE MARSHALLED
 		if (iMarshalledRecords.containsKey(record)) {
-			return "-";
+			return "";
 		} else
 			iMarshalledRecords.put(record, ORecordId.EMPTY_RECORD_ID);
 

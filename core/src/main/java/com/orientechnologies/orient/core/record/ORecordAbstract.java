@@ -164,12 +164,15 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		if (database == null)
 			throw new ODatabaseException("No database assigned to current record");
 
+		Object result = null;
 		try {
-			if (database.load(this) == null)
-				throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found");
+			result = database.load(this);
 		} catch (Exception e) {
 			throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found", e);
 		}
+
+		if (result == null)
+			throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found");
 
 		return this;
 	}

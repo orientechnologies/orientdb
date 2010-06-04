@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OClass extends OSchemaRecord {
+
 	protected int											id;
 	protected OSchema									owner;
 	protected String									name;
@@ -57,7 +58,6 @@ public class OClass extends OSchemaRecord {
 
 	public OClass(final OSchema iOwner, final int iId, final String iName, final int[] iClusterIds, final int iDefaultClusterId) {
 		super(iOwner.getDatabase());
-
 		id = iId;
 		owner = iOwner;
 		name = iName;
@@ -141,7 +141,7 @@ public class OClass extends OSchemaRecord {
 			throw new OSchemaException("Property '" + iPropertyName + "' not found in class " + name + "'");
 
 		fixedSize -= prop.getType().size;
-		owner.setDirty();
+		setDirty();
 	}
 
 	public int fixedSize() {
@@ -163,7 +163,7 @@ public class OClass extends OSchemaRecord {
 		properties.put(lowerName, prop);
 		fixedSize += iType.size;
 
-		owner.setDirty();
+		setDirty();
 
 		return prop;
 	}
@@ -215,7 +215,7 @@ public class OClass extends OSchemaRecord {
 
 	public void setDefaultClusterId(final int iDefaultClusterId) {
 		this.defaultClusterId = iDefaultClusterId;
-		owner.setDirty();
+		setDirty();
 	}
 
 	public int[] getClusterIds() {
@@ -228,7 +228,15 @@ public class OClass extends OSchemaRecord {
 				return this;
 
 		clusterIds = Arrays.copyOf(clusterIds, clusterIds.length + 1);
-		owner.setDirty();
+		setDirty();
+		return this;
+	}
+
+	@Override
+	public OClass setDirty() {
+		super.setDirty();
+		if (owner != null)
+			owner.setDirty();
 		return this;
 	}
 

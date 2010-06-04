@@ -59,4 +59,9 @@ public class ORawBuffer implements Externalizable {
 		iOutput.write(recordType);
 		iOutput.writeLong(newPosition);
 	}
+
+	@Override
+	public String toString() {
+		return "size:" + (buffer != null ? buffer.length : "empty");
+	}
 }
