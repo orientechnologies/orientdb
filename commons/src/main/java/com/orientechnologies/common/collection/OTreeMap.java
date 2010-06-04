@@ -291,7 +291,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 		if (key == null)
 			throw new NullPointerException();
 
-		Comparable<? super K> k = (Comparable<? super K>) key;
+		final Comparable<? super K> k = (Comparable<? super K>) key;
 		OTreeMapEntry<K, V> p = root;
 		OTreeMapEntry<K, V> lastNode = null;
 
@@ -318,7 +318,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 					p = p.getRight();
 				else {
 					// SEARCH INSIDE THE NODE
-					V value = lastNode.search(k);
+					final V value = lastNode.search(k);
 
 					if (value != null)
 						// FOUND: RETURN CURRENT NODE

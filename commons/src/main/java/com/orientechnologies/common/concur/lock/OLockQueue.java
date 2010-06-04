@@ -6,7 +6,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.thread.OSoftThread;
 
 /**
- * Manage the synchronization among Runnable requester. Each resource can be acquired by only one Runnable instance.
+ * Manage the synchronization among Runnable requesters. Each resource can be acquired by only one Runnable instance.
  */
 public class OLockQueue<RESOURCE_TYPE> {
 	protected final LinkedHashMap<RESOURCE_TYPE, Runnable>	queue	= new LinkedHashMap<RESOURCE_TYPE, Runnable>();

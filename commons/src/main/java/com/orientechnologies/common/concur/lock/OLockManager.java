@@ -8,10 +8,10 @@ import java.util.Map;
 import com.orientechnologies.common.profiler.OProfiler;
 
 /**
- * Manage the locks across all the client connections. To optimize speed and space in memory the shared lock map hold the client
- * connection directly if only one client is locking the resource. When multiple clients acquire the same resource, then a List is
- * put in place of single object.<br/>
- * On client removing the list is maintained even if the client remains only one because the cost to replace the List to the object
+ * Manage the locks across all the client connections. To optimize speed and space in memory the shared lock map holds the client
+ * connections directly if only one client is locking the resource. When multiple clients acquire the same resource, then a List is
+ * put in place of the single object.<br/>
+ * On lock removing the list is maintained even if the client remains only one because the cost to replace the List to the object
  * directly is higher then just remove the item and the probability to add another again is high.
  */
 @SuppressWarnings("unchecked")

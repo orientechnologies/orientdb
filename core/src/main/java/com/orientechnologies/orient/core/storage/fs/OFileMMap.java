@@ -48,7 +48,7 @@ public class OFileMMap extends OFile {
 	public void read(int iOffset, final byte[] iDestBuffer, final int iLenght) {
 		iOffset = checkRegions(iOffset, iLenght);
 
-		OMMapBufferEntry entry = OMMapManager.request(this, iOffset, iLenght);
+		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, iLenght);
 		entry.buffer.position(iOffset - entry.beginOffset);
 		entry.buffer.get(iDestBuffer, 0, iLenght);
 	}
@@ -56,56 +56,56 @@ public class OFileMMap extends OFile {
 	@Override
 	public int readInt(int iOffset) {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_INT);
-		OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_INT);
+		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_INT);
 		return entry.buffer.getInt(iOffset - entry.beginOffset);
 	}
 
 	@Override
 	public long readLong(int iOffset) {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_LONG);
-		OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_LONG);
+		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_LONG);
 		return entry.buffer.getLong(iOffset - entry.beginOffset);
 	}
 
 	@Override
 	public short readShort(int iOffset) {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_SHORT);
-		OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_SHORT);
+		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_SHORT);
 		return entry.buffer.getShort(iOffset - entry.beginOffset);
 	}
 
 	@Override
 	public byte readByte(int iOffset) {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_BYTE);
-		OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_BYTE);
+		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_BYTE);
 		return entry.buffer.get(iOffset - entry.beginOffset);
 	}
 
 	@Override
 	public void writeInt(int iOffset, final int iValue) {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_INT);
-		OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_INT);
+		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_INT);
 		entry.buffer.putInt(iOffset - entry.beginOffset, iValue);
 	}
 
 	@Override
 	public void writeLong(int iOffset, final long iValue) {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_LONG);
-		OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_LONG);
+		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_LONG);
 		entry.buffer.putLong(iOffset - entry.beginOffset, iValue);
 	}
 
 	@Override
 	public void writeShort(int iOffset, final short iValue) {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_SHORT);
-		OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_SHORT);
+		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_SHORT);
 		entry.buffer.putShort(iOffset - entry.beginOffset, iValue);
 	}
 
 	@Override
 	public void writeByte(int iOffset, final byte iValue) {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_BYTE);
-		OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_BYTE);
+		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_BYTE);
 		entry.buffer.put(iOffset - entry.beginOffset, iValue);
 	}
 
@@ -114,7 +114,7 @@ public class OFileMMap extends OFile {
 		iOffset = checkRegions(iOffset, iSourceBuffer.length);
 
 		try {
-			OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_INT + iSourceBuffer.length);
+			final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_INT + iSourceBuffer.length);
 			entry.buffer.position(iOffset - entry.beginOffset);
 			entry.buffer.put(iSourceBuffer);
 		} catch (BufferOverflowException e) {

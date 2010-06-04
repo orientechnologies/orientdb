@@ -208,13 +208,13 @@ public class OProfiler implements OProfilerMBean {
 
 		buffer.append("DUMPING STATISTICS (last reset on: " + lastReset.toString() + ")...");
 
-		buffer.append(String.format("\n%40s +-------------------------------------------------------------------+", ""));
-		buffer.append(String.format("\n%40s | Value                                                             |", "Name"));
-		buffer.append(String.format("\n%40s +-------------------------------------------------------------------+", ""));
+		buffer.append(String.format("\n%45s +-------------------------------------------------------------------+", ""));
+		buffer.append(String.format("\n%45s | Value                                                             |", "Name"));
+		buffer.append(String.format("\n%45s +-------------------------------------------------------------------+", ""));
 		for (Iterator<String> it = statistics.keySet().iterator(); it.hasNext();) {
 			statName = it.next();
 			stat = statistics.get(statName);
-			buffer.append(String.format("\n%40s | %d", statName, stat));
+			buffer.append(String.format("\n%45s | %d", statName, stat));
 		}
 
 		return buffer.toString();
@@ -237,14 +237,14 @@ public class OProfiler implements OProfilerMBean {
 		Chrono c;
 		String chronoName;
 
-		buffer.append(String.format("\n%40s +-------------------------------------------------------------------+", ""));
-		buffer.append(String.format("\n%40s | %10s %10s %10s %10s %10s %10s |", "Name", "last", "total", "min", "max", "average",
+		buffer.append(String.format("\n%45s +-------------------------------------------------------------------+", ""));
+		buffer.append(String.format("\n%45s | %10s %10s %10s %10s %10s %10s |", "Name", "last", "total", "min", "max", "average",
 				"items"));
-		buffer.append(String.format("\n%40s +-------------------------------------------------------------------+", ""));
+		buffer.append(String.format("\n%45s +-------------------------------------------------------------------+", ""));
 		for (Iterator<String> it = chronos.keySet().iterator(); it.hasNext();) {
 			chronoName = it.next();
 			c = chronos.get(chronoName);
-			buffer.append(String.format("\n%40s | %10d %10d %10d %10d %10d %10d", chronoName, c.lastElapsed, c.totalElapsed,
+			buffer.append(String.format("\n%45s | %10d %10d %10d %10d %10d %10d", chronoName, c.lastElapsed, c.totalElapsed,
 					c.minElapsed, c.maxElapsed, c.averageElapsed, c.items));
 		}
 		return buffer.toString();

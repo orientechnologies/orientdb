@@ -222,7 +222,7 @@ public abstract class OFile {
 	}
 
 	protected int checkRegions(final int iOffset, final int iLenght) {
-		if (iOffset > filledUpTo || iOffset + iLenght > filledUpTo)
+		if (iOffset + iLenght > filledUpTo)
 			throw new OIOException("You can't access outside the file size (" + filledUpTo + " bytes). You've requested portion "
 					+ iOffset + "-" + (iOffset + iLenght) + " bytes");
 
@@ -241,7 +241,7 @@ public abstract class OFile {
 		return filledUpTo;
 	}
 
-	public boolean canOversize(int iRecordSize) {
+	public boolean canOversize(final int iRecordSize) {
 		return maxSize - size > iRecordSize;
 	}
 

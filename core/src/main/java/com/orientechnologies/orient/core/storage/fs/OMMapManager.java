@@ -82,7 +82,6 @@ public class OMMapManager {
 			}
 
 			// LOAD THE PAGE
-
 			entry = mapBuffer(iFile, iBeginOffset, bufferSize);
 			buffersLRU.push(entry);
 

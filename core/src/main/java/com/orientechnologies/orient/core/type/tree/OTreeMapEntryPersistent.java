@@ -137,17 +137,14 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 		if (parentRid == null)
 			return null;
 
-		if ((parent == null || parent.get() == null) && parentRid.isValid()) {
-			if (parent != null)
-				OProfiler.getInstance().updateStatistic("OTreeMapEntryP.reload", 1);
-
+		if (parentRid.isValid() && (parent == null || parent.get() == null)) {
 			try {
 				// LAZY LOADING OF THE PARENT NODE
-				OTreeMapEntry<K, V> node = pTree.createEntry(this, parentRid).load();
+				final OTreeMapEntry<K, V> node = pTree.createEntry(this, parentRid).load();
 
 				parent = new SoftReference<OTreeMapEntry<K, V>>(node);
 			} catch (IOException e) {
-				OLogManager.instance().error(this, "Can't load tree. The tree could be invalid.", e, ODatabaseException.class);
+				OLogManager.instance().error(this, "Can't load the tree. The tree could be invalid.", e, ODatabaseException.class);
 			}
 		}
 
@@ -167,17 +164,14 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 
 	@Override
 	public OTreeMapEntry<K, V> getLeft() {
-		if ((left == null || left.get() == null) && leftRid.isValid()) {
-			if (left != null)
-				OProfiler.getInstance().updateStatistic("OTreeMapEntryP.reload", 1);
-
+		if (leftRid.isValid() && (left == null || left.get() == null)) {
 			try {
 				// LAZY LOADING OF THE LEFT LEAF
-				OTreeMapEntry<K, V> node = pTree.createEntry(this, leftRid).load();
+				final OTreeMapEntry<K, V> node = pTree.createEntry(this, leftRid).load();
 
 				left = new SoftReference<OTreeMapEntry<K, V>>(node);
 			} catch (IOException e) {
-				OLogManager.instance().error(this, "Can't load tree. The tree could be invalid.", e, ODatabaseException.class);
+				OLogManager.instance().error(this, "Can't load the tree. The tree could be invalid.", e, ODatabaseException.class);
 			}
 		}
 
@@ -200,13 +194,10 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 
 	@Override
 	public OTreeMapEntry<K, V> getRight() {
-		if ((right == null || right.get() == null) && rightRid.isValid()) {
-			if (right != null)
-				OProfiler.getInstance().updateStatistic("OTreeMapEntryP.reload", 1);
-
+		if (rightRid.isValid() && (right == null || right.get() == null)) {
 			// LAZY LOADING OF THE RIGHT LEAF
 			try {
-				OTreeMapEntry<K, V> node = pTree.createEntry(this, rightRid).load();
+				final OTreeMapEntry<K, V> node = pTree.createEntry(this, rightRid).load();
 
 				right = new SoftReference<OTreeMapEntry<K, V>>(node);
 			} catch (IOException e) {
