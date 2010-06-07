@@ -14,7 +14,6 @@
         <storage path="memory:temp" name="temp"/>
     </storages>
     <users>
-        <user resources="*" password="232C9B27C3EAC0CD537D722020C18483A30D37D5764BF1976F6AB67D57846286" name="admin"/>
     </users>
     <properties>
         <entry value="false" name="cache.static"/>
