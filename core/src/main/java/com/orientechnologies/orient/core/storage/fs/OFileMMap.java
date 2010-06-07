@@ -218,10 +218,6 @@ public class OFileMMap extends OFile {
 	@Override
 	protected void openChannel(final int iNewSize) throws IOException {
 		super.openChannel(iNewSize);
-		// OBufferEntry entry = OMMapManager.mapBuffer(this, 0, HEADER_SIZE);
-		// entry.pin = true;
-		// headerBuffer = entry.buffer;
-
 		headerBuffer = channel.map(mode.equals("r") ? FileChannel.MapMode.READ_ONLY : FileChannel.MapMode.READ_WRITE, 0, HEADER_SIZE);
 	}
 }

@@ -25,7 +25,7 @@ public class OMMapBufferEntry {
 	int								counter;
 	boolean						pin;
 
-	public OMMapBufferEntry(OFileMMap iFile, MappedByteBuffer buffer, int beginOffset, int size) {
+	public OMMapBufferEntry(final OFileMMap iFile, final MappedByteBuffer buffer, final int beginOffset, final int size) {
 		this.file = iFile;
 		this.buffer = buffer;
 		this.beginOffset = beginOffset;

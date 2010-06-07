@@ -23,10 +23,10 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.exception.OIOException;
 
 public class OMMapManager {
-	public static final int									DEF_BLOCK_SIZE	= 1500000;
-	private static final int								MAX_MEMORY			= 100000000;
+	public static final int											DEF_BLOCK_SIZE	= 1500000;
+	private static final int										MAX_MEMORY			= 100000000;
 
-	private static int											totalMemory;
+	private static int													totalMemory;
 
 	private static ArrayDeque<OMMapBufferEntry>	buffersLRU			= new ArrayDeque<OMMapBufferEntry>();
 
