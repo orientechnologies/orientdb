@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.util.Date;
+import java.util.List;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -25,6 +26,8 @@ import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.iterator.OObjectIteratorCluster;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.business.Address;
 import com.orientechnologies.orient.test.domain.business.City;
@@ -57,7 +60,7 @@ public class CRUDObjectPhysicalTest {
 		for (long i = startRecordNumber; i < startRecordNumber + TOT_RECORDS; ++i) {
 			account = new Account((int) i, "Bill", "Gates");
 			account.setBirthDate(new Date());
-			account.setSalary(i + 300f);
+			account.setSalary(i + 300.10f);
 			account.getAddresses().add(new Address("Residence", rome, "Piazza Navona, 1"));
 			database.save(account);
 		}
@@ -85,7 +88,7 @@ public class CRUDObjectPhysicalTest {
 			Assert.assertTrue(a.getId() == i);
 			Assert.assertEquals(a.getName(), "Bill");
 			Assert.assertEquals(a.getSurname(), "Gates");
-			Assert.assertTrue(a.getSalary() == i + 300f);
+			Assert.assertEquals(a.getSalary(), i + 300.1f);
 			Assert.assertEquals(a.getAddresses().size(), 1);
 			Assert.assertEquals(a.getAddresses().get(0).getCity().getName(), rome.getName());
 			Assert.assertEquals(a.getAddresses().get(0).getCity().getCountry().getName(), rome.getCountry().getName());
@@ -110,7 +113,7 @@ public class CRUDObjectPhysicalTest {
 			if (i % 2 == 0)
 				a.getAddresses().set(0, new Address("work", new City(new Country("Spain"), "Madrid"), "Plaza central"));
 
-			a.setSalary(i + 100);
+			a.setSalary(i + 500.10f);
 
 			database.save(a);
 
@@ -134,7 +137,7 @@ public class CRUDObjectPhysicalTest {
 			else
 				Assert.assertEquals(a.getAddresses().get(0).getCity().getCountry().getName(), "Italy");
 
-			Assert.assertEquals(a.getSalary(), i + 100f);
+			Assert.assertEquals(a.getSalary(), i + 500.1f);
 
 			i++;
 		}
@@ -143,21 +146,6 @@ public class CRUDObjectPhysicalTest {
 	}
 
 	@Test(dependsOnMethods = "testUpdate")
-	public void delete() {
-		database.open("admin", "admin");
-
-		startRecordNumber = database.countClusterElements("Account");
-
-		// DELETE ALL THE RECORD IN THE CLUSTER
-		for (Object obj : database.browseCluster("Account"))
-			database.delete(obj);
-
-		Assert.assertEquals(database.countClusterElements("Account"), 0);
-
-		database.close();
-	}
-
-	@Test(dependsOnMethods = "delete")
 	public void createLinked() {
 		database.open("admin", "admin");
 
@@ -175,7 +163,7 @@ public class CRUDObjectPhysicalTest {
 	}
 
 	@Test(dependsOnMethods = "createLinked")
-	public void queryLinked() {
+	public void browseLinked() {
 		database.open("admin", "admin");
 
 		for (Profile obj : database.browseClass(Profile.class)) {
@@ -188,7 +176,40 @@ public class CRUDObjectPhysicalTest {
 		database.close();
 	}
 
-	@Test(dependsOnMethods = "queryLinked")
+	@Test(dependsOnMethods = "browseLinked")
+	public void queryPerFloat() {
+		database.open("admin", "admin");
+
+		final List<Account> result = database.query(new OSQLSynchQuery<ODocument>("select * from Account where salary = 500.10"));
+
+		Assert.assertTrue(result.size() > 0);
+
+		Account account;
+		for (int i = 0; i < result.size(); ++i) {
+			account = result.get(i);
+
+			Assert.assertEquals(account.getSalary(), 500.10f);
+		}
+
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "queryPerFloat")
+	public void delete() {
+		database.open("admin", "admin");
+
+		startRecordNumber = database.countClusterElements("Account");
+
+		// DELETE ALL THE RECORD IN THE CLUSTER
+		for (Object obj : database.browseCluster("Account"))
+			database.delete(obj);
+
+		Assert.assertEquals(database.countClusterElements("Account"), 0);
+
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "delete")
 	public void cleanAll() {
 		database.open("admin", "admin");
 
