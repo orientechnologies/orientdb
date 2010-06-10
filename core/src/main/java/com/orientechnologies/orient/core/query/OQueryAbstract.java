@@ -18,9 +18,10 @@ package com.orientechnologies.orient.core.query;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
-public abstract class OQueryAbstract<REC extends ORecordInternal<?>> implements OQuery<REC> {
-	protected ODatabaseRecord<?>	database;
-	protected int									limit	= -1;
+public abstract class OQueryAbstract<REC extends ORecordInternal<?>> implements
+		OQuery<REC> {
+	protected ODatabaseRecord<?> database;
+	protected int limit = -1;
 
 	protected OQueryAbstract() {
 	}
@@ -33,7 +34,8 @@ public abstract class OQueryAbstract<REC extends ORecordInternal<?>> implements 
 		return limit;
 	}
 
-	public void setLimit(int limit) {
+	public OQueryAbstract<REC> setLimit(int limit) {
 		this.limit = limit;
+		return this;
 	}
 }

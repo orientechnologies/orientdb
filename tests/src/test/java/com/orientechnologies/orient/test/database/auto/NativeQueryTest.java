@@ -30,8 +30,8 @@ import com.orientechnologies.orient.test.database.base.OrientTest;
 
 @Test(groups = "query", sequential = true)
 public class NativeQueryTest {
-	private ODatabaseDocument	database;
-	private ODocument					record;
+	private ODatabaseDocument database;
+	private ODocument record;
 
 	@Parameters(value = "url")
 	public NativeQueryTest(String iURL) {
@@ -42,15 +42,16 @@ public class NativeQueryTest {
 	public void querySchemaAndLike() {
 		database.open("admin", "admin");
 
-		List<ODocument> result = new ONativeSynchQuery<ODocument, OQueryContextNativeSchema<ODocument>>(database, "Account",
-				new OQueryContextNativeSchema<ODocument>()) {
+		List<ODocument> result = new ONativeSynchQuery<ODocument, OQueryContextNativeSchema<ODocument>>(
+				database, "Account", new OQueryContextNativeSchema<ODocument>()) {
 
 			@Override
 			public boolean filter(OQueryContextNativeSchema<ODocument> iRecord) {
-				return iRecord.field("location").field("city").field("name").eq("Rome").and().field("name").like("G%").go();
+				return iRecord.field("location").field("city").field("name")
+						.eq("Rome").and().field("name").like("G%").go();
 			};
 
-		}.execute();
+		}.setLimit(20).execute();
 
 		for (int i = 0; i < result.size(); ++i) {
 			record = result.get(i);
@@ -58,7 +59,8 @@ public class NativeQueryTest {
 			OrientTest.printRecord(i, record);
 
 			Assert.assertTrue(record.getClassName().equalsIgnoreCase("Person"));
-			Assert.assertEquals(((ODocument) record.field("city")).field("name"), "Rome");
+			Assert.assertEquals(((ODocument) record.field("city"))
+					.field("name"), "Rome");
 			Assert.assertTrue(record.field("name").toString().startsWith("G"));
 		}
 
