@@ -178,7 +178,7 @@ public class CRUDObjectPhysicalTest {
 
 	@Test(dependsOnMethods = "browseLinked")
 	public void queryPerFloat() {
-		database.open("ademin", "admin");
+		database.open("admin", "admin");
 
 		final List<Account> result = database.query(new OSQLSynchQuery<ODocument>("select * from Account where salary = 500.10"));
 
