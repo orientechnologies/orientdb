@@ -16,11 +16,12 @@
 package com.orientechnologies.orient.kv;
 
 import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseBinary;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.server.OServerMain;
 
-public class OSharedBinaryDatabase {
+public class OSharedBinaryDatabaseDistributed {
 	// TODO: ALLOW ONLY 1 BECAUSE THE TREE IS NOT YET FULLY TRANSACTIONAL
 	private static final ODatabasePool<ODatabaseBinary>	dbPool	= new ODatabasePool<ODatabaseBinary>(1, false) {
 
@@ -45,7 +46,12 @@ public class OSharedBinaryDatabase {
 																															};
 
 	public static ODatabaseBinary acquireDatabase(String iName) throws InterruptedException {
-		return dbPool.acquireDatabase(iName);
+		final ODatabaseBinary db = dbPool.acquireDatabase(iName);
+
+		// DISABLE CACHE SINCE THERE IS HAZELCAST FOR IT
+		((ODatabaseRaw) db.getUnderlying()).setUseCache(false);
+
+		return db;
 	}
 
 	public static void releaseDatabase(final ODatabaseBinary iDatabase) {

@@ -31,13 +31,15 @@ public abstract class ODatabasePool<DB extends ODatabaseRecord<?>> implements OR
 	private final Map<String, OResourcePool<String, DB>>	pools							= new HashMap<String, OResourcePool<String, DB>>();
 	private int																						maxSize;
 	private int																						timeout						= DEF_WAIT_TIMEOUT;
+	private boolean																				enableSecurity		= true;
 
-	public ODatabasePool(final int iMaxSize) {
-		maxSize = iMaxSize;
+	public ODatabasePool(final int iMaxSize, boolean iEnableSecurity) {
+		this(iMaxSize, iEnableSecurity, DEF_WAIT_TIMEOUT);
 	}
 
-	public ODatabasePool(final int iMaxSize, final int iTimeout) {
+	public ODatabasePool(final int iMaxSize, boolean iEnableSecurity, final int iTimeout) {
 		maxSize = iMaxSize;
+		enableSecurity = iEnableSecurity;
 		timeout = iTimeout;
 	}
 
@@ -69,6 +71,9 @@ public abstract class ODatabasePool<DB extends ODatabaseRecord<?>> implements OR
 	}
 
 	public DB reuseResource(String iKey, DB iValue) {
+		if (!enableSecurity)
+			return iValue;
+
 		final String[] parts = iKey.split(":");
 
 		if (parts.length < 3)

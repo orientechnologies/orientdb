@@ -26,7 +26,7 @@ public abstract class OChannel {
 	public InputStream			inStream;
 	public OutputStream			outStream;
 
-	public static final int	DEFAULT_BUFFER_SIZE	= 16384;
+	public static final int	DEFAULT_BUFFER_SIZE	= 32768;
 
 	public OChannel(Socket iSocket) throws IOException {
 		socket = iSocket;

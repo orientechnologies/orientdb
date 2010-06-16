@@ -19,8 +19,8 @@ import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Iterator;
 
+import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.orient.core.exception.OIOException;
 
 public class OMMapManager {
 	public static final int											DEF_BLOCK_SIZE	= 1500000;

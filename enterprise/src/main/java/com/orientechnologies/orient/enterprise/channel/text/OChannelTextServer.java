@@ -18,19 +18,13 @@ package com.orientechnologies.orient.enterprise.channel.text;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.LineNumberReader;
 import java.net.Socket;
 
 public class OChannelTextServer extends OChannelText {
-	public LineNumberReader	in;
-
 	public OChannelTextServer(final Socket iSocket) throws IOException {
 		super(iSocket);
 
 		inStream = new BufferedInputStream(socket.getInputStream(), DEFAULT_BUFFER_SIZE);
 		outStream = new BufferedOutputStream(socket.getOutputStream(), DEFAULT_BUFFER_SIZE);
-
-		in = new LineNumberReader(new InputStreamReader(inStream));
 	}
 }

@@ -20,9 +20,9 @@ import java.nio.BufferOverflowException;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 
+import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.exception.OIOException;
 
 /**
  * 

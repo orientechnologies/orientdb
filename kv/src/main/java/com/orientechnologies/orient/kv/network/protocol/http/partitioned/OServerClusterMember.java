@@ -31,7 +31,7 @@ import com.hazelcast.partition.MigrationListener;
 import com.hazelcast.partition.PartitionService;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseBinary;
-import com.orientechnologies.orient.kv.OSharedBinaryDatabase;
+import com.orientechnologies.orient.kv.OSharedBinaryDatabaseDistributed;
 import com.orientechnologies.orient.kv.network.protocol.http.OKVDictionaryBucketManager;
 import com.orientechnologies.orient.kv.network.protocol.http.command.OKVServerCommandAbstract;
 import com.orientechnologies.orient.server.OServerMain;
@@ -99,7 +99,7 @@ public class OServerClusterMember implements InstanceListener, MembershipListene
 						// MY OWN ENTRY: STORE IT
 						try {
 							parts = OKVServerCommandAbstract.getDbBucketKey(localKey, 3);
-							ODatabaseBinary db = OSharedBinaryDatabase.acquireDatabase(parts[0]);
+							ODatabaseBinary db = OSharedBinaryDatabaseDistributed.acquireDatabase(parts[0]);
 
 							bucketMap = OKVDictionaryBucketManager.getDictionaryBucket(db, parts[1], false);
 

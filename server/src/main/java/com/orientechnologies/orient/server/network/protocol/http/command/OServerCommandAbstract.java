@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequestException;
@@ -91,7 +92,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 
 	protected void writeLine(final OHttpRequest iRequest, final String iContent) throws IOException {
 		if (iContent != null)
-			iRequest.channel.outStream.write(iContent.getBytes());
+			iRequest.channel.outStream.write(OBinaryProtocol.string2bytes(iContent));
 		iRequest.channel.outStream.write(OHttpUtils.EOL);
 	}
 

@@ -18,9 +18,9 @@ package com.orientechnologies.orient.core.storage.fs;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.exception.OIOException;
 
 /**
  * Need to be synchronized by the external. Multiple Reader, Single Writer.<br/>
