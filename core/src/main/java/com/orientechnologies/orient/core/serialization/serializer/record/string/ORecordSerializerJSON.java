@@ -35,9 +35,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 	public static final String								NAME							= "json";
 	public static final ORecordSerializerJSON	INSTANCE					= new ORecordSerializerJSON();
 
-	private static final String								ATTRIBUTE_ID			= "_id";
-	private static final String								ATTRIBUTE_VERSION	= "_ver";
-	private static final String								ATTRIBUTE_CLASS		= "_class";
+	public static final String								ATTRIBUTE_ID			= "_id";
+	public static final String								ATTRIBUTE_VERSION	= "_ver";
+	public static final String								ATTRIBUTE_CLASS		= "_class";
 
 	@Override
 	public ORecordInternal<?> fromString(final ODatabaseRecord<?> iDatabase, String iSource, final ORecordInternal<?> iRecord) {
@@ -118,7 +118,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 					else if (f.equals("class"))
 						includeClazz = true;
 					else if (f.startsWith("ident"))
-						identLevel = Integer.parseInt(f.substring(f.indexOf(":")+1));
+						identLevel = Integer.parseInt(f.substring(f.indexOf(":") + 1));
 			}
 
 			json.beginObject(identLevel);

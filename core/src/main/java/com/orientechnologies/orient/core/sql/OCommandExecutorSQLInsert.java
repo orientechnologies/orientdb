@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -75,7 +76,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 
 		className = cls.getName();
 
-		final int beginFields = OSQLHelper.jumpWhiteSpaces(text, pos);
+		final int beginFields = OStringParser.jumpWhiteSpaces(text, pos);
 		if (beginFields == -1 || text.charAt(beginFields) != '(')
 			throw new OCommandSQLParsingException("Set of fields is missed. Example: (name, surname)", text, pos);
 
@@ -91,7 +92,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 		if (pos == -1 || !word.toString().equals(KEYWORD_VALUES))
 			throw new OCommandSQLParsingException("Missed VALUES keyword", text, endFields);
 
-		final int beginValues = OSQLHelper.jumpWhiteSpaces(text, pos + 1);
+		final int beginValues = OStringParser.jumpWhiteSpaces(text, pos + 1);
 		if (pos == -1 || text.charAt(beginValues) != '(')
 			throw new OCommandSQLParsingException("Set of values is missed. Example: ('Bill', 'Stuart', 300)", text, pos);
 

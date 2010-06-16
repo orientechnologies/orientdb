@@ -58,13 +58,6 @@ public class OSQLHelper {
 			new OQueryOperatorContainsAll(), new OQueryOperatorMajor(), new OQueryOperatorLike(), new OQueryOperatorIs(),
 			new OQueryOperatorIn(), new OQueryOperatorContains(), new OQueryOperatorTraverse() };
 
-	public static int jumpWhiteSpaces(final String iText, int iCurrentPosition) {
-		for (; iCurrentPosition < iText.length(); ++iCurrentPosition)
-			if (!Character.isWhitespace(iText.charAt(iCurrentPosition)))
-				break;
-		return iCurrentPosition;
-	}
-
 	public static int nextWord(final String iText, final String iTextUpperCase, int ioCurrentPosition, final StringBuilder ioWord,
 			final boolean iForceUpperCase) {
 		return nextWord(iText, iTextUpperCase, ioCurrentPosition, ioWord, iForceUpperCase, " =><()");
@@ -74,11 +67,11 @@ public class OSQLHelper {
 			final boolean iForceUpperCase, final String iSeparatorChars) {
 		ioWord.setLength(0);
 
-		ioCurrentPosition = OSQLHelper.jumpWhiteSpaces(iText, ioCurrentPosition);
+		ioCurrentPosition = OStringParser.jumpWhiteSpaces(iText, ioCurrentPosition);
 		if (ioCurrentPosition >= iText.length())
 			return -1;
 
-		final String word = OStringParser.getWord(iForceUpperCase ? iTextUpperCase : iText, ioCurrentPosition, iSeparatorChars);
+		final String word = OStringParser.getWordFromString(iForceUpperCase ? iTextUpperCase : iText, ioCurrentPosition, iSeparatorChars);
 
 		if (word != null && word.length() > 0) {
 			ioWord.append(word);

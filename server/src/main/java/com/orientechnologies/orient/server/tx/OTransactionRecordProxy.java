@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
+@SuppressWarnings("unchecked")
 public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
 	protected int							version;
 	protected byte[]					stream;

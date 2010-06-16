@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -151,7 +152,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 
 			fieldName = word.toString();
 
-			pos = OSQLHelper.jumpWhiteSpaces(text, pos);
+			pos = OStringParser.jumpWhiteSpaces(text, pos);
 
 			if (pos == -1 || text.charAt(pos) != '=')
 				throw new OCommandSQLParsingException("Character '=' was expected", text, pos);

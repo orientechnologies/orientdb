@@ -49,6 +49,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.utility.impexp.OConsoleDatabaseExport;
+import com.orientechnologies.utility.impexp.OConsoleDatabaseImport;
 import com.orientechnologies.utility.impexp.ODatabaseExportException;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandListener {
@@ -436,7 +437,38 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		out.println("Exporting current database to: " + iOutputFilePath + "...");
 
 		try {
-			new OConsoleDatabaseExport(currentDatabase, iOutputFilePath, this).exportDatabase();
+			new OConsoleDatabaseExport(currentDatabase, iOutputFilePath, this).exportDatabase().close();
+		} catch (ODatabaseExportException e) {
+			out.println("ERROR: " + e.toString());
+		}
+	}
+
+	@ConsoleCommand(description = "Export one or more clusters")
+	public void exportCluster(
+			@ConsoleParameter(name = "clusters", description = "Cluster list separated by comma") final String iClusters,
+			@ConsoleParameter(name = "output-file", description = "Output file path") final String iOutputFilePath) throws IOException {
+		out.println("Exporting clusters '" + iClusters + "' to: " + iOutputFilePath + "...");
+
+		String[] clusters = iClusters.split(",");
+
+		try {
+			new OConsoleDatabaseExport(currentDatabase, iOutputFilePath, this).exportClusters(clusters, 0).close();
+			out.println();
+		} catch (ODatabaseExportException e) {
+			out.println("ERROR: " + e.toString());
+		}
+	}
+
+	@ConsoleCommand(description = "Import documents")
+	public void importDocuments(@ConsoleParameter(name = "input-file", description = "Input file path") final String iInputFilePath,
+			@ConsoleParameter(name = "mode", description = "Mode between { array }") final String iMode,
+			@ConsoleParameter(name = "cluster-type", description = "Cluster type between { logical, physical }") final String iClusterType)
+			throws IOException {
+		out.print("\nImporting documents from file '" + iInputFilePath + "' using the mode '" + iMode + "'...");
+
+		try {
+			new OConsoleDatabaseImport(currentDatabase, iInputFilePath, this).importRecords(iMode, iClusterType);
+			out.println();
 		} catch (ODatabaseExportException e) {
 			out.println("ERROR: " + e.toString());
 		}

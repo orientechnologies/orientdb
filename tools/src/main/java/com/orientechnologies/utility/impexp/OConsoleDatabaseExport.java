@@ -17,7 +17,6 @@ package com.orientechnologies.utility.impexp;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
@@ -34,6 +33,7 @@ import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.utility.console.OCommandListener;
 
 public class OConsoleDatabaseExport {
@@ -42,33 +42,26 @@ public class OConsoleDatabaseExport {
 	private OJSONWriter					writer;
 	private OCommandListener		listener;
 
-	private static final String	ATTRIBUTE_TYPE		= "_type";
-	private static final String	ATTRIBUTE_VERSION	= "_version";
-	private static final String	ATTRIBUTE_RECID		= "_recid";
+	private static final String	ATTRIBUTE_TYPE	= "_type";
 
-	public OConsoleDatabaseExport(final ODatabaseDocument database, final String iFileName, final OCommandListener iListener) {
+	public OConsoleDatabaseExport(final ODatabaseDocument database, final String iFileName, final OCommandListener iListener)
+			throws IOException {
 		this.database = database;
 		this.fileName = iFileName;
 		listener = iListener;
+
+		writer = new OJSONWriter(new FileWriter(fileName));
+		writer.beginObject();
+
+		database.declareIntent(new OIntentMassiveRead());
 	}
 
-	public void exportDatabase() {
-		writer = null;
+	public OConsoleDatabaseExport exportDatabase() {
 		try {
-			writer = new OJSONWriter(new FileWriter(fileName));
-
-			writer.beginObject();
-
-			database.declareIntent(new OIntentMassiveRead());
-
 			exportInfo();
 			exportDictionary();
 			exportSchema();
-			exportClusters();
-
-			database.declareIntent(new OIntentDefault());
-
-			writer.endObject();
+			exportAllClusters();
 
 			listener.onMessage("\nExport of database completed.");
 
@@ -76,12 +69,59 @@ public class OConsoleDatabaseExport {
 		} catch (Exception e) {
 			throw new ODatabaseExportException("Error on exporting database '" + database.getName() + " to: " + fileName, e);
 		} finally {
-			if (writer != null)
-				try {
-					writer.close();
-				} catch (IOException e) {
-				}
+			close();
 		}
+
+		return this;
+	}
+
+	public OConsoleDatabaseExport exportClusters(final String[] iClusters, final int iLevel) throws IOException {
+		for (String clusterName : iClusters) {
+			long recordTot = database.countClusterElements(clusterName);
+			listener.onMessage("\n- Exporting cluster '" + clusterName + "' (records=" + recordTot + ") -> ");
+
+			writer.beginObject(iLevel, true, "cluster");
+			writer.writeAttribute(iLevel + 1, true, "name", clusterName);
+			writer.writeAttribute(0, false, "id", database.getClusterIdByName(clusterName));
+
+			if (recordTot > 0) {
+				writer.beginCollection(iLevel + 1, true, "records");
+
+				long recordNum = 0;
+				for (ORecord<?> rec : database.browseCluster(clusterName))
+					exportRecord(recordTot, recordNum, rec);
+
+				writer.endCollection(iLevel + 1, true);
+			}
+
+			listener.onMessage("OK");
+
+			writer.endObject(iLevel, true);
+		}
+		return this;
+	}
+
+	public void close() {
+		database.declareIntent(new OIntentDefault());
+
+		if (writer == null)
+			return;
+
+		try {
+			writer.endObject();
+			writer.close();
+			writer = null;
+		} catch (IOException e) {
+		}
+	}
+
+	private void exportAllClusters() throws IOException {
+		listener.onMessage("\nExporting clusters...");
+
+		writer.beginObject(1, true, "clusters");
+		exportClusters(database.getClusterNames().toArray(new String[database.getClusterNames().size()]), 2);
+		writer.endObject(1, true);
+
 	}
 
 	private void exportInfo() throws IOException {
@@ -159,43 +199,13 @@ public class OConsoleDatabaseExport {
 		listener.onMessage("OK");
 	}
 
-	private void exportClusters() throws IOException {
-		listener.onMessage("\nExporting clusters...");
-
-		writer.beginObject(1, true, "clusters");
-		Collection<String> clusterNames = database.getClusterNames();
-		for (String clusterName : clusterNames) {
-			long recordTot = database.countClusterElements(clusterName);
-			listener.onMessage("\n- Exporting cluster '" + clusterName + "' (records=" + recordTot + ") -> ");
-
-			writer.beginObject(2, true, "cluster");
-			writer.writeAttribute(3, true, "name", clusterName);
-			writer.writeAttribute(0, false, "id", database.getClusterIdByName(clusterName));
-
-			if (recordTot > 0) {
-				writer.beginCollection(3, true, "records");
-
-				long recordNum = 0;
-				for (ORecord<?> rec : database.browseCluster(clusterName))
-					exportRecord(recordTot, recordNum, rec);
-
-				writer.endCollection(3, true);
-			}
-
-			listener.onMessage("OK");
-
-			writer.endObject(2, true);
-		}
-		writer.endObject(1, true);
-	}
-
 	private void exportRecord(long recordTot, long recordNum, ORecord<?> rec) throws IOException {
 		if (rec == null)
 			return;
 
 		writer.beginObject(4, true, null);
-		writer.writeAttribute(0, false, ATTRIBUTE_RECID, rec.getIdentity());
-		writer.writeAttribute(0, false, ATTRIBUTE_VERSION, rec.getVersion());
+		writer.writeAttribute(0, false, ORecordSerializerJSON.ATTRIBUTE_ID, rec.getIdentity());
+		writer.writeAttribute(0, false, ORecordSerializerJSON.ATTRIBUTE_VERSION, rec.getVersion());
 
 		if (rec.getIdentity().isValid())
 			rec.load();

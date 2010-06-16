@@ -22,12 +22,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandToParse;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.query.OQueryHelper;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
@@ -263,6 +265,7 @@ public class OSQLFilter extends OCommandToParse {
 				// QUOTED STRING: GET UNTIL THE END OF QUOTING
 				stringBeginCharacter = c;
 			} else if (stringBeginCharacter != ' ') {
+				// INSIDE TEXT
 				if (c == stringBeginCharacter) {
 					stringBeginCharacter = ' ';
 
@@ -276,9 +279,9 @@ public class OSQLFilter extends OCommandToParse {
 				openBraces++;
 			} else if (c == ')') {
 				openBraces--;
-			} else if (c == '[') {
+			} else if (c == OStringSerializerHelper.COLLECTION_BEGIN) {
 				openBraket++;
-			} else if (c == ']') {
+			} else if (c == OStringSerializerHelper.COLLECTION_END) {
 				openBraket--;
 				if (openBraket == 0 && openBraces == 0) {
 					currentPos++;
@@ -304,7 +307,7 @@ public class OSQLFilter extends OCommandToParse {
 	}
 
 	private boolean jumpWhiteSpaces() {
-		currentPos = OSQLHelper.jumpWhiteSpaces(text, currentPos);
+		currentPos = OStringParser.jumpWhiteSpaces(text, currentPos);
 		return currentPos < text.length();
 	}
 
