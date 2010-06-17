@@ -134,7 +134,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				// SCHEMA AWARE
 				final ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) iRecord;
 				for (String fieldName : record.fieldNames()) {
-					json.writeAttribute(identLevel + 1, true, fieldName, record.field(fieldName));
+					json.writeAttribute(identLevel + 1, true, fieldName, encode(record.field(fieldName)));
 				}
 			} else if (iRecord instanceof ORecordStringable) {
 
@@ -151,6 +151,14 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 		} catch (IOException e) {
 			throw new OSerializationException("Error on marshalling of record to JSON", e);
 		}
+	}
+
+	private Object encode(final Object iValue) {
+		if (iValue instanceof String) {
+			final String encoded = ((String) iValue).replace('"', '\'');
+			return encoded;
+		} else
+			return iValue;
 	}
 
 	@Override
