@@ -34,12 +34,12 @@ import com.orientechnologies.orient.core.security.OSecurityManager;
  */
 public class OUser extends ODocument {
 	public enum STATUSES {
-		ACTIVE, SUSPENDED
+		SUSPENDED, ACTIVE
 	}
 
 	protected String			name;
 	protected String			password;
-	protected STATUSES		status;
+	protected STATUSES		accountStatus;
 	protected Set<ORole>	roles	= new HashSet<ORole>();
 
 	/**
@@ -55,7 +55,7 @@ public class OUser extends ODocument {
 	public OUser(final ODatabaseRecord<?> iDatabase, final String iName) {
 		this(iDatabase);
 		name = iName;
-		status = STATUSES.ACTIVE;
+		accountStatus = STATUSES.ACTIVE;
 	}
 
 	/**
@@ -121,7 +121,7 @@ public class OUser extends ODocument {
 		return false;
 	}
 
-	public boolean checkPassword(String iPassword) {
+	public boolean checkPassword(final String iPassword) {
 		return OSecurityManager.instance().check(iPassword, password);
 	}
 
@@ -175,7 +175,7 @@ public class OUser extends ODocument {
 
 		name = iSource.field("name");
 		password = iSource.field("password");
-		status = STATUSES.values()[((Long) iSource.field("status")).intValue()];
+		accountStatus = STATUSES.values()[((Long) iSource.field("status")).intValue()];
 
 		roles = new HashSet<ORole>();
 		Set<ODocument> loadedRoles = iSource.field("roles");
@@ -190,7 +190,7 @@ public class OUser extends ODocument {
 	public byte[] toStream() {
 		field("name", name);
 		field("password", password);
-		field("status", status.ordinal());
+		field("status", accountStatus.ordinal());
 		field("roles", roles, OType.LINKSET);
 		return super.toStream();
 	}
@@ -198,5 +198,13 @@ public class OUser extends ODocument {
 	@Override
 	public String toString() {
 		return name;
+	}
+
+	public STATUSES getAccountStatus() {
+		return accountStatus;
+	}
+
+	public void setAccountStatus(STATUSES accountStatus) {
+		this.accountStatus = accountStatus;
 	}
 }

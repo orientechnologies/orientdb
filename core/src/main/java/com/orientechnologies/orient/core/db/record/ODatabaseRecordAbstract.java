@@ -45,6 +45,7 @@ import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityReso
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.security.OUserTrigger;
+import com.orientechnologies.orient.core.metadata.security.OUser.STATUSES;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -101,6 +102,9 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 				user = getMetadata().getSecurity().getUser(iUserName);
 				if (user == null)
 					throw new OSecurityAccessException(this.getName(), "User '" + iUserName + "' was not found in database: " + getName());
+
+				if (user.getAccountStatus() != STATUSES.ACTIVE)
+					throw new OSecurityAccessException(this.getName(), "User '" + iUserName + "' is not active");
 
 				if (!user.checkPassword(iUserPassword)) {
 					// WAIT A BIT TO AVOID BRUTE FORCE
