@@ -168,37 +168,37 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 
 	@ConsoleCommand(splitInWords = false, description = "Insert a new record into the database")
 	public void insert(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-		sqlCommand("insert", iCommandText, "Inserted record in %f sec(s).");
+		sqlCommand("insert", iCommandText, "\nInserted record in %f sec(s).\n");
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Update records in the database")
 	public void update(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-		sqlCommand("update", iCommandText, "Updated %d record(s) in %f sec(s).");
+		sqlCommand("update", iCommandText, "\nUpdated %d record(s) in %f sec(s).\n");
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Delete records from the database")
 	public void delete(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-		sqlCommand("delete", iCommandText, "Delete %d record(s) in %f sec(s).");
+		sqlCommand("delete", iCommandText, "\nDelete %d record(s) in %f sec(s).\n");
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Grant privileges to a role")
 	public void grant(@ConsoleParameter(name = "text", description = "Grant command") String iCommandText) {
-		sqlCommand("grant", iCommandText, "Privilege granted to the role: %s");
+		sqlCommand("grant", iCommandText, "\nPrivilege granted to the role: %s\n");
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Revoke privileges to a role")
 	public void revoke(@ConsoleParameter(name = "text", description = "Revoke command") String iCommandText) {
-		sqlCommand("revoke", iCommandText, "Privilege revoked to the role: %s");
+		sqlCommand("revoke", iCommandText, "\nPrivilege revoked to the role: %s\n");
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Create a link from a JOIN")
 	public void createLink(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-		sqlCommand("create", iCommandText, "Created %d link(s) in %f sec(s).");
+		sqlCommand("create", iCommandText, "\nCreated %d link(s) in %f sec(s).\n");
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Create a property")
 	public void createProperty(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-		sqlCommand("create", iCommandText, "Property created successfully with id=%d");
+		sqlCommand("create", iCommandText, "\nProperty created successfully with id=%d\n");
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Execute a query against the database and display the results")
@@ -274,7 +274,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 			@ConsoleParameter(name = "class.name", description = "Class and property names: <class>.<property>. Example: Account.name") String iTarget,
 			@ConsoleParameter(name = "unique", description = "Accepts only unique values. true for unique, otherwise false") String iUnique)
 			throws IOException {
-		out.println("Creating index on property [" + iTarget + "]...");
+		out.println("\nCreating index on property [" + iTarget + "]...");
 
 		String[] parts = iTarget.split("\\.");
 

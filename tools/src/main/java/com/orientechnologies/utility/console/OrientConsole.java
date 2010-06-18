@@ -42,6 +42,11 @@ public abstract class OrientConsole extends ConsoleApplication {
 	}
 
 	@Override
+	protected void onAfter() {
+		out.println();
+	}
+
+	@Override
 	public void help() {
 		super.help();
 	}
