@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAwareAbstract;
@@ -190,6 +191,16 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		sqlCommand("revoke", iCommandText, "Privilege revoked to the role: %s");
 	}
 
+	@ConsoleCommand(splitInWords = false, description = "Create a link from a JOIN")
+	public void createLink(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
+		sqlCommand("create", iCommandText, "Created %d link(s) in %f sec(s).");
+	}
+
+	@ConsoleCommand(splitInWords = false, description = "Create a property")
+	public void createProperty(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
+		sqlCommand("create", iCommandText, "Property created successfully with id=%d");
+	}
+
 	@ConsoleCommand(splitInWords = false, description = "Execute a query against the database and display the results")
 	public void select(@ConsoleParameter(name = "query-text", description = "The query to execute") String iQueryText) {
 		checkCurrentDatabase();
@@ -249,6 +260,37 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		Object result = new OCommandScript("Javascript", iScriptText).execute();
 
 		out.printf("Script executed in %f sec(s). Value returned is: %s", (float) (System.currentTimeMillis() - start) / 1000, result);
+	}
+
+	@ConsoleCommand(description = "Create an index on a property")
+	public void createIndex(
+			@ConsoleParameter(name = "class.name", description = "Class and property names: <class>.<property>. Example: Account.name") String iTarget)
+			throws IOException {
+		createIndex(iTarget, "true");
+	}
+
+	@ConsoleCommand(description = "Create an index on a property")
+	public void createIndex(
+			@ConsoleParameter(name = "class.name", description = "Class and property names: <class>.<property>. Example: Account.name") String iTarget,
+			@ConsoleParameter(name = "unique", description = "Accepts only unique values. true for unique, otherwise false") String iUnique)
+			throws IOException {
+		out.println("Creating index on property [" + iTarget + "]...");
+
+		String[] parts = iTarget.split("\\.");
+
+		OClass cls = currentDatabase.getMetadata().getSchema().getClass(parts[0]);
+		if (cls == null)
+			throw new IllegalArgumentException("Class '" + parts[0] + "' not found");
+
+		OProperty prop = cls.getProperty(parts[1]);
+		if (prop == null)
+			throw new IllegalArgumentException("Property '" + parts[1] + "' was not found in class '" + parts[0] + "'");
+
+		out.println("Creating index, please wait...");
+
+		prop.createIndex(iUnique.equalsIgnoreCase("true"));
+
+		out.println("\nIndex created succesfully");
 	}
 
 	@ConsoleCommand(description = "Browse all the records of a class")
