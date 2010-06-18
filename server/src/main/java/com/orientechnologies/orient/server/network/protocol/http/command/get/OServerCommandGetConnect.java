@@ -229,6 +229,7 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 				json.writeAttribute(4, true, "notNull", prop.isNotNull());
 				json.writeAttribute(4, true, "min", prop.getMin());
 				json.writeAttribute(4, true, "max", prop.getMax());
+				json.writeAttribute(4, true, "indexed", prop.isIndexed());
 				json.endObject(3, true);
 			}
 			json.endCollection(1, true);

@@ -194,7 +194,7 @@ function showDatabaseInfo(database) {
 			$('#classProperties'),
 			"Properties",
 			[ 'id', 'name', 'type', 'linkedType', 'linkedClass', 'mandatory',
-					'notNull', 'min', 'max' ],
+					'notNull', 'min', 'max', 'indexed' ],
 			[
 					{
 						name : 'id',
@@ -270,6 +270,15 @@ function showDatabaseInfo(database) {
 						name : 'max',
 						index : 'max',
 						width : 120,
+						editable : true
+					}, {
+						name : 'indexed',
+						index : 'indexed',
+						width : 80,
+						edittype : "select",
+						editoptions : {
+							value : ":;Unique:Unique;Not unique:Not Unique"
+						},
 						editable : true
 					} ], null, {
 				editurl : getStudioURL('classProperties'),

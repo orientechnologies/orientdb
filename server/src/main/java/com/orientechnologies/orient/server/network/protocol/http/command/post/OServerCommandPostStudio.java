@@ -124,6 +124,8 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 					prop.setMin(fields.get("min"));
 				if (fields.get("max") != null)
 					prop.setMax(fields.get("max"));
+				if (fields.get("indexed") != null)
+					prop.createIndex(fields.get("indexed").equals("Unique"));
 
 				db.getMetadata().getSchema().save();
 
