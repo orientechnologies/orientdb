@@ -52,6 +52,7 @@ public class OSQLHelper {
 	public static final String			NAME							= "sql";
 
 	public static final String			VALUE_NOT_PARSED	= "_NOT_PARSED_";
+	public static final String			NOT_NULL					= "_NOT_NULL_";
 
 	public static OQueryOperator[]	OPERATORS					= { new OQueryOperatorAnd(), new OQueryOperatorOr(), new OQueryOperatorNot(),
 			new OQueryOperatorEquals(), new OQueryOperatorMinorEquals(), new OQueryOperatorMinor(), new OQueryOperatorMajorEquals(),
@@ -71,7 +72,8 @@ public class OSQLHelper {
 		if (ioCurrentPosition >= iText.length())
 			return -1;
 
-		final String word = OStringParser.getWordFromString(iForceUpperCase ? iTextUpperCase : iText, ioCurrentPosition, iSeparatorChars);
+		final String word = OStringParser.getWordFromString(iForceUpperCase ? iTextUpperCase : iText, ioCurrentPosition,
+				iSeparatorChars);
 
 		if (word != null && word.length() > 0) {
 			ioWord.append(word);
@@ -130,6 +132,9 @@ public class OSQLHelper {
 			if (upperCase.equals("NULL"))
 				// NULL
 				fieldValue = null;
+			else if (upperCase.equals("NOT NULL"))
+				// NULL
+				fieldValue = NOT_NULL;
 			else if (upperCase.equals("TRUE"))
 				// BOOLEAN, TRUE
 				fieldValue = Boolean.TRUE;
