@@ -149,7 +149,7 @@ public class OConsoleDatabaseImport {
 					}
 				} finally {
 					listener.onMessage("Done. Imported " + importedRecordsClass + " record(s) in "
-							+ (System.currentTimeMillis() - beginChronoClass) + "ms. " + notImportedRecordsClass + " record(s) was not imported");
+							+ (System.currentTimeMillis() - beginChronoClass) + "ms. " + notImportedRecordsClass + " error(s)");
 					importedRecordsTotal += importedRecordsClass;
 					notImportedRecordsTotal += notImportedRecordsClass;
 				}
@@ -161,7 +161,7 @@ public class OConsoleDatabaseImport {
 			}
 		} finally {
 			listener.onMessage("\n\nImported " + importedRecordsTotal + " document(s) in "
-					+ (System.currentTimeMillis() - beginChronoTotal) + "ms. " + notImportedRecordsTotal + " record(s) was not imported\n");
+					+ (System.currentTimeMillis() - beginChronoTotal) + "ms. " + notImportedRecordsTotal + " error(s)\n");
 		}
 
 		return this;
