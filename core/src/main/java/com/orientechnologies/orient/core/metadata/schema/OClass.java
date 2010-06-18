@@ -135,11 +135,13 @@ public class OClass extends OSchemaRecord {
 	}
 
 	public void removeProperty(final String iPropertyName) {
-		OProperty prop = properties.remove(iPropertyName);
+		OProperty prop = properties.remove(iPropertyName.toLowerCase());
 
 		if (prop == null)
 			throw new OSchemaException("Property '" + iPropertyName + "' not found in class " + name + "'");
 
+		prop.removeIndex();
+		
 		fixedSize -= prop.getType().size;
 		setDirty();
 	}
