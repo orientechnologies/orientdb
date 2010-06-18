@@ -45,6 +45,12 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract {
 				delegate = new OCommandExecutorSQLGrant().parse(iCommand);
 			else if (textUpperCase.startsWith(OCommandExecutorSQLRevoke.KEYWORD_REVOKE))
 				delegate = new OCommandExecutorSQLRevoke().parse(iCommand);
+			else if (textUpperCase.startsWith(OCommandExecutorSQLCreateLink.KEYWORD_CREATE + " "
+					+ OCommandExecutorSQLCreateLink.KEYWORD_LINK))
+				delegate = new OCommandExecutorSQLCreateLink().parse(iCommand);
+			else if (textUpperCase.startsWith(OCommandExecutorSQLCreateProperty.KEYWORD_CREATE + " "
+					+ OCommandExecutorSQLCreateProperty.KEYWORD_PROPERTY))
+				delegate = new OCommandExecutorSQLCreateProperty().parse(iCommand);
 			else
 				throw new IllegalArgumentException("Can't find a command executor for the command request: " + iCommand);
 		} else
