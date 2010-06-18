@@ -139,28 +139,28 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 					// SEARCH THE DESTINATION RECORD
 					if (value instanceof String) {
 						if (((String) value).length() == 0)
-							continue;
+							value = null;
+						else {
+							value = "'" + value + "'";
+							result = database.command(new OSQLSynchQuery<ODocument>(cmd + value)).execute();
 
-						value = "'" + value + "'";
+							if (result == null || result.size() == 0)
+								// throw new OCommandExecutionException("Can't create link because the destination record was not found in class '"
+								// + destClass.getName() + "' and with the field '" + destField + "' equals to " + value);
+								value = null;
+							else if (result.size() > 1)
+								throw new OCommandExecutionException("Can't create link because multiple records was found in class '"
+										+ destClass.getName() + "' with value " + value + " in field '" + destField + "'");
+							else
+								value = result.get(0);
+						}
+
+						// SET THE REFERENCE
+						doc.field(sourceField, value);
+						doc.save();
+
+						total++;
 					}
-
-					result = database.command(new OSQLSynchQuery<ODocument>(cmd + value)).execute();
-
-					if (result == null || result.size() == 0)
-						// throw new OCommandExecutionException("Can't create link because the destination record was not found in class '"
-						// + destClass.getName() + "' and with the field '" + destField + "' equals to " + value);
-						value = null;
-					else if (result.size() > 1)
-						throw new OCommandExecutionException("Can't create link because multiple records was found in class '"
-								+ destClass.getName() + "' with value " + value + " in field '" + destField + "'");
-					else
-						value = result.get(0);
-
-					// SET THE REFERENCE
-					doc.field(sourceField, value);
-					doc.save();
-
-					total++;
 				}
 			}
 		}
