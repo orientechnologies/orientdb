@@ -230,8 +230,16 @@ public class OSQLFilter extends OCommandToParse {
 
 			result = new OSQLFilterItemFieldAny(this, words[1]);
 
-		} else
+		} else {
+			if (words[0].equals("NOT")) {
+				// GET THE NEXT VALUE
+				String[] nextWord = nextValue(true);
+				if (nextWord != null && nextWord.length == 2)
+					words[1] = words[1] + " " + nextWord[1];
+			}
+
 			result = OSQLHelper.parseValue(database, this, words[1]);
+		}
 
 		return result;
 	}
