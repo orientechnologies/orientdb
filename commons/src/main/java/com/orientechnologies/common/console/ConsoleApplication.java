@@ -89,7 +89,7 @@ public class ConsoleApplication {
 
 	protected boolean execute(String iCommand) {
 		iCommand = iCommand.trim();
-		String[] commandWords = OStringParser.getWords(iCommand, wordSeparator);
+		final String[] commandWords = OStringParser.getWords(iCommand, wordSeparator);
 
 		for (String cmd : helpCommands)
 			if (cmd.equals(commandWords[0])) {
@@ -104,6 +104,9 @@ public class ConsoleApplication {
 
 		String methodName;
 		ConsoleCommand ann;
+		Method lastMethodInvoked = null;
+		StringBuilder lastCommandInvoked = new StringBuilder();
+
 		for (Method m : getConsoleMethods()) {
 			methodName = m.getName();
 			ann = m.getAnnotation(ConsoleCommand.class);
@@ -155,16 +158,15 @@ public class ConsoleApplication {
 				m.invoke(this, methodArgs);
 
 			} catch (IllegalArgumentException e) {
-
+				lastMethodInvoked = m;
 				// GET THE COMMAND NAME
-				StringBuilder cmd = new StringBuilder();
+				lastCommandInvoked.setLength(0);
 				for (int i = 0; i < commandWordCount; ++i) {
-					if (cmd.length() > 0)
-						cmd.append(" ");
-					cmd.append(commandWords[i]);
+					if (lastCommandInvoked.length() > 0)
+						lastCommandInvoked.append(" ");
+					lastCommandInvoked.append(commandWords[i]);
 				}
-
-				syntaxError(cmd.toString(), m);
+				continue;
 			} catch (Exception e) {
 				// e.printStackTrace();
 				// err.println();
@@ -175,6 +177,9 @@ public class ConsoleApplication {
 			}
 			return true;
 		}
+
+		if (lastMethodInvoked != null)
+			syntaxError(lastCommandInvoked.toString(), lastMethodInvoked);
 
 		out.println("!Unrecognized command: " + iCommand);
 		return true;
@@ -213,9 +218,9 @@ public class ConsoleApplication {
 	}
 
 	protected List<Method> getConsoleMethods() {
-		Method[] methods = getClass().getDeclaredMethods();
+		final Method[] methods = getClass().getDeclaredMethods();
 
-		List<Method> consoleMethods = new ArrayList<Method>();
+		final List<Method> consoleMethods = new ArrayList<Method>();
 
 		for (Method m : methods) {
 			if (Modifier.isAbstract(m.getModifiers()) || Modifier.isStatic(m.getModifiers()) || !Modifier.isPublic(m.getModifiers()))
