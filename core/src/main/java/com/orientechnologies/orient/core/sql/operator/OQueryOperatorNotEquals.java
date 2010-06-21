@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
 /**
@@ -32,7 +31,6 @@ public class OQueryOperatorNotEquals extends OQueryOperatorEqualityNotNulls {
 
 	@Override
 	protected boolean evaluateExpression(OSQLFilterCondition iCondition, final Object iLeft, final Object iRight) {
-		return !iLeft.equals(OType.convert(iRight, iLeft.getClass()));
+		return !OQueryOperatorEquals.equals(iLeft, iRight);
 	}
-
 }

@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNot;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNotEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorOr;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorTraverse;
 
@@ -54,10 +55,11 @@ public class OSQLHelper {
 	public static final String			VALUE_NOT_PARSED	= "_NOT_PARSED_";
 	public static final String			NOT_NULL					= "_NOT_NULL_";
 
-	public static OQueryOperator[]	OPERATORS					= { new OQueryOperatorAnd(), new OQueryOperatorOr(), new OQueryOperatorNot(),
-			new OQueryOperatorEquals(), new OQueryOperatorMinorEquals(), new OQueryOperatorMinor(), new OQueryOperatorMajorEquals(),
-			new OQueryOperatorContainsAll(), new OQueryOperatorMajor(), new OQueryOperatorLike(), new OQueryOperatorIs(),
-			new OQueryOperatorIn(), new OQueryOperatorContains(), new OQueryOperatorTraverse() };
+	public static OQueryOperator[]	OPERATORS					= { new OQueryOperatorAnd(), new OQueryOperatorOr(),
+			new OQueryOperatorNotEquals(), new OQueryOperatorNot(), new OQueryOperatorEquals(), new OQueryOperatorMinorEquals(),
+			new OQueryOperatorMinor(), new OQueryOperatorMajorEquals(), new OQueryOperatorContainsAll(), new OQueryOperatorMajor(),
+			new OQueryOperatorLike(), new OQueryOperatorIs(), new OQueryOperatorIn(), new OQueryOperatorContains(),
+			new OQueryOperatorTraverse()									};
 
 	public static int nextWord(final String iText, final String iTextUpperCase, int ioCurrentPosition, final StringBuilder ioWord,
 			final boolean iForceUpperCase) {

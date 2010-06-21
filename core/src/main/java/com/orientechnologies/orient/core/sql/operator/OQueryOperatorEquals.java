@@ -15,7 +15,9 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
 /**
@@ -32,7 +34,18 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
 
 	@Override
 	protected boolean evaluateExpression(OSQLFilterCondition iCondition, final Object iLeft, final Object iRight) {
-		return iLeft.equals(OType.convert(iRight, iLeft.getClass()));
+		return equals(iLeft, iRight);
 	}
 
+	public static boolean equals(final Object iLeft, final Object iRight) {
+		if (iLeft instanceof ORecord<?> && iRight instanceof ORID)
+			// RECORD & ORID
+			return ((ORecord<?>) iLeft).getIdentity().equals(iRight);
+		else if (iRight instanceof ORecord<?> && iLeft instanceof ORID)
+			// ORID && RECORD
+			return ((ORecord<?>) iRight).getIdentity().equals(iLeft);
+		else
+			// ALL OTHER CASES
+			return iLeft.equals(OType.convert(iRight, iLeft.getClass()));
+	}
 }

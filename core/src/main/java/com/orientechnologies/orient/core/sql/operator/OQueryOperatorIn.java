@@ -37,14 +37,14 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
 		if (iLeft instanceof Collection<?>) {
 			Collection<Object> collection = (Collection<Object>) iLeft;
 			for (Object o : collection) {
-				if (iRight.equals(o))
+				if (OQueryOperatorEquals.equals(iRight, o))
 					return true;
 			}
 		} else if (iRight instanceof Collection<?>) {
 
 			Collection<Object> collection = (Collection<Object>) iRight;
 			for (Object o : collection) {
-				if (iLeft.equals(o))
+				if (OQueryOperatorEquals.equals(iLeft, o))
 					return true;
 			}
 		}

@@ -297,7 +297,7 @@ public class OSQLFilter extends OCommandToParse {
 				}
 			} else if (c == ' ' && openBraces == 0) {
 				break;
-			} else if (!Character.isLetter(c) && !Character.isDigit(c) && c != '.' && c != '-' && c != '+' && openBraces == 0
+			} else if (!Character.isLetter(c) && !Character.isDigit(c) && c != '.' && c != ':' && c != '-' && c != '+' && openBraces == 0
 					&& openBraket == 0) {
 				if (iAdvanceWhenNotFound)
 					currentPos++;
