@@ -58,8 +58,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			if (iValue.length() == 0)
 				return null;
 
-			// REMOVE BEGIN & END COLLECTIONS CHARACTERS
-			String value = iValue.substring(1, iValue.length() - 1);
+			// REMOVE BEGIN & END COLLECTIONS CHARACTERS IF IT'S A COLLECTION
+			String value = iValue.startsWith("[") ? iValue.substring(1, iValue.length() - 1) : iValue;
 
 			Collection<Object> coll = iType == OType.EMBEDDEDLIST ? new ArrayList<Object>() : new HashSet<Object>();
 
@@ -98,8 +98,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			if (iValue.length() == 0)
 				return null;
 
-			// REMOVE BEGIN & END COLLECTIONS CHARACTERS
-			String value = iValue.substring(1, iValue.length() - 1);
+			// REMOVE BEGIN & END COLLECTIONS CHARACTERS IF IT'S A COLLECTION
+			String value = iValue.startsWith("[") ? iValue.substring(1, iValue.length() - 1) : iValue;
 
 			Collection<Object> coll = iType == OType.LINKLIST ? new ArrayList<Object>() : new HashSet<Object>();
 
