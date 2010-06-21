@@ -259,7 +259,7 @@ public class OProperty extends OSchemaRecord {
 
 		final int[] clusterIds = owner.getClusterIds();
 		for (int clusterId : clusterIds)
-			for (Object record : database.browseCluster(database.getClusterNameById(clusterId)).setReuseSameRecord(true)) {
+			for (Object record : database.browseCluster(database.getClusterNameById(clusterId))) {
 				if (record instanceof ODocument) {
 					document = (ODocument) record;
 					fieldValue = document.field(name);
