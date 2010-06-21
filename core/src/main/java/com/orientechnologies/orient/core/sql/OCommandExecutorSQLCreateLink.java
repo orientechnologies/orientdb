@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -47,6 +48,8 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 	private String							destField;
 	private String							sourceClassName;
 	private String							sourceField;
+	private String							linkName;
+	private String							linkType;
 
 	public OCommandExecutorSQLCreateLink parse(final OCommandRequestInternal iRequest) {
 		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_CREATE);
@@ -64,9 +67,21 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 		if (pos == -1 || !word.toString().equals(KEYWORD_LINK))
 			throw new OCommandSQLParsingException("Keyword " + KEYWORD_LINK + " not found", text, oldPos);
 
-		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
-		if (pos == -1 || !word.toString().equals(KEYWORD_FROM))
+		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
+		if (pos == -1)
 			throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found", text, oldPos);
+
+		if (!word.toString().equalsIgnoreCase(KEYWORD_FROM)) {
+			// GET THE LINK NAME
+			linkName = word.toString();
+
+			if (linkName.contains(" "))
+				throw new OCommandSQLParsingException("Link name '" + linkName + "' contains not valid characters", text, oldPos);
+
+			pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+			if (pos == -1 || !word.toString().equals(KEYWORD_FROM))
+				throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found", text, oldPos);
+		}
 
 		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
 		if (pos == -1)
@@ -98,6 +113,13 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 			throw new OCommandSQLParsingException("Class not found", text, pos);
 		destField = parts[1];
 
+		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+		if (pos == -1)
+			return this;
+
+		// GET THE LINK TYPE
+		linkType = word.toString();
+
 		return this;
 	}
 
@@ -124,7 +146,16 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 		Object value;
 		String cmd = "select from " + destClassName + " where " + destField + " = ";
 		List<ODocument> result;
+		ODocument target;
+		Object oldValue;
 		long total = 0;
+
+		if (linkName == null)
+			// NO LINK NAME EXPRESSED: OVERWRITE THE SOURCE FIELD
+			linkName = sourceField;
+
+		boolean inverse = linkType != null && linkType.equalsIgnoreCase("inverse");
+		boolean multipleRelationship = false;
 
 		// BROWSE ALL THE RECORDS OF THE SOURCE CLASS
 		for (ODocument doc : db.browseClass(sourceClass.getName())) {
@@ -138,6 +169,8 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 				} else {
 					// SEARCH THE DESTINATION RECORD
 					if (value instanceof String) {
+						target = null;
+
 						if (((String) value).length() == 0)
 							value = null;
 						else {
@@ -151,13 +184,42 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 							else if (result.size() > 1)
 								throw new OCommandExecutionException("Can't create link because multiple records was found in class '"
 										+ destClass.getName() + "' with value " + value + " in field '" + destField + "'");
-							else
-								value = result.get(0);
+							else {
+								target = result.get(0);
+								value = target;
+							}
 						}
 
-						// SET THE REFERENCE
-						doc.field(sourceField, value);
-						doc.save();
+						if (target != null && inverse) {
+							// INVERSE RELATIONSHIP
+							oldValue = target.field(linkName);
+
+							if (oldValue != null) {
+								if (!multipleRelationship)
+									multipleRelationship = true;
+
+								Collection<ODocument> coll;
+								if (oldValue instanceof Collection) {
+									// ADD IT IN THE EXISTENT COLLECTION
+									coll = (Collection<ODocument>) oldValue;
+									target.setDirty();
+								} else {
+									// CREATE A NEW COLLECTION FOR BOTH
+									coll = new ArrayList<ODocument>(2);
+									target.field(linkName, coll);
+									coll.add((ODocument) oldValue);
+								}
+								coll.add(doc);
+							} else {
+								target.field(linkName, doc);
+							}
+							target.save();
+
+						} else {
+							// SET THE REFERENCE
+							doc.field(linkName, value);
+							doc.save();
+						}
 
 						total++;
 					}
@@ -166,14 +228,27 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 		}
 
 		if (total > 0) {
-			// REMOVE THE OLD PROPERTY IF ANY
-			OProperty prop = sourceClass.getProperty(sourceField);
-			if (prop != null)
-				sourceClass.removeProperty(sourceField);
+			if (inverse) {
+				// REMOVE THE OLD PROPERTY IF ANY
+				OProperty prop = destClass.getProperty(linkName);
+				if (prop != null)
+					destClass.removeProperty(linkName);
 
-			// CREATE THE PROPERTY
-			sourceClass.createProperty(sourceField, OType.LINK, destClass);
-			database.getMetadata().getSchema().save();
+				// CREATE THE PROPERTY
+				destClass.createProperty(linkName, multipleRelationship ? OType.LINKLIST : OType.LINK, sourceClass);
+				database.getMetadata().getSchema().save();
+
+			} else {
+
+				// REMOVE THE OLD PROPERTY IF ANY
+				OProperty prop = sourceClass.getProperty(linkName);
+				if (prop != null)
+					sourceClass.removeProperty(linkName);
+
+				// CREATE THE PROPERTY
+				sourceClass.createProperty(linkName, OType.LINK, destClass);
+				database.getMetadata().getSchema().save();
+			}
 		}
 
 		return total;
