@@ -378,7 +378,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				data.commandInfo = "Dictionary put";
 
 				String key = channel.readString();
-				ORecordInternal<?> value = ORecordFactory.getRecord(channel.readByte());
+				ORecordInternal<?> value = ORecordFactory.newInstance(channel.readByte());
 
 				final ORecordId rid = new ORecordId(channel.readString());
 				value.setIdentity(rid.clusterId, rid.clusterPosition);

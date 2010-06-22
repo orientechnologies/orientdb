@@ -915,7 +915,7 @@ public class OStorageRemote extends OStorageAbstract {
 		if (classId == OChannelBinaryProtocol.RECORD_NULL)
 			return null;
 
-		ORecordInternal<?> record = ORecordFactory.getRecord(network.readByte());
+		ORecordInternal<?> record = ORecordFactory.newInstance(network.readByte());
 
 		if (record instanceof ORecordSchemaAware<?>)
 			((ORecordSchemaAware<?>) record).fill(iDatabase, classId, network.readShort(), network.readLong(), network.readInt())

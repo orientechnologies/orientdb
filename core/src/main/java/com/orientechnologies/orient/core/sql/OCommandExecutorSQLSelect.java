@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -44,7 +43,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	protected OSQLAsynchQuery<ORecordSchemaAware<?>>	request;
 	protected OSQLFilter															compiledFilter;
 	protected List<String>														projections			= new ArrayList<String>();
-	protected ORecordAbstract<?>											record;
 	private int																				resultCount;
 
 	/**
@@ -64,8 +62,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			return this;
 
 		compiledFilter = new OSQLFilter(iRequest.getDatabase(), text.substring(pos));
-
-		record = (ORecordAbstract<?>) database.newInstance();
 
 		return this;
 	}
@@ -87,9 +83,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 			database.checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, cls.getName());
 
-			if (record instanceof ORecordSchemaAware<?>)
-				((ORecordSchemaAware<?>) record).setClassName(cls.getName());
-
 			clusterIds = cls.getPolymorphicClusterIds();
 
 			// CHECK PERMISSION TO ACCESS TO ALL THE CONFIGURED CLUSTERS
@@ -97,7 +90,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, database.getClusterNameById(clusterId),
 						clusterId);
 
-			List<ORecordId> resultSet = searchForIndexes(cls);
+			final List<ORecordId> resultSet = searchForIndexes(cls);
 
 			if (resultSet.size() > 0) {
 				// FOUND USING INDEXES
@@ -132,7 +125,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	public boolean foreach(final ORecordInternal<?> iRecord) {
 		if (filter(iRecord)) {
 			resultCount++;
-			request.getResultListener().result(record.copy());
+			request.getResultListener().result(iRecord.copy());
 
 			if (request.getLimit() > -1 && resultCount == request.getLimit())
 				// BREAK THE EXECUTION
@@ -223,6 +216,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	}
 
 	private void scanClusters(final int[] clusterIds) {
-		((OStorageLocal) database.getStorage()).browse(database.getId(), clusterIds, this, record, false);
+		((OStorageLocal) database.getStorage()).browse(database.getId(), clusterIds, this, database.newInstance(), false);
 	}
 }

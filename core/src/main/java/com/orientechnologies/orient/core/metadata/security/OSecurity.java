@@ -18,9 +18,8 @@ package com.orientechnologies.orient.core.metadata.security;
 import java.util.List;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.query.nativ.ONativeSynchQuery;
-import com.orientechnologies.orient.core.query.nativ.OQueryContextNativeSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 /**
  * Manages users and roles.
@@ -28,7 +27,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Luca Garulli
  * 
  */
-@SuppressWarnings("unchecked")
 public class OSecurity {
 	private ODatabaseRecord<?>	database;
 
@@ -37,18 +35,11 @@ public class OSecurity {
 	}
 
 	public OUser getUser(final String iUserName) {
-		ODocument result = new ONativeSynchQuery<ODocument, OQueryContextNativeSchema<ODocument>>(
-				(ODatabaseRecord<ODocument>) database, OUser.class.getSimpleName(), new OQueryContextNativeSchema<ODocument>()) {
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "'"))
+				.execute();
 
-			@Override
-			public boolean filter(OQueryContextNativeSchema<ODocument> iRecord) {
-				return iRecord.field("name").eq(iUserName).go();
-			};
-
-		}.executeFirst();
-
-		if (result != null)
-			return new OUser(result);
+		if (result != null && result.size() > 0)
+			return new OUser(result.get(0));
 
 		return null;
 	}
@@ -66,18 +57,11 @@ public class OSecurity {
 	}
 
 	public ORole getRole(final String iRoleName) {
-		ODocument result = new ONativeSynchQuery<ODocument, OQueryContextNativeSchema<ODocument>>(
-				(ODatabaseRecord<ODocument>) database, ORole.class.getSimpleName(), new OQueryContextNativeSchema<ODocument>()) {
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from ORole where name = '" + iRoleName + "'"))
+				.execute();
 
-			@Override
-			public boolean filter(OQueryContextNativeSchema<ODocument> iRecord) {
-				return iRecord.field("name").eq(iRoleName).go();
-			};
-
-		}.executeFirst();
-
-		if (result != null)
-			return new ORole(result);
+		if (result != null && result.size() > 0)
+			return new ORole(result.get(0));
 
 		return null;
 	}
@@ -96,26 +80,10 @@ public class OSecurity {
 	}
 
 	public List<ODocument> getUsers() {
-		return new ONativeSynchQuery<ODocument, OQueryContextNativeSchema<ODocument>>((ODatabaseRecord<ODocument>) database,
-				OUser.class.getSimpleName(), new OQueryContextNativeSchema<ODocument>()) {
-
-			@Override
-			public boolean filter(OQueryContextNativeSchema<ODocument> iRecord) {
-				return true;
-			};
-
-		}.execute();
+		return database.command(new OSQLSynchQuery<ODocument>("select from OUser")).execute();
 	}
 
 	public List<ODocument> getRoles() {
-		return new ONativeSynchQuery<ODocument, OQueryContextNativeSchema<ODocument>>((ODatabaseRecord<ODocument>) database,
-				ORole.class.getSimpleName(), new OQueryContextNativeSchema<ODocument>()) {
-
-			@Override
-			public boolean filter(OQueryContextNativeSchema<ODocument> iRecord) {
-				return true;
-			};
-
-		}.execute();
+		return database.command(new OSQLSynchQuery<ODocument>("select from ORole")).execute();
 	}
 }

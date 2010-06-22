@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordColumn;
@@ -413,11 +414,10 @@ public class OStorageLocal extends OStorageAbstract {
 	 *          Array of cluster ids
 	 * @param iListener
 	 *          The listener to call for each record found
-	 * @param iRecord
-	 *          Record passed to minimize object creation. The record will be re-used ar every read
+	 * @param ioRecord
 	 */
 	public void browse(final int iRequesterId, final int[] iClusterId, final ORecordBrowsingListener iListener,
-			final ORecordInternal<?> iRecord, final boolean iLockEntireCluster) {
+			ORecordInternal<?> ioRecord, final boolean iLockEntireCluster) {
 		checkOpeness();
 
 		final long timer = OProfiler.getInstance().startChrono();
@@ -430,7 +430,7 @@ public class OStorageLocal extends OStorageAbstract {
 			for (int clusterId : iClusterId) {
 				cluster = getClusterById(clusterId);
 
-				browseCluster(iRequesterId, iListener, iRecord, cluster, iLockEntireCluster);
+				ioRecord = browseCluster(iRequesterId, iListener, ioRecord, cluster, iLockEntireCluster);
 			}
 		} catch (IOException e) {
 
@@ -443,8 +443,8 @@ public class OStorageLocal extends OStorageAbstract {
 		}
 	}
 
-	private void browseCluster(final int iRequesterId, final ORecordBrowsingListener iListener, final ORecordInternal<?> iRecord,
-			OCluster cluster, final boolean iLockEntireCluster) throws IOException {
+	private ORecordInternal<?> browseCluster(final int iRequesterId, final ORecordBrowsingListener iListener,
+			ORecordInternal<?> ioRecord, OCluster cluster, final boolean iLockEntireCluster) throws IOException {
 		ORawBuffer recordBuffer;
 		long positionInPhyCluster;
 
@@ -468,10 +468,21 @@ public class OStorageLocal extends OStorageAbstract {
 					// WRONG RECORD TYPE: JUMP IT
 					continue;
 
-				iRecord.reset();
-				iRecord.setIdentity(cluster.getId(), positionInPhyCluster);
-				iRecord.fromStream(recordBuffer.buffer);
-				if (!iListener.foreach(iRecord))
+				if (ioRecord == null)
+					// RECORD NULL OR DIFFERENT IN TYPE: CREATE A NEW ONE
+					ioRecord = ORecordFactory.newInstance(recordBuffer.recordType);
+				else if (ioRecord.getRecordType() != recordBuffer.recordType) {
+					// RECORD NULL OR DIFFERENT IN TYPE: CREATE A NEW ONE
+					final ORecordInternal<?> newRecord = ORecordFactory.newInstance(recordBuffer.recordType);
+					newRecord.setDatabase(ioRecord.getDatabase());
+					ioRecord = newRecord;
+				} else
+					// RESET CURRENT RECORD
+					ioRecord.reset();
+
+				ioRecord.setIdentity(cluster.getId(), positionInPhyCluster);
+				ioRecord.fromStream(recordBuffer.buffer);
+				if (!iListener.foreach(ioRecord))
 					// LISTENER HAS INTERRUPTED THE EXECUTION
 					break;
 			}
@@ -481,6 +492,8 @@ public class OStorageLocal extends OStorageAbstract {
 				// UNLOCK THE ENTIRE CLUSTER
 				cluster.unlock();
 		}
+
+		return ioRecord;
 	}
 
 	public Set<String> getClusterNames() {

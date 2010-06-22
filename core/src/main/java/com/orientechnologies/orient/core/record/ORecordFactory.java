@@ -55,7 +55,7 @@ public class ORecordFactory {
 		return instance;
 	}
 
-	public static ORecordInternal<?> getRecord(final byte iRecordType) {
+	public static ORecordInternal<?> newInstance(final byte iRecordType) {
 		if (iRecordType == ODocument.RECORD_TYPE)
 			return new ODocument();
 		else if (iRecordType == ORecordFlat.RECORD_TYPE)
