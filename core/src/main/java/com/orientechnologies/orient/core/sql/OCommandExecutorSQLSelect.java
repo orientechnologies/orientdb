@@ -18,6 +18,8 @@ package com.orientechnologies.orient.core.sql;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orientechnologies.common.parser.OStringParser;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
@@ -43,6 +45,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	protected OSQLAsynchQuery<ORecordSchemaAware<?>>	request;
 	protected OSQLFilter															compiledFilter;
 	protected List<String>														projections			= new ArrayList<String>();
+	private List<OPair<String, String>>								orderedFields;
 	private int																				resultCount;
 
 	/**
@@ -61,13 +64,84 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		if (pos == -1)
 			return this;
 
-		compiledFilter = new OSQLFilter(iRequest.getDatabase(), text.substring(pos));
+		int endPosition = textUpperCase.indexOf(OCommandExecutorSQLAbstract.KEYWORD_ORDER_BY, currentPos);
+		if (endPosition == -1) {
+			// NO OTHER STUFF: GET UNTIL THE END AND ASSURE TO RETURN FALSE IN ORDER TO AVOID PARSING OF CONDITIONS
+			endPosition = text.length();
+		}
+
+		compiledFilter = new OSQLFilter(iRequest.getDatabase(), text.substring(pos, endPosition));
+		currentPos = compiledFilter.currentPos + pos;
+
+		extractOrderBy();
 
 		return this;
 	}
 
+	protected void extractOrderBy() {
+		if (currentPos == -1 || currentPos >= text.length())
+			return;
+
+		currentPos = OStringParser.jump(text, currentPos, " \r\n");
+
+		final StringBuilder word = new StringBuilder();
+		if (textUpperCase.length() - currentPos > OCommandExecutorSQLAbstract.KEYWORD_ORDER_BY.length())
+			word.append(textUpperCase.substring(currentPos, currentPos + OCommandExecutorSQLAbstract.KEYWORD_ORDER_BY.length()));
+
+		if (!OCommandExecutorSQLAbstract.KEYWORD_ORDER_BY.equals(word.toString()))
+			throw new OQueryParsingException("Expected keyword " + OCommandExecutorSQLAbstract.KEYWORD_ORDER_BY);
+
+		currentPos = currentPos += OCommandExecutorSQLAbstract.KEYWORD_ORDER_BY.length();
+
+		String fieldName;
+		String fieldOrdering;
+
+		orderedFields = new ArrayList<OPair<String, String>>();
+		while (currentPos != -1 && (orderedFields.size() == 0 || word.equals(","))) {
+			currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, false);
+			if (currentPos == -1)
+				throw new OCommandSQLParsingException("Field name expected", text, currentPos);
+
+			fieldName = word.toString();
+
+			currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
+			if (currentPos == -1)
+				fieldOrdering = OCommandExecutorSQLAbstract.KEYWORD_ASC;
+			else {
+
+				if (word.toString().endsWith(",")) {
+					currentPos--;
+					word.deleteCharAt(word.length() - 1);
+				}
+
+				if (word.toString().equals(OCommandExecutorSQLAbstract.KEYWORD_ASC))
+					fieldOrdering = OCommandExecutorSQLAbstract.KEYWORD_ASC;
+				else if (word.toString().equals(OCommandExecutorSQLAbstract.KEYWORD_DESC))
+					fieldOrdering = OCommandExecutorSQLAbstract.KEYWORD_DESC;
+				else
+					throw new OCommandSQLParsingException("Ordering mode '" + word
+							+ "' not supported. Valid is 'ASC', 'DESC' or nothing ('ASC' by default)", text, currentPos);
+
+				currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
+			}
+
+			orderedFields.add(new OPair<String, String>(fieldName, fieldOrdering));
+
+			if (currentPos == -1)
+				break;
+		}
+
+		if (orderedFields.size() == 0)
+			throw new OCommandSQLParsingException("Order by field set was missed. Example: ORDER BY name ASC, salary DESC", text,
+					currentPos);
+	}
+
 	public List<String> getProjections() {
 		return projections;
+	}
+
+	public List<OPair<String, String>> getOrderedFields() {
+		return orderedFields;
 	}
 
 	public Object execute(final Object... iArgs) {
@@ -192,7 +266,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 		int currentPos = 0;
 
-		StringBuilder word = new StringBuilder();
+		final StringBuilder word = new StringBuilder();
 
 		currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
 		if (!word.toString().equals(OCommandExecutorSQLSelect.KEYWORD_SELECT))

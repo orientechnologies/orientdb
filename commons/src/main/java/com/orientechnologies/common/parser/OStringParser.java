@@ -174,11 +174,20 @@ public class OStringParser {
 	public static int jump(final CharSequence iText, int iCurrentPosition, final String iJumpChars) {
 		final int size = iText.length();
 		final int jumpCharSize = iJumpChars.length();
+		boolean found = true;
 
-		for (; iCurrentPosition < size; ++iCurrentPosition)
-			for (int jumpIndex = 0; jumpIndex < jumpCharSize; ++jumpIndex)
-				if (iJumpChars.charAt(jumpIndex) != iText.charAt(iCurrentPosition))
-					return iCurrentPosition;
+		for (; iCurrentPosition < size; ++iCurrentPosition) {
+			found = false;
+			for (int jumpIndex = 0; jumpIndex < jumpCharSize; ++jumpIndex) {
+				if (iJumpChars.charAt(jumpIndex) == iText.charAt(iCurrentPosition)) {
+					found = true;
+					break;
+				}
+			}
+
+			if (!found)
+				break;
+		}
 
 		return iCurrentPosition;
 	}

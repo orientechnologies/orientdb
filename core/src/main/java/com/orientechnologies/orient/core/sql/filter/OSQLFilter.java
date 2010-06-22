@@ -49,7 +49,7 @@ public class OSQLFilter extends OCommandToParse {
 	protected List<String>				recordTransformed;
 	private int										braces;
 
-	public OSQLFilter(ODatabaseRecord<?> iDatabase, final String iText) {
+	public OSQLFilter(final ODatabaseRecord<?> iDatabase, final String iText) {
 		try {
 			database = iDatabase;
 			text = iText.trim();
@@ -75,18 +75,18 @@ public class OSQLFilter extends OCommandToParse {
 	private boolean extractClustersAndClasses() {
 		jumpWhiteSpaces();
 
-		boolean whereDefined = true;
+		int nextPosition;
+		int endPosition = textUpperCase.indexOf(OCommandExecutorSQLAbstract.KEYWORD_WHERE, currentPos);
+		if (endPosition == -1) {
+			// NO OTHER STUFF: GET UNTIL THE END AND ASSURE TO RETURN FALSE IN ORDER TO AVOID PARSING OF CONDITIONS
+			endPosition = text.length();
+			nextPosition = endPosition;
+		} else
+			nextPosition = endPosition + OCommandExecutorSQLAbstract.KEYWORD_WHERE.length();
 
-		int wherePosition = textUpperCase.indexOf(OCommandExecutorSQLAbstract.KEYWORD_WHERE, currentPos);
-		if (wherePosition == -1) {
-			// NO WHERE CONDITION: GET UNTIL THE END AND ASSURE TO RETURN FALSE IN ORDER TO AVOID PARSING OF CONDITIONS
-			whereDefined = false;
-			wherePosition = text.length();
-		}
-
-		String[] items = textUpperCase.substring(currentPos, wherePosition).split(",");
+		String[] items = textUpperCase.substring(currentPos, endPosition).split(",");
 		if (items == null || items.length == 0)
-			throw new OQueryParsingException("No clusters found after " + OCommandExecutorSQLAbstract.KEYWORD_FROM, text, currentPos);
+			throw new OQueryParsingException("No clusters found after " + OCommandExecutorSQLAbstract.KEYWORD_FROM, text, 0);
 
 		String[] words;
 		String subjectName;
@@ -118,10 +118,9 @@ public class OSQLFilter extends OCommandToParse {
 			}
 		}
 
-		if (whereDefined)
-			currentPos = wherePosition + OCommandExecutorSQLAbstract.KEYWORD_WHERE.length() + 1;
+		currentPos = nextPosition;
 
-		return whereDefined;
+		return nextPosition < text.length();
 	}
 
 	private OSQLFilterCondition extractConditions(final OSQLFilterCondition iParentCondition) {

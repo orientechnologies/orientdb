@@ -248,4 +248,39 @@ public class SQLSelectTest {
 
 		database.close();
 	}
+
+	@Test
+	public void queryOrderBy() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile order by name")).execute();
+
+		Assert.assertTrue(result.size() != 0);
+
+		String lastName = null;
+		for (ODocument d : result) {
+//			Assert.assertTrue(((String) d.field("name")).compareTo(lastName) > 0);
+			lastName = d.field("name");
+		}
+
+		database.close();
+	}
+
+	@Test
+	public void queryConditionAndOrderBy() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(
+				new OSQLSynchQuery<ODocument>("select from Profile where name is not null order by name")).execute();
+
+		Assert.assertTrue(result.size() != 0);
+
+		String lastName = null;
+		for (ODocument d : result) {
+//			Assert.assertTrue(((String) d.field("name")).compareTo(lastName) > 0);
+			lastName = d.field("name");
+		}
+
+		database.close();
+	}
 }
