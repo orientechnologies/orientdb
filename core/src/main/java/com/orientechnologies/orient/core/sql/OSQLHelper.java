@@ -144,7 +144,7 @@ public class OSQLHelper {
 				// BOOLEAN, FALSE
 				fieldValue = Boolean.FALSE;
 			else {
-				OType t = ORecordSerializerCSVAbstract.getNumber(iDatabase.getStorage().getConfiguration().getUnusualSymbols(), iValue);
+				OType t = ORecordSerializerCSVAbstract.getNumber(iValue);
 				// NUMBER
 				if (t == OType.LONG)
 					fieldValue = Long.parseLong((String) iValue);

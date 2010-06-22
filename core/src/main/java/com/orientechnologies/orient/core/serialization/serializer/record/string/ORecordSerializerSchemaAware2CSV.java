@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
 import java.lang.reflect.Array;
-import java.text.DecimalFormatSymbols;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
@@ -260,8 +259,6 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 		OType linkedType;
 		OProperty prop;
 
-		final DecimalFormatSymbols unusualSymbols = iDatabase.getStorage().getConfiguration().getUnusualSymbols();
-
 		// UNMARSHALL ALL THE FIELDS
 		for (int i = 0; i < fields.length; ++i) {
 			field = fields[i].trim();
@@ -312,7 +309,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 									} else if (value.charAt(0) == OStringSerializerHelper.EMBEDDED) {
 										linkedType = OType.EMBEDDED;
 									} else if (Character.isDigit(value.charAt(0)) || value.charAt(0) == '+' || value.charAt(0) == '-') {
-										linkedType = getNumber(unusualSymbols, value);
+										String[] items = value.split(",");
+										linkedType = getNumber(items[0]);
 									} else if (value.charAt(0) == '\'' || value.charAt(0) == '"')
 										linkedType = OType.STRING;
 								}
@@ -325,12 +323,11 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 							else if (fieldValue.equals("true") || fieldValue.equals("false"))
 								type = OType.BOOLEAN;
 							else
-								type = getNumber(unusualSymbols, fieldValue);
+								type = getNumber(fieldValue);
 						}
 					}
 
-					record.field(fieldName, fieldFromStream(iRecord.getDatabase(), type, linkedClass, linkedType, fieldName, fieldValue,
-							unusualSymbols));
+					record.field(fieldName, fieldFromStream(iRecord.getDatabase(), type, linkedClass, linkedType, fieldName, fieldValue));
 				}
 			} catch (Exception e) {
 				OLogManager.instance().exception("Error on unmarshalling field '%s'", e, OSerializationException.class, fieldName);

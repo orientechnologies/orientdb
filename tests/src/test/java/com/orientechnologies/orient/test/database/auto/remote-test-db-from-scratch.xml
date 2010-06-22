@@ -42,6 +42,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentLogicalTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentPhysicalTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.CRUDObjectPhysicalTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.CRUDObjectInheritanceTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.CRUDFlatPhysicalTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentValidationTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ObjectTreeTest"/>

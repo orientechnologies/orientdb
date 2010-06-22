@@ -55,6 +55,10 @@ public class OSchema extends ODocument {
 		return createClass(iClassName, new int[] { iDefaultClusterId }, iDefaultClusterId);
 	}
 
+	public OClass createClass(final String iClassName, final int[] iClusterIds) {
+		return createClass(iClassName, iClusterIds, -1);
+	}
+
 	public OClass createClass(final String iClassName, final int[] iClusterIds, final int iDefaultClusterId) {
 		String key = iClassName.toLowerCase();
 
@@ -123,6 +127,27 @@ public class OSchema extends ODocument {
 			cls = new OClass(this).fromDocument(c);
 			classes.put(cls.getName().toLowerCase(), cls);
 		}
+
+		// REBUILD THE INHERITANCE TREE
+		String superClassName;
+		OClass superClass;
+		for (ODocument c : storedClasses) {
+			superClassName = c.field("superClass");
+
+			if (superClassName != null) {
+				// HAS A SUPER CLASS
+				cls = classes.get(((String) c.field("name")).toLowerCase());
+
+				superClass = classes.get(superClassName.toLowerCase());
+
+				if (superClass == null)
+					throw new OConfigurationException("Super class '" + superClassName + "' was declared in class '" + cls.getName()
+							+ "' but was not found in schema. Remove the dependency or create the class to continue.");
+
+				cls.setSuperClass(superClass);
+			}
+		}
+
 		return this;
 	}
 

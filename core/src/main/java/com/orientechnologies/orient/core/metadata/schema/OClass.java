@@ -15,9 +15,11 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +37,8 @@ public class OClass extends OSchemaRecord {
 	protected Map<String, OProperty>	properties	= new LinkedHashMap<String, OProperty>();
 	protected int[]										clusterIds;
 	protected int											defaultClusterId;
+	protected OClass									superClass;
+	protected List<OClass>						baseClasses;
 
 	/**
 	 * Constructor used in unmarshalling.
@@ -82,6 +86,16 @@ public class OClass extends OSchemaRecord {
 			throw new IllegalArgumentException("Can't create an instance of class '" + name + "' since no Java class was specified");
 
 		return (T) javaClass.newInstance();
+	}
+
+	public OClass getSuperClass() {
+		return superClass;
+	}
+
+	public OClass setSuperClass(final OClass iSuperClass) {
+		this.superClass = iSuperClass;
+		iSuperClass.addBaseClasses(this);
+		return this;
 	}
 
 	public String getName() {
@@ -141,7 +155,7 @@ public class OClass extends OSchemaRecord {
 			throw new OSchemaException("Property '" + iPropertyName + "' not found in class " + name + "'");
 
 		prop.removeIndex();
-		
+
 		fixedSize -= prop.getType().size;
 		setDirty();
 	}
@@ -200,6 +214,8 @@ public class OClass extends OSchemaRecord {
 		field("defaultClusterId", defaultClusterId);
 		field("clusterIds", clusterIds);
 		field("properties", properties.values(), OType.EMBEDDEDSET);
+		if (superClass != null)
+			field("superClass", superClass.getName());
 		return super.toStream();
 	}
 
@@ -240,6 +256,16 @@ public class OClass extends OSchemaRecord {
 		if (owner != null)
 			owner.setDirty();
 		return this;
+	}
+
+	public Iterator<OClass> getBaseClasses() {
+		return baseClasses.iterator();
+	}
+
+	public void addBaseClasses(final OClass iBaseClass) {
+		if (baseClasses == null)
+			baseClasses = new ArrayList<OClass>();
+		baseClasses.add(iBaseClass);
 	}
 
 	@Override

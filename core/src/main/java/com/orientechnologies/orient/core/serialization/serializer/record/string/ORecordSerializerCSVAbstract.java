@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
 import java.lang.reflect.Array;
-import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -42,12 +41,13 @@ import com.orientechnologies.orient.core.serialization.serializer.object.OObject
 
 @SuppressWarnings("unchecked")
 public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStringAbstract {
+	private static final char		DECIMAL_SEPARATOR			= '.';
 	public static final String	FIELD_VALUE_SEPARATOR	= ":";
 
 	protected abstract ORecordSchemaAware<?> newObject(ODatabaseRecord<?> iDatabase, String iClassName);
 
 	public Object fieldFromStream(final ODatabaseRecord<?> iDatabase, final OType iType, OClass iLinkedClass, OType iLinkedType,
-			final String iName, final String iValue, final DecimalFormatSymbols iUnusualSymbols) {
+			final String iName, final String iValue) {
 
 		if (iValue == null)
 			return null;
@@ -163,7 +163,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 								} else if (mapValue.charAt(0) == OStringSerializerHelper.EMBEDDED) {
 									iLinkedType = OType.EMBEDDED;
 								} else if (Character.isDigit(mapValue.charAt(0)) || mapValue.charAt(0) == '+' || mapValue.charAt(0) == '-') {
-									iLinkedType = getNumber(iUnusualSymbols, mapValue);
+									iLinkedType = getNumber(mapValue);
 								} else if (mapValue.charAt(0) == '\'' || mapValue.charAt(0) == '"')
 									iLinkedType = OType.STRING;
 							} else
@@ -361,7 +361,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 	 *          Value to parse
 	 * @return OType.LONG for integers, OType.DOUBLE for decimals and OType.STRING for other
 	 */
-	public static OType getNumber(final DecimalFormatSymbols iUnusualSymbols, final String iValue) {
+	public static OType getNumber(final String iValue) {
 		boolean integer = true;
 		char c;
 
@@ -370,7 +370,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			if (c < '0' || c > '9')
 				if ((index == 0 && (c == '+' || c == '-')))
 					continue;
-				else if (c == iUnusualSymbols.getDecimalSeparator())
+				else if (c == DECIMAL_SEPARATOR)
 					integer = false;
 				else {
 					return OType.STRING;

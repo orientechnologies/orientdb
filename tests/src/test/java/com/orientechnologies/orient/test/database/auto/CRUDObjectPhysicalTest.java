@@ -34,7 +34,7 @@ import com.orientechnologies.orient.test.domain.business.City;
 import com.orientechnologies.orient.test.domain.business.Country;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
 
-@Test(groups = { "crud", "record-vobject" }, sequential = true)
+@Test(groups = { "crud", "object" }, sequential = true)
 public class CRUDObjectPhysicalTest {
 	protected static final int	TOT_RECORDS	= 100;
 	protected long							startRecordNumber;
@@ -195,21 +195,6 @@ public class CRUDObjectPhysicalTest {
 	}
 
 	@Test(dependsOnMethods = "queryPerFloat")
-	public void delete() {
-		database.open("admin", "admin");
-
-		startRecordNumber = database.countClusterElements("Account");
-
-		// DELETE ALL THE RECORD IN THE CLUSTER
-		for (Object obj : database.browseCluster("Account"))
-			database.delete(obj);
-
-		Assert.assertEquals(database.countClusterElements("Account"), 0);
-
-		database.close();
-	}
-
-	@Test(dependsOnMethods = "delete")
 	public void cleanAll() {
 		database.open("admin", "admin");
 
@@ -223,5 +208,4 @@ public class CRUDObjectPhysicalTest {
 
 		database.close();
 	}
-
 }
