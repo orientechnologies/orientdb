@@ -94,6 +94,13 @@ public class OClass extends OSchemaRecord {
 		return superClass;
 	}
 
+	/**
+	 * Set the super class.
+	 * 
+	 * @param iSuperClass
+	 *          Super class as OClass instance
+	 * @return the object itself.
+	 */
 	public OClass setSuperClass(final OClass iSuperClass) {
 		this.superClass = iSuperClass;
 		iSuperClass.addBaseClasses(this);
@@ -276,7 +283,7 @@ public class OClass extends OSchemaRecord {
 	 * @param iBaseClass
 	 *          The base class to add.
 	 */
-	public OClass addBaseClasses(final OClass iBaseClass) {
+	private OClass addBaseClasses(final OClass iBaseClass) {
 		if (baseClasses == null)
 			baseClasses = new ArrayList<OClass>();
 
