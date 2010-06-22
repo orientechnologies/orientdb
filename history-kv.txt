@@ -29,6 +29,10 @@
 
 This document enlist the last changes to the Orient Key/Value Server project.
 
+VERSION 0.9.18 - beta (June, 21st 2010)
+-------------------------------------------------------------------------------
+- Improved performances of about 15% on insert and 10% on read
+
 VERSION 0.9.15 - beta (May, 28th 2010)
 -------------------------------------------------------------------------------
 - Changed internal management to adhere to the new OrientDB Security policies

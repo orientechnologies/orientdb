@@ -30,6 +30,19 @@
 This document enlist the last changes to the Orient Database project.
 
 -------------------------------------------------------------------------------
+VERSION 0.9.18 - beta (June, 21st 2010)
+-------------------------------------------------------------------------------
+- New SQL command "create link" to create physical connection between records.
+  Useful when import a Relational DBMS. Use the "inverse" form to map 1-N
+  relationships
+- New console command "import documents" to import JSON document 
+- New SQL command "create property" to add schema full properties
+- Added status in OUser and checked when login. By default is ACTIVE
+- Issue #44: support of ORID in queries. Example: SELECT FROM profile WHERE
+             friends IN [10:3, 10:1]
+- Fixed other bugs (not null, not equals, encoding)
+
+-------------------------------------------------------------------------------
 VERSION 0.9.17 - beta (June, 7th 2010)
 -------------------------------------------------------------------------------
 - New Index API to create a unique index for each property. This speed up the

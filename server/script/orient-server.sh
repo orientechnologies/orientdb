@@ -44,7 +44,7 @@ done
 # Get standard environment variables
 PRGDIR=`dirname "$PRG"`
 
-# Only set CATALINA_HOME if not already set
+# Only set ORIENT_HOME if not already set
 [ -z "$ORIENT_HOME" ] && ORIENT_HOME=`cd "$PRGDIR/.." ; pwd`
 export ORIENT_HOME
 
