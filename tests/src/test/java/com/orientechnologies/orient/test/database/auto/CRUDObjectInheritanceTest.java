@@ -81,7 +81,7 @@ public class CRUDObjectInheritanceTest {
 		final List<Account> result = database.query(new OSQLSynchQuery<ODocument>("select from Account where name.length() > 0"));
 
 		Assert.assertTrue(result.size() > 0);
-		Assert.assertTrue(result.size() > TOT_RECORDS);
+		Assert.assertEquals(result.size(), TOT_RECORDS);
 
 		int companyRecords = 0;
 		Account account;

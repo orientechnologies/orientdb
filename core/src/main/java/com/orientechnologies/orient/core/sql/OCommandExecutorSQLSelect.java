@@ -90,7 +90,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			if (record instanceof ORecordSchemaAware<?>)
 				((ORecordSchemaAware<?>) record).setClassName(cls.getName());
 
-			clusterIds = cls.getClusterIds();
+			clusterIds = cls.getPolymorphicClusterIds();
 
 			// CHECK PERMISSION TO ACCESS TO ALL THE CONFIGURED CLUSTERS
 			for (int clusterId : clusterIds)

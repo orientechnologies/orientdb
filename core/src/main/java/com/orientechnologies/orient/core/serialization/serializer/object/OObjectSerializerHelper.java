@@ -273,52 +273,53 @@ public class OObjectSerializerHelper {
 		return result;
 	}
 
-	private static List<Field> registerClass(Class<?> c) {
+	private static List<Field> registerClass(final Class<?> iClass) {
 		synchronized (classes) {
-			if (classes.containsKey(c.getName()))
-				return classes.get(c.getName());
+			if (classes.containsKey(iClass.getName()))
+				return classes.get(iClass.getName());
 
 			List<Field> properties = new ArrayList<Field>();
-			classes.put(c.getName(), properties);
+			classes.put(iClass.getName(), properties);
 
 			String fieldName;
 			int fieldModifier;
 
-			for (Field f : c.getDeclaredFields()) {
-				fieldModifier = f.getModifiers();
-				if (Modifier.isStatic(fieldModifier) || Modifier.isNative(fieldModifier) || Modifier.isTransient(fieldModifier))
-					continue;
+			for (Class<?> currentClass = iClass; currentClass != Object.class; currentClass = currentClass.getSuperclass())
+				for (Field f : currentClass.getDeclaredFields()) {
+					fieldModifier = f.getModifiers();
+					if (Modifier.isStatic(fieldModifier) || Modifier.isNative(fieldModifier) || Modifier.isTransient(fieldModifier))
+						continue;
 
-				properties.add(f);
+					properties.add(f);
 
-				fieldName = f.getName();
+					fieldName = f.getName();
 
-				// TRY TO GET THE VALUE BY THE GETTER (IF ANY)
-				try {
-					String getterName = "get" + Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1);
-					Method m = c.getMethod(getterName, NO_ARGS);
-					getters.put(c.getName() + "." + fieldName, m);
-				} catch (Exception e) {
-					// TRY TO GET THE VALUE BY ACCESSING DIRECTLY TO THE PROPERTY
-					if (!f.isAccessible())
-						f.setAccessible(true);
+					// TRY TO GET THE VALUE BY THE GETTER (IF ANY)
+					try {
+						String getterName = "get" + Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1);
+						Method m = currentClass.getMethod(getterName, NO_ARGS);
+						getters.put(iClass.getName() + "." + fieldName, m);
+					} catch (Exception e) {
+						// TRY TO GET THE VALUE BY ACCESSING DIRECTLY TO THE PROPERTY
+						if (!f.isAccessible())
+							f.setAccessible(true);
 
-					getters.put(c.getName() + "." + fieldName, f);
+						getters.put(iClass.getName() + "." + fieldName, f);
+					}
+
+					// TRY TO GET THE VALUE BY THE SETTER (IF ANY)
+					try {
+						String getterName = "set" + Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1);
+						Method m = currentClass.getMethod(getterName, f.getType());
+						setters.put(iClass.getName() + "." + fieldName, m);
+					} catch (Exception e) {
+						// TRY TO GET THE VALUE BY ACCESSING DIRECTLY TO THE PROPERTY
+						if (!f.isAccessible())
+							f.setAccessible(true);
+
+						setters.put(iClass.getName() + "." + fieldName, f);
+					}
 				}
-
-				// TRY TO GET THE VALUE BY THE SETTER (IF ANY)
-				try {
-					String getterName = "set" + Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1);
-					Method m = c.getMethod(getterName, f.getType());
-					setters.put(c.getName() + "." + fieldName, m);
-				} catch (Exception e) {
-					// TRY TO GET THE VALUE BY ACCESSING DIRECTLY TO THE PROPERTY
-					if (!f.isAccessible())
-						f.setAccessible(true);
-
-					setters.put(c.getName() + "." + fieldName, f);
-				}
-			}
 			return properties;
 		}
 	}

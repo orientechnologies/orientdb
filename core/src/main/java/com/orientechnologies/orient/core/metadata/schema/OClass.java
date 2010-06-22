@@ -38,6 +38,7 @@ public class OClass extends OSchemaRecord {
 	protected int[]										clusterIds;
 	protected int											defaultClusterId;
 	protected OClass									superClass;
+	protected int[]										polymorphicClusterIds;
 	protected List<OClass>						baseClasses;
 
 	/**
@@ -66,6 +67,7 @@ public class OClass extends OSchemaRecord {
 		owner = iOwner;
 		name = iName;
 		clusterIds = iClusterIds;
+		polymorphicClusterIds = iClusterIds;
 		defaultClusterId = iDefaultClusterId;
 	}
 
@@ -195,6 +197,8 @@ public class OClass extends OSchemaRecord {
 		for (Long item : coll)
 			clusterIds[i++] = item.intValue();
 
+		polymorphicClusterIds = clusterIds;
+
 		// READ PROPERTIES
 		OProperty prop;
 		List<ODocument> storedProperties = iSource.field("properties");
@@ -240,6 +244,10 @@ public class OClass extends OSchemaRecord {
 		return clusterIds;
 	}
 
+	public int[] getPolymorphicClusterIds() {
+		return polymorphicClusterIds;
+	}
+
 	public OClass addClusterIds(final int iId) {
 		for (int currId : clusterIds)
 			if (currId == iId)
@@ -262,10 +270,36 @@ public class OClass extends OSchemaRecord {
 		return baseClasses.iterator();
 	}
 
-	public void addBaseClasses(final OClass iBaseClass) {
+	/**
+	 * Adds a base class to the current one. It adds also the base class cluster ids to the polymorphic cluster ids array.
+	 * 
+	 * @param iBaseClass
+	 *          The base class to add.
+	 */
+	public OClass addBaseClasses(final OClass iBaseClass) {
 		if (baseClasses == null)
 			baseClasses = new ArrayList<OClass>();
+
 		baseClasses.add(iBaseClass);
+
+		// ADD DIFFERENT CLUSTER IDS TO THE "POLYMORPHIC CLUSTER IDS" ARRAY
+		boolean found;
+		for (int i : iBaseClass.clusterIds) {
+			found = false;
+			for (int k : clusterIds) {
+				if (i == k) {
+					found = true;
+					break;
+				}
+			}
+
+			if (!found) {
+				// ADD IT
+				polymorphicClusterIds = Arrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length + 1);
+				polymorphicClusterIds[polymorphicClusterIds.length - 1] = i;
+			}
+		}
+		return this;
 	}
 
 	@Override

@@ -67,7 +67,7 @@ public class ObjectTreeTest {
 
 	@Test(dependsOnMethods = "testPersonSaving")
 	public void testCitySaving() {
-		Assert.assertEquals(database.countClusterElements("City"), 1);
+		Assert.assertEquals(database.countClusterElements("City"), 2);
 	}
 
 	@Test(dependsOnMethods = "testCitySaving")
