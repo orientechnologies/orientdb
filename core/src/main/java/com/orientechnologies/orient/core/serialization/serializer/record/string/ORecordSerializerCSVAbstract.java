@@ -54,44 +54,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 		switch (iType) {
 		case EMBEDDEDLIST:
-		case EMBEDDEDSET: {
-			if (iValue.length() == 0)
-				return null;
-
-			// REMOVE BEGIN & END COLLECTIONS CHARACTERS IF IT'S A COLLECTION
-			String value = iValue.startsWith("[") ? iValue.substring(1, iValue.length() - 1) : iValue;
-
-			Collection<Object> coll = iType == OType.EMBEDDEDLIST ? new ArrayList<Object>() : new HashSet<Object>();
-
-			if (value.length() == 0)
-				return coll;
-
-			String[] items = OStringSerializerHelper.split(value, OStringSerializerHelper.RECORD_SEPARATOR_AS_CHAR);
-
-			for (String item : items) {
-				if (iLinkedClass != null) {
-					// EMBEDDED OBJECT
-					if (item.length() > 2) {
-						item = item.substring(1, item.length() - 1);
-						coll.add(fromString(iDatabase, item, new ODocument(iDatabase, iLinkedClass.getName())));
-					}
-
-				} else if (item.length() > 0 && item.charAt(0) == OStringSerializerHelper.EMBEDDED) {
-					// EMBEDDED OBJECT
-					coll.add(OStringSerializerHelper.fieldTypeFromStream(iLinkedType, item.substring(1, item.length() - 1)));
-
-				} else {
-					// EMBEDDED LITERAL
-					if (iLinkedType == null)
-						throw new IllegalArgumentException(
-								"Linked type can't be null. Probably the serialized type has not stored the type along with data");
-					coll.add(OStringSerializerHelper.fieldTypeFromStream(iLinkedType, item));
-
-				}
-			}
-
-			return coll;
-		}
+		case EMBEDDEDSET:
+			return embeddedCollectionFromStream(iDatabase, iType, iLinkedClass, iLinkedType, iValue);
 
 		case LINKLIST:
 		case LINKSET: {
@@ -220,58 +184,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 		case EMBEDDEDLIST:
 		case EMBEDDEDSET: {
-			buffer.append(OStringSerializerHelper.COLLECTION_BEGIN);
-
-			int size = iValue instanceof Collection<?> ? ((Collection<Object>) iValue).size() : Array.getLength(iValue);
-			Iterator<Object> iterator = iValue instanceof Collection<?> ? ((Collection<Object>) iValue).iterator() : null;
-			Object o;
-
-			for (int i = 0; i < size; ++i) {
-				if (iValue instanceof Collection<?>)
-					o = iterator.next();
-				else
-					o = Array.get(iValue, i);
-
-				if (i > 0)
-					buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
-
-				if (o instanceof ORecord<?>)
-					buffer.append(OStringSerializerHelper.EMBEDDED);
-
-				if (iLinkedClass != null) {
-					// EMBEDDED OBJECTS
-					ODocument record;
-
-					if (o != null) {
-						if (o instanceof ODocument)
-							record = (ODocument) o;
-						else
-							record = OObjectSerializerHelper.toStream(o, new ODocument(o.getClass().getSimpleName()),
-									iDatabase instanceof ODatabaseObjectTx ? ((ODatabaseObjectTx) iDatabase).getEntityManager()
-											: OEntityManagerInternal.INSTANCE, iLinkedClass, iObjHandler != null ? iObjHandler
-											: new OUserObject2RecordHandler() {
-
-												public Object getUserObjectByRecord(ORecordInternal<?> iRecord) {
-													return iRecord;
-												}
-
-												public ORecordInternal<?> getRecordByUserObject(Object iPojo, boolean iIsMandatory) {
-													return new ODocument(iLinkedClass);
-												}
-											});
-
-						buffer.append(toString(record, null, iObjHandler, iMarshalledRecords));
-					}
-				} else {
-					// EMBEDDED LITERALS
-					buffer.append(OStringSerializerHelper.fieldTypeToString(iLinkedType, o));
-				}
-
-				if (o instanceof ORecord<?>)
-					buffer.append(OStringSerializerHelper.EMBEDDED);
-			}
-
-			buffer.append(OStringSerializerHelper.COLLECTION_END);
+			embeddedCollectionToStream(iDatabase, iObjHandler, iLinkedClass, iLinkedType, iValue, iMarshalledRecords, buffer);
 			break;
 		}
 
@@ -349,6 +262,102 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		}
 
 		return buffer.toString();
+	}
+
+	public Object embeddedCollectionFromStream(final ODatabaseRecord<?> iDatabase, final OType iType, OClass iLinkedClass,
+			OType iLinkedType, final String iValue) {
+		if (iValue.length() == 0)
+			return null;
+
+		// REMOVE BEGIN & END COLLECTIONS CHARACTERS IF IT'S A COLLECTION
+		String value = iValue.startsWith("[") ? iValue.substring(1, iValue.length() - 1) : iValue;
+
+		Collection<Object> coll = iType == OType.EMBEDDEDLIST ? new ArrayList<Object>() : new HashSet<Object>();
+
+		if (value.length() == 0)
+			return coll;
+
+		String[] items = OStringSerializerHelper.split(value, OStringSerializerHelper.RECORD_SEPARATOR_AS_CHAR);
+
+		for (String item : items) {
+			if (iLinkedClass != null) {
+				// EMBEDDED OBJECT
+				if (item.length() > 2) {
+					item = item.substring(1, item.length() - 1);
+					coll.add(fromString(iDatabase, item, new ODocument(iDatabase, iLinkedClass.getName())));
+				}
+
+			} else if (item.length() > 0 && item.charAt(0) == OStringSerializerHelper.EMBEDDED) {
+				// EMBEDDED OBJECT
+				coll.add(OStringSerializerHelper.fieldTypeFromStream(iLinkedType, item.substring(1, item.length() - 1)));
+
+			} else {
+				// EMBEDDED LITERAL
+				if (iLinkedType == null)
+					throw new IllegalArgumentException(
+							"Linked type can't be null. Probably the serialized type has not stored the type along with data");
+				coll.add(OStringSerializerHelper.fieldTypeFromStream(iLinkedType, item));
+			}
+		}
+
+		return coll;
+	}
+
+	public void embeddedCollectionToStream(final ODatabaseRecord iDatabase, final OUserObject2RecordHandler iObjHandler,
+			final OClass iLinkedClass, final OType iLinkedType, final Object iValue,
+			final Map<ORecordInternal<?>, ORecordId> iMarshalledRecords, StringBuilder buffer) {
+		buffer.append(OStringSerializerHelper.COLLECTION_BEGIN);
+
+		int size = iValue instanceof Collection<?> ? ((Collection<Object>) iValue).size() : Array.getLength(iValue);
+		Iterator<Object> iterator = iValue instanceof Collection<?> ? ((Collection<Object>) iValue).iterator() : null;
+		Object o;
+
+		for (int i = 0; i < size; ++i) {
+			if (iValue instanceof Collection<?>)
+				o = iterator.next();
+			else
+				o = Array.get(iValue, i);
+
+			if (i > 0)
+				buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
+
+			if (o instanceof ORecord<?>)
+				buffer.append(OStringSerializerHelper.EMBEDDED);
+
+			if (iLinkedClass != null) {
+				// EMBEDDED OBJECTS
+				ODocument record;
+
+				if (o != null) {
+					if (o instanceof ODocument)
+						record = (ODocument) o;
+					else
+						record = OObjectSerializerHelper.toStream(o, new ODocument(o.getClass().getSimpleName()),
+								iDatabase instanceof ODatabaseObjectTx ? ((ODatabaseObjectTx) iDatabase).getEntityManager()
+										: OEntityManagerInternal.INSTANCE, iLinkedClass, iObjHandler != null ? iObjHandler
+										: new OUserObject2RecordHandler() {
+
+											public Object getUserObjectByRecord(ORecordInternal<?> iRecord) {
+												return iRecord;
+											}
+
+											public ORecordInternal<?> getRecordByUserObject(Object iPojo, boolean iIsMandatory) {
+												return new ODocument(iLinkedClass);
+											}
+										});
+
+					buffer.append(toString(record, null, iObjHandler, iMarshalledRecords));
+				}
+			} else {
+				// EMBEDDED LITERALS
+				buffer.append(OStringSerializerHelper.fieldTypeToString(iLinkedType, o));
+			}
+
+			if (o instanceof ORecord<?>)
+				buffer.append(OStringSerializerHelper.EMBEDDED);
+		}
+
+		buffer.append(OStringSerializerHelper.COLLECTION_END);
 	}
 
 	/**

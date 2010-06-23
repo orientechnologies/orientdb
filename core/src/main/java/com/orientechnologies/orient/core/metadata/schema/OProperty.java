@@ -18,17 +18,14 @@ package com.orientechnologies.orient.core.metadata.schema;
 import java.io.IOException;
 import java.text.ParseException;
 
-import com.orientechnologies.common.collection.OTreeMap;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerString;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.type.tree.OTreeMapDatabaseLazySave;
 
 /**
  * Contains the description of a persistent class property.
@@ -38,23 +35,23 @@ import com.orientechnologies.orient.core.type.tree.OTreeMapDatabaseLazySave;
  */
 public class OProperty extends OSchemaRecord {
 
-	private OClass																			owner;
+	private OClass	owner;
 
-	private int																					id;
-	private String																			name;
-	private OType																				type;
-	private int																					offset;
-	private int																					size;
+	private int			id;
+	private String	name;
+	private OType		type;
+	private int			offset;
+	private int			size;
 
-	private OType																				linkedType;
-	private OClass																			linkedClass;
+	private OType		linkedType;
+	private OClass	linkedClass;
 
-	private OTreeMapDatabaseLazySave<String, ORecordId>	index;
+	private OIndex	index;
 
-	private boolean																			mandatory;
-	private boolean																			notNull;
-	private String																			min;
-	private String																			max;
+	private boolean	mandatory;
+	private boolean	notNull;
+	private String	min;
+	private String	max;
 
 	/**
 	 * Constructor used in unmarshalling.
@@ -117,16 +114,21 @@ public class OProperty extends OSchemaRecord {
 			linkedType = OType.getById(((Long) iSource.field("linkedType")).byteValue());
 
 		final ODocument indexRecord = iSource.field("index");
-
 		// LOAD THE INDEX
-		if (indexRecord != null && indexRecord.getIdentity().isValid())
+		if (indexRecord != null && indexRecord.getIdentity().isValid()) {
+			Boolean indexType = iSource.field("index-unique");
+			if (indexType == null)
+				// UNIQUE BY DEFAULT
+				indexType = Boolean.TRUE;
+
 			try {
-				index = new OTreeMapDatabaseLazySave<String, ORecordId>((ODatabaseRecord<?>) database, OStorage.CLUSTER_INDEX_NAME,
-						new ORecordId(indexRecord.getIdentity().toString()));
+				index = new OIndex(indexType, (ODatabaseRecord<?>) database, OStorage.CLUSTER_INDEX_NAME, new ORecordId(indexRecord
+						.getIdentity().toString()));
 				index.load();
 			} catch (IOException e) {
 				OLogManager.instance().error(this, "Can't load index for property %s", e, ODatabaseException.class, toString());
 			}
+		}
 
 		return this;
 	}
@@ -146,14 +148,12 @@ public class OProperty extends OSchemaRecord {
 
 		// SAVE THE INDEX
 		if (index != null) {
-			try {
-				index.save();
-			} catch (IOException e) {
-				throw new ODatabaseException("Error on saving index for property: " + index);
-			}
+			index.lazySave();
 			field("index", index.getRecord().getIdentity());
-		} else
+			field("index-unique", index.isUnique());
+		} else {
 			field("index", ORecordId.EMPTY_RECORD_ID);
+		}
 
 		return super.toStream();
 	}
@@ -218,17 +218,13 @@ public class OProperty extends OSchemaRecord {
 	 *          Don't allow duplicates. Now is supported only unique indexes, so pass always TRUE
 	 * @return
 	 */
-	public OTreeMap<?, ?> createIndex(boolean iUnique) {
-		if (!iUnique)
-			throw new UnsupportedOperationException(
-					"OrientDB supports only unique indexes. Contact the staff to know when no-unique indexes will be available");
-
+	public OIndex createIndex(final boolean iUnique) {
 		if (index != null)
 			throw new IllegalStateException("Index already created");
 
 		try {
-			index = new OTreeMapDatabaseLazySave<String, ORecordId>((ODatabaseRecord<?>) database, OStorage.CLUSTER_INDEX_NAME,
-					OStreamSerializerString.INSTANCE, new OStreamSerializerRID());
+			index = new OIndex(iUnique, (ODatabaseRecord<?>) database, OStorage.CLUSTER_INDEX_NAME);
+
 			setDirty();
 
 			populateIndex();
@@ -282,7 +278,7 @@ public class OProperty extends OSchemaRecord {
 		}
 	}
 
-	public OTreeMapDatabaseLazySave<String, ORecordId> getIndex() {
+	public OIndex getIndex() {
 		return index;
 	}
 

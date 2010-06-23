@@ -20,6 +20,7 @@ import java.util.Date;
 
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
@@ -97,6 +98,8 @@ public abstract class OStringSerializerHelper {
 		case LINK:
 			if (iValue instanceof ORID)
 				return iValue.toString();
+			else if (iValue instanceof String)
+				return new ORecordId((String) iValue);
 			else
 				return ((ORecord<?>) iValue).getIdentity().toString();
 

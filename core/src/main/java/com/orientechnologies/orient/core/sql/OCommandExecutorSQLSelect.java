@@ -272,10 +272,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			if (iCondition.getOperator() instanceof OQueryOperatorEquals) {
 				final Object value = iCondition.getLeft() == iItem ? iCondition.getRight() : iCondition.getLeft();
 				if (value != null) {
-					final ORecordId record = prop.getIndex().get(value.toString());
-					if (record != null)
-						// FOUND: ADD IT
-						iResultSet.add(record);
+					final List<ORecordId> records = prop.getIndex().get(value.toString());
+					if (records != null && records.size() > 0)
+						// FOUND: ADD IT ALL
+						iResultSet.addAll(records);
 				}
 			}
 		}

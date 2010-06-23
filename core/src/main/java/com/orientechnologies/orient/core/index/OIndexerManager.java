@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.index;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
@@ -27,7 +28,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.type.tree.OTreeMapDatabase;
 
 /**
  * Handles indexing when records change.
@@ -119,22 +119,22 @@ public class OIndexerManager extends ODocumentHookAbstract {
 		if (cls == null)
 			return;
 
-		OTreeMapDatabase<String, ORecordId> index;
+		OIndex index;
 		Object fieldValue;
 		String fieldValueString;
 
-		ORecordId indexedRID;
+		List<ORecordId> indexedRIDs;
 
 		for (OProperty prop : cls.properties()) {
 			index = prop.getIndex();
-			if (index != null) {
+			if (index != null && index.isUnique()) {
 				fieldValue = iRecord.field(prop.getName());
 
 				if (fieldValue != null) {
 					fieldValueString = fieldValue.toString();
 
-					indexedRID = index.get(fieldValueString);
-					if (indexedRID != null && !indexedRID.equals(iRecord.getIdentity()))
+					indexedRIDs = index.get(fieldValueString);
+					if (indexedRIDs != null && indexedRIDs.size() > 0 && !indexedRIDs.get(0).equals(iRecord.getIdentity()))
 						OLogManager.instance().exception("Found duplicated key '%s' for property '%s'", null, OIndexException.class,
 								fieldValueString, prop);
 				}
@@ -148,7 +148,7 @@ public class OIndexerManager extends ODocumentHookAbstract {
 		if (cls == null)
 			return null;
 
-		OTreeMapDatabase<String, ORecordId> index;
+		OIndex index;
 		Object fieldValue;
 		String fieldValueString;
 

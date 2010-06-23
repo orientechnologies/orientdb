@@ -21,7 +21,7 @@ import java.util.SortedSet;
 public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements NavigableMap<K, V>, Cloneable, java.io.Serializable {
 	OTreeMapEventListener<K, V>							listener;
 	boolean																	pageItemFound		= false;
-	int																			pageIndex				= -1;
+	volatile int														pageIndex				= -1;
 
 	protected int														lastPageSize		= 63;		// PERSISTENT FIELDS
 

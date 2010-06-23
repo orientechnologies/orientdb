@@ -45,7 +45,7 @@ public class IndexTest {
 	}
 
 	@Test
-	public void testDuplicatedIndex() {
+	public void testDuplicatedIndexOnUnique() {
 		database.open("admin", "admin");
 
 		Profile jayMiner = new Profile("Jay", "Jay", "Miner", null);
@@ -65,7 +65,7 @@ public class IndexTest {
 		database.close();
 	}
 
-	@Test
+	@Test(dependsOnMethods = "testDuplicatedIndexOnUnique")
 	public void testUseOfIndex() {
 		database.open("admin", "admin");
 
@@ -80,6 +80,36 @@ public class IndexTest {
 
 			Assert.assertTrue(record.getClassName().equalsIgnoreCase("Profile"));
 			Assert.assertTrue(record.field("name").toString().equalsIgnoreCase("Jay"));
+		}
+
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "testUseOfIndex")
+	public void testChangeOfIndexToNotUnique() {
+		database.open("admin", "admin");
+		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getIndex().setUnique(false);
+		database.getMetadata().getSchema().save();
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "testChangeOfIndexToNotUnique")
+	public void testDuplicatedIndexOnNotUnique() {
+		database.open("admin", "admin");
+
+		Profile nickNolte = new Profile("Jay", "Nick", "Nolte", null);
+		database.save(nickNolte);
+
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "testDuplicatedIndexOnNotUnique")
+	public void testChangeOfIndexToUnique() {
+		database.open("admin", "admin");
+		try {
+			database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getIndex().setUnique(true);
+			Assert.assertTrue(false);
+		} catch (OIndexException e) {
 		}
 
 		database.close();
