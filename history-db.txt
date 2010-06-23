@@ -30,6 +30,12 @@
 This document enlist the last changes to the Orient Database project.
 
 -------------------------------------------------------------------------------
+VERSION 0.9.19 - beta (June, ? 2010)
+-------------------------------------------------------------------------------
+- Issue #10: support for native inheritance between Documents and POJOs
+- Issue #47: support ORDER BY clause in SQL SELECT statements
+- Fixed other bugs (user loading, logical cluster casts)
+-------------------------------------------------------------------------------
 VERSION 0.9.18 - beta (June, 21st 2010)
 -------------------------------------------------------------------------------
 - New SQL command "create link" to create physical connection between records.
