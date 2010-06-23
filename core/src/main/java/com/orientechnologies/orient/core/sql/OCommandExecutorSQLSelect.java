@@ -28,9 +28,12 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.sort.ODocumentSorter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
@@ -39,14 +42,25 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
+/**
+ * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
+ * If the query contains the ORDER BY clause, the results are temporary collected internally, then ordered and finally returned all
+ * together to the listener.
+ * 
+ * @author Luca Garulli
+ */
 public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract implements ORecordBrowsingListener {
-	public static final String												KEYWORD_SELECT	= "SELECT";
+	public static final String											KEYWORD_SELECT		= "SELECT";
+	public static final String											KEYWORD_ASC				= "ASC";
+	public static final String											KEYWORD_DESC			= "DESC";
+	public static final String											KEYWORD_ORDER_BY	= "ORDER BY";
 
-	protected OSQLAsynchQuery<ORecordSchemaAware<?>>	request;
-	protected OSQLFilter															compiledFilter;
-	protected List<String>														projections			= new ArrayList<String>();
-	private List<OPair<String, String>>								orderedFields;
-	private int																				resultCount;
+	private OSQLAsynchQuery<ORecordSchemaAware<?>>	request;
+	private OSQLFilter															compiledFilter;
+	private List<String>														projections				= new ArrayList<String>();
+	private List<OPair<String, String>>							orderedFields;
+	private List<ODocument>													tempResult;
+	private int																			resultCount;
 
 	/**
 	 * Compile the filter conditions only the first time.
@@ -64,7 +78,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		if (pos == -1)
 			return this;
 
-		int endPosition = textUpperCase.indexOf(OCommandExecutorSQLAbstract.KEYWORD_ORDER_BY, currentPos);
+		int endPosition = textUpperCase.indexOf(OCommandExecutorSQLSelect.KEYWORD_ORDER_BY, currentPos);
 		if (endPosition == -1) {
 			// NO OTHER STUFF: GET UNTIL THE END AND ASSURE TO RETURN FALSE IN ORDER TO AVOID PARSING OF CONDITIONS
 			endPosition = text.length();
@@ -74,74 +88,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		currentPos = compiledFilter.currentPos + pos;
 
 		extractOrderBy();
-
 		return this;
-	}
-
-	protected void extractOrderBy() {
-		if (currentPos == -1 || currentPos >= text.length())
-			return;
-
-		currentPos = OStringParser.jump(text, currentPos, " \r\n");
-
-		final StringBuilder word = new StringBuilder();
-		if (textUpperCase.length() - currentPos > OCommandExecutorSQLAbstract.KEYWORD_ORDER_BY.length())
-			word.append(textUpperCase.substring(currentPos, currentPos + OCommandExecutorSQLAbstract.KEYWORD_ORDER_BY.length()));
-
-		if (!OCommandExecutorSQLAbstract.KEYWORD_ORDER_BY.equals(word.toString()))
-			throw new OQueryParsingException("Expected keyword " + OCommandExecutorSQLAbstract.KEYWORD_ORDER_BY);
-
-		currentPos = currentPos += OCommandExecutorSQLAbstract.KEYWORD_ORDER_BY.length();
-
-		String fieldName;
-		String fieldOrdering;
-
-		orderedFields = new ArrayList<OPair<String, String>>();
-		while (currentPos != -1 && (orderedFields.size() == 0 || word.equals(","))) {
-			currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, false);
-			if (currentPos == -1)
-				throw new OCommandSQLParsingException("Field name expected", text, currentPos);
-
-			fieldName = word.toString();
-
-			currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
-			if (currentPos == -1)
-				fieldOrdering = OCommandExecutorSQLAbstract.KEYWORD_ASC;
-			else {
-
-				if (word.toString().endsWith(",")) {
-					currentPos--;
-					word.deleteCharAt(word.length() - 1);
-				}
-
-				if (word.toString().equals(OCommandExecutorSQLAbstract.KEYWORD_ASC))
-					fieldOrdering = OCommandExecutorSQLAbstract.KEYWORD_ASC;
-				else if (word.toString().equals(OCommandExecutorSQLAbstract.KEYWORD_DESC))
-					fieldOrdering = OCommandExecutorSQLAbstract.KEYWORD_DESC;
-				else
-					throw new OCommandSQLParsingException("Ordering mode '" + word
-							+ "' not supported. Valid is 'ASC', 'DESC' or nothing ('ASC' by default)", text, currentPos);
-
-				currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
-			}
-
-			orderedFields.add(new OPair<String, String>(fieldName, fieldOrdering));
-
-			if (currentPos == -1)
-				break;
-		}
-
-		if (orderedFields.size() == 0)
-			throw new OCommandSQLParsingException("Order by field set was missed. Example: ORDER BY name ASC, salary DESC", text,
-					currentPos);
-	}
-
-	public List<String> getProjections() {
-		return projections;
-	}
-
-	public List<OPair<String, String>> getOrderedFields() {
-		return orderedFields;
 	}
 
 	public Object execute(final Object... iArgs) {
@@ -169,10 +116,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			if (resultSet.size() > 0) {
 				// FOUND USING INDEXES
 				for (ORecordId rid : resultSet)
-					request.getResultListener().result(database.load(rid));
+					addResult(database.load(rid));
 			} else
 				// NO INDEXES: SCAN THE ENTIRE CLUSTER
-				scanClusters(clusterIds);
+				scanEntireClusters(clusterIds);
 
 		} else {
 			String firstCluster = compiledFilter.getClusters().size() > 0 ? compiledFilter.getClusters().keySet().iterator().next()
@@ -190,22 +137,101 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 			database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, firstCluster.toLowerCase(), clusterIds[0]);
 
-			scanClusters(clusterIds);
+			scanEntireClusters(clusterIds);
 		}
 
+		processResultSet();
 		return null;
 	}
 
 	public boolean foreach(final ORecordInternal<?> iRecord) {
 		if (filter(iRecord)) {
 			resultCount++;
-			request.getResultListener().result(iRecord.copy());
+			addResult(iRecord.copy());
 
 			if (request.getLimit() > -1 && resultCount == request.getLimit())
 				// BREAK THE EXECUTION
 				return false;
 		}
 		return true;
+	}
+
+	public List<String> getProjections() {
+		return projections;
+	}
+
+	public List<OPair<String, String>> getOrderedFields() {
+		return orderedFields;
+	}
+
+	protected void extractOrderBy() {
+		if (currentPos == -1 || currentPos >= text.length())
+			return;
+
+		currentPos = OStringParser.jump(text, currentPos, " \r\n");
+
+		final StringBuilder word = new StringBuilder();
+		if (textUpperCase.length() - currentPos > OCommandExecutorSQLSelect.KEYWORD_ORDER_BY.length())
+			word.append(textUpperCase.substring(currentPos, currentPos + OCommandExecutorSQLSelect.KEYWORD_ORDER_BY.length()));
+
+		if (!OCommandExecutorSQLSelect.KEYWORD_ORDER_BY.equals(word.toString()))
+			throw new OQueryParsingException("Expected keyword " + OCommandExecutorSQLSelect.KEYWORD_ORDER_BY);
+
+		currentPos = currentPos += OCommandExecutorSQLSelect.KEYWORD_ORDER_BY.length();
+
+		String fieldName;
+		String fieldOrdering;
+
+		orderedFields = new ArrayList<OPair<String, String>>();
+		while (currentPos != -1 && (orderedFields.size() == 0 || word.equals(","))) {
+			currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, false);
+			if (currentPos == -1)
+				throw new OCommandSQLParsingException("Field name expected", text, currentPos);
+
+			fieldName = word.toString();
+
+			currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
+			if (currentPos == -1)
+				fieldOrdering = OCommandExecutorSQLSelect.KEYWORD_ASC;
+			else {
+
+				if (word.toString().endsWith(",")) {
+					currentPos--;
+					word.deleteCharAt(word.length() - 1);
+				}
+
+				if (word.toString().equals(OCommandExecutorSQLSelect.KEYWORD_ASC))
+					fieldOrdering = OCommandExecutorSQLSelect.KEYWORD_ASC;
+				else if (word.toString().equals(OCommandExecutorSQLSelect.KEYWORD_DESC))
+					fieldOrdering = OCommandExecutorSQLSelect.KEYWORD_DESC;
+				else
+					throw new OCommandSQLParsingException("Ordering mode '" + word
+							+ "' not supported. Valid is 'ASC', 'DESC' or nothing ('ASC' by default)", text, currentPos);
+
+				currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
+			}
+
+			orderedFields.add(new OPair<String, String>(fieldName, fieldOrdering));
+
+			if (currentPos == -1)
+				break;
+		}
+
+		if (orderedFields.size() == 0)
+			throw new OCommandSQLParsingException("Order by field set was missed. Example: ORDER BY name ASC, salary DESC", text,
+					currentPos);
+	}
+
+	private void addResult(final ORecord<?> iRecord) {
+		if (orderedFields != null) {
+			// ORDER BY CLAUSE: COLLECT ALL THE RECORDS AND ORDER THEM AT THE END
+			if (tempResult == null)
+				tempResult = new ArrayList<ODocument>();
+
+			tempResult.add((ODocument) iRecord);
+		} else
+			// CALL THE LISTENER
+			request.getResultListener().result(iRecord);
 	}
 
 	private List<ORecordId> searchForIndexes(final OClass iSchemaClass) {
@@ -289,7 +315,21 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		return currentPos;
 	}
 
-	private void scanClusters(final int[] clusterIds) {
+	private void scanEntireClusters(final int[] clusterIds) {
 		((OStorageLocal) database.getStorage()).browse(database.getId(), clusterIds, this, database.newInstance(), false);
+	}
+
+	private void processResultSet() {
+		if (orderedFields != null) {
+			ODocumentSorter.sort(tempResult, orderedFields);
+
+			// ORDERED RESULT: RETURN ALL THE RECORDS AT THE END
+			for (ODocument doc : tempResult)
+				// CALL THE LISTENER
+				request.getResultListener().result(doc);
+
+			orderedFields.clear();
+			tempResult.clear();
+		}
 	}
 }

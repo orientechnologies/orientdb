@@ -259,7 +259,8 @@ public class SQLSelectTest {
 
 		String lastName = null;
 		for (ODocument d : result) {
-//			Assert.assertTrue(((String) d.field("name")).compareTo(lastName) > 0);
+			if (lastName != null)
+				Assert.assertTrue(((String) d.field("name")).compareTo(lastName) > 0);
 			lastName = d.field("name");
 		}
 
@@ -277,7 +278,27 @@ public class SQLSelectTest {
 
 		String lastName = null;
 		for (ODocument d : result) {
-//			Assert.assertTrue(((String) d.field("name")).compareTo(lastName) > 0);
+			if (lastName != null)
+				Assert.assertTrue(((String) d.field("name")).compareTo(lastName) > 0);
+			lastName = d.field("name");
+		}
+
+		database.close();
+	}
+
+	@Test
+	public void queryConditionsAndOrderBy() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(
+				new OSQLSynchQuery<ODocument>("select from Profile where name is not null order by name desc, id asc")).execute();
+
+		Assert.assertTrue(result.size() != 0);
+
+		String lastName = null;
+		for (ODocument d : result) {
+			if (lastName != null)
+				Assert.assertTrue(((String) d.field("name")).compareTo(lastName) < 0);
 			lastName = d.field("name");
 		}
 
