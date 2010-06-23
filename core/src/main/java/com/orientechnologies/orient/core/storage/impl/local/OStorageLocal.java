@@ -672,8 +672,10 @@ public class OStorageLocal extends OStorageAbstract {
 	 */
 	private int createClusterFromConfig(final OStorageClusterConfiguration iConfig) throws IOException {
 		if (clusterMap.containsKey(iConfig.getName())) {
-			// ALREADY CONFIGURED, JUST OVERWRITE CONFIG
-			((OClusterLocal) clusterMap.get(iConfig.getName())).config = (OStorageSegmentConfiguration) iConfig;
+			OCluster c = clusterMap.get(iConfig.getName());
+			if (c instanceof OClusterLocal)
+				// ALREADY CONFIGURED, JUST OVERWRITE CONFIG
+				((OClusterLocal) c).config = (OStorageSegmentConfiguration) iConfig;
 			return -1;
 		}
 

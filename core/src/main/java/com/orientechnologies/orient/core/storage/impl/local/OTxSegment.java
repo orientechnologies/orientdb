@@ -363,7 +363,7 @@ public class OTxSegment extends OSingleFileSegment {
 	private void recoverTransactionEntry(byte status, byte operation, int reqId, int txId, int clusterId, long clusterOffset,
 			long oldDataOffset, OPhysicalPosition ppos) throws IOException {
 
-		OClusterLocal cluster = (OClusterLocal) storage.getClusterById(clusterId);
+		final OClusterLocal cluster = (OClusterLocal) storage.getClusterById(clusterId);
 
 		OLogManager.instance().info(this,
 				"Recovering tx <%d> by req <%d>. Operation <%d> was in status <%d> on record %d:%d in data space %d...", txId, reqId,
