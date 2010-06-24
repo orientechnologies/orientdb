@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import com.orientechnologies.orient.core.command.OCommandRequestInternal;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -31,7 +31,7 @@ public class OCommandExecutorSQLGrant extends OCommandExecutorSQLPermissionAbstr
 	private static final String	KEYWORD_TO		= "TO";
 
 	@SuppressWarnings("unchecked")
-	public OCommandExecutorSQLGrant parse(final OCommandRequestInternal iRequest) {
+	public OCommandExecutorSQLGrant parse(final OCommandRequestText iRequest) {
 		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_CREATE);
 
 		init(iRequest.getDatabase(), iRequest.getText());

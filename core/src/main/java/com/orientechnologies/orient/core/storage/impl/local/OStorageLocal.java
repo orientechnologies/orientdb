@@ -29,7 +29,7 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
-import com.orientechnologies.orient.core.command.OCommandRequestInternal;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
@@ -899,7 +899,7 @@ public class OStorageLocal extends OStorageAbstract {
 	/**
 	 * Execute the command request and return the result back.
 	 */
-	public Object command(final OCommandRequestInternal iCommand) {
+	public Object command(final OCommandRequestText iCommand) {
 		final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
 		executor.parse(iCommand);
 		try {

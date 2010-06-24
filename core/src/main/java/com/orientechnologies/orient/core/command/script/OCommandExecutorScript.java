@@ -25,7 +25,7 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
-import com.orientechnologies.orient.core.command.OCommandRequestInternal;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
 
 /**
  * Executes Script Commands.
@@ -64,7 +64,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
 	}
 
 	@SuppressWarnings("unchecked")
-	public OCommandExecutorScript parse(final OCommandRequestInternal iRequest) {
+	public OCommandExecutorScript parse(final OCommandRequestText iRequest) {
 		request = (OCommandScript) iRequest;
 		return this;
 	}

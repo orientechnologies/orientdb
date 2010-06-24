@@ -18,11 +18,11 @@ package com.orientechnologies.orient.core.sql.query;
 import java.io.IOException;
 import java.util.List;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.query.OQueryAbstract;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.core.serialization.OMemoryOutputStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 /**
  * SQL query implementation.
@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
  * @param <T>
  *          Record type to return.
  */
-public abstract class OSQLQuery<T extends Object> extends OCommandSQL {
+public abstract class OSQLQuery<T extends Object> extends OQueryAbstract<T> implements OCommandRequestText {
 	protected String	text;
 
 	public OSQLQuery() {
@@ -45,9 +45,8 @@ public abstract class OSQLQuery<T extends Object> extends OCommandSQL {
 	/**
 	 * Delegates to the OQueryExecutor the query execution.
 	 */
-	@Override
 	@SuppressWarnings("unchecked")
-	public List<T> execute(final Object... iArgs) {
+	public List<T> execute2(final Object... iArgs) {
 		parameters = iArgs;
 		return (List<T>) database.getStorage().command(this);
 	}
@@ -61,7 +60,6 @@ public abstract class OSQLQuery<T extends Object> extends OCommandSQL {
 		return result != null && result.size() > 0 ? result.get(0) : null;
 	}
 
-	@Override
 	public String getText() {
 		return text;
 	}
@@ -71,7 +69,6 @@ public abstract class OSQLQuery<T extends Object> extends OCommandSQL {
 		return "OSQLQuery [text=" + text + "]";
 	}
 
-	@Override
 	public OSerializableStream fromStream(final byte[] iStream) throws IOException {
 		OMemoryInputStream buffer = new OMemoryInputStream(iStream);
 		text = buffer.getAsString();
@@ -79,22 +76,10 @@ public abstract class OSQLQuery<T extends Object> extends OCommandSQL {
 		return this;
 	}
 
-	@Override
 	public byte[] toStream() throws IOException {
 		OMemoryOutputStream buffer = new OMemoryOutputStream();
 		buffer.add(text);
 		buffer.add(limit);
 		return buffer.toByteArray();
-	}
-
-	@Override
-	public ODatabaseRecord<?> getDatabase() {
-		return database;
-	}
-
-	@Override
-	public OSQLQuery<T> setDatabase(final ODatabaseRecord<?> iDatabase) {
-		database = iDatabase;
-		return this;
 	}
 }

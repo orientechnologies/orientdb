@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.command;
 
-import com.orientechnologies.orient.core.serialization.OSerializableStream;
-
 /**
  * Generic GOF command pattern implementation. Execute a command passing the optional arguments "iArgs" and returns an Object.
  * 
@@ -24,6 +22,6 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  * 
  * @param <T>
  */
-public interface OCommandRequest extends OSerializableStream {
+public interface OCommandRequest {
 	public <RET> RET execute(Object... iArgs);
 }

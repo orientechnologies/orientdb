@@ -23,7 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.command.OCommandRequestInternal;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
@@ -282,7 +282,7 @@ public class OStorageMemory extends OStorageAbstract {
 		return defaultClusterId;
 	}
 
-	public Object command(OCommandRequestInternal iCommand) {
+	public Object command(final OCommandRequestText iCommand) {
 		return null;
 	}
 }

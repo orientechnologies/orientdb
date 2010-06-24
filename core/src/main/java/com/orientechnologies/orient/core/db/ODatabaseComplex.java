@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import java.util.List;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -25,6 +26,7 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
@@ -132,6 +134,15 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 * @return
 	 */
 	public ODatabaseComplex<T> rollback();
+
+	/**
+	 * Execute a query against the database.
+	 * 
+	 * @param iCommand
+	 *          Query command
+	 * @return List of POJOs
+	 */
+	public <RET extends List<?>> RET query(final OQuery<? extends Object> iCommand);
 
 	/**
 	 * Execute a command against the database. A command can be a SQL statement or a Procedure. If the OStorage used is remote

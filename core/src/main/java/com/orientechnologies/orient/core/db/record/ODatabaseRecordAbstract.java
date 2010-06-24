@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.db.record;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -44,12 +45,14 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.metadata.security.OUserTrigger;
 import com.orientechnologies.orient.core.metadata.security.OUser.STATUSES;
+import com.orientechnologies.orient.core.metadata.security.OUserTrigger;
+import com.orientechnologies.orient.core.query.OQuery;
+import com.orientechnologies.orient.core.query.OQueryAbstract;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -60,13 +63,13 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> extends ODatabaseWrapperAbstract<ODatabaseRaw, REC>
 		implements ODatabaseRecord<REC> {
 
-	private ODictionaryInternal		dictionary;
-	private OMetadata							metadata;
-	private OUser									user;
-	private static final String		DEF_RECORD_FORMAT	= "csv";
-	private Class<? extends REC>	recordClass;
-	private String								recordFormat;
-	private Set<ORecordHook>			hooks							= new HashSet<ORecordHook>();
+	private ODictionaryInternal<REC>	dictionary;
+	private OMetadata									metadata;
+	private OUser											user;
+	private static final String				DEF_RECORD_FORMAT	= "csv";
+	private Class<? extends REC>			recordClass;
+	private String										recordFormat;
+	private Set<ORecordHook>					hooks							= new HashSet<ORecordHook>();
 
 	public ODatabaseRecordAbstract(final String iURL, final Class<? extends REC> iRecordClass) {
 		super(new ODatabaseRaw(iURL));
@@ -78,7 +81,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			recordClass = iRecordClass;
 
 			metadata = new OMetadata(this);
-			dictionary = (ODictionaryInternal) getStorage().createDictionary(this);
+			dictionary = (ODictionaryInternal<REC>) getStorage().createDictionary(this);
 
 			registerHook(new OUserTrigger());
 			registerHook(new OIndexerManager());
@@ -193,13 +196,20 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		OCommandRequestInternal command = (OCommandRequestInternal) iCommand;
 
 		try {
-			command.setDatabase(getDatabaseOwner());
+			command.setDatabase(this);
 
 			return command;
 
 		} catch (Exception e) {
 			throw new ODatabaseException("Error on command execution", e);
 		}
+	}
+
+	public <RET extends List<?>> RET query(final OQuery<? extends Object> iCommand) {
+		if (iCommand instanceof OQueryAbstract)
+			((OQueryAbstract<?>) iCommand).setDatabase(this);
+
+		return (RET) iCommand.execute();
 	}
 
 	public Class<? extends REC> getRecordType() {
@@ -455,8 +465,13 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 	}
 
 	@Override
-	public ODatabaseRecord<?> getDatabaseOwner() {
-		return (ODatabaseRecord<?>) databaseOwner;
+	public ODatabaseComplex<?> getDatabaseOwner() {
+		ODatabaseComplex<?> current = databaseOwner;
+
+		while (current != null && current != this && current.getDatabaseOwner() != current)
+			current = current.getDatabaseOwner();
+
+		return current;
 	}
 
 	@Override

@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -165,8 +166,8 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 
 		registerPojo(iPojo, record);
 
-		OObjectSerializerHelper.toStream(iPojo, record, getEntityManager(), getMetadata().getSchema().getClass(
-				iPojo.getClass().getSimpleName()), this);
+		OObjectSerializerHelper.toStream(iPojo, record, getEntityManager(),
+				getMetadata().getSchema().getClass(iPojo.getClass().getSimpleName()), this);
 
 		underlying.save(record, iClusterName);
 
@@ -201,8 +202,8 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 
 			registerPojo(iPojo, record);
 
-			OObjectSerializerHelper.toStream(iPojo, record, getEntityManager(), getMetadata().getSchema().getClass(
-					iPojo.getClass().getSimpleName()), this);
+			OObjectSerializerHelper.toStream(iPojo, record, getEntityManager(),
+					getMetadata().getSchema().getClass(iPojo.getClass().getSimpleName()), this);
 		}
 
 		return record;
@@ -297,27 +298,22 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 		return new ODocument(underlying);
 	}
 
-	public <RET extends List<?>> RET query(final OCommandRequest iCommand) {
-		underlying.command(iCommand);
-		Object result = iCommand.execute();
+	public <RET extends List<?>> RET query(final OQuery<?> iCommand) {
+		final List<ODocument> result = underlying.query(iCommand);
 
 		if (result == null)
 			return null;
-		else if (result instanceof List<?>) {
-			final List<ODocument> resultSet = (List<ODocument>) result;
-			final List<Object> resultPojo = new ArrayList<Object>();
-			Object obj;
-			for (ODocument doc : resultSet) {
-				// GET THE ASSOCIATED DOCUMENT
-				obj = getUserObjectByRecord(doc);
-				OObjectSerializerHelper.fromStream(doc, obj, getEntityManager(), this);
-				resultPojo.add(obj);
-			}
 
-			result = resultPojo;
+		final List<Object> resultPojo = new ArrayList<Object>();
+		Object obj;
+		for (ODocument doc : result) {
+			// GET THE ASSOCIATED DOCUMENT
+			obj = getUserObjectByRecord(doc);
+			OObjectSerializerHelper.fromStream(doc, obj, getEntityManager(), this);
+			resultPojo.add(obj);
 		}
 
-		return (RET) result;
+		return (RET) resultPojo;
 	}
 
 	public OCommandRequest command(final OCommandRequest iCommand) {

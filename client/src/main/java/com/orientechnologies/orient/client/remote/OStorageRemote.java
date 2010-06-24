@@ -24,8 +24,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
@@ -35,7 +35,7 @@ import com.orientechnologies.orient.client.config.OClientConfiguration;
 import com.orientechnologies.orient.client.dictionary.ODictionaryClient;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
-import com.orientechnologies.orient.core.command.OCommandRequestInternal;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
@@ -343,7 +343,7 @@ public class OStorageRemote extends OStorageAbstract {
 	/**
 	 * Execute the command remotely and get the results back.
 	 */
-	public Object command(final OCommandRequestInternal iCommand) {
+	public Object command(final OCommandRequestText iCommand) {
 		checkConnection();
 
 		if (!(iCommand instanceof OSerializableStream))

@@ -36,14 +36,14 @@ public class SQLDeleteTest {
 	public void deleteWithWhereOperator() {
 		database.open("admin", "admin");
 
-		Long total = database.countClass("Profile");
+		final Long total = database.countClass("Profile");
 
-		Number records = (Number) database.command(new OCommandSQL("delete from Profile set sex = 'male' where salary > 100"))
+		final Number records = (Number) database.command(new OCommandSQL("delete from Profile set sex = 'male' where salary > 100"))
 				.execute();
 
-		Assert.assertEquals(records.intValue(), 1);
+		Assert.assertEquals(records.intValue(), 3);
 
-		Assert.assertEquals(database.countClass("Profile"), total - 1);
+		Assert.assertEquals(database.countClass("Profile"), total - records.intValue());
 
 		database.close();
 	}

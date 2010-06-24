@@ -35,7 +35,7 @@ public interface OCommandExecutor {
 	 * @see #execute(Object...)
 	 * @return
 	 */
-	public <RET extends OCommandExecutor> RET parse(OCommandRequestInternal iRequest);
+	public <RET extends OCommandExecutor> RET parse(OCommandRequestText iRequest);
 
 	/**
 	 * Execute the requested command parsed previously.
@@ -59,5 +59,5 @@ public interface OCommandExecutor {
 	 * @see #execute(Object...)
 	 * @return
 	 */
-	public Object execute(OCommandRequestInternal iRequest, final Object... iArgs);
+	public Object execute(OCommandRequestText iRequest, final Object... iArgs);
 }

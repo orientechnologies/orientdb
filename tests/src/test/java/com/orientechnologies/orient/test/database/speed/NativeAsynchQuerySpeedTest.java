@@ -48,7 +48,7 @@ public class NativeAsynchQuerySpeedTest extends SpeedTestMonoThread implements
 			public boolean filter(OQueryContextNativeSchema<ODocument> iRecord) {
 				return iRecord.column("id").toInt().minor(10).go();
 			}
-		}.execute();
+		}.execute2();
 	}
 
 	public boolean result(final Object iRecord) {

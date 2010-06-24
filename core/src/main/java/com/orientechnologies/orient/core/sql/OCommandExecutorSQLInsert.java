@@ -16,7 +16,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.parser.OStringParser;
-import com.orientechnologies.orient.core.command.OCommandRequestInternal;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -41,7 +41,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 	private Object[]						fieldValues;
 
 	@SuppressWarnings("unchecked")
-	public OCommandExecutorSQLInsert parse(final OCommandRequestInternal iRequest) {
+	public OCommandExecutorSQLInsert parse(final OCommandRequestText iRequest) {
 		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_CREATE);
 
 		init(iRequest.getDatabase(), iRequest.getText());

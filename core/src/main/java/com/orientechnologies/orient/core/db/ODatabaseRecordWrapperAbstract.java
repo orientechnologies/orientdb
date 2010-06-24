@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.db;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -26,6 +27,7 @@ import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
@@ -76,6 +78,10 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord<
 
 	public <RET extends OCommandRequest> RET command(final OCommandRequest iCommand) {
 		return (RET) underlying.command(iCommand);
+	}
+
+	public <RET extends List<?>> RET query(final OQuery<? extends Object> iCommand) {
+		return (RET) underlying.query(iCommand);
 	}
 
 	public REC newInstance() {

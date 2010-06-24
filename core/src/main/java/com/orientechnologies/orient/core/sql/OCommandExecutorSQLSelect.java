@@ -20,7 +20,7 @@ import java.util.List;
 
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.command.OCommandRequestInternal;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -66,7 +66,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	 * Compile the filter conditions only the first time.
 	 */
 	@SuppressWarnings("unchecked")
-	public OCommandExecutorSQLSelect parse(final OCommandRequestInternal iRequest) {
+	public OCommandExecutorSQLSelect parse(final OCommandRequestText iRequest) {
 		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
 		init(iRequest.getDatabase(), iRequest.getText());

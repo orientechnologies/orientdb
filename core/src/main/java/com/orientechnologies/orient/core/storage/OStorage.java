@@ -20,7 +20,7 @@ import java.util.Collection;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.cache.OCacheRecord;
-import com.orientechnologies.orient.core.command.OCommandRequestInternal;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
@@ -134,5 +134,5 @@ public interface OStorage {
 	/**
 	 * Execute the command request and return the result back.
 	 */
-	public Object command(OCommandRequestInternal iCommand);
+	public Object command(OCommandRequestText iCommand);
 }

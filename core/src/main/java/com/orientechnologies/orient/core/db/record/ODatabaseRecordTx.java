@@ -18,10 +18,10 @@ package com.orientechnologies.orient.core.db.record;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.tx.OTransaction;
-import com.orientechnologies.orient.core.tx.OTransactionNoTx;
-import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.tx.OTransaction.TXSTATUS;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
+import com.orientechnologies.orient.core.tx.OTransactionNoTx;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
 @SuppressWarnings("unchecked")
 /**
@@ -51,7 +51,7 @@ public class ODatabaseRecordTx<REC extends ORecordInternal<?>> extends ODatabase
 			break;
 
 		case OPTIMISTIC:
-			currentTx = new OTransactionOptimistic(this, txSerial++);
+			currentTx = new OTransactionOptimistic<REC>(this, txSerial++);
 			break;
 
 		case PESSIMISTIC:
@@ -96,7 +96,7 @@ public class ODatabaseRecordTx<REC extends ORecordInternal<?>> extends ODatabase
 		return this;
 	}
 
-	public void executeRollback(final OTransaction iTransaction) {
+	public void executeRollback(final OTransaction<?> iTransaction) {
 	}
 
 	public void executeCommit() {
@@ -109,7 +109,7 @@ public class ODatabaseRecordTx<REC extends ORecordInternal<?>> extends ODatabase
 	}
 
 	private void init() {
-		currentTx = new OTransactionNoTx(this, -1);
+		currentTx = new OTransactionNoTx<REC>(this, -1);
 	}
 
 	public ORecordInternal<?> getRecordByUserObject(final Object iUserObject, final boolean iIsMandatory) {
@@ -122,6 +122,6 @@ public class ODatabaseRecordTx<REC extends ORecordInternal<?>> extends ODatabase
 
 	private void setDefaultTransactionMode() {
 		if (!(currentTx instanceof OTransactionNoTx))
-			currentTx = new OTransactionNoTx(this, txSerial++);
+			currentTx = new OTransactionNoTx<REC>(this, txSerial++);
 	}
 }

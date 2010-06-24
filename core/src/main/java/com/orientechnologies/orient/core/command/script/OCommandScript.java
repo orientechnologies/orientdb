@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.command.script;
 
-import com.orientechnologies.orient.core.command.OCommandRequestAbstract;
+import com.orientechnologies.orient.core.command.OCommandRequestTextAbstract;
 
 /**
  * Script command request implementation. It just stores the request and delegated the execution to the configured OCommandExecutor.
@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestAbstract;
  * @author Luca Garulli
  * 
  */
-public class OCommandScript extends OCommandRequestAbstract {
+public class OCommandScript extends OCommandRequestTextAbstract {
 	private String	language;
 
 	public OCommandScript() {

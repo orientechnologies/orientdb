@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
+@SuppressWarnings("unchecked")
 public abstract class ONativeAsynchQuery<T extends ORecordInternal<?>, CTX extends OQueryContextNative<T>> extends
 		ONativeQuery<T, CTX> implements ORecordBrowsingListener {
 	protected OCommandResultListener	resultListener;
@@ -48,7 +49,6 @@ public abstract class ONativeAsynchQuery<T extends ORecordInternal<?>, CTX exten
 		return resultListener != this;
 	}
 
-	@SuppressWarnings("unchecked")
 	public boolean foreach(final ORecordInternal<?> iRecord) {
 		T record = (T) iRecord;
 		queryRecord.setRecord(record);
@@ -64,7 +64,7 @@ public abstract class ONativeAsynchQuery<T extends ORecordInternal<?>, CTX exten
 		return true;
 	}
 
-	public List<T> execute(final Object... iArgs) {
+	public List<T> execute2(final Object... iArgs) {
 		if (!(database.getStorage() instanceof OStorageLocal))
 			throw new OCommandExecutionException("Native queries can run only in embedded-local version. Not in the remote one.");
 

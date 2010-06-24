@@ -17,14 +17,16 @@ package com.orientechnologies.orient.core.query;
 
 import java.util.List;
 
-public interface OQuery<T extends Object> {
+import com.orientechnologies.orient.core.command.OCommandRequest;
+
+public interface OQuery<T extends Object> extends OCommandRequest {
 
 	/**
 	 * Execute the query without limit about the result set. The limit will be bound to the maximum allowed.
 	 * 
 	 * @return List of records if any record matches the query constraints, otherwise an empty List.
 	 */
-	public List<T> execute(Object... iArgs);
+	public List<T> execute2(Object... iArgs);
 
 	/**
 	 * Return the first occurrence found if any
@@ -32,4 +34,8 @@ public interface OQuery<T extends Object> {
 	 * @return Record if found, otherwise null
 	 */
 	public T executeFirst(Object... iArgs);
+
+	public int getLimit();
+
+	public OQuery<T> setLimit(final int iLimit);
 }

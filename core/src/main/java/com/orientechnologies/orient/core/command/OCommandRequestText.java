@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.command;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
 /**
@@ -25,8 +24,6 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  * 
  * @param <T>
  */
-public interface OCommandRequestInternal extends OCommandRequest, OSerializableStream {
-	public ODatabaseRecord<?> getDatabase();
-
-	public OCommandRequestInternal setDatabase(final ODatabaseRecord<?> iDatabase);
+public interface OCommandRequestText extends OCommandRequestInternal, OSerializableStream {
+	public String getText();
 }

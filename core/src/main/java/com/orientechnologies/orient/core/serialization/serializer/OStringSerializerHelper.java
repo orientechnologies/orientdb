@@ -125,6 +125,7 @@ public abstract class OStringSerializerHelper {
 		case DOUBLE:
 		case SHORT:
 		case BYTE:
+		case BOOLEAN:
 			return String.valueOf(iValue);
 
 		case BINARY:

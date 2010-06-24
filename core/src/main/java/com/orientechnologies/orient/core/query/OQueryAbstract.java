@@ -15,26 +15,29 @@
  */
 package com.orientechnologies.orient.core.query;
 
+import com.orientechnologies.orient.core.command.OCommandRequestAbstract;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 
-public abstract class OQueryAbstract<REC extends ORecordInternal<?>> implements
-		OQuery<REC> {
-	protected ODatabaseRecord<?> database;
-	protected int limit = -1;
+public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAbstract implements OQuery<T> {
+	protected int	limit	= -1;
 
-	protected OQueryAbstract() {
+	public OQueryAbstract() {
 	}
 
-	protected OQueryAbstract(final ODatabaseRecord<REC> iDatabase) {
-		this.database = iDatabase;
+	public OQueryAbstract(final ODatabaseRecord<?> iDatabase) {
+		super(iDatabase);
+	}
+
+	@SuppressWarnings("unchecked")
+	public <RET> RET execute(Object... iArgs) {
+		return (RET) execute2(iArgs);
 	}
 
 	public int getLimit() {
 		return limit;
 	}
 
-	public OQueryAbstract<REC> setLimit(int limit) {
+	public OQueryAbstract<T> setLimit(int limit) {
 		this.limit = limit;
 		return this;
 	}

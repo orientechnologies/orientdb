@@ -7,10 +7,7 @@ import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 public class OIntentMassiveInsert implements OIntent {
 
 	public void activate(final ODatabaseRaw iDatabase, final Object... iArgs) {
-		ODatabaseComplex<?> ownerDb = iDatabase.getDatabaseOwner();
-
-		while (ownerDb.getDatabaseOwner() != null && ownerDb.getDatabaseOwner() != ownerDb)
-			ownerDb = ownerDb.getDatabaseOwner();
+		final ODatabaseComplex<?> ownerDb = iDatabase.getDatabaseOwner();
 
 		if (ownerDb instanceof ODatabaseObject)
 			((ODatabaseObject) ownerDb).setRetainObjects(false);

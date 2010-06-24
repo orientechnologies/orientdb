@@ -36,13 +36,9 @@ public abstract class OCommandExecutorAbstract extends OCommandToParse implement
 	/**
 	 * Parse every time the request and execute it.
 	 */
-	public Object execute(final OCommandRequestInternal iRequest, final Object... iArgs) {
+	public Object execute(final OCommandRequestText iRequest, final Object... iArgs) {
 		parse(iRequest);
 		return execute(iArgs);
-	}
-
-	public String getText() {
-		return text;
 	}
 
 	public ODatabase getDatabase() {

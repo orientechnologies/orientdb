@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import com.orientechnologies.orient.core.command.OCommandRequestInternal;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
 
 /**
  * SQL UPDATE command.
@@ -27,9 +27,9 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract {
 	private OCommandExecutorSQLAbstract	delegate;
 
 	@SuppressWarnings("unchecked")
-	public OCommandExecutorSQLDelegate parse(final OCommandRequestInternal iCommand) {
-		if (iCommand instanceof OCommandSQL) {
-			OCommandSQL sql = (OCommandSQL) iCommand;
+	public OCommandExecutorSQLDelegate parse(final OCommandRequestText iCommand) {
+		if (iCommand instanceof OCommandRequestText) {
+			OCommandRequestText sql = (OCommandRequestText) iCommand;
 			final String text = sql.getText();
 			final String textUpperCase = text.toUpperCase();
 

@@ -21,12 +21,13 @@ import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.common.parser.OStringParser;
-import com.orientechnologies.orient.core.command.OCommandRequestInternal;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
@@ -45,11 +46,11 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 	private String							className				= null;
 	private Map<String, Object>	setEntries			= new HashMap<String, Object>();
 	private Set<String>					removeEntries		= new HashSet<String>();
-	private OCommandSQL					query;
+	private OQuery<?>						query;
 	private int									recordCount			= 0;
 
 	@SuppressWarnings("unchecked")
-	public OCommandExecutorSQLUpdate parse(final OCommandRequestInternal iRequest) {
+	public OCommandExecutorSQLUpdate parse(final OCommandRequestText iRequest) {
 		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_UPDATE);
 
 		init(iRequest.getDatabase(), iRequest.getText());
@@ -99,9 +100,9 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 		String whereCondition = word.toString();
 
 		if (whereCondition.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE))
-			query = database.command(new OSQLAsynchQuery<ODocument>("select from " + className + " where " + text.substring(pos), this));
+			query = new OSQLAsynchQuery<ODocument>("select from " + className + " where " + text.substring(pos), this);
 		else
-			query = database.command(new OSQLAsynchQuery<ODocument>("select from " + className, this));
+			query = new OSQLAsynchQuery<ODocument>("select from " + className, this);
 
 		return this;
 	}
@@ -110,7 +111,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 		if (className == null)
 			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
 
-		query.execute();
+		database.query(query);
 		return recordCount;
 	}
 

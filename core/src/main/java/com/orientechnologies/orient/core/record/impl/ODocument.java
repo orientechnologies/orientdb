@@ -23,8 +23,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -63,17 +63,6 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	public ODocument(final byte[] iSource) {
 		super(iSource);
 		setup();
-	}
-
-	/**
-	 * Creates a new instance of the specified class. New instances are not persistent until {@link #save()} is called.
-	 * 
-	 * @param iClassName
-	 *          Class name
-	 */
-	public ODocument(final String iClassName) {
-		setup();
-		setClassName(iClassName);
 	}
 
 	/**

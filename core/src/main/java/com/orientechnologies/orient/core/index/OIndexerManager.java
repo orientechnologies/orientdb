@@ -18,8 +18,8 @@ package com.orientechnologies.orient.core.index;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
@@ -106,7 +106,8 @@ public class OIndexerManager extends ODocumentHookAbstract {
 
 			// REMOVE INDEX OF ENTRIES FOR THE CHANGED ONLY VALUES
 			for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
-				if (iRecord.containsField(propEntry.getKey().getName()) && !dirtyFields.contains(propEntry.getKey().getName())) {
+				if (iRecord.containsField(propEntry.getKey().getName())
+						&& (dirtyFields == null || !dirtyFields.contains(propEntry.getKey().getName()))) {
 					propEntry.getKey().getIndex().remove(propEntry.getValue());
 					propEntry.getKey().getIndex().lazySave();
 				}

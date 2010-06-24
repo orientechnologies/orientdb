@@ -51,7 +51,7 @@ public class OSQLAsynchQuery<T extends Object> extends OSQLQuery<T> implements O
 	}
 
 	@SuppressWarnings("unchecked")
-	public <RET> RET execute(final String iText, final Object... iArgs) {
+	public <RET> RET execute2(final String iText, final Object... iArgs) {
 		text = iText;
 		return (RET) execute(iArgs);
 	}

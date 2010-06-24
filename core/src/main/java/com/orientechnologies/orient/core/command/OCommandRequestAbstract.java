@@ -15,12 +15,7 @@
  */
 package com.orientechnologies.orient.core.command;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
-import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
 /**
  * Text based Command Request abstract class.
@@ -29,49 +24,15 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  * 
  */
 public abstract class OCommandRequestAbstract implements OCommandRequestInternal {
-	protected String									text;
 	protected ODatabaseRecord<?>			database;
-	protected int											limit	= -1;
 	protected OCommandResultListener	resultListener;
 	protected Object[]								parameters;
 
 	protected OCommandRequestAbstract() {
 	}
 
-	protected OCommandRequestAbstract(final String iText) {
-		this(iText, null);
-	}
-
-	protected OCommandRequestAbstract(final String iText, final ODatabaseRecord<ODocument> iDatabase) {
-		text = iText;
+	protected OCommandRequestAbstract(final ODatabaseRecord<?> iDatabase) {
 		database = iDatabase;
-	}
-
-	/**
-	 * Delegates the execution to the configured command executor.
-	 */
-	@SuppressWarnings("unchecked")
-	public <RET> RET execute(final Object... iArgs) {
-		parameters = iArgs;
-		return (RET) database.getStorage().command(this);
-	}
-
-	public String getText() {
-		return text;
-	}
-
-	public OSerializableStream fromStream(byte[] iStream) throws IOException {
-		text = OBinaryProtocol.bytes2string(iStream);
-		return this;
-	}
-
-	public byte[] toStream() throws IOException {
-		return OBinaryProtocol.string2bytes(text);
-	}
-
-	@Override
-	public String toString() {
-		return getClass().getSimpleName() + " [text=" + text + "]";
 	}
 
 	public ODatabaseRecord<?> getDatabase() {
@@ -81,14 +42,6 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
 	public OCommandRequestInternal setDatabase(final ODatabaseRecord<?> iDatabase) {
 		this.database = iDatabase;
 		return this;
-	}
-
-	public int getLimit() {
-		return limit;
-	}
-
-	public void setLimit(int limit) {
-		this.limit = limit;
 	}
 
 	public OCommandResultListener getResultListener() {

@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import com.orientechnologies.orient.core.command.OCommandRequestInternal;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -39,7 +39,7 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLPermis
 	private OType								type;
 	private String							linked;
 
-	public OCommandExecutorSQLCreateProperty parse(final OCommandRequestInternal iRequest) {
+	public OCommandExecutorSQLCreateProperty parse(final OCommandRequestText iRequest) {
 		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_CREATE);
 
 		init(iRequest.getDatabase(), iRequest.getText());

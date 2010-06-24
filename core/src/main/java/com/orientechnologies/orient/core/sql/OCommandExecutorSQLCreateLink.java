@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import com.orientechnologies.orient.core.command.OCommandRequestInternal;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -51,7 +51,7 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 	private String							linkName;
 	private String							linkType;
 
-	public OCommandExecutorSQLCreateLink parse(final OCommandRequestInternal iRequest) {
+	public OCommandExecutorSQLCreateLink parse(final OCommandRequestText iRequest) {
 		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_CREATE);
 
 		init(iRequest.getDatabase(), iRequest.getText());
