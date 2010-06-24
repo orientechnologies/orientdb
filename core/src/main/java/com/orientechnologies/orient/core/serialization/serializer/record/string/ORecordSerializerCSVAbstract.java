@@ -134,8 +134,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 								iLinkedType = OType.EMBEDDED;
 						}
 
-						map.put((String) OStringSerializerHelper.fieldTypeFromStream(OType.STRING, entry[0]), OStringSerializerHelper
-								.fieldTypeFromStream(iLinkedType, mapValue));
+						map.put((String) OStringSerializerHelper.fieldTypeFromStream(OType.STRING, entry[0]),
+								OStringSerializerHelper.fieldTypeFromStream(iLinkedType, mapValue));
 					}
 
 				}
@@ -203,7 +203,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 						if (o instanceof ODocument)
 							record = (ODocument) o;
 						else
-							record = OObjectSerializerHelper.toStream(o, new ODocument(o.getClass().getSimpleName()),
+							record = OObjectSerializerHelper.toStream(o, new ODocument(iDatabase, o.getClass().getSimpleName()),
 									iDatabase instanceof ODatabaseObjectTx ? ((ODatabaseObjectTx) iDatabase).getEntityManager()
 											: OEntityManagerInternal.INSTANCE, iLinkedClass, iObjHandler != null ? iObjHandler
 											: new OUserObject2RecordHandler() {
@@ -332,7 +332,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					if (o instanceof ODocument)
 						record = (ODocument) o;
 					else
-						record = OObjectSerializerHelper.toStream(o, new ODocument(o.getClass().getSimpleName()),
+						record = OObjectSerializerHelper.toStream(o, new ODocument(iDatabase, o.getClass().getSimpleName()),
 								iDatabase instanceof ODatabaseObjectTx ? ((ODatabaseObjectTx) iDatabase).getEntityManager()
 										: OEntityManagerInternal.INSTANCE, iLinkedClass, iObjHandler != null ? iObjHandler
 										: new OUserObject2RecordHandler() {
