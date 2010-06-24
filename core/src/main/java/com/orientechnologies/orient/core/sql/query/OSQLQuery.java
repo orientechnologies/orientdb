@@ -46,7 +46,7 @@ public abstract class OSQLQuery<T extends Object> extends OQueryAbstract<T> impl
 	 * Delegates to the OQueryExecutor the query execution.
 	 */
 	@SuppressWarnings("unchecked")
-	public List<T> execute2(final Object... iArgs) {
+	public List<T> run(final Object... iArgs) {
 		parameters = iArgs;
 		return (List<T>) database.getStorage().command(this);
 	}
@@ -54,7 +54,7 @@ public abstract class OSQLQuery<T extends Object> extends OQueryAbstract<T> impl
 	/**
 	 * Returns only the first record if any.
 	 */
-	public T executeFirst(final Object... iArgs) {
+	public T runFirst(final Object... iArgs) {
 		setLimit(1);
 		final List<T> result = execute(iArgs);
 		return result != null && result.size() > 0 ? result.get(0) : null;

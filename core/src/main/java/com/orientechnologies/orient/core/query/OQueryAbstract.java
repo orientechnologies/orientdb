@@ -30,7 +30,7 @@ public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAb
 
 	@SuppressWarnings("unchecked")
 	public <RET> RET execute(Object... iArgs) {
-		return (RET) execute2(iArgs);
+		return (RET) run(iArgs);
 	}
 
 	public int getLimit() {

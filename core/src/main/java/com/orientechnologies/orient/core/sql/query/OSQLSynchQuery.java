@@ -56,8 +56,8 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
 	}
 
 	@Override
-	public List<T> execute2(Object... iArgs) {
-		super.execute2(iArgs);
+	public List<T> run(Object... iArgs) {
+		super.run(iArgs);
 		return result;
 	}
 

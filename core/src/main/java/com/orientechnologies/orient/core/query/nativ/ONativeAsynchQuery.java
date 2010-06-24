@@ -64,7 +64,7 @@ public abstract class ONativeAsynchQuery<T extends ORecordInternal<?>, CTX exten
 		return true;
 	}
 
-	public List<T> execute2(final Object... iArgs) {
+	public List<T> run(final Object... iArgs) {
 		if (!(database.getStorage() instanceof OStorageLocal))
 			throw new OCommandExecutionException("Native queries can run only in embedded-local version. Not in the remote one.");
 
@@ -79,7 +79,7 @@ public abstract class ONativeAsynchQuery<T extends ORecordInternal<?>, CTX exten
 		return null;
 	}
 
-	public T executeFirst(final Object... iArgs) {
+	public T runFirst(final Object... iArgs) {
 		setLimit(1);
 		execute();
 		return null;

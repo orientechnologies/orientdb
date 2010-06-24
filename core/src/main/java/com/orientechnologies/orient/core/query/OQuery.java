@@ -26,14 +26,14 @@ public interface OQuery<T extends Object> extends OCommandRequest {
 	 * 
 	 * @return List of records if any record matches the query constraints, otherwise an empty List.
 	 */
-	public List<T> execute2(Object... iArgs);
+	public List<T> run(Object... iArgs);
 
 	/**
 	 * Return the first occurrence found if any
 	 * 
 	 * @return Record if found, otherwise null
 	 */
-	public T executeFirst(Object... iArgs);
+	public T runFirst(Object... iArgs);
 
 	public int getLimit();
 
