@@ -67,6 +67,7 @@ public class OTreeMapStorage<K, V> extends OTreeMapPersistent<K, V> {
 		return new OTreeMapEntryStorage<K, V>(this, iParent, iRecordId);
 	}
 
+	@Override
 	public OTreeMapPersistent<K, V> load() throws IOException {
 		lock.acquireExclusiveLock();
 
@@ -83,6 +84,7 @@ public class OTreeMapStorage<K, V> extends OTreeMapPersistent<K, V> {
 		}
 	}
 
+	@Override
 	public OTreeMapPersistent<K, V> save() throws IOException {
 		lock.acquireExclusiveLock();
 
@@ -105,6 +107,7 @@ public class OTreeMapStorage<K, V> extends OTreeMapPersistent<K, V> {
 		}
 	}
 
+	@Override
 	protected void serializerFromStream(final OMemoryInputStream stream) throws IOException {
 		keySerializer = OStreamSerializerFactory.get(null, stream.getAsString());
 		valueSerializer = OStreamSerializerFactory.get(null, stream.getAsString());

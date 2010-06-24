@@ -67,12 +67,14 @@ public class OTreeMapEntryDatabase<K, V> extends OTreeMapEntryPersistent<K, V> {
 		record.setDatabase(iTree.database);
 	}
 
+	@Override
 	public OTreeMapEntryDatabase<K, V> load() throws IOException {
 		record.load();
 		fromStream(record.toStream());
 		return this;
 	}
 
+	@Override
 	public OTreeMapEntryDatabase<K, V> save() throws IOException {
 		record.fromStream(toStream());
 		record.save(pTree.getClusterName());

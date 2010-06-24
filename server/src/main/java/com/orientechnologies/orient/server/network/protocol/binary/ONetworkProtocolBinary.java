@@ -23,7 +23,6 @@ import java.net.SocketException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
-import com.orientechnologies.orient.core.command.OCommandRequestAbstract;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.command.OCommandRequestTextAbstract;
 import com.orientechnologies.orient.core.command.OCommandResultListener;

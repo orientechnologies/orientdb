@@ -29,7 +29,7 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract {
 	@SuppressWarnings("unchecked")
 	public OCommandExecutorSQLDelegate parse(final OCommandRequestText iCommand) {
 		if (iCommand instanceof OCommandRequestText) {
-			OCommandRequestText sql = (OCommandRequestText) iCommand;
+			OCommandRequestText sql = iCommand;
 			final String text = sql.getText();
 			final String textUpperCase = text.toUpperCase();
 

@@ -147,9 +147,9 @@ public class OSQLHelper {
 				OType t = ORecordSerializerCSVAbstract.getNumber(iValue);
 				// NUMBER
 				if (t == OType.LONG)
-					fieldValue = Long.parseLong((String) iValue);
+					fieldValue = Long.parseLong(iValue);
 				else if (t == OType.DOUBLE)
-					fieldValue = Double.parseDouble((String) iValue);
+					fieldValue = Double.parseDouble(iValue);
 			}
 		}
 

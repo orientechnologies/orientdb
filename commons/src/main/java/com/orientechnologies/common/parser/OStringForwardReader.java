@@ -128,7 +128,7 @@ public class OStringForwardReader implements CharSequence {
 		StringBuilder buffer = new StringBuilder();
 
 		char c;
-		for (int i = (int) iOffset; i < size; ++i) {
+		for (int i = iOffset; i < size; ++i) {
 			c = charAt(i);
 			if (c == iToFind) {
 				if (iIncluded)

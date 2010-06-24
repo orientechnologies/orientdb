@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.List;
-
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -25,8 +23,6 @@ import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.iterator.ORecordIterator;
-import com.orientechnologies.orient.core.query.nativ.ONativeSynchQuery;
-import com.orientechnologies.orient.core.query.nativ.OQueryContextNativeSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @Test(groups = { "crud", "record-vobject" }, sequential = true)

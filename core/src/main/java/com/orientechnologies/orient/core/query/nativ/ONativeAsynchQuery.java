@@ -85,10 +85,12 @@ public abstract class ONativeAsynchQuery<T extends ORecordInternal<?>, CTX exten
 		return null;
 	}
 
+	@Override
 	public OCommandResultListener getResultListener() {
 		return resultListener;
 	}
 
+	@Override
 	public void setResultListener(final OCommandResultListener resultListener) {
 		this.resultListener = resultListener;
 	}

@@ -144,7 +144,7 @@ public class OIndexerManager extends ODocumentHookAbstract {
 	}
 
 	protected Map<OProperty, String> getIndexedProperties(final ODocument iRecord) {
-		final ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) iRecord;
+		final ORecordSchemaAware<?> record = iRecord;
 		final OClass cls = record.getSchemaClass();
 		if (cls == null)
 			return null;

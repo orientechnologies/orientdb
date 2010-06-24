@@ -122,7 +122,7 @@ public class OProperty extends OSchemaRecord {
 				indexType = Boolean.TRUE;
 
 			try {
-				index = new OIndex(indexType, (ODatabaseRecord<?>) database, OStorage.CLUSTER_INDEX_NAME, new ORecordId(indexRecord
+				index = new OIndex(indexType, database, OStorage.CLUSTER_INDEX_NAME, new ORecordId(indexRecord
 						.getIdentity().toString()));
 				index.load();
 			} catch (IOException e) {
@@ -223,7 +223,7 @@ public class OProperty extends OSchemaRecord {
 			throw new IllegalStateException("Index already created");
 
 		try {
-			index = new OIndex(iUnique, (ODatabaseRecord<?>) database, OStorage.CLUSTER_INDEX_NAME);
+			index = new OIndex(iUnique, database, OStorage.CLUSTER_INDEX_NAME);
 
 			setDirty();
 

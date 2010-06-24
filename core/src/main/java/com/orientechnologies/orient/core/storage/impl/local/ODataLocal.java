@@ -17,8 +17,6 @@ package com.orientechnologies.orient.core.storage.impl.local;
 
 import java.io.IOException;
 
-import com.orientechnologies.common.io.OIOException;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
