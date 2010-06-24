@@ -221,7 +221,7 @@ public abstract class OTreeMapEntry<K, V> implements Map.Entry<K, V> {
 		int i = 0;
 		int comp = -1;
 		for (; i < size; ++i) {
-			comp = ((Comparable) getKeyAt(i)).compareTo(iKey);
+			comp = ((Comparable<Comparable<? super K>>) getKeyAt(i)).compareTo(iKey);
 
 			if (comp == 0) {
 				// FOUND: SET THE INDEX AND RETURN THE NODE
@@ -252,7 +252,7 @@ public abstract class OTreeMapEntry<K, V> implements Map.Entry<K, V> {
 
 		while (low <= high) {
 			mid = (low + high) >>> 1;
-			Comparable midVal = (Comparable) getKeyAt(mid);
+			Comparable<Comparable<? super K>> midVal = (Comparable<Comparable<? super K>>) getKeyAt(mid);
 			int cmp = midVal.compareTo(iKey);
 
 			if (cmp == 0) {

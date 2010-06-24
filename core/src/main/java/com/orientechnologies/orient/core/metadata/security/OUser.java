@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.security.OSecurityManager;
  * 
  * @see ORole
  */
+@SuppressWarnings("unchecked")
 public class OUser extends ODocument {
 	public enum STATUSES {
 		SUSPENDED, ACTIVE

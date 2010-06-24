@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 
 @SuppressWarnings("unchecked")
 public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<T> {
+	@SuppressWarnings("rawtypes")
 	protected ODatabaseRecord		database;
 	protected ORecordId					recordId;
 	protected int								version;
@@ -40,17 +41,17 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	public ORecordAbstract() {
 	}
 
-	public ORecordAbstract(final ODatabaseRecord iDatabase) {
+	public ORecordAbstract(final ODatabaseRecord<?> iDatabase) {
 		database = iDatabase;
 	}
 
-	public ORecordAbstract(final ODatabaseRecord iDatabase, final byte[] iSource) {
+	public ORecordAbstract(final ODatabaseRecord<?> iDatabase, final byte[] iSource) {
 		this(iDatabase);
 		source = iSource;
 		unsetDirty();
 	}
 
-	public ORecordAbstract fill(final ODatabaseRecord<?> iDatabase, final int iClusterId, final long iPosition, final int iVersion) {
+	public ORecordAbstract<?> fill(final ODatabaseRecord<?> iDatabase, final int iClusterId, final long iPosition, final int iVersion) {
 		database = iDatabase;
 		setIdentity(iClusterId, iPosition);
 		version = iVersion;
@@ -61,7 +62,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		return recordId;
 	}
 
-	public ORecordAbstract setIdentity(final int iClusterId, final long iPosition) {
+	public ORecordAbstract<?> setIdentity(final int iClusterId, final long iPosition) {
 		if (recordId == null)
 			recordId = new ORecordId(iClusterId, iPosition);
 		else {
@@ -126,11 +127,11 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		return this;
 	}
 
-	public ODatabaseRecord getDatabase() {
+	public ODatabaseRecord<?> getDatabase() {
 		return database;
 	}
 
-	public ORecordAbstract setDatabase(final ODatabaseRecord iDatabase) {
+	public ORecordAbstract<?> setDatabase(final ODatabaseRecord<?> iDatabase) {
 		this.database = iDatabase;
 		return this;
 	}
@@ -246,7 +247,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		final ORecordAbstract other = (ORecordAbstract) obj;
+		final ORecordAbstract<?> other = (ORecordAbstract<?>) obj;
 		if (database == null) {
 			if (other.database != null)
 				return false;

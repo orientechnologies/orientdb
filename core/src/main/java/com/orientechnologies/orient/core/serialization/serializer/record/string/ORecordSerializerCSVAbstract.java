@@ -164,7 +164,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		}
 	}
 
-	public String fieldToStream(final ODocument iRecord, final ODatabaseRecord iDatabase,
+	public String fieldToStream(final ODocument iRecord, final ODatabaseRecord<?> iDatabase,
 			final OUserObject2RecordHandler iObjHandler, final OType iType, final OClass iLinkedClass, final OType iLinkedType,
 			final String iName, final Object iValue, final Map<ORecordInternal<?>, ORecordId> iMarshalledRecords) {
 		StringBuilder buffer = new StringBuilder();
@@ -303,7 +303,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		return coll;
 	}
 
-	public void embeddedCollectionToStream(final ODatabaseRecord iDatabase, final OUserObject2RecordHandler iObjHandler,
+	public void embeddedCollectionToStream(final ODatabaseRecord<?> iDatabase, final OUserObject2RecordHandler iObjHandler,
 			final OClass iLinkedClass, final OType iLinkedType, final Object iValue,
 			final Map<ORecordInternal<?>, ORecordId> iMarshalledRecords, StringBuilder buffer) {
 		buffer.append(OStringSerializerHelper.COLLECTION_BEGIN);
@@ -418,7 +418,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				iLinkedRecord.setDatabase(iParentRecord.getDatabase());
 
 				// STORE THE TRAVERSED OBJECT TO KNOW THE RECORD ID. CALL THIS VERSION TO AVOID CLEAR OF STACK IN THREAD-LOCAL
-				iLinkedRecord.getDatabase().save((ORecordInternal) iLinkedRecord);
+				((ODatabaseRecord<ORecordInternal<?>>) iLinkedRecord.getDatabase()).save((ORecordInternal<?>) iLinkedRecord);
 			}
 
 			if (iLinkedRecord instanceof ORecordSchemaAware<?>) {

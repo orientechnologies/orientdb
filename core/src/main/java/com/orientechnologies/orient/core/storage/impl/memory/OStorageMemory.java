@@ -258,9 +258,8 @@ public class OStorageMemory extends OStorageAbstract {
 	public void synch() {
 	}
 
-	@SuppressWarnings("unchecked")
 	public ODictionary<?> createDictionary(final ODatabaseRecord<?> iDatabase) throws Exception {
-		return new ODictionaryMemory(iDatabase);
+		return new ODictionaryMemory<Object>(iDatabase);
 	}
 
 	public void browse(int iRequesterId, int[] iClusterId, ORecordBrowsingListener iListener, ORecord<?> iRecord) {

@@ -37,7 +37,7 @@ public class OQueryContextNative<T extends ORecordInternal<?>> extends OQueryCon
 		currentValue = null;
 	}
 
-	public OQueryContextNative and() {
+	public OQueryContextNative<T> and() {
 		if (result == null) {
 			if (partialResult != null && !partialResult)
 				result = partialResult;
@@ -45,7 +45,7 @@ public class OQueryContextNative<T extends ORecordInternal<?>> extends OQueryCon
 		return this;
 	}
 
-	public OQueryContextNative or() {
+	public OQueryContextNative<T> or() {
 		if (result == null) {
 			if (partialResult != null && partialResult)
 				result = partialResult;
@@ -53,7 +53,7 @@ public class OQueryContextNative<T extends ORecordInternal<?>> extends OQueryCon
 		return this;
 	}
 
-	public OQueryContextNative not() {
+	public OQueryContextNative<T> not() {
 		if (result == null) {
 			if (partialResult != null)
 				partialResult = !partialResult;
@@ -61,92 +61,92 @@ public class OQueryContextNative<T extends ORecordInternal<?>> extends OQueryCon
 		return this;
 	}
 
-	public OQueryContextNative like(String iValue) {
+	public OQueryContextNative<T> like(String iValue) {
 		if (checkOperator())
 			partialResult = OQueryHelper.like(currentValue.toString(), iValue);
 
 		return this;
 	}
 
-	public OQueryContextNative matches(Object iValue) {
+	public OQueryContextNative<T> matches(Object iValue) {
 		if (checkOperator())
 			partialResult = currentValue.toString().matches(iValue.toString());
 		return this;
 	}
 
-	public OQueryContextNative eq(Object iValue) {
+	public OQueryContextNative<T> eq(Object iValue) {
 		if (checkOperator())
 			partialResult = currentValue.equals(iValue);
 		return this;
 	}
 
-	public OQueryContextNative different(Object iValue) {
+	public OQueryContextNative<T> different(Object iValue) {
 		if (checkOperator())
 			partialResult = !currentValue.equals(iValue);
 		return this;
 	}
 
-	public OQueryContextNative between(Object iFrom, Object iTo) {
+	public OQueryContextNative<T> between(Object iFrom, Object iTo) {
 		if (checkOperator())
-			partialResult = ((Comparable) currentValue).compareTo(iFrom) >= 0 && ((Comparable) currentValue).compareTo(iTo) <= 0;
+			partialResult = ((Comparable<Object>) currentValue).compareTo(iFrom) >= 0 && ((Comparable<Object>) currentValue).compareTo(iTo) <= 0;
 		return this;
 	}
 
-	public OQueryContextNative minor(Object iValue) {
+	public OQueryContextNative<T> minor(Object iValue) {
 		if (checkOperator())
-			partialResult = ((Comparable) currentValue).compareTo(iValue) < 0;
+			partialResult = ((Comparable<Object>) currentValue).compareTo(iValue) < 0;
 		return this;
 	}
 
-	public OQueryContextNative minorEq(Object iValue) {
+	public OQueryContextNative<T> minorEq(Object iValue) {
 		if (checkOperator())
-			partialResult = ((Comparable) currentValue).compareTo(iValue) <= 0;
+			partialResult = ((Comparable<Object>) currentValue).compareTo(iValue) <= 0;
 		return this;
 	}
 
-	public OQueryContextNative major(Object iValue) {
+	public OQueryContextNative<T> major(Object iValue) {
 		if (checkOperator())
-			partialResult = ((Comparable) currentValue).compareTo(iValue) > 0;
+			partialResult = ((Comparable<Object>) currentValue).compareTo(iValue) > 0;
 		return this;
 	}
 
-	public OQueryContextNative majorEq(Object iValue) {
+	public OQueryContextNative<T> majorEq(Object iValue) {
 		if (checkOperator())
-			partialResult = ((Comparable) currentValue).compareTo(iValue) >= 0;
+			partialResult = ((Comparable<Object>) currentValue).compareTo(iValue) >= 0;
 		return this;
 	}
 
-	public OQueryContextNative toInt() {
+	public OQueryContextNative<T> toInt() {
 		if (checkOperator())
 			currentValue = Integer.valueOf(currentValue.toString());
 		return this;
 	}
 
-	public OQueryContextNative toLong() {
+	public OQueryContextNative<T> toLong() {
 		if (checkOperator())
 			currentValue = Long.valueOf(currentValue.toString());
 		return this;
 	}
 
-	public OQueryContextNative toFloat() {
+	public OQueryContextNative<T> toFloat() {
 		if (checkOperator())
 			currentValue = Float.valueOf(currentValue.toString());
 		return this;
 	}
 
-	public OQueryContextNative toDouble() {
+	public OQueryContextNative<T> toDouble() {
 		if (checkOperator())
 			currentValue = Double.valueOf(currentValue.toString());
 		return this;
 	}
 
-	public OQueryContextNative toChar() {
+	public OQueryContextNative<T> toChar() {
 		if (checkOperator())
 			currentValue = currentValue.toString().charAt(0);
 		return this;
 	}
 
-	public OQueryContextNative toDate() {
+	public OQueryContextNative<T> toDate() {
 		if (checkOperator())
 			currentValue = new Date(Long.valueOf(currentValue.toString()));
 		return this;

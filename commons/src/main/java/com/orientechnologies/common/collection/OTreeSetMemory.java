@@ -10,6 +10,7 @@ import java.util.NavigableSet;
 import java.util.NoSuchElementException;
 import java.util.SortedSet;
 
+@SuppressWarnings("unchecked")
 public class OTreeSetMemory<E> extends AbstractSet<E> implements NavigableSet<E>, Cloneable, java.io.Serializable {
 	/**
 	 * The backing map.
@@ -28,9 +29,9 @@ public class OTreeSetMemory<E> extends AbstractSet<E> implements NavigableSet<E>
 
 	/**
 	 * Constructs a new, empty tree set, sorted according to the natural ordering of its elements. All elements inserted into the set
-	 * must implement the {@link Comparable} interface. Furthermore, all such elements must be <i>mutually comparable</i>: {@code
-	 * e1.compareTo(e2)} must not throw a {@code ClassCastException} for any elements {@code e1} and {@code e2} in the set. If the
-	 * user attempts to add an element to the set that violates this constraint (for example, the user attempts to add a string
+	 * must implement the {@link Comparable} interface. Furthermore, all such elements must be <i>mutually comparable</i>:
+	 * {@code e1.compareTo(e2)} must not throw a {@code ClassCastException} for any elements {@code e1} and {@code e2} in the set. If
+	 * the user attempts to add an element to the set that violates this constraint (for example, the user attempts to add a string
 	 * element to a set whose elements are integers), the {@code add} call will throw a {@code ClassCastException}.
 	 */
 	public OTreeSetMemory() {
@@ -39,9 +40,9 @@ public class OTreeSetMemory<E> extends AbstractSet<E> implements NavigableSet<E>
 
 	/**
 	 * Constructs a new, empty tree set, sorted according to the specified comparator. All elements inserted into the set must be
-	 * <i>mutually comparable</i> by the specified comparator: {@code comparator.compare(e1, e2)} must not throw a {@code
-	 * ClassCastException} for any elements {@code e1} and {@code e2} in the set. If the user attempts to add an element to the set
-	 * that violates this constraint, the {@code add} call will throw a {@code ClassCastException}.
+	 * <i>mutually comparable</i> by the specified comparator: {@code comparator.compare(e1, e2)} must not throw a
+	 * {@code ClassCastException} for any elements {@code e1} and {@code e2} in the set. If the user attempts to add an element to the
+	 * set that violates this constraint, the {@code add} call will throw a {@code ClassCastException}.
 	 * 
 	 * @param comparator
 	 *          the comparator that will be used to order this set. If {@code null}, the {@linkplain Comparable natural ordering} of
@@ -106,7 +107,7 @@ public class OTreeSetMemory<E> extends AbstractSet<E> implements NavigableSet<E>
 	 * @since 1.6
 	 */
 	public NavigableSet<E> descendingSet() {
-		return new OTreeSetMemory(m.descendingMap());
+		return new OTreeSetMemory<E>(m.descendingMap());
 	}
 
 	/**
@@ -415,7 +416,7 @@ public class OTreeSetMemory<E> extends AbstractSet<E> implements NavigableSet<E>
 		s.writeInt(m.size());
 
 		// Write out all elements in the proper order.
-		for (Iterator i = m.keySet().iterator(); i.hasNext();)
+		for (Iterator<E> i = m.keySet().iterator(); i.hasNext();)
 			s.writeObject(i.next());
 	}
 

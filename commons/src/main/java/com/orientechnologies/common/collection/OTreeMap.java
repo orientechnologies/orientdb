@@ -252,7 +252,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 	public void putAll(Map<? extends K, ? extends V> map) {
 		int mapSize = map.size();
 		if (size == 0 && mapSize != 0 && map instanceof SortedMap) {
-			Comparator c = ((SortedMap) map).comparator();
+			Comparator<?> c = ((SortedMap<? extends K, ? extends V>) map).comparator();
 			if (c == comparator || (c != null && c.equals(comparator))) {
 				++modCount;
 				try {
@@ -288,8 +288,6 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 		// Offload comparator-based version for sake of performance
 		if (comparator != null)
 			return getEntryUsingComparator(key, iGetContainer);
-		if (key == null)
-			throw new NullPointerException();
 
 		final Comparable<? super K> k = (Comparable<? super K>) key;
 		OTreeMapEntry<K, V> p = root;
@@ -815,7 +813,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 	 */
 	public NavigableSet<K> navigableKeySet() {
 		KeySet<K> nks = navigableKeySet;
-		return (nks != null) ? nks : (navigableKeySet = new KeySet(this));
+		return (nks != null) ? nks : (navigableKeySet = (KeySet<K>) new KeySet<Object>((NavigableMap<Object, Object>) this));
 	}
 
 	/**
@@ -860,7 +858,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 	 */
 	public NavigableMap<K, V> descendingMap() {
 		NavigableMap<K, V> km = descendingMap;
-		return (km != null) ? km : (descendingMap = new DescendingSubMap(this, true, null, true, true, null, true));
+		return (km != null) ? km : (descendingMap = new DescendingSubMap<K, V>(this, true, null, true, true, null, true));
 	}
 
 	/**
@@ -874,7 +872,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 	 * @since 1.6
 	 */
 	public NavigableMap<K, V> subMap(K fromKey, boolean fromInclusive, K toKey, boolean toInclusive) {
-		return new AscendingSubMap(this, false, fromKey, fromInclusive, false, toKey, toInclusive);
+		return new AscendingSubMap<K, V>(this, false, fromKey, fromInclusive, false, toKey, toInclusive);
 	}
 
 	/**
@@ -887,7 +885,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 	 * @since 1.6
 	 */
 	public NavigableMap<K, V> headMap(K toKey, boolean inclusive) {
-		return new AscendingSubMap(this, true, null, true, false, toKey, inclusive);
+		return new AscendingSubMap<K, V>(this, true, null, true, false, toKey, inclusive);
 	}
 
 	/**
@@ -900,7 +898,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 	 * @since 1.6
 	 */
 	public NavigableMap<K, V> tailMap(K fromKey, boolean inclusive) {
-		return new AscendingSubMap(this, false, fromKey, inclusive, true, null, true);
+		return new AscendingSubMap<K, V>(this, false, fromKey, inclusive, true, null, true);
 	}
 
 	/**
@@ -1030,6 +1028,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 		return new DescendingKeyIterator(getLastEntry());
 	}
 
+	@SuppressWarnings("rawtypes")
 	static final class KeySet<E> extends AbstractSet<E> implements NavigableSet<E> {
 		private final NavigableMap<E, Object>	m;
 
@@ -1142,7 +1141,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 		}
 
 		public NavigableSet<E> descendingSet() {
-			return new OTreeSetMemory(m.descendingMap());
+			return new OTreeSetMemory<E>(m.descendingMap());
 		}
 	}
 
@@ -1478,6 +1477,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 		transient EntrySetView				entrySetView				= null;
 		transient KeySet<K>						navigableKeySetView	= null;
 
+		@SuppressWarnings("rawtypes")
 		public final NavigableSet<K> navigableKeySet() {
 			KeySet<K> nksv = navigableKeySetView;
 			return (nksv != null) ? nksv : (navigableKeySetView = new OTreeMap.KeySet(this));
@@ -1516,7 +1516,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 				if (size == -1 || sizeModCount != m.modCount) {
 					sizeModCount = m.modCount;
 					size = 0;
-					Iterator i = iterator();
+					Iterator<?> i = iterator();
 					while (i.hasNext()) {
 						size++;
 						i.next();
@@ -1704,24 +1704,25 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 				throw new IllegalArgumentException("fromKey out of range");
 			if (!inRange(toKey, toInclusive))
 				throw new IllegalArgumentException("toKey out of range");
-			return new AscendingSubMap(m, false, fromKey, fromInclusive, false, toKey, toInclusive);
+			return new AscendingSubMap<K, V>(m, false, fromKey, fromInclusive, false, toKey, toInclusive);
 		}
 
 		public NavigableMap<K, V> headMap(final K toKey, final boolean inclusive) {
 			if (!inRange(toKey, inclusive))
 				throw new IllegalArgumentException("toKey out of range");
-			return new AscendingSubMap(m, fromStart, lo, loInclusive, false, toKey, inclusive);
+			return new AscendingSubMap<K, V>(m, fromStart, lo, loInclusive, false, toKey, inclusive);
 		}
 
 		public NavigableMap<K, V> tailMap(final K fromKey, final boolean inclusive) {
 			if (!inRange(fromKey, inclusive))
 				throw new IllegalArgumentException("fromKey out of range");
-			return new AscendingSubMap(m, false, fromKey, inclusive, toEnd, hi, hiInclusive);
+			return new AscendingSubMap<K, V>(m, false, fromKey, inclusive, toEnd, hi, hiInclusive);
 		}
 
 		public NavigableMap<K, V> descendingMap() {
 			NavigableMap<K, V> mv = descendingMapView;
-			return (mv != null) ? mv : (descendingMapView = new DescendingSubMap(m, fromStart, lo, loInclusive, toEnd, hi, hiInclusive));
+			return (mv != null) ? mv : (descendingMapView = new DescendingSubMap<K, V>(m, fromStart, lo, loInclusive, toEnd, hi,
+					hiInclusive));
 		}
 
 		@Override
@@ -1800,24 +1801,25 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 				throw new IllegalArgumentException("fromKey out of range");
 			if (!inRange(toKey, toInclusive))
 				throw new IllegalArgumentException("toKey out of range");
-			return new DescendingSubMap(m, false, toKey, toInclusive, false, fromKey, fromInclusive);
+			return new DescendingSubMap<K, V>(m, false, toKey, toInclusive, false, fromKey, fromInclusive);
 		}
 
 		public NavigableMap<K, V> headMap(final K toKey, final boolean inclusive) {
 			if (!inRange(toKey, inclusive))
 				throw new IllegalArgumentException("toKey out of range");
-			return new DescendingSubMap(m, false, toKey, inclusive, toEnd, hi, hiInclusive);
+			return new DescendingSubMap<K, V>(m, false, toKey, inclusive, toEnd, hi, hiInclusive);
 		}
 
 		public NavigableMap<K, V> tailMap(final K fromKey, final boolean inclusive) {
 			if (!inRange(fromKey, inclusive))
 				throw new IllegalArgumentException("fromKey out of range");
-			return new DescendingSubMap(m, fromStart, lo, loInclusive, false, fromKey, inclusive);
+			return new DescendingSubMap<K, V>(m, fromStart, lo, loInclusive, false, fromKey, inclusive);
 		}
 
 		public NavigableMap<K, V> descendingMap() {
 			NavigableMap<K, V> mv = descendingMapView;
-			return (mv != null) ? mv : (descendingMapView = new AscendingSubMap(m, fromStart, lo, loInclusive, toEnd, hi, hiInclusive));
+			return (mv != null) ? mv : (descendingMapView = new AscendingSubMap<K, V>(m, fromStart, lo, loInclusive, toEnd, hi,
+					hiInclusive));
 		}
 
 		@Override
@@ -2271,7 +2273,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 	 * @throws ClassNotFoundException
 	 *           propagated from readObject. This cannot occur if str is null.
 	 */
-	private void buildFromSorted(final int size, final Iterator it, final java.io.ObjectInputStream str, final V defaultVal)
+	private void buildFromSorted(final int size, final Iterator<?> it, final java.io.ObjectInputStream str, final V defaultVal)
 			throws java.io.IOException, ClassNotFoundException {
 		this.size = size;
 		root = buildFromSorted(0, 0, size - 1, computeRedLevel(size), it, str, defaultVal);
@@ -2292,7 +2294,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 	 *          the level at which nodes should be red. Must be equal to computeRedLevel for tree of this size.
 	 */
 	private final OTreeMapEntry<K, V> buildFromSorted(final int level, final int lo, final int hi, final int redLevel,
-			final Iterator it, final java.io.ObjectInputStream str, final V defaultVal) throws java.io.IOException,
+			final Iterator<?> it, final java.io.ObjectInputStream str, final V defaultVal) throws java.io.IOException,
 			ClassNotFoundException {
 		/*
 		 * Strategy: The root is the middlemost element. To get to it, we have to first recursively construct the entire left subtree,

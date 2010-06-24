@@ -17,8 +17,8 @@ package com.orientechnologies.orient.core.metadata.security;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * </ul>
  * Mode = ALLOW (allow all but) or DENY (deny all but)
  */
+@SuppressWarnings("unchecked")
 public class ORole extends ODocument {
 	public enum ALLOW_MODES {
 		DENY_ALL_BUT, ALLOW_ALL_BUT

@@ -16,8 +16,8 @@
 package com.orientechnologies.orient.client.dictionary;
 
 import java.util.Iterator;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -88,7 +88,7 @@ public class ODictionaryClient<T extends Object> implements ODictionaryInternal<
 	 * Preload all the keys to fetch values in lazy way.
 	 */
 	public Iterator<Entry<String, T>> iterator() {
-		return new ODictionaryClientIterator(database, storage.dictionaryKeys());
+		return new ODictionaryClientIterator<T>(database, storage.dictionaryKeys());
 	}
 
 	public Set<String> keySet() {

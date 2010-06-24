@@ -26,14 +26,14 @@ import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-@SuppressWarnings("unchecked")
 public class OTransactionOptimisticProxy extends OTransactionAbstract<OTransactionRecordProxy> {
 	private OTransactionEntryProxy	entry					= new OTransactionEntryProxy();
 	private int											size;
 	private OChannelBinary					channel;
 	private boolean									emptyContent	= false;
 
-	public OTransactionOptimisticProxy(final ODatabaseRecordTx iDatabase, final OChannelBinary iChannel) throws IOException {
+	public OTransactionOptimisticProxy(final ODatabaseRecordTx<OTransactionRecordProxy> iDatabase, final OChannelBinary iChannel)
+			throws IOException {
 		super(iDatabase, -1);
 
 		channel = iChannel;

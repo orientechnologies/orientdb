@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+@SuppressWarnings("unchecked")
 public class OSchema extends ODocument {
 	public static final String		CLUSTER_NAME						= "schema";
 

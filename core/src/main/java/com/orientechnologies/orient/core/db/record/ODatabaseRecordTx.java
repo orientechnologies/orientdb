@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
-@SuppressWarnings("unchecked")
 /**
  * Delegates all the CRUD operations to the current transaction.
  * 

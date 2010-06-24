@@ -33,6 +33,6 @@ public class OQueryOperatorMajor extends OQueryOperatorEqualityNotNulls {
 	@Override
 	@SuppressWarnings("unchecked")
 	protected boolean evaluateExpression(OSQLFilterCondition iCondition, final Object iLeft, final Object iRight) {
-		return ((Comparable) iLeft).compareTo(OType.convert(iRight, iLeft.getClass())) > 0;
+		return ((Comparable<Object>) iLeft).compareTo(OType.convert(iRight, iLeft.getClass())) > 0;
 	}
 }

@@ -32,6 +32,7 @@ public class OMultiFileSegment extends OSegment {
 	private String													fileExtension;
 	private String													type;
 	private long														maxSize;
+	@SuppressWarnings("unused")
 	private String													defrag;
 	private int															fileStartSize;
 	private int															fileMaxSize;

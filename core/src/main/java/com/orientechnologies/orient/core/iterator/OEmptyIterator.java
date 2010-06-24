@@ -16,16 +16,16 @@
 package com.orientechnologies.orient.core.iterator;
 
 import java.util.Iterator;
+import java.util.Map;
 
-@SuppressWarnings("unchecked")
-public class OEmptyIterator implements Iterator {
+public class OEmptyIterator implements Iterator<Map.Entry<String, Object>> {
 	public static final OEmptyIterator	INSTANCE	= new OEmptyIterator();
 
 	public boolean hasNext() {
 		return false;
 	}
 
-	public Object next() {
+	public Map.Entry<String, Object> next() {
 		return null;
 	}
 

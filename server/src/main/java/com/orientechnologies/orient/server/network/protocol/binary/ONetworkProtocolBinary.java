@@ -59,6 +59,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
+import com.orientechnologies.orient.server.tx.OTransactionRecordProxy;
 
 public class ONetworkProtocolBinary extends ONetworkProtocol {
 	protected OClientConnection	connection;
@@ -424,7 +425,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				data.commandInfo = "Transaction commit";
 
 				((OStorageLocal) connection.database.getStorage()).commit(connection.database.getId(), new OTransactionOptimisticProxy(
-						(ODatabaseRecordTx) connection.database.getUnderlying(), channel));
+						(ODatabaseRecordTx<OTransactionRecordProxy>) connection.database.getUnderlying(), channel));
 
 				sendOk();
 				break;

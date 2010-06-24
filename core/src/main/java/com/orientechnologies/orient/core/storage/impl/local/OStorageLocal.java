@@ -621,9 +621,8 @@ public class OStorageLocal extends OStorageAbstract {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	public ODictionary<?> createDictionary(ODatabaseRecord<?> iDatabase) throws Exception {
-		return new ODictionaryLocal(iDatabase);
+		return new ODictionaryLocal<Object>(iDatabase);
 	}
 
 	public String getStoragePath() {

@@ -657,7 +657,7 @@ public class OStorageRemote extends OStorageAbstract {
 		return null;
 	}
 
-	public int dictionarySize(ODatabaseRecord iDatabase) {
+	public int dictionarySize(final ODatabaseRecord<?> iDatabase) {
 		checkConnection();
 
 		do {
@@ -680,8 +680,8 @@ public class OStorageRemote extends OStorageAbstract {
 		return -1;
 	}
 
-	public ODictionary createDictionary(ODatabaseRecord iDatabase) throws Exception {
-		return new ODictionaryClient(iDatabase, this);
+	public ODictionary<?> createDictionary(final ODatabaseRecord<?> iDatabase) throws Exception {
+		return new ODictionaryClient<Object>(iDatabase, this);
 	}
 
 	public Set<String> dictionaryKeys() {
@@ -931,7 +931,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 	private RuntimeException createException(final String iClassName, final String iMessage) {
 		RuntimeException rootException = null;
-		Constructor c = null;
+		Constructor<?> c = null;
 		try {
 			final Class<RuntimeException> excClass = (Class<RuntimeException>) Class.forName(iClassName);
 			c = excClass.getConstructor(String.class);

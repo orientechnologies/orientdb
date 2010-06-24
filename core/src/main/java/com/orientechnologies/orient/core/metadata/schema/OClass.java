@@ -27,6 +27,7 @@ import java.util.Map;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+@SuppressWarnings("unchecked")
 public class OClass extends OSchemaRecord {
 
 	protected int											id;
@@ -82,7 +83,6 @@ public class OClass extends OSchemaRecord {
 		name = iClass.getSimpleName();
 	}
 
-	@SuppressWarnings("unchecked")
 	public <T> T newInstance() throws InstantiationException, IllegalAccessException {
 		if (javaClass == null)
 			throw new IllegalArgumentException("Can't create an instance of class '" + name + "' since no Java class was specified");

@@ -13,6 +13,7 @@ public class DannySchemaTest {
 	private OClass							dependents;
 	private OClass							master;
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void test1() {
 

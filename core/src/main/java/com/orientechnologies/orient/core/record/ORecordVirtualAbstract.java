@@ -99,7 +99,7 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 			return false;
 
 		if (!recordId.isValid()) {
-			final ORecordVirtualAbstract other = (ORecordVirtualAbstract) obj;
+			final ORecordVirtualAbstract<?> other = (ORecordVirtualAbstract<?>) obj;
 
 			// NO PERSISTENT OBJECT: COMPARE EACH FIELDS
 			if (fieldValues == null || other.fieldValues == null)

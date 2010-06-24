@@ -18,8 +18,8 @@ package com.orientechnologies.orient.client.dictionary;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -41,7 +41,7 @@ public class ODictionaryClientIterator<T> implements Iterator<Entry<String, T>> 
 
 	public Entry<String, T> next() {
 		String key = keys.get(++cursor);
-		return new OPair(key, database.getDictionary().get(key));
+		return new OPair<String, T>(key, (T) database.getDictionary().get(key));
 	}
 
 	public void remove() {

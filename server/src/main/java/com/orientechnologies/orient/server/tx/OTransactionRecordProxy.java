@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
@@ -91,11 +92,11 @@ public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
 		return null;
 	}
 
-	public ORecordInternal<byte[]> setDatabase(ODatabaseRecord<?> iDatabase) {
+	public ORecordAbstract<?> setDatabase(ODatabaseRecord<?> iDatabase) {
 		return null;
 	}
 
-	public ORecordInternal<byte[]> setIdentity(int iClusterId, long iClusterPosition) {
+	public ORecordAbstract<?> setIdentity(int iClusterId, long iClusterPosition) {
 		return null;
 	}
 
@@ -121,8 +122,8 @@ public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
 	public void setStatus(com.orientechnologies.orient.core.record.ORecord.STATUS iStatus) {
 	}
 
-	public ORecordInternal<byte[]> fill(ODatabaseRecord<?> iDatabase, int iClusterId, long iPosition, int iVersion) {
-		return this;
+	public ORecordAbstract<?> fill(ODatabaseRecord<?> iDatabase, int iClusterId, long iPosition, int iVersion) {
+		return null;
 	}
 
 	public byte getRecordType() {

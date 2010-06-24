@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.text.ParseException;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -33,6 +32,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * @author Luca Garulli
  * 
  */
+@SuppressWarnings("unchecked")
 public class OProperty extends OSchemaRecord {
 
 	private OClass	owner;
@@ -41,7 +41,6 @@ public class OProperty extends OSchemaRecord {
 	private String	name;
 	private OType		type;
 	private int			offset;
-	private int			size;
 
 	private OType		linkedType;
 	private OClass	linkedClass;
@@ -122,8 +121,7 @@ public class OProperty extends OSchemaRecord {
 				indexType = Boolean.TRUE;
 
 			try {
-				index = new OIndex(indexType, database, OStorage.CLUSTER_INDEX_NAME, new ORecordId(indexRecord
-						.getIdentity().toString()));
+				index = new OIndex(indexType, database, OStorage.CLUSTER_INDEX_NAME, new ORecordId(indexRecord.getIdentity().toString()));
 				index.load();
 			} catch (IOException e) {
 				OLogManager.instance().error(this, "Can't load index for property %s", e, ODatabaseException.class, toString());

@@ -65,7 +65,7 @@ public interface ORecord<T> {
 	 * 
 	 * @return
 	 */
-	public ODatabaseRecord<ORecordInternal<T>> getDatabase();
+	public ODatabaseRecord<?> getDatabase();
 
 	/**
 	 * Checks if the record is dirty, namely if it was changed in memory.

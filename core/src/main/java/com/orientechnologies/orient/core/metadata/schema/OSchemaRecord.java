@@ -19,6 +19,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+@SuppressWarnings("unchecked")
 public abstract class OSchemaRecord extends ODocument {
 
 	public OSchemaRecord() {

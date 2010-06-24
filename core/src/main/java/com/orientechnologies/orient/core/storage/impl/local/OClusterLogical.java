@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.storage.tree.OTreeMapStorage;
 public class OClusterLogical implements OCluster {
 	private String																		name;
 	private int																				id;
+	@SuppressWarnings("unused")
 	private int																				localClusterId;
 	private OTreeMapStorage<Long, OPhysicalPosition>	map;
 	private OPhysicalPosition													total;

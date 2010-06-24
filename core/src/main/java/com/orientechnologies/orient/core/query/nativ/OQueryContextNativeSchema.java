@@ -20,12 +20,12 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 
 @SuppressWarnings("unchecked")
 public class OQueryContextNativeSchema<T extends ORecordSchemaAware<?>> extends OQueryContextNative<T> {
-	public OQueryContextNativeSchema column(String iName) {
+	public OQueryContextNativeSchema<T> column(String iName) {
 		field(iName);
 		return this;
 	}
 
-	public OQueryContextNativeSchema field(String iName) {
+	public OQueryContextNativeSchema<T> field(String iName) {
 		if (result != null && result.booleanValue())
 			return this;
 
@@ -36,109 +36,109 @@ public class OQueryContextNativeSchema<T extends ORecordSchemaAware<?>> extends 
 	}
 
 	@Override
-	public OQueryContextNativeSchema and() {
+	public OQueryContextNativeSchema<T> and() {
 		super.and();
 		return this;
 	}
 
 	@Override
-	public OQueryContextNativeSchema between(Object iFrom, Object iTo) {
+	public OQueryContextNativeSchema<T> between(Object iFrom, Object iTo) {
 		super.between(iFrom, iTo);
 		return this;
 	}
 
 	@Override
-	public OQueryContextNativeSchema different(Object iValue) {
+	public OQueryContextNativeSchema<T> different(Object iValue) {
 		super.different(iValue);
 		return this;
 	}
 
 	@Override
-	public OQueryContextNativeSchema eq(Object iValue) {
+	public OQueryContextNativeSchema<T> eq(Object iValue) {
 		super.eq(iValue);
 		return this;
 	}
 
 	@Override
-	public OQueryContextNativeSchema like(String iValue) {
+	public OQueryContextNativeSchema<T> like(String iValue) {
 		super.like(iValue);
 		return this;
 	}
 
 	@Override
-	public OQueryContextNativeSchema major(Object iValue) {
+	public OQueryContextNativeSchema<T> major(Object iValue) {
 		super.major(iValue);
 		return this;
 	}
 
 	@Override
-	public OQueryContextNativeSchema majorEq(Object iValue) {
+	public OQueryContextNativeSchema<T> majorEq(Object iValue) {
 		super.majorEq(iValue);
 		return this;
 	}
 
 	@Override
-	public OQueryContextNativeSchema matches(Object iValue) {
+	public OQueryContextNativeSchema<T> matches(Object iValue) {
 		super.matches(iValue);
 		return this;
 	}
 
 	@Override
-	public OQueryContextNativeSchema minor(Object iValue) {
+	public OQueryContextNativeSchema<T> minor(Object iValue) {
 		super.minor(iValue);
 		return this;
 	}
 
 	@Override
-	public OQueryContextNativeSchema minorEq(Object iValue) {
+	public OQueryContextNativeSchema<T> minorEq(Object iValue) {
 		super.minorEq(iValue);
 		return this;
 	}
 
 	@Override
-	public OQueryContextNativeSchema not() {
+	public OQueryContextNativeSchema<T> not() {
 		super.not();
 		return this;
 	}
 
 	@Override
-	public OQueryContextNativeSchema or() {
+	public OQueryContextNativeSchema<T> or() {
 		super.or();
 		return this;
 	}
 
 	@Override
-	public OQueryContextNativeSchema toChar() {
+	public OQueryContextNativeSchema<T> toChar() {
 		super.toChar();
 		return this;
 	}
 
 	@Override
-	public OQueryContextNativeSchema toDate() {
+	public OQueryContextNativeSchema<T> toDate() {
 		super.toDate();
 		return this;
 	}
 
 	@Override
-	public OQueryContextNativeSchema toDouble() {
+	public OQueryContextNativeSchema<T> toDouble() {
 		super.toDouble();
 		return this;
 	}
 
 	@Override
-	public OQueryContextNativeSchema toFloat() {
+	public OQueryContextNativeSchema<T> toFloat() {
 		super.toFloat();
 		return this;
 	}
 
 	@Override
-	public OQueryContextNativeSchema toInt() {
+	public OQueryContextNativeSchema<T> toInt() {
 		super.toInt();
 		return this;
 	}
 
 	@Override
-	public OQueryContextNativeSchema toLong() {
+	public OQueryContextNativeSchema<T> toLong() {
 		super.toLong();
 		return this;
 	}
