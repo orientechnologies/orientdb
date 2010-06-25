@@ -62,7 +62,7 @@ import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocument, ODocument> implements ODatabaseObject,
 		OUserObject2RecordHandler {
 
-	private HashMap<Object, ODocument>	objects2Records	= new HashMap<Object, ODocument>();
+	private HashMap<Integer, ODocument>	objects2Records	= new HashMap<Integer, ODocument>();
 	private HashMap<ODocument, Object>	records2Objects	= new HashMap<ODocument, Object>();
 	private ODictionary<Object>					dictionary;
 	private OEntityManager							entityManager		= new OEntityManager();
@@ -174,7 +174,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 		OSerializationThreadLocal.INSTANCE.get().clear();
 
 		// GET THE ASSOCIATED DOCUMENT
-		ODocument record = objects2Records.get(iPojo);
+		ODocument record = objects2Records.get(System.identityHashCode(iPojo));
 		if (record == null)
 			record = underlying.newInstance(iPojo.getClass().getSimpleName());
 
@@ -210,7 +210,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 
 	public ODocument getRecordByUserObject(final Object iPojo, final boolean iIsMandatory) {
 		checkOpeness();
-		ODocument record = objects2Records.get(iPojo);
+		ODocument record = objects2Records.get(System.identityHashCode(iPojo));
 
 		if (record == null) {
 			if (iIsMandatory)
@@ -368,14 +368,14 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 	 */
 	private void registerPojo(final Object iObject, final ODocument iRecord) {
 		if (retainObjects) {
-			objects2Records.put(iObject, iRecord);
+			objects2Records.put(System.identityHashCode(iObject), iRecord);
 			records2Objects.put(iRecord, iObject);
 		}
 	}
 
 	private void unregisterPojo(final Object iObject, final ODocument iRecord) {
 		if (iObject != null)
-			objects2Records.remove(iObject);
+			objects2Records.remove(System.identityHashCode(iObject));
 
 		if (iRecord != null)
 			records2Objects.remove(iRecord);
