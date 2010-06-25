@@ -143,7 +143,7 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase, REC extends
 
 	protected void checkOpeness() {
 		if (isClosed())
-			throw new ODatabaseException("Database is closed");
+			throw new ODatabaseException("Database is closed. Open it before to use.");
 	}
 
 	public ODatabaseComplex<?> getDatabaseOwner() {

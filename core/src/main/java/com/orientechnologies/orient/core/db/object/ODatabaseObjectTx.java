@@ -91,6 +91,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 	 * @see #registerEntityClasses(String)
 	 */
 	public Object newInstance(final String iClassName) {
+		checkOpeness();
 		checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, iClassName);
 
 		try {
@@ -109,6 +110,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 	}
 
 	public <RET> OObjectIteratorMultiCluster<RET> browseClass(final String iClassName) {
+		checkOpeness();
 		checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, iClassName);
 
 		return new OObjectIteratorMultiCluster<RET>(this, (ODatabaseRecordAbstract<ODocument>) getUnderlying().getUnderlying(),
@@ -116,6 +118,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 	}
 
 	public <RET> OObjectIteratorCluster<RET> browseCluster(final String iClusterName) {
+		checkOpeness();
 		checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
 		return (OObjectIteratorCluster<RET>) new OObjectIteratorCluster<Object>(this,
@@ -123,6 +126,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 	}
 
 	public ODatabaseObjectTx load(final Object iPojo) {
+		checkOpeness();
 		if (iPojo == null)
 			return this;
 
@@ -137,7 +141,15 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 	}
 
 	public Object load(final ORID iRecordId) {
-		return this;
+		checkOpeness();
+		if (iRecordId == null)
+			return this;
+
+		// GET THE ASSOCIATED DOCUMENT
+		final ODocument record = underlying.load(iRecordId);
+
+		return record == null ? null : OObjectSerializerHelper.fromStream(record, newInstance(record.getClassName()),
+				getEntityManager(), this);
 	}
 
 	/**
@@ -154,6 +166,8 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 	 * @see ORecordSchemaAware#validate()
 	 */
 	public ODatabaseObject save(final Object iPojo, final String iClusterName) {
+		checkOpeness();
+
 		if (iPojo == null)
 			return this;
 
@@ -175,6 +189,8 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 	}
 
 	public ODatabaseObject delete(final Object iContent) {
+		checkOpeness();
+
 		if (iContent == null)
 			return this;
 
@@ -188,10 +204,12 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 	}
 
 	public long countClass(final String iClassName) {
+		checkOpeness();
 		return underlying.countClass(iClassName);
 	}
 
 	public ODocument getRecordByUserObject(final Object iPojo, final boolean iIsMandatory) {
+		checkOpeness();
 		ODocument record = objects2Records.get(iPojo);
 
 		if (record == null) {
@@ -210,6 +228,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 	}
 
 	public Object getUserObjectByRecord(final ORecordInternal<?> iRecord) {
+		checkOpeness();
 		if (!(iRecord instanceof ODocument))
 			return null;
 
@@ -232,44 +251,31 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 		return pojo;
 	}
 
-	/**
-	 * Register a new POJO
-	 */
-	private void registerPojo(final Object iObject, final ODocument iRecord) {
-		if (retainObjects) {
-			objects2Records.put(iObject, iRecord);
-			records2Objects.put(iRecord, iObject);
-		}
-	}
-
-	private void unregisterPojo(final Object iObject, final ODocument iRecord) {
-		if (iObject != null)
-			objects2Records.remove(iObject);
-
-		if (iRecord != null)
-			records2Objects.remove(iRecord);
-	}
-
 	public ODatabaseObjectTx begin() {
+		checkOpeness();
 		underlying.begin();
 		return this;
 	}
 
 	public ODatabaseObjectTx begin(final TXTYPE iStatus) {
+		checkOpeness();
 		underlying.begin(iStatus);
 		return this;
 	}
 
 	public ODatabaseObjectTx commit() {
+		checkOpeness();
 		underlying.commit();
 		return this;
 	}
 
 	public OMetadata getMetadata() {
+		checkOpeness();
 		return underlying.getMetadata();
 	}
 
 	public ODictionary<Object> getDictionary() {
+		checkOpeness();
 		if (dictionary == null)
 			dictionary = new ODictionaryWrapper(this, underlying);
 
@@ -277,6 +283,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 	}
 
 	public ODatabaseObjectTx rollback() {
+		checkOpeness();
 		underlying.rollback();
 		return this;
 	}
@@ -295,10 +302,12 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 	}
 
 	public Object newInstance() {
+		checkOpeness();
 		return new ODocument(underlying);
 	}
 
 	public <RET extends List<?>> RET query(final OQuery<?> iCommand) {
+		checkOpeness();
 		final List<ODocument> result = underlying.query(iCommand);
 
 		if (result == null)
@@ -317,6 +326,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 	}
 
 	public OCommandRequest command(final OCommandRequest iCommand) {
+		checkOpeness();
 		return underlying.command(iCommand);
 	}
 
@@ -329,22 +339,45 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 	}
 
 	public Set<ORecordHook> getHooks() {
+		checkOpeness();
 		return underlying.getHooks();
 	}
 
 	public <DB extends ODatabaseRecord<?>> DB registerHook(final ORecordHook iHookImpl) {
+		checkOpeness();
 		return (DB) underlying.registerHook(iHookImpl);
 	}
 
 	public <DB extends ODatabaseRecord<?>> DB unregisterHook(final ORecordHook iHookImpl) {
+		checkOpeness();
 		return (DB) underlying.unregisterHook(iHookImpl);
 	}
 
 	public void callbackHooks(final TYPE iType, final Object iObject) {
+		checkOpeness();
 		underlying.callbackHooks(iType, iObject);
 	}
 
 	public OUser getUser() {
+		checkOpeness();
 		return underlying.getUser();
+	}
+
+	/**
+	 * Register a new POJO
+	 */
+	private void registerPojo(final Object iObject, final ODocument iRecord) {
+		if (retainObjects) {
+			objects2Records.put(iObject, iRecord);
+			records2Objects.put(iRecord, iObject);
+		}
+	}
+
+	private void unregisterPojo(final Object iObject, final ODocument iRecord) {
+		if (iObject != null)
+			objects2Records.remove(iObject);
+
+		if (iRecord != null)
+			records2Objects.remove(iRecord);
 	}
 }
