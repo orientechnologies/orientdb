@@ -282,6 +282,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 				underlyingDatabase.delete(channel.readShort(), channel.readLong(), channel.readInt());
 				sendOk();
+
+				channel.writeByte((byte) '1');
 				break;
 
 			case OChannelBinaryProtocol.COUNT: {

@@ -101,22 +101,22 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			recordFormat = DEF_RECORD_FORMAT;
 			dictionary.load();
 
+			user = getMetadata().getSecurity().getUser(iUserName);
+			if (user == null)
+				throw new OSecurityAccessException(this.getName(), "User '" + iUserName + "' was not found in database: " + getName());
+
+			if (user.getAccountStatus() != STATUSES.ACTIVE)
+				throw new OSecurityAccessException(this.getName(), "User '" + iUserName + "' is not active");
+
 			if (getStorage() instanceof OStorageLocal) {
-				user = getMetadata().getSecurity().getUser(iUserName);
-				if (user == null)
-					throw new OSecurityAccessException(this.getName(), "User '" + iUserName + "' was not found in database: " + getName());
-
-				if (user.getAccountStatus() != STATUSES.ACTIVE)
-					throw new OSecurityAccessException(this.getName(), "User '" + iUserName + "' is not active");
-
 				if (!user.checkPassword(iUserPassword)) {
 					// WAIT A BIT TO AVOID BRUTE FORCE
 					Thread.sleep(200);
 					throw new OSecurityAccessException(this.getName(), "Password not valid for user: " + iUserName);
 				}
-
-				checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
 			}
+
+			checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
 		} catch (Exception e) {
 			close();
 			throw new ODatabaseException("Can't open database", e);

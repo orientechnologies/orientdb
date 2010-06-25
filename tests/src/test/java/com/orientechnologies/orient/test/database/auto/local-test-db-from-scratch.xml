@@ -1,0 +1,119 @@
+<!DOCTYPE suite SYSTEM "http://beust.com/testng/testng-1.0.dtd">
+<suite name="Test Suite Example" verbose="1" parallel="false">
+	<!-- <parameter name="url" value="remote:localhost/demo" /> -->
+
+	<!-- -->
+	<parameter name="url"
+		value="local:../../releases/0.9.19/db/databases/demo/demo" />
+
+
+	<test name="Setup">
+		<parameter name="path" value="../../releases/0.9.19/db/databases/demo" />
+		<classes>
+			<class
+				name="com.orientechnologies.orient.test.database.base.DeleteDirectory" />
+		</classes>
+	</test>
+
+	<test name="DbCreation">
+		<classes>
+			<class
+				name="com.orientechnologies.orient.test.database.auto.DbCreationTest" />
+		</classes>
+	</test>
+	<test name="Schema">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.SchemaTest" />
+		</classes>
+	</test>
+	<test name="Security">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.SecurityTest" />
+		</classes>
+	</test>
+	<test name="Hook">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.HookTest" />
+		</classes>
+	</test>
+	<test name="Population">
+		<classes>
+			<class
+				name="com.orientechnologies.orient.test.database.auto.CRUDFlatPhysicalTest" />
+			<class
+				name="com.orientechnologies.orient.test.database.auto.CRUDColumnPhysicalTest" />
+			<class
+				name="com.orientechnologies.orient.test.database.auto.CRUDDocumentLogicalTest" />
+			<class
+				name="com.orientechnologies.orient.test.database.auto.CRUDDocumentPhysicalTest" />
+			<class
+				name="com.orientechnologies.orient.test.database.auto.CRUDObjectPhysicalTest" />
+			<class
+				name="com.orientechnologies.orient.test.database.auto.CRUDObjectInheritanceTest" />
+			<class
+				name="com.orientechnologies.orient.test.database.auto.CRUDFlatPhysicalTest" />
+			<class
+				name="com.orientechnologies.orient.test.database.auto.CRUDDocumentValidationTest" />
+			<class
+				name="com.orientechnologies.orient.test.database.auto.ObjectTreeTest" />
+		</classes>
+	</test>
+	<test name="Tx">
+		<classes>
+			<class
+				name="com.orientechnologies.orient.test.database.auto.TransactionAtomicTest" />
+			<class
+				name="com.orientechnologies.orient.test.database.auto.TransactionOptimisticTest" />
+			<class
+				name="com.orientechnologies.orient.test.database.auto.TransactionConsistencyTest" />
+		</classes>
+	</test>
+	<test name="Index">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.IndexTest" />
+		</classes>
+	</test>
+	<test name="Dictionary">
+		<classes>
+			<class
+				name="com.orientechnologies.orient.test.database.auto.DictionaryTest" />
+		</classes>
+	</test>
+	<test name="Query">
+		<classes>
+			<class
+				name="com.orientechnologies.orient.test.database.auto.NativeQueryTest" />
+			<class
+				name="com.orientechnologies.orient.test.database.auto.WrongQueryTest" />
+		</classes>
+	</test>
+	<test name="sql-select">
+		<classes>
+			<class
+				name="com.orientechnologies.orient.test.database.auto.SQLSelectTest" />
+		</classes>
+	</test>
+	<test name="sql-insert">
+		<classes>
+			<class
+				name="com.orientechnologies.orient.test.database.auto.SQLInsertTest" />
+		</classes>
+	</test>
+	<test name="sql-update">
+		<classes>
+			<class
+				name="com.orientechnologies.orient.test.database.auto.SQLUpdateTest" />
+		</classes>
+	</test>
+	<test name="sql-delete">
+		<classes>
+			<class
+				name="com.orientechnologies.orient.test.database.auto.SQLDeleteTest" />
+		</classes>
+	</test>
+	<test name="End">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.DbClosedTest" />
+		</classes>
+	</test>
+</suite>

@@ -49,7 +49,6 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyRuntime;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
-import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -359,7 +358,7 @@ public class OStorageRemote extends OStorageAbstract {
 			OStorageRemoteThreadLocal.INSTANCE.set(Boolean.TRUE);
 
 			try {
-				final OSQLQuery<?> aquery = (OSQLQuery<?>) iCommand;
+				final OCommandRequestText aquery = (OCommandRequestText) iCommand;
 
 				final boolean asynch = iCommand instanceof OCommandRequestAsynch;
 
@@ -514,10 +513,11 @@ public class OStorageRemote extends OStorageAbstract {
 
 				if (OClusterLocal.TYPE.equals(iClusterType)) {
 					// FIEL PATH + START SIZE
-					network.writeString((String) iArguments[0]).writeInt((Integer) iArguments[1]);
+					network.writeString(iArguments.length > 0 ? (String) iArguments[0] : "").writeInt(
+							iArguments.length > 0 ? (Integer) iArguments[1] : -1);
 				} else {
 					// PHY CLUSTER ID
-					network.writeInt((Integer) iArguments[0]);
+					network.writeInt(iArguments.length > 0 ? (Integer) iArguments[0] : -1);
 				}
 
 				network.flush();

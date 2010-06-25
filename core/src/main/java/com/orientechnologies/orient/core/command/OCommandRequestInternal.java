@@ -30,5 +30,7 @@ public interface OCommandRequestInternal extends OCommandRequest, OSerializableS
 
 	public OCommandRequestInternal setDatabase(final ODatabaseRecord<?> iDatabase);
 
+	public OCommandResultListener getResultListener();
+
 	public void setResultListener(OCommandResultListener iListener);
 }
