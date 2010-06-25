@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -164,7 +165,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		}
 	}
 
-	public String fieldToStream(final ODocument iRecord, final ODatabaseRecord<?> iDatabase,
+	public String fieldToStream(final ODocument iRecord, final ODatabaseComplex<?> iDatabase,
 			final OUserObject2RecordHandler iObjHandler, final OType iType, final OClass iLinkedClass, final OType iLinkedType,
 			final String iName, final Object iValue, final Map<ORecordInternal<?>, ORecordId> iMarshalledRecords) {
 		StringBuilder buffer = new StringBuilder();
@@ -203,19 +204,19 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 						if (o instanceof ODocument)
 							record = (ODocument) o;
 						else
-							record = OObjectSerializerHelper.toStream(o, new ODocument(iDatabase, o.getClass().getSimpleName()),
-									iDatabase instanceof ODatabaseObjectTx ? ((ODatabaseObjectTx) iDatabase).getEntityManager()
-											: OEntityManagerInternal.INSTANCE, iLinkedClass, iObjHandler != null ? iObjHandler
-											: new OUserObject2RecordHandler() {
+							record = OObjectSerializerHelper.toStream(o, new ODocument((ODatabaseRecord<?>) iDatabase, o.getClass()
+									.getSimpleName()), iDatabase instanceof ODatabaseObjectTx ? ((ODatabaseObjectTx) iDatabase).getEntityManager()
+									: OEntityManagerInternal.INSTANCE, iLinkedClass, iObjHandler != null ? iObjHandler
+									: new OUserObject2RecordHandler() {
 
-												public Object getUserObjectByRecord(ORecordInternal<?> iRecord) {
-													return iRecord;
-												}
+										public Object getUserObjectByRecord(ORecordInternal<?> iRecord) {
+											return iRecord;
+										}
 
-												public ORecordInternal<?> getRecordByUserObject(Object iPojo, boolean iIsMandatory) {
-													return new ODocument(iLinkedClass);
-												}
-											});
+										public ORecordInternal<?> getRecordByUserObject(Object iPojo, boolean iIsMandatory) {
+											return new ODocument(iLinkedClass);
+										}
+									});
 
 						buffer.append(OStringSerializerHelper.EMBEDDED);
 						buffer.append(toString(record, null, iObjHandler, iMarshalledRecords));
@@ -303,7 +304,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		return coll;
 	}
 
-	public void embeddedCollectionToStream(final ODatabaseRecord<?> iDatabase, final OUserObject2RecordHandler iObjHandler,
+	public void embeddedCollectionToStream(final ODatabaseComplex<?> iDatabase, final OUserObject2RecordHandler iObjHandler,
 			final OClass iLinkedClass, final OType iLinkedType, final Object iValue,
 			final Map<ORecordInternal<?>, ORecordId> iMarshalledRecords, StringBuilder buffer) {
 		buffer.append(OStringSerializerHelper.COLLECTION_BEGIN);
@@ -332,7 +333,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					if (o instanceof ODocument)
 						record = (ODocument) o;
 					else
-						record = OObjectSerializerHelper.toStream(o, new ODocument(iDatabase, o.getClass().getSimpleName()),
+						record = OObjectSerializerHelper.toStream(o,
+								new ODocument((ODatabaseRecord<?>) iDatabase, o.getClass().getSimpleName()),
 								iDatabase instanceof ODatabaseObjectTx ? ((ODatabaseObjectTx) iDatabase).getEntityManager()
 										: OEntityManagerInternal.INSTANCE, iLinkedClass, iObjHandler != null ? iObjHandler
 										: new OUserObject2RecordHandler() {
