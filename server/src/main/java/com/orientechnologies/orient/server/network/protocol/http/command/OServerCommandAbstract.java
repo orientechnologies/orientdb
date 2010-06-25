@@ -21,7 +21,7 @@ import java.io.StringWriter;
 import java.util.Date;
 import java.util.List;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -117,7 +117,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 		if (iRecords != null && iRecords.size() > 0) {
 			ORecord<?> first = iRecords.get(0);
 			if (first != null && first instanceof ODocument) {
-				ODatabaseDocumentTx db = (ODatabaseDocumentTx) ((ODocument) first).getDatabase();
+				ODatabaseRecord<?> db = (ODatabaseRecord<?>) ((ODocument) first).getDatabase();
 
 				String className = ((ODocument) first).getClassName();
 				exportClassSchema(db, json, db.getMetadata().getSchema().getClass(className));
@@ -150,8 +150,8 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 
 	protected void sendRecordContent(final OHttpRequest iRequest, final ORecord<?> iRecord) throws IOException {
 		if (iRecord != null)
-			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, iRecord
-					.toJSON("id,ver,class"));
+			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN,
+					iRecord.toJSON("id,ver,class"));
 	}
 
 	protected void sendBinaryContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iContentType,
@@ -167,7 +167,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 		iRequest.channel.flush();
 	}
 
-	public void exportClassSchema(final ODatabaseDocumentTx db, final OJSONWriter json, final OClass cls) throws IOException {
+	public void exportClassSchema(final ODatabaseRecord<?> db, final OJSONWriter json, final OClass cls) throws IOException {
 		if (cls == null)
 			return;
 
