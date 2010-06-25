@@ -29,4 +29,6 @@ public interface OCommandRequestInternal extends OCommandRequest, OSerializableS
 	public ODatabaseRecord<?> getDatabase();
 
 	public OCommandRequestInternal setDatabase(final ODatabaseRecord<?> iDatabase);
+
+	public void setResultListener(OCommandResultListener iListener);
 }

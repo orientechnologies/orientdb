@@ -49,7 +49,7 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyRuntime;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -359,7 +359,7 @@ public class OStorageRemote extends OStorageAbstract {
 			OStorageRemoteThreadLocal.INSTANCE.set(Boolean.TRUE);
 
 			try {
-				final OCommandSQL aquery = (OCommandSQL) iCommand;
+				final OSQLQuery<?> aquery = (OSQLQuery<?>) iCommand;
 
 				final boolean asynch = iCommand instanceof OCommandRequestAsynch;
 

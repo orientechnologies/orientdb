@@ -24,6 +24,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandRequestTextAbstract;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
@@ -301,8 +302,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 				final boolean asynch = channel.readByte() == 'a';
 
-				final OCommandRequestTextAbstract command = (OCommandRequestTextAbstract) OStreamSerializerAnyStreamable.INSTANCE
-						.fromStream(channel.readBytes());
+				final OCommandRequestText command = (OCommandRequestText) OStreamSerializerAnyStreamable.INSTANCE.fromStream(channel
+						.readBytes());
 
 				data.commandDetail = command.getText();
 

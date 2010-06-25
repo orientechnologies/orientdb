@@ -20,8 +20,8 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
@@ -144,9 +144,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 			@ConsoleParameter(name = "cluster-type", description = "Cluster type: 'physical' or 'logical'") String iClusterType) {
 		checkCurrentDatabase();
 
-		out
-				.println("Creating cluster [" + iClusterName + "] of type '" + iClusterType + "' in database " + currentDatabaseName
-						+ "...");
+		out.println("Creating cluster [" + iClusterName + "] of type '" + iClusterType + "' in database " + currentDatabaseName + "...");
 
 		int clusterId = iClusterType.equalsIgnoreCase("physical") ? currentDatabase.addPhysicalCluster(iClusterName, iClusterName, -1)
 				: currentDatabase.addLogicalCluster(iClusterName, -1);
@@ -197,7 +195,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Create a property")
-	public void createProperty(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
+	public void createProperty(
+			@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
 		sqlCommand("create", iCommandText, "\nProperty created successfully with id=%d\n");
 	}
 
@@ -222,7 +221,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		final int limit = Integer.parseInt((String) properties.get("limit"));
 
 		long start = System.currentTimeMillis();
-		currentDatabase.command(new OSQLAsynchQuery<ODocument>(iQueryText, limit + 1, new OCommandResultListener() {
+		currentDatabase.query(new OSQLAsynchQuery<ODocument>(iQueryText, limit + 1, new OCommandResultListener() {
 			public boolean result(final Object iRecord) {
 				if (currentResultSet.size() > limit - 1) {
 					printHeaderLine(columns);
@@ -237,7 +236,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 				return true;
 			}
 
-		})).execute();
+		}));
 
 		if (currentResultSet.size() > 0 && currentResultSet.size() < limit)
 			printHeaderLine(columns);
