@@ -21,6 +21,7 @@ import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.server.OServerMain;
 
 public class OSharedDocumentDatabase {
@@ -30,6 +31,10 @@ public class OSharedDocumentDatabase {
 																																		public ODatabaseDocumentTx createNewResource(
 																																				final String iDatabaseName) {
 																																			final String[] parts = iDatabaseName.split(":");
+
+																																			if (parts.length < 2)
+																																				throw new OSecurityAccessException(
+																																						"Username and/or password missed");
 
 																																			final String path = OServerMain.server().getStoragePath(
 																																					parts[0]);
@@ -41,8 +46,8 @@ public class OSharedDocumentDatabase {
 																																				// (IT'S
 																																				// THREAD SAFE)
 																																				db.create();
-																																				OServerMain.server().getMemoryDatabases().put(
-																																						iDatabaseName, db);
+																																				OServerMain.server().getMemoryDatabases()
+																																						.put(iDatabaseName, db);
 																																			} else
 																																				db.open(parts[1], parts[2]);
 

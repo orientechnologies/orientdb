@@ -51,7 +51,7 @@ public abstract class OServerCommandAuthenticatedServerAbstract extends OServerC
 		if (iRequest.authorization != null) {
 			String[] authParts = iRequest.authorization.split(":");
 
-			if (OServerMain.server().authenticate(authParts[0], authParts[1], resource))
+			if (authParts.length == 2 && OServerMain.server().authenticate(authParts[0], authParts[1], resource))
 				return true;
 		}
 

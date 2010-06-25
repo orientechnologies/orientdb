@@ -51,8 +51,8 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 
 public class OServer {
+	private static final String																SRV_ROOT_ADMIN				= "root";
 	private static final String																PROPERTY_CONFIG_FILE	= "orient.config.file";
-
 	public static final String																DEFAULT_CONFIG_FILE		= "config/orient-server-config.xml";
 
 	protected ReentrantReadWriteLock													lock									= new ReentrantReadWriteLock();
@@ -168,9 +168,15 @@ public class OServer {
 			configurationLoader = new OConfigurationLoaderXml(OServerConfiguration.class, config);
 			configuration = configurationLoader.load();
 
-			if (configuration.users == null || configuration.users.size() == 0)
-				createAdminUser();
+			if (configuration.users != null && configuration.users.size() > 0) {
+				for (OServerUserConfiguration u : configuration.users) {
+					if (u.name.equals(SRV_ROOT_ADMIN))
+						// FOUND
+						return;
+				}
+			}
 
+			createAdminUser();
 		} catch (IOException e) {
 			OLogManager.instance().error(this, "Error on reading server configuration.", OConfigurationException.class);
 		}
@@ -241,7 +247,7 @@ public class OServer {
 		final long generatedPassword = new Random(System.currentTimeMillis()).nextLong();
 		String encodedPassword = OSecurityManager.instance().digest2String(String.valueOf(generatedPassword));
 
-		configuration.users.add(new OServerUserConfiguration("admin", encodedPassword, "*"));
+		configuration.users.add(new OServerUserConfiguration(SRV_ROOT_ADMIN, encodedPassword, "*"));
 		configurationLoader.save(configuration);
 	}
 

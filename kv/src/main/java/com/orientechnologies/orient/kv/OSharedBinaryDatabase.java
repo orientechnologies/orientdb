@@ -18,6 +18,7 @@ package com.orientechnologies.orient.kv;
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.record.ODatabaseBinary;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.server.OServerMain;
 
 public class OSharedBinaryDatabase {
@@ -26,6 +27,10 @@ public class OSharedBinaryDatabase {
 
 																																public ODatabaseBinary createNewResource(final String iDatabaseName) {
 																																	final String[] parts = iDatabaseName.split(":");
+
+																																	if (parts.length < 2)
+																																		throw new OSecurityAccessException(
+																																				"Username and/or password missed");
 
 																																	final String path = OServerMain.server().getStoragePath(parts[0]);
 

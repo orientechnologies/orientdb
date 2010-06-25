@@ -32,6 +32,10 @@ public class OSecurityAccessException extends OException {
 		databaseName = iDatabasename;
 	}
 
+	public OSecurityAccessException(final String message) {
+		super(message);
+	}
+
 	public String getDatabaseName() {
 		return databaseName;
 	}
