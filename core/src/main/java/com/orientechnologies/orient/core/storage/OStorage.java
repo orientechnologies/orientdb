@@ -38,7 +38,6 @@ public interface OStorage {
 	public static final String	CLUSTER_INTERNAL_NAME	= "internal";
 	public static final String	CLUSTER_INDEX_NAME		= "index";
 	public static final String	CLUSTER_DEFAULT_NAME	= "default";
-
 	public static final String	DATA_DEFAULT_NAME			= "default";
 
 	public void open(int iRequesterId, String iUserName, String iUserPassword);

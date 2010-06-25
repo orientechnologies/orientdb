@@ -27,11 +27,10 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
 @SuppressWarnings("unchecked")
 public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
-	protected int							version;
-	protected byte[]					stream;
-	protected ORID						recordId		= new ORecordId();
-
-	private static final char	RECORD_TYPE	= 'p';
+	protected int			version;
+	protected byte[]	stream;
+	protected byte		recordType;
+	protected ORID		recordId	= new ORecordId();
 
 	public OTransactionRecordProxy() {
 	}
@@ -127,7 +126,7 @@ public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
 	}
 
 	public byte getRecordType() {
-		return RECORD_TYPE;
+		return recordType;
 	}
 
 	public String toJSON(final String iFormat) {

@@ -441,6 +441,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 					network.writeByte(txEntry.status);
 					network.writeShort((short) txEntry.record.getIdentity().getClusterId());
+					network.writeByte(txEntry.record.getRecordType());
 
 					switch (txEntry.status) {
 					case OTransactionEntry.CREATED:

@@ -65,6 +65,6 @@ public class ORecordFactory {
 		else if (iRecordType == ORecordColumn.RECORD_TYPE)
 			return new ORecordColumn();
 
-		return null;
+		throw new IllegalArgumentException("Unsuppurted record type" + iRecordType);
 	}
 }
