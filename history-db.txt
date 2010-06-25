@@ -36,6 +36,7 @@ VERSION 0.9.19 - beta (June, 25th 2010)
 - Issue #45: implemented not-unique indexes
 - Issue #47: support ORDER BY clause in SQL SELECT statements
 - Issue #53: Improved description on errors 
+- Issue #50: Auto register Remote Engine if available
 - Fixed other bugs (user loading, logical cluster casts)
 -------------------------------------------------------------------------------
 VERSION 0.9.18 - beta (June, 21st 2010)

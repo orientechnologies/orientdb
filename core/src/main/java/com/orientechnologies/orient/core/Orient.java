@@ -45,6 +45,7 @@ public class Orient extends OSharedResource {
 		// REGISTER THE EMBEDDED ENGINE
 		registerEngine(new OEngineLocal());
 		registerEngine(new OEngineMemory());
+		registerEngine("com.orientechnologies.orient.client.remote.OEngineRemote");
 
 		active = true;
 	}
@@ -138,6 +139,14 @@ public class Orient extends OSharedResource {
 
 		} finally {
 			releaseExclusiveLock();
+		}
+	}
+
+	private void registerEngine(final String iClassName) {
+		try {
+			final Class<?> cls = Class.forName(iClassName);
+			registerEngine((OEngine) cls.newInstance());
+		} catch (Exception e) {
 		}
 	}
 
