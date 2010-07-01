@@ -35,8 +35,8 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecord.STATUS;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings("unchecked")
@@ -122,7 +122,7 @@ public class OObjectSerializerHelper {
 				}
 			} else if (p.getType().isAssignableFrom(List.class)) {
 
-				Collection<? extends ODocument> list = (Collection<? extends ODocument>) fieldValue;
+				Collection<ODocument> list = (Collection<ODocument>) fieldValue;
 				List<Object> targetList = new OLazyList<Object>((ODatabaseObjectTx) iRecord.getDatabase().getDatabaseOwner());
 				fieldValue = targetList;
 
@@ -131,22 +131,10 @@ public class OObjectSerializerHelper {
 				}
 
 			} else if (p.getType().isAssignableFrom(Set.class)) {
-				Collection<? extends ODocument> set = (Collection<? extends ODocument>) fieldValue;
 
-				HashSet<Object> target = new HashSet<Object>();
+				Collection<ODocument> set = (Collection<ODocument>) fieldValue;
+				Set<Object> target = new OLazySet<Object>((ODatabaseObjectTx) iRecord.getDatabase().getDatabaseOwner(), set);
 				fieldValue = target;
-
-				if (set != null && set.size() > 0) {
-					// NO LAZY: CONVERT ALL NOW
-
-					ODatabaseObjectTx database = (ODatabaseObjectTx) iRecord.getDatabase().getDatabaseOwner();
-					for (ODocument item : set) {
-						Object pojo = database.getUserObjectByRecord(item);
-
-						target.add(pojo);
-					}
-				}
-
 			} else {
 				// GENERIC TYPE
 				// OType type = OType.getTypeByClass(p.getType());

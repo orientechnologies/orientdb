@@ -210,6 +210,10 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 
 	public ODocument getRecordByUserObject(final Object iPojo, final boolean iIsMandatory) {
 		checkOpeness();
+
+		if (iPojo instanceof ODocument)
+			return (ODocument) iPojo;
+
 		ODocument record = objects2Records.get(System.identityHashCode(iPojo));
 
 		if (record == null) {
@@ -232,7 +236,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 		if (!(iRecord instanceof ODocument))
 			return null;
 
-		ODocument record = (ODocument) iRecord;
+		final ODocument record = (ODocument) iRecord;
 
 		Object pojo = records2Objects.get(iRecord);
 
