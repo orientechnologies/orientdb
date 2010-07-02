@@ -31,12 +31,15 @@ public class OLazyIterator<TYPE> implements Iterator<TYPE> {
 	}
 
 	public TYPE next() {
-		final ODocument record = underlying.next();
+		final Object value = underlying.next();
 
-		if (record == null)
+		if (value == null)
 			return null;
 
-		return (TYPE) database.getUserObjectByRecord(record);
+		if (value instanceof ODocument)
+			return (TYPE) database.getUserObjectByRecord((ODocument) value);
+
+		return (TYPE) value;
 	}
 
 	public boolean hasNext() {
