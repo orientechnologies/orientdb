@@ -111,6 +111,12 @@ public class OClusterLogical implements OCluster {
 	public void close() {
 	}
 
+	public void delete() throws IOException {
+		close();
+		map.clear();
+		map.save();
+	}
+
 	/**
 	 * Fill and return the PhysicalPosition object received as parameter with the physical position of logical record iPosition
 	 */

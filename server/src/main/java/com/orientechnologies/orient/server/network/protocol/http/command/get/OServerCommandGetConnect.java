@@ -184,16 +184,20 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 			json.endCollection(2, true);
 
 			json.beginCollection(2, true, "properties");
-			for (OEntryConfiguration entry : db.getStorage().getConfiguration().properties) {
-				json.beginObject(3, true, null);
-				json.writeAttribute(4, false, "name", entry.name);
-				json.writeAttribute(4, false, "value", entry.value);
-				json.endObject(3, true);
-			}
+			if (db.getStorage().getConfiguration().properties != null)
+				for (OEntryConfiguration entry : db.getStorage().getConfiguration().properties) {
+					if (entry != null) {
+						json.beginObject(3, true, null);
+						json.writeAttribute(4, false, "name", entry.name);
+						json.writeAttribute(4, false, "value", entry.value);
+						json.endObject(3, true);
+					}
+				}
 			json.endCollection(2, true);
 
 			json.endObject(1, true);
 			json.endObject();
+			json.flush();
 
 			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, buffer.toString());
 		} finally {

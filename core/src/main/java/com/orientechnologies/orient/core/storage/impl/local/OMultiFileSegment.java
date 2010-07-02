@@ -61,8 +61,9 @@ public class OMultiFileSegment extends OSegment {
 		if (iConfig.infoFiles.length == 0) {
 			// EMPTY FILE: CREATE THE FIRST FILE BY DEFAULT
 			files = new OFile[1];
-			files[0] = OFileFactory.create(type, iStorage.getVariableParser().resolveVariables(
-					storage.getStoragePath() + "/" + name + "." + 0 + fileExtension), iStorage.getMode());
+			files[0] = OFileFactory.create(type,
+					iStorage.getVariableParser().resolveVariables(storage.getStoragePath() + "/" + name + "." + 0 + fileExtension),
+					iStorage.getMode());
 			perFileMaxSize = fileMaxSize;
 			files[0].setMaxSize(perFileMaxSize);
 			files[0].setIncrementSize(fileIncrementSize);
@@ -70,8 +71,8 @@ public class OMultiFileSegment extends OSegment {
 		} else {
 			files = new OFile[iConfig.infoFiles.length];
 			for (int i = 0; i < files.length; ++i) {
-				files[i] = OFileFactory.create(type, iStorage.getVariableParser().resolveVariables(iConfig.infoFiles[i].path), iStorage
-						.getMode());
+				files[i] = OFileFactory.create(type, iStorage.getVariableParser().resolveVariables(iConfig.infoFiles[i].path),
+						iStorage.getMode());
 				perFileMaxSize = fileMaxSize;
 
 				files[i].setMaxSize(perFileMaxSize);
@@ -110,6 +111,20 @@ public class OMultiFileSegment extends OSegment {
 			for (OFile file : files) {
 				if (file != null)
 					file.close();
+			}
+
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
+
+	public void delete() throws IOException {
+		try {
+			acquireExclusiveLock();
+
+			for (OFile file : files) {
+				if (file != null)
+					file.delete();
 			}
 
 		} finally {
@@ -249,8 +264,8 @@ public class OMultiFileSegment extends OSegment {
 	private OFile createNewFile() throws IOException {
 		final int num = files.length - 1;
 
-		final OFile file = OFileFactory.create(type, storage.getStoragePath() + "/" + name + "." + num + fileExtension, storage
-				.getMode());
+		final OFile file = OFileFactory.create(type, storage.getStoragePath() + "/" + name + "." + num + fileExtension,
+				storage.getMode());
 		file.setMaxSize((int) OFileUtils.getSizeAsNumber(config.fileMaxSize));
 		file.create(fileStartSize);
 		files[num] = file;

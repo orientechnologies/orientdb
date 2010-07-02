@@ -137,6 +137,12 @@ public abstract class OFile {
 		}
 	}
 
+	public void delete() throws IOException {
+		close();
+		if (osFile != null)
+			osFile.delete();
+	}
+
 	public void lock() throws IOException {
 		fileLock = channel.lock();
 	}

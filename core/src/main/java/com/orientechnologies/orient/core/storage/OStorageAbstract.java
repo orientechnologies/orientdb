@@ -85,6 +85,10 @@ public abstract class OStorageAbstract extends OSharedResourceAdaptive implement
 		close();
 	}
 
+	public boolean removeCluster(final String iClusterName) {
+		return removeCluster(getClusterIdByName(iClusterName));
+	}
+
 	public OCacheRecord getCache() {
 		return cache;
 	}

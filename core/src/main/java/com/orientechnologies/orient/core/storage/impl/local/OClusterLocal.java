@@ -85,6 +85,11 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 		holeSegment.close();
 	}
 
+	public void delete() throws IOException {
+		super.delete();
+		holeSegment.delete();
+	}
+
 	/**
 	 * Fill and return the PhysicalPosition object received as parameter with the physical position of logical record iPosition
 	 * 

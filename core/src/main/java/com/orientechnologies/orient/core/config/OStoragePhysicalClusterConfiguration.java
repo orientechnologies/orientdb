@@ -18,7 +18,6 @@ package com.orientechnologies.orient.core.config;
 public class OStoragePhysicalClusterConfiguration extends OStorageSegmentConfiguration implements OStorageClusterConfiguration {
 
 	public OStorageFileConfiguration	holeFile;
-	public int												id;
 
 	private static final String				START_SIZE	= "1Mb";
 

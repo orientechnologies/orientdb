@@ -92,6 +92,10 @@ public interface OStorage {
 	 */
 	public int addCluster(String iClusterName, String iClusterType, Object... iParameters);
 
+	public boolean removeCluster(String iClusterName);
+
+	public boolean removeCluster(int iId);
+
 	/**
 	 * Add a new data segment in the default segment directory and with filename equals to the cluster name.
 	 */

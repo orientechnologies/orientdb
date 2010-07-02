@@ -153,6 +153,30 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 				+ clusterId);
 	}
 
+	@ConsoleCommand(description = "Remove a cluster in the current database. The cluster can be physical or logical.")
+	public void removeCluster(
+			@ConsoleParameter(name = "cluster-name", description = "The name or the id of the cluster to remove") String iClusterName) {
+		checkCurrentDatabase();
+
+		out.println("Removing cluster [" + iClusterName + "] in database " + currentDatabaseName + "...");
+
+		boolean result = currentDatabase.getStorage().removeCluster(iClusterName);
+
+		if (!result) {
+			// TRY TO GET AS CLUSTER ID
+			try {
+				int clusterId = Integer.parseInt(iClusterName);
+				result = currentDatabase.getStorage().removeCluster(clusterId);
+			} catch (Exception e) {
+			}
+		}
+
+		if (result)
+			out.println("Cluster correctly removed");
+		else
+			out.println("Can't find the cluster to remove");
+	}
+
 	@ConsoleCommand(description = "Load a record in memory and set it as the current one")
 	public void loadRecord(
 			@ConsoleParameter(name = "record-id", description = "The unique Record Id of the record to load. If you don't have the Record Id execute a query first") String iRecordId) {

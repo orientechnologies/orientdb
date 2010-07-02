@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.storage.tree;
 import java.io.IOException;
 
 import com.orientechnologies.common.collection.OTreeMapEntry;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
@@ -74,6 +75,9 @@ public class OTreeMapStorage<K, V> extends OTreeMapPersistent<K, V> {
 		try {
 			ORawBuffer raw = storage.readRecord(-1, clusterId, record.getIdentity().getClusterPosition());
 
+			if (raw == null)
+				throw new OConfigurationException("Can't load map with id " + clusterId + ":" + record.getIdentity().getClusterPosition());
+
 			record.setVersion(raw.version);
 
 			fromStream(raw.buffer);
@@ -92,12 +96,12 @@ public class OTreeMapStorage<K, V> extends OTreeMapPersistent<K, V> {
 			record.fromStream(toStream());
 			if (record.getIdentity().isValid())
 				// UPDATE IT
-				record.setVersion(storage.updateRecord(0, clusterId, record.getIdentity().getClusterPosition(), record.toStream(), record
-						.getVersion(), record.getRecordType()));
+				record.setVersion(storage.updateRecord(0, clusterId, record.getIdentity().getClusterPosition(), record.toStream(),
+						record.getVersion(), record.getRecordType()));
 			else
 				// CREATE IT
-				record.setIdentity(clusterId, storage.createRecord(record.getIdentity().getClusterId(), record.toStream(), record
-						.getRecordType()));
+				record.setIdentity(clusterId,
+						storage.createRecord(record.getIdentity().getClusterId(), record.toStream(), record.getRecordType()));
 			record.unsetDirty();
 
 			return this;
@@ -105,6 +109,13 @@ public class OTreeMapStorage<K, V> extends OTreeMapPersistent<K, V> {
 		} finally {
 			lock.releaseExclusiveLock();
 		}
+	}
+
+	@Override
+	public void clear() {
+		storage.deleteRecord(0, record.getIdentity().getClusterId(), record.getIdentity().getClusterPosition(), record.getVersion());
+		root = null;
+		super.clear();
 	}
 
 	@Override

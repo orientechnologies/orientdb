@@ -77,6 +77,18 @@ public class OSingleFileSegment extends OSharedResourceAdaptiveLinked {
 		}
 	}
 
+	public void delete() throws IOException {
+		try {
+			acquireExclusiveLock();
+
+			if (file != null)
+				file.delete();
+
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
+
 	public long getSize() {
 		return file.getFileSize();
 	}

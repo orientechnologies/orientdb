@@ -140,8 +140,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 					channel.writeString(connection.id);
 					channel.writeInt(connection.database.getClusterNames().size());
 					for (OCluster c : (connection.database.getStorage()).getClusters()) {
-						channel.writeString(c.getName());
-						channel.writeInt(c.getId());
+						if (c != null) {
+							channel.writeString(c.getName());
+							channel.writeInt(c.getId());
+						}
 					}
 				}
 				break;
@@ -230,6 +232,18 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 				sendOk();
 				channel.writeShort((short) num);
+				break;
+			}
+
+			case OChannelBinaryProtocol.CLUSTER_REMOVE: {
+				data.commandInfo = "remove cluster";
+
+				final int id = channel.readShort();
+
+				boolean result = connection.database.getStorage().removeCluster(id);
+
+				sendOk();
+				channel.writeByte((byte) (result ? '1' : '0'));
 				break;
 			}
 

@@ -330,6 +330,38 @@ public class OStorageLocal extends OStorageAbstract {
 		return -1;
 	}
 
+	public boolean removeCluster(final int iClusterId) {
+		final boolean locked = acquireExclusiveLock();
+
+		try {
+			if (iClusterId < 0 || iClusterId >= clusters.length)
+				throw new IllegalArgumentException("Cluster id '" + iClusterId + "' is out of range of configured clusters (0-"
+						+ (clusters.length - 1) + ")");
+
+			final OCluster cluster = clusters[iClusterId];
+			if (cluster == null)
+				return false;
+
+			cluster.delete();
+
+			clusterMap.remove(cluster.getName());
+			clusters[iClusterId] = null;
+
+			// UPDATE CONFIGURATION
+			configuration.clusters.set(iClusterId, null);
+			configuration.update();
+
+			return true;
+		} catch (Exception e) {
+			OLogManager.instance().exception("Error while removing cluster '" + iClusterId + "'", e, OStorageException.class);
+
+		} finally {
+			releaseExclusiveLock(locked);
+		}
+
+		return false;
+	}
+
 	public long count(final int[] iClusterIds) {
 		checkOpeness();
 
@@ -340,8 +372,15 @@ public class OStorageLocal extends OStorageAbstract {
 		try {
 			long tot = 0;
 
-			for (int i = 0; i < iClusterIds.length; ++i)
-				tot += clusters[iClusterIds[i]].getElements();
+			OCluster c;
+			for (int i = 0; i < iClusterIds.length; ++i) {
+				if (iClusterIds[i] >= clusters.length)
+					throw new OConfigurationException("Cluster id " + iClusterIds[i] + "was not found");
+				
+				c = clusters[iClusterIds[i]];
+				if (c != null)
+					tot += c.getElements();
+			}
 
 			return tot;
 
@@ -580,7 +619,7 @@ public class OStorageLocal extends OStorageAbstract {
 		checkOpeness();
 
 		for (OCluster cluster : clusters)
-			if (cluster.getId() == iClusterId)
+			if (cluster != null && cluster.getId() == iClusterId)
 				return cluster.getName();
 
 		return null;

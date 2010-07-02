@@ -538,6 +538,42 @@ public class OStorageRemote extends OStorageAbstract {
 		return 0;
 	}
 
+	public boolean removeCluster(final int iClusterId) {
+		checkConnection();
+
+		do {
+			boolean locked = acquireExclusiveLock();
+
+			try {
+				network.writeByte(OChannelBinaryProtocol.CLUSTER_REMOVE);
+				network.writeShort((short) iClusterId);
+
+				network.flush();
+
+				readStatus();
+
+				if (network.readByte() == '1') {
+					// REMOVE THE CLUSTER LOCALLY
+					for (Entry<String, Integer> entry : clusters.entrySet())
+						if (entry.getValue() != null && entry.getValue().intValue() == iClusterId) {
+							clusters.remove(entry.getKey());
+							break;
+						}
+
+					return true;
+				}
+				return false;
+			} catch (Exception e) {
+				if (handleException("Error on removing of cluster", e))
+					break;
+
+			} finally {
+				releaseExclusiveLock(locked);
+			}
+		} while (true);
+		return false;
+	}
+
 	public int addDataSegment(final String iDataSegmentName) {
 		return addDataSegment(iDataSegmentName, null);
 	}

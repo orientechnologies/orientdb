@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 
 public class OClusterMemory extends OSharedResource implements OCluster {
 	public static final String			TYPE		= "MEMORY";
-	
+
 	private int											id;
 	private String									name;
 	private List<OPhysicalPosition>	entries	= new ArrayList<OPhysicalPosition>();
@@ -45,6 +45,11 @@ public class OClusterMemory extends OSharedResource implements OCluster {
 	}
 
 	public void create(final int iStartSize) throws IOException {
+	}
+
+	public void delete() throws IOException {
+		close();
+		entries.clear();
 	}
 
 	public long getElements() {

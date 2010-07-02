@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.config;
 public class OStorageSegmentConfiguration {
 	public transient OStorageConfiguration	root;
 
+	public int															id;
 	public String														name;
 	public String														maxSize						= "0";
 	public String														fileType					= "mmap";

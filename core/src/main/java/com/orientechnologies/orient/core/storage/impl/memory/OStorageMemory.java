@@ -105,6 +105,16 @@ public class OStorageMemory extends OStorageAbstract {
 		return clusters.size() - 1;
 	}
 
+	public boolean removeCluster(final int iClusterId) {
+		try {
+			OCluster c = clusters.get(iClusterId);
+			c.delete();
+			clusters.set(iClusterId, null);
+		} catch (IOException e) {
+		}
+		return false;
+	}
+
 	public int addDataSegment(final String iDataSegmentName) {
 		// UNIQUE DATASEGMENT
 		return 0;

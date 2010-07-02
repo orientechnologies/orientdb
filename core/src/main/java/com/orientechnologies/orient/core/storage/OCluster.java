@@ -36,6 +36,8 @@ public interface OCluster {
 
 	public void close() throws IOException;
 
+	public void delete() throws IOException;
+
 	public String getType();
 
 	/**
