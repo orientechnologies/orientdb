@@ -16,17 +16,22 @@
 package com.orientechnologies.orient.core.serialization.serializer.object;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-@SuppressWarnings( { "unchecked", "serial" })
+@SuppressWarnings({ "unchecked", "serial" })
 public class OLazyList<TYPE> extends ArrayList<TYPE> {
 	private ODatabaseObjectTx	database;
 
 	public OLazyList(final ODatabaseObjectTx database) {
 		this.database = database;
+	}
+
+	public Iterator<TYPE> iterator() {
+		return new OLazyIterator<TYPE>(database, (Iterator<ODocument>) super.iterator());
 	}
 
 	public void convertAll() {
