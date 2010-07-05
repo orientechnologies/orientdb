@@ -86,12 +86,12 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 					}
 
 				if (!operatorFound) {
-					pos = partUpperCase.indexOf(OSQLFilterFieldOperator.CHAIN_SEPARATOR, pos);
+					pos = partUpperCase.indexOf(OSQLFilterFieldOperator.CHAIN_SEPARATOR, 0);
 
 					// CHECK IF IT'S A FIELD
 					int posOpenBrace = part.indexOf("(");
 					if (posOpenBrace == -1 || posOpenBrace > pos && pos > -1) {
-						// YES, IT'S A FIELD
+						// YES, SEEMS A FIELD
 						String chainedFieldName = pos > -1 ? part.substring(0, pos) : part;
 
 						if (operationsChain == null)

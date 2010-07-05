@@ -195,6 +195,25 @@ public class CRUDObjectPhysicalTest {
 	}
 
 	@Test(dependsOnMethods = "queryPerFloat")
+	public void queryCross3Levels() {
+		database.open("admin", "admin");
+
+		final List<Profile> result = database.query(new OSQLSynchQuery<Profile>(
+				"select from Profile where location.city.country.name = 'Italy'"));
+
+		Assert.assertTrue(result.size() > 0);
+
+		Profile profile;
+		for (int i = 0; i < result.size(); ++i) {
+			profile = result.get(i);
+
+			Assert.assertEquals(profile.getLocation().getCity().getCountry().getName(), "Italy");
+		}
+
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "queryCross3Levels")
 	public void cleanAll() {
 		database.open("admin", "admin");
 
