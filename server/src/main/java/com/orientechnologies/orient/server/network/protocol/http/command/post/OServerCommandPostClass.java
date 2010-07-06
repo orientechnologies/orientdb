@@ -23,7 +23,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandPostClass extends OServerCommandAuthenticatedDbAbstract {
-	private static final String[]	NAMES	= { "POST|class" };
+	private static final String[]	NAMES	= { "POST|class/*" };
 
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: class/<database>/<class-name>");

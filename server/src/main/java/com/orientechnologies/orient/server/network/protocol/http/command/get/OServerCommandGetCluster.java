@@ -25,7 +25,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandGetCluster extends OServerCommandAuthenticatedDbAbstract {
-	private static final String[]	NAMES	= { "GET|cluster" };
+	private static final String[]	NAMES	= { "GET|cluster/*" };
 
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(

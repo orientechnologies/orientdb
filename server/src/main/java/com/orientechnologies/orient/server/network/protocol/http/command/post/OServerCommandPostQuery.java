@@ -26,7 +26,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandPostQuery extends OServerCommandAuthenticatedDbAbstract {
-	private static final String[]	NAMES	= { "POST|query" };
+	private static final String[]	NAMES	= { "POST|query/*" };
 
 	@SuppressWarnings("unchecked")
 	public void execute(final OHttpRequest iRequest) throws Exception {

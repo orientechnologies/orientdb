@@ -22,7 +22,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 
 public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServerAbstract {
-	private static final String[]	NAMES	= { "POST|database" };
+	private static final String[]	NAMES	= { "POST|database/*" };
 
 	public OServerCommandPostDatabase() {
 		super("new-database");

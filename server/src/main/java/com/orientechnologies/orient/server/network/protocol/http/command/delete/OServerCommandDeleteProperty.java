@@ -23,7 +23,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandDeleteProperty extends OServerCommandAuthenticatedDbAbstract {
-	private static final String[]	NAMES	= { "DELETE|property" };
+	private static final String[]	NAMES	= { "DELETE|property/*" };
 
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(iRequest.url, 4, "Syntax error: property/<database>/<class-name>/<property-name>");

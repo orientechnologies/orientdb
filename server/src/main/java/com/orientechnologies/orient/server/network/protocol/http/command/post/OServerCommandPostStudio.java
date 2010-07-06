@@ -37,7 +37,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 
 @SuppressWarnings("unchecked")
 public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstract {
-	private static final String[]	NAMES	= { "POST|studio" };
+	private static final String[]	NAMES	= { "POST|studio/*" };
 
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		ODatabaseDocumentTx db = null;

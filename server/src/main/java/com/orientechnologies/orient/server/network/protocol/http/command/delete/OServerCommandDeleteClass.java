@@ -22,7 +22,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandDeleteClass extends OServerCommandAuthenticatedDbAbstract {
-	private static final String[]	NAMES	= { "DELETE|class" };
+	private static final String[]	NAMES	= { "DELETE|class/*" };
 
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: class/<database>/<class-name>");

@@ -20,8 +20,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
 
 public class OServerCommandOptions extends OServerCommandAbstract {
-	private static final String[]	NAMES	= { "OPTIONS|", "OPTIONS|query", "OPTIONS|document", "OPTIONS|database", "OPTIONS|connect",
-			"OPTIONS|disconnect"						};
+	private static final String[]	NAMES	= { "OPTIONS|*" };
 
 	public OServerCommandOptions() {
 	}

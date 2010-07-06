@@ -22,7 +22,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 public class OKVServerCommandPostEntry extends OKVServerCommandAbstract {
-	private static final String[]	NAMES	= { "POST|entry" };
+	private static final String[]	NAMES	= { "POST|entry/*" };
 
 	public OKVServerCommandPostEntry(OKVDictionary dictionary) {
 		super(dictionary);

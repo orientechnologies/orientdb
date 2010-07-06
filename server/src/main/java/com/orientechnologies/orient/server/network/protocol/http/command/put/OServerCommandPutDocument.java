@@ -24,7 +24,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandDocumentAbstract;
 
 public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
-	private static final String[]	NAMES	= { "PUT|document" };
+	private static final String[]	NAMES	= { "PUT|document/*" };
 
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: document/<database>/<record-id>");
