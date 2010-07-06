@@ -23,7 +23,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 public class OKVServerCommandDeleteEntry extends OKVServerCommandAbstract {
 
-	private static final String[]	NAMES	= { "DELETE.entry" };
+	private static final String[]	NAMES	= { "DELETE|entry" };
 
 	public OKVServerCommandDeleteEntry(OKVDictionary dictionary) {
 		super(dictionary);

@@ -40,7 +40,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstract {
-	private static final String[]	NAMES	= { "GET.connect" };
+	private static final String[]	NAMES	= { "GET|connect" };
 
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: connect/<database>[/<user>/<password>]");

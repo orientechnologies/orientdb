@@ -1,3 +1,7 @@
+function orient_connect(url, dbName, callback) {
+	executeJSONRequest(url + '/connect/' + dbName, callback);
+}
+
 function executeJSONRequest(iRequest, iCallback, iData, iMethod) {
 	if (!iMethod)
 		iMethod = 'GET';

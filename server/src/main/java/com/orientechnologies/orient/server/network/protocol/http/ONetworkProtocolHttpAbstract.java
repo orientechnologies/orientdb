@@ -43,6 +43,7 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolExce
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
+	private static final String								COMMAND_SEPARATOR		= "|";
 	private static final int									MAX_CONTENT_LENGTH	= 10000;																	// MAX = 10Kb
 	private static final int									TCP_DEFAULT_TIMEOUT	= 10000;
 
@@ -89,7 +90,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 			command = sep == -1 ? request.url.substring(1) : request.url.substring(1, sep);
 		}
 
-		OServerCommand cmd = commands.get(request.method + "." + command);
+		OServerCommand cmd = commands.get(request.method + COMMAND_SEPARATOR + command);
 
 		if (cmd != null)
 			try {

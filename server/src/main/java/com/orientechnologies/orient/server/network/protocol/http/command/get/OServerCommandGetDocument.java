@@ -24,7 +24,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandGetDocument extends OServerCommandAuthenticatedDbAbstract {
-	private static final String[]	NAMES	= { "GET.document" };
+	private static final String[]	NAMES	= { "GET|document" };
 
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		ODatabaseDocumentTx db = null;

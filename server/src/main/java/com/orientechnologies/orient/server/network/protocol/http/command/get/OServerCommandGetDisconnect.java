@@ -23,7 +23,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
 
 public class OServerCommandGetDisconnect extends OServerCommandAbstract {
-	private static final String[]	NAMES	= { "GET.disconnect" };
+	private static final String[]	NAMES	= { "GET|disconnect" };
 
 	@Override
 	public boolean beforeExecute(OHttpRequest iRequest) throws IOException {

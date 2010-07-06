@@ -23,7 +23,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandGetDictionary extends OServerCommandAuthenticatedDbAbstract {
-	private static final String[]	NAMES	= { "GET.dictionary" };
+	private static final String[]	NAMES	= { "GET|dictionary" };
 
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		iRequest.data.commandInfo = "Dictionary lookup";

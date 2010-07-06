@@ -6,15 +6,15 @@ var classEnumeration; // CONTAINS THE DB CLASSES
 var selectedClassName; // CONTAINS LATEST SELECTED CLASS NAME
 
 function connect() {
-	executeJSONRequest($('#server').val() + '/connect/' + $('#database').val(),
-			function(database) {
-				showDatabaseInfo(database);
+	orient_connect($('#server').val(), $('#database').val(), function(database) {
+		databaseInfo = database;
 
-				$("#tabs-main").show(200);
-				$("#buttonConnect").hide();
-				$("#buttonDisconnect").show();
+		showDatabaseInfo();
 
-			});
+		$("#tabs-main").show(200);
+		$("#buttonConnect").hide();
+		$("#buttonDisconnect").show();
+	});
 }
 
 function disconnect() {
@@ -27,9 +27,7 @@ function disconnect() {
 	});
 }
 
-function showDatabaseInfo(database) {
-	databaseInfo = database;
-
+function showDatabaseInfo() {
 	fillDynaTable($('#databaseDataSegments'), "Data Segments", [ 'id', 'name',
 			'size', 'filled', 'maxSize', 'files' ], [ {
 		name : 'id',
@@ -61,7 +59,7 @@ function showDatabaseInfo(database) {
 		index : 'files',
 		width : '600px',
 		editable : false
-	} ], database['dataSegments'], {
+	} ], databaseInfo['dataSegments'], {
 		height : '40px'
 	});
 
@@ -106,7 +104,7 @@ function showDatabaseInfo(database) {
 		index : 'files',
 		width : '450px',
 		editable : false
-	} ], database['clusters']);
+	} ], databaseInfo['clusters']);
 
 	fillDynaTable($('#databaseTxSegment'), "Tx Segment", [ 'totalLogs', 'size',
 			'filled', 'maxSize', 'file' ], [ {
@@ -134,12 +132,12 @@ function showDatabaseInfo(database) {
 		index : 'File',
 		width : '600px',
 		editable : false
-	} ], database['txSegment'], {
+	} ], databaseInfo['txSegment'], {
 		height : '25px'
 	});
 
 	fillDynaTable($('#databaseUsers'), "Users", [ 'name', 'roles' ], null,
-			database['users']);
+			databaseInfo['users']);
 	fillDynaTable($('#databaseRolesRules'), "Rules", [ 'Name', 'Create',
 			'Read', 'Update', 'Delete' ], [ {
 		name : 'name',
@@ -182,11 +180,11 @@ function showDatabaseInfo(database) {
 			});
 
 	classEnumeration = ":;";
-	for (cls in database['classes']) {
+	for (cls in databaseInfo['classes']) {
 		if (classEnumeration.length > 2)
 			classEnumeration += ";";
-		classEnumeration += database['classes'][cls].name + ":"
-				+ database['classes'][cls].name;
+		classEnumeration += databaseInfo['classes'][cls].name + ":"
+				+ databaseInfo['classes'][cls].name;
 	}
 
 	jQuery($('#classProperties')).jqGrid('GridUnload');
@@ -353,7 +351,7 @@ function showDatabaseInfo(database) {
 		index : 'records',
 		width : 150,
 		editable : false
-	} ], database['classes'], {
+	} ], databaseInfo['classes'], {
 		sortname : 'id',
 		editurl : getStudioURL('classes'),
 		onSelectRow : function(classRowNum) {
@@ -399,12 +397,12 @@ function showDatabaseInfo(database) {
 			});
 
 	fillDynaTable($('#databaseConfig'), "Configuration", [ 'name', 'value' ],
-			null, database['config'].values, {
+			null, databaseInfo['config'].values, {
 				sortname : 'name'
 			});
 
 	fillDynaTable($('#databaseConfigProperties'), "Configuration properties", [
-			'name', 'value' ], null, database['config'].properties, {
+			'name', 'value' ], null, databaseInfo['config'].properties, {
 		sortname : 'name'
 	});
 }

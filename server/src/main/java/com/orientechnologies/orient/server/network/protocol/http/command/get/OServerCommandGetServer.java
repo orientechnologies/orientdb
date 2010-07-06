@@ -39,7 +39,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 
 public class OServerCommandGetServer extends OServerCommandAuthenticatedServerAbstract {
-	private static final String[]		NAMES						= { "GET.server" };
+	private static final String[]		NAMES						= { "GET|server" };
 	private final static DateFormat	dateTimeFormat	= new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 
 	public OServerCommandGetServer() {
