@@ -78,8 +78,7 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 				if (!inputFile.exists()) {
 					OLogManager.instance().debug(this, "Static resource not found: %s", url);
 
-					sendStatus(iRequest, 404, "File not found");
-					iRequest.channel.flush();
+					sendBinaryContent(iRequest, 404, "File not found", null, null, 0);
 					return;
 				}
 

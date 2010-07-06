@@ -6,15 +6,16 @@ var classEnumeration; // CONTAINS THE DB CLASSES
 var selectedClassName; // CONTAINS LATEST SELECTED CLASS NAME
 
 function connect() {
-	orient_connect($('#server').val(), $('#database').val(), function(database) {
-		databaseInfo = database;
+	orient_connect($('#server').val(), $('#database').val(),
+			function(database) {
+				databaseInfo = database;
 
-		showDatabaseInfo();
+				showDatabaseInfo();
 
-		$("#tabs-main").show(200);
-		$("#buttonConnect").hide();
-		$("#buttonDisconnect").show();
-	});
+				$("#tabs-main").show(200);
+				$("#buttonConnect").hide();
+				$("#buttonDisconnect").show();
+			});
 }
 
 function disconnect() {
@@ -517,38 +518,33 @@ function clear(component) {
 	$('#' + component).val("");
 }
 
-jQuery(document).ready(
-		function() {
-			jQuery(document).ajaxError(function(event, request, settings, err) {
-				jQuery("#output").val("Error: " + request.responseText);
-			});
+function formatServerURL() {
+	var s = $('#server').val();
+	var index = s.indexOf('/', 8); // JUMP HTTP://
+	if (index > -1)
+		$('#server').val(s.substring(0, index));
 
-			$("#tabs-main").hide();
-			$("#buttonDisconnect").hide();
+	$('#rawServer').html($('#server').val() + "/");
+}
 
-			$("#tabs-main").tabs();
-			$("#tabs-db").tabs();
-			$("#tabs-security").tabs();
-			$("#tabs-server").tabs();
+jQuery(document).ready(function() {
+	jQuery(document).ajaxError(function(event, request, settings, err) {
+		jQuery("#output").val("Error: " + request.responseText);
+	});
 
-			$('#server').change(function(objEvent) {
-				var s = $('#server').val();
-				if (s.charAt(s.length - 1) == "/")
-					$('#server').val(s.substring(0, s.length - 1));
+	$("#tabs-main").hide();
+	$("#buttonDisconnect").hide();
 
-				$('#rawServer').html($('#server').val() + "/");
-			});
+	$("#tabs-main").tabs();
+	$("#tabs-db").tabs();
+	$("#tabs-security").tabs();
+	$("#tabs-server").tabs();
 
-			if (document.location.href
-					.charAt(document.location.href.length - 1) == "/")
-				$('#server').val(
-						document.location.href.substring(0,
-								document.location.href.length - 1));
-			else
-				$('#server').val(document.location.href);
+	$('#server').change(formatServerURL);
+	$('#server').val(document.location.href);
+	formatServerURL();
 
-			jQuery("#queryText").val(jQuery.trim(jQuery("#queryText").val()));
-			jQuery("#commandText").val(
-					jQuery.trim(jQuery("#commandText").val()));
-			jQuery("#output").val(jQuery.trim(jQuery("#output").val()));
-		});
+	jQuery("#queryText").val(jQuery.trim(jQuery("#queryText").val()));
+	jQuery("#commandText").val(jQuery.trim(jQuery("#commandText").val()));
+	jQuery("#output").val(jQuery.trim(jQuery("#output").val()));
+});
