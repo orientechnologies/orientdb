@@ -23,6 +23,7 @@ import java.net.URLDecoder;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
@@ -54,7 +55,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 	protected OHttpRequest										request;
 
 	private final StringBuilder								requestContent			= new StringBuilder();
-	private final Map<String, OServerCommand>	commands						= new HashMap<String, OServerCommand>();
+	private final Map<String, OServerCommand>	exactCommands				= new HashMap<String, OServerCommand>();
+	private final Map<String, OServerCommand>	wildcardCommands		= new HashMap<String, OServerCommand>();
 	private final OBase64Utils								base64							= new OBase64Utils(null, "");
 
 	public ONetworkProtocolHttpAbstract() {
@@ -86,11 +88,28 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 		if (request.url.length() < 2) {
 			command = "";
 		} else {
-			final int sep = request.url.indexOf("/", 1);
-			command = sep == -1 ? request.url.substring(1) : request.url.substring(1, sep);
+			command = request.url.substring(1);
 		}
 
-		OServerCommand cmd = commands.get(request.method + COMMAND_SEPARATOR + command);
+		final String commandString = request.method + COMMAND_SEPARATOR + command;
+
+		// TRY TO FIND EXACT MATCH
+		OServerCommand cmd = exactCommands.get(commandString);
+
+		if (cmd == null) {
+			// TRY WITH WILDCARD COMMANDS
+			String partLeft, partRight;
+			for (Entry<String, OServerCommand> entry : wildcardCommands.entrySet()) {
+				int wildcardPos = entry.getKey().indexOf("*");
+				partLeft = entry.getKey().substring(0, wildcardPos);
+				partRight = entry.getKey().substring(wildcardPos + 1);
+
+				if (commandString.startsWith(partLeft) && commandString.endsWith(partRight)) {
+					cmd = entry.getValue();
+					break;
+				}
+			}
+		}
 
 		if (cmd != null)
 			try {
@@ -187,7 +206,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 	 */
 	protected void registerCommand(final OServerCommand iServerCommandInstance) {
 		for (String name : iServerCommandInstance.getNames())
-			commands.put(name, iServerCommandInstance);
+			if (name.contains("*"))
+				wildcardCommands.put(name, iServerCommandInstance);
+			else
+				exactCommands.put(name, iServerCommandInstance);
 	}
 
 	protected void sendTextContent(final int iCode, final String iReason, String iHeaders, final String iContentType,
