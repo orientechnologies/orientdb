@@ -19,7 +19,8 @@ import com.orientechnologies.orient.core.command.OCommandRequestAbstract;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 
 public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAbstract implements OQuery<T> {
-	protected int	limit	= -1;
+	protected int			limit	= -1;
+	protected String	fetchPlan;
 
 	public OQueryAbstract() {
 	}
@@ -29,7 +30,7 @@ public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAb
 	}
 
 	@SuppressWarnings("unchecked")
-	public <RET> RET execute(Object... iArgs) {
+	public <RET> RET execute(final Object... iArgs) {
 		return (RET) run(iArgs);
 	}
 
@@ -37,8 +38,18 @@ public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAb
 		return limit;
 	}
 
-	public OQueryAbstract<T> setLimit(int limit) {
+	public OQueryAbstract<T> setLimit(final int limit) {
 		this.limit = limit;
 		return this;
 	}
+
+	public String getFetchPlan() {
+		return fetchPlan;
+	}
+
+	public OQuery<T> setFetchPlan(final String fetchPlan) {
+		this.fetchPlan = fetchPlan;
+		return this;
+	}
+
 }

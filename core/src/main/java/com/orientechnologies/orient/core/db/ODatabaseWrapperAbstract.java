@@ -16,6 +16,8 @@
 package com.orientechnologies.orient.core.db;
 
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.cache.OCacheRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -163,5 +165,17 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase, REC extends
 		final ODatabase other = (ODatabase) iOther;
 
 		return other.getName().equals(getName());
+	}
+
+	public Object setProperty(final String iName, final Object iValue) {
+		return underlying.setProperty(iName, iValue);
+	}
+
+	public Object getProperty(final String iName) {
+		return underlying.getProperty(iName);
+	}
+
+	public Iterator<Entry<String, Object>> getProperties() {
+		return underlying.getProperties();
 	}
 }

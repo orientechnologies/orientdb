@@ -16,6 +16,8 @@
 package com.orientechnologies.orient.core.db;
 
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
 
 import com.orientechnologies.orient.core.cache.OCacheRecord;
 import com.orientechnologies.orient.core.intent.OIntent;
@@ -212,4 +214,29 @@ public interface ODatabase {
 	 * Internal. Adds a data segment where to store record content.
 	 */
 	public int addDataSegment(String iSegmentName, String iSegmentFileName);
+
+	/**
+	 * Sets a property value
+	 * 
+	 * @param iName
+	 *          Property name
+	 * @param iValue
+	 *          new value to set
+	 * @return The previous value if any, otherwise null
+	 */
+	public Object setProperty(String iName, Object iValue);
+
+	/**
+	 * Gets the property value.
+	 * 
+	 * @param iName
+	 *          Property name
+	 * @return The previous value if any, otherwise null
+	 */
+	public Object getProperty(String iName);
+
+	/**
+	 * Returns an iterator of the property entries
+	 */
+	public Iterator<Map.Entry<String, Object>> getProperties();
 }

@@ -58,17 +58,17 @@ public class OProperty extends OSchemaRecord {
 	public OProperty() {
 	}
 
-	public OProperty(OClass iOwner) {
-		owner = iOwner;
-		database = iOwner.getDatabase();
-		id = iOwner.properties.size();
-	}
-
 	public OProperty(OClass iOwner, String iName, OType iType, int iOffset) {
 		this(iOwner);
 		name = iName;
 		type = iType;
 		offset = iOffset;
+	}
+
+	public OProperty(OClass iOwner) {
+		owner = iOwner;
+		database = iOwner.getDatabase();
+		id = iOwner.properties.size();
 	}
 
 	public String getName() {

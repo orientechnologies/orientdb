@@ -16,6 +16,10 @@
 package com.orientechnologies.orient.core.db.raw;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -29,12 +33,12 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OClusterLogical;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
+import com.orientechnologies.orient.core.storage.impl.local.OClusterLogical;
 
 @SuppressWarnings("unchecked")
 public class ODatabaseRaw implements ODatabase {
-	private static volatile int	serialId	= 0;
+	private static volatile int	serialId		= 0;
 
 	protected int								id;
 	protected OStorage					storage;
@@ -42,7 +46,8 @@ public class ODatabaseRaw implements ODatabase {
 
 	private ODatabaseRecord<?>	databaseOwner;
 
-	private boolean							useCache	= true;
+	private boolean							useCache		= true;
+	private Map<String, Object>	properties	= new HashMap<String, Object>();
 
 	public enum STATUS {
 		OPEN, CLOSED
@@ -53,6 +58,10 @@ public class ODatabaseRaw implements ODatabase {
 			storage = Orient.instance().getStorage(iURL);
 			id = serialId++;
 			status = STATUS.CLOSED;
+
+			// SET DEFAULT PROPERTIES
+			setProperty("fetch-max", 50);
+
 		} catch (Throwable t) {
 			throw new ODatabaseException("Error on opening database '" + iURL + "'", t);
 		}
@@ -263,5 +272,17 @@ public class ODatabaseRaw implements ODatabase {
 
 	public void setUseCache(boolean useCache) {
 		this.useCache = useCache;
+	}
+
+	public Object setProperty(final String iName, final Object iValue) {
+		return properties.put(iName, iValue);
+	}
+
+	public Object getProperty(final String iName) {
+		return properties.get(iName);
+	}
+
+	public Iterator<Entry<String, Object>> getProperties() {
+		return properties.entrySet().iterator();
 	}
 }

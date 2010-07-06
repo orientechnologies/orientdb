@@ -19,6 +19,8 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -36,10 +38,12 @@ import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyRuntime;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
@@ -320,11 +324,14 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				final OCommandRequestText command = (OCommandRequestText) OStreamSerializerAnyStreamable.INSTANCE.fromStream(channel
 						.readBytes());
 
+				final OQuery<?> query = (OQuery<?>) (command instanceof OQuery<?> ? command : null);
+
 				data.commandDetail = command.getText();
 
 				if (asynch) {
 					// ASYNCHRONOUS
 					final StringBuilder empty = new StringBuilder();
+					final Set<ODocument> recordToSend = new HashSet<ODocument>();
 
 					command.setResultListener(new OCommandResultListener() {
 						public boolean result(final Object iRecord) {
@@ -336,14 +343,63 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 								}
 
 							try {
-								channel.writeByte((byte) 1);
+								channel.writeByte((byte) 1); // ONE MORE RECORD
 								writeRecord((ORecordInternal<?>) iRecord);
 								channel.flush();
+
+								if (query != null && query.getFetchPlan() != null && iRecord instanceof ODocument)
+									// CHECK IF THERE IS SOME FETCH-DEPTH
+									fetchInDeep((ODocument) iRecord, query.getFetchPlan().split(" "), null, 0, -1);
+
 							} catch (IOException e) {
 								return false;
 							}
 
 							return true;
+						}
+
+						private void fetchInDeep(final ODocument doc, final String[] iFetchPlan, final String iCurrentField,
+								final int iCurrentLevel, final int iMaxFetch) {
+
+							if (recordToSend.size() >= iMaxFetch)
+								// MAX FETCH SIZE REACHED: STOP TO FETCH AT ALL
+								return;
+
+							String parts[];
+							Object fieldValue;
+							int depthLevel;
+							int currentLevel;
+
+							for (String field : iFetchPlan) {
+								parts = field.split(":");
+
+								depthLevel = Integer.parseInt(parts[1]);
+								if (depthLevel == 0)
+									// NO FETCH THIS FIELD PLEASE
+									continue;
+
+								if (parts[0].equals(iCurrentField)) {
+									currentLevel = iCurrentLevel + 1;
+
+									if (depthLevel >= currentLevel)
+										// MAX DEPTH REACHED: STOP TO FETCH THIS FIELD
+										continue;
+								} else
+									currentLevel = 0;
+
+								if (recordToSend.size() >= iMaxFetch)
+									// MAX FETCH SIZE REACHED: STOP TO FETCH AT ALL
+									return;
+
+								fieldValue = doc.field(parts[0]);
+
+								if (fieldValue != null && fieldValue instanceof ODocument) {
+									final ODocument linked = (ODocument) fieldValue;
+									recordToSend.add(linked);
+
+									fetchInDeep(linked, iFetchPlan, parts[0], currentLevel, iMaxFetch);
+								}
+							}
 						}
 					});
 
@@ -355,7 +411,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 						} catch (IOException e1) {
 						}
 
-					channel.writeByte((byte) 0);
+					// SEND RECORDS TO LOAD IN CLIENT CACHE
+					for (ODocument doc : recordToSend) {
+						channel.writeByte((byte) 2); // CLIENT CACHE RECORD. IT ISN'T PART OF THE RESULT SET
+						writeRecord(doc);
+					}
+
+					channel.writeByte((byte) 0); // NO MORE RECORDS
 				} else {
 					// SYNCHRONOUS
 					final Object result = ((OCommandRequestInternal) connection.database.command(command)).execute();

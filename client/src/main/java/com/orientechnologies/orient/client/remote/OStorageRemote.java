@@ -370,24 +370,35 @@ public class OStorageRemote extends OStorageAbstract {
 				readStatus();
 
 				if (asynch) {
+					byte status;
+
 					// ASYNCH: READ ONE RECORD AT TIME
-					while (network.readByte() == 1) {
+					while ((status = network.readByte()) > 0) {
 						ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) readRecordFromNetwork(iCommand.getDatabase());
 						if (record == null)
 							break;
 
-						// INVOKE THE LISTENER
-						try {
-							if (!aquery.getResultListener().result(record)) {
-								// EMPTY THE INPUT CHANNEL
-								while (network.in.available() > 0)
-									network.in.read();
+						switch (status) {
+						case 1:
+							// PUT AS PART OF THE RESULT SET. INVOKE THE LISTENER
+							try {
+								if (!aquery.getResultListener().result(record)) {
+									// EMPTY THE INPUT CHANNEL
+									while (network.in.available() > 0)
+										network.in.read();
 
-								break;
+									break;
+								}
+							} catch (Throwable t) {
+								// ABSORBE ALL THE USER EXCEPTIONS
+								t.printStackTrace();
 							}
-						} catch (Throwable t) {
-							// ABSORBE ALL THE USER EXCEPTIONS
-							t.printStackTrace();
+							break;
+
+						case 2:
+							// PUT IN THE CLIENT LOCAL CACHE
+							cache.addRecord(record.getIdentity().toString(),
+									new ORawBuffer(record.toStream(), record.getVersion(), record.getRecordType()));
 						}
 					}
 				} else {
