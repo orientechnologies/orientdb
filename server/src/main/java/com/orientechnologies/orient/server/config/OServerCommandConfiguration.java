@@ -15,25 +15,22 @@
  */
 package com.orientechnologies.orient.server.config;
 
-import javax.xml.bind.annotation.XmlAnyElement;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
-@XmlRootElement(name = "protocol")
-@XmlType(propOrder = { "name", "implementation", "commands" })
-public class OServerNetworkProtocolConfiguration {
+import com.orientechnologies.orient.core.config.OEntryConfiguration;
+
+@XmlRootElement(name = "command")
+@XmlType(propOrder = { "implementation", "parameters" })
+public class OServerCommandConfiguration {
 
 	@XmlAttribute(required = true)
-	public String													name;
-
-	@XmlAttribute(required = true)
-	public String													implementation;
+	public String									implementation;
 
 	@XmlElementWrapper(required = false)
-	@XmlAnyElement
-	@XmlElementRef(type = OServerCommandConfiguration.class)
-	public OServerCommandConfiguration[]	commands;
+	@XmlElementRef(type = OEntryConfiguration.class)
+	public OEntryConfiguration[]	parameters;
 }

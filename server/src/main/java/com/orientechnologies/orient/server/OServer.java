@@ -168,7 +168,7 @@ public class OServer {
 			configurationLoader = new OConfigurationLoaderXml(OServerConfiguration.class, config);
 			configuration = configurationLoader.load();
 
-			if (configuration.users != null && configuration.users.size() > 0) {
+			if (configuration.users != null && configuration.users.length > 0) {
 				for (OServerUserConfiguration u : configuration.users) {
 					if (u.name.equals(SRV_ROOT_ADMIN))
 						// FOUND
@@ -242,12 +242,12 @@ public class OServer {
 	}
 
 	private void createAdminUser() throws IOException {
-		configuration.users = new ArrayList<OServerUserConfiguration>();
+		configuration.users = new OServerUserConfiguration[1];
 
 		final long generatedPassword = new Random(System.currentTimeMillis()).nextLong();
 		String encodedPassword = OSecurityManager.instance().digest2String(String.valueOf(generatedPassword));
 
-		configuration.users.add(new OServerUserConfiguration(SRV_ROOT_ADMIN, encodedPassword, "*"));
+		configuration.users[0] = new OServerUserConfiguration(SRV_ROOT_ADMIN, encodedPassword, "*");
 		configurationLoader.save(configuration);
 	}
 

@@ -3,31 +3,28 @@
 <orient-server>
 	<network>
 		<protocols>
-            <!-- Default registered protocol. It reads commands using the HTTP protocol and write data
-                 locally -->
+			<!-- Default registered protocol. It reads commands using the HTTP protocol and write data locally -->
 			<protocol name="http2local" implementation="com.orientechnologies.orient.kv.network.protocol.http.local.ONetworkProtocolHttpKVLocal" />
 		</protocols>
 		<listeners>
-            <!-- Default listener using the HTTP-2-LOCAL protocol bound to localhost, port 2431. If the port is busy
-                 then it will try to acquire the next one up to the 2440. -->
+			<!-- Default listener using the HTTP-2-LOCAL protocol bound to localhost, port 2431. If the port is busy then it will try to acquire the next one up 
+				to the 2440. -->
 			<listener ip-address="127.0.0.1" port-range="2431-2440" protocol="http2local" />
 		</listeners>
 	</network>
 	<storages>
-        <!-- Default in-memory storage. Data are not saved permanently. -->
-        <storage name="temp" path="memory:temp"/>
+		<!-- Default in-memory storage. Data are not saved permanently. -->
+		<storage name="temp" path="memory:temp" />
 	</storages>
 	<properties>
-        <!-- Set the asynchronous commit of the maps to the disk in persistent way. It the value is 0
-             or this property is not defined, the map is written synchronously to the disk.
-             If the value is major than 0 the maps will be written to disk every VALUE milliseconds -->
-        <entry name="asynch.commit.delay" value="5000" />
+		<!-- Set the asynchronous commit of the maps to the disk in persistent way. It the value is 0 or this property is not defined, the map is written synchronously 
+			to the disk. If the value is major than 0 the maps will be written to disk every VALUE milliseconds -->
+		<entry name="asynch.commit.delay" value="5000" />
 
-        <!-- Caches static contents. If enabled the files will be kept in memory the first time
-             are loaded. Changes to the files will be taken on the next restart -->
-        <entry name="cache.static" value="false" />
+		<!-- Caches static contents. If enabled the files will be kept in memory the first time are loaded. Changes to the files will be taken on the next restart -->
+		<entry name="cache.static" value="false" />
 
-        <!-- Enable/Disable logging. Levels are: finer, fine, finest, info, warning -->
-        <entry name="log.level" value="info" />
+		<!-- Enable/Disable logging. Levels are: finer, fine, finest, info, warning -->
+		<entry name="log.level" value="info" />
 	</properties>
 </orient-server>

@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.server.config;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlElementRef;
@@ -42,15 +41,15 @@ public class OServerConfiguration {
 
 	@XmlElementWrapper
 	@XmlElementRef(type = OServerStorageConfiguration.class)
-	public List<OServerStorageConfiguration>	storages;
+	public OServerStorageConfiguration[]			storages;
 
 	@XmlElementWrapper(required = false)
 	@XmlElementRef(type = OServerUserConfiguration.class)
-	public List<OServerUserConfiguration>			users;
+	public OServerUserConfiguration[]					users;
 
 	@XmlElementWrapper
 	@XmlElementRef(type = OEntryConfiguration.class)
-	public List<OEntryConfiguration>					properties;
+	public OEntryConfiguration[]							properties;
 
 	/**
 	 * Empty constructor for JAXB
@@ -61,7 +60,7 @@ public class OServerConfiguration {
 	public OServerConfiguration(OConfigurationLoaderXml iFactory) {
 		location = FILE_NAME;
 		network = new OServerNetworkConfiguration(iFactory);
-		storages = new ArrayList<OServerStorageConfiguration>();
+		storages = new OServerStorageConfiguration[0];
 	}
 
 	public String getStoragePath(String iURL) {
