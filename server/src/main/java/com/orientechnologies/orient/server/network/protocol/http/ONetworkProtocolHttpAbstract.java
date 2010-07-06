@@ -204,12 +204,14 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 	 * 
 	 * @param iServerCommandInstance
 	 */
-	protected void registerCommand(final OServerCommand iServerCommandInstance) {
-		for (String name : iServerCommandInstance.getNames())
+	public void registerCommand(final Object iServerCommandInstance) {
+		OServerCommand cmd = (OServerCommand) iServerCommandInstance;
+
+		for (String name : cmd.getNames())
 			if (name.contains("*"))
-				wildcardCommands.put(name, iServerCommandInstance);
+				wildcardCommands.put(name, cmd);
 			else
-				exactCommands.put(name, iServerCommandInstance);
+				exactCommands.put(name, cmd);
 	}
 
 	protected void sendTextContent(final int iCode, final String iReason, String iHeaders, final String iContentType,

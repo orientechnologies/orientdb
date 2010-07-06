@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.network;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -23,10 +24,13 @@ import java.net.Socket;
 import java.net.SocketException;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OEntryConfiguration;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
+import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 
 public class OServerNetworkListener extends Thread {
 	private ServerSocket											serverSocket;
@@ -34,11 +38,30 @@ public class OServerNetworkListener extends Thread {
 	private Class<? extends ONetworkProtocol>	protocolType;
 	private volatile int											connectionSerial	= 0;
 	private volatile boolean									active						= true;
+	private OServerCommand[]									commands;
 
+	@SuppressWarnings("unchecked")
 	public OServerNetworkListener(final String iHostName, final String iHostPortRange, final String iProtocolName,
-			final Class<? extends ONetworkProtocol> iProtocol) {
+			final Class<? extends ONetworkProtocol> iProtocol, final OServerCommandConfiguration[] iCommands) {
+		if (iProtocol == null)
+			throw new IllegalArgumentException("Can't start listener: protocol not found");
+
 		listen(iHostName, iHostPortRange, iProtocolName);
 		protocolType = iProtocol;
+
+		if (iCommands != null) {
+			// CREATE COMMANDS
+			commands = new OServerCommand[iCommands.length];
+			Constructor<OServerCommand> c;
+			for (int i = 0; i < iCommands.length; ++i) {
+				try {
+					c = (Constructor<OServerCommand>) Class.forName(iCommands[i].implementation).getConstructor(OEntryConfiguration[].class);
+					commands[0] = (OServerCommand) c.newInstance(new Object[] { (Object[]) iCommands[i].parameters });
+				} catch (Exception e) {
+					throw new IllegalArgumentException("Can't create custom command '" + iCommands[i].implementation + "'", e);
+				}
+			}
+		}
 		start();
 	}
 
@@ -129,6 +152,12 @@ public class OServerNetworkListener extends Thread {
 
 					// CONFIGURE THE PROTOCOL FOR THE INCOMING CONNECTION
 					protocol.config(socket, connection);
+
+					if (commands != null)
+						// REGISTER ADDITIONAL COMMANDS
+						for (OServerCommand c : commands) {
+							protocol.registerCommand(c);
+						}
 
 					// EXECUTE THE CONNECTION
 					OClientConnectionManager.instance().connect(socket, connection);

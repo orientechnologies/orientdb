@@ -111,7 +111,7 @@ public class OServer {
 
 		// STARTUP LISTENERS
 		for (OServerNetworkListenerConfiguration l : configuration.network.listeners) {
-			listeners.add(new OServerNetworkListener(l.ipAddress, l.portRange, l.protocol, protocols.get(l.protocol)));
+			listeners.add(new OServerNetworkListener(l.ipAddress, l.portRange, l.protocol, protocols.get(l.protocol), l.commands));
 		}
 
 		OLogManager.instance().config(this, "Orient Database Server v" + OConstants.ORIENT_VERSION + " is active.");

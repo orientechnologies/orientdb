@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
+import com.orientechnologies.orient.core.config.OEntryConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -26,6 +27,9 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 
 public class OServerCommandPostAction extends OServerCommandDocumentAbstract {
 	private static final String[]	NAMES	= { "POST|*.action" };
+
+	public OServerCommandPostAction(final OEntryConfiguration[] iParameters) {
+	}
 
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(iRequest.url, 1, "Syntax error: *.action");

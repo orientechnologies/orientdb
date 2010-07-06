@@ -15,20 +15,28 @@
  */
 package com.orientechnologies.orient.server.config;
 
+import javax.xml.bind.annotation.XmlAnyElement;
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElementRef;
+import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "listener")
-@XmlType(propOrder = { "ipAddress", "portRange", "protocol" })
+@XmlType(propOrder = { "ipAddress", "portRange", "protocol", "commands" })
 public class OServerNetworkListenerConfiguration {
 
 	@XmlAttribute(name = "ip-address", required = true)
-	public String	ipAddress	= "127.0.0.1";
+	public String													ipAddress	= "127.0.0.1";
 
 	@XmlAttribute(name = "port-range")
-	public String	portRange	= "2424-2430";
+	public String													portRange	= "2424-2430";
 
 	@XmlAttribute
-	public String	protocol	= "binary";
+	public String													protocol	= "binary";
+
+	@XmlElementWrapper(required = false)
+	@XmlAnyElement
+	@XmlElementRef(type = OServerCommandConfiguration.class)
+	public OServerCommandConfiguration[]	commands;
 }

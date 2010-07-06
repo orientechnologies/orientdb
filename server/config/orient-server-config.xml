@@ -4,18 +4,18 @@
 		<protocols>
 			<!-- Default registered protocol. It reads commands using the HTTP protocol and write data locally -->
 			<protocol implementation="com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary" name="binary" />
-			<protocol implementation="com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb" name="http">
+			<protocol implementation="com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb" name="http" />
+		</protocols>
+		<listeners>
+			<listener protocol="binary" port-range="2424-2430" ip-address="127.0.0.1" />
+			<listener protocol="http" port-range="2480-2490" ip-address="127.0.0.1">
 				<commands>
 					<command implementation="com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandPostAction">
 						<parameters>
 						</parameters>
 					</command>
 				</commands>
-			</protocol>
-		</protocols>
-		<listeners>
-			<listener protocol="binary" port-range="2424-2430" ip-address="127.0.0.1" />
-			<listener protocol="http" port-range="2480-2490" ip-address="127.0.0.1" />
+			</listener>
 		</listeners>
 	</network>
 	<storages>

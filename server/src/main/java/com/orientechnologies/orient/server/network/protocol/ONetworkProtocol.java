@@ -33,6 +33,8 @@ public abstract class ONetworkProtocol extends OSoftThread {
 
 	public abstract OChannel getChannel();
 
+	public abstract void registerCommand(Object iServerCommandInstance);
+
 	public ONetworkProtocolData getData() {
 		return data;
 	}

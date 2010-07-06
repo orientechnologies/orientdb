@@ -481,11 +481,20 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	}
 
 	@Override
+	public OChannel getChannel() {
+		return channel;
+	}
+
+	@Override
 	public void shutdown() {
 		sendShutdown();
 		channel.close();
 
 		OClientConnectionManager.instance().onClientDisconnection(connection.id);
+	}
+
+	@Override
+	public void registerCommand(Object iServerCommandInstance) {
 	}
 
 	protected void sendOk() throws IOException {
@@ -551,10 +560,5 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			channel.writeInt(iRecord.getVersion());
 			channel.writeBytes(iRecord.toStream());
 		}
-	}
-
-	@Override
-	public OChannel getChannel() {
-		return channel;
 	}
 }
