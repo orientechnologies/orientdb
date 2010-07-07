@@ -19,8 +19,8 @@ package com.orientechnologies.common.profiler;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Profiling util class. It can: - make statistics - chrono execution time of code blocks
@@ -33,13 +33,13 @@ import java.util.Map.Entry;
 public class OProfiler implements OProfilerMBean {
 	private long											recording	= -1;
 	private HashMap<String, Long>			statistics;
-	private HashMap<String, Chrono>		chronos;
+	private HashMap<String, OChrono>	chronos;
 	private Date											lastReset;
 
 	protected static final OProfiler	instance	= new OProfiler();
 
 	// INNER CLASSES:
-	public class Chrono {
+	public class OChrono {
 		public String	name						= null;
 		public long		items						= 0;
 		public long		lastElapsed			= 0;
@@ -68,7 +68,7 @@ public class OProfiler implements OProfilerMBean {
 
 	private void init() {
 		statistics = new HashMap<String, Long>();
-		chronos = new HashMap<String, Chrono>();
+		chronos = new HashMap<String, OChrono>();
 
 		lastReset = new Date();
 	}
@@ -169,11 +169,11 @@ public class OProfiler implements OProfilerMBean {
 
 		long now = System.currentTimeMillis();
 
-		Chrono c = chronos.get(iName);
+		OChrono c = chronos.get(iName);
 
 		if (c == null) {
 			// CREATE NEW CHRONO
-			c = new Chrono();
+			c = new OChrono();
 			chronos.put(iName, c);
 		}
 
@@ -234,7 +234,7 @@ public class OProfiler implements OProfilerMBean {
 
 		buffer.append("DUMPING CHRONOS (last reset on: " + lastReset.toString() + "). Times in ms...");
 
-		Chrono c;
+		OChrono c;
 		String chronoName;
 
 		buffer.append(String.format("\n%45s +-------------------------------------------------------------------+", ""));
@@ -272,7 +272,7 @@ public class OProfiler implements OProfilerMBean {
 	public String[] getChronosAsString() {
 		String[] output = new String[chronos.size()];
 		int i = 0;
-		for (Entry<String, Chrono> entry : chronos.entrySet()) {
+		for (Entry<String, OChrono> entry : chronos.entrySet()) {
 			output[i++] = entry.getKey() + ": " + entry.getValue().toString();
 		}
 
@@ -315,7 +315,11 @@ public class OProfiler implements OProfilerMBean {
 		return statistics.entrySet();
 	}
 
-	public Set<Entry<String, Chrono>> getChronos() {
+	public Set<Entry<String, OChrono>> getChronos() {
 		return chronos.entrySet();
+	}
+
+	public OChrono getChrono(final String iChronoName) {
+		return chronos.get(iChronoName);
 	}
 }

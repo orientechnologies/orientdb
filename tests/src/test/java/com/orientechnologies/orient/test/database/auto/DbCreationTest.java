@@ -21,6 +21,7 @@ import java.util.Locale;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.client.admin.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
@@ -33,6 +34,7 @@ public class DbCreationTest {
 	@Parameters(value = "url")
 	public DbCreationTest(String iURL) {
 		url = iURL;
+		OProfiler.getInstance().startRecording();
 	}
 
 	public void testDbCreation() throws IOException {

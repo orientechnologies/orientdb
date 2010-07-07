@@ -75,6 +75,8 @@ public class ODatabaseRaw implements ODatabase {
 			storage.open(getId(), iUserName, iUserPassword);
 
 			status = STATUS.OPEN;
+		} catch (ODatabaseException e) {
+			throw e;
 		} catch (Exception e) {
 			throw new ODatabaseException("Can't open database", e);
 		}

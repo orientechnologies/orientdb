@@ -246,6 +246,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 
 			ODocument linkedRecord = (ODocument) linkedObject;
 			if (linkedRecord.getStatus() == STATUS.NOT_LOADED)
+				// LAZY LOAD IT
 				linkedRecord.load();
 
 			// CALL MYSELF RECURSIVELY BY CROSSING ALL THE OBJECTS

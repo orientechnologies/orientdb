@@ -70,16 +70,18 @@ public abstract class OSQLQuery<T extends Object> extends OQueryAbstract<T> impl
 	}
 
 	public OSerializableStream fromStream(final byte[] iStream) throws IOException {
-		OMemoryInputStream buffer = new OMemoryInputStream(iStream);
+		final OMemoryInputStream buffer = new OMemoryInputStream(iStream);
 		text = buffer.getAsString();
 		limit = buffer.getAsInteger();
+		fetchPlan = buffer.getAsString();
 		return this;
 	}
 
 	public byte[] toStream() throws IOException {
-		OMemoryOutputStream buffer = new OMemoryOutputStream();
+		final OMemoryOutputStream buffer = new OMemoryOutputStream();
 		buffer.add(text);
 		buffer.add(limit);
+		buffer.add(fetchPlan);
 		return buffer.toByteArray();
 	}
 }

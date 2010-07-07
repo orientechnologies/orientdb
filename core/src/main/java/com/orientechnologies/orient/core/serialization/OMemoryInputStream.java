@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.serialization;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -36,8 +35,9 @@ public class OMemoryInputStream {
 	}
 
 	public byte[] getAsByteArray() throws IOException {
-		if (position > buffer.length)
-			throw new EOFException("Reached end of stream. Requested position was #" + position + " while the size is " + buffer.length);
+		if (position >= buffer.length)
+			return null;
+		// throw new EOFException("Reached end of stream. Requested position was #" + position + " while the size is " + buffer.length);
 
 		final int size = OBinaryProtocol.bytes2int(buffer, position);
 		position += OConstants.SIZE_INT;

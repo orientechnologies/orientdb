@@ -99,7 +99,10 @@ public class OStorageRemote extends OStorageAbstract {
 
 		} catch (Exception e) {
 			close();
-			throw new OStorageException("Can't open the remote storage: " + name, e);
+			if (e instanceof OException)
+				throw (OException) e;
+			else
+				throw new OStorageException("Can't open the remote storage: " + name, e);
 		} finally {
 
 			releaseExclusiveLock(locked);

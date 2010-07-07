@@ -19,7 +19,9 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.common.exception.OException;
@@ -37,6 +39,7 @@ import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -333,6 +336,21 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 					final StringBuilder empty = new StringBuilder();
 					final Set<ODocument> recordToSend = new HashSet<ODocument>();
 
+					final Map<String, Integer> fetchPlan;
+
+					if (query != null && query.getFetchPlan() != null) {
+						// CHECK IF THERE IS SOME FETCH-DEPTH
+						final String[] planParts = query.getFetchPlan().split(" ");
+						fetchPlan = new HashMap<String, Integer>();
+
+						String[] parts;
+						for (String planPart : planParts) {
+							parts = planPart.split(":");
+							fetchPlan.put(parts[0], Integer.parseInt(parts[1]));
+						}
+					} else
+						fetchPlan = null;
+
 					command.setResultListener(new OCommandResultListener() {
 						public boolean result(final Object iRecord) {
 							if (empty.length() == 0)
@@ -347,9 +365,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 								writeRecord((ORecordInternal<?>) iRecord);
 								channel.flush();
 
-								if (query != null && query.getFetchPlan() != null && iRecord instanceof ODocument)
-									// CHECK IF THERE IS SOME FETCH-DEPTH
-									fetchInDeep((ODocument) iRecord, query.getFetchPlan().split(" "), null, 0, -1);
+								if (fetchPlan != null && iRecord instanceof ODocument) {
+									fetchInDeep((ODocument) iRecord, fetchPlan, null, 0, -1);
+								}
 
 							} catch (IOException e) {
 								return false;
@@ -358,27 +376,43 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 							return true;
 						}
 
-						private void fetchInDeep(final ODocument doc, final String[] iFetchPlan, final String iCurrentField,
+						private void fetchInDeep(final ODocument doc, final Map<String, Integer> iFetchPlan, final String iCurrentField,
 								final int iCurrentLevel, final int iMaxFetch) {
 
-							if (recordToSend.size() >= iMaxFetch)
+							if (iMaxFetch > -1 && recordToSend.size() >= iMaxFetch)
 								// MAX FETCH SIZE REACHED: STOP TO FETCH AT ALL
 								return;
 
-							String parts[];
 							Object fieldValue;
-							int depthLevel;
+							Integer depthLevel;
 							int currentLevel;
+							Integer anyFieldDepthLevel = iFetchPlan.get("*");
 
-							for (String field : iFetchPlan) {
-								parts = field.split(":");
+							// BROWSE ALL THE DOCUMENT'S FIELDS
+							for (String fieldName : doc.fieldNames()) {
+								// GET THE FETCH PLAN FOR THE GENERIC FIELD IF SPECIFIED
+								depthLevel = iFetchPlan.get(fieldName);
 
-								depthLevel = Integer.parseInt(parts[1]);
-								if (depthLevel == 0)
+								// IF NOT FOUND, SEARCH IT FOR THE SPECIFIC CLASSES FOLLOWING THE INHERITANCE
+								if (depthLevel == null) {
+									OClass cls = doc.getSchemaClass();
+
+									while (cls != null && depthLevel == null) {
+										depthLevel = iFetchPlan.get(cls.getName() + "." + fieldName);
+										
+										if (depthLevel == null)
+											cls = cls.getSuperClass();
+									}
+								}
+
+								if (depthLevel == null)
+									// NO SPECIFIED: ASSIGN DEFAULT LEVEL TAKEN FROM * WILDCARD IF ANY
+									depthLevel = anyFieldDepthLevel;
+								else if (depthLevel == 0)
 									// NO FETCH THIS FIELD PLEASE
 									continue;
 
-								if (parts[0].equals(iCurrentField)) {
+								if (fieldName.equals(iCurrentField)) {
 									currentLevel = iCurrentLevel + 1;
 
 									if (depthLevel >= currentLevel)
@@ -387,17 +421,17 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 								} else
 									currentLevel = 0;
 
-								if (recordToSend.size() >= iMaxFetch)
+								if (iMaxFetch > -1 && recordToSend.size() >= iMaxFetch)
 									// MAX FETCH SIZE REACHED: STOP TO FETCH AT ALL
 									return;
 
-								fieldValue = doc.field(parts[0]);
+								fieldValue = doc.field(fieldName);
 
 								if (fieldValue != null && fieldValue instanceof ODocument) {
 									final ODocument linked = (ODocument) fieldValue;
-									recordToSend.add(linked);
-
-									fetchInDeep(linked, iFetchPlan, parts[0], currentLevel, iMaxFetch);
+									if (recordToSend.add(linked))
+										// GO RECURSIVELY
+										fetchInDeep(linked, iFetchPlan, fieldName, currentLevel, iMaxFetch);
 								}
 							}
 						}

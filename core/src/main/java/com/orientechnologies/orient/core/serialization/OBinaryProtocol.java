@@ -25,7 +25,7 @@ public class OBinaryProtocol {
 
 	public static final byte[] string2bytes(final String input) {
 		if (input == null)
-			return new byte[0];
+			return null;
 
 		// worst case, all chars could require 3-byte encodings.
 		final byte[] output = new byte[input.length() * 3];
@@ -50,15 +50,18 @@ public class OBinaryProtocol {
 				output[j++] = (byte) (0x80 | c & 0x3F);
 			}
 		}// end for
-		// Prune back our byte array. For efficiency we could hand item back
-		// partly filled, which is only a minor inconvenience to the caller
-		// most of the time to save copying the array.
+			// Prune back our byte array. For efficiency we could hand item back
+			// partly filled, which is only a minor inconvenience to the caller
+			// most of the time to save copying the array.
 		final byte[] chopped = new byte[j];
 		System.arraycopy(output, 0, chopped, 0, j/* length */);
 		return chopped;
 	}// end encode
 
 	public static final String bytes2string(final byte[] input) {
+		if (input == null)
+			return null;
+
 		return OBinaryProtocol.bytes2string(input, 0, input.length);
 	}
 
