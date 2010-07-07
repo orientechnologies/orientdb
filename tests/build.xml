@@ -39,7 +39,10 @@
     <exec dir="../${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
       <arg value="/c start orient-server.bat" />
     </exec>
-    <exec dir="../${orient.path}/bin" executable="./orient-server.sh" spawn="true" osfamily="unix" />
+
+    <exec dir="../${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
+      <arg value="./orient-server.sh" />
+    </exec>
 
     <echo>OK</echo>
 
