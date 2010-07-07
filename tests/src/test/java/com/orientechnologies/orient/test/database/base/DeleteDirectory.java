@@ -24,7 +24,12 @@ import org.testng.annotations.Test;
 public class DeleteDirectory {
 	@Parameters(value = "path")
 	public DeleteDirectory(String iPath) {
-		deleteDirectory(new File(iPath));
+		final File f = new File(iPath);
+
+		if (f.exists())
+			deleteDirectory(f);
+		else
+			System.err.println("Directory: " + f.getAbsolutePath() + " not found");
 	}
 
 	private void deleteDirectory(File iDirectory) {

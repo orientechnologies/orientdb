@@ -1,25 +1,75 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Copyright (c) 1999-2010 Luca Garulli - LICENSE: Apache 2.0 -->
 <project basedir="." default="compile" name="orient-database-tests">
-	<import file="../_base/base-build.xml" />
+  <property name="project.src" value="src/test/java" />
+  <import file="../_base/base-build.xml" />
 
-	<taskdef resource="testngtasks" classpath="lib/testng-5.10-jdk15.jar" />
+  <taskdef resource="testngtasks" classpath="lib/testng.jar" />
 
-	<target name="test">
-		<testng annotations="JDK" classpathref="project.class.path" outputDir="test-output" haltOnFailure="true" verbose="2">
-			<sysproperty key="URL" value="remote:stream-tx:localhost:2424/petshop?mode=rw" />
-			<classfileset dir="bin" includes="**/auto/*.class" />
-		</testng>
-	</target>
+  <target name="test">
+    <copy todir="${project.build}">
+      <fileset dir="src/test/java">
+        <include name="**/*.xml" />
+      </fileset>
+    </copy>
 
-	<target name="reports" depends="test">
-		<mkdir dir="" />
-		<junitreport todir="test-output">
-			<fileset dir="test-output">
-				<include name="*.xml" />
-			</fileset>
-			<report format="noframes" todir="test-output" />
-		</junitreport>
-	</target>
+    <replace dir="bin/com/orientechnologies/orient/test/database/auto">
+      <include name="*-test-db-from-scratch.xml" />
+
+      <replacefilter token="@PATH@" value="${orient.path}/databases/demo" />
+      <replacefilter token="@URL@" value="local:${orient.path}/databases/demo/demo" />
+    </replace>
+
+    <echo>EXECUTING TESTS USING LOCAL DATABASE: local:${orient.path}/databases/demo/demo</echo>
+
+    <testng annotations="JDK" outputDir="test-output" haltOnFailure="true" verbose="2">
+      <classpath>
+        <pathelement location="bin" />
+        <fileset dir="${global.lib}">
+          <include name="*.jar" />
+        </fileset>
+      </classpath>
+      <xmlfileset dir="bin/com/orientechnologies/orient/test/database/auto" includes="local-test-db-from-scratch.xml" />
+    </testng>
+
+    <echo>OK</echo>
+
+    <echo>STARTING REMOTE ORIENTDB SERVER INSTANCE...</echo>
+
+    <exec dir="../${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
+      <arg value="/c start orient-server.bat" />
+    </exec>
+    <exec dir="../${orient.path}/bin" executable="./orient-server.sh" spawn="true" osfamily="unix" />
+
+    <echo>OK</echo>
+
+    <echo>WAITING FOR SERVER STARTUP...</echo>
+    <sleep seconds="5" />
+    <echo>OK</echo>
+
+    <echo>EXECUTING TESTS USING REMOTE DATABASE: remote:localhost/demo</echo>
+
+    <testng annotations="JDK" outputDir="test-output" haltOnFailure="true" verbose="2">
+      <classpath>
+        <pathelement location="bin" />
+        <fileset dir="${global.lib}">
+          <include name="*.jar" />
+        </fileset>
+      </classpath>
+      <xmlfileset dir="bin/com/orientechnologies/orient/test/database/auto" includes="remote-test-db-from-scratch.xml" />
+    </testng>
+
+    <echo>OK</echo>
+  </target>
+
+  <target name="reports" depends="test">
+    <mkdir dir="" />
+    <junitreport todir="test-output">
+      <fileset dir="test-output">
+        <include name="*.xml" />
+      </fileset>
+      <report format="noframes" todir="test-output" />
+    </junitreport>
+  </target>
 
 </project>

@@ -973,8 +973,7 @@ public class OStorageRemote extends OStorageAbstract {
 					.fromStream(network.readBytes());
 		else {
 			// DISCARD CLASS ID
-			network.readShort();
-			record.fill(iDatabase, classId, network.readLong(), network.readInt()).fromStream(network.readBytes());
+			record.fill(iDatabase, network.readShort(), network.readLong(), network.readInt()).fromStream(network.readBytes());
 		}
 
 		return record;

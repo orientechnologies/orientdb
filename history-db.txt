@@ -28,6 +28,13 @@
 *******************************************************************************
 
 This document enlist the last changes to the Orient Database project.
+------------------------------------------------------------------------
+VERSION 0.9.20 - (July, ? 2010)
+-------------------------------------------------------------------------------
+- Issue #54: New database properties
+- Issue #54: New run-time fetch plans. Example: "parent:0 Address.city:1 *:-1" 
+
+- Fixed other bugs (object database graph, )
 
 -------------------------------------------------------------------------------
 VERSION 0.9.19 - beta (June, 25th 2010)

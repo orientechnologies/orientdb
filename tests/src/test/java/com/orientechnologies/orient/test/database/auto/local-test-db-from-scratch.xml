@@ -1,12 +1,9 @@
 <!DOCTYPE suite SYSTEM "http://beust.com/testng/testng-1.0.dtd">
 <suite name="Test Suite Example" verbose="1" parallel="false">
-	<!-- <parameter name="url" value="remote:localhost/demo" /> -->
-
-	<!-- -->
-	<parameter name="url" value="local:../../releases/0.9.20/db/databases/demo/demo" />
+	<parameter name="url" value="@URL@" />
+	<parameter name="path" value="@PATH@" />
 
 	<test name="Setup">
-		<parameter name="path" value="../../releases/0.9.20/db/databases/demo" />
 		<classes>
 			<class name="com.orientechnologies.orient.test.database.base.DeleteDirectory" />
 		</classes>
@@ -65,7 +62,7 @@
 	<test name="Query">
 		<classes>
 			<class name="com.orientechnologies.orient.test.database.auto.NativeQueryTest" />
-			<!-- <class name="com.orientechnologies.orient.test.database.auto.FetchPlanTest" />  -->
+			<!-- <class name="com.orientechnologies.orient.test.database.auto.FetchPlanTest" /> -->
 			<class name="com.orientechnologies.orient.test.database.auto.WrongQueryTest" />
 		</classes>
 	</test>
