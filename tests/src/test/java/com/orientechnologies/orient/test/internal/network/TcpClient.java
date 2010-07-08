@@ -44,6 +44,7 @@ public class TcpClient {
 
 		try {
 			this.socket = new Socket(SERVER_HOSTNAME, COMM_PORT);
+			this.socket.setSendBufferSize(65000);
 			InputStream iStream = this.socket.getInputStream();
 			ObjectInputStream oiStream = new ObjectInputStream(iStream);
 

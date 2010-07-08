@@ -41,6 +41,8 @@ public class TcpServer {
 			while (true) {
 				// listen for and accept a client connection to serverSocket
 				Socket sock = this.serverSocket.accept();
+				sock.setSendBufferSize(65000);
+
 				InputStream iStream = sock.getInputStream();
 				OutputStream oStream = sock.getOutputStream();
 				ObjectOutputStream ooStream = new ObjectOutputStream(oStream);
