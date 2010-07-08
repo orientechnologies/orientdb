@@ -63,5 +63,13 @@ e) Enjoy ;-)
 If you want help start from here:
 > http://groups.google.com/group/orient-database
 
+3 Launch the tests
+
+Follow the instruction below:
+
+a) Open a shell and go in the path where you have installed the OrientDB sources.
+b) Type: ant -f build-db.xml test
+c) Wait for the completition.
+d) Once finished you can close the OrientDB Server instance started for the tests 
 
 Orient Database staff
