@@ -962,19 +962,19 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	private ORecord<?> readRecordFromNetwork(ODatabaseRecord<?> iDatabase) throws IOException {
-		int classId = network.readShort();
+		final int classId = network.readShort();
 		if (classId == OChannelBinaryProtocol.RECORD_NULL)
 			return null;
 
 		ORecordInternal<?> record = ORecordFactory.newInstance(network.readByte());
 
 		if (record instanceof ORecordSchemaAware<?>)
-			((ORecordSchemaAware<?>) record).fill(iDatabase, classId, network.readShort(), network.readLong(), network.readInt())
-					.fromStream(network.readBytes());
-		else {
+			((ORecordSchemaAware<?>) record).fill(iDatabase, classId, network.readShort(), network.readLong(), network.readInt());
+		else
 			// DISCARD CLASS ID
-			record.fill(iDatabase, network.readShort(), network.readLong(), network.readInt()).fromStream(network.readBytes());
-		}
+			record.fill(iDatabase, network.readShort(), network.readLong(), network.readInt());
+
+		record.fromStream(network.readBytes());
 
 		return record;
 	}

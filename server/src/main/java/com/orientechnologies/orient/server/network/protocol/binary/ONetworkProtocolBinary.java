@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
@@ -399,7 +400,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 									while (cls != null && depthLevel == null) {
 										depthLevel = iFetchPlan.get(cls.getName() + "." + fieldName);
-										
+
 										if (depthLevel == null)
 											cls = cls.getSuperClass();
 									}
@@ -478,8 +479,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			case OChannelBinaryProtocol.DICTIONARY_LOOKUP: {
 				data.commandInfo = "Dictionary lookup";
 
-				String key = channel.readString();
-				ORecordInternal<?> value = connection.database.getDictionary().get(key);
+				final String key = channel.readString();
+				final ORecordAbstract<?> value = connection.database.getDictionary().get(key);
+
+				if (value != null)
+					((ODatabaseRecordTx<ORecordInternal<?>>) connection.database.getUnderlying()).load(value);
 
 				sendOk();
 
@@ -499,6 +503,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 				value = connection.database.getDictionary().putRecord(key, value);
 
+				if (value != null)
+					((ODatabaseRecordTx<ORecordInternal<?>>) connection.database.getUnderlying()).load(value);
+
 				sendOk();
 
 				writeRecord(value);
@@ -508,8 +515,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			case OChannelBinaryProtocol.DICTIONARY_REMOVE: {
 				data.commandInfo = "Dictionary remove";
 
-				String key = channel.readString();
-				ORecordInternal<?> value = connection.database.getDictionary().remove(key);
+				final String key = channel.readString();
+				final ORecordInternal<?> value = connection.database.getDictionary().remove(key);
+
+				if (value != null)
+					((ODatabaseRecordTx<ORecordInternal<?>>) connection.database.getUnderlying()).load(value);
 
 				sendOk();
 

@@ -49,6 +49,7 @@ public abstract class OChannelBinary extends OChannel {
 
 	public byte[] readBytes() throws IOException {
 		int len = in.readInt();
+
 		if (len < 0)
 			return null;
 
@@ -121,9 +122,9 @@ public abstract class OChannelBinary extends OChannel {
 	}
 
 	public OChannelBinary writeBytes(final byte[] iContent) throws IOException {
-		if (iContent == null)
+		if (iContent == null) {
 			out.writeInt(-1);
-		else {
+		} else {
 			out.writeInt(iContent.length);
 			out.write(iContent);
 		}
