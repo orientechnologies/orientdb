@@ -21,4 +21,6 @@ public interface OUserObject2RecordHandler {
 	public ORecordInternal<?> getRecordByUserObject(Object iPojo, boolean iIsMandatory);
 
 	public Object getUserObjectByRecord(ORecordInternal<?> iRecord, String iFetchPlan);
+
+	public boolean existsUserObjectByRecord(ORecordInternal<?> iRecord);
 }

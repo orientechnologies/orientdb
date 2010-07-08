@@ -111,7 +111,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord<
 		return this;
 	}
 
-	public ORecordInternal<?> getRecordByUserObject(final Object iUserObject, boolean iMandatory) {
+	public ORecordInternal<?> getRecordByUserObject(final Object iUserObject, final boolean iMandatory) {
 		if (databaseOwner != this)
 			return getDatabaseOwner().getRecordByUserObject(iUserObject, false);
 
@@ -120,9 +120,15 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord<
 
 	public Object getUserObjectByRecord(final ORecordInternal<?> iRecord, final String iFetchPlan) {
 		if (databaseOwner != this)
-			return getDatabaseOwner().getUserObjectByRecord(iRecord, iFetchPlan);
+			return databaseOwner.getUserObjectByRecord(iRecord, iFetchPlan);
 
 		return iRecord;
+	}
+
+	public boolean existsUserObjectByRecord(final ORecordInternal<?> iRecord) {
+		if (databaseOwner != this)
+			return databaseOwner.existsUserObjectByRecord(iRecord);
+		return false;
 	}
 
 	public <DBTYPE extends ODatabaseRecord<?>> DBTYPE checkSecurity(final String iResource, final int iOperation) {

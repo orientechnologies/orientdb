@@ -119,6 +119,10 @@ public class ODatabaseRecordTx<REC extends ORecordInternal<?>> extends ODatabase
 		return record;
 	}
 
+	public boolean existsUserObjectByRecord(final ORecordInternal<?> iRecord) {
+		return true;
+	}
+
 	private void setDefaultTransactionMode() {
 		if (!(currentTx instanceof OTransactionNoTx))
 			currentTx = new OTransactionNoTx<REC>(this, txSerial++);

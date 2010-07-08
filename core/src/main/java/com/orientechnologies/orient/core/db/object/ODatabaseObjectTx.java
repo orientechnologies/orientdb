@@ -239,6 +239,14 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 		return record;
 	}
 
+	public boolean existsUserObjectByRecord(ORecordInternal<?> iRecord) {
+		checkOpeness();
+		if (!(iRecord instanceof ODocument))
+			return false;
+
+		return records2Objects.containsKey(iRecord);
+	}
+
 	public Object getUserObjectByRecord(final ORecordInternal<?> iRecord, final String iFetchPlan) {
 		checkOpeness();
 		if (!(iRecord instanceof ODocument))

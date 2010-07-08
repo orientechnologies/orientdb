@@ -115,6 +115,11 @@ public class OLazySet<TYPE> implements Set<TYPE> {
 		return this;
 	}
 
+	@Override
+	public String toString() {
+		return underlying.toString();
+	}
+
 	private void convertAll() {
 		Iterator<TYPE> e = iterator();
 		while (e.hasNext()) {

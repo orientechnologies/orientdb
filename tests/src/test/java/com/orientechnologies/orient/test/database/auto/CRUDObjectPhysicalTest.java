@@ -167,10 +167,13 @@ public class CRUDObjectPhysicalTest {
 		database.open("admin", "admin");
 
 		for (Profile obj : database.browseClass(Profile.class)) {
-			if (obj.getNick().equals("Neo"))
+			if (obj.getNick().equals("Neo")) {
+				Assert.assertEquals(obj.getFollowers().size(), 0);
 				Assert.assertEquals(obj.getFollowings().size(), 2);
-			else if (obj.getNick().equals("Morpheus") || obj.getNick().equals("Trinity"))
+			} else if (obj.getNick().equals("Morpheus") || obj.getNick().equals("Trinity")) {
+				Assert.assertEquals(obj.getFollowers().size(), 1);
 				Assert.assertEquals(obj.getFollowings().size(), 0);
+			}
 		}
 
 		database.close();

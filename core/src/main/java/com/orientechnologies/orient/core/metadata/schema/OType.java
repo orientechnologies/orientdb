@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.metadata.schema;
 import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -273,6 +274,7 @@ public enum OType {
 	 *          Expected class
 	 * @return The converted value or the original if no conversion was applied
 	 */
+	@SuppressWarnings("unchecked")
 	public static Object convert(final Object iValue, final Class<?> iTargetClass) {
 		if (iValue == null)
 			return null;
@@ -314,6 +316,11 @@ public enum OType {
 			if (iValue instanceof Double)
 				return iValue;
 			return ((Number) iValue).doubleValue();
+
+		} else if (iValue instanceof Collection<?> && Set.class.isAssignableFrom(iTargetClass)) {
+			final Set<Object> set = new HashSet<Object>();
+			set.addAll((Collection<? extends Object>) iValue);
+			return set;
 
 		}
 

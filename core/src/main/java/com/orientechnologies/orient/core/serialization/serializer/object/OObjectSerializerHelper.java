@@ -145,8 +145,10 @@ public class OObjectSerializerHelper {
 			fieldName = p.getName();
 			fieldValue = iRecord.field(fieldName);
 
-			if (fieldValue == null || !(fieldValue instanceof ODocument) || !(fieldValue instanceof Collection<?>)
-					|| ((Collection<?>) fieldValue).size() == 0 || !(((Collection<?>) fieldValue).iterator().next() instanceof ODocument))
+			if (fieldValue == null
+					|| !(fieldValue instanceof ODocument)
+					|| (fieldValue instanceof Collection<?> && (((Collection<?>) fieldValue).size() == 0 || !(((Collection<?>) fieldValue)
+							.iterator().next() instanceof ODocument))))
 				setFieldValue(iPojo, fieldName, fieldValue);
 		}
 
@@ -165,10 +167,11 @@ public class OObjectSerializerHelper {
 
 				Object fieldValue = null;
 				Class<?> fieldClass;
+				boolean propagate = false;
 
 				if (type.isAssignableFrom(List.class)) {
 
-					Collection<ODocument> list = (Collection<ODocument>) iLinked;
+					final Collection<ODocument> list = (Collection<ODocument>) iLinked;
 					final List<Object> targetList = new OLazyList<Object>((ODatabaseObjectTx) iRecord.getDatabase().getDatabaseOwner())
 							.setFetchPlan(iFetchPlan);
 					fieldValue = targetList;
@@ -189,19 +192,15 @@ public class OObjectSerializerHelper {
 					fieldClass = iEntityManager.getEntityClass(type.getSimpleName());
 					if (fieldClass != null) {
 						// RECOGNIZED TYPE
+						propagate = !iObj2RecHandler.existsUserObjectByRecord((ODocument) iLinked);
+
 						fieldValue = iObj2RecHandler.getUserObjectByRecord((ODocument) iLinked, iFetchPlan);
 					}
 				}
 
-				Object prevValue = getFieldValue(iPojo, iFieldName);
+				setFieldValue(iPojo, iFieldName, fieldValue);
 
-				if (prevValue == null && fieldValue != null || fieldValue != null && !fieldValue.equals(prevValue)) {
-					setFieldValue(iPojo, iFieldName, fieldValue);
-					return fieldValue;
-				}
-				
-				// NOT CHANGED
-				return null;
+				return propagate ? fieldValue : null;
 			}
 		});
 

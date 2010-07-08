@@ -216,6 +216,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 										public ORecordInternal<?> getRecordByUserObject(Object iPojo, boolean iIsMandatory) {
 											return new ODocument(iLinkedClass);
 										}
+
+										public boolean existsUserObjectByRecord(ORecordInternal<?> iRecord) {
+											return false;
+										}
 									});
 
 						buffer.append(OStringSerializerHelper.EMBEDDED);
@@ -338,13 +342,16 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 								iDatabase instanceof ODatabaseObjectTx ? ((ODatabaseObjectTx) iDatabase).getEntityManager()
 										: OEntityManagerInternal.INSTANCE, iLinkedClass, iObjHandler != null ? iObjHandler
 										: new OUserObject2RecordHandler() {
-
 											public Object getUserObjectByRecord(ORecordInternal<?> iRecord, final String iFetchPlan) {
 												return iRecord;
 											}
 
 											public ORecordInternal<?> getRecordByUserObject(Object iPojo, boolean iIsMandatory) {
 												return new ODocument(iLinkedClass);
+											}
+
+											public boolean existsUserObjectByRecord(ORecordInternal<?> iRecord) {
+												return false;
 											}
 										});
 
