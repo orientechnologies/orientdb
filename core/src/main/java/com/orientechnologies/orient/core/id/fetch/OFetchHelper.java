@@ -60,7 +60,7 @@ public class OFetchHelper {
 		Object fieldValue;
 		Integer depthLevel;
 		int currentLevel;
-		Integer anyFieldDepthLevel = iFetchPlan.get(ANY_FIELD);
+		Integer anyFieldDepthLevel = iFetchPlan != null ? iFetchPlan.get(ANY_FIELD) : -1;
 
 		// BROWSE ALL THE DOCUMENT'S FIELDS
 		for (String fieldName : doc.fieldNames()) {
@@ -75,20 +75,20 @@ public class OFetchHelper {
 				// NULL OR NOT LINKED
 				continue;
 
-			// GET THE FETCH PLAN FOR THE GENERIC FIELD IF SPECIFIED
-			depthLevel = iFetchPlan.get(fieldName);
+			if (iFetchPlan != null) {
+				// GET THE FETCH PLAN FOR THE GENERIC FIELD IF SPECIFIED
+				depthLevel = iFetchPlan.get(fieldName);
 
-			// IF NOT FOUND, SEARCH IT FOR THE SPECIFIC CLASSES FOLLOWING THE INHERITANCE
-			if (depthLevel == null) {
 				OClass cls = doc.getSchemaClass();
-
 				while (cls != null && depthLevel == null) {
 					depthLevel = iFetchPlan.get(cls.getName() + "." + fieldName);
 
 					if (depthLevel == null)
 						cls = cls.getSuperClass();
 				}
-			}
+			} else
+				// INFINITE
+				depthLevel = -1;
 
 			if (depthLevel == null)
 				// NO SPECIFIED: ASSIGN DEFAULT LEVEL TAKEN FROM * WILDCARD IF ANY
