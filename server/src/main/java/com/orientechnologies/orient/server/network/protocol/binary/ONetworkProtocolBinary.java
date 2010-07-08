@@ -19,6 +19,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -337,7 +338,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 					final StringBuilder empty = new StringBuilder();
 					final Set<ODocument> recordToSend = new HashSet<ODocument>();
 
-					final Map<String, Integer> fetchPlan = OFetchHelper.buildFetchPlan(query);
+					final Map<String, Integer> fetchPlan = query != null ? OFetchHelper.buildFetchPlan(query.getFetchPlan()) : null;
 
 					command.setResultListener(new OCommandResultListener() {
 						public boolean result(final Object iRecord) {
@@ -360,8 +361,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 										}
 
 										// ADD TO THE SET OF OBJECT TO SEND
-										public boolean fetchLinked(ODocument iRoot, String iFieldName, ODocument iLinked) {
-											return recordToSend.add(iLinked);
+										public boolean fetchLinked(ODocument iRoot, String iFieldName, Object iLinked) {
+											if (iLinked instanceof ODocument)
+												return recordToSend.add((ODocument) iLinked);
+											else
+												return recordToSend.addAll((Collection<? extends ODocument>) iLinked);
 										}
 									});
 								}

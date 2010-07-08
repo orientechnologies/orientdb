@@ -15,11 +15,11 @@
  */
 package com.orientechnologies.orient.core.id.fetch;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -31,12 +31,12 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class OFetchHelper {
 	private static final String	ANY_FIELD	= "*";
 
-	public static Map<String, Integer> buildFetchPlan(final OQuery<?> query) {
+	public static Map<String, Integer> buildFetchPlan(final String iFetchPlan) {
 		final Map<String, Integer> fetchPlan;
 
-		if (query != null && query.getFetchPlan() != null) {
+		if (iFetchPlan != null) {
 			// CHECK IF THERE IS SOME FETCH-DEPTH
-			final String[] planParts = query.getFetchPlan().split(" ");
+			final String[] planParts = iFetchPlan.split(" ");
 			fetchPlan = new HashMap<String, Integer>();
 
 			String[] parts;
@@ -46,6 +46,7 @@ public class OFetchHelper {
 			}
 		} else
 			fetchPlan = null;
+
 		return fetchPlan;
 	}
 
@@ -64,6 +65,11 @@ public class OFetchHelper {
 		// BROWSE ALL THE DOCUMENT'S FIELDS
 		for (String fieldName : doc.fieldNames()) {
 			fieldValue = doc.field(fieldName);
+
+			if (fieldValue == null || !(fieldValue instanceof ODocument) || !(fieldValue instanceof Collection<?>)
+					|| ((Collection<?>) fieldValue).size() == 0 || !(((Collection<?>) fieldValue).iterator().next() instanceof ODocument))
+				// NULL NEITHER LINK, NOR COLLECTION OF LINKS
+				continue;
 
 			if (fieldValue == null || !(fieldValue instanceof ODocument))
 				// NULL OR NOT LINKED

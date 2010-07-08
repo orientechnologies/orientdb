@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public interface OFetchListener {
-	public boolean fetchLinked(ODocument iRoot, String iFieldName, ODocument iLinked);
+	public boolean fetchLinked(ODocument iRoot, String iFieldName, Object iLinked);
 
 	public int size();
 }

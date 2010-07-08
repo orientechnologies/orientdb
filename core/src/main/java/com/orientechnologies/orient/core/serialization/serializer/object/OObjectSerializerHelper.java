@@ -32,11 +32,12 @@ import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.id.fetch.OFetchHelper;
+import com.orientechnologies.orient.core.id.fetch.OFetchListener;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord.STATUS;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings("unchecked")
@@ -95,9 +96,9 @@ public class OObjectSerializerHelper {
 
 	public static Object fromStream(final ODocument iRecord, final Object iPojo, final OEntityManager iEntityManager,
 			final OUserObject2RecordHandler iObj2RecHandler, final String iFetchPlan) {
-		long timer = OProfiler.getInstance().startChrono();
+		final long timer = OProfiler.getInstance().startChrono();
 
-		Class<?> c = iPojo.getClass();
+		final Class<?> c = iPojo.getClass();
 
 		List<Field> properties = classes.get(c.getName());
 		if (properties == null)
@@ -105,45 +106,70 @@ public class OObjectSerializerHelper {
 
 		String fieldName;
 		Object fieldValue;
-		Class<?> fieldClass;
 
 		if (iRecord.getStatus() == STATUS.NOT_LOADED)
 			iRecord.load();
 
+		// BIND BASIC FIELDS, LINKS WILL BE BOUND BY THE FETCH API
 		for (Field p : properties) {
 			fieldName = p.getName();
 			fieldValue = iRecord.field(fieldName);
 
-			if (fieldValue instanceof ODocument && !OType.isSimpleType(p.getClass())) {
-				fieldClass = iEntityManager.getEntityClass(p.getType().getSimpleName());
-				if (fieldClass != null) {
-					// RECOGNIZED TYPE
-					fieldValue = iObj2RecHandler.getUserObjectByRecord((ORecordInternal<?>) fieldValue, iFetchPlan);
-				}
-			} else if (p.getType().isAssignableFrom(List.class)) {
+			if (fieldValue == null || !(fieldValue instanceof ODocument) || !(fieldValue instanceof Collection<?>)
+					|| ((Collection<?>) fieldValue).size() == 0 || !(((Collection<?>) fieldValue).iterator().next() instanceof ODocument))
+				setFieldValue(iPojo, fieldName, fieldValue);
+		}
 
-				Collection<ODocument> list = (Collection<ODocument>) fieldValue;
-				List<Object> targetList = new OLazyList<Object>((ODatabaseObjectTx) iRecord.getDatabase().getDatabaseOwner());
-				fieldValue = targetList;
-
-				if (list != null && list.size() > 0) {
-					targetList.addAll(list);
-				}
-
-			} else if (p.getType().isAssignableFrom(Set.class)) {
-
-				Collection<ODocument> set = (Collection<ODocument>) fieldValue;
-				Set<Object> target = new OLazySet<Object>((ODatabaseObjectTx) iRecord.getDatabase().getDatabaseOwner(), set);
-				fieldValue = target;
-			} else {
-				// GENERIC TYPE
-				// OType type = OType.getTypeByClass(p.getType());
-				// if (type != null)
-				// fieldValue = OStringSerializerHelper.fieldTypeFromStream(type, fieldValue);
+		// BIND LINKS FOLLOWING THE FETCHING PLAN
+		final Map<String, Integer> fetchPlan = OFetchHelper.buildFetchPlan(iFetchPlan);
+		OFetchHelper.fetch(iRecord, fetchPlan, null, 0, -1, new OFetchListener() {
+			/***
+			 * Doesn't matter size.
+			 */
+			public int size() {
+				return 0;
 			}
 
-			setFieldValue(iPojo, fieldName, fieldValue);
-		}
+			public boolean fetchLinked(final ODocument iRoot, final String iFieldName, final Object iLinked) {
+				Field p;
+				try {
+					p = c.getField(iFieldName);
+				} catch (Exception e) {
+					e.printStackTrace();
+					return false;
+				}
+
+				Object fieldValue = null;
+				Class<?> fieldClass;
+
+				if (iLinked instanceof ODocument) {
+					fieldClass = iEntityManager.getEntityClass(p.getType().getSimpleName());
+					if (fieldClass != null) {
+						// RECOGNIZED TYPE
+						fieldValue = iObj2RecHandler.getUserObjectByRecord((ODocument) iLinked, iFetchPlan);
+					}
+				} else if (p.getType().isAssignableFrom(List.class)) {
+
+					Collection<ODocument> list = (Collection<ODocument>) iLinked;
+					final List<Object> targetList = new OLazyList<Object>((ODatabaseObjectTx) iRecord.getDatabase().getDatabaseOwner());
+					fieldValue = targetList;
+
+					if (list != null && list.size() > 0) {
+						targetList.addAll(list);
+					}
+
+				} else if (p.getType().isAssignableFrom(Set.class)) {
+
+					final Collection<ODocument> set = (Collection<ODocument>) iLinked;
+					final Set<Object> target = new OLazySet<Object>((ODatabaseObjectTx) iRecord.getDatabase().getDatabaseOwner(), set);
+					fieldValue = target;
+				}
+
+				setFieldValue(iPojo, iFieldName, fieldValue);
+
+				return false;
+			}
+		});
 
 		OProfiler.getInstance().stopChrono("Object.fromStream", timer);
 
