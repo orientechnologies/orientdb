@@ -50,8 +50,9 @@ public class OFetchHelper {
 		return fetchPlan;
 	}
 
-	public static void fetch(final ODocument doc, final Map<String, Integer> iFetchPlan, final String iCurrentField,
-			final int iCurrentLevel, final int iMaxFetch, final OFetchListener iListener) {
+	@SuppressWarnings("unchecked")
+	public static void fetch(final ODocument iRootRecord, final Object iUserObject, final Map<String, Integer> iFetchPlan,
+			final String iCurrentField, final int iCurrentLevel, final int iMaxFetch, final OFetchListener iListener) {
 
 		if (iMaxFetch > -1 && iListener.size() >= iMaxFetch)
 			// MAX FETCH SIZE REACHED: STOP TO FETCH AT ALL
@@ -63,32 +64,17 @@ public class OFetchHelper {
 		Integer anyFieldDepthLevel = iFetchPlan != null ? iFetchPlan.get(ANY_FIELD) : -1;
 
 		// BROWSE ALL THE DOCUMENT'S FIELDS
-		for (String fieldName : doc.fieldNames()) {
-			fieldValue = doc.field(fieldName);
+		for (String fieldName : iRootRecord.fieldNames()) {
+			fieldValue = iRootRecord.field(fieldName);
 
-			if (fieldValue == null || !(fieldValue instanceof ODocument) || !(fieldValue instanceof Collection<?>)
-					|| ((Collection<?>) fieldValue).size() == 0 || !(((Collection<?>) fieldValue).iterator().next() instanceof ODocument))
+			if (fieldValue == null
+					|| !(fieldValue instanceof ODocument)
+					&& (!(fieldValue instanceof Collection<?>) || ((Collection<?>) fieldValue).size() == 0 || !(((Collection<?>) fieldValue)
+							.iterator().next() instanceof ODocument)))
 				// NULL NEITHER LINK, NOR COLLECTION OF LINKS
 				continue;
 
-			if (fieldValue == null || !(fieldValue instanceof ODocument))
-				// NULL OR NOT LINKED
-				continue;
-
-			if (iFetchPlan != null) {
-				// GET THE FETCH PLAN FOR THE GENERIC FIELD IF SPECIFIED
-				depthLevel = iFetchPlan.get(fieldName);
-
-				OClass cls = doc.getSchemaClass();
-				while (cls != null && depthLevel == null) {
-					depthLevel = iFetchPlan.get(cls.getName() + "." + fieldName);
-
-					if (depthLevel == null)
-						cls = cls.getSuperClass();
-				}
-			} else
-				// INFINITE
-				depthLevel = -1;
+			depthLevel = getDepthLevel(iRootRecord, iFetchPlan, fieldName);
 
 			if (depthLevel == null)
 				// NO SPECIFIED: ASSIGN DEFAULT LEVEL TAKEN FROM * WILDCARD IF ANY
@@ -107,16 +93,50 @@ public class OFetchHelper {
 			} else
 				currentLevel = 0;
 
+			Object userObject;
 			if (fieldValue instanceof ODocument) {
 				final ODocument linked = (ODocument) fieldValue;
-				if (iListener.fetchLinked(doc, fieldName, linked))
+				userObject = iListener.fetchLinked(iRootRecord, iUserObject, fieldName, linked);
+				if (userObject != null)
 					// GO RECURSIVELY
-					fetch(linked, iFetchPlan, fieldName, currentLevel, iMaxFetch, iListener);
+					fetch(linked, userObject, iFetchPlan, fieldName, currentLevel, iMaxFetch, iListener);
+
+			} else if (fieldValue instanceof Collection<?>) {
+				final Collection<ODocument> linked = (Collection<ODocument>) fieldValue;
+				userObject = iListener.fetchLinked(iRootRecord, iUserObject, fieldName, linked);
+//				for (ODocument d : linked) {
+//					if (userObject != null)
+//						// GO RECURSIVELY
+//						fetch(d, userObject, iFetchPlan, fieldName, currentLevel, iMaxFetch, iListener);
+//				}
 			}
 
 			if (iMaxFetch > -1 && iListener.size() >= iMaxFetch)
 				// MAX FETCH SIZE REACHED: STOP TO FETCH AT ALL
 				return;
 		}
+	}
+
+	private static Integer getDepthLevel(final ODocument doc, final Map<String, Integer> iFetchPlan, final String iFieldName) {
+		Integer depthLevel;
+
+		if (iFetchPlan != null) {
+			// GET THE FETCH PLAN FOR THE GENERIC FIELD IF SPECIFIED
+			depthLevel = iFetchPlan.get(iFieldName);
+
+			if (depthLevel == null) {
+				OClass cls = doc.getSchemaClass();
+				while (cls != null && depthLevel == null) {
+					depthLevel = iFetchPlan.get(cls.getName() + "." + iFieldName);
+
+					if (depthLevel == null)
+						cls = cls.getSuperClass();
+				}
+			}
+		} else
+			// INFINITE
+			depthLevel = -1;
+
+		return depthLevel;
 	}
 }

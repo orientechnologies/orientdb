@@ -355,17 +355,18 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 								channel.flush();
 
 								if (fetchPlan != null && iRecord instanceof ODocument) {
-									OFetchHelper.fetch((ODocument) iRecord, fetchPlan, null, 0, -1, new OFetchListener() {
+									OFetchHelper.fetch((ODocument) iRecord, iRecord, fetchPlan, null, 0, -1, new OFetchListener() {
 										public int size() {
 											return recordToSend.size();
 										}
 
 										// ADD TO THE SET OF OBJECT TO SEND
-										public boolean fetchLinked(ODocument iRoot, String iFieldName, Object iLinked) {
+										public Object fetchLinked(final ODocument iRoot, final Object iUserObject, final String iFieldName,
+												final Object iLinked) {
 											if (iLinked instanceof ODocument)
-												return recordToSend.add((ODocument) iLinked);
+												return recordToSend.add((ODocument) iLinked) ? iLinked : null;
 											else
-												return recordToSend.addAll((Collection<? extends ODocument>) iLinked);
+												return recordToSend.addAll((Collection<? extends ODocument>) iLinked) ? iLinked : null;
 										}
 									});
 								}

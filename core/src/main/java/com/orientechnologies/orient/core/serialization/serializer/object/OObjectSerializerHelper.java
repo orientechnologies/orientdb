@@ -51,6 +51,37 @@ public class OObjectSerializerHelper {
 	private static HashMap<String, Object>			getters	= new HashMap<String, Object>();
 	private static HashMap<String, Object>			setters	= new HashMap<String, Object>();
 
+	public static boolean hasField(final Object iPojo, final String iProperty) {
+		final Class<?> c = iPojo.getClass();
+		final String className = c.getName();
+
+		if (!classes.containsKey(className))
+			registerClass(c);
+
+		return getters.get(className + "." + iProperty) != null;
+	}
+
+	public static Class<?> getFieldType(final Object iPojo, final String iProperty) {
+		final Class<?> c = iPojo.getClass();
+		final String className = c.getName();
+
+		if (!classes.containsKey(className))
+			registerClass(c);
+
+		try {
+			Object o = getters.get(className + "." + iProperty);
+
+			if (o == null)
+				return null;
+			else if (o instanceof Field)
+				return ((Field) o).getType();
+			else
+				return ((Method) o).getReturnType();
+		} catch (Exception e) {
+			throw new OSchemaException("Can't get the value of the property: " + iProperty, e);
+		}
+	}
+
 	public static Object getFieldValue(final Object iPojo, final String iProperty) {
 		final Class<?> c = iPojo.getClass();
 		final String className = c.getName();
@@ -67,7 +98,6 @@ public class OObjectSerializerHelper {
 				return ((Field) o).get(iPojo);
 			return null;
 		} catch (Exception e) {
-
 			throw new OSchemaException("Can't get the value of the property: " + iProperty, e);
 		}
 	}
@@ -122,7 +152,7 @@ public class OObjectSerializerHelper {
 
 		// BIND LINKS FOLLOWING THE FETCHING PLAN
 		final Map<String, Integer> fetchPlan = OFetchHelper.buildFetchPlan(iFetchPlan);
-		OFetchHelper.fetch(iRecord, fetchPlan, null, 0, -1, new OFetchListener() {
+		OFetchHelper.fetch(iRecord, iPojo, fetchPlan, null, 0, -1, new OFetchListener() {
 			/***
 			 * Doesn't matter size.
 			 */
@@ -130,44 +160,48 @@ public class OObjectSerializerHelper {
 				return 0;
 			}
 
-			public boolean fetchLinked(final ODocument iRoot, final String iFieldName, final Object iLinked) {
-				Field p;
-				try {
-					p = c.getField(iFieldName);
-				} catch (Exception e) {
-					e.printStackTrace();
-					return false;
-				}
+			public Object fetchLinked(final ODocument iRoot, final Object iUserObject, final String iFieldName, final Object iLinked) {
+				final Class<?> type = getFieldType(iUserObject, iFieldName);
 
 				Object fieldValue = null;
 				Class<?> fieldClass;
 
-				if (iLinked instanceof ODocument) {
-					fieldClass = iEntityManager.getEntityClass(p.getType().getSimpleName());
-					if (fieldClass != null) {
-						// RECOGNIZED TYPE
-						fieldValue = iObj2RecHandler.getUserObjectByRecord((ODocument) iLinked, iFetchPlan);
-					}
-				} else if (p.getType().isAssignableFrom(List.class)) {
+				if (type.isAssignableFrom(List.class)) {
 
 					Collection<ODocument> list = (Collection<ODocument>) iLinked;
-					final List<Object> targetList = new OLazyList<Object>((ODatabaseObjectTx) iRecord.getDatabase().getDatabaseOwner());
+					final List<Object> targetList = new OLazyList<Object>((ODatabaseObjectTx) iRecord.getDatabase().getDatabaseOwner())
+							.setFetchPlan(iFetchPlan);
 					fieldValue = targetList;
 
 					if (list != null && list.size() > 0) {
 						targetList.addAll(list);
 					}
 
-				} else if (p.getType().isAssignableFrom(Set.class)) {
+				} else if (type.isAssignableFrom(Set.class)) {
 
 					final Collection<ODocument> set = (Collection<ODocument>) iLinked;
-					final Set<Object> target = new OLazySet<Object>((ODatabaseObjectTx) iRecord.getDatabase().getDatabaseOwner(), set);
+					final Set<Object> target = new OLazySet<Object>((ODatabaseObjectTx) iRecord.getDatabase().getDatabaseOwner(), set)
+							.setFetchPlan(iFetchPlan);
+
 					fieldValue = target;
+				} else {
+
+					fieldClass = iEntityManager.getEntityClass(type.getSimpleName());
+					if (fieldClass != null) {
+						// RECOGNIZED TYPE
+						fieldValue = iObj2RecHandler.getUserObjectByRecord((ODocument) iLinked, iFetchPlan);
+					}
 				}
 
-				setFieldValue(iPojo, iFieldName, fieldValue);
+				Object prevValue = getFieldValue(iPojo, iFieldName);
 
-				return false;
+				if (prevValue == null && fieldValue != null || fieldValue != null && !fieldValue.equals(prevValue)) {
+					setFieldValue(iPojo, iFieldName, fieldValue);
+					return fieldValue;
+				}
+				
+				// NOT CHANGED
+				return null;
 			}
 		});
 

@@ -24,7 +24,15 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public interface OFetchListener {
-	public boolean fetchLinked(ODocument iRoot, String iFieldName, Object iLinked);
+	/**
+	 * Fetch the linked field.
+	 * 
+	 * @param iRoot
+	 * @param iFieldName
+	 * @param iLinked
+	 * @return null if the fetching must stop, otherwise the current field value
+	 */
+	public Object fetchLinked(ODocument iRoot, Object iUserObject, String iFieldName, Object iLinked);
 
 	public int size();
 }

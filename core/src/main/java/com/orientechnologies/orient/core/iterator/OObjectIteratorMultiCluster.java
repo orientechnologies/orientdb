@@ -44,7 +44,7 @@ public class OObjectIteratorMultiCluster<T> implements Iterator<T>, Iterable<T> 
 	}
 
 	public T next(final String iFetchPlan) {
-		ODocument record = underlying.next();
+		final ODocument record = underlying.next();
 
 		if (record == null)
 			return null;

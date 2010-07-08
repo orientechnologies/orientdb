@@ -110,8 +110,9 @@ public class OLazySet<TYPE> implements Set<TYPE> {
 		return fetchPlan;
 	}
 
-	public void setFetchPlan(String fetchPlan) {
+	public OLazySet<TYPE> setFetchPlan(String fetchPlan) {
 		this.fetchPlan = fetchPlan;
+		return this;
 	}
 
 	private void convertAll() {

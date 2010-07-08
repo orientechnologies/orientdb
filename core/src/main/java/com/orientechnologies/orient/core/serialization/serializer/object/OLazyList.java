@@ -80,8 +80,9 @@ public class OLazyList<TYPE> extends ArrayList<TYPE> {
 		return fetchPlan;
 	}
 
-	public void setFetchPlan(String fetchPlan) {
+	public OLazyList<TYPE> setFetchPlan(String fetchPlan) {
 		this.fetchPlan = fetchPlan;
+		return this;
 	}
 
 	/**
