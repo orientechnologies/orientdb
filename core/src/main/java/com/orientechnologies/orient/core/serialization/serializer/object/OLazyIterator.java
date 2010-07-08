@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class OLazyIterator<TYPE> implements Iterator<TYPE> {
 	final private ODatabaseObjectTx		database;
 	final private Iterator<ODocument>	underlying;
+	private String										fetchPlan;
 
 	public OLazyIterator(final ODatabaseObjectTx database, final Iterator<ODocument> iIterator) {
 		this.database = database;
@@ -31,13 +32,17 @@ public class OLazyIterator<TYPE> implements Iterator<TYPE> {
 	}
 
 	public TYPE next() {
+		return next(fetchPlan);
+	}
+
+	public TYPE next(final String iFetchPlan) {
 		final Object value = underlying.next();
 
 		if (value == null)
 			return null;
 
 		if (value instanceof ODocument)
-			return (TYPE) database.getUserObjectByRecord((ODocument) value);
+			return (TYPE) database.getUserObjectByRecord((ODocument) value, iFetchPlan);
 
 		return (TYPE) value;
 	}
@@ -48,5 +53,13 @@ public class OLazyIterator<TYPE> implements Iterator<TYPE> {
 
 	public void remove() {
 		underlying.remove();
+	}
+
+	public String getFetchPlan() {
+		return fetchPlan;
+	}
+
+	public void setFetchPlan(String fetchPlan) {
+		this.fetchPlan = fetchPlan;
 	}
 }

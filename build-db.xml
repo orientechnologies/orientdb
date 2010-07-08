@@ -144,7 +144,7 @@
     </copy>    
 	</target>
 	
-	<target name="test" depends="init">
+	<target name="test" depends="compile">
     <subant target="test">
         <property name="global.lib"  value="../${db.release}/lib"/>
         <property name="orient.path" value="${db.release}"/>

@@ -126,6 +126,10 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 	}
 
 	public ODatabaseObjectTx load(final Object iPojo) {
+		return load(iPojo, null);
+	}
+
+	public ODatabaseObjectTx load(final Object iPojo, final String iFetchPlan) {
 		checkOpeness();
 		if (iPojo == null)
 			return this;
@@ -135,12 +139,16 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 
 		underlying.load(record);
 
-		OObjectSerializerHelper.fromStream(record, iPojo, getEntityManager(), this);
+		OObjectSerializerHelper.fromStream(record, iPojo, getEntityManager(), this, iFetchPlan);
 
 		return this;
 	}
 
 	public Object load(final ORID iRecordId) {
+		return load(iRecordId, null);
+	}
+
+	public Object load(final ORID iRecordId, final String iFetchPlan) {
 		checkOpeness();
 		if (iRecordId == null)
 			return this;
@@ -149,7 +157,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 		final ODocument record = underlying.load(iRecordId);
 
 		return record == null ? null : OObjectSerializerHelper.fromStream(record, newInstance(record.getClassName()),
-				getEntityManager(), this);
+				getEntityManager(), this, iFetchPlan);
 	}
 
 	/**
@@ -231,7 +239,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 		return record;
 	}
 
-	public Object getUserObjectByRecord(final ORecordInternal<?> iRecord) {
+	public Object getUserObjectByRecord(final ORecordInternal<?> iRecord, final String iFetchPlan) {
 		checkOpeness();
 		if (!(iRecord instanceof ODocument))
 			return null;
@@ -245,7 +253,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 				pojo = entityManager.createPojo(record.getClassName());
 				registerPojo(pojo, record);
 
-				OObjectSerializerHelper.fromStream(record, pojo, getEntityManager(), this);
+				OObjectSerializerHelper.fromStream(record, pojo, getEntityManager(), this, iFetchPlan);
 
 			} catch (Exception e) {
 				throw new OConfigurationException("Can't retrieve pojo from the record " + record, e);
@@ -321,8 +329,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 		Object obj;
 		for (ODocument doc : result) {
 			// GET THE ASSOCIATED DOCUMENT
-			obj = getUserObjectByRecord(doc);
-			OObjectSerializerHelper.fromStream(doc, obj, getEntityManager(), this);
+			obj = getUserObjectByRecord(doc, iCommand.getFetchPlan());
 			resultPojo.add(obj);
 		}
 

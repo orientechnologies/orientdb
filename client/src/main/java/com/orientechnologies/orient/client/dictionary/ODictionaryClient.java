@@ -35,12 +35,16 @@ public class ODictionaryClient<T extends Object> implements ODictionaryInternal<
 	}
 
 	public T get(final Object iKey) {
+		return get(iKey, null);
+	}
+
+	public T get(final Object iKey, final String iFetchPlan) {
 		if (iKey == null)
 			return null;
 
 		ORecordInternal<?> record = storage.dictionaryLookup(database, (String) iKey);
 
-		return (T) database.getUserObjectByRecord(record);
+		return (T) database.getUserObjectByRecord(record, iFetchPlan);
 	}
 
 	public ORecordInternal<?> putRecord(String iKey, ORecordInternal<?> iValue) {
@@ -57,14 +61,14 @@ public class ODictionaryClient<T extends Object> implements ODictionaryInternal<
 
 		ORecordInternal<?> oldRecord = storage.dictionaryPut(database, iKey, record);
 
-		return (T) database.getUserObjectByRecord(oldRecord);
+		return (T) database.getUserObjectByRecord(oldRecord, null);
 	}
 
 	public T remove(final Object iKey) {
 		if (iKey == null)
 			return null;
 
-		return (T) database.getUserObjectByRecord(storage.dictionaryRemove(database, iKey));
+		return (T) database.getUserObjectByRecord(storage.dictionaryRemove(database, iKey), null);
 	}
 
 	public boolean containsKey(final Object iKey) {

@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  */
 public interface ODictionary<T extends Object> extends Iterable<Entry<String, T>> {
 	/**
-	 * Get a record by its key.
+	 * Gets a record by its key.
 	 * 
 	 * @param iKey
 	 *          Key to search
@@ -45,7 +45,18 @@ public interface ODictionary<T extends Object> extends Iterable<Entry<String, T>
 	public T get(Object iKey);
 
 	/**
-	 * Put a new association between the iKey and the iValue. If the association already exists, replace it with the new one and
+	 * Gets a record by its key and specifying the fetch plan to use.
+	 * 
+	 * @param iKey
+	 *          Key to search
+	 * @param iFetchPlan
+	 *          Fetch plan to use (see FetchPlan)
+	 * @return The Record if found, otherwise null
+	 */
+	public T get(final Object iKey, final String iFetchPlan);
+
+	/**
+	 * Puts a new association between the iKey and the iValue. If the association already exists, replace it with the new one and
 	 * return the previous value.
 	 * 
 	 * @param iKey
@@ -57,7 +68,7 @@ public interface ODictionary<T extends Object> extends Iterable<Entry<String, T>
 	public T put(String iKey, T iValue);
 
 	/**
-	 * Check if the dictionary contains a key.
+	 * Checks if the dictionary contains a key.
 	 * 
 	 * @param iKey
 	 *          Key to search
@@ -66,7 +77,7 @@ public interface ODictionary<T extends Object> extends Iterable<Entry<String, T>
 	public boolean containsKey(Object iKey);
 
 	/**
-	 * Remove an entry if exists.
+	 * Removes an entry if exists.
 	 * 
 	 * @param iKey
 	 *          Key to remove
@@ -75,12 +86,12 @@ public interface ODictionary<T extends Object> extends Iterable<Entry<String, T>
 	public T remove(Object iKey);
 
 	/**
-	 * Return the total number of elements in the dictionary.
+	 * Returns the total number of elements in the dictionary.
 	 */
 	public int size();
 
 	/**
-	 * Return the set of all the keys.
+	 * Returns the set of all the keys.
 	 */
 	public Set<String> keySet();
 

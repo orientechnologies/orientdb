@@ -17,8 +17,8 @@ package com.orientechnologies.orient.core.storage.impl.local;
 
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
@@ -43,27 +43,31 @@ public class ODictionaryLocal<T extends Object> implements ODictionaryInternal<T
 
 	public String												clusterName									= DICTIONARY_DEF_CLUSTER_NAME;
 
-	public ODictionaryLocal(ODatabaseRecord<?> iDatabase) throws SecurityException, NoSuchMethodException {
+	public ODictionaryLocal(final ODatabaseRecord<?> iDatabase) throws SecurityException, NoSuchMethodException {
 		database = (ODatabaseComplex<T>) iDatabase.getDatabaseOwner();
 	}
 
-	public T get(Object iKey) {
+	public T get(final Object iKey, final String iFetchPlan) {
+		return get(iKey, null);
+	}
+
+	public T get(final Object iKey) {
 		return tree.get(iKey);
 	}
 
-	public boolean containsKey(Object iKey) {
+	public boolean containsKey(final Object iKey) {
 		return tree.containsKey(iKey);
 	}
 
-	public ORecordInternal<?> putRecord(String iKey, ORecordInternal<?> iValue) {
+	public ORecordInternal<?> putRecord(final String iKey, final ORecordInternal<?> iValue) {
 		return (ORecordInternal<?>) tree.put(iKey, (T) iValue);
 	}
 
-	public T put(String iKey, T iValue) {
+	public T put(final String iKey, final T iValue) {
 		return tree.put(iKey, iValue);
 	}
 
-	public T remove(Object iKey) {
+	public T remove(final Object iKey) {
 		return tree.remove(iKey);
 	}
 

@@ -94,7 +94,7 @@ public class OObjectSerializerHelper {
 	}
 
 	public static Object fromStream(final ODocument iRecord, final Object iPojo, final OEntityManager iEntityManager,
-			final OUserObject2RecordHandler iObj2RecHandler) {
+			final OUserObject2RecordHandler iObj2RecHandler, final String iFetchPlan) {
 		long timer = OProfiler.getInstance().startChrono();
 
 		Class<?> c = iPojo.getClass();
@@ -118,7 +118,7 @@ public class OObjectSerializerHelper {
 				fieldClass = iEntityManager.getEntityClass(p.getType().getSimpleName());
 				if (fieldClass != null) {
 					// RECOGNIZED TYPE
-					fieldValue = iObj2RecHandler.getUserObjectByRecord((ORecordInternal<?>) fieldValue);
+					fieldValue = iObj2RecHandler.getUserObjectByRecord((ORecordInternal<?>) fieldValue, iFetchPlan);
 				}
 			} else if (p.getType().isAssignableFrom(List.class)) {
 

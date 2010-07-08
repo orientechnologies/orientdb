@@ -20,5 +20,5 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 public interface OUserObject2RecordHandler {
 	public ORecordInternal<?> getRecordByUserObject(Object iPojo, boolean iIsMandatory);
 
-	public Object getUserObjectByRecord(ORecordInternal<?> iRecord);
+	public Object getUserObjectByRecord(ORecordInternal<?> iRecord, String iFetchPlan);
 }

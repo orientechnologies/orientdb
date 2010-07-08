@@ -17,8 +17,12 @@ public class ODictionaryIteratorWrapper implements Iterator<Entry<String, Object
 	}
 
 	public Entry<String, Object> next() {
+		return next(null);
+	}
+
+	public Entry<String, Object> next(final String iFetchPlan) {
 		Entry<String, ODocument> entry = wrapped.next();
-		return new OPair<String, Object>(entry.getKey(), database.getUserObjectByRecord(entry.getValue()));
+		return new OPair<String, Object>(entry.getKey(), database.getUserObjectByRecord(entry.getValue(), iFetchPlan));
 	}
 
 	public boolean hasNext() {

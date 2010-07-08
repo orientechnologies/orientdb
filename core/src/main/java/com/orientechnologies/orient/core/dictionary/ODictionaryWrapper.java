@@ -41,9 +41,13 @@ public class ODictionaryWrapper implements ODictionary<Object> {
 	}
 
 	public Object get(final Object iKey) {
+		return get(iKey, null);
+	}
+
+	public Object get(final Object iKey, final String iFetchPlan) {
 		ORecordInternal<?> record = recordDatabase.getDictionary().get(iKey);
 
-		return database.getUserObjectByRecord(record);
+		return database.getUserObjectByRecord(record, iFetchPlan);
 	}
 
 	public ORecordInternal<?> putRecord(String iKey, ORecordInternal<?> iValue) {
@@ -55,13 +59,13 @@ public class ODictionaryWrapper implements ODictionary<Object> {
 
 		ORecordInternal<?> oldRecord = recordDatabase.getDictionary().put(iKey, record);
 
-		return database.getUserObjectByRecord(oldRecord);
+		return database.getUserObjectByRecord(oldRecord, null);
 	}
 
 	public Object remove(final Object iKey) {
 		ORecordInternal<?> record = recordDatabase.getDictionary().remove(iKey);
 
-		return database.getUserObjectByRecord(record);
+		return database.getUserObjectByRecord(record, null);
 	}
 
 	public Iterator<Entry<String, Object>> iterator() {

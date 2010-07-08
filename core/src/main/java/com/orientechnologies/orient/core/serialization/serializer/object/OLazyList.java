@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 @SuppressWarnings({ "unchecked", "serial" })
 public class OLazyList<TYPE> extends ArrayList<TYPE> {
 	private ODatabaseObjectTx	database;
+	private String						fetchPlan;
 
 	public OLazyList(final ODatabaseObjectTx database) {
 		this.database = database;
@@ -75,6 +76,14 @@ public class OLazyList<TYPE> extends ArrayList<TYPE> {
 		return super.toArray(a);
 	}
 
+	public String getFetchPlan() {
+		return fetchPlan;
+	}
+
+	public void setFetchPlan(String fetchPlan) {
+		this.fetchPlan = fetchPlan;
+	}
+
 	/**
 	 * Convert the item requested.
 	 * 
@@ -85,6 +94,6 @@ public class OLazyList<TYPE> extends ArrayList<TYPE> {
 		Object o = super.get(iIndex);
 
 		if (o != null && o instanceof ODocument)
-			super.set(iIndex, (TYPE) database.getUserObjectByRecord((ORecordInternal<?>) o));
+			super.set(iIndex, (TYPE) database.getUserObjectByRecord((ORecordInternal<?>) o, fetchPlan));
 	}
 }

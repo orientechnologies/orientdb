@@ -118,9 +118,9 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord<
 		return (ORecordInternal<?>) iUserObject;
 	}
 
-	public Object getUserObjectByRecord(final ORecordInternal<?> iRecord) {
+	public Object getUserObjectByRecord(final ORecordInternal<?> iRecord, final String iFetchPlan) {
 		if (databaseOwner != this)
-			return getDatabaseOwner().getUserObjectByRecord(iRecord);
+			return getDatabaseOwner().getUserObjectByRecord(iRecord, iFetchPlan);
 
 		return iRecord;
 	}

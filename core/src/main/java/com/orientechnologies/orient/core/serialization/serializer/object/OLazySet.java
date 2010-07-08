@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class OLazySet<TYPE> implements Set<TYPE> {
 	private final ODatabaseObjectTx			database;
 	private final Collection<ODocument>	underlying;
+	private String											fetchPlan;
 
 	public OLazySet(final ODatabaseObjectTx database, final Collection<ODocument> iSource) {
 		this.database = database;
@@ -59,7 +60,7 @@ public class OLazySet<TYPE> implements Set<TYPE> {
 		convertAll();
 		underlying.toArray(a);
 		for (int i = 0; i < a.length; ++i)
-			a[i] = (T) database.getUserObjectByRecord((ORecordInternal<?>) a[i]);
+			a[i] = (T) database.getUserObjectByRecord((ORecordInternal<?>) a[i], fetchPlan);
 		return a;
 	}
 
@@ -103,6 +104,14 @@ public class OLazySet<TYPE> implements Set<TYPE> {
 			if (!underlying.remove(database.getRecordByUserObject(o, false)))
 				modified = true;
 		return modified;
+	}
+
+	public String getFetchPlan() {
+		return fetchPlan;
+	}
+
+	public void setFetchPlan(String fetchPlan) {
+		this.fetchPlan = fetchPlan;
 	}
 
 	private void convertAll() {

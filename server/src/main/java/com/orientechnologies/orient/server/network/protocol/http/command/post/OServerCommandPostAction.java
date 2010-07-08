@@ -26,7 +26,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandDocumentAbstract;
 
 public class OServerCommandPostAction extends OServerCommandDocumentAbstract {
-	private static final String[]	NAMES	= { "POST|*.action" };
+	private static final String[]	NAMES	= { "POST|*.action", "GET|*.action" };
 
 	public OServerCommandPostAction(final OEntryConfiguration[] iParameters) {
 	}

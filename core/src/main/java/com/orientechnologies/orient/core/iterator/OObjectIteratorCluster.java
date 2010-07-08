@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class OObjectIteratorCluster<T> implements Iterator<T>, Iterable<T> {
 	private ODatabaseObject										database;
 	private ORecordIteratorCluster<ODocument>	underlying;
+	private String														fetchPlan;
 
 	public OObjectIteratorCluster(final ODatabaseObject iDatabase, final ODatabaseRecordAbstract<ODocument> iUnderlyingDatabase,
 			final int iClusterId) {
@@ -39,12 +40,16 @@ public class OObjectIteratorCluster<T> implements Iterator<T>, Iterable<T> {
 	}
 
 	public T next() {
+		return next(fetchPlan);
+	}
+
+	public T next(final String iFetchPlan) {
 		ODocument record = underlying.next();
 
 		if (record == null)
 			return null;
 
-		return (T) database.getUserObjectByRecord(record);
+		return (T) database.getUserObjectByRecord(record, iFetchPlan);
 	}
 
 	public void remove() {
@@ -53,5 +58,13 @@ public class OObjectIteratorCluster<T> implements Iterator<T>, Iterable<T> {
 
 	public Iterator<T> iterator() {
 		return this;
+	}
+
+	public String getFetchPlan() {
+		return fetchPlan;
+	}
+
+	public void setFetchPlan(String fetchPlan) {
+		this.fetchPlan = fetchPlan;
 	}
 }

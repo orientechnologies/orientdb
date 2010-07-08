@@ -36,12 +36,16 @@ public class ODictionaryMemory<T extends Object> extends HashMap<String, T> impl
 	public void load() {
 	}
 
+	public T get(final Object iKey, final String iFetchPlan) {
+		return get(iKey);
+	}
+
 	public Iterator<Entry<String, T>> iterator() {
 		return new ODictionaryIterator<T>(this);
 	}
 
 	@SuppressWarnings("unchecked")
-	public ORecordInternal<?> putRecord(String iKey, ORecordInternal<?> iValue) {
+	public ORecordInternal<?> putRecord(final String iKey, final ORecordInternal<?> iValue) {
 		return (ORecordInternal<?>) put(iKey, (T) iValue);
 	}
 }

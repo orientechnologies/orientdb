@@ -209,7 +209,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 									: OEntityManagerInternal.INSTANCE, iLinkedClass, iObjHandler != null ? iObjHandler
 									: new OUserObject2RecordHandler() {
 
-										public Object getUserObjectByRecord(ORecordInternal<?> iRecord) {
+										public Object getUserObjectByRecord(ORecordInternal<?> iRecord, final String iFetchPlan) {
 											return iRecord;
 										}
 
@@ -339,7 +339,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 										: OEntityManagerInternal.INSTANCE, iLinkedClass, iObjHandler != null ? iObjHandler
 										: new OUserObject2RecordHandler() {
 
-											public Object getUserObjectByRecord(ORecordInternal<?> iRecord) {
+											public Object getUserObjectByRecord(ORecordInternal<?> iRecord, final String iFetchPlan) {
 												return iRecord;
 											}
 

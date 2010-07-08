@@ -115,7 +115,7 @@ public class ODatabaseRecordTx<REC extends ORecordInternal<?>> extends ODatabase
 		return (ORecordInternal<?>) iUserObject;
 	}
 
-	public Object getUserObjectByRecord(final ORecordInternal<?> record) {
+	public Object getUserObjectByRecord(final ORecordInternal<?> record, final String iFetchPlan) {
 		return record;
 	}
 
