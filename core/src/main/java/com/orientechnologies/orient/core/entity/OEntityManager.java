@@ -84,7 +84,7 @@ public class OEntityManager {
 	 * @return The classes
 	 */
 	public void registerEntityClasses(final String iPackageName) {
-		OLogManager.instance().config(this, "Discovering entity classes inside package: %s", iPackageName);
+		OLogManager.instance().debug(this, "Discovering entity classes inside package: %s", iPackageName);
 
 		try {
 			final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();

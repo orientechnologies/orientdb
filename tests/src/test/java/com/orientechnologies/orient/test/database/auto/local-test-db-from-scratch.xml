@@ -1,5 +1,5 @@
 <!DOCTYPE suite SYSTEM "http://beust.com/testng/testng-1.0.dtd">
-<suite name="Test Suite Example" verbose="2" parallel="false">
+<suite name="Test Suite Example" verbose="1" parallel="false">
 
 <!-- 
 	<parameter name="url" value="local:../../releases/0.9.20/db/databases/demo/demo" />
