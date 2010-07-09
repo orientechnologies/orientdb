@@ -332,7 +332,7 @@ public class OObjectSerializerHelper {
 			String fieldName;
 			int fieldModifier;
 
-			for (Class<?> currentClass = iClass; currentClass != Object.class; currentClass = currentClass.getSuperclass())
+			for (Class<?> currentClass = iClass; currentClass != Object.class;) {
 				for (Field f : currentClass.getDeclaredFields()) {
 					fieldModifier = f.getModifiers();
 					if (Modifier.isStatic(fieldModifier) || Modifier.isNative(fieldModifier) || Modifier.isTransient(fieldModifier))
@@ -368,6 +368,12 @@ public class OObjectSerializerHelper {
 						setters.put(iClass.getName() + "." + fieldName, f);
 					}
 				}
+				currentClass = currentClass.getSuperclass();
+
+				if (currentClass.equals(ODocument.class))
+					// POJO EXTENDS ODOCUMENT: SPECIAL CASE: AVOID TO CONSIDER ODOCUMENT FIELDS
+					currentClass = Object.class;
+			}
 			return properties;
 		}
 	}
