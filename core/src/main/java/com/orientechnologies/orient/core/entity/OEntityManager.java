@@ -22,8 +22,12 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 
 public class OEntityManager {
 	private static final String		CLASS_EXTENSION	= ".class";
@@ -32,7 +36,8 @@ public class OEntityManager {
 	private Map<String, Class<?>>	entityClasses		= new HashMap<String, Class<?>>();
 
 	public OEntityManager() {
-		registerEntityClasses("com.orientechnologies.orient.core.metadata");
+		registerEntityClass(OUser.class);
+		registerEntityClass(ORole.class);
 	}
 
 	/**
@@ -67,6 +72,10 @@ public class OEntityManager {
 		return entityClasses.get(iClassName);
 	}
 
+	public void registerEntityClass(final Class<?> iClass) {
+		entityClasses.put(iClass.getSimpleName(), iClass);
+	}
+
 	/**
 	 * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
 	 * 
@@ -75,6 +84,8 @@ public class OEntityManager {
 	 * @return The classes
 	 */
 	public void registerEntityClasses(final String iPackageName) {
+		OLogManager.instance().config(this, "Discovering entity classes inside package: %s", iPackageName);
+
 		try {
 			final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 			assert classLoader != null;
@@ -89,6 +100,12 @@ public class OEntityManager {
 			for (File directory : dirs) {
 				entityClasses.putAll(findClasses(directory, iPackageName));
 			}
+
+			if (OLogManager.instance().isDebugEnabled())
+				for (Entry<String, Class<?>> entry : entityClasses.entrySet()) {
+					OLogManager.instance().debug(this, "Loaded entity class '%s' from: %s", entry.getKey(), entry.getValue());
+				}
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

@@ -22,7 +22,7 @@
 
     <echo>EXECUTING TESTS USING LOCAL DATABASE: local:${orient.path}/databases/demo/demo</echo>
 
-    <testng annotations="JDK" outputDir="test-output" haltOnFailure="true" verbose="2">
+    <testng annotations="JDK" outputDir="test-output" haltOnFailure="true" verbose="10">
       <classpath>
         <pathelement location="bin" />
         <fileset dir="${global.lib}">
@@ -52,7 +52,7 @@
 
     <echo>EXECUTING TESTS USING REMOTE DATABASE: remote:localhost/demo</echo>
 
-    <testng annotations="JDK" outputDir="test-output" haltOnFailure="true" verbose="2">
+    <testng annotations="JDK" outputDir="test-output" haltOnFailure="true">
       <classpath>
         <pathelement location="bin" />
         <fileset dir="${global.lib}">

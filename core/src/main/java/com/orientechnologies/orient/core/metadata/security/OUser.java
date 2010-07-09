@@ -41,6 +41,7 @@ public class OUser extends ODocument {
 	}
 
 	protected String			name;
+	// AVOID THE INVOCATION OF SETTER
 	@OBind(mode = MODES.FIELD)
 	protected String			password;
 	protected STATUSES		status;
