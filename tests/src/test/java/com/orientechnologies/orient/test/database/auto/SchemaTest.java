@@ -47,15 +47,15 @@ public class SchemaTest {
 		database.getStorage().addCluster("flat", OClusterLocal.TYPE);
 		database.getStorage().addCluster("binary", OClusterLocal.TYPE);
 
-		OClass account = database.getMetadata().getSchema().createClass("Account",
-				database.getStorage().addCluster("account", OClusterLocal.TYPE));
+		OClass account = database.getMetadata().getSchema()
+				.createClass("Account", database.getStorage().addCluster("account", OClusterLocal.TYPE));
 		account.createProperty("id", OType.INTEGER);
 		account.createProperty("birthDate", OType.DATE);
 
 		database.getMetadata().getSchema().createClass("Company").setSuperClass(account);
 
-		OClass profile = database.getMetadata().getSchema().createClass("Profile",
-				database.getStorage().addCluster("profile", OClusterLocal.TYPE));
+		OClass profile = database.getMetadata().getSchema()
+				.createClass("Profile", database.getStorage().addCluster("profile", OClusterLocal.TYPE));
 		profile.createProperty("nick", OType.STRING).setMin("3").setMax("30").createIndex(true);
 		profile.createProperty("name", OType.STRING).setMin("3").setMax("30");
 		profile.createProperty("surname", OType.STRING).setMin("3").setMax("30");
@@ -110,7 +110,6 @@ public class SchemaTest {
 		OSchema schema = database.getMetadata().getSchema();
 
 		try {
-
 			Assert.assertNull(schema.getClass("Animal33"));
 		} catch (OSchemaException e) {
 		}

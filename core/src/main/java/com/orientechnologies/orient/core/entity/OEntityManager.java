@@ -31,6 +31,10 @@ public class OEntityManager {
 
 	private Map<String, Class<?>>	entityClasses		= new HashMap<String, Class<?>>();
 
+	public OEntityManager() {
+		registerEntityClasses("com.orientechnologies.orient.core.metadata");
+	}
+
 	/**
 	 * Create a POJO by its class name.
 	 * 

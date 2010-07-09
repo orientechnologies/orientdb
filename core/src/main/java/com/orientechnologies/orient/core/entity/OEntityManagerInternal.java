@@ -17,8 +17,4 @@ package com.orientechnologies.orient.core.entity;
 
 public class OEntityManagerInternal extends OEntityManager {
 	public static final OEntityManagerInternal	INSTANCE	= new OEntityManagerInternal();
-
-	public OEntityManagerInternal() {
-		registerEntityClasses("com.orientechnologies.orient.core.metadata");
-	}
 }
