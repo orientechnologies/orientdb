@@ -199,7 +199,7 @@ public class OObjectSerializerHelper {
 					}
 				}
 
-				setFieldValue(iPojo, iFieldName, fieldValue);
+				setFieldValue(iUserObject, iFieldName, fieldValue);
 
 				return propagate ? fieldValue : null;
 			}
