@@ -18,6 +18,8 @@ package com.orientechnologies.orient.core.metadata.security;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.annotation.OBind;
+import com.orientechnologies.orient.core.annotation.OBind.MODES;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -39,8 +41,9 @@ public class OUser extends ODocument {
 	}
 
 	protected String			name;
+	@OBind(mode = MODES.FIELD)
 	protected String			password;
-	protected STATUSES		accountStatus;
+	protected STATUSES		status;
 	protected Set<ORole>	roles	= new HashSet<ORole>();
 
 	/**
@@ -56,14 +59,14 @@ public class OUser extends ODocument {
 	public OUser(final ODatabaseRecord<?> iDatabase, final String iName) {
 		this(iDatabase);
 		name = iName;
-		accountStatus = STATUSES.ACTIVE;
+		status = STATUSES.ACTIVE;
 	}
 
 	/**
 	 * Create the user by reading the source document.
 	 */
 	public OUser(final ODocument iSource) {
-		database = iSource.getDatabase();
+		_database = iSource.getDatabase();
 		fromDocument(iSource);
 	}
 
@@ -79,13 +82,14 @@ public class OUser extends ODocument {
 	 */
 	public ORole allow(final String iResource, final int iOperation) {
 		if (roles == null || roles.isEmpty())
-			throw new OSecurityAccessException(database.getName(), "User '" + name + "' has no role defined");
+			throw new OSecurityAccessException(_database.getName(), "User '" + name + "' has no role defined");
 
 		final ORole role = checkIfAllowed(iResource, iOperation);
 
 		if (role == null)
-			throw new OSecurityAccessException(database.getName(), "User '" + name + "' has no the permission to execute the operation '"
-					+ ORole.permissionToString(iOperation) + "' against the resource: " + iResource);
+			throw new OSecurityAccessException(_database.getName(), "User '" + name
+					+ "' has no the permission to execute the operation '" + ORole.permissionToString(iOperation)
+					+ "' against the resource: " + iResource);
 
 		return role;
 	}
@@ -155,7 +159,7 @@ public class OUser extends ODocument {
 
 	public OUser addRole(final String iRole) {
 		if (iRole != null)
-			addRole(database.getMetadata().getSecurity().getRole(iRole));
+			addRole(_database.getMetadata().getSecurity().getRole(iRole));
 		return this;
 	}
 
@@ -172,16 +176,16 @@ public class OUser extends ODocument {
 	}
 
 	public OUser fromDocument(final ODocument iSource) {
-		recordId.copyFrom(iSource.getIdentity());
+		_recordId.copyFrom(iSource.getIdentity());
 
 		name = iSource.field("name");
 		password = iSource.field("password");
-		accountStatus = STATUSES.values()[((Long) iSource.field("status")).intValue()];
+		status = STATUSES.values()[((Long) iSource.field("status")).intValue()];
 
 		roles = new HashSet<ORole>();
 		Set<ODocument> loadedRoles = iSource.field("roles");
 		for (ODocument d : loadedRoles) {
-			roles.add(database.getMetadata().getSecurity().getRole((String) d.field("name")));
+			roles.add(_database.getMetadata().getSecurity().getRole((String) d.field("name")));
 		}
 
 		return this;
@@ -191,7 +195,7 @@ public class OUser extends ODocument {
 	public byte[] toStream() {
 		field("name", name);
 		field("password", password);
-		field("status", accountStatus.ordinal());
+		field("status", status.ordinal());
 		field("roles", roles, OType.LINKSET);
 		return super.toStream();
 	}
@@ -202,10 +206,10 @@ public class OUser extends ODocument {
 	}
 
 	public STATUSES getAccountStatus() {
-		return accountStatus;
+		return status;
 	}
 
 	public void setAccountStatus(STATUSES accountStatus) {
-		this.accountStatus = accountStatus;
+		this.status = accountStatus;
 	}
 }

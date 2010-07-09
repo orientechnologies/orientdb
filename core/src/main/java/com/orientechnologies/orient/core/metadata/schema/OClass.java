@@ -53,7 +53,7 @@ public class OClass extends OSchemaRecord {
 	 */
 	public OClass(final OSchema iOwner) {
 		owner = iOwner;
-		database = iOwner.getDatabase();
+		_database = iOwner.getDatabase();
 	}
 
 	public OClass(final OSchema iOwner, final int iId, final String iName, final String iJavaClassName, final int[] iClusterIds,
@@ -210,7 +210,7 @@ public class OClass extends OSchemaRecord {
 		OProperty prop;
 		List<ODocument> storedProperties = iSource.field("properties");
 		for (ODocument p : storedProperties) {
-			p.setDatabase(database);
+			p.setDatabase(_database);
 			prop = new OProperty(this).fromDocument(p);
 			properties.put(prop.getName().toLowerCase(), prop);
 		}

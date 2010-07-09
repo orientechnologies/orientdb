@@ -29,15 +29,15 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
  */
 @SuppressWarnings("unchecked")
 public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstract<T> {
-	protected Map<String, T>			fieldValues;
-	protected Map<String, T>			fieldOriginalValues;
-	protected Map<String, OType>	fieldTypes;
+	protected Map<String, T>			_fieldValues;
+	protected Map<String, T>			_fieldOriginalValues;
+	protected Map<String, OType>	_fieldTypes;
 
 	public ORecordVirtualAbstract() {
 	}
 
 	public ORecordVirtualAbstract(byte[] iSource) {
-		source = iSource;
+		_source = iSource;
 	}
 
 	public ORecordVirtualAbstract(String iClassName) {
@@ -59,14 +59,14 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 	 * @param iPropertyName
 	 */
 	public OType fieldType(final String iPropertyName) {
-		return fieldTypes != null ? fieldTypes.get(iPropertyName) : null;
+		return _fieldTypes != null ? _fieldTypes.get(iPropertyName) : null;
 	}
 
 	@Override
 	public ORecordSchemaAwareAbstract<T> reset() {
 		super.reset();
-		if (fieldValues != null)
-			fieldValues.clear();
+		if (_fieldValues != null)
+			_fieldValues.clear();
 		return this;
 	}
 
@@ -74,8 +74,8 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 	public int hashCode() {
 		int result = super.hashCode();
 
-		if (!recordId.isValid() && fieldValues != null)
-			for (Entry<String, T> field : fieldValues.entrySet()) {
+		if (!_recordId.isValid() && _fieldValues != null)
+			for (Entry<String, T> field : _fieldValues.entrySet()) {
 				if (field.getKey() != null)
 					result += field.getKey().hashCode();
 
@@ -98,29 +98,29 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 		if (!super.equals(obj))
 			return false;
 
-		if (!recordId.isValid()) {
+		if (!_recordId.isValid()) {
 			final ORecordVirtualAbstract<?> other = (ORecordVirtualAbstract<?>) obj;
 
 			// NO PERSISTENT OBJECT: COMPARE EACH FIELDS
-			if (fieldValues == null || other.fieldValues == null)
+			if (_fieldValues == null || other._fieldValues == null)
 				// CAN'T COMPARE FIELDS: RETURN FALSE
 				return false;
 
-			if (fieldValues.size() != other.fieldValues.size())
+			if (_fieldValues.size() != other._fieldValues.size())
 				// FIELD SIZES ARE DIFFERENTS
 				return false;
 
 			String k;
 			Object v;
 			Object otherV;
-			for (Entry<String, T> field : fieldValues.entrySet()) {
+			for (Entry<String, T> field : _fieldValues.entrySet()) {
 				k = field.getKey();
 				if (k != null && !other.containsField(k))
 					// FIELD NOT PRESENT IN THE OTHER RECORD
 					return false;
 
-				v = fieldValues.get(k);
-				otherV = other.fieldValues.get(k);
+				v = _fieldValues.get(k);
+				otherV = other._fieldValues.get(k);
 				if (v == null && otherV == null)
 					continue;
 
@@ -137,10 +137,10 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 
 	@Override
 	protected void checkForFields() {
-		if (fieldValues == null)
-			fieldValues = new LinkedHashMap<String, T>();
+		if (_fieldValues == null)
+			_fieldValues = new LinkedHashMap<String, T>();
 
-		if (status == STATUS.LOADED && (fieldValues == null || size() == 0))
+		if (_status == STATUS.LOADED && (_fieldValues == null || size() == 0))
 			// POPULATE FIELDS LAZY
 			deserializeFields();
 	}

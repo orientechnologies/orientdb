@@ -114,7 +114,7 @@ public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
 		return null;
 	}
 
-	public com.orientechnologies.orient.core.record.ORecord.STATUS getStatus() {
+	public com.orientechnologies.orient.core.record.ORecord.STATUS getInternalStatus() {
 		return null;
 	}
 

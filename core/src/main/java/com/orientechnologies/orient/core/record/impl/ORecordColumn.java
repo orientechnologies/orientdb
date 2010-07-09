@@ -58,14 +58,14 @@ public class ORecordColumn extends ORecordAbstract<String> implements ORecordStr
 
 	public ORecordColumn(ODatabaseRecord<?> iDatabase, ORID iRID) {
 		this(iDatabase);
-		recordId = (ORecordId) iRID;
+		_recordId = (ORecordId) iRID;
 	}
 
 	public ORecordColumn value(String iValue) {
 		setDirty();
 		extractValues(iValue);
 
-		source = null;
+		_source = null;
 		return this;
 	}
 
@@ -79,10 +79,10 @@ public class ORecordColumn extends ORecordAbstract<String> implements ORecordStr
 
 	public ORecordColumn copy() {
 		ORecordColumn cloned = new ORecordColumn();
-		cloned.source = source;
+		cloned._source = _source;
 		cloned.values = values;
-		cloned.database = database;
-		cloned.recordId = recordId.copy();
+		cloned._database = _database;
+		cloned._recordId = _recordId.copy();
 		return cloned;
 	}
 
@@ -96,8 +96,8 @@ public class ORecordColumn extends ORecordAbstract<String> implements ORecordStr
 
 	public String value() {
 		if (values.size() == 0)
-			if (source != null)
-				extractValues(OBinaryProtocol.bytes2string(source));
+			if (_source != null)
+				extractValues(OBinaryProtocol.bytes2string(_source));
 		// else
 		// // EXTRACT FROM FIELDS
 		// extractValues(ORecordFormatStringAbstract.byte2String(storage, toStream()));
@@ -163,7 +163,7 @@ public class ORecordColumn extends ORecordAbstract<String> implements ORecordStr
 	@Override
 	public ORecordColumn fromStream(byte[] iRecordBuffer) {
 		super.fromStream(iRecordBuffer);
-		extractValues(OBinaryProtocol.bytes2string(source));
+		extractValues(OBinaryProtocol.bytes2string(_source));
 		return this;
 	}
 
@@ -187,7 +187,7 @@ public class ORecordColumn extends ORecordAbstract<String> implements ORecordStr
 	@Override
 	protected void setup() {
 		super.setup();
-		recordFormat = ORecordSerializerFactory.instance().getDefaultRecordFormat();
+		_recordFormat = ORecordSerializerFactory.instance().getDefaultRecordFormat();
 	}
 
 	public byte getRecordType() {

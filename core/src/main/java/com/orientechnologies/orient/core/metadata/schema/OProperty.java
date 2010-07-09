@@ -67,7 +67,7 @@ public class OProperty extends OSchemaRecord {
 
 	public OProperty(OClass iOwner) {
 		owner = iOwner;
-		database = iOwner.getDatabase();
+		_database = iOwner.getDatabase();
 		id = iOwner.properties.size();
 	}
 
@@ -121,7 +121,7 @@ public class OProperty extends OSchemaRecord {
 				indexType = Boolean.TRUE;
 
 			try {
-				index = new OIndex(indexType, database, OStorage.CLUSTER_INDEX_NAME, new ORecordId(indexRecord.getIdentity().toString()));
+				index = new OIndex(indexType, _database, OStorage.CLUSTER_INDEX_NAME, new ORecordId(indexRecord.getIdentity().toString()));
 				index.load();
 			} catch (IOException e) {
 				OLogManager.instance().error(this, "Can't load index for property %s", e, ODatabaseException.class, toString());
@@ -221,16 +221,16 @@ public class OProperty extends OSchemaRecord {
 			throw new IllegalStateException("Index already created");
 
 		try {
-			index = new OIndex(iUnique, database, OStorage.CLUSTER_INDEX_NAME);
+			index = new OIndex(iUnique, _database, OStorage.CLUSTER_INDEX_NAME);
 
 			setDirty();
 
 			populateIndex();
 
-			if (database != null) {
+			if (_database != null) {
 				// / SAVE ONLY IF THE PROPERTY IS ALREADY PERSISTENT
 				index.lazySave();
-				database.getMetadata().getSchema().save();
+				_database.getMetadata().getSchema().save();
 			}
 
 		} catch (Exception e) {
@@ -253,7 +253,7 @@ public class OProperty extends OSchemaRecord {
 
 		final int[] clusterIds = owner.getClusterIds();
 		for (int clusterId : clusterIds)
-			for (Object record : database.browseCluster(database.getClusterNameById(clusterId))) {
+			for (Object record : _database.browseCluster(_database.getClusterNameById(clusterId))) {
 				if (record instanceof ODocument) {
 					document = (ODocument) record;
 					fieldValue = document.field(name);

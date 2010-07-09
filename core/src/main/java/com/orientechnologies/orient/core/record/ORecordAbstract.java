@@ -29,115 +29,115 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 @SuppressWarnings("unchecked")
 public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<T> {
 	@SuppressWarnings("rawtypes")
-	protected ODatabaseRecord		database;
-	protected ORecordId					recordId;
-	protected int								version;
-	protected byte[]						source;
-	protected ORecordSerializer	recordFormat;
-	protected boolean						pinned	= false;
-	protected boolean						dirty		= true;
-	protected STATUS						status	= STATUS.NEW;
+	protected ODatabaseRecord		_database;
+	protected ORecordId					_recordId;
+	protected int								_version;
+	protected byte[]						_source;
+	protected ORecordSerializer	_recordFormat;
+	protected boolean						_pinned	= false;
+	protected boolean						_dirty	= true;
+	protected STATUS						_status	= STATUS.NEW;
 
 	public ORecordAbstract() {
 	}
 
 	public ORecordAbstract(final ODatabaseRecord<?> iDatabase) {
-		database = iDatabase;
+		_database = iDatabase;
 	}
 
 	public ORecordAbstract(final ODatabaseRecord<?> iDatabase, final byte[] iSource) {
 		this(iDatabase);
-		source = iSource;
+		_source = iSource;
 		unsetDirty();
 	}
 
 	public ORecordAbstract<?> fill(final ODatabaseRecord<?> iDatabase, final int iClusterId, final long iPosition, final int iVersion) {
-		database = iDatabase;
+		_database = iDatabase;
 		setIdentity(iClusterId, iPosition);
-		version = iVersion;
+		_version = iVersion;
 		return this;
 	}
 
 	public ORID getIdentity() {
-		return recordId;
+		return _recordId;
 	}
 
 	public ORecordAbstract<?> setIdentity(final int iClusterId, final long iPosition) {
-		if (recordId == null)
-			recordId = new ORecordId(iClusterId, iPosition);
+		if (_recordId == null)
+			_recordId = new ORecordId(iClusterId, iPosition);
 		else {
-			recordId.clusterId = iClusterId;
-			recordId.clusterPosition = iPosition;
+			_recordId.clusterId = iClusterId;
+			_recordId.clusterPosition = iPosition;
 		}
 		return this;
 	}
 
 	public ORecordAbstract<T> reset() {
-		status = STATUS.NEW;
+		_status = STATUS.NEW;
 
 		setDirty();
-		source = null;
-		if (recordId != null)
-			recordId.reset();
+		_source = null;
+		if (_recordId != null)
+			_recordId.reset();
 		return this;
 	}
 
 	public byte[] toStream() {
-		if (source == null)
-			source = recordFormat.toStream(database, this);
+		if (_source == null)
+			_source = _recordFormat.toStream(_database, this);
 
-		return source;
+		return _source;
 	}
 
 	public ORecordAbstract<T> fromStream(final byte[] iRecordBuffer) {
-		source = iRecordBuffer;
-		status = STATUS.LOADED;
+		_source = iRecordBuffer;
+		_status = STATUS.LOADED;
 		return this;
 	}
 
 	public void unsetDirty() {
-		if (dirty)
-			dirty = false;
+		if (_dirty)
+			_dirty = false;
 	}
 
 	public ORecordAbstract<T> setDirty() {
-		if (!dirty)
-			dirty = true;
-		source = null;
+		if (!_dirty)
+			_dirty = true;
+		_source = null;
 		return this;
 	}
 
 	public boolean isDirty() {
-		return dirty;
+		return _dirty;
 	}
 
 	public boolean isPinned() {
-		return pinned;
+		return _pinned;
 	}
 
 	public ORecordAbstract<T> pin() {
-		if (!pinned)
-			pinned = true;
+		if (!_pinned)
+			_pinned = true;
 		return this;
 	}
 
 	public ORecordAbstract<T> unpin() {
-		if (pinned)
-			pinned = false;
+		if (_pinned)
+			_pinned = false;
 		return this;
 	}
 
 	public ODatabaseRecord<?> getDatabase() {
-		return database;
+		return _database;
 	}
 
 	public ORecordAbstract<?> setDatabase(final ODatabaseRecord<?> iDatabase) {
-		this.database = iDatabase;
+		this._database = iDatabase;
 		return this;
 	}
 
 	public <RET extends ORecord<T>> RET fromJSON(final String iSource) {
-		return (RET) ORecordSerializerJSON.INSTANCE.fromString(database, iSource, this);
+		return (RET) ORecordSerializerJSON.INSTANCE.fromString(_database, iSource, this);
 	}
 
 	public String toJSON() {
@@ -150,24 +150,24 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 
 	@Override
 	public String toString() {
-		return "@" + (recordId.isValid() ? recordId : "") + "[" + Arrays.toString(source) + "]";
+		return "@" + (_recordId.isValid() ? _recordId : "") + "[" + Arrays.toString(_source) + "]";
 	}
 
 	public int getVersion() {
-		return version;
+		return _version;
 	}
 
 	public void setVersion(final int iVersion) {
-		version = iVersion;
+		_version = iVersion;
 	}
 
 	public ORecordAbstract<T> load() {
-		if (database == null)
+		if (_database == null)
 			throw new ODatabaseException("No database assigned to current record");
 
 		Object result = null;
 		try {
-			result = database.load(this);
+			result = _database.load(this);
 		} catch (Exception e) {
 			throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found", e);
 		}
@@ -179,68 +179,68 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	}
 
 	public ORecordAbstract<T> save() {
-		if (database == null)
+		if (_database == null)
 			throw new ODatabaseException("No database assigned to current record. Create it using the <DB>.newInstance()");
 
 		OSerializationThreadLocal.INSTANCE.get().clear();
 
-		database.save(this);
+		_database.save(this);
 		return this;
 	}
 
 	public ORecordAbstract<T> save(final String iClusterName) {
-		if (database == null)
+		if (_database == null)
 			throw new ODatabaseException("No database assigned to current record. Create it using the <DB>.newInstance()");
 
 		OSerializationThreadLocal.INSTANCE.get().clear();
 
-		database.save(this, iClusterName);
+		_database.save(this, iClusterName);
 
 		return this;
 	}
 
-	public ORecordAbstract<T> save(ODatabaseRecord<?> iDatabase) {
-		if (database != null)
+	public ORecordAbstract<T> save(final ODatabaseRecord<?> iDatabase) {
+		if (_database != null)
 			throw new IllegalArgumentException("Can't change database to a live record");
 
-		database = iDatabase;
-		database.save(this);
+		_database = iDatabase;
+		_database.save(this);
 		return this;
 	}
 
-	public ORecordAbstract<T> save(ODatabaseRecord<?> iDatabase, final String iClusterName) {
-		if (database != null)
+	public ORecordAbstract<T> save(final ODatabaseRecord<?> iDatabase, final String iClusterName) {
+		if (_database != null)
 			throw new IllegalArgumentException("Can't change database to a live record");
 
-		database = iDatabase;
-		database.save(this, iClusterName);
+		_database = iDatabase;
+		_database.save(this, iClusterName);
 		return this;
 	}
 
 	public ORecordAbstract<T> delete() {
-		if (database == null)
+		if (_database == null)
 			throw new ODatabaseException("No database assigned to current record");
 
-		database.delete(this);
+		_database.delete(this);
 		return this;
 	}
 
 	protected void setup() {
-		if (recordId == null)
-			recordId = new ORecordId();
+		if (_recordId == null)
+			_recordId = new ORecordId();
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((database == null) ? 0 : database.hashCode());
-		result = prime * result + ((recordId == null) ? 0 : recordId.hashCode());
+		result = prime * result + ((_database == null) ? 0 : _database.hashCode());
+		result = prime * result + ((_recordId == null) ? 0 : _recordId.hashCode());
 		return result;
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj)
 			return true;
 		if (obj == null)
@@ -248,24 +248,24 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		if (getClass() != obj.getClass())
 			return false;
 		final ORecordAbstract<?> other = (ORecordAbstract<?>) obj;
-		if (database == null) {
-			if (other.database != null)
+		if (_database == null) {
+			if (other._database != null)
 				return false;
-		} else if (!database.equals(other.database))
+		} else if (!_database.equals(other._database))
 			return false;
-		if (recordId == null) {
-			if (other.recordId != null)
+		if (_recordId == null) {
+			if (other._recordId != null)
 				return false;
-		} else if (!recordId.equals(other.recordId))
+		} else if (!_recordId.equals(other._recordId))
 			return false;
 		return true;
 	}
 
-	public STATUS getStatus() {
-		return status;
+	public STATUS getInternalStatus() {
+		return _status;
 	}
 
-	public void setStatus(STATUS status) {
-		this.status = status;
+	public void setStatus(final STATUS iStatus) {
+		this._status = iStatus;
 	}
 }

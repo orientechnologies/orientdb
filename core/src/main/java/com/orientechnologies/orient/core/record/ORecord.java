@@ -108,7 +108,7 @@ public interface ORecord<T> {
 	 * Returns the current status of the record.
 	 * 
 	 */
-	public STATUS getStatus();
+	public STATUS getInternalStatus();
 
 	/**
 	 * Loads the record content in memory. If the record is dirty, then it returns to the original content. If the record doesn't

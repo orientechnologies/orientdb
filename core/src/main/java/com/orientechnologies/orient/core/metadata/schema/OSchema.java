@@ -44,10 +44,10 @@ public class OSchema extends ODocument {
 	}
 
 	public OClass createClass(final String iClassName) {
-		int clusterId = database.getClusterIdByName(iClassName);
+		int clusterId = _database.getClusterIdByName(iClassName);
 		if (clusterId == -1)
 			// CREATE A NEW CLUSTER
-			clusterId = database.addLogicalCluster(iClassName, database.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME));
+			clusterId = _database.addLogicalCluster(iClassName, _database.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME));
 
 		return createClass(iClassName, clusterId);
 	}
@@ -124,7 +124,7 @@ public class OSchema extends ODocument {
 		OClass cls;
 		List<ODocument> storedClasses = field("classes");
 		for (ODocument c : storedClasses) {
-			c.setDatabase(database);
+			c.setDatabase(_database);
 			cls = new OClass(this).fromDocument(c);
 			classes.put(cls.getName().toLowerCase(), cls);
 		}
@@ -172,12 +172,12 @@ public class OSchema extends ODocument {
 
 	@Override
 	public ODocument load() {
-		recordId.fromString(database.getStorage().getConfiguration().schemaRecordId);
+		_recordId.fromString(_database.getStorage().getConfiguration().schemaRecordId);
 		return (ODocument) super.load();
 	}
 
 	public void create() {
-		database.addLogicalCluster(CLUSTER_NAME, database.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME));
+		_database.addLogicalCluster(CLUSTER_NAME, _database.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME));
 		save();
 	}
 }

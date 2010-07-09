@@ -274,7 +274,7 @@ public enum OType {
 	 *          Expected class
 	 * @return The converted value or the original if no conversion was applied
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static Object convert(final Object iValue, final Class<?> iTargetClass) {
 		if (iValue == null)
 			return null;
@@ -286,6 +286,13 @@ public enum OType {
 		if (iTargetClass.isAssignableFrom(iValue.getClass()))
 			// COMPATIBLE TYPES: DON'T CONVERT IT
 			return iValue;
+
+		if (iTargetClass.isEnum()) {
+			if (iValue instanceof Number)
+				return ((Class<Enum>) iTargetClass).getEnumConstants()[((Number) iValue).intValue()];
+
+			return Enum.valueOf((Class<Enum>) iTargetClass, iValue.toString());
+		}
 
 		if (iTargetClass.equals(Byte.TYPE) || iTargetClass.equals(Byte.class)) {
 			if (iValue instanceof Byte)
@@ -316,6 +323,12 @@ public enum OType {
 			if (iValue instanceof Double)
 				return iValue;
 			return ((Number) iValue).doubleValue();
+
+		} else if (iTargetClass.equals(Boolean.TYPE) || iTargetClass.equals(Boolean.class)) {
+			if (iValue instanceof Boolean)
+				return ((Boolean) iValue).booleanValue();
+			else if (iValue instanceof Number)
+				return ((Number) iValue).intValue() != 0;
 
 		} else if (iValue instanceof Collection<?> && Set.class.isAssignableFrom(iTargetClass)) {
 			final Set<Object> set = new HashSet<Object>();

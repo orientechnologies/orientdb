@@ -48,12 +48,12 @@ public class ORecordFlat extends ORecordAbstract<String> implements ORecordStrin
 
 	public ORecordFlat(ODatabaseRecord<?> iDatabase, ORID iRID) {
 		this(iDatabase);
-		recordId = (ORecordId) iRID;
+		_recordId = (ORecordId) iRID;
 	}
 
 	public ORecordFlat value(String iValue) {
 		value = iValue;
-		source = null;
+		_source = null;
 		setDirty();
 		return this;
 	}
@@ -67,10 +67,10 @@ public class ORecordFlat extends ORecordAbstract<String> implements ORecordStrin
 
 	public ORecordFlat copy() {
 		ORecordFlat cloned = new ORecordFlat();
-		cloned.source = source;
+		cloned._source = _source;
 		cloned.value = value;
-		cloned.database = database;
-		cloned.recordId = recordId.copy();
+		cloned._database = _database;
+		cloned._recordId = _recordId.copy();
 		setDirty();
 		return cloned;
 	}
@@ -78,11 +78,11 @@ public class ORecordFlat extends ORecordAbstract<String> implements ORecordStrin
 	public String value() {
 		if (value == null) {
 			// LAZY DESERIALIZATION
-			if (source == null && getIdentity() != null && getIdentity().isValid())
+			if (_source == null && getIdentity() != null && getIdentity().isValid())
 				load();
 
 			// LAZY LOADING: LOAD THE RECORD FIRST
-			value = OBinaryProtocol.bytes2string(source);
+			value = OBinaryProtocol.bytes2string(_source);
 		}
 
 		return value;

@@ -19,13 +19,16 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import javax.annotation.PostConstruct;
+
 public class Account {
 	private int						id;
 	private String				name;
 	private String				surname;
 	private Date					birthDate;
 	private float					salary;
-	private List<Address>	addresses	= new ArrayList<Address>();
+	private List<Address>	addresses		= new ArrayList<Address>();
+	private boolean				initialized	= false;
 
 	public Account() {
 	}
@@ -34,6 +37,11 @@ public class Account {
 		this.id = iId;
 		this.name = iName;
 		this.surname = iSurname;
+	}
+
+	@PostConstruct
+	public void initialize() {
+		initialized = true;
 	}
 
 	public String getName() {
@@ -74,5 +82,9 @@ public class Account {
 
 	public void setSalary(float salary) {
 		this.salary = salary;
+	}
+
+	public boolean isInitialized() {
+		return initialized;
 	}
 }

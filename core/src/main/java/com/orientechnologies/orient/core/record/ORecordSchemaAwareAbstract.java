@@ -28,8 +28,8 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 @SuppressWarnings("unchecked")
 public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> implements ORecordSchemaAware<T> {
 
-	protected OClass	clazz;
-	protected int			cursor;
+	protected OClass	_clazz;
+	protected int			_cursor;
 
 	public ORecordSchemaAwareAbstract() {
 	}
@@ -41,7 +41,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	public ORecordSchemaAwareAbstract<T> fill(final ODatabaseRecord<?> iDatabase, final int iClassId, final int iClusterId,
 			final long iPosition, final int iVersion) {
 		super.fill(iDatabase, iClusterId, iPosition, iVersion);
-		setClass(database.getMetadata().getSchema().getClassById(iClassId));
+		setClass(_database.getMetadata().getSchema().getClassById(iClassId));
 		return this;
 	}
 
@@ -53,45 +53,45 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	 * @see OProperty
 	 */
 	public void validate() throws OValidationException {
-		if (clazz != null)
-			for (OProperty p : clazz.properties()) {
+		if (_clazz != null)
+			for (OProperty p : _clazz.properties()) {
 				validateField(this, p);
 			}
 	}
 
 	public OClass getSchemaClass() {
-		return clazz;
+		return _clazz;
 	}
 
 	public String getClassName() {
 		checkForFields();
-		return clazz != null ? clazz.getName() : null;
+		return _clazz != null ? _clazz.getName() : null;
 	}
 
 	public void setClassName(final String iClassName) {
-		if (database == null || iClassName == null) {
-			clazz = null;
+		if (_database == null || iClassName == null) {
+			_clazz = null;
 			return;
 		}
 
-		setClass(database.getMetadata().getSchema().getClass(iClassName));
+		setClass(_database.getMetadata().getSchema().getClass(iClassName));
 
-		if (clazz == null) {
+		if (_clazz == null) {
 			// CREATE THE CLASS AT THE FLY
-			setClass(database.getMetadata().getSchema().createClass(iClassName));
-			database.getMetadata().getSchema().save();
+			setClass(_database.getMetadata().getSchema().createClass(iClassName));
+			_database.getMetadata().getSchema().save();
 		}
 	}
 
 	public boolean hasNext() {
 		checkForFields();
-		return cursor < size();
+		return _cursor < size();
 	}
 
 	@Override
 	public ORecordSchemaAwareAbstract<T> reset() {
 		super.reset();
-		cursor = 0;
+		_cursor = 0;
 		return this;
 	}
 
@@ -100,22 +100,22 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	}
 
 	protected void checkForFields() {
-		if (status == STATUS.LOADED && size() == 0)
+		if (_status == STATUS.LOADED && size() == 0)
 			// POPULATE FIELDS LAZY
 			deserializeFields();
 	}
 
 	protected void deserializeFields() {
-		if (source == null)
+		if (_source == null)
 			return;
 
-		status = STATUS.UNMARSHALLING;
-		recordFormat.fromStream(database, source, this);
-		status = STATUS.LOADED;
+		_status = STATUS.UNMARSHALLING;
+		_recordFormat.fromStream(_database, _source, this);
+		_status = STATUS.LOADED;
 	}
 
 	protected void setClass(final OClass iClass) {
-		clazz = iClass;
+		_clazz = iClass;
 	}
 
 	protected void checkFieldAccess(final int iIndex) {

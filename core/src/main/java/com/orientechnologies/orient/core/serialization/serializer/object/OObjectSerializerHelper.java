@@ -27,10 +27,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.PostConstruct;
+
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.annotation.OBind;
+import com.orientechnologies.orient.core.annotation.OBind.MODES;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.entity.OEntityManager;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.id.fetch.OFetchListener;
@@ -45,11 +50,12 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * Helper class to manage POJO by using the reflection. 
  */
 public class OObjectSerializerHelper {
-	private static final Class<?>[]							NO_ARGS	= new Class<?>[] {};
+	private static final Class<?>[]							NO_ARGS			= new Class<?>[] {};
 
-	private static HashMap<String, List<Field>>	classes	= new HashMap<String, List<Field>>();
-	private static HashMap<String, Object>			getters	= new HashMap<String, Object>();
-	private static HashMap<String, Object>			setters	= new HashMap<String, Object>();
+	private static HashMap<String, List<Field>>	classes			= new HashMap<String, List<Field>>();
+	private static HashMap<String, Method>			initMethods	= new HashMap<String, Method>();
+	private static HashMap<String, Object>			getters			= new HashMap<String, Object>();
+	private static HashMap<String, Object>			setters			= new HashMap<String, Object>();
 
 	public static boolean hasField(final Object iPojo, final String iProperty) {
 		final Class<?> c = iPojo.getClass();
@@ -138,19 +144,23 @@ public class OObjectSerializerHelper {
 		String fieldName;
 		Object fieldValue;
 
-		if (iRecord.getStatus() == STATUS.NOT_LOADED)
+		if (iRecord.getInternalStatus() == STATUS.NOT_LOADED)
 			iRecord.load();
 
 		// BIND BASIC FIELDS, LINKS WILL BE BOUND BY THE FETCH API
 		for (Field p : properties) {
 			fieldName = p.getName();
-			fieldValue = iRecord.field(fieldName);
 
-			if (fieldValue == null
-					|| !(fieldValue instanceof ODocument)
-					|| (fieldValue instanceof Collection<?> && (((Collection<?>) fieldValue).size() == 0 || !(((Collection<?>) fieldValue)
-							.iterator().next() instanceof ODocument))))
-				setFieldValue(iPojo, fieldName, fieldValue);
+			if (iRecord.containsField(fieldName)) {
+				// BIND ONLY THE SPECIFIED FIELDS
+				fieldValue = iRecord.field(fieldName);
+
+				if (fieldValue == null
+						|| !(fieldValue instanceof ODocument)
+						|| (fieldValue instanceof Collection<?> && (((Collection<?>) fieldValue).size() == 0 || !(((Collection<?>) fieldValue)
+								.iterator().next() instanceof ODocument))))
+					setFieldValue(iPojo, fieldName, fieldValue);
+			}
 		}
 
 		// BIND LINKS FOLLOWING THE FETCHING PLAN
@@ -204,6 +214,16 @@ public class OObjectSerializerHelper {
 				return propagate ? fieldValue : null;
 			}
 		});
+
+		// CALL POST CONSTRUCTOR
+		final Method initMethod = initMethods.get(c.getName());
+		if (initMethod != null) {
+			try {
+				initMethod.invoke(iPojo);
+			} catch (Exception e) {
+				throw new OConfigurationException("Error on initializing pojo of class '" + c.getName() + "' after unmarshalling", e);
+			}
+		}
 
 		OProfiler.getInstance().stopChrono("Object.fromStream", timer);
 
@@ -331,6 +351,8 @@ public class OObjectSerializerHelper {
 
 			String fieldName;
 			int fieldModifier;
+			OBind bindAnnotation;
+			boolean autoBinding;
 
 			for (Class<?> currentClass = iClass; currentClass != Object.class;) {
 				for (Field f : currentClass.getDeclaredFields()) {
@@ -342,32 +364,40 @@ public class OObjectSerializerHelper {
 
 					fieldName = f.getName();
 
-					// TRY TO GET THE VALUE BY THE GETTER (IF ANY)
-					try {
-						String getterName = "get" + Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1);
-						Method m = currentClass.getMethod(getterName, NO_ARGS);
-						getters.put(iClass.getName() + "." + fieldName, m);
-					} catch (Exception e) {
-						// TRY TO GET THE VALUE BY ACCESSING DIRECTLY TO THE PROPERTY
-						if (!f.isAccessible())
-							f.setAccessible(true);
+					bindAnnotation = f.getAnnotation(OBind.class);
+					autoBinding = bindAnnotation == null || bindAnnotation.mode() == MODES.AUTO;
 
-						getters.put(iClass.getName() + "." + fieldName, f);
-					}
+					if (autoBinding)
+						// TRY TO GET THE VALUE BY THE GETTER (IF ANY)
+						try {
+							String getterName = "get" + Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1);
+							Method m = currentClass.getMethod(getterName, NO_ARGS);
+							getters.put(iClass.getName() + "." + fieldName, m);
+						} catch (Exception e) {
+							registerFieldGetter(iClass, fieldName, f);
+						}
+					else
+						registerFieldGetter(iClass, fieldName, f);
 
-					// TRY TO GET THE VALUE BY THE SETTER (IF ANY)
-					try {
-						String getterName = "set" + Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1);
-						Method m = currentClass.getMethod(getterName, f.getType());
-						setters.put(iClass.getName() + "." + fieldName, m);
-					} catch (Exception e) {
-						// TRY TO GET THE VALUE BY ACCESSING DIRECTLY TO THE PROPERTY
-						if (!f.isAccessible())
-							f.setAccessible(true);
-
-						setters.put(iClass.getName() + "." + fieldName, f);
-					}
+					if (autoBinding)
+						// TRY TO GET THE VALUE BY THE SETTER (IF ANY)
+						try {
+							String getterName = "set" + Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1);
+							Method m = currentClass.getMethod(getterName, f.getType());
+							setters.put(iClass.getName() + "." + fieldName, m);
+						} catch (Exception e) {
+							registerFieldSetter(iClass, fieldName, f);
+						}
+					else
+						registerFieldSetter(iClass, fieldName, f);
 				}
+
+				// FIND KEY METHODS
+				for (Method m : currentClass.getDeclaredMethods()) {
+					if (m.getAnnotation(PostConstruct.class) != null)
+						initMethods.put(iClass.getName(), m);
+				}
+
 				currentClass = currentClass.getSuperclass();
 
 				if (currentClass.equals(ODocument.class))
@@ -376,5 +406,21 @@ public class OObjectSerializerHelper {
 			}
 			return properties;
 		}
+	}
+
+	private static void registerFieldSetter(final Class<?> iClass, String fieldName, Field f) {
+		// TRY TO GET THE VALUE BY ACCESSING DIRECTLY TO THE PROPERTY
+		if (!f.isAccessible())
+			f.setAccessible(true);
+
+		setters.put(iClass.getName() + "." + fieldName, f);
+	}
+
+	private static void registerFieldGetter(final Class<?> iClass, String fieldName, Field f) {
+		// TRY TO GET THE VALUE BY ACCESSING DIRECTLY TO THE PROPERTY
+		if (!f.isAccessible())
+			f.setAccessible(true);
+
+		getters.put(iClass.getName() + "." + fieldName, f);
 	}
 }

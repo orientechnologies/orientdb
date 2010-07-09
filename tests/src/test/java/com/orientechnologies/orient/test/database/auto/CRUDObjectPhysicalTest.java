@@ -26,6 +26,7 @@ import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.iterator.OObjectIteratorCluster;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.domain.business.Account;
@@ -102,6 +103,30 @@ public class CRUDObjectPhysicalTest {
 	}
 
 	@Test(dependsOnMethods = "readAndBrowseDescendingAndCheckHoleUtilization")
+	public void mapEnumAndInternalObjects() {
+		database.open("admin", "admin");
+
+		// BROWSE ALL THE OBJECTS
+		for (OUser u : database.browseClass(OUser.class)) {
+			database.save(u);
+		}
+
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "mapEnumAndInternalObjects")
+	public void postConstructorCall() {
+		database.open("admin", "admin");
+
+		// BROWSE ALL THE OBJECTS
+		for (Account a : database.browseClass(Account.class)) {
+			Assert.assertTrue(a.isInitialized());
+		}
+
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "postConstructorCall")
 	public void update() {
 		database.open("admin", "admin");
 

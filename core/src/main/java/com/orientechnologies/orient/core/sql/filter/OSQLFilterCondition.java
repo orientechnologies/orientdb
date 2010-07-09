@@ -110,7 +110,7 @@ public class OSQLFilterCondition {
 
 	protected Object evaluate(ORecordSchemaAware<?> iRecord, Object iValue) {
 		if (iValue instanceof OSQLFilterItem) {
-			if (iRecord.getStatus() == STATUS.NOT_LOADED)
+			if (iRecord.getInternalStatus() == STATUS.NOT_LOADED)
 				iRecord.load();
 
 			return ((OSQLFilterItem) iValue).getValue(iRecord);

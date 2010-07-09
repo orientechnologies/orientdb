@@ -64,6 +64,12 @@ public class ORole extends ODocument {
 	/**
 	 * Constructor used in unmarshalling.
 	 */
+	public ORole() {
+	}
+
+	/**
+	 * Constructor used in unmarshalling.
+	 */
 	public ORole(final ODatabaseRecord<?> iDatabase) {
 		super(iDatabase, "ORole");
 	}
@@ -79,7 +85,7 @@ public class ORole extends ODocument {
 	 * Create the role by reading the source document.
 	 */
 	public ORole(final ODocument iSource) {
-		database = iSource.getDatabase();
+		_database = iSource.getDatabase();
 		fromDocument(iSource);
 	}
 
@@ -176,12 +182,12 @@ public class ORole extends ODocument {
 	}
 
 	public ORole fromDocument(final ODocument iSource) {
-		recordId.copyFrom(iSource.getIdentity());
+		_recordId.copyFrom(iSource.getIdentity());
 
 		name = iSource.field("name");
 		mode = ((Byte) iSource.field("mode")) == STREAM_ALLOW ? ALLOW_MODES.ALLOW_ALL_BUT : ALLOW_MODES.DENY_ALL_BUT;
 
-		parentRole = database.getMetadata().getSecurity().getRole((String) iSource.field("inheritedRole"));
+		parentRole = _database.getMetadata().getSecurity().getRole((String) iSource.field("inheritedRole"));
 
 		final Map<String, Byte> storedRules = iSource.field("rules");
 		for (Entry<String, Byte> a : storedRules.entrySet()) {

@@ -46,26 +46,26 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 
 	public ORecordBytes(ODatabaseRecord<?> iDatabase, ORID iRecordId) {
 		super(iDatabase);
-		recordId = (ORecordId) iRecordId;
+		_recordId = (ORecordId) iRecordId;
 		setup();
 	}
 
 	public void reset(byte[] iSource) {
 		reset();
-		source = iSource;
+		_source = iSource;
 	}
 
 	public ORecordBytes copy() {
 		ORecordBytes cloned = new ORecordBytes();
-		cloned.source = source;
-		cloned.database = database;
-		cloned.recordId = recordId.copy();
+		cloned._source = _source;
+		cloned._database = _database;
+		cloned._recordId = _recordId.copy();
 		return cloned;
 	}
 
 	@Override
 	public byte[] toStream() {
-		return source;
+		return _source;
 	}
 
 	public byte getRecordType() {
