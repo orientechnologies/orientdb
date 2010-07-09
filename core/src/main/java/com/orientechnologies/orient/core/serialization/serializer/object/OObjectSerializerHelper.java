@@ -120,7 +120,8 @@ public class OObjectSerializerHelper {
 
 		} catch (Exception e) {
 
-			throw new OSchemaException("Can't set the value '" + iValue + "' to the property: " + iProperty, e);
+			throw new OSchemaException("Can't set the value '" + iValue + "' to the property '" + iProperty + "' for the pojo: " + iPojo,
+					e);
 		}
 	}
 
