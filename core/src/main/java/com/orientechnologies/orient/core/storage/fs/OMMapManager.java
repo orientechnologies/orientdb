@@ -20,6 +20,7 @@ import java.util.ArrayDeque;
 import java.util.Iterator;
 
 import com.orientechnologies.common.io.OIOException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 
 public class OMMapManager {
@@ -65,6 +66,18 @@ public class OMMapManager {
 				for (Iterator<OMMapBufferEntry> it = buffersLRU.descendingIterator(); it.hasNext();) {
 					entry = it.next();
 					if (!entry.pin) {
+						// FORCE THE WRITE OF THE BUFFER
+						for (int i = 0; i < 3; ++i) {
+							try {
+								entry.buffer.force();
+							} catch (Exception e) {
+								OLogManager.instance().error(entry.buffer, "Can't write memory buffer to disk. Retrying...");
+								try {
+									Thread.sleep(500);
+								} catch (InterruptedException e1) {
+								}
+							}
+						}
 						entry.buffer.force();
 
 						it.remove();
