@@ -65,10 +65,11 @@ public class OMMapManager {
 				for (Iterator<OMMapBufferEntry> it = buffersLRU.descendingIterator(); it.hasNext();) {
 					entry = it.next();
 					if (!entry.pin) {
+						entry.buffer.force();
+
 						it.remove();
 						pagesUnloaded++;
 
-						entry.buffer.force();
 						entry.buffer = null;
 
 						totalMemory -= entry.size;
