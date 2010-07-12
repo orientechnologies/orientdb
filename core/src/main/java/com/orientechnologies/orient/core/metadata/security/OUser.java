@@ -18,8 +18,8 @@ package com.orientechnologies.orient.core.metadata.security;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.annotation.OBind;
-import com.orientechnologies.orient.core.annotation.OBind.MODES;
+import com.orientechnologies.orient.core.annotation.OField;
+import com.orientechnologies.orient.core.annotation.OField.MODES;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -42,7 +42,7 @@ public class OUser extends ODocument {
 
 	protected String			name;
 	// AVOID THE INVOCATION OF SETTER
-	@OBind(mode = MODES.FIELD)
+	@OField(binding = MODES.RAW)
 	protected String			password;
 	protected STATUSES		status;
 	protected Set<ORole>	roles	= new HashSet<ORole>();

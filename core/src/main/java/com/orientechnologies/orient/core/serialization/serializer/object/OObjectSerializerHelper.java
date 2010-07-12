@@ -32,8 +32,8 @@ import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
 import com.orientechnologies.orient.core.annotation.OAfterSerialization;
 import com.orientechnologies.orient.core.annotation.OBeforeDeserialization;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
-import com.orientechnologies.orient.core.annotation.OBind;
-import com.orientechnologies.orient.core.annotation.OBind.MODES;
+import com.orientechnologies.orient.core.annotation.OField;
+import com.orientechnologies.orient.core.annotation.OField.MODES;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.entity.OEntityManager;
@@ -357,7 +357,7 @@ public class OObjectSerializerHelper {
 
 			String fieldName;
 			int fieldModifier;
-			OBind bindAnnotation;
+			OField bindAnnotation;
 			boolean autoBinding;
 
 			for (Class<?> currentClass = iClass; currentClass != Object.class;) {
@@ -370,8 +370,8 @@ public class OObjectSerializerHelper {
 
 					fieldName = f.getName();
 
-					bindAnnotation = f.getAnnotation(OBind.class);
-					autoBinding = bindAnnotation == null || bindAnnotation.mode() == MODES.AUTO;
+					bindAnnotation = f.getAnnotation(OField.class);
+					autoBinding = bindAnnotation == null || bindAnnotation.binding() == MODES.AUTO;
 
 					if (autoBinding)
 						// TRY TO GET THE VALUE BY THE GETTER (IF ANY)

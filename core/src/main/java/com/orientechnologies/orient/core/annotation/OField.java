@@ -24,15 +24,15 @@ import java.lang.annotation.Target;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface OBind {
+public @interface OField {
 	enum MODES {
-		AUTO, FIELD
+		AUTO, RAW
 	}
 
 	/**
 	 * Tells the way Orient should bind the field. AUTO, the default, means to search for getter and setter. If they are not present,
-	 * then the field is accessed directly. FIELD instead forces the FIELD level access. Use this if you want by-pass getter and
-	 * setter methods.
+	 * then the field is accessed directly. RAW instead forces the field level access. Use this if you want by-pass getter and setter
+	 * methods.
 	 */
-	MODES mode() default MODES.AUTO;
+	MODES binding() default MODES.AUTO;
 }
