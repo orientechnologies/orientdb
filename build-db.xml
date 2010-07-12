@@ -152,6 +152,14 @@
 	    </subant>
 	</target>
 
+	<target name="stress-test">
+    <subant target="stress-test">
+        <property name="global.lib"  value="../${db.release}/lib"/>
+        <property name="orient.path" value="${db.release}"/>
+		  	<fileset dir="tests"        includes="build.xml" />
+	    </subant>
+	</target>
+
   <target name="release" depends="install">
 		<delete file="../releases/orient-database-${version}.zip" />
 		<zip destfile="../releases/orient-database-${version}.zip" basedir="${db.release}" level="9" update="false" excludes="*.log" />

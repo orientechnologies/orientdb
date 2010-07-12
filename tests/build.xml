@@ -65,6 +65,50 @@
     <echo>OK</echo>
   </target>
 
+  <target name="stress-test">
+    <echo>MASSIVE INSERT 1,000,000 FLAT RECORDS</echo>
+    <java classname="com.orientechnologies.orient.test.database.speed.LocalCreateFlatSpeedTest" fork="yes">
+      <classpath>
+        <pathelement location="bin" />
+        <fileset dir="${global.lib}">
+          <include name="*.jar" />
+        </fileset>
+      </classpath>
+      <sysproperty key="url" value="local:../../releases/0.9.20/db/databases/demo/demo" />
+      <jvmarg value="-server" />
+      <jvmarg value="-XX:+AggressiveOpts" />
+      <jvmarg value="-XX:CompileThreshold=200" />
+    </java>
+
+    <echo>MASSIVE INSERT 1,000,000 DOCUMENT RECORDS</echo>
+    <java classname="com.orientechnologies.orient.test.database.speed.LocalCreateDocumentSpeedTest" fork="yes">
+      <classpath>
+        <pathelement location="bin" />
+        <fileset dir="${global.lib}">
+          <include name="*.jar" />
+        </fileset>
+      </classpath>
+      <sysproperty key="url" value="local:../../releases/0.9.20/db/databases/demo/demo" />
+      <jvmarg value="-server" />
+      <jvmarg value="-XX:+AggressiveOpts" />
+      <jvmarg value="-XX:CompileThreshold=200" />
+    </java>
+
+    <echo>MASSIVE INSERT 100,000 POJOs</echo>
+    <java classname="com.orientechnologies.orient.test.database.speed.LocalCreateObjectSpeedTest" fork="yes">
+      <classpath>
+        <pathelement location="bin" />
+        <fileset dir="${global.lib}">
+          <include name="*.jar" />
+        </fileset>
+      </classpath>
+      <sysproperty key="url" value="local:../../releases/0.9.20/db/databases/demo/demo" />
+      <jvmarg value="-server" />
+      <jvmarg value="-XX:+AggressiveOpts" />
+      <jvmarg value="-XX:CompileThreshold=200" />
+    </java>
+  </target>
+
   <target name="reports" depends="test">
     <mkdir dir="" />
     <junitreport todir="test-output">
@@ -73,6 +117,7 @@
       </fileset>
       <report format="noframes" todir="test-output" />
     </junitreport>
+
   </target>
 
 </project>

@@ -84,7 +84,7 @@ public class CRUDObjectPhysicalTest {
 
 		// BROWSE ALL THE OBJECTS
 		int i = 0;
-		for (Account a : database.browseClass(Account.class)) {
+		for (Account a : database.browseClass(Account.class).setFetchPlan("*:-1")) {
 
 			Assert.assertTrue(a.getId() == i);
 			Assert.assertEquals(a.getName(), "Bill");
