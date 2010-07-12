@@ -74,8 +74,10 @@
           <include name="*.jar" />
         </fileset>
       </classpath>
-      <sysproperty key="url" value="local:../../releases/0.9.20/db/databases/demo/demo" />
+      <sysproperty key="url" value="local:${orient.path}/databases/demo/demo" />
       <jvmarg value="-server" />
+      <jvmarg value="-Xms1G" />
+      <jvmarg value="-Xmx1G" />
       <jvmarg value="-XX:+AggressiveOpts" />
       <jvmarg value="-XX:CompileThreshold=200" />
     </java>
@@ -88,13 +90,15 @@
           <include name="*.jar" />
         </fileset>
       </classpath>
-      <sysproperty key="url" value="local:../../releases/0.9.20/db/databases/demo/demo" />
+      <sysproperty key="url" value="local:${orient.path}/databases/demo/demo" />
       <jvmarg value="-server" />
+      <jvmarg value="-Xms1G" />
+      <jvmarg value="-Xmx1G" />
       <jvmarg value="-XX:+AggressiveOpts" />
       <jvmarg value="-XX:CompileThreshold=200" />
     </java>
 
-    <echo>MASSIVE INSERT 100,000 POJOs</echo>
+    <echo>MASSIVE INSERT 20,000 POJOs</echo>
     <java classname="com.orientechnologies.orient.test.database.speed.LocalCreateObjectSpeedTest" fork="yes">
       <classpath>
         <pathelement location="bin" />
@@ -102,8 +106,10 @@
           <include name="*.jar" />
         </fileset>
       </classpath>
-      <sysproperty key="url" value="local:../../releases/0.9.20/db/databases/demo/demo" />
+      <sysproperty key="url" value="local:${orient.path}/databases/demo/demo" />
       <jvmarg value="-server" />
+      <jvmarg value="-Xms1G" />
+      <jvmarg value="-Xmx1G" />
       <jvmarg value="-XX:+AggressiveOpts" />
       <jvmarg value="-XX:CompileThreshold=200" />
     </java>
