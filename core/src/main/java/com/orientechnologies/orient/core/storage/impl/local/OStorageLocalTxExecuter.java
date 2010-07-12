@@ -137,7 +137,7 @@ public class OStorageLocalTxExecuter {
 		// UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT
 		for (OTransactionEntry<? extends ORecord<?>> txEntry : iTx.getEntries()) {
 			if (txEntry.record.isPinned())
-				storage.getCache().addRecord(txEntry.record.getIdentity().toString(),
+				storage.getCache().pushRecord(txEntry.record.getIdentity().toString(),
 						new ORawBuffer(txEntry.record.toStream(), txEntry.record.getVersion(), txEntry.record.getRecordType()));
 		}
 	}

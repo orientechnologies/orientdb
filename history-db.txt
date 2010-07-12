@@ -29,12 +29,15 @@
 
 This document enlist the last changes to the Orient Database project.
 ------------------------------------------------------------------------
-VERSION 0.9.20 - (July, ? 2010)
+VERSION 0.9.20 - (July, 12nd 2010)
 -------------------------------------------------------------------------------
-- Issue #54: New database properties
-- Issue #54: New run-time fetch plans. Example: "parent:0 Address.city:1 *:-1" 
-
-- Fixed other bugs (object database graph, )
+- New run-time Fetch Plans. Example: "parent:0 Address.city:1 *:-1" (Issue #54)
+- New database properties (Issue #54)
+- POJO callback on serialization/deserialization (Issue #56)
+- New annotation to use RAW binding (Issue #57)
+- Enhance the base-build.xml to create all required directories (Issue #58)
+- Fixed object graph management
+- Fixed other minor bugs
 
 -------------------------------------------------------------------------------
 VERSION 0.9.19 - beta (June, 25th 2010)

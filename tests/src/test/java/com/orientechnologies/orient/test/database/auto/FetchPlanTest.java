@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.List;
+
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -39,19 +41,33 @@ public class FetchPlanTest {
 		database.open("admin", "admin");
 
 		final long times = OProfiler.getInstance().getStatistic("Cache.reused");
-		database.command(new OSQLSynchQuery<ODocument>("select * from Profile")).execute();
+		List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>("select * from Profile"));
 		Assert.assertEquals(OProfiler.getInstance().getStatistic("Cache.reused"), times);
+
+		ODocument linked;
+		for (ODocument d : resultset) {
+			linked = ((ODocument) d.field("location"));
+			if (linked != null)
+				Assert.assertNull(database.getCache().getRecord(linked.getIdentity().toString()));
+		}
 
 		database.close();
 	}
 
-	@Test
+	@Test(dependsOnMethods = "queryNoFetchPlan")
 	public void queryWithFetchPlan() {
 		database.open("admin", "admin");
 
 		final long times = OProfiler.getInstance().getStatistic("Cache.reused");
-		database.command(new OSQLSynchQuery<ODocument>("select * from Profile").setFetchPlan("*:-1")).execute();
+		List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>("select * from Profile").setFetchPlan("*:-1"));
 		Assert.assertEquals(OProfiler.getInstance().getStatistic("Cache.reused"), times);
+
+		ODocument linked;
+		for (ODocument d : resultset) {
+			linked = ((ODocument) d.field("location"));
+			if (linked != null)
+				Assert.assertNotNull(database.getCache().getRecord(linked.getIdentity().toString()));
+		}
 
 		database.close();
 	}

@@ -64,8 +64,9 @@ public class OObjectIteratorMultiCluster<T> implements Iterator<T>, Iterable<T> 
 		return fetchPlan;
 	}
 
-	public void setFetchPlan(String fetchPlan) {
+	public OObjectIteratorMultiCluster<T> setFetchPlan(String fetchPlan) {
 		this.fetchPlan = fetchPlan;
+		return this;
 	}
 
 }

@@ -22,13 +22,13 @@ import java.util.List;
 import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
 
 public class Account {
-	private int						id;
-	private String				name;
-	private String				surname;
-	private Date					birthDate;
-	private float					salary;
-	private List<Address>	addresses		= new ArrayList<Address>();
-	private boolean				initialized	= false;
+	private int								id;
+	private String						name;
+	private String						surname;
+	private Date							birthDate;
+	private float							salary;
+	private List<Address>			addresses		= new ArrayList<Address>();
+	private transient boolean	initialized	= false;
 
 	public Account() {
 	}

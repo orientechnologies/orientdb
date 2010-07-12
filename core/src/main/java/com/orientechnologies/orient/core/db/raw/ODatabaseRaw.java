@@ -122,7 +122,7 @@ public class ODatabaseRaw implements ODatabase {
 
 			if (useCache) {
 				// FIND IN CACHE
-				result = getCache().findRecord(recId);
+				result = getCache().popRecord(recId);
 
 				if (result != null)
 					// FOUND: JUST RETURN IT
@@ -133,7 +133,7 @@ public class ODatabaseRaw implements ODatabase {
 
 			if (useCache)
 				// ADD THE RECORD TO THE LOCAL CACHE
-				getCache().addRecord(recId, result);
+				getCache().pushRecord(recId, result);
 
 			return result;
 
@@ -151,7 +151,7 @@ public class ODatabaseRaw implements ODatabase {
 
 				if (useCache)
 					// ADD/UPDATE IT IN CACHE
-					getCache().addRecord(ORecordId.generateString(iClusterId, iPosition), new ORawBuffer(iContent, 0, iRecordType));
+					getCache().pushRecord(ORecordId.generateString(iClusterId, iPosition), new ORawBuffer(iContent, 0, iRecordType));
 
 				return iPosition;
 			} else {
@@ -160,7 +160,7 @@ public class ODatabaseRaw implements ODatabase {
 
 				if (useCache)
 					// ADD/UPDATE IT IN CACHE
-					getCache().addRecord(ORecordId.generateString(iClusterId, iPosition), new ORawBuffer(iContent, newVersion, iRecordType));
+					getCache().pushRecord(ORecordId.generateString(iClusterId, iPosition), new ORawBuffer(iContent, newVersion, iRecordType));
 
 				return newVersion;
 			}

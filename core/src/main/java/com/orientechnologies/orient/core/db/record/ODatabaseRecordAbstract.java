@@ -397,7 +397,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 					// RECORD SAVED DURING PREVIOUS STREAMING PHASE: THIS HAPPENS FOR CIRCULAR REFERENCED RECORDS
 					if (underlying.isUseCache())
 						// ADD/UPDATE IT IN CACHE
-						getCache().addRecord(iRecord.getIdentity().toString(),
+						getCache().pushRecord(iRecord.getIdentity().toString(),
 								new ORawBuffer(iRecord.toStream(), iRecord.getVersion(), iRecordType));
 					return;
 				}

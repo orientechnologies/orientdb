@@ -95,6 +95,8 @@ public class OStorageRemote extends OStorageAbstract {
 
 			configuration.load();
 
+			cache.addUser();
+
 			Orient.instance().registerStorage(this);
 
 		} catch (Exception e) {
@@ -145,6 +147,9 @@ public class OStorageRemote extends OStorageAbstract {
 			network.out.flush();
 
 			network.socket.close();
+
+			cache.removeUser();
+			cache.clear();
 
 			open = false;
 
@@ -400,7 +405,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 						case 2:
 							// PUT IN THE CLIENT LOCAL CACHE
-							cache.addRecord(record.getIdentity().toString(),
+							cache.pushRecord(record.getIdentity().toString(),
 									new ORawBuffer(record.toStream(), record.getVersion(), record.getRecordType()));
 						}
 					}

@@ -257,7 +257,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 
 		if (value instanceof ORecord<?>) {
 			// RELATION X->1
-			lazyLoadRecord((ORecord<?>) value);
+			// lazyLoadRecord((ORecord<?>) value);
 
 		} else if (value instanceof Collection<?>) {
 			// RELATION 1-N
@@ -436,7 +436,8 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 */
 	@Override
 	public boolean containsField(final String iFieldName) {
-		return _fieldValues != null ? _fieldValues.containsKey(iFieldName) : false;
+		checkForFields();
+		return _fieldValues.containsKey(iFieldName);
 	}
 
 	/**

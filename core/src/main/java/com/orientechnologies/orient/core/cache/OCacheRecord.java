@@ -51,7 +51,7 @@ public class OCacheRecord extends OSharedResourceAdaptive {
 		};
 	}
 
-	public void addRecord(final String iRecord, ORawBuffer iContent) {
+	public void pushRecord(final String iRecord, ORawBuffer iContent) {
 		if (maxSize == 0)
 			return;
 
@@ -86,7 +86,7 @@ public class OCacheRecord extends OSharedResourceAdaptive {
 		}
 	}
 
-	public ORawBuffer findRecord(final String iRecord) {
+	public ORawBuffer popRecord(final String iRecord) {
 		if (maxSize == 0)
 			return null;
 
@@ -155,5 +155,16 @@ public class OCacheRecord extends OSharedResourceAdaptive {
 
 	public int getMaxSize() {
 		return maxSize;
+	}
+
+	public int size() {
+		final boolean locked = acquireSharedLock();
+
+		try {
+			return cache.size();
+
+		} finally {
+			releaseSharedLock(locked);
+		}
 	}
 }
