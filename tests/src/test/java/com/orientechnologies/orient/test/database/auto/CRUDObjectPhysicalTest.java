@@ -115,7 +115,7 @@ public class CRUDObjectPhysicalTest {
 	}
 
 	@Test(dependsOnMethods = "mapEnumAndInternalObjects")
-	public void postConstructorCall() {
+	public void afterDeserializationCall() {
 		database.open("admin", "admin");
 
 		// BROWSE ALL THE OBJECTS
@@ -126,7 +126,7 @@ public class CRUDObjectPhysicalTest {
 		database.close();
 	}
 
-	@Test(dependsOnMethods = "postConstructorCall")
+	@Test(dependsOnMethods = "afterDeserializationCall")
 	public void update() {
 		database.open("admin", "admin");
 

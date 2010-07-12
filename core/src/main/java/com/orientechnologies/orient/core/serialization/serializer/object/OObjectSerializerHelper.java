@@ -27,9 +27,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.PostConstruct;
-
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
+import com.orientechnologies.orient.core.annotation.OAfterSerialization;
+import com.orientechnologies.orient.core.annotation.OBeforeDeserialization;
+import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.annotation.OBind;
 import com.orientechnologies.orient.core.annotation.OBind.MODES;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
@@ -50,12 +52,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * Helper class to manage POJO by using the reflection. 
  */
 public class OObjectSerializerHelper {
-	private static final Class<?>[]							NO_ARGS			= new Class<?>[] {};
+	private static final Class<?>[]							callbackAnnotationClasses	= new Class[] { OBeforeDeserialization.class,
+			OAfterDeserialization.class, OBeforeSerialization.class, OAfterSerialization.class };
+	private static final Class<?>[]							NO_ARGS										= new Class<?>[] {};
 
-	private static HashMap<String, List<Field>>	classes			= new HashMap<String, List<Field>>();
-	private static HashMap<String, Method>			initMethods	= new HashMap<String, Method>();
-	private static HashMap<String, Object>			getters			= new HashMap<String, Object>();
-	private static HashMap<String, Object>			setters			= new HashMap<String, Object>();
+	private static HashMap<String, List<Field>>	classes										= new HashMap<String, List<Field>>();
+	private static HashMap<String, Method>			callbacks									= new HashMap<String, Method>();
+	private static HashMap<String, Object>			getters										= new HashMap<String, Object>();
+	private static HashMap<String, Object>			setters										= new HashMap<String, Object>();
 
 	public static boolean hasField(final Object iPojo, final String iProperty) {
 		final Class<?> c = iPojo.getClass();
@@ -147,6 +151,9 @@ public class OObjectSerializerHelper {
 		if (iRecord.getInternalStatus() == STATUS.NOT_LOADED)
 			iRecord.load();
 
+		// CALL BEFORE UNMARSHALLING
+		invokeCallback(iPojo, OBeforeDeserialization.class);
+
 		// BIND BASIC FIELDS, LINKS WILL BE BOUND BY THE FETCH API
 		for (Field p : properties) {
 			fieldName = p.getName();
@@ -215,15 +222,8 @@ public class OObjectSerializerHelper {
 			}
 		});
 
-		// CALL POST CONSTRUCTOR
-		final Method initMethod = initMethods.get(c.getName());
-		if (initMethod != null) {
-			try {
-				initMethod.invoke(iPojo);
-			} catch (Exception e) {
-				throw new OConfigurationException("Error on initializing pojo of class '" + c.getName() + "' after unmarshalling", e);
-			}
-		}
+		// CALL AFTER UNMARSHALLING
+		invokeCallback(iPojo, OAfterDeserialization.class);
 
 		OProfiler.getInstance().stopChrono("Object.fromStream", timer);
 
@@ -254,6 +254,9 @@ public class OObjectSerializerHelper {
 		String fieldName;
 		Object fieldValue;
 
+		// CALL BEFORE MARSHALLING
+		invokeCallback(iPojo, OBeforeSerialization.class);
+
 		for (Field p : properties) {
 			fieldName = p.getName();
 			fieldValue = getFieldValue(iPojo, fieldName);
@@ -265,6 +268,9 @@ public class OObjectSerializerHelper {
 
 			iRecord.field(fieldName, fieldValue);
 		}
+
+		// CALL AFTER MARSHALLING
+		invokeCallback(iPojo, OAfterSerialization.class);
 
 		OProfiler.getInstance().stopChrono("Object.toStream", timer);
 
@@ -392,11 +398,7 @@ public class OObjectSerializerHelper {
 						registerFieldSetter(iClass, fieldName, f);
 				}
 
-				// FIND KEY METHODS
-				for (Method m : currentClass.getDeclaredMethods()) {
-					if (m.getAnnotation(PostConstruct.class) != null)
-						initMethods.put(iClass.getName(), m);
-				}
+				registerCallbacks(iClass, currentClass);
 
 				currentClass = currentClass.getSuperclass();
 
@@ -406,6 +408,30 @@ public class OObjectSerializerHelper {
 			}
 			return properties;
 		}
+	}
+
+	@SuppressWarnings("rawtypes")
+	private static void registerCallbacks(final Class<?> iRootClass, final Class<?> iCurrentClass) {
+		// FIND KEY METHODS
+		for (Method m : iCurrentClass.getDeclaredMethods()) {
+			// SEARCH FOR CALLBACK ANNOTATIONS
+			for (Class annotationClass : callbackAnnotationClasses) {
+				if (m.getAnnotation(annotationClass) != null)
+					callbacks.put(iRootClass.getSimpleName() + "." + annotationClass.getSimpleName(), m);
+			}
+		}
+	}
+
+	private static void invokeCallback(final Object iPojo, final Class<?> iAnnotation) {
+		final Method m = callbacks.get(iPojo.getClass().getSimpleName() + "." + iAnnotation.getSimpleName());
+
+		if (m != null)
+			try {
+				m.invoke(iPojo);
+			} catch (Exception e) {
+				throw new OConfigurationException("Error on executing user callback '" + m.getName() + "' annotated with '"
+						+ iAnnotation.getSimpleName() + "'", e);
+			}
 	}
 
 	private static void registerFieldSetter(final Class<?> iClass, String fieldName, Field f) {

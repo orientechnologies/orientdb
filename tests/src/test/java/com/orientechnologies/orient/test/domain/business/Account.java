@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
+import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
 
 public class Account {
 	private int						id;
@@ -39,7 +39,7 @@ public class Account {
 		this.surname = iSurname;
 	}
 
-	@PostConstruct
+	@OAfterDeserialization
 	public void initialize() {
 		initialized = true;
 	}
