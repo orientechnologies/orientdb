@@ -25,4 +25,4 @@ export ORIENT_HOME
 
 # Only set ORIENT_HOME if not already set correctly
 
-java -client -jar $ORIENT_HOME/lib/orient-database-tools.jar
+java -client -jar $ORIENT_HOME/lib/orient-database-tools.jar $*
