@@ -45,7 +45,7 @@ done
 PRGDIR=`dirname "$PRG"`
 
 # Only set ORIENT_HOME if not already set
-[ -z "$ORIENT_HOME" ] && ORIENT_HOME=`cd "$PRGDIR/.." ; pwd`
+[ -f "$ORIENT_HOME"/lib/orient-database-server.jar ] || ORIENT_HOME=`cd "$PRGDIR/.." ; pwd`
 export ORIENT_HOME
 
 CONFIG_FILE=$ORIENT_HOME/config/orient-server-config.xml
