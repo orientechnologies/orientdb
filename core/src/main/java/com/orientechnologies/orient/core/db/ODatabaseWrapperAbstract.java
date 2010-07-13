@@ -124,6 +124,11 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase, REC extends
 		return underlying.addPhysicalCluster(iClusterName, iClusterFileName, iStartSize);
 	}
 
+	public int addPhysicalCluster(final String iClusterName) {
+		checkOpeness();
+		return underlying.addPhysicalCluster(iClusterName, iClusterName, -1);
+	}
+
 	public int addDataSegment(final String iSegmentName, final String iSegmentFileName) {
 		checkOpeness();
 		return underlying.addDataSegment(iSegmentName, iSegmentFileName);
