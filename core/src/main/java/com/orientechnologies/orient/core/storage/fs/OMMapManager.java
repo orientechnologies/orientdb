@@ -26,6 +26,8 @@ import com.orientechnologies.common.profiler.OProfiler;
 public class OMMapManager {
 	public static final int											DEF_BLOCK_SIZE	= 1500000;
 	private static final int										MAX_MEMORY			= 100000000;
+	private static final int										FORCE_DELAY			= 500;
+	private static final int										FORCE_RETRY			= 5;
 
 	private static int													totalMemory;
 
@@ -67,13 +69,13 @@ public class OMMapManager {
 					entry = it.next();
 					if (!entry.pin) {
 						// FORCE THE WRITE OF THE BUFFER
-						for (int i = 0; i < 3; ++i) {
+						for (int i = 0; i < FORCE_RETRY; ++i) {
 							try {
 								entry.buffer.force();
 							} catch (Exception e) {
 								OLogManager.instance().error(entry.buffer, "Can't write memory buffer to disk. Retrying...");
 								try {
-									Thread.sleep(500);
+									Thread.sleep(FORCE_DELAY);
 								} catch (InterruptedException e1) {
 								}
 							}
