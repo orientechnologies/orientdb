@@ -5,6 +5,14 @@ rem
 rem Guess ORIENT_HOME if not defined
 set CURRENT_DIR=%cd%
 
+if exist "%JAVA_HOME%\bin\java.exe" goto setJavaHome
+set JAVA="java"
+goto okJava
+
+:setJavaHome
+set JAVA="%JAVA_HOME%\bin\java"
+
+:okJava
 if not "%ORIENT_HOME%" == "" goto gotHome
 set ORIENT_HOME=%CURRENT_DIR%
 if exist "%ORIENT_HOME%\bin\console.bat" goto okHome
@@ -30,6 +38,6 @@ goto setArgs
 
 :doneSetArgs
 
-call "%JAVA_HOME%\bin\java" -client -jar "%ORIENT_HOME%\lib\orient-database-tools.jar" %CMD_LINE_ARGS%
+call %JAVA% -client -jar "%ORIENT_HOME%\lib\orient-database-tools.jar" %CMD_LINE_ARGS%
 
 :end
