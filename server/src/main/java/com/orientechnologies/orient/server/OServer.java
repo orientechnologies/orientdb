@@ -60,7 +60,6 @@ public class OServer {
 	protected OConfigurationLoaderXml													configurationLoader;
 	protected OServerConfiguration														configuration;
 	protected OServerShutdownHook															shutdownHook;
-
 	protected List<Object>																		handlers							= new ArrayList<Object>();
 	protected Map<String, Class<? extends ONetworkProtocol>>	protocols							= new HashMap<String, Class<? extends ONetworkProtocol>>();
 	protected List<OServerNetworkListener>										listeners							= new ArrayList<OServerNetworkListener>();
@@ -159,29 +158,6 @@ public class OServer {
 		return threadGroup;
 	}
 
-	protected void loadConfiguration() {
-		try {
-			String config = DEFAULT_CONFIG_FILE;
-			if (System.getProperty(PROPERTY_CONFIG_FILE) != null)
-				config = System.getProperty(PROPERTY_CONFIG_FILE);
-
-			configurationLoader = new OConfigurationLoaderXml(OServerConfiguration.class, config);
-			configuration = configurationLoader.load();
-
-			if (configuration.users != null && configuration.users.length > 0) {
-				for (OServerUserConfiguration u : configuration.users) {
-					if (u.name.equals(SRV_ROOT_ADMIN))
-						// FOUND
-						return;
-				}
-			}
-
-			createAdminUser();
-		} catch (IOException e) {
-			OLogManager.instance().error(this, "Error on reading server configuration.", OConfigurationException.class);
-		}
-	}
-
 	/**
 	 * Authenticate a server user.
 	 * 
@@ -241,6 +217,29 @@ public class OServer {
 		return managedServer;
 	}
 
+	protected void loadConfiguration() {
+		try {
+			String config = DEFAULT_CONFIG_FILE;
+			if (System.getProperty(PROPERTY_CONFIG_FILE) != null)
+				config = System.getProperty(PROPERTY_CONFIG_FILE);
+
+			configurationLoader = new OConfigurationLoaderXml(OServerConfiguration.class, config);
+			configuration = configurationLoader.load();
+
+			if (configuration.users != null && configuration.users.length > 0) {
+				for (OServerUserConfiguration u : configuration.users) {
+					if (u.name.equals(SRV_ROOT_ADMIN))
+						// FOUND
+						return;
+				}
+			}
+
+			createAdminUser();
+		} catch (IOException e) {
+			OLogManager.instance().error(this, "Error on reading server configuration.", OConfigurationException.class);
+		}
+	}
+
 	private void createAdminUser() throws IOException {
 		configuration.users = new OServerUserConfiguration[1];
 
@@ -250,5 +249,4 @@ public class OServer {
 		configuration.users[0] = new OServerUserConfiguration(SRV_ROOT_ADMIN, encodedPassword, "*");
 		configurationLoader.save(configuration);
 	}
-
 }

@@ -15,20 +15,19 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
-import com.orientechnologies.orient.core.config.OEntryConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandDocumentAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedPatternAbstract;
 
-public class OServerCommandPostAction extends OServerCommandDocumentAbstract {
-	private static final String[]	NAMES	= { "POST|*.action", "GET|*.action" };
-
-	public OServerCommandPostAction(final OEntryConfiguration[] iParameters) {
+public class OServerCommandPostAction extends OServerCommandAuthenticatedPatternAbstract {
+	public OServerCommandPostAction(final OServerCommandConfiguration iConfig) {
+		super(iConfig);
 	}
 
 	public void execute(final OHttpRequest iRequest) throws Exception {
@@ -53,9 +52,5 @@ public class OServerCommandPostAction extends OServerCommandDocumentAbstract {
 		}
 
 		sendTextContent(iRequest, 201, OHttpUtils.STATUS_OK_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN, doc.getIdentity());
-	}
-
-	public String[] getNames() {
-		return NAMES;
 	}
 }

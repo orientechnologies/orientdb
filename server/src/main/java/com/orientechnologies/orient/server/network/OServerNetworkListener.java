@@ -24,7 +24,6 @@ import java.net.Socket;
 import java.net.SocketException;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.config.OEntryConfiguration;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
@@ -55,10 +54,11 @@ public class OServerNetworkListener extends Thread {
 			Constructor<OServerCommand> c;
 			for (int i = 0; i < iCommands.length; ++i) {
 				try {
-					c = (Constructor<OServerCommand>) Class.forName(iCommands[i].implementation).getConstructor(OEntryConfiguration[].class);
-					commands[0] = (OServerCommand) c.newInstance(new Object[] { (Object[]) iCommands[i].parameters });
+					c = (Constructor<OServerCommand>) Class.forName(iCommands[i].implementation).getConstructor(
+							OServerCommandConfiguration.class);
+					commands[0] = (OServerCommand) c.newInstance(new Object[] { iCommands[i] });
 				} catch (Exception e) {
-					throw new IllegalArgumentException("Can't create custom command '" + iCommands[i].implementation + "'", e);
+					throw new IllegalArgumentException("Can't create custom command '" + iCommands[i] + "'", e);
 				}
 			}
 		}

@@ -24,8 +24,10 @@ import javax.xml.bind.annotation.XmlType;
 import com.orientechnologies.orient.core.config.OEntryConfiguration;
 
 @XmlRootElement(name = "command")
-@XmlType(propOrder = { "implementation", "parameters" })
+@XmlType(propOrder = { "pattern", "implementation", "parameters" })
 public class OServerCommandConfiguration {
+	@XmlAttribute(required = true)
+	public String									pattern;
 
 	@XmlAttribute(required = true)
 	public String									implementation;

@@ -10,7 +10,7 @@
 			<listener protocol="binary" port-range="2424-2430" ip-address="127.0.0.1" />
 			<listener protocol="http" port-range="2480-2490" ip-address="127.0.0.1">
 				<commands>
-					<command implementation="com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostAction">
+					<command pattern="POST|*.action GET|*.action" implementation="com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostAction">
 						<parameters>
 						</parameters>
 					</command>

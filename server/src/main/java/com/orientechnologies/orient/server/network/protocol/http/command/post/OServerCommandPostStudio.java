@@ -83,6 +83,8 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 				executeDocument(iRequest, db, operation, rid, className, fields);
 			else if ("classes".equals(context))
 				executeClasses(iRequest, db, operation, rid, className, fields);
+			else if ("clusters".equals(context))
+				executeClusters(iRequest, db, operation, rid, className, fields);
 			else if ("classProperties".equals(context))
 				executeClassProperties(iRequest, db, operation, rid, className, fields);
 
@@ -129,8 +131,8 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 
 				db.getMetadata().getSchema().save();
 
-				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Property "
-						+ fields.get("name") + " created successfully with id=" + prop.getId());
+				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN,
+						"Property " + fields.get("name") + " created successfully with id=" + prop.getId());
 
 			} catch (Exception e) {
 				sendTextContent(iRequest, OHttpUtils.STATUS_ERROR, "Error on creating a new property in class " + rid + ": " + e, null,
@@ -143,8 +145,8 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 
 			db.getMetadata().getSchema().save();
 
-			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Property "
-					+ fields.get("name") + " deleted successfully.");
+			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN,
+					"Property " + fields.get("name") + " deleted successfully.");
 		}
 	}
 
@@ -169,6 +171,36 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 			}
 		} else if ("del".equals(operation)) {
 			iRequest.data.commandInfo = "Studio delete class";
+
+			db.getMetadata().getSchema().removeClass(rid);
+			db.getMetadata().getSchema().save();
+
+			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Class '" + rid
+					+ "' deleted successfully.");
+		}
+	}
+
+	private void executeClusters(final OHttpRequest iRequest, final ODatabaseDocumentTx db, final String operation, final String rid,
+			final String iClusterName, final Map<String, String> fields) throws IOException {
+		if ("add".equals(operation)) {
+			iRequest.data.commandInfo = "Studio add cluster";
+
+			// int defCluster = fields.get("defaultCluster") != null ? Integer.parseInt(fields.get("defaultCluster")) : db
+			// .getDefaultClusterId();
+
+			try {
+				final OClass cls = db.getMetadata().getSchema().createClass(fields.get("name"));
+				db.getMetadata().getSchema().save();
+
+				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Class '" + rid
+						+ "' created successfully with id=" + cls.getId());
+
+			} catch (Exception e) {
+				sendTextContent(iRequest, OHttpUtils.STATUS_ERROR, "Error on creating the new class '" + rid + "': " + e, null,
+						OHttpUtils.CONTENT_TEXT_PLAIN, "Error on creating the new class '" + rid + "': " + e);
+			}
+		} else if ("del".equals(operation)) {
+			iRequest.data.commandInfo = "Studio delete cluster";
 
 			db.getMetadata().getSchema().removeClass(rid);
 			db.getMetadata().getSchema().save();
