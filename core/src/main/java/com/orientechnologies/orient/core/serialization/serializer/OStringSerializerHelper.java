@@ -42,6 +42,9 @@ public abstract class OStringSerializerHelper {
 		if (iValue == null)
 			return null;
 
+		if (iType == null)
+			throw new IllegalArgumentException("Can't unmarshall value because the type is not specified. Value: " + iValue);
+
 		switch (iType) {
 		case STRING:
 			if (iValue instanceof String) {

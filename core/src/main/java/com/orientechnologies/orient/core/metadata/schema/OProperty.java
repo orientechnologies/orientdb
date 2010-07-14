@@ -35,22 +35,23 @@ import com.orientechnologies.orient.core.storage.OStorage;
 @SuppressWarnings("unchecked")
 public class OProperty extends OSchemaRecord {
 
-	private OClass	owner;
+	private OClass						owner;
 
-	private int			id;
-	private String	name;
-	private OType		type;
-	private int			offset;
+	private int								id;
+	private String						name;
+	private OType							type;
+	private int								offset;
 
-	private OType		linkedType;
-	private OClass	linkedClass;
+	private OType							linkedType;
+	private OClass						linkedClass;
+	transient private String	linkedClassName;
 
-	private OIndex	index;
+	private OIndex						index;
 
-	private boolean	mandatory;
-	private boolean	notNull;
-	private String	min;
-	private String	max;
+	private boolean						mandatory;
+	private boolean						notNull;
+	private String						min;
+	private String						max;
 
 	/**
 	 * Constructor used in unmarshalling.
@@ -87,7 +88,14 @@ public class OProperty extends OSchemaRecord {
 		return id;
 	}
 
+	/**
+	 * Returns the linked class in lazy mode because while unmarshalling the class could be not loaded yet.
+	 * 
+	 * @return
+	 */
 	public OClass getLinkedClass() {
+		if (linkedClass == null && linkedClassName != null)
+			linkedClass = owner.owner.getClass(linkedClassName);
 		return linkedClass;
 	}
 
@@ -108,7 +116,7 @@ public class OProperty extends OSchemaRecord {
 		min = iSource.field("min");
 		max = iSource.field("max");
 
-		linkedClass = owner.owner.getClass((String) iSource.field("linkedClass"));
+		linkedClassName = (String) iSource.field("linkedClass");
 		if (iSource.field("linkedType") != null)
 			linkedType = OType.getById(((Long) iSource.field("linkedType")).byteValue());
 
