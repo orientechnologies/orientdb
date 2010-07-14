@@ -290,22 +290,12 @@ public class OClass extends OSchemaRecord {
 		baseClasses.add(iBaseClass);
 
 		// ADD DIFFERENT CLUSTER IDS TO THE "POLYMORPHIC CLUSTER IDS" ARRAY
-		boolean found;
-		for (int i : iBaseClass.clusterIds) {
-			found = false;
-			for (int k : clusterIds) {
-				if (i == k) {
-					found = true;
-					break;
-				}
-			}
-
-			if (!found) {
-				// ADD IT
-				polymorphicClusterIds = Arrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length + 1);
-				polymorphicClusterIds[polymorphicClusterIds.length - 1] = i;
-			}
+		OClass currentClass = iBaseClass;
+		while (currentClass != null) {
+			addPolymorphicClusterIds(currentClass);
+			currentClass = currentClass.getSuperClass();
 		}
+		
 		return this;
 	}
 
@@ -337,5 +327,27 @@ public class OClass extends OSchemaRecord {
 		} else if (!owner.equals(other.owner))
 			return false;
 		return true;
+	}
+
+	/**
+	 * Add different cluster ids to the "polymorphic cluster ids" array.
+	 */
+	private void addPolymorphicClusterIds(final OClass iBaseClass) {
+		boolean found;
+		for (int i : iBaseClass.clusterIds) {
+			found = false;
+			for (int k : clusterIds) {
+				if (i == k) {
+					found = true;
+					break;
+				}
+			}
+
+			if (!found) {
+				// ADD IT
+				polymorphicClusterIds = Arrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length + 1);
+				polymorphicClusterIds[polymorphicClusterIds.length - 1] = i;
+			}
+		}
 	}
 }
