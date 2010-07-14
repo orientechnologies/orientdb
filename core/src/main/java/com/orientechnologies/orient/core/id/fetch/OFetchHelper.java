@@ -79,7 +79,8 @@ public class OFetchHelper {
 			if (depthLevel == null)
 				// NO SPECIFIED: ASSIGN DEFAULT LEVEL TAKEN FROM * WILDCARD IF ANY
 				depthLevel = anyFieldDepthLevel;
-			else if (depthLevel == 0)
+
+			if (depthLevel == 0)
 				// NO FETCH THIS FIELD PLEASE
 				continue;
 
@@ -104,11 +105,11 @@ public class OFetchHelper {
 			} else if (fieldValue instanceof Collection<?>) {
 				final Collection<ODocument> linked = (Collection<ODocument>) fieldValue;
 				userObject = iListener.fetchLinked(iRootRecord, iUserObject, fieldName, linked);
-//				for (ODocument d : linked) {
-//					if (userObject != null)
-//						// GO RECURSIVELY
-//						fetch(d, userObject, iFetchPlan, fieldName, currentLevel, iMaxFetch, iListener);
-//				}
+				// for (ODocument d : linked) {
+				// if (userObject != null)
+				// // GO RECURSIVELY
+				// fetch(d, userObject, iFetchPlan, fieldName, currentLevel, iMaxFetch, iListener);
+				// }
 			}
 
 			if (iMaxFetch > -1 && iListener.size() >= iMaxFetch)
