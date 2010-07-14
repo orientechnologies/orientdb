@@ -42,7 +42,7 @@ public class OClientConnectionManager {
 
 		handlers.put(iConnection.id, iConnection.protocol);
 
-		OLogManager.instance().info(this, "Remote client connected from: " + iConnection);
+		OLogManager.instance().config(this, "Remote client connected from: " + iConnection);
 	}
 
 	public OClientConnection getConnection(final String iChannelId) {

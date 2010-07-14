@@ -47,8 +47,8 @@ public class OLogManager {
 
 		final Logger log = iRequester != null ? Logger.getLogger(iRequester.getClass().getName()) : Logger.getAnonymousLogger();
 
-		// if (!log.isLoggable(iLevel))
-		// return;
+		if (!log.isLoggable(iLevel))
+			return;
 
 		final StringBuilder buffer = new StringBuilder();
 		buffer.append('\n');
