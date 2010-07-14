@@ -16,15 +16,19 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.id.ORID;
 
 /**
  * GraphDB Node.
  */
 public class OArc extends ODocument {
-	public static final byte		RECORD_TYPE	= 'a';
-	private static final String	CLASS_NAME		= "Arc";
+	private static final String	CLASS_NAME	= "Arc";
 	private static final String	SOURCE			= "source";
 	private static final String	DESTINATION	= "destination";
+
+	public OArc(final ODatabaseRecord<?> iDatabase, final ORID iRID) {
+		super(iDatabase, iRID);
+	}
 
 	public OArc(final ODatabaseRecord<?> iDatabase) {
 		super(iDatabase, CLASS_NAME);

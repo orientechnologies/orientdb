@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.graph;
 
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -30,17 +31,25 @@ public class ODatabaseGraphTx extends ODatabaseDocumentTx {
 
 	public ODatabaseGraphTx(String iURL) {
 		super(iURL);
+	}
 
-		if (!getMetadata().getSchema().existsClass("Node")) {
-			final OClass node = getMetadata().getSchema().createClass("Node", addPhysicalCluster("Node"));
-			final OClass arc = getMetadata().getSchema().createClass("Arc", addPhysicalCluster("Arc"));
+	@SuppressWarnings("unchecked")
+	@Override
+	public <THISDB extends ODatabase> THISDB open(String iUserName, String iUserPassword) {
+		super.open(iUserName, iUserPassword);
+
+		if (!getMetadata().getSchema().existsClass("ONode")) {
+			final OClass node = getMetadata().getSchema().createClass("ONode", addPhysicalCluster("ONode"));
+			final OClass arc = getMetadata().getSchema().createClass("OArc", addPhysicalCluster("OArc"));
 
 			arc.createProperty("from", OType.LINK, node);
 			arc.createProperty("to", OType.LINK, node);
-			node.createProperty("arcs", OType.EMBEDDEDMAP, arc);
+			node.createProperty("arcs", OType.EMBEDDEDLIST, arc);
 
 			getMetadata().getSchema().save();
 		}
+
+		return (THISDB) this;
 	}
 
 	public ONode createNode() {

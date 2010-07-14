@@ -19,13 +19,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.id.ORID;
 
 /**
  * GraphDB Node.
  */
 public class ONode extends ODocument {
-	public static final byte		RECORD_TYPE	= 'g';
 	private static final String	CLASS_NAME	= "Node";
+
+	public ONode(final ODatabaseRecord<?> iDatabase, final ORID iRID) {
+		super(iDatabase, iRID);
+	}
 
 	public ONode(final ODatabaseRecord<?> iDatabase) {
 		super(iDatabase, CLASS_NAME);
@@ -44,18 +48,27 @@ public class ONode extends ODocument {
 			throw new IllegalArgumentException("Missed 'to' Arc property");
 
 		final OArc arc = new OArc(getDatabase(), this, iToNode);
-
-		List<ODocument> arcs = field("arcs");
-		if (arcs == null) {
-			arcs = new ArrayList<ODocument>();
-			field("arcs", arcs);
-		}
-
-		arcs.add(arc);
+		getArcs().add(arc);
 		return arc;
 	}
 
-	public List<OArc> getLinks() {
-		return field("arcs");
+	/**
+	 * Returns the arcs of current node. If there are no arcs, then an empty list is returned.
+	 */
+	public List<OArc> getArcs() {
+		List<OArc> arcs = field("arcs");
+
+		if (arcs == null) {
+			arcs = new ArrayList<OArc>();
+			field("arcs", arcs);
+		}
+
+		return arcs;
 	}
+
+	@Override
+	public byte getRecordType() {
+		return RECORD_TYPE;
+	}
+
 }

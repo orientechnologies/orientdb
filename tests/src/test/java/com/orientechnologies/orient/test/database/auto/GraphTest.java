@@ -17,12 +17,14 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.util.Date;
 
+import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.graph.ODatabaseGraphTx;
+import com.orientechnologies.orient.core.record.impl.OArc;
 import com.orientechnologies.orient.core.record.impl.ONode;
 
 @Test(sequential = true)
@@ -41,8 +43,10 @@ public class GraphTest {
 	public void populate() {
 		database.open("admin", "admin");
 
+		ONode rootNode = database.createNode().set("id", 0);
 		ONode newNode;
-		ONode currentNode = database.createNode().set("id", 0);
+		ONode currentNode = rootNode;
+		database.setRoot("test", currentNode);
 
 		for (int i = 1; i <= TOT_RECORDS; ++i) {
 
@@ -51,6 +55,28 @@ public class GraphTest {
 
 			currentNode = newNode;
 		}
+
+		rootNode.save();
+
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "populate")
+	public void checkPopulation() {
+		database.open("admin", "admin");
+
+		int counter = 0;
+		ONode currentNode = database.getRoot("test");
+		while (!currentNode.getArcs().isEmpty()) {
+			Assert.assertEquals(((Number) currentNode.get("id")).intValue(), counter);
+
+			for (OArc arc : currentNode.getArcs()) {
+				counter++;
+				currentNode = arc.getDestination();
+			}
+		}
+
+		Assert.assertEquals(counter, TOT_RECORDS);
 
 		database.close();
 	}
