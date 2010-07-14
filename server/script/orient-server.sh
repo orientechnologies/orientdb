@@ -49,8 +49,9 @@ PRGDIR=`dirname "$PRG"`
 export ORIENT_HOME
 
 CONFIG_FILE=$ORIENT_HOME/config/orient-server-config.xml
+LOG_FILE=$ORIENT_HOME/config/orient-server-log.properties
 LOG_LEVEL=warning
 WWW_PATH=$ORIENT_HOME/www
 #JAVA_OPTS=-Xms1024m -Xmx1024m
 
-java -server $JAVA_OPTS -XX:+UseParallelGC -XX:+AggressiveOpts -XX:CompileThreshold=200 -Dorient.config.file="$CONFIG_FILE" -Dorient.www.path="$WWW_PATH" -Dorient.log.level=$LOG_LEVEL -jar $ORIENT_HOME/lib/orient-database-server.jar
+java -server $JAVA_OPTS -XX:+UseParallelGC -XX:+AggressiveOpts -XX:CompileThreshold=200 -Djava.util.logging.config.file="$LOG_FILE" -Dorient.config.file="$CONFIG_FILE" -Dorient.www.path="$WWW_PATH" -Dorient.log.level=$LOG_LEVEL -jar "$ORIENT_HOME/lib/orient-database-server.jar"

@@ -104,7 +104,7 @@ public class OServerNetworkListener extends Thread {
 				serverSocket = new java.net.ServerSocket(port);
 
 				if (serverSocket.isBound()) {
-					OLogManager.instance().config(this,
+					OLogManager.instance().info(this,
 							"Listening " + iProtocolName + " connections on " + inboundAddr.getHostName() + ":" + inboundAddr.getPort());
 					return;
 				}

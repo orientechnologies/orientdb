@@ -88,7 +88,7 @@ public class OServer {
 
 	@SuppressWarnings("unchecked")
 	public void startup() throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-		OLogManager.instance().config(this, "Orient Database Server v" + OConstants.ORIENT_VERSION + " is starting up...");
+		OLogManager.instance().info(this, "Orient Database Server v" + OConstants.ORIENT_VERSION + " is starting up...");
 
 		loadConfiguration();
 
@@ -113,11 +113,11 @@ public class OServer {
 			listeners.add(new OServerNetworkListener(l.ipAddress, l.portRange, l.protocol, protocols.get(l.protocol), l.commands));
 		}
 
-		OLogManager.instance().config(this, "Orient Database Server v" + OConstants.ORIENT_VERSION + " is active.");
+		OLogManager.instance().info(this, "Orient Database Server v" + OConstants.ORIENT_VERSION + " is active.");
 	}
 
 	public void shutdown() {
-		OLogManager.instance().config(this, "Orient Database Server is shutdowning...");
+		OLogManager.instance().info(this, "Orient Database Server is shutdowning...");
 
 		try {
 			lock.writeLock().lock();
@@ -134,7 +134,7 @@ public class OServer {
 			lock.writeLock().unlock();
 		}
 
-		OLogManager.instance().config(this, "Orient Database Server shutdown complete");
+		OLogManager.instance().info(this, "Orient Database Server shutdown complete");
 	}
 
 	public String getStoragePath(final String iName) {

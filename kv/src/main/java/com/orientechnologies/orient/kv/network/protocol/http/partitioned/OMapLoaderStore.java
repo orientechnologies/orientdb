@@ -30,14 +30,14 @@ import com.orientechnologies.orient.kv.network.protocol.http.command.OKVServerCo
 
 public class OMapLoaderStore implements MapLoader<String, String>, MapStore<String, String> {
 	public OMapLoaderStore() {
-		OLogManager.instance().config(this, "OMapLoaderStore started");
+		OLogManager.instance().info(this, "OMapLoaderStore started");
 	}
 
 	/**
 	 * Load the record using the local storage.
 	 */
 	public String load(final String iKey) {
-		OLogManager.instance().config(this, "Loading entry from database: %s", iKey);
+		OLogManager.instance().debug(this, "Loading entry from database: %s", iKey);
 
 		ODatabaseBinary db = null;
 
@@ -65,7 +65,7 @@ public class OMapLoaderStore implements MapLoader<String, String>, MapStore<Stri
 	 * Store the record in the local storage.
 	 */
 	public void store(final String iKey, final String iValue) {
-		OLogManager.instance().config(this, "Saving entry into database: %s", iKey);
+		OLogManager.instance().debug(this, "Saving entry into database: %s", iKey);
 
 		ODatabaseBinary db = null;
 
@@ -92,7 +92,7 @@ public class OMapLoaderStore implements MapLoader<String, String>, MapStore<Stri
 	 * Delete a record from the local storage.
 	 */
 	public void delete(final String iKey) {
-		OLogManager.instance().config(this, "Deleting entry into database: %s", iKey);
+		OLogManager.instance().debug(this, "Deleting entry into database: %s", iKey);
 
 		ODatabaseBinary db = null;
 

@@ -41,16 +41,16 @@ import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
 public class OServerClusterMember implements InstanceListener, MembershipListener, MigrationListener {
 
 	public OServerClusterMember() {
-		OLogManager.instance().config(this, "Orient Server starting cluster...");
+		OLogManager.instance().info(this, "Orient Server starting cluster...");
 		Hazelcast.addInstanceListener(this);
 		Hazelcast.getPartitionService().addMigrationListener(this);
 
 		for (OServerStorageConfiguration stg : OServerMain.server().getConfiguration().storages) {
-			OLogManager.instance().config(this, "- Registering distributed database: " + stg.name);
+			OLogManager.instance().info(this, "- Registering distributed database: " + stg.name);
 			Hazelcast.getMap(stg.name);
 		}
 
-		OLogManager.instance().config(this, "Orient Server cluster started successfully");
+		OLogManager.instance().info(this, "Orient Server cluster started successfully");
 	}
 
 	public void instanceCreated(InstanceEvent iEvent) {
@@ -62,11 +62,11 @@ public class OServerClusterMember implements InstanceListener, MembershipListene
 	}
 
 	public void memberAdded(MembershipEvent iEvent) {
-		OLogManager.instance().config(this, "Orient Server member added: %s", iEvent);
+		OLogManager.instance().info(this, "Orient Server member added: %s", iEvent);
 	}
 
 	public void memberRemoved(MembershipEvent iEvent) {
-		OLogManager.instance().config(this, "Orient Server member removed: %s", iEvent);
+		OLogManager.instance().info(this, "Orient Server member removed: %s", iEvent);
 	}
 
 	public void migrationStarted(MigrationEvent iEvent) {
