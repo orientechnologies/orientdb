@@ -135,13 +135,15 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 		return true;
 	}
 
+	protected void checkForLoading() {
+		if (_status == STATUS.NOT_LOADED)
+			load();
+	}
+
 	@Override
 	protected void checkForFields() {
 		if (_fieldValues == null)
 			_fieldValues = new LinkedHashMap<String, T>();
-
-		if (_status == STATUS.NOT_LOADED)
-			load();
 
 		if (_status == STATUS.LOADED && (_fieldValues == null || size() == 0))
 			// POPULATE FIELDS LAZY

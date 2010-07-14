@@ -37,7 +37,7 @@ public class SQLUpdateTest {
 		database.open("admin", "admin");
 
 		Integer records = (Integer) database.command(
-				new OCommandSQL("update Profile set salary = 120.30, location = -3:2, salary_cloned = salary where surname = 'Obama'"))
+				new OCommandSQL("update Profile set salary = 120.30, location = 3:2, salary_cloned = salary where surname = 'Obama'"))
 				.execute();
 
 		Assert.assertEquals(records.intValue(), 3);

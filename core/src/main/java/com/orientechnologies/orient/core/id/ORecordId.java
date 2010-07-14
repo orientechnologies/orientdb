@@ -90,6 +90,9 @@ public class ORecordId implements ORID {
 	}
 
 	private void checkClusterLimits() {
+		if (clusterId < -1)
+			throw new ODatabaseException("RecordId can't support negative cluster id. You've used: " + clusterId);
+
 		if (clusterId > CLUSTER_MAX)
 			throw new ODatabaseException("RecordId can't support cluster id major than 32767. You've used: " + clusterId);
 	}

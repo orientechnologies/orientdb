@@ -230,6 +230,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 * Returns the array of field names.
 	 */
 	public String[] fieldNames() {
+		checkForLoading();
 		checkForFields();
 
 		String[] result = new String[_fieldValues.keySet().size()];
@@ -240,6 +241,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 * Returns the array of field values.
 	 */
 	public Object[] fieldValues() {
+		checkForLoading();
 		checkForFields();
 
 		Object[] result = new Object[_fieldValues.values().size()];
@@ -254,6 +256,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 * @return field value if defined, otherwise null
 	 */
 	public <RET> RET field(final String iPropertyName) {
+		checkForLoading();
 		checkForFields();
 
 		int separatorPos = iPropertyName.indexOf('.');
@@ -329,6 +332,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 * @return The Record instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	public ODocument field(final String iPropertyName, Object iPropertyValue, OType iType) {
+		checkForLoading();
 		checkForFields();
 
 		boolean knownProperty = _fieldValues.containsKey(iPropertyName);
@@ -414,6 +418,8 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 * Removes a field.
 	 */
 	public ORecordSchemaAware<Object> removeField(final String iPropertyName) {
+		checkForLoading();
+		checkForFields();
 		_fieldValues.remove(iPropertyName);
 		return this;
 	}
