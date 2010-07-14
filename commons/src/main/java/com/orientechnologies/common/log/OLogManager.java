@@ -45,7 +45,7 @@ public class OLogManager {
 		if (iMessage == null)
 			return;
 
-		final Logger log = Logger.getLogger(iRequester.getClass().getName());
+		final Logger log = iRequester != null ? Logger.getLogger(iRequester.getClass().getName()) : Logger.getAnonymousLogger();
 
 		// if (!log.isLoggable(iLevel))
 		// return;
