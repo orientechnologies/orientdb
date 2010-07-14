@@ -24,8 +24,8 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.graph.ODatabaseGraphTx;
-import com.orientechnologies.orient.core.record.impl.OArc;
-import com.orientechnologies.orient.core.record.impl.ONode;
+import com.orientechnologies.orient.core.db.graph.OGraphArc;
+import com.orientechnologies.orient.core.db.graph.OGraphNode;
 
 @Test(sequential = true)
 public class GraphTest {
@@ -43,10 +43,10 @@ public class GraphTest {
 	public void populate() {
 		database.open("admin", "admin");
 
-		ONode rootNode = database.createNode().set("id", 0);
-		ONode newNode;
-		ONode currentNode = rootNode;
-		database.setRoot("test", currentNode);
+		OGraphNode rootNode = database.createNode().set("id", 0);
+
+		OGraphNode newNode;
+		OGraphNode currentNode = rootNode;
 
 		for (int i = 1; i <= TOT_RECORDS; ++i) {
 
@@ -56,7 +56,7 @@ public class GraphTest {
 			currentNode = newNode;
 		}
 
-		rootNode.save();
+		database.setRoot("test", rootNode);
 
 		database.close();
 	}
@@ -66,11 +66,11 @@ public class GraphTest {
 		database.open("admin", "admin");
 
 		int counter = 0;
-		ONode currentNode = database.getRoot("test");
+		OGraphNode currentNode = database.getRoot("test");
 		while (!currentNode.getArcs().isEmpty()) {
 			Assert.assertEquals(((Number) currentNode.get("id")).intValue(), counter);
 
-			for (OArc arc : currentNode.getArcs()) {
+			for (OGraphArc arc : currentNode.getArcs()) {
 				counter++;
 				currentNode = arc.getDestination();
 			}

@@ -66,7 +66,7 @@ public class OStreamSerializerAnyRecord implements OStreamSerializer {
 
 				if (params.length == 2 && params[0].isAssignableFrom(database.getClass()) && params[1].equals(ORID.class)) {
 					ORecord<?> rec = (ORecord<?>) c.newInstance(database, new ORecordId(content.toString()));
-					rec.load();
+//					rec.load();
 					return rec;
 				}
 			}

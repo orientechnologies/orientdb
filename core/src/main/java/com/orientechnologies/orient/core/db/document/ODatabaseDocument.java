@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public interface ODatabaseDocument extends ODatabaseRecord<ODocument>, ODatabaseSchemaAware<ODocument> {
 
 	/**
-	 * Browse all the records of the specified class.
+	 * Browses all the records of the specified class.
 	 * 
 	 * @param iClassName
 	 *          Class name to iterate
@@ -36,4 +36,14 @@ public interface ODatabaseDocument extends ODatabaseRecord<ODocument>, ODatabase
 	 */
 	public ORecordIteratorMultiCluster<ODocument> browseClass(String iClassName);
 
+	/**
+	 * Loads a record using a fetch plan.
+	 * 
+	 * @param iDocument
+	 *          Record to load
+	 * @param iFetchPlan
+	 *          Fetch plan used
+	 * @return The record received
+	 */
+	public ODocument load(ODocument iDocument, String iFetchPlan);
 }

@@ -19,7 +19,6 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ONode;
 
 /**
  * GraphDB implementation on top of Document Database.
@@ -38,9 +37,9 @@ public class ODatabaseGraphTx extends ODatabaseDocumentTx {
 	public <THISDB extends ODatabase> THISDB open(String iUserName, String iUserPassword) {
 		super.open(iUserName, iUserPassword);
 
-		if (!getMetadata().getSchema().existsClass("ONode")) {
-			final OClass node = getMetadata().getSchema().createClass("ONode", addPhysicalCluster("ONode"));
-			final OClass arc = getMetadata().getSchema().createClass("OArc", addPhysicalCluster("OArc"));
+		if (!getMetadata().getSchema().existsClass("OGraphNode")) {
+			final OClass node = getMetadata().getSchema().createClass("OGraphNode", addPhysicalCluster("OGraphNode"));
+			final OClass arc = getMetadata().getSchema().createClass("OGraphArc", addPhysicalCluster("OGraphArc"));
 
 			arc.createProperty("from", OType.LINK, node);
 			arc.createProperty("to", OType.LINK, node);
@@ -52,16 +51,20 @@ public class ODatabaseGraphTx extends ODatabaseDocumentTx {
 		return (THISDB) this;
 	}
 
-	public ONode createNode() {
-		return new ONode(this);
+	public OGraphNode createNode() {
+		return new OGraphNode(this);
 	}
 
-	public ONode getRoot(final String iName) {
-		return (ONode) getDictionary().get(iName);
+	public OGraphNode getRoot(final String iName) {
+		return new OGraphNode(getDictionary().get(iName));
 	}
 
-	public ODatabaseGraphTx setRoot(final String iName, final ONode iNode) {
-		getDictionary().put(iName, iNode);
+	public OGraphNode getRoot(final String iName, final String iFetchPlan) {
+		return new OGraphNode(getDictionary().get(iName), iFetchPlan);
+	}
+
+	public ODatabaseGraphTx setRoot(final String iName, final OGraphNode iNode) {
+		getDictionary().put(iName, iNode.getDocument());
 		return this;
 	}
 }

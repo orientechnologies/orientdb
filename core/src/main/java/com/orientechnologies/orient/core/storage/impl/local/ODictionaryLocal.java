@@ -48,7 +48,7 @@ public class ODictionaryLocal<T extends Object> implements ODictionaryInternal<T
 	}
 
 	public T get(final Object iKey, final String iFetchPlan) {
-		return get(iKey, null);
+		return tree.get(iKey, iFetchPlan);
 	}
 
 	public T get(final Object iKey) {

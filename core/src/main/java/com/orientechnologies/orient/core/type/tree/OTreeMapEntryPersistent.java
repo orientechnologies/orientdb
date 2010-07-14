@@ -69,7 +69,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	 * @param iPosition
 	 *          Current position
 	 */
-	public OTreeMapEntryPersistent(OTreeMapEntry<K, V> iParent, int iPosition) {
+	public OTreeMapEntryPersistent(final OTreeMapEntry<K, V> iParent, final int iPosition) {
 		super(iParent, iPosition);
 		pTree = (OTreeMapPersistent<K, V>) tree;
 
@@ -101,8 +101,8 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	 * @param iRecordId
 	 *          Record to unmarshall
 	 */
-	public OTreeMapEntryPersistent(OTreeMapPersistent<K, V> iTree, OTreeMapEntryPersistent<K, V> iParent, ORID iRecordId)
-			throws IOException {
+	public OTreeMapEntryPersistent(final OTreeMapPersistent<K, V> iTree, final OTreeMapEntryPersistent<K, V> iParent,
+			final ORID iRecordId) throws IOException {
 		super(iTree);
 		pTree = iTree;
 		record = new ORecordBytes();

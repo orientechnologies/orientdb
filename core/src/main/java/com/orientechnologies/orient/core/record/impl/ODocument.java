@@ -27,7 +27,9 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -157,6 +159,26 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	}
 
 	/**
+	 * Loads the record using a fetch plan.
+	 */
+	public ODocument load(final String iFetchPlan) {
+		if (_database == null)
+			throw new ODatabaseException("No database assigned to current record");
+
+		Object result = null;
+		try {
+			result = ((ODatabaseDocument) _database).load(this, iFetchPlan);
+		} catch (Exception e) {
+			throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found", e);
+		}
+
+		if (result == null)
+			throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found");
+
+		return this;
+	}
+
+	/**
 	 * Dumps the instance as string.
 	 */
 	@Override
@@ -253,13 +275,9 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			return (RET) linkedRecord.field(iPropertyName.substring(separatorPos + 1));
 		}
 
-		RET value = (RET) _fieldValues.get(iPropertyName);
+		final RET value = (RET) _fieldValues.get(iPropertyName);
 
-		if (value instanceof ORecord<?>) {
-			// RELATION X->1
-			// lazyLoadRecord((ORecord<?>) value);
-
-		} else if (value instanceof Collection<?>) {
+		if (value instanceof Collection<?>) {
 			// RELATION 1-N
 			Collection<?> coll = (Collection<?>) value;
 			if (coll.size() > 0) {

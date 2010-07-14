@@ -60,6 +60,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 	protected final String															clusterName;
 	protected ORecordBytes															record;
+	protected String																		fetchPlan;
 
 	public OTreeMapPersistent(final String iClusterName, final ORID iRID) {
 		this(iClusterName, null, null);
@@ -217,7 +218,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 		}
 	}
 
-	public OSerializableStream fromStream(byte[] iStream) throws IOException {
+	public OSerializableStream fromStream(final byte[] iStream) throws IOException {
 		final long timer = OProfiler.getInstance().startChrono();
 		try {
 			OMemoryInputStream stream = new OMemoryInputStream(iStream);
@@ -274,11 +275,11 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 		}
 	}
 
-	public void signalTreeChanged(OTreeMap<K, V> iTree) {
+	public void signalTreeChanged(final OTreeMap<K, V> iTree) {
 		record.setDirty();
 	}
 
-	public void signalNodeChanged(OTreeMapEntry<K, V> iNode) {
+	public void signalNodeChanged(final OTreeMapEntry<K, V> iNode) {
 		recordsToCommit.add((OTreeMapEntryPersistent<K, V>) iNode);
 	}
 
@@ -299,19 +300,24 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 	}
 
 	@Override
-	public V get(Object key) {
+	public V get(final Object iKey) {
 		lock.acquireSharedLock();
 
 		try {
-			return super.get(key);
+			return super.get(iKey);
 
 		} finally {
 			lock.releaseSharedLock();
 		}
 	}
 
+	public V get(final Object iKey, final String iFetchPlan) {
+		fetchPlan = iFetchPlan;
+		return get(iKey);
+	}
+
 	@Override
-	public boolean containsKey(Object key) {
+	public boolean containsKey(final Object key) {
 		lock.acquireSharedLock();
 
 		try {
@@ -323,7 +329,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 	}
 
 	@Override
-	public boolean containsValue(Object value) {
+	public boolean containsValue(final Object value) {
 		lock.acquireSharedLock();
 
 		try {
@@ -372,6 +378,14 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 	public String getClusterName() {
 		return clusterName;
+	}
+
+	public String getFetchPlan() {
+		return fetchPlan;
+	}
+
+	public void setFetchPlan(String fetchPlan) {
+		this.fetchPlan = fetchPlan;
 	}
 
 	private V internalPut(final K key, final V value) {

@@ -41,8 +41,15 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
 	public ODocument newInstance(final String iClassName) {
 		checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, iClassName);
-
 		return new ODocument(this, iClassName);
+	}
+
+	/**
+	 * Loads a record using a fetch plan.
+	 */
+	public ODocument load(final ODocument iDocument, final String iFetchPlan) {
+		// TODO
+		return super.load(iDocument);
 	}
 
 	public ORecordIteratorMultiCluster<ODocument> browseClass(final String iClassName) {
