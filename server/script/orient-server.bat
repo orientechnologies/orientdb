@@ -64,10 +64,11 @@ goto setArgs
 
 :doneSetArgs
 set CONFIG_FILE=%ORIENT_HOME%/config/orient-server-config.xml
+set LOG_FILE=%ORIENT_HOME%/config/orient-server-log.properties
 set LOG_LEVEL=warning
 set WWW_PATH=%ORIENT_HOME%/www
 REM set JAVA_OPTS=-Xms1024m -Xmx1024m
 
-call %JAVA% -server %JAVA_OPTS% -XX:+UseParallelGC -XX:+AggressiveOpts -XX:CompileThreshold=200 -Dorient.config.file="%CONFIG_FILE%" -Dorient.www.path="%WWW_PATH%" -Dorient.log.level=%LOG_LEVEL% -jar "%ORIENT_HOME%\lib\orient-database-server.jar" %CMD_LINE_ARGS%
+call %JAVA% -server %JAVA_OPTS% -XX:+UseParallelGC -XX:+AggressiveOpts -XX:CompileThreshold=200 -Djava.util.logging.config.file=%LOG_FILE% -Dorient.config.file="%CONFIG_FILE%" -Dorient.www.path="%WWW_PATH%" -Dorient.log.level=%LOG_LEVEL% -jar "%ORIENT_HOME%\lib\orient-database-server.jar" %CMD_LINE_ARGS%
 
 :end

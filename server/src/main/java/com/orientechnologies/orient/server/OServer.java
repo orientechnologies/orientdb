@@ -217,6 +217,15 @@ public class OServer {
 		return managedServer;
 	}
 
+	public static String getOrientHome() {
+		String v = System.getenv("ORIENT_HOME");
+
+		if (v == null)
+			v = System.getProperty("orient.home");
+
+		return v;
+	}
+
 	protected void loadConfiguration() {
 		try {
 			String config = DEFAULT_CONFIG_FILE;

@@ -63,6 +63,7 @@
   
 		<mkdir dir="${global.release}" />
 		<mkdir dir="${db.release}" />
+		<mkdir dir="${db.release}/log" />
 		<mkdir dir="${db.release}/databases" />
   </target>
 
@@ -128,7 +129,7 @@
     <copy tofile="${db.release}/history.txt" file="history-db.txt" />
 
     <copy todir="${db.release}/bin/" flatten="true">
-      <fileset dir="." includes="tools/script/* server/script/*" />
+      <fileset dir="." includes="tools/script/*.sh tools/script/*.bat tools/script/*.exe server/script/*.sh server/script/*.bat server/script/*.exe" />
     </copy>
 
     <copy todir="${db.release}/www/">

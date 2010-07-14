@@ -1,12 +1,12 @@
 package com.orientechnologies.common.log;
 
-import java.io.PrintStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.orientechnologies.common.exception.OException;
 
@@ -15,16 +15,17 @@ public class OLogManager {
 	private static final String				SYSPROPERTY_LOG_LEVEL	= "orient.log.level";
 
 	private Level											level;
-	private boolean										warn									= false;
-	private boolean										info									= false;
-	private boolean										debug									= false;
+	private boolean										warn									= true;
+	private boolean										info									= true;
+	private boolean										debug									= true;
 	private boolean										error									= true;
 
 	private static final OLogManager	instance							= new OLogManager();
 	private static final DateFormat		dateFormat						= new SimpleDateFormat("yyyy-MM-dd hh:mm:ss:SSS");
 
 	public OLogManager() {
-		setLevel(System.getProperty(SYSPROPERTY_LOG_LEVEL));
+		if (System.getProperty(SYSPROPERTY_LOG_LEVEL) != null)
+			setLevel(System.getProperty(SYSPROPERTY_LOG_LEVEL));
 	}
 
 	public void setLevel(final String iLevel) {
@@ -39,14 +40,18 @@ public class OLogManager {
 			error = true;
 	}
 
-	public PrintStream log(final Object iRequester, final Level iLevel, final String iMessage, final Throwable iException,
+	public void log(final Object iRequester, final Level iLevel, final String iMessage, final Throwable iException,
 			final Object... iAdditionalArgs) {
 		if (iMessage == null)
-			return null;
+			return;
 
-		final PrintStream stream = iLevel.equals(Level.SEVERE) ? System.err : System.out;
+		final Logger log = Logger.getLogger(iRequester.getClass().getName());
+
+		// if (!log.isLoggable(iLevel))
+		// return;
 
 		final StringBuilder buffer = new StringBuilder();
+		buffer.append('\n');
 		buffer.append(dateFormat.format(new Date()));
 		buffer.append(' ');
 		buffer.append(iLevel.getName().substring(0, 4));
@@ -64,12 +69,10 @@ public class OLogManager {
 			buffer.append(iMessage);
 		}
 
-		stream.println(buffer);
-
 		if (iException != null)
-			iException.printStackTrace(stream);
-
-		return stream;
+			log.log(iLevel, buffer.toString(), iException);
+		else
+			log.log(iLevel, buffer.toString());
 	}
 
 	public void debug(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
@@ -112,7 +115,7 @@ public class OLogManager {
 	}
 
 	public void config(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
-		log(iRequester, Level.CONFIG, iMessage, null, iAdditionalArgs).flush();
+		log(iRequester, Level.CONFIG, iMessage, null, iAdditionalArgs);
 	}
 
 	public void error(final Object iRequester, final String iMessage, final Throwable iException,
@@ -147,9 +150,9 @@ public class OLogManager {
 	@SuppressWarnings("unchecked")
 	public void exception(final String iMessage, final Exception iNestedException, final Class<? extends OException> iExceptionClass,
 			final Object... iAdditionalArgs) throws OException {
-		if( iMessage == null )
+		if (iMessage == null)
 			return;
-		
+
 		// FORMAT THE MESSAGE
 		String msg = String.format(iMessage, iAdditionalArgs);
 
