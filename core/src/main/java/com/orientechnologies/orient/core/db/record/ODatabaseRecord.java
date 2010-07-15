@@ -17,8 +17,6 @@ package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
-import com.orientechnologies.orient.core.metadata.security.OSecurity;
-import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
 /**
@@ -36,13 +34,6 @@ public interface ODatabaseRecord<REC extends ORecordInternal<?>> extends ODataba
 	 * @return Iterator of ODocument instances
 	 */
 	public ORecordIteratorCluster<REC> browseCluster(String iClusterName);
-
-	/**
-	 * Returns the current user logged into the database.
-	 * 
-	 * @see OSecurity
-	 */
-	public OUser getUser();
 
 	/**
 	 * Returns the record type class.

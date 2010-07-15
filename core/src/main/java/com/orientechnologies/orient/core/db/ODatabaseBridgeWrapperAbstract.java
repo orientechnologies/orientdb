@@ -15,16 +15,12 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.query.OQuery;
@@ -32,28 +28,28 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
 @SuppressWarnings("unchecked")
-public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord<REC>, REC extends ORecordInternal<?>> extends
-		ODatabaseWrapperAbstract<DB, REC> implements ODatabaseComplex<REC> {
+public abstract class ODatabaseBridgeWrapperAbstract<DB extends ODatabaseComplex<REC>, REC extends ORecordInternal<?>, T extends Object>
+		extends ODatabaseWrapperAbstract<DB, REC> implements ODatabaseComplex<T> {
 
-	public ODatabaseRecordWrapperAbstract(final DB iDatabase) {
+	public ODatabaseBridgeWrapperAbstract(final DB iDatabase) {
 		super(iDatabase);
 		iDatabase.setDatabaseOwner((ODatabaseComplex<?>) this);
 	}
 
-	public ODatabaseComplex<REC> begin() {
-		return (ODatabaseComplex<REC>) underlying.begin();
+	public ODatabaseComplex<T> begin() {
+		return (ODatabaseComplex<T>) underlying.begin();
 	}
 
-	public ODatabaseComplex<REC> begin(final TXTYPE iType) {
-		return (ODatabaseComplex<REC>) underlying.begin(iType);
+	public ODatabaseComplex<T> begin(final TXTYPE iType) {
+		return (ODatabaseComplex<T>) underlying.begin(iType);
 	}
 
-	public ODatabaseComplex<REC> commit() {
-		return (ODatabaseComplex<REC>) underlying.commit();
+	public ODatabaseComplex<T> commit() {
+		return (ODatabaseComplex<T>) underlying.commit();
 	}
 
-	public ODatabaseComplex<REC> rollback() {
-		return (ODatabaseComplex<REC>) underlying.rollback();
+	public ODatabaseComplex<T> rollback() {
+		return (ODatabaseComplex<T>) underlying.rollback();
 	}
 
 	public OUser getUser() {
@@ -64,18 +60,6 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord<
 		return underlying.getMetadata();
 	}
 
-	public ODictionary<REC> getDictionary() {
-		return underlying.getDictionary();
-	}
-
-	public Class<? extends REC> getRecordType() {
-		return underlying.getRecordType();
-	}
-
-	public Iterator<REC> browseCluster(final String iClusterName) {
-		return underlying.browseCluster(iClusterName);
-	}
-
 	public <RET extends OCommandRequest> RET command(final OCommandRequest iCommand) {
 		return (RET) underlying.command(iCommand);
 	}
@@ -84,30 +68,8 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord<
 		return (RET) underlying.query(iCommand);
 	}
 
-	public REC newInstance() {
-		return underlying.newInstance();
-	}
-
-	public ODatabaseComplex<REC> delete(final REC iRecord) {
+	public ODatabaseComplex<T> delete(final REC iRecord) {
 		underlying.delete(iRecord);
-		return this;
-	}
-
-	public REC load(final ORID iRecordId) {
-		return underlying.load(iRecordId);
-	}
-
-	public REC load(final REC iRecord) {
-		return underlying.load(iRecord);
-	}
-
-	public ODatabaseComplex<REC> save(final REC iRecord, final String iClusterName) {
-		underlying.save(iRecord, iClusterName);
-		return this;
-	}
-
-	public ODatabaseComplex<REC> save(final REC iRecord) {
-		underlying.save(iRecord);
 		return this;
 	}
 
@@ -129,15 +91,6 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord<
 		if (databaseOwner != this)
 			return databaseOwner.existsUserObjectByRecord(iRecord);
 		return false;
-	}
-
-	public <DBTYPE extends ODatabaseRecord<?>> DBTYPE checkSecurity(final String iResource, final int iOperation) {
-		return (DBTYPE) underlying.checkSecurity(iResource, iOperation);
-	}
-
-	public <DBTYPE extends ODatabaseRecord<?>> DBTYPE checkSecurity(final String iResourceGeneric, final int iOperation,
-			final Object... iResourcesSpecific) {
-		return (DBTYPE) underlying.checkSecurity(iResourceGeneric, iOperation, iResourcesSpecific);
 	}
 
 	public <DBTYPE extends ODatabaseComplex<?>> DBTYPE registerHook(final ORecordHook iHookImpl) {

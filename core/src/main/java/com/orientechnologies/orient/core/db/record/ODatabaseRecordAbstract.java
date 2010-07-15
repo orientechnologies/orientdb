@@ -494,12 +494,12 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		return user;
 	}
 
-	public <DB extends ODatabaseRecord<?>> DB registerHook(final ORecordHook iHookImpl) {
+	public <DB extends ODatabaseComplex<?>> DB registerHook(final ORecordHook iHookImpl) {
 		hooks.add(iHookImpl);
 		return (DB) this;
 	}
 
-	public <DB extends ODatabaseRecord<?>> DB unregisterHook(final ORecordHook iHookImpl) {
+	public <DB extends ODatabaseComplex<?>> DB unregisterHook(final ORecordHook iHookImpl) {
 		hooks.remove(iHookImpl);
 		return (DB) this;
 	}

@@ -31,12 +31,12 @@ public class OGraphNode extends OGraphElement {
 
 	private List<OGraphArc>			arcs;
 
-	public OGraphNode(final ODatabaseRecord<?> iDatabase, final ORID iRID) {
-		super(new ODocument(iDatabase, iRID));
+	public OGraphNode(final ODatabaseGraphTx iDatabase, final ORID iRID) {
+		super(new ODocument((ODatabaseRecord<?>) iDatabase.getUnderlying(), iRID));
 	}
 
-	public OGraphNode(final ODatabaseRecord<?> iDatabase) {
-		super(new ODocument(iDatabase, CLASS_NAME));
+	public OGraphNode(final ODatabaseGraphTx iDatabase) {
+		super(new ODocument((ODatabaseRecord<?>) iDatabase.getUnderlying(), CLASS_NAME));
 	}
 
 	public OGraphNode(final ODocument iDocument) {

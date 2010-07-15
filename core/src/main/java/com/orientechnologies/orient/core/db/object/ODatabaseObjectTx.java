@@ -23,11 +23,11 @@ import java.util.Set;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.dictionary.ODictionaryWrapper;
@@ -362,12 +362,12 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 		return underlying.getHooks();
 	}
 
-	public <DB extends ODatabaseRecord<?>> DB registerHook(final ORecordHook iHookImpl) {
+	public <DB extends ODatabaseComplex<?>> DB registerHook(final ORecordHook iHookImpl) {
 		checkOpeness();
 		return (DB) underlying.registerHook(iHookImpl);
 	}
 
-	public <DB extends ODatabaseRecord<?>> DB unregisterHook(final ORecordHook iHookImpl) {
+	public <DB extends ODatabaseComplex<?>> DB unregisterHook(final ORecordHook iHookImpl) {
 		checkOpeness();
 		return (DB) underlying.unregisterHook(iHookImpl);
 	}
