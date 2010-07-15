@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.db.graph.OGraphVertex;
 
 @Test(sequential = true)
 public class GraphTestVariableDensity {
-	private static final int	MAX_NODES						= 500000;
+	private static final int	MAX_NODES						= 10000;
 	private static final int	MAX_DEEP						= 5;
 	private static final int	START_DENSITY				= 184;
 	private static final int	DENSITY_FACTOR			= 13;
