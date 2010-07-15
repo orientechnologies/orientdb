@@ -212,6 +212,13 @@ public class OObjectSerializerHelper {
 						// RECOGNIZED TYPE
 						propagate = !iObj2RecHandler.existsUserObjectByRecord((ODocument) iLinked);
 
+						if (((ODocument) iLinked).getSchemaClass() == null) {
+							final OProperty prop = iRoot.getSchemaClass().getProperty(iFieldName);
+							if (prop != null)
+								// FORCE CLASS NAME
+								((ODocument) iLinked).setClassName(prop.getLinkedClass().getName());
+						}
+
 						fieldValue = iObj2RecHandler.getUserObjectByRecord((ODocument) iLinked, iFetchPlan);
 					}
 				}
