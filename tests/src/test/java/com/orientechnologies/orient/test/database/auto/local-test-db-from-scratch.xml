@@ -1,12 +1,13 @@
 <!DOCTYPE suite SYSTEM "http://beust.com/testng/testng-1.0.dtd">
 <suite name="Test Suite Example" verbose="1" parallel="false">
 
-<!-- 
+  <!--
 	<parameter name="url" value="local:../../releases/0.9.20/db/databases/demo/demo" />
 	<parameter name="path" value="../../releases/0.9.20/db/databases/demo" />
--->
+  -->
+  
 	<parameter name="url" value="@URL@" />
-	<parameter name="path" value="@PATH@" />
+  <parameter name="path" value="@PATH@" />
 
 	<test name="Setup">
 		<classes>
@@ -72,7 +73,8 @@
 	</test>
 	<test name="Graph">
 		<classes>
-			<class name="com.orientechnologies.orient.test.database.auto.GraphTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.GraphTestFixedDensity" />
+			<class name="com.orientechnologies.orient.test.database.auto.GraphTestVariableDensity" />
 		</classes>
 	</test>
 	<test name="sql-select">
