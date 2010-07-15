@@ -185,6 +185,8 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		OSerializationThreadLocal.INSTANCE.get().clear();
 
 		_database.save(this);
+
+		OSerializationThreadLocal.INSTANCE.get().clear();
 		return this;
 	}
 

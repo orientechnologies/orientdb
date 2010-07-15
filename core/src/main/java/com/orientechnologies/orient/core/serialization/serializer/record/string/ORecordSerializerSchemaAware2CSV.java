@@ -202,6 +202,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
 			i++;
 		}
+		
+		iMarshalledRecords.remove(record);
 
 		return buffer.toString();
 	}

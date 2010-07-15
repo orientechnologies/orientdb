@@ -15,10 +15,8 @@
  */
 package com.orientechnologies.orient.core.record;
 
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -73,22 +71,22 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 	@Override
 	public int hashCode() {
 		int result = super.hashCode();
-
-		if (!_recordId.isValid() && _fieldValues != null)
-			for (Entry<String, T> field : _fieldValues.entrySet()) {
-				if (field.getKey() != null)
-					result += field.getKey().hashCode();
-
-				if (field.getValue() != null)
-					if (field.getValue() instanceof ORecord<?>)
-						// AVOID TO GET THE HASH-CODE OF THE VALUE TO AVOID STACK OVERFLOW FOR CIRCULAR REFS
-						result += 31 * ((ORecord<T>) field.getValue()).getIdentity().hashCode();
-					else if (field.getValue() instanceof Collection<?>)
-						// AVOID TO GET THE HASH-CODE OF THE VALUE TO AVOID STACK OVERFLOW FOR CIRCULAR REFS
-						result += ((Collection<?>) field.getValue()).size() * 31;
-					else
-						result += field.getValue().hashCode();
-			}
+		//
+		// if (!_recordId.isValid() && _fieldValues != null)
+		// for (Entry<String, T> field : _fieldValues.entrySet()) {
+		// if (field.getKey() != null)
+		// result += field.getKey().hashCode();
+		//
+		// if (field.getValue() != null)
+		// if (field.getValue() instanceof ORecord<?>)
+		// // AVOID TO GET THE HASH-CODE OF THE VALUE TO AVOID STACK OVERFLOW FOR CIRCULAR REFS
+		// result += 31 * ((ORecord<T>) field.getValue()).getIdentity().hashCode();
+		// else if (field.getValue() instanceof Collection<?>)
+		// // AVOID TO GET THE HASH-CODE OF THE VALUE TO AVOID STACK OVERFLOW FOR CIRCULAR REFS
+		// result += ((Collection<?>) field.getValue()).size() * 31;
+		// else
+		// result += field.getValue().hashCode();
+		// }
 
 		return result;
 	}
@@ -99,37 +97,39 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 			return false;
 
 		if (!_recordId.isValid()) {
-			final ORecordVirtualAbstract<?> other = (ORecordVirtualAbstract<?>) obj;
-
-			// NO PERSISTENT OBJECT: COMPARE EACH FIELDS
-			if (_fieldValues == null || other._fieldValues == null)
-				// CAN'T COMPARE FIELDS: RETURN FALSE
-				return false;
-
-			if (_fieldValues.size() != other._fieldValues.size())
-				// FIELD SIZES ARE DIFFERENTS
-				return false;
-
-			String k;
-			Object v;
-			Object otherV;
-			for (Entry<String, T> field : _fieldValues.entrySet()) {
-				k = field.getKey();
-				if (k != null && !other.containsField(k))
-					// FIELD NOT PRESENT IN THE OTHER RECORD
-					return false;
-
-				v = _fieldValues.get(k);
-				otherV = other._fieldValues.get(k);
-				if (v == null && otherV == null)
-					continue;
-
-				if (v == null && otherV != null || otherV == null && v != null)
-					return false;
-
-				if (!v.equals(otherV))
-					return false;
-			}
+			//
+			// final ORecordVirtualAbstract<?> other = (ORecordVirtualAbstract<?>) obj;
+			//
+			// // NO PERSISTENT OBJECT: COMPARE EACH FIELDS
+			// if (_fieldValues == null || other._fieldValues == null)
+			// // CAN'T COMPARE FIELDS: RETURN FALSE
+			// return false;
+			//
+			// if (_fieldValues.size() != other._fieldValues.size())
+			// // FIELD SIZES ARE DIFFERENTS
+			// return false;
+			//
+			// String k;
+			// Object v;
+			// Object otherV;
+			// for (Entry<String, T> field : _fieldValues.entrySet()) {
+			// k = field.getKey();
+			// if (k != null && !other.containsField(k))
+			// // FIELD NOT PRESENT IN THE OTHER RECORD
+			// return false;
+			//
+			// v = _fieldValues.get(k);
+			// otherV = other._fieldValues.get(k);
+			// if (v == null && otherV == null)
+			// continue;
+			//
+			// if (v == null && otherV != null || otherV == null && v != null)
+			// return false;
+			//
+			// if (!v.equals(otherV))
+			// return false;
+			// }
+			return false;
 		}
 
 		return true;
