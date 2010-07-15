@@ -60,6 +60,12 @@
 			<class name="com.orientechnologies.orient.test.database.auto.WrongQueryTest" />
 		</classes>
 	</test>
+	<test name="Graph">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.GraphTestFixedDensity" />
+			<class name="com.orientechnologies.orient.test.database.auto.GraphTestVariableDensity" />
+		</classes>
+	</test>
 	<test name="sql-select">
 		<classes>
 			<class name="com.orientechnologies.orient.test.database.auto.SQLSelectTest" />

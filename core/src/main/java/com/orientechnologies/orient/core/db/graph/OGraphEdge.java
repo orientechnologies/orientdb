@@ -23,44 +23,56 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 /**
  * GraphDB Node.
  */
-public class OGraphArc extends OGraphElement {
-	private static final String	CLASS_NAME	= "OGraphArc";
-	private static final String	SOURCE			= "source";
-	private static final String	DESTINATION	= "destination";
+public class OGraphEdge extends OGraphElement {
+	public static final String	CLASS_NAME	= "OGraphEdge";
+	public static final String	SOURCE			= "source";
+	public static final String	DESTINATION	= "destination";
 
-	private OGraphNode					source;
-	private OGraphNode					destination;
+	private OGraphVertex				source;
+	private OGraphVertex				destination;
 
-	public OGraphArc(final ODatabaseRecord<?> iDatabase, final ORID iRID) {
+	public OGraphEdge(final ODatabaseRecord<?> iDatabase, final ORID iRID) {
 		super(iDatabase, iRID);
 	}
 
-	public OGraphArc(final ODatabaseRecord<?> iDatabase) {
+	public OGraphEdge(final ODatabaseRecord<?> iDatabase) {
 		super(iDatabase, CLASS_NAME);
 	}
 
-	public OGraphArc(final ODatabaseRecord<?> database, final OGraphNode iSourceNode, final OGraphNode iDestinationNode) {
+	public OGraphEdge(final ODatabaseRecord<?> database, final OGraphVertex iSourceNode, final OGraphVertex iDestinationNode) {
 		this(database);
+		source = iSourceNode;
+		destination = iDestinationNode;
 		set(SOURCE, iSourceNode.getDocument()).set(DESTINATION, iDestinationNode.getDocument());
 	}
 
-	public OGraphArc(final ODocument iDocument) {
+	public OGraphEdge(final ODocument iDocument) {
 		super(iDocument);
 		if (iDocument.getInternalStatus() == STATUS.NOT_LOADED)
 			iDocument.load();
 	}
 
-	public OGraphNode getSource() {
+	public OGraphVertex getSource() {
 		if (source == null)
-			source = new OGraphNode((ODocument) document.field(SOURCE));
+			source = new OGraphVertex((ODocument) document.field(SOURCE));
 
 		return source;
 	}
 
-	public OGraphNode getDestination() {
+	public void setSource(final OGraphVertex iSource) {
+		this.source = iSource;
+		document.field(SOURCE, iSource.getDocument());
+	}
+
+	public OGraphVertex getDestination() {
 		if (destination == null)
-			destination = new OGraphNode((ODocument) document.field(DESTINATION));
+			destination = new OGraphVertex((ODocument) document.field(DESTINATION));
 
 		return destination;
+	}
+
+	public void setDestination(final OGraphVertex iDestination) {
+		this.destination = iDestination;
+		document.field(DESTINATION, iDestination.getDocument());
 	}
 }

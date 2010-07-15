@@ -38,17 +38,18 @@ public class ODatabaseGraphTx extends ODatabaseBridgeWrapperAbstract<ODatabaseDo
 	}
 
 	@SuppressWarnings("unchecked")
-	public <THISDB extends ODatabase> THISDB open(String iUserName, String iUserPassword) {
+	public <THISDB extends ODatabase> THISDB open(final String iUserName, final String iUserPassword) {
 		underlying.open(iUserName, iUserPassword);
 
-		if (!underlying.getMetadata().getSchema().existsClass("OGraphNode")) {
+		if (!underlying.getMetadata().getSchema().existsClass(OGraphVertex.CLASS_NAME)) {
 			final OClass node = underlying.getMetadata().getSchema()
-					.createClass("OGraphNode", underlying.addPhysicalCluster("OGraphNode"));
-			final OClass arc = underlying.getMetadata().getSchema().createClass("OGraphArc", underlying.addPhysicalCluster("OGraphArc"));
+					.createClass(OGraphVertex.CLASS_NAME, underlying.addPhysicalCluster(OGraphVertex.CLASS_NAME));
+			final OClass arc = underlying.getMetadata().getSchema()
+					.createClass(OGraphEdge.CLASS_NAME, underlying.addPhysicalCluster(OGraphEdge.CLASS_NAME));
 
-			arc.createProperty("from", OType.LINK, node);
-			arc.createProperty("to", OType.LINK, node);
-			node.createProperty("arcs", OType.EMBEDDEDLIST, arc);
+			arc.createProperty(OGraphEdge.SOURCE, OType.LINK, node);
+			arc.createProperty(OGraphEdge.DESTINATION, OType.LINK, node);
+			node.createProperty(OGraphVertex.FIELD_EDGES, OType.EMBEDDEDLIST, arc);
 
 			underlying.getMetadata().getSchema().save();
 		}
@@ -56,25 +57,25 @@ public class ODatabaseGraphTx extends ODatabaseBridgeWrapperAbstract<ODatabaseDo
 		return (THISDB) this;
 	}
 
-	public OGraphNode createNode() {
-		return new OGraphNode(this);
+	public OGraphVertex createVertex() {
+		return new OGraphVertex(this);
 	}
 
-	public OGraphNode getRoot(final String iName) {
-		return new OGraphNode(underlying.getDictionary().get(iName));
+	public OGraphVertex getRoot(final String iName) {
+		return new OGraphVertex(underlying.getDictionary().get(iName));
 	}
 
-	public OGraphNode getRoot(final String iName, final String iFetchPlan) {
-		return new OGraphNode(underlying.getDictionary().get(iName), iFetchPlan);
+	public OGraphVertex getRoot(final String iName, final String iFetchPlan) {
+		return new OGraphVertex(underlying.getDictionary().get(iName), iFetchPlan);
 	}
 
-	public ODatabaseGraphTx setRoot(final String iName, final OGraphNode iNode) {
+	public ODatabaseGraphTx setRoot(final String iName, final OGraphVertex iNode) {
 		underlying.getDictionary().put(iName, iNode.getDocument());
 		return this;
 	}
 
 	public OGraphElement newInstance() {
-		return new OGraphNode(this);
+		return new OGraphVertex(this);
 	}
 
 	public OGraphElement load(final OGraphElement iObject) {
@@ -91,10 +92,10 @@ public class ODatabaseGraphTx extends ODatabaseBridgeWrapperAbstract<ODatabaseDo
 		if (doc == null)
 			return null;
 
-		if (doc.getClassName().equals(OGraphNode.class.getSimpleName()))
-			return new OGraphNode(doc);
-		else if (doc.getClassName().equals(OGraphArc.class.getSimpleName()))
-			return new OGraphArc(doc);
+		if (doc.getClassName().equals(OGraphVertex.class.getSimpleName()))
+			return new OGraphVertex(doc);
+		else if (doc.getClassName().equals(OGraphEdge.class.getSimpleName()))
+			return new OGraphEdge(doc);
 		else
 			throw new IllegalArgumentException("RecordID is not of supported type. Class=" + doc.getClassName());
 	}

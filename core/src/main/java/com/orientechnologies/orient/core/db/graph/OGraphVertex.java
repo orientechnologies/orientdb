@@ -26,62 +26,84 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 /**
  * GraphDB Node.
  */
-public class OGraphNode extends OGraphElement {
-	private static final String	CLASS_NAME	= "OGraphNode";
+public class OGraphVertex extends OGraphElement {
+	public static final String	CLASS_NAME	= "OGraphVertex";
+	public static final String	FIELD_EDGES	= "edges";
 
-	private List<OGraphArc>			arcs;
+	private List<OGraphEdge>		edges;
 
-	public OGraphNode(final ODatabaseGraphTx iDatabase, final ORID iRID) {
+	public OGraphVertex(final ODatabaseGraphTx iDatabase, final ORID iRID) {
 		super(new ODocument((ODatabaseRecord<?>) iDatabase.getUnderlying(), iRID));
 	}
 
-	public OGraphNode(final ODatabaseGraphTx iDatabase) {
+	public OGraphVertex(final ODatabaseGraphTx iDatabase) {
 		super(new ODocument((ODatabaseRecord<?>) iDatabase.getUnderlying(), CLASS_NAME));
 	}
 
-	public OGraphNode(final ODocument iDocument) {
+	public OGraphVertex(final ODocument iDocument) {
 		super(iDocument);
 		if (iDocument.getInternalStatus() == STATUS.NOT_LOADED)
 			iDocument.load();
 	}
 
-	public OGraphNode(final ODocument iDocument, final String iFetchPlan) {
+	public OGraphVertex(final ODocument iDocument, final String iFetchPlan) {
 		super(iDocument);
 		if (iDocument.getInternalStatus() == STATUS.NOT_LOADED)
 			iDocument.load(iFetchPlan);
 	}
 
 	@SuppressWarnings("unchecked")
-	public OGraphArc link(final OGraphNode iDestinationNode) {
+	public OGraphEdge link(final OGraphVertex iDestinationNode) {
 		if (iDestinationNode == null)
 			throw new IllegalArgumentException("Missed the arc destination property");
 
-		final OGraphArc arc = new OGraphArc(document.getDatabase(), this, iDestinationNode);
-		getArcs().add(arc);
-		((List<ODocument>) document.field("arcs")).add(arc.getDocument());
+		final OGraphEdge arc = new OGraphEdge(document.getDatabase(), this, iDestinationNode);
+		getEdges().add(arc);
+		((List<ODocument>) document.field(FIELD_EDGES)).add(arc.getDocument());
 		return arc;
 	}
 
 	/**
 	 * Returns the arcs of current node. If there are no arcs, then an empty list is returned.
 	 */
-	public List<OGraphArc> getArcs() {
-		if (arcs == null) {
-			arcs = new ArrayList<OGraphArc>();
+	public List<OGraphEdge> getEdges() {
+		if (edges == null) {
+			edges = new ArrayList<OGraphEdge>();
 
-			List<ODocument> docs = document.field("arcs");
+			List<ODocument> docs = document.field(FIELD_EDGES);
 
 			if (docs == null) {
 				docs = new ArrayList<ODocument>();
-				document.field("arcs", docs);
+				document.field(FIELD_EDGES, docs);
 			} else {
 				// TRANSFORM ALL THE ARCS
 				for (ODocument d : docs) {
-					arcs.add(new OGraphArc(d));
+					edges.add(new OGraphEdge(d));
 				}
 			}
 		}
 
-		return arcs;
+		return edges;
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<OGraphVertex> browseEdgeDestinations() {
+		final List<OGraphVertex> resultset = new ArrayList<OGraphVertex>();
+
+		if (edges == null) {
+			List<ODocument> docEdges = (List<ODocument>) document.field(FIELD_EDGES);
+
+			// TRANSFORM ALL THE ARCS
+			if (docEdges != null)
+				for (ODocument d : docEdges) {
+					resultset.add(new OGraphVertex((ODocument) d.field(OGraphEdge.DESTINATION)));
+				}
+		} else {
+			for (OGraphEdge edge : edges) {
+				resultset.add(edge.getDestination());
+			}
+		}
+
+		return resultset;
 	}
 }
