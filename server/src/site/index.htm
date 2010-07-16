@@ -1,582 +1,490 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
-    <head>
-        <title>OrientDB Studio v. 0.9.19 (www.orientechnologies.com)</title>
-        <meta name="title" content="Document | DBMS | Database | Java | Studio" />
-        <meta name="description" content="OrientDB Studio" />
-        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-        <link rel="stylesheet" type="text/css" media="screen" href="www/styles/redmond/jquery-ui-1.8.1.custom.css" />
-        <link rel="stylesheet" type="text/css" media="screen" href="www/styles/ui.jqgrid.css" />
-        <style>
-            body {
-                font-size: 9pt;
-                font-family: Arial;
-            }
-            
-            td {
-                font-size: 9pt;
-                font-family: Arial;
-            }
-            
-            .cell_readonly {
-                color: white;
-                background-color: #6D7B8D;
-            }
-            
-            .help {
-                font-size: 13pt;
-            }
-        </style>
-        <script src="www/js/jquery-1.4.2.min.js" type="text/javascript">
+<head>
+<title>OrientDB Studio v. 0.9.21 (www.orientechnologies.com)</title>
+<meta name="title" content="Document | DBMS | Database | Java | Studio" />
+<meta name="description" content="OrientDB Studio" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" media="screen" href="www/styles/redmond/jquery-ui-1.8.1.custom.css" />
+<link rel="stylesheet" type="text/css" media="screen" href="www/styles/ui.jqgrid.css" />
+<style>
+body {
+	font-size: 9pt;
+	font-family: Arial;
+}
+
+td {
+	font-size: 9pt;
+	font-family: Arial;
+}
+
+.cell_readonly {
+	color: white;
+	background-color: #6D7B8D;
+}
+
+.help {
+	font-size: 13pt;
+}
+</style>
+<script src="www/js/jquery-1.4.2.min.js" type="text/javascript">
         </script>
-        <script src="www/js/jquery-ui-1.8.1.custom.min.js" type="text/javascript">
+<script src="www/js/jquery-ui-1.8.1.custom.min.js" type="text/javascript">
         </script>
-        <script src="www/js/i18n/grid.locale-en.js" type="text/javascript">
+<script src="www/js/i18n/grid.locale-en.js" type="text/javascript">
         </script>
-        <script src="www/js/jquery.jqGrid.min.js" type="text/javascript">
+<script src="www/js/jquery.jqGrid.min.js" type="text/javascript">
         </script>
-        <script src="www/js/jQueryRotate.js" type="text/javascript">
+<script src="www/js/jQueryRotate.js" type="text/javascript">
         </script>
-        <script src="www/js/orient-app.js" type="text/javascript">
+<script src="www/js/orient-app.js" type="text/javascript">
         </script>
-        <script src="www/js/orient-studio.js" type="text/javascript">
+<script src="www/js/orient-studio.js" type="text/javascript">
         </script>
-    </head>
-    <body>
-        <table align="center" width="1000">
-            <tr>
-                <td>
-                    <table style="width: 100%;" cellpadding="0" cellspacing="2">
-                        <tr>
-                            <td align="left">
-                                <a href="http://www.orientechnologies.com/orient-db.htm"><img border="0" src="www/images/orient_db.png" /></a>
-                            </td>
-                            <td class="ui-widget">
-                                Server: <input id="server" size="25" value="" />&nbsp;Database: <input id="database" size="10" value="demo" />
-                                <button id="buttonConnect" onclick="javascript:connect()" class="ui-button-text-icon">
-                                    Connect <img border="0" alt="Refresh" src="www/images/connect.png" align="top" />
-                                </button>
-                                <button id="buttonDisconnect" onclick="javascript:disconnect()" class="ui-button-text-icon">
-                                    Disconnect <img border="0" alt="Refresh" src="www/images/disconnect.png" align="top" />
-                                </button>&nbsp;&nbsp;<a href="http://code.google.com/p/orient/wiki/OrientDB_Studio" target="help">Help</a>
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <div id="tabs-main">
-                    <ul>
-                        <li>
-                            <a href="#tab-database"><span>Database</span></a>
-                        </li>
-                        <li>
-                            <a href="#tab-query"><span>Query</span></a>
-                        </li>
-                        <li>
-                            <a href="#tab-command"><span>Command</span></a>
-                        </li>
-                        <li>
-                            <a href="#tab-dictionary"><span>Dictionary</span></a>
-                        </li>
-                        <li>
-                            <a href="#tab-raw"><span>Raw access</span></a>
-                        </li>
-                        <li>
-                            <a href="#tab-server"><span>Server</span></a>
-                        </li>
-                    </ul>
-                    <div id="tab-database">
-                        <button onclick="javascript:askDatabaseInfo()" class="ui-button-text-icon">
-                            Refresh <img border="0" alt="Refresh" src="www/images/execute.png" align="top" />
-                        </button>
-                        <div id="tabs-db">
-                            <ul>
-                                <li>
-                                    <a href="#tab-db-schema"><span>Schema</span></a>
-                                </li>
-                                <li>
-                                    <a href="#tab-db-structure"><span>Structure</span></a>
-                                </li>
-                                <li>
-                                    <a href="#tab-db-security"><span>Security</span></a>
-                                </li>
-                                <li>
-                                    <a href="#tab-db-config"><span>Configuration</span></a>
-                                </li>
-                            </ul>
-                            <div id="tab-db-schema">
-                                <table style="width: 100%;" cellpadding="5">
-                                    <tr>
-                                        <td valign="top">
-                                            <table id="databaseClasses" cellspacing="0" cellpadding="5" border="1">
-                                            </table>
-                                        </td>
-                                        <td valign="top" class="help" width="400">
-                                            Select the class to display the properties associated. Each class can store its records into one or multiple <b>Clusters</b>
-                                            (see "Structure" tab). 
-                                            A class can be <b>schema-less</b>
-                                            (has no properties), <b>schema-full</b>
-                                            (all properties as mandatories) 
-                                            or with a <b>partial schema</b>. 
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td valign="top" align="left">
-                                            <table>
-                                                <tr>
-                                                    <td>
-                                                        <button id="addClass" class="ui-button-text-icon" style="text-align: left">
-                                                            Add class <img border="0" alt="New record" src="www/images/add.png" align="top" />
-                                                        </button>
-                                                    </td>
-                                                    <td>
-                                                        <button id="deleteClass" class="ui-button-text-icon" style="text-align: left">
-                                                            Delete class <img border="0" alt="Delete record" src="www/images/delete.png" align="top" />
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            </table>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td valign="top" colspan="2">
-                                            <table id="classProperties" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
-                                            </table>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td valign="top" align="left">
-                                            <table>
-                                                <tr>
-                                                    <td>
-                                                    <button id="addProperty" " class="ui-button-text-icon" style="text-align: left">Add property <img border="0"  alt="New record" src="www/images/add.png" align="top" />
-                                                    </button>
-                                                </td>
-                                                <td>
-                                                    <button id="deleteProperty" class="ui-button-text-icon" style="text-align: left">
-                                                        Delete property <img border="0" alt="Delete record" src="www/images/delete.png" align="top" />
-                                                    </button>
-                                                </td>
-                                                </tr>
-                                            </table>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-                            <div id="tab-db-structure">
-                                <table style="width: 100%;" cellpadding="5">
-                                    <tr>
-                                        <td valign="top" class="help">
-                                            <b><a href="http://code.google.com/p/orient/wiki/Concepts#Data_Segment">Data
-                                                    segments</a></b>
-                                            are the segments that contain data pointed by Clusters.
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td valign="top" width="500">
-                                            <table id="databaseDataSegments" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
-                                            </table>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td valign="top" class="help">
-                                            <b><a href="http://code.google.com/p/orient/wiki/Concepts#Cluster">Clusters</a></b>
-                                            are sets of records grouped by a mean. Any mean you want to assign. You can use a Cluster like a Table of the Relational DBMS world, namely to group records of the same type. Or you could want to group records by different logics.
-                                            <br/>
-                                            <br/>
-                                            There are two kinds of clusters: <b><a href="http://code.google.com/p/orient/wiki/Concepts#Local_Physical_Cluster">Physical</a></b>
-                                            and <b><a href="http://code.google.com/p/orient/wiki/Concepts#Logical_Cluster">Logical</a></b>. The first one uses ad-hoc files to speed up the I/O while the second one saves more space but it's slower. The suggestion is to use Physical Clusters for the records accessed often and where you need light speed.
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td valign="top" width="500">
-                                            <table id="databaseClusters" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
-                                            </table>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td valign="top" class="help">
-                                            <b>Tx Segment</b>
-                                            handles the transaction log for the entire database. It's used in Transactions.
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td valign="top" width="500">
-                                            <table id="databaseTxSegment" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
-                                            </table>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-                            <div id="tab-db-security">
-                                <div id="tabs-security">
-                                    <ul>
-                                        <li>
-                                            <a href="#tab-security-users"><span>Users</span></a>
-                                        </li>
-                                        <li>
-                                            <a href="#tab-security-roles"><span>Roles</span></a>
-                                        </li>
-                                    </ul>
-                                    <div id="tab-security-users">
-                                        <table id="databaseUsers" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
-                                        </table>
-                                    </div>
-                                    <div id="tab-security-roles">
-                                        <table style="width: 100%;" cellpadding="5" cellspacing="0">
-                                            <tr>
-                                                <td>
-                                                    <table id="databaseRoles" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
-                                                    </table>
-                                                </td>
-                                                <td>
-                                                    <table id="databaseRolesRules" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
-                                                    </table>
-                                                </td>
-                                            </tr>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                            <div id="tab-db-config">
-                                <table style="width: 100%;" cellpadding="5">
-                                    <tr>
-                                        <td valign="top">
-                                            <table id="databaseConfig" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
-                                            </table>
-                                        </td>
-                                        <td valign="top" class="help">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td valign="top">
-                                            <table id="databaseConfigProperties" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
-                                            </table>
-                                        </td>
-                                        <td valign="top" class="help">
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="tab-query">
-                        <table style="width: 100%;" cellpadding="0" cellspacing="2">
-                            <tr>
-                                <td valign="top">
-                                    <table style="width: 100%;" cellpadding="2" cellspacing="0">
-                                        <tr>
-                                            <td valign="top">
-                                                <table style="width: 100%;">
-                                                    <tr>
-                                                        <td>
-                                                            <textarea id="queryText" cols="120" rows="2" title="value">
+</head>
+<body>
+<table align="center" width="1000">
+	<tr>
+		<td>
+		<table style="width: 100%;" cellpadding="0" cellspacing="2">
+			<tr>
+				<td align="left"><a href="http://www.orientechnologies.com/orient-db.htm"><img border="0" src="www/images/orient_db.png" /></a></td>
+				<td class="ui-widget">Server: <input id="server" size="25" value="" />&nbsp;Database: <input id="database" size="10" value="demo" />
+				<button id="buttonConnect" onclick="javascript:connect()" class="ui-button-text-icon">Connect <img border="0" alt="Refresh"
+					src="www/images/connect.png" align="top" /></button>
+				<button id="buttonDisconnect" onclick="javascript:disconnect()" class="ui-button-text-icon">Disconnect <img border="0" alt="Refresh"
+					src="www/images/disconnect.png" align="top" /></button>
+				&nbsp;&nbsp;<a href="http://code.google.com/p/orient/wiki/OrientDB_Studio" target="help">Help</a></td>
+			</tr>
+		</table>
+		</td>
+	</tr>
+	<tr>
+		<td>
+		<div id="tabs-main">
+		<ul>
+			<li><a href="#tab-database"><span>Database</span></a></li>
+			<li><a href="#tab-query"><span>Query</span></a></li>
+			<li><a href="#tab-command"><span>Command</span></a></li>
+			<li><a href="#tab-dictionary"><span>Dictionary</span></a></li>
+			<li><a href="#tab-raw"><span>Raw access</span></a></li>
+			<li><a href="#tab-server"><span>Server</span></a></li>
+		</ul>
+		<div id="tab-database">
+		<button onclick="javascript:askDatabaseInfo()" class="ui-button-text-icon">Refresh <img border="0" alt="Refresh"
+			src="www/images/execute.png" align="top" /></button>
+		<div id="tabs-db">
+		<ul>
+			<li><a href="#tab-db-schema"><span>Schema</span></a></li>
+			<li><a href="#tab-db-structure"><span>Structure</span></a></li>
+			<li><a href="#tab-db-security"><span>Security</span></a></li>
+			<li><a href="#tab-db-config"><span>Configuration</span></a></li>
+		</ul>
+		<div id="tab-db-schema">
+		<table style="width: 100%;" cellpadding="5">
+			<tr>
+				<td valign="top">
+				<table id="databaseClasses" cellspacing="0" cellpadding="5" border="1">
+				</table>
+				</td>
+				<td valign="top" class="help" width="400">Select the class to display the properties associated. Each class can store its records into one or
+				multiple <b>Clusters</b> (see "Structure" tab). A class can be <b>schema-less</b> (has no properties), <b>schema-full</b> (all properties as
+				mandatories) or with a <b>partial schema</b>.</td>
+			</tr>
+			<tr>
+				<td valign="top" align="left">
+				<table>
+					<tr>
+						<td>
+						<button id="addClass" class="ui-button-text-icon" style="text-align: left">Add class <img border="0" alt="New record"
+							src="www/images/add.png" align="top" /></button>
+						</td>
+						<td>
+						<button id="deleteClass" class="ui-button-text-icon" style="text-align: left">Delete class <img border="0" alt="Delete record"
+							src="www/images/delete.png" align="top" /></button>
+						</td>
+					</tr>
+				</table>
+				</td>
+			</tr>
+			<tr>
+				<td valign="top" colspan="2">
+				<table id="classProperties" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+				</table>
+				</td>
+			</tr>
+			<tr>
+				<td valign="top" align="left">
+				<table>
+					<tr>
+						<td>
+						<button id="addProperty" " class="ui-button-text-icon" style="text-align: left">Add property <img border="0" alt="New record"
+							src="www/images/add.png" align="top" /></button>
+						</td>
+						<td>
+						<button id="deleteProperty" class="ui-button-text-icon" style="text-align: left">Delete property <img border="0" alt="Delete record"
+							src="www/images/delete.png" align="top" /></button>
+						</td>
+					</tr>
+				</table>
+				</td>
+			</tr>
+		</table>
+		</div>
+		<div id="tab-db-structure">
+		<table style="width: 100%;" cellpadding="5">
+			<tr>
+				<td valign="top" class="help"><b><a href="http://code.google.com/p/orient/wiki/Concepts#Cluster">Clusters</a></b> are sets of records grouped
+				by a mean. Any mean you want to assign. You can use a Cluster like a Table of the Relational DBMS world, namely to group records of the same type.
+				Or you could want to group records by different logics. <br />
+				<br />
+				There are two kinds of clusters: <b><a href="http://code.google.com/p/orient/wiki/Concepts#Local_Physical_Cluster">Physical</a></b> and <b><a
+					href="http://code.google.com/p/orient/wiki/Concepts#Logical_Cluster">Logical</a></b>. The first one uses ad-hoc files to speed up the I/O while the
+				second one saves more space but it's slower. The suggestion is to use Physical Clusters for the records accessed often and where you need light
+				speed.</td>
+			</tr>
+			<tr>
+				<td valign="top" width="500">
+				<table id="databaseClusters" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+				</table>
+				</td>
+			</tr>
+			<tr>
+				<td valign="top" align="left">
+				<table>
+					<tr>
+						<td>
+						<button id="addPhysicalCluster" class="ui-button-text-icon" style="text-align: left">Add Physical Cluster <img border="0" alt="Add Physical Cluster"
+							src="www/images/add.png" align="top" /></button>
+						</td>
+						<td>
+						<button id="addLogicalCluster" class="ui-button-text-icon" style="text-align: left">Add Logical Cluster <img border="0" alt="Add Logical Cluster"
+							src="www/images/add.png" align="top" /></button>
+						</td>
+						<td>
+						<button id="removeCluster" class="ui-button-text-icon" style="text-align: left">Remove Cluster <img border="0" alt="Remove Cluster"
+							src="www/images/delete.png" align="top" /></button>
+						</td>
+					</tr>
+				</table>
+				</td>
+			</tr>
+			<tr>
+				<td valign="top" class="help"><b><a href="http://code.google.com/p/orient/wiki/Concepts#Data_Segment">Data segments</a></b> are the segments
+				that contain data pointed by Clusters.</td>
+			</tr>
+			<tr>
+				<td valign="top" width="500">
+				<table id="databaseDataSegments" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+				</table>
+				</td>
+			</tr>
+			<tr>
+				<td valign="top" class="help"><b>Tx Segment</b> handles the transaction log for the entire database. It's used in Transactions.</td>
+			</tr>
+			<tr>
+				<td valign="top" width="500">
+				<table id="databaseTxSegment" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+				</table>
+				</td>
+			</tr>
+		</table>
+		</div>
+		<div id="tab-db-security">
+		<div id="tabs-security">
+		<ul>
+			<li><a href="#tab-security-users"><span>Users</span></a></li>
+			<li><a href="#tab-security-roles"><span>Roles</span></a></li>
+		</ul>
+		<div id="tab-security-users">
+		<table id="databaseUsers" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+		</table>
+		</div>
+		<div id="tab-security-roles">
+		<table style="width: 100%;" cellpadding="5" cellspacing="0">
+			<tr>
+				<td>
+				<table id="databaseRoles" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+				</table>
+				</td>
+				<td>
+				<table id="databaseRolesRules" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+				</table>
+				</td>
+			</tr>
+		</table>
+		</div>
+		</div>
+		</div>
+		<div id="tab-db-config">
+		<table style="width: 100%;" cellpadding="5">
+			<tr>
+				<td valign="top">
+				<table id="databaseConfig" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+				</table>
+				</td>
+				<td valign="top" class="help"></td>
+			</tr>
+			<tr>
+				<td valign="top">
+				<table id="databaseConfigProperties" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+				</table>
+				</td>
+				<td valign="top" class="help"></td>
+			</tr>
+		</table>
+		</div>
+		</div>
+		</div>
+		<div id="tab-query">
+		<table style="width: 100%;" cellpadding="0" cellspacing="2">
+			<tr>
+				<td valign="top">
+				<table style="width: 100%;" cellpadding="2" cellspacing="0">
+					<tr>
+						<td valign="top">
+						<table style="width: 100%;">
+							<tr>
+								<td><textarea id="queryText" cols="120" rows="2" title="value">
                                                                 select from Address where city.country.name = 'Italy'
-                                                            </textarea>
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td valign="top">
-                                                            <table id="queryResultTable">
-                                                            </table>
-                                                            <div id="queryResultTableNav">
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                </table>
-                                            </td>
-                                            <td valign="top">
-                                                <table style="width: 120px;">
-                                                    <tr>
-                                                        <td>
-                                                            <button onclick="javascript:executeQuery()" class="ui-button-text-icon">
-                                                                Execute <img border="0" alt="Execute" src="www/images/execute.png" align="top" />
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>
-                                                            Limit: <input id="limit" size="1" value="20" />
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td style="font-size: 10pt;">
-                                                            <a href="http://code.google.com/p/orient/wiki/SQLQuery" target="help">SQL select syntax</a>
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td style="font-size: 10pt;">
-                                                            <a href="http://code.google.com/p/orient/wiki/SQLWhere" target="help">SQL operators</a>
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>
-                                                        <button id="newRecord" " class="ui-button-text-icon" style="width: 100px;  text-align: left">New <img border="0"  alt="New record" src="www/images/add.png" align="top" />
-                                                        </button>
-                                                    </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>
-                                                            <button id="deleteRecord" class="ui-button-text-icon" style="width: 100px; text-align: left">
-                                                                Delete <img border="0" alt="Delete record" src="www/images/delete.png" align="top" />
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                </table>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-                    <div id="tab-command">
-                        <table style="width: 100%;" cellpadding="0" cellspacing="2">
-                            <tr>
-                                <td valign="top">
-                                    <table style="width: 100%;" cellpadding="2" cellspacing="0">
-                                        <tr>
-                                            <td valign="top">
-                                                <table style="width: 100%;">
-                                                    <tr>
-                                                        <td>
-                                                            <textarea id="commandText" cols="120" rows="4" title="value">
-                                                            </textarea>
-                                                        </td>
-                                                        <td>
-                                                            <table style="width: 100%;">
-                                                                <tr>
-                                                                    <td>
-                                                                        <button onclick="javascript:executeCommand()" class="ui-button-text-icon">
-                                                                            Execute <img border="0" alt="Execute" src="www/images/execute.png" align="top" />
-                                                                        </button>
-                                                                    </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td align="right">
-                                                                        Limit: <input id="limit" size="1" value="20" />
-                                                                    </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td style="font-size: 10pt;">
-                                                                        <a href="http://code.google.com/p/orient/wiki/SQL" target="help">SQL syntax</a>
-                                                                    </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td style="font-size: 10pt;">
-                                                                        <a href="http://code.google.com/p/orient/wiki/SQLWhere" target="help">SQL operators</a>
-                                                                    </td>
-                                                                </tr>
-                                                            </table>
-                                                        </td>
-                                                    </tr>
-                                                </table>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>
-                                                <table style="width: 100%;">
-                                                    <tr>
-                                                        <td>
-                                                            <textarea id="commandOutput" cols="132" rows="15" title="value" readonly="readonly">
-                                                            </textarea>
-                                                        </td>
-                                                        <td valign="top">
-                                                            <a href="javascript:clear('commandOutput')"><img border="0" src="www/images/clear.png" /></a>
-                                                        </td>
-                                                    </tr>
-                                                </table>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-                    <div id="tab-dictionary">
-                        <table style="width: 100%;">
-                        </table>
-                    </div>
-                    <div id="tab-raw">
-                        <table style="width: 100%;">
-                            <tr>
-                                <td align="left">
-                                </td>
-                                <td align="left">
-                                    <b>HTTP Method</b>
-                                </td>
-                                <td align="left">
-                                    <b>Operation</b>
-                                </td>
-                                <td align="left">
-                                    <b>Database</b>
-                                </td>
-                                <td align="left">
-                                    <b>Argument(s)</b>
-                                </td>
-                                <td align="left">
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <select id="rawMethod">
-                                        <option value='GET'>GET</option>
-                                        <option value='PUT'>PUT</option>
-                                        <option value='POST'>POST</option>
-                                        <option value='DELETE'>DELETE</option>
-                                    </select>/
-                                </td>
-                                <td id="rawServer">
-                                    http://localhost:2480/
-                                </td>
-                                <td>
-                                    <select id="rawOperation">
-                                        <option value='cluster'>cluster</option>
-                                        <option value='class'>class</option>
-                                        <option value='command'>command</option>
-                                        <option value='connect'>connect</option>
-                                        <option value='database'>database</option>
-                                        <option value='dictionary'>dictionary</option>
-                                        <option value='disconnect'>disconnect</option>
-                                        <option value='document'>document</option>
-                                        <option value='query'>query</option>
-                                        <option value='server'>server</option>
-                                    </select>/
-                                </td>
-                                <td>
-                                    <input id="rawDatabase" size="15" value="demo" />/
-                                </td>
-                                <td>
-                                    <input id="rawArgs" size="40" value="Address" />
-                                </td>
-                                <td>
-                                    <button onclick="javascript:executeRawCommand()" style="background-color: #F0F0F0;">
-                                        <img border="0" alt="Execute" src="www/images/execute.png" />
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td colspan="6" valign="top">
-                                    <textarea id="rawOutput" cols="135" rows="22" title="value">
-                                    </textarea>
-                                </td>
-                                <td valign="top">
-                                    <a href="javascript:clear('rawOutput')"><img border="0" src="www/images/clear.png" /></a>
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-                    <div id="tab-server">
-                        <button onclick="javascript:askServerInfo()" class="ui-button-text-icon">
-                            Refresh <img border="0" alt="Refresh" src="www/images/execute.png" align="top" />
-                        </button>
-                        <div id="tabs-server">
-                            <ul>
-                                <li>
-                                    <a href="#tab-server-conns"><span>Active Connections</span></a>
-                                </li>
-                                <li>
-                                    <a href="#tab-server-config"><span>Configuration</span></a>
-                                </li>
-                                <li>
-                                    <a href="#tab-server-dbs"><span>Database pool</span></a>
-                                </li>
-                                <li>
-                                    <a href="#tab-server-storages"><span>Used Storages</span></a>
-                                </li>
-                                <li>
-                                    <a href="#tab-server-profiler"><span>Profiler</span></a>
-                                </li>
-                            </ul>
-                            <div id="tab-server-conns">
-                                <table style="width: 100%;">
-                                    <tr>
-                                        <td valign="top" class="help">
-                                            Below all the active connections. Keep in mind that HTTP connections are stateless, so no database is retained and usually after a short timeout (seconds) they are killed. Binary connections, instead, remain in life until the connection client closes it. Binary connections are used by the <a href="http://code.google.com/p/orient/wiki/ConsoleCommands">Orient Console</a>
-                                            tool and by any Orient Java applications that uses the native <a href="http://code.google.com/p/orient/wiki/JavaAPI">Java API</a>.
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td valign="top">
-                                            <table id="serverConnections" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
-                                            </table>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-                            <div id="tab-server-config">
-                                <table style="width: 100%;">
-                                    <tr>
-                                        <td valign="top">
-                                            <table id="serverConfigProperties" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
-                                            </table>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-                            <div id="tab-server-dbs">
-                                <table style="width: 100%;">
-                                    <tr>
-                                        <td valign="top">
-                                            <table id="serverDbs" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
-                                            </table>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-                            <div id="tab-server-storages">
-                                <table style="width: 100%;">
-                                    <tr>
-                                        <td valign="top">
-                                            <table id="serverStorages" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
-                                            </table>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-                            <div id="tab-server-profiler">
-                                <table style="width: 100%;">
-                                    <tr>
-                                        <td valign="top">
-                                            <table id="serverProfilerStats" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
-                                            </table>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td valign="top">
-                                            <table id="serverProfilerChronos" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
-                                            </table>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <table style="width: 100%;">
-                        <tr>
-                            <td valign="top">
-                                Output:
-                            </td>
-                            <td valign="top">
-                                <textarea id="output" cols="125" rows="3" title="value" readonly="readonly">
+                                                            </textarea></td>
+							</tr>
+							<tr>
+								<td valign="top">
+								<table id="queryResultTable">
+								</table>
+								<div id="queryResultTableNav"></div>
+								</td>
+							</tr>
+						</table>
+						</td>
+						<td valign="top">
+						<table style="width: 120px;">
+							<tr>
+								<td>
+								<button onclick="javascript:executeQuery()" class="ui-button-text-icon">Execute <img border="0" alt="Execute"
+									src="www/images/execute.png" align="top" /></button>
+								</td>
+							</tr>
+							<tr>
+								<td>Limit: <input id="limit" size="1" value="20" /></td>
+							</tr>
+							<tr>
+								<td style="font-size: 10pt;"><a href="http://code.google.com/p/orient/wiki/SQLQuery" target="help">SQL select syntax</a></td>
+							</tr>
+							<tr>
+								<td style="font-size: 10pt;"><a href="http://code.google.com/p/orient/wiki/SQLWhere" target="help">SQL operators</a></td>
+							</tr>
+							<tr>
+								<td>
+								<button id="newRecord" " class="ui-button-text-icon" style="width: 100px; text-align: left">New <img border="0" alt="New record"
+									src="www/images/add.png" align="top" /></button>
+								</td>
+							</tr>
+							<tr>
+								<td>
+								<button id="deleteRecord" class="ui-button-text-icon" style="width: 100px; text-align: left">Delete <img border="0"
+									alt="Delete record" src="www/images/delete.png" align="top" /></button>
+								</td>
+							</tr>
+						</table>
+						</td>
+					</tr>
+				</table>
+				</td>
+			</tr>
+		</table>
+		</div>
+		<div id="tab-command">
+		<table style="width: 100%;" cellpadding="0" cellspacing="2">
+			<tr>
+				<td valign="top">
+				<table style="width: 100%;" cellpadding="2" cellspacing="0">
+					<tr>
+						<td valign="top">
+						<table style="width: 100%;">
+							<tr>
+								<td><textarea id="commandText" cols="120" rows="4" title="value">
+                                                            </textarea></td>
+								<td>
+								<table style="width: 100%;">
+									<tr>
+										<td>
+										<button onclick="javascript:executeCommand()" class="ui-button-text-icon">Execute <img border="0" alt="Execute"
+											src="www/images/execute.png" align="top" /></button>
+										</td>
+									</tr>
+									<tr>
+										<td align="right">Limit: <input id="limit" size="1" value="20" /></td>
+									</tr>
+									<tr>
+										<td style="font-size: 10pt;"><a href="http://code.google.com/p/orient/wiki/SQL" target="help">SQL syntax</a></td>
+									</tr>
+									<tr>
+										<td style="font-size: 10pt;"><a href="http://code.google.com/p/orient/wiki/SQLWhere" target="help">SQL operators</a></td>
+									</tr>
+								</table>
+								</td>
+							</tr>
+						</table>
+						</td>
+					</tr>
+					<tr>
+						<td>
+						<table style="width: 100%;">
+							<tr>
+								<td><textarea id="commandOutput" cols="132" rows="15" title="value" readonly="readonly">
+                                                            </textarea></td>
+								<td valign="top"><a href="javascript:clear('commandOutput')"><img border="0" src="www/images/clear.png" /></a></td>
+							</tr>
+						</table>
+						</td>
+					</tr>
+				</table>
+				</td>
+			</tr>
+		</table>
+		</div>
+		<div id="tab-dictionary">
+		<table style="width: 100%;">
+		</table>
+		</div>
+		<div id="tab-raw">
+		<table style="width: 100%;">
+			<tr>
+				<td align="left"></td>
+				<td align="left"><b>HTTP Method</b></td>
+				<td align="left"><b>Operation</b></td>
+				<td align="left"><b>Database</b></td>
+				<td align="left"><b>Argument(s)</b></td>
+				<td align="left"></td>
+			</tr>
+			<tr>
+				<td><select id="rawMethod">
+					<option value='GET'>GET</option>
+					<option value='PUT'>PUT</option>
+					<option value='POST'>POST</option>
+					<option value='DELETE'>DELETE</option>
+				</select>/</td>
+				<td id="rawServer">http://localhost:2480/</td>
+				<td><select id="rawOperation">
+					<option value='cluster'>cluster</option>
+					<option value='class'>class</option>
+					<option value='command'>command</option>
+					<option value='connect'>connect</option>
+					<option value='database'>database</option>
+					<option value='dictionary'>dictionary</option>
+					<option value='disconnect'>disconnect</option>
+					<option value='document'>document</option>
+					<option value='query'>query</option>
+					<option value='server'>server</option>
+				</select>/</td>
+				<td><input id="rawDatabase" size="15" value="demo" />/</td>
+				<td><input id="rawArgs" size="40" value="Address" /></td>
+				<td>
+				<button onclick="javascript:executeRawCommand()" style="background-color: #F0F0F0;"><img border="0" alt="Execute"
+					src="www/images/execute.png" /></button>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="6" valign="top"><textarea id="rawOutput" cols="135" rows="22" title="value">
+                                    </textarea></td>
+				<td valign="top"><a href="javascript:clear('rawOutput')"><img border="0" src="www/images/clear.png" /></a></td>
+			</tr>
+		</table>
+		</div>
+		<div id="tab-server">
+		<button onclick="javascript:askServerInfo()" class="ui-button-text-icon">Refresh <img border="0" alt="Refresh" src="www/images/execute.png"
+			align="top" /></button>
+		<div id="tabs-server">
+		<ul>
+			<li><a href="#tab-server-conns"><span>Active Connections</span></a></li>
+			<li><a href="#tab-server-config"><span>Configuration</span></a></li>
+			<li><a href="#tab-server-dbs"><span>Database pool</span></a></li>
+			<li><a href="#tab-server-storages"><span>Used Storages</span></a></li>
+			<li><a href="#tab-server-profiler"><span>Profiler</span></a></li>
+		</ul>
+		<div id="tab-server-conns">
+		<table style="width: 100%;">
+			<tr>
+				<td valign="top" class="help">Below all the active connections. Keep in mind that HTTP connections are stateless, so no database is retained
+				and usually after a short timeout (seconds) they are killed. Binary connections, instead, remain in life until the connection client closes it.
+				Binary connections are used by the <a href="http://code.google.com/p/orient/wiki/ConsoleCommands">Orient Console</a> tool and by any Orient Java
+				applications that uses the native <a href="http://code.google.com/p/orient/wiki/JavaAPI">Java API</a>.</td>
+			</tr>
+			<tr>
+				<td valign="top">
+				<table id="serverConnections" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+				</table>
+				</td>
+			</tr>
+		</table>
+		</div>
+		<div id="tab-server-config">
+		<table style="width: 100%;">
+			<tr>
+				<td valign="top">
+				<table id="serverConfigProperties" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+				</table>
+				</td>
+			</tr>
+		</table>
+		</div>
+		<div id="tab-server-dbs">
+		<table style="width: 100%;">
+			<tr>
+				<td valign="top">
+				<table id="serverDbs" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+				</table>
+				</td>
+			</tr>
+		</table>
+		</div>
+		<div id="tab-server-storages">
+		<table style="width: 100%;">
+			<tr>
+				<td valign="top">
+				<table id="serverStorages" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+				</table>
+				</td>
+			</tr>
+		</table>
+		</div>
+		<div id="tab-server-profiler">
+		<table style="width: 100%;">
+			<tr>
+				<td valign="top">
+				<table id="serverProfilerStats" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+				</table>
+				</td>
+			</tr>
+			<tr>
+				<td valign="top">
+				<table id="serverProfilerChronos" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+				</table>
+				</td>
+			</tr>
+		</table>
+		</div>
+		</div>
+		</div>
+		</td>
+	</tr>
+	<tr>
+		<td>
+		<table style="width: 100%;">
+			<tr>
+				<td valign="top">Output:</td>
+				<td valign="top"><textarea id="output" cols="125" rows="3" title="value" readonly="readonly">
                                     For the demo database use "reader/reader" to read records from the database, and "writer/writer" to read, create, update and delete records. To access to the Server information use "root" as user and the automatic generated password created in the file "config/orient-server-config.xml". 
-                                </textarea>
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-            </tr>
-            <tr>
-                <td align="center">
-                    To know more information visit: <a href="http://www.orientechnologies.com">http://www.orientechnologies.com</a>
-                </td>
-            </tr>
-        </table>
-    </body>
+                                </textarea></td>
+			</tr>
+		</table>
+		</td>
+	</tr>
+	<tr>
+		<td align="center">To know more information visit: <a href="http://www.orientechnologies.com">http://www.orientechnologies.com</a></td>
+	</tr>
+</table>
+</body>
 </html>

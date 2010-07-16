@@ -29,41 +29,6 @@ function disconnect() {
 }
 
 function showDatabaseInfo() {
-	fillDynaTable($('#databaseDataSegments'), "Data Segments", [ 'id', 'name',
-			'size', 'filled', 'maxSize', 'files' ], [ {
-		name : 'id',
-		index : 'id',
-		width : '30px',
-		editable : false
-	}, {
-		name : 'name',
-		index : 'name',
-		width : '100px',
-		editable : false
-	}, {
-		name : 'size',
-		index : 'size',
-		width : '80px',
-		editable : false
-	}, {
-		name : 'filled',
-		index : 'filled',
-		width : '80px',
-		editable : false
-	}, {
-		name : 'maxSize',
-		index : 'maxSize',
-		width : '80px',
-		editable : false
-	}, {
-		name : 'files',
-		index : 'files',
-		width : '600px',
-		editable : false
-	} ], databaseInfo['dataSegments'], {
-		height : '40px'
-	});
-
 	fillDynaTable($('#databaseClusters'), "Clusters", [ 'id', 'name', 'type',
 			'records', 'size', 'filled', 'maxSize', 'files' ], [ {
 		name : 'id',
@@ -105,7 +70,93 @@ function showDatabaseInfo() {
 		index : 'files',
 		width : '450px',
 		editable : false
-	} ], databaseInfo['clusters']);
+	} ], databaseInfo['clusters'], {
+		sortname : 'id',
+		editurl : getStudioURL('clusters')
+	});
+
+	$("#addPhysicalCluster").click(function() {
+		jQuery("#databaseClusters").jqGrid('editGridRow', "newp", {
+			height : 320,
+			reloadAfterSubmit : false,
+			closeOnEscape : true,
+			closeAfterAdd : true,
+			editData : [ selectedClassName ],
+			afterSubmit : function(response, postdata) {
+				jQuery("#output").val(response.responseText);
+				return true;
+			}
+		});
+	});
+	$("#addLogicalCluster").click(function() {
+		jQuery("#databaseClusters").jqGrid('editGridRow', "newl", {
+			height : 320,
+			reloadAfterSubmit : false,
+			closeOnEscape : true,
+			closeAfterAdd : true,
+			editData : [ selectedClassName ],
+			afterSubmit : function(response, postdata) {
+				jQuery("#output").val(response.responseText);
+				return true;
+			}
+		});
+	});
+	$("#removeCluster").click(
+			function() {
+				var selectedRow = jQuery("#databaseClusters").jqGrid(
+						'getGridParam', 'selrow');
+				if (selectedRow != null) {
+					jQuery("#databaseClusters").jqGrid(
+							'delGridRow',
+							selectedRow,
+							{
+								reloadAfterSubmit : false,
+								closeOnEscape : true,
+								delData : [ selectedClassName ],
+								afterSubmit : function(response, postdata) {
+									jQuery("#output")
+											.val(response.responseText);
+									return [ true, response.responseText ];
+								}
+							});
+				} else
+					alert("Please select the cluster to delete!");
+			});
+
+	fillDynaTable($('#databaseDataSegments'), "Data Segments", [ 'id', 'name',
+			'size', 'filled', 'maxSize', 'files' ], [ {
+		name : 'id',
+		index : 'id',
+		width : '30px',
+		editable : false
+	}, {
+		name : 'name',
+		index : 'name',
+		width : '100px',
+		editable : false
+	}, {
+		name : 'size',
+		index : 'size',
+		width : '80px',
+		editable : false
+	}, {
+		name : 'filled',
+		index : 'filled',
+		width : '80px',
+		editable : false
+	}, {
+		name : 'maxSize',
+		index : 'maxSize',
+		width : '80px',
+		editable : false
+	}, {
+		name : 'files',
+		index : 'files',
+		width : '600px',
+		editable : false
+	} ], databaseInfo['dataSegments'], {
+		height : '40px'
+	});
 
 	fillDynaTable($('#databaseTxSegment'), "Tx Segment", [ 'totalLogs', 'size',
 			'filled', 'maxSize', 'file' ], [ {
