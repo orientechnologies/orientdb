@@ -139,8 +139,10 @@ public class OClass extends OSchemaRecord {
 			if (currentClass.properties != null)
 				p = currentClass.properties.get(iPropertyName.toLowerCase());
 
-			if (p == null)
-				currentClass = currentClass.getSuperClass();
+			if (p != null)
+				return p;
+
+			currentClass = currentClass.getSuperClass();
 
 		} while (currentClass != null);
 
