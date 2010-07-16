@@ -157,7 +157,7 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 				json.writeAttribute(3, false, "mode", role.getMode().toString());
 
 				json.beginCollection(3, true, "rules");
-				for (Entry<String, Byte> rule : role.getRules()) {
+				for (Entry<String, Byte> rule : role.getRules().entrySet()) {
 					json.beginObject(4);
 					json.writeAttribute(4, true, "name", rule.getKey());
 					json.writeAttribute(4, false, "create", role.allow(rule.getKey(), ORole.PERMISSION_CREATE));
