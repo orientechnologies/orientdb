@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.common.profiler.OProfiler;
@@ -60,6 +61,7 @@ public class OObjectSerializerHelper {
 	private static HashMap<String, Method>			callbacks									= new HashMap<String, Method>();
 	private static HashMap<String, Object>			getters										= new HashMap<String, Object>();
 	private static HashMap<String, Object>			setters										= new HashMap<String, Object>();
+	private static HashMap<String, String>			boundDocumentFields				= new HashMap<String, String>();
 
 	public static boolean hasField(final Object iPojo, final String iProperty) {
 		final Class<?> c = iPojo.getClass();
@@ -69,6 +71,13 @@ public class OObjectSerializerHelper {
 			registerClass(c);
 
 		return getters.get(className + "." + iProperty) != null;
+	}
+
+	public static String getDocumentBoundField(final Class<?> iClass) {
+		if (!classes.containsKey(iClass.getName()))
+			registerClass(iClass);
+
+		return boundDocumentFields.get(iClass.getName());
 	}
 
 	public static Class<?> getFieldType(final Object iPojo, final String iProperty) {
@@ -152,7 +161,7 @@ public class OObjectSerializerHelper {
 			iRecord.load();
 
 		// CALL BEFORE UNMARSHALLING
-		invokeCallback(iPojo, OBeforeDeserialization.class);
+		invokeCallback(iPojo, iRecord, OBeforeDeserialization.class);
 
 		// BIND BASIC FIELDS, LINKS WILL BE BOUND BY THE FETCH API
 		for (Field p : properties) {
@@ -223,7 +232,7 @@ public class OObjectSerializerHelper {
 		});
 
 		// CALL AFTER UNMARSHALLING
-		invokeCallback(iPojo, OAfterDeserialization.class);
+		invokeCallback(iPojo, iRecord, OAfterDeserialization.class);
 
 		OProfiler.getInstance().stopChrono("Object.fromStream", timer);
 
@@ -255,7 +264,7 @@ public class OObjectSerializerHelper {
 		Object fieldValue;
 
 		// CALL BEFORE MARSHALLING
-		invokeCallback(iPojo, OBeforeSerialization.class);
+		invokeCallback(iPojo, iRecord, OBeforeSerialization.class);
 
 		for (Field p : properties) {
 			fieldName = p.getName();
@@ -270,7 +279,7 @@ public class OObjectSerializerHelper {
 		}
 
 		// CALL AFTER MARSHALLING
-		invokeCallback(iPojo, OAfterSerialization.class);
+		invokeCallback(iPojo, iRecord, OAfterSerialization.class);
 
 		OProfiler.getInstance().stopChrono("Object.toStream", timer);
 
@@ -287,12 +296,13 @@ public class OObjectSerializerHelper {
 		if (!OType.isSimpleType(fieldClass)) {
 			if (fieldClass.isArray()) {
 				// ARRAY
-				iFieldValue = listToStream(Arrays.asList(iFieldValue), iType, iEntityManager, iObj2RecHandler);
+				iFieldValue = multiValueToStream(Arrays.asList(iFieldValue), iType, iEntityManager, iObj2RecHandler);
 			} else if (Collection.class.isAssignableFrom(fieldClass)) {
 				// COLLECTION (LIST OR SET)
-				iFieldValue = listToStream((Collection<Object>) iFieldValue, iType, iEntityManager, iObj2RecHandler);
+				iFieldValue = multiValueToStream(iFieldValue, iType, iEntityManager, iObj2RecHandler);
 			} else if (Map.class.isAssignableFrom(fieldClass)) {
 				// MAP
+				iFieldValue = multiValueToStream(iFieldValue, iType, iEntityManager, iObj2RecHandler);
 			} else {
 				// LINK OR EMBEDDED
 				fieldClass = iEntityManager.getEntityClass(fieldClass.getSimpleName());
@@ -305,44 +315,71 @@ public class OObjectSerializerHelper {
 		return iFieldValue;
 	}
 
-	private static Collection<Object> listToStream(final Collection<Object> iCollection, OType iType,
-			final OEntityManager iEntityManager, final OUserObject2RecordHandler iObj2RecHandler) {
+	private static Object multiValueToStream(final Object iMultiValue, OType iType, final OEntityManager iEntityManager,
+			final OUserObject2RecordHandler iObj2RecHandler) {
+		if (iMultiValue == null)
+			return null;
+
+		final Collection<Object> sourceValues = (Collection<Object>) (iMultiValue instanceof Collection<?> ? iMultiValue
+				: ((Map<?, ?>) iMultiValue).values());
+
 		if (iType == null) {
-			if (iCollection.size() == 0)
-				return iCollection;
+			if (sourceValues.size() == 0)
+				return iMultiValue;
 
 			// TRY TO UNDERSTAND THE COLLECTION TYPE BY ITS CONTENT
-			Object firstValue = iCollection.iterator().next();
+			final Object firstValue = sourceValues.iterator().next();
 
 			if (firstValue == null)
-				return iCollection;
+				return iMultiValue;
 
+			// DETERMINE THE RIGHT TYPE BASED ON SOURCE MULTI VALUE OBJECT
 			if (OType.isSimpleType(firstValue.getClass())) {
-				iType = iCollection instanceof List ? OType.EMBEDDEDLIST : OType.EMBEDDEDSET;
-			} else
-				iType = iCollection instanceof List ? OType.LINKLIST : OType.LINKSET;
+				if (iMultiValue instanceof List)
+					iType = OType.EMBEDDEDLIST;
+				else if (iMultiValue instanceof Set)
+					iType = OType.EMBEDDEDSET;
+				else
+					iType = OType.EMBEDDEDMAP;
+			} else {
+				if (iMultiValue instanceof List)
+					iType = OType.LINKLIST;
+				else if (iMultiValue instanceof Set)
+					iType = OType.LINKSET;
+				else
+					iType = OType.LINKMAP;
+			}
 		}
 
-		Collection<Object> result = null;
+		Object result = null;
 		final OType linkedType;
 
+		// CREATE THE RETURN MULTI VALUE OBJECT BASED ON DISCOVERED TYPE
 		if (iType.equals(OType.EMBEDDEDLIST) || iType.equals(OType.LINKLIST)) {
 			result = new ArrayList<Object>();
 		} else if (iType.equals(OType.EMBEDDEDSET) || iType.equals(OType.LINKSET)) {
 			result = new HashSet<Object>();
+		} else if (iType.equals(OType.EMBEDDEDMAP) || iType.equals(OType.LINKMAP)) {
+			result = new HashMap<String, Object>();
 		} else
 			throw new IllegalArgumentException("Type " + iType + " must be a collection");
 
-		if (iType.equals(OType.EMBEDDEDLIST) || iType.equals(OType.LINKLIST))
+		if (iType.equals(OType.LINKLIST) || iType.equals(OType.LINKSET) || iType.equals(OType.LINKMAP))
 			linkedType = OType.LINK;
-		else if (iType.equals(OType.EMBEDDEDSET) || iType.equals(OType.LINKSET))
+		else if (iType.equals(OType.EMBEDDEDLIST) || iType.equals(OType.EMBEDDEDSET) || iType.equals(OType.EMBEDDEDMAP))
 			linkedType = OType.EMBEDDED;
 		else
-			throw new IllegalArgumentException("Type " + iType + " must be a collection");
+			throw new IllegalArgumentException("Type " + iType + " must be a multi value type (collection or map)");
 
-		for (Object o : iCollection) {
-			result.add(typeToStream(o, linkedType, iEntityManager, iObj2RecHandler));
-		}
+		if (iMultiValue instanceof Collection<?>)
+			for (Object o : sourceValues) {
+				((Collection<Object>) result).add(typeToStream(o, linkedType, iEntityManager, iObj2RecHandler));
+			}
+		else
+			for (Entry<String, Object> entry : ((Map<String, Object>) iMultiValue).entrySet()) {
+				((Map<String, Object>) result).put(entry.getKey(),
+						typeToStream(entry.getValue(), linkedType, iEntityManager, iObj2RecHandler));
+			}
 
 		return result;
 	}
@@ -357,7 +394,7 @@ public class OObjectSerializerHelper {
 
 			String fieldName;
 			int fieldModifier;
-			OField bindAnnotation;
+			OField fieldAnnotation;
 			boolean autoBinding;
 
 			for (Class<?> currentClass = iClass; currentClass != Object.class;) {
@@ -370,8 +407,12 @@ public class OObjectSerializerHelper {
 
 					fieldName = f.getName();
 
-					bindAnnotation = f.getAnnotation(OField.class);
-					autoBinding = bindAnnotation == null || bindAnnotation.binding() == MODES.AUTO;
+					fieldAnnotation = f.getAnnotation(OField.class);
+					autoBinding = fieldAnnotation == null || fieldAnnotation.binding() == MODES.AUTO;
+
+					if (fieldAnnotation != null && fieldAnnotation.document())
+						// BOUND DOCUMENT ON IT
+						boundDocumentFields.put(iClass.getName(), fieldName);
 
 					if (autoBinding)
 						// TRY TO GET THE VALUE BY THE GETTER (IF ANY)
@@ -422,12 +463,16 @@ public class OObjectSerializerHelper {
 		}
 	}
 
-	private static void invokeCallback(final Object iPojo, final Class<?> iAnnotation) {
+	private static void invokeCallback(final Object iPojo, final ODocument iDocument, final Class<?> iAnnotation) {
 		final Method m = callbacks.get(iPojo.getClass().getSimpleName() + "." + iAnnotation.getSimpleName());
 
 		if (m != null)
+
 			try {
-				m.invoke(iPojo);
+				if (m.getParameterTypes().length > 0)
+					m.invoke(iPojo, iDocument);
+				else
+					m.invoke(iPojo);
 			} catch (Exception e) {
 				throw new OConfigurationException("Error on executing user callback '" + m.getName() + "' annotated with '"
 						+ iAnnotation.getSimpleName() + "'", e);

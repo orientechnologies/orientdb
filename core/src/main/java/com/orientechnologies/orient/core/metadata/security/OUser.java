@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.metadata.security;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
 import com.orientechnologies.orient.core.annotation.OField;
 import com.orientechnologies.orient.core.annotation.OField.MODES;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -25,6 +26,7 @@ import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
+import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 /**
  * Contains the user settings about security and permissions. Each user has one or more roles associated. Roles contains the
@@ -34,17 +36,13 @@ import com.orientechnologies.orient.core.security.OSecurityManager;
  * 
  * @see ORole
  */
-@SuppressWarnings("unchecked")
-public class OUser extends ODocument {
+public class OUser extends ODocumentWrapper {
 	public enum STATUSES {
 		SUSPENDED, ACTIVE
 	}
 
-	protected String			name;
 	// AVOID THE INVOCATION OF SETTER
 	@OField(binding = MODES.RAW)
-	protected String			password;
-	protected STATUSES		status;
 	protected Set<ORole>	roles	= new HashSet<ORole>();
 
 	/**
@@ -53,22 +51,31 @@ public class OUser extends ODocument {
 	public OUser() {
 	}
 
-	public OUser(final ODatabaseRecord<?> iDatabase) {
-		super(iDatabase, "OUser");
-	}
-
 	public OUser(final ODatabaseRecord<?> iDatabase, final String iName) {
-		this(iDatabase);
-		name = iName;
-		status = STATUSES.ACTIVE;
+		super(iDatabase, "OUser");
+		document.field("name", iName);
+		setAccountStatus(STATUSES.ACTIVE);
 	}
 
 	/**
 	 * Create the user by reading the source document.
 	 */
 	public OUser(final ODocument iSource) {
-		_database = iSource.getDatabase();
-		fromDocument(iSource);
+		init(iSource);
+	}
+
+	@OAfterDeserialization
+	public void init(final ODocument iSource) {
+		if (document != null)
+			return;
+
+		document = iSource;
+
+		roles = new HashSet<ORole>();
+		Set<ODocument> loadedRoles = iSource.field("roles");
+		for (ODocument d : loadedRoles) {
+			roles.add(document.getDatabase().getMetadata().getSecurity().getRole((String) d.field("name")));
+		}
 	}
 
 	/**
@@ -83,12 +90,13 @@ public class OUser extends ODocument {
 	 */
 	public ORole allow(final String iResource, final int iOperation) {
 		if (roles == null || roles.isEmpty())
-			throw new OSecurityAccessException(_database.getName(), "User '" + name + "' has no role defined");
+			throw new OSecurityAccessException(document.getDatabase().getName(), "User '" + document.field("name")
+					+ "' has no role defined");
 
 		final ORole role = checkIfAllowed(iResource, iOperation);
 
 		if (role == null)
-			throw new OSecurityAccessException(_database.getName(), "User '" + name
+			throw new OSecurityAccessException(document.getDatabase().getName(), "User '" + document.field("name")
 					+ "' has no the permission to execute the operation '" + ORole.permissionToString(iOperation)
 					+ "' against the resource: " + iResource);
 
@@ -128,20 +136,23 @@ public class OUser extends ODocument {
 	}
 
 	public boolean checkPassword(final String iPassword) {
-		return OSecurityManager.instance().check(iPassword, password);
+		return OSecurityManager.instance().check(iPassword, (String) document.field("password"));
 	}
 
 	public String getName() {
-		return this.name;
+		return document.field("name");
 	}
 
 	public String getPassword() {
-		return password;
+		return document.field("password");
 	}
 
 	public OUser setPassword(final String iPassword) {
-		this.password = encryptPassword(iPassword);
-		setDirty();
+		return setPasswordEncoded(encryptPassword(iPassword));
+	}
+
+	public OUser setPasswordEncoded(String iPassword) {
+		document.field("password", iPassword);
 		return this;
 	}
 
@@ -149,9 +160,12 @@ public class OUser extends ODocument {
 		return OSecurityManager.instance().digest2String(iPassword);
 	}
 
-	public void setPasswordEncoded(String iPassword) {
-		this.password = iPassword;
-		setDirty();
+	public STATUSES getAccountStatus() {
+		return STATUSES.valueOf((String) document.field("status"));
+	}
+
+	public void setAccountStatus(STATUSES accountStatus) {
+		document.field("status", accountStatus);
 	}
 
 	public Set<ORole> getRoles() {
@@ -160,57 +174,25 @@ public class OUser extends ODocument {
 
 	public OUser addRole(final String iRole) {
 		if (iRole != null)
-			addRole(_database.getMetadata().getSecurity().getRole(iRole));
+			addRole(document.getDatabase().getMetadata().getSecurity().getRole(iRole));
 		return this;
 	}
 
 	public OUser addRole(final ORole iRole) {
 		if (iRole != null)
 			roles.add(iRole);
-		setDirty();
+		document.field("roles", roles, OType.LINKSET);
 		return this;
 	}
 
-	@Override
+	@SuppressWarnings("unchecked")
 	public OUser save() {
-		return (OUser) super.save(OUser.class.getSimpleName());
-	}
-
-	public OUser fromDocument(final ODocument iSource) {
-		_recordId.copyFrom(iSource.getIdentity());
-
-		name = iSource.field("name");
-		password = iSource.field("password");
-		status = STATUSES.values()[((Long) iSource.field("status")).intValue()];
-
-		roles = new HashSet<ORole>();
-		Set<ODocument> loadedRoles = iSource.field("roles");
-		for (ODocument d : loadedRoles) {
-			roles.add(_database.getMetadata().getSecurity().getRole((String) d.field("name")));
-		}
-
+		document.save(OUser.class.getSimpleName());
 		return this;
-	}
-
-	@Override
-	public byte[] toStream() {
-		field("name", name);
-		field("password", password);
-		field("status", status.ordinal());
-		field("roles", roles, OType.LINKSET);
-		return super.toStream();
 	}
 
 	@Override
 	public String toString() {
-		return name;
-	}
-
-	public STATUSES getAccountStatus() {
-		return status;
-	}
-
-	public void setAccountStatus(STATUSES accountStatus) {
-		this.status = accountStatus;
+		return getName();
 	}
 }

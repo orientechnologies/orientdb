@@ -15,13 +15,16 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
+import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 /**
  * Contains the user settings about security and permissions roles.<br/>
@@ -35,7 +38,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * Mode = ALLOW (allow all but) or DENY (deny all but)
  */
 @SuppressWarnings("unchecked")
-public class ORole extends ODocument {
+public class ORole extends ODocumentWrapper {
 	public enum ALLOW_MODES {
 		DENY_ALL_BUT, ALLOW_ALL_BUT
 	}
@@ -56,7 +59,6 @@ public class ORole extends ODocument {
 	protected final static byte	STREAM_DENY							= 0;
 	protected final static byte	STREAM_ALLOW						= 1;
 
-	protected String						name;
 	protected ALLOW_MODES				mode										= ALLOW_MODES.DENY_ALL_BUT;
 	protected ORole							parentRole;
 	protected Map<String, Byte>	rules										= new LinkedHashMap<String, Byte>();
@@ -76,17 +78,35 @@ public class ORole extends ODocument {
 
 	public ORole(final ODatabaseRecord<?> iDatabase, final String iName, final ORole iParent, final ALLOW_MODES iAllowMode) {
 		this(iDatabase);
-		name = iName;
+		document.field("name", iName);
 		parentRole = iParent;
-		mode = iAllowMode;
+		document.field("inheritedRole", parentRole != null ? parentRole.getName() : null);
+		setMode(iAllowMode);
+		document.field("rules", new HashMap<String, Number>());
 	}
 
 	/**
 	 * Create the role by reading the source document.
 	 */
 	public ORole(final ODocument iSource) {
-		_database = iSource.getDatabase();
-		fromDocument(iSource);
+		init(iSource);
+	}
+
+	@OAfterDeserialization
+	public void init(final ODocument iSource) {
+		if (document != null)
+			return;
+
+		document = iSource;
+
+		mode = ((Number) document.field("mode")).byteValue() == STREAM_ALLOW ? ALLOW_MODES.ALLOW_ALL_BUT : ALLOW_MODES.DENY_ALL_BUT;
+
+		parentRole = document.getDatabase().getMetadata().getSecurity().getRole((String) document.field("inheritedRole"));
+
+		final Map<String, Number> storedRules = document.field("rules");
+		for (Entry<String, Number> a : storedRules.entrySet()) {
+			rules.put(a.getKey(), a.getValue().byteValue());
+		}
 	}
 
 	public boolean allow(final String iResource, final int iCRUDOperation) {
@@ -107,7 +127,7 @@ public class ORole extends ODocument {
 
 	public void addRule(final String iResource, final int iOperation) {
 		rules.put(iResource, (byte) iOperation);
-		setDirty();
+		document.field("rules", rules);
 	}
 
 	/**
@@ -125,7 +145,7 @@ public class ORole extends ODocument {
 		currentValue |= (byte) iOperation;
 
 		rules.put(iResource, currentValue);
-		setDirty();
+		document.field("rules", rules);
 	}
 
 	/**
@@ -151,11 +171,11 @@ public class ORole extends ODocument {
 		}
 
 		rules.put(iResource, currentValue);
-		setDirty();
+		document.field("rules", rules);
 	}
 
 	public String getName() {
-		return this.name;
+		return document.field("name");
 	}
 
 	public ALLOW_MODES getMode() {
@@ -164,6 +184,7 @@ public class ORole extends ODocument {
 
 	public ORole setMode(final ALLOW_MODES iMode) {
 		this.mode = iMode;
+		document.field("mode", mode == ALLOW_MODES.ALLOW_ALL_BUT ? STREAM_ALLOW : STREAM_DENY);
 		return this;
 	}
 
@@ -173,45 +194,22 @@ public class ORole extends ODocument {
 
 	public ORole setParentRole(final ORole iParent) {
 		this.parentRole = iParent;
+		document.field("inheritedRole", parentRole != null ? parentRole.getName() : null);
 		return this;
 	}
 
-	@Override
 	public ORole save() {
-		return (ORole) super.save(ORole.class.getSimpleName());
-	}
-
-	public ORole fromDocument(final ODocument iSource) {
-		_recordId.copyFrom(iSource.getIdentity());
-
-		name = iSource.field("name");
-		mode = ((Byte) iSource.field("mode")) == STREAM_ALLOW ? ALLOW_MODES.ALLOW_ALL_BUT : ALLOW_MODES.DENY_ALL_BUT;
-
-		parentRole = _database.getMetadata().getSecurity().getRole((String) iSource.field("inheritedRole"));
-
-		final Map<String, Byte> storedRules = iSource.field("rules");
-		for (Entry<String, Byte> a : storedRules.entrySet()) {
-			rules.put(a.getKey(), a.getValue().byteValue());
-		}
+		document.save(ORole.class.getSimpleName());
 		return this;
 	}
 
-	@Override
-	public byte[] toStream() {
-		field("name", name);
-		field("mode", mode == ALLOW_MODES.ALLOW_ALL_BUT ? STREAM_ALLOW : STREAM_DENY);
-		field("inheritedRole", parentRole != null ? parentRole.name : null);
-		field("rules", rules);
-		return super.toStream();
-	}
-
-	public Set<Entry<String, Byte>> getRules() {
-		return rules.entrySet();
+	public Map<String, Byte> getRules() {
+		return Collections.unmodifiableMap(rules);
 	}
 
 	@Override
 	public String toString() {
-		return name;
+		return getName();
 	}
 
 	/**
@@ -234,5 +232,4 @@ public class ORole extends ODocument {
 		}
 		return "Unknown permission: " + iPermission;
 	}
-
 }

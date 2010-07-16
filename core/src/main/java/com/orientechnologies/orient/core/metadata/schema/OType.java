@@ -339,4 +339,8 @@ public enum OType {
 
 		return null;
 	}
+
+	public Class<?>[] getJavaTypes() {
+		return javaTypes;
+	}
 }

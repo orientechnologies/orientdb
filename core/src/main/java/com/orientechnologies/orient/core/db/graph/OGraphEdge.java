@@ -21,15 +21,18 @@ import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
- * GraphDB Node.
+ * GraphDB Edge class. It represent the edge (or arc) in the graph. The Edge can have custom properties. You can read/write them
+ * using respectively get/set methods. The Edge is the connection between two Vertexes.
+ * 
+ * @see OGraphVertex
  */
 public class OGraphEdge extends OGraphElement {
 	public static final String	CLASS_NAME	= "OGraphEdge";
-	public static final String	SOURCE			= "source";
-	public static final String	DESTINATION	= "destination";
+	public static final String	IN					= "in";
+	public static final String	OUT					= "out";
 
-	private OGraphVertex				source;
-	private OGraphVertex				destination;
+	private OGraphVertex				in;
+	private OGraphVertex				out;
 
 	public OGraphEdge(final ODatabaseRecord<?> iDatabase, final ORID iRID) {
 		super(iDatabase, iRID);
@@ -39,11 +42,11 @@ public class OGraphEdge extends OGraphElement {
 		super(iDatabase, CLASS_NAME);
 	}
 
-	public OGraphEdge(final ODatabaseRecord<?> database, final OGraphVertex iSourceNode, final OGraphVertex iDestinationNode) {
-		this(database);
-		source = iSourceNode;
-		destination = iDestinationNode;
-		set(SOURCE, iSourceNode.getDocument()).set(DESTINATION, iDestinationNode.getDocument());
+	public OGraphEdge(final ODatabaseRecord<?> iDatabase, final OGraphVertex iInNode, final OGraphVertex iOutNode) {
+		this(iDatabase);
+		in = iInNode;
+		out = iOutNode;
+		set(IN, iInNode.getDocument()).set(OUT, iOutNode.getDocument());
 	}
 
 	public OGraphEdge(final ODocument iDocument) {
@@ -52,27 +55,58 @@ public class OGraphEdge extends OGraphElement {
 			iDocument.load();
 	}
 
-	public OGraphVertex getSource() {
-		if (source == null)
-			source = new OGraphVertex((ODocument) document.field(SOURCE));
+	public OGraphVertex getIn() {
+		if (in == null)
+			in = new OGraphVertex((ODocument) document.field(IN));
 
-		return source;
+		return in;
 	}
 
-	public void setSource(final OGraphVertex iSource) {
-		this.source = iSource;
-		document.field(SOURCE, iSource.getDocument());
+	public OGraphVertex getOut() {
+		if (out == null)
+			out = new OGraphVertex((ODocument) document.field(OUT));
+
+		return out;
 	}
 
-	public OGraphVertex getDestination() {
-		if (destination == null)
-			destination = new OGraphVertex((ODocument) document.field(DESTINATION));
-
-		return destination;
+	protected void setIn(final OGraphVertex iSource) {
+		this.in = iSource;
+		document.field(IN, iSource.getDocument());
 	}
 
-	public void setDestination(final OGraphVertex iDestination) {
-		this.destination = iDestination;
-		document.field(DESTINATION, iDestination.getDocument());
+	protected void setOut(final OGraphVertex iDestination) {
+		this.out = iDestination;
+		document.field(OUT, iDestination.getDocument());
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + ((in == null) ? 0 : in.hashCode());
+		result = prime * result + ((out == null) ? 0 : out.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final OGraphEdge other = (OGraphEdge) obj;
+		if (in == null) {
+			if (other.in != null)
+				return false;
+		} else if (!in.equals(other.in))
+			return false;
+		if (out == null) {
+			if (other.out != null)
+				return false;
+		} else if (!out.equals(other.out))
+			return false;
+		return true;
 	}
 }

@@ -15,16 +15,20 @@
  */
 package com.orientechnologies.orient.core.db.graph;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 /**
- * GraphDB Node.
+ * Document wrapper class. Useful when you want to manage POJO but without using the Object Database. The mapping from/to the
+ * ODocument instance is in charge to the developer.
+ * 
+ * @See {@link ODatabaseDocument}
+ * @author Luca Garulli
  */
-public abstract class OGraphElement {
-	protected ODocument	document;
-
+public abstract class OGraphElement extends ODocumentWrapper {
 	public OGraphElement(final ODatabaseRecord<?> iDatabase, final ORID iRID) {
 		this(new ODocument(iDatabase, iRID));
 	}
@@ -34,7 +38,7 @@ public abstract class OGraphElement {
 	}
 
 	public OGraphElement(final ODocument iDocument) {
-		document = iDocument;
+		super(iDocument);
 	}
 
 	public Object get(final String iPropertyName) {
@@ -47,45 +51,4 @@ public abstract class OGraphElement {
 		return (RET) this;
 	}
 
-	public void reload() {
-		document.load();
-	}
-
-	public void save() {
-		document.save();
-	}
-
-	public ODocument getDocument() {
-		return document;
-	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((document == null) ? 0 : document.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		OGraphElement other = (OGraphElement) obj;
-		if (document == null) {
-			if (other.document != null)
-				return false;
-		} else if (!document.equals(other.document))
-			return false;
-		return true;
-	}
-
-	@Override
-	public String toString() {
-		return document != null ? document.toString() : "?";
-	}
 }

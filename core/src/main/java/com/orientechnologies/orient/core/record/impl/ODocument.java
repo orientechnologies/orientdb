@@ -360,6 +360,13 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			OProperty prop = _clazz.getProperty(iPropertyName);
 
 			if (prop != null) {
+				if (iPropertyValue instanceof Enum)
+					// ENUM
+					if (prop.getType().isAssignableFrom(""))
+						iPropertyValue = iPropertyValue.toString();
+					else if (prop.getType().isAssignableFrom(1))
+						iPropertyValue = ((Enum<?>) iPropertyValue).ordinal();
+
 				if (!(iPropertyValue instanceof String) && !prop.getType().isAssignableFrom(iPropertyValue))
 					throw new IllegalArgumentException("Property '" + iPropertyName + "' of type '" + prop.getType()
 							+ "' can't accept value of type: " + iPropertyValue.getClass());
@@ -400,6 +407,10 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 				else
 					iPropertyValue = iPropertyValue.toString();
 			}
+		} else {
+			if (iPropertyValue instanceof Enum)
+				// ENUM
+				iPropertyValue = iPropertyValue.toString();
 		}
 
 		_fieldValues.put(iPropertyName, iPropertyValue);

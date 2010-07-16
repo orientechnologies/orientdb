@@ -24,13 +24,19 @@ import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
- * GraphDB Node.
+ * GraphDB Vertex class. It represent the vertex (or node) in the graph. The Vertex can have custom properties. You can read/write
+ * them using respectively get/set methods. The Vertex can be connected to other Vertexes using edges. The Vertex keeps the edges
+ * separated: "inEdges" for the incoming edges and "outEdges" for the outgoing edges.
+ * 
+ * @see OGraphEdge
  */
 public class OGraphVertex extends OGraphElement {
-	public static final String	CLASS_NAME	= "OGraphVertex";
-	public static final String	FIELD_EDGES	= "edges";
+	public static final String	CLASS_NAME			= "OGraphVertex";
+	public static final String	FIELD_IN_EDGES	= "inEdges";
+	public static final String	FIELD_OUT_EDGES	= "outEdges";
 
-	private List<OGraphEdge>		edges;
+	private List<OGraphEdge>		inEdges;
+	private List<OGraphEdge>		outEdges;
 
 	public OGraphVertex(final ODatabaseGraphTx iDatabase, final ORID iRID) {
 		super(new ODocument((ODatabaseRecord<?>) iDatabase.getUnderlying(), iRID));
@@ -52,67 +58,188 @@ public class OGraphVertex extends OGraphElement {
 			iDocument.load(iFetchPlan);
 	}
 
+	/**
+	 * Create a link between the current vertex and the target one.
+	 * 
+	 * @param iTargetVertex
+	 *          Target vertex where to create the connection
+	 * @return The new edge created
+	 */
 	@SuppressWarnings("unchecked")
-	public OGraphEdge link(final OGraphVertex iDestinationNode) {
-		if (iDestinationNode == null)
-			throw new IllegalArgumentException("Missed the arc destination property");
+	public OGraphEdge link(final OGraphVertex iTargetVertex) {
+		if (iTargetVertex == null)
+			throw new IllegalArgumentException("Missed the target vertex");
 
-		final OGraphEdge arc = new OGraphEdge(document.getDatabase(), this, iDestinationNode);
-		getEdges().add(arc);
-		((List<ODocument>) document.field(FIELD_EDGES)).add(arc.getDocument());
-		return arc;
+		// CREATE THE EDGE BETWEEN ME AND THE TARGET
+		final OGraphEdge outEdge = new OGraphEdge(document.getDatabase(), this, iTargetVertex);
+		getOutEdges().add(outEdge);
+		((List<ODocument>) document.field(FIELD_OUT_EDGES)).add(outEdge.getDocument());
+
+		// INSERT INTO THE INGOING EDGES OF TARGET
+		final OGraphEdge inEdge = new OGraphEdge(document.getDatabase(), iTargetVertex, this);
+		iTargetVertex.getInEdges().add(inEdge);
+		((List<ODocument>) iTargetVertex.getDocument().field(FIELD_IN_EDGES)).add(inEdge.getDocument());
+
+		return outEdge;
 	}
 
 	/**
-	 * Returns true if the vertex has at least one edge, otherwise false.
+	 * Remove the link between the current vertex and the target one.
+	 * 
+	 * @param iTargetVertex
+	 *          Target vertex where to remove the connection
+	 * @return Current vertex (useful for fluent calls)
 	 */
-	public boolean hasEdges() {
-		if (edges == null) {
-			final List<ODocument> docs = document.field(FIELD_EDGES);
+	public OGraphVertex unlink(final OGraphVertex iTargetVertex) {
+		if (iTargetVertex == null)
+			throw new IllegalArgumentException("Missed the target vertex");
+
+		// REMOVE THE EDGE OBJECT
+		boolean found = false;
+		if (outEdges != null) {
+			for (OGraphEdge e : outEdges)
+				if (e.getOut().equals(iTargetVertex)) {
+					outEdges.remove(e);
+					found = true;
+					break;
+				}
+
+			if (!found)
+				throw new IllegalArgumentException("Target vertex is not linked to the current vertex");
+		}
+
+		// REMOVE THE EDGE DOCUMENT
+		List<ODocument> docs = document.field(FIELD_OUT_EDGES);
+		docs.remove(iTargetVertex.getDocument());
+
+		// REMOVE THE EDGE OBJECT FROM THE TARGET VERTEX
+		if (iTargetVertex.inEdges != null) {
+			for (OGraphEdge e : iTargetVertex.inEdges)
+				if (e.getIn().equals(this)) {
+					iTargetVertex.inEdges.remove(e);
+					break;
+				}
+		}
+
+		// REMOVE THE EDGE DOCUMENT FROM THE TARGET VERTEX
+		docs = iTargetVertex.getDocument().field(FIELD_IN_EDGES);
+		docs.remove(document);
+
+		return this;
+	}
+
+	/**
+	 * Returns true if the vertex has at least one incoming edge, otherwise false.
+	 */
+	public boolean hasInEdges() {
+		if (inEdges == null) {
+			final List<ODocument> docs = document.field(FIELD_IN_EDGES);
 			return docs != null && !docs.isEmpty();
 		}
 
-		return !edges.isEmpty();
+		return !inEdges.isEmpty();
 	}
 
 	/**
-	 * Returns the arcs of current node. If there are no arcs, then an empty list is returned.
+	 * Returns true if the vertex has at least one outgoing edge, otherwise false.
 	 */
-	public List<OGraphEdge> getEdges() {
-		if (edges == null) {
-			edges = new ArrayList<OGraphEdge>();
+	public boolean hasOutEdges() {
+		if (outEdges == null) {
+			final List<ODocument> docs = document.field(FIELD_OUT_EDGES);
+			return docs != null && !docs.isEmpty();
+		}
 
-			List<ODocument> docs = document.field(FIELD_EDGES);
+		return !outEdges.isEmpty();
+	}
+
+	/**
+	 * Returns the incoming edges of current node. If there are no edged, then an empty list is returned.
+	 */
+	public List<OGraphEdge> getInEdges() {
+		if (inEdges == null) {
+			inEdges = new ArrayList<OGraphEdge>();
+
+			List<ODocument> docs = document.field(FIELD_IN_EDGES);
 
 			if (docs == null) {
 				docs = new ArrayList<ODocument>();
-				document.field(FIELD_EDGES, docs);
+				document.field(FIELD_IN_EDGES, docs);
 			} else {
 				// TRANSFORM ALL THE ARCS
 				for (ODocument d : docs) {
-					edges.add(new OGraphEdge(d));
+					inEdges.add(new OGraphEdge(d));
 				}
 			}
 		}
 
-		return edges;
+		return inEdges;
 	}
 
+	/**
+	 * Returns the outgoing edges of current node. If there are no edged, then an empty list is returned.
+	 */
+	public List<OGraphEdge> getOutEdges() {
+		if (outEdges == null) {
+			outEdges = new ArrayList<OGraphEdge>();
+
+			List<ODocument> docs = document.field(FIELD_OUT_EDGES);
+
+			if (docs == null) {
+				docs = new ArrayList<ODocument>();
+				document.field(FIELD_OUT_EDGES, docs);
+			} else {
+				// TRANSFORM ALL THE ARCS
+				for (ODocument d : docs) {
+					outEdges.add(new OGraphEdge(d));
+				}
+			}
+		}
+
+		return outEdges;
+	}
+
+	/**
+	 * Returns the list of Vertexes from the outgoing edges.
+	 */
 	@SuppressWarnings("unchecked")
-	public List<OGraphVertex> browseEdgeDestinations() {
+	public List<OGraphVertex> browseOutEdgesVertexes() {
 		final List<OGraphVertex> resultset = new ArrayList<OGraphVertex>();
 
-		if (edges == null) {
-			List<ODocument> docEdges = (List<ODocument>) document.field(FIELD_EDGES);
+		if (outEdges == null) {
+			List<ODocument> docEdges = (List<ODocument>) document.field(FIELD_OUT_EDGES);
 
-			// TRANSFORM ALL THE ARCS
+			// TRANSFORM ALL THE EDGES
 			if (docEdges != null)
 				for (ODocument d : docEdges) {
-					resultset.add(new OGraphVertex((ODocument) d.field(OGraphEdge.DESTINATION)));
+					resultset.add(new OGraphVertex((ODocument) d.field(OGraphEdge.OUT)));
 				}
 		} else {
-			for (OGraphEdge edge : edges) {
-				resultset.add(edge.getDestination());
+			for (OGraphEdge edge : outEdges) {
+				resultset.add(edge.getOut());
+			}
+		}
+
+		return resultset;
+	}
+
+	/**
+	 * Returns the list of Vertexes from the incoming edges.
+	 */
+	@SuppressWarnings("unchecked")
+	public List<OGraphVertex> browseInEdgesVertexes() {
+		final List<OGraphVertex> resultset = new ArrayList<OGraphVertex>();
+
+		if (inEdges == null) {
+			List<ODocument> docEdges = (List<ODocument>) document.field(FIELD_IN_EDGES);
+
+			// TRANSFORM ALL THE EDGES
+			if (docEdges != null)
+				for (ODocument d : docEdges) {
+					resultset.add(new OGraphVertex((ODocument) d.field(OGraphEdge.IN)));
+				}
+		} else {
+			for (OGraphEdge edge : inEdges) {
+				resultset.add(edge.getIn());
 			}
 		}
 

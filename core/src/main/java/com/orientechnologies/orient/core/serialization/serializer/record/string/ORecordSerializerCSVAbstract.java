@@ -406,7 +406,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 	 * @param iLinked
 	 *          Can be an instance of ORID or a Record<?>
 	 */
-	private void linkToStream(final StringBuilder buffer, final ORecordSchemaAware<?> iParentRecord, final Object iLinked) {
+	private void linkToStream(final StringBuilder buffer, final ORecordSchemaAware<?> iParentRecord, Object iLinked) {
 		if (iLinked == null)
 			// NULL REFERENCE
 			return;
@@ -419,10 +419,20 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			// JUST THE REFERENCE
 			rid = (ORID) iLinked;
 		} else {
+			if (!(iLinked instanceof ORecordInternal<?>)) {
+				// NOT RECORD: TRY TO EXTRACT THE DOCUMENT IF ANY
+				final String boundDocumentField = OObjectSerializerHelper.getDocumentBoundField(iLinked.getClass());
+				if (boundDocumentField != null)
+					iLinked = OObjectSerializerHelper.getFieldValue(iLinked, boundDocumentField);
+			}
+
+			if (!(iLinked instanceof ORecordInternal<?>))
+				throw new IllegalArgumentException("Invalid object received. Expected a record but received: " + iLinked);
+
 			// RECORD
 			ORecordInternal<?> iLinkedRecord = (ORecordInternal<?>) iLinked;
 			rid = iLinkedRecord.getIdentity();
-			if (!rid.isValid()) {
+			if (!rid.isValid() || iLinkedRecord.isDirty()) {
 				// OVERWRITE THE DATABASE TO THE SAME OF PARENT ONE
 				iLinkedRecord.setDatabase(iParentRecord.getDatabase());
 
