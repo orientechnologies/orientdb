@@ -22,11 +22,12 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.graph.ODatabaseGraphTx;
+import com.orientechnologies.orient.core.db.graph.OGraphEdge;
 import com.orientechnologies.orient.core.db.graph.OGraphVertex;
 
 @Test(sequential = true)
 public class GraphTestFixedDensity {
-	private static final int	MAX_DEEP						= 1000;
+	private static final int	MAX_DEEP						= 100;
 	private static final int	DENSITY							= 1;
 
 	private ODatabaseGraphTx	database;
@@ -89,8 +90,8 @@ public class GraphTestFixedDensity {
 	private void readSubNodes(final OGraphVertex iNode) {
 		Assert.assertEquals(((Number) iNode.get("id")).intValue(), ++nodeReadCounter);
 
-		for (OGraphVertex node : iNode.browseEdgeDestinations()) {
-			readSubNodes(node);
+		for (OGraphEdge edge : iNode.getOutEdges()) {
+			readSubNodes(edge.getOut());
 		}
 	}
 

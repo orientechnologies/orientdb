@@ -108,7 +108,7 @@ public class CRUDObjectPhysicalTest {
 
 		// BROWSE ALL THE OBJECTS
 		for (OUser u : database.browseClass(OUser.class)) {
-			database.save(u);
+			u.save();
 		}
 
 		database.close();
