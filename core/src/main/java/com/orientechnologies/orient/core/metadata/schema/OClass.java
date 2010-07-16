@@ -111,27 +111,56 @@ public class OClass extends OSchemaRecord {
 		return this.name;
 	}
 
-	public Collection<OProperty> properties() {
+	public Collection<OProperty> declaredProperties() {
 		return Collections.unmodifiableCollection(properties.values());
 	}
 
+	public Collection<OProperty> properties() {
+		Collection<OProperty> props = new ArrayList<OProperty>();
+
+		OClass currentClass = this;
+
+		do {
+			if (currentClass.properties != null)
+				props.addAll(currentClass.properties.values());
+
+			currentClass = currentClass.getSuperClass();
+
+		} while (currentClass != null);
+
+		return props;
+	}
+
 	public OProperty getProperty(final String iPropertyName) {
-		return properties.get(iPropertyName.toLowerCase());
+		OClass currentClass = this;
+		OProperty p = null;
+
+		do {
+			if (currentClass.properties != null)
+				p = currentClass.properties.get(iPropertyName.toLowerCase());
+
+			if (p == null)
+				currentClass = currentClass.getSuperClass();
+
+		} while (currentClass != null);
+
+		return p;
 	}
 
 	public OProperty getProperty(final int iIndex) {
-		for (OProperty prop : properties.values())
-			if (prop.getId() == iIndex)
-				return prop;
+		OClass currentClass = this;
 
-		throw new OSchemaException("Property with index " + iIndex + " was not found in class: " + name);
-	}
+		do {
+			if (currentClass.properties != null)
+				for (OProperty prop : currentClass.properties.values())
+					if (prop.getId() == iIndex)
+						return prop;
 
-	public int getPropertyIndex(final String iPropertyName) {
-		OProperty prop = properties.get(iPropertyName.toLowerCase());
-		if (prop == null)
-			return -1;
-		return prop.getId();
+			currentClass = currentClass.getSuperClass();
+
+		} while (currentClass != null);
+
+		return null;
 	}
 
 	public OProperty createProperty(final String iPropertyName, final OType iType) {
@@ -295,7 +324,7 @@ public class OClass extends OSchemaRecord {
 			addPolymorphicClusterIds(currentClass);
 			currentClass = currentClass.getSuperClass();
 		}
-		
+
 		return this;
 	}
 
