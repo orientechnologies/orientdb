@@ -64,6 +64,18 @@ public class OGraphVertex extends OGraphElement {
 	}
 
 	/**
+	 * Returns true if the vertex has at least one edge, otherwise false.
+	 */
+	public boolean hasEdges() {
+		if (edges == null) {
+			final List<ODocument> docs = document.field(FIELD_EDGES);
+			return docs != null && !docs.isEmpty();
+		}
+
+		return !edges.isEmpty();
+	}
+
+	/**
 	 * Returns the arcs of current node. If there are no arcs, then an empty list is returned.
 	 */
 	public List<OGraphEdge> getEdges() {

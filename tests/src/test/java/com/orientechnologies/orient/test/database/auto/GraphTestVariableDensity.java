@@ -19,8 +19,6 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.client.remote.OEngineRemote;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.graph.ODatabaseGraphTx;
 import com.orientechnologies.orient.core.db.graph.OGraphVertex;
 
@@ -29,7 +27,7 @@ public class GraphTestVariableDensity {
 	private static final int	MAX_NODES						= 10000;
 	private static final int	MAX_DEEP						= 5;
 	private static final int	START_DENSITY				= 184;
-	private static final int	DENSITY_FACTOR			= 13;
+	private static final int	DENSITY_FACTOR			= 14;
 
 	private static int				nodeWrittenCounter	= 0;
 	private static int				arcWrittenCounter		= 0;
@@ -40,7 +38,6 @@ public class GraphTestVariableDensity {
 
 	@Parameters(value = "url")
 	public GraphTestVariableDensity(String iURL) {
-		Orient.instance().registerEngine(new OEngineRemote());
 		database = new ODatabaseGraphTx(iURL);
 	}
 
@@ -51,6 +48,8 @@ public class GraphTestVariableDensity {
 		long time = System.currentTimeMillis();
 
 		OGraphVertex rootNode = database.createVertex().set("id", 0);
+
+		System.out.println("Creating subnodes: ");
 
 		nodeWrittenCounter = 1;
 		createSubNodes(rootNode, 0, START_DENSITY);
@@ -86,7 +85,7 @@ public class GraphTestVariableDensity {
 		nodeReadCounter = arcReadCounter = 0;
 		readSubNodes(database.getRoot("HighDensityGraph"));
 
-		System.out.println("Read of the entire graph with deep=" + MAX_DEEP + " and density variable <=30 Total " + nodeReadCounter
+		System.out.println("Read using the cache of the entire graph with deep=" + MAX_DEEP + " and density variable <=30 Total " + nodeReadCounter
 				+ " nodes and " + arcReadCounter + " arcs in " + ((System.currentTimeMillis() - time) / 1000f) + " sec.");
 
 		Assert.assertEquals(nodeReadCounter, nodeWrittenCounter);
@@ -106,7 +105,7 @@ public class GraphTestVariableDensity {
 	}
 
 	private void createSubNodes(final OGraphVertex iNode, final int iDeepLevel, int iDensity) {
-		System.out.println("Creating " + iDensity + " sub nodes...");
+		System.out.print(iDensity + " ");
 
 		OGraphVertex newNode;
 
