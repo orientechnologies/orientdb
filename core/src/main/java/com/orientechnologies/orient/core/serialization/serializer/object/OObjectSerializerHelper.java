@@ -33,8 +33,8 @@ import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
 import com.orientechnologies.orient.core.annotation.OAfterSerialization;
 import com.orientechnologies.orient.core.annotation.OBeforeDeserialization;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
-import com.orientechnologies.orient.core.annotation.OField;
-import com.orientechnologies.orient.core.annotation.OField.MODES;
+import com.orientechnologies.orient.core.annotation.ODocumentInstance;
+import com.orientechnologies.orient.core.annotation.ORawBinding;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.entity.OEntityManager;
@@ -394,7 +394,6 @@ public class OObjectSerializerHelper {
 
 			String fieldName;
 			int fieldModifier;
-			OField fieldAnnotation;
 			boolean autoBinding;
 
 			for (Class<?> currentClass = iClass; currentClass != Object.class;) {
@@ -407,10 +406,9 @@ public class OObjectSerializerHelper {
 
 					fieldName = f.getName();
 
-					fieldAnnotation = f.getAnnotation(OField.class);
-					autoBinding = fieldAnnotation == null || fieldAnnotation.binding() == MODES.AUTO;
+					autoBinding = f.getAnnotation(ORawBinding.class) == null;
 
-					if (fieldAnnotation != null && fieldAnnotation.document())
+					if (f.getAnnotation(ODocumentInstance.class) != null)
 						// BOUND DOCUMENT ON IT
 						boundDocumentFields.put(iClass.getName(), fieldName);
 

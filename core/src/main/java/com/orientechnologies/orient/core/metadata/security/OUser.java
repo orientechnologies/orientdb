@@ -19,8 +19,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
-import com.orientechnologies.orient.core.annotation.OField;
-import com.orientechnologies.orient.core.annotation.OField.MODES;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -42,7 +40,6 @@ public class OUser extends ODocumentWrapper {
 	}
 
 	// AVOID THE INVOCATION OF SETTER
-	@OField(binding = MODES.RAW)
 	protected Set<ORole>	roles	= new HashSet<ORole>();
 
 	/**

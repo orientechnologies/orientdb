@@ -16,7 +16,7 @@
 package com.orientechnologies.orient.core.type;
 
 import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
-import com.orientechnologies.orient.core.annotation.OField;
+import com.orientechnologies.orient.core.annotation.ODocumentInstance;
 import com.orientechnologies.orient.core.db.graph.OGraphElement;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings("unchecked")
 public class ODocumentWrapper {
-	@OField(document = true)
+	@ODocumentInstance
 	protected ODocument	document;
 
 	public ODocumentWrapper(final ODatabaseRecord<?> iDatabase, final ORID iRID) {

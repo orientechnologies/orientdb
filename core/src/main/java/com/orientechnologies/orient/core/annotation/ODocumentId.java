@@ -21,23 +21,12 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Tells that the field contains the RecordID. This is needed when you work with detached object graph. OrientDb will use this field
+ * to know the Document bound across different database instances.
+ */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface OField {
-	enum MODES {
-		AUTO, RAW
-	}
-
-	/**
-	 * Tells the way Orient should bind the field. AUTO, the default, means to search for getter and setter. If they are not present,
-	 * then the field is accessed directly. RAW instead forces the field level access. Use this if you want by-pass getter and setter
-	 * methods. Default is AUTO.
-	 */
-	MODES binding() default MODES.AUTO;
-
-	/**
-	 * Tells that the field contains the embedded document bound to the POJO. Default is FALSE.
-	 */
-	boolean document() default false;
+public @interface ODocumentId {
 }
