@@ -278,7 +278,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			return (RET) linkedRecord.field(iPropertyName.substring(separatorPos + 1));
 		}
 
-		final RET value = (RET) _fieldValues.get(iPropertyName);
+		RET value = (RET) _fieldValues.get(iPropertyName);
 
 		if (value instanceof Collection<?>) {
 			// RELATION 1-N
@@ -302,6 +302,10 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 						lazyLoadRecord((ORecord<?>) o);
 				}
 			}
+		} else if (value instanceof ORID) {
+			// CREATE THE DOCUMENT OBJECT IN LAZY WAY
+			value = (RET) new ODocument(_database, (ORID) value);
+			_fieldValues.put(iPropertyName, value);
 		}
 
 		return value;

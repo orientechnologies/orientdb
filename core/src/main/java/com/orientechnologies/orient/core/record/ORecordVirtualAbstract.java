@@ -135,11 +135,6 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 		return true;
 	}
 
-	protected void checkForLoading() {
-		if (_status == STATUS.NOT_LOADED)
-			load();
-	}
-
 	@Override
 	protected void checkForFields() {
 		if (_fieldValues == null)

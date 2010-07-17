@@ -196,4 +196,10 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 				throw new OValidationException("The field " + p.getName() + " contains more items then " + max + " requested");
 		}
 	}
+
+	protected void checkForLoading() {
+		if (_status == STATUS.NOT_LOADED)
+			load();
+	}
+
 }

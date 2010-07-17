@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
 @Test(sequential = true)
 public class LocalCreateGraphVariableDensityTest {
-	private static final int				MAX_NODES						= 100000;
+	private static final int				MAX_NODES						= 1000000;
 	private static final int				MAX_DEEP						= 5;
 	private static final int				START_DENSITY				= 184;
 	private static final int				DENSITY_FACTOR			= 13;

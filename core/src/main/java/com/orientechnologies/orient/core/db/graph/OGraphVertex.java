@@ -15,12 +15,14 @@
  */
 package com.orientechnologies.orient.core.db.graph;
 
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecord.STATUS;
+import com.orientechnologies.orient.core.iterator.OGraphVertexOutIterator;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -30,13 +32,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  * @see OGraphEdge
  */
-public class OGraphVertex extends OGraphElement {
-	public static final String	CLASS_NAME			= "OGraphVertex";
-	public static final String	FIELD_IN_EDGES	= "inEdges";
-	public static final String	FIELD_OUT_EDGES	= "outEdges";
+public class OGraphVertex extends OGraphElement implements Cloneable {
+	public static final String							CLASS_NAME			= "OGraphVertex";
+	public static final String							FIELD_IN_EDGES	= "inEdges";
+	public static final String							FIELD_OUT_EDGES	= "outEdges";
 
-	private List<OGraphEdge>		inEdges;
-	private List<OGraphEdge>		outEdges;
+	private SoftReference<List<OGraphEdge>>	inEdges;
+	private SoftReference<List<OGraphEdge>>	outEdges;
 
 	public OGraphVertex(final ODatabaseGraphTx iDatabase, final ORID iRID) {
 		super(new ODocument((ODatabaseRecord<?>) iDatabase.getUnderlying(), iRID));
@@ -48,14 +50,21 @@ public class OGraphVertex extends OGraphElement {
 
 	public OGraphVertex(final ODocument iDocument) {
 		super(iDocument);
-		if (iDocument.getInternalStatus() == STATUS.NOT_LOADED)
-			iDocument.load();
 	}
 
 	public OGraphVertex(final ODocument iDocument, final String iFetchPlan) {
 		super(iDocument);
-		if (iDocument.getInternalStatus() == STATUS.NOT_LOADED)
-			iDocument.load(iFetchPlan);
+	}
+
+	@Override
+	public OGraphVertex clone() {
+		return new OGraphVertex(document);
+	}
+
+	@OAfterDeserialization
+	public void init(final ODocument iDocument) {
+		super.init(iDocument);
+		inEdges = outEdges = null;
 	}
 
 	/**
@@ -96,10 +105,10 @@ public class OGraphVertex extends OGraphElement {
 
 		// REMOVE THE EDGE OBJECT
 		boolean found = false;
-		if (outEdges != null) {
-			for (OGraphEdge e : outEdges)
+		if (outEdges != null && outEdges.get() != null) {
+			for (OGraphEdge e : outEdges.get())
 				if (e.getOut().equals(iTargetVertex)) {
-					outEdges.remove(e);
+					outEdges.get().remove(e);
 					found = true;
 					break;
 				}
@@ -113,10 +122,10 @@ public class OGraphVertex extends OGraphElement {
 		docs.remove(iTargetVertex.getDocument());
 
 		// REMOVE THE EDGE OBJECT FROM THE TARGET VERTEX
-		if (iTargetVertex.inEdges != null) {
-			for (OGraphEdge e : iTargetVertex.inEdges)
+		if (iTargetVertex.inEdges != null && iTargetVertex.inEdges.get() != null) {
+			for (OGraphEdge e : iTargetVertex.inEdges.get())
 				if (e.getIn().equals(this)) {
-					iTargetVertex.inEdges.remove(e);
+					iTargetVertex.inEdges.get().remove(e);
 					break;
 				}
 		}
@@ -129,35 +138,39 @@ public class OGraphVertex extends OGraphElement {
 	}
 
 	/**
+	 * Returns the iterator to browse all linked outgoing vertexes.
+	 * 
+	 * @return
+	 */
+	public OGraphVertexOutIterator outIterator() {
+		return new OGraphVertexOutIterator(this);
+	}
+
+	/**
 	 * Returns true if the vertex has at least one incoming edge, otherwise false.
 	 */
 	public boolean hasInEdges() {
-		if (inEdges == null) {
-			final List<ODocument> docs = document.field(FIELD_IN_EDGES);
-			return docs != null && !docs.isEmpty();
-		}
-
-		return !inEdges.isEmpty();
+		final List<ODocument> docs = document.field(FIELD_IN_EDGES);
+		return docs != null && !docs.isEmpty();
 	}
 
 	/**
 	 * Returns true if the vertex has at least one outgoing edge, otherwise false.
 	 */
 	public boolean hasOutEdges() {
-		if (outEdges == null) {
-			final List<ODocument> docs = document.field(FIELD_OUT_EDGES);
-			return docs != null && !docs.isEmpty();
-		}
-
-		return !outEdges.isEmpty();
+		final List<ODocument> docs = document.field(FIELD_OUT_EDGES);
+		return docs != null && !docs.isEmpty();
 	}
 
 	/**
 	 * Returns the incoming edges of current node. If there are no edged, then an empty list is returned.
 	 */
 	public List<OGraphEdge> getInEdges() {
-		if (inEdges == null) {
-			inEdges = new ArrayList<OGraphEdge>();
+		List<OGraphEdge> tempList = inEdges != null ? inEdges.get() : null;
+
+		if (tempList == null) {
+			tempList = new ArrayList<OGraphEdge>();
+			inEdges = new SoftReference<List<OGraphEdge>>(tempList);
 
 			List<ODocument> docs = document.field(FIELD_IN_EDGES);
 
@@ -167,20 +180,23 @@ public class OGraphVertex extends OGraphElement {
 			} else {
 				// TRANSFORM ALL THE ARCS
 				for (ODocument d : docs) {
-					inEdges.add(new OGraphEdge(d));
+					tempList.add(new OGraphEdge(d));
 				}
 			}
 		}
 
-		return inEdges;
+		return inEdges.get();
 	}
 
 	/**
 	 * Returns the outgoing edges of current node. If there are no edged, then an empty list is returned.
 	 */
 	public List<OGraphEdge> getOutEdges() {
-		if (outEdges == null) {
-			outEdges = new ArrayList<OGraphEdge>();
+		List<OGraphEdge> tempList = outEdges != null ? outEdges.get() : null;
+
+		if (tempList == null) {
+			tempList = new ArrayList<OGraphEdge>();
+			outEdges = new SoftReference<List<OGraphEdge>>(tempList);
 
 			List<ODocument> docs = document.field(FIELD_OUT_EDGES);
 
@@ -190,23 +206,55 @@ public class OGraphVertex extends OGraphElement {
 			} else {
 				// TRANSFORM ALL THE ARCS
 				for (ODocument d : docs) {
-					outEdges.add(new OGraphEdge(d));
+					tempList.add(new OGraphEdge(d));
 				}
 			}
 		}
 
-		return outEdges;
+		return tempList;
 	}
 
 	/**
-	 * Returns the list of Vertexes from the outgoing edges.
+	 * Returns the outgoing vertex at given position.
+	 * 
+	 * @param iIndex
+	 *          edge position
+	 * @param iCurrentVertex
+	 *          Object to recycle to save memory. Used on iteration
+	 * @param iCurrentVertex
+	 */
+	public OGraphVertex getOutEdgeVertex(int iIndex, final OGraphVertex iCurrentVertex) {
+		final List<ODocument> docs = document.field(FIELD_OUT_EDGES);
+		iCurrentVertex.init((ODocument) docs.get(iIndex).field(OGraphEdge.OUT));
+		return iCurrentVertex;
+	}
+
+	/**
+	 * Returns the incoming vertex at given position.
+	 * 
+	 * @param iIndex
+	 *          edge position
+	 * @param iCurrentVertex
+	 *          Object to recycle to save memory. Used on iteration
+	 * @param iCurrentVertex
+	 */
+	public OGraphVertex getInEdgeVertex(int iIndex, final OGraphVertex iCurrentVertex) {
+		final List<ODocument> docs = document.field(FIELD_IN_EDGES);
+		iCurrentVertex.init((ODocument) docs.get(iIndex).field(OGraphEdge.IN));
+		return iCurrentVertex;
+	}
+
+	/**
+	 * Returns the list of Vertexes from the outgoing edges. It avoids to unmarshall edges.
 	 */
 	@SuppressWarnings("unchecked")
 	public List<OGraphVertex> browseOutEdgesVertexes() {
 		final List<OGraphVertex> resultset = new ArrayList<OGraphVertex>();
 
-		if (outEdges == null) {
-			List<ODocument> docEdges = (List<ODocument>) document.field(FIELD_OUT_EDGES);
+		List<OGraphEdge> tempList = outEdges != null ? outEdges.get() : null;
+
+		if (tempList == null) {
+			final List<ODocument> docEdges = (List<ODocument>) document.field(FIELD_OUT_EDGES);
 
 			// TRANSFORM ALL THE EDGES
 			if (docEdges != null)
@@ -214,7 +262,7 @@ public class OGraphVertex extends OGraphElement {
 					resultset.add(new OGraphVertex((ODocument) d.field(OGraphEdge.OUT)));
 				}
 		} else {
-			for (OGraphEdge edge : outEdges) {
+			for (OGraphEdge edge : tempList) {
 				resultset.add(edge.getOut());
 			}
 		}
@@ -223,14 +271,16 @@ public class OGraphVertex extends OGraphElement {
 	}
 
 	/**
-	 * Returns the list of Vertexes from the incoming edges.
+	 * Returns the list of Vertexes from the incoming edges. It avoids to unmarshall edges.
 	 */
 	@SuppressWarnings("unchecked")
 	public List<OGraphVertex> browseInEdgesVertexes() {
 		final List<OGraphVertex> resultset = new ArrayList<OGraphVertex>();
 
-		if (inEdges == null) {
-			List<ODocument> docEdges = (List<ODocument>) document.field(FIELD_IN_EDGES);
+		List<OGraphEdge> tempList = inEdges != null ? inEdges.get() : null;
+
+		if (tempList == null) {
+			final List<ODocument> docEdges = (List<ODocument>) document.field(FIELD_IN_EDGES);
 
 			// TRANSFORM ALL THE EDGES
 			if (docEdges != null)
@@ -238,11 +288,47 @@ public class OGraphVertex extends OGraphElement {
 					resultset.add(new OGraphVertex((ODocument) d.field(OGraphEdge.IN)));
 				}
 		} else {
-			for (OGraphEdge edge : inEdges) {
+			for (OGraphEdge edge : tempList) {
 				resultset.add(edge.getIn());
 			}
 		}
 
 		return resultset;
+	}
+
+	public int findInVertex(final OGraphVertex iVertexDocument) {
+		final List<ODocument> docs = document.field(FIELD_IN_EDGES);
+		if (docs == null || docs.size() == 0)
+			return -1;
+
+		for (int i = 0; i < docs.size(); ++i) {
+			if (docs.get(i).field(OGraphEdge.IN).equals(iVertexDocument.getDocument()))
+				return i;
+		}
+
+		return -1;
+	}
+
+	public int findOutVertex(final OGraphVertex iVertexDocument) {
+		final List<ODocument> docs = document.field(FIELD_OUT_EDGES);
+		if (docs == null || docs.size() == 0)
+			return -1;
+
+		for (int i = 0; i < docs.size(); ++i) {
+			if (docs.get(i).field(OGraphEdge.OUT).equals(iVertexDocument.getDocument()))
+				return i;
+		}
+
+		return -1;
+	}
+
+	public int getInEdgeCount() {
+		final List<ODocument> docs = document.field(FIELD_IN_EDGES);
+		return docs == null ? 0 : docs.size();
+	}
+
+	public int getOutEdgeCount() {
+		final List<ODocument> docs = document.field(FIELD_OUT_EDGES);
+		return docs == null ? 0 : docs.size();
 	}
 }

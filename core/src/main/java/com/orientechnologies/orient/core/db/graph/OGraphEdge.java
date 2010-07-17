@@ -15,9 +15,11 @@
  */
 package com.orientechnologies.orient.core.db.graph;
 
+import java.lang.ref.SoftReference;
+
+import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -27,12 +29,12 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @see OGraphVertex
  */
 public class OGraphEdge extends OGraphElement {
-	public static final String	CLASS_NAME	= "OGraphEdge";
-	public static final String	IN					= "in";
-	public static final String	OUT					= "out";
+	public static final String					CLASS_NAME	= "OGraphEdge";
+	public static final String					IN					= "in";
+	public static final String					OUT					= "out";
 
-	private OGraphVertex				in;
-	private OGraphVertex				out;
+	private SoftReference<OGraphVertex>	in;
+	private SoftReference<OGraphVertex>	out;
 
 	public OGraphEdge(final ODatabaseRecord<?> iDatabase, final ORID iRID) {
 		super(iDatabase, iRID);
@@ -44,38 +46,42 @@ public class OGraphEdge extends OGraphElement {
 
 	public OGraphEdge(final ODatabaseRecord<?> iDatabase, final OGraphVertex iInNode, final OGraphVertex iOutNode) {
 		this(iDatabase);
-		in = iInNode;
-		out = iOutNode;
+		in = new SoftReference<OGraphVertex>(iInNode);
+		out = new SoftReference<OGraphVertex>(iOutNode);
 		set(IN, iInNode.getDocument()).set(OUT, iOutNode.getDocument());
 	}
 
 	public OGraphEdge(final ODocument iDocument) {
 		super(iDocument);
-		if (iDocument.getInternalStatus() == STATUS.NOT_LOADED)
-			iDocument.load();
+	}
+
+	@OAfterDeserialization
+	public void init(final ODocument iDocument) {
+		super.init(iDocument);
+		in = out = null;
 	}
 
 	public OGraphVertex getIn() {
-		if (in == null)
-			in = new OGraphVertex((ODocument) document.field(IN));
+		if (in == null || in.get() == null)
+			in = new SoftReference<OGraphVertex>(new OGraphVertex((ODocument) document.field(IN)));
 
-		return in;
+		return in.get();
 	}
 
 	public OGraphVertex getOut() {
-		if (out == null)
-			out = new OGraphVertex((ODocument) document.field(OUT));
+		if (out == null || out.get() == null)
+			out = new SoftReference<OGraphVertex>(new OGraphVertex((ODocument) document.field(OUT)));
 
-		return out;
+		return out.get();
 	}
 
 	protected void setIn(final OGraphVertex iSource) {
-		this.in = iSource;
+		this.in = new SoftReference<OGraphVertex>(iSource);
 		document.field(IN, iSource.getDocument());
 	}
 
 	protected void setOut(final OGraphVertex iDestination) {
-		this.out = iDestination;
+		this.out = new SoftReference<OGraphVertex>(iDestination);
 		document.field(OUT, iDestination.getDocument());
 	}
 
@@ -83,8 +89,8 @@ public class OGraphEdge extends OGraphElement {
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + ((in == null) ? 0 : in.hashCode());
-		result = prime * result + ((out == null) ? 0 : out.hashCode());
+		result = prime * result + ((in == null || in.get() == null) ? 0 : in.get().hashCode());
+		result = prime * result + ((out == null || out.get() == null) ? 0 : out.get().hashCode());
 		return result;
 	}
 
@@ -97,15 +103,15 @@ public class OGraphEdge extends OGraphElement {
 		if (getClass() != obj.getClass())
 			return false;
 		final OGraphEdge other = (OGraphEdge) obj;
-		if (in == null) {
-			if (other.in != null)
+		if (in == null || in.get() == null) {
+			if (other.in != null || other.in.get() == null)
 				return false;
 		} else if (!in.equals(other.in))
 			return false;
-		if (out == null) {
-			if (other.out != null)
+		if (out == null || out.get() == null) {
+			if (other.out != null || other.out.get() == null)
 				return false;
-		} else if (!out.equals(other.out))
+		} else if (!out.get().equals(other.out.get()))
 			return false;
 		return true;
 	}

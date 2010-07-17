@@ -85,6 +85,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				} else
 					item = item.substring(1);
 
+				// coll.add(new ORecordId(item));
 				coll.add(new ODocument(iDatabase, iLinkedClass != null ? iLinkedClass.getName() : null, new ORecordId(item)));
 			}
 
@@ -152,11 +153,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				else
 					pos = 0;
 
-				// if (iLinkedClass == null)
-				// throw new IllegalArgumentException("Linked class not specified in ORID field: " + iValue);
-
-				ORecordId recId = new ORecordId(iValue.substring(pos + 1));
-				return new ODocument(iDatabase, iLinkedClass != null ? iLinkedClass.getName() : null, recId);
+				// return new ORecordId(iValue.substring(pos + 1));
+				return new ODocument(iDatabase, iLinkedClass != null ? iLinkedClass.getName() : null, new ORecordId(
+						iValue.substring(pos + 1)));
 			} else
 				return null;
 

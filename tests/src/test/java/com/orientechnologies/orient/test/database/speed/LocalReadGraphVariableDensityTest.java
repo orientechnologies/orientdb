@@ -19,17 +19,13 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.db.graph.ODatabaseGraphTx;
-import com.orientechnologies.orient.core.db.graph.OGraphEdge;
 import com.orientechnologies.orient.core.db.graph.OGraphVertex;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
+import com.orientechnologies.orient.core.iterator.OGraphVertexOutIterator;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
 @Test(sequential = true)
 public class LocalReadGraphVariableDensityTest {
-	private static int							nodeReadCounter	= 0;
-	private static int							arcReadCounter	= 0;
-	private static int							maxDeep					= 0;
-
 	private static ODatabaseGraphTx	database;
 
 	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
@@ -42,33 +38,35 @@ public class LocalReadGraphVariableDensityTest {
 
 		long time = System.currentTimeMillis();
 
-		readSubNodes(database.getRoot("HighDensityGraph"), 0);
+		OGraphVertexOutIterator iterator = readSubNodes(database.getRoot("HighDensityGraph"));
 
-		System.out.println("Read of the entire graph with deep=" + maxDeep + ". Total " + nodeReadCounter + " nodes and "
-				+ arcReadCounter + " arcs in " + ((System.currentTimeMillis() - time) / 1000f) + " sec.");
+		System.out.println("Read of the entire graph with deep=" + iterator.getMaxDeepLevel() + ". Total " + iterator.getCount()
+				+ " nodes in " + ((System.currentTimeMillis() - time) / 1000f) + " sec.");
 
 		System.out.println("Repeating the same operation but with hot cache");
 
 		time = System.currentTimeMillis();
 
-		nodeReadCounter = arcReadCounter = maxDeep = 0;
-		readSubNodes(database.getRoot("HighDensityGraph"), 0);
+		iterator = readSubNodes(database.getRoot("HighDensityGraph"));
 
-		System.out.println("Read using the cache of the entire graph with deep=" + maxDeep + ". Total " + nodeReadCounter
-				+ " nodes and " + arcReadCounter + " arcs in " + ((System.currentTimeMillis() - time) / 1000f) + " sec.");
+		System.out.println("Read using the cache of the entire graph with deep=" + iterator.getMaxDeepLevel() + ". Total "
+				+ iterator.getCount() + " nodes in " + ((System.currentTimeMillis() - time) / 1000f) + " sec.");
 
 		database.close();
 	}
 
-	private static void readSubNodes(final OGraphVertex iNode, final int iCurrentDeepLevel) {
-		if (iCurrentDeepLevel > maxDeep)
-			maxDeep = iCurrentDeepLevel;
+	private static OGraphVertexOutIterator readSubNodes(final OGraphVertex iNode) {
+		OGraphVertexOutIterator iterator = iNode.outIterator();
 
-		nodeReadCounter++;
+		int i = 0;
+		for (OGraphVertex v : iNode.outIterator()) {
+			// System.out.print(v.get("id") + " - ");
+			++i;
 
-		for (OGraphEdge edge : iNode.getOutEdges()) {
-			arcReadCounter++;
-			readSubNodes(edge.getOut(), iCurrentDeepLevel + 1);
+			if (i % 10000 == 0)
+				System.out.print(".");
 		}
+
+		return iterator;
 	}
 }

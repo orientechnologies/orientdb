@@ -69,7 +69,7 @@ public class OUser extends ODocumentWrapper {
 		document = iSource;
 
 		roles = new HashSet<ORole>();
-		Set<ODocument> loadedRoles = iSource.field("roles");
+		final Set<ODocument> loadedRoles = iSource.field("roles");
 		for (ODocument d : loadedRoles) {
 			roles.add(document.getDatabase().getMetadata().getSecurity().getRole((String) d.field("name")));
 		}
