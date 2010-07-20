@@ -18,7 +18,6 @@ package com.orientechnologies.orient.core.serialization.serializer.record.string
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -27,6 +26,7 @@ import java.util.Map.Entry;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.document.OLazyRecordList;
+import com.orientechnologies.orient.core.db.document.OLazyRecordMap;
 import com.orientechnologies.orient.core.db.document.OLazyRecordSet;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -68,9 +68,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			// REMOVE BEGIN & END COLLECTIONS CHARACTERS IF IT'S A COLLECTION
 			String value = iValue.startsWith("[") ? iValue.substring(1, iValue.length() - 1) : iValue;
 
-			@SuppressWarnings("rawtypes")
-			Collection coll = iType == OType.LINKLIST ? new OLazyRecordList<ODocument>(iDatabase, ODocument.RECORD_TYPE)
-					: new OLazyRecordSet<ODocument>(iDatabase, ODocument.RECORD_TYPE);
+			Collection<Object> coll = iType == OType.LINKLIST ? new OLazyRecordList(iDatabase, ODocument.RECORD_TYPE)
+					: new OLazyRecordSet(iDatabase, ODocument.RECORD_TYPE);
 
 			if (value.length() == 0)
 				return coll;
@@ -102,7 +101,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			// REMOVE BEGIN & END MAP CHARACTERS
 			String value = iValue.substring(1, iValue.length() - 1);
 
-			Map<String, Object> map = new HashMap<String, Object>();
+			@SuppressWarnings("rawtypes")
+			Map map = new OLazyRecordMap(iDatabase, ODocument.RECORD_TYPE);
 
 			if (value.length() == 0)
 				return map;

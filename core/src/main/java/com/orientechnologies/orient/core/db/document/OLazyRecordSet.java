@@ -19,12 +19,13 @@ import java.util.HashSet;
 import java.util.Iterator;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.id.ORID;
 
 @SuppressWarnings({ "serial" })
-public class OLazyRecordSet<REC extends ORecord<?>> extends HashSet<REC> {
+public class OLazyRecordSet extends HashSet<Object> {
 	private ODatabaseRecord<?>	database;
 	private byte								recordType;
+	private boolean							converted	= false;
 
 	public OLazyRecordSet(final ODatabaseRecord<?> database, final byte iRecordType) {
 		this.database = database;
@@ -32,8 +33,15 @@ public class OLazyRecordSet<REC extends ORecord<?>> extends HashSet<REC> {
 	}
 
 	@Override
-	public Iterator<REC> iterator() {
-		return new OLazyRecordIterator<REC>(database, recordType, super.iterator());
+	public Iterator<Object> iterator() {
+		return new OLazyRecordIterator(database, recordType, super.iterator());
+	}
+
+	@Override
+	public boolean add(final Object e) {
+		if (converted && e instanceof ORID)
+			converted = false;
+		return super.add(e);
 	}
 
 	@Override
@@ -58,7 +66,12 @@ public class OLazyRecordSet<REC extends ORecord<?>> extends HashSet<REC> {
 	 * Browse all the set to convert all the items.
 	 */
 	public void convertAll() {
-		for (Iterator<REC> it = iterator(); it.hasNext(); it.next())
+		if (converted)
+			return;
+
+		for (Iterator<Object> it = iterator(); it.hasNext(); it.next())
 			;
+
+		converted = true;
 	}
 }

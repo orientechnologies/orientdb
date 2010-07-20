@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.db.object;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -25,6 +26,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class OLazyObjectList<TYPE> extends ArrayList<TYPE> {
 	private ODatabaseObjectTx	database;
 	private String						fetchPlan;
+	private boolean						converted	= false;
 
 	public OLazyObjectList(final ODatabaseObjectTx database) {
 		this.database = database;
@@ -34,15 +36,24 @@ public class OLazyObjectList<TYPE> extends ArrayList<TYPE> {
 		return new OLazyObjectIterator<TYPE>(database, (Iterator<ODocument>) super.iterator());
 	}
 
-	public void convertAll() {
-		for (int i = 0; i < size(); ++i)
-			convert(i);
-	}
-
 	@Override
 	public boolean contains(final Object o) {
 		convertAll();
 		return super.contains(o);
+	}
+
+	@Override
+	public boolean add(TYPE element) {
+		if (converted && element instanceof ORID)
+			converted = false;
+		return super.add(element);
+	}
+
+	@Override
+	public void add(int index, TYPE element) {
+		if (converted && element instanceof ORID)
+			converted = false;
+		super.add(index, element);
 	}
 
 	@Override
@@ -82,6 +93,16 @@ public class OLazyObjectList<TYPE> extends ArrayList<TYPE> {
 	public OLazyObjectList<TYPE> setFetchPlan(String fetchPlan) {
 		this.fetchPlan = fetchPlan;
 		return this;
+	}
+
+	public void convertAll() {
+		if (converted)
+			return;
+
+		for (int i = 0; i < size(); ++i)
+			convert(i);
+
+		converted = true;
 	}
 
 	/**

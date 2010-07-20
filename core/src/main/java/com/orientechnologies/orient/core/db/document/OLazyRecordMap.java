@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.document;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
@@ -24,73 +24,46 @@ import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
 @SuppressWarnings({ "serial" })
-public class OLazyRecordList extends ArrayList<Object> {
+public class OLazyRecordMap extends HashMap<String, Object> {
 	private ODatabaseRecord<?>	database;
 	private byte								recordType;
 	private boolean							converted	= false;
 
-	public OLazyRecordList(final ODatabaseRecord<?> database, final byte iRecordType) {
+	public OLazyRecordMap(final ODatabaseRecord<?> database, final byte iRecordType) {
 		this.database = database;
 		this.recordType = iRecordType;
 	}
 
 	@Override
-	public boolean contains(final Object o) {
+	public boolean containsValue(final Object o) {
 		convertAll();
-		return super.contains(o);
+		return super.containsValue(o);
 	}
 
 	@Override
-	public boolean add(Object element) {
-		if (converted && element instanceof ORID)
+	public Object get(final Object iKey) {
+		if (iKey == null)
+			return null;
+
+		final String key = iKey.toString();
+
+		convert(key);
+		return super.get(key);
+	}
+
+	@Override
+	public Object put(final String iKey, final Object iValue) {
+		if (converted && iValue instanceof ORID)
 			converted = false;
-		return super.add(element);
-	}
-
-	@Override
-	public void add(int index, Object element) {
-		if (converted && element instanceof ORID)
-			converted = false;
-		super.add(index, element);
-	}
-
-	@Override
-	public Object get(final int index) {
-		convert(index);
-		return super.get(index);
-	}
-
-	@Override
-	public int indexOf(final Object o) {
-		convertAll();
-		return super.indexOf(o);
-	}
-
-	@Override
-	public int lastIndexOf(final Object o) {
-		convertAll();
-		return super.lastIndexOf(o);
-	}
-
-	@Override
-	public Object[] toArray() {
-		convertAll();
-		return super.toArray();
-	}
-
-	@Override
-	public <T> T[] toArray(final T[] a) {
-		convertAll();
-		return super.toArray(a);
+		return super.put(iKey, iValue);
 	}
 
 	public void convertAll() {
 		if (converted)
 			return;
 
-		for (int i = 0; i < size(); ++i)
-			convert(i);
-
+		for (String key : super.keySet())
+			convert(key);
 		converted = true;
 	}
 
@@ -100,8 +73,8 @@ public class OLazyRecordList extends ArrayList<Object> {
 	 * @param iIndex
 	 *          Position of the item to convert
 	 */
-	private void convert(final int iIndex) {
-		final Object o = super.get(iIndex);
+	private void convert(final String iKey) {
+		final Object o = super.get(iKey);
 
 		if (o != null && o instanceof ORecordId) {
 			final ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
@@ -111,7 +84,7 @@ public class OLazyRecordList extends ArrayList<Object> {
 			record.setIdentity(rid);
 			record.load();
 
-			super.set(iIndex, record);
+			super.put(iKey, record);
 		}
 	}
 }

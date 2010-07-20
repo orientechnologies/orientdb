@@ -19,23 +19,21 @@ import java.util.Iterator;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
-@SuppressWarnings({ "unchecked" })
-public class OLazyRecordIterator<REC extends ORecord<?>> implements Iterator<REC> {
+public class OLazyRecordIterator implements Iterator<Object> {
 	final private ODatabaseRecord<?>	database;
-	final private Iterator<REC>				underlying;
+	final private Iterator<?>					underlying;
 	private byte											recordType;
 
-	public OLazyRecordIterator(final ODatabaseRecord<?> database, final byte iRecordType, final Iterator<REC> iIterator) {
+	public OLazyRecordIterator(final ODatabaseRecord<?> database, final byte iRecordType, final Iterator<?> iIterator) {
 		this.database = database;
 		this.underlying = iIterator;
 		this.recordType = iRecordType;
 	}
 
-	public REC next() {
+	public Object next() {
 		final Object value = underlying.next();
 
 		if (value == null)
@@ -46,10 +44,10 @@ public class OLazyRecordIterator<REC extends ORecord<?>> implements Iterator<REC
 			record.setDatabase(database);
 			record.setIdentity((ORecordId) value);
 			record.load();
-			return (REC) record;
+			return record;
 		}
-		
-		return (REC) value;
+
+		return value;
 	}
 
 	public boolean hasNext() {

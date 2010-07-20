@@ -46,17 +46,14 @@ public class OLazyObjectSet<TYPE> implements Set<TYPE> {
 	}
 
 	public boolean contains(final Object o) {
-		convertAll();
 		return underlying.contains(underlying.contains(database.getRecordByUserObject(o, false)));
 	}
 
 	public Object[] toArray() {
-		convertAll();
 		return toArray(new Object[size()]);
 	}
 
 	public <T> T[] toArray(final T[] a) {
-		convertAll();
 		underlying.toArray(a);
 		for (int i = 0; i < a.length; ++i)
 			a[i] = (T) database.getUserObjectByRecord((ORecordInternal<?>) a[i], fetchPlan);
@@ -88,7 +85,6 @@ public class OLazyObjectSet<TYPE> implements Set<TYPE> {
 	}
 
 	public boolean retainAll(final Collection<?> c) {
-		convertAll();
 		return underlying.retainAll(c);
 	}
 
@@ -97,7 +93,6 @@ public class OLazyObjectSet<TYPE> implements Set<TYPE> {
 	}
 
 	public boolean removeAll(final Collection<?> c) {
-		convertAll();
 		boolean modified = false;
 		for (Object o : c)
 			if (!underlying.remove(database.getRecordByUserObject(o, false)))
@@ -117,16 +112,5 @@ public class OLazyObjectSet<TYPE> implements Set<TYPE> {
 	@Override
 	public String toString() {
 		return underlying.toString();
-	}
-
-	private void convertAll() {
-		Iterator<TYPE> e = iterator();
-		while (e.hasNext()) {
-			convert(e.next());
-		}
-	}
-
-	private void convert(final TYPE o) {
-		database.getRecordByUserObject(o, false);
 	}
 }
