@@ -140,4 +140,8 @@ public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
 	public ORecord<byte[]> fromJSON(String iJson) {
 		return null;
 	}
+
+	public ORecordAbstract<?> setIdentity(final ORecordId iIdentity) {
+		return null;
+	}
 }

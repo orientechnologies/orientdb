@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.serialization.serializer.object;
+package com.orientechnologies.orient.core.db.object;
 
 import java.util.Iterator;
 
-import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings({ "unchecked" })
-public class OLazyIterator<TYPE> implements Iterator<TYPE> {
+public class OLazyObjectIterator<TYPE> implements Iterator<TYPE> {
 	final private ODatabaseObjectTx		database;
 	final private Iterator<ODocument>	underlying;
 	private String										fetchPlan;
 
-	public OLazyIterator(final ODatabaseObjectTx database, final Iterator<ODocument> iIterator) {
+	public OLazyObjectIterator(final ODatabaseObjectTx database, final Iterator<ODocument> iIterator) {
 		this.database = database;
 		this.underlying = iIterator;
 	}

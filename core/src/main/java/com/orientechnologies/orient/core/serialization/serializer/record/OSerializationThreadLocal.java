@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record;
 
-import java.util.IdentityHashMap;
+import java.util.HashMap;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -26,6 +26,6 @@ public class OSerializationThreadLocal extends ThreadLocal<Map<ORecordInternal<?
 
 	@Override
 	protected Map<ORecordInternal<?>, ORecordId> initialValue() {
-		return new IdentityHashMap<ORecordInternal<?>, ORecordId>();
+		return new HashMap<ORecordInternal<?>, ORecordId>();
 	}
 }

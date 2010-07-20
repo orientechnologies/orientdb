@@ -13,26 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.serialization.serializer.object;
+package com.orientechnologies.orient.core.db.object;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings({ "unchecked", "serial" })
-public class OLazyList<TYPE> extends ArrayList<TYPE> {
+public class OLazyObjectList<TYPE> extends ArrayList<TYPE> {
 	private ODatabaseObjectTx	database;
 	private String						fetchPlan;
 
-	public OLazyList(final ODatabaseObjectTx database) {
+	public OLazyObjectList(final ODatabaseObjectTx database) {
 		this.database = database;
 	}
 
 	public Iterator<TYPE> iterator() {
-		return new OLazyIterator<TYPE>(database, (Iterator<ODocument>) super.iterator());
+		return new OLazyObjectIterator<TYPE>(database, (Iterator<ODocument>) super.iterator());
 	}
 
 	public void convertAll() {
@@ -80,7 +79,7 @@ public class OLazyList<TYPE> extends ArrayList<TYPE> {
 		return fetchPlan;
 	}
 
-	public OLazyList<TYPE> setFetchPlan(String fetchPlan) {
+	public OLazyObjectList<TYPE> setFetchPlan(String fetchPlan) {
 		this.fetchPlan = fetchPlan;
 		return this;
 	}
@@ -92,7 +91,7 @@ public class OLazyList<TYPE> extends ArrayList<TYPE> {
 	 *          Position of the item to convert
 	 */
 	private void convert(final int iIndex) {
-		Object o = super.get(iIndex);
+		final Object o = super.get(iIndex);
 
 		if (o != null && o instanceof ODocument)
 			super.set(iIndex, (TYPE) database.getUserObjectByRecord((ORecordInternal<?>) o, fetchPlan));

@@ -37,6 +37,8 @@ import com.orientechnologies.orient.core.annotation.ODocumentInstance;
 import com.orientechnologies.orient.core.annotation.ORawBinding;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
+import com.orientechnologies.orient.core.db.object.OLazyObjectList;
+import com.orientechnologies.orient.core.db.object.OLazyObjectSet;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -199,7 +201,7 @@ public class OObjectSerializerHelper {
 				if (type.isAssignableFrom(List.class)) {
 
 					final Collection<ODocument> list = (Collection<ODocument>) iLinked;
-					final List<Object> targetList = new OLazyList<Object>((ODatabaseObjectTx) iRecord.getDatabase().getDatabaseOwner())
+					final List<Object> targetList = new OLazyObjectList<Object>((ODatabaseObjectTx) iRecord.getDatabase().getDatabaseOwner())
 							.setFetchPlan(iFetchPlan);
 					fieldValue = targetList;
 
@@ -210,7 +212,7 @@ public class OObjectSerializerHelper {
 				} else if (type.isAssignableFrom(Set.class)) {
 
 					final Collection<ODocument> set = (Collection<ODocument>) iLinked;
-					final Set<Object> target = new OLazySet<Object>((ODatabaseObjectTx) iRecord.getDatabase().getDatabaseOwner(), set)
+					final Set<Object> target = new OLazyObjectSet<Object>((ODatabaseObjectTx) iRecord.getDatabase().getDatabaseOwner(), set)
 							.setFetchPlan(iFetchPlan);
 
 					fieldValue = target;

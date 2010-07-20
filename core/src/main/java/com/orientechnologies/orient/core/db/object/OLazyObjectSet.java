@@ -13,29 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.serialization.serializer.object;
+package com.orientechnologies.orient.core.db.object;
 
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings("unchecked")
-public class OLazySet<TYPE> implements Set<TYPE> {
+public class OLazyObjectSet<TYPE> implements Set<TYPE> {
 	private final ODatabaseObjectTx			database;
 	private final Collection<ODocument>	underlying;
 	private String											fetchPlan;
 
-	public OLazySet(final ODatabaseObjectTx database, final Collection<ODocument> iSource) {
+	public OLazyObjectSet(final ODatabaseObjectTx database, final Collection<ODocument> iSource) {
 		this.database = database;
 		this.underlying = iSource;
 	}
 
 	public Iterator<TYPE> iterator() {
-		return new OLazyIterator<TYPE>(database, underlying.iterator());
+		return new OLazyObjectIterator<TYPE>(database, underlying.iterator());
 	}
 
 	public int size() {
@@ -110,7 +109,7 @@ public class OLazySet<TYPE> implements Set<TYPE> {
 		return fetchPlan;
 	}
 
-	public OLazySet<TYPE> setFetchPlan(String fetchPlan) {
+	public OLazyObjectSet<TYPE> setFetchPlan(String fetchPlan) {
 		this.fetchPlan = fetchPlan;
 		return this;
 	}

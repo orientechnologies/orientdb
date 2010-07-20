@@ -26,6 +26,8 @@ import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
+import com.orientechnologies.orient.core.db.document.OLazyRecordList;
+import com.orientechnologies.orient.core.db.document.OLazyRecordSet;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.entity.OEntityManagerInternal;
@@ -66,7 +68,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			// REMOVE BEGIN & END COLLECTIONS CHARACTERS IF IT'S A COLLECTION
 			String value = iValue.startsWith("[") ? iValue.substring(1, iValue.length() - 1) : iValue;
 
-			Collection<Object> coll = iType == OType.LINKLIST ? new ArrayList<Object>() : new HashSet<Object>();
+			@SuppressWarnings("rawtypes")
+			Collection coll = iType == OType.LINKLIST ? new OLazyRecordList<ODocument>(iDatabase, ODocument.RECORD_TYPE)
+					: new OLazyRecordSet<ODocument>(iDatabase, ODocument.RECORD_TYPE);
 
 			if (value.length() == 0)
 				return coll;
@@ -85,8 +89,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				} else
 					item = item.substring(1);
 
-				// coll.add(new ORecordId(item));
-				coll.add(new ODocument(iDatabase, iLinkedClass != null ? iLinkedClass.getName() : null, new ORecordId(item)));
+				coll.add(new ORecordId(item));
+				// coll.add(new ODocument(iDatabase, iLinkedClass != null ? iLinkedClass.getName() : null, new ORecordId(item)));
 			}
 
 			return coll;
@@ -432,7 +436,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			ORecordInternal<?> iLinkedRecord = (ORecordInternal<?>) iLinked;
 			rid = iLinkedRecord.getIdentity();
 			if (!rid.isValid() || iLinkedRecord.isDirty()) {
-				// OVERWRITE THE DATABASE TO THE SAME OF PARENT ONE
+				// OVERWRITE THE DATABASE TO THE SAME OF THE PARENT ONE
 				iLinkedRecord.setDatabase(iParentRecord.getDatabase());
 
 				// STORE THE TRAVERSED OBJECT TO KNOW THE RECORD ID. CALL THIS VERSION TO AVOID CLEAR OF STACK IN THREAD-LOCAL

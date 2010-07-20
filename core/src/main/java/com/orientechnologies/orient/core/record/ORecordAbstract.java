@@ -72,6 +72,11 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		return this;
 	}
 
+	public ORecordAbstract<?> setIdentity(final ORecordId iIdentity) {
+		_recordId = iIdentity;
+		return this;
+	}
+
 	public ORecordAbstract<T> reset() {
 		_status = STATUS.NEW;
 
