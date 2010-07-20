@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.sql.operator;
 
 import java.util.Collection;
+import java.util.Map;
 
 import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -78,6 +79,13 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 
 				Collection<ODocument> collection = (Collection<ODocument>) target;
 				for (ODocument o : collection) {
+					if (traverse(condition, o, iLevel + 1) == Boolean.TRUE)
+						return true;
+				}
+			} else if (target instanceof Map<?, ?>) {
+
+				Map<String, ODocument> map = (Map<String, ODocument>) target;
+				for (ODocument o : map.values()) {
 					if (traverse(condition, o, iLevel + 1) == Boolean.TRUE)
 						return true;
 				}
