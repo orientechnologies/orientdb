@@ -21,21 +21,23 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
-@SuppressWarnings("unchecked")
-public class OSchema extends ODocument {
+public class OSchema extends ODocumentWrapperNoClass {
 	public static final String		CLUSTER_NAME						= "schema";
 
 	protected Map<String, OClass>	classes									= new LinkedHashMap<String, OClass>();
 	private static final int			CURRENT_VERSION_NUMBER	= 3;
 
 	public OSchema(final ODatabaseRecord<?> iDatabaseOwner, final int schemaClusterId) {
-		super(iDatabaseOwner);
+		super(new ODocument(iDatabaseOwner));
 		registerStandardClasses();
 	}
 
@@ -44,10 +46,11 @@ public class OSchema extends ODocument {
 	}
 
 	public OClass createClass(final String iClassName) {
-		int clusterId = _database.getClusterIdByName(iClassName);
+		int clusterId = document.getDatabase().getClusterIdByName(iClassName);
 		if (clusterId == -1)
 			// CREATE A NEW CLUSTER
-			clusterId = _database.addLogicalCluster(iClassName, _database.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME));
+			clusterId = document.getDatabase().addLogicalCluster(iClassName,
+					document.getDatabase().getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME));
 
 		return createClass(iClassName, clusterId);
 	}
@@ -68,7 +71,7 @@ public class OSchema extends ODocument {
 
 		OClass cls = new OClass(this, classes.size(), iClassName, iClusterIds, iDefaultClusterId);
 		classes.put(key, cls);
-		setDirty();
+		document.setDirty();
 
 		return cls;
 	}
@@ -80,7 +83,7 @@ public class OSchema extends ODocument {
 			throw new OSchemaException("Class " + iClassName + " was not found in current database");
 
 		classes.remove(key);
-		setDirty();
+		document.setDirty();
 	}
 
 	public boolean existsClass(final String iClassName) {
@@ -108,12 +111,9 @@ public class OSchema extends ODocument {
 	/**
 	 * Binds ODocument to POJO.
 	 */
-	@Override
-	public OSchema fromStream(final byte[] iBuffer) {
-		super.fromStream(iBuffer);
-
+	public void fromStream() {
 		// READ CURRENT SCHEMA VERSION
-		int schemaVersion = ((Long) field("schemaVersion")).intValue();
+		int schemaVersion = ((Long) document.field("schemaVersion")).intValue();
 		if (schemaVersion != CURRENT_VERSION_NUMBER) {
 			// HANDLE SCHEMA UPGRADE
 			throw new OConfigurationException(
@@ -122,10 +122,11 @@ public class OSchema extends ODocument {
 
 		// REGISTER ALL THE CLASSES
 		OClass cls;
-		List<ODocument> storedClasses = field("classes");
+		List<ODocument> storedClasses = document.field("classes");
 		for (ODocument c : storedClasses) {
-			c.setDatabase(_database);
-			cls = new OClass(this).fromDocument(c);
+			c.setDatabase(document.getDatabase());
+			cls = new OClass(this, c);
+			cls.fromStream();
 			classes.put(cls.getName().toLowerCase(), cls);
 		}
 
@@ -148,19 +149,15 @@ public class OSchema extends ODocument {
 				cls.setSuperClass(superClass);
 			}
 		}
-
-		return this;
 	}
 
 	/**
 	 * Binds POJO to ODocument.
 	 */
-	@Override
-	public byte[] toStream() {
-		field("schemaVersion", CURRENT_VERSION_NUMBER);
-		field("classes", classes.values(), OType.EMBEDDEDSET);
-
-		return super.toStream();
+	@OBeforeSerialization
+	public void toStream() {
+		document.field("schemaVersion", CURRENT_VERSION_NUMBER);
+		document.field("classes", classes.values(), OType.EMBEDDEDSET);
 	}
 
 	private void registerStandardClasses() {
@@ -170,14 +167,20 @@ public class OSchema extends ODocument {
 		return Collections.unmodifiableCollection(classes.values());
 	}
 
-	@Override
-	public ODocument load() {
-		_recordId.fromString(_database.getStorage().getConfiguration().schemaRecordId);
-		return (ODocument) super.load();
+	@SuppressWarnings("unchecked")
+	public OSchema load() {
+		((ORecordId) document.getIdentity()).fromString(document.getDatabase().getStorage().getConfiguration().schemaRecordId);
+		return super.load();
 	}
 
 	public void create() {
-		_database.addLogicalCluster(CLUSTER_NAME, _database.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME));
+		document.getDatabase().addLogicalCluster(CLUSTER_NAME,
+				document.getDatabase().getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME));
 		save();
+	}
+
+	public OSchema setDirty() {
+		document.setDirty();
+		return this;
 	}
 }

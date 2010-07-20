@@ -23,6 +23,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.orientechnologies.orient.core.annotation.OAfterSerialization;
+import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.document.OLazyRecordList;
@@ -289,7 +291,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 		for (String item : items) {
 			if (iLinkedClass != null) {
-				// EMBEDDED OBJECT
+				// EMBEDDED RECORD
 				if (item.length() > 2) {
 					item = item.substring(1, item.length() - 1);
 					coll.add(fromString(iDatabase, item, new ODocument(iDatabase, iLinkedClass.getName())));
@@ -329,43 +331,50 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			if (i > 0)
 				buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
-			if (o instanceof ORecord<?>)
+			if (o == null)
+				continue;
+
+			ODocument record = null;
+			if (!(o instanceof ORecord<?>)) {
+				final String fieldBound = OObjectSerializerHelper.getDocumentBoundField(o.getClass());
+				if (fieldBound != null) {
+					OObjectSerializerHelper.invokeCallback(o, null, OBeforeSerialization.class);
+					record = (ODocument) OObjectSerializerHelper.getFieldValue(o, fieldBound);
+					OObjectSerializerHelper.invokeCallback(o, record, OAfterSerialization.class);
+				}
+			} else
+				record = (ODocument) o;
+
+			if (record != null)
 				buffer.append(OStringSerializerHelper.EMBEDDED);
 
-			if (iLinkedClass != null) {
-				// EMBEDDED OBJECTS
-				ODocument record;
+			if (iLinkedClass != null || record != null) {
+				if (record == null)
+					// EMBEDDED OBJECTS
+					record = OObjectSerializerHelper.toStream(o, new ODocument((ODatabaseRecord<?>) iDatabase, o.getClass().getSimpleName()),
+							iDatabase instanceof ODatabaseObjectTx ? ((ODatabaseObjectTx) iDatabase).getEntityManager()
+									: OEntityManagerInternal.INSTANCE, iLinkedClass, iObjHandler != null ? iObjHandler
+									: new OUserObject2RecordHandler() {
+										public Object getUserObjectByRecord(ORecordInternal<?> iRecord, final String iFetchPlan) {
+											return iRecord;
+										}
 
-				if (o != null) {
-					if (o instanceof ODocument)
-						record = (ODocument) o;
-					else
-						record = OObjectSerializerHelper.toStream(o,
-								new ODocument((ODatabaseRecord<?>) iDatabase, o.getClass().getSimpleName()),
-								iDatabase instanceof ODatabaseObjectTx ? ((ODatabaseObjectTx) iDatabase).getEntityManager()
-										: OEntityManagerInternal.INSTANCE, iLinkedClass, iObjHandler != null ? iObjHandler
-										: new OUserObject2RecordHandler() {
-											public Object getUserObjectByRecord(ORecordInternal<?> iRecord, final String iFetchPlan) {
-												return iRecord;
-											}
+										public ORecordInternal<?> getRecordByUserObject(Object iPojo, boolean iIsMandatory) {
+											return new ODocument(iLinkedClass);
+										}
 
-											public ORecordInternal<?> getRecordByUserObject(Object iPojo, boolean iIsMandatory) {
-												return new ODocument(iLinkedClass);
-											}
+										public boolean existsUserObjectByRecord(ORecordInternal<?> iRecord) {
+											return false;
+										}
+									});
 
-											public boolean existsUserObjectByRecord(ORecordInternal<?> iRecord) {
-												return false;
-											}
-										});
-
-					buffer.append(toString(record, null, iObjHandler, iMarshalledRecords));
-				}
+				buffer.append(toString(record, null, iObjHandler, iMarshalledRecords));
 			} else {
 				// EMBEDDED LITERALS
 				buffer.append(OStringSerializerHelper.fieldTypeToString(iLinkedType, o));
 			}
 
-			if (o instanceof ORecord<?>)
+			if (record != null)
 				buffer.append(OStringSerializerHelper.EMBEDDED);
 		}
 

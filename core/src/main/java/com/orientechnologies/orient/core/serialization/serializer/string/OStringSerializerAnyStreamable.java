@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerHelper;
@@ -35,19 +36,27 @@ public class OStringSerializerAnyStreamable implements OStringSerializer {
 			// NULL VALUE
 			return null;
 
+		OSerializableStream instance = null;
+
 		int pos = iStream.indexOf(OStreamSerializerHelper.SEPARATOR);
 		if (pos < 0)
-			OLogManager.instance().error(this, "Class signature not found in ANY element: " + iStream, OSerializationException.class);
-
-		final String className = iStream.substring(0, pos);
-
+			// OLogManager.instance().error(this, "Class signature not found in ANY element: " + iStream, OSerializationException.class);
+			instance = new ODocument();
+		else {
+			final String className = iStream.substring(0, pos);
+			try {
+				final Class<?> clazz = Class.forName(className);
+				instance = (OSerializableStream) clazz.newInstance();
+			} catch (Exception e) {
+				OLogManager.instance().error(this, "Error on unmarshalling content. Class: " + className, e, OSerializationException.class);
+			}
+		}
 		try {
-			Class<?> clazz = Class.forName(className);
-			OSerializableStream instance = (OSerializableStream) clazz.newInstance();
 			instance.fromStream(OBinaryProtocol.string2bytes(iStream.substring(pos + 1)));
 			return instance;
-		} catch (Exception e) {
-			OLogManager.instance().error(this, "Error on unmarshalling content. Class: " + className, e, OSerializationException.class);
+		} catch (IOException e) {
+			OLogManager.instance().error(this, "Error on unmarshalling embedded instance. Class: " + instance.getClass().getName(), e,
+					OSerializationException.class);
 		}
 
 		return null;

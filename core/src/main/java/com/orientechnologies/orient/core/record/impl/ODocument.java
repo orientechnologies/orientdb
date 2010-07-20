@@ -132,7 +132,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 *          OClass instance
 	 */
 	public ODocument(final OClass iClass) {
-		super(iClass.getDatabase());
+		super(iClass.getDocument().getDatabase());
 		setup();
 		_clazz = iClass;
 	}
@@ -384,7 +384,8 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			_fieldOriginalValues.put(iPropertyName, oldValue);
 		}
 
-		setDirty();
+		if (_status != STATUS.UNMARSHALLING)
+			setDirty();
 
 		if (oldValue != null) {
 			// DETERMINE THE TYPE FROM THE PREVIOUS CONTENT

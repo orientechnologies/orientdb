@@ -62,8 +62,8 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 	}
 
 	@OAfterDeserialization
-	public void init(final ODocument iDocument) {
-		super.init(iDocument);
+	public void fromStream(final ODocument iDocument) {
+		super.fromStream(iDocument);
 		inEdges = outEdges = null;
 	}
 
@@ -225,7 +225,7 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 	 */
 	public OGraphVertex getOutEdgeVertex(int iIndex, final OGraphVertex iCurrentVertex) {
 		final List<ODocument> docs = document.field(FIELD_OUT_EDGES);
-		iCurrentVertex.init((ODocument) docs.get(iIndex).field(OGraphEdge.OUT));
+		iCurrentVertex.fromStream((ODocument) docs.get(iIndex).field(OGraphEdge.OUT));
 		return iCurrentVertex;
 	}
 
@@ -240,7 +240,7 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 	 */
 	public OGraphVertex getInEdgeVertex(int iIndex, final OGraphVertex iCurrentVertex) {
 		final List<ODocument> docs = document.field(FIELD_IN_EDGES);
-		iCurrentVertex.init((ODocument) docs.get(iIndex).field(OGraphEdge.IN));
+		iCurrentVertex.fromStream((ODocument) docs.get(iIndex).field(OGraphEdge.IN));
 		return iCurrentVertex;
 	}
 

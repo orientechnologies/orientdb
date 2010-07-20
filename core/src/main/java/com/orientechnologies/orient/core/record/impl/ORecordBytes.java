@@ -63,6 +63,12 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 		return cloned;
 	}
 
+	public ORecordBytes fromStream(final byte[] iRecordBuffer) {
+		_source = iRecordBuffer;
+		_status = STATUS.LOADED;
+		return this;
+	}
+
 	@Override
 	public byte[] toStream() {
 		return _source;

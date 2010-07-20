@@ -56,8 +56,8 @@ public class OGraphEdge extends OGraphElement {
 	}
 
 	@OAfterDeserialization
-	public void init(final ODocument iDocument) {
-		super.init(iDocument);
+	public void fromStream(final ODocument iDocument) {
+		super.fromStream(iDocument);
 		in = out = null;
 	}
 

@@ -158,7 +158,7 @@ public class OConsoleDatabaseExport {
 
 		writer.beginObject(1, true, "schema");
 		OSchema s = database.getMetadata().getSchema();
-		writer.writeAttribute(2, true, "version", s.getVersion());
+		writer.writeAttribute(2, true, "version", s.getDocument().getVersion());
 
 		if (s.getClasses().size() > 0) {
 			writer.beginCollection(2, true, "classes");

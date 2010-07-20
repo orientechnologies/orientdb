@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 
 @SuppressWarnings("unchecked")
 public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> implements ORecordSchemaAware<T> {
@@ -46,6 +47,18 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	}
 
 	public abstract boolean containsField(String name);
+
+	@Override
+	public ORecordAbstract<T> save() {
+		OSerializationThreadLocal.INSTANCE.get().clear();
+		return super.save();
+	}
+
+	@Override
+	public ORecordAbstract<T> save(String iClusterName) {
+		OSerializationThreadLocal.INSTANCE.get().clear();
+		return super.save(iClusterName);
+	}
 
 	/**
 	 * Validate the record following the declared constraints such as mandatory, notNull, min and max.

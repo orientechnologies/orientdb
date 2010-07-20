@@ -13,25 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.metadata.schema;
+package com.orientechnologies.orient.core.type;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings("unchecked")
-public abstract class OSchemaRecord extends ODocument {
-
-	public OSchemaRecord() {
-		super();
+public abstract class ODocumentWrapperNoClass extends ODocumentWrapper {
+	public ODocumentWrapperNoClass() {
 	}
 
-	public OSchemaRecord(ODatabaseRecord<?> iDatabase) {
-		super(iDatabase);
+	public ODocumentWrapperNoClass(final ODocument iDocument) {
+		super(iDocument);
 	}
 
 	@Override
-	public ORecordAbstract<Object> save() {
-		return this;
+	public void fromStream(ODocument iDocument) {
+		super.fromStream(iDocument);
+		fromStream();
+	}
+
+	protected abstract void fromStream();
+
+	protected abstract void toStream();
+
+	public <RET extends ODocumentWrapper> RET load() {
+		super.load();
+		fromStream();
+		return (RET) this;
+	}
+
+	public <RET extends ODocumentWrapper> RET save() {
+		toStream();
+		super.save();
+		return (RET) this;
 	}
 }

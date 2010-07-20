@@ -34,14 +34,15 @@ public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
 
 		ODatabaseDocumentTx db = null;
 		ODocument doc = new ODocument().fromJSON(iRequest.content);
-		
+
 		// ASSURE TO MAKE THE RECORD ID INVALID
 		((ORecordId) doc.getIdentity()).clusterPosition = ORID.CLUSTER_POS_INVALID;
-		
+
 		try {
 			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
 
-			doc.save(db);
+			doc.setDatabase(db);
+			doc.save();
 
 		} finally {
 			if (db != null)

@@ -463,7 +463,7 @@ public class OObjectSerializerHelper {
 		}
 	}
 
-	private static void invokeCallback(final Object iPojo, final ODocument iDocument, final Class<?> iAnnotation) {
+	public static void invokeCallback(final Object iPojo, final ODocument iDocument, final Class<?> iAnnotation) {
 		final Method m = callbacks.get(iPojo.getClass().getSimpleName() + "." + iAnnotation.getSimpleName());
 
 		if (m != null)

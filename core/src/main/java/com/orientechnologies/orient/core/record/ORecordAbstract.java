@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 
 @SuppressWarnings("unchecked")
@@ -81,7 +80,6 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		_status = STATUS.NEW;
 
 		setDirty();
-		_source = null;
 		if (_recordId != null)
 			_recordId.reset();
 		return this;
@@ -95,6 +93,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	}
 
 	public ORecordAbstract<T> fromStream(final byte[] iRecordBuffer) {
+		_dirty = false;
 		_source = iRecordBuffer;
 		_status = STATUS.LOADED;
 		return this;
@@ -187,11 +186,8 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		if (_database == null)
 			throw new ODatabaseException("No database assigned to current record. Create it using the <DB>.newInstance()");
 
-		OSerializationThreadLocal.INSTANCE.get().clear();
-
 		_database.save(this);
 
-		OSerializationThreadLocal.INSTANCE.get().clear();
 		return this;
 	}
 
@@ -199,28 +195,8 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		if (_database == null)
 			throw new ODatabaseException("No database assigned to current record. Create it using the <DB>.newInstance()");
 
-		OSerializationThreadLocal.INSTANCE.get().clear();
-
 		_database.save(this, iClusterName);
 
-		return this;
-	}
-
-	public ORecordAbstract<T> save(final ODatabaseRecord<?> iDatabase) {
-		if (_database != null)
-			throw new IllegalArgumentException("Can't change database to a live record");
-
-		_database = iDatabase;
-		_database.save(this);
-		return this;
-	}
-
-	public ORecordAbstract<T> save(final ODatabaseRecord<?> iDatabase, final String iClusterName) {
-		if (_database != null)
-			throw new IllegalArgumentException("Can't change database to a live record");
-
-		_database = iDatabase;
-		_database.save(this, iClusterName);
 		return this;
 	}
 
@@ -239,11 +215,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((_database == null) ? 0 : _database.hashCode());
-		result = prime * result + ((_recordId == null) ? 0 : _recordId.hashCode());
-		return result;
+		return _recordId != null ? _recordId.hashCode() : 0;
 	}
 
 	@Override
@@ -252,19 +224,31 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 			return true;
 		if (obj == null)
 			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		final ORecordAbstract<?> other = (ORecordAbstract<?>) obj;
-		if (_database == null) {
-			if (other._database != null)
+		if (getClass() == obj.getClass()) {
+			// DOCUMENT <-> DOCUMENT
+			final ORecordAbstract<?> other = (ORecordAbstract<?>) obj;
+			if (_database == null) {
+				if (other._database != null)
+					return false;
+			} else if (!_database.equals(other._database))
 				return false;
-		} else if (!_database.equals(other._database))
-			return false;
-		if (_recordId == null) {
-			if (other._recordId != null)
+			if (_recordId == null) {
+				if (other._recordId != null)
+					return false;
+			} else if (!_recordId.equals(other._recordId))
 				return false;
-		} else if (!_recordId.equals(other._recordId))
+		} else if (obj instanceof ORID) {
+			// DOCUMENT <-> ORID
+			final ORID other = (ORID) obj;
+
+			if (_recordId == null) {
+				if (other != null)
+					return false;
+			} else if (!_recordId.equals(other))
+				return false;
+		} else
 			return false;
+
 		return true;
 	}
 

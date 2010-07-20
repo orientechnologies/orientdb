@@ -376,7 +376,7 @@ public class OStorageLocal extends OStorageAbstract {
 			for (int i = 0; i < iClusterIds.length; ++i) {
 				if (iClusterIds[i] >= clusters.length)
 					throw new OConfigurationException("Cluster id " + iClusterIds[i] + "was not found");
-				
+
 				c = clusters[iClusterIds[i]];
 				if (c != null)
 					tot += c.getElements();

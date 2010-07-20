@@ -24,11 +24,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 @SuppressWarnings("unchecked")
-public class OClass extends OSchemaRecord {
+public class OClass extends ODocumentWrapperNoClass {
 
 	protected int											id;
 	protected OSchema									owner;
@@ -52,8 +54,16 @@ public class OClass extends OSchemaRecord {
 	 * Constructor used in unmarshalling.
 	 */
 	public OClass(final OSchema iOwner) {
+		document = new ODocument(iOwner.getDocument().getDatabase());
 		owner = iOwner;
-		_database = iOwner.getDatabase();
+	}
+
+	/**
+	 * Constructor used in unmarshalling.
+	 */
+	public OClass(final OSchema iOwner, final ODocument iDocument) {
+		document = iDocument;
+		owner = iOwner;
 	}
 
 	public OClass(final OSchema iOwner, final int iId, final String iName, final String iJavaClassName, final int[] iClusterIds,
@@ -63,9 +73,8 @@ public class OClass extends OSchemaRecord {
 	}
 
 	public OClass(final OSchema iOwner, final int iId, final String iName, final int[] iClusterIds, final int iDefaultClusterId) {
-		super(iOwner.getDatabase());
+		this(iOwner);
 		id = iId;
-		owner = iOwner;
 		name = iName;
 		clusterIds = iClusterIds;
 		polymorphicClusterIds = iClusterIds;
@@ -224,12 +233,12 @@ public class OClass extends OSchemaRecord {
 		return prop;
 	}
 
-	public OClass fromDocument(final ODocument iSource) {
-		name = iSource.field("name");
-		id = ((Long) iSource.field("id")).intValue();
-		defaultClusterId = ((Long) iSource.field("defaultClusterId")).intValue();
+	public void fromStream() {
+		name = document.field("name");
+		id = ((Long) document.field("id")).intValue();
+		defaultClusterId = ((Long) document.field("defaultClusterId")).intValue();
 
-		Collection<Long> coll = iSource.field("clusterIds");
+		Collection<Long> coll = document.field("clusterIds");
 		clusterIds = new int[coll.size()];
 		int i = 0;
 		for (Long item : coll)
@@ -239,26 +248,24 @@ public class OClass extends OSchemaRecord {
 
 		// READ PROPERTIES
 		OProperty prop;
-		List<ODocument> storedProperties = iSource.field("properties");
+		List<ODocument> storedProperties = document.field("properties");
 		for (ODocument p : storedProperties) {
-			p.setDatabase(_database);
-			prop = new OProperty(this).fromDocument(p);
+			p.setDatabase(document.getDatabase());
+			prop = new OProperty(this, p);
+			prop.fromStream();
 			properties.put(prop.getName().toLowerCase(), prop);
 		}
-
-		return this;
 	}
 
-	@Override
-	public byte[] toStream() {
-		field("name", name);
-		field("id", id);
-		field("defaultClusterId", defaultClusterId);
-		field("clusterIds", clusterIds);
-		field("properties", properties.values(), OType.EMBEDDEDSET);
+	@OBeforeSerialization
+	public void toStream() {
+		document.field("name", name);
+		document.field("id", id);
+		document.field("defaultClusterId", defaultClusterId);
+		document.field("clusterIds", clusterIds);
+		document.field("properties", properties.values(), OType.EMBEDDEDSET);
 		if (superClass != null)
-			field("superClass", superClass.getName());
-		return super.toStream();
+			document.field("superClass", superClass.getName());
 	}
 
 	public Class<?> getJavaClass() {
@@ -296,9 +303,8 @@ public class OClass extends OSchemaRecord {
 		return this;
 	}
 
-	@Override
 	public OClass setDirty() {
-		super.setDirty();
+		document.setDirty();
 		if (owner != null)
 			owner.setDirty();
 		return this;

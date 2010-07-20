@@ -58,11 +58,11 @@ public class OUser extends ODocumentWrapper {
 	 * Create the user by reading the source document.
 	 */
 	public OUser(final ODocument iSource) {
-		init(iSource);
+		fromStream(iSource);
 	}
 
 	@OAfterDeserialization
-	public void init(final ODocument iSource) {
+	public void fromStream(final ODocument iSource) {
 		if (document != null)
 			return;
 

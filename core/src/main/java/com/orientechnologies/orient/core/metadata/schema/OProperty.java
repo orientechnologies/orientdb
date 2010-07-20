@@ -19,12 +19,14 @@ import java.io.IOException;
 import java.text.ParseException;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 /**
  * Contains the description of a persistent class property.
@@ -32,8 +34,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * @author Luca Garulli
  * 
  */
-@SuppressWarnings("unchecked")
-public class OProperty extends OSchemaRecord {
+public class OProperty extends ODocumentWrapperNoClass {
 
 	private OClass						owner;
 
@@ -67,9 +68,14 @@ public class OProperty extends OSchemaRecord {
 	}
 
 	public OProperty(OClass iOwner) {
+		document = new ODocument(iOwner.getDocument().getDatabase());
 		owner = iOwner;
-		_database = iOwner.getDatabase();
 		id = iOwner.properties.size();
+	}
+
+	public OProperty(final OClass iOwner, final ODocument iDocument) {
+		this(iOwner);
+		document = iDocument;
 	}
 
 	public String getName() {
@@ -105,63 +111,60 @@ public class OProperty extends OSchemaRecord {
 		return this;
 	}
 
-	public OProperty fromDocument(final ODocument iSource) {
-		name = iSource.field("name");
-		if (iSource.field("type") != null)
-			type = OType.getById(((Long) iSource.field("type")).byteValue());
-		offset = ((Long) iSource.field("offset")).intValue();
+	public void fromStream() {
+		name = document.field("name");
+		if (document.field("type") != null)
+			type = OType.getById(((Long) document.field("type")).byteValue());
+		offset = ((Long) document.field("offset")).intValue();
 
-		mandatory = (Boolean) iSource.field("mandatory");
-		notNull = (Boolean) iSource.field("notNull");
-		min = iSource.field("min");
-		max = iSource.field("max");
+		mandatory = (Boolean) document.field("mandatory");
+		notNull = (Boolean) document.field("notNull");
+		min = document.field("min");
+		max = document.field("max");
 
-		linkedClassName = (String) iSource.field("linkedClass");
-		if (iSource.field("linkedType") != null)
-			linkedType = OType.getById(((Long) iSource.field("linkedType")).byteValue());
+		linkedClassName = (String) document.field("linkedClass");
+		if (document.field("linkedType") != null)
+			linkedType = OType.getById(((Long) document.field("linkedType")).byteValue());
 
-		final ODocument indexRecord = iSource.field("index");
+		final ODocument indexRecord = document.field("index");
 		// LOAD THE INDEX
 		if (indexRecord != null && indexRecord.getIdentity().isValid()) {
-			Boolean indexType = iSource.field("index-unique");
+			Boolean indexType = document.field("index-unique");
 			if (indexType == null)
 				// UNIQUE BY DEFAULT
 				indexType = Boolean.TRUE;
 
 			try {
-				index = new OIndex(indexType, _database, OStorage.CLUSTER_INDEX_NAME, new ORecordId(indexRecord.getIdentity().toString()));
+				index = new OIndex(indexType, document.getDatabase(), OStorage.CLUSTER_INDEX_NAME, new ORecordId(indexRecord.getIdentity()
+						.toString()));
 				index.load();
 			} catch (IOException e) {
 				OLogManager.instance().error(this, "Can't load index for property %s", e, ODatabaseException.class, toString());
 			}
 		}
-
-		return this;
 	}
 
-	@Override
-	public byte[] toStream() {
-		field("name", name);
-		field("type", type.id);
-		field("offset", offset);
-		field("mandatory", mandatory);
-		field("notNull", notNull);
-		field("min", min);
-		field("max", max);
+	@OBeforeSerialization
+	public void toStream() {
+		document.field("name", name);
+		document.field("type", type.id);
+		document.field("offset", offset);
+		document.field("mandatory", mandatory);
+		document.field("notNull", notNull);
+		document.field("min", min);
+		document.field("max", max);
 
-		field("linkedClass", linkedClass != null ? linkedClass.getName() : null);
-		field("linkedType", linkedType != null ? linkedType.id : null);
+		document.field("linkedClass", linkedClass != null ? linkedClass.getName() : null);
+		document.field("linkedType", linkedType != null ? linkedType.id : null);
 
 		// SAVE THE INDEX
 		if (index != null) {
 			index.lazySave();
-			field("index", index.getRecord().getIdentity());
-			field("index-unique", index.isUnique());
+			document.field("index", index.getRecord().getIdentity());
+			document.field("index-unique", index.isUnique());
 		} else {
-			field("index", ORecordId.EMPTY_RECORD_ID);
+			document.field("index", ORecordId.EMPTY_RECORD_ID);
 		}
-
-		return super.toStream();
 	}
 
 	public OType getLinkedType() {
@@ -229,16 +232,16 @@ public class OProperty extends OSchemaRecord {
 			throw new IllegalStateException("Index already created");
 
 		try {
-			index = new OIndex(iUnique, _database, OStorage.CLUSTER_INDEX_NAME);
+			index = new OIndex(iUnique, document.getDatabase(), OStorage.CLUSTER_INDEX_NAME);
 
 			setDirty();
 
 			populateIndex();
 
-			if (_database != null) {
+			if (document.getDatabase() != null) {
 				// / SAVE ONLY IF THE PROPERTY IS ALREADY PERSISTENT
 				index.lazySave();
-				_database.getMetadata().getSchema().save();
+				document.getDatabase().getMetadata().getSchema().save();
 			}
 
 		} catch (Exception e) {
@@ -255,19 +258,19 @@ public class OProperty extends OSchemaRecord {
 	 */
 	private void populateIndex() {
 		Object fieldValue;
-		ODocument document;
+		ODocument doc;
 
 		index.clear();
 
 		final int[] clusterIds = owner.getClusterIds();
 		for (int clusterId : clusterIds)
-			for (Object record : _database.browseCluster(_database.getClusterNameById(clusterId))) {
+			for (Object record : document.getDatabase().browseCluster(document.getDatabase().getClusterNameById(clusterId))) {
 				if (record instanceof ODocument) {
-					document = (ODocument) record;
-					fieldValue = document.field(name);
+					doc = (ODocument) record;
+					fieldValue = doc.field(name);
 
 					if (fieldValue != null)
-						index.put(fieldValue.toString(), (ORecordId) document.getIdentity());
+						index.put(fieldValue.toString(), (ORecordId) doc.getIdentity());
 				}
 			}
 	}
@@ -292,9 +295,8 @@ public class OProperty extends OSchemaRecord {
 		return index != null;
 	}
 
-	@Override
 	public OProperty setDirty() {
-		super.setDirty();
+		document.setDirty();
 		if (owner != null)
 			owner.setDirty();
 		return this;
@@ -333,7 +335,7 @@ public class OProperty extends OSchemaRecord {
 	private void checkForDateFormat(String min) {
 		if (type == OType.DATE) {
 			try {
-				owner.owner.getDatabase().getStorage().getConfiguration().getDateTimeFormatInstance().parse(min);
+				owner.owner.getDocument().getDatabase().getStorage().getConfiguration().getDateTimeFormatInstance().parse(min);
 			} catch (ParseException e) {
 				throw new OSchemaException("Invalid date format setted", e);
 			}

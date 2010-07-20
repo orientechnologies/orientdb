@@ -288,8 +288,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				long newVersion = underlyingDatabase.save(clusterId, position, channel.readBytes(), channel.readInt(), channel.readByte());
 
 				// TODO: Handle it by using triggers
-				if (connection.database.getMetadata().getSchema().getIdentity().getClusterId() == clusterId
-						&& connection.database.getMetadata().getSchema().getIdentity().getClusterPosition() == position)
+				if (connection.database.getMetadata().getSchema().getDocument().getIdentity().getClusterId() == clusterId
+						&& connection.database.getMetadata().getSchema().getDocument().getIdentity().getClusterPosition() == position)
 					connection.database.getMetadata().loadSchema();
 				else if (((ODictionaryLocal<?>) connection.database.getDictionary()).getTree().getRecord().getIdentity().getClusterId() == clusterId
 						&& ((ODictionaryLocal<?>) connection.database.getDictionary()).getTree().getRecord().getIdentity().getClusterPosition() == position)

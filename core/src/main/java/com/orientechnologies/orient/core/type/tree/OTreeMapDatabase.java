@@ -60,6 +60,10 @@ public class OTreeMapDatabase<K, V> extends OTreeMapPersistent<K, V> {
 
 	@Override
 	public OTreeMapPersistent<K, V> load() throws IOException {
+		if (!record.getIdentity().isValid())
+			// NOTHING TO LOAD
+			return this;
+
 		lock.acquireExclusiveLock();
 
 		try {
@@ -74,14 +78,14 @@ public class OTreeMapDatabase<K, V> extends OTreeMapPersistent<K, V> {
 
 	@Override
 	public OTreeMapPersistent<K, V> save() throws IOException {
-
 		lock.acquireExclusiveLock();
 
 		try {
-			record.fromStream(toStream());
-			record.save(clusterName);
+			if (record.isDirty()) {
+				record.fromStream(toStream());
+				record.save(clusterName);
+			}
 			return this;
-
 		} finally {
 			lock.releaseExclusiveLock();
 		}

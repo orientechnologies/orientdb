@@ -17,7 +17,6 @@ package com.orientechnologies.orient.core.type;
 
 import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
 import com.orientechnologies.orient.core.annotation.ODocumentInstance;
-import com.orientechnologies.orient.core.db.graph.OGraphElement;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -43,11 +42,11 @@ public class ODocumentWrapper {
 	}
 
 	@OAfterDeserialization
-	public void init(final ODocument iDocument) {
+	public void fromStream(final ODocument iDocument) {
 		document = iDocument;
 	}
 
-	public <RET extends ODocumentWrapper> RET reload() {
+	public <RET extends ODocumentWrapper> RET load() {
 		document.load();
 		return (RET) this;
 	}
@@ -77,7 +76,7 @@ public class ODocumentWrapper {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		final ODocumentWrapper other = (OGraphElement) obj;
+		final ODocumentWrapper other = (ODocumentWrapper) obj;
 		if (document == null) {
 			if (other.document != null)
 				return false;

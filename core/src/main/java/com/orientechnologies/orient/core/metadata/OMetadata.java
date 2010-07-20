@@ -57,7 +57,7 @@ public class OMetadata {
 		try {
 			// CREATE RECORD FOR SCHEMA
 			schema.create();
-			database.getStorage().getConfiguration().schemaRecordId = schema.getIdentity().toString();
+			database.getStorage().getConfiguration().schemaRecordId = schema.getDocument().getIdentity().toString();
 
 			database.getStorage().getConfiguration().update();
 		} finally {

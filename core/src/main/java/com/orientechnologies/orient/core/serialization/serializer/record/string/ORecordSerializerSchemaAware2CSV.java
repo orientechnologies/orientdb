@@ -19,8 +19,8 @@ import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
@@ -107,7 +107,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
 				// NOT FOUND: TRY TO DETERMINE THE TYPE FROM ITS CONTENT
 				if (fieldValue instanceof Collection<?> || fieldValue.getClass().isArray()) {
-					Collection<?> coll = fieldValue instanceof Collection<?> ? (Collection<?>) fieldValue : null;
+					final Collection<?> coll = fieldValue instanceof Collection<?> ? (Collection<?>) fieldValue : null;
 
 					int size = coll != null ? coll.size() : Array.getLength(fieldValue);
 
@@ -135,7 +135,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 								// EMBEDDED FOR SURE SINCE IT CONTAINS JAVA TYPES
 								if (linkedType == null) {
 									linkedType = OType.EMBEDDED;
-									linkedClass = new OClass(firstValue.getClass());
+									// linkedClass = new OClass(firstValue.getClass());
 								}
 
 								if (type == null)
@@ -202,7 +202,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
 			i++;
 		}
-		
+
 		iMarshalledRecords.remove(record);
 
 		return buffer.toString();
@@ -335,6 +335,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 				OLogManager.instance().exception("Error on unmarshalling field '%s'", e, OSerializationException.class, fieldName);
 			}
 		}
+		
+		record.unsetDirty();
 
 		return iRecord;
 	}
