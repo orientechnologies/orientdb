@@ -30,7 +30,6 @@ import com.orientechnologies.orient.client.admin.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
-import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -49,6 +48,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
+import com.orientechnologies.orient.enterprise.command.script.OCommandScript;
 import com.orientechnologies.utility.impexp.OConsoleDatabaseExport;
 import com.orientechnologies.utility.impexp.OConsoleDatabaseImport;
 import com.orientechnologies.utility.impexp.ODatabaseExportException;
@@ -247,10 +247,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		long start = System.currentTimeMillis();
 		currentDatabase.query(new OSQLAsynchQuery<ODocument>(iQueryText, limit + 1, new OCommandResultListener() {
 			public boolean result(final Object iRecord) {
-				if (currentResultSet.size() > limit - 1) {
+				if (currentResultSet.size() >= limit) {
 					printHeaderLine(columns);
 					out.println("\nResultset contains more items not displayed (max=" + limit + ")");
-					return false;
+					return true;
 				}
 
 				ORecordSchemaAwareAbstract<?> record = (ORecordSchemaAwareAbstract<?>) iRecord;
