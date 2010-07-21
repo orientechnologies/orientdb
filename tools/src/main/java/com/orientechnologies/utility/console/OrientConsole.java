@@ -15,12 +15,12 @@
  */
 package com.orientechnologies.utility.console;
 
-import com.orientechnologies.common.console.ConsoleApplication;
+import com.orientechnologies.common.console.OConsoleApplication;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 
-public abstract class OrientConsole extends ConsoleApplication {
+public abstract class OrientConsole extends OConsoleApplication {
 
 	public OrientConsole(String[] args) {
 		super(args);

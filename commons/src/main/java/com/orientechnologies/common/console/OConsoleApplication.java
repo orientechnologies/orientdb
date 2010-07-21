@@ -15,8 +15,10 @@
  */
 package com.orientechnologies.common.console;
 
-import java.io.Console;
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -30,7 +32,7 @@ import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.util.OArrays;
 
-public class ConsoleApplication {
+public class OConsoleApplication {
 
 	protected InputStream					in								= System.in;
 	protected PrintStream					out								= System.out;
@@ -41,25 +43,25 @@ public class ConsoleApplication {
 	protected String[]						exitCommands			= { "exit", "bye", "quit" };
 	protected Map<String, Object>	properties				= new HashMap<String, Object>();
 
-	public ConsoleApplication(String[] args) {
+	public OConsoleApplication(String[] args) {
 		boolean interactiveMode = isInteractiveMode(args);
 
 		onBefore();
 
 		if (interactiveMode) {
 			// EXECUTE IN INTERACTIVE MODE
-			Console console = System.console();
-			if (console == null) {
-				err.println("Error on reading from the console");
-				return;
-			}
+			final BufferedReader reader = new BufferedReader(new InputStreamReader(in));
 
 			String consoleInput;
 
 			while (true) {
 				out.println();
 				out.print("> ");
-				consoleInput = console.readLine();
+				try {
+					consoleInput = reader.readLine();
+				} catch (IOException e) {
+					break;
+				}
 
 				if (consoleInput == null || consoleInput.length() == 0)
 					continue;
