@@ -1203,7 +1203,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 	 * Return SimpleImmutableEntry for entry, or null if null
 	 */
 	static <K, V> Map.Entry<K, V> exportEntry(OTreeMapEntry<K, V> e) {
-		return e == null ? null : new AbstractMap.SimpleImmutableEntry<K, V>(e);
+		return e == null ? null : new OSimpleImmutableEntry<K, V>(e);
 	}
 
 	/**
