@@ -3,7 +3,6 @@ package com.orientechnologies.common.collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
-import java.util.NavigableSet;
 import java.util.SortedMap;
 
 /**
@@ -162,7 +161,7 @@ public interface ONavigableMap<K, V> extends SortedMap<K, V> {
 	ONavigableMap<K, V> descendingMap();
 
 	/**
-	 * Returns a {@link NavigableSet} view of the keys contained in this map. The set's iterator returns the keys in ascending order.
+	 * Returns a {@link ONavigableSet} view of the keys contained in this map. The set's iterator returns the keys in ascending order.
 	 * The set is backed by the map, so changes to the map are reflected in the set, and vice-versa. If the map is modified while an
 	 * iteration over the set is in progress (except through the iterator's own {@code remove} operation), the results of the
 	 * iteration are undefined. The set supports element removal, which removes the corresponding mapping from the map, via the
@@ -171,10 +170,10 @@ public interface ONavigableMap<K, V> extends SortedMap<K, V> {
 	 * 
 	 * @return a navigable set view of the keys in this map
 	 */
-	NavigableSet<K> navigableKeySet();
+	ONavigableSet<K> navigableKeySet();
 
 	/**
-	 * Returns a reverse order {@link NavigableSet} view of the keys contained in this map. The set's iterator returns the keys in
+	 * Returns a reverse order {@link ONavigableSet} view of the keys contained in this map. The set's iterator returns the keys in
 	 * descending order. The set is backed by the map, so changes to the map are reflected in the set, and vice-versa. If the map is
 	 * modified while an iteration over the set is in progress (except through the iterator's own {@code remove} operation), the
 	 * results of the iteration are undefined. The set supports element removal, which removes the corresponding mapping from the map,
@@ -183,7 +182,7 @@ public interface ONavigableMap<K, V> extends SortedMap<K, V> {
 	 * 
 	 * @return a reverse order navigable set view of the keys in this map
 	 */
-	NavigableSet<K> descendingKeySet();
+	ONavigableSet<K> descendingKeySet();
 
 	/**
 	 * Returns a view of the portion of this map whose keys range from {@code fromKey} to {@code toKey}. If {@code fromKey} and

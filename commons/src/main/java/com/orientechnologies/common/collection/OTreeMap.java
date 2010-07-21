@@ -10,7 +10,6 @@ import java.util.Comparator;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.NavigableSet;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.SortedMap;
@@ -810,7 +809,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 	/**
 	 * @since 1.6
 	 */
-	public NavigableSet<K> navigableKeySet() {
+	public ONavigableSet<K> navigableKeySet() {
 		KeySet<K> nks = navigableKeySet;
 		return (nks != null) ? nks : (navigableKeySet = (KeySet<K>) new KeySet<Object>((ONavigableMap<Object, Object>) this));
 	}
@@ -818,7 +817,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 	/**
 	 * @since 1.6
 	 */
-	public NavigableSet<K> descendingKeySet() {
+	public ONavigableSet<K> descendingKeySet() {
 		return descendingMap().navigableKeySet();
 	}
 
@@ -1028,7 +1027,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 	}
 
 	@SuppressWarnings("rawtypes")
-	static final class KeySet<E> extends AbstractSet<E> implements NavigableSet<E> {
+	static final class KeySet<E> extends AbstractSet<E> implements ONavigableSet<E> {
 		private final ONavigableMap<E, Object>	m;
 
 		KeySet(ONavigableMap<E, Object> map) {
@@ -1115,15 +1114,15 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 			return size() != oldSize;
 		}
 
-		public NavigableSet<E> subSet(E fromElement, boolean fromInclusive, E toElement, boolean toInclusive) {
+		public ONavigableSet<E> subSet(E fromElement, boolean fromInclusive, E toElement, boolean toInclusive) {
 			return new OTreeSetMemory<E>(m.subMap(fromElement, fromInclusive, toElement, toInclusive));
 		}
 
-		public NavigableSet<E> headSet(E toElement, boolean inclusive) {
+		public ONavigableSet<E> headSet(E toElement, boolean inclusive) {
 			return new OTreeSetMemory<E>(m.headMap(toElement, inclusive));
 		}
 
-		public NavigableSet<E> tailSet(E fromElement, boolean inclusive) {
+		public ONavigableSet<E> tailSet(E fromElement, boolean inclusive) {
 			return new OTreeSetMemory<E>(m.tailMap(fromElement, inclusive));
 		}
 
@@ -1139,7 +1138,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 			return tailSet(fromElement, true);
 		}
 
-		public NavigableSet<E> descendingSet() {
+		public ONavigableSet<E> descendingSet() {
 			return new OTreeSetMemory<E>(m.descendingMap());
 		}
 	}
@@ -1477,7 +1476,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 		transient KeySet<K>						navigableKeySetView	= null;
 
 		@SuppressWarnings("rawtypes")
-		public final NavigableSet<K> navigableKeySet() {
+		public final ONavigableSet<K> navigableKeySet() {
 			KeySet<K> nksv = navigableKeySetView;
 			return (nksv != null) ? nksv : (navigableKeySetView = new OTreeMap.KeySet(this));
 		}
@@ -1487,7 +1486,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 			return navigableKeySet();
 		}
 
-		public NavigableSet<K> descendingKeySet() {
+		public ONavigableSet<K> descendingKeySet() {
 			return descendingMap().navigableKeySet();
 		}
 

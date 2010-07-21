@@ -5,12 +5,11 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.NavigableSet;
 import java.util.NoSuchElementException;
 import java.util.SortedSet;
 
 @SuppressWarnings("unchecked")
-public class OTreeSetMemory<E> extends AbstractSet<E> implements NavigableSet<E>, Cloneable, java.io.Serializable {
+public class OTreeSetMemory<E> extends AbstractSet<E> implements ONavigableSet<E>, Cloneable, java.io.Serializable {
 	/**
 	 * The backing map.
 	 */
@@ -105,7 +104,7 @@ public class OTreeSetMemory<E> extends AbstractSet<E> implements NavigableSet<E>
 	/**
 	 * @since 1.6
 	 */
-	public NavigableSet<E> descendingSet() {
+	public ONavigableSet<E> descendingSet() {
 		return new OTreeSetMemory<E>(m.descendingMap());
 	}
 
@@ -229,7 +228,7 @@ public class OTreeSetMemory<E> extends AbstractSet<E> implements NavigableSet<E>
 	 *           {@inheritDoc}
 	 * @since 1.6
 	 */
-	public NavigableSet<E> subSet(E fromElement, boolean fromInclusive, E toElement, boolean toInclusive) {
+	public ONavigableSet<E> subSet(E fromElement, boolean fromInclusive, E toElement, boolean toInclusive) {
 		return new OTreeSetMemory<E>(m.subMap(fromElement, fromInclusive, toElement, toInclusive));
 	}
 
@@ -242,7 +241,7 @@ public class OTreeSetMemory<E> extends AbstractSet<E> implements NavigableSet<E>
 	 *           {@inheritDoc}
 	 * @since 1.6
 	 */
-	public NavigableSet<E> headSet(E toElement, boolean inclusive) {
+	public ONavigableSet<E> headSet(E toElement, boolean inclusive) {
 		return new OTreeSetMemory<E>(m.headMap(toElement, inclusive));
 	}
 
@@ -255,7 +254,7 @@ public class OTreeSetMemory<E> extends AbstractSet<E> implements NavigableSet<E>
 	 *           {@inheritDoc}
 	 * @since 1.6
 	 */
-	public NavigableSet<E> tailSet(E fromElement, boolean inclusive) {
+	public ONavigableSet<E> tailSet(E fromElement, boolean inclusive) {
 		return new OTreeSetMemory<E>(m.tailMap(fromElement, inclusive));
 	}
 
@@ -316,7 +315,7 @@ public class OTreeSetMemory<E> extends AbstractSet<E> implements NavigableSet<E>
 		return m.lastKey();
 	}
 
-	// NavigableSet API methods
+	// ONavigableSet API methods
 
 	/**
 	 * @throws ClassCastException
