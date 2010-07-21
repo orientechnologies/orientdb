@@ -37,9 +37,12 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.security.OSecurityManager;
+import com.orientechnologies.orient.enterprise.command.script.OCommandScript;
+import com.orientechnologies.orient.server.command.script.OCommandExecutorScript;
 import com.orientechnologies.orient.server.config.OConfigurationLoaderXml;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
@@ -71,6 +74,9 @@ public class OServer {
 	public OServer() throws ClassNotFoundException, MalformedObjectNameException, NullPointerException,
 			InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
 		threadGroup = new ThreadGroup("OrientDB Server");
+
+		// REGISTER THE COMMAND SCRIPT
+		OCommandManager.instance().register(OCommandScript.class, OCommandExecutorScript.class);
 
 		System.setProperty("com.sun.management.jmxremote", "true");
 
