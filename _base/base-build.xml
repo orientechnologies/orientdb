@@ -26,7 +26,8 @@
 
 	<target name="compile" depends="init">
     <mkdir dir="${project.lib}" />
-		<javac destdir="${project.build}" debug="${project.is-debug}" debuglevel="${project.debug-level}" target="${project.target-comp}">
+		<javac destdir="${project.build}" debug="${project.is-debug}" debuglevel="${project.debug-level}" target="${project.target-comp}"
+           includeantruntime="false">
 			<src path="${project.src}" />
 			<classpath refid="project.classpath" />
 		</javac>
