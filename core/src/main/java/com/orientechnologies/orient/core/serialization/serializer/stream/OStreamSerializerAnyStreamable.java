@@ -16,9 +16,9 @@
 package com.orientechnologies.orient.core.serialization.serializer.stream;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
@@ -47,7 +47,7 @@ public class OStreamSerializerAnyStreamable implements OStreamSerializer {
 			// CREATE THE OBJECT BY INVOKING THE EMPTY CONSTRUCTOR
 			OSerializableStream stream = (OSerializableStream) clazz.newInstance();
 
-			return stream.fromStream(Arrays.copyOfRange(iStream, 4 + classNameSize, iStream.length));
+			return stream.fromStream(OArrays.copyOfRange(iStream, 4 + classNameSize, iStream.length));
 
 		} catch (Exception e) {
 			OLogManager.instance().error(this, "Error on unmarshalling content. Class: " + className, e, OSerializationException.class);

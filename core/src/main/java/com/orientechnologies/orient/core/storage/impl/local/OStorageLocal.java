@@ -27,6 +27,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -693,7 +694,7 @@ public class OStorageLocal extends OStorageAbstract {
 		// CREATE AND ADD THE NEW REF SEGMENT
 		ODataLocal segment = new ODataLocal(this, iConfig, pos);
 
-		dataSegments = Arrays.copyOf(dataSegments, dataSegments.length + 1);
+		dataSegments = OArrays.copyOf(dataSegments, dataSegments.length + 1);
 		dataSegments[pos] = segment;
 
 		return pos;
@@ -745,7 +746,7 @@ public class OStorageLocal extends OStorageAbstract {
 
 		final int id = clusters.length;
 
-		clusters = Arrays.copyOf(clusters, id + 1);
+		clusters = OArrays.copyOf(clusters, id + 1);
 		clusters[id] = cluster;
 
 		return id;

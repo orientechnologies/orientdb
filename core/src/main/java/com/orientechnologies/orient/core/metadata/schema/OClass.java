@@ -24,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -298,7 +299,7 @@ public class OClass extends ODocumentWrapperNoClass {
 			if (currId == iId)
 				return this;
 
-		clusterIds = Arrays.copyOf(clusterIds, clusterIds.length + 1);
+		clusterIds = OArrays.copyOf(clusterIds, clusterIds.length + 1);
 		setDirty();
 		return this;
 	}
@@ -382,7 +383,7 @@ public class OClass extends ODocumentWrapperNoClass {
 
 			if (!found) {
 				// ADD IT
-				polymorphicClusterIds = Arrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length + 1);
+				polymorphicClusterIds = OArrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length + 1);
 				polymorphicClusterIds[polymorphicClusterIds.length - 1] = i;
 			}
 		}

@@ -16,8 +16,8 @@
 package com.orientechnologies.orient.core.serialization;
 
 import java.io.IOException;
-import java.util.Arrays;
 
+import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.OConstants;
 
 /**
@@ -42,7 +42,7 @@ public class OMemoryInputStream {
 		final int size = OBinaryProtocol.bytes2int(buffer, position);
 		position += OConstants.SIZE_INT;
 
-		final byte[] portion = Arrays.copyOfRange(buffer, position, position + size);
+		final byte[] portion = OArrays.copyOfRange(buffer, position, position + size);
 		position += size;
 
 		return portion;

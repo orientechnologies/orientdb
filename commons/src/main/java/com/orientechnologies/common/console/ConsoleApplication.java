@@ -22,13 +22,13 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.parser.OStringParser;
+import com.orientechnologies.common.util.OArrays;
 
 public class ConsoleApplication {
 
@@ -151,7 +151,7 @@ public class ConsoleApplication {
 			if (ann != null && !ann.splitInWords()) {
 				methodArgs = new String[] { iCommand.substring(iCommand.indexOf(" ") + 1) };
 			} else {
-				methodArgs = Arrays.copyOfRange(commandWords, commandWordCount, commandWords.length);
+				methodArgs = OArrays.copyOfRange(commandWords, commandWordCount, commandWords.length);
 			}
 
 			try {

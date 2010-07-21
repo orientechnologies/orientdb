@@ -18,11 +18,13 @@ package com.orientechnologies.orient.core.serialization.serializer.record.string
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.annotation.OAfterSerialization;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
@@ -160,7 +162,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				else
 					pos = 0;
 
-				// return new ORecordId(iValue.substring(pos + 1));
+				//				return new ORecordId(iValue.substring(pos + 1));
 				return new ODocument(iDatabase, iLinkedClass != null ? iLinkedClass.getName() : null, new ORecordId(
 						iValue.substring(pos + 1)));
 			} else
@@ -177,17 +179,113 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		StringBuilder buffer = new StringBuilder();
 
 		switch (iType) {
+
+		case LINK: {
+			final ORID rid = linkToStream(buffer, iRecord, iValue);
+			if (rid != null)
+				// OVERWRITE CONTENT
+				iRecord.field(iName, rid);
+			break;
+		}
+
+		case LINKLIST: {
+			buffer.append(OStringSerializerHelper.COLLECTION_BEGIN);
+
+			ORID rid;
+			int items = 0;
+			List<Object> coll = (List<Object>) iValue;
+			// LINKED LIST
+			for (int i = 0; i < coll.size(); ++i) {
+				if (items++ > 0)
+					buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
+
+				rid = linkToStream(buffer, iRecord, coll.get(i));
+
+				if (rid != null)
+					coll.set(i, rid);
+			}
+
+			buffer.append(OStringSerializerHelper.COLLECTION_END);
+			break;
+		}
+
+		case LINKSET: {
+			buffer.append(OStringSerializerHelper.COLLECTION_BEGIN);
+
+			ORID rid;
+			int items = 0;
+			Set<Object> coll = (Set<Object>) iValue;
+			Map<Object, Object> objToReplace = null;
+
+			// LINKED SET
+			for (Object item : coll) {
+				if (items++ > 0)
+					buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
+
+				rid = linkToStream(buffer, iRecord, item);
+
+				if (rid != null) {
+					// REMEMBER TO REPLACE THIS ITEM AFTER ALL
+					if (objToReplace == null)
+						objToReplace = new HashMap<Object, Object>();
+
+					objToReplace.put(item, rid);
+				}
+			}
+
+			if (objToReplace != null)
+				// REPLACE ALL CHANGED ITEMS
+				for (Map.Entry<Object, Object> entry : objToReplace.entrySet()) {
+					coll.remove(entry.getKey());
+					coll.add(entry.getValue());
+				}
+
+			buffer.append(OStringSerializerHelper.COLLECTION_END);
+			break;
+		}
+
+		case LINKMAP: {
+			buffer.append(OStringSerializerHelper.MAP_BEGIN);
+
+			ORID rid;
+			int items = 0;
+			Map<String, Object> map = (Map<String, Object>) iValue;
+			Map<String, Object> objToReplace = null;
+
+			// LINKED MAP
+			for (Map.Entry<String, Object> entry : map.entrySet()) {
+				if (items++ > 0)
+					buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
+
+				buffer.append(OStringSerializerHelper.fieldTypeToString(OType.STRING, entry.getKey()));
+				buffer.append(OStringSerializerHelper.ENTRY_SEPARATOR);
+				rid = linkToStream(buffer, iRecord, entry.getValue());
+
+				if (rid != null) {
+					// REMEMBER TO REPLACE THIS ITEM AFTER ALL
+					if (objToReplace == null)
+						objToReplace = new HashMap<String, Object>();
+
+					objToReplace.put(entry.getKey(), rid);
+				}
+			}
+
+			if (objToReplace != null)
+				// REPLACE ALL CHANGED ITEMS
+				for (Map.Entry<String, Object> entry : objToReplace.entrySet()) {
+					map.put(entry.getKey(), entry.getValue());
+				}
+
+			buffer.append(OStringSerializerHelper.MAP_END);
+			break;
+		}
+
 		case EMBEDDED:
 			if (iValue instanceof ODocument)
 				buffer.append(toString((ODocument) iValue, null, iObjHandler, iMarshalledRecords));
 			else if (iValue != null)
 				buffer.append(iValue.toString());
 			break;
-
-		case LINK: {
-			linkToStream(buffer, iRecord, iValue);
-			break;
-		}
 
 		case EMBEDDEDLIST:
 		case EMBEDDEDSET: {
@@ -248,23 +346,6 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				}
 
 			buffer.append(OStringSerializerHelper.MAP_END);
-			break;
-		}
-
-		case LINKLIST:
-		case LINKSET: {
-			buffer.append(OStringSerializerHelper.COLLECTION_BEGIN);
-
-			int items = 0;
-			// LINKED OBJECTS
-			for (Object link : (Collection<Object>) iValue) {
-				if (items++ > 0)
-					buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
-
-				linkToStream(buffer, iRecord, link);
-			}
-
-			buffer.append(OStringSerializerHelper.COLLECTION_END);
 			break;
 		}
 
@@ -416,14 +497,18 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 	 * 
 	 * @param buffer
 	 * @param iParentRecord
+	 * @param iFieldName
+	 *          TODO
 	 * @param iLinked
 	 *          Can be an instance of ORID or a Record<?>
+	 * @return
 	 */
-	private void linkToStream(final StringBuilder buffer, final ORecordSchemaAware<?> iParentRecord, Object iLinked) {
+	private ORID linkToStream(final StringBuilder buffer, final ORecordSchemaAware<?> iParentRecord, Object iLinked) {
 		if (iLinked == null)
 			// NULL REFERENCE
-			return;
+			return null;
 
+		ORID resultRid = null;
 		ORID rid;
 
 		buffer.append(OStringSerializerHelper.LINK);
@@ -461,9 +546,18 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					buffer.append(OStringSerializerHelper.CLASS_SEPARATOR);
 				}
 			}
+
+			if (iParentRecord.getDatabase() instanceof ODatabaseRecord<?>) {
+				final ODatabaseRecord<?> db = (ODatabaseRecord<?>) iParentRecord.getDatabase();
+				if (!db.isRetainRecords())
+					// REPLACE CURRENT RECORD WITH ITS ID: THIS SAVES A LOT OF MEMORY
+					resultRid = iLinkedRecord.getIdentity();
+			}
 		}
 
 		if (rid.isValid())
 			buffer.append(rid.toString());
+
+		return resultRid;
 	}
 }
