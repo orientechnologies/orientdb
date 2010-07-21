@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabaseRecordTx<ODocument>, ODocument> implements
 		ODatabaseDocument {
-
 	public ODatabaseDocumentTx(final String iURL) {
 		super(new ODatabaseRecordTx<ODocument>(iURL, ODocument.class));
 	}

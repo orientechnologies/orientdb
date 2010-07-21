@@ -41,6 +41,25 @@ public interface ODatabaseRecord<REC extends ORecordInternal<?>> extends ODataba
 	public Class<? extends REC> getRecordType();
 
 	/**
+	 * Returns true if current configuration retains objects, otherwise false
+	 * 
+	 * @param iValue
+	 *          True to enable, false to disable it.
+	 * @see #setRetainRecords(boolean)
+	 */
+	public boolean isRetainRecords();
+
+	/**
+	 * Specifies if retain handled objects in memory or not. Setting it to false can improve performance on large inserts. Default is
+	 * enabled.
+	 * 
+	 * @param iValue
+	 *          True to enable, false to disable it.
+	 * @see #isRetainRecords()
+	 */
+	public ODatabaseRecord<?> setRetainRecords(boolean iValue);
+
+	/**
 	 * Checks if the operation on a resource is allowed for the current user.
 	 * 
 	 * @param iResource

@@ -377,7 +377,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			}
 		}
 
-		if (knownProperty) {
+		if (knownProperty && _trackingChanges) {
 			// SAVE THE OLD VALUE IN A SEPARATE MAP
 			if (_fieldOriginalValues == null)
 				_fieldOriginalValues = new HashMap<String, Object>();

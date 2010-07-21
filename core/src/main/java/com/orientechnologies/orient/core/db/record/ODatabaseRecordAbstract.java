@@ -70,6 +70,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 	private Class<? extends REC>			recordClass;
 	private String										recordFormat;
 	private Set<ORecordHook>					hooks							= new HashSet<ORecordHook>();
+	private boolean										retainRecords			= true;
 
 	public ODatabaseRecordAbstract(final String iURL, final Class<? extends REC> iRecordClass) {
 		super(new ODatabaseRaw(iURL));
@@ -292,13 +293,30 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 
 		if (user != null) {
 			try {
-				ORole role = user.allow(iResourceGeneric + "." + ODatabaseSecurityResources.ALL, iOperation);
+				final StringBuilder keyBuffer = new StringBuilder();
+				String key;
 
-				for (Object target : iResourcesSpecific)
-					if (target != null && user.isRuleDefined(iResourceGeneric + "." + target.toString())) {
-						// RULE DEFINED: CHECK AGAINST IT
-						role = user.allow(iResourceGeneric + "." + target.toString(), iOperation);
+				keyBuffer.append(iResourceGeneric);
+				keyBuffer.append('.');
+				keyBuffer.append(ODatabaseSecurityResources.ALL);
+
+				ORole role = user.allow(keyBuffer.toString(), iOperation);
+
+				for (Object target : iResourcesSpecific) {
+					if (target != null) {
+						keyBuffer.setLength(0);
+						keyBuffer.append(iResourceGeneric);
+						keyBuffer.append('.');
+						keyBuffer.append(target.toString());
+
+						key = keyBuffer.toString();
+
+						if (user.isRuleDefined(key)) {
+							// RULE DEFINED: CHECK AGAINST IT
+							role = user.allow(key, iOperation);
+						}
 					}
+				}
 
 				if (OLogManager.instance().isDebugEnabled())
 					OLogManager.instance().debug(this,
@@ -480,14 +498,13 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		return this;
 	}
 
-	protected ORecordSerializer resolveFormat(final Object iObject) {
-		return ORecordSerializerFactory.instance().getFormatForObject(iObject, recordFormat);
+	public boolean isRetainRecords() {
+		return retainRecords;
 	}
 
-	@Override
-	protected void checkOpeness() {
-		if (isClosed())
-			throw new ODatabaseException("Database is closed");
+	public ODatabaseRecord<?> setRetainRecords(boolean retainRecords) {
+		this.retainRecords = retainRecords;
+		return this;
 	}
 
 	public OUser getUser() {
@@ -518,6 +535,16 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 	public void callbackHooks(final TYPE iType, final Object iRecord) {
 		for (ORecordHook hook : hooks)
 			hook.onTrigger(iType, (ORecord<?>) iRecord);
+	}
+
+	protected ORecordSerializer resolveFormat(final Object iObject) {
+		return ORecordSerializerFactory.instance().getFormatForObject(iObject, recordFormat);
+	}
+
+	@Override
+	protected void checkOpeness() {
+		if (isClosed())
+			throw new ODatabaseException("Database is closed");
 	}
 
 	private void createRolesAndUsers() {

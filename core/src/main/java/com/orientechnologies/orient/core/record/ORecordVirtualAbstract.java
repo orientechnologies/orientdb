@@ -30,6 +30,7 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 	protected Map<String, T>			_fieldValues;
 	protected Map<String, T>			_fieldOriginalValues;
 	protected Map<String, OType>	_fieldTypes;
+	protected boolean							_trackingChanges	= true;
 
 	public ORecordVirtualAbstract() {
 	}
@@ -68,27 +69,13 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 		return this;
 	}
 
-	@Override
-	public int hashCode() {
-		int result = super.hashCode();
-		//
-		// if (!_recordId.isValid() && _fieldValues != null)
-		// for (Entry<String, T> field : _fieldValues.entrySet()) {
-		// if (field.getKey() != null)
-		// result += field.getKey().hashCode();
-		//
-		// if (field.getValue() != null)
-		// if (field.getValue() instanceof ORecord<?>)
-		// // AVOID TO GET THE HASH-CODE OF THE VALUE TO AVOID STACK OVERFLOW FOR CIRCULAR REFS
-		// result += 31 * ((ORecord<T>) field.getValue()).getIdentity().hashCode();
-		// else if (field.getValue() instanceof Collection<?>)
-		// // AVOID TO GET THE HASH-CODE OF THE VALUE TO AVOID STACK OVERFLOW FOR CIRCULAR REFS
-		// result += ((Collection<?>) field.getValue()).size() * 31;
-		// else
-		// result += field.getValue().hashCode();
-		// }
+	public boolean isTrackingChanges() {
+		return _trackingChanges;
+	}
 
-		return result;
+	public <RET extends ORecordVirtualAbstract<?>> RET setTrackingChanges(final boolean iTrackingChanges) {
+		this._trackingChanges = iTrackingChanges;
+		return (RET) this;
 	}
 
 	@Override
@@ -96,43 +83,7 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 		if (!super.equals(obj))
 			return false;
 
-		if (!_recordId.isValid()) {
-			//
-			// final ORecordVirtualAbstract<?> other = (ORecordVirtualAbstract<?>) obj;
-			//
-			// // NO PERSISTENT OBJECT: COMPARE EACH FIELDS
-			// if (_fieldValues == null || other._fieldValues == null)
-			// // CAN'T COMPARE FIELDS: RETURN FALSE
-			// return false;
-			//
-			// if (_fieldValues.size() != other._fieldValues.size())
-			// // FIELD SIZES ARE DIFFERENTS
-			// return false;
-			//
-			// String k;
-			// Object v;
-			// Object otherV;
-			// for (Entry<String, T> field : _fieldValues.entrySet()) {
-			// k = field.getKey();
-			// if (k != null && !other.containsField(k))
-			// // FIELD NOT PRESENT IN THE OTHER RECORD
-			// return false;
-			//
-			// v = _fieldValues.get(k);
-			// otherV = other._fieldValues.get(k);
-			// if (v == null && otherV == null)
-			// continue;
-			//
-			// if (v == null && otherV != null || otherV == null && v != null)
-			// return false;
-			//
-			// if (!v.equals(otherV))
-			// return false;
-			// }
-			return false;
-		}
-
-		return true;
+		return _recordId.isValid();
 	}
 
 	@Override

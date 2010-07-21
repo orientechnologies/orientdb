@@ -58,6 +58,7 @@ public class OGraphEdge extends OGraphElement {
 	@OAfterDeserialization
 	public void fromStream(final ODocument iDocument) {
 		super.fromStream(iDocument);
+		document.setTrackingChanges(false);
 		in = out = null;
 	}
 

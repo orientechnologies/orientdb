@@ -317,8 +317,9 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 		return underlying;
 	}
 
-	public void setRetainObjects(final boolean iValue) {
+	public ODatabaseObjectTx setRetainObjects(final boolean iValue) {
 		retainObjects = iValue;
+		return this;
 	}
 
 	public boolean isRetainObjects() {

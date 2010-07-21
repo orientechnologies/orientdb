@@ -31,14 +31,17 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
 public abstract class OGraphElement extends ODocumentWrapper {
 	public OGraphElement(final ODatabaseRecord<?> iDatabase, final ORID iRID) {
 		this(new ODocument(iDatabase, iRID));
+		document.setTrackingChanges(false);
 	}
 
 	public OGraphElement(final ODatabaseRecord<?> iDatabase, final String iClassName) {
 		this(new ODocument(iDatabase, iClassName));
+		document.setTrackingChanges(false);
 	}
 
 	public OGraphElement(final ODocument iDocument) {
 		super(iDocument);
+		document.setTrackingChanges(false);
 	}
 
 	public Object get(final String iPropertyName) {

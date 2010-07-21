@@ -99,5 +99,7 @@ public class LocalCreateGraphVariableDensityTest {
 
 			createSubNodes(node, iDeepLevel + 1, iDensity);
 		}
+
+		iNode.save();
 	}
 }

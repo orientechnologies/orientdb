@@ -78,5 +78,5 @@ public interface ODatabaseObject extends ODatabaseSchemaAware<Object> {
 	 *          True to enable, false to disable it.
 	 * @see #isRetainObjects()
 	 */
-	public void setRetainObjects(boolean iValue);
+	public ODatabaseObject setRetainObjects(boolean iValue);
 }

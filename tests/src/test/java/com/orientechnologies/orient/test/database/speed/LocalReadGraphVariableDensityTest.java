@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.db.graph.ODatabaseGraphTx;
 import com.orientechnologies.orient.core.db.graph.OGraphVertex;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
+import com.orientechnologies.orient.core.intent.OIntentMassiveRead;
 import com.orientechnologies.orient.core.iterator.OGraphVertexOutIterator;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
@@ -33,7 +33,7 @@ public class LocalReadGraphVariableDensityTest {
 
 		database = new ODatabaseGraphTx(System.getProperty("url")).open("admin", "admin");
 
-		database.declareIntent(new OIntentMassiveInsert());
+		database.declareIntent(new OIntentMassiveRead());
 		database.begin(TXTYPE.NOTX);
 
 		long time = System.currentTimeMillis();

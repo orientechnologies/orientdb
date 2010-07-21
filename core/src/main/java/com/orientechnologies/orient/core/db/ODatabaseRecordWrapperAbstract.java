@@ -111,6 +111,15 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord<
 		return this;
 	}
 
+	public boolean isRetainRecords() {
+		return underlying.isRetainRecords();
+	}
+
+	public ODatabaseRecord<?> setRetainRecords(boolean iValue) {
+		underlying.setRetainRecords(iValue);
+		return (ODatabaseRecord<?>) this;
+	}
+
 	public ORecordInternal<?> getRecordByUserObject(final Object iUserObject, final boolean iMandatory) {
 		if (databaseOwner != this)
 			return getDatabaseOwner().getRecordByUserObject(iUserObject, false);

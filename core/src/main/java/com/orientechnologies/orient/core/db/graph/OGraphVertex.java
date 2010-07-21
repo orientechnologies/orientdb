@@ -64,6 +64,7 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 	@OAfterDeserialization
 	public void fromStream(final ODocument iDocument) {
 		super.fromStream(iDocument);
+		document.setTrackingChanges(false);
 		inEdges = outEdges = null;
 	}
 
