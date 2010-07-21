@@ -19,8 +19,6 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.client.remote.OEngineRemote;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.iterator.ORecordIterator;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -34,7 +32,6 @@ public class CRUDDocumentPhysicalTest {
 
 	@Parameters(value = "url")
 	public CRUDDocumentPhysicalTest(String iURL) {
-		Orient.instance().registerEngine(new OEngineRemote());
 		database = new ODatabaseDocumentTx(iURL);
 		record = database.newInstance();
 	}

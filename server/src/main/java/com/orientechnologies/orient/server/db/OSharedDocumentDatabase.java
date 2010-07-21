@@ -18,7 +18,7 @@ package com.orientechnologies.orient.server.db;
 import java.util.Map;
 
 import com.orientechnologies.common.concur.resource.OResourcePool;
-import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.ODatabasePoolAbstract;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -26,34 +26,37 @@ import com.orientechnologies.orient.server.OServerMain;
 
 public class OSharedDocumentDatabase {
 	// TODO: ALLOW ONLY 1 BECAUSE THE TREE IS NOT YET FULLY TRANSACTIONAL
-	private static final ODatabasePool<ODatabaseDocumentTx>	dbPool	= new ODatabasePool<ODatabaseDocumentTx>(20, true) {
+	private static final ODatabasePoolAbstract<ODatabaseDocumentTx>	dbPool	= new ODatabasePoolAbstract<ODatabaseDocumentTx>(1, 20,
+																																							true) {
 
-																																		public ODatabaseDocumentTx createNewResource(
-																																				final String iDatabaseName) {
-																																			final String[] parts = iDatabaseName.split(":");
+																																						public ODatabaseDocumentTx createNewResource(
+																																								final String iDatabaseName) {
+																																							final String[] parts = iDatabaseName.split(":");
 
-																																			if (parts.length < 2)
-																																				throw new OSecurityAccessException(
-																																						"Username and/or password missed");
+																																							if (parts.length < 2)
+																																								throw new OSecurityAccessException(
+																																										"Username and/or password missed");
 
-																																			final String path = OServerMain.server().getStoragePath(
-																																					parts[0]);
+																																							final String path = OServerMain.server()
+																																									.getStoragePath(parts[0]);
 
-																																			final ODatabaseDocumentTx db = new ODatabaseDocumentTx(path);
+																																							final ODatabaseDocumentTx db = new ODatabaseDocumentTx(
+																																									path);
 
-																																			if (path.startsWith(OEngineMemory.NAME)) {
-																																				// CREATE AND PUT IN THE MEMORY MAPTABLE TO AVOID LOCKING
-																																				// (IT'S
-																																				// THREAD SAFE)
-																																				db.create();
-																																				OServerMain.server().getMemoryDatabases()
-																																						.put(iDatabaseName, db);
-																																			} else
-																																				db.open(parts[1], parts[2]);
+																																							if (path.startsWith(OEngineMemory.NAME)) {
+																																								// CREATE AND PUT IN THE MEMORY MAPTABLE TO AVOID
+																																								// LOCKING
+																																								// (IT'S
+																																								// THREAD SAFE)
+																																								db.create();
+																																								OServerMain.server().getMemoryDatabases()
+																																										.put(iDatabaseName, db);
+																																							} else
+																																								db.open(parts[1], parts[2]);
 
-																																			return db;
-																																		}
-																																	};
+																																							return db;
+																																						}
+																																					};
 
 	public static ODatabaseDocumentTx acquireDatabase(final String iName) throws InterruptedException {
 		return dbPool.acquireDatabase(iName);

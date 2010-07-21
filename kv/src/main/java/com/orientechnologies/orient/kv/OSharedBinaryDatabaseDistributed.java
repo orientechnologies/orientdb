@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.kv;
 
-import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.ODatabasePoolAbstract;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseBinary;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
@@ -24,31 +24,34 @@ import com.orientechnologies.orient.server.OServerMain;
 
 public class OSharedBinaryDatabaseDistributed {
 	// TODO: ALLOW ONLY 1 BECAUSE THE TREE IS NOT YET FULLY TRANSACTIONAL
-	private static final ODatabasePool<ODatabaseBinary>	dbPool	= new ODatabasePool<ODatabaseBinary>(1, false) {
+	private static final ODatabasePoolAbstract<ODatabaseBinary>	dbPool	= new ODatabasePoolAbstract<ODatabaseBinary>(1, 1, false) {
 
-																																public ODatabaseBinary createNewResource(final String iDatabaseName) {
-																																	final String[] parts = iDatabaseName.split(":");
+																																				public ODatabaseBinary createNewResource(
+																																						final String iDatabaseName) {
+																																					final String[] parts = iDatabaseName.split(":");
 
-																																	if (parts.length < 2)
-																																		throw new OSecurityAccessException(
-																																				"Username and/or password missed");
+																																					if (parts.length < 2)
+																																						throw new OSecurityAccessException(
+																																								"Username and/or password missed");
 
-																																	final String path = OServerMain.server().getStoragePath(parts[0]);
+																																					final String path = OServerMain.server().getStoragePath(
+																																							parts[0]);
 
-																																	final ODatabaseBinary db = new ODatabaseBinary(path);
+																																					final ODatabaseBinary db = new ODatabaseBinary(path);
 
-																																	if (path.startsWith(OEngineMemory.NAME)) {
-																																		// CREATE AND PUT IN THE MEMORY MAPTABLE TO AVOID LOCKING (IT'S
-																																		// THREAD SAFE)
-																																		db.create();
-																																		OServerMain.server().getMemoryDatabases()
-																																				.put(iDatabaseName, db);
-																																	} else
-																																		db.open(parts[1], parts[2]);
+																																					if (path.startsWith(OEngineMemory.NAME)) {
+																																						// CREATE AND PUT IN THE MEMORY MAPTABLE TO AVOID
+																																						// LOCKING (IT'S
+																																						// THREAD SAFE)
+																																						db.create();
+																																						OServerMain.server().getMemoryDatabases()
+																																								.put(iDatabaseName, db);
+																																					} else
+																																						db.open(parts[1], parts[2]);
 
-																																	return db;
-																																}
-																															};
+																																					return db;
+																																				}
+																																			};
 
 	public static ODatabaseBinary acquireDatabase(String iName) throws InterruptedException {
 		final ODatabaseBinary db = dbPool.acquireDatabase(iName);

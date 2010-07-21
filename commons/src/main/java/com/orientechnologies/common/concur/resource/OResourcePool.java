@@ -34,11 +34,15 @@ public class OResourcePool<K, V> {
 		sem = new Semaphore(iMaxResources, true);
 	}
 
-	public V getResource(K iKey, final long iMaxWaitMillis) throws InterruptedException, OLockException {
+	public V getResource(K iKey, final long iMaxWaitMillis) throws OLockException {
 
 		// First, get permission to take or create a resource
-		if (!sem.tryAcquire(iMaxWaitMillis, TimeUnit.MILLISECONDS))
-			throw new OLockException("Can't acquire lock on requested resource: " + iKey);
+		try {
+			if (!sem.tryAcquire(iMaxWaitMillis, TimeUnit.MILLISECONDS))
+				throw new OLockException("Can't acquire lock on requested resource: " + iKey);
+		} catch (InterruptedException e) {
+			throw new OLockException("Can't acquire lock on requested resource: " + iKey, e);
+		}
 
 		// Then, actually take one if available...
 		V res = resources.poll();

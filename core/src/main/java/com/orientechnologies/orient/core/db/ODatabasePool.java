@@ -1,3 +1,5 @@
+package com.orientechnologies.orient.core.db;
+
 /*
  * Copyright 1999-2010 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
@@ -13,85 +15,62 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.db;
-
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.concur.resource.OResourcePool;
-import com.orientechnologies.common.concur.resource.OResourcePoolListener;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
-public abstract class ODatabasePool<DB extends ODatabaseRecord<?>> implements OResourcePoolListener<String, DB> {
+public class ODatabasePool {
+	private static ODatabasePoolAbstract<ODatabaseDocumentTx>	dbPool;
+	private static volatile Object														lock	= new Object();
 
-	private static final int															DEF_WAIT_TIMEOUT	= 5000;
-	private final Map<String, OResourcePool<String, DB>>	pools							= new HashMap<String, OResourcePool<String, DB>>();
-	private int																						maxSize;
-	private int																						timeout						= DEF_WAIT_TIMEOUT;
-	private boolean																				enableSecurity		= true;
-
-	public ODatabasePool(final int iMaxSize, boolean iEnableSecurity) {
-		this(iMaxSize, iEnableSecurity, DEF_WAIT_TIMEOUT);
+	public static void setup() {
+		setup(1, 20);
 	}
 
-	public ODatabasePool(final int iMaxSize, boolean iEnableSecurity, final int iTimeout) {
-		maxSize = iMaxSize;
-		enableSecurity = iEnableSecurity;
-		timeout = iTimeout;
-	}
+	public static void setup(final int iMinSize, final int iMaxSize) {
+		if (dbPool == null)
+			synchronized (lock) {
+				if (dbPool == null) {
+					dbPool = new ODatabasePoolAbstract<ODatabaseDocumentTx>(iMinSize, iMaxSize, true) {
 
-	public DB acquireDatabase(final String iURL) throws OLockException, InterruptedException {
-		final String url = iURL.indexOf(":") > -1 ? iURL.substring(0, iURL.lastIndexOf(":")) : iURL;
+						public ODatabaseDocumentTx createNewResource(final String iDatabaseName) {
+							final String[] parts = iDatabaseName.split(":");
 
-		OResourcePool<String, DB> pool = pools.get(url);
-		if (pool == null) {
-			synchronized (pools) {
-				if (pool == null) {
-					pool = new OResourcePool<String, DB>(maxSize, this);
-					pools.put(url, pool);
+							if (parts.length < 2)
+								throw new OSecurityAccessException("Username and/or password missed");
+
+							final String path = parts[0];
+
+							final ODatabaseDocumentTx db = new ODatabaseDocumentTx(path);
+
+							db.open(parts[1], parts[2]);
+
+							return db;
+						}
+					};
 				}
 			}
-		}
-
-		return pool.getResource(iURL, timeout);
 	}
 
-	public void releaseDatabase(final String iURL, final DB iDatabase) {
-		if (iDatabase instanceof ODatabaseRecord<?>)
-			((ODatabaseRecord<?>) iDatabase).rollback();
-
-		OResourcePool<String, DB> pool = pools.get(iURL);
-		if (pool == null)
-			throw new OLockException("Can't release a database URL not acquired before. URL: " + iURL);
-
-		pool.returnResource(iDatabase);
+	public static ODatabaseDocumentTx acquireDatabase(final String iName) {
+		setup();
+		return dbPool.acquireDatabase(iName);
 	}
 
-	public DB reuseResource(String iKey, DB iValue) {
-		if (!enableSecurity)
-			return iValue;
+	public static void releaseDatabase(final ODatabaseDocumentTx iDatabase) {
+		if (dbPool == null)
+			throw new OConfigurationException("Database pool is not initialized");
 
-		final List<String> parts = OStringSerializerHelper.split(iKey, ':');
-
-		if (parts.size() < 3)
-			throw new IllegalArgumentException("Missed user or password");
-
-		if (iValue.getUser() != null) {
-			final OUser user = iValue.getMetadata().getSecurity().getUser(parts.get(1));
-			if (!user.checkPassword(parts.get(2)))
-				throw new OSecurityAccessException(iValue.getName(), "Wrong user/password");
-		}
-
-		return null;
-
+		dbPool.releaseDatabase(iDatabase.getName() + ":" + iDatabase.getUser().getName(), iDatabase);
 	}
 
-	public Map<String, OResourcePool<String, DB>> getPools() {
-		return pools;
+	public static Map<String, OResourcePool<String, ODatabaseDocumentTx>> getDatabasePools() {
+		if (dbPool == null)
+			throw new OConfigurationException("Database pool is not initialized");
+
+		return dbPool.getPools();
 	}
 }
