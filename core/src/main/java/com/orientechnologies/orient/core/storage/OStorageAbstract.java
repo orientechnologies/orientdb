@@ -19,6 +19,7 @@ import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.orient.core.cache.OCacheRecord;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 public abstract class OStorageAbstract extends OSharedResourceAdaptive implements OStorage {
 	protected OStorageConfiguration	configuration;
@@ -30,12 +31,12 @@ public abstract class OStorageAbstract extends OSharedResourceAdaptive implement
 	protected boolean								open	= false;
 
 	public OStorageAbstract(final String iName, final String iFilePath, final String iMode) {
-		if (iName.contains("/"))
+		if (OStringSerializerHelper.contains(iName, '/'))
 			name = iName.substring(iName.lastIndexOf("/") + 1);
 		else
 			name = iName;
 
-		if (name.contains(":") || name.contains(","))
+		if (OStringSerializerHelper.contains(iName, ','))
 			throw new IllegalArgumentException("Invalid character in storage name: " + name);
 
 		fileURL = iFilePath;

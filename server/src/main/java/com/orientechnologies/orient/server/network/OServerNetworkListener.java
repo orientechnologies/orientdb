@@ -24,6 +24,7 @@ import java.net.Socket;
 import java.net.SocketException;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
@@ -78,14 +79,14 @@ public class OServerNetworkListener extends Thread {
 	private void listen(final String iHostName, final String iHostPortRange, final String iProtocolName) {
 		int[] ports;
 
-		if (iHostPortRange.contains(",")) {
+		if (OStringSerializerHelper.contains(iHostPortRange, ',')) {
 			// MULTIPLE ENUMERATED PORTS
 			String[] portValues = iHostPortRange.split(",");
 			ports = new int[portValues.length];
 			for (int i = 0; i < portValues.length; ++i)
 				ports[i] = Integer.parseInt(portValues[i]);
 
-		} else if (iHostPortRange.contains("-")) {
+		} else if (OStringSerializerHelper.contains(iHostPortRange, '-')) {
 			// MULTIPLE RANGE PORTS
 			String[] limits = iHostPortRange.split("-");
 			int lowerLimit = Integer.parseInt(limits[0]);

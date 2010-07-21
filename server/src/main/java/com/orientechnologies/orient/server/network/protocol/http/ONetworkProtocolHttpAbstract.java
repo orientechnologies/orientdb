@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.text.OChannelTextServer;
 import com.orientechnologies.orient.server.OClientConnection;
@@ -208,7 +209,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 		OServerCommand cmd = (OServerCommand) iServerCommandInstance;
 
 		for (String name : cmd.getNames())
-			if (name.contains("*"))
+			if (OStringSerializerHelper.contains(name, '*'))
 				wildcardCommands.put(name, cmd);
 			else
 				exactCommands.put(name, cmd);

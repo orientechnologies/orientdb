@@ -16,8 +16,9 @@
 package com.orientechnologies.orient.core.sql.filter;
 
 import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.ORecord.STATUS;
+import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 
 /**
@@ -90,7 +91,7 @@ public class OSQLFilterCondition {
 		if (NULL_VALUE.equals(stringValue))
 			return null;
 
-		if (stringValue.contains(".") || stringValue.contains(","))
+		if (OStringSerializerHelper.contains(stringValue, '.') || OStringSerializerHelper.contains(stringValue, ','))
 			return (int) Float.parseFloat(stringValue);
 		else
 			return stringValue.length() > 0 ? new Integer(stringValue) : new Integer(0);

@@ -18,6 +18,7 @@ package com.orientechnologies.orient.server.network.protocol.http.command;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 
 public abstract class OServerCommandDocumentAbstract extends OServerCommandAuthenticatedDbAbstract {
@@ -36,7 +37,7 @@ public abstract class OServerCommandDocumentAbstract extends OServerCommandAuthe
 		String value;
 
 		for (String p : params) {
-			if (p.contains("=")) {
+			if (OStringSerializerHelper.contains(p, '=')) {
 				String[] pairs = p.split("=");
 				value = pairs.length == 1 ? null : pairs[1];
 

@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 /**
@@ -75,7 +76,7 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 			// GET THE LINK NAME
 			linkName = word.toString();
 
-			if (linkName.contains(" "))
+			if (OStringSerializerHelper.contains(linkName, ' '))
 				throw new OCommandSQLParsingException("Link name '" + linkName + "' contains not valid characters", text, oldPos);
 
 			pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
