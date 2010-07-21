@@ -22,16 +22,19 @@ package com.orientechnologies.common.parser;
  * 
  */
 public class OSystemVariableResolver implements OVariableParserListener {
-	public static final String						VAR_BEGIN	= "${";
-	public static final String						VAR_END		= "}";
+	public static final String							VAR_BEGIN	= "${";
+	public static final String							VAR_END		= "}";
 
 	private static OSystemVariableResolver	instance	= new OSystemVariableResolver();
 
-	public static String resolveSystemVariables(String iPath) {
+	public static String resolveSystemVariables(final String iPath) {
+		if (iPath == null)
+			return null;
+
 		return OVariableParser.resolveVariables(iPath, VAR_BEGIN, VAR_END, instance);
 	}
 
-	public String resolve(String variable) {
+	public String resolve(final String variable) {
 		String resolved = System.getProperty(variable);
 
 		if (resolved == null)

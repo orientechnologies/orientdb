@@ -101,7 +101,8 @@ public class ORole extends ODocumentWrapper {
 
 		mode = ((Number) document.field("mode")).byteValue() == STREAM_ALLOW ? ALLOW_MODES.ALLOW_ALL_BUT : ALLOW_MODES.DENY_ALL_BUT;
 
-		parentRole = document.getDatabase().getMetadata().getSecurity().getRole((String) document.field("inheritedRole"));
+		final String roleName = document.field("inheritedRole");
+		parentRole = roleName != null ? document.getDatabase().getMetadata().getSecurity().getRole(roleName) : null;
 
 		final Map<String, Number> storedRules = document.field("rules");
 		for (Entry<String, Number> a : storedRules.entrySet()) {

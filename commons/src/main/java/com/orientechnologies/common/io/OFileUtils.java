@@ -71,6 +71,8 @@ public class OFileUtils {
 	}
 
 	public static String getPath(final String iPath) {
+		if (iPath == null)
+			return null;
 		return iPath.replace('\\', '/');
 	}
 }
