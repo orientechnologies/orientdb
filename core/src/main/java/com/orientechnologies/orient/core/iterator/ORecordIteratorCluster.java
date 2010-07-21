@@ -198,7 +198,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 
 		currentClusterPosition += iMovement;
 
-		iRecord = lowLevelDatabase.executeReadRecord(currentClusterId, currentClusterPosition, iRecord);
+		iRecord = lowLevelDatabase.executeReadRecord(currentClusterId, currentClusterPosition, iRecord, fetchPlan);
 		if (iRecord != null)
 			browsedRecords++;
 

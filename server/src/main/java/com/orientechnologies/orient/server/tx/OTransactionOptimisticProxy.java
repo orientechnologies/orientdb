@@ -130,7 +130,8 @@ public class OTransactionOptimisticProxy extends OTransactionAbstract<OTransacti
 		throw new UnsupportedOperationException("createRecord");
 	}
 
-	public OTransactionRecordProxy load(final int iClusterId, final long iPosition, final OTransactionRecordProxy iRecord) {
+	public OTransactionRecordProxy load(final int iClusterId, final long iPosition, final OTransactionRecordProxy iRecord,
+			final String iFetchPlan) {
 		throw new UnsupportedOperationException("createRecord");
 	}
 

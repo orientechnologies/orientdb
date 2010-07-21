@@ -37,7 +37,7 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 	protected long																limit						= -1;
 	protected long																browsedRecords	= 0;
 	protected long																currentClusterPosition;
-
+	protected String															fetchPlan;
 	private REC																		reusedRecord		= null;	// DEFAULT = NOT REUSE IT
 
 	public ORecordIterator(final ODatabaseRecord<REC> iDatabase, final ODatabaseRecordAbstract<REC> iLowLevelDatabase) {
@@ -54,6 +54,14 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 	public abstract ORecordIterator<REC> begin();
 
 	public abstract ORecordIterator<REC> last();
+
+	public String getFetchPlan() {
+		return fetchPlan;
+	}
+
+	public void setFetchPlan(String fetchPlan) {
+		this.fetchPlan = fetchPlan;
+	}
 
 	public void remove() {
 		throw new UnsupportedOperationException("remove");

@@ -59,7 +59,7 @@ public class OStorageConfiguration implements OSerializableStream {
 	private static final int									FIXED_CONFIG_SIZE	= 20000;
 
 	public OStorageConfiguration load() throws IOException {
-		record = storage.readRecord(-1, storage.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME), CONFIG_RECORD_NUM).buffer;
+		record = storage.readRecord(null, -1, storage.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME), CONFIG_RECORD_NUM, null).buffer;
 		fromStream(record);
 		return this;
 	}

@@ -35,8 +35,8 @@ public class OSecurity {
 	}
 
 	public OUser getUser(final String iUserName) {
-		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "'"))
-				.execute();
+		final List<ODocument> result = database.command(
+				new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "'").setFetchPlan("*:-1")).execute();
 
 		if (result != null && result.size() > 0)
 			return new OUser(result.get(0));
@@ -45,7 +45,7 @@ public class OSecurity {
 	}
 
 	public OUser createUser(final String iUserName, final String iUserPassword, final String[] iRoles) {
-		OUser user = new OUser(database, iUserName);
+		final OUser user = new OUser(database, iUserName);
 		user.setPassword(iUserPassword);
 
 		if (iRoles != null)
@@ -57,8 +57,8 @@ public class OSecurity {
 	}
 
 	public ORole getRole(final String iRoleName) {
-		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from ORole where name = '" + iRoleName + "'"))
-				.execute();
+		final List<ODocument> result = database.command(
+				new OSQLSynchQuery<ODocument>("select from ORole where name = '" + iRoleName + "'").setFetchPlan("*:-1")).execute();
 
 		if (result != null && result.size() > 0)
 			return new ORole(result.get(0));

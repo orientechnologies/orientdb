@@ -150,15 +150,22 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 	}
 
 	public REC load(final REC iRecord) {
-		return load(iRecord.getIdentity().getClusterId(), iRecord.getIdentity().getClusterPosition(), iRecord);
+		return load(iRecord, null);
+	}
+
+	/**
+	 * Loads a record using a fetch plan.
+	 */
+	public REC load(final REC iRecord, final String iFetchPlan) {
+		return load(iRecord.getIdentity().getClusterId(), iRecord.getIdentity().getClusterPosition(), iRecord, iFetchPlan);
 	}
 
 	public REC load(final ORID iRecordId) {
-		return load(iRecordId.getClusterId(), iRecordId.getClusterPosition(), (REC) databaseOwner.newInstance());
+		return load(iRecordId.getClusterId(), iRecordId.getClusterPosition(), (REC) databaseOwner.newInstance(), null);
 	}
 
-	public REC load(final int iClusterId, final long iPosition, final REC iRecord) {
-		return executeReadRecord(iClusterId, iPosition, iRecord);
+	public REC load(final int iClusterId, final long iPosition, final REC iRecord, final String iFetchPlan) {
+		return executeReadRecord(iClusterId, iPosition, iRecord, iFetchPlan);
 	}
 
 	/**
@@ -335,7 +342,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		return (DB) this;
 	}
 
-	public REC executeReadRecord(final int iClusterId, final long iPosition, REC iRecord) {
+	public REC executeReadRecord(final int iClusterId, final long iPosition, REC iRecord, final String iFetchPlan) {
 		checkOpeness();
 
 		try {
@@ -343,7 +350,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 
 			callbackHooks(TYPE.BEFORE_READ, iRecord);
 
-			final ORawBuffer recordBuffer = underlying.read(iClusterId, iPosition);
+			final ORawBuffer recordBuffer = underlying.read(iClusterId, iPosition, iFetchPlan);
 			if (recordBuffer == null)
 				return null;
 

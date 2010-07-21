@@ -51,6 +51,11 @@ public class ODocumentWrapper {
 		return (RET) this;
 	}
 
+	public <RET extends ODocumentWrapper> RET load(final String iFetchPlan) {
+		document.load(iFetchPlan);
+		return (RET) this;
+	}
+
 	public <RET extends ODocumentWrapper> RET save() {
 		document.save();
 		return (RET) this;

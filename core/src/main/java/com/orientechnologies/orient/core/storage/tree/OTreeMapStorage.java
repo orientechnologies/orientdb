@@ -73,7 +73,7 @@ public class OTreeMapStorage<K, V> extends OTreeMapPersistent<K, V> {
 		lock.acquireExclusiveLock();
 
 		try {
-			ORawBuffer raw = storage.readRecord(-1, clusterId, record.getIdentity().getClusterPosition());
+			ORawBuffer raw = storage.readRecord(null, -1, clusterId, record.getIdentity().getClusterPosition(), null);
 
 			if (raw == null)
 				throw new OConfigurationException("Can't load map with id " + clusterId + ":" + record.getIdentity().getClusterPosition());

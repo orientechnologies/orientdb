@@ -27,7 +27,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -167,7 +166,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 
 		Object result = null;
 		try {
-			result = ((ODatabaseDocument) _database).load(this, iFetchPlan);
+			result = _database.load(this, iFetchPlan);
 		} catch (Exception e) {
 			throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found", e);
 		}

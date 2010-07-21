@@ -43,10 +43,6 @@ public abstract class OStorageAbstract extends OSharedResourceAdaptive implement
 		mode = iMode;
 	}
 
-	public ORawBuffer readRecord(final int iRequesterId, final ORID iRecordId) {
-		return readRecord(iRequesterId, iRecordId.getClusterId(), iRecordId.getClusterPosition());
-	}
-
 	public int updateRecord(final int iRequesterId, final ORID iRecordId, final byte[] iContent, final int iVersion,
 			final byte iRecordType) {
 		return updateRecord(iRequesterId, iRecordId.getClusterId(), iRecordId.getClusterPosition(), iContent, iVersion, iRecordType);

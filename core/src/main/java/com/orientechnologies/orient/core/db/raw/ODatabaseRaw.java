@@ -113,7 +113,7 @@ public class ODatabaseRaw implements ODatabase {
 		return storage.count(iClusterIds);
 	}
 
-	public ORawBuffer read(final int iClusterId, final long iPosition) {
+	public ORawBuffer read(final int iClusterId, final long iPosition, final String iFetchPlan) {
 		try {
 
 			final String recId = ORecordId.generateString(iClusterId, iPosition);
@@ -130,7 +130,7 @@ public class ODatabaseRaw implements ODatabase {
 					return result;
 			}
 
-			result = storage.readRecord(id, iClusterId, iPosition);
+			result = storage.readRecord(databaseOwner, id, iClusterId, iPosition, iFetchPlan);
 
 			if (useCache)
 				// ADD THE RECORD TO THE LOCAL CACHE

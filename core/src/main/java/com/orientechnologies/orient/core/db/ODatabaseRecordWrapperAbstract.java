@@ -101,6 +101,10 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord<
 		return underlying.load(iRecord);
 	}
 
+	public REC load(final REC iRecord, final String iFetchPlan) {
+		return underlying.load(iRecord, iFetchPlan);
+	}
+
 	public ODatabaseComplex<REC> save(final REC iRecord, final String iClusterName) {
 		underlying.save(iRecord, iClusterName);
 		return this;

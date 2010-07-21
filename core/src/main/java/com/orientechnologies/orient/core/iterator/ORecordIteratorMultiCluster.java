@@ -37,8 +37,8 @@ public class ORecordIteratorMultiCluster<REC extends ORecordInternal<?>> extends
 	private int					lastClusterId;
 	private long				lastClusterSize;
 
-	public ORecordIteratorMultiCluster(final ODatabaseRecord<REC> iDatabase,
-			final ODatabaseRecordAbstract<REC> iLowLevelDatabase, final int[] iClusterIds) {
+	public ORecordIteratorMultiCluster(final ODatabaseRecord<REC> iDatabase, final ODatabaseRecordAbstract<REC> iLowLevelDatabase,
+			final int[] iClusterIds) {
 		super(iDatabase, iLowLevelDatabase);
 
 		clusterIds = iClusterIds;
@@ -185,7 +185,7 @@ public class ORecordIteratorMultiCluster<REC extends ORecordInternal<?>> extends
 
 		currentClusterPosition += iMovement;
 
-		if (lowLevelDatabase.executeReadRecord(clusterIds[currentClusterIdx], currentClusterPosition, iRecord) != null)
+		if (lowLevelDatabase.executeReadRecord(clusterIds[currentClusterIdx], currentClusterPosition, iRecord, fetchPlan) != null)
 			browsedRecords++;
 
 		return iRecord;

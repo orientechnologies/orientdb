@@ -41,7 +41,7 @@ public class OTransactionOptimistic<REC extends ORecordInternal<?>> extends OTra
 		status = TXSTATUS.INVALID;
 	}
 
-	public REC load(final int iClusterId, final long iPosition, final REC iRecord) {
+	public REC load(final int iClusterId, final long iPosition, final REC iRecord, final String iFetchPlan) {
 		checkTransaction();
 
 		OTransactionEntry<REC> txEntry = getRecord(iClusterId, iPosition);
@@ -59,7 +59,7 @@ public class OTransactionOptimistic<REC extends ORecordInternal<?>> extends OTra
 		}
 
 		// DELEGATE TO THE STORAGE
-		return database.executeReadRecord(iClusterId, iPosition, iRecord);
+		return database.executeReadRecord(iClusterId, iPosition, iRecord, iFetchPlan);
 	}
 
 	public void delete(final REC iRecord) {

@@ -256,19 +256,63 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				break;
 			}
 
-			case OChannelBinaryProtocol.RECORD_LOAD:
+			case OChannelBinaryProtocol.RECORD_LOAD: {
 				data.commandInfo = "Load record";
 
-				final ORawBuffer record = underlyingDatabase.read(channel.readShort(), channel.readLong());
+				final short clusterId = channel.readShort();
+				final long clusterPosition = channel.readLong();
+				final String fetchPlanString = channel.readString();
+
+				// LOAD THE RAW BUFFER
+				final ORawBuffer buffer = underlyingDatabase.read(clusterId, clusterPosition, null);
 				sendOk();
-				if (record != null) {
+
+				if (buffer != null) {
+					// SEND THE ROOT BUFFER
 					channel.writeByte((byte) 1);
-					channel.writeBytes(record.buffer);
-					channel.writeInt(record.version);
-					channel.writeByte(record.recordType);
-				} else
-					channel.writeByte((byte) 0);
+					channel.writeBytes(buffer.buffer);
+					channel.writeInt(buffer.version);
+					channel.writeByte(buffer.recordType);
+
+					if (fetchPlanString.length() > 0) {
+						// BUILD THE SERVER SIDE RECORD TO ACCES TO THE FETCH PLAN
+						final ORecordInternal<?> record = ORecordFactory.newInstance(buffer.recordType);
+						record.fill(connection.database, clusterId, clusterPosition, buffer.version);
+						record.fromStream(buffer.buffer);
+
+						if (record instanceof ODocument) {
+							final Map<String, Integer> fetchPlan = OFetchHelper.buildFetchPlan(fetchPlanString);
+
+							final Set<ODocument> recordsToSend = new HashSet<ODocument>();
+							OFetchHelper.fetch((ODocument) record, record, fetchPlan, null, 0, -1, new OFetchListener() {
+								public int size() {
+									return recordsToSend.size();
+								}
+
+								// ADD TO THE SET OF OBJECT TO SEND
+								public Object fetchLinked(final ODocument iRoot, final Object iUserObject, final String iFieldName,
+										final Object iLinked) {
+									if (iLinked instanceof ODocument)
+										return recordsToSend.add((ODocument) iLinked) ? iLinked : null;
+									else
+										return recordsToSend.addAll((Collection<? extends ODocument>) iLinked) ? iLinked : null;
+								}
+							});
+
+							// SEND RECORDS TO LOAD IN CLIENT CACHE
+							for (ODocument doc : recordsToSend) {
+								channel.writeByte((byte) 2); // CLIENT CACHE RECORD. IT ISN'T PART OF THE RESULT SET
+								writeRecord(doc);
+							}
+						}
+
+						channel.writeByte((byte) 0); // NO MORE RECORDS
+
+					} else
+						channel.writeByte((byte) 0);
+				}
 				break;
+			}
 
 			case OChannelBinaryProtocol.RECORD_CREATE:
 				data.commandInfo = "Create record";
@@ -336,7 +380,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				if (asynch) {
 					// ASYNCHRONOUS
 					final StringBuilder empty = new StringBuilder();
-					final Set<ODocument> recordToSend = new HashSet<ODocument>();
+					final Set<ODocument> recordsToSend = new HashSet<ODocument>();
 
 					final Map<String, Integer> fetchPlan = query != null ? OFetchHelper.buildFetchPlan(query.getFetchPlan()) : null;
 
@@ -357,16 +401,16 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 								if (fetchPlan != null && iRecord instanceof ODocument) {
 									OFetchHelper.fetch((ODocument) iRecord, iRecord, fetchPlan, null, 0, -1, new OFetchListener() {
 										public int size() {
-											return recordToSend.size();
+											return recordsToSend.size();
 										}
 
 										// ADD TO THE SET OF OBJECT TO SEND
 										public Object fetchLinked(final ODocument iRoot, final Object iUserObject, final String iFieldName,
 												final Object iLinked) {
 											if (iLinked instanceof ODocument)
-												return recordToSend.add((ODocument) iLinked) ? iLinked : null;
+												return recordsToSend.add((ODocument) iLinked) ? iLinked : null;
 											else
-												return recordToSend.addAll((Collection<? extends ODocument>) iLinked) ? iLinked : null;
+												return recordsToSend.addAll((Collection<? extends ODocument>) iLinked) ? iLinked : null;
 										}
 									});
 								}
@@ -388,7 +432,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 						}
 
 					// SEND RECORDS TO LOAD IN CLIENT CACHE
-					for (ODocument doc : recordToSend) {
+					for (ODocument doc : recordsToSend) {
 						channel.writeByte((byte) 2); // CLIENT CACHE RECORD. IT ISN'T PART OF THE RESULT SET
 						writeRecord(doc);
 					}

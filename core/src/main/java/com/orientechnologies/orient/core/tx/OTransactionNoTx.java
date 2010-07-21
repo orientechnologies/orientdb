@@ -35,8 +35,8 @@ public class OTransactionNoTx<REC extends ORecordInternal<?>> extends OTransacti
 	public void rollback() {
 	}
 
-	public REC load(final int iClusterId, final long iPosition, final REC iRecord) {
-		return database.executeReadRecord(iClusterId, iPosition, iRecord);
+	public REC load(final int iClusterId, final long iPosition, final REC iRecord, final String iFetchPlan) {
+		return database.executeReadRecord(iClusterId, iPosition, iRecord, iFetchPlan);
 	}
 
 	/**

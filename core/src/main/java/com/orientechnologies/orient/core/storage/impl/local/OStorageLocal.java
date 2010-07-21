@@ -428,7 +428,8 @@ public class OStorageLocal extends OStorageAbstract {
 		return createRecord(getClusterById(iClusterId), iContent, iRecordType);
 	}
 
-	public ORawBuffer readRecord(final int iRequesterId, final int iClusterId, final long iPosition) {
+	public ORawBuffer readRecord(final ODatabaseRecord<?> iDatabase, final int iRequesterId, final int iClusterId, final long iPosition,
+			final String iFetchPlan) {
 		checkOpeness();
 		return readRecord(iRequesterId, getClusterById(iClusterId), iPosition, true);
 	}

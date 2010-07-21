@@ -42,6 +42,12 @@ public abstract class ODocumentWrapperNoClass extends ODocumentWrapper {
 		return (RET) this;
 	}
 
+	public <RET extends ODocumentWrapper> RET load(final String iFetchPlan) {
+		super.load(iFetchPlan);
+		fromStream();
+		return (RET) this;
+	}
+
 	public <RET extends ODocumentWrapper> RET save() {
 		toStream();
 		super.save();

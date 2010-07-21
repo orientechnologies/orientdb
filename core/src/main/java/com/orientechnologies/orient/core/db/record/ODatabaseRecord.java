@@ -36,6 +36,17 @@ public interface ODatabaseRecord<REC extends ORecordInternal<?>> extends ODataba
 	public ORecordIteratorCluster<REC> browseCluster(String iClusterName);
 
 	/**
+	 * Loads a record using a fetch plan.
+	 * 
+	 * @param iDocument
+	 *          Record to load
+	 * @param iFetchPlan
+	 *          Fetch plan used
+	 * @return The record received
+	 */
+	public REC load(REC iDocument, String iFetchPlan);
+
+	/**
 	 * Returns the record type class.
 	 */
 	public Class<? extends REC> getRecordType();

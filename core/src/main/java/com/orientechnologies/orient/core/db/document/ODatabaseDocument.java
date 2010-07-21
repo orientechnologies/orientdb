@@ -35,15 +35,4 @@ public interface ODatabaseDocument extends ODatabaseRecord<ODocument>, ODatabase
 	 * @return Iterator of ODocument instances
 	 */
 	public ORecordIteratorMultiCluster<ODocument> browseClass(String iClassName);
-
-	/**
-	 * Loads a record using a fetch plan.
-	 * 
-	 * @param iDocument
-	 *          Record to load
-	 * @param iFetchPlan
-	 *          Fetch plan used
-	 * @return The record received
-	 */
-	public ODocument load(ODocument iDocument, String iFetchPlan);
 }

@@ -45,7 +45,7 @@ public class ReadAllClusterObjectsSpeedTest extends SpeedTestMonoThread {
 		int clusterId = db.getClusterIdByName(CLUSTER_NAME);
 
 		for (int i = 0; i < db.countClusterElements(CLUSTER_NAME); ++i) {
-			buffer = db.read(clusterId, i);
+			buffer = db.read(clusterId, i, null);
 			if (buffer != null)
 				++objectsRead;
 		}

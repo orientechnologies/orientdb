@@ -201,7 +201,8 @@ public class OStorageRemote extends OStorageAbstract {
 		return -1;
 	}
 
-	public ORawBuffer readRecord(final int iRequesterId, final int iClusterId, final long iPosition) {
+	public ORawBuffer readRecord(final ODatabaseRecord<?> iDatabase, final int iRequesterId, final int iClusterId,
+			final long iPosition, final String iFetchPlan) {
 		checkConnection();
 
 		if (OStorageRemoteThreadLocal.INSTANCE.get())
@@ -215,13 +216,24 @@ public class OStorageRemote extends OStorageAbstract {
 				network.writeByte(OChannelBinaryProtocol.RECORD_LOAD);
 				network.writeShort((short) iClusterId);
 				network.writeLong(iPosition);
+				network.writeString(iFetchPlan != null ? iFetchPlan : "");
 				network.flush();
 
 				readStatus();
-				if (network.readByte() == 1)
-					return new ORawBuffer(network.readBytes(), network.readInt(), network.readByte());
-				else
+
+				if (network.readByte() == 0)
 					return null;
+
+				final ORawBuffer buffer = new ORawBuffer(network.readBytes(), network.readInt(), network.readByte());
+
+				while (network.readByte() == 2) {
+					ORecordInternal<?> record = readRecordFromNetwork(iDatabase);
+					// PUT IN THE CLIENT LOCAL CACHE
+					cache.pushRecord(record.getIdentity().toString(),
+							new ORawBuffer(record.toStream(), record.getVersion(), record.getRecordType()));
+				}
+
+				return buffer;
 
 			} catch (Exception e) {
 				if (handleException("Error on read record: " + iClusterId + ":" + iPosition, e))
@@ -632,7 +644,7 @@ public class OStorageRemote extends OStorageAbstract {
 		}
 	}
 
-	public <REC extends ORecordInternal<?>> REC dictionaryPut(ODatabaseRecord<REC> iDatabase, final String iKey,
+	public <REC extends ORecordInternal<?>> REC dictionaryPut(final ODatabaseRecord<REC> iDatabase, final String iKey,
 			final ORecordInternal<?> iRecord) {
 		checkConnection();
 
@@ -966,7 +978,7 @@ public class OStorageRemote extends OStorageAbstract {
 			throw new ODatabaseException("Connection is closed");
 	}
 
-	private ORecord<?> readRecordFromNetwork(ODatabaseRecord<?> iDatabase) throws IOException {
+	private ORecordInternal<?> readRecordFromNetwork(final ODatabaseRecord<?> iDatabase) throws IOException {
 		final int classId = network.readShort();
 		if (classId == OChannelBinaryProtocol.RECORD_NULL)
 			return null;

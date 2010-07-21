@@ -43,14 +43,6 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 		return new ODocument(this, iClassName);
 	}
 
-	/**
-	 * Loads a record using a fetch plan.
-	 */
-	public ODocument load(final ODocument iDocument, final String iFetchPlan) {
-		// TODO
-		return super.load(iDocument);
-	}
-
 	public ORecordIteratorMultiCluster<ODocument> browseClass(final String iClassName) {
 		if (getMetadata().getSchema().getClass(iClassName) == null)
 			throw new IllegalArgumentException("Class '" + iClassName + "' not found in current database");

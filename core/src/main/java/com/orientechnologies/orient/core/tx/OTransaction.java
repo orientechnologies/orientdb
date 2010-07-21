@@ -26,7 +26,7 @@ public interface OTransaction<REC extends ORecordInternal<?>> {
 		INVALID, BEGUN, COMMITTING, ROLLBACKING
 	}
 
-	public REC load(int iClusterId, long iPosition, REC iRecord);
+	public REC load(int iClusterId, long iPosition, REC iRecord, String iFetchPlan);
 
 	public void save(REC iContent, String iClusterName);
 

@@ -145,7 +145,8 @@ public class OStorageMemory extends OStorageAbstract {
 		}
 	}
 
-	public ORawBuffer readRecord(final int iRequesterId, final int iClusterId, final long iPosition) {
+	public ORawBuffer readRecord(final ODatabaseRecord<?> iDatabase, final int iRequesterId, final int iClusterId, final long iPosition,
+			String iFetchPlan) {
 		OCluster cluster = getClusterById(iClusterId);
 		try {
 			OPhysicalPosition ppos = cluster.getPhysicalPosition(iPosition, new OPhysicalPosition());

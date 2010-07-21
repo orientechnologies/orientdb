@@ -54,8 +54,8 @@ public class OTreeMapEntryStorage<K, V> extends OTreeMapEntryPersistent<K, V> {
 
 	@Override
 	public OTreeMapEntryStorage<K, V> load() throws IOException {
-		ORawBuffer raw = ((OTreeMapStorage<K, V>) tree).storage.readRecord(-1, record.getIdentity().getClusterId(), record
-				.getIdentity().getClusterPosition());
+		ORawBuffer raw = ((OTreeMapStorage<K, V>) tree).storage.readRecord(null, -1, record.getIdentity().getClusterId(), record
+				.getIdentity().getClusterPosition(), null);
 
 		record.setVersion(raw.version);
 
