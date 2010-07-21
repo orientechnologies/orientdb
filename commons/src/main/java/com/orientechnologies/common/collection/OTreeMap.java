@@ -10,7 +10,6 @@ import java.util.Comparator;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.NavigableMap;
 import java.util.NavigableSet;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -18,7 +17,7 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 
 @SuppressWarnings("unchecked")
-public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements NavigableMap<K, V>, Cloneable, java.io.Serializable {
+public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavigableMap<K, V>, Cloneable, java.io.Serializable {
 	OTreeMapEventListener<K, V>							listener;
 	boolean																	pageItemFound		= false;
 	volatile int														pageIndex				= -1;
@@ -659,7 +658,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 		return clone;
 	}
 
-	// NavigableMap API methods
+	// ONavigableMap API methods
 
 	/**
 	 * @since 1.6
@@ -793,7 +792,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 	 */
 	private transient EntrySet						entrySet				= null;
 	private transient KeySet<K>						navigableKeySet	= null;
-	private transient NavigableMap<K, V>	descendingMap		= null;
+	private transient ONavigableMap<K, V>	descendingMap		= null;
 
 	/**
 	 * Returns a {@link Set} view of the keys contained in this map. The set's iterator returns the keys in ascending order. The set
@@ -813,7 +812,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 	 */
 	public NavigableSet<K> navigableKeySet() {
 		KeySet<K> nks = navigableKeySet;
-		return (nks != null) ? nks : (navigableKeySet = (KeySet<K>) new KeySet<Object>((NavigableMap<Object, Object>) this));
+		return (nks != null) ? nks : (navigableKeySet = (KeySet<K>) new KeySet<Object>((ONavigableMap<Object, Object>) this));
 	}
 
 	/**
@@ -856,8 +855,8 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 	/**
 	 * @since 1.6
 	 */
-	public NavigableMap<K, V> descendingMap() {
-		NavigableMap<K, V> km = descendingMap;
+	public ONavigableMap<K, V> descendingMap() {
+		ONavigableMap<K, V> km = descendingMap;
 		return (km != null) ? km : (descendingMap = new DescendingSubMap<K, V>(this, true, null, true, true, null, true));
 	}
 
@@ -871,7 +870,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 	 *           {@inheritDoc}
 	 * @since 1.6
 	 */
-	public NavigableMap<K, V> subMap(K fromKey, boolean fromInclusive, K toKey, boolean toInclusive) {
+	public ONavigableMap<K, V> subMap(K fromKey, boolean fromInclusive, K toKey, boolean toInclusive) {
 		return new AscendingSubMap<K, V>(this, false, fromKey, fromInclusive, false, toKey, toInclusive);
 	}
 
@@ -884,7 +883,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 	 *           {@inheritDoc}
 	 * @since 1.6
 	 */
-	public NavigableMap<K, V> headMap(K toKey, boolean inclusive) {
+	public ONavigableMap<K, V> headMap(K toKey, boolean inclusive) {
 		return new AscendingSubMap<K, V>(this, true, null, true, false, toKey, inclusive);
 	}
 
@@ -897,7 +896,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 	 *           {@inheritDoc}
 	 * @since 1.6
 	 */
-	public NavigableMap<K, V> tailMap(K fromKey, boolean inclusive) {
+	public ONavigableMap<K, V> tailMap(K fromKey, boolean inclusive) {
 		return new AscendingSubMap<K, V>(this, false, fromKey, inclusive, true, null, true);
 	}
 
@@ -1015,7 +1014,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 	}
 
 	/*
-	 * Unlike Values and EntrySet, the KeySet class is static, delegating to a NavigableMap to allow use by SubMaps, which outweighs
+	 * Unlike Values and EntrySet, the KeySet class is static, delegating to a ONavigableMap to allow use by SubMaps, which outweighs
 	 * the ugliness of needing type-tests for the following Iterator methods that are defined appropriately in main versus submap
 	 * classes.
 	 */
@@ -1030,9 +1029,9 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 
 	@SuppressWarnings("rawtypes")
 	static final class KeySet<E> extends AbstractSet<E> implements NavigableSet<E> {
-		private final NavigableMap<E, Object>	m;
+		private final ONavigableMap<E, Object>	m;
 
-		KeySet(NavigableMap<E, Object> map) {
+		KeySet(ONavigableMap<E, Object> map) {
 			m = map;
 		}
 
@@ -1233,7 +1232,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 	 * @serial include
 	 */
 	@SuppressWarnings("serial")
-	static abstract class NavigableSubMap<K, V> extends AbstractMap<K, V> implements NavigableMap<K, V>, java.io.Serializable {
+	static abstract class NavigableSubMap<K, V> extends AbstractMap<K, V> implements ONavigableMap<K, V>, java.io.Serializable {
 		/**
 		 * The backing map.
 		 */
@@ -1473,7 +1472,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 		}
 
 		// Views
-		transient NavigableMap<K, V>	descendingMapView		= null;
+		transient ONavigableMap<K, V>	descendingMapView		= null;
 		transient EntrySetView				entrySetView				= null;
 		transient KeySet<K>						navigableKeySetView	= null;
 
@@ -1699,7 +1698,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 			return m.comparator();
 		}
 
-		public NavigableMap<K, V> subMap(final K fromKey, final boolean fromInclusive, final K toKey, final boolean toInclusive) {
+		public ONavigableMap<K, V> subMap(final K fromKey, final boolean fromInclusive, final K toKey, final boolean toInclusive) {
 			if (!inRange(fromKey, fromInclusive))
 				throw new IllegalArgumentException("fromKey out of range");
 			if (!inRange(toKey, toInclusive))
@@ -1707,20 +1706,20 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 			return new AscendingSubMap<K, V>(m, false, fromKey, fromInclusive, false, toKey, toInclusive);
 		}
 
-		public NavigableMap<K, V> headMap(final K toKey, final boolean inclusive) {
+		public ONavigableMap<K, V> headMap(final K toKey, final boolean inclusive) {
 			if (!inRange(toKey, inclusive))
 				throw new IllegalArgumentException("toKey out of range");
 			return new AscendingSubMap<K, V>(m, fromStart, lo, loInclusive, false, toKey, inclusive);
 		}
 
-		public NavigableMap<K, V> tailMap(final K fromKey, final boolean inclusive) {
+		public ONavigableMap<K, V> tailMap(final K fromKey, final boolean inclusive) {
 			if (!inRange(fromKey, inclusive))
 				throw new IllegalArgumentException("fromKey out of range");
 			return new AscendingSubMap<K, V>(m, false, fromKey, inclusive, toEnd, hi, hiInclusive);
 		}
 
-		public NavigableMap<K, V> descendingMap() {
-			NavigableMap<K, V> mv = descendingMapView;
+		public ONavigableMap<K, V> descendingMap() {
+			ONavigableMap<K, V> mv = descendingMapView;
 			return (mv != null) ? mv : (descendingMapView = new DescendingSubMap<K, V>(m, fromStart, lo, loInclusive, toEnd, hi,
 					hiInclusive));
 		}
@@ -1796,7 +1795,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 			return reverseComparator;
 		}
 
-		public NavigableMap<K, V> subMap(final K fromKey, final boolean fromInclusive, final K toKey, final boolean toInclusive) {
+		public ONavigableMap<K, V> subMap(final K fromKey, final boolean fromInclusive, final K toKey, final boolean toInclusive) {
 			if (!inRange(fromKey, fromInclusive))
 				throw new IllegalArgumentException("fromKey out of range");
 			if (!inRange(toKey, toInclusive))
@@ -1804,20 +1803,20 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements Naviga
 			return new DescendingSubMap<K, V>(m, false, toKey, toInclusive, false, fromKey, fromInclusive);
 		}
 
-		public NavigableMap<K, V> headMap(final K toKey, final boolean inclusive) {
+		public ONavigableMap<K, V> headMap(final K toKey, final boolean inclusive) {
 			if (!inRange(toKey, inclusive))
 				throw new IllegalArgumentException("toKey out of range");
 			return new DescendingSubMap<K, V>(m, false, toKey, inclusive, toEnd, hi, hiInclusive);
 		}
 
-		public NavigableMap<K, V> tailMap(final K fromKey, final boolean inclusive) {
+		public ONavigableMap<K, V> tailMap(final K fromKey, final boolean inclusive) {
 			if (!inRange(fromKey, inclusive))
 				throw new IllegalArgumentException("fromKey out of range");
 			return new DescendingSubMap<K, V>(m, fromStart, lo, loInclusive, false, fromKey, inclusive);
 		}
 
-		public NavigableMap<K, V> descendingMap() {
-			NavigableMap<K, V> mv = descendingMapView;
+		public ONavigableMap<K, V> descendingMap() {
+			ONavigableMap<K, V> mv = descendingMapView;
 			return (mv != null) ? mv : (descendingMapView = new AscendingSubMap<K, V>(m, fromStart, lo, loInclusive, toEnd, hi,
 					hiInclusive));
 		}

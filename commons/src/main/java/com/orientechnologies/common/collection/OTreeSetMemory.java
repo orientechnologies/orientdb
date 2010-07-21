@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.NavigableMap;
 import java.util.NavigableSet;
 import java.util.NoSuchElementException;
 import java.util.SortedSet;
@@ -15,15 +14,15 @@ public class OTreeSetMemory<E> extends AbstractSet<E> implements NavigableSet<E>
 	/**
 	 * The backing map.
 	 */
-	private transient NavigableMap<E, Object>	m;
+	private transient ONavigableMap<E, Object>	m;
 
 	// Dummy value to associate with an Object in the backing Map
-	private static final Object								PRESENT	= new Object();
+	private static final Object									PRESENT	= new Object();
 
 	/**
 	 * Constructs a set backed by the specified navigable map.
 	 */
-	OTreeSetMemory(NavigableMap<E, Object> m) {
+	OTreeSetMemory(ONavigableMap<E, Object> m) {
 		this.m = m;
 	}
 

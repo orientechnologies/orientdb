@@ -15,17 +15,16 @@
  */
 package com.orientechnologies.orient.test.internal.index;
 
-import java.util.NavigableMap;
-
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.common.collection.ONavigableMap;
 import com.orientechnologies.common.collection.OTreeMapMemory;
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 
 public class OTreeMapSpeedTest extends SpeedTestMonoThread {
 
-	private NavigableMap<Integer, Integer>	tree	= new OTreeMapMemory<Integer, Integer>();
+	private ONavigableMap<Integer, Integer>	tree	= new OTreeMapMemory<Integer, Integer>();
 
 	@Override
 	@Test(enabled = false)
