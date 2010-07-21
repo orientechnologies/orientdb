@@ -65,7 +65,7 @@ public interface ODatabase {
 	 * @param iParams
 	 *          Additional parameters
 	 */
-	public void declareIntent(OIntent iIntent, Object... iParams);
+	public void declareIntent(final OIntent iIntent, Object... iParams);
 
 	/**
 	 * Checks if the database exists.

@@ -43,6 +43,7 @@ public class ODatabaseRaw implements ODatabase {
 	protected int								id;
 	protected OStorage					storage;
 	protected STATUS						status;
+	protected OIntent						currentIntent;
 
 	private ODatabaseRecord<?>	databaseOwner;
 
@@ -256,7 +257,14 @@ public class ODatabaseRaw implements ODatabase {
 	}
 
 	public void declareIntent(final OIntent iIntent, final Object... iParams) {
-		iIntent.activate(this, iParams);
+		if (currentIntent != null)
+			// END CURRENT INTENT
+			currentIntent.end(this);
+
+		currentIntent = iIntent;
+
+		if (iIntent != null)
+			iIntent.begin(this, iParams);
 	}
 
 	public ODatabaseRecord<?> getDatabaseOwner() {

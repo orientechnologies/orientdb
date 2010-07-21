@@ -22,7 +22,6 @@ import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
-import com.orientechnologies.orient.core.intent.OIntentDefault;
 import com.orientechnologies.orient.core.intent.OIntentMassiveRead;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -102,7 +101,7 @@ public class OConsoleDatabaseExport {
 	}
 
 	public void close() {
-		database.declareIntent(new OIntentDefault());
+		database.declareIntent(null);
 
 		if (writer == null)
 			return;

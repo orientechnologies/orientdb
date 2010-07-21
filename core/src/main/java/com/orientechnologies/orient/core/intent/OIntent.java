@@ -32,5 +32,15 @@ public interface OIntent {
 	 * @param iArgs
 	 *          Additional, optional arguments
 	 */
-	public void activate(ODatabaseRaw iDatabase, Object... iArgs);
+	public void begin(ODatabaseRaw iDatabase, Object... iArgs);
+
+	/**
+	 * Activate the intent.
+	 * 
+	 * @param iDatabase
+	 *          Database where to activate it
+	 * @param iArgs
+	 *          Additional, optional arguments
+	 */
+	public void end(ODatabaseRaw iDatabase);
 }

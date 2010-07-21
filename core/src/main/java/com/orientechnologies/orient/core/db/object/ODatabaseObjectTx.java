@@ -321,6 +321,10 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 		retainObjects = iValue;
 	}
 
+	public boolean isRetainObjects() {
+		return retainObjects;
+	}
+
 	public Object newInstance() {
 		checkOpeness();
 		return new ODocument(underlying);

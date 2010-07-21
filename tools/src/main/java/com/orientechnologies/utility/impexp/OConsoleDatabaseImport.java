@@ -21,7 +21,6 @@ import java.io.IOException;
 import com.orientechnologies.common.parser.OStringForwardReader;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.intent.OIntentDefault;
 import com.orientechnologies.orient.core.intent.OIntentMassiveRead;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -177,7 +176,7 @@ public class OConsoleDatabaseImport {
 	}
 
 	public void close() {
-		database.declareIntent(new OIntentDefault());
+		database.declareIntent(null);
 
 		if (reader == null)
 			return;
