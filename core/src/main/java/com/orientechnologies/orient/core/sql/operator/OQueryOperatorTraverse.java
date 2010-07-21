@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.sql.operator;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
@@ -95,12 +96,12 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 	}
 
 	@Override
-	public OQueryOperator configure(String[] params) {
-		if (params == null)
+	public OQueryOperator configure(final List<String> iParams) {
+		if (iParams == null)
 			return this;
 
-		final int start = params.length > 0 ? Integer.parseInt(params[0]) : startDeepLevel;
-		final int end = params.length > 1 ? Integer.parseInt(params[1]) : endDeepLevel;
+		final int start = iParams.size() > 0 ? Integer.parseInt(iParams.get(0)) : startDeepLevel;
+		final int end = iParams.size() > 1 ? Integer.parseInt(iParams.get(1)) : endDeepLevel;
 
 		return new OQueryOperatorTraverse(start, end);
 	}

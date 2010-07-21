@@ -42,8 +42,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
-	protected String													name;
-	protected List<OPair<Integer, String[]>>	operationsChain	= null;
+	protected String															name;
+	protected List<OPair<Integer, List<String>>>	operationsChain	= null;
 
 	public OSQLFilterItemAbstract(final OCommandToParse iQueryToParse, final String iName) {
 		int pos = iName.indexOf(OSQLFilterFieldOperator.CHAIN_SEPARATOR);
@@ -63,22 +63,22 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 				for (OSQLFilterFieldOperator op : OSQLFilterFieldOperator.OPERATORS)
 					if (partUpperCase.startsWith(op.keyword + "(")) {
 						// OPERATOR MATCH
-						final String arguments[];
+						final List<String> arguments;
 
 						if (op.minArguments > 0) {
 							arguments = OQueryHelper.getParameters(part);
-							if (arguments.length < op.minArguments || arguments.length > op.maxArguments)
+							if (arguments.size() < op.minArguments || arguments.size() > op.maxArguments)
 								throw new OQueryParsingException(iQueryToParse.text, "Syntax error: field operator '" + op.keyword + "' needs "
 										+ (op.minArguments == op.maxArguments ? op.minArguments : op.minArguments + "-" + op.maxArguments)
-										+ " argument(s) while has been received " + arguments.length, iQueryToParse.currentPos + pos);
+										+ " argument(s) while has been received " + arguments.size(), iQueryToParse.currentPos + pos);
 						} else
 							arguments = null;
 
 						// SPECIAL OPERATION FOUND: ADD IT IN TO THE CHAIN
 						if (operationsChain == null)
-							operationsChain = new ArrayList<OPair<Integer, String[]>>();
+							operationsChain = new ArrayList<OPair<Integer, List<String>>>();
 
-						operationsChain.add(new OPair<Integer, String[]>(op.id, arguments));
+						operationsChain.add(new OPair<Integer, List<String>>(op.id, arguments));
 
 						pos = partUpperCase.indexOf(OQueryHelper.CLOSED_BRACE) + OSQLFilterFieldOperator.CHAIN_SEPARATOR.length();
 						operatorFound = true;
@@ -95,9 +95,11 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 						String chainedFieldName = pos > -1 ? part.substring(0, pos) : part;
 
 						if (operationsChain == null)
-							operationsChain = new ArrayList<OPair<Integer, String[]>>();
+							operationsChain = new ArrayList<OPair<Integer, List<String>>>();
 
-						operationsChain.add(new OPair<Integer, String[]>(OSQLFilterFieldOperator.FIELD.id, new String[] { chainedFieldName }));
+						final List<String> list = new ArrayList<String>();
+						list.add(chainedFieldName);
+						operationsChain.add(new OPair<Integer, List<String>>(OSQLFilterFieldOperator.FIELD.id, list));
 					} else
 						// ERROR: OPERATOR NOT FOUND OR MISPELLED
 						throw new OQueryParsingException(iQueryToParse.text,
@@ -120,7 +122,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 			int operator = -2;
 
 			try {
-				for (OPair<Integer, String[]> op : operationsChain) {
+				for (OPair<Integer, List<String>> op : operationsChain) {
 					operator = op.key.intValue();
 
 					// NO ARGS OPERATORS
@@ -155,36 +157,36 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
 							try {
 								record.load();
-								iResult = iResult != null ? record.field(op.value[0]) : null;
+								iResult = iResult != null ? record.field(op.value.get(0)) : null;
 							} catch (ORecordNotFoundException e) {
 								iResult = null;
 							}
 						}
 
 					} else if (operator == OSQLFilterFieldOperator.CHARAT.id) {
-						int index = Integer.parseInt(op.value[0]);
+						int index = Integer.parseInt(op.value.get(0));
 						iResult = iResult != null ? iResult.toString().substring(index, index + 1) : null;
 
-					} else if (operator == OSQLFilterFieldOperator.INDEXOF.id && op.value[0].length() > 2) {
-						String toFind = op.value[0].substring(1, op.value[0].length() - 1);
-						int startIndex = op.value.length > 1 ? Integer.parseInt(op.value[1]) : 0;
+					} else if (operator == OSQLFilterFieldOperator.INDEXOF.id && op.value.get(0).length() > 2) {
+						String toFind = op.value.get(0).substring(1, op.value.get(0).length() - 1);
+						int startIndex = op.value.size() > 1 ? Integer.parseInt(op.value.get(1)) : 0;
 						iResult = iResult != null ? iResult.toString().indexOf(toFind, startIndex) : null;
 
 					} else if (operator == OSQLFilterFieldOperator.SUBSTRING.id) {
 
-						int endIndex = op.value.length > 1 ? Integer.parseInt(op.value[1]) : op.value[0].length();
-						iResult = iResult != null ? iResult.toString().substring(Integer.parseInt(op.value[0]), endIndex) : null;
+						int endIndex = op.value.size() > 1 ? Integer.parseInt(op.value.get(1)) : op.value.get(0).length();
+						iResult = iResult != null ? iResult.toString().substring(Integer.parseInt(op.value.get(0)), endIndex) : null;
 					} else if (operator == OSQLFilterFieldOperator.FORMAT.id)
 
-						iResult = iResult != null ? String.format(op.value[0], iResult) : null;
+						iResult = iResult != null ? String.format(op.value.get(0), iResult) : null;
 
 					else if (operator == OSQLFilterFieldOperator.LEFT.id) {
-						final int len = Integer.parseInt(op.value[0]);
+						final int len = Integer.parseInt(op.value.get(0));
 						iResult = iResult != null ? iResult.toString().substring(0,
 								len <= iResult.toString().length() ? len : iResult.toString().length()) : null;
 
 					} else if (operator == OSQLFilterFieldOperator.RIGHT.id) {
-						final int offset = Integer.parseInt(op.value[0]);
+						final int offset = Integer.parseInt(op.value.get(0));
 						iResult = iResult != null ? iResult.toString().substring(
 								offset <= iResult.toString().length() - 1 ? offset : iResult.toString().length() - 1) : null;
 

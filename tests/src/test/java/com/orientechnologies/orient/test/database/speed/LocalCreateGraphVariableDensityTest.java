@@ -68,12 +68,14 @@ public class LocalCreateGraphVariableDensityTest {
 		if (iDeepLevel >= MAX_DEEP || nodeWrittenCounter >= MAX_NODES)
 			return;
 
-		System.out.print(iNode.get("id"));
+		//		System.out.print(iNode.get("id"));
+		// if (iNode.hasInEdges())
+		// System.out.print("<" + iNode.getInEdges().get(0).getOut().get("id"));
+		//
+		// System.out.print("=" + iDensity + " - ");
 
-		if (iNode.hasInEdges())
-			System.out.print("<" + iNode.getInEdges().get(0).getOut().get("id"));
-
-		System.out.print("=" + iDensity + " - ");
+		if (nodeWrittenCounter % 100000 == 0)
+			System.out.print(".");
 
 		if (iDeepLevel > maxDeep)
 			maxDeep = iDeepLevel;
@@ -97,6 +99,7 @@ public class LocalCreateGraphVariableDensityTest {
 
 			createSubNodes(node, iDeepLevel + 1, iDensity);
 		}
+		
 
 		iNode.save();
 	}

@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -76,7 +77,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			if (value.length() == 0)
 				return coll;
 
-			String[] items = OStringSerializerHelper.split(value, OStringSerializerHelper.RECORD_SEPARATOR_AS_CHAR);
+			final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR);
 
 			for (String item : items) {
 				// GET THE CLASS NAME IF ANY
@@ -109,7 +110,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			if (value.length() == 0)
 				return map;
 
-			String[] items = OStringSerializerHelper.split(value, OStringSerializerHelper.RECORD_SEPARATOR_AS_CHAR);
+			final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR);
 
 			// EMBEDDED LITERALS
 			String[] entry;
@@ -280,14 +281,14 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			return null;
 
 		// REMOVE BEGIN & END COLLECTIONS CHARACTERS IF IT'S A COLLECTION
-		String value = iValue.startsWith("[") ? iValue.substring(1, iValue.length() - 1) : iValue;
+		final String value = iValue.startsWith("[") ? iValue.substring(1, iValue.length() - 1) : iValue;
 
-		Collection<Object> coll = iType == OType.EMBEDDEDLIST ? new ArrayList<Object>() : new HashSet<Object>();
+		final Collection<Object> coll = iType == OType.EMBEDDEDLIST ? new ArrayList<Object>() : new HashSet<Object>();
 
 		if (value.length() == 0)
 			return coll;
 
-		String[] items = OStringSerializerHelper.split(value, OStringSerializerHelper.RECORD_SEPARATOR_AS_CHAR);
+		final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR);
 
 		for (String item : items) {
 			if (iLinkedClass != null) {

@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.serialization.serializer.record.string
 import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -241,9 +242,9 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 			return iRecord;
 
 		// UNMARSHALL THE CLASS NAME
-		ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) iRecord;
+		final ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) iRecord;
 
-		int posFirstValue = iContent.indexOf(OStringSerializerHelper.ENTRY_SEPARATOR);
+		final int posFirstValue = iContent.indexOf(OStringSerializerHelper.ENTRY_SEPARATOR);
 		int pos = iContent.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
 		if (pos > -1 && pos < posFirstValue) {
 			record.setClassName(iContent.substring(0, pos));
@@ -251,7 +252,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 		} else
 			record.setClassName(null);
 
-		String[] fields = OStringSerializerHelper.split(iContent, OStringSerializerHelper.RECORD_SEPARATOR_AS_CHAR);
+		final List<String> fields = OStringSerializerHelper.smartSplit(iContent, OStringSerializerHelper.RECORD_SEPARATOR);
 
 		String field;
 		String fieldName = null;
@@ -262,8 +263,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 		OProperty prop;
 
 		// UNMARSHALL ALL THE FIELDS
-		for (int i = 0; i < fields.length; ++i) {
-			field = fields[i].trim();
+		for (int i = 0; i < fields.size(); ++i) {
+			field = fields.get(i).trim();
 
 			try {
 				pos = field.indexOf(FIELD_VALUE_SEPARATOR);
@@ -335,7 +336,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 				OLogManager.instance().exception("Error on unmarshalling field '%s'", e, OSerializationException.class, fieldName);
 			}
 		}
-		
+
 		record.unsetDirty();
 
 		return iRecord;

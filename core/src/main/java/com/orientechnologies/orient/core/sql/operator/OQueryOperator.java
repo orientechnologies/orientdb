@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
+import java.util.List;
+
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
 /**
@@ -47,7 +49,7 @@ public abstract class OQueryOperator {
 	 * @param params
 	 * @return
 	 */
-	public OQueryOperator configure(String[] params) {
+	public OQueryOperator configure(final List<String> params) {
 		return this;
 	}
 }

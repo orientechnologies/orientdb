@@ -116,8 +116,8 @@ public class OSQLHelper {
 			fieldValue = stringContent(iValue);
 		if (iValue.startsWith("[") && iValue.endsWith("]")) {
 			// COLLECTION/ARRAY
-			String[] items = OStringSerializerHelper.split(iValue.substring(1, iValue.length() - 1),
-					OStringSerializerHelper.RECORD_SEPARATOR_AS_CHAR);
+			final List<String> items = OStringSerializerHelper.smartSplit(iValue.substring(1, iValue.length() - 1),
+					OStringSerializerHelper.RECORD_SEPARATOR);
 
 			List<Object> coll = new ArrayList<Object>();
 			for (String item : items) {

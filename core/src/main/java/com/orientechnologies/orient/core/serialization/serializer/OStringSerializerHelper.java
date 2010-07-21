@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.serialization.serializer;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -26,17 +27,16 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 
 public abstract class OStringSerializerHelper {
-	public static final String	RECORD_SEPARATOR					= ",";
-	public static final char		RECORD_SEPARATOR_AS_CHAR	= ',';
+	public static final char		RECORD_SEPARATOR	= ',';
 
-	public static final String	CLASS_SEPARATOR						= "@";
-	public static final String	LINK											= "#";
-	public static final char		EMBEDDED									= '*';
-	public static final char		COLLECTION_BEGIN					= '[';
-	public static final char		COLLECTION_END						= ']';
-	public static final char		MAP_BEGIN									= '{';
-	public static final char		MAP_END										= '}';
-	public static final String	ENTRY_SEPARATOR						= ":";
+	public static final String	CLASS_SEPARATOR		= "@";
+	public static final String	LINK							= "#";
+	public static final char		EMBEDDED					= '*';
+	public static final char		COLLECTION_BEGIN	= '[';
+	public static final char		COLLECTION_END		= ']';
+	public static final char		MAP_BEGIN					= '{';
+	public static final char		MAP_END						= '}';
+	public static final String	ENTRY_SEPARATOR		= ":";
 
 	public static Object fieldTypeFromStream(OType iType, Object iValue) {
 		if (iValue == null)
@@ -153,7 +153,7 @@ public abstract class OStringSerializerHelper {
 		throw new IllegalArgumentException("Type " + iType + " not supported to convert value: " + iValue);
 	}
 
-	public static String[] split(String iSource, char iRecordSeparator) {
+	public static List<String> smartSplit(final String iSource, final char iRecordSeparator) {
 		StringBuilder buffer = new StringBuilder();
 		char stringBeginChar = ' ';
 		char c;
@@ -161,9 +161,10 @@ public abstract class OStringSerializerHelper {
 		int insideCollection = 0;
 		int insideMap = 0;
 
-		ArrayList<String> parts = new ArrayList<String>();
+		final ArrayList<String> parts = new ArrayList<String>();
+		final int max = iSource.length();
 
-		for (int i = 0; i < iSource.length(); ++i) {
+		for (int i = 0; i < max; ++i) {
 			c = iSource.charAt(i);
 
 			if (stringBeginChar == ' ') {
@@ -214,25 +215,59 @@ public abstract class OStringSerializerHelper {
 
 		parts.add(buffer.toString());
 
-		return parts.toArray(new String[parts.size()]);
+		return parts;
+	}
+
+	public static List<String> split(final String iSource, final char iRecordSeparator) {
+		final ArrayList<String> parts = new ArrayList<String>();
+		final int max = iSource.length();
+		final StringBuilder buffer = new StringBuilder();
+		char c;
+
+		for (int i = 0; i < max; ++i) {
+			c = iSource.charAt(i);
+
+			if (c == iRecordSeparator) {
+				parts.add(buffer.toString());
+				buffer.setLength(0);
+			} else
+				buffer.append(c);
+		}
+
+		parts.add(buffer.toString());
+
+		return parts;
 	}
 
 	public static String joinIntArray(int[] iArray) {
-		StringBuilder ids = new StringBuilder();
+		final StringBuilder ids = new StringBuilder();
 		for (int id : iArray) {
 			if (ids.length() > 0)
-				ids.append(RECORD_SEPARATOR_AS_CHAR);
+				ids.append(RECORD_SEPARATOR);
 			ids.append(id);
 		}
 		return ids.toString();
 	}
 
-	public static int[] splitIntArray(String iInput) {
-		String[] items = iInput.split(RECORD_SEPARATOR);
-		int[] values = new int[items.length];
-		for (int i = 0; i < items.length; ++i) {
-			values[i] = Integer.parseInt(items[i]);
+	public static int[] splitIntArray(final String iInput) {
+		final List<String> items = split(iInput, RECORD_SEPARATOR);
+		final int[] values = new int[items.size()];
+		for (int i = 0; i < items.size(); ++i) {
+			values[i] = Integer.parseInt(items.get(i));
 		}
 		return values;
+	}
+
+	public static boolean contains(final String iText, final char iSeparator) {
+		if (iText == null)
+			return false;
+
+		final int max = iText.length();
+		for (int i = 0; i < max; ++i) {
+			if (iText.charAt(i) == iSeparator)
+				return true;
+		}
+
+		return false;
 	}
 }

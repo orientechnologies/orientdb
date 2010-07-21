@@ -76,7 +76,10 @@ public class OTransactionOptimistic<REC extends ORecordInternal<?>> extends OTra
 		int clusterId = iRecord.getIdentity().getClusterId();
 		long position = iRecord.getIdentity().getClusterPosition();
 
-		String key = clusterId + ORID.SEPARATOR;
+		final StringBuilder key = new StringBuilder();
+		key.append(clusterId);
+		key.append(ORID.SEPARATOR);
+
 		if (position == -1) {
 			// NEW RECORD: CHECK IF IT'S ALREADY IN
 			for (OTransactionEntry<REC> entry : entries.values()) {
@@ -86,16 +89,17 @@ public class OTransactionOptimistic<REC extends ORecordInternal<?>> extends OTra
 
 			// ASSIGN A UNIQUE SERIAL TEMPORARY ID
 			position = newObjectCounter++;
-			key += position + "+";
+			key.append(position);
+			key.append('+');
 		} else
-			key += position;
+			key.append(position);
 
 		OTransactionEntry<REC> txEntry = entries.get(key);
 
 		if (txEntry == null) {
 			// NEW ENTRY: JUST REGISTER IT
 			txEntry = new OTransactionEntry<REC>(iRecord, iStatus, iClusterName);
-			entries.put(key, txEntry);
+			entries.put(key.toString(), txEntry);
 		} else {
 			// UPDATE PREVIOUS STATUS
 			txEntry.record = iRecord;

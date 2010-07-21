@@ -157,7 +157,7 @@ public class OSQLFilter extends OCommandToParse {
 
 		for (OQueryOperator op : OSQLHelper.getOperators()) {
 			if (word.startsWith(op.keyword)) {
-				String[] params = null;
+				List<String> params = null;
 
 				// CHECK FOR PARAMETERS
 				if (word.endsWith(OQueryHelper.OPEN_BRACE)) {
@@ -216,10 +216,10 @@ public class OSQLFilter extends OCommandToParse {
 			return coll;
 		} else if (words[0].startsWith(OCommandExecutorSQLAbstract.KEYWORD_COLUMN)) {
 
-			String[] parameters = OQueryHelper.getParameters(words[0]);
-			if (parameters.length != 1)
+			final List<String> parameters = OQueryHelper.getParameters(words[0]);
+			if (parameters.size() != 1)
 				throw new OQueryParsingException("Missed column number", text, currentPos);
-			result = new OSQLFilterItemColumn(this, parameters[0]);
+			result = new OSQLFilterItemColumn(this, parameters.get(0));
 
 		} else if (words[0].startsWith(OSQLFilterItemFieldAll.NAME + OQueryHelper.OPEN_BRACE)) {
 

@@ -15,18 +15,22 @@
  */
 package com.orientechnologies.orient.core.query;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 public class OQueryHelper {
-	protected static final String	WILDCARD_ANYCHAR			= "?";
-	protected static final String	WILDCARD_ANY					= "%";
+	protected static final String			WILDCARD_ANYCHAR			= "?";
+	protected static final String			WILDCARD_ANY					= "%";
 
-	public static final String		OPEN_BRACE						= "(";
-	public static final String		CLOSED_BRACE					= ")";
-	public static final String		OPEN_COLLECTION				= "[";
-	public static final String		CLOSED_COLLECTION			= "]";
-	public static final String		COLLECTION_SEPARATOR	= ",";
-	public static final String		PARAMETER_SEPARATOR		= ",";
-	public static final String[]	EMPTY_PARAMETERS			= new String[] {};
+	public static final String				OPEN_BRACE						= "(";
+	public static final String				CLOSED_BRACE					= ")";
+	public static final String				OPEN_COLLECTION				= "[";
+	public static final String				CLOSED_COLLECTION			= "]";
+	public static final String				COLLECTION_SEPARATOR	= ",";
+	public static final char					PARAMETER_SEPARATOR		= ',';
+	public static final List<String>	EMPTY_PARAMETERS			= new ArrayList<String>();
 
 	public static boolean like(String currentValue, String iValue) {
 		if (currentValue == null || currentValue.length() == 0)
@@ -64,11 +68,11 @@ public class OQueryHelper {
 		return false;
 	}
 
-	public static String[] getParameters(final String iText) {
+	public static List<String> getParameters(final String iText) {
 		return getParameters(iText, 0);
 	}
 
-	public static String[] getParameters(final String iText, final int iBeginPosition) {
+	public static List<String> getParameters(final String iText, final int iBeginPosition) {
 		int openPos = iText.indexOf(OPEN_BRACE, iBeginPosition);
 		if (openPos == -1)
 			return EMPTY_PARAMETERS;
@@ -81,11 +85,11 @@ public class OQueryHelper {
 			// EMPTY STRING: TREATS AS EMPTY
 			return EMPTY_PARAMETERS;
 
-		String[] pars = iText.substring(openPos + 1, closePos).split(PARAMETER_SEPARATOR);
+		final List<String> pars = OStringSerializerHelper.split(iText.substring(openPos + 1, closePos), PARAMETER_SEPARATOR);
 
 		// REMOVE TAIL AND END SPACES
-		for (int i = 0; i < pars.length; ++i)
-			pars[i] = pars[i].trim();
+		for (int i = 0; i < pars.size(); ++i)
+			pars.set(i, pars.get(i).trim());
 
 		return pars;
 	}

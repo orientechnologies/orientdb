@@ -16,15 +16,16 @@
 package com.orientechnologies.orient.core.iterator;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 public class OColumnIterator implements Iterator<String>, Iterable<String> {
-	private char			separator	= OStringSerializerHelper.RECORD_SEPARATOR_AS_CHAR;
-	private String		buffer;
-	private int				cursor		= 0;
-	private String[]	values;
+	private char					separator	= OStringSerializerHelper.RECORD_SEPARATOR;
+	private String				buffer;
+	private int						cursor		= 0;
+	private List<String>	values;
 
 	public OColumnIterator(String iBuffer) {
 		this.buffer = iBuffer;
@@ -38,14 +39,14 @@ public class OColumnIterator implements Iterator<String>, Iterable<String> {
 		if (values == null)
 			values = OStringSerializerHelper.split(buffer, separator);
 
-		return cursor < values.length;
+		return cursor < values.size();
 	}
 
 	public String next() {
 		if (!hasNext())
-			throw new NoSuchElementException("Position " + cursor + " is out of range: 0-" + values.length);
+			throw new NoSuchElementException("Position " + cursor + " is out of range: 0-" + values.size());
 
-		return values[cursor++];
+		return values.get(cursor++);
 	}
 
 	public void reset(String iBuffer) {

@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
+import java.util.List;
+
 import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
@@ -26,16 +28,16 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
  * 
  */
 public abstract class OSQLFilterItemFieldMultiAbstract extends OSQLFilterItemAbstract {
-	private String[]	names;
+	private List<String>	names;
 
-	public OSQLFilterItemFieldMultiAbstract(final OSQLFilter iQueryCompiled, final String iName, final String[] iNames) {
+	public OSQLFilterItemFieldMultiAbstract(final OSQLFilter iQueryCompiled, final String iName, final List<String> iNames) {
 		super(iQueryCompiled, iName);
 		names = iNames;
 	}
 
 	public Object getValue(final ORecordInternal<?> iRecord) {
-		if (names.length == 1)
-			return transformValue(iRecord.getDatabase(), ((ORecordSchemaAware<?>) iRecord).field(names[0]));
+		if (names.size() == 1)
+			return transformValue(iRecord.getDatabase(), ((ORecordSchemaAware<?>) iRecord).field(names.get(0)));
 
 		Object[] values = ((ORecordSchemaAware<?>) iRecord).fieldValues();
 

@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.List;
+
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -37,7 +39,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 	private static final String	KEYWORD_VALUES	= "VALUES";
 	private static final String	KEYWORD_INTO		= "INTO";
 	private String							className				= null;
-	private String[]						fieldNames;
+	private List<String>				fieldNames;
 	private Object[]						fieldValues;
 
 	@SuppressWarnings("unchecked")
@@ -85,7 +87,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 			throw new OCommandSQLParsingException("Missed closed brace", text, beginFields);
 
 		fieldNames = OQueryHelper.getParameters(text, beginFields);
-		if (fieldNames.length == 0)
+		if (fieldNames.size() == 0)
 			throw new OCommandSQLParsingException("Set of fields is empty. Example: (name, surname)", text, endFields);
 
 		pos = OSQLHelper.nextWord(text, textUpperCase, endFields + 1, word, true);
@@ -100,18 +102,18 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 		if (endValues == -1)
 			throw new OCommandSQLParsingException("Missed closed brace", text, beginValues);
 
-		String[] values = OStringSerializerHelper.split(text.substring(beginValues + 1, endValues), ',');
+		final List<String> values = OStringSerializerHelper.smartSplit(text.substring(beginValues + 1, endValues), ',');
 
-		if (values.length == 0)
+		if (values.size() == 0)
 			throw new OCommandSQLParsingException("Set of values is empty. Example: ('Bill', 'Stuart', 300)", text, beginValues);
 
-		if (values.length != fieldNames.length)
+		if (values.size() != fieldNames.size())
 			throw new OCommandSQLParsingException("Fields not match with values", text, beginValues);
 
 		// TRANSFORM FIELD VALUES
-		fieldValues = new Object[values.length];
-		for (int i = 0; i < values.length; ++i)
-			fieldValues[i] = OSQLHelper.parseValue(database, this, values[i]);
+		fieldValues = new Object[values.size()];
+		for (int i = 0; i < values.size(); ++i)
+			fieldValues[i] = OSQLHelper.parseValue(database, this, values.get(i));
 
 		return this;
 	}
@@ -128,13 +130,13 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 
 		// BIND VALUES
 		Object v;
-		for (int i = 0; i < fieldNames.length; ++i) {
+		for (int i = 0; i < fieldNames.size(); ++i) {
 			v = fieldValues[i];
 
 			if (v instanceof OSQLFilterItem)
 				v = ((OSQLFilterItem) v).getValue(doc);
 
-			doc.field(fieldNames[i], v);
+			doc.field(fieldNames.get(i), v);
 		}
 
 		doc.save();

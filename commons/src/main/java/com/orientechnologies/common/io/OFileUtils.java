@@ -65,7 +65,7 @@ public class OFileUtils {
 	}
 
 	public static void createDirectoryTree(final String iFileName) {
-		String[] fileDirectories = iFileName.split("/");
+		final String[] fileDirectories = iFileName.split("/");
 		for (int i = 0; i < fileDirectories.length - 1; ++i)
 			new File(fileDirectories[i]).mkdir();
 	}

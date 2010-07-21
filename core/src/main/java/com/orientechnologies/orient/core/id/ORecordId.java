@@ -15,9 +15,12 @@
  */
 package com.orientechnologies.orient.core.id;
 
+import java.util.List;
+
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 public class ORecordId implements ORID {
 	public static final int				PERSISTENT_SIZE					= OConstants.SIZE_SHORT + OConstants.SIZE_LONG;
@@ -98,7 +101,11 @@ public class ORecordId implements ORID {
 	}
 
 	public static String generateString(final int iClusterId, final long iPosition) {
-		return iClusterId + SEPARATOR + iPosition;
+		final StringBuilder buffer = new StringBuilder();
+		buffer.append(iClusterId);
+		buffer.append(SEPARATOR);
+		buffer.append(iPosition);
+		return buffer.toString();
 	}
 
 	public ORecordId fromStream(final byte[] iBuffer) {
@@ -129,19 +136,19 @@ public class ORecordId implements ORID {
 			return;
 		}
 
-		if (!iRecordId.contains(SEPARATOR))
+		if (!OStringSerializerHelper.contains(iRecordId, SEPARATOR))
 			throw new IllegalArgumentException(
 					"Argument is not a RecordId in form of string. Format must be: <cluster-id>:<cluster-position>");
 
-		final String parts[] = iRecordId.split(SEPARATOR);
+		final List<String> parts = OStringSerializerHelper.split(iRecordId, SEPARATOR);
 
-		if (parts.length != 2)
+		if (parts.size() != 2)
 			throw new IllegalArgumentException(
 					"Argument is not a RecordId in form of string. Format must be: <cluster-id>:<cluster-position>");
 
-		clusterId = Integer.parseInt(parts[0]);
+		clusterId = Integer.parseInt(parts.get(0));
 		checkClusterLimits();
-		clusterPosition = Long.parseLong(parts[1]);
+		clusterPosition = Long.parseLong(parts.get(1));
 	}
 
 	public void copyFrom(final ORID iSource) {

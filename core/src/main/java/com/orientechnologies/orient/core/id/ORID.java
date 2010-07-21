@@ -18,10 +18,10 @@ package com.orientechnologies.orient.core.id;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
 public interface ORID extends OSerializableStream {
-	public static final String	SEPARATOR						= ":";
-	public static final int			CLUSTER_MAX					= 32767;
-	public static final int			CLUSTER_ID_INVALID	= -1;
-	public static final int			CLUSTER_POS_INVALID	= -1;
+	public static final char	SEPARATOR						= ':';
+	public static final int		CLUSTER_MAX					= 32767;
+	public static final int		CLUSTER_ID_INVALID	= -1;
+	public static final int		CLUSTER_POS_INVALID	= -1;
 
 	public int getClusterId();
 

@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 @SuppressWarnings("unchecked")
 public class ORecordColumn extends ORecordAbstract<String> implements ORecordStringable, ORecordPositional<String> {
 	protected List<String>		values			= new ArrayList<String>();
-	protected char						separator		= OStringSerializerHelper.RECORD_SEPARATOR_AS_CHAR;
+	protected char						separator		= OStringSerializerHelper.RECORD_SEPARATOR;
 	protected int							cursor			= 0;
 
 	public static final byte	RECORD_TYPE	= 'c';
@@ -177,7 +177,7 @@ public class ORecordColumn extends ORecordAbstract<String> implements ORecordStr
 	}
 
 	private void extractValues(String iValue) {
-		String[] strings = OStringSerializerHelper.split(iValue, separator);
+		final List<String> strings = OStringSerializerHelper.split(iValue, separator);
 
 		values.clear();
 		for (String s : strings)

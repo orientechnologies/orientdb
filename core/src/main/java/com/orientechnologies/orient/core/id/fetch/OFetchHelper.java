@@ -17,10 +17,12 @@ package com.orientechnologies.orient.core.id.fetch;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 /**
  * Helper class for fetching.
@@ -36,13 +38,13 @@ public class OFetchHelper {
 
 		if (iFetchPlan != null) {
 			// CHECK IF THERE IS SOME FETCH-DEPTH
-			final String[] planParts = iFetchPlan.split(" ");
+			final List<String> planParts = OStringSerializerHelper.split(iFetchPlan, ' ');
 			fetchPlan = new HashMap<String, Integer>();
 
-			String[] parts;
+			List<String> parts;
 			for (String planPart : planParts) {
-				parts = planPart.split(":");
-				fetchPlan.put(parts[0], Integer.parseInt(parts[1]));
+				parts = OStringSerializerHelper.split(planPart, ':');
+				fetchPlan.put(parts.get(0), Integer.parseInt(parts.get(1)));
 			}
 		} else
 			fetchPlan = null;
