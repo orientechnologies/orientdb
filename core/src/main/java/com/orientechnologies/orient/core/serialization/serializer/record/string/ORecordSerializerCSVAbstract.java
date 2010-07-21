@@ -161,10 +161,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					iLinkedClass = iDatabase.getMetadata().getSchema().getClass(iValue.substring(OStringSerializerHelper.LINK.length(), pos));
 				else
 					pos = 0;
-
-				//				return new ORecordId(iValue.substring(pos + 1));
-				return new ODocument(iDatabase, iLinkedClass != null ? iLinkedClass.getName() : null, new ORecordId(
-						iValue.substring(pos + 1)));
+				
+				return new ORecordId(iValue.substring(pos + 1));
+				// return new ODocument(iDatabase, iLinkedClass != null ? iLinkedClass.getName() : null, new ORecordId(
+				// iValue.substring(pos + 1)));
 			} else
 				return null;
 

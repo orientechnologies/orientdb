@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityReso
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.query.OQuery;
+import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -258,6 +259,9 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 
 		if (pojo == null) {
 			try {
+				if (record.getInternalStatus() == STATUS.NOT_LOADED)
+					record.load();
+
 				pojo = entityManager.createPojo(record.getClassName());
 				registerPojo(pojo, record);
 

@@ -19,6 +19,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
@@ -44,7 +46,8 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 	}
 
 	@Override
-	protected boolean evaluateExpression(final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight) {
+	protected boolean evaluateExpression(final ODatabaseRecord<?> iDatabase, final OSQLFilterCondition iCondition,
+			final Object iLeft, final Object iRight) {
 		final OSQLFilterCondition condition;
 		final Object target;
 
@@ -56,38 +59,41 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 			target = iLeft;
 		}
 
-		return traverse(condition, target, 0);
+		return traverse(iDatabase, condition, target, 0);
 	}
 
 	@SuppressWarnings("unchecked")
-	private boolean traverse(final OSQLFilterCondition condition, final Object target, final int iLevel) {
-		if (target instanceof ODocument) {
-			if (iLevel >= startDeepLevel && (Boolean) condition.evaluate((ODocument) target) == Boolean.TRUE)
-				return true;
+	private boolean traverse(final ODatabaseRecord<?> iDatabase, final OSQLFilterCondition iCondition, Object iTarget, final int iLevel) {
+		if (iTarget instanceof ORID)
+			// TRANSFORM THE ORID IN ODOCUMENT
+			iTarget = new ODocument(iDatabase, (ORID) iTarget);
 
+		if (iTarget instanceof ODocument) {
+			if (iLevel >= startDeepLevel && (Boolean) iCondition.evaluate((ODocument) iTarget) == Boolean.TRUE)
+				return true;
 		} else {
 			if (iLevel >= endDeepLevel)
 				return false;
 
-			if (target instanceof OQueryRuntimeValueMulti) {
+			if (iTarget instanceof OQueryRuntimeValueMulti) {
 
-				OQueryRuntimeValueMulti multi = (OQueryRuntimeValueMulti) target;
+				OQueryRuntimeValueMulti multi = (OQueryRuntimeValueMulti) iTarget;
 				for (Object o : multi.values) {
-					if (traverse(condition, o, iLevel + 1) == Boolean.TRUE)
+					if (traverse(iDatabase, iCondition, o, iLevel + 1) == Boolean.TRUE)
 						return true;
 				}
-			} else if (target instanceof Collection<?>) {
+			} else if (iTarget instanceof Collection<?>) {
 
-				Collection<ODocument> collection = (Collection<ODocument>) target;
+				Collection<ODocument> collection = (Collection<ODocument>) iTarget;
 				for (ODocument o : collection) {
-					if (traverse(condition, o, iLevel + 1) == Boolean.TRUE)
+					if (traverse(iDatabase, iCondition, o, iLevel + 1) == Boolean.TRUE)
 						return true;
 				}
-			} else if (target instanceof Map<?, ?>) {
+			} else if (iTarget instanceof Map<?, ?>) {
 
-				Map<String, ODocument> map = (Map<String, ODocument>) target;
+				Map<String, ODocument> map = (Map<String, ODocument>) iTarget;
 				for (ODocument o : map.values()) {
-					if (traverse(condition, o, iLevel + 1) == Boolean.TRUE)
+					if (traverse(iDatabase, iCondition, o, iLevel + 1) == Boolean.TRUE)
 						return true;
 				}
 			}

@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
 /**
@@ -30,7 +31,8 @@ public class OQueryOperatorAnd extends OQueryOperator {
 	}
 
 	@Override
-	public boolean evaluate(final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight) {
+	public boolean evaluate(final ODatabaseRecord<?> iDatabase, final OSQLFilterCondition iCondition, final Object iLeft,
+			final Object iRight) {
 		if (iLeft == null)
 			return false;
 		return (Boolean) iLeft && (Boolean) iRight;

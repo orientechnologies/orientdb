@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.sql.operator;
 
 import java.util.Collection;
 
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
@@ -35,11 +36,13 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	protected boolean evaluateExpression(final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight) {
+	protected boolean evaluateExpression(final ODatabaseRecord<?> iDatabase, final OSQLFilterCondition iCondition,
+			final Object iLeft, final Object iRight) {
 		OSQLFilterCondition condition;
-		
+
 		try {
-			condition = (OSQLFilterCondition) (iCondition.getLeft() instanceof OSQLFilterCondition ? iCondition.getLeft() : iCondition.getRight());
+			condition = (OSQLFilterCondition) (iCondition.getLeft() instanceof OSQLFilterCondition ? iCondition.getLeft() : iCondition
+					.getRight());
 		} catch (Exception e) {
 			throw new OCommandExecutionException("Operator contains needs a condition to apply", e);
 		}
