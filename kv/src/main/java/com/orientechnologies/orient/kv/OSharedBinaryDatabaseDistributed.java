@@ -24,7 +24,7 @@ import com.orientechnologies.orient.server.OServerMain;
 
 public class OSharedBinaryDatabaseDistributed {
 	// TODO: ALLOW ONLY 1 BECAUSE THE TREE IS NOT YET FULLY TRANSACTIONAL
-	private static final ODatabasePoolAbstract<ODatabaseBinary>	dbPool	= new ODatabasePoolAbstract<ODatabaseBinary>(1, 1, false) {
+	private static final ODatabasePoolAbstract<ODatabaseBinary>	dbPool	= new ODatabasePoolAbstract<ODatabaseBinary>(null, 1, 1) {
 
 																																				public ODatabaseBinary createNewResource(
 																																						final String iDatabaseName,

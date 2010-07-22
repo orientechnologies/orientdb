@@ -22,9 +22,9 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.client.remote.OEngineRemote;
-import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.object.ODatabaseObjectPool;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -41,18 +41,17 @@ public class CRUDObjectPhysicalTest {
 	protected long							startRecordNumber;
 	private ODatabaseObjectTx		database;
 	private City								rome				= new City(new Country("Italy"), "Rome");
+	private String							url;
 
 	@Parameters(value = "url")
 	public CRUDObjectPhysicalTest(String iURL) {
-		Orient.instance().registerEngine(new OEngineRemote());
-
-		database = new ODatabaseObjectTx(iURL);
-		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain");
+		url = iURL;
 	}
 
 	@Test
 	public void create() {
-		database.open("admin", "admin");
+		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain");
 
 		startRecordNumber = database.countClusterElements("Account");
 
@@ -69,9 +68,14 @@ public class CRUDObjectPhysicalTest {
 		database.close();
 	}
 
-	@Test(dependsOnMethods = "create")
-	public void testCreate() {
+	@Test(dependsOnMethods = "create", expectedExceptions = ODatabaseException.class)
+	public void testReleasedPoolDatabase() {
 		database.open("admin", "admin");
+	}
+
+	@Test(dependsOnMethods = "testReleasedPoolDatabase")
+	public void testCreate() {
+		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
 
 		Assert.assertEquals(database.countClusterElements("Account") - startRecordNumber, TOT_RECORDS);
 
@@ -80,7 +84,7 @@ public class CRUDObjectPhysicalTest {
 
 	@Test(dependsOnMethods = "testCreate")
 	public void readAndBrowseDescendingAndCheckHoleUtilization() {
-		database.open("admin", "admin");
+		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
 
 		// BROWSE ALL THE OBJECTS
 		int i = 0;
@@ -104,7 +108,7 @@ public class CRUDObjectPhysicalTest {
 
 	@Test(dependsOnMethods = "readAndBrowseDescendingAndCheckHoleUtilization")
 	public void mapEnumAndInternalObjects() {
-		database.open("admin", "admin");
+		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
 
 		// BROWSE ALL THE OBJECTS
 		for (OUser u : database.browseClass(OUser.class)) {
@@ -116,7 +120,7 @@ public class CRUDObjectPhysicalTest {
 
 	@Test(dependsOnMethods = "mapEnumAndInternalObjects")
 	public void afterDeserializationCall() {
-		database.open("admin", "admin");
+		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
 
 		// BROWSE ALL THE OBJECTS
 		for (Account a : database.browseClass(Account.class)) {
@@ -128,7 +132,7 @@ public class CRUDObjectPhysicalTest {
 
 	@Test(dependsOnMethods = "afterDeserializationCall")
 	public void update() {
-		database.open("admin", "admin");
+		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
 
 		int i = 0;
 		Account a;
@@ -150,7 +154,7 @@ public class CRUDObjectPhysicalTest {
 
 	@Test(dependsOnMethods = "update")
 	public void testUpdate() {
-		database.open("admin", "admin");
+		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
 
 		int i = 0;
 		Account a;
@@ -172,7 +176,7 @@ public class CRUDObjectPhysicalTest {
 
 	@Test(dependsOnMethods = "testUpdate")
 	public void createLinked() {
-		database.open("admin", "admin");
+		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
 
 		long profiles = database.countClass("Profile");
 
@@ -189,7 +193,7 @@ public class CRUDObjectPhysicalTest {
 
 	@Test(dependsOnMethods = "createLinked")
 	public void browseLinked() {
-		database.open("admin", "admin");
+		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
 
 		for (Profile obj : database.browseClass(Profile.class)) {
 			if (obj.getNick().equals("Neo")) {
@@ -206,7 +210,7 @@ public class CRUDObjectPhysicalTest {
 
 	@Test(dependsOnMethods = "browseLinked")
 	public void queryPerFloat() {
-		database.open("admin", "admin");
+		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
 
 		final List<Account> result = database.query(new OSQLSynchQuery<ODocument>("select * from Account where salary = 500.10"));
 
@@ -224,7 +228,7 @@ public class CRUDObjectPhysicalTest {
 
 	@Test(dependsOnMethods = "queryPerFloat")
 	public void queryCross3Levels() {
-		database.open("admin", "admin");
+		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
 
 		final List<Profile> result = database.query(new OSQLSynchQuery<Profile>(
 				"select from Profile where location.city.country.name = 'Italy'"));
@@ -243,7 +247,7 @@ public class CRUDObjectPhysicalTest {
 
 	@Test(dependsOnMethods = "queryCross3Levels")
 	public void cleanAll() {
-		database.open("admin", "admin");
+		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
 
 		startRecordNumber = database.countClusterElements("Account");
 

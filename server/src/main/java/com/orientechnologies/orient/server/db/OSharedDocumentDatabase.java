@@ -26,8 +26,8 @@ import com.orientechnologies.orient.server.OServerMain;
 
 public class OSharedDocumentDatabase {
 	// TODO: ALLOW ONLY 1 BECAUSE THE TREE IS NOT YET FULLY TRANSACTIONAL
-	private static final ODatabasePoolAbstract<ODatabaseDocumentTx>	dbPool	= new ODatabasePoolAbstract<ODatabaseDocumentTx>(1, 20,
-																																							true) {
+	private static final ODatabasePoolAbstract<ODatabaseDocumentTx>	dbPool	= new ODatabasePoolAbstract<ODatabaseDocumentTx>(null, 1,
+																																							20) {
 
 																																						public ODatabaseDocumentTx createNewResource(
 																																								final String iDatabaseName,

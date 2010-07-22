@@ -70,4 +70,8 @@ public class OResourcePool<K, V> {
 	public Collection<V> getResources() {
 		return Collections.unmodifiableCollection(resources);
 	}
+
+	public void close() {
+		sem.drainPermits();
+	}
 }

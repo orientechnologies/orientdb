@@ -19,6 +19,7 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.iterator.ORecordIterator;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -29,16 +30,17 @@ public class CRUDDocumentPhysicalTest {
 	protected long							startRecordNumber;
 	private ODatabaseDocumentTx	database;
 	private ODocument						record;
+	private String							url;
 
 	@Parameters(value = "url")
-	public CRUDDocumentPhysicalTest(String iURL) {
-		database = new ODatabaseDocumentTx(iURL);
-		record = database.newInstance();
+	public CRUDDocumentPhysicalTest(final String iURL) {
+		url = iURL;
 	}
 
 	@Test
 	public void cleanAll() {
-		database.open("admin", "admin");
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+		record = database.newInstance();
 
 		startRecordNumber = database.countClusterElements("Account");
 
@@ -53,7 +55,7 @@ public class CRUDDocumentPhysicalTest {
 
 	@Test(dependsOnMethods = "cleanAll")
 	public void create() {
-		database.open("admin", "admin");
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 
 		startRecordNumber = database.countClusterElements("Account");
 
@@ -77,6 +79,7 @@ public class CRUDDocumentPhysicalTest {
 
 	@Test(dependsOnMethods = "create")
 	public void testCreate() {
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 		database.open("admin", "admin");
 
 		Assert.assertEquals(database.countClusterElements("Account") - startRecordNumber, TOT_RECORDS);
@@ -86,7 +89,7 @@ public class CRUDDocumentPhysicalTest {
 
 	@Test(dependsOnMethods = "testCreate")
 	public void readAndBrowseDescendingAndCheckHoleUtilization() {
-		database.open("admin", "admin");
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 
 		// BROWSE IN THE OPPOSITE ORDER
 		int i = 0;
@@ -110,7 +113,7 @@ public class CRUDDocumentPhysicalTest {
 
 	@Test(dependsOnMethods = "readAndBrowseDescendingAndCheckHoleUtilization")
 	public void update() {
-		database.open("admin", "admin");
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 
 		record.reset();
 
@@ -132,7 +135,7 @@ public class CRUDDocumentPhysicalTest {
 
 	@Test(dependsOnMethods = "update")
 	public void testUpdate() {
-		database.open("admin", "admin");
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 
 		int i = 0;
 		for (ODocument rec : database.browseCluster("Account")) {

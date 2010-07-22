@@ -17,11 +17,12 @@ package com.orientechnologies.orient.core.db;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.common.log.OLogManager;
 
 public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements OResourcePoolListener<String, DB> {
 
@@ -29,25 +30,28 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements ORe
 	private final Map<String, OResourcePool<String, DB>>	pools							= new HashMap<String, OResourcePool<String, DB>>();
 	private int																						maxSize;
 	private int																						timeout						= DEF_WAIT_TIMEOUT;
-	private boolean																				enableSecurity		= true;
+	protected Object																			owner;
 
-	public ODatabasePoolAbstract(final int iMinSize, final int iMaxSize, boolean iEnableSecurity) {
-		this(iMinSize, iMaxSize, iEnableSecurity, DEF_WAIT_TIMEOUT);
+	public ODatabasePoolAbstract(final Object iOwner, final int iMinSize, final int iMaxSize) {
+		this(iOwner, iMinSize, iMaxSize, DEF_WAIT_TIMEOUT);
 	}
 
-	public ODatabasePoolAbstract(final int iMinSize, final int iMaxSize, final boolean iEnableSecurity, final int iTimeout) {
+	public ODatabasePoolAbstract(final Object iOwner, final int iMinSize, final int iMaxSize, final int iTimeout) {
 		maxSize = iMaxSize;
-		enableSecurity = iEnableSecurity;
 		timeout = iTimeout;
+		owner = iOwner;
 	}
 
 	public DB acquire(final String iURL, final String iUserName, final String iUserPassword) throws OLockException {
-		OResourcePool<String, DB> pool = pools.get(iURL);
+		final int separatorPos = iURL.lastIndexOf('/');
+		final String name = separatorPos > -1 ? iURL.substring(separatorPos + 1) : iURL;
+
+		OResourcePool<String, DB> pool = pools.get(name);
 		if (pool == null) {
 			synchronized (pools) {
 				if (pool == null) {
 					pool = new OResourcePool<String, DB>(maxSize, this);
-					pools.put(iURL, pool);
+					pools.put(name, pool);
 				}
 			}
 		}
@@ -56,13 +60,9 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements ORe
 	}
 
 	public void release(final DB iDatabase) {
-		if (iDatabase instanceof ODatabaseRecord<?>)
-			// ASSURE TO ROOL BACK ALL PENDING OPERATIONS
-			((ODatabaseRecord<?>) iDatabase).rollback();
-
 		final OResourcePool<String, DB> pool = pools.get(iDatabase.getName());
 		if (pool == null)
-			throw new OLockException("Can't release a database URL not acquired before. URL: " + iDatabase.getURL());
+			throw new OLockException("Can't release a database URL not acquired before. URL: " + iDatabase.getName());
 
 		pool.returnResource(iDatabase);
 	}
@@ -73,5 +73,23 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements ORe
 
 	public Map<String, OResourcePool<String, DB>> getPools() {
 		return pools;
+	}
+
+	/**
+	 * Closes all the databases.
+	 */
+	public void close() {
+		for (Entry<String, OResourcePool<String, DB>> pool : pools.entrySet()) {
+			for (DB db : pool.getValue().getResources()) {
+				pool.getValue().close();
+				try {
+					OLogManager.instance().debug(this, "Closing pooled database '%s'...", db.getName());
+					((ODatabasePooled) db).forceClose();
+					OLogManager.instance().debug(this, "OK", db.getName());
+				} catch (Exception e) {
+					OLogManager.instance().debug(this, "Error: %d", e.toString());
+				}
+			}
+		}
 	}
 }
