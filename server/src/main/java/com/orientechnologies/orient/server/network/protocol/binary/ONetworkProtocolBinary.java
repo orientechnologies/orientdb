@@ -289,7 +289,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 									return recordsToSend.size();
 								}
 
-								// ADD TO THE SET OF OBJECT TO SEND
+								// ADD TO THE SET OF OBJECTS TO SEND
 								public Object fetchLinked(final ODocument iRoot, final Object iUserObject, final String iFieldName,
 										final Object iLinked) {
 									if (iLinked instanceof ODocument)

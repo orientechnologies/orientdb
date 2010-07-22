@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -64,59 +65,62 @@ public class OFetchHelper {
 		Integer depthLevel;
 		int currentLevel;
 		final Integer anyFieldDepthLevel = iFetchPlan != null ? iFetchPlan.get(ANY_FIELD) : -1;
+		try {
+			// BROWSE ALL THE DOCUMENT'S FIELDS
+			for (String fieldName : iRootRecord.fieldNames()) {
+				fieldValue = iRootRecord.field(fieldName);
 
-		// BROWSE ALL THE DOCUMENT'S FIELDS
-		for (String fieldName : iRootRecord.fieldNames()) {
-			fieldValue = iRootRecord.field(fieldName);
-
-			if (fieldValue == null
-					|| !(fieldValue instanceof ODocument)
-					&& (!(fieldValue instanceof Collection<?>) || ((Collection<?>) fieldValue).size() == 0 || !(((Collection<?>) fieldValue)
-							.iterator().next() instanceof ODocument)))
-				// NULL NEITHER LINK, NOR COLLECTION OF LINKS
-				continue;
-
-			depthLevel = getDepthLevel(iRootRecord, iFetchPlan, fieldName);
-
-			if (depthLevel == null)
-				// NO SPECIFIED: ASSIGN DEFAULT LEVEL TAKEN FROM * WILDCARD IF ANY
-				depthLevel = anyFieldDepthLevel;
-
-			if (depthLevel == 0)
-				// NO FETCH THIS FIELD PLEASE
-				continue;
-
-			// DETERMINE CURRENT DEPTH LEVEL
-			if (fieldName.equals(iCurrentField)) {
-				currentLevel = iCurrentLevel + 1;
-
-				if (depthLevel >= currentLevel)
-					// MAX DEPTH REACHED: STOP TO FETCH THIS FIELD
+				if (fieldValue == null
+						|| !(fieldValue instanceof ODocument)
+						&& (!(fieldValue instanceof Collection<?>) || ((Collection<?>) fieldValue).size() == 0 || !(((Collection<?>) fieldValue)
+								.iterator().next() instanceof ODocument)))
+					// NULL NEITHER LINK, NOR COLLECTION OF LINKS
 					continue;
-			} else
-				currentLevel = 0;
 
-			Object userObject;
-			if (fieldValue instanceof ODocument) {
-				final ODocument linked = (ODocument) fieldValue;
-				userObject = iListener.fetchLinked(iRootRecord, iUserObject, fieldName, linked);
-				if (userObject != null)
-					// GO RECURSIVELY
-					fetch(linked, userObject, iFetchPlan, fieldName, currentLevel, iMaxFetch, iListener);
+				depthLevel = getDepthLevel(iRootRecord, iFetchPlan, fieldName);
 
-			} else if (fieldValue instanceof Collection<?>) {
-				final Collection<ODocument> linked = (Collection<ODocument>) fieldValue;
-				userObject = iListener.fetchLinked(iRootRecord, iUserObject, fieldName, linked);
-				// for (ODocument d : linked) {
-				// if (userObject != null)
-				// // GO RECURSIVELY
-				// fetch(d, userObject, iFetchPlan, fieldName, currentLevel, iMaxFetch, iListener);
-				// }
+				if (depthLevel == null)
+					// NO SPECIFIED: ASSIGN DEFAULT LEVEL TAKEN FROM * WILDCARD IF ANY
+					depthLevel = anyFieldDepthLevel;
+
+				if (depthLevel == 0)
+					// NO FETCH THIS FIELD PLEASE
+					continue;
+
+				// DETERMINE CURRENT DEPTH LEVEL
+				if (fieldName.equals(iCurrentField)) {
+					currentLevel = iCurrentLevel + 1;
+
+					if (depthLevel >= currentLevel)
+						// MAX DEPTH REACHED: STOP TO FETCH THIS FIELD
+						continue;
+				} else
+					currentLevel = 0;
+
+				Object userObject;
+				if (fieldValue instanceof ODocument) {
+					final ODocument linked = (ODocument) fieldValue;
+					userObject = iListener.fetchLinked(iRootRecord, iUserObject, fieldName, linked);
+					if (userObject != null)
+						// GO RECURSIVELY
+						fetch(linked, userObject, iFetchPlan, fieldName, currentLevel, iMaxFetch, iListener);
+
+				} else if (fieldValue instanceof Collection<?>) {
+					final Collection<ODocument> linked = (Collection<ODocument>) fieldValue;
+					userObject = iListener.fetchLinked(iRootRecord, iUserObject, fieldName, linked);
+					if (userObject != null)
+						for (ODocument d : (Collection<ODocument>) userObject) {
+							// GO RECURSIVELY
+							fetch(d, d, iFetchPlan, fieldName, currentLevel, iMaxFetch, iListener);
+						}
+				}
+
+				if (iMaxFetch > -1 && iListener.size() >= iMaxFetch)
+					// MAX FETCH SIZE REACHED: STOP TO FETCH AT ALL
+					return;
 			}
-
-			if (iMaxFetch > -1 && iListener.size() >= iMaxFetch)
-				// MAX FETCH SIZE REACHED: STOP TO FETCH AT ALL
-				return;
+		} catch (Exception e) {
+			OLogManager.instance().warn(null, "Fetching error on record %s", iRootRecord.getIdentity());
 		}
 	}
 

@@ -170,7 +170,7 @@ public class OSchema extends ODocumentWrapperNoClass {
 	@SuppressWarnings("unchecked")
 	public OSchema load() {
 		((ORecordId) document.getIdentity()).fromString(document.getDatabase().getStorage().getConfiguration().schemaRecordId);
-		return super.load("*:-1");
+		return super.load("*:-1 index:0");
 	}
 
 	public void create() {
