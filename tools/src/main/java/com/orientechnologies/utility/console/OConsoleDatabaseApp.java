@@ -245,13 +245,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		final int limit = Integer.parseInt((String) properties.get("limit"));
 
 		long start = System.currentTimeMillis();
-		currentDatabase.query(new OSQLAsynchQuery<ODocument>(iQueryText, limit + 1, new OCommandResultListener() {
+		currentDatabase.query(new OSQLAsynchQuery<ODocument>(iQueryText, limit, new OCommandResultListener() {
 			public boolean result(final Object iRecord) {
-				if (currentResultSet.size() >= limit) {
-					printHeaderLine(columns);
-					out.println("\nResultset contains more items not displayed (max=" + limit + ")");
-					return true;
-				}
+//				if (currentResultSet.size() >= limit) {
+//					printHeaderLine(columns);
+//					out.println("\nResultset contains more items not displayed (max=" + limit + ")");
+//					return true;
+//				}
 
 				ORecordSchemaAwareAbstract<?> record = (ORecordSchemaAwareAbstract<?>) iRecord;
 

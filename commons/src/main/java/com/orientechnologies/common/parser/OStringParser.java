@@ -175,11 +175,12 @@ public class OStringParser {
 		final int size = iText.length();
 		final int jumpCharSize = iJumpChars.length();
 		boolean found = true;
-
+		char c;
 		for (; iCurrentPosition < size; ++iCurrentPosition) {
 			found = false;
+			c = iText.charAt(iCurrentPosition);
 			for (int jumpIndex = 0; jumpIndex < jumpCharSize; ++jumpIndex) {
-				if (iJumpChars.charAt(jumpIndex) == iText.charAt(iCurrentPosition)) {
+				if (iJumpChars.charAt(jumpIndex) == c) {
 					found = true;
 					break;
 				}

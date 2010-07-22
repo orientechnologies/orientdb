@@ -93,11 +93,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 	public Object execute(final Object... iArgs) {
 		// TODO: SUPPORTS MULTIPLE CLASSES LIKE A SQL JOIN
-		String firstClass = compiledFilter.getClasses().size() > 0 ? compiledFilter.getClasses().keySet().iterator().next() : null;
-
 		final int[] clusterIds;
 
-		if (firstClass != null) {
+		if (compiledFilter.getSourceClasses() != null) {
+			String firstClass = compiledFilter.getSourceClasses().keySet().iterator().next();
+
 			OClass cls = database.getMetadata().getSchema().getClass(firstClass.toLowerCase());
 			if (cls == null)
 				throw new OCommandExecutionException("Class " + firstClass + " was not found");
@@ -121,9 +121,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				// NO INDEXES: SCAN THE ENTIRE CLUSTER
 				scanEntireClusters(clusterIds);
 
-		} else {
-			String firstCluster = compiledFilter.getClusters().size() > 0 ? compiledFilter.getClusters().keySet().iterator().next()
-					: null;
+		} else if (compiledFilter.getSourceClusters() != null) {
+			String firstCluster = compiledFilter.getSourceClusters().keySet().iterator().next();
 
 			if (firstCluster == null || firstCluster.length() == 0)
 				throw new OCommandExecutionException("No cluster or schema class selected in query");
@@ -138,7 +137,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, firstCluster.toLowerCase(), clusterIds[0]);
 
 			scanEntireClusters(clusterIds);
-		}
+		} else if (compiledFilter.getSourceRecords() != null) {
+			ORecordId rid = new ORecordId();
+			ORecordInternal<?> record;
+			for (String rec : compiledFilter.getSourceRecords()) {
+				rid.fromString(rec);
+				record = database.load(rid);
+				foreach(record);
+			}
+		} else
+			throw new OQueryParsingException("No source found in query: specify class, clusters or single records");
 
 		processResultSet();
 		return null;

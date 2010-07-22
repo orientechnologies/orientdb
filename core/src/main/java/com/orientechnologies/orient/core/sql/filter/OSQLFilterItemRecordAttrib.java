@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
  * <li>@version, the version</li>
  * <li>@type, the type between: 'document', 'column', 'flat', 'bytes'</li>
  * <li>@size, the size on disk in bytes
+ * <li>@fields, the field list defined for the current record
  * </ul>
  * 
  * @author Luca Garulli
@@ -49,6 +50,8 @@ public class OSQLFilterItemRecordAttrib extends OSQLFilterItemAbstract {
 			return transformValue(iRecord.getDatabase(), ((ORecordSchemaAware<?>) iRecord).getClassName());
 		else if (name.equals("@TYPE"))
 			return transformValue(iRecord.getDatabase(), ORecordFactory.getRecordTypeName(iRecord.getRecordType()));
+		else if (name.equals("@FIELDS") && iRecord instanceof ORecordSchemaAware<?>)
+			return transformValue(iRecord.getDatabase(), ((ORecordSchemaAware<?>) iRecord).fieldNames());
 		else if (name.equals("@SIZE")) {
 			try {
 				final byte[] stream = iRecord.toStream();

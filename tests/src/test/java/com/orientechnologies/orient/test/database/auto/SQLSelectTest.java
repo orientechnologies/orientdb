@@ -345,7 +345,7 @@ public class SQLSelectTest {
 		Assert.assertTrue(result.size() != 0);
 
 		for (ODocument d : result) {
-			Assert.assertTrue(d.getVersion() >0);
+			Assert.assertTrue(d.getVersion() > 0);
 		}
 
 		database.close();

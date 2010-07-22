@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.command.OCommandToParse;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.query.OQueryHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerCSVAbstract;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
@@ -114,7 +115,7 @@ public class OSQLHelper {
 		if (iValue.startsWith("'") && iValue.endsWith("'"))
 			// STRING
 			fieldValue = stringContent(iValue);
-		if (iValue.startsWith("[") && iValue.endsWith("]")) {
+		if (iValue.startsWith(OQueryHelper.OPEN_COLLECTION) && iValue.endsWith(OQueryHelper.CLOSED_COLLECTION)) {
 			// COLLECTION/ARRAY
 			final List<String> items = OStringSerializerHelper.smartSplit(iValue.substring(1, iValue.length() - 1),
 					OStringSerializerHelper.RECORD_SEPARATOR);

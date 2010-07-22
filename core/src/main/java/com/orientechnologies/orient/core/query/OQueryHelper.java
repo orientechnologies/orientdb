@@ -28,7 +28,7 @@ public class OQueryHelper {
 	public static final String				CLOSED_BRACE					= ")";
 	public static final String				OPEN_COLLECTION				= "[";
 	public static final String				CLOSED_COLLECTION			= "]";
-	public static final String				COLLECTION_SEPARATOR	= ",";
+	public static final char					COLLECTION_SEPARATOR	= ',';
 	public static final char					PARAMETER_SEPARATOR		= ',';
 	public static final List<String>	EMPTY_PARAMETERS			= new ArrayList<String>();
 
@@ -94,7 +94,7 @@ public class OQueryHelper {
 		return pars;
 	}
 
-	public static Object getCollection(final String iText) {
+	public static List<String> getCollection(final String iText) {
 		int openPos = iText.indexOf(OPEN_COLLECTION);
 		if (openPos == -1)
 			return EMPTY_PARAMETERS;
@@ -103,7 +103,6 @@ public class OQueryHelper {
 		if (closePos == -1)
 			return EMPTY_PARAMETERS;
 
-		// TODO BY IMPROVING IT CONSIDERING COMMAS INSIDE STRINGS!
-		return iText.substring(openPos + 1, closePos).split(COLLECTION_SEPARATOR);
+		return OStringSerializerHelper.split(iText.substring(openPos + 1, closePos), COLLECTION_SEPARATOR);
 	}
 }
