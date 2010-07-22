@@ -16,8 +16,8 @@
 package com.orientechnologies.orient.core.storage.fs;
 
 import java.io.IOException;
-import java.util.ArrayDeque;
 import java.util.Iterator;
+import java.util.LinkedList;
 
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
@@ -31,7 +31,7 @@ public class OMMapManager {
 
 	private static int													totalMemory;
 
-	private static ArrayDeque<OMMapBufferEntry>	buffersLRU			= new ArrayDeque<OMMapBufferEntry>();
+	private static LinkedList<OMMapBufferEntry>	buffersLRU			= new LinkedList<OMMapBufferEntry>();
 
 	public static OMMapBufferEntry request(final OFileMMap iFile, final int iBeginOffset, final int iSize) {
 		return request(iFile, iBeginOffset, iSize, false);
