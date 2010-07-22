@@ -34,7 +34,7 @@ public class OResourcePool<K, V> {
 		sem = new Semaphore(iMaxResources, true);
 	}
 
-	public V getResource(K iKey, final long iMaxWaitMillis) throws OLockException {
+	public V getResource(K iKey, final long iMaxWaitMillis, String... iAdditionalArgs) throws OLockException {
 
 		// First, get permission to take or create a resource
 		try {
@@ -53,7 +53,7 @@ public class OResourcePool<K, V> {
 
 		// ...or create one if none available
 		try {
-			res = listener.createNewResource(iKey);
+			res = listener.createNewResource(iKey, iAdditionalArgs);
 			return res;
 		} catch (Exception e) {
 			// Don't hog the permit if we failed to create a resource!

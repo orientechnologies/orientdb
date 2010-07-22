@@ -30,15 +30,14 @@ public class OSharedDocumentDatabase {
 																																							true) {
 
 																																						public ODatabaseDocumentTx createNewResource(
-																																								final String iDatabaseName) {
-																																							final String[] parts = iDatabaseName.split(":");
-
-																																							if (parts.length < 2)
+																																								final String iDatabaseName,
+																																								final String... iAdditionalArgs) {
+																																							if (iAdditionalArgs.length < 2)
 																																								throw new OSecurityAccessException(
 																																										"Username and/or password missed");
 
 																																							final String path = OServerMain.server()
-																																									.getStoragePath(parts[0]);
+																																									.getStoragePath(iDatabaseName);
 
 																																							final ODatabaseDocumentTx db = new ODatabaseDocumentTx(
 																																									path);
@@ -52,7 +51,7 @@ public class OSharedDocumentDatabase {
 																																								OServerMain.server().getMemoryDatabases()
 																																										.put(iDatabaseName, db);
 																																							} else
-																																								db.open(parts[1], parts[2]);
+																																								db.open(iAdditionalArgs[0], iAdditionalArgs[1]);
 
 																																							return db;
 																																						}

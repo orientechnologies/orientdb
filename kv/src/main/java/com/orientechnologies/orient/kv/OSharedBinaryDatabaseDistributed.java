@@ -27,15 +27,14 @@ public class OSharedBinaryDatabaseDistributed {
 	private static final ODatabasePoolAbstract<ODatabaseBinary>	dbPool	= new ODatabasePoolAbstract<ODatabaseBinary>(1, 1, false) {
 
 																																				public ODatabaseBinary createNewResource(
-																																						final String iDatabaseName) {
-																																					final String[] parts = iDatabaseName.split(":");
-
-																																					if (parts.length < 2)
+																																						final String iDatabaseName,
+																																						final String... iAdditionalArgs) {
+																																					if (iAdditionalArgs.length < 2)
 																																						throw new OSecurityAccessException(
 																																								"Username and/or password missed");
 
 																																					final String path = OServerMain.server().getStoragePath(
-																																							parts[0]);
+																																							iDatabaseName);
 
 																																					final ODatabaseBinary db = new ODatabaseBinary(path);
 
@@ -47,7 +46,7 @@ public class OSharedBinaryDatabaseDistributed {
 																																						OServerMain.server().getMemoryDatabases()
 																																								.put(iDatabaseName, db);
 																																					} else
-																																						db.open(parts[1], parts[2]);
+																																						db.open(iAdditionalArgs[0], iAdditionalArgs[1]);
 
 																																					return db;
 																																				}

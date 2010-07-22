@@ -153,7 +153,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 			errorCode = 404;
 		else if (e instanceof OLockException) {
 			errorCode = 423;
-			e = (Exception) e.getCause();
+//			e = (Exception) e.getCause();
 		} else if (e instanceof IllegalArgumentException)
 			errorCode = 400;
 

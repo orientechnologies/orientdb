@@ -33,17 +33,13 @@ public class ODatabasePool {
 				if (dbPool == null) {
 					dbPool = new ODatabasePoolAbstract<ODatabase>(iMinSize, iMaxSize, true) {
 
-						public ODatabaseDocumentTx createNewResource(final String iDatabaseName) {
-							final String[] parts = iDatabaseName.split(":");
-
-							if (parts.length < 2)
+						public ODatabaseDocumentTx createNewResource(final String iDatabaseName, final String... iAdditionalArgs) {
+							if (iAdditionalArgs.length < 2)
 								throw new OSecurityAccessException("Username and/or password missed");
 
-							final String path = parts[0];
+							final ODatabaseDocumentTx db = new ODatabaseDocumentTx(iDatabaseName);
 
-							final ODatabaseDocumentTx db = new ODatabaseDocumentTx(path);
-
-							db.open(parts[1], parts[2]);
+							db.open(iAdditionalArgs[0], iAdditionalArgs[0]);
 
 							return db;
 						}

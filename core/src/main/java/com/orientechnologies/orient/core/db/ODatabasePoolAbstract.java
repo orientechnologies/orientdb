@@ -52,7 +52,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements ORe
 			}
 		}
 
-		return pool.getResource(iURL, timeout);
+		return pool.getResource(iURL, timeout, iUserName, iUserPassword);
 	}
 
 	public void release(final DB iDatabase) {
@@ -60,7 +60,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements ORe
 			// ASSURE TO ROOL BACK ALL PENDING OPERATIONS
 			((ODatabaseRecord<?>) iDatabase).rollback();
 
-		final OResourcePool<String, DB> pool = pools.get(iDatabase.getURL());
+		final OResourcePool<String, DB> pool = pools.get(iDatabase.getName());
 		if (pool == null)
 			throw new OLockException("Can't release a database URL not acquired before. URL: " + iDatabase.getURL());
 
