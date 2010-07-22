@@ -83,6 +83,7 @@ public class ORecordFlat extends ORecordAbstract<String> implements ORecordStrin
 
 			// LAZY LOADING: LOAD THE RECORD FIRST
 			value = OBinaryProtocol.bytes2string(_source);
+			_source = null;
 		}
 
 		return value;
@@ -95,7 +96,7 @@ public class ORecordFlat extends ORecordAbstract<String> implements ORecordStrin
 
 	@Override
 	public byte[] toStream() {
-		return OBinaryProtocol.string2bytes(value());
+		return _source != null ? _source : OBinaryProtocol.string2bytes(value());
 	}
 
 	@Override
