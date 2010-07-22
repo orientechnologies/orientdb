@@ -15,9 +15,7 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement(name = "cluster-hole")
 public class OStorageClusterHoleConfiguration extends OStorageFileConfiguration {
 	private static final String	DEF_EXTENSION				= ".och";
 	private static final String	DEF_INCREMENT_SIZE	= "50%";

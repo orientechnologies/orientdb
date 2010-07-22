@@ -15,9 +15,7 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement(name = "data-hole")
 public class OStorageDataHoleConfiguration extends OStorageFileConfiguration {
 	private static final String	DEF_EXTENSION				= ".odh";
 	private static final String	DEF_INCREMENT_SIZE	= "50%";

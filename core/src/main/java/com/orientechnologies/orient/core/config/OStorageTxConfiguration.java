@@ -15,9 +15,7 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement(name = "tx-segment")
 public class OStorageTxConfiguration extends OStorageFileConfiguration {
 	private static final String	DEF_EXTENSION				= ".otd";
 	private static final String	DEF_MAX_SIZE				= "50mb";
