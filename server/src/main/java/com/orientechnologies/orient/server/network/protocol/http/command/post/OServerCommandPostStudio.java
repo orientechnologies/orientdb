@@ -90,7 +90,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 
 		} finally {
 			if (db != null)
-				OSharedDocumentDatabase.releaseDatabase(db);
+				OSharedDocumentDatabase.release(db);
 		}
 	}
 

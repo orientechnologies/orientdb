@@ -46,7 +46,7 @@ public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
 
 		} finally {
 			if (db != null)
-				OSharedDocumentDatabase.releaseDatabase(db);
+				OSharedDocumentDatabase.release(db);
 		}
 
 		sendTextContent(iRequest, 201, OHttpUtils.STATUS_OK_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN, doc.getIdentity());

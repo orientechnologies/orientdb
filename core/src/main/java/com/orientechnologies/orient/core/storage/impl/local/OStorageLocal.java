@@ -74,7 +74,7 @@ public class OStorageLocal extends OStorageAbstract {
 	public OStorageLocal(final String iName, final String iFilePath, final String iMode) throws IOException {
 		super(iName, iFilePath, iMode);
 
-		storagePath = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(fileURL).getParent()));
+		storagePath = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getParent()));
 
 		configuration = new OStorageConfiguration(this);
 		variableParser = new OStorageVariableParser(storagePath);
@@ -116,7 +116,7 @@ public class OStorageLocal extends OStorageAbstract {
 			configuration.load();
 
 			if (configuration.isEmpty())
-				throw new OStorageException("Can't open storage because it not exists. Storage path: " + fileURL);
+				throw new OStorageException("Can't open storage because it not exists. Storage path: " + url);
 
 			// REGISTER DATA SEGMENT
 			for (OStorageDataConfiguration data : configuration.dataSegments) {
@@ -144,7 +144,7 @@ public class OStorageLocal extends OStorageAbstract {
 			dataSegments = new ODataLocal[0];
 			clusters = new OCluster[0];
 			clusterMap.clear();
-			throw new OStorageException("Can't open local storage: " + fileURL + ", with mode=" + mode, e);
+			throw new OStorageException("Can't open local storage: " + url + ", with mode=" + mode, e);
 		} finally {
 			releaseExclusiveLock(locked);
 

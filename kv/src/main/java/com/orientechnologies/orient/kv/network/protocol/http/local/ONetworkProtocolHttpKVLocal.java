@@ -84,7 +84,7 @@ public class ONetworkProtocolHttpKVLocal extends ONetworkProtocolHttpKV implemen
 			iAuthorization = "admin:admin";
 
 		try {
-			db = OSharedBinaryDatabase.acquireDatabase(dbName + ":" + iAuthorization);
+			db = OSharedBinaryDatabase.acquire(dbName + ":" + iAuthorization);
 
 			return OKVDictionaryBucketManager.getDictionaryBucket(db, iBucketName, asynchMode);
 
@@ -93,7 +93,7 @@ public class ONetworkProtocolHttpKVLocal extends ONetworkProtocolHttpKV implemen
 		} finally {
 
 			if (db != null)
-				OSharedBinaryDatabase.releaseDatabase(db);
+				OSharedBinaryDatabase.release(db);
 		}
 	}
 

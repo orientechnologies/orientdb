@@ -49,7 +49,7 @@ public class OServerCommandPostAction extends OServerCommandAuthenticatedPattern
 
 		} finally {
 			if (db != null)
-				OSharedDocumentDatabase.releaseDatabase(db);
+				OSharedDocumentDatabase.release(db);
 		}
 
 		sendTextContent(iRequest, 201, OHttpUtils.STATUS_OK_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN, doc.getIdentity());

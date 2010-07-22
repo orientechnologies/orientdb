@@ -49,7 +49,7 @@ public class OTreeMapPersistentAsynch<K, V> extends OTreeMapDatabase<K, V> {
 		ODatabaseBinary db = null;
 
 		try {
-			db = OSharedBinaryDatabase.acquireDatabase(database.getName() + ":admin:admin");
+			db = OSharedBinaryDatabase.acquire(database.getName());
 
 			super.commitChanges(db);
 
@@ -59,7 +59,7 @@ public class OTreeMapPersistentAsynch<K, V> extends OTreeMapDatabase<K, V> {
 		} finally {
 
 			if (db != null)
-				OSharedBinaryDatabase.releaseDatabase(db);
+				OSharedBinaryDatabase.release(db);
 		}
 	}
 }

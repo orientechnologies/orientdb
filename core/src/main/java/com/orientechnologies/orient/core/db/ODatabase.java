@@ -94,6 +94,13 @@ public interface ODatabase {
 	public String getName();
 
 	/**
+	 * Returns the database URL.
+	 * 
+	 * @return URL of the database
+	 */
+	public String getURL();
+
+	/**
 	 * Returns the underlying storage implementation.
 	 * 
 	 * @return The underlying storage implementation

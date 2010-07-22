@@ -25,35 +25,38 @@ public class OSharedBinaryDatabase {
 	// TODO: ALLOW ONLY 1 BECAUSE THE TREE IS NOT YET FULLY TRANSACTIONAL
 	private static final ODatabasePoolAbstract<ODatabaseBinary>	dbPool	= new ODatabasePoolAbstract<ODatabaseBinary>(1, 1, false) {
 
-																																public ODatabaseBinary createNewResource(final String iDatabaseName) {
-																																	final String[] parts = iDatabaseName.split(":");
+																																				public ODatabaseBinary createNewResource(
+																																						final String iDatabaseName) {
+																																					final String[] parts = iDatabaseName.split(":");
 
-																																	if (parts.length < 2)
-																																		throw new OSecurityAccessException(
-																																				"Username and/or password missed");
+																																					if (parts.length < 2)
+																																						throw new OSecurityAccessException(
+																																								"Username and/or password missed");
 
-																																	final String path = OServerMain.server().getStoragePath(parts[0]);
+																																					final String path = OServerMain.server().getStoragePath(
+																																							parts[0]);
 
-																																	final ODatabaseBinary db = new ODatabaseBinary(path);
+																																					final ODatabaseBinary db = new ODatabaseBinary(path);
 
-																																	if (path.startsWith(OEngineMemory.NAME)) {
-																																		// CREATE AND PUT IN THE MEMORY MAPTABLE TO AVOID LOCKING (IT'S
-																																		// THREAD SAFE)
-																																		db.create();
-																																		OServerMain.server().getMemoryDatabases()
-																																				.put(iDatabaseName, db);
-																																	} else
-																																		db.open(parts[1], parts[2]);
+																																					if (path.startsWith(OEngineMemory.NAME)) {
+																																						// CREATE AND PUT IN THE MEMORY MAPTABLE TO AVOID
+																																						// LOCKING (IT'S
+																																						// THREAD SAFE)
+																																						db.create();
+																																						OServerMain.server().getMemoryDatabases()
+																																								.put(iDatabaseName, db);
+																																					} else
+																																						db.open(parts[1], parts[2]);
 
-																																	return db;
-																																}
-																															};
+																																					return db;
+																																				}
+																																			};
 
-	public static ODatabaseBinary acquireDatabase(String iName) throws InterruptedException {
-		return dbPool.acquireDatabase(iName);
+	public static ODatabaseBinary acquire(String iName) throws InterruptedException {
+		return dbPool.acquire(iName, "admin", "admin");
 	}
 
-	public static void releaseDatabase(final ODatabaseBinary iDatabase) {
-		dbPool.releaseDatabase(iDatabase.getName() + ":admin", iDatabase);
+	public static void release(final ODatabaseBinary iDatabase) {
+		dbPool.release(iDatabase);
 	}
 }

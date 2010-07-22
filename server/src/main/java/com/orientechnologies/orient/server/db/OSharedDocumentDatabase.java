@@ -58,12 +58,13 @@ public class OSharedDocumentDatabase {
 																																						}
 																																					};
 
-	public static ODatabaseDocumentTx acquireDatabase(final String iName) throws InterruptedException {
-		return dbPool.acquireDatabase(iName);
+	public static ODatabaseDocumentTx acquire(final String iName, final String iUserName, final String iUserPassword)
+			throws InterruptedException {
+		return dbPool.acquire(iName, iUserName, iUserPassword);
 	}
 
-	public static void releaseDatabase(final ODatabaseDocumentTx iDatabase) {
-		dbPool.releaseDatabase(iDatabase.getName() + ":" + iDatabase.getUser().getName(), iDatabase);
+	public static void release(final ODatabaseDocumentTx iDatabase) {
+		dbPool.release(iDatabase);
 	}
 
 	public static Map<String, OResourcePool<String, ODatabaseDocumentTx>> getDatabasePools() {

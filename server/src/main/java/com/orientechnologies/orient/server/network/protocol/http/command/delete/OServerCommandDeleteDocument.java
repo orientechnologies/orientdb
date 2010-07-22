@@ -51,7 +51,7 @@ public class OServerCommandDeleteDocument extends OServerCommandDocumentAbstract
 
 		} finally {
 			if (db != null)
-				OSharedDocumentDatabase.releaseDatabase(db);
+				OSharedDocumentDatabase.release(db);
 		}
 	}
 

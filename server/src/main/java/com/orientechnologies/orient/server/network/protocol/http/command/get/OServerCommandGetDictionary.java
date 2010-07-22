@@ -43,7 +43,7 @@ public class OServerCommandGetDictionary extends OServerCommandAuthenticatedDbAb
 
 		} finally {
 			if (db != null)
-				OSharedDocumentDatabase.releaseDatabase(db);
+				OSharedDocumentDatabase.release(db);
 		}
 	}
 

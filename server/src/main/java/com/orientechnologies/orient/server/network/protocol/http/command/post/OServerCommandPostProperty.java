@@ -51,7 +51,7 @@ public class OServerCommandPostProperty extends OServerCommandAuthenticatedDbAbs
 
 		} finally {
 			if (db != null)
-				OSharedDocumentDatabase.releaseDatabase(db);
+				OSharedDocumentDatabase.release(db);
 		}
 	}
 

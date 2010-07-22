@@ -45,7 +45,7 @@ public class OServerCommandGetDocument extends OServerCommandAuthenticatedDbAbst
 
 		} finally {
 			if (db != null)
-				OSharedDocumentDatabase.releaseDatabase(db);
+				OSharedDocumentDatabase.release(db);
 		}
 
 		if (rec == null)

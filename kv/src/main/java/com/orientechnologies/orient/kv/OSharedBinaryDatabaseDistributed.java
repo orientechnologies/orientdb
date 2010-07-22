@@ -54,7 +54,7 @@ public class OSharedBinaryDatabaseDistributed {
 																																			};
 
 	public static ODatabaseBinary acquireDatabase(String iName) throws InterruptedException {
-		final ODatabaseBinary db = dbPool.acquireDatabase(iName);
+		final ODatabaseBinary db = dbPool.acquire(iName, "admin", "admin");
 
 		// DISABLE CACHE SINCE THERE IS HAZELCAST FOR IT
 		((ODatabaseRaw) db.getUnderlying()).setUseCache(false);
@@ -63,6 +63,6 @@ public class OSharedBinaryDatabaseDistributed {
 	}
 
 	public static void releaseDatabase(final ODatabaseBinary iDatabase) {
-		dbPool.releaseDatabase(iDatabase.getName() + ":admin", iDatabase);
+		dbPool.release(iDatabase);
 	}
 }

@@ -57,7 +57,7 @@ public class OServerCommandGetClass extends OServerCommandAuthenticatedDbAbstrac
 			sendRecordsContent(iRequest, response);
 		} finally {
 			if (db != null)
-				OSharedDocumentDatabase.releaseDatabase(db);
+				OSharedDocumentDatabase.release(db);
 		}
 	}
 

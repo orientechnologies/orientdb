@@ -66,6 +66,10 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase, REC extends
 		return underlying.getName();
 	}
 
+	public String getURL() {
+		return underlying.getURL();
+	}
+
 	public OStorage getStorage() {
 		return underlying.getStorage();
 	}

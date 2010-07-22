@@ -31,7 +31,7 @@ public class OServerAdmin extends OStorageRemote {
 		super(iURL, "");
 
 		if (iURL.startsWith(OEngineRemote.NAME))
-			fileURL = iURL.substring(OEngineRemote.NAME.length() + 1);
+			url = iURL.substring(OEngineRemote.NAME.length() + 1);
 	}
 
 	public OServerAdmin connect() throws IOException {

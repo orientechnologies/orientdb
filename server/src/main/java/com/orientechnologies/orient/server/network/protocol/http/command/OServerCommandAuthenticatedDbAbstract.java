@@ -16,12 +16,14 @@
 package com.orientechnologies.orient.server.network.protocol.http.command;
 
 import java.io.IOException;
+import java.util.List;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequestException;
@@ -77,8 +79,9 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
 	private boolean authenticate(final OHttpRequest iRequest, final String iDatabaseName) throws IOException {
 		ODatabaseDocumentTx db = null;
 		try {
-			String dbName = iDatabaseName + ":" + iRequest.authorization;
-			db = OSharedDocumentDatabase.acquireDatabase(dbName);
+			final List<String> parts = OStringSerializerHelper.split(iRequest.authorization, ':');
+
+			db = OSharedDocumentDatabase.acquire(iDatabaseName, parts.get(0), parts.get(1));
 
 			// AUTHENTICATED: CREATE THE SESSION
 			iRequest.sessionId = OHttpSessionManager.getInstance().createSession();
@@ -92,7 +95,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
 			OLogManager.instance().error(this, "Can't access to the database", ODatabaseException.class, e);
 		} finally {
 			if (db != null)
-				OSharedDocumentDatabase.releaseDatabase(db);
+				OSharedDocumentDatabase.release(db);
 			else
 				// WRONG USER/PASSWD
 				sendAuthorizationRequest(iRequest, iDatabaseName);
@@ -113,6 +116,8 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
 		if (iRequest.authorization == null)
 			throw new OSecurityAccessException(iDatabaseURL, "No user and password received");
 
-		return OSharedDocumentDatabase.acquireDatabase(iDatabaseURL + ":" + iRequest.authorization);
+		final List<String> parts = OStringSerializerHelper.split(iRequest.authorization, ':');
+
+		return OSharedDocumentDatabase.acquire(iDatabaseURL, parts.get(0), parts.get(1));
 	}
 }

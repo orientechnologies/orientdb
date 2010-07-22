@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 public abstract class OStorageAbstract extends OSharedResourceAdaptive implements OStorage {
 	protected OStorageConfiguration	configuration;
 	protected String								name;
-	protected String								fileURL;
+	protected String								url;
 	protected String								mode;
 	protected OCacheRecord					cache	= new OCacheRecord(2000);
 
@@ -39,7 +39,7 @@ public abstract class OStorageAbstract extends OSharedResourceAdaptive implement
 		if (OStringSerializerHelper.contains(iName, ','))
 			throw new IllegalArgumentException("Invalid character in storage name: " + name);
 
-		fileURL = iFilePath;
+		url = iFilePath;
 		mode = iMode;
 	}
 
@@ -66,6 +66,10 @@ public abstract class OStorageAbstract extends OSharedResourceAdaptive implement
 
 	public String getName() {
 		return name;
+	}
+
+	public String getURL() {
+		return url;
 	}
 
 	@Override

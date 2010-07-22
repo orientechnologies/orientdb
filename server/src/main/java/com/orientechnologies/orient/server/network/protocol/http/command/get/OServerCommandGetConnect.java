@@ -66,7 +66,7 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 		ODatabaseDocumentTx db = null;
 		try {
 			if (urlParts.length > 2) {
-				db = OSharedDocumentDatabase.acquireDatabase(urlParts[1] + ":" + urlParts[2] + ":" + urlParts[3]);
+				db = OSharedDocumentDatabase.acquire(urlParts[1], urlParts[2], urlParts[3]);
 			} else
 				db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
 
@@ -202,7 +202,7 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, buffer.toString());
 		} finally {
 			if (db != null)
-				OSharedDocumentDatabase.releaseDatabase(db);
+				OSharedDocumentDatabase.release(db);
 		}
 	}
 

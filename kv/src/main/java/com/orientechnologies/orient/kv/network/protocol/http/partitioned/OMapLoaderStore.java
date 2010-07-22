@@ -57,7 +57,7 @@ public class OMapLoaderStore implements MapLoader<String, String>, MapStore<Stri
 		} finally {
 
 			if (db != null)
-				OSharedBinaryDatabase.releaseDatabase(db);
+				OSharedBinaryDatabase.release(db);
 		}
 	}
 
@@ -84,7 +84,7 @@ public class OMapLoaderStore implements MapLoader<String, String>, MapStore<Stri
 		} finally {
 
 			if (db != null)
-				OSharedBinaryDatabase.releaseDatabase(db);
+				OSharedBinaryDatabase.release(db);
 		}
 	}
 
@@ -109,7 +109,7 @@ public class OMapLoaderStore implements MapLoader<String, String>, MapStore<Stri
 		} finally {
 
 			if (db != null)
-				OSharedBinaryDatabase.releaseDatabase(db);
+				OSharedBinaryDatabase.release(db);
 		}
 	}
 

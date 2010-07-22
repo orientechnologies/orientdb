@@ -16,18 +16,14 @@
 package com.orientechnologies.orient.core.db;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
-public abstract class ODatabasePoolAbstract<DB extends ODatabaseRecord<?>> implements OResourcePoolListener<String, DB> {
+public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements OResourcePoolListener<String, DB> {
 
 	private static final int															DEF_WAIT_TIMEOUT	= 5000;
 	private final Map<String, OResourcePool<String, DB>>	pools							= new HashMap<String, OResourcePool<String, DB>>();
@@ -39,21 +35,19 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseRecord<?>> imple
 		this(iMinSize, iMaxSize, iEnableSecurity, DEF_WAIT_TIMEOUT);
 	}
 
-	public ODatabasePoolAbstract(final int iMinSize, final int iMaxSize, boolean iEnableSecurity, final int iTimeout) {
+	public ODatabasePoolAbstract(final int iMinSize, final int iMaxSize, final boolean iEnableSecurity, final int iTimeout) {
 		maxSize = iMaxSize;
 		enableSecurity = iEnableSecurity;
 		timeout = iTimeout;
 	}
 
-	public DB acquireDatabase(final String iURL) throws OLockException {
-		final String url = iURL.lastIndexOf(":") > -1 ? iURL.substring(0, iURL.lastIndexOf(":")) : iURL;
-
-		OResourcePool<String, DB> pool = pools.get(url);
+	public DB acquire(final String iURL, final String iUserName, final String iUserPassword) throws OLockException {
+		OResourcePool<String, DB> pool = pools.get(iURL);
 		if (pool == null) {
 			synchronized (pools) {
 				if (pool == null) {
 					pool = new OResourcePool<String, DB>(maxSize, this);
-					pools.put(url, pool);
+					pools.put(iURL, pool);
 				}
 			}
 		}
@@ -61,34 +55,20 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseRecord<?>> imple
 		return pool.getResource(iURL, timeout);
 	}
 
-	public void releaseDatabase(final String iURL, final DB iDatabase) {
+	public void release(final DB iDatabase) {
 		if (iDatabase instanceof ODatabaseRecord<?>)
+			// ASSURE TO ROOL BACK ALL PENDING OPERATIONS
 			((ODatabaseRecord<?>) iDatabase).rollback();
 
-		OResourcePool<String, DB> pool = pools.get(iURL);
+		final OResourcePool<String, DB> pool = pools.get(iDatabase.getURL());
 		if (pool == null)
-			throw new OLockException("Can't release a database URL not acquired before. URL: " + iURL);
+			throw new OLockException("Can't release a database URL not acquired before. URL: " + iDatabase.getURL());
 
 		pool.returnResource(iDatabase);
 	}
 
-	public DB reuseResource(String iKey, DB iValue) {
-		if (!enableSecurity)
-			return iValue;
-
-		final List<String> parts = OStringSerializerHelper.split(iKey, ':');
-
-		if (parts.size() < 3)
-			throw new IllegalArgumentException("Missed user or password");
-
-		if (iValue.getUser() != null) {
-			final OUser user = iValue.getMetadata().getSecurity().getUser(parts.get(1));
-			if (!user.checkPassword(parts.get(2)))
-				throw new OSecurityAccessException(iValue.getName(), "Wrong user/password");
-		}
-
-		return null;
-
+	public DB reuseResource(final String iKey, final DB iValue) {
+		return iValue;
 	}
 
 	public Map<String, OResourcePool<String, DB>> getPools() {

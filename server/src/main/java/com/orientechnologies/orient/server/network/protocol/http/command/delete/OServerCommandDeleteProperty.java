@@ -49,7 +49,7 @@ public class OServerCommandDeleteProperty extends OServerCommandAuthenticatedDbA
 
 		} finally {
 			if (db != null)
-				OSharedDocumentDatabase.releaseDatabase(db);
+				OSharedDocumentDatabase.release(db);
 		}
 	}
 

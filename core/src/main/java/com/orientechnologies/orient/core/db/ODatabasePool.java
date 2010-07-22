@@ -15,16 +15,13 @@ package com.orientechnologies.orient.core.db;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import java.util.Map;
-
-import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 
 public class ODatabasePool {
-	private static ODatabasePoolAbstract<ODatabaseDocumentTx>	dbPool;
-	private static volatile Object														lock	= new Object();
+	private static ODatabasePoolAbstract<ODatabase>	dbPool;
+	private static volatile Object									lock	= new Object();
 
 	public static void setup() {
 		setup(1, 20);
@@ -34,7 +31,7 @@ public class ODatabasePool {
 		if (dbPool == null)
 			synchronized (lock) {
 				if (dbPool == null) {
-					dbPool = new ODatabasePoolAbstract<ODatabaseDocumentTx>(iMinSize, iMaxSize, true) {
+					dbPool = new ODatabasePoolAbstract<ODatabase>(iMinSize, iMaxSize, true) {
 
 						public ODatabaseDocumentTx createNewResource(final String iDatabaseName) {
 							final String[] parts = iDatabaseName.split(":");
@@ -55,22 +52,15 @@ public class ODatabasePool {
 			}
 	}
 
-	public static ODatabaseDocumentTx acquireDatabase(final String iName) {
+	public static ODatabase acquire(final String iName, final String iUserName, final String iUserPassword) {
 		setup();
-		return dbPool.acquireDatabase(iName);
+		return dbPool.acquire(iName, iUserName, iUserPassword);
 	}
 
-	public static void releaseDatabase(final ODatabaseDocumentTx iDatabase) {
+	public static void release(final ODatabase iDatabase) {
 		if (dbPool == null)
 			throw new OConfigurationException("Database pool is not initialized");
 
-		dbPool.releaseDatabase(iDatabase.getName() + ":" + iDatabase.getUser().getName(), iDatabase);
-	}
-
-	public static Map<String, OResourcePool<String, ODatabaseDocumentTx>> getDatabasePools() {
-		if (dbPool == null)
-			throw new OConfigurationException("Database pool is not initialized");
-
-		return dbPool.getPools();
+		dbPool.release(iDatabase);
 	}
 }

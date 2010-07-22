@@ -45,7 +45,7 @@ public class OServerCommandDeleteClass extends OServerCommandAuthenticatedDbAbst
 
 		} finally {
 			if (db != null)
-				OSharedDocumentDatabase.releaseDatabase(db);
+				OSharedDocumentDatabase.release(db);
 		}
 	}
 

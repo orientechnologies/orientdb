@@ -912,32 +912,32 @@ public class OStorageRemote extends OStorageAbstract {
 		String remoteHost;
 		String[] remotePorts;
 
-		int dbPos = fileURL.indexOf("/");
+		int dbPos = url.indexOf("/");
 		if (dbPos == -1) {
 			// SHORT FORM
-			name = fileURL;
+			name = url;
 			remoteHost = getDefaultHost();
 			remotePorts = getDefaultPort();
 		} else {
-			name = fileURL.substring(dbPos + 1);
+			name = url.substring(dbPos + 1);
 
 			int startPos = 0;
 			int endPos = 0;
 
 			while (endPos < dbPos) {
-				if (fileURL.indexOf(ADDRESS_SEPARATOR, startPos) > -1)
-					endPos = fileURL.indexOf(ADDRESS_SEPARATOR, startPos);
+				if (url.indexOf(ADDRESS_SEPARATOR, startPos) > -1)
+					endPos = url.indexOf(ADDRESS_SEPARATOR, startPos);
 				else
 					endPos = dbPos;
 
-				int posRemotePort = fileURL.indexOf(":", startPos);
+				int posRemotePort = url.indexOf(":", startPos);
 
 				if (posRemotePort != -1 && posRemotePort < endPos) {
-					remoteHost = fileURL.substring(startPos, posRemotePort);
-					remotePorts = fileURL.substring(posRemotePort + 1, endPos).split("_");
+					remoteHost = url.substring(startPos, posRemotePort);
+					remotePorts = url.substring(posRemotePort + 1, endPos).split("_");
 					startPos = endPos + 1;
 				} else {
-					remoteHost = fileURL.substring(startPos, endPos);
+					remoteHost = url.substring(startPos, endPos);
 					remotePorts = getDefaultPort();
 					startPos = endPos + 1;
 				}

@@ -57,7 +57,7 @@ public class OServerCommandPostQuery extends OServerCommandAuthenticatedDbAbstra
 
 		} finally {
 			if (db != null)
-				OSharedDocumentDatabase.releaseDatabase(db);
+				OSharedDocumentDatabase.release(db);
 		}
 
 		sendRecordsContent(iRequest, response);

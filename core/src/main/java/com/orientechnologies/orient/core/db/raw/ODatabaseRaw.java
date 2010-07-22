@@ -197,6 +197,10 @@ public class ODatabaseRaw implements ODatabase {
 		return storage != null ? storage.getName() : "<no-name>";
 	}
 
+	public String getURL() {
+		return storage != null ? storage.getURL() : "<no-url>";
+	}
+
 	@Override
 	public void finalize() {
 		close();
