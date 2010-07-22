@@ -55,6 +55,19 @@ public class ORecordFactory {
 		return instance;
 	}
 
+	public static String getRecordTypeName(final byte iRecordType) {
+		if (iRecordType == ODocument.RECORD_TYPE)
+			return "document";
+		else if (iRecordType == ORecordFlat.RECORD_TYPE)
+			return "flat";
+		else if (iRecordType == ORecordBytes.RECORD_TYPE)
+			return "bytes";
+		else if (iRecordType == ORecordColumn.RECORD_TYPE)
+			return "column";
+
+		throw new IllegalArgumentException("Unsupported record type" + iRecordType);
+	}
+
 	public static ORecordInternal<?> newInstance(final byte iRecordType) {
 		if (iRecordType == ODocument.RECORD_TYPE)
 			return new ODocument();
@@ -65,6 +78,6 @@ public class ORecordFactory {
 		else if (iRecordType == ORecordColumn.RECORD_TYPE)
 			return new ORecordColumn();
 
-		throw new IllegalArgumentException("Unsuppurted record type" + iRecordType);
+		throw new IllegalArgumentException("Unsupported record type" + iRecordType);
 	}
 }
