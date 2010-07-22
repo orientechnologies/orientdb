@@ -18,7 +18,7 @@ package com.orientechnologies.orient.test.java.serialization;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 public class OrientStringContainsSpeedTest {
-	private static final String	TEXT	= "Ciao, questa, è, una, prova. Che ne pensi?";
+	private static final String	TEXT	= "Ciao, questa, e, una, prova. Che ne pensi?";
 	private static final int		MAX		= 10000000;
 
 	public static void main(String[] iArgs) {

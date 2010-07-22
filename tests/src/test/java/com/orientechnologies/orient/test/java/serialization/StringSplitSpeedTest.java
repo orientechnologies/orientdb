@@ -16,7 +16,7 @@
 package com.orientechnologies.orient.test.java.serialization;
 
 public class StringSplitSpeedTest {
-	private static final String	TEXT	= "Ciao, questa, è, una, prova. Che ne pensi?";
+	private static final String	TEXT	= "Ciao, questa, e, una, prova. Che ne pensi?";
 	private static final int		MAX		= 10000000;
 
 	public static void main(String[] iArgs) {
