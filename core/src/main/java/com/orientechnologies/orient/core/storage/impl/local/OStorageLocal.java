@@ -521,6 +521,7 @@ public class OStorageLocal extends OStorageAbstract {
 					// RESET CURRENT RECORD
 					ioRecord.reset();
 
+				ioRecord.setVersion(recordBuffer.version);
 				ioRecord.setIdentity(cluster.getId(), positionInPhyCluster);
 				ioRecord.fromStream(recordBuffer.buffer);
 				if (!iListener.foreach(ioRecord))

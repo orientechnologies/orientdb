@@ -304,4 +304,81 @@ public class SQLSelectTest {
 
 		database.close();
 	}
+
+	@Test
+	public void queryRecordAttribRid() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where @rid = 11:0")).execute();
+
+		Assert.assertTrue(result.size() == 1);
+
+		for (ODocument d : result) {
+			Assert.assertTrue(d.getIdentity().toString().equals("11:0"));
+		}
+
+		database.close();
+	}
+
+	@Test
+	public void queryRecordAttribClass() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where @class = 'Profile'"))
+				.execute();
+
+		Assert.assertTrue(result.size() != 0);
+
+		for (ODocument d : result) {
+			Assert.assertTrue(d.getClassName().equals("Profile"));
+		}
+
+		database.close();
+	}
+
+	@Test
+	public void queryRecordAttribVersion() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where @version > 0")).execute();
+
+		Assert.assertTrue(result.size() != 0);
+
+		for (ODocument d : result) {
+			Assert.assertTrue(d.getVersion() >0);
+		}
+
+		database.close();
+	}
+
+	@Test
+	public void queryRecordAttribSize() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where @size >= 50")).execute();
+
+		Assert.assertTrue(result.size() != 0);
+
+		for (ODocument d : result) {
+			Assert.assertTrue(d.toStream().length >= 50);
+		}
+
+		database.close();
+	}
+
+	@Test
+	public void queryRecordAttribType() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where @type = 'document'"))
+				.execute();
+
+		Assert.assertTrue(result.size() != 0);
+
+		for (ODocument d : result) {
+			Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
+		}
+
+		database.close();
+	}
 }

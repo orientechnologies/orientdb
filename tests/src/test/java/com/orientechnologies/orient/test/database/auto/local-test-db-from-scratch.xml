@@ -75,14 +75,14 @@
 			<class name="com.orientechnologies.orient.test.database.auto.GraphTestFixedDensity" />
 		</classes>
 	</test>
-	<test name="sql-select">
-		<classes>
-			<class name="com.orientechnologies.orient.test.database.auto.SQLSelectTest" />
-		</classes>
-	</test>
 	<test name="sql-insert">
 		<classes>
 			<class name="com.orientechnologies.orient.test.database.auto.SQLInsertTest" />
+		</classes>
+	</test>
+	<test name="sql-select">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.SQLSelectTest" />
 		</classes>
 	</test>
 	<test name="sql-update">

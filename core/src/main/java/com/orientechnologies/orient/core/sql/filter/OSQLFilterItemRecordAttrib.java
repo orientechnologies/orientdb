@@ -23,7 +23,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 
 /**
- * Represent a special attribute of the record such as:
+ * Represent a special attribute value taken directly from the record such as:
  * <ul>
  * <li>@rid, the record id</li>
  * <li>@class, the record class if it's schema aware</li>
@@ -41,20 +41,19 @@ public class OSQLFilterItemRecordAttrib extends OSQLFilterItemAbstract {
 	}
 
 	public Object getValue(final ORecordInternal<?> iRecord) {
-		if (name.equals("@rid"))
+		if (name.equals("@RID"))
 			return transformValue(iRecord.getDatabase(), iRecord.getIdentity());
-		else if (name.equals("@version"))
+		else if (name.equals("@VERSION"))
 			return transformValue(iRecord.getDatabase(), iRecord.getVersion());
-		else if (name.equals("@class") && iRecord instanceof ORecordSchemaAware<?>)
+		else if (name.equals("@CLASS") && iRecord instanceof ORecordSchemaAware<?>)
 			return transformValue(iRecord.getDatabase(), ((ORecordSchemaAware<?>) iRecord).getClassName());
-		else if (name.equals("@type"))
+		else if (name.equals("@TYPE"))
 			return transformValue(iRecord.getDatabase(), ORecordFactory.getRecordTypeName(iRecord.getRecordType()));
-		else if (name.equals("@size")) {
-			byte[] stream;
+		else if (name.equals("@SIZE")) {
 			try {
-				stream = iRecord.toStream();
+				final byte[] stream = iRecord.toStream();
 				if (stream != null)
-					transformValue(iRecord.getDatabase(), stream.length);
+					return transformValue(iRecord.getDatabase(), stream.length);
 			} catch (IOException e) {
 			}
 		}

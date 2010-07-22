@@ -221,6 +221,10 @@ public class OSQLFilter extends OCommandToParse {
 				throw new OQueryParsingException("Missed column number", text, currentPos);
 			result = new OSQLFilterItemColumn(this, parameters.get(0));
 
+		} else if (words[0].startsWith("@")) {
+			// RECORD ATTRIB
+			result = new OSQLFilterItemRecordAttrib(this, words[0]);
+
 		} else if (words[0].startsWith(OSQLFilterItemFieldAll.NAME + OQueryHelper.OPEN_BRACE)) {
 
 			result = new OSQLFilterItemFieldAll(this, words[1]);
@@ -296,8 +300,8 @@ public class OSQLFilter extends OCommandToParse {
 				}
 			} else if (c == ' ' && openBraces == 0) {
 				break;
-			} else if (!Character.isLetter(c) && !Character.isDigit(c) && c != '.' && c != ':' && c != '-' && c != '+' && openBraces == 0
-					&& openBraket == 0) {
+			} else if (!Character.isLetter(c) && !Character.isDigit(c) && c != '.' && c != ':' && c != '-' && c != '+' && c != '@'
+					&& openBraces == 0 && openBraket == 0) {
 				if (iAdvanceWhenNotFound)
 					currentPos++;
 				break;

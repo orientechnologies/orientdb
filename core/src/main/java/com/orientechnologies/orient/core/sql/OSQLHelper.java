@@ -119,7 +119,7 @@ public class OSQLHelper {
 			final List<String> items = OStringSerializerHelper.smartSplit(iValue.substring(1, iValue.length() - 1),
 					OStringSerializerHelper.RECORD_SEPARATOR);
 
-			List<Object> coll = new ArrayList<Object>();
+			final List<Object> coll = new ArrayList<Object>();
 			for (String item : items) {
 				coll.add(parseValue(iDatabase, item));
 			}
@@ -130,7 +130,7 @@ public class OSQLHelper {
 			fieldValue = new ORecordId(iValue.trim());
 		else {
 
-			String upperCase = iValue.toUpperCase();
+			final String upperCase = iValue.toUpperCase();
 			if (upperCase.equals("NULL"))
 				// NULL
 				fieldValue = null;
