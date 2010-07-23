@@ -45,12 +45,11 @@ public class ODatabaseGraphTx extends ODatabaseBridgeWrapperAbstract<ODatabaseDo
 			// CREATE THE META MODEL USING THE ORIENT SCHEMA
 			final OClass vertex = underlying.getMetadata().getSchema()
 					.createClass(OGraphVertex.CLASS_NAME, underlying.addPhysicalCluster(OGraphVertex.CLASS_NAME));
-			final OClass edge = underlying.getMetadata().getSchema()
-					.createClass(OGraphEdge.CLASS_NAME, underlying.addPhysicalCluster(OGraphEdge.CLASS_NAME));
+			final OClass edge = underlying.getMetadata().getSchema().createClass(OGraphEdge.CLASS_NAME);
 
 			edge.createProperty(OGraphEdge.IN, OType.LINK, vertex);
 			edge.createProperty(OGraphEdge.OUT, OType.LINK, vertex);
-			
+
 			vertex.createProperty(OGraphVertex.FIELD_IN_EDGES, OType.EMBEDDEDLIST, edge);
 			vertex.createProperty(OGraphVertex.FIELD_OUT_EDGES, OType.EMBEDDEDLIST, edge);
 
