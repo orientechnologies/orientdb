@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityReso
 import com.orientechnologies.orient.core.metadata.security.ORole;
 
 /**
- * SQL CREATE LINK command: Transform a JOIN relationship to a physical LINK
+ * SQL CREATE PROPERTY command: Creates a new property in the target class.
  * 
  * @author Luca Garulli
  * 
@@ -84,7 +84,7 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLPermis
 	}
 
 	/**
-	 * Execute the GRANT.
+	 * Execute the CREATE PROPERTY.
 	 */
 	public Object execute(final Object... iArgs) {
 		if (type == null)
@@ -112,14 +112,14 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLPermis
 		}
 
 		if (linkedClass != null)
-			sourceClass.createProperty(fieldName, type, linkedClass);
+			prop = sourceClass.createProperty(fieldName, type, linkedClass);
 		else if (linkedType != null)
-			sourceClass.createProperty(fieldName, type, linkedType);
+			prop = sourceClass.createProperty(fieldName, type, linkedType);
 		else
-			sourceClass.createProperty(fieldName, type);
+			prop = sourceClass.createProperty(fieldName, type);
 
 		database.getMetadata().getSchema().save();
 
-		return 1;
+		return prop.getId();
 	}
 }
