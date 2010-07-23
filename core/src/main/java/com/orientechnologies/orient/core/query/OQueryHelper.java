@@ -103,6 +103,6 @@ public class OQueryHelper {
 		if (closePos == -1)
 			return EMPTY_PARAMETERS;
 
-		return OStringSerializerHelper.split(iText.substring(openPos + 1, closePos), COLLECTION_SEPARATOR);
+		return OStringSerializerHelper.split(iText.substring(openPos + 1, closePos), COLLECTION_SEPARATOR, ' ');
 	}
 }

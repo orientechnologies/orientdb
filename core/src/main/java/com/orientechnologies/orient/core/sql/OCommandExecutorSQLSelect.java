@@ -95,8 +95,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		// TODO: SUPPORTS MULTIPLE CLASSES LIKE A SQL JOIN
 		final int[] clusterIds;
 
-		if (compiledFilter.getSourceClasses() != null) {
-			String firstClass = compiledFilter.getSourceClasses().keySet().iterator().next();
+		if (compiledFilter.getTargetClasses() != null) {
+			String firstClass = compiledFilter.getTargetClasses().keySet().iterator().next();
 
 			OClass cls = database.getMetadata().getSchema().getClass(firstClass.toLowerCase());
 			if (cls == null)
@@ -121,8 +121,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				// NO INDEXES: SCAN THE ENTIRE CLUSTER
 				scanEntireClusters(clusterIds);
 
-		} else if (compiledFilter.getSourceClusters() != null) {
-			String firstCluster = compiledFilter.getSourceClusters().keySet().iterator().next();
+		} else if (compiledFilter.getTargetClusters() != null) {
+			String firstCluster = compiledFilter.getTargetClusters().keySet().iterator().next();
 
 			if (firstCluster == null || firstCluster.length() == 0)
 				throw new OCommandExecutionException("No cluster or schema class selected in query");
@@ -137,10 +137,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, firstCluster.toLowerCase(), clusterIds[0]);
 
 			scanEntireClusters(clusterIds);
-		} else if (compiledFilter.getSourceRecords() != null) {
+		} else if (compiledFilter.getTargetRecords() != null) {
 			ORecordId rid = new ORecordId();
 			ORecordInternal<?> record;
-			for (String rec : compiledFilter.getSourceRecords()) {
+			for (String rec : compiledFilter.getTargetRecords()) {
 				rid.fromString(rec);
 				record = database.load(rid);
 				foreach(record);

@@ -306,6 +306,35 @@ public class SQLSelectTest {
 	}
 
 	@Test
+	public void queryRecordTargetRid() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from 11:0")).execute();
+
+		Assert.assertTrue(result.size() == 1);
+
+		for (ODocument d : result) {
+			Assert.assertTrue(d.getIdentity().toString().equals("11:0"));
+		}
+
+		database.close();
+	}
+
+	@Test
+	public void queryRecordTargetRids() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from [11:0, 11:1]")).execute();
+
+		Assert.assertTrue(result.size() == 2);
+
+		Assert.assertTrue(result.get(0).getIdentity().toString().equals("11:0"));
+		Assert.assertTrue(result.get(1).getIdentity().toString().equals("11:1"));
+
+		database.close();
+	}
+
+	@Test
 	public void queryRecordAttribRid() {
 		database.open("admin", "admin");
 

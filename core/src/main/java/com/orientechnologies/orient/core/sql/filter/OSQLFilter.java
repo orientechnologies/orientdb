@@ -42,9 +42,9 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
  */
 public class OSQLFilter extends OCommandToParse {
 	protected ODatabaseRecord<?>	database;
-	protected List<String>				sourceRecords;
-	protected Map<String, String>	sourceClusters;
-	protected Map<String, String>	sourceClasses;
+	protected List<String>				targetRecords;
+	protected Map<String, String>	targetClusters;
+	protected Map<String, String>	targetClasses;
 	protected Set<OProperty>			properties	= new HashSet<OProperty>();
 	protected OSQLFilterCondition	rootCondition;
 	protected List<String>				recordTransformed;
@@ -56,7 +56,7 @@ public class OSQLFilter extends OCommandToParse {
 			text = iText.trim();
 			textUpperCase = text.toUpperCase();
 
-			if (extractRecordSets()) {
+			if (extractTargets()) {
 				// IF WHERE EXISTS EXTRACT CONDITIONS
 				rootCondition = extractConditions(null);
 			}
@@ -73,7 +73,7 @@ public class OSQLFilter extends OCommandToParse {
 		return (Boolean) rootCondition.evaluate(iRecord);
 	}
 
-	private boolean extractRecordSets() {
+	private boolean extractTargets() {
 		jumpWhiteSpaces();
 
 		int nextPosition;
@@ -87,8 +87,13 @@ public class OSQLFilter extends OCommandToParse {
 
 		final String txt = textUpperCase.substring(currentPos, endPosition);
 
-		if (txt.startsWith(OQueryHelper.OPEN_COLLECTION)) {
-			sourceRecords = OQueryHelper.getCollection(txt);
+		if (Character.isDigit(txt.charAt(0))) {
+			// UNIQUE RID
+			targetRecords = new ArrayList<String>();
+			targetRecords.add(text);
+		} else if (txt.startsWith(OQueryHelper.OPEN_COLLECTION)) {
+			// COLLECTION OF RIDS
+			targetRecords = OQueryHelper.getCollection(txt);
 		} else {
 			final List<String> items = OStringSerializerHelper.split(txt, ',');
 			if (items == null || items.size() == 0)
@@ -113,18 +118,18 @@ public class OSQLFilter extends OCommandToParse {
 				subjectToMatch = subjectName;
 				if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX)) {
 					// REGISTER AS CLUSTER
-					if (sourceClusters == null)
-						sourceClusters = new HashMap<String, String>();
-					sourceClusters.put(subjectName.substring(OCommandExecutorSQLAbstract.CLUSTER_PREFIX.length()), alias);
+					if (targetClusters == null)
+						targetClusters = new HashMap<String, String>();
+					targetClusters.put(subjectName.substring(OCommandExecutorSQLAbstract.CLUSTER_PREFIX.length()), alias);
 				} else {
 					if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX))
 						// REGISTER AS CLASS
 						subjectName = subjectName.substring(OCommandExecutorSQLAbstract.CLASS_PREFIX.length());
 
 					// REGISTER AS CLASS
-					if (sourceClasses == null)
-						sourceClasses = new HashMap<String, String>();
-					sourceClasses.put(subjectName, alias);
+					if (targetClasses == null)
+						targetClasses = new HashMap<String, String>();
+					targetClasses.put(subjectName, alias);
 				}
 			}
 		}
@@ -258,16 +263,16 @@ public class OSQLFilter extends OCommandToParse {
 		return result;
 	}
 
-	public Map<String, String> getSourceClusters() {
-		return sourceClusters;
+	public Map<String, String> getTargetClusters() {
+		return targetClusters;
 	}
 
-	public Map<String, String> getSourceClasses() {
-		return sourceClasses;
+	public Map<String, String> getTargetClasses() {
+		return targetClasses;
 	}
 
-	public List<String> getSourceRecords() {
-		return sourceRecords;
+	public List<String> getTargetRecords() {
+		return targetRecords;
 	}
 
 	public OSQLFilterCondition getRootCondition() {

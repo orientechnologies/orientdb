@@ -218,7 +218,7 @@ public abstract class OStringSerializerHelper {
 		return parts;
 	}
 
-	public static List<String> split(final String iSource, final char iRecordSeparator) {
+	public static List<String> split(final String iSource, final char iRecordSeparator, final char... iJumpCharacters) {
 		final ArrayList<String> parts = new ArrayList<String>();
 		final int max = iSource.length();
 		final StringBuilder buffer = new StringBuilder();
@@ -230,8 +230,21 @@ public abstract class OStringSerializerHelper {
 			if (c == iRecordSeparator) {
 				parts.add(buffer.toString());
 				buffer.setLength(0);
-			} else
-				buffer.append(c);
+			} else {
+				boolean toAppend = true;
+				if (iJumpCharacters.length > 0 && buffer.length() == 0) {
+					// CHECK IF IT'S A CHAR TO JUMP
+					for (char j : iJumpCharacters) {
+						if (c == j) {
+							// JUMP THE CHAR
+							toAppend = false;
+							break;
+						}
+					}
+				}
+				if (toAppend)
+					buffer.append(c);
+			}
 		}
 
 		parts.add(buffer.toString());
