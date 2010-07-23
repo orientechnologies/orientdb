@@ -58,7 +58,7 @@ function fillDynaTable(iTable, iTitle, iColumnsNames, iColumnsModel, iData,
 		multiselect : false,
 		viewrecords : true,
 		gridview : true,
-		sortname : "_id",
+		sortname : "@id",
 		sortorder : "asc",
 		caption : iTitle,
 		loadonce : true,
@@ -166,8 +166,8 @@ function displayResultSet(result, schema) {
 	var columnModel = new Array();
 
 	columnModel.push( {
-		"name" : "_id",
-		"index" : "_id",
+		"name" : "@id",
+		"index" : "@id",
 		"width" : 30,
 		"classes" : "cell_readonly",
 		searchoptions : {
@@ -175,8 +175,8 @@ function displayResultSet(result, schema) {
 		}
 	});
 	columnModel.push( {
-		"name" : "_ver",
-		"index" : "_ver",
+		"name" : "@ver",
+		"index" : "@ver",
 		"width" : 30,
 		"classes" : "cell_readonly",
 		searchoptions : {
@@ -184,8 +184,8 @@ function displayResultSet(result, schema) {
 		}
 	});
 	columnModel.push( {
-		"name" : "_class",
-		"index" : "_class",
+		"name" : "@class",
+		"index" : "@class",
 		"width" : 30,
 		"classes" : "cell_readonly",
 		searchoptions : {
@@ -193,7 +193,7 @@ function displayResultSet(result, schema) {
 		}
 	});
 	columnModel.push( {
-		"name" : "_class",
+		"name" : "@class",
 		"index" : "_className",
 		edittype : "select",
 		editoptions : {
@@ -254,7 +254,7 @@ function displayResultSet(result, schema) {
 
 		editFormatter = formatter;
 
-		if (col.charAt(0) !== '_') {
+		if (col.charAt(0) !== '@') {
 			columnModel.push( {
 				name : columnNames[col],
 				editable : true,
@@ -277,7 +277,7 @@ function displayResultSet(result, schema) {
 	jQuery($('#queryResultTable')).jqGrid('GridUnload');
 	fillDynaTable($('#queryResultTable'), "Resultset", columnNames,
 			columnModel, result, {
-				sortname : '_id',
+				sortname : '@id',
 				width : 400,
 				height : 300,
 				editurl : getStudioURL('document'),
@@ -289,7 +289,7 @@ function displayResultSet(result, schema) {
 					}
 
 					var recId = jQuery('#queryResultTable').jqGrid(
-							'getRowData', id)["_id"];
+							'getRowData', id)["@id"];
 					jQuery('#queryResultTable').jqGrid('editRow', id, true,
 							null, function(response, postdata) {
 								jQuery("#output").val(response.responseText);
@@ -316,7 +316,7 @@ function displayResultSet(result, schema) {
 						'getGridParam', 'selrow');
 				if (selectedRow != null) {
 					var recId = jQuery('#queryResultTable').jqGrid(
-							'getRowData', selectedRow)["_id"];
+							'getRowData', selectedRow)["@id"];
 					jQuery("#queryResultTable").jqGrid(
 							'delGridRow',
 							selectedRow,

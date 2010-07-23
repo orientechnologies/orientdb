@@ -35,9 +35,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 	public static final String								NAME							= "json";
 	public static final ORecordSerializerJSON	INSTANCE					= new ORecordSerializerJSON();
 
-	public static final String								ATTRIBUTE_ID			= "_id";
-	public static final String								ATTRIBUTE_VERSION	= "_ver";
-	public static final String								ATTRIBUTE_CLASS		= "_class";
+	public static final String								ATTRIBUTE_ID			= "@id";
+	public static final String								ATTRIBUTE_VERSION	= "@ver";
+	public static final String								ATTRIBUTE_CLASS		= "@class";
 
 	@Override
 	public ORecordInternal<?> fromString(final ODatabaseRecord<?> iDatabase, String iSource, final ORecordInternal<?> iRecord) {
