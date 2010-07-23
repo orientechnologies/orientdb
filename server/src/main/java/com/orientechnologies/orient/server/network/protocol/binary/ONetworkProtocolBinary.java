@@ -310,7 +310,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 					} else
 						channel.writeByte((byte) 0);
-				}
+				} else
+					channel.writeByte((byte) 0);
 				break;
 			}
 
