@@ -247,11 +247,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		long start = System.currentTimeMillis();
 		currentDatabase.query(new OSQLAsynchQuery<ODocument>(iQueryText, limit, new OCommandResultListener() {
 			public boolean result(final Object iRecord) {
-//				if (currentResultSet.size() >= limit) {
-//					printHeaderLine(columns);
-//					out.println("\nResultset contains more items not displayed (max=" + limit + ")");
-//					return true;
-//				}
+				// if (currentResultSet.size() >= limit) {
+				// printHeaderLine(columns);
+				// out.println("\nResultset contains more items not displayed (max=" + limit + ")");
+				// return true;
+				// }
 
 				ORecordSchemaAwareAbstract<?> record = (ORecordSchemaAwareAbstract<?>) iRecord;
 
@@ -517,7 +517,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		String[] clusters = iClusters.split(",");
 
 		try {
-			new OConsoleDatabaseExport(currentDatabase, iOutputFilePath, this).exportClusters(clusters, 0).close();
+			OConsoleDatabaseExport exp = new OConsoleDatabaseExport(currentDatabase, iOutputFilePath, this);
+			exp.exportClusters(clusters, 0);
+			exp.close();
+			
 			out.println();
 		} catch (ODatabaseExportException e) {
 			out.println("ERROR: " + e.toString());

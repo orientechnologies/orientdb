@@ -74,7 +74,8 @@ public class OConsoleDatabaseExport {
 		return this;
 	}
 
-	public OConsoleDatabaseExport exportClusters(final String[] iClusters, final int iLevel) throws IOException {
+	public long exportClusters(final String[] iClusters, final int iLevel) throws IOException {
+		long totalRecords = 0;
 		for (String clusterName : iClusters) {
 			long recordTot = database.countClusterElements(clusterName);
 			listener.onMessage("\n- Exporting cluster '" + clusterName + "' (records=" + recordTot + ") -> ");
@@ -95,9 +96,14 @@ public class OConsoleDatabaseExport {
 
 			listener.onMessage("OK");
 
+			totalRecords += recordTot;
+
 			writer.endObject(iLevel, true);
 		}
-		return this;
+
+		listener.onMessage("\n\nDone. Exported " + totalRecords + " records\n");
+
+		return totalRecords;
 	}
 
 	public void close() {
@@ -210,7 +216,7 @@ public class OConsoleDatabaseExport {
 			rec.load();
 
 		if (rec instanceof ODocument) {
-			ODocument vobj = (ODocument) rec;
+			final ODocument vobj = (ODocument) rec;
 
 			writer.writeAttribute(0, false, ATTRIBUTE_TYPE, "v");
 
@@ -237,13 +243,13 @@ public class OConsoleDatabaseExport {
 				writer.endCollection(5, true);
 			}
 		} else if (rec instanceof ORecordFlat) {
-			ORecordFlat flat = (ORecordFlat) rec;
+			final ORecordFlat flat = (ORecordFlat) rec;
 
 			writer.writeAttribute(0, false, ATTRIBUTE_TYPE, "f");
 			writer.writeAttribute(6, true, "value", flat.value());
 		} else if (rec instanceof ORecordBytes) {
 
-			ORecordBytes bytes = (ORecordBytes) rec;
+			final ORecordBytes bytes = (ORecordBytes) rec;
 
 			writer.writeAttribute(0, false, ATTRIBUTE_TYPE, "b");
 			writer.writeAttribute(6, true, "value", bytes.toStream());
