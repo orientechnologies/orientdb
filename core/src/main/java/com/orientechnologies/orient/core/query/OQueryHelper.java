@@ -85,11 +85,11 @@ public class OQueryHelper {
 			// EMPTY STRING: TREATS AS EMPTY
 			return EMPTY_PARAMETERS;
 
-		final List<String> pars = OStringSerializerHelper.split(iText.substring(openPos + 1, closePos), PARAMETER_SEPARATOR);
+		final List<String> pars = OStringSerializerHelper.split(iText.substring(openPos + 1, closePos), PARAMETER_SEPARATOR, ' ');
 
 		// REMOVE TAIL AND END SPACES
 		for (int i = 0; i < pars.size(); ++i)
-			pars.set(i, pars.get(i).trim());
+			pars.set(i, pars.get(i));
 
 		return pars;
 	}

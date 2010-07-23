@@ -247,6 +247,28 @@ public abstract class OStringSerializerHelper {
 			}
 		}
 
+		if (iJumpCharacters.length > 0 && buffer.length() > 0) {
+			// CHECK THE END OF LAST ITEM IF NEED TO CUT THE CHARS TO JUMP
+			char b;
+			int newSize = 0;
+			boolean found;
+			for (int i = buffer.length() - 1; i >= 0; --i) {
+				b = buffer.charAt(i);
+				found = false;
+				for (char j : iJumpCharacters) {
+					if (j == b) {
+						found = true;
+						++newSize;
+						break;
+					}
+				}
+				if (!found)
+					break;
+			}
+			if (newSize > 0)
+				buffer.setLength(buffer.length() - newSize);
+		}
+
 		parts.add(buffer.toString());
 
 		return parts;
