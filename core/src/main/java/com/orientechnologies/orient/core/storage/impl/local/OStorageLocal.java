@@ -94,6 +94,9 @@ public class OStorageLocal extends OStorageAbstract {
 				// ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS REUSED
 				return;
 
+			if (!exists())
+				throw new OStorageException("Can't open the storage " + name + " because it not exists");
+
 			open = true;
 
 			// OPEN BASIC SEGMENTS
@@ -161,17 +164,14 @@ public class OStorageLocal extends OStorageAbstract {
 		final boolean locked = acquireExclusiveLock();
 
 		try {
-			if (!configuration.isEmpty())
-				throw new OStorageException("Can't create new storage " + name + " because it already exists");
-
-			open = true;
-
 			File storageFolder = new File(storagePath);
 			if (!storageFolder.exists())
 				storageFolder.mkdir();
 
-			if (new File(storagePath + "/" + OStorage.DATA_DEFAULT_NAME + ".0" + ODataLocal.DEF_EXTENSION).exists())
+			if (exists())
 				throw new OStorageException("Can't create new storage " + name + " because it already exists");
+
+			open = true;
 
 			addDataSegment(OStorage.DATA_DEFAULT_NAME);
 
@@ -202,7 +202,7 @@ public class OStorageLocal extends OStorageAbstract {
 	}
 
 	public boolean exists() {
-		return !configuration.isEmpty();
+		return new File(storagePath + "/" + OStorage.DATA_DEFAULT_NAME + ".0" + ODataLocal.DEF_EXTENSION).exists();
 	}
 
 	public void close() {
@@ -428,8 +428,8 @@ public class OStorageLocal extends OStorageAbstract {
 		return createRecord(getClusterById(iClusterId), iContent, iRecordType);
 	}
 
-	public ORawBuffer readRecord(final ODatabaseRecord<?> iDatabase, final int iRequesterId, final int iClusterId, final long iPosition,
-			final String iFetchPlan) {
+	public ORawBuffer readRecord(final ODatabaseRecord<?> iDatabase, final int iRequesterId, final int iClusterId,
+			final long iPosition, final String iFetchPlan) {
 		checkOpeness();
 		return readRecord(iRequesterId, getClusterById(iClusterId), iPosition, true);
 	}
