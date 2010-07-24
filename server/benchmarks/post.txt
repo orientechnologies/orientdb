@@ -1,6 +1,6 @@
 {
-  "_class": "Address", 
+  "@class": "Address", 
   "type": "Residence", 
   "street": "Piazza di Spagna", 
-  "city": "-4:0"
+  "city": "14:0"
 }
