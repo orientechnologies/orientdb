@@ -135,9 +135,22 @@ public class OStorageLocalTxExecuter {
 		txSegment.clearLogEntries(iRequesterId, iTx.getId());
 
 		// UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT
+		String rid;
+		ORawBuffer cachedBuffer;
 		for (OTransactionEntry<? extends ORecord<?>> txEntry : iTx.getEntries()) {
-			if (txEntry.record.isPinned())
-				storage.getCache().pushRecord(txEntry.record.getIdentity().toString(),
+			rid = txEntry.record.getIdentity().toString();
+
+			cachedBuffer = storage.getCache().getRecord(rid);
+
+			if (cachedBuffer != null) {
+				// UPDATE CACHE
+				cachedBuffer.buffer = txEntry.record.toStream();
+				cachedBuffer.version = txEntry.record.getVersion();
+				cachedBuffer.recordType = txEntry.record.getRecordType();
+
+			} else if (txEntry.record.isPinned())
+				// INSERT NEW ENTRY IN THE CACHE
+				storage.getCache().pushRecord(rid,
 						new ORawBuffer(txEntry.record.toStream(), txEntry.record.getVersion(), txEntry.record.getRecordType()));
 		}
 	}
