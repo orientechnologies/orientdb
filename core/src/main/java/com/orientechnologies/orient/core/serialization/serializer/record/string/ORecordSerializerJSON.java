@@ -28,6 +28,8 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.ORecordStringable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
@@ -45,48 +47,69 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 		try {
 			iSource = iSource.trim();
 
-			if (!iSource.startsWith("{") || !iSource.endsWith("}"))
-				throw new OSerializationException("Error on unmarshalling JSON content: content must be embraced by { }");
+			if (iRecord instanceof ODocument) {
+				// DOCUMENT
+				if (!iSource.startsWith("{") || !iSource.endsWith("}"))
+					throw new OSerializationException("Error on unmarshalling JSON content: content must be embraced by { }");
 
-			iSource = iSource.substring(1, iSource.length() - 1).trim();
+				iSource = iSource.substring(1, iSource.length() - 1).trim();
 
-			String[] fields = OStringParser.getWords(iSource, ":,");
+				String[] fields = OStringParser.getWords(iSource, ":,");
 
-			if (fields != null && fields.length > 0) {
-				ODocument doc = (ODocument) iRecord;
+				if (fields != null && fields.length > 0) {
+					ODocument doc = (ODocument) iRecord;
 
-				boolean isNew = !doc.getIdentity().isValid();
+					boolean isNew = !doc.getIdentity().isValid();
 
-				String fieldName;
-				String fieldValue;
+					String fieldName;
+					String fieldValue;
 
-				for (int i = 0; i < fields.length; i += 2) {
-					fieldName = fields[i];
-					fieldValue = fields[i + 1];
-					if (fieldName.equals(ATTRIBUTE_CLASS))
-						doc.setClassName(fields[i + 1]);
-					else if (fieldName.equals(ATTRIBUTE_ID)) {
-						if (isNew) {
-							// NEW RECORD: SET THE RECORD ID
-							ORecordId rid = new ORecordId(fieldValue);
-							doc.setIdentity(rid.clusterId, rid.clusterPosition);
+					for (int i = 0; i < fields.length; i += 2) {
+						fieldName = fields[i];
+						fieldValue = fields[i + 1];
+						if (fieldName.equals(ATTRIBUTE_CLASS))
+							doc.setClassName(fields[i + 1]);
+						else if (fieldName.equals(ATTRIBUTE_ID)) {
+							if (isNew) {
+								// NEW RECORD: SET THE RECORD ID
+								ORecordId rid = new ORecordId(fieldValue);
+								doc.setIdentity(rid.clusterId, rid.clusterPosition);
+							}
+						} else if (fieldName.equals(ATTRIBUTE_VERSION)) {
+							if (!isNew) {
+								// UPDATE RECORD: SET THE VERSION NUMBER
+								doc.setVersion(Integer.parseInt(fieldValue));
+							}
+						} else {
+							if (fieldValue.equals("null"))
+								doc.field(fieldName, null);
+							else if (fieldValue.startsWith("{") && fieldValue.endsWith("}")) {
+								// MAP
+								Map<String, String> map = OStringSerializerHelper.getMap(fieldValue);
+								doc.field(fieldName, map);
+							} else
+								doc.field(fieldName, fieldValue);
 						}
-					} else if (fieldName.equals(ATTRIBUTE_VERSION)) {
-						if (!isNew) {
-							// UPDATE RECORD: SET THE VERSION NUMBER
-							doc.setVersion(Integer.parseInt(fieldValue));
-						}
-					} else {
-						if (fieldValue.equals("null"))
-							doc.field(fieldName, null);
-						else if (fieldValue.startsWith("{") && fieldValue.endsWith("}")) {
-							// MAP
-							Map<String, String> map = OStringSerializerHelper.getMap(fieldValue);
-							doc.field(fieldName, map);
-						} else
-							doc.field(fieldName, fieldValue);
 					}
 				}
+			} else if (iRecord instanceof ORecordColumn) {
+				// COLUMN
+
+			} else if (iRecord instanceof ORecordStringable) {
+				// FLAT
+				((ORecordStringable) iRecord).value(iSource);
+
+			} else if (iRecord instanceof ORecordBytes) {
+				// BYTES
+				int b;
+				int offset;
+				byte[] buffer = new byte[iSource.length() / 3];
+				for (int i = 0; i < buffer.length; ++i) {
+					offset = i * 3;
+					b = Integer.parseInt(iSource.substring(offset, offset + 3));
+					buffer[i] = (byte) b;
+				}
+				iRecord.fromStream(buffer);
 			}
 
 		} catch (Exception e) {

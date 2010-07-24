@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONReader;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -385,31 +386,16 @@ public class OConsoleDatabaseImport {
 
 		// CREATE THE RECORD FOLLOWING THE ORIGINAL TYPE
 		switch (type) {
-		case 'b': {
+		case 'b':
 			// BINARY
-			String value = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"value\"").readString(OJSONReader.END_OBJECT);
-
-			int b;
-			int offset;
-			byte[] buffer = new byte[value.length() / 3];
-			for (int i = 0; i < buffer.length; ++i) {
-				offset = i * 3;
-				b = Integer.parseInt(value.substring(offset, offset + 3));
-				buffer[i] = (byte) b;
-			}
-
 			if (record == null || !(record instanceof ORecordBytes))
 				record = new ORecordBytes(database);
 			else
 				record.reset();
-			record.fromStream(buffer);
 			break;
-		}
 
-		case 'v': {
+		case 'v':
 			// ODOCUMENT
-			jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT);
-
 			if (record == null || !(record instanceof ODocument))
 				record = new ODocument(database);
 			else
@@ -419,28 +405,33 @@ public class OConsoleDatabaseImport {
 				((ODocument) record).setClassName(jsonReader.readString(OJSONReader.COMMA_SEPARATOR));
 				jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT);
 			}
-
-			String obj = jsonReader.checkContent("\"fields\"").readString(OJSONReader.END_OBJECT, true);
-			record.fromJSON(obj);
 			break;
-		}
 
-		case 'f': {
+		case 'c':
+			// COLUMN
+			if (record == null || !(record instanceof ORecordColumn))
+				record = new ORecordColumn(database);
+			else
+				record.reset();
+			break;
+
+		case 'f':
 			// FLAT
-			String value = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"value\"").readString(OJSONReader.END_OBJECT);
-
 			if (record == null || !(record instanceof ORecordFlat))
 				record = new ORecordFlat(database);
 			else
 				record.reset();
-
-			((ORecordFlat) record).value(value);
 			break;
-		}
+
 		default:
 			// ERROR
 			throw new OSchemaException("Error: unsupported record type: " + type);
 		}
+
+		String value = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"value\"")
+				.readString(OJSONReader.END_OBJECT, true);
+
+		record.fromJSON(value);
 
 		// SAVE THE RECORD
 		record.setVersion(version);

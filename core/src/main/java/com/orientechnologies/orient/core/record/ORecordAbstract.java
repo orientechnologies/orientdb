@@ -141,8 +141,8 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	}
 
 	public <RET extends ORecord<T>> RET fromJSON(final String iSource) {
-		ORecordSerializerJSON.INSTANCE.fromString(_database, iSource, this);
 		setDirty();
+		ORecordSerializerJSON.INSTANCE.fromString(_database, iSource, this);
 		return (RET) this;
 	}
 

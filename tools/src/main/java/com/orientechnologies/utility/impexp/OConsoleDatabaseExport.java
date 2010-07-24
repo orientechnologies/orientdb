@@ -234,7 +234,7 @@ public class OConsoleDatabaseExport {
 
 			Object value;
 			if (vobj.fieldNames() != null && vobj.fieldNames().length > 0) {
-				writer.beginObject(5, true, "fields");
+				writer.beginObject(5, true, "value");
 				for (String f : vobj.fieldNames()) {
 					value = vobj.field(f);
 
@@ -248,7 +248,7 @@ public class OConsoleDatabaseExport {
 			writer.writeAttribute(0, false, ATTRIBUTE_TYPE, "c");
 
 			if (csv.size() > 0) {
-				writer.beginCollection(5, true, "values");
+				writer.beginCollection(5, true, "value");
 				for (int i = 0; i < csv.size(); ++i) {
 					writer.writeValue(6, true, csv.field(i));
 				}
