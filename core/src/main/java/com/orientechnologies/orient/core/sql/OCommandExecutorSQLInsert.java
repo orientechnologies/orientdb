@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.query.OQueryHelper;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
@@ -86,7 +85,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 		if (endFields == -1)
 			throw new OCommandSQLParsingException("Missed closed brace", text, beginFields);
 
-		fieldNames = OQueryHelper.getParameters(text, beginFields);
+		fieldNames = OStringSerializerHelper.getParameters(text, beginFields);
 		if (fieldNames.size() == 0)
 			throw new OCommandSQLParsingException("Set of fields is empty. Example: (name, surname)", text, endFields);
 

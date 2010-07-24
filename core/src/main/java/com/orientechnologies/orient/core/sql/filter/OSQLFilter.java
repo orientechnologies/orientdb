@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.command.OCommandToParse;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.query.OQueryHelper;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
@@ -91,9 +90,9 @@ public class OSQLFilter extends OCommandToParse {
 			// UNIQUE RID
 			targetRecords = new ArrayList<String>();
 			targetRecords.add(text);
-		} else if (txt.startsWith(OQueryHelper.OPEN_COLLECTION)) {
+		} else if (txt.charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN) {
 			// COLLECTION OF RIDS
-			targetRecords = OQueryHelper.getCollection(txt);
+			targetRecords = OStringSerializerHelper.getCollection(txt);
 		} else {
 			final List<String> items = OStringSerializerHelper.split(txt, ',');
 			if (items == null || items.size() == 0)
@@ -176,9 +175,9 @@ public class OSQLFilter extends OCommandToParse {
 				List<String> params = null;
 
 				// CHECK FOR PARAMETERS
-				if (word.endsWith(OQueryHelper.OPEN_BRACE)) {
-					params = OQueryHelper.getParameters(text, currentPos - 1);
-					currentPos = text.indexOf(OQueryHelper.CLOSED_BRACE, currentPos) + 1;
+				if (word.endsWith(OStringSerializerHelper.OPEN_BRACE)) {
+					params = OStringSerializerHelper.getParameters(text, currentPos - 1);
+					currentPos = text.indexOf(OStringSerializerHelper.CLOSED_BRACE, currentPos) + 1;
 				}
 
 				return op.configure(params);
@@ -194,7 +193,7 @@ public class OSQLFilter extends OCommandToParse {
 		if (words == null)
 			return null;
 
-		if (words[0].startsWith(OQueryHelper.OPEN_BRACE)) {
+		if (words[0].startsWith(OStringSerializerHelper.OPEN_BRACE)) {
 			braces++;
 
 			// SUB-CONDITION
@@ -210,7 +209,7 @@ public class OSQLFilter extends OCommandToParse {
 			braces--;
 
 			return subCondition;
-		} else if (words[0].startsWith(OQueryHelper.OPEN_COLLECTION)) {
+		} else if (words[0].charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN) {
 			// COLLECTION OF ELEMENTS
 			currentPos = currentPos - words[0].length() + 1;
 			final List<Object> coll = new ArrayList<Object>();
@@ -225,14 +224,14 @@ public class OSQLFilter extends OCommandToParse {
 
 				currentPos = OStringParser.jump(text, currentPos, " ,\t\r\n");
 				item = nextValue(true);
-			} while (item != null && item[0].equals(OQueryHelper.COLLECTION_SEPARATOR));
+			} while (item != null && item[0].equals(OStringSerializerHelper.COLLECTION_SEPARATOR));
 
 			currentPos++;
 
 			return coll;
 		} else if (words[0].startsWith(OCommandExecutorSQLAbstract.KEYWORD_COLUMN)) {
 
-			final List<String> parameters = OQueryHelper.getParameters(words[0]);
+			final List<String> parameters = OStringSerializerHelper.getParameters(words[0]);
 			if (parameters.size() != 1)
 				throw new OQueryParsingException("Missed column number", text, currentPos);
 			result = new OSQLFilterItemColumn(this, parameters.get(0));
@@ -241,11 +240,11 @@ public class OSQLFilter extends OCommandToParse {
 			// RECORD ATTRIB
 			result = new OSQLFilterItemRecordAttrib(this, words[0]);
 
-		} else if (words[0].startsWith(OSQLFilterItemFieldAll.NAME + OQueryHelper.OPEN_BRACE)) {
+		} else if (words[0].startsWith(OSQLFilterItemFieldAll.NAME + OStringSerializerHelper.OPEN_BRACE)) {
 
 			result = new OSQLFilterItemFieldAll(this, words[1]);
 
-		} else if (words[0].startsWith(OSQLFilterItemFieldAny.NAME + OQueryHelper.OPEN_BRACE)) {
+		} else if (words[0].startsWith(OSQLFilterItemFieldAny.NAME + OStringSerializerHelper.OPEN_BRACE)) {
 
 			result = new OSQLFilterItemFieldAny(this, words[1]);
 

@@ -16,8 +16,11 @@
 package com.orientechnologies.orient.core.serialization.serializer;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -27,16 +30,22 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 
 public abstract class OStringSerializerHelper {
-	public static final char		RECORD_SEPARATOR	= ',';
+	public static final char								RECORD_SEPARATOR			= ',';
 
-	public static final String	CLASS_SEPARATOR		= "@";
-	public static final String	LINK							= "#";
-	public static final char		EMBEDDED					= '*';
-	public static final char		COLLECTION_BEGIN	= '[';
-	public static final char		COLLECTION_END		= ']';
-	public static final char		MAP_BEGIN					= '{';
-	public static final char		MAP_END						= '}';
-	public static final String	ENTRY_SEPARATOR		= ":";
+	public static final String							CLASS_SEPARATOR				= "@";
+	public static final String							LINK									= "#";
+	public static final char								EMBEDDED							= '*';
+	public static final String							OPEN_BRACE						= "(";
+	public static final String							CLOSED_BRACE					= ")";
+	public static final char								COLLECTION_BEGIN			= '[';
+	public static final char								COLLECTION_END				= ']';
+	public static final char								MAP_BEGIN							= '{';
+	public static final char								MAP_END								= '}';
+	public static final char								ENTRY_SEPARATOR				= ':';
+	public static final char								PARAMETER_SEPARATOR		= ',';
+	public static final char								COLLECTION_SEPARATOR	= ',';
+	public static final List<String>				EMPTY_LIST						= Collections.unmodifiableList(new ArrayList<String>());
+	public static final Map<String, String>	EMPTY_MAP							= Collections.unmodifiableMap(new HashMap<String, String>());
 
 	public static Object fieldTypeFromStream(OType iType, Object iValue) {
 		if (iValue == null)
@@ -304,5 +313,70 @@ public abstract class OStringSerializerHelper {
 		}
 
 		return false;
+	}
+
+	public static List<String> getCollection(final String iText) {
+		int openPos = iText.indexOf(COLLECTION_BEGIN);
+		if (openPos == -1)
+			return EMPTY_LIST;
+
+		int closePos = iText.indexOf(COLLECTION_END, openPos + 1);
+		if (closePos == -1)
+			return EMPTY_LIST;
+
+		return split(iText.substring(openPos + 1, closePos), COLLECTION_SEPARATOR, ' ');
+	}
+
+	public static List<String> getParameters(final String iText, final int iBeginPosition) {
+		int openPos = iText.indexOf(OPEN_BRACE, iBeginPosition);
+		if (openPos == -1)
+			return EMPTY_LIST;
+
+		int closePos = iText.indexOf(CLOSED_BRACE, openPos + 1);
+		if (closePos == -1)
+			return EMPTY_LIST;
+
+		if (closePos - openPos == 1)
+			// EMPTY STRING: TREATS AS EMPTY
+			return EMPTY_LIST;
+
+		final List<String> pars = split(iText.substring(openPos + 1, closePos), PARAMETER_SEPARATOR, ' ');
+
+		// REMOVE TAIL AND END SPACES
+		for (int i = 0; i < pars.size(); ++i)
+			pars.set(i, pars.get(i));
+
+		return pars;
+	}
+
+	public static List<String> getParameters(final String iText) {
+		return getParameters(iText, 0);
+	}
+
+	public static Map<String, String> getMap(final String iText) {
+		int openPos = iText.indexOf(COLLECTION_BEGIN);
+		if (openPos == -1)
+			return EMPTY_MAP;
+
+		int closePos = iText.indexOf(COLLECTION_END, openPos + 1);
+		if (closePos == -1)
+			return EMPTY_MAP;
+
+		final List<String> entries = smartSplit(iText.substring(openPos + 1, closePos), COLLECTION_SEPARATOR);
+		if (entries.size() == 0)
+			return EMPTY_MAP;
+
+		Map<String, String> map = new HashMap<String, String>();
+
+		List<String> entry;
+		for (String item : entries) {
+			if (item != null && item.length() > 0) {
+				entry = OStringSerializerHelper.split(item, OStringSerializerHelper.ENTRY_SEPARATOR);
+
+				map.put((String) fieldTypeFromStream(OType.STRING, entry.get(0)), entry.get(1));
+			}
+		}
+
+		return map;
 	}
 }

@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.text.OChannelTextServer;
@@ -58,7 +59,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 	private final StringBuilder								requestContent			= new StringBuilder();
 	private final Map<String, OServerCommand>	exactCommands				= new HashMap<String, OServerCommand>();
 	private final Map<String, OServerCommand>	wildcardCommands		= new HashMap<String, OServerCommand>();
-	private final OBase64Utils								base64							= new OBase64Utils(null, "");
+	private final OBase64Utils								base64							= new OBase64Utils();
 
 	public ONetworkProtocolHttpAbstract() {
 		super(OServer.getThreadGroup(), "HTTP");

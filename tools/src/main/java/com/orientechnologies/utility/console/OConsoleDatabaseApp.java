@@ -52,6 +52,7 @@ import com.orientechnologies.orient.enterprise.command.script.OCommandScript;
 import com.orientechnologies.utility.impexp.OConsoleDatabaseExport;
 import com.orientechnologies.utility.impexp.OConsoleDatabaseImport;
 import com.orientechnologies.utility.impexp.ODatabaseExportException;
+import com.orientechnologies.utility.impexp.ODatabaseImportException;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandListener {
 	protected ODatabaseDocument					currentDatabase;
@@ -216,6 +217,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 	@ConsoleCommand(splitInWords = false, description = "Create a link from a JOIN")
 	public void createLink(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
 		sqlCommand("create", iCommandText, "\nCreated %d link(s) in %f sec(s).\n");
+	}
+
+	@ConsoleCommand(splitInWords = false, description = "Create a class")
+	public void createClass(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
+		sqlCommand("create", iCommandText, "\nClass created successfully with id=%d\n");
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Create a property")
@@ -520,9 +526,21 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 			OConsoleDatabaseExport exp = new OConsoleDatabaseExport(currentDatabase, iOutputFilePath, this);
 			exp.exportClusters(clusters, 0);
 			exp.close();
-			
+
 			out.println();
 		} catch (ODatabaseExportException e) {
+			out.println("ERROR: " + e.toString());
+		}
+	}
+
+	@ConsoleCommand(description = "Import a database into the current one")
+	public void importDatabase(@ConsoleParameter(name = "imput-file", description = "Input file path") final String iInputFilePath)
+			throws IOException {
+		out.println("Importing database from file " + iInputFilePath + "...");
+
+		try {
+			new OConsoleDatabaseImport(currentDatabase, iInputFilePath, this).importDatabase().close();
+		} catch (ODatabaseImportException e) {
 			out.println("ERROR: " + e.toString());
 		}
 	}

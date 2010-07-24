@@ -107,7 +107,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			String value = iValue.substring(1, iValue.length() - 1);
 
 			@SuppressWarnings("rawtypes")
-			Map map = new OLazyRecordMap(iDatabase, ODocument.RECORD_TYPE);
+			final Map map = new OLazyRecordMap(iDatabase, ODocument.RECORD_TYPE);
 
 			if (value.length() == 0)
 				return map;
@@ -115,13 +115,13 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR);
 
 			// EMBEDDED LITERALS
-			String[] entry;
+			List<String> entry;
 			String mapValue;
 			for (String item : items) {
 				if (item != null && item.length() > 0) {
-					entry = item.split(OStringSerializerHelper.ENTRY_SEPARATOR);
-					if (entry.length > 0) {
-						mapValue = entry[1];
+					entry = OStringSerializerHelper.split(item, OStringSerializerHelper.ENTRY_SEPARATOR);
+					if (entry.size() > 0) {
+						mapValue = entry.get(1);
 
 						if (iLinkedType == null) {
 							if (mapValue.length() > 0) {
@@ -145,7 +145,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 								iLinkedType = OType.EMBEDDED;
 						}
 
-						map.put((String) OStringSerializerHelper.fieldTypeFromStream(OType.STRING, entry[0]),
+						map.put((String) OStringSerializerHelper.fieldTypeFromStream(OType.STRING, entry.get(0)),
 								OStringSerializerHelper.fieldTypeFromStream(iLinkedType, mapValue));
 					}
 
@@ -154,6 +154,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 			return map;
 		}
+
 		case LINK:
 			if (iValue.length() > 1) {
 				int pos = iValue.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
@@ -161,7 +162,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					iLinkedClass = iDatabase.getMetadata().getSchema().getClass(iValue.substring(OStringSerializerHelper.LINK.length(), pos));
 				else
 					pos = 0;
-				
+
 				return new ORecordId(iValue.substring(pos + 1));
 				// return new ODocument(iDatabase, iLinkedClass != null ? iLinkedClass.getName() : null, new ORecordId(
 				// iValue.substring(pos + 1)));

@@ -175,9 +175,9 @@ public class OClass extends ODocumentWrapperNoClass {
 	}
 
 	public OProperty createProperty(final String iPropertyName, final OType iType) {
-		if (iType == OType.LINK || iType == OType.LINKLIST || iType == OType.LINKSET)
-			throw new OSchemaException("Can't add property '" + iPropertyName
-					+ "' since it contains a relationship but no linked class was received");
+//		if (iType == OType.LINK || iType == OType.LINKLIST || iType == OType.LINKSET)
+//			throw new OSchemaException("Can't add property '" + iPropertyName
+//					+ "' since it contains a relationship but no linked class was received");
 
 		return addProperty(iPropertyName, iType, fixedSize);
 	}

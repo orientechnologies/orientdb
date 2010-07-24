@@ -126,21 +126,25 @@ public class OProperty extends ODocumentWrapperNoClass {
 		if (document.field("linkedType") != null)
 			linkedType = OType.getById(((Long) document.field("linkedType")).byteValue());
 
-		final ODocument indexRecord = document.field("index");
-		// LOAD THE INDEX
-		if (indexRecord != null && indexRecord.getIdentity().isValid()) {
-			Boolean indexType = document.field("index-unique");
-			if (indexType == null)
-				// UNIQUE BY DEFAULT
-				indexType = Boolean.TRUE;
-
+		if (document.field("index") != null) {
+			setIndex((ODocument) document.field("index"), (Boolean) document.field("index-unique"));
 			try {
-				index = new OIndex(indexType, document.getDatabase(), OStorage.CLUSTER_INDEX_NAME, new ORecordId(indexRecord.getIdentity()
-						.toString()));
 				index.load();
 			} catch (IOException e) {
 				OLogManager.instance().error(this, "Can't load index for property %s", e, ODatabaseException.class, toString());
 			}
+		}
+	}
+
+	public void setIndex(final ODocument iIndexRecord, Boolean iUnique) {
+		// LOAD THE INDEX
+		if (iIndexRecord != null && iIndexRecord.getIdentity().isValid()) {
+			if (iUnique == null)
+				// UNIQUE BY DEFAULT
+				iUnique = Boolean.TRUE;
+
+			index = new OIndex(iUnique, document.getDatabase(), OStorage.CLUSTER_INDEX_NAME, new ORecordId(iIndexRecord.getIdentity()
+					.toString()));
 		}
 	}
 

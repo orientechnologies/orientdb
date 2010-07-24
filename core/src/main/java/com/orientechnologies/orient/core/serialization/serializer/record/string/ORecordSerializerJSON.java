@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.ORecordStringable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
@@ -75,8 +76,16 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 							// UPDATE RECORD: SET THE VERSION NUMBER
 							doc.setVersion(Integer.parseInt(fieldValue));
 						}
-					} else
-						doc.field(fieldName, fieldValue);
+					} else {
+						if (fieldValue.equals("null"))
+							doc.field(fieldName, null);
+						else if (fieldValue.startsWith("{") && fieldValue.endsWith("}")) {
+							// MAP
+							Map<String, String> map = OStringSerializerHelper.getMap(fieldValue);
+							doc.field(fieldName, map);
+						} else
+							doc.field(fieldName, fieldValue);
+					}
 				}
 			}
 

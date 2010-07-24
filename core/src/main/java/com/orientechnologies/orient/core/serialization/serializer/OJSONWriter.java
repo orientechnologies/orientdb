@@ -33,7 +33,7 @@ public class OJSONWriter {
 	private boolean	prettyPrint			= true;
 	private boolean	firstAttribute	= true;
 
-	public OJSONWriter(Writer out) {
+	public OJSONWriter(final Writer out) {
 		this.out = out;
 	}
 
@@ -61,7 +61,7 @@ public class OJSONWriter {
 		if (iName != null)
 			out.append("\"" + iName.toString() + "\":");
 
-		out.append("{");
+		out.append('{');
 
 		firstAttribute = true;
 		return this;
@@ -69,7 +69,7 @@ public class OJSONWriter {
 
 	public OJSONWriter endObject() throws IOException {
 		format(0, true);
-		out.append("}");
+		out.append('}');
 		return this;
 	}
 
@@ -79,7 +79,7 @@ public class OJSONWriter {
 
 	public OJSONWriter endObject(final int iIdentLevel, final boolean iNewLine) throws IOException {
 		format(iIdentLevel, iNewLine);
-		out.append("}");
+		out.append('}');
 		firstAttribute = false;
 		return this;
 	}
@@ -100,7 +100,7 @@ public class OJSONWriter {
 	public OJSONWriter endCollection(final int iIdentLevel, final boolean iNewLine) throws IOException {
 		format(iIdentLevel, iNewLine);
 		firstAttribute = false;
-		out.append("]");
+		out.append(']');
 		return this;
 	}
 
@@ -145,47 +145,57 @@ public class OJSONWriter {
 		StringBuilder buffer = new StringBuilder();
 
 		if (iValue == null)
-			buffer.append("null");
+			buffer.append("\"null\"");
 
 		else if (iValue instanceof ORecord<?>) {
 			ORecord<?> linked = (ORecord<?>) iValue;
-			if (linked.getIdentity().isValid())
-				buffer.append("\"" + linked.getIdentity().toString() + "\"");
-			else
-				buffer.append("\"" + linked.toString() + "\"");
+			if (linked.getIdentity().isValid()) {
+				buffer.append('\"');
+				buffer.append(linked.getIdentity().toString());
+				buffer.append('\"');
+			} else {
+				buffer.append('\"');
+				buffer.append(linked.toString());
+				buffer.append('\"');
+			}
 
 		} else if (iValue.getClass().isArray()) {
 
 			if (iValue instanceof byte[]) {
-				buffer.append("\"");
-				for (int i = 0; i < Array.getLength(iValue); ++i) {
-					buffer.append(String.format("%03d", Array.getByte(iValue, i)));
+				buffer.append('\"');
+				byte[] source = (byte[]) iValue;
+				int v;
+				for (int i = 0; i < source.length; ++i) {
+					v = source[i];
+					if (v < 0)
+						v = (int) v & 0xFF;
+					buffer.append(String.format("%03d", v));
 				}
-				buffer.append("\"");
+				buffer.append('\"');
 			} else {
-				buffer.append("[");
+				buffer.append('[');
 				for (int i = 0; i < Array.getLength(iValue); ++i) {
 					if (i > 0)
 						buffer.append(", ");
 					buffer.append(writeValue(Array.get(iValue, i)));
 				}
-				buffer.append("]");
+				buffer.append(']');
 			}
 
 		} else if (iValue instanceof Collection<?>) {
 			Collection<Object> coll = (Collection<Object>) iValue;
-			buffer.append("[");
+			buffer.append('[');
 			int i = 0;
 			for (Iterator<Object> it = coll.iterator(); it.hasNext(); ++i) {
 				if (i > 0)
 					buffer.append(", ");
 				buffer.append(writeValue(it.next()));
 			}
-			buffer.append("]");
+			buffer.append(']');
 
 		} else if (iValue instanceof Map<?, ?>) {
 			Map<Object, Object> map = (Map<Object, Object>) iValue;
-			buffer.append("{");
+			buffer.append('{');
 			int i = 0;
 			Entry<Object, Object> entry;
 			for (Iterator<Entry<Object, Object>> it = map.entrySet().iterator(); it.hasNext(); ++i) {
@@ -196,13 +206,17 @@ public class OJSONWriter {
 				buffer.append(": ");
 				buffer.append(writeValue(entry.getValue()));
 			}
-			buffer.append("}");
+			buffer.append('}');
 
 		} else if (iValue instanceof String || iValue instanceof ORecordId || iValue instanceof Date) {
-			buffer.append('"');
-			buffer.append(iValue.toString());
-			buffer.append('"');
-
+			String v = iValue.toString();
+			if (v.startsWith("\""))
+				buffer.append(v);
+			else {
+				buffer.append('"');
+				buffer.append(v);
+				buffer.append('"');
+			}
 		} else
 			buffer.append(iValue.toString());
 
@@ -221,7 +235,7 @@ public class OJSONWriter {
 
 	private OJSONWriter format(final int iIdentLevel, final boolean iNewLine) throws IOException {
 		if (iNewLine) {
-			out.append("\n");
+			out.append('\n');
 
 			if (prettyPrint)
 				for (int i = 0; i < iIdentLevel; ++i)

@@ -31,9 +31,9 @@ import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.query.OQueryHelper;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 /**
  * Represent an object field as value in the query condition.
@@ -66,7 +66,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 						final List<String> arguments;
 
 						if (op.minArguments > 0) {
-							arguments = OQueryHelper.getParameters(part);
+							arguments = OStringSerializerHelper.getParameters(part);
 							if (arguments.size() < op.minArguments || arguments.size() > op.maxArguments)
 								throw new OQueryParsingException(iQueryToParse.text, "Syntax error: field operator '" + op.keyword + "' needs "
 										+ (op.minArguments == op.maxArguments ? op.minArguments : op.minArguments + "-" + op.maxArguments)
@@ -80,7 +80,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
 						operationsChain.add(new OPair<Integer, List<String>>(op.id, arguments));
 
-						pos = partUpperCase.indexOf(OQueryHelper.CLOSED_BRACE) + OSQLFilterFieldOperator.CHAIN_SEPARATOR.length();
+						pos = partUpperCase.indexOf(OStringSerializerHelper.CLOSED_BRACE) + OSQLFilterFieldOperator.CHAIN_SEPARATOR.length();
 						operatorFound = true;
 						break;
 					}

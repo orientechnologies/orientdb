@@ -15,22 +15,9 @@
  */
 package com.orientechnologies.orient.core.query;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-
 public class OQueryHelper {
-	protected static final String			WILDCARD_ANYCHAR			= "?";
-	protected static final String			WILDCARD_ANY					= "%";
-
-	public static final String				OPEN_BRACE						= "(";
-	public static final String				CLOSED_BRACE					= ")";
-	public static final String				OPEN_COLLECTION				= "[";
-	public static final String				CLOSED_COLLECTION			= "]";
-	public static final char					COLLECTION_SEPARATOR	= ',';
-	public static final char					PARAMETER_SEPARATOR		= ',';
-	public static final List<String>	EMPTY_PARAMETERS			= new ArrayList<String>();
+	protected static final String	WILDCARD_ANYCHAR	= "?";
+	protected static final String	WILDCARD_ANY			= "%";
 
 	public static boolean like(String currentValue, String iValue) {
 		if (currentValue == null || currentValue.length() == 0)
@@ -66,43 +53,5 @@ public class OQueryHelper {
 		}
 
 		return false;
-	}
-
-	public static List<String> getParameters(final String iText) {
-		return getParameters(iText, 0);
-	}
-
-	public static List<String> getParameters(final String iText, final int iBeginPosition) {
-		int openPos = iText.indexOf(OPEN_BRACE, iBeginPosition);
-		if (openPos == -1)
-			return EMPTY_PARAMETERS;
-
-		int closePos = iText.indexOf(CLOSED_BRACE, openPos + 1);
-		if (closePos == -1)
-			return EMPTY_PARAMETERS;
-
-		if (closePos - openPos == 1)
-			// EMPTY STRING: TREATS AS EMPTY
-			return EMPTY_PARAMETERS;
-
-		final List<String> pars = OStringSerializerHelper.split(iText.substring(openPos + 1, closePos), PARAMETER_SEPARATOR, ' ');
-
-		// REMOVE TAIL AND END SPACES
-		for (int i = 0; i < pars.size(); ++i)
-			pars.set(i, pars.get(i));
-
-		return pars;
-	}
-
-	public static List<String> getCollection(final String iText) {
-		int openPos = iText.indexOf(OPEN_COLLECTION);
-		if (openPos == -1)
-			return EMPTY_PARAMETERS;
-
-		int closePos = iText.indexOf(CLOSED_COLLECTION, openPos + 1);
-		if (closePos == -1)
-			return EMPTY_PARAMETERS;
-
-		return OStringSerializerHelper.split(iText.substring(openPos + 1, closePos), COLLECTION_SEPARATOR, ' ');
 	}
 }

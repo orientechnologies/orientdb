@@ -49,7 +49,20 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
 				if (OQueryOperatorEquals.equals(iLeft, o))
 					return true;
 			}
+		} else if (iLeft.getClass().isArray()) {
+
+			for (Object o : (Object[]) iLeft) {
+				if (OQueryOperatorEquals.equals(iRight, o))
+					return true;
+			}
+		} else if (iRight.getClass().isArray()) {
+
+			for (Object o : (Object[]) iRight) {
+				if (OQueryOperatorEquals.equals(iLeft, o))
+					return true;
+			}
 		}
+
 		return false;
 	}
 

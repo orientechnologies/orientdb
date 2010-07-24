@@ -41,7 +41,7 @@ public class OConsoleDatabaseExport {
 	private OJSONWriter					writer;
 	private OCommandListener		listener;
 
-	private static final String	ATTRIBUTE_TYPE	= "_type";
+	private static final String	ATTRIBUTE_TYPE	= "@type";
 
 	public OConsoleDatabaseExport(final ODatabaseDocument database, final String iFileName, final OCommandListener iListener)
 			throws IOException {
@@ -83,6 +83,7 @@ public class OConsoleDatabaseExport {
 			writer.beginObject(iLevel, true, "cluster");
 			writer.writeAttribute(iLevel + 1, true, "name", clusterName);
 			writer.writeAttribute(0, false, "id", database.getClusterIdByName(clusterName));
+			writer.writeAttribute(0, false, "type", database.getClusterType(clusterName));
 
 			if (recordTot > 0) {
 				writer.beginCollection(iLevel + 1, true, "records");
@@ -143,6 +144,7 @@ public class OConsoleDatabaseExport {
 	private void exportDictionary() throws IOException {
 		listener.onMessage("\nExporting dictionary...");
 
+		long tot = 0;
 		writer.beginObject(1, true, "dictionary");
 		ODictionary<ODocument> d = database.getDictionary();
 		if (d != null) {
@@ -151,11 +153,12 @@ public class OConsoleDatabaseExport {
 				entry = iterator.next();
 				writer.writeAttribute(2, true, "key", entry.getKey());
 				writer.writeAttribute(0, false, "value", OJSONWriter.writeValue(entry.getValue()));
+				++tot;
 			}
 		}
 		writer.endObject(1, true);
 
-		listener.onMessage("OK");
+		listener.onMessage("OK (" + tot + " entries)");
 	}
 
 	private void exportSchema() throws IOException {
@@ -173,6 +176,8 @@ public class OConsoleDatabaseExport {
 				writer.writeAttribute(0, false, "id", cls.getId());
 				writer.writeAttribute(0, false, "default-cluster-id", cls.getDefaultClusterId());
 				writer.writeAttribute(0, false, "cluster-ids", cls.getClusterIds());
+				if (cls.getSuperClass() != null)
+					writer.writeAttribute(0, false, "super-class", cls.getSuperClass().getName());
 
 				if (cls.properties().size() > 0) {
 					writer.beginCollection(4, true, "properties");
@@ -189,6 +194,10 @@ public class OConsoleDatabaseExport {
 							writer.writeAttribute(0, false, "min", p.getMin());
 						if (p.getMax() != null)
 							writer.writeAttribute(0, false, "max", p.getMax());
+						if (p.getIndex() != null) {
+							writer.writeAttribute(0, false, "index-rid", p.getIndex().getRecord().getIdentity());
+							writer.writeAttribute(0, false, "index-unique", p.getIndex().isUnique());
+						}
 						writer.endObject(0, false);
 					}
 					writer.endCollection(4, true);
@@ -201,7 +210,7 @@ public class OConsoleDatabaseExport {
 
 		writer.endObject(1, true);
 
-		listener.onMessage("OK");
+		listener.onMessage("OK (" + s.getClasses().size() + " classes)");
 	}
 
 	private void exportRecord(long recordTot, long recordNum, ORecord<?> rec) throws IOException {
@@ -219,6 +228,9 @@ public class OConsoleDatabaseExport {
 			final ODocument vobj = (ODocument) rec;
 
 			writer.writeAttribute(0, false, ATTRIBUTE_TYPE, "v");
+
+			if (vobj.getClassName() != null)
+				writer.writeAttribute(0, false, "@class", vobj.getClassName());
 
 			Object value;
 			if (vobj.fieldNames() != null && vobj.fieldNames().length > 0) {

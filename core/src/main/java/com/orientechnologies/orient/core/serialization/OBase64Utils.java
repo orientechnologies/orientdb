@@ -1,9 +1,13 @@
-package com.orientechnologies.orient.server.network.protocol.http;
+package com.orientechnologies.orient.core.serialization;
 
 import java.util.HashMap;
 
 public class OBase64Utils extends java.util.prefs.AbstractPreferences {
 	private HashMap<String, String>	encodedStore	= new HashMap<String, String>();
+
+	public OBase64Utils() {
+		this(null, "");
+	}
 
 	public OBase64Utils(java.util.prefs.AbstractPreferences prefs, java.lang.String string) {
 		super(prefs, string);

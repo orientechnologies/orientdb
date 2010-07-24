@@ -38,6 +38,10 @@ public class OQueryOperatorIs extends OQueryOperatorEquality {
 			return iLeft != null;
 		else if (OSQLHelper.NOT_NULL.equals(iLeft))
 			return iRight != null;
+		else if ("defined".equals(iLeft))
+			return iRight != null;
+		else if ("defined".equals(iRight))
+			return iRight != null;
 		else
 			return iLeft == iRight;
 	}

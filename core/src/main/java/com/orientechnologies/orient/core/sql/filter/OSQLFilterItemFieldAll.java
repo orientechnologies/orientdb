@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
-import com.orientechnologies.orient.core.query.OQueryHelper;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 /**
  * Represent one or more object fields as value in the query condition.
@@ -27,6 +27,6 @@ public class OSQLFilterItemFieldAll extends OSQLFilterItemFieldMultiAbstract {
 	public static final String	NAME	= "ALL";
 
 	public OSQLFilterItemFieldAll(final OSQLFilter iQueryCompiled, final String iName) {
-		super(iQueryCompiled, iName, OQueryHelper.getParameters(iName));
+		super(iQueryCompiled, iName, OStringSerializerHelper.getParameters(iName));
 	}
 }
