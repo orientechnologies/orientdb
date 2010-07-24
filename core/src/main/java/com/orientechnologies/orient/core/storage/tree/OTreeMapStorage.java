@@ -95,13 +95,15 @@ public class OTreeMapStorage<K, V> extends OTreeMapPersistent<K, V> {
 		try {
 			record.fromStream(toStream());
 			if (record.getIdentity().isValid())
-				// UPDATE IT
-				record.setVersion(storage.updateRecord(0, clusterId, record.getIdentity().getClusterPosition(), record.toStream(),
-						record.getVersion(), record.getRecordType()));
-			else
+				// UPDATE IT WITHOUT VERSION CHECK SINCE ALL IT'S LOCKED
+				record.setVersion(storage.updateRecord(0, record.getIdentity().getClusterId(), record.getIdentity().getClusterPosition(),
+						record.toStream(), -1, record.getRecordType()));
+			else {
 				// CREATE IT
-				record.setIdentity(clusterId,
-						storage.createRecord(record.getIdentity().getClusterId(), record.toStream(), record.getRecordType()));
+				int cluster = record.getIdentity().getClusterId() == ORID.CLUSTER_ID_INVALID ? clusterId : record.getIdentity()
+						.getClusterId();
+				record.setIdentity(cluster, storage.createRecord(cluster, record.toStream(), record.getRecordType()));
+			}
 			record.unsetDirty();
 
 			return this;
