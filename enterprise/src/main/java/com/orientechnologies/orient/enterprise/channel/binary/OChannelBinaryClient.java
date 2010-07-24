@@ -17,9 +17,9 @@ package com.orientechnologies.orient.enterprise.channel.binary;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
@@ -40,8 +40,8 @@ public class OChannelBinaryClient extends OChannelBinary {
 		inStream = new BufferedInputStream(socket.getInputStream(), DEFAULT_BUFFER_SIZE);
 		outStream = new BufferedOutputStream(socket.getOutputStream(), DEFAULT_BUFFER_SIZE);
 
-		in = new ObjectInputStream(inStream);
-		out = new ObjectOutputStream(outStream);
+		in = new DataInputStream(inStream);
+		out = new DataOutputStream(outStream);
 	}
 
 	public void reconnect() throws IOException {

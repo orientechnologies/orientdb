@@ -15,9 +15,9 @@
  */
 package com.orientechnologies.orient.enterprise.channel.binary;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,8 +28,8 @@ import java.util.Set;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 
 public abstract class OChannelBinary extends OChannel {
-	public ObjectInputStream	in;
-	public ObjectOutputStream	out;
+	public DataInputStream	in;
+	public DataOutputStream	out;
 
 	public OChannelBinary(final Socket iSocket) throws IOException {
 		super(iSocket);
