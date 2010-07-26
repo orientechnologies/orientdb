@@ -100,59 +100,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			return coll;
 		}
 		case EMBEDDEDMAP: {
-			if (iValue.length() == 0)
-				return null;
-
-			// REMOVE BEGIN & END MAP CHARACTERS
-			String value = iValue.substring(1, iValue.length() - 1);
-
-			@SuppressWarnings("rawtypes")
-			final Map map = new OLazyRecordMap(iDatabase, ODocument.RECORD_TYPE);
-
-			if (value.length() == 0)
-				return map;
-
-			final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR);
-
-			// EMBEDDED LITERALS
-			List<String> entry;
-			String mapValue;
-			for (String item : items) {
-				if (item != null && item.length() > 0) {
-					entry = OStringSerializerHelper.split(item, OStringSerializerHelper.ENTRY_SEPARATOR);
-					if (entry.size() > 0) {
-						mapValue = entry.get(1);
-
-						if (iLinkedType == null) {
-							if (mapValue.length() > 0) {
-								if (mapValue.startsWith(OStringSerializerHelper.LINK)) {
-									iLinkedType = OType.LINK;
-
-									// GET THE CLASS NAME IF ANY
-									int classSeparatorPos = value.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
-									if (classSeparatorPos > -1) {
-										String className = value.substring(1, classSeparatorPos);
-										if (className != null)
-											iLinkedClass = iDatabase.getMetadata().getSchema().getClass(className);
-									}
-								} else if (mapValue.charAt(0) == OStringSerializerHelper.EMBEDDED) {
-									iLinkedType = OType.EMBEDDED;
-								} else if (Character.isDigit(mapValue.charAt(0)) || mapValue.charAt(0) == '+' || mapValue.charAt(0) == '-') {
-									iLinkedType = getNumber(mapValue);
-								} else if (mapValue.charAt(0) == '\'' || mapValue.charAt(0) == '"')
-									iLinkedType = OType.STRING;
-							} else
-								iLinkedType = OType.EMBEDDED;
-						}
-
-						map.put((String) OStringSerializerHelper.fieldTypeFromStream(OType.STRING, entry.get(0)),
-								OStringSerializerHelper.fieldTypeFromStream(iLinkedType, mapValue));
-					}
-
-				}
-			}
-
-			return map;
+			return embeddedMapFromStream(iDatabase, iLinkedType, iValue);
 		}
 
 		case LINK:
@@ -172,6 +120,51 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		default:
 			return OStringSerializerHelper.fieldTypeFromStream(iType, iValue);
 		}
+	}
+
+	public Map<String, Object> embeddedMapFromStream(final ODatabaseRecord<?> iDatabase, OType iLinkedType, final String iValue) {
+		if (iValue.length() == 0)
+			return null;
+
+		// REMOVE BEGIN & END MAP CHARACTERS
+		String value = iValue.substring(1, iValue.length() - 1);
+
+		@SuppressWarnings("rawtypes")
+		final Map map = new OLazyRecordMap(iDatabase, ODocument.RECORD_TYPE);
+
+		if (value.length() == 0)
+			return map;
+
+		final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR);
+
+		// EMBEDDED LITERALS
+		List<String> entry;
+		String mapValue;
+		for (String item : items) {
+			if (item != null && item.length() > 0) {
+				entry = OStringSerializerHelper.split(item, OStringSerializerHelper.ENTRY_SEPARATOR);
+				if (entry.size() > 0) {
+					mapValue = entry.get(1);
+
+					if (iLinkedType == null) {
+						if (mapValue.length() > 0) {
+							if (mapValue.charAt(0) == OStringSerializerHelper.EMBEDDED) {
+								iLinkedType = OType.EMBEDDED;
+							} else if (Character.isDigit(mapValue.charAt(0)) || mapValue.charAt(0) == '+' || mapValue.charAt(0) == '-') {
+								iLinkedType = getNumber(mapValue);
+							} else if (mapValue.charAt(0) == '\'' || mapValue.charAt(0) == '"')
+								iLinkedType = OType.STRING;
+						} else
+							iLinkedType = OType.EMBEDDED;
+					}
+
+					map.put((String) OStringSerializerHelper.fieldTypeFromStream(OType.STRING, entry.get(0)),
+							OStringSerializerHelper.fieldTypeFromStream(iLinkedType, mapValue));
+				}
+
+			}
+		}
+		return map;
 	}
 
 	public String fieldToStream(final ODocument iRecord, final ODatabaseComplex<?> iDatabase,

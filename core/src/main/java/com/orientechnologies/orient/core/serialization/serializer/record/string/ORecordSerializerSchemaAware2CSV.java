@@ -40,7 +40,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstract {
-	public static final String	NAME	= "ORecordDocument2csv";
+	public static final String														NAME			= "ORecordDocument2csv";
+	public static final ORecordSerializerSchemaAware2CSV	INSTANCE	= new ORecordSerializerSchemaAware2CSV();
 
 	@Override
 	public ORecordSchemaAware<?> newObject(ODatabaseRecord<?> iDatabase, String iClassName) {

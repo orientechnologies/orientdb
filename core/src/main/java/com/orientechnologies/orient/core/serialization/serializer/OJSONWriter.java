@@ -154,9 +154,8 @@ public class OJSONWriter {
 				buffer.append(linked.getIdentity().toString());
 				buffer.append('\"');
 			} else {
-				buffer.append('\"');
-				buffer.append(linked.toString());
-				buffer.append('\"');
+				buffer.append(linked.toJSON("id,ver,class,ident:6"));
+
 			}
 
 		} else if (iValue.getClass().isArray()) {

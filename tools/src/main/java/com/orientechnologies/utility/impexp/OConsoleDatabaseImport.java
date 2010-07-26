@@ -34,10 +34,10 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONReader;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.utility.console.OCommandListener;
 
 /**
@@ -57,7 +57,6 @@ public class OConsoleDatabaseImport {
 	private OJSONReader							jsonReader;
 	private OStringForwardReader		reader;
 	private ORecordInternal<?>			record;
-	private ORecordId								rid						= new ORecordId();
 
 	public OConsoleDatabaseImport(final ODatabaseDocument database, final String iFileName, final OCommandListener iListener)
 			throws IOException {
@@ -75,14 +74,13 @@ public class OConsoleDatabaseImport {
 			jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
 
 			importInfo();
-			importDictionary();
+			importClusters();
 			importSchema();
-
-			long total = importAllClusters();
+			importRecords();
+			importDictionary();
 
 			jsonReader.readNext(OJSONReader.END_OBJECT);
 
-			listener.onMessage("\n\nImported " + total + " records");
 			listener.onMessage("\nImport of database completed.");
 
 		} catch (Exception e) {
@@ -149,11 +147,12 @@ public class OConsoleDatabaseImport {
 	private void importSchema() throws IOException, ParseException {
 		listener.onMessage("\nImporting database schema...");
 
-		jsonReader.readNext(OJSONReader.BEGIN_OBJECT).checkContent("\"schema\":").readNext(OJSONReader.FIELD_ASSIGNMENT);
+		jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"schema\"").readNext(OJSONReader.BEGIN_OBJECT);
 		@SuppressWarnings("unused")
-		int schemaVersion = jsonReader.checkContent("\"version\"").readNumber(OJSONReader.ANY_NUMBER, true);
-		jsonReader.readNext(OJSONReader.COMMA_SEPARATOR).readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"classes\"");
-		jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
+		int schemaVersion = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"version\"")
+				.readNumber(OJSONReader.ANY_NUMBER, true);
+		jsonReader.readNext(OJSONReader.COMMA_SEPARATOR).readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"classes\"")
+				.readNext(OJSONReader.BEGIN_COLLECTION);
 
 		long classImported = 0;
 		String className;
@@ -166,7 +165,7 @@ public class OConsoleDatabaseImport {
 
 		try {
 			do {
-				jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"class\"").readString(OJSONReader.BEGIN_OBJECT);
+				jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
 
 				className = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"name\"")
 						.readString(OJSONReader.COMMA_SEPARATOR);
@@ -238,7 +237,7 @@ public class OConsoleDatabaseImport {
 				entry.getKey().setLinkedClass(database.getMetadata().getSchema().getClass(entry.getValue()));
 			}
 
-			listener.onMessage("OK (" + classImported + " entries)");
+			listener.onMessage("OK (" + classImported + " classes)");
 
 			jsonReader.readNext(OJSONReader.END_OBJECT);
 			jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
@@ -310,18 +309,16 @@ public class OConsoleDatabaseImport {
 			prop.setIndex(new ODocument(database, indexRid), indexUnique);
 	}
 
-	private long importAllClusters() throws ParseException, IOException {
+	private long importClusters() throws ParseException, IOException {
+		listener.onMessage("\nImporting clusters...");
+
 		long total = 0;
 
 		jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT);
 		jsonReader.checkContent("\"clusters\"");
 		jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
 
-		long totalRecords = 0;
-
 		while (jsonReader.lastChar() != ']') {
-			jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT);
-			jsonReader.checkContent("\"cluster\"");
 			jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
 
 			String name = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"name\"")
@@ -342,29 +339,30 @@ public class OConsoleDatabaseImport {
 			if (clusterId != id)
 				throw new OSchemaException("Imported cluster '" + name + "' has id=" + clusterId + " different from the original: " + id);
 
-			if (jsonReader.lastChar() != '}') {
-				// PARSE RECORDS
-				jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT);
-				jsonReader.checkContent("\"records\"");
-				jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
+			total++;
 
-				listener.onMessage("\n- Exporting cluster '" + name + "' -> ");
+			jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+		}
+		jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
 
-				long clusterRecords;
-				for (clusterRecords = 0; jsonReader.lastChar() != ']'; ++clusterRecords) {
-					importClusterRecord();
+		listener.onMessage("OK (" + total + " clusters)");
 
-					if (jsonReader.lastChar() == '}')
-						jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
-				}
-				totalRecords += clusterRecords;
+		return total;
+	}
 
-				listener.onMessage("OK (" + clusterRecords + " records)");
+	private long importRecords() throws ParseException, IOException {
+		long total = 0;
 
-				jsonReader.readNext(OJSONReader.END_OBJECT);
-			}
+		jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT);
+		jsonReader.checkContent("\"records\"");
+		jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
 
-			jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
+		long totalRecords = 0;
+
+		while (jsonReader.lastChar() != ']') {
+			importRecord();
+
+			++totalRecords;
 		}
 
 		listener.onMessage("\n\nDone. Imported " + totalRecords + " records");
@@ -373,80 +371,23 @@ public class OConsoleDatabaseImport {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void importClusterRecord() throws IOException, ParseException {
-		jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
+	private void importRecord() throws IOException, ParseException {
+		String value = jsonReader.readString(OJSONReader.END_OBJECT, true);
 
-		String id = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"@id\"").readString(OJSONReader.COMMA_SEPARATOR);
+		record = ORecordSerializerJSON.INSTANCE.fromString(database, value, record);
 
-		int version = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"@ver\"")
-				.readInteger(OJSONReader.COMMA_SEPARATOR);
+		String rid = record.getIdentity().toString();
 
-		char type = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"@type\"").readString(OJSONReader.COMMA_SEPARATOR)
-				.charAt(0);
-
-		// CREATE THE RECORD FOLLOWING THE ORIGINAL TYPE
-		switch (type) {
-		case 'b':
-			// BINARY
-			if (record == null || !(record instanceof ORecordBytes))
-				record = new ORecordBytes(database);
-			else
-				record.reset();
-			break;
-
-		case 'v':
-			// ODOCUMENT
-			if (record == null || !(record instanceof ODocument))
-				record = new ODocument(database);
-			else
-				record.reset();
-
-			if (jsonReader.getValue().equals("\"@class\"")) {
-				((ODocument) record).setClassName(jsonReader.readString(OJSONReader.COMMA_SEPARATOR));
-				jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT);
-			}
-			break;
-
-		case 'c':
-			// COLUMN
-			if (record == null || !(record instanceof ORecordColumn))
-				record = new ORecordColumn(database);
-			else
-				record.reset();
-			break;
-
-		case 'f':
-			// FLAT
-			if (record == null || !(record instanceof ORecordFlat))
-				record = new ORecordFlat(database);
-			else
-				record.reset();
-			break;
-
-		default:
-			// ERROR
-			throw new OSchemaException("Error: unsupported record type: " + type);
-		}
-
-		String value = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"value\"")
-				.readString(OJSONReader.END_OBJECT, true);
-
-		record.fromJSON(value);
+		System.out.print("\nImporting record of type '" + (char) record.getRecordType() + "' with id=" + rid);
 
 		// SAVE THE RECORD
-		record.setVersion(version);
-
-		rid.fromString(id);
-		if (rid.clusterPosition < database.countClusterElements(rid.clusterId)) {
-			record.setIdentity(rid);
+		if (record.getIdentity().getClusterPosition() < database.countClusterElements(record.getIdentity().getClusterId())) {
 			if (record instanceof ORecordBytes)
 				((ODatabaseRecord<ORecordBytes>) database.getUnderlying()).save((ORecordBytes) record);
-			else if (record instanceof ORecordFlat)
-				((ODatabaseRecord<ORecordFlat>) database.getUnderlying()).save((ORecordFlat) record);
-			else if (record instanceof ODocument)
+			else if (record instanceof ORecordFlat || record instanceof ODocument)
 				((ODocument) record).save();
 		} else {
-			String clusterName = database.getClusterNameById(rid.clusterId);
+			String clusterName = database.getClusterNameById(record.getIdentity().getClusterId());
 			record.setIdentity(-1, -1);
 			if (record instanceof ORecordBytes)
 				((ODatabaseRecord<ORecordBytes>) database.getUnderlying()).save((ORecordBytes) record, clusterName);
@@ -456,8 +397,8 @@ public class OConsoleDatabaseImport {
 				((ODatabaseRecord<ORecordInternal<?>>) database.getUnderlying()).save(record, clusterName);
 		}
 
-		if (!record.getIdentity().toString().equals(id))
-			throw new OSchemaException("Imported record '" + record.getIdentity() + "' has rid different from the original: " + id);
+		if (!record.getIdentity().toString().equals(rid))
+			throw new OSchemaException("Imported record '" + record.getIdentity() + "' has rid different from the original: " + rid);
 
 		jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
 	}

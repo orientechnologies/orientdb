@@ -77,11 +77,12 @@ public class OStringParser {
 		char stringBeginChar = ' ';
 		char c;
 		int openBraket = 0;
+		int openGraph = 0;
 		boolean charFound;
 
 		for (int i = 0; i < iText.length(); ++i) {
 			c = iText.charAt(i);
-			if (openBraket == 0 && (c == '\'' || c == '"')) {
+			if (openBraket == 0 && openGraph == 0 && (c == '\'' || c == '"')) {
 				if (stringBeginChar != ' ') {
 					// CLOSE THE STRING?
 					if (stringBeginChar == c) {
@@ -101,7 +102,11 @@ public class OStringParser {
 					openBraket++;
 				else if (c == ']')
 					openBraket--;
-				else if (openBraket == 0) {
+				if (c == '{')
+					openGraph++;
+				else if (c == '}')
+					openGraph--;
+				else if (openBraket == 0 && openGraph == 0) {
 					charFound = false;
 					for (int sepIndex = 0; sepIndex < iSeparatorChars.length(); ++sepIndex) {
 						if (iSeparatorChars.charAt(sepIndex) == c) {

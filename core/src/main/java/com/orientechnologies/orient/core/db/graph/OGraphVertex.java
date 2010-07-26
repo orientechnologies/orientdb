@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.OGraphVertexOutIterator;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 
 /**
  * GraphDB Vertex class. It represent the vertex (or node) in the graph. The Vertex can have custom properties. You can read/write
@@ -58,8 +57,6 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 	}
 
 	public List<OGraphVertex> traverse(final int iStartLevel, final int iEndLevel) {
-		OSQLQuery<ODocument> result = new OSQLQuery<ODocument>("select from " + getClass().getSimpleName() + " where") {
-		};
 		return null;
 	}
 

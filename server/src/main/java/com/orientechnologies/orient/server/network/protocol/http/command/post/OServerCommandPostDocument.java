@@ -33,15 +33,17 @@ public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
 		iRequest.data.commandInfo = "Create document";
 
 		ODatabaseDocumentTx db = null;
-		ODocument doc = new ODocument().fromJSON(iRequest.content);
 
-		// ASSURE TO MAKE THE RECORD ID INVALID
-		((ORecordId) doc.getIdentity()).clusterPosition = ORID.CLUSTER_POS_INVALID;
+		ODocument doc = null;
 
 		try {
 			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
 
-			doc.setDatabase(db);
+			doc = new ODocument(db).fromJSON(iRequest.content);
+
+			// ASSURE TO MAKE THE RECORD ID INVALID
+			((ORecordId) doc.getIdentity()).clusterPosition = ORID.CLUSTER_POS_INVALID;
+
 			doc.save();
 
 		} finally {
@@ -49,7 +51,8 @@ public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
 				OSharedDocumentDatabase.release(db);
 		}
 
-		sendTextContent(iRequest, 201, OHttpUtils.STATUS_OK_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN, doc.getIdentity());
+		sendTextContent(iRequest, 201, OHttpUtils.STATUS_OK_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN,
+				doc != null ? doc.getIdentity() : "?");
 	}
 
 	public String[] getNames() {

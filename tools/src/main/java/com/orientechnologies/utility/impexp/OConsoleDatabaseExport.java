@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveRead;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.record.impl.ORecordColumn;
@@ -58,9 +58,10 @@ public class OConsoleDatabaseExport {
 	public OConsoleDatabaseExport exportDatabase() {
 		try {
 			exportInfo();
-			exportDictionary();
-			exportSchema();
 			exportAllClusters();
+			exportSchema();
+			exportRecords();
+			exportDictionary();
 
 			listener.onMessage("\nExport of database completed.");
 
@@ -76,31 +77,47 @@ public class OConsoleDatabaseExport {
 
 	public long exportClusters(final String[] iClusters, final int iLevel) throws IOException {
 		long totalRecords = 0;
+
 		for (String clusterName : iClusters) {
 			long recordTot = database.countClusterElements(clusterName);
-			listener.onMessage("\n- Exporting cluster '" + clusterName + "' (records=" + recordTot + ") -> ");
 
-			writer.beginObject(iLevel, true, "cluster");
-			writer.writeAttribute(iLevel + 1, true, "name", clusterName);
+			writer.beginObject(iLevel, true, null);
+			writer.writeAttribute(0, false, "name", clusterName);
 			writer.writeAttribute(0, false, "id", database.getClusterIdByName(clusterName));
 			writer.writeAttribute(0, false, "type", database.getClusterType(clusterName));
 
-			if (recordTot > 0) {
-				writer.beginCollection(iLevel + 1, true, "records");
-
-				long recordNum = 0;
-				for (ORecord<?> rec : database.browseCluster(clusterName))
-					exportRecord(recordTot, recordNum, rec);
-
-				writer.endCollection(iLevel + 1, true);
-			}
-
-			listener.onMessage("OK");
-
 			totalRecords += recordTot;
 
-			writer.endObject(iLevel, true);
+			writer.endObject(iLevel, false);
 		}
+
+		listener.onMessage("OK");
+
+		return totalRecords;
+	}
+
+	public long exportRecords() throws IOException {
+		long totalRecords = 0;
+
+		final String[] clusters = database.getClusterNames().toArray(new String[database.getClusterNames().size()]);
+		int level = 1;
+
+		listener.onMessage("\nExporting records...");
+
+		writer.beginCollection(level, true, "records");
+
+		for (String clusterName : clusters) {
+			long recordTot = database.countClusterElements(clusterName);
+			listener.onMessage("\n- Exporting record of cluster '" + clusterName + "' (records=" + recordTot + ") -> ");
+			long recordNum = 0;
+			for (ORecordInternal<?> rec : database.browseCluster(clusterName))
+				exportRecord(recordTot, recordNum, rec);
+
+			totalRecords += recordTot;
+		}
+		writer.endCollection(level, true);
+
+		listener.onMessage("OK");
 
 		listener.onMessage("\n\nDone. Exported " + totalRecords + " records\n");
 
@@ -124,9 +141,9 @@ public class OConsoleDatabaseExport {
 	private void exportAllClusters() throws IOException {
 		listener.onMessage("\nExporting clusters...");
 
-		writer.beginObject(1, true, "clusters");
+		writer.beginCollection(1, true, "clusters");
 		exportClusters(database.getClusterNames().toArray(new String[database.getClusterNames().size()]), 2);
-		writer.endObject(1, true);
+		writer.endCollection(1, true);
 
 	}
 
@@ -134,7 +151,7 @@ public class OConsoleDatabaseExport {
 		listener.onMessage("\nExporting database info...");
 
 		writer.beginObject(1, true, "info");
-		writer.writeAttribute(2, true, "name", database.getName());
+		writer.writeAttribute(2, true, "name", database.getName().replace('\\', '/'));
 		writer.writeAttribute(2, true, "default-cluster-id", database.getDefaultClusterId());
 		writer.endObject(1, true);
 
@@ -171,7 +188,7 @@ public class OConsoleDatabaseExport {
 		if (s.getClasses().size() > 0) {
 			writer.beginCollection(2, true, "classes");
 			for (OClass cls : s.getClasses()) {
-				writer.beginObject(3, true, "class");
+				writer.beginObject(3, true, null);
 				writer.writeAttribute(0, false, "name", cls.getName());
 				writer.writeAttribute(0, false, "id", cls.getId());
 				writer.writeAttribute(0, false, "default-cluster-id", cls.getDefaultClusterId());
@@ -185,11 +202,11 @@ public class OConsoleDatabaseExport {
 						writer.beginObject(5, true, null);
 						writer.writeAttribute(0, false, "name", p.getName());
 						writer.writeAttribute(0, false, "id", p.getId());
-						writer.writeAttribute(0, false, "type", p.getType());
+						writer.writeAttribute(0, false, "type", p.getType().toString());
 						if (p.getLinkedClass() != null)
 							writer.writeAttribute(0, false, "linked-class", p.getLinkedClass().getName());
 						if (p.getLinkedType() != null)
-							writer.writeAttribute(0, false, "linked-type", p.getLinkedType());
+							writer.writeAttribute(0, false, "linked-type", p.getLinkedType().toString());
 						if (p.getMin() != null)
 							writer.writeAttribute(0, false, "min", p.getMin());
 						if (p.getMax() != null)
@@ -213,61 +230,56 @@ public class OConsoleDatabaseExport {
 		listener.onMessage("OK (" + s.getClasses().size() + " classes)");
 	}
 
-	private void exportRecord(long recordTot, long recordNum, ORecord<?> rec) throws IOException {
+	private void exportRecord(long recordTot, long recordNum, ORecordInternal<?> rec) throws IOException {
 		if (rec == null)
 			return;
 
-		writer.beginObject(4, true, null);
+		byte recordType = rec.getRecordType();
+
+		writer.beginObject(3, true, null);
+		writer.writeAttribute(0, false, ATTRIBUTE_TYPE, "" + (char) recordType);
 		writer.writeAttribute(0, false, ORecordSerializerJSON.ATTRIBUTE_ID, rec.getIdentity());
 		writer.writeAttribute(0, false, ORecordSerializerJSON.ATTRIBUTE_VERSION, rec.getVersion());
 
 		if (rec.getIdentity().isValid())
 			rec.load();
 
-		if (rec instanceof ODocument) {
+		switch (recordType) {
+		case ODocument.RECORD_TYPE:
 			final ODocument vobj = (ODocument) rec;
-
-			writer.writeAttribute(0, false, ATTRIBUTE_TYPE, "v");
-
 			if (vobj.getClassName() != null)
 				writer.writeAttribute(0, false, "@class", vobj.getClassName());
 
 			Object value;
 			if (vobj.fieldNames() != null && vobj.fieldNames().length > 0) {
-				writer.beginObject(5, true, "value");
 				for (String f : vobj.fieldNames()) {
 					value = vobj.field(f);
-
-					writer.writeAttribute(6, true, f, value);
+					writer.writeAttribute(5, true, f, value);
 				}
-				writer.endObject(5, true);
 			}
-		} else if (rec instanceof ORecordColumn) {
+			break;
+
+		case ORecordColumn.RECORD_TYPE:
 			ORecordColumn csv = (ORecordColumn) rec;
-
-			writer.writeAttribute(0, false, ATTRIBUTE_TYPE, "c");
-
 			if (csv.size() > 0) {
-				writer.beginCollection(5, true, "value");
+				writer.beginCollection(4, true, null);
 				for (int i = 0; i < csv.size(); ++i) {
-					writer.writeValue(6, true, csv.field(i));
+					writer.writeValue(5, true, csv.field(i));
 				}
-				writer.endCollection(5, true);
+				writer.endCollection(4, true);
 			}
-		} else if (rec instanceof ORecordFlat) {
-			final ORecordFlat flat = (ORecordFlat) rec;
+			break;
 
-			writer.writeAttribute(0, false, ATTRIBUTE_TYPE, "f");
-			writer.writeAttribute(6, true, "value", flat.value());
-		} else if (rec instanceof ORecordBytes) {
+		case ORecordFlat.RECORD_TYPE:
+			writer.writeAttribute(5, true, "value", ((ORecordFlat) rec).value());
+			break;
 
-			final ORecordBytes bytes = (ORecordBytes) rec;
-
-			writer.writeAttribute(0, false, ATTRIBUTE_TYPE, "b");
-			writer.writeAttribute(6, true, "value", bytes.toStream());
+		case ORecordBytes.RECORD_TYPE:
+			writer.writeAttribute(5, true, "value", rec.toStream());
+			break;
 		}
 
-		writer.endObject(4, true);
+		writer.endObject(3, true);
 
 		recordNum++;
 
