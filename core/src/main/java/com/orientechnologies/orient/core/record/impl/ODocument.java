@@ -281,26 +281,26 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 
 		if (value instanceof Collection<?>) {
 			// RELATION 1-N
-			Collection<?> coll = (Collection<?>) value;
-			if (coll.size() > 0) {
-				Object o;
-				for (Iterator<?> it = coll.iterator(); it.hasNext();) {
-					o = it.next();
-					if (o instanceof ORecord<?>)
-						lazyLoadRecord((ORecord<?>) o);
-				}
-			}
+			// Collection<?> coll = (Collection<?>) value;
+			// if (coll.size() > 0) {
+			// Object o;
+			// for (Iterator<?> it = coll.iterator(); it.hasNext();) {
+			// o = it.next();
+			// if (o instanceof ORecord<?>)
+			// lazyLoadRecord((ORecord<?>) o);
+			// }
+			// }
 		} else if (value instanceof Map<?, ?>) {
 			// RELATION 1-N
-			Map<String, ?> map = (Map<String, ?>) value;
-			if (map.size() > 0) {
-				Object o;
-				for (Iterator<?> it = map.values().iterator(); it.hasNext();) {
-					o = it.next();
-					if (o instanceof ORecord<?>)
-						lazyLoadRecord((ORecord<?>) o);
-				}
-			}
+			// Map<String, ?> map = (Map<String, ?>) value;
+			// if (map.size() > 0) {
+			// Object o;
+			// for (Iterator<?> it = map.values().iterator(); it.hasNext();) {
+			// o = it.next();
+			// if (o instanceof ORecord<?>)
+			// lazyLoadRecord((ORecord<?>) o);
+			// }
+			// }
 		} else if (value instanceof ORID) {
 			// CREATE THE DOCUMENT OBJECT IN LAZY WAY
 			value = (RET) new ODocument(_database, (ORID) value);
