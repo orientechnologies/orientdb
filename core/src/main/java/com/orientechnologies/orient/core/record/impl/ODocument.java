@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -279,29 +278,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 
 		RET value = (RET) _fieldValues.get(iPropertyName);
 
-		if (value instanceof Collection<?>) {
-			// RELATION 1-N
-			// Collection<?> coll = (Collection<?>) value;
-			// if (coll.size() > 0) {
-			// Object o;
-			// for (Iterator<?> it = coll.iterator(); it.hasNext();) {
-			// o = it.next();
-			// if (o instanceof ORecord<?>)
-			// lazyLoadRecord((ORecord<?>) o);
-			// }
-			// }
-		} else if (value instanceof Map<?, ?>) {
-			// RELATION 1-N
-			// Map<String, ?> map = (Map<String, ?>) value;
-			// if (map.size() > 0) {
-			// Object o;
-			// for (Iterator<?> it = map.values().iterator(); it.hasNext();) {
-			// o = it.next();
-			// if (o instanceof ORecord<?>)
-			// lazyLoadRecord((ORecord<?>) o);
-			// }
-			// }
-		} else if (value instanceof ORID) {
+		if (value instanceof ORID) {
 			// CREATE THE DOCUMENT OBJECT IN LAZY WAY
 			value = (RET) new ODocument(_database, (ORID) value);
 			_fieldValues.put(iPropertyName, value);
@@ -494,20 +471,5 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	protected void setup() {
 		super.setup();
 		_recordFormat = ORecordSerializerFactory.instance().getFormat(ORecordSerializerSchemaAware2CSV.NAME);
-	}
-
-	/**
-	 * Lazy loads the record.
-	 * 
-	 * @param <RET>
-	 * @param record
-	 */
-	private <RET> void lazyLoadRecord(final ORecord<?> record) {
-		if (record.getInternalStatus() == STATUS.NOT_LOADED)
-			try {
-				record.load();
-			} catch (ORecordNotFoundException e) {
-				// IGNORE IT CAUSE CAN BE RAISED BY NETWORK ISSUES
-			}
 	}
 }
