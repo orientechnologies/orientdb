@@ -136,7 +136,6 @@ public class TransactionOptimisticTest {
 			db.close();
 		}
 	}
-	/*
 
 	@Test(dependsOnMethods = "testTransactionOptimisticCacheMgmt1Db")
 	public void testTransactionOptimisticCacheMgmt2Db() throws IOException {
@@ -169,5 +168,4 @@ public class TransactionOptimisticTest {
 			db2.close();
 		}
 	}
-	*/
 }
