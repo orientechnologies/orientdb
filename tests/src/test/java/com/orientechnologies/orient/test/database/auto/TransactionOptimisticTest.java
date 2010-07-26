@@ -110,4 +110,64 @@ public class TransactionOptimisticTest {
 			db2.close();
 		}
 	}
+
+	@Test(dependsOnMethods = "testTransactionOptimisticCuncurrentException")
+	public void testTransactionOptimisticCacheMgmt1Db() throws IOException {
+		ODatabaseFlat db = new ODatabaseFlat(url);
+		db.open("admin", "admin");
+
+		ORecordFlat record = new ORecordFlat(db);
+		record.value("This is the first version").save();
+
+		try {
+			db.begin();
+
+			// RE-READ THE RECORD
+			record.load();
+			int v1 = record.getVersion();
+			record.value("This is the second version").save();
+			db.commit();
+
+			record.load();
+			Assert.assertEquals(record.getVersion(), v1 + 1);
+			Assert.assertTrue(record.value().contains("second"));
+		} finally {
+
+			db.close();
+		}
+	}
+	/*
+
+	@Test(dependsOnMethods = "testTransactionOptimisticCacheMgmt1Db")
+	public void testTransactionOptimisticCacheMgmt2Db() throws IOException {
+		ODatabaseFlat db1 = new ODatabaseFlat(url);
+		db1.open("admin", "admin");
+
+		ODatabaseFlat db2 = new ODatabaseFlat(url);
+		db2.open("admin", "admin");
+
+		ORecordFlat record1 = new ORecordFlat(db1);
+		record1.value("This is the first version").save();
+
+		try {
+			db1.begin();
+
+			// RE-READ THE RECORD
+			record1.load();
+			int v1 = record1.getVersion();
+			record1.value("This is the second version").save();
+
+			db1.commit();
+
+			ORecordFlat record2 = db2.load(record1.getIdentity());
+			Assert.assertEquals(record2.getVersion(), v1 + 1);
+			Assert.assertTrue(record2.value().contains("second"));
+
+		} finally {
+
+			db1.close();
+			db2.close();
+		}
+	}
+	*/
 }

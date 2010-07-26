@@ -16,7 +16,9 @@
 package com.orientechnologies.orient.server.tx;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -27,10 +29,10 @@ import com.orientechnologies.orient.core.tx.OTransactionEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
 public class OTransactionOptimisticProxy extends OTransactionAbstract<OTransactionRecordProxy> {
-	private OTransactionEntryProxy	entry					= new OTransactionEntryProxy();
-	private int											size;
-	private OChannelBinary					channel;
-	private boolean									emptyContent	= false;
+	private OTransactionEntryProxy				entry		= new OTransactionEntryProxy();
+	private int														size;
+	private OChannelBinary								channel;
+	private List<OTransactionEntryProxy>	entries	= new ArrayList<OTransactionEntryProxy>();
 
 	public OTransactionOptimisticProxy(final ODatabaseRecordTx<OTransactionRecordProxy> iDatabase, final OChannelBinary iChannel)
 			throws IOException {
@@ -43,51 +45,50 @@ public class OTransactionOptimisticProxy extends OTransactionAbstract<OTransacti
 
 	public Iterable<? extends OTransactionEntry<OTransactionRecordProxy>> getEntries() {
 
-		return new Iterable<OTransactionEntry<OTransactionRecordProxy>>() {
+		return new Iterable<OTransactionEntryProxy>() {
 
-			public Iterator<OTransactionEntry<OTransactionRecordProxy>> iterator() {
-				return new Iterator<OTransactionEntry<OTransactionRecordProxy>>() {
+			public Iterator<OTransactionEntryProxy> iterator() {
+				return new Iterator<OTransactionEntryProxy>() {
 					private int	current	= 1;
 
 					public boolean hasNext() {
-						if (emptyContent)
-							return false;
-
-						if (current > size)
-							// AVOID BROWSING OF RECORDS THE SECOND TIME TO BE INSERTED IN SERVER-SIDE CACHE
-							emptyContent = true;
-
 						return current <= size;
 					}
 
-					public OTransactionEntry<OTransactionRecordProxy> next() {
-						ORecordId rid = (ORecordId) entry.record.getIdentity();
-
+					public OTransactionEntryProxy next() {
 						try {
-							entry.status = channel.readByte();
-							rid.clusterId = channel.readShort();
-							entry.record.recordType = channel.readByte();
+							if (entries.size() < size) {
+								final ORecordId rid = (ORecordId) entry.record.getIdentity();
 
-							switch (entry.status) {
-							case OTransactionEntry.CREATED:
-								entry.clusterName = channel.readString();
-								entry.record.stream = channel.readBytes();
-								break;
+								entry.status = channel.readByte();
+								rid.clusterId = channel.readShort();
+								entry.record.recordType = channel.readByte();
 
-							case OTransactionEntry.UPDATED:
-								rid.clusterPosition = channel.readLong();
-								entry.record.version = channel.readInt();
-								entry.record.stream = channel.readBytes();
-								break;
+								switch (entry.status) {
+								case OTransactionEntry.CREATED:
+									entry.clusterName = channel.readString();
+									entry.record.stream = channel.readBytes();
+									break;
 
-							case OTransactionEntry.DELETED:
-								rid.clusterPosition = channel.readLong();
-								entry.record.version = channel.readInt();
-								break;
+								case OTransactionEntry.UPDATED:
+									rid.clusterPosition = channel.readLong();
+									entry.record.version = channel.readInt();
+									entry.record.stream = channel.readBytes();
+									break;
 
-							default:
-								throw new OTransactionException("Unrecognized tx command: " + entry.status);
-							}
+								case OTransactionEntry.DELETED:
+									rid.clusterPosition = channel.readLong();
+									entry.record.version = channel.readInt();
+									break;
+
+								default:
+									throw new OTransactionException("Unrecognized tx command: " + entry.status);
+								}
+
+								// PUT IN TEMPORARY LIST TO GET FETCHED AFTER ALL FOR CACHE
+								entries.add(entry);
+							} else
+								entry = entries.get(current - 1);
 
 							current++;
 
@@ -111,15 +112,15 @@ public class OTransactionOptimisticProxy extends OTransactionAbstract<OTransacti
 	}
 
 	public void begin() {
-		throw new UnsupportedOperationException("createRecord");
+		throw new UnsupportedOperationException("begin");
 	}
 
 	public void commit() {
-		throw new UnsupportedOperationException("createRecord");
+		throw new UnsupportedOperationException("commit");
 	}
 
 	public void rollback() {
-		throw new UnsupportedOperationException("createRecord");
+		throw new UnsupportedOperationException("rollback");
 	}
 
 	public long createRecord(final OTransactionRecordProxy iContent) {
@@ -127,15 +128,15 @@ public class OTransactionOptimisticProxy extends OTransactionAbstract<OTransacti
 	}
 
 	public void delete(final OTransactionRecordProxy iRecord) {
-		throw new UnsupportedOperationException("createRecord");
+		throw new UnsupportedOperationException("delete");
 	}
 
 	public OTransactionRecordProxy load(final int iClusterId, final long iPosition, final OTransactionRecordProxy iRecord,
 			final String iFetchPlan) {
-		throw new UnsupportedOperationException("createRecord");
+		throw new UnsupportedOperationException("load");
 	}
 
 	public void save(final OTransactionRecordProxy iContent, final String iClusterName) {
-		throw new UnsupportedOperationException("createRecord");
+		throw new UnsupportedOperationException("save");
 	}
 }
