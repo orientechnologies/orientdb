@@ -42,7 +42,7 @@ public class NativeQueryTest {
 	public void querySchemaAndLike() {
 		database.open("admin", "admin");
 
-		List<ODocument> result = new ONativeSynchQuery<ODocument, OQueryContextNativeSchema<ODocument>>(database, "Account",
+		List<ODocument> result = new ONativeSynchQuery<ODocument, OQueryContextNativeSchema<ODocument>>(database, "Profile",
 				new OQueryContextNativeSchema<ODocument>()) {
 
 			@Override
@@ -57,8 +57,8 @@ public class NativeQueryTest {
 
 			OrientTest.printRecord(i, record);
 
-			Assert.assertTrue(record.getClassName().equalsIgnoreCase("Person"));
-			Assert.assertEquals(((ODocument) record.field("city")).field("name"), "Rome");
+			Assert.assertTrue(record.getClassName().equalsIgnoreCase("Profile"));
+			Assert.assertEquals(((ODocument) ((ODocument) record.field("location")).field("city")).field("name"), "Rome");
 			Assert.assertTrue(record.field("name").toString().startsWith("G"));
 		}
 

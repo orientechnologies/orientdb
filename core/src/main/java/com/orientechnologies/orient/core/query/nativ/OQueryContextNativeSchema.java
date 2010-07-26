@@ -59,6 +59,7 @@ public class OQueryContextNativeSchema<T extends ORecordSchemaAware<?>> extends 
 		return this;
 	}
 
+
 	@Override
 	public OQueryContextNativeSchema<T> like(String iValue) {
 		super.like(iValue);

@@ -17,7 +17,6 @@ package com.orientechnologies.orient.core.query.nativ;
 
 import java.util.Date;
 
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.query.OQueryContext;
 import com.orientechnologies.orient.core.query.OQueryHelper;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -88,7 +87,8 @@ public class OQueryContextNative<T extends ORecordInternal<?>> extends OQueryCon
 
 	public OQueryContextNative<T> between(Object iFrom, Object iTo) {
 		if (checkOperator())
-			partialResult = ((Comparable<Object>) currentValue).compareTo(iFrom) >= 0 && ((Comparable<Object>) currentValue).compareTo(iTo) <= 0;
+			partialResult = ((Comparable<Object>) currentValue).compareTo(iFrom) >= 0
+					&& ((Comparable<Object>) currentValue).compareTo(iTo) <= 0;
 		return this;
 	}
 
@@ -160,8 +160,11 @@ public class OQueryContextNative<T extends ORecordInternal<?>> extends OQueryCon
 		if (result != null)
 			return false;
 
-		if (currentValue == null)
-			throw new OCommandExecutionException("Can't execute operators if no value was selected. Use column() to obtain a value");
+		if (currentValue == null) {
+			result = false;
+			return false;
+			// throw new OCommandExecutionException("Can't execute operators if no value was selected. Use column() to obtain a value");
+		}
 
 		return true;
 	}
