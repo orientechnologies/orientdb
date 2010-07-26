@@ -102,8 +102,9 @@ public abstract class OFile {
 		OLogManager.instance().debug(this, "Checking file integrity of " + osFile.getName() + "...");
 		readHeader();
 
-		if (filledUpTo > size)
-			OLogManager.instance().error(this, "Invalid filledUp size. The file is corrupted", null, OStorageException.class);
+		if (filledUpTo > size || filledUpTo < 0)
+			OLogManager.instance().error(this, "Invalid filledUp size (=" + filledUpTo + "). The file is corrupted", null,
+					OStorageException.class);
 
 		boolean softlyClosed = isSoftlyClosed();
 

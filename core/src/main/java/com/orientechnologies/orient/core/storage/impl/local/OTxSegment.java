@@ -199,7 +199,9 @@ public class OTxSegment extends OSingleFileSegment {
 				lastRecord = i;
 				recordFreed--;
 			}
-			file.shrink(lastRecord * RECORD_SIZE);
+
+			if (lastRecord > -1)
+				file.shrink(lastRecord * RECORD_SIZE);
 
 			synchTx();
 
