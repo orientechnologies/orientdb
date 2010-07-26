@@ -210,7 +210,7 @@ public class OStorageMemory extends OStorageAbstract {
 	public long count(final int iClusterId) {
 		OCluster cluster = getClusterById(iClusterId);
 		try {
-			return cluster.getElements();
+			return cluster.getEntries();
 		} catch (IOException e) {
 			throw new OStorageException("Error on count record in cluster: " + iClusterId, e);
 		}
@@ -219,7 +219,7 @@ public class OStorageMemory extends OStorageAbstract {
 	public long count(final int[] iClusterIds) {
 		long tot = 0;
 		for (int i = 0; i < iClusterIds.length; ++i)
-			tot += clusters.get(iClusterIds[i]).getElements();
+			tot += clusters.get(iClusterIds[i]).getEntries();
 		return tot;
 	}
 

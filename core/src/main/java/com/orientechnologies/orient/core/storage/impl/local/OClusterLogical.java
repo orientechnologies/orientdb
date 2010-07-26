@@ -66,7 +66,7 @@ public class OClusterLogical implements OCluster {
 					OStreamSerializerAnyStreamable.INSTANCE);
 			map.getRecord().setIdentity(iPhysicalClusterId, ORID.CLUSTER_POS_INVALID);
 
-			total = new OPhysicalPosition(0, 0, (byte) 0);
+			total = new OPhysicalPosition(0, -1, (byte) 0);
 			map.put(new Long(-1), total);
 
 		} catch (Exception e) {
@@ -163,22 +163,20 @@ public class OClusterLogical implements OCluster {
 	 * @throws IOException
 	 */
 	public long addPhysicalPosition(final int iDataSegmentId, final long iRecordPosition, final byte iRecordType) throws IOException {
-		long pos = total.dataPosition;
+		final long pos = ++total.dataPosition;
 		map.put(new Long(pos), new OPhysicalPosition(iDataSegmentId, iRecordPosition, iRecordType));
 
-		total.dataPosition++;
 		map.put(new Long(-1), total);
-
 		return pos;
 	}
 
-	public long getAvailablePosition() throws IOException {
-		return total.dataPosition;
-	}
-
-	public long getElements() {
+	public long getEntries() {
 		// RETURN THE MAP SIZE LESS THE DUMMY -1 POSITION
 		return map.size() - 1;
+	}
+
+	public long getLastEntry() {
+		return total.dataPosition + 1;
 	}
 
 	public int getId() {

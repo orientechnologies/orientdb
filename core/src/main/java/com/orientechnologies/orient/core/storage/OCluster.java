@@ -64,7 +64,9 @@ public interface OCluster {
 
 	public void updateVersion(long iPosition, int iVersion) throws IOException;
 
-	public long getElements() throws IOException;
+	public long getEntries() throws IOException;
+
+	public long getLastEntry() throws IOException;
 
 	/**
 	 * Let to an external actor to lock the cluster in shared mode. Useful for range queries to avoid atomic locking.

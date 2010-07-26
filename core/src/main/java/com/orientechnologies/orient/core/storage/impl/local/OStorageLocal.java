@@ -380,7 +380,7 @@ public class OStorageLocal extends OStorageAbstract {
 
 				c = clusters[iClusterIds[i]];
 				if (c != null)
-					tot += c.getElements();
+					tot += c.getEntries();
 			}
 
 			return tot;
@@ -409,7 +409,7 @@ public class OStorageLocal extends OStorageAbstract {
 		final boolean locked = acquireSharedLock();
 
 		try {
-			return clusters[iClusterId].getElements();
+			return clusters[iClusterId].getEntries();
 
 		} catch (IOException e) {
 

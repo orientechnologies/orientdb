@@ -25,7 +25,7 @@ public class OClusterPositionIterator implements Iterator<Long> {
 
 	public OClusterPositionIterator(final OCluster iCluster) throws IOException {
 		cluster = iCluster;
-		max = cluster.getElements();
+		max = cluster.getLastEntry();
 	}
 
 	public boolean hasNext() {

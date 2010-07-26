@@ -30,6 +30,7 @@ public class OClusterMemory extends OSharedResource implements OCluster {
 	private int											id;
 	private String									name;
 	private List<OPhysicalPosition>	entries	= new ArrayList<OPhysicalPosition>();
+	private int											removed	= 0;
 
 	public OClusterMemory(final int id, final String name) {
 		this.id = id;
@@ -52,7 +53,11 @@ public class OClusterMemory extends OSharedResource implements OCluster {
 		entries.clear();
 	}
 
-	public long getElements() {
+	public long getEntries() {
+		return entries.size() - removed;
+	}
+
+	public long getLastEntry() {
 		return entries.size();
 	}
 
@@ -85,7 +90,9 @@ public class OClusterMemory extends OSharedResource implements OCluster {
 	}
 
 	public void removePhysicalPosition(final long iPosition, OPhysicalPosition iPPosition) {
-		entries.set((int) iPosition, null);
+		if (entries.set((int) iPosition, null) != null)
+			// ADD A REMOVED
+			removed++;
 	}
 
 	public void setPhysicalPosition(final long iPosition, final int iDataId, final long iDataPosition, final byte iRecordType) {
