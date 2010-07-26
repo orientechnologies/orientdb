@@ -483,10 +483,12 @@ public class OStorageRemote extends OStorageAbstract {
 						network.writeLong(txEntry.record.getIdentity().getClusterPosition());
 						network.writeInt(txEntry.record.getVersion());
 						network.writeBytes(txEntry.record.toStream());
-
+						break;
+						
 					case OTransactionEntry.DELETED:
 						network.writeLong(txEntry.record.getIdentity().getClusterPosition());
 						network.writeInt(txEntry.record.getVersion());
+						break;
 					}
 
 				}
