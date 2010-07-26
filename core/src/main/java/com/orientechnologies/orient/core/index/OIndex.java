@@ -23,6 +23,8 @@ import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerString;
@@ -35,25 +37,67 @@ import com.orientechnologies.orient.core.type.tree.OTreeMapDatabaseLazySave;
  * 
  */
 public class OIndex {
+	private OProperty																					owner;
 	private OTreeMapDatabaseLazySave<String, List<ORecordId>>	map;
 	private boolean																						unique;
+	private boolean																						active = false;
 
-	public OIndex(final boolean iUnique, final ODatabaseRecord<?> iDatabase, final String iClusterIndexName, final ORecordId iRecordId) {
+	public OIndex(final boolean iUnique, final ODatabaseRecord<?> iDatabase, final OProperty iProperty,
+			final String iClusterIndexName, final ORecordId iRecordId) {
+		owner = iProperty;
 		unique = iUnique;
 		map = new OTreeMapDatabaseLazySave<String, List<ORecordId>>(iDatabase, iClusterIndexName, iRecordId);
 	}
 
-	public OIndex(boolean iUnique, ODatabaseRecord<?> iDatabase, String iClusterIndexName) {
+	public OIndex(final boolean iUnique, final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final String iClusterIndexName) {
+		owner = iProperty;
 		unique = iUnique;
 		map = new OTreeMapDatabaseLazySave<String, List<ORecordId>>(iDatabase, iClusterIndexName, OStreamSerializerString.INSTANCE,
 				OStreamSerializerListRID.INSTANCE);
+	}
+
+	/**
+	 * Populate the index with all the existent records.
+	 */
+	public void rebuild() {
+		Object fieldValue;
+		ODocument doc;
+
+		clear();
+
+		final int[] clusterIds = owner.getOwnerClass().getClusterIds();
+		for (int clusterId : clusterIds)
+			for (Object record : map.getDatabase().browseCluster(map.getDatabase().getClusterNameById(clusterId))) {
+				if (record instanceof ODocument) {
+					doc = (ODocument) record;
+					fieldValue = doc.field(owner.getName());
+
+					if (fieldValue != null)
+						put(fieldValue.toString(), (ORecordId) doc.getIdentity());
+				}
+			}
+	}
+
+	public boolean isActive() {
+		return active;
+	}
+
+	public void setActivated(boolean iActive) {
+		this.active = iActive;
+
+		if (iActive)
+			try {
+				map.load();
+			} catch (IOException e) {
+				throw new OIndexException("Can't activate index on property");
+			}
 	}
 
 	public void setUnique(boolean iUnique) {
 		if (iUnique == unique)
 			return;
 
-		if (iUnique) {
+		if (active && iUnique) {
 			// CHECK FOR DUPLICATES
 			List<ORecordId> values;
 			for (Entry<String, List<ORecordId>> entry : map.entrySet()) {
@@ -73,18 +117,27 @@ public class OIndex {
 	}
 
 	public void clear() {
+		if (!active)
+			return;
 		map.clear();
 	}
 
 	public void lazySave() {
+		if (!active)
+			return;
 		map.lazySave();
 	}
 
 	public void remove(Object key) {
+		if (!active)
+			return;
 		map.remove(key);
 	}
 
 	public void put(final String iKey, final ORecordId iSingleValue) {
+		if (!active)
+			return;
+
 		List<ORecordId> values = map.get(iKey);
 		if (values == null)
 			values = new ArrayList<ORecordId>();
@@ -110,6 +163,9 @@ public class OIndex {
 
 	@SuppressWarnings("unchecked")
 	public List<ORecordId> get(String iKey) {
+		if (!active)
+			return null;
+
 		final List<ORecordId> values = map.get(iKey);
 
 		if (values == null)

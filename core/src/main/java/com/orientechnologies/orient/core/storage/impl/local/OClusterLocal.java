@@ -225,7 +225,7 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 		}
 	}
 
-	public long getLastEntry() throws IOException {
+	public long getLastEntryPosition() throws IOException {
 		try {
 			acquireSharedLock();
 

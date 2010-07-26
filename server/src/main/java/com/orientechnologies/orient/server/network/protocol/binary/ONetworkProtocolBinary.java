@@ -206,26 +206,38 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				// connection.storage.close();
 				break;
 
-			case OChannelBinaryProtocol.DB_EXIST:
+			case OChannelBinaryProtocol.DB_EXIST: {
 				data.commandInfo = "Exists database";
 
 				channel.writeByte((byte) (connection.database.exists() ? 1 : 0));
 
 				sendOk();
 				break;
+			}
 
-			case OChannelBinaryProtocol.CLUSTER_COUNT:
+			case OChannelBinaryProtocol.CLUSTER_COUNT: {
 				data.commandInfo = "Count cluster elements";
 
-				int[] ids = new int[channel.readShort()];
-				for (int i = 0; i < ids.length; ++i)
-					ids[i] = channel.readShort();
+				int[] clusterIds = new int[channel.readShort()];
+				for (int i = 0; i < clusterIds.length; ++i)
+					clusterIds[i] = channel.readShort();
 
-				long count = connection.database.countClusterElements(ids);
+				long count = connection.database.countClusterElements(clusterIds);
 
 				sendOk();
 				channel.writeLong(count);
 				break;
+			}
+
+			case OChannelBinaryProtocol.CLUSTER_LASTPOS: {
+				data.commandInfo = "Get last entry position in cluster";
+
+				long pos = connection.database.getStorage().getClusterLastEntryPosition(channel.readShort());
+
+				sendOk();
+				channel.writeLong(pos);
+				break;
+			}
 
 			case OChannelBinaryProtocol.CLUSTER_ADD: {
 				data.commandInfo = "Add cluster";

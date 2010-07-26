@@ -145,8 +145,8 @@ public class OStorageMemory extends OStorageAbstract {
 		}
 	}
 
-	public ORawBuffer readRecord(final ODatabaseRecord<?> iDatabase, final int iRequesterId, final int iClusterId, final long iPosition,
-			String iFetchPlan) {
+	public ORawBuffer readRecord(final ODatabaseRecord<?> iDatabase, final int iRequesterId, final int iClusterId,
+			final long iPosition, String iFetchPlan) {
 		OCluster cluster = getClusterById(iClusterId);
 		try {
 			OPhysicalPosition ppos = cluster.getPhysicalPosition(iPosition, new OPhysicalPosition());
@@ -208,11 +208,20 @@ public class OStorageMemory extends OStorageAbstract {
 	}
 
 	public long count(final int iClusterId) {
-		OCluster cluster = getClusterById(iClusterId);
+		final OCluster cluster = getClusterById(iClusterId);
 		try {
 			return cluster.getEntries();
 		} catch (IOException e) {
 			throw new OStorageException("Error on count record in cluster: " + iClusterId, e);
+		}
+	}
+
+	public long getClusterLastEntryPosition(final int iClusterId) {
+		final OCluster cluster = getClusterById(iClusterId);
+		try {
+			return cluster.getLastEntryPosition();
+		} catch (IOException e) {
+			throw new OStorageException("Error on getting last entry position in cluster: " + iClusterId, e);
 		}
 	}
 

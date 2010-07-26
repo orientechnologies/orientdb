@@ -58,7 +58,7 @@ function fillDynaTable(iTable, iTitle, iColumnsNames, iColumnsModel, iData,
 		multiselect : false,
 		viewrecords : true,
 		gridview : true,
-		sortname : "@id",
+		sortname : "@rid",
 		sortorder : "asc",
 		caption : iTitle,
 		loadonce : true,
@@ -166,8 +166,8 @@ function displayResultSet(result, schema) {
 	var columnModel = new Array();
 
 	columnModel.push( {
-		"name" : "@id",
-		"index" : "@id",
+		"name" : "@rid",
+		"index" : "@rid",
 		"width" : 30,
 		"classes" : "cell_readonly",
 		searchoptions : {
@@ -175,8 +175,8 @@ function displayResultSet(result, schema) {
 		}
 	});
 	columnModel.push( {
-		"name" : "@ver",
-		"index" : "@ver",
+		"name" : "@version",
+		"index" : "@version",
 		"width" : 30,
 		"classes" : "cell_readonly",
 		searchoptions : {
@@ -277,7 +277,7 @@ function displayResultSet(result, schema) {
 	jQuery($('#queryResultTable')).jqGrid('GridUnload');
 	fillDynaTable($('#queryResultTable'), "Resultset", columnNames,
 			columnModel, result, {
-				sortname : '@id',
+				sortname : '@rid',
 				width : 400,
 				height : 300,
 				editurl : getStudioURL('document'),
@@ -289,7 +289,7 @@ function displayResultSet(result, schema) {
 					}
 
 					var recId = jQuery('#queryResultTable').jqGrid(
-							'getRowData', id)["@id"];
+							'getRowData', id)["@rid"];
 					jQuery('#queryResultTable').jqGrid('editRow', id, true,
 							null, function(response, postdata) {
 								jQuery("#output").val(response.responseText);
@@ -316,7 +316,7 @@ function displayResultSet(result, schema) {
 						'getGridParam', 'selrow');
 				if (selectedRow != null) {
 					var recId = jQuery('#queryResultTable').jqGrid(
-							'getRowData', selectedRow)["@id"];
+							'getRowData', selectedRow)["@rid"];
 					jQuery("#queryResultTable").jqGrid(
 							'delGridRow',
 							selectedRow,

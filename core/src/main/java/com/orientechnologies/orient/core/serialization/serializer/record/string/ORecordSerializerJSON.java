@@ -18,6 +18,8 @@ package com.orientechnologies.orient.core.serialization.serializer.record.string
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -26,6 +28,7 @@ import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -42,8 +45,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 	public static final String								NAME							= "json";
 	public static final ORecordSerializerJSON	INSTANCE					= new ORecordSerializerJSON();
 
-	public static final String								ATTRIBUTE_ID			= "@id";
-	public static final String								ATTRIBUTE_VERSION	= "@ver";
+	public static final String								ATTRIBUTE_ID			= "@rid";
+	public static final String								ATTRIBUTE_VERSION	= "@version";
 	public static final String								ATTRIBUTE_TYPE		= "@type";
 	public static final String								ATTRIBUTE_CLASS		= "@class";
 
@@ -89,7 +92,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 						}
 
 					} else if (fieldName.equals(ATTRIBUTE_CLASS) && iRecord instanceof ODocument)
-						((ODocument) iRecord).setClassName(fieldValue);
+						((ODocument) iRecord).setClassName("null".equals(fieldValue) ? null : fieldValue);
 
 					// RECORD VALUE(S)
 					else if (fieldName.equals("value")) {
@@ -121,7 +124,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 						}
 					} else {
 						if (iRecord instanceof ODocument)
-							((ODocument) iRecord).field(fieldName, extractFieldValue(iRecord, fieldValue));
+							((ODocument) iRecord).field(fieldName, extractFieldValue((ODocument) iRecord, fieldName, fieldValue));
 					}
 				}
 			}
@@ -132,7 +135,18 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 		return iRecord;
 	}
 
-	private Object extractFieldValue(final ORecordInternal<?> iRecord, String iFieldValue) {
+	private Object extractFieldValue(final ODocument iRecord, String iFieldName, String iFieldValue) {
+		OType type = null;
+		OType linkedType = null;
+
+		if (iRecord.getSchemaClass() != null) {
+			final OProperty p = iRecord.getSchemaClass().getProperty(iFieldName);
+			if (p != null) {
+				type = p.getType();
+				linkedType = p.getLinkedType();
+			}
+		}
+
 		if (iFieldValue.equals("null"))
 			return null;
 
@@ -141,19 +155,55 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			return ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedMapFromStream(iRecord.getDatabase(), OType.EMBEDDED, iFieldValue);
 
 		} else if (iFieldValue.startsWith("[") && iFieldValue.endsWith("]")) {
+
+			// EMBEDDED VALUES
+			Collection<Object> embeddedCollection;
+			if (type == OType.LINKSET || type == OType.EMBEDDEDSET)
+				embeddedCollection = new HashSet<Object>();
+			else
+				embeddedCollection = new ArrayList<Object>();
+
 			iFieldValue = iFieldValue.substring(1, iFieldValue.length() - 1);
 
-			if (iFieldValue.startsWith("{") && iFieldValue.endsWith("}")) {
-				// EMBEDDED COLLECTION
-				List<ORecordInternal<?>> records = new ArrayList<ORecordInternal<?>>();
+			// EMBEDDED VALUES
+			List<String> items = OStringSerializerHelper.smartSplit(iFieldValue, ',');
 
-				List<String> items = OStringSerializerHelper.smartSplit(iFieldValue, ',');
+			Object itemToAdd;
+			for (String item : items) {
+				item = item.trim();
+				itemToAdd = item;
 
-				for (String item : items)
-					records.add(fromString(iRecord.getDatabase(), item));
+				if (linkedType == null)
+					// TRY TO DETERMINE THE CONTAINED TYPE from THE FIRST VALUE
+					if (item.length() >= 4 && item.charAt(0) == '"' && item.charAt(1) == '#')
+						linkedType = OType.LINK;
+					else if (iFieldValue.startsWith("{") && iFieldValue.endsWith("}"))
+						linkedType = OType.EMBEDDED;
 
-				return records;
+				if (linkedType != null)
+					if (linkedType == OType.LINK)
+						itemToAdd = new ORecordId(item.substring(2, item.length() - 1));
+					else if (linkedType == OType.EMBEDDED)
+						itemToAdd = fromString(iRecord.getDatabase(), item);
+
+				embeddedCollection.add(itemToAdd);
 			}
+
+			return embeddedCollection;
+		} else {
+			// OTHER
+			if (linkedType == null)
+				// TRY TO DETERMINE THE CONTAINED TYPE from THE FIRST VALUE
+				if (iFieldValue.length() >= 4 && iFieldValue.charAt(0) == '#')
+					linkedType = OType.LINK;
+				else if (iFieldValue.startsWith("{") && iFieldValue.endsWith("}"))
+					linkedType = OType.EMBEDDED;
+
+			if (linkedType != null)
+				if (linkedType == OType.LINK)
+					return new ORecordId(iFieldValue.substring(1));
+				else if (linkedType == OType.EMBEDDED)
+					return fromString(iRecord.getDatabase(), iFieldValue);
 		}
 
 		return iFieldValue;
@@ -204,7 +254,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			if (includeType)
 				json.writeAttribute(identLevel + 1, true, ATTRIBUTE_TYPE, "" + (char) iRecord.getRecordType());
 			if (includeId)
-				json.writeAttribute(identLevel + 1, true, ATTRIBUTE_ID, iRecord.getIdentity());
+				json.writeAttribute(identLevel + 1, true, ATTRIBUTE_ID, iRecord.getIdentity().toString());
 			if (includeVer)
 				json.writeAttribute(identLevel + 1, true, ATTRIBUTE_VERSION, iRecord.getVersion());
 			if (includeClazz && iRecord instanceof ORecordSchemaAware<?>)

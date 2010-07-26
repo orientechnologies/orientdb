@@ -519,7 +519,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			}
 
 			if (!(iLinked instanceof ORecordInternal<?>))
-				throw new IllegalArgumentException("Invalid object received. Expected a record but received: " + iLinked);
+				throw new IllegalArgumentException("Invalid object received. Expected a record but received type=" + iLinked.getClass().getName()
+						+ " and value=" + iLinked);
 
 			// RECORD
 			ORecordInternal<?> iLinkedRecord = (ORecordInternal<?>) iLinked;

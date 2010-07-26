@@ -180,7 +180,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 		super.setLiveUpdated(iLiveUpdated);
 
 		// SET THE UPPER LIMIT TO -1 IF IT'S ENABLED
-		clusterSize = iLiveUpdated ? -1 : database.countClusterElements(currentClusterId);
+		clusterSize = iLiveUpdated ? -1 : database.getStorage().getClusterLastEntryPosition(currentClusterId);
 
 		return this;
 	}

@@ -138,4 +138,12 @@ public interface OStorage {
 	 * Execute the command request and return the result back.
 	 */
 	public Object command(OCommandRequestText iCommand);
+
+	/**
+	 * Returns the last entry position in the requested cluster. Useful to know the range of the records.
+	 * 
+	 * @param iCurrentClusterId
+	 *          Cluster id
+	 */
+	public long getClusterLastEntryPosition(int currentClusterId);
 }

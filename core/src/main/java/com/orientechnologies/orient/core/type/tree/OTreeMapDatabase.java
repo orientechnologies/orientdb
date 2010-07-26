@@ -58,6 +58,10 @@ public class OTreeMapDatabase<K, V> extends OTreeMapPersistent<K, V> {
 		return new OTreeMapEntryDatabase<K, V>(this, (OTreeMapEntryDatabase<K, V>) iParent, iRecordId);
 	}
 
+	public ODatabaseRecord<?> getDatabase() {
+		return database;
+	}
+
 	@Override
 	public OTreeMapPersistent<K, V> load() throws IOException {
 		if (!record.getIdentity().isValid())

@@ -57,7 +57,7 @@ public class OClusterMemory extends OSharedResource implements OCluster {
 		return entries.size() - removed;
 	}
 
-	public long getLastEntry() {
+	public long getLastEntryPosition() {
 		return entries.size();
 	}
 

@@ -397,6 +397,31 @@ public class OStorageLocal extends OStorageAbstract {
 		}
 	}
 
+	public long getClusterLastEntryPosition(final int iClusterId) {
+		if (iClusterId == -1)
+			throw new OStorageException("Cluster Id is invalid: " + iClusterId);
+
+		checkOpeness();
+
+		final long timer = OProfiler.getInstance().startChrono();
+
+		final boolean locked = acquireSharedLock();
+
+		try {
+			return clusters[iClusterId].getLastEntryPosition();
+
+		} catch (IOException e) {
+
+			OLogManager.instance().error(this, "Error on getting last entry position", e);
+			return -1;
+
+		} finally {
+			releaseSharedLock(locked);
+
+			OProfiler.getInstance().stopChrono("OStorageLocal.getClusterLastEntryPosition", timer);
+		}
+	}
+
 	public long count(final int iClusterId) {
 		if (iClusterId == -1)
 			throw new OStorageException("Cluster Id is invalid: " + iClusterId);

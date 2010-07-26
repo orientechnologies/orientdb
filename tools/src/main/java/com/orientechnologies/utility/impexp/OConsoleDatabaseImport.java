@@ -19,7 +19,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.parser.OStringForwardReader;
 import com.orientechnologies.common.parser.OStringParser;
@@ -33,8 +35,6 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONReader;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
@@ -47,16 +47,17 @@ import com.orientechnologies.utility.console.OCommandListener;
  * 
  */
 public class OConsoleDatabaseImport {
-	private static final String			MODE_ARRAY		= "array";
+	private static final String			MODE_ARRAY			= "array";
 	private ODatabaseDocument				database;
 	private String									fileName;
 	private OCommandListener				listener;
-	private Map<OProperty, String>	linkedClasses	= new HashMap<OProperty, String>();
-	private Map<OClass, String>			superClasses	= new HashMap<OClass, String>();
+	private Map<OProperty, String>	linkedClasses		= new HashMap<OProperty, String>();
+	private Map<OClass, String>			superClasses		= new HashMap<OClass, String>();
 
 	private OJSONReader							jsonReader;
 	private OStringForwardReader		reader;
 	private ORecordInternal<?>			record;
+	private Set<String>							recordToDelete	= new HashSet<String>();
 
 	public OConsoleDatabaseImport(final ODatabaseDocument database, final String iFileName, final OCommandListener iListener)
 			throws IOException {
@@ -73,15 +74,19 @@ public class OConsoleDatabaseImport {
 		try {
 			jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
 
+			long time = System.currentTimeMillis();
+
 			importInfo();
 			importClusters();
 			importSchema();
 			importRecords();
 			importDictionary();
+			deleteHoleRecords();
+			activateIndexes();
 
 			jsonReader.readNext(OJSONReader.END_OBJECT);
 
-			listener.onMessage("\nImport of database completed.");
+			listener.onMessage("\n\nImport completed in " + ((System.currentTimeMillis() - time)) + " ms");
 
 		} catch (Exception e) {
 			throw new ODatabaseExportException("Error on importing database '" + database.getName() + "' from file: " + fileName, e);
@@ -90,6 +95,43 @@ public class OConsoleDatabaseImport {
 		}
 
 		return this;
+	}
+
+	/**
+	 * Delete all the temporary records created to fill the holes and to mantain the same record ID
+	 */
+	private void deleteHoleRecords() {
+		listener.onMessage("\nDelete temporary records...");
+
+		final ORecordId rid = new ORecordId();
+		final ODocument doc = new ODocument(database, rid);
+		for (String recId : recordToDelete) {
+			doc.reset();
+			rid.fromString(recId);
+			doc.delete();
+		}
+		listener.onMessage("OK (" + recordToDelete.size() + " records)");
+	}
+
+	/**
+	 * Activate the indexes at the end to avoid errors.
+	 */
+	private void activateIndexes() {
+		listener.onMessage("\nActivating indexes...");
+
+		int indexes = 0;
+		for (OClass cls : database.getMetadata().getSchema().classes()) {
+			for (OProperty prop : cls.properties()) {
+				if (prop.isIndexed()) {
+					boolean unique = prop.getIndex().isUnique();
+					prop.removeIndex();
+					prop.createIndex(unique);
+
+					++indexes;
+				}
+			}
+		}
+		listener.onMessage("OK (" + indexes + " indexes)");
 	}
 
 	private void importInfo() throws IOException, ParseException {
@@ -128,7 +170,8 @@ public class OConsoleDatabaseImport {
 				dictionaryValue = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"value\"")
 						.readString(OJSONReader.NEXT_IN_OBJECT);
 
-				rid.fromString(dictionaryValue);
+				if (dictionaryValue.length() >= 4)
+					rid.fromString(dictionaryValue.substring(1));
 
 				database.getDictionary().put(dictionaryKey, doc);
 				tot++;
@@ -300,7 +343,7 @@ public class OConsoleDatabaseImport {
 		if (min != null)
 			prop.setMin(min);
 		if (max != null)
-			prop.setMin(max);
+			prop.setMax(max);
 		if (linkedClass != null)
 			linkedClasses.put(prop, linkedClass);
 		if (linkedType != null)
@@ -359,13 +402,17 @@ public class OConsoleDatabaseImport {
 
 		long totalRecords = 0;
 
+		System.out.print("\nImporting records...");
+
 		while (jsonReader.lastChar() != ']') {
 			importRecord();
 
 			++totalRecords;
 		}
 
-		listener.onMessage("\n\nDone. Imported " + totalRecords + " records");
+		listener.onMessage("OK (" + totalRecords + " records)");
+
+		jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
 
 		return total;
 	}
@@ -378,22 +425,37 @@ public class OConsoleDatabaseImport {
 
 		String rid = record.getIdentity().toString();
 
-		System.out.print("\nImporting record of type '" + (char) record.getRecordType() + "' with id=" + rid);
+		// System.out.print("\n- Importing record of type '" + (char) record.getRecordType() + "' with id=" + rid);
+
+		long lastPos = database.getStorage().getClusterLastEntryPosition(record.getIdentity().getClusterId());
 
 		// SAVE THE RECORD
-		if (record.getIdentity().getClusterPosition() < database.countClusterElements(record.getIdentity().getClusterId())) {
-			if (record instanceof ORecordBytes)
-				((ODatabaseRecord<ORecordBytes>) database.getUnderlying()).save((ORecordBytes) record);
-			else if (record instanceof ORecordFlat || record instanceof ODocument)
-				((ODocument) record).save();
+		if (record.getIdentity().getClusterPosition() < lastPos) {
+			// REWRITE PREVIOUS RECORD
+			if (record instanceof ODocument)
+				record.save();
+			else
+				((ODatabaseRecord<ORecordInternal<?>>) database.getUnderlying()).save(record);
 		} else {
 			String clusterName = database.getClusterNameById(record.getIdentity().getClusterId());
+
+			if (record.getIdentity().getClusterPosition() > lastPos) {
+				// CREATE HOLES
+				int holes = (int) (record.getIdentity().getClusterPosition() - lastPos);
+
+				ODocument tempRecord = new ODocument(database);
+				for (int i = 0; i < holes; ++i) {
+					tempRecord.reset();
+					((ODatabaseRecord<ORecordInternal<?>>) database.getUnderlying()).save(tempRecord, clusterName);
+					recordToDelete.add(tempRecord.getIdentity().toString());
+				}
+			}
+
+			// APPEND THE RECORD
 			record.setIdentity(-1, -1);
-			if (record instanceof ORecordBytes)
-				((ODatabaseRecord<ORecordBytes>) database.getUnderlying()).save((ORecordBytes) record, clusterName);
-			else if (record instanceof ORecordFlat)
-				((ODatabaseRecord<ORecordInternal<?>>) database.getUnderlying()).save(record, clusterName);
-			else if (record instanceof ODocument)
+			if (record instanceof ODocument)
+				record.save(clusterName);
+			else
 				((ODatabaseRecord<ORecordInternal<?>>) database.getUnderlying()).save(record, clusterName);
 		}
 

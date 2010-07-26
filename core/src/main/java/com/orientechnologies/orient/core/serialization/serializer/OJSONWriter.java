@@ -147,10 +147,16 @@ public class OJSONWriter {
 		if (iValue == null)
 			buffer.append("\"null\"");
 
-		else if (iValue instanceof ORecord<?>) {
+		else if (iValue instanceof ORecordId) {
+			ORecordId rid = (ORecordId) iValue;
+			buffer.append("\"");
+			buffer.append(rid.toString());
+			buffer.append('\"');
+
+		} else if (iValue instanceof ORecord<?>) {
 			ORecord<?> linked = (ORecord<?>) iValue;
 			if (linked.getIdentity().isValid()) {
-				buffer.append('\"');
+				buffer.append("\"#");
 				buffer.append(linked.getIdentity().toString());
 				buffer.append('\"');
 			} else {
@@ -207,7 +213,7 @@ public class OJSONWriter {
 			}
 			buffer.append('}');
 
-		} else if (iValue instanceof String || iValue instanceof ORecordId || iValue instanceof Date) {
+		} else if (iValue instanceof String || iValue instanceof Date) {
 			String v = iValue.toString();
 			if (v.startsWith("\""))
 				buffer.append(v);

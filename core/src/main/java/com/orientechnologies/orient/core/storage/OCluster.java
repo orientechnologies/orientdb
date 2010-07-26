@@ -66,7 +66,7 @@ public interface OCluster {
 
 	public long getEntries() throws IOException;
 
-	public long getLastEntry() throws IOException;
+	public long getLastEntryPosition() throws IOException;
 
 	/**
 	 * Let to an external actor to lock the cluster in shared mode. Useful for range queries to avoid atomic locking.

@@ -128,6 +128,7 @@ public class OProperty extends ODocumentWrapperNoClass {
 
 		if (document.field("index") != null) {
 			setIndex((ODocument) document.field("index"), (Boolean) document.field("index-unique"));
+			getIndex().setActivated(true);
 			try {
 				index.load();
 			} catch (IOException e) {
@@ -143,8 +144,8 @@ public class OProperty extends ODocumentWrapperNoClass {
 				// UNIQUE BY DEFAULT
 				iUnique = Boolean.TRUE;
 
-			index = new OIndex(iUnique, document.getDatabase(), OStorage.CLUSTER_INDEX_NAME, new ORecordId(iIndexRecord.getIdentity()
-					.toString()));
+			index = new OIndex(iUnique, document.getDatabase(), this, OStorage.CLUSTER_INDEX_NAME, new ORecordId(iIndexRecord
+					.getIdentity().toString()));
 		}
 	}
 
@@ -236,11 +237,12 @@ public class OProperty extends ODocumentWrapperNoClass {
 			throw new IllegalStateException("Index already created");
 
 		try {
-			index = new OIndex(iUnique, document.getDatabase(), OStorage.CLUSTER_INDEX_NAME);
+			index = new OIndex(iUnique, document.getDatabase(), this, OStorage.CLUSTER_INDEX_NAME);
+			index.setActivated(true);
+			
+			index.rebuild();
 
 			setDirty();
-
-			populateIndex();
 
 			if (document.getDatabase() != null) {
 				// / SAVE ONLY IF THE PROPERTY IS ALREADY PERSISTENT
@@ -255,28 +257,6 @@ public class OProperty extends ODocumentWrapperNoClass {
 		}
 
 		return index;
-	}
-
-	/**
-	 * Populate the index with all the existent records.
-	 */
-	private void populateIndex() {
-		Object fieldValue;
-		ODocument doc;
-
-		index.clear();
-
-		final int[] clusterIds = owner.getClusterIds();
-		for (int clusterId : clusterIds)
-			for (Object record : document.getDatabase().browseCluster(document.getDatabase().getClusterNameById(clusterId))) {
-				if (record instanceof ODocument) {
-					doc = (ODocument) record;
-					fieldValue = doc.field(name);
-
-					if (fieldValue != null)
-						index.put(fieldValue.toString(), (ORecordId) doc.getIdentity());
-				}
-			}
 	}
 
 	/**
@@ -297,6 +277,10 @@ public class OProperty extends ODocumentWrapperNoClass {
 
 	public boolean isIndexed() {
 		return index != null;
+	}
+
+	public OClass getOwnerClass() {
+		return owner;
 	}
 
 	public OProperty setDirty() {

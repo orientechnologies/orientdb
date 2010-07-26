@@ -309,6 +309,30 @@ public class OStorageRemote extends OStorageAbstract {
 		return count(new int[] { iClusterId });
 	}
 
+	public long getClusterLastEntryPosition(final int iClusterId) {
+		checkConnection();
+
+		do {
+			boolean locked = acquireExclusiveLock();
+
+			try {
+				network.writeByte(OChannelBinaryProtocol.CLUSTER_LASTPOS);
+				network.writeShort((short) iClusterId);
+				network.flush();
+
+				readStatus();
+				return network.readLong();
+			} catch (Exception e) {
+				if (handleException("Error on getting last entry position count in cluster: " + iClusterId, e))
+					break;
+
+			} finally {
+				releaseExclusiveLock(locked);
+			}
+		} while (true);
+		return -1;
+	}
+
 	public long count(final int[] iClusterIds) {
 		checkConnection();
 
@@ -484,7 +508,7 @@ public class OStorageRemote extends OStorageAbstract {
 						network.writeInt(txEntry.record.getVersion());
 						network.writeBytes(txEntry.record.toStream());
 						break;
-						
+
 					case OTransactionEntry.DELETED:
 						network.writeLong(txEntry.record.getIdentity().getClusterPosition());
 						network.writeInt(txEntry.record.getVersion());
