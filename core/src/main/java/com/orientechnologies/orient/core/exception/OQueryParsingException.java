@@ -20,7 +20,7 @@ import com.orientechnologies.common.exception.OException;
 public class OQueryParsingException extends OException {
 
 	private String						text;
-	private int								position;
+	private int								position					= -1;
 	private static final long	serialVersionUID	= -7430575036316163711L;
 
 	public OQueryParsingException(final String iMessage) {
@@ -42,16 +42,28 @@ public class OQueryParsingException extends OException {
 	@Override
 	public String getMessage() {
 		StringBuilder buffer = new StringBuilder();
-		buffer.append("Error on parsing query at position #");
-		buffer.append(position);
-		buffer.append(": " + super.getMessage());
-		buffer.append("\nQuery: ");
-		buffer.append(text);
-		buffer.append("\n------");
-		for (int i = 0; i < position - 1; ++i)
-			buffer.append("-");
+		if (position > -1) {
+			buffer.append("Error on parsing query at position #");
+			buffer.append(position);
+			buffer.append(": ");
+		}
 
-		buffer.append("^");
+		buffer.append(super.getMessage());
+
+		if (text != null) {
+			buffer.append("\nQuery: ");
+			buffer.append(text);
+			buffer.append("\n------");
+			for (int i = 0; i < position - 1; ++i)
+				buffer.append("-");
+
+			buffer.append("^");
+		}
 		return buffer.toString();
 	}
+
+	public String getText() {
+		return text;
+	}
+
 }

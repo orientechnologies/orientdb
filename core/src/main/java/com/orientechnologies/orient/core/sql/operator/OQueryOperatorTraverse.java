@@ -46,6 +46,11 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 	}
 
 	@Override
+	public String getSyntax() {
+		return "<left> TRAVERSE[( <begin-deep-level> [, <maximum-deep-level>] )] ( <conditions> )";
+	}
+
+	@Override
 	protected boolean evaluateExpression(final ODatabaseRecord<?> iDatabase, final OSQLFilterCondition iCondition,
 			final Object iLeft, final Object iRight) {
 		final OSQLFilterCondition condition;
@@ -63,7 +68,8 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 	}
 
 	@SuppressWarnings("unchecked")
-	private boolean traverse(final ODatabaseRecord<?> iDatabase, final OSQLFilterCondition iCondition, Object iTarget, final int iLevel) {
+	private boolean traverse(final ODatabaseRecord<?> iDatabase, final OSQLFilterCondition iCondition, Object iTarget,
+			final int iLevel) {
 		if (iTarget instanceof ORID)
 			// TRANSFORM THE ORID IN ODOCUMENT
 			iTarget = new ODocument(iDatabase, (ORID) iTarget);

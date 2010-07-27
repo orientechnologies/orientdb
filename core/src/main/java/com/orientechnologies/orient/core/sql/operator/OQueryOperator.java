@@ -46,12 +46,16 @@ public abstract class OQueryOperator {
 	}
 
 	/**
-	 * Default State-less implementation: return itself
+	 * Default State-less implementation: doesn't save parameters and just return itself
 	 * 
-	 * @param params
+	 * @param iParams
 	 * @return
 	 */
-	public OQueryOperator configure(final List<String> params) {
+	public OQueryOperator configure(final List<String> iParams) {
 		return this;
+	}
+
+	public String getSyntax() {
+		return "<left> " + keyword + " <right>";
 	}
 }

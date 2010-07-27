@@ -60,6 +60,10 @@ public class OSQLFilter extends OCommandToParse {
 				rootCondition = extractConditions(null);
 			}
 		} catch (OQueryParsingException e) {
+			if (e.getText() == null)
+				// QUERY EXCEPTION BUT WITHOUT TEXT: NEST IT
+				throw new OQueryParsingException("Error on parsing query", text, currentPos, e);
+
 			throw e;
 		} catch (Throwable t) {
 			throw new OQueryParsingException("Error on parsing query", text, currentPos, t);
@@ -180,7 +184,12 @@ public class OSQLFilter extends OCommandToParse {
 					currentPos = text.indexOf(OStringSerializerHelper.CLOSED_BRACE, currentPos) + 1;
 				}
 
-				return op.configure(params);
+				try {
+					return op.configure(params);
+				} catch (Exception e) {
+					throw new OQueryParsingException("Syntax error using the operator '" + op.toString() + "'. Syntax is: "
+							+ op.getSyntax());
+				}
 			}
 		}
 
