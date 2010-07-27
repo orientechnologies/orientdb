@@ -142,7 +142,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		String mapValue;
 		for (String item : items) {
 			if (item != null && item.length() > 0) {
-				entry = OStringSerializerHelper.split(item, OStringSerializerHelper.ENTRY_SEPARATOR);
+				entry = OStringSerializerHelper.smartSplit(item, OStringSerializerHelper.ENTRY_SEPARATOR);
 				if (entry.size() > 0) {
 					mapValue = entry.get(1);
 
@@ -150,6 +150,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 						if (mapValue.length() > 0) {
 							if (mapValue.charAt(0) == OStringSerializerHelper.EMBEDDED) {
 								iLinkedType = OType.EMBEDDED;
+								mapValue = mapValue.substring(1, mapValue.length() - 1);
 							} else if (Character.isDigit(mapValue.charAt(0)) || mapValue.charAt(0) == '+' || mapValue.charAt(0) == '-') {
 								iLinkedType = getNumber(mapValue);
 							} else if (mapValue.charAt(0) == '\'' || mapValue.charAt(0) == '"')
@@ -291,53 +292,50 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			buffer.append(OStringSerializerHelper.MAP_BEGIN);
 
 			int items = 0;
-			if (iLinkedClass != null) {
-				// EMBEDDED OBJECTS
-				ODocument record;
-				for (Entry<String, Object> o : ((Map<String, Object>) iValue).entrySet()) {
-					if (items > 0)
-						buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
+			// EMBEDDED OBJECTS
+			ODocument record;
+			for (Entry<String, Object> o : ((Map<String, Object>) iValue).entrySet()) {
+				if (items > 0)
+					buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
-					if (o != null) {
-						if (o instanceof ODocument)
-							record = (ODocument) o;
-						else
-							record = OObjectSerializerHelper.toStream(o, new ODocument((ODatabaseRecord<?>) iDatabase, o.getClass()
-									.getSimpleName()), iDatabase instanceof ODatabaseObjectTx ? ((ODatabaseObjectTx) iDatabase).getEntityManager()
-									: OEntityManagerInternal.INSTANCE, iLinkedClass, iObjHandler != null ? iObjHandler
-									: new OUserObject2RecordHandler() {
-
-										public Object getUserObjectByRecord(ORecordInternal<?> iRecord, final String iFetchPlan) {
-											return iRecord;
-										}
-
-										public ORecordInternal<?> getRecordByUserObject(Object iPojo, boolean iIsMandatory) {
-											return new ODocument(iLinkedClass);
-										}
-
-										public boolean existsUserObjectByRecord(ORecordInternal<?> iRecord) {
-											return false;
-										}
-									});
-
-						buffer.append(OStringSerializerHelper.EMBEDDED);
-						buffer.append(toString(record, null, iObjHandler, iMarshalledRecords));
-						buffer.append(OStringSerializerHelper.EMBEDDED);
-					}
-
-					items++;
-				}
-			} else
-				// EMBEDDED LITERALS
-				for (Entry<String, Object> o : ((Map<String, Object>) iValue).entrySet()) {
-					if (items > 0)
-						buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
-
+				if (o != null) {
 					buffer.append(OStringSerializerHelper.fieldTypeToString(OType.STRING, o.getKey()));
 					buffer.append(OStringSerializerHelper.ENTRY_SEPARATOR);
-					buffer.append(OStringSerializerHelper.fieldTypeToString(iLinkedType, o.getValue()));
-					items++;
+
+					if (o.getValue() instanceof ORecord<?>) {
+						if (o.getValue() instanceof ODocument)
+							record = (ODocument) o.getValue();
+						else
+							record = OObjectSerializerHelper.toStream(o.getValue(), new ODocument((ODatabaseRecord<?>) iDatabase, o.getValue()
+									.getClass().getSimpleName()),
+									iDatabase instanceof ODatabaseObjectTx ? ((ODatabaseObjectTx) iDatabase).getEntityManager()
+											: OEntityManagerInternal.INSTANCE, iLinkedClass, iObjHandler != null ? iObjHandler
+											: new OUserObject2RecordHandler() {
+
+												public Object getUserObjectByRecord(ORecordInternal<?> iRecord, final String iFetchPlan) {
+													return iRecord;
+												}
+
+												public ORecordInternal<?> getRecordByUserObject(Object iPojo, boolean iIsMandatory) {
+													return new ODocument(iLinkedClass);
+												}
+
+												public boolean existsUserObjectByRecord(ORecordInternal<?> iRecord) {
+													return false;
+												}
+											});
+
+						buffer.append(OStringSerializerHelper.EMBEDDED);
+						buffer.append(OStringSerializerHelper.fieldTypeToString(iLinkedType, record));
+						// buffer.append(toString(record, null, iObjHandler, iMarshalledRecords));
+						buffer.append(OStringSerializerHelper.EMBEDDED);
+					} else
+						// EMBEDDED LITERALS
+						buffer.append(OStringSerializerHelper.fieldTypeToString(iLinkedType, o.getValue()));
 				}
+
+				items++;
+			}
 
 			buffer.append(OStringSerializerHelper.MAP_END);
 			break;
@@ -519,8 +517,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			}
 
 			if (!(iLinked instanceof ORecordInternal<?>))
-				throw new IllegalArgumentException("Invalid object received. Expected a record but received type=" + iLinked.getClass().getName()
-						+ " and value=" + iLinked);
+				throw new IllegalArgumentException("Invalid object received. Expected a record but received type="
+						+ iLinked.getClass().getName() + " and value=" + iLinked);
 
 			// RECORD
 			ORecordInternal<?> iLinkedRecord = (ORecordInternal<?>) iLinked;

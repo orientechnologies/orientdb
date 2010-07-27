@@ -47,18 +47,18 @@ public abstract class OStringSerializerHelper {
 	public static final List<String>				EMPTY_LIST						= Collections.unmodifiableList(new ArrayList<String>());
 	public static final Map<String, String>	EMPTY_MAP							= Collections.unmodifiableMap(new HashMap<String, String>());
 
-	public static Object fieldTypeFromStream(OType iType, Object iValue) {
+	public static Object fieldTypeFromStream(OType iType, final Object iValue) {
 		if (iValue == null)
 			return null;
 
 		if (iType == null)
-			throw new IllegalArgumentException("Can't unmarshall value because the type is not specified. Value: " + iValue);
+			iType = OType.EMBEDDED;
 
 		switch (iType) {
 		case STRING:
 			if (iValue instanceof String) {
 				final String s = (String) iValue;
-				return s.substring(1, s.length() - 1);
+				return decode(s.substring(1, s.length() - 1));
 			}
 			return iValue.toString();
 
@@ -123,13 +123,16 @@ public abstract class OStringSerializerHelper {
 		throw new IllegalArgumentException("Type " + iType + " not supported to convert value: " + iValue);
 	}
 
-	public static String fieldTypeToString(OType iType, Object iValue) {
+	public static String fieldTypeToString(OType iType, final Object iValue) {
 		if (iValue == null)
 			return null;
 
+		if (iType == null)
+			iType = OType.EMBEDDED;
+
 		switch (iType) {
 		case STRING:
-			return "\"" + (String) iValue + "\"";
+			return "\"" + encode((String) iValue) + "\"";
 
 		case INTEGER:
 		case FLOAT:
@@ -166,6 +169,7 @@ public abstract class OStringSerializerHelper {
 		StringBuilder buffer = new StringBuilder();
 		char stringBeginChar = ' ';
 		char c;
+		char previousChar = ' ';
 		boolean insideEmbedded = false;
 		int insideCollection = 0;
 		int insideMap = 0;
@@ -197,7 +201,7 @@ public abstract class OStringSerializerHelper {
 				if (insideCollection == 0 && insideMap == 0 && !insideEmbedded) {
 					// OUTSIDE A COLLECTION
 
-					if (c == '\'' || c == '"') {
+					if ((c == '\'' || c == '"') && previousChar != '\\') {
 						// START STRING
 						stringBeginChar = c;
 					} else if (c == iRecordSeparator) {
@@ -210,7 +214,7 @@ public abstract class OStringSerializerHelper {
 
 			} else {
 				// INSIDE A STRING
-				if (c == '\'' || c == '"') {
+				if ((c == '\'' || c == '"') && previousChar != '\\') {
 					// CLOSE THE STRING ?
 					if (stringBeginChar == c) {
 						// SAME CHAR AS THE BEGIN OF THE STRING: CLOSE IT AND PUSH
@@ -220,6 +224,8 @@ public abstract class OStringSerializerHelper {
 			}
 
 			buffer.append(c);
+
+			previousChar = c;
 		}
 
 		parts.add(buffer.toString());
@@ -378,5 +384,78 @@ public abstract class OStringSerializerHelper {
 		}
 
 		return map;
+	}
+
+	/**
+	 * Transforms, only if needed, the source string escaping the characters \ and ".
+	 * 
+	 * @param iText
+	 *          Input String
+	 * @return Modified string if needed, otherwise the same input object
+	 * @see OStringSerializerHelper#decode(String)
+	 */
+	public static String encode(final String iText) {
+		int pos = -1;
+
+		for (int i = 0; i < iText.length(); ++i)
+			if (iText.charAt(i) == '"' || iText.charAt(i) == '\\') {
+				pos = i;
+				break;
+			}
+
+		if (pos == -1)
+			// NOT FOUND, RETURN THE SAME STRING (AVOID COPIES)
+			return iText;
+
+		// CHANGE THE INPUT STRING
+		final StringBuilder buffer = new StringBuilder(iText);
+
+		char c;
+		for (int i = pos; i < buffer.length(); ++i) {
+			c = buffer.charAt(i);
+
+			if (c == '"' || c == '\\') {
+				buffer.insert(i, '\\');
+				++i;
+			}
+		}
+
+		return buffer.toString();
+	}
+
+	/**
+	 * Transforms, only if needed, the source string un-escaping the characters \ and ".
+	 * 
+	 * @param iText
+	 *          Input String
+	 * @return Modified string if needed, otherwise the same input object
+	 * @see OStringSerializerHelper#encode(String)
+	 */
+	public static String decode(final String iText) {
+		int pos = -1;
+
+		for (int i = 0; i < iText.length(); ++i)
+			if (iText.charAt(i) == '"' || iText.charAt(i) == '\\') {
+				pos = i;
+				break;
+			}
+
+		if (pos == -1)
+			// NOT FOUND, RETURN THE SAME STRING (AVOID COPIES)
+			return iText;
+
+		// CHANGE THE INPUT STRING
+		final StringBuilder buffer = new StringBuilder(iText);
+
+		char c;
+		for (int i = pos; i < buffer.length(); ++i) {
+			c = buffer.charAt(i);
+
+			if (c == '\\') {
+				buffer.deleteCharAt(i);
+			}
+		}
+
+		return buffer.toString();
 	}
 }

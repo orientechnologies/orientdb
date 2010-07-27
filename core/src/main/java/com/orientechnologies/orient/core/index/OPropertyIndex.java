@@ -36,20 +36,20 @@ import com.orientechnologies.orient.core.type.tree.OTreeMapDatabaseLazySave;
  * @author Luca Garulli
  * 
  */
-public class OIndex {
+public class OPropertyIndex {
 	private OProperty																					owner;
 	private OTreeMapDatabaseLazySave<String, List<ORecordId>>	map;
 	private boolean																						unique;
 	private boolean																						active = false;
 
-	public OIndex(final boolean iUnique, final ODatabaseRecord<?> iDatabase, final OProperty iProperty,
+	public OPropertyIndex(final boolean iUnique, final ODatabaseRecord<?> iDatabase, final OProperty iProperty,
 			final String iClusterIndexName, final ORecordId iRecordId) {
 		owner = iProperty;
 		unique = iUnique;
 		map = new OTreeMapDatabaseLazySave<String, List<ORecordId>>(iDatabase, iClusterIndexName, iRecordId);
 	}
 
-	public OIndex(final boolean iUnique, final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final String iClusterIndexName) {
+	public OPropertyIndex(final boolean iUnique, final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final String iClusterIndexName) {
 		owner = iProperty;
 		unique = iUnique;
 		map = new OTreeMapDatabaseLazySave<String, List<ORecordId>>(iDatabase, iClusterIndexName, OStreamSerializerString.INSTANCE,

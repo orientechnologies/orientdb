@@ -23,7 +23,7 @@ import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OPropertyIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
@@ -47,7 +47,7 @@ public class OProperty extends ODocumentWrapperNoClass {
 	private OClass						linkedClass;
 	transient private String	linkedClassName;
 
-	private OIndex						index;
+	private OPropertyIndex						index;
 
 	private boolean						mandatory;
 	private boolean						notNull;
@@ -144,7 +144,7 @@ public class OProperty extends ODocumentWrapperNoClass {
 				// UNIQUE BY DEFAULT
 				iUnique = Boolean.TRUE;
 
-			index = new OIndex(iUnique, document.getDatabase(), this, OStorage.CLUSTER_INDEX_NAME, new ORecordId(iIndexRecord
+			index = new OPropertyIndex(iUnique, document.getDatabase(), this, OStorage.CLUSTER_INDEX_NAME, new ORecordId(iIndexRecord
 					.getIdentity().toString()));
 		}
 	}
@@ -232,12 +232,12 @@ public class OProperty extends ODocumentWrapperNoClass {
 	 *          Don't allow duplicates. Now is supported only unique indexes, so pass always TRUE
 	 * @return
 	 */
-	public OIndex createIndex(final boolean iUnique) {
+	public OPropertyIndex createIndex(final boolean iUnique) {
 		if (index != null)
 			throw new IllegalStateException("Index already created");
 
 		try {
-			index = new OIndex(iUnique, document.getDatabase(), this, OStorage.CLUSTER_INDEX_NAME);
+			index = new OPropertyIndex(iUnique, document.getDatabase(), this, OStorage.CLUSTER_INDEX_NAME);
 			index.setActivated(true);
 			
 			index.rebuild();
@@ -271,7 +271,7 @@ public class OProperty extends ODocumentWrapperNoClass {
 		}
 	}
 
-	public OIndex getIndex() {
+	public OPropertyIndex getIndex() {
 		return index;
 	}
 

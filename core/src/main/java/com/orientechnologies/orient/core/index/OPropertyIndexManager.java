@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Luca Garulli
  * 
  */
-public class OIndexerManager extends ODocumentHookAbstract {
+public class OPropertyIndexManager extends ODocumentHookAbstract {
 
 	@Override
 	public void onRecordBeforeCreate(final ODocument iRecord) {
@@ -120,7 +120,7 @@ public class OIndexerManager extends ODocumentHookAbstract {
 		if (cls == null)
 			return;
 
-		OIndex index;
+		OPropertyIndex index;
 		Object fieldValue;
 		String fieldValueString;
 
@@ -149,7 +149,7 @@ public class OIndexerManager extends ODocumentHookAbstract {
 		if (cls == null)
 			return null;
 
-		OIndex index;
+		OPropertyIndex index;
 		Object fieldValue;
 		String fieldValueString;
 
