@@ -62,7 +62,7 @@ public class OSQLFilter extends OCommandToParse {
 		} catch (OQueryParsingException e) {
 			throw e;
 		} catch (Throwable t) {
-			throw new OQueryParsingException("", text, currentPos);
+			throw new OQueryParsingException("Error on parsing query", text, currentPos, t);
 		}
 	}
 
