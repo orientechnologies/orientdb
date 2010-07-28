@@ -111,11 +111,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 						} else if (iRecord instanceof ORecordBytes) {
 							// BYTES
-							final byte[] buffer = OBase64Utils.decode(OStringSerializerHelper.decode(fieldValue));
-							iRecord.fromStream(buffer);
-
-							System.out.println(fieldValue.length() + "--> " + buffer.length);
-
+							iRecord.fromStream(OBase64Utils.decode(OStringSerializerHelper.decode(fieldValue)));
 						} else if (iRecord instanceof ORecordStringable) {
 							((ORecordStringable) iRecord).value(fieldValue);
 						}

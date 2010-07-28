@@ -171,10 +171,7 @@ public class OJSONWriter {
 				buffer.append('\"');
 				byte[] source = (byte[]) iValue;
 
-				String encoded = OStringSerializerHelper.encode(OBase64Utils.encodeBytes(source));
-				buffer.append(encoded);
-
-				System.out.println(source.length + "--> " + encoded.length());
+				buffer.append(OStringSerializerHelper.encode(OBase64Utils.encodeBytes(source)));
 
 				buffer.append('\"');
 			} else {
