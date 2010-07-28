@@ -43,7 +43,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 		currentClusterId = iClusterId;
 		rangeFrom = -1;
 		rangeTo = -1;
-		clusterSize = database.countClusterElements(currentClusterId);
+		clusterSize = database.getStorage().getClusterLastEntryPosition(currentClusterId);
 	}
 
 	@Override
