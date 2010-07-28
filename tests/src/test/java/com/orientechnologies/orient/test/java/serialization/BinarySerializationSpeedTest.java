@@ -38,7 +38,7 @@ public class BinarySerializationSpeedTest extends SpeedTestMonoThread {
 		try {
 			oos.writeInt(300);
 			oos.writeBoolean(true);
-			oos.writeUTF("Questa è una prova di scrittura di una stringa");
+			oos.writeUTF("Questa e una prova di scrittura di una stringa");
 			oos.writeFloat(3.0f);
 			oos.writeLong(30000000L);
 		} finally {

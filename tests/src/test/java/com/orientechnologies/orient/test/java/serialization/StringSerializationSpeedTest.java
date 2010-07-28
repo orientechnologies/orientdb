@@ -33,7 +33,7 @@ public class StringSerializationSpeedTest extends SpeedTestMonoThread {
 		StringBuilder buffer = new StringBuilder();
 		buffer.append(new Integer(300).toString());
 		buffer.append(new Boolean(true).toString());
-		buffer.append("Questa è una prova di scrittura di una stringa");
+		buffer.append("Questa e una prova di scrittura di una stringa");
 		buffer.append(new Float(3.0f).toString());
 		buffer.append(new Long(30000000L).toString());
 
