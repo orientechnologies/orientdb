@@ -220,10 +220,13 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 	public OSerializableStream fromStream(final byte[] iStream) throws IOException {
 		final long timer = OProfiler.getInstance().startChrono();
-		try {
-			OMemoryInputStream stream = new OMemoryInputStream(iStream);
 
-			ORID rootRid = new ORecordId().fromStream(stream.getAsByteArray());
+		final ORID rootRid = new ORecordId();
+
+		try {
+			final OMemoryInputStream stream = new OMemoryInputStream(iStream);
+
+			rootRid.fromStream(stream.getAsByteArray());
 
 			size = stream.getAsInteger();
 			lastPageSize = stream.getAsShort();
@@ -238,7 +241,8 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 		} catch (Exception e) {
 
-			OLogManager.instance().error(this, "Error on unmarshalling OTreeMapPersistent object", e, OSerializationException.class);
+			OLogManager.instance().error(this, "Error on unmarshalling OTreeMapPersistent object from record: " + rootRid, e,
+					OSerializationException.class);
 
 		} finally {
 			OProfiler.getInstance().stopChrono("OTreeMapPersistent.fromStream", timer);
