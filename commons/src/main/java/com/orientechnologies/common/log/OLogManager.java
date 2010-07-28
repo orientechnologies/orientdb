@@ -5,6 +5,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -26,6 +28,20 @@ public class OLogManager {
 	public OLogManager() {
 		if (System.getProperty(SYSPROPERTY_LOG_LEVEL) != null)
 			setLevel(System.getProperty(SYSPROPERTY_LOG_LEVEL));
+
+		// ASSURE TO HAVE THE ORIENT LOG FORMATTER TO THE CONSOLE EVEN IF NO CONFIGURATION FILE IS TAKEN
+		Logger log = Logger.getLogger("");
+		if (log.getHandlers().length == 0) {
+			// SET DEFAULT LOG FORMATTER
+			Handler h = new ConsoleHandler();
+			h.setFormatter(new OLogFormatter());
+			log.addHandler(h);
+		} else {
+			for (Handler h : log.getHandlers()) {
+				if (h instanceof ConsoleHandler && !h.getFormatter().getClass().equals(OLogFormatter.class))
+					h.setFormatter(new OLogFormatter());
+			}
+		}
 	}
 
 	public void setLevel(final String iLevel) {

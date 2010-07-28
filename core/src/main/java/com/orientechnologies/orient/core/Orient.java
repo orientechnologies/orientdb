@@ -183,16 +183,16 @@ public class Orient extends OSharedResource {
 			if (!active)
 				return;
 
-			OLogManager.instance().info(this, "Orient Engine is shutdowning...");
+			OLogManager.instance().debug(this, "Orient Engine is shutdowning...");
 
 			// CLOSE ALL THE STORAGES
 			for (OStorage stg : storages.values()) {
-				OLogManager.instance().info(this, "Shutdowning storage: " + stg.getName() + "...");
+				OLogManager.instance().debug(this, "Shutdowning storage: " + stg.getName() + "...");
 				stg.close();
 			}
 			active = false;
 
-			OLogManager.instance().info(this, "Orient Engine shutdown complete");
+			OLogManager.instance().debug(this, "Orient Engine shutdown complete");
 
 		} finally {
 			releaseExclusiveLock();
