@@ -57,13 +57,15 @@ public class OConsoleDatabaseExport {
 
 	public OConsoleDatabaseExport exportDatabase() {
 		try {
+			long time = System.currentTimeMillis();
+
 			exportInfo();
 			exportAllClusters();
 			exportSchema();
 			exportRecords();
 			exportDictionary();
 
-			listener.onMessage("\nExport of database completed.");
+			listener.onMessage("\n\nExport of database completed in " + (System.currentTimeMillis() - time) + "ms");
 
 			writer.flush();
 		} catch (Exception e) {
@@ -91,7 +93,7 @@ public class OConsoleDatabaseExport {
 			writer.endObject(iLevel, false);
 		}
 
-		listener.onMessage("OK");
+		listener.onMessage("OK (" + iClusters.length + " clusters)");
 
 		return totalRecords;
 	}
@@ -108,16 +110,16 @@ public class OConsoleDatabaseExport {
 
 		for (String clusterName : clusters) {
 			long recordTot = database.countClusterElements(clusterName);
-			listener.onMessage("\n- Exporting record of cluster '" + clusterName + "' (records=" + recordTot + ") -> ");
+			listener.onMessage("\n- Exporting record of cluster '" + clusterName + "'...");
 			long recordNum = 0;
 			for (ORecordInternal<?> rec : database.browseCluster(clusterName))
 				exportRecord(recordTot, recordNum, rec);
 
+			listener.onMessage("OK (records=" + recordTot + ")");
+
 			totalRecords += recordTot;
 		}
 		writer.endCollection(level, true);
-
-		listener.onMessage("OK");
 
 		listener.onMessage("\n\nDone. Exported " + totalRecords + " records\n");
 

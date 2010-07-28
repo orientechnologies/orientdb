@@ -26,6 +26,7 @@ import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.serialization.OBase64Utils;
 
 @SuppressWarnings("unchecked")
 public class OJSONWriter {
@@ -169,13 +170,12 @@ public class OJSONWriter {
 			if (iValue instanceof byte[]) {
 				buffer.append('\"');
 				byte[] source = (byte[]) iValue;
-				int v;
-				for (int i = 0; i < source.length; ++i) {
-					v = source[i];
-					if (v < 0)
-						v = (int) v & 0xFF;
-					buffer.append(String.format("%03d", v));
-				}
+
+				String encoded = OStringSerializerHelper.encode(OBase64Utils.encodeBytes(source));
+				buffer.append(encoded);
+
+				System.out.println(source.length + "--> " + encoded.length());
+
 				buffer.append('\"');
 			} else {
 				buffer.append('[');

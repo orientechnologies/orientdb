@@ -59,7 +59,6 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 	private final StringBuilder								requestContent			= new StringBuilder();
 	private final Map<String, OServerCommand>	exactCommands				= new HashMap<String, OServerCommand>();
 	private final Map<String, OServerCommand>	wildcardCommands		= new HashMap<String, OServerCommand>();
-	private final OBase64Utils								base64							= new OBase64Utils();
 
 	public ONetworkProtocolHttpAbstract() {
 		super(OServer.getThreadGroup(), "HTTP");
@@ -154,7 +153,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 			errorCode = 404;
 		else if (e instanceof OLockException) {
 			errorCode = 423;
-//			e = (Exception) e.getCause();
+			// e = (Exception) e.getCause();
 		} else if (e instanceof IllegalArgumentException)
 			errorCode = 400;
 
@@ -283,7 +282,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
 						iRequest.authorization = auth.substring("BASIC".length() + 1);
 
-						iRequest.authorization = base64.decodeBase64("", iRequest.authorization);
+						iRequest.authorization = new String(OBase64Utils.decode(iRequest.authorization));
 
 					} else if (lineUpperCase.startsWith("COOKIE:")) {
 						String sessionPair = line.substring("COOKIE:".length() + 1);

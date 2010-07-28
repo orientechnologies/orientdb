@@ -28,6 +28,7 @@ import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -359,7 +360,7 @@ public class OConsoleDatabaseImport {
 
 		jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT);
 		jsonReader.checkContent("\"clusters\"");
-		jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
+		jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
 
 		while (jsonReader.lastChar() != ']') {
 			jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
@@ -369,6 +370,8 @@ public class OConsoleDatabaseImport {
 			int id = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"id\"").readInteger(OJSONReader.COMMA_SEPARATOR);
 			String type = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"type\"")
 					.readString(OJSONReader.NEXT_IN_OBJECT);
+
+			listener.onMessage("\n- Creating cluster " + name + "...");
 
 			int clusterId = database.getClusterIdByName(name);
 			if (clusterId == -1) {
@@ -382,13 +385,15 @@ public class OConsoleDatabaseImport {
 			if (clusterId != id)
 				throw new OSchemaException("Imported cluster '" + name + "' has id=" + clusterId + " different from the original: " + id);
 
+			listener.onMessage("OK");
+
 			total++;
 
 			jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
 		}
 		jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
 
-		listener.onMessage("OK (" + total + " clusters)");
+		listener.onMessage("\nDone. Imported " + total + " clusters");
 
 		return total;
 	}
@@ -404,13 +409,27 @@ public class OConsoleDatabaseImport {
 
 		System.out.print("\nImporting records...");
 
+		ORID rid;
+		int lastClusterId = 0;
+		long clusterRecords = 0;
 		while (jsonReader.lastChar() != ']') {
-			importRecord();
+			rid = importRecord();
+
+			++clusterRecords;
+
+			if (rid.getClusterId() != lastClusterId) {
+				// CHANGED CLUSTERID: DUMP STATISTICS
+				System.out.print("\n- Imported records into the cluster '" + database.getClusterNameById(lastClusterId) + "': "
+						+ clusterRecords + " records");
+				clusterRecords = 0;
+			}
+
+			lastClusterId = rid.getClusterId();
 
 			++totalRecords;
 		}
 
-		listener.onMessage("OK (" + totalRecords + " records)");
+		listener.onMessage("\n\nDone. Imported " + totalRecords + " records\n");
 
 		jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
 
@@ -418,7 +437,7 @@ public class OConsoleDatabaseImport {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void importRecord() throws IOException, ParseException {
+	private ORID importRecord() throws IOException, ParseException {
 		String value = jsonReader.readString(OJSONReader.END_OBJECT, true);
 
 		record = ORecordSerializerJSON.INSTANCE.fromString(database, value, record);
@@ -463,6 +482,8 @@ public class OConsoleDatabaseImport {
 			throw new OSchemaException("Imported record '" + record.getIdentity() + "' has rid different from the original: " + rid);
 
 		jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+
+		return record.getIdentity();
 	}
 
 	public OConsoleDatabaseImport importRecords(final String iMode, final String iClusterType) throws IOException {

@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.record.ORecordStringable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.record.impl.ORecordColumn;
+import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
@@ -110,15 +111,11 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 						} else if (iRecord instanceof ORecordBytes) {
 							// BYTES
-							int b;
-							int offset;
-							byte[] buffer = new byte[fieldValue.length() / 3];
-							for (int pos = 0; pos < buffer.length; ++pos) {
-								offset = pos * 3;
-								b = Integer.parseInt(fieldValue.substring(offset, offset + 3));
-								buffer[pos] = (byte) b;
-							}
+							final byte[] buffer = OBase64Utils.decode(OStringSerializerHelper.decode(fieldValue));
 							iRecord.fromStream(buffer);
+
+							System.out.println(fieldValue.length() + "--> " + buffer.length);
+
 						} else if (iRecord instanceof ORecordStringable) {
 							((ORecordStringable) iRecord).value(fieldValue);
 						}
@@ -271,7 +268,14 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				// STRINGABLE
 				final ORecordStringable record = (ORecordStringable) iRecord;
 				json.writeAttribute(identLevel + 1, true, "value", record.value());
+
+			} else if (iRecord instanceof ORecordBytes) {
+				// BYTES
+				final ORecordBytes record = (ORecordBytes) iRecord;
+				json.writeAttribute(identLevel + 1, true, "value",
+						OStringSerializerHelper.encode(OBase64Utils.encodeBytes(record.toStream())));
 			} else
+
 				throw new OSerializationException("Error on marshalling record of type '" + iRecord.getClass()
 						+ "' to JSON. The record type can't be exported to JSON");
 
