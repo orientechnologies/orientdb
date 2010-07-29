@@ -50,7 +50,9 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 
 	@Override
 	public ORecordAbstract<T> save() {
-		OSerializationThreadLocal.INSTANCE.get().clear();
+		if (_clazz != null)
+			return save(_database.getClusterNameById(_clazz.getDefaultClusterId()));
+
 		return super.save();
 	}
 

@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
 import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
@@ -111,8 +112,13 @@ public class OSQLFilterCondition {
 
 	protected Object evaluate(ORecordSchemaAware<?> iRecord, Object iValue) {
 		if (iValue instanceof OSQLFilterItem) {
-			if (iRecord.getInternalStatus() == STATUS.NOT_LOADED)
-				iRecord.load();
+			if (iRecord.getInternalStatus() == STATUS.NOT_LOADED) {
+				try {
+					iRecord.load();
+				} catch (ORecordNotFoundException e) {
+					return null;
+				}
+			}
 
 			return ((OSQLFilterItem) iValue).getValue(iRecord);
 		}

@@ -41,7 +41,7 @@ public class SQLDeleteTest {
 		final Number records = (Number) database.command(new OCommandSQL("delete from Profile set sex = 'male' where salary > 100"))
 				.execute();
 
-		Assert.assertEquals(records.intValue(), 3);
+		Assert.assertEquals(records.intValue(), 4);
 
 		Assert.assertEquals(database.countClass("Profile"), total - records.intValue());
 
