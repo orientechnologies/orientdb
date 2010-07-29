@@ -61,6 +61,11 @@ public class ODocumentWrapper {
 		return (RET) this;
 	}
 
+	public <RET extends ODocumentWrapper> RET save(final String iClusterName) {
+		document.save(iClusterName);
+		return (RET) this;
+	}
+
 	public ODocument getDocument() {
 		return document;
 	}

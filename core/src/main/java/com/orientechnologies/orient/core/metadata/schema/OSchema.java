@@ -28,13 +28,12 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 public class OSchema extends ODocumentWrapperNoClass {
-	public static final String		CLUSTER_NAME						= "schema";
-
 	protected Map<String, OClass>	classes									= new LinkedHashMap<String, OClass>();
-	private static final int			CURRENT_VERSION_NUMBER	= 3;
+	private static final int			CURRENT_VERSION_NUMBER	= 4;
 
 	public OSchema(final ODatabaseRecord<?> iDatabaseOwner, final int schemaClusterId) {
 		super(new ODocument(iDatabaseOwner));
@@ -174,9 +173,7 @@ public class OSchema extends ODocumentWrapperNoClass {
 	}
 
 	public void create() {
-		document.getDatabase().addLogicalCluster(CLUSTER_NAME,
-				document.getDatabase().getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME));
-		save();
+		save(OStorageLocal.CLUSTER_INTERNAL_NAME);
 	}
 
 	public OSchema setDirty() {

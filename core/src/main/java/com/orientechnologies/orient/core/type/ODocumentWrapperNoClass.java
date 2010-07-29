@@ -53,4 +53,10 @@ public abstract class ODocumentWrapperNoClass extends ODocumentWrapper {
 		super.save();
 		return (RET) this;
 	}
+
+	public <RET extends ODocumentWrapper> RET save(final String iClusterName) {
+		toStream();
+		super.save(iClusterName);
+		return (RET) this;
+	}
 }

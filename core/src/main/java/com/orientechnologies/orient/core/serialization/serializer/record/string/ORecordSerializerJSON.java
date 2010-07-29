@@ -249,45 +249,66 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			boolean includeType;
 			boolean includeId;
 			boolean includeClazz;
+			boolean attribSameRow;
 			int indentLevel;
 
 			if (iFormat == null) {
-				includeVer = true;
 				includeType = true;
+				includeVer = true;
 				includeId = true;
 				includeClazz = true;
+				attribSameRow = true;
 				indentLevel = 0;
 			} else {
-				includeVer = false;
 				includeType = true;
+				includeVer = false;
 				includeId = false;
 				includeClazz = false;
+				attribSameRow = false;
 				indentLevel = 0;
 
 				String[] format = iFormat.split(",");
 				for (String f : format)
-					if (f.equals("rid"))
-						includeId = true;
-					else if (f.equals("type"))
+					if (f.equals("type"))
 						includeType = true;
+					else if (f.equals("rid"))
+						includeId = true;
 					else if (f.equals("version"))
 						includeVer = true;
 					else if (f.equals("class"))
 						includeClazz = true;
+					else if (f.equals("attribSameRow"))
+						attribSameRow = true;
 					else if (f.startsWith("indent"))
 						indentLevel = Integer.parseInt(f.substring(f.indexOf(":") + 1));
 			}
 
 			json.beginObject(indentLevel);
 
-			if (includeType)
-				json.writeAttribute(indentLevel + 1, true, ATTRIBUTE_TYPE, "" + (char) iRecord.getRecordType());
-			if (includeId)
-				json.writeAttribute(indentLevel + 1, true, ATTRIBUTE_ID, iRecord.getIdentity().toString());
-			if (includeVer)
-				json.writeAttribute(indentLevel + 1, true, ATTRIBUTE_VERSION, iRecord.getVersion());
-			if (includeClazz && iRecord instanceof ORecordSchemaAware<?>)
-				json.writeAttribute(indentLevel + 1, true, ATTRIBUTE_CLASS, ((ORecordSchemaAware<?>) iRecord).getClassName());
+			boolean firstAttribute = true;
+
+			if (includeType) {
+				json.writeAttribute(firstAttribute ? indentLevel + 1 : 0, firstAttribute, ATTRIBUTE_TYPE,
+						"" + (char) iRecord.getRecordType());
+				if (attribSameRow)
+					firstAttribute = false;
+			}
+			if (includeId) {
+				json.writeAttribute(firstAttribute ? indentLevel + 1 : 0, firstAttribute, ATTRIBUTE_ID, iRecord.getIdentity().toString());
+				if (attribSameRow)
+					firstAttribute = false;
+			}
+			if (includeVer) {
+				json.writeAttribute(firstAttribute ? indentLevel + 1 : 0, firstAttribute, ATTRIBUTE_VERSION, iRecord.getVersion());
+				if (attribSameRow)
+					firstAttribute = false;
+			}
+			if (includeClazz && iRecord instanceof ORecordSchemaAware<?>) {
+				json.writeAttribute(firstAttribute ? indentLevel + 1 : 0, firstAttribute, ATTRIBUTE_CLASS,
+						((ORecordSchemaAware<?>) iRecord).getClassName());
+				if (attribSameRow)
+					firstAttribute = false;
+			}
 
 			if (iRecord instanceof ORecordSchemaAware<?>) {
 				// SCHEMA AWARE

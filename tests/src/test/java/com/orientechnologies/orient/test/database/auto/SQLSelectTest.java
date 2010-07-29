@@ -345,12 +345,12 @@ public class SQLSelectTest {
 	public void queryRecordTargetRid() {
 		database.open("admin", "admin");
 
-		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from 11:0")).execute();
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from 10:0")).execute();
 
 		Assert.assertTrue(result.size() == 1);
 
 		for (ODocument d : result) {
-			Assert.assertTrue(d.getIdentity().toString().equals("11:0"));
+			Assert.assertTrue(d.getIdentity().toString().equals("10:0"));
 		}
 
 		database.close();
@@ -360,12 +360,12 @@ public class SQLSelectTest {
 	public void queryRecordTargetRids() {
 		database.open("admin", "admin");
 
-		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from [11:0, 11:1]")).execute();
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from [10:0, 10:1]")).execute();
 
 		Assert.assertTrue(result.size() == 2);
 
-		Assert.assertTrue(result.get(0).getIdentity().toString().equals("11:0"));
-		Assert.assertTrue(result.get(1).getIdentity().toString().equals("11:1"));
+		Assert.assertTrue(result.get(0).getIdentity().toString().equals("10:0"));
+		Assert.assertTrue(result.get(1).getIdentity().toString().equals("10:1"));
 
 		database.close();
 	}
@@ -374,12 +374,12 @@ public class SQLSelectTest {
 	public void queryRecordAttribRid() {
 		database.open("admin", "admin");
 
-		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where @rid = 11:0")).execute();
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where @rid = 10:0")).execute();
 
 		Assert.assertTrue(result.size() == 1);
 
 		for (ODocument d : result) {
-			Assert.assertTrue(d.getIdentity().toString().equals("11:0"));
+			Assert.assertTrue(d.getIdentity().toString().equals("10:0"));
 		}
 
 		database.close();

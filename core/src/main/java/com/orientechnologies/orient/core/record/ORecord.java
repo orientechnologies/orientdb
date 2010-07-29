@@ -167,9 +167,11 @@ public interface ORecord<T> {
 	 *          <li><b>rid</b>: exports the record's id as property "@rid"</li>
 	 *          <li><b>version</b>: exports the record's version as property "@version"</li>
 	 *          <li><b>class</b>: exports the record's class as property "@class"</li>
+	 *          <li><b>attribSameRow</b>: exports all the record attributes in the same row</li>
 	 *          <li><b>indent:&lt;level&gt;</b>: Indents the output if the &lt;level&gt; specified. Default is 0</li>
 	 *          </ul>
-	 *          Example: "rid,version,class,indent:6" exports record id, version and class properties along with record properties using an indenting level equals of 6.
+	 *          Example: "rid,version,class,indent:6" exports record id, version and class properties along with record properties
+	 *          using an indenting level equals of 6.
 	 * @return Object content in JSON format
 	 */
 	public String toJSON(String iFormat);

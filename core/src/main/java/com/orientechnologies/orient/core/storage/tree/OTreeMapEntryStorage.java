@@ -72,8 +72,10 @@ public class OTreeMapEntryStorage<K, V> extends OTreeMapEntryPersistent<K, V> {
 					.getIdentity().getClusterPosition(), record.toStream(), -1, record.getRecordType()));
 		else {
 			// CREATE IT
-			record.setIdentity(((OTreeMapStorage<K, V>) tree).clusterId, ((OTreeMapStorage<K, V>) tree).storage.createRecord(record
-					.getIdentity().getClusterId(), record.toStream(), record.getRecordType()));
+			record.setIdentity(
+					record.getIdentity().getClusterId(),
+					((OTreeMapStorage<K, V>) tree).storage.createRecord(record.getIdentity().getClusterId(), record.toStream(),
+							record.getRecordType()));
 		}
 		record.unsetDirty();
 		return this;

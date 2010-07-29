@@ -44,12 +44,14 @@ public class OTreeMapStorage<K, V> extends OTreeMapPersistent<K, V> {
 	public OTreeMapStorage(final OStorageLocal iStorage, final String iClusterName, final ORID iRID) {
 		super(iClusterName, iRID);
 		storage = iStorage;
+		clusterId = storage.getClusterIdByName(OStorageLocal.CLUSTER_INTERNAL_NAME);
 	}
 
 	public OTreeMapStorage(final OStorageLocal iStorage, String iClusterName, final OStreamSerializer iKeySerializer,
 			final OStreamSerializer iValueSerializer) {
 		super(iClusterName, iKeySerializer, iValueSerializer);
 		storage = iStorage;
+		clusterId = storage.getClusterIdByName(OStorageLocal.CLUSTER_INTERNAL_NAME);
 	}
 
 	@Override

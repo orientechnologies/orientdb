@@ -312,7 +312,8 @@ public class OStorageLocal extends OStorageAbstract {
 				return addPhysicalCluster(iClusterName, clusterFileName, startSize);
 			} else if (OClusterLogical.TYPE.equalsIgnoreCase(iClusterType)) {
 				// GET PARAMETERS
-				final int physicalClusterId = (iParameters.length < 1 ? -1 : (Integer) iParameters[0]);
+				final int physicalClusterId = (iParameters.length < 1 ? getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME)
+						: (Integer) iParameters[0]);
 
 				return addLogicalCluster(iClusterName, physicalClusterId);
 			} else

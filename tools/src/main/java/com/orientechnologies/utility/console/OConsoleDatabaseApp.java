@@ -48,12 +48,13 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.command.script.OCommandScript;
-import com.orientechnologies.utility.impexp.OConsoleDatabaseCompare;
-import com.orientechnologies.utility.impexp.OConsoleDatabaseExport;
-import com.orientechnologies.utility.impexp.OConsoleDatabaseImport;
-import com.orientechnologies.utility.impexp.ODatabaseExportException;
-import com.orientechnologies.utility.impexp.ODatabaseImportException;
+import com.orientechnologies.utility.cmd.OConsoleDatabaseCompare;
+import com.orientechnologies.utility.cmd.OConsoleDatabaseExport;
+import com.orientechnologies.utility.cmd.OConsoleDatabaseImport;
+import com.orientechnologies.utility.cmd.ODatabaseExportException;
+import com.orientechnologies.utility.cmd.ODatabaseImportException;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandListener {
 	protected ODatabaseDocument					currentDatabase;
@@ -149,7 +150,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		out.println("Creating cluster [" + iClusterName + "] of type '" + iClusterType + "' in database " + currentDatabaseName + "...");
 
 		int clusterId = iClusterType.equalsIgnoreCase("physical") ? currentDatabase.addPhysicalCluster(iClusterName, iClusterName, -1)
-				: currentDatabase.addLogicalCluster(iClusterName, -1);
+				: currentDatabase.addLogicalCluster(iClusterName, currentDatabase.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME));
 
 		out.println((iClusterType.equalsIgnoreCase("physical") ? "Physical" : "Logical") + " cluster created correctly with id #"
 				+ clusterId);
@@ -525,25 +526,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		}
 	}
 
-	@ConsoleCommand(description = "Export one or more clusters")
-	public void exportCluster(
-			@ConsoleParameter(name = "clusters", description = "Cluster list separated by comma") final String iClusters,
-			@ConsoleParameter(name = "output-file", description = "Output file path") final String iOutputFilePath) throws IOException {
-		out.println("Exporting clusters '" + iClusters + "' to: " + iOutputFilePath + "...");
-
-		String[] clusters = iClusters.split(",");
-
-		try {
-			OConsoleDatabaseExport exp = new OConsoleDatabaseExport(currentDatabase, iOutputFilePath, this);
-			exp.exportClusters(clusters, 0);
-			exp.close();
-
-			out.println();
-		} catch (ODatabaseExportException e) {
-			out.println("ERROR: " + e.toString());
-		}
-	}
-
 	@ConsoleCommand(description = "Import a database into the current one")
 	public void importDatabase(@ConsoleParameter(name = "imput-file", description = "Input file path") final String iInputFilePath)
 			throws IOException {
@@ -552,21 +534,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		try {
 			new OConsoleDatabaseImport(currentDatabase, iInputFilePath, this).importDatabase().close();
 		} catch (ODatabaseImportException e) {
-			out.println("ERROR: " + e.toString());
-		}
-	}
-
-	@ConsoleCommand(description = "Import documents")
-	public void importDocuments(@ConsoleParameter(name = "input-file", description = "Input file path") final String iInputFilePath,
-			@ConsoleParameter(name = "mode", description = "Mode between { array }") final String iMode,
-			@ConsoleParameter(name = "cluster-type", description = "Cluster type between { logical, physical }") final String iClusterType)
-			throws IOException {
-		out.print("\nImporting documents from file '" + iInputFilePath + "' using the mode '" + iMode + "'...");
-
-		try {
-			new OConsoleDatabaseImport(currentDatabase, iInputFilePath, this).importRecords(iMode, iClusterType);
-			out.println();
-		} catch (ODatabaseExportException e) {
 			out.println("ERROR: " + e.toString());
 		}
 	}

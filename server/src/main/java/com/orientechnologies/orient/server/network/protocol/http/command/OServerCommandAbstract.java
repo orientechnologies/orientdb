@@ -131,7 +131,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 			String objectJson;
 			for (ORecord<?> rec : iRecords) {
 				try {
-					objectJson = rec.toJSON("indent:2,rid,version,class");
+					objectJson = rec.toJSON("indent:2,rid,version,attribSameRow,class");
 
 					if (counter++ > 0)
 						buffer.append(", ");
@@ -151,7 +151,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 	protected void sendRecordContent(final OHttpRequest iRequest, final ORecord<?> iRecord) throws IOException {
 		if (iRecord != null)
 			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN,
-					iRecord.toJSON("rid,version,class"));
+					iRecord.toJSON("rid,version,class,attribSameRow"));
 	}
 
 	protected void sendBinaryContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iContentType,

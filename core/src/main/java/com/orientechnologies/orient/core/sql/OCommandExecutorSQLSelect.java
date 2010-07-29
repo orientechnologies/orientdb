@@ -116,7 +116,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 			if (resultSet.size() > 0) {
 				OProfiler.getInstance().updateStatistic("Query.indexUsage", 1);
-				
+
 				// FOUND USING INDEXES
 				for (ORecordId rid : resultSet)
 					addResult(database.load(rid));
