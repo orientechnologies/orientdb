@@ -41,6 +41,21 @@ public class SQLSelectTest {
 	}
 
 	@Test
+	public void queryNoWhere() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile ")).execute();
+
+		Assert.assertTrue(result.size() != 0);
+
+		for (ODocument d : result) {
+			Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
+		}
+
+		database.close();
+	}
+
+	@Test
 	public void querySchemaAndLike() {
 		database.open("admin", "admin");
 
@@ -223,6 +238,27 @@ public class SQLSelectTest {
 
 		List<ODocument> result = database.command(
 				new OSQLSynchQuery<ODocument>("select from Profile where any() traverse( 0,3 ) ( any().indexOf( 'Navona' ) > -1 )"))
+				.execute();
+
+		Assert.assertTrue(result.size() > 0);
+
+		for (int i = 0; i < result.size(); ++i) {
+			record = result.get(i);
+
+			OrientTest.printRecord(i, record);
+
+			Assert.assertTrue(record.getClassName().equalsIgnoreCase("Profile"));
+		}
+
+		database.close();
+	}
+
+	@Test
+	public void queryTraverseInfiniteLevelOperator() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(
+				new OSQLSynchQuery<ODocument>("select from Profile where any() traverse( 0,-1 ) ( any().indexOf( 'Navona' ) > -1 )"))
 				.execute();
 
 		Assert.assertTrue(result.size() > 0);
