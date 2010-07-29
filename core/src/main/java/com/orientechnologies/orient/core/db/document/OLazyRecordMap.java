@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.document;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
 @SuppressWarnings({ "serial" })
-public class OLazyRecordMap extends HashMap<String, Object> {
+public class OLazyRecordMap extends LinkedHashMap<String, Object> {
 	private ODatabaseRecord<?>	database;
 	private byte								recordType;
 	private boolean							converted	= false;

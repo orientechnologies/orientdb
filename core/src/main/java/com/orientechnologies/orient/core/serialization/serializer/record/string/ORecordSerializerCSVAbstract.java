@@ -533,14 +533,15 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				((ODatabaseRecord<ORecordInternal<?>>) iLinkedRecord.getDatabase()).save((ORecordInternal<?>) iLinkedRecord);
 			}
 
-			if (iLinkedRecord instanceof ORecordSchemaAware<?>) {
-				final ORecordSchemaAware<?> schemaAwareRecord = (ORecordSchemaAware<?>) iLinkedRecord;
-
-				if (schemaAwareRecord.getClassName() != null) {
-					buffer.append(schemaAwareRecord.getClassName());
-					buffer.append(OStringSerializerHelper.CLASS_SEPARATOR);
-				}
-			}
+			// TEMPORARY DISABLED SINCE IT MAKES NOT SENSE AT CURRENT RELEASE (0.9.21)!
+			// if (iLinkedRecord instanceof ORecordSchemaAware<?>) {
+			// final ORecordSchemaAware<?> schemaAwareRecord = (ORecordSchemaAware<?>) iLinkedRecord;
+			//
+			// if (schemaAwareRecord.getClassName() != null) {
+			// buffer.append(schemaAwareRecord.getClassName());
+			// buffer.append(OStringSerializerHelper.CLASS_SEPARATOR);
+			// }
+			// }
 
 			if (iParentRecord.getDatabase() instanceof ODatabaseRecord<?>) {
 				final ODatabaseRecord<?> db = (ODatabaseRecord<?>) iParentRecord.getDatabase();

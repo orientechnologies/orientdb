@@ -19,8 +19,8 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -158,11 +158,12 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				return fromString(iRecord.getDatabase(), iFieldValue, null);
 			else {
 				// MAP
-				final Map<String, Object> embeddedMap;
-				embeddedMap = new HashMap<String, Object>();
+				final Map<String, Object> embeddedMap = new LinkedHashMap<String, Object>();
 
 				for (int i = 0; i < fields.length; i += 2) {
 					iFieldName = fields[i];
+					if (iFieldName.length() >= 2)
+						iFieldName = iFieldName.substring(1, iFieldName.length() - 1);
 					iFieldValue = fields[i + 1];
 					iFieldValueAsString = iFieldValue.length() >= 2 ? iFieldValue.substring(1, iFieldValue.length() - 1) : iFieldValue;
 
