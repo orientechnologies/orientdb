@@ -32,9 +32,9 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 	public static final String	CLUSTER_PREFIX	= "CLUSTER:";
 	public static final String	CLASS_PREFIX		= "CLASS:";
 
-	@Override
-	public OCommandExecutorSQLAbstract init(final ODatabaseRecord<?> iDatabase, final String iText) {
-		text = iText;
+	@Override	
+	public OCommandExecutorSQLAbstract init(final ODatabaseRecord<?> iDatabase, String iText) {
+		iText = iText.trim();
 		textUpperCase = iText.toUpperCase();
 		return (OCommandExecutorSQLAbstract) super.init(iDatabase, iText);
 	}
