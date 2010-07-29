@@ -23,11 +23,12 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 /**
- * Profiling util class. It can: - make statistics - chrono execution time of code blocks
- * <p/>
- * Statistics and chrono may be disabled on construction.
+ * Profiling utility class. Handles chronos (times) and statistics. By default it's used as Singleton but you can create any
+ * instances you want for separate profiling contexts.
  * 
- * @author Oriet Staff
+ * To start the recording use call startRecording(). By default record is turned off to avoid a run-time execution cost.
+ * 
+ * @author Luca Garulli
  * @copyrights Orient Technologies.com
  */
 public class OProfiler implements OProfilerMBean {
