@@ -147,7 +147,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	}
 
 	public String toJSON() {
-		return toJSON("id,ver,class");
+		return toJSON("rid,version,class");
 	}
 
 	public String toJSON(final String iFormat) {

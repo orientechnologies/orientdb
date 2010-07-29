@@ -50,7 +50,7 @@ public class OJSONReader {
 
 	public OJSONReader checkContent(final String iExpected) throws ParseException {
 		if (!value.equals(iExpected))
-			throw new ParseException("Not found expected content: " + iExpected, cursor);
+			throw new ParseException("Expected content is " + iExpected + " but found " + value, cursor);
 		return this;
 	}
 
