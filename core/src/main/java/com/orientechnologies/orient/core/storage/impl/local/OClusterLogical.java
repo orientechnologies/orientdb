@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.tree.OTreeMapStorage;
 
 /**
@@ -38,8 +37,8 @@ import com.orientechnologies.orient.core.storage.tree.OTreeMapStorage;
 public class OClusterLogical implements OCluster {
 	private String																		name;
 	private int																				id;
-	@SuppressWarnings("unused")
 	private int																				localClusterId;
+
 	private OTreeMapStorage<Long, OPhysicalPosition>	map;
 	private OPhysicalPosition													total;
 
@@ -62,8 +61,8 @@ public class OClusterLogical implements OCluster {
 		this(iName, iId, iPhysicalClusterId);
 
 		try {
-			map = new OTreeMapStorage<Long, OPhysicalPosition>(iStorage, OStorage.CLUSTER_DEFAULT_NAME, OStreamSerializerLong.INSTANCE,
-					OStreamSerializerAnyStreamable.INSTANCE);
+			map = new OTreeMapStorage<Long, OPhysicalPosition>(iStorage, iStorage.getClusterById(iPhysicalClusterId).getName(),
+					OStreamSerializerLong.INSTANCE, OStreamSerializerAnyStreamable.INSTANCE);
 			map.getRecord().setIdentity(iPhysicalClusterId, ORID.CLUSTER_POS_INVALID);
 
 			total = new OPhysicalPosition(0, -1, (byte) 0);
@@ -76,7 +75,7 @@ public class OClusterLogical implements OCluster {
 	}
 
 	/**
-	 * Constructor called on loading of the object.
+	 * Constructor called on importing.
 	 * 
 	 * @param iStorage
 	 * @param iName
@@ -84,16 +83,29 @@ public class OClusterLogical implements OCluster {
 	 * @param iRecordId
 	 * @throws IOException
 	 */
-	public OClusterLogical(final OStorageLocal iStorage, final OStorageLogicalClusterConfiguration iConfig) throws IOException {
-		this(iConfig.name, iConfig.id, iConfig.physicalClusterId);
-		map = new OTreeMapStorage<Long, OPhysicalPosition>(iStorage, OStorage.CLUSTER_DEFAULT_NAME, iConfig.map);
-		map.load();
+	public OClusterLogical(final OStorageLocal iStorage, final String iName, final int iId, final ORID iRecordId) throws IOException {
+		this(iName, iId, 0);
 
-		total = map.get(new Long(-1));
-		if (total == null) {
-			total = new OPhysicalPosition(0, map.size(), (byte) 0);
-			map.put(new Long(-1), total);
+		try {
+			map = new OTreeMapStorage<Long, OPhysicalPosition>(iStorage, iStorage.getClusterById(iRecordId.getClusterId()).getName(),
+					iRecordId);
+			map.load();
+
+			total = map.get(new Long(-1));
+			if (total == null) {
+				total = new OPhysicalPosition(0, map.size(), (byte) 0);
+				map.put(new Long(-1), total);
+			}
+		} catch (Exception e) {
+			throw new ODatabaseException("Error on load internal map for logical cluster: " + name, e);
 		}
+	}
+
+	/**
+	 * Constructor called on loading of the object.
+	 */
+	public OClusterLogical(final OStorageLocal iStorage, final OStorageLogicalClusterConfiguration iConfig) throws IOException {
+		this(iStorage, iConfig.name, iConfig.id, iConfig.map);
 	}
 
 	protected OClusterLogical(final String iName, final int iId, final int iPhysicalClusterId) {
@@ -132,6 +144,13 @@ public class OClusterLogical implements OCluster {
 		final OPhysicalPosition ppos = map.get(key);
 		ppos.dataSegment = iDataId;
 		ppos.dataPosition = iDataPosition;
+		ppos.type = iRecordType;
+		map.put(key, ppos);
+	}
+
+	public void updateRecordType(final long iPosition, final byte iRecordType) throws IOException {
+		final Long key = new Long(iPosition);
+		final OPhysicalPosition ppos = map.get(key);
 		ppos.type = iRecordType;
 		map.put(key, ppos);
 	}
@@ -221,5 +240,9 @@ public class OClusterLogical implements OCluster {
 
 	public String getType() {
 		return TYPE;
+	}
+
+	public int getLocalClusterId() {
+		return localClusterId;
 	}
 }

@@ -62,6 +62,8 @@ public interface OCluster {
 	 */
 	public void removePhysicalPosition(long iPosition, OPhysicalPosition iPPosition) throws IOException;
 
+	public void updateRecordType(long iPosition, final byte iRecordType) throws IOException;
+
 	public void updateVersion(long iPosition, int iVersion) throws IOException;
 
 	public long getEntries() throws IOException;

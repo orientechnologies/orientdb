@@ -880,6 +880,9 @@ public class OStorageLocal extends OStorageAbstract {
 								+ recId
 								+ " because it has been modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
 
+			if (ppos.type != iRecordType)
+				iClusterSegment.updateRecordType(iPosition, iRecordType);
+
 			iClusterSegment.updateVersion(iPosition, ++ppos.version);
 
 			final long newDataSegmentOffset = getDataSegment(ppos.dataSegment).setRecord(ppos.dataPosition, iClusterSegment.getId(),

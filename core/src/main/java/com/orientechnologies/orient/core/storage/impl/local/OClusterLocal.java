@@ -156,6 +156,21 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 		}
 	}
 
+	public void updateRecordType(long iPosition, final byte iRecordType) throws IOException {
+		iPosition = iPosition * RECORD_SIZE;
+
+		try {
+			acquireExclusiveLock();
+
+			int[] pos = getRelativePosition(iPosition);
+
+			files[pos[0]].writeByte(pos[1] + OConstants.SIZE_SHORT + OConstants.SIZE_LONG, iRecordType);
+
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
+
 	/**
 	 * Remove the Logical position entry. Add to the hole segment and change the version to -1.
 	 * 

@@ -78,6 +78,10 @@ public class OClusterMemory extends OSharedResource implements OCluster {
 		return entries.size() - 1;
 	}
 
+	public void updateRecordType(final long iPosition, final byte iRecordType) throws IOException {
+		entries.get((int) iPosition).type = iRecordType;
+	}
+
 	public void updateVersion(long iPosition, int iVersion) throws IOException {
 		entries.get((int) iPosition).version = iVersion;
 	}
