@@ -66,10 +66,15 @@ public class OStringParser {
 	}
 
 	public static String[] getWords(String iRecord, final String iSeparatorChars) {
-		return getWords(iRecord, iSeparatorChars, " \n\r");
+		return getWords(iRecord, iSeparatorChars, false);
 	}
 
-	public static String[] getWords(String iText, final String iSeparatorChars, final String iJumpChars) {
+	public static String[] getWords(String iRecord, final String iSeparatorChars, final boolean iIncludeStringSep) {
+		return getWords(iRecord, iSeparatorChars, " \n\r", iIncludeStringSep);
+	}
+
+	public static String[] getWords(String iText, final String iSeparatorChars, final String iJumpChars,
+			final boolean iIncludeStringSep) {
 		iText = iText.trim();
 
 		ArrayList<String> fields = new ArrayList<String>();
@@ -88,6 +93,10 @@ public class OStringParser {
 					if (stringBeginChar == c) {
 						// SAME CHAR AS THE BEGIN OF THE STRING: CLOSE IT AND PUSH
 						stringBeginChar = ' ';
+
+						if (iIncludeStringSep)
+							buffer.append(c);
+
 						fields.add(buffer.toString());
 						buffer.setLength(0);
 						continue;
@@ -95,6 +104,9 @@ public class OStringParser {
 				} else {
 					// START STRING
 					stringBeginChar = c;
+					if (iIncludeStringSep)
+						buffer.append(c);
+
 					continue;
 				}
 			} else if (stringBeginChar == ' ') {

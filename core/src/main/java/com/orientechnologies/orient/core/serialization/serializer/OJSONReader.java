@@ -35,6 +35,7 @@ public class OJSONReader {
 	public static final char[]	COMMA_SEPARATOR		= new char[] { ',' };
 	public static final char[]	NEXT_IN_OBJECT		= new char[] { ',', '}' };
 	public static final char[]	NEXT_IN_ARRAY			= new char[] { ',', ']' };
+	public static final char[]	NEXT_OBJ_IN_ARRAY	= new char[] { '{', ']' };
 	public static final char[]	ANY_NUMBER				= new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
 	public static final char[]	BEGIN_COLLECTION	= new char[] { '[' };
 	public static final char[]	END_COLLECTION		= new char[] { ']' };
@@ -92,7 +93,7 @@ public class OJSONReader {
 	public OJSONReader readNext(final char[] iUntil, final boolean iInclude, final char[] iJumpChars) throws IOException,
 			ParseException {
 		jump(iJumpChars);
-		
+
 		// READ WHILE THERE IS SOMETHING OF AVAILABLE
 		int openBrackets = 0;
 		boolean found;
@@ -111,7 +112,7 @@ public class OJSONReader {
 			if (!found) {
 				if (buffer.length() > 1 && c == '{')
 					openBrackets++;
-				
+
 				c = nextChar();
 				buffer.append(c);
 			}

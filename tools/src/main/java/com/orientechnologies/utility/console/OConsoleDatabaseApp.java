@@ -49,6 +49,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.enterprise.command.script.OCommandScript;
+import com.orientechnologies.utility.impexp.OConsoleDatabaseCompare;
 import com.orientechnologies.utility.impexp.OConsoleDatabaseExport;
 import com.orientechnologies.utility.impexp.OConsoleDatabaseImport;
 import com.orientechnologies.utility.impexp.ODatabaseExportException;
@@ -509,6 +510,16 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 
 		try {
 			new OConsoleDatabaseExport(currentDatabase, iOutputFilePath, this).exportDatabase().close();
+		} catch (ODatabaseExportException e) {
+			out.println("ERROR: " + e.toString());
+		}
+	}
+
+	@ConsoleCommand(description = "Compare two databases")
+	public void compareDatabases(@ConsoleParameter(name = "db1-url", description = "URL of the first database") final String iDb1URL,
+			@ConsoleParameter(name = "db2-url", description = "URL of the second database") final String iDb2URL) throws IOException {
+		try {
+			new OConsoleDatabaseCompare(iDb1URL, iDb2URL, this).compare();
 		} catch (ODatabaseExportException e) {
 			out.println("ERROR: " + e.toString());
 		}

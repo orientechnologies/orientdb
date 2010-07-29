@@ -27,6 +27,7 @@ import com.orientechnologies.common.parser.OStringForwardReader;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -39,6 +40,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONReader;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
+import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
 import com.orientechnologies.utility.console.OCommandListener;
 
 /**
@@ -81,7 +83,7 @@ public class OConsoleDatabaseImport {
 			importClusters();
 			importSchema();
 			importRecords();
-			importDictionary();
+			// importDictionary();
 			deleteHoleRecords();
 			activateIndexes();
 
@@ -90,6 +92,7 @@ public class OConsoleDatabaseImport {
 			listener.onMessage("\n\nImport completed in " + ((System.currentTimeMillis() - time)) + " ms");
 
 		} catch (Exception e) {
+			e.printStackTrace();
 			throw new ODatabaseExportException("Error on importing database '" + database.getName() + "' from file: " + fileName, e);
 		} finally {
 			close();
@@ -150,43 +153,44 @@ public class OConsoleDatabaseImport {
 		listener.onMessage("OK");
 	}
 
-	private long importDictionary() throws IOException, ParseException {
-		listener.onMessage("\nImporting database dictionary...");
-
-		jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
-		jsonReader.checkContent("\"dictionary\":");
-
-		String dictionaryKey;
-		String dictionaryValue;
-
-		final ODocument doc = new ODocument(database);
-		final ORecordId rid = new ORecordId();
-
-		long tot = 0;
-
-		try {
-			do {
-				dictionaryKey = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"key\"")
-						.readString(OJSONReader.COMMA_SEPARATOR);
-				dictionaryValue = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"value\"")
-						.readString(OJSONReader.NEXT_IN_OBJECT);
-
-				if (dictionaryValue.length() >= 4)
-					rid.fromString(dictionaryValue.substring(1));
-
-				database.getDictionary().put(dictionaryKey, doc);
-				tot++;
-			} while (jsonReader.lastChar() == ',');
-
-			listener.onMessage("OK (" + tot + " entries)");
-
-			jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
-		} catch (Exception e) {
-			listener.onMessage("ERROR (" + tot + " entries): " + e);
-		}
-
-		return tot;
-	}
+	//
+	// private long importDictionary() throws IOException, ParseException {
+	// listener.onMessage("\nImporting database dictionary...");
+	//
+	// jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
+	// jsonReader.checkContent("\"dictionary\":");
+	//
+	// String dictionaryKey;
+	// String dictionaryValue;
+	//
+	// final ODocument doc = new ODocument(database);
+	// final ORecordId rid = new ORecordId();
+	//
+	// long tot = 0;
+	//
+	// try {
+	// do {
+	// dictionaryKey = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"key\"")
+	// .readString(OJSONReader.COMMA_SEPARATOR);
+	// dictionaryValue = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"value\"")
+	// .readString(OJSONReader.NEXT_IN_OBJECT);
+	//
+	// if (dictionaryValue.length() >= 4)
+	// rid.fromString(dictionaryValue.substring(1));
+	//
+	// database.getDictionary().put(dictionaryKey, doc);
+	// tot++;
+	// } while (jsonReader.lastChar() == ',');
+	//
+	// listener.onMessage("OK (" + tot + " entries)");
+	//
+	// jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
+	// } catch (Exception e) {
+	// listener.onMessage("ERROR (" + tot + " entries): " + e);
+	// }
+	//
+	// return tot;
+	// }
 
 	private void importSchema() throws IOException, ParseException {
 		listener.onMessage("\nImporting database schema...");
@@ -254,7 +258,7 @@ public class OConsoleDatabaseImport {
 						superClasses.put(cls, classSuper);
 					} else if (value.equals("\"properties\"")) {
 						// GET PROPERTIES
-						jsonReader.readString(OJSONReader.BEGIN_COLLECTION);
+						jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
 
 						while (jsonReader.lastChar() != ']') {
 							importProperty(cls);
@@ -292,7 +296,12 @@ public class OConsoleDatabaseImport {
 	}
 
 	private void importProperty(final OClass iClass) throws IOException, ParseException {
-		String propName = jsonReader.readNext(OJSONReader.BEGIN_OBJECT).readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"name\"")
+		jsonReader.readNext(OJSONReader.NEXT_OBJ_IN_ARRAY);
+
+		if (jsonReader.lastChar() == ']')
+			return;
+
+		String propName = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"name\"")
 				.readString(OJSONReader.COMMA_SEPARATOR);
 
 		final int id = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"id\"")
@@ -362,6 +371,7 @@ public class OConsoleDatabaseImport {
 		jsonReader.checkContent("\"clusters\"");
 		jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
 
+		ORecordId rid = null;
 		while (jsonReader.lastChar() != ']') {
 			jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
 
@@ -371,6 +381,12 @@ public class OConsoleDatabaseImport {
 			String type = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"type\"")
 					.readString(OJSONReader.NEXT_IN_OBJECT);
 
+			if (jsonReader.lastChar() == ',') {
+				rid = new ORecordId(jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"rid\"")
+						.readString(OJSONReader.NEXT_IN_OBJECT));
+			} else if (type.equals("LOGICAL"))
+				throw new OConfigurationException("Logical cluster '" + name + "' has no 'rid' field");
+
 			listener.onMessage("\n- Creating cluster " + name + "...");
 
 			int clusterId = database.getClusterIdByName(name);
@@ -378,12 +394,14 @@ public class OConsoleDatabaseImport {
 				// CREATE IT
 				if (type.equals("PHYSICAL"))
 					clusterId = database.addPhysicalCluster(name, name, -1);
-				else
-					clusterId = database.addLogicalCluster(name, database.getDefaultClusterId());
+				else if (type.equals("LOGICAL")) {
+					clusterId = database.addLogicalCluster(name, rid != null ? rid.getClusterId() : database.getDefaultClusterId());
+				}
 			}
 
 			if (clusterId != id)
-				throw new OSchemaException("Imported cluster '" + name + "' has id=" + clusterId + " different from the original: " + id);
+				throw new OConfigurationException("Imported cluster '" + name + "' has id=" + clusterId + " different from the original: "
+						+ id);
 
 			listener.onMessage("OK");
 
@@ -417,14 +435,16 @@ public class OConsoleDatabaseImport {
 
 			++clusterRecords;
 
-			if (rid.getClusterId() != lastClusterId) {
-				// CHANGED CLUSTERID: DUMP STATISTICS
-				System.out.print("\n- Imported records into the cluster '" + database.getClusterNameById(lastClusterId) + "': "
-						+ clusterRecords + " records");
-				clusterRecords = 0;
-			}
+			if (rid != null) {
+				if (rid.getClusterId() != lastClusterId) {
+					// CHANGED CLUSTERID: DUMP STATISTICS
+					System.out.print("\n- Imported records into the cluster '" + database.getClusterNameById(lastClusterId) + "': "
+							+ clusterRecords + " records");
+					clusterRecords = 0;
+				}
 
-			lastClusterId = rid.getClusterId();
+				lastClusterId = rid.getClusterId();
+			}
 
 			++totalRecords;
 		}
@@ -442,9 +462,13 @@ public class OConsoleDatabaseImport {
 
 		record = ORecordSerializerJSON.INSTANCE.fromString(database, value, record);
 
-		String rid = record.getIdentity().toString();
+		if (database.getClusterType(database.getClusterNameById(record.getIdentity().getClusterId())) != OClusterLocal.TYPE) {
+			// JUMP NON PHYSICAL CLUSTERS
+			jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+			return null;
+		}
 
-		// System.out.print("\n- Importing record of type '" + (char) record.getRecordType() + "' with id=" + rid);
+		String rid = record.getIdentity().toString();
 
 		long lastPos = database.getStorage().getClusterLastEntryPosition(record.getIdentity().getClusterId());
 
@@ -516,7 +540,8 @@ public class OConsoleDatabaseImport {
 					else
 						cls = database.getMetadata().getSchema().createClass(className, database.addPhysicalCluster(className, className, -1));
 
-					database.getMetadata().getSchema().save();
+					// AVOID TO SAVE THE SCHEMA!
+					// database.getMetadata().getSchema().save();
 				}
 
 				doc.setClassName(className);

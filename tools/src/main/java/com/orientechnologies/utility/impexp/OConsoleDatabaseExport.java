@@ -28,20 +28,16 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.record.impl.ORecordColumn;
-import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
+import com.orientechnologies.orient.core.storage.impl.local.OClusterLogical;
 import com.orientechnologies.utility.console.OCommandListener;
 
 public class OConsoleDatabaseExport {
-	private ODatabaseDocument		database;
-	private String							fileName;
-	private OJSONWriter					writer;
-	private OCommandListener		listener;
-
-	private static final String	ATTRIBUTE_TYPE	= "@type";
+	private ODatabaseDocument	database;
+	private String						fileName;
+	private OJSONWriter				writer;
+	private OCommandListener	listener;
+	private long							recordExported;
 
 	public OConsoleDatabaseExport(final ODatabaseDocument database, final String iFileName, final OCommandListener iListener)
 			throws IOException {
@@ -69,7 +65,8 @@ public class OConsoleDatabaseExport {
 
 			writer.flush();
 		} catch (Exception e) {
-			throw new ODatabaseExportException("Error on exporting database '" + database.getName() + " to: " + fileName, e);
+			e.printStackTrace();
+			throw new ODatabaseExportException("Error on exporting database '" + database.getName() + "' to: " + fileName, e);
 		} finally {
 			close();
 		}
@@ -87,6 +84,11 @@ public class OConsoleDatabaseExport {
 			writer.writeAttribute(0, false, "name", clusterName);
 			writer.writeAttribute(0, false, "id", database.getClusterIdByName(clusterName));
 			writer.writeAttribute(0, false, "type", database.getClusterType(clusterName));
+
+			if (database.getClusterType(clusterName).equals("LOGICAL")) {
+				OClusterLogical cluster = (OClusterLogical) database.getStorage().getClusterById(database.getClusterIdByName(clusterName));
+				writer.writeAttribute(0, false, "rid", cluster.getRID());
+			}
 
 			totalRecords += recordTot;
 
@@ -111,9 +113,10 @@ public class OConsoleDatabaseExport {
 		for (String clusterName : clusters) {
 			long recordTot = database.countClusterElements(clusterName);
 			listener.onMessage("\n- Exporting record of cluster '" + clusterName + "'...");
+
 			long recordNum = 0;
 			for (ORecordInternal<?> rec : database.browseCluster(clusterName))
-				exportRecord(recordTot, recordNum, rec);
+				exportRecord(recordTot, recordNum++, rec);
 
 			listener.onMessage("OK (records=" + recordTot + ")");
 
@@ -200,7 +203,7 @@ public class OConsoleDatabaseExport {
 
 				if (cls.properties().size() > 0) {
 					writer.beginCollection(4, true, "properties");
-					for (OProperty p : cls.properties()) {
+					for (OProperty p : cls.declaredProperties()) {
 						writer.beginObject(5, true, null);
 						writer.writeAttribute(0, false, "name", p.getName());
 						writer.writeAttribute(0, false, "id", p.getId());
@@ -236,53 +239,15 @@ public class OConsoleDatabaseExport {
 		if (rec == null)
 			return;
 
-		byte recordType = rec.getRecordType();
-
-		writer.beginObject(3, true, null);
-		writer.writeAttribute(0, false, ATTRIBUTE_TYPE, "" + (char) recordType);
-		writer.writeAttribute(0, false, ORecordSerializerJSON.ATTRIBUTE_ID, rec.getIdentity());
-		writer.writeAttribute(0, false, ORecordSerializerJSON.ATTRIBUTE_VERSION, rec.getVersion());
-
 		if (rec.getIdentity().isValid())
 			rec.load();
 
-		switch (recordType) {
-		case ODocument.RECORD_TYPE:
-			final ODocument vobj = (ODocument) rec;
-			if (vobj.getClassName() != null)
-				writer.writeAttribute(0, false, "@class", vobj.getClassName());
+		if (recordExported > 0)
+			writer.append(",");
 
-			Object value;
-			if (vobj.fieldNames() != null && vobj.fieldNames().length > 0) {
-				for (String f : vobj.fieldNames()) {
-					value = vobj.field(f);
-					writer.writeAttribute(5, true, f, value);
-				}
-			}
-			break;
+		writer.append(rec.toJSON("rid,type,version,class,ident:4"));
 
-		case ORecordColumn.RECORD_TYPE:
-			ORecordColumn csv = (ORecordColumn) rec;
-			if (csv.size() > 0) {
-				writer.beginCollection(4, true, null);
-				for (int i = 0; i < csv.size(); ++i) {
-					writer.writeValue(5, true, csv.field(i));
-				}
-				writer.endCollection(4, true);
-			}
-			break;
-
-		case ORecordFlat.RECORD_TYPE:
-			writer.writeAttribute(5, true, "value", ((ORecordFlat) rec).value());
-			break;
-
-		case ORecordBytes.RECORD_TYPE:
-			writer.writeAttribute(5, true, "value", rec.toStream());
-			break;
-		}
-
-		writer.endObject(3, true);
-
+		recordExported++;
 		recordNum++;
 
 		if (recordTot > 10 && (recordNum + 1) % (recordTot / 10) == 0)
