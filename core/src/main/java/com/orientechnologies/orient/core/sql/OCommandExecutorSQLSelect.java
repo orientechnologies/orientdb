@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.common.parser.OStringParser;
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -114,6 +115,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			final List<ORecordId> resultSet = searchForIndexes(cls);
 
 			if (resultSet.size() > 0) {
+				OProfiler.getInstance().updateStatistic("Query.indexUsage", 1);
+				
 				// FOUND USING INDEXES
 				for (ORecordId rid : resultSet)
 					addResult(database.load(rid));
