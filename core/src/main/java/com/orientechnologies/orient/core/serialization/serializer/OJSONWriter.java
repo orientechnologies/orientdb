@@ -160,10 +160,10 @@ public class OJSONWriter {
 			if (linked.getIdentity().isValid()) {
 				buffer.append("\"#");
 
-				if (linked instanceof ODocument && ((ODocument) linked).getClassName() != null) {
-					buffer.append(((ODocument) linked).getClassName());
-					buffer.append('@');
-				}
+//				if (linked instanceof ODocument && ((ODocument) linked).getClassName() != null) {
+//					buffer.append(((ODocument) linked).getClassName());
+//					buffer.append('@');
+//				}
 
 				buffer.append(linked.getIdentity().toString());
 				buffer.append('\"');

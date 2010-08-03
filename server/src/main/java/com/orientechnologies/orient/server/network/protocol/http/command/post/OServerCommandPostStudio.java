@@ -69,9 +69,9 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 					rid = value;
 				else if ("1".equals(pairs[0]))
 					className = value;
-				else if (pairs[0].startsWith("_class"))
+				else if (pairs[0].startsWith("@class"))
 					className = value;
-				else if (pairs[0].startsWith("_") || pairs[0].equals("id"))
+				else if (pairs[0].startsWith("@") || pairs[0].equals("id"))
 					continue;
 				else {
 					fields.put(pairs[0], value);
@@ -231,11 +231,14 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 				if (oldValue != null) {
 					if (oldValue instanceof ORecord<?>) {
 						ORecord<?> rec = (ORecord<?>) oldValue;
-						ORecordId newRid = new ORecordId(f.getValue());
+						String parsedRid = f.getValue();
+						if (parsedRid != null && parsedRid.charAt(0) == '#')
+							parsedRid = parsedRid.substring(1);
 
-						if (!rec.getIdentity().equals(newRid)) {
+						if (!rec.getIdentity().toString().equals(parsedRid)) {
 							// CHANGED RID
-							((ORecordId) rec.getIdentity()).fromString(f.getValue());
+							rec.reset();
+							((ORecordId) rec.getIdentity()).fromString(parsedRid);
 
 							// RELOAD TO ASSURE IT EXISTS
 							rec.load();
