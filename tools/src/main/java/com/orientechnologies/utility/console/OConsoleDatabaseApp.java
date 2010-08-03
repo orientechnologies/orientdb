@@ -50,11 +50,11 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.command.script.OCommandScript;
-import com.orientechnologies.utility.cmd.OConsoleDatabaseCompare;
-import com.orientechnologies.utility.cmd.OConsoleDatabaseExport;
-import com.orientechnologies.utility.cmd.OConsoleDatabaseImport;
-import com.orientechnologies.utility.cmd.ODatabaseExportException;
-import com.orientechnologies.utility.cmd.ODatabaseImportException;
+import com.orientechnologies.utility.console.md.OConsoleDatabaseCompare;
+import com.orientechnologies.utility.console.md.OConsoleDatabaseExport;
+import com.orientechnologies.utility.console.md.OConsoleDatabaseImport;
+import com.orientechnologies.utility.console.md.ODatabaseExportException;
+import com.orientechnologies.utility.console.md.ODatabaseImportException;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandListener {
 	protected ODatabaseDocument					currentDatabase;
@@ -193,7 +193,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 
 	@ConsoleCommand(splitInWords = false, description = "Insert a new record into the database")
 	public void insert(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-		sqlCommand("insert", iCommandText, "\nInserted record in %f sec(s).\n");
+		sqlCommand("insert", iCommandText, "\nInserted record %s in %f sec(s).\n");
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Update records in the database")
