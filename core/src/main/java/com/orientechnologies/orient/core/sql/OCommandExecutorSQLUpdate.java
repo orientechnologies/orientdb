@@ -15,10 +15,9 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -42,12 +41,15 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract implements OCommandResultListener {
 	public static final String	KEYWORD_UPDATE	= "UPDATE";
 	private static final String	KEYWORD_SET			= "SET";
+	private static final String	KEYWORD_ADD			= "ADD";
 	private static final String	KEYWORD_REMOVE	= "REMOVE";
 	private String							className				= null;
 	private Map<String, Object>	setEntries			= new HashMap<String, Object>();
-	private Set<String>					removeEntries		= new HashSet<String>();
+	private Map<String, Object>	addEntries			= new HashMap<String, Object>();
+	private Map<String, Object>	removeEntries		= new HashMap<String, Object>();
 	private OQuery<?>						query;
 	private int									recordCount			= 0;
+	private static final Object	EMPTY_VALUE			= new Object();
 
 	@SuppressWarnings("unchecked")
 	public OCommandExecutorSQLUpdate parse(final OCommandRequestText iRequest) {
@@ -85,14 +87,20 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 		className = cls.getName();
 
 		newPos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
-		if (pos == -1 || (!word.toString().equals(KEYWORD_SET) && !word.toString().equals(KEYWORD_REMOVE)))
-			throw new OCommandSQLParsingException("Expected keyword " + KEYWORD_SET + " or " + KEYWORD_REMOVE, text, pos);
+		if (newPos == -1
+				|| (!word.toString().equals(KEYWORD_SET) && !word.toString().equals(KEYWORD_ADD) && !word.toString().equals(KEYWORD_REMOVE)))
+			throw new OCommandSQLParsingException("Expected keyword " + KEYWORD_SET + " or " + KEYWORD_ADD + " or " + KEYWORD_REMOVE,
+					text, pos);
+
+		pos = newPos;
 
 		while (pos != -1 && !word.toString().equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)) {
 			if (word.toString().equals(KEYWORD_SET)) {
-				pos = parseSetFields(word, pos, newPos);
+				pos = parseSetFields(word, pos);
+			} else if (word.toString().equals(KEYWORD_ADD)) {
+				pos = parseAddFields(word, pos);
 			} else if (word.toString().equals(KEYWORD_REMOVE)) {
-				pos = parseRemoveFields(word, newPos);
+				pos = parseRemoveFields(word, pos);
 			} else
 				break;
 		}
@@ -118,6 +126,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 	/**
 	 * Update current record.
 	 */
+	@SuppressWarnings("unchecked")
 	public boolean result(final Object iRecord) {
 		ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) iRecord;
 
@@ -132,32 +141,65 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 			record.field(entry.getKey(), v);
 		}
 
+		// BIND VALUES TO ADD
+		Collection<Object> coll;
+		Object fieldValue;
+		for (Map.Entry<String, Object> entry : addEntries.entrySet()) {
+			fieldValue = record.field(entry.getKey());
+
+			if (fieldValue instanceof Collection<?>) {
+				coll = (Collection<Object>) fieldValue;
+
+				v = entry.getValue();
+
+				if (v instanceof OSQLFilterItem)
+					v = ((OSQLFilterItem) v).getValue(record);
+
+				coll.add(v);
+				record.setDirty();
+			}
+		}
+
 		// REMOVE FIELD IF ANY
-		for (String entry : removeEntries)
-			record.removeField(entry);
+		for (Map.Entry<String, Object> entry : removeEntries.entrySet()) {
+			v = entry.getValue();
+			if (v == EMPTY_VALUE)
+				record.removeField(entry.getKey());
+			else {
+				fieldValue = record.field(entry.getKey());
+
+				if (fieldValue instanceof Collection<?>) {
+					coll = (Collection<Object>) fieldValue;
+					coll.remove(v);
+					record.setDirty();
+				}
+			}
+		}
 
 		record.save();
 		recordCount++;
 		return true;
 	}
 
-	private int parseSetFields(final StringBuilder word, int pos, int newPos) {
+	private int parseSetFields(final StringBuilder word, int pos) {
 		String fieldName;
 		String fieldValue;
+		int newPos = pos;
 
 		while (pos != -1 && (setEntries.size() == 0 || word.toString().equals(","))) {
-			newPos = OSQLHelper.nextWord(text, textUpperCase, newPos, word, false);
-			if (pos == -1)
+			newPos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
+			if (newPos == -1)
 				throw new OCommandSQLParsingException("Field name expected", text, pos);
 			pos = newPos;
 
 			fieldName = word.toString();
 
-			pos = OStringParser.jumpWhiteSpaces(text, pos);
+			newPos = OStringParser.jumpWhiteSpaces(text, pos);
 
-			if (pos == -1 || text.charAt(pos) != '=')
+			if (newPos == -1 || text.charAt(newPos) != '=')
 				throw new OCommandSQLParsingException("Character '=' was expected", text, pos);
-
+			
+			pos = newPos;
 			newPos = OSQLHelper.nextWord(text, textUpperCase, pos + 1, word, false, " =><");
 			if (pos == -1)
 				throw new OCommandSQLParsingException("Value expected", text, pos);
@@ -173,28 +215,94 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 			// INSERT TRANSFORMED FIELD VALUE
 			setEntries.put(fieldName, OSQLHelper.parseValue(database, this, fieldValue));
 
-			newPos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+			pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		}
 
 		if (setEntries.size() == 0)
 			throw new OCommandSQLParsingException("Entries to set <field> = <value> are missed. Example: name = 'Bill', salary = 300.2",
 					text, pos);
 
-		return newPos;
+		return pos;
+	}
+
+	private int parseAddFields(final StringBuilder word, int pos) {
+		String fieldName;
+		String fieldValue;
+		int newPos = pos;
+
+		while (pos != -1 && (setEntries.size() == 0 || word.toString().equals(","))) {
+			newPos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
+			if (newPos == -1)
+				throw new OCommandSQLParsingException("Field name expected", text, pos);
+			pos = newPos;
+
+			fieldName = word.toString();
+
+			newPos = OStringParser.jumpWhiteSpaces(text, pos);
+
+			if (newPos == -1 || text.charAt(newPos) != '=')
+				throw new OCommandSQLParsingException("Character '=' was expected", text, pos);
+
+			pos = newPos;
+			newPos = OSQLHelper.nextWord(text, textUpperCase, pos + 1, word, false, " =><");
+			if (pos == -1)
+				throw new OCommandSQLParsingException("Value expected", text, pos);
+
+			fieldValue = word.toString();
+
+			if (fieldValue.endsWith(",")) {
+				pos = newPos - 1;
+				fieldValue = fieldValue.substring(0, fieldValue.length() - 1);
+			} else
+				pos = newPos;
+
+			// INSERT TRANSFORMED FIELD VALUE
+			addEntries.put(fieldName, OSQLHelper.parseValue(database, this, fieldValue));
+
+			pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+		}
+
+		if (setEntries.size() == 0)
+			throw new OCommandSQLParsingException("Entries to add <field> = <value> are missed. Example: name = 'Bill', salary = 300.2",
+					text, pos);
+
+		return pos;
 	}
 
 	private int parseRemoveFields(final StringBuilder word, int pos) {
 		String fieldName;
+		String fieldValue;
+		Object value;
+		int newPos = pos;
 
 		while (pos != -1 && (removeEntries.size() == 0 || word.toString().equals(","))) {
-			pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
-			if (pos == -1)
+			newPos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
+			if (newPos == -1)
 				throw new OCommandSQLParsingException("Field name expected", text, pos);
 
 			fieldName = word.toString();
 
+			pos = OStringParser.jumpWhiteSpaces(text, pos);
+
+			if (pos > -1 && text.charAt(newPos) == '=') {
+				pos = OSQLHelper.nextWord(text, textUpperCase, pos + 1, word, false, " =><");
+				if (pos == -1)
+					throw new OCommandSQLParsingException("Value expected", text, pos);
+
+				fieldValue = word.toString();
+
+				if (fieldValue.endsWith(",")) {
+					pos = newPos - 1;
+					fieldValue = fieldValue.substring(0, fieldValue.length() - 1);
+				} else
+					pos = newPos;
+
+				value = fieldValue;
+			} else
+				value = EMPTY_VALUE;
+
 			// INSERT FIELD NAME TO BE REMOVED
-			removeEntries.add(fieldName);
+			removeEntries.put(fieldName, value);
 
 			pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		}

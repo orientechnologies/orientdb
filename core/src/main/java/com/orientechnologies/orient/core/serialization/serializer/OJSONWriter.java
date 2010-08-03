@@ -26,7 +26,6 @@ import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 
 @SuppressWarnings("unchecked")
@@ -160,10 +159,10 @@ public class OJSONWriter {
 			if (linked.getIdentity().isValid()) {
 				buffer.append("\"#");
 
-//				if (linked instanceof ODocument && ((ODocument) linked).getClassName() != null) {
-//					buffer.append(((ODocument) linked).getClassName());
-//					buffer.append('@');
-//				}
+				// if (linked instanceof ODocument && ((ODocument) linked).getClassName() != null) {
+				// buffer.append(((ODocument) linked).getClassName());
+				// buffer.append('@');
+				// }
 
 				buffer.append(linked.getIdentity().toString());
 				buffer.append('\"');

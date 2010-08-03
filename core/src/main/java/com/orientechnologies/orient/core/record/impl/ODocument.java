@@ -413,6 +413,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		checkForLoading();
 		checkForFields();
 		_fieldValues.remove(iPropertyName);
+		setDirty();
 		return this;
 	}
 
