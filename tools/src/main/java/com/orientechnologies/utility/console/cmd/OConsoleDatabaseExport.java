@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.utility.cmd;
+package com.orientechnologies.utility.console.cmd;
 
 import java.io.FileWriter;
 import java.io.IOException;

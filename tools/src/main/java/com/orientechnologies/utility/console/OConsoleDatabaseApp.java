@@ -50,11 +50,11 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.command.script.OCommandScript;
-import com.orientechnologies.utility.console.md.OConsoleDatabaseCompare;
-import com.orientechnologies.utility.console.md.OConsoleDatabaseExport;
-import com.orientechnologies.utility.console.md.OConsoleDatabaseImport;
-import com.orientechnologies.utility.console.md.ODatabaseExportException;
-import com.orientechnologies.utility.console.md.ODatabaseImportException;
+import com.orientechnologies.utility.console.cmd.OConsoleDatabaseCompare;
+import com.orientechnologies.utility.console.cmd.OConsoleDatabaseExport;
+import com.orientechnologies.utility.console.cmd.OConsoleDatabaseImport;
+import com.orientechnologies.utility.console.cmd.ODatabaseExportException;
+import com.orientechnologies.utility.console.cmd.ODatabaseImportException;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandListener {
 	protected ODatabaseDocument					currentDatabase;
