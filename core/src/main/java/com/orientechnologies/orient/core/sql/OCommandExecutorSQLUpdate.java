@@ -23,6 +23,7 @@ import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -198,7 +199,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 
 			if (newPos == -1 || text.charAt(newPos) != '=')
 				throw new OCommandSQLParsingException("Character '=' was expected", text, pos);
-			
+
 			pos = newPos;
 			newPos = OSQLHelper.nextWord(text, textUpperCase, pos + 1, word, false, " =><");
 			if (pos == -1)
@@ -297,7 +298,11 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 				} else
 					pos = newPos;
 
-				value = fieldValue;
+				if (fieldValue.length() > 2 && Character.isDigit(fieldValue.charAt(0)) && fieldValue.contains(":"))
+					value = new ORecordId(fieldValue);
+				else
+					value = fieldValue;
+
 			} else
 				value = EMPTY_VALUE;
 
