@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 @Test(groups = "sql-update", sequential = true)
 public class SQLUpdateTest {
 	private ODatabaseDocument	database;
+	private int								updatedRecords;
 
 	@Parameters(value = "url")
 	public SQLUpdateTest(String iURL) {
@@ -46,6 +47,26 @@ public class SQLUpdateTest {
 	}
 
 	@Test(dependsOnMethods = "updateWithWhereOperator")
+	public void updateCollectionsAddWithWhereOperator() {
+		database.open("admin", "admin");
+
+		updatedRecords = (Integer) database.command(new OCommandSQL("update Account add addresses = 12:0")).execute();
+
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "updateCollectionsAddWithWhereOperator")
+	public void updateCollectionsRemoveWithWhereOperator() {
+		database.open("admin", "admin");
+
+		final int records = (Integer) database.command(new OCommandSQL("update Account remove addresses = 12:0")).execute();
+
+		Assert.assertEquals(records, updatedRecords);
+
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "updateCollectionsRemoveWithWhereOperator")
 	public void updateAllOperator() {
 		database.open("admin", "admin");
 

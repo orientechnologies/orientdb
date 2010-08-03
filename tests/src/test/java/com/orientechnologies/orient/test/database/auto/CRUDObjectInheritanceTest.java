@@ -117,16 +117,18 @@ public class CRUDObjectInheritanceTest {
 	}
 
 	@Test(dependsOnMethods = "queryPerSuperType")
-	public void cleanAll() {
+	public void deleteFirst() {
 		database.open("admin", "admin");
 
 		startRecordNumber = database.countClusterElements("Company");
 
 		// DELETE ALL THE RECORD IN THE CLUSTER
-		for (Object obj : database.browseCluster("Company"))
+		for (Object obj : database.browseCluster("Company")) {
 			database.delete(obj);
+			break;
+		}
 
-		Assert.assertEquals(database.countClusterElements("Company"), 0);
+		Assert.assertEquals(database.countClusterElements("Company"), startRecordNumber - 1);
 
 		database.close();
 	}

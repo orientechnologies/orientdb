@@ -262,7 +262,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 			pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		}
 
-		if (setEntries.size() == 0)
+		if (addEntries.size() == 0)
 			throw new OCommandSQLParsingException("Entries to add <field> = <value> are missed. Example: name = 'Bill', salary = 300.2",
 					text, pos);
 
@@ -282,9 +282,9 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 
 			fieldName = word.toString();
 
-			pos = OStringParser.jumpWhiteSpaces(text, pos);
+			pos = OStringParser.jumpWhiteSpaces(text, newPos);
 
-			if (pos > -1 && text.charAt(newPos) == '=') {
+			if (pos > -1 && text.charAt(pos) == '=') {
 				pos = OSQLHelper.nextWord(text, textUpperCase, pos + 1, word, false, " =><");
 				if (pos == -1)
 					throw new OCommandSQLParsingException("Value expected", text, pos);

@@ -246,16 +246,18 @@ public class CRUDObjectPhysicalTest {
 	}
 
 	@Test(dependsOnMethods = "queryCross3Levels")
-	public void cleanAll() {
+	public void deleteFirst() {
 		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
 
 		startRecordNumber = database.countClusterElements("Account");
 
 		// DELETE ALL THE RECORD IN THE CLUSTER
-		for (Object obj : database.browseCluster("Account"))
+		for (Object obj : database.browseCluster("Account")) {
 			database.delete(obj);
+			break;
+		}
 
-		Assert.assertEquals(database.countClusterElements("Account"), 0);
+		Assert.assertEquals(database.countClusterElements("Account"), startRecordNumber - 1);
 
 		database.close();
 	}
