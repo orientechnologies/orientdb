@@ -62,6 +62,10 @@ public class CRUDDocumentPhysicalTest {
 
 		record.setClassName("Account");
 
+		byte[] binary = new byte[100];
+		for (int b = 0; b < binary.length; ++b)
+			binary[b] = (byte) b;
+
 		for (long i = startRecordNumber; i < startRecordNumber + TOT_RECORDS; ++i) {
 			record.reset();
 
@@ -69,6 +73,7 @@ public class CRUDDocumentPhysicalTest {
 			record.field("name", "Gipsy");
 			record.field("location", "Italy");
 			record.field("salary", (i + 300));
+			record.field("binary", binary);
 			record.field("testLong", 10000000000L); // TEST LONG
 			record.field("extra", "This is an extra field not included in the schema");
 
@@ -93,6 +98,7 @@ public class CRUDDocumentPhysicalTest {
 		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 
 		// BROWSE IN THE OPPOSITE ORDER
+		byte[] binary;
 		int i = 0;
 		ORecordIterator<ODocument> it = database.browseCluster("Account");
 		for (ODocument rec = it.last().previous(); rec != null; rec = it.previous()) {
@@ -103,6 +109,10 @@ public class CRUDDocumentPhysicalTest {
 			Assert.assertEquals(((Number) rec.field("testLong")).longValue(), 10000000000L);
 			Assert.assertEquals(((Number) rec.field("salary")).intValue(), i + 300);
 			Assert.assertNotNull(rec.field("extra"));
+
+			binary = rec.field("binary");
+			for (int b = 0; b < binary.length; ++b)
+				Assert.assertEquals(binary[b], (byte) b);
 
 			i++;
 		}

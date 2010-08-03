@@ -29,10 +29,25 @@
 
 This document enlist the last changes to the Orient Database project.
 -------------------------------------------------------------------------------
-VERSION 0.9.21 - (July, ? 2010)
+VERSION 0.9.21 - (July, 29th 2010)
 -------------------------------------------------------------------------------
+- Issue 60: GraphDB implementation
+- Issue 8:  Import of exported database
+- Issue 70: Connection pool
+- Issue 67: Support lazy loaded collections and maps also for ODocument
+- Issue 66: Optimize loading of database schema at opening using the fetch plan
+- Issue 71: Support record internal field in queries
+- Issue 63: Server: logs by default should reside in files
+- Issue 69: Java 1.6 creep
+- Issue 74: Create class from console
+- Issue 75: Sequential document updates from different connections yields
+            conncurrent modification exception
+- Issue 78: Database corruption
+- Issue 79: Error parsing example query
+- Issue 80: Root cause not reported on query parsing
 - New annotations to control object mapping: ORawBinding, ODocumentId and
   ODocumentInstance
+- Fixed other minor bugs
 
 -------------------------------------------------------------------------------
 VERSION 0.9.20 - (July, 12nd 2010)

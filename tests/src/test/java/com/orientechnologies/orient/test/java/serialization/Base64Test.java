@@ -16,22 +16,32 @@
 package com.orientechnologies.orient.test.java.serialization;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 
 import org.testng.Assert;
+import org.testng.annotations.Test;
 
+import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 
-public class Base64Test {
+public class Base64Test extends SpeedTestMonoThread {
 
 	private static final String	TEXT	= "Ciao, questa, e, una, prova. Che ne pensi?";
+	private byte[]							textAsBytes;
 
-	public static void main(String[] iArgs) throws IOException {
-		String encoded = OBase64Utils.encodeBytes(TEXT.getBytes());
+	@Override
+	@Test(enabled = false)
+	public void cycle() throws IOException {
+		String encoded = OBase64Utils.encodeBytes(textAsBytes);
 
 		byte[] decoded = OBase64Utils.decode(encoded);
 		String decodedString = new String(decoded);
 
 		Assert.assertEquals(decodedString, TEXT);
+	}
 
+	@Override
+	public void init() throws NoSuchAlgorithmException {
+		textAsBytes = TEXT.getBytes();
 	}
 }

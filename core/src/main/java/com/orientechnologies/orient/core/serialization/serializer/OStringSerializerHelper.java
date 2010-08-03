@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -27,6 +28,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 
 public abstract class OStringSerializerHelper {
@@ -100,7 +102,11 @@ public abstract class OStringSerializerHelper {
 		case BINARY:
 			if (iValue instanceof byte[])
 				return iValue;
-			return iValue.toString().getBytes();
+			try {
+				return OBase64Utils.decode((String) iValue);
+			} catch (IOException e) {
+				throw new OSerializationException("Error on decode binary data", e);
+			}
 
 		case DATE:
 			if (iValue instanceof Date)
@@ -146,7 +152,7 @@ public abstract class OStringSerializerHelper {
 		case BINARY:
 			if (iValue instanceof Byte)
 				return new String(new byte[] { ((Byte) iValue).byteValue() });
-			return new String((byte[]) iValue);
+			return OBase64Utils.encodeBytes((byte[]) iValue);
 
 		case DATE:
 			return String.valueOf(((Date) iValue).getTime());

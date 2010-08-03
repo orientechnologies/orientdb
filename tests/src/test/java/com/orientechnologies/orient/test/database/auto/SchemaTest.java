@@ -51,6 +51,7 @@ public class SchemaTest {
 				.createClass("Account", database.getStorage().addCluster("account", OClusterLocal.TYPE));
 		account.createProperty("id", OType.INTEGER);
 		account.createProperty("birthDate", OType.DATE);
+		account.createProperty("binary", OType.BINARY);
 
 		database.getMetadata().getSchema().createClass("Company").setSuperClass(account);
 
