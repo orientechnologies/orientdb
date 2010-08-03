@@ -18,26 +18,24 @@ package com.orientechnologies.orient.test.java.serialization;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 
-public class Base64Test extends SpeedTestMonoThread {
+@Test(enabled = false)
+public class Base64EncodingTest extends SpeedTestMonoThread {
 
 	private static final String	TEXT	= "Ciao, questa, e, una, prova. Che ne pensi?";
 	private byte[]							textAsBytes;
 
+	public Base64EncodingTest() throws InstantiationException, IllegalAccessException {
+		super(1000000);
+	}
+
 	@Override
-	@Test(enabled = false)
 	public void cycle() throws IOException {
-		String encoded = OBase64Utils.encodeBytes(textAsBytes);
-
-		byte[] decoded = OBase64Utils.decode(encoded);
-		String decodedString = new String(decoded);
-
-		Assert.assertEquals(decodedString, TEXT);
+		OBase64Utils.encodeBytes(textAsBytes);
 	}
 
 	@Override
