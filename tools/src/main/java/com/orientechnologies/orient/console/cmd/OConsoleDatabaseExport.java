@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.utility.console.cmd;
+package com.orientechnologies.orient.console.cmd;
 
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
+import com.orientechnologies.orient.console.OCommandListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.index.OPropertyIndex;
@@ -31,7 +32,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterLogical;
-import com.orientechnologies.utility.console.OCommandListener;
 
 public class OConsoleDatabaseExport extends OConsoleDatabaseImpExpAbstract {
 	private OJSONWriter	writer;
@@ -241,7 +241,7 @@ public class OConsoleDatabaseExport extends OConsoleDatabaseImpExpAbstract {
 							writer.writeAttribute(0, false, "index-rid", p.getIndex().getRecord().getIdentity());
 
 							OPropertyIndex idx = p.getIndex();
-							writer.writeAttribute(0, false, "index-type", idx.isUnique() ? "unique" : "not-unique");
+							writer.writeAttribute(0, false, "index-type", idx.getType());
 						}
 						writer.endObject(0, false);
 					}

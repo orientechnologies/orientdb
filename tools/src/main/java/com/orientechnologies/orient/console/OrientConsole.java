@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.utility.console;
+package com.orientechnologies.orient.console;
 
 import com.orientechnologies.common.console.OConsoleApplication;
 import com.orientechnologies.orient.client.remote.OEngineRemote;

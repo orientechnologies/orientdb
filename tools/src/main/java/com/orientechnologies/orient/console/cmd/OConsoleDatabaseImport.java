@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.utility.console.cmd;
+package com.orientechnologies.orient.console.cmd;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.common.parser.OStringForwardReader;
+import com.orientechnologies.orient.console.OCommandListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -40,7 +41,6 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONReader;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.utility.console.OCommandListener;
 
 /**
  * Import data into a database.

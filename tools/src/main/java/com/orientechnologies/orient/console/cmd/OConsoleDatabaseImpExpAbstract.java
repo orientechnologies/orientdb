@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.utility.console.cmd;
+package com.orientechnologies.orient.console.cmd;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import com.orientechnologies.orient.console.OCommandListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.utility.console.OCommandListener;
 
 /**
  * Abstract class for import/export of database and data in general.

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.utility.console;
+package com.orientechnologies.orient.console;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
@@ -28,6 +28,11 @@ import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.client.admin.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
+import com.orientechnologies.orient.console.cmd.OConsoleDatabaseCompare;
+import com.orientechnologies.orient.console.cmd.OConsoleDatabaseExport;
+import com.orientechnologies.orient.console.cmd.OConsoleDatabaseImport;
+import com.orientechnologies.orient.console.cmd.ODatabaseExportException;
+import com.orientechnologies.orient.console.cmd.ODatabaseImportException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -36,6 +41,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAwareAbstract;
@@ -50,11 +56,6 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.command.script.OCommandScript;
-import com.orientechnologies.utility.console.cmd.OConsoleDatabaseCompare;
-import com.orientechnologies.utility.console.cmd.OConsoleDatabaseExport;
-import com.orientechnologies.utility.console.cmd.OConsoleDatabaseImport;
-import com.orientechnologies.utility.console.cmd.ODatabaseExportException;
-import com.orientechnologies.utility.console.cmd.ODatabaseImportException;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandListener {
 	protected ODatabaseDocument					currentDatabase;
@@ -302,9 +303,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 
 	@ConsoleCommand(description = "Create an index on a property")
 	public void createIndex(
-			@ConsoleParameter(name = "class.name", description = "Class and property names: <class>.<property>. Example: Account.name") String iTarget,
-			@ConsoleParameter(name = "unique", description = "Accepts only unique values. true for unique, otherwise false") String iUnique)
-			throws IOException {
+			@ConsoleParameter(name = "class.name", description = "Class and property names: <class>.<property>. Example: Account.name") final String iTarget,
+			@ConsoleParameter(name = "type", description = "unique, not-unique, full-text") final String iType) throws IOException {
 		out.println("\nCreating index on property [" + iTarget + "]...");
 
 		String[] parts = iTarget.split("\\.");
@@ -319,7 +319,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 
 		out.println("Creating index, please wait...");
 
-		prop.createIndex(iUnique.equalsIgnoreCase("true"));
+		prop.createIndex(INDEX_TYPE.valueOf(iType));
 
 		out.println("\nIndex created succesfully");
 	}

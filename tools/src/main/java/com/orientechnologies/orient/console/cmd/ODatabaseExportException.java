@@ -1,4 +1,4 @@
-package com.orientechnologies.utility.console.cmd;
+package com.orientechnologies.orient.console.cmd;
 
 @SuppressWarnings("serial")
 public class ODatabaseExportException extends RuntimeException {
