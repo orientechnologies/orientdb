@@ -38,10 +38,10 @@ import com.orientechnologies.orient.enterprise.command.script.OCommandScriptExce
  */
 public class OCommandExecutorScript extends OCommandExecutorAbstract {
 	protected static final String								DEF_LANGUAGE		= "JavaScript";
-
 	protected static ScriptEngineManager				scriptEngineManager;
 	protected static Map<String, ScriptEngine>	engines;
 	protected static String											defaultLanguage	= DEF_LANGUAGE;
+
 	protected OCommandScript										request;
 
 	static {
@@ -72,28 +72,37 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
 	}
 
 	public Object execute(final Object... iArgs) {
-		final String iLanguage = request.getLanguage();
-		final String iScript = request.getText();
+		final String language = request.getLanguage();
+		final String script = request.getText();
 
-		if (iLanguage == null)
+		if (language == null)
 			throw new OCommandScriptException("No language was specified");
 
-		if (!engines.containsKey(iLanguage))
-			throw new OCommandScriptException("Unsupported language: " + iLanguage + ". Supported languages are: " + engines);
+		if (!engines.containsKey(language))
+			throw new OCommandScriptException("Unsupported language: " + language + ". Supported languages are: " + engines);
 
-		if (iScript == null)
-			throw new OCommandScriptException("Invalid script: " + iScript);
+		if (script == null)
+			throw new OCommandScriptException("Invalid script: " + script);
 
-		ScriptEngine scriptEngine = engines.get(iLanguage);
+		final ScriptEngine scriptEngine = engines.get(language);
 
 		if (scriptEngine == null)
-			throw new OCommandScriptException("Cannot find script engine: " + iLanguage);
+			throw new OCommandScriptException("Cannot find script engine: " + language);
 
-		Bindings binding = scriptEngine.createBindings();
+		final Bindings binding = scriptEngine.createBindings();
+
+		// BIND FIXED VARIABLES
+		binding.put("db", database);
+
+		// BIND PARAMETERS INTO THE SCRIPT
+		if (iArgs != null)
+			for (int i = 0; i < iArgs.length; ++i) {
+				binding.put("$" + i, iArgs[i]);
+			}
 
 		try {
 			Object result = null;
-			result = scriptEngine.eval(iScript, binding);
+			result = scriptEngine.eval(script, binding);
 
 			return result;
 		} catch (ScriptException e) {
