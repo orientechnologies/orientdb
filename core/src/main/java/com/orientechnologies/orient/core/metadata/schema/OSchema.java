@@ -120,6 +120,7 @@ public class OSchema extends ODocumentWrapperNoClass {
 		}
 
 		// REGISTER ALL THE CLASSES
+		classes.clear();
 		OClass cls;
 		List<ODocument> storedClasses = document.field("classes");
 		for (ODocument c : storedClasses) {
@@ -168,6 +169,7 @@ public class OSchema extends ODocumentWrapperNoClass {
 
 	@SuppressWarnings("unchecked")
 	public OSchema load() {
+		document.reset();
 		((ORecordId) document.getIdentity()).fromString(document.getDatabase().getStorage().getConfiguration().schemaRecordId);
 		return super.load("*:-1 index:0");
 	}

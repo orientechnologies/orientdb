@@ -28,8 +28,8 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 public class OTreeMapDatabase<K, V> extends OTreeMapPersistent<K, V> {
 	protected ODatabaseRecord<?>	database;
 
-	public OTreeMapDatabase(final ODatabaseRecord<?> iDatabase, final String iClusterName, final ORID iRID) {
-		super(iClusterName, iRID);
+	public OTreeMapDatabase(final ODatabaseRecord<?> iDatabase, final ORID iRID) {
+		super(iDatabase.getClusterNameById(iRID.getClusterId()), iRID);
 		database = iDatabase;
 		record.setDatabase(iDatabase);
 	}

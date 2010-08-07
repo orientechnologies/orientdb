@@ -4,8 +4,6 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.index.OFullTextIndex;
-import com.orientechnologies.orient.core.index.OFullTextIndexManager;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
@@ -18,14 +16,6 @@ public class FullTextIndexerTest {
 		OProfiler.getInstance().startRecording();
 
 		final ODatabaseDocumentTx database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
-
-		final OFullTextIndexManager indexMgr = new OFullTextIndexManager(database);
-		OFullTextIndex index = indexMgr.getIndex("test");
-
-		if (index == null) {
-			index = new OFullTextIndex(database, "test");
-			indexMgr.addIndex(index);
-		}
 
 		database.declareIntent(new OIntentMassiveInsert());
 		database.begin(TXTYPE.NOTX);
@@ -76,7 +66,7 @@ public class FullTextIndexerTest {
 									+ " declared bankruptcy.");
 			document.save();
 
-			index.indexDocument(document);
+//			index.indexDocument(document);
 		}
 
 		long lap = System.currentTimeMillis();

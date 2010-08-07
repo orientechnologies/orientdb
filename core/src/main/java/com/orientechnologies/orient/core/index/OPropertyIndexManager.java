@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -128,7 +129,7 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 
 		for (OProperty prop : cls.properties()) {
 			index = prop.getIndex();
-			if (index != null && index.isUnique()) {
+			if (index != null && index.getType() == INDEX_TYPE.UNIQUE) {
 				fieldValue = iRecord.field(prop.getName());
 
 				if (fieldValue != null) {

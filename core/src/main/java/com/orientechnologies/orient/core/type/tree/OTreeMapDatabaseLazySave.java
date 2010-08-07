@@ -27,8 +27,8 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 @SuppressWarnings("serial")
 public class OTreeMapDatabaseLazySave<K, V> extends OTreeMapDatabase<K, V> {
 
-	public OTreeMapDatabaseLazySave(ODatabaseRecord<?> iDatabase, String iClusterName, ORID iRID) {
-		super(iDatabase, iClusterName, iRID);
+	public OTreeMapDatabaseLazySave(ODatabaseRecord<?> iDatabase, ORID iRID) {
+		super(iDatabase, iRID);
 	}
 
 	public OTreeMapDatabaseLazySave(ODatabaseRecord<?> iDatabase, String iClusterName, OStreamSerializer iKeySerializer,

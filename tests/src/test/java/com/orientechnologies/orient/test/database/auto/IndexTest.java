@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.database.base.OrientTest;
@@ -88,7 +89,8 @@ public class IndexTest {
 	@Test(dependsOnMethods = "testUseOfIndex")
 	public void testChangeOfIndexToNotUnique() {
 		database.open("admin", "admin");
-		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getIndex().setUnique(false);
+		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").removeIndex();
+		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").createIndex(INDEX_TYPE.NOT_UNIQUE);
 		database.getMetadata().getSchema().save();
 		database.close();
 	}
@@ -107,7 +109,9 @@ public class IndexTest {
 	public void testChangeOfIndexToUnique() {
 		database.open("admin", "admin");
 		try {
-			database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getIndex().setUnique(true);
+			database.getMetadata().getSchema().getClass("Profile").getProperty("nick").removeIndex();
+			database.getMetadata().getSchema().save();
+			database.getMetadata().getSchema().getClass("Profile").getProperty("nick").createIndex(INDEX_TYPE.UNIQUE);
 			Assert.assertTrue(false);
 		} catch (OIndexException e) {
 		}

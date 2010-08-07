@@ -22,8 +22,13 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OFullTextIndex;
+import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OPropertyIndex;
+import com.orientechnologies.orient.core.index.OPropertyIndexNotUnique;
+import com.orientechnologies.orient.core.index.OPropertyIndexUnique;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
@@ -35,6 +40,9 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  * 
  */
 public class OProperty extends ODocumentWrapperNoClass {
+	public static enum INDEX_TYPE {
+		UNIQUE, NOT_UNIQUE, FULLTEXT
+	};
 
 	private OClass						owner;
 
@@ -47,7 +55,7 @@ public class OProperty extends ODocumentWrapperNoClass {
 	private OClass						linkedClass;
 	transient private String	linkedClassName;
 
-	private OPropertyIndex						index;
+	private OPropertyIndex		index;
 
 	private boolean						mandatory;
 	private boolean						notNull;
@@ -127,25 +135,12 @@ public class OProperty extends ODocumentWrapperNoClass {
 			linkedType = OType.getById(((Long) document.field("linkedType")).byteValue());
 
 		if (document.field("index") != null) {
-			setIndex((ODocument) document.field("index"), (Boolean) document.field("index-unique"));
-			getIndex().setActivated(true);
+			setIndex(INDEX_TYPE.valueOf((String) document.field("index-type")), ((ODocument) document.field("index")).getIdentity());
 			try {
 				index.load();
 			} catch (IOException e) {
 				OLogManager.instance().error(this, "Can't load index for property %s", e, ODatabaseException.class, toString());
 			}
-		}
-	}
-
-	public void setIndex(final ODocument iIndexRecord, Boolean iUnique) {
-		// LOAD THE INDEX
-		if (iIndexRecord != null && iIndexRecord.getIdentity().isValid()) {
-			if (iUnique == null)
-				// UNIQUE BY DEFAULT
-				iUnique = Boolean.TRUE;
-
-			index = new OPropertyIndex(iUnique, document.getDatabase(), this, OStorage.CLUSTER_INDEX_NAME, new ORecordId(iIndexRecord
-					.getIdentity().toString()));
 		}
 	}
 
@@ -166,7 +161,7 @@ public class OProperty extends ODocumentWrapperNoClass {
 		if (index != null) {
 			index.lazySave();
 			document.field("index", index.getRecord().getIdentity());
-			document.field("index-unique", index.isUnique());
+			document.field("index-type", index.getType());
 		} else {
 			document.field("index", ORecordId.EMPTY_RECORD_ID);
 		}
@@ -225,21 +220,48 @@ public class OProperty extends ODocumentWrapperNoClass {
 	}
 
 	/**
-	 * Creates an index on this property. Indexes speed up queries but slow down insert and update operations. Now only unique indexes
-	 * are supported. For massive inserts we suggest to remove the index, make the massive insert and recreate it.
+	 * Creates an index on this property. Indexes speed up queries but slow down insert and update operations. For massive inserts we
+	 * suggest to remove the index, make the massive insert and recreate it.
 	 * 
 	 * @param iUnique
 	 *          Don't allow duplicates. Now is supported only unique indexes, so pass always TRUE
+	 * @deprecated Use {@link #createIndex(INDEX_TYPE)} instead
 	 * @return
 	 */
 	public OPropertyIndex createIndex(final boolean iUnique) {
+		return createIndex(iUnique ? INDEX_TYPE.UNIQUE : INDEX_TYPE.NOT_UNIQUE);
+	}
+
+	/**
+	 * Creates an index on this property. Indexes speed up queries but slow down insert and update operations. For massive inserts we
+	 * suggest to remove the index, make the massive insert and recreate it.
+	 * 
+	 * @param iType
+	 *          One of types supported.
+	 *          <ul>
+	 *          <li>UNIQUE: Doesn't allow duplicates</li>
+	 *          <li>NOT_UNIQUE: Allow duplicates</li>
+	 *          <li>FULL_TEXT: Indexes single word for full text search</li>
+	 *          </ul>
+	 * @return
+	 */
+	public OPropertyIndex createIndex(final INDEX_TYPE iType) {
 		if (index != null)
 			throw new IllegalStateException("Index already created");
 
 		try {
-			index = new OPropertyIndex(iUnique, document.getDatabase(), this, OStorage.CLUSTER_INDEX_NAME);
-			index.setActivated(true);
-			
+			switch (iType) {
+			case UNIQUE:
+				index = new OPropertyIndexUnique(document.getDatabase(), this, OStorage.CLUSTER_INDEX_NAME);
+				break;
+			case NOT_UNIQUE:
+				index = new OPropertyIndexNotUnique(document.getDatabase(), this, OStorage.CLUSTER_INDEX_NAME);
+				break;
+			case FULLTEXT:
+				index = new OFullTextIndex(document.getDatabase(), this, OStorage.CLUSTER_INDEX_NAME);
+				break;
+			}
+
 			index.rebuild();
 
 			setDirty();
@@ -250,9 +272,12 @@ public class OProperty extends ODocumentWrapperNoClass {
 				document.getDatabase().getMetadata().getSchema().save();
 			}
 
+		} catch (OIndexException e) {
+			throw e;
+
 		} catch (Exception e) {
-			OLogManager.instance().exception("Unable to create %s index for property %s", e, ODatabaseException.class,
-					iUnique ? "unique" : "not unique", toString());
+			OLogManager.instance().exception("Unable to create '%s' index for property: %s", e, ODatabaseException.class, iType,
+					toString());
 
 		}
 
@@ -318,6 +343,23 @@ public class OProperty extends ODocumentWrapperNoClass {
 		} else if (!owner.equals(other.owner))
 			return false;
 		return true;
+	}
+
+	protected void setIndex(final INDEX_TYPE iType, final ORID iRID) {
+		// LOAD THE INDEX
+		if (iRID != null && iRID.isValid()) {
+			switch (iType) {
+			case UNIQUE:
+				index = new OPropertyIndexUnique(document.getDatabase(), this, iRID);
+				break;
+			case NOT_UNIQUE:
+				index = new OPropertyIndexNotUnique(document.getDatabase(), this, iRID);
+				break;
+			case FULLTEXT:
+				index = new OFullTextIndex(document.getDatabase(), this, iRID);
+				break;
+			}
+		}
 	}
 
 	private void checkForDateFormat(String min) {

@@ -16,14 +16,16 @@
 package com.orientechnologies.orient.core.index;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
@@ -36,25 +38,66 @@ import com.orientechnologies.orient.core.type.tree.OTreeMapDatabaseLazySave;
  * @author Luca Garulli
  * 
  */
-public class OPropertyIndex {
-	private OProperty																					owner;
-	private OTreeMapDatabaseLazySave<String, List<ORecordId>>	map;
-	private boolean																						unique;
-	private boolean																						active = false;
+public abstract class OPropertyIndex implements Iterable<Entry<String, List<ORecordId>>> {
+	protected OProperty																					owner;
+	protected OTreeMapDatabaseLazySave<String, List<ORecordId>>	map;
 
-	public OPropertyIndex(final boolean iUnique, final ODatabaseRecord<?> iDatabase, final OProperty iProperty,
-			final String iClusterIndexName, final ORecordId iRecordId) {
+	/**
+	 * Constructor called when a new index is created.
+	 * 
+	 * @param iDatabase
+	 *          Current Database instance
+	 * @param iProperty
+	 *          Owner property
+	 * @param iClusterIndexName
+	 *          Cluster name where to place the TreeMap
+	 */
+	public OPropertyIndex(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final String iClusterIndexName) {
 		owner = iProperty;
-		unique = iUnique;
-		map = new OTreeMapDatabaseLazySave<String, List<ORecordId>>(iDatabase, iClusterIndexName, iRecordId);
-	}
-
-	public OPropertyIndex(final boolean iUnique, final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final String iClusterIndexName) {
-		owner = iProperty;
-		unique = iUnique;
 		map = new OTreeMapDatabaseLazySave<String, List<ORecordId>>(iDatabase, iClusterIndexName, OStreamSerializerString.INSTANCE,
 				OStreamSerializerListRID.INSTANCE);
 	}
+
+	/**
+	 * Constructor called on loading of an existent index.
+	 * 
+	 * @param iDatabase
+	 *          Current Database instance
+	 * @param iProperty
+	 *          Owner property
+	 * @param iRecordId
+	 *          Record Id of the persistent TreeMap
+	 */
+	public OPropertyIndex(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final ORID iRecordId) {
+		owner = iProperty;
+		init(iDatabase, iRecordId);
+	}
+
+	/**
+	 * Constructor called on 2 steps loading of an existent index.
+	 * 
+	 * @param iDatabase
+	 *          Current Database instance
+	 * @param iProperty
+	 *          Owner property
+	 */
+	public OPropertyIndex(final ODatabaseRecord<?> iDatabase, final OProperty iProperty) {
+		owner = iProperty;
+	}
+
+	public abstract INDEX_TYPE getType();
+
+	@SuppressWarnings("unchecked")
+	public List<ORecordId> get(Object iKey) {
+		final List<ORecordId> values = map.get(iKey);
+
+		if (values == null)
+			return Collections.EMPTY_LIST;
+
+		return values;
+	}
+
+	public abstract void put(final Object iKey, final ORecordId iValue);
 
 	/**
 	 * Populate the index with all the existent records.
@@ -76,40 +119,12 @@ public class OPropertyIndex {
 						put(fieldValue.toString(), (ORecordId) doc.getIdentity());
 				}
 			}
+
+		lazySave();
 	}
 
-	public boolean isActive() {
-		return active;
-	}
-
-	public void setActivated(boolean iActive) {
-		this.active = iActive;
-
-		if (iActive)
-			try {
-				map.load();
-			} catch (IOException e) {
-				throw new OIndexException("Can't activate index on property");
-			}
-	}
-
-	public void setUnique(boolean iUnique) {
-		if (iUnique == unique)
-			return;
-
-		if (active && iUnique) {
-			// CHECK FOR DUPLICATES
-			List<ORecordId> values;
-			for (Entry<String, List<ORecordId>> entry : map.entrySet()) {
-				values = entry.getValue();
-				if (values != null && values.size() > 1)
-					throw new OIndexException(
-							"Can't change the index from unique to not-unique since the index contains multiple values with the same key ('"
-									+ entry.getKey() + "'). Remove duplicates and try again.");
-			}
-		}
-
-		unique = iUnique;
+	public void remove(final Object key) {
+		map.remove(key);
 	}
 
 	public void load() throws IOException {
@@ -117,68 +132,27 @@ public class OPropertyIndex {
 	}
 
 	public void clear() {
-		if (!active)
-			return;
 		map.clear();
 	}
 
 	public void lazySave() {
-		if (!active)
-			return;
 		map.lazySave();
-	}
-
-	public void remove(Object key) {
-		if (!active)
-			return;
-		map.remove(key);
-	}
-
-	public void put(final String iKey, final ORecordId iSingleValue) {
-		if (!active)
-			return;
-
-		List<ORecordId> values = map.get(iKey);
-		if (values == null)
-			values = new ArrayList<ORecordId>();
-
-		if (unique) {
-			// UNIQUE
-			if (values.size() > 0)
-				values.set(0, iSingleValue);
-			else
-				values.add(iSingleValue);
-		} else {
-			// NOT UNIQUE
-			int pos = values.indexOf(iSingleValue);
-			if (pos > -1)
-				// REPLACE IT
-				values.set(pos, iSingleValue);
-			else
-				values.add(iSingleValue);
-		}
-
-		map.put(iKey, values);
-	}
-
-	@SuppressWarnings("unchecked")
-	public List<ORecordId> get(String iKey) {
-		if (!active)
-			return null;
-
-		final List<ORecordId> values = map.get(iKey);
-
-		if (values == null)
-			return Collections.EMPTY_LIST;
-
-		return values;
 	}
 
 	public ORecordBytes getRecord() {
 		return map.getRecord();
 	}
 
-	public boolean isUnique() {
-		return unique;
+	public Iterator<Entry<String, List<ORecordId>>> iterator() {
+		return map.entrySet().iterator();
+	}
+
+	protected void init(final ODatabaseRecord<?> iDatabase, final ORID iRecordId) {
+		map = new OTreeMapDatabaseLazySave<String, List<ORecordId>>(iDatabase, iRecordId);
+		try {
+			map.load();
+		} catch (IOException e) {
+			throw new OIndexException("Can't activate index on property");
+		}
 	}
 }

@@ -77,8 +77,8 @@ public class ODictionaryLocal<T extends Object> implements ODictionaryInternal<T
 
 	public void load() {
 		try {
-			tree = new OTreeMapDatabase<String, T>((ODatabaseRecord<?>) database, clusterName, new ORecordId(database.getStorage()
-					.getConfiguration().dictionaryRecordId));
+			tree = new OTreeMapDatabase<String, T>((ODatabaseRecord<?>) database, new ORecordId(
+					database.getStorage().getConfiguration().dictionaryRecordId));
 			tree.load();
 		} catch (IOException e) {
 			OLogManager.instance().error(this, "Can't load tree from the database", e, ODatabaseException.class);

@@ -20,14 +20,14 @@ import com.orientechnologies.orient.kv.OSharedBinaryDatabase;
 @SuppressWarnings("serial")
 public class OTreeMapPersistentAsynch<K, V> extends OTreeMapDatabase<K, V> {
 
-	public OTreeMapPersistentAsynch(ODatabaseRecord<?> iDatabase, String iClusterName, OStreamSerializer iKeySerializer,
-			OStreamSerializer iValueSerializer) {
+	public OTreeMapPersistentAsynch(final ODatabaseRecord<?> iDatabase, final String iClusterName,
+			final OStreamSerializer iKeySerializer, final OStreamSerializer iValueSerializer) {
 		super(iDatabase, iClusterName, iKeySerializer, iValueSerializer);
 		OTreeMapPersistentAsynchThread.getInstance().registerMap(this);
 	}
 
-	public OTreeMapPersistentAsynch(ODatabaseRecord<?> iDatabase, String iClusterName, ORID iRID) {
-		super(iDatabase, iClusterName, iRID);
+	public OTreeMapPersistentAsynch(final ODatabaseRecord<?> iDatabase, final ORID iRID) {
+		super(iDatabase, iRID);
 		OTreeMapPersistentAsynchThread.getInstance().registerMap(this);
 	}
 

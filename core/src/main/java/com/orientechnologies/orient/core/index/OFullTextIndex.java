@@ -17,18 +17,16 @@ package com.orientechnologies.orient.core.index;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerString;
@@ -40,44 +38,41 @@ import com.orientechnologies.orient.core.type.tree.OTreeMapDatabaseLazySave;
  * @author Luca Garulli
  * 
  */
-public class OFullTextIndex implements Iterable<Entry<String, List<ORecordId>>> {
-	private static final String																FIELD_NAME					= "name";
-	private static final String																FIELD_MAP_RID				= "mapRid";
-	private static final String																FIELD_CLUSTER_NAME	= "clusterName";
-	private static final String																FIELD_STOP_WORDS		= "stopWords";
-	private static final String																FIELD_IGNORE_CHARS	= "ignoreChars";
+public class OFullTextIndex extends OPropertyIndex {
+	private static final String	FIELD_MAP_RID				= "mapRid";
+	private static final String	FIELD_CLUSTER_NAME	= "clusterName";
+	private static final String	FIELD_STOP_WORDS		= "stopWords";
+	private static final String	FIELD_IGNORE_CHARS	= "ignoreChars";
 
-	private static String																			DEF_CLUSTER_NAME		= "FullTextIndex";
-	private static String																			DEF_IGNORE_CHARS		= " \r\n\t:;,.|+*/\\=!?[]()'\"";
-	private static String																			DEF_STOP_WORDS			= "the in a at as and or for his her "
-																																										+ "him this that what which while "
-																																										+ "up with be was is";
-	private OTreeMapDatabaseLazySave<String, List<ORecordId>>	map;
-	private boolean																						active							= false;
-	private String																						ignoreChars;
-	private Set<String>																				stopWords;
-	private ODocument																					config;
+	private static String				DEF_CLUSTER_NAME		= "FullTextIndex";
+	private static String				DEF_IGNORE_CHARS		= " \r\n\t:;,.|+*/\\=!?[]()'\"";
+	private static String				DEF_STOP_WORDS			= "the in a at as and or for his her " + "him this that what which while "
+																											+ "up with be was is";
+	private String							ignoreChars;
+	private Set<String>					stopWords;
+	private ODocument						config;
 
-	public OFullTextIndex(final ODatabaseDocumentTx iDatabase, final String iIndexName) {
-		this(iDatabase, iIndexName, DEF_CLUSTER_NAME);
+	public OFullTextIndex(final ODatabaseRecord<?> iDatabase, final OProperty iProperty) {
+		this(iDatabase, iProperty, DEF_CLUSTER_NAME);
 	}
 
-	public OFullTextIndex(final ODatabaseDocumentTx iDatabase, final String iIndexName, final String iClusterIndexName) {
-		this(iDatabase, iIndexName, iClusterIndexName, DEF_IGNORE_CHARS, DEF_STOP_WORDS);
+	public OFullTextIndex(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final String iClusterIndexName) {
+		this(iDatabase, iProperty, iClusterIndexName, DEF_IGNORE_CHARS, DEF_STOP_WORDS);
 	}
 
-	public OFullTextIndex(final ODatabaseDocumentTx iDatabase, final String iIndexName, final String iClusterIndexName,
+	public OFullTextIndex(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final String iClusterIndexName,
 			final String iIgnoreChars, final String iStopWords) {
+		super(iDatabase, iProperty, iClusterIndexName);
+
 		if (iDatabase.getClusterIdByName(iClusterIndexName) == -1)
 			// CREATE THE PHYSICAL CLUSTER THE FIRST TIME
-			iDatabase.addPhysicalCluster(iClusterIndexName);
+			iDatabase.addPhysicalCluster(iClusterIndexName, iClusterIndexName, -1);
 
 		map = new OTreeMapDatabaseLazySave<String, List<ORecordId>>((ODatabaseRecord<?>) iDatabase.getUnderlying(), iClusterIndexName,
 				OStreamSerializerString.INSTANCE, OStreamSerializerListRID.INSTANCE);
 		map.lazySave();
 
 		config = new ODocument(iDatabase);
-		config.field(FIELD_NAME, iIndexName);
 		config.field(FIELD_IGNORE_CHARS, iIgnoreChars);
 		config.field(FIELD_STOP_WORDS, iStopWords);
 		config.field(FIELD_CLUSTER_NAME, iClusterIndexName);
@@ -87,21 +82,23 @@ public class OFullTextIndex implements Iterable<Entry<String, List<ORecordId>>> 
 	}
 
 	/**
-	 * Constructor used in load.
+	 * Constructor called on loading of an existent index.
 	 * 
 	 * @param iDatabase
+	 *          Current Database instance
+	 * @param iProperty
+	 *          Owner property
 	 * @param iClusterIndexName
+	 *          Cluster name where to place the TreeMap
 	 * @param iRecordId
+	 *          Record Id of the persistent TreeMap
 	 */
-	public OFullTextIndex(final ODatabaseDocumentTx iDatabase, final String iIndexName, final ODocument iIndexConfig) {
-		config = iIndexConfig;
-		map = new OTreeMapDatabaseLazySave<String, List<ORecordId>>((ODatabaseRecord<?>) iDatabase.getUnderlying(),
-				(String) iIndexConfig.field(FIELD_CLUSTER_NAME), new ORecordId((String) iIndexConfig.field(FIELD_MAP_RID)));
-		try {
-			map.load();
-		} catch (IOException e) {
-			throw new OIndexException("Can't load tree map for Full Text index '" + iIndexName + "'");
-		}
+	public OFullTextIndex(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final ORID iRecordId) {
+		super(iDatabase, iProperty);
+		config = new ODocument(iDatabase, iRecordId);
+		config.load();
+
+		init(iDatabase, new ORecordId((String) config.field(FIELD_MAP_RID)));
 		init();
 	}
 
@@ -160,60 +157,15 @@ public class OFullTextIndex implements Iterable<Entry<String, List<ORecordId>>> 
 		try {
 			map.save();
 		} catch (IOException e) {
-			throw new OIndexException("Can't save tree map for Full Text index '" + config.field(FIELD_NAME) + "'");
+			throw new OIndexException("Can't save index for property '" + owner.getName() + "'");
 		}
 	}
 
-	public String getName() {
-		return config.field(FIELD_NAME);
-	}
-
-	public boolean isActive() {
-		return active;
-	}
-
-	public void setActivated(boolean iActive) {
-		this.active = iActive;
-
-		if (iActive)
-			try {
-				map.load();
-			} catch (IOException e) {
-				throw new OIndexException("Can't activate index on property");
-			}
-	}
-
-	public void load() throws IOException {
-		map.load();
-	}
-
-	public void clear() {
-		if (!active)
-			return;
-		map.clear();
-	}
-
-	public void lazySave() {
-		if (!active)
-			return;
-		map.lazySave();
-	}
-
-	public void remove(Object key) {
-		if (!active)
-			return;
-		map.remove(key);
-	}
-
-	public void put(final String iKey, final ORecordId iSingleValue) {
-		if (!active)
-			return;
-
+	public void put(final Object iKey, final ORecordId iSingleValue) {
 		List<ORecordId> values = map.get(iKey);
 		if (values == null)
 			values = new ArrayList<ORecordId>();
 
-		// NOT UNIQUE
 		int pos = values.indexOf(iSingleValue);
 		if (pos > -1)
 			// REPLACE IT
@@ -221,36 +173,20 @@ public class OFullTextIndex implements Iterable<Entry<String, List<ORecordId>>> 
 		else
 			values.add(iSingleValue);
 
-		map.put(iKey, values);
-	}
-
-	@SuppressWarnings("unchecked")
-	public List<ORecordId> get(String iKey) {
-		if (!active)
-			return null;
-
-		final List<ORecordId> values = map.get(iKey);
-
-		if (values == null)
-			return Collections.EMPTY_LIST;
-
-		return values;
-	}
-
-	public ORecordBytes getRecord() {
-		return map.getRecord();
+		map.put(iKey.toString(), values);
 	}
 
 	public ODocument getConfiguration() {
 		return config;
 	}
 
+	@Override
+	public INDEX_TYPE getType() {
+		return INDEX_TYPE.FULLTEXT;
+	}
+
 	private void init() {
 		ignoreChars = (String) config.field(FIELD_IGNORE_CHARS);
 		stopWords = new HashSet<String>(OStringSerializerHelper.split((String) config.field(FIELD_STOP_WORDS), ' '));
-	}
-
-	public Iterator<Entry<String, List<ORecordId>>> iterator() {
-		return map.entrySet().iterator();
 	}
 }

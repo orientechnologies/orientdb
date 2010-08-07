@@ -33,7 +33,7 @@ import com.orientechnologies.orient.kv.index.OTreeMapPersistentAsynch;
  */
 public class OKVDictionaryBucketManager {
 	private static Map<String, OTreeMapDatabase<String, String>>	bucketCache						= new HashMap<String, OTreeMapDatabase<String, String>>();
-	private static final String																			DEFAULT_CLUSTER_NAME	= "default";
+	private static final String																		DEFAULT_CLUSTER_NAME	= "default";
 
 	public static synchronized Map<String, String> getDictionaryBucket(final ODatabaseBinary iDatabase, final String iName,
 			final boolean iAsynchMode) throws IOException {
@@ -58,9 +58,9 @@ public class OKVDictionaryBucketManager {
 			iDatabase.getDictionary().put(iName, bucket.getRecord());
 		} else {
 			if (iAsynchMode)
-				bucket = new OTreeMapPersistentAsynch<String, String>(iDatabase, DEFAULT_CLUSTER_NAME, record.getIdentity());
+				bucket = new OTreeMapPersistentAsynch<String, String>(iDatabase, record.getIdentity());
 			else
-				bucket = new OTreeMapDatabase<String, String>(iDatabase, DEFAULT_CLUSTER_NAME, record.getIdentity());
+				bucket = new OTreeMapDatabase<String, String>(iDatabase, record.getIdentity());
 
 			bucket.load();
 		}
