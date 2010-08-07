@@ -28,11 +28,9 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 @Test(groups = "db")
 public class DbImportTest implements OCommandListener {
-	private String	url;
 
 	@Parameters(value = "url")
 	public DbImportTest(String iURL) {
-		url = iURL;
 		OProfiler.getInstance().startRecording();
 	}
 
