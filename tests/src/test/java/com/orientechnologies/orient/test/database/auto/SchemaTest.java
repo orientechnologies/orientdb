@@ -22,6 +22,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
@@ -57,7 +58,7 @@ public class SchemaTest {
 
 		OClass profile = database.getMetadata().getSchema()
 				.createClass("Profile", database.getStorage().addCluster("profile", OClusterLocal.TYPE));
-		profile.createProperty("nick", OType.STRING).setMin("3").setMax("30").createIndex(true);
+		profile.createProperty("nick", OType.STRING).setMin("3").setMax("30").createIndex(INDEX_TYPE.UNIQUE);
 		profile.createProperty("name", OType.STRING).setMin("3").setMax("30");
 		profile.createProperty("surname", OType.STRING).setMin("3").setMax("30");
 		profile.createProperty("registeredOn", OType.DATE).setMin("2010-01-01 00:00:00");
