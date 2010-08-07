@@ -605,6 +605,30 @@ public class OStorageLocal extends OStorageAbstract {
 		return -1;
 	}
 
+	public String getClusterTypeByName(final String iClusterName) {
+		checkOpeness();
+
+		if (iClusterName == null)
+			throw new IllegalArgumentException("Cluster name is null");
+
+		// SEARCH IT BETWEEN PHYSICAL CLUSTERS
+		OCluster segment;
+
+		final boolean locked = acquireSharedLock();
+
+		try {
+			segment = clusterMap.get(iClusterName.toLowerCase());
+
+		} finally {
+			releaseSharedLock(locked);
+		}
+
+		if (segment != null)
+			return segment.getType();
+
+		return null;
+	}
+
 	public void commit(final int iRequesterId, final OTransaction<?> iTx) {
 		final boolean locked = acquireSharedLock();
 

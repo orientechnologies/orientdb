@@ -19,7 +19,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import com.orientechnologies.orient.console.OCommandListener;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
@@ -29,20 +29,20 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * 
  */
 public abstract class OConsoleDatabaseImpExpAbstract {
-	protected ODatabaseDocument	database;
-	protected String						fileName;
+	protected ODatabaseRecord<?>	database;
+	protected String							fileName;
 
-	protected boolean						includeInfo				= true;
-	protected Set<String>				includeClusters;
-	protected Set<String>				excludeClusters;
-	protected Set<String>				includeClasses;
-	protected Set<String>				excludeClasses;
-	protected boolean						includeSchema			= true;
-	protected boolean						includeSecurity		= false;
-	protected boolean						includeDictionary	= true;
-	protected OCommandListener	listener;
+	protected boolean							includeInfo				= true;
+	protected Set<String>					includeClusters;
+	protected Set<String>					excludeClusters;
+	protected Set<String>					includeClasses;
+	protected Set<String>					excludeClasses;
+	protected boolean							includeSchema			= true;
+	protected boolean							includeSecurity		= false;
+	protected boolean							includeDictionary	= true;
+	protected OCommandListener		listener;
 
-	public OConsoleDatabaseImpExpAbstract(final ODatabaseDocument iDatabase, final String iFileName, final OCommandListener iListener) {
+	public OConsoleDatabaseImpExpAbstract(final ODatabaseRecord<?> iDatabase, final String iFileName, final OCommandListener iListener) {
 		database = iDatabase;
 		fileName = iFileName;
 		listener = iListener;
@@ -92,7 +92,7 @@ public abstract class OConsoleDatabaseImpExpAbstract {
 		this.listener = listener;
 	}
 
-	public ODatabaseDocument getDatabase() {
+	public ODatabaseRecord<?> getDatabase() {
 		return database;
 	}
 

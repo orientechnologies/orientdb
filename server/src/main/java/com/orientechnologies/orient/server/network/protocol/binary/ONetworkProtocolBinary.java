@@ -152,6 +152,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 						if (c != null) {
 							channel.writeString(c.getName());
 							channel.writeInt(c.getId());
+							channel.writeString(c.getType());
 						}
 					}
 				}

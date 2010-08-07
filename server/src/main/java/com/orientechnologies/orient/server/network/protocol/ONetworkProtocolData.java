@@ -16,7 +16,7 @@
 package com.orientechnologies.orient.server.network.protocol;
 
 /**
- * Save all the important information about the network connection. Useful for monitoring and statistics.
+ * Saves all the important information about the network connection. Useful for monitoring and statistics.
  * 
  * @author Luca Garulli
  * 
@@ -24,7 +24,7 @@ package com.orientechnologies.orient.server.network.protocol;
 public class ONetworkProtocolData {
 	public int		totalRequests							= 0;
 	public String	commandInfo								= null;
-	public String	commandDetail						= null;
+	public String	commandDetail							= null;
 	public String	lastCommandInfo						= null;
 	public String	lastCommandDetail					= null;
 	public long		lastCommandExecutionTime	= 0;

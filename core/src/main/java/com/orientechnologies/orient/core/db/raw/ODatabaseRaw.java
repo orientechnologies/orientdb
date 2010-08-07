@@ -221,7 +221,7 @@ public class ODatabaseRaw implements ODatabase {
 	}
 
 	public String getClusterType(final String iClusterName) {
-		return storage.getClusterById(storage.getClusterIdByName(iClusterName)).getType();
+		return storage.getClusterTypeByName(iClusterName);
 	}
 
 	public int getClusterIdByName(final String iClusterName) {

@@ -21,7 +21,7 @@ public class OKVDatabase extends ODatabaseDocumentTx {
 		OTreeMapDatabase<String, String> bucketTree = null;
 
 		if (rec != null) {
-			bucketTree = new OTreeMapDatabase<String, String>(iDb, ODictionaryLocal.DICTIONARY_DEF_CLUSTER_NAME, rec.getIdentity());
+			bucketTree = new OTreeMapDatabase<String, String>(iDb, rec.getIdentity());
 			bucketTree.load();
 		}
 

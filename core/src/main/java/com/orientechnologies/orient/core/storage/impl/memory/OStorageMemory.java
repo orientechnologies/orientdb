@@ -246,6 +246,10 @@ public class OStorageMemory extends OStorageAbstract {
 		return -1;
 	}
 
+	public String getClusterTypeByName(final String iClusterName) {
+		return OClusterMemory.TYPE;
+	}
+
 	public String getPhysicalClusterNameById(final int iClusterId) {
 		for (int i = 0; i < clusters.size(); ++i)
 			if (getClusterById(i).getId() == iClusterId)

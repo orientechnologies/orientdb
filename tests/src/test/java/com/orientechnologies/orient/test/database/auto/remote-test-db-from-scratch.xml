@@ -90,4 +90,9 @@
 			<class name="com.orientechnologies.orient.test.database.auto.DbClosedTest" />
 		</classes>
 	</test>
+	<test name="DbTools">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.DbExportTest" />
+		</classes>
+	</test>
 </suite>

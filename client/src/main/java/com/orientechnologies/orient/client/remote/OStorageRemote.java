@@ -73,7 +73,8 @@ public class OStorageRemote extends OStorageAbstract {
 	private final OClientConfiguration			clientConfiguration;
 	protected OChannelBinaryClient					network;
 	protected String												sessionId;
-	protected final Map<String, Integer>		clusters					= new HashMap<String, Integer>();
+	protected final Map<String, Integer>		clustersIds				= new HashMap<String, Integer>();
+	protected final Map<String, String>			clustersTypes			= new HashMap<String, String>();
 	protected int														defaultClusterId;
 	protected int														retry							= 0;
 
@@ -168,7 +169,7 @@ public class OStorageRemote extends OStorageAbstract {
 		boolean locked = acquireSharedLock();
 
 		try {
-			return clusters.keySet();
+			return clustersIds.keySet();
 
 		} finally {
 			releaseSharedLock(locked);
@@ -514,7 +515,6 @@ public class OStorageRemote extends OStorageAbstract {
 						network.writeInt(txEntry.record.getVersion());
 						break;
 					}
-
 				}
 				network.flush();
 
@@ -542,11 +542,27 @@ public class OStorageRemote extends OStorageAbstract {
 		boolean locked = acquireSharedLock();
 
 		try {
-			final Integer id = clusters.get(iClusterName.toLowerCase());
+			final Integer id = clustersIds.get(iClusterName.toLowerCase());
 			if (id == null)
 				return -1;
 
 			return id;
+
+		} finally {
+			releaseSharedLock(locked);
+		}
+	}
+
+	public String getClusterTypeByName(final String iClusterName) {
+		checkConnection();
+
+		if (iClusterName == null)
+			return null;
+
+		boolean locked = acquireSharedLock();
+
+		try {
+			return clustersTypes.get(iClusterName.toLowerCase());
 
 		} finally {
 			releaseSharedLock(locked);
@@ -582,7 +598,8 @@ public class OStorageRemote extends OStorageAbstract {
 				readStatus();
 
 				int clusterId = network.readShort();
-				clusters.put(iClusterName.toLowerCase(), clusterId);
+				clustersIds.put(iClusterName.toLowerCase(), clusterId);
+				clustersTypes.put(iClusterName.toLowerCase(), iClusterType);
 				return clusterId;
 			} catch (Exception e) {
 				if (handleException("Error on add new cluster", e))
@@ -611,9 +628,10 @@ public class OStorageRemote extends OStorageAbstract {
 
 				if (network.readByte() == '1') {
 					// REMOVE THE CLUSTER LOCALLY
-					for (Entry<String, Integer> entry : clusters.entrySet())
+					for (Entry<String, Integer> entry : clustersIds.entrySet())
 						if (entry.getValue() != null && entry.getValue().intValue() == iClusterId) {
-							clusters.remove(entry.getKey());
+							clustersIds.remove(entry.getKey());
+							clustersTypes.remove(entry.getKey());
 							break;
 						}
 
@@ -805,7 +823,7 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public String getPhysicalClusterNameById(final int iClusterId) {
-		for (Entry<String, Integer> clusterEntry : clusters.entrySet()) {
+		for (Entry<String, Integer> clusterEntry : clustersIds.entrySet()) {
 			if (clusterEntry.getValue().intValue() == iClusterId)
 				return clusterEntry.getKey();
 		}
@@ -907,10 +925,14 @@ public class OStorageRemote extends OStorageAbstract {
 		OLogManager.instance().debug(null, "Client connected with session id: " + sessionId);
 
 		int tot = network.readInt();
-		for (int i = 0; i < tot; ++i)
-			clusters.put(network.readString().toLowerCase(), network.readInt());
+		String clusterName;
+		for (int i = 0; i < tot; ++i) {
+			clusterName = network.readString().toLowerCase();
+			clustersIds.put(clusterName, network.readInt());
+			clustersTypes.put(clusterName, network.readString());
+		}
 
-		defaultClusterId = clusters.get(OStorage.CLUSTER_DEFAULT_NAME);
+		defaultClusterId = clustersIds.get(OStorage.CLUSTER_DEFAULT_NAME);
 
 		open = true;
 	}

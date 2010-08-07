@@ -109,6 +109,8 @@ public interface OStorage {
 
 	public int getClusterIdByName(String iClusterName);
 
+	public String getClusterTypeByName(String iClusterName);
+
 	public String getPhysicalClusterNameById(int iClusterId);
 
 	public boolean checkForRecordValidity(OPhysicalPosition ppos);

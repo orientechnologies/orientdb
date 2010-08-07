@@ -78,7 +78,7 @@ public class CRUDDocumentLogicalTest {
 		database.open("admin", "admin");
 
 		// LOAD THE LAST ENTRY JUST CREATED
-		record = database.browseClass("City").last().previous();
+		record = (ODocument) database.browseClass("City").last().previous();
 
 		Assert.assertEquals(record.field("name"), "Cat");
 		Assert.assertTrue(((List<ODocument>) record.field("races")).size() == 2);
@@ -92,7 +92,7 @@ public class CRUDDocumentLogicalTest {
 
 		record.reset();
 
-		record = database.browseClass("City").last().previous();
+		record = (ODocument) database.browseClass("City").last().previous();
 
 		List<ODocument> races = record.field("races");
 		races.add(database.newInstance("AnimalRace").field("name", "Egyptian"));
@@ -109,7 +109,7 @@ public class CRUDDocumentLogicalTest {
 
 		record.reset();
 
-		record = database.browseClass("City").last().previous();
+		record = (ODocument) database.browseClass("City").last().previous();
 
 		Assert.assertEquals(record.field("name"), "Cat");
 		Assert.assertTrue(((List<ODocument>) record.field("races")).size() == 3);
@@ -123,7 +123,7 @@ public class CRUDDocumentLogicalTest {
 
 		startRecordNumber = database.countClass("City");
 
-		record = database.browseClass("City").last().previous();
+		record = (ODocument) database.browseClass("City").last().previous();
 		record.delete();
 
 		Assert.assertEquals(database.countClass("City"), startRecordNumber - 1);

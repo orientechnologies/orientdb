@@ -21,7 +21,7 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 
 import com.orientechnologies.orient.console.OCommandListener;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.index.OPropertyIndex;
 import com.orientechnologies.orient.core.intent.OIntentMassiveRead;
@@ -32,12 +32,13 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterLogical;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 public class OConsoleDatabaseExport extends OConsoleDatabaseImpExpAbstract {
 	private OJSONWriter	writer;
 	private long				recordExported;
 
-	public OConsoleDatabaseExport(final ODatabaseDocument iDatabase, final String iFileName, final OCommandListener iListener)
+	public OConsoleDatabaseExport(final ODatabaseRecord<?> iDatabase, final String iFileName, final OCommandListener iListener)
 			throws IOException {
 		super(iDatabase, iFileName, iListener);
 
@@ -159,10 +160,12 @@ public class OConsoleDatabaseExport extends OConsoleDatabaseImpExpAbstract {
 			writer.writeAttribute(0, false, "id", database.getClusterIdByName(clusterName));
 			writer.writeAttribute(0, false, "type", database.getClusterType(clusterName));
 
-			if (database.getClusterType(clusterName).equals("LOGICAL")) {
-				OClusterLogical cluster = (OClusterLogical) database.getStorage().getClusterById(database.getClusterIdByName(clusterName));
-				writer.writeAttribute(0, false, "rid", cluster.getRID());
-			}
+			if (database.getStorage() instanceof OStorageLocal)
+				if (database.getClusterType(clusterName).equals("LOGICAL")) {
+					OClusterLogical cluster = (OClusterLogical) database.getStorage()
+							.getClusterById(database.getClusterIdByName(clusterName));
+					writer.writeAttribute(0, false, "rid", cluster.getRID());
+				}
 
 			totalClusters++;
 			writer.endObject(2, false);
@@ -184,12 +187,13 @@ public class OConsoleDatabaseExport extends OConsoleDatabaseImpExpAbstract {
 		listener.onMessage("OK");
 	}
 
+	@SuppressWarnings("unchecked")
 	private void exportDictionary() throws IOException {
 		listener.onMessage("\nExporting dictionary...");
 
 		long tot = 0;
 		writer.beginObject(1, true, "dictionary");
-		ODictionary<ODocument> d = database.getDictionary();
+		ODictionary<ODocument> d = (ODictionary<ODocument>) database.getDictionary();
 		if (d != null) {
 			Entry<String, ODocument> entry;
 			for (Iterator<Entry<String, ODocument>> iterator = d.iterator(); iterator.hasNext();) {

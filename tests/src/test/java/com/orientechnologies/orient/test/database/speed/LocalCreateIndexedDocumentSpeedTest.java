@@ -21,6 +21,7 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
@@ -70,7 +71,7 @@ public class LocalCreateIndexedDocumentSpeedTest extends OrientMonoThreadTest {
 			database.commit();
 
 			System.out.println("\nIndexing...");
-			database.getMetadata().getSchema().getClass("Profile").getProperty("nick").createIndex(true);
+			database.getMetadata().getSchema().getClass("Profile").getProperty("nick").createIndex(OProperty.INDEX_TYPE.UNIQUE);
 			System.out.println("Done");
 		}
 	}

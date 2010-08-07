@@ -27,6 +27,7 @@ import com.orientechnologies.common.parser.OStringForwardReader;
 import com.orientechnologies.orient.console.OCommandListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -128,6 +129,7 @@ public class OConsoleDatabaseImport extends OConsoleDatabaseImpExpAbstract {
 		listener.onMessage("OK");
 	}
 
+	@SuppressWarnings("unchecked")
 	private long importDictionary() throws IOException, ParseException {
 		listener.onMessage("\nImporting database dictionary...");
 
@@ -150,7 +152,7 @@ public class OConsoleDatabaseImport extends OConsoleDatabaseImpExpAbstract {
 			if (dictionaryValue.length() >= 4)
 				rid.fromString(dictionaryValue.substring(1));
 
-			database.getDictionary().put(dictionaryKey, doc);
+			((ODictionary<ODocument>) database.getDictionary()).put(dictionaryKey, doc);
 			tot++;
 		} while (jsonReader.lastChar() == ',');
 
@@ -330,7 +332,7 @@ public class OConsoleDatabaseImport extends OConsoleDatabaseImpExpAbstract {
 		if (linkedType != null)
 			prop.setLinkedType(linkedType);
 		if (indexRid != null)
-			prop.createIndex(indexType.equals("unique"));
+			prop.createIndex(OProperty.INDEX_TYPE.valueOf(indexType));
 	}
 
 	private long importClusters() throws ParseException, IOException {
