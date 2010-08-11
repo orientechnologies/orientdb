@@ -120,7 +120,7 @@ public class OFetchHelper {
 					return;
 			}
 		} catch (Exception e) {
-			OLogManager.instance().warn(null, "Fetching error on record %s", iRootRecord.getIdentity());
+			OLogManager.instance().error(null, "Fetching error on record %s", e, iRootRecord.getIdentity());
 		}
 	}
 

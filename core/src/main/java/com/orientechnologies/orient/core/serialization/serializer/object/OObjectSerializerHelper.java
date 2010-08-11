@@ -216,6 +216,13 @@ public class OObjectSerializerHelper {
 							.setFetchPlan(iFetchPlan);
 
 					fieldValue = target;
+				} else if (type.isEnum()) {
+
+					String enumName = ((ODocument) iLinked).field(iFieldName);
+					@SuppressWarnings("rawtypes")
+					Class<Enum> enumClass = (Class<Enum>) type;
+					fieldValue = Enum.valueOf(enumClass, enumName);
+
 				} else {
 
 					fieldClass = iEntityManager.getEntityClass(type.getSimpleName());
