@@ -32,7 +32,8 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 	private int		currentClusterId;
 	private long	rangeFrom;
 	private long	rangeTo;
-	private long	clusterSize;
+	private long	lastClusterPosition;
+	private long	totalAvailableRecords;
 
 	public ORecordIteratorCluster(final ODatabaseRecord<REC> iDatabase, final ODatabaseRecordAbstract<REC> iLowLevelDatabase,
 			final int iClusterId) {
@@ -43,7 +44,9 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 		currentClusterId = iClusterId;
 		rangeFrom = -1;
 		rangeTo = -1;
-		clusterSize = database.getStorage().getClusterLastEntryPosition(currentClusterId);
+
+		lastClusterPosition = database.getStorage().getClusterLastEntryPosition(currentClusterId);
+		totalAvailableRecords = database.countClusterElements(currentClusterId);
 	}
 
 	@Override
@@ -58,6 +61,9 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 	public boolean hasNext() {
 		if (limit > -1 && browsedRecords >= limit)
 			// LIMIT REACHED
+			return false;
+
+		if (browsedRecords >= totalAvailableRecords)
 			return false;
 
 		return currentClusterPosition < getRangeTo() - 1;
@@ -159,9 +165,9 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 	 */
 	public long getRangeTo() {
 		if (!liveUpdated)
-			return clusterSize;
+			return lastClusterPosition;
 
-		final long limit = database.countClusterElements(currentClusterId);
+		final long limit = database.getStorage().getClusterLastEntryPosition(currentClusterId);
 		if (rangeTo > -1)
 			return Math.min(rangeTo, limit);
 		return limit;
@@ -180,7 +186,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 		super.setLiveUpdated(iLiveUpdated);
 
 		// SET THE UPPER LIMIT TO -1 IF IT'S ENABLED
-		clusterSize = iLiveUpdated ? -1 : database.getStorage().getClusterLastEntryPosition(currentClusterId);
+		lastClusterPosition = iLiveUpdated ? -1 : database.getStorage().getClusterLastEntryPosition(currentClusterId);
 
 		return this;
 	}
