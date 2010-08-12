@@ -225,14 +225,13 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	}
 
 	/**
-	 * Returns the array of field names.
+	 * Returns the set of field names.
 	 */
-	public String[] fieldNames() {
+	public Set<String> fieldNames() {
 		checkForLoading();
 		checkForFields();
 
-		String[] result = new String[_fieldValues.keySet().size()];
-		return _fieldValues.keySet().toArray(result);
+		return _fieldValues.keySet();
 	}
 
 	/**
