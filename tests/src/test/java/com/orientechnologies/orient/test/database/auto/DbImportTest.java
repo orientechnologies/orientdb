@@ -34,7 +34,6 @@ public class DbImportTest implements OCommandListener {
 		OProfiler.getInstance().startRecording();
 	}
 
-	@Test(dependsOnMethods = { "testDbExport" })
 	public void testDbImport() throws IOException {
 		File importDir = new File("test-import");
 
