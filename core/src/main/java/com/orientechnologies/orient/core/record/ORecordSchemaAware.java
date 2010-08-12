@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.record;
 
+import java.util.Set;
+
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -30,7 +32,7 @@ public interface ORecordSchemaAware<T> extends ORecordInternal<T> {
 
 	public ORecordSchemaAware<T> removeField(String iPropertyName);
 
-	public String[] fieldNames();
+	public Set<String> fieldNames();
 
 	public Object[] fieldValues();
 
