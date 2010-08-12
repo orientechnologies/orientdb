@@ -86,6 +86,11 @@ public class OGraphEdge extends OGraphElement {
 		document.field(OUT, iDestination.getDocument());
 	}
 
+	public void delete() {
+		getIn().unlink(getOut());
+		document.delete();
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;

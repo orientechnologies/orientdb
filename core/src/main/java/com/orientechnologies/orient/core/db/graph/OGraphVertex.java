@@ -336,4 +336,20 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 		final List<ODocument> docs = document.field(FIELD_OUT_EDGES);
 		return docs == null ? 0 : docs.size();
 	}
+
+	public OGraphVertex delete() {
+		// DELETE ALL THE INCOMING EDGES
+		if (inEdges != null && inEdges.get() != null) {
+			for (OGraphEdge e : inEdges.get())
+				e.delete();
+		}
+
+		// DELETE ALL THE OUGOING EDGES
+		if (outEdges != null && outEdges.get() != null) {
+			for (OGraphEdge e : outEdges.get())
+				e.delete();
+		}
+
+		return this;
+	}
 }

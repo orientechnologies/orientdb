@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.db.graph;
 
+import java.util.Set;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
@@ -44,6 +46,10 @@ public abstract class OGraphElement extends ODocumentWrapper {
 		document.setTrackingChanges(false);
 	}
 
+	public Object getId() {
+		return document.getIdentity();
+	}
+
 	public Object get(final String iPropertyName) {
 		return document.field(iPropertyName);
 	}
@@ -54,4 +60,11 @@ public abstract class OGraphElement extends ODocumentWrapper {
 		return (RET) this;
 	}
 
+	public Object remove(final String iPropertyName) {
+		return document.removeField(iPropertyName);
+	}
+
+	public Set<String> propertyNames() {
+		return document.fieldNames();
+	}
 }
