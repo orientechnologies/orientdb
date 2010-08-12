@@ -93,15 +93,15 @@
 			<class name="com.orientechnologies.orient.test.database.auto.SQLDeleteTest" />
 		</classes>
 	</test>
-	<test name="End">
-		<classes>
-			<class name="com.orientechnologies.orient.test.database.auto.DbClosedTest" />
-		</classes>
-	</test>
 	<test name="DbTools">
 		<classes>
 			<class name="com.orientechnologies.orient.test.database.auto.DbExportTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.DbImportTest" />
+		</classes>
+	</test>
+	<test name="End">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.DbClosedTest" />
 		</classes>
 	</test>
 </suite>
