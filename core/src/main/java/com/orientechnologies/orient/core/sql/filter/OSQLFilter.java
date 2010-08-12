@@ -182,13 +182,13 @@ public class OSQLFilter extends OCommandToParse {
 				if (word.endsWith(OStringSerializerHelper.OPEN_BRACE)) {
 					params = OStringSerializerHelper.getParameters(text, currentPos - 1);
 					currentPos = text.indexOf(OStringSerializerHelper.CLOSED_BRACE, currentPos) + 1;
-				}
+				} else if (!word.equals(op.keyword))
+					throw new OQueryParsingException("Malformed usage of operator '" + op.toString() + "'. Parsed operator is: " + word);
 
 				try {
 					return op.configure(params);
 				} catch (Exception e) {
-					throw new OQueryParsingException("Syntax error using the operator '" + op.toString() + "'. Syntax is: "
-							+ op.getSyntax());
+					throw new OQueryParsingException("Syntax error using the operator '" + op.toString() + "'. Syntax is: " + op.getSyntax());
 				}
 			}
 		}

@@ -34,18 +34,18 @@ public class OSQLFilterCondition {
 	protected OQueryOperator		operator;
 	protected Object						right;
 
-	public OSQLFilterCondition(Object iLeft, OQueryOperator iOperator) {
+	public OSQLFilterCondition(final Object iLeft, final OQueryOperator iOperator) {
 		this.left = iLeft;
 		this.operator = iOperator;
 	}
 
-	public OSQLFilterCondition(Object iLeft, OQueryOperator iOperator, Object iRight) {
+	public OSQLFilterCondition(final Object iLeft, final OQueryOperator iOperator, final Object iRight) {
 		this.left = iLeft;
 		this.operator = iOperator;
 		this.right = iRight;
 	}
 
-	public Object evaluate(ORecordSchemaAware<?> iRecord) {
+	public Object evaluate(final ORecordSchemaAware<?> iRecord) {
 		Object l = evaluate(iRecord, left);
 		Object r = evaluate(iRecord, right);
 
@@ -58,7 +58,7 @@ public class OSQLFilterCondition {
 		return operator.evaluate(iRecord.getDatabase(), this, l, r);
 	}
 
-	private Object[] checkForConversion(Object l, Object r) {
+	private Object[] checkForConversion(final Object l, final Object r) {
 		Object[] result = null;
 
 		// INTEGERS
@@ -98,7 +98,7 @@ public class OSQLFilterCondition {
 			return stringValue.length() > 0 ? new Integer(stringValue) : new Integer(0);
 	}
 
-	protected Float getFloat(Object iValue) {
+	protected Float getFloat(final Object iValue) {
 		if (iValue == null)
 			return null;
 
@@ -110,7 +110,7 @@ public class OSQLFilterCondition {
 		return stringValue.length() > 0 ? new Float(stringValue) : new Float(0);
 	}
 
-	protected Object evaluate(ORecordSchemaAware<?> iRecord, Object iValue) {
+	protected Object evaluate(final ORecordSchemaAware<?> iRecord, final Object iValue) {
 		if (iValue instanceof OSQLFilterItem) {
 			if (iRecord.getInternalStatus() == STATUS.NOT_LOADED) {
 				try {
