@@ -1018,7 +1018,14 @@ public class OStorageRemote extends OStorageAbstract {
 			}
 		}
 
-		throw new OIOException("Can't connect to any configured remote nodes: " + serverURLs);
+		final StringBuilder buffer = new StringBuilder();
+		for (OPair<String, String[]> server : serverURLs) {
+			if (buffer.length() > 0)
+				buffer.append(',');
+			buffer.append(server.getKey());
+		}
+
+		throw new OIOException("Can't connect to any configured remote nodes: " + buffer);
 	}
 
 	protected void checkConnection() {
