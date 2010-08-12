@@ -127,11 +127,15 @@ public abstract class OFile {
 	public void close() throws IOException {
 		try {
 			unlock();
-			if (channel != null && channel.isOpen())
+			if (channel != null && channel.isOpen()) {
 				channel.close();
+				channel = null;
+			}
 
-			if (accessFile != null)
+			if (accessFile != null) {
 				accessFile.close();
+				accessFile = null;
+			}
 
 		} catch (Exception e) {
 			OLogManager.instance().error(this, "Error on closing file " + osFile.getAbsolutePath(), e, OIOException.class);
