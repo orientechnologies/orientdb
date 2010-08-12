@@ -46,7 +46,9 @@ public abstract class OGraphElement extends ODocumentWrapper {
 		document.setTrackingChanges(false);
 	}
 
-	public Object getId() {
+	public abstract void delete();
+
+	public ORID getId() {
 		return document.getIdentity();
 	}
 

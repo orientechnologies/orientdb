@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.db.ODatabaseBridgeWrapperAbstract;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
+import com.orientechnologies.orient.core.exception.OGraphException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorMultiCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -42,20 +43,16 @@ public class ODatabaseGraphTx extends ODatabaseBridgeWrapperAbstract<ODatabaseDo
 	public <THISDB extends ODatabase> THISDB open(final String iUserName, final String iUserPassword) {
 		underlying.open(iUserName, iUserPassword);
 
-		if (!underlying.getMetadata().getSchema().existsClass(OGraphVertex.CLASS_NAME)) {
-			// CREATE THE META MODEL USING THE ORIENT SCHEMA
-			final OClass vertex = underlying.getMetadata().getSchema()
-					.createClass(OGraphVertex.CLASS_NAME, underlying.addPhysicalCluster(OGraphVertex.CLASS_NAME));
-			final OClass edge = underlying.getMetadata().getSchema().createClass(OGraphEdge.CLASS_NAME);
+		checkForGraphSchema();
 
-			edge.createProperty(OGraphEdge.IN, OType.LINK, vertex);
-			edge.createProperty(OGraphEdge.OUT, OType.LINK, vertex);
+		return (THISDB) this;
+	}
 
-			vertex.createProperty(OGraphVertex.FIELD_IN_EDGES, OType.EMBEDDEDLIST, edge);
-			vertex.createProperty(OGraphVertex.FIELD_OUT_EDGES, OType.EMBEDDEDLIST, edge);
+	@SuppressWarnings("unchecked")
+	public <THISDB extends ODatabase> THISDB create() {
+		underlying.create();
 
-			underlying.getMetadata().getSchema().save();
-		}
+		checkForGraphSchema();
 
 		return (THISDB) this;
 	}
@@ -95,6 +92,10 @@ public class ODatabaseGraphTx extends ODatabaseBridgeWrapperAbstract<ODatabaseDo
 		if (doc == null)
 			return null;
 
+		if (doc.getClassName() == null)
+			throw new OGraphException(
+					"The document loaded has no class, while it should be a OGraphVertex, OGraphEdge or any subclass of its");
+
 		if (doc.getClassName().equals(OGraphVertex.class.getSimpleName()))
 			return new OGraphVertex(doc);
 		else if (doc.getClassName().equals(OGraphEdge.class.getSimpleName()))
@@ -124,5 +125,22 @@ public class ODatabaseGraphTx extends ODatabaseBridgeWrapperAbstract<ODatabaseDo
 
 	public ORecordIteratorMultiCluster<ODocument> browseVertexes() {
 		return underlying.browseClass(OGraphVertex.class.getSimpleName());
+	}
+
+	private void checkForGraphSchema() {
+		if (!underlying.getMetadata().getSchema().existsClass(OGraphVertex.CLASS_NAME)) {
+			// CREATE THE META MODEL USING THE ORIENT SCHEMA
+			final OClass vertex = underlying.getMetadata().getSchema()
+					.createClass(OGraphVertex.CLASS_NAME, underlying.addPhysicalCluster(OGraphVertex.CLASS_NAME));
+			final OClass edge = underlying.getMetadata().getSchema().createClass(OGraphEdge.CLASS_NAME);
+
+			edge.createProperty(OGraphEdge.IN, OType.LINK, vertex);
+			edge.createProperty(OGraphEdge.OUT, OType.LINK, vertex);
+
+			vertex.createProperty(OGraphVertex.FIELD_IN_EDGES, OType.EMBEDDEDLIST, edge);
+			vertex.createProperty(OGraphVertex.FIELD_OUT_EDGES, OType.EMBEDDEDLIST, edge);
+
+			underlying.getMetadata().getSchema().save();
+		}
 	}
 }

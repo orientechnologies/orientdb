@@ -87,6 +87,7 @@ public class OGraphEdge extends OGraphElement {
 	}
 
 	public void delete() {
+		getOut().unlink(getIn());
 		getIn().unlink(getOut());
 		document.delete();
 	}

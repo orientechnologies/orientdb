@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.iterator;
 
 import java.util.Iterator;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.graph.ODatabaseGraphTx;
 import com.orientechnologies.orient.core.db.graph.OGraphElement;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -36,8 +37,8 @@ public abstract class OGraphElementIterator<T extends OGraphElement> implements 
 
 	public OGraphElementIterator(final ODatabaseGraphTx iDatabase, final String iClassName) {
 		underlying = new ORecordIteratorMultiCluster<ODocument>((ODatabaseRecord<ODocument>) iDatabase.getUnderlying(),
-				(ODatabaseRecordAbstract<ODocument>) iDatabase.getUnderlying(), iDatabase.getMetadata().getSchema().getClass(iClassName)
-						.getClusterIds());
+				(ODatabaseRecordAbstract<ODocument>) ((ODatabaseDocumentTx) iDatabase.getUnderlying()).getUnderlying(), iDatabase
+						.getMetadata().getSchema().getClass(iClassName).getClusterIds());
 	}
 
 	public abstract T next(final String iFetchPlan);
