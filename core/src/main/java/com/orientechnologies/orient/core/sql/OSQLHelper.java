@@ -30,6 +30,9 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorAnd;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContains;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsAll;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsKey;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsText;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsValue;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIs;
@@ -58,7 +61,8 @@ public class OSQLHelper {
 	public static OQueryOperator[]	OPERATORS					= { new OQueryOperatorAnd(), new OQueryOperatorOr(),
 			new OQueryOperatorNotEquals(), new OQueryOperatorNot(), new OQueryOperatorEquals(), new OQueryOperatorMinorEquals(),
 			new OQueryOperatorMinor(), new OQueryOperatorMajorEquals(), new OQueryOperatorContainsAll(), new OQueryOperatorMajor(),
-			new OQueryOperatorLike(), new OQueryOperatorIs(), new OQueryOperatorIn(), new OQueryOperatorContains(),
+			new OQueryOperatorLike(), new OQueryOperatorIs(), new OQueryOperatorIn(), new OQueryOperatorContainsKey(),
+			new OQueryOperatorContainsValue(), new OQueryOperatorContainsText(), new OQueryOperatorContains(),
 			new OQueryOperatorTraverse()									};
 
 	public static int nextWord(final String iText, final String iTextUpperCase, int ioCurrentPosition, final StringBuilder ioWord,
