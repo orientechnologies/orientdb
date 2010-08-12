@@ -446,4 +446,19 @@ public class SQLSelectTest {
 
 		database.close();
 	}
+
+	@Test
+	public void queryWrongOperator() {
+		database.open("admin", "admin");
+
+		try {
+			database.query(new OSQLSynchQuery<ODocument>("select from Profile where name like.toLowerCase() '%Jay%'"));
+			Assert.assertFalse(true);
+		} catch (Exception e) {
+			Assert.assertTrue(true);
+		}
+
+		database.close();
+	}
+
 }
