@@ -30,7 +30,7 @@ public interface ORecordSchemaAware<T> extends ORecordInternal<T> {
 
 	public ORecordSchemaAware<T> field(String iPropertyName, Object iValue);
 
-	public ORecordSchemaAware<T> removeField(String iPropertyName);
+	public Object removeField(String iPropertyName);
 
 	public Set<String> fieldNames();
 
