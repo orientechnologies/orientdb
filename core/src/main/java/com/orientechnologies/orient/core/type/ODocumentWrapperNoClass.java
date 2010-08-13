@@ -34,8 +34,6 @@ public abstract class ODocumentWrapperNoClass extends ODocumentWrapper {
 
 	protected abstract void fromStream();
 
-	protected abstract void toStream();
-
 	public <RET extends ODocumentWrapper> RET load() {
 		super.load();
 		fromStream();

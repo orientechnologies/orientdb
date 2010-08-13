@@ -31,12 +31,12 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  *          Record Type
  */
 public class ORecordIteratorMultiCluster<REC extends ORecordInternal<?>> extends ORecordIterator<REC> {
-	private final int[]	clusterIds;
-	private int					currentClusterIdx;
+	protected final int[]	clusterIds;
+	protected int					currentClusterIdx;
 
-	private int					lastClusterId;
-	private long				lastClusterPosition;
-	private long				totalAvailableRecords;
+	protected int					lastClusterId;
+	protected long				lastClusterPosition;
+	protected long				totalAvailableRecords;
 
 	public ORecordIteratorMultiCluster(final ODatabaseRecord<REC> iDatabase, final ODatabaseRecordAbstract<REC> iLowLevelDatabase,
 			final int[] iClusterIds) {
@@ -66,8 +66,8 @@ public class ORecordIteratorMultiCluster<REC extends ORecordInternal<?>> extends
 		if (limit > -1 && browsedRecords >= limit)
 			// LIMIT REACHED
 			return false;
-		
-		if( browsedRecords >= totalAvailableRecords )
+
+		if (browsedRecords >= totalAvailableRecords)
 			return false;
 
 		if (currentClusterIdx < clusterIds.length - 1)
@@ -184,18 +184,24 @@ public class ORecordIteratorMultiCluster<REC extends ORecordInternal<?>> extends
 	 * @param iRecord
 	 * @return
 	 */
-	private REC readCurrentRecord(final REC iRecord, final int iMovement) {
+	private REC readCurrentRecord(REC iRecord, final int iMovement) {
 		if (limit > -1 && browsedRecords >= limit)
 			// LIMIT REACHED
 			return null;
 
 		currentClusterPosition += iMovement;
 
-		if (lowLevelDatabase.executeReadRecord(clusterIds[currentClusterIdx], currentClusterPosition, iRecord, fetchPlan) != null) {
+		iRecord = loadRecord(iRecord);
+		
+		if (iRecord != null) {
 			browsedRecords++;
 			return iRecord;
 		}
 
 		return null;
+	}
+
+	protected REC loadRecord(final REC iRecord) {
+		return lowLevelDatabase.executeReadRecord(clusterIds[currentClusterIdx], currentClusterPosition, iRecord, fetchPlan);
 	}
 }

@@ -46,6 +46,10 @@ public class ODocumentWrapper {
 		document = iDocument;
 	}
 
+	public ODocument toStream() {
+		return document;
+	}
+
 	public <RET extends ODocumentWrapper> RET load() {
 		document.load();
 		return (RET) this;

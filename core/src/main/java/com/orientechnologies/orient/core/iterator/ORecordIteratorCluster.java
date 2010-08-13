@@ -29,11 +29,11 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  *          Record Type
  */
 public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORecordIterator<REC> {
-	private int		currentClusterId;
-	private long	rangeFrom;
-	private long	rangeTo;
-	private long	lastClusterPosition;
-	private long	totalAvailableRecords;
+	protected int		currentClusterId;
+	protected long	rangeFrom;
+	protected long	rangeTo;
+	protected long	lastClusterPosition;
+	protected long	totalAvailableRecords;
 
 	public ORecordIteratorCluster(final ODatabaseRecord<REC> iDatabase, final ODatabaseRecordAbstract<REC> iLowLevelDatabase,
 			final int iClusterId) {

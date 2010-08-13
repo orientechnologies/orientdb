@@ -60,23 +60,4 @@ public interface ODatabaseObject extends ODatabaseSchemaAware<Object> {
 	 * @return
 	 */
 	public OEntityManager getEntityManager();
-
-	/**
-	 * Returns true if current configuration retains objects, otherwise false
-	 * 
-	 * @param iValue
-	 *          True to enable, false to disable it.
-	 * @see #setRetainObjects(boolean)
-	 */
-	public boolean isRetainObjects();
-
-	/**
-	 * Specifies if retain handled objects in memory or not. Setting it to false can improve performance on large inserts. Default is
-	 * enabled.
-	 * 
-	 * @param iValue
-	 *          True to enable, false to disable it.
-	 * @see #isRetainObjects()
-	 */
-	public ODatabaseObject setRetainObjects(boolean iValue);
 }

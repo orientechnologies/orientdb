@@ -36,12 +36,20 @@ public class OGraphEdge extends OGraphElement {
 	private SoftReference<OGraphVertex>	in;
 	private SoftReference<OGraphVertex>	out;
 
-	public OGraphEdge(final ODatabaseRecord<?> iDatabase, final ORID iRID) {
-		super(iDatabase, iRID);
+	public OGraphEdge(final ODatabaseGraphTx iDatabase, final ORID iRID) {
+		super((ODatabaseRecord<?>) iDatabase.getUnderlying(), iRID);
 	}
 
 	public OGraphEdge(final ODatabaseRecord<?> iDatabase) {
 		super(iDatabase, CLASS_NAME);
+	}
+
+	public OGraphEdge(final ODatabaseGraphTx iDatabase) {
+		super((ODatabaseRecord<?>) iDatabase.getUnderlying(), CLASS_NAME);
+	}
+
+	public OGraphEdge(final ODatabaseGraphTx iDatabase, final OGraphVertex iInNode, final OGraphVertex iOutNode) {
+		this((ODatabaseRecord<?>) iDatabase.getUnderlying(), iInNode, iOutNode);
 	}
 
 	public OGraphEdge(final ODatabaseRecord<?> iDatabase, final OGraphVertex iInNode, final OGraphVertex iOutNode) {
@@ -89,7 +97,6 @@ public class OGraphEdge extends OGraphElement {
 	public void delete() {
 		getOut().unlink(getIn());
 		getIn().unlink(getOut());
-		document.delete();
 	}
 
 	@Override

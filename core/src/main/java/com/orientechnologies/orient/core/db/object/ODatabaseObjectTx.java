@@ -16,15 +16,11 @@
 package com.orientechnologies.orient.core.db.object;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
+import com.orientechnologies.orient.core.db.ODatabasePojoAbstract;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -32,25 +28,17 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.dictionary.ODictionaryWrapper;
 import com.orientechnologies.orient.core.entity.OEntityManager;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.hook.ORecordHook;
-import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.core.iterator.OObjectIteratorMultiCluster;
-import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.query.OQuery;
-import com.orientechnologies.orient.core.record.ORecord.STATUS;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
-import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
 /**
  * Object Database instance. It's a wrapper to the class ODatabaseDocumentTx but handle the conversion between ODocument instances
@@ -60,25 +48,15 @@ import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
  * @author Luca Garulli
  */
 @SuppressWarnings("unchecked")
-public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocument, ODocument> implements ODatabaseObject,
+public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> implements ODatabaseObject,
 		OUserObject2RecordHandler {
 
-	private HashMap<Integer, ODocument>	objects2Records	= new HashMap<Integer, ODocument>();
-	private HashMap<ODocument, Object>	records2Objects	= new HashMap<ODocument, Object>();
-	private ODictionary<Object>					dictionary;
-	private OEntityManager							entityManager		= new OEntityManager();
-	private boolean											retainObjects		= true;
+	private ODictionary<Object>	dictionary;
+	private OEntityManager			entityManager	= new OEntityManager();
 
 	public ODatabaseObjectTx(final String iURL) {
 		super(new ODatabaseDocumentTx(iURL));
 		underlying.setDatabaseOwner(this);
-	}
-
-	@Override
-	public void close() {
-		objects2Records.clear();
-		records2Objects.clear();
-		super.close();
 	}
 
 	public <T> T newInstance(final Class<T> iType) {
@@ -140,7 +118,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 
 		underlying.load(record);
 
-		OObjectSerializerHelper.fromStream(record, iPojo, getEntityManager(), this, iFetchPlan);
+		stream2pojo(record, iPojo, iFetchPlan);
 
 		return this;
 	}
@@ -152,13 +130,12 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 	public Object load(final ORID iRecordId, final String iFetchPlan) {
 		checkOpeness();
 		if (iRecordId == null)
-			return this;
+			return null;
 
 		// GET THE ASSOCIATED DOCUMENT
 		final ODocument record = underlying.load(iRecordId);
 
-		return record == null ? null : OObjectSerializerHelper.fromStream(record, newInstance(record.getClassName()),
-				getEntityManager(), this, iFetchPlan);
+		return record == null ? null : stream2pojo(record, newInstance(record.getClassName()), iFetchPlan);
 	}
 
 	/**
@@ -188,9 +165,7 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 			record = underlying.newInstance(iPojo.getClass().getSimpleName());
 
 		registerPojo(iPojo, record);
-
-		OObjectSerializerHelper.toStream(iPojo, record, getEntityManager(),
-				getMetadata().getSchema().getClass(iPojo.getClass().getSimpleName()), this);
+		pojo2Stream(iPojo, record);
 
 		underlying.save(record, iClusterName);
 
@@ -217,99 +192,12 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 		return underlying.countClass(iClassName);
 	}
 
-	public ODocument getRecordByUserObject(final Object iPojo, final boolean iIsMandatory) {
-		checkOpeness();
-
-		if (iPojo instanceof ODocument)
-			return (ODocument) iPojo;
-
-		ODocument record = objects2Records.get(System.identityHashCode(iPojo));
-
-		if (record == null) {
-			if (iIsMandatory)
-				throw new OObjectNotManagedException("The object " + iPojo + " is not managed by the current database");
-
-			record = underlying.newInstance(iPojo.getClass().getSimpleName());
-
-			registerPojo(iPojo, record);
-
-			OObjectSerializerHelper.toStream(iPojo, record, getEntityManager(),
-					getMetadata().getSchema().getClass(iPojo.getClass().getSimpleName()), this);
-		}
-
-		return record;
-	}
-
-	public boolean existsUserObjectByRecord(ORecordInternal<?> iRecord) {
-		checkOpeness();
-		if (!(iRecord instanceof ODocument))
-			return false;
-
-		return records2Objects.containsKey(iRecord);
-	}
-
-	public Object getUserObjectByRecord(final ORecordInternal<?> iRecord, final String iFetchPlan) {
-		checkOpeness();
-		if (!(iRecord instanceof ODocument))
-			return null;
-
-		final ODocument record = (ODocument) iRecord;
-
-		Object pojo = records2Objects.get(iRecord);
-
-		if (pojo == null) {
-			try {
-				if (record.getInternalStatus() == STATUS.NOT_LOADED)
-					record.load();
-
-				pojo = entityManager.createPojo(record.getClassName());
-				registerPojo(pojo, record);
-
-				OObjectSerializerHelper.fromStream(record, pojo, getEntityManager(), this, iFetchPlan);
-
-			} catch (Exception e) {
-				throw new OConfigurationException("Can't retrieve pojo from the record " + record, e);
-			}
-		}
-
-		return pojo;
-	}
-
-	public ODatabaseObjectTx begin() {
-		checkOpeness();
-		underlying.begin();
-		return this;
-	}
-
-	public ODatabaseObjectTx begin(final TXTYPE iStatus) {
-		checkOpeness();
-		underlying.begin(iStatus);
-		return this;
-	}
-
-	public ODatabaseObjectTx commit() {
-		checkOpeness();
-		underlying.commit();
-		return this;
-	}
-
-	public OMetadata getMetadata() {
-		checkOpeness();
-		return underlying.getMetadata();
-	}
-
 	public ODictionary<Object> getDictionary() {
 		checkOpeness();
 		if (dictionary == null)
 			dictionary = new ODictionaryWrapper(this, underlying);
 
 		return dictionary;
-	}
-
-	public ODatabaseObjectTx rollback() {
-		checkOpeness();
-		underlying.rollback();
-		return this;
 	}
 
 	public OEntityManager getEntityManager() {
@@ -319,15 +207,6 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 	@Override
 	public ODatabaseDocument getUnderlying() {
 		return underlying;
-	}
-
-	public ODatabaseObjectTx setRetainObjects(final boolean iValue) {
-		retainObjects = iValue;
-		return this;
-	}
-
-	public boolean isRetainObjects() {
-		return retainObjects;
 	}
 
 	public Object newInstance() {
@@ -353,11 +232,6 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 		return (RET) resultPojo;
 	}
 
-	public OCommandRequest command(final OCommandRequest iCommand) {
-		checkOpeness();
-		return underlying.command(iCommand);
-	}
-
 	public <DBTYPE extends ODatabase> DBTYPE checkSecurity(final String iResource, final byte iOperation) {
 		return (DBTYPE) underlying.checkSecurity(iResource, iOperation);
 	}
@@ -366,46 +240,12 @@ public class ODatabaseObjectTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
 		return (DBTYPE) underlying.checkSecurity(iResource, iOperation, iResourcesSpecific);
 	}
 
-	public Set<ORecordHook> getHooks() {
-		checkOpeness();
-		return underlying.getHooks();
+	protected ODocument pojo2Stream(final Object iPojo, final ODocument record) {
+		return OObjectSerializerHelper.toStream(iPojo, record, getEntityManager(),
+				getMetadata().getSchema().getClass(iPojo.getClass().getSimpleName()), this);
 	}
 
-	public <DB extends ODatabaseComplex<?>> DB registerHook(final ORecordHook iHookImpl) {
-		checkOpeness();
-		return (DB) underlying.registerHook(iHookImpl);
-	}
-
-	public <DB extends ODatabaseComplex<?>> DB unregisterHook(final ORecordHook iHookImpl) {
-		checkOpeness();
-		return (DB) underlying.unregisterHook(iHookImpl);
-	}
-
-	public void callbackHooks(final TYPE iType, final Object iObject) {
-		checkOpeness();
-		underlying.callbackHooks(iType, iObject);
-	}
-
-	public OUser getUser() {
-		checkOpeness();
-		return underlying.getUser();
-	}
-
-	/**
-	 * Register a new POJO
-	 */
-	private void registerPojo(final Object iObject, final ODocument iRecord) {
-		if (retainObjects) {
-			objects2Records.put(System.identityHashCode(iObject), iRecord);
-			records2Objects.put(iRecord, iObject);
-		}
-	}
-
-	private void unregisterPojo(final Object iObject, final ODocument iRecord) {
-		if (iObject != null)
-			objects2Records.remove(System.identityHashCode(iObject));
-
-		if (iRecord != null)
-			records2Objects.remove(iRecord);
+	protected Object stream2pojo(final ODocument record, final Object iPojo, final String iFetchPlan) {
+		return OObjectSerializerHelper.fromStream(record, iPojo, getEntityManager(), this, iFetchPlan);
 	}
 }

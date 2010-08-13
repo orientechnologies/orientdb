@@ -32,13 +32,20 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 @SuppressWarnings("unchecked")
 public abstract class OGraphElementIterator<T extends OGraphElement> implements Iterator<T>, Iterable<T> {
+	protected ODatabaseGraphTx												database;
 	protected ORecordIteratorMultiCluster<ODocument>	underlying;
 	private String																		fetchPlan;
 
 	public OGraphElementIterator(final ODatabaseGraphTx iDatabase, final String iClassName) {
+		database = iDatabase;
 		underlying = new ORecordIteratorMultiCluster<ODocument>((ODatabaseRecord<ODocument>) iDatabase.getUnderlying(),
 				(ODatabaseRecordAbstract<ODocument>) ((ODatabaseDocumentTx) iDatabase.getUnderlying()).getUnderlying(), iDatabase
 						.getMetadata().getSchema().getClass(iClassName).getClusterIds());
+	}
+
+	public OGraphElementIterator(final ODatabaseGraphTx iDatabase, ORecordIteratorMultiCluster<ODocument> iUnderlying) {
+		database = iDatabase;
+		underlying = iUnderlying;
 	}
 
 	public abstract T next(final String iFetchPlan);

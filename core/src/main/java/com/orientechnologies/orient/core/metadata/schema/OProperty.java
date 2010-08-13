@@ -145,7 +145,7 @@ public class OProperty extends ODocumentWrapperNoClass {
 	}
 
 	@OBeforeSerialization
-	public void toStream() {
+	public ODocument toStream() {
 		document.field("name", name);
 		document.field("type", type.id);
 		document.field("offset", offset);
@@ -165,6 +165,7 @@ public class OProperty extends ODocumentWrapperNoClass {
 		} else {
 			document.field("index", ORecordId.EMPTY_RECORD_ID);
 		}
+		return document;
 	}
 
 	public OType getLinkedType() {

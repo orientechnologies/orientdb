@@ -155,9 +155,10 @@ public class OSchema extends ODocumentWrapperNoClass {
 	 * Binds POJO to ODocument.
 	 */
 	@OBeforeSerialization
-	public void toStream() {
+	public ODocument toStream() {
 		document.field("schemaVersion", CURRENT_VERSION_NUMBER);
 		document.field("classes", classes.values(), OType.EMBEDDEDSET);
+		return document;
 	}
 
 	private void registerStandardClasses() {

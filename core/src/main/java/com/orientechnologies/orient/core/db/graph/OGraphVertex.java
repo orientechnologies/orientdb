@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.OGraphVertexOutIterator;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 /**
  * GraphDB Vertex class. It represent the vertex (or node) in the graph. The Vertex can have custom properties. You can read/write
@@ -37,15 +38,18 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 	public static final String							FIELD_IN_EDGES	= "inEdges";
 	public static final String							FIELD_OUT_EDGES	= "outEdges";
 
+	protected ODatabaseGraphTx							database;
 	private SoftReference<List<OGraphEdge>>	inEdges;
 	private SoftReference<List<OGraphEdge>>	outEdges;
 
 	public OGraphVertex(final ODatabaseGraphTx iDatabase, final ORID iRID) {
 		super(new ODocument((ODatabaseRecord<?>) iDatabase.getUnderlying(), iRID));
+		database = iDatabase;
 	}
 
 	public OGraphVertex(final ODatabaseGraphTx iDatabase) {
 		super(new ODocument((ODatabaseRecord<?>) iDatabase.getUnderlying(), CLASS_NAME));
+		database = iDatabase;
 	}
 
 	public OGraphVertex(final ODocument iDocument) {
@@ -54,6 +58,15 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 
 	public OGraphVertex(final ODocument iDocument, final String iFetchPlan) {
 		super(iDocument);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <RET extends ODocumentWrapper> RET save() {
+		super.save();
+		if (database != null)
+			database.registerPojo(this, document);
+		return (RET) this;
 	}
 
 	public List<OGraphVertex> traverse(final int iStartLevel, final int iEndLevel) {
@@ -114,7 +127,6 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 			for (OGraphEdge e : outEdges.get())
 				if (e.getOut().equals(iTargetVertex)) {
 					outEdges.get().remove(e);
-					e.getDocument().delete();
 					found = true;
 					break;
 				}
@@ -133,7 +145,6 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 			for (OGraphEdge e : iTargetVertex.inEdges.get())
 				if (e.getIn().equals(this)) {
 					iTargetVertex.inEdges.get().remove(e);
-					e.getDocument().delete();
 					break;
 				}
 		}

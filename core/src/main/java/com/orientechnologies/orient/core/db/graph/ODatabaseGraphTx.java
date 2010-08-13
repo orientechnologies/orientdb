@@ -16,13 +16,13 @@
 package com.orientechnologies.orient.core.db.graph;
 
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseBridgeWrapperAbstract;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabasePojoAbstract;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OGraphException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.iterator.ORecordIteratorMultiCluster;
+import com.orientechnologies.orient.core.iterator.OGraphVertexIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Luca Garulli
  * 
  */
-public class ODatabaseGraphTx extends ODatabaseBridgeWrapperAbstract<ODatabaseDocumentTx, ODocument, OGraphElement> {
+public class ODatabaseGraphTx extends ODatabasePojoAbstract<ODocument, OGraphElement> {
 
 	public ODatabaseGraphTx(final String iURL) {
 		super(new ODatabaseDocumentTx(iURL));
@@ -58,15 +58,15 @@ public class ODatabaseGraphTx extends ODatabaseBridgeWrapperAbstract<ODatabaseDo
 	}
 
 	public OGraphVertex createVertex() {
-		return new OGraphVertex(this);
+		return registerPojo(new OGraphVertex(this));
 	}
 
 	public OGraphVertex getRoot(final String iName) {
-		return new OGraphVertex(underlying.getDictionary().get(iName));
+		return registerPojo(new OGraphVertex(underlying.getDictionary().get(iName)));
 	}
 
 	public OGraphVertex getRoot(final String iName, final String iFetchPlan) {
-		return new OGraphVertex(underlying.getDictionary().get(iName), iFetchPlan);
+		return registerPojo(new OGraphVertex(underlying.getDictionary().get(iName), iFetchPlan));
 	}
 
 	public ODatabaseGraphTx setRoot(final String iName, final OGraphVertex iNode) {
@@ -75,7 +75,7 @@ public class ODatabaseGraphTx extends ODatabaseBridgeWrapperAbstract<ODatabaseDo
 	}
 
 	public OGraphElement newInstance() {
-		return new OGraphVertex(this);
+		return registerPojo(new OGraphVertex(this));
 	}
 
 	public OGraphElement load(final OGraphElement iObject) {
@@ -88,9 +88,15 @@ public class ODatabaseGraphTx extends ODatabaseBridgeWrapperAbstract<ODatabaseDo
 		if (iRecordId == null)
 			return null;
 
-		final ODocument doc = underlying.load(iRecordId);
-		if (doc == null)
-			return null;
+		// TRY IN LOCAL CACHE
+		ODocument doc = getRecordById(iRecordId);
+		if (doc == null) {
+			// TRY TO LOAD IT
+			doc = underlying.load(iRecordId);
+			if (doc == null)
+				// NOT FOUND
+				return null;
+		}
 
 		if (doc.getClassName() == null)
 			throw new OGraphException(
@@ -123,8 +129,8 @@ public class ODatabaseGraphTx extends ODatabaseBridgeWrapperAbstract<ODatabaseDo
 		return null;
 	}
 
-	public ORecordIteratorMultiCluster<ODocument> browseVertexes() {
-		return underlying.browseClass(OGraphVertex.class.getSimpleName());
+	public OGraphVertexIterator browseVertexes() {
+		return new OGraphVertexIterator(this);
 	}
 
 	private void checkForGraphSchema() {
@@ -142,5 +148,30 @@ public class ODatabaseGraphTx extends ODatabaseBridgeWrapperAbstract<ODatabaseDo
 
 			underlying.getMetadata().getSchema().save();
 		}
+	}
+
+	@Override
+	protected ODocument pojo2Stream(final OGraphElement iPojo, ODocument record) {
+		return record;
+	}
+
+	@Override
+	protected Object stream2pojo(ODocument record, final OGraphElement iPojo, String iFetchPlan) {
+		return iPojo;
+	}
+
+	@Override
+	public OGraphElement newInstance(String iClassName) {
+		if (iClassName.equals(OGraphVertex.class.getSimpleName()))
+			return new OGraphVertex(this);
+		else if (iClassName.equals(OGraphEdge.class.getSimpleName()))
+			return new OGraphEdge(this);
+
+		throw new OGraphException("Unrecognized class: " + iClassName);
+	}
+
+	private OGraphVertex registerPojo(final OGraphVertex iVertex) {
+		registerPojo(iVertex, iVertex.getDocument());
+		return iVertex;
 	}
 }

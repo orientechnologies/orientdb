@@ -258,7 +258,7 @@ public class OClass extends ODocumentWrapperNoClass {
 	}
 
 	@OBeforeSerialization
-	public void toStream() {
+	public ODocument toStream() {
 		document.field("name", name);
 		document.field("id", id);
 		document.field("defaultClusterId", defaultClusterId);
@@ -266,6 +266,7 @@ public class OClass extends ODocumentWrapperNoClass {
 		document.field("properties", properties.values(), OType.EMBEDDEDSET);
 		if (superClass != null)
 			document.field("superClass", superClass.getName());
+		return document;
 	}
 
 	public Class<?> getJavaClass() {
