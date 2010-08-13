@@ -314,8 +314,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		checkForLoading();
 		checkForFields();
 
-		boolean knownProperty = _fieldValues.containsKey(iPropertyName);
-
+		final boolean knownProperty = _fieldValues.containsKey(iPropertyName);
 		final Object oldValue = _fieldValues.get(iPropertyName);
 
 		if (knownProperty)
@@ -408,12 +407,24 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	/**
 	 * Removes a field.
 	 */
-	public ORecordSchemaAware<Object> removeField(final String iPropertyName) {
+	public Object removeField(final String iPropertyName) {
 		checkForLoading();
 		checkForFields();
+
+		final boolean knownProperty = _fieldValues.containsKey(iPropertyName);
+		final Object oldValue = _fieldValues.get(iPropertyName);
+
+		if (knownProperty && _trackingChanges) {
+			// SAVE THE OLD VALUE IN A SEPARATE MAP
+			if (_fieldOriginalValues == null)
+				_fieldOriginalValues = new HashMap<String, Object>();
+			_fieldOriginalValues.put(iPropertyName, oldValue);
+		}
+
 		_fieldValues.remove(iPropertyName);
+
 		setDirty();
-		return this;
+		return oldValue;
 	}
 
 	/**
