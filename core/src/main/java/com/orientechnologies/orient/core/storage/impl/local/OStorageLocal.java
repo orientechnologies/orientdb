@@ -215,7 +215,8 @@ public class OStorageLocal extends OStorageAbstract {
 
 		try {
 			for (OCluster cluster : clusters)
-				cluster.close();
+				if (cluster != null)
+					cluster.close();
 			clusters = new OCluster[0];
 			clusterMap.clear();
 
