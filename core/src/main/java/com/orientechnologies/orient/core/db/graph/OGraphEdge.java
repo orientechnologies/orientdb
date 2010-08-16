@@ -56,7 +56,8 @@ public class OGraphEdge extends OGraphElement {
 		this(iDatabase);
 		in = new SoftReference<OGraphVertex>(iInNode);
 		out = new SoftReference<OGraphVertex>(iOutNode);
-		set(IN, iInNode.getDocument()).set(OUT, iOutNode.getDocument());
+		set(IN, iInNode.getDocument());
+		set(OUT, iOutNode.getDocument());
 	}
 
 	public OGraphEdge(final ODocument iDocument) {
@@ -95,8 +96,9 @@ public class OGraphEdge extends OGraphElement {
 	}
 
 	public void delete() {
-		getOut().unlink(getIn());
-		getIn().unlink(getOut());
+		getIn().outUnlink(getOut());
+		getOut().inUnlink(getIn());
+		document = null;
 	}
 
 	@Override
