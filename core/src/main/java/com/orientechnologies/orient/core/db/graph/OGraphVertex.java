@@ -21,6 +21,7 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.exception.OGraphException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.OGraphVertexOutIterator;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -98,16 +99,15 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 			throw new IllegalArgumentException("Missed the target vertex");
 
 		// CREATE THE EDGE BETWEEN ME AND THE TARGET
-		final OGraphEdge outEdge = new OGraphEdge(document.getDatabase(), this, iTargetVertex);
-		getOutEdges().add(outEdge);
-		((List<ODocument>) document.field(FIELD_OUT_EDGES)).add(outEdge.getDocument());
+		final OGraphEdge edge = new OGraphEdge(document.getDatabase(), this, iTargetVertex);
+		getOutEdges().add(edge);
+		((List<ODocument>) document.field(FIELD_OUT_EDGES)).add(edge.getDocument());
 
 		// INSERT INTO THE INGOING EDGES OF TARGET
-		final OGraphEdge inEdge = new OGraphEdge(document.getDatabase(), iTargetVertex, this);
-		iTargetVertex.getInEdges().add(inEdge);
-		((List<ODocument>) iTargetVertex.getDocument().field(FIELD_IN_EDGES)).add(inEdge.getDocument());
+		iTargetVertex.getInEdges().add(edge);
+		((List<ODocument>) iTargetVertex.getDocument().field(FIELD_IN_EDGES)).add(edge.getDocument());
 
-		return outEdge;
+		return edge;
 	}
 
 	/**
@@ -117,99 +117,29 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 	 *          Target vertex where to remove the connection
 	 * @return Current vertex (useful for fluent calls)
 	 */
-	public OGraphVertex outUnlink(final OGraphVertex iTargetVertex) {
+	public OGraphVertex unlink(final OGraphVertex iTargetVertex) {
 		if (iTargetVertex == null)
 			throw new IllegalArgumentException("Missed the target vertex");
 
 		// REMOVE THE EDGE OBJECT
-		boolean found = false;
 		if (outEdges != null && outEdges.get() != null) {
 			for (OGraphEdge e : outEdges.get())
 				if (e.getOut().equals(iTargetVertex)) {
 					outEdges.get().remove(e);
-					found = true;
 					break;
 				}
 		}
 
-//		if (!found)
-//			throw new IllegalArgumentException("Target vertex [" + iTargetVertex.getId() + "] is not linked to the current vertex");
-
-		// REMOVE THE EDGE DOCUMENT
-		List<ODocument> docs = document.field(FIELD_OUT_EDGES);
-		if (docs != null)
-			docs.remove(iTargetVertex.getDocument());
-
 		// REMOVE THE EDGE OBJECT FROM THE TARGET VERTEX
-		found = false;
 		if (iTargetVertex.inEdges != null && iTargetVertex.inEdges.get() != null) {
 			for (OGraphEdge e : iTargetVertex.inEdges.get())
 				if (e.getOut().equals(this)) {
 					iTargetVertex.inEdges.get().remove(e);
-					found = true;
 					break;
 				}
 		}
 
-//		if (!found)
-//			throw new IllegalArgumentException("Reverse vertex [" + getId() + "] is not linked to the target vertex");
-
-		// REMOVE THE EDGE DOCUMENT FROM THE TARGET VERTEX
-		docs = iTargetVertex.getDocument().field(FIELD_IN_EDGES);
-		if (docs != null)
-			docs.remove(document);
-
-		return this;
-	}
-
-	/**
-	 * Remove the link between the current vertex and the target one.
-	 * 
-	 * @param iTargetVertex
-	 *          Target vertex where to remove the connection
-	 * @return Current vertex (useful for fluent calls)
-	 */
-	public OGraphVertex inUnlink(final OGraphVertex iTargetVertex) {
-		if (iTargetVertex == null)
-			throw new IllegalArgumentException("Missed the target vertex");
-
-		// REMOVE THE EDGE OBJECT
-		boolean found = false;
-		if (inEdges != null && inEdges.get() != null) {
-			for (OGraphEdge e : inEdges.get())
-				if (e.getOut().equals(iTargetVertex)) {
-					inEdges.get().remove(e);
-					found = true;
-					break;
-				}
-		}
-
-//		if (!found)
-//			throw new IllegalArgumentException("Target vertex [" + iTargetVertex.getId() + "] is not linked to the current vertex");
-
-		// REMOVE THE EDGE DOCUMENT
-		List<ODocument> docs = document.field(FIELD_IN_EDGES);
-		if (docs != null)
-			docs.remove(iTargetVertex.getDocument());
-
-		// REMOVE THE EDGE OBJECT FROM THE TARGET VERTEX
-		found = false;
-		if (iTargetVertex.outEdges != null && iTargetVertex.outEdges.get() != null) {
-			for (OGraphEdge e : iTargetVertex.outEdges.get())
-				if (e.getIn().equals(this)) {
-					iTargetVertex.outEdges.get().remove(e);
-					found = true;
-					break;
-				}
-		}
-
-//		if (!found)
-//			throw new IllegalArgumentException("Reverse vertex [" + getId() + "] is not linked to the target vertex");
-
-		// REMOVE THE EDGE DOCUMENT FROM THE TARGET VERTEX
-		docs = iTargetVertex.getDocument().field(FIELD_OUT_EDGES);
-		if (docs != null)
-			docs.remove(document);
+		unlink(document, iTargetVertex.getDocument());
 
 		return this;
 	}
@@ -409,20 +339,69 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 		return docs == null ? 0 : docs.size();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void delete() {
-		// DELETE ALL THE INCOMING EDGES
-		if (inEdges != null && inEdges.get() != null) {
-			while (!inEdges.get().isEmpty())
-				inEdges.get().get(0).delete();
-		}
+		// DELETE ALL THE IN-OUT EDGES FROM RAM
+		if (inEdges != null && inEdges.get() != null)
+			inEdges.get().clear();
+		inEdges = null;
 
-		// DELETE ALL THE OUGOING EDGES
-		if (outEdges != null && outEdges.get() != null) {
-			while (!outEdges.get().isEmpty())
-				outEdges.get().get(0).delete();
-		}
+		if (outEdges != null && outEdges.get() != null)
+			outEdges.get().clear();
+		outEdges = null;
+
+		List<ODocument> docs = (List<ODocument>) document.field(FIELD_IN_EDGES);
+		if (docs != null)
+			while (!docs.isEmpty())
+				OGraphEdge.delete(docs.get(0));
+
+		docs = (List<ODocument>) document.field(FIELD_OUT_EDGES);
+		if (docs != null)
+			while (!docs.isEmpty())
+				OGraphEdge.delete(docs.get(0));
 
 		document.delete();
+		document = null;
+	}
+
+	public static void unlink(final ODocument iSourceVertex, final ODocument iTargetVertex) {
+		if (iTargetVertex == null)
+			throw new IllegalArgumentException("Missed the target vertex");
+
+		// REMOVE THE EDGE DOCUMENT
+		ODocument edge = null;
+		List<ODocument> docs = iSourceVertex.field(FIELD_OUT_EDGES);
+		if (docs != null) {
+			for (ODocument d : docs)
+				if (d.field(OGraphEdge.IN).equals(iTargetVertex)) {
+					docs.remove(d);
+					edge = d;
+					break;
+				}
+		}
+
+		if (edge == null)
+			throw new OGraphException("Edge not found between the ougoing edges");
+
+		iSourceVertex.setDirty();
+		iSourceVertex.save();
+
+		docs = iTargetVertex.field(FIELD_IN_EDGES);
+
+		// REMOVE THE EDGE DOCUMENT FROM THE TARGET VERTEX
+		if (docs != null) {
+			for (ODocument d : docs)
+				if (d.field(OGraphEdge.IN).equals(iTargetVertex)) {
+					docs.remove(d);
+					edge = d;
+					break;
+				}
+		}
+
+		iTargetVertex.setDirty();
+		iTargetVertex.save();
+
+		edge.delete();
 	}
 }

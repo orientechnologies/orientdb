@@ -91,7 +91,7 @@ public class GraphTestFixedDensity {
 		Assert.assertEquals(((Number) iNode.get("id")).intValue(), ++nodeReadCounter);
 
 		for (OGraphEdge edge : iNode.getOutEdges()) {
-			readSubNodes(edge.getOut());
+			readSubNodes(edge.getIn());
 		}
 	}
 

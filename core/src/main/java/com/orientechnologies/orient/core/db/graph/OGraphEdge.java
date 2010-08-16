@@ -49,10 +49,10 @@ public class OGraphEdge extends OGraphElement {
 	}
 
 	public OGraphEdge(final ODatabaseGraphTx iDatabase, final OGraphVertex iInNode, final OGraphVertex iOutNode) {
-		this((ODatabaseRecord<?>) iDatabase.getUnderlying(), iInNode, iOutNode);
+		this((ODatabaseRecord<?>) iDatabase.getUnderlying(), iOutNode, iInNode);
 	}
 
-	public OGraphEdge(final ODatabaseRecord<?> iDatabase, final OGraphVertex iInNode, final OGraphVertex iOutNode) {
+	public OGraphEdge(final ODatabaseRecord<?> iDatabase, final OGraphVertex iOutNode, final OGraphVertex iInNode) {
 		this(iDatabase);
 		in = new SoftReference<OGraphVertex>(iInNode);
 		out = new SoftReference<OGraphVertex>(iOutNode);
@@ -96,39 +96,14 @@ public class OGraphEdge extends OGraphElement {
 	}
 
 	public void delete() {
-		getIn().outUnlink(getOut());
-		getOut().inUnlink(getIn());
+		getOut().unlink(getIn());
 		document = null;
 	}
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + ((in == null || in.get() == null) ? 0 : in.get().hashCode());
-		result = prime * result + ((out == null || out.get() == null) ? 0 : out.get().hashCode());
-		return result;
+	public static void delete(final ODocument iEdge) {
+		final ODocument out = (ODocument) iEdge.field(OUT);
+		final ODocument in = (ODocument) iEdge.field(IN);
+		OGraphVertex.unlink(out, in);
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (!super.equals(obj))
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		final OGraphEdge other = (OGraphEdge) obj;
-		if (in == null || in.get() == null) {
-			if (other.in != null || other.in.get() == null)
-				return false;
-		} else if (!in.equals(other.in))
-			return false;
-		if (out == null || out.get() == null) {
-			if (other.out != null || other.out.get() == null)
-				return false;
-		} else if (!out.get().equals(other.out.get()))
-			return false;
-		return true;
-	}
 }
