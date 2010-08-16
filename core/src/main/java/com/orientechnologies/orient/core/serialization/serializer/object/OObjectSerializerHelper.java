@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.db.object.OLazyObjectSet;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.id.fetch.OFetchListener;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -318,7 +319,9 @@ public class OObjectSerializerHelper {
 				if (fieldClass != null) {
 					// RECOGNIZED TYPE
 					iFieldValue = iObj2RecHandler.getRecordByUserObject(iFieldValue, false);
-				}
+				} else
+					throw new OSerializationException("Linked type [" + iFieldValue.getClass() + ":" + iFieldValue
+							+ "] can't be serialized because is not part of registered entities");
 			}
 		}
 		return iFieldValue;

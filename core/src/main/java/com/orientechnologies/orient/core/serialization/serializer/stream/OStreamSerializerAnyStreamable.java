@@ -62,10 +62,11 @@ public class OStreamSerializerAnyStreamable implements OStreamSerializer {
 		if (iObject == null)
 			return null;
 
-		OSerializableStream stream = (OSerializableStream) iObject;
-
 		if (!(iObject instanceof OSerializableStream))
-			throw new OSerializationException("Can't serialize the object since it's not implements the OSerializableStream interface");
+			throw new OSerializationException("Can't serialize the object [" + iObject.getClass() + ":" + iObject
+					+ "] since it not implements the OSerializableStream interface");
+
+		OSerializableStream stream = (OSerializableStream) iObject;
 
 		byte[] className = OBinaryProtocol.string2bytes(iObject.getClass().getName());
 		byte[] objectContent = stream.toStream();
