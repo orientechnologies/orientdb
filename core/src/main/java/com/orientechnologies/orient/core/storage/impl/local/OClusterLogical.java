@@ -195,7 +195,7 @@ public class OClusterLogical implements OCluster {
 	}
 
 	public long getLastEntryPosition() {
-		return total.dataPosition + 1;
+		return total.dataPosition;
 	}
 
 	public int getId() {

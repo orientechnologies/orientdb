@@ -244,7 +244,7 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 		try {
 			acquireSharedLock();
 
-			return getFilledUpTo() / RECORD_SIZE;
+			return getFilledUpTo() / RECORD_SIZE - 1;
 
 		} finally {
 			releaseSharedLock();

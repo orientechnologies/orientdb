@@ -144,8 +144,8 @@ public class OConsoleDatabaseCompare extends OConsoleDatabaseImpExpAbstract {
 
 			long clusterMax = Math.max(db1Max, db2Max);
 			for (int i = 0; i < clusterMax; ++i) {
-				buffer1 = i < db1Max ? storage1.readRecord(null, 0, clusterId, i, null) : null;
-				buffer2 = i < db2Max ? storage2.readRecord(null, 0, clusterId, i, null) : null;
+				buffer1 = i <= db1Max ? storage1.readRecord(null, 0, clusterId, i, null) : null;
+				buffer2 = i <= db2Max ? storage2.readRecord(null, 0, clusterId, i, null) : null;
 
 				if (buffer1 == null && buffer2 == null)
 					// BOTH RECORD NULL, OK

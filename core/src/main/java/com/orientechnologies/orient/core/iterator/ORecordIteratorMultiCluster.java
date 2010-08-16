@@ -75,9 +75,9 @@ public class ORecordIteratorMultiCluster<REC extends ORecordInternal<?>> extends
 			return true;
 
 		if (liveUpdated)
-			return currentClusterPosition < database.getStorage().getClusterLastEntryPosition(lastClusterId) - 1;
+			return currentClusterPosition < database.getStorage().getClusterLastEntryPosition(lastClusterId);
 
-		return currentClusterPosition < lastClusterPosition - 1;
+		return currentClusterPosition < lastClusterPosition;
 	}
 
 	/**
@@ -156,7 +156,7 @@ public class ORecordIteratorMultiCluster<REC extends ORecordInternal<?>> extends
 	@Override
 	public ORecordIterator<REC> last() {
 		currentClusterIdx = clusterIds.length - 1;
-		currentClusterPosition = liveUpdated ? database.countClusterElements(clusterIds[currentClusterIdx]) : lastClusterPosition;
+		currentClusterPosition = liveUpdated ? database.countClusterElements(clusterIds[currentClusterIdx]) : lastClusterPosition + 1;
 		return this;
 	}
 
@@ -192,7 +192,7 @@ public class ORecordIteratorMultiCluster<REC extends ORecordInternal<?>> extends
 		currentClusterPosition += iMovement;
 
 		iRecord = loadRecord(iRecord);
-		
+
 		if (iRecord != null) {
 			browsedRecords++;
 			return iRecord;

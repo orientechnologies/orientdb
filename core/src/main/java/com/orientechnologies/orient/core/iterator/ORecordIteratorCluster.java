@@ -66,7 +66,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 		if (browsedRecords >= totalAvailableRecords)
 			return false;
 
-		return currentClusterPosition < getRangeTo() - 1;
+		return currentClusterPosition < getRangeTo();
 	}
 
 	/**
@@ -165,9 +165,9 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 	 */
 	public long getRangeTo() {
 		if (!liveUpdated)
-			return lastClusterPosition;
+			return lastClusterPosition + 1;
 
-		final long limit = database.getStorage().getClusterLastEntryPosition(currentClusterId);
+		final long limit = database.getStorage().getClusterLastEntryPosition(currentClusterId) + 1;
 		if (rangeTo > -1)
 			return Math.min(rangeTo, limit);
 		return limit;

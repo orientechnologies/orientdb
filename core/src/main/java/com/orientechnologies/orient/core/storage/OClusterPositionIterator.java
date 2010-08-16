@@ -29,7 +29,7 @@ public class OClusterPositionIterator implements Iterator<Long> {
 	}
 
 	public boolean hasNext() {
-		return current < max;
+		return current <= max;
 	}
 
 	public Long next() {

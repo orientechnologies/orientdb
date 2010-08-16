@@ -462,10 +462,10 @@ public class OConsoleDatabaseImport extends OConsoleDatabaseImpExpAbstract {
 
 		String rid = record.getIdentity().toString();
 
-		long lastPos = database.getStorage().getClusterLastEntryPosition(record.getIdentity().getClusterId());
+		long nextAvailablePos = database.getStorage().getClusterLastEntryPosition(record.getIdentity().getClusterId()) + 1;
 
 		// SAVE THE RECORD
-		if (record.getIdentity().getClusterPosition() < lastPos) {
+		if (record.getIdentity().getClusterPosition() < nextAvailablePos) {
 			// REWRITE PREVIOUS RECORD
 			if (record instanceof ODocument)
 				record.save();
@@ -474,9 +474,9 @@ public class OConsoleDatabaseImport extends OConsoleDatabaseImpExpAbstract {
 		} else {
 			String clusterName = database.getClusterNameById(record.getIdentity().getClusterId());
 
-			if (record.getIdentity().getClusterPosition() > lastPos) {
+			if (record.getIdentity().getClusterPosition() > nextAvailablePos) {
 				// CREATE HOLES
-				int holes = (int) (record.getIdentity().getClusterPosition() - lastPos);
+				int holes = (int) (record.getIdentity().getClusterPosition() - nextAvailablePos);
 
 				ODocument tempRecord = new ODocument(database);
 				for (int i = 0; i < holes; ++i) {
