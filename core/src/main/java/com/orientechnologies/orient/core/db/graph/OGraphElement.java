@@ -31,18 +31,21 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
  * @author Luca Garulli
  */
 public abstract class OGraphElement extends ODocumentWrapper {
-	public OGraphElement(final ODatabaseRecord<?> iDatabase, final ORID iRID) {
-		this(new ODocument(iDatabase, iRID));
+	protected ODatabaseGraphTx	database;
+
+	public OGraphElement(final ODatabaseGraphTx iDatabase, final ORID iRID) {
+		this(iDatabase, new ODocument((ODatabaseRecord<?>) iDatabase.getUnderlying(), iRID));
 		document.setTrackingChanges(false);
 	}
 
-	public OGraphElement(final ODatabaseRecord<?> iDatabase, final String iClassName) {
-		this(new ODocument(iDatabase, iClassName));
+	public OGraphElement(final ODatabaseGraphTx iDatabase, final String iClassName) {
+		this(iDatabase, new ODocument((ODatabaseRecord<?>) iDatabase.getUnderlying(), iClassName));
 		document.setTrackingChanges(false);
 	}
 
-	public OGraphElement(final ODocument iDocument) {
+	public OGraphElement(final ODatabaseGraphTx iDatabase, final ODocument iDocument) {
 		super(iDocument);
+		database = iDatabase;
 		document.setTrackingChanges(false);
 	}
 

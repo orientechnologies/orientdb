@@ -58,15 +58,15 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<ODocument, OGraphEle
 	}
 
 	public OGraphVertex createVertex() {
-		return registerPojo(new OGraphVertex(this));
+		return new OGraphVertex(this);
 	}
 
 	public OGraphVertex getRoot(final String iName) {
-		return registerPojo(new OGraphVertex(underlying.getDictionary().get(iName)));
+		return registerPojo(new OGraphVertex(this, underlying.getDictionary().get(iName)));
 	}
 
 	public OGraphVertex getRoot(final String iName, final String iFetchPlan) {
-		return registerPojo(new OGraphVertex(underlying.getDictionary().get(iName), iFetchPlan));
+		return registerPojo(new OGraphVertex(this, underlying.getDictionary().get(iName), iFetchPlan));
 	}
 
 	public ODatabaseGraphTx setRoot(final String iName, final OGraphVertex iNode) {
@@ -75,7 +75,7 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<ODocument, OGraphEle
 	}
 
 	public OGraphElement newInstance() {
-		return registerPojo(new OGraphVertex(this));
+		return new OGraphVertex(this);
 	}
 
 	public OGraphElement load(final OGraphElement iObject) {
@@ -103,9 +103,9 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<ODocument, OGraphEle
 					"The document loaded has no class, while it should be a OGraphVertex, OGraphEdge or any subclass of its");
 
 		if (doc.getClassName().equals(OGraphVertex.class.getSimpleName()))
-			return new OGraphVertex(doc);
+			return new OGraphVertex(this, doc);
 		else if (doc.getClassName().equals(OGraphEdge.class.getSimpleName()))
-			return new OGraphEdge(doc);
+			return new OGraphEdge(this, doc);
 		else
 			throw new IllegalArgumentException("RecordID is not of supported type. Class=" + doc.getClassName());
 	}
@@ -122,6 +122,7 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<ODocument, OGraphEle
 
 	public ODatabaseComplex<OGraphElement> delete(final OGraphElement iObject) {
 		iObject.getDocument().delete();
+		unregisterPojo(iObject, iObject.getDocument());
 		return this;
 	}
 

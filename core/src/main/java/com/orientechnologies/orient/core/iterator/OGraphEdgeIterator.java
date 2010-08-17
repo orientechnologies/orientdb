@@ -37,7 +37,7 @@ public class OGraphEdgeIterator extends OGraphElementIterator<OGraphEdge> {
 		if (record == null)
 			return null;
 
-		return new OGraphEdge(record);
+		return new OGraphEdge(database, record);
 	}
 
 }

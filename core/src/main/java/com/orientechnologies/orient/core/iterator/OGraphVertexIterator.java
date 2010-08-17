@@ -37,7 +37,6 @@ public class OGraphVertexIterator extends OGraphElementIterator<OGraphVertex> {
 		if (record == null)
 			return null;
 
-		return new OGraphVertex(record);
+		return new OGraphVertex(database, record);
 	}
-
 }
