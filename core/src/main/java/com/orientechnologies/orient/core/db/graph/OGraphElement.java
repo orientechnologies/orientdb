@@ -72,4 +72,8 @@ public abstract class OGraphElement extends ODocumentWrapper {
 	public Set<String> propertyNames() {
 		return document.fieldNames();
 	}
+
+	public void setDocument(final ODocument iDocument) {
+		document = iDocument;
+	}
 }
