@@ -261,6 +261,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 	}
 
 	public OMetadata getMetadata() {
+		checkOpeness();
 		return metadata;
 	}
 
