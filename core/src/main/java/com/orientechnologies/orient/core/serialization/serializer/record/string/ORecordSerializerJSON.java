@@ -17,6 +17,8 @@ package com.orientechnologies.orient.core.serialization.serializer.record.string
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -46,11 +48,13 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 	public static final String								NAME							= "json";
 	public static final ORecordSerializerJSON	INSTANCE					= new ORecordSerializerJSON();
-
 	public static final String								ATTRIBUTE_ID			= "@rid";
 	public static final String								ATTRIBUTE_VERSION	= "@version";
 	public static final String								ATTRIBUTE_TYPE		= "@type";
 	public static final String								ATTRIBUTE_CLASS		= "@class";
+	public static final String								DEF_DATE_FORMAT		= "yyyy-MM-dd hh:mm:ss";
+
+	private SimpleDateFormat									dateFormat				= new SimpleDateFormat(DEF_DATE_FORMAT);
 
 	@Override
 	public ORecordInternal<?> fromString(final ODatabaseRecord<?> iDatabase, final String iSource) {
@@ -211,8 +215,16 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				type = OType.LINK;
 			else if (iFieldValueAsString.startsWith("{") && iFieldValueAsString.endsWith("}"))
 				type = OType.EMBEDDED;
-			else
+			else {
+				if (iFieldValueAsString.length() == DEF_DATE_FORMAT.length())
+					// TRY TO PARSE AS DATE
+					try {
+						return dateFormat.parseObject(iFieldValueAsString);
+					} catch (Exception e) {
+					}
+
 				type = OType.STRING;
+			}
 
 		if (type != null)
 			switch (type) {
@@ -231,6 +243,14 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 			case EMBEDDED:
 				return fromString(iRecord.getDatabase(), iFieldValueAsString);
+
+			case DATE:
+				// TRY TO PARSE AS DATE
+				try {
+					return dateFormat.parseObject(iFieldValueAsString);
+				} catch (ParseException e) {
+					throw new OSerializationException("Unable to unmarshall date: " + iFieldValueAsString, e);
+				}
 
 			default:
 				return OStringSerializerHelper.fieldTypeFromStream(type, iFieldValue);

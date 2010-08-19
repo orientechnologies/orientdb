@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.serialization.serializer;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.Array;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
@@ -27,6 +28,7 @@ import java.util.Map.Entry;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 
 @SuppressWarnings("unchecked")
 public class OJSONWriter {
@@ -143,7 +145,7 @@ public class OJSONWriter {
 	}
 
 	public static String writeValue(final Object iValue) throws IOException {
-		StringBuilder buffer = new StringBuilder();
+		final StringBuilder buffer = new StringBuilder();
 
 		if (iValue == null)
 			buffer.append("\"null\"");
@@ -158,12 +160,6 @@ public class OJSONWriter {
 			ORecord<?> linked = (ORecord<?>) iValue;
 			if (linked.getIdentity().isValid()) {
 				buffer.append("\"#");
-
-				// if (linked instanceof ODocument && ((ODocument) linked).getClassName() != null) {
-				// buffer.append(((ODocument) linked).getClassName());
-				// buffer.append('@');
-				// }
-
 				buffer.append(linked.getIdentity().toString());
 				buffer.append('\"');
 			} else {
@@ -216,7 +212,12 @@ public class OJSONWriter {
 			}
 			buffer.append('}');
 
-		} else if (iValue instanceof String || iValue instanceof Date) {
+		} else if (iValue instanceof Date) {
+			final SimpleDateFormat dateFormat = new SimpleDateFormat(ORecordSerializerJSON.DEF_DATE_FORMAT);
+			buffer.append('"');
+			buffer.append(dateFormat.format(iValue));
+			buffer.append('"');
+		} else if (iValue instanceof String) {
 			String v = iValue.toString();
 			if (v.startsWith("\""))
 				buffer.append(v);
