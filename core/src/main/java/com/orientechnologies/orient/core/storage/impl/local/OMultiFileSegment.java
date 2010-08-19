@@ -250,7 +250,7 @@ public class OMultiFileSegment extends OSegment {
 
 		if (fileNum >= files.length)
 			throw new ODatabaseException("Record position #" + iPosition + " was bound to file #" + fileNum
-					+ " that is out of limit (current=" + (files.length - 1) + ")");
+					+ " that is out of limit (files range 0-" + (files.length - 1) + ")");
 
 		final int fileRec = (int) (iPosition % fileMaxSize);
 
