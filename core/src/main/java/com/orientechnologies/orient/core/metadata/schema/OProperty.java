@@ -160,7 +160,7 @@ public class OProperty extends ODocumentWrapperNoClass {
 		// SAVE THE INDEX
 		if (index != null) {
 			index.lazySave();
-			document.field("index", index.getRecord().getIdentity());
+			document.field("index", index.getRID());
 			document.field("index-type", index.getType());
 		} else {
 			document.field("index", ORecordId.EMPTY_RECORD_ID);

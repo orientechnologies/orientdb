@@ -71,4 +71,9 @@ public class OPropertyIndexNotUnique extends OPropertyIndex {
 	public INDEX_TYPE getType() {
 		return INDEX_TYPE.NOT_UNIQUE;
 	}
+
+	@Override
+	public ORID getRID() {
+		return map.getRecord().getIdentity();
+	}
 }

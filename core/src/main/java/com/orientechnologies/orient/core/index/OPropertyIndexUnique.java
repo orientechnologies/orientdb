@@ -69,4 +69,9 @@ public class OPropertyIndexUnique extends OPropertyIndex {
 	public INDEX_TYPE getType() {
 		return INDEX_TYPE.UNIQUE;
 	}
+
+	@Override
+	public ORID getRID() {
+		return map.getRecord().getIdentity();
+	}
 }

@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -68,7 +69,11 @@ public class OFullTextIndex extends OPropertyIndex {
 			// CREATE THE PHYSICAL CLUSTER THE FIRST TIME
 			iDatabase.addPhysicalCluster(iClusterIndexName, iClusterIndexName, -1);
 
-		map = new OTreeMapDatabaseLazySave<String, List<ORecordId>>((ODatabaseRecord<?>) iDatabase.getUnderlying(), iClusterIndexName,
+		ODatabaseComplex<?> db = iDatabase;
+		while (db != null && !(db instanceof ODatabaseRecord<?>))
+			db = db.getUnderlying();
+
+		map = new OTreeMapDatabaseLazySave<String, List<ORecordId>>((ODatabaseRecord<?>) db, iClusterIndexName,
 				OStreamSerializerString.INSTANCE, OStreamSerializerListRID.INSTANCE);
 		map.lazySave();
 
@@ -77,6 +82,7 @@ public class OFullTextIndex extends OPropertyIndex {
 		config.field(FIELD_STOP_WORDS, iStopWords);
 		config.field(FIELD_CLUSTER_NAME, iClusterIndexName);
 		config.field(FIELD_MAP_RID, map.getRecord().getIdentity().toString());
+		config.save();
 
 		init();
 	}
@@ -188,5 +194,10 @@ public class OFullTextIndex extends OPropertyIndex {
 	private void init() {
 		ignoreChars = (String) config.field(FIELD_IGNORE_CHARS);
 		stopWords = new HashSet<String>(OStringSerializerHelper.split((String) config.field(FIELD_STOP_WORDS), ' '));
+	}
+
+	@Override
+	public ORID getRID() {
+		return config.getIdentity();
 	}
 }

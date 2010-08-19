@@ -87,6 +87,8 @@ public abstract class OPropertyIndex implements Iterable<Entry<String, List<ORec
 
 	public abstract INDEX_TYPE getType();
 
+	public abstract ORID getRID();
+
 	@SuppressWarnings("unchecked")
 	public List<ORecordId> get(Object iKey) {
 		final List<ORecordId> values = map.get(iKey);
