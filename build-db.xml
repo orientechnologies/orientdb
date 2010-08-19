@@ -142,8 +142,22 @@
     
     <copy todir="${db.release}/benchmarks" flatten="true">
       <fileset dir="." includes="server/benchmarks/*"/>
-    </copy>    
+    </copy>
 	</target>
+	
+	<target name="md5" depends="init">
+		<checksum algorithm="MD5" fileext=".md5">
+      <fileset dir="${db.release}/lib">
+        <include name="*.jar"/>
+      </fileset>
+    </checksum>
+    
+		<checksum algorithm="SHA" fileext=".sha1">
+      <fileset dir="${db.release}/lib">
+        <include name="*.jar"/>
+      </fileset>
+    </checksum>
+  </target>
 	
 	<target name="test" depends="install">
     <subant target="test">
