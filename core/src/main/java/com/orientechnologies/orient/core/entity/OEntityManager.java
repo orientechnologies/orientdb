@@ -31,7 +31,8 @@ public class OEntityManager {
 	private Map<String, Class<?>>	entityClasses	= new HashMap<String, Class<?>>();
 
 	public OEntityManager() {
-		OLogManager.instance().warn(this, "Registering entity manager");
+		OLogManager.instance().debug(this, "Registering entity manager");
+		
 		registerEntityClass(OUser.class);
 		registerEntityClass(ORole.class);
 	}
