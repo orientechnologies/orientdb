@@ -7,10 +7,10 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.query.nativ.ONativeSynchQuery;
-import com.orientechnologies.orient.core.query.nativ.OQueryContextNativeSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
@@ -27,17 +27,17 @@ public class SecMaskTest {
 			create();
 		}
 
-//		insert();
+		insert();
 		query();
 	}
 
 	public static void insert() {
 		database.declareIntent(new OIntentMassiveInsert());
 		database.begin(TXTYPE.NOTX);
-		long ndoc = 5000000;
+		long ndoc = 50000000;
 		ODocument doc = new ODocument();
 
-		System.out.println("Inserting " + ndoc + "docs...");
+		System.out.println("Inserting " + ndoc + " docs...");
 
 		long start = System.nanoTime();
 		long block = System.nanoTime();
@@ -61,19 +61,26 @@ public class SecMaskTest {
 		}
 		database.commit();
 
-		System.out.println("Insertion done");
+		System.out.println("Insertion done, now indexing ids...");
+
+		// CREATE THE INDEX AT THE END
+		database.getMetadata().getSchema().getClass("Account").getProperty("id").createIndex(INDEX_TYPE.UNIQUE);
+
+		System.out.println("Indexing done");
 	}
 
 	public static void query() {
 		System.out.println("Querying docs...");
 
-		List<ODocument> result = database.query(new ONativeSynchQuery<ODocument, OQueryContextNativeSchema<ODocument>>(database,
-				"Account", new OQueryContextNativeSchema<ODocument>()) {
-			@Override
-			public boolean filter(OQueryContextNativeSchema<ODocument> iRecord) {
-				return iRecord.field("id").eq(1000l).field("name").go();
-			}
-		});
+		// List<ODocument> result = database.query(new ONativeSynchQuery<ODocument, OQueryContextNativeSchema<ODocument>>(database,
+		// "Account", new OQueryContextNativeSchema<ODocument>()) {
+		// @Override
+		// public boolean filter(OQueryContextNativeSchema<ODocument> iRecord) {
+		// return iRecord.field("id").eq(1000l).field("name").go();
+		// }
+		// });
+
+		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("SELECT FROM Account WHERE id = " + 1000l));
 
 		System.out.println("Query done");
 
