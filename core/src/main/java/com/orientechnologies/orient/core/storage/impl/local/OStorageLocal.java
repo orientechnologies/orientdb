@@ -122,17 +122,33 @@ public class OStorageLocal extends OStorageAbstract {
 				throw new OStorageException("Can't open storage because it not exists. Storage path: " + url);
 
 			// REGISTER DATA SEGMENT
-			for (OStorageDataConfiguration data : configuration.dataSegments) {
-				pos = registerDataSegment(data);
-				if (pos > -1)
+			OStorageDataConfiguration dataConfig;
+			for (int i = 0; i < configuration.dataSegments.size(); ++i) {
+				dataConfig = configuration.dataSegments.get(i);
+
+				pos = registerDataSegment(dataConfig);
+				if (pos == -1) {
+					// CLOSE AND REOPEN TO BE SURE ALL THE FILE SEGMENTS ARE OPENED
+					dataSegments[i].close();
+					dataSegments[i] = new ODataLocal(this, dataConfig, pos);
+					dataSegments[i].open();
+				} else
 					dataSegments[pos].open();
 			}
 
 			// REGISTER CLUSTER
-			for (OStorageClusterConfiguration clusterConfig : configuration.clusters) {
+			OStorageClusterConfiguration clusterConfig;
+			for (int i = 0; i < configuration.clusters.size(); ++i) {
+				clusterConfig = configuration.clusters.get(i);
+
 				pos = createClusterFromConfig(clusterConfig);
 
-				if (pos > -1) {
+				if (pos == -1) {
+					// CLOSE AND REOPEN TO BE SURE ALL THE FILE SEGMENTS ARE OPENED
+					clusters[i].close();
+					clusters[i] = new OClusterLocal(this, (OStoragePhysicalClusterConfiguration) clusterConfig);
+					clusters[i].open();
+				} else {
 					if (clusterConfig.getName().equals(OStorage.CLUSTER_DEFAULT_NAME))
 						defaultClusterId = pos;
 
