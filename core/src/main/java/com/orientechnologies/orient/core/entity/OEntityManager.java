@@ -15,27 +15,23 @@
  */
 package com.orientechnologies.orient.core.entity;
 
-import java.io.File;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 
 public class OEntityManager {
-	private static final String		CLASS_EXTENSION	= ".class";
-	private static final String		CLASS_SEPARATOR	= ".";
-
-	private Map<String, Class<?>>	entityClasses		= new HashMap<String, Class<?>>();
+	private Map<String, Class<?>>	entityClasses	= new HashMap<String, Class<?>>();
 
 	public OEntityManager() {
+		OLogManager.instance().warn(this, "Registering entity manager");
 		registerEntityClass(OUser.class);
 		registerEntityClass(ORole.class);
 	}
@@ -86,58 +82,22 @@ public class OEntityManager {
 	public void registerEntityClasses(final String iPackageName) {
 		OLogManager.instance().debug(this, "Discovering entity classes inside package: %s", iPackageName);
 
+		List<Class<?>> classes = null;
 		try {
-			final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-			assert classLoader != null;
-			final String path = iPackageName.replace('.', '/');
-			Enumeration<URL> resources;
-			resources = classLoader.getResources(path);
-			final List<File> dirs = new ArrayList<File>();
-			while (resources.hasMoreElements()) {
-				URL resource = resources.nextElement();
-				dirs.add(new File(resource.getFile()));
-			}
-			for (File directory : dirs) {
-				entityClasses.putAll(findClasses(directory, iPackageName));
-			}
+			classes = OReflectionHelper.getClassesForPackage(iPackageName);
+		} catch (ClassNotFoundException e) {
+			throw new OException(e);
+		}
+		for (Class<?> c : classes) {
+			String className = c.getSimpleName();
+			entityClasses.put(className, c);
+		}
 
-			if (OLogManager.instance().isDebugEnabled())
-				for (Entry<String, Class<?>> entry : entityClasses.entrySet()) {
-					OLogManager.instance().debug(this, "Loaded entity class '%s' from: %s", entry.getKey(), entry.getValue());
-				}
-
-		} catch (Exception e) {
-			e.printStackTrace();
+		if (OLogManager.instance().isDebugEnabled()) {
+			for (Entry<String, Class<?>> entry : entityClasses.entrySet()) {
+				OLogManager.instance().debug(this, "Loaded entity class '%s' from: %s", entry.getKey(), entry.getValue());
+			}
 		}
 	}
 
-	/**
-	 * Recursive method used to find all classes in a given directory and subdirs.
-	 * 
-	 * @param directory
-	 *          The base directory
-	 * @param packageName
-	 *          The package name for classes found inside the base directory
-	 * @return The classes
-	 * @throws ClassNotFoundException
-	 */
-	private Map<String, Class<?>> findClasses(final File directory, final String packageName) throws ClassNotFoundException {
-		final Map<String, Class<?>> classes = new HashMap<String, Class<?>>();
-		if (!directory.exists())
-			return classes;
-
-		String className;
-		final File[] files = directory.listFiles();
-		for (File file : files) {
-			if (file.isDirectory()) {
-				if (file.getName().contains(CLASS_SEPARATOR))
-					continue;
-				classes.putAll(findClasses(file, packageName + CLASS_SEPARATOR + file.getName()));
-			} else if (file.getName().endsWith(CLASS_EXTENSION)) {
-				className = file.getName().substring(0, file.getName().length() - CLASS_EXTENSION.length());
-				classes.put(className, Class.forName(packageName + '.' + className));
-			}
-		}
-		return classes;
-	}
 }
