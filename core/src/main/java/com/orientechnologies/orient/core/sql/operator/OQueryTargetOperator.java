@@ -17,28 +17,29 @@ package com.orientechnologies.orient.core.sql.operator;
 
 import java.util.List;
 
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
 /**
- * Query Operators. Remember to handle the operator in OQueryItemCondition.
+ * Operator that filters the target records.
  * 
  * @author Luca Garulli
  * 
  */
-public abstract class OQueryOperator {
+public abstract class OQueryTargetOperator {
 	public String		keyword;
 	public int			precedence;
 	public boolean	logical;
 
-	protected OQueryOperator(String iKeyword, int iPrecedence, boolean iLogical) {
+	protected OQueryTargetOperator(String iKeyword, int iPrecedence, boolean iLogical) {
 		keyword = iKeyword;
 		precedence = iPrecedence;
 		logical = iLogical;
 	}
 
-	public abstract boolean evaluate(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-			final Object iRight);
+	public abstract List<ORecordId> evaluate(final ODatabaseComplex<?> iRecord, final List<String> iTargetClasses,
+			final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight);
 
 	@Override
 	public String toString() {
@@ -51,7 +52,7 @@ public abstract class OQueryOperator {
 	 * @param iParams
 	 * @return
 	 */
-	public OQueryOperator configure(final List<String> iParams) {
+	public OQueryTargetOperator configure(final List<String> iParams) {
 		return this;
 	}
 

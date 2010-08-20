@@ -16,8 +16,12 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
+import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -25,9 +29,11 @@ import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 @Test(groups = { "index" }, sequential = true)
 public class FullTextIndexTest {
+	private static final int		TOT		= 1000;
 	private ODatabaseDocumentTx	database;
 	private static final String	TEXT	= "Jay Glenn Miner (May 31, 1932 – June 20, 1994), was a famous integrated circuit designer, known primarily for his "
 																				+ "work in multimedia chips and as the 'father of the Amiga'[1]. He received a BS in EECS from "
@@ -83,7 +89,7 @@ public class FullTextIndexTest {
 		StringBuilder text = new StringBuilder();
 		Random random = new Random();
 
-		for (int i = 0; i < 1000; ++i) {
+		for (int i = 0; i < TOT; ++i) {
 			doc.reset();
 			doc.setClassName("Whiz");
 			doc.field("id", i);
@@ -100,6 +106,23 @@ public class FullTextIndexTest {
 
 			doc.save();
 		}
+
+		database.close();
+	}
+
+	@Test
+	public void testFullTextSearch() {
+		database.open("admin", "admin");
+
+		Set<ODocument> allDocs = new HashSet<ODocument>();
+
+		for (int i = 0; i < TOT; ++i) {
+			List<ODocument> docs = database.query(new OSQLSynchQuery<Object>("SELECT FROM Whiz WHERE text containstext '" + words[i]
+					+ "'"));
+			allDocs.addAll(docs);
+		}
+
+		Assert.assertEquals(allDocs.size(), TOT);
 
 		database.close();
 	}

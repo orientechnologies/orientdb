@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.sql.operator;
 
 import java.util.Map;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
 /**
@@ -34,8 +34,8 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
 
 	@Override
 	@SuppressWarnings("unchecked")
-	protected boolean evaluateExpression(final ODatabaseRecord<?> iDatabase, final OSQLFilterCondition iCondition,
-			final Object iLeft, final Object iRight) {
+	protected boolean evaluateExpression(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
+			final Object iRight) {
 
 		if (iLeft instanceof Map<?, ?>) {
 

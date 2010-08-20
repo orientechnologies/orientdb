@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorAnd;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContains;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsAll;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsKey;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsText;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsValue;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
@@ -45,6 +44,8 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNot;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNotEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorOr;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorTraverse;
+import com.orientechnologies.orient.core.sql.operator.OQueryTargetOperator;
+import com.orientechnologies.orient.core.sql.operator.OQueryTargetOperatorContainsText;
 
 /**
  * SQL Helper class
@@ -53,17 +54,18 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorTraverse;
  * 
  */
 public class OSQLHelper {
-	public static final String			NAME							= "sql";
+	public static final String						NAME							= "sql";
 
-	public static final String			VALUE_NOT_PARSED	= "_NOT_PARSED_";
-	public static final String			NOT_NULL					= "_NOT_NULL_";
+	public static final String						VALUE_NOT_PARSED	= "_NOT_PARSED_";
+	public static final String						NOT_NULL					= "_NOT_NULL_";
 
-	public static OQueryOperator[]	OPERATORS					= { new OQueryOperatorAnd(), new OQueryOperatorOr(),
+	public static OQueryOperator[]				RECORD_OPERATORS	= { new OQueryOperatorAnd(), new OQueryOperatorOr(),
 			new OQueryOperatorNotEquals(), new OQueryOperatorNot(), new OQueryOperatorEquals(), new OQueryOperatorMinorEquals(),
 			new OQueryOperatorMinor(), new OQueryOperatorMajorEquals(), new OQueryOperatorContainsAll(), new OQueryOperatorMajor(),
 			new OQueryOperatorLike(), new OQueryOperatorIs(), new OQueryOperatorIn(), new OQueryOperatorContainsKey(),
-			new OQueryOperatorContainsValue(), new OQueryOperatorContainsText(), new OQueryOperatorContains(),
-			new OQueryOperatorTraverse()									};
+			new OQueryOperatorContainsValue(), new OQueryOperatorContains(), new OQueryOperatorTraverse() };
+
+	public static OQueryTargetOperator[]	TARGET_OPERATORS	= { new OQueryTargetOperatorContainsText() };
 
 	public static int nextWord(final String iText, final String iTextUpperCase, int ioCurrentPosition, final StringBuilder ioWord,
 			final boolean iForceUpperCase) {
@@ -89,14 +91,18 @@ public class OSQLHelper {
 		return ioCurrentPosition;
 	}
 
-	public static OQueryOperator[] getOperators() {
-		return OPERATORS;
+	public static OQueryOperator[] getRecordOperators() {
+		return RECORD_OPERATORS;
+	}
+
+	public static OQueryTargetOperator[] getTargetOperators() {
+		return TARGET_OPERATORS;
 	}
 
 	public static void registerOperator(final OQueryOperator iOperator) {
-		OQueryOperator[] ops = new OQueryOperator[OPERATORS.length + 1];
-		System.arraycopy(OPERATORS, 0, ops, 0, OPERATORS.length);
-		OPERATORS = ops;
+		OQueryOperator[] ops = new OQueryOperator[RECORD_OPERATORS.length + 1];
+		System.arraycopy(RECORD_OPERATORS, 0, ops, 0, RECORD_OPERATORS.length);
+		RECORD_OPERATORS = ops;
 	}
 
 	/**

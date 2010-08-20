@@ -174,7 +174,7 @@ public class OSQLFilter extends OCommandToParse {
 		String word;
 		word = nextWord(true, " 0123456789'\"");
 
-		for (OQueryOperator op : OSQLHelper.getOperators()) {
+		for (OQueryOperator op : OSQLHelper.getRecordOperators()) {
 			if (word.startsWith(op.keyword)) {
 				List<String> params = null;
 
@@ -296,6 +296,8 @@ public class OSQLFilter extends OCommandToParse {
 		char stringBeginCharacter = ' ';
 		int openBraces = 0;
 		int openBraket = 0;
+		boolean escaped = false;
+		boolean escapingOn = false;
 
 		for (; currentPos < text.length(); ++currentPos) {
 			c = text.charAt(currentPos);
@@ -305,14 +307,22 @@ public class OSQLFilter extends OCommandToParse {
 				stringBeginCharacter = c;
 			} else if (stringBeginCharacter != ' ') {
 				// INSIDE TEXT
-				if (c == stringBeginCharacter) {
-					stringBeginCharacter = ' ';
+				if (c == '\\') {
+					escapingOn = true;
+					escaped = true;
+				} else {
+					if (c == stringBeginCharacter && !escapingOn) {
+						stringBeginCharacter = ' ';
 
-					if (openBraket == 0 && openBraces == 0) {
-						if (iAdvanceWhenNotFound)
-							currentPos++;
-						break;
+						if (openBraket == 0 && openBraces == 0) {
+							if (iAdvanceWhenNotFound)
+								currentPos++;
+							break;
+						}
 					}
+
+					if (escapingOn)
+						escapingOn = false;
 				}
 			} else if (c == '(') {
 				openBraces++;
@@ -336,7 +346,11 @@ public class OSQLFilter extends OCommandToParse {
 			}
 		}
 
-		return new String[] { textUpperCase.substring(begin, currentPos), text.substring(begin, currentPos) };
+		if (escaped)
+			return new String[] { OStringSerializerHelper.decode(textUpperCase.substring(begin, currentPos)),
+					OStringSerializerHelper.decode(text.substring(begin, currentPos)) };
+		else
+			return new String[] { textUpperCase.substring(begin, currentPos), text.substring(begin, currentPos) };
 	}
 
 	private String nextWord(final boolean iForceUpperCase, final String iSeparators) {

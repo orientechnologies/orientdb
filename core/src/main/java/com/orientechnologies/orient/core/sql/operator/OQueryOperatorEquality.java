@@ -15,8 +15,8 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldAll;
 
@@ -32,11 +32,11 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
 		super(iKeyword, iPrecedence, iLogical);
 	}
 
-	protected abstract boolean evaluateExpression(final ODatabaseRecord<?> iDatabase, final OSQLFilterCondition iCondition,
+	protected abstract boolean evaluateExpression(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition,
 			final Object iLeft, final Object iRight);
 
 	@Override
-	public boolean evaluate(final ODatabaseRecord<?> iDatabase, final OSQLFilterCondition iCondition, final Object iLeft,
+	public boolean evaluate(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight) {
 		if (iLeft instanceof OQueryRuntimeValueMulti) {
 			// LEFT = MULTI
@@ -48,13 +48,13 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
 			if (left.getDefinition().getName().equals(OSQLFilterItemFieldAll.NAME)) {
 				// ALL VALUES
 				for (Object v : left.values)
-					if (v == null || !evaluateExpression(iDatabase, iCondition, v, iRight))
+					if (v == null || !evaluateExpression(iRecord, iCondition, v, iRight))
 						return false;
 				return true;
 			} else {
 				// ANY VALUES
 				for (Object v : left.values)
-					if (v != null && evaluateExpression(iDatabase, iCondition, v, iRight))
+					if (v != null && evaluateExpression(iRecord, iCondition, v, iRight))
 						return true;
 				return false;
 			}
@@ -69,18 +69,18 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
 			if (right.getDefinition().getName().equals(OSQLFilterItemFieldAll.NAME)) {
 				// ALL VALUES
 				for (Object v : right.values)
-					if (v == null || !evaluateExpression(iDatabase, iCondition, iLeft, v))
+					if (v == null || !evaluateExpression(iRecord, iCondition, iLeft, v))
 						return false;
 				return true;
 			} else {
 				// ANY VALUES
 				for (Object v : right.values)
-					if (v != null && evaluateExpression(iDatabase, iCondition, iLeft, v))
+					if (v != null && evaluateExpression(iRecord, iCondition, iLeft, v))
 						return true;
 				return false;
 			}
 		} else
 			// SINGLE SIMPLE ITEM
-			return evaluateExpression(iDatabase, iCondition, iLeft, iRight);
+			return evaluateExpression(iRecord, iCondition, iLeft, iRight);
 	}
 }

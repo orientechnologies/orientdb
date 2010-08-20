@@ -461,4 +461,12 @@ public class SQLSelectTest {
 		database.close();
 	}
 
+	@Test
+	public void queryEscaping() {
+		database.open("admin", "admin");
+
+		database.query(new OSQLSynchQuery<ODocument>("select from Profile where name like '%\\'Jay%'"));
+
+		database.close();
+	}
 }

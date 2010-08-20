@@ -108,56 +108,18 @@ public class OFullTextIndex extends OPropertyIndex {
 		init();
 	}
 
+	/**
+	 * Index an entire document field by field and save the index at the end.
+	 * 
+	 * @param iDocument
+	 *          The document to index
+	 */
 	public void indexDocument(final ODocument iDocument) {
 		Object fieldValue;
-		List<ORecordId> refs;
-		final StringBuilder buffer = new StringBuilder();
-		char c;
-		boolean ignore;
 
 		for (String fieldName : iDocument.fieldNames()) {
 			fieldValue = iDocument.field(fieldName);
-
-			if (fieldValue != null) {
-				// GET ALL THE WORDS OF THE STRING
-				final List<String> words = OStringSerializerHelper.split(fieldValue.toString(), ' ');
-
-				// FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT
-				for (String word : words) {
-					buffer.setLength(0);
-
-					for (int i = 0; i < word.length(); ++i) {
-						c = word.charAt(i);
-						ignore = false;
-						for (int k = 0; k < ignoreChars.length(); ++k)
-							if (c == ignoreChars.charAt(k)) {
-								ignore = true;
-								break;
-							}
-
-						if (!ignore)
-							buffer.append(c);
-					}
-
-					word = buffer.toString();
-
-					// CHECK IF IT'S A STOP WORD
-					if (stopWords.contains(word))
-						continue;
-
-					// SEARCH FOR THE WORD
-					refs = map.get(word);
-					if (refs == null)
-						// WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
-						refs = new ArrayList<ORecordId>();
-
-					// ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
-					refs.add((ORecordId) iDocument.getIdentity());
-
-					// SAVE THE INDEX ENTRY
-					map.put(word, refs);
-				}
-			}
+			put(fieldValue, (ORecordId) iDocument.getIdentity());
 		}
 
 		try {
@@ -167,19 +129,71 @@ public class OFullTextIndex extends OPropertyIndex {
 		}
 	}
 
+	/**
+	 * Index a value and save the index.
+	 * 
+	 * @param iDocument
+	 *          The document to index
+	 */
 	public void put(final Object iKey, final ORecordId iSingleValue) {
-		List<ORecordId> values = map.get(iKey);
-		if (values == null)
-			values = new ArrayList<ORecordId>();
+		indexValue(iKey, iSingleValue);
+	}
 
-		int pos = values.indexOf(iSingleValue);
-		if (pos > -1)
-			// REPLACE IT
-			values.set(pos, iSingleValue);
-		else
-			values.add(iSingleValue);
+	/**
+	 * Split the value in single words and index each one. Save of the index is responsability of the caller.
+	 * 
+	 * @param iKey
+	 *          Value to index
+	 * @param iOwnerRecord
+	 *          ORecordId of the owner record
+	 */
+	private void indexValue(final Object iKey, final ORecordId iOwnerRecord) {
+		if (iKey == null)
+			return;
 
-		map.put(iKey.toString(), values);
+		List<ORecordId> refs;
+		final StringBuilder buffer = new StringBuilder();
+		char c;
+		boolean ignore;
+
+		// GET ALL THE WORDS OF THE STRING
+		final List<String> words = OStringSerializerHelper.split(iKey.toString(), ' ');
+
+		// FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT
+		for (String word : words) {
+			buffer.setLength(0);
+
+			for (int i = 0; i < word.length(); ++i) {
+				c = word.charAt(i);
+				ignore = false;
+				for (int k = 0; k < ignoreChars.length(); ++k)
+					if (c == ignoreChars.charAt(k)) {
+						ignore = true;
+						break;
+					}
+
+				if (!ignore)
+					buffer.append(c);
+			}
+
+			word = buffer.toString();
+
+			// CHECK IF IT'S A STOP WORD
+			if (stopWords.contains(word))
+				continue;
+
+			// SEARCH FOR THE WORD
+			refs = map.get(word);
+			if (refs == null)
+				// WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
+				refs = new ArrayList<ORecordId>();
+
+			// ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
+			refs.add(iOwnerRecord);
+
+			// SAVE THE INDEX ENTRY
+			map.put(word, refs);
+		}
 	}
 
 	public ODocument getConfiguration() {

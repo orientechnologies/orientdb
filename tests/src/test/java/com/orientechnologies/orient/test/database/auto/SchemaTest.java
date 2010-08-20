@@ -68,7 +68,7 @@ public class SchemaTest {
 		whiz.createProperty("id", OType.INTEGER);
 		whiz.createProperty("account", OType.LINK, profile);
 		whiz.createProperty("date", OType.DATE).setMin("2010-01-01 00:00:00");
-		whiz.createProperty("text", OType.STRING).setMandatory(true).setMin("1").setMax("140");//.createIndex(INDEX_TYPE.FULLTEXT);
+		whiz.createProperty("text", OType.STRING).setMandatory(true).setMin("1").setMax("140").createIndex(INDEX_TYPE.FULLTEXT);
 		whiz.createProperty("replyTo", OType.LINK, profile);
 
 		database.getMetadata().getSchema().save();
