@@ -45,7 +45,6 @@ public class OReflectionHelper {
 						if (e.getName().startsWith(iPackageName.replace('.', '/')) && e.getName().endsWith(CLASS_EXTENSION)
 								&& !e.getName().contains("$")) {
 							String className = e.getName().replace("/", ".").substring(0, e.getName().length() - 6);
-							System.out.println(className);
 							classes.add(Class.forName(className));
 						}
 					}
