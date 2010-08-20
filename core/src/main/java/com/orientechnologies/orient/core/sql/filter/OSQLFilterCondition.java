@@ -55,7 +55,7 @@ public class OSQLFilterCondition {
 			r = convertedValues[1];
 		}
 
-		return operator.evaluate(iRecord, this, l, r);
+		return operator.evaluateRecord(iRecord, this, l, r);
 	}
 
 	private Object[] checkForConversion(final Object l, final Object r) {

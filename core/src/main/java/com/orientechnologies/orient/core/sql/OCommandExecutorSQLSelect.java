@@ -25,6 +25,9 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OFullTextIndex;
+import com.orientechnologies.orient.core.index.OPropertyIndexNotUnique;
+import com.orientechnologies.orient.core.index.OPropertyIndexUnique;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -38,6 +41,7 @@ import com.orientechnologies.orient.core.sort.ODocumentSorter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsText;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
@@ -279,8 +283,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 		final OProperty prop = iSchemaClass.getProperty(item.getName());
 		if (prop != null && prop.isIndexed()) {
+			// TODO: IMPROVE THIS MANAGEMENT
 			// ONLY EQUALS IS SUPPORTED NOW!
-			if (iCondition.getOperator() instanceof OQueryOperatorEquals) {
+			if (((prop.getIndex() instanceof OPropertyIndexUnique || prop.getIndex() instanceof OPropertyIndexNotUnique) && iCondition
+					.getOperator() instanceof OQueryOperatorEquals)
+					|| prop.getIndex() instanceof OFullTextIndex
+					&& iCondition.getOperator() instanceof OQueryOperatorContainsText) {
 				final Object value = iCondition.getLeft() == iItem ? iCondition.getRight() : iCondition.getLeft();
 				if (value != null) {
 					final List<ORecordId> records = prop.getIndex().get(value.toString());

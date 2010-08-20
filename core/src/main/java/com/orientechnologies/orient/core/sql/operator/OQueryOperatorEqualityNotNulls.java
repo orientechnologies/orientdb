@@ -31,11 +31,11 @@ public abstract class OQueryOperatorEqualityNotNulls extends OQueryOperatorEqual
 	}
 
 	@Override
-	public boolean evaluate(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
+	public boolean evaluateRecord(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight) {
 		if (iLeft == null || iRight == null)
 			return false;
 
-		return super.evaluate(iRecord, iCondition, iLeft, iRight);
+		return super.evaluateRecord(iRecord, iCondition, iLeft, iRight);
 	}
 }

@@ -37,7 +37,7 @@ public abstract class OQueryOperator {
 		logical = iLogical;
 	}
 
-	public abstract boolean evaluate(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
+	public abstract boolean evaluateRecord(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight);
 
 	@Override

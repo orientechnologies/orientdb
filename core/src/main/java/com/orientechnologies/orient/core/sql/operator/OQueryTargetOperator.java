@@ -19,6 +19,7 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
 /**
@@ -27,23 +28,20 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
  * @author Luca Garulli
  * 
  */
-public abstract class OQueryTargetOperator {
-	public String		keyword;
-	public int			precedence;
-	public boolean	logical;
-
+public abstract class OQueryTargetOperator extends OQueryOperator {
 	protected OQueryTargetOperator(String iKeyword, int iPrecedence, boolean iLogical) {
-		keyword = iKeyword;
-		precedence = iPrecedence;
-		logical = iLogical;
+		super(iKeyword, iPrecedence, iLogical);
 	}
 
-	public abstract List<ORecordId> evaluate(final ODatabaseComplex<?> iRecord, final List<String> iTargetClasses,
+	public abstract List<ORecordId> filterRecords(final ODatabaseComplex<?> iRecord, final List<String> iTargetClasses,
 			final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight);
 
+	/**
+	 * At run-time the evaluation per record must return always true since the recordset are filtered at the begin.
+	 */
 	@Override
-	public String toString() {
-		return keyword;
+	public boolean evaluateRecord(ORecordInternal<?> iRecord, OSQLFilterCondition iCondition, Object iLeft, Object iRight) {
+		return true;
 	}
 
 	/**
@@ -54,9 +52,5 @@ public abstract class OQueryTargetOperator {
 	 */
 	public OQueryTargetOperator configure(final List<String> iParams) {
 		return this;
-	}
-
-	public String getSyntax() {
-		return "<left> " + keyword + " <right>";
 	}
 }

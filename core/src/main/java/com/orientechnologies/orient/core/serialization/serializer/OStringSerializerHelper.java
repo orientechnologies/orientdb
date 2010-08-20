@@ -404,7 +404,7 @@ public abstract class OStringSerializerHelper {
 		int pos = -1;
 
 		for (int i = 0; i < iText.length(); ++i)
-			if (iText.charAt(i) == '"' || iText.charAt(i) == '\\') {
+			if (iText.charAt(i) == '"' || iText.charAt(i) == '\\' || iText.charAt(i) == '\'') {
 				pos = i;
 				break;
 			}
@@ -420,7 +420,7 @@ public abstract class OStringSerializerHelper {
 		for (int i = pos; i < buffer.length(); ++i) {
 			c = buffer.charAt(i);
 
-			if (c == '"' || c == '\\') {
+			if (c == '"' || c == '\\' || c == '\'') {
 				buffer.insert(i, '\\');
 				++i;
 			}

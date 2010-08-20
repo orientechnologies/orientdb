@@ -31,16 +31,15 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
  * @author Luca Garulli
  * 
  */
-public class OQueryTargetOperatorContainsText extends OQueryTargetOperator {
-
+public class OQueryOperatorContainsText extends OQueryTargetOperator {
 	private boolean	ignoreCase	= true;
 
-	public OQueryTargetOperatorContainsText(final boolean iIgnoreCase) {
+	public OQueryOperatorContainsText(final boolean iIgnoreCase) {
 		super("CONTAINSTEXT", 5, false);
 		ignoreCase = iIgnoreCase;
 	}
 
-	public OQueryTargetOperatorContainsText() {
+	public OQueryOperatorContainsText() {
 		super("CONTAINSTEXT", 5, false);
 	}
 
@@ -50,7 +49,7 @@ public class OQueryTargetOperatorContainsText extends OQueryTargetOperator {
 	}
 
 	@Override
-	public List<ORecordId> evaluate(final ODatabaseComplex<?> iDatabase, final List<String> iTargetClasses,
+	public List<ORecordId> filterRecords(final ODatabaseComplex<?> iDatabase, final List<String> iTargetClasses,
 			final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight) {
 
 		final String fieldName;
