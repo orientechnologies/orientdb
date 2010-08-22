@@ -101,7 +101,8 @@ public class CRUDDocumentPhysicalTest {
 		byte[] binary;
 		int i = 0;
 		ORecordIterator<ODocument> it = database.browseCluster("Account");
-		for (ODocument rec = it.last().previous(); rec != null; rec = it.previous()) {
+		for (it.last(); it.hasPrevious();) {
+			ODocument rec = it.previous();
 
 			Assert.assertTrue(((Number) rec.field("id")).intValue() == i);
 			Assert.assertEquals(rec.field("name"), "Gipsy");
@@ -117,7 +118,7 @@ public class CRUDDocumentPhysicalTest {
 			i++;
 		}
 
-		Assert.assertTrue(i == TOT_RECORDS);
+		Assert.assertEquals(i, TOT_RECORDS);
 
 		database.close();
 	}

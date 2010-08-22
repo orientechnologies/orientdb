@@ -22,7 +22,6 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
-import com.orientechnologies.orient.core.iterator.ORecordIterator;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 
 @Test(groups = { "crud", "record-csv" }, sequential = true)
@@ -70,8 +69,7 @@ public class CRUDFlatPhysicalTest {
 		String[] fields;
 
 		int i = 0;
-		ORecordIterator<ORecordFlat> it = database.browseCluster(CLUSTER_NAME);
-		for (ORecordFlat rec = it.begin().next(); rec != null; rec = it.next()) {
+		for (ORecordFlat rec : database.browseCluster(CLUSTER_NAME)) {
 			fields = rec.value().split("-");
 
 			Assert.assertEquals(Integer.parseInt(fields[0]), i);
@@ -79,7 +77,7 @@ public class CRUDFlatPhysicalTest {
 			i++;
 		}
 
-		Assert.assertTrue(i == TOT_RECORDS);
+		Assert.assertEquals(i, TOT_RECORDS);
 
 		database.close();
 	}

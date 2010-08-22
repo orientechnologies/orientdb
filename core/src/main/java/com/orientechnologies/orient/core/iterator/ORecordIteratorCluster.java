@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.iterator;
 
+import java.util.NoSuchElementException;
+
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.id.ORID;
@@ -72,7 +74,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 	/**
 	 * Return the element at the current position and move backward the cursor to the previous position available.
 	 * 
-	 * @return the previous record found, otherwise NULL when no more records are found.
+	 * @return the previous record found, otherwise the NoSuchElementException exception is thrown when no more records are found.
 	 */
 	@Override
 	public REC previous() {
@@ -85,13 +87,13 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 				return record;
 		}
 
-		return null;
+		throw new NoSuchElementException();
 	}
 
 	/**
 	 * Return the element at the current position and move forward the cursor to the next position available.
 	 * 
-	 * @return the next record found, otherwise NULL when no more records are found.
+	 * @return the next record found, otherwise the NoSuchElementException exception is thrown when no more records are found.
 	 */
 	public REC next() {
 		// ITERATE UNTIL THE NEXT GOOD RECORD
@@ -104,7 +106,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 				return record;
 		}
 
-		return null;
+		throw new NoSuchElementException();
 	}
 
 	public REC current() {
