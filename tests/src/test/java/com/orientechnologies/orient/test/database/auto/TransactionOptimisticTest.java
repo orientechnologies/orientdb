@@ -185,7 +185,6 @@ public class TransactionOptimisticTest {
 			doc.field("nr", g);
 
 			doc.save();
-			System.out.println(g);
 		}
 		db.commit();
 

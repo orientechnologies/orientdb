@@ -66,6 +66,7 @@ public class OTransactionOptimisticProxy extends OTransactionAbstract<OTransacti
 
 								switch (entry.status) {
 								case OTransactionEntry.CREATED:
+									rid.clusterPosition = -1;
 									entry.clusterName = channel.readString();
 									entry.record.stream = channel.readBytes();
 									break;
