@@ -21,11 +21,12 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.client.remote.OEngineRemote;
-import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
+import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
 @Test(groups = "dictionary")
 public class TransactionOptimisticTest {
@@ -33,7 +34,6 @@ public class TransactionOptimisticTest {
 
 	@Parameters(value = "url")
 	public TransactionOptimisticTest(String iURL) {
-		Orient.instance().registerEngine(new OEngineRemote());
 		url = iURL;
 	}
 
@@ -167,5 +167,30 @@ public class TransactionOptimisticTest {
 			db1.close();
 			db2.close();
 		}
+	}
+
+	@Test(dependsOnMethods = "testTransactionOptimisticCacheMgmt2Db")
+	public void testTransactionMultipleRecords() throws IOException {
+		ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+		db.open("admin", "admin");
+
+		long totalAccounts = db.countClusterElements("Account");
+
+		String json = "{ \"@class\": \"Account\", \"type\": \"Residence\", \"street\": \"Piazza di Spagna\"}";
+
+		db.begin(TXTYPE.OPTIMISTIC);
+		for (int g = 0; g < 1000; g++) {
+			ODocument doc = new ODocument(db, "Account");
+			doc.fromJSON(json);
+			doc.field("nr", g);
+
+			doc.save();
+			System.out.println(g);
+		}
+		db.commit();
+
+		Assert.assertEquals(db.countClusterElements("Account"), totalAccounts + 1000);
+
+		db.close();
 	}
 }
