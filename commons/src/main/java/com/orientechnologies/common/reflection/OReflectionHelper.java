@@ -17,7 +17,8 @@ import java.util.jar.JarFile;
 import com.orientechnologies.common.log.OLogManager;
 
 /**
- * @see http://forums.sun.com/thread.jspa?threadID=341935&start=15&tstart=0
+ * Helper class to browse .class files. See also: http://forums.sun.com/thread.jspa?threadID=341935&start=15&tstart=0
+ * 
  * @author Antony Stubbs
  */
 public class OReflectionHelper {
@@ -111,7 +112,7 @@ public class OReflectionHelper {
 	 * 
 	 * @param thePackage
 	 * @param theInterface
-	 * @return
+	 * @return The list of classes that implements the requested interface
 	 */
 	public static List<Class<?>> getClassessOfInterface(String thePackage, Class<?> theInterface) {
 		List<Class<?>> classList = new ArrayList<Class<?>>();
