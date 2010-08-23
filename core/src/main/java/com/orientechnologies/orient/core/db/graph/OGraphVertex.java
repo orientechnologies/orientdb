@@ -95,10 +95,12 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 		final OGraphEdge edge = new OGraphEdge(database, this, iTargetVertex);
 		getOutEdges().add(edge);
 		((List<ODocument>) document.field(FIELD_OUT_EDGES)).add(edge.getDocument());
+		document.setDirty();
 
 		// INSERT INTO THE INGOING EDGES OF TARGET
 		iTargetVertex.getInEdges().add(edge);
 		((List<ODocument>) iTargetVertex.getDocument().field(FIELD_IN_EDGES)).add(edge.getDocument());
+		iTargetVertex.getDocument().setDirty();
 
 		return edge;
 	}
