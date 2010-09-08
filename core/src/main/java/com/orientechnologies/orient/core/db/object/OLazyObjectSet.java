@@ -19,22 +19,22 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.db.ODatabasePojoAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings("unchecked")
-public class OLazyObjectSet<TYPE> implements Set<TYPE> {
-	private final ODatabaseObjectTx			database;
-	private final Collection<ODocument>	underlying;
-	private String											fetchPlan;
+public class OLazyObjectSet<TYPE> implements Set<Object> {
+	private final ODatabasePojoAbstract<?, TYPE>	database;
+	private final Collection<Object>							underlying;
+	private String																fetchPlan;
 
-	public OLazyObjectSet(final ODatabaseObjectTx database, final Collection<ODocument> iSource) {
+	public OLazyObjectSet(final ODatabasePojoAbstract<?, TYPE> database, final Collection<Object> iSource) {
 		this.database = database;
 		this.underlying = iSource;
 	}
 
-	public Iterator<TYPE> iterator() {
-		return new OLazyObjectIterator<TYPE>(database, underlying.iterator());
+	public Iterator<Object> iterator() {
+		return (Iterator<Object>) new OLazyObjectIterator<TYPE>(database, underlying.iterator());
 	}
 
 	public int size() {
@@ -60,7 +60,7 @@ public class OLazyObjectSet<TYPE> implements Set<TYPE> {
 		return a;
 	}
 
-	public boolean add(final TYPE e) {
+	public boolean add(final Object e) {
 		return underlying.add(database.getRecordByUserObject(e, false));
 	}
 
@@ -76,7 +76,7 @@ public class OLazyObjectSet<TYPE> implements Set<TYPE> {
 		return true;
 	}
 
-	public boolean addAll(final Collection<? extends TYPE> c) {
+	public boolean addAll(final Collection<? extends Object> c) {
 		boolean modified = false;
 		for (Object o : c)
 			if (!underlying.add(database.getRecordByUserObject(o, false)))

@@ -76,4 +76,8 @@ public abstract class OGraphElement extends ODocumentWrapper {
 	public void setDocument(final ODocument iDocument) {
 		document = iDocument;
 	}
+
+	public ODatabaseGraphTx getDatabase() {
+		return database;
+	}
 }

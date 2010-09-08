@@ -16,74 +16,144 @@
 package com.orientechnologies.orient.core.db.object;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
 
+import com.orientechnologies.orient.core.db.ODatabasePojoAbstract;
+import com.orientechnologies.orient.core.db.graph.ODatabaseGraphTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-@SuppressWarnings({ "unchecked", "serial" })
-public class OLazyObjectList<TYPE> extends ArrayList<TYPE> {
-	private ODatabaseObjectTx	database;
-	private String						fetchPlan;
-	private boolean						converted	= false;
+@SuppressWarnings({ "unchecked" })
+public class OLazyObjectList<TYPE> implements List<TYPE> {
+	private ArrayList<Object>								list			= new ArrayList<Object>();
+	private ODatabasePojoAbstract<?, TYPE>	database;
+	private String													fetchPlan;
+	private boolean													converted	= false;
 
-	public OLazyObjectList(final ODatabaseObjectTx database) {
-		this.database = database;
+	public OLazyObjectList(final ODatabaseGraphTx iDatabase, final Collection<?> iSourceList) {
+		this((ODatabasePojoAbstract<?, TYPE>) iDatabase, iSourceList);
+	}
+
+	public OLazyObjectList(final ODatabasePojoAbstract<?, TYPE> iDatabase, final Collection<?> iSourceList) {
+		this(iDatabase);
+		if (iSourceList != null)
+			list.addAll(iSourceList);
+	}
+
+	public OLazyObjectList(final ODatabasePojoAbstract<?, TYPE> iDatabase) {
+		this.database = iDatabase;
 	}
 
 	public Iterator<TYPE> iterator() {
-		return new OLazyObjectIterator<TYPE>(database, (Iterator<ODocument>) super.iterator());
+		return new OLazyObjectIterator<TYPE>(database, list.iterator());
 	}
 
-	@Override
 	public boolean contains(final Object o) {
 		convertAll();
-		return super.contains(o);
+		return list.contains(o);
 	}
 
-	@Override
 	public boolean add(TYPE element) {
 		if (converted && element instanceof ORID)
 			converted = false;
-		return super.add(element);
+		return list.add(element);
 	}
 
-	@Override
 	public void add(int index, TYPE element) {
 		if (converted && element instanceof ORID)
 			converted = false;
-		super.add(index, element);
+		list.add(index, element);
 	}
 
-	@Override
 	public TYPE get(final int index) {
 		convert(index);
-		return super.get(index);
+		return (TYPE) list.get(index);
 	}
 
-	@Override
 	public int indexOf(final Object o) {
 		convertAll();
-		return super.indexOf(o);
+		return list.indexOf(o);
 	}
 
-	@Override
 	public int lastIndexOf(final Object o) {
 		convertAll();
-		return super.lastIndexOf(o);
+		return list.lastIndexOf(o);
 	}
 
-	@Override
 	public Object[] toArray() {
 		convertAll();
-		return super.toArray();
+		return list.toArray();
 	}
 
-	@Override
 	public <T> T[] toArray(final T[] a) {
 		convertAll();
-		return super.toArray(a);
+		return list.toArray(a);
+	}
+
+	public int size() {
+		return list.size();
+	}
+
+	public boolean isEmpty() {
+		return list.isEmpty();
+	}
+
+	public boolean remove(Object o) {
+		convertAll();
+		return list.remove(o);
+	}
+
+	public boolean containsAll(Collection<?> c) {
+		convertAll();
+		return list.containsAll(c);
+	}
+
+	public boolean addAll(Collection<? extends TYPE> c) {
+		return list.addAll(c);
+	}
+
+	public boolean addAll(int index, Collection<? extends TYPE> c) {
+		return list.addAll(index, c);
+	}
+
+	public boolean removeAll(Collection<?> c) {
+		convertAll();
+		return list.removeAll(c);
+	}
+
+	public boolean retainAll(Collection<?> c) {
+		convertAll();
+		return list.retainAll(c);
+	}
+
+	public void clear() {
+		list.clear();
+	}
+
+	public TYPE set(int index, TYPE element) {
+		convert(index);
+		return (TYPE) list.set(index, element);
+	}
+
+	public TYPE remove(int index) {
+		convert(index);
+		return (TYPE) list.remove(index);
+	}
+
+	public ListIterator<TYPE> listIterator() {
+		return (ListIterator<TYPE>) list.listIterator();
+	}
+
+	public ListIterator<TYPE> listIterator(int index) {
+		return (ListIterator<TYPE>) list.listIterator(index);
+	}
+
+	public List<TYPE> subList(int fromIndex, int toIndex) {
+		return (List<TYPE>) list.subList(fromIndex, toIndex);
 	}
 
 	public String getFetchPlan() {
@@ -112,9 +182,9 @@ public class OLazyObjectList<TYPE> extends ArrayList<TYPE> {
 	 *          Position of the item to convert
 	 */
 	private void convert(final int iIndex) {
-		final Object o = super.get(iIndex);
+		final Object o = list.get(iIndex);
 
 		if (o != null && o instanceof ODocument)
-			super.set(iIndex, (TYPE) database.getUserObjectByRecord((ORecordInternal<?>) o, fetchPlan));
+			list.set(iIndex, (TYPE) database.getUserObjectByRecord((ORecordInternal<?>) o, fetchPlan));
 	}
 }

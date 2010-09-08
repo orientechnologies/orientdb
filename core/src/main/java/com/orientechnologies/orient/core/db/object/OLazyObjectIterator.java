@@ -17,15 +17,16 @@ package com.orientechnologies.orient.core.db.object;
 
 import java.util.Iterator;
 
+import com.orientechnologies.orient.core.db.ODatabasePojoAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings({ "unchecked" })
 public class OLazyObjectIterator<TYPE> implements Iterator<TYPE> {
-	final private ODatabaseObjectTx		database;
-	final private Iterator<ODocument>	underlying;
-	private String										fetchPlan;
+	final private ODatabasePojoAbstract<?, TYPE>	database;
+	final private Iterator<Object>								underlying;
+	private String																fetchPlan;
 
-	public OLazyObjectIterator(final ODatabaseObjectTx database, final Iterator<ODocument> iIterator) {
+	public OLazyObjectIterator(final ODatabasePojoAbstract<?, TYPE> database, final Iterator<Object> iIterator) {
 		this.database = database;
 		this.underlying = iIterator;
 	}

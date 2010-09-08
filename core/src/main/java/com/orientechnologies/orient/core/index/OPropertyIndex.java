@@ -89,6 +89,8 @@ public abstract class OPropertyIndex implements Iterable<Entry<String, List<ORec
 
 	public abstract ORID getRID();
 
+	public abstract void put(final Object iKey, final ORecordId iValue);
+
 	@SuppressWarnings("unchecked")
 	public List<ORecordId> get(Object iKey) {
 		final List<ORecordId> values = map.get(iKey);
@@ -98,8 +100,6 @@ public abstract class OPropertyIndex implements Iterable<Entry<String, List<ORec
 
 		return values;
 	}
-
-	public abstract void put(final Object iKey, final ORecordId iValue);
 
 	/**
 	 * Populate the index with all the existent records.
