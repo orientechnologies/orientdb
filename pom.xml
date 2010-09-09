@@ -1,0 +1,137 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.orientechnologies</groupId>
+    <artifactId>orientdb-parent</artifactId>
+    <version>0.9.22-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>Orient Parent</name>
+
+    <modules>
+        <module>client</module>
+        <module>commons</module>
+        <module>core</module>
+        <module>enterprise</module>
+        <module>kv</module>
+        <module>server</module>
+        <module>tests</module>
+        <module>tools</module>
+    </modules>
+
+    <developers>
+        <developer>
+            <id>l.garulli</id>
+            <name>Luca Garulli</name>
+            <email>l.garulli@orientechnologies.com</email>
+            <organization>Orientechnologies</organization>
+            <organizationUrl>http://www.orientechnologies.com</organizationUrl>
+            <roles>
+                <role>architect</role>
+                <role>developer</role>
+                <role>founder</role>
+            </roles>
+            <timezone>+1</timezone>
+        </developer>
+        <developer>
+            <id>astubbs</id>
+            <name>Antony Stubbs</name>
+            <email>antony.stubbs@gmail.com</email>
+            <organization>Sharca.com</organization>
+            <organizationUrl>http://www.sharca.com</organizationUrl>
+            <roles>
+                <role>contributor</role>
+            </roles>
+            <timezone>+12</timezone>
+        </developer>
+    </developers>
+
+    <scm>
+        <developerConnection>scm:svn:file://${basedir}</developerConnection>
+    </scm>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.target>1.5</maven.compiler.target>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3</version>
+                <configuration>
+                    <source>${maven.compiler.target}</source>
+                    <target>${maven.compiler.target}</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.7</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.1-SNAPSHOT</version>
+                <configuration>
+                    <localCheckout>true</localCheckout>
+                    <pushChanges>false</pushChanges>
+                    <allowTimestampedSnapshots>true</allowTimestampedSnapshots>
+                </configuration>
+            </plugin>
+        </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>2.3</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>2.1.2</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <distributionManagement>
+        <repository>
+            <id>local</id>
+            <url>file://${build.directory}/staging</url>
+            <uniqueVersion>true</uniqueVersion>
+        </repository>
+    </distributionManagement>
+
+    <pluginRepositories>
+         <pluginRepository>
+             <id>apache.snapshots</id>
+             <url>http://repository.apache.org/snapshots/</url>
+         </pluginRepository>
+     </pluginRepositories>
+
+</project>

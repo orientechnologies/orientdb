@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.orientechnologies</groupId>
+        <artifactId>orientdb-parent</artifactId>
+        <version>0.9.22-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>orientdb-kv</artifactId>
+    <packaging>jar</packaging>
+
+    <name>Orient Key/Value</name>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-server</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- External Dependencies -->
+        <dependency>
+            <groupId>com.hazelcast</groupId>
+            <artifactId>hazelcast</artifactId>
+            <version>1.8.4</version>
+        </dependency>
+    </dependencies>
+
+</project>
