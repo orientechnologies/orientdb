@@ -5,7 +5,7 @@
 	<property environment="env" />
 	<property name="vendor"         value="Orient Technologies" />
 	<property name="product"        value="Orient Database" />
-	<property name="version"        value="0.9.21" />
+	<property name="version"        value="0.9.22-SNAPSHOT" />
 	<property name="global.release" value="../releases/${version}" />
 	<property name="db.release"     value="../releases/${version}/db" />
 	
@@ -14,6 +14,7 @@
 		<sequential>
       <subant target="@{target}">
         <property name="global.lib" value="../${db.release}/lib"/>
+        <property name="version" value="${version}"/>
         
 		  	<fileset dir="commons"    includes="build.xml" />
 		  	<fileset dir="core"       includes="build.xml" />
@@ -130,6 +131,9 @@
 
     <copy todir="${db.release}/bin/" flatten="true">
       <fileset dir="." includes="tools/script/*.sh tools/script/*.bat tools/script/*.exe server/script/*.sh server/script/*.bat server/script/*.exe" />
+      <filterset>
+        <filter token="VERSION" value="${version}"/>
+      </filterset>
     </copy>
 
     <copy todir="${db.release}/www/">
@@ -176,8 +180,8 @@
 	</target>
 
   <target name="release" depends="install">
-		<delete file="../releases/orient-database-${version}.zip" />
-		<zip destfile="../releases/orient-database-${version}.zip" basedir="${db.release}" level="9" update="false" excludes="*.log" />
+		<delete file="../releases/orientdb-${version}.zip" />
+		<zip destfile="../releases/orientdb-${version}.zip" basedir="${db.release}" level="9" update="false" excludes="*.log" />
 	</target>
     
 </project>
