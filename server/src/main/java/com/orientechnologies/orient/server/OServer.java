@@ -55,8 +55,8 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 
 public class OServer {
 	private static final String																SRV_ROOT_ADMIN				= "root";
-	private static final String																PROPERTY_CONFIG_FILE	= "orient.config.file";
-	public static final String																DEFAULT_CONFIG_FILE		= "config/orient-server-config.xml";
+	private static final String																PROPERTY_CONFIG_FILE	= "orientdb.config.file";
+	public static final String																DEFAULT_CONFIG_FILE		= "config/orientdb-server-config.xml";
 
 	protected ReentrantReadWriteLock													lock									= new ReentrantReadWriteLock();
 
@@ -149,7 +149,7 @@ public class OServer {
 
 		if (dbPath == null) {
 			// SEARCH IN DEFAULT DATABASE DIRECTORY
-			dbPath = OSystemVariableResolver.resolveSystemVariables("${ORIENT_HOME}/databases/" + iName + "/");
+			dbPath = OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/databases/" + iName + "/");
 			File f = new File(dbPath + "default.odh");
 			if (!f.exists())
 				throw new OConfigurationException("Database '" + iName + "' is not configured on server");
@@ -224,7 +224,7 @@ public class OServer {
 	}
 
 	public static String getOrientHome() {
-		String v = System.getenv("ORIENT_HOME");
+		String v = System.getenv("ORIENTDB_HOME");
 
 		if (v == null)
 			v = System.getProperty("orient.home");

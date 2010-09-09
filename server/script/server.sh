@@ -43,13 +43,15 @@ done
 
 # Get standard environment variables
 PRGDIR=`dirname "$PRG"`
-export ORIENT_HOME
 
-# Only set CATALINA_HOME if not already set
-[ -z "$ORIENT_HOME" ] && ORIENT_HOME=`cd "$PRGDIR/.." ; pwd`
+# Only set ORIENTDB_HOME if not already set
+[ -f "$ORIENTDB_HOME"/bin/orient.sh ] || ORIENTDB_HOME=`cd "$PRGDIR/.." ; pwd`
+export ORIENTDB_HOME
 
-CONFIG_FILE=$ORIENT_HOME/config/orient-kv-config.xml
+CONFIG_FILE=$ORIENTDB_HOME/config/orientdb-server-config.xml
+LOG_FILE=$ORIENTDB_HOME/config/orientdb-server-log.properties
 LOG_LEVEL=warning
-WWW_PATH=$ORIENT_HOME/www
+WWW_PATH=$ORIENTDB_HOME/www
+#JAVA_OPTS=-Xms1024m -Xmx1024m
 
-java -server -Xms1024m -Xmx1024m -XX:+UseParallelGC -XX:+AggressiveOpts -XX:CompileThreshold=200 -Dorient.config.file="$CONFIG_FILE" -Dorient.www.path="$WWW_PATH" -Dorient.log.level=$LOG_LEVEL -jar "$ORIENT_HOME/lib/orient-database-kv.jar"
+java -server $JAVA_OPTS -XX:+UseParallelGC -XX:+AggressiveOpts -XX:CompileThreshold=200 -Djava.util.logging.config.file="$LOG_FILE" -Dorientdb.config.file="$CONFIG_FILE" -Dorientdb.www.path="$WWW_PATH" -Dorientdb.log.level=$LOG_LEVEL -jar "$ORIENTDB_HOME/lib/orientdb-server-@VERSION@.jar"

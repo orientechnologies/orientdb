@@ -40,7 +40,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
 			if (OSharedDocumentDatabase.getDatabasePools().containsKey(urlParts[1]))
 				throw new IllegalArgumentException("Can't create the database '" + urlParts[1] + "' because it already exists");
 
-			db = new ODatabaseDocumentTx("local:${ORIENT_HOME}/databases/" + urlParts[1] + "/" + urlParts[1]);
+			db = new ODatabaseDocumentTx("local:${ORIENTDB_HOME}/databases/" + urlParts[1] + "/" + urlParts[1]);
 			db.create();
 
 		} finally {

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<orient-server>
+    <network>
+        <protocols>
+            <protocol implementation="com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary" name="binary"/>
+            <protocol implementation="com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb" name="http"/>
+        </protocols>
+        <listeners>
+            <listener protocol="binary" port-range="2424-2430" ip-address="127.0.0.1"/>
+            <listener protocol="http" port-range="2480-2490" ip-address="127.0.0.1">
+                <commands>
+                    <command implementation="com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostAction" pattern="POST|*.action GET|*.action">
+                        <parameters/>
+                    </command>
+                </commands>
+            </listener>
+        </listeners>
+    </network>
+    <storages>
+        <storage path="memory:temp" name="temp"/>
+    </storages>
+    <users>
+        <user resources="*" password="9FFD766AAB1E4779ED4146F117989739ABCB89C64CC1C5DA8E8F9AC74A237CCD" name="root"/>
+    </users>
+    <properties>
+        <entry value="false" name="cache.static"/>
+        <entry value="info" name="log.level"/>
+    </properties>
+</orient-server>

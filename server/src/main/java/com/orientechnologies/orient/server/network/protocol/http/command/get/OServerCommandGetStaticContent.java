@@ -35,7 +35,7 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 			"GET|*.png", "GET|*.gif", "GET|*.js", "GET|*.css", "GET|favicon.ico", "GET|robots.txt" };
 	private static final String											CACHE_PAR	= "cache.static";
 
-	static final String															WWW_PATH	= System.getProperty("orient.www.path", "src/site");
+	static final String															WWW_PATH	= System.getProperty("orientdb.www.path", "src/site");
 
 	private Map<String, OStaticContentCachedEntry>	cache;
 

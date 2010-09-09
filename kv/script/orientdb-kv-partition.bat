@@ -1,4 +1,5 @@
 @echo off
+
 rem
 rem Copyright (c) 1999-2010 Luca Garulli
 rem
@@ -23,32 +24,24 @@ echo      ...,::,,,,::.. `:  .,,  :,    :   :     :   .:
 echo           ,::::,,,. `:   ,,   :::::    :     :   .:      
 echo           ,,:` `,,.                                      
 echo          ,,,    .,`                                      
-echo         ,,.     `,                D B   S E R V E R        
+echo         ,,.     `,  K E Y - V A L U E   S E R V E R        
 echo       ``        `.                                       
-echo                 ``                                       
-echo                 `                                        
+echo                 ``    (CLUSTER-PARTITION POWERED BY
+echo                 `              HAZELCAST)  
 
-rem Guess ORIENT_HOME if not defined
+rem Guess ORIENTDB_HOME if not defined
 set CURRENT_DIR=%cd%
 
-if exist "%JAVA_HOME%\bin\java.exe" goto setJavaHome
-set JAVA=java
-goto okJava
-
-:setJavaHome
-set JAVA="%JAVA_HOME%\bin\java"
-
-:okJava
-if not "%ORIENT_HOME%" == "" goto gotHome
-set ORIENT_HOME=%CURRENT_DIR%
-if exist "%ORIENT_HOME%\bin\orient-server.bat" goto okHome
+if not "%ORIENTDB_HOME%" == "" goto gotHome
+set ORIENTDB_HOME=%CURRENT_DIR%
+if exist "%ORIENTDB_HOME%\bin\orientdb-kv.bat" goto okHome
 cd ..
-set ORIENT_HOME=%cd%
+set ORIENTDB_HOME=%cd%
 cd %CURRENT_DIR%
 
 :gotHome
-if exist "%ORIENT_HOME%\bin\orient-server.bat" goto okHome
-echo The ORIENT_HOME environment variable is not defined correctly
+if exist "%ORIENTDB_HOME%\bin\orientdb-kv.bat" goto okHome
+echo The ORIENTDB_HOME environment variable is not defined correctly
 echo This environment variable is needed to run this program
 goto end
 
@@ -63,12 +56,12 @@ shift
 goto setArgs
 
 :doneSetArgs
-set CONFIG_FILE=%ORIENT_HOME%/config/orient-server-config.xml
-set LOG_FILE=%ORIENT_HOME%/config/orient-server-log.properties
-set LOG_LEVEL=warning
-set WWW_PATH=%ORIENT_HOME%/www
-REM set JAVA_OPTS=-Xms1024m -Xmx1024m
 
-call %JAVA% -server %JAVA_OPTS% -XX:+UseParallelGC -XX:+AggressiveOpts -XX:CompileThreshold=200 -Djava.util.logging.config.file="%LOG_FILE%" -Dorient.config.file="%CONFIG_FILE%" -Dorient.www.path="%WWW_PATH%" -Dorient.log.level=%LOG_LEVEL% -jar "%ORIENT_HOME%\lib\orient-database-server.jar" %CMD_LINE_ARGS%
+set CONFIG_FILE=%ORIENTDB_HOME%/config/orientdb-kv-partition-config.xml
+set LOG_LEVEL=warning
+set HAZELCAST_FILE=%ORIENTDB_HOME%/config/hazelcast.xml
+set WWW_PATH=%ORIENTDB_HOME%/www
+
+call "%JAVA_HOME%\bin\java" -server -Xms1024m -Xmx1024m -XX:+UseParallelGC -XX:+AggressiveOpts -XX:CompileThreshold=200 -Dhazelcast.config="%HAZELCAST_FILE%" -Dorientdb.config.file="%CONFIG_FILE%" -Dorientdb.www.path="%WWW_PATH%" -Dorientdb.log.level=%LOG_LEVEL% -jar "%ORIENTDB_HOME%\lib\orientdb-kv-@VERSION@.jar" %CMD_LINE_ARGS%
 
 :end

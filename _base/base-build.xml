@@ -36,7 +36,7 @@
 	<target name="jar" depends="compile">
 		<mkdir dir="${project.dist}" />
 		<delete file="${project.dist}/${ant.project.name}.jar" />
-		<jar compress="true" basedir="${project.build}" destfile="${project.dist}/${ant.project.name}.jar">
+		<jar compress="true" basedir="${project.build}" destfile="${project.dist}/${ant.project.name}-${version}.jar">
 			<manifest>
 				<attribute name="Implementation-Vendor" value="${vendor}" />
 				<attribute name="Implementation-Title" value="${product}" />
@@ -52,7 +52,7 @@
 
 	<target name="install" depends="jar">
 		<copy todir="${global.lib}">
-			<fileset dir="${project.dist}" includes="*.jar" excludes="test*.jar" />
+			<fileset dir="${project.dist}" includes="*.jar *.md5 *.sha1" excludes="test*.jar" />
 		</copy>
 	</target>
 

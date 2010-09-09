@@ -172,7 +172,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 					if (OServerMain.server().existsStoragePath(dbName))
 						throw new IllegalArgumentException("Database '" + dbName + "' already exists.");
 
-					path = storageMode + ":${ORIENT_HOME}/databases/" + dbName + "/" + dbName;
+					path = storageMode + ":${ORIENTDB_HOME}/databases/" + dbName + "/" + dbName;
 					realPath = OSystemVariableResolver.resolveSystemVariables(path);
 				} else if (storageMode.equals(OEngineMemory.NAME)) {
 					if (OServerMain.server().getMemoryDatabases().containsKey(dbName))
