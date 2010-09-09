@@ -14,7 +14,7 @@ import com.orientechnologies.common.exception.OException;
 
 public class OLogManager {
 
-	private static final String				SYSPROPERTY_LOG_LEVEL	= "orient.log.level";
+	private static final String				SYSPROPERTY_LOG_LEVEL	= "orientdb.log.level";
 
 	private Level											level;
 	private boolean										warn									= true;
