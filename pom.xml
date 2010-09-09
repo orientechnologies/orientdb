@@ -16,8 +16,8 @@
         <module>enterprise</module>
         <module>kv</module>
         <module>server</module>
-        <module>tests</module>
         <module>tools</module>
+        <module>tests</module>
     </modules>
 
     <developers>
@@ -117,6 +117,14 @@
                 </plugin>
             </plugins>
         </pluginManagement>
+        <extensions>
+        <!-- Enabling the use of FTP -->
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-ftp</artifactId>
+                <version>1.0-beta-6</version>
+            </extension>
+        </extensions>
     </build>
 
     <distributionManagement>
@@ -125,6 +133,11 @@
             <url>file://${build.directory}/staging</url>
             <uniqueVersion>true</uniqueVersion>
         </repository>
+        <snapshotRepository>
+            <id>orientechnologies.com</id>
+            <url>ftp://www.orientechnologies.com/www.orientechnologies.com/listing/m2/</url>
+            <uniqueVersion>false</uniqueVersion>
+        </snapshotRepository>
     </distributionManagement>
 
     <pluginRepositories>
