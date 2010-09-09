@@ -66,7 +66,15 @@ public class OReflectionHelper {
 				// Get the list of the files contained in the package
 				File[] files = directory.listFiles();
 				for (File file : files) {
-					classes.addAll(findClasses(file, iPackageName));
+					if (file.isDirectory()) {
+						classes.addAll(findClasses(file, iPackageName));
+					} else {
+						String className;
+						if (file.getName().endsWith(CLASS_EXTENSION)) {
+							className = file.getName().substring(0, file.getName().length() - CLASS_EXTENSION.length());
+							classes.add(Class.forName(iPackageName + '.' + className));
+						}
+					}
 				}
 			} else {
 				throw new ClassNotFoundException(iPackageName + " (" + directory.getPath() + ") does not appear to be a valid package");
@@ -98,7 +106,7 @@ public class OReflectionHelper {
 			if (file.isDirectory()) {
 				if (file.getName().contains("."))
 					continue;
-				classes.addAll(findClasses(file, iPackageName + "." + file.getName()));
+				classes.addAll(findClasses(file, iPackageName));
 			} else if (file.getName().endsWith(CLASS_EXTENSION)) {
 				className = file.getName().substring(0, file.getName().length() - CLASS_EXTENSION.length());
 				classes.add(Class.forName(iPackageName + '.' + className));
