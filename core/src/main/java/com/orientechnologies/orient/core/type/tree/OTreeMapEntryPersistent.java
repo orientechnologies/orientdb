@@ -132,6 +132,8 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 
 	public abstract OTreeMapEntryPersistent<K, V> save() throws IOException;
 
+	public abstract OTreeMapEntryPersistent<K, V> delete() throws IOException;
+
 	@Override
 	public OTreeMapEntry<K, V> getParent() {
 		if (parentRid == null)
@@ -324,30 +326,6 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 		V oldValue = super.setValue(value);
 		serializedValues[tree.getPageIndex()] = null;
 		return oldValue;
-	}
-
-	/**
-	 * Delete all the nodes recursively. IF they are not loaded in memory, load all the tree.
-	 * 
-	 * @throws IOException
-	 */
-	public void delete() throws IOException {
-		// EARLY LOAD LEFT AND DELETE IT RECURSIVELY
-		if (getLeft() != null)
-			((OTreeMapEntryPersistent<K, V>) getLeft()).delete();
-
-		// EARLY LOAD RIGHT AND DELETE IT RECURSIVELY
-		if (getRight() != null)
-			((OTreeMapEntryPersistent<K, V>) getRight()).delete();
-
-		// DELETE MYSELF
-		record.delete();
-
-		// FORCE REMOVING OF K/V AND SEIALIZED K/V AS WELL
-		keys = null;
-		values = null;
-		serializedKeys = null;
-		serializedValues = null;
 	}
 
 	public final OSerializableStream fromStream(final byte[] iStream) throws IOException {

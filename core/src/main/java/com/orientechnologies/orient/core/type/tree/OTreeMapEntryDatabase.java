@@ -80,4 +80,31 @@ public class OTreeMapEntryDatabase<K, V> extends OTreeMapEntryPersistent<K, V> {
 		record.save(pTree.getClusterName());
 		return this;
 	}
+
+	/**
+	 * Delete all the nodes recursively. IF they are not loaded in memory, load all the tree.
+	 * 
+	 * @throws IOException
+	 */
+	public OTreeMapEntryDatabase<K, V> delete() throws IOException {
+		// EARLY LOAD LEFT AND DELETE IT RECURSIVELY
+		if (getLeft() != null)
+			((OTreeMapEntryPersistent<K, V>) getLeft()).delete();
+
+		// EARLY LOAD RIGHT AND DELETE IT RECURSIVELY
+		if (getRight() != null)
+			((OTreeMapEntryPersistent<K, V>) getRight()).delete();
+
+		// DELETE MYSELF
+		record.delete();
+
+		// FORCE REMOVING OF K/V AND SEIALIZED K/V AS WELL
+		keys = null;
+		values = null;
+		serializedKeys = null;
+		serializedValues = null;
+
+		return this;
+	}
+
 }

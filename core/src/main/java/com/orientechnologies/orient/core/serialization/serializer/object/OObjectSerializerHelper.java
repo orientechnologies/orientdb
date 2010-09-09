@@ -212,7 +212,7 @@ public class OObjectSerializerHelper {
 
 				} else if (type.isAssignableFrom(Set.class)) {
 
-					final Collection<ODocument> set = (Collection<ODocument>) iLinked;
+					final Collection<Object> set = (Collection<Object>) iLinked;
 					final Set<Object> target = new OLazyObjectSet<Object>((ODatabaseObjectTx) iRecord.getDatabase().getDatabaseOwner(), set)
 							.setFetchPlan(iFetchPlan);
 
