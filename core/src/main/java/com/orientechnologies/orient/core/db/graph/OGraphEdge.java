@@ -144,7 +144,7 @@ public class OGraphEdge extends OGraphElement {
 		targetVertex.setDirty();
 		targetVertex.save();
 
-		if (iDatabase.existsUserObjectByRecord(sourceVertex)) {
+		if (iDatabase.existsUserObjectByRecord(iEdge)) {
 			final OGraphEdge edge = (OGraphEdge) iDatabase.getUserObjectByRecord(iEdge, null);
 			iDatabase.unregisterPojo(edge, iEdge);
 		}

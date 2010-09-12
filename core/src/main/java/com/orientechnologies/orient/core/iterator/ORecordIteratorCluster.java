@@ -28,16 +28,19 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  * @author Luca Garulli
  * 
  * @param <T>
- *          Record Type
+ *            Record Type
  */
-public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORecordIterator<REC> {
-	protected int		currentClusterId;
-	protected long	rangeFrom;
-	protected long	rangeTo;
-	protected long	lastClusterPosition;
-	protected long	totalAvailableRecords;
+public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends
+		ORecordIterator<REC> {
+	protected int currentClusterId;
+	protected long rangeFrom;
+	protected long rangeTo;
+	protected long firstClusterPosition;
+	protected long lastClusterPosition;
+	protected long totalAvailableRecords;
 
-	public ORecordIteratorCluster(final ODatabaseRecord<REC> iDatabase, final ODatabaseRecordAbstract<REC> iLowLevelDatabase,
+	public ORecordIteratorCluster(final ODatabaseRecord<REC> iDatabase,
+			final ODatabaseRecordAbstract<REC> iLowLevelDatabase,
 			final int iClusterId) {
 		super(iDatabase, iLowLevelDatabase);
 		if (iClusterId == ORID.CLUSTER_ID_INVALID)
@@ -47,7 +50,13 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 		rangeFrom = -1;
 		rangeTo = -1;
 
-		lastClusterPosition = database.getStorage().getClusterLastEntryPosition(currentClusterId);
+		long[] range = database.getStorage().getClusterDataRange(
+				currentClusterId);
+		firstClusterPosition = range[0];
+		lastClusterPosition = range[1];
+
+//		currentClusterPosition = firstClusterPosition - 1;
+
 		totalAvailableRecords = database.countClusterElements(currentClusterId);
 	}
 
@@ -72,9 +81,11 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 	}
 
 	/**
-	 * Return the element at the current position and move backward the cursor to the previous position available.
+	 * Return the element at the current position and move backward the cursor
+	 * to the previous position available.
 	 * 
-	 * @return the previous record found, otherwise the NoSuchElementException exception is thrown when no more records are found.
+	 * @return the previous record found, otherwise the NoSuchElementException
+	 *         exception is thrown when no more records are found.
 	 */
 	@Override
 	public REC previous() {
@@ -91,9 +102,11 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 	}
 
 	/**
-	 * Return the element at the current position and move forward the cursor to the next position available.
+	 * Return the element at the current position and move forward the cursor to
+	 * the next position available.
 	 * 
-	 * @return the next record found, otherwise the NoSuchElementException exception is thrown when no more records are found.
+	 * @return the next record found, otherwise the NoSuchElementException
+	 *         exception is thrown when no more records are found.
 	 */
 	public REC next() {
 		// ITERATE UNTIL THE NEXT GOOD RECORD
@@ -115,7 +128,8 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 	}
 
 	/**
-	 * Move the iterator to the begin of the range. If no range was specified move to the first record of the cluster.
+	 * Move the iterator to the begin of the range. If no range was specified
+	 * move to the first record of the cluster.
 	 * 
 	 * @return The object itself
 	 */
@@ -126,7 +140,8 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 	}
 
 	/**
-	 * Move the iterator to the end of the range. If no range was specified move to the last record of the cluster.
+	 * Move the iterator to the end of the range. If no range was specified move
+	 * to the last record of the cluster.
 	 * 
 	 * @return The object itself
 	 */
@@ -140,14 +155,16 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 	 * Define the range where move the iterator forward and backward.
 	 * 
 	 * @param iFrom
-	 *          Lower bound limit of the range
+	 *            Lower bound limit of the range
 	 * @param iEnd
-	 *          Upper bound limit of the range
+	 *            Upper bound limit of the range
 	 * @return
 	 */
-	public ORecordIteratorCluster<REC> setRange(final long iFrom, final long iEnd) {
-		currentClusterPosition = iFrom;
+	public ORecordIteratorCluster<REC> setRange(final long iFrom,
+			final long iEnd) {
+		firstClusterPosition = iFrom;
 		rangeTo = iEnd;
+		currentClusterPosition = firstClusterPosition;
 		return this;
 	}
 
@@ -157,11 +174,19 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 	 * @return
 	 */
 	public long getRangeFrom() {
-		return Math.max(rangeFrom, -1);
+		if (!liveUpdated)
+			return firstClusterPosition - 1;
+
+		final long limit = database.getStorage().getClusterDataRange(
+				currentClusterId)[0] - 1;
+		if (rangeFrom > -1)
+			return Math.max(rangeFrom, limit);
+		return limit;
 	}
 
 	/**
-	 * Return the upper bound limit of the range if any, otherwise the last record.
+	 * Return the upper bound limit of the range if any, otherwise the last
+	 * record.
 	 * 
 	 * @return
 	 */
@@ -169,33 +194,45 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 		if (!liveUpdated)
 			return lastClusterPosition + 1;
 
-		final long limit = database.getStorage().getClusterLastEntryPosition(currentClusterId) + 1;
+		final long limit = database.getStorage().getClusterDataRange(
+				currentClusterId)[1] + 1;
 		if (rangeTo > -1)
 			return Math.min(rangeTo, limit);
 		return limit;
 	}
 
 	/**
-	 * Tell to the iterator that the upper limit must be checked at every cycle. Useful when concurrent deletes or additions change
-	 * the size of the cluster while you're browsing it. Default is false.
+	 * Tell to the iterator that the upper limit must be checked at every cycle.
+	 * Useful when concurrent deletes or additions change the size of the
+	 * cluster while you're browsing it. Default is false.
 	 * 
 	 * @param iLiveUpdated
-	 *          True to activate it, otherwise false (default)
+	 *            True to activate it, otherwise false (default)
 	 * @see #isLiveUpdated()
 	 */
 	@Override
 	public ORecordIterator<REC> setLiveUpdated(boolean iLiveUpdated) {
 		super.setLiveUpdated(iLiveUpdated);
 
-		// SET THE UPPER LIMIT TO -1 IF IT'S ENABLED
-		lastClusterPosition = iLiveUpdated ? -1 : database.getStorage().getClusterLastEntryPosition(currentClusterId);
+		// SET THE RANGE LIMITS
+		if (iLiveUpdated) {
+			firstClusterPosition = -1;
+			lastClusterPosition = -1;
+		} else {
+			long[] range = database.getStorage().getClusterDataRange(
+					currentClusterId);
+			firstClusterPosition = range[0];
+			lastClusterPosition = range[1];
+		}
+
 		totalAvailableRecords = database.countClusterElements(currentClusterId);
 
 		return this;
 	}
 
 	/**
-	 * Read the current record and increment the counter if the record was found.
+	 * Read the current record and increment the counter if the record was
+	 * found.
 	 * 
 	 * @param iRecord
 	 * @return
@@ -207,7 +244,8 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 
 		currentClusterPosition += iMovement;
 
-		iRecord = lowLevelDatabase.executeReadRecord(currentClusterId, currentClusterPosition, iRecord, fetchPlan);
+		iRecord = lowLevelDatabase.executeReadRecord(currentClusterId,
+				currentClusterPosition, iRecord, fetchPlan);
 		if (iRecord != null)
 			browsedRecords++;
 

@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.iterator;
 
 import com.orientechnologies.orient.core.db.graph.ODatabaseGraphTx;
 import com.orientechnologies.orient.core.db.graph.OGraphEdge;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Iterator to browse all the edges.
@@ -31,7 +32,13 @@ public class OGraphEdgeIterator extends OGraphElementIterator<OGraphEdge> {
 	}
 
 	public OGraphEdge next(final String iFetchPlan) {
-		return new OGraphEdge(database, underlying.next());
+		final ODocument doc = underlying.next();
+
+		OGraphEdge v = (OGraphEdge) database.getUserObjectByRecord(doc, null);
+		if (v != null)
+			return v;
+
+		return new OGraphEdge(database, doc);
 	}
 
 }

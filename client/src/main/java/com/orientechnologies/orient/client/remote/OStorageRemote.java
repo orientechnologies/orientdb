@@ -310,19 +310,19 @@ public class OStorageRemote extends OStorageAbstract {
 		return count(new int[] { iClusterId });
 	}
 
-	public long getClusterLastEntryPosition(final int iClusterId) {
+	public long[] getClusterDataRange(final int iClusterId) {
 		checkConnection();
 
 		do {
 			boolean locked = acquireExclusiveLock();
 
 			try {
-				network.writeByte(OChannelBinaryProtocol.CLUSTER_LASTPOS);
+				network.writeByte(OChannelBinaryProtocol.CLUSTER_DATARANGE);
 				network.writeShort((short) iClusterId);
 				network.flush();
 
 				readStatus();
-				return network.readLong();
+				return new long[]{ network.readLong(), network.readLong()};
 			} catch (Exception e) {
 				if (handleException("Error on getting last entry position count in cluster: " + iClusterId, e))
 					break;
@@ -331,7 +331,7 @@ public class OStorageRemote extends OStorageAbstract {
 				releaseExclusiveLock(locked);
 			}
 		} while (true);
-		return -1;
+		return null;
 	}
 
 	public long count(final int[] iClusterIds) {

@@ -139,8 +139,8 @@ public class OConsoleDatabaseCompare extends OConsoleDatabaseImpExpAbstract {
 
 			clusterId = storage1.getClusterIdByName(clusterName);
 
-			long db1Max = storage1.getClusterLastEntryPosition(clusterId);
-			long db2Max = storage2.getClusterLastEntryPosition(clusterId);
+			long db1Max = storage1.getClusterDataRange(clusterId)[1];
+			long db2Max = storage2.getClusterDataRange(clusterId)[1];
 
 			long clusterMax = Math.max(db1Max, db2Max);
 			for (int i = 0; i < clusterMax; ++i) {

@@ -56,6 +56,7 @@ public abstract class OFile {
 	protected String						mode;
 
 	protected static final int	HEADER_SIZE							= 1024;
+	protected static final int	HEADER_DATA_OFFSET							= 128;
 	protected static final int	DEFAULT_SIZE						= 15000000;
 	protected static final int	DEFAULT_INCREMENT_SIZE	= -50;										// NEGATIVE NUMBER MEANS AS PERCENT OF CURRENT SIZE
 
@@ -66,6 +67,10 @@ public abstract class OFile {
 	protected abstract void writeHeader() throws IOException;
 
 	protected abstract void readHeader() throws IOException;
+
+	public abstract void writeHeaderLong(int iPosition, long iValue) throws IOException;
+
+	public abstract long readHeaderLong(int iPosition) throws IOException;
 
 	protected abstract void setSoftlyClosed(boolean b) throws IOException;
 

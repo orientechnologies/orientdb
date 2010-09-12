@@ -194,6 +194,10 @@ public class OClusterLogical implements OCluster {
 		return map.size() - 1;
 	}
 
+	public long getFirstEntryPosition() {
+		return 0;
+	}
+
 	public long getLastEntryPosition() {
 		return total.dataPosition;
 	}

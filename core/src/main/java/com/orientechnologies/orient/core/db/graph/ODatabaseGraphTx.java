@@ -89,7 +89,7 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<ODocument, OGraphEle
 	public OGraphElement load(final ORID iRecordId) {
 		if (iRecordId == null)
 			return null;
-
+		
 		// TRY IN LOCAL CACHE
 		ODocument doc = getRecordById(iRecordId);
 		if (doc == null) {

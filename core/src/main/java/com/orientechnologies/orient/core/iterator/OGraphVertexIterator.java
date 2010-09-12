@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.iterator;
 
 import com.orientechnologies.orient.core.db.graph.ODatabaseGraphTx;
 import com.orientechnologies.orient.core.db.graph.OGraphVertex;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Iterator to browse all the vertexes.
@@ -31,6 +32,13 @@ public class OGraphVertexIterator extends OGraphElementIterator<OGraphVertex> {
 	}
 
 	public OGraphVertex next(final String iFetchPlan) {
-		return new OGraphVertex(database, underlying.next());
+		final ODocument doc = underlying.next();
+
+		final OGraphVertex v = (OGraphVertex) database.getUserObjectByRecord(doc,
+				null);
+		if (v != null)
+			return v;
+
+		return new OGraphVertex(database, doc);
 	}
 }

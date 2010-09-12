@@ -68,6 +68,8 @@ public interface OCluster {
 
 	public long getEntries() throws IOException;
 
+	public long getFirstEntryPosition() throws IOException;
+
 	public long getLastEntryPosition() throws IOException;
 
 	/**

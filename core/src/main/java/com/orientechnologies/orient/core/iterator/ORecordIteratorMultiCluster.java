@@ -33,177 +33,194 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  *          Record Type
  */
 public class ORecordIteratorMultiCluster<REC extends ORecordInternal<?>> extends ORecordIterator<REC> {
-	protected final int[]	clusterIds;
-	protected int					currentClusterIdx;
+  protected final int[] clusterIds;
+  protected int         currentClusterIdx;
 
-	protected int					lastClusterId;
-	protected long				lastClusterPosition;
-	protected long				totalAvailableRecords;
+  protected int         lastClusterId;
+  protected long        firstClusterPosition;
+  protected long        lastClusterPosition;
+  protected long        totalAvailableRecords;
 
-	public ORecordIteratorMultiCluster(final ODatabaseRecord<REC> iDatabase, final ODatabaseRecordAbstract<REC> iLowLevelDatabase,
-			final int[] iClusterIds) {
-		super(iDatabase, iLowLevelDatabase);
+  public ORecordIteratorMultiCluster(final ODatabaseRecord<REC> iDatabase, final ODatabaseRecordAbstract<REC> iLowLevelDatabase,
+      final int[] iClusterIds) {
+    super(iDatabase, iLowLevelDatabase);
 
-		clusterIds = iClusterIds;
+    clusterIds = iClusterIds;
 
-		currentClusterIdx = 0; // START FROM THE FIRST CLUSTER
-		currentClusterPosition = -1; // DEFAULT = START FROM THE BEGIN
+    currentClusterIdx = 0; // START FROM THE FIRST CLUSTER
 
-		lastClusterId = clusterIds[clusterIds.length - 1];
-		lastClusterPosition = database.getStorage().getClusterLastEntryPosition(lastClusterId);
+    lastClusterId = clusterIds[clusterIds.length - 1];
 
-		totalAvailableRecords = database.countClusterElements(iClusterIds);
-	}
+    long[] range = database.getStorage().getClusterDataRange(lastClusterId);
+    firstClusterPosition = range[0];
+    lastClusterPosition = range[1];
 
-	@Override
-	public boolean hasPrevious() {
-		if (limit > -1 && browsedRecords >= limit)
-			// LIMIT REACHED
-			return false;
+    currentClusterPosition = firstClusterPosition - 1;
 
-		return currentClusterPosition > 0;
-	}
+    totalAvailableRecords = database.countClusterElements(iClusterIds);
+  }
 
-	public boolean hasNext() {
-		if (limit > -1 && browsedRecords >= limit)
-			// LIMIT REACHED
-			return false;
+  @Override
+  public boolean hasPrevious() {
+    if (limit > -1 && browsedRecords >= limit)
+      // LIMIT REACHED
+      return false;
 
-		if (browsedRecords >= totalAvailableRecords)
-			return false;
+    if (liveUpdated)
+      return currentClusterPosition > database.getStorage().getClusterDataRange(lastClusterId)[0];
 
-		if (currentClusterIdx < clusterIds.length - 1)
-			// PRESUME THAT IF IT'S NOT AT THE LAST CLUSTER THERE COULD BE OTHER ELEMENTS
-			return true;
+    return currentClusterPosition > firstClusterPosition;
+  }
 
-		if (liveUpdated)
-			return currentClusterPosition < database.getStorage().getClusterLastEntryPosition(lastClusterId);
+  public boolean hasNext() {
+    if (limit > -1 && browsedRecords >= limit)
+      // LIMIT REACHED
+      return false;
 
-		return currentClusterPosition < lastClusterPosition;
-	}
+    if (browsedRecords >= totalAvailableRecords)
+      return false;
 
-	/**
-	 * Return the element at the current position and move backward the cursor to the previous position available.
-	 * 
-	 * @return the previous record found, otherwise the NoSuchElementException exception is thrown when no more records are found.
-	 */
-	@Override
-	public REC previous() {
-		final REC record = getRecord();
+    if (currentClusterIdx < clusterIds.length - 1)
+      // PRESUME THAT IF IT'S NOT AT THE LAST CLUSTER THERE COULD BE OTHER ELEMENTS
+      return true;
 
-		// ITERATE UNTIL THE PREVIOUS GOOD RECORD
-		while (currentClusterIdx > -1) {
+    if (liveUpdated)
+      return currentClusterPosition < database.getStorage().getClusterDataRange(lastClusterId)[1];
 
-			// MOVE BACKWARD IN THE CURRENT CLUSTER
-			while (hasPrevious()) {
-				if (readCurrentRecord(record, -1) != null)
-					// FOUND
-					return record;
-			}
+    return currentClusterPosition < lastClusterPosition;
+  }
 
-			// CLUSTER EXHAUSTED, TRY WITH THE PREVIOUS ONE
-			currentClusterIdx--;
-		}
+  /**
+   * Return the element at the current position and move backward the cursor to the previous position available.
+   * 
+   * @return the previous record found, otherwise the NoSuchElementException exception is thrown when no more records are found.
+   */
+  @Override
+  public REC previous() {
+    final REC record = getRecord();
 
-		throw new NoSuchElementException();
-	}
+    // ITERATE UNTIL THE PREVIOUS GOOD RECORD
+    while (currentClusterIdx > -1) {
 
-	/**
-	 * Return the element at the current position and move forward the cursor to the next position available.
-	 * 
-	 * @return the next record found, otherwise the NoSuchElementException exception is thrown when no more records are found.
-	 */
-	public REC next() {
-		final REC record = getRecord();
+      // MOVE BACKWARD IN THE CURRENT CLUSTER
+      while (hasPrevious()) {
+        if (readCurrentRecord(record, -1) != null)
+          // FOUND
+          return record;
+      }
 
-		// ITERATE UNTIL THE NEXT GOOD RECORD
-		while (currentClusterIdx < clusterIds.length) {
+      // CLUSTER EXHAUSTED, TRY WITH THE PREVIOUS ONE
+      currentClusterIdx--;
+    }
 
-			// MOVE FORWARD IN THE CURRENT CLUSTER
-			while (hasNext()) {
-				if (readCurrentRecord(record, +1) != null)
-					// FOUND
-					return record;
-			}
+    throw new NoSuchElementException();
+  }
 
-			// CLUSTER EXHAUSTED, TRY WITH THE NEXT ONE
-			currentClusterIdx++;
-		}
+  /**
+   * Return the element at the current position and move forward the cursor to the next position available.
+   * 
+   * @return the next record found, otherwise the NoSuchElementException exception is thrown when no more records are found.
+   */
+  public REC next() {
+    final REC record = getRecord();
 
-		throw new NoSuchElementException();
-	}
+    // ITERATE UNTIL THE NEXT GOOD RECORD
+    while (currentClusterIdx < clusterIds.length) {
 
-	public REC current() {
-		final REC record = getRecord();
-		return readCurrentRecord(record, 0);
-	}
+      // MOVE FORWARD IN THE CURRENT CLUSTER
+      while (hasNext()) {
+        if (readCurrentRecord(record, +1) != null)
+          // FOUND
+          return record;
+      }
 
-	/**
-	 * Move the iterator to the begin of the range. If no range was specified move to the first record of the cluster.
-	 * 
-	 * @return The object itself
-	 */
-	@Override
-	public ORecordIterator<REC> begin() {
-		currentClusterIdx = 0;
-		currentClusterPosition = -1;
-		return this;
-	}
+      // CLUSTER EXHAUSTED, TRY WITH THE NEXT ONE
+      currentClusterIdx++;
+    }
 
-	/**
-	 * Move the iterator to the end of the range. If no range was specified move to the last record of the cluster.
-	 * 
-	 * @return The object itself
-	 */
-	@Override
-	public ORecordIterator<REC> last() {
-		currentClusterIdx = clusterIds.length - 1;
-		currentClusterPosition = liveUpdated ? database.countClusterElements(clusterIds[currentClusterIdx]) : lastClusterPosition + 1;
-		return this;
-	}
+    throw new NoSuchElementException();
+  }
 
-	/**
-	 * Tell to the iterator that the upper limit must be checked at every cycle. Useful when concurrent deletes or additions change
-	 * the size of the cluster while you're browsing it. Default is false.
-	 * 
-	 * @param iLiveUpdated
-	 *          True to activate it, otherwise false (default)
-	 * @see #isLiveUpdated()
-	 */
-	@Override
-	public ORecordIterator<REC> setLiveUpdated(boolean iLiveUpdated) {
-		super.setLiveUpdated(iLiveUpdated);
+  public REC current() {
+    final REC record = getRecord();
+    return readCurrentRecord(record, 0);
+  }
 
-		// SET THE UPPER LIMIT TO -1 IF IT'S ENABLED
-		lastClusterPosition = iLiveUpdated ? -1 : database.countClusterElements(lastClusterId);
+  /**
+   * Move the iterator to the begin of the range. If no range was specified move to the first record of the cluster.
+   * 
+   * @return The object itself
+   */
+  @Override
+  public ORecordIterator<REC> begin() {
+    currentClusterIdx = 0;
+    currentClusterPosition = -1;
+    return this;
+  }
 
-		return this;
-	}
+  /**
+   * Move the iterator to the end of the range. If no range was specified move to the last record of the cluster.
+   * 
+   * @return The object itself
+   */
+  @Override
+  public ORecordIterator<REC> last() {
+    currentClusterIdx = clusterIds.length - 1;
+    currentClusterPosition = liveUpdated ? database.countClusterElements(clusterIds[currentClusterIdx]) : lastClusterPosition + 1;
+    return this;
+  }
 
-	/**
-	 * Read the current record and increment the counter if the record was found.
-	 * 
-	 * @param iRecord
-	 * @return
-	 */
-	private REC readCurrentRecord(REC iRecord, final int iMovement) {
-		if (limit > -1 && browsedRecords >= limit)
-			// LIMIT REACHED
-			return null;
+  /**
+   * Tell to the iterator that the upper limit must be checked at every cycle. Useful when concurrent deletes or additions change
+   * the size of the cluster while you're browsing it. Default is false.
+   * 
+   * @param iLiveUpdated
+   *          True to activate it, otherwise false (default)
+   * @see #isLiveUpdated()
+   */
+  @Override
+  public ORecordIterator<REC> setLiveUpdated(boolean iLiveUpdated) {
+    super.setLiveUpdated(iLiveUpdated);
 
-		currentClusterPosition += iMovement;
+    // SET THE UPPER LIMIT TO -1 IF IT'S ENABLED
+    lastClusterPosition = iLiveUpdated ? -1 : database.countClusterElements(lastClusterId);
 
-		iRecord = loadRecord(iRecord);
+    if (iLiveUpdated) {
+      firstClusterPosition = -1;
+      lastClusterPosition = -1;
+    } else {
+      long[] range = database.getStorage().getClusterDataRange(lastClusterId);
+      firstClusterPosition = range[0];
+      lastClusterPosition = range[1];
+    }
 
-		if (iRecord != null) {
-			browsedRecords++;
-			return iRecord;
-		}
+    return this;
+  }
 
-		return null;
-	}
+  /**
+   * Read the current record and increment the counter if the record was found.
+   * 
+   * @param iRecord
+   * @return
+   */
+  private REC readCurrentRecord(REC iRecord, final int iMovement) {
+    if (limit > -1 && browsedRecords >= limit)
+      // LIMIT REACHED
+      return null;
 
-	protected REC loadRecord(final REC iRecord) {
-		return lowLevelDatabase.executeReadRecord(clusterIds[currentClusterIdx], currentClusterPosition, iRecord, fetchPlan);
-	}
+    currentClusterPosition += iMovement;
+
+    iRecord = loadRecord(iRecord);
+
+    if (iRecord != null) {
+      browsedRecords++;
+      return iRecord;
+    }
+
+    return null;
+  }
+
+  protected REC loadRecord(final REC iRecord) {
+    return lowLevelDatabase.executeReadRecord(clusterIds[currentClusterIdx], currentClusterPosition, iRecord, fetchPlan);
+  }
 }

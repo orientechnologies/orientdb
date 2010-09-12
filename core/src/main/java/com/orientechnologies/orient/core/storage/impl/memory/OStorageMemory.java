@@ -216,10 +216,10 @@ public class OStorageMemory extends OStorageAbstract {
 		}
 	}
 
-	public long getClusterLastEntryPosition(final int iClusterId) {
+	public long[] getClusterDataRange(final int iClusterId) {
 		final OCluster cluster = getClusterById(iClusterId);
 		try {
-			return cluster.getLastEntryPosition();
+			return new long[]{ cluster.getFirstEntryPosition(), cluster.getLastEntryPosition() };
 		} catch (IOException e) {
 			throw new OStorageException("Error on getting last entry position in cluster: " + iClusterId, e);
 		}

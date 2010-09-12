@@ -142,10 +142,10 @@ public interface OStorage {
 	public Object command(OCommandRequestText iCommand);
 
 	/**
-	 * Returns the last entry position in the requested cluster. Useful to know the range of the records.
+	 * Returns a pair of long values telling the begin and end positions of data in the requested cluster. Useful to know the range of the records.
 	 * 
 	 * @param iCurrentClusterId
 	 *          Cluster id
 	 */
-	public long getClusterLastEntryPosition(int currentClusterId);
+	public long[] getClusterDataRange(int currentClusterId);
 }

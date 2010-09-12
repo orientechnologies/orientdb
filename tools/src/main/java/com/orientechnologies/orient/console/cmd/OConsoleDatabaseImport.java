@@ -462,7 +462,7 @@ public class OConsoleDatabaseImport extends OConsoleDatabaseImpExpAbstract {
 
 		String rid = record.getIdentity().toString();
 
-		long nextAvailablePos = database.getStorage().getClusterLastEntryPosition(record.getIdentity().getClusterId()) + 1;
+		long nextAvailablePos = database.getStorage().getClusterDataRange(record.getIdentity().getClusterId())[1] + 1;
 
 		// SAVE THE RECORD
 		if (record.getIdentity().getClusterPosition() < nextAvailablePos) {

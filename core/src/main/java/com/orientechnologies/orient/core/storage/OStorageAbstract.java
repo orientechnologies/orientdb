@@ -26,7 +26,7 @@ public abstract class OStorageAbstract extends OSharedResourceAdaptive implement
 	protected String								name;
 	protected String								url;
 	protected String								mode;
-	protected OCacheRecord					cache	= new OCacheRecord(2000);
+	protected OCacheRecord					cache	= new OCacheRecord(20000);
 
 	protected boolean								open	= false;
 

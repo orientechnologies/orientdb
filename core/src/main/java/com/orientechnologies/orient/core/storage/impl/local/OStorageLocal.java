@@ -59,1007 +59,1019 @@ import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
 public class OStorageLocal extends OStorageAbstract {
-	public static final String[]					TYPES							= { OClusterLocal.TYPE, OClusterLogical.TYPE };
-
-	// private final OLockManager<String, String> lockManager = new OLockManager<String, String>();
-	protected final Map<String, OCluster>	clusterMap				= new LinkedHashMap<String, OCluster>();
-	protected OCluster[]									clusters					= new OCluster[0];
-	protected ODataLocal[]								dataSegments			= new ODataLocal[0];
-
-	private OStorageLocalTxExecuter				txManager;
-	private String												storagePath;
-	private OStorageVariableParser				variableParser;
-	private int														defaultClusterId	= -1;
-
-	public OStorageLocal(final String iName, final String iFilePath, final String iMode) throws IOException {
-		super(iName, iFilePath, iMode);
-
-		storagePath = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getParent()));
-
-		configuration = new OStorageConfiguration(this);
-		variableParser = new OStorageVariableParser(storagePath);
-		txManager = new OStorageLocalTxExecuter(this, configuration.txSegment);
-	}
-
-	public synchronized void open(final int iRequesterId, final String iUserName, final String iUserPassword) {
-		final long timer = OProfiler.getInstance().startChrono();
-
-		addUser();
-		cache.addUser();
-
-		final boolean locked = acquireExclusiveLock();
-
-		try {
-			if (open)
-				// ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS REUSED
-				return;
+  public static final String[]          TYPES            = { OClusterLocal.TYPE, OClusterLogical.TYPE };
+
+  // private final OLockManager<String, String> lockManager = new
+  // OLockManager<String, String>();
+  protected final Map<String, OCluster> clusterMap       = new LinkedHashMap<String, OCluster>();
+  protected OCluster[]                  clusters         = new OCluster[0];
+  protected ODataLocal[]                dataSegments     = new ODataLocal[0];
+
+  private OStorageLocalTxExecuter       txManager;
+  private String                        storagePath;
+  private OStorageVariableParser        variableParser;
+  private int                           defaultClusterId = -1;
+
+  public OStorageLocal(final String iName, final String iFilePath, final String iMode) throws IOException {
+    super(iName, iFilePath, iMode);
+
+    storagePath = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getParent()));
+
+    configuration = new OStorageConfiguration(this);
+    variableParser = new OStorageVariableParser(storagePath);
+    txManager = new OStorageLocalTxExecuter(this, configuration.txSegment);
+  }
+
+  public synchronized void open(final int iRequesterId, final String iUserName, final String iUserPassword) {
+    final long timer = OProfiler.getInstance().startChrono();
+
+    addUser();
+    cache.addUser();
+
+    final boolean locked = acquireExclusiveLock();
+
+    try {
+      if (open)
+        // ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
+        // REUSED
+        return;
 
-			if (!exists())
-				throw new OStorageException("Can't open the storage " + name + " because it not exists");
+      if (!exists())
+        throw new OStorageException("Can't open the storage " + name + " because it not exists");
 
-			open = true;
+      open = true;
+
+      // OPEN BASIC SEGMENTS
+      int pos;
+      pos = registerDataSegment(new OStorageDataConfiguration(configuration, OStorage.DATA_DEFAULT_NAME));
+      dataSegments[pos].open();
 
-			// OPEN BASIC SEGMENTS
-			int pos;
-			pos = registerDataSegment(new OStorageDataConfiguration(configuration, OStorage.DATA_DEFAULT_NAME));
-			dataSegments[pos].open();
+      pos = createClusterFromConfig(new OStoragePhysicalClusterConfiguration(configuration, OStorage.CLUSTER_INTERNAL_NAME,
+          clusters.length));
+      clusters[pos].open();
 
-			pos = createClusterFromConfig(new OStoragePhysicalClusterConfiguration(configuration, OStorage.CLUSTER_INTERNAL_NAME,
-					clusters.length));
-			clusters[pos].open();
+      pos = createClusterFromConfig(new OStoragePhysicalClusterConfiguration(configuration, OStorage.CLUSTER_INDEX_NAME,
+          clusters.length));
+      clusters[pos].open();
+
+      defaultClusterId = createClusterFromConfig(new OStoragePhysicalClusterConfiguration(configuration,
+          OStorage.CLUSTER_DEFAULT_NAME, clusters.length));
+      clusters[defaultClusterId].open();
+
+      configuration.load();
 
-			pos = createClusterFromConfig(new OStoragePhysicalClusterConfiguration(configuration, OStorage.CLUSTER_INDEX_NAME,
-					clusters.length));
-			clusters[pos].open();
+      if (configuration.isEmpty())
+        throw new OStorageException("Can't open storage because it not exists. Storage path: " + url);
 
-			defaultClusterId = createClusterFromConfig(new OStoragePhysicalClusterConfiguration(configuration,
-					OStorage.CLUSTER_DEFAULT_NAME, clusters.length));
-			clusters[defaultClusterId].open();
+      // REGISTER DATA SEGMENT
+      OStorageDataConfiguration dataConfig;
+      for (int i = 0; i < configuration.dataSegments.size(); ++i) {
+        dataConfig = configuration.dataSegments.get(i);
 
-			configuration.load();
+        pos = registerDataSegment(dataConfig);
+        if (pos == -1) {
+          // CLOSE AND REOPEN TO BE SURE ALL THE FILE SEGMENTS ARE
+          // OPENED
+          dataSegments[i].close();
+          dataSegments[i] = new ODataLocal(this, dataConfig, pos);
+          dataSegments[i].open();
+        } else
+          dataSegments[pos].open();
+      }
 
-			if (configuration.isEmpty())
-				throw new OStorageException("Can't open storage because it not exists. Storage path: " + url);
+      // REGISTER CLUSTER
+      OStorageClusterConfiguration clusterConfig;
+      for (int i = 0; i < configuration.clusters.size(); ++i) {
+        clusterConfig = configuration.clusters.get(i);
 
-			// REGISTER DATA SEGMENT
-			OStorageDataConfiguration dataConfig;
-			for (int i = 0; i < configuration.dataSegments.size(); ++i) {
-				dataConfig = configuration.dataSegments.get(i);
+        pos = createClusterFromConfig(clusterConfig);
 
-				pos = registerDataSegment(dataConfig);
-				if (pos == -1) {
-					// CLOSE AND REOPEN TO BE SURE ALL THE FILE SEGMENTS ARE OPENED
-					dataSegments[i].close();
-					dataSegments[i] = new ODataLocal(this, dataConfig, pos);
-					dataSegments[i].open();
-				} else
-					dataSegments[pos].open();
-			}
+        if (pos == -1) {
+          // CLOSE AND REOPEN TO BE SURE ALL THE FILE SEGMENTS ARE
+          // OPENED
+          clusters[i].close();
+          clusters[i] = new OClusterLocal(this, (OStoragePhysicalClusterConfiguration) clusterConfig);
+          clusters[i].open();
+        } else {
+          if (clusterConfig.getName().equals(OStorage.CLUSTER_DEFAULT_NAME))
+            defaultClusterId = pos;
 
-			// REGISTER CLUSTER
-			OStorageClusterConfiguration clusterConfig;
-			for (int i = 0; i < configuration.clusters.size(); ++i) {
-				clusterConfig = configuration.clusters.get(i);
+          clusters[pos].open();
+        }
+      }
 
-				pos = createClusterFromConfig(clusterConfig);
+      txManager.open();
 
-				if (pos == -1) {
-					// CLOSE AND REOPEN TO BE SURE ALL THE FILE SEGMENTS ARE OPENED
-					clusters[i].close();
-					clusters[i] = new OClusterLocal(this, (OStoragePhysicalClusterConfiguration) clusterConfig);
-					clusters[i].open();
-				} else {
-					if (clusterConfig.getName().equals(OStorage.CLUSTER_DEFAULT_NAME))
-						defaultClusterId = pos;
+    } catch (IOException e) {
+      open = false;
+      dataSegments = new ODataLocal[0];
+      clusters = new OCluster[0];
+      clusterMap.clear();
+      throw new OStorageException("Can't open local storage: " + url + ", with mode=" + mode, e);
+    } finally {
+      releaseExclusiveLock(locked);
 
-					clusters[pos].open();
-				}
-			}
+      OProfiler.getInstance().stopChrono("OStorageLocal.open", timer);
+    }
+  }
 
-			txManager.open();
+  public void create() {
+    final long timer = OProfiler.getInstance().startChrono();
 
-		} catch (IOException e) {
-			open = false;
-			dataSegments = new ODataLocal[0];
-			clusters = new OCluster[0];
-			clusterMap.clear();
-			throw new OStorageException("Can't open local storage: " + url + ", with mode=" + mode, e);
-		} finally {
-			releaseExclusiveLock(locked);
+    addUser();
+    cache.addUser();
 
-			OProfiler.getInstance().stopChrono("OStorageLocal.open", timer);
-		}
-	}
+    final boolean locked = acquireExclusiveLock();
 
-	public void create() {
-		final long timer = OProfiler.getInstance().startChrono();
+    try {
+      File storageFolder = new File(storagePath);
+      if (!storageFolder.exists())
+        storageFolder.mkdir();
 
-		addUser();
-		cache.addUser();
+      if (exists())
+        throw new OStorageException("Can't create new storage " + name + " because it already exists");
 
-		final boolean locked = acquireExclusiveLock();
+      open = true;
 
-		try {
-			File storageFolder = new File(storagePath);
-			if (!storageFolder.exists())
-				storageFolder.mkdir();
+      addDataSegment(OStorage.DATA_DEFAULT_NAME);
 
-			if (exists())
-				throw new OStorageException("Can't create new storage " + name + " because it already exists");
+      // ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
+      addCluster(OStorage.CLUSTER_INTERNAL_NAME, OClusterLocal.TYPE);
 
-			open = true;
+      // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF
+      // INDEXING
+      addCluster(OStorage.CLUSTER_INDEX_NAME, OClusterLocal.TYPE);
 
-			addDataSegment(OStorage.DATA_DEFAULT_NAME);
+      // ADD THE DEFAULT CLUSTER
+      defaultClusterId = addCluster(OStorage.CLUSTER_DEFAULT_NAME, OClusterLocal.TYPE);
 
-			// ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
-			addCluster(OStorage.CLUSTER_INTERNAL_NAME, OClusterLocal.TYPE);
+      configuration.create();
 
-			// ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING
-			addCluster(OStorage.CLUSTER_INDEX_NAME, OClusterLocal.TYPE);
+      txManager.create();
+    } catch (OStorageException e) {
+      close();
+      throw e;
+    } catch (IOException e) {
+      close();
+      throw new OStorageException("Error on creation of storage: " + name, e);
 
-			// ADD THE DEFAULT CLUSTER
-			defaultClusterId = addCluster(OStorage.CLUSTER_DEFAULT_NAME, OClusterLocal.TYPE);
+    } finally {
+      releaseExclusiveLock(locked);
 
-			configuration.create();
+      OProfiler.getInstance().stopChrono("OStorageLocal.create", timer);
+    }
+  }
 
-			txManager.create();
-		} catch (OStorageException e) {
-			close();
-			throw e;
-		} catch (IOException e) {
-			close();
-			throw new OStorageException("Error on creation of storage: " + name, e);
+  public boolean exists() {
+    return new File(storagePath + "/" + OStorage.DATA_DEFAULT_NAME + ".0" + ODataLocal.DEF_EXTENSION).exists();
+  }
 
-		} finally {
-			releaseExclusiveLock(locked);
+  public void close() {
+    final long timer = OProfiler.getInstance().startChrono();
 
-			OProfiler.getInstance().stopChrono("OStorageLocal.create", timer);
-		}
-	}
+    final boolean locked = acquireExclusiveLock();
 
-	public boolean exists() {
-		return new File(storagePath + "/" + OStorage.DATA_DEFAULT_NAME + ".0" + ODataLocal.DEF_EXTENSION).exists();
-	}
+    if (!open)
+      return;
 
-	public void close() {
-		final long timer = OProfiler.getInstance().startChrono();
+    try {
+      for (OCluster cluster : clusters)
+        if (cluster != null)
+          cluster.close();
+      clusters = new OCluster[0];
+      clusterMap.clear();
 
-		final boolean locked = acquireExclusiveLock();
+      for (ODataLocal data : dataSegments)
+        data.close();
+      dataSegments = new ODataLocal[0];
 
-		if (!open)
-			return;
+      txManager.close();
 
-		try {
-			for (OCluster cluster : clusters)
-				if (cluster != null)
-					cluster.close();
-			clusters = new OCluster[0];
-			clusterMap.clear();
+      cache.removeUser();
+      cache.clear();
+      configuration = new OStorageConfiguration(this);
 
-			for (ODataLocal data : dataSegments)
-				data.close();
-			dataSegments = new ODataLocal[0];
+      open = false;
+    } catch (IOException e) {
+      OLogManager.instance().error(this, "Error on closing of the storage '" + name, e, OStorageException.class);
 
-			txManager.close();
+    } finally {
+      releaseExclusiveLock(locked);
 
-			cache.removeUser();
-			cache.clear();
-			configuration = new OStorageConfiguration(this);
+      OProfiler.getInstance().stopChrono("OStorageLocal.close", timer);
+    }
+  }
 
-			open = false;
-		} catch (IOException e) {
-			OLogManager.instance().error(this, "Error on closing of the storage '" + name, e, OStorageException.class);
+  public ODataLocal getDataSegment(final int iDataSegmentId) {
+    checkOpeness();
+    if (iDataSegmentId >= dataSegments.length)
+      throw new IllegalArgumentException("Data segment #" + iDataSegmentId + " doesn't exist in current storage");
 
-		} finally {
-			releaseExclusiveLock(locked);
+    final boolean locked = acquireSharedLock();
 
-			OProfiler.getInstance().stopChrono("OStorageLocal.close", timer);
-		}
-	}
+    try {
+      return dataSegments[iDataSegmentId];
 
-	public ODataLocal getDataSegment(final int iDataSegmentId) {
-		checkOpeness();
-		if (iDataSegmentId >= dataSegments.length)
-			throw new IllegalArgumentException("Data segment #" + iDataSegmentId + " doesn't exist in current storage");
+    } finally {
+      releaseSharedLock(locked);
+    }
+  }
 
-		final boolean locked = acquireSharedLock();
+  /**
+   * Add a new data segment in the default segment directory and with filename equals to the cluster name.
+   */
+  public int addDataSegment(final String iDataSegmentName) {
+    String segmentFileName = storagePath + "/" + iDataSegmentName;
+    return addDataSegment(iDataSegmentName, segmentFileName);
+  }
 
-		try {
-			return dataSegments[iDataSegmentId];
+  public int addDataSegment(String iSegmentName, final String iSegmentFileName) {
+    checkOpeness();
 
-		} finally {
-			releaseSharedLock(locked);
-		}
-	}
+    iSegmentName = iSegmentName.toLowerCase();
 
-	/**
-	 * Add a new data segment in the default segment directory and with filename equals to the cluster name.
-	 */
-	public int addDataSegment(final String iDataSegmentName) {
-		String segmentFileName = storagePath + "/" + iDataSegmentName;
-		return addDataSegment(iDataSegmentName, segmentFileName);
-	}
+    final boolean locked = acquireExclusiveLock();
 
-	public int addDataSegment(String iSegmentName, final String iSegmentFileName) {
-		checkOpeness();
+    try {
+      OStorageDataConfiguration conf = new OStorageDataConfiguration(configuration, iSegmentName);
+      configuration.dataSegments.add(conf);
 
-		iSegmentName = iSegmentName.toLowerCase();
+      final int pos = registerDataSegment(conf);
 
-		final boolean locked = acquireExclusiveLock();
+      if (pos == -1)
+        throw new OConfigurationException("Can't add segment " + conf.name + " because it's already part of current storage");
 
-		try {
-			OStorageDataConfiguration conf = new OStorageDataConfiguration(configuration, iSegmentName);
-			configuration.dataSegments.add(conf);
+      dataSegments[pos].create(-1);
+      configuration.update();
 
-			final int pos = registerDataSegment(conf);
+      return pos;
+    } catch (Throwable e) {
+      OLogManager.instance().error(this, "Error on creation of new data segment '" + iSegmentName + "' in: " + iSegmentFileName, e,
+          OStorageException.class);
+      return -1;
 
-			if (pos == -1)
-				throw new OConfigurationException("Can't add segment " + conf.name + " because it's already part of current storage");
+    } finally {
+      releaseExclusiveLock(locked);
+    }
+  }
 
-			dataSegments[pos].create(-1);
-			configuration.update();
+  /**
+   * Add a new cluster into the storage. Type can be: "physical" or "logical".
+   */
+  public int addCluster(String iClusterName, final String iClusterType, final Object... iParameters) {
+    checkOpeness();
 
-			return pos;
-		} catch (Throwable e) {
-			OLogManager.instance().error(this, "Error on creation of new data segment '" + iSegmentName + "' in: " + iSegmentFileName, e,
-					OStorageException.class);
-			return -1;
+    final boolean locked = acquireExclusiveLock();
 
-		} finally {
-			releaseExclusiveLock(locked);
-		}
-	}
+    try {
+      iClusterName = iClusterName.toLowerCase();
 
-	/**
-	 * Add a new cluster into the storage. Type can be: "physical" or "logical".
-	 */
-	public int addCluster(String iClusterName, final String iClusterType, final Object... iParameters) {
-		checkOpeness();
+      if (OClusterLocal.TYPE.equalsIgnoreCase(iClusterType)) {
+        // GET PARAMETERS
+        final String clusterFileName = (String) (iParameters.length < 1 ? storagePath + "/" + iClusterName : iParameters[0]);
+        final int startSize = (iParameters.length < 2 ? -1 : (Integer) iParameters[1]);
 
-		final boolean locked = acquireExclusiveLock();
+        return addPhysicalCluster(iClusterName, clusterFileName, startSize);
+      } else if (OClusterLogical.TYPE.equalsIgnoreCase(iClusterType)) {
+        // GET PARAMETERS
+        final int physicalClusterId = (iParameters.length < 1 ? getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME)
+            : (Integer) iParameters[0]);
 
-		try {
-			iClusterName = iClusterName.toLowerCase();
+        return addLogicalCluster(iClusterName, physicalClusterId);
+      } else
+        OLogManager.instance().exception(
+            "Cluster type '" + iClusterType + "' is not supported. Supported types are: " + Arrays.toString(TYPES), null,
+            OStorageException.class);
 
-			if (OClusterLocal.TYPE.equalsIgnoreCase(iClusterType)) {
-				// GET PARAMETERS
-				final String clusterFileName = (String) (iParameters.length < 1 ? storagePath + "/" + iClusterName : iParameters[0]);
-				final int startSize = (iParameters.length < 2 ? -1 : (Integer) iParameters[1]);
+    } catch (Exception e) {
+      OLogManager.instance().exception("Error in creation of new cluster '" + iClusterName + "' of type: " + iClusterType, e,
+          OStorageException.class);
 
-				return addPhysicalCluster(iClusterName, clusterFileName, startSize);
-			} else if (OClusterLogical.TYPE.equalsIgnoreCase(iClusterType)) {
-				// GET PARAMETERS
-				final int physicalClusterId = (iParameters.length < 1 ? getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME)
-						: (Integer) iParameters[0]);
+    } finally {
 
-				return addLogicalCluster(iClusterName, physicalClusterId);
-			} else
-				OLogManager.instance().exception(
-						"Cluster type '" + iClusterType + "' is not supported. Supported types are: " + Arrays.toString(TYPES), null,
-						OStorageException.class);
+      releaseExclusiveLock(locked);
+    }
+    return -1;
+  }
 
-		} catch (Exception e) {
-			OLogManager.instance().exception("Error in creation of new cluster '" + iClusterName + "' of type: " + iClusterType, e,
-					OStorageException.class);
+  public boolean removeCluster(final int iClusterId) {
+    final boolean locked = acquireExclusiveLock();
 
-		} finally {
+    try {
+      if (iClusterId < 0 || iClusterId >= clusters.length)
+        throw new IllegalArgumentException("Cluster id '" + iClusterId + "' is out of range of configured clusters (0-"
+            + (clusters.length - 1) + ")");
 
-			releaseExclusiveLock(locked);
-		}
-		return -1;
-	}
+      final OCluster cluster = clusters[iClusterId];
+      if (cluster == null)
+        return false;
 
-	public boolean removeCluster(final int iClusterId) {
-		final boolean locked = acquireExclusiveLock();
+      cluster.delete();
 
-		try {
-			if (iClusterId < 0 || iClusterId >= clusters.length)
-				throw new IllegalArgumentException("Cluster id '" + iClusterId + "' is out of range of configured clusters (0-"
-						+ (clusters.length - 1) + ")");
+      clusterMap.remove(cluster.getName());
+      clusters[iClusterId] = null;
 
-			final OCluster cluster = clusters[iClusterId];
-			if (cluster == null)
-				return false;
+      // UPDATE CONFIGURATION
+      configuration.clusters.set(iClusterId, null);
+      configuration.update();
 
-			cluster.delete();
+      return true;
+    } catch (Exception e) {
+      OLogManager.instance().exception("Error while removing cluster '" + iClusterId + "'", e, OStorageException.class);
 
-			clusterMap.remove(cluster.getName());
-			clusters[iClusterId] = null;
+    } finally {
+      releaseExclusiveLock(locked);
+    }
 
-			// UPDATE CONFIGURATION
-			configuration.clusters.set(iClusterId, null);
-			configuration.update();
+    return false;
+  }
 
-			return true;
-		} catch (Exception e) {
-			OLogManager.instance().exception("Error while removing cluster '" + iClusterId + "'", e, OStorageException.class);
+  public long count(final int[] iClusterIds) {
+    checkOpeness();
 
-		} finally {
-			releaseExclusiveLock(locked);
-		}
+    final long timer = OProfiler.getInstance().startChrono();
 
-		return false;
-	}
+    final boolean locked = acquireSharedLock();
 
-	public long count(final int[] iClusterIds) {
-		checkOpeness();
+    try {
+      long tot = 0;
 
-		final long timer = OProfiler.getInstance().startChrono();
+      OCluster c;
+      for (int i = 0; i < iClusterIds.length; ++i) {
+        if (iClusterIds[i] >= clusters.length)
+          throw new OConfigurationException("Cluster id " + iClusterIds[i] + "was not found");
 
-		final boolean locked = acquireSharedLock();
+        c = clusters[iClusterIds[i]];
+        if (c != null)
+          tot += c.getEntries();
+      }
 
-		try {
-			long tot = 0;
+      return tot;
 
-			OCluster c;
-			for (int i = 0; i < iClusterIds.length; ++i) {
-				if (iClusterIds[i] >= clusters.length)
-					throw new OConfigurationException("Cluster id " + iClusterIds[i] + "was not found");
+    } catch (IOException e) {
 
-				c = clusters[iClusterIds[i]];
-				if (c != null)
-					tot += c.getEntries();
-			}
+      OLogManager.instance().error(this, "Error on getting element counts", e);
+      return -1;
 
-			return tot;
+    } finally {
+      releaseSharedLock(locked);
 
-		} catch (IOException e) {
+      OProfiler.getInstance().stopChrono("OStorageLocal.getClusterElementCounts", timer);
+    }
+  }
 
-			OLogManager.instance().error(this, "Error on getting element counts", e);
-			return -1;
+  public long[] getClusterDataRange(final int iClusterId) {
+    if (iClusterId == -1)
+      throw new OStorageException("Cluster Id is invalid: " + iClusterId);
 
-		} finally {
-			releaseSharedLock(locked);
+    checkOpeness();
 
-			OProfiler.getInstance().stopChrono("OStorageLocal.getClusterElementCounts", timer);
-		}
-	}
+    final long timer = OProfiler.getInstance().startChrono();
 
-	public long getClusterLastEntryPosition(final int iClusterId) {
-		if (iClusterId == -1)
-			throw new OStorageException("Cluster Id is invalid: " + iClusterId);
+    final boolean locked = acquireSharedLock();
 
-		checkOpeness();
+    try {
+      return new long[] { clusters[iClusterId].getFirstEntryPosition(), clusters[iClusterId].getLastEntryPosition() };
 
-		final long timer = OProfiler.getInstance().startChrono();
+    } catch (IOException e) {
 
-		final boolean locked = acquireSharedLock();
+      OLogManager.instance().error(this, "Error on getting last entry position", e);
+      return null;
 
-		try {
-			return clusters[iClusterId].getLastEntryPosition();
+    } finally {
+      releaseSharedLock(locked);
 
-		} catch (IOException e) {
+      OProfiler.getInstance().stopChrono("OStorageLocal.getClusterLastEntryPosition", timer);
+    }
+  }
 
-			OLogManager.instance().error(this, "Error on getting last entry position", e);
-			return -1;
+  public long count(final int iClusterId) {
+    if (iClusterId == -1)
+      throw new OStorageException("Cluster Id is invalid: " + iClusterId);
 
-		} finally {
-			releaseSharedLock(locked);
+    // COUNT PHYSICAL CLUSTER IF ANY
+    checkOpeness();
 
-			OProfiler.getInstance().stopChrono("OStorageLocal.getClusterLastEntryPosition", timer);
-		}
-	}
+    final long timer = OProfiler.getInstance().startChrono();
 
-	public long count(final int iClusterId) {
-		if (iClusterId == -1)
-			throw new OStorageException("Cluster Id is invalid: " + iClusterId);
+    final boolean locked = acquireSharedLock();
 
-		// COUNT PHYSICAL CLUSTER IF ANY
-		checkOpeness();
+    try {
+      return clusters[iClusterId].getEntries();
 
-		final long timer = OProfiler.getInstance().startChrono();
+    } catch (IOException e) {
 
-		final boolean locked = acquireSharedLock();
+      OLogManager.instance().error(this, "Error on getting element counts", e);
+      return -1;
 
-		try {
-			return clusters[iClusterId].getEntries();
+    } finally {
+      releaseSharedLock(locked);
 
-		} catch (IOException e) {
+      OProfiler.getInstance().stopChrono("OStorageLocal.getClusterElementCounts", timer);
+    }
+  }
 
-			OLogManager.instance().error(this, "Error on getting element counts", e);
-			return -1;
+  public long createRecord(final int iClusterId, final byte[] iContent, final byte iRecordType) {
+    checkOpeness();
+    return createRecord(getClusterById(iClusterId), iContent, iRecordType);
+  }
 
-		} finally {
-			releaseSharedLock(locked);
+  public ORawBuffer readRecord(final ODatabaseRecord<?> iDatabase, final int iRequesterId, final int iClusterId,
+      final long iPosition, final String iFetchPlan) {
+    checkOpeness();
+    return readRecord(iRequesterId, getClusterById(iClusterId), iPosition, true);
+  }
 
-			OProfiler.getInstance().stopChrono("OStorageLocal.getClusterElementCounts", timer);
-		}
-	}
+  public int updateRecord(final int iRequesterId, final int iClusterId, final long iPosition, final byte[] iContent,
+      final int iVersion, final byte iRecordType) {
+    checkOpeness();
+    return updateRecord(iRequesterId, getClusterById(iClusterId), iPosition, iContent, iVersion, iRecordType);
+  }
 
-	public long createRecord(final int iClusterId, final byte[] iContent, final byte iRecordType) {
-		checkOpeness();
-		return createRecord(getClusterById(iClusterId), iContent, iRecordType);
-	}
+  public boolean deleteRecord(final int iRequesterId, final int iClusterId, final long iPosition, final int iVersion) {
+    checkOpeness();
+    return deleteRecord(iRequesterId, getClusterById(iClusterId), iPosition, iVersion);
+  }
 
-	public ORawBuffer readRecord(final ODatabaseRecord<?> iDatabase, final int iRequesterId, final int iClusterId,
-			final long iPosition, final String iFetchPlan) {
-		checkOpeness();
-		return readRecord(iRequesterId, getClusterById(iClusterId), iPosition, true);
-	}
+  /**
+   * Browse N clusters. The entire operation use a shared lock on the storage and lock the cluster from the external avoiding atomic
+   * lock at every record read.
+   * 
+   * @param iRequesterId
+   *          The requester of the operation. Needed to know who locks
+   * @param iClusterId
+   *          Array of cluster ids
+   * @param iListener
+   *          The listener to call for each record found
+   * @param ioRecord
+   */
+  public void browse(final int iRequesterId, final int[] iClusterId, final ORecordBrowsingListener iListener,
+      ORecordInternal<?> ioRecord, final boolean iLockEntireCluster) {
+    checkOpeness();
 
-	public int updateRecord(final int iRequesterId, final int iClusterId, final long iPosition, final byte[] iContent,
-			final int iVersion, final byte iRecordType) {
-		checkOpeness();
-		return updateRecord(iRequesterId, getClusterById(iClusterId), iPosition, iContent, iVersion, iRecordType);
-	}
+    final long timer = OProfiler.getInstance().startChrono();
 
-	public boolean deleteRecord(final int iRequesterId, final int iClusterId, final long iPosition, final int iVersion) {
-		checkOpeness();
-		return deleteRecord(iRequesterId, getClusterById(iClusterId), iPosition, iVersion);
-	}
+    final boolean locked = acquireSharedLock();
 
-	/**
-	 * Browse N clusters. The entire operation use a shared lock on the storage and lock the cluster from the external avoiding atomic
-	 * lock at every record read.
-	 * 
-	 * @param iRequesterId
-	 *          The requester of the operation. Needed to know who locks
-	 * @param iClusterId
-	 *          Array of cluster ids
-	 * @param iListener
-	 *          The listener to call for each record found
-	 * @param ioRecord
-	 */
-	public void browse(final int iRequesterId, final int[] iClusterId, final ORecordBrowsingListener iListener,
-			ORecordInternal<?> ioRecord, final boolean iLockEntireCluster) {
-		checkOpeness();
+    try {
+      OCluster cluster;
 
-		final long timer = OProfiler.getInstance().startChrono();
+      for (int clusterId : iClusterId) {
+        cluster = getClusterById(clusterId);
 
-		final boolean locked = acquireSharedLock();
+        ioRecord = browseCluster(iRequesterId, iListener, ioRecord, cluster, iLockEntireCluster);
+      }
+    } catch (IOException e) {
 
-		try {
-			OCluster cluster;
+      OLogManager.instance().error(this, "Error on browsing elements of cluster: " + iClusterId, e);
 
-			for (int clusterId : iClusterId) {
-				cluster = getClusterById(clusterId);
+    } finally {
+      releaseSharedLock(locked);
 
-				ioRecord = browseCluster(iRequesterId, iListener, ioRecord, cluster, iLockEntireCluster);
-			}
-		} catch (IOException e) {
+      OProfiler.getInstance().stopChrono("OStorageLocal.foreach", timer);
+    }
+  }
 
-			OLogManager.instance().error(this, "Error on browsing elements of cluster: " + iClusterId, e);
+  private ORecordInternal<?> browseCluster(final int iRequesterId, final ORecordBrowsingListener iListener,
+      ORecordInternal<?> ioRecord, OCluster cluster, final boolean iLockEntireCluster) throws IOException {
+    ORawBuffer recordBuffer;
+    long positionInPhyCluster;
 
-		} finally {
-			releaseSharedLock(locked);
+    try {
+      if (iLockEntireCluster)
+        // LOCK THE ENTIRE CLUSTER AVOIDING TO LOCK EVERY SINGLE RECORD
+        cluster.lock();
 
-			OProfiler.getInstance().stopChrono("OStorageLocal.foreach", timer);
-		}
-	}
+      OClusterPositionIterator iterator = cluster.absoluteIterator();
 
-	private ORecordInternal<?> browseCluster(final int iRequesterId, final ORecordBrowsingListener iListener,
-			ORecordInternal<?> ioRecord, OCluster cluster, final boolean iLockEntireCluster) throws IOException {
-		ORawBuffer recordBuffer;
-		long positionInPhyCluster;
+      // BROWSE ALL THE RECORDS
+      while (iterator.hasNext()) {
+        positionInPhyCluster = iterator.next();
 
-		try {
-			if (iLockEntireCluster)
-				// LOCK THE ENTIRE CLUSTER AVOIDING TO LOCK EVERY SINGLE RECORD
-				cluster.lock();
+        // READ THE RAW RECORD. IF iLockEntireCluster THEN THE READ WILL
+        // BE NOT-LOCKING, OTHERWISE YES
+        recordBuffer = readRecord(iRequesterId, cluster, positionInPhyCluster, !iLockEntireCluster);
+        if (recordBuffer == null)
+          continue;
 
-			OClusterPositionIterator iterator = cluster.absoluteIterator();
+        if (recordBuffer.recordType != ODocument.RECORD_TYPE && recordBuffer.recordType != ORecordColumn.RECORD_TYPE)
+          // WRONG RECORD TYPE: JUMP IT
+          continue;
 
-			// BROWSE ALL THE RECORDS
-			while (iterator.hasNext()) {
-				positionInPhyCluster = iterator.next();
+        if (ioRecord == null)
+          // RECORD NULL OR DIFFERENT IN TYPE: CREATE A NEW ONE
+          ioRecord = ORecordFactory.newInstance(recordBuffer.recordType);
+        else if (ioRecord.getRecordType() != recordBuffer.recordType) {
+          // RECORD NULL OR DIFFERENT IN TYPE: CREATE A NEW ONE
+          final ORecordInternal<?> newRecord = ORecordFactory.newInstance(recordBuffer.recordType);
+          newRecord.setDatabase(ioRecord.getDatabase());
+          ioRecord = newRecord;
+        } else
+          // RESET CURRENT RECORD
+          ioRecord.reset();
 
-				// READ THE RAW RECORD. IF iLockEntireCluster THEN THE READ WILL BE NOT-LOCKING, OTHERWISE YES
-				recordBuffer = readRecord(iRequesterId, cluster, positionInPhyCluster, !iLockEntireCluster);
-				if (recordBuffer == null)
-					continue;
+        ioRecord.setVersion(recordBuffer.version);
+        ioRecord.setIdentity(cluster.getId(), positionInPhyCluster);
+        ioRecord.fromStream(recordBuffer.buffer);
+        if (!iListener.foreach(ioRecord))
+          // LISTENER HAS INTERRUPTED THE EXECUTION
+          break;
+      }
+    } finally {
 
-				if (recordBuffer.recordType != ODocument.RECORD_TYPE && recordBuffer.recordType != ORecordColumn.RECORD_TYPE)
-					// WRONG RECORD TYPE: JUMP IT
-					continue;
+      if (iLockEntireCluster)
+        // UNLOCK THE ENTIRE CLUSTER
+        cluster.unlock();
+    }
 
-				if (ioRecord == null)
-					// RECORD NULL OR DIFFERENT IN TYPE: CREATE A NEW ONE
-					ioRecord = ORecordFactory.newInstance(recordBuffer.recordType);
-				else if (ioRecord.getRecordType() != recordBuffer.recordType) {
-					// RECORD NULL OR DIFFERENT IN TYPE: CREATE A NEW ONE
-					final ORecordInternal<?> newRecord = ORecordFactory.newInstance(recordBuffer.recordType);
-					newRecord.setDatabase(ioRecord.getDatabase());
-					ioRecord = newRecord;
-				} else
-					// RESET CURRENT RECORD
-					ioRecord.reset();
+    return ioRecord;
+  }
 
-				ioRecord.setVersion(recordBuffer.version);
-				ioRecord.setIdentity(cluster.getId(), positionInPhyCluster);
-				ioRecord.fromStream(recordBuffer.buffer);
-				if (!iListener.foreach(ioRecord))
-					// LISTENER HAS INTERRUPTED THE EXECUTION
-					break;
-			}
-		} finally {
+  public Set<String> getClusterNames() {
+    checkOpeness();
 
-			if (iLockEntireCluster)
-				// UNLOCK THE ENTIRE CLUSTER
-				cluster.unlock();
-		}
+    final boolean locked = acquireSharedLock();
 
-		return ioRecord;
-	}
+    try {
 
-	public Set<String> getClusterNames() {
-		checkOpeness();
+      return clusterMap.keySet();
 
-		final boolean locked = acquireSharedLock();
+    } finally {
+      releaseSharedLock(locked);
+    }
+  }
 
-		try {
+  public int getClusterIdByName(final String iClusterName) {
+    checkOpeness();
 
-			return clusterMap.keySet();
+    if (iClusterName == null)
+      throw new IllegalArgumentException("Cluster name is null");
 
-		} finally {
-			releaseSharedLock(locked);
-		}
-	}
+    if (Character.isDigit(iClusterName.charAt(0)))
+      return Integer.parseInt(iClusterName);
 
-	public int getClusterIdByName(final String iClusterName) {
-		checkOpeness();
+    // SEARCH IT BETWEEN PHYSICAL CLUSTERS
+    OCluster segment;
 
-		if (iClusterName == null)
-			throw new IllegalArgumentException("Cluster name is null");
+    final boolean locked = acquireSharedLock();
 
-		if (Character.isDigit(iClusterName.charAt(0)))
-			return Integer.parseInt(iClusterName);
+    try {
+      segment = clusterMap.get(iClusterName.toLowerCase());
 
-		// SEARCH IT BETWEEN PHYSICAL CLUSTERS
-		OCluster segment;
+    } finally {
+      releaseSharedLock(locked);
+    }
 
-		final boolean locked = acquireSharedLock();
+    if (segment != null)
+      return segment.getId();
 
-		try {
-			segment = clusterMap.get(iClusterName.toLowerCase());
+    return -1;
+  }
 
-		} finally {
-			releaseSharedLock(locked);
-		}
+  public String getClusterTypeByName(final String iClusterName) {
+    checkOpeness();
 
-		if (segment != null)
-			return segment.getId();
+    if (iClusterName == null)
+      throw new IllegalArgumentException("Cluster name is null");
 
-		return -1;
-	}
+    // SEARCH IT BETWEEN PHYSICAL CLUSTERS
+    OCluster segment;
 
-	public String getClusterTypeByName(final String iClusterName) {
-		checkOpeness();
+    final boolean locked = acquireSharedLock();
 
-		if (iClusterName == null)
-			throw new IllegalArgumentException("Cluster name is null");
+    try {
+      segment = clusterMap.get(iClusterName.toLowerCase());
 
-		// SEARCH IT BETWEEN PHYSICAL CLUSTERS
-		OCluster segment;
+    } finally {
+      releaseSharedLock(locked);
+    }
 
-		final boolean locked = acquireSharedLock();
+    if (segment != null)
+      return segment.getType();
 
-		try {
-			segment = clusterMap.get(iClusterName.toLowerCase());
+    return null;
+  }
 
-		} finally {
-			releaseSharedLock(locked);
-		}
+  public void commit(final int iRequesterId, final OTransaction<?> iTx) {
+    final boolean locked = acquireSharedLock();
 
-		if (segment != null)
-			return segment.getType();
+    try {
+      txManager.commitAllPendingRecords(iRequesterId, iTx);
 
-		return null;
-	}
+    } catch (IOException e) {
+      rollback(iRequesterId, iTx);
 
-	public void commit(final int iRequesterId, final OTransaction<?> iTx) {
-		final boolean locked = acquireSharedLock();
+    } finally {
+      releaseSharedLock(locked);
+    }
 
-		try {
-			txManager.commitAllPendingRecords(iRequesterId, iTx);
+  }
 
-		} catch (IOException e) {
-			rollback(iRequesterId, iTx);
+  public void rollback(final int iRequesterId, final OTransaction<?> iTx) {
+  }
 
-		} finally {
-			releaseSharedLock(locked);
-		}
+  public void synch() {
+    checkOpeness();
 
-	}
+    final long timer = OProfiler.getInstance().startChrono();
 
-	public void rollback(final int iRequesterId, final OTransaction<?> iTx) {
-	}
+    final boolean locked = acquireExclusiveLock();
 
-	public void synch() {
-		checkOpeness();
+    try {
+      for (OCluster cluster : clusters)
+        cluster.synch();
 
-		final long timer = OProfiler.getInstance().startChrono();
+      for (ODataLocal data : dataSegments)
+        data.synch();
 
-		final boolean locked = acquireExclusiveLock();
+    } finally {
+      releaseExclusiveLock(locked);
 
-		try {
-			for (OCluster cluster : clusters)
-				cluster.synch();
+      OProfiler.getInstance().stopChrono("OStorageLocal.synch", timer);
+    }
+  }
 
-			for (ODataLocal data : dataSegments)
-				data.synch();
+  public String getPhysicalClusterNameById(final int iClusterId) {
+    checkOpeness();
 
-		} finally {
-			releaseExclusiveLock(locked);
+    for (OCluster cluster : clusters)
+      if (cluster != null && cluster.getId() == iClusterId)
+        return cluster.getName();
 
-			OProfiler.getInstance().stopChrono("OStorageLocal.synch", timer);
-		}
-	}
+    return null;
+  }
 
-	public String getPhysicalClusterNameById(final int iClusterId) {
-		checkOpeness();
+  @Override
+  public OStorageConfiguration getConfiguration() {
+    return configuration;
+  }
 
-		for (OCluster cluster : clusters)
-			if (cluster != null && cluster.getId() == iClusterId)
-				return cluster.getName();
+  public int getDefaultClusterId() {
+    return defaultClusterId;
+  }
 
-		return null;
-	}
+  public OCluster getClusterById(int iClusterId) {
+    if (iClusterId == ORID.CLUSTER_ID_INVALID)
+      // GET THE DEFAULT CLUSTER
+      iClusterId = defaultClusterId;
 
-	@Override
-	public OStorageConfiguration getConfiguration() {
-		return configuration;
-	}
+    checkClusterSegmentIndexRange(iClusterId);
 
-	public int getDefaultClusterId() {
-		return defaultClusterId;
-	}
+    return clusters[iClusterId];
+  }
 
-	public OCluster getClusterById(int iClusterId) {
-		if (iClusterId == ORID.CLUSTER_ID_INVALID)
-			// GET THE DEFAULT CLUSTER
-			iClusterId = defaultClusterId;
+  public OCluster getClusterByName(final String iClusterName) {
+    final boolean locked = acquireSharedLock();
 
-		checkClusterSegmentIndexRange(iClusterId);
+    try {
+      final OCluster cluster = clusterMap.get(iClusterName.toLowerCase());
 
-		return clusters[iClusterId];
-	}
+      if (cluster == null)
+        throw new IllegalArgumentException("Cluster " + iClusterName + " not exists");
+      return cluster;
 
-	public OCluster getClusterByName(final String iClusterName) {
-		final boolean locked = acquireSharedLock();
+    } finally {
 
-		try {
-			final OCluster cluster = clusterMap.get(iClusterName.toLowerCase());
+      releaseSharedLock(locked);
+    }
+  }
 
-			if (cluster == null)
-				throw new IllegalArgumentException("Cluster " + iClusterName + " not exists");
-			return cluster;
+  public ODictionary<?> createDictionary(ODatabaseRecord<?> iDatabase) throws Exception {
+    return new ODictionaryLocal<Object>(iDatabase);
+  }
 
-		} finally {
+  public String getStoragePath() {
+    return storagePath;
+  }
 
-			releaseSharedLock(locked);
-		}
-	}
+  public String getMode() {
+    return mode;
+  }
 
-	public ODictionary<?> createDictionary(ODatabaseRecord<?> iDatabase) throws Exception {
-		return new ODictionaryLocal<Object>(iDatabase);
-	}
+  public OStorageVariableParser getVariableParser() {
+    return variableParser;
+  }
 
-	public String getStoragePath() {
-		return storagePath;
-	}
+  protected int registerDataSegment(final OStorageDataConfiguration iConfig) throws IOException {
+    checkOpeness();
 
-	public String getMode() {
-		return mode;
-	}
+    int pos = 0;
 
-	public OStorageVariableParser getVariableParser() {
-		return variableParser;
-	}
+    // CHECK FOR DUPLICATION OF NAMES
+    for (ODataLocal data : dataSegments)
+      if (data.getName().equals(iConfig.name)) {
+        // OVERWRITE CONFIG
+        data.config = iConfig;
+        return -1;
+      }
+    pos = dataSegments.length;
 
-	protected int registerDataSegment(final OStorageDataConfiguration iConfig) throws IOException {
-		checkOpeness();
+    // CREATE AND ADD THE NEW REF SEGMENT
+    ODataLocal segment = new ODataLocal(this, iConfig, pos);
 
-		int pos = 0;
+    dataSegments = OArrays.copyOf(dataSegments, dataSegments.length + 1);
+    dataSegments[pos] = segment;
 
-		// CHECK FOR DUPLICATION OF NAMES
-		for (ODataLocal data : dataSegments)
-			if (data.getName().equals(iConfig.name)) {
-				// OVERWRITE CONFIG
-				data.config = iConfig;
-				return -1;
-			}
-		pos = dataSegments.length;
+    return pos;
+  }
 
-		// CREATE AND ADD THE NEW REF SEGMENT
-		ODataLocal segment = new ODataLocal(this, iConfig, pos);
+  /**
+   * Create the cluster by reading the configuration received as argument and register it assigning it the higher serial id.
+   * 
+   * @param iConfig
+   *          A OStorageClusterConfiguration implementation, namely physical or logical
+   * @return The id (physical position into the array) of the new cluster just created. First is 0.
+   * @throws IOException
+   * @throws IOException
+   */
+  private int createClusterFromConfig(final OStorageClusterConfiguration iConfig) throws IOException {
+    if (clusterMap.containsKey(iConfig.getName())) {
+      OCluster c = clusterMap.get(iConfig.getName());
+      if (c instanceof OClusterLocal)
+        // ALREADY CONFIGURED, JUST OVERWRITE CONFIG
+        ((OClusterLocal) c).config = (OStorageSegmentConfiguration) iConfig;
+      return -1;
+    }
 
-		dataSegments = OArrays.copyOf(dataSegments, dataSegments.length + 1);
-		dataSegments[pos] = segment;
+    final OCluster cluster;
 
-		return pos;
-	}
+    if (iConfig instanceof OStoragePhysicalClusterConfiguration) {
+      cluster = new OClusterLocal(this, (OStoragePhysicalClusterConfiguration) iConfig);
+    } else
+      cluster = new OClusterLogical(this, (OStorageLogicalClusterConfiguration) iConfig);
 
-	/**
-	 * Create the cluster by reading the configuration received as argument and register it assigning it the higher serial id.
-	 * 
-	 * @param iConfig
-	 *          A OStorageClusterConfiguration implementation, namely physical or logical
-	 * @return The id (physical position into the array) of the new cluster just created. First is 0.
-	 * @throws IOException
-	 * @throws IOException
-	 */
-	private int createClusterFromConfig(final OStorageClusterConfiguration iConfig) throws IOException {
-		if (clusterMap.containsKey(iConfig.getName())) {
-			OCluster c = clusterMap.get(iConfig.getName());
-			if (c instanceof OClusterLocal)
-				// ALREADY CONFIGURED, JUST OVERWRITE CONFIG
-				((OClusterLocal) c).config = (OStorageSegmentConfiguration) iConfig;
-			return -1;
-		}
+    return registerCluster(cluster);
+  }
 
-		final OCluster cluster;
+  /**
+   * Register the cluster internally.
+   * 
+   * @param cluster
+   *          OCluster implementation
+   * @return The id (physical position into the array) of the new cluster just created. First is 0.
+   * @throws IOException
+   */
+  private int registerCluster(final OCluster cluster) throws IOException {
+    // CHECK FOR DUPLICATION OF NAMES
+    if (clusterMap.containsKey(cluster.getName()))
+      throw new OConfigurationException("Can't add segment " + cluster.getName() + " because it was already registered");
 
-		if (iConfig instanceof OStoragePhysicalClusterConfiguration) {
-			cluster = new OClusterLocal(this, (OStoragePhysicalClusterConfiguration) iConfig);
-		} else
-			cluster = new OClusterLogical(this, (OStorageLogicalClusterConfiguration) iConfig);
+    // CREATE AND ADD THE NEW REF SEGMENT
+    clusterMap.put(cluster.getName(), cluster);
 
-		return registerCluster(cluster);
-	}
+    final int id = clusters.length;
 
-	/**
-	 * Register the cluster internally.
-	 * 
-	 * @param cluster
-	 *          OCluster implementation
-	 * @return The id (physical position into the array) of the new cluster just created. First is 0.
-	 * @throws IOException
-	 */
-	private int registerCluster(final OCluster cluster) throws IOException {
-		// CHECK FOR DUPLICATION OF NAMES
-		if (clusterMap.containsKey(cluster.getName()))
-			throw new OConfigurationException("Can't add segment " + cluster.getName() + " because it was already registered");
+    clusters = OArrays.copyOf(clusters, id + 1);
+    clusters[id] = cluster;
 
-		// CREATE AND ADD THE NEW REF SEGMENT
-		clusterMap.put(cluster.getName(), cluster);
+    return id;
+  }
 
-		final int id = clusters.length;
+  private void checkClusterSegmentIndexRange(final int iClusterId) {
+    if (iClusterId > clusters.length - 1)
+      throw new IllegalArgumentException("Cluster segment #" + iClusterId + " not exists");
+  }
 
-		clusters = OArrays.copyOf(clusters, id + 1);
-		clusters[id] = cluster;
+  protected int getDataSegmentForRecord(final OCluster iCluster, final byte[] iContent) {
+    // TODO: CREATE POLICY & STRATEGY TO ASSIGN THE BEST-MULTIPLE DATA
+    // SEGMENT
+    return 0;
+  }
 
-		return id;
-	}
+  protected long createRecord(final OCluster iClusterSegment, final byte[] iContent, final byte iRecordType) {
+    checkOpeness();
 
-	private void checkClusterSegmentIndexRange(final int iClusterId) {
-		if (iClusterId > clusters.length - 1)
-			throw new IllegalArgumentException("Cluster segment #" + iClusterId + " not exists");
-	}
+    if (iContent == null)
+      throw new IllegalArgumentException("Record " + iContent + " is null");
 
-	protected int getDataSegmentForRecord(final OCluster iCluster, final byte[] iContent) {
-		// TODO: CREATE POLICY & STRATEGY TO ASSIGN THE BEST-MULTIPLE DATA SEGMENT
-		return 0;
-	}
+    final long timer = OProfiler.getInstance().startChrono();
 
-	protected long createRecord(final OCluster iClusterSegment, final byte[] iContent, final byte iRecordType) {
-		checkOpeness();
+    final boolean locked = acquireSharedLock();
 
-		if (iContent == null)
-			throw new IllegalArgumentException("Record " + iContent + " is null");
+    try {
+      final int dataSegment = getDataSegmentForRecord(iClusterSegment, iContent);
+      ODataLocal data = getDataSegment(dataSegment);
 
-		final long timer = OProfiler.getInstance().startChrono();
+      final long clusterPosition = iClusterSegment.addPhysicalPosition(-1, -1, iRecordType);
 
-		final boolean locked = acquireSharedLock();
+      final long dataOffset = data.addRecord(iClusterSegment.getId(), clusterPosition, iContent);
 
-		try {
-			final int dataSegment = getDataSegmentForRecord(iClusterSegment, iContent);
-			ODataLocal data = getDataSegment(dataSegment);
+      // UPDATE THE POSITION IN CLUSTER WITH THE POSITION OF RECORD IN
+      // DATA
+      iClusterSegment.setPhysicalPosition(clusterPosition, dataSegment, dataOffset, iRecordType);
 
-			final long clusterPosition = iClusterSegment.addPhysicalPosition(-1, -1, iRecordType);
+      return clusterPosition;
 
-			final long dataOffset = data.addRecord(iClusterSegment.getId(), clusterPosition, iContent);
+    } catch (IOException e) {
 
-			// UPDATE THE POSITION IN CLUSTER WITH THE POSITION OF RECORD IN DATA
-			iClusterSegment.setPhysicalPosition(clusterPosition, dataSegment, dataOffset, iRecordType);
+      OLogManager.instance().error(this, "Error on creating record in cluster: " + iClusterSegment, e);
+      return -1;
+    } finally {
+      releaseSharedLock(locked);
 
-			return clusterPosition;
+      OProfiler.getInstance().stopChrono("OStorageLocal.createRecord", timer);
+    }
+  }
 
-		} catch (IOException e) {
+  protected ORawBuffer readRecord(final int iRequesterId, final OCluster iClusterSegment, final long iPosition, boolean iAtomicLock) {
+    if (iPosition < 0)
+      throw new IllegalArgumentException("Can't read the record because the position #" + iPosition + " is invalid");
 
-			OLogManager.instance().error(this, "Error on creating record in cluster: " + iClusterSegment, e);
-			return -1;
-		} finally {
-			releaseSharedLock(locked);
+    // NOT FOUND: SEARCH IT IN THE STORAGE
+    final long timer = OProfiler.getInstance().startChrono();
 
-			OProfiler.getInstance().stopChrono("OStorageLocal.createRecord", timer);
-		}
-	}
+    // GET LOCK ONLY IF IT'S IN ATOMIC-MODE (SEE THE PARAMETER iAtomicLock)
+    // USUALLY BROWSING OPERATIONS (QUERY) AVOID ATOMIC LOCKING
+    // TO IMPROVE PERFORMANCES BY LOCKING THE ENTIRE CLUSTER FROM THE
+    // OUTSIDE.
+    final boolean locked = iAtomicLock ? acquireSharedLock() : false;
 
-	protected ORawBuffer readRecord(final int iRequesterId, final OCluster iClusterSegment, final long iPosition, boolean iAtomicLock) {
-		if (iPosition < 0)
-			throw new IllegalArgumentException("Can't read the record because the position #" + iPosition + " is invalid");
+    try {
+      // lockManager.acquireLock(iRequesterId, recId, LOCK.SHARED,
+      // timeout);
 
-		// NOT FOUND: SEARCH IT IN THE STORAGE
-		final long timer = OProfiler.getInstance().startChrono();
+      final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iPosition, new OPhysicalPosition());
+      if (ppos == null || !checkForRecordValidity(ppos))
+        // DELETED
+        return null;
 
-		// GET LOCK ONLY IF IT'S IN ATOMIC-MODE (SEE THE PARAMETER iAtomicLock) USUALLY BROWSING OPERATIONS (QUERY) AVOID ATOMIC LOCKING
-		// TO IMPROVE PERFORMANCES BY LOCKING THE ENTIRE CLUSTER FROM THE OUTSIDE.
-		final boolean locked = iAtomicLock ? acquireSharedLock() : false;
+      final ODataLocal data = getDataSegment(ppos.dataSegment);
+      return new ORawBuffer(data.getRecord(ppos.dataPosition), ppos.version, ppos.type);
 
-		try {
-			// lockManager.acquireLock(iRequesterId, recId, LOCK.SHARED, timeout);
+    } catch (IOException e) {
 
-			final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iPosition, new OPhysicalPosition());
-			if (ppos == null || !checkForRecordValidity(ppos))
-				// DELETED
-				return null;
+      OLogManager.instance().error(this, "Error on reading record #" + iPosition + " in cluster: " + iClusterSegment, e);
+      return null;
 
-			final ODataLocal data = getDataSegment(ppos.dataSegment);
-			return new ORawBuffer(data.getRecord(ppos.dataPosition), ppos.version, ppos.type);
+    } finally {
+      releaseSharedLock(locked);
 
-		} catch (IOException e) {
+      OProfiler.getInstance().stopChrono("OStorageLocal.readRecord", timer);
+    }
+  }
 
-			OLogManager.instance().error(this, "Error on reading record #" + iPosition + " in cluster: " + iClusterSegment, e);
-			return null;
+  protected int updateRecord(final int iRequesterId, final OCluster iClusterSegment, final long iPosition, final byte[] iContent,
+      final int iVersion, final byte iRecordType) {
+    final long timer = OProfiler.getInstance().startChrono();
 
-		} finally {
-			releaseSharedLock(locked);
+    final String recId = ORecordId.generateString(iClusterSegment.getId(), iPosition);
 
-			OProfiler.getInstance().stopChrono("OStorageLocal.readRecord", timer);
-		}
-	}
+    final boolean locked = acquireSharedLock();
 
-	protected int updateRecord(final int iRequesterId, final OCluster iClusterSegment, final long iPosition, final byte[] iContent,
-			final int iVersion, final byte iRecordType) {
-		final long timer = OProfiler.getInstance().startChrono();
+    try {
+      // lockManager.acquireLock(iRequesterId, recId, LOCK.EXCLUSIVE,
+      // timeout);
 
-		final String recId = ORecordId.generateString(iClusterSegment.getId(), iPosition);
+      final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iPosition, new OPhysicalPosition());
+      if (!checkForRecordValidity(ppos))
+        // DELETED
+        return -1;
 
-		final boolean locked = acquireSharedLock();
+      // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
+      if (iVersion > -1 && ppos.version != iVersion)
+        throw new OConcurrentModificationException(
+            "Can't update record #"
+                + recId
+                + " because it has been modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
 
-		try {
-			// lockManager.acquireLock(iRequesterId, recId, LOCK.EXCLUSIVE, timeout);
+      if (ppos.type != iRecordType)
+        iClusterSegment.updateRecordType(iPosition, iRecordType);
 
-			final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iPosition, new OPhysicalPosition());
-			if (!checkForRecordValidity(ppos))
-				// DELETED
-				return -1;
+      iClusterSegment.updateVersion(iPosition, ++ppos.version);
 
-			// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-			if (iVersion > -1 && ppos.version != iVersion)
-				throw new OConcurrentModificationException(
-						"Can't update record #"
-								+ recId
-								+ " because it has been modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
+      final long newDataSegmentOffset = getDataSegment(ppos.dataSegment).setRecord(ppos.dataPosition, iClusterSegment.getId(),
+          iPosition, iContent);
 
-			if (ppos.type != iRecordType)
-				iClusterSegment.updateRecordType(iPosition, iRecordType);
+      if (newDataSegmentOffset != ppos.dataPosition)
+        // UPDATE DATA SEGMENT OFFSET WITH THE NEW PHYSICAL POSITION
+        iClusterSegment.setPhysicalPosition(iPosition, ppos.dataSegment, newDataSegmentOffset, iRecordType);
 
-			iClusterSegment.updateVersion(iPosition, ++ppos.version);
+      return ppos.version;
 
-			final long newDataSegmentOffset = getDataSegment(ppos.dataSegment).setRecord(ppos.dataPosition, iClusterSegment.getId(),
-					iPosition, iContent);
+    } catch (IOException e) {
 
-			if (newDataSegmentOffset != ppos.dataPosition)
-				// UPDATE DATA SEGMENT OFFSET WITH THE NEW PHYSICAL POSITION
-				iClusterSegment.setPhysicalPosition(iPosition, ppos.dataSegment, newDataSegmentOffset, iRecordType);
+      OLogManager.instance().error(this, "Error on updating record #" + iPosition + " in cluster: " + iClusterSegment, e);
 
-			return ppos.version;
+    } finally {
+      releaseSharedLock(locked);
 
-		} catch (IOException e) {
+      OProfiler.getInstance().stopChrono("OStorageLocal.updateRecord", timer);
+    }
 
-			OLogManager.instance().error(this, "Error on updating record #" + iPosition + " in cluster: " + iClusterSegment, e);
+    return -1;
+  }
 
-		} finally {
-			releaseSharedLock(locked);
+  protected boolean deleteRecord(final int iRequesterId, final OCluster iClusterSegment, final long iPosition, final int iVersion) {
+    final long timer = OProfiler.getInstance().startChrono();
 
-			OProfiler.getInstance().stopChrono("OStorageLocal.updateRecord", timer);
-		}
+    final String recId = ORecordId.generateString(iClusterSegment.getId(), iPosition);
 
-		return -1;
-	}
+    final boolean locked = acquireSharedLock();
 
-	protected boolean deleteRecord(final int iRequesterId, final OCluster iClusterSegment, final long iPosition, final int iVersion) {
-		final long timer = OProfiler.getInstance().startChrono();
+    try {
+      final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iPosition, new OPhysicalPosition());
 
-		final String recId = ORecordId.generateString(iClusterSegment.getId(), iPosition);
+      if (!checkForRecordValidity(ppos))
+        // ALREADY DELETED
+        return false;
 
-		final boolean locked = acquireSharedLock();
+      // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
+      if (iVersion > -1 && ppos.version != iVersion)
+        throw new OConcurrentModificationException(
+            "Can't delete the record #"
+                + recId
+                + " because it was modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
 
-		try {
-			final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iPosition, new OPhysicalPosition());
+      iClusterSegment.removePhysicalPosition(iPosition, ppos);
 
-			if (!checkForRecordValidity(ppos))
-				// ALREADY DELETED
-				return false;
+      getDataSegment(ppos.dataSegment).deleteRecord(ppos.dataPosition);
 
-			// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-			if (iVersion > -1 && ppos.version != iVersion)
-				throw new OConcurrentModificationException(
-						"Can't delete the record #"
-								+ recId
-								+ " because it was modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
+      return true;
 
-			iClusterSegment.removePhysicalPosition(iPosition, ppos);
+    } catch (IOException e) {
 
-			getDataSegment(ppos.dataSegment).deleteRecord(ppos.dataPosition);
+      OLogManager.instance().error(this, "Error on deleting record #" + iPosition + " in cluster: " + iClusterSegment, e);
 
-			return true;
+    } finally {
+      releaseSharedLock(locked);
 
-		} catch (IOException e) {
+      OProfiler.getInstance().stopChrono("OStorageLocal.deleteRecord", timer);
+    }
 
-			OLogManager.instance().error(this, "Error on deleting record #" + iPosition + " in cluster: " + iClusterSegment, e);
+    return false;
+  }
 
-		} finally {
-			releaseSharedLock(locked);
+  /**
+   * Check if the storage is open. If it's closed an exception is raised.
+   */
+  private void checkOpeness() {
+    if (!open)
+      throw new OStorageException("Storage " + name + " is not opened.");
+  }
 
-			OProfiler.getInstance().stopChrono("OStorageLocal.deleteRecord", timer);
-		}
+  public Set<OCluster> getClusters() {
+    Set<OCluster> result = new HashSet<OCluster>();
 
-		return false;
-	}
+    // ADD ALL THE CLUSTERS
+    for (OCluster c : clusters)
+      result.add(c);
 
-	/**
-	 * Check if the storage is open. If it's closed an exception is raised.
-	 */
-	private void checkOpeness() {
-		if (!open)
-			throw new OStorageException("Storage " + name + " is not opened.");
-	}
+    return result;
+  }
 
-	public Set<OCluster> getClusters() {
-		Set<OCluster> result = new HashSet<OCluster>();
+  /**
+   * Execute the command request and return the result back.
+   */
+  public Object command(final OCommandRequestText iCommand) {
+    final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
+    executor.parse(iCommand);
+    try {
+      return executor.execute();
+    } catch (OCommandExecutionException e) {
+      // PASS THROUGHT
+      throw e;
+    } catch (Exception e) {
+      throw new OCommandExecutionException("Error on execution of command: " + iCommand, e);
+    }
+  }
 
-		// ADD ALL THE CLUSTERS
-		for (OCluster c : clusters)
-			result.add(c);
+  /**
+   * Add a new physical cluster into the storage.
+   * 
+   * @throws IOException
+   */
+  private int addPhysicalCluster(final String iClusterName, String iClusterFileName, final int iStartSize) throws IOException {
+    final OStoragePhysicalClusterConfiguration config = new OStoragePhysicalClusterConfiguration(configuration, iClusterName,
+        clusters.length);
+    configuration.clusters.add(config);
 
-		return result;
-	}
+    final OClusterLocal cluster = new OClusterLocal(this, config);
+    final int id = registerCluster(cluster);
 
-	/**
-	 * Execute the command request and return the result back.
-	 */
-	public Object command(final OCommandRequestText iCommand) {
-		final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
-		executor.parse(iCommand);
-		try {
-			return executor.execute();
-		} catch (OCommandExecutionException e) {
-			// PASS THROUGHT
-			throw e;
-		} catch (Exception e) {
-			throw new OCommandExecutionException("Error on execution of command: " + iCommand, e);
-		}
-	}
+    clusters[id].create(iStartSize);
+    configuration.update();
+    return id;
+  }
 
-	/**
-	 * Add a new physical cluster into the storage.
-	 * 
-	 * @throws IOException
-	 */
-	private int addPhysicalCluster(final String iClusterName, String iClusterFileName, final int iStartSize) throws IOException {
-		final OStoragePhysicalClusterConfiguration config = new OStoragePhysicalClusterConfiguration(configuration, iClusterName,
-				clusters.length);
-		configuration.clusters.add(config);
+  private int addLogicalCluster(final String iClusterName, final int iPhysicalCluster) throws IOException {
+    final OStorageLogicalClusterConfiguration config = new OStorageLogicalClusterConfiguration(iClusterName, clusters.length,
+        iPhysicalCluster, null);
 
-		final OClusterLocal cluster = new OClusterLocal(this, config);
-		final int id = registerCluster(cluster);
+    configuration.clusters.add(config);
 
-		clusters[id].create(iStartSize);
-		configuration.update();
-		return id;
-	}
+    final OClusterLogical cluster = new OClusterLogical(this, clusters.length, iClusterName, iPhysicalCluster);
+    config.map = cluster.getRID();
+    final int id = registerCluster(cluster);
 
-	private int addLogicalCluster(final String iClusterName, final int iPhysicalCluster) throws IOException {
-		final OStorageLogicalClusterConfiguration config = new OStorageLogicalClusterConfiguration(iClusterName, clusters.length,
-				iPhysicalCluster, null);
+    configuration.update();
+    return id;
+  }
 
-		configuration.clusters.add(config);
+  public ODataLocal[] getDataSegments() {
+    return dataSegments;
+  }
 
-		final OClusterLogical cluster = new OClusterLogical(this, clusters.length, iClusterName, iPhysicalCluster);
-		config.map = cluster.getRID();
-		final int id = registerCluster(cluster);
-
-		configuration.update();
-		return id;
-	}
-
-	public ODataLocal[] getDataSegments() {
-		return dataSegments;
-	}
-
-	public OStorageLocalTxExecuter getTxManager() {
-		return txManager;
-	}
+  public OStorageLocalTxExecuter getTxManager() {
+    return txManager;
+  }
 }

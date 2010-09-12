@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.OConstants;
  * <br/>
  */
 public class OFileClassic extends OFile {
-	protected ByteBuffer	internalWriteBuffer	= getBuffer(OConstants.SIZE_LONG);
+	protected ByteBuffer internalWriteBuffer = getBuffer(OConstants.SIZE_LONG);
 
 	public OFileClassic(String iFileName, String iMode) throws IOException {
 		super(iFileName, iMode);
@@ -50,7 +50,8 @@ public class OFileClassic extends OFile {
 	}
 
 	@Override
-	public void read(int iOffset, byte[] iDestBuffer, int iLenght) throws IOException {
+	public void read(int iOffset, byte[] iDestBuffer, int iLenght)
+			throws IOException {
 		iOffset = checkRegions(iOffset, iLenght);
 
 		ByteBuffer buffer = ByteBuffer.wrap(iDestBuffer);
@@ -129,7 +130,9 @@ public class OFileClassic extends OFile {
 			openChannel(iSize);
 
 		} catch (IOException e) {
-			OLogManager.instance().error(this, "Error on changing the file size to " + iSize + " bytes", e, OIOException.class);
+			OLogManager.instance().error(this,
+					"Error on changing the file size to " + iSize + " bytes",
+					e, OIOException.class);
 		}
 	}
 
@@ -145,7 +148,8 @@ public class OFileClassic extends OFile {
 	@Override
 	protected void readHeader() throws IOException {
 		size = readData(0, OConstants.SIZE_INT).getInt();
-		filledUpTo = readData(OConstants.SIZE_INT, OConstants.SIZE_INT).getInt();
+		filledUpTo = readData(OConstants.SIZE_INT, OConstants.SIZE_INT)
+				.getInt();
 	}
 
 	@Override
@@ -154,6 +158,19 @@ public class OFileClassic extends OFile {
 		buffer.putInt(size);
 		buffer.putInt(filledUpTo);
 		writeData(buffer, 0);
+	}
+
+	@Override
+	public void writeHeaderLong(int iPosition, long iValue)
+			throws IOException {
+		ByteBuffer buffer = getWriteBuffer(OConstants.SIZE_LONG);
+		buffer.putLong(iValue);
+		writeData(buffer, HEADER_DATA_OFFSET + iPosition);
+	}
+
+	@Override
+	public long readHeaderLong(int iPosition) throws IOException {
+		return readData(HEADER_DATA_OFFSET + iPosition, OConstants.SIZE_LONG).getLong();
 	}
 
 	@Override

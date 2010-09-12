@@ -29,7 +29,7 @@ public class OChannelBinaryProtocol {
 	public static final byte	CLUSTER_ADD					= 10;
 	public static final byte	CLUSTER_REMOVE			= 11;
 	public static final byte	CLUSTER_COUNT				= 12;
-	public static final byte	CLUSTER_LASTPOS			= 13;
+	public static final byte	CLUSTER_DATARANGE			= 13;
 
 	public static final byte	DATASEGMENT_ADD			= 20;
 	public static final byte	DATASEGMENT_REMOVE	= 21;
