@@ -12,7 +12,7 @@
 
 	<path id="project.classpath">
 		<fileset dir="${project.lib}" includes="**/*.jar" />
-		<fileset dir=".." includes="**/dist/*.jar" />
+		<fileset dir=".." includes="**/target/*.jar" />
 	</path>
 
 	<target name="init">
