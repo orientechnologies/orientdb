@@ -38,140 +38,146 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public class OPropertyIndexManager extends ODocumentHookAbstract {
 
-	@Override
-	public void onRecordBeforeCreate(final ODocument iRecord) {
-		checkIndexedProperties(iRecord);
-	}
+  @Override
+  public void onRecordBeforeCreate(final ODocument iRecord) {
+    checkIndexedProperties(iRecord);
+  }
 
-	@Override
-	public void onRecordAfterCreate(final ODocument iRecord) {
-		final Map<OProperty, String> indexedProperties = getIndexedProperties(iRecord);
+  @Override
+  public void onRecordAfterCreate(final ODocument iRecord) {
+    final Map<OProperty, String> indexedProperties = getIndexedProperties(iRecord);
 
-		if (indexedProperties != null)
-			for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
-				propEntry.getKey().getIndex().put(propEntry.getValue(), (ORecordId) iRecord.getIdentity());
-				propEntry.getKey().getIndex().lazySave();
-			}
-	}
+    if (indexedProperties != null)
+      for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
+        propEntry.getKey().getIndex().put(propEntry.getValue(), (ORecordId) iRecord.getIdentity());
+        propEntry.getKey().getIndex().lazySave();
+      }
+  }
 
-	@Override
-	public void onRecordBeforeUpdate(final ODocument iRecord) {
-		checkIndexedProperties(iRecord);
-	}
+  @Override
+  public void onRecordBeforeUpdate(final ODocument iRecord) {
+    checkIndexedProperties(iRecord);
+  }
 
-	@Override
-	public void onRecordAfterUpdate(final ODocument iRecord) {
-		final Map<OProperty, String> indexedProperties = getIndexedProperties(iRecord);
+  @Override
+  public void onRecordAfterUpdate(final ODocument iRecord) {
+    final Map<OProperty, String> indexedProperties = getIndexedProperties(iRecord);
 
-		if (indexedProperties != null) {
-			final Set<String> dirtyFields = iRecord.getDirtyFields();
+    if (indexedProperties != null) {
+      final Set<String> dirtyFields = iRecord.getDirtyFields();
 
-			if (dirtyFields != null && dirtyFields.size() > 0) {
-				// REMOVE INDEX OF ENTRIES FOR THE OLD VALUES
-				for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
-					if (dirtyFields.contains(propEntry.getKey().getName())) {
-						// REMOVE IT
-						propEntry.getKey().getIndex().remove(iRecord.getOriginalValue(propEntry.getKey().getName()));
-						propEntry.getKey().getIndex().lazySave();
-					}
-				}
+      if (dirtyFields != null && dirtyFields.size() > 0) {
+        // REMOVE INDEX OF ENTRIES FOR THE OLD VALUES
+        Object originalValue = null;
 
-				// ADD INDEX OF ENTRIES FOR THE CHANGED ONLY VALUES
-				for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
-					if (dirtyFields.contains(propEntry.getKey().getName())) {
-						propEntry.getKey().getIndex().put(propEntry.getValue(), (ORecordId) iRecord.getIdentity());
-						propEntry.getKey().getIndex().lazySave();
-					}
-				}
-			}
-		}
-	}
+        for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
+          if (dirtyFields.contains(propEntry.getKey().getName())) {
+            // REMOVE IT
+            originalValue = iRecord.getOriginalValue(propEntry.getKey().getName());
+            if (originalValue != null)
+              originalValue = originalValue.toString();
 
-	@Override
-	public void onRecordAfterDelete(final ODocument iRecord) {
-		final Map<OProperty, String> indexedProperties = getIndexedProperties(iRecord);
+            propEntry.getKey().getIndex().remove(originalValue);
+            propEntry.getKey().getIndex().lazySave();
+          }
+        }
 
-		if (indexedProperties != null) {
-			final Set<String> dirtyFields = iRecord.getDirtyFields();
+        // ADD INDEX OF ENTRIES FOR THE CHANGED ONLY VALUES
+        for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
+          if (dirtyFields.contains(propEntry.getKey().getName())) {
+            propEntry.getKey().getIndex().put(propEntry.getValue(), (ORecordId) iRecord.getIdentity());
+            propEntry.getKey().getIndex().lazySave();
+          }
+        }
+      }
+    }
+  }
 
-			if (dirtyFields != null && dirtyFields.size() > 0) {
-				// REMOVE INDEX OF ENTRIES FOR THE OLD VALUES
-				for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
-					if (dirtyFields.contains(propEntry.getKey().getName())) {
-						// REMOVE IT
-						propEntry.getKey().getIndex().remove(propEntry.getValue());
-						propEntry.getKey().getIndex().lazySave();
-					}
-				}
-			}
+  @Override
+  public void onRecordAfterDelete(final ODocument iRecord) {
+    final Map<OProperty, String> indexedProperties = getIndexedProperties(iRecord);
 
-			// REMOVE INDEX OF ENTRIES FOR THE CHANGED ONLY VALUES
-			for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
-				if (iRecord.containsField(propEntry.getKey().getName())
-						&& (dirtyFields == null || !dirtyFields.contains(propEntry.getKey().getName()))) {
-					propEntry.getKey().getIndex().remove(propEntry.getValue());
-					propEntry.getKey().getIndex().lazySave();
-				}
-			}
-		}
-	}
+    if (indexedProperties != null) {
+      final Set<String> dirtyFields = iRecord.getDirtyFields();
 
-	protected void checkIndexedProperties(final ODocument iRecord) {
-		final OClass cls = iRecord.getSchemaClass();
-		if (cls == null)
-			return;
+      if (dirtyFields != null && dirtyFields.size() > 0) {
+        // REMOVE INDEX OF ENTRIES FOR THE OLD VALUES
+        for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
+          if (dirtyFields.contains(propEntry.getKey().getName())) {
+            // REMOVE IT
+            propEntry.getKey().getIndex().remove(propEntry.getValue());
+            propEntry.getKey().getIndex().lazySave();
+          }
+        }
+      }
 
-		OPropertyIndex index;
-		Object fieldValue;
-		String fieldValueString;
+      // REMOVE INDEX OF ENTRIES FOR THE CHANGED ONLY VALUES
+      for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
+        if (iRecord.containsField(propEntry.getKey().getName())
+            && (dirtyFields == null || !dirtyFields.contains(propEntry.getKey().getName()))) {
+          propEntry.getKey().getIndex().remove(propEntry.getValue());
+          propEntry.getKey().getIndex().lazySave();
+        }
+      }
+    }
+  }
 
-		List<ORecordId> indexedRIDs;
+  protected void checkIndexedProperties(final ODocument iRecord) {
+    final OClass cls = iRecord.getSchemaClass();
+    if (cls == null)
+      return;
 
-		for (OProperty prop : cls.properties()) {
-			index = prop.getIndex();
-			if (index != null && index.getType() == INDEX_TYPE.UNIQUE) {
-				fieldValue = iRecord.field(prop.getName());
+    OPropertyIndex index;
+    Object fieldValue;
+    String fieldValueString;
 
-				if (fieldValue != null) {
-					fieldValueString = fieldValue.toString();
+    List<ORecordId> indexedRIDs;
 
-					indexedRIDs = index.get(fieldValueString);
-					if (indexedRIDs != null && indexedRIDs.size() > 0 && !indexedRIDs.get(0).equals(iRecord.getIdentity()))
-						OLogManager.instance().exception("Found duplicated key '%s' for property '%s'", null, OIndexException.class,
-								fieldValueString, prop);
-				}
-			}
-		}
-	}
+    for (OProperty prop : cls.properties()) {
+      index = prop.getIndex();
+      if (index != null && index.getType() == INDEX_TYPE.UNIQUE) {
+        fieldValue = iRecord.field(prop.getName());
 
-	protected Map<OProperty, String> getIndexedProperties(final ODocument iRecord) {
-		final ORecordSchemaAware<?> record = iRecord;
-		final OClass cls = record.getSchemaClass();
-		if (cls == null)
-			return null;
+        if (fieldValue != null) {
+          fieldValueString = fieldValue.toString();
 
-		OPropertyIndex index;
-		Object fieldValue;
-		String fieldValueString;
+          indexedRIDs = index.get(fieldValueString);
+          if (indexedRIDs != null && indexedRIDs.size() > 0 && !indexedRIDs.get(0).equals(iRecord.getIdentity()))
+            OLogManager.instance().exception("Found duplicated key '%s' for property '%s'", null, OIndexException.class,
+                fieldValueString, prop);
+        }
+      }
+    }
+  }
 
-		Map<OProperty, String> indexedProperties = null;
+  protected Map<OProperty, String> getIndexedProperties(final ODocument iRecord) {
+    final ORecordSchemaAware<?> record = iRecord;
+    final OClass cls = record.getSchemaClass();
+    if (cls == null)
+      return null;
 
-		for (OProperty prop : cls.properties()) {
-			index = prop.getIndex();
-			if (index != null) {
-				fieldValue = record.field(prop.getName());
+    OPropertyIndex index;
+    Object fieldValue;
+    String fieldValueString;
 
-				if (fieldValue != null) {
-					fieldValueString = fieldValue.toString();
+    Map<OProperty, String> indexedProperties = null;
 
-					// PUSH THE PROPERTY IN THE SET TO BE WORKED BY THE EXTERNAL
-					if (indexedProperties == null)
-						indexedProperties = new HashMap<OProperty, String>();
-					indexedProperties.put(prop, fieldValueString);
-				}
-			}
-		}
+    for (OProperty prop : cls.properties()) {
+      index = prop.getIndex();
+      if (index != null) {
+        fieldValue = record.field(prop.getName());
 
-		return indexedProperties;
-	}
+        if (fieldValue != null) {
+          fieldValueString = fieldValue.toString();
+
+          // PUSH THE PROPERTY IN THE SET TO BE WORKED BY THE EXTERNAL
+          if (indexedProperties == null)
+            indexedProperties = new HashMap<OProperty, String>();
+          indexedProperties.put(prop, fieldValueString);
+        }
+      }
+    }
+
+    return indexedProperties;
+  }
 }
