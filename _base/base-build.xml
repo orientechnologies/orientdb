@@ -4,8 +4,8 @@
 	<property name="project.src" value="src/main/java" />
 	<property name="project.lib" value="lib" />
 	<property name="project.doc" value="doc" />
-	<property name="project.build" value="bin" />
-	<property name="project.dist" value="dist" />
+	<property name="project.build" value="target/classes" />
+	<property name="project.dist" value="target" />
 	<property name="project.is-debug" value="on" />
 	<property name="project.debug-level" value="lines, vars, source" />
 	<property name="project.target-comp" value="1.5" />
@@ -46,13 +46,17 @@
 			</manifest>
 		</jar>
 		<copy todir="${project.dist}">
-			<fileset dir="${project.lib}" includes="*.jar"  excludes="test*.jar" />
+			<fileset dir="${project.lib}" includes="*.jar" excludes="test*.jar" />
 		</copy>
 	</target>
 
 	<target name="install" depends="jar">
 		<copy todir="${global.lib}">
-			<fileset dir="${project.dist}" includes="*.jar *.md5 *.sha1" excludes="test*.jar" />
+			<fileset dir="${project.dist}" includes="*.jar">
+			  <exclude name="*test*.jar"/>
+			  <exclude name="*-javadoc.jar"/>
+			  <exclude name="*-sources.jar"/>
+			</fileset>
 		</copy>
 	</target>
 

@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Copyright (c) 1999-2010 Luca Garulli - LICENSE: Apache 2.0 -->
 <project basedir="." default="compile" name="orientdb-tests">
+  <property name="project.jar-classpath" value="orientdb-client-${version}.jar"/>
   <property name="project.src" value="src/test/java" />
+  <property name="project.build" value="target/test-classes" />
+
   <import file="../_base/base-build.xml" />
 
   <taskdef resource="testngtasks" classpath="lib/testng.jar" />
