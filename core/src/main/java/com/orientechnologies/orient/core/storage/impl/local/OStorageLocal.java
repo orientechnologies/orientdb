@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
 import com.orientechnologies.orient.core.config.OStorageLogicalClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStorageMemoryClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -56,6 +57,7 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
+import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemory;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
 public class OStorageLocal extends OStorageAbstract {
@@ -338,6 +340,8 @@ public class OStorageLocal extends OStorageAbstract {
             : (Integer) iParameters[0]);
 
         return addLogicalCluster(iClusterName, physicalClusterId);
+      } else if (OClusterMemory.TYPE.equalsIgnoreCase(iClusterType)) {
+        return addMemoryCluster(iClusterName);
       } else
         OLogManager.instance().exception(
             "Cluster type '" + iClusterType + "' is not supported. Supported types are: " + Arrays.toString(TYPES), null,
@@ -1064,6 +1068,18 @@ public class OStorageLocal extends OStorageAbstract {
     final int id = registerCluster(cluster);
 
     configuration.update();
+    return id;
+  }
+
+  private int addMemoryCluster(final String iClusterName) throws IOException {
+    final OStorageMemoryClusterConfiguration config = new OStorageMemoryClusterConfiguration(iClusterName, clusters.length);
+
+    configuration.clusters.add(config);
+
+    final OClusterMemory cluster = new OClusterMemory(clusters.length, iClusterName);
+    final int id = registerCluster(cluster);
+    configuration.update();
+
     return id;
   }
 
