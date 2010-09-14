@@ -39,7 +39,7 @@ public class DbExportTest implements OCommandListener {
 		ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
 		database.open("admin", "admin");
 
-		OConsoleDatabaseExport export = new OConsoleDatabaseExport(database, "db.export", this);
+		OConsoleDatabaseExport export = new OConsoleDatabaseExport(database, "tests/target/db.export", this);
 		export.exportDatabase();
 		export.close();
 

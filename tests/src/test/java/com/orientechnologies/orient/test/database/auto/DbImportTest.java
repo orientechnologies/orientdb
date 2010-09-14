@@ -29,36 +29,36 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 @Test(groups = "db")
 public class DbImportTest implements OCommandListener {
 
-	@Parameters(value = "url")
-	public DbImportTest(String iURL) {
-		OProfiler.getInstance().startRecording();
-	}
+  @Parameters(value = "url")
+  public DbImportTest(String iURL) {
+    OProfiler.getInstance().startRecording();
+  }
 
-	public void testDbImport() throws IOException {
-		File importDir = new File("test-import");
+  public void testDbImport() throws IOException {
+    File importDir = new File("tests/target/test-import");
 
-		if (importDir.exists())
-			for (File f : importDir.listFiles())
-				f.delete();
-		else
-			importDir.mkdir();
+    if (importDir.exists())
+      for (File f : importDir.listFiles())
+        f.delete();
+    else
+      importDir.mkdir();
 
-		ODatabaseDocumentTx database = new ODatabaseDocumentTx("local:test-import/test-import");
-		database.create();
+    ODatabaseDocumentTx database = new ODatabaseDocumentTx("local:tests/target/test-import/test-import");
+    database.create();
 
-		OConsoleDatabaseImport impor = new OConsoleDatabaseImport(database, "db.export", this);
-		impor.importDatabase();
-		impor.close();
+    OConsoleDatabaseImport impor = new OConsoleDatabaseImport(database, "tests/target/db.export", this);
+    impor.importDatabase();
+    impor.close();
 
-		database.close();
+    database.close();
 
-		for (File f : importDir.listFiles())
-			f.delete();
-		importDir.delete();
-	}
+    for (File f : importDir.listFiles())
+      f.delete();
+    importDir.delete();
+  }
 
-	@Test(enabled = false)
-	public void onMessage(final String iText) {
-		System.out.print(iText);
-	}
+  @Test(enabled = false)
+  public void onMessage(final String iText) {
+    System.out.print(iText);
+  }
 }
