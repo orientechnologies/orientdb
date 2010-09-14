@@ -668,7 +668,6 @@ public class OStorageLocal extends OStorageAbstract {
     } finally {
       releaseSharedLock(locked);
     }
-
   }
 
   public void rollback(final int iRequesterId, final OTransaction<?> iTx) {
