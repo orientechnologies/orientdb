@@ -38,7 +38,7 @@ public class LocalCreateObjectSpeedTest extends OrientMonoThreadTest {
 	}
 
 	public LocalCreateObjectSpeedTest() throws InstantiationException, IllegalAccessException {
-		super(20000);
+		super(100000);
 	}
 
 	@Override
