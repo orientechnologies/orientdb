@@ -29,6 +29,25 @@
 
 This document enlist the last changes to the Orient Database project.
 -------------------------------------------------------------------------------
+VERSION 0.9.22 - (September, 15th 2010)
+-------------------------------------------------------------------------------
+New features:
+- Issue  21: Full text index against schema fields
+- Issue  91: SQL UPDATE against collections and maps
+- Issue  94: Support for GREMLIN graph language
+- Issue 108: Regular expression support in WHERE clause
+- Issue 109: Support for memory clusters inside regular persistent database
+
+Bugs:
+- Issue  86: Cannot insert record from console
+- Issue  87: Cannot query records from OrientDB Studio Command-page
+- Issue 100: Transaction does not work as expected
+- Issue 101: Error in using orient queries having ' character
+- Issue 104: Bulk record creation in cluster with pre-created indices causes ClassCastException
+- Issue 105: Error in using UPDATE query
+- Fixed other minor bugs
+
+-------------------------------------------------------------------------------
 VERSION 0.9.21 - (July, 29th 2010)
 -------------------------------------------------------------------------------
 - Issue 60: GraphDB implementation
