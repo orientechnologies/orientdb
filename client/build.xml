@@ -3,6 +3,7 @@
 <project basedir="." default="compile" name="orientdb-client">
 	<property name="project.jar-classpath" value="orientdb-enterprise-${version}.jar" />
 	<property name="project.jar-mainclass" value="com.orientechnologies.orient.server.OServerMain" />
+	<property name="project.jar-deps"      value="commons/target/orient-commons-${version}.jar" />
 
 	<import file="../_base/base-build.xml" />
 </project>

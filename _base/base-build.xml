@@ -11,11 +11,15 @@
 	<property name="project.target-comp" value="1.5" />
 
 	<path id="project.classpath">
-		<fileset dir="${project.lib}" includes="**/*.jar" />
-		<fileset dir=".." includes="**/target/*.jar" />
+		<filelist dir=".."             files="${project.jar-deps}" />
+		<fileset  dir="${project.lib}" includes="**/*.jar" />
+		<fileset  dir=".."             includes="**/target/*.jar" />
 	</path>
 
 	<target name="init">
+    <echo>-----------------------------------</echo>
+    <echo>-> ${ant.project.name}</echo>
+    <echo>-----------------------------------</echo>
 		<mkdir dir="${project.build}" />
 	</target>
 
@@ -27,7 +31,7 @@
 	<target name="compile" depends="init">
     <mkdir dir="${project.lib}" />
 		<javac destdir="${project.build}" debug="${project.is-debug}" debuglevel="${project.debug-level}" target="${project.target-comp}"
-           includeantruntime="false">
+           includeantruntime="false" verbose="false">
 			<src path="${project.src}" />
 			<classpath refid="project.classpath" />
 		</javac>
@@ -35,7 +39,7 @@
 
 	<target name="jar" depends="compile">
 		<mkdir dir="${project.dist}" />
-		<delete file="${project.dist}/${ant.project.name}.jar" />
+		<delete file="${project.dist}/${project.dist}/${ant.project.name}-${version}.jar" />
 		<jar compress="true" basedir="${project.build}" destfile="${project.dist}/${ant.project.name}-${version}.jar">
 			<manifest>
 				<attribute name="Implementation-Vendor" value="${vendor}" />
