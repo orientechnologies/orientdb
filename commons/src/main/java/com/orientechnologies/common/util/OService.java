@@ -13,22 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.config;
+package com.orientechnologies.common.util;
 
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElementRef;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlRootElement;
+/**
+ * Generic Service interface.
+ * 
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * 
+ */
+public interface OService {
+  public String getName();
 
-import com.orientechnologies.orient.core.config.OParameterConfiguration;
+  public void startup();
 
-@XmlRootElement(name = "handler")
-public class OServerHandlerConfiguration {
-
-  @XmlAttribute(name = "class", required = true)
-  public String                    clazz;
-
-  @XmlElementWrapper
-  @XmlElementRef(type = OParameterConfiguration.class)
-  public OParameterConfiguration[] params;
+  public void shutdown();
 }

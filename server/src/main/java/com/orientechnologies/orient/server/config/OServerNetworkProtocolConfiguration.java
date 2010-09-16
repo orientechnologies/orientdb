@@ -23,9 +23,9 @@ import javax.xml.bind.annotation.XmlType;
 @XmlType(propOrder = { "name", "implementation" })
 public class OServerNetworkProtocolConfiguration {
 
-	@XmlAttribute(required = true)
-	public String	name;
+  @XmlAttribute(required = true)
+  public String name;
 
-	@XmlAttribute(required = true)
-	public String	implementation;
+  @XmlAttribute(required = true)
+  public String implementation;
 }

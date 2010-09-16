@@ -13,22 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.config;
+package com.orientechnologies.orient.server.handler;
 
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElementRef;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlRootElement;
-
+import com.orientechnologies.common.util.OService;
 import com.orientechnologies.orient.core.config.OParameterConfiguration;
+import com.orientechnologies.orient.server.OServer;
 
-@XmlRootElement(name = "handler")
-public class OServerHandlerConfiguration {
-
-  @XmlAttribute(name = "class", required = true)
-  public String                    clazz;
-
-  @XmlElementWrapper
-  @XmlElementRef(type = OParameterConfiguration.class)
-  public OParameterConfiguration[] params;
+/**
+ * Server handler interface. Used when configured in the server configuration.
+ * 
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * 
+ */
+public interface OServerHandler extends OService {
+  public void config(OServer oServer, OParameterConfiguration[] iParams);
 }

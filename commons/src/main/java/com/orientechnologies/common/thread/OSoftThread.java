@@ -1,85 +1,87 @@
 package com.orientechnologies.common.thread;
 
-public abstract class OSoftThread extends Thread {
-	protected volatile boolean	running	= true;
+import com.orientechnologies.common.util.OService;
 
-	public OSoftThread() {
-	}
+public abstract class OSoftThread extends Thread implements OService {
+  protected volatile boolean running = true;
 
-	public OSoftThread(final ThreadGroup iThreadGroup) {
-		super(iThreadGroup, OSoftThread.class.getSimpleName());
-	}
+  public OSoftThread() {
+  }
 
-	public OSoftThread(final String name) {
-		super(name);
-	}
+  public OSoftThread(final ThreadGroup iThreadGroup) {
+    super(iThreadGroup, OSoftThread.class.getSimpleName());
+  }
 
-	public OSoftThread(final ThreadGroup group, final String name) {
-		super(group, name);
-	}
+  public OSoftThread(final String name) {
+    super(name);
+  }
 
-	protected abstract void execute() throws Exception;
+  public OSoftThread(final ThreadGroup group, final String name) {
+    super(group, name);
+  }
 
-	public void startup() {
-		running = true;
-	}
+  protected abstract void execute() throws Exception;
 
-	public void shutdown() {
-		running = false;
-	}
+  public void startup() {
+    running = true;
+  }
 
-	public void sendShutdown() {
-		running = false;
-		interrupt();
-	}
+  public void shutdown() {
+    running = false;
+  }
 
-	@Override
-	public void run() {
-		startup();
+  public void sendShutdown() {
+    running = false;
+    interrupt();
+  }
 
-		while (running) {
-			try {
-				beforeExecution();
-				execute();
-				afterExecution();
-			} catch (Throwable t) {
-				t.printStackTrace();
-			}
-		}
+  @Override
+  public void run() {
+    startup();
 
-		shutdown();
-	}
+    while (running) {
+      try {
+        beforeExecution();
+        execute();
+        afterExecution();
+      } catch (Throwable t) {
+        t.printStackTrace();
+      }
+    }
 
-	public boolean isRunning() {
-		return running;
-	}
+    shutdown();
+  }
 
-	public boolean pause(final long iTime) {
-		try {
-			sleep(iTime);
-			return true;
-		} catch (InterruptedException e) {
-			return false;
-		}
-	}
+  public boolean isRunning() {
+    return running;
+  }
 
-	public static boolean pauseCurrentThread(long iTime) {
-		try {
-			if (iTime <= 0)
-				iTime = Long.MAX_VALUE;
+  public boolean pause(final long iTime) {
+    try {
+      sleep(iTime);
+      return true;
+    } catch (InterruptedException e) {
+      return false;
+    }
+  }
 
-			Thread.sleep(iTime);
-			return true;
-		} catch (InterruptedException e) {
-			return false;
-		}
-	}
+  public static boolean pauseCurrentThread(long iTime) {
+    try {
+      if (iTime <= 0)
+        iTime = Long.MAX_VALUE;
 
-	protected void beforeExecution() throws InterruptedException {
-		return;
-	}
+      Thread.sleep(iTime);
+      return true;
+    } catch (InterruptedException e) {
+      return false;
+    }
+  }
 
-	protected void afterExecution() throws InterruptedException {
-		return;
-	}
+  protected void beforeExecution() throws InterruptedException {
+    return;
+  }
+
+  protected void afterExecution() throws InterruptedException {
+    return;
+  }
 }
