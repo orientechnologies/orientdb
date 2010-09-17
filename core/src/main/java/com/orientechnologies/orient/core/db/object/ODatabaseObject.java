@@ -27,37 +27,45 @@ import com.orientechnologies.orient.core.iterator.OObjectIteratorMultiCluster;
  */
 public interface ODatabaseObject extends ODatabaseSchemaAware<Object> {
 
-	/**
-	 * Browses all the records of the specified cluster.
-	 * 
-	 * @param iClusterName
-	 *          Cluster name to iterate
-	 * @return Iterator of Object instances
-	 */
-	public <RET> OObjectIteratorCluster<RET> browseCluster(String iClusterName);
+  /**
+   * Sets as dirty a POJO. This is useful when you change the object and need to tell to the engine to treat as dirty.
+   * 
+   * @param iPojo
+   *          User object
+   */
+  public void setDirty(final Object iPojo);
 
-	/**
-	 * Browses all the records of the specified class.
-	 * 
-	 * @param iClusterClass
-	 *          Class name to iterate
-	 * @return Iterator of Object instances
-	 */
-	public <RET> OObjectIteratorMultiCluster<RET> browseClass(Class<RET> iClusterClass);
+  /**
+   * Browses all the records of the specified cluster.
+   * 
+   * @param iClusterName
+   *          Cluster name to iterate
+   * @return Iterator of Object instances
+   */
+  public <RET> OObjectIteratorCluster<RET> browseCluster(String iClusterName);
 
-	/**
-	 * Creates a new entity of the specified class.
-	 * 
-	 * @param iType
-	 *          Class name where to originate the instance
-	 * @return New instance
-	 */
-	public <T> T newInstance(Class<T> iType);
+  /**
+   * Browses all the records of the specified class.
+   * 
+   * @param iClusterClass
+   *          Class name to iterate
+   * @return Iterator of Object instances
+   */
+  public <RET> OObjectIteratorMultiCluster<RET> browseClass(Class<RET> iClusterClass);
 
-	/**
-	 * Returns the entity manager that handle the binding from ODocuments and POJOs.
-	 * 
-	 * @return
-	 */
-	public OEntityManager getEntityManager();
+  /**
+   * Creates a new entity of the specified class.
+   * 
+   * @param iType
+   *          Class name where to originate the instance
+   * @return New instance
+   */
+  public <T> T newInstance(Class<T> iType);
+
+  /**
+   * Returns the entity manager that handle the binding from ODocuments and POJOs.
+   * 
+   * @return
+   */
+  public OEntityManager getEntityManager();
 }
