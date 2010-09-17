@@ -18,31 +18,36 @@ package com.orientechnologies.orient.core.tx;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
 public interface OTransaction<REC extends ORecordInternal<?>> {
-	public enum TXTYPE {
-		NOTX, OPTIMISTIC, PESSIMISTIC
-	}
+  public enum TXTYPE {
+    NOTX, OPTIMISTIC, PESSIMISTIC
+  }
 
-	public enum TXSTATUS {
-		INVALID, BEGUN, COMMITTING, ROLLBACKING
-	}
+  public enum TXSTATUS {
+    INVALID, BEGUN, COMMITTING, ROLLBACKING
+  }
 
-	public REC load(int iClusterId, long iPosition, REC iRecord, String iFetchPlan);
+  public REC load(int iClusterId, long iPosition, REC iRecord, String iFetchPlan);
 
-	public void save(REC iContent, String iClusterName);
+  public void save(REC iContent, String iClusterName);
 
-	public void delete(REC iRecord);
+  public void delete(REC iRecord);
 
-	public void begin();
+  public void begin();
 
-	public void commit();
+  public void commit();
 
-	public void rollback();
+  public void rollback();
 
-	public TXSTATUS getStatus();
+  public TXSTATUS getStatus();
 
-	public int getId();
+  public int getId();
 
-	public Iterable<? extends OTransactionEntry<REC>> getEntries();
+  public Iterable<? extends OTransactionEntry<REC>> getEntries();
 
-	public int size();
+  /**
+   * Contains all the entries created a commit time.
+   */
+  public Iterable<? extends OTransactionEntry<REC>> getNewEntriesOnCommit();
+
+  public int size();
 }

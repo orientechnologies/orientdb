@@ -99,7 +99,11 @@ public class OTransactionOptimistic<REC extends ORecordInternal<?>> extends OTra
     if (txEntry == null) {
       // NEW ENTRY: JUST REGISTER IT
       txEntry = new OTransactionEntry<REC>(iRecord, iStatus, iClusterName);
-      entries.put(key.toString(), txEntry);
+
+      if (status == TXSTATUS.COMMITTING)
+        newEntriesOnCommit.put(key.toString(), txEntry);
+      else
+        entries.put(key.toString(), txEntry);
     } else {
       // UPDATE PREVIOUS STATUS
       txEntry.record = iRecord;
