@@ -4,45 +4,36 @@ import org.testng.annotations.Test;
 
 @Test(enabled = false)
 public abstract class SpeedTestMultiThreads extends SpeedTestAbstract {
-	protected Class<? extends SpeedTestThread>	threadClass;
-	protected int																threads;
-	protected volatile int											activeThreads	= 0;
-	protected long															threadCycles;
+  protected Class<? extends SpeedTestThread> threadClass;
+  protected int                              threads;
+  protected long                             threadCycles;
 
-	protected SpeedTestMultiThreads(long iCycles, int iThreads, Class<? extends SpeedTestThread> iThreadClass) {
-		super(1);
-		threadClass = iThreadClass;
-		threads = iThreads;
-		threadCycles = iCycles;
-	}
+  protected SpeedTestMultiThreads(long iCycles, int iThreads, Class<? extends SpeedTestThread> iThreadClass) {
+    super(1);
+    threadClass = iThreadClass;
+    threads = iThreads;
+    threadCycles = iCycles;
+  }
 
-	@Override
-	public void cycle() {
-		SpeedTestThread t;
-		for (int i = 0; i < threads; ++i)
-			try {
-				t = threadClass.newInstance();
-				t.setOwner(this);
-				t.setCycles(threadCycles / threads);
-				t.start();
-			} catch (Exception e) {
-				e.printStackTrace();
-				return;
-			}
+  @Override
+  public void cycle() throws InterruptedException {
+    SpeedTestThread[] ts = new SpeedTestThread[threads];
+    SpeedTestThread t;
+    for (int i = 0; i < threads; ++i)
+      try {
+        t = threadClass.newInstance();
+        ts[i] = t;
 
-		while (activeThreads > 0) {
-			try {
-				Thread.sleep(50);
-			} catch (InterruptedException e) {
-			}
-		}
-	}
+        t.setOwner(this);
+        t.setCycles(threadCycles / threads);
+        t.start();
+      } catch (Exception e) {
+        e.printStackTrace();
+        return;
+      }
 
-	public synchronized void startThread(SpeedTestThread speedTestThread) {
-		activeThreads++;
-	}
-
-	public synchronized void endThread(SpeedTestThread speedTestThread) {
-		activeThreads--;
-	}
+    for (int i = 0; i < threads; ++i) {
+      ts[i].join();
+    }
+  }
 }

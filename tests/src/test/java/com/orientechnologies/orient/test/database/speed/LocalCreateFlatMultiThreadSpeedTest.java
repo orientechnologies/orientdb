@@ -26,64 +26,63 @@ import com.orientechnologies.orient.test.database.base.OrientThreadTest;
 
 @Test(enabled = false)
 public class LocalCreateFlatMultiThreadSpeedTest extends OrientMultiThreadTest {
-	protected ODatabaseFlat	database;
-	private long									foundObjects;
+  protected ODatabaseFlat database;
+  private long            foundObjects;
 
-	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
-		LocalCreateFlatMultiThreadSpeedTest test = new LocalCreateFlatMultiThreadSpeedTest();
-		test.data.go(test);
-	}
+  public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
+    LocalCreateFlatMultiThreadSpeedTest test = new LocalCreateFlatMultiThreadSpeedTest();
+    test.data.go(test);
+  }
 
-	public LocalCreateFlatMultiThreadSpeedTest() {
-		super(1000000, 2, CreateObjectsThread.class);
-	}
+  public LocalCreateFlatMultiThreadSpeedTest() {
+    super(1000000, 20, CreateObjectsThread.class);
+  }
 
-	@Override
-	public void init() {
-		database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
-		foundObjects = database.countClusterElements("Animal");
+  @Override
+  public void init() {
+    database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
+    foundObjects = database.countClusterElements("flat");
 
-		System.out.println("\nTotal objects in Animal cluster before the test: " + foundObjects);
-	}
+    System.out.println("\nTotal objects in Animal cluster before the test: " + foundObjects);
+  }
 
-	public static class CreateObjectsThread extends OrientThreadTest {
-		protected ODatabaseFlat	database;
-		protected ORecordFlat					record	= new ORecordFlat();
+  @Test(enabled = false)
+  public static class CreateObjectsThread extends OrientThreadTest {
+    protected ODatabaseFlat database;
+    protected ORecordFlat   record;
 
-		@Override
-		public void init() {
-			database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
-			record = database.newInstance();
+    @Override
+    public void init() {
+      database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
+      record = database.newInstance();
+      database.begin(TXTYPE.NOTX);
+    }
 
-			database.begin(TXTYPE.NOTX);
-		}
+    public void cycle() {
+      record.reset();
+      record.value("id:" + data.getCyclesDone() + ",name:'Luca',surname:'Garulli',salary:" + (data.getCyclesDone() + 3000) + ".00")
+          .save("flat");
 
-		public void cycle() {
-			record.reset();
-			record.value(
-					"id:" + data.getCyclesDone() + ",name:'Gipsy',type:'Cat',race:'European',country:'Italy',price:"
-							+ (data.getCyclesDone() + 300) + ".00").save("Animal");
+      if (data.getCyclesDone() == data.getCycles() - 1)
+        database.commit();
+    }
 
-			if (data.getCyclesDone() == data.getCycles() - 1)
-				database.commit();
-		}
+    @Override
+    public void deinit() throws Exception {
+      database.close();
+      super.deinit();
+    }
+  }
 
-		@Override
-		public void deinit() throws Exception {
-			database.close();
-			super.deinit();
-		}
-	}
+  @Override
+  public void deinit() {
+    System.out.println("\nTotal objects in Animal cluster after the test: " + (database.countClusterElements("flat")));
 
-	@Override
-	public void deinit() {
-		System.out.println("\nTotal objects in Animal cluster after the test: " + (database.countClusterElements("Animal")));
+    System.out.println("Created " + (database.countClusterElements("flat") - foundObjects));
 
-		System.out.println("Created " + (database.countClusterElements("Animal") - foundObjects));
+    Assert.assertEquals(threadCycles, database.countClusterElements("flat") - foundObjects);
 
-		Assert.assertEquals(threadCycles, database.countClusterElements("Animal") - foundObjects);
-
-		if (database != null)
-			database.close();
-	}
+    if (database != null)
+      database.close();
+  }
 }
