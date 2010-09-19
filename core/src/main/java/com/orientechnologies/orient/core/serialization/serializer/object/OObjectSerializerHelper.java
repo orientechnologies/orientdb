@@ -72,16 +72,13 @@ public class OObjectSerializerHelper {
     final Class<?> c = iPojo.getClass();
     final String className = c.getName();
 
-    if (!classes.containsKey(className))
-      registerClass(c);
+    getClassFields(c);
 
     return getters.get(className + "." + iProperty) != null;
   }
 
   public static String getDocumentBoundField(final Class<?> iClass) {
-    if (!classes.containsKey(iClass.getName()))
-      registerClass(iClass);
-
+    getClassFields(iClass);
     return boundDocumentFields.get(iClass.getName());
   }
 
@@ -89,8 +86,7 @@ public class OObjectSerializerHelper {
     final Class<?> c = iPojo.getClass();
     final String className = c.getName();
 
-    if (!classes.containsKey(className))
-      registerClass(c);
+    getClassFields(c);
 
     try {
       Object o = getters.get(className + "." + iProperty);
@@ -110,8 +106,7 @@ public class OObjectSerializerHelper {
     final Class<?> c = iPojo.getClass();
     final String className = c.getName();
 
-    if (!classes.containsKey(className))
-      registerClass(c);
+    getClassFields(c);
 
     try {
       Object o = getters.get(className + "." + iProperty);
@@ -130,8 +125,7 @@ public class OObjectSerializerHelper {
     final Class<?> c = iPojo.getClass();
     final String className = c.getName();
 
-    if (!classes.containsKey(className))
-      registerClass(c);
+    getClassFields(c);
 
     try {
       Object o = setters.get(className + "." + iProperty);
@@ -155,9 +149,7 @@ public class OObjectSerializerHelper {
 
     final Class<?> c = iPojo.getClass();
 
-    List<Field> properties = classes.get(c.getName());
-    if (properties == null)
-      properties = registerClass(c);
+    final List<Field> properties = getClassFields(c);
 
     String fieldName;
     Object fieldValue;
@@ -273,9 +265,7 @@ public class OObjectSerializerHelper {
 
     Class<?> c = iPojo.getClass();
 
-    List<Field> properties = classes.get(c.getName());
-    if (properties == null)
-      properties = registerClass(c);
+    final List<Field> properties = getClassFields(c);
 
     String fieldName;
     Object fieldValue;
@@ -407,13 +397,15 @@ public class OObjectSerializerHelper {
     return result;
   }
 
-  private static List<Field> registerClass(final Class<?> iClass) {
+  private static List<Field> getClassFields(final Class<?> iClass) {
     synchronized (classes) {
       if (classes.containsKey(iClass.getName()))
         return classes.get(iClass.getName());
 
       List<Field> properties = new ArrayList<Field>();
       classes.put(iClass.getName(), properties);
+
+      System.out.println("Created class " + iClass);
 
       String fieldName;
       int fieldModifier;
