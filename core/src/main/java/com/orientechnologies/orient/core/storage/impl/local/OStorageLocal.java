@@ -817,7 +817,7 @@ public class OStorageLocal extends OStorageAbstract {
   private int registerCluster(final OCluster cluster) throws IOException {
     // CHECK FOR DUPLICATION OF NAMES
     if (clusterMap.containsKey(cluster.getName()))
-      throw new OConfigurationException("Can't add segment " + cluster.getName() + " because it was already registered");
+      throw new OConfigurationException("Can't add segment '" + cluster.getName() + "' because it was already registered");
 
     // CREATE AND ADD THE NEW REF SEGMENT
     clusterMap.put(cluster.getName(), cluster);

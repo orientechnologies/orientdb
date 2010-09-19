@@ -405,8 +405,6 @@ public class OObjectSerializerHelper {
       List<Field> properties = new ArrayList<Field>();
       classes.put(iClass.getName(), properties);
 
-      System.out.println("Created class " + iClass);
-
       String fieldName;
       int fieldModifier;
       boolean autoBinding;
