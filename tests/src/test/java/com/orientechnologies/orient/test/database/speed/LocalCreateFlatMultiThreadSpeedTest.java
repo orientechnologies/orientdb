@@ -19,6 +19,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
+import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMultiThreadTest;
@@ -55,6 +56,7 @@ public class LocalCreateFlatMultiThreadSpeedTest extends OrientMultiThreadTest {
     public void init() {
       database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
       record = database.newInstance();
+      database.declareIntent(new OIntentMassiveInsert());
       database.begin(TXTYPE.NOTX);
     }
 
@@ -76,11 +78,11 @@ public class LocalCreateFlatMultiThreadSpeedTest extends OrientMultiThreadTest {
 
   @Override
   public void deinit() {
-    System.out.println("\nTotal objects in Animal cluster after the test: " + (database.countClusterElements("flat")));
+    long total = database.countClusterElements("flat");
 
-    System.out.println("Created " + (database.countClusterElements("flat") - foundObjects));
-
-    Assert.assertEquals(threadCycles, database.countClusterElements("flat") - foundObjects);
+    System.out.println("\nTotal objects in flat cluster after the test: " + total);
+    System.out.println("Created " + (total - foundObjects));
+    Assert.assertEquals(threadCycles, total - foundObjects);
 
     if (database != null)
       database.close();
