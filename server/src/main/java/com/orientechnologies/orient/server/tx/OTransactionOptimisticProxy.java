@@ -29,10 +29,11 @@ import com.orientechnologies.orient.core.tx.OTransactionEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
 public class OTransactionOptimisticProxy extends OTransactionAbstract<OTransactionRecordProxy> {
-  private OTransactionEntryProxy       entry   = new OTransactionEntryProxy();
+  private OTransactionEntryProxy       entry     = new OTransactionEntryProxy();
   private int                          size;
   private OChannelBinary               channel;
-  private List<OTransactionEntryProxy> entries = new ArrayList<OTransactionEntryProxy>();
+  private List<OTransactionEntryProxy> entries   = new ArrayList<OTransactionEntryProxy>();
+  private boolean                      exhausted = false;
 
   public OTransactionOptimisticProxy(final ODatabaseRecordTx<OTransactionRecordProxy> iDatabase, final OChannelBinary iChannel)
       throws IOException {
@@ -52,7 +53,11 @@ public class OTransactionOptimisticProxy extends OTransactionAbstract<OTransacti
           private int current = 1;
 
           public boolean hasNext() {
-            return current <= size;
+            if (exhausted)
+              return false;
+
+            exhausted = current > size;
+            return !exhausted;
           }
 
           public OTransactionEntryProxy next() {
