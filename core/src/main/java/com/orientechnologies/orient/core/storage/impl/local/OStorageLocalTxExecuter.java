@@ -130,24 +130,30 @@ public class OStorageLocalTxExecuter {
   protected void commitAllPendingRecords(final int iRequesterId, final OTransaction<?> iTx) throws IOException {
     // COPY ALL THE ENTRIES IN SEPARATE COLLECTION SINCE WHILE THE COMMIT PHASE NEW ENTRIES COULD BE CREATED AND CONCURRENTEXCEPTION
     // MAY OCCURS
-    final List<OTransactionEntry<? extends ORecord<?>>> entries = new ArrayList<OTransactionEntry<? extends ORecord<?>>>();
+    final List<OTransactionEntry<? extends ORecord<?>>> allEntries = new ArrayList<OTransactionEntry<? extends ORecord<?>>>();
+    final List<OTransactionEntry<? extends ORecord<?>>> tmpEntries = new ArrayList<OTransactionEntry<? extends ORecord<?>>>();
 
     while (iTx.getEntries().iterator().hasNext()) {
       for (OTransactionEntry<? extends ORecord<?>> txEntry : iTx.getEntries())
-        entries.add(txEntry);
+        tmpEntries.add(txEntry);
 
       iTx.clearEntries();
 
-      for (OTransactionEntry<? extends ORecord<?>> txEntry : entries)
+      for (OTransactionEntry<? extends ORecord<?>> txEntry : tmpEntries)
         // COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
         commitEntry(iRequesterId, iTx.getId(), txEntry);
+
+      allEntries.addAll(tmpEntries);
+      tmpEntries.clear();
     }
 
     // CLEAR ALL TEMPORARY RECORDS
     txSegment.clearLogEntries(iRequesterId, iTx.getId());
 
     // UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT
-    updateCacheFromEntries(iTx, iTx.getEntries());
+    updateCacheFromEntries(iTx, allEntries);
+    
+    allEntries.clear();
   }
 
   private void updateCacheFromEntries(final OTransaction<?> iTx, final Iterable<? extends OTransactionEntry<?>> iEntries)

@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.tx.OTransactionEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
 public class OTransactionOptimisticProxy extends OTransactionAbstract<OTransactionRecordProxy> {
-  private OTransactionEntryProxy       entry     = new OTransactionEntryProxy();
   private int                          size;
   private OChannelBinary               channel;
   private List<OTransactionEntryProxy> entries   = new ArrayList<OTransactionEntryProxy>();
@@ -62,6 +61,8 @@ public class OTransactionOptimisticProxy extends OTransactionAbstract<OTransacti
 
           public OTransactionEntryProxy next() {
             try {
+               OTransactionEntryProxy entry = new OTransactionEntryProxy();
+
               if (entries.size() < size) {
                 final ORecordId rid = (ORecordId) entry.record.getIdentity();
 
