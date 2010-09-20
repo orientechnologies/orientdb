@@ -292,14 +292,12 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
     OTreeMapEntry<K, V> lastNode = null;
 
     int beginKey = -1;
-    OTreeMapEntry<K, V> left;
 
     while (p != null) {
       lastNode = p;
       try {
         beginKey = k.compareTo(p.getFirstKey());
       } catch (Exception e) {
-        int a = 4;
       }
 
       if (beginKey == 0) {
@@ -308,11 +306,9 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
         pageItemFound = true;
         return p;
       } else {
-        left = p.getLeft();
-
-        if (beginKey < 0 && left != null && k.compareTo(p.getLastKey()) < 0)
+        if (beginKey < 0 && p.getLeft() != null && k.compareTo(p.getLastKey()) < 0)
           // MINOR THAN THE CURRENT: GET THE LEFT NODE
-          p = left;
+          p = p.getLeft();
         else if (beginKey > 0 && p.getRight() != null && k.compareTo(p.getLastKey()) > 0)
           // MAJOR THAN THE CURRENT: GET THE RIGHT NODE
           p = p.getRight();
@@ -1890,7 +1886,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
   /**
    * Returns the first Entry in the OTreeMap (according to the OTreeMap's key-sort function). Returns null if the OTreeMap is empty.
    */
-  final OTreeMapEntry<K, V> getFirstEntry() {
+  protected final OTreeMapEntry<K, V> getFirstEntry() {
     OTreeMapEntry<K, V> p = root;
     if (p != null) {
       if (p.getSize() > 0)
@@ -1905,7 +1901,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
   /**
    * Returns the last Entry in the OTreeMap (according to the OTreeMap's key-sort function). Returns null if the OTreeMap is empty.
    */
-  final OTreeMapEntry<K, V> getLastEntry() {
+  protected final OTreeMapEntry<K, V> getLastEntry() {
     OTreeMapEntry<K, V> p = root;
     if (p != null)
       while (p.getRight() != null)
@@ -1920,7 +1916,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
   /**
    * Returns the successor of the specified Entry, or null if no such.
    */
-  static <K, V> OTreeMapEntry<K, V> successor(OTreeMapEntry<K, V> t) {
+  public static <K, V> OTreeMapEntry<K, V> successor(OTreeMapEntry<K, V> t) {
     if (t == null)
       return null;
 
@@ -1943,7 +1939,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
   /**
    * Returns the predecessor of the specified Entry, or null if no such.
    */
-  static <K, V> OTreeMapEntry<K, V> predecessor(final OTreeMapEntry<K, V> t) {
+  public static <K, V> OTreeMapEntry<K, V> predecessor(final OTreeMapEntry<K, V> t) {
     if (t == null)
       return null;
     else if (t.getLeft() != null) {

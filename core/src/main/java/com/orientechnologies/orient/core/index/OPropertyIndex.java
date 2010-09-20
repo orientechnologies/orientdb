@@ -39,122 +39,130 @@ import com.orientechnologies.orient.core.type.tree.OTreeMapDatabaseLazySave;
  * 
  */
 public abstract class OPropertyIndex implements Iterable<Entry<String, List<ORecordId>>> {
-	protected OProperty																					owner;
-	protected OTreeMapDatabaseLazySave<String, List<ORecordId>>	map;
+  protected OProperty                                         owner;
+  protected OTreeMapDatabaseLazySave<String, List<ORecordId>> map;
 
-	/**
-	 * Constructor called when a new index is created.
-	 * 
-	 * @param iDatabase
-	 *          Current Database instance
-	 * @param iProperty
-	 *          Owner property
-	 * @param iClusterIndexName
-	 *          Cluster name where to place the TreeMap
-	 */
-	public OPropertyIndex(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final String iClusterIndexName) {
-		owner = iProperty;
-		map = new OTreeMapDatabaseLazySave<String, List<ORecordId>>(iDatabase, iClusterIndexName, OStreamSerializerString.INSTANCE,
-				OStreamSerializerListRID.INSTANCE);
-	}
+  /**
+   * Constructor called when a new index is created.
+   * 
+   * @param iDatabase
+   *          Current Database instance
+   * @param iProperty
+   *          Owner property
+   * @param iClusterIndexName
+   *          Cluster name where to place the TreeMap
+   */
+  public OPropertyIndex(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final String iClusterIndexName) {
+    owner = iProperty;
+    map = new OTreeMapDatabaseLazySave<String, List<ORecordId>>(iDatabase, iClusterIndexName, OStreamSerializerString.INSTANCE,
+        OStreamSerializerListRID.INSTANCE);
+  }
 
-	/**
-	 * Constructor called on loading of an existent index.
-	 * 
-	 * @param iDatabase
-	 *          Current Database instance
-	 * @param iProperty
-	 *          Owner property
-	 * @param iRecordId
-	 *          Record Id of the persistent TreeMap
-	 */
-	public OPropertyIndex(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final ORID iRecordId) {
-		owner = iProperty;
-		init(iDatabase, iRecordId);
-	}
+  /**
+   * Constructor called on loading of an existent index.
+   * 
+   * @param iDatabase
+   *          Current Database instance
+   * @param iProperty
+   *          Owner property
+   * @param iRecordId
+   *          Record Id of the persistent TreeMap
+   */
+  public OPropertyIndex(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final ORID iRecordId) {
+    owner = iProperty;
+    init(iDatabase, iRecordId);
+  }
 
-	/**
-	 * Constructor called on 2 steps loading of an existent index.
-	 * 
-	 * @param iDatabase
-	 *          Current Database instance
-	 * @param iProperty
-	 *          Owner property
-	 */
-	public OPropertyIndex(final ODatabaseRecord<?> iDatabase, final OProperty iProperty) {
-		owner = iProperty;
-	}
+  /**
+   * Constructor called on 2 steps loading of an existent index.
+   * 
+   * @param iDatabase
+   *          Current Database instance
+   * @param iProperty
+   *          Owner property
+   */
+  public OPropertyIndex(final ODatabaseRecord<?> iDatabase, final OProperty iProperty) {
+    owner = iProperty;
+  }
 
-	public abstract INDEX_TYPE getType();
+  public abstract INDEX_TYPE getType();
 
-	public abstract ORID getRID();
+  public abstract ORID getRID();
 
-	public abstract void put(final Object iKey, final ORecordId iValue);
+  public abstract void put(final Object iKey, final ORecordId iValue);
 
-	@SuppressWarnings("unchecked")
-	public List<ORecordId> get(Object iKey) {
-		final List<ORecordId> values = map.get(iKey);
+  @SuppressWarnings("unchecked")
+  public List<ORecordId> get(Object iKey) {
+    final List<ORecordId> values = map.get(iKey);
 
-		if (values == null)
-			return Collections.EMPTY_LIST;
+    if (values == null)
+      return Collections.EMPTY_LIST;
 
-		return values;
-	}
+    return values;
+  }
 
-	/**
-	 * Populate the index with all the existent records.
-	 */
-	public void rebuild() {
-		Object fieldValue;
-		ODocument doc;
+  /**
+   * Populate the index with all the existent records.
+   */
+  public void rebuild() {
+    Object fieldValue;
+    ODocument doc;
 
-		clear();
+    clear();
 
-		final int[] clusterIds = owner.getOwnerClass().getClusterIds();
-		for (int clusterId : clusterIds)
-			for (Object record : map.getDatabase().browseCluster(map.getDatabase().getClusterNameById(clusterId))) {
-				if (record instanceof ODocument) {
-					doc = (ODocument) record;
-					fieldValue = doc.field(owner.getName());
+    int i = 0;
 
-					if (fieldValue != null)
-						put(fieldValue.toString(), (ORecordId) doc.getIdentity());
-				}
-			}
+    final int[] clusterIds = owner.getOwnerClass().getClusterIds();
+    for (int clusterId : clusterIds)
+      for (Object record : map.getDatabase().browseCluster(map.getDatabase().getClusterNameById(clusterId))) {
+        if (record instanceof ODocument) {
+          doc = (ODocument) record;
+          fieldValue = doc.field(owner.getName());
 
-		lazySave();
-	}
+          if (fieldValue != null) {
+            put(fieldValue.toString(), (ORecordId) doc.getIdentity());
+            ++i;
+          }
 
-	public void remove(final Object key) {
-		map.remove(key);
-	}
+          if (i % 10000 == 0)
+            lazySave();
+        }
+      }
 
-	public void load() throws IOException {
-		map.load();
-	}
+    lazySave();
+  }
 
-	public void clear() {
-		map.clear();
-	}
+  public void remove(final Object key) {
+    map.remove(key);
+  }
 
-	public void lazySave() {
-		map.lazySave();
-	}
+  public void load() throws IOException {
+    map.load();
+  }
 
-	public ORecordBytes getRecord() {
-		return map.getRecord();
-	}
+  public void clear() {
+    map.clear();
+  }
 
-	public Iterator<Entry<String, List<ORecordId>>> iterator() {
-		return map.entrySet().iterator();
-	}
+  public void lazySave() {
+    map.optimize();
+    map.lazySave();
+  }
 
-	protected void init(final ODatabaseRecord<?> iDatabase, final ORID iRecordId) {
-		map = new OTreeMapDatabaseLazySave<String, List<ORecordId>>(iDatabase, iRecordId);
-		try {
-			map.load();
-		} catch (IOException e) {
-			throw new OIndexException("Can't activate index on property");
-		}
-	}
+  public ORecordBytes getRecord() {
+    return map.getRecord();
+  }
+
+  public Iterator<Entry<String, List<ORecordId>>> iterator() {
+    return map.entrySet().iterator();
+  }
+
+  protected void init(final ODatabaseRecord<?> iDatabase, final ORID iRecordId) {
+    map = new OTreeMapDatabaseLazySave<String, List<ORecordId>>(iDatabase, iRecordId);
+    try {
+      map.load();
+    } catch (IOException e) {
+      throw new OIndexException("Can't activate index on property");
+    }
+  }
 }
