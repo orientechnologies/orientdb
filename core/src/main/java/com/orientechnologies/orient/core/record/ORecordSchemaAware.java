@@ -26,25 +26,27 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
  */
 public interface ORecordSchemaAware<T> extends ORecordInternal<T> {
 
-	public <RET> RET field(String iPropertyName);
+  public <RET> RET field(String iPropertyName);
 
-	public ORecordSchemaAware<T> field(String iPropertyName, Object iValue);
+  public ORecordSchemaAware<T> field(String iPropertyName, Object iValue);
 
-	public Object removeField(String iPropertyName);
+  public Object removeField(String iPropertyName);
 
-	public Set<String> fieldNames();
+  public Set<String> fieldNames();
 
-	public Object[] fieldValues();
+  public Object[] fieldValues();
 
-	public int size();
+  public int size();
 
-	public String getClassName();
+  public String getClassName();
 
-	public void setClassName(String iClassName);
+  public void setClassName(String iClassName);
 
-	public OClass getSchemaClass();
+  public void setClassNameIfExists(String iClassName);
 
-	public void validate() throws OValidationException;
+  public OClass getSchemaClass();
 
-	public ORecordSchemaAware<T> fill(ODatabaseRecord<?> iDatabase, int iClassId, int iClusterId, long iPosition, int iVersion);
+  public void validate() throws OValidationException;
+
+  public ORecordSchemaAware<T> fill(ODatabaseRecord<?> iDatabase, int iClassId, int iClusterId, long iPosition, int iVersion);
 }
