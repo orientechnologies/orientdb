@@ -35,6 +35,10 @@ public abstract class OTransactionRealAbstract<REC extends ORecordInternal<?>> e
     return entries.values();
   }
 
+  public void clearEntries() {
+    entries.clear();
+  }
+
   public int size() {
     return entries.size();
   }

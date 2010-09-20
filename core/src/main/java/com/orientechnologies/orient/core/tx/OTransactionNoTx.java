@@ -21,43 +21,46 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
 public class OTransactionNoTx<REC extends ORecordInternal<?>> extends OTransactionAbstract<REC> {
-	public OTransactionNoTx(final ODatabaseRecordTx<REC> iDatabase, final int iId) {
-		super(iDatabase, iId);
-		status = TXSTATUS.BEGUN;
-	}
+  public OTransactionNoTx(final ODatabaseRecordTx<REC> iDatabase, final int iId) {
+    super(iDatabase, iId);
+    status = TXSTATUS.BEGUN;
+  }
 
-	public void begin() {
-	}
+  public void begin() {
+  }
 
-	public void commit() {
-	}
+  public void commit() {
+  }
 
-	public void rollback() {
-	}
+  public void rollback() {
+  }
 
-	public REC load(final int iClusterId, final long iPosition, final REC iRecord, final String iFetchPlan) {
-		return database.executeReadRecord(iClusterId, iPosition, iRecord, iFetchPlan);
-	}
+  public REC load(final int iClusterId, final long iPosition, final REC iRecord, final String iFetchPlan) {
+    return database.executeReadRecord(iClusterId, iPosition, iRecord, iFetchPlan);
+  }
 
-	/**
-	 * Update the record without checking the version coherence.
-	 */
-	public void save(final REC iContent, final String iClusterName) {
-		database.executeSaveRecord(iContent, iClusterName, -1, iContent.getRecordType());
-	}
+  /**
+   * Update the record without checking the version coherence.
+   */
+  public void save(final REC iContent, final String iClusterName) {
+    database.executeSaveRecord(iContent, iClusterName, -1, iContent.getRecordType());
+  }
 
-	/**
-	 * Delete the record without checking the version coherence.
-	 */
-	public void delete(final REC iRecord) {
-		database.executeDeleteRecord(iRecord, -1);
-	}
+  /**
+   * Delete the record without checking the version coherence.
+   */
+  public void delete(final REC iRecord) {
+    database.executeDeleteRecord(iRecord, -1);
+  }
 
-	public Collection<OTransactionEntry<REC>> getEntries() {
-		return null;
-	}
+  public Collection<OTransactionEntry<REC>> getEntries() {
+    return null;
+  }
 
-	public int size() {
-		return 0;
-	}
+  public void clearEntries() {
+  }
+
+  public int size() {
+    return 0;
+  }
 }

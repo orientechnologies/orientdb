@@ -16,6 +16,8 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OStorageTxConfiguration;
@@ -126,16 +128,26 @@ public class OStorageLocalTxExecuter {
   }
 
   protected void commitAllPendingRecords(final int iRequesterId, final OTransaction<?> iTx) throws IOException {
-    // COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
-    commitAllEntries(iRequesterId, iTx, iTx.getEntries());
-    commitAllEntries(iRequesterId, iTx, iTx.getNewEntriesOnCommit());
+    // COPY ALL THE ENTRIES IN SEPARATE COLLECTION SINCE WHILE THE COMMIT PHASE NEW ENTRIES COULD BE CREATED AND CONCURRENTEXCEPTION
+    // MAY OCCURS
+    final List<OTransactionEntry<? extends ORecord<?>>> entries = new ArrayList<OTransactionEntry<? extends ORecord<?>>>();
+
+    while (iTx.getEntries().iterator().hasNext()) {
+      for (OTransactionEntry<? extends ORecord<?>> txEntry : iTx.getEntries())
+        entries.add(txEntry);
+
+      iTx.clearEntries();
+
+      for (OTransactionEntry<? extends ORecord<?>> txEntry : entries)
+        // COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
+        commitEntry(iRequesterId, iTx.getId(), txEntry);
+    }
 
     // CLEAR ALL TEMPORARY RECORDS
     txSegment.clearLogEntries(iRequesterId, iTx.getId());
 
     // UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT
     updateCacheFromEntries(iTx, iTx.getEntries());
-    updateCacheFromEntries(iTx, iTx.getNewEntriesOnCommit());
   }
 
   private void updateCacheFromEntries(final OTransaction<?> iTx, final Iterable<? extends OTransactionEntry<?>> iEntries)
@@ -160,16 +172,6 @@ public class OStorageLocalTxExecuter {
     }
   }
 
-  /**
-   * Commits each single entry of the collection.
-   */
-  private void commitAllEntries(final int iRequesterId, final OTransaction<?> iTx,
-      final Iterable<? extends OTransactionEntry<?>> iEntries) throws IOException {
-    for (OTransactionEntry<? extends ORecord<?>> txEntry : iEntries) {
-      commitEntry(iRequesterId, iTx.getId(), txEntry);
-    }
-  }
-
   protected void rollback() {
     // TODO
   }
@@ -177,10 +179,14 @@ public class OStorageLocalTxExecuter {
   private void commitEntry(final int iRequesterId, final int iTxId, final OTransactionEntry<? extends ORecord<?>> txEntry)
       throws IOException {
 
-    ORecordId rid = (ORecordId) txEntry.record.getIdentity();
+    final ORecordId rid = (ORecordId) txEntry.record.getIdentity();
 
     final OCluster cluster = txEntry.clusterName != null ? storage.getClusterByName(txEntry.clusterName) : storage
         .getClusterById(rid.clusterId);
+
+    if (!(cluster instanceof OClusterLocal))
+      // ONLY LOCAL CLUSTER ARE INVOLVED IN TX
+      return;
 
     switch (txEntry.status) {
     case OTransactionEntry.LOADED:

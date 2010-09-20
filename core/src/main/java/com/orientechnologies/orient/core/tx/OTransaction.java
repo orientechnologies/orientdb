@@ -44,10 +44,8 @@ public interface OTransaction<REC extends ORecordInternal<?>> {
 
   public Iterable<? extends OTransactionEntry<REC>> getEntries();
 
-  /**
-   * Contains all the entries created a commit time.
-   */
-  public Iterable<? extends OTransactionEntry<REC>> getNewEntriesOnCommit();
+  public void clearEntries();
 
   public int size();
+
 }

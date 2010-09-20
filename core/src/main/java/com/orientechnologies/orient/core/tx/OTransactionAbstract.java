@@ -15,18 +15,14 @@
  */
 package com.orientechnologies.orient.core.tx;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
 public abstract class OTransactionAbstract<REC extends ORecordInternal<?>> implements OTransaction<REC> {
-  protected final ODatabaseRecordTx<REC>        database;
-  protected int                                 id;
-  protected TXSTATUS                            status             = TXSTATUS.INVALID;
-  protected Map<String, OTransactionEntry<REC>> newEntriesOnCommit = new HashMap<String, OTransactionEntry<REC>>();
+  protected final ODatabaseRecordTx<REC> database;
+  protected int                          id;
+  protected TXSTATUS                     status = TXSTATUS.INVALID;
 
   protected OTransactionAbstract(ODatabaseRecordTx<REC> iDatabase, int iId) {
     database = iDatabase;
@@ -39,10 +35,6 @@ public abstract class OTransactionAbstract<REC extends ORecordInternal<?>> imple
 
   public TXSTATUS getStatus() {
     return status;
-  }
-
-  public Iterable<? extends OTransactionEntry<REC>> getNewEntriesOnCommit() {
-    return newEntriesOnCommit.values();
   }
 
   protected void checkTransaction() {
