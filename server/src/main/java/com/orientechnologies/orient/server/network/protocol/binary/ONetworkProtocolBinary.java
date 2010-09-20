@@ -54,7 +54,7 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.ODictionaryLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
@@ -248,10 +248,23 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         final String name = channel.readString();
 
         final int num;
-        if (OClusterLocal.TYPE.equals(type))
+        OStorage.CLUSTER_TYPE t = OStorage.CLUSTER_TYPE.valueOf(type);
+        switch (t) {
+        case PHYSICAL:
           num = connection.database.addPhysicalCluster(name, channel.readString(), channel.readInt());
-        else
+          break;
+
+        case MEMORY:
+          num = connection.database.getStorage().addCluster(name, t);
+          break;
+
+        case LOGICAL:
           num = connection.database.addLogicalCluster(name, channel.readInt());
+          break;
+
+        default:
+          throw new IllegalArgumentException("Cluster type " + type + " is not supported");
+        }
 
         sendOk();
         channel.writeShort((short) num);
