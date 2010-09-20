@@ -21,10 +21,11 @@ import java.net.MulticastSocket;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.thread.OSoftThread;
+import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.server.OServer;
 
 public class OClusterDiscoveryListener extends OSoftThread {
-  private final byte[]    recvBuffer = new byte[8192];
+  private final byte[]    recvBuffer = new byte[50000];
   private DatagramPacket  dgram;
   private OClusterNode    clusterNode;
 
@@ -37,8 +38,8 @@ public class OClusterDiscoveryListener extends OSoftThread {
 
     dgram = new DatagramPacket(recvBuffer, recvBuffer.length);
     try {
-      socket = new MulticastSocket(iClusterNode.networkPort);
-      socket.joinGroup(iClusterNode.networkAddress);
+      socket = new MulticastSocket(iClusterNode.configNetworkMulticastPort);
+      socket.joinGroup(iClusterNode.configNetworkMulticastAddress);
     } catch (IOException e) {
       OLogManager.instance().error(this, "Can't startup cluster discovery listener", e);
     }
@@ -55,42 +56,48 @@ public class OClusterDiscoveryListener extends OSoftThread {
       // BLOCKS UNTIL SOMETHING IS RECEIVED OR SOCKET SHUTDOWN
       socket.receive(dgram);
 
-      OLogManager.instance().debug(this, "Received multicast packet %d bytes from %s:%d", dgram.getLength(), dgram.getAddress(),
+      OLogManager.instance().info(this, "Received multicast packet %d bytes from %s:%d", dgram.getLength(), dgram.getAddress(),
           dgram.getPort());
 
+      byte[] buffer = new byte[dgram.getLength()];
+      System.arraycopy(dgram.getData(), 0, buffer, 0, buffer.length);
+
       try {
-        String packet = new String(dgram.getData());
+        String packet = new String(OSecurityManager.instance().decrypt(clusterNode.securityAlgorithm, clusterNode.securityKey,
+            buffer));
+
+        // UNPACK DATA
         String[] parts = packet.trim().split("\\|");
 
-        if (!parts[0].startsWith(OClusterNode.PACKET_HEADER))
+        int i = 0;
+
+        if (!parts[i].startsWith(OClusterNode.PACKET_HEADER))
           return;
 
-        if (Integer.parseInt(parts[1]) != OClusterNode.PROTOCOL_VERSION) {
+        if (Integer.parseInt(parts[++i]) != OClusterNode.PROTOCOL_VERSION) {
           OLogManager.instance().debug(this, "Received bad multicast packet with version %s not equals to the current %d",
-              parts[1], OClusterNode.PROTOCOL_VERSION);
+              parts[i], OClusterNode.PROTOCOL_VERSION);
           return;
         }
 
-        if (!parts[2].equals(clusterNode.name)) {
+        if (!parts[++i].equals(clusterNode.name)) {
           OLogManager.instance().debug(this, "Received bad multicast packet with cluster name %s not equals to the current %s",
-              parts[2], clusterNode.name);
+              parts[i], clusterNode.name);
           return;
         }
 
-        if (!parts[3].equals(clusterNode.password)) {
-          OLogManager.instance().debug(this, "Received bad multicast packet with cluster password not equals to the current one",
-              parts[3], clusterNode.password);
-          return;
-        }
+        final String serverAddress = parts[++i];
+        final int serverPort = Integer.parseInt(parts[++i]);
 
-        final String serverAddress = parts[4];
-        final int serverPort = Integer.parseInt(parts[5]);
+        // CHECK IF THE PACKET WAS SENT BY MYSELF
+        //TODO
 
         // GOOD PACKET!
         OLogManager.instance().warn(this, "Discovered cluster node %s:%d", serverAddress, serverPort);
 
       } catch (Exception e) {
         // WRONG PACKET
+        OLogManager.instance().debug(this, "Received wrong packet from multicast IP", e);
       }
     } catch (Throwable t) {
       OLogManager.instance().error(this, "Error on executing request", t);

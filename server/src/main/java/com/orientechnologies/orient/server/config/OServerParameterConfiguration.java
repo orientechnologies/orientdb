@@ -13,25 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.config;
+package com.orientechnologies.orient.server.config;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
-@XmlRootElement(name = "param")
+@XmlRootElement(name = "parameter")
 @XmlType(propOrder = { "name", "value" })
-public class OParameterConfiguration {
+public class OServerParameterConfiguration {
   @XmlAttribute
   public String name;
 
   @XmlAttribute
   public String value;
 
-  public OParameterConfiguration() {
+  public OServerParameterConfiguration() {
   }
 
-  public OParameterConfiguration(final String iName, final String iValue) {
+  public OServerParameterConfiguration(final String iName, final String iValue) {
     name = iName;
     value = iValue;
   }

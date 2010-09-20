@@ -19,16 +19,16 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
-
-import com.orientechnologies.orient.core.config.OParameterConfiguration;
+import javax.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "handler")
+@XmlType(propOrder = { "clazz", "parameters" })
 public class OServerHandlerConfiguration {
 
   @XmlAttribute(name = "class", required = true)
-  public String                    clazz;
+  public String                          clazz;
 
   @XmlElementWrapper
-  @XmlElementRef(type = OParameterConfiguration.class)
-  public OParameterConfiguration[] params;
+  @XmlElementRef(type = OServerParameterConfiguration.class)
+  public OServerParameterConfiguration[] parameters;
 }

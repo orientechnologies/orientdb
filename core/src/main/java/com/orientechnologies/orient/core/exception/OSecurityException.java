@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.handler;
+package com.orientechnologies.orient.core.exception;
 
-import com.orientechnologies.common.util.OService;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.common.exception.OException;
 
 /**
- * Server handler interface. Used when configured in the server configuration.
+ * Generic Security exception. Used in cryptography.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public interface OServerHandler extends OService {
-  public void config(OServer oServer, OServerParameterConfiguration[] iParams);
+@SuppressWarnings("serial")
+public class OSecurityException extends OException {
+
+  public OSecurityException(final String message, final Throwable cause) {
+    super(message, cause);
+  }
+
+  public OSecurityException(final String message) {
+    super(message);
+  }
 }

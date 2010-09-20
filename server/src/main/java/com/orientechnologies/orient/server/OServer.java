@@ -265,7 +265,7 @@ public class OServer {
     String encodedPassword = OSecurityManager.instance().digest2String(String.valueOf(generatedPassword));
 
     configuration.users[0] = new OServerUserConfiguration(SRV_ROOT_ADMIN, encodedPassword, "*");
-    configurationLoader.save(configuration);
+    saveConfiguration();
   }
 
   private void registerHandlers() throws InstantiationException, IllegalAccessException, ClassNotFoundException {
@@ -276,7 +276,7 @@ public class OServer {
         handler = (OServerHandler) Class.forName(h.clazz).newInstance();
         handlers.add(handler);
 
-        handler.config(this, h.params);
+        handler.config(this, h.parameters);
         handler.startup();
       }
     }

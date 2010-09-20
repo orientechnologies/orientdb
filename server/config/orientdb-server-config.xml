@@ -3,11 +3,15 @@
 	<handlers>
 		<handler
 			class="com.orientechnologies.orient.server.handler.cluster.OClusterNode">
-			<param name="name" value="default" />
-			<param name="password" value="orientdb" />
-			<param name="networkAddress" value="235.1.1.1" />
-			<param name="networkPort" value="2424" />
-			<param name="signalPresenceEverySecs" value="30" />
+			<parameters>
+				<parameter name="name" value="default" />
+
+				<parameter name="security.algorithm" value="Blowfish" />
+
+				<parameter name="network.multicast.address" value="235.1.1.1" />
+				<parameter name="network.multicast.port" value="2424" />
+				<parameter name="network.multicast.heartbeat" value="10" />
+			</parameters>
 		</handler>
 	</handlers>
 	<network>
