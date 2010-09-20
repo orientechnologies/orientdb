@@ -198,14 +198,14 @@ public class OStorageLocal extends OStorageAbstract {
       addDataSegment(OStorage.DATA_DEFAULT_NAME);
 
       // ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
-      addCluster(OStorage.CLUSTER_INTERNAL_NAME, OClusterLocal.TYPE);
+      addCluster(OStorage.CLUSTER_INTERNAL_NAME, OStorage.CLUSTER_TYPE.PHYSICAL);
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF
       // INDEXING
-      addCluster(OStorage.CLUSTER_INDEX_NAME, OClusterLocal.TYPE);
+      addCluster(OStorage.CLUSTER_INDEX_NAME, OStorage.CLUSTER_TYPE.PHYSICAL);
 
       // ADD THE DEFAULT CLUSTER
-      defaultClusterId = addCluster(OStorage.CLUSTER_DEFAULT_NAME, OClusterLocal.TYPE);
+      defaultClusterId = addCluster(OStorage.CLUSTER_DEFAULT_NAME, OStorage.CLUSTER_TYPE.PHYSICAL);
 
       configuration.create();
 
@@ -320,7 +320,7 @@ public class OStorageLocal extends OStorageAbstract {
   /**
    * Add a new cluster into the storage. Type can be: "physical" or "logical".
    */
-  public int addCluster(String iClusterName, final String iClusterType, final Object... iParameters) {
+  public int addCluster(String iClusterName, final OStorage.CLUSTER_TYPE iClusterType, final Object... iParameters) {
     checkOpeness();
 
     final boolean locked = acquireExclusiveLock();
@@ -328,24 +328,30 @@ public class OStorageLocal extends OStorageAbstract {
     try {
       iClusterName = iClusterName.toLowerCase();
 
-      if (OClusterLocal.TYPE.equalsIgnoreCase(iClusterType)) {
+      switch (iClusterType) {
+      case PHYSICAL: {
         // GET PARAMETERS
         final String clusterFileName = (String) (iParameters.length < 1 ? storagePath + "/" + iClusterName : iParameters[0]);
         final int startSize = (iParameters.length < 2 ? -1 : (Integer) iParameters[1]);
 
         return addPhysicalCluster(iClusterName, clusterFileName, startSize);
-      } else if (OClusterLogical.TYPE.equalsIgnoreCase(iClusterType)) {
+      }
+      case LOGICAL: {
         // GET PARAMETERS
         final int physicalClusterId = (iParameters.length < 1 ? getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME)
             : (Integer) iParameters[0]);
 
         return addLogicalCluster(iClusterName, physicalClusterId);
-      } else if (OClusterMemory.TYPE.equalsIgnoreCase(iClusterType)) {
+      }
+
+      case MEMORY:
         return addMemoryCluster(iClusterName);
-      } else
+
+      default:
         OLogManager.instance().exception(
             "Cluster type '" + iClusterType + "' is not supported. Supported types are: " + Arrays.toString(TYPES), null,
             OStorageException.class);
+      }
 
     } catch (Exception e) {
       OLogManager.instance().exception("Error in creation of new cluster '" + iClusterName + "' of type: " + iClusterType, e,
@@ -551,6 +557,10 @@ public class OStorageLocal extends OStorageAbstract {
       // BROWSE ALL THE RECORDS
       while (iterator.hasNext()) {
         positionInPhyCluster = iterator.next();
+
+        if (positionInPhyCluster == -1)
+          // NOT VALID POSITION (IT HAS BEEN DELETED)
+          continue;
 
         // READ THE RAW RECORD. IF iLockEntireCluster THEN THE READ WILL
         // BE NOT-LOCKING, OTHERWISE YES

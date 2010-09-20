@@ -114,7 +114,7 @@ public class OStorageMemory extends OStorageAbstract {
     }
   }
 
-  public int addCluster(final String iClusterName, final String iClusterType, final Object... iParameters) {
+  public int addCluster(final String iClusterName, final OStorage.CLUSTER_TYPE iClusterType, final Object... iParameters) {
     final boolean locked = acquireExclusiveLock();
     try {
 

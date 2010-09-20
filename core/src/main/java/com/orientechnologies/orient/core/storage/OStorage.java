@@ -35,117 +35,122 @@ import com.orientechnologies.orient.core.tx.OTransaction;
  * 
  */
 public interface OStorage {
-	public static final String	CLUSTER_INTERNAL_NAME	= "internal";
-	public static final String	CLUSTER_INDEX_NAME		= "index";
-	public static final String	CLUSTER_DEFAULT_NAME	= "default";
-	public static final String	DATA_DEFAULT_NAME			= "default";
+  public static final String CLUSTER_INTERNAL_NAME = "internal";
+  public static final String CLUSTER_INDEX_NAME    = "index";
+  public static final String CLUSTER_DEFAULT_NAME  = "default";
+  public static final String DATA_DEFAULT_NAME     = "default";
 
-	public void open(int iRequesterId, String iUserName, String iUserPassword);
+  public enum CLUSTER_TYPE {
+    PHYSICAL, LOGICAL, MEMORY
+  }
 
-	public void create();
+  public void open(int iRequesterId, String iUserName, String iUserPassword);
 
-	public boolean exists();
+  public void create();
 
-	public void close();
+  public boolean exists();
 
-	public void close(boolean iForce);
+  public void close();
 
-	public boolean isClosed();
+  public void close(boolean iForce);
 
-	// CRUD OPERATIONS
-	public long createRecord(int iClusterId, byte[] iContent, final byte iRecordType);
+  public boolean isClosed();
 
-	public ORawBuffer readRecord(ODatabaseRecord<?> iDatabase, int iRequesterId, int iClusterId, long iPosition, String iFetchPlan);
+  // CRUD OPERATIONS
+  public long createRecord(int iClusterId, byte[] iContent, final byte iRecordType);
 
-	public int updateRecord(int iRequesterId, int iClusterId, long iPosition, byte[] iContent, final int iVersion,
-			final byte iRecordType);
+  public ORawBuffer readRecord(ODatabaseRecord<?> iDatabase, int iRequesterId, int iClusterId, long iPosition, String iFetchPlan);
 
-	public int updateRecord(int iRequesterId, ORID iRecordId, byte[] iContent, final int iVersion, final byte iRecordType);
+  public int updateRecord(int iRequesterId, int iClusterId, long iPosition, byte[] iContent, final int iVersion,
+      final byte iRecordType);
 
-	public boolean deleteRecord(int iRequesterId, ORID iRecordId, final int iVersion);
+  public int updateRecord(int iRequesterId, ORID iRecordId, byte[] iContent, final int iVersion, final byte iRecordType);
 
-	public boolean deleteRecord(int iRequesterId, int iClusterId, long iPosition, final int iVersion);
+  public boolean deleteRecord(int iRequesterId, ORID iRecordId, final int iVersion);
 
-	// TX OPERATIONS
-	public void commit(int iRequesterId, OTransaction<?> iTx);
+  public boolean deleteRecord(int iRequesterId, int iClusterId, long iPosition, final int iVersion);
 
-	public OStorageConfiguration getConfiguration();
+  // TX OPERATIONS
+  public void commit(int iRequesterId, OTransaction<?> iTx);
 
-	public Set<String> getClusterNames();
+  public OStorageConfiguration getConfiguration();
 
-	public OCluster getClusterById(int iId);
+  public Set<String> getClusterNames();
 
-	public Collection<? extends OCluster> getClusters();
+  public OCluster getClusterById(int iId);
 
-	/**
-	 * Add a new cluster into the storage.
-	 * 
-	 * @param iClusterName
-	 *          name of the cluster
-	 * @param iClusterType
-	 *          Cluster type. Type depends by the implementation.
-	 * @param iParameters
-	 *          Additional parameters to configure the cluster
-	 * @throws IOException
-	 */
-	public int addCluster(String iClusterName, String iClusterType, Object... iParameters);
+  public Collection<? extends OCluster> getClusters();
 
-	public boolean removeCluster(String iClusterName);
+  /**
+   * Add a new cluster into the storage.
+   * 
+   * @param iClusterName
+   *          name of the cluster
+   * @param iClusterType
+   *          Cluster type. Type depends by the implementation.
+   * @param iParameters
+   *          Additional parameters to configure the cluster
+   * @throws IOException
+   */
+  public int addCluster(String iClusterName, OStorage.CLUSTER_TYPE iClusterType, Object... iParameters);
 
-	public boolean removeCluster(int iId);
+  public boolean removeCluster(String iClusterName);
 
-	/**
-	 * Add a new data segment in the default segment directory and with filename equals to the cluster name.
-	 */
-	public int addDataSegment(String iDataSegmentName);
+  public boolean removeCluster(int iId);
 
-	public int addDataSegment(String iSegmentName, String iSegmentFileName);
+  /**
+   * Add a new data segment in the default segment directory and with filename equals to the cluster name.
+   */
+  public int addDataSegment(String iDataSegmentName);
 
-	public long count(int iClusterId);
+  public int addDataSegment(String iSegmentName, String iSegmentFileName);
 
-	public long count(int[] iClusterIds);
+  public long count(int iClusterId);
 
-	public int getDefaultClusterId();
+  public long count(int[] iClusterIds);
 
-	public int getClusterIdByName(String iClusterName);
+  public int getDefaultClusterId();
 
-	public String getClusterTypeByName(String iClusterName);
+  public int getClusterIdByName(String iClusterName);
 
-	public String getPhysicalClusterNameById(int iClusterId);
+  public String getClusterTypeByName(String iClusterName);
 
-	public boolean checkForRecordValidity(OPhysicalPosition ppos);
+  public String getPhysicalClusterNameById(int iClusterId);
 
-	public String getName();
+  public boolean checkForRecordValidity(OPhysicalPosition ppos);
 
-	public String getURL();
+  public String getName();
 
-	public void synch();
+  public String getURL();
 
-	public int getUsers();
+  public void synch();
 
-	public int addUser();
+  public int getUsers();
 
-	public int removeUser();
+  public int addUser();
 
-	public ODictionary<?> createDictionary(ODatabaseRecord<?> iDatabase) throws Exception;
+  public int removeUser();
 
-	/**
-	 * Return the configured local Level-2 cache component. Cache component is always created even if not used.
-	 * 
-	 * @return
-	 */
-	public OCacheRecord getCache();
+  public ODictionary<?> createDictionary(ODatabaseRecord<?> iDatabase) throws Exception;
 
-	/**
-	 * Execute the command request and return the result back.
-	 */
-	public Object command(OCommandRequestText iCommand);
+  /**
+   * Return the configured local Level-2 cache component. Cache component is always created even if not used.
+   * 
+   * @return
+   */
+  public OCacheRecord getCache();
 
-	/**
-	 * Returns a pair of long values telling the begin and end positions of data in the requested cluster. Useful to know the range of the records.
-	 * 
-	 * @param iCurrentClusterId
-	 *          Cluster id
-	 */
-	public long[] getClusterDataRange(int currentClusterId);
+  /**
+   * Execute the command request and return the result back.
+   */
+  public Object command(OCommandRequestText iCommand);
+
+  /**
+   * Returns a pair of long values telling the begin and end positions of data in the requested cluster. Useful to know the range of
+   * the records.
+   * 
+   * @param iCurrentClusterId
+   *          Cluster id
+   */
+  public long[] getClusterDataRange(int currentClusterId);
 }

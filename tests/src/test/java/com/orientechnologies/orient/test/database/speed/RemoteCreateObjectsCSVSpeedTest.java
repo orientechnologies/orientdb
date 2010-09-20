@@ -23,35 +23,35 @@ import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.ODatabaseColumn;
 import com.orientechnologies.orient.core.record.impl.ORecordColumn;
-import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 public class RemoteCreateObjectsCSVSpeedTest extends SpeedTestMonoThread {
-	private ODatabaseColumn	database;
-	private ORecordColumn		record;
+  private ODatabaseColumn database;
+  private ORecordColumn   record;
 
-	public RemoteCreateObjectsCSVSpeedTest() {
-		super(1000000);
-	}
+  public RemoteCreateObjectsCSVSpeedTest() {
+    super(1000000);
+  }
 
-	@Override
-	public void init() throws IOException {
-		Orient.instance().registerEngine(new OEngineRemote());
+  @Override
+  public void init() throws IOException {
+    Orient.instance().registerEngine(new OEngineRemote());
 
-		if (!database.getStorage().getClusterNames().contains("Animal"))
-			database.getStorage().addCluster("Animal", OClusterLocal.TYPE);
-	}
+    if (!database.getStorage().getClusterNames().contains("Animal"))
+      database.getStorage().addCluster("Animal", OStorage.CLUSTER_TYPE.PHYSICAL);
+  }
 
-	@Override
-	public void cycle() throws UnsupportedEncodingException {
-		record.reset();
+  @Override
+  public void cycle() throws UnsupportedEncodingException {
+    record.reset();
 
-		record.add(String.valueOf(data.getCyclesDone()));
-		record.add("Gipsy");
-		record.add("Cat");
-		record.add("European");
-		record.add("Italy");
-		record.add((data.getCyclesDone() + 300) + ".00");
+    record.add(String.valueOf(data.getCyclesDone()));
+    record.add("Gipsy");
+    record.add("Cat");
+    record.add("European");
+    record.add("Italy");
+    record.add((data.getCyclesDone() + 300) + ".00");
 
-		record.save("csv");
-	}
+    record.save("csv");
+  }
 }

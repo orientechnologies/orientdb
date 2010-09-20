@@ -32,155 +32,159 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 public class OSchema extends ODocumentWrapperNoClass {
-	protected Map<String, OClass>	classes									= new LinkedHashMap<String, OClass>();
-	private static final int			CURRENT_VERSION_NUMBER	= 4;
+  protected Map<String, OClass> classes                = new LinkedHashMap<String, OClass>();
+  private static final int      CURRENT_VERSION_NUMBER = 4;
 
-	public OSchema(final ODatabaseRecord<?> iDatabaseOwner, final int schemaClusterId) {
-		super(new ODocument(iDatabaseOwner));
-		registerStandardClasses();
-	}
+  public OSchema(final ODatabaseRecord<?> iDatabaseOwner, final int schemaClusterId) {
+    super(new ODocument(iDatabaseOwner));
+    registerStandardClasses();
+  }
 
-	public Collection<OClass> classes() {
-		return Collections.unmodifiableCollection(classes.values());
-	}
+  public Collection<OClass> classes() {
+    return Collections.unmodifiableCollection(classes.values());
+  }
 
-	public OClass createClass(final String iClassName) {
-		int clusterId = document.getDatabase().getClusterIdByName(iClassName);
-		if (clusterId == -1)
-			// CREATE A NEW CLUSTER
-			clusterId = document.getDatabase().addLogicalCluster(iClassName,
-					document.getDatabase().getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME));
+  public OClass createClass(final String iClassName) {
+    return createClass(iClassName, OStorage.CLUSTER_TYPE.PHYSICAL);
+  }
 
-		return createClass(iClassName, clusterId);
-	}
+  public OClass createClass(final String iClassName, final OStorage.CLUSTER_TYPE iType) {
+    int clusterId = document.getDatabase().getClusterIdByName(iClassName);
+    if (clusterId == -1) {
+      // CREATE A NEW CLUSTER
+      clusterId = document.getDatabase().getStorage().addCluster(iClassName, iType);
+    }
 
-	public OClass createClass(final String iClassName, final int iDefaultClusterId) {
-		return createClass(iClassName, new int[] { iDefaultClusterId }, iDefaultClusterId);
-	}
+    return createClass(iClassName, clusterId);
+  }
 
-	public OClass createClass(final String iClassName, final int[] iClusterIds) {
-		return createClass(iClassName, iClusterIds, -1);
-	}
+  public OClass createClass(final String iClassName, final int iDefaultClusterId) {
+    return createClass(iClassName, new int[] { iDefaultClusterId }, iDefaultClusterId);
+  }
 
-	public OClass createClass(final String iClassName, final int[] iClusterIds, final int iDefaultClusterId) {
-		String key = iClassName.toLowerCase();
+  public OClass createClass(final String iClassName, final int[] iClusterIds) {
+    return createClass(iClassName, iClusterIds, -1);
+  }
 
-		if (classes.containsKey(key))
-			throw new OSchemaException("Class " + iClassName + " already exists in current database");
+  public OClass createClass(final String iClassName, final int[] iClusterIds, final int iDefaultClusterId) {
+    String key = iClassName.toLowerCase();
 
-		OClass cls = new OClass(this, classes.size(), iClassName, iClusterIds, iDefaultClusterId);
-		classes.put(key, cls);
-		document.setDirty();
+    if (classes.containsKey(key))
+      throw new OSchemaException("Class " + iClassName + " already exists in current database");
 
-		return cls;
-	}
+    OClass cls = new OClass(this, classes.size(), iClassName, iClusterIds, iDefaultClusterId);
+    classes.put(key, cls);
+    document.setDirty();
 
-	public void removeClass(final String iClassName) {
-		String key = iClassName.toLowerCase();
+    return cls;
+  }
 
-		if (!classes.containsKey(key))
-			throw new OSchemaException("Class " + iClassName + " was not found in current database");
+  public void removeClass(final String iClassName) {
+    String key = iClassName.toLowerCase();
 
-		classes.remove(key);
-		document.setDirty();
-	}
+    if (!classes.containsKey(key))
+      throw new OSchemaException("Class " + iClassName + " was not found in current database");
 
-	public boolean existsClass(final String iClassName) {
-		return classes.containsKey(iClassName.toLowerCase());
-	}
+    classes.remove(key);
+    document.setDirty();
+  }
 
-	public OClass getClassById(final int iClassId) {
-		if (iClassId == -1)
-			return null;
+  public boolean existsClass(final String iClassName) {
+    return classes.containsKey(iClassName.toLowerCase());
+  }
 
-		for (OClass c : classes.values())
-			if (c.getId() == iClassId)
-				return c;
+  public OClass getClassById(final int iClassId) {
+    if (iClassId == -1)
+      return null;
 
-		throw new OSchemaException("Class #" + iClassId + " was not found in current database");
-	}
+    for (OClass c : classes.values())
+      if (c.getId() == iClassId)
+        return c;
 
-	public OClass getClass(final String iClassName) {
-		if (iClassName == null)
-			return null;
+    throw new OSchemaException("Class #" + iClassId + " was not found in current database");
+  }
 
-		return classes.get(iClassName.toLowerCase());
-	}
+  public OClass getClass(final String iClassName) {
+    if (iClassName == null)
+      return null;
 
-	/**
-	 * Binds ODocument to POJO.
-	 */
-	public void fromStream() {
-		// READ CURRENT SCHEMA VERSION
-		int schemaVersion = ((Long) document.field("schemaVersion")).intValue();
-		if (schemaVersion != CURRENT_VERSION_NUMBER) {
-			// HANDLE SCHEMA UPGRADE
-			throw new OConfigurationException(
-					"Database schema is different. Please export your old database with the previous verison of OrientDB and reimport it using the current one.");
-		}
+    return classes.get(iClassName.toLowerCase());
+  }
 
-		// REGISTER ALL THE CLASSES
-		classes.clear();
-		OClass cls;
-		List<ODocument> storedClasses = document.field("classes");
-		for (ODocument c : storedClasses) {
-			c.setDatabase(document.getDatabase());
-			cls = new OClass(this, c);
-			cls.fromStream();
-			classes.put(cls.getName().toLowerCase(), cls);
-		}
+  /**
+   * Binds ODocument to POJO.
+   */
+  public void fromStream() {
+    // READ CURRENT SCHEMA VERSION
+    int schemaVersion = ((Long) document.field("schemaVersion")).intValue();
+    if (schemaVersion != CURRENT_VERSION_NUMBER) {
+      // HANDLE SCHEMA UPGRADE
+      throw new OConfigurationException(
+          "Database schema is different. Please export your old database with the previous verison of OrientDB and reimport it using the current one.");
+    }
 
-		// REBUILD THE INHERITANCE TREE
-		String superClassName;
-		OClass superClass;
-		for (ODocument c : storedClasses) {
-			superClassName = c.field("superClass");
+    // REGISTER ALL THE CLASSES
+    classes.clear();
+    OClass cls;
+    List<ODocument> storedClasses = document.field("classes");
+    for (ODocument c : storedClasses) {
+      c.setDatabase(document.getDatabase());
+      cls = new OClass(this, c);
+      cls.fromStream();
+      classes.put(cls.getName().toLowerCase(), cls);
+    }
 
-			if (superClassName != null) {
-				// HAS A SUPER CLASS
-				cls = classes.get(((String) c.field("name")).toLowerCase());
+    // REBUILD THE INHERITANCE TREE
+    String superClassName;
+    OClass superClass;
+    for (ODocument c : storedClasses) {
+      superClassName = c.field("superClass");
 
-				superClass = classes.get(superClassName.toLowerCase());
+      if (superClassName != null) {
+        // HAS A SUPER CLASS
+        cls = classes.get(((String) c.field("name")).toLowerCase());
 
-				if (superClass == null)
-					throw new OConfigurationException("Super class '" + superClassName + "' was declared in class '" + cls.getName()
-							+ "' but was not found in schema. Remove the dependency or create the class to continue.");
+        superClass = classes.get(superClassName.toLowerCase());
 
-				cls.setSuperClass(superClass);
-			}
-		}
-	}
+        if (superClass == null)
+          throw new OConfigurationException("Super class '" + superClassName + "' was declared in class '" + cls.getName()
+              + "' but was not found in schema. Remove the dependency or create the class to continue.");
 
-	/**
-	 * Binds POJO to ODocument.
-	 */
-	@OBeforeSerialization
-	public ODocument toStream() {
-		document.field("schemaVersion", CURRENT_VERSION_NUMBER);
-		document.field("classes", classes.values(), OType.EMBEDDEDSET);
-		return document;
-	}
+        cls.setSuperClass(superClass);
+      }
+    }
+  }
 
-	private void registerStandardClasses() {
-	}
+  /**
+   * Binds POJO to ODocument.
+   */
+  @OBeforeSerialization
+  public ODocument toStream() {
+    document.field("schemaVersion", CURRENT_VERSION_NUMBER);
+    document.field("classes", classes.values(), OType.EMBEDDEDSET);
+    return document;
+  }
 
-	public Collection<OClass> getClasses() {
-		return Collections.unmodifiableCollection(classes.values());
-	}
+  private void registerStandardClasses() {
+  }
 
-	@SuppressWarnings("unchecked")
-	public OSchema load() {
-		document.reset();
-		((ORecordId) document.getIdentity()).fromString(document.getDatabase().getStorage().getConfiguration().schemaRecordId);
-		return super.load("*:-1 index:0");
-	}
+  public Collection<OClass> getClasses() {
+    return Collections.unmodifiableCollection(classes.values());
+  }
 
-	public void create() {
-		save(OStorageLocal.CLUSTER_INTERNAL_NAME);
-	}
+  @SuppressWarnings("unchecked")
+  public OSchema load() {
+    document.reset();
+    ((ORecordId) document.getIdentity()).fromString(document.getDatabase().getStorage().getConfiguration().schemaRecordId);
+    return super.load("*:-1 index:0");
+  }
 
-	public OSchema setDirty() {
-		document.setDirty();
-		return this;
-	}
+  public void create() {
+    save(OStorageLocal.CLUSTER_INTERNAL_NAME);
+  }
+
+  public OSchema setDirty() {
+    document.setDirty();
+    return this;
+  }
 }

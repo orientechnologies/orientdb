@@ -179,7 +179,7 @@ public class SQLSelectTest {
 		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(
-				new OSQLSynchQuery<ODocument>("select * from cluster:animaltype where races contains (name in ['European','Asiatic'])"))
+				new OSQLSynchQuery<ODocument>("select * from cluster:animal where races contains (name in ['European','Asiatic'])"))
 				.execute();
 
 		for (int i = 0; i < result.size(); ++i) {
@@ -187,7 +187,7 @@ public class SQLSelectTest {
 
 			OrientTest.printRecord(i, record);
 
-			Assert.assertTrue(record.getClassName().equalsIgnoreCase("animaltype"));
+			Assert.assertTrue(record.getClassName().equalsIgnoreCase("animal"));
 			Assert.assertNotNull(record.field("races"));
 
 			Collection<ODocument> races = record.field("races");

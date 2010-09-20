@@ -25,109 +25,109 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 @Test(groups = "schema")
 public class SchemaTest {
-	private ODatabaseFlat	database;
-	private String				url;
+  private ODatabaseFlat database;
+  private String        url;
 
-	@Parameters(value = "url")
-	public SchemaTest(String iURL) {
-		url = iURL;
-	}
+  @Parameters(value = "url")
+  public SchemaTest(String iURL) {
+    url = iURL;
+  }
 
-	public void createSchema() {
-		database = new ODatabaseFlat(url);
-		database.open("admin", "admin");
+  public void createSchema() {
+    database = new ODatabaseFlat(url);
+    database.open("admin", "admin");
 
-		if (database.getMetadata().getSchema().existsClass("Account"))
-			return;
+    if (database.getMetadata().getSchema().existsClass("Account"))
+      return;
 
-		database.getStorage().addCluster("csv", OClusterLocal.TYPE);
-		database.getStorage().addCluster("flat", OClusterLocal.TYPE);
-		database.getStorage().addCluster("binary", OClusterLocal.TYPE);
+    database.getStorage().addCluster("csv", OStorage.CLUSTER_TYPE.PHYSICAL);
+    database.getStorage().addCluster("flat", OStorage.CLUSTER_TYPE.PHYSICAL);
+    database.getStorage().addCluster("binary", OStorage.CLUSTER_TYPE.PHYSICAL);
 
-		OClass account = database.getMetadata().getSchema()
-				.createClass("Account", database.getStorage().addCluster("account", OClusterLocal.TYPE));
-		account.createProperty("id", OType.INTEGER);
-		account.createProperty("birthDate", OType.DATE);
-		account.createProperty("binary", OType.BINARY);
+    OClass account = database.getMetadata().getSchema()
+        .createClass("Account", database.getStorage().addCluster("account", OStorage.CLUSTER_TYPE.PHYSICAL));
+    account.createProperty("id", OType.INTEGER);
+    account.createProperty("birthDate", OType.DATE);
+    account.createProperty("binary", OType.BINARY);
 
-		database.getMetadata().getSchema().createClass("Company").setSuperClass(account);
+    database.getMetadata().getSchema().createClass("Company").setSuperClass(account);
 
-		OClass profile = database.getMetadata().getSchema()
-				.createClass("Profile", database.getStorage().addCluster("profile", OClusterLocal.TYPE));
-		profile.createProperty("nick", OType.STRING).setMin("3").setMax("30").createIndex(INDEX_TYPE.UNIQUE);
-		profile.createProperty("name", OType.STRING).setMin("3").setMax("30");
-		profile.createProperty("surname", OType.STRING).setMin("3").setMax("30");
-		profile.createProperty("registeredOn", OType.DATE).setMin("2010-01-01 00:00:00");
-		profile.createProperty("lastAccessOn", OType.DATE).setMin("2010-01-01 00:00:00");
+    OClass profile = database.getMetadata().getSchema()
+        .createClass("Profile", database.getStorage().addCluster("profile", OStorage.CLUSTER_TYPE.PHYSICAL));
+    profile.createProperty("nick", OType.STRING).setMin("3").setMax("30").createIndex(INDEX_TYPE.UNIQUE);
+    profile.createProperty("name", OType.STRING).setMin("3").setMax("30");
+    profile.createProperty("surname", OType.STRING).setMin("3").setMax("30");
+    profile.createProperty("registeredOn", OType.DATE).setMin("2010-01-01 00:00:00");
+    profile.createProperty("lastAccessOn", OType.DATE).setMin("2010-01-01 00:00:00");
 
-		OClass whiz = database.getMetadata().getSchema().createClass("Whiz");
-		whiz.createProperty("id", OType.INTEGER);
-		whiz.createProperty("account", OType.LINK, profile);
-		whiz.createProperty("date", OType.DATE).setMin("2010-01-01 00:00:00");
-		whiz.createProperty("text", OType.STRING).setMandatory(true).setMin("1").setMax("140").createIndex(INDEX_TYPE.FULLTEXT);
-		whiz.createProperty("replyTo", OType.LINK, profile);
+    OClass whiz = database.getMetadata().getSchema().createClass("Whiz");
+    whiz.createProperty("id", OType.INTEGER);
+    whiz.createProperty("account", OType.LINK, profile);
+    whiz.createProperty("date", OType.DATE).setMin("2010-01-01 00:00:00");
+    whiz.createProperty("text", OType.STRING).setMandatory(true).setMin("1").setMax("140").createIndex(INDEX_TYPE.FULLTEXT);
+    whiz.createProperty("replyTo", OType.LINK, profile);
 
-		database.getMetadata().getSchema().save();
-		database.close();
-	}
+    database.getMetadata().getSchema().save();
+    database.close();
+  }
 
-	@Test(dependsOnMethods = "createSchema")
-	public void checkSchema() {
-		database = new ODatabaseFlat(url);
-		database.open("admin", "admin");
+  @Test(dependsOnMethods = "createSchema")
+  public void checkSchema() {
+    database = new ODatabaseFlat(url);
+    database.open("admin", "admin");
 
-		OSchema schema = database.getMetadata().getSchema();
+    OSchema schema = database.getMetadata().getSchema();
 
-		assert schema != null;
-		assert schema.getClass("Profile") != null;
-		assert schema.getClass("Profile").getProperty("nick").getType() == OType.STRING;
-		assert schema.getClass("Profile").getProperty("name").getType() == OType.STRING;
-		assert schema.getClass("Profile").getProperty("surname").getType() == OType.STRING;
-		assert schema.getClass("Profile").getProperty("registeredOn").getType() == OType.DATE;
-		assert schema.getClass("Profile").getProperty("lastAccessOn").getType() == OType.DATE;
+    assert schema != null;
+    assert schema.getClass("Profile") != null;
+    assert schema.getClass("Profile").getProperty("nick").getType() == OType.STRING;
+    assert schema.getClass("Profile").getProperty("name").getType() == OType.STRING;
+    assert schema.getClass("Profile").getProperty("surname").getType() == OType.STRING;
+    assert schema.getClass("Profile").getProperty("registeredOn").getType() == OType.DATE;
+    assert schema.getClass("Profile").getProperty("lastAccessOn").getType() == OType.DATE;
 
-		assert schema.getClass("Whiz") != null;
-		assert schema.getClass("whiz").getProperty("account").getType() == OType.LINK;
-		assert schema.getClass("whiz").getProperty("account").getLinkedClass().getName().equalsIgnoreCase("Profile");
-		assert schema.getClass("WHIZ").getProperty("date").getType() == OType.DATE;
-		assert schema.getClass("WHIZ").getProperty("text").getType() == OType.STRING;
-		assert schema.getClass("WHIZ").getProperty("text").isMandatory();
-		assert schema.getClass("WHIZ").getProperty("text").getMin().equals("1");
-		assert schema.getClass("WHIZ").getProperty("text").getMax().equals("140");
-		assert schema.getClass("whiz").getProperty("replyTo").getType() == OType.LINK;
-		assert schema.getClass("Whiz").getProperty("replyTo").getLinkedClass().getName().equalsIgnoreCase("Profile");
+    assert schema.getClass("Whiz") != null;
+    assert schema.getClass("whiz").getProperty("account").getType() == OType.LINK;
+    assert schema.getClass("whiz").getProperty("account").getLinkedClass().getName().equalsIgnoreCase("Profile");
+    assert schema.getClass("WHIZ").getProperty("date").getType() == OType.DATE;
+    assert schema.getClass("WHIZ").getProperty("text").getType() == OType.STRING;
+    assert schema.getClass("WHIZ").getProperty("text").isMandatory();
+    assert schema.getClass("WHIZ").getProperty("text").getMin().equals("1");
+    assert schema.getClass("WHIZ").getProperty("text").getMax().equals("140");
+    assert schema.getClass("whiz").getProperty("replyTo").getType() == OType.LINK;
+    assert schema.getClass("Whiz").getProperty("replyTo").getLinkedClass().getName().equalsIgnoreCase("Profile");
 
-		database.close();
-	}
+    database.close();
+  }
 
-	@Test(dependsOnMethods = "checkSchema")
-	public void checkSchemaApi() {
-		database = new ODatabaseFlat(url);
-		database.open("admin", "admin");
+  @Test(dependsOnMethods = "checkSchema")
+  public void checkSchemaApi() {
+    database = new ODatabaseFlat(url);
+    database.open("admin", "admin");
 
-		OSchema schema = database.getMetadata().getSchema();
+    OSchema schema = database.getMetadata().getSchema();
 
-		try {
-			Assert.assertNull(schema.getClass("Animal33"));
-		} catch (OSchemaException e) {
-		}
+    try {
+      Assert.assertNull(schema.getClass("Animal33"));
+    } catch (OSchemaException e) {
+    }
 
-		database.close();
-	}
+    database.close();
+  }
 
-	@Test(dependsOnMethods = "checkSchemaApi")
-	public void checkClusters() {
-		database = new ODatabaseFlat(url);
-		database.open("admin", "admin");
+  @Test(dependsOnMethods = "checkSchemaApi")
+  public void checkClusters() {
+    database = new ODatabaseFlat(url);
+    database.open("admin", "admin");
 
-		for (OClass cls : database.getMetadata().getSchema().classes()) {
-			assert database.getClusterNameById(cls.getDefaultClusterId()) != null;
-		}
+    for (OClass cls : database.getMetadata().getSchema().classes()) {
+      assert database.getClusterNameById(cls.getDefaultClusterId()) != null;
+    }
 
-		database.close();
-	}
+    database.close();
+  }
 }

@@ -24,61 +24,61 @@ import com.orientechnologies.orient.core.db.record.ODatabaseColumn;
 import com.orientechnologies.orient.core.query.nativ.ONativeSynchQuery;
 import com.orientechnologies.orient.core.query.nativ.OQueryContextNativePositional;
 import com.orientechnologies.orient.core.record.impl.ORecordColumn;
-import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 public class RandomNoTxSpeedTest extends SpeedTestMonoThread {
-	private static final String	CLUSTER_NAME	= "Animal";
+  private static final String CLUSTER_NAME = "Animal";
 
-	private ODatabaseColumn			database;
-	private Random							random;
-	private ORecordColumn				record;
+  private ODatabaseColumn     database;
+  private Random              random;
+  private ORecordColumn       record;
 
-	public RandomNoTxSpeedTest() {
-		super(1000000);
-		random = new Random(System.currentTimeMillis());
-	}
+  public RandomNoTxSpeedTest() {
+    super(1000000);
+    random = new Random(System.currentTimeMillis());
+  }
 
-	@Override
-	public void init() throws IOException {
-		if (!database.getStorage().getClusterNames().contains(CLUSTER_NAME))
-			database.getStorage().addCluster(CLUSTER_NAME, OClusterLocal.TYPE);
-	}
+  @Override
+  public void init() throws IOException {
+    if (!database.getStorage().getClusterNames().contains(CLUSTER_NAME))
+      database.getStorage().addCluster(CLUSTER_NAME, OStorage.CLUSTER_TYPE.PHYSICAL);
+  }
 
-	@Override
-	public void cycle() throws UnsupportedEncodingException {
-		long clusterCount = database.countClusterElements(CLUSTER_NAME);
+  @Override
+  public void cycle() throws UnsupportedEncodingException {
+    long clusterCount = database.countClusterElements(CLUSTER_NAME);
 
-		switch (random.nextInt(3)) {
-		case 0:
-			// CREATE RECORD
-			record.value(clusterCount + "|Gipsy|Cat|European|Italy|" + (clusterCount + 300) + ".00").save(CLUSTER_NAME);
-			break;
-		case 1:
-			// DELETE RECORD
-			if (clusterCount > 0)
-				// database.deleteRecord( CLUSTER_NAME, random.nextInt((int) (clusterCount - 1)));
-				break;
-		case 2:
-			// UPDATE RECORD
-			if (clusterCount > 0)
-				record.value(clusterCount + "|Gipsy|Cat|European|Italy|" + (clusterCount + 3000) + ".00").save();
-			break;
-		case 3:
-			// QUERY RECORDS
-			final int counter = random.nextInt((int) (clusterCount - 1));
+    switch (random.nextInt(3)) {
+    case 0:
+      // CREATE RECORD
+      record.value(clusterCount + "|Gipsy|Cat|European|Italy|" + (clusterCount + 300) + ".00").save(CLUSTER_NAME);
+      break;
+    case 1:
+      // DELETE RECORD
+      if (clusterCount > 0)
+        // database.deleteRecord( CLUSTER_NAME, random.nextInt((int) (clusterCount - 1)));
+        break;
+    case 2:
+      // UPDATE RECORD
+      if (clusterCount > 0)
+        record.value(clusterCount + "|Gipsy|Cat|European|Italy|" + (clusterCount + 3000) + ".00").save();
+      break;
+    case 3:
+      // QUERY RECORDS
+      final int counter = random.nextInt((int) (clusterCount - 1));
 
-			new ONativeSynchQuery<ORecordColumn, OQueryContextNativePositional<ORecordColumn>>(database, CLUSTER_NAME,
-					new OQueryContextNativePositional<ORecordColumn>()) {
+      new ONativeSynchQuery<ORecordColumn, OQueryContextNativePositional<ORecordColumn>>(database, CLUSTER_NAME,
+          new OQueryContextNativePositional<ORecordColumn>()) {
 
-				@Override
-				public boolean filter(OQueryContextNativePositional<ORecordColumn> iRecord) {
-					return iRecord.column(0).toInt().eq(counter).go();
-				}
+        @Override
+        public boolean filter(OQueryContextNativePositional<ORecordColumn> iRecord) {
+          return iRecord.column(0).toInt().eq(counter).go();
+        }
 
-			}.execute();
-			break;
-		}
+      }.execute();
+      break;
+    }
 
-		record.value(data.getCyclesDone() + "|Gipsy|Cat|European|Italy|" + (data.getCyclesDone() + 300) + ".00").save(CLUSTER_NAME);
-	}
+    record.value(data.getCyclesDone() + "|Gipsy|Cat|European|Italy|" + (data.getCyclesDone() + 300) + ".00").save(CLUSTER_NAME);
+  }
 }
