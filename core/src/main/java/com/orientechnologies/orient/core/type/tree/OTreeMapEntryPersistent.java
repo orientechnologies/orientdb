@@ -137,10 +137,13 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
    * Clear recursively memory references to being cleaned by Garbage collector.
    */
   public void clear() {
-    if (left != null)
+    if (record.isDirty())
+      return;
+
+    if (left != null && !((OTreeMapEntryPersistent<K, V>) left).record.isDirty())
       ((OTreeMapEntryPersistent<K, V>) left).clear();
 
-    if (right != null)
+    if (right != null && !((OTreeMapEntryPersistent<K, V>) right).record.isDirty())
       ((OTreeMapEntryPersistent<K, V>) right).clear();
 
     if (parent != null)

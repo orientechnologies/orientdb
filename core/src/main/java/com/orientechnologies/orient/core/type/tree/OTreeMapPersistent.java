@@ -50,17 +50,21 @@ import com.orientechnologies.orient.core.storage.impl.local.OClusterLogical;
  */
 @SuppressWarnings("serial")
 public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMapEventListener<K, V>, OSerializableStream {
-  protected OSharedResourceExternal                   lock            = new OSharedResourceExternal();
+  private static final float                          OPTIMIZE_FACTOR   = 3 / 4f;
+
+  protected OSharedResourceExternal                   lock              = new OSharedResourceExternal();
 
   protected OStreamSerializer                         keySerializer;
   protected OStreamSerializer                         valueSerializer;
 
-  protected final List<OTreeMapEntryPersistent<K, V>> recordsToCommit = new ArrayList<OTreeMapEntryPersistent<K, V>>();
+  protected final List<OTreeMapEntryPersistent<K, V>> recordsToCommit   = new ArrayList<OTreeMapEntryPersistent<K, V>>();
   protected final OMemoryOutputStream                 entryRecordBuffer;
 
   protected final String                              clusterName;
   protected ORecordBytes                              record;
   protected String                                    fetchPlan;
+  protected int                                       insertCounter     = 0;
+  protected int                                       optimizeThreshold = 5000;
 
   public OTreeMapPersistent(final String iClusterName, final ORID iRID) {
     this(iClusterName, null, null);
@@ -142,7 +146,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
           maxDepthLevel = currentDepthLevel;
       }
 
-      final int cutLevel = maxDepthLevel * 3 / 4;
+      final int cutLevel = (int) (maxDepthLevel * OPTIMIZE_FACTOR);
 
       // RESET (IN-MEMORY ONLY) STATISTICS
       for (OTreeMapEntryPersistent<K, V> e = (OTreeMapEntryPersistent<K, V>) getFirstEntry(); e != null; e = (OTreeMapEntryPersistent<K, V>) OTreeMap
@@ -435,6 +439,14 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
     this.fetchPlan = fetchPlan;
   }
 
+  public int getOptimizeThreshold() {
+    return optimizeThreshold;
+  }
+
+  public void setOptimizeThreshold(int optimizeThreshold) {
+    this.optimizeThreshold = optimizeThreshold;
+  }
+
   private V internalPut(final K key, final V value) {
     ORecord<?> record;
 
@@ -450,6 +462,13 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
       record = (ORecord<?>) value;
       if (!record.getIdentity().isValid())
         record.save();
+    }
+
+    insertCounter++;
+
+    if (insertCounter > optimizeThreshold) {
+      optimize();
+      insertCounter = 0;
     }
 
     return super.put(key, value);

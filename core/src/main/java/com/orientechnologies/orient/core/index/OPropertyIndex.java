@@ -123,9 +123,6 @@ public abstract class OPropertyIndex implements Iterable<Entry<String, List<ORec
             put(fieldValue.toString(), (ORecordId) doc.getIdentity());
             ++i;
           }
-
-          if (i % 10000 == 0)
-            lazySave();
         }
       }
 
