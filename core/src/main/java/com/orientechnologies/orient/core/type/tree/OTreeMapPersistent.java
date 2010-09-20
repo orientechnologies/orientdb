@@ -50,7 +50,8 @@ import com.orientechnologies.orient.core.storage.impl.local.OClusterLogical;
  */
 @SuppressWarnings("serial")
 public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMapEventListener<K, V>, OSerializableStream {
-  private static final float                          OPTIMIZE_FACTOR   = 3 / 4f;
+  protected float                                     optimizeFactor    = 3 / 4f;                                         ;
+  protected int                                       optimizeThreshold = 8000;
 
   protected OSharedResourceExternal                   lock              = new OSharedResourceExternal();
 
@@ -64,7 +65,6 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
   protected ORecordBytes                              record;
   protected String                                    fetchPlan;
   protected int                                       insertCounter     = 0;
-  protected int                                       optimizeThreshold = 5000;
 
   public OTreeMapPersistent(final String iClusterName, final ORID iRID) {
     this(iClusterName, null, null);
@@ -146,7 +146,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
           maxDepthLevel = currentDepthLevel;
       }
 
-      final int cutLevel = (int) (maxDepthLevel * OPTIMIZE_FACTOR);
+      final int cutLevel = (int) (maxDepthLevel * optimizeFactor);
 
       // RESET (IN-MEMORY ONLY) STATISTICS
       for (OTreeMapEntryPersistent<K, V> e = (OTreeMapEntryPersistent<K, V>) getFirstEntry(); e != null; e = (OTreeMapEntryPersistent<K, V>) OTreeMap
@@ -445,6 +445,14 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
   public void setOptimizeThreshold(int optimizeThreshold) {
     this.optimizeThreshold = optimizeThreshold;
+  }
+
+  public float getOptimizeFactor() {
+    return optimizeFactor;
+  }
+
+  public void setOptimizeFactor(float optimizeFactor) {
+    this.optimizeFactor = optimizeFactor;
   }
 
   private V internalPut(final K key, final V value) {

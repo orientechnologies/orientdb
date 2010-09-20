@@ -18,61 +18,62 @@ package com.orientechnologies.orient.test.database.speed;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.orient.client.remote.OEngineRemote;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
+import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 
 @Test(enabled = false)
 public class DictionaryPutSpeedTest extends OrientMonoThreadTest {
-	private ODatabaseFlat	database;
-	private ORecordFlat					record;
-	private long								startNum;
+  private ODatabaseFlat database;
+  private ORecordFlat   record;
+  private long          startNum;
 
-	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
-		DictionaryPutSpeedTest test = new DictionaryPutSpeedTest();
-		test.data.go(test);
-	}
+  public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
+    DictionaryPutSpeedTest test = new DictionaryPutSpeedTest();
+    test.data.go(test);
+  }
 
-	public DictionaryPutSpeedTest() throws InstantiationException, IllegalAccessException {
-		super(1000000);
-		Orient.instance().registerEngine(new OEngineRemote());
-		// String url = "remote:localhost:2424/petshop";
-		String url = System.getProperty("url");
-		database = new ODatabaseFlat(url).open("admin", "admin");
-		record = database.newInstance();
-		startNum = 0;// database.countClusterElements("Animal");
+  public DictionaryPutSpeedTest() throws InstantiationException, IllegalAccessException {
+    super(1000000);
 
-		OProfiler.getInstance().startRecording();
+    // String url = "remote:localhost:2424/petshop";
+    String url = System.getProperty("url");
+    database = new ODatabaseFlat(url).open("admin", "admin");
+    database.declareIntent(new OIntentMassiveInsert());
 
-		System.out.println("Total element in the dictionary: " + startNum);
+    record = database.newInstance();
+    startNum = 0;// database.countClusterElements("Animal");
 
-		database.begin(TXTYPE.NOTX);
-	}
+    OProfiler.getInstance().startRecording();
 
-	@Override
-	public void cycle() {
-		int id = (int) (startNum + data.getCyclesDone());
+    System.out.println("Total element in the dictionary: " + startNum);
 
-		record.reset();
-		record = record.value("{ 'id' : " + id
-				+ " , 'name' : 'Gipsy' , 'type' : 'Cat' , 'race' : 'European' , 'country' : 'Italy' , 'price' :"
-				+ (data.getCyclesDone() + 300) + ".00");
-		record.save("Animal");
+    database.begin(TXTYPE.NOTX);
+  }
 
-		database.getDictionary().put("doc-" + id, record);
-	}
+  @Override
+  public void cycle() {
+    int id = (int) (startNum + data.getCyclesDone());
 
-	@Override
-	public void deinit() {
-		System.out.println("Total element in the dictionary: " + database.getDictionary().size());
+    record.reset();
+    record = record.value("{ 'id' : " + id
+        + " , 'name' : 'Gipsy' , 'type' : 'Cat' , 'race' : 'European' , 'country' : 'Italy' , 'price' :"
+        + (data.getCyclesDone() + 300) + ".00");
+    record.save("Animal");
 
-		database.commit();
+    database.getDictionary().put("doc-" + id, record);
+  }
 
-		database.close();
-		super.deinit();
-	}
+  @Override
+  public void deinit() {
+    System.out.println("Total element in the dictionary: " + database.getDictionary().size());
+
+    database.commit();
+
+    database.close();
+    super.deinit();
+  }
 
 }
