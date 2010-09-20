@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
-import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
 /**
  * Sends regularly packets using IP multicast protocol to signal the presence in the network.
@@ -38,25 +37,12 @@ public class OClusterDiscoverySignaler extends OPollerThread {
   private DatagramPacket dgram;
   private DatagramSocket socket;
 
-  public OClusterDiscoverySignaler(final OClusterNode iClusterNode) {
+  public OClusterDiscoverySignaler(final OClusterNode iClusterNode, final OServerNetworkListener iNetworkListener) {
     super(iClusterNode.configNetworkMulticastHeartbeat * 1000, OServer.getThreadGroup(), "DiscoverySignaler");
 
-    // FIND THE BINARY NETWORK LISTENER
-    OServerNetworkListener binaryNetworkListener = null;
-    for (OServerNetworkListener l : iClusterNode.server.getListeners()) {
-      if (l.getProtocolType().equals(ONetworkProtocolBinary.class)) {
-        binaryNetworkListener = l;
-        break;
-      }
-    }
-
-    if (binaryNetworkListener == null)
-      OLogManager.instance().error(this, "Can't find a configured network listener with binary protocol. Can't start cluster node",
-          null, OConfigurationException.class);
-
     String buffer = OClusterNode.PACKET_HEADER + OConstants.ORIENT_VERSION + "|" + OClusterNode.PROTOCOL_VERSION + "|"
-        + iClusterNode.name + "|" + binaryNetworkListener.getInboundAddr().getHostName() + "|"
-        + binaryNetworkListener.getInboundAddr().getPort();
+        + iClusterNode.name + "|" + iNetworkListener.getInboundAddr().getHostName() + "|"
+        + iNetworkListener.getInboundAddr().getPort();
 
     discoveryPacket = OSecurityManager.instance().encrypt(iClusterNode.securityAlgorithm, iClusterNode.securityKey,
         buffer.getBytes());

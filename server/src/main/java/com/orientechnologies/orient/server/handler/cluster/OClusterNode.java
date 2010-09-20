@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.handler.cluster;
 
 import java.net.InetAddress;
+import java.util.HashMap;
 
 import javax.crypto.SecretKey;
 
@@ -27,6 +28,8 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OServerHandler;
+import com.orientechnologies.orient.server.network.OServerNetworkListener;
+import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
 /**
  * Cluster node handler. Cluster messages are sent using IP Multicast.<br/>
@@ -41,22 +44,24 @@ import com.orientechnologies.orient.server.handler.OServerHandler;
  * 
  */
 public class OClusterNode implements OServerHandler {
-  protected OServer                 server;
+  protected OServer                         server;
 
-  protected String                  name;
-  protected SecretKey               securityKey;
-  protected String                  securityAlgorithm;
-  protected InetAddress             configNetworkMulticastAddress;
-  protected int                     configNetworkMulticastPort;
-  protected int                     configNetworkMulticastHeartbeat;
+  protected String                          name;
+  protected SecretKey                       securityKey;
+  protected String                          securityAlgorithm;
+  protected InetAddress                     configNetworkMulticastAddress;
+  protected int                             configNetworkMulticastPort;
+  protected int                             configNetworkMulticastHeartbeat;
 
-  private OClusterDiscoverySignaler discoverySignaler;
-  private OClusterDiscoveryListener discoveryListener;
+  private OClusterDiscoverySignaler         discoverySignaler;
+  private OClusterDiscoveryListener         discoveryListener;
 
-  static final String               CHECKSUM         = "ChEcKsUm1976";
+  private HashMap<String, OClusterNodeInfo> nodes            = new HashMap<String, OClusterNodeInfo>();
 
-  static final String               PACKET_HEADER    = "OrientDB v.";
-  static final int                  PROTOCOL_VERSION = 0;
+  static final String                       CHECKSUM         = "ChEcKsUm1976";
+
+  static final String                       PACKET_HEADER    = "OrientDB v.";
+  static final int                          PROTOCOL_VERSION = 0;
 
   /**
    * Parse parameters and configure services.
@@ -117,8 +122,21 @@ public class OClusterNode implements OServerHandler {
   }
 
   public void startup() {
-    discoverySignaler = new OClusterDiscoverySignaler(this);
-    discoveryListener = new OClusterDiscoveryListener(this);
+    // FIND THE BINARY NETWORK LISTENER
+    OServerNetworkListener binaryNetworkListener = null;
+    for (OServerNetworkListener l : server.getListeners()) {
+      if (l.getProtocolType().equals(ONetworkProtocolBinary.class)) {
+        binaryNetworkListener = l;
+        break;
+      }
+    }
+
+    if (binaryNetworkListener == null)
+      OLogManager.instance().error(this, "Can't find a configured network listener with binary protocol. Can't start cluster node",
+          null, OConfigurationException.class);
+
+    discoverySignaler = new OClusterDiscoverySignaler(this, binaryNetworkListener);
+    discoveryListener = new OClusterDiscoveryListener(this, binaryNetworkListener);
   }
 
   public void shutdown() {
@@ -128,5 +146,17 @@ public class OClusterNode implements OServerHandler {
 
   public String getName() {
     return "Cluster node '" + name + "'";
+  }
+
+  public void receivedClusterPresence(final String iServerAddress, final int iServerPort) {
+    if (nodes.containsKey(iServerAddress))
+      // ALREADY REGISTERED, IGNORE IT
+      return;
+
+    final OClusterNodeInfo info = new OClusterNodeInfo(iServerAddress, iServerPort);
+    nodes.put(iServerAddress, info);
+
+    OLogManager.instance().warn(this, "Discovered new cluster node %s:%d. Trying to connect...", iServerAddress, iServerPort);
+
   }
 }

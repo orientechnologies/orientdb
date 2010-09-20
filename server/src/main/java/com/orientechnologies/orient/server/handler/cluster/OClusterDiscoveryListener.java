@@ -23,18 +23,26 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.thread.OSoftThread;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.network.OServerNetworkListener;
 
 public class OClusterDiscoveryListener extends OSoftThread {
-  private final byte[]    recvBuffer = new byte[50000];
-  private DatagramPacket  dgram;
-  private OClusterNode    clusterNode;
+  private final byte[]           recvBuffer = new byte[50000];
+  private DatagramPacket         dgram;
+  private OClusterNode           clusterNode;
+  private OServerNetworkListener binaryNetworkListener;
 
-  private MulticastSocket socket;
+  private MulticastSocket        socket;
 
-  public OClusterDiscoveryListener(final OClusterNode iClusterNode) {
+  public OClusterDiscoveryListener(final OClusterNode iClusterNode, final OServerNetworkListener iNetworkListener) {
     super(OServer.getThreadGroup(), "DiscoveryListener");
 
     clusterNode = iClusterNode;
+    binaryNetworkListener = iNetworkListener;
+
+    OLogManager.instance().info(
+        this,
+        "Listening for cluster nodes on IP multicast " + iClusterNode.configNetworkMulticastAddress + ":"
+            + iClusterNode.configNetworkMulticastPort);
 
     dgram = new DatagramPacket(recvBuffer, recvBuffer.length);
     try {
@@ -56,7 +64,7 @@ public class OClusterDiscoveryListener extends OSoftThread {
       // BLOCKS UNTIL SOMETHING IS RECEIVED OR SOCKET SHUTDOWN
       socket.receive(dgram);
 
-      OLogManager.instance().info(this, "Received multicast packet %d bytes from %s:%d", dgram.getLength(), dgram.getAddress(),
+      OLogManager.instance().debug(this, "Received multicast packet %d bytes from %s:%d", dgram.getLength(), dgram.getAddress(),
           dgram.getPort());
 
       byte[] buffer = new byte[dgram.getLength()];
@@ -90,10 +98,13 @@ public class OClusterDiscoveryListener extends OSoftThread {
         final int serverPort = Integer.parseInt(parts[++i]);
 
         // CHECK IF THE PACKET WAS SENT BY MYSELF
-        //TODO
+        if (serverAddress.equals(binaryNetworkListener.getInboundAddr().getHostName())
+            && serverPort == binaryNetworkListener.getInboundAddr().getPort())
+          // IT'S ME, JUST IGNORE
+          return;
 
-        // GOOD PACKET!
-        OLogManager.instance().warn(this, "Discovered cluster node %s:%d", serverAddress, serverPort);
+        // GOOD PACKET, PASS TO THE CLUSTER NODE MANAGER THIS INFO
+        clusterNode.receivedClusterPresence(serverAddress, serverPort);
 
       } catch (Exception e) {
         // WRONG PACKET
