@@ -52,11 +52,12 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
     OUserObject2RecordHandler {
 
   private ODictionary<Object> dictionary;
-  private OEntityManager      entityManager = new OEntityManager();
+  private OEntityManager      entityManager;
 
   public ODatabaseObjectTx(final String iURL) {
     super(new ODatabaseDocumentTx(iURL));
     underlying.setDatabaseOwner(this);
+    entityManager = OEntityManager.getEntityManagerByDatabaseURL(iURL);
   }
 
   public <T> T newInstance(final Class<T> iType) {
