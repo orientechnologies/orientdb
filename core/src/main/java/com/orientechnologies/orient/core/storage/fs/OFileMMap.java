@@ -214,7 +214,6 @@ public class OFileMMap extends OFile {
 	public void close() throws IOException {
 		if (headerBuffer != null) {
 			setSoftlyClosed(true);
-			headerBuffer.force();
 			headerBuffer = null;
 		}
 		super.close();
