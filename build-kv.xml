@@ -4,9 +4,10 @@
   
 	<property environment="env" />
 	<property name="vendor"         value="Orient Technologies" />
-	<property name="product"        value="Orient Key/Value Server" />
-	<property name="version"        value="0.9.20" />
+	<property name="product"        value="OrientDB Key/Value Server" />
+	<property name="version"        value="0.9.23-SNAPSHOT" />
 	<property name="global.release" value="../releases/${version}" />
+	<property name="db.release"     value="../releases/${version}/db" />
 	<property name="kv.release"     value="../releases/${version}/kv" />
 
   <macrodef name="delegate">
@@ -57,6 +58,7 @@
   
 		<mkdir dir="${global.release}" />
 		<mkdir dir="${kv.release}" />
+		<mkdir dir="${kv.release}/log" />
 		<mkdir dir="${kv.release}/databases" />
   </target>
 
@@ -81,29 +83,32 @@
     <copy tofile="${kv.release}/history.txt" file="history-kv.txt" />
 
     <copy todir="${kv.release}/bin/" flatten="true">
-      <fileset dir="." includes="kv/script/*" />
+      <fileset dir="." includes="kv/script/*.sh kv/script/*.bat" />
+      <filterset>
+        <filter token="VERSION" value="${version}"/>
+      </filterset>
     </copy>
 
+    <copy todir="${kv.release}/www/">
+      <fileset dir="kv/src/site"/>
+    </copy>
+    
     <copy todir="${kv.release}/config/" flatten="true">
       <fileset dir="." includes="kv/config/*" />
     </copy>
     
-    <copy todir="${kv.release}/lib/" flatten="true">
-      <fileset dir="." includes="core/dist/* tools/dist/* enterprise/dist/* server/dist/* commons/dist/orient-*" />
-    </copy>
-    
-    <copy todir="${kv.release}/www/">
-      <fileset dir="kv/src/site"/>
-    </copy>
-
     <copy todir="${kv.release}/benchmarks" flatten="true">
       <fileset dir="." includes="kv/benchmarks/*"/>
+    </copy>
+    
+    <copy todir="${kv.release}/lib/">
+      <fileset dir="${db.release}/lib" includes="*.jar" />
     </copy>
 	</target>
 
   <target name="release" depends="install">
-		<delete file="../releases/orient-kv-server-${version}.zip" />
-		<zip destfile="../releases/orient-kv-server-${version}.zip" basedir="${kv.release}" level="9" update="false" excludes="*.log" />
+		<delete file="../releases/orientdb-kv-${version}.zip" />
+		<zip destfile="../releases/orientdb-kv-${version}.zip" basedir="${kv.release}" level="9" update="false" excludes="*.log" />
 	</target>
     
 </project>

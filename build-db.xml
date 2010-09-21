@@ -4,7 +4,7 @@
   
 	<property environment="env" />
 	<property name="vendor"         value="Orient Technologies" />
-	<property name="product"        value="Orient Database" />
+	<property name="product"        value="OrientDB Database" />
 	<property name="version"        value="0.9.23-SNAPSHOT" />
 	<property name="global.release" value="../releases/${version}" />
 	<property name="db.release"     value="../releases/${version}/db" />
@@ -130,7 +130,7 @@
     <copy tofile="${db.release}/history.txt" file="history-db.txt" />
 
     <copy todir="${db.release}/bin/" flatten="true">
-      <fileset dir="." includes="tools/script/*.sh tools/script/*.bat tools/script/*.exe server/script/*.sh server/script/*.bat server/script/*.exe" />
+      <fileset dir="." includes="tools/script/*.sh tools/script/*.bat server/script/*.sh server/script/*.bat" />
       <filterset>
         <filter token="VERSION" value="${version}"/>
       </filterset>
