@@ -37,7 +37,14 @@ public class OTransactionOptimistic<REC extends ORecordInternal<?>> extends OTra
 
   public void rollback() {
     status = TXSTATUS.ROLLBACKING;
+    // INVALIDATE THE CACHE
+    database.getCache().removeRecords(entries.keySet());
+
+    // REMOVE CURRENT STATUS
     entries.clear();
+
+    newObjectCounter = 0;
+
     status = TXSTATUS.INVALID;
   }
 

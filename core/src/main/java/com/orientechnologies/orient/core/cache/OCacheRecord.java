@@ -15,8 +15,8 @@
  */
 package com.orientechnologies.orient.core.cache;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.List;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -124,7 +124,7 @@ public class OCacheRecord extends OSharedResourceAdaptive {
    * @param iRecords
    *          List of Strings
    */
-  public void removeRecords(final List<String> iRecords) {
+  public void removeRecords(final Collection<String> iRecords) {
     if (maxSize == 0)
       return;
 

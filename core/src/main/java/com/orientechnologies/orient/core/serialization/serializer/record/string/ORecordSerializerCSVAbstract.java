@@ -92,6 +92,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					}
 				} else
 					item = item.substring(1);
+				
+				if( item.length()==0)
+				  continue;
 
 				coll.add(new ORecordId(item));
 				// coll.add(new ODocument(iDatabase, iLinkedClass != null ? iLinkedClass.getName() : null, new ORecordId(item)));
