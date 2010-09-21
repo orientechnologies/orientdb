@@ -142,7 +142,6 @@ public abstract class OPropertyIndex implements Iterable<Entry<String, List<ORec
   }
 
   public void lazySave() {
-    map.optimize();
     map.lazySave();
   }
 

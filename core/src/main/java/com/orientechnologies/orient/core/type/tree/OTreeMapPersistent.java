@@ -51,7 +51,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OClusterLogical;
 @SuppressWarnings("serial")
 public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMapEventListener<K, V>, OSerializableStream {
   protected float                                     optimizeFactor    = 3 / 4f;                                         ;
-  protected int                                       optimizeThreshold = 8000;
+  protected int                                       optimizeThreshold = 12000;
 
   protected OSharedResourceExternal                   lock              = new OSharedResourceExternal();
 
@@ -64,7 +64,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
   protected final String                              clusterName;
   protected ORecordBytes                              record;
   protected String                                    fetchPlan;
-  protected int                                       insertCounter     = 0;
+  protected volatile int                              usageCounter      = 0;
 
   public OTreeMapPersistent(final String iClusterName, final ORID iRID) {
     this(iClusterName, null, null);
@@ -111,6 +111,8 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
       getListener().signalTreeChanged(this);
 
+      usageCounter = 0;
+
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on deleting the tree: " + record.getIdentity(), e, OStorageException.class);
     } finally {
@@ -122,6 +124,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
   public void optimize() {
     final long timer = OProfiler.getInstance().startChrono();
+
     lock.acquireExclusiveLock();
 
     try {
@@ -166,6 +169,9 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
   @Override
   public V put(final K key, final V value) {
     final long timer = OProfiler.getInstance().startChrono();
+
+    updateUsageCounter();
+
     lock.acquireExclusiveLock();
 
     try {
@@ -182,6 +188,9 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
   @Override
   public void putAll(final Map<? extends K, ? extends V> map) {
     final long timer = OProfiler.getInstance().startChrono();
+
+    updateUsageCounter();
+
     lock.acquireExclusiveLock();
 
     try {
@@ -352,6 +361,8 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
   @Override
   public V get(final Object iKey) {
+    updateUsageCounter();
+
     lock.acquireSharedLock();
 
     try {
@@ -369,6 +380,8 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
   @Override
   public boolean containsKey(final Object key) {
+    updateUsageCounter();
+
     lock.acquireSharedLock();
 
     try {
@@ -381,6 +394,8 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
   @Override
   public boolean containsValue(final Object value) {
+    updateUsageCounter();
+
     lock.acquireSharedLock();
 
     try {
@@ -393,6 +408,8 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
   @Override
   public Set<java.util.Map.Entry<K, V>> entrySet() {
+    updateUsageCounter();
+
     lock.acquireSharedLock();
 
     try {
@@ -405,6 +422,8 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
   @Override
   public Set<K> keySet() {
+    updateUsageCounter();
+
     lock.acquireSharedLock();
 
     try {
@@ -417,6 +436,8 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
   @Override
   public Collection<V> values() {
+    updateUsageCounter();
+
     lock.acquireSharedLock();
 
     try {
@@ -472,13 +493,18 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
         record.save();
     }
 
-    insertCounter++;
-
-    if (insertCounter > optimizeThreshold) {
-      optimize();
-      insertCounter = 0;
-    }
-
     return super.put(key, value);
+  }
+
+  /**
+   * Updates the usage counter and check if it's higher than the configured threshold. In this case executes the optimization and
+   * reset the usage counter.
+   */
+  protected void updateUsageCounter() {
+    usageCounter++;
+    if (usageCounter > optimizeThreshold) {
+      optimize();
+      usageCounter = 0;
+    }
   }
 }
