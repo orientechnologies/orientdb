@@ -230,11 +230,16 @@ public class OTxSegment extends OSingleFileSegment {
 
     int recoveredTxs = 0;
     int recoveredRecords = 0;
+    int rec;
 
     Map<Integer, Integer> txToRecover = scanForTransactionsToRecover();
     for (Entry<Integer, Integer> entry : txToRecover.entrySet()) {
-      recoveredRecords += recoverTransaction(entry.getKey(), entry.getValue());
-      recoveredTxs++;
+      rec = recoverTransaction(entry.getKey(), entry.getValue());
+
+      if (rec > 0) {
+        recoveredTxs++;
+        recoveredRecords += rec;
+      }
     }
 
     // EMPTY THE FILE
@@ -322,7 +327,7 @@ public class OTxSegment extends OSingleFileSegment {
     OPhysicalPosition ppos = new OPhysicalPosition();
 
     int size = (file.getFilledUpTo() / RECORD_SIZE);
-    int recoveredTx = 0;
+    int recordsRecovered = 0;
 
     for (int i = 0; i < size; ++i) {
       offset = i * RECORD_SIZE;
@@ -356,7 +361,7 @@ public class OTxSegment extends OSingleFileSegment {
             oldDataOffset = file.readLong(offset);
 
             recoverTransactionEntry(status, operation, reqId, txId, clusterId, clusterOffset, oldDataOffset, ppos);
-            recoveredTx++;
+            recordsRecovered++;
 
             // CLEAR THE ENTRY BY WRITING '0'
             file.writeByte(i * RECORD_SIZE + OConstants.SIZE_SHORT + OConstants.SIZE_INT, STATUS_FREE);
@@ -364,7 +369,7 @@ public class OTxSegment extends OSingleFileSegment {
         }
       }
     }
-    return recoveredTx;
+    return recordsRecovered;
   }
 
   private void recoverTransactionEntry(byte status, byte operation, int reqId, int txId, int clusterId, long clusterOffset,
