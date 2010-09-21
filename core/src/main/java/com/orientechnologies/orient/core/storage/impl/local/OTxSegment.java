@@ -223,7 +223,7 @@ public class OTxSegment extends OSingleFileSegment {
   }
 
   private void recoverTransactions() throws IOException {
-    OLogManager.instance().info(
+    OLogManager.instance().debug(
         this,
         "Started the recovering of pending transactions after a brute shutdown. Found " + getTotalLogCount()
             + " entry logs. Scanning...");
@@ -240,9 +240,13 @@ public class OTxSegment extends OSingleFileSegment {
     // EMPTY THE FILE
     file.shrink(0);
 
-    OLogManager.instance().info(this, "Recovering successfully completed:");
-    OLogManager.instance().info(this, "- Recovered Tx.....: " + recoveredTxs);
-    OLogManager.instance().info(this, "- Recovered Records: " + recoveredRecords);
+    if (recoveredRecords > 0) {
+      OLogManager.instance().info(this, "Recovering successfully completed:");
+      OLogManager.instance().info(this, "- Recovered Tx.....: " + recoveredTxs);
+      OLogManager.instance().info(this, "- Recovered Records: " + recoveredRecords);
+    } else
+      OLogManager.instance().debug(this, "Recovering successfully completed: no pending tx records found.");
+
   }
 
   private Map<Integer, Integer> scanForTransactionsToRecover() throws IOException {
