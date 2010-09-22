@@ -123,6 +123,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         String dbURL = channel.readString();
         String dbName = dbURL.substring(dbURL.lastIndexOf(":") + 1);
 
+        OLogManager.instance().info(this, "Opening database '%s'...", dbName);
+
         user = channel.readString();
         passwd = channel.readString();
 
@@ -138,6 +140,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             connection.database.create();
           else
             connection.database.open(user, passwd);
+
+        OLogManager.instance().info(this, "Database '%s' opened", dbName);
 
         underlyingDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
 
@@ -165,6 +169,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         String dbName = channel.readString();
         String storageMode = channel.readString();
 
+        OLogManager.instance().info(this, "Creating database '%s'...", dbName);
+        
         final String path;
         final String realPath;
 
@@ -185,6 +191,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
         connection.database = new ODatabaseDocumentTx(realPath);
         connection.database.create();
+        
+        OLogManager.instance().info(this, "Database '%s' created", dbName);
 
         if (storageMode.equals(OEngineLocal.NAME)) {
           // CLOSE IT BECAUSE IT WILL BE OPEN AT FIRST USE
@@ -216,7 +224,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         break;
       }
 
-      case OChannelBinaryProtocol.CLUSTER_COUNT: {
+      case OChannelBinaryProtocol.DATACLUSTER_COUNT: {
         data.commandInfo = "Count cluster elements";
 
         int[] clusterIds = new int[channel.readShort()];
@@ -230,7 +238,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         break;
       }
 
-      case OChannelBinaryProtocol.CLUSTER_DATARANGE: {
+      case OChannelBinaryProtocol.DATACLUSTER_DATARANGE: {
         data.commandInfo = "Get the begin/end range of data in cluster";
 
         long[] pos = connection.database.getStorage().getClusterDataRange(channel.readShort());
@@ -241,7 +249,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         break;
       }
 
-      case OChannelBinaryProtocol.CLUSTER_ADD: {
+      case OChannelBinaryProtocol.DATACLUSTER_ADD: {
         data.commandInfo = "Add cluster";
 
         final String type = channel.readString();
@@ -271,7 +279,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         break;
       }
 
-      case OChannelBinaryProtocol.CLUSTER_REMOVE: {
+      case OChannelBinaryProtocol.DATACLUSTER_REMOVE: {
         data.commandInfo = "remove cluster";
 
         final int id = channel.readShort();

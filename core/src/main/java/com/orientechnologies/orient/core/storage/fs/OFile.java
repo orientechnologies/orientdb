@@ -269,16 +269,16 @@ public abstract class OFile {
     builder.append(osFile.getName());
     builder.append(" os-size=");
     try {
-      builder.append(OFileUtils.getSizeAsString(accessFile.length()));
+      builder.append(accessFile.length());
     } catch (IOException e) {
       builder.append("?");
     }
     builder.append(", stored=");
-    builder.append(OFileUtils.getSizeAsString(size));
+    builder.append(size);
     builder.append(", filled=");
-    builder.append(OFileUtils.getSizeAsString(filledUpTo));
+    builder.append(filledUpTo);
     builder.append(", max=");
-    builder.append(OFileUtils.getSizeAsString(maxSize));
+    builder.append(maxSize);
     builder.append("");
     return builder.toString();
   }
