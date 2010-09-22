@@ -46,7 +46,7 @@ public class ODataLocal extends OMultiFileSegment {
 		id = iId;
 
 		iConfig.holeFile = new OStorageDataHoleConfiguration(iConfig, OStorageVariableParser.DB_PATH_VARIABLE + "/" + name,
-				iConfig.fileType, iConfig.fileMaxSize);
+				iConfig.fileType, iConfig.maxSize);
 		holeSegment = new ODataLocalHole(iStorage, iConfig.holeFile);
 	}
 
