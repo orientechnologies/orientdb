@@ -44,7 +44,7 @@ public class SQLSelectTest {
 	public void queryNoWhere() {
 		database.open("admin", "admin");
 
-		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile ")).execute();
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>(" select from Profile ")).execute();
 
 		Assert.assertTrue(result.size() != 0);
 
@@ -360,7 +360,7 @@ public class SQLSelectTest {
 	public void queryRecordTargetRids() {
 		database.open("admin", "admin");
 
-		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from [10:0, 10:1]")).execute();
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>(" select from [10:0, 10:1]")).execute();
 
 		Assert.assertTrue(result.size() == 2);
 

@@ -39,7 +39,7 @@ public abstract class OSQLQuery<T extends Object> extends OQueryAbstract<T> impl
 	}
 
 	public OSQLQuery(final String iText) {
-		text = iText;
+		text = iText.trim();
 	}
 
 	/**

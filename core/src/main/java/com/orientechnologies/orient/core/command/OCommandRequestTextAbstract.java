@@ -29,44 +29,44 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  * 
  */
 public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstract implements OCommandRequestText {
-	protected String	text;
+  protected String text;
 
-	protected OCommandRequestTextAbstract() {
-	}
+  protected OCommandRequestTextAbstract() {
+  }
 
-	protected OCommandRequestTextAbstract(final String iText) {
-		this(iText, null);
-	}
+  protected OCommandRequestTextAbstract(final String iText) {
+    this(iText, null);
+  }
 
-	protected OCommandRequestTextAbstract(final String iText, final ODatabaseRecord<ODocument> iDatabase) {
-		super(iDatabase);
-		text = iText;
-	}
+  protected OCommandRequestTextAbstract(final String iText, final ODatabaseRecord<ODocument> iDatabase) {
+    super(iDatabase);
+    text = iText.trim();
+  }
 
-	/**
-	 * Delegates the execution to the configured command executor.
-	 */
-	@SuppressWarnings("unchecked")
-	public <RET> RET execute(final Object... iArgs) {
-		parameters = iArgs;
-		return (RET) database.getStorage().command(this);
-	}
+  /**
+   * Delegates the execution to the configured command executor.
+   */
+  @SuppressWarnings("unchecked")
+  public <RET> RET execute(final Object... iArgs) {
+    parameters = iArgs;
+    return (RET) database.getStorage().command(this);
+  }
 
-	public String getText() {
-		return text;
-	}
+  public String getText() {
+    return text;
+  }
 
-	public OSerializableStream fromStream(byte[] iStream) throws IOException {
-		text = OBinaryProtocol.bytes2string(iStream);
-		return this;
-	}
+  public OSerializableStream fromStream(byte[] iStream) throws IOException {
+    text = OBinaryProtocol.bytes2string(iStream);
+    return this;
+  }
 
-	public byte[] toStream() throws IOException {
-		return OBinaryProtocol.string2bytes(text);
-	}
+  public byte[] toStream() throws IOException {
+    return OBinaryProtocol.string2bytes(text);
+  }
 
-	@Override
-	public String toString() {
-		return getClass().getSimpleName() + " [text=" + text + "]";
-	}
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + " [text=" + text + "]";
+  }
 }
