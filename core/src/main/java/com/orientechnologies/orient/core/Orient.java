@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.Timer;
 
 import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.log.OLogManager;
@@ -39,6 +40,8 @@ public class Orient extends OSharedResource {
   protected volatile boolean          active       = false;
 
   protected static OrientShutdownHook shutdownHook = new OrientShutdownHook();
+  protected static Timer              timer        = new Timer(true);
+
   protected static Orient             instance     = new Orient();
 
   protected Orient() {
@@ -197,6 +200,10 @@ public class Orient extends OSharedResource {
     } finally {
       releaseExclusiveLock();
     }
+  }
+
+  public static Timer getTimer() {
+    return timer;
   }
 
   public void removeShutdownHook() {

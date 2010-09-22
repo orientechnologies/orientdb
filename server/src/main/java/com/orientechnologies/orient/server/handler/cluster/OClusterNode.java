@@ -15,12 +15,15 @@
  */
 package com.orientechnologies.orient.server.handler.cluster;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.util.HashMap;
+import java.util.TimerTask;
 
 import javax.crypto.SecretKey;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
@@ -32,36 +35,44 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
 /**
- * Cluster node handler. Cluster messages are sent using IP Multicast.<br/>
- * Cluster message format:<br/>
- * <br/>
- * 
+ * Cluster node handler. It starts the discovery signaler and listener and manages the cluster configuration. When a node starts
+ * it's SLAVE as default. If after a configurable timeout no nodes are joined, then the node became the MASTER.
+ * <p>
+ * Cluster messages are sent using IP Multicast.
+ * </p>
+ * <p>
+ * Cluster message format:
+ * </p>
  * <code>
  * Orient v. &lt;orientdb-version&gt;-&lt;protocol-version&gt;-&lt;cluster-name&gt;-&lt;cluster-password&gt-&lt;callback-address&gt-&lt;callback-port&gt;
  * </code>
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * @see OClusterDiscoveryListener, OClusterDiscoverySignaler
  * 
  */
 public class OClusterNode implements OServerHandler {
-  protected OServer                         server;
+  protected OServer                      server;
 
-  protected String                          name;
-  protected SecretKey                       securityKey;
-  protected String                          securityAlgorithm;
-  protected InetAddress                     configNetworkMulticastAddress;
-  protected int                             configNetworkMulticastPort;
-  protected int                             configNetworkMulticastHeartbeat;
+  protected String                       name;
+  protected SecretKey                    securityKey;
+  protected String                       securityAlgorithm;
+  protected InetAddress                  networkMulticastAddress;
+  protected int                          networkMulticastPort;
+  protected int                          networkMulticastHeartbeat;                              // IN MS
+  protected int                          networkTimeoutMaster;                                   // IN MS
+  protected int                          networkTimeoutConnectionSlaves;                         // IN MS
 
-  private OClusterDiscoverySignaler         discoverySignaler;
-  private OClusterDiscoveryListener         discoveryListener;
+  private OClusterDiscoverySignaler      discoverySignaler;
+  private OClusterDiscoveryListener      discoveryListener;
 
-  private HashMap<String, OClusterNodeInfo> nodes            = new HashMap<String, OClusterNodeInfo>();
+  private OClusterSlave                  master           = null;
+  private HashMap<String, OClusterSlave> slaves           = new HashMap<String, OClusterSlave>(); ;
 
-  static final String                       CHECKSUM         = "ChEcKsUm1976";
+  static final String                    CHECKSUM         = "ChEcKsUm1976";
 
-  static final String                       PACKET_HEADER    = "OrientDB v.";
-  static final int                          PROTOCOL_VERSION = 0;
+  static final String                    PACKET_HEADER    = "OrientDB v.";
+  static final int                       PROTOCOL_VERSION = 0;
 
   /**
    * Parse parameters and configure services.
@@ -72,9 +83,11 @@ public class OClusterNode implements OServerHandler {
     try {
       name = "unknown";
       securityKey = null;
-      configNetworkMulticastAddress = InetAddress.getByName("235.1.1.1");
-      configNetworkMulticastPort = 2424;
-      configNetworkMulticastHeartbeat = 10;
+      networkMulticastAddress = InetAddress.getByName("235.1.1.1");
+      networkMulticastPort = 2424;
+      networkMulticastHeartbeat = 5000;
+      networkTimeoutMaster = 10000;
+      networkTimeoutConnectionSlaves = 2000;
       securityAlgorithm = "Blowfish";
       byte[] tempSecurityKey = null;
 
@@ -87,15 +100,19 @@ public class OClusterNode implements OServerHandler {
           else if ("security.key".equalsIgnoreCase(param.name))
             tempSecurityKey = OBase64Utils.decode(param.value);
           else if ("network.multicast.address".equalsIgnoreCase(param.name))
-            configNetworkMulticastAddress = InetAddress.getByName(param.value);
+            networkMulticastAddress = InetAddress.getByName(param.value);
           else if ("network.multicast.port".equalsIgnoreCase(param.name))
-            configNetworkMulticastPort = Integer.parseInt(param.value);
+            networkMulticastPort = Integer.parseInt(param.value);
           else if ("network.multicast.heartbeat".equalsIgnoreCase(param.name))
-            configNetworkMulticastHeartbeat = Integer.parseInt(param.value);
+            networkMulticastHeartbeat = Integer.parseInt(param.value);
+          else if ("network.timeout.master".equalsIgnoreCase(param.name))
+            networkTimeoutMaster = Integer.parseInt(param.value);
+          else if ("network.timeout.connectionSlaves".equalsIgnoreCase(param.name))
+            networkTimeoutConnectionSlaves = Integer.parseInt(param.value);
         }
 
       if (tempSecurityKey == null) {
-        OLogManager.instance().info(this, "Generating Server security key...");
+        OLogManager.instance().info(this, "Generating Server security key and save it in configuration...");
         // GENERATE NEW SECURITY KEY
         securityKey = OSecurityManager.instance().generateKey(securityAlgorithm, 96);
 
@@ -123,25 +140,45 @@ public class OClusterNode implements OServerHandler {
 
   public void startup() {
     // FIND THE BINARY NETWORK LISTENER
-    OServerNetworkListener binaryNetworkListener = null;
+    OServerNetworkListener found = null;
     for (OServerNetworkListener l : server.getListeners()) {
       if (l.getProtocolType().equals(ONetworkProtocolBinary.class)) {
-        binaryNetworkListener = l;
+        found = l;
         break;
       }
     }
+
+    final OServerNetworkListener binaryNetworkListener = found;
 
     if (binaryNetworkListener == null)
       OLogManager.instance().error(this, "Can't find a configured network listener with binary protocol. Can't start cluster node",
           null, OConfigurationException.class);
 
+    // START THE SIGNALER AND WAIT FOR A CONNECTION
     discoverySignaler = new OClusterDiscoverySignaler(this, binaryNetworkListener);
-    discoveryListener = new OClusterDiscoveryListener(this, binaryNetworkListener);
+    Orient.getTimer().schedule(new TimerTask() {
+      @Override
+      public void run() {
+        synchronized (this) {
+          // TIMEOUT: STOP TO SEND PACKETS TO BEING DISCOVERED
+          discoverySignaler.sendShutdown();
+
+          if (master != null)
+            // I'M NOT THE MASTER, DO NOTHING
+            return;
+
+          // NO NODE HAS JOINED: BECAME THE MASTER AND LISTEN FOR SLAVES
+          startListener(binaryNetworkListener);
+        }
+      }
+    }, networkTimeoutMaster);
   }
 
   public void shutdown() {
-    discoverySignaler.sendShutdown();
-    discoveryListener.sendShutdown();
+    if (discoverySignaler != null)
+      discoverySignaler.sendShutdown();
+    if (discoveryListener != null)
+      discoveryListener.sendShutdown();
   }
 
   public String getName() {
@@ -149,14 +186,25 @@ public class OClusterNode implements OServerHandler {
   }
 
   public void receivedClusterPresence(final String iServerAddress, final int iServerPort) {
-    if (nodes.containsKey(iServerAddress))
-      // ALREADY REGISTERED, IGNORE IT
-      return;
+    synchronized (slaves) {
+      if (slaves.containsKey(iServerAddress))
+        // ALREADY REGISTERED, IGNORE IT
+        return;
 
-    final OClusterNodeInfo info = new OClusterNodeInfo(iServerAddress, iServerPort);
-    nodes.put(iServerAddress, info);
+      final OClusterSlave slave = new OClusterSlave(this, iServerAddress, iServerPort);
+      slaves.put(iServerAddress, slave);
 
-    OLogManager.instance().warn(this, "Discovered new cluster node %s:%d. Trying to connect...", iServerAddress, iServerPort);
+      OLogManager.instance().warn(this, "Discovered new cluster node %s:%d. Trying to connect...", iServerAddress, iServerPort);
 
+      try {
+        slave.connect(networkTimeoutConnectionSlaves);
+      } catch (IOException e) {
+        OLogManager.instance().error(this, "Can't connect to cluster slave node: %s:%d", iServerAddress, iServerPort);
+      }
+    }
+  }
+
+  private void startListener(OServerNetworkListener binaryNetworkListener) {
+    discoveryListener = new OClusterDiscoveryListener(this, binaryNetworkListener);
   }
 }

@@ -15,7 +15,11 @@
  */
 package com.orientechnologies.orient.server.handler.cluster;
 
+import java.io.IOException;
 import java.util.Date;
+
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 /**
  * Contains all the information about a cluster node.
@@ -23,14 +27,30 @@ import java.util.Date;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OClusterNodeInfo {
-  public String binaryNetworkAddress;
-  public int    binaryNetworkPort;
-  public Date   joinedOn;
+public class OClusterSlave {
+  private OClusterNode        node;
+  public String               binaryNetworkAddress;
+  public int                  binaryNetworkPort;
+  public Date                 joinedOn;
+  public OChannelBinaryClient network;
 
-  public OClusterNodeInfo(String iServerAddress, int iServerPort) {
+  public OClusterSlave(final OClusterNode iNode, final String iServerAddress, final int iServerPort) {
+    node = iNode;
     binaryNetworkAddress = iServerAddress;
     binaryNetworkPort = iServerPort;
     joinedOn = new Date();
+  }
+
+  public void connect(final int iTimeout) throws IOException {
+    network = new OChannelBinaryClient(binaryNetworkAddress, binaryNetworkPort, iTimeout);
+
+    network.out.writeByte(OChannelBinaryProtocol.NODECLUSTER_CONNECT);
+    network.flush();
+
+    readStatus();
+  }
+
+  private boolean readStatus() throws IOException {
+    return network.readByte() != OChannelBinaryProtocol.ERROR;
   }
 }

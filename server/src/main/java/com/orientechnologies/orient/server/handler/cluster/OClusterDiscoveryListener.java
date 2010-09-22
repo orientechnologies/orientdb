@@ -41,13 +41,13 @@ public class OClusterDiscoveryListener extends OSoftThread {
 
     OLogManager.instance().info(
         this,
-        "Listening for cluster nodes on IP multicast " + iClusterNode.configNetworkMulticastAddress + ":"
-            + iClusterNode.configNetworkMulticastPort);
+        "Listening for cluster nodes on IP multicast " + iClusterNode.networkMulticastAddress + ":"
+            + iClusterNode.networkMulticastPort);
 
     dgram = new DatagramPacket(recvBuffer, recvBuffer.length);
     try {
-      socket = new MulticastSocket(iClusterNode.configNetworkMulticastPort);
-      socket.joinGroup(iClusterNode.configNetworkMulticastAddress);
+      socket = new MulticastSocket(iClusterNode.networkMulticastPort);
+      socket.joinGroup(iClusterNode.networkMulticastAddress);
     } catch (IOException e) {
       OLogManager.instance().error(this, "Can't startup cluster discovery listener", e);
     }

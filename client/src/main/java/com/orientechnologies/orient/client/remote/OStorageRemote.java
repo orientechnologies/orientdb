@@ -316,7 +316,7 @@ public class OStorageRemote extends OStorageAbstract {
       boolean locked = acquireExclusiveLock();
 
       try {
-        network.writeByte(OChannelBinaryProtocol.CLUSTER_DATARANGE);
+        network.writeByte(OChannelBinaryProtocol.DATACLUSTER_DATARANGE);
         network.writeShort((short) iClusterId);
         network.flush();
 
@@ -340,7 +340,7 @@ public class OStorageRemote extends OStorageAbstract {
       boolean locked = acquireExclusiveLock();
 
       try {
-        network.writeByte(OChannelBinaryProtocol.CLUSTER_COUNT);
+        network.writeByte(OChannelBinaryProtocol.DATACLUSTER_COUNT);
         network.writeShort((short) iClusterIds.length);
         for (int i = 0; i < iClusterIds.length; ++i)
           network.writeShort((short) iClusterIds[i]);
@@ -579,7 +579,7 @@ public class OStorageRemote extends OStorageAbstract {
       boolean locked = acquireExclusiveLock();
 
       try {
-        network.writeByte(OChannelBinaryProtocol.CLUSTER_ADD);
+        network.writeByte(OChannelBinaryProtocol.DATACLUSTER_ADD);
         network.writeString(iClusterType.toString());
         network.writeString(iClusterName);
 
@@ -622,7 +622,7 @@ public class OStorageRemote extends OStorageAbstract {
       boolean locked = acquireExclusiveLock();
 
       try {
-        network.writeByte(OChannelBinaryProtocol.CLUSTER_REMOVE);
+        network.writeByte(OChannelBinaryProtocol.DATACLUSTER_REMOVE);
         network.writeShort((short) iClusterId);
 
         network.flush();
@@ -942,22 +942,6 @@ public class OStorageRemote extends OStorageAbstract {
 
   /**
    * Parse the URL in the following formats:<br/>
-   * <ul>
-   * <li>
-   * 
-   * <pre>
-   * <protocol>:<>
-   * </pre>
-   * 
-   * </li>
-   * <li>
-   * 
-   * <pre>
-   * <db-sename>
-   * </pre>
-   * 
-   * , to connect to the localhost, default port 2424</li>
-   * </ul>
    */
   protected void parseServerURLs() {
     String remoteHost;

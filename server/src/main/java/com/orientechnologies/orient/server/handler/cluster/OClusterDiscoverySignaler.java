@@ -21,7 +21,6 @@ import java.net.DatagramSocket;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.thread.OPollerThread;
 import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -38,7 +37,7 @@ public class OClusterDiscoverySignaler extends OPollerThread {
   private DatagramSocket socket;
 
   public OClusterDiscoverySignaler(final OClusterNode iClusterNode, final OServerNetworkListener iNetworkListener) {
-    super(iClusterNode.configNetworkMulticastHeartbeat * 1000, OServer.getThreadGroup(), "DiscoverySignaler");
+    super(iClusterNode.networkMulticastHeartbeat, OServer.getThreadGroup(), "DiscoverySignaler");
 
     String buffer = OClusterNode.PACKET_HEADER + OConstants.ORIENT_VERSION + "|" + OClusterNode.PROTOCOL_VERSION + "|"
         + iClusterNode.name + "|" + iNetworkListener.getInboundAddr().getHostName() + "|"
@@ -48,8 +47,8 @@ public class OClusterDiscoverySignaler extends OPollerThread {
         buffer.getBytes());
 
     try {
-      dgram = new DatagramPacket(discoveryPacket, discoveryPacket.length, iClusterNode.configNetworkMulticastAddress,
-          iClusterNode.configNetworkMulticastPort);
+      dgram = new DatagramPacket(discoveryPacket, discoveryPacket.length, iClusterNode.networkMulticastAddress,
+          iClusterNode.networkMulticastPort);
       socket = new DatagramSocket();
       start();
     } catch (Exception e) {
@@ -68,5 +67,13 @@ public class OClusterDiscoverySignaler extends OPollerThread {
       OLogManager.instance().error(this, "Error on sending signal for cluster presence", t);
     } finally {
     }
+  }
+
+  @Override
+  public void shutdown() {
+    socket.close();
+    socket = null;
+    dgram = null;
+    super.shutdown();
   }
 }
