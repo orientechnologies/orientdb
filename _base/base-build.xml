@@ -6,7 +6,7 @@
 	<property name="project.doc" value="doc" />
 	<property name="project.build" value="target/classes" />
 	<property name="project.dist" value="target" />
-	<property name="project.is-debug" value="on" />
+	<property name="project.is-debug" value="true" />
 	<property name="project.debug-level" value="lines, vars, source" />
 	<property name="project.target-comp" value="1.5" />
 
