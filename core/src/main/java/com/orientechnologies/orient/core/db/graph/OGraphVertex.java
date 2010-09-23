@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OGraphException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.OGraphVertexOutIterator;
@@ -43,8 +42,7 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
   private SoftReference<List<OGraphEdge>> outEdges;
 
   public OGraphVertex(final ODatabaseGraphTx iDatabase) {
-    super(iDatabase, new ODocument((ODatabaseRecord<?>) iDatabase.getUnderlying(), CLASS_NAME));
-    database = iDatabase;
+    super(iDatabase, CLASS_NAME);
   }
 
   public OGraphVertex(final ODatabaseGraphTx iDatabase, final ODocument iDocument) {

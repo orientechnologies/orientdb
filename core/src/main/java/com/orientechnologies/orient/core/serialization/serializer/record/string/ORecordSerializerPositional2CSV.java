@@ -25,31 +25,34 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 
 public class ORecordSerializerPositional2CSV extends ORecordSerializerCSVAbstract {
-	public static final String	NAME	= "ORecordCSV2csv";
+  public static final String NAME = "ORecordCSV2csv";
 
-	@Override
-	public String toString() {
-		return NAME;
-	}
+  @Override
+  public String toString() {
+    return NAME;
+  }
 
-	public ORecordInternal<?> fromStream(final ODatabaseRecord<?> iDatabase, final byte[] iSource) {
-		return fromStream(iDatabase, iSource, new ORecordColumn());
-	}
+  public ORecordInternal<?> fromStream(final ODatabaseRecord<?> iDatabase, final byte[] iSource) {
+    return fromStream(iDatabase, iSource, new ORecordColumn());
+  }
 
-	@Override
-	protected ORecordInternal<?> fromString(final ODatabaseRecord<?> iDatabase, final String iContent,
-			final ORecordInternal<?> iRecord) {
-		return fromString(iDatabase, iContent, new ORecordColumn());
-	}
+  @Override
+  protected ORecordInternal<?> fromString(final ODatabaseRecord<?> iDatabase, final String iContent,
+      final ORecordInternal<?> iRecord) {
+    return fromString(iDatabase, iContent, new ORecordColumn());
+  }
 
-	@Override
-	protected ORecordSchemaAware<?> newObject(final ODatabaseRecord<?> iDatabase, final String iClassName) {
-		return null;
-	}
+  @Override
+  protected ORecordSchemaAware<?> newObject(final ODatabaseRecord<?> iDatabase, final String iClassName) {
+    return null;
+  }
 
-	@Override
-	protected String toString(final ORecordInternal<?> iRecord, final String iFormat, final OUserObject2RecordHandler iObjHandler,
-			Map<ORecordInternal<?>, ORecordId> iMarshalledRecords) {
-		return null;
-	}
+  @Override
+  protected String toString(final ORecordInternal<?> iRecord, final String iFormat, final OUserObject2RecordHandler iObjHandler,
+      Map<ORecordInternal<?>, ORecordId> iMarshalledRecords) {
+    if (!iRecord.getIdentity().isValid())
+      iRecord.save();
+
+    return iRecord.getIdentity().toString();
+  }
 }

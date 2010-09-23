@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 
 @SuppressWarnings("unchecked")
@@ -153,7 +154,11 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
       if (!iRecord.containsField(p.getName()))
         throw new OValidationException("The field " + p.getName() + " is mandatory");
 
-    fieldValue = iRecord.field(p.getName());
+    if (iRecord instanceof ODocument)
+      // AVOID CONVERSIONS: FASTER!
+      fieldValue = ((ODocument) iRecord).rawField(p.getName());
+    else
+      fieldValue = iRecord.field(p.getName());
 
     if (p.isNotNull() && fieldValue == null)
       throw new OValidationException("The field " + p.getName() + " is null");
