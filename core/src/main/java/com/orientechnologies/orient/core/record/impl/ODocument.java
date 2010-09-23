@@ -280,7 +280,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
    * @return field value if defined, otherwise null
    */
   public <RET> RET field(final String iPropertyName) {
-    RET value = rawField(iPropertyName);
+    RET value = this.<RET>rawField(iPropertyName);
 
     if (value instanceof ORID) {
       // CREATE THE DOCUMENT OBJECT IN LAZY WAY
