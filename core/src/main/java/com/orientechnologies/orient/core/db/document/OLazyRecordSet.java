@@ -20,6 +20,9 @@ import java.util.Iterator;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecordFactory;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 
 @SuppressWarnings({ "serial" })
 public class OLazyRecordSet extends HashSet<Object> {
@@ -69,9 +72,28 @@ public class OLazyRecordSet extends HashSet<Object> {
 		if (converted)
 			return;
 
-		for (Iterator<Object> it = iterator(); it.hasNext(); it.next())
-			;
+		HashSet<Object> copy = new HashSet<Object>();
+		for (Iterator<Object> it = iterator(); it.hasNext();)
+			copy.add(convert(it.next()));
+
+		clear();
+
+		addAll(copy);
+		copy.clear();
 
 		converted = true;
+	}
+
+	protected Object convert(final Object iElement) {
+		if (iElement != null && iElement instanceof ORecordId) {
+			final ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
+			final ORecordId rid = (ORecordId) iElement;
+
+			record.setDatabase(database);
+			record.setIdentity(rid);
+			record.load();
+			return record;
+		}
+		return iElement;
 	}
 }

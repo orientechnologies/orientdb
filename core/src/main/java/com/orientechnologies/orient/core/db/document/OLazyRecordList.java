@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.db.document;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
@@ -32,6 +33,11 @@ public class OLazyRecordList extends ArrayList<Object> {
 	public OLazyRecordList(final ODatabaseRecord<?> database, final byte iRecordType) {
 		this.database = database;
 		this.recordType = iRecordType;
+	}
+
+	@Override
+	public Iterator<Object> iterator() {
+		return new OLazyRecordIterator(database, recordType, super.iterator());
 	}
 
 	@Override
