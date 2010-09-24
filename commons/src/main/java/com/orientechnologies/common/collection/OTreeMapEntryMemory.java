@@ -16,9 +16,9 @@
 package com.orientechnologies.common.collection;
 
 public class OTreeMapEntryMemory<K, V> extends OTreeMapEntry<K, V> {
-	protected OTreeMapEntry<K, V>	left	= null;
-	protected OTreeMapEntry<K, V>	right	= null;
-	protected OTreeMapEntry<K, V>	parent;
+	protected OTreeMapEntryMemory<K, V>	left	= null;
+	protected OTreeMapEntryMemory<K, V>	right	= null;
+	protected OTreeMapEntryMemory<K, V>	parent;
 
 	/**
 	 * Constructor called on unmarshalling.
@@ -47,7 +47,7 @@ public class OTreeMapEntryMemory<K, V> extends OTreeMapEntry<K, V> {
 
 	@Override
 	public void setLeft(final OTreeMapEntry<K, V> left) {
-		this.left = left;
+		this.left = (OTreeMapEntryMemory<K, V>) left;
 		if (left != null && left.getParent() != this)
 			left.setParent(this);
 	}
@@ -59,7 +59,7 @@ public class OTreeMapEntryMemory<K, V> extends OTreeMapEntry<K, V> {
 
 	@Override
 	public OTreeMapEntry<K, V> setRight(final OTreeMapEntry<K, V> right) {
-		this.right = right;
+		this.right = (OTreeMapEntryMemory<K, V>) right;
 		if (right != null && right.getParent() != this)
 			right.setParent(this);
 
@@ -73,12 +73,34 @@ public class OTreeMapEntryMemory<K, V> extends OTreeMapEntry<K, V> {
 
 	@Override
 	public OTreeMapEntry<K, V> setParent(final OTreeMapEntry<K, V> parent) {
-		this.parent = parent;
+		this.parent = (OTreeMapEntryMemory<K, V>) parent;
 		return parent;
 	}
 
 	@Override
 	public OTreeMapEntry<K, V> getParent() {
 		return parent;
+	}
+
+	/**
+	 * Returns the successor of the current Entry only by traversing the memory, or null if no such.
+	 */
+	public OTreeMapEntryMemory<K, V> nextInMemory() {
+		OTreeMapEntryMemory<K, V> t = this;
+		OTreeMapEntryMemory<K, V> p = null;
+
+		if (t.right != null) {
+			p = t.right;
+			while (p.left != null)
+				p = p.left;
+		} else {
+			p = t.parent;
+			while (p != null && t == p.right) {
+				t = p;
+				p = p.parent;
+			}
+		}
+
+		return p;
 	}
 }

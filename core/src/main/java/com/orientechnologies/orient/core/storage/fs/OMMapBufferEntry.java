@@ -33,4 +33,13 @@ public class OMMapBufferEntry {
 		this.counter = 0;
 		pin = false;
 	}
+
+	@Override
+	public String toString() {
+		final StringBuilder builder = new StringBuilder();
+		builder.append("OMMapBufferEntry [file=").append(file).append(", beginOffset=").append(beginOffset).append(", size=")
+				.append(size).append("]");
+		return builder.toString();
+	}
+
 }
