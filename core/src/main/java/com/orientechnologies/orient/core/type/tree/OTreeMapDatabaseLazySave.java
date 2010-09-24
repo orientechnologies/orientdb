@@ -42,5 +42,6 @@ public class OTreeMapDatabaseLazySave<K, V> extends OTreeMapDatabase<K, V> {
 
 	public void lazySave() {
 		super.commitChanges(database);
+		optimize();
 	}
 }

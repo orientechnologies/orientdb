@@ -50,7 +50,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OClusterLogical;
  */
 @SuppressWarnings("serial")
 public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMapEventListener<K, V>, OSerializableStream {
-	protected float																			optimizeFactor		= 3 / 4f;																					;
+	protected float																			optimizeFactor		= 1 / 4f;																					;
 	protected int																				optimizeThreshold	= 15000;
 
 	protected OSharedResourceExternal										lock							= new OSharedResourceExternal();
