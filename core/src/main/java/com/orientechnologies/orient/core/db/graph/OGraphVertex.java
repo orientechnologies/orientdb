@@ -34,394 +34,411 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
  * @see OGraphEdge
  */
 public class OGraphVertex extends OGraphElement implements Cloneable {
-  public static final String              CLASS_NAME      = "OGraphVertex";
-  public static final String              FIELD_IN_EDGES  = "inEdges";
-  public static final String              FIELD_OUT_EDGES = "outEdges";
-
-  private SoftReference<List<OGraphEdge>> inEdges;
-  private SoftReference<List<OGraphEdge>> outEdges;
-
-  public OGraphVertex(final ODatabaseGraphTx iDatabase) {
-    super(iDatabase, CLASS_NAME);
-  }
-
-  public OGraphVertex(final ODatabaseGraphTx iDatabase, final ODocument iDocument) {
-    super(iDatabase, iDocument);
-  }
-
-  public OGraphVertex(final ODatabaseGraphTx iDatabase, final ODocument iDocument, final String iFetchPlan) {
-    super(iDatabase, iDocument);
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public <RET extends ODocumentWrapper> RET save() {
-    super.save();
-    if (database != null)
-      database.registerPojo(this, document);
-    return (RET) this;
-  }
-
-  public List<OGraphVertex> traverse(final int iStartLevel, final int iEndLevel) {
-    return null;
-  }
-
-  @Override
-  public OGraphVertex clone() {
-    return new OGraphVertex(database, document);
-  }
-
-  @OAfterDeserialization
-  public void fromStream(final ODocument iDocument) {
-    super.fromStream(iDocument);
-    document.setTrackingChanges(false);
-    inEdges = outEdges = null;
-  }
-
-  /**
-   * Create a link between the current vertex and the target one.
-   * 
-   * @param iTargetVertex
-   *          Target vertex where to create the connection
-   * @return The new edge created
-   */
-  @SuppressWarnings("unchecked")
-  public OGraphEdge link(final OGraphVertex iTargetVertex) {
-    if (iTargetVertex == null)
-      throw new IllegalArgumentException("Missed the target vertex");
-
-    // CREATE THE EDGE BETWEEN ME AND THE TARGET
-    final OGraphEdge edge = new OGraphEdge(database, this, iTargetVertex);
-    getOutEdges().add(edge);
-    ((List<ODocument>) document.field(FIELD_OUT_EDGES)).add(edge.getDocument());
-    document.setDirty();
-
-    // INSERT INTO THE INGOING EDGES OF TARGET
-    iTargetVertex.getInEdges().add(edge);
-    ((List<ODocument>) iTargetVertex.getDocument().field(FIELD_IN_EDGES)).add(edge.getDocument());
-    iTargetVertex.getDocument().setDirty();
-
-    return edge;
-  }
-
-  /**
-   * Remove the link between the current vertex and the target one.
-   * 
-   * @param iTargetVertex
-   *          Target vertex where to remove the connection
-   * @return Current vertex (useful for fluent calls)
-   */
-  public OGraphVertex unlink(final OGraphVertex iTargetVertex) {
-    if (iTargetVertex == null)
-      throw new IllegalArgumentException("Missed the target vertex");
-
-    unlink(database, document, iTargetVertex.getDocument());
-
-    return this;
-  }
-
-  /**
-   * Returns the iterator to browse all linked outgoing vertexes.
-   * 
-   * @return
-   */
-  public OGraphVertexOutIterator outIterator() {
-    return new OGraphVertexOutIterator(this);
-  }
-
-  /**
-   * Returns true if the vertex has at least one incoming edge, otherwise false.
-   */
-  public boolean hasInEdges() {
-    final List<ODocument> docs = document.field(FIELD_IN_EDGES);
-    return docs != null && !docs.isEmpty();
-  }
-
-  /**
-   * Returns true if the vertex has at least one outgoing edge, otherwise false.
-   */
-  public boolean hasOutEdges() {
-    final List<ODocument> docs = document.field(FIELD_OUT_EDGES);
-    return docs != null && !docs.isEmpty();
-  }
-
-  /**
-   * Returns the incoming edges of current node. If there are no edged, then an empty list is returned.
-   */
-  public List<OGraphEdge> getInEdges() {
-    List<OGraphEdge> tempList = inEdges != null ? inEdges.get() : null;
-
-    if (tempList == null) {
-      tempList = new ArrayList<OGraphEdge>();
-      inEdges = new SoftReference<List<OGraphEdge>>(tempList);
-
-      List<Object> docs = document.field(FIELD_IN_EDGES);
-
-      if (docs == null) {
-        docs = new ArrayList<Object>();
-        document.field(FIELD_IN_EDGES, docs);
-      } else {
-        // TRANSFORM ALL THE ARCS
-        ODocument doc;
-        for (Object o : docs) {
-          if (o instanceof ODocument)
-            doc = (ODocument) o;
-          else
-            doc = database.getRecordById((ORID) o);
-
-          tempList.add((OGraphEdge) database.getUserObjectByRecord(doc, null));
-        }
-      }
-    }
-
-    return inEdges.get();
-  }
-
-  /**
-   * Returns the outgoing edges of current node. If there are no edged, then an empty list is returned.
-   */
-  public List<OGraphEdge> getOutEdges() {
-    List<OGraphEdge> tempList = outEdges != null ? outEdges.get() : null;
-
-    if (tempList == null) {
-      tempList = new ArrayList<OGraphEdge>();
-      outEdges = new SoftReference<List<OGraphEdge>>(tempList);
-
-      List<Object> docs = document.field(FIELD_OUT_EDGES);
-
-      if (docs == null) {
-        docs = new ArrayList<Object>();
-        document.field(FIELD_OUT_EDGES, docs);
-      } else {
-        // TRANSFORM ALL THE ARCS
-        ODocument doc;
-        for (Object o : docs) {
-          if (o instanceof ODocument)
-            doc = (ODocument) o;
-          else
-            doc = database.getRecordById((ORID) o);
-
-          tempList.add((OGraphEdge) database.getUserObjectByRecord(doc, null));
-        }
-      }
-    }
-
-    return tempList;
-  }
-
-  /**
-   * Returns the outgoing vertex at given position.
-   * 
-   * @param iIndex
-   *          edge position
-   * @param iCurrentVertex
-   *          Object to recycle to save memory. Used on iteration
-   * @param iCurrentVertex
-   */
-  public OGraphVertex getOutEdgeVertex(int iIndex, final OGraphVertex iCurrentVertex) {
-    final List<ODocument> docs = document.field(FIELD_OUT_EDGES);
-    iCurrentVertex.fromStream((ODocument) docs.get(iIndex).field(OGraphEdge.OUT));
-    return iCurrentVertex;
-  }
-
-  /**
-   * Returns the incoming vertex at given position.
-   * 
-   * @param iIndex
-   *          edge position
-   * @param iCurrentVertex
-   *          Object to recycle to save memory. Used on iteration
-   * @param iCurrentVertex
-   */
-  public OGraphVertex getInEdgeVertex(int iIndex, final OGraphVertex iCurrentVertex) {
-    final List<ODocument> docs = document.field(FIELD_IN_EDGES);
-    iCurrentVertex.fromStream((ODocument) docs.get(iIndex).field(OGraphEdge.IN));
-    return iCurrentVertex;
-  }
-
-  /**
-   * Returns the list of Vertexes from the outgoing edges. It avoids to unmarshall edges.
-   */
-  @SuppressWarnings("unchecked")
-  public List<OGraphVertex> browseOutEdgesVertexes() {
-    final List<OGraphVertex> resultset = new ArrayList<OGraphVertex>();
-
-    List<OGraphEdge> tempList = outEdges != null ? outEdges.get() : null;
-
-    if (tempList == null) {
-      final List<ODocument> docEdges = (List<ODocument>) document.field(FIELD_OUT_EDGES);
-
-      // TRANSFORM ALL THE EDGES
-      if (docEdges != null)
-        for (ODocument d : docEdges) {
-          resultset.add((OGraphVertex) database.getUserObjectByRecord((ODocument) d.field(OGraphEdge.OUT), null));
-        }
-    } else {
-      for (OGraphEdge edge : tempList) {
-        resultset.add(edge.getOut());
-      }
-    }
-
-    return resultset;
-  }
-
-  /**
-   * Returns the list of Vertexes from the incoming edges. It avoids to unmarshall edges.
-   */
-  @SuppressWarnings("unchecked")
-  public List<OGraphVertex> browseInEdgesVertexes() {
-    final List<OGraphVertex> resultset = new ArrayList<OGraphVertex>();
-
-    List<OGraphEdge> tempList = inEdges != null ? inEdges.get() : null;
-
-    if (tempList == null) {
-      final List<ODocument> docEdges = (List<ODocument>) document.field(FIELD_IN_EDGES);
-
-      // TRANSFORM ALL THE EDGES
-      if (docEdges != null)
-        for (ODocument d : docEdges) {
-          resultset.add((OGraphVertex) database.getUserObjectByRecord((ODocument) d.field(OGraphEdge.IN), null));
-        }
-    } else {
-      for (OGraphEdge edge : tempList) {
-        resultset.add(edge.getIn());
-      }
-    }
-
-    return resultset;
-  }
-
-  public int findInVertex(final OGraphVertex iVertexDocument) {
-    final List<ODocument> docs = document.field(FIELD_IN_EDGES);
-    if (docs == null || docs.size() == 0)
-      return -1;
-
-    for (int i = 0; i < docs.size(); ++i) {
-      if (docs.get(i).field(OGraphEdge.IN).equals(iVertexDocument.getDocument()))
-        return i;
-    }
-
-    return -1;
-  }
-
-  public int findOutVertex(final OGraphVertex iVertexDocument) {
-    final List<ODocument> docs = document.field(FIELD_OUT_EDGES);
-    if (docs == null || docs.size() == 0)
-      return -1;
-
-    for (int i = 0; i < docs.size(); ++i) {
-      if (docs.get(i).field(OGraphEdge.OUT).equals(iVertexDocument.getDocument()))
-        return i;
-    }
-
-    return -1;
-  }
-
-  public int getInEdgeCount() {
-    final List<ODocument> docs = document.field(FIELD_IN_EDGES);
-    return docs == null ? 0 : docs.size();
-  }
-
-  public int getOutEdgeCount() {
-    final List<ODocument> docs = document.field(FIELD_OUT_EDGES);
-    return docs == null ? 0 : docs.size();
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public void delete() {
-    // DELETE ALL THE IN-OUT EDGES FROM RAM
-    if (inEdges != null && inEdges.get() != null)
-      inEdges.get().clear();
-    inEdges = null;
-
-    if (outEdges != null && outEdges.get() != null)
-      outEdges.get().clear();
-    outEdges = null;
-
-    List<ODocument> docs = (List<ODocument>) document.field(FIELD_IN_EDGES);
-    if (docs != null)
-      while (!docs.isEmpty())
-        OGraphEdge.delete(database, docs.get(0));
-
-    docs = (List<ODocument>) document.field(FIELD_OUT_EDGES);
-    if (docs != null)
-      while (!docs.isEmpty())
-        OGraphEdge.delete(database, docs.get(0));
-
-    database.unregisterPojo(this, document);
-
-    document.delete();
-    document = null;
-  }
-
-  /**
-   * Unlinks all the edges between iSourceVertex and iTargetVertex
-   * 
-   * @param iDatabase
-   * @param iSourceVertex
-   * @param iTargetVertex
-   */
-  public static void unlink(final ODatabaseGraphTx iDatabase, final ODocument iSourceVertex, final ODocument iTargetVertex) {
-    if (iTargetVertex == null)
-      throw new IllegalArgumentException("Missed the target vertex");
-
-    if (iDatabase.existsUserObjectByRecord(iSourceVertex)) {
-      // WORK ALSO WITH IN MEMORY OBJECTS
-
-      final OGraphVertex vertex = (OGraphVertex) iDatabase.getUserObjectByRecord(iSourceVertex, null);
-      // REMOVE THE EDGE OBJECT
-      if (vertex.outEdges != null && vertex.outEdges.get() != null) {
-        for (OGraphEdge e : vertex.outEdges.get())
-          if (e.getIn().getDocument().equals(iTargetVertex)) {
-            vertex.outEdges.get().remove(e);
-          }
-      }
-    }
-
-    if (iDatabase.existsUserObjectByRecord(iTargetVertex)) {
-      // WORK ALSO WITH IN MEMORY OBJECTS
-
-      final OGraphVertex vertex = (OGraphVertex) iDatabase.getUserObjectByRecord(iTargetVertex, null);
-      // REMOVE THE EDGE OBJECT FROM THE TARGET VERTEX
-      if (vertex.inEdges != null && vertex.inEdges.get() != null) {
-        for (OGraphEdge e : vertex.inEdges.get())
-          if (e.getOut().getDocument().equals(iSourceVertex)) {
-            vertex.inEdges.get().remove(e);
-          }
-      }
-    }
-
-    // REMOVE THE EDGE DOCUMENT
-    ODocument edge = null;
-    List<ODocument> docs = iSourceVertex.field(FIELD_OUT_EDGES);
-    if (docs != null) {
-      for (ODocument d : docs)
-        if (d.field(OGraphEdge.IN).equals(iTargetVertex)) {
-          docs.remove(d);
-          edge = d;
-        }
-    }
-
-    if (edge == null)
-      throw new OGraphException("Edge not found between the ougoing edges");
-
-    iSourceVertex.setDirty();
-    iSourceVertex.save();
-
-    docs = iTargetVertex.field(FIELD_IN_EDGES);
-
-    // REMOVE THE EDGE DOCUMENT FROM THE TARGET VERTEX
-    if (docs != null) {
-      for (ODocument d : docs)
-        if (d.field(OGraphEdge.IN).equals(iTargetVertex)) {
-          docs.remove(d);
-        }
-    }
-
-    iTargetVertex.setDirty();
-    iTargetVertex.save();
-
-    edge.delete();
-  }
+	public static final String							CLASS_NAME			= "OGraphVertex";
+	public static final String							FIELD_IN_EDGES	= "inEdges";
+	public static final String							FIELD_OUT_EDGES	= "outEdges";
+
+	private SoftReference<List<OGraphEdge>>	inEdges;
+	private SoftReference<List<OGraphEdge>>	outEdges;
+
+	public OGraphVertex(final ODatabaseGraphTx iDatabase) {
+		super(iDatabase, CLASS_NAME);
+	}
+
+	public OGraphVertex(final ODatabaseGraphTx iDatabase, final String iClassName) {
+		super(iDatabase, iClassName != null ? iClassName : CLASS_NAME);
+	}
+
+	public OGraphVertex(final ODatabaseGraphTx iDatabase, final ODocument iDocument) {
+		super(iDatabase, iDocument);
+	}
+
+	public OGraphVertex(final ODatabaseGraphTx iDatabase, final ODocument iDocument, final String iFetchPlan) {
+		super(iDatabase, iDocument);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <RET extends ODocumentWrapper> RET save() {
+		super.save();
+		if (database != null)
+			database.registerPojo(this, document);
+		return (RET) this;
+	}
+
+	public List<OGraphVertex> traverse(final int iStartLevel, final int iEndLevel) {
+		return null;
+	}
+
+	@Override
+	public OGraphVertex clone() {
+		return new OGraphVertex(database, document);
+	}
+
+	@OAfterDeserialization
+	public void fromStream(final ODocument iDocument) {
+		super.fromStream(iDocument);
+		document.setTrackingChanges(false);
+		inEdges = outEdges = null;
+	}
+
+	/**
+	 * Create a link between the current vertex and the target one. The link is of type iClassName.
+	 * 
+	 * @param iTargetVertex
+	 *          Target vertex where to create the connection
+	 * @param iClassName
+	 *          The name of the class to use for the Edge
+	 * @return The new edge created
+	 */
+	@SuppressWarnings("unchecked")
+	public OGraphEdge link(final OGraphVertex iTargetVertex, final String iClassName) {
+		if (iTargetVertex == null)
+			throw new IllegalArgumentException("Missed the target vertex");
+
+		// CREATE THE EDGE BETWEEN ME AND THE TARGET
+		final OGraphEdge edge = new OGraphEdge(database, iClassName, this, iTargetVertex);
+		getOutEdges().add(edge);
+		((List<ODocument>) document.field(FIELD_OUT_EDGES)).add(edge.getDocument());
+		document.setDirty();
+
+		// INSERT INTO THE INGOING EDGES OF TARGET
+		iTargetVertex.getInEdges().add(edge);
+		((List<ODocument>) iTargetVertex.getDocument().field(FIELD_IN_EDGES)).add(edge.getDocument());
+		iTargetVertex.getDocument().setDirty();
+
+		return edge;
+	}
+
+	/**
+	 * Create a link between the current vertex and the target one.
+	 * 
+	 * @param iTargetVertex
+	 *          Target vertex where to create the connection
+	 * @return The new edge created
+	 */
+	public OGraphEdge link(final OGraphVertex iTargetVertex) {
+		return link(iTargetVertex, null);
+	}
+
+	/**
+	 * Remove the link between the current vertex and the target one.
+	 * 
+	 * @param iTargetVertex
+	 *          Target vertex where to remove the connection
+	 * @return Current vertex (useful for fluent calls)
+	 */
+	public OGraphVertex unlink(final OGraphVertex iTargetVertex) {
+		if (iTargetVertex == null)
+			throw new IllegalArgumentException("Missed the target vertex");
+
+		unlink(database, document, iTargetVertex.getDocument());
+
+		return this;
+	}
+
+	/**
+	 * Returns the iterator to browse all linked outgoing vertexes.
+	 * 
+	 * @return
+	 */
+	public OGraphVertexOutIterator outIterator() {
+		return new OGraphVertexOutIterator(this);
+	}
+
+	/**
+	 * Returns true if the vertex has at least one incoming edge, otherwise false.
+	 */
+	public boolean hasInEdges() {
+		final List<ODocument> docs = document.field(FIELD_IN_EDGES);
+		return docs != null && !docs.isEmpty();
+	}
+
+	/**
+	 * Returns true if the vertex has at least one outgoing edge, otherwise false.
+	 */
+	public boolean hasOutEdges() {
+		final List<ODocument> docs = document.field(FIELD_OUT_EDGES);
+		return docs != null && !docs.isEmpty();
+	}
+
+	/**
+	 * Returns the incoming edges of current node. If there are no edged, then an empty list is returned.
+	 */
+	public List<OGraphEdge> getInEdges() {
+		List<OGraphEdge> tempList = inEdges != null ? inEdges.get() : null;
+
+		if (tempList == null) {
+			tempList = new ArrayList<OGraphEdge>();
+			inEdges = new SoftReference<List<OGraphEdge>>(tempList);
+
+			List<Object> docs = document.field(FIELD_IN_EDGES);
+
+			if (docs == null) {
+				docs = new ArrayList<Object>();
+				document.field(FIELD_IN_EDGES, docs);
+			} else {
+				// TRANSFORM ALL THE ARCS
+				ODocument doc;
+				for (Object o : docs) {
+					if (o instanceof ODocument)
+						doc = (ODocument) o;
+					else
+						doc = database.getRecordById((ORID) o);
+
+					tempList.add((OGraphEdge) database.getUserObjectByRecord(doc, null));
+				}
+			}
+		}
+
+		return inEdges.get();
+	}
+
+	/**
+	 * Returns the outgoing edges of current node. If there are no edged, then an empty list is returned.
+	 */
+	public List<OGraphEdge> getOutEdges() {
+		List<OGraphEdge> tempList = outEdges != null ? outEdges.get() : null;
+
+		if (tempList == null) {
+			tempList = new ArrayList<OGraphEdge>();
+			outEdges = new SoftReference<List<OGraphEdge>>(tempList);
+
+			List<Object> docs = document.field(FIELD_OUT_EDGES);
+
+			if (docs == null) {
+				docs = new ArrayList<Object>();
+				document.field(FIELD_OUT_EDGES, docs);
+			} else {
+				// TRANSFORM ALL THE ARCS
+				ODocument doc;
+				for (Object o : docs) {
+					if (o instanceof ODocument)
+						doc = (ODocument) o;
+					else
+						doc = database.getRecordById((ORID) o);
+
+					tempList.add((OGraphEdge) database.getUserObjectByRecord(doc, null));
+				}
+			}
+		}
+
+		return tempList;
+	}
+
+	/**
+	 * Returns the outgoing vertex at given position.
+	 * 
+	 * @param iIndex
+	 *          edge position
+	 * @param iCurrentVertex
+	 *          Object to recycle to save memory. Used on iteration
+	 * @param iCurrentVertex
+	 */
+	public OGraphVertex getOutEdgeVertex(int iIndex, final OGraphVertex iCurrentVertex) {
+		final List<ODocument> docs = document.field(FIELD_OUT_EDGES);
+		iCurrentVertex.fromStream((ODocument) docs.get(iIndex).field(OGraphEdge.OUT));
+		return iCurrentVertex;
+	}
+
+	/**
+	 * Returns the incoming vertex at given position.
+	 * 
+	 * @param iIndex
+	 *          edge position
+	 * @param iCurrentVertex
+	 *          Object to recycle to save memory. Used on iteration
+	 * @param iCurrentVertex
+	 */
+	public OGraphVertex getInEdgeVertex(int iIndex, final OGraphVertex iCurrentVertex) {
+		final List<ODocument> docs = document.field(FIELD_IN_EDGES);
+		iCurrentVertex.fromStream((ODocument) docs.get(iIndex).field(OGraphEdge.IN));
+		return iCurrentVertex;
+	}
+
+	/**
+	 * Returns the list of Vertexes from the outgoing edges. It avoids to unmarshall edges.
+	 */
+	@SuppressWarnings("unchecked")
+	public List<OGraphVertex> browseOutEdgesVertexes() {
+		final List<OGraphVertex> resultset = new ArrayList<OGraphVertex>();
+
+		List<OGraphEdge> tempList = outEdges != null ? outEdges.get() : null;
+
+		if (tempList == null) {
+			final List<ODocument> docEdges = (List<ODocument>) document.field(FIELD_OUT_EDGES);
+
+			// TRANSFORM ALL THE EDGES
+			if (docEdges != null)
+				for (ODocument d : docEdges) {
+					resultset.add((OGraphVertex) database.getUserObjectByRecord((ODocument) d.field(OGraphEdge.OUT), null));
+				}
+		} else {
+			for (OGraphEdge edge : tempList) {
+				resultset.add(edge.getOut());
+			}
+		}
+
+		return resultset;
+	}
+
+	/**
+	 * Returns the list of Vertexes from the incoming edges. It avoids to unmarshall edges.
+	 */
+	@SuppressWarnings("unchecked")
+	public List<OGraphVertex> browseInEdgesVertexes() {
+		final List<OGraphVertex> resultset = new ArrayList<OGraphVertex>();
+
+		List<OGraphEdge> tempList = inEdges != null ? inEdges.get() : null;
+
+		if (tempList == null) {
+			final List<ODocument> docEdges = (List<ODocument>) document.field(FIELD_IN_EDGES);
+
+			// TRANSFORM ALL THE EDGES
+			if (docEdges != null)
+				for (ODocument d : docEdges) {
+					resultset.add((OGraphVertex) database.getUserObjectByRecord((ODocument) d.field(OGraphEdge.IN), null));
+				}
+		} else {
+			for (OGraphEdge edge : tempList) {
+				resultset.add(edge.getIn());
+			}
+		}
+
+		return resultset;
+	}
+
+	public int findInVertex(final OGraphVertex iVertexDocument) {
+		final List<ODocument> docs = document.field(FIELD_IN_EDGES);
+		if (docs == null || docs.size() == 0)
+			return -1;
+
+		for (int i = 0; i < docs.size(); ++i) {
+			if (docs.get(i).field(OGraphEdge.IN).equals(iVertexDocument.getDocument()))
+				return i;
+		}
+
+		return -1;
+	}
+
+	public int findOutVertex(final OGraphVertex iVertexDocument) {
+		final List<ODocument> docs = document.field(FIELD_OUT_EDGES);
+		if (docs == null || docs.size() == 0)
+			return -1;
+
+		for (int i = 0; i < docs.size(); ++i) {
+			if (docs.get(i).field(OGraphEdge.OUT).equals(iVertexDocument.getDocument()))
+				return i;
+		}
+
+		return -1;
+	}
+
+	public int getInEdgeCount() {
+		final List<ODocument> docs = document.field(FIELD_IN_EDGES);
+		return docs == null ? 0 : docs.size();
+	}
+
+	public int getOutEdgeCount() {
+		final List<ODocument> docs = document.field(FIELD_OUT_EDGES);
+		return docs == null ? 0 : docs.size();
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public void delete() {
+		// DELETE ALL THE IN-OUT EDGES FROM RAM
+		if (inEdges != null && inEdges.get() != null)
+			inEdges.get().clear();
+		inEdges = null;
+
+		if (outEdges != null && outEdges.get() != null)
+			outEdges.get().clear();
+		outEdges = null;
+
+		List<ODocument> docs = (List<ODocument>) document.field(FIELD_IN_EDGES);
+		if (docs != null)
+			while (!docs.isEmpty())
+				OGraphEdge.delete(database, docs.get(0));
+
+		docs = (List<ODocument>) document.field(FIELD_OUT_EDGES);
+		if (docs != null)
+			while (!docs.isEmpty())
+				OGraphEdge.delete(database, docs.get(0));
+
+		database.unregisterPojo(this, document);
+
+		document.delete();
+		document = null;
+	}
+
+	/**
+	 * Unlinks all the edges between iSourceVertex and iTargetVertex
+	 * 
+	 * @param iDatabase
+	 * @param iSourceVertex
+	 * @param iTargetVertex
+	 */
+	public static void unlink(final ODatabaseGraphTx iDatabase, final ODocument iSourceVertex, final ODocument iTargetVertex) {
+		if (iTargetVertex == null)
+			throw new IllegalArgumentException("Missed the target vertex");
+
+		if (iDatabase.existsUserObjectByRecord(iSourceVertex)) {
+			// WORK ALSO WITH IN MEMORY OBJECTS
+
+			final OGraphVertex vertex = (OGraphVertex) iDatabase.getUserObjectByRecord(iSourceVertex, null);
+			// REMOVE THE EDGE OBJECT
+			if (vertex.outEdges != null && vertex.outEdges.get() != null) {
+				for (OGraphEdge e : vertex.outEdges.get())
+					if (e.getIn().getDocument().equals(iTargetVertex)) {
+						vertex.outEdges.get().remove(e);
+					}
+			}
+		}
+
+		if (iDatabase.existsUserObjectByRecord(iTargetVertex)) {
+			// WORK ALSO WITH IN MEMORY OBJECTS
+
+			final OGraphVertex vertex = (OGraphVertex) iDatabase.getUserObjectByRecord(iTargetVertex, null);
+			// REMOVE THE EDGE OBJECT FROM THE TARGET VERTEX
+			if (vertex.inEdges != null && vertex.inEdges.get() != null) {
+				for (OGraphEdge e : vertex.inEdges.get())
+					if (e.getOut().getDocument().equals(iSourceVertex)) {
+						vertex.inEdges.get().remove(e);
+					}
+			}
+		}
+
+		// REMOVE THE EDGE DOCUMENT
+		ODocument edge = null;
+		List<ODocument> docs = iSourceVertex.field(FIELD_OUT_EDGES);
+		if (docs != null) {
+			for (ODocument d : docs)
+				if (d.field(OGraphEdge.IN).equals(iTargetVertex)) {
+					docs.remove(d);
+					edge = d;
+				}
+		}
+
+		if (edge == null)
+			throw new OGraphException("Edge not found between the ougoing edges");
+
+		iSourceVertex.setDirty();
+		iSourceVertex.save();
+
+		docs = iTargetVertex.field(FIELD_IN_EDGES);
+
+		// REMOVE THE EDGE DOCUMENT FROM THE TARGET VERTEX
+		if (docs != null) {
+			for (ODocument d : docs)
+				if (d.field(OGraphEdge.IN).equals(iTargetVertex)) {
+					docs.remove(d);
+				}
+		}
+
+		iTargetVertex.setDirty();
+		iTargetVertex.save();
+
+		edge.delete();
+	}
 }

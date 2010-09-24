@@ -38,158 +38,170 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public class ODatabaseGraphTx extends ODatabasePojoAbstract<ODocument, OGraphElement> {
 
-  public ODatabaseGraphTx(final String iURL) {
-    super(new ODatabaseDocumentTx(iURL));
-  }
+	public ODatabaseGraphTx(final String iURL) {
+		super(new ODatabaseDocumentTx(iURL));
+	}
 
-  @SuppressWarnings("unchecked")
-  public <THISDB extends ODatabase> THISDB open(final String iUserName, final String iUserPassword) {
-    underlying.open(iUserName, iUserPassword);
+	@SuppressWarnings("unchecked")
+	public <THISDB extends ODatabase> THISDB open(final String iUserName, final String iUserPassword) {
+		underlying.open(iUserName, iUserPassword);
 
-    checkForGraphSchema();
+		checkForGraphSchema();
 
-    return (THISDB) this;
-  }
+		return (THISDB) this;
+	}
 
-  @SuppressWarnings("unchecked")
-  public <THISDB extends ODatabase> THISDB create() {
-    underlying.create();
+	@SuppressWarnings("unchecked")
+	public <THISDB extends ODatabase> THISDB create() {
+		underlying.create();
 
-    checkForGraphSchema();
+		checkForGraphSchema();
 
-    return (THISDB) this;
-  }
+		return (THISDB) this;
+	}
 
-  public OGraphVertex createVertex() {
-    return new OGraphVertex(this);
-  }
+	public OGraphVertex createVertex() {
+		return new OGraphVertex(this);
+	}
 
-  public OGraphVertex getRoot(final String iName) {
-    return registerPojo(new OGraphVertex(this, underlying.getDictionary().get(iName)));
-  }
+	public OGraphVertex createVertex(final String iClassName) {
+		return new OGraphVertex(this, iClassName);
+	}
 
-  public OGraphVertex getRoot(final String iName, final String iFetchPlan) {
-    return registerPojo(new OGraphVertex(this, underlying.getDictionary().get(iName), iFetchPlan));
-  }
+	public OGraphVertex getRoot(final String iName) {
+		return registerPojo(new OGraphVertex(this, underlying.getDictionary().get(iName)));
+	}
 
-  public ODatabaseGraphTx setRoot(final String iName, final OGraphVertex iNode) {
-    underlying.getDictionary().put(iName, iNode.getDocument());
-    return this;
-  }
+	public OGraphVertex getRoot(final String iName, final String iFetchPlan) {
+		return registerPojo(new OGraphVertex(this, underlying.getDictionary().get(iName), iFetchPlan));
+	}
 
-  public OGraphElement newInstance() {
-    return new OGraphVertex(this);
-  }
+	public ODatabaseGraphTx setRoot(final String iName, final OGraphVertex iNode) {
+		underlying.getDictionary().put(iName, iNode.getDocument());
+		return this;
+	}
 
-  public OGraphElement load(final OGraphElement iObject) {
-    if (iObject != null)
-      iObject.getDocument().load();
-    return iObject;
-  }
+	public OGraphElement newInstance() {
+		return new OGraphVertex(this);
+	}
 
-  public OGraphElement load(final ORID iRecordId) {
-    if (iRecordId == null)
-      return null;
+	public OGraphElement load(final OGraphElement iObject) {
+		if (iObject != null)
+			iObject.getDocument().load();
+		return iObject;
+	}
 
-    // TRY IN LOCAL CACHE
-    ODocument doc = getRecordById(iRecordId);
-    if (doc == null) {
-      // TRY TO LOAD IT
-      doc = underlying.load(iRecordId);
-      if (doc == null)
-        // NOT FOUND
-        return null;
-    }
+	public OGraphElement load(final ORID iRecordId) {
+		if (iRecordId == null)
+			return null;
 
-    if (doc.getClassName() == null)
-      throw new OGraphException(
-          "The document loaded has no class, while it should be a OGraphVertex, OGraphEdge or any subclass of its");
+		// TRY IN LOCAL CACHE
+		ODocument doc = getRecordById(iRecordId);
+		if (doc == null) {
+			// TRY TO LOAD IT
+			doc = underlying.load(iRecordId);
+			if (doc == null)
+				// NOT FOUND
+				return null;
+		}
 
-    if (doc.getClassName().equals(OGraphVertex.class.getSimpleName()))
-      return new OGraphVertex(this, doc);
-    else if (doc.getClassName().equals(OGraphEdge.class.getSimpleName()))
-      return new OGraphEdge(this, doc);
-    else
-      throw new IllegalArgumentException("RecordID is not of supported type. Class=" + doc.getClassName());
-  }
+		if (doc.getClassName() == null)
+			throw new OGraphException(
+					"The document loaded has no class, while it should be a OGraphVertex, OGraphEdge or any subclass of its");
 
-  public ODatabaseComplex<OGraphElement> save(final OGraphElement iObject) {
-    iObject.getDocument().save();
-    return this;
-  }
+		if (doc.getClassName().equals(OGraphVertex.class.getSimpleName()))
+			return new OGraphVertex(this, doc);
+		else if (doc.getClassName().equals(OGraphEdge.class.getSimpleName()))
+			return new OGraphEdge(this, doc);
+		else
+			throw new IllegalArgumentException("RecordID is not of supported type. Class=" + doc.getClassName());
+	}
 
-  public ODatabaseComplex<OGraphElement> save(final OGraphElement iObject, final String iClusterName) {
-    iObject.getDocument().save(iClusterName);
-    return this;
-  }
+	public ODatabaseComplex<OGraphElement> save(final OGraphElement iObject) {
+		iObject.getDocument().save();
+		return this;
+	}
 
-  public ODatabaseComplex<OGraphElement> delete(final OGraphElement iObject) {
-    iObject.getDocument().delete();
-    unregisterPojo(iObject, iObject.getDocument());
-    return this;
-  }
+	public ODatabaseComplex<OGraphElement> save(final OGraphElement iObject, final String iClusterName) {
+		iObject.getDocument().save(iClusterName);
+		return this;
+	}
 
-  public ODictionary<OGraphElement> getDictionary() {
-    return null;
-  }
+	public ODatabaseComplex<OGraphElement> delete(final OGraphElement iObject) {
+		iObject.getDocument().delete();
+		unregisterPojo(iObject, iObject.getDocument());
+		return this;
+	}
 
-  public OGraphVertexIterator browseVertexes() {
-    return new OGraphVertexIterator(this);
-  }
+	public ODictionary<OGraphElement> getDictionary() {
+		return null;
+	}
 
-  private void checkForGraphSchema() {
-    if (!underlying.getMetadata().getSchema().existsClass(OGraphVertex.CLASS_NAME)) {
-      // CREATE THE META MODEL USING THE ORIENT SCHEMA
-      final OClass vertex = underlying.getMetadata().getSchema()
-          .createClass(OGraphVertex.CLASS_NAME, underlying.addPhysicalCluster(OGraphVertex.CLASS_NAME));
-      final OClass edge = underlying.getMetadata().getSchema()
-          .createClass(OGraphEdge.CLASS_NAME, underlying.addPhysicalCluster(OGraphEdge.CLASS_NAME));
+	public OGraphVertexIterator browseVertexes() {
+		return new OGraphVertexIterator(this);
+	}
 
-      edge.createProperty(OGraphEdge.IN, OType.LINK, vertex);
-      edge.createProperty(OGraphEdge.OUT, OType.LINK, vertex);
+	private void checkForGraphSchema() {
+		if (!underlying.getMetadata().getSchema().existsClass(OGraphVertex.CLASS_NAME)) {
+			// CREATE THE META MODEL USING THE ORIENT SCHEMA
+			final OClass vertex = underlying.getMetadata().getSchema()
+					.createClass(OGraphVertex.CLASS_NAME, underlying.addPhysicalCluster(OGraphVertex.CLASS_NAME));
+			final OClass edge = underlying.getMetadata().getSchema()
+					.createClass(OGraphEdge.CLASS_NAME, underlying.addPhysicalCluster(OGraphEdge.CLASS_NAME));
 
-      vertex.createProperty(OGraphVertex.FIELD_IN_EDGES, OType.LINKLIST, edge);
-      vertex.createProperty(OGraphVertex.FIELD_OUT_EDGES, OType.LINKLIST, edge);
+			edge.createProperty(OGraphEdge.IN, OType.LINK, vertex);
+			edge.createProperty(OGraphEdge.OUT, OType.LINK, vertex);
 
-      underlying.getMetadata().getSchema().save();
-    }
-  }
+			vertex.createProperty(OGraphVertex.FIELD_IN_EDGES, OType.LINKLIST, edge);
+			vertex.createProperty(OGraphVertex.FIELD_OUT_EDGES, OType.LINKLIST, edge);
 
-  @Override
-  protected ODocument pojo2Stream(final OGraphElement iPojo, ODocument record) {
-    return record;
-  }
+			underlying.getMetadata().getSchema().save();
+		}
+	}
 
-  @Override
-  protected Object stream2pojo(ODocument record, final OGraphElement iPojo, String iFetchPlan) {
-    iPojo.setDocument(record);
-    return iPojo;
-  }
+	@Override
+	protected ODocument pojo2Stream(final OGraphElement iPojo, ODocument record) {
+		return record;
+	}
 
-  @Override
-  public OGraphElement newInstance(String iClassName) {
-    if (iClassName.equals(OGraphVertex.class.getSimpleName()))
-      return new OGraphVertex(this);
-    else if (iClassName.equals(OGraphEdge.class.getSimpleName()))
-      return new OGraphEdge(this);
+	@Override
+	protected Object stream2pojo(ODocument record, final OGraphElement iPojo, String iFetchPlan) {
+		iPojo.setDocument(record);
+		return iPojo;
+	}
 
-    throw new OGraphException("Unrecognized class: " + iClassName);
-  }
+	@Override
+	public OGraphElement newInstance(final String iClassName) {
+		if (iClassName.equals(OGraphVertex.class.getSimpleName()))
+			return new OGraphVertex(this);
+		else if (iClassName.equals(OGraphEdge.class.getSimpleName()))
+			return new OGraphEdge(this);
 
-  public HashMap<ODocument, OGraphElement> getRecords2Objects() {
-    return records2Objects;
-  }
+		final OClass cls = getMetadata().getSchema().getClass(iClassName);
+		if (cls != null && cls.getSuperClass() != null) {
+			if (cls.getSuperClass().getName().equals(OGraphVertex.class.getSimpleName()))
+				return new OGraphVertex(this, iClassName);
+			else if (cls.getSuperClass().getName().equals(OGraphEdge.class.getSimpleName()))
+				return new OGraphEdge(this, iClassName);
+		}
 
-  private OGraphVertex registerPojo(final OGraphVertex iVertex) {
-    registerPojo(iVertex, iVertex.getDocument());
-    return iVertex;
-  }
+		throw new OGraphException("Unrecognized class: " + iClassName);
+	}
 
-  public void removeCachedElements(final Collection<OGraphElement> iElements) {
-    for (OGraphElement e : iElements) {
-      records2Objects.remove(e.getDocument());
-      rid2Records.remove(e.getDocument().getIdentity());
-      objects2Records.remove(System.identityHashCode(e));
-    }
-  }
+	public HashMap<ODocument, OGraphElement> getRecords2Objects() {
+		return records2Objects;
+	}
+
+	private OGraphVertex registerPojo(final OGraphVertex iVertex) {
+		registerPojo(iVertex, iVertex.getDocument());
+		return iVertex;
+	}
+
+	public void removeCachedElements(final Collection<OGraphElement> iElements) {
+		for (OGraphElement e : iElements) {
+			records2Objects.remove(e.getDocument());
+			rid2Records.remove(e.getDocument().getIdentity());
+			objects2Records.remove(System.identityHashCode(e));
+		}
+	}
 }

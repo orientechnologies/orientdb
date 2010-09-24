@@ -44,12 +44,21 @@ public class OGraphEdge extends OGraphElement {
 		super(iDatabase, CLASS_NAME);
 	}
 
-	public OGraphEdge(final ODatabaseGraphTx iDatabase, final OGraphVertex iOutNode, final OGraphVertex iInNode) {
-		this(iDatabase);
+	public OGraphEdge(final ODatabaseGraphTx iDatabase, final String iClassName) {
+		super(iDatabase, iClassName != null ? iClassName : CLASS_NAME);
+	}
+
+	public OGraphEdge(final ODatabaseGraphTx iDatabase, final String iClassName, final OGraphVertex iOutNode,
+			final OGraphVertex iInNode) {
+		this(iDatabase, iClassName);
 		in = new SoftReference<OGraphVertex>(iInNode);
 		out = new SoftReference<OGraphVertex>(iOutNode);
 		set(IN, iInNode.getDocument());
 		set(OUT, iOutNode.getDocument());
+	}
+
+	public OGraphEdge(final ODatabaseGraphTx iDatabase, final OGraphVertex iOutNode, final OGraphVertex iInNode) {
+		this(iDatabase, CLASS_NAME, iOutNode, iInNode);
 	}
 
 	public OGraphEdge(final ODatabaseGraphTx iDatabase, final ODocument iDocument) {
