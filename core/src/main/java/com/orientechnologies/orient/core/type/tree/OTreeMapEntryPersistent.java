@@ -535,7 +535,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 			return;
 
 		markDirty();
-		super.setColor(color);
+		super.setColor(iColor);
 	}
 
 	private void markDirty() {

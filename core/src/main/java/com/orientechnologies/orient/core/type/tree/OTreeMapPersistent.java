@@ -562,7 +562,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 	protected void updateUsageCounter() {
 		usageCounter++;
 		if (optimizeThreshold > 0 && usageCounter > optimizeThreshold) {
-			optimize();
+//			optimize();
 			usageCounter = 0;
 		}
 	}

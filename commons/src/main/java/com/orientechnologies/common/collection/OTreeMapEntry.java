@@ -218,23 +218,23 @@ public abstract class OTreeMapEntry<K, V> implements Map.Entry<K, V> {
 
 		// if (((Comparable) getKeyAt(size - 1)).compareTo(iKey) < 0) {
 		// CHECK THE LOWER LIMIT
-		int comp = iKey.compareTo(getKeyAt(0));
-		if (comp == 0) {
+		tree.pageItemComparator = iKey.compareTo(getKeyAt(0));
+		if (tree.pageItemComparator == 0) {
 			// FOUND: SET THE INDEX AND RETURN THE NODE
 			tree.pageItemFound = true;
 			tree.pageIndex = 0;
 			return getValueAt(tree.pageIndex);
 
-		} else if (comp < 0) {
+		} else if (tree.pageItemComparator < 0) {
 			// KEY OUT OF FIRST ITEM: AVOID SEARCH AND RETURN THE FIRST POSITION
 			tree.pageIndex = 0;
 			return null;
 
 		} else {
 			// CHECK THE UPPER LIMIT
-			comp = iKey.compareTo(getKeyAt(size - 1));
+			tree.pageItemComparator = iKey.compareTo(getKeyAt(size - 1));
 
-			if (comp > 0) {
+			if (tree.pageItemComparator > 0) {
 				// KEY OUT OF LAST ITEM: AVOID SEARCH AND RETURN THE LAST POSITION
 				tree.pageIndex = size;
 				return null;
@@ -258,16 +258,16 @@ public abstract class OTreeMapEntry<K, V> implements Map.Entry<K, V> {
 	private V linearSearch(final Comparable<? super K> iKey) {
 		V value = null;
 		int i = 0;
-		int comp = -1;
+		tree.pageItemComparator = -1;
 		for (; i < size; ++i) {
-			comp = ((Comparable<Comparable<? super K>>) getKeyAt(i)).compareTo(iKey);
+			tree.pageItemComparator = ((Comparable<Comparable<? super K>>) getKeyAt(i)).compareTo(iKey);
 
-			if (comp == 0) {
+			if (tree.pageItemComparator == 0) {
 				// FOUND: SET THE INDEX AND RETURN THE NODE
 				tree.pageItemFound = true;
 				value = getValueAt(tree.pageIndex);
 				break;
-			} else if (comp > 0)
+			} else if (tree.pageItemComparator > 0)
 				break;
 		}
 
@@ -292,9 +292,9 @@ public abstract class OTreeMapEntry<K, V> implements Map.Entry<K, V> {
 		while (low <= high) {
 			mid = (low + high) >>> 1;
 			Comparable<Comparable<? super K>> midVal = (Comparable<Comparable<? super K>>) getKeyAt(mid);
-			int cmp = midVal.compareTo(iKey);
+			tree.pageItemComparator = midVal.compareTo(iKey);
 
-			if (cmp == 0) {
+			if (tree.pageItemComparator == 0) {
 				// FOUND: SET THE INDEX AND RETURN THE NODE
 				tree.pageItemFound = true;
 				tree.pageIndex = mid;
@@ -304,7 +304,7 @@ public abstract class OTreeMapEntry<K, V> implements Map.Entry<K, V> {
 			if (low == high)
 				break;
 
-			if (cmp < 0)
+			if (tree.pageItemComparator < 0)
 				low = mid + 1;
 			else
 				high = mid;

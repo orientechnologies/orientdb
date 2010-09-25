@@ -18,17 +18,18 @@ import java.util.SortedSet;
 @SuppressWarnings("unchecked")
 public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavigableMap<K, V>, Cloneable, java.io.Serializable {
 	OTreeMapEventListener<K, V>							listener;
-	boolean																	pageItemFound		= false;
-	volatile int														pageIndex				= -1;
+	boolean																	pageItemFound				= false;
+	int																			pageItemComparator	= 0;
+	volatile int														pageIndex						= -1;
 
-	protected int														lastPageSize		= 63;		// PERSISTENT FIELDS
+	protected int														lastPageSize				= 63;		// PERSISTENT FIELDS
 
 	/**
 	 * The number of entries in the tree
 	 */
-	protected int														size						= 0;			// PERSISTENT FIELDS
+	protected int														size								= 0;			// PERSISTENT FIELDS
 
-	float																		pageLoadFactor	= 0.7f;
+	float																		pageLoadFactor			= 0.7f;
 
 	/**
 	 * The comparator used to maintain order in this tree map, or null if it uses the natural ordering of its keys.
@@ -37,12 +38,12 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 	 */
 	private final Comparator<? super K>			comparator;
 
-	protected transient OTreeMapEntry<K, V>	root						= null;
+	protected transient OTreeMapEntry<K, V>	root								= null;
 
 	/**
 	 * The number of structural modifications to the tree.
 	 */
-	transient int														modCount				= 0;
+	transient int														modCount						= 0;
 
 	public OTreeMap(final int iSize, final float iLoadFactor) {
 		lastPageSize = iSize;
@@ -307,15 +308,18 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 				// EXACT MATCH, YOU'RE VERY LUCKY: RETURN THE FIRST KEY WITHOUT SEARCH INSIDE THE NODE
 				pageIndex = 0;
 				pageItemFound = true;
+				pageItemComparator = 0;
 				return p;
 			} else {
-				if (beginKey < 0 && p.getLeft() != null && k.compareTo(p.getLastKey()) < 0)
+				if (beginKey < 0 && p.getLeft() != null && k.compareTo(p.getLastKey()) < 0) {
 					// MINOR THAN THE CURRENT: GET THE LEFT NODE
+					pageItemComparator = -1;
 					p = p.getLeft();
-				else if (beginKey > 0 && p.getRight() != null && k.compareTo(p.getLastKey()) > 0)
+				} else if (beginKey > 0 && p.getRight() != null && k.compareTo(p.getLastKey()) > 0) {
 					// MAJOR THAN THE CURRENT: GET THE RIGHT NODE
+					pageItemComparator = 1;
 					p = p.getRight();
-				else {
+				} else {
 					// SEARCH INSIDE THE NODE
 					final V value = lastNode.search(k);
 
@@ -567,7 +571,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 			parent.insert(pageIndex, key, value);
 		} else {
 			// CREATE NEW NODE AND COPY HALF OF VALUES FROM THE ORIGIN TO THE NEW ONE IN ORDER TO GET VALUES BALANCED
-			final OTreeMapEntry<K, V> newEntry = createEntry(parent, false);
+			final OTreeMapEntry<K, V> newEntry = createEntry(parent, pageItemComparator < 0);
 
 			if (pageIndex < parent.getPageSplitItems())
 				// INSERT IN THE ORIGINAL NODE
@@ -576,12 +580,19 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 				// INSERT IN THE NEW NODE
 				newEntry.insert(pageIndex - parent.getPageSplitItems(), key, value);
 
-			OTreeMapEntry<K, V> prevNode = parent.getRight();
-			if (prevNode != null)
-				// INSERT THE NODE IN THE TREE IN THE RIGHT MOVING CURRENT RIGHT TO THE RIGHT OF THE NEW NODE
-				newEntry.setRight(prevNode);
-
-			parent.setRight(newEntry);
+			if (pageItemComparator < 0) {
+				OTreeMapEntry<K, V> prevNode = parent.getLeft();
+				if (prevNode != null)
+					// INSERT THE NODE IN THE TREE IN THE LEFT MOVING CURRENT LEFT TO THE LEFT OF THE NEW NODE
+					newEntry.setLeft(prevNode);
+				parent.setLeft(newEntry);
+			} else {
+				OTreeMapEntry<K, V> prevNode = parent.getRight();
+				if (prevNode != null)
+					// INSERT THE NODE IN THE TREE IN THE RIGHT MOVING CURRENT RIGHT TO THE RIGHT OF THE NEW NODE
+					newEntry.setRight(prevNode);
+				parent.setRight(newEntry);
+			}
 
 			fixAfterInsertion(newEntry);
 
