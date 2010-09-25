@@ -39,9 +39,10 @@ public class OTreeMapEntryDatabase<K, V> extends OTreeMapEntryPersistent<K, V> {
 	 *          Parent node
 	 * @param iPosition
 	 *          Current position
+	 * @param iLeft
 	 */
-	public OTreeMapEntryDatabase(OTreeMapEntry<K, V> iParent, int iPosition) {
-		super(iParent, iPosition);
+	public OTreeMapEntryDatabase(OTreeMapEntry<K, V> iParent, int iPosition, final boolean iLeft) {
+		super(iParent, iPosition, iLeft);
 		record.setDatabase(((OTreeMapDatabase<K, V>) pTree).database);
 	}
 
@@ -104,6 +105,7 @@ public class OTreeMapEntryDatabase<K, V> extends OTreeMapEntryPersistent<K, V> {
 		serializedKeys = null;
 		serializedValues = null;
 
+		super.delete();
 		return this;
 	}
 

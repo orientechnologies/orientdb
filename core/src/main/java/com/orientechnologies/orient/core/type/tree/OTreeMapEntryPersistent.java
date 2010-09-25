@@ -67,9 +67,10 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	 *          Parent node
 	 * @param iPosition
 	 *          Current position
+	 * @param iLeft
 	 */
-	public OTreeMapEntryPersistent(final OTreeMapEntry<K, V> iParent, final int iPosition) {
-		super(iParent, iPosition);
+	public OTreeMapEntryPersistent(final OTreeMapEntry<K, V> iParent, final int iPosition, final boolean iLeft) {
+		super(iParent, iPosition, iLeft);
 		pTree = (OTreeMapPersistent<K, V>) tree;
 
 		parentRid = new ORecordId();
@@ -84,8 +85,13 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 		serializedKeys = new byte[pageSize][];
 		serializedValues = new byte[pageSize][];
 
-		System.arraycopy(((OTreeMapEntryPersistent<K, V>) iParent).serializedKeys, iPosition, serializedKeys, 0, size);
-		System.arraycopy(((OTreeMapEntryPersistent<K, V>) iParent).serializedValues, iPosition, serializedValues, 0, size);
+		if (iLeft) {
+			System.arraycopy(((OTreeMapEntryPersistent<K, V>) iParent).serializedKeys, 0, serializedKeys, 0, iPosition);
+			System.arraycopy(((OTreeMapEntryPersistent<K, V>) iParent).serializedValues, 0, serializedValues, 0, iPosition);
+		} else {
+			System.arraycopy(((OTreeMapEntryPersistent<K, V>) iParent).serializedKeys, iPosition, serializedKeys, 0, size);
+			System.arraycopy(((OTreeMapEntryPersistent<K, V>) iParent).serializedValues, iPosition, serializedValues, 0, size);
+		}
 
 		markDirty();
 	}
@@ -127,32 +133,68 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 		markDirty();
 	}
 
-	public abstract OTreeMapEntryPersistent<K, V> load() throws IOException;
+	public OTreeMapEntryPersistent<K, V> load() throws IOException {
+		return this;
+	}
 
-	public abstract OTreeMapEntryPersistent<K, V> save() throws IOException;
+	public OTreeMapEntryPersistent<K, V> save() throws IOException {
+		return this;
+	}
 
-	public abstract OTreeMapEntryPersistent<K, V> delete() throws IOException;
+	public OTreeMapEntryPersistent<K, V> delete() throws IOException {
+		pTree.removeEntryPoint(this);
+		return this;
+	}
 
 	/**
-	 * Clear recursively memory references to being cleaned by Garbage collector.
+	 * Disconnect the current node from others.
 	 */
-	public void clear() {
-		if (record.isDirty())
-			return;
-
-		if (left != null && !left.record.isDirty())
+	protected void disconnect() {
+		if (left != null)
 			left.clear();
 
-		if (right != null && !right.record.isDirty())
+		if (right != null)
 			right.clear();
 
-		if (parent != null) {
-			if (parent.left == this)
-				parent.left = null;
-			else
-				parent.right = null;
+		if (parent != null)
+			parent.clear();
+	}
 
-			parent = null;
+	/**
+	 * Clear links and current node only if it's not an entry point.
+	 */
+	protected void clear() {
+		if (record != null && !record.isDirty()) {
+			for (OTreeMapEntryPersistent<K, V> e : pTree.entryPoints)
+				if (e == this) {
+					// CAN'T REMOVE CURRENT NODE BECAUSE IS AN ENTRY POINT
+					return;
+				}
+
+			// DISCONNECT MYSELF FROM THE OTHER NODES
+			if (parent != null) {
+				if (parent.left == this)
+					parent.left = null;
+				else
+					parent.right = null;
+				parent.clear();
+				parent = null;
+			}
+
+			if (left != null) {
+				left.parent = null;
+				left.clear();
+				left = null;
+			}
+
+			if (right != null) {
+				right.parent = null;
+				right.clear();
+				right = null;
+			}
+
+			keys = null;
+			values = null;
 			serializedKeys = null;
 			serializedValues = null;
 			record = null;
@@ -360,7 +402,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	/**
 	 * Returns the successor of the current Entry only by traversing the memory, or null if no such.
 	 */
-	public OTreeMapEntryPersistent<K, V> nextInMemory() {
+	public OTreeMapEntryPersistent<K, V> getNextInMemory() {
 		OTreeMapEntryPersistent<K, V> t = this;
 		OTreeMapEntryPersistent<K, V> p = null;
 

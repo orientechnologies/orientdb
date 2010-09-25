@@ -40,9 +40,10 @@ public class OTreeMapEntryMemory<K, V> extends OTreeMapEntry<K, V> {
 	 * 
 	 * @param iParent
 	 * @param iPosition
+	 * @param iLeft
 	 */
-	protected OTreeMapEntryMemory(final OTreeMapEntry<K, V> iParent, final int iPosition) {
-		super(iParent, iPosition);
+	protected OTreeMapEntryMemory(final OTreeMapEntry<K, V> iParent, final int iPosition, final boolean iLeft) {
+		super(iParent, iPosition, iLeft);
 	}
 
 	@Override
@@ -85,7 +86,7 @@ public class OTreeMapEntryMemory<K, V> extends OTreeMapEntry<K, V> {
 	/**
 	 * Returns the successor of the current Entry only by traversing the memory, or null if no such.
 	 */
-	public OTreeMapEntryMemory<K, V> nextInMemory() {
+	public OTreeMapEntryMemory<K, V> getNextInMemory() {
 		OTreeMapEntryMemory<K, V> t = this;
 		OTreeMapEntryMemory<K, V> p = null;
 

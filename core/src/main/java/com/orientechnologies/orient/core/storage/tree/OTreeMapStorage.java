@@ -38,94 +38,94 @@ import com.orientechnologies.orient.core.type.tree.OTreeMapPersistent;
  */
 @SuppressWarnings("serial")
 public class OTreeMapStorage<K, V> extends OTreeMapPersistent<K, V> {
-  protected OStorageLocal storage;
-  int                     clusterId;
+	protected OStorageLocal	storage;
+	int											clusterId;
 
-  public OTreeMapStorage(final OStorageLocal iStorage, final String iClusterName, final ORID iRID) {
-    super(iClusterName, iRID);
-    storage = iStorage;
-    clusterId = storage.getClusterIdByName(OStorageLocal.CLUSTER_INTERNAL_NAME);
-  }
+	public OTreeMapStorage(final OStorageLocal iStorage, final String iClusterName, final ORID iRID) {
+		super(iClusterName, iRID);
+		storage = iStorage;
+		clusterId = storage.getClusterIdByName(OStorageLocal.CLUSTER_INTERNAL_NAME);
+	}
 
-  public OTreeMapStorage(final OStorageLocal iStorage, String iClusterName, final OStreamSerializer iKeySerializer,
-      final OStreamSerializer iValueSerializer) {
-    super(iClusterName, iKeySerializer, iValueSerializer);
-    storage = iStorage;
-    clusterId = storage.getClusterIdByName(OStorageLocal.CLUSTER_INTERNAL_NAME);
-  }
+	public OTreeMapStorage(final OStorageLocal iStorage, String iClusterName, final OStreamSerializer iKeySerializer,
+			final OStreamSerializer iValueSerializer) {
+		super(iClusterName, iKeySerializer, iValueSerializer);
+		storage = iStorage;
+		clusterId = storage.getClusterIdByName(OStorageLocal.CLUSTER_INTERNAL_NAME);
+	}
 
-  @Override
-  protected OTreeMapEntryPersistent<K, V> createEntry(OTreeMapEntry<K, V> iParent) {
-    return new OTreeMapEntryStorage<K, V>(iParent, iParent.getPageSplitItems());
-  }
+	@Override
+	protected OTreeMapEntryPersistent<K, V> createEntry(OTreeMapEntry<K, V> iParent, final boolean iLeft) {
+		return new OTreeMapEntryStorage<K, V>(iParent, iParent.getPageSplitItems(), iLeft);
+	}
 
-  @Override
-  protected OTreeMapEntryPersistent<K, V> createEntry(final K key, final V value) {
-    adjustPageSize();
-    return new OTreeMapEntryStorage<K, V>(this, key, value, null);
-  }
+	@Override
+	protected OTreeMapEntryPersistent<K, V> createEntry(final K key, final V value) {
+		adjustPageSize();
+		return new OTreeMapEntryStorage<K, V>(this, key, value, null);
+	}
 
-  @Override
-  protected OTreeMapEntryStorage<K, V> createEntry(OTreeMapEntryPersistent<K, V> iParent, ORID iRecordId) throws IOException {
-    return new OTreeMapEntryStorage<K, V>(this, iParent, iRecordId);
-  }
+	@Override
+	protected OTreeMapEntryStorage<K, V> createEntry(OTreeMapEntryPersistent<K, V> iParent, ORID iRecordId) throws IOException {
+		return new OTreeMapEntryStorage<K, V>(this, iParent, iRecordId);
+	}
 
-  @Override
-  public OTreeMapPersistent<K, V> load() throws IOException {
-    lock.acquireExclusiveLock();
+	@Override
+	public OTreeMapPersistent<K, V> load() throws IOException {
+		lock.acquireExclusiveLock();
 
-    try {
-      usageCounter = 0;
-      ORawBuffer raw = storage.readRecord(null, -1, clusterId, record.getIdentity().getClusterPosition(), null);
+		try {
+			usageCounter = 0;
+			ORawBuffer raw = storage.readRecord(null, -1, clusterId, record.getIdentity().getClusterPosition(), null);
 
-      if (raw == null)
-        throw new OConfigurationException("Can't load map with id " + clusterId + ":" + record.getIdentity().getClusterPosition());
+			if (raw == null)
+				throw new OConfigurationException("Can't load map with id " + clusterId + ":" + record.getIdentity().getClusterPosition());
 
-      record.setVersion(raw.version);
+			record.setVersion(raw.version);
 
-      fromStream(raw.buffer);
-      return this;
+			fromStream(raw.buffer);
+			return this;
 
-    } finally {
-      lock.releaseExclusiveLock();
-    }
-  }
+		} finally {
+			lock.releaseExclusiveLock();
+		}
+	}
 
-  @Override
-  public OTreeMapPersistent<K, V> save() throws IOException {
-    lock.acquireExclusiveLock();
+	@Override
+	public OTreeMapPersistent<K, V> save() throws IOException {
+		lock.acquireExclusiveLock();
 
-    try {
-      record.fromStream(toStream());
-      if (record.getIdentity().isValid())
-        // UPDATE IT WITHOUT VERSION CHECK SINCE ALL IT'S LOCKED
-        record.setVersion(storage.updateRecord(0, record.getIdentity().getClusterId(), record.getIdentity().getClusterPosition(),
-            record.toStream(), -1, record.getRecordType()));
-      else {
-        // CREATE IT
-        int cluster = record.getIdentity().getClusterId() == ORID.CLUSTER_ID_INVALID ? clusterId : record.getIdentity()
-            .getClusterId();
-        record.setIdentity(cluster, storage.createRecord(cluster, record.toStream(), record.getRecordType()));
-      }
-      record.unsetDirty();
+		try {
+			record.fromStream(toStream());
+			if (record.getIdentity().isValid())
+				// UPDATE IT WITHOUT VERSION CHECK SINCE ALL IT'S LOCKED
+				record.setVersion(storage.updateRecord(0, record.getIdentity().getClusterId(), record.getIdentity().getClusterPosition(),
+						record.toStream(), -1, record.getRecordType()));
+			else {
+				// CREATE IT
+				int cluster = record.getIdentity().getClusterId() == ORID.CLUSTER_ID_INVALID ? clusterId : record.getIdentity()
+						.getClusterId();
+				record.setIdentity(cluster, storage.createRecord(cluster, record.toStream(), record.getRecordType()));
+			}
+			record.unsetDirty();
 
-      return this;
+			return this;
 
-    } finally {
-      lock.releaseExclusiveLock();
-    }
-  }
+		} finally {
+			lock.releaseExclusiveLock();
+		}
+	}
 
-  @Override
-  public void clear() {
-    storage.deleteRecord(0, record.getIdentity().getClusterId(), record.getIdentity().getClusterPosition(), record.getVersion());
-    root = null;
-    super.clear();
-  }
+	@Override
+	public void clear() {
+		storage.deleteRecord(0, record.getIdentity().getClusterId(), record.getIdentity().getClusterPosition(), record.getVersion());
+		root = null;
+		super.clear();
+	}
 
-  @Override
-  protected void serializerFromStream(final OMemoryInputStream stream) throws IOException {
-    keySerializer = OStreamSerializerFactory.get(null, stream.getAsString());
-    valueSerializer = OStreamSerializerFactory.get(null, stream.getAsString());
-  }
+	@Override
+	protected void serializerFromStream(final OMemoryInputStream stream) throws IOException {
+		keySerializer = OStreamSerializerFactory.get(null, stream.getAsString());
+		valueSerializer = OStreamSerializerFactory.get(null, stream.getAsString());
+	}
 }

@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.type.tree;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,27 +45,34 @@ import com.orientechnologies.orient.core.storage.impl.local.OClusterLogical;
 /**
  * Persistent TreeMap implementation. The difference with the class OTreeMapPersistent is the level. In facts this class works
  * directly at the storage level, while the other at database level. This class is used for Logical Clusters. It can'be
- * transactional.
+ * transactional. It uses the entryPoints linked list to get the best entry point for searching a node.
  * 
  * @see OClusterLogical
  */
 @SuppressWarnings("serial")
 public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMapEventListener<K, V>, OSerializableStream {
-	protected float																			optimizeFactor		= 1 / 4f;																					;
-	protected int																				optimizeThreshold	= 15000;
+	protected int																						optimizeThreshold					= 50000;
 
-	protected OSharedResourceExternal										lock							= new OSharedResourceExternal();
+	protected OSharedResourceExternal												lock											= new OSharedResourceExternal();
 
-	protected OStreamSerializer													keySerializer;
-	protected OStreamSerializer													valueSerializer;
+	protected OStreamSerializer															keySerializer;
+	protected OStreamSerializer															valueSerializer;
 
-	protected final List<OTreeMapEntryPersistent<K, V>>	recordsToCommit		= new ArrayList<OTreeMapEntryPersistent<K, V>>();
-	protected final OMemoryOutputStream									entryRecordBuffer;
+	protected final List<OTreeMapEntryPersistent<K, V>>			recordsToCommit						= new ArrayList<OTreeMapEntryPersistent<K, V>>();
+	protected final OMemoryOutputStream											entryRecordBuffer;
 
-	protected final String															clusterName;
-	protected ORecordBytes															record;
-	protected String																		fetchPlan;
-	protected volatile int															usageCounter			= 0;
+	protected final String																	clusterName;
+	protected ORecordBytes																	record;
+	protected String																				fetchPlan;
+	protected volatile int																	usageCounter							= 0;
+
+	// STORES IN MEMORY DIRECT REFERENCES TO PORTION OF THE TREE
+	protected int																						entryPointSize						= 100;
+	protected float																					entryPointThresholdFactor	= 1.5f;
+	protected volatile List<OTreeMapEntryPersistent<K, V>>	entryPoints								= new ArrayList<OTreeMapEntryPersistent<K, V>>(
+																																												entryPointSize);
+	protected List<OTreeMapEntryPersistent<K, V>>						tmpEntryPoints						= new ArrayList<OTreeMapEntryPersistent<K, V>>(
+																																												entryPointSize);
 
 	public OTreeMapPersistent(final String iClusterName, final ORID iRID) {
 		this(iClusterName, null, null);
@@ -112,6 +120,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 			getListener().signalTreeChanged(this);
 
 			usageCounter = 0;
+			entryPoints.clear();
 
 		} catch (IOException e) {
 			OLogManager.instance().error(this, "Error on deleting the tree: " + record.getIdentity(), e, OStorageException.class);
@@ -122,8 +131,11 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 		}
 	}
 
+	/**
+	 * Optimize the tree memory consumption by keeping part of nodes as entry points and clearing all the rest.
+	 */
 	public void optimize() {
-		final long timer = OProfiler.getInstance().startChrono();
+		final long timer = System.currentTimeMillis();// OProfiler.getInstance().startChrono();
 
 		lock.acquireExclusiveLock();
 
@@ -131,60 +143,86 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 			if (root == null)
 				return;
 
-			final int maxDepthLevel = getMaxDepth();
+			OLogManager.instance().info(this, "Starting optimization of RB+Tree...");
 
-			if (maxDepthLevel <= 5)
-				// FIRST 5 DEPTH LEVELS ARE FIXED
+			if (entryPoints.size() == 0)
+				// FIRST TIME THE LIST IS NULL: START FROM ROOT
+				entryPoints.add((OTreeMapEntryPersistent<K, V>) root);
+
+			// COUNT ALL IN-MEMORY NODES BY BROWSING ALL THE ENTRYPOINT NODES
+			int nodes = 0;
+			Set<OTreeMapEntryPersistent<K, V>> tmp = new HashSet<OTreeMapEntryPersistent<K, V>>();
+
+			for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints)
+				for (OTreeMapEntryPersistent<K, V> e = getMostLeftNode(entryPoint); e != null; e = e.getNextInMemory()) {
+					for (OTreeMapEntryPersistent<K, V> t : tmp)
+						if (t == e)
+							OLogManager.instance().error(this, "ERROR");
+
+					tmp.add(e);
+					++nodes;
+				}
+
+			OLogManager.instance().info(this, "Found %d nodes in memory, %d items on disk, threshold=%d, entryPoints=%d", nodes, size,
+					entryPointSize * entryPointThresholdFactor, entryPoints.size());
+
+			if (nodes < entryPointSize * entryPointThresholdFactor)
+				// UNDER THRESHOLD AVOID TO OPTIMIZE
 				return;
 
-			final int cutLevel = (int) (maxDepthLevel * optimizeFactor);
+			// COMPUTE THE DISTANCE BETWEEN NODES
+			final int distance;
+			if (nodes <= entryPointSize)
+				distance = 1;
+			else
+				distance = nodes / entryPointSize + 1;
 
-			// RESET (IN-MEMORY ONLY) STATISTICS
-			for (OTreeMapEntryPersistent<K, V> e = (OTreeMapEntryPersistent<K, V>) getFirstEntry(); e != null; e = e.nextInMemory()) {
-				if (e.getDepth() > cutLevel)
-					e.clear();
-			}
+			tmpEntryPoints.clear();
+
+			OLogManager.instance().info(this, "Compacting nodes with distance = %d", distance);
+
+			// RESET ALL THE IN-MEMORY NODES NOT IN THE ENTRY POINT LIST
+			int nodeCounter = 0;
+			OTreeMapEntryPersistent<K, V> lastNode = null;
+			for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints)
+				for (OTreeMapEntryPersistent<K, V> e = getMostLeftNode(entryPoint); e != null; e = e.getNextInMemory()) {
+					++nodeCounter;
+
+					if (tmpEntryPoints.size() == 0 || nodeCounter % distance == 0)
+						tmpEntryPoints.add(e);
+
+					lastNode = e;
+				}
+
+			if (tmpEntryPoints.size() > 1 && tmpEntryPoints.get(tmpEntryPoints.size() - 1) != lastNode)
+				// ADD THE LAST ONE IF IT'S NOT YET PRESENT
+				tmpEntryPoints.add(lastNode);
+
+			// SWAP TMP AND REAL ENTRY POINT COLLECTIONS
+			final List<OTreeMapEntryPersistent<K, V>> a = entryPoints;
+			entryPoints = tmpEntryPoints;
+			tmpEntryPoints = a;
+			tmpEntryPoints.clear();
+
+			// FREE ALL THE NODES BUT THE ENTRY POINTS
+			for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints)
+				entryPoint.disconnect();
+
+			// COUNT ALL IN-MEMORY NODES BY BROWSING ALL THE ENTRYPOINT NODES
+			nodes = 0;
+			for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints)
+				for (OTreeMapEntryPersistent<K, V> e = getMostLeftNode(entryPoint); e != null; e = e.getNextInMemory())
+					++nodes;
+
+			OLogManager.instance().info(this, "Now Found %d nodes in memory and threshold=%d. EntryPoints=%d", nodes,
+					entryPointSize * entryPointThresholdFactor, entryPoints.size());
 
 		} finally {
 
 			lock.releaseExclusiveLock();
 			OProfiler.getInstance().stopChrono("OTreeMapPersistent.optimize", timer);
+			OLogManager.instance().info(this, "Optimization completed in %d ms\n", System.currentTimeMillis() - timer);
 		}
-	}
-
-	public int getMaxDepth() {
-		int currentDepthLevel;
-		int maxDepthLevel = 0;
-		for (OTreeMapEntryPersistent<K, V> e = firstEntryInMemory(); e != null; e = e.nextInMemory()) {
-
-			currentDepthLevel = e.getDepth();
-
-			if (currentDepthLevel > maxDepthLevel)
-				maxDepthLevel = currentDepthLevel;
-		}
-		return maxDepthLevel;
-	}
-
-	public int getNodeCount() {
-		int total = 0;
-
-		for (OTreeMapEntryPersistent<K, V> e = firstEntryInMemory(); e != null; e = e.nextInMemory())
-			total++;
-
-		return total;
-	}
-
-	/**
-	 * Returns the first Entry in memory in the OTreeMap (according to the OTreeMap's key-sort function). Returns null if the OTreeMap
-	 * is empty.
-	 */
-	public final OTreeMapEntryPersistent<K, V> firstEntryInMemory() {
-		OTreeMapEntryPersistent<K, V> p = (OTreeMapEntryPersistent<K, V>) root;
-		if (p != null) {
-			while (p.left != null)
-				p = p.left;
-		}
-		return p;
 	}
 
 	@Override
@@ -375,9 +413,9 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 	}
 
 	protected void adjustPageSize() {
-		lastPageSize = (int) (size * 0.2 / 100);
-		if (lastPageSize < 256)
-			lastPageSize = 256;
+		// int newPageSize = (int) (size * 0.2 / 100);
+		// if (newPageSize > lastPageSize)
+		// lastPageSize = newPageSize;
 	}
 
 	@Override
@@ -489,12 +527,12 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 		this.optimizeThreshold = optimizeThreshold;
 	}
 
-	public float getOptimizeFactor() {
-		return optimizeFactor;
+	public int getEntryPointSize() {
+		return entryPointSize;
 	}
 
-	public void setOptimizeFactor(float optimizeFactor) {
-		this.optimizeFactor = optimizeFactor;
+	public void setEntryPointSize(int entryPointSize) {
+		this.entryPointSize = entryPointSize;
 	}
 
 	private V internalPut(final K key, final V value) {
@@ -523,9 +561,84 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 	 */
 	protected void updateUsageCounter() {
 		usageCounter++;
-		if (usageCounter > optimizeThreshold) {
+		if (optimizeThreshold > 0 && usageCounter > optimizeThreshold) {
 			optimize();
 			usageCounter = 0;
 		}
 	}
+
+	/**
+	 * Returns the best entry point to start the search.
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	protected OTreeMapEntry<K, V> getBestEntryPoint(final Object iKey) {
+		final Comparable<? super K> key = (Comparable<? super K>) iKey;
+
+		OTreeMapEntryPersistent<K, V> bestNode = null;
+
+		if (entryPoints.size() == 0) {
+			// TREE EMPTY: RETURN ROOT
+			entryPoints.add((OTreeMapEntryPersistent<K, V>) root);
+			return root;
+		}
+
+		// SEARCH THE BEST KEY
+		OTreeMapEntryPersistent<K, V> e;
+		for (int i = 0; i < entryPoints.size(); ++i) {
+			e = entryPoints.get(i);
+
+			if (e.serializedKeys == null) {
+				// CLEAN WRONG ENTRY (WHY THEY ARE WRONG?)
+				entryPoints.remove(i);
+				--i;
+				continue;
+			}
+
+			if (key.compareTo(e.getFirstKey()) < 0) {
+				// RETURN THE PREVIOUS ONE OF CURRENT IF IT'S NULL
+				return bestNode != null ? bestNode : e;
+			} else if (key.compareTo(e.getFirstKey()) >= 0 && key.compareTo(e.getLastKey()) <= 0)
+				// PERFECT MATCH, VERY LUCKY: RETURN THE CURRENT = 0 READS
+				return e;
+
+			// SET THE CURRENT AS BEST NODE
+			bestNode = e;
+		}
+
+		// RETURN THE LATEST ONE
+		return bestNode;
+	}
+
+	/**
+	 * Remove an entry point from the list
+	 */
+	void removeEntryPoint(final OTreeMapEntryPersistent<K, V> iEntry) {
+		for (int i = 0; i < entryPoints.size(); ++i)
+			if (entryPoints.get(i) == iEntry) {
+				entryPoints.remove(i);
+				break;
+			}
+	}
+
+	/**
+	 * Returns the most left key in memory given a root node.
+	 */
+	private final OTreeMapEntryPersistent<K, V> getMostLeftNode(final OTreeMapEntryPersistent<K, V> iEntryPoint) {
+		if (iEntryPoint == null)
+			return null;
+
+		OTreeMapEntryPersistent<K, V> p = iEntryPoint;
+
+		// GET THE HIGHEST NODE
+		while (p.parent != null)
+			p = p.parent;
+
+		// GO DOWN TO GET THE MOST LEFT
+		while (p.left != null)
+			p = p.left;
+
+		return p;
+	}
+
 }

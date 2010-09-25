@@ -59,18 +59,27 @@ public abstract class OTreeMapEntry<K, V> implements Map.Entry<K, V> {
 	 * 
 	 * @param iParent
 	 * @param iPosition
+	 * @param iLeft
 	 */
-	protected OTreeMapEntry(final OTreeMapEntry<K, V> iParent, final int iPosition) {
+	protected OTreeMapEntry(final OTreeMapEntry<K, V> iParent, final int iPosition, final boolean iLeft) {
 		this.tree = iParent.tree;
 		setParent(iParent);
 		this.pageSize = tree.getPageSize();
 		this.keys = (K[]) new Object[pageSize];
-		this.size = iParent.size - iPosition;
-		System.arraycopy(iParent.keys, iPosition, keys, 0, size);
 		this.values = (V[]) new Object[pageSize];
-		System.arraycopy(iParent.values, iPosition, values, 0, size);
 
-		iParent.size = iPosition;
+		if (iLeft) {
+			this.size = iPosition;
+			System.arraycopy(iParent.keys, 0, keys, 0, iPosition);
+			System.arraycopy(iParent.values, 0, values, 0, iPosition);
+			iParent.size = iParent.size - iPosition;
+		} else {
+			this.size = iParent.size - iPosition;
+			System.arraycopy(iParent.keys, iPosition, keys, 0, size);
+			System.arraycopy(iParent.values, iPosition, values, 0, size);
+			iParent.size = iPosition;
+		}
+
 		init();
 	}
 
@@ -89,7 +98,7 @@ public abstract class OTreeMapEntry<K, V> implements Map.Entry<K, V> {
 	/**
 	 * Returns the successor of the current Entry only by traversing the memory, or null if no such.
 	 */
-	public abstract OTreeMapEntry<K, V> nextInMemory();
+	public abstract OTreeMapEntry<K, V> getNextInMemory();
 
 	protected OTreeMap<K, V> getTree() {
 		return tree;
@@ -180,15 +189,15 @@ public abstract class OTreeMapEntry<K, V> implements Map.Entry<K, V> {
 
 	@Override
 	public String toString() {
-		final StringBuilder buffer = new StringBuilder("[");
-		for (int i = 0; i < size; ++i) {
-			if (i > 0)
-				buffer.append(",");
+		final StringBuilder buffer = new StringBuilder();
 
-			buffer.append(keys[i] != null ? keys[i] : "{lazy}");
-		}
+		buffer.append(size);
+		buffer.append('[');
+		buffer.append(keys[0] != null ? keys[0] : "{lazy}");
+		buffer.append('-');
+		buffer.append(keys[size - 1] != null ? keys[size - 1] : "{lazy}");
 
-		buffer.append("]");
+		buffer.append(']');
 
 		return buffer.toString();
 	}
