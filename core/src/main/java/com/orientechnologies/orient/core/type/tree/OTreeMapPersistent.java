@@ -66,7 +66,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 	protected volatile int																	usageCounter							= 0;
 
 	// STORES IN MEMORY DIRECT REFERENCES TO PORTION OF THE TREE
-	protected int																						entryPointSize						= 20;
+	protected int																						entryPointSize						= 100;
 	protected float																					entryPointThresholdFactor	= 1.5f;
 	protected volatile List<OTreeMapEntryPersistent<K, V>>	entryPoints								= new ArrayList<OTreeMapEntryPersistent<K, V>>(
 																																												entryPointSize);
