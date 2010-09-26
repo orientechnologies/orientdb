@@ -189,6 +189,9 @@ public abstract class OTreeMapEntry<K, V> implements Map.Entry<K, V> {
 
 	@Override
 	public String toString() {
+		if (keys == null)
+			return "?";
+
 		final StringBuilder buffer = new StringBuilder();
 
 		buffer.append(size);

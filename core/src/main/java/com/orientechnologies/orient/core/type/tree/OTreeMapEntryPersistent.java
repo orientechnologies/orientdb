@@ -47,19 +47,6 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	protected OTreeMapEntryPersistent<K, V>	left;
 	protected OTreeMapEntryPersistent<K, V>	right;
 
-	//
-	// private int keySize = 0;
-	// private int valueSIze = 0;
-	// private int itemChanged;
-	// private boolean otherChanged;
-	//
-	// private final static int PAGESIZE_OFFSET = 0;
-	// private final static int LEFTRID_OFFSET = 2;
-	// private final static int RIGHTRID_OFFSET = 12;
-	// private final static int COLOR_OFFSET = 22;
-	// private final static int SIZE_OFFSET = 23;
-	// private final static int CONTENT_OFFSET = 27;
-
 	/**
 	 * Called on event of splitting an entry.
 	 * 
@@ -149,56 +136,47 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	/**
 	 * Disconnect the current node from others.
 	 */
-	protected void disconnect() {
+	protected int disconnect() {
+		int disconnected = 0;
+
 		if (left != null)
-			left.clear();
+			disconnected += left.clear();
 
 		if (right != null)
-			right.clear();
+			disconnected += right.clear();
 
-		if (parent != null)
-			parent.clear();
+		return disconnected;
 	}
 
 	/**
 	 * Clear links and current node only if it's not an entry point.
 	 */
-	protected void clear() {
-		if (record != null && !record.isDirty()) {
-			for (OTreeMapEntryPersistent<K, V> e : pTree.entryPoints)
-				if (e == this) {
-					// CAN'T REMOVE CURRENT NODE BECAUSE IS AN ENTRY POINT
-					return;
-				}
+	protected int clear() {
+		if (record == null || record.isDirty())
+			return 0;
 
-			// DISCONNECT MYSELF FROM THE OTHER NODES
-			if (parent != null) {
-				if (parent.left == this)
-					parent.left = null;
-				else
-					parent.right = null;
-				parent.clear();
-				parent = null;
+		for (OTreeMapEntryPersistent<K, V> e : pTree.entryPoints)
+			if (e == this) {
+				// CAN'T REMOVE CURRENT NODE BECAUSE IS AN ENTRY POINT
+				return 0;
 			}
 
-			if (left != null) {
-				left.parent = null;
-				left.clear();
-				left = null;
-			}
+		// DISCONNECT MYSELF FROM THE PARENT NODE
+		if (parent.left == this)
+			parent.left = null;
+		else
+			parent.right = null;
 
-			if (right != null) {
-				right.parent = null;
-				right.clear();
-				right = null;
-			}
+		left = null;
+		right = null;
+		parent = null;
+		keys = null;
+		values = null;
+		serializedKeys = null;
+		serializedValues = null;
+		record = null;
 
-			keys = null;
-			values = null;
-			serializedKeys = null;
-			serializedValues = null;
-			record = null;
-		}
+		return disconnect() + 1;
 	}
 
 	@Override

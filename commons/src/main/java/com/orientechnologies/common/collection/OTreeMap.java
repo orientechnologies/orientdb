@@ -571,7 +571,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 			parent.insert(pageIndex, key, value);
 		} else {
 			// CREATE NEW NODE AND COPY HALF OF VALUES FROM THE ORIGIN TO THE NEW ONE IN ORDER TO GET VALUES BALANCED
-			final OTreeMapEntry<K, V> newEntry = createEntry(parent, pageItemComparator < 0);
+			final OTreeMapEntry<K, V> newEntry = createEntry(parent, false);
 
 			if (pageIndex < parent.getPageSplitItems())
 				// INSERT IN THE ORIGINAL NODE
@@ -580,7 +580,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 				// INSERT IN THE NEW NODE
 				newEntry.insert(pageIndex - parent.getPageSplitItems(), key, value);
 
-			if (pageItemComparator < 0) {
+			if (false) {
 				OTreeMapEntry<K, V> prevNode = parent.getLeft();
 				if (prevNode != null)
 					// INSERT THE NODE IN THE TREE IN THE LEFT MOVING CURRENT LEFT TO THE LEFT OF THE NEW NODE
@@ -594,7 +594,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 				parent.setRight(newEntry);
 			}
 
-			fixAfterInsertion(newEntry);
+//			fixAfterInsertion(newEntry);
 
 			modCount++;
 		}
