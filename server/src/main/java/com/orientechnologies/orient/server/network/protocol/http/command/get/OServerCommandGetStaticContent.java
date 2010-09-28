@@ -31,8 +31,8 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
 
 public class OServerCommandGetStaticContent extends OServerCommandAbstract {
-	private static final String[]										NAMES			= { "GET|www", "GET|", "GET|*.htm", "GET|*.jpeg", "GET|*.jpg",
-			"GET|*.png", "GET|*.gif", "GET|*.js", "GET|*.css", "GET|favicon.ico", "GET|robots.txt" };
+	private static final String[]										NAMES			= { "GET|www", "GET|", "GET|*.htm", "GET|*.xml", "GET|*.jpeg",
+			"GET|*.jpg", "GET|*.png", "GET|*.gif", "GET|*.js", "GET|*.css", "GET|favicon.ico", "GET|robots.txt" };
 	private static final String											CACHE_PAR	= "cache.static";
 
 	static final String															WWW_PATH	= System.getProperty("orientdb.www.path", "src/site");
