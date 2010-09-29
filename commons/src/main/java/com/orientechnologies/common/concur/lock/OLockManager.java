@@ -84,12 +84,12 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 
 	protected synchronized boolean tryToAcquireLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId,
 			final LOCK iLockType) {
-		OProfiler.getInstance().updateStatistic("LockMgr.tryToAcquire", +1);
+		OProfiler.getInstance().updateCounter("LockMgr.tryToAcquire", +1);
 
 		REQUESTER_TYPE client = exclusiveLocks.get(iResourceId);
 		if (client != null) {
 			// THE RESOURCE IS ALREADY LOCKED IN EXCLUSIVE MODE
-			OProfiler.getInstance().updateStatistic("LockMgr.tryToAcquire.locked", +1);
+			OProfiler.getInstance().updateCounter("LockMgr.tryToAcquire.locked", +1);
 			return false;
 		}
 

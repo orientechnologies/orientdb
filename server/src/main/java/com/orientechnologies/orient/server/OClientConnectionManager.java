@@ -36,7 +36,7 @@ public class OClientConnectionManager {
 	}
 
 	public void connect(final Socket iSocket, final OClientConnection iConnection) throws IOException {
-		OProfiler.getInstance().updateStatistic("OServer.threads.actives", +1);
+		OProfiler.getInstance().updateCounter("OServer.threads.actives", +1);
 
 		connections.put(iConnection.id, iConnection);
 
@@ -50,7 +50,7 @@ public class OClientConnectionManager {
 	}
 
 	public void onClientDisconnection(final String iChannelId) {
-		OProfiler.getInstance().updateStatistic("OServer.threads.actives", -1);
+		OProfiler.getInstance().updateCounter("OServer.threads.actives", -1);
 
 		OClientConnection conn = connections.remove(iChannelId);
 		if (conn == null)

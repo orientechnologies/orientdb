@@ -55,8 +55,8 @@ public class OTreeMapStorage<K, V> extends OTreeMapPersistent<K, V> {
 	}
 
 	@Override
-	protected OTreeMapEntryPersistent<K, V> createEntry(OTreeMapEntry<K, V> iParent, final boolean iLeft) {
-		return new OTreeMapEntryStorage<K, V>(iParent, iParent.getPageSplitItems(), iLeft);
+	protected OTreeMapEntryPersistent<K, V> createEntry(OTreeMapEntry<K, V> iParent) {
+		return new OTreeMapEntryStorage<K, V>(iParent, iParent.getPageSplitItems());
 	}
 
 	@Override
@@ -66,7 +66,7 @@ public class OTreeMapStorage<K, V> extends OTreeMapPersistent<K, V> {
 	}
 
 	@Override
-	protected OTreeMapEntryStorage<K, V> createEntry(OTreeMapEntryPersistent<K, V> iParent, ORID iRecordId) throws IOException {
+	protected OTreeMapEntryStorage<K, V> loadEntry(OTreeMapEntryPersistent<K, V> iParent, ORID iRecordId) throws IOException {
 		return new OTreeMapEntryStorage<K, V>(this, iParent, iRecordId);
 	}
 

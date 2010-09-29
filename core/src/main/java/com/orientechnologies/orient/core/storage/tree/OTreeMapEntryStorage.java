@@ -36,8 +36,8 @@ import com.orientechnologies.orient.core.type.tree.OTreeMapPersistent;
  */
 public class OTreeMapEntryStorage<K, V> extends OTreeMapEntryPersistent<K, V> {
 
-	public OTreeMapEntryStorage(OTreeMapEntry<K, V> iParent, int iPosition, final boolean iLeft) {
-		super(iParent, iPosition, iLeft);
+	public OTreeMapEntryStorage(OTreeMapEntry<K, V> iParent, int iPosition) {
+		super(iParent, iPosition);
 		record.setIdentity(pTree.getRecord().getIdentity().getClusterId(), ORID.CLUSTER_POS_INVALID);
 	}
 
@@ -80,6 +80,9 @@ public class OTreeMapEntryStorage<K, V> extends OTreeMapEntryPersistent<K, V> {
 		}
 		record.unsetDirty();
 		super.save();
+
+		assureIntegrityOfReferences();
+
 		return this;
 	}
 

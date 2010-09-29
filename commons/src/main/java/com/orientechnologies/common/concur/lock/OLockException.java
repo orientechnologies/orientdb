@@ -8,11 +8,11 @@ public class OLockException extends OException {
 
 	public OLockException(String iMessage) {
 		super(iMessage);
-		OProfiler.getInstance().updateStatistic("OLockException", +1);
+		OProfiler.getInstance().updateCounter("OLockException", +1);
 	}
 
 	public OLockException(String iMessage, Exception iException) {
 		super(iMessage, iException);
-		OProfiler.getInstance().updateStatistic("OLockException", +1);
+		OProfiler.getInstance().updateCounter("OLockException", +1);
 	}
 }

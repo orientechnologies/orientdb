@@ -64,7 +64,7 @@ public class DictionaryTest {
 		database.close();
 		database.open("admin", "admin");
 
-		Assert.assertTrue(database.getDictionary().get("key1").value().equals("Text changed"));
+		Assert.assertEquals(database.getDictionary().get("key1").value(), "Text changed");
 		Assert.assertEquals(database.getDictionary().size(), originalSize);
 
 		database.close();

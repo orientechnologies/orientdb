@@ -96,7 +96,7 @@ public class OCacheRecord extends OSharedResourceAdaptive {
       ORawBuffer buffer = cache.remove(iRecord);
 
       if (buffer != null)
-        OProfiler.getInstance().updateStatistic("Cache.reused", +1);
+        OProfiler.getInstance().updateCounter("Cache.reused", +1);
 
       return buffer;
     } finally {

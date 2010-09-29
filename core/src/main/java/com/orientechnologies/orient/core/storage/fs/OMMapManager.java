@@ -43,7 +43,7 @@ public class OMMapManager {
 			// SEARCH THE REQUESTED RANGE IN CACHED BUFFERS
 			for (OMMapBufferEntry e : buffersLRU) {
 				if (iFile.equals(e.file) && iBeginOffset >= e.beginOffset && iBeginOffset + iSize <= e.beginOffset + e.size) {
-					OProfiler.getInstance().updateStatistic("OMMapManager.usePage", 1);
+					OProfiler.getInstance().updateCounter("OMMapManager.usePage", 1);
 					// FOUND: USE IT
 					return e;
 				}
@@ -95,7 +95,7 @@ public class OMMapManager {
 					}
 				}
 
-				OProfiler.getInstance().updateStatistic("OMMapManager.pagesUnloaded", pagesUnloaded);
+				OProfiler.getInstance().updateCounter("OMMapManager.pagesUnloaded", pagesUnloaded);
 			}
 
 			// LOAD THE PAGE
@@ -110,7 +110,7 @@ public class OMMapManager {
 	}
 
 	static OMMapBufferEntry mapBuffer(final OFileMMap iFile, final int iBeginOffset, final int iSize) throws IOException {
-		OProfiler.getInstance().updateStatistic("OMMapManager.loadPage", 1);
+		OProfiler.getInstance().updateCounter("OMMapManager.loadPage", 1);
 		long timer = OProfiler.getInstance().startChrono();
 		try {
 			return new OMMapBufferEntry(iFile, iFile.map(iBeginOffset, iSize), iBeginOffset, iSize);

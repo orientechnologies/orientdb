@@ -40,9 +40,9 @@ public class FetchPlanTest {
 	public void queryNoFetchPlan() {
 		database.open("admin", "admin");
 
-		final long times = OProfiler.getInstance().getStatistic("Cache.reused");
+		final long times = OProfiler.getInstance().getCounter("Cache.reused");
 		List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>("select * from Profile"));
-		Assert.assertEquals(OProfiler.getInstance().getStatistic("Cache.reused"), times);
+		Assert.assertEquals(OProfiler.getInstance().getCounter("Cache.reused"), times);
 
 		ODocument linked;
 		for (ODocument d : resultset) {
@@ -58,9 +58,9 @@ public class FetchPlanTest {
 	public void queryWithFetchPlan() {
 		database.open("admin", "admin");
 
-		final long times = OProfiler.getInstance().getStatistic("Cache.reused");
+		final long times = OProfiler.getInstance().getCounter("Cache.reused");
 		List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>("select * from Profile").setFetchPlan("*:-1"));
-		Assert.assertEquals(OProfiler.getInstance().getStatistic("Cache.reused"), times);
+		Assert.assertEquals(OProfiler.getInstance().getCounter("Cache.reused"), times);
 
 		ODocument linked;
 		for (ODocument d : resultset) {

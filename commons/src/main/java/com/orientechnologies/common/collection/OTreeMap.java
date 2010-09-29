@@ -15,9 +15,12 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfiler;
+
 @SuppressWarnings("unchecked")
 public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavigableMap<K, V>, Cloneable, java.io.Serializable {
-	OTreeMapEventListener<K, V>							listener;
+	protected OTreeMapEventListener<K, V>		listener;
 	boolean																	pageItemFound				= false;
 	int																			pageItemComparator	= 0;
 	volatile int														pageIndex						= -1;
@@ -44,6 +47,8 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 	 * The number of structural modifications to the tree.
 	 */
 	transient int														modCount						= 0;
+
+	transient boolean												runtimeCheckEnabled	= true;
 
 	public OTreeMap(final int iSize, final float iLoadFactor) {
 		lastPageSize = iSize;
@@ -132,7 +137,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 	/**
 	 * Create a new node with the same parent of the node is splitting.
 	 */
-	protected abstract OTreeMapEntry<K, V> createEntry(final OTreeMapEntry<K, V> parent, final boolean iLeft);
+	protected abstract OTreeMapEntry<K, V> createEntry(final OTreeMapEntry<K, V> parent);
 
 	public int getNodes() {
 		int counter = -1;
@@ -291,47 +296,78 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 		if (comparator != null)
 			return getEntryUsingComparator(key, iGetContainer);
 
-		final Comparable<? super K> k = (Comparable<? super K>) key;
 		OTreeMapEntry<K, V> p = getBestEntryPoint(key);
-		OTreeMapEntry<K, V> lastNode = null;
 
+		checkTreeStructure(p);
+
+		if (p == null)
+			return null;
+
+		OTreeMapEntry<K, V> lastNode = p;
+		OTreeMapEntry<K, V> prevNode = null;
+		OTreeMapEntry<K, V> tmpNode;
 		int beginKey = -1;
+		int steps = -1;
+		final Comparable<? super K> k = (Comparable<? super K>) key;
 
-		while (p != null) {
-			lastNode = p;
-			try {
-				beginKey = k.compareTo(p.getFirstKey());
-			} catch (Exception e) {
-			}
+		try {
+			while (p != null) {
+				steps++;
 
-			if (beginKey == 0) {
-				// EXACT MATCH, YOU'RE VERY LUCKY: RETURN THE FIRST KEY WITHOUT SEARCH INSIDE THE NODE
-				pageIndex = 0;
-				pageItemFound = true;
-				pageItemComparator = 0;
-				return p;
-			} else {
-				if (beginKey < 0 && p.getLeft() != null && k.compareTo(p.getLastKey()) < 0) {
-					// MINOR THAN THE CURRENT: GET THE LEFT NODE
-					pageItemComparator = -1;
-					p = p.getLeft();
-				} else if (beginKey > 0 && p.getRight() != null && k.compareTo(p.getLastKey()) > 0) {
-					// MAJOR THAN THE CURRENT: GET THE RIGHT NODE
-					pageItemComparator = 1;
-					p = p.getRight();
-				} else {
-					// SEARCH INSIDE THE NODE
-					final V value = lastNode.search(k);
+				lastNode = p;
 
-					if (value != null)
-						// FOUND: RETURN CURRENT NODE
-						return lastNode;
-					else if (iGetContainer)
-						// RETURN THE CONTAINER NODE ANYWAY
-						return lastNode;
-					break;
+				try {
+					beginKey = k.compareTo(p.getFirstKey());
+				} catch (Exception e) {
 				}
+
+				if (beginKey == 0) {
+					// EXACT MATCH, YOU'RE VERY LUCKY: RETURN THE FIRST KEY WITHOUT SEARCH INSIDE THE NODE
+					pageIndex = 0;
+					pageItemFound = true;
+					pageItemComparator = 0;
+					return p;
+				}
+
+				pageItemComparator = k.compareTo(p.getLastKey());
+
+				if (beginKey < 0) {
+					if (pageItemComparator < 0) {
+						tmpNode = predecessor(p);
+						if (tmpNode != null && tmpNode != prevNode) {
+							// MINOR THAN THE CURRENT: GET THE LEFT NODE
+							// p = p.getLeft();
+							prevNode = p;
+							p = tmpNode;
+							continue;
+						}
+					}
+				} else if (beginKey > 0) {
+					if (pageItemComparator > 0) {
+						tmpNode = successor(p);
+						if (tmpNode != null && tmpNode != prevNode) {
+							// MAJOR THAN THE CURRENT: GET THE RIGHT NODE
+							// p = p.getRight();
+							prevNode = p;
+							p = tmpNode;
+							continue;
+						}
+					}
+				}
+
+				// SEARCH INSIDE THE NODE
+				final V value = lastNode.search(k);
+				if (value != null || iGetContainer)
+					// FOUND: RETURN CURRENT NODE OR AT LEAST THE CONTAINER NODE
+					return lastNode;
+
+				// NOT FOUND
+				return null;
 			}
+		} finally {
+			checkTreeStructure(p);
+
+			OProfiler.getInstance().updateStat("[OTreeMap.getEntry] Steps of search", steps);
 		}
 
 		return null;
@@ -544,65 +580,66 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 	 */
 	@Override
 	public V put(final K key, final V value) {
-		if (root == null) {
-			root = createEntry(key, value);
+		OTreeMapEntry<K, V> parentNode = null;
 
-			size = 1;
-			modCount++;
+		try {
+			if (root == null) {
+				root = createEntry(key, value);
 
-			if (listener != null)
-				listener.signalTreeChanged(this);
+				size = 1;
+				modCount++;
 
-			return null;
-		}
+				if (listener != null)
+					listener.signalTreeChanged(this);
 
-		// SEARCH THE ITEM
-		OTreeMapEntry<K, V> parent = getEntry(key, true);
+				return null;
+			}
 
-		if (pageItemFound)
-			// EXACT MATCH: UPDATE THE VALUE
-			return parent.setValue(value);
+			// SEARCH THE ITEM
+			parentNode = getEntry(key, true);
 
-		if (parent == null)
-			parent = root;
+			if (pageItemFound)
+				// EXACT MATCH: UPDATE THE VALUE
+				return parentNode.setValue(value);
 
-		if (parent.getFreeSpace() > 0) {
-			// INSERT INTO THE PAGE
-			parent.insert(pageIndex, key, value);
-		} else {
-			// CREATE NEW NODE AND COPY HALF OF VALUES FROM THE ORIGIN TO THE NEW ONE IN ORDER TO GET VALUES BALANCED
-			final OTreeMapEntry<K, V> newEntry = createEntry(parent, false);
+			if (parentNode == null)
+				parentNode = root;
 
-			if (pageIndex < parent.getPageSplitItems())
-				// INSERT IN THE ORIGINAL NODE
-				parent.insert(pageIndex, key, value);
-			else
-				// INSERT IN THE NEW NODE
-				newEntry.insert(pageIndex - parent.getPageSplitItems(), key, value);
-
-			if (false) {
-				OTreeMapEntry<K, V> prevNode = parent.getLeft();
-				if (prevNode != null)
-					// INSERT THE NODE IN THE TREE IN THE LEFT MOVING CURRENT LEFT TO THE LEFT OF THE NEW NODE
-					newEntry.setLeft(prevNode);
-				parent.setLeft(newEntry);
+			if (parentNode.getFreeSpace() > 0) {
+				// INSERT INTO THE PAGE
+				parentNode.insert(pageIndex, key, value);
 			} else {
-				OTreeMapEntry<K, V> prevNode = parent.getRight();
+				// CREATE NEW NODE AND COPY HALF OF VALUES FROM THE ORIGIN TO THE NEW ONE IN ORDER TO GET VALUES BALANCED
+				final OTreeMapEntry<K, V> newEntry = createEntry(parentNode);
+
+				if (pageIndex < parentNode.getPageSplitItems())
+					// INSERT IN THE ORIGINAL NODE
+					parentNode.insert(pageIndex, key, value);
+				else
+					// INSERT IN THE NEW NODE
+					newEntry.insert(pageIndex - parentNode.getPageSplitItems(), key, value);
+
+				OTreeMapEntry<K, V> prevNode = parentNode.getRight();
 				if (prevNode != null)
 					// INSERT THE NODE IN THE TREE IN THE RIGHT MOVING CURRENT RIGHT TO THE RIGHT OF THE NEW NODE
 					newEntry.setRight(prevNode);
-				parent.setRight(newEntry);
+				parentNode.setRight(newEntry);
+
+				fixAfterInsertion(newEntry);
+				checkTreeStructure(parentNode);
+
+				modCount++;
 			}
 
-//			fixAfterInsertion(newEntry);
+			checkTreeStructure(parentNode);
 
-			modCount++;
+			size++;
+
+			if (listener != null)
+				listener.signalTreeChanged(this);
+		} finally {
+			checkTreeStructure(parentNode);
 		}
-
-		size++;
-
-		if (listener != null)
-			listener.signalTreeChanged(this);
 
 		return null;
 	}
@@ -637,7 +674,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 	public void clear() {
 		modCount++;
 		size = 0;
-		root = null;
+		setRoot(null);
 	}
 
 	/**
@@ -1907,7 +1944,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 	/**
 	 * Returns the first Entry in the OTreeMap (according to the OTreeMap's key-sort function). Returns null if the OTreeMap is empty.
 	 */
-	protected final OTreeMapEntry<K, V> getFirstEntry() {
+	protected OTreeMapEntry<K, V> getFirstEntry() {
 		OTreeMapEntry<K, V> p = root;
 		if (p != null) {
 			if (p.getSize() > 0)
@@ -1937,19 +1974,21 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 	/**
 	 * Returns the successor of the specified Entry, or null if no such.
 	 */
-	public static <K, V> OTreeMapEntry<K, V> successor(OTreeMapEntry<K, V> t) {
+	public static <K, V> OTreeMapEntry<K, V> successor(final OTreeMapEntry<K, V> t) {
 		if (t == null)
 			return null;
 
 		OTreeMapEntry<K, V> p = null;
+
 		if (t.getRight() != null) {
 			p = t.getRight();
 			while (p.getLeft() != null)
 				p = p.getLeft();
 		} else {
 			p = t.getParent();
-			while (p != null && t == p.getRight()) {
-				t = p;
+			OTreeMapEntry<K, V> ch = t;
+			while (p != null && ch == p.getRight()) {
+				ch = p;
 				p = p.getParent();
 			}
 		}
@@ -2017,7 +2056,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 				r.getLeft().setParent(p);
 			r.setParent(p.getParent());
 			if (p.getParent() == null)
-				root = r;
+				setRoot(r);
 			else if (p.getParent().getLeft() == p)
 				p.getParent().setLeft(r);
 			else
@@ -2025,6 +2064,10 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 			r.setLeft(p);
 			p.setParent(r);
 		}
+	}
+
+	protected void setRoot(final OTreeMapEntry<K, V> iRoot) {
+		root = iRoot;
 	}
 
 	/** From CLR */
@@ -2036,7 +2079,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 				l.getRight().setParent(p);
 			l.setParent(p.getParent());
 			if (p.getParent() == null)
-				root = l;
+				setRoot(l);
 			else if (p.getParent().getRight() == p)
 				p.getParent().setRight(l);
 			else
@@ -2050,7 +2093,11 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 	private void fixAfterInsertion(OTreeMapEntry<K, V> x) {
 		x.setColor(RED);
 
-		while (x != null && x != root && x.getParent().getColor() == RED) {
+		// if (x != null && x != root && x.getParent() != null && x.getParent().getColor() == RED) {
+		// System.out.println("BEFORE FIX on node: " + x);
+		// printInMemoryStructure(x);
+
+		while (x != null && x != root && x.getParent() != null && x.getParent().getColor() == RED) {
 			if (parentOf(x) == leftOf(parentOf(parentOf(x)))) {
 				OTreeMapEntry<K, V> y = rightOf(parentOf(parentOf(x)));
 				if (colorOf(y) == RED) {
@@ -2085,11 +2132,16 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 				}
 			}
 		}
+
+		// System.out.println("AFTER FIX");
+		// printInMemoryStructure(x);
+		// }
+
 		root.setColor(BLACK);
 	}
 
 	/**
-	 * Delete node p, and then rebalance the tree.
+	 * Delete node p, and then re-balance the tree.
 	 * 
 	 * @param iIndex
 	 *          -1 = delete the node, otherwise the item inside of it
@@ -2126,7 +2178,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 			// Link replacement to parent
 			replacement.setParent(p.getParent());
 			if (p.getParent() == null)
-				root = replacement;
+				setRoot(replacement);
 			else if (p == p.getParent().getLeft())
 				p.getParent().setLeft(replacement);
 			else
@@ -2391,5 +2443,79 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 	}
 
 	private void init() {
+	}
+
+	public OTreeMapEntry<K, V> getRoot() {
+		return root;
+	}
+
+	protected void printInMemoryStructure(final OTreeMapEntry<K, V> iRootNode) {
+		printInMemoryNode("root", iRootNode.getFirstInMemory(), 0);
+	}
+
+	private void printInMemoryNode(final String iLabel, OTreeMapEntry<K, V> iNode, int iLevel) {
+		if (iNode == null)
+			return;
+
+		for (int i = 0; i < iLevel; ++i)
+			System.out.print(' ');
+
+		System.out.println(iLabel + ": " + iNode.toString() + " (" + (iNode.getColor() ? "B" : "R") + ")");
+
+		++iLevel;
+
+		printInMemoryNode(iLevel + ".left", iNode.getLeftInMemory(), iLevel);
+		printInMemoryNode(iLevel + ".right", iNode.getRightInMemory(), iLevel);
+	}
+
+	@SuppressWarnings("rawtypes")
+	protected void checkTreeStructure(final OTreeMapEntry<K, V> iRootNode) {
+		if (!runtimeCheckEnabled || iRootNode == null)
+			return;
+
+		int currPageIndex = pageIndex;
+
+		OTreeMapEntry<K, V> prevNode = null;
+		int i = 0;
+		for (OTreeMapEntry<K, V> e = iRootNode; e != null; e = e.getNextInMemory()) {
+			if (prevNode != null) {
+				if (prevNode.getTree() == null)
+					OLogManager.instance().error(this, "[OTreeMap.checkTreeStructure] Freed record %d found in memory\n", i);
+
+				if (((Comparable) e.getFirstKey()).compareTo(((Comparable) e.getLastKey())) > 0) {
+					OLogManager.instance().error(this, "[OTreeMap.checkTreeStructure] begin key is > than last key\n", e.getFirstKey(),
+							e.getLastKey());
+					printInMemoryStructure(iRootNode);
+				}
+
+				if (((Comparable) e.getFirstKey()).compareTo(((Comparable) prevNode.getLastKey())) < 0) {
+					OLogManager.instance().error(this,
+							"[OTreeMap.checkTreeStructure] Node %s starts with a key minor than the last key of the previous node %s\n", e,
+							prevNode);
+					printInMemoryStructure(iRootNode);
+				}
+			}
+
+			if (e.getParentInMemory() != null && e.getParentInMemory().getRightInMemory() != e
+					&& e.getParentInMemory().getLeftInMemory() != e) {
+				OLogManager.instance().error(this,
+						"[OTreeMap.checkTreeStructure] Node %s is the children of node %s but the cross-reference is missed!\n", e,
+						e.getParentInMemory());
+				printInMemoryStructure(iRootNode);
+			}
+
+			prevNode = e;
+			++i;
+		}
+
+		pageIndex = currPageIndex;
+	}
+
+	public boolean isRuntimeCheckEnabled() {
+		return runtimeCheckEnabled;
+	}
+
+	public void setChecks(boolean checks) {
+		this.runtimeCheckEnabled = checks;
 	}
 }

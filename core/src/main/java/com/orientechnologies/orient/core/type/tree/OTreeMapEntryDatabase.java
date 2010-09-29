@@ -41,8 +41,8 @@ public class OTreeMapEntryDatabase<K, V> extends OTreeMapEntryPersistent<K, V> {
 	 *          Current position
 	 * @param iLeft
 	 */
-	public OTreeMapEntryDatabase(OTreeMapEntry<K, V> iParent, int iPosition, final boolean iLeft) {
-		super(iParent, iPosition, iLeft);
+	public OTreeMapEntryDatabase(OTreeMapEntry<K, V> iParent, int iPosition) {
+		super(iParent, iPosition);
 		record.setDatabase(((OTreeMapDatabase<K, V>) pTree).database);
 	}
 
@@ -79,6 +79,9 @@ public class OTreeMapEntryDatabase<K, V> extends OTreeMapEntryPersistent<K, V> {
 	public OTreeMapEntryDatabase<K, V> save() throws IOException {
 		record.fromStream(toStream());
 		record.save(pTree.getClusterName());
+
+		assureIntegrityOfReferences();
+
 		return this;
 	}
 

@@ -77,7 +77,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 	}
 
 	public void service() throws ONetworkProtocolException, IOException {
-		OProfiler.getInstance().updateStatistic("Server.requests", +1);
+		OProfiler.getInstance().updateCounter("Server.requests", +1);
 
 		++data.totalRequests;
 		data.commandInfo = null;
@@ -418,17 +418,17 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 	}
 
 	protected void connectionClosed() {
-		OProfiler.getInstance().updateStatistic("OrientKV-Server.http.closed", +1);
+		OProfiler.getInstance().updateCounter("OrientKV-Server.http.closed", +1);
 		sendShutdown();
 	}
 
 	protected void timeout() {
-		OProfiler.getInstance().updateStatistic("OrientKV-Server.http.timeout", +1);
+		OProfiler.getInstance().updateCounter("OrientKV-Server.http.timeout", +1);
 		sendShutdown();
 	}
 
 	protected void connectionError() {
-		OProfiler.getInstance().updateStatistic("OrientKV-Server.http.error", +1);
+		OProfiler.getInstance().updateCounter("OrientKV-Server.http.error", +1);
 		sendShutdown();
 	}
 

@@ -42,8 +42,8 @@ public class OTreeMapEntryMemory<K, V> extends OTreeMapEntry<K, V> {
 	 * @param iPosition
 	 * @param iLeft
 	 */
-	protected OTreeMapEntryMemory(final OTreeMapEntry<K, V> iParent, final int iPosition, final boolean iLeft) {
-		super(iParent, iPosition, iLeft);
+	protected OTreeMapEntryMemory(final OTreeMapEntry<K, V> iParent, final int iPosition) {
+		super(iParent, iPosition);
 	}
 
 	@Override
@@ -103,5 +103,20 @@ public class OTreeMapEntryMemory<K, V> extends OTreeMapEntry<K, V> {
 		}
 
 		return p;
+	}
+
+	@Override
+	protected OTreeMapEntry<K, V> getLeftInMemory() {
+		return left;
+	}
+
+	@Override
+	protected OTreeMapEntry<K, V> getParentInMemory() {
+		return parent;
+	}
+
+	@Override
+	protected OTreeMapEntry<K, V> getRightInMemory() {
+		return right;
 	}
 }

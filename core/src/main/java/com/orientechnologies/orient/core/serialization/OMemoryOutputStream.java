@@ -179,7 +179,7 @@ public class OMemoryOutputStream extends OutputStream {
 		final int mbuflen = mbuf.length;
 
 		if (mbuflen < capacity) {
-			OProfiler.getInstance().updateStatistic("OMemOutStream.resize", +1);
+			OProfiler.getInstance().updateCounter("OMemOutStream.resize", +1);
 
 			final byte[] newbuf = new byte[Math.max(mbuflen << 1, capacity)];
 

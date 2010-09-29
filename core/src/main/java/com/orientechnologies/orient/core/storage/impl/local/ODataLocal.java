@@ -165,7 +165,7 @@ public class ODataLocal extends OMultiFileSegment {
 				// USE THE OLD SPACE SINCE SIZE IT ISN'T CHANGED
 				file.write(pos[1] + RECORD_FIX_SIZE, iContent);
 
-				OProfiler.getInstance().updateStatistic("ODataLocal.setRecord:tot.reused.space", +1);
+				OProfiler.getInstance().updateCounter("ODataLocal.setRecord:tot.reused.space", +1);
 			} else if (iContent.length < recordSize) {
 				// USE THE OLD SPACE BUT UPDATE THE CURRENT SIZE. IT'S PREFEREABLE TO USE THE SAME INSTEAD FINDING A BEST SUITED FOR IT TO
 				// AVOID CHANGES TO REF FILE AS WELL.
@@ -174,7 +174,7 @@ public class ODataLocal extends OMultiFileSegment {
 				// CREATE A HOLE WITH THE DIFFERENCE OF SPACE
 				holeSegment.createHole(iPosition + RECORD_FIX_SIZE + iContent.length, iContent.length - recordSize);
 
-				OProfiler.getInstance().updateStatistic("ODataLocal.setRecord:part.reused.space", +1);
+				OProfiler.getInstance().updateCounter("ODataLocal.setRecord:part.reused.space", +1);
 			} else {
 				// USE A NEW SPACE
 				pos = allocateSpace(iContent.length + RECORD_FIX_SIZE);
@@ -183,7 +183,7 @@ public class ODataLocal extends OMultiFileSegment {
 				// CREATE A HOLE FOR THE ENTIRE OLD RECORD
 				holeSegment.createHole(iPosition, recordSize);
 
-				OProfiler.getInstance().updateStatistic("ODataLocal.setRecord:new.space", +1);
+				OProfiler.getInstance().updateCounter("ODataLocal.setRecord:new.space", +1);
 			}
 
 			return getAbsolutePosition(pos);

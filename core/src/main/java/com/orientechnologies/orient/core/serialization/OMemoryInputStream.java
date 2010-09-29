@@ -62,6 +62,12 @@ public class OMemoryInputStream {
 		return value;
 	}
 
+	public byte getAsByte() throws IOException {
+		final byte value = buffer[position];
+		position += OConstants.SIZE_BYTE;
+		return value;
+	}
+
 	public int getAsInteger() throws IOException {
 		final int value = OBinaryProtocol.bytes2int(buffer, position);
 		position += OConstants.SIZE_INT;

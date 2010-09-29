@@ -29,7 +29,7 @@ public abstract class OTreeMapEntry<K, V> implements Map.Entry<K, V> {
 	protected boolean					color										= OTreeMap.BLACK;
 
 	private int								pageSplitItems;
-	private static final int	BINARY_SEARCH_THRESHOLD	= 10;
+	public static final int		BINARY_SEARCH_THRESHOLD	= 10;
 
 	/**
 	 * Constructor called on unmarshalling.
@@ -61,24 +61,17 @@ public abstract class OTreeMapEntry<K, V> implements Map.Entry<K, V> {
 	 * @param iPosition
 	 * @param iLeft
 	 */
-	protected OTreeMapEntry(final OTreeMapEntry<K, V> iParent, final int iPosition, final boolean iLeft) {
+	protected OTreeMapEntry(final OTreeMapEntry<K, V> iParent, final int iPosition) {
 		this.tree = iParent.tree;
 		setParent(iParent);
 		this.pageSize = tree.getPageSize();
 		this.keys = (K[]) new Object[pageSize];
 		this.values = (V[]) new Object[pageSize];
 
-		if (iLeft) {
-			this.size = iPosition;
-			System.arraycopy(iParent.keys, 0, keys, 0, iPosition);
-			System.arraycopy(iParent.values, 0, values, 0, iPosition);
-			iParent.size = iParent.size - iPosition;
-		} else {
-			this.size = iParent.size - iPosition;
-			System.arraycopy(iParent.keys, iPosition, keys, 0, size);
-			System.arraycopy(iParent.values, iPosition, values, 0, size);
-			iParent.size = iPosition;
-		}
+		this.size = iParent.size - iPosition;
+		System.arraycopy(iParent.keys, iPosition, keys, 0, size);
+		System.arraycopy(iParent.values, iPosition, values, 0, size);
+		iParent.size = iPosition;
 
 		init();
 	}
@@ -95,10 +88,50 @@ public abstract class OTreeMapEntry<K, V> implements Map.Entry<K, V> {
 
 	public abstract OTreeMapEntry<K, V> getParent();
 
+	protected abstract OTreeMapEntry<K, V> getLeftInMemory();
+
+	protected abstract OTreeMapEntry<K, V> getParentInMemory();
+
+	protected abstract OTreeMapEntry<K, V> getRightInMemory();
+
+	protected abstract OTreeMapEntry<K, V> getNextInMemory();
+
 	/**
-	 * Returns the successor of the current Entry only by traversing the memory, or null if no such.
+	 * Returns the first Entry only by traversing the memory, or null if no such.
 	 */
-	public abstract OTreeMapEntry<K, V> getNextInMemory();
+	public OTreeMapEntry<K, V> getFirstInMemory() {
+		OTreeMapEntry<K, V> node = this;
+		OTreeMapEntry<K, V> prev = this;
+
+		while (node != null) {
+			prev = node;
+			node = node.getPreviousInMemory();
+		}
+
+		return prev;
+	}
+
+	/**
+	 * Returns the previous of the current Entry only by traversing the memory, or null if no such.
+	 */
+	public OTreeMapEntry<K, V> getPreviousInMemory() {
+		OTreeMapEntry<K, V> t = this;
+		OTreeMapEntry<K, V> p = null;
+
+		if (t.getLeftInMemory() != null) {
+			p = t.getLeftInMemory();
+			while (p.getRightInMemory() != null)
+				p = p.getRightInMemory();
+		} else {
+			p = t.getParentInMemory();
+			while (p != null && t == p.getLeftInMemory()) {
+				t = p;
+				p = p.getParentInMemory();
+			}
+		}
+
+		return p;
+	}
 
 	protected OTreeMap<K, V> getTree() {
 		return tree;
@@ -346,11 +379,11 @@ public abstract class OTreeMapEntry<K, V> implements Map.Entry<K, V> {
 		tree.pageIndex = -1;
 	}
 
-	protected void setColor(boolean color) {
-		this.color = color;
+	protected void setColor(boolean iColor) {
+		this.color = iColor;
 	}
 
-	protected boolean getColor() {
+	public boolean getColor() {
 		return color;
 	}
 

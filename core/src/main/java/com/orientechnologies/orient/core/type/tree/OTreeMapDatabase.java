@@ -48,13 +48,14 @@ public class OTreeMapDatabase<K, V> extends OTreeMapPersistent<K, V> {
 	}
 
 	@Override
-	protected OTreeMapEntryDatabase<K, V> createEntry(final OTreeMapEntry<K, V> parent, final boolean iLeft) {
+	protected OTreeMapEntryDatabase<K, V> createEntry(final OTreeMapEntry<K, V> parent) {
 		adjustPageSize();
-		return new OTreeMapEntryDatabase<K, V>(parent, parent.getPageSplitItems(), iLeft);
+		return new OTreeMapEntryDatabase<K, V>(parent, parent.getPageSplitItems());
 	}
 
 	@Override
-	protected OTreeMapEntryDatabase<K, V> createEntry(OTreeMapEntryPersistent<K, V> iParent, ORID iRecordId) throws IOException {
+	protected OTreeMapEntryDatabase<K, V> loadEntry(final OTreeMapEntryPersistent<K, V> iParent, final ORID iRecordId)
+			throws IOException {
 		return new OTreeMapEntryDatabase<K, V>(this, (OTreeMapEntryDatabase<K, V>) iParent, iRecordId);
 	}
 

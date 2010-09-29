@@ -5,14 +5,14 @@ import java.util.Date;
 public interface OProfilerMBean {
 
 	// ----------------------------------------------------------------------------
-	public void updateStatistic(String iStatName, long iPlus);
+	public void updateCounter(String iStatName, long iPlus);
 
 	// ----------------------------------------------------------------------------
-	public long getStatistic(String iStatName);
+	public long getCounter(String iStatName);
 
 	public String dump();
 
-	public String dumpStatistics();
+	public String dumpCounters();
 
 	// ----------------------------------------------------------------------------
 	/**
@@ -34,7 +34,7 @@ public interface OProfilerMBean {
 
 	public String dumpChronos();
 
-	public String[] getStatisticsAsString();
+	public String[] getCountersAsString();
 
 	public String[] getChronosAsString();
 

@@ -25,7 +25,7 @@ import java.util.Map.Entry;
 
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.common.profiler.OProfiler.OChrono;
+import com.orientechnologies.common.profiler.OProfiler.OProfilerEntry;
 import com.orientechnologies.orient.core.config.OEntryConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
@@ -118,7 +118,7 @@ public class OServerCommandGetServer extends OServerCommandAuthenticatedServerAb
 
 			json.beginObject(1, true, "profiler");
 			json.beginCollection(2, true, "stats");
-			for (Entry<String, Long> s : OProfiler.getInstance().getStatistics()) {
+			for (Entry<String, Long> s : OProfiler.getInstance().getCounters()) {
 				json.beginObject(3);
 				writeField(json, 3, "name", s.getKey());
 				writeField(json, 3, "value", s.getValue());
@@ -127,15 +127,15 @@ public class OServerCommandGetServer extends OServerCommandAuthenticatedServerAb
 			json.endCollection(2, false);
 
 			json.beginCollection(2, true, "chronos");
-			for (Entry<String, OChrono> c : OProfiler.getInstance().getChronos()) {
+			for (Entry<String, OProfilerEntry> c : OProfiler.getInstance().getChronos()) {
 				json.beginObject(3);
 				writeField(json, 3, "name", c.getKey());
 				writeField(json, 3, "total", c.getValue().items);
-				writeField(json, 3, "averageElapsed", c.getValue().averageElapsed);
-				writeField(json, 3, "minElapsed", c.getValue().minElapsed);
-				writeField(json, 3, "maxElapsed", c.getValue().maxElapsed);
-				writeField(json, 3, "lastElapsed", c.getValue().lastElapsed);
-				writeField(json, 3, "totalElapsed", c.getValue().totalElapsed);
+				writeField(json, 3, "averageElapsed", c.getValue().average);
+				writeField(json, 3, "minElapsed", c.getValue().min);
+				writeField(json, 3, "maxElapsed", c.getValue().max);
+				writeField(json, 3, "lastElapsed", c.getValue().last);
+				writeField(json, 3, "totalElapsed", c.getValue().total);
 				json.endObject(3);
 			}
 			json.endCollection(2, false);
