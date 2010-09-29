@@ -187,4 +187,8 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase, REC extends
 	public Iterator<Entry<String, Object>> getProperties() {
 		return underlying.getProperties();
 	}
+
+	public void registerListener(final ODatabaseLifecycleListener iListener) {
+		underlying.registerListener(iListener);
+	}
 }

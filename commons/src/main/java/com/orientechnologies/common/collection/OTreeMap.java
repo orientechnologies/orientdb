@@ -48,7 +48,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 	 */
 	transient int														modCount						= 0;
 
-	transient boolean												runtimeCheckEnabled	= true;
+	transient boolean												runtimeCheckEnabled	= false;
 
 	public OTreeMap(final int iSize, final float iLoadFactor) {
 		lastPageSize = iSize;
@@ -310,6 +310,8 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 		int steps = -1;
 		final Comparable<? super K> k = (Comparable<? super K>) key;
 
+		// System.out.println("Searching key " + key + "...");
+
 		try {
 			while (p != null) {
 				steps++;
@@ -333,7 +335,9 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 
 				if (beginKey < 0) {
 					if (pageItemComparator < 0) {
+						// System.out.println("-> Load predecessor of " + p + "...");
 						tmpNode = predecessor(p);
+						// System.out.println("-> Loaded " + tmpNode);
 						if (tmpNode != null && tmpNode != prevNode) {
 							// MINOR THAN THE CURRENT: GET THE LEFT NODE
 							// p = p.getLeft();
@@ -344,7 +348,9 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 					}
 				} else if (beginKey > 0) {
 					if (pageItemComparator > 0) {
+						// System.out.println("-> Load successor of " + p + "...");
 						tmpNode = successor(p);
+						// System.out.println("-> Loaded " + tmpNode);
 						if (tmpNode != null && tmpNode != prevNode) {
 							// MAJOR THAN THE CURRENT: GET THE RIGHT NODE
 							// p = p.getRight();
@@ -2450,7 +2456,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 	}
 
 	protected void printInMemoryStructure(final OTreeMapEntry<K, V> iRootNode) {
-		printInMemoryNode("root", iRootNode.getFirstInMemory(), 0);
+		printInMemoryNode("root", iRootNode, 0);
 	}
 
 	private void printInMemoryNode(final String iLabel, OTreeMapEntry<K, V> iNode, int iLevel) {

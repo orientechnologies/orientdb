@@ -82,6 +82,10 @@ public class OTreeMapEntryDatabase<K, V> extends OTreeMapEntryPersistent<K, V> {
 
 		assureIntegrityOfReferences();
 
+		if (pTree.cache.get(record.getIdentity()) != this)
+			// UPDATE THE CACHE
+			pTree.cache.put(record.getIdentity(), this);
+
 		return this;
 	}
 

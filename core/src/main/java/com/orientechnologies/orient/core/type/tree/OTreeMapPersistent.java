@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.type.tree;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -66,12 +67,13 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 	protected volatile int																	usageCounter							= 0;
 
 	// STORES IN MEMORY DIRECT REFERENCES TO PORTION OF THE TREE
-	protected int																						entryPointSize						= 50;
+	protected int																						entryPointSize						= 20;
 	protected float																					entryPointThresholdFactor	= 1.5f;
 	protected volatile List<OTreeMapEntryPersistent<K, V>>	entryPoints								= new ArrayList<OTreeMapEntryPersistent<K, V>>(
 																																												entryPointSize);
 	protected List<OTreeMapEntryPersistent<K, V>>						tmpEntryPoints						= new ArrayList<OTreeMapEntryPersistent<K, V>>(
 																																												entryPointSize);
+	protected Map<ORID, OTreeMapEntryPersistent<K, V>>			cache											= new HashMap<ORID, OTreeMapEntryPersistent<K, V>>();
 
 	public OTreeMapPersistent(final String iClusterName, final ORID iRID) {
 		this(iClusterName, null, null);
@@ -120,6 +122,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 			usageCounter = 0;
 			entryPoints.clear();
+			cache.clear();
 
 		} catch (IOException e) {
 			OLogManager.instance().error(this, "Error on deleting the tree: " + record.getIdentity(), e, OStorageException.class);
@@ -144,6 +147,9 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 			OLogManager.instance().debug(this, "Starting optimization of RB+Tree...");
 
+//				System.out.println("Begin of optimization.");
+//				printInMemoryStructure();
+
 			if (entryPoints.size() == 0)
 				// FIRST TIME THE LIST IS NULL: START FROM ROOT
 				entryPoints.add((OTreeMapEntryPersistent<K, V>) root);
@@ -156,13 +162,12 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 				tmp = new ArrayList<OTreeMapEntryPersistent<K, V>>();
 
 			for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints) {
-				for (OTreeMapEntryPersistent<K, V> e = (OTreeMapEntryPersistent<K, V>) entryPoint.getFirstInMemory(); e != null; e = e
-						.getNextInMemory()) {
+				for (OTreeMapEntryPersistent<K, V> e = (OTreeMapEntryPersistent<K, V>) entryPoint; e != null; e = e.getNextInMemory()) {
 
 					if (isRuntimeCheckEnabled()) {
 						for (OTreeMapEntryPersistent<K, V> t : tmp)
-							if (t == e || t.record.getIdentity().equals(e.record.getIdentity()))
-								OLogManager.instance().error(this, "Found duplicated Node in memory: " + e);
+							if (t != e && t.record.getIdentity().equals(e.record.getIdentity()))
+								OLogManager.instance().error(this, "Found Node loaded in memory twice with different instances: " + e);
 
 						tmp.add(e);
 					}
@@ -179,6 +184,8 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 				// UNDER THRESHOLD AVOID TO OPTIMIZE
 				return;
 
+			cache.clear();
+
 			// COMPUTE THE DISTANCE BETWEEN NODES
 			final int distance;
 			if (nodes <= entryPointSize)
@@ -190,15 +197,26 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 			OLogManager.instance().debug(this, "Compacting nodes with distance = %d", distance);
 
-			// RESET ALL THE IN-MEMORY NODES NOT IN THE ENTRY POINT LIST
+			// PICK NEW ENTRYPOINTS AT EQUAL DISTANCE
 			int nodeCounter = 0;
 			OTreeMapEntryPersistent<K, V> lastNode = null;
 			for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints)
 				for (OTreeMapEntryPersistent<K, V> e = entryPoint; e != null; e = e.getNextInMemory()) {
 					++nodeCounter;
 
-					if (tmpEntryPoints.size() == 0 || nodeCounter % distance == 0)
-						tmpEntryPoints.add(e);
+					if (tmpEntryPoints.size() == 0 || nodeCounter % distance == 0) {
+						boolean alreadyPresent = false;
+						for (OTreeMapEntryPersistent<K, V> ep : tmpEntryPoints)
+							if (ep == e) {
+								alreadyPresent = true;
+								break;
+							}
+
+						if (alreadyPresent)
+							--nodeCounter;
+						else
+							tmpEntryPoints.add(e);
+					}
 
 					lastNode = e;
 				}
@@ -213,9 +231,11 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 			tmpEntryPoints = a;
 			tmpEntryPoints.clear();
 
-			// FREE ALL THE NODES BUT THE ENTRY POINTS
-			for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints)
+			// FREE ALL THE NODES BUT THE ENTRY POINTS AND PUT THE ENTRYPOINT INTO THE CACHE
+			for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints) {
 				entryPoint.disconnectLinked();
+				cache.put(entryPoint.record.getIdentity(), entryPoint);
+			}
 
 			if (isRuntimeCheckEnabled())
 				if (OLogManager.instance().isDebugEnabled()) {
@@ -230,6 +250,9 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 				}
 
 		} finally {
+//				System.out.println("End of optimization.");
+//				printInMemoryStructure();
+
 			if (isRuntimeCheckEnabled())
 				for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints)
 					checkTreeStructure(entryPoint);
@@ -304,7 +327,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 		try {
 			if (recordsToCommit.size() > 0) {
-				List<OTreeMapEntryPersistent<K, V>> tmp = new ArrayList<OTreeMapEntryPersistent<K, V>>();
+				final List<OTreeMapEntryPersistent<K, V>> tmp = new ArrayList<OTreeMapEntryPersistent<K, V>>();
 
 				while (recordsToCommit.iterator().hasNext()) {
 					// COMMIT BEFORE THE NEW RECORDS (TO ASSURE RID IN RELATIONSHIPS)
@@ -695,6 +718,12 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 		}
 
 		return super.getFirstEntry();
+	}
+
+	private void printInMemoryStructure() {
+		System.out.println("* Entrypoints (" + entryPoints.size() + "), in cache=" + cache.size() + ": *");
+		for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints)
+			printInMemoryStructure(entryPoint);
 	}
 
 	@Override

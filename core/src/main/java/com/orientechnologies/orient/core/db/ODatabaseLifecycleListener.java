@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.common.collection;
+package com.orientechnologies.orient.core.db;
 
 /**
- * Interface to listen events from Tree Map.
+ * Listener Interface for all the events of the Database instances.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * 
  */
-public interface OTreeMapEventListener<K, V> {
-	public void signalTreeChanged(OTreeMap<K, V> iTree);
+public interface ODatabaseLifecycleListener {
+	public void onOpen(final ODatabase iDatabase);
 
-	public void signalNodeChanged(OTreeMapEntry<K, V> iNode);
+	public void onClose(final ODatabase iDatabase);
 }

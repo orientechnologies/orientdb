@@ -246,4 +246,11 @@ public interface ODatabase {
 	 * Returns an iterator of the property entries
 	 */
 	public Iterator<Map.Entry<String, Object>> getProperties();
+
+	/**
+	 * Registers a listener to the database events.
+	 * 
+	 * @param iListener
+	 */
+	public void registerListener(ODatabaseLifecycleListener iListener);
 }

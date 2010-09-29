@@ -47,8 +47,6 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	protected OTreeMapEntryPersistent<K, V>	left;
 	protected OTreeMapEntryPersistent<K, V>	right;
 
-	private byte														parentSide;
-
 	/**
 	 * Called on event of splitting an entry.
 	 * 
@@ -127,6 +125,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 
 	public OTreeMapEntryPersistent<K, V> delete() throws IOException {
 		pTree.removeEntryPoint(this);
+		pTree.cache.remove(record.getIdentity());
 		return this;
 	}
 
@@ -209,17 +208,25 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 
 		if (parent == null && parentRid.isValid()) {
 			try {
+				// System.out.println("Node " + record.getIdentity() + " is loading PARENT node " + parentRid + "...");
+
 				// LAZY LOADING OF THE PARENT NODE
 				parent = pTree.loadEntry(null, parentRid);
 
 				if (tree.isRuntimeCheckEnabled() && !parent.record.getIdentity().equals(parentRid))
 					OLogManager.instance().error(this, "Wrong parent node loaded: " + parentRid);
 
-				if (parent != null)
-					if (parentSide == 1)
+				if (parent != null) {
+					// TRY TO ASSIGN IT FOLLOWING THE RID
+					if (parent.leftRid.equals(record.getIdentity()))
 						parent.left = this;
-					else if (parentSide == 2)
+					else if (parent.rightRid.equals(record.getIdentity()))
 						parent.right = this;
+					else
+						OLogManager.instance().error(this, "Can't assign node %s to parent. Nodes parent-left=%s, parent-right=%s", parentRid,
+								parent.leftRid, parent.rightRid);
+				}
+
 			} catch (IOException e) {
 				OLogManager.instance().error(this, "Can't load the tree. The tree could be invalid.", e, ODatabaseException.class);
 			}
@@ -242,6 +249,8 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	public OTreeMapEntry<K, V> getLeft() {
 		if (leftRid.isValid() && left == null) {
 			try {
+				// System.out.println("Node " + record.getIdentity() + " is loading LEFT node " + leftRid + "...");
+
 				// LAZY LOADING OF THE LEFT LEAF
 				left = pTree.loadEntry(this, leftRid).load();
 
@@ -274,6 +283,8 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 		if (rightRid.isValid() && right == null) {
 			// LAZY LOADING OF THE RIGHT LEAF
 			try {
+				// System.out.println("Node " + record.getIdentity() + " is loading RIGHT node " + rightRid + "...");
+
 				right = pTree.loadEntry(this, rightRid).load();
 
 				if (tree.isRuntimeCheckEnabled() && !right.record.getIdentity().equals(rightRid))
@@ -434,7 +445,6 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 		try {
 			pageSize = buffer.getAsShort();
 
-			parentSide = buffer.getAsByte();
 			parentRid = new ORecordId().fromStream(buffer.getAsByteArray());
 			leftRid = new ORecordId().fromStream(buffer.getAsByteArray());
 			rightRid = new ORecordId().fromStream(buffer.getAsByteArray());
@@ -481,9 +491,6 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 		try {
 			stream.add((short) pageSize);
 
-			parentSide = parent != null ? (byte) (parent.left == this ? 1 : 2) : 0;
-
-			stream.add(parentSide);
 			stream.add(parentRid.toStream());
 			stream.add(leftRid.toStream());
 			stream.add(rightRid.toStream());
@@ -542,7 +549,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	}
 
 	@Override
-	protected void setColor(boolean iColor) {
+	protected void setColor(final boolean iColor) {
 		if (iColor == color)
 			return;
 

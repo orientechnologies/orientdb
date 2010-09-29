@@ -67,7 +67,16 @@ public class OTreeMapStorage<K, V> extends OTreeMapPersistent<K, V> {
 
 	@Override
 	protected OTreeMapEntryStorage<K, V> loadEntry(OTreeMapEntryPersistent<K, V> iParent, ORID iRecordId) throws IOException {
-		return new OTreeMapEntryStorage<K, V>(this, iParent, iRecordId);
+		OTreeMapEntryStorage<K, V> entry = (OTreeMapEntryStorage<K, V>) cache.get(iRecordId);
+		if (entry == null) {
+			// NOT FOUND: CREATE IT AND PUT IT INTO THE CACHE
+			entry = new OTreeMapEntryStorage<K, V>(this, iParent, iRecordId);
+			cache.put(iRecordId, entry);
+		} else
+			// FOUND: ASSIGN IT
+			entry.setParent(iParent);
+
+		return entry;
 	}
 
 	@Override

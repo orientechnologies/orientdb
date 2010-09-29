@@ -15,33 +15,83 @@
  */
 package com.orientechnologies.orient.core.type.tree;
 
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 
 /**
- * Save changes on express call. Useful for massive changes.
+ * Collects changes all together and save them following the selected strategy. By default the map is saved automatically every
+ * "maxUpdatesBeforeSave" updates (=500). "maxUpdatesBeforeSave" is configurable: 0 means no automatic save, 1 means non-lazy map
+ * (save each operation) and > 1 is lazy.
  * 
  * @author Luca Garulli
  */
 @SuppressWarnings("serial")
-public class OTreeMapDatabaseLazySave<K, V> extends OTreeMapDatabase<K, V> {
+public class OTreeMapDatabaseLazySave<K, V> extends OTreeMapDatabase<K, V> implements ODatabaseLifecycleListener {
+	protected int	maxUpdatesBeforeSave	= 500;
+	protected int	updates								= 0;
 
 	public OTreeMapDatabaseLazySave(ODatabaseRecord<?> iDatabase, ORID iRID) {
 		super(iDatabase, iRID);
+		iDatabase.registerListener(this);
 	}
 
 	public OTreeMapDatabaseLazySave(ODatabaseRecord<?> iDatabase, String iClusterName, OStreamSerializer iKeySerializer,
 			OStreamSerializer iValueSerializer) {
 		super(iDatabase, iClusterName, iKeySerializer, iValueSerializer);
+		iDatabase.registerListener(this);
+	}
+
+	/**
+	 * Do nothing since all the changes will be committed expressly at lazySave() time or on closing.
+	 */
+	@Override
+	public synchronized void commitChanges(final ODatabaseRecord<?> iDatabase) {
+		if (maxUpdatesBeforeSave > 0 && ++updates >= maxUpdatesBeforeSave) {
+			lazySave();
+			updates = 0;
+		}
 	}
 
 	@Override
-	public void commitChanges(final ODatabaseRecord<?> iDatabase) {
+	public void clear() {
+		super.clear();
+		lazySave();
 	}
 
 	public void lazySave() {
 		super.commitChanges(database);
 		optimize();
+	}
+
+	public void onOpen(final ODatabase iDatabase) {
+	}
+
+	/**
+	 * Assure to save all the data without the optimization.
+	 */
+	public void onClose(final ODatabase iDatabase) {
+		super.commitChanges(database);
+	}
+
+	/**
+	 * Returns the maximum updates to save the map persistently.
+	 * 
+	 * @return 0 means no automatic save, 1 means non-lazy map (save each operation) and > 1 is lazy.
+	 */
+	public int getMaxUpdatesBeforeSave() {
+		return maxUpdatesBeforeSave;
+	}
+
+	/**
+	 * Sets the maximum updates to save the map persistently.
+	 * 
+	 * @param iValue
+	 *          0 means no automatic save, 1 means non-lazy map (save each operation) and > 1 is lazy.
+	 */
+	public void setMaxUpdatesBeforeSave(final int iValue) {
+		this.maxUpdatesBeforeSave = iValue;
 	}
 }
