@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.type.tree;
 
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -30,18 +31,18 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
  */
 @SuppressWarnings("serial")
 public class OTreeMapDatabaseLazySave<K, V> extends OTreeMapDatabase<K, V> implements ODatabaseLifecycleListener {
-	protected int	maxUpdatesBeforeSave	= 500;
-	protected int	updates								= 0;
+	protected int	maxUpdatesBeforeSave;
+	protected int	updates	= 0;
 
 	public OTreeMapDatabaseLazySave(ODatabaseRecord<?> iDatabase, ORID iRID) {
 		super(iDatabase, iRID);
-		iDatabase.registerListener(this);
+		init(iDatabase);
 	}
 
 	public OTreeMapDatabaseLazySave(ODatabaseRecord<?> iDatabase, String iClusterName, OStreamSerializer iKeySerializer,
 			OStreamSerializer iValueSerializer) {
 		super(iDatabase, iClusterName, iKeySerializer, iValueSerializer);
-		iDatabase.registerListener(this);
+		init(iDatabase);
 	}
 
 	/**
@@ -93,5 +94,10 @@ public class OTreeMapDatabaseLazySave<K, V> extends OTreeMapDatabase<K, V> imple
 	 */
 	public void setMaxUpdatesBeforeSave(final int iValue) {
 		this.maxUpdatesBeforeSave = iValue;
+	}
+
+	private void init(ODatabaseRecord<?> iDatabase) {
+		iDatabase.registerListener(this);
+		maxUpdatesBeforeSave = OConfiguration.TREEMAP_LAZY_UPDATES.getValue();
 	}
 }

@@ -39,7 +39,7 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandManager;
-import com.orientechnologies.orient.core.config.OConfigurationConstants;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.security.OSecurityManager;
@@ -81,7 +81,7 @@ public class OServer {
 		// REGISTER THE COMMAND SCRIPT
 		OCommandManager.instance().register(OCommandScript.class, OCommandExecutorScript.class);
 
-		System.setProperty(OConfigurationConstants.KEEP_STORAGE_OPEN, "true");
+		OConfiguration.STORAGE_KEEP_OPEN.setValue(true);
 		System.setProperty("com.sun.management.jmxremote", "true");
 
 		MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
