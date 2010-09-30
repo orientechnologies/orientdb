@@ -90,7 +90,6 @@ public class OStorageRemote extends OStorageAbstract {
 			userName = iUserName;
 			userPassword = iUserPassword;
 
-			System.out.println("Opening remote connection " + this.hashCode() + "...");
 			openRemoteDatabase();
 			addUser();
 
@@ -142,7 +141,6 @@ public class OStorageRemote extends OStorageAbstract {
 
 	public void close() {
 		boolean locked = acquireExclusiveLock();
-		System.out.println("- Closing remote connection " + this.hashCode() + "...");
 
 		try {
 			network.writeByte(OChannelBinaryProtocol.DB_CLOSE);
