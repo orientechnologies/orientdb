@@ -204,7 +204,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			case OChannelBinaryProtocol.DB_CLOSE:
 				data.commandInfo = "Close Database";
 
-				// connection.storage.close();
+				connection.database.close();
 				break;
 
 			case OChannelBinaryProtocol.DB_EXIST: {
