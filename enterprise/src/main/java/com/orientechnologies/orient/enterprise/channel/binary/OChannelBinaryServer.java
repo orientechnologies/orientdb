@@ -42,8 +42,8 @@ public class OChannelBinaryServer extends OChannelBinary {
 	public OChannelBinaryServer(Socket iSocket) throws IOException {
 		super(iSocket);
 
-		inStream = new BufferedInputStream(socket.getInputStream(), DEFAULT_BUFFER_SIZE);
-		outStream = new BufferedOutputStream(socket.getOutputStream(), DEFAULT_BUFFER_SIZE);
+		inStream = new BufferedInputStream(socket.getInputStream(), socketBufferSize);
+		outStream = new BufferedOutputStream(socket.getOutputStream(), socketBufferSize);
 
 		out = new DataOutputStream(outStream);
 		in = new DataInputStream(inStream);

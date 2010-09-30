@@ -32,13 +32,13 @@ public class OChannelBinaryClient extends OChannelBinary {
 		timeout = iTimeout;
 
 		socket.setPerformancePreferences(0, 2, 1);
-		socket.setSendBufferSize(DEFAULT_BUFFER_SIZE);
-		socket.setReceiveBufferSize(DEFAULT_BUFFER_SIZE);
+		socket.setSendBufferSize(socketBufferSize);
+		socket.setReceiveBufferSize(socketBufferSize);
 
 		socket.connect(new InetSocketAddress(remoteHost, remotePort), timeout);
 
-		inStream = new BufferedInputStream(socket.getInputStream(), DEFAULT_BUFFER_SIZE);
-		outStream = new BufferedOutputStream(socket.getOutputStream(), DEFAULT_BUFFER_SIZE);
+		inStream = new BufferedInputStream(socket.getInputStream(), socketBufferSize);
+		outStream = new BufferedOutputStream(socket.getOutputStream(), socketBufferSize);
 
 		in = new DataInputStream(inStream);
 		out = new DataOutputStream(outStream);

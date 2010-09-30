@@ -32,7 +32,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 	 */
 	protected int														size								= 0;			// PERSISTENT FIELDS
 
-	float																		pageLoadFactor			= 0.7f;
+	protected float																		pageLoadFactor			= 0.7f;
 
 	/**
 	 * The comparator used to maintain order in this tree map, or null if it uses the natural ordering of its keys.

@@ -29,6 +29,7 @@ import com.orientechnologies.common.collection.OTreeMapEventListener;
 import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -51,38 +52,40 @@ import com.orientechnologies.orient.core.storage.impl.local.OClusterLogical;
  */
 @SuppressWarnings("serial")
 public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMapEventListener<K, V>, OSerializableStream {
-	protected int																						optimizeThreshold					= 50000;
+	protected int																						optimizeThreshold;
 
-	protected OSharedResourceExternal												lock											= new OSharedResourceExternal();
+	protected OSharedResourceExternal												lock						= new OSharedResourceExternal();
 
 	protected OStreamSerializer															keySerializer;
 	protected OStreamSerializer															valueSerializer;
 
-	protected final List<OTreeMapEntryPersistent<K, V>>			recordsToCommit						= new ArrayList<OTreeMapEntryPersistent<K, V>>();
+	protected final List<OTreeMapEntryPersistent<K, V>>			recordsToCommit	= new ArrayList<OTreeMapEntryPersistent<K, V>>();
 	protected final OMemoryOutputStream											entryRecordBuffer;
 
 	protected final String																	clusterName;
 	protected ORecordBytes																	record;
 	protected String																				fetchPlan;
-	protected volatile int																	usageCounter							= 0;
+	protected volatile int																	usageCounter		= 0;
 
 	// STORES IN MEMORY DIRECT REFERENCES TO PORTION OF THE TREE
-	protected int																						entryPointSize						= 20;
-	protected float																					entryPointThresholdFactor	= 1.5f;
-	protected volatile List<OTreeMapEntryPersistent<K, V>>	entryPoints								= new ArrayList<OTreeMapEntryPersistent<K, V>>(
-																																												entryPointSize);
-	protected List<OTreeMapEntryPersistent<K, V>>						tmpEntryPoints						= new ArrayList<OTreeMapEntryPersistent<K, V>>(
-																																												entryPointSize);
-	protected Map<ORID, OTreeMapEntryPersistent<K, V>>			cache											= new HashMap<ORID, OTreeMapEntryPersistent<K, V>>();
+	protected int																						entryPointsSize;
+	protected float																					entryPointsFullFactor;
+	protected volatile List<OTreeMapEntryPersistent<K, V>>	entryPoints			= new ArrayList<OTreeMapEntryPersistent<K, V>>(
+																																							entryPointsSize);
+	protected List<OTreeMapEntryPersistent<K, V>>						tmpEntryPoints	= new ArrayList<OTreeMapEntryPersistent<K, V>>(
+																																							entryPointsSize);
+	protected Map<ORID, OTreeMapEntryPersistent<K, V>>			cache						= new HashMap<ORID, OTreeMapEntryPersistent<K, V>>();
 
 	public OTreeMapPersistent(final String iClusterName, final ORID iRID) {
 		this(iClusterName, null, null);
 		record.setIdentity(iRID.getClusterId(), iRID.getClusterPosition());
+		config();
 	}
 
 	public OTreeMapPersistent(String iClusterName, final OStreamSerializer iKeySerializer, final OStreamSerializer iValueSerializer) {
 		// MINIMIZE I/O USING A LARGER PAGE THAN THE DEFAULT USED IN MEMORY
 		super(1024, 0.7f);
+		config();
 
 		clusterName = iClusterName;
 		record = new ORecordBytes();
@@ -147,8 +150,8 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 			OLogManager.instance().debug(this, "Starting optimization of RB+Tree...");
 
-//				System.out.println("Begin of optimization.");
-//				printInMemoryStructure();
+			// System.out.println("Begin of optimization.");
+			// printInMemoryStructure();
 
 			if (entryPoints.size() == 0)
 				// FIRST TIME THE LIST IS NULL: START FROM ROOT
@@ -178,9 +181,9 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 			if (OLogManager.instance().isDebugEnabled())
 				OLogManager.instance().debug(this, "Found %d nodes in memory, %d items on disk, threshold=%d, entryPoints=%d", nodes, size,
-						(entryPointSize * entryPointThresholdFactor), entryPoints.size());
+						(entryPointsSize * entryPointsFullFactor), entryPoints.size());
 
-			if (nodes < entryPointSize * entryPointThresholdFactor)
+			if (nodes < entryPointsSize * entryPointsFullFactor)
 				// UNDER THRESHOLD AVOID TO OPTIMIZE
 				return;
 
@@ -188,10 +191,10 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 			// COMPUTE THE DISTANCE BETWEEN NODES
 			final int distance;
-			if (nodes <= entryPointSize)
+			if (nodes <= entryPointsSize)
 				distance = 1;
 			else
-				distance = nodes / entryPointSize + 1;
+				distance = nodes / entryPointsSize + 1;
 
 			tmpEntryPoints.clear();
 
@@ -246,12 +249,12 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 							++nodes;
 
 					OLogManager.instance().debug(this, "Now Found %d nodes in memory and threshold=%d. EntryPoints=%d", nodes,
-							(entryPointSize * entryPointThresholdFactor), entryPoints.size());
+							(entryPointsSize * entryPointsFullFactor), entryPoints.size());
 				}
 
 		} finally {
-//				System.out.println("End of optimization.");
-//				printInMemoryStructure();
+			// System.out.println("End of optimization.");
+			// printInMemoryStructure();
 
 			if (isRuntimeCheckEnabled())
 				for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints)
@@ -564,11 +567,11 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 	}
 
 	public int getEntryPointSize() {
-		return entryPointSize;
+		return entryPointsSize;
 	}
 
 	public void setEntryPointSize(int entryPointSize) {
-		this.entryPointSize = entryPointSize;
+		this.entryPointsSize = entryPointSize;
 	}
 
 	private V internalPut(final K key, final V value) {
@@ -731,5 +734,13 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 		super.setRoot(iRoot);
 		if (listener != null)
 			listener.signalTreeChanged(this);
+	}
+
+	private void config() {
+		lastPageSize = OConfiguration.TREEMAP_NODE_PAGE_SIZE.getValue();
+		pageLoadFactor = OConfiguration.TREEMAP_LOAD_FACTOR.getValue();
+		optimizeThreshold = OConfiguration.TREEMAP_OPTIMIZE_THRESHOLD.getValue();
+		entryPointsSize = OConfiguration.TREEMAP_ENTRYPOINTS.getValue();
+		entryPointsFullFactor = OConfiguration.TREEMAP_ENTRYPOINTS_FULLFACTOR.getValue();
 	}
 }

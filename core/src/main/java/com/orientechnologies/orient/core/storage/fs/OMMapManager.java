@@ -22,16 +22,24 @@ import java.util.LinkedList;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.config.OConfiguration;
 
 public class OMMapManager {
-	public static final int											DEF_BLOCK_SIZE	= 300000;
-	private static final int										MAX_MEMORY			= 110000000;
-	private static final int										FORCE_DELAY			= 500;
-	private static final int										FORCE_RETRY			= 5;
+	public static final int											DEF_BLOCK_SIZE;
+	private static final int										MAX_MEMORY;
+	private static final int										FORCE_DELAY;
+	private static final int										FORCE_RETRY;
 
 	private static int													totalMemory;
 
-	private static LinkedList<OMMapBufferEntry>	buffersLRU			= new LinkedList<OMMapBufferEntry>();
+	private static LinkedList<OMMapBufferEntry>	buffersLRU	= new LinkedList<OMMapBufferEntry>();
+
+	static {
+		DEF_BLOCK_SIZE = OConfiguration.FILE_MMAP_DEF_BLOCK_SIZE.getValue();
+		MAX_MEMORY = OConfiguration.FILE_MMAP_MAX_MEMORY.getValue();
+		FORCE_DELAY = OConfiguration.FILE_MMAP_FORCE_DELAY.getValue();
+		FORCE_RETRY = OConfiguration.FILE_MMAP_FORCE_RETRY.getValue();
+	}
 
 	public static OMMapBufferEntry request(final OFileMMap iFile, final int iBeginOffset, final int iSize) {
 		return request(iFile, iBeginOffset, iSize, false);

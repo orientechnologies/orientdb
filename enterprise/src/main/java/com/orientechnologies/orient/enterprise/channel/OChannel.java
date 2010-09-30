@@ -20,16 +20,19 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
+import com.orientechnologies.orient.core.config.OConfiguration;
+
 public abstract class OChannel {
-	public Socket						socket;
+	public Socket				socket;
 
-	public InputStream			inStream;
-	public OutputStream			outStream;
+	public InputStream	inStream;
+	public OutputStream	outStream;
 
-	public static final int	DEFAULT_BUFFER_SIZE	= 32768;
+	public int					socketBufferSize;
 
 	public OChannel(Socket iSocket) throws IOException {
 		socket = iSocket;
+		socketBufferSize = OConfiguration.NETWORK_SOCKET_BUFFER_SIZE.getValue();
 	}
 
 	public void flush() throws IOException {
