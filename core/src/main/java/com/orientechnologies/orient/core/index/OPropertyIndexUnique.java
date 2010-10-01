@@ -55,9 +55,11 @@ public class OPropertyIndexUnique extends OPropertyIndex {
 		List<ORecordId> values = map.get(iKey);
 		if (values == null)
 			values = new ArrayList<ORecordId>();
-
-		// UNIQUE
-		if (values.size() > 0)
+		else if (values.size() == 1) {
+			// CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
+			if (!values.get(0).equals(iSingleValue))
+				throw new OIndexException("Found duplicated key '" + iKey + "' on unique index defined in property: " + owner);
+		} else if (values.size() > 1)
 			throw new OIndexException("Found duplicated key '" + iKey + "' on unique index defined in property: " + owner);
 
 		values.add(iSingleValue);
