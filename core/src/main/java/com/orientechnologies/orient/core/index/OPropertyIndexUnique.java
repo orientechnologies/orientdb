@@ -59,6 +59,8 @@ public class OPropertyIndexUnique extends OPropertyIndex {
 			// CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
 			if (!values.get(0).equals(iSingleValue))
 				throw new OIndexException("Found duplicated key '" + iKey + "' on unique index defined in property: " + owner);
+			else
+				return;
 		} else if (values.size() > 1)
 			throw new OIndexException("Found duplicated key '" + iKey + "' on unique index defined in property: " + owner);
 
