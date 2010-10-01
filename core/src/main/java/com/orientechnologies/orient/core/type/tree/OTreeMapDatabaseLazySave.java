@@ -98,6 +98,6 @@ public class OTreeMapDatabaseLazySave<K, V> extends OTreeMapDatabase<K, V> imple
 
 	private void init(ODatabaseRecord<?> iDatabase) {
 		iDatabase.registerListener(this);
-		maxUpdatesBeforeSave = OConfiguration.TREEMAP_LAZY_UPDATES.getValue();
+		maxUpdatesBeforeSave = OConfiguration.TREEMAP_LAZY_UPDATES.getValueAsInteger();
 	}
 }

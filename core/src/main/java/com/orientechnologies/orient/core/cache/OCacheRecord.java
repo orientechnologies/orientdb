@@ -42,7 +42,7 @@ public class OCacheRecord extends OSharedResourceAdaptive {
 	 *          Maximum number of elements for the cache
 	 */
 	public OCacheRecord() {
-		maxSize = OConfiguration.CACHE_SIZE.getValue();
+		maxSize = OConfiguration.CACHE_SIZE.getValueAsInteger();
 
 		cache = new LinkedHashMap<String, ORawBuffer>(maxSize, 0.75f, true) {
 			@Override

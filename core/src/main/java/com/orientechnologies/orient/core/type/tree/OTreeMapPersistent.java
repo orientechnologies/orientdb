@@ -737,10 +737,10 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 	}
 
 	private void config() {
-		lastPageSize = OConfiguration.TREEMAP_NODE_PAGE_SIZE.getValue();
-		pageLoadFactor = OConfiguration.TREEMAP_LOAD_FACTOR.getValue();
-		optimizeThreshold = OConfiguration.TREEMAP_OPTIMIZE_THRESHOLD.getValue();
-		entryPointsSize = OConfiguration.TREEMAP_ENTRYPOINTS.getValue();
-		optimizeEntryPointsFactor = OConfiguration.TREEMAP_OPTIMIZE_ENTRYPOINTS_FACTOR.getValue();
+		lastPageSize = OConfiguration.TREEMAP_NODE_PAGE_SIZE.getValueAsInteger();
+		pageLoadFactor = OConfiguration.TREEMAP_LOAD_FACTOR.getValueAsFloat();
+		optimizeThreshold = OConfiguration.TREEMAP_OPTIMIZE_THRESHOLD.getValueAsInteger();
+		entryPointsSize = OConfiguration.TREEMAP_ENTRYPOINTS.getValueAsInteger();
+		optimizeEntryPointsFactor = OConfiguration.TREEMAP_OPTIMIZE_ENTRYPOINTS_FACTOR.getValueAsFloat();
 	}
 }

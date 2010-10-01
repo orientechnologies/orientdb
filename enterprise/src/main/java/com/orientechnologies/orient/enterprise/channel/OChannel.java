@@ -32,7 +32,7 @@ public abstract class OChannel {
 
 	public OChannel(Socket iSocket) throws IOException {
 		socket = iSocket;
-		socketBufferSize = OConfiguration.NETWORK_SOCKET_BUFFER_SIZE.getValue();
+		socketBufferSize = OConfiguration.NETWORK_SOCKET_BUFFER_SIZE.getValueAsInteger();
 	}
 
 	public void flush() throws IOException {

@@ -125,7 +125,7 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 	}
 
 	/**
-	 * Execute the GRANT.
+	 * Execute the CREATE LINK.
 	 */
 	public Object execute(final Object... iArgs) {
 		if (destField == null)

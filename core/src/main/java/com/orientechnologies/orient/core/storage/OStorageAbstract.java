@@ -77,7 +77,7 @@ public abstract class OStorageAbstract extends OSharedResourceAdaptive implement
 	public int removeUser() {
 		int u = super.removeUser();
 
-		boolean keepOpen = OConfiguration.STORAGE_KEEP_OPEN.getValue();
+		boolean keepOpen = OConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean();
 		if (u == 0 && !keepOpen)
 			close();
 

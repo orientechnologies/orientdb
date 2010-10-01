@@ -135,7 +135,7 @@ public class OServerNetworkListener extends Thread {
 		ONetworkProtocol protocol;
 		OClientConnection connection;
 
-		final int socketBufferSize = OConfiguration.NETWORK_SOCKET_BUFFER_SIZE.getValue();
+		final int socketBufferSize = OConfiguration.NETWORK_SOCKET_BUFFER_SIZE.getValueAsInteger();
 
 		try {
 			while (active) {
