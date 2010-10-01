@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 
 /**
@@ -31,146 +32,146 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
  */
 @SuppressWarnings("serial")
 public class OCacheRecord extends OSharedResourceAdaptive {
-  private final int                         maxSize;
-  private LinkedHashMap<String, ORawBuffer> cache;
+	private final int													maxSize;
+	private LinkedHashMap<String, ORawBuffer>	cache;
 
-  /**
-   * Create the cache of iMaxSize size.
-   * 
-   * @param iMaxSize
-   *          Maximum number of elements for the cache
-   */
-  public OCacheRecord(final int iMaxSize) {
-    maxSize = iMaxSize;
+	/**
+	 * Create the cache of iMaxSize size.
+	 * 
+	 * @param iMaxSize
+	 *          Maximum number of elements for the cache
+	 */
+	public OCacheRecord() {
+		maxSize = OConfiguration.CACHE_SIZE.getValue();
 
-    cache = new LinkedHashMap<String, ORawBuffer>(iMaxSize, 0.75f, true) {
-      @Override
-      protected boolean removeEldestEntry(java.util.Map.Entry<String, ORawBuffer> iEldest) {
-        return size() > maxSize;
-      }
-    };
-  }
+		cache = new LinkedHashMap<String, ORawBuffer>(maxSize, 0.75f, true) {
+			@Override
+			protected boolean removeEldestEntry(java.util.Map.Entry<String, ORawBuffer> iEldest) {
+				return size() > maxSize;
+			}
+		};
+	}
 
-  public void pushRecord(final String iRecord, ORawBuffer iContent) {
-    if (maxSize == 0)
-      return;
+	public void pushRecord(final String iRecord, ORawBuffer iContent) {
+		if (maxSize == 0)
+			return;
 
-    final boolean locked = acquireExclusiveLock();
+		final boolean locked = acquireExclusiveLock();
 
-    try {
-      cache.put(iRecord, iContent);
+		try {
+			cache.put(iRecord, iContent);
 
-    } finally {
-      releaseExclusiveLock(locked);
-    }
-  }
+		} finally {
+			releaseExclusiveLock(locked);
+		}
+	}
 
-  /**
-   * Find a record in cache by String
-   * 
-   * @param iRecord
-   *          String instance
-   * @return The record buffer if found, otherwise null
-   */
-  public ORawBuffer getRecord(final String iRecord) {
-    if (maxSize == 0)
-      return null;
+	/**
+	 * Find a record in cache by String
+	 * 
+	 * @param iRecord
+	 *          String instance
+	 * @return The record buffer if found, otherwise null
+	 */
+	public ORawBuffer getRecord(final String iRecord) {
+		if (maxSize == 0)
+			return null;
 
-    final boolean locked = acquireSharedLock();
+		final boolean locked = acquireSharedLock();
 
-    try {
-      return cache.get(iRecord);
+		try {
+			return cache.get(iRecord);
 
-    } finally {
-      releaseSharedLock(locked);
-    }
-  }
+		} finally {
+			releaseSharedLock(locked);
+		}
+	}
 
-  public ORawBuffer popRecord(final String iRecord) {
-    if (maxSize == 0)
-      return null;
+	public ORawBuffer popRecord(final String iRecord) {
+		if (maxSize == 0)
+			return null;
 
-    final boolean locked = acquireExclusiveLock();
+		final boolean locked = acquireExclusiveLock();
 
-    try {
-      ORawBuffer buffer = cache.remove(iRecord);
+		try {
+			ORawBuffer buffer = cache.remove(iRecord);
 
-      if (buffer != null)
-        OProfiler.getInstance().updateCounter("Cache.reused", +1);
+			if (buffer != null)
+				OProfiler.getInstance().updateCounter("Cache.reused", +1);
 
-      return buffer;
-    } finally {
-      releaseExclusiveLock(locked);
-    }
-  }
+			return buffer;
+		} finally {
+			releaseExclusiveLock(locked);
+		}
+	}
 
-  public void removeRecord(final String iRecord) {
-    if (maxSize == 0)
-      return;
+	public void removeRecord(final String iRecord) {
+		if (maxSize == 0)
+			return;
 
-    final boolean locked = acquireExclusiveLock();
+		final boolean locked = acquireExclusiveLock();
 
-    try {
-      cache.remove(iRecord);
+		try {
+			cache.remove(iRecord);
 
-    } finally {
-      releaseExclusiveLock(locked);
-    }
-  }
+		} finally {
+			releaseExclusiveLock(locked);
+		}
+	}
 
-  /**
-   * Remove multiple records from the cache in one shot saving the cost of locking for each record.
-   * 
-   * @param iRecords
-   *          List of Strings
-   */
-  public void removeRecords(final Collection<String> iRecords) {
-    if (maxSize == 0)
-      return;
+	/**
+	 * Remove multiple records from the cache in one shot saving the cost of locking for each record.
+	 * 
+	 * @param iRecords
+	 *          List of Strings
+	 */
+	public void removeRecords(final Collection<String> iRecords) {
+		if (maxSize == 0)
+			return;
 
-    final boolean locked = acquireExclusiveLock();
+		final boolean locked = acquireExclusiveLock();
 
-    try {
-      for (String id : iRecords)
-        cache.remove(id);
+		try {
+			for (String id : iRecords)
+				cache.remove(id);
 
-    } finally {
-      releaseExclusiveLock(locked);
-    }
-  }
+		} finally {
+			releaseExclusiveLock(locked);
+		}
+	}
 
-  public void clear() {
-    if (maxSize == 0)
-      return;
+	public void clear() {
+		if (maxSize == 0)
+			return;
 
-    final boolean locked = acquireExclusiveLock();
+		final boolean locked = acquireExclusiveLock();
 
-    try {
-      cache.clear();
+		try {
+			cache.clear();
 
-    } finally {
-      releaseExclusiveLock(locked);
-    }
-  }
+		} finally {
+			releaseExclusiveLock(locked);
+		}
+	}
 
-  public int getMaxSize() {
-    return maxSize;
-  }
+	public int getMaxSize() {
+		return maxSize;
+	}
 
-  public int size() {
-    final boolean locked = acquireSharedLock();
+	public int size() {
+		final boolean locked = acquireSharedLock();
 
-    try {
-      return cache.size();
+		try {
+			return cache.size();
 
-    } finally {
-      releaseSharedLock(locked);
-    }
-  }
+		} finally {
+			releaseSharedLock(locked);
+		}
+	}
 
-  @Override
-  public String toString() {
-    return "Cached items=" + cache.size() + ", maxSize=" + maxSize;
-  }
+	@Override
+	public String toString() {
+		return "Cached items=" + cache.size() + ", maxSize=" + maxSize;
+	}
 
 }

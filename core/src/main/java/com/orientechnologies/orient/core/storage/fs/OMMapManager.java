@@ -35,7 +35,7 @@ public class OMMapManager {
 	private static LinkedList<OMMapBufferEntry>	buffersLRU	= new LinkedList<OMMapBufferEntry>();
 
 	static {
-		DEF_BLOCK_SIZE = OConfiguration.FILE_MMAP_DEF_BLOCK_SIZE.getValue();
+		DEF_BLOCK_SIZE = OConfiguration.FILE_MMAP_BLOCK_SIZE.getValue();
 		MAX_MEMORY = OConfiguration.FILE_MMAP_MAX_MEMORY.getValue();
 		FORCE_DELAY = OConfiguration.FILE_MMAP_FORCE_DELAY.getValue();
 		FORCE_RETRY = OConfiguration.FILE_MMAP_FORCE_RETRY.getValue();

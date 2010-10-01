@@ -26,20 +26,24 @@ import java.util.Map.Entry;
  */
 public enum OConfiguration {
 	STORAGE_KEEP_OPEN("orientdb.storage.keepOpen", Boolean.FALSE),
-	
+
+	CACHE_SIZE("orientdb.cache.size", 10000),
+
 	TREEMAP_LAZY_UPDATES("orientdb.treemap.lazyUpdates", 500),
 	TREEMAP_NODE_PAGE_SIZE("orientdb.treemap.nodePageSize", 1024),
 	TREEMAP_LOAD_FACTOR("orientdb.treemap.loadFactor", 0.7f),
 	TREEMAP_OPTIMIZE_THRESHOLD("orientdb.treemap.optimizeThreshold", 50000),
+	TREEMAP_OPTIMIZE_ENTRYPOINTS_FACTOR("orientdb.treemap.optimizeEntryPointsFactor", 1.5f),
 	TREEMAP_ENTRYPOINTS("orientdb.treemap.entrypoints", 20),
-	TREEMAP_ENTRYPOINTS_FULLFACTOR("orientdb.treemap.entrypointsFullFactor", 1.5f),
 	
-	FILE_MMAP_DEF_BLOCK_SIZE("orientdb.file.mmap.defBlockSize", 300000),
+	FILE_MMAP_BLOCK_SIZE("orientdb.file.mmap.blockSize", 300000),
 	FILE_MMAP_MAX_MEMORY("orientdb.file.mmap.maxMemory", 110000000),
 	FILE_MMAP_FORCE_DELAY("orientdb.file.mmap.forceDelay", 500),
 	FILE_MMAP_FORCE_RETRY("orientdb.file.mmap.forceRetry", 5),
 
-	NETWORK_SOCKET_BUFFER_SIZE( "orientdb.network.socketBufferSize", 32768);
+	NETWORK_SOCKET_BUFFER_SIZE( "orientdb.network.socketBufferSize", 32768),
+	NETWORK_HTTP_TIMEOUT( "orientdb.network.http.timeout", 10000),
+	NETWORK_HTTP_MAX_CONTENT_LENGTH( "orientdb.network.http.maxLength", 10000);
 
 	private final String	key;
 	private final Object	defValue;

@@ -69,7 +69,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 	// STORES IN MEMORY DIRECT REFERENCES TO PORTION OF THE TREE
 	protected int																						entryPointsSize;
-	protected float																					entryPointsFullFactor;
+	protected float																					optimizeEntryPointsFactor;
 	protected volatile List<OTreeMapEntryPersistent<K, V>>	entryPoints			= new ArrayList<OTreeMapEntryPersistent<K, V>>(
 																																							entryPointsSize);
 	protected List<OTreeMapEntryPersistent<K, V>>						tmpEntryPoints	= new ArrayList<OTreeMapEntryPersistent<K, V>>(
@@ -181,9 +181,9 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 			if (OLogManager.instance().isDebugEnabled())
 				OLogManager.instance().debug(this, "Found %d nodes in memory, %d items on disk, threshold=%d, entryPoints=%d", nodes, size,
-						(entryPointsSize * entryPointsFullFactor), entryPoints.size());
+						(entryPointsSize * optimizeEntryPointsFactor), entryPoints.size());
 
-			if (nodes < entryPointsSize * entryPointsFullFactor)
+			if (nodes < entryPointsSize * optimizeEntryPointsFactor)
 				// UNDER THRESHOLD AVOID TO OPTIMIZE
 				return;
 
@@ -249,7 +249,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 							++nodes;
 
 					OLogManager.instance().debug(this, "Now Found %d nodes in memory and threshold=%d. EntryPoints=%d", nodes,
-							(entryPointsSize * entryPointsFullFactor), entryPoints.size());
+							(entryPointsSize * optimizeEntryPointsFactor), entryPoints.size());
 				}
 
 		} finally {
@@ -741,6 +741,6 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 		pageLoadFactor = OConfiguration.TREEMAP_LOAD_FACTOR.getValue();
 		optimizeThreshold = OConfiguration.TREEMAP_OPTIMIZE_THRESHOLD.getValue();
 		entryPointsSize = OConfiguration.TREEMAP_ENTRYPOINTS.getValue();
-		entryPointsFullFactor = OConfiguration.TREEMAP_ENTRYPOINTS_FULLFACTOR.getValue();
+		optimizeEntryPointsFactor = OConfiguration.TREEMAP_OPTIMIZE_ENTRYPOINTS_FACTOR.getValue();
 	}
 }
