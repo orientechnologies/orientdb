@@ -518,7 +518,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				String key = channel.readString();
 				ORecordInternal<?> value = ORecordFactory.newInstance(channel.readByte());
 
-				final ORecordId rid = new ORecordId(channel.readString());
+				final ORecordId rid = new ORecordId(channel.readShort(), channel.readLong());
 				value.setIdentity(rid.clusterId, rid.clusterPosition);
 				value.setDatabase(connection.database);
 

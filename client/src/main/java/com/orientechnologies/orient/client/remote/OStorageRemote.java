@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -699,10 +700,13 @@ public class OStorageRemote extends OStorageAbstract {
 			boolean locked = acquireExclusiveLock();
 
 			try {
+				final ORID rid = iRecord.getIdentity();
+
 				network.writeByte(OChannelBinaryProtocol.DICTIONARY_PUT);
 				network.writeString(iKey);
 				network.writeByte(iRecord.getRecordType());
-				network.writeString(iRecord.getIdentity().toString());
+				network.writeShort((short) rid.getClusterId());
+				network.writeLong(rid.getClusterPosition());
 				network.flush();
 
 				readStatus();
