@@ -88,7 +88,7 @@ public class FullTextIndexTest {
 		ODocument doc = new ODocument(database);
 
 		StringBuilder text = new StringBuilder();
-		Random random = new Random();
+		Random random = new Random(1000);
 
 		for (int i = 0; i < TOT; ++i) {
 			doc.reset();
