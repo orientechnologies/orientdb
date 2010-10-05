@@ -56,7 +56,6 @@ public class ObjectTreeTest {
 
 		Profile garibaldi = new Profile("GGaribaldi", "Giuseppe", "Garibaldi", null);
 		garibaldi.setLocation(new Address("Residence", new City(italy, "Rome"), "Piazza Navona, 1"));
-		database.save(garibaldi);
 
 		Profile bonaparte = new Profile("NBonaparte", "Napoleone", "Bonaparte", garibaldi);
 		bonaparte.setLocation(new Address("Residence", garibaldi.getLocation().getCity(), "Piazza di Spagna, 111"));
