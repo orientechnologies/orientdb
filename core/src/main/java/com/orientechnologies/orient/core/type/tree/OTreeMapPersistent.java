@@ -72,7 +72,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 	protected float																					optimizeEntryPointsFactor;
 	protected volatile List<OTreeMapEntryPersistent<K, V>>	entryPoints			= new ArrayList<OTreeMapEntryPersistent<K, V>>(
 																																							entryPointsSize);
-	protected List<OTreeMapEntryPersistent<K, V>>						tmpEntryPoints	= new ArrayList<OTreeMapEntryPersistent<K, V>>(
+	protected List<OTreeMapEntryPersistent<K, V>>						newEntryPoints	= new ArrayList<OTreeMapEntryPersistent<K, V>>(
 																																							entryPointsSize);
 	protected Map<ORID, OTreeMapEntryPersistent<K, V>>			cache						= new HashMap<ORID, OTreeMapEntryPersistent<K, V>>();
 
@@ -116,12 +116,11 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 		lock.acquireExclusiveLock();
 
 		try {
-			if (root != null)
+			if (root != null) {
 				((OTreeMapEntryPersistent<K, V>) root).delete();
-
-			super.clear();
-
-			getListener().signalTreeChanged(this);
+				super.clear();
+				getListener().signalTreeChanged(this);
+			}
 
 			usageCounter = 0;
 			entryPoints.clear();
@@ -148,7 +147,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 			if (root == null)
 				return;
 
-			OLogManager.instance().debug(this, "Starting optimization of RB+Tree...");
+//			OLogManager.instance().info(this, "Starting optimization of RB+Tree...");
 
 			// System.out.println("Begin of optimization.");
 			// printInMemoryStructure();
@@ -165,7 +164,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 				tmp = new ArrayList<OTreeMapEntryPersistent<K, V>>();
 
 			for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints) {
-				for (OTreeMapEntryPersistent<K, V> e = (OTreeMapEntryPersistent<K, V>) entryPoint; e != null; e = e.getNextInMemory()) {
+				for (OTreeMapEntryPersistent<K, V> e = (OTreeMapEntryPersistent<K, V>) entryPoint.getFirstInMemory(); e != null; e = e.getNextInMemory()) {
 
 					if (isRuntimeCheckEnabled()) {
 						for (OTreeMapEntryPersistent<K, V> t : tmp)
@@ -187,8 +186,6 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 				// UNDER THRESHOLD AVOID TO OPTIMIZE
 				return;
 
-			cache.clear();
-
 			// COMPUTE THE DISTANCE BETWEEN NODES
 			final int distance;
 			if (nodes <= entryPointsSize)
@@ -196,20 +193,38 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 			else
 				distance = nodes / entryPointsSize + 1;
 
-			tmpEntryPoints.clear();
+			newEntryPoints.clear();
 
 			OLogManager.instance().debug(this, "Compacting nodes with distance = %d", distance);
 
 			// PICK NEW ENTRYPOINTS AT EQUAL DISTANCE
 			int nodeCounter = 0;
 			OTreeMapEntryPersistent<K, V> lastNode = null;
-			for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints)
-				for (OTreeMapEntryPersistent<K, V> e = entryPoint; e != null; e = e.getNextInMemory()) {
+			OTreeMapEntryPersistent<K, V> currNode;
+
+			for (int i = 0; i < entryPoints.size(); ++i) {
+				currNode = entryPoints.get(i);
+
+				for (OTreeMapEntryPersistent<K, V> e = (OTreeMapEntryPersistent<K, V>) currNode.getFirstInMemory(); e != null; e = e
+						.getNextInMemory()) {
+
+					boolean alreadyPresent = false;
+
+					// CHECK THAT THE NODE IS NOT PART OF A NEXT ENTRY-POINTS: THIS IS THE CASE WHEN THE TREE CHUNKS ARE CONNECTED
+					// BETWEEN THEM
+					for (int k = i + 1; k < entryPoints.size(); ++k)
+						if (e == entryPoints.get(k)) {
+							alreadyPresent = true;
+							break;
+						}
+
+					if (alreadyPresent)
+						continue;
+
 					++nodeCounter;
 
-					if (tmpEntryPoints.size() == 0 || nodeCounter % distance == 0) {
-						boolean alreadyPresent = false;
-						for (OTreeMapEntryPersistent<K, V> ep : tmpEntryPoints)
+					if (newEntryPoints.size() == 0 || nodeCounter % distance == 0) {
+						for (OTreeMapEntryPersistent<K, V> ep : newEntryPoints)
 							if (ep == e) {
 								alreadyPresent = true;
 								break;
@@ -218,23 +233,25 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 						if (alreadyPresent)
 							--nodeCounter;
 						else
-							tmpEntryPoints.add(e);
+							newEntryPoints.add(e);
 					}
 
 					lastNode = e;
 				}
+			}
 
-			if (tmpEntryPoints.size() > 1 && tmpEntryPoints.get(tmpEntryPoints.size() - 1) != lastNode)
+			if (newEntryPoints.size() > 1 && newEntryPoints.get(newEntryPoints.size() - 1) != lastNode)
 				// ADD THE LAST ONE IF IT'S NOT YET PRESENT
-				tmpEntryPoints.add(lastNode);
+				newEntryPoints.add(lastNode);
 
 			// SWAP TMP AND REAL ENTRY POINT COLLECTIONS
 			final List<OTreeMapEntryPersistent<K, V>> a = entryPoints;
-			entryPoints = tmpEntryPoints;
-			tmpEntryPoints = a;
-			tmpEntryPoints.clear();
+			entryPoints = newEntryPoints;
+			newEntryPoints = a;
+			newEntryPoints.clear();
 
 			// FREE ALL THE NODES BUT THE ENTRY POINTS AND PUT THE ENTRYPOINT INTO THE CACHE
+			cache.clear();
 			for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints) {
 				entryPoint.disconnectLinked();
 				cache.put(entryPoint.record.getIdentity(), entryPoint);
@@ -258,7 +275,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 			if (isRuntimeCheckEnabled())
 				for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints)
-					checkTreeStructure(entryPoint);
+					checkTreeStructure(entryPoint.getFirstInMemory());
 
 			lock.releaseExclusiveLock();
 			OProfiler.getInstance().stopChrono("OTreeMapPersistent.optimize", timer);
@@ -334,8 +351,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 				while (recordsToCommit.iterator().hasNext()) {
 					// COMMIT BEFORE THE NEW RECORDS (TO ASSURE RID IN RELATIONSHIPS)
-					for (OTreeMapEntryPersistent<K, V> node : recordsToCommit)
-						tmp.add(node);
+					tmp.addAll(recordsToCommit);
 
 					recordsToCommit.clear();
 
@@ -348,6 +364,8 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 							// CREATE THE RECORD
 							node.save();
 						}
+
+					tmp.clear();
 				}
 
 				recordsToCommit.clear();
@@ -574,6 +592,23 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 		this.entryPointsSize = entryPointSize;
 	}
 
+	@Override
+	public String toString() {
+		final int currPageIndex = pageIndex;
+
+		final StringBuilder buffer = new StringBuilder();
+		buffer.append("size=");
+		buffer.append(size);
+		buffer.append(" ");
+		buffer.append(getFirstEntry().getFirstKey());
+		buffer.append("-");
+		buffer.append(getLastEntry().getLastKey());
+
+		pageIndex = currPageIndex;
+
+		return buffer.toString();
+	}
+
 	private V internalPut(final K key, final V value) {
 		ORecord<?> rec;
 
@@ -731,6 +766,9 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 	@Override
 	protected void setRoot(final OTreeMapEntry<K, V> iRoot) {
+		if (iRoot == root)
+			return;
+
 		super.setRoot(iRoot);
 		if (listener != null)
 			listener.signalTreeChanged(this);

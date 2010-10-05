@@ -26,6 +26,7 @@ import java.util.Map.Entry;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCacheRecord;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -48,7 +49,7 @@ public class ODatabaseRaw implements ODatabase {
 
 	private ODatabaseRecord<?>								databaseOwner;
 
-	private boolean														useCache		= true;
+	private boolean														useCache;
 	private Map<String, Object>								properties	= new HashMap<String, Object>();
 
 	private List<ODatabaseLifecycleListener>	listeners		= new ArrayList<ODatabaseLifecycleListener>();
@@ -65,6 +66,8 @@ public class ODatabaseRaw implements ODatabase {
 
 			// SET DEFAULT PROPERTIES
 			setProperty("fetch-max", 50);
+
+			useCache = OConfiguration.DB_USE_CACHE.getValueAsBoolean();
 
 		} catch (Throwable t) {
 			throw new ODatabaseException("Error on opening database '" + iURL + "'", t);
@@ -188,6 +191,10 @@ public class ODatabaseRaw implements ODatabase {
 		try {
 			if (!storage.deleteRecord(id, iClusterId, iPosition, iVersion))
 				throw new ORecordNotFoundException("The record with id '" + iClusterId + ":" + iPosition + "' was not found");
+
+			// DELETE IT ALSO IN CACHE
+			if (useCache)
+				getCache().removeRecord(ORecordId.generateString(iClusterId, iPosition));
 
 		} catch (Exception e) {
 			OLogManager.instance().exception("Error on deleting record #%d in cluster '%s'", e, ODatabaseException.class, iPosition,

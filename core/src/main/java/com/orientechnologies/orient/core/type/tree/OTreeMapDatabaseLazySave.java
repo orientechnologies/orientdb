@@ -75,6 +75,10 @@ public class OTreeMapDatabaseLazySave<K, V> extends OTreeMapDatabase<K, V> imple
 	 */
 	public void onClose(final ODatabase iDatabase) {
 		super.commitChanges(database);
+		cache.clear();
+		entryPoints.clear();
+		entryPointsSize = 0;
+		root = null;
 	}
 
 	/**

@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.type.tree;
 import java.io.IOException;
 
 import com.orientechnologies.common.collection.OTreeMapEntry;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.id.ORID;
 
 /**
@@ -81,6 +82,15 @@ public class OTreeMapEntryDatabase<K, V> extends OTreeMapEntryPersistent<K, V> {
 		record.save(pTree.getClusterName());
 
 		assureIntegrityOfReferences();
+
+		if (pTree.isRuntimeCheckEnabled()) {
+			if (this == left || record.getIdentity().equals(leftRid))
+				OLogManager.instance().error(this, "[OTreeMapEntryDatabase.save] Node %s has left that points to itself!\n", this);
+			if (this == right|| record.getIdentity().equals(rightRid))
+				OLogManager.instance().error(this, "[OTreeMapEntryDatabase.save] Node %s has right that points to itself!\n", this);
+			if (left != null && left == right)
+				OLogManager.instance().error(this, "[OTreeMapEntryDatabase.save] Node %s has left and right equals!\n", this);
+		}
 
 		if (pTree.cache.get(record.getIdentity()) != this)
 			// UPDATE THE CACHE

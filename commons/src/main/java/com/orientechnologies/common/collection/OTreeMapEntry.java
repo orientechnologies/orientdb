@@ -63,7 +63,6 @@ public abstract class OTreeMapEntry<K, V> implements Map.Entry<K, V> {
 	 */
 	protected OTreeMapEntry(final OTreeMapEntry<K, V> iParent, final int iPosition) {
 		this.tree = iParent.tree;
-		setParent(iParent);
 		this.pageSize = tree.getPageSize();
 		this.keys = (K[]) new Object[pageSize];
 		this.values = (V[]) new Object[pageSize];
@@ -400,8 +399,14 @@ public abstract class OTreeMapEntry<K, V> implements Map.Entry<K, V> {
 	}
 
 	protected void copyFrom(final OTreeMapEntry<K, V> iSource) {
-		keys = iSource.keys;
-		values = iSource.values;
+		keys = (K[]) new Object[iSource.keys.length];
+		for (int i = 0; i < iSource.keys.length; ++i)
+			keys[i] = iSource.keys[i];
+
+		values = (V[]) new Object[iSource.values.length];
+		for (int i = 0; i < iSource.values.length; ++i)
+			values[i] = iSource.values[i];
+
 		size = iSource.size;
 	}
 

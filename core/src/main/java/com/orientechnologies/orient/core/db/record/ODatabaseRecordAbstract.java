@@ -466,17 +466,13 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			throw new ODatabaseException(
 					"Can't delete record because it has no identity. Probably was created from scratch or contains projections of fields rather than a full record");
 
-		final int clusterId = iRecord.getIdentity().getClusterId();
+		final int clusterId = rid.getClusterId();
 		checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(clusterId), clusterId);
 
 		try {
 			callbackHooks(TYPE.BEFORE_DELETE, iRecord);
 
-			underlying.delete(iRecord.getIdentity().getClusterId(), iRecord.getIdentity().getClusterPosition(), iVersion);
-
-			// DELETE IT ALSO IN CACHE
-			if (underlying.isUseCache())
-				getCache().removeRecord(rid.toString());
+			underlying.delete(clusterId, rid.getClusterPosition(), iVersion);
 
 			callbackHooks(TYPE.AFTER_DELETE, iRecord);
 

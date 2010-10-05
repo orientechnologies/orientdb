@@ -59,12 +59,13 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	public OTreeMapEntryPersistent(final OTreeMapEntry<K, V> iParent, final int iPosition) {
 		super(iParent, iPosition);
 		pTree = (OTreeMapPersistent<K, V>) tree;
+		record = new ORecordBytes();
+
+		setParent(iParent);
 
 		parentRid = new ORecordId();
 		leftRid = new ORecordId();
 		rightRid = new ORecordId();
-
-		record = new ORecordBytes();
 
 		pageSize = pTree.getPageSize();
 
@@ -72,8 +73,10 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 		serializedKeys = new byte[pageSize][];
 		serializedValues = new byte[pageSize][];
 
-		System.arraycopy(((OTreeMapEntryPersistent<K, V>) iParent).serializedKeys, iPosition, serializedKeys, 0, size);
-		System.arraycopy(((OTreeMapEntryPersistent<K, V>) iParent).serializedValues, iPosition, serializedValues, 0, size);
+		final OTreeMapEntryPersistent<K, V> p = (OTreeMapEntryPersistent<K, V>) iParent;
+
+		System.arraycopy(p.serializedKeys, iPosition, serializedKeys, 0, size);
+		System.arraycopy(p.serializedValues, iPosition, serializedValues, 0, size);
 
 		markDirty();
 	}
@@ -126,6 +129,17 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	public OTreeMapEntryPersistent<K, V> delete() throws IOException {
 		pTree.removeEntryPoint(this);
 		pTree.cache.remove(record.getIdentity());
+
+		// DELETE THE NODE FROM THE PENDING RECORDS TO COMMIT
+		OTreeMapEntryPersistent<K, V> node;
+		for (int i = 0; i < pTree.recordsToCommit.size(); ++i) {
+			node = pTree.recordsToCommit.get(i);
+			if( node.record.getIdentity().equals( record.getIdentity() ))
+			{
+				pTree.recordsToCommit.remove(i);
+				--i;
+			}
+		}
 		return this;
 	}
 
@@ -218,13 +232,17 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 
 				if (parent != null) {
 					// TRY TO ASSIGN IT FOLLOWING THE RID
-					if (parent.leftRid.equals(record.getIdentity()))
-						parent.left = this;
-					else if (parent.rightRid.equals(record.getIdentity()))
-						parent.right = this;
-					else
+					if (parent.leftRid.isValid() && parent.leftRid.equals(record.getIdentity()))
+						parent.setLeft(this);
+					else if (parent.rightRid.isValid() && parent.rightRid.equals(record.getIdentity()))
+						parent.setRight(this);
+					else {
+						if (!parent.record.isDirty())
+							parent.load();
+
 						OLogManager.instance().error(this, "Can't assign node %s to parent. Nodes parent-left=%s, parent-right=%s", parentRid,
 								parent.leftRid, parent.rightRid);
+					}
 				}
 
 			} catch (IOException e) {
@@ -241,6 +259,13 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 
 			this.parent = (OTreeMapEntryPersistent<K, V>) iParent;
 			this.parentRid = iParent == null ? ORecordId.EMPTY_RECORD_ID : parent.record.getIdentity();
+
+			if (parent != null) {
+				if (parent.leftRid.isValid() && parent.leftRid.equals(record.getIdentity()))
+					parent.setLeft(this);
+				else if (parent.rightRid.isValid() && parent.rightRid.equals(record.getIdentity()))
+					parent.setRight(this);
+			}
 		}
 		return iParent;
 	}
@@ -252,10 +277,14 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 				// System.out.println("Node " + record.getIdentity() + " is loading LEFT node " + leftRid + "...");
 
 				// LAZY LOADING OF THE LEFT LEAF
-				left = pTree.loadEntry(this, leftRid).load();
+				left = pTree.loadEntry(this, leftRid);
 
-				if (tree.isRuntimeCheckEnabled() && !left.record.getIdentity().equals(leftRid))
-					OLogManager.instance().error(this, "Wrong left node loaded: " + leftRid);
+				if (tree.isRuntimeCheckEnabled()) {
+					if (this == left)
+						OLogManager.instance().error(this, "Left points to itself!");
+					if (!left.record.getIdentity().equals(leftRid))
+						OLogManager.instance().error(this, "Wrong left node loaded: " + leftRid);
+				}
 
 			} catch (IOException e) {
 				OLogManager.instance().error(this, "Can't load the tree. The tree could be invalid.", e, ODatabaseException.class);
@@ -266,16 +295,17 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 
 	@Override
 	public void setLeft(final OTreeMapEntry<K, V> iLeft) {
-		if (iLeft == getLeft())
+		if (iLeft == left)
 			return;
-
-		markDirty();
-
-		this.left = (OTreeMapEntryPersistent<K, V>) iLeft;
-		this.leftRid = iLeft == null ? ORecordId.EMPTY_RECORD_ID : left.record.getIdentity();
 
 		if (iLeft != null && iLeft.getParent() != this)
 			iLeft.setParent(this);
+
+		left = (OTreeMapEntryPersistent<K, V>) iLeft;
+		if (left == null || !left.record.getIdentity().isValid() || !left.record.getIdentity().equals(leftRid)) {
+			markDirty();
+			this.leftRid = iLeft == null ? ORecordId.EMPTY_RECORD_ID : left.record.getIdentity();
+		}
 	}
 
 	@Override
@@ -285,10 +315,14 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 			try {
 				// System.out.println("Node " + record.getIdentity() + " is loading RIGHT node " + rightRid + "...");
 
-				right = pTree.loadEntry(this, rightRid).load();
+				right = pTree.loadEntry(this, rightRid);
 
-				if (tree.isRuntimeCheckEnabled() && !right.record.getIdentity().equals(rightRid))
-					OLogManager.instance().error(this, "Wrong right node loaded: " + rightRid);
+				if (tree.isRuntimeCheckEnabled()) {
+					if (this == right)
+						OLogManager.instance().error(this, "Right points to itself!");
+					if (!right.record.getIdentity().equals(rightRid))
+						OLogManager.instance().error(this, "Wrong right node loaded: " + rightRid);
+				}
 
 			} catch (IOException e) {
 				OLogManager.instance().error(this, "Can't load tree. The tree could be invalid.", e, ODatabaseException.class);
@@ -299,17 +333,17 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 
 	@Override
 	public OTreeMapEntry<K, V> setRight(final OTreeMapEntry<K, V> iRight) {
-		if (iRight == getRight())
+		if (iRight == right)
 			return this;
-
-		markDirty();
-
-		this.right = (OTreeMapEntryPersistent<K, V>) iRight;
-		this.rightRid = iRight == null ? ORecordId.EMPTY_RECORD_ID : right.record.getIdentity();
 
 		if (iRight != null && iRight.getParent() != this)
 			iRight.setParent(this);
 
+		right = (OTreeMapEntryPersistent<K, V>) iRight;
+		if (right == null || !right.record.getIdentity().isValid() || !right.record.getIdentity().equals(rightRid)) {
+			markDirty();
+			rightRid = iRight == null ? ORecordId.EMPTY_RECORD_ID : right.record.getIdentity();
+		}
 		return right;
 	}
 
@@ -319,12 +353,21 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 
 		final OTreeMapEntryPersistent<K, V> source = (OTreeMapEntryPersistent<K, V>) iSource;
 
+		parent = source.parent;
+		left = source.left;
+		right = source.right;
+
 		parentRid = source.parentRid;
 		leftRid = source.leftRid;
 		rightRid = source.rightRid;
 
-		serializedKeys = source.serializedKeys;
-		serializedValues = source.serializedValues;
+		serializedKeys = new byte[source.serializedKeys.length][];
+		for (int i = 0; i < source.serializedKeys.length; ++i)
+			serializedKeys[i] = source.serializedKeys[i];
+
+		serializedValues = new byte[source.serializedValues.length][];
+		for (int i = 0; i < source.serializedValues.length; ++i)
+			serializedValues[i] = source.serializedValues[i];
 
 		super.copyFrom(source);
 	}

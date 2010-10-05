@@ -44,6 +44,7 @@ public class OTreeMapEntryMemory<K, V> extends OTreeMapEntry<K, V> {
 	 */
 	protected OTreeMapEntryMemory(final OTreeMapEntry<K, V> iParent, final int iPosition) {
 		super(iParent, iPosition);
+		setParent(iParent);
 	}
 
 	@Override
