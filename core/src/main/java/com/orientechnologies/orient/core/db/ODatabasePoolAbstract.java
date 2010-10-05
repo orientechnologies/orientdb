@@ -49,6 +49,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements ORe
 		OResourcePool<String, DB> pool = pools.get(name);
 		if (pool == null) {
 			synchronized (pools) {
+				pool = pools.get(name);
 				if (pool == null) {
 					pool = new OResourcePool<String, DB>(maxSize, this);
 					pools.put(name, pool);

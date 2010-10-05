@@ -20,7 +20,7 @@ import com.orientechnologies.orient.core.db.ODatabasePoolBase;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 
 public class ODatabaseObjectPool extends ODatabasePoolBase<ODatabaseObjectTx> {
-	private static ODatabaseObjectPool	globalInstance	= new ODatabaseObjectPool();
+	private static volatile ODatabaseObjectPool	globalInstance	= new ODatabaseObjectPool();
 
 	public void setup(final int iMinSize, final int iMaxSize) {
 		if (dbPool == null)
