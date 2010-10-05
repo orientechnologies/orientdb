@@ -29,7 +29,7 @@ public enum OConfiguration {
 
 	DB_USE_CACHE("orientdb.db.cache", false),
 
-	TREEMAP_LAZY_UPDATES("orientdb.treemap.lazyUpdates", 50000), TREEMAP_NODE_PAGE_SIZE("orientdb.treemap.nodePageSize", 1024), TREEMAP_LOAD_FACTOR(
+	TREEMAP_LAZY_UPDATES("orientdb.treemap.lazyUpdates", 300), TREEMAP_NODE_PAGE_SIZE("orientdb.treemap.nodePageSize", 1024), TREEMAP_LOAD_FACTOR(
 			"orientdb.treemap.loadFactor", 0.7f), TREEMAP_OPTIMIZE_THRESHOLD("orientdb.treemap.optimizeThreshold", 50000), TREEMAP_OPTIMIZE_ENTRYPOINTS_FACTOR(
 			"orientdb.treemap.optimizeEntryPointsFactor", 1.5f), TREEMAP_ENTRYPOINTS("orientdb.treemap.entrypoints", 50),
 
