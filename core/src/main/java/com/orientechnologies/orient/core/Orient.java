@@ -25,6 +25,8 @@ import java.util.Timer;
 
 import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
@@ -33,184 +35,188 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 public class Orient extends OSharedResource {
-  public static final String          URL_SYNTAX   = "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
+	public static final String					URL_SYNTAX		= "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
 
-  protected Map<String, OEngine>      engines      = new HashMap<String, OEngine>();
-  protected Map<String, OStorage>     storages     = new HashMap<String, OStorage>();
-  protected volatile boolean          active       = false;
+	protected Map<String, OEngine>			engines				= new HashMap<String, OEngine>();
+	protected Map<String, OStorage>			storages			= new HashMap<String, OStorage>();
+	protected volatile boolean					active				= false;
 
-  protected static OrientShutdownHook shutdownHook = new OrientShutdownHook();
-  protected static Timer              timer        = new Timer(true);
+	protected static OrientShutdownHook	shutdownHook	= new OrientShutdownHook();
+	protected static Timer							timer					= new Timer(true);
 
-  protected static Orient             instance     = new Orient();
+	protected static Orient							instance			= new Orient();
 
-  protected Orient() {
-    // REGISTER THE EMBEDDED ENGINE
-    registerEngine(new OEngineLocal());
-    registerEngine(new OEngineMemory());
-    registerEngine("com.orientechnologies.orient.client.remote.OEngineRemote");
+	protected Orient() {
+		// REGISTER THE EMBEDDED ENGINE
+		registerEngine(new OEngineLocal());
+		registerEngine(new OEngineMemory());
+		registerEngine("com.orientechnologies.orient.client.remote.OEngineRemote");
 
-    active = true;
-  }
+		if (OConfiguration.PROFILER_ENABLED.getValueAsBoolean())
+			// ACTIVATE RECORDING OF THE PROFILER
+			OProfiler.getInstance().startRecording();
 
-  public OStorage getStorage(String iURL) {
-    if (iURL == null || iURL.length() == 0)
-      throw new IllegalArgumentException("URL missed");
+		active = true;
+	}
 
-    // SEARCH FOR ENGINE
-    int pos = iURL.indexOf(':');
-    if (pos <= 0)
-      throw new OConfigurationException("Error in database URL: the engine was not specified. Syntax is: " + URL_SYNTAX
-          + ". URL was: " + iURL);
+	public OStorage getStorage(String iURL) {
+		if (iURL == null || iURL.length() == 0)
+			throw new IllegalArgumentException("URL missed");
 
-    String engineName = iURL.substring(0, pos);
+		// SEARCH FOR ENGINE
+		int pos = iURL.indexOf(':');
+		if (pos <= 0)
+			throw new OConfigurationException("Error in database URL: the engine was not specified. Syntax is: " + URL_SYNTAX
+					+ ". URL was: " + iURL);
 
-    try {
-      acquireExclusiveLock();
+		String engineName = iURL.substring(0, pos);
 
-      OEngine engine = engines.get(engineName.toLowerCase());
+		try {
+			acquireExclusiveLock();
 
-      if (engine == null)
-        throw new OConfigurationException("Error on opening database: the engine '" + engineName + "' was not found. URL was: "
-            + iURL);
+			OEngine engine = engines.get(engineName.toLowerCase());
 
-      // SEARCH FOR DB-NAME
-      iURL = iURL.substring(pos + 1);
-      pos = iURL.indexOf('?');
+			if (engine == null)
+				throw new OConfigurationException("Error on opening database: the engine '" + engineName + "' was not found. URL was: "
+						+ iURL);
 
-      Map<String, String> parameters = null;
-      String dbName = null;
-      if (pos > 0) {
-        dbName = iURL.substring(0, pos);
-        iURL = iURL.substring(pos + 1);
+			// SEARCH FOR DB-NAME
+			iURL = iURL.substring(pos + 1);
+			pos = iURL.indexOf('?');
 
-        // PARSE PARAMETERS
-        parameters = new HashMap<String, String>();
-        String[] pairs = iURL.split("&");
-        String[] kv;
-        for (String pair : pairs) {
-          kv = pair.split("=");
-          if (kv.length < 2)
-            throw new OConfigurationException("Error on opening database: the parameter has no value. Syntax is: " + URL_SYNTAX
-                + ". URL was: " + iURL);
-          parameters.put(kv[0], kv[1]);
-        }
-      } else
-        dbName = iURL;
+			Map<String, String> parameters = null;
+			String dbName = null;
+			if (pos > 0) {
+				dbName = iURL.substring(0, pos);
+				iURL = iURL.substring(pos + 1);
 
-      return engine.getStorage(dbName, parameters);
+				// PARSE PARAMETERS
+				parameters = new HashMap<String, String>();
+				String[] pairs = iURL.split("&");
+				String[] kv;
+				for (String pair : pairs) {
+					kv = pair.split("=");
+					if (kv.length < 2)
+						throw new OConfigurationException("Error on opening database: the parameter has no value. Syntax is: " + URL_SYNTAX
+								+ ". URL was: " + iURL);
+					parameters.put(kv[0], kv[1]);
+				}
+			} else
+				dbName = iURL;
 
-    } finally {
-      releaseExclusiveLock();
-    }
-  }
+			return engine.getStorage(dbName, parameters);
 
-  public void registerStorage(final OStorage iStorage) throws IOException {
-    try {
-      acquireExclusiveLock();
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
 
-      if (!storages.containsKey(iStorage.getName()))
-        storages.put(iStorage.getName(), iStorage);
+	public void registerStorage(final OStorage iStorage) throws IOException {
+		try {
+			acquireExclusiveLock();
 
-    } finally {
-      releaseExclusiveLock();
-    }
-  }
+			if (!storages.containsKey(iStorage.getName()))
+				storages.put(iStorage.getName(), iStorage);
 
-  public OStorage accessToLocalStorage(String iDbName, String iMode) throws IOException {
-    try {
-      acquireExclusiveLock();
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
 
-      OStorage storage = storages.get(iDbName);
-      if (storage == null) {
-        storage = new OStorageLocal(iDbName, iDbName, iMode);
-        storages.put(iDbName, storage);
-      }
+	public OStorage accessToLocalStorage(String iDbName, String iMode) throws IOException {
+		try {
+			acquireExclusiveLock();
 
-      return storage;
+			OStorage storage = storages.get(iDbName);
+			if (storage == null) {
+				storage = new OStorageLocal(iDbName, iDbName, iMode);
+				storages.put(iDbName, storage);
+			}
 
-    } finally {
-      releaseExclusiveLock();
-    }
-  }
+			return storage;
 
-  public void registerEngine(OEngine iEngine) {
-    try {
-      acquireExclusiveLock();
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
 
-      engines.put(iEngine.getName(), iEngine);
+	public void registerEngine(OEngine iEngine) {
+		try {
+			acquireExclusiveLock();
 
-    } finally {
-      releaseExclusiveLock();
-    }
-  }
+			engines.put(iEngine.getName(), iEngine);
 
-  private void registerEngine(final String iClassName) {
-    try {
-      final Class<?> cls = Class.forName(iClassName);
-      registerEngine((OEngine) cls.newInstance());
-    } catch (Exception e) {
-    }
-  }
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
 
-  public Set<String> getEngines() {
-    try {
-      acquireSharedLock();
+	private void registerEngine(final String iClassName) {
+		try {
+			final Class<?> cls = Class.forName(iClassName);
+			registerEngine((OEngine) cls.newInstance());
+		} catch (Exception e) {
+		}
+	}
 
-      return Collections.unmodifiableSet(engines.keySet());
+	public Set<String> getEngines() {
+		try {
+			acquireSharedLock();
 
-    } finally {
-      releaseSharedLock();
-    }
-  }
+			return Collections.unmodifiableSet(engines.keySet());
 
-  public void unregisterStorage(final OStorage iStorage) {
-    storages.remove(iStorage.getName());
-  }
+		} finally {
+			releaseSharedLock();
+		}
+	}
 
-  public Collection<OStorage> getStorages() {
-    try {
-      acquireSharedLock();
+	public void unregisterStorage(final OStorage iStorage) {
+		storages.remove(iStorage.getName());
+	}
 
-      return Collections.unmodifiableCollection(storages.values());
+	public Collection<OStorage> getStorages() {
+		try {
+			acquireSharedLock();
 
-    } finally {
-      releaseSharedLock();
-    }
-  }
+			return Collections.unmodifiableCollection(storages.values());
 
-  public void shutdown() {
-    try {
-      acquireExclusiveLock();
+		} finally {
+			releaseSharedLock();
+		}
+	}
 
-      if (!active)
-        return;
+	public void shutdown() {
+		try {
+			acquireExclusiveLock();
 
-      OLogManager.instance().debug(this, "Orient Engine is shutdowning...");
+			if (!active)
+				return;
 
-      // CLOSE ALL THE STORAGES
-      for (OStorage stg : storages.values()) {
-        OLogManager.instance().debug(this, "Shutdowning storage: " + stg.getName() + "...");
-        stg.close();
-      }
-      active = false;
+			OLogManager.instance().debug(this, "Orient Engine is shutdowning...");
 
-      OLogManager.instance().debug(this, "Orient Engine shutdown complete");
+			// CLOSE ALL THE STORAGES
+			for (OStorage stg : storages.values()) {
+				OLogManager.instance().debug(this, "Shutdowning storage: " + stg.getName() + "...");
+				stg.close();
+			}
+			active = false;
 
-    } finally {
-      releaseExclusiveLock();
-    }
-  }
+			OLogManager.instance().debug(this, "Orient Engine shutdown complete");
 
-  public static Timer getTimer() {
-    return timer;
-  }
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
 
-  public void removeShutdownHook() {
-    Runtime.getRuntime().removeShutdownHook(shutdownHook);
-  }
+	public static Timer getTimer() {
+		return timer;
+	}
 
-  public static Orient instance() {
-    return instance;
-  }
+	public void removeShutdownHook() {
+		Runtime.getRuntime().removeShutdownHook(shutdownHook);
+	}
+
+	public static Orient instance() {
+		return instance;
+	}
 }

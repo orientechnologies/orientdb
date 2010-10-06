@@ -28,7 +28,7 @@ public enum OConfiguration {
 	STORAGE_KEEP_OPEN("orientdb.storage.keepOpen", Boolean.class, Boolean.FALSE), STORAGE_CACHE_SIZE("orientdb.storage.cache.size",
 			Integer.class, 5000),
 
-	DB_USE_CACHE("orientdb.db.cache", Boolean.class, true),
+	DB_USE_CACHE("orientdb.db.cache.enabled", Boolean.class, true),
 
 	TREEMAP_LAZY_UPDATES("orientdb.treemap.lazyUpdates", Integer.class, 300), TREEMAP_NODE_PAGE_SIZE("orientdb.treemap.nodePageSize",
 			Float.class, 1024), TREEMAP_LOAD_FACTOR("orientdb.treemap.loadFactor", Float.class, 0.7f), TREEMAP_OPTIMIZE_THRESHOLD(
@@ -41,7 +41,9 @@ public enum OConfiguration {
 
 	NETWORK_SOCKET_BUFFER_SIZE("orientdb.network.socketBufferSize", Integer.class, 32768), NETWORK_HTTP_TIMEOUT(
 			"orientdb.network.http.timeout", Integer.class, 10000), NETWORK_HTTP_MAX_CONTENT_LENGTH("orientdb.network.http.maxLength",
-			Integer.class, 10000);
+			Integer.class, 10000),
+
+	PROFILER_ENABLED("orientdb.profiler.enabled", Boolean.class, false);
 
 	private final String		key;
 	private final Object		defValue;
