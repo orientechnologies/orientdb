@@ -27,14 +27,16 @@ import javax.xml.validation.Schema;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.orient.core.config.OConfiguration;
+import com.orientechnologies.orient.core.config.OEntryConfiguration;
 
-public class OConfigurationLoaderXml {
+public class OServerConfigurationLoaderXml {
 	private Class<? extends OServerConfiguration>	rootClass;
 	private String																filePath;
 	private JAXBContext														context;
 	private File																	file;
 
-	public OConfigurationLoaderXml(Class<? extends OServerConfiguration> iRootClass, String iFilePath) {
+	public OServerConfigurationLoaderXml(Class<? extends OServerConfiguration> iRootClass, String iFilePath) {
 		filePath = OSystemVariableResolver.resolveSystemVariables(iFilePath);
 		rootClass = iRootClass;
 		file = new File(filePath);
@@ -53,9 +55,21 @@ public class OConfigurationLoaderXml {
 				OServerConfiguration obj = rootClass.cast(unmarshaller.unmarshal(file));
 				obj.location = filePath;
 
+				// AUTO CONFIGURE SYSTEM CONFIGURATION
+				OConfiguration config;
+				for (OEntryConfiguration prop : obj.properties) {
+					try {
+						config = OConfiguration.valueOf(prop.name);
+						if (config != null) {
+							config.setValue(prop.value);
+						}
+					} catch (Exception e) {
+					}
+				}
+
 				return obj;
 			} else
-				return rootClass.getConstructor(OConfigurationLoaderXml.class, String.class).newInstance(this, filePath);
+				return rootClass.getConstructor(OServerConfigurationLoaderXml.class, String.class).newInstance(this, filePath);
 		} catch (Exception e) {
 			// SYNTAX ERROR? PRINT AN EXAMPLE
 			OLogManager.instance().error(this, "Invalid syntax. Below an example of how it should be:", e);
@@ -64,7 +78,7 @@ public class OConfigurationLoaderXml {
 				context = JAXBContext.newInstance(rootClass);
 				Marshaller marshaller = context.createMarshaller();
 				marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-				Object example = rootClass.getConstructor(OConfigurationLoaderXml.class).newInstance(this);
+				Object example = rootClass.getConstructor(OServerConfigurationLoaderXml.class).newInstance(this);
 				marshaller.marshal(example, System.out);
 			} catch (Exception ex) {
 				throw new IOException(ex);

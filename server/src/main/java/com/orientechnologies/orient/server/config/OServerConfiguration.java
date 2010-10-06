@@ -57,7 +57,7 @@ public class OServerConfiguration {
 	public OServerConfiguration() {
 	}
 
-	public OServerConfiguration(OConfigurationLoaderXml iFactory) {
+	public OServerConfiguration(OServerConfigurationLoaderXml iFactory) {
 		location = FILE_NAME;
 		network = new OServerNetworkConfiguration(iFactory);
 		storages = new OServerStorageConfiguration[0];

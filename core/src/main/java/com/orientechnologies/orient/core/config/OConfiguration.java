@@ -25,36 +25,52 @@ import java.util.Map.Entry;
  * 
  */
 public enum OConfiguration {
-	STORAGE_KEEP_OPEN("orientdb.storage.keepOpen", Boolean.FALSE), STORAGE_CACHE_SIZE("orientdb.storage.cache.size", 5000),
+	STORAGE_KEEP_OPEN("orientdb.storage.keepOpen", Boolean.class, Boolean.FALSE), STORAGE_CACHE_SIZE("orientdb.storage.cache.size",
+			Integer.class, 5000),
 
-	DB_USE_CACHE("orientdb.db.cache", true),
+	DB_USE_CACHE("orientdb.db.cache", Boolean.class, true),
 
-	TREEMAP_LAZY_UPDATES("orientdb.treemap.lazyUpdates", 300), TREEMAP_NODE_PAGE_SIZE("orientdb.treemap.nodePageSize", 1024), TREEMAP_LOAD_FACTOR(
-			"orientdb.treemap.loadFactor", 0.7f), TREEMAP_OPTIMIZE_THRESHOLD("orientdb.treemap.optimizeThreshold", 50000), TREEMAP_ENTRYPOINTS(
-			"orientdb.treemap.entryPoints", 30), TREEMAP_OPTIMIZE_ENTRYPOINTS_FACTOR("orientdb.treemap.optimizeEntryPointsFactor", 1.0f),
+	TREEMAP_LAZY_UPDATES("orientdb.treemap.lazyUpdates", Integer.class, 300), TREEMAP_NODE_PAGE_SIZE("orientdb.treemap.nodePageSize",
+			Float.class, 1024), TREEMAP_LOAD_FACTOR("orientdb.treemap.loadFactor", Float.class, 0.7f), TREEMAP_OPTIMIZE_THRESHOLD(
+			"orientdb.treemap.optimizeThreshold", Integer.class, 50000), TREEMAP_ENTRYPOINTS("orientdb.treemap.entryPoints",
+			Integer.class, 30), TREEMAP_OPTIMIZE_ENTRYPOINTS_FACTOR("orientdb.treemap.optimizeEntryPointsFactor", Float.class, 1.0f),
 
-	FILE_MMAP_BLOCK_SIZE("orientdb.file.mmap.blockSize", 300000), FILE_MMAP_MAX_MEMORY("orientdb.file.mmap.maxMemory", 110000000), FILE_MMAP_FORCE_DELAY(
-			"orientdb.file.mmap.forceDelay", 500), FILE_MMAP_FORCE_RETRY("orientdb.file.mmap.forceRetry", 5),
+	FILE_MMAP_BLOCK_SIZE("orientdb.file.mmap.blockSize", Integer.class, 300000), FILE_MMAP_MAX_MEMORY("orientdb.file.mmap.maxMemory",
+			Integer.class, 110000000), FILE_MMAP_FORCE_DELAY("orientdb.file.mmap.forceDelay", Integer.class, 500), FILE_MMAP_FORCE_RETRY(
+			"orientdb.file.mmap.forceRetry", Integer.class, 5),
 
-	NETWORK_SOCKET_BUFFER_SIZE("orientdb.network.socketBufferSize", 32768), NETWORK_HTTP_TIMEOUT("orientdb.network.http.timeout",
-			10000), NETWORK_HTTP_MAX_CONTENT_LENGTH("orientdb.network.http.maxLength", 10000);
+	NETWORK_SOCKET_BUFFER_SIZE("orientdb.network.socketBufferSize", Integer.class, 32768), NETWORK_HTTP_TIMEOUT(
+			"orientdb.network.http.timeout", Integer.class, 10000), NETWORK_HTTP_MAX_CONTENT_LENGTH("orientdb.network.http.maxLength",
+			Integer.class, 10000);
 
-	private final String	key;
-	private final Object	defValue;
-	private Object				value	= null;
+	private final String		key;
+	private final Object		defValue;
+	private final Class<?>	type;
+	private Object					value	= null;
 
 	// AT STARTUP AUTO-CONFIG
 	static {
 		readConfiguration();
 	}
 
-	OConfiguration(final String iKey, final Object iDefValue) {
+	OConfiguration(final String iKey, final Class<?> iType, final Object iDefValue) {
 		key = iKey;
 		defValue = iDefValue;
+		type = iType;
 	}
 
 	public void setValue(final Object iValue) {
-		value = iValue;
+		if (iValue != null)
+			if (type == Boolean.class)
+				value = Boolean.parseBoolean(iValue.toString());
+			else if (type == Integer.class)
+				value = Integer.parseInt(iValue.toString());
+			else if (type == Float.class)
+				value = Float.parseFloat(iValue.toString());
+			else if (type == String.class)
+				value = iValue.toString();
+			else
+				value = iValue;
 	}
 
 	public Object getValue() {
@@ -83,6 +99,10 @@ public enum OConfiguration {
 
 	public String getKey() {
 		return key;
+	}
+
+	public Class<?> getType() {
+		return type;
 	}
 
 	/**

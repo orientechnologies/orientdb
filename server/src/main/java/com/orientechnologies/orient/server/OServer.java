@@ -45,7 +45,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.enterprise.command.script.OCommandScript;
 import com.orientechnologies.orient.server.command.script.OCommandExecutorScript;
-import com.orientechnologies.orient.server.config.OConfigurationLoaderXml;
+import com.orientechnologies.orient.server.config.OServerConfigurationLoaderXml;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerNetworkListenerConfiguration;
@@ -63,7 +63,7 @@ public class OServer {
 
 	protected ReentrantReadWriteLock													lock									= new ReentrantReadWriteLock();
 
-	protected OConfigurationLoaderXml													configurationLoader;
+	protected OServerConfigurationLoaderXml													configurationLoader;
 	protected OServerConfiguration														configuration;
 	protected OServerShutdownHook															shutdownHook;
 	protected List<OServerHandler>														handlers							= new ArrayList<OServerHandler>();
@@ -243,7 +243,7 @@ public class OServer {
 			if (System.getProperty(PROPERTY_CONFIG_FILE) != null)
 				config = System.getProperty(PROPERTY_CONFIG_FILE);
 
-			configurationLoader = new OConfigurationLoaderXml(OServerConfiguration.class, config);
+			configurationLoader = new OServerConfigurationLoaderXml(OServerConfiguration.class, config);
 			configuration = configurationLoader.load();
 
 			if (configuration.users != null && configuration.users.length > 0) {
