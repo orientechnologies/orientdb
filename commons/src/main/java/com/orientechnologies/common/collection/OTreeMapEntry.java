@@ -26,7 +26,7 @@ public abstract class OTreeMapEntry<K, V> implements Map.Entry<K, V> {
 
 	protected K[]							keys;
 	protected V[]							values;
-	protected boolean					color										= OTreeMap.BLACK;
+	protected boolean					color										= OTreeMap.RED;
 
 	private int								pageSplitItems;
 	public static final int		BINARY_SEARCH_THRESHOLD	= 10;
@@ -378,7 +378,7 @@ public abstract class OTreeMapEntry<K, V> implements Map.Entry<K, V> {
 		tree.pageIndex = -1;
 	}
 
-	protected void setColor(boolean iColor) {
+	protected void setColor(final boolean iColor) {
 		this.color = iColor;
 	}
 

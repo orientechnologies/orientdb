@@ -27,11 +27,11 @@ import java.util.Map.Entry;
 public enum OConfiguration {
 	STORAGE_KEEP_OPEN("orientdb.storage.keepOpen", Boolean.FALSE), STORAGE_CACHE_SIZE("orientdb.storage.cache.size", 5000),
 
-	DB_USE_CACHE("orientdb.db.cache", false),
+	DB_USE_CACHE("orientdb.db.cache", true),
 
 	TREEMAP_LAZY_UPDATES("orientdb.treemap.lazyUpdates", 300), TREEMAP_NODE_PAGE_SIZE("orientdb.treemap.nodePageSize", 1024), TREEMAP_LOAD_FACTOR(
-			"orientdb.treemap.loadFactor", 0.7f), TREEMAP_OPTIMIZE_THRESHOLD("orientdb.treemap.optimizeThreshold", 50000), TREEMAP_OPTIMIZE_ENTRYPOINTS_FACTOR(
-			"orientdb.treemap.optimizeEntryPointsFactor", 1.5f), TREEMAP_ENTRYPOINTS("orientdb.treemap.entrypoints", 50),
+			"orientdb.treemap.loadFactor", 0.7f), TREEMAP_OPTIMIZE_THRESHOLD("orientdb.treemap.optimizeThreshold", 50000), TREEMAP_ENTRYPOINTS(
+			"orientdb.treemap.entryPoints", 30), TREEMAP_OPTIMIZE_ENTRYPOINTS_FACTOR("orientdb.treemap.optimizeEntryPointsFactor", 1.0f),
 
 	FILE_MMAP_BLOCK_SIZE("orientdb.file.mmap.blockSize", 300000), FILE_MMAP_MAX_MEMORY("orientdb.file.mmap.maxMemory", 110000000), FILE_MMAP_FORCE_DELAY(
 			"orientdb.file.mmap.forceDelay", 500), FILE_MMAP_FORCE_RETRY("orientdb.file.mmap.forceRetry", 5),

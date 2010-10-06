@@ -593,6 +593,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 		try {
 			if (root == null) {
 				root = createEntry(key, value);
+				root.setColor(BLACK);
 
 				size = 1;
 				modCount++;
@@ -639,13 +640,13 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 
 				// REPLACE THE RIGHT ONE WITH THE NEW NODE
 				parentNode.setRight(newNode);
-//				fixAfterInsertion(newNode);
 
 				if (prevNode != null) {
 					// INSERT THE NODE IN THE TREE IN THE RIGHT MOVING CURRENT RIGHT TO THE RIGHT OF THE NEW NODE
 					newNode.setRight(prevNode);
 					fixAfterInsertion(prevNode);
-				}
+				} else
+					fixAfterInsertion(newNode);
 
 				checkTreeStructure(parentNode);
 
@@ -1955,8 +1956,8 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 
 	// Red-black mechanics
 
-	private static final boolean	RED		= false;
-	static final boolean					BLACK	= true;
+	static final boolean	RED		= false;
+	static final boolean	BLACK	= true;
 
 	/**
 	 * Node in the Tree. Doubles as a means to pass key-value pairs back to user (see Map.Entry).
@@ -2111,54 +2112,87 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 	}
 
 	/** From CLR */
-	private void fixAfterInsertion(OTreeMapEntry<K, V> x) {
-		x.setColor(RED);
+	/*
+	 * private void fixAfterInsertion(OTreeMapEntry<K, V> x) { x.setColor(RED);
+	 * 
+	 * // if (x != null && x != root && x.getParent() != null && x.getParent().getColor() == RED) { //
+	 * //System.out.println("BEFORE FIX on node: " + x); // printInMemoryStructure(x);
+	 * 
+	 * OTreeMapEntry<K, V> parent; OTreeMapEntry<K, V> grandParent;
+	 * 
+	 * while (x != null && x != root && x.getParent() != null && x.getParent().getColor() == RED) { parent = parentOf(x); grandParent
+	 * = parentOf(parent);
+	 * 
+	 * if (parent == leftOf(grandParent)) { // MY PARENT IS THE LEFT OF THE GRANDFATHER. GET MY UNCLE final OTreeMapEntry<K, V> uncle
+	 * = rightOf(grandParent); if (colorOf(uncle) == RED) { // SET MY PARENT AND UNCLE TO BLACK setColor(parent, BLACK);
+	 * setColor(uncle, BLACK); // SET GRANDPARENT'S COLOR TO RED setColor(grandParent, RED); // CONTINUE RECURSIVELY WITH MY
+	 * GRANDFATHER x = grandParent; } else { if (x == rightOf(parent)) { // I'M THE RIGHT x = parent; parent = parentOf(x);
+	 * grandParent = parentOf(parent); rotateLeft(x); } setColor(parent, BLACK); setColor(grandParent, RED); rotateRight(grandParent);
+	 * } } else { // MY PARENT IS THE RIGHT OF THE GRANDFATHER. GET MY UNCLE final OTreeMapEntry<K, V> uncle = leftOf(grandParent); if
+	 * (colorOf(uncle) == RED) { setColor(parent, BLACK); setColor(uncle, BLACK); setColor(grandParent, RED); x = grandParent; } else
+	 * { if (x == leftOf(parent)) { x = parentOf(x); parent = parentOf(x); grandParent = parentOf(parent); rotateRight(x); }
+	 * setColor(parent, BLACK); setColor(grandParent, RED); rotateLeft(grandParent); } } }
+	 * 
+	 * // //System.out.println("AFTER FIX"); // printInMemoryStructure(x); // }
+	 * 
+	 * root.setColor(BLACK); }
+	 */
 
-		// if (x != null && x != root && x.getParent() != null && x.getParent().getColor() == RED) {
-		// //System.out.println("BEFORE FIX on node: " + x);
-		// printInMemoryStructure(x);
+	private OTreeMapEntry<K, V> grandparent(final OTreeMapEntry<K, V> n) {
+		return parentOf(parentOf(n));
+	}
 
-		while (x != null && x != root && x.getParent() != null && x.getParent().getColor() == RED) {
-			if (parentOf(x) == leftOf(parentOf(parentOf(x)))) {
-				OTreeMapEntry<K, V> y = rightOf(parentOf(parentOf(x)));
-				if (colorOf(y) == RED) {
-					setColor(parentOf(x), BLACK);
-					setColor(y, BLACK);
-					setColor(parentOf(parentOf(x)), RED);
-					x = parentOf(parentOf(x));
-				} else {
-					if (x == rightOf(parentOf(x))) {
-						x = parentOf(x);
-						rotateLeft(x);
-					}
-					setColor(parentOf(x), BLACK);
-					setColor(parentOf(parentOf(x)), RED);
-					rotateRight(parentOf(parentOf(x)));
-				}
-			} else {
-				OTreeMapEntry<K, V> y = leftOf(parentOf(parentOf(x)));
-				if (colorOf(y) == RED) {
-					setColor(parentOf(x), BLACK);
-					setColor(y, BLACK);
-					setColor(parentOf(parentOf(x)), RED);
-					x = parentOf(parentOf(x));
-				} else {
-					if (x == leftOf(parentOf(x))) {
-						x = parentOf(x);
-						rotateRight(x);
-					}
-					setColor(parentOf(x), BLACK);
-					setColor(parentOf(parentOf(x)), RED);
-					rotateLeft(parentOf(parentOf(x)));
-				}
-			}
+	private OTreeMapEntry<K, V> uncle(final OTreeMapEntry<K, V> n) {
+		if (parentOf(n) == leftOf(grandparent(n)))
+			return rightOf(grandparent(n));
+		else
+			return leftOf(grandparent(n));
+	}
+
+	private void fixAfterInsertion(final OTreeMapEntry<K, V> n) {
+		if (parentOf(n) == null)
+			setColor(n, BLACK);
+		else
+			insert_case2(n);
+	}
+
+	private void insert_case2(final OTreeMapEntry<K, V> n) {
+		if (colorOf(parentOf(n)) == BLACK)
+			return; /* Tree is still valid */
+		else
+			insert_case3(n);
+	}
+
+	private void insert_case3(final OTreeMapEntry<K, V> n) {
+		if (uncle(n) != null && colorOf(uncle(n)) == RED) {
+			setColor(parentOf(n), BLACK);
+			setColor(uncle(n), BLACK);
+			setColor(grandparent(n), RED);
+			fixAfterInsertion(grandparent(n));
+		} else
+			insert_case4(n);
+	}
+
+	private void insert_case4(OTreeMapEntry<K, V> n) {
+		if (n == rightOf(parentOf(n)) && parentOf(n) == leftOf(grandparent(n))) {
+			rotateLeft(parentOf(n));
+			n = leftOf(n);
+		} else if (n == leftOf(parentOf(n)) && parentOf(n) == rightOf(grandparent(n))) {
+			rotateRight(parentOf(n));
+			n = rightOf(n);
 		}
+		insert_case5(n);
+	}
 
-		// //System.out.println("AFTER FIX");
-		// printInMemoryStructure(x);
-		// }
-
-		root.setColor(BLACK);
+	private void insert_case5(final OTreeMapEntry<K, V> n) {
+		setColor(parentOf(n), BLACK);
+		setColor(grandparent(n), RED);
+		if (n == leftOf(parentOf(n)) && parentOf(n) == leftOf(grandparent(n))) {
+			rotateRight(grandparent(n));
+		} else {
+			/* Here, n == parentOf(n)->right && parentOf(n) == grandparent(n)->right */
+			rotateLeft(grandparent(n));
+		}
 	}
 
 	/**
