@@ -24,5 +24,9 @@ package com.orientechnologies.orient.core.db;
 public interface ODatabaseLifecycleListener {
 	public void onOpen(final ODatabase iDatabase);
 
+	public void onTxRollback(final ODatabase iDatabase);
+
+	public void onTxCommit(final ODatabase iDatabase);
+
 	public void onClose(final ODatabase iDatabase);
 }

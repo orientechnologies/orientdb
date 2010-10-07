@@ -31,5 +31,7 @@ public interface ORID extends OSerializableStream {
 
 	public boolean isValid();
 
+	public boolean isNew();
+
 	public ORID copy();
 }

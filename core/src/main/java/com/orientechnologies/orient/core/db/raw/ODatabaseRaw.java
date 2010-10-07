@@ -127,6 +127,9 @@ public class ODatabaseRaw implements ODatabase {
 	}
 
 	public ORawBuffer read(final int iClusterId, final long iPosition, final String iFetchPlan) {
+		if (iClusterId < 0 || iPosition < 0)
+			return null;
+
 		try {
 
 			final String recId = ORecordId.generateString(iClusterId, iPosition);
@@ -159,7 +162,7 @@ public class ODatabaseRaw implements ODatabase {
 
 	public long save(final int iClusterId, long iPosition, final byte[] iContent, final int iVersion, final byte iRecordType) {
 		try {
-			if (iPosition == ORID.CLUSTER_POS_INVALID) {
+			if (iPosition < 0) {
 				// CREATE
 				iPosition = storage.createRecord(iClusterId, iContent, iRecordType);
 
@@ -326,5 +329,9 @@ public class ODatabaseRaw implements ODatabase {
 
 	public void registerListener(final ODatabaseLifecycleListener iListener) {
 		listeners.add(iListener);
+	}
+
+	public List<ODatabaseLifecycleListener> getListeners() {
+		return listeners;
 	}
 }

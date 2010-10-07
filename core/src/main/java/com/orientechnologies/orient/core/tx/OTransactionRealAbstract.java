@@ -21,31 +21,32 @@ import java.util.Map;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
 public abstract class OTransactionRealAbstract<REC extends ORecordInternal<?>> extends OTransactionAbstract<REC> {
-  protected Map<String, OTransactionEntry<REC>> entries          = new HashMap<String, OTransactionEntry<REC>>();
-  protected int                                 newObjectCounter = 0;
+	protected Map<ORecordId, OTransactionEntry<REC>>	entries						= new HashMap<ORecordId, OTransactionEntry<REC>>();
+	protected int																			newObjectCounter	= -2;
 
-  protected OTransactionRealAbstract(ODatabaseRecordTx<REC> iDatabase, int iId) {
-    super(iDatabase, iId);
-  }
+	protected OTransactionRealAbstract(ODatabaseRecordTx<REC> iDatabase, int iId) {
+		super(iDatabase, iId);
+	}
 
-  public Collection<OTransactionEntry<REC>> getEntries() {
-    return entries.values();
-  }
+	public Collection<OTransactionEntry<REC>> getEntries() {
+		return entries.values();
+	}
 
-  public void clearEntries() {
-    entries.clear();
-  }
+	public void clearEntries() {
+		entries.clear();
+	}
 
-  public int size() {
-    return entries.size();
-  }
+	public int size() {
+		return entries.size();
+	}
 
-  @Override
-  protected void checkTransaction() {
-    if (status == TXSTATUS.INVALID)
-      throw new OTransactionException("Invalid state of the transaction. The transaction must be begun.");
-  }
+	@Override
+	protected void checkTransaction() {
+		if (status == TXSTATUS.INVALID)
+			throw new OTransactionException("Invalid state of the transaction. The transaction must be begun.");
+	}
 }

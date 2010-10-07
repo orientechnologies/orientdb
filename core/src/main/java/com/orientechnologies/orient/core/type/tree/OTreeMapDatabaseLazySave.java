@@ -70,6 +70,13 @@ public class OTreeMapDatabaseLazySave<K, V> extends OTreeMapDatabase<K, V> imple
 	public void onOpen(final ODatabase iDatabase) {
 	}
 
+	public void onTxRollback(ODatabase iDatabase) {
+	}
+
+	public void onTxCommit(ODatabase iDatabase) {
+		super.commitChanges(database);
+	}
+
 	/**
 	 * Assure to save all the data without the optimization.
 	 */

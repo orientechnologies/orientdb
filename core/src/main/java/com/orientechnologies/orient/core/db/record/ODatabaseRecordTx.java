@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -63,12 +64,28 @@ public class ODatabaseRecordTx<REC extends ORecordInternal<?>> extends ODatabase
 
 	public ODatabaseRecord<REC> commit() {
 		currentTx.commit();
+
+		// WAKE UP LISTENERS
+		for (ODatabaseLifecycleListener listener : underlying.getListeners())
+			try {
+				listener.onTxCommit(underlying);
+			} catch (Throwable t) {
+			}
+
 		setDefaultTransactionMode();
 		return this;
 	}
 
 	public ODatabaseRecord<REC> rollback() {
 		currentTx.rollback();
+
+		// WAKE UP LISTENERS
+		for (ODatabaseLifecycleListener listener : underlying.getListeners())
+			try {
+				listener.onTxRollback(underlying);
+			} catch (Throwable t) {
+			}
+
 		setDefaultTransactionMode();
 		return this;
 	}

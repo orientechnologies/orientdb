@@ -33,4 +33,13 @@ public class OTransactionEntry<REC extends ORecordInternal<?>> {
 		this.status = iStatus;
 		this.clusterName = iClusterName;
 	}
+
+	@Override
+	public String toString() {
+		final StringBuilder builder = new StringBuilder();
+		builder.append("OTransactionEntry [record=").append(record).append(", status=").append(status).append(", clusterName=")
+				.append(clusterName).append("]");
+		return builder.toString();
+	}
+
 }

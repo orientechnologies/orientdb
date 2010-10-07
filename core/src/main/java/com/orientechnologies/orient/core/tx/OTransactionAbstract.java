@@ -15,30 +15,57 @@
  */
 package com.orientechnologies.orient.core.tx;
 
+import java.io.IOException;
+
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 public abstract class OTransactionAbstract<REC extends ORecordInternal<?>> implements OTransaction<REC> {
-  protected final ODatabaseRecordTx<REC> database;
-  protected int                          id;
-  protected TXSTATUS                     status = TXSTATUS.INVALID;
+	protected final ODatabaseRecordTx<REC>	database;
+	protected int														id;
+	protected TXSTATUS											status	= TXSTATUS.INVALID;
 
-  protected OTransactionAbstract(ODatabaseRecordTx<REC> iDatabase, int iId) {
-    database = iDatabase;
-    id = iId;
-  }
+	protected OTransactionAbstract(ODatabaseRecordTx<REC> iDatabase, int iId) {
+		database = iDatabase;
+		id = iId;
+	}
 
-  public int getId() {
-    return id;
-  }
+	public int getId() {
+		return id;
+	}
 
-  public TXSTATUS getStatus() {
-    return status;
-  }
+	public TXSTATUS getStatus() {
+		return status;
+	}
 
-  protected void checkTransaction() {
-    if (status == TXSTATUS.INVALID)
-      throw new OTransactionException("Invalid state of the transaction. The transaction must be begun.");
-  }
+	protected void checkTransaction() {
+		if (status == TXSTATUS.INVALID)
+			throw new OTransactionException("Invalid state of the transaction. The transaction must be begun.");
+	}
+
+	public static void updateCacheFromEntries(final OStorage iStorage, final OTransaction<?> iTx,
+			final Iterable<? extends OTransactionEntry<?>> iEntries) throws IOException {
+		String rid;
+		ORawBuffer cachedBuffer;
+		for (OTransactionEntry<? extends ORecord<?>> txEntry : iEntries) {
+			rid = txEntry.record.getIdentity().toString();
+
+			cachedBuffer = iStorage.getCache().getRecord(rid);
+
+			if (cachedBuffer != null) {
+				// UPDATE CACHE
+				cachedBuffer.buffer = txEntry.record.toStream();
+				cachedBuffer.version = txEntry.record.getVersion();
+				cachedBuffer.recordType = txEntry.record.getRecordType();
+
+			} else if (txEntry.record.isPinned())
+				// INSERT NEW ENTRY IN THE CACHE
+				iStorage.getCache().pushRecord(rid,
+						new ORawBuffer(txEntry.record.toStream(), txEntry.record.getVersion(), txEntry.record.getRecordType()));
+		}
+	}
 }

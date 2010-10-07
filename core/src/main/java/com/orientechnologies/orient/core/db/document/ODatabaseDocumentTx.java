@@ -68,7 +68,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 		iContent.validate();
 
 		try {
-			if (!iContent.getIdentity().isValid()) {
+			if (iContent.getIdentity().isNew()) {
 				// NEW RECORD
 				if (iContent.getClassName() != null)
 					checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, iContent.getClassName());

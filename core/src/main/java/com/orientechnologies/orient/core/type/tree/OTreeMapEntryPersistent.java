@@ -634,24 +634,24 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	 */
 	protected boolean assureIntegrityOfReferences() throws IOException {
 		boolean needToUpdate = false;
-		if (!parentRid.isValid() && parent != null) {
-			if (!parent.record.getIdentity().isValid()) {
+		if (parentRid.isNew() && parent != null) {
+			if (parent.record.getIdentity().isNew()) {
 				parent.save();
 				needToUpdate = true;
 			}
 			parentRid = parent.record.getIdentity();
 		}
 
-		if (!leftRid.isValid() && left != null) {
-			if (!left.record.getIdentity().isValid()) {
+		if (leftRid.isNew() && left != null) {
+			if (left.record.getIdentity().isNew()) {
 				left.save();
 				needToUpdate = true;
 			}
 			leftRid = left.record.getIdentity();
 		}
 
-		if (!rightRid.isValid() && right != null) {
-			if (!right.record.getIdentity().isValid()) {
+		if (rightRid.isNew() && right != null) {
+			if (right.record.getIdentity().isNew()) {
 				right.save();
 				needToUpdate = true;
 			}

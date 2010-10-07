@@ -59,7 +59,11 @@ public class OCacheRecord extends OSharedResourceAdaptive {
 		final boolean locked = acquireExclusiveLock();
 
 		try {
-			cache.put(iRecord, iContent);
+			if (iContent == null || iContent.buffer.length == 0)
+				// NULL RECORD: REMOVE FROM THE CACHE TO SAVE SPACE
+				cache.remove(iRecord);
+			else
+				cache.put(iRecord, iContent);
 
 		} finally {
 			releaseExclusiveLock(locked);
@@ -123,17 +127,17 @@ public class OCacheRecord extends OSharedResourceAdaptive {
 	 * Remove multiple records from the cache in one shot saving the cost of locking for each record.
 	 * 
 	 * @param iRecords
-	 *          List of Strings
+	 *          List of RIDs as RecordID instances or Strings
 	 */
-	public void removeRecords(final Collection<String> iRecords) {
+	public void removeRecords(final Collection<?> iRecords) {
 		if (maxSize == 0)
 			return;
 
 		final boolean locked = acquireExclusiveLock();
 
 		try {
-			for (String id : iRecords)
-				cache.remove(id);
+			for (Object id : iRecords)
+				cache.remove(id.toString());
 
 		} finally {
 			releaseExclusiveLock(locked);

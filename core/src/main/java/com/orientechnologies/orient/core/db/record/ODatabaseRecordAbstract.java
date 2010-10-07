@@ -400,7 +400,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			// STREAM.LENGTH = 0 -> RECORD IN STACK: WILL BE SAVED AFTER
 			final byte[] stream = iRecord.toStream();
 
-			boolean isNew = !rid.isValid();
+			boolean isNew = rid.isNew();
 
 			final int clusterId;
 			if (isNew)
@@ -429,8 +429,11 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 				}
 			}
 
+			// GET THE LATEST VERSION. IT COULD CHANGE BECAUSE THE RECORD COULD BE BEEN LINKED FROM OTHERS
+			final int realVersion = iVersion == -1 ? -1 : iRecord.getVersion();
+
 			// SAVE IT
-			long result = underlying.save(clusterId, rid.getClusterPosition(), stream, iVersion, iRecord.getRecordType());
+			long result = underlying.save(clusterId, rid.getClusterPosition(), stream, realVersion, iRecord.getRecordType());
 
 			if (stream.length > 0)
 				// FILLED RECORD
