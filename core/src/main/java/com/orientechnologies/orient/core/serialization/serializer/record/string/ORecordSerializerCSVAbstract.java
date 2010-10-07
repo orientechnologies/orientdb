@@ -173,7 +173,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 	public String fieldToStream(final ODocument iRecord, final ODatabaseComplex<?> iDatabase,
 			final OUserObject2RecordHandler iObjHandler, final OType iType, final OClass iLinkedClass, final OType iLinkedType,
-			final String iName, final Object iValue, final Map<ORecordInternal<?>, ORecordId> iMarshalledRecords) {
+			final String iName, final Object iValue, final Set<Integer> iMarshalledRecords) {
 		StringBuilder buffer = new StringBuilder();
 
 		switch (iType) {
@@ -393,8 +393,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 	}
 
 	public void embeddedCollectionToStream(final ODatabaseComplex<?> iDatabase, final OUserObject2RecordHandler iObjHandler,
-			final OClass iLinkedClass, final OType iLinkedType, final Object iValue,
-			final Map<ORecordInternal<?>, ORecordId> iMarshalledRecords, StringBuilder buffer) {
+			final OClass iLinkedClass, final OType iLinkedType, final Object iValue, final Set<Integer> iMarshalledRecords,
+			StringBuilder buffer) {
 		buffer.append(OStringSerializerHelper.COLLECTION_BEGIN);
 
 		int size = iValue instanceof Collection<?> ? ((Collection<Object>) iValue).size() : Array.getLength(iValue);

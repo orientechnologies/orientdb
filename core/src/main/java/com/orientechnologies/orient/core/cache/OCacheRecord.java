@@ -59,7 +59,7 @@ public class OCacheRecord extends OSharedResourceAdaptive {
 		final boolean locked = acquireExclusiveLock();
 
 		try {
-			if (iContent == null || iContent.buffer.length == 0)
+			if (iContent == null || iContent.buffer == null || iContent.buffer.length == 0)
 				// NULL RECORD: REMOVE FROM THE CACHE TO SAVE SPACE
 				cache.remove(iRecord);
 			else

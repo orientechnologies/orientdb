@@ -15,17 +15,14 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record;
 
-import java.util.IdentityHashMap;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-
-public class OSerializationThreadLocal extends ThreadLocal<Map<ORecordInternal<?>, ORecordId>> {
+public class OSerializationThreadLocal extends ThreadLocal<Set<Integer>> {
 	public static OSerializationThreadLocal	INSTANCE	= new OSerializationThreadLocal();
 
 	@Override
-	protected Map<ORecordInternal<?>, ORecordId> initialValue() {
-		return new IdentityHashMap<ORecordInternal<?>, ORecordId>();
+	protected Set<Integer> initialValue() {
+		return new HashSet<Integer>();
 	}
 }
