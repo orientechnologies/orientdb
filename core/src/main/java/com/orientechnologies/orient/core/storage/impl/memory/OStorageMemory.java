@@ -462,8 +462,16 @@ public class OStorageMemory extends OStorageAbstract {
 
 		case OTransactionEntry.CREATED:
 			if (rid.isNew()) {
-				rid.clusterPosition = createRecord(cluster.getId(), txEntry.record.toStream(), txEntry.record.getRecordType());
-				rid.clusterId = cluster.getId();
+				// CHECK 2 TIMES TO ASSURE THAT IT'S A CREATE OR AN UPDATE BASED ON RECURSIVE TO-STREAM METHOD
+				final byte[] stream = txEntry.record.toStream();
+
+				if (rid.isNew()) {
+					rid.clusterPosition = createRecord(cluster.getId(), stream, txEntry.record.getRecordType());
+					rid.clusterId = cluster.getId();
+				} else {
+					txEntry.record.setVersion(updateRecord(iRequesterId, rid, stream, txEntry.record.getVersion(),
+							txEntry.record.getRecordType()));
+				}
 			}
 			break;
 

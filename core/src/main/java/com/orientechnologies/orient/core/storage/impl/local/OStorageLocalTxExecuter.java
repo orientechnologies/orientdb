@@ -179,8 +179,16 @@ public class OStorageLocalTxExecuter {
 
 		case OTransactionEntry.CREATED:
 			if (rid.isNew()) {
-				rid.clusterPosition = createRecord(iRequesterId, iTxId, cluster, txEntry.record.toStream(), txEntry.record.getRecordType());
-				rid.clusterId = cluster.getId();
+				// CHECK 2 TIMES TO ASSURE THAT IT'S A CREATE OR AN UPDATE BASED ON RECURSIVE TO-STREAM METHOD
+				final byte[] stream = txEntry.record.toStream();
+
+				if (rid.isNew()) {
+					rid.clusterPosition = createRecord(iRequesterId, iTxId, cluster, stream, txEntry.record.getRecordType());
+					rid.clusterId = cluster.getId();
+				} else {
+					txEntry.record.setVersion(updateRecord(iRequesterId, iTxId, cluster, rid.clusterPosition, stream,
+							txEntry.record.getVersion(), txEntry.record.getRecordType()));
+				}
 			}
 			break;
 
