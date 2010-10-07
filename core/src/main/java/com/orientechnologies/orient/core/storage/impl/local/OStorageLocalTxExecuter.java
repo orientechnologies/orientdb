@@ -88,9 +88,14 @@ public class OStorageLocalTxExecuter {
 			// READ CURRENT RECORD CONTENT
 			final ORawBuffer buffer = storage.readRecord(iRequesterId, iClusterSegment, iPosition, true);
 
-			// CREATE A COPY OF IT IN DATASEGMENT. IF TX FAILS AT THIS POINT UN-REFERENCED DATA WILL REMAIN UNTIL NEXT DEFRAG
-			final long dataOffset = storage.getDataSegment(storage.getDataSegmentForRecord(iClusterSegment, buffer.buffer)).addRecord(-1,
-					-1, buffer.buffer);
+			final long dataOffset;
+			if (buffer.buffer != null) {
+				// CREATE A COPY OF IT IN DATASEGMENT. IF TX FAILS AT THIS POINT UN-REFERENCED DATA WILL REMAIN UNTIL NEXT DEFRAG
+				dataOffset = storage.getDataSegment(storage.getDataSegmentForRecord(iClusterSegment, buffer.buffer)).addRecord(-1, -1,
+						buffer.buffer);
+			} else
+				// NO DATA
+				dataOffset = -1;
 
 			// SAVE INTO THE LOG THE POSITION OF THE RECORD JUST DELETED. IF TX FAILS AT THIS POINT AS ABOVE
 			txSegment.addLog(OTxSegment.OPERATION_UPDATE, iRequesterId, iTxId, iClusterSegment.getId(), iPosition, dataOffset);

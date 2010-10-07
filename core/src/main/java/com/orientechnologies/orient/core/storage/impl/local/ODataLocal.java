@@ -101,6 +101,9 @@ public class ODataLocal extends OMultiFileSegment {
 	 * @throws IOException
 	 */
 	public byte[] getRecord(final long iPosition) throws IOException {
+		if (iPosition == -1)
+			return null;
+
 		try {
 			acquireSharedLock();
 
@@ -158,8 +161,8 @@ public class ODataLocal extends OMultiFileSegment {
 			final OFile file = files[pos[0]];
 
 			final int recordSize = file.readInt(pos[1]);
-//			if (recordSize <= 0)
-//				OLogManager.instance().error(this, "Error while writing to data file. The record size was invalid", OIOException.class);
+			// if (recordSize <= 0)
+			// OLogManager.instance().error(this, "Error while writing to data file. The record size was invalid", OIOException.class);
 
 			if (iContent.length == recordSize) {
 				// USE THE OLD SPACE SINCE SIZE IT ISN'T CHANGED
