@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabasePojoAbstract;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OGraphException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -29,6 +30,7 @@ import com.orientechnologies.orient.core.iterator.OGraphVertexIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.tx.OTransactionEntry;
 
 /**
  * GraphDB implementation on top of Document underlying.
@@ -141,6 +143,41 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<ODocument, OGraphEle
 		return new OGraphVertexIterator(this);
 	}
 
+	@Override
+	public OGraphElement newInstance(final String iClassName) {
+		if (iClassName.equals(OGraphVertex.class.getSimpleName()))
+			return new OGraphVertex(this);
+		else if (iClassName.equals(OGraphEdge.class.getSimpleName()))
+			return new OGraphEdge(this);
+
+		final OClass cls = getMetadata().getSchema().getClass(iClassName);
+		if (cls != null && cls.getSuperClass() != null) {
+			if (cls.getSuperClass().getName().equals(OGraphVertex.class.getSimpleName()))
+				return new OGraphVertex(this, iClassName);
+			else if (cls.getSuperClass().getName().equals(OGraphEdge.class.getSimpleName()))
+				return new OGraphEdge(this, iClassName);
+		}
+
+		throw new OGraphException("Unrecognized class: " + iClassName);
+	}
+
+	public HashMap<ODocument, OGraphElement> getRecords2Objects() {
+		return records2Objects;
+	}
+
+	public void removeCachedElements(final Collection<OGraphElement> iElements) {
+		for (OGraphElement e : iElements) {
+			records2Objects.remove(e.getDocument());
+			rid2Records.remove(e.getDocument().getIdentity());
+			objects2Records.remove(System.identityHashCode(e));
+		}
+	}
+
+	private OGraphVertex registerPojo(final OGraphVertex iVertex) {
+		registerPojo(iVertex, iVertex.getDocument());
+		return iVertex;
+	}
+
 	private void checkForGraphSchema() {
 		if (!underlying.getMetadata().getSchema().existsClass(OGraphVertex.CLASS_NAME)) {
 			// CREATE THE META MODEL USING THE ORIENT SCHEMA
@@ -168,40 +205,5 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<ODocument, OGraphEle
 	protected Object stream2pojo(ODocument record, final OGraphElement iPojo, String iFetchPlan) {
 		iPojo.setDocument(record);
 		return iPojo;
-	}
-
-	@Override
-	public OGraphElement newInstance(final String iClassName) {
-		if (iClassName.equals(OGraphVertex.class.getSimpleName()))
-			return new OGraphVertex(this);
-		else if (iClassName.equals(OGraphEdge.class.getSimpleName()))
-			return new OGraphEdge(this);
-
-		final OClass cls = getMetadata().getSchema().getClass(iClassName);
-		if (cls != null && cls.getSuperClass() != null) {
-			if (cls.getSuperClass().getName().equals(OGraphVertex.class.getSimpleName()))
-				return new OGraphVertex(this, iClassName);
-			else if (cls.getSuperClass().getName().equals(OGraphEdge.class.getSimpleName()))
-				return new OGraphEdge(this, iClassName);
-		}
-
-		throw new OGraphException("Unrecognized class: " + iClassName);
-	}
-
-	public HashMap<ODocument, OGraphElement> getRecords2Objects() {
-		return records2Objects;
-	}
-
-	private OGraphVertex registerPojo(final OGraphVertex iVertex) {
-		registerPojo(iVertex, iVertex.getDocument());
-		return iVertex;
-	}
-
-	public void removeCachedElements(final Collection<OGraphElement> iElements) {
-		for (OGraphElement e : iElements) {
-			records2Objects.remove(e.getDocument());
-			rid2Records.remove(e.getDocument().getIdentity());
-			objects2Records.remove(System.identityHashCode(e));
-		}
 	}
 }

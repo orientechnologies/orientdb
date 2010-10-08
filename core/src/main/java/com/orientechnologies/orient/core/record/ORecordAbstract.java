@@ -33,9 +33,10 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	protected int								_version;
 	protected byte[]						_source;
 	protected ORecordSerializer	_recordFormat;
-	protected boolean						_pinned	= false;
-	protected boolean						_dirty	= true;
-	protected STATUS						_status	= STATUS.NEW;
+	protected boolean						_pinned		= false;
+	protected boolean						_dirty		= true;
+	protected STATUS						_status		= STATUS.NEW;
+	protected ORecordListener		listener	= null;
 
 	public ORecordAbstract() {
 	}
@@ -82,12 +83,17 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		setDirty();
 		if (_recordId != null)
 			_recordId.reset();
+
+		invokeListenerEvent(ORecordListener.EVENT.RESET);
+
 		return this;
 	}
 
 	public byte[] toStream() {
 		if (_source == null)
 			_source = _recordFormat.toStream(_database, this);
+
+		invokeListenerEvent(ORecordListener.EVENT.MARSHALL);
 
 		return _source;
 	}
@@ -96,6 +102,9 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		_dirty = false;
 		_source = iRecordBuffer;
 		_status = STATUS.LOADED;
+
+		invokeListenerEvent(ORecordListener.EVENT.UNMARSHALL);
+
 		return this;
 	}
 
@@ -165,6 +174,13 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 
 	public void setVersion(final int iVersion) {
 		_version = iVersion;
+	}
+
+	public ORecordAbstract<T> unload() {
+		_status = STATUS.NOT_LOADED;
+		unsetDirty();
+		invokeListenerEvent(ORecordListener.EVENT.UNLOAD);
+		return this;
 	}
 
 	public ORecordAbstract<T> load() {
@@ -258,5 +274,31 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 
 	public void setStatus(final STATUS iStatus) {
 		this._status = iStatus;
+	}
+
+	/**
+	 * Add a listener to the current document to catch all the supported events.
+	 * 
+	 * @see ORecordListener
+	 * 
+	 * @param iListener
+	 *          ODocumentListener implementation
+	 */
+	public void setListener(final ORecordListener iListener) {
+		listener = iListener;
+	}
+
+	/**
+	 * Remove the current event listener.
+	 * 
+	 * @see ORecordListener
+	 */
+	public void removeListener() {
+		listener = null;
+	}
+
+	protected void invokeListenerEvent(final ORecordListener.EVENT iEvent) {
+		if (listener != null)
+			listener.onEvent(this, iEvent);
 	}
 }

@@ -37,10 +37,15 @@ public class OTransactionOptimistic<REC extends ORecordInternal<?>> extends OTra
 
 	public void rollback() {
 		status = TXSTATUS.ROLLBACKING;
+
 		// INVALIDATE THE CACHE
 		database.getCache().removeRecords(entries.keySet());
 
-		// REMOVE CURRENT STATUS
+		// REMOVE ALL THE ENTRIES AND INVALIDATE THE DOCUMENTS TO AVOID TO BE RE-USED DIRTY AT USER-LEVEL. IN THIS WAY RE-LOADING MUST
+		// EXECUTED
+		for (OTransactionEntry<REC> v : entries.values()) {
+			v.record.unload();
+		}
 		entries.clear();
 
 		newObjectCounter = -2;

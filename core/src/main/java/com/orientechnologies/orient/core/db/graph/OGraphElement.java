@@ -20,6 +20,7 @@ import java.util.Set;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.ORecordListener;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
@@ -30,7 +31,7 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
  * @See {@link ODatabaseDocument}
  * @author Luca Garulli
  */
-public abstract class OGraphElement extends ODocumentWrapper {
+public abstract class OGraphElement extends ODocumentWrapper implements ORecordListener {
 	protected ODatabaseGraphTx	database;
 
 	public OGraphElement(final ODatabaseGraphTx iDatabase, final ORID iRID) {
@@ -47,6 +48,7 @@ public abstract class OGraphElement extends ODocumentWrapper {
 		super(iDocument);
 		database = iDatabase;
 		document.setTrackingChanges(false);
+		init();
 	}
 
 	public abstract void delete();
@@ -79,5 +81,9 @@ public abstract class OGraphElement extends ODocumentWrapper {
 
 	public ODatabaseGraphTx getDatabase() {
 		return database;
+	}
+
+	private void init() {
+		document.setListener(this);
 	}
 }

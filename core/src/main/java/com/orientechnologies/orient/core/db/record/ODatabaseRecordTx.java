@@ -90,6 +90,10 @@ public class ODatabaseRecordTx<REC extends ORecordInternal<?>> extends ODatabase
 		return this;
 	}
 
+	public OTransaction<?> getTransaction() {
+		return currentTx;
+	}
+
 	@Override
 	public REC load(final int iClusterId, final long iPosition, final REC iRecord, final String iFetchPlan) {
 		return currentTx.load(iClusterId, iPosition, iRecord, iFetchPlan);

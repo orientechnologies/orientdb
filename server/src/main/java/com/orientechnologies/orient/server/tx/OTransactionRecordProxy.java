@@ -144,4 +144,9 @@ public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
 	public ORecordAbstract<?> setIdentity(final ORecordId iIdentity) {
 		return null;
 	}
+
+	public <RET extends ORecord<byte[]>> RET unload() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

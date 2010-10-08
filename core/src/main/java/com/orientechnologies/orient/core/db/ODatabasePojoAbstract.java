@@ -16,7 +16,9 @@
 package com.orientechnologies.orient.core.db;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -70,11 +72,19 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 	}
 
 	public ODatabaseComplex<T> commit() {
-		return (ODatabaseComplex<T>) underlying.commit();
+		clearNewEntriesFromCache();
+
+		underlying.commit();
+
+		return this;
 	}
 
 	public ODatabaseComplex<T> rollback() {
-		return (ODatabaseComplex<T>) underlying.rollback();
+		clearNewEntriesFromCache();
+
+		underlying.rollback();
+
+		return this;
 	}
 
 	public OUser getUser() {
@@ -226,6 +236,29 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 			final ORID rid = iRecord.getIdentity();
 			if (rid.isValid())
 				rid2Records.remove(rid);
+		}
+	}
+
+	private void clearNewEntriesFromCache() {
+		for (Iterator<Entry<ORID, ODocument>> it = rid2Records.entrySet().iterator(); it.hasNext();) {
+			Entry<ORID, ODocument> entry = it.next();
+			if (entry.getKey().isNew()) {
+				it.remove();
+			}
+		}
+
+		for (Iterator<Entry<Integer, ODocument>> it = objects2Records.entrySet().iterator(); it.hasNext();) {
+			Entry<Integer, ODocument> entry = it.next();
+			if (entry.getValue().getIdentity().isNew()) {
+				it.remove();
+			}
+		}
+
+		for (Iterator<Entry<ODocument, T>> it = records2Objects.entrySet().iterator(); it.hasNext();) {
+			Entry<ODocument, T> entry = it.next();
+			if (entry.getKey().getIdentity().isNew()) {
+				it.remove();
+			}
 		}
 	}
 }

@@ -61,6 +61,13 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 		return _fieldTypes != null ? _fieldTypes.get(iPropertyName) : null;
 	}
 
+	public ORecordAbstract<T> unload() {
+		super.unload();
+		if (_fieldValues != null)
+			_fieldValues.clear();
+		return this;
+	}
+
 	@Override
 	public ORecordSchemaAwareAbstract<T> reset() {
 		super.reset();
@@ -83,7 +90,7 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 		if (!super.equals(obj))
 			return false;
 
-		return _recordId.isValid();
+		return this == obj || _recordId.isValid();
 	}
 
 	@Override

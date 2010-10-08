@@ -20,6 +20,7 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -86,19 +87,16 @@ public class OGraphEdge extends OGraphElement {
 		return out.get();
 	}
 
-	protected void setIn(final OGraphVertex iSource) {
-		this.in = new SoftReference<OGraphVertex>(iSource);
-		document.field(IN, iSource.getDocument());
-	}
-
-	protected void setOut(final OGraphVertex iDestination) {
-		this.out = new SoftReference<OGraphVertex>(iDestination);
-		document.field(OUT, iDestination.getDocument());
-	}
-
 	public void delete() {
 		delete(database, document);
 		document = null;
+	}
+
+	public void onEvent(final ORecord<?> iDocument, final EVENT iEvent) {
+		if (iEvent == EVENT.UNLOAD) {
+			out = null;
+			in = null;
+		}
 	}
 
 	public static void delete(final ODatabaseGraphTx iDatabase, final ODocument iEdge) {
@@ -159,5 +157,15 @@ public class OGraphEdge extends OGraphElement {
 		}
 
 		iEdge.delete();
+	}
+
+	protected void setIn(final OGraphVertex iSource) {
+		this.in = new SoftReference<OGraphVertex>(iSource);
+		document.field(IN, iSource.getDocument());
+	}
+
+	protected void setOut(final OGraphVertex iDestination) {
+		this.out = new SoftReference<OGraphVertex>(iDestination);
+		document.field(OUT, iDestination.getDocument());
 	}
 }

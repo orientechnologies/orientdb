@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
 import com.orientechnologies.orient.core.exception.OGraphException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.OGraphVertexOutIterator;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
@@ -370,6 +371,13 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 
 		document.delete();
 		document = null;
+	}
+
+	public void onEvent(final ORecord<?> iDocument, final EVENT iEvent) {
+		if (iEvent == EVENT.UNLOAD) {
+			outEdges = null;
+			inEdges = null;
+		}
 	}
 
 	/**
