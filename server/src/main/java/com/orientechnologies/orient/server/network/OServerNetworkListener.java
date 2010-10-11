@@ -18,6 +18,7 @@ package com.orientechnologies.orient.server.network;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.net.BindException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -102,7 +103,7 @@ public class OServerNetworkListener extends Thread {
 		for (int port : ports) {
 			inboundAddr = new InetSocketAddress(iHostName, port);
 			try {
-				serverSocket = new java.net.ServerSocket(port);
+				serverSocket = new java.net.ServerSocket(port, 0, InetAddress.getByName(iHostName));
 
 				if (serverSocket.isBound()) {
 					OLogManager.instance().info(this,
