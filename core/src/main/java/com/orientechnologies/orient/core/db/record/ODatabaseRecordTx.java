@@ -38,8 +38,7 @@ public class ODatabaseRecordTx<REC extends ORecordInternal<?>> extends ODatabase
 	}
 
 	public ODatabaseRecord<REC> begin() {
-		begin(TXTYPE.OPTIMISTIC);
-		return this;
+		return begin(TXTYPE.OPTIMISTIC);
 	}
 
 	public ODatabaseRecord<REC> begin(final TXTYPE iType) {

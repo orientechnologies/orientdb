@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
 @SuppressWarnings("unchecked")
@@ -61,6 +62,10 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 		records2Objects.clear();
 		rid2Records.clear();
 		super.close();
+	}
+
+	public OTransaction<?> getTransaction() {
+		return underlying.getTransaction();
 	}
 
 	public ODatabaseComplex<T> begin() {

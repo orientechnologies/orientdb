@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.orient.core.db.ODatabaseSchemaAware;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.iterator.ORecordIteratorMultiCluster;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -34,5 +34,5 @@ public interface ODatabaseDocument extends ODatabaseRecord<ODocument>, ODatabase
 	 *          Class name to iterate
 	 * @return Iterator of ODocument instances
 	 */
-	public ORecordIteratorMultiCluster<ODocument> browseClass(String iClassName);
+	public ORecordIteratorClass<ODocument> browseClass(String iClassName);
 }

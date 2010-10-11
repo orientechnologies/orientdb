@@ -16,13 +16,16 @@
 package com.orientechnologies.orient.core.iterator;
 
 import java.util.Iterator;
+import java.util.List;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.tx.OTransactionEntry;
 
 /**
- * Iterator class to browse forward and backward the records of a cluster.
+ * Iterator class to browse forward and backward the records of a cluster. Once browsed in a direction, the iterator can't change
+ * it.
  * 
  * @author Luca Garulli
  * 
@@ -33,12 +36,15 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 	protected final ODatabaseRecord<REC>					database;
 	protected final ODatabaseRecordAbstract<REC>	lowLevelDatabase;
 
-	protected boolean															liveUpdated			= false;
-	protected long																limit						= -1;
-	protected long																browsedRecords	= 0;
+	protected boolean															liveUpdated							= false;
+	protected long																limit										= -1;
+	protected long																browsedRecords					= 0;
 	protected long																currentClusterPosition;
 	protected String															fetchPlan;
-	private REC																		reusedRecord		= null;	// DEFAULT = NOT REUSE IT
+	private REC																		reusedRecord						= null;	// DEFAULT = NOT REUSE IT
+	protected Boolean															directionForward;
+	protected List<OTransactionEntry<?>>					txEntries;
+	protected int																	currentTxEntryPosition	= -1;
 
 	public ORecordIterator(final ODatabaseRecord<REC> iDatabase, final ODatabaseRecordAbstract<REC> iLowLevelDatabase) {
 		database = iDatabase;
@@ -162,5 +168,30 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 	public ORecordIterator<REC> setLiveUpdated(boolean liveUpdated) {
 		this.liveUpdated = liveUpdated;
 		return this;
+	}
+
+	protected boolean hasTxEntry() {
+		if (txEntries != null) {
+			// BROWSE FOR NEW RECORDS IN CURRENT TX
+			OTransactionEntry<?> entry;
+
+			for (int i = currentTxEntryPosition + 1; i < txEntries.size(); ++i) {
+				entry = txEntries.get(i);
+				if (entry.status == OTransactionEntry.CREATED) {
+					// SET THE CURRENT POINTER
+					currentTxEntryPosition = i;
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	protected void checkDirection(final boolean iForward) {
+		if (directionForward == null)
+			// SET THE DIRECTION
+			directionForward = iForward;
+		else if (directionForward != iForward)
+			throw new OIterationException("Iterator can't change direction while browsing");
 	}
 }

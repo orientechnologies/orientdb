@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
 /**
@@ -108,6 +109,13 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
 	public ODatabaseComplex<T> delete(T iObject);
+
+	/**
+	 * Return active transaction. Can't be null. If no transaction is active, then a OTransactionNoTx instance is returned.
+	 * 
+	 * @return OTransaction implementation
+	 */
+	public OTransaction<?> getTransaction();
 
 	/**
 	 * Begins a new transaction. By default the type is OPTIMISTIC. If a previous transaction was started it will be rollbacked and

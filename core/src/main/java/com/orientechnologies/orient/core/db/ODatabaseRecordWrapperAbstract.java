@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
 @SuppressWarnings("unchecked")
@@ -38,6 +39,10 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord<
 	public ODatabaseRecordWrapperAbstract(final DB iDatabase) {
 		super(iDatabase);
 		iDatabase.setDatabaseOwner((ODatabaseComplex<?>) this);
+	}
+
+	public OTransaction<?> getTransaction() {
+		return underlying.getTransaction();
 	}
 
 	public ODatabaseComplex<REC> begin() {
