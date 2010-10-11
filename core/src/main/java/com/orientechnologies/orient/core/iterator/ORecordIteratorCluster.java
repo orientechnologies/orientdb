@@ -98,7 +98,8 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 		if (liveUpdated)
 			lastClusterPosition = getRangeTo();
 
-		final long recordsToBrowse = lastClusterPosition > -1 ? lastClusterPosition - currentClusterPosition : 0;
+		final long recordsToBrowse = currentClusterPosition > -2 && lastClusterPosition > -1 ? lastClusterPosition
+				- currentClusterPosition : 0;
 
 		if (recordsToBrowse <= 0)
 			return hasTxEntry();

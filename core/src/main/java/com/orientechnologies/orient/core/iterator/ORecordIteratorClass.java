@@ -112,7 +112,8 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 		if (liveUpdated)
 			lastClusterPosition = database.getStorage().getClusterDataRange(lastClusterId)[1];
 
-		final long recordsToBrowse = lastClusterPosition > -1 ? lastClusterPosition - currentClusterPosition : 0;
+		final long recordsToBrowse = currentClusterPosition > -2 && lastClusterPosition > -1 ? lastClusterPosition
+				- currentClusterPosition : 0;
 
 		if (recordsToBrowse <= 0)
 			return hasTxEntry();
@@ -181,8 +182,7 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 	}
 
 	public REC current() {
-		final REC record = getRecord();
-		return readCurrentRecord(record, 0);
+		return readCurrentRecord(getRecord(), 0);
 	}
 
 	/**
