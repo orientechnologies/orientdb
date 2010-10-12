@@ -62,7 +62,7 @@ public class OStorageLocalTxExecuter {
 		try {
 			// CREATE DATA SEGMENT. IF TX FAILS AT THIS POINT UN-REFERENCED DATA WILL REMAIN UNTIL NEXT DEFRAG
 			final int dataSegment = storage.getDataSegmentForRecord(iClusterSegment, iContent);
-			ODataLocal data = storage.dataSegments[dataSegment];
+			ODataLocal data = storage.getDataSegment(dataSegment);
 			final long dataOffset = data.addRecord(-1, -1, iContent);
 
 			// REFERENCE IN THE CLUSTER THE DATA JUST CREATED. IF TX FAILS AT THIS POINT ???
