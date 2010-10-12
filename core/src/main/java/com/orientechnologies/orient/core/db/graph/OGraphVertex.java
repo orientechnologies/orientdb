@@ -100,12 +100,25 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 		// CREATE THE EDGE BETWEEN ME AND THE TARGET
 		final OGraphEdge edge = new OGraphEdge(database, iClassName, this, iTargetVertex);
 		getOutEdges().add(edge);
-		((List<ODocument>) document.field(FIELD_OUT_EDGES)).add(edge.getDocument());
+
+		List<ODocument> recordEdges = ((List<ODocument>) document.field(FIELD_OUT_EDGES));
+		if (recordEdges == null) {
+			recordEdges = new ArrayList<ODocument>();
+			document.field(FIELD_OUT_EDGES, recordEdges);
+		}
+		recordEdges.add(edge.getDocument());
 		document.setDirty();
 
 		// INSERT INTO THE INGOING EDGES OF TARGET
 		iTargetVertex.getInEdges().add(edge);
-		((List<ODocument>) iTargetVertex.getDocument().field(FIELD_IN_EDGES)).add(edge.getDocument());
+
+		recordEdges = ((List<ODocument>) iTargetVertex.getDocument().field(FIELD_IN_EDGES));
+		if (recordEdges == null) {
+			recordEdges = new ArrayList<ODocument>();
+			iTargetVertex.getDocument().field(FIELD_IN_EDGES, recordEdges);
+		}
+
+		recordEdges.add(edge.getDocument());
 		iTargetVertex.getDocument().setDirty();
 
 		return edge;
@@ -173,12 +186,9 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 			tempList = new ArrayList<OGraphEdge>();
 			inEdges = new SoftReference<List<OGraphEdge>>(tempList);
 
-			List<Object> docs = document.field(FIELD_IN_EDGES);
+			final List<Object> docs = document.field(FIELD_IN_EDGES);
 
-			if (docs == null) {
-				docs = new ArrayList<Object>();
-				document.field(FIELD_IN_EDGES, docs);
-			} else {
+			if (docs != null) {
 				// TRANSFORM ALL THE ARCS
 				ODocument doc;
 				for (Object o : docs) {
@@ -192,7 +202,7 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 			}
 		}
 
-		return inEdges.get();
+		return tempList;
 	}
 
 	/**
@@ -205,12 +215,9 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 			tempList = new ArrayList<OGraphEdge>();
 			outEdges = new SoftReference<List<OGraphEdge>>(tempList);
 
-			List<Object> docs = document.field(FIELD_OUT_EDGES);
+			final List<Object> docs = document.field(FIELD_OUT_EDGES);
 
-			if (docs == null) {
-				docs = new ArrayList<Object>();
-				document.field(FIELD_OUT_EDGES, docs);
-			} else {
+			if (docs != null) {
 				// TRANSFORM ALL THE ARCS
 				ODocument doc;
 				for (Object o : docs) {
@@ -343,6 +350,13 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 	public int getOutEdgeCount() {
 		final List<ODocument> docs = document.field(FIELD_OUT_EDGES);
 		return docs == null ? 0 : docs.size();
+	}
+
+	@Override
+	public void reset() {
+		document = null;
+		inEdges = null;
+		outEdges = null;
 	}
 
 	@SuppressWarnings("unchecked")

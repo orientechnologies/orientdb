@@ -83,15 +83,15 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 	}
 
 	/**
-	 * Tell to the iterator to use the same record for browsing. The record will be resetted before every use. This improve the
+	 * Tell to the iterator to use the same record for browsing. The record will be reset before every use. This improve the
 	 * performance and reduce memory utilization since it doesn't create a new one for each operation, but pay attention to copy the
-	 * data of the record once read otherwise they will be resetted to the next operation.
+	 * data of the record once read otherwise they will be reset to the next operation.
 	 * 
 	 * @param reuseSameRecord
 	 * @return @see #isReuseSameRecord()
 	 */
 	public ORecordIterator<REC> setReuseSameRecord(boolean reuseSameRecord) {
-		reusedRecord = database.newInstance();
+		reusedRecord = reuseSameRecord ? database.newInstance() : null;
 		return this;
 	}
 

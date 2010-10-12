@@ -51,6 +51,11 @@ public abstract class OGraphElement extends ODocumentWrapper implements ORecordL
 		init();
 	}
 
+	/**
+	 * Resets the object to be reused. Used by iterators.
+	 */
+	public abstract void reset();
+
 	public abstract void delete();
 
 	public ORID getId() {

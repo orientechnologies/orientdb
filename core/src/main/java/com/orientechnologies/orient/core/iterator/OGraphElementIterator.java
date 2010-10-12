@@ -35,11 +35,17 @@ public abstract class OGraphElementIterator<T extends OGraphElement> implements 
 	protected ODatabaseGraphTx								database;
 	protected ORecordIteratorClass<ODocument>	underlying;
 	private String														fetchPlan;
+	private T																	reusedObject;
+	private String														className;
 
 	public OGraphElementIterator(final ODatabaseGraphTx iDatabase, final String iClassName) {
 		database = iDatabase;
+		className = iClassName;
 		underlying = new ORecordIteratorClass<ODocument>((ODatabaseRecord<ODocument>) iDatabase.getUnderlying(),
 				(ODatabaseRecordAbstract<ODocument>) ((ODatabaseDocumentTx) iDatabase.getUnderlying()).getUnderlying(), iClassName);
+
+		setReuseSameObject(false);
+		underlying.setReuseSameRecord(false);
 	}
 
 	public OGraphElementIterator(final ODatabaseGraphTx iDatabase, ORecordIteratorClass<ODocument> iUnderlying) {
@@ -72,5 +78,44 @@ public abstract class OGraphElementIterator<T extends OGraphElement> implements 
 	public OGraphElementIterator<T> setFetchPlan(String fetchPlan) {
 		this.fetchPlan = fetchPlan;
 		return this;
+	}
+
+	/**
+	 * Tells if the iterator is using the same object for browsing.
+	 * 
+	 * @see #setReuseSameObject(boolean)
+	 */
+	public boolean isReuseSameObject() {
+		return reusedObject != null;
+	}
+
+	/**
+	 * Tells to the iterator to use the same object for browsing. The object will be reset before every use. This improve the
+	 * performance and reduce memory utilization since it doesn't create a new one for each operation, but pay attention to copy the
+	 * data of the object once read otherwise they will be reset to the next operation.
+	 * 
+	 * @param iReuse
+	 * @return @see #isReuseSameObject()
+	 */
+	public OGraphElementIterator<T> setReuseSameObject(boolean iReuse) {
+		reusedObject = (T) database.newInstance(className);
+		return this;
+	}
+
+	/**
+	 * Returns the object to use for the operation.
+	 * 
+	 * @return
+	 */
+	protected T getObject() {
+		final T object;
+		if (reusedObject != null) {
+			// REUSE THE SAME RECORD AFTER HAVING RESETTED IT
+			object = reusedObject;
+			object.reset();
+		} else
+			// CREATE A NEW ONE
+			object = (T) database.newInstance(className);
+		return object;
 	}
 }

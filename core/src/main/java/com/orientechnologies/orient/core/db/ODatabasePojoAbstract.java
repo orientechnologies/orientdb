@@ -191,6 +191,10 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 	}
 
 	public T getUserObjectByRecord(final ORecordInternal<?> iRecord, final String iFetchPlan) {
+		return getUserObjectByRecord(iRecord, iFetchPlan, true);
+	}
+
+	public T getUserObjectByRecord(final ORecordInternal<?> iRecord, final String iFetchPlan, final boolean iCreate) {
 		checkOpeness();
 		if (!(iRecord instanceof ODocument))
 			return null;
@@ -199,7 +203,7 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 
 		T pojo = records2Objects.get(iRecord);
 
-		if (pojo == null) {
+		if (pojo == null && iCreate) {
 			try {
 				if (record.getInternalStatus() == STATUS.NOT_LOADED)
 					record.load();

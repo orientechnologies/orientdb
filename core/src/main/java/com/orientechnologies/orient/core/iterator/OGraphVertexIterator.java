@@ -34,11 +34,15 @@ public class OGraphVertexIterator extends OGraphElementIterator<OGraphVertex> {
 	public OGraphVertex next(final String iFetchPlan) {
 		final ODocument doc = underlying.next();
 
-		final OGraphVertex v = (OGraphVertex) database.getUserObjectByRecord(doc,
+		OGraphVertex v = (OGraphVertex) database.getUserObjectByRecord(doc,
 				null);
+		
 		if (v != null)
 			return v;
 
-		return new OGraphVertex(database, doc);
+		v = getObject();
+		v.fromStream(doc);
+		
+		return v;
 	}
 }

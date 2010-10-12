@@ -34,11 +34,14 @@ public class OGraphEdgeIterator extends OGraphElementIterator<OGraphEdge> {
 	public OGraphEdge next(final String iFetchPlan) {
 		final ODocument doc = underlying.next();
 
-		OGraphEdge v = (OGraphEdge) database.getUserObjectByRecord(doc, null);
-		if (v != null)
-			return v;
+		OGraphEdge e = (OGraphEdge) database.getUserObjectByRecord(doc, null, !isReuseSameObject());
+		if (e != null)
+			return e;
 
-		return new OGraphEdge(database, doc);
+		e = getObject();
+		e.fromStream(doc);
+		
+		return e; 
 	}
 
 }

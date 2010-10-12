@@ -87,9 +87,18 @@ public class OGraphEdge extends OGraphElement {
 		return out.get();
 	}
 
+	@Override
+	public void reset() {
+		document = null;
+		in = null;
+		out = null;
+	}
+
 	public void delete() {
 		delete(database, document);
 		document = null;
+		in = null;
+		out = null;
 	}
 
 	public void onEvent(final ORecord<?> iDocument, final EVENT iEvent) {
