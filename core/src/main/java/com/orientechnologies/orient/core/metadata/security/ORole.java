@@ -21,7 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
+import com.orientechnologies.orient.core.annotation.OBeforeDeserialization;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
@@ -92,7 +92,7 @@ public class ORole extends ODocumentWrapper {
 		fromStream(iSource);
 	}
 
-	@OAfterDeserialization
+	@OBeforeDeserialization
 	public void fromStream(final ODocument iSource) {
 		if (document != null)
 			return;

@@ -24,12 +24,14 @@ import org.testng.annotations.Test;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.client.admin.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
-import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
+import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 @Test(groups = "db")
 public class DbCreationTest {
-	private String				url;
-	private ODatabaseFlat	database;
+	private String						url;
+	private ODatabaseObjectTx	database;
 
 	@Parameters(value = "url")
 	public DbCreationTest(String iURL) {
@@ -41,7 +43,7 @@ public class DbCreationTest {
 		if (url.startsWith(OEngineRemote.NAME))
 			new OServerAdmin(url).connect().createDatabase("local").close();
 		else {
-			database = new ODatabaseFlat(url);
+			database = new ODatabaseObjectTx(url);
 			database.create();
 			database.close();
 		}
@@ -49,18 +51,26 @@ public class DbCreationTest {
 
 	@Test(dependsOnMethods = { "testDbCreation" })
 	public void testDbOpen() {
-		database = new ODatabaseFlat(url);
+		database = new ODatabaseObjectTx(url);
 		database.open("admin", "admin");
 		database.close();
 	}
 
 	@Test(dependsOnMethods = { "testDbOpen" })
 	public void testChangeLocale() throws IOException {
-		database = new ODatabaseFlat(url);
+		database = new ODatabaseObjectTx(url);
 		database.open("admin", "admin");
 		database.getStorage().getConfiguration().localeLanguage = Locale.ENGLISH.getLanguage();
 		database.getStorage().getConfiguration().localeCountry = Locale.ENGLISH.getCountry();
 		database.getStorage().getConfiguration().update();
+		database.close();
+	}
+
+	@Test(dependsOnMethods = { "testChangeLocale" })
+	public void testRoles() throws IOException {
+		database = new ODatabaseObjectTx(url);
+		database.open("admin", "admin");
+		database.query(new OSQLSynchQuery<ORole>("select from ORole where name = 'admin'"));
 		database.close();
 	}
 }
