@@ -153,6 +153,7 @@ public class OStorageLocal extends OStorageAbstract {
 					// OPENED
 					clusters[i].close();
 					clusters[i] = new OClusterLocal(this, (OStoragePhysicalClusterConfiguration) clusterConfig);
+					clusterMap.put(clusters[i].getName(), clusters[i]);
 					clusters[i].open();
 				} else {
 					if (clusterConfig.getName().equals(OStorage.CLUSTER_DEFAULT_NAME))
