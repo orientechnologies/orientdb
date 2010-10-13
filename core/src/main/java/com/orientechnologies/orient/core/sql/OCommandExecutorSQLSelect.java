@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsText;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
@@ -76,7 +77,15 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 		init(iRequest.getDatabase(), iRequest.getText());
 
-		request = (OSQLAsynchQuery<ORecordSchemaAware<?>>) iRequest;
+		if (iRequest instanceof OSQLAsynchQuery)
+			request = (OSQLAsynchQuery<ORecordSchemaAware<?>>) iRequest;
+		else {
+			// BUILD A QUERY OBJECT FROM THE COMMAND REQUEST
+			request = new OSQLSynchQuery<ORecordSchemaAware<?>>(iRequest.getText());
+			request.setDatabase(iRequest.getDatabase());
+			if (iRequest.getResultListener() != null)
+				request.setResultListener(iRequest.getResultListener());
+		}
 
 		int pos = extractProjections();
 		// TODO: IF NO PROJECTION WHAT???
@@ -156,7 +165,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			throw new OQueryParsingException("No source found in query: specify class, clusters or single records");
 
 		processResultSet();
-		return null;
+		return request instanceof OSQLSynchQuery ? ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getResult() : tempResult;
 	}
 
 	public boolean foreach(final ORecordInternal<?> iRecord) {
