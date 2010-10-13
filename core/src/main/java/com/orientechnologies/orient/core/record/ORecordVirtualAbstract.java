@@ -69,6 +69,14 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 	}
 
 	@Override
+	public ORecordSchemaAwareAbstract<T> clear() {
+		super.clear();
+		if (_fieldValues != null)
+			_fieldValues.clear();
+		return this;
+	}
+
+	@Override
 	public ORecordSchemaAwareAbstract<T> reset() {
 		super.reset();
 		if (_fieldValues != null)

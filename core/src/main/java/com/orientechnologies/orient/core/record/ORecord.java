@@ -46,6 +46,13 @@ public interface ORecord<T> {
 	public <RET extends ORecord<T>> RET unload();
 
 	/**
+	 * All the fields are deleted but the record identity is maintained.
+	 * 
+	 * @return The object it self. Useful to call methods in chain.
+	 */
+	public <RET extends ORecord<T>> RET clear();
+
+	/**
 	 * Creates a copy of the record. All the record contents are copied.
 	 * 
 	 * @return A new record instance copied by the current.

@@ -120,6 +120,13 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	}
 
 	@Override
+	public ORecordSchemaAwareAbstract<T> clear() {
+		super.clear();
+		_cursor = 0;
+		return this;
+	}
+
+	@Override
 	public ORecordSchemaAwareAbstract<T> reset() {
 		super.reset();
 		_cursor = 0;

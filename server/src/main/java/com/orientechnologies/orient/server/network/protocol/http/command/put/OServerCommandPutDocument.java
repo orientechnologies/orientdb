@@ -27,28 +27,37 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 	private static final String[]	NAMES	= { "PUT|document/*" };
 
 	public void execute(final OHttpRequest iRequest) throws Exception {
-		final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: document/<database>/<record-id>");
+		final String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: document/<database>[/<record-id>]");
 
 		iRequest.data.commandInfo = "Edit Document";
 
 		ODatabaseDocumentTx db = null;
-
-		// PARSE PARAMETERS
-		final int parametersPos = urlParts[2].indexOf("?");
-		final String rid = parametersPos > -1 ? urlParts[2].substring(0, parametersPos) : urlParts[2];
-		final ORecordId recorId = new ORecordId(rid);
-
-		if (!recorId.isValid())
-			throw new IllegalArgumentException("Invalid Record ID in request: " + recorId);
+		ORecordId recordId = null;
+		final ODocument doc;
 
 		try {
 			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
 
-			final ODocument doc = new ODocument(db, recorId);
+			if (urlParts.length > 2) {
+				// EXTRACT RID
+				final int parametersPos = urlParts[2].indexOf("?");
+				final String rid = parametersPos > -1 ? urlParts[2].substring(0, parametersPos) : urlParts[2];
+				recordId = new ORecordId(rid);
 
-			doc.load();
+				if (!recordId.isValid())
+					throw new IllegalArgumentException("Invalid Record ID in request: " + recordId);
+
+				doc = new ODocument(db, recordId);
+			} else
+				doc = new ODocument(db);
 
 			doc.fromJSON(iRequest.content);
+
+			if (recordId == null)
+				recordId = (ORecordId) doc.getIdentity();
+			
+			if (!recordId.isValid())
+				throw new IllegalArgumentException("Invalid Record ID in request: " + recordId);
 
 			doc.save();
 
@@ -57,7 +66,7 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 				OSharedDocumentDatabase.release(db);
 		}
 
-		sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid
+		sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + recordId
 				+ " updated successfully.");
 	}
 

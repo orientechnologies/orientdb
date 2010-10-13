@@ -77,6 +77,12 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		return this;
 	}
 
+	public ORecordAbstract<T> clear() {
+		setDirty();
+		invokeListenerEvent(ORecordListener.EVENT.CLEAR);
+		return this;
+	}
+
 	public ORecordAbstract<T> reset() {
 		_status = STATUS.NEW;
 
@@ -150,7 +156,6 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	}
 
 	public <RET extends ORecord<T>> RET fromJSON(final String iSource) {
-		setDirty();
 		ORecordSerializerJSON.INSTANCE.fromString(_database, iSource, this);
 		return (RET) this;
 	}

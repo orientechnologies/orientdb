@@ -23,7 +23,7 @@ package com.orientechnologies.orient.core.record;
  */
 public interface ORecordListener {
 	public enum EVENT {
-		RESET, MARSHALL, UNMARSHALL, UNLOAD
+		CLEAR, RESET, MARSHALL, UNMARSHALL, UNLOAD
 	}
 
 	public void onEvent(ORecord<?> iDocument, EVENT iEvent);

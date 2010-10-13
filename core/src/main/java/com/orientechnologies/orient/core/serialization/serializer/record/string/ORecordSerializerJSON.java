@@ -71,10 +71,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 		if (!iSource.startsWith("{") || !iSource.endsWith("}"))
 			throw new OSerializationException("Error on unmarshalling JSON content: content must be embraced by { }");
 
-		if (iRecord != null) {
-			iRecord.reset();
-			iRecord.setDirty();
-		}
+		if (iRecord != null)
+			iRecord.clear();
 
 		iSource = iSource.substring(1, iSource.length() - 1).trim();
 

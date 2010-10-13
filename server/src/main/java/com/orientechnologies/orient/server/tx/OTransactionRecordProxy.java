@@ -146,7 +146,10 @@ public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
 	}
 
 	public <RET extends ORecord<byte[]>> RET unload() {
-		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public <RET extends ORecord<byte[]>> RET clear() {
 		return null;
 	}
 }
