@@ -64,6 +64,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 	@Override
 	public ORecordInternal<?> fromString(final ODatabaseRecord<?> iDatabase, String iSource, ORecordInternal<?> iRecord) {
+		if (iSource == null)
+			throw new OSerializationException("Error on unmarshalling JSON content: content is null");
+
 		iSource = iSource.trim();
 		if (!iSource.startsWith("{") || !iSource.endsWith("}"))
 			throw new OSerializationException("Error on unmarshalling JSON content: content must be embraced by { }");

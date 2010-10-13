@@ -44,7 +44,7 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 		try {
 			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
 
-			final ODocument doc = new ODocument(db, rid);
+			final ODocument doc = new ODocument(db, recorId);
 
 			doc.load();
 
