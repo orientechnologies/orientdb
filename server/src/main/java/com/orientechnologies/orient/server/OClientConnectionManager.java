@@ -25,10 +25,10 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 
 public class OClientConnectionManager {
-	protected Map<String, OClientConnection>			connections							= new HashMap<String, OClientConnection>();
-	protected Map<String, ONetworkProtocol>				handlers								= new HashMap<String, ONetworkProtocol>();
+	protected Map<Integer, OClientConnection>			connections	= new HashMap<Integer, OClientConnection>();
+	protected Map<Integer, ONetworkProtocol>			handlers		= new HashMap<Integer, ONetworkProtocol>();
 
-	private static final OClientConnectionManager	instance								= new OClientConnectionManager();
+	private static final OClientConnectionManager	instance		= new OClientConnectionManager();
 
 	public OClientConnectionManager() {
 	}
@@ -37,17 +37,16 @@ public class OClientConnectionManager {
 		OProfiler.getInstance().updateCounter("OServer.threads.actives", +1);
 
 		connections.put(iConnection.id, iConnection);
-
 		handlers.put(iConnection.id, iConnection.protocol);
 
 		OLogManager.instance().config(this, "Remote client connected from: " + iConnection);
 	}
 
-	public OClientConnection getConnection(final String iChannelId) {
+	public OClientConnection getConnection(final int iChannelId) {
 		return connections.get(iChannelId);
 	}
 
-	public void onClientDisconnection(final String iChannelId) {
+	public void onClientDisconnection(final int iChannelId) {
 		OProfiler.getInstance().updateCounter("OServer.threads.actives", -1);
 
 		OClientConnection conn = connections.remove(iChannelId);
@@ -61,11 +60,11 @@ public class OClientConnectionManager {
 		return instance;
 	}
 
-	public Map<String, OClientConnection> getConnections() {
+	public Map<Integer, OClientConnection> getConnections() {
 		return connections;
 	}
 
-	public Map<String, ONetworkProtocol> getHandlers() {
+	public Map<Integer, ONetworkProtocol> getHandlers() {
 		return handlers;
 	}
 }

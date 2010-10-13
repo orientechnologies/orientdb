@@ -159,7 +159,7 @@ public class OServerNetworkListener extends Thread {
 					protocol = protocolType.newInstance();
 
 					// CREATE THE CLIENT CONNECTION
-					connection = new OClientConnection(connectionSerial++, socket, protocol);
+					connection = new OClientConnection(++connectionSerial, socket, protocol);
 
 					// CONFIGURE THE PROTOCOL FOR THE INCOMING CONNECTION
 					protocol.config(socket, connection, configuration);

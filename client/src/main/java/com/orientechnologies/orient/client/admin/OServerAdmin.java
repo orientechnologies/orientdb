@@ -48,6 +48,7 @@ public class OServerAdmin extends OStorageRemote {
 				iStorageMode = "csv";
 
 			network.writeByte(OChannelBinaryProtocol.DB_CREATE);
+			network.writeInt(0);
 			network.writeString(name);
 			network.writeString(iStorageMode);
 			network.flush();

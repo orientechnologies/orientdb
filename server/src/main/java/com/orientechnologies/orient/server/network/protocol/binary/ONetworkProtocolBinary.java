@@ -101,8 +101,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		data.commandInfo = "Listening";
 		data.commandDetail = "-";
 
+		int clientTxId = 0;
+
 		try {
 			commandType = channel.readByte();
+			clientTxId = channel.readInt();
+
 			++data.totalRequests;
 
 			data.lastCommandReceived = System.currentTimeMillis();
@@ -114,8 +118,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 				user = channel.readString();
 				passwd = channel.readString();
-				sendOk();
-				channel.writeString(connection.id);
+				sendOk(clientTxId);
+				channel.writeInt(connection.id);
 				break;
 			}
 
@@ -144,11 +148,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				underlyingDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
 
 				if (!(underlyingDatabase.getStorage() instanceof OStorageMemory) && !loadUserFromSchema(user, passwd)) {
-					sendError(new OSecurityAccessException(connection.database.getName(), "Access denied to database '"
+					sendError(clientTxId, new OSecurityAccessException(connection.database.getName(), "Access denied to database '"
 							+ connection.database.getName() + "' for user: " + user));
 				} else {
-					sendOk();
-					channel.writeString(connection.id);
+					sendOk(clientTxId);
+					channel.writeInt(connection.id);
 					channel.writeInt(connection.database.getClusterNames().size());
 					for (OCluster c : (connection.database.getStorage()).getClusters()) {
 						if (c != null) {
@@ -199,7 +203,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 				underlyingDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
 
-				sendOk();
+				sendOk(clientTxId);
 				break;
 			}
 
@@ -214,7 +218,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 				channel.writeByte((byte) (connection.database.exists() ? 1 : 0));
 
-				sendOk();
+				sendOk(clientTxId);
 				break;
 			}
 
@@ -227,7 +231,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 				long count = connection.database.countClusterElements(clusterIds);
 
-				sendOk();
+				sendOk(clientTxId);
 				channel.writeLong(count);
 				break;
 			}
@@ -237,7 +241,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 				long[] pos = connection.database.getStorage().getClusterDataRange(channel.readShort());
 
-				sendOk();
+				sendOk(clientTxId);
 				channel.writeLong(pos[0]);
 				channel.writeLong(pos[1]);
 				break;
@@ -268,7 +272,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 					throw new IllegalArgumentException("Cluster type " + type + " is not supported");
 				}
 
-				sendOk();
+				sendOk(clientTxId);
 				channel.writeShort((short) num);
 				break;
 			}
@@ -280,7 +284,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 				boolean result = connection.database.getStorage().removeCluster(id);
 
-				sendOk();
+				sendOk(clientTxId);
 				channel.writeByte((byte) (result ? '1' : '0'));
 				break;
 			}
@@ -294,7 +298,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 				// LOAD THE RAW BUFFER
 				final ORawBuffer buffer = underlyingDatabase.read(clusterId, clusterPosition, null);
-				sendOk();
+				sendOk(clientTxId);
 
 				if (buffer != null) {
 					// SEND THE ROOT BUFFER
@@ -354,7 +358,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 				final long location = underlyingDatabase.save(channel.readShort(), ORID.CLUSTER_POS_INVALID, channel.readBytes(), -1,
 						channel.readByte());
-				sendOk();
+				sendOk(clientTxId);
 				channel.writeLong(location);
 				break;
 
@@ -374,7 +378,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 						&& ((ODictionaryLocal<?>) connection.database.getDictionary()).getTree().getRecord().getIdentity().getClusterPosition() == position)
 					((ODictionaryLocal<?>) connection.database.getDictionary()).load();
 
-				sendOk();
+				sendOk(clientTxId);
 
 				channel.writeInt((int) newVersion);
 				break;
@@ -383,7 +387,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				data.commandInfo = "Delete record";
 
 				underlyingDatabase.delete(channel.readShort(), channel.readLong(), channel.readInt());
-				sendOk();
+				sendOk(clientTxId);
 
 				channel.writeByte((byte) '1');
 				break;
@@ -394,7 +398,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				final String clusterName = channel.readString();
 				final long size = connection.database.countClusterElements(clusterName);
 
-				sendOk();
+				sendOk(clientTxId);
 
 				channel.writeLong(size);
 				break;
@@ -416,14 +420,14 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 					// ASYNCHRONOUS
 					final StringBuilder empty = new StringBuilder();
 					final Set<ODocument> recordsToSend = new HashSet<ODocument>();
+					final int txId = clientTxId;
 
 					final Map<String, Integer> fetchPlan = query != null ? OFetchHelper.buildFetchPlan(query.getFetchPlan()) : null;
-
 					command.setResultListener(new OCommandResultListener() {
 						public boolean result(final Object iRecord) {
 							if (empty.length() == 0)
 								try {
-									sendOk();
+									sendOk(txId);
 									empty.append("-");
 								} catch (IOException e1) {
 								}
@@ -463,7 +467,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 					if (empty.length() == 0)
 						try {
-							sendOk();
+							sendOk(clientTxId);
 						} catch (IOException e1) {
 						}
 
@@ -480,7 +484,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 					// SYNCHRONOUS
 					final Object result = ((OCommandRequestInternal) connection.database.command(command)).execute();
 
-					sendOk();
+					sendOk(clientTxId);
 
 					if (result == null) {
 						// NULL VALUE
@@ -508,7 +512,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				if (value != null)
 					((ODatabaseRecordTx<ORecordInternal<?>>) connection.database.getUnderlying()).load(value);
 
-				sendOk();
+				sendOk(clientTxId);
 
 				writeRecord(value);
 				break;
@@ -529,7 +533,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				if (value != null)
 					((ODatabaseRecordTx<ORecordInternal<?>>) connection.database.getUnderlying()).load(value);
 
-				sendOk();
+				sendOk(clientTxId);
 
 				writeRecord(value);
 				break;
@@ -544,7 +548,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				if (value != null)
 					((ODatabaseRecordTx<ORecordInternal<?>>) connection.database.getUnderlying()).load(value);
 
-				sendOk();
+				sendOk(clientTxId);
 
 				writeRecord(value);
 				break;
@@ -553,7 +557,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			case OChannelBinaryProtocol.DICTIONARY_SIZE: {
 				data.commandInfo = "Dictionary size";
 
-				sendOk();
+				sendOk(clientTxId);
 				channel.writeInt(connection.database.getDictionary().size());
 				break;
 			}
@@ -561,7 +565,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			case OChannelBinaryProtocol.DICTIONARY_KEYS: {
 				data.commandInfo = "Dictionary keys";
 
-				sendOk();
+				sendOk(clientTxId);
 				channel.writeCollectionString(connection.database.getDictionary().keySet());
 				break;
 			}
@@ -572,7 +576,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				((OStorageLocal) connection.database.getStorage()).commit(connection.database.getId(), new OTransactionOptimisticProxy(
 						(ODatabaseRecordTx<OTransactionRecordProxy>) connection.database.getUnderlying(), channel));
 
-				sendOk();
+				sendOk(clientTxId);
 				break;
 
 			default:
@@ -581,17 +585,17 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				OLogManager.instance().error(this, "Request not supported. Code: " + commandType);
 
 				channel.clearInput();
-				sendError(null);
+				sendError(clientTxId, null);
 			}
 		} catch (EOFException eof) {
 			shutdown();
 		} catch (SocketException e) {
 			shutdown();
 		} catch (OException e) {
-			sendError(e);
+			sendError(clientTxId, e);
 		} catch (Throwable t) {
 			OLogManager.instance().error(this, "Error on executing request", t);
-			sendError(t);
+			sendError(clientTxId, t);
 		} finally {
 			try {
 				channel.flush();
@@ -622,12 +626,14 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		OClientConnectionManager.instance().onClientDisconnection(connection.id);
 	}
 
-	protected void sendOk() throws IOException {
+	protected void sendOk(final int iClientTxId) throws IOException {
 		channel.writeByte(OChannelBinaryProtocol.OK);
+		channel.writeInt(iClientTxId);
 	}
 
-	protected void sendError(final Throwable t) throws IOException {
+	protected void sendError(final int iClientTxId, final Throwable t) throws IOException {
 		channel.writeByte(OChannelBinaryProtocol.ERROR);
+		channel.writeInt(iClientTxId);
 
 		Throwable current = t;
 		while (current != null) {

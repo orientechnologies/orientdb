@@ -22,13 +22,13 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 
 public class OClientConnection {
-	public String								id;
+	public int									id;
 	public ONetworkProtocol			protocol;
 	public long									since;
 	public ODatabaseDocumentTx	database;
 
 	public OClientConnection(final int iId, final Socket iSocket, final ONetworkProtocol iProtocol) throws IOException {
-		this.id = String.valueOf(iId);
+		this.id = iId;
 		this.protocol = iProtocol;
 		this.since = System.currentTimeMillis();
 	}
@@ -42,7 +42,7 @@ public class OClientConnection {
 
 	@Override
 	public int hashCode() {
-		return id.hashCode();
+		return id;
 	}
 
 	@Override
@@ -53,7 +53,7 @@ public class OClientConnection {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		OClientConnection other = (OClientConnection) obj;
+		final OClientConnection other = (OClientConnection) obj;
 		if (id != other.id)
 			return false;
 		return true;

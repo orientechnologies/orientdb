@@ -76,7 +76,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 	protected List<OPair<String, String[]>>	serverURLs				= new ArrayList<OPair<String, String[]>>();
 	protected OChannelBinaryClient					network;
-	protected String												sessionId;
+	protected int														txId;
 	protected final Map<String, Integer>		clustersIds				= new HashMap<String, Integer>();
 	protected final Map<String, String>			clustersTypes			= new HashMap<String, String>();
 	protected int														defaultClusterId;
@@ -131,7 +131,7 @@ public class OStorageRemote extends OStorageAbstract {
 			boolean locked = acquireExclusiveLock();
 
 			try {
-				network.writeByte(OChannelBinaryProtocol.DB_EXIST);
+				writeCommand(OChannelBinaryProtocol.DB_EXIST);
 				network.flush();
 
 				readStatus();
@@ -151,7 +151,7 @@ public class OStorageRemote extends OStorageAbstract {
 		boolean locked = acquireExclusiveLock();
 
 		try {
-			network.writeByte(OChannelBinaryProtocol.DB_CLOSE);
+			writeCommand(OChannelBinaryProtocol.DB_CLOSE);
 			network.out.flush();
 
 			network.socket.close();
@@ -190,7 +190,7 @@ public class OStorageRemote extends OStorageAbstract {
 			boolean locked = acquireExclusiveLock();
 
 			try {
-				network.writeByte(OChannelBinaryProtocol.RECORD_CREATE);
+				writeCommand(OChannelBinaryProtocol.RECORD_CREATE);
 				network.writeShort((short) iClusterId);
 				network.writeBytes(iContent);
 				network.writeByte(iRecordType);
@@ -221,7 +221,7 @@ public class OStorageRemote extends OStorageAbstract {
 			boolean locked = acquireExclusiveLock();
 
 			try {
-				network.writeByte(OChannelBinaryProtocol.RECORD_LOAD);
+				writeCommand(OChannelBinaryProtocol.RECORD_LOAD);
 				network.writeShort((short) iClusterId);
 				network.writeLong(iPosition);
 				network.writeString(iFetchPlan != null ? iFetchPlan : "");
@@ -262,7 +262,7 @@ public class OStorageRemote extends OStorageAbstract {
 			boolean locked = acquireExclusiveLock();
 
 			try {
-				network.writeByte(OChannelBinaryProtocol.RECORD_UPDATE);
+				writeCommand(OChannelBinaryProtocol.RECORD_UPDATE);
 				network.writeShort((short) iClusterId);
 				network.writeLong(iPosition);
 				network.writeBytes(iContent);
@@ -293,7 +293,7 @@ public class OStorageRemote extends OStorageAbstract {
 			boolean locked = acquireExclusiveLock();
 
 			try {
-				network.writeByte(OChannelBinaryProtocol.RECORD_DELETE);
+				writeCommand(OChannelBinaryProtocol.RECORD_DELETE);
 				network.writeShort((short) iClusterId);
 				network.writeLong(iPosition);
 				network.writeInt(iVersion);
@@ -324,7 +324,7 @@ public class OStorageRemote extends OStorageAbstract {
 			boolean locked = acquireExclusiveLock();
 
 			try {
-				network.writeByte(OChannelBinaryProtocol.DATACLUSTER_DATARANGE);
+				writeCommand(OChannelBinaryProtocol.DATACLUSTER_DATARANGE);
 				network.writeShort((short) iClusterId);
 				network.flush();
 
@@ -348,7 +348,7 @@ public class OStorageRemote extends OStorageAbstract {
 			boolean locked = acquireExclusiveLock();
 
 			try {
-				network.writeByte(OChannelBinaryProtocol.DATACLUSTER_COUNT);
+				writeCommand(OChannelBinaryProtocol.DATACLUSTER_COUNT);
 				network.writeShort((short) iClusterIds.length);
 				for (int i = 0; i < iClusterIds.length; ++i)
 					network.writeShort((short) iClusterIds[i]);
@@ -374,7 +374,7 @@ public class OStorageRemote extends OStorageAbstract {
 			boolean locked = acquireExclusiveLock();
 
 			try {
-				network.writeByte(OChannelBinaryProtocol.COUNT);
+				writeCommand(OChannelBinaryProtocol.COUNT);
 				network.writeString(iClassName);
 				network.flush();
 
@@ -414,7 +414,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 				final boolean asynch = iCommand instanceof OCommandRequestAsynch;
 
-				network.writeByte(OChannelBinaryProtocol.COMMAND);
+				writeCommand(OChannelBinaryProtocol.COMMAND);
 				network.writeByte((byte) (asynch ? 'a' : 's')); // ASYNC / SYNC
 				network.writeBytes(OStreamSerializerAnyStreamable.INSTANCE.toStream(command));
 				network.flush();
@@ -492,7 +492,7 @@ public class OStorageRemote extends OStorageAbstract {
 			boolean locked = acquireExclusiveLock();
 
 			try {
-				network.writeByte(OChannelBinaryProtocol.TX_COMMIT);
+				writeCommand(OChannelBinaryProtocol.TX_COMMIT);
 				network.writeInt(iTx.getId());
 				network.writeInt(iTx.size());
 
@@ -587,7 +587,7 @@ public class OStorageRemote extends OStorageAbstract {
 			boolean locked = acquireExclusiveLock();
 
 			try {
-				network.writeByte(OChannelBinaryProtocol.DATACLUSTER_ADD);
+				writeCommand(OChannelBinaryProtocol.DATACLUSTER_ADD);
 				network.writeString(iClusterType.toString());
 				network.writeString(iClusterName);
 
@@ -630,7 +630,7 @@ public class OStorageRemote extends OStorageAbstract {
 			boolean locked = acquireExclusiveLock();
 
 			try {
-				network.writeByte(OChannelBinaryProtocol.DATACLUSTER_REMOVE);
+				writeCommand(OChannelBinaryProtocol.DATACLUSTER_REMOVE);
 				network.writeShort((short) iClusterId);
 
 				network.flush();
@@ -671,7 +671,7 @@ public class OStorageRemote extends OStorageAbstract {
 			boolean locked = acquireExclusiveLock();
 
 			try {
-				network.writeByte(OChannelBinaryProtocol.DATASEGMENT_ADD);
+				writeCommand(OChannelBinaryProtocol.DATASEGMENT_ADD);
 				network.writeString(iSegmentName).writeString(iSegmentFileName);
 				network.flush();
 
@@ -688,11 +688,11 @@ public class OStorageRemote extends OStorageAbstract {
 		return 0;
 	}
 
-	public String getSessionId() {
+	public int getSessionId() {
 		boolean locked = acquireSharedLock();
 
 		try {
-			return sessionId;
+			return txId;
 
 		} finally {
 			releaseSharedLock(locked);
@@ -709,7 +709,7 @@ public class OStorageRemote extends OStorageAbstract {
 			try {
 				final ORID rid = iRecord.getIdentity();
 
-				network.writeByte(OChannelBinaryProtocol.DICTIONARY_PUT);
+				writeCommand(OChannelBinaryProtocol.DICTIONARY_PUT);
 				network.writeString(iKey);
 				network.writeByte(iRecord.getRecordType());
 				network.writeShort((short) rid.getClusterId());
@@ -738,7 +738,7 @@ public class OStorageRemote extends OStorageAbstract {
 			boolean locked = acquireExclusiveLock();
 
 			try {
-				network.writeByte(OChannelBinaryProtocol.DICTIONARY_LOOKUP);
+				writeCommand(OChannelBinaryProtocol.DICTIONARY_LOOKUP);
 				network.writeString(iKey);
 				network.flush();
 
@@ -764,7 +764,7 @@ public class OStorageRemote extends OStorageAbstract {
 			boolean locked = acquireExclusiveLock();
 
 			try {
-				network.writeByte(OChannelBinaryProtocol.DICTIONARY_REMOVE);
+				writeCommand(OChannelBinaryProtocol.DICTIONARY_REMOVE);
 				network.writeString(iKey.toString());
 				network.flush();
 
@@ -790,7 +790,7 @@ public class OStorageRemote extends OStorageAbstract {
 			boolean locked = acquireExclusiveLock();
 
 			try {
-				network.writeByte(OChannelBinaryProtocol.DICTIONARY_SIZE);
+				writeCommand(OChannelBinaryProtocol.DICTIONARY_SIZE);
 				network.flush();
 
 				readStatus();
@@ -817,7 +817,7 @@ public class OStorageRemote extends OStorageAbstract {
 			boolean locked = acquireExclusiveLock();
 
 			try {
-				network.writeByte(OChannelBinaryProtocol.DICTIONARY_KEYS);
+				writeCommand(OChannelBinaryProtocol.DICTIONARY_KEYS);
 				network.flush();
 
 				readStatus();
@@ -854,6 +854,9 @@ public class OStorageRemote extends OStorageAbstract {
 
 	protected void readStatus() throws IOException {
 		final byte result = network.readByte();
+
+		// TODO: USE THIS TO ROUTE TO THE REQUESTER TX THREAD
+		final int clientTxId = network.readInt();
 
 		if (result == OChannelBinaryProtocol.ERROR) {
 			StringBuilder buffer = new StringBuilder();
@@ -928,14 +931,14 @@ public class OStorageRemote extends OStorageAbstract {
 		parseServerURLs();
 		createNetworkConnection();
 
-		network.out.writeByte(OChannelBinaryProtocol.DB_OPEN);
+		writeCommand(OChannelBinaryProtocol.DB_OPEN);
 		network.writeString(name).writeString(userName).writeString(userPassword);
 		network.flush();
 
 		readStatus();
 
-		sessionId = network.readString();
-		OLogManager.instance().debug(null, "Client connected with session id: " + sessionId);
+		txId = network.readInt();
+		OLogManager.instance().debug(null, "Client connected with session id: " + txId);
 
 		int tot = network.readInt();
 		String clusterName;
@@ -1068,5 +1071,10 @@ public class OStorageRemote extends OStorageAbstract {
 			}
 
 		return rootException;
+	}
+
+	private void writeCommand(final byte iCommand) throws IOException {
+		network.writeByte(iCommand);
+		network.writeInt(txId);
 	}
 }
