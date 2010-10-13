@@ -18,12 +18,13 @@ package com.orientechnologies.orient.enterprise.channel.text;
 import java.io.IOException;
 import java.net.Socket;
 
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 
 public class OChannelText extends OChannel {
 
-	public OChannelText(final Socket iSocket) throws IOException {
-		super(iSocket);
+	public OChannelText(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
+		super(iSocket, iConfig);
 	}
 
 	public byte[] readBytes(final int iTotal) throws IOException {

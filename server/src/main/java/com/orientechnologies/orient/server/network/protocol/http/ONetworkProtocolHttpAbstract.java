@@ -28,6 +28,8 @@ import java.util.Map.Entry;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -46,9 +48,9 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolExce
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
-	private static final String								COMMAND_SEPARATOR		= "|";
-	private static final int									MAX_CONTENT_LENGTH	= 10000;																	// MAX = 10Kb
-	private static final int									TCP_DEFAULT_TIMEOUT	= 10000;
+	private static final String								COMMAND_SEPARATOR	= "|";
+	private static int												requestMaxContentLength;																		// MAX = 10Kb
+	private static int												socketTimeout;
 
 	protected OClientConnection								connection;
 	protected OServerConfiguration						configuration;
@@ -56,18 +58,22 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 	protected OUser														account;
 	protected OHttpRequest										request;
 
-	private final StringBuilder								requestContent			= new StringBuilder();
-	private final Map<String, OServerCommand>	exactCommands				= new HashMap<String, OServerCommand>();
-	private final Map<String, OServerCommand>	wildcardCommands		= new HashMap<String, OServerCommand>();
+	private final StringBuilder								requestContent		= new StringBuilder();
+	private final Map<String, OServerCommand>	exactCommands			= new HashMap<String, OServerCommand>();
+	private final Map<String, OServerCommand>	wildcardCommands	= new HashMap<String, OServerCommand>();
 
 	public ONetworkProtocolHttpAbstract() {
 		super(OServer.getThreadGroup(), "HTTP");
 	}
 
 	@Override
-	public void config(final Socket iSocket, final OClientConnection iConnection) throws IOException {
-		iSocket.setSoTimeout(TCP_DEFAULT_TIMEOUT);
-		channel = new OChannelTextServer(iSocket);
+	public void config(final Socket iSocket, final OClientConnection iConnection, final OContextConfiguration iConfiguration)
+			throws IOException {
+		requestMaxContentLength = iConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_HTTP_MAX_CONTENT_LENGTH);
+		socketTimeout = iConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
+
+		iSocket.setSoTimeout(socketTimeout);
+		channel = new OChannelTextServer(iSocket, iConfiguration);
 		connection = iConnection;
 		configuration = new OServerConfiguration();
 
@@ -292,11 +298,11 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
 					} else if (lineUpperCase.startsWith(OHttpUtils.CONTENT_LENGTH)) {
 						contentLength = Integer.parseInt(lineUpperCase.substring(OHttpUtils.CONTENT_LENGTH.length()));
-						if (contentLength > MAX_CONTENT_LENGTH)
+						if (contentLength > requestMaxContentLength)
 							OLogManager.instance().warn(
 									this,
 									"->" + channel.socket.getInetAddress().getHostAddress() + ": Error on content size " + contentLength
-											+ ": the maximum allowed is " + MAX_CONTENT_LENGTH);
+											+ ": the maximum allowed is " + requestMaxContentLength);
 					}
 				}
 

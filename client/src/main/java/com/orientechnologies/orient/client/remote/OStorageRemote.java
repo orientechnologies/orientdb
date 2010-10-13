@@ -31,11 +31,12 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.client.config.OClientConfiguration;
 import com.orientechnologies.orient.client.dictionary.ODictionaryClient;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
@@ -69,8 +70,11 @@ public class OStorageRemote extends OStorageAbstract {
 	private static final String							ADDRESS_SEPARATOR	= ";";
 	private String													userName;
 	private String													userPassword;
+	private OContextConfiguration						clientConfiguration;
+	private int															connectionRetry;
+	private int															connectionRetryDelay;
+
 	protected List<OPair<String, String[]>>	serverURLs				= new ArrayList<OPair<String, String[]>>();
-	private final OClientConfiguration			clientConfiguration;
 	protected OChannelBinaryClient					network;
 	protected String												sessionId;
 	protected final Map<String, Integer>		clustersIds				= new HashMap<String, Integer>();
@@ -81,7 +85,10 @@ public class OStorageRemote extends OStorageAbstract {
 	public OStorageRemote(final String iURL, final String iMode) throws IOException {
 		super(iURL, iURL, iMode);
 		configuration = new OStorageConfiguration(this);
-		clientConfiguration = new OClientConfiguration();
+
+		clientConfiguration = new OContextConfiguration();
+		connectionRetry = clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY);
+		connectionRetryDelay = clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY_DELAY);
 	}
 
 	public void open(final int iRequesterId, final String iUserName, final String iUserPassword) {
@@ -885,17 +892,16 @@ public class OStorageRemote extends OStorageAbstract {
 		if (!(iException instanceof IOException))
 			throw new OStorageException(iMessage, iException);
 
-		if (retry < clientConfiguration.connectionRetry) {
+		if (retry < connectionRetry) {
 			// WAIT THE DELAY BEFORE TO RETRY
 			try {
-				Thread.sleep(clientConfiguration.connectionRetryDelay);
+				Thread.sleep(connectionRetryDelay);
 			} catch (InterruptedException e) {
 			}
 
 			try {
 				if (OLogManager.instance().isDebugEnabled())
-					OLogManager.instance().debug(this,
-							"Retrying to connect to remote server #" + retry + "/" + clientConfiguration.connectionRetry + "...");
+					OLogManager.instance().debug(this, "Retrying to connect to remote server #" + retry + "/" + connectionRetry + "...");
 
 				openRemoteDatabase();
 
@@ -1003,7 +1009,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 			OLogManager.instance().debug(this, "Trying to connect to the remote host %s:%d...", server.getKey(), port);
 			try {
-				network = new OChannelBinaryClient(server.getKey(), port, clientConfiguration.connectionTimeout);
+				network = new OChannelBinaryClient(server.getKey(), port, clientConfiguration);
 				return;
 			} catch (Exception e) {
 			}

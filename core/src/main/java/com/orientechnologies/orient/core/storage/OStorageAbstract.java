@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.storage;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.orient.core.cache.OCacheRecord;
-import com.orientechnologies.orient.core.config.OConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -77,7 +77,7 @@ public abstract class OStorageAbstract extends OSharedResourceAdaptive implement
 	public int removeUser() {
 		int u = super.removeUser();
 
-		boolean keepOpen = OConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean();
+		boolean keepOpen = OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean();
 		if (u == 0 && !keepOpen)
 			close();
 

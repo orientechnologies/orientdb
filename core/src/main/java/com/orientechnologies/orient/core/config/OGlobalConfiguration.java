@@ -24,7 +24,7 @@ import java.util.Map.Entry;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public enum OConfiguration {
+public enum OGlobalConfiguration {
 	STORAGE_KEEP_OPEN("orientdb.storage.keepOpen", Boolean.class, Boolean.FALSE), STORAGE_CACHE_SIZE("orientdb.storage.cache.size",
 			Integer.class, 5000),
 
@@ -39,9 +39,11 @@ public enum OConfiguration {
 			Integer.class, 110000000), FILE_MMAP_FORCE_DELAY("orientdb.file.mmap.forceDelay", Integer.class, 500), FILE_MMAP_FORCE_RETRY(
 			"orientdb.file.mmap.forceRetry", Integer.class, 5),
 
-	NETWORK_SOCKET_BUFFER_SIZE("orientdb.network.socketBufferSize", Integer.class, 32768), NETWORK_HTTP_TIMEOUT(
-			"orientdb.network.http.timeout", Integer.class, 10000), NETWORK_HTTP_MAX_CONTENT_LENGTH("orientdb.network.http.maxLength",
-			Integer.class, 10000),
+	NETWORK_SOCKET_BUFFER_SIZE("orientdb.network.socketBufferSize", Integer.class, 32768), NETWORK_SOCKET_TIMEOUT(
+			"orientdb.network.timeout", Integer.class, 10000), NETWORK_SOCKET_RETRY("orientdb.network.retry", Integer.class, 5), NETWORK_SOCKET_RETRY_DELAY(
+			"orientdb.network.retryDelay", Integer.class, 500),
+
+	NETWORK_HTTP_MAX_CONTENT_LENGTH("orientdb.network.http.maxLength", Integer.class, 10000),
 
 	PROFILER_ENABLED("orientdb.profiler.enabled", Boolean.class, false);
 
@@ -55,7 +57,7 @@ public enum OConfiguration {
 		readConfiguration();
 	}
 
-	OConfiguration(final String iKey, final Class<?> iType, final Object iDefValue) {
+	OGlobalConfiguration(final String iKey, final Class<?> iType, final Object iDefValue) {
 		key = iKey;
 		defValue = iDefValue;
 		type = iType;
@@ -111,7 +113,7 @@ public enum OConfiguration {
 	 * Assign configuration values by reading system properties.
 	 */
 	private static void readConfiguration() {
-		for (OConfiguration config : values())
+		for (OGlobalConfiguration config : values())
 			config.setValue(System.getProperty(config.key));
 	}
 
@@ -119,7 +121,7 @@ public enum OConfiguration {
 	 * Change configuration values in one shot by passing a Map of values.
 	 */
 	public static void setConfiguration(final Map<String, Object> iConfig) {
-		OConfiguration cfg;
+		OGlobalConfiguration cfg;
 		for (Entry<String, Object> config : iConfig.entrySet()) {
 			cfg = valueOf(config.getKey());
 			if (cfg != null)

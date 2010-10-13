@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.Socket;
 
 import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.kv.network.protocol.http.command.OKVServerCommandDeleteEntry;
 import com.orientechnologies.orient.kv.network.protocol.http.command.OKVServerCommandGetEntry;
 import com.orientechnologies.orient.kv.network.protocol.http.command.OKVServerCommandPostEntry;
@@ -33,7 +34,7 @@ public abstract class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstrac
 	protected OKVDictionary			dictionary;
 
 	@Override
-	public void config(Socket iSocket, OClientConnection iConnection) throws IOException {
+	public void config(Socket iSocket, OClientConnection iConnection, final OContextConfiguration iConfiguration) throws IOException {
 		setName("HTTP-KV");
 		data.serverInfo = ORIENT_SERVER_KV;
 
@@ -44,6 +45,6 @@ public abstract class ONetworkProtocolHttpKV extends ONetworkProtocolHttpAbstrac
 		registerCommand(new OKVServerCommandPutEntry(dictionary));
 		registerCommand(new OKVServerCommandDeleteEntry(dictionary));
 
-		super.config(iSocket, iConnection);
+		super.config(iSocket, iConnection, iConfiguration);
 	}
 }

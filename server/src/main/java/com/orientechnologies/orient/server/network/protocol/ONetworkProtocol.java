@@ -19,24 +19,26 @@ import java.io.IOException;
 import java.net.Socket;
 
 import com.orientechnologies.common.thread.OSoftThread;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.server.OClientConnection;
 
 public abstract class ONetworkProtocol extends OSoftThread {
-  protected ONetworkProtocolData data = new ONetworkProtocolData();
+	protected ONetworkProtocolData	data	= new ONetworkProtocolData();
 
-  public ONetworkProtocol(ThreadGroup group, String name) {
-    super(group, name);
-  }
+	public ONetworkProtocol(ThreadGroup group, String name) {
+		super(group, name);
+	}
 
-  public abstract void config(Socket iSocket, OClientConnection iConnection) throws IOException;
+	public abstract void config(Socket iSocket, OClientConnection iConnection, OContextConfiguration iConfiguration)
+			throws IOException;
 
-  public abstract OChannel getChannel();
+	public abstract OChannel getChannel();
 
-  public void registerCommand(final Object iServerCommandInstance) {
-  }
+	public void registerCommand(final Object iServerCommandInstance) {
+	}
 
-  public ONetworkProtocolData getData() {
-    return data;
-  }
+	public ONetworkProtocolData getData() {
+		return data;
+	}
 }

@@ -25,8 +25,6 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 
 public class OClientConnectionManager {
-	public static final int												DEFAULT_CONN_EXPIRATION	= 60;																			// SECONDS
-	protected int																	expiration							= DEFAULT_CONN_EXPIRATION;
 	protected Map<String, OClientConnection>			connections							= new HashMap<String, OClientConnection>();
 	protected Map<String, ONetworkProtocol>				handlers								= new HashMap<String, ONetworkProtocol>();
 
@@ -55,16 +53,8 @@ public class OClientConnectionManager {
 		OClientConnection conn = connections.remove(iChannelId);
 		if (conn == null)
 			return;
-		
+
 		handlers.remove(iChannelId);
-	}
-
-	public int getExpiration() {
-		return expiration;
-	}
-
-	public void setExpiration(final int iExpiration) {
-		this.expiration = iExpiration;
 	}
 
 	public static OClientConnectionManager instance() {

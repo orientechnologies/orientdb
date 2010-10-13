@@ -20,7 +20,7 @@ import java.util.LinkedHashMap;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.orient.core.config.OConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 
 /**
@@ -42,7 +42,7 @@ public class OCacheRecord extends OSharedResourceAdaptive {
 	 *          Maximum number of elements for the cache
 	 */
 	public OCacheRecord() {
-		maxSize = OConfiguration.STORAGE_CACHE_SIZE.getValueAsInteger();
+		maxSize = OGlobalConfiguration.STORAGE_CACHE_SIZE.getValueAsInteger();
 
 		cache = new LinkedHashMap<String, ORawBuffer>(maxSize, 0.75f, true) {
 			@Override

@@ -24,12 +24,15 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+
 public class OChannelBinaryClient extends OChannelBinary {
 	protected int	timeout	= 5000; // IN MS
 
-	public OChannelBinaryClient(String remoteHost, int remotePort, int iTimeout) throws IOException {
-		super(new Socket());
-		timeout = iTimeout;
+	public OChannelBinaryClient(String remoteHost, int remotePort, final OContextConfiguration iConfig) throws IOException {
+		super(new Socket(), iConfig);
+		timeout = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
 
 		socket.setPerformancePreferences(0, 2, 1);
 		socket.setSendBufferSize(socketBufferSize);

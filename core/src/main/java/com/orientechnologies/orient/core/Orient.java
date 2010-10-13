@@ -26,7 +26,7 @@ import java.util.Timer;
 import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.orient.core.config.OConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
@@ -52,7 +52,7 @@ public class Orient extends OSharedResource {
 		registerEngine(new OEngineMemory());
 		registerEngine("com.orientechnologies.orient.client.remote.OEngineRemote");
 
-		if (OConfiguration.PROFILER_ENABLED.getValueAsBoolean())
+		if (OGlobalConfiguration.PROFILER_ENABLED.getValueAsBoolean())
 			// ACTIVATE RECORDING OF THE PROFILER
 			OProfiler.getInstance().startRecording();
 

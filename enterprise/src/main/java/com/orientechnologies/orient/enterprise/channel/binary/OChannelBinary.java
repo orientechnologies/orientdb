@@ -25,14 +25,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 
-public abstract class OChannelBinary extends OChannel {
+public class OChannelBinary extends OChannel {
 	public DataInputStream	in;
 	public DataOutputStream	out;
 
-	public OChannelBinary(final Socket iSocket) throws IOException {
-		super(iSocket);
+	public OChannelBinary(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
+		super(iSocket, iConfig);
 	}
 
 	public byte readByte() throws IOException {

@@ -20,9 +20,11 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+
 public class OChannelTextServer extends OChannelText {
-	public OChannelTextServer(final Socket iSocket) throws IOException {
-		super(iSocket);
+	public OChannelTextServer(final Socket iSocket, final OContextConfiguration iConfiguration) throws IOException {
+		super(iSocket, iConfiguration);
 
 		inStream = new BufferedInputStream(socket.getInputStream(), socketBufferSize);
 		outStream = new BufferedOutputStream(socket.getOutputStream(), socketBufferSize);

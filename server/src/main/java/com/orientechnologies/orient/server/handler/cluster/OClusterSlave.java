@@ -18,6 +18,7 @@ package com.orientechnologies.orient.server.handler.cluster;
 import java.io.IOException;
 import java.util.Date;
 
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
@@ -28,29 +29,31 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
  * 
  */
 public class OClusterSlave {
-  private OClusterNode        node;
-  public String               binaryNetworkAddress;
-  public int                  binaryNetworkPort;
-  public Date                 joinedOn;
-  public OChannelBinaryClient network;
+	private OClusterNode					node;
+	public String									binaryNetworkAddress;
+	public int										binaryNetworkPort;
+	public Date										joinedOn;
+	public OChannelBinaryClient		network;
+	private OContextConfiguration	configuration;
 
-  public OClusterSlave(final OClusterNode iNode, final String iServerAddress, final int iServerPort) {
-    node = iNode;
-    binaryNetworkAddress = iServerAddress;
-    binaryNetworkPort = iServerPort;
-    joinedOn = new Date();
-  }
+	public OClusterSlave(final OClusterNode iNode, final String iServerAddress, final int iServerPort) {
+		node = iNode;
+		binaryNetworkAddress = iServerAddress;
+		binaryNetworkPort = iServerPort;
+		joinedOn = new Date();
+		configuration = new OContextConfiguration();
+	}
 
-  public void connect(final int iTimeout) throws IOException {
-    network = new OChannelBinaryClient(binaryNetworkAddress, binaryNetworkPort, iTimeout);
+	public void connect(final int iTimeout) throws IOException {
+		network = new OChannelBinaryClient(binaryNetworkAddress, binaryNetworkPort, configuration);
 
-    network.out.writeByte(OChannelBinaryProtocol.NODECLUSTER_CONNECT);
-    network.flush();
+		network.out.writeByte(OChannelBinaryProtocol.NODECLUSTER_CONNECT);
+		network.flush();
 
-    readStatus();
-  }
+		readStatus();
+	}
 
-  private boolean readStatus() throws IOException {
-    return network.readByte() != OChannelBinaryProtocol.ERROR;
-  }
+	private boolean readStatus() throws IOException {
+		return network.readByte() != OChannelBinaryProtocol.ERROR;
+	}
 }

@@ -20,7 +20,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
-import com.orientechnologies.orient.core.config.OConfiguration;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 public abstract class OChannel {
 	public Socket				socket;
@@ -30,9 +31,9 @@ public abstract class OChannel {
 
 	public int					socketBufferSize;
 
-	public OChannel(Socket iSocket) throws IOException {
+	public OChannel(Socket iSocket, final OContextConfiguration iConfig) throws IOException {
 		socket = iSocket;
-		socketBufferSize = OConfiguration.NETWORK_SOCKET_BUFFER_SIZE.getValueAsInteger();
+		socketBufferSize = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_BUFFER_SIZE);
 	}
 
 	public void flush() throws IOException {

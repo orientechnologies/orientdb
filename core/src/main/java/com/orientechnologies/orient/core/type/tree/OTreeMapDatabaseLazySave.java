@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.type.tree;
 
-import com.orientechnologies.orient.core.config.OConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -109,6 +109,6 @@ public class OTreeMapDatabaseLazySave<K, V> extends OTreeMapDatabase<K, V> imple
 
 	private void init(ODatabaseRecord<?> iDatabase) {
 		iDatabase.registerListener(this);
-		maxUpdatesBeforeSave = OConfiguration.TREEMAP_LAZY_UPDATES.getValueAsInteger();
+		maxUpdatesBeforeSave = OGlobalConfiguration.TREEMAP_LAZY_UPDATES.getValueAsInteger();
 	}
 }

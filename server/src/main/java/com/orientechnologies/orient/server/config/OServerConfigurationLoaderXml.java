@@ -27,7 +27,7 @@ import javax.xml.validation.Schema;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
-import com.orientechnologies.orient.core.config.OConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OEntryConfiguration;
 
 public class OServerConfigurationLoaderXml {
@@ -56,10 +56,10 @@ public class OServerConfigurationLoaderXml {
 				obj.location = filePath;
 
 				// AUTO CONFIGURE SYSTEM CONFIGURATION
-				OConfiguration config;
+				OGlobalConfiguration config;
 				for (OEntryConfiguration prop : obj.properties) {
 					try {
-						config = OConfiguration.valueOf(prop.name);
+						config = OGlobalConfiguration.valueOf(prop.name);
 						if (config != null) {
 							config.setValue(prop.value);
 						}

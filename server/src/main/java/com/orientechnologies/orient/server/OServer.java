@@ -39,14 +39,14 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandManager;
-import com.orientechnologies.orient.core.config.OConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.enterprise.command.script.OCommandScript;
 import com.orientechnologies.orient.server.command.script.OCommandExecutorScript;
-import com.orientechnologies.orient.server.config.OServerConfigurationLoaderXml;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
+import com.orientechnologies.orient.server.config.OServerConfigurationLoaderXml;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerNetworkListenerConfiguration;
 import com.orientechnologies.orient.server.config.OServerNetworkProtocolConfiguration;
@@ -63,7 +63,7 @@ public class OServer {
 
 	protected ReentrantReadWriteLock													lock									= new ReentrantReadWriteLock();
 
-	protected OServerConfigurationLoaderXml													configurationLoader;
+	protected OServerConfigurationLoaderXml										configurationLoader;
 	protected OServerConfiguration														configuration;
 	protected OServerShutdownHook															shutdownHook;
 	protected List<OServerHandler>														handlers							= new ArrayList<OServerHandler>();
@@ -81,7 +81,7 @@ public class OServer {
 		// REGISTER THE COMMAND SCRIPT
 		OCommandManager.instance().register(OCommandScript.class, OCommandExecutorScript.class);
 
-		OConfiguration.STORAGE_KEEP_OPEN.setValue(true);
+		OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(true);
 		System.setProperty("com.sun.management.jmxremote", "true");
 
 		MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
@@ -114,7 +114,8 @@ public class OServer {
 
 		// STARTUP LISTENERS
 		for (OServerNetworkListenerConfiguration l : configuration.network.listeners)
-			listeners.add(new OServerNetworkListener(l.ipAddress, l.portRange, l.protocol, protocols.get(l.protocol), l.commands));
+			listeners.add(new OServerNetworkListener(l.ipAddress, l.portRange, l.protocol, protocols.get(l.protocol), l.parameters,
+					l.commands));
 
 		registerHandlers();
 

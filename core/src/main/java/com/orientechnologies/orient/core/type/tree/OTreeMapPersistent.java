@@ -29,7 +29,7 @@ import com.orientechnologies.common.collection.OTreeMapEventListener;
 import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.orient.core.config.OConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -775,10 +775,10 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 	}
 
 	private void config() {
-		lastPageSize = OConfiguration.TREEMAP_NODE_PAGE_SIZE.getValueAsInteger();
-		pageLoadFactor = OConfiguration.TREEMAP_LOAD_FACTOR.getValueAsFloat();
-		optimizeThreshold = OConfiguration.TREEMAP_OPTIMIZE_THRESHOLD.getValueAsInteger();
-		entryPointsSize = OConfiguration.TREEMAP_ENTRYPOINTS.getValueAsInteger();
-		optimizeEntryPointsFactor = OConfiguration.TREEMAP_OPTIMIZE_ENTRYPOINTS_FACTOR.getValueAsFloat();
+		lastPageSize = OGlobalConfiguration.TREEMAP_NODE_PAGE_SIZE.getValueAsInteger();
+		pageLoadFactor = OGlobalConfiguration.TREEMAP_LOAD_FACTOR.getValueAsFloat();
+		optimizeThreshold = OGlobalConfiguration.TREEMAP_OPTIMIZE_THRESHOLD.getValueAsInteger();
+		entryPointsSize = OGlobalConfiguration.TREEMAP_ENTRYPOINTS.getValueAsInteger();
+		optimizeEntryPointsFactor = OGlobalConfiguration.TREEMAP_OPTIMIZE_ENTRYPOINTS_FACTOR.getValueAsFloat();
 	}
 }

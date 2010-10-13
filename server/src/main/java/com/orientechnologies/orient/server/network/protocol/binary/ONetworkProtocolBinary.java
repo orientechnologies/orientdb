@@ -30,6 +30,7 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
@@ -85,8 +86,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	}
 
 	@Override
-	public void config(final Socket iSocket, final OClientConnection iConnection) throws IOException {
-		channel = new OChannelBinaryServer(iSocket);
+	public void config(final Socket iSocket, final OClientConnection iConnection, final OContextConfiguration iConfig)
+			throws IOException {
+		channel = new OChannelBinaryServer(iSocket, iConfig);
 		connection = iConnection;
 
 		start();
