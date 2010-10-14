@@ -122,6 +122,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 				getListener().signalTreeChanged(this);
 			}
 
+			recordsToCommit.clear();
 			usageCounter = 0;
 			entryPoints.clear();
 			cache.clear();
@@ -132,6 +133,35 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 			lock.releaseExclusiveLock();
 			OProfiler.getInstance().stopChrono("OTreeMapPersistent.clear", timer);
+		}
+	}
+
+	public void unload() {
+		final long timer = OProfiler.getInstance().startChrono();
+		lock.acquireExclusiveLock();
+
+		try {
+			// DISCONNECT ALL THE NODES
+			if (root != null)
+				((OTreeMapEntryPersistent<K, V>) root).disconnectLinked();
+			
+			for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints)
+				entryPoint.disconnectLinked();
+			entryPoints.clear();
+
+			recordsToCommit.clear();
+			cache.clear();
+
+			usageCounter = 0;
+
+			load();
+
+		} catch (IOException e) {
+			OLogManager.instance().error(this, "Error on unload the tree: " + record.getIdentity(), e, OStorageException.class);
+		} finally {
+
+			lock.releaseExclusiveLock();
+			OProfiler.getInstance().stopChrono("OTreeMapPersistent.unload", timer);
 		}
 	}
 
@@ -147,7 +177,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 			if (root == null)
 				return;
 
-//			OLogManager.instance().info(this, "Starting optimization of RB+Tree...");
+			// OLogManager.instance().info(this, "Starting optimization of RB+Tree...");
 
 			// System.out.println("Begin of optimization.");
 			// printInMemoryStructure();
@@ -164,7 +194,8 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 				tmp = new ArrayList<OTreeMapEntryPersistent<K, V>>();
 
 			for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints) {
-				for (OTreeMapEntryPersistent<K, V> e = (OTreeMapEntryPersistent<K, V>) entryPoint.getFirstInMemory(); e != null; e = e.getNextInMemory()) {
+				for (OTreeMapEntryPersistent<K, V> e = (OTreeMapEntryPersistent<K, V>) entryPoint.getFirstInMemory(); e != null; e = e
+						.getNextInMemory()) {
 
 					if (isRuntimeCheckEnabled()) {
 						for (OTreeMapEntryPersistent<K, V> t : tmp)
