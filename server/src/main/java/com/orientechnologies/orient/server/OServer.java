@@ -103,8 +103,6 @@ public class OServer {
 
 		loadConfiguration();
 
-		OLogManager.instance().setLevel(configuration.getProperty("log.level"));
-
 		Orient.instance();
 		Orient.instance().removeShutdownHook();
 

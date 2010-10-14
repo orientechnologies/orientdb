@@ -20,14 +20,16 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.client.admin.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
+import com.orientechnologies.orient.client.remote.OServerAdmin;
+import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.console.cmd.OConsoleDatabaseCompare;
 import com.orientechnologies.orient.console.cmd.OConsoleDatabaseExport;
 import com.orientechnologies.orient.console.cmd.OConsoleDatabaseImport;
@@ -35,6 +37,7 @@ import com.orientechnologies.orient.console.cmd.ODatabaseExportException;
 import com.orientechnologies.orient.console.cmd.ODatabaseImportException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -62,6 +65,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 	protected String										currentDatabaseName;
 	protected ORecordInternal<?>				currentRecord;
 	protected List<ORecordInternal<?>>	currentResultSet;
+	protected OServerAdmin							srvAdmin;
 
 	public static void main(String[] args) {
 		new OConsoleDatabaseApp(args);
@@ -100,6 +104,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 
 		currentDatabaseName = currentDatabase.getName();
 
+		if (currentDatabase.getStorage() instanceof OStorageRemote)
+			srvAdmin = new OServerAdmin((OStorageRemote) currentDatabase.getStorage());
+
 		out.println("OK");
 	}
 
@@ -108,6 +115,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		checkCurrentDatabase();
 
 		out.print("Disconnecting from the database [" + currentDatabaseName + "]...");
+
+		srvAdmin = null;
 
 		currentDatabase.close();
 		currentDatabase = null;
@@ -256,13 +265,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		long start = System.currentTimeMillis();
 		currentDatabase.query(new OSQLAsynchQuery<ODocument>(iQueryText, limit, new OCommandResultListener() {
 			public boolean result(final Object iRecord) {
-				// if (currentResultSet.size() >= limit) {
-				// printHeaderLine(columns);
-				// out.println("\nResultset contains more items not displayed (max=" + limit + ")");
-				// return true;
-				// }
-
-				ORecordSchemaAwareAbstract<?> record = (ORecordSchemaAwareAbstract<?>) iRecord;
+				final ORecordSchemaAwareAbstract<?> record = (ORecordSchemaAwareAbstract<?>) iRecord;
 
 				dumpRecordInTable(currentResultSet.size(), record, columns);
 				currentResultSet.add(record);
@@ -274,7 +277,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		if (currentResultSet.size() > 0 && currentResultSet.size() < limit)
 			printHeaderLine(columns);
 
-		out.println(currentResultSet.size() + " item(s) found. Query executed in " + (float) (System.currentTimeMillis() - start)
+		out.println("\n"+currentResultSet.size() + " item(s) found. Query executed in " + (float) (System.currentTimeMillis() - start)
 				/ 1000 + " sec(s).");
 	}
 
@@ -567,10 +570,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 	public void properties() {
 		out.println("PROPERTIES:");
 		out.println("+---------------------+----------------------+");
-		out.printf("| %-20s| %-20s |\n", "NAME", "VALUE");
+		out.printf("| %-30s| %-30s |\n", "NAME", "VALUE");
 		out.println("+---------------------+----------------------+");
 		for (Entry<String, Object> p : properties.entrySet()) {
-			out.printf("| %-20s= %-20s |\n", p.getKey(), p.getValue());
+			out.printf("| %-30s= %-30s |\n", p.getKey(), p.getValue());
 		}
 		out.println("+---------------------+----------------------+");
 	}
@@ -601,6 +604,69 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 
 		out.println();
 		out.println(iPropertyName + " = " + iPropertyValue);
+	}
+
+	@ConsoleCommand(description = "Return the value of a configuration value")
+	public void configGet(@ConsoleParameter(name = "config-name", description = "Name of the configuration") final String iConfigName)
+			throws IOException {
+		final OGlobalConfiguration config = OGlobalConfiguration.findByKey(iConfigName);
+		if (config == null)
+			throw new IllegalArgumentException("Configuration variable '" + iConfigName + "' wasn't found");
+
+		final String value;
+		if (srvAdmin != null) {
+			value = srvAdmin.getGlobalConfiguration(config);
+			out.print("\nRemote configuration: ");
+		} else {
+			value = config.getValueAsString();
+			out.print("\nLocal configuration: ");
+		}
+		out.println(iConfigName + " = " + value);
+	}
+
+	@ConsoleCommand(description = "Change the value of a configuration value")
+	public void configSet(
+			@ConsoleParameter(name = "config-name", description = "Name of the configuration") final String iConfigName,
+			@ConsoleParameter(name = "config-value", description = "Value to set") final String iConfigValue) throws IOException {
+		final OGlobalConfiguration config = OGlobalConfiguration.findByKey(iConfigName);
+		if (config == null)
+			throw new IllegalArgumentException("Configuration variable '" + iConfigName + "' wasn't found");
+
+		if (srvAdmin != null) {
+			srvAdmin.setGlobalConfiguration(config, iConfigValue);
+			out.println("\nRemote configuration value changed correctly");
+		} else {
+			config.setValue(iConfigValue);
+			out.println("\nLocal configuration value changed correctly");
+		}
+		out.println();
+	}
+
+	@ConsoleCommand(description = "Return all the configuration values")
+	public void config() throws IOException {
+		if (srvAdmin != null) {
+			// REMOTE STORAGE
+			final Map<String, String> values = srvAdmin.getGlobalConfigurations();
+
+			out.println("REMOTE SERVER CONFIGURATION:");
+			out.println("+------------------------------------+--------------------------------+");
+			out.printf("| %-35s| %-30s |\n", "NAME", "VALUE");
+			out.println("+------------------------------------+--------------------------------+");
+			for (Entry<String, String> p : values.entrySet()) {
+				out.printf("| %-35s= %-30s |\n", p.getKey(), p.getValue());
+			}
+		} else {
+			// LOCAL STORAGE
+			out.println("LOCAL SERVER CONFIGURATION:");
+			out.println("+------------------------------------+--------------------------------+");
+			out.printf("| %-35s| %-30s |\n", "NAME", "VALUE");
+			out.println("+------------------------------------+--------------------------------+");
+			for (OGlobalConfiguration cfg : OGlobalConfiguration.values()) {
+				out.printf("| %-35s= %-30s |\n", cfg.getKey(), cfg.getValue());
+			}
+		}
+
+		out.println("+------------------------------------+--------------------------------+");
 	}
 
 	protected void checkCurrentDatabase() {

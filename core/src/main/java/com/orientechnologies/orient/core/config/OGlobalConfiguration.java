@@ -18,6 +18,8 @@ package com.orientechnologies.orient.core.config;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.orientechnologies.common.log.OLogManager;
+
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system properties.
  * 
@@ -25,36 +27,48 @@ import java.util.Map.Entry;
  * 
  */
 public enum OGlobalConfiguration {
-	STORAGE_KEEP_OPEN("orientdb.storage.keepOpen", Boolean.class, Boolean.FALSE), STORAGE_CACHE_SIZE("orientdb.storage.cache.size",
-			Integer.class, 5000),
+	LOG_LEVEL("log.level", String.class, "info", new OConfigurationChangeCallback() {
+		public void change(final Object iCurrentValue, final Object iNewValue) {
+			OLogManager.instance().setLevel((String) iNewValue);
+		}
+	}),
 
-	DB_USE_CACHE("orientdb.db.cache.enabled", Boolean.class, true),
+	STORAGE_KEEP_OPEN("storage.keepOpen", Boolean.class, Boolean.FALSE), STORAGE_CACHE_SIZE("storage.cache.size", Integer.class, 5000),
 
-	TREEMAP_LAZY_UPDATES("orientdb.treemap.lazyUpdates", Integer.class, 300), TREEMAP_NODE_PAGE_SIZE("orientdb.treemap.nodePageSize",
-			Float.class, 1024), TREEMAP_LOAD_FACTOR("orientdb.treemap.loadFactor", Float.class, 0.7f), TREEMAP_OPTIMIZE_THRESHOLD(
-			"orientdb.treemap.optimizeThreshold", Integer.class, 50000), TREEMAP_ENTRYPOINTS("orientdb.treemap.entryPoints",
-			Integer.class, 30), TREEMAP_OPTIMIZE_ENTRYPOINTS_FACTOR("orientdb.treemap.optimizeEntryPointsFactor", Float.class, 1.0f),
+	DB_USE_CACHE("db.cache.enabled", Boolean.class, true),
 
-	FILE_MMAP_BLOCK_SIZE("orientdb.file.mmap.blockSize", Integer.class, 300000), FILE_MMAP_MAX_MEMORY("orientdb.file.mmap.maxMemory",
-			Integer.class, 110000000), FILE_MMAP_FORCE_DELAY("orientdb.file.mmap.forceDelay", Integer.class, 500), FILE_MMAP_FORCE_RETRY(
-			"orientdb.file.mmap.forceRetry", Integer.class, 5),
+	TREEMAP_LAZY_UPDATES("treemap.lazyUpdates", Integer.class, 300), TREEMAP_NODE_PAGE_SIZE("treemap.nodePageSize", Float.class, 1024), TREEMAP_LOAD_FACTOR(
+			"treemap.loadFactor", Float.class, 0.7f), TREEMAP_OPTIMIZE_THRESHOLD("treemap.optimizeThreshold", Integer.class, 50000), TREEMAP_ENTRYPOINTS(
+			"treemap.entryPoints", Integer.class, 30), TREEMAP_OPTIMIZE_ENTRYPOINTS_FACTOR("treemap.optimizeEntryPointsFactor",
+			Float.class, 1.0f),
 
-	NETWORK_SOCKET_BUFFER_SIZE("orientdb.network.socketBufferSize", Integer.class, 32768), NETWORK_SOCKET_TIMEOUT(
-			"orientdb.network.timeout", Integer.class, 10000), NETWORK_SOCKET_RETRY("orientdb.network.retry", Integer.class, 5), NETWORK_SOCKET_RETRY_DELAY(
-			"orientdb.network.retryDelay", Integer.class, 500),
+	FILE_MMAP_BLOCK_SIZE("file.mmap.blockSize", Integer.class, 300000), FILE_MMAP_MAX_MEMORY("file.mmap.maxMemory", Integer.class,
+			110000000), FILE_MMAP_FORCE_DELAY("file.mmap.forceDelay", Integer.class, 500), FILE_MMAP_FORCE_RETRY("file.mmap.forceRetry",
+			Integer.class, 5),
 
-	NETWORK_HTTP_MAX_CONTENT_LENGTH("orientdb.network.http.maxLength", Integer.class, 10000),
+	NETWORK_SOCKET_BUFFER_SIZE("network.socketBufferSize", Integer.class, 32768), NETWORK_SOCKET_TIMEOUT("network.timeout",
+			Integer.class, 10000), NETWORK_SOCKET_RETRY("network.retry", Integer.class, 5), NETWORK_SOCKET_RETRY_DELAY(
+			"network.retryDelay", Integer.class, 500),
 
-	PROFILER_ENABLED("orientdb.profiler.enabled", Boolean.class, false);
+	NETWORK_HTTP_MAX_CONTENT_LENGTH("network.http.maxLength", Integer.class, 10000),
 
-	private final String		key;
-	private final Object		defValue;
-	private final Class<?>	type;
-	private Object					value	= null;
+	PROFILER_ENABLED("profiler.enabled", Boolean.class, false);
+
+	private final String									key;
+	private final Object									defValue;
+	private final Class<?>								type;
+	private Object												value						= null;
+	private OConfigurationChangeCallback	changeCallback	= null;
 
 	// AT STARTUP AUTO-CONFIG
 	static {
 		readConfiguration();
+	}
+
+	OGlobalConfiguration(final String iKey, final Class<?> iType, final Object iDefValue,
+			final OConfigurationChangeCallback iChangeAction) {
+		this(iKey, iType, iDefValue);
+		changeCallback = iChangeAction;
 	}
 
 	OGlobalConfiguration(final String iKey, final Class<?> iType, final Object iDefValue) {
@@ -64,6 +78,8 @@ public enum OGlobalConfiguration {
 	}
 
 	public void setValue(final Object iValue) {
+		Object oldValue = value;
+
 		if (iValue != null)
 			if (type == Boolean.class)
 				value = Boolean.parseBoolean(iValue.toString());
@@ -75,6 +91,9 @@ public enum OGlobalConfiguration {
 				value = iValue.toString();
 			else
 				value = iValue;
+
+		if (changeCallback != null)
+			changeCallback.change(oldValue, value);
 	}
 
 	public Object getValue() {
@@ -110,11 +129,30 @@ public enum OGlobalConfiguration {
 	}
 
 	/**
+	 * Find the OGlobalConfiguration instance by the key. Key is case insensitive.
+	 * 
+	 * @param iKey
+	 *          Key to find. It's case insensitive.
+	 * @return OGlobalConfiguration instance if found, otherwise null
+	 */
+	public static OGlobalConfiguration findByKey(final String iKey) {
+		for (OGlobalConfiguration v : values()) {
+			if (v.getKey().equalsIgnoreCase(iKey))
+				return v;
+		}
+		return null;
+	}
+
+	/**
 	 * Assign configuration values by reading system properties.
 	 */
 	private static void readConfiguration() {
-		for (OGlobalConfiguration config : values())
-			config.setValue(System.getProperty(config.key));
+		String prop;
+		for (OGlobalConfiguration config : values()) {
+			prop = System.getProperty(config.key);
+			if (prop != null)
+				config.setValue(prop);
+		}
 	}
 
 	/**

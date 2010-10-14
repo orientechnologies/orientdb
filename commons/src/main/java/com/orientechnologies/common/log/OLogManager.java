@@ -54,6 +54,8 @@ public class OLogManager {
 			warn = true;
 		else if (level.equals(Level.SEVERE))
 			error = true;
+
+		Logger.getLogger("").setLevel(level);
 	}
 
 	public void log(final Object iRequester, final Level iLevel, final String iMessage, final Throwable iException,
@@ -61,7 +63,7 @@ public class OLogManager {
 		if (iMessage == null)
 			return;
 
-		final Logger log = iRequester != null ? Logger.getLogger(iRequester.getClass().getName()) : Logger.getAnonymousLogger();
+		final Logger log = iRequester != null ? Logger.getLogger(iRequester.getClass().getName()) : Logger.getLogger("");
 
 		if (!log.isLoggable(iLevel))
 			return;

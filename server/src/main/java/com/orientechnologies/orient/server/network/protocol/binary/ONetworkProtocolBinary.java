@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
@@ -578,6 +579,45 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 				sendOk(clientTxId);
 				break;
+
+			case OChannelBinaryProtocol.CONFIG_GET: {
+				data.commandInfo = "Get config";
+
+				final String key = channel.readString();
+				final OGlobalConfiguration cfg = OGlobalConfiguration.findByKey(key);
+				String cfgValue = cfg != null ? cfg.getValueAsString() : "";
+
+				sendOk(clientTxId);
+				channel.writeString(cfgValue);
+				break;
+			}
+
+			case OChannelBinaryProtocol.CONFIG_SET: {
+				data.commandInfo = "Get config";
+
+				final String key = channel.readString();
+				final String value = channel.readString();
+				final OGlobalConfiguration cfg = OGlobalConfiguration.findByKey(key);
+				if (cfg != null)
+					cfg.setValue(value);
+
+				sendOk(clientTxId);
+				break;
+			}
+
+			case OChannelBinaryProtocol.CONFIG_LIST: {
+				data.commandInfo = "List config";
+
+				sendOk(clientTxId);
+
+				channel.writeShort((short) OGlobalConfiguration.values().length);
+				for (OGlobalConfiguration cfg : OGlobalConfiguration.values()) {
+					channel.writeString(cfg.getKey());
+					channel.writeString(cfg.getValueAsString() != null ? cfg.getValueAsString() : "");
+				}
+
+				break;
+			}
 
 			default:
 				data.commandInfo = "Command not supported";

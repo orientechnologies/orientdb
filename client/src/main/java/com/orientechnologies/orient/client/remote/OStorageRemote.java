@@ -75,7 +75,7 @@ public class OStorageRemote extends OStorageAbstract {
 	private int															connectionRetryDelay;
 
 	protected List<OPair<String, String[]>>	serverURLs				= new ArrayList<OPair<String, String[]>>();
-	protected OChannelBinaryClient					network;
+	private OChannelBinaryClient						network;
 	protected int														txId;
 	protected final Map<String, Integer>		clustersIds				= new HashMap<String, Integer>();
 	protected final Map<String, String>			clustersTypes			= new HashMap<String, String>();
@@ -132,8 +132,6 @@ public class OStorageRemote extends OStorageAbstract {
 
 			try {
 				writeCommand(OChannelBinaryProtocol.DB_EXIST);
-				network.flush();
-
 				readStatus();
 				return network.readByte() == 1;
 			} catch (Exception e) {
@@ -194,8 +192,6 @@ public class OStorageRemote extends OStorageAbstract {
 				network.writeShort((short) iClusterId);
 				network.writeBytes(iContent);
 				network.writeByte(iRecordType);
-				network.flush();
-
 				readStatus();
 				return network.readLong();
 			} catch (Exception e) {
@@ -225,8 +221,6 @@ public class OStorageRemote extends OStorageAbstract {
 				network.writeShort((short) iClusterId);
 				network.writeLong(iPosition);
 				network.writeString(iFetchPlan != null ? iFetchPlan : "");
-				network.flush();
-
 				readStatus();
 
 				if (network.readByte() == 0)
@@ -268,8 +262,6 @@ public class OStorageRemote extends OStorageAbstract {
 				network.writeBytes(iContent);
 				network.writeInt(iVersion);
 				network.writeByte(iRecordType);
-				network.flush();
-
 				readStatus();
 
 				return network.readInt();
@@ -297,8 +289,6 @@ public class OStorageRemote extends OStorageAbstract {
 				network.writeShort((short) iClusterId);
 				network.writeLong(iPosition);
 				network.writeInt(iVersion);
-				network.flush();
-
 				readStatus();
 
 				return network.readByte() == '1';
@@ -326,8 +316,6 @@ public class OStorageRemote extends OStorageAbstract {
 			try {
 				writeCommand(OChannelBinaryProtocol.DATACLUSTER_DATARANGE);
 				network.writeShort((short) iClusterId);
-				network.flush();
-
 				readStatus();
 				return new long[] { network.readLong(), network.readLong() };
 			} catch (Exception e) {
@@ -352,8 +340,6 @@ public class OStorageRemote extends OStorageAbstract {
 				network.writeShort((short) iClusterIds.length);
 				for (int i = 0; i < iClusterIds.length; ++i)
 					network.writeShort((short) iClusterIds[i]);
-				network.flush();
-
 				readStatus();
 				return network.readLong();
 			} catch (Exception e) {
@@ -376,8 +362,6 @@ public class OStorageRemote extends OStorageAbstract {
 			try {
 				writeCommand(OChannelBinaryProtocol.COUNT);
 				network.writeString(iClassName);
-				network.flush();
-
 				readStatus();
 				return network.readLong();
 			} catch (Exception e) {
@@ -417,8 +401,6 @@ public class OStorageRemote extends OStorageAbstract {
 				writeCommand(OChannelBinaryProtocol.COMMAND);
 				network.writeByte((byte) (asynch ? 'a' : 's')); // ASYNC / SYNC
 				network.writeBytes(OStreamSerializerAnyStreamable.INSTANCE.toStream(command));
-				network.flush();
-
 				readStatus();
 
 				if (asynch) {
@@ -523,8 +505,6 @@ public class OStorageRemote extends OStorageAbstract {
 						break;
 					}
 				}
-				network.flush();
-
 				readStatus();
 				break;
 			} catch (Exception e) {
@@ -603,9 +583,6 @@ public class OStorageRemote extends OStorageAbstract {
 					network.writeInt(iArguments.length > 0 ? (Integer) iArguments[0] : -1);
 					break;
 				}
-
-				network.flush();
-
 				readStatus();
 
 				int clusterId = network.readShort();
@@ -632,8 +609,6 @@ public class OStorageRemote extends OStorageAbstract {
 			try {
 				writeCommand(OChannelBinaryProtocol.DATACLUSTER_REMOVE);
 				network.writeShort((short) iClusterId);
-
-				network.flush();
 
 				readStatus();
 
@@ -673,8 +648,6 @@ public class OStorageRemote extends OStorageAbstract {
 			try {
 				writeCommand(OChannelBinaryProtocol.DATASEGMENT_ADD);
 				network.writeString(iSegmentName).writeString(iSegmentFileName);
-				network.flush();
-
 				readStatus();
 				return network.readShort();
 			} catch (Exception e) {
@@ -714,8 +687,6 @@ public class OStorageRemote extends OStorageAbstract {
 				network.writeByte(iRecord.getRecordType());
 				network.writeShort((short) rid.getClusterId());
 				network.writeLong(rid.getClusterPosition());
-				network.flush();
-
 				readStatus();
 
 				return (REC) readRecordFromNetwork(iDatabase);
@@ -740,8 +711,6 @@ public class OStorageRemote extends OStorageAbstract {
 			try {
 				writeCommand(OChannelBinaryProtocol.DICTIONARY_LOOKUP);
 				network.writeString(iKey);
-				network.flush();
-
 				readStatus();
 
 				return (REC) readRecordFromNetwork(iDatabase);
@@ -766,8 +735,6 @@ public class OStorageRemote extends OStorageAbstract {
 			try {
 				writeCommand(OChannelBinaryProtocol.DICTIONARY_REMOVE);
 				network.writeString(iKey.toString());
-				network.flush();
-
 				readStatus();
 
 				return (REC) readRecordFromNetwork(iDatabase);
@@ -791,8 +758,6 @@ public class OStorageRemote extends OStorageAbstract {
 
 			try {
 				writeCommand(OChannelBinaryProtocol.DICTIONARY_SIZE);
-				network.flush();
-
 				readStatus();
 				return network.readInt();
 			} catch (Exception e) {
@@ -818,8 +783,6 @@ public class OStorageRemote extends OStorageAbstract {
 
 			try {
 				writeCommand(OChannelBinaryProtocol.DICTIONARY_KEYS);
-				network.flush();
-
 				readStatus();
 				return network.readStringSet();
 			} catch (Exception e) {
@@ -853,6 +816,7 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	protected void readStatus() throws IOException {
+		network.flush();
 		final byte result = network.readByte();
 
 		// TODO: USE THIS TO ROUTE TO THE REQUESTER TX THREAD
@@ -933,8 +897,6 @@ public class OStorageRemote extends OStorageAbstract {
 
 		writeCommand(OChannelBinaryProtocol.DB_OPEN);
 		network.writeString(name).writeString(userName).writeString(userPassword);
-		network.flush();
-
 		readStatus();
 
 		txId = network.readInt();
@@ -951,6 +913,10 @@ public class OStorageRemote extends OStorageAbstract {
 		defaultClusterId = clustersIds.get(OStorage.CLUSTER_DEFAULT_NAME);
 
 		open = true;
+	}
+
+	public OChannelBinaryClient getNetwork() {
+		return network;
 	}
 
 	/**
@@ -1029,7 +995,7 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	protected void checkConnection() {
-		if (network == null)
+		if (getNetwork() == null)
 			throw new ODatabaseException("Connection is closed");
 	}
 
@@ -1041,7 +1007,7 @@ public class OStorageRemote extends OStorageAbstract {
 		ORecordInternal<?> record = ORecordFactory.newInstance(network.readByte());
 
 		if (record instanceof ORecordSchemaAware<?>)
-			((ORecordSchemaAware<?>) record).fill(iDatabase, classId, network.readShort(), network.readLong(), network.readInt());
+			((ORecordSchemaAware<?>) record).fill(iDatabase, classId, network.readShort(), network.readLong(), getNetwork().readInt());
 		else
 			// DISCARD CLASS ID
 			record.fill(iDatabase, network.readShort(), network.readLong(), network.readInt());
@@ -1073,7 +1039,7 @@ public class OStorageRemote extends OStorageAbstract {
 		return rootException;
 	}
 
-	private void writeCommand(final byte iCommand) throws IOException {
+	protected void writeCommand(final byte iCommand) throws IOException {
 		network.writeByte(iCommand);
 		network.writeInt(txId);
 	}
