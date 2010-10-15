@@ -134,6 +134,7 @@ public class OMMapManager {
 		}
 		buffersLRU.clear();
 		buffersLRU = null;
+		totalMemory = 0;
 	}
 
 	public static void closeStorage(final OStorageLocal iStorage) {
@@ -141,6 +142,7 @@ public class OMMapManager {
 		for (Iterator<OMMapBufferEntry> it = buffersLRU.iterator(); it.hasNext();) {
 			entry = it.next();
 			if (entry.file != null && entry.file.isClosed()) {
+				totalMemory -= entry.size;
 				entry.close();
 				it.remove();
 			}

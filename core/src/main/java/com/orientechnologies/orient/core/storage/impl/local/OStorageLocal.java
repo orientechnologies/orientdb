@@ -282,8 +282,10 @@ public class OStorageLocal extends OStorageAbstract {
 
 		try {
 			// RETRIES
-			for (int i = 0; i < 3; ++i) {
+			for (int i = 0; i < 10; ++i) {
+				// FORCE GARBAGE COLLECTION TO COLLECT ALL THE PENDING BUFFERS
 				System.gc();
+
 				if (dbDir.exists() && dbDir.isDirectory()) {
 					// TRY TO DELETE ALL THE FILES
 					for (File f : dbDir.listFiles())
@@ -296,7 +298,7 @@ public class OStorageLocal extends OStorageAbstract {
 					return;
 
 				try {
-					Thread.sleep(200);
+					Thread.sleep(100);
 				} catch (InterruptedException e) {
 				}
 			}
