@@ -58,6 +58,12 @@ public interface ODatabase {
 	public <DB extends ODatabase> DB create();
 
 	/**
+	 * Delete a database.
+	 * 
+	 */
+	public void delete();
+
+	/**
 	 * Declares an intent to the database. Intents aim to optimize common use cases.
 	 * 
 	 * @param iIntent

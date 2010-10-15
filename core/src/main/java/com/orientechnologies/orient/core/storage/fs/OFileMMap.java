@@ -231,4 +231,8 @@ public class OFileMMap extends OFile {
 		super.openChannel(iNewSize);
 		headerBuffer = channel.map(mode.equals("r") ? FileChannel.MapMode.READ_ONLY : FileChannel.MapMode.READ_WRITE, 0, HEADER_SIZE);
 	}
+
+	public boolean isClosed() {
+		return headerBuffer == null;
+	}
 }

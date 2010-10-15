@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.fs.OMMapManager;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 public class Orient extends OSharedResource {
@@ -199,6 +200,8 @@ public class Orient extends OSharedResource {
 				OLogManager.instance().debug(this, "Shutdowning storage: " + stg.getName() + "...");
 				stg.close();
 			}
+
+			OMMapManager.shutdown();
 			active = false;
 
 			OLogManager.instance().debug(this, "Orient Engine shutdown complete");

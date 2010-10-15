@@ -67,6 +67,7 @@ public class OTreeMapEntryStorage<K, V> extends OTreeMapEntryPersistent<K, V> {
 	@Override
 	public OTreeMapEntryStorage<K, V> save() throws IOException {
 		record.fromStream(toStream());
+		
 		if (record.getIdentity().isValid())
 			// UPDATE IT WITHOUT VERSION CHECK SINCE ALL IT'S LOCKED
 			record.setVersion(((OTreeMapStorage<K, V>) tree).storage.updateRecord(0, record.getIdentity().getClusterId(), record
@@ -79,7 +80,6 @@ public class OTreeMapEntryStorage<K, V> extends OTreeMapEntryPersistent<K, V> {
 							record.getRecordType()));
 		}
 		record.unsetDirty();
-		super.save();
 
 		assureIntegrityOfReferences();
 

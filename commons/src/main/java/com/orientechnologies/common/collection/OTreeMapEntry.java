@@ -205,8 +205,11 @@ public abstract class OTreeMapEntry<K, V> implements Map.Entry<K, V> {
 
 	@Override
 	public boolean equals(final Object o) {
+		if (this == o)
+			return true;
 		if (!(o instanceof OTreeMapEntry<?, ?>))
 			return false;
+
 		final OTreeMapEntry<?, ?> e = (OTreeMapEntry<?, ?>) o;
 
 		return OTreeMap.valEquals(getKey(0), e.getKey(0)) && OTreeMap.valEquals(getValue(0), e.getValue(0));

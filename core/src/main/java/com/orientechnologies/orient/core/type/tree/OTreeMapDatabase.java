@@ -99,7 +99,7 @@ public class OTreeMapDatabase<K, V> extends OTreeMapPersistent<K, V> {
 
 		try {
 			if (record.isDirty()) {
-				record.fromStream(toStream());
+				toStream();
 				record.save(clusterName);
 			}
 			return this;

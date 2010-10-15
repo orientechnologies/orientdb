@@ -17,6 +17,9 @@ package com.orientechnologies.orient.core.tx;
 
 import java.io.IOException;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -67,5 +70,25 @@ public abstract class OTransactionAbstract<REC extends ORecordInternal<?>> imple
 				iStorage.getCache().pushRecord(rid,
 						new ORawBuffer(txEntry.record.toStream(), txEntry.record.getVersion(), txEntry.record.getRecordType()));
 		}
+	}
+
+	protected void invokeCommitAgainstListeners() {
+		// WAKE UP LISTENERS
+		for (ODatabaseLifecycleListener listener : ((ODatabaseRaw) database.getUnderlying()).getListeners())
+			try {
+				listener.onTxCommit(database.getUnderlying());
+			} catch (Throwable t) {
+				OLogManager.instance().error(this, "Error on commit callback against listener: " + listener, t);
+			}
+	}
+
+	protected void invokeRollbackAgainstListeners() {
+		// WAKE UP LISTENERS
+		for (ODatabaseLifecycleListener listener : ((ODatabaseRaw) database.getUnderlying()).getListeners())
+			try {
+				listener.onTxRollback(database.getUnderlying());
+			} catch (Throwable t) {
+				OLogManager.instance().error(this, "Error on commit callback against listener: " + listener, t);
+			}
 	}
 }

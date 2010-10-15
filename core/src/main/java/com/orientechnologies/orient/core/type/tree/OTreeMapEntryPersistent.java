@@ -131,13 +131,14 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 		pTree.cache.remove(record.getIdentity());
 
 		// DELETE THE NODE FROM THE PENDING RECORDS TO COMMIT
-		OTreeMapEntryPersistent<K, V> node;
-		for (int i = 0; i < pTree.recordsToCommit.size(); ++i) {
-			node = pTree.recordsToCommit.get(i);
-			if( node.record.getIdentity().equals( record.getIdentity() ))
-			{
-				pTree.recordsToCommit.remove(i);
-				--i;
+		/*
+		 * OTreeMapEntryPersistent<K, V> node; for (int i = 0; i < pTree.recordsToCommit.size(); ++i) { node =
+		 * pTree.recordsToCommit.get(i); if( node.record.getIdentity().equals( record.getIdentity() )) {
+		 * pTree.recordsToCommit.remove(i); --i; } }
+		 */
+		for (OTreeMapEntryPersistent<K, V> node : pTree.recordsToCommit) {
+			if (node.record.getIdentity().equals(record.getIdentity())) {
+				pTree.recordsToCommit.remove(node);
 			}
 		}
 		return this;
@@ -146,7 +147,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	/**
 	 * Disconnect the current node from others.
 	 */
-	protected int disconnectLinked() {
+	protected int disconnectLinked(final boolean iForceDirty) {
 		int disconnected = 0;
 
 		if (parent != null) {
@@ -154,21 +155,21 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 				parent.left = null;
 			else
 				parent.right = null;
-			disconnected += parent.disconnect(0, this);
+			disconnected += parent.disconnect(0, this, iForceDirty);
 			parent = null;
 		}
 
 		if (left != null) {
 			// DISCONNECT MYSELF FROM THE LEFT NODE
 			left.parent = null;
-			disconnected += left.disconnect(1, this);
+			disconnected += left.disconnect(1, this, iForceDirty);
 			left = null;
 		}
 
 		if (right != null) {
 			// DISCONNECT MYSELF FROM THE RIGHT NODE
 			right.parent = null;
-			disconnected += right.disconnect(2, this);
+			disconnected += right.disconnect(2, this, iForceDirty);
 			right = null;
 		}
 
@@ -178,21 +179,31 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	/**
 	 * Clear links and current node only if it's not an entry point.
 	 * 
+	 * @param iForceDirty
+	 * 
 	 * @param iSource
 	 */
-	protected int disconnect(final int iDirection, OTreeMapEntryPersistent<K, V> iRequester) {
-		if (record == null || record.isDirty() || this == pTree.getRoot())
+	protected int disconnect(final int iDirection, OTreeMapEntryPersistent<K, V> iRequester, boolean iForceDirty) {
+		if (record == null || this == pTree.getRoot())
 			// DIRTY NODE OR IS ROOT
 			return 0;
 
-		boolean entryPoint = false;
+		if (!iForceDirty && record.isDirty())
+			return 0;
+
+		boolean entryToKeep = false;
+		// CHECK IF IT'S PART OF ENTRYPOINTS
 		for (OTreeMapEntryPersistent<K, V> e : pTree.entryPoints)
 			if (e == this) {
-				entryPoint = true;
+				entryToKeep = true;
 				break;
 			}
 
-		if (!entryPoint) {
+		if (!entryToKeep)
+			// CHECK IF IT'S PART OF THE RECORDS TO COMMIT. CHECK IF IT'S DIRTY IS NOT ENOUGH
+			entryToKeep = pTree.recordsToCommit.contains(this);
+
+		if (!entryToKeep) {
 			keys = null;
 			values = null;
 			serializedKeys = null;
@@ -201,7 +212,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 			tree = pTree = null;
 		}
 
-		return disconnectLinked() + 1;
+		return disconnectLinked(iForceDirty) + 1;
 	}
 
 	@Override
@@ -552,8 +563,8 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 
 			stream.flush();
 
-			return stream.getByteArray();
-
+			record.fromStream(stream.getByteArray());
+			return record.toStream();
 		} finally {
 			stream.close();
 
@@ -609,6 +620,21 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	}
 
 	@Override
+	public boolean equals(final Object o) {
+		if (this == o)
+			return true;
+		if (!(o instanceof OTreeMapEntryPersistent<?, ?>))
+			return false;
+
+		final OTreeMapEntryPersistent<?, ?> e = (OTreeMapEntryPersistent<?, ?>) o;
+
+		if (record != null && e.record != null)
+			return record.getIdentity().equals(e.record.getIdentity());
+
+		return false;
+	}
+
+	@Override
 	public int hashCode() {
 		final ORID rid = record.getIdentity();
 		return rid == null ? 0 : rid.hashCode();
@@ -634,7 +660,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	 */
 	protected boolean assureIntegrityOfReferences() throws IOException {
 		boolean needToUpdate = false;
-		if (parentRid.isNew() && parent != null) {
+		if (!parentRid.isValid() && parent != null) {
 			if (parent.record.getIdentity().isNew()) {
 				parent.save();
 				needToUpdate = true;
@@ -642,7 +668,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 			parentRid = parent.record.getIdentity();
 		}
 
-		if (leftRid.isNew() && left != null) {
+		if (!leftRid.isValid() && left != null) {
 			if (left.record.getIdentity().isNew()) {
 				left.save();
 				needToUpdate = true;
@@ -650,7 +676,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 			leftRid = left.record.getIdentity();
 		}
 
-		if (rightRid.isNew() && right != null) {
+		if (!rightRid.isValid() && right != null) {
 			if (right.record.getIdentity().isNew()) {
 				right.save();
 				needToUpdate = true;

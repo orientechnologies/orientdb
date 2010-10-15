@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,7 +60,8 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 	protected OStreamSerializer															keySerializer;
 	protected OStreamSerializer															valueSerializer;
 
-	protected final List<OTreeMapEntryPersistent<K, V>>			recordsToCommit	= new ArrayList<OTreeMapEntryPersistent<K, V>>();
+	// protected final List<OTreeMapEntryPersistent<K, V>> recordsToCommit = new ArrayList<OTreeMapEntryPersistent<K, V>>();
+	protected final Set<OTreeMapEntryPersistent<K, V>>			recordsToCommit	= new HashSet<OTreeMapEntryPersistent<K, V>>();
 	protected final OMemoryOutputStream											entryRecordBuffer;
 
 	protected final String																	clusterName;
@@ -136,6 +138,9 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 		}
 	}
 
+	/**
+	 * Unload all the in-memory nodes. This is called on transaction rollback.
+	 */
 	public void unload() {
 		final long timer = OProfiler.getInstance().startChrono();
 		lock.acquireExclusiveLock();
@@ -143,10 +148,11 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 		try {
 			// DISCONNECT ALL THE NODES
 			if (root != null)
-				((OTreeMapEntryPersistent<K, V>) root).disconnectLinked();
-			
+				((OTreeMapEntryPersistent<K, V>) root).disconnectLinked(true);
+			root = null;
+
 			for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints)
-				entryPoint.disconnectLinked();
+				entryPoint.disconnectLinked(true);
 			entryPoints.clear();
 
 			recordsToCommit.clear();
@@ -282,9 +288,10 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 			newEntryPoints.clear();
 
 			// FREE ALL THE NODES BUT THE ENTRY POINTS AND PUT THE ENTRYPOINT INTO THE CACHE
+			((OTreeMapEntryPersistent<K, V>) root).disconnectLinked(false);
 			cache.clear();
 			for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints) {
-				entryPoint.disconnectLinked();
+				entryPoint.disconnectLinked(false);
 				cache.put(entryPoint.record.getIdentity(), entryPoint);
 			}
 
@@ -444,8 +451,8 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 		} catch (Exception e) {
 
-			OLogManager.instance().error(this, "Error on unmarshalling OTreeMapPersistent object from record: " + rootRid, e,
-					OSerializationException.class);
+			OLogManager.instance().error(this, "Error on unmarshalling OTreeMapPersistent object from record: %s", e,
+					OSerializationException.class, rootRid);
 
 		} finally {
 			OProfiler.getInstance().stopChrono("OTreeMapPersistent.fromStream", timer);
@@ -460,7 +467,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 			if (root != null) {
 				OTreeMapEntryPersistent<K, V> pRoot = (OTreeMapEntryPersistent<K, V>) root;
-				if (!pRoot.record.getIdentity().isValid()) {
+				if (pRoot.record.getIdentity().isNew()) {
 					// FIRST TIME: SAVE IT
 					pRoot.save();
 				}
@@ -475,7 +482,8 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 			stream.add(keySerializer.getName());
 			stream.add(valueSerializer.getName());
 
-			return stream.getByteArray();
+			record.fromStream(stream.getByteArray());
+			return record.toStream();
 
 		} finally {
 			OProfiler.getInstance().stopChrono("OTreeMapPersistent.toStream", timer);

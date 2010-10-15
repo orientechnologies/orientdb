@@ -78,7 +78,7 @@ public class OTreeMapEntryDatabase<K, V> extends OTreeMapEntryPersistent<K, V> {
 
 	@Override
 	public OTreeMapEntryDatabase<K, V> save() throws IOException {
-		record.fromStream(toStream());
+		toStream();
 		record.save(pTree.getClusterName());
 
 		assureIntegrityOfReferences();

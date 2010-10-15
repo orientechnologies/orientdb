@@ -168,6 +168,11 @@ public class OStorageRemote extends OStorageAbstract {
 		}
 	}
 
+	public void delete() {
+		throw new UnsupportedOperationException(
+				"Can't delete a database in a remote server. Please use the console or the OServerAdmin class.");
+	}
+
 	public Set<String> getClusterNames() {
 		checkConnection();
 

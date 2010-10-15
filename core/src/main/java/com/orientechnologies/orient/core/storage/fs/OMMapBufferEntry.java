@@ -42,4 +42,8 @@ public class OMMapBufferEntry {
 		return builder.toString();
 	}
 
+	public void close() {
+		file = null;
+		buffer = null;
+	}
 }

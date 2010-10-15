@@ -31,9 +31,11 @@ public class OTransactionNoTx<REC extends ORecordInternal<?>> extends OTransacti
 	}
 
 	public void commit() {
+		invokeCommitAgainstListeners();
 	}
 
 	public void rollback() {
+		invokeRollbackAgainstListeners();
 	}
 
 	public REC load(final int iClusterId, final long iPosition, final REC iRecord, final String iFetchPlan) {

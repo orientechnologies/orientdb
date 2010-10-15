@@ -23,6 +23,7 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 public class OMMapManager {
 	public static final int											DEF_BLOCK_SIZE;
@@ -127,6 +128,22 @@ public class OMMapManager {
 		}
 	}
 
-	public static void close() {
+	public static void shutdown() {
+		for (OMMapBufferEntry entry : buffersLRU) {
+			entry.close();
+		}
+		buffersLRU.clear();
+		buffersLRU = null;
+	}
+
+	public static void closeStorage(final OStorageLocal iStorage) {
+		OMMapBufferEntry entry;
+		for (Iterator<OMMapBufferEntry> it = buffersLRU.iterator(); it.hasNext();) {
+			entry = it.next();
+			if (entry.file != null && entry.file.isClosed()) {
+				entry.close();
+				it.remove();
+			}
+		}
 	}
 }

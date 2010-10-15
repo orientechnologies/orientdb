@@ -15,8 +15,9 @@
  */
 package com.orientechnologies.orient.core.tx;
 
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
@@ -31,12 +32,27 @@ public class OTransactionOptimistic<REC extends ORecordInternal<?>> extends OTra
 
 	public void commit() {
 		status = TXSTATUS.COMMITTING;
+
+		// WAKE UP LISTENERS
+		for (ODatabaseLifecycleListener listener : ((ODatabaseRaw) database.getUnderlying()).getListeners())
+			try {
+				listener.onTxCommit(database.getUnderlying());
+			} catch (Throwable t) {
+			}
+
 		database.executeCommit();
 		status = TXSTATUS.INVALID;
 	}
 
 	public void rollback() {
 		status = TXSTATUS.ROLLBACKING;
+
+		// WAKE UP LISTENERS
+		for (ODatabaseLifecycleListener listener : ((ODatabaseRaw) database.getUnderlying()).getListeners())
+			try {
+				listener.onTxRollback(database.getUnderlying());
+			} catch (Throwable t) {
+			}
 
 		// INVALIDATE THE CACHE
 		database.getCache().removeRecords(entries.keySet());
@@ -79,7 +95,7 @@ public class OTransactionOptimistic<REC extends ORecordInternal<?>> extends OTra
 	}
 
 	public void save(final REC iRecord, final String iClusterName) {
-		addRecord(iRecord, iRecord.getIdentity().isNew() ? OTransactionEntry.CREATED : OTransactionEntry.UPDATED, iClusterName);
+		addRecord(iRecord, iRecord.getIdentity().isValid() ? OTransactionEntry.UPDATED : OTransactionEntry.CREATED, iClusterName);
 	}
 
 	private void addRecord(final REC iRecord, final byte iStatus, final String iClusterName) {
@@ -99,7 +115,8 @@ public class OTransactionOptimistic<REC extends ORecordInternal<?>> extends OTra
 		} else {
 			final ORecordId rid = (ORecordId) iRecord.getIdentity();
 
-			if (rid.getClusterPosition() == ORID.CLUSTER_POS_INVALID) {
+			if (!rid.isValid()) {
+				// TODO: NEET IT FOR REAL?
 				// NEW RECORD: CHECK IF IT'S ALREADY IN
 				for (OTransactionEntry<REC> entry : entries.values()) {
 					if (entry.record == iRecord)
@@ -151,7 +168,6 @@ public class OTransactionOptimistic<REC extends ORecordInternal<?>> extends OTra
 				}
 			}
 		}
-
 	}
 
 	private OTransactionEntry<REC> getRecord(final int iClusterId, final long iPosition) {

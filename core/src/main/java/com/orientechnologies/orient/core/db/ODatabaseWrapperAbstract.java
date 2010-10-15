@@ -58,6 +58,10 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase, REC extends
 		underlying.close();
 	}
 
+	public void delete() {
+		underlying.delete();
+	}
+
 	public int getId() {
 		return underlying.getId();
 	}

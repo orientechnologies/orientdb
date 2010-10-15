@@ -57,6 +57,7 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
+import com.orientechnologies.orient.core.storage.fs.OMMapManager;
 import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemory;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
@@ -254,6 +255,8 @@ public class OStorageLocal extends OStorageAbstract {
 			cache.clear();
 			configuration = new OStorageConfiguration(this);
 
+			OMMapManager.closeStorage(this);
+
 			open = false;
 		} catch (IOException e) {
 			OLogManager.instance().error(this, "Error on closing of the storage '" + name, e, OStorageException.class);
@@ -262,6 +265,48 @@ public class OStorageLocal extends OStorageAbstract {
 			releaseExclusiveLock(locked);
 
 			OProfiler.getInstance().stopChrono("OStorageLocal.close", timer);
+		}
+	}
+
+	public void delete() {
+		final long timer = OProfiler.getInstance().startChrono();
+
+		close();
+
+		// GET REAL DIRECTORY
+		File dbDir = new File(url);
+		if (!dbDir.exists() || !dbDir.isDirectory())
+			dbDir = dbDir.getParentFile();
+
+		final boolean locked = acquireExclusiveLock();
+
+		try {
+			// RETRIES
+			for (int i = 0; i < 3; ++i) {
+				System.gc();
+				if (dbDir.exists() && dbDir.isDirectory()) {
+					// TRY TO DELETE ALL THE FILES
+					for (File f : dbDir.listFiles())
+						f.delete();
+
+					if (dbDir.delete())
+						// DIRECTORY DELETED
+						return;
+				} else
+					return;
+
+				try {
+					Thread.sleep(200);
+				} catch (InterruptedException e) {
+				}
+			}
+
+			throw new OStorageException("Can't delete database '" + name + "' located in: " + dbDir);
+
+		} finally {
+			releaseExclusiveLock(locked);
+
+			OProfiler.getInstance().stopChrono("OStorageLocal.delete", timer);
 		}
 	}
 

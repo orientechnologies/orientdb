@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -105,6 +104,15 @@ public class ODatabaseRaw implements ODatabase {
 			throw new ODatabaseException("Can't create database", e);
 		}
 		return (DB) this;
+	}
+
+	public void delete() {
+		try {
+			storage.delete();
+			status = STATUS.CLOSED;
+		} catch (Exception e) {
+			throw new ODatabaseException("Can't delete database", e);
+		}
 	}
 
 	public boolean exists() {
