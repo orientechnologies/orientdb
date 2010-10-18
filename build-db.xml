@@ -5,7 +5,7 @@
 	<property environment="env" />
 	<property name="vendor"         value="Orient Technologies" />
 	<property name="product"        value="OrientDB Database" />
-	<property name="version"        value="0.9.23-SNAPSHOT" />
+	<property name="version"        value="0.9.23" />
 	<property name="global.release" value="../releases/${version}" />
 	<property name="db.release"     value="../releases/${version}/db" />
 	
@@ -181,7 +181,7 @@
 
   <target name="release" depends="install">
 		<delete file="../releases/orientdb-${version}.zip" />
-		<zip destfile="../releases/orientdb-${version}.zip" basedir="${db.release}" level="9" update="false" excludes="*.log" />
+		<zip destfile="../releases/orientdb-${version}.zip" basedir="${db.release}" level="9" update="false" excludes="*.log.*" />
 	</target>
     
 </project>

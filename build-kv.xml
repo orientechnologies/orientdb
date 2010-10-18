@@ -108,7 +108,7 @@
 
   <target name="release" depends="install">
 		<delete file="../releases/orientdb-kv-${version}.zip" />
-		<zip destfile="../releases/orientdb-kv-${version}.zip" basedir="${kv.release}" level="9" update="false" excludes="*.log" />
+		<zip destfile="../releases/orientdb-kv-${version}.zip" basedir="${kv.release}" level="9" update="false" excludes="*.log.*" />
 	</target>
     
 </project>
