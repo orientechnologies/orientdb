@@ -44,7 +44,7 @@ public enum OGlobalConfiguration {
 
 	FILE_MMAP_BLOCK_SIZE("file.mmap.blockSize", Integer.class, 300000), FILE_MMAP_MAX_MEMORY("file.mmap.maxMemory", Integer.class,
 			110000000), FILE_MMAP_FORCE_DELAY("file.mmap.forceDelay", Integer.class, 500), FILE_MMAP_FORCE_RETRY("file.mmap.forceRetry",
-			Integer.class, 5),
+			Integer.class, 10),
 
 	NETWORK_SOCKET_BUFFER_SIZE("network.socketBufferSize", Integer.class, 32768), NETWORK_SOCKET_TIMEOUT("network.timeout",
 			Integer.class, 10000), NETWORK_SOCKET_RETRY("network.retry", Integer.class, 5), NETWORK_SOCKET_RETRY_DELAY(
