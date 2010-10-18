@@ -436,7 +436,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 							try {
 								channel.writeByte((byte) 1); // ONE MORE RECORD
 								writeRecord((ORecordInternal<?>) iRecord);
-								channel.flush();
+								// TEMPORARY TEST: ON LINUX THIS SLOW DOWN A LOT
+								// channel.flush();
 
 								if (fetchPlan != null && iRecord instanceof ODocument) {
 									OFetchHelper.fetch((ODocument) iRecord, iRecord, fetchPlan, null, 0, -1, new OFetchListener() {
