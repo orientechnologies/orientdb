@@ -29,7 +29,7 @@ public class FullTextIndexerTest {
 			document.field("surname", "Miner");
 			document
 					.field("description",
-							"Jay Glenn Miner (May 31, 1932 – June 20, 1994), was a famous integrated circuit designer, known primarily for his "
+							"Jay Glenn Miner (May 31, 1932 - June 20, 1994), was a famous integrated circuit designer, known primarily for his "
 									+ "work in multimedia chips and as the 'father of the Amiga'[1]. He received a BS in EECS from "
 									+ "UC Berkeley in 1959. Miner started in the electronics industry with a number of designs in the "
 									+ "medical world, including a remote-control pacemaker. He moved to Atari in the late 1970s. One of "
