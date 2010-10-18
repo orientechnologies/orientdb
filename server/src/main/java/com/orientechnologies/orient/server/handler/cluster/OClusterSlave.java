@@ -48,6 +48,7 @@ public class OClusterSlave {
 		network = new OChannelBinaryClient(binaryNetworkAddress, binaryNetworkPort, configuration);
 
 		network.out.writeByte(OChannelBinaryProtocol.NODECLUSTER_CONNECT);
+		network.out.writeInt(0);
 		network.flush();
 
 		readStatus();

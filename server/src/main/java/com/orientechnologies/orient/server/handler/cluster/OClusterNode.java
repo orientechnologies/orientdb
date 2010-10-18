@@ -190,20 +190,22 @@ public class OClusterNode implements OServerHandler {
 	}
 
 	public void receivedClusterPresence(final String iServerAddress, final int iServerPort) {
+		final String key = iServerAddress + ":" + iServerPort;
+
 		synchronized (slaves) {
-			if (slaves.containsKey(iServerAddress))
+			if (slaves.containsKey(key))
 				// ALREADY REGISTERED, IGNORE IT
 				return;
 
 			final OClusterSlave slave = new OClusterSlave(this, iServerAddress, iServerPort);
-			slaves.put(iServerAddress, slave);
+			slaves.put(key, slave);
 
-			OLogManager.instance().warn(this, "Discovered new cluster node %s:%d. Trying to connect...", iServerAddress, iServerPort);
+			OLogManager.instance().warn(this, "Discovered new cluster node %s. Trying to connect...", key);
 
 			try {
 				slave.connect(networkTimeoutConnectionSlaves);
 			} catch (IOException e) {
-				OLogManager.instance().error(this, "Can't connect to cluster slave node: %s:%d", iServerAddress, iServerPort);
+				OLogManager.instance().error(this, "Can't connect to cluster slave node: %s", key);
 			}
 		}
 	}
