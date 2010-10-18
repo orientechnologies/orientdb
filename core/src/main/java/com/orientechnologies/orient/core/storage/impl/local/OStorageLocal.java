@@ -190,6 +190,9 @@ public class OStorageLocal extends OStorageAbstract {
 		final boolean locked = acquireExclusiveLock();
 
 		try {
+			if (open)
+				throw new OStorageException("Can't create new storage " + name + " because it isn't closed");
+
 			File storageFolder = new File(storagePath);
 			if (!storageFolder.exists())
 				storageFolder.mkdir();
@@ -277,7 +280,9 @@ public class OStorageLocal extends OStorageAbstract {
 	public void delete() {
 		final long timer = OProfiler.getInstance().startChrono();
 
-		close();
+		// CLOSE THE DATABASE BY REMOVING THE CURRENT USER
+		if (removeUser() > 0)
+			throw new OStorageException("Can't delete a storage open");
 
 		// GET REAL DIRECTORY
 		File dbDir = new File(url);
