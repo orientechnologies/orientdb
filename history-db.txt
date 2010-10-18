@@ -29,6 +29,36 @@
 
 This document enlist the last changes to the Orient Database project.
 -------------------------------------------------------------------------------
+VERSION 0.9.23 - (October, 18th 2010)
+-------------------------------------------------------------------------------
+New features:
+- Issue  92: Support for logical cluster in TX
+- Issue 125: Cross-domain access to the DB server for Silverlight and Flash
+             clients
+Bugs:
+- Issue  65: Slow query on Index when the value isn't in the database
+- Issue  73: OrientDB Studio issues
+- Issue  83: ClassCastException occurs
+- Issue  99: Deleting docs one by one will cause exception
+- Issue 110: ClassCastException occurs in OrientDB Studio
+- Issue 113: RegisterEntityClasses once with ODatabaseObjectPool should be
+             enough
+- Issue 115: Concurrent access fails various ways and performance is bad
+- Issue 116: Referenced POJOs are not stored during save
+- Issue 117: TreeMap performance degrades under high load
+- Issue 118: Registering classes should use fully qualified class name, not
+             strings
+- Issue 119: Error occurs call OSQLQuery method with the query string that
+             starts with white space.
+- Issue 121: Debug option in base-build.xml
+- Issue 122: An error has occurred while building the revision 1465
+- Issue 131: REST api record update requires to repeat all attributes
+- Issue 132: Error 500 on curl POST to REST api
+- Issue 133: REST api: cannot change record class?
+- Issue 135: Stacktrace contradiction, Type BINARY must be a collection
+- Fixed other minor bugs
+
+-------------------------------------------------------------------------------
 VERSION 0.9.22 - (September, 15th 2010)
 -------------------------------------------------------------------------------
 New features:
@@ -43,7 +73,8 @@ Bugs:
 - Issue  87: Cannot query records from OrientDB Studio Command-page
 - Issue 100: Transaction does not work as expected
 - Issue 101: Error in using orient queries having ' character
-- Issue 104: Bulk record creation in cluster with pre-created indices causes ClassCastException
+- Issue 104: Bulk record creation in cluster with pre-created indices causes
+             ClassCastException
 - Issue 105: Error in using UPDATE query
 - Fixed other minor bugs
 
