@@ -62,18 +62,20 @@ import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemory;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
 public class OStorageLocal extends OStorageAbstract {
-	public static final String[]				TYPES							= { OClusterLocal.TYPE, OClusterLogical.TYPE };
+	public static final String[]				TYPES								= { OClusterLocal.TYPE, OClusterLogical.TYPE };
 
 	// private final OLockManager<String, String> lockManager = new
 	// OLockManager<String, String>();
-	private final Map<String, OCluster>	clusterMap				= new LinkedHashMap<String, OCluster>();
-	private OCluster[]									clusters					= new OCluster[0];
-	private ODataLocal[]								dataSegments			= new ODataLocal[0];
+	private final Map<String, OCluster>	clusterMap					= new LinkedHashMap<String, OCluster>();
+	private OCluster[]									clusters						= new OCluster[0];
+	private ODataLocal[]								dataSegments				= new ODataLocal[0];
 
 	private OStorageLocalTxExecuter			txManager;
 	private String											storagePath;
 	private OStorageVariableParser			variableParser;
-	private int													defaultClusterId	= -1;
+	private int													defaultClusterId		= -1;
+
+	private static String[]							ALL_FILE_EXTENSIONS	= { ".och", ".ocl", ".oda", ".odh", ".otx" };
 
 	public OStorageLocal(final String iName, final String iFilePath, final String iMode) throws IOException {
 		super(iName, iFilePath, iMode);
@@ -268,6 +270,10 @@ public class OStorageLocal extends OStorageAbstract {
 		}
 	}
 
+	/**
+	 * Deletes physically all the database files (that ends for ".och", ".ocl", ".oda", ".odh", ".otx"). Tries also to delete the
+	 * container folder if the directory is empty. If files are locked, retry up to 10 times before to raise an exception.
+	 */
 	public void delete() {
 		final long timer = OProfiler.getInstance().startChrono();
 
@@ -287,13 +293,24 @@ public class OStorageLocal extends OStorageAbstract {
 				System.gc();
 
 				if (dbDir.exists() && dbDir.isDirectory()) {
-					// TRY TO DELETE ALL THE FILES
-					for (File f : dbDir.listFiles())
-						f.delete();
+					int notDeletedFiles = 0;
 
-					if (dbDir.delete())
-						// DIRECTORY DELETED
+					// TRY TO DELETE ALL THE FILES
+					for (File f : dbDir.listFiles()) {
+						// DELETE ONLY THE SUPPORTED FILES
+						for (String ext : ALL_FILE_EXTENSIONS)
+							if (f.getPath().endsWith(ext)) {
+								if (!f.delete())
+									notDeletedFiles++;
+								break;
+							}
+					}
+
+					if (notDeletedFiles == 0) {
+						// TRY TO DELETE ALSO THE DIRECTORY IF IT'S EMPTY
+						dbDir.delete();
 						return;
+					}
 				} else
 					return;
 
