@@ -69,7 +69,7 @@ public class OPropertyIndexNotUnique extends OPropertyIndex {
 
 	@Override
 	public INDEX_TYPE getType() {
-		return INDEX_TYPE.NOT_UNIQUE;
+		return INDEX_TYPE.NOTUNIQUE;
 	}
 
 	@Override

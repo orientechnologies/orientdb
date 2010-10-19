@@ -35,6 +35,8 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
  * @see ORole
  */
 public class OUser extends ODocumentWrapper {
+	public static final String	ADMIN	= "admin";
+
 	public enum STATUSES {
 		SUSPENDED, ACTIVE
 	}

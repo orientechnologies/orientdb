@@ -39,6 +39,8 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
  */
 @SuppressWarnings("unchecked")
 public class ORole extends ODocumentWrapper {
+	public static final String	ADMIN	= "admin";
+
 	public enum ALLOW_MODES {
 		DENY_ALL_BUT, ALLOW_ALL_BUT
 	}

@@ -90,7 +90,7 @@ public class IndexTest {
 	public void testChangeOfIndexToNotUnique() {
 		database.open("admin", "admin");
 		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").removeIndex();
-		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").createIndex(INDEX_TYPE.NOT_UNIQUE);
+		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").createIndex(INDEX_TYPE.NOTUNIQUE);
 		database.getMetadata().getSchema().save();
 		database.close();
 	}

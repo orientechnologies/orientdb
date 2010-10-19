@@ -41,7 +41,7 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  */
 public class OProperty extends ODocumentWrapperNoClass {
 	public static enum INDEX_TYPE {
-		UNIQUE, NOT_UNIQUE, FULLTEXT
+		UNIQUE, NOTUNIQUE, FULLTEXT
 	};
 
 	private OClass						owner;
@@ -230,7 +230,7 @@ public class OProperty extends ODocumentWrapperNoClass {
 	 * @return
 	 */
 	public OPropertyIndex createIndex(final boolean iUnique) {
-		return createIndex(iUnique ? INDEX_TYPE.UNIQUE : INDEX_TYPE.NOT_UNIQUE);
+		return createIndex(iUnique ? INDEX_TYPE.UNIQUE : INDEX_TYPE.NOTUNIQUE);
 	}
 
 	/**
@@ -250,28 +250,31 @@ public class OProperty extends ODocumentWrapperNoClass {
 		if (index != null)
 			throw new IllegalStateException("Index already created");
 
+		OPropertyIndex tempIndex = null;
 		try {
 			switch (iType) {
 			case UNIQUE:
-				index = new OPropertyIndexUnique(document.getDatabase(), this, OStorage.CLUSTER_INDEX_NAME);
+				tempIndex = new OPropertyIndexUnique(document.getDatabase(), this, OStorage.CLUSTER_INDEX_NAME);
 				break;
-			case NOT_UNIQUE:
-				index = new OPropertyIndexNotUnique(document.getDatabase(), this, OStorage.CLUSTER_INDEX_NAME);
+			case NOTUNIQUE:
+				tempIndex = new OPropertyIndexNotUnique(document.getDatabase(), this, OStorage.CLUSTER_INDEX_NAME);
 				break;
 			case FULLTEXT:
-				index = new OFullTextIndex(document.getDatabase(), this, OStorage.CLUSTER_INDEX_NAME);
+				tempIndex = new OFullTextIndex(document.getDatabase(), this, OStorage.CLUSTER_INDEX_NAME);
 				break;
 			}
 
-			index.rebuild();
+			tempIndex.rebuild();
 
 			setDirty();
 
 			if (document.getDatabase() != null) {
 				// / SAVE ONLY IF THE PROPERTY IS ALREADY PERSISTENT
-				index.lazySave();
+				tempIndex.lazySave();
 				document.getDatabase().getMetadata().getSchema().save();
 			}
+
+			index = tempIndex;
 
 		} catch (OIndexException e) {
 			throw e;
@@ -353,7 +356,7 @@ public class OProperty extends ODocumentWrapperNoClass {
 			case UNIQUE:
 				index = new OPropertyIndexUnique(document.getDatabase(), this, iRID);
 				break;
-			case NOT_UNIQUE:
+			case NOTUNIQUE:
 				index = new OPropertyIndexNotUnique(document.getDatabase(), this, iRID);
 				break;
 			case FULLTEXT:
