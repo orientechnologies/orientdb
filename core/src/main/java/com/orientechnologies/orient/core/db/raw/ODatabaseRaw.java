@@ -98,7 +98,18 @@ public class ODatabaseRaw implements ODatabase {
 
 	public <DB extends ODatabase> DB create() {
 		try {
+			if (status == STATUS.OPEN)
+				throw new IllegalStateException("Database " + getName() + " is already open");
+
 			storage.create();
+
+			// WAKE UP LISTENERS
+			for (ODatabaseLifecycleListener listener : listeners)
+				try {
+					listener.onCreate(this);
+				} catch (Throwable t) {
+				}
+
 			status = STATUS.OPEN;
 		} catch (Exception e) {
 			throw new ODatabaseException("Can't create database", e);
@@ -109,6 +120,14 @@ public class ODatabaseRaw implements ODatabase {
 	public void delete() {
 		try {
 			storage.delete();
+
+			// WAKE UP LISTENERS
+			for (ODatabaseLifecycleListener listener : listeners)
+				try {
+					listener.onDelete(this);
+				} catch (Throwable t) {
+				}
+				
 			status = STATUS.CLOSED;
 		} catch (Exception e) {
 			throw new ODatabaseException("Can't delete database", e);

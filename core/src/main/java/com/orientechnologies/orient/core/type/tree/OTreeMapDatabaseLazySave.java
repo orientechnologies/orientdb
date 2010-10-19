@@ -111,4 +111,10 @@ public class OTreeMapDatabaseLazySave<K, V> extends OTreeMapDatabase<K, V> imple
 		iDatabase.registerListener(this);
 		maxUpdatesBeforeSave = OGlobalConfiguration.TREEMAP_LAZY_UPDATES.getValueAsInteger();
 	}
+
+	public void onCreate(ODatabase iDatabase) {
+	}
+
+	public void onDelete(ODatabase iDatabase) {
+	}
 }
