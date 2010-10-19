@@ -135,6 +135,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 
 			if (getStorage() instanceof OStorageLocal)
 				createRolesAndUsers();
+			user = getMetadata().getSecurity().getUser(OUser.ADMIN);
 
 			dictionary.create();
 		} catch (Exception e) {
@@ -566,8 +567,8 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		metadata.getSchema().save();
 
 		// CREATE ROLES AND USERS
-		final ORole adminRole = metadata.getSecurity().createRole("admin", ORole.ALLOW_MODES.ALLOW_ALL_BUT);
-		user = metadata.getSecurity().createUser("admin", "admin", new String[] { adminRole.getName() });
+		final ORole adminRole = metadata.getSecurity().createRole(ORole.ADMIN, ORole.ALLOW_MODES.ALLOW_ALL_BUT);
+		user = metadata.getSecurity().createUser(OUser.ADMIN, OUser.ADMIN, new String[] { adminRole.getName() });
 
 		final ORole readerRole = metadata.getSecurity().createRole("reader", ORole.ALLOW_MODES.DENY_ALL_BUT);
 		readerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
