@@ -85,7 +85,8 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> {
 	}
 
 	public Set<java.util.Map.Entry<String, Object>> entrySet() {
-		throw new UnsupportedOperationException("entrySet");
+		convertAll();
+		return super.entrySet();
 	}
 
 	public Object get(final Object iKey) {
@@ -98,9 +99,10 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> {
 		return underlying.keySet();
 	}
 
-	public void putAll(Map<? extends String, ? extends Object> arg0) {
-		// TODO Auto-generated method stub
-
+	public void putAll(final Map<? extends String, ? extends Object> iMap) {
+		for (java.util.Map.Entry<? extends String, ? extends Object> e : iMap.entrySet()) {
+			put(e.getKey(), e.getValue());
+		}
 	}
 
 	public Collection<Object> values() {

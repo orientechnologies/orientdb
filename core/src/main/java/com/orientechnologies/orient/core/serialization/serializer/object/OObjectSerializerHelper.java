@@ -171,7 +171,9 @@ public class OObjectSerializerHelper {
 				if (fieldValue == null
 						|| !(fieldValue instanceof ODocument)
 						|| (fieldValue instanceof Collection<?> && (((Collection<?>) fieldValue).size() == 0 || !(((Collection<?>) fieldValue)
-								.iterator().next() instanceof ODocument))))
+								.iterator().next() instanceof ODocument)))
+						|| (!(fieldValue instanceof Map<?, ?>) || ((Map<?, ?>) fieldValue).size() == 0 || !(((Map<?, ?>) fieldValue).values()
+								.iterator().next() instanceof ODocument)))
 					setFieldValue(iPojo, fieldName, fieldValue);
 			}
 		}

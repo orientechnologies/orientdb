@@ -73,8 +73,10 @@ public class OFetchHelper {
 				if (fieldValue == null
 						|| !(fieldValue instanceof ODocument)
 						&& (!(fieldValue instanceof Collection<?>) || ((Collection<?>) fieldValue).size() == 0 || !(((Collection<?>) fieldValue)
+								.iterator().next() instanceof ODocument))
+						&& (!(fieldValue instanceof Map<?, ?>) || ((Map<?, ?>) fieldValue).size() == 0 || !(((Map<?, ?>) fieldValue).values()
 								.iterator().next() instanceof ODocument)))
-					// NULL NEITHER LINK, NOR COLLECTION OF LINKS
+					// NULL NEITHER LINK, NOR COLLECTION OF LINKS OR MAP OF LINKS
 					continue;
 
 				depthLevel = getDepthLevel(iRootRecord, iFetchPlan, fieldName);
@@ -110,6 +112,14 @@ public class OFetchHelper {
 					userObject = iListener.fetchLinked(iRootRecord, iUserObject, fieldName, linked);
 					if (userObject != null)
 						for (ODocument d : (Collection<ODocument>) userObject) {
+							// GO RECURSIVELY
+							fetch(d, d, iFetchPlan, fieldName, currentLevel, iMaxFetch, iListener);
+						}
+				} else if (fieldValue instanceof Map<?, ?>) {
+					final Map<String, ODocument> linked = (Map<String, ODocument>) fieldValue;
+					userObject = iListener.fetchLinked(iRootRecord, iUserObject, fieldName, linked);
+					if (userObject != null)
+						for (ODocument d : ((Map<String, ODocument>) userObject).values()) {
 							// GO RECURSIVELY
 							fetch(d, d, iFetchPlan, fieldName, currentLevel, iMaxFetch, iListener);
 						}
