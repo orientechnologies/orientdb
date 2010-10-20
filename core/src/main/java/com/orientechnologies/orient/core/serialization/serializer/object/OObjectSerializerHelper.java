@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.annotation.ORawBinding;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.db.object.OLazyObjectList;
+import com.orientechnologies.orient.core.db.object.OLazyObjectMap;
 import com.orientechnologies.orient.core.db.object.OLazyObjectSet;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -210,6 +211,14 @@ public class OObjectSerializerHelper {
 							.setFetchPlan(iFetchPlan);
 
 					fieldValue = target;
+				} else if (type.isAssignableFrom(Map.class)) {
+
+					final Map<String, Object> map = (Map<String, Object>) iLinked;
+					final Map<String, Object> target = new OLazyObjectMap<Object>((ODatabaseObjectTx) iRecord.getDatabase()
+							.getDatabaseOwner(), map).setFetchPlan(iFetchPlan);
+
+					fieldValue = target;
+
 				} else if (type.isEnum()) {
 
 					String enumName = ((ODocument) iLinked).field(iFieldName);
