@@ -26,7 +26,6 @@ import java.util.Set;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
@@ -207,24 +206,21 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			String storageMode = channel.readString();
 
 			final String path;
-			final String realPath;
 
 			if (storageMode.equals(OEngineLocal.NAME)) {
 				if (OServerMain.server().existsStoragePath(dbName))
 					throw new IllegalArgumentException("Database '" + dbName + "' already exists.");
 
 				path = storageMode + ":${ORIENTDB_HOME}/databases/" + dbName + "/" + dbName;
-				realPath = OSystemVariableResolver.resolveSystemVariables(path);
 			} else if (storageMode.equals(OEngineMemory.NAME)) {
 				if (OServerMain.server().getMemoryDatabases().containsKey(dbName))
 					throw new IllegalArgumentException("Database '" + dbName + "' already exists.");
 
 				path = storageMode + ":" + dbName;
-				realPath = path;
 			} else
 				throw new IllegalArgumentException("Can't create databse: storage mode '" + storageMode + "' is not supported.");
 
-			connection.database = new ODatabaseDocumentTx(realPath);
+			connection.database = new ODatabaseDocumentTx(path);
 			connection.database.create();
 
 			if (storageMode.equals(OEngineLocal.NAME)) {
