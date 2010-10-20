@@ -2083,8 +2083,8 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 				p.getParent().setLeft(r);
 			else
 				p.getParent().setRight(r);
-			r.setLeft(p);
 			p.setParent(r);
+			r.setLeft(p);
 		}
 	}
 
@@ -2524,7 +2524,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 	}
 
 	@SuppressWarnings("rawtypes")
-	protected void checkTreeStructure(final OTreeMapEntry<K, V> iRootNode) {
+	public void checkTreeStructure(final OTreeMapEntry<K, V> iRootNode) {
 		if (!runtimeCheckEnabled || iRootNode == null)
 			return;
 
