@@ -48,7 +48,7 @@ public class OCommandSQLParsingException extends OException {
 		if (text != null) {
 			buffer.append("\nCommand: ");
 			buffer.append(text);
-			buffer.append("\n------");
+			buffer.append("\n---------");
 			for (int i = 0; i < position - 1; ++i)
 				buffer.append("-");
 

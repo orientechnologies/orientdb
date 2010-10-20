@@ -13,26 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.id.fetch;
+package com.orientechnologies.orient.server.network.protocol.cluster;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 /**
- * Listener interface used while fetching records.
+ * Cluster extension to the default binary protocol.
  * 
- * @author Luca Garulli
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public interface OFetchListener {
-	/**
-	 * Fetch the linked field.
-	 * 
-	 * @param iRoot
-	 * @param iFieldName
-	 * @param iLinked
-	 * @return null if the fetching must stop, otherwise the current field value
-	 */
-	public Object fetchLinked(ODocument iRoot, Object iUserObject, String iFieldName, Object iLinked);
-
-	public int size();
+public class OChannelClusterProtocol extends OChannelBinaryProtocol {
+	public static final byte	NODECLUSTER_CONNECT			= 80;
+	public static final byte	NODECLUSTER_DISCONNECT	= 81;
 }

@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.command;
 
+import com.orientechnologies.common.listener.OProgressListener;
+
 /**
  * Generic GOF command pattern implementation.
  * 
@@ -60,4 +62,13 @@ public interface OCommandExecutor {
 	 * @return
 	 */
 	public Object execute(OCommandRequestText iRequest, final Object... iArgs);
+
+	/**
+	 * Set the listener invoked while the command is executing.
+	 * 
+	 * @param progressListener
+	 *          OProgressListener implementation
+	 * @return
+	 */
+	public <RET extends OCommandExecutor> RET setProgressListener(OProgressListener progressListener);
 }

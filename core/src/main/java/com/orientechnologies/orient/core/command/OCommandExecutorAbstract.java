@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.command;
 
+import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 
@@ -26,6 +27,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
  */
 public abstract class OCommandExecutorAbstract extends OCommandToParse implements OCommandExecutor {
 	protected ODatabaseRecord<?>	database;
+	protected OProgressListener		progressListener;
 
 	public OCommandExecutorAbstract init(final ODatabaseRecord<?> iDatabase, final String iText) {
 		database = iDatabase;
@@ -48,5 +50,15 @@ public abstract class OCommandExecutorAbstract extends OCommandToParse implement
 	@Override
 	public String toString() {
 		return getClass().getSimpleName() + " [text=" + text + "]";
+	}
+
+	public OProgressListener getProgressListener() {
+		return progressListener;
+	}
+
+	@SuppressWarnings("unchecked")
+	public OCommandExecutorAbstract setProgressListener(OProgressListener progressListener) {
+		this.progressListener = progressListener;
+		return this;
 	}
 }

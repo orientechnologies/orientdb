@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.id.fetch;
+package com.orientechnologies.orient.core.fetch;
 
 import java.util.Collection;
 import java.util.HashMap;

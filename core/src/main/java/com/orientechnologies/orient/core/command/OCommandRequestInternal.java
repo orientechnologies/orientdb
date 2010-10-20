@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.command;
 
+import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
@@ -33,4 +34,8 @@ public interface OCommandRequestInternal extends OCommandRequest, OSerializableS
 	public OCommandResultListener getResultListener();
 
 	public void setResultListener(OCommandResultListener iListener);
+
+	public OProgressListener getProgressListener();
+
+	public OCommandRequestInternal setProgressListener(OProgressListener iProgressListener);
 }

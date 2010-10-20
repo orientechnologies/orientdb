@@ -21,6 +21,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
+import com.orientechnologies.common.concur.resource.OSharedResource;
+import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -38,7 +40,7 @@ import com.orientechnologies.orient.core.type.tree.OTreeMapDatabaseLazySave;
  * @author Luca Garulli
  * 
  */
-public abstract class OPropertyIndex implements Iterable<Entry<String, List<ORecordId>>> {
+public abstract class OPropertyIndex extends OSharedResource implements Iterable<Entry<String, List<ORecordId>>> {
 	protected OProperty																					owner;
 	protected OTreeMapDatabaseLazySave<String, List<ORecordId>>	map;
 
@@ -89,60 +91,113 @@ public abstract class OPropertyIndex implements Iterable<Entry<String, List<ORec
 
 	public abstract ORID getRID();
 
-	public abstract void put(final Object iKey, final ORecordId iValue);
+	protected abstract void put(final Object iKey, final ORecordId iValue);
 
 	@SuppressWarnings("unchecked")
 	public List<ORecordId> get(Object iKey) {
-		final List<ORecordId> values = map.get(iKey);
+		acquireSharedLock();
 
-		if (values == null)
-			return Collections.EMPTY_LIST;
+		try {
+			final List<ORecordId> values = map.get(iKey);
 
-		return values;
+			if (values == null)
+				return Collections.EMPTY_LIST;
+
+			return values;
+
+		} finally {
+			releaseSharedLock();
+		}
+	}
+
+	public void rebuild() {
+		rebuild(null);
 	}
 
 	/**
 	 * Populate the index with all the existent records.
 	 */
-	public void rebuild() {
+	public void rebuild(final OProgressListener iProgressListener) {
 		Object fieldValue;
 		ODocument doc;
 
 		clear();
 
-		int i = 0;
+		acquireExclusiveLock();
 
-		final int[] clusterIds = owner.getOwnerClass().getClusterIds();
-		for (int clusterId : clusterIds)
-			for (Object record : map.getDatabase().browseCluster(map.getDatabase().getClusterNameById(clusterId))) {
-				if (record instanceof ODocument) {
-					doc = (ODocument) record;
-					fieldValue = doc.field(owner.getName());
+		try {
 
-					if (fieldValue != null) {
-						put(fieldValue.toString(), (ORecordId) doc.getIdentity());
-						++i;
+			int documentIndexed = 0;
+			int documentNum = 0;
+			final int[] clusterIds = owner.getOwnerClass().getClusterIds();
+			final long documentTotal = map.getDatabase().countClusterElements(clusterIds);
+
+			for (int clusterId : clusterIds)
+				for (Object record : map.getDatabase().browseCluster(map.getDatabase().getClusterNameById(clusterId))) {
+					if (record instanceof ODocument) {
+						doc = (ODocument) record;
+						fieldValue = doc.field(owner.getName());
+
+						if (fieldValue != null) {
+							put(fieldValue.toString(), (ORecordId) doc.getIdentity());
+							++documentIndexed;
+						}
 					}
-				}
-			}
+					documentNum++;
 
-		lazySave();
+					if (iProgressListener != null)
+						iProgressListener.onProgress(this, documentNum, (int) (documentNum / documentTotal) * 100);
+				}
+
+			lazySave();
+
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	public void remove(final Object key) {
-		map.remove(key);
+		acquireSharedLock();
+
+		try {
+			map.remove(key);
+
+		} finally {
+			releaseSharedLock();
+		}
 	}
 
 	public void load() throws IOException {
-		map.load();
+		acquireExclusiveLock();
+
+		try {
+			map.load();
+
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	public void clear() {
-		map.clear();
+		acquireExclusiveLock();
+
+		try {
+			map.clear();
+
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	public void lazySave() {
-		map.lazySave();
+		acquireExclusiveLock();
+
+		try {
+			map.lazySave();
+
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	public ORecordBytes getRecord() {
@@ -150,7 +205,14 @@ public abstract class OPropertyIndex implements Iterable<Entry<String, List<ORec
 	}
 
 	public Iterator<Entry<String, List<ORecordId>>> iterator() {
-		return map.entrySet().iterator();
+		acquireSharedLock();
+
+		try {
+			return map.entrySet().iterator();
+
+		} finally {
+			releaseSharedLock();
+		}
 	}
 
 	protected void init(final ODatabaseRecord<?> iDatabase, final ORID iRecordId) {
@@ -163,6 +225,13 @@ public abstract class OPropertyIndex implements Iterable<Entry<String, List<ORec
 	}
 
 	public int getIndexedItems() {
-		return map.size();
+		acquireSharedLock();
+
+		try {
+			return map.size();
+
+		} finally {
+			releaseSharedLock();
+		}
 	}
 }

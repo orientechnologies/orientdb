@@ -87,6 +87,9 @@ public class OCommandExecutorSQLRemoveIndex extends OCommandExecutorSQLPermissio
 		if (prop == null)
 			throw new IllegalArgumentException("Property '" + field + "' was not found in class '" + cls + "'");
 
+		if (prop.getIndex() == null)
+			throw new IllegalArgumentException("Property '" + cls + "." + field + "' has not index");
+
 		final int indexedItems = prop.getIndex().getIndexedItems();
 
 		prop.removeIndex();

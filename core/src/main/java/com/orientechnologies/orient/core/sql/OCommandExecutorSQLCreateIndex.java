@@ -50,14 +50,17 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 		if (pos == -1 || !word.toString().equals(KEYWORD_CREATE))
 			throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found", text, oldPos);
 
-		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+		oldPos = pos;
+		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_INDEX))
 			throw new OCommandSQLParsingException("Keyword " + KEYWORD_INDEX + " not found", text, oldPos);
 
-		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
+		oldPos = pos;
+		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
 		if (pos == -1)
-			throw new OCommandSQLParsingException("Expected <class>.<property>", text, pos);
+			throw new OCommandSQLParsingException("Expected <class>.<property>", text, oldPos);
 
+		oldPos = pos;
 		String[] parts = word.toString().split("\\.");
 		if (parts.length != 2)
 			throw new OCommandSQLParsingException("Expected <class>.<property>", text, pos);
@@ -67,12 +70,15 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 			throw new OCommandSQLParsingException("Class not found", text, pos);
 		field = parts[1];
 
-		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1)
-			return this;
+			throw new OCommandSQLParsingException("Index type requested.", text, oldPos + 1);
 
 		// GET THE LINK TYPE
 		indexType = word.toString();
+
+		if (indexType == null)
+			throw new OCommandSQLParsingException("Index type requested.", text, pos);
 
 		return this;
 	}
@@ -92,7 +98,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 		if (prop == null)
 			throw new IllegalArgumentException("Property '" + field + "' was not found in class '" + cls + "'");
 
-		prop.createIndex(INDEX_TYPE.valueOf(indexType.toUpperCase()));
+		prop.createIndex(INDEX_TYPE.valueOf(indexType.toUpperCase()), progressListener);
 
 		return prop.getIndex().getIndexedItems();
 	}

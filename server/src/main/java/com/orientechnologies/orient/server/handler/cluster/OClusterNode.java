@@ -32,7 +32,7 @@ import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OServerHandler;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
-import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
+import com.orientechnologies.orient.server.network.protocol.cluster.ONetworkProtocolCluster;
 
 /**
  * Cluster node handler. It starts the discovery signaler and listener and manages the cluster configuration. When a node starts
@@ -142,40 +142,21 @@ public class OClusterNode implements OServerHandler {
 		// FIND THE BINARY NETWORK LISTENER
 		OServerNetworkListener found = null;
 		for (OServerNetworkListener l : server.getListeners()) {
-			if (l.getProtocolType().equals(ONetworkProtocolBinary.class)) {
+			if (l.getProtocolType().equals(ONetworkProtocolCluster.class)) {
 				found = l;
 				break;
 			}
 		}
 
-		final OServerNetworkListener binaryNetworkListener = found;
+		final OServerNetworkListener clusterNetworkListener = found;
 
-		if (binaryNetworkListener == null)
-			OLogManager.instance().error(this, "Can't find a configured network listener with binary protocol. Can't start cluster node",
-					null, OConfigurationException.class);
+		if (clusterNetworkListener == null)
+			OLogManager.instance().error(this,
+					"Can't find a configured network listener with 'cluster' protocol. Can't start cluster node", null,
+					OConfigurationException.class);
 
 		// START THE SIGNALER AND WAIT FOR A CONNECTION
-		discoverySignaler = new OClusterDiscoverySignaler(this, binaryNetworkListener);
-		Orient.getTimer().schedule(new TimerTask() {
-			@Override
-			public void run() {
-				synchronized (this) {
-					try {
-						// TIMEOUT: STOP TO SEND PACKETS TO BEING DISCOVERED
-						discoverySignaler.sendShutdown();
-
-						if (master != null)
-							// I'M NOT THE MASTER, DO NOTHING
-							return;
-
-						// NO NODE HAS JOINED: BECAME THE MASTER AND LISTEN FOR SLAVES
-						startListener(binaryNetworkListener);
-					} catch (Exception e) {
-						// AVOID THE TIMER IS NOT SCHEDULED ANYMORE IN CASE OF EXCEPTION
-					}
-				}
-			}
-		}, networkTimeoutMaster);
+		launchTheSignalOfLife(clusterNetworkListener);
 	}
 
 	public void shutdown() {
@@ -212,5 +193,29 @@ public class OClusterNode implements OServerHandler {
 
 	private void startListener(OServerNetworkListener binaryNetworkListener) {
 		discoveryListener = new OClusterDiscoveryListener(this, binaryNetworkListener);
+	}
+
+	private void launchTheSignalOfLife(final OServerNetworkListener clusterNetworkListener) {
+		discoverySignaler = new OClusterDiscoverySignaler(this, clusterNetworkListener);
+		Orient.getTimer().schedule(new TimerTask() {
+			@Override
+			public void run() {
+				synchronized (this) {
+					try {
+						// TIMEOUT: STOP TO SEND PACKETS TO BEING DISCOVERED
+						discoverySignaler.sendShutdown();
+
+						if (master != null)
+							// I'M NOT THE MASTER, DO NOTHING
+							return;
+
+						// NO NODE HAS JOINED: BECAME THE MASTER AND LISTEN FOR SLAVES
+						startListener(clusterNetworkListener);
+					} catch (Exception e) {
+						// AVOID THE TIMER IS NOT SCHEDULED ANYMORE IN CASE OF EXCEPTION
+					}
+				}
+			}
+		}, networkTimeoutMaster);
 	}
 }

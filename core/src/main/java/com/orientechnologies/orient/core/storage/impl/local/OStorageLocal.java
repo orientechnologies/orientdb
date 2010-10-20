@@ -1106,6 +1106,7 @@ public class OStorageLocal extends OStorageAbstract {
 	 */
 	public Object command(final OCommandRequestText iCommand) {
 		final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
+		executor.setProgressListener(iCommand.getProgressListener());
 		executor.parse(iCommand);
 		try {
 			return executor.execute();

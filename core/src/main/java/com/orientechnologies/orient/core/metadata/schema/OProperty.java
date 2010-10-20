@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.metadata.schema;
 import java.io.IOException;
 import java.text.ParseException;
 
+import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -241,12 +242,30 @@ public class OProperty extends ODocumentWrapperNoClass {
 	 *          One of types supported.
 	 *          <ul>
 	 *          <li>UNIQUE: Doesn't allow duplicates</li>
-	 *          <li>NOT_UNIQUE: Allow duplicates</li>
-	 *          <li>FULL_TEXT: Indexes single word for full text search</li>
+	 *          <li>NOTUNIQUE: Allow duplicates</li>
+	 *          <li>FULLTEXT: Indexes single word for full text search</li>
 	 *          </ul>
 	 * @return
 	 */
 	public OPropertyIndex createIndex(final INDEX_TYPE iType) {
+		return createIndex(iType, null);
+	}
+
+	/**
+	 * Creates an index on this property. Indexes speed up queries but slow down insert and update operations. For massive inserts we
+	 * suggest to remove the index, make the massive insert and recreate it. This version accepts a progress listener interface to
+	 * handle the progress status from the external.
+	 * 
+	 * @param iType
+	 *          One of types supported.
+	 *          <ul>
+	 *          <li>UNIQUE: Doesn't allow duplicates</li>
+	 *          <li>NOTUNIQUE: Allow duplicates</li>
+	 *          <li>FULLTEXT: Indexes single word for full text search</li>
+	 *          </ul>
+	 * @return
+	 */
+	public OPropertyIndex createIndex(final INDEX_TYPE iType, final OProgressListener iProgressListener) {
 		if (index != null)
 			throw new IllegalStateException("Index already created");
 
@@ -264,7 +283,7 @@ public class OProperty extends ODocumentWrapperNoClass {
 				break;
 			}
 
-			tempIndex.rebuild();
+			tempIndex.rebuild(iProgressListener);
 
 			setDirty();
 
@@ -282,7 +301,6 @@ public class OProperty extends ODocumentWrapperNoClass {
 		} catch (Exception e) {
 			OLogManager.instance().exception("Unable to create '%s' index for property: %s", e, ODatabaseException.class, iType,
 					toString());
-
 		}
 
 		return index;

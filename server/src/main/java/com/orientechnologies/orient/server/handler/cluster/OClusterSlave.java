@@ -30,22 +30,22 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
  */
 public class OClusterSlave {
 	private OClusterNode					node;
-	public String									binaryNetworkAddress;
-	public int										binaryNetworkPort;
+	public String									clusterNetworkAddress;
+	public int										clusterNetworkPort;
 	public Date										joinedOn;
 	public OChannelBinaryClient		network;
 	private OContextConfiguration	configuration;
 
 	public OClusterSlave(final OClusterNode iNode, final String iServerAddress, final int iServerPort) {
 		node = iNode;
-		binaryNetworkAddress = iServerAddress;
-		binaryNetworkPort = iServerPort;
+		clusterNetworkAddress = iServerAddress;
+		clusterNetworkPort = iServerPort;
 		joinedOn = new Date();
 		configuration = new OContextConfiguration();
 	}
 
 	public void connect(final int iTimeout) throws IOException {
-		network = new OChannelBinaryClient(binaryNetworkAddress, binaryNetworkPort, configuration);
+		network = new OChannelBinaryClient(clusterNetworkAddress, clusterNetworkPort, configuration);
 
 		network.out.writeByte(OChannelBinaryProtocol.NODECLUSTER_CONNECT);
 		network.out.writeInt(0);

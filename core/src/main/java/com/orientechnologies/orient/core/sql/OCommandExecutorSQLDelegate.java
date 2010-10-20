@@ -62,6 +62,8 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract {
 				delegate = new OCommandExecutorSQLCreateProperty().parse(iCommand);
 			else
 				throw new IllegalArgumentException("Can't find a command executor for the command request: " + iCommand);
+
+			delegate.setProgressListener(progressListener);
 		} else
 			throw new IllegalArgumentException("Can't find a command executor for the command request: " + iCommand);
 		return this;

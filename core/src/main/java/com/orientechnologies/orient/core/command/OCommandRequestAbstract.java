@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.command;
 
+import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 
 /**
@@ -26,6 +27,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 public abstract class OCommandRequestAbstract implements OCommandRequestInternal {
 	protected ODatabaseRecord<?>			database;
 	protected OCommandResultListener	resultListener;
+	protected OProgressListener				progressListener;
 	protected Object[]								parameters;
 
 	protected OCommandRequestAbstract() {
@@ -54,5 +56,14 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
 
 	public Object[] getParameters() {
 		return parameters;
+	}
+
+	public OProgressListener getProgressListener() {
+		return progressListener;
+	}
+
+	public OCommandRequestAbstract setProgressListener(OProgressListener progressListener) {
+		this.progressListener = progressListener;
+		return this;
 	}
 }

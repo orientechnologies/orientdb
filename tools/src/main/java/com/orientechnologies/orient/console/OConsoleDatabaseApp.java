@@ -27,6 +27,7 @@ import java.util.Set;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
@@ -58,12 +59,13 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.command.script.OCommandScript;
 
-public class OConsoleDatabaseApp extends OrientConsole implements OCommandListener {
+public class OConsoleDatabaseApp extends OrientConsole implements OCommandListener, OProgressListener {
 	protected ODatabaseDocument					currentDatabase;
 	protected String										currentDatabaseName;
 	protected ORecordInternal<?>				currentRecord;
 	protected List<ORecordInternal<?>>	currentResultSet;
 	protected OServerAdmin							srvAdmin;
+	private int													lastPercentStep;
 
 	public static void main(String[] args) {
 		new OConsoleDatabaseApp(args);
@@ -295,7 +297,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		out.printf("Script executed in %f sec(s). Value returned is: %s", (float) (System.currentTimeMillis() - start) / 1000, result);
 	}
 
-	@ConsoleCommand(description = "Create an index against a property")
+	@ConsoleCommand(splitInWords = false, description = "Create an index against a property")
 	public void createIndex(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText)
 			throws IOException {
 		out.println("\nCreating index...");
@@ -305,7 +307,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		out.println("\nIndex created succesfully");
 	}
 
-	@ConsoleCommand(description = "Remove an index")
+	@ConsoleCommand(splitInWords = false, description = "Remove an index")
 	public void removeIndex(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText)
 			throws IOException {
 		out.println("\nRemoving index...");
@@ -849,11 +851,21 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 
 		currentResultSet.clear();
 
-		final Object result = new OCommandSQL(iReceivedCommand).setDatabase(currentDatabase).execute();
+		final Object result = new OCommandSQL(iReceivedCommand).setDatabase(currentDatabase).setProgressListener(this).execute();
 
 		if (result != null)
 			out.printf(iMessage, result, (float) (System.currentTimeMillis() - start) / 1000);
 
 		return result;
+	}
+
+	public boolean onProgress(Object iTask, long iCounter, int iPercent) {
+		iPercent = iPercent / 10;
+
+		for (int i = lastPercentStep; i < iPercent; ++i)
+			out.print('.');
+
+		lastPercentStep = iPercent;
+		return true;
 	}
 }
