@@ -210,7 +210,8 @@ public abstract class OStringSerializerHelper {
 				else if (insideLinkPart == 1 && c == ORID.SEPARATOR)
 					// SECOND PART OF LINK
 					insideLinkPart = 2;
-				else if (insideLinkPart == 2 && c != '-' && Character.isDigit(c))
+
+				if (insideLinkPart > 0 && c != '-' && !Character.isDigit(c) && c != ORID.SEPARATOR && c != LINK)
 					insideLinkPart = 0;
 
 				if (insideCollection == 0 && insideMap == 0 && !insideEmbedded && insideLinkPart == 0) {
