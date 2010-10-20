@@ -64,8 +64,8 @@ public class OTreeMapDatabase<K, V> extends OTreeMapPersistent<K, V> {
 			entry = new OTreeMapEntryDatabase<K, V>(this, (OTreeMapEntryDatabase<K, V>) iParent, iRecordId);
 			cache.put(iRecordId, entry);
 		} else {
-			entry.load();
-			
+			// entry.load();
+
 			if (iParent != null)
 				// FOUND: ASSIGN IT
 				entry.setParent(iParent);

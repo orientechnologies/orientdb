@@ -305,10 +305,8 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 			cache.clear();
 			for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints) {
 				entryPoint.disconnectLinked(false);
-
 				cache.put(entryPoint.record.getIdentity(), entryPoint);
 			}
-			// cache.clear();
 
 			if (isRuntimeCheckEnabled()) {
 				for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints)

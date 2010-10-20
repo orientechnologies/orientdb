@@ -161,7 +161,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 				parent.right = null;
 				parent.rightRid = ORecordId.EMPTY_RECORD_ID;
 			}
-			disconnected += parent.disconnectLinked(iForceDirty);
+			disconnected += parent.disconnect(iForceDirty);
 			parent = null;
 			parentRid = ORecordId.EMPTY_RECORD_ID;
 		}
@@ -170,7 +170,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 			// DISCONNECT MYSELF FROM THE LEFT NODE
 			left.parent = null;
 			left.parentRid = ORecordId.EMPTY_RECORD_ID;
-			disconnected += left.disconnectLinked(iForceDirty);
+			disconnected += left.disconnect(iForceDirty);
 			left = null;
 			leftRid = ORecordId.EMPTY_RECORD_ID;
 		}
@@ -179,7 +179,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 			// DISCONNECT MYSELF FROM THE RIGHT NODE
 			right.parent = null;
 			right.parentRid = ORecordId.EMPTY_RECORD_ID;
-			disconnected += right.disconnectLinked(iForceDirty);
+			disconnected += right.disconnect(iForceDirty);
 			right = null;
 			rightRid = ORecordId.EMPTY_RECORD_ID;
 		}
@@ -194,7 +194,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	 * 
 	 * @param iSource
 	 */
-	protected int disconnect(final int iDirection, boolean iForceDirty) {
+	protected int disconnect(boolean iForceDirty) {
 		if (record == null || this == pTree.getRoot())
 			// DIRTY NODE OR IS ROOT
 			return 0;
