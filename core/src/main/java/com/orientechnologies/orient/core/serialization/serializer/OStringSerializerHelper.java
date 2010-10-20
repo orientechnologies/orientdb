@@ -35,7 +35,7 @@ public abstract class OStringSerializerHelper {
 	public static final char								RECORD_SEPARATOR			= ',';
 
 	public static final String							CLASS_SEPARATOR				= "@";
-	public static final String							LINK									= "#";
+	public static final char								LINK									= '#';
 	public static final char								EMBEDDED							= '*';
 	public static final String							OPEN_BRACE						= "(";
 	public static final String							CLOSED_BRACE					= ")";
@@ -179,6 +179,7 @@ public abstract class OStringSerializerHelper {
 		boolean insideEmbedded = false;
 		int insideCollection = 0;
 		int insideMap = 0;
+		int insideLinkPart = 0;
 
 		final ArrayList<String> parts = new ArrayList<String>();
 		final int max = iSource.length();
@@ -203,10 +204,17 @@ public abstract class OStringSerializerHelper {
 					insideMap--;
 				} else if (c == EMBEDDED)
 					insideEmbedded = !insideEmbedded;
+				else if (c == LINK)
+					// FIRST PART OF LINK
+					insideLinkPart = 1;
+				else if (insideLinkPart == 1 && c == ORID.SEPARATOR)
+					// SECOND PART OF LINK
+					insideLinkPart = 2;
+				else if (insideLinkPart == 2 && c != '-' && Character.isDigit(c))
+					insideLinkPart = 0;
 
-				if (insideCollection == 0 && insideMap == 0 && !insideEmbedded) {
-					// OUTSIDE A COLLECTION
-
+				if (insideCollection == 0 && insideMap == 0 && !insideEmbedded && insideLinkPart == 0) {
+					// OUTSIDE A COLLECTION/MAP
 					if ((c == '\'' || c == '"') && previousChar != '\\') {
 						// START STRING
 						stringBeginChar = c;

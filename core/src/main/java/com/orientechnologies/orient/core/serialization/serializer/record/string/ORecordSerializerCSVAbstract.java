@@ -142,7 +142,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			if (iValue.length() > 1) {
 				int pos = iValue.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
 				if (pos > -1)
-					iLinkedClass = iDatabase.getMetadata().getSchema().getClass(iValue.substring(OStringSerializerHelper.LINK.length(), pos));
+					iLinkedClass = iDatabase.getMetadata().getSchema().getClass(iValue.substring(1, pos));
 				else
 					pos = 0;
 

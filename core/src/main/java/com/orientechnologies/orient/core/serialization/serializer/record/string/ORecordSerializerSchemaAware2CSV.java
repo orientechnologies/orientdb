@@ -299,7 +299,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 								String value = fieldValue.substring(1, fieldValue.length() - 1);
 
 								if (value.length() > 0) {
-									if (value.startsWith(OStringSerializerHelper.LINK)) {
+									if (value.charAt(0) == OStringSerializerHelper.LINK) {
 										type = OType.LINKLIST;
 										linkedType = OType.LINK;
 
@@ -322,7 +322,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 							} else if (fieldValue.charAt(0) == OStringSerializerHelper.MAP_BEGIN
 									&& fieldValue.charAt(fieldValue.length() - 1) == OStringSerializerHelper.MAP_END) {
 								type = OType.EMBEDDEDMAP;
-							} else if (fieldValue.startsWith(OStringSerializerHelper.LINK))
+							} else if (fieldValue.charAt(0) == OStringSerializerHelper.LINK)
 								type = OType.LINK;
 							else if (fieldValue.equals("true") || fieldValue.equals("false"))
 								type = OType.BOOLEAN;
