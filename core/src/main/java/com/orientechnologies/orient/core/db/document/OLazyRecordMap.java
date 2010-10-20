@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.document;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -58,7 +59,13 @@ public class OLazyRecordMap extends LinkedHashMap<String, Object> {
 		return super.put(iKey, iValue);
 	}
 
-	public void convertAll() {
+	@Override
+	public Collection<Object> values() {
+		convertAll();
+		return super.values();
+	}
+
+	private void convertAll() {
 		if (converted)
 			return;
 
