@@ -49,6 +49,17 @@ public class ORecordId implements ORID {
 		fromString(iRecordId);
 	}
 
+	/**
+	 * Copy constructor.
+	 * 
+	 * @param parentRid
+	 *          Source object
+	 */
+	public ORecordId(ORID parentRid) {
+		clusterId = parentRid.getClusterId();
+		clusterPosition = parentRid.getClusterPosition();
+	}
+
 	public void reset() {
 		clusterId = CLUSTER_ID_INVALID;
 		clusterPosition = CLUSTER_POS_INVALID;

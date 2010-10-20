@@ -63,7 +63,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	}
 
 	public ORecordAbstract<?> setIdentity(final int iClusterId, final long iPosition) {
-		if (_recordId == null)
+		if (_recordId == null || _recordId == ORecordId.EMPTY_RECORD_ID)
 			_recordId = new ORecordId(iClusterId, iPosition);
 		else {
 			_recordId.clusterId = iClusterId;

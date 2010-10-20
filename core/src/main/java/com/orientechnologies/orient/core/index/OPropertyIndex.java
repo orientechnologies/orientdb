@@ -146,7 +146,7 @@ public abstract class OPropertyIndex extends OSharedResource implements Iterable
 					documentNum++;
 
 					if (iProgressListener != null)
-						iProgressListener.onProgress(this, documentNum, (int) (documentNum / documentTotal) * 100);
+						iProgressListener.onProgress(this, documentNum, (int) (documentNum * 100 / documentTotal));
 				}
 
 			lazySave();
