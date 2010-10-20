@@ -102,9 +102,41 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 			return coll;
 		}
-		case EMBEDDEDMAP: {
-			return embeddedMapFromStream(iDatabase, iLinkedType, iValue);
+
+		case LINKMAP: {
+			if (iValue.length() == 0)
+				return null;
+
+			// REMOVE BEGIN & END MAP CHARACTERS
+			String value = iValue.substring(1, iValue.length() - 1);
+
+			@SuppressWarnings("rawtypes")
+			final Map map = new OLazyRecordMap(iDatabase, ODocument.RECORD_TYPE);
+
+			if (value.length() == 0)
+				return map;
+
+			final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR);
+
+			// EMBEDDED LITERALS
+			List<String> entry;
+			String mapValue;
+
+			for (String item : items) {
+				if (item != null && item.length() > 0) {
+					entry = OStringSerializerHelper.smartSplit(item, OStringSerializerHelper.ENTRY_SEPARATOR);
+					if (entry.size() > 0) {
+						mapValue = getLinkedRecord(iDatabase, value, entry.get(1));
+						map.put((String) OStringSerializerHelper.fieldTypeFromStream(OType.STRING, entry.get(0)), new ORecordId(mapValue));
+					}
+
+				}
+			}
+			return map;
 		}
+
+		case EMBEDDEDMAP:
+			return embeddedMapFromStream(iDatabase, iLinkedType, iValue);
 
 		case LINK:
 			if (iValue.length() > 1) {
@@ -553,5 +585,20 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			buffer.append(rid.toString());
 
 		return resultRid;
+	}
+
+	private String getLinkedRecord(final ODatabaseRecord<?> iDatabase, String value, String item) {
+		// OClass iLinkedClass;
+		// GET THE CLASS NAME IF ANY
+		int classSeparatorPos = value.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
+		if (classSeparatorPos > -1) {
+			String className = value.substring(1, classSeparatorPos);
+			if (className != null) {
+				// iLinkedClass = iDatabase.getMetadata().getSchema().getClass(className);
+				item = item.substring(classSeparatorPos + 1);
+			}
+		} else
+			item = item.substring(1);
+		return item;
 	}
 }
