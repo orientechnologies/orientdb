@@ -5,9 +5,7 @@
 			class="com.orientechnologies.orient.server.handler.cluster.OClusterNode">
 			<parameters>
 				<parameter name="name" value="default" />
-
 				<parameter name="security.algorithm" value="Blowfish" />
-
 				<parameter name="network.multicast.address" value="235.1.1.1" />
 				<parameter name="network.multicast.port" value="2424" />
 				<parameter name="network.multicast.heartbeat" value="10" />
@@ -24,6 +22,9 @@
 			<protocol
 				implementation="com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb"
 				name="http" />
+			<protocol
+				implementation="com.orientechnologies.orient.server.network.protocol.cluster.ONetworkProtocolCluster"
+				name="cluster" />
 		</protocols>
 		<listeners>
 			<listener protocol="binary" port-range="2424-2430"
@@ -41,6 +42,8 @@
 					</command>
 				</commands>
 			</listener>
+			<listener protocol="cluster" port-range="2431-2435"
+				ip-address="127.0.0.1" />
 		</listeners>
 		<cluster>
 		</cluster>
