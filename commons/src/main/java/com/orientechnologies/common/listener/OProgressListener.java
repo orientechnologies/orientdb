@@ -22,5 +22,9 @@ package com.orientechnologies.common.listener;
  * 
  */
 public interface OProgressListener {
-	public boolean onProgress(Object iTask, long iCounter, int iPercent);
+	public void onBegin(Object iTask, long iTotal);
+
+	public boolean onProgress(Object iTask, long iCounter, float iPercent);
+
+	public void onCompletition(Object iTask, boolean iSucceed);
 }

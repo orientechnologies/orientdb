@@ -42,9 +42,10 @@ public class OConsoleApplication {
 	protected String[]						helpCommands			= { "help", "?" };
 	protected String[]						exitCommands			= { "exit", "bye", "quit" };
 	protected Map<String, Object>	properties				= new HashMap<String, Object>();
+	protected boolean							interactiveMode;
 
 	public OConsoleApplication(String[] args) {
-		boolean interactiveMode = isInteractiveMode(args);
+		interactiveMode = isInteractiveMode(args);
 
 		onBefore();
 

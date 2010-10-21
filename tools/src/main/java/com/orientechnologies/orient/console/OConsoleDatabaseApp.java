@@ -859,13 +859,46 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		return result;
 	}
 
-	public boolean onProgress(Object iTask, long iCounter, int iPercent) {
-		iPercent = iPercent / 10;
+	public void onBegin(final Object iTask, final long iTotal) {
+		lastPercentStep = 0;
 
-		for (int i = lastPercentStep; i < iPercent; ++i)
-			out.print('.');
+		if (interactiveMode) {
+			out.print("[");
+			for (int i = 0; i < 10; ++i)
+				out.print(' ');
+			out.print("]   0%");
+		}
+	}
 
-		lastPercentStep = iPercent;
+	public boolean onProgress(final Object iTask, final long iCounter, final float iPercent) {
+		final int completitionBar = (int) iPercent / 10;
+
+		if (((int) (iPercent * 10)) == lastPercentStep)
+			return true;
+
+		if (interactiveMode) {
+			out.print("\r[");
+			for (int i = 0; i < completitionBar; ++i)
+				out.print('=');
+			for (int i = completitionBar; i < 10; ++i)
+				out.print(' ');
+			out.printf("] %3.1f%% ", iPercent);
+		} else {
+			for (int i = lastPercentStep / 100; i < completitionBar; ++i)
+				out.print('=');
+		}
+
+		lastPercentStep = (int) (iPercent * 10);
 		return true;
+	}
+
+	public void onCompletition(final Object iTask, final boolean iSucceed) {
+		if (interactiveMode)
+			if (iSucceed)
+				out.print("\r[==========] 100% Done.");
+			else
+				out.print(" Error!");
+		else
+			out.print(iSucceed ? " Done." : " Error!");
 	}
 }
