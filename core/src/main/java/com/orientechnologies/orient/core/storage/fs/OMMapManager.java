@@ -83,7 +83,7 @@ public class OMMapManager {
 							try {
 								entry.buffer.force();
 							} catch (Exception e) {
-								OLogManager.instance().info(entry.buffer,
+								OLogManager.instance().debug(entry.buffer,
 										"Can't write memory buffer to disk. Retrying (" + (i + 1) + "/" + FORCE_RETRY + ")...");
 								try {
 									System.gc();
