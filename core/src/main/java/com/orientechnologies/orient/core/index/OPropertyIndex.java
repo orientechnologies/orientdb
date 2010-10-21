@@ -132,6 +132,9 @@ public abstract class OPropertyIndex extends OSharedResource implements Iterable
 			final int[] clusterIds = owner.getOwnerClass().getClusterIds();
 			final long documentTotal = map.getDatabase().countClusterElements(clusterIds);
 
+			if (iProgressListener != null)
+				iProgressListener.onBegin(this, documentTotal);
+
 			for (int clusterId : clusterIds)
 				for (Object record : map.getDatabase().browseCluster(map.getDatabase().getClusterNameById(clusterId))) {
 					if (record instanceof ODocument) {
@@ -146,10 +149,21 @@ public abstract class OPropertyIndex extends OSharedResource implements Iterable
 					documentNum++;
 
 					if (iProgressListener != null)
-						iProgressListener.onProgress(this, documentNum, (int) (documentNum * 100 / documentTotal));
+						iProgressListener.onProgress(this, documentNum, (float) documentNum * 100f / documentTotal);
 				}
 
 			lazySave();
+
+			if (iProgressListener != null)
+				iProgressListener.onCompletition(this, true);
+
+		} catch (Exception e) {
+			if (iProgressListener != null)
+				iProgressListener.onCompletition(this, false);
+
+			clear();
+
+			throw new OIndexException("Error on rebuilding the index for property: " + owner, e);
 
 		} finally {
 			releaseExclusiveLock();
