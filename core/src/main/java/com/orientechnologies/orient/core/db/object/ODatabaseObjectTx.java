@@ -136,7 +136,12 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
 		// GET THE ASSOCIATED DOCUMENT
 		final ODocument record = underlying.load(iRecordId);
 
-		return record == null ? null : stream2pojo(record, newInstance(record.getClassName()), iFetchPlan);
+		if (record == null)
+			return null;
+
+		final Object result = stream2pojo(record, newInstance(record.getClassName()), iFetchPlan);
+		registerPojo(result, record);
+		return result;
 	}
 
 	/**
