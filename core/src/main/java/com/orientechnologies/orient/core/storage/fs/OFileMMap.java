@@ -202,6 +202,7 @@ public class OFileMMap extends OFile {
 	public void close() throws IOException {
 		if (headerBuffer != null) {
 			setSoftlyClosed(true);
+			OMMapManager.flush();
 			headerBuffer = null;
 		}
 		super.close();

@@ -23,7 +23,6 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 public class OMMapManager {
 	public static final int											DEF_BLOCK_SIZE;
@@ -120,26 +119,10 @@ public class OMMapManager {
 		}
 	}
 
-	static OMMapBufferEntry mapBuffer(final OFileMMap iFile, final int iBeginOffset, final int iSize) throws IOException {
-		OProfiler.getInstance().updateCounter("OMMapManager.loadPage", 1);
-		long timer = OProfiler.getInstance().startChrono();
-		try {
-			return new OMMapBufferEntry(iFile, iFile.map(iBeginOffset, iSize), iBeginOffset, iSize);
-		} finally {
-			OProfiler.getInstance().stopChrono("OMMapManager.loadPage", timer);
-		}
-	}
-
-	public static void shutdown() {
-		for (OMMapBufferEntry entry : buffersLRU) {
-			entry.close();
-		}
-		buffersLRU.clear();
-		buffersLRU = null;
-		totalMemory = 0;
-	}
-
-	public static void closeStorage(final OStorageLocal iStorage) {
+	/**
+	 * Flush away all the buffers of file closed. This frees the memory.
+	 */
+	public synchronized static void flush() {
 		OMMapBufferEntry entry;
 		for (Iterator<OMMapBufferEntry> it = buffersLRU.iterator(); it.hasNext();) {
 			entry = it.next();
@@ -148,6 +131,25 @@ public class OMMapManager {
 				entry.close();
 				it.remove();
 			}
+		}
+	}
+
+	public synchronized static void shutdown() {
+		for (OMMapBufferEntry entry : buffersLRU) {
+			entry.close();
+		}
+		buffersLRU.clear();
+		buffersLRU = null;
+		totalMemory = 0;
+	}
+
+	private static OMMapBufferEntry mapBuffer(final OFileMMap iFile, final int iBeginOffset, final int iSize) throws IOException {
+		OProfiler.getInstance().updateCounter("OMMapManager.loadPage", 1);
+		long timer = OProfiler.getInstance().startChrono();
+		try {
+			return new OMMapBufferEntry(iFile, iFile.map(iBeginOffset, iSize), iBeginOffset, iSize);
+		} finally {
+			OProfiler.getInstance().stopChrono("OMMapManager.loadPage", timer);
 		}
 	}
 }

@@ -105,10 +105,23 @@ public abstract class OFile {
     openChannel((int) osFile.length());
 
     OLogManager.instance().debug(this, "Checking file integrity of " + osFile.getName() + "...");
+
+    final int fileSize = size;
     readHeader();
 
+    if (filledUpTo > 0 && filledUpTo > size) {
+      OLogManager
+          .instance()
+          .warn(
+              this,
+              "Invalid OFile.filledUp value (%d). Reset the file size %d to the os file size: %d. Probably the file was not closed correctly last time",
+              filledUpTo, size, fileSize);
+      size = fileSize;
+      writeHeader();
+    }
+
     if (filledUpTo > size || filledUpTo < 0)
-      OLogManager.instance().error(this, "Invalid filledUp size (=" + filledUpTo + "). The file is corrupted", null,
+      OLogManager.instance().error(this, "Invalid filledUp size (=" + filledUpTo + "). The file could be corrupted", null,
           OStorageException.class);
 
     boolean softlyClosed = isSoftlyClosed();

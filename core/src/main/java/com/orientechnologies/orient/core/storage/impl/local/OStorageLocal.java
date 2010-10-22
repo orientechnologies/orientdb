@@ -260,7 +260,7 @@ public class OStorageLocal extends OStorageAbstract {
 			cache.clear();
 			configuration = new OStorageConfiguration(this);
 
-			OMMapManager.closeStorage(this);
+			OMMapManager.flush();
 
 			open = false;
 		} catch (IOException e) {

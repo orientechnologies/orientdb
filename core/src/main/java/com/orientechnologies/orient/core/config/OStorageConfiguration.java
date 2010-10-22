@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Locale;
 
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
@@ -60,6 +61,10 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public OStorageConfiguration load() throws IOException {
     record = storage.readRecord(null, -1, storage.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME), CONFIG_RECORD_NUM, null).buffer;
+
+    if (record == null)
+      throw new OStorageException("Can't load database's configuration. The database seems to be corrupted.");
+
     fromStream(record);
     return this;
   }
