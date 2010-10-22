@@ -102,6 +102,16 @@ public class OObjectSerializerHelper {
 		}
 	}
 
+	public static Class<?> getFieldType(final ODocument iDocument, final OEntityManager iEntityManager) {
+		if (iDocument.getInternalStatus() == STATUS.NOT_LOADED)
+			iDocument.load();
+		if (iDocument.getClassName() == null) {
+			return null;
+		} else {
+			return iEntityManager.getEntityClass(iDocument.getClassName());
+		}
+	}
+
 	public static Object getFieldValue(final Object iPojo, final String iProperty) {
 		final Class<?> c = iPojo.getClass();
 		final String className = c.getName();
@@ -189,7 +199,14 @@ public class OObjectSerializerHelper {
 			}
 
 			public Object fetchLinked(final ODocument iRoot, final Object iUserObject, final String iFieldName, final Object iLinked) {
-				final Class<?> type = getFieldType(iUserObject, iFieldName);
+				final Class<?> type;
+				if (iLinked != null && iLinked instanceof ODocument) {
+					// GET TYPE BY DOCUMENT'S CLASS. THIS WORKS VERY WELL FOR SUB-TYPES
+					type = getFieldType((ODocument) iLinked, iEntityManager);
+				} else {
+					// DETERMINE TYPE BY REFLECTION
+					type = getFieldType(iUserObject, iFieldName);
+				}
 
 				Object fieldValue = null;
 				Class<?> fieldClass;
