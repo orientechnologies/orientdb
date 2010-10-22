@@ -862,8 +862,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 	public void onBegin(final Object iTask, final long iTotal) {
 		lastPercentStep = 0;
 
+		out.print("[");
 		if (interactiveMode) {
-			out.print("[");
 			for (int i = 0; i < 10; ++i)
 				out.print(' ');
 			out.print("]   0%");
@@ -899,6 +899,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 			else
 				out.print(" Error!");
 		else
-			out.print(iSucceed ? " Done." : " Error!");
+			out.print(iSucceed ? "] Done." : " Error!");
 	}
 }
