@@ -27,7 +27,7 @@
 		<dependency>
 			<groupId>com.hazelcast</groupId>
 			<artifactId>hazelcast</artifactId>
-			<version>1.8.4</version>
+			<version>1.9</version>
 		</dependency>
 	</dependencies>
 	<build>

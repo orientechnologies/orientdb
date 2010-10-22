@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <project basedir="." default="install" name="orient-ant">
   <!-- Copyright (c) 1999-2010 Luca Garulli - LICENSE: Apache 2.0 -->
   
@@ -15,7 +15,8 @@
 		<sequential>
       <subant target="@{target}">
         <property name="global.lib" value="../${kv.release}/lib"/>
-        
+        <property name="version" value="${version}"/>
+                                                               
 		  	<fileset dir="kv"    includes="build.xml" />
 	    </subant>
 	    
