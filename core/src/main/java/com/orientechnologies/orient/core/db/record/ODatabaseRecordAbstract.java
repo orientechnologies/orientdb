@@ -464,11 +464,14 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 
 	public void executeDeleteRecord(final REC iRecord, final int iVersion) {
 		checkOpeness();
-		ORecordId rid = (ORecordId) iRecord.getIdentity();
+		final ORecordId rid = (ORecordId) iRecord.getIdentity();
 
 		if (rid == null)
 			throw new ODatabaseException(
 					"Can't delete record because it has no identity. Probably was created from scratch or contains projections of fields rather than a full record");
+
+		if (!rid.isValid())
+			return;
 
 		final int clusterId = rid.getClusterId();
 		checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(clusterId), clusterId);
