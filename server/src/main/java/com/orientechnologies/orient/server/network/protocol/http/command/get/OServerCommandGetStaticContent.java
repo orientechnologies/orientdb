@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.server.OServerMain;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
@@ -33,7 +33,6 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 	private static final String[]										NAMES			= { "GET|www", "GET|", "GET|*.htm", "GET|*.xml", "GET|*.jpeg",
 			"GET|*.jpg", "GET|*.png", "GET|*.gif", "GET|*.js", "GET|*.css", "GET|favicon.ico", "GET|robots.txt" };
-	private static final String											CACHE_PAR	= "cache.static";
 
 	static final String															WWW_PATH	= System.getProperty("orientdb.www.path", "src/site");
 
@@ -47,7 +46,7 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 		iRequest.data.commandInfo = "Get static content";
 		iRequest.data.commandDetail = iRequest.url;
 
-		if (cache == null && Boolean.parseBoolean(OServerMain.server().getConfiguration().getProperty(CACHE_PAR, "true")))
+		if (cache == null && OGlobalConfiguration.SERVER_CACHE_STATIC_RESOURCES.getValueAsBoolean())
 			// CREATE THE CACHE IF ENABLED
 			cache = new HashMap<String, OStaticContentCachedEntry>();
 

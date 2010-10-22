@@ -52,7 +52,9 @@ public enum OGlobalConfiguration {
 
 	NETWORK_HTTP_MAX_CONTENT_LENGTH("network.http.maxLength", Integer.class, 10000),
 
-	PROFILER_ENABLED("profiler.enabled", Boolean.class, false);
+	PROFILER_ENABLED("profiler.enabled", Boolean.class, false),
+
+	SERVER_CACHE_STATIC_RESOURCES("server.cache.staticResources", Boolean.class, false);
 
 	private final String									key;
 	private final Object									defValue;
