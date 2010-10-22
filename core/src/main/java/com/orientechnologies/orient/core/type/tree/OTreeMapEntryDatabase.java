@@ -105,10 +105,12 @@ public class OTreeMapEntryDatabase<K, V> extends OTreeMapEntryPersistent<K, V> {
 		// EARLY LOAD LEFT AND DELETE IT RECURSIVELY
 		if (getLeft() != null)
 			((OTreeMapEntryPersistent<K, V>) getLeft()).delete();
+		leftRid = null;
 
 		// EARLY LOAD RIGHT AND DELETE IT RECURSIVELY
 		if (getRight() != null)
 			((OTreeMapEntryPersistent<K, V>) getRight()).delete();
+		rightRid = null;
 
 		// DELETE MYSELF
 		record.delete();

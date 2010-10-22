@@ -131,17 +131,15 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 
 	public OTreeMapEntryPersistent<K, V> delete() throws IOException {
 		pTree.removeEntryPoint(this);
-		pTree.cache.remove(record.getIdentity());
+
+		if (record.getIdentity().isValid())
+			pTree.cache.remove(record.getIdentity());
 
 		// DELETE THE NODE FROM THE PENDING RECORDS TO COMMIT
-		/*
-		 * OTreeMapEntryPersistent<K, V> node; for (int i = 0; i < pTree.recordsToCommit.size(); ++i) { node =
-		 * pTree.recordsToCommit.get(i); if( node.record.getIdentity().equals( record.getIdentity() )) {
-		 * pTree.recordsToCommit.remove(i); --i; } }
-		 */
 		for (OTreeMapEntryPersistent<K, V> node : pTree.recordsToCommit) {
 			if (node.record.getIdentity().equals(record.getIdentity())) {
 				pTree.recordsToCommit.remove(node);
+				break;
 			}
 		}
 		return this;
@@ -586,6 +584,27 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 		} else
 			marshalledRecords.add(identityRecord);
 
+		if (parent != null && !parentRid.isValid()) {
+			if (parent.record.getIdentity().isNew())
+				((OTreeMapEntryDatabase<K, V>) parent).save();
+			parentRid = parent.record.getIdentity();
+			record.setDirty();
+		}
+
+		if (left != null && !leftRid.isValid()) {
+			if (left.record.getIdentity().isNew())
+				((OTreeMapEntryDatabase<K, V>) left).save();
+			leftRid = left.record.getIdentity();
+			record.setDirty();
+		}
+
+		if (right != null && !rightRid.isValid()) {
+			if (right.record.getIdentity().isNew())
+				((OTreeMapEntryDatabase<K, V>) right).save();
+			rightRid = right.record.getIdentity();
+			record.setDirty();
+		}
+
 		final long timer = OProfiler.getInstance().startChrono();
 
 		OMemoryOutputStream stream = pTree.entryRecordBuffer;
@@ -711,44 +730,25 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	 * @param iMarshalledRecords
 	 */
 	protected boolean assureIntegrityOfReferences() throws IOException {
-		if (parent != null && !parentRid.isValid()) {
-			if (parent.record.getIdentity().isNew())
-				((OTreeMapEntryDatabase<K, V>) parent).save();
-			parentRid = parent.record.getIdentity();
-			record.setDirty();
-		}
+		if (!record.isDirty())
+			return true;
 
-		if (left != null && !leftRid.isValid()) {
-			if (left.record.getIdentity().isNew())
-				((OTreeMapEntryDatabase<K, V>) left).save();
-			leftRid = left.record.getIdentity();
-			record.setDirty();
-		}
+		final boolean isNew = record.getIdentity().isNew();
 
-		if (right != null && !rightRid.isValid()) {
-			if (right.record.getIdentity().isNew())
-				((OTreeMapEntryDatabase<K, V>) right).save();
-			rightRid = right.record.getIdentity();
-			record.setDirty();
-		}
+		toStream();
+		record.save(pTree.getClusterName());
 
-		if (record.isDirty()) {
-			final boolean isNew = record.getIdentity().isNew();
-
-			toStream();
-			record.save(pTree.getClusterName());
-
-			if (isNew) {
-				if (left != null)
-					left.parentRid = record.getIdentity();
-				if (right != null)
-					right.parentRid = record.getIdentity();
-				if (parent != null) {
-					if (parent.left == this)
-						parent.leftRid = record.getIdentity();
-					else if (parent.right == this)
-						parent.rightRid = record.getIdentity();
-				}
+		// RE-ASSIGN RID
+		if (isNew) {
+			if (left != null)
+				left.parentRid = record.getIdentity();
+			if (right != null)
+				right.parentRid = record.getIdentity();
+			if (parent != null) {
+				if (parent.left == this)
+					parent.leftRid = record.getIdentity();
+				else if (parent.right == this)
+					parent.rightRid = record.getIdentity();
 			}
 		}
 

@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
@@ -41,211 +42,211 @@ import com.orientechnologies.orient.core.type.tree.OTreeMapDatabaseLazySave;
  * 
  */
 public abstract class OPropertyIndex extends OSharedResource implements Iterable<Entry<String, List<ORecordId>>> {
-	protected OProperty																					owner;
-	protected OTreeMapDatabaseLazySave<String, List<ORecordId>>	map;
+  protected OProperty                                         owner;
+  protected OTreeMapDatabaseLazySave<String, List<ORecordId>> map;
 
-	/**
-	 * Constructor called when a new index is created.
-	 * 
-	 * @param iDatabase
-	 *          Current Database instance
-	 * @param iProperty
-	 *          Owner property
-	 * @param iClusterIndexName
-	 *          Cluster name where to place the TreeMap
-	 */
-	public OPropertyIndex(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final String iClusterIndexName) {
-		owner = iProperty;
-		map = new OTreeMapDatabaseLazySave<String, List<ORecordId>>(iDatabase, iClusterIndexName, OStreamSerializerString.INSTANCE,
-				OStreamSerializerListRID.INSTANCE);
-	}
+  /**
+   * Constructor called when a new index is created.
+   * 
+   * @param iDatabase
+   *          Current Database instance
+   * @param iProperty
+   *          Owner property
+   * @param iClusterIndexName
+   *          Cluster name where to place the TreeMap
+   */
+  public OPropertyIndex(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final String iClusterIndexName) {
+    owner = iProperty;
+    map = new OTreeMapDatabaseLazySave<String, List<ORecordId>>(iDatabase, iClusterIndexName, OStreamSerializerString.INSTANCE,
+        OStreamSerializerListRID.INSTANCE);
+  }
 
-	/**
-	 * Constructor called on loading of an existent index.
-	 * 
-	 * @param iDatabase
-	 *          Current Database instance
-	 * @param iProperty
-	 *          Owner property
-	 * @param iRecordId
-	 *          Record Id of the persistent TreeMap
-	 */
-	public OPropertyIndex(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final ORID iRecordId) {
-		owner = iProperty;
-		init(iDatabase, iRecordId);
-	}
+  /**
+   * Constructor called on loading of an existent index.
+   * 
+   * @param iDatabase
+   *          Current Database instance
+   * @param iProperty
+   *          Owner property
+   * @param iRecordId
+   *          Record Id of the persistent TreeMap
+   */
+  public OPropertyIndex(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final ORID iRecordId) {
+    owner = iProperty;
+    init(iDatabase, iRecordId);
+  }
 
-	/**
-	 * Constructor called on 2 steps loading of an existent index.
-	 * 
-	 * @param iDatabase
-	 *          Current Database instance
-	 * @param iProperty
-	 *          Owner property
-	 */
-	public OPropertyIndex(final ODatabaseRecord<?> iDatabase, final OProperty iProperty) {
-		owner = iProperty;
-	}
+  /**
+   * Constructor called on 2 steps loading of an existent index.
+   * 
+   * @param iDatabase
+   *          Current Database instance
+   * @param iProperty
+   *          Owner property
+   */
+  public OPropertyIndex(final ODatabaseRecord<?> iDatabase, final OProperty iProperty) {
+    owner = iProperty;
+  }
 
-	public abstract INDEX_TYPE getType();
+  public abstract INDEX_TYPE getType();
 
-	public abstract ORID getRID();
+  public abstract ORID getRID();
 
-	protected abstract void put(final Object iKey, final ORecordId iValue);
+  protected abstract void put(final Object iKey, final ORecordId iValue);
 
-	@SuppressWarnings("unchecked")
-	public List<ORecordId> get(Object iKey) {
-		acquireSharedLock();
+  @SuppressWarnings("unchecked")
+  public List<ORecordId> get(Object iKey) {
+    acquireSharedLock();
 
-		try {
-			final List<ORecordId> values = map.get(iKey);
+    try {
+      final List<ORecordId> values = map.get(iKey);
 
-			if (values == null)
-				return Collections.EMPTY_LIST;
+      if (values == null)
+        return Collections.EMPTY_LIST;
 
-			return values;
+      return values;
 
-		} finally {
-			releaseSharedLock();
-		}
-	}
+    } finally {
+      releaseSharedLock();
+    }
+  }
 
-	public void rebuild() {
-		rebuild(null);
-	}
+  public void rebuild() {
+    rebuild(null);
+  }
 
-	/**
-	 * Populate the index with all the existent records.
-	 */
-	public void rebuild(final OProgressListener iProgressListener) {
-		Object fieldValue;
-		ODocument doc;
+  /**
+   * Populate the index with all the existent records.
+   */
+  public void rebuild(final OProgressListener iProgressListener) {
+    Object fieldValue;
+    ODocument doc;
 
-		clear();
+    clear();
 
-		acquireExclusiveLock();
+    acquireExclusiveLock();
 
-		try {
+    try {
 
-			int documentIndexed = 0;
-			int documentNum = 0;
-			final int[] clusterIds = owner.getOwnerClass().getClusterIds();
-			final long documentTotal = map.getDatabase().countClusterElements(clusterIds);
+      int documentIndexed = 0;
+      int documentNum = 0;
+      final int[] clusterIds = owner.getOwnerClass().getClusterIds();
+      final long documentTotal = map.getDatabase().countClusterElements(clusterIds);
 
-			if (iProgressListener != null)
-				iProgressListener.onBegin(this, documentTotal);
+      if (iProgressListener != null)
+        iProgressListener.onBegin(this, documentTotal);
 
-			for (int clusterId : clusterIds)
-				for (Object record : map.getDatabase().browseCluster(map.getDatabase().getClusterNameById(clusterId))) {
-					if (record instanceof ODocument) {
-						doc = (ODocument) record;
-						fieldValue = doc.field(owner.getName());
+      for (int clusterId : clusterIds)
+        for (ORecord<?> record : map.getDatabase().browseCluster(map.getDatabase().getClusterNameById(clusterId))) {
+          if (record instanceof ODocument) {
+            doc = (ODocument) record;
+            fieldValue = doc.field(owner.getName());
 
-						if (fieldValue != null) {
-							put(fieldValue.toString(), (ORecordId) doc.getIdentity());
-							++documentIndexed;
-						}
-					}
-					documentNum++;
+            if (fieldValue != null) {
+              put(fieldValue.toString(), (ORecordId) doc.getIdentity());
+              ++documentIndexed;
+            }
+          }
+          documentNum++;
 
-					if (iProgressListener != null)
-						iProgressListener.onProgress(this, documentNum, (float) documentNum * 100f / documentTotal);
-				}
+          if (iProgressListener != null)
+            iProgressListener.onProgress(this, documentNum, (float) documentNum * 100f / documentTotal);
+        }
 
-			lazySave();
+      lazySave();
 
-			if (iProgressListener != null)
-				iProgressListener.onCompletition(this, true);
+      if (iProgressListener != null)
+        iProgressListener.onCompletition(this, true);
 
-		} catch (Exception e) {
-			if (iProgressListener != null)
-				iProgressListener.onCompletition(this, false);
+    } catch (Exception e) {
+      if (iProgressListener != null)
+        iProgressListener.onCompletition(this, false);
 
-			clear();
+      clear();
 
-			throw new OIndexException("Error on rebuilding the index for property: " + owner, e);
+      throw new OIndexException("Error on rebuilding the index for property: " + owner, e);
 
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
 
-	public void remove(final Object key) {
-		acquireSharedLock();
+  public void remove(final Object key) {
+    acquireSharedLock();
 
-		try {
-			map.remove(key);
+    try {
+      map.remove(key);
 
-		} finally {
-			releaseSharedLock();
-		}
-	}
+    } finally {
+      releaseSharedLock();
+    }
+  }
 
-	public void load() throws IOException {
-		acquireExclusiveLock();
+  public void load() throws IOException {
+    acquireExclusiveLock();
 
-		try {
-			map.load();
+    try {
+      map.load();
 
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
 
-	public void clear() {
-		acquireExclusiveLock();
+  public void clear() {
+    acquireExclusiveLock();
 
-		try {
-			map.clear();
+    try {
+      map.clear();
 
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
 
-	public void lazySave() {
-		acquireExclusiveLock();
+  public void lazySave() {
+    acquireExclusiveLock();
 
-		try {
-			map.lazySave();
+    try {
+      map.lazySave();
 
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
 
-	public ORecordBytes getRecord() {
-		return map.getRecord();
-	}
+  public ORecordBytes getRecord() {
+    return map.getRecord();
+  }
 
-	public Iterator<Entry<String, List<ORecordId>>> iterator() {
-		acquireSharedLock();
+  public Iterator<Entry<String, List<ORecordId>>> iterator() {
+    acquireSharedLock();
 
-		try {
-			return map.entrySet().iterator();
+    try {
+      return map.entrySet().iterator();
 
-		} finally {
-			releaseSharedLock();
-		}
-	}
+    } finally {
+      releaseSharedLock();
+    }
+  }
 
-	protected void init(final ODatabaseRecord<?> iDatabase, final ORID iRecordId) {
-		map = new OTreeMapDatabaseLazySave<String, List<ORecordId>>(iDatabase, iRecordId);
-		try {
-			map.load();
-		} catch (IOException e) {
-			throw new OIndexException("Can't activate index on property");
-		}
-	}
+  protected void init(final ODatabaseRecord<?> iDatabase, final ORID iRecordId) {
+    map = new OTreeMapDatabaseLazySave<String, List<ORecordId>>(iDatabase, iRecordId);
+    try {
+      map.load();
+    } catch (IOException e) {
+      throw new OIndexException("Can't activate index on property");
+    }
+  }
 
-	public int getIndexedItems() {
-		acquireSharedLock();
+  public int getIndexedItems() {
+    acquireSharedLock();
 
-		try {
-			return map.size();
+    try {
+      return map.size();
 
-		} finally {
-			releaseSharedLock();
-		}
-	}
+    } finally {
+      releaseSharedLock();
+    }
+  }
 }
