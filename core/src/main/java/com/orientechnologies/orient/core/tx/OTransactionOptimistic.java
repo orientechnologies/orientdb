@@ -171,7 +171,7 @@ public class OTransactionOptimistic<REC extends ORecordInternal<?>> extends OTra
 	}
 
 	private OTransactionEntry<REC> getRecord(final int iClusterId, final long iPosition) {
-		return entries.get(ORecordId.generateString(iClusterId, iPosition));
+		return entries.get(new ORecordId(iClusterId, iPosition));
 	}
 
 	@Override
