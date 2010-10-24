@@ -148,7 +148,7 @@ public class OJSONWriter {
 		final StringBuilder buffer = new StringBuilder();
 
 		if (iValue == null)
-			buffer.append("\"null\"");
+			buffer.append("null");
 
 		else if (iValue instanceof ORecordId) {
 			ORecordId rid = (ORecordId) iValue;
