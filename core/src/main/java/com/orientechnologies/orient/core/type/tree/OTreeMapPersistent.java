@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.core.serialization.OMemoryOutputStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterLogical;
 
@@ -190,141 +191,19 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 			OTreeMapEntryPersistent<K, V> pRoot = (OTreeMapEntryPersistent<K, V>) root;
 
-			if (entryPoints.size() == 0)
-				// FIRST TIME THE LIST IS NULL: START FROM ROOT
-				entryPoints.add(pRoot);
+			final int depth = pRoot.getMaxDepthInMemory();
 
-			// COUNT ALL IN-MEMORY NODES BY BROWSING ALL THE ENTRYPOINT NODES
-			int nodes = 0;
-			List<OTreeMapEntryPersistent<K, V>> tmp = null;
-
-			if (isRuntimeCheckEnabled())
-				tmp = new ArrayList<OTreeMapEntryPersistent<K, V>>();
-
-			for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints) {
-				for (OTreeMapEntryPersistent<K, V> e = (OTreeMapEntryPersistent<K, V>) entryPoint.getFirstInMemory(); e != null; e = e
-						.getNextInMemory()) {
-
-					if (isRuntimeCheckEnabled()) {
-						for (OTreeMapEntryPersistent<K, V> t : tmp)
-							if (t != e && t.record.getIdentity().equals(e.record.getIdentity()))
-								OLogManager.instance().error(this, "Found Node loaded in memory twice with different instances: " + e);
-
-						tmp.add(e);
-					}
-
-					++nodes;
-				}
-			}
-
-			if (OLogManager.instance().isDebugEnabled())
-				OLogManager.instance().debug(this, "Found %d nodes in memory, %d items on disk, threshold=%d, entryPoints=%d", nodes, size,
-						(entryPointsSize * optimizeEntryPointsFactor), entryPoints.size());
-
-			if (nodes < entryPointsSize * optimizeEntryPointsFactor)
+			if (depth < entryPointsSize * optimizeEntryPointsFactor)
 				// UNDER THRESHOLD AVOID TO OPTIMIZE
 				return;
 
-			// COMPUTE THE DISTANCE BETWEEN NODES
-			final int distance;
-			if (nodes <= entryPointsSize)
-				distance = 1;
-			else
-				distance = nodes / entryPointsSize + 1;
-
-			newEntryPoints.clear();
-
-			OLogManager.instance().debug(this, "Compacting nodes with distance = %d", distance);
-
-			// PICK NEW ENTRYPOINTS AT EQUAL DISTANCE
-			int nodeCounter = 0;
-			OTreeMapEntryPersistent<K, V> lastNode = null;
-			OTreeMapEntryPersistent<K, V> currNode;
-
-			for (int i = 0; i < entryPoints.size(); ++i) {
-				currNode = entryPoints.get(i);
-
-				for (OTreeMapEntryPersistent<K, V> e = (OTreeMapEntryPersistent<K, V>) currNode.getFirstInMemory(); e != null; e = e
-						.getNextInMemory()) {
-
-					boolean alreadyPresent = false;
-
-					// CHECK THAT THE NODE IS NOT PART OF A NEXT ENTRY-POINTS: THIS IS THE CASE WHEN THE TREE CHUNKS ARE CONNECTED
-					// BETWEEN THEM
-					for (int k = i + 1; k < entryPoints.size(); ++k)
-						if (e == entryPoints.get(k)) {
-							alreadyPresent = true;
-							break;
-						}
-
-					if (alreadyPresent)
-						continue;
-
-					++nodeCounter;
-
-					if (newEntryPoints.size() == 0 || nodeCounter % distance == 0) {
-						for (OTreeMapEntryPersistent<K, V> ep : newEntryPoints)
-							if (ep == e) {
-								alreadyPresent = true;
-								break;
-							}
-
-						if (alreadyPresent)
-							--nodeCounter;
-						else
-							newEntryPoints.add(e);
-					}
-
-					lastNode = e;
-				}
-			}
-
-			if (newEntryPoints.size() > 1 && newEntryPoints.get(newEntryPoints.size() - 1) != lastNode)
-				// ADD THE LAST ONE IF IT'S NOT YET PRESENT
-				newEntryPoints.add(lastNode);
-
-			// INSERT ROOT BETWEEN ENTRY-POINTS
-			int cmp;
-			for (int i = 0; i < newEntryPoints.size(); ++i) {
-				cmp = ((Comparable<K>) pRoot.getFirstKey()).compareTo(newEntryPoints.get(i).getFirstKey());
-				if (cmp < 0) {
-					newEntryPoints.add(i, pRoot);
-					break;
-				} else if (cmp == 0)
-					// ALREADY PRESENT: DO NOTHING
-					break;
-			}
-
-			// SWAP TMP AND REAL ENTRY POINT COLLECTIONS
-			entryPoints.clear();
-			final List<OTreeMapEntryPersistent<K, V>> a = entryPoints;
-			entryPoints = newEntryPoints;
-			newEntryPoints = a;
-
-			// FREE ALL THE NODES BUT THE ENTRY POINTS AND PUT THE ENTRYPOINT INTO THE CACHE
-			cache.clear();
-			for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints) {
-				entryPoint.disconnectLinked(false);
-				cache.put(entryPoint.record.getIdentity(), entryPoint);
-			}
+			pRoot.disconnect((int) (entryPointsSize * optimizeEntryPointsFactor));
 
 			if (isRuntimeCheckEnabled()) {
 				for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints)
 					for (OTreeMapEntryPersistent<K, V> e = (OTreeMapEntryPersistent<K, V>) entryPoint.getFirstInMemory(); e != null; e = e
 							.getNextInMemory())
 						e.checkEntryStructure();
-
-				if (OLogManager.instance().isDebugEnabled()) {
-					// COUNT ALL IN-MEMORY NODES BY BROWSING ALL THE ENTRYPOINT NODES
-					nodes = 0;
-					for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints)
-						for (OTreeMapEntryPersistent<K, V> e = (OTreeMapEntryPersistent<K, V>) entryPoint.getFirstInMemory(); e != null; e = e
-								.getNextInMemory())
-							++nodes;
-
-					OLogManager.instance().debug(this, "Now Found %d nodes in memory and threshold=%d. EntryPoints=%d", nodes,
-							(entryPointsSize * optimizeEntryPointsFactor), entryPoints.size());
-				}
 			}
 
 		} finally {
@@ -482,9 +361,19 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 	public byte[] toStream() throws IOException {
 		final long timer = OProfiler.getInstance().startChrono();
-		try {
-			OMemoryOutputStream stream = new OMemoryOutputStream();
 
+		// CHECK IF THE RECORD IS PENDING TO BE MARSHALLED
+		final Integer identityRecord = System.identityHashCode(record);
+		final Set<Integer> marshalledRecords = OSerializationThreadLocal.INSTANCE.get();
+		if (marshalledRecords.contains(identityRecord)) {
+			// ALREADY IN STACK, RETURN EMPTY
+			return new byte[] {};
+		} else
+			marshalledRecords.add(identityRecord);
+
+		OMemoryOutputStream stream = new OMemoryOutputStream();
+
+		try {
 			if (root != null) {
 				OTreeMapEntryPersistent<K, V> pRoot = (OTreeMapEntryPersistent<K, V>) root;
 				if (pRoot.record.getIdentity().isNew()) {
@@ -506,6 +395,8 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 			return record.toStream();
 
 		} finally {
+			marshalledRecords.remove(identityRecord);
+
 			OProfiler.getInstance().stopChrono("OTreeMapPersistent.toStream", timer);
 		}
 	}
@@ -653,17 +544,19 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 	@Override
 	public String toString() {
-		final int currPageIndex = pageIndex;
 
 		final StringBuilder buffer = new StringBuilder();
 		buffer.append("size=");
 		buffer.append(size);
-		buffer.append(" ");
-		buffer.append(getFirstEntry().getFirstKey());
-		buffer.append("-");
-		buffer.append(getLastEntry().getLastKey());
 
-		pageIndex = currPageIndex;
+		if (size > 0) {
+			final int currPageIndex = pageIndex;
+			buffer.append(" ");
+			buffer.append(getFirstEntry().getFirstKey());
+			buffer.append("-");
+			buffer.append(getLastEntry().getLastKey());
+			pageIndex = currPageIndex;
+		}
 
 		return buffer.toString();
 	}

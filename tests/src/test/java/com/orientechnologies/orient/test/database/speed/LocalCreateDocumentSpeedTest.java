@@ -29,50 +29,51 @@ import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 
 @Test(enabled = false)
 public class LocalCreateDocumentSpeedTest extends OrientMonoThreadTest {
-	private ODatabaseDocument	database;
-	private ODocument					record;
-	private Date							date	= new Date();
+  private ODatabaseDocument database;
+  private ODocument         record;
+  private Date              date = new Date();
 
-	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
-		LocalCreateDocumentSpeedTest test = new LocalCreateDocumentSpeedTest();
-		test.data.go(test);
-	}
+  public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
+    LocalCreateDocumentSpeedTest test = new LocalCreateDocumentSpeedTest();
+    test.data.go(test);
+  }
 
-	public LocalCreateDocumentSpeedTest() throws InstantiationException, IllegalAccessException {
-		super(1000000);
-	}
+  public LocalCreateDocumentSpeedTest() throws InstantiationException, IllegalAccessException {
+    super(1000000);
+  }
 
-	@Override
-	public void init() {
-		OProfiler.getInstance().startRecording();
+  @Override
+  public void init() {
+    OProfiler.getInstance().startRecording();
 
-		database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
-		record = database.newInstance();
+    database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
+    record = database.newInstance();
 
-		database.declareIntent(new OIntentMassiveInsert());
-		database.begin(TXTYPE.NOTX);
-	}
+    database.declareIntent(new OIntentMassiveInsert());
+    database.begin(TXTYPE.NOTX);
+  }
 
-	@Override
-	public void cycle() {
-		record.reset();
+  @Override
+  public void cycle() {
+    record.reset();
 
-		record.setClassName("Account");
-		record.field("id", data.getCyclesDone());
-		record.field("name", "Luca");
-		record.field("surname", "Garulli");
-		record.field("birthDate", date);
-		record.field("salary", 3000f + data.getCyclesDone());
+    record.setClassName("Account");
+    record.field("id", data.getCyclesDone());
+    record.field("name", "Luca");
+    record.field("surname", "Garulli");
+    record.field("birthDate", date);
+    record.field("salary", 3000f + data.getCyclesDone());
 
-		record.save();
+    record.save();
 
-		if (data.getCyclesDone() == data.getCycles() - 1)
-			database.commit();
-	}
+    if (data.getCyclesDone() == data.getCycles() - 1)
+      database.commit();
+  }
 
-	@Override
-	public void deinit() {
-		database.close();
-		super.deinit();
-	}
+  @Override
+  public void deinit() {
+    if (database != null)
+      database.close();
+    super.deinit();
+  }
 }

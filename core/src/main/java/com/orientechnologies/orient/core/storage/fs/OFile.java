@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 
@@ -172,7 +173,10 @@ public abstract class OFile {
 
   public void unlock() throws IOException {
     if (fileLock != null) {
-      fileLock.release();
+      try {
+        fileLock.release();
+      } catch (ClosedChannelException e) {
+      }
       fileLock = null;
     }
   }

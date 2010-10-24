@@ -39,7 +39,7 @@ public enum OGlobalConfiguration {
 
 	TREEMAP_LAZY_UPDATES("treemap.lazyUpdates", Integer.class, 300), TREEMAP_NODE_PAGE_SIZE("treemap.nodePageSize", Float.class, 1024), TREEMAP_LOAD_FACTOR(
 			"treemap.loadFactor", Float.class, 0.7f), TREEMAP_OPTIMIZE_THRESHOLD("treemap.optimizeThreshold", Integer.class, 50000), TREEMAP_ENTRYPOINTS(
-			"treemap.entryPoints", Integer.class, 30), TREEMAP_OPTIMIZE_ENTRYPOINTS_FACTOR("treemap.optimizeEntryPointsFactor",
+			"treemap.entryPoints", Integer.class, 5), TREEMAP_OPTIMIZE_ENTRYPOINTS_FACTOR("treemap.optimizeEntryPointsFactor",
 			Float.class, 1.0f),
 
 	FILE_MMAP_BLOCK_SIZE("file.mmap.blockSize", Integer.class, 300000), FILE_MMAP_MAX_MEMORY("file.mmap.maxMemory", Integer.class,

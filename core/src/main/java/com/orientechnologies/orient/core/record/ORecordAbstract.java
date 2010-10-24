@@ -195,15 +195,18 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		if (!getIdentity().isValid())
 			throw new ORecordNotFoundException("The record has no id, probably it's new or transient yet ");
 
-		Object result = null;
 		try {
-			result = _database.load(this);
+			final ORecordInternal<?> result = (ORecordInternal<?>) _database.load(this);
+
+			if (result == null)
+				throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found");
+
+			if (result != this)
+				// GET CONTENT
+				fromStream(result.toStream());
 		} catch (Exception e) {
 			throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found", e);
 		}
-
-		if (result == null)
-			throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found");
 
 		return this;
 	}

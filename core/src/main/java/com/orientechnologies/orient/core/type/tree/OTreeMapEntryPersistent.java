@@ -154,32 +154,24 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 		if (parent != null) {
 			if (parent.left == this) {
 				parent.left = null;
-				parent.leftRid = ORecordId.EMPTY_RECORD_ID;
 			} else {
 				parent.right = null;
-				parent.rightRid = ORecordId.EMPTY_RECORD_ID;
 			}
-			disconnected += parent.disconnect(iForceDirty);
 			parent = null;
-			parentRid = ORecordId.EMPTY_RECORD_ID;
 		}
 
 		if (left != null) {
 			// DISCONNECT MYSELF FROM THE LEFT NODE
 			left.parent = null;
-			left.parentRid = ORecordId.EMPTY_RECORD_ID;
-			disconnected += left.disconnect(iForceDirty);
+			disconnected += left.disconnectLinked(iForceDirty);
 			left = null;
-			leftRid = ORecordId.EMPTY_RECORD_ID;
 		}
 
 		if (right != null) {
 			// DISCONNECT MYSELF FROM THE RIGHT NODE
 			right.parent = null;
-			right.parentRid = ORecordId.EMPTY_RECORD_ID;
-			disconnected += right.disconnect(iForceDirty);
+			disconnected += right.disconnectLinked(iForceDirty);
 			right = null;
-			rightRid = ORecordId.EMPTY_RECORD_ID;
 		}
 
 		return disconnected;
@@ -192,45 +184,42 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	 * 
 	 * @param iSource
 	 */
-	protected int disconnect(boolean iForceDirty) {
+	protected int disconnect(final int iDepthLevel) {
 		if (record == null || this == pTree.getRoot())
 			// DIRTY NODE OR IS ROOT
 			return 0;
 
-		if (!iForceDirty && record.isDirty())
-			return 0;
+		int freed = 0;
 
-		boolean entryToKeep = false;
-		// CHECK IF IT'S PART OF ENTRYPOINTS
-		for (OTreeMapEntryPersistent<K, V> e : pTree.entryPoints)
-			if (e == this) {
-				entryToKeep = true;
-				break;
-			}
-
-		if (!iForceDirty && !entryToKeep)
-			// CHECK IF IT'S PART OF THE RECORDS TO COMMIT. CHECK IF IT'S DIRTY IS NOT ENOUGH
-			entryToKeep = pTree.recordsToCommit.contains(this);
-
-		if (!entryToKeep) {
-			keys = null;
-			values = null;
-			serializedKeys = null;
-			serializedValues = null;
-			record = null;
-			tree = pTree = null;
+		if (getDepthInMemory() >= iDepthLevel)
+			freed = disconnectLinked(false);
+		else {
+			if (left != null)
+				freed += left.disconnect(iDepthLevel);
+			if (right != null)
+				freed += right.disconnect(iDepthLevel);
 		}
 
-		return disconnectLinked(iForceDirty) + 1;
+		return freed;
+	}
+
+	public int getDepthInMemory() {
+		int level = 0;
+		OTreeMapEntryPersistent<K, V> entry = this;
+		while (entry.parent != null) {
+			level++;
+			entry = (OTreeMapEntryPersistent<K, V>) entry.parent;
+		}
+		return level;
 	}
 
 	@Override
 	public int getDepth() {
 		int level = 0;
 		OTreeMapEntryPersistent<K, V> entry = this;
-		while (entry.parent != null) {
+		while (entry.getParent() != null) {
 			level++;
-			entry = (OTreeMapEntryPersistent<K, V>) entry.parent;
+			entry = (OTreeMapEntryPersistent<K, V>) entry.getParent();
 		}
 		return level;
 	}
@@ -261,8 +250,6 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 					else {
 						OLogManager.instance().error(this, "getParent: Can't assign node %s to parent. Nodes parent-left=%s, parent-right=%s",
 								parentRid, parent.leftRid, parent.rightRid);
-
-						parent.load();
 					}
 				}
 
@@ -506,6 +493,29 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 		return oldValue;
 	}
 
+	public int getMaxDepthInMemory() {
+		return getMaxDepthInMemory(0);
+	}
+
+	private int getMaxDepthInMemory(final int iCurrDepthLevel) {
+		int depth;
+
+		if (left != null)
+			// GET THE LEFT'S DEPTH LEVEL AS GOOD
+			depth = left.getMaxDepthInMemory(iCurrDepthLevel + 1);
+		else
+			// GET THE CURRENT DEPTH LEVEL AS GOOD
+			depth = iCurrDepthLevel;
+
+		if (right != null) {
+			int rightDepth = right.getMaxDepthInMemory(iCurrDepthLevel + 1);
+			if (rightDepth > depth)
+				depth = rightDepth;
+		}
+
+		return depth;
+	}
+
 	/**
 	 * Returns the successor of the current Entry only by traversing the memory, or null if no such.
 	 */
@@ -580,7 +590,8 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 		final Set<Integer> marshalledRecords = OSerializationThreadLocal.INSTANCE.get();
 		if (marshalledRecords.contains(identityRecord)) {
 			// ALREADY IN STACK, RETURN EMPTY
-			return new byte[] {};
+			record.fromStream(new byte[] {});
+			return record.toStream();
 		} else
 			marshalledRecords.add(identityRecord);
 
