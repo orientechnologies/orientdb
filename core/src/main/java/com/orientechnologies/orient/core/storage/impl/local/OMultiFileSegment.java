@@ -150,7 +150,7 @@ public class OMultiFileSegment extends OSegment {
 		try {
 			acquireSharedLock();
 
-			int filled = 0;
+			long filled = 0;
 			for (OFile file : files)
 				filled += file.getFilledUpTo();
 
@@ -165,7 +165,7 @@ public class OMultiFileSegment extends OSegment {
 		try {
 			acquireSharedLock();
 
-			int size = 0;
+			long size = 0;
 			for (OFile file : files)
 				size += file.getFileSize();
 
