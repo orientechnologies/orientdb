@@ -18,8 +18,6 @@ package com.orientechnologies.orient.core.sql;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 
@@ -30,17 +28,15 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLPermissionAbstract {
-	public static final String	KEYWORD_CREATE		= "CREATE";
+public class OCommandExecutorSQLRemoveProperty extends OCommandExecutorSQLPermissionAbstract {
+	public static final String	KEYWORD_REMOVE		= "REMOVE";
 	public static final String	KEYWORD_PROPERTY	= "PROPERTY";
 
 	private String							className;
 	private String							fieldName;
-	private OType								type;
-	private String							linked;
 
-	public OCommandExecutorSQLCreateProperty parse(final OCommandRequestText iRequest) {
-		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_CREATE);
+	public OCommandExecutorSQLRemoveProperty parse(final OCommandRequestText iRequest) {
+		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_DELETE);
 
 		init(iRequest.getDatabase(), iRequest.getText());
 
@@ -48,8 +44,8 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLPermis
 
 		int oldPos = 0;
 		int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		if (pos == -1 || !word.toString().equals(KEYWORD_CREATE))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found", text, oldPos);
+		if (pos == -1 || !word.toString().equals(KEYWORD_REMOVE))
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_REMOVE + " not found", text, oldPos);
 
 		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_PROPERTY))
@@ -68,18 +64,6 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLPermis
 			throw new OCommandSQLParsingException("Class not found", text, pos);
 		fieldName = parts[1];
 
-		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
-		if (pos == -1)
-			throw new OCommandSQLParsingException("Missed property type", text, oldPos);
-
-		type = OType.valueOf(word.toString());
-
-		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
-		if (pos == -1)
-			return this;
-
-		linked = word.toString();
-
 		return this;
 	}
 
@@ -87,39 +71,18 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLPermis
 	 * Execute the CREATE PROPERTY.
 	 */
 	public Object execute(final Object... iArgs) {
-		if (type == null)
+		if (fieldName == null)
 			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
 
 		OClass sourceClass = database.getMetadata().getSchema().getClass(className);
 		if (sourceClass == null)
 			throw new OCommandExecutionException("Source class '" + className + "' not found");
 
-		OProperty prop = sourceClass.getProperty(fieldName);
-		if (prop != null)
-			throw new OCommandExecutionException("Property '" + className + "." + fieldName
-					+ "' already exists. Remove it before to retry.");
-
-		// CREATE THE PROPERTY
-		OClass linkedClass = null;
-		OType linkedType = null;
-		if (linked != null) {
-			// FIRST SEARCH BETWEEN CLASSES
-			linkedClass = database.getMetadata().getSchema().getClass(linked);
-
-			if (linkedClass == null)
-				// NOT FOUND: SEARCH BETWEEN TYPES
-				linkedType = OType.valueOf(linked.toUpperCase());
-		}
-
-		if (linkedClass != null)
-			prop = sourceClass.createProperty(fieldName, type, linkedClass);
-		else if (linkedType != null)
-			prop = sourceClass.createProperty(fieldName, type, linkedType);
-		else
-			prop = sourceClass.createProperty(fieldName, type);
+		// REMOVE THE PROPERTY
+		sourceClass.removeProperty(fieldName);
 
 		database.getMetadata().getSchema().save();
 
-		return prop.getId();
+		return null;
 	}
 }
