@@ -469,8 +469,8 @@ function executeQuery() {
 	jQuery("#queryText").val(jQuery.trim($('#queryText').val()));
 
 	executeJSONRequest($('#server').val() + '/query/' + $('#database').val()
-			+ '/sql/' + $('#limit').val(), queryResponse, jQuery("#queryText")
-			.val(), 'POST');
+			+ '/sql/' + $("#queryText").val() + "/" + $('#limit').val(),
+			queryResponse);
 }
 
 function executeCommand() {
@@ -478,9 +478,9 @@ function executeCommand() {
 
 	jQuery("#commandText").val(jQuery.trim($('#commandText').val()));
 
-	$.ajax( {
+	$.ajax({
 		type : 'POST',
-		url : $('#server').val() + '/command/sql/' + $('#database').val() + '/'
+		url : $('#server').val() + '/command/' + $('#database').val() + '/sql/'
 				+ $('#commandText').val() + '/' + $('#limit').val(),
 		success : function(msg) {
 			jQuery("#commandOutput").val(msg);
@@ -501,7 +501,7 @@ function executeRawCommand() {
 	var req = $('#server').val() + '/' + $('#rawOperation').val() + '/'
 			+ $('#rawDatabase').val() + '/' + $('#rawArgs').val();
 
-	$.ajax( {
+	$.ajax({
 		type : $('#rawMethod').val(),
 		url : req,
 		success : function(msg) {

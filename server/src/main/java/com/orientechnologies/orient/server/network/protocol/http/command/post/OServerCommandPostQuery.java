@@ -26,25 +26,24 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandPostQuery extends OServerCommandAuthenticatedDbAbstract {
-	private static final String[]	NAMES	= { "POST|query/*" };
+	private static final String[]	NAMES	= { "GET|query/*" };
 
 	@SuppressWarnings("unchecked")
 	public void execute(final OHttpRequest iRequest) throws Exception {
-		String[] urlParts = checkSyntax(iRequest.url, 3,
-				"Syntax error: query/<database>/sql[/<limit>]<br/>Limit is optional and is setted to 20 by default. Set expressely to 0 to have no limits.");
+		String[] urlParts = checkSyntax(
+				iRequest.url,
+				4,
+				"Syntax error: query/<database>/sql/query[/<limit>]. <br/>Limit is optional and is setted to 20 by default. Set expressely to 0 to have no limits.");
 
-		final int limit = urlParts.length > 3 ? Integer.parseInt(urlParts[3]) : 20;
+		final int limit = urlParts.length > 4 ? Integer.parseInt(urlParts[4]) : 20;
 
-		if (iRequest.content == null)
-			throw new IllegalArgumentException("No SQL expression found");
-
-		final String text = iRequest.content;
+		final String text = urlParts[3];
 
 		iRequest.data.commandInfo = "Query";
 		iRequest.data.commandDetail = text;
 
 		if (!text.toLowerCase().startsWith("select"))
-			throw new IllegalArgumentException("Only SQL Select are valid using HTTP POST");
+			throw new IllegalArgumentException("Only SQL Select are valid using Query command");
 
 		ODatabaseDocumentTx db = null;
 
