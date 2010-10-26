@@ -150,6 +150,9 @@ public class OSQLFilter extends OCommandToParse {
 			// END OF TEXT
 			return currentCondition;
 
+		if (currentPos > -1 && text.charAt(currentPos) == ')')
+			return currentCondition;
+
 		OQueryOperator nextOperator = extractConditionOperator();
 
 		OSQLFilterCondition parentCondition = new OSQLFilterCondition(currentCondition, nextOperator);
@@ -208,8 +211,10 @@ public class OSQLFilter extends OCommandToParse {
 			// SUB-CONDITION
 			currentPos = currentPos - words[0].length() + 1;
 
-			OSQLFilterCondition subCondition = new OSQLFilterCondition(extractConditionItem(), extractConditionOperator(),
-					extractConditionItem());
+			OSQLFilterCondition subCondition = extractConditions(null);
+
+			// OSQLFilterCondition subCondition = new OSQLFilterCondition(extractConditionItem(), extractConditionOperator(),
+			// extractConditionItem());
 
 			jumpWhiteSpaces();
 

@@ -56,6 +56,24 @@ public class SQLSelectTest {
 	}
 
 	@Test
+	public void queryTwoParentesisConditions() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(
+				new OSQLSynchQuery<ODocument>(
+						"select from Profile  where ( name = 'Giuseppe' and nick is not null ) or ( name = 'Napoleone' and nick is not null ) "))
+				.execute();
+
+		Assert.assertTrue(result.size() != 0);
+
+		for (ODocument d : result) {
+			Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
+		}
+
+		database.close();
+	}
+
+	@Test
 	public void querySchemaAndLike() {
 		database.open("admin", "admin");
 
