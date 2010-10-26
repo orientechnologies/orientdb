@@ -43,7 +43,7 @@ public class OHttpUtils {
 	public static final String	STATUS_OK_DESCRIPTION							= "OK";
 	public static final int			STATUS_INVALIDMETHOD_CODE					= 405;
 	public static final String	STATUS_INVALIDMETHOD_DESCRIPTION	= "Method Not Allowed";
-	public static final int			STATUS_ERROR											= 500;
+	public static final int			STATUS_INTERNALERROR											= 500;
 	public static final String	STATUS_ERROR_DESCRIPTION					= "Internal Server Error";
 	public static final int			STATUS_AUTH_CODE									= 401;
 	public static final String	STATUS_AUTH_DESCRIPTION						= "Unauthorized";

@@ -99,7 +99,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 		// GET THE TARGET CLASS
 		final OClass cls = db.getMetadata().getSchema().getClass(rid);
 		if (cls == null) {
-			sendTextContent(iRequest, OHttpUtils.STATUS_ERROR, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Class '" + rid
+			sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Class '" + rid
 					+ "' not found.");
 			return;
 		}
@@ -135,7 +135,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 						"Property " + fields.get("name") + " created successfully with id=" + prop.getId());
 
 			} catch (Exception e) {
-				sendTextContent(iRequest, OHttpUtils.STATUS_ERROR, "Error on creating a new property in class " + rid + ": " + e, null,
+				sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error on creating a new property in class " + rid + ": " + e, null,
 						OHttpUtils.CONTENT_TEXT_PLAIN, "Error on creating a new property in class " + rid + ": " + e);
 			}
 		} else if ("del".equals(operation)) {
@@ -166,7 +166,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 						+ "' created successfully with id=" + cls.getId());
 
 			} catch (Exception e) {
-				sendTextContent(iRequest, OHttpUtils.STATUS_ERROR, "Error on creating the new class '" + rid + "': " + e, null,
+				sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error on creating the new class '" + rid + "': " + e, null,
 						OHttpUtils.CONTENT_TEXT_PLAIN, "Error on creating the new class '" + rid + "': " + e);
 			}
 		} else if ("del".equals(operation)) {
@@ -196,7 +196,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 						+ "' created successfully with id=" + cls.getId());
 
 			} catch (Exception e) {
-				sendTextContent(iRequest, OHttpUtils.STATUS_ERROR, "Error on creating the new class '" + rid + "': " + e, null,
+				sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error on creating the new class '" + rid + "': " + e, null,
 						OHttpUtils.CONTENT_TEXT_PLAIN, "Error on creating the new class '" + rid + "': " + e);
 			}
 		} else if ("del".equals(operation)) {

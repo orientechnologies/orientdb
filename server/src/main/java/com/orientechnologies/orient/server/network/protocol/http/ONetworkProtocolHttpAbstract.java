@@ -161,7 +161,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 			errorCode = 423;
 			// e = (Exception) e.getCause();
 		} else if (e instanceof IllegalArgumentException)
-			errorCode = 400;
+			errorCode = OHttpUtils.STATUS_INTERNALERROR;
 
 		if (e instanceof ODatabaseException || e instanceof OSecurityAccessException || e instanceof OCommandExecutionException) {
 			// GENERIC DATABASE EXCEPTION
@@ -186,6 +186,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
 		if (errorReason == null)
 			errorReason = OHttpUtils.STATUS_ERROR_DESCRIPTION;
+		
 		if (errorMessage == null) {
 			// FORMAT GENERIC MESSAGE BY READING THE EXCEPTION STACK
 			final StringBuilder buffer = new StringBuilder();
