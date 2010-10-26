@@ -23,26 +23,30 @@ package com.orientechnologies.orient.server.network.protocol.http;
  */
 public class OHttpUtils {
 
-	public static final String	URL_SEPARATOR							= "/";
-	public static final char		URL_SEPARATOR_CHAR				= '/';
-	public static final byte[]	EOL												= { (byte) '\r', (byte) '\n' };
+	public static final String	URL_SEPARATOR											= "/";
+	public static final char		URL_SEPARATOR_CHAR								= '/';
+	public static final byte[]	EOL																= { (byte) '\r', (byte) '\n' };
 
-	public static final String	METHOD_GET								= "GET";
-	public static final String	METHOD_PUT								= "PUT";
-	public static final String	METHOD_DELETE							= "DELETE";
-	public static final String	METHOD_POST								= "POST";
+	public static final String	METHOD_GET												= "GET";
+	public static final String	METHOD_PUT												= "PUT";
+	public static final String	METHOD_DELETE											= "DELETE";
+	public static final String	METHOD_POST												= "POST";
 
-	public static final String	CONTENT_LENGTH						= "CONTENT-LENGTH: ";
+	public static final String	CONTENT_LENGTH										= "CONTENT-LENGTH: ";
 
-	public static final String	CONTENT_TEXT_PLAIN				= "text/plain";
-	public static final String	CONTENT_JSON							= "application/json";
+	public static final String	CONTENT_TEXT_PLAIN								= "text/plain";
+	public static final String	CONTENT_JSON											= "application/json";
 
-	public static final int			STATUS_OK_CODE						= 200;
-	public static final String	STATUS_OK_DESCRIPTION			= "OK";
-	public static final int			STATUS_ERROR							= 500;
-	public static final String	STATUS_ERROR_DESCRIPTION	= "Error";
-	public static final int			STATUS_AUTH_CODE					= 401;
-	public static final String	STATUS_AUTH_DESCRIPTION		= "Unauthorized";
+	public static final int			STATUS_CREATED_CODE								= 201;
+	public static final String	STATUS_CREATED_DESCRIPTION				= "Created";
+	public static final int			STATUS_OK_CODE										= 200;
+	public static final String	STATUS_OK_DESCRIPTION							= "OK";
+	public static final int			STATUS_INVALIDMETHOD_CODE					= 405;
+	public static final String	STATUS_INVALIDMETHOD_DESCRIPTION	= "Method Not Allowed";
+	public static final int			STATUS_ERROR											= 500;
+	public static final String	STATUS_ERROR_DESCRIPTION					= "Internal Server Error";
+	public static final int			STATUS_AUTH_CODE									= 401;
+	public static final String	STATUS_AUTH_DESCRIPTION						= "Unauthorized";
 
 	public static String[] getParts(String iURI) {
 		if (iURI == null || iURI.length() == 0)

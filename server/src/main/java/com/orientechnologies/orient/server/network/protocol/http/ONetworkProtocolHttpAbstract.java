@@ -132,8 +132,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 				OLogManager.instance().warn(this,
 						"->" + channel.socket.getInetAddress().getHostAddress() + ": Command not found: " + request.method + "." + command);
 
-				sendTextContent(405, "Command '" + command + "' not found", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Command not found: "
-						+ command);
+				sendTextContent(OHttpUtils.STATUS_INVALIDMETHOD_CODE, OHttpUtils.STATUS_INVALIDMETHOD_DESCRIPTION, null,
+						OHttpUtils.CONTENT_TEXT_PLAIN, "Command not found: " + command);
 			} catch (IOException e1) {
 				sendShutdown();
 			}
@@ -185,7 +185,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 		}
 
 		if (errorReason == null)
-			errorReason = "Unknow error";
+			errorReason = OHttpUtils.STATUS_ERROR_DESCRIPTION;
 		if (errorMessage == null) {
 			// FORMAT GENERIC MESSAGE BY READING THE EXCEPTION STACK
 			final StringBuilder buffer = new StringBuilder();

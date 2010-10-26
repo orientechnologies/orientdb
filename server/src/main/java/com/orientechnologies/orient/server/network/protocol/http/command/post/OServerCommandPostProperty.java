@@ -47,7 +47,8 @@ public class OServerCommandPostProperty extends OServerCommandAuthenticatedDbAbs
 
 			db.getMetadata().getSchema().save();
 
-			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, prop.getId());
+			sendTextContent(iRequest, OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, null,
+					OHttpUtils.CONTENT_TEXT_PLAIN, prop.getId());
 
 		} finally {
 			if (db != null)
