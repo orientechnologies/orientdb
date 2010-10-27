@@ -57,19 +57,16 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 
 public class OServer {
-	private static final String																SRV_ROOT_ADMIN				= "root";
-	private static final String																PROPERTY_CONFIG_FILE	= "orientdb.config.file";
-	public static final String																DEFAULT_CONFIG_FILE		= "config/orientdb-server-config.xml";
+	protected ReentrantReadWriteLock													lock						= new ReentrantReadWriteLock();
 
-	protected ReentrantReadWriteLock													lock									= new ReentrantReadWriteLock();
-
+	protected volatile boolean																running					= true;
 	protected OServerConfigurationLoaderXml										configurationLoader;
 	protected OServerConfiguration														configuration;
 	protected OServerShutdownHook															shutdownHook;
-	protected List<OServerHandler>														handlers							= new ArrayList<OServerHandler>();
-	protected Map<String, Class<? extends ONetworkProtocol>>	protocols							= new HashMap<String, Class<? extends ONetworkProtocol>>();
-	protected List<OServerNetworkListener>										listeners							= new ArrayList<OServerNetworkListener>();
-	protected Map<String, ODatabaseRecord<?>>									memoryDatabases				= new HashMap<String, ODatabaseRecord<?>>();
+	protected List<OServerHandler>														handlers				= new ArrayList<OServerHandler>();
+	protected Map<String, Class<? extends ONetworkProtocol>>	protocols				= new HashMap<String, Class<? extends ONetworkProtocol>>();
+	protected List<OServerNetworkListener>										listeners				= new ArrayList<OServerNetworkListener>();
+	protected Map<String, ODatabaseRecord<?>>									memoryDatabases	= new HashMap<String, ODatabaseRecord<?>>();
 	protected static ThreadGroup															threadGroup;
 
 	private OrientServer																			managedServer;
@@ -121,6 +118,11 @@ public class OServer {
 	}
 
 	public void shutdown() {
+		if (!running)
+			return;
+
+		running = false;
+		
 		OLogManager.instance().info(this, "Orient Database Server is shutdowning...");
 
 		try {
@@ -145,6 +147,7 @@ public class OServer {
 		}
 
 		OLogManager.instance().info(this, "Orient Database Server shutdown complete");
+		System.out.println();
 	}
 
 	public String getStoragePath(final String iName) {
@@ -238,16 +241,16 @@ public class OServer {
 
 	protected void loadConfiguration() {
 		try {
-			String config = DEFAULT_CONFIG_FILE;
-			if (System.getProperty(PROPERTY_CONFIG_FILE) != null)
-				config = System.getProperty(PROPERTY_CONFIG_FILE);
+			String config = OServerConfiguration.DEFAULT_CONFIG_FILE;
+			if (System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE) != null)
+				config = System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE);
 
 			configurationLoader = new OServerConfigurationLoaderXml(OServerConfiguration.class, config);
 			configuration = configurationLoader.load();
 
 			if (configuration.users != null && configuration.users.length > 0) {
 				for (OServerUserConfiguration u : configuration.users) {
-					if (u.name.equals(SRV_ROOT_ADMIN))
+					if (u.name.equals(OServerConfiguration.SRV_ROOT_ADMIN))
 						// FOUND
 						return;
 				}
@@ -265,7 +268,7 @@ public class OServer {
 		final long generatedPassword = new Random(System.currentTimeMillis()).nextLong();
 		String encodedPassword = OSecurityManager.instance().digest2String(String.valueOf(generatedPassword));
 
-		configuration.users[0] = new OServerUserConfiguration(SRV_ROOT_ADMIN, encodedPassword, "*");
+		configuration.users[0] = new OServerUserConfiguration(OServerConfiguration.SRV_ROOT_ADMIN, encodedPassword, "*");
 		saveConfiguration();
 	}
 
@@ -281,5 +284,9 @@ public class OServer {
 				handler.startup();
 			}
 		}
+	}
+
+	public List<OServerHandler> getHandlers() {
+		return handlers;
 	}
 }

@@ -87,27 +87,7 @@ public class OServerNetworkListener extends Thread {
 	 * @param iHostName
 	 */
 	private void listen(final String iHostName, final String iHostPortRange, final String iProtocolName) {
-		int[] ports;
-
-		if (OStringSerializerHelper.contains(iHostPortRange, ',')) {
-			// MULTIPLE ENUMERATED PORTS
-			String[] portValues = iHostPortRange.split(",");
-			ports = new int[portValues.length];
-			for (int i = 0; i < portValues.length; ++i)
-				ports[i] = Integer.parseInt(portValues[i]);
-
-		} else if (OStringSerializerHelper.contains(iHostPortRange, '-')) {
-			// MULTIPLE RANGE PORTS
-			String[] limits = iHostPortRange.split("-");
-			int lowerLimit = Integer.parseInt(limits[0]);
-			int upperLimit = Integer.parseInt(limits[1]);
-			ports = new int[upperLimit - lowerLimit + 1];
-			for (int i = 0; i < upperLimit - lowerLimit + 1; ++i)
-				ports[i] = lowerLimit + i;
-
-		} else
-			// SINGLE PORT SPECIFIED
-			ports = new int[] { Integer.parseInt(iHostPortRange) };
+		int[] ports = getPorts(iHostPortRange);
 
 		for (int port : ports) {
 			inboundAddr = new InetSocketAddress(iHostName, port);
@@ -211,5 +191,30 @@ public class OServerNetworkListener extends Thread {
 			configuration = new OContextConfiguration();
 
 		socketBufferSize = configuration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_BUFFER_SIZE);
+	}
+
+	public static int[] getPorts(final String iHostPortRange) {
+		int[] ports;
+
+		if (OStringSerializerHelper.contains(iHostPortRange, ',')) {
+			// MULTIPLE ENUMERATED PORTS
+			String[] portValues = iHostPortRange.split(",");
+			ports = new int[portValues.length];
+			for (int i = 0; i < portValues.length; ++i)
+				ports[i] = Integer.parseInt(portValues[i]);
+
+		} else if (OStringSerializerHelper.contains(iHostPortRange, '-')) {
+			// MULTIPLE RANGE PORTS
+			String[] limits = iHostPortRange.split("-");
+			int lowerLimit = Integer.parseInt(limits[0]);
+			int upperLimit = Integer.parseInt(limits[1]);
+			ports = new int[upperLimit - lowerLimit + 1];
+			for (int i = 0; i < upperLimit - lowerLimit + 1; ++i)
+				ports[i] = lowerLimit + i;
+
+		} else
+			// SINGLE PORT SPECIFIED
+			ports = new int[] { Integer.parseInt(iHostPortRange) };
+		return ports;
 	}
 }

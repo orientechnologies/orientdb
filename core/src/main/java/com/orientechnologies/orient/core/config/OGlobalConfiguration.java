@@ -27,39 +27,77 @@ import com.orientechnologies.common.log.OLogManager;
  * 
  */
 public enum OGlobalConfiguration {
-	LOG_LEVEL("log.level", String.class, "info", new OConfigurationChangeCallback() {
+	LOG_LEVEL("log.level", "Logging level", String.class, "info", new OConfigurationChangeCallback() {
 		public void change(final Object iCurrentValue, final Object iNewValue) {
 			OLogManager.instance().setLevel((String) iNewValue);
 		}
 	}),
 
-	STORAGE_KEEP_OPEN("storage.keepOpen", Boolean.class, Boolean.FALSE), STORAGE_CACHE_SIZE("storage.cache.size", Integer.class, 5000),
+	STORAGE_KEEP_OPEN(
+			"storage.keepOpen",
+			"Tells to the engine to not close the storage when a database is closed. Storages will be closed when the process will shutdown",
+			Boolean.class, Boolean.FALSE),
 
-	DB_USE_CACHE("db.cache.enabled", Boolean.class, true),
+	STORAGE_CACHE_SIZE("storage.cache.size", "Size of the cache that keep the record in memory", Integer.class, 5000),
 
-	TREEMAP_LAZY_UPDATES("treemap.lazyUpdates", Integer.class, 300), TREEMAP_NODE_PAGE_SIZE("treemap.nodePageSize", Float.class, 1024), TREEMAP_LOAD_FACTOR(
-			"treemap.loadFactor", Float.class, 0.7f), TREEMAP_OPTIMIZE_THRESHOLD("treemap.optimizeThreshold", Integer.class, 50000), TREEMAP_ENTRYPOINTS(
-			"treemap.entryPoints", Integer.class, 5), TREEMAP_OPTIMIZE_ENTRYPOINTS_FACTOR("treemap.optimizeEntryPointsFactor",
+	DB_USE_CACHE("db.cache.enabled", "Uses the storage cache", Boolean.class, true),
+
+	TREEMAP_LAZY_UPDATES("treemap.lazyUpdates", "Configure the TreeMaps (indexes and dictionaries) as buffered or not",
+			Integer.class, 300),
+
+	TREEMAP_NODE_PAGE_SIZE("treemap.nodePageSize",
+			"Page size of each single node. 1,024 means that 1,024 entries can be stored inside a node", Float.class, 1024),
+
+	TREEMAP_LOAD_FACTOR("treemap.loadFactor", "HashMap load factor", Float.class, 0.7f),
+
+	TREEMAP_OPTIMIZE_THRESHOLD("treemap.optimizeThreshold", "Auto optimize the TreeMap every X operations as get, put and remove",
+			Integer.class, 50000),
+
+	TREEMAP_ENTRYPOINTS("treemap.entryPoints", "Number of entry points to start searching entries", Integer.class, 5),
+
+	TREEMAP_OPTIMIZE_ENTRYPOINTS_FACTOR("treemap.optimizeEntryPointsFactor",
+			"Multiplicand factor to apply to entry-points list (parameter treemap.entrypoints) to determine if needs of optimization",
 			Float.class, 1.0f),
 
-	FILE_MMAP_BLOCK_SIZE("file.mmap.blockSize", Integer.class, 300000), FILE_MMAP_MAX_MEMORY("file.mmap.maxMemory", Integer.class,
-			110000000), FILE_MMAP_FORCE_DELAY("file.mmap.forceDelay", Integer.class, 500), FILE_MMAP_FORCE_RETRY("file.mmap.forceRetry",
+	FILE_MMAP_BLOCK_SIZE("file.mmap.blockSize", "Size of the memory mapped block", Integer.class, 300000),
+
+	FILE_MMAP_MAX_MEMORY("file.mmap.maxMemory",
+			"Max memory allocable by memory mapping manager. Note that on 32bit OS the limit is to 2Gb but can change to OS by OS",
+			Integer.class, 110000000),
+
+	FILE_MMAP_FORCE_DELAY("file.mmap.forceDelay",
+			"Delay time in ms to wait for another force flush of the memory mapped block to the disk", Integer.class, 500),
+
+	FILE_MMAP_FORCE_RETRY("file.mmap.forceRetry", "Number of times the memory mapped block will try to flush to the disk",
 			Integer.class, 10),
 
-	NETWORK_SOCKET_BUFFER_SIZE("network.socketBufferSize", Integer.class, 32768), NETWORK_SOCKET_TIMEOUT("network.timeout",
-			Integer.class, 10000), NETWORK_SOCKET_RETRY("network.retry", Integer.class, 5), NETWORK_SOCKET_RETRY_DELAY(
-			"network.retryDelay", Integer.class, 500),
+	NETWORK_SOCKET_BUFFER_SIZE("network.socketBufferSize", "TCP/IP Socket buffer size", Integer.class, 32768),
 
-	NETWORK_HTTP_MAX_CONTENT_LENGTH("network.http.maxLength", Integer.class, 10000),
+	NETWORK_SOCKET_TIMEOUT("network.timeout", "TCP/IP Socket timeout in ms", Integer.class, 10000),
 
-	PROFILER_ENABLED("profiler.enabled", Boolean.class, false),
+	NETWORK_SOCKET_RETRY("network.retry",
+			"Number of times the client connection retries to connect to the server in case of failure", Integer.class, 5),
 
-	SERVER_CACHE_STATIC_RESOURCES("server.cache.staticResources", Boolean.class, false);
+	NETWORK_SOCKET_RETRY_DELAY("network.retryDelay", "Number of ms the client wait to reconnect to the server in case of failure",
+			Integer.class, 500),
+
+	NETWORK_HTTP_MAX_CONTENT_LENGTH("network.http.maxLength", "TCP/IP max content length in Kb of HTTP requests", Integer.class,
+			10000),
+
+	PROFILER_ENABLED("profiler.enabled", "Enable the recording of statistics and counters", Boolean.class, false),
+
+	SERVER_CACHE_STATIC_RESOURCES("server.cache.staticResources", "Cache static resources after loaded", Boolean.class, false),
+
+	CLUSTER_SYNC_TIME_DELAY("cluster.sync.timeDelay", "Delay time (in ms) of synchronization with slave nodes", Integer.class, 30000),
+
+	CLUSTER_SYNC_MAXRECORDS_BUFFER("cluster.sync.maxRecordsBuffer",
+			"Maximum number of records to buffer before to send to the slave nodes", Integer.class, 100);
 
 	private final String									key;
 	private final Object									defValue;
 	private final Class<?>								type;
 	private Object												value						= null;
+	private String												description;
 	private OConfigurationChangeCallback	changeCallback	= null;
 
 	// AT STARTUP AUTO-CONFIG
@@ -67,14 +105,15 @@ public enum OGlobalConfiguration {
 		readConfiguration();
 	}
 
-	OGlobalConfiguration(final String iKey, final Class<?> iType, final Object iDefValue,
+	OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
 			final OConfigurationChangeCallback iChangeAction) {
-		this(iKey, iType, iDefValue);
+		this(iKey, iDescription, iType, iDefValue);
 		changeCallback = iChangeAction;
 	}
 
-	OGlobalConfiguration(final String iKey, final Class<?> iType, final Object iDefValue) {
+	OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue) {
 		key = iKey;
+		description = iDescription;
 		defValue = iDefValue;
 		type = iType;
 	}
@@ -167,5 +206,9 @@ public enum OGlobalConfiguration {
 			if (cfg != null)
 				cfg.setValue(config.getValue());
 		}
+	}
+
+	public String getDescription() {
+		return description;
 	}
 }

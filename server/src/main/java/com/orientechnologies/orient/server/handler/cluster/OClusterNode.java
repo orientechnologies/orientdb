@@ -206,7 +206,7 @@ public class OClusterNode implements OServerHandler {
 						discoverySignaler.sendShutdown();
 
 						if (master != null)
-							// I'M NOT THE MASTER, DO NOTHING
+							// I'M ALREADY THE MASTER, DO NOTHING
 							return;
 
 						// NO NODE HAS JOINED: BECAME THE MASTER AND LISTEN FOR SLAVES

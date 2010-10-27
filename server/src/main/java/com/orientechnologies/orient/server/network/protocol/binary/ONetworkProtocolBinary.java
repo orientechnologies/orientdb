@@ -67,6 +67,9 @@ import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
+import com.orientechnologies.orient.server.handler.OServerHandler;
+import com.orientechnologies.orient.server.handler.cluster.OClusterNode;
+import com.orientechnologies.orient.server.handler.cluster.OClusterRecordHook;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 import com.orientechnologies.orient.server.tx.OTransactionRecordProxy;
@@ -95,7 +98,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			throws IOException {
 		channel = new OChannelBinaryServer(iSocket, iConfig);
 		connection = iConnection;
-
 		start();
 	}
 
@@ -147,6 +149,28 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	protected void parseCommand() throws IOException {
 		switch (commandType) {
 
+		case OChannelBinaryProtocol.SHUTDOWN: {
+			data.commandInfo = "Shutdowning";
+
+			OLogManager.instance().info(this, "Received shutdown command from client %s:%d", channel.socket.getInetAddress(),
+					channel.socket.getPort());
+
+			user = channel.readString();
+			passwd = channel.readString();
+
+			if (OServerMain.server().authenticate(user, passwd, "shutdown")) {
+				sendOk(clientTxId);
+				channel.flush();
+				channel.close();
+				OServerMain.server().shutdown();
+				System.exit(0);
+				return;
+			}
+
+			sendError(clientTxId, new OSecurityAccessException("Invalid user/password to shutdown the server"));
+			break;
+		}
+
 		case OChannelBinaryProtocol.CONNECT: {
 			data.commandInfo = "Connect";
 
@@ -156,7 +180,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			channel.writeInt(connection.id);
 			break;
 		}
-
 		case OChannelBinaryProtocol.DB_OPEN: {
 			data.commandInfo = "Open database";
 
@@ -181,6 +204,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			underlyingDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
 
+			installClusterTrigger();
+
 			if (!(underlyingDatabase.getStorage() instanceof OStorageMemory) && !loadUserFromSchema(user, passwd)) {
 				sendError(clientTxId, new OSecurityAccessException(connection.database.getName(), "Access denied to database '"
 						+ connection.database.getName() + "' for user: " + user));
@@ -196,6 +221,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 					}
 				}
 			}
+
 			break;
 		}
 
@@ -233,6 +259,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			}
 
 			underlyingDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
+
+			installClusterTrigger();
 
 			sendOk(clientTxId);
 			break;
@@ -735,6 +763,16 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			channel.writeLong(iRecord.getIdentity().getClusterPosition());
 			channel.writeInt(iRecord.getVersion());
 			channel.writeBytes(iRecord.toStream());
+		}
+	}
+
+	private void installClusterTrigger() {
+		// INSTALL TRIGGER TO CATCH ALL THE EVENTS ON RECORDS
+		for (OServerHandler h : OServerMain.server().getHandlers()) {
+			if (h instanceof OClusterNode) {
+				connection.database.registerHook(new OClusterRecordHook());
+				break;
+			}
 		}
 	}
 }
