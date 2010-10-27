@@ -46,29 +46,28 @@ public class OServerShutdownMain {
 	private OContextConfiguration						contextConfig;
 	private String													rootPassword;
 
-	public OServerShutdownMain(final String iServerAddress, final String iServerPorts) {
+	public OServerShutdownMain(final String iServerAddress, final String iServerPorts, final String iRootPassword) {
 		contextConfig = new OContextConfiguration();
 
 		try {
-			String config = OServerConfiguration.DEFAULT_CONFIG_FILE;
-			if (System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE) != null)
-				config = System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE);
-
-			configurationLoader = new OServerConfigurationLoaderXml(OServerConfiguration.class, config);
-			configuration = configurationLoader.load();
-
-			if (configuration.users != null && configuration.users.length > 0) {
-				for (OServerUserConfiguration u : configuration.users) {
-					if (u.name.equals(OServerConfiguration.SRV_ROOT_ADMIN)) {
-						// FOUND
-						rootPassword = u.password;
-						break;
+			if (iRootPassword == null) {
+				// LOAD SERVER ROOT'S PASSWORD
+				loadConfiguration();
+				if (configuration.users != null && configuration.users.length > 0) {
+					for (OServerUserConfiguration u : configuration.users) {
+						if (u.name.equals(OServerConfiguration.SRV_ROOT_ADMIN)) {
+							// FOUND
+							rootPassword = u.password;
+							break;
+						}
 					}
 				}
-			}
+			} else
+				rootPassword = iRootPassword;
 
 			if (iServerAddress == null) {
 				// LOAD SERVER HOST AND PORT FROM FILE
+				loadConfiguration();
 				for (OServerNetworkListenerConfiguration l : configuration.network.listeners) {
 					if (l.protocol.equals("binary")) {
 						clusterNetworkAddress = l.ipAddress;
@@ -84,6 +83,19 @@ public class OServerShutdownMain {
 		} catch (IOException e) {
 			OLogManager.instance().error(this, "Error on reading server configuration.", OConfigurationException.class);
 		}
+	}
+
+	private void loadConfiguration() throws IOException {
+		if( configurationLoader != null )
+			// AREADY LOADED
+			return;
+		
+		String config = OServerConfiguration.DEFAULT_CONFIG_FILE;
+		if (System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE) != null)
+			config = System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE);
+
+		configurationLoader = new OServerConfigurationLoaderXml(OServerConfiguration.class, config);
+		configuration = configurationLoader.load();
 	}
 
 	public void connect(final int iTimeout) throws IOException {
@@ -105,18 +117,22 @@ public class OServerShutdownMain {
 		network.writeString(rootPassword);
 		network.flush();
 
-		if (network.readByte() == OChannelBinaryProtocol.ERROR)
+		if (network.readByte() == OChannelBinaryProtocol.ERROR){
+			network.readInt();
+			network.readString();
 			throw new ONetworkProtocolException(network.readString());
+		}
 	}
 
 	public static void main(final String[] iArgs) {
 		String serverHost = iArgs.length > 0 ? iArgs[0] : null;
 		String serverPorts = iArgs.length > 1 ? iArgs[1] : null;
+		String rootPassword = iArgs.length > 2 ? iArgs[2] : null;
 
 		System.out.println("Sending shutdown command to remote OrientDB Server instance...");
 
 		try {
-			new OServerShutdownMain(serverHost, serverPorts).connect(5000);
+			new OServerShutdownMain(serverHost, serverPorts, rootPassword).connect(5000);
 			System.out.println("Shutdown executed correctly");
 		} catch (Exception e) {
 			System.out.println("Error: " + e.getLocalizedMessage());

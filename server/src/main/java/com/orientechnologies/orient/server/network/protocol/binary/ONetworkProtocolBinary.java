@@ -152,13 +152,16 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		case OChannelBinaryProtocol.SHUTDOWN: {
 			data.commandInfo = "Shutdowning";
 
-			OLogManager.instance().info(this, "Received shutdown command from client %s:%d", channel.socket.getInetAddress(),
+			OLogManager.instance().info(this, "Received shutdown command from the remote client %s:%d", channel.socket.getInetAddress(),
 					channel.socket.getPort());
 
 			user = channel.readString();
 			passwd = channel.readString();
 
 			if (OServerMain.server().authenticate(user, passwd, "shutdown")) {
+				OLogManager.instance().info(this, "Remote client %s:%d authenticated. Starting shutdown of server...",
+						channel.socket.getInetAddress(), channel.socket.getPort());
+
 				sendOk(clientTxId);
 				channel.flush();
 				channel.close();
@@ -166,6 +169,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				System.exit(0);
 				return;
 			}
+
+			OLogManager.instance().error(this, "Authentication error of remote client %s:%d: shutdown is aborted.",
+					channel.socket.getInetAddress(), channel.socket.getPort());
 
 			sendError(clientTxId, new OSecurityAccessException("Invalid user/password to shutdown the server"));
 			break;
