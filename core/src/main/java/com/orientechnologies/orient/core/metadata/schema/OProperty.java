@@ -269,36 +269,42 @@ public class OProperty extends ODocumentWrapperNoClass {
 		if (index != null)
 			throw new IllegalStateException("Index already created");
 
-		OPropertyIndex tempIndex = null;
 		try {
 			switch (iType) {
 			case UNIQUE:
-				tempIndex = new OPropertyIndexUnique(document.getDatabase(), this, OStorage.CLUSTER_INDEX_NAME);
+				index = new OPropertyIndexUnique(document.getDatabase(), this, OStorage.CLUSTER_INDEX_NAME);
 				break;
 			case NOTUNIQUE:
-				tempIndex = new OPropertyIndexNotUnique(document.getDatabase(), this, OStorage.CLUSTER_INDEX_NAME);
+				index = new OPropertyIndexNotUnique(document.getDatabase(), this, OStorage.CLUSTER_INDEX_NAME);
 				break;
 			case FULLTEXT:
-				tempIndex = new OFullTextIndex(document.getDatabase(), this, OStorage.CLUSTER_INDEX_NAME);
+				index = new OFullTextIndex(document.getDatabase(), this, OStorage.CLUSTER_INDEX_NAME);
 				break;
 			}
 
-			tempIndex.rebuild(iProgressListener);
+			index.rebuild(iProgressListener);
 
 			setDirty();
 
 			if (document.getDatabase() != null) {
 				// / SAVE ONLY IF THE PROPERTY IS ALREADY PERSISTENT
-				tempIndex.lazySave();
+				index.lazySave();
 				document.getDatabase().getMetadata().getSchema().save();
 			}
 
-			index = tempIndex;
-
 		} catch (OIndexException e) {
+			if (index != null) {
+				index.clear();
+				document.getDatabase().getMetadata().getSchema().save();
+			}
 			throw e;
 
 		} catch (Exception e) {
+			if (index != null) {
+				index.clear();
+				document.getDatabase().getMetadata().getSchema().save();
+			}
+
 			OLogManager.instance().exception("Unable to create '%s' index for property: %s", e, ODatabaseException.class, iType,
 					toString());
 		}
