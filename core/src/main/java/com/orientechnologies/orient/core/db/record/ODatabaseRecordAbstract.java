@@ -272,13 +272,17 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 	}
 
 	public <DB extends ODatabaseRecord<?>> DB checkSecurity(final String iResource, final int iOperation) {
-		OLogManager.instance()
-				.debug(this, "[checkSecurity] Check permissions for resource '%s', operation '%s'", iResource, iOperation);
+		if (OLogManager.instance().isDebugEnabled())
+			OLogManager.instance().debug(this, "[checkSecurity] Check permissions for resource '%s', operation '%s'", iResource,
+					iOperation);
+
 		if (user != null) {
 			try {
 				final ORole role = user.allow(iResource, iOperation);
-				OLogManager.instance().debug(this, "[checkSecurity] Granted permission for resource '%s', operation '%s' by role: %s",
-						iResource, iOperation, role.getName());
+
+				if (OLogManager.instance().isDebugEnabled())
+					OLogManager.instance().debug(this, "[checkSecurity] Granted permission for resource '%s', operation '%s' by role: %s",
+							iResource, iOperation, role.getName());
 
 			} catch (OSecurityAccessException e) {
 
