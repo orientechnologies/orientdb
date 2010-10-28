@@ -114,9 +114,9 @@ public class ORole extends ODocumentWrapper {
 
 	public boolean allow(final String iResource, final int iCRUDOperation) {
 		// CHECK FOR SECURITY AS DIRECT RESOURCE
-		Byte access = rules.get(iResource);
+		final Byte access = rules.get(iResource);
 		if (access != null) {
-			byte mask = (byte) iCRUDOperation;
+			final byte mask = (byte) iCRUDOperation;
 
 			return (access.byteValue() & mask) == mask;
 		}
