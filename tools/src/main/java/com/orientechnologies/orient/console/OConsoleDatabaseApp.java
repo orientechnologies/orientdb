@@ -15,7 +15,9 @@
  */
 package com.orientechnologies.orient.console;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,6 +26,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.common.exception.OException;
@@ -66,9 +69,32 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 	protected List<ORecordInternal<?>>	currentResultSet;
 	protected OServerAdmin							srvAdmin;
 	private int													lastPercentStep;
-
+	
+    
 	public static void main(String[] args) {
-		new OConsoleDatabaseApp(args);
+	    try{
+	        boolean tty = false;
+	        try
+            {
+	            if(setTerminalToCBreak()) {
+	                tty = true;
+	            }
+            }
+            catch (Exception e)
+            {
+            }
+            OConsoleDatabaseApp console = new OConsoleDatabaseApp(args);
+            if(tty){
+                console.setReader(new TTYConsoleReader());
+            }
+            console.run();
+	    }finally{
+	        try {
+	            stty("echo");
+             }
+             catch (Exception e) {
+             }
+	    }
 	}
 
 	public OConsoleDatabaseApp(String[] args) {
@@ -901,4 +927,65 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		else
 			out.print(iSucceed ? "] Done." : " Error!");
 	}
+	
+	
+	
+	
+	
+
+	
+	
+    private static boolean setTerminalToCBreak() throws IOException, InterruptedException {
+        // set the console to be character-buffered instead of line-buffered
+        int result = stty("-icanon min 1");
+        if(result != 0){
+            return false;
+        }
+
+        // disable character echoing
+        stty("-echo");
+        return true;
+    }
+
+    /**
+     *  Execute the stty command with the specified arguments
+     *  against the current active terminal.
+     */
+    private static int stty(final String args)
+                    throws IOException, InterruptedException {
+        String cmd = "stty " + args + " < /dev/tty";
+
+        return exec(new String[] {
+                    "sh",
+                    "-c",
+                    cmd
+                });
+    }
+
+    /**
+     *  Execute the specified command and return the output
+     *  (both stdout and stderr).
+     */
+    private static int exec(final String[] cmd)
+                    throws IOException, InterruptedException {
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+
+        Process p = Runtime.getRuntime().exec(cmd);
+        int c;
+        InputStream in = p.getInputStream();
+
+        while ((c = in.read()) != -1) {
+            bout.write(c);
+        }
+
+        in = p.getErrorStream();
+
+        while ((c = in.read()) != -1) {
+            bout.write(c);
+        }
+
+        p.waitFor();
+
+        return p.exitValue();
+    }
 }

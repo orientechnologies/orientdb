@@ -15,10 +15,8 @@
  */
 package com.orientechnologies.common.console;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -32,269 +30,329 @@ import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.util.OArrays;
 
-public class OConsoleApplication {
+public class OConsoleApplication
+{
 
-	protected InputStream					in								= System.in;
-	protected PrintStream					out								= System.out;
-	protected PrintStream					err								= System.err;
-	protected String							commandSeparator	= ";";
-	protected String							wordSeparator			= " ";
-	protected String[]						helpCommands			= { "help", "?" };
-	protected String[]						exitCommands			= { "exit", "bye", "quit" };
-	protected Map<String, Object>	properties				= new HashMap<String, Object>();
-	protected boolean							interactiveMode;
+    protected InputStream in = System.in;// System.in;
 
-	public OConsoleApplication(String[] args) {
-		interactiveMode = isInteractiveMode(args);
+    protected PrintStream out = System.out;
 
-		onBefore();
+    protected PrintStream err = System.err;
 
-		if (interactiveMode) {
-			// EXECUTE IN INTERACTIVE MODE
-			final BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+    protected String commandSeparator = ";";
 
-			String consoleInput;
+    protected String wordSeparator = " ";
 
-			while (true) {
-				out.println();
-				out.print("> ");
-				try {
-					consoleInput = reader.readLine();
-				} catch (IOException e) {
-					break;
-				}
+    protected String[] helpCommands = {"help", "?"};
 
-				if (consoleInput == null || consoleInput.length() == 0)
-					continue;
+    protected String[] exitCommands = {"exit", "bye", "quit"};
 
-				if (!executeCommands(consoleInput))
-					break;
-			}
-		} else {
-			// EXECUTE IN BATCH MODE
-			executeCommands(getCommandLine(args));
-		}
+    protected Map<String, Object> properties = new HashMap<String, Object>();
 
-		onAfter();
-	}
+    // protected OConsoleReader reader = new TTYConsoleReader();
+    protected OConsoleReader reader = new DefaultConsoleReader();
 
-	protected boolean isInteractiveMode(String[] args) {
-		return args.length == 0;
-	}
+    protected boolean interactiveMode;
+    
+    protected String[] args;
 
-	protected boolean executeCommands(String iCommands) {
-		String[] commandLines = iCommands.split(commandSeparator);
-		for (String commandLine : commandLines)
-			if (!execute(commandLine))
-				return false;
-		return true;
-	}
+    public void setReader(OConsoleReader iReader)
+    {
+        this.reader = iReader;
+    }
 
-	protected boolean execute(String iCommand) {
-		iCommand = iCommand.trim();
-		final String[] commandWords = OStringParser.getWords(iCommand, wordSeparator);
+    public OConsoleApplication(String[] iArgs)
+    {
+        this.args = iArgs;
+    }
+    
+    public void run(){
+        interactiveMode = isInteractiveMode(args);
+        onBefore();
 
-		for (String cmd : helpCommands)
-			if (cmd.equals(commandWords[0])) {
-				help();
-				return true;
-			}
+        if (interactiveMode)
+        {
+            // EXECUTE IN INTERACTIVE MODE
+            // final BufferedReader reader = new BufferedReader(new InputStreamReader(in));
 
-		for (String cmd : exitCommands)
-			if (cmd.equals(commandWords[0])) {
-				return false;
-			}
+            String consoleInput;
 
-		String methodName;
-		ConsoleCommand ann;
-		Method lastMethodInvoked = null;
-		StringBuilder lastCommandInvoked = new StringBuilder();
+            while (true)
+            {
+                out.println();
+                out.print("> ");
+                consoleInput = reader.readLine();
 
-		for (Method m : getConsoleMethods()) {
-			methodName = m.getName();
-			ann = m.getAnnotation(ConsoleCommand.class);
+                if (consoleInput == null || consoleInput.length() == 0)
+                    continue;
 
-			StringBuilder commandName = new StringBuilder();
-			char ch;
-			int commandWordCount = 1;
-			for (int i = 0; i < methodName.length(); ++i) {
-				ch = methodName.charAt(i);
-				if (Character.isUpperCase(ch)) {
-					commandName.append(" ");
-					ch = Character.toLowerCase(ch);
-					commandWordCount++;
-				}
-				commandName.append(ch);
-			}
+                if (!executeCommands(consoleInput))
+                    break;
+            }
+        }
+        else
+        {
+            // EXECUTE IN BATCH MODE
+            executeCommands(getCommandLine(args));
+        }
 
-			if (!iCommand.startsWith(commandName.toString())) {
-				if (ann == null)
-					continue;
+        onAfter();
+    }
 
-				String[] aliases = ann.aliases();
-				if (aliases == null || aliases.length == 0)
-					continue;
+    protected boolean isInteractiveMode(String[] args)
+    {
+        return args.length == 0;
+    }
 
-				boolean aliasMatch = false;
-				for (String alias : aliases) {
-					if (iCommand.startsWith(alias.split(" ")[0])) {
-						aliasMatch = true;
-						commandWordCount = 1;
-						break;
-					}
-				}
+    protected boolean executeCommands(String iCommands)
+    {
+        String[] commandLines = iCommands.split(commandSeparator);
+        for (String commandLine : commandLines)
+            if (!execute(commandLine))
+                return false;
+        return true;
+    }
 
-				if (!aliasMatch)
-					continue;
-			}
+    protected boolean execute(String iCommand)
+    {
+        iCommand = iCommand.trim();
+        final String[] commandWords = OStringParser.getWords(iCommand, wordSeparator);
 
-			Object[] methodArgs;
+        for (String cmd : helpCommands)
+            if (cmd.equals(commandWords[0]))
+            {
+                help();
+                return true;
+            }
 
-			// BUILD PARAMETERS
-			if (ann != null && !ann.splitInWords()) {
-				methodArgs = new String[] { iCommand.substring(iCommand.indexOf(" ") + 1) };
-			} else {
-				methodArgs = OArrays.copyOfRange(commandWords, commandWordCount, commandWords.length);
-			}
+        for (String cmd : exitCommands)
+            if (cmd.equals(commandWords[0]))
+            {
+                return false;
+            }
 
-			try {
-				m.invoke(this, methodArgs);
+        String methodName;
+        ConsoleCommand ann;
+        Method lastMethodInvoked = null;
+        StringBuilder lastCommandInvoked = new StringBuilder();
 
-			} catch (IllegalArgumentException e) {
-				lastMethodInvoked = m;
-				// GET THE COMMAND NAME
-				lastCommandInvoked.setLength(0);
-				for (int i = 0; i < commandWordCount; ++i) {
-					if (lastCommandInvoked.length() > 0)
-						lastCommandInvoked.append(" ");
-					lastCommandInvoked.append(commandWords[i]);
-				}
-				continue;
-			} catch (Exception e) {
-				// e.printStackTrace();
-				// err.println();
-				if (e.getCause() != null)
-					onException(e.getCause());
-				else
-					e.printStackTrace();
-			}
-			return true;
-		}
+        for (Method m : getConsoleMethods())
+        {
+            methodName = m.getName();
+            ann = m.getAnnotation(ConsoleCommand.class);
 
-		if (lastMethodInvoked != null)
-			syntaxError(lastCommandInvoked.toString(), lastMethodInvoked);
+            StringBuilder commandName = new StringBuilder();
+            char ch;
+            int commandWordCount = 1;
+            for (int i = 0; i < methodName.length(); ++i)
+            {
+                ch = methodName.charAt(i);
+                if (Character.isUpperCase(ch))
+                {
+                    commandName.append(" ");
+                    ch = Character.toLowerCase(ch);
+                    commandWordCount++;
+                }
+                commandName.append(ch);
+            }
 
-		out.println("!Unrecognized command: " + iCommand);
-		return true;
-	}
+            if (!iCommand.startsWith(commandName.toString()))
+            {
+                if (ann == null)
+                    continue;
 
-	protected void syntaxError(String iCommand, Method m) {
-		out.print("!Wrong syntax. Expected: " + iCommand + " ");
+                String[] aliases = ann.aliases();
+                if (aliases == null || aliases.length == 0)
+                    continue;
 
-		String paramName = null;
-		String paramDescription = null;
+                boolean aliasMatch = false;
+                for (String alias : aliases)
+                {
+                    if (iCommand.startsWith(alias.split(" ")[0]))
+                    {
+                        aliasMatch = true;
+                        commandWordCount = 1;
+                        break;
+                    }
+                }
 
-		StringBuilder buffer = new StringBuilder("\n\nWhere:\n\n");
-		for (Annotation[] annotations : m.getParameterAnnotations()) {
-			for (Annotation ann : annotations) {
-				if (ann instanceof com.orientechnologies.common.console.annotation.ConsoleParameter) {
-					paramName = ((com.orientechnologies.common.console.annotation.ConsoleParameter) ann).name();
-					paramDescription = ((com.orientechnologies.common.console.annotation.ConsoleParameter) ann).description();
-					break;
-				}
-			}
+                if (!aliasMatch)
+                    continue;
+            }
 
-			if (paramName == null)
-				paramName = "?";
+            Object[] methodArgs;
 
-			out.print("<" + paramName + "> ");
+            // BUILD PARAMETERS
+            if (ann != null && !ann.splitInWords())
+            {
+                methodArgs = new String[]{iCommand.substring(iCommand.indexOf(" ") + 1)};
+            }
+            else
+            {
+                methodArgs = OArrays.copyOfRange(commandWords, commandWordCount, commandWords.length);
+            }
 
-			buffer.append("* ");
-			buffer.append(String.format("%-15s", paramName));
+            try
+            {
+                m.invoke(this, methodArgs);
 
-			if (paramDescription != null)
-				buffer.append(String.format("%-15s", paramDescription));
-			buffer.append("\n");
-		}
+            }
+            catch (IllegalArgumentException e)
+            {
+                lastMethodInvoked = m;
+                // GET THE COMMAND NAME
+                lastCommandInvoked.setLength(0);
+                for (int i = 0; i < commandWordCount; ++i)
+                {
+                    if (lastCommandInvoked.length() > 0)
+                        lastCommandInvoked.append(" ");
+                    lastCommandInvoked.append(commandWords[i]);
+                }
+                continue;
+            }
+            catch (Exception e)
+            {
+                // e.printStackTrace();
+                // err.println();
+                if (e.getCause() != null)
+                    onException(e.getCause());
+                else
+                    e.printStackTrace();
+            }
+            return true;
+        }
 
-		out.println(buffer);
-	}
+        if (lastMethodInvoked != null)
+            syntaxError(lastCommandInvoked.toString(), lastMethodInvoked);
 
-	protected List<Method> getConsoleMethods() {
-		final Method[] methods = getClass().getDeclaredMethods();
+        out.println("!Unrecognized command: " + iCommand);
+        return true;
+    }
 
-		final List<Method> consoleMethods = new ArrayList<Method>();
+    protected void syntaxError(String iCommand, Method m)
+    {
+        out.print("!Wrong syntax. Expected: " + iCommand + " ");
 
-		for (Method m : methods) {
-			if (Modifier.isAbstract(m.getModifiers()) || Modifier.isStatic(m.getModifiers()) || !Modifier.isPublic(m.getModifiers()))
-				continue;
+        String paramName = null;
+        String paramDescription = null;
 
-			if (m.getReturnType() != Void.TYPE)
-				continue;
+        StringBuilder buffer = new StringBuilder("\n\nWhere:\n\n");
+        for (Annotation[] annotations : m.getParameterAnnotations())
+        {
+            for (Annotation ann : annotations)
+            {
+                if (ann instanceof com.orientechnologies.common.console.annotation.ConsoleParameter)
+                {
+                    paramName = ((com.orientechnologies.common.console.annotation.ConsoleParameter) ann).name();
+                    paramDescription = ((com.orientechnologies.common.console.annotation.ConsoleParameter) ann).description();
+                    break;
+                }
+            }
 
-			consoleMethods.add(m);
-		}
+            if (paramName == null)
+                paramName = "?";
 
-		return consoleMethods;
-	}
+            out.print("<" + paramName + "> ");
 
-	protected void help() {
-		out.println();
-		out.println("AVAILABLE COMMANDS:");
-		out.println();
+            buffer.append("* ");
+            buffer.append(String.format("%-15s", paramName));
 
-		for (Method m : getConsoleMethods()) {
-			com.orientechnologies.common.console.annotation.ConsoleCommand annotation = m
-					.getAnnotation(com.orientechnologies.common.console.annotation.ConsoleCommand.class);
+            if (paramDescription != null)
+                buffer.append(String.format("%-15s", paramDescription));
+            buffer.append("\n");
+        }
 
-			if (annotation == null)
-				continue;
+        out.println(buffer);
+    }
 
-			System.out.print(String.format("* %-20s%s\n", getClearName(m.getName()), annotation.description()));
-		}
-		System.out.print(String.format("* %-20s%s\n", getClearName("help"), "Print this help"));
-		System.out.print(String.format("* %-20s%s\n", getClearName("exit"), "Close the console"));
+    protected List<Method> getConsoleMethods()
+    {
+        final Method[] methods = getClass().getDeclaredMethods();
 
-	}
+        final List<Method> consoleMethods = new ArrayList<Method>();
 
-	public static String getClearName(String iJavaName) {
-		StringBuilder buffer = new StringBuilder();
+        for (Method m : methods)
+        {
+            if (Modifier.isAbstract(m.getModifiers()) || Modifier.isStatic(m.getModifiers()) || !Modifier.isPublic(m.getModifiers()))
+                continue;
 
-		char c;
-		if (iJavaName != null) {
-			buffer.append(iJavaName.charAt(0));
-			for (int i = 1; i < iJavaName.length(); ++i) {
-				c = iJavaName.charAt(i);
+            if (m.getReturnType() != Void.TYPE)
+                continue;
 
-				if (Character.isUpperCase(c)) {
-					buffer.append(' ');
-				}
+            consoleMethods.add(m);
+        }
 
-				buffer.append(Character.toLowerCase(c));
-			}
+        return consoleMethods;
+    }
 
-		}
-		return buffer.toString();
-	}
+    protected void help()
+    {
+        out.println();
+        out.println("AVAILABLE COMMANDS:");
+        out.println();
 
-	protected String getCommandLine(String[] iArguments) {
-		StringBuilder command = new StringBuilder();
-		for (int i = 0; i < iArguments.length; ++i) {
-			if (i > 0)
-				command.append(" ");
+        for (Method m : getConsoleMethods())
+        {
+            com.orientechnologies.common.console.annotation.ConsoleCommand annotation = m
+                    .getAnnotation(com.orientechnologies.common.console.annotation.ConsoleCommand.class);
 
-			command.append(iArguments[i]);
-		}
-		return command.toString();
-	}
+            if (annotation == null)
+                continue;
 
-	protected void onBefore() {
-	}
+            System.out.print(String.format("* %-20s%s\n", getClearName(m.getName()), annotation.description()));
+        }
+        System.out.print(String.format("* %-20s%s\n", getClearName("help"), "Print this help"));
+        System.out.print(String.format("* %-20s%s\n", getClearName("exit"), "Close the console"));
 
-	protected void onAfter() {
-	}
+    }
 
-	protected void onException(Throwable throwable) {
-		throwable.printStackTrace();
-	}
+    public static String getClearName(String iJavaName)
+    {
+        StringBuilder buffer = new StringBuilder();
+
+        char c;
+        if (iJavaName != null)
+        {
+            buffer.append(iJavaName.charAt(0));
+            for (int i = 1; i < iJavaName.length(); ++i)
+            {
+                c = iJavaName.charAt(i);
+
+                if (Character.isUpperCase(c))
+                {
+                    buffer.append(' ');
+                }
+
+                buffer.append(Character.toLowerCase(c));
+            }
+
+        }
+        return buffer.toString();
+    }
+
+    protected String getCommandLine(String[] iArguments)
+    {
+        StringBuilder command = new StringBuilder();
+        for (int i = 0; i < iArguments.length; ++i)
+        {
+            if (i > 0)
+                command.append(" ");
+
+            command.append(iArguments[i]);
+        }
+        return command.toString();
+    }
+
+    protected void onBefore()
+    {
+    }
+
+    protected void onAfter()
+    {
+    }
+
+    protected void onException(Throwable throwable)
+    {
+        throwable.printStackTrace();
+    }
 }
