@@ -186,7 +186,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
 		if (errorReason == null)
 			errorReason = OHttpUtils.STATUS_ERROR_DESCRIPTION;
-		
+
 		if (errorMessage == null) {
 			// FORMAT GENERIC MESSAGE BY READING THE EXCEPTION STACK
 			final StringBuilder buffer = new StringBuilder();
@@ -327,7 +327,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 				// END OF HEADERS
 				byte[] buffer = new byte[contentLength];
 				buffer[0] = (byte) currChar;
-				channel.inStream.read(buffer, 1, contentLength - 1);
+
+				channel.read(buffer, 1, contentLength - 1);
 
 				iRequest.content = new String(buffer);
 				return;

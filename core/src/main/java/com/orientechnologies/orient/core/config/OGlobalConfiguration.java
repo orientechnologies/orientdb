@@ -82,7 +82,7 @@ public enum OGlobalConfiguration {
 			Integer.class, 500),
 
 	NETWORK_HTTP_MAX_CONTENT_LENGTH("network.http.maxLength", "TCP/IP max content length in Kb of HTTP requests", Integer.class,
-			10000),
+			100000),
 
 	PROFILER_ENABLED("profiler.enabled", "Enable the recording of statistics and counters", Boolean.class, false),
 
