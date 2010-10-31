@@ -174,6 +174,10 @@ public class OSQLFilter extends OCommandToParse {
 	}
 
 	private OQueryOperator extractConditionOperator() {
+		if (currentPos >= text.length())
+			// END OF PARSING: JUST RETURN
+			return null;
+
 		String word;
 		word = nextWord(true, " 0123456789'\"");
 

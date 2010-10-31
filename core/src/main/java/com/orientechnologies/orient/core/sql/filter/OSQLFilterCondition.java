@@ -55,6 +55,10 @@ public class OSQLFilterCondition {
 			r = convertedValues[1];
 		}
 
+		if (operator == null)
+			// UNITARY OPERATOR: JUST RETURN LEFT RESULT
+			return l;
+
 		return operator.evaluateRecord(iRecord, this, l, r);
 	}
 
@@ -137,11 +141,13 @@ public class OSQLFilterCondition {
 
 		buffer.append('(');
 		buffer.append(left);
-		buffer.append(' ');
-		buffer.append(operator);
-		buffer.append(' ');
-		buffer.append(right);
-		buffer.append(')');
+		if (operator != null) {
+			buffer.append(' ');
+			buffer.append(operator);
+			buffer.append(' ');
+			buffer.append(right);
+			buffer.append(')');
+		}
 
 		return buffer.toString();
 	}
