@@ -61,7 +61,7 @@ public class SQLSelectTest {
 
 		List<ODocument> result = database.command(
 				new OSQLSynchQuery<ODocument>(
-						"  select from Profile where name = 'Giuseppe' and ( name <> 'Napoleone' and nick is not null )   "))
+						"  select from Profile where ( name = 'Giuseppe' and ( name <> 'Napoleone' and nick is not null ))  "))
 				.execute();
 
 		Assert.assertTrue(result.size() != 0);

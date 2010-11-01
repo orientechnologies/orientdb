@@ -167,15 +167,17 @@ public class OSQLFilter extends OCommandToParse {
 			// END OF TEXT
 			return null;
 
-		braces = 0;
-
 		// CREATE THE CONDITION OBJECT
 		return new OSQLFilterCondition(extractConditionItem(), extractConditionOperator(), extractConditionItem());
 	}
 
 	private OQueryOperator extractConditionOperator() {
-		if (currentPos >= text.length())
+		if (!jumpWhiteSpaces())
 			// END OF PARSING: JUST RETURN
+			return null;
+
+		if (text.charAt(currentPos) == ')')
+			// FOUND ')': JUST RETURN
 			return null;
 
 		String word;
@@ -220,11 +222,9 @@ public class OSQLFilter extends OCommandToParse {
 			// OSQLFilterCondition subCondition = new OSQLFilterCondition(extractConditionItem(), extractConditionOperator(),
 			// extractConditionItem());
 
-			jumpWhiteSpaces();
-
+			if (!jumpWhiteSpaces() || text.charAt(currentPos) == ')')
+				braces--;
 			currentPos++;
-
-			braces--;
 
 			return subCondition;
 		} else if (words[0].charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN) {
