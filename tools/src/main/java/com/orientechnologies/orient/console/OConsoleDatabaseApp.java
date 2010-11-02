@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAwareAbstract;
@@ -69,32 +70,27 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 	protected List<ORecordInternal<?>>	currentResultSet;
 	protected OServerAdmin							srvAdmin;
 	private int													lastPercentStep;
-	
-    
+
 	public static void main(String[] args) {
-	    try{
-	        boolean tty = false;
-	        try
-            {
-	            if(setTerminalToCBreak()) {
-	                tty = true;
-	            }
-            }
-            catch (Exception e)
-            {
-            }
-            OConsoleDatabaseApp console = new OConsoleDatabaseApp(args);
-            if(tty){
-                console.setReader(new TTYConsoleReader());
-            }
-            console.run();
-	    }finally{
-	        try {
-	            stty("echo");
-             }
-             catch (Exception e) {
-             }
-	    }
+		try {
+			boolean tty = false;
+			try {
+				if (setTerminalToCBreak()) {
+					tty = true;
+				}
+			} catch (Exception e) {
+			}
+			OConsoleDatabaseApp console = new OConsoleDatabaseApp(args);
+			if (tty) {
+				console.setReader(new TTYConsoleReader());
+			}
+			console.run();
+		} finally {
+			try {
+				stty("echo");
+			} catch (Exception e) {
+			}
+		}
 	}
 
 	public OConsoleDatabaseApp(String[] args) {
@@ -164,8 +160,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		if (iDatabaseURL.startsWith(OEngineRemote.NAME)) {
 			// REMOTE CONNECTION
 			final String dbURL = iDatabaseURL.substring(OEngineRemote.NAME.length() + 1);
-			new OServerAdmin(dbURL).connect().createDatabase(iStorageType).close();
-			connect(iDatabaseURL, iUserName, iUserPassword);
+			new OServerAdmin(dbURL).connect(iUserName, iUserPassword).createDatabase(iStorageType).close();
+			connect(iDatabaseURL, OUser.ADMIN, OUser.ADMIN);
 
 		} else {
 			// LOCAL CONNECTION
@@ -927,65 +923,50 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		else
 			out.print(iSucceed ? "] Done." : " Error!");
 	}
-	
-	
-	
-	
-	
 
-	
-	
-    private static boolean setTerminalToCBreak() throws IOException, InterruptedException {
-        // set the console to be character-buffered instead of line-buffered
-        int result = stty("-icanon min 1");
-        if(result != 0){
-            return false;
-        }
+	private static boolean setTerminalToCBreak() throws IOException, InterruptedException {
+		// set the console to be character-buffered instead of line-buffered
+		int result = stty("-icanon min 1");
+		if (result != 0) {
+			return false;
+		}
 
-        // disable character echoing
-        stty("-echo");
-        return true;
-    }
+		// disable character echoing
+		stty("-echo");
+		return true;
+	}
 
-    /**
-     *  Execute the stty command with the specified arguments
-     *  against the current active terminal.
-     */
-    private static int stty(final String args)
-                    throws IOException, InterruptedException {
-        String cmd = "stty " + args + " < /dev/tty";
+	/**
+	 * Execute the stty command with the specified arguments against the current active terminal.
+	 */
+	private static int stty(final String args) throws IOException, InterruptedException {
+		String cmd = "stty " + args + " < /dev/tty";
 
-        return exec(new String[] {
-                    "sh",
-                    "-c",
-                    cmd
-                });
-    }
+		return exec(new String[] { "sh", "-c", cmd });
+	}
 
-    /**
-     *  Execute the specified command and return the output
-     *  (both stdout and stderr).
-     */
-    private static int exec(final String[] cmd)
-                    throws IOException, InterruptedException {
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+	/**
+	 * Execute the specified command and return the output (both stdout and stderr).
+	 */
+	private static int exec(final String[] cmd) throws IOException, InterruptedException {
+		ByteArrayOutputStream bout = new ByteArrayOutputStream();
 
-        Process p = Runtime.getRuntime().exec(cmd);
-        int c;
-        InputStream in = p.getInputStream();
+		Process p = Runtime.getRuntime().exec(cmd);
+		int c;
+		InputStream in = p.getInputStream();
 
-        while ((c = in.read()) != -1) {
-            bout.write(c);
-        }
+		while ((c = in.read()) != -1) {
+			bout.write(c);
+		}
 
-        in = p.getErrorStream();
+		in = p.getErrorStream();
 
-        while ((c = in.read()) != -1) {
-            bout.write(c);
-        }
+		while ((c = in.read()) != -1) {
+			bout.write(c);
+		}
 
-        p.waitFor();
+		p.waitFor();
 
-        return p.exitValue();
-    }
+		return p.exitValue();
+	}
 }

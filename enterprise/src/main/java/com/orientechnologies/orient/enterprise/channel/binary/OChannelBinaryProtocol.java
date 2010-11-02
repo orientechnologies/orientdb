@@ -19,13 +19,14 @@ public class OChannelBinaryProtocol {
 	public static final int		CURRENT_VERSION					= 0;
 
 	// COMMANDS
-	public static final short	SHUTDOWN								= 1;
-	public static final short	CONNECT									= 2;
+	public static final byte	SHUTDOWN								= 1;
+	public static final byte	CONNECT									= 2;
 
 	public static final byte	DB_OPEN									= 5;
 	public static final byte	DB_CREATE								= 6;
 	public static final byte	DB_CLOSE								= 7;
 	public static final byte	DB_EXIST								= 8;
+	public static final byte	DB_DELETE								= 9;
 
 	public static final byte	DATACLUSTER_ADD					= 10;
 	public static final byte	DATACLUSTER_REMOVE			= 11;

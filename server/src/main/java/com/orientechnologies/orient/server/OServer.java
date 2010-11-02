@@ -122,7 +122,7 @@ public class OServer {
 			return;
 
 		running = false;
-		
+
 		OLogManager.instance().info(this, "Orient Database Server is shutdowning...");
 
 		try {
@@ -181,9 +181,9 @@ public class OServer {
 	 * @return true if authentication is ok, otherwise false
 	 */
 	public boolean authenticate(final String iUserName, final String iPassword, final String iResourceToCheck) {
-		final OServerUserConfiguration user = configuration.getUser(iUserName);
+		final OServerUserConfiguration user = getUser(iUserName);
 
-		if (user != null && user.password.equals(iPassword)) {
+		if (user != null && (iPassword == null || user.password.equals(iPassword))) {
 			if (user.resources.equals("*"))
 				// ACCESS TO ALL
 				return true;
@@ -196,6 +196,10 @@ public class OServer {
 
 		// WRONG PASSWORD OR NO AUTHORIZATION
 		return false;
+	}
+
+	public OServerUserConfiguration getUser(final String iUserName) {
+		return configuration.getUser(iUserName);
 	}
 
 	public boolean existsStoragePath(final String iURL) {

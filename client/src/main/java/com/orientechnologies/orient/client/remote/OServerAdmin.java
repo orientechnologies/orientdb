@@ -29,6 +29,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
  */
 public class OServerAdmin {
 	private OStorageRemote	storage;
+	private int							clientId;
 
 	/**
 	 * Creates the object passing a remote URL to connect.
@@ -53,9 +54,25 @@ public class OServerAdmin {
 		storage = iStorage;
 	}
 
-	public OServerAdmin connect() throws IOException {
+	public OServerAdmin connect(final String iUserName, final String iUserPassword) throws IOException {
 		storage.parseServerURLs();
 		storage.createNetworkConnection();
+
+		try {
+			storage.writeCommand(OChannelBinaryProtocol.CONNECT);
+			storage.getNetwork().writeString(iUserName);
+			storage.getNetwork().writeString(iUserPassword);
+			storage.getNetwork().flush();
+
+			storage.readStatus();
+
+			clientId = storage.getNetwork().readInt();
+
+		} catch (Exception e) {
+			OLogManager.instance().error(this, "Can't create the remote storage: " + storage.getName(), e, OStorageException.class);
+			storage.close();
+		}
+
 		return this;
 	}
 
@@ -69,12 +86,27 @@ public class OServerAdmin {
 			storage.writeCommand(OChannelBinaryProtocol.DB_CREATE);
 			storage.getNetwork().writeString(storage.getName());
 			storage.getNetwork().writeString(iStorageMode);
-			storage.getNetwork().flush();
 
 			storage.readStatus();
 
 		} catch (Exception e) {
 			OLogManager.instance().error(this, "Can't create the remote storage: " + storage.getName(), e, OStorageException.class);
+			storage.close();
+		}
+		return this;
+	}
+
+	public OServerAdmin deleteDatabase() throws IOException {
+		storage.checkConnection();
+
+		try {
+			storage.writeCommand(OChannelBinaryProtocol.DB_DELETE);
+			storage.getNetwork().writeString(storage.getName());
+
+			storage.readStatus();
+
+		} catch (Exception e) {
+			OLogManager.instance().error(this, "Can't delete the remote storage: " + storage.getName(), e, OStorageException.class);
 			storage.close();
 		}
 		return this;

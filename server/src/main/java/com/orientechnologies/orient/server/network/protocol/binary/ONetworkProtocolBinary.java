@@ -67,6 +67,7 @@ import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
+import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.handler.OServerHandler;
 import com.orientechnologies.orient.server.handler.cluster.OClusterNode;
 import com.orientechnologies.orient.server.handler.cluster.OClusterRecordHook;
@@ -75,15 +76,16 @@ import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 import com.orientechnologies.orient.server.tx.OTransactionRecordProxy;
 
 public class ONetworkProtocolBinary extends ONetworkProtocol {
-	protected OClientConnection	connection;
-	protected OChannelBinary		channel;
-	protected OUser							account;
+	protected OClientConnection				connection;
+	protected OChannelBinary					channel;
+	protected OUser										account;
 
-	protected String						user;
-	protected String						passwd;
-	protected ODatabaseRaw			underlyingDatabase;
-	protected int								commandType;
-	protected int								clientTxId;
+	protected String									user;
+	protected String									passwd;
+	protected ODatabaseRaw						underlyingDatabase;
+	protected int											commandType;
+	protected int											clientTxId;
+	private OServerUserConfiguration	serverUser;
 
 	public ONetworkProtocolBinary() {
 		super(OServer.getThreadGroup(), "Binary-DB");
@@ -180,8 +182,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		case OChannelBinaryProtocol.CONNECT: {
 			data.commandInfo = "Connect";
 
-			user = channel.readString();
-			passwd = channel.readString();
+			serverLogin(channel.readString(), channel.readString());
+
 			sendOk(clientTxId);
 			channel.writeInt(connection.id);
 			break;
@@ -236,6 +238,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			String dbName = channel.readString();
 			String storageMode = channel.readString();
+
+			checkServerAccess("database.create");
 
 			final String path;
 
@@ -690,6 +694,23 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			channel.clearInput();
 			sendError(clientTxId, null);
 		}
+	}
+
+	private void serverLogin(final String iUser, final String iPassword) {
+		if (!OServerMain.server().authenticate(iUser, iPassword, "connect"))
+			throw new OSecurityAccessException(
+					"Wrong user/password to [connect] to the remote OrientDB Server instance. Get the user/password from the config/orientdb-server-config.xml file");
+
+		serverUser = OServerMain.server().getUser(iUser);
+	}
+
+	private void checkServerAccess(final String iResource) {
+		if (serverUser == null)
+			throw new OSecurityAccessException("Server user not authenticated.");
+
+		if (!OServerMain.server().authenticate(serverUser.name, null, iResource))
+			throw new OSecurityAccessException("User '" + serverUser.name + "' can't access to the resource [" + iResource
+					+ "]. Use another server user or change permission in the file config/orientdb-server-config.xml");
 	}
 
 	@Override
