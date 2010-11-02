@@ -56,10 +56,11 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 	}
 
 	public ORecordBytes copy() {
-		ORecordBytes cloned = new ORecordBytes();
+		final ORecordBytes cloned = new ORecordBytes();
 		cloned._source = _source;
 		cloned._database = _database;
 		cloned._recordId = _recordId.copy();
+		cloned._version = _version;
 		return cloned;
 	}
 

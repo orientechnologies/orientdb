@@ -15,10 +15,10 @@
  */
 package com.orientechnologies.orient.core.serialization;
 
-import java.io.IOException;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 
 public interface OSerializableStream {
-	public byte[] toStream() throws IOException;
+	public byte[] toStream() throws OSerializationException;
 
-	public OSerializableStream fromStream(byte[] iStream) throws IOException;
+	public OSerializableStream fromStream(byte[] iStream) throws OSerializationException;
 }

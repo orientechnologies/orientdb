@@ -26,12 +26,60 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.record.impl.ORecordBytesLazy;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.core.serialization.OMemoryOutputStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
+import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 
+/**
+ * 
+ * Serialized as:
+ * <table>
+ * <tr>
+ * <td>FROM</td>
+ * <td>TO</td>
+ * <td>FIELD</td>
+ * </tr>
+ * <tr>
+ * <td>00</td>
+ * <td>02</td>
+ * <td>PAGE SIZE</td>
+ * </tr>
+ * <tr>
+ * <td>02</td>
+ * <td>12</td>
+ * <td>PARENT RID</td>
+ * </tr>
+ * <tr>
+ * <td>12</td>
+ * <td>22</td>
+ * <td>LEFT RID</td>
+ * </tr>
+ * <tr>
+ * <td>22</td>
+ * <td>32</td>
+ * <td>RIGHT RID</td>
+ * </tr>
+ * <tr>
+ * <td>32</td>
+ * <td>33</td>
+ * <td>COLOR</td>
+ * </tr>
+ * <tr>
+ * <td>33</td>
+ * <td>35</td>
+ * <td>SIZE</td>
+ * </tr>
+ * </table>
+ * VARIABLE
+ * 
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * 
+ * @param <K>
+ * @param <V>
+ */
 @SuppressWarnings("unchecked")
 public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> implements OSerializableStream {
 	protected OTreeMapPersistent<K, V>			pTree;
@@ -43,7 +91,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	protected ORID													leftRid;
 	protected ORID													rightRid;
 
-	public ORecordBytes											record;
+	public ORecordBytesLazy									record;
 
 	protected OTreeMapEntryPersistent<K, V>	parent;
 	protected OTreeMapEntryPersistent<K, V>	left;
@@ -61,7 +109,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	public OTreeMapEntryPersistent(final OTreeMapEntry<K, V> iParent, final int iPosition) {
 		super(iParent, iPosition);
 		pTree = (OTreeMapPersistent<K, V>) tree;
-		record = new ORecordBytes();
+		record = new ORecordBytesLazy(this);
 
 		setParent(iParent);
 
@@ -97,9 +145,11 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 			final ORID iRecordId) throws IOException {
 		super(iTree);
 		pTree = iTree;
-		record = new ORecordBytes();
-		record.setIdentity(iRecordId.getClusterId(), iRecordId.getClusterPosition());
-		setParent(iParent);
+		record = new ORecordBytesLazy(this);
+		record.setIdentity((ORecordId) iRecordId);
+
+		parent = (OTreeMapEntryPersistent<K, V>) iParent;
+		parentRid = iParent == null ? ORecordId.EMPTY_RECORD_ID : parent.record.getIdentity();
 	}
 
 	public OTreeMapEntryPersistent(final OTreeMapPersistent<K, V> iTree, final K key, final V value,
@@ -111,7 +161,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 		leftRid = new ORecordId();
 		rightRid = new ORecordId();
 
-		record = new ORecordBytes();
+		record = new ORecordBytesLazy(this);
 
 		pageSize = pTree.getPageSize();
 
@@ -132,8 +182,8 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	public OTreeMapEntryPersistent<K, V> delete() throws IOException {
 		pTree.removeEntryPoint(this);
 
-		if (record.getIdentity().isValid())
-			pTree.cache.remove(record.getIdentity());
+		// if (record.getIdentity().isValid())
+		// pTree.cache.remove(record.getIdentity());
 
 		// DELETE THE NODE FROM THE PENDING RECORDS TO COMMIT
 		for (OTreeMapEntryPersistent<K, V> node : pTree.recordsToCommit) {
@@ -147,10 +197,28 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 
 	/**
 	 * Disconnect the current node from others.
+	 * 
+	 * @param iForceDirty
+	 *          Force disconnection also if the record it's dirty
 	 */
-	protected int disconnectLinked(final boolean iForceDirty) {
-		int disconnected = 0;
+	protected int disconnect(final boolean iForceDirty) {
+		if (!iForceDirty && record.isDirty())
+			// DIRTY NODE
+			return 0;
 
+		int disconnected = 1;
+
+		if (this != tree.getRoot()) {
+			// SPEED UP MEMORY CLAIM BY RESETTING INTERNAL FIELDS
+			keys = null;
+			values = null;
+			serializedKeys = null;
+			serializedValues = null;
+			pTree = null;
+			record = null;
+		}
+
+		// DISCONNECT FROM THE PARENT
 		if (parent != null) {
 			if (parent.left == this) {
 				parent.left = null;
@@ -160,17 +228,19 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 			parent = null;
 		}
 
+		// DISCONNECT RECURSIVELY THE LEFT NODE
 		if (left != null) {
 			// DISCONNECT MYSELF FROM THE LEFT NODE
 			left.parent = null;
-			disconnected += left.disconnectLinked(iForceDirty);
+			disconnected += left.disconnect(iForceDirty);
 			left = null;
 		}
 
+		// DISCONNECT RECURSIVELY THE RIGHT NODE
 		if (right != null) {
 			// DISCONNECT MYSELF FROM THE RIGHT NODE
 			right.parent = null;
-			disconnected += right.disconnectLinked(iForceDirty);
+			disconnected += right.disconnect(iForceDirty);
 			right = null;
 		}
 
@@ -184,20 +254,20 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	 * 
 	 * @param iSource
 	 */
-	protected int disconnect(final int iDepthLevel) {
-		if (record == null || this == pTree.getRoot())
+	protected int checkToDisconnect(final int iDepthLevel) {
+		if (record == null || record.isDirty())
 			// DIRTY NODE OR IS ROOT
 			return 0;
 
 		int freed = 0;
 
-		if (getDepthInMemory() >= iDepthLevel)
-			freed = disconnectLinked(false);
+		if (iDepthLevel == -1 || getDepthInMemory() >= iDepthLevel)
+			freed = disconnect(false);
 		else {
 			if (left != null)
-				freed += left.disconnect(iDepthLevel);
+				freed += left.checkToDisconnect(iDepthLevel);
 			if (right != null)
-				freed += right.disconnect(iDepthLevel);
+				freed += right.checkToDisconnect(iDepthLevel);
 		}
 
 		return freed;
@@ -267,7 +337,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 			markDirty();
 
 			this.parent = (OTreeMapEntryPersistent<K, V>) iParent;
-			this.parentRid = iParent == null ? ORecordId.EMPTY_RECORD_ID : new ORecordId(parent.record.getIdentity());
+			this.parentRid = iParent == null ? ORecordId.EMPTY_RECORD_ID : parent.record.getIdentity();
 
 			if (parent != null) {
 				if (parent.left == this && !parent.leftRid.equals(record.getIdentity()))
@@ -310,7 +380,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 		left = (OTreeMapEntryPersistent<K, V>) iLeft;
 		// if (left == null || !left.record.getIdentity().isValid() || !left.record.getIdentity().equals(leftRid)) {
 		markDirty();
-		this.leftRid = iLeft == null ? ORecordId.EMPTY_RECORD_ID : new ORecordId(left.record.getIdentity());
+		this.leftRid = iLeft == null ? ORecordId.EMPTY_RECORD_ID : left.record.getIdentity();
 		// }
 
 		if (iLeft != null && iLeft.getParent() != this)
@@ -345,7 +415,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 		right = (OTreeMapEntryPersistent<K, V>) iRight;
 		// if (right == null || !right.record.getIdentity().isValid() || !right.record.getIdentity().equals(rightRid)) {
 		markDirty();
-		rightRid = iRight == null ? ORecordId.EMPTY_RECORD_ID : new ORecordId(right.record.getIdentity());
+		rightRid = iRight == null ? ORecordId.EMPTY_RECORD_ID : right.record.getIdentity();
 		// }
 
 		if (iRight != null && iRight.getParent() != this)
@@ -392,9 +462,9 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 		left = source.left;
 		right = source.right;
 
-		parentRid = new ORecordId(source.parentRid);
-		leftRid = new ORecordId(source.leftRid);
-		rightRid = new ORecordId(source.rightRid);
+		parentRid = source.parentRid;
+		leftRid = source.leftRid;
+		rightRid = source.rightRid;
 
 		serializedKeys = new byte[source.serializedKeys.length][];
 		for (int i = 0; i < source.serializedKeys.length; ++i)
@@ -538,7 +608,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 		return p;
 	}
 
-	public final OSerializableStream fromStream(final byte[] iStream) throws IOException {
+	public final OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		final OMemoryInputStream buffer = new OMemoryInputStream(iStream);
@@ -577,6 +647,8 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 			values = (V[]) new Object[pageSize];
 
 			return this;
+		} catch (IOException e) {
+			throw new OSerializationException("Can't unmarshall RB+Tree node", e);
 		} finally {
 			buffer.close();
 
@@ -584,7 +656,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 		}
 	}
 
-	public final byte[] toStream() throws IOException {
+	public final byte[] toStream() throws OSerializationException {
 		// CHECK IF THE RECORD IS PENDING TO BE MARSHALLED
 		final Integer identityRecord = System.identityHashCode(record);
 		final Set<Integer> marshalledRecords = OSerializationThreadLocal.INSTANCE.get();
@@ -595,23 +667,29 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 		} else
 			marshalledRecords.add(identityRecord);
 
-		if (parent != null && !parentRid.isValid()) {
-			if (parent.record.getIdentity().isNew())
-				((OTreeMapEntryDatabase<K, V>) parent).save();
+		if (parent != null && parentRid.isNew()) {
+			// FORCE DIRTY
+			parent.record.setDirty();
+
+			((OTreeMapEntryDatabase<K, V>) parent).save();
 			parentRid = parent.record.getIdentity();
 			record.setDirty();
 		}
 
-		if (left != null && !leftRid.isValid()) {
-			if (left.record.getIdentity().isNew())
-				((OTreeMapEntryDatabase<K, V>) left).save();
+		if (left != null && leftRid.isNew()) {
+			// FORCE DIRTY
+			left.record.setDirty();
+
+			((OTreeMapEntryDatabase<K, V>) left).save();
 			leftRid = left.record.getIdentity();
 			record.setDirty();
 		}
 
-		if (right != null && !rightRid.isValid()) {
-			if (right.record.getIdentity().isNew())
-				((OTreeMapEntryDatabase<K, V>) right).save();
+		if (right != null && rightRid.isNew()) {
+			// FORCE DIRTY
+			right.record.setDirty();
+
+			((OTreeMapEntryDatabase<K, V>) right).save();
 			rightRid = right.record.getIdentity();
 			record.setDirty();
 		}
@@ -643,6 +721,8 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 
 			record.fromStream(stream.getByteArray());
 			return record.toStream();
+		} catch (IOException e) {
+			throw new OSerializationException("Can't marshall RB+Tree node", e);
 		} finally {
 			stream.close();
 
@@ -692,33 +772,33 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	}
 
 	private void markDirty() {
-		if (record == null || record.isDirty())
+		if (record == null)
 			return;
 
 		record.setDirty();
 		tree.getListener().signalNodeChanged(this);
 	}
 
-	@Override
-	public boolean equals(final Object o) {
-		if (this == o)
-			return true;
-		if (!(o instanceof OTreeMapEntryPersistent<?, ?>))
-			return false;
-
-		final OTreeMapEntryPersistent<?, ?> e = (OTreeMapEntryPersistent<?, ?>) o;
-
-		if (record != null && e.record != null)
-			return record.getIdentity().equals(e.record.getIdentity());
-
-		return false;
-	}
-
-	@Override
-	public int hashCode() {
-		final ORID rid = record.getIdentity();
-		return rid == null ? 0 : rid.hashCode();
-	}
+	// @Override
+	// public boolean equals(final Object o) {
+	// if (this == o)
+	// return true;
+	// if (!(o instanceof OTreeMapEntryPersistent<?, ?>))
+	// return false;
+	//
+	// final OTreeMapEntryPersistent<?, ?> e = (OTreeMapEntryPersistent<?, ?>) o;
+	//
+	// if (record != null && e.record != null)
+	// return record.getIdentity().equals(e.record.getIdentity());
+	//
+	// return false;
+	// }
+	//
+	// @Override
+	// public int hashCode() {
+	// final ORID rid = record.getIdentity();
+	// return rid == null ? 0 : rid.hashCode();
+	// }
 
 	@Override
 	protected OTreeMapEntry<K, V> getLeftInMemory() {
@@ -740,30 +820,36 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	 * 
 	 * @param iMarshalledRecords
 	 */
-	protected boolean assureIntegrityOfReferences() throws IOException {
+	protected void flush2Record() throws OSerializationException {
 		if (!record.isDirty())
-			return true;
+			return;
 
 		final boolean isNew = record.getIdentity().isNew();
 
-		toStream();
-		record.save(pTree.getClusterName());
+		// toStream();
+
+		if (record.isDirty())
+			// SAVE IF IT'S DIRTY YET
+			record.save(pTree.getClusterName());
 
 		// RE-ASSIGN RID
 		if (isNew) {
+			final ORecordId rid = (ORecordId) record.getIdentity();
+
 			if (left != null)
-				left.parentRid = record.getIdentity();
+				left.parentRid = rid;
+
 			if (right != null)
-				right.parentRid = record.getIdentity();
+				right.parentRid = rid;
+
 			if (parent != null) {
+				parentRid = parent.record.getIdentity();
 				if (parent.left == this)
-					parent.leftRid = record.getIdentity();
+					parent.leftRid = rid;
 				else if (parent.right == this)
-					parent.rightRid = record.getIdentity();
+					parent.rightRid = rid;
 			}
 		}
-
-		return true;
 	}
 
 	@Override

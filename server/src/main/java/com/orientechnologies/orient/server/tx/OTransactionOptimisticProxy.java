@@ -64,28 +64,28 @@ public class OTransactionOptimisticProxy extends OTransactionAbstract<OTransacti
 							OTransactionEntryProxy entry = new OTransactionEntryProxy();
 
 							if (entries.size() < size) {
-								final ORecordId rid = (ORecordId) entry.record.getIdentity();
+								final ORecordId rid = (ORecordId) entry.getRecord().getIdentity();
 
 								entry.status = channel.readByte();
 								rid.clusterId = channel.readShort();
-								entry.record.recordType = channel.readByte();
+								entry.getRecord().recordType = channel.readByte();
 
 								switch (entry.status) {
 								case OTransactionEntry.CREATED:
 									rid.clusterPosition = -1;
 									entry.clusterName = channel.readString();
-									entry.record.stream = channel.readBytes();
+									entry.getRecord().stream = channel.readBytes();
 									break;
 
 								case OTransactionEntry.UPDATED:
 									rid.clusterPosition = channel.readLong();
-									entry.record.version = channel.readInt();
-									entry.record.stream = channel.readBytes();
+									entry.getRecord().version = channel.readInt();
+									entry.getRecord().stream = channel.readBytes();
 									break;
 
 								case OTransactionEntry.DELETED:
 									rid.clusterPosition = channel.readLong();
-									entry.record.version = channel.readInt();
+									entry.getRecord().version = channel.readInt();
 									break;
 
 								default:

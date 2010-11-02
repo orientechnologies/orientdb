@@ -58,11 +58,11 @@ public class OTreeMapDatabase<K, V> extends OTreeMapPersistent<K, V> {
 			throws IOException {
 
 		// SEARCH INTO THE CACHE
-		OTreeMapEntryDatabase<K, V> entry = (OTreeMapEntryDatabase<K, V>) cache.get(iRecordId);
+		OTreeMapEntryDatabase<K, V> entry = null;// (OTreeMapEntryDatabase<K, V>) cache.get(iRecordId);
 		if (entry == null) {
 			// NOT FOUND: CREATE IT AND PUT IT INTO THE CACHE
 			entry = new OTreeMapEntryDatabase<K, V>(this, (OTreeMapEntryDatabase<K, V>) iParent, iRecordId);
-			cache.put(iRecordId, entry);
+			// cache.put(iRecordId, entry);
 		} else {
 			// entry.load();
 
@@ -102,10 +102,7 @@ public class OTreeMapDatabase<K, V> extends OTreeMapPersistent<K, V> {
 		lock.acquireExclusiveLock();
 
 		try {
-			if (record.isDirty()) {
-				toStream();
-				record.save(clusterName);
-			}
+			record.save(clusterName);
 			return this;
 		} finally {
 			lock.releaseExclusiveLock();

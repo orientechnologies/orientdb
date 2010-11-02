@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import com.orientechnologies.common.collection.OTreeMapEntry;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 
 /**
@@ -77,11 +78,11 @@ public class OTreeMapEntryDatabase<K, V> extends OTreeMapEntryPersistent<K, V> {
 	}
 
 	@Override
-	public OTreeMapEntryDatabase<K, V> save() throws IOException {
+	public OTreeMapEntryDatabase<K, V> save() throws OSerializationException {
 		if (!record.isDirty())
 			return this;
 
-		assureIntegrityOfReferences();
+		flush2Record();
 
 		if (parent != null)
 			if (!parent.record.getIdentity().equals(parentRid))
@@ -89,9 +90,9 @@ public class OTreeMapEntryDatabase<K, V> extends OTreeMapEntryPersistent<K, V> {
 
 		checkEntryStructure();
 
-		if (pTree.cache.get(record.getIdentity()) != this)
-			// UPDATE THE CACHE
-			pTree.cache.put(record.getIdentity(), this);
+		// if (pTree.cache.get(record.getIdentity()) != this)
+		// UPDATE THE CACHE
+		// pTree.cache.put(record.getIdentity(), this);
 
 		return this;
 	}

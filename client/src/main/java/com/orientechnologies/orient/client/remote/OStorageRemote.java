@@ -489,24 +489,24 @@ public class OStorageRemote extends OStorageAbstract {
 						continue;
 
 					network.writeByte(txEntry.status);
-					network.writeShort((short) txEntry.record.getIdentity().getClusterId());
-					network.writeByte(txEntry.record.getRecordType());
+					network.writeShort((short) txEntry.getRecord().getIdentity().getClusterId());
+					network.writeByte(txEntry.getRecord().getRecordType());
 
 					switch (txEntry.status) {
 					case OTransactionEntry.CREATED:
 						network.writeString(txEntry.clusterName);
-						network.writeBytes(txEntry.record.toStream());
+						network.writeBytes(txEntry.getRecord().toStream());
 						break;
 
 					case OTransactionEntry.UPDATED:
-						network.writeLong(txEntry.record.getIdentity().getClusterPosition());
-						network.writeInt(txEntry.record.getVersion());
-						network.writeBytes(txEntry.record.toStream());
+						network.writeLong(txEntry.getRecord().getIdentity().getClusterPosition());
+						network.writeInt(txEntry.getRecord().getVersion());
+						network.writeBytes(txEntry.getRecord().toStream());
 						break;
 
 					case OTransactionEntry.DELETED:
-						network.writeLong(txEntry.record.getIdentity().getClusterPosition());
-						network.writeInt(txEntry.record.getVersion());
+						network.writeLong(txEntry.getRecord().getIdentity().getClusterPosition());
+						network.writeInt(txEntry.getRecord().getVersion());
 						break;
 					}
 				}

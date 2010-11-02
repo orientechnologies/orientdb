@@ -50,8 +50,8 @@ public abstract class OTransactionRealAbstract<REC extends ORecordInternal<?>> e
 		else
 			// FILTER RECORDS BY CLASSNAME
 			for (OTransactionEntry<REC> entry : entries.values()) {
-				if (entry.record != null && entry.record instanceof ODocument
-						&& iClassName.equals(((ODocument) entry.record).getClassName()))
+				if (entry.getRecord() != null && entry.getRecord() instanceof ODocument
+						&& iClassName.equals(((ODocument) entry.getRecord()).getClassName()))
 					result.add(entry);
 			}
 
@@ -70,7 +70,7 @@ public abstract class OTransactionRealAbstract<REC extends ORecordInternal<?>> e
 			// FILTER RECORDS BY ID
 			for (OTransactionEntry<REC> entry : entries.values()) {
 				for (int id : iIds) {
-					if (entry.record != null && entry.record.getIdentity().getClusterId() == id) {
+					if (entry.getRecord() != null && entry.getRecord().getIdentity().getClusterId() == id) {
 						result.add(entry);
 						break;
 					}

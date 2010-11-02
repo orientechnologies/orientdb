@@ -31,8 +31,6 @@ public class OTransactionOptimistic<REC extends ORecordInternal<?>> extends OTra
 	}
 
 	public void commit() {
-		status = TXSTATUS.COMMITTING;
-
 		// WAKE UP LISTENERS
 		for (ODatabaseLifecycleListener listener : ((ODatabaseRaw) database.getUnderlying()).getListeners())
 			try {
@@ -40,6 +38,7 @@ public class OTransactionOptimistic<REC extends ORecordInternal<?>> extends OTra
 			} catch (Throwable t) {
 			}
 
+		status = TXSTATUS.COMMITTING;
 		database.executeCommit();
 		status = TXSTATUS.INVALID;
 	}
@@ -60,7 +59,7 @@ public class OTransactionOptimistic<REC extends ORecordInternal<?>> extends OTra
 		// REMOVE ALL THE ENTRIES AND INVALIDATE THE DOCUMENTS TO AVOID TO BE RE-USED DIRTY AT USER-LEVEL. IN THIS WAY RE-LOADING MUST
 		// EXECUTED
 		for (OTransactionEntry<REC> v : entries.values()) {
-			v.record.unload();
+			v.getRecord().unload();
 		}
 		entries.clear();
 
@@ -79,7 +78,7 @@ public class OTransactionOptimistic<REC extends ORecordInternal<?>> extends OTra
 			case OTransactionEntry.LOADED:
 			case OTransactionEntry.UPDATED:
 			case OTransactionEntry.CREATED:
-				return txEntry.record;
+				return txEntry.getRecord();
 
 			case OTransactionEntry.DELETED:
 				return null;
@@ -119,7 +118,7 @@ public class OTransactionOptimistic<REC extends ORecordInternal<?>> extends OTra
 				// TODO: NEET IT FOR REAL?
 				// NEW RECORD: CHECK IF IT'S ALREADY IN
 				for (OTransactionEntry<REC> entry : entries.values()) {
-					if (entry.record == iRecord)
+					if (entry.getRecord() == iRecord)
 						return;
 				}
 
@@ -136,7 +135,7 @@ public class OTransactionOptimistic<REC extends ORecordInternal<?>> extends OTra
 				entries.put(rid, txEntry);
 			} else {
 				// UPDATE PREVIOUS STATUS
-				txEntry.record = iRecord;
+				txEntry.setRecord(iRecord);
 
 				switch (txEntry.status) {
 				case OTransactionEntry.LOADED:

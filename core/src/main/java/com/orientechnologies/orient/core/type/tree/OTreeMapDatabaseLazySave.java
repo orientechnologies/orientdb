@@ -15,11 +15,14 @@
  */
 package com.orientechnologies.orient.core.type.tree;
 
+import java.io.IOException;
+
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 
 /**
@@ -71,10 +74,19 @@ public class OTreeMapDatabaseLazySave<K, V> extends OTreeMapDatabase<K, V> imple
 	}
 
 	public void onTxRollback(ODatabase iDatabase) {
+//		cache.clear();
+		entryPoints.clear();
+		try {
+			if (root != null)
+				((OTreeMapEntryDatabase<K, V>) root).load();
+		} catch (IOException e) {
+			throw new OIndexException("Error on loading root node");
+		}
 	}
 
-	public void onTxCommit(ODatabase iDatabase) {
+	public void onTxCommit(final ODatabase iDatabase) {
 		super.commitChanges(database);
+		optimize();
 	}
 
 	/**
@@ -82,9 +94,8 @@ public class OTreeMapDatabaseLazySave<K, V> extends OTreeMapDatabase<K, V> imple
 	 */
 	public void onClose(final ODatabase iDatabase) {
 		super.commitChanges(database);
-		cache.clear();
+//		cache.clear();
 		entryPoints.clear();
-		entryPointsSize = 0;
 		root = null;
 	}
 

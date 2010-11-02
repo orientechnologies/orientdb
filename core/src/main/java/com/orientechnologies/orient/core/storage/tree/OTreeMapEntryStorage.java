@@ -81,7 +81,7 @@ public class OTreeMapEntryStorage<K, V> extends OTreeMapEntryPersistent<K, V> {
 		}
 		record.unsetDirty();
 
-		assureIntegrityOfReferences();
+		flush2Record();
 
 		return this;
 	}

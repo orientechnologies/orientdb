@@ -15,9 +15,8 @@
  */
 package com.orientechnologies.orient.server.tx;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -91,22 +90,22 @@ public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
 		return null;
 	}
 
-	public ORecordAbstract<?> setDatabase(ODatabaseRecord<?> iDatabase) {
+	public ORecordAbstract<?> setDatabase(final ODatabaseRecord<?> iDatabase) {
 		return null;
 	}
 
-	public ORecordAbstract<?> setIdentity(int iClusterId, long iClusterPosition) {
+	public ORecordAbstract<?> setIdentity(final int iClusterId, final long iClusterPosition) {
 		return null;
 	}
 
 	public void unsetDirty() {
 	}
 
-	public OSerializableStream fromStream(byte[] iStream) throws IOException {
+	public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
 		return null;
 	}
 
-	public byte[] toStream() throws IOException {
+	public byte[] toStream() throws OSerializationException {
 		return stream;
 	}
 
@@ -121,7 +120,7 @@ public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
 	public void setStatus(com.orientechnologies.orient.core.record.ORecord.STATUS iStatus) {
 	}
 
-	public ORecordAbstract<?> fill(ODatabaseRecord<?> iDatabase, int iClusterId, long iPosition, int iVersion) {
+	public ORecordAbstract<?> fill(final ODatabaseRecord<?> iDatabase, final int iClusterId, final long iPosition, final int iVersion) {
 		return null;
 	}
 

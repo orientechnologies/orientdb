@@ -139,7 +139,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 
 		if (currentTxEntryPosition > -1)
 			// IN TX
-			return (REC) txEntries.get(currentTxEntryPosition).record;
+			return (REC) txEntries.get(currentTxEntryPosition).getRecord();
 
 		// ITERATE UNTIL THE NEXT GOOD RECORD
 		while (hasNext()) {

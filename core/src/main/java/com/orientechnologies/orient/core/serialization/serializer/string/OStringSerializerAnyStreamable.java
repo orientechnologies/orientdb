@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.string;
 
-import java.io.IOException;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -51,15 +49,9 @@ public class OStringSerializerAnyStreamable implements OStringSerializer {
 				OLogManager.instance().error(this, "Error on unmarshalling content. Class: " + className, e, OSerializationException.class);
 			}
 		}
-		try {
-			instance.fromStream(OBinaryProtocol.string2bytes(iStream.substring(pos + 1)));
-			return instance;
-		} catch (IOException e) {
-			OLogManager.instance().error(this, "Error on unmarshalling embedded instance. Class: " + instance.getClass().getName(), e,
-					OSerializationException.class);
-		}
 
-		return null;
+		instance.fromStream(OBinaryProtocol.string2bytes(iStream.substring(pos + 1)));
+		return instance;
 	}
 
 	/**
@@ -74,11 +66,7 @@ public class OStringSerializerAnyStreamable implements OStringSerializer {
 		if (!(iObject instanceof OSerializableStream))
 			throw new OSerializationException("Can't serialize the object since it's not implements the OSerializableStream interface");
 
-		try {
-			return iObject.getClass().getName() + OStreamSerializerHelper.SEPARATOR + OBinaryProtocol.bytes2string(stream.toStream());
-		} catch (IOException e) {
-			throw new OSerializationException("Can't serialize the object: " + e);
-		}
+		return iObject.getClass().getName() + OStreamSerializerHelper.SEPARATOR + OBinaryProtocol.bytes2string(stream.toStream());
 	}
 
 	public String getName() {

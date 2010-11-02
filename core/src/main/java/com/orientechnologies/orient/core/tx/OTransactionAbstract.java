@@ -55,20 +55,20 @@ public abstract class OTransactionAbstract<REC extends ORecordInternal<?>> imple
 		String rid;
 		ORawBuffer cachedBuffer;
 		for (OTransactionEntry<? extends ORecord<?>> txEntry : iEntries) {
-			rid = txEntry.record.getIdentity().toString();
+			rid = txEntry.getRecord().getIdentity().toString();
 
 			cachedBuffer = iStorage.getCache().getRecord(rid);
 
 			if (cachedBuffer != null) {
 				// UPDATE CACHE
-				cachedBuffer.buffer = txEntry.record.toStream();
-				cachedBuffer.version = txEntry.record.getVersion();
-				cachedBuffer.recordType = txEntry.record.getRecordType();
+				cachedBuffer.buffer = txEntry.getRecord().toStream();
+				cachedBuffer.version = txEntry.getRecord().getVersion();
+				cachedBuffer.recordType = txEntry.getRecord().getRecordType();
 
-			} else if (txEntry.record.isPinned())
+			} else if (txEntry.getRecord().isPinned())
 				// INSERT NEW ENTRY IN THE CACHE
 				iStorage.getCache().pushRecord(rid,
-						new ORawBuffer(txEntry.record.toStream(), txEntry.record.getVersion(), txEntry.record.getRecordType()));
+						new ORawBuffer(txEntry.getRecord().toStream(), txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType()));
 		}
 	}
 
@@ -88,7 +88,7 @@ public abstract class OTransactionAbstract<REC extends ORecordInternal<?>> imple
 			try {
 				listener.onTxRollback(database.getUnderlying());
 			} catch (Throwable t) {
-				OLogManager.instance().error(this, "Error on commit callback against listener: " + listener, t);
+				OLogManager.instance().error(this, "Error on rollback callback against listener: " + listener, t);
 			}
 	}
 }

@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.query.OQueryAbstract;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.core.serialization.OMemoryOutputStream;
@@ -69,19 +70,28 @@ public abstract class OSQLQuery<T extends Object> extends OQueryAbstract<T> impl
 		return "OSQLQuery [text=" + text + "]";
 	}
 
-	public OSerializableStream fromStream(final byte[] iStream) throws IOException {
+	public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
 		final OMemoryInputStream buffer = new OMemoryInputStream(iStream);
-		text = buffer.getAsString();
-		limit = buffer.getAsInteger();
-		fetchPlan = buffer.getAsString();
+		try {
+			text = buffer.getAsString();
+			limit = buffer.getAsInteger();
+			fetchPlan = buffer.getAsString();
+		} catch (IOException e) {
+			throw new OSerializationException("Error while unmarshalling OSQLQuery", e);
+		}
 		return this;
 	}
 
-	public byte[] toStream() throws IOException {
+	public byte[] toStream() throws OSerializationException {
 		final OMemoryOutputStream buffer = new OMemoryOutputStream();
-		buffer.add(text);
-		buffer.add(limit);
-		buffer.add(fetchPlan);
+		try {
+			buffer.add(text);
+			buffer.add(limit);
+			buffer.add(fetchPlan);
+		} catch (IOException e) {
+			throw new OSerializationException("Error while marshalling OSQLQuery", e);
+		}
+
 		return buffer.toByteArray();
 	}
 }

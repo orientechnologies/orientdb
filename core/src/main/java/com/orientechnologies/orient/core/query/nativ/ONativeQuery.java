@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.query.nativ;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.query.OQueryAbstract;
@@ -34,11 +32,11 @@ public abstract class ONativeQuery<T extends ORecordInternal<?>, CTX extends OQu
 		cluster = iCluster;
 	}
 
-	public byte[] toStream() throws IOException {
+	public byte[] toStream() throws OSerializationException {
 		throw new OSerializationException("Native queries can't be serialized");
 	}
 
-	public OSerializableStream fromStream(byte[] iStream) throws IOException {
+	public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
 		throw new OSerializationException("Native queries can't be deserialized");
 	}
 

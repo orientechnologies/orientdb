@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.core.command.OCommandToParse;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -53,12 +51,9 @@ public class OSQLFilterItemRecordAttrib extends OSQLFilterItemAbstract {
 		else if (name.equals("@FIELDS") && iRecord instanceof ORecordSchemaAware<?>)
 			return transformValue(iRecord.getDatabase(), ((ORecordSchemaAware<?>) iRecord).fieldNames());
 		else if (name.equals("@SIZE")) {
-			try {
-				final byte[] stream = iRecord.toStream();
-				if (stream != null)
-					return transformValue(iRecord.getDatabase(), stream.length);
-			} catch (IOException e) {
-			}
+			final byte[] stream = iRecord.toStream();
+			if (stream != null)
+				return transformValue(iRecord.getDatabase(), stream.length);
 		}
 
 		return null;

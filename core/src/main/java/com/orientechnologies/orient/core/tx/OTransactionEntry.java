@@ -25,11 +25,12 @@ public class OTransactionEntry<REC extends ORecordInternal<?>> {
 	public static final byte	CREATED	= 3;
 
 	public byte								status;
-	public REC								record;
+	private REC								record;
 	public String							clusterName;
 
 	public OTransactionEntry(final REC iRecord, final byte iStatus, final String iClusterName) {
-		this.record = iRecord;
+		// CLONE RECORD AND CONTENT
+		this.setRecord(iRecord);
 		this.status = iStatus;
 		this.clusterName = iClusterName;
 	}
@@ -42,4 +43,20 @@ public class OTransactionEntry<REC extends ORecordInternal<?>> {
 		return builder.toString();
 	}
 
+	/**
+	 * Save always a copy of record to avoid changes during the transactions
+	 */
+	@SuppressWarnings("unchecked")
+	public void setRecord(final REC iRecord) {
+		// CLEARS PREVIOUS RECORD
+		if (this.record != null)
+			this.record.clear();
+
+		// SAVES A COPY
+		this.record = iRecord;//(REC) iRecord.copy();
+	}
+
+	public REC getRecord() {
+		return record;
+	}
 }

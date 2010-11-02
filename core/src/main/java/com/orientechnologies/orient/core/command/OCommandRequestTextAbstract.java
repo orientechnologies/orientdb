@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.command;
 import java.io.IOException;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
@@ -56,12 +57,12 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
 		return text;
 	}
 
-	public OSerializableStream fromStream(byte[] iStream) throws IOException {
+	public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
 		text = OBinaryProtocol.bytes2string(iStream);
 		return this;
 	}
 
-	public byte[] toStream() throws IOException {
+	public byte[] toStream() throws OSerializationException {
 		return OBinaryProtocol.string2bytes(text);
 	}
 

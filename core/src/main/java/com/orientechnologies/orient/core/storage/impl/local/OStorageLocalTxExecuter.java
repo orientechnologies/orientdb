@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.storage.impl.local;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -30,6 +31,7 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionEntry;
+import com.orientechnologies.orient.core.tx.OTxListener;
 
 public class OStorageLocalTxExecuter {
 	private final OStorageLocal	storage;
@@ -140,8 +142,7 @@ public class OStorageLocalTxExecuter {
 		final List<OTransactionEntry<? extends ORecord<?>>> tmpEntries = new ArrayList<OTransactionEntry<? extends ORecord<?>>>();
 
 		while (iTx.getEntries().iterator().hasNext()) {
-			for (OTransactionEntry<? extends ORecord<?>> txEntry : iTx.getEntries())
-				tmpEntries.add(txEntry);
+			tmpEntries.addAll((Collection<? extends OTransactionEntry<? extends ORecord<?>>>) iTx.getEntries());
 
 			iTx.clearEntries();
 
@@ -169,7 +170,7 @@ public class OStorageLocalTxExecuter {
 	private void commitEntry(final int iRequesterId, final int iTxId, final OTransactionEntry<? extends ORecord<?>> txEntry)
 			throws IOException {
 
-		final ORecordId rid = (ORecordId) txEntry.record.getIdentity();
+		final ORecordId rid = (ORecordId) txEntry.getRecord().getIdentity();
 
 		final OCluster cluster = txEntry.clusterName != null ? storage.getClusterByName(txEntry.clusterName) : storage
 				.getClusterById(rid.clusterId);
@@ -178,6 +179,9 @@ public class OStorageLocalTxExecuter {
 			// ONLY LOCAL CLUSTER ARE INVOLVED IN TX
 			return;
 
+		if (txEntry.getRecord() instanceof OTxListener)
+			((OTxListener) txEntry.getRecord()).onEvent(txEntry, OTxListener.EVENT.BEFORE_COMMIT);
+
 		switch (txEntry.status) {
 		case OTransactionEntry.LOADED:
 			break;
@@ -185,26 +189,31 @@ public class OStorageLocalTxExecuter {
 		case OTransactionEntry.CREATED:
 			if (rid.isNew()) {
 				// CHECK 2 TIMES TO ASSURE THAT IT'S A CREATE OR AN UPDATE BASED ON RECURSIVE TO-STREAM METHOD
-				final byte[] stream = txEntry.record.toStream();
+				final byte[] stream = txEntry.getRecord().toStream();
 
 				if (rid.isNew()) {
-					rid.clusterPosition = createRecord(iRequesterId, iTxId, cluster, stream, txEntry.record.getRecordType());
+					rid.clusterPosition = createRecord(iRequesterId, iTxId, cluster, stream, txEntry.getRecord().getRecordType());
 					rid.clusterId = cluster.getId();
 				} else {
-					txEntry.record.setVersion(updateRecord(iRequesterId, iTxId, cluster, rid.clusterPosition, stream,
-							txEntry.record.getVersion(), txEntry.record.getRecordType()));
+					txEntry.getRecord().setVersion(
+							updateRecord(iRequesterId, iTxId, cluster, rid.clusterPosition, stream, txEntry.getRecord().getVersion(), txEntry
+									.getRecord().getRecordType()));
 				}
 			}
 			break;
 
 		case OTransactionEntry.UPDATED:
-			txEntry.record.setVersion(updateRecord(iRequesterId, iTxId, cluster, rid.clusterPosition, txEntry.record.toStream(),
-					txEntry.record.getVersion(), txEntry.record.getRecordType()));
+			txEntry.getRecord().setVersion(
+					updateRecord(iRequesterId, iTxId, cluster, rid.clusterPosition, txEntry.getRecord().toStream(), txEntry.getRecord()
+							.getVersion(), txEntry.getRecord().getRecordType()));
 			break;
 
 		case OTransactionEntry.DELETED:
-			deleteRecord(iRequesterId, iTxId, cluster, rid.clusterPosition, txEntry.record.getVersion());
+			deleteRecord(iRequesterId, iTxId, cluster, rid.clusterPosition, txEntry.getRecord().getVersion());
 			break;
 		}
+
+		if (txEntry.getRecord() instanceof OTxListener)
+			((OTxListener) txEntry.getRecord()).onEvent(txEntry, OTxListener.EVENT.AFTER_COMMIT);
 	}
 }

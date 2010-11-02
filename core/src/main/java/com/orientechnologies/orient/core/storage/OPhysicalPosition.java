@@ -15,9 +15,8 @@
  */
 package com.orientechnologies.orient.core.storage;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
@@ -56,7 +55,7 @@ public class OPhysicalPosition implements OSerializableStream {
 				+ ", v=" + version;
 	}
 
-	public OSerializableStream fromStream(byte[] iStream) throws IOException {
+	public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
 		int pos = 0;
 
 		dataSegment = OBinaryProtocol.bytes2int(iStream, pos);
@@ -76,7 +75,7 @@ public class OPhysicalPosition implements OSerializableStream {
 		return this;
 	}
 
-	public byte[] toStream() throws IOException {
+	public byte[] toStream() throws OSerializationException {
 		byte[] buffer = new byte[OConstants.SIZE_INT + OConstants.SIZE_LONG + OConstants.SIZE_BYTE + OConstants.SIZE_INT
 				+ OConstants.SIZE_INT];
 		int pos = 0;

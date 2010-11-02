@@ -24,7 +24,6 @@ public class ORawBuffer implements Externalizable {
 	public byte[]	buffer;
 	public int		version;
 	public byte		recordType;
-	public long		newPosition;
 
 	/**
 	 * Constructor used by serialization.
@@ -47,7 +46,6 @@ public class ORawBuffer implements Externalizable {
 			buffer = null;
 		version = iInput.readInt();
 		recordType = iInput.readByte();
-		newPosition = iInput.readLong();
 	}
 
 	public void writeExternal(final ObjectOutput iOutput) throws IOException {
@@ -57,7 +55,6 @@ public class ORawBuffer implements Externalizable {
 			iOutput.write(buffer);
 		iOutput.writeInt(version);
 		iOutput.write(recordType);
-		iOutput.writeLong(newPosition);
 	}
 
 	@Override

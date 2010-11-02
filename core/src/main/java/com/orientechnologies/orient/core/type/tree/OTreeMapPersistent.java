@@ -18,7 +18,6 @@ package com.orientechnologies.orient.core.type.tree;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +37,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.record.impl.ORecordBytesLazy;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.core.serialization.OMemoryOutputStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
@@ -66,7 +66,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 	protected final OMemoryOutputStream											entryRecordBuffer;
 
 	protected final String																	clusterName;
-	protected ORecordBytes																	record;
+	protected ORecordBytesLazy															record;
 	protected String																				fetchPlan;
 	protected volatile int																	usageCounter		= 0;
 
@@ -77,7 +77,8 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 																																							entryPointsSize);
 	protected List<OTreeMapEntryPersistent<K, V>>						newEntryPoints	= new ArrayList<OTreeMapEntryPersistent<K, V>>(
 																																							entryPointsSize);
-	protected Map<ORID, OTreeMapEntryPersistent<K, V>>			cache						= new HashMap<ORID, OTreeMapEntryPersistent<K, V>>();
+
+	// protected Map<ORID, OTreeMapEntryPersistent<K, V>> cache = new HashMap<ORID, OTreeMapEntryPersistent<K, V>>();
 
 	public OTreeMapPersistent(final String iClusterName, final ORID iRID) {
 		this(iClusterName, null, null);
@@ -91,7 +92,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 		config();
 
 		clusterName = iClusterName;
-		record = new ORecordBytes();
+		record = new ORecordBytesLazy(this);
 
 		keySerializer = iKeySerializer;
 		valueSerializer = iValueSerializer;
@@ -128,7 +129,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 			recordsToCommit.clear();
 			usageCounter = 0;
 			entryPoints.clear();
-			cache.clear();
+			// cache.clear();
 
 		} catch (IOException e) {
 			OLogManager.instance().error(this, "Error on deleting the tree: " + record.getIdentity(), e, OStorageException.class);
@@ -148,16 +149,13 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 		try {
 			// DISCONNECT ALL THE NODES
-			if (root != null)
-				((OTreeMapEntryPersistent<K, V>) root).disconnectLinked(true);
-			root = null;
-
 			for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints)
-				entryPoint.disconnectLinked(true);
+				entryPoint.disconnect(true);
 			entryPoints.clear();
 
 			recordsToCommit.clear();
-			cache.clear();
+			// cache.clear();
+			root = null;
 
 			usageCounter = 0;
 
@@ -175,7 +173,6 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 	/**
 	 * Optimize the tree memory consumption by keeping part of nodes as entry points and clearing all the rest.
 	 */
-	@SuppressWarnings("unchecked")
 	public void optimize() {
 		final long timer = System.currentTimeMillis();// OProfiler.getInstance().startChrono();
 
@@ -197,7 +194,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 				// UNDER THRESHOLD AVOID TO OPTIMIZE
 				return;
 
-			pRoot.disconnect((int) (entryPointsSize * optimizeEntryPointsFactor));
+			pRoot.checkToDisconnect((int) (entryPointsSize * optimizeEntryPointsFactor));
 
 			if (isRuntimeCheckEnabled()) {
 				for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints)
@@ -210,15 +207,21 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 			// System.out.println("End of optimization.");
 			// printInMemoryStructure();
 
-			if (isRuntimeCheckEnabled())
-				for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints)
-					checkTreeStructure(entryPoint.getFirstInMemory());
+			if (isRuntimeCheckEnabled()) {
+				if (entryPoints.size() > 0)
+					for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints)
+						checkTreeStructure(entryPoint.getFirstInMemory());
+				else
+					checkTreeStructure(root);
+			}
 
 			lock.releaseExclusiveLock();
 			OProfiler.getInstance().stopChrono("OTreeMapPersistent.optimize", timer);
 
 			if (OLogManager.instance().isDebugEnabled())
 				OLogManager.instance().debug(this, "Optimization completed in %d ms\n", System.currentTimeMillis() - timer);
+
+			usageCounter = 0;
 		}
 	}
 
@@ -327,7 +330,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 		}
 	}
 
-	public OSerializableStream fromStream(final byte[] iStream) throws IOException {
+	public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		final ORID rootRid = new ORecordId();
@@ -359,7 +362,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 		return this;
 	}
 
-	public byte[] toStream() throws IOException {
+	public byte[] toStream() throws OSerializationException {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		// CHECK IF THE RECORD IS PENDING TO BE MARSHALLED
@@ -394,6 +397,8 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 			record.fromStream(stream.getByteArray());
 			return record.toStream();
 
+		} catch (IOException e) {
+			throw new OSerializationException("Error on marshalling RB+Tree", e);
 		} finally {
 			marshalledRecords.remove(identityRecord);
 
@@ -589,7 +594,6 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 		usageCounter++;
 		if (optimizeThreshold > 0 && usageCounter > optimizeThreshold) {
 			optimize();
-			usageCounter = 0;
 		}
 	}
 

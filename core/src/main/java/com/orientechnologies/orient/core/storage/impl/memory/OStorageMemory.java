@@ -456,7 +456,7 @@ public class OStorageMemory extends OStorageAbstract {
 	private void commitEntry(final int iRequesterId, final int iTxId, final OTransactionEntry<? extends ORecord<?>> txEntry)
 			throws IOException {
 
-		final ORecordId rid = (ORecordId) txEntry.record.getIdentity();
+		final ORecordId rid = (ORecordId) txEntry.getRecord().getIdentity();
 
 		final OCluster cluster = txEntry.clusterName != null ? getClusterByName(txEntry.clusterName) : getClusterById(rid.clusterId);
 
@@ -467,25 +467,25 @@ public class OStorageMemory extends OStorageAbstract {
 		case OTransactionEntry.CREATED:
 			if (rid.isNew()) {
 				// CHECK 2 TIMES TO ASSURE THAT IT'S A CREATE OR AN UPDATE BASED ON RECURSIVE TO-STREAM METHOD
-				final byte[] stream = txEntry.record.toStream();
+				final byte[] stream = txEntry.getRecord().toStream();
 
 				if (rid.isNew()) {
-					rid.clusterPosition = createRecord(cluster.getId(), stream, txEntry.record.getRecordType());
+					rid.clusterPosition = createRecord(cluster.getId(), stream, txEntry.getRecord().getRecordType());
 					rid.clusterId = cluster.getId();
 				} else {
-					txEntry.record.setVersion(updateRecord(iRequesterId, rid, stream, txEntry.record.getVersion(),
-							txEntry.record.getRecordType()));
+					txEntry.getRecord().setVersion(updateRecord(iRequesterId, rid, stream, txEntry.getRecord().getVersion(),
+							txEntry.getRecord().getRecordType()));
 				}
 			}
 			break;
 
 		case OTransactionEntry.UPDATED:
-			txEntry.record.setVersion(updateRecord(iRequesterId, rid, txEntry.record.toStream(), txEntry.record.getVersion(),
-					txEntry.record.getRecordType()));
+			txEntry.getRecord().setVersion(updateRecord(iRequesterId, rid, txEntry.getRecord().toStream(), txEntry.getRecord().getVersion(),
+					txEntry.getRecord().getRecordType()));
 			break;
 
 		case OTransactionEntry.DELETED:
-			deleteRecord(iRequesterId, rid, txEntry.record.getVersion());
+			deleteRecord(iRequesterId, rid, txEntry.getRecord().getVersion());
 			break;
 		}
 	}

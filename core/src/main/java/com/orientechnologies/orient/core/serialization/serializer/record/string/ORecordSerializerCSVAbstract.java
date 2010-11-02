@@ -147,8 +147,6 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					pos = 0;
 
 				return new ORecordId(iValue.substring(pos + 1));
-				// return new ODocument(iDatabase, iLinkedClass != null ? iLinkedClass.getName() : null, new ORecordId(
-				// iValue.substring(pos + 1)));
 			} else
 				return null;
 

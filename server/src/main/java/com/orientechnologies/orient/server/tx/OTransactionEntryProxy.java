@@ -15,11 +15,13 @@
  */
 package com.orientechnologies.orient.server.tx;
 
+import java.io.IOException;
+
 import com.orientechnologies.orient.core.tx.OTransactionEntry;
 
 public class OTransactionEntryProxy extends OTransactionEntry<OTransactionRecordProxy> {
 
-	public OTransactionEntryProxy() {
+	public OTransactionEntryProxy() throws IOException {
 		super(new OTransactionRecordProxy(), (byte) 0, null);
 	}
 }
