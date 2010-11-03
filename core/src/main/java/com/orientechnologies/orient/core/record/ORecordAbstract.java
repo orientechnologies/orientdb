@@ -234,6 +234,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 			throw new ODatabaseException("No database assigned to current record");
 
 		_database.delete(this);
+		setDirty();
 		return this;
 	}
 
