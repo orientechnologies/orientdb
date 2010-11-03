@@ -912,7 +912,7 @@ public abstract class OTreeMap<K, V> extends AbstractMap<K, V> implements ONavig
 	 */
 	@Override
 	public Collection<V> values() {
-		Collection<V> vs = values();
+		Collection<V> vs = super.values();
 		return (vs != null) ? vs : null;
 	}
 
