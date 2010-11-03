@@ -17,6 +17,8 @@ package com.orientechnologies.orient.core.config;
 
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.FileHandler;
 
 import com.orientechnologies.common.log.OLogManager;
 
@@ -27,9 +29,13 @@ import com.orientechnologies.common.log.OLogManager;
  * 
  */
 public enum OGlobalConfiguration {
-	LOG_LEVEL("log.level", "Logging level", String.class, "info", new OConfigurationChangeCallback() {
+	LOG_CONSOLE_LEVEL("log.console.level", "Console's logging level", String.class, "info", new OConfigurationChangeCallback() {
 		public void change(final Object iCurrentValue, final Object iNewValue) {
-			OLogManager.instance().setLevel((String) iNewValue);
+			OLogManager.instance().setLevel((String) iNewValue, ConsoleHandler.class);
+		}
+	}), LOG_FILE_LEVEL("log.file.level", "File's logging level", String.class, "fine", new OConfigurationChangeCallback() {
+		public void change(final Object iCurrentValue, final Object iNewValue) {
+			OLogManager.instance().setLevel((String) iNewValue, FileHandler.class);
 		}
 	}),
 
