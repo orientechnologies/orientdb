@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.type;
+package com.orientechnologies.common.number;
 
 /**
  * 
