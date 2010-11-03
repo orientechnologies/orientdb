@@ -294,9 +294,6 @@ public class OStorageLocal extends OStorageAbstract {
 		try {
 			// RETRIES
 			for (int i = 0; i < 10; ++i) {
-				// FORCE GARBAGE COLLECTION TO COLLECT ALL THE PENDING BUFFERS
-				System.gc();
-
 				if (dbDir.exists() && dbDir.isDirectory()) {
 					int notDeletedFiles = 0;
 
@@ -320,7 +317,10 @@ public class OStorageLocal extends OStorageAbstract {
 					return;
 
 				try {
-					Thread.sleep(100);
+					// FORCE GARBAGE COLLECTION TO COLLECT ALL THE PENDING BUFFERS
+					System.gc();
+
+					Thread.sleep(150);
 				} catch (InterruptedException e) {
 				}
 			}
@@ -1014,7 +1014,11 @@ public class OStorageLocal extends OStorageAbstract {
 				throw new OConcurrentModificationException(
 						"Can't update record #"
 								+ recId
-								+ " because it has been modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
+								+ " because it has been modified by another user (v."
+								+ ppos.version
+								+ " != v."
+								+ iVersion
+								+ ") in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
 
 			if (ppos.type != iRecordType)
 				iClusterSegment.updateRecordType(iPosition, iRecordType);
