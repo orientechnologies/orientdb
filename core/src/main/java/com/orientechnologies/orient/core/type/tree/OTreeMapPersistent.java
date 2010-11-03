@@ -61,7 +61,6 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 	protected OStreamSerializer															keySerializer;
 	protected OStreamSerializer															valueSerializer;
 
-	// protected final List<OTreeMapEntryPersistent<K, V>> recordsToCommit = new ArrayList<OTreeMapEntryPersistent<K, V>>();
 	protected final Set<OTreeMapEntryPersistent<K, V>>			recordsToCommit	= new HashSet<OTreeMapEntryPersistent<K, V>>();
 	protected final OMemoryOutputStream											entryRecordBuffer;
 
@@ -338,7 +337,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 		try {
 			final OMemoryInputStream stream = new OMemoryInputStream(iStream);
 
-			rootRid.fromStream(stream.getAsByteArray());
+			rootRid.fromStream(stream.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
 
 			size = stream.getAsInteger();
 			lastPageSize = stream.getAsShort();
@@ -384,9 +383,9 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 					pRoot.save();
 				}
 
-				stream.add(pRoot.record.getIdentity().toStream());
+				stream.addAsFixed(pRoot.record.getIdentity().toStream());
 			} else
-				stream.add(ORecordId.EMPTY_RECORD_ID_STREAM);
+				stream.addAsFixed(ORecordId.EMPTY_RECORD_ID_STREAM);
 
 			stream.add(size);
 			stream.add((short) lastPageSize);

@@ -74,7 +74,7 @@ public class OTreeMapDatabaseLazySave<K, V> extends OTreeMapDatabase<K, V> imple
 	}
 
 	public void onTxRollback(ODatabase iDatabase) {
-//		cache.clear();
+		// cache.clear();
 		entryPoints.clear();
 		try {
 			if (root != null)
@@ -84,8 +84,11 @@ public class OTreeMapDatabaseLazySave<K, V> extends OTreeMapDatabase<K, V> imple
 		}
 	}
 
-	public void onTxCommit(final ODatabase iDatabase) {
+	public void onBeforeTxCommit(final ODatabase iDatabase) {
 		super.commitChanges(database);
+	}
+
+	public void onAfterTxCommit(final ODatabase iDatabase) {
 		optimize();
 	}
 
@@ -94,7 +97,7 @@ public class OTreeMapDatabaseLazySave<K, V> extends OTreeMapDatabase<K, V> imple
 	 */
 	public void onClose(final ODatabase iDatabase) {
 		super.commitChanges(database);
-//		cache.clear();
+		// cache.clear();
 		entryPoints.clear();
 		root = null;
 	}

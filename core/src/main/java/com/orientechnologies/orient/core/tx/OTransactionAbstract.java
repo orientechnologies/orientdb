@@ -76,7 +76,7 @@ public abstract class OTransactionAbstract<REC extends ORecordInternal<?>> imple
 		// WAKE UP LISTENERS
 		for (ODatabaseLifecycleListener listener : ((ODatabaseRaw) database.getUnderlying()).getListeners())
 			try {
-				listener.onTxCommit(database.getUnderlying());
+				listener.onBeforeTxCommit(database.getUnderlying());
 			} catch (Throwable t) {
 				OLogManager.instance().error(this, "Error on commit callback against listener: " + listener, t);
 			}

@@ -31,7 +31,9 @@ public interface ODatabaseLifecycleListener {
 
 	public void onTxRollback(final ODatabase iDatabase);
 
-	public void onTxCommit(final ODatabase iDatabase);
+	public void onBeforeTxCommit(final ODatabase iDatabase);
+
+	public void onAfterTxCommit(final ODatabase iDatabase);
 
 	public void onClose(final ODatabase iDatabase);
 }

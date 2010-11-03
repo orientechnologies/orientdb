@@ -17,7 +17,6 @@ package com.orientechnologies.orient.core.storage.impl.local;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -142,7 +141,8 @@ public class OStorageLocalTxExecuter {
 		final List<OTransactionEntry<? extends ORecord<?>>> tmpEntries = new ArrayList<OTransactionEntry<? extends ORecord<?>>>();
 
 		while (iTx.getEntries().iterator().hasNext()) {
-			tmpEntries.addAll((Collection<? extends OTransactionEntry<? extends ORecord<?>>>) iTx.getEntries());
+			for (OTransactionEntry<? extends ORecord<?>> txEntry : iTx.getEntries())
+				tmpEntries.add(txEntry);
 
 			iTx.clearEntries();
 
@@ -170,6 +170,9 @@ public class OStorageLocalTxExecuter {
 	private void commitEntry(final int iRequesterId, final int iTxId, final OTransactionEntry<? extends ORecord<?>> txEntry)
 			throws IOException {
 
+		if (!txEntry.getRecord().isDirty())
+			return;
+
 		final ORecordId rid = (ORecordId) txEntry.getRecord().getIdentity();
 
 		final OCluster cluster = txEntry.clusterName != null ? storage.getClusterByName(txEntry.clusterName) : storage
@@ -187,18 +190,16 @@ public class OStorageLocalTxExecuter {
 			break;
 
 		case OTransactionEntry.CREATED:
-			if (rid.isNew()) {
-				// CHECK 2 TIMES TO ASSURE THAT IT'S A CREATE OR AN UPDATE BASED ON RECURSIVE TO-STREAM METHOD
-				final byte[] stream = txEntry.getRecord().toStream();
+			// CHECK 2 TIMES TO ASSURE THAT IT'S A CREATE OR AN UPDATE BASED ON RECURSIVE TO-STREAM METHOD
+			final byte[] stream = txEntry.getRecord().toStream();
 
-				if (rid.isNew()) {
-					rid.clusterPosition = createRecord(iRequesterId, iTxId, cluster, stream, txEntry.getRecord().getRecordType());
-					rid.clusterId = cluster.getId();
-				} else {
-					txEntry.getRecord().setVersion(
-							updateRecord(iRequesterId, iTxId, cluster, rid.clusterPosition, stream, txEntry.getRecord().getVersion(), txEntry
-									.getRecord().getRecordType()));
-				}
+			if (rid.isNew()) {
+				rid.clusterPosition = createRecord(iRequesterId, iTxId, cluster, stream, txEntry.getRecord().getRecordType());
+				rid.clusterId = cluster.getId();
+			} else {
+				txEntry.getRecord().setVersion(
+						updateRecord(iRequesterId, iTxId, cluster, rid.clusterPosition, stream, txEntry.getRecord().getVersion(), txEntry
+								.getRecord().getRecordType()));
 			}
 			break;
 
@@ -212,6 +213,8 @@ public class OStorageLocalTxExecuter {
 			deleteRecord(iRequesterId, iTxId, cluster, rid.clusterPosition, txEntry.getRecord().getVersion());
 			break;
 		}
+
+		txEntry.getRecord().unsetDirty();
 
 		if (txEntry.getRecord() instanceof OTxListener)
 			((OTxListener) txEntry.getRecord()).onEvent(txEntry, OTxListener.EVENT.AFTER_COMMIT);

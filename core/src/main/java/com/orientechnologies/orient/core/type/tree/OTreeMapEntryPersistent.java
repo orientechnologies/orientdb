@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.core.serialization.OMemoryOutputStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
-import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 
 /**
  * 
@@ -349,7 +348,6 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 				if (parent.right != this && parent.rightRid.isValid() && parent.rightRid.equals(record.getIdentity()))
 					parent.right = this;
 			}
-			checkEntryStructure();
 		}
 		return iParent;
 	}
@@ -429,6 +427,13 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	public void checkEntryStructure() {
 		if (!tree.isRuntimeCheckEnabled())
 			return;
+
+		if (parentRid == null)
+			OLogManager.instance().error(this, "checkEntryStructure: Node %s has parentRid null!\n", this);
+		if (leftRid == null)
+			OLogManager.instance().error(this, "checkEntryStructure: Node %s has leftRid null!\n", this);
+		if (rightRid == null)
+			OLogManager.instance().error(this, "checkEntryStructure: Node %s has rightRid null!\n", this);
 
 		if (this == left || record.getIdentity().isValid() && record.getIdentity().equals(leftRid))
 			OLogManager.instance().error(this, "checkEntryStructure: Node %s has left that points to itself!\n", this);
@@ -616,9 +621,9 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 		try {
 			pageSize = buffer.getAsShort();
 
-			parentRid = new ORecordId().fromStream(buffer.getAsByteArray());
-			leftRid = new ORecordId().fromStream(buffer.getAsByteArray());
-			rightRid = new ORecordId().fromStream(buffer.getAsByteArray());
+			parentRid = new ORecordId().fromStream(buffer.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
+			leftRid = new ORecordId().fromStream(buffer.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
+			rightRid = new ORecordId().fromStream(buffer.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
 
 			color = buffer.getAsBoolean();
 			init();
@@ -662,8 +667,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 		final Set<Integer> marshalledRecords = OSerializationThreadLocal.INSTANCE.get();
 		if (marshalledRecords.contains(identityRecord)) {
 			// ALREADY IN STACK, RETURN EMPTY
-			record.fromStream(new byte[] {});
-			return record.toStream();
+			return new byte[] {};
 		} else
 			marshalledRecords.add(identityRecord);
 
@@ -701,9 +705,9 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 		try {
 			stream.add((short) pageSize);
 
-			stream.add(parentRid.toStream());
-			stream.add(leftRid.toStream());
-			stream.add(rightRid.toStream());
+			stream.addAsFixed(parentRid.toStream());
+			stream.addAsFixed(leftRid.toStream());
+			stream.addAsFixed(rightRid.toStream());
 
 			stream.add(color);
 			stream.add((short) size);
@@ -719,14 +723,18 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 
 			stream.flush();
 
-			record.fromStream(stream.getByteArray());
-			return record.toStream();
+			final byte[] buffer = stream.getByteArray();
+			record.fromStream(buffer);
+			return buffer;
+
 		} catch (IOException e) {
 			throw new OSerializationException("Can't marshall RB+Tree node", e);
 		} finally {
 			stream.close();
 
 			marshalledRecords.remove(identityRecord);
+
+			checkEntryStructure();
 
 			OProfiler.getInstance().stopChrono("OTreeMapEntryP.toStream", timer);
 		}

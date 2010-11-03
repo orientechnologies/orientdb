@@ -23,32 +23,32 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerPositional2CSV;
 
 public class OStreamSerializerListRID implements OStreamSerializer {
-  public static final String                           NAME     = "y";
-  public static final OStreamSerializerListRID         INSTANCE = new OStreamSerializerListRID();
-  private static final ORecordSerializerPositional2CSV FORMAT   = (ORecordSerializerPositional2CSV) ORecordSerializerFactory
-                                                                    .instance().getFormat(ORecordSerializerPositional2CSV.NAME);
+	public static final String														NAME			= "y";
+	public static final OStreamSerializerListRID					INSTANCE	= new OStreamSerializerListRID();
+	private static final ORecordSerializerPositional2CSV	FORMAT		= (ORecordSerializerPositional2CSV) ORecordSerializerFactory
+																																			.instance().getFormat(ORecordSerializerPositional2CSV.NAME);
 
-  public Object fromStream(byte[] iStream) throws IOException {
-    if (iStream == null)
-      return null;
+	public Object fromStream(byte[] iStream) throws IOException {
+		if (iStream == null)
+			return null;
 
-    final String s = OBinaryProtocol.bytes2string(iStream);
+		final String s = OBinaryProtocol.bytes2string(iStream);
 
-    return FORMAT.embeddedCollectionFromStream(null, OType.EMBEDDEDLIST, null, OType.LINK, s);
-  }
+		return FORMAT.embeddedCollectionFromStream(null, OType.EMBEDDEDLIST, null, OType.LINK, s);
+	}
 
-  public byte[] toStream(Object iObject) throws IOException {
-    if (iObject == null)
-      return null;
+	public byte[] toStream(Object iObject) throws IOException {
+		if (iObject == null)
+			return null;
 
-    final StringBuilder buffer = new StringBuilder();
+		final StringBuilder buffer = new StringBuilder();
 
-    FORMAT.embeddedCollectionToStream(null, null, null, OType.LINK, iObject, null, buffer);
+		FORMAT.embeddedCollectionToStream(null, null, null, OType.LINK, iObject, null, buffer);
 
-    return OBinaryProtocol.string2bytes(buffer.toString());
-  }
+		return OBinaryProtocol.string2bytes(buffer.toString());
+	}
 
-  public String getName() {
-    return NAME;
-  }
+	public String getName() {
+		return NAME;
+	}
 }

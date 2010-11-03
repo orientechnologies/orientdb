@@ -49,7 +49,7 @@ public class ORecordSerializerPositional2CSV extends ORecordSerializerCSVAbstrac
 	@Override
 	protected String toString(final ORecordInternal<?> iRecord, final String iFormat, final OUserObject2RecordHandler iObjHandler,
 			Set<Integer> iMarshalledRecords) {
-		if (!iRecord.getIdentity().isValid())
+		if (iRecord.getIdentity().isNew())
 			iRecord.save();
 
 		return iRecord.getIdentity().toString();

@@ -34,13 +34,20 @@ public class OTransactionOptimistic<REC extends ORecordInternal<?>> extends OTra
 		// WAKE UP LISTENERS
 		for (ODatabaseLifecycleListener listener : ((ODatabaseRaw) database.getUnderlying()).getListeners())
 			try {
-				listener.onTxCommit(database.getUnderlying());
+				listener.onBeforeTxCommit(database.getUnderlying());
 			} catch (Throwable t) {
 			}
 
 		status = TXSTATUS.COMMITTING;
 		database.executeCommit();
 		status = TXSTATUS.INVALID;
+
+		// WAKE UP LISTENERS
+		for (ODatabaseLifecycleListener listener : ((ODatabaseRaw) database.getUnderlying()).getListeners())
+			try {
+				listener.onAfterTxCommit(database.getUnderlying());
+			} catch (Throwable t) {
+			}
 	}
 
 	public void rollback() {

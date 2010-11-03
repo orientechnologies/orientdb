@@ -15,12 +15,15 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.Locale;
 
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
@@ -40,9 +43,27 @@ public class DbCreationTest {
 	}
 
 	public void testDbCreation() throws IOException {
-		if (url.startsWith(OEngineRemote.NAME))
-			new OServerAdmin(url).connect("root", "root").createDatabase("local").close();
-		else {
+		if (url.startsWith(OEngineRemote.NAME)) {
+
+			// LAOD SERVER CONFIG FILE TO EXTRACT THE ROOT'S PASSWORD
+			File file = new File("../server/config/orientdb-server-config.xml");
+			if (!file.exists())
+				file = new File("server/config/orientdb-server-config.xml");
+			if (!file.exists())
+				file = new File(OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/orientdb-server-config.xml"));
+
+			FileReader f = new FileReader(file);
+			char[] buffer = new char[(int) file.length()];
+			f.read(buffer);
+			f.close();
+
+			String fileContent = new String(buffer);
+			int pos = fileContent.indexOf("password=\"");
+			pos += "password=\"".length();
+			String password = fileContent.substring(pos, fileContent.indexOf("\"", pos));
+
+			new OServerAdmin(url).connect("root", password).createDatabase("local").close();
+		} else {
 			database = new ODatabaseObjectTx(url);
 			database.create();
 			database.close();

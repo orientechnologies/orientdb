@@ -44,16 +44,11 @@ public class OTransactionEntry<REC extends ORecordInternal<?>> {
 	}
 
 	/**
-	 * Save always a copy of record to avoid changes during the transactions
+	 * Save the record but after having freed previous record content.
 	 */
-	@SuppressWarnings("unchecked")
 	public void setRecord(final REC iRecord) {
-		// CLEARS PREVIOUS RECORD
-		if (this.record != null)
-			this.record.clear();
-
-		// SAVES A COPY
-		this.record = iRecord;//(REC) iRecord.copy();
+		// SAVES THE RECORD
+		this.record = iRecord;
 	}
 
 	public REC getRecord() {

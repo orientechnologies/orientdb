@@ -56,12 +56,7 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 	}
 
 	public ORecordBytes copy() {
-		final ORecordBytes cloned = new ORecordBytes();
-		cloned._source = _source;
-		cloned._database = _database;
-		cloned._recordId = _recordId.copy();
-		cloned._version = _version;
-		return cloned;
+		return (ORecordBytes) copyTo(new ORecordBytes());
 	}
 
 	public ORecordBytes fromStream(final byte[] iRecordBuffer) {

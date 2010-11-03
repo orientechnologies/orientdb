@@ -284,6 +284,19 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		this._status = iStatus;
 	}
 
+	public ORecordAbstract<T> copyTo(final ORecordAbstract<T> cloned) {
+		cloned._database = _database;
+		cloned._recordId = _recordId.copy();
+		cloned._version = _version;
+		cloned._source = null;
+		cloned._recordFormat = _recordFormat;
+		cloned._pinned = _pinned;
+		cloned._dirty = _dirty;
+		cloned._status = _status;
+		cloned.listener = listener;
+		return cloned;
+	}
+
 	/**
 	 * Add a listener to the current document to catch all the supported events.
 	 * 

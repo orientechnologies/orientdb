@@ -34,10 +34,19 @@ public class OMemoryInputStream {
 		buffer = iBuffer;
 	}
 
+	public byte[] getAsByteArrayFixed(final int iSize) throws IOException {
+		if (position >= buffer.length)
+			return null;
+
+		final byte[] portion = OArrays.copyOfRange(buffer, position, position + iSize);
+		position += iSize;
+
+		return portion;
+	}
+
 	public byte[] getAsByteArray() throws IOException {
 		if (position >= buffer.length)
 			return null;
-		// throw new EOFException("Reached end of stream. Requested position was #" + position + " while the size is " + buffer.length);
 
 		final int size = OBinaryProtocol.bytes2int(buffer, position);
 		position += OConstants.SIZE_INT;

@@ -15,10 +15,7 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
-import com.orientechnologies.orient.core.tx.OTransactionEntry;
-import com.orientechnologies.orient.core.tx.OTxListener;
 
 /**
  * Extension of ORecordBytes that handle lazy serialization and converts temporary links (record id in transactions) to finals.
@@ -27,35 +24,35 @@ import com.orientechnologies.orient.core.tx.OTxListener;
  * 
  */
 @SuppressWarnings("unchecked")
-public class ORecordBytesLazy extends ORecordBytes implements OTxListener {
-	private OSerializableStream	rbpTreeNode;
+public class ORecordBytesLazy extends ORecordBytes {
+	private OSerializableStream	serializableContent;
 
 	public ORecordBytesLazy(final OSerializableStream rbpTreeNode) {
-		this.rbpTreeNode = rbpTreeNode;
+		this.serializableContent = rbpTreeNode;
 	}
 
 	@Override
 	public byte[] toStream() {
 		if (_source == null)
-			_source = rbpTreeNode.toStream();
+			_source = serializableContent.toStream();
 		return _source;
 	}
 
-	@Override
-	public ORecordBytes copy() {
-		final ORecordBytesLazy cloned = new ORecordBytesLazy(rbpTreeNode);
-		cloned._source = null;
-		cloned._database = _database;
-		cloned._recordId = _recordId.copy();
-		cloned._version = _version;
-		return cloned;
+	public ORecordBytesLazy copy() {
+		return (ORecordBytesLazy) copyTo(new ORecordBytesLazy(serializableContent));
 	}
-
-	public void onEvent(final OTransactionEntry<? extends ORecord<?>> iTxEntry, final EVENT iEvent) {
-		switch (iEvent) {
-		case BEFORE_COMMIT:
-			// CONVERT TEMPORARY LINKS TO FINALS
-			toStream();
-		}
-	}
+	//
+	// public void onEvent(final OTransactionEntry<? extends ORecord<?>> iTxEntry, final EVENT iEvent) {
+	// switch (iEvent) {
+	// case BEFORE_COMMIT:
+	// // CONVERT TEMPORARY LINKS TO FINALS
+	// // toStream();
+	// break;
+	//
+	// case AFTER_COMMIT:
+	// // FREE ALLOCATED MEMORY
+	// // _source = null;
+	// break;
+	// }
+	// }
 }

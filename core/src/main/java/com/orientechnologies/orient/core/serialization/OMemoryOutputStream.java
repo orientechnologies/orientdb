@@ -129,10 +129,17 @@ public class OMemoryOutputStream extends OutputStream {
 		reset();
 	}
 
-	public final void add(final byte[] iContent) throws IOException {
-		if( iContent == null )
+	public final void addAsFixed(final byte[] iContent) throws IOException {
+		if (iContent == null)
 			return;
-		
+		assureSpaceFor(iContent.length);
+		write(iContent, 0, iContent.length);
+	}
+
+	public final void add(final byte[] iContent) throws IOException {
+		if (iContent == null)
+			return;
+
 		assureSpaceFor(OConstants.SIZE_INT + iContent.length);
 
 		OBinaryProtocol.int2bytes(iContent.length, buffer, position);
