@@ -61,6 +61,7 @@
 		<entry name="server.cache.staticResources" value="false" />
 
 		<!-- Enable/Disable logging. Levels are: finer, fine, finest, info, warning -->
-		<entry name="log.level" value="info" />
+		<entry name="log.console.level" value="info" />
+		<entry name="log.file.level" value="fine" />
 	</properties>
 </orient-server>
