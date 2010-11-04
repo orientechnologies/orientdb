@@ -257,7 +257,8 @@ public enum OType {
 
 	public static boolean isSimpleType(final Class<?> iType) {
 		if (iType.isPrimitive() || Number.class.isAssignableFrom(iType) || String.class.isAssignableFrom(iType)
-				|| Boolean.class.isAssignableFrom(iType) || Date.class.isAssignableFrom(iType))
+				|| Boolean.class.isAssignableFrom(iType) || Date.class.isAssignableFrom(iType)
+				|| (iType.isArray() && (iType.getCanonicalName().equals("byte[]") || iType.getCanonicalName().equals("char[]"))))
 			return true;
 		return false;
 	}
