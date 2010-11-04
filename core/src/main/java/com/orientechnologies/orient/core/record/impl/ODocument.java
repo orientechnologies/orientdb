@@ -50,7 +50,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 public class ODocument extends ORecordVirtualAbstract<Object> implements Iterable<Entry<String, Object>> {
 	public static final byte	RECORD_TYPE	= 'd';
 
-	protected ODocument				_owner				= null;
+	protected ODocument				_owner			= null;
 
 	public ODocument() {
 		setup();
@@ -288,6 +288,28 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		RET value = this.<RET> rawField(iPropertyName);
 
 		if (value instanceof ORID) {
+			// CREATE THE DOCUMENT OBJECT IN LAZY WAY
+			value = (RET) new ODocument(_database, (ORID) value);
+			_fieldValues.put(iPropertyName, value);
+		}
+
+		return value;
+	}
+
+	/**
+	 * Reads the field value forcing the return type. Use this method to force return of ORID instead of the entire document by
+	 * passing ORID.class as iType.
+	 * 
+	 * @param iPropertyName
+	 *          field name
+	 * @param iType
+	 *          Forced type.
+	 * @return field value if defined, otherwise null
+	 */
+	public <RET> RET field(final String iPropertyName, final Class<?> iType) {
+		RET value = this.<RET> rawField(iPropertyName);
+
+		if (value instanceof ORID && !ORID.class.equals(iType) && !ORecordId.class.equals(iType)) {
 			// CREATE THE DOCUMENT OBJECT IN LAZY WAY
 			value = (RET) new ODocument(_database, (ORID) value);
 			_fieldValues.put(iPropertyName, value);
