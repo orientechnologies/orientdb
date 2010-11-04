@@ -33,16 +33,15 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerString;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.tree.OTreeMapDatabase;
-import com.orientechnologies.orient.core.type.tree.OTreeMapDatabaseLazySave;
 
 @SuppressWarnings("unchecked")
 public class ODictionaryLocal<T extends Object> implements ODictionaryInternal<T> {
-	public static final String									DICTIONARY_DEF_CLUSTER_NAME	= OStorage.CLUSTER_INTERNAL_NAME;
+	public static final String					DICTIONARY_DEF_CLUSTER_NAME	= OStorage.CLUSTER_INTERNAL_NAME;
 
-	private ODatabaseComplex<T>									database;
-	private OTreeMapDatabaseLazySave<String, T>	tree;
+	private ODatabaseComplex<T>					database;
+	private OTreeMapDatabase<String, T>	tree;
 
-	public String																clusterName									= DICTIONARY_DEF_CLUSTER_NAME;
+	public String												clusterName									= DICTIONARY_DEF_CLUSTER_NAME;
 
 	public ODictionaryLocal(final ODatabaseRecord<?> iDatabase) throws SecurityException, NoSuchMethodException {
 		database = (ODatabaseComplex<T>) iDatabase.getDatabaseOwner();
@@ -78,7 +77,7 @@ public class ODictionaryLocal<T extends Object> implements ODictionaryInternal<T
 
 	public void load() {
 		try {
-			tree = new OTreeMapDatabaseLazySave<String, T>((ODatabaseRecord<?>) database, new ORecordId(
+			tree = new OTreeMapDatabase<String, T>((ODatabaseRecord<?>) database, new ORecordId(
 					database.getStorage().getConfiguration().dictionaryRecordId));
 			tree.load();
 		} catch (IOException e) {
@@ -88,7 +87,7 @@ public class ODictionaryLocal<T extends Object> implements ODictionaryInternal<T
 
 	public void create() {
 		try {
-			tree = new OTreeMapDatabaseLazySave<String, T>((ODatabaseRecord<?>) database, clusterName, OStreamSerializerString.INSTANCE,
+			tree = new OTreeMapDatabase<String, T>((ODatabaseRecord<?>) database, clusterName, OStreamSerializerString.INSTANCE,
 					new OStreamSerializerAnyRecord((ODatabaseRecord<? extends ORecord<?>>) database));
 			tree.save();
 
