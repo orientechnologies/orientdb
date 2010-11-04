@@ -75,6 +75,7 @@ public class CRUDDocumentPhysicalTest {
 			record.field("location", "Italy");
 			record.field("salary", (i + 300));
 			record.field("binary", binary);
+			record.field("nonSchemaBinary", binary);
 			record.field("testLong", 10000000000L); // TEST LONG
 			record.field("extra", "This is an extra field not included in the schema");
 
