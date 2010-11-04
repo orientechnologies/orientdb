@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 
@@ -32,14 +31,13 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-@SuppressWarnings({ "serial" })
-public class OLazyRecordSet extends HashSet<Object> {
-	private final ORecord<?>	sourceRecord;
-	private final byte				recordType;
-	private boolean						converted	= false;
+@SuppressWarnings("serial")
+public class OLazyRecordSet extends ORecordTrackedSet {
+	private final byte	recordType;
+	private boolean			converted	= false;
 
 	public OLazyRecordSet(final ORecord<?> iSourceRecord, final byte iRecordType) {
-		this.sourceRecord = iSourceRecord;
+		super(iSourceRecord);
 		this.recordType = iRecordType;
 	}
 
@@ -91,41 +89,6 @@ public class OLazyRecordSet extends HashSet<Object> {
 		copy.clear();
 
 		converted = true;
-	}
-
-	@Override
-	public boolean remove(Object o) {
-		setDirty();
-		return super.remove(o);
-	}
-
-	@Override
-	public void clear() {
-		setDirty();
-		super.clear();
-	}
-
-	@Override
-	public boolean removeAll(Collection<?> c) {
-		setDirty();
-		return super.removeAll(c);
-	}
-
-	@Override
-	public boolean addAll(Collection<? extends Object> c) {
-		setDirty();
-		return super.addAll(c);
-	}
-
-	@Override
-	public boolean retainAll(Collection<?> c) {
-		setDirty();
-		return super.retainAll(c);
-	}
-
-	public void setDirty() {
-		if (sourceRecord != null)
-			sourceRecord.setDirty();
 	}
 
 	protected Object convert(final Object iElement) {

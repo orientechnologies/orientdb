@@ -16,8 +16,6 @@
 package com.orientechnologies.orient.core.db.record;
 
 import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -32,14 +30,13 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-@SuppressWarnings({ "serial" })
-public class OLazyRecordMap extends LinkedHashMap<String, Object> {
-	final private ORecord<?>	sourceRecord;
-	final private byte				recordType;
-	private boolean						converted	= false;
+@SuppressWarnings("serial")
+public class OLazyRecordMap extends ORecordTrackedMap {
+	final private byte	recordType;
+	private boolean			converted	= false;
 
 	public OLazyRecordMap(final ORecord<?> iSourceRecord, final byte iRecordType) {
-		this.sourceRecord = iSourceRecord;
+		super(iSourceRecord);
 		this.recordType = iRecordType;
 	}
 
@@ -64,37 +61,13 @@ public class OLazyRecordMap extends LinkedHashMap<String, Object> {
 	public Object put(final String iKey, final Object iValue) {
 		if (converted && iValue instanceof ORID)
 			converted = false;
-		setDirty();
 		return super.put(iKey, iValue);
-	}
-
-	@Override
-	public Object remove(final Object iKey) {
-		setDirty();
-		return super.remove(iKey);
 	}
 
 	@Override
 	public Collection<Object> values() {
 		convertAll();
 		return super.values();
-	}
-
-	@Override
-	public void clear() {
-		setDirty();
-		super.clear();
-	}
-
-	@Override
-	public void putAll(Map<? extends String, ? extends Object> m) {
-		setDirty();
-		super.putAll(m);
-	}
-
-	public void setDirty() {
-		if (sourceRecord != null)
-			sourceRecord.setDirty();
 	}
 
 	private void convertAll() {

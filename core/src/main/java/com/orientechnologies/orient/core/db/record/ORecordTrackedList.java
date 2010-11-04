@@ -15,114 +15,99 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordFactory;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 
 /**
- * Lazy implementation of ArrayList. It's bound to a source ORecord object to keep track of changes. This avoid to call the
- * makeDirty() by hand when the list is changed.
+ * Implementation of ArrayList bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by hand
+ * when the list is changed.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
 @SuppressWarnings({ "serial" })
-public class OLazyRecordList extends ORecordTrackedList {
-	final private byte	recordType;
-	private boolean			converted	= false;
+public class ORecordTrackedList extends ArrayList<Object> {
+	protected final ORecord<?>	sourceRecord;
 
-	public OLazyRecordList(final ORecord<?> iSourceRecord, final byte iRecordType) {
-		super(iSourceRecord);
-		this.recordType = iRecordType;
+	public ORecordTrackedList(final ORecord<?> iSourceRecord) {
+		this.sourceRecord = iSourceRecord;
 	}
 
 	@Override
 	public Iterator<Object> iterator() {
-		return new OLazyRecordIterator(sourceRecord, recordType, super.iterator());
+		return new ORecordTrackedIterator(sourceRecord, super.iterator());
 	}
 
 	@Override
 	public boolean contains(final Object o) {
-		convertAll();
 		return super.contains(o);
 	}
 
 	@Override
 	public boolean add(Object element) {
-		if (converted && element instanceof ORID)
-			converted = false;
+		setDirty();
 		return super.add(element);
 	}
 
 	@Override
 	public void add(int index, Object element) {
-		if (converted && element instanceof ORID)
-			converted = false;
+		sourceRecord.setDirty();
 		super.add(index, element);
 	}
 
 	@Override
 	public Object get(final int index) {
-		convert(index);
 		return super.get(index);
 	}
 
 	@Override
 	public int indexOf(final Object o) {
-		convertAll();
 		return super.indexOf(o);
 	}
 
 	@Override
 	public int lastIndexOf(final Object o) {
-		convertAll();
 		return super.lastIndexOf(o);
 	}
 
 	@Override
 	public Object[] toArray() {
-		convertAll();
 		return super.toArray();
 	}
 
 	@Override
 	public <T> T[] toArray(final T[] a) {
-		convertAll();
 		return super.toArray(a);
 	}
 
-	public void convertAll() {
-		if (converted)
-			return;
-
-		for (int i = 0; i < size(); ++i)
-			convert(i);
-
-		converted = true;
+	@Override
+	public Object set(int index, Object element) {
+		sourceRecord.setDirty();
+		return super.set(index, element);
 	}
 
-	/**
-	 * Convert the item requested.
-	 * 
-	 * @param iIndex
-	 *          Position of the item to convert
-	 */
-	private void convert(final int iIndex) {
-		final Object o = super.get(iIndex);
+	@Override
+	public Object remove(int index) {
+		sourceRecord.setDirty();
+		return super.remove(index);
+	}
 
-		if (o != null && o instanceof ORecordId) {
-			final ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
-			final ORecordId rid = (ORecordId) o;
+	@Override
+	public boolean remove(Object o) {
+		sourceRecord.setDirty();
+		return super.remove(o);
+	}
 
-			record.setDatabase(sourceRecord.getDatabase());
-			record.setIdentity(rid);
-			record.load();
+	@Override
+	public void clear() {
+		sourceRecord.setDirty();
+		super.clear();
+	}
 
-			super.set(iIndex, record);
-		}
+	public void setDirty() {
+		if (sourceRecord != null)
+			sourceRecord.setDirty();
 	}
 }
