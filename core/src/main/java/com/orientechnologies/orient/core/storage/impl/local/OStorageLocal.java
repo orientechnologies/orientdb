@@ -280,9 +280,10 @@ public class OStorageLocal extends OStorageAbstract {
 	public void delete() {
 		final long timer = OProfiler.getInstance().startChrono();
 
-		// CLOSE THE DATABASE BY REMOVING THE CURRENT USER
-		if (removeUser() > 0)
-			throw new OStorageException("Can't delete a storage open");
+		if (!isClosed())
+			// CLOSE THE DATABASE BY REMOVING THE CURRENT USER
+			if (removeUser() > 0)
+				throw new OStorageException("Can't delete a storage open");
 
 		// GET REAL DIRECTORY
 		File dbDir = new File(url);
@@ -325,7 +326,7 @@ public class OStorageLocal extends OStorageAbstract {
 				}
 			}
 
-			throw new OStorageException("Can't delete database '" + name + "' located in: " + dbDir);
+			throw new OStorageException("Can't delete database '" + name + "' located in: " + dbDir + ". Database files seems locked");
 
 		} finally {
 			releaseExclusiveLock(locked);
@@ -1014,9 +1015,9 @@ public class OStorageLocal extends OStorageAbstract {
 				throw new OConcurrentModificationException(
 						"Can't update record #"
 								+ recId
-								+ " because it has been modified by another user (v."
+								+ " because it has been modified by another user (v"
 								+ ppos.version
-								+ " != v."
+								+ " != v"
 								+ iVersion
 								+ ") in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
 
