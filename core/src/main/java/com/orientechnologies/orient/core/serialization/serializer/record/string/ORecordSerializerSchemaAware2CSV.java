@@ -162,7 +162,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 								&& (firstValue instanceof ORecordSchemaAware<?> || (database.getDatabaseOwner() instanceof ODatabaseObject && ((ODatabaseObject) database
 										.getDatabaseOwner()).getEntityManager().getEntityClass(getClassName(firstValue)) != null))) {
 							// LINK: GET THE CLASS
-							linkedType = OType.LINK;
+							linkedType = type == OType.EMBEDDEDMAP ? OType.EMBEDDED : OType.LINK;
 							linkedClass = getLinkInfo(database, getClassName(firstValue));
 						} else
 							linkedType = OType.getTypeByClass(firstValue.getClass());

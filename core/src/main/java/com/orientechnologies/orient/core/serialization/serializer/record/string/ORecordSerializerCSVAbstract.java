@@ -183,16 +183,18 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 					if (iLinkedType == null) {
 						if (mapValue.length() > 0) {
-							if (mapValue.charAt(0) == OStringSerializerHelper.EMBEDDED) {
+							if (mapValue.charAt(0) == OStringSerializerHelper.EMBEDDED)
 								iLinkedType = OType.EMBEDDED;
-								mapValue = mapValue.substring(1, mapValue.length() - 1);
-							} else if (Character.isDigit(mapValue.charAt(0)) || mapValue.charAt(0) == '+' || mapValue.charAt(0) == '-') {
+							else if (Character.isDigit(mapValue.charAt(0)) || mapValue.charAt(0) == '+' || mapValue.charAt(0) == '-') {
 								iLinkedType = getNumber(mapValue);
 							} else if (mapValue.charAt(0) == '\'' || mapValue.charAt(0) == '"')
 								iLinkedType = OType.STRING;
 						} else
 							iLinkedType = OType.EMBEDDED;
 					}
+
+					if (iLinkedType == OType.EMBEDDED)
+						mapValue = mapValue.substring(1, mapValue.length() - 1);
 
 					mapValueObject = OStringSerializerHelper.fieldTypeFromStream(iLinkedType, mapValue);
 
@@ -366,8 +368,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 												});
 
 							buffer.append(OStringSerializerHelper.EMBEDDED);
-							buffer.append(OStringSerializerHelper.fieldTypeToString(iLinkedType, record));
-							// buffer.append(toString(record, null, iObjHandler, iMarshalledRecords));
+							// buffer.append(OStringSerializerHelper.fieldTypeToString(iLinkedType, record));
+							buffer.append(toString(record, null, iObjHandler, iMarshalledRecords));
 							buffer.append(OStringSerializerHelper.EMBEDDED);
 						} else
 							// EMBEDDED LITERALS
