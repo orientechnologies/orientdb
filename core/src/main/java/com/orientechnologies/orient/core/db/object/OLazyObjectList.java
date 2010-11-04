@@ -24,22 +24,27 @@ import java.util.ListIterator;
 import com.orientechnologies.orient.core.db.ODatabasePojoAbstract;
 import com.orientechnologies.orient.core.db.graph.ODatabaseGraphTx;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings({ "unchecked" })
 public class OLazyObjectList<TYPE> implements List<TYPE> {
-	private ArrayList<Object>								list			= new ArrayList<Object>();
+	private ORecord<?>											sourceRecord;
+	private final ArrayList<Object>					list			= new ArrayList<Object>();
 	private ODatabasePojoAbstract<?, TYPE>	database;
 	private String													fetchPlan;
 	private boolean													converted	= false;
 
-	public OLazyObjectList(final ODatabaseGraphTx iDatabase, final Collection<?> iSourceList) {
-		this((ODatabasePojoAbstract<?, TYPE>) iDatabase, iSourceList);
+	public OLazyObjectList(final ODatabaseGraphTx iDatabase, final ORecord<?> iSourceRecord, final Collection<?> iSourceList) {
+		this((ODatabasePojoAbstract<?, TYPE>) iDatabase, iSourceRecord, iSourceList);
+		this.sourceRecord = iSourceRecord;
 	}
 
-	public OLazyObjectList(final ODatabasePojoAbstract<?, TYPE> iDatabase, final Collection<?> iSourceList) {
+	public OLazyObjectList(final ODatabasePojoAbstract<?, TYPE> iDatabase, final ORecord<?> iSourceRecord,
+			final Collection<?> iSourceList) {
 		this(iDatabase);
+		this.sourceRecord = iSourceRecord;
 		if (iSourceList != null)
 			list.addAll(iSourceList);
 	}
@@ -49,7 +54,7 @@ public class OLazyObjectList<TYPE> implements List<TYPE> {
 	}
 
 	public Iterator<TYPE> iterator() {
-		return new OLazyObjectIterator<TYPE>(database, list.iterator());
+		return new OLazyObjectIterator<TYPE>(database, sourceRecord, list.iterator());
 	}
 
 	public boolean contains(final Object o) {
@@ -60,12 +65,14 @@ public class OLazyObjectList<TYPE> implements List<TYPE> {
 	public boolean add(TYPE element) {
 		if (converted && element instanceof ORID)
 			converted = false;
+		setDirty();
 		return list.add(element);
 	}
 
 	public void add(int index, TYPE element) {
 		if (converted && element instanceof ORID)
 			converted = false;
+		setDirty();
 		list.add(index, element);
 	}
 
@@ -104,6 +111,7 @@ public class OLazyObjectList<TYPE> implements List<TYPE> {
 
 	public boolean remove(Object o) {
 		convertAll();
+		setDirty();
 		return list.remove(o);
 	}
 
@@ -113,34 +121,41 @@ public class OLazyObjectList<TYPE> implements List<TYPE> {
 	}
 
 	public boolean addAll(Collection<? extends TYPE> c) {
+		setDirty();
 		return list.addAll(c);
 	}
 
 	public boolean addAll(int index, Collection<? extends TYPE> c) {
+		setDirty();
 		return list.addAll(index, c);
 	}
 
 	public boolean removeAll(Collection<?> c) {
 		convertAll();
+		setDirty();
 		return list.removeAll(c);
 	}
 
 	public boolean retainAll(Collection<?> c) {
 		convertAll();
+		setDirty();
 		return list.retainAll(c);
 	}
 
 	public void clear() {
+		setDirty();
 		list.clear();
 	}
 
 	public TYPE set(int index, TYPE element) {
 		convert(index);
+		setDirty();
 		return (TYPE) list.set(index, element);
 	}
 
 	public TYPE remove(int index) {
 		convert(index);
+		setDirty();
 		return (TYPE) list.remove(index);
 	}
 
@@ -173,6 +188,11 @@ public class OLazyObjectList<TYPE> implements List<TYPE> {
 			convert(i);
 
 		converted = true;
+	}
+
+	public void setDirty() {
+		if (sourceRecord != null)
+			sourceRecord.setDirty();
 	}
 
 	/**

@@ -13,31 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.db.document;
+package com.orientechnologies.orient.core.db.record;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
+/**
+ * Lazy implementation of ArrayList. It's bound to a source ORecord object to keep track of changes. This avoid to call the
+ * makeDirty() by hand when the list is changed.
+ * 
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * 
+ */
 @SuppressWarnings({ "serial" })
 public class OLazyRecordList extends ArrayList<Object> {
-	private ODatabaseRecord<?>	database;
-	private byte								recordType;
-	private boolean							converted	= false;
+	final private ORecord<?>	sourceRecord;
+	final private byte				recordType;
+	private boolean						converted	= false;
 
-	public OLazyRecordList(final ODatabaseRecord<?> database, final byte iRecordType) {
-		this.database = database;
+	public OLazyRecordList(final ORecord<?> iSourceRecord, final byte iRecordType) {
+		this.sourceRecord = iSourceRecord;
 		this.recordType = iRecordType;
 	}
 
 	@Override
 	public Iterator<Object> iterator() {
-		return new OLazyRecordIterator(database, recordType, super.iterator());
+		return new OLazyRecordIterator(sourceRecord, recordType, super.iterator());
 	}
 
 	@Override
@@ -50,6 +57,7 @@ public class OLazyRecordList extends ArrayList<Object> {
 	public boolean add(Object element) {
 		if (converted && element instanceof ORID)
 			converted = false;
+		setDirty();
 		return super.add(element);
 	}
 
@@ -57,6 +65,7 @@ public class OLazyRecordList extends ArrayList<Object> {
 	public void add(int index, Object element) {
 		if (converted && element instanceof ORID)
 			converted = false;
+		sourceRecord.setDirty();
 		super.add(index, element);
 	}
 
@@ -100,6 +109,35 @@ public class OLazyRecordList extends ArrayList<Object> {
 		converted = true;
 	}
 
+	@Override
+	public Object set(int index, Object element) {
+		sourceRecord.setDirty();
+		return super.set(index, element);
+	}
+
+	@Override
+	public Object remove(int index) {
+		sourceRecord.setDirty();
+		return super.remove(index);
+	}
+
+	@Override
+	public boolean remove(Object o) {
+		sourceRecord.setDirty();
+		return super.remove(o);
+	}
+
+	@Override
+	public void clear() {
+		sourceRecord.setDirty();
+		super.clear();
+	}
+
+	public void setDirty() {
+		if (sourceRecord != null)
+			sourceRecord.setDirty();
+	}
+
 	/**
 	 * Convert the item requested.
 	 * 
@@ -113,7 +151,7 @@ public class OLazyRecordList extends ArrayList<Object> {
 			final ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
 			final ORecordId rid = (ORecordId) o;
 
-			record.setDatabase(database);
+			record.setDatabase(sourceRecord.getDatabase());
 			record.setIdentity(rid);
 			record.load();
 

@@ -331,7 +331,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 						}
 					}
 
-					record.field(fieldName, fieldFromStream(iRecord.getDatabase(), type, linkedClass, linkedType, fieldName, fieldValue));
+					record.field(fieldName, fieldFromStream(iRecord, type, linkedClass, linkedType, fieldName, fieldValue));
 				}
 			} catch (Exception e) {
 				OLogManager.instance().exception("Error on unmarshalling field '%s'", e, OSerializationException.class, fieldName);

@@ -130,6 +130,7 @@ public class OFetchHelper {
 					return;
 			}
 		} catch (Exception e) {
+			e.printStackTrace();
 			OLogManager.instance().error(null, "Fetching error on record %s", e, iRootRecord.getIdentity());
 		}
 	}

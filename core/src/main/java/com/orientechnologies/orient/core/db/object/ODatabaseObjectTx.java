@@ -193,20 +193,6 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
 		return this;
 	}
 
-	/**
-	 * Sets as dirty a POJO. This is useful when you change the object and need to tell to the engine to treat as dirty.
-	 * 
-	 * @param iPojo
-	 *          User object
-	 */
-	public void setDirty(final Object iPojo) {
-		checkOpeness();
-
-		final ODocument record = getRecordByUserObject(iPojo, true);
-
-		record.setDirty();
-	}
-
 	public long countClass(final String iClassName) {
 		checkOpeness();
 		return underlying.countClass(iClassName);

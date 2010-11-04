@@ -30,11 +30,11 @@ import com.orientechnologies.orient.core.annotation.OAfterSerialization;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
-import com.orientechnologies.orient.core.db.document.OLazyRecordList;
-import com.orientechnologies.orient.core.db.document.OLazyRecordMap;
-import com.orientechnologies.orient.core.db.document.OLazyRecordSet;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.OLazyRecordList;
+import com.orientechnologies.orient.core.db.record.OLazyRecordMap;
+import com.orientechnologies.orient.core.db.record.OLazyRecordSet;
 import com.orientechnologies.orient.core.entity.OEntityManagerInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -54,7 +54,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 	protected abstract ORecordSchemaAware<?> newObject(ODatabaseRecord<?> iDatabase, String iClassName);
 
-	public Object fieldFromStream(final ODatabaseRecord<?> iDatabase, final OType iType, OClass iLinkedClass, OType iLinkedType,
+	public Object fieldFromStream(final ORecord<?> iSourceRecord, final OType iType, OClass iLinkedClass, OType iLinkedType,
 			final String iName, final String iValue) {
 
 		if (iValue == null)
@@ -63,7 +63,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		switch (iType) {
 		case EMBEDDEDLIST:
 		case EMBEDDEDSET:
-			return embeddedCollectionFromStream(iDatabase, iType, iLinkedClass, iLinkedType, iValue);
+			return embeddedCollectionFromStream(iSourceRecord.getDatabase(), iType, iLinkedClass, iLinkedType, iValue);
 
 		case LINKLIST:
 		case LINKSET: {
@@ -73,8 +73,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			// REMOVE BEGIN & END COLLECTIONS CHARACTERS IF IT'S A COLLECTION
 			String value = iValue.startsWith("[") ? iValue.substring(1, iValue.length() - 1) : iValue;
 
-			Collection<Object> coll = iType == OType.LINKLIST ? new OLazyRecordList(iDatabase, ODocument.RECORD_TYPE)
-					: new OLazyRecordSet(iDatabase, ODocument.RECORD_TYPE);
+			Collection<Object> coll = iType == OType.LINKLIST ? new OLazyRecordList(iSourceRecord, ODocument.RECORD_TYPE)
+					: new OLazyRecordSet(iSourceRecord, ODocument.RECORD_TYPE);
 
 			if (value.length() == 0)
 				return coll;
@@ -87,7 +87,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				if (classSeparatorPos > -1) {
 					String className = value.substring(1, classSeparatorPos);
 					if (className != null) {
-						iLinkedClass = iDatabase.getMetadata().getSchema().getClass(className);
+						iLinkedClass = iSourceRecord.getDatabase().getMetadata().getSchema().getClass(className);
 						item = item.substring(classSeparatorPos + 1);
 					}
 				} else
@@ -111,7 +111,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			String value = iValue.substring(1, iValue.length() - 1);
 
 			@SuppressWarnings("rawtypes")
-			final Map map = new OLazyRecordMap(iDatabase, ODocument.RECORD_TYPE);
+			final Map map = new OLazyRecordMap(iSourceRecord, ODocument.RECORD_TYPE);
 
 			if (value.length() == 0)
 				return map;
@@ -126,7 +126,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				if (item != null && item.length() > 0) {
 					entry = OStringSerializerHelper.smartSplit(item, OStringSerializerHelper.ENTRY_SEPARATOR);
 					if (entry.size() > 0) {
-						mapValue = getLinkedRecord(iDatabase, value, entry.get(1));
+						mapValue = getLinkedRecord(iSourceRecord.getDatabase(), value, entry.get(1));
 						map.put((String) OStringSerializerHelper.fieldTypeFromStream(OType.STRING, entry.get(0)), new ORecordId(mapValue));
 					}
 
@@ -136,13 +136,13 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		}
 
 		case EMBEDDEDMAP:
-			return embeddedMapFromStream(iDatabase, iLinkedType, iValue);
+			return embeddedMapFromStream(iSourceRecord, iLinkedType, iValue);
 
 		case LINK:
 			if (iValue.length() > 1) {
 				int pos = iValue.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
 				if (pos > -1)
-					iLinkedClass = iDatabase.getMetadata().getSchema().getClass(iValue.substring(1, pos));
+					iLinkedClass = iSourceRecord.getDatabase().getMetadata().getSchema().getClass(iValue.substring(1, pos));
 				else
 					pos = 0;
 
@@ -155,7 +155,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		}
 	}
 
-	public Map<String, Object> embeddedMapFromStream(final ODatabaseRecord<?> iDatabase, OType iLinkedType, final String iValue) {
+	public Map<String, Object> embeddedMapFromStream(final ORecord<?> iSourceRecord, OType iLinkedType, final String iValue) {
 		if (iValue.length() == 0)
 			return null;
 
@@ -163,7 +163,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		String value = iValue.substring(1, iValue.length() - 1);
 
 		@SuppressWarnings("rawtypes")
-		final Map map = new OLazyRecordMap(iDatabase, ODocument.RECORD_TYPE);
+		final Map map = new OLazyRecordMap(iSourceRecord, ODocument.RECORD_TYPE);
 
 		if (value.length() == 0)
 			return map;

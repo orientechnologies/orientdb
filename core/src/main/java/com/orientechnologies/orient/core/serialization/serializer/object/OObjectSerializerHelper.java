@@ -226,15 +226,15 @@ public class OObjectSerializerHelper {
 				} else if (type.isAssignableFrom(Set.class)) {
 
 					final Collection<Object> set = (Collection<Object>) iLinked;
-					final Set<Object> target = new OLazyObjectSet<Object>((ODatabaseObjectTx) iRecord.getDatabase().getDatabaseOwner(), set)
-							.setFetchPlan(iFetchPlan);
+					final Set<Object> target = new OLazyObjectSet<Object>((ODatabaseObjectTx) iRecord.getDatabase().getDatabaseOwner(),
+							iRoot, set).setFetchPlan(iFetchPlan);
 
 					fieldValue = target;
 				} else if (type.isAssignableFrom(Map.class)) {
 
 					final Map<String, Object> map = (Map<String, Object>) iLinked;
 					final Map<String, Object> target = new OLazyObjectMap<Object>((ODatabaseObjectTx) iRecord.getDatabase()
-							.getDatabaseOwner(), map).setFetchPlan(iFetchPlan);
+							.getDatabaseOwner(), iRoot, map).setFetchPlan(iFetchPlan);
 
 					fieldValue = target;
 

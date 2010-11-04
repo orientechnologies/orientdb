@@ -13,22 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.db.document;
+package com.orientechnologies.orient.core.db.record;
 
 import java.util.Iterator;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
+/**
+ * Lazy implementation of Iterator that load the records only when accessed. It keep also track of changes to the source record
+ * avoiding to call setDirty() by hand.
+ * 
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * 
+ */
 public class OLazyRecordIterator implements Iterator<Object> {
-	final private ODatabaseRecord<?>	database;
-	final private Iterator<?>					underlying;
-	private byte											recordType;
+	final private ORecord<?>	sourceRecord;
+	final private Iterator<?>	underlying;
+	final private byte				recordType;
 
-	public OLazyRecordIterator(final ODatabaseRecord<?> database, final byte iRecordType, final Iterator<?> iIterator) {
-		this.database = database;
+	public OLazyRecordIterator(final ORecord<?> iSourceRecord, final byte iRecordType, final Iterator<?> iIterator) {
+		this.sourceRecord = iSourceRecord;
 		this.underlying = iIterator;
 		this.recordType = iRecordType;
 	}
@@ -41,7 +48,7 @@ public class OLazyRecordIterator implements Iterator<Object> {
 
 		if (value instanceof ORecordId) {
 			ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
-			record.setDatabase(database);
+			record.setDatabase(sourceRecord.getDatabase());
 			record.setIdentity((ORecordId) value);
 			record.load();
 			return record;
@@ -56,5 +63,7 @@ public class OLazyRecordIterator implements Iterator<Object> {
 
 	public void remove() {
 		underlying.remove();
+		if (sourceRecord != null)
+			sourceRecord.setDirty();
 	}
 }

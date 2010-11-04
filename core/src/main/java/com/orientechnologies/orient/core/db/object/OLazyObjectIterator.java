@@ -18,16 +18,27 @@ package com.orientechnologies.orient.core.db.object;
 import java.util.Iterator;
 
 import com.orientechnologies.orient.core.db.ODatabasePojoAbstract;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+/**
+ * Lazy implementation of Iterator that load the records only when accessed. It keep also track of changes to the source record
+ * avoiding to call setDirty() by hand.
+ * 
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * 
+ */
 @SuppressWarnings({ "unchecked" })
 public class OLazyObjectIterator<TYPE> implements Iterator<TYPE> {
-	final private ODatabasePojoAbstract<?, TYPE>	database;
-	final private Iterator<Object>								underlying;
+	private final ORecord<?>											sourceRecord;
+	private final ODatabasePojoAbstract<?, TYPE>	database;
+	private final Iterator<Object>								underlying;
 	private String																fetchPlan;
 
-	public OLazyObjectIterator(final ODatabasePojoAbstract<?, TYPE> database, final Iterator<Object> iIterator) {
+	public OLazyObjectIterator(final ODatabasePojoAbstract<?, TYPE> database, final ORecord<?> iSourceRecord,
+			final Iterator<Object> iIterator) {
 		this.database = database;
+		this.sourceRecord = iSourceRecord;
 		this.underlying = iIterator;
 	}
 
@@ -53,6 +64,8 @@ public class OLazyObjectIterator<TYPE> implements Iterator<TYPE> {
 
 	public void remove() {
 		underlying.remove();
+		if (sourceRecord != null)
+			sourceRecord.setDirty();
 	}
 
 	public String getFetchPlan() {

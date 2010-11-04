@@ -21,17 +21,21 @@ import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.db.ODatabasePojoAbstract;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
 @SuppressWarnings("serial")
 public class OLazyObjectMap<TYPE> extends HashMap<String, Object> {
+	private final ORecord<?>											sourceRecord;
 	private final ODatabasePojoAbstract<?, TYPE>	database;
 	private final Map<String, Object>							underlying;
 	private String																fetchPlan;
 	private boolean																converted	= false;
 
-	public OLazyObjectMap(final ODatabasePojoAbstract<?, TYPE> database, final Map<String, Object> iSource) {
+	public OLazyObjectMap(final ODatabasePojoAbstract<?, TYPE> database, final ORecord<?> iSourceRecord,
+			final Map<String, Object> iSource) {
 		this.database = database;
+		this.sourceRecord = iSourceRecord;
 		this.underlying = iSource;
 
 		converted = iSource.isEmpty();
@@ -56,11 +60,13 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> {
 
 	public Object put(final String iKey, final Object e) {
 		underlying.put(iKey, database.getRecordByUserObject(e, false));
+		setDirty();
 		return super.put(iKey, e);
 	}
 
 	public Object remove(final Object o) {
 		underlying.remove(database.getRecordByUserObject(o, false));
+		setDirty();
 		return super.remove(o);
 	}
 
@@ -68,6 +74,7 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> {
 		converted = true;
 		underlying.clear();
 		super.clear();
+		setDirty();
 	}
 
 	public String getFetchPlan() {
@@ -100,6 +107,7 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> {
 	}
 
 	public void putAll(final Map<? extends String, ? extends Object> iMap) {
+		setDirty();
 		for (java.util.Map.Entry<? extends String, ? extends Object> e : iMap.entrySet()) {
 			put(e.getKey(), e.getValue());
 		}
@@ -108,6 +116,11 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> {
 	public Collection<Object> values() {
 		convertAll();
 		return super.values();
+	}
+
+	public void setDirty() {
+		if (sourceRecord != null)
+			sourceRecord.setDirty();
 	}
 
 	/**

@@ -20,21 +20,32 @@ import java.util.Iterator;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.db.ODatabasePojoAbstract;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
+/**
+ * Lazy implementation of Set. It's bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by
+ * hand when the set is changed.
+ * 
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * 
+ */
 @SuppressWarnings("unchecked")
 public class OLazyObjectSet<TYPE> implements Set<Object> {
+	private final ORecord<?>											sourceRecord;
 	private final ODatabasePojoAbstract<?, TYPE>	database;
 	private final Collection<Object>							underlying;
 	private String																fetchPlan;
 
-	public OLazyObjectSet(final ODatabasePojoAbstract<?, TYPE> database, final Collection<Object> iSource) {
+	public OLazyObjectSet(final ODatabasePojoAbstract<?, TYPE> database, final ORecord<?> iSourceRecord,
+			final Collection<Object> iSource) {
 		this.database = database;
+		this.sourceRecord = iSourceRecord;
 		this.underlying = iSource;
 	}
 
 	public Iterator<Object> iterator() {
-		return (Iterator<Object>) new OLazyObjectIterator<TYPE>(database, underlying.iterator());
+		return (Iterator<Object>) new OLazyObjectIterator<TYPE>(database, sourceRecord, underlying.iterator());
 	}
 
 	public int size() {
@@ -61,10 +72,12 @@ public class OLazyObjectSet<TYPE> implements Set<Object> {
 	}
 
 	public boolean add(final Object e) {
+		setDirty();
 		return underlying.add(database.getRecordByUserObject(e, false));
 	}
 
 	public boolean remove(final Object o) {
+		setDirty();
 		return underlying.remove(underlying.contains(database.getRecordByUserObject(o, false)));
 	}
 
@@ -78,6 +91,7 @@ public class OLazyObjectSet<TYPE> implements Set<Object> {
 
 	public boolean addAll(final Collection<? extends Object> c) {
 		boolean modified = false;
+		setDirty();
 		for (Object o : c)
 			if (!underlying.add(database.getRecordByUserObject(o, false)))
 				modified = true;
@@ -85,14 +99,17 @@ public class OLazyObjectSet<TYPE> implements Set<Object> {
 	}
 
 	public boolean retainAll(final Collection<?> c) {
+		setDirty();
 		return underlying.retainAll(c);
 	}
 
 	public void clear() {
+		setDirty();
 		underlying.clear();
 	}
 
 	public boolean removeAll(final Collection<?> c) {
+		setDirty();
 		boolean modified = false;
 		for (Object o : c)
 			if (!underlying.remove(database.getRecordByUserObject(o, false)))
@@ -112,5 +129,10 @@ public class OLazyObjectSet<TYPE> implements Set<Object> {
 	@Override
 	public String toString() {
 		return underlying.toString();
+	}
+
+	public void setDirty() {
+		if (sourceRecord != null)
+			sourceRecord.setDirty();
 	}
 }

@@ -92,6 +92,57 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 		return this;
 	}
 
+	/**
+	 * Sets as dirty a POJO. This is useful when you change the object and need to tell to the engine to treat as dirty.
+	 * 
+	 * @param iPojo
+	 *          User object
+	 */
+	public void setDirty(final Object iPojo) {
+		checkOpeness();
+
+		final ODocument record = getRecordByUserObject(iPojo, true);
+
+		if (record == null)
+			throw new OObjectNotManagedException("The object " + iPojo + " is not managed by the current database");
+
+		record.setDirty();
+	}
+
+	/**
+	 * Returns the version number of the object. Version starts from 0 assigned on creation.
+	 * 
+	 * @param iPojo
+	 *          User object
+	 */
+	public int getVersion(final Object iPojo) {
+		checkOpeness();
+
+		final ODocument record = getRecordByUserObject(iPojo, true);
+
+		if (record == null)
+			throw new OObjectNotManagedException("The object " + iPojo + " is not managed by the current database");
+
+		return record.getVersion();
+	}
+
+	/**
+	 * Returns the object unique identity.
+	 * 
+	 * @param iPojo
+	 *          User object
+	 */
+	public ORID getIdentity(final Object iPojo) {
+		checkOpeness();
+
+		final ODocument record = getRecordByUserObject(iPojo, true);
+
+		if (record == null)
+			throw new OObjectNotManagedException("The object " + iPojo + " is not managed by the current database");
+
+		return record.getIdentity();
+	}
+
 	public OUser getUser() {
 		return underlying.getUser();
 	}
