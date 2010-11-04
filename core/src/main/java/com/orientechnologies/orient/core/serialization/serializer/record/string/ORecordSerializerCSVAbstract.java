@@ -16,10 +16,8 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +33,8 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OLazyRecordList;
 import com.orientechnologies.orient.core.db.record.OLazyRecordMap;
 import com.orientechnologies.orient.core.db.record.OLazyRecordSet;
+import com.orientechnologies.orient.core.db.record.ORecordTrackedList;
+import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
 import com.orientechnologies.orient.core.entity.OEntityManagerInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -63,7 +63,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		switch (iType) {
 		case EMBEDDEDLIST:
 		case EMBEDDEDSET:
-			return embeddedCollectionFromStream(iSourceRecord.getDatabase(), iType, iLinkedClass, iLinkedType, iValue);
+			return embeddedCollectionFromStream((ODocument) iSourceRecord, iType, iLinkedClass, iLinkedType, iValue);
 
 		case LINKLIST:
 		case LINKSET: {
@@ -136,7 +136,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		}
 
 		case EMBEDDEDMAP:
-			return embeddedMapFromStream(iSourceRecord, iLinkedType, iValue);
+			return embeddedMapFromStream((ODocument) iSourceRecord, iLinkedType, iValue);
 
 		case LINK:
 			if (iValue.length() > 1) {
@@ -155,7 +155,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		}
 	}
 
-	public Map<String, Object> embeddedMapFromStream(final ORecord<?> iSourceRecord, OType iLinkedType, final String iValue) {
+	public Map<String, Object> embeddedMapFromStream(final ODocument iSourceDocument, OType iLinkedType, final String iValue) {
 		if (iValue.length() == 0)
 			return null;
 
@@ -163,7 +163,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		String value = iValue.substring(1, iValue.length() - 1);
 
 		@SuppressWarnings("rawtypes")
-		final Map map = new OLazyRecordMap(iSourceRecord, ODocument.RECORD_TYPE);
+		final Map map = new OLazyRecordMap(iSourceDocument, ODocument.RECORD_TYPE);
 
 		if (value.length() == 0)
 			return map;
@@ -173,6 +173,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		// EMBEDDED LITERALS
 		List<String> entry;
 		String mapValue;
+		Object mapValueObject;
+
 		for (String item : items) {
 			if (item != null && item.length() > 0) {
 				entry = OStringSerializerHelper.smartSplit(item, OStringSerializerHelper.ENTRY_SEPARATOR);
@@ -192,8 +194,12 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 							iLinkedType = OType.EMBEDDED;
 					}
 
-					map.put((String) OStringSerializerHelper.fieldTypeFromStream(OType.STRING, entry.get(0)),
-							OStringSerializerHelper.fieldTypeFromStream(iLinkedType, mapValue));
+					mapValueObject = OStringSerializerHelper.fieldTypeFromStream(iLinkedType, mapValue);
+
+					if (mapValueObject != null && mapValueObject instanceof ODocument)
+						((ODocument) mapValueObject).setOwner(iSourceDocument);
+
+					map.put((String) OStringSerializerHelper.fieldTypeFromStream(OType.STRING, entry.get(0)), mapValueObject);
 				}
 
 			}
@@ -383,39 +389,49 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		return buffer.toString();
 	}
 
-	public Object embeddedCollectionFromStream(final ODatabaseRecord<?> iDatabase, final OType iType, OClass iLinkedClass,
-			OType iLinkedType, final String iValue) {
+	public Object embeddedCollectionFromStream(final ODocument iDocument, final OType iType, OClass iLinkedClass, OType iLinkedType,
+			final String iValue) {
 		if (iValue.length() == 0)
 			return null;
 
 		// REMOVE BEGIN & END COLLECTIONS CHARACTERS IF IT'S A COLLECTION
 		final String value = iValue.startsWith("[") ? iValue.substring(1, iValue.length() - 1) : iValue;
 
-		final Collection<Object> coll = iType == OType.EMBEDDEDLIST ? new ArrayList<Object>() : new HashSet<Object>();
+		final Collection<Object> coll = iType == OType.EMBEDDEDLIST ? new ORecordTrackedList(iDocument) : new ORecordTrackedSet(
+				iDocument);
 
 		if (value.length() == 0)
 			return coll;
 
 		final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR);
 
+		Object objectToAdd;
 		for (String item : items) {
+			objectToAdd = null;
+
 			if (iLinkedClass != null) {
 				// EMBEDDED RECORD
 				if (item.length() > 2) {
 					item = item.substring(1, item.length() - 1);
-					coll.add(fromString(iDatabase, item, new ODocument(iDatabase, iLinkedClass.getName())));
+					objectToAdd = fromString(iDocument.getDatabase(), item, new ODocument(iDocument.getDatabase(), iLinkedClass.getName()));
 				}
 
 			} else if (item.length() > 0 && item.charAt(0) == OStringSerializerHelper.EMBEDDED) {
 				// EMBEDDED OBJECT
-				coll.add(OStringSerializerHelper.fieldTypeFromStream(iLinkedType, item.substring(1, item.length() - 1)));
+				objectToAdd = OStringSerializerHelper.fieldTypeFromStream(iLinkedType, item.substring(1, item.length() - 1));
 
 			} else {
 				// EMBEDDED LITERAL
 				if (iLinkedType == null)
 					throw new IllegalArgumentException(
 							"Linked type can't be null. Probably the serialized type has not stored the type along with data");
-				coll.add(OStringSerializerHelper.fieldTypeFromStream(iLinkedType, item));
+				objectToAdd = OStringSerializerHelper.fieldTypeFromStream(iLinkedType, item);
+			}
+
+			if (objectToAdd != null) {
+				if (objectToAdd instanceof ODocument)
+					((ODocument) objectToAdd).setOwner(iDocument);
+				coll.add(objectToAdd);
 			}
 		}
 

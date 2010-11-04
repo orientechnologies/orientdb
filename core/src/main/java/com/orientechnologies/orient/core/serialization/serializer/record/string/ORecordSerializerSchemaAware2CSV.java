@@ -167,10 +167,13 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 						} else
 							linkedType = OType.getTypeByClass(firstValue.getClass());
 					}
-				} else if (database != null && fieldValue instanceof ORecordSchemaAware<?>) {
+				} else if (database != null && fieldValue instanceof ODocument) {
 					if (type == null)
 						// DETERMINE THE FIELD TYPE
-						type = OType.LINK;
+						if (((ODocument) fieldValue).getOwner() == null)
+							type = OType.LINK;
+						else
+							type = OType.EMBEDDED;
 
 					linkedClass = getLinkInfo(database, fieldClassName);
 				} else if (fieldValue instanceof ORID) {

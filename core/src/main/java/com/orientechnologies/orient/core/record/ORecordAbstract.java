@@ -36,7 +36,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	protected boolean						_pinned		= false;
 	protected boolean						_dirty		= true;
 	protected STATUS						_status		= STATUS.NEW;
-	protected ORecordListener		listener	= null;
+	protected ORecordListener		_listener	= null;
 
 	public ORecordAbstract() {
 	}
@@ -294,7 +294,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		cloned._pinned = _pinned;
 		cloned._dirty = _dirty;
 		cloned._status = _status;
-		cloned.listener = listener;
+		cloned._listener = _listener;
 		return cloned;
 	}
 
@@ -307,7 +307,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	 *          ODocumentListener implementation
 	 */
 	public void setListener(final ORecordListener iListener) {
-		listener = iListener;
+		_listener = iListener;
 	}
 
 	/**
@@ -316,11 +316,11 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	 * @see ORecordListener
 	 */
 	public void removeListener() {
-		listener = null;
+		_listener = null;
 	}
 
 	protected void invokeListenerEvent(final ORecordListener.EVENT iEvent) {
-		if (listener != null)
-			listener.onEvent(this, iEvent);
+		if (_listener != null)
+			_listener.onEvent(this, iEvent);
 	}
 }

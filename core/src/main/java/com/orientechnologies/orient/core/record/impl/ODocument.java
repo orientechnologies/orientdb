@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordVirtualAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
@@ -48,6 +49,8 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 @SuppressWarnings("unchecked")
 public class ODocument extends ORecordVirtualAbstract<Object> implements Iterable<Entry<String, Object>> {
 	public static final byte	RECORD_TYPE	= 'd';
+
+	protected ODocument				_owner				= null;
 
 	public ODocument() {
 		setup();
@@ -186,10 +189,12 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 
 		StringBuilder buffer = new StringBuilder();
 
-		buffer.append(_clazz == null ? "<unknown>" : _clazz.getName());
+		if (_clazz != null)
+			buffer.append(_clazz.getName());
 
 		if (_recordId != null) {
-			buffer.append("@");
+			if (buffer.length() > 0)
+				buffer.append("@");
 			if (_recordId != null && _recordId.isValid())
 				buffer.append(_recordId);
 		}
@@ -478,6 +483,29 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 */
 	public byte getRecordType() {
 		return RECORD_TYPE;
+	}
+
+	public ODocument getOwner() {
+		return _owner;
+	}
+
+	/**
+	 * Internal.
+	 */
+	public ODocument setOwner(ODocument owner) {
+		this._owner = owner;
+		return this;
+	}
+
+	/**
+	 * Propagates the dirty status to the owner, if any. This happens when the object is embedded in another one.
+	 */
+	@Override
+	public ORecordAbstract<Object> setDirty() {
+		if (_owner != null)
+			// PROPAGATES TO THE OWNER
+			_owner.setDirty();
+		return super.setDirty();
 	}
 
 	/**
