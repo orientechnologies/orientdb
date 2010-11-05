@@ -32,11 +32,19 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  */
 @SuppressWarnings({ "serial" })
 public class OLazyRecordList extends ORecordTrackedList {
-	final private byte	recordType;
-	private boolean			converted	= false;
+	final private byte								recordType;
+	final private ODatabaseRecord<?>	database;
+	private boolean										converted	= false;
+
+	public OLazyRecordList(ODatabaseRecord<?> iDatabase, final byte iRecordType) {
+		super(null);
+		this.database = iDatabase;
+		this.recordType = iRecordType;
+	}
 
 	public OLazyRecordList(final ORecord<?> iSourceRecord, final byte iRecordType) {
 		super(iSourceRecord);
+		this.database = iSourceRecord.getDatabase();
 		this.recordType = iRecordType;
 	}
 
@@ -118,7 +126,7 @@ public class OLazyRecordList extends ORecordTrackedList {
 			final ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
 			final ORecordId rid = (ORecordId) o;
 
-			record.setDatabase(sourceRecord.getDatabase());
+			record.setDatabase(database);
 			record.setIdentity(rid);
 			record.load();
 

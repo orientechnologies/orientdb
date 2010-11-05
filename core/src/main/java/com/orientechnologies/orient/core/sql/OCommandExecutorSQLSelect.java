@@ -24,6 +24,7 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OFullTextIndex;
 import com.orientechnologies.orient.core.index.OPropertyIndexNotUnique;
@@ -125,14 +126,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, database.getClusterNameById(clusterId),
 						clusterId);
 
-			final List<ORecordId> resultSet = searchForIndexes(cls);
+			final List<ORecord<?>> resultSet = searchForIndexes(cls);
 
 			if (resultSet.size() > 0) {
 				OProfiler.getInstance().updateCounter("Query.indexUsage", 1);
 
 				// FOUND USING INDEXES
-				for (ORecordId rid : resultSet)
-					addResult(database.load(rid));
+				for (ORecord<?> record : resultSet)
+					addResult(record);
 			} else
 				// NO INDEXES: SCAN THE ENTIRE CLUSTER
 				scanEntireClusters(clusterIds);
@@ -258,11 +259,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			request.getResultListener().result(iRecord);
 	}
 
-	private List<ORecordId> searchForIndexes(final OClass iSchemaClass) {
-		return analyzeQueryBranch(new ArrayList<ORecordId>(), iSchemaClass, compiledFilter.getRootCondition());
+	private List<ORecord<?>> searchForIndexes(final OClass iSchemaClass) {
+		return analyzeQueryBranch(new ArrayList<ORecord<?>>(), iSchemaClass, compiledFilter.getRootCondition());
 	}
 
-	private List<ORecordId> analyzeQueryBranch(final List<ORecordId> iResultSet, final OClass iSchemaClass,
+	private List<ORecord<?>> analyzeQueryBranch(final List<ORecord<?>> iResultSet, final OClass iSchemaClass,
 			final OSQLFilterCondition iCondition) {
 		if (iCondition == null)
 			return iResultSet;
@@ -283,7 +284,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		return iResultSet;
 	}
 
-	private List<ORecordId> searchIndexedProperty(final List<ORecordId> iResultSet, final OClass iSchemaClass,
+	private List<ORecord<?>> searchIndexedProperty(final List<ORecord<?>> iResultSet, final OClass iSchemaClass,
 			final OSQLFilterCondition iCondition, final Object iItem) {
 		if (iItem == null || !(iItem instanceof OSQLFilterItemField))
 			return null;
@@ -300,10 +301,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 					&& iCondition.getOperator() instanceof OQueryOperatorContainsText) {
 				final Object value = iCondition.getLeft() == iItem ? iCondition.getRight() : iCondition.getLeft();
 				if (value != null) {
-					final List<ORecordId> records = prop.getIndex().get(value.toString());
-					if (records != null && records.size() > 0)
-						// FOUND: ADD IT ALL
-						iResultSet.addAll(records);
+					final List<?> resultSet = prop.getIndex().get(value.toString());
+					if (resultSet != null && resultSet.size() > 0)
+						for (Object o : resultSet) {
+							if (o instanceof ORID)
+								iResultSet.add(database.load((ORID) o));
+							else
+								iResultSet.add((ORecord<?>) o);
+
+						}
+
 				}
 			}
 		}

@@ -53,7 +53,7 @@ public class ORecordTrackedList extends ArrayList<Object> {
 
 	@Override
 	public void add(int index, Object element) {
-		sourceRecord.setDirty();
+		setDirty();
 		super.add(index, element);
 	}
 
@@ -84,25 +84,25 @@ public class ORecordTrackedList extends ArrayList<Object> {
 
 	@Override
 	public Object set(int index, Object element) {
-		sourceRecord.setDirty();
+		setDirty();
 		return super.set(index, element);
 	}
 
 	@Override
 	public Object remove(int index) {
-		sourceRecord.setDirty();
+		setDirty();
 		return super.remove(index);
 	}
 
 	@Override
 	public boolean remove(Object o) {
-		sourceRecord.setDirty();
+		setDirty();
 		return super.remove(o);
 	}
 
 	@Override
 	public void clear() {
-		sourceRecord.setDirty();
+		setDirty();
 		super.clear();
 	}
 

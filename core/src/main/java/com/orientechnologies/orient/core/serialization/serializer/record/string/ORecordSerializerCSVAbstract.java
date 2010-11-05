@@ -63,7 +63,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		switch (iType) {
 		case EMBEDDEDLIST:
 		case EMBEDDEDSET:
-			return embeddedCollectionFromStream((ODocument) iSourceRecord, iType, iLinkedClass, iLinkedType, iValue);
+			return embeddedCollectionFromStream(iSourceRecord.getDatabase(), (ODocument) iSourceRecord, iType, iLinkedClass, iLinkedType,
+					iValue);
 
 		case LINKLIST:
 		case LINKSET: {
@@ -391,16 +392,24 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		return buffer.toString();
 	}
 
-	public Object embeddedCollectionFromStream(final ODocument iDocument, final OType iType, OClass iLinkedClass, OType iLinkedType,
-			final String iValue) {
+	public Object embeddedCollectionFromStream(final ODatabaseRecord<?> iDatabase, final ODocument iDocument, final OType iType,
+			OClass iLinkedClass, OType iLinkedType, final String iValue) {
 		if (iValue.length() == 0)
 			return null;
 
 		// REMOVE BEGIN & END COLLECTIONS CHARACTERS IF IT'S A COLLECTION
 		final String value = iValue.startsWith("[") ? iValue.substring(1, iValue.length() - 1) : iValue;
 
-		final Collection<Object> coll = iType == OType.EMBEDDEDLIST ? new ORecordTrackedList(iDocument) : new ORecordTrackedSet(
-				iDocument);
+		final Collection<Object> coll;
+		if (iLinkedType == OType.LINK) {
+			if (iDocument != null)
+				coll = iType == OType.EMBEDDEDLIST ? new OLazyRecordList(iDocument, ODocument.RECORD_TYPE) : new OLazyRecordSet(iDocument,
+						ODocument.RECORD_TYPE);
+			else
+				coll = iType == OType.EMBEDDEDLIST ? new OLazyRecordList(iDatabase, ODocument.RECORD_TYPE) : new OLazyRecordSet(iDatabase,
+						ODocument.RECORD_TYPE);
+		} else
+			coll = iType == OType.EMBEDDEDLIST ? new ORecordTrackedList(iDocument) : new ORecordTrackedSet(iDocument);
 
 		if (value.length() == 0)
 			return coll;
@@ -476,7 +485,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				linkedClass = document.getSchemaClass();
 			}
 
-			if (document != null)
+			if (document != null && iLinkedType != OType.LINK)
 				buffer.append(OStringSerializerHelper.EMBEDDED);
 
 			if (linkedClass != null || document != null) {
@@ -506,7 +515,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				buffer.append(OStringSerializerHelper.fieldTypeToString(iLinkedType, o));
 			}
 
-			if (document != null)
+			if (document != null && iLinkedType != OType.LINK)
 				buffer.append(OStringSerializerHelper.EMBEDDED);
 		}
 

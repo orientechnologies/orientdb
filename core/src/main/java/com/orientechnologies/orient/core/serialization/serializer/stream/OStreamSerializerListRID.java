@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.serialization.serializer.stream;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
@@ -24,9 +25,14 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 
 public class OStreamSerializerListRID implements OStreamSerializer {
 	public static final String														NAME			= "y";
-	public static final OStreamSerializerListRID					INSTANCE	= new OStreamSerializerListRID();
+	public static final OStreamSerializerListRID					INSTANCE	= new OStreamSerializerListRID(null);
 	private static final ORecordSerializerPositional2CSV	FORMAT		= (ORecordSerializerPositional2CSV) ORecordSerializerFactory
 																																			.instance().getFormat(ORecordSerializerPositional2CSV.NAME);
+	public final ODatabaseRecord<?>												database;
+
+	public OStreamSerializerListRID(final ODatabaseRecord<?> database) {
+		this.database = database;
+	}
 
 	public Object fromStream(byte[] iStream) throws IOException {
 		if (iStream == null)
@@ -34,7 +40,7 @@ public class OStreamSerializerListRID implements OStreamSerializer {
 
 		final String s = OBinaryProtocol.bytes2string(iStream);
 
-		return FORMAT.embeddedCollectionFromStream(null, OType.EMBEDDEDLIST, null, OType.LINK, s);
+		return FORMAT.embeddedCollectionFromStream(database, null, OType.EMBEDDEDLIST, null, OType.LINK, s);
 	}
 
 	public byte[] toStream(Object iObject) throws IOException {
