@@ -315,7 +315,7 @@ public abstract class OFile {
 	protected void openChannel(final int iNewSize) throws IOException {
 		OLogManager.instance().debug(this, "[OFile.openChannel] Opening channel for file: " + osFile);
 
-		for (int i = 0; i < OPEN_DELAY_RETRY; ++i)
+		for (int i = 0; i < OPEN_RETRY_MAX; ++i)
 			try {
 				accessFile = new RandomAccessFile(osFile, mode);
 				break;
