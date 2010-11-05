@@ -827,7 +827,7 @@ public class OStorageRemote extends OStorageAbstract {
 		// TODO: USE THIS TO ROUTE TO THE REQUESTER TX THREAD
 		final int clientTxId = network.readInt();
 
-		if (result == OChannelBinaryProtocol.ERROR) {
+		if (result == OChannelBinaryProtocol.STATUS_ERROR) {
 			StringBuilder buffer = new StringBuilder();
 			boolean moreDetails = false;
 			String rootClassName = null;

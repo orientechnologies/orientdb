@@ -55,6 +55,6 @@ public class OClusterSlave {
 	}
 
 	private boolean readStatus() throws IOException {
-		return network.readByte() != OChannelBinaryProtocol.ERROR;
+		return network.readByte() != OChannelBinaryProtocol.STATUS_ERROR;
 	}
 }

@@ -29,6 +29,7 @@ import com.orientechnologies.common.log.OLogManager;
  * 
  */
 public enum OGlobalConfiguration {
+	// LOG
 	LOG_CONSOLE_LEVEL("log.console.level", "Console's logging level", String.class, "info", new OConfigurationChangeCallback() {
 		public void change(final Object iCurrentValue, final Object iNewValue) {
 			OLogManager.instance().setLevel((String) iNewValue, ConsoleHandler.class);
@@ -39,6 +40,7 @@ public enum OGlobalConfiguration {
 		}
 	}),
 
+	// STORAGE
 	STORAGE_KEEP_OPEN(
 			"storage.keepOpen",
 			"Tells to the engine to not close the storage when a database is closed. Storages will be closed when the process will shutdown",
@@ -46,8 +48,10 @@ public enum OGlobalConfiguration {
 
 	STORAGE_CACHE_SIZE("storage.cache.size", "Size of the cache that keep the record in memory", Integer.class, 5000),
 
+	// DATABASE
 	DB_USE_CACHE("db.cache.enabled", "Uses the storage cache", Boolean.class, true),
 
+	// TREEMAP
 	TREEMAP_LAZY_UPDATES("treemap.lazyUpdates", "Configure the TreeMaps (indexes and dictionaries) as buffered or not",
 			Integer.class, 300),
 
@@ -65,6 +69,7 @@ public enum OGlobalConfiguration {
 			"Multiplicand factor to apply to entry-points list (parameter treemap.entrypoints) to determine if needs of optimization",
 			Float.class, 1.0f),
 
+	// FILE
 	FILE_MMAP_BLOCK_SIZE("file.mmap.blockSize", "Size of the memory mapped block", Integer.class, 300000),
 
 	FILE_MMAP_MAX_MEMORY("file.mmap.maxMemory",
@@ -77,6 +82,7 @@ public enum OGlobalConfiguration {
 	FILE_MMAP_FORCE_RETRY("file.mmap.forceRetry", "Number of times the memory mapped block will try to flush to the disk",
 			Integer.class, 10),
 
+	// NETWORK
 	NETWORK_SOCKET_BUFFER_SIZE("network.socketBufferSize", "TCP/IP Socket buffer size", Integer.class, 32768),
 
 	NETWORK_SOCKET_TIMEOUT("network.timeout", "TCP/IP Socket timeout in ms", Integer.class, 10000),
@@ -90,9 +96,15 @@ public enum OGlobalConfiguration {
 	NETWORK_HTTP_MAX_CONTENT_LENGTH("network.http.maxLength", "TCP/IP max content length in Kb of HTTP requests", Integer.class,
 			100000),
 
+	// PROFILER
 	PROFILER_ENABLED("profiler.enabled", "Enable the recording of statistics and counters", Boolean.class, false),
 
+	// SERVER
 	SERVER_CACHE_STATIC_RESOURCES("server.cache.staticResources", "Cache static resources after loaded", Boolean.class, false),
+
+	// CLUSTERS
+	CLUSTER_SYNC_REPLICAS("cluster.sync.replicas",
+			"Number of synchronous replicas, use 1 to have at least a secure backup server in case of failure", Integer.class, 1),
 
 	CLUSTER_SYNC_TIME_DELAY("cluster.sync.timeDelay", "Delay time (in ms) of synchronization with slave nodes", Integer.class, 30000),
 

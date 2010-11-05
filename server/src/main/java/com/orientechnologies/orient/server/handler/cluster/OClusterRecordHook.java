@@ -15,8 +15,10 @@
  */
 package com.orientechnologies.orient.server.handler.cluster;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.server.OClientConnection;
 
 /**
  * Record hook implementation. Catches all the relevant events and propagates to the cluster's slave nodes.
@@ -24,6 +26,14 @@ import com.orientechnologies.orient.core.record.ORecord;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OClusterRecordHook implements ORecordHook {
+
+	private int								syncReplicas;
+	private OClientConnection	connection;
+
+	public OClusterRecordHook(final OClientConnection iConnection) {
+		connection = iConnection;
+		syncReplicas = OGlobalConfiguration.CLUSTER_SYNC_REPLICAS.getValueAsInteger();
+	}
 
 	public void onTrigger(final TYPE iType, final ORecord<?> iRecord) {
 		switch (iType) {
@@ -40,6 +50,6 @@ public class OClusterRecordHook implements ORecordHook {
 			return;
 		}
 
-		//System.out.println("\nCatched update to database: " + iType + " record: " + iRecord);
+//		System.out.println("\nCatched update to database: " + iType + " record: " + iRecord);
 	}
 }

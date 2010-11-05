@@ -727,12 +727,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	}
 
 	protected void sendOk(final int iClientTxId) throws IOException {
-		channel.writeByte(OChannelBinaryProtocol.OK);
+		channel.writeByte(OChannelBinaryProtocol.STATUS_OK);
 		channel.writeInt(iClientTxId);
 	}
 
 	protected void sendError(final int iClientTxId, final Throwable t) throws IOException {
-		channel.writeByte(OChannelBinaryProtocol.ERROR);
+		channel.writeByte(OChannelBinaryProtocol.STATUS_ERROR);
 		channel.writeInt(iClientTxId);
 
 		Throwable current = t;
@@ -797,7 +797,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		// INSTALL TRIGGER TO CATCH ALL THE EVENTS ON RECORDS
 		for (OServerHandler h : OServerMain.server().getHandlers()) {
 			if (h instanceof OClusterNode) {
-				connection.database.registerHook(new OClusterRecordHook());
+				connection.database.registerHook(new OClusterRecordHook(connection));
 				break;
 			}
 		}

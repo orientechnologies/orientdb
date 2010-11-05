@@ -117,7 +117,7 @@ public class OServerShutdownMain {
 		network.writeString(rootPassword);
 		network.flush();
 
-		if (network.readByte() == OChannelBinaryProtocol.ERROR){
+		if (network.readByte() == OChannelBinaryProtocol.STATUS_ERROR){
 			network.readInt();
 			network.readString();
 			throw new ONetworkProtocolException(network.readString());

@@ -60,8 +60,8 @@ public class OChannelBinaryProtocol {
 	public static final byte	NODECLUSTER_DISCONNECT	= 81;
 
 	// STATUSES
-	public static final byte	OK											= 0;
-	public static final byte	ERROR										= 1;
+	public static final byte	STATUS_OK								= 0;
+	public static final byte	STATUS_ERROR						= 1;
 
 	// CONSTANTS
 	public static final int		RECORD_NULL							= -2;
