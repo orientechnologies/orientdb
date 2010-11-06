@@ -28,6 +28,7 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
@@ -51,6 +52,8 @@ public class DbCreationTest {
 				file = new File("server/config/orientdb-server-config.xml");
 			if (!file.exists())
 				file = new File(OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/orientdb-server-config.xml"));
+			if (!file.exists())
+				throw new OConfigurationException("Can't load file orientdb-server-config.xml to execute remote tests");
 
 			FileReader f = new FileReader(file);
 			char[] buffer = new char[(int) file.length()];
