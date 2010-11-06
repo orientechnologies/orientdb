@@ -222,6 +222,10 @@ public class OServer {
 		return memoryDatabases;
 	}
 
+	public Map<String, ODatabaseRecord<?>> getPersistentDatabases() {
+		return memoryDatabases;
+	}
+
 	public Map<String, Class<? extends ONetworkProtocol>> getProtocols() {
 		return protocols;
 	}

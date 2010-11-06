@@ -37,8 +37,8 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolExce
  * 
  */
 public class OServerShutdownMain {
-	public String														clusterNetworkAddress;
-	public int[]														clusterNetworkPort;
+	public String														networkAddress;
+	public int[]														networkPort;
 	public OChannelBinaryClient							network;
 	protected OServerConfigurationLoaderXml	configurationLoader;
 	protected OServerConfiguration					configuration;
@@ -70,14 +70,14 @@ public class OServerShutdownMain {
 				loadConfiguration();
 				for (OServerNetworkListenerConfiguration l : configuration.network.listeners) {
 					if (l.protocol.equals("binary")) {
-						clusterNetworkAddress = l.ipAddress;
-						clusterNetworkPort = OServerNetworkListener.getPorts(l.portRange);
+						networkAddress = l.ipAddress;
+						networkPort = OServerNetworkListener.getPorts(l.portRange);
 						break;
 					}
 				}
 			} else {
-				clusterNetworkAddress = iServerAddress;
-				clusterNetworkPort = OServerNetworkListener.getPorts(iServerPorts);
+				networkAddress = iServerAddress;
+				networkPort = OServerNetworkListener.getPorts(iServerPorts);
 			}
 
 		} catch (IOException e) {
@@ -86,10 +86,10 @@ public class OServerShutdownMain {
 	}
 
 	private void loadConfiguration() throws IOException {
-		if( configurationLoader != null )
+		if (configurationLoader != null)
 			// AREADY LOADED
 			return;
-		
+
 		String config = OServerConfiguration.DEFAULT_CONFIG_FILE;
 		if (System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE) != null)
 			config = System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE);
@@ -100,16 +100,16 @@ public class OServerShutdownMain {
 
 	public void connect(final int iTimeout) throws IOException {
 		// TRY TO CONNECT TO THE RIGHT PORT
-		for (int port : clusterNetworkPort)
+		for (int port : networkPort)
 			try {
-				network = new OChannelBinaryClient(clusterNetworkAddress, port, contextConfig);
+				network = new OChannelBinaryClient(networkAddress, port, contextConfig);
 				break;
 			} catch (Exception e) {
 			}
 
 		if (network == null)
-			throw new ONetworkProtocolException("Can't connect to server host '" + clusterNetworkAddress + "', ports: "
-					+ Arrays.toString(clusterNetworkPort));
+			throw new ONetworkProtocolException("Can't connect to server host '" + networkAddress + "', ports: "
+					+ Arrays.toString(networkPort));
 
 		network.writeByte((byte) OChannelBinaryProtocol.REQUEST_SHUTDOWN);
 		network.writeInt(0);
@@ -117,7 +117,7 @@ public class OServerShutdownMain {
 		network.writeString(rootPassword);
 		network.flush();
 
-		if (network.readByte() == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR){
+		if (network.readByte() == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
 			network.readInt();
 			network.readString();
 			throw new ONetworkProtocolException(network.readString());
