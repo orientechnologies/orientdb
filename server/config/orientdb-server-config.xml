@@ -2,7 +2,7 @@
 <orient-server>
 	<handlers>
 		<handler
-			class="com.orientechnologies.orient.server.handler.cluster.OClusterNode">
+			class="com.orientechnologies.orient.server.handler.cluster.discovery.OClusterDiscoveryManager">
 			<parameters>
 				<parameter name="name" value="default" />
 				<parameter name="security.algorithm" value="Blowfish" />
