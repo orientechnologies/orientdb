@@ -69,8 +69,8 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.handler.OServerHandler;
-import com.orientechnologies.orient.server.handler.cluster.OClusterRecordHook;
-import com.orientechnologies.orient.server.handler.cluster.discovery.OClusterDiscoveryManager;
+import com.orientechnologies.orient.server.handler.distributed.ODistributedServerRecordHook;
+import com.orientechnologies.orient.server.handler.distributed.discovery.ODistributedServerDiscoveryManager;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 import com.orientechnologies.orient.server.tx.OTransactionRecordProxy;
@@ -797,8 +797,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	private void installClusterTrigger() {
 		// INSTALL TRIGGER TO CATCH ALL THE EVENTS ON RECORDS
 		for (OServerHandler h : OServerMain.server().getHandlers()) {
-			if (h instanceof OClusterDiscoveryManager) {
-				connection.database.registerHook(new OClusterRecordHook(connection));
+			if (h instanceof ODistributedServerDiscoveryManager) {
+				connection.database.registerHook(new ODistributedServerRecordHook(connection));
 				break;
 			}
 		}
