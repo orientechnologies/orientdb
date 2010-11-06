@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.handler.cluster;
+package com.orientechnologies.orient.server.handler.cluster.discovery;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -36,10 +36,10 @@ public class OClusterDiscoverySignaler extends OPollerThread {
   private DatagramPacket dgram;
   private DatagramSocket socket;
 
-  public OClusterDiscoverySignaler(final OClusterNode iClusterNode, final OServerNetworkListener iNetworkListener) {
+  public OClusterDiscoverySignaler(final OClusterDiscoveryManager iClusterNode, final OServerNetworkListener iNetworkListener) {
     super(iClusterNode.networkMulticastHeartbeat, OServer.getThreadGroup(), "DiscoverySignaler");
 
-    String buffer = OClusterNode.PACKET_HEADER + OConstants.ORIENT_VERSION + "|" + OClusterNode.PROTOCOL_VERSION + "|"
+    String buffer = OClusterDiscoveryManager.PACKET_HEADER + OConstants.ORIENT_VERSION + "|" + OClusterDiscoveryManager.PROTOCOL_VERSION + "|"
         + iClusterNode.name + "|" + iNetworkListener.getInboundAddr().getHostName() + "|"
         + iNetworkListener.getInboundAddr().getPort();
 
