@@ -59,7 +59,7 @@ public class OServerAdmin {
 		storage.createNetworkConnection();
 
 		try {
-			storage.writeCommand(OChannelBinaryProtocol.CONNECT);
+			storage.writeCommand(OChannelBinaryProtocol.REQUEST_CONNECT);
 			storage.getNetwork().writeString(iUserName);
 			storage.getNetwork().writeString(iUserPassword);
 			storage.getNetwork().flush();
@@ -83,7 +83,7 @@ public class OServerAdmin {
 			if (iStorageMode == null)
 				iStorageMode = "csv";
 
-			storage.writeCommand(OChannelBinaryProtocol.DB_CREATE);
+			storage.writeCommand(OChannelBinaryProtocol.REQUEST_DB_CREATE);
 			storage.getNetwork().writeString(storage.getName());
 			storage.getNetwork().writeString(iStorageMode);
 
@@ -100,7 +100,7 @@ public class OServerAdmin {
 		storage.checkConnection();
 
 		try {
-			storage.writeCommand(OChannelBinaryProtocol.DB_DELETE);
+			storage.writeCommand(OChannelBinaryProtocol.REQUEST_DB_DELETE);
 			storage.getNetwork().writeString(storage.getName());
 
 			storage.readStatus();
@@ -118,7 +118,7 @@ public class OServerAdmin {
 		final Map<String, String> config = new HashMap<String, String>();
 
 		try {
-			storage.writeCommand(OChannelBinaryProtocol.CONFIG_LIST);
+			storage.writeCommand(OChannelBinaryProtocol.REQUEST_CONFIG_LIST);
 			storage.readStatus();
 
 			final int num = storage.getNetwork().readShort();
@@ -137,7 +137,7 @@ public class OServerAdmin {
 		storage.checkConnection();
 
 		try {
-			storage.writeCommand(OChannelBinaryProtocol.CONFIG_GET);
+			storage.writeCommand(OChannelBinaryProtocol.REQUEST_CONFIG_GET);
 			storage.getNetwork().writeString(iConfig.getKey());
 			storage.readStatus();
 
@@ -154,7 +154,7 @@ public class OServerAdmin {
 		storage.checkConnection();
 
 		try {
-			storage.writeCommand(OChannelBinaryProtocol.CONFIG_SET);
+			storage.writeCommand(OChannelBinaryProtocol.REQUEST_CONFIG_SET);
 			storage.getNetwork().writeString(iConfig.getKey());
 			storage.getNetwork().writeString(iValue != null ? iValue.toString() : "");
 			storage.readStatus();

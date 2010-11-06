@@ -111,13 +111,13 @@ public class OServerShutdownMain {
 			throw new ONetworkProtocolException("Can't connect to server host '" + clusterNetworkAddress + "', ports: "
 					+ Arrays.toString(clusterNetworkPort));
 
-		network.writeByte((byte) OChannelBinaryProtocol.SHUTDOWN);
+		network.writeByte((byte) OChannelBinaryProtocol.REQUEST_SHUTDOWN);
 		network.writeInt(0);
 		network.writeString(OServerConfiguration.SRV_ROOT_ADMIN);
 		network.writeString(rootPassword);
 		network.flush();
 
-		if (network.readByte() == OChannelBinaryProtocol.STATUS_ERROR){
+		if (network.readByte() == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR){
 			network.readInt();
 			network.readString();
 			throw new ONetworkProtocolException(network.readString());

@@ -69,8 +69,8 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.handler.OServerHandler;
-import com.orientechnologies.orient.server.handler.cluster.OClusterNode;
 import com.orientechnologies.orient.server.handler.cluster.OClusterRecordHook;
+import com.orientechnologies.orient.server.handler.cluster.discovery.OClusterDiscoveryManager;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 import com.orientechnologies.orient.server.tx.OTransactionRecordProxy;
@@ -151,7 +151,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	protected void parseCommand() throws IOException {
 		switch (commandType) {
 
-		case OChannelBinaryProtocol.SHUTDOWN: {
+		case OChannelBinaryProtocol.REQUEST_SHUTDOWN: {
 			data.commandInfo = "Shutdowning";
 
 			OLogManager.instance().info(this, "Received shutdown command from the remote client %s:%d", channel.socket.getInetAddress(),
@@ -179,7 +179,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			break;
 		}
 
-		case OChannelBinaryProtocol.CONNECT: {
+		case OChannelBinaryProtocol.REQUEST_CONNECT: {
 			data.commandInfo = "Connect";
 
 			serverLogin(channel.readString(), channel.readString());
@@ -188,7 +188,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			channel.writeInt(connection.id);
 			break;
 		}
-		case OChannelBinaryProtocol.DB_OPEN: {
+
+		case OChannelBinaryProtocol.REQUEST_DB_OPEN: {
 			data.commandInfo = "Open database";
 
 			String dbURL = channel.readString();
@@ -233,7 +234,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			break;
 		}
 
-		case OChannelBinaryProtocol.DB_CREATE: {
+		case OChannelBinaryProtocol.REQUEST_DB_CREATE: {
 			data.commandInfo = "Create database";
 
 			String dbName = channel.readString();
@@ -276,13 +277,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			break;
 		}
 
-		case OChannelBinaryProtocol.DB_CLOSE:
+		case OChannelBinaryProtocol.REQUEST_DB_CLOSE:
 			data.commandInfo = "Close Database";
 
 			connection.database.close();
 			break;
 
-		case OChannelBinaryProtocol.DB_EXIST: {
+		case OChannelBinaryProtocol.REQUEST_DB_EXIST: {
 			data.commandInfo = "Exists database";
 
 			channel.writeByte((byte) (connection.database.exists() ? 1 : 0));
@@ -291,7 +292,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			break;
 		}
 
-		case OChannelBinaryProtocol.DATACLUSTER_COUNT: {
+		case OChannelBinaryProtocol.REQUEST_DATACLUSTER_COUNT: {
 			data.commandInfo = "Count cluster elements";
 
 			int[] clusterIds = new int[channel.readShort()];
@@ -305,7 +306,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			break;
 		}
 
-		case OChannelBinaryProtocol.DATACLUSTER_DATARANGE: {
+		case OChannelBinaryProtocol.REQUEST_DATACLUSTER_DATARANGE: {
 			data.commandInfo = "Get the begin/end range of data in cluster";
 
 			long[] pos = connection.database.getStorage().getClusterDataRange(channel.readShort());
@@ -316,7 +317,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			break;
 		}
 
-		case OChannelBinaryProtocol.DATACLUSTER_ADD: {
+		case OChannelBinaryProtocol.REQUEST_DATACLUSTER_ADD: {
 			data.commandInfo = "Add cluster";
 
 			final String type = channel.readString();
@@ -346,7 +347,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			break;
 		}
 
-		case OChannelBinaryProtocol.DATACLUSTER_REMOVE: {
+		case OChannelBinaryProtocol.REQUEST_DATACLUSTER_REMOVE: {
 			data.commandInfo = "remove cluster";
 
 			final int id = channel.readShort();
@@ -358,7 +359,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			break;
 		}
 
-		case OChannelBinaryProtocol.RECORD_LOAD: {
+		case OChannelBinaryProtocol.REQUEST_RECORD_LOAD: {
 			data.commandInfo = "Load record";
 
 			final short clusterId = channel.readShort();
@@ -422,7 +423,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			break;
 		}
 
-		case OChannelBinaryProtocol.RECORD_CREATE:
+		case OChannelBinaryProtocol.REQUEST_RECORD_CREATE:
 			data.commandInfo = "Create record";
 
 			final long location = underlyingDatabase.save(channel.readShort(), ORID.CLUSTER_POS_INVALID, channel.readBytes(), -1,
@@ -431,7 +432,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			channel.writeLong(location);
 			break;
 
-		case OChannelBinaryProtocol.RECORD_UPDATE:
+		case OChannelBinaryProtocol.REQUEST_RECORD_UPDATE:
 			data.commandInfo = "Update record";
 
 			final int clusterId = channel.readShort();
@@ -452,7 +453,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			channel.writeInt((int) newVersion);
 			break;
 
-		case OChannelBinaryProtocol.RECORD_DELETE:
+		case OChannelBinaryProtocol.REQUEST_RECORD_DELETE:
 			data.commandInfo = "Delete record";
 
 			underlyingDatabase.delete(channel.readShort(), channel.readLong(), channel.readInt());
@@ -461,7 +462,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			channel.writeByte((byte) '1');
 			break;
 
-		case OChannelBinaryProtocol.COUNT: {
+		case OChannelBinaryProtocol.REQUEST_COUNT: {
 			data.commandInfo = "Count cluster records";
 
 			final String clusterName = channel.readString();
@@ -473,7 +474,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			break;
 		}
 
-		case OChannelBinaryProtocol.COMMAND: {
+		case OChannelBinaryProtocol.REQUEST_COMMAND: {
 			data.commandInfo = "Execute remote command";
 
 			final boolean asynch = channel.readByte() == 'a';
@@ -573,7 +574,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			break;
 		}
 
-		case OChannelBinaryProtocol.DICTIONARY_LOOKUP: {
+		case OChannelBinaryProtocol.REQUEST_DICTIONARY_LOOKUP: {
 			data.commandInfo = "Dictionary lookup";
 
 			final String key = channel.readString();
@@ -588,7 +589,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			break;
 		}
 
-		case OChannelBinaryProtocol.DICTIONARY_PUT: {
+		case OChannelBinaryProtocol.REQUEST_DICTIONARY_PUT: {
 			data.commandInfo = "Dictionary put";
 
 			String key = channel.readString();
@@ -609,7 +610,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			break;
 		}
 
-		case OChannelBinaryProtocol.DICTIONARY_REMOVE: {
+		case OChannelBinaryProtocol.REQUEST_DICTIONARY_REMOVE: {
 			data.commandInfo = "Dictionary remove";
 
 			final String key = channel.readString();
@@ -624,7 +625,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			break;
 		}
 
-		case OChannelBinaryProtocol.DICTIONARY_SIZE: {
+		case OChannelBinaryProtocol.REQUEST_DICTIONARY_SIZE: {
 			data.commandInfo = "Dictionary size";
 
 			sendOk(clientTxId);
@@ -632,7 +633,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			break;
 		}
 
-		case OChannelBinaryProtocol.DICTIONARY_KEYS: {
+		case OChannelBinaryProtocol.REQUEST_DICTIONARY_KEYS: {
 			data.commandInfo = "Dictionary keys";
 
 			sendOk(clientTxId);
@@ -640,7 +641,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			break;
 		}
 
-		case OChannelBinaryProtocol.TX_COMMIT:
+		case OChannelBinaryProtocol.REQUEST_TX_COMMIT:
 			data.commandInfo = "Transaction commit";
 
 			((OStorageLocal) connection.database.getStorage()).commit(connection.database.getId(), new OTransactionOptimisticProxy(
@@ -649,7 +650,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			sendOk(clientTxId);
 			break;
 
-		case OChannelBinaryProtocol.CONFIG_GET: {
+		case OChannelBinaryProtocol.REQUEST_CONFIG_GET: {
 			data.commandInfo = "Get config";
 
 			final String key = channel.readString();
@@ -661,7 +662,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			break;
 		}
 
-		case OChannelBinaryProtocol.CONFIG_SET: {
+		case OChannelBinaryProtocol.REQUEST_CONFIG_SET: {
 			data.commandInfo = "Get config";
 
 			final String key = channel.readString();
@@ -674,7 +675,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			break;
 		}
 
-		case OChannelBinaryProtocol.CONFIG_LIST: {
+		case OChannelBinaryProtocol.REQUEST_CONFIG_LIST: {
 			data.commandInfo = "List config";
 
 			sendOk(clientTxId);
@@ -727,12 +728,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	}
 
 	protected void sendOk(final int iClientTxId) throws IOException {
-		channel.writeByte(OChannelBinaryProtocol.STATUS_OK);
+		channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_OK);
 		channel.writeInt(iClientTxId);
 	}
 
 	protected void sendError(final int iClientTxId, final Throwable t) throws IOException {
-		channel.writeByte(OChannelBinaryProtocol.STATUS_ERROR);
+		channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
 		channel.writeInt(iClientTxId);
 
 		Throwable current = t;
@@ -796,7 +797,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	private void installClusterTrigger() {
 		// INSTALL TRIGGER TO CATCH ALL THE EVENTS ON RECORDS
 		for (OServerHandler h : OServerMain.server().getHandlers()) {
-			if (h instanceof OClusterNode) {
+			if (h instanceof OClusterDiscoveryManager) {
 				connection.database.registerHook(new OClusterRecordHook(connection));
 				break;
 			}

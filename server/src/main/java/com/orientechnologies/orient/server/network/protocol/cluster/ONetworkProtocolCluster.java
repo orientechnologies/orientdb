@@ -18,7 +18,6 @@ package com.orientechnologies.orient.server.network.protocol.cluster;
 import java.io.IOException;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
 /**
@@ -44,12 +43,6 @@ public class ONetworkProtocolCluster extends ONetworkProtocolBinary {
 			data.commandInfo = "Cluster connection";
 
 			sendOk(clientTxId);
-
-			channel.writeShort((short) OGlobalConfiguration.values().length);
-			for (OGlobalConfiguration cfg : OGlobalConfiguration.values()) {
-				channel.writeString(cfg.getKey());
-				channel.writeString(cfg.getValueAsString() != null ? cfg.getValueAsString() : "");
-			}
 
 			break;
 		}

@@ -18,7 +18,7 @@ package com.orientechnologies.orient.server.network.protocol.cluster;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 /**
- * Cluster extension to the default binary protocol.
+ * Cluster extension to the default binary protocol. The range of requests is 80-90.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
