@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.handler.cluster;
+package com.orientechnologies.orient.server.handler.distributed;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.hook.ORecordHook;
@@ -25,14 +25,14 @@ import com.orientechnologies.orient.server.OClientConnection;
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class OClusterRecordHook implements ORecordHook {
+public class ODistributedServerRecordHook implements ORecordHook {
 
 	private int								syncReplicas;
 	private OClientConnection	connection;
 
-	public OClusterRecordHook(final OClientConnection iConnection) {
+	public ODistributedServerRecordHook(final OClientConnection iConnection) {
 		connection = iConnection;
-		syncReplicas = OGlobalConfiguration.CLUSTER_SYNC_REPLICAS.getValueAsInteger();
+		syncReplicas = OGlobalConfiguration.DISTRIBUTED_SERVER_SYNC_REPLICAS.getValueAsInteger();
 	}
 
 	public void onTrigger(final TYPE iType, final ORecord<?> iRecord) {
@@ -50,6 +50,6 @@ public class OClusterRecordHook implements ORecordHook {
 			return;
 		}
 
-//		System.out.println("\nCatched update to database: " + iType + " record: " + iRecord);
+		// System.out.println("\nCatched update to database: " + iType + " record: " + iRecord);
 	}
 }

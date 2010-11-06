@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.handler.cluster;
+package com.orientechnologies.orient.server.handler.distributed;
 
 import java.io.IOException;
 import java.util.Date;
@@ -21,8 +21,8 @@ import java.util.Date;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
-import com.orientechnologies.orient.server.handler.cluster.discovery.OClusterDiscoveryManager;
-import com.orientechnologies.orient.server.network.protocol.cluster.OChannelClusterProtocol;
+import com.orientechnologies.orient.server.handler.distributed.discovery.ODistributedServerDiscoveryManager;
+import com.orientechnologies.orient.server.network.protocol.distributed.OChannelDistributedProtocol;
 
 /**
  * Contains all the information about a cluster node.
@@ -30,20 +30,20 @@ import com.orientechnologies.orient.server.network.protocol.cluster.OChannelClus
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OClusterNode {
+public class ODistributedServerNode {
 	public enum STATUS {
 		CONNECTING, SYNCHRONIZED, UNSYNCHRONIZED
 	}
 
-	public String											clusterNetworkAddress;
-	public int												clusterNetworkPort;
-	public Date												joinedOn;
-	private OClusterDiscoveryManager	discoveryManager;
-	public OChannelBinaryClient				network;
-	private OContextConfiguration			configuration;
-	private STATUS										status;
+	public String																clusterNetworkAddress;
+	public int																	clusterNetworkPort;
+	public Date																	joinedOn;
+	private ODistributedServerDiscoveryManager	discoveryManager;
+	public OChannelBinaryClient									network;
+	private OContextConfiguration								configuration;
+	private STATUS															status;
 
-	public OClusterNode(final OClusterDiscoveryManager iNode, final String iServerAddress, final int iServerPort) {
+	public ODistributedServerNode(final ODistributedServerDiscoveryManager iNode, final String iServerAddress, final int iServerPort) {
 		discoveryManager = iNode;
 		clusterNetworkAddress = iServerAddress;
 		clusterNetworkPort = iServerPort;
@@ -57,7 +57,7 @@ public class OClusterNode {
 
 		OLogManager.instance().info(this, "Connecting to remote cluster node %s:%d...", clusterNetworkAddress, clusterNetworkPort);
 
-		network.out.writeByte(OChannelClusterProtocol.NODECLUSTER_CONNECT);
+		network.out.writeByte(OChannelDistributedProtocol.NODECLUSTER_CONNECT);
 		network.out.writeInt(0);
 		network.flush();
 
@@ -74,7 +74,7 @@ public class OClusterNode {
 	}
 
 	private boolean readStatus() throws IOException {
-		return network.readByte() != OChannelClusterProtocol.RESPONSE_STATUS_ERROR;
+		return network.readByte() != OChannelDistributedProtocol.RESPONSE_STATUS_ERROR;
 	}
 
 }
