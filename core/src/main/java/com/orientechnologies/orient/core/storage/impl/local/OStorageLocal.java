@@ -75,7 +75,6 @@ public class OStorageLocal extends OStorageAbstract {
 	private String											storagePath;
 	private OStorageVariableParser			variableParser;
 	private int													defaultClusterId		= -1;
-	private long												version							= 0;
 
 	private static String[]							ALL_FILE_EXTENSIONS	= { ".och", ".ocl", ".oda", ".odh", ".otx" };
 
@@ -449,10 +448,6 @@ public class OStorageLocal extends OStorageAbstract {
 		return txManager;
 	}
 
-	public long getVersion() {
-		return version;
-	}
-
 	public boolean removeCluster(final int iClusterId) {
 		final boolean locked = acquireExclusiveLock();
 
@@ -770,6 +765,7 @@ public class OStorageLocal extends OStorageAbstract {
 			txManager.commitAllPendingRecords(iRequesterId, iTx);
 
 			incrementVersion();
+			synch();
 
 		} catch (IOException e) {
 			rollback(iRequesterId, iTx);
@@ -787,7 +783,7 @@ public class OStorageLocal extends OStorageAbstract {
 
 		final long timer = OProfiler.getInstance().startChrono();
 
-		final boolean locked = acquireExclusiveLock();
+		final boolean locked = acquireSharedLock();
 
 		try {
 			saveVersion();
@@ -801,7 +797,7 @@ public class OStorageLocal extends OStorageAbstract {
 		} catch (IOException e) {
 			throw new OStorageException("Error on synch", e);
 		} finally {
-			releaseExclusiveLock(locked);
+			releaseSharedLock(locked);
 
 			OProfiler.getInstance().stopChrono("OStorageLocal.synch", timer);
 		}
@@ -1157,13 +1153,6 @@ public class OStorageLocal extends OStorageAbstract {
 	private void checkOpeness() {
 		if (!open)
 			throw new OStorageException("Storage " + name + " is not opened.");
-	}
-
-	/**
-	 * Update the storage's version
-	 */
-	private void incrementVersion() {
-		++version;
 	}
 
 	/***

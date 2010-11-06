@@ -125,6 +125,8 @@ public interface OStorage {
 
 	public String getURL();
 
+	public long getVersion();
+	
 	public void synch();
 
 	public int getUsers();

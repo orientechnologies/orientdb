@@ -473,15 +473,16 @@ public class OStorageMemory extends OStorageAbstract {
 					rid.clusterPosition = createRecord(cluster.getId(), stream, txEntry.getRecord().getRecordType());
 					rid.clusterId = cluster.getId();
 				} else {
-					txEntry.getRecord().setVersion(updateRecord(iRequesterId, rid, stream, txEntry.getRecord().getVersion(),
-							txEntry.getRecord().getRecordType()));
+					txEntry.getRecord().setVersion(
+							updateRecord(iRequesterId, rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType()));
 				}
 			}
 			break;
 
 		case OTransactionEntry.UPDATED:
-			txEntry.getRecord().setVersion(updateRecord(iRequesterId, rid, txEntry.getRecord().toStream(), txEntry.getRecord().getVersion(),
-					txEntry.getRecord().getRecordType()));
+			txEntry.getRecord().setVersion(
+					updateRecord(iRequesterId, rid, txEntry.getRecord().toStream(), txEntry.getRecord().getVersion(), txEntry.getRecord()
+							.getRecordType()));
 			break;
 
 		case OTransactionEntry.DELETED:

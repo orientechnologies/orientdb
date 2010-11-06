@@ -27,9 +27,10 @@ public abstract class OStorageAbstract extends OSharedResourceAdaptive implement
 	protected String								name;
 	protected String								url;
 	protected String								mode;
-	protected OCacheRecord					cache	= new OCacheRecord();
+	protected OCacheRecord					cache		= new OCacheRecord();
+	protected long									version	= 0;
 
-	protected boolean								open	= false;
+	protected boolean								open		= false;
 
 	public OStorageAbstract(final String iName, final String iFilePath, final String iMode) {
 		if (OStringSerializerHelper.contains(iName, '/'))
@@ -86,6 +87,20 @@ public abstract class OStorageAbstract extends OSharedResourceAdaptive implement
 
 	public void close(boolean iForce) {
 		close();
+	}
+
+	/**
+	 * Returns current storage's version as serial.
+	 */
+	public long getVersion() {
+		return version;
+	}
+
+	/**
+	 * Update the storage's version
+	 */
+	protected void incrementVersion() {
+		++version;
 	}
 
 	public boolean removeCluster(final String iClusterName) {
