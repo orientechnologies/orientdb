@@ -28,6 +28,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.util.OArrays;
+import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -74,6 +75,7 @@ public class OStorageLocal extends OStorageAbstract {
 	private String											storagePath;
 	private OStorageVariableParser			variableParser;
 	private int													defaultClusterId		= -1;
+	private long												version							= 0;
 
 	private static String[]							ALL_FILE_EXTENSIONS	= { ".och", ".ocl", ".oda", ".odh", ".otx" };
 
@@ -166,6 +168,8 @@ public class OStorageLocal extends OStorageAbstract {
 				}
 			}
 
+			loadVersion();
+
 			txManager.open();
 
 		} catch (IOException e) {
@@ -244,6 +248,8 @@ public class OStorageLocal extends OStorageAbstract {
 			return;
 
 		try {
+			saveVersion();
+
 			for (OCluster cluster : clusters)
 				if (cluster != null)
 					cluster.close();
@@ -435,6 +441,18 @@ public class OStorageLocal extends OStorageAbstract {
 		return -1;
 	}
 
+	public ODataLocal[] getDataSegments() {
+		return dataSegments;
+	}
+
+	public OStorageLocalTxExecuter getTxManager() {
+		return txManager;
+	}
+
+	public long getVersion() {
+		return version;
+	}
+
 	public boolean removeCluster(final int iClusterId) {
 		final boolean locked = acquireExclusiveLock();
 
@@ -554,7 +572,10 @@ public class OStorageLocal extends OStorageAbstract {
 
 	public long createRecord(final int iClusterId, final byte[] iContent, final byte iRecordType) {
 		checkOpeness();
-		return createRecord(getClusterById(iClusterId), iContent, iRecordType);
+
+		final long clusterPosition = createRecord(getClusterById(iClusterId), iContent, iRecordType);
+		incrementVersion();
+		return clusterPosition;
 	}
 
 	public ORawBuffer readRecord(final ODatabaseRecord<?> iDatabase, final int iRequesterId, final int iClusterId,
@@ -566,12 +587,17 @@ public class OStorageLocal extends OStorageAbstract {
 	public int updateRecord(final int iRequesterId, final int iClusterId, final long iPosition, final byte[] iContent,
 			final int iVersion, final byte iRecordType) {
 		checkOpeness();
-		return updateRecord(iRequesterId, getClusterById(iClusterId), iPosition, iContent, iVersion, iRecordType);
+
+		final int recordVersion = updateRecord(iRequesterId, getClusterById(iClusterId), iPosition, iContent, iVersion, iRecordType);
+		incrementVersion();
+		return recordVersion;
 	}
 
 	public boolean deleteRecord(final int iRequesterId, final int iClusterId, final long iPosition, final int iVersion) {
 		checkOpeness();
-		return deleteRecord(iRequesterId, getClusterById(iClusterId), iPosition, iVersion);
+		final boolean succeed = deleteRecord(iRequesterId, getClusterById(iClusterId), iPosition, iVersion);
+		incrementVersion();
+		return succeed;
 	}
 
 	/**
@@ -743,6 +769,8 @@ public class OStorageLocal extends OStorageAbstract {
 		try {
 			txManager.commitAllPendingRecords(iRequesterId, iTx);
 
+			incrementVersion();
+
 		} catch (IOException e) {
 			rollback(iRequesterId, iTx);
 
@@ -762,12 +790,16 @@ public class OStorageLocal extends OStorageAbstract {
 		final boolean locked = acquireExclusiveLock();
 
 		try {
+			saveVersion();
+
 			for (OCluster cluster : clusters)
 				cluster.synch();
 
 			for (ODataLocal data : dataSegments)
 				data.synch();
 
+		} catch (IOException e) {
+			throw new OStorageException("Error on synch", e);
 		} finally {
 			releaseExclusiveLock(locked);
 
@@ -834,6 +866,33 @@ public class OStorageLocal extends OStorageAbstract {
 
 	public OStorageVariableParser getVariableParser() {
 		return variableParser;
+	}
+
+	public Set<OCluster> getClusters() {
+		Set<OCluster> result = new HashSet<OCluster>();
+
+		// ADD ALL THE CLUSTERS
+		for (OCluster c : clusters)
+			result.add(c);
+
+		return result;
+	}
+
+	/**
+	 * Execute the command request and return the result back.
+	 */
+	public Object command(final OCommandRequestText iCommand) {
+		final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
+		executor.setProgressListener(iCommand.getProgressListener());
+		executor.parse(iCommand);
+		try {
+			return executor.execute();
+		} catch (OCommandExecutionException e) {
+			// PASS THROUGHT
+			throw e;
+		} catch (Exception e) {
+			throw new OCommandExecutionException("Error on execution of command: " + iCommand, e);
+		}
 	}
 
 	protected int registerDataSegment(final OStorageDataConfiguration iConfig) throws IOException {
@@ -1033,6 +1092,8 @@ public class OStorageLocal extends OStorageAbstract {
 				// UPDATE DATA SEGMENT OFFSET WITH THE NEW PHYSICAL POSITION
 				iClusterSegment.setPhysicalPosition(iPosition, ppos.dataSegment, newDataSegmentOffset, iRecordType);
 
+			incrementVersion();
+
 			return ppos.version;
 
 		} catch (IOException e) {
@@ -1073,6 +1134,8 @@ public class OStorageLocal extends OStorageAbstract {
 
 			getDataSegment(ppos.dataSegment).deleteRecord(ppos.dataPosition);
 
+			incrementVersion();
+
 			return true;
 
 		} catch (IOException e) {
@@ -1096,31 +1159,30 @@ public class OStorageLocal extends OStorageAbstract {
 			throw new OStorageException("Storage " + name + " is not opened.");
 	}
 
-	public Set<OCluster> getClusters() {
-		Set<OCluster> result = new HashSet<OCluster>();
+	/**
+	 * Update the storage's version
+	 */
+	private void incrementVersion() {
+		++version;
+	}
 
-		// ADD ALL THE CLUSTERS
-		for (OCluster c : clusters)
-			result.add(c);
-
-		return result;
+	/***
+	 * Save the version number to disk
+	 * 
+	 * @throws IOException
+	 */
+	private void saveVersion() throws IOException {
+		dataSegments[0].files[0].writeHeaderLong(OConstants.SIZE_LONG, version);
 	}
 
 	/**
-	 * Execute the command request and return the result back.
+	 * Read the storage version from disk;
+	 * 
+	 * @return Long as serial version number
+	 * @throws IOException
 	 */
-	public Object command(final OCommandRequestText iCommand) {
-		final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
-		executor.setProgressListener(iCommand.getProgressListener());
-		executor.parse(iCommand);
-		try {
-			return executor.execute();
-		} catch (OCommandExecutionException e) {
-			// PASS THROUGHT
-			throw e;
-		} catch (Exception e) {
-			throw new OCommandExecutionException("Error on execution of command: " + iCommand, e);
-		}
+	private long loadVersion() throws IOException {
+		return version = dataSegments[0].files[0].readHeaderLong(OConstants.SIZE_LONG);
 	}
 
 	/**
@@ -1167,11 +1229,4 @@ public class OStorageLocal extends OStorageAbstract {
 		return id;
 	}
 
-	public ODataLocal[] getDataSegments() {
-		return dataSegments;
-	}
-
-	public OStorageLocalTxExecuter getTxManager() {
-		return txManager;
-	}
 }
