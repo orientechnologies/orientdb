@@ -50,6 +50,7 @@ import com.orientechnologies.orient.server.config.OServerConfigurationLoaderXml;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerNetworkListenerConfiguration;
 import com.orientechnologies.orient.server.config.OServerNetworkProtocolConfiguration;
+import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.handler.OServerHandler;
 import com.orientechnologies.orient.server.managed.OrientServer;
@@ -222,8 +223,8 @@ public class OServer {
 		return memoryDatabases;
 	}
 
-	public Map<String, ODatabaseRecord<?>> getPersistentDatabases() {
-		return memoryDatabases;
+	public Map<String, ODatabaseRecord<?>> getConfiguredDatabases() {
+		return null;
 	}
 
 	public Map<String, Class<? extends ONetworkProtocol>> getProtocols() {
@@ -247,6 +248,10 @@ public class OServer {
 		return v;
 	}
 
+	public List<OServerHandler> getHandlers() {
+		return handlers;
+	}
+
 	protected void loadConfiguration() {
 		try {
 			String config = OServerConfiguration.DEFAULT_CONFIG_FILE;
@@ -256,17 +261,31 @@ public class OServer {
 			configurationLoader = new OServerConfigurationLoaderXml(OServerConfiguration.class, config);
 			configuration = configurationLoader.load();
 
-			if (configuration.users != null && configuration.users.length > 0) {
-				for (OServerUserConfiguration u : configuration.users) {
-					if (u.name.equals(OServerConfiguration.SRV_ROOT_ADMIN))
-						// FOUND
-						return;
-				}
-			}
+			loadStorages();
+			loadUsers();
 
-			createAdminUser();
 		} catch (IOException e) {
 			OLogManager.instance().error(this, "Error on reading server configuration.", OConfigurationException.class);
+		}
+	}
+
+	private void loadUsers() throws IOException {
+		if (configuration.users != null && configuration.users.length > 0) {
+			for (OServerUserConfiguration u : configuration.users) {
+				if (u.name.equals(OServerConfiguration.SRV_ROOT_ADMIN))
+					// FOUND
+					return;
+			}
+		}
+
+		createAdminUser();
+	}
+
+	private void loadStorages() {
+		String type;
+		for (OServerStorageConfiguration stg : OServerMain.server().getConfiguration().storages) {
+			type = stg.path.substring(0, stg.path.indexOf(":"));
+			OLogManager.instance().info(this, "-> Loaded " + type + " database '" + stg.name + "'");
 		}
 	}
 
@@ -292,9 +311,5 @@ public class OServer {
 				handler.startup();
 			}
 		}
-	}
-
-	public List<OServerHandler> getHandlers() {
-		return handlers;
 	}
 }

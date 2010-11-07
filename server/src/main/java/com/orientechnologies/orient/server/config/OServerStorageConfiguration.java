@@ -20,7 +20,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "storage")
-@XmlType(propOrder = { "name", "path" })
+@XmlType(propOrder = { "loadOnStartup", "path", "name" })
 public class OServerStorageConfiguration {
 
 	@XmlAttribute
@@ -28,6 +28,9 @@ public class OServerStorageConfiguration {
 
 	@XmlAttribute
 	public String	path;
+
+	@XmlAttribute
+	public boolean loadOnStartup;
 
 	public OServerStorageConfiguration() {
 	}

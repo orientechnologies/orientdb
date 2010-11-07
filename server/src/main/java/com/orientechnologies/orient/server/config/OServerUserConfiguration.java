@@ -20,7 +20,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "user")
-@XmlType(propOrder = { "name", "password", "resources" })
+@XmlType(propOrder = { "resources", "password", "name" })
 public class OServerUserConfiguration {
 	@XmlAttribute
 	public String	name;

@@ -20,7 +20,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "entry")
-@XmlType(propOrder = { "name", "value" })
+@XmlType(propOrder = { "value", "name" })
 public class OEntryConfiguration {
 	@XmlAttribute
 	public String	name;

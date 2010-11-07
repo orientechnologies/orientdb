@@ -23,7 +23,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "listener")
-@XmlType(propOrder = { "ipAddress", "portRange", "protocol", "parameters", "commands" })
+@XmlType(propOrder = { "commands", "parameters", "protocol", "portRange", "ipAddress", })
 public class OServerNetworkListenerConfiguration {
 
 	@XmlAttribute(name = "ip-address", required = true)

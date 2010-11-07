@@ -22,13 +22,13 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "handler")
-@XmlType(propOrder = { "clazz", "parameters" })
+@XmlType(propOrder = { "parameters", "clazz" })
 public class OServerHandlerConfiguration {
 
-  @XmlAttribute(name = "class", required = true)
-  public String                          clazz;
+	@XmlAttribute(name = "class", required = true)
+	public String														clazz;
 
-  @XmlElementWrapper
-  @XmlElementRef(type = OServerParameterConfiguration.class)
-  public OServerParameterConfiguration[] parameters;
+	@XmlElementWrapper
+	@XmlElementRef(type = OServerParameterConfiguration.class)
+	public OServerParameterConfiguration[]	parameters;
 }
