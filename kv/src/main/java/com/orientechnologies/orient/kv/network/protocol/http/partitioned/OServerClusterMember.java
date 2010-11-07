@@ -41,7 +41,7 @@ import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
 public class OServerClusterMember implements InstanceListener, MembershipListener, MigrationListener {
 
 	public OServerClusterMember() {
-		OLogManager.instance().info(this, "Orient Server starting cluster...");
+		OLogManager.instance().info(this, "OrientDB KV Server starting cluster...");
 		Hazelcast.addInstanceListener(this);
 		Hazelcast.getPartitionService().addMigrationListener(this);
 
@@ -50,32 +50,32 @@ public class OServerClusterMember implements InstanceListener, MembershipListene
 			Hazelcast.getMap(stg.name);
 		}
 
-		OLogManager.instance().info(this, "Orient Server cluster started successfully");
+		OLogManager.instance().info(this, "OrientDB KV Server cluster started successfully");
 	}
 
 	public void instanceCreated(InstanceEvent iEvent) {
-		OLogManager.instance().debug(this, "Orient Server instance registered: %d", iEvent);
+		OLogManager.instance().debug(this, "OrientDB KV Server instance registered: %d", iEvent);
 	}
 
 	public void instanceDestroyed(InstanceEvent iEvent) {
-		OLogManager.instance().debug(this, "Orient Server instance unregistered: %s", iEvent);
+		OLogManager.instance().debug(this, "OrientDB KV Server instance unregistered: %s", iEvent);
 	}
 
 	public void memberAdded(MembershipEvent iEvent) {
-		OLogManager.instance().info(this, "Orient Server member added: %s", iEvent);
+		OLogManager.instance().info(this, "OrientDB KV Server member added: %s", iEvent);
 	}
 
 	public void memberRemoved(MembershipEvent iEvent) {
-		OLogManager.instance().info(this, "Orient Server member removed: %s", iEvent);
+		OLogManager.instance().info(this, "OrientDB KV Server member removed: %s", iEvent);
 	}
 
 	public void migrationStarted(MigrationEvent iEvent) {
-		OLogManager.instance().debug(this, "Orient Server migration started for partition %d from %s to %s", iEvent.getPartitionId(),
+		OLogManager.instance().debug(this, "OrientDB KV Server migration started for partition %d from %s to %s", iEvent.getPartitionId(),
 				iEvent.getOldOwner(), iEvent.getNewOwner());
 	}
 
 	public void migrationCompleted(MigrationEvent iEvent) {
-		OLogManager.instance().debug(this, "Orient Server migration completed for partition %d from %s to %s", iEvent.getPartitionId(),
+		OLogManager.instance().debug(this, "OrientDB KV Server migration completed for partition %d from %s to %s", iEvent.getPartitionId(),
 				iEvent.getOldOwner(), iEvent.getNewOwner());
 
 		final int partitionId = iEvent.getPartitionId();

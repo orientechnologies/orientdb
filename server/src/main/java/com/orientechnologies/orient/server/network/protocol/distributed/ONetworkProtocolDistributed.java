@@ -16,8 +16,13 @@
 package com.orientechnologies.orient.server.network.protocol.distributed;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
 /**
@@ -34,15 +39,29 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary {
 	@Override
 	protected void parseCommand() throws IOException {
 		if (commandType < 80) {
+			// BINARY REQUESTS
 			super.parseCommand();
 			return;
 		}
 
+		// DISTRIBUTED SERVER REQUESTS
 		switch (commandType) {
 		case OChannelDistributedProtocol.NODECLUSTER_CONNECT: {
 			data.commandInfo = "Cluster connection";
 
 			sendOk(clientTxId);
+
+			// TRANSMITS FOR ALL THE CONFIGURED STORAGES: STORAGE/VERSION
+			Map<String, Long> storages = new HashMap<String, Long>();
+			for (OStorage stg : Orient.instance().getStorages()) {
+				storages.put(stg.getName(), stg.getVersion());
+			}
+
+			channel.writeInt(storages.size());
+			for (Entry<String, Long> s : storages.entrySet()) {
+				channel.writeString(s.getKey());
+				channel.writeLong(s.getValue());
+			}
 
 			break;
 		}

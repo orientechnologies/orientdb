@@ -97,7 +97,7 @@ public class OServer {
 	@SuppressWarnings("unchecked")
 	public void startup() throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException,
 			SecurityException, InvocationTargetException, NoSuchMethodException {
-		OLogManager.instance().info(this, "Orient Database Server v" + OConstants.ORIENT_VERSION + " is starting up...");
+		OLogManager.instance().info(this, "OrientDB Server v" + OConstants.ORIENT_VERSION + " is starting up...");
 
 		loadConfiguration();
 
@@ -115,7 +115,7 @@ public class OServer {
 
 		registerHandlers();
 
-		OLogManager.instance().info(this, "Orient Database Server v" + OConstants.ORIENT_VERSION + " is active.");
+		OLogManager.instance().info(this, "OrientDB Server v" + OConstants.ORIENT_VERSION + " is active.");
 	}
 
 	public void shutdown() {
@@ -124,7 +124,7 @@ public class OServer {
 
 		running = false;
 
-		OLogManager.instance().info(this, "Orient Database Server is shutdowning...");
+		OLogManager.instance().info(this, "OrientDB Server is shutdowning...");
 
 		try {
 			lock.writeLock().lock();
@@ -147,7 +147,7 @@ public class OServer {
 			lock.writeLock().unlock();
 		}
 
-		OLogManager.instance().info(this, "Orient Database Server shutdown complete");
+		OLogManager.instance().info(this, "OrientDB Server shutdown complete");
 		System.out.println();
 	}
 
@@ -223,10 +223,6 @@ public class OServer {
 		return memoryDatabases;
 	}
 
-	public Map<String, ODatabaseRecord<?>> getConfiguredDatabases() {
-		return null;
-	}
-
 	public Map<String, Class<? extends ONetworkProtocol>> getProtocols() {
 		return protocols;
 	}
@@ -283,10 +279,13 @@ public class OServer {
 
 	private void loadStorages() {
 		String type;
-		for (OServerStorageConfiguration stg : OServerMain.server().getConfiguration().storages) {
-			type = stg.path.substring(0, stg.path.indexOf(":"));
-			OLogManager.instance().info(this, "-> Loaded " + type + " database '" + stg.name + "'");
-		}
+		for (OServerStorageConfiguration stg : OServerMain.server().getConfiguration().storages)
+			if (stg.loadOnStartup) {
+				Orient.instance().getStorage(stg.path);
+
+				type = stg.path.substring(0, stg.path.indexOf(":"));
+				OLogManager.instance().info(this, "-> Loaded " + type + " database '" + stg.name + "'");
+			}
 	}
 
 	private void createAdminUser() throws IOException {

@@ -105,7 +105,9 @@ public class Orient extends OSharedResource {
 			} else
 				dbName = iURL;
 
-			return engine.getStorage(dbName, parameters);
+			final OStorage storage = engine.getStorage(dbName, parameters);
+			storages.put(dbName, storage);
+			return storage;
 
 		} finally {
 			releaseExclusiveLock();
@@ -129,10 +131,8 @@ public class Orient extends OSharedResource {
 			acquireExclusiveLock();
 
 			OStorage storage = storages.get(iDbName);
-			if (storage == null) {
+			if (storage == null)
 				storage = new OStorageLocal(iDbName, iDbName, iMode);
-				storages.put(iDbName, storage);
-			}
 
 			return storage;
 
