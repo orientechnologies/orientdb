@@ -23,14 +23,14 @@ import javax.xml.bind.annotation.XmlType;
 @XmlType(propOrder = { "loadOnStartup", "path", "name" })
 public class OServerStorageConfiguration {
 
-	@XmlAttribute
-	public String	name;
+	@XmlAttribute(required = true)
+	public String		name;
 
 	@XmlAttribute
-	public String	path;
+	public String		path;
 
-	@XmlAttribute
-	public boolean loadOnStartup;
+	@XmlAttribute(name = "loaded-at-startup")
+	public boolean	loadOnStartup;
 
 	public OServerStorageConfiguration() {
 	}

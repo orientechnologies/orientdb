@@ -50,7 +50,7 @@
 	</network>
 	<storages>
 		<!-- Default in-memory storage. Data are not saved permanently. -->
-		<storage path="memory:temp" name="temp" />
+		<storage path="memory:temp" name="temp" loaded-at-startup="true" />
 	</storages>
 	<users>
 	</users>
