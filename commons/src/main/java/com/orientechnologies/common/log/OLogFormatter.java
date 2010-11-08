@@ -7,7 +7,17 @@ public class OLogFormatter extends Formatter {
 
 	@Override
 	public String format(final LogRecord record) {
-		return record.getMessage();
-	}
+		if (record.getThrown() == null)
+			return record.getMessage();
 
+		// FORMAT THE STACK TRACE
+		final StringBuilder buffer = new StringBuilder();
+		buffer.append(record.getMessage());
+		for (StackTraceElement stackTraceElement : record.getThrown().getStackTrace()) {
+			buffer.append("\n-> ");
+			buffer.append(stackTraceElement.toString());
+		}
+
+		return buffer.toString();
+	}
 }
