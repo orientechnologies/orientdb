@@ -38,7 +38,7 @@ public class ODistributedServerDiscoverySignaler extends OPollerThread {
 
 	public ODistributedServerDiscoverySignaler(final ODistributedServerDiscoveryManager iClusterNode,
 			final OServerNetworkListener iNetworkListener) {
-		super(iClusterNode.networkMulticastHeartbeat, OServer.getThreadGroup(), "DiscoverySignaler");
+		super(iClusterNode.networkMulticastHeartbeat * 1000, OServer.getThreadGroup(), "DiscoverySignaler");
 
 		String buffer = ODistributedServerDiscoveryManager.PACKET_HEADER + OConstants.ORIENT_VERSION + "|"
 				+ ODistributedServerDiscoveryManager.PROTOCOL_VERSION + "|" + iClusterNode.name + "|"
@@ -72,7 +72,10 @@ public class ODistributedServerDiscoverySignaler extends OPollerThread {
 
 	@Override
 	public void shutdown() {
-		socket.close();
+		try {
+			socket.close();
+		} catch (Throwable t) {
+		}
 		socket = null;
 		dgram = null;
 		super.shutdown();

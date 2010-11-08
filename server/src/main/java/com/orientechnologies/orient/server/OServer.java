@@ -231,6 +231,15 @@ public class OServer {
 		return listeners;
 	}
 
+	@SuppressWarnings("unchecked")
+	public <RET extends OServerNetworkListener> RET getListenerByProtocol(final Class<? extends ONetworkProtocol> iProtocolClass) {
+		for (OServerNetworkListener l : listeners)
+			if (l.getProtocolType().equals(iProtocolClass))
+				return (RET) l;
+
+		return null;
+	}
+
 	public OrientServer getManagedServer() {
 		return managedServer;
 	}
@@ -246,6 +255,15 @@ public class OServer {
 
 	public List<OServerHandler> getHandlers() {
 		return handlers;
+	}
+
+	@SuppressWarnings("unchecked")
+	public <RET extends OServerHandler> RET getHandler(final Class<RET> iHandlerClass) {
+		for (OServerHandler h : handlers)
+			if (h.getClass().equals(iHandlerClass))
+				return (RET) h;
+
+		return null;
 	}
 
 	protected void loadConfiguration() {

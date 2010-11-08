@@ -24,6 +24,7 @@ import java.util.Map.Entry;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.server.handler.distributed.discovery.ODistributedServerDiscoveryManager;
@@ -40,8 +41,8 @@ public class ODistributedServerNode {
 		CONNECTING, SYNCHRONIZED, UNSYNCHRONIZED
 	}
 
-	public String																clusterNetworkAddress;
-	public int																	clusterNetworkPort;
+	public String																networkAddress;
+	public int																	networkPort;
 	public Date																	joinedOn;
 	private ODistributedServerDiscoveryManager	discoveryManager;
 	public OChannelBinaryClient									network;
@@ -51,17 +52,18 @@ public class ODistributedServerNode {
 
 	public ODistributedServerNode(final ODistributedServerDiscoveryManager iNode, final String iServerAddress, final int iServerPort) {
 		discoveryManager = iNode;
-		clusterNetworkAddress = iServerAddress;
-		clusterNetworkPort = iServerPort;
+		networkAddress = iServerAddress;
+		networkPort = iServerPort;
 		joinedOn = new Date();
 		configuration = new OContextConfiguration();
 		status = STATUS.CONNECTING;
 	}
 
 	public void connect(final int iTimeout) throws IOException {
-		network = new OChannelBinaryClient(clusterNetworkAddress, clusterNetworkPort, configuration);
+		configuration.setValue(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT, iTimeout);
+		network = new OChannelBinaryClient(networkAddress, networkPort, configuration);
 
-		OLogManager.instance().info(this, "Connecting to remote cluster node %s:%d...", clusterNetworkAddress, clusterNetworkPort);
+		OLogManager.instance().info(this, "Connecting to remote cluster node %s:%d...", networkAddress, networkPort);
 
 		network.out.writeByte(OChannelDistributedProtocol.NODECLUSTER_CONNECT);
 		network.out.writeInt(0);
@@ -101,8 +103,26 @@ public class ODistributedServerNode {
 		OLogManager.instance().info(this, "+--------------------------------+-----------------+----------------+");
 
 		status = STATUS.UNSYNCHRONIZED;
-		OLogManager.instance().info(this, "Connection to remote cluster node %s:%d has been established", clusterNetworkAddress,
-				clusterNetworkPort);
+		OLogManager.instance().info(this, "Connection to remote cluster node %s:%d has been established", networkAddress, networkPort);
+	}
+
+	public boolean sendKeepAlive(final int iNetworkTimeout) {
+		configuration.setValue(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT, iNetworkTimeout);
+		OLogManager.instance().debug(this, "Sending keepalive message to remote distributed server node %s:%d...", networkAddress,
+				networkPort);
+
+		try {
+			network.out.writeByte(OChannelDistributedProtocol.NODECLUSTER_KEEPALIVE);
+			network.out.writeInt(0);
+			network.flush();
+
+			if (readStatus())
+				return true;
+
+		} catch (Exception e) {
+		}
+
+		return false;
 	}
 
 	public void startSynchronization() {
@@ -113,4 +133,12 @@ public class ODistributedServerNode {
 	private boolean readStatus() throws IOException {
 		return network.readByte() != OChannelDistributedProtocol.RESPONSE_STATUS_ERROR;
 	}
+
+	@Override
+	public String toString() {
+		final StringBuilder builder = new StringBuilder();
+		builder.append(networkAddress).append(":").append(networkPort);
+		return builder.toString();
+	}
+
 }

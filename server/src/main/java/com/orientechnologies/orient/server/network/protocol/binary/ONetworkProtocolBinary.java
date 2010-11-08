@@ -795,12 +795,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	}
 
 	private void installClusterTrigger() {
-		// INSTALL TRIGGER TO CATCH ALL THE EVENTS ON RECORDS
-		for (OServerHandler h : OServerMain.server().getHandlers()) {
-			if (h instanceof ODistributedServerDiscoveryManager) {
-				connection.database.registerHook(new ODistributedServerRecordHook(connection));
-				break;
-			}
-		}
+		final OServerHandler manager = OServerMain.server().getHandler(ODistributedServerDiscoveryManager.class);
+		if (manager != null)
+			// INSTALL TRIGGER TO CATCH ALL THE EVENTS ON RECORDS
+			connection.database.registerHook(new ODistributedServerRecordHook(connection));
 	}
 }

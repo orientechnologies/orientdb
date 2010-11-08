@@ -24,6 +24,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
  * 
  */
 public class OChannelDistributedProtocol extends OChannelBinaryProtocol {
-	public static final byte	NODECLUSTER_CONNECT			= 80;
-	public static final byte	NODECLUSTER_DISCONNECT	= 81;
+	public static final byte	NODECLUSTER_KEEPALIVE		= 80;
+	public static final byte	NODECLUSTER_CONNECT			= 81;
+	public static final byte	NODECLUSTER_DISCONNECT	= 82;
 }

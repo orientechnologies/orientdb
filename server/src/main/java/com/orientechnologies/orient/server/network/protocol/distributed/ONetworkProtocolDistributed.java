@@ -22,7 +22,10 @@ import java.util.Map.Entry;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.server.OServerMain;
+import com.orientechnologies.orient.server.handler.distributed.discovery.ODistributedServerDiscoveryManager;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
 /**
@@ -32,8 +35,15 @@ import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProto
  * 
  */
 public class ONetworkProtocolDistributed extends ONetworkProtocolBinary {
+	private ODistributedServerDiscoveryManager	manager;
+
 	public ONetworkProtocolDistributed() {
-		super("Cluster-DB");
+		super("Distributed-DB");
+
+		manager = OServerMain.server().getHandler(ODistributedServerDiscoveryManager.class);
+		if (manager == null)
+			throw new OConfigurationException(
+					"Can't find a ODistributedServerDiscoveryManager instance registered as handler. Check the server configuration in the handlers section.");
 	}
 
 	@Override
@@ -46,8 +56,15 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary {
 
 		// DISTRIBUTED SERVER REQUESTS
 		switch (commandType) {
+		case OChannelDistributedProtocol.NODECLUSTER_KEEPALIVE:
+			data.commandInfo = "Keep-alive";
+			sendOk(clientTxId);
+			break;
+
 		case OChannelDistributedProtocol.NODECLUSTER_CONNECT: {
 			data.commandInfo = "Cluster connection";
+			
+			manager.receivedLeaderConnection(this);
 
 			sendOk(clientTxId);
 

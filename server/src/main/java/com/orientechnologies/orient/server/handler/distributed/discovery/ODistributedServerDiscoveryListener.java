@@ -33,22 +33,23 @@ public class ODistributedServerDiscoveryListener extends OSoftThread {
 
 	private MulticastSocket											socket;
 
-	public ODistributedServerDiscoveryListener(final ODistributedServerDiscoveryManager iServerNode,
+	public ODistributedServerDiscoveryListener(final ODistributedServerDiscoveryManager iManager,
 			final OServerNetworkListener iNetworkListener) {
 		super(OServer.getThreadGroup(), "DiscoveryListener");
 
-		serverNode = iServerNode;
+		serverNode = iManager;
 		binaryNetworkListener = iNetworkListener;
 
-		OLogManager.instance().info(
-				this,
-				"Listening for distributed nodes on IP multicast " + iServerNode.networkMulticastAddress + ":"
-						+ iServerNode.networkMulticastPort);
+		OLogManager.instance()
+				.info(
+						this,
+						"Listening for distributed nodes on IP multicast " + iManager.networkMulticastAddress + ":"
+								+ iManager.networkMulticastPort);
 
 		dgram = new DatagramPacket(recvBuffer, recvBuffer.length);
 		try {
-			socket = new MulticastSocket(iServerNode.networkMulticastPort);
-			socket.joinGroup(iServerNode.networkMulticastAddress);
+			socket = new MulticastSocket(iManager.networkMulticastPort);
+			socket.joinGroup(iManager.networkMulticastAddress);
 		} catch (IOException e) {
 			OLogManager.instance().error(this, "Can't startup the Discovery Listener service to catch distributed server nodes", e);
 		}
@@ -105,7 +106,7 @@ public class ODistributedServerDiscoveryListener extends OSoftThread {
 					return;
 
 				// GOOD PACKET, PASS TO THE DISTRIBUTED NODE MANAGER THIS INFO
-				serverNode.receivedDistributedServerNodePresence(serverAddress, serverPort);
+				serverNode.receivedNodePresence(serverAddress, serverPort);
 
 			} catch (Exception e) {
 				// WRONG PACKET

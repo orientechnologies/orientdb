@@ -17,11 +17,14 @@ package com.orientechnologies.orient.server.handler.distributed.discovery;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.TimerTask;
 
 import javax.crypto.SecretKey;
 
+import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -36,8 +39,8 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.distributed.ONetworkProtocolDistributed;
 
 /**
- * Distributed server node handler. It starts the discovery signaler and listener and manages the configuration of the distributed server
- * nodes. When the node startups and after a configurable timeout no nodes are joined, then the node became the LEADER.
+ * Distributed server node handler. It starts the discovery signaler and listener and manages the configuration of the distributed
+ * server nodes. When the node startups and after a configurable timeout no nodes are joined, then the node became the LEADER.
  * <p>
  * Distributed server messages are sent using IP Multicast.
  * </p>
@@ -53,27 +56,31 @@ import com.orientechnologies.orient.server.network.protocol.distributed.ONetwork
  * 
  */
 public class ODistributedServerDiscoveryManager implements OServerHandler {
-	protected OServer																server;
+	protected OServer																			server;
 
-	protected String																name;
-	protected SecretKey															securityKey;
-	protected String																securityAlgorithm;
-	protected InetAddress														networkMulticastAddress;
-	protected int																		networkMulticastPort;
-	protected int																		networkMulticastHeartbeat;																					// IN MS
-	protected int																		networkTimeoutLeader;																							// IN MS
-	protected int																		networkTimeoutConnectionSlaves;																		// IN MS
+	protected String																			name;
+	protected SecretKey																		securityKey;
+	protected String																			securityAlgorithm;
+	protected InetAddress																	networkMulticastAddress;
+	protected int																					networkMulticastPort;
+	protected int																					networkMulticastHeartbeat;																					// IN MS
+	protected int																					networkTimeoutLeader;																							// IN MS
+	protected int																					networkTimeoutNode;																								// IN MS
+	protected int																					networkKeepaliveDelay;																							// IN MS
 
-	private ODistributedServerDiscoverySignaler			discoverySignaler;
-	private ODistributedServerDiscoveryListener			discoveryListener;
+	private ODistributedServerDiscoverySignaler						discoverySignaler;
+	private ODistributedServerDiscoveryListener						discoveryListener;
+	private final OSharedResourceAdaptiveExternal					lock							= new OSharedResourceAdaptiveExternal();
 
-	private ODistributedServerNode									leader						= null;
-	private HashMap<String, ODistributedServerNode>	nodes							= new HashMap<String, ODistributedServerNode>();	;
+	private final HashMap<String, ODistributedServerNode>	nodes							= new HashMap<String, ODistributedServerNode>();	;
 
-	static final String															CHECKSUM					= "ChEcKsUm1976";
+	static final String																		CHECKSUM					= "ChEcKsUm1976";
 
-	static final String															PACKET_HEADER			= "OrientDB v.";
-	static final int																PROTOCOL_VERSION	= 0;
+	static final String																		PACKET_HEADER			= "OrientDB v.";
+	static final int																			PROTOCOL_VERSION	= 0;
+
+	private OServerNetworkListener												distributedNetworkListener;
+	private ONetworkProtocolDistributed										leaderConnection;
 
 	/**
 	 * Parse parameters and configure services.
@@ -87,8 +94,9 @@ public class ODistributedServerDiscoveryManager implements OServerHandler {
 			networkMulticastAddress = InetAddress.getByName("235.1.1.1");
 			networkMulticastPort = 2424;
 			networkMulticastHeartbeat = 5000;
-			networkTimeoutLeader = 10000;
-			networkTimeoutConnectionSlaves = 2000;
+			networkTimeoutLeader = 3000;
+			networkTimeoutNode = 5000;
+			networkKeepaliveDelay = 5000;
 			securityAlgorithm = "Blowfish";
 			byte[] tempSecurityKey = null;
 
@@ -108,8 +116,10 @@ public class ODistributedServerDiscoveryManager implements OServerHandler {
 						networkMulticastHeartbeat = Integer.parseInt(param.value);
 					else if ("network.timeout.leader".equalsIgnoreCase(param.name))
 						networkTimeoutLeader = Integer.parseInt(param.value);
-					else if ("network.timeout.connectionSlaves".equalsIgnoreCase(param.name))
-						networkTimeoutConnectionSlaves = Integer.parseInt(param.value);
+					else if ("network.timeout.connection".equalsIgnoreCase(param.name))
+						networkTimeoutNode = Integer.parseInt(param.value);
+					else if ("network.keepalive.delay".equalsIgnoreCase(param.name))
+						networkKeepaliveDelay = Integer.parseInt(param.value);
 				}
 
 			if (tempSecurityKey == null) {
@@ -140,24 +150,14 @@ public class ODistributedServerDiscoveryManager implements OServerHandler {
 	}
 
 	public void startup() {
-		// FIND THE BINARY NETWORK LISTENER
-		OServerNetworkListener found = null;
-		for (OServerNetworkListener l : server.getListeners()) {
-			if (l.getProtocolType().equals(ONetworkProtocolDistributed.class)) {
-				found = l;
-				break;
-			}
-		}
-
-		final OServerNetworkListener clusterNetworkListener = found;
-
-		if (clusterNetworkListener == null)
+		distributedNetworkListener = server.getListenerByProtocol(ONetworkProtocolDistributed.class);
+		if (distributedNetworkListener == null)
 			OLogManager.instance().error(this,
 					"Can't find a configured network listener with 'cluster' protocol. Can't start cluster node", null,
 					OConfigurationException.class);
 
 		// LAUNCH THE SIGNAL AND WAIT FOR A CONNECTION
-		launchTheSignalOfLife(clusterNetworkListener);
+		launchTheSignalOfLife();
 	}
 
 	public void shutdown() {
@@ -171,6 +171,13 @@ public class ODistributedServerDiscoveryManager implements OServerHandler {
 		return "Cluster node '" + name + "'";
 	}
 
+	public void receivedLeaderConnection(final ONetworkProtocolDistributed iNetworkProtocolDistributed) {
+		// STOP TO SEND PACKETS TO BEING DISCOVERED
+		discoverySignaler.sendShutdown();
+
+		leaderConnection = iNetworkProtocolDistributed;
+	}
+
 	/**
 	 * Callback invoked by OClusterDiscoveryListener when a good packed has been received.
 	 * 
@@ -179,48 +186,107 @@ public class ODistributedServerDiscoveryManager implements OServerHandler {
 	 * @param iServerPort
 	 *          Server port
 	 */
-	public void receivedDistributedServerNodePresence(final String iServerAddress, final int iServerPort) {
-		final String key = iServerAddress + ":" + iServerPort;
+	public void receivedNodePresence(final String iServerAddress, final int iServerPort) {
 
-		synchronized (nodes) {
+		final String key = iServerAddress + ":" + iServerPort;
+		final ODistributedServerNode node;
+
+		final boolean locked = lock.acquireExclusiveLock();
+
+		try {
 			if (nodes.containsKey(key))
 				// ALREADY REGISTERED, IGNORE IT
 				return;
 
-			final ODistributedServerNode node = new ODistributedServerNode(this, iServerAddress, iServerPort);
+			node = new ODistributedServerNode(this, iServerAddress, iServerPort);
 			nodes.put(key, node);
+		} finally {
+			lock.releaseExclusiveLock(locked);
+		}
 
-			OLogManager.instance().warn(this, "Discovered new distributed server node %s. Trying to connect...", key);
+		OLogManager.instance().warn(this, "Discovered new distributed server node %s. Trying to connect...", key);
 
-			try {
-				node.connect(networkTimeoutConnectionSlaves);
-				node.startSynchronization();
-			} catch (IOException e) {
-				OLogManager.instance().error(this, "Can't connect to  distributed server node: %s", key);
-			}
+		try {
+			node.connect(networkTimeoutNode);
+			node.startSynchronization();
+		} catch (IOException e) {
+			OLogManager.instance().error(this, "Can't connect to  distributed server node: %s", key);
 		}
 	}
 
-	private void startListener(OServerNetworkListener binaryNetworkListener) {
-		discoveryListener = new ODistributedServerDiscoveryListener(this, binaryNetworkListener);
-	}
+	private void startListener() {
+		discoveryListener = new ODistributedServerDiscoveryListener(this, distributedNetworkListener);
 
-	private void launchTheSignalOfLife(final OServerNetworkListener clusterNetworkListener) {
-		discoverySignaler = new ODistributedServerDiscoverySignaler(this, clusterNetworkListener);
+		// START KEEPALIVE FOR CONNECTIONS
 		Orient.getTimer().schedule(new TimerTask() {
 			@Override
 			public void run() {
-				synchronized (this) {
+				final List<ODistributedServerNode> nodeList;
+
+				boolean locked = lock.acquireSharedLock();
+				try {
+					if (nodes.values().size() == 0)
+						// NO NODES, JUST RETURN
+						return;
+
+					// COPY THE NODE LIST
+					nodeList = new ArrayList<ODistributedServerNode>(nodes.values());
+
+				} finally {
+					lock.releaseSharedLock(locked);
+				}
+
+				try {
+
+					// CHECK EVERY SINGLE NODE
+					for (ODistributedServerNode node : nodeList) {
+						if (!node.sendKeepAlive(networkTimeoutLeader)) {
+							// ERROR
+							OLogManager.instance().warn(this, "Remote server node %s:%d seems down, retrying to connect...", node.networkAddress,
+									node.networkPort);
+
+							// RETRY TO CONNECT
+
+							OLogManager.instance().warn(this, "Remote server node %s:%d is down, remove from the server list",
+									node.networkAddress, node.networkPort);
+
+							locked = lock.acquireExclusiveLock();
+							nodes.remove(node.toString());
+							lock.releaseExclusiveLock(locked);
+						}
+					}
+
+					nodeList.clear();
+
+				} catch (Exception e) {
+					// AVOID THE TIMER IS NOT SCHEDULED ANYMORE IN CASE OF EXCEPTION
+				}
+			}
+		}, networkKeepaliveDelay, networkKeepaliveDelay);
+	}
+
+	private void launchTheSignalOfLife() {
+		discoverySignaler = new ODistributedServerDiscoverySignaler(this, distributedNetworkListener);
+
+		// START THE TIMEOUT FOR PRESENCE
+		Orient.getTimer().schedule(new TimerTask() {
+			@Override
+			public void run() {
+				synchronized (lock) {
 					try {
 						// TIMEOUT: STOP TO SEND PACKETS TO BEING DISCOVERED
 						discoverySignaler.sendShutdown();
 
-						if (leader != null)
+						if (discoveryListener != null)
 							// I'M ALREADY THE LEADER, DO NOTHING
 							return;
 
+						if (leaderConnection != null)
+							// I'M NOT THE LEADER CAUSE I WAS BEEN CONNECTED BY THE LEADER
+							return;
+
 						// NO NODE HAS JOINED: BECAME THE LEADER AND LISTEN FOR SLAVES
-						startListener(clusterNetworkListener);
+						startListener();
 					} catch (Exception e) {
 						// AVOID THE TIMER IS NOT SCHEDULED ANYMORE IN CASE OF EXCEPTION
 					}

@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.config;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -41,6 +42,12 @@ public class OContextConfiguration {
 	 */
 	public OContextConfiguration(final Map<String, Object> iConfig) {
 		this.config = iConfig;
+	}
+
+	public Object setValue(final OGlobalConfiguration iConfig, final Object iValue) {
+		if (config == null)
+			config = new HashMap<String, Object>();
+		return config.put(iConfig.getKey(), iValue);
 	}
 
 	public Object getValue(final OGlobalConfiguration iConfig) {
