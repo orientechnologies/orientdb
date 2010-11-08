@@ -16,9 +16,11 @@
 package com.orientechnologies.orient.core;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
@@ -196,7 +198,7 @@ public class Orient extends OSharedResource {
 			OLogManager.instance().debug(this, "Orient Engine is shutdowning...");
 
 			// CLOSE ALL THE STORAGES
-			final Collection<OStorage> storagesCopy = storages.values();
+			final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
 			for (OStorage stg : storagesCopy) {
 				OLogManager.instance().debug(this, "Shutdowning storage: " + stg.getName() + "...");
 				stg.close();
