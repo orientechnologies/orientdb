@@ -196,7 +196,8 @@ public class Orient extends OSharedResource {
 			OLogManager.instance().debug(this, "Orient Engine is shutdowning...");
 
 			// CLOSE ALL THE STORAGES
-			for (OStorage stg : storages.values()) {
+			final Collection<OStorage> storagesCopy = storages.values();
+			for (OStorage stg : storagesCopy) {
 				OLogManager.instance().debug(this, "Shutdowning storage: " + stg.getName() + "...");
 				stg.close();
 			}
