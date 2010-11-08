@@ -24,6 +24,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.handler.distributed.discovery.ODistributedServerDiscoveryManager;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
@@ -58,15 +59,15 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary {
 		switch (commandType) {
 		case OChannelDistributedProtocol.NODECLUSTER_KEEPALIVE:
 			data.commandInfo = "Keep-alive";
-			sendOk(clientTxId);
+			channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_OK);
 			break;
 
 		case OChannelDistributedProtocol.NODECLUSTER_CONNECT: {
 			data.commandInfo = "Cluster connection";
-			
+
 			manager.receivedLeaderConnection(this);
 
-			sendOk(clientTxId);
+			channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_OK);
 
 			// TRANSMITS FOR ALL THE CONFIGURED STORAGES: STORAGE/VERSION
 			Map<String, Long> storages = new HashMap<String, Long>();

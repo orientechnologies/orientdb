@@ -75,32 +75,7 @@ public class ODistributedServerNode {
 		for (int i = 0; i < tot; ++i)
 			storages.put(network.readString(), network.readLong());
 
-		OLogManager.instance().info(this, "+--------------------------------+-----------------+----------------+");
-		OLogManager.instance().info(this, "| STORAGE                        | LOCAL VERSION   | REMOTE VERSION |");
-		OLogManager.instance().info(this, "+--------------------------------+-----------------+----------------+");
-
-		for (OStorage s : Orient.instance().getStorages()) {
-			if (storages.containsKey(s.getName()))
-				OLogManager.instance().info(this, "| %-30s | %15d | %15d |", s.getName(), s.getVersion(), storages.get(s.getName()));
-			else
-				OLogManager.instance().info(this, "| %-30s | %15d | unavailable    |", s.getName(), s.getVersion());
-		}
-
-		boolean found;
-		for (Entry<String, Long> stg : storages.entrySet()) {
-			found = false;
-			for (OStorage s : Orient.instance().getStorages()) {
-				if (s.getName().equals(stg.getKey())) {
-					found = true;
-					break;
-				}
-			}
-
-			if (!found)
-				OLogManager.instance().info(this, "| %-30s | unavailable   | %15d |", stg.getKey(), stg.getValue());
-		}
-
-		OLogManager.instance().info(this, "+--------------------------------+-----------------+----------------+");
+		printDatabaseTable();
 
 		status = STATUS.UNSYNCHRONIZED;
 		OLogManager.instance().info(this, "Connection to remote cluster node %s:%d has been established", networkAddress, networkPort);
@@ -141,4 +116,32 @@ public class ODistributedServerNode {
 		return builder.toString();
 	}
 
+	private void printDatabaseTable() {
+		OLogManager.instance().info(this, "+--------------------------------+----------------+----------------+");
+		OLogManager.instance().info(this, "| STORAGE                        | LOCAL VERSION  | REMOTE VERSION |");
+		OLogManager.instance().info(this, "+--------------------------------+----------------+----------------+");
+
+		for (OStorage s : Orient.instance().getStorages()) {
+			if (storages.containsKey(s.getName()))
+				OLogManager.instance().info(this, "| %-30s | %14d | %14d |", s.getName(), s.getVersion(), storages.get(s.getName()));
+			else
+				OLogManager.instance().info(this, "| %-30s | %14d |    unavailable |", s.getName(), s.getVersion());
+		}
+
+		boolean found;
+		for (Entry<String, Long> stg : storages.entrySet()) {
+			found = false;
+			for (OStorage s : Orient.instance().getStorages()) {
+				if (s.getName().equals(stg.getKey())) {
+					found = true;
+					break;
+				}
+			}
+
+			if (!found)
+				OLogManager.instance().info(this, "| %-30s |    unavailable | %14d |", stg.getKey(), stg.getValue());
+		}
+
+		OLogManager.instance().info(this, "+--------------------------------+----------------+----------------+");
+	}
 }
