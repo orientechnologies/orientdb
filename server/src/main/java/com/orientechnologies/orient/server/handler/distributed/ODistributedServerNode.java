@@ -25,6 +25,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.server.handler.distributed.discovery.ODistributedServerDiscoveryManager;
@@ -65,7 +66,7 @@ public class ODistributedServerNode {
 
 		OLogManager.instance().info(this, "Connecting to remote cluster node %s:%d...", networkAddress, networkPort);
 
-		network.out.writeByte(OChannelDistributedProtocol.NODECLUSTER_CONNECT);
+		network.out.writeByte(OChannelDistributedProtocol.SERVERNODE_CONNECT);
 		network.out.writeInt(0);
 		network.flush();
 
@@ -87,7 +88,7 @@ public class ODistributedServerNode {
 				networkPort);
 
 		try {
-			network.out.writeByte(OChannelDistributedProtocol.NODECLUSTER_KEEPALIVE);
+			network.out.writeByte(OChannelDistributedProtocol.SERVERNODE_KEEPALIVE);
 			network.out.writeInt(0);
 			network.flush();
 
@@ -101,12 +102,20 @@ public class ODistributedServerNode {
 	}
 
 	public void startSynchronization() {
-		// TODO Auto-generated method stub
+		final ODocument config = createDatabaseConfiguration();
 
-	}
+		// SEND THE LAST CONFIGURATION TO THE NODE
+		try {
+			network.out.writeByte(OChannelDistributedProtocol.SERVERNODE_DB_CONFIG);
+			network.out.writeInt(0);
+			network.writeBytes(config.toStream());
+			network.flush();
 
-	private boolean readStatus() throws IOException {
-		return network.readByte() != OChannelDistributedProtocol.RESPONSE_STATUS_ERROR;
+			if (readStatus())
+				;
+		} catch (Exception e) {
+		}
+
 	}
 
 	@Override
@@ -114,6 +123,20 @@ public class ODistributedServerNode {
 		final StringBuilder builder = new StringBuilder();
 		builder.append(networkAddress).append(":").append(networkPort);
 		return builder.toString();
+	}
+
+	private boolean readStatus() throws IOException {
+		return network.readByte() != OChannelDistributedProtocol.RESPONSE_STATUS_ERROR;
+	}
+
+	private ODocument createDatabaseConfiguration() {
+		final ODocument config = new ODocument();
+
+		config.field("servers",
+				new ODocument(discoveryManager.getName(), new ODocument("update-delay", discoveryManager.getServerUpdateDelay())));
+		config.field("clusters", new ODocument("*", new ODocument("owner", discoveryManager.getName())));
+
+		return config;
 	}
 
 	private void printDatabaseTable() {

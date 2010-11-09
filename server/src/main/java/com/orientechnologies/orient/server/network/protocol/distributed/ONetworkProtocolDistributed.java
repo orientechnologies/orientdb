@@ -23,6 +23,7 @@ import java.util.Map.Entry;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.OServerMain;
@@ -57,12 +58,12 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary {
 
 		// DISTRIBUTED SERVER REQUESTS
 		switch (commandType) {
-		case OChannelDistributedProtocol.NODECLUSTER_KEEPALIVE:
+		case OChannelDistributedProtocol.SERVERNODE_KEEPALIVE:
 			data.commandInfo = "Keep-alive";
 			channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_OK);
 			break;
 
-		case OChannelDistributedProtocol.NODECLUSTER_CONNECT: {
+		case OChannelDistributedProtocol.SERVERNODE_CONNECT: {
 			data.commandInfo = "Cluster connection";
 
 			manager.receivedLeaderConnection(this);
@@ -81,6 +82,14 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary {
 				channel.writeLong(s.getValue());
 			}
 
+			break;
+		}
+
+		case OChannelDistributedProtocol.SERVERNODE_DB_CONFIG: {
+			data.commandInfo = "Update db configuration from server node leader";
+			ODocument config = (ODocument) new ODocument().fromStream(channel.readBytes());
+			config.getClassName();
+			channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_OK);
 			break;
 		}
 

@@ -67,6 +67,7 @@ public class ODistributedServerDiscoveryManager implements OServerHandler {
 	protected int																					networkTimeoutLeader;																							// IN MS
 	protected int																					networkTimeoutNode;																								// IN MS
 	protected int																					networkKeepaliveDelay;																							// IN MS
+	private int																						serverUpdateDelay;																									// IN MS
 
 	private ODistributedServerDiscoverySignaler						discoverySignaler;
 	private ODistributedServerDiscoveryListener						discoveryListener;
@@ -120,6 +121,8 @@ public class ODistributedServerDiscoveryManager implements OServerHandler {
 						networkTimeoutNode = Integer.parseInt(param.value);
 					else if ("network.keepalive.delay".equalsIgnoreCase(param.name))
 						networkKeepaliveDelay = Integer.parseInt(param.value);
+					else if ("server.update.delay".equalsIgnoreCase(param.name))
+						serverUpdateDelay = Integer.parseInt(param.value);
 				}
 
 			if (tempSecurityKey == null) {
@@ -168,7 +171,7 @@ public class ODistributedServerDiscoveryManager implements OServerHandler {
 	}
 
 	public String getName() {
-		return "Cluster node '" + name + "'";
+		return name;
 	}
 
 	public void receivedLeaderConnection(final ONetworkProtocolDistributed iNetworkProtocolDistributed) {
@@ -212,6 +215,10 @@ public class ODistributedServerDiscoveryManager implements OServerHandler {
 		} catch (IOException e) {
 			OLogManager.instance().error(this, "Can't connect to  distributed server node: %s", key);
 		}
+	}
+
+	public int getServerUpdateDelay() {
+		return serverUpdateDelay;
 	}
 
 	private void startListener() {
