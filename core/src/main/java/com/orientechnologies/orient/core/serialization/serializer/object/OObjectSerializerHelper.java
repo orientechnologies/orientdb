@@ -208,6 +208,9 @@ public class OObjectSerializerHelper {
 					type = getFieldType(iUserObject, iFieldName);
 				}
 
+				if (type == null)
+					throw new OSerializationException("Linked type of field " + iFieldName + " in class " + iRoot.getClassName() + " is null");
+
 				Object fieldValue = null;
 				Class<?> fieldClass;
 				boolean propagate = false;
