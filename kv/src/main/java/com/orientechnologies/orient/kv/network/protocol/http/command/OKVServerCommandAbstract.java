@@ -36,13 +36,13 @@ public abstract class OKVServerCommandAbstract extends OServerCommandAbstract {
 			iParameters = iParameters.substring(1);
 
 		if (iParameters.startsWith("entry"))
-			iParameters = iParameters.substring("entry".length()+1);
+			iParameters = iParameters.substring("entry".length() + 1);
 
 		if (iParameters.endsWith(OHttpUtils.URL_SEPARATOR))
 			iParameters = iParameters.substring(0, iParameters.length() - 1);
 
 		final String[] pars = iParameters.split(OHttpUtils.URL_SEPARATOR);
-		
+
 		if (pars == null || pars.length < iMin)
 			throw new ONetworkProtocolException("Requested URI '" + iParameters + "' is invalid. Expected: entry/db/bucket[/key]");
 

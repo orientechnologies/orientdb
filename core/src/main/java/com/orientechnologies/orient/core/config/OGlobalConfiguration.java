@@ -188,6 +188,10 @@ public enum OGlobalConfiguration {
 		return type;
 	}
 
+	public String getDescription() {
+		return description;
+	}
+
 	/**
 	 * Find the OGlobalConfiguration instance by the key. Key is case insensitive.
 	 * 
@@ -225,9 +229,5 @@ public enum OGlobalConfiguration {
 			if (cfg != null)
 				cfg.setValue(config.getValue());
 		}
-	}
-
-	public String getDescription() {
-		return description;
 	}
 }

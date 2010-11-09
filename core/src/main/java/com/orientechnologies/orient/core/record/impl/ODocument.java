@@ -140,6 +140,28 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	}
 
 	/**
+	 * Fill a document passing the field array in form of pairs of field name and value.
+	 * 
+	 * @param iFields
+	 *          Array of field pairs
+	 */
+	public ODocument(final Object[] iFields) {
+		if (iFields != null && iFields.length > 0)
+			for (int i = 0; i < iFields.length; i += 2) {
+				field(iFields[i].toString(), iFields[i + 1]);
+			}
+	}
+
+	/**
+	 * Fill a document passing the field names/values
+	 * 
+	 */
+	public ODocument(final String iFieldName, final Object iFieldValue, final Object... iFields) {
+		this(iFields);
+		field(iFieldName, iFieldValue);
+	}
+
+	/**
 	 * Copies the current instance to a new one.
 	 */
 	public ODocument copy() {
@@ -200,6 +222,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		}
 
 		boolean first = true;
+		ORecord<?> record;
 		for (Entry<String, Object> f : _fieldValues.entrySet()) {
 			buffer.append(first ? "{" : ",");
 			buffer.append(f.getKey());
@@ -209,8 +232,13 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 				buffer.append(((Collection<?>) f.getValue()).size());
 				buffer.append("]");
 			} else if (f.getValue() instanceof ORecord<?>) {
-				buffer.append("#");
-				buffer.append(((ORecord<?>) f.getValue()).getIdentity());
+				record = (ORecord<?>) f.getValue();
+
+				if (record.getIdentity() != null) {
+					buffer.append("#");
+					buffer.append(record.getIdentity());
+				} else
+					buffer.append(record.toString());
 			} else
 				buffer.append(f.getValue());
 

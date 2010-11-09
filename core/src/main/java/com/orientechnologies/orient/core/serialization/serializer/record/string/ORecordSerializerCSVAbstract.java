@@ -151,6 +151,14 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			} else
 				return null;
 
+		case EMBEDDED:
+			if (iValue.length() > 2) {
+				// REMOVE BEGIN & END EMBEDDED CHARACTERS
+				String value = iValue.substring(1, iValue.length() - 1);
+				return OStringSerializerHelper.fieldTypeFromStream(iType, value);
+			} else
+				return null;
+
 		default:
 			return OStringSerializerHelper.fieldTypeFromStream(iType, iValue);
 		}
@@ -318,9 +326,11 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		}
 
 		case EMBEDDED:
-			if (iValue instanceof ODocument)
+			if (iValue instanceof ODocument) {
+				buffer.append(OStringSerializerHelper.EMBEDDED);
 				buffer.append(toString((ODocument) iValue, null, iObjHandler, iMarshalledRecords));
-			else if (iValue != null)
+				buffer.append(OStringSerializerHelper.EMBEDDED);
+			} else if (iValue != null)
 				buffer.append(iValue.toString());
 			break;
 
