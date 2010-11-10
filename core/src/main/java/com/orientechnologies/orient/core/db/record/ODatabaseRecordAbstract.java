@@ -401,6 +401,9 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			throw new ODatabaseException(
 					"Can't create record because it has no identity. Probably is not a regular record or contains projections of fields rather than a full record");
 
+		if (iRecord.getDatabase() == null)
+			iRecord.setDatabase(this);
+
 		try {
 			// STREAM.LENGTH = 0 -> RECORD IN STACK: WILL BE SAVED AFTER
 			final byte[] stream = iRecord.toStream();

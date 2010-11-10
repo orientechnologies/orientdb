@@ -23,9 +23,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
@@ -472,5 +474,18 @@ public abstract class OStringSerializerHelper {
 		}
 
 		return buffer.toString();
+	}
+
+	public static OClass getRecordClassName(final ODatabaseRecord<?> iDatabase, String iValue, OClass iLinkedClass) {
+		// EXTRACT THE CLASS NAME
+		int classSeparatorPos = iValue.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
+		if (classSeparatorPos > -1) {
+			final String className = iValue.substring(0, classSeparatorPos);
+			if (className != null)
+				iLinkedClass = iDatabase.getMetadata().getSchema().getClass(className);
+
+			iValue = iValue.substring(classSeparatorPos + 1);
+		}
+		return iLinkedClass;
 	}
 }

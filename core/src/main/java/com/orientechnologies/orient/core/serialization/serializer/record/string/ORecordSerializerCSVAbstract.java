@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.orientechnologies.common.number.ORef;
 import com.orientechnologies.orient.core.annotation.OAfterSerialization;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
@@ -84,21 +85,13 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 			for (String item : items) {
 				// GET THE CLASS NAME IF ANY
-				int classSeparatorPos = value.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
-				if (classSeparatorPos > -1) {
-					String className = value.substring(1, classSeparatorPos);
-					if (className != null) {
-						iLinkedClass = iSourceRecord.getDatabase().getMetadata().getSchema().getClass(className);
-						item = item.substring(classSeparatorPos + 1);
-					}
-				} else
+				if (item != null && item.length() > 0)
 					item = item.substring(1);
 
 				if (item.length() == 0)
 					continue;
 
 				coll.add(new ORecordId(item));
-				// coll.add(new ODocument(iDatabase, iLinkedClass != null ? iLinkedClass.getName() : null, new ORecordId(item)));
 			}
 
 			return coll;
@@ -127,7 +120,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				if (item != null && item.length() > 0) {
 					entry = OStringSerializerHelper.smartSplit(item, OStringSerializerHelper.ENTRY_SEPARATOR);
 					if (entry.size() > 0) {
-						mapValue = getLinkedRecord(iSourceRecord.getDatabase(), value, entry.get(1));
+						mapValue = entry.get(1);
+						if (mapValue != null && mapValue.length() > 0)
+							mapValue.substring(1);
 						map.put((String) OStringSerializerHelper.fieldTypeFromStream(OType.STRING, entry.get(0)), new ORecordId(mapValue));
 					}
 
@@ -154,7 +149,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		case EMBEDDED:
 			if (iValue.length() > 2) {
 				// REMOVE BEGIN & END EMBEDDED CHARACTERS
-				String value = iValue.substring(1, iValue.length() - 1);
+				final String value = iValue.substring(1, iValue.length() - 1);
 				return OStringSerializerHelper.fieldTypeFromStream(iType, value);
 			} else
 				return null;
@@ -403,7 +398,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 	}
 
 	public Object embeddedCollectionFromStream(final ODatabaseRecord<?> iDatabase, final ODocument iDocument, final OType iType,
-			OClass iLinkedClass, OType iLinkedType, final String iValue) {
+			OClass iLinkedClass, final OType iLinkedType, final String iValue) {
 		if (iValue.length() == 0)
 			return null;
 
@@ -430,17 +425,20 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		for (String item : items) {
 			objectToAdd = null;
 
-			if (iLinkedClass != null) {
-				// EMBEDDED RECORD
-				if (item.length() > 2) {
-					item = item.substring(1, item.length() - 1);
-					objectToAdd = fromString(iDocument.getDatabase(), item, new ODocument(iDocument.getDatabase(), iLinkedClass.getName()));
+			if (item.length() > 2 && item.charAt(0) == OStringSerializerHelper.EMBEDDED) {
+				// REMOVE EMBEDDED BEGIN/END CHARS
+				item = item.substring(1, item.length() - 1);
+
+				if (item.length() > 0) {
+					// EMBEDDED RECORD, EXTRACT THE CLASS NAME IF DIFFERENT BY THE PASSED (SUB-CLASS OR IT WAS PASSED NULL)
+					iLinkedClass = OStringSerializerHelper.getRecordClassName(iDatabase, item, iLinkedClass);
+
+					if (iLinkedClass != null) {
+						objectToAdd = fromString(iDocument.getDatabase(), item, new ODocument(iDatabase, iLinkedClass.getName()));
+					} else
+						// EMBEDDED OBJECT
+						objectToAdd = OStringSerializerHelper.fieldTypeFromStream(iLinkedType, item);
 				}
-
-			} else if (item.length() > 0 && item.charAt(0) == OStringSerializerHelper.EMBEDDED) {
-				// EMBEDDED OBJECT
-				objectToAdd = OStringSerializerHelper.fieldTypeFromStream(iLinkedType, item.substring(1, item.length() - 1));
-
 			} else {
 				// EMBEDDED LITERAL
 				if (iLinkedType == null)
@@ -464,8 +462,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			StringBuilder buffer) {
 		buffer.append(OStringSerializerHelper.COLLECTION_BEGIN);
 
-		int size = iValue instanceof Collection<?> ? ((Collection<Object>) iValue).size() : Array.getLength(iValue);
-		Iterator<Object> iterator = iValue instanceof Collection<?> ? ((Collection<Object>) iValue).iterator() : null;
+		final int size = iValue instanceof Collection<?> ? ((Collection<Object>) iValue).size() : Array.getLength(iValue);
+		final Iterator<Object> iterator = iValue instanceof Collection<?> ? ((Collection<Object>) iValue).iterator() : null;
 		Object o;
 
 		for (int i = 0; i < size; ++i) {
@@ -620,20 +618,5 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			buffer.append(rid.toString());
 
 		return resultRid;
-	}
-
-	private String getLinkedRecord(final ODatabaseRecord<?> iDatabase, String value, String item) {
-		// OClass iLinkedClass;
-		// GET THE CLASS NAME IF ANY
-		int classSeparatorPos = value.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
-		if (classSeparatorPos > -1) {
-			String className = value.substring(1, classSeparatorPos);
-			if (className != null) {
-				// iLinkedClass = iDatabase.getMetadata().getSchema().getClass(className);
-				item = item.substring(classSeparatorPos + 1);
-			}
-		} else
-			item = item.substring(1);
-		return item;
 	}
 }
