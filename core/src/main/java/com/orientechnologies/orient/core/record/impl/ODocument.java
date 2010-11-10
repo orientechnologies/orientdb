@@ -360,6 +360,19 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	}
 
 	/**
+	 * Fill a document passing the field names/values
+	 * 
+	 */
+	public ODocument fields(final String iFieldName, final Object iFieldValue, final Object... iFields) {
+		field(iFieldName, iFieldValue);
+		if (iFields != null && iFields.length > 0)
+			for (int i = 0; i < iFields.length; i += 2) {
+				field(iFields[i].toString(), iFields[i + 1]);
+			}
+		return this;
+	}
+
+	/**
 	 * Writes the field value forcing the type.
 	 * 
 	 * @param iPropertyName
