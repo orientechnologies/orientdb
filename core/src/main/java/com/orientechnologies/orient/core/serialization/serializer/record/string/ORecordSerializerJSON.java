@@ -19,9 +19,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,10 +28,13 @@ import java.util.Set;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ORecordTrackedList;
+import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
@@ -130,9 +131,27 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 							((ORecordStringable) iRecord).value(fieldValueAsString);
 						}
 					} else {
-						if (iRecord instanceof ODocument)
-							((ODocument) iRecord).field(fieldName,
-									getValue((ODocument) iRecord, fieldName, fieldValue, fieldValueAsString, null, null));
+						if (iRecord instanceof ODocument) {
+							final Object v = getValue((ODocument) iRecord, fieldName, fieldValue, fieldValueAsString, null, null);
+
+							if (v instanceof Collection<?> && ((Collection<?>) v).size() > 0) {
+								// CHECK IF THE COLLECTION IS EMBEDDED
+								Object first = ((Collection<?>) v).iterator().next();
+								if (first != null && first instanceof ORecord<?> && !((ORecord<?>) first).getIdentity().isValid()) {
+									((ODocument) iRecord).field(fieldName, v, v instanceof Set<?> ? OType.EMBEDDEDSET : OType.EMBEDDEDLIST);
+									continue;
+								}
+							} else if (v instanceof Map<?, ?> && ((Map<?, ?>) v).size() > 0) {
+								// CHECK IF THE MAP IS EMBEDDED
+								Object first = ((Map<?, ?>) v).values().iterator().next();
+								if (first != null && first instanceof ORecord<?> && !((ORecord<?>) first).getIdentity().isValid()) {
+									((ODocument) iRecord).field(fieldName, v, OType.EMBEDDEDMAP);
+									continue;
+								}
+							}
+
+							((ODocument) iRecord).field(fieldName, v);
+						}
 					}
 				}
 			}
@@ -144,8 +163,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 		return iRecord;
 	}
 
-	private Object getValue(final ODocument iRecord, String iFieldName, String iFieldValue, String iFieldValueAsString, OType type,
-			OType linkedType) {
+	private Object getValue(final ODocument iRecord, String iFieldName, String iFieldValue, String iFieldValueAsString, OType iType,
+			OType iLinkedType) {
 		if (iFieldValue.equals("null"))
 			return null;
 
@@ -153,8 +172,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			if (iRecord.getSchemaClass() != null) {
 				final OProperty p = iRecord.getSchemaClass().getProperty(iFieldName);
 				if (p != null) {
-					type = p.getType();
-					linkedType = p.getLinkedType();
+					iType = p.getType();
+					iLinkedType = p.getLinkedType();
 				}
 			}
 
@@ -179,7 +198,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 					iFieldValue = fields[i + 1];
 					iFieldValueAsString = iFieldValue.length() >= 2 ? iFieldValue.substring(1, iFieldValue.length() - 1) : iFieldValue;
 
-					embeddedMap.put(iFieldName, getValue(iRecord, null, iFieldValue, iFieldValueAsString, linkedType, null));
+					embeddedMap.put(iFieldName, getValue(iRecord, null, iFieldValue, iFieldValueAsString, iLinkedType, null));
 				}
 				return embeddedMap;
 			}
@@ -187,10 +206,10 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 			// EMBEDDED VALUES
 			final Collection<Object> embeddedCollection;
-			if (type == OType.LINKSET || type == OType.EMBEDDEDSET)
-				embeddedCollection = new HashSet<Object>();
+			if (iType == OType.LINKSET || iType == OType.EMBEDDEDSET)
+				embeddedCollection = new ORecordTrackedSet(iRecord);
 			else
-				embeddedCollection = new ArrayList<Object>();
+				embeddedCollection = new ORecordTrackedList(iRecord);
 
 			iFieldValue = iFieldValue.substring(1, iFieldValue.length() - 1);
 
@@ -198,31 +217,38 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				// EMBEDDED VALUES
 				List<String> items = OStringSerializerHelper.smartSplit(iFieldValue, ',');
 
+				Object collectionItem;
 				for (String item : items) {
 					iFieldValue = item.trim();
 					iFieldValueAsString = iFieldValue.length() >= 2 ? iFieldValue.substring(1, iFieldValue.length() - 1) : iFieldValue;
 
-					embeddedCollection.add(getValue(iRecord, null, iFieldValue, iFieldValueAsString, linkedType, null));
+					collectionItem = getValue(iRecord, null, iFieldValue, iFieldValueAsString, iLinkedType, null);
+
+					if (collectionItem instanceof ODocument && iRecord instanceof ODocument)
+						// SET THE OWNER
+						((ODocument) collectionItem).setOwner(iRecord);
+
+					embeddedCollection.add(collectionItem);
 				}
 			}
 
 			return embeddedCollection;
 		}
 
-		if (type == null)
+		if (iType == null)
 			// TRY TO DETERMINE THE CONTAINED TYPE from THE FIRST VALUE
 			if (iFieldValue.charAt(0) != '\"') {
 				if (iFieldValue.equalsIgnoreCase("false") || iFieldValue.equalsIgnoreCase("true"))
-					type = OType.BOOLEAN;
+					iType = OType.BOOLEAN;
 				else if (OStringSerializerHelper.contains(iFieldValue, '.'))
-					type = OType.DOUBLE;
+					iType = OType.DOUBLE;
 				else
-					type = OType.LONG;
+					iType = OType.LONG;
 
 			} else if (iFieldValueAsString.length() >= 4 && iFieldValueAsString.charAt(0) == '#')
-				type = OType.LINK;
+				iType = OType.LINK;
 			else if (iFieldValueAsString.startsWith("{") && iFieldValueAsString.endsWith("}"))
-				type = OType.EMBEDDED;
+				iType = OType.EMBEDDED;
 			else {
 				if (iFieldValueAsString.length() == DEF_DATE_FORMAT.length())
 					// TRY TO PARSE AS DATE
@@ -231,11 +257,11 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 					} catch (Exception e) {
 					}
 
-				type = OType.STRING;
+				iType = OType.STRING;
 			}
 
-		if (type != null)
-			switch (type) {
+		if (iType != null)
+			switch (iType) {
 			case STRING:
 				return iFieldValueAsString;
 
@@ -261,7 +287,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				}
 
 			default:
-				return OStringSerializerHelper.fieldTypeFromStream(type, iFieldValue);
+				return OStringSerializerHelper.fieldTypeFromStream(iType, iFieldValue);
 			}
 
 		return iFieldValueAsString;
@@ -327,7 +353,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				if (attribSameRow)
 					firstAttribute = false;
 			}
-			if (includeVer && iRecord.getVersion() > 0 ) {
+			if (includeVer && iRecord.getVersion() > 0) {
 				json.writeAttribute(firstAttribute ? indentLevel + 1 : 0, firstAttribute, ATTRIBUTE_VERSION, iRecord.getVersion());
 				if (attribSameRow)
 					firstAttribute = false;
