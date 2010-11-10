@@ -143,9 +143,13 @@ public class OConsoleDatabaseExport extends OConsoleDatabaseImpExpAbstract {
 		listener.onMessage("\nExporting clusters...");
 
 		writer.beginCollection(1, true, "clusters");
-		int totalClusters = 0;
+		int exportedClusters = 0;
+		int totalCluster = database.getClusterNames().size();
+		String clusterName;
 
-		for (String clusterName : database.getClusterNames()) {
+		for (int clusterId = 0; clusterId < totalCluster; ++clusterId) {
+			clusterName = database.getClusterNameById(clusterId);
+
 			// CHECK IF THE CLUSTER IS INCLUDED
 			if (includeClusters != null) {
 				if (!includeClusters.contains(clusterName))
@@ -157,21 +161,20 @@ public class OConsoleDatabaseExport extends OConsoleDatabaseImpExpAbstract {
 
 			writer.beginObject(2, true, null);
 			writer.writeAttribute(0, false, "name", clusterName);
-			writer.writeAttribute(0, false, "id", database.getClusterIdByName(clusterName));
+			writer.writeAttribute(0, false, "id", clusterId);
 			writer.writeAttribute(0, false, "type", database.getClusterType(clusterName));
 
 			if (database.getStorage() instanceof OStorageLocal)
 				if (database.getClusterType(clusterName).equals("LOGICAL")) {
-					OClusterLogical cluster = (OClusterLogical) database.getStorage()
-							.getClusterById(database.getClusterIdByName(clusterName));
+					OClusterLogical cluster = (OClusterLogical) database.getStorage().getClusterById(clusterId);
 					writer.writeAttribute(0, false, "rid", cluster.getRID());
 				}
 
-			totalClusters++;
+			exportedClusters++;
 			writer.endObject(2, false);
 		}
 
-		listener.onMessage("OK (" + totalClusters + " clusters)");
+		listener.onMessage("OK (" + exportedClusters + " clusters)");
 
 		writer.endCollection(1, true);
 	}
