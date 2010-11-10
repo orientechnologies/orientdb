@@ -524,8 +524,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 											final Object iLinked) {
 										if (iLinked instanceof ODocument)
 											return recordsToSend.add((ODocument) iLinked) ? iLinked : null;
-										else
+										else if (iLinked instanceof Collection<?>)
 											return recordsToSend.addAll((Collection<? extends ODocument>) iLinked) ? iLinked : null;
+										else if (iLinked instanceof Map<?, ?>)
+											return recordsToSend.addAll(((Map<String, ? extends ODocument>) iLinked).values()) ? iLinked : null;
+										else
+											throw new IllegalArgumentException("Unrecognized type while fetching records: " + iLinked);
 									}
 								});
 							}
