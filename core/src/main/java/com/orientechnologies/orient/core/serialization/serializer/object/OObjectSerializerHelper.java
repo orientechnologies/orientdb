@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.annotation.OBeforeDeserialization;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.annotation.ODocumentInstance;
 import com.orientechnologies.orient.core.annotation.ORawBinding;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.db.object.OLazyObjectList;
@@ -284,6 +285,9 @@ public class OObjectSerializerHelper {
 	 */
 	public static ODocument toStream(final Object iPojo, final ODocument iRecord, final OEntityManager iEntityManager,
 			final OClass schemaClass, final OUserObject2RecordHandler iObj2RecHandler) {
+		if (OGlobalConfiguration.OBJECT_SAVE_ONLY_DIRTY.getValueAsBoolean() && !iRecord.isDirty())
+			return iRecord;
+
 		long timer = OProfiler.getInstance().startChrono();
 
 		final Integer identityRecord = System.identityHashCode(iRecord);

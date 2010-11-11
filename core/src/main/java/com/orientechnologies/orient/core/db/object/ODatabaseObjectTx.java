@@ -246,8 +246,8 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
 		return (DBTYPE) underlying.checkSecurity(iResource, iOperation, iResourcesSpecific);
 	}
 
-	protected ODocument pojo2Stream(final Object iPojo, final ODocument record) {
-		return OObjectSerializerHelper.toStream(iPojo, record, getEntityManager(),
+	protected ODocument pojo2Stream(final Object iPojo, final ODocument iRecord) {
+		return OObjectSerializerHelper.toStream(iPojo, iRecord, getEntityManager(),
 				getMetadata().getSchema().getClass(iPojo.getClass().getSimpleName()), this);
 	}
 

@@ -51,6 +51,8 @@ public enum OGlobalConfiguration {
 	// DATABASE
 	DB_USE_CACHE("db.cache.enabled", "Uses the storage cache", Boolean.class, true),
 
+	OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database saves only object bound to dirty records", Boolean.class, false),
+
 	// TREEMAP
 	TREEMAP_LAZY_UPDATES("treemap.lazyUpdates", "Configure the TreeMaps (indexes and dictionaries) as buffered or not",
 			Integer.class, 300),
