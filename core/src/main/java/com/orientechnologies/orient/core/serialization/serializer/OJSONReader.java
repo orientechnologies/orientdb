@@ -24,9 +24,12 @@ import java.util.Arrays;
 public class OJSONReader {
 	private BufferedReader			in;
 	private int									cursor						= 0;
+	private int									lineNumber				= 0;
+	private int									columnNumber			= 0;
 	private StringBuilder				buffer						= new StringBuilder();
 	private String							value;
 	private char								c;
+	public static final char		NEW_LINE					= '\n';
 	public static final char[]	DEFAULT_JUMP			= new char[] { ' ', '\r', '\n', '\t' };
 	public static final char[]	BEGIN_OBJECT			= new char[] { '{' };
 	public static final char[]	END_OBJECT				= new char[] { '}' };
@@ -136,6 +139,12 @@ public class OJSONReader {
 		while (go && in.ready()) {
 			c = nextChar();
 
+			if (c == NEW_LINE) {
+				++lineNumber;
+				columnNumber = 0;
+			} else
+				++columnNumber;
+
 			go = false;
 			for (char j : iJumpChars) {
 				if (j == c) {
@@ -160,5 +169,13 @@ public class OJSONReader {
 
 	public String getValue() {
 		return value;
+	}
+
+	public int getLineNumber() {
+		return lineNumber;
+	}
+
+	public int getColumnNumber() {
+		return columnNumber;
 	}
 }

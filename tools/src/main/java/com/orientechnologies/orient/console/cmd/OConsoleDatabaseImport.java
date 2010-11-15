@@ -91,6 +91,8 @@ public class OConsoleDatabaseImport extends OConsoleDatabaseImpExpAbstract {
 			listener.onMessage("\n\nImport completed in " + ((System.currentTimeMillis() - time)) + " ms");
 
 		} catch (Exception e) {
+			System.err.println("Error on database import. Line " + jsonReader.getLineNumber() + ", column "
+					+ jsonReader.getColumnNumber());
 			e.printStackTrace();
 			throw new ODatabaseExportException("Error on importing database '" + database.getName() + "' from file: " + fileName, e);
 		} finally {
