@@ -53,6 +53,9 @@ public class OFullTextIndex extends OPropertyIndex {
 	private Set<String>					stopWords;
 	private ODocument						config;
 
+	public OFullTextIndex() {
+	}
+
 	public OFullTextIndex(final ODatabaseRecord<?> iDatabase, final OProperty iProperty) {
 		this(iDatabase, iProperty, DEF_CLUSTER_NAME);
 	}
@@ -88,7 +91,7 @@ public class OFullTextIndex extends OPropertyIndex {
 	}
 
 	/**
-	 * Constructor called on loading of an existent index.
+	 * Configure the index to be loaded.
 	 * 
 	 * @param iDatabase
 	 *          Current Database instance
@@ -99,13 +102,16 @@ public class OFullTextIndex extends OPropertyIndex {
 	 * @param iRecordId
 	 *          Record Id of the persistent TreeMap
 	 */
-	public OFullTextIndex(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final ORID iRecordId) {
-		super(iDatabase, iProperty);
-		config = new ODocument(iDatabase, iRecordId);
+	@Override
+	public OPropertyIndex configure(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final ORID iRID) {
+		owner = iProperty;
+		config = new ODocument(iDatabase, iRID);
 		config.load();
 
 		init(iDatabase, new ORecordId((String) config.field(FIELD_MAP_RID)));
 		init();
+
+		return this;
 	}
 
 	/**

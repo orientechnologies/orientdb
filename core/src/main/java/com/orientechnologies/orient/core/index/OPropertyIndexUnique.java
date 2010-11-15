@@ -31,24 +31,11 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
  * 
  */
 public class OPropertyIndexUnique extends OPropertyIndex {
-	public OPropertyIndexUnique(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final String iClusterIndexName) {
-		super(iDatabase, iProperty, iClusterIndexName);
+	public OPropertyIndexUnique() {
 	}
 
-	/**
-	 * Constructor called on loading of an existent index.
-	 * 
-	 * @param iDatabase
-	 *          Current Database instance
-	 * @param iProperty
-	 *          Owner property
-	 * @param iClusterIndexName
-	 *          Cluster name where to place the TreeMap
-	 * @param iRecordId
-	 *          Record Id of the persistent TreeMap
-	 */
-	public OPropertyIndexUnique(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final ORID iRecordId) {
-		super(iDatabase, iProperty, iRecordId);
+	public OPropertyIndexUnique(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final String iClusterIndexName) {
+		super(iDatabase, iProperty, iClusterIndexName);
 	}
 
 	public void put(final Object iKey, final ORecordId iSingleValue) {

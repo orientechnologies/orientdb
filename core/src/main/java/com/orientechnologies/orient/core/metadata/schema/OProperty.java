@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OFullTextIndex;
 import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OPropertyIndex;
 import com.orientechnologies.orient.core.index.OPropertyIndexNotUnique;
 import com.orientechnologies.orient.core.index.OPropertyIndexUnique;
@@ -373,21 +374,26 @@ public class OProperty extends ODocumentWrapperNoClass {
 		return true;
 	}
 
-	protected void setIndex(final INDEX_TYPE iType, final ORID iRID) {
+	protected OPropertyIndex setIndex(final INDEX_TYPE iType, final ORID iRID) {
+		return setIndex(iType.toString(), iRID);
+	}
+
+	/**
+	 * Load the index
+	 * 
+	 * @param iType
+	 *          Index type (see OIndexFactory)
+	 * @param iRID
+	 *          RecordID of the persistent map
+	 * @return The Index instance
+	 * @see OIndexFactory
+	 */
+	protected OPropertyIndex setIndex(final String iType, final ORID iRID) {
 		// LOAD THE INDEX
-		if (iRID != null && iRID.isValid()) {
-			switch (iType) {
-			case UNIQUE:
-				index = new OPropertyIndexUnique(document.getDatabase(), this, iRID);
-				break;
-			case NOTUNIQUE:
-				index = new OPropertyIndexNotUnique(document.getDatabase(), this, iRID);
-				break;
-			case FULLTEXT:
-				index = new OFullTextIndex(document.getDatabase(), this, iRID);
-				break;
-			}
-		}
+		if (iRID != null && iRID.isValid())
+			index = OIndexFactory.instance().newInstance(iType).configure(document.getDatabase(), this, iRID);
+
+		return index;
 	}
 
 	private void checkForDateFormat(String min) {
