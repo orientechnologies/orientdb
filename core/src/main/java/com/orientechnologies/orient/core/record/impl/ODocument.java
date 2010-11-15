@@ -28,6 +28,9 @@ import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.OLazyRecordList;
+import com.orientechnologies.orient.core.db.record.OLazyRecordSet;
+import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -341,6 +344,19 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			// CREATE THE DOCUMENT OBJECT IN LAZY WAY
 			value = (RET) new ODocument(_database, (ORID) value);
 			_fieldValues.put(iPropertyName, value);
+		} else if (Set.class.isAssignableFrom(iType) && !(value instanceof Set)) {
+			// CONVERT FROM LIST TO SET
+			final ORecordTrackedSet newValue;
+
+			if (value instanceof OLazyRecordList)
+				newValue = new OLazyRecordSet(this, RECORD_TYPE);
+			else
+				newValue = new ORecordTrackedSet(this);
+
+			newValue.addAll((Collection<Object>) value);
+
+			_fieldValues.put(iPropertyName, newValue);
+			value = (RET) newValue;
 		}
 
 		return value;

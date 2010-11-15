@@ -17,8 +17,11 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -102,6 +105,86 @@ public class ComplexTypesTest {
 		d = ((List<ODocument>) loadedDoc.field("linkedList")).get(1);
 		Assert.assertEquals(d.getClassName(), "Account");
 		Assert.assertEquals(d.field("name"), "Marcus");
+
+		database.close();
+	}
+
+	@Test
+	public void testEmbeddedSet() {
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+
+		ODocument newDoc = new ODocument();
+
+		final Set<ODocument> set = new HashSet<ODocument>();
+		newDoc.field("embeddedSet", set, OType.EMBEDDEDSET);
+		set.add(new ODocument().field("name", "Luca"));
+		set.add(new ODocument(database, "Account").field("name", "Marcus"));
+
+		database.save(newDoc);
+		final ORID rid = newDoc.getIdentity();
+
+		database.close();
+
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+
+		ODocument loadedDoc = database.load(rid);
+		Assert.assertTrue(loadedDoc.containsField("embeddedSet"));
+		Assert.assertTrue(loadedDoc.field("embeddedSet", Set.class) instanceof Set<?>);
+
+		final Iterator<ODocument> it = ((Set<ODocument>) loadedDoc.field("embeddedSet")).iterator();
+
+		int tot = 0;
+		while (it.hasNext()) {
+			ODocument d = it.next();
+			Assert.assertTrue(d instanceof ODocument);
+
+			if (d.field("name").equals("Marcus"))
+				Assert.assertEquals(d.getClassName(), "Account");
+
+			++tot;
+		}
+
+		Assert.assertEquals(tot, 2);
+
+		database.close();
+	}
+
+	@Test
+	public void testLinkSet() {
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+
+		ODocument newDoc = new ODocument();
+
+		final Set<ODocument> set = new HashSet<ODocument>();
+		newDoc.field("linkedSet", set, OType.LINKSET);
+		set.add(new ODocument().field("name", "Luca"));
+		set.add(new ODocument(database, "Account").field("name", "Marcus"));
+
+		database.save(newDoc);
+		final ORID rid = newDoc.getIdentity();
+
+		database.close();
+
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+
+		ODocument loadedDoc = database.load(rid);
+		Assert.assertTrue(loadedDoc.containsField("linkedSet"));
+		Assert.assertTrue(loadedDoc.field("linkedSet", Set.class) instanceof Set<?>);
+
+		final Iterator<ODocument> it = ((Set<ODocument>) loadedDoc.field("linkedSet")).iterator();
+
+		int tot = 0;
+		while (it.hasNext()) {
+			ODocument d = it.next();
+			Assert.assertTrue(d instanceof ODocument);
+
+			if (d.field("name").equals("Marcus"))
+				Assert.assertEquals(d.getClassName(), "Account");
+
+			++tot;
+		}
+
+		Assert.assertEquals(tot, 2);
 
 		database.close();
 	}
