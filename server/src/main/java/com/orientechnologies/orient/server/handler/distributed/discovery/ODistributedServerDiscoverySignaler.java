@@ -32,29 +32,36 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
  * 
  */
 public class ODistributedServerDiscoverySignaler extends OPollerThread {
-	private byte[]					discoveryPacket;
-	private DatagramPacket	dgram;
-	private DatagramSocket	socket;
+	private byte[]															discoveryPacket;
+	private DatagramPacket											dgram;
+	private DatagramSocket											socket;
+	private ODistributedServerDiscoveryManager	clusterNode;
 
 	public ODistributedServerDiscoverySignaler(final ODistributedServerDiscoveryManager iClusterNode,
 			final OServerNetworkListener iNetworkListener) {
 		super(iClusterNode.networkMulticastHeartbeat * 1000, OServer.getThreadGroup(), "DiscoverySignaler");
 
-		String buffer = ODistributedServerDiscoveryManager.PACKET_HEADER + OConstants.ORIENT_VERSION + "|"
-				+ ODistributedServerDiscoveryManager.PROTOCOL_VERSION + "|" + iClusterNode.name + "|"
+		clusterNode = iClusterNode;
+
+		final String buffer = ODistributedServerDiscoveryManager.PACKET_HEADER + OConstants.ORIENT_VERSION + "|"
+				+ ODistributedServerDiscoveryManager.PROTOCOL_VERSION + "|" + clusterNode.name + "|"
 				+ iNetworkListener.getInboundAddr().getHostName() + "|" + iNetworkListener.getInboundAddr().getPort();
 
-		discoveryPacket = OSecurityManager.instance().encrypt(iClusterNode.securityAlgorithm, iClusterNode.securityKey,
-				buffer.getBytes());
+		discoveryPacket = OSecurityManager.instance()
+				.encrypt(clusterNode.securityAlgorithm, clusterNode.securityKey, buffer.getBytes());
 
+		start();
+	}
+
+	public void startup() {
 		try {
-			dgram = new DatagramPacket(discoveryPacket, discoveryPacket.length, iClusterNode.networkMulticastAddress,
-					iClusterNode.networkMulticastPort);
+			dgram = new DatagramPacket(discoveryPacket, discoveryPacket.length, clusterNode.networkMulticastAddress,
+					clusterNode.networkMulticastPort);
 			socket = new DatagramSocket();
-			start();
 		} catch (Exception e) {
 			OLogManager.instance().error(this, "Can't startup distributed server discovery signaler", e);
 		}
+		super.startup();
 	}
 
 	@Override
