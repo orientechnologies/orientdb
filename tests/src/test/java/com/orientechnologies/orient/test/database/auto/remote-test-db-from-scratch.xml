@@ -26,6 +26,7 @@
 	</test>
 	<test name="Population">
 		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.ComplexTypesTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.CRUDFlatPhysicalTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.CRUDColumnPhysicalTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentLogicalTest" />
