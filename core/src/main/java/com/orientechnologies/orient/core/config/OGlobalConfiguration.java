@@ -54,21 +54,21 @@ public enum OGlobalConfiguration {
 	OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database saves only object bound to dirty records", Boolean.class, false),
 
 	// TREEMAP
-	TREEMAP_LAZY_UPDATES("treemap.lazyUpdates", "Configure the TreeMaps (indexes and dictionaries) as buffered or not",
+	MVRBTREE_LAZY_UPDATES("mvrbtree.lazyUpdates", "Configure the TreeMaps (indexes and dictionaries) as buffered or not",
 			Integer.class, 300),
 
-	TREEMAP_NODE_PAGE_SIZE("treemap.nodePageSize",
+	MVRBTREE_NODE_PAGE_SIZE("mvrbtree.nodePageSize",
 			"Page size of each single node. 1,024 means that 1,024 entries can be stored inside a node", Float.class, 1024),
 
-	TREEMAP_LOAD_FACTOR("treemap.loadFactor", "HashMap load factor", Float.class, 0.7f),
+	MVRBTREE_LOAD_FACTOR("mvrbtree.loadFactor", "HashMap load factor", Float.class, 0.7f),
 
-	TREEMAP_OPTIMIZE_THRESHOLD("treemap.optimizeThreshold", "Auto optimize the TreeMap every X operations as get, put and remove",
+	MVRBTREE_OPTIMIZE_THRESHOLD("mvrbtree.optimizeThreshold", "Auto optimize the TreeMap every X operations as get, put and remove",
 			Integer.class, 50000),
 
-	TREEMAP_ENTRYPOINTS("treemap.entryPoints", "Number of entry points to start searching entries", Integer.class, 5),
+	MVRBTREE_ENTRYPOINTS("mvrbtree.entryPoints", "Number of entry points to start searching entries", Integer.class, 5),
 
-	TREEMAP_OPTIMIZE_ENTRYPOINTS_FACTOR("treemap.optimizeEntryPointsFactor",
-			"Multiplicand factor to apply to entry-points list (parameter treemap.entrypoints) to determine if needs of optimization",
+	MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR("mvrbtree.optimizeEntryPointsFactor",
+			"Multiplicand factor to apply to entry-points list (parameter mvrbtree.entrypoints) to determine if needs of optimization",
 			Float.class, 1.0f),
 
 	// FILE

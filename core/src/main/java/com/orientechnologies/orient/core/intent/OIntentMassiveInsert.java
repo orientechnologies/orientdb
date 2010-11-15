@@ -14,8 +14,8 @@ public class OIntentMassiveInsert implements OIntent {
 	private int			treeMapLazyUpdates;
 
 	public void begin(final ODatabaseRaw iDatabase, final Object... iArgs) {
-		treeMapLazyUpdates = OGlobalConfiguration.TREEMAP_LAZY_UPDATES.getValueAsInteger();
-		OGlobalConfiguration.TREEMAP_LAZY_UPDATES.setValue(1000);
+		treeMapLazyUpdates = OGlobalConfiguration.MVRBTREE_LAZY_UPDATES.getValueAsInteger();
+		OGlobalConfiguration.MVRBTREE_LAZY_UPDATES.setValue(1000);
 
 		previousUseCache = iDatabase.isUseCache();
 		iDatabase.setUseCache(false);
@@ -37,7 +37,7 @@ public class OIntentMassiveInsert implements OIntent {
 	}
 
 	public void end(final ODatabaseRaw iDatabase) {
-		OGlobalConfiguration.TREEMAP_LAZY_UPDATES.setValue(treeMapLazyUpdates);
+		OGlobalConfiguration.MVRBTREE_LAZY_UPDATES.setValue(treeMapLazyUpdates);
 		iDatabase.setUseCache(previousUseCache);
 
 		final ODatabaseComplex<?> ownerDb = iDatabase.getDatabaseOwner();

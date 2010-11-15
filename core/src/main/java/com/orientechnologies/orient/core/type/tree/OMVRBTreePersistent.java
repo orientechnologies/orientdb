@@ -728,10 +728,10 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	}
 
 	private void config() {
-		lastPageSize = OGlobalConfiguration.TREEMAP_NODE_PAGE_SIZE.getValueAsInteger();
-		pageLoadFactor = OGlobalConfiguration.TREEMAP_LOAD_FACTOR.getValueAsFloat();
-		optimizeThreshold = OGlobalConfiguration.TREEMAP_OPTIMIZE_THRESHOLD.getValueAsInteger();
-		entryPointsSize = OGlobalConfiguration.TREEMAP_ENTRYPOINTS.getValueAsInteger();
-		optimizeEntryPointsFactor = OGlobalConfiguration.TREEMAP_OPTIMIZE_ENTRYPOINTS_FACTOR.getValueAsFloat();
+		lastPageSize = OGlobalConfiguration.MVRBTREE_NODE_PAGE_SIZE.getValueAsInteger();
+		pageLoadFactor = OGlobalConfiguration.MVRBTREE_LOAD_FACTOR.getValueAsFloat();
+		optimizeThreshold = OGlobalConfiguration.MVRBTREE_OPTIMIZE_THRESHOLD.getValueAsInteger();
+		entryPointsSize = OGlobalConfiguration.MVRBTREE_ENTRYPOINTS.getValueAsInteger();
+		optimizeEntryPointsFactor = OGlobalConfiguration.MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR.getValueAsFloat();
 	}
 }

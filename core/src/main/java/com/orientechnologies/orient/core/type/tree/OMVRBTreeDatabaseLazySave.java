@@ -123,7 +123,7 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> imp
 
 	private void init(ODatabaseRecord<?> iDatabase) {
 		iDatabase.registerListener(this);
-		maxUpdatesBeforeSave = OGlobalConfiguration.TREEMAP_LAZY_UPDATES.getValueAsInteger();
+		maxUpdatesBeforeSave = OGlobalConfiguration.MVRBTREE_LAZY_UPDATES.getValueAsInteger();
 	}
 
 	public void onCreate(ODatabase iDatabase) {
