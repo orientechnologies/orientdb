@@ -328,6 +328,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 								type = OType.EMBEDDEDMAP;
 							} else if (fieldValue.charAt(0) == OStringSerializerHelper.LINK)
 								type = OType.LINK;
+							else if (fieldValue.charAt(0) == OStringSerializerHelper.EMBEDDED)
+								type = OType.EMBEDDED;
 							else if (fieldValue.equals("true") || fieldValue.equals("false"))
 								type = OType.BOOLEAN;
 							else
