@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+@SuppressWarnings("unchecked")
 @Test(groups = { "crud", "record-vobject" })
 public class ComplexTypesTest {
 	private ODatabaseDocumentTx	database;
@@ -40,7 +41,6 @@ public class ComplexTypesTest {
 		url = iURL;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Test
 	public void testEmbeddedList() {
 		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
@@ -73,8 +73,40 @@ public class ComplexTypesTest {
 		database.close();
 	}
 
-	@SuppressWarnings("unchecked")
-	@Test(dependsOnMethods = "testEmbeddedList")
+	@Test
+	public void testLinkList() {
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+
+		ODocument newDoc = new ODocument();
+
+		final ArrayList<ODocument> list = new ArrayList<ODocument>();
+		newDoc.field("linkedList", list, OType.LINKLIST);
+		list.add(new ODocument().field("name", "Luca"));
+		list.add(new ODocument(database, "Account").field("name", "Marcus"));
+
+		database.save(newDoc);
+		final ORID rid = newDoc.getIdentity();
+
+		database.close();
+
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+
+		ODocument loadedDoc = database.load(rid);
+		Assert.assertTrue(loadedDoc.containsField("linkedList"));
+		Assert.assertTrue(loadedDoc.field("linkedList") instanceof List<?>);
+		Assert.assertTrue(((List<ODocument>) loadedDoc.field("linkedList")).get(0) instanceof ODocument);
+
+		ODocument d = ((List<ODocument>) loadedDoc.field("linkedList")).get(0);
+		Assert.assertTrue(d.getIdentity().isValid());
+		Assert.assertEquals(d.field("name"), "Luca");
+		d = ((List<ODocument>) loadedDoc.field("linkedList")).get(1);
+		Assert.assertEquals(d.getClassName(), "Account");
+		Assert.assertEquals(d.field("name"), "Marcus");
+
+		database.close();
+	}
+
+	@Test
 	public void testEmbeddedMap() {
 		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 
@@ -111,8 +143,7 @@ public class ComplexTypesTest {
 		database.close();
 	}
 
-	@SuppressWarnings("unchecked")
-	@Test(dependsOnMethods = "testEmbeddedMap")
+	@Test
 	public void testLinkMap() {
 		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 
