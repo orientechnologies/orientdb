@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.type.tree;
 
 import java.io.IOException;
 
-import com.orientechnologies.common.collection.OTreeMapEntry;
+import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.id.ORID;
  * @param <V>
  *          Value type
  */
-public class OTreeMapEntryDatabase<K, V> extends OTreeMapEntryPersistent<K, V> {
+public class OMVRBTreeEntryDatabase<K, V> extends OMVRBTreeEntryPersistent<K, V> {
 	/**
 	 * Called on event of splitting an entry.
 	 * 
@@ -43,9 +43,9 @@ public class OTreeMapEntryDatabase<K, V> extends OTreeMapEntryPersistent<K, V> {
 	 *          Current position
 	 * @param iLeft
 	 */
-	public OTreeMapEntryDatabase(OTreeMapEntry<K, V> iParent, int iPosition) {
+	public OMVRBTreeEntryDatabase(OMVRBTreeEntry<K, V> iParent, int iPosition) {
 		super(iParent, iPosition);
-		record.setDatabase(((OTreeMapDatabase<K, V>) pTree).database);
+		record.setDatabase(((OMVRBTreeDatabase<K, V>) pTree).database);
 	}
 
 	/**
@@ -58,27 +58,27 @@ public class OTreeMapEntryDatabase<K, V> extends OTreeMapEntryPersistent<K, V> {
 	 * @param iRecordId
 	 *          Record to unmarshall
 	 */
-	public OTreeMapEntryDatabase(OTreeMapDatabase<K, V> iTree, OTreeMapEntryDatabase<K, V> iParent, ORID iRecordId)
+	public OMVRBTreeEntryDatabase(OMVRBTreeDatabase<K, V> iTree, OMVRBTreeEntryDatabase<K, V> iParent, ORID iRecordId)
 			throws IOException {
 		super(iTree, iParent, iRecordId);
 		record.setDatabase(iTree.database);
 		load();
 	}
 
-	public OTreeMapEntryDatabase(OTreeMapDatabase<K, V> iTree, K key, V value, OTreeMapEntryDatabase<K, V> iParent) {
+	public OMVRBTreeEntryDatabase(OMVRBTreeDatabase<K, V> iTree, K key, V value, OMVRBTreeEntryDatabase<K, V> iParent) {
 		super(iTree, key, value, iParent);
 		record.setDatabase(iTree.database);
 	}
 
 	@Override
-	public OTreeMapEntryDatabase<K, V> load() throws IOException {
+	public OMVRBTreeEntryDatabase<K, V> load() throws IOException {
 		record.load();
 		fromStream(record.toStream());
 		return this;
 	}
 
 	@Override
-	public OTreeMapEntryDatabase<K, V> save() throws OSerializationException {
+	public OMVRBTreeEntryDatabase<K, V> save() throws OSerializationException {
 		if (!record.isDirty())
 			return this;
 
@@ -102,15 +102,15 @@ public class OTreeMapEntryDatabase<K, V> extends OTreeMapEntryPersistent<K, V> {
 	 * 
 	 * @throws IOException
 	 */
-	public OTreeMapEntryDatabase<K, V> delete() throws IOException {
+	public OMVRBTreeEntryDatabase<K, V> delete() throws IOException {
 		// EARLY LOAD LEFT AND DELETE IT RECURSIVELY
 		if (getLeft() != null)
-			((OTreeMapEntryPersistent<K, V>) getLeft()).delete();
+			((OMVRBTreeEntryPersistent<K, V>) getLeft()).delete();
 		leftRid = null;
 
 		// EARLY LOAD RIGHT AND DELETE IT RECURSIVELY
 		if (getRight() != null)
-			((OTreeMapEntryPersistent<K, V>) getRight()).delete();
+			((OMVRBTreeEntryPersistent<K, V>) getRight()).delete();
 		rightRid = null;
 
 		// DELETE MYSELF

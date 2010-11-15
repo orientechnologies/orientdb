@@ -31,14 +31,14 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyRecord;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerString;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.type.tree.OTreeMapDatabase;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabase;
 
 @SuppressWarnings("unchecked")
 public class ODictionaryLocal<T extends Object> implements ODictionaryInternal<T> {
 	public static final String					DICTIONARY_DEF_CLUSTER_NAME	= OStorage.CLUSTER_INTERNAL_NAME;
 
 	private ODatabaseComplex<T>					database;
-	private OTreeMapDatabase<String, T>	tree;
+	private OMVRBTreeDatabase<String, T>	tree;
 
 	public String												clusterName									= DICTIONARY_DEF_CLUSTER_NAME;
 
@@ -75,14 +75,14 @@ public class ODictionaryLocal<T extends Object> implements ODictionaryInternal<T
 	}
 
 	public void load() {
-		tree = new OTreeMapDatabase<String, T>((ODatabaseRecord<?>) database, new ORecordId(
+		tree = new OMVRBTreeDatabase<String, T>((ODatabaseRecord<?>) database, new ORecordId(
 				database.getStorage().getConfiguration().dictionaryRecordId));
 		tree.load();
 	}
 
 	public void create() {
 		try {
-			tree = new OTreeMapDatabase<String, T>((ODatabaseRecord<?>) database, clusterName, OStreamSerializerString.INSTANCE,
+			tree = new OMVRBTreeDatabase<String, T>((ODatabaseRecord<?>) database, clusterName, OStreamSerializerString.INSTANCE,
 					new OStreamSerializerAnyRecord((ODatabaseRecord<? extends ORecord<?>>) database));
 			tree.save();
 
@@ -93,7 +93,7 @@ public class ODictionaryLocal<T extends Object> implements ODictionaryInternal<T
 		}
 	}
 
-	public OTreeMapDatabase<String, T> getTree() {
+	public OMVRBTreeDatabase<String, T> getTree() {
 		return tree;
 	}
 

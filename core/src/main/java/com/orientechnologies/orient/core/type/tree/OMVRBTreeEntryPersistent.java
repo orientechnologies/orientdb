@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.type.tree;
 import java.io.IOException;
 import java.util.Set;
 
-import com.orientechnologies.common.collection.OTreeMapEntry;
+import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -80,8 +80,8 @@ import com.orientechnologies.orient.core.serialization.serializer.record.OSerial
  * @param <V>
  */
 @SuppressWarnings("unchecked")
-public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> implements OSerializableStream {
-	protected OTreeMapPersistent<K, V>			pTree;
+public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> implements OSerializableStream {
+	protected OMVRBTreePersistent<K, V>			pTree;
 
 	byte[][]																serializedKeys;
 	byte[][]																serializedValues;
@@ -92,9 +92,9 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 
 	public ORecordBytesLazy									record;
 
-	protected OTreeMapEntryPersistent<K, V>	parent;
-	protected OTreeMapEntryPersistent<K, V>	left;
-	protected OTreeMapEntryPersistent<K, V>	right;
+	protected OMVRBTreeEntryPersistent<K, V>	parent;
+	protected OMVRBTreeEntryPersistent<K, V>	left;
+	protected OMVRBTreeEntryPersistent<K, V>	right;
 
 	/**
 	 * Called on event of splitting an entry.
@@ -105,9 +105,9 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	 *          Current position
 	 * @param iLeft
 	 */
-	public OTreeMapEntryPersistent(final OTreeMapEntry<K, V> iParent, final int iPosition) {
+	public OMVRBTreeEntryPersistent(final OMVRBTreeEntry<K, V> iParent, final int iPosition) {
 		super(iParent, iPosition);
-		pTree = (OTreeMapPersistent<K, V>) tree;
+		pTree = (OMVRBTreePersistent<K, V>) tree;
 		record = new ORecordBytesLazy(this);
 
 		setParent(iParent);
@@ -122,7 +122,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 		serializedKeys = new byte[pageSize][];
 		serializedValues = new byte[pageSize][];
 
-		final OTreeMapEntryPersistent<K, V> p = (OTreeMapEntryPersistent<K, V>) iParent;
+		final OMVRBTreeEntryPersistent<K, V> p = (OMVRBTreeEntryPersistent<K, V>) iParent;
 
 		System.arraycopy(p.serializedKeys, iPosition, serializedKeys, 0, size);
 		System.arraycopy(p.serializedValues, iPosition, serializedValues, 0, size);
@@ -140,19 +140,19 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	 * @param iRecordId
 	 *          Record to unmarshall
 	 */
-	public OTreeMapEntryPersistent(final OTreeMapPersistent<K, V> iTree, final OTreeMapEntryPersistent<K, V> iParent,
+	public OMVRBTreeEntryPersistent(final OMVRBTreePersistent<K, V> iTree, final OMVRBTreeEntryPersistent<K, V> iParent,
 			final ORID iRecordId) throws IOException {
 		super(iTree);
 		pTree = iTree;
 		record = new ORecordBytesLazy(this);
 		record.setIdentity((ORecordId) iRecordId);
 
-		parent = (OTreeMapEntryPersistent<K, V>) iParent;
+		parent = (OMVRBTreeEntryPersistent<K, V>) iParent;
 		parentRid = iParent == null ? ORecordId.EMPTY_RECORD_ID : parent.record.getIdentity();
 	}
 
-	public OTreeMapEntryPersistent(final OTreeMapPersistent<K, V> iTree, final K key, final V value,
-			final OTreeMapEntryPersistent<K, V> iParent) {
+	public OMVRBTreeEntryPersistent(final OMVRBTreePersistent<K, V> iTree, final K key, final V value,
+			final OMVRBTreeEntryPersistent<K, V> iParent) {
 		super(iTree, key, value, iParent);
 		pTree = iTree;
 
@@ -170,22 +170,22 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 		markDirty();
 	}
 
-	public OTreeMapEntryPersistent<K, V> load() throws IOException {
+	public OMVRBTreeEntryPersistent<K, V> load() throws IOException {
 		return this;
 	}
 
-	public OTreeMapEntryPersistent<K, V> save() throws IOException {
+	public OMVRBTreeEntryPersistent<K, V> save() throws IOException {
 		return this;
 	}
 
-	public OTreeMapEntryPersistent<K, V> delete() throws IOException {
+	public OMVRBTreeEntryPersistent<K, V> delete() throws IOException {
 		pTree.removeEntryPoint(this);
 
 		// if (record.getIdentity().isValid())
 		// pTree.cache.remove(record.getIdentity());
 
 		// DELETE THE NODE FROM THE PENDING RECORDS TO COMMIT
-		for (OTreeMapEntryPersistent<K, V> node : pTree.recordsToCommit) {
+		for (OMVRBTreeEntryPersistent<K, V> node : pTree.recordsToCommit) {
 			if (node.record.getIdentity().equals(record.getIdentity())) {
 				pTree.recordsToCommit.remove(node);
 				break;
@@ -274,10 +274,10 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 
 	public int getDepthInMemory() {
 		int level = 0;
-		OTreeMapEntryPersistent<K, V> entry = this;
+		OMVRBTreeEntryPersistent<K, V> entry = this;
 		while (entry.parent != null) {
 			level++;
-			entry = (OTreeMapEntryPersistent<K, V>) entry.parent;
+			entry = (OMVRBTreeEntryPersistent<K, V>) entry.parent;
 		}
 		return level;
 	}
@@ -285,16 +285,16 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	@Override
 	public int getDepth() {
 		int level = 0;
-		OTreeMapEntryPersistent<K, V> entry = this;
+		OMVRBTreeEntryPersistent<K, V> entry = this;
 		while (entry.getParent() != null) {
 			level++;
-			entry = (OTreeMapEntryPersistent<K, V>) entry.getParent();
+			entry = (OMVRBTreeEntryPersistent<K, V>) entry.getParent();
 		}
 		return level;
 	}
 
 	@Override
-	public OTreeMapEntry<K, V> getParent() {
+	public OMVRBTreeEntry<K, V> getParent() {
 		if (parentRid == null)
 			return null;
 
@@ -331,11 +331,11 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	}
 
 	@Override
-	public OTreeMapEntry<K, V> setParent(final OTreeMapEntry<K, V> iParent) {
+	public OMVRBTreeEntry<K, V> setParent(final OMVRBTreeEntry<K, V> iParent) {
 		if (iParent != getParent()) {
 			markDirty();
 
-			this.parent = (OTreeMapEntryPersistent<K, V>) iParent;
+			this.parent = (OMVRBTreeEntryPersistent<K, V>) iParent;
 			this.parentRid = iParent == null ? ORecordId.EMPTY_RECORD_ID : parent.record.getIdentity();
 
 			if (parent != null) {
@@ -353,7 +353,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	}
 
 	@Override
-	public OTreeMapEntry<K, V> getLeft() {
+	public OMVRBTreeEntry<K, V> getLeft() {
 		if (left == null && leftRid.isValid()) {
 			try {
 				// System.out.println("Node " + record.getIdentity() + " is loading LEFT node " + leftRid + "...");
@@ -371,11 +371,11 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	}
 
 	@Override
-	public void setLeft(final OTreeMapEntry<K, V> iLeft) {
+	public void setLeft(final OMVRBTreeEntry<K, V> iLeft) {
 		if (iLeft == left)
 			return;
 
-		left = (OTreeMapEntryPersistent<K, V>) iLeft;
+		left = (OMVRBTreeEntryPersistent<K, V>) iLeft;
 		// if (left == null || !left.record.getIdentity().isValid() || !left.record.getIdentity().equals(leftRid)) {
 		markDirty();
 		this.leftRid = iLeft == null ? ORecordId.EMPTY_RECORD_ID : left.record.getIdentity();
@@ -388,7 +388,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	}
 
 	@Override
-	public OTreeMapEntry<K, V> getRight() {
+	public OMVRBTreeEntry<K, V> getRight() {
 		if (rightRid.isValid() && right == null) {
 			// LAZY LOADING OF THE RIGHT LEAF
 			try {
@@ -406,11 +406,11 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	}
 
 	@Override
-	public OTreeMapEntry<K, V> setRight(final OTreeMapEntry<K, V> iRight) {
+	public OMVRBTreeEntry<K, V> setRight(final OMVRBTreeEntry<K, V> iRight) {
 		if (iRight == right)
 			return this;
 
-		right = (OTreeMapEntryPersistent<K, V>) iRight;
+		right = (OMVRBTreeEntryPersistent<K, V>) iRight;
 		// if (right == null || !right.record.getIdentity().isValid() || !right.record.getIdentity().equals(rightRid)) {
 		markDirty();
 		rightRid = iRight == null ? ORecordId.EMPTY_RECORD_ID : right.record.getIdentity();
@@ -458,10 +458,10 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	}
 
 	@Override
-	protected void copyFrom(final OTreeMapEntry<K, V> iSource) {
+	protected void copyFrom(final OMVRBTreeEntry<K, V> iSource) {
 		markDirty();
 
-		final OTreeMapEntryPersistent<K, V> source = (OTreeMapEntryPersistent<K, V>) iSource;
+		final OMVRBTreeEntryPersistent<K, V> source = (OMVRBTreeEntryPersistent<K, V>) iSource;
 
 		parent = source.parent;
 		left = source.left;
@@ -528,7 +528,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	public K getKeyAt(final int iIndex) {
 		if (keys[iIndex] == null)
 			try {
-				OProfiler.getInstance().updateCounter("OTreeMapEntryP.unserializeKey", 1);
+				OProfiler.getInstance().updateCounter("OMVRBTreeEntryP.unserializeKey", 1);
 
 				keys[iIndex] = (K) pTree.keySerializer.fromStream(serializedKeys[iIndex]);
 			} catch (IOException e) {
@@ -544,7 +544,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	protected V getValueAt(final int iIndex) {
 		if (values[iIndex] == null)
 			try {
-				OProfiler.getInstance().updateCounter("OTreeMapEntryP.unserializeValue", 1);
+				OProfiler.getInstance().updateCounter("OMVRBTreeEntryP.unserializeValue", 1);
 
 				values[iIndex] = (V) pTree.valueSerializer.fromStream(serializedValues[iIndex]);
 			} catch (IOException e) {
@@ -594,9 +594,9 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	/**
 	 * Returns the successor of the current Entry only by traversing the memory, or null if no such.
 	 */
-	public OTreeMapEntryPersistent<K, V> getNextInMemory() {
-		OTreeMapEntryPersistent<K, V> t = this;
-		OTreeMapEntryPersistent<K, V> p = null;
+	public OMVRBTreeEntryPersistent<K, V> getNextInMemory() {
+		OMVRBTreeEntryPersistent<K, V> t = this;
+		OMVRBTreeEntryPersistent<K, V> p = null;
 
 		if (t.right != null) {
 			p = t.right;
@@ -657,7 +657,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 		} finally {
 			buffer.close();
 
-			OProfiler.getInstance().stopChrono("OTreeMapEntryP.fromStream", timer);
+			OProfiler.getInstance().stopChrono("OMVRBTreeEntryP.fromStream", timer);
 		}
 	}
 
@@ -675,7 +675,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 			// FORCE DIRTY
 			parent.record.setDirty();
 
-			((OTreeMapEntryDatabase<K, V>) parent).save();
+			((OMVRBTreeEntryDatabase<K, V>) parent).save();
 			parentRid = parent.record.getIdentity();
 			record.setDirty();
 		}
@@ -684,7 +684,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 			// FORCE DIRTY
 			left.record.setDirty();
 
-			((OTreeMapEntryDatabase<K, V>) left).save();
+			((OMVRBTreeEntryDatabase<K, V>) left).save();
 			leftRid = left.record.getIdentity();
 			record.setDirty();
 		}
@@ -693,7 +693,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 			// FORCE DIRTY
 			right.record.setDirty();
 
-			((OTreeMapEntryDatabase<K, V>) right).save();
+			((OMVRBTreeEntryDatabase<K, V>) right).save();
 			rightRid = right.record.getIdentity();
 			record.setDirty();
 		}
@@ -736,7 +736,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 
 			checkEntryStructure();
 
-			OProfiler.getInstance().stopChrono("OTreeMapEntryP.toStream", timer);
+			OProfiler.getInstance().stopChrono("OMVRBTreeEntryP.toStream", timer);
 		}
 	}
 
@@ -748,7 +748,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	private void serializeNewKeys() throws IOException {
 		for (int i = 0; i < size; ++i) {
 			if (serializedKeys[i] == null) {
-				OProfiler.getInstance().updateCounter("OTreeMapEntryP.serializeValue", 1);
+				OProfiler.getInstance().updateCounter("OMVRBTreeEntryP.serializeValue", 1);
 
 				serializedKeys[i] = pTree.keySerializer.toStream(keys[i]);
 			}
@@ -763,7 +763,7 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	private void serializeNewValues() throws IOException {
 		for (int i = 0; i < size; ++i) {
 			if (serializedValues[i] == null) {
-				OProfiler.getInstance().updateCounter("OTreeMapEntryP.serializeKey", 1);
+				OProfiler.getInstance().updateCounter("OMVRBTreeEntryP.serializeKey", 1);
 
 				serializedValues[i] = pTree.valueSerializer.toStream(values[i]);
 			}
@@ -791,10 +791,10 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	// public boolean equals(final Object o) {
 	// if (this == o)
 	// return true;
-	// if (!(o instanceof OTreeMapEntryPersistent<?, ?>))
+	// if (!(o instanceof OMVRBTreeEntryPersistent<?, ?>))
 	// return false;
 	//
-	// final OTreeMapEntryPersistent<?, ?> e = (OTreeMapEntryPersistent<?, ?>) o;
+	// final OMVRBTreeEntryPersistent<?, ?> e = (OMVRBTreeEntryPersistent<?, ?>) o;
 	//
 	// if (record != null && e.record != null)
 	// return record.getIdentity().equals(e.record.getIdentity());
@@ -809,17 +809,17 @@ public abstract class OTreeMapEntryPersistent<K, V> extends OTreeMapEntry<K, V> 
 	// }
 
 	@Override
-	protected OTreeMapEntry<K, V> getLeftInMemory() {
+	protected OMVRBTreeEntry<K, V> getLeftInMemory() {
 		return left;
 	}
 
 	@Override
-	protected OTreeMapEntry<K, V> getParentInMemory() {
+	protected OMVRBTreeEntry<K, V> getParentInMemory() {
 		return parent;
 	}
 
 	@Override
-	protected OTreeMapEntry<K, V> getRightInMemory() {
+	protected OMVRBTreeEntry<K, V> getRightInMemory() {
 		return right;
 	}
 

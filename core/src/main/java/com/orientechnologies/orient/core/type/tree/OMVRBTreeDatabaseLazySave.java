@@ -33,16 +33,16 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
  * @author Luca Garulli
  */
 @SuppressWarnings("serial")
-public class OTreeMapDatabaseLazySave<K, V> extends OTreeMapDatabase<K, V> implements ODatabaseLifecycleListener {
+public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> implements ODatabaseLifecycleListener {
 	protected int	maxUpdatesBeforeSave;
 	protected int	updates	= 0;
 
-	public OTreeMapDatabaseLazySave(ODatabaseRecord<?> iDatabase, ORID iRID) {
+	public OMVRBTreeDatabaseLazySave(ODatabaseRecord<?> iDatabase, ORID iRID) {
 		super(iDatabase, iRID);
 		init(iDatabase);
 	}
 
-	public OTreeMapDatabaseLazySave(ODatabaseRecord<?> iDatabase, String iClusterName, OStreamSerializer iKeySerializer,
+	public OMVRBTreeDatabaseLazySave(ODatabaseRecord<?> iDatabase, String iClusterName, OStreamSerializer iKeySerializer,
 			OStreamSerializer iValueSerializer) {
 		super(iDatabase, iClusterName, iKeySerializer, iValueSerializer);
 		init(iDatabase);
@@ -78,7 +78,7 @@ public class OTreeMapDatabaseLazySave<K, V> extends OTreeMapDatabase<K, V> imple
 		entryPoints.clear();
 		try {
 			if (root != null)
-				((OTreeMapEntryDatabase<K, V>) root).load();
+				((OMVRBTreeEntryDatabase<K, V>) root).load();
 		} catch (IOException e) {
 			throw new OIndexException("Error on loading root node");
 		}

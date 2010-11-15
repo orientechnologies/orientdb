@@ -23,9 +23,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.common.collection.OTreeMap;
-import com.orientechnologies.common.collection.OTreeMapEntry;
-import com.orientechnologies.common.collection.OTreeMapEventListener;
+import com.orientechnologies.common.collection.OMVRBTree;
+import com.orientechnologies.common.collection.OMVRBTreeEntry;
+import com.orientechnologies.common.collection.OMVRBTreeEventListener;
 import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -43,17 +43,15 @@ import com.orientechnologies.orient.core.serialization.OMemoryOutputStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
-import com.orientechnologies.orient.core.storage.impl.local.OClusterLogical;
 
 /**
- * Persistent TreeMap implementation. The difference with the class OTreeMapPersistent is the level. In facts this class works
- * directly at the storage level, while the other at database level. This class is used for Logical Clusters. It can'be
+ * Persistent based MVRB-Tree implementation. The difference with the class OMVRBTreePersistent is the level. In facts this class
+ * works directly at the storage level, while the other at database level. This class is used for Logical Clusters. It can'be
  * transactional. It uses the entryPoints linked list to get the best entry point for searching a node.
  * 
- * @see OClusterLogical
  */
 @SuppressWarnings("serial")
-public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements OTreeMapEventListener<K, V>, OSerializableStream {
+public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implements OMVRBTreeEventListener<K, V>, OSerializableStream {
 	protected int																						optimizeThreshold;
 
 	protected OSharedResourceExternal												lock						= new OSharedResourceExternal();
@@ -61,7 +59,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 	protected OStreamSerializer															keySerializer;
 	protected OStreamSerializer															valueSerializer;
 
-	protected final Set<OTreeMapEntryPersistent<K, V>>			recordsToCommit	= new HashSet<OTreeMapEntryPersistent<K, V>>();
+	protected final Set<OMVRBTreeEntryPersistent<K, V>>			recordsToCommit	= new HashSet<OMVRBTreeEntryPersistent<K, V>>();
 	protected final OMemoryOutputStream											entryRecordBuffer;
 
 	protected final String																	clusterName;
@@ -72,20 +70,20 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 	// STORES IN MEMORY DIRECT REFERENCES TO PORTION OF THE TREE
 	protected int																						entryPointsSize;
 	protected float																					optimizeEntryPointsFactor;
-	protected volatile List<OTreeMapEntryPersistent<K, V>>	entryPoints			= new ArrayList<OTreeMapEntryPersistent<K, V>>(
+	protected volatile List<OMVRBTreeEntryPersistent<K, V>>	entryPoints			= new ArrayList<OMVRBTreeEntryPersistent<K, V>>(
 																																							entryPointsSize);
-	protected List<OTreeMapEntryPersistent<K, V>>						newEntryPoints	= new ArrayList<OTreeMapEntryPersistent<K, V>>(
+	protected List<OMVRBTreeEntryPersistent<K, V>>						newEntryPoints	= new ArrayList<OMVRBTreeEntryPersistent<K, V>>(
 																																							entryPointsSize);
 
-	// protected Map<ORID, OTreeMapEntryPersistent<K, V>> cache = new HashMap<ORID, OTreeMapEntryPersistent<K, V>>();
+	// protected Map<ORID, OMVRBTreeEntryPersistent<K, V>> cache = new HashMap<ORID, OMVRBTreeEntryPersistent<K, V>>();
 
-	public OTreeMapPersistent(final String iClusterName, final ORID iRID) {
+	public OMVRBTreePersistent(final String iClusterName, final ORID iRID) {
 		this(iClusterName, null, null);
 		record.setIdentity(iRID.getClusterId(), iRID.getClusterPosition());
 		config();
 	}
 
-	public OTreeMapPersistent(String iClusterName, final OStreamSerializer iKeySerializer, final OStreamSerializer iValueSerializer) {
+	public OMVRBTreePersistent(String iClusterName, final OStreamSerializer iKeySerializer, final OStreamSerializer iValueSerializer) {
 		// MINIMIZE I/O USING A LARGER PAGE THAN THE DEFAULT USED IN MEMORY
 		super(1024, 0.7f);
 		config();
@@ -101,16 +99,16 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 		setListener(this);
 	}
 
-	public abstract OTreeMapPersistent<K, V> load() throws IOException;
+	public abstract OMVRBTreePersistent<K, V> load() throws IOException;
 
-	public abstract OTreeMapPersistent<K, V> save() throws IOException;
+	public abstract OMVRBTreePersistent<K, V> save() throws IOException;
 
 	protected abstract void serializerFromStream(OMemoryInputStream stream) throws IOException;
 
 	/**
 	 * Lazy loads a node.
 	 */
-	protected abstract OTreeMapEntryPersistent<K, V> loadEntry(OTreeMapEntryPersistent<K, V> iParent, ORID iRecordId)
+	protected abstract OMVRBTreeEntryPersistent<K, V> loadEntry(OMVRBTreeEntryPersistent<K, V> iParent, ORID iRecordId)
 			throws IOException;
 
 	@Override
@@ -120,7 +118,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 		try {
 			if (root != null) {
-				((OTreeMapEntryPersistent<K, V>) root).delete();
+				((OMVRBTreeEntryPersistent<K, V>) root).delete();
 				super.clear();
 				getListener().signalTreeChanged(this);
 			}
@@ -135,7 +133,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 		} finally {
 
 			lock.releaseExclusiveLock();
-			OProfiler.getInstance().stopChrono("OTreeMapPersistent.clear", timer);
+			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.clear", timer);
 		}
 	}
 
@@ -148,7 +146,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 		try {
 			// DISCONNECT ALL THE NODES
-			for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints)
+			for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints)
 				entryPoint.disconnect(true);
 			entryPoints.clear();
 
@@ -165,7 +163,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 		} finally {
 
 			lock.releaseExclusiveLock();
-			OProfiler.getInstance().stopChrono("OTreeMapPersistent.unload", timer);
+			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.unload", timer);
 		}
 	}
 
@@ -185,7 +183,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 			// printInMemoryStructure();
 
-			OTreeMapEntryPersistent<K, V> pRoot = (OTreeMapEntryPersistent<K, V>) root;
+			OMVRBTreeEntryPersistent<K, V> pRoot = (OMVRBTreeEntryPersistent<K, V>) root;
 
 			final int depth = pRoot.getMaxDepthInMemory();
 
@@ -196,8 +194,8 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 			pRoot.checkToDisconnect((int) (entryPointsSize * optimizeEntryPointsFactor));
 
 			if (isRuntimeCheckEnabled()) {
-				for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints)
-					for (OTreeMapEntryPersistent<K, V> e = (OTreeMapEntryPersistent<K, V>) entryPoint.getFirstInMemory(); e != null; e = e
+				for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints)
+					for (OMVRBTreeEntryPersistent<K, V> e = (OMVRBTreeEntryPersistent<K, V>) entryPoint.getFirstInMemory(); e != null; e = e
 							.getNextInMemory())
 						e.checkEntryStructure();
 			}
@@ -208,14 +206,14 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 			if (isRuntimeCheckEnabled()) {
 				if (entryPoints.size() > 0)
-					for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints)
+					for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints)
 						checkTreeStructure(entryPoint.getFirstInMemory());
 				else
 					checkTreeStructure(root);
 			}
 
 			lock.releaseExclusiveLock();
-			OProfiler.getInstance().stopChrono("OTreeMapPersistent.optimize", timer);
+			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.optimize", timer);
 
 			if (OLogManager.instance().isDebugEnabled())
 				OLogManager.instance().debug(this, "Optimization completed in %d ms\n", System.currentTimeMillis() - timer);
@@ -239,7 +237,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 		} finally {
 
 			lock.releaseExclusiveLock();
-			OProfiler.getInstance().stopChrono("OTreeMapPersistent.put", timer);
+			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.put", timer);
 		}
 	}
 
@@ -260,7 +258,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 		} finally {
 
 			lock.releaseExclusiveLock();
-			OProfiler.getInstance().stopChrono("OTreeMapPersistent.putAll", timer);
+			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.putAll", timer);
 		}
 	}
 
@@ -286,7 +284,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 		try {
 			if (recordsToCommit.size() > 0) {
-				final List<OTreeMapEntryPersistent<K, V>> tmp = new ArrayList<OTreeMapEntryPersistent<K, V>>();
+				final List<OMVRBTreeEntryPersistent<K, V>> tmp = new ArrayList<OMVRBTreeEntryPersistent<K, V>>();
 
 				while (recordsToCommit.iterator().hasNext()) {
 					// COMMIT BEFORE THE NEW RECORDS (TO ASSURE RID IN RELATIONSHIPS)
@@ -294,7 +292,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 					recordsToCommit.clear();
 
-					for (OTreeMapEntryPersistent<K, V> node : tmp)
+					for (OMVRBTreeEntryPersistent<K, V> node : tmp)
 						if (node.record.isDirty()) {
 							if (iDatabase != null)
 								// REPLACE THE DATABASE WITH THE NEW ACQUIRED
@@ -325,7 +323,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 		} finally {
 
 			lock.releaseExclusiveLock();
-			OProfiler.getInstance().stopChrono("OTreeMapPersistent.commitChanges", timer);
+			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.commitChanges", timer);
 		}
 	}
 
@@ -352,11 +350,11 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 		} catch (Exception e) {
 
-			OLogManager.instance().error(this, "Error on unmarshalling OTreeMapPersistent object from record: %s", e,
+			OLogManager.instance().error(this, "Error on unmarshalling OMVRBTreePersistent object from record: %s", e,
 					OSerializationException.class, rootRid);
 
 		} finally {
-			OProfiler.getInstance().stopChrono("OTreeMapPersistent.fromStream", timer);
+			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.fromStream", timer);
 		}
 		return this;
 	}
@@ -377,7 +375,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 		try {
 			if (root != null) {
-				OTreeMapEntryPersistent<K, V> pRoot = (OTreeMapEntryPersistent<K, V>) root;
+				OMVRBTreeEntryPersistent<K, V> pRoot = (OMVRBTreeEntryPersistent<K, V>) root;
 				if (pRoot.record.getIdentity().isNew()) {
 					// FIRST TIME: SAVE IT
 					pRoot.save();
@@ -401,16 +399,16 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 		} finally {
 			marshalledRecords.remove(identityRecord);
 
-			OProfiler.getInstance().stopChrono("OTreeMapPersistent.toStream", timer);
+			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.toStream", timer);
 		}
 	}
 
-	public void signalTreeChanged(final OTreeMap<K, V> iTree) {
+	public void signalTreeChanged(final OMVRBTree<K, V> iTree) {
 		record.setDirty();
 	}
 
-	public void signalNodeChanged(final OTreeMapEntry<K, V> iNode) {
-		recordsToCommit.add((OTreeMapEntryPersistent<K, V>) iNode);
+	public void signalNodeChanged(final OMVRBTreeEntry<K, V> iNode) {
+		recordsToCommit.add((OMVRBTreeEntryPersistent<K, V>) iNode);
 	}
 
 	@Override
@@ -601,7 +599,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	protected OTreeMapEntry<K, V> getBestEntryPoint(final Object iKey) {
+	protected OMVRBTreeEntry<K, V> getBestEntryPoint(final Object iKey) {
 		final Comparable<? super K> key = (Comparable<? super K>) iKey;
 
 		if (entryPoints.size() == 0)
@@ -609,11 +607,11 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 			return root;
 
 		// SEARCH THE BEST KEY
-		OTreeMapEntryPersistent<K, V> e;
+		OMVRBTreeEntryPersistent<K, V> e;
 		int entryPointSize = entryPoints.size();
 		int cmp;
-		OTreeMapEntryPersistent<K, V> bestNode = null;
-		if (entryPointSize < OTreeMapEntry.BINARY_SEARCH_THRESHOLD) {
+		OMVRBTreeEntryPersistent<K, V> bestNode = null;
+		if (entryPointSize < OMVRBTreeEntry.BINARY_SEARCH_THRESHOLD) {
 			// LINEAR SEARCH
 			for (int i = 0; i < entryPointSize; ++i) {
 				e = entryPoints.get(i);
@@ -687,7 +685,7 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 	/**
 	 * Remove an entry point from the list
 	 */
-	void removeEntryPoint(final OTreeMapEntryPersistent<K, V> iEntry) {
+	void removeEntryPoint(final OMVRBTreeEntryPersistent<K, V> iEntry) {
 		for (int i = 0; i < entryPoints.size(); ++i)
 			if (entryPoints.get(i) == iEntry) {
 				entryPoints.remove(i);
@@ -696,16 +694,16 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 	}
 
 	/**
-	 * Returns the first Entry in the OTreeMap (according to the OTreeMap's key-sort function). Returns null if the OTreeMap is empty.
+	 * Returns the first Entry in the OMVRBTree (according to the OMVRBTree's key-sort function). Returns null if the OMVRBTree is empty.
 	 */
 	@Override
-	protected OTreeMapEntry<K, V> getFirstEntry() {
+	protected OMVRBTreeEntry<K, V> getFirstEntry() {
 		if (entryPoints.size() > 0) {
 			// FIND THE FIRST ELEMENT STARTING FROM THE FIRST NODE
-			OTreeMapEntryPersistent<K, V> e = entryPoints.get(0);
+			OMVRBTreeEntryPersistent<K, V> e = entryPoints.get(0);
 
 			while (e.getLeft() != null) {
-				e = (OTreeMapEntryPersistent<K, V>) e.getLeft();
+				e = (OMVRBTreeEntryPersistent<K, V>) e.getLeft();
 			}
 			return e;
 		}
@@ -715,12 +713,12 @@ public abstract class OTreeMapPersistent<K, V> extends OTreeMap<K, V> implements
 
 	// private void printInMemoryStructure() {
 	// System.out.println("* Entrypoints (" + entryPoints.size() + "), in cache=" + cache.size() + ": *");
-	// for (OTreeMapEntryPersistent<K, V> entryPoint : entryPoints)
+	// for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints)
 	// printInMemoryStructure(entryPoint);
 	// }
 
 	@Override
-	protected void setRoot(final OTreeMapEntry<K, V> iRoot) {
+	protected void setRoot(final OMVRBTreeEntry<K, V> iRoot) {
 		if (iRoot == root)
 			return;
 

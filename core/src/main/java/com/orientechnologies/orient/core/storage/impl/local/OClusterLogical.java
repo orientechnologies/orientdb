@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.tree.OTreeMapStorage;
+import com.orientechnologies.orient.core.storage.tree.OMVRBTreeStorage;
 
 /**
  * Handle a cluster using a logical structure stored into a real physical local cluster.<br/>
@@ -39,7 +39,7 @@ public class OClusterLogical implements OCluster {
 	private int																				id;
 	private int																				localClusterId;
 
-	private OTreeMapStorage<Long, OPhysicalPosition>	map;
+	private OMVRBTreeStorage<Long, OPhysicalPosition>	map;
 	private OPhysicalPosition													total;
 
 	private OSharedResourceExternal										lock	= new OSharedResourceExternal();
@@ -61,7 +61,7 @@ public class OClusterLogical implements OCluster {
 		this(iName, iId, iPhysicalClusterId);
 
 		try {
-			map = new OTreeMapStorage<Long, OPhysicalPosition>(iStorage, iStorage.getClusterById(iPhysicalClusterId).getName(),
+			map = new OMVRBTreeStorage<Long, OPhysicalPosition>(iStorage, iStorage.getClusterById(iPhysicalClusterId).getName(),
 					OStreamSerializerLong.INSTANCE, OStreamSerializerAnyStreamable.INSTANCE);
 			map.getRecord().setIdentity(iPhysicalClusterId, ORID.CLUSTER_POS_INVALID);
 
@@ -87,7 +87,7 @@ public class OClusterLogical implements OCluster {
 		this(iName, iId, 0);
 
 		try {
-			map = new OTreeMapStorage<Long, OPhysicalPosition>(iStorage, iStorage.getClusterById(iRecordId.getClusterId()).getName(),
+			map = new OMVRBTreeStorage<Long, OPhysicalPosition>(iStorage, iStorage.getClusterById(iRecordId.getClusterId()).getName(),
 					iRecordId);
 			map.load();
 

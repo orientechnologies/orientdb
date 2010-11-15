@@ -17,11 +17,11 @@ package com.orientechnologies.orient.core.storage.tree;
 
 import java.io.IOException;
 
-import com.orientechnologies.common.collection.OTreeMapEntry;
+import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.type.tree.OTreeMapEntryPersistent;
-import com.orientechnologies.orient.core.type.tree.OTreeMapPersistent;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeEntryPersistent;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreePersistent;
 
 /**
  * Persistent TreeMap implementation that use a OStorage instance to handle the entries. This class can't be used also from the
@@ -34,27 +34,27 @@ import com.orientechnologies.orient.core.type.tree.OTreeMapPersistent;
  * @param <V>
  *          Value type
  */
-public class OTreeMapEntryStorage<K, V> extends OTreeMapEntryPersistent<K, V> {
+public class OMVRBTreeEntryStorage<K, V> extends OMVRBTreeEntryPersistent<K, V> {
 
-	public OTreeMapEntryStorage(OTreeMapEntry<K, V> iParent, int iPosition) {
+	public OMVRBTreeEntryStorage(OMVRBTreeEntry<K, V> iParent, int iPosition) {
 		super(iParent, iPosition);
 		record.setIdentity(pTree.getRecord().getIdentity().getClusterId(), ORID.CLUSTER_POS_INVALID);
 	}
 
-	public OTreeMapEntryStorage(OTreeMapPersistent<K, V> iTree, K key, V value, OTreeMapEntryPersistent<K, V> iParent) {
+	public OMVRBTreeEntryStorage(OMVRBTreePersistent<K, V> iTree, K key, V value, OMVRBTreeEntryPersistent<K, V> iParent) {
 		super(iTree, key, value, iParent);
 		record.setIdentity(pTree.getRecord().getIdentity().getClusterId(), ORID.CLUSTER_POS_INVALID);
 	}
 
-	public OTreeMapEntryStorage(OTreeMapPersistent<K, V> iTree, OTreeMapEntryPersistent<K, V> iParent, ORID iRecordId)
+	public OMVRBTreeEntryStorage(OMVRBTreePersistent<K, V> iTree, OMVRBTreeEntryPersistent<K, V> iParent, ORID iRecordId)
 			throws IOException {
 		super(iTree, iParent, iRecordId);
 		load();
 	}
 
 	@Override
-	public OTreeMapEntryStorage<K, V> load() throws IOException {
-		ORawBuffer raw = ((OTreeMapStorage<K, V>) tree).storage.readRecord(null, -1, record.getIdentity().getClusterId(), record
+	public OMVRBTreeEntryStorage<K, V> load() throws IOException {
+		ORawBuffer raw = ((OMVRBTreeStorage<K, V>) tree).storage.readRecord(null, -1, record.getIdentity().getClusterId(), record
 				.getIdentity().getClusterPosition(), null);
 
 		record.setVersion(raw.version);
@@ -65,18 +65,18 @@ public class OTreeMapEntryStorage<K, V> extends OTreeMapEntryPersistent<K, V> {
 	}
 
 	@Override
-	public OTreeMapEntryStorage<K, V> save() throws IOException {
+	public OMVRBTreeEntryStorage<K, V> save() throws IOException {
 		record.fromStream(toStream());
 		
 		if (record.getIdentity().isValid())
 			// UPDATE IT WITHOUT VERSION CHECK SINCE ALL IT'S LOCKED
-			record.setVersion(((OTreeMapStorage<K, V>) tree).storage.updateRecord(0, record.getIdentity().getClusterId(), record
+			record.setVersion(((OMVRBTreeStorage<K, V>) tree).storage.updateRecord(0, record.getIdentity().getClusterId(), record
 					.getIdentity().getClusterPosition(), record.toStream(), -1, record.getRecordType()));
 		else {
 			// CREATE IT
 			record.setIdentity(
 					record.getIdentity().getClusterId(),
-					((OTreeMapStorage<K, V>) tree).storage.createRecord(record.getIdentity().getClusterId(), record.toStream(),
+					((OMVRBTreeStorage<K, V>) tree).storage.createRecord(record.getIdentity().getClusterId(), record.toStream(),
 							record.getRecordType()));
 		}
 		record.unsetDirty();
@@ -91,17 +91,17 @@ public class OTreeMapEntryStorage<K, V> extends OTreeMapEntryPersistent<K, V> {
 	 * 
 	 * @throws IOException
 	 */
-	public OTreeMapEntryStorage<K, V> delete() throws IOException {
+	public OMVRBTreeEntryStorage<K, V> delete() throws IOException {
 		// EARLY LOAD LEFT AND DELETE IT RECURSIVELY
 		if (getLeft() != null)
-			((OTreeMapEntryPersistent<K, V>) getLeft()).delete();
+			((OMVRBTreeEntryPersistent<K, V>) getLeft()).delete();
 
 		// EARLY LOAD RIGHT AND DELETE IT RECURSIVELY
 		if (getRight() != null)
-			((OTreeMapEntryPersistent<K, V>) getRight()).delete();
+			((OMVRBTreeEntryPersistent<K, V>) getRight()).delete();
 
 		// DELETE MYSELF
-		((OTreeMapStorage<K, V>) tree).storage.deleteRecord(0, record.getIdentity(), record.getVersion());
+		((OMVRBTreeStorage<K, V>) tree).storage.deleteRecord(0, record.getIdentity(), record.getVersion());
 
 		// FORCE REMOVING OF K/V AND SEIALIZED K/V AS WELL
 		keys = null;

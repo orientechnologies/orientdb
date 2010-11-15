@@ -21,7 +21,7 @@ import java.util.Map;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.record.ODatabaseBinary;
 import com.orientechnologies.orient.kv.OSharedBinaryDatabase;
-import com.orientechnologies.orient.kv.index.OTreeMapPersistentAsynchThread;
+import com.orientechnologies.orient.kv.index.OMVRBTreePersistentAsynchThread;
 import com.orientechnologies.orient.kv.network.protocol.http.OKVDictionary;
 import com.orientechnologies.orient.kv.network.protocol.http.OKVDictionaryBucketManager;
 import com.orientechnologies.orient.kv.network.protocol.http.ONetworkProtocolHttpKV;
@@ -37,8 +37,8 @@ public class ONetworkProtocolHttpKVLocal extends ONetworkProtocolHttpKV implemen
 		// START ASYNCH THREAD IF CONFIGURED
 		String v = OServerMain.server().getConfiguration().getProperty(ASYNCH_COMMIT_DELAY_PAR);
 		if (v != null) {
-			OTreeMapPersistentAsynchThread.getInstance().setDelay(Integer.parseInt(v));
-			OTreeMapPersistentAsynchThread.getInstance().start();
+			OMVRBTreePersistentAsynchThread.getInstance().setDelay(Integer.parseInt(v));
+			OMVRBTreePersistentAsynchThread.getInstance().start();
 			asynchMode = true;
 		}
 		//

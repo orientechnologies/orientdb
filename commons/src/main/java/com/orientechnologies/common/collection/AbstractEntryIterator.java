@@ -20,15 +20,15 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
- * Base class for OTreeMap Iterators
+ * Base class for OMVRBTree Iterators
  */
 abstract class AbstractEntryIterator<K, V, T> implements Iterator<T> {
-	OTreeMap<K, V>			tree;
-	OTreeMapEntry<K, V>	next;
-	OTreeMapEntry<K, V>	lastReturned;
+	OMVRBTree<K, V>			tree;
+	OMVRBTreeEntry<K, V>	next;
+	OMVRBTreeEntry<K, V>	lastReturned;
 	int									expectedModCount;
 
-	AbstractEntryIterator(OTreeMapEntry<K, V> first) {
+	AbstractEntryIterator(OMVRBTreeEntry<K, V> first) {
 		if (first == null)
 			// IN CASE OF ABSTRACTMAP.HASHCODE()
 			return;
@@ -41,10 +41,10 @@ abstract class AbstractEntryIterator<K, V, T> implements Iterator<T> {
 	}
 
 	public final boolean hasNext() {
-		return next != null && (OTreeMap.successor(next) != null || tree.pageIndex < next.getSize() - 1);
+		return next != null && (OMVRBTree.successor(next) != null || tree.pageIndex < next.getSize() - 1);
 	}
 
-	final OTreeMapEntry<K, V> nextEntry() {
+	final OMVRBTreeEntry<K, V> nextEntry() {
 		if (next == null)
 			throw new NoSuchElementException();
 
@@ -57,20 +57,20 @@ abstract class AbstractEntryIterator<K, V, T> implements Iterator<T> {
 				throw new ConcurrentModificationException();
 
 			tree.pageIndex = 0;
-			next = OTreeMap.successor(next);
+			next = OMVRBTree.successor(next);
 			lastReturned = next;
 		}
 
 		return next;
 	}
 
-	final OTreeMapEntry<K, V> prevEntry() {
-		OTreeMapEntry<K, V> e = next;
+	final OMVRBTreeEntry<K, V> prevEntry() {
+		OMVRBTreeEntry<K, V> e = next;
 		if (e == null)
 			throw new NoSuchElementException();
 		if (tree.modCount != expectedModCount)
 			throw new ConcurrentModificationException();
-		next = OTreeMap.predecessor(e);
+		next = OMVRBTree.predecessor(e);
 		lastReturned = e;
 		return e;
 	}

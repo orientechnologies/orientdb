@@ -20,8 +20,8 @@ package com.orientechnologies.common.collection;
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public interface OTreeMapEventListener<K, V> {
-	public void signalTreeChanged(OTreeMap<K, V> iTree);
+public interface OMVRBTreeEventListener<K, V> {
+	public void signalTreeChanged(OMVRBTree<K, V> iTree);
 
-	public void signalNodeChanged(OTreeMapEntry<K, V> iNode);
+	public void signalNodeChanged(OMVRBTreeEntry<K, V> iNode);
 }

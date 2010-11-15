@@ -28,13 +28,13 @@ import com.orientechnologies.common.thread.OSoftThread;
  * @author Luca Garulli
  * 
  */
-public class OTreeMapPersistentAsynchThread extends OSoftThread {
+public class OMVRBTreePersistentAsynchThread extends OSoftThread {
 
 	private long																	delay			= 0;
-	private Set<OTreeMapPersistentAsynch<?, ?>>		maps			= new HashSet<OTreeMapPersistentAsynch<?, ?>>();
-	private static OTreeMapPersistentAsynchThread	instance	= new OTreeMapPersistentAsynchThread();
+	private Set<OMVRBTreePersistentAsynch<?, ?>>		maps			= new HashSet<OMVRBTreePersistentAsynch<?, ?>>();
+	private static OMVRBTreePersistentAsynchThread	instance	= new OMVRBTreePersistentAsynchThread();
 
-	public OTreeMapPersistentAsynchThread setDelay(final int iDelay) {
+	public OMVRBTreePersistentAsynchThread setDelay(final int iDelay) {
 		delay = iDelay;
 		return this;
 	}
@@ -44,13 +44,13 @@ public class OTreeMapPersistentAsynchThread extends OSoftThread {
 	 * 
 	 * @param iMap
 	 */
-	public synchronized void registerMap(final OTreeMapPersistentAsynch<?, ?> iMap) {
+	public synchronized void registerMap(final OMVRBTreePersistentAsynch<?, ?> iMap) {
 		maps.add(iMap);
 	}
 
 	@Override
 	protected synchronized void execute() throws Exception {
-		for (OTreeMapPersistentAsynch<?, ?> map : maps) {
+		for (OMVRBTreePersistentAsynch<?, ?> map : maps) {
 			try {
 				synchronized (map) {
 
@@ -68,7 +68,7 @@ public class OTreeMapPersistentAsynchThread extends OSoftThread {
 		pauseCurrentThread(delay);
 	}
 
-	public static OTreeMapPersistentAsynchThread getInstance() {
+	public static OMVRBTreePersistentAsynchThread getInstance() {
 		return instance;
 	}
 }

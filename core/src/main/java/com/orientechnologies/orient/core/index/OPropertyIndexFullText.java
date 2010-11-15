@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerString;
-import com.orientechnologies.orient.core.type.tree.OTreeMapDatabaseLazySave;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
 
 /**
  * Fast index for full-text searches.
@@ -81,7 +81,7 @@ public class OPropertyIndexFullText extends OPropertyIndexMVRBTreeAbstract {
 		while (db != null && !(db instanceof ODatabaseRecord<?>))
 			db = db.getUnderlying();
 
-		map = new OTreeMapDatabaseLazySave<String, List<ORecordId>>((ODatabaseRecord<?>) db, iClusterIndexName,
+		map = new OMVRBTreeDatabaseLazySave<String, List<ORecordId>>((ODatabaseRecord<?>) db, iClusterIndexName,
 				OStreamSerializerString.INSTANCE, OStreamSerializerListRID.INSTANCE);
 		map.lazySave();
 

@@ -15,23 +15,23 @@
  */
 package com.orientechnologies.common.collection;
 
-public class OTreeMapEntryMemory<K, V> extends OTreeMapEntry<K, V> {
-	protected OTreeMapEntryMemory<K, V>	left	= null;
-	protected OTreeMapEntryMemory<K, V>	right	= null;
-	protected OTreeMapEntryMemory<K, V>	parent;
+public class OMVRBTreeEntryMemory<K, V> extends OMVRBTreeEntry<K, V> {
+	protected OMVRBTreeEntryMemory<K, V>	left	= null;
+	protected OMVRBTreeEntryMemory<K, V>	right	= null;
+	protected OMVRBTreeEntryMemory<K, V>	parent;
 
 	/**
 	 * Constructor called on unmarshalling.
 	 * 
 	 */
-	protected OTreeMapEntryMemory(final OTreeMap<K, V> iTree) {
+	protected OMVRBTreeEntryMemory(final OMVRBTree<K, V> iTree) {
 		super(iTree);
 	}
 
 	/**
 	 * Make a new cell with given key, value, and parent, and with <tt>null</tt> child links, and BLACK color.
 	 */
-	protected OTreeMapEntryMemory(final OTreeMap<K, V> iTree, final K iKey, final V iValue, final OTreeMapEntryMemory<K, V> iParent) {
+	protected OMVRBTreeEntryMemory(final OMVRBTree<K, V> iTree, final K iKey, final V iValue, final OMVRBTreeEntryMemory<K, V> iParent) {
 		super(iTree, iKey, iValue, iParent);
 	}
 
@@ -42,26 +42,26 @@ public class OTreeMapEntryMemory<K, V> extends OTreeMapEntry<K, V> {
 	 * @param iPosition
 	 * @param iLeft
 	 */
-	protected OTreeMapEntryMemory(final OTreeMapEntry<K, V> iParent, final int iPosition) {
+	protected OMVRBTreeEntryMemory(final OMVRBTreeEntry<K, V> iParent, final int iPosition) {
 		super(iParent, iPosition);
 		setParent(iParent);
 	}
 
 	@Override
-	public void setLeft(final OTreeMapEntry<K, V> left) {
-		this.left = (OTreeMapEntryMemory<K, V>) left;
+	public void setLeft(final OMVRBTreeEntry<K, V> left) {
+		this.left = (OMVRBTreeEntryMemory<K, V>) left;
 		if (left != null && left.getParent() != this)
 			left.setParent(this);
 	}
 
 	@Override
-	public OTreeMapEntry<K, V> getLeft() {
+	public OMVRBTreeEntry<K, V> getLeft() {
 		return left;
 	}
 
 	@Override
-	public OTreeMapEntry<K, V> setRight(final OTreeMapEntry<K, V> right) {
-		this.right = (OTreeMapEntryMemory<K, V>) right;
+	public OMVRBTreeEntry<K, V> setRight(final OMVRBTreeEntry<K, V> right) {
+		this.right = (OMVRBTreeEntryMemory<K, V>) right;
 		if (right != null && right.getParent() != this)
 			right.setParent(this);
 
@@ -69,27 +69,27 @@ public class OTreeMapEntryMemory<K, V> extends OTreeMapEntry<K, V> {
 	}
 
 	@Override
-	public OTreeMapEntry<K, V> getRight() {
+	public OMVRBTreeEntry<K, V> getRight() {
 		return right;
 	}
 
 	@Override
-	public OTreeMapEntry<K, V> setParent(final OTreeMapEntry<K, V> parent) {
-		this.parent = (OTreeMapEntryMemory<K, V>) parent;
+	public OMVRBTreeEntry<K, V> setParent(final OMVRBTreeEntry<K, V> parent) {
+		this.parent = (OMVRBTreeEntryMemory<K, V>) parent;
 		return parent;
 	}
 
 	@Override
-	public OTreeMapEntry<K, V> getParent() {
+	public OMVRBTreeEntry<K, V> getParent() {
 		return parent;
 	}
 
 	/**
 	 * Returns the successor of the current Entry only by traversing the memory, or null if no such.
 	 */
-	public OTreeMapEntryMemory<K, V> getNextInMemory() {
-		OTreeMapEntryMemory<K, V> t = this;
-		OTreeMapEntryMemory<K, V> p = null;
+	public OMVRBTreeEntryMemory<K, V> getNextInMemory() {
+		OMVRBTreeEntryMemory<K, V> t = this;
+		OMVRBTreeEntryMemory<K, V> p = null;
 
 		if (t.right != null) {
 			p = t.right;
@@ -107,17 +107,17 @@ public class OTreeMapEntryMemory<K, V> extends OTreeMapEntry<K, V> {
 	}
 
 	@Override
-	protected OTreeMapEntry<K, V> getLeftInMemory() {
+	protected OMVRBTreeEntry<K, V> getLeftInMemory() {
 		return left;
 	}
 
 	@Override
-	protected OTreeMapEntry<K, V> getParentInMemory() {
+	protected OMVRBTreeEntry<K, V> getParentInMemory() {
 		return parent;
 	}
 
 	@Override
-	protected OTreeMapEntry<K, V> getRightInMemory() {
+	protected OMVRBTreeEntry<K, V> getRightInMemory() {
 		return right;
 	}
 }

@@ -24,7 +24,7 @@ import java.util.NoSuchElementException;
 import java.util.SortedSet;
 
 @SuppressWarnings("unchecked")
-public class OTreeSetMemory<E> extends AbstractSet<E> implements ONavigableSet<E>, Cloneable, java.io.Serializable {
+public class OMVRBTreeSetMemory<E> extends AbstractSet<E> implements ONavigableSet<E>, Cloneable, java.io.Serializable {
 	/**
 	 * The backing map.
 	 */
@@ -36,7 +36,7 @@ public class OTreeSetMemory<E> extends AbstractSet<E> implements ONavigableSet<E
 	/**
 	 * Constructs a set backed by the specified navigable map.
 	 */
-	OTreeSetMemory(ONavigableMap<E, Object> m) {
+	OMVRBTreeSetMemory(ONavigableMap<E, Object> m) {
 		this.m = m;
 	}
 
@@ -47,8 +47,8 @@ public class OTreeSetMemory<E> extends AbstractSet<E> implements ONavigableSet<E
 	 * the user attempts to add an element to the set that violates this constraint (for example, the user attempts to add a string
 	 * element to a set whose elements are integers), the {@code add} call will throw a {@code ClassCastException}.
 	 */
-	public OTreeSetMemory() {
-		this(new OTreeMapMemory<E, Object>());
+	public OMVRBTreeSetMemory() {
+		this(new OMVRBTreeMemory<E, Object>());
 	}
 
 	/**
@@ -61,8 +61,8 @@ public class OTreeSetMemory<E> extends AbstractSet<E> implements ONavigableSet<E
 	 *          the comparator that will be used to order this set. If {@code null}, the {@linkplain Comparable natural ordering} of
 	 *          the elements will be used.
 	 */
-	public OTreeSetMemory(Comparator<? super E> comparator) {
-		this(new OTreeMapMemory<E, Object>(comparator));
+	public OMVRBTreeSetMemory(Comparator<? super E> comparator) {
+		this(new OMVRBTreeMemory<E, Object>(comparator));
 	}
 
 	/**
@@ -78,7 +78,7 @@ public class OTreeSetMemory<E> extends AbstractSet<E> implements ONavigableSet<E
 	 * @throws NullPointerException
 	 *           if the specified collection is null
 	 */
-	public OTreeSetMemory(Collection<? extends E> c) {
+	public OMVRBTreeSetMemory(Collection<? extends E> c) {
 		this();
 		addAll(c);
 	}
@@ -91,7 +91,7 @@ public class OTreeSetMemory<E> extends AbstractSet<E> implements ONavigableSet<E
 	 * @throws NullPointerException
 	 *           if the specified sorted set is null
 	 */
-	public OTreeSetMemory(SortedSet<E> s) {
+	public OMVRBTreeSetMemory(SortedSet<E> s) {
 		this(s.comparator());
 		addAll(s);
 	}
@@ -120,7 +120,7 @@ public class OTreeSetMemory<E> extends AbstractSet<E> implements ONavigableSet<E
 	 * @since 1.6
 	 */
 	public ONavigableSet<E> descendingSet() {
-		return new OTreeSetMemory<E>(m.descendingMap());
+		return new OMVRBTreeSetMemory<E>(m.descendingMap());
 	}
 
 	/**
@@ -220,9 +220,9 @@ public class OTreeSetMemory<E> extends AbstractSet<E> implements ONavigableSet<E
 	@Override
 	public boolean addAll(Collection<? extends E> c) {
 		// Use linear-time version if applicable
-		if (m.size() == 0 && c.size() > 0 && c instanceof SortedSet && m instanceof OTreeMap) {
+		if (m.size() == 0 && c.size() > 0 && c instanceof SortedSet && m instanceof OMVRBTree) {
 			SortedSet<? extends E> set = (SortedSet<? extends E>) c;
-			OTreeMap<E, Object> map = (OTreeMap<E, Object>) m;
+			OMVRBTree<E, Object> map = (OMVRBTree<E, Object>) m;
 			Comparator<? super E> cc = (Comparator<? super E>) set.comparator();
 			Comparator<? super E> mc = map.comparator();
 			if (cc == mc || (cc != null && cc.equals(mc))) {
@@ -244,7 +244,7 @@ public class OTreeSetMemory<E> extends AbstractSet<E> implements ONavigableSet<E
 	 * @since 1.6
 	 */
 	public ONavigableSet<E> subSet(E fromElement, boolean fromInclusive, E toElement, boolean toInclusive) {
-		return new OTreeSetMemory<E>(m.subMap(fromElement, fromInclusive, toElement, toInclusive));
+		return new OMVRBTreeSetMemory<E>(m.subMap(fromElement, fromInclusive, toElement, toInclusive));
 	}
 
 	/**
@@ -257,7 +257,7 @@ public class OTreeSetMemory<E> extends AbstractSet<E> implements ONavigableSet<E
 	 * @since 1.6
 	 */
 	public ONavigableSet<E> headSet(E toElement, boolean inclusive) {
-		return new OTreeSetMemory<E>(m.headMap(toElement, inclusive));
+		return new OMVRBTreeSetMemory<E>(m.headMap(toElement, inclusive));
 	}
 
 	/**
@@ -270,7 +270,7 @@ public class OTreeSetMemory<E> extends AbstractSet<E> implements ONavigableSet<E
 	 * @since 1.6
 	 */
 	public ONavigableSet<E> tailSet(E fromElement, boolean inclusive) {
-		return new OTreeSetMemory<E>(m.tailMap(fromElement, inclusive));
+		return new OMVRBTreeSetMemory<E>(m.tailMap(fromElement, inclusive));
 	}
 
 	/**
@@ -399,14 +399,14 @@ public class OTreeSetMemory<E> extends AbstractSet<E> implements ONavigableSet<E
 	 */
 	@Override
 	public Object clone() {
-		OTreeSetMemory<E> clone = null;
+		OMVRBTreeSetMemory<E> clone = null;
 		try {
-			clone = (OTreeSetMemory<E>) super.clone();
+			clone = (OMVRBTreeSetMemory<E>) super.clone();
 		} catch (CloneNotSupportedException e) {
 			throw new InternalError();
 		}
 
-		clone.m = new OTreeMapMemory<E, Object>(m);
+		clone.m = new OMVRBTreeMemory<E, Object>(m);
 		return clone;
 	}
 
@@ -443,12 +443,12 @@ public class OTreeSetMemory<E> extends AbstractSet<E> implements ONavigableSet<E
 		// Read in Comparator
 		Comparator<? super E> c = (Comparator<? super E>) s.readObject();
 
-		// Create backing OTreeMap
-		OTreeMap<E, Object> tm;
+		// Create backing OMVRBTree
+		OMVRBTree<E, Object> tm;
 		if (c == null)
-			tm = new OTreeMapMemory<E, Object>();
+			tm = new OMVRBTreeMemory<E, Object>();
 		else
-			tm = new OTreeMapMemory<E, Object>(c);
+			tm = new OMVRBTreeMemory<E, Object>(c);
 		m = tm;
 
 		// Read in size

@@ -17,24 +17,29 @@ package com.orientechnologies.orient.core.type.tree;
 
 import java.io.IOException;
 
-import com.orientechnologies.common.collection.OTreeMapEntry;
+import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerFactory;
 
+/**
+ * Persistent MVRB-Tree implementation. The difference with the class OMVRBTreeStorage is the level. In facts this class works
+ * directly at the database level, while the other at storage level.
+ * 
+ */
 @SuppressWarnings("serial")
-public class OTreeMapDatabase<K, V> extends OTreeMapPersistent<K, V> {
+public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> {
 	protected ODatabaseRecord<?>	database;
 
-	public OTreeMapDatabase(final ODatabaseRecord<?> iDatabase, final ORID iRID) {
+	public OMVRBTreeDatabase(final ODatabaseRecord<?> iDatabase, final ORID iRID) {
 		super(iDatabase.getClusterNameById(iRID.getClusterId()), iRID);
 		database = iDatabase;
 		record.setDatabase(iDatabase);
 	}
 
-	public OTreeMapDatabase(final ODatabaseRecord<?> iDatabase, String iClusterName, final OStreamSerializer iKeySerializer,
+	public OMVRBTreeDatabase(final ODatabaseRecord<?> iDatabase, String iClusterName, final OStreamSerializer iKeySerializer,
 			final OStreamSerializer iValueSerializer) {
 		super(iClusterName, iKeySerializer, iValueSerializer);
 		database = iDatabase;
@@ -42,26 +47,26 @@ public class OTreeMapDatabase<K, V> extends OTreeMapPersistent<K, V> {
 	}
 
 	@Override
-	protected OTreeMapEntryDatabase<K, V> createEntry(final K key, final V value) {
+	protected OMVRBTreeEntryDatabase<K, V> createEntry(final K key, final V value) {
 		adjustPageSize();
-		return new OTreeMapEntryDatabase<K, V>(this, key, value, null);
+		return new OMVRBTreeEntryDatabase<K, V>(this, key, value, null);
 	}
 
 	@Override
-	protected OTreeMapEntryDatabase<K, V> createEntry(final OTreeMapEntry<K, V> parent) {
+	protected OMVRBTreeEntryDatabase<K, V> createEntry(final OMVRBTreeEntry<K, V> parent) {
 		adjustPageSize();
-		return new OTreeMapEntryDatabase<K, V>(parent, parent.getPageSplitItems());
+		return new OMVRBTreeEntryDatabase<K, V>(parent, parent.getPageSplitItems());
 	}
 
 	@Override
-	protected OTreeMapEntryDatabase<K, V> loadEntry(final OTreeMapEntryPersistent<K, V> iParent, final ORID iRecordId)
+	protected OMVRBTreeEntryDatabase<K, V> loadEntry(final OMVRBTreeEntryPersistent<K, V> iParent, final ORID iRecordId)
 			throws IOException {
 
 		// SEARCH INTO THE CACHE
-		OTreeMapEntryDatabase<K, V> entry = null;// (OTreeMapEntryDatabase<K, V>) cache.get(iRecordId);
+		OMVRBTreeEntryDatabase<K, V> entry = null;// (OMVRBTreeEntryDatabase<K, V>) cache.get(iRecordId);
 		if (entry == null) {
 			// NOT FOUND: CREATE IT AND PUT IT INTO THE CACHE
-			entry = new OTreeMapEntryDatabase<K, V>(this, (OTreeMapEntryDatabase<K, V>) iParent, iRecordId);
+			entry = new OMVRBTreeEntryDatabase<K, V>(this, (OMVRBTreeEntryDatabase<K, V>) iParent, iRecordId);
 			// cache.put(iRecordId, entry);
 		} else {
 			// entry.load();
@@ -78,7 +83,7 @@ public class OTreeMapDatabase<K, V> extends OTreeMapPersistent<K, V> {
 	}
 
 	@Override
-	public OTreeMapPersistent<K, V> load() {
+	public OMVRBTreePersistent<K, V> load() {
 		if (!record.getIdentity().isValid())
 			// NOTHING TO LOAD
 			return this;
@@ -98,7 +103,7 @@ public class OTreeMapDatabase<K, V> extends OTreeMapPersistent<K, V> {
 	}
 
 	@Override
-	public OTreeMapPersistent<K, V> save() throws IOException {
+	public OMVRBTreePersistent<K, V> save() throws IOException {
 		lock.acquireExclusiveLock();
 
 		try {

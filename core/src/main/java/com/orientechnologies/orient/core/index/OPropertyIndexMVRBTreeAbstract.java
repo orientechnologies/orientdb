@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerString;
-import com.orientechnologies.orient.core.type.tree.OTreeMapDatabaseLazySave;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
 
 /**
  * Handles indexing when records change.
@@ -41,7 +41,7 @@ import com.orientechnologies.orient.core.type.tree.OTreeMapDatabaseLazySave;
  */
 public abstract class OPropertyIndexMVRBTreeAbstract extends OSharedResource implements OPropertyIndex {
 	protected OProperty																					owner;
-	protected OTreeMapDatabaseLazySave<String, List<ORecordId>>	map;
+	protected OMVRBTreeDatabaseLazySave<String, List<ORecordId>>	map;
 
 	public OPropertyIndexMVRBTreeAbstract() {
 	}
@@ -75,7 +75,7 @@ public abstract class OPropertyIndexMVRBTreeAbstract extends OSharedResource imp
 	public OPropertyIndex create(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final String iClusterIndexName,
 			final OProgressListener iProgressListener) {
 		owner = iProperty;
-		map = new OTreeMapDatabaseLazySave<String, List<ORecordId>>(iDatabase, iClusterIndexName, OStreamSerializerString.INSTANCE,
+		map = new OMVRBTreeDatabaseLazySave<String, List<ORecordId>>(iDatabase, iClusterIndexName, OStreamSerializerString.INSTANCE,
 				OStreamSerializerListRID.INSTANCE);
 		rebuild(iProgressListener);
 		return this;
@@ -233,7 +233,7 @@ public abstract class OPropertyIndexMVRBTreeAbstract extends OSharedResource imp
 	}
 
 	protected void init(final ODatabaseRecord<?> iDatabase, final ORID iRecordId) {
-		map = new OTreeMapDatabaseLazySave<String, List<ORecordId>>(iDatabase, iRecordId);
+		map = new OMVRBTreeDatabaseLazySave<String, List<ORecordId>>(iDatabase, iRecordId);
 		map.load();
 	}
 

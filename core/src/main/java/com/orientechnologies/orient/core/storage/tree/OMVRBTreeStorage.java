@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.storage.tree;
 
 import java.io.IOException;
 
-import com.orientechnologies.common.collection.OTreeMapEntry;
+import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
@@ -26,28 +26,28 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterLogical;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
-import com.orientechnologies.orient.core.type.tree.OTreeMapEntryPersistent;
-import com.orientechnologies.orient.core.type.tree.OTreeMapPersistent;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeEntryPersistent;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreePersistent;
 
 /**
- * Persistent TreeMap implementation. The difference with the class OTreeMapPersistent is the level. In facts this class works
+ * Persistent MVRB-Tree implementation. The difference with the class OMVRBTreeDatabase is the level. In facts this class works
  * directly at the storage level, while the other at database level. This class is used for Logical Clusters. It can'be
  * transactional.
  * 
  * @see OClusterLogical
  */
 @SuppressWarnings("serial")
-public class OTreeMapStorage<K, V> extends OTreeMapPersistent<K, V> {
+public class OMVRBTreeStorage<K, V> extends OMVRBTreePersistent<K, V> {
 	protected OStorageLocal	storage;
 	int											clusterId;
 
-	public OTreeMapStorage(final OStorageLocal iStorage, final String iClusterName, final ORID iRID) {
+	public OMVRBTreeStorage(final OStorageLocal iStorage, final String iClusterName, final ORID iRID) {
 		super(iClusterName, iRID);
 		storage = iStorage;
 		clusterId = storage.getClusterIdByName(OStorageLocal.CLUSTER_INTERNAL_NAME);
 	}
 
-	public OTreeMapStorage(final OStorageLocal iStorage, String iClusterName, final OStreamSerializer iKeySerializer,
+	public OMVRBTreeStorage(final OStorageLocal iStorage, String iClusterName, final OStreamSerializer iKeySerializer,
 			final OStreamSerializer iValueSerializer) {
 		super(iClusterName, iKeySerializer, iValueSerializer);
 		storage = iStorage;
@@ -55,23 +55,23 @@ public class OTreeMapStorage<K, V> extends OTreeMapPersistent<K, V> {
 	}
 
 	@Override
-	protected OTreeMapEntryPersistent<K, V> createEntry(OTreeMapEntry<K, V> iParent) {
-		return new OTreeMapEntryStorage<K, V>(iParent, iParent.getPageSplitItems());
+	protected OMVRBTreeEntryPersistent<K, V> createEntry(OMVRBTreeEntry<K, V> iParent) {
+		return new OMVRBTreeEntryStorage<K, V>(iParent, iParent.getPageSplitItems());
 	}
 
 	@Override
-	protected OTreeMapEntryPersistent<K, V> createEntry(final K key, final V value) {
+	protected OMVRBTreeEntryPersistent<K, V> createEntry(final K key, final V value) {
 		adjustPageSize();
-		return new OTreeMapEntryStorage<K, V>(this, key, value, null);
+		return new OMVRBTreeEntryStorage<K, V>(this, key, value, null);
 	}
 
 	@Override
-	protected OTreeMapEntryStorage<K, V> loadEntry(OTreeMapEntryPersistent<K, V> iParent, ORID iRecordId) throws IOException {
-		OTreeMapEntryStorage<K, V> entry = null;//(OTreeMapEntryStorage<K, V>) cache.get(iRecordId);
+	protected OMVRBTreeEntryStorage<K, V> loadEntry(OMVRBTreeEntryPersistent<K, V> iParent, ORID iRecordId) throws IOException {
+		OMVRBTreeEntryStorage<K, V> entry = null;// (OMVRBTreeEntryStorage<K, V>) cache.get(iRecordId);
 		if (entry == null) {
 			// NOT FOUND: CREATE IT AND PUT IT INTO THE CACHE
-			entry = new OTreeMapEntryStorage<K, V>(this, iParent, iRecordId);
-//			cache.put(iRecordId, entry);
+			entry = new OMVRBTreeEntryStorage<K, V>(this, iParent, iRecordId);
+			// cache.put(iRecordId, entry);
 		} else
 			// FOUND: ASSIGN IT
 			entry.setParent(iParent);
@@ -80,7 +80,7 @@ public class OTreeMapStorage<K, V> extends OTreeMapPersistent<K, V> {
 	}
 
 	@Override
-	public OTreeMapPersistent<K, V> load() throws IOException {
+	public OMVRBTreePersistent<K, V> load() throws IOException {
 		lock.acquireExclusiveLock();
 
 		try {
@@ -101,7 +101,7 @@ public class OTreeMapStorage<K, V> extends OTreeMapPersistent<K, V> {
 	}
 
 	@Override
-	public OTreeMapPersistent<K, V> save() throws IOException {
+	public OMVRBTreePersistent<K, V> save() throws IOException {
 		lock.acquireExclusiveLock();
 
 		try {

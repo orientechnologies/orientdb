@@ -18,15 +18,15 @@ package com.orientechnologies.common.collection;
 import java.util.Map;
 
 @SuppressWarnings("unchecked")
-public abstract class OTreeMapEntry<K, V> implements Map.Entry<K, V> {
-	protected OTreeMap<K, V>	tree;
+public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V> {
+	protected OMVRBTree<K, V>	tree;
 
 	protected int							size										= 1;
 	protected int							pageSize;
 
 	protected K[]							keys;
 	protected V[]							values;
-	protected boolean					color										= OTreeMap.RED;
+	protected boolean					color										= OMVRBTree.RED;
 
 	private int								pageSplitItems;
 	public static final int		BINARY_SEARCH_THRESHOLD	= 10;
@@ -35,7 +35,7 @@ public abstract class OTreeMapEntry<K, V> implements Map.Entry<K, V> {
 	 * Constructor called on unmarshalling.
 	 * 
 	 */
-	protected OTreeMapEntry(final OTreeMap<K, V> iTree) {
+	protected OMVRBTreeEntry(final OMVRBTree<K, V> iTree) {
 		this.tree = iTree;
 		init();
 	}
@@ -43,7 +43,7 @@ public abstract class OTreeMapEntry<K, V> implements Map.Entry<K, V> {
 	/**
 	 * Make a new cell with given key, value, and parent, and with <tt>null</tt> child links, and BLACK color.
 	 */
-	protected OTreeMapEntry(final OTreeMap<K, V> iTree, final K iKey, final V iValue, final OTreeMapEntry<K, V> iParent) {
+	protected OMVRBTreeEntry(final OMVRBTree<K, V> iTree, final K iKey, final V iValue, final OMVRBTreeEntry<K, V> iParent) {
 		this.tree = iTree;
 		setParent(iParent);
 		this.pageSize = tree.getPageSize();
@@ -61,7 +61,7 @@ public abstract class OTreeMapEntry<K, V> implements Map.Entry<K, V> {
 	 * @param iPosition
 	 * @param iLeft
 	 */
-	protected OTreeMapEntry(final OTreeMapEntry<K, V> iParent, final int iPosition) {
+	protected OMVRBTreeEntry(final OMVRBTreeEntry<K, V> iParent, final int iPosition) {
 		this.tree = iParent.tree;
 		this.pageSize = tree.getPageSize();
 		this.keys = (K[]) new Object[pageSize];
@@ -75,32 +75,32 @@ public abstract class OTreeMapEntry<K, V> implements Map.Entry<K, V> {
 		init();
 	}
 
-	public abstract void setLeft(OTreeMapEntry<K, V> left);
+	public abstract void setLeft(OMVRBTreeEntry<K, V> left);
 
-	public abstract OTreeMapEntry<K, V> getLeft();
+	public abstract OMVRBTreeEntry<K, V> getLeft();
 
-	public abstract OTreeMapEntry<K, V> setRight(OTreeMapEntry<K, V> right);
+	public abstract OMVRBTreeEntry<K, V> setRight(OMVRBTreeEntry<K, V> right);
 
-	public abstract OTreeMapEntry<K, V> getRight();
+	public abstract OMVRBTreeEntry<K, V> getRight();
 
-	public abstract OTreeMapEntry<K, V> setParent(OTreeMapEntry<K, V> parent);
+	public abstract OMVRBTreeEntry<K, V> setParent(OMVRBTreeEntry<K, V> parent);
 
-	public abstract OTreeMapEntry<K, V> getParent();
+	public abstract OMVRBTreeEntry<K, V> getParent();
 
-	protected abstract OTreeMapEntry<K, V> getLeftInMemory();
+	protected abstract OMVRBTreeEntry<K, V> getLeftInMemory();
 
-	protected abstract OTreeMapEntry<K, V> getParentInMemory();
+	protected abstract OMVRBTreeEntry<K, V> getParentInMemory();
 
-	protected abstract OTreeMapEntry<K, V> getRightInMemory();
+	protected abstract OMVRBTreeEntry<K, V> getRightInMemory();
 
-	protected abstract OTreeMapEntry<K, V> getNextInMemory();
+	protected abstract OMVRBTreeEntry<K, V> getNextInMemory();
 
 	/**
 	 * Returns the first Entry only by traversing the memory, or null if no such.
 	 */
-	public OTreeMapEntry<K, V> getFirstInMemory() {
-		OTreeMapEntry<K, V> node = this;
-		OTreeMapEntry<K, V> prev = this;
+	public OMVRBTreeEntry<K, V> getFirstInMemory() {
+		OMVRBTreeEntry<K, V> node = this;
+		OMVRBTreeEntry<K, V> prev = this;
 
 		while (node != null) {
 			prev = node;
@@ -113,9 +113,9 @@ public abstract class OTreeMapEntry<K, V> implements Map.Entry<K, V> {
 	/**
 	 * Returns the previous of the current Entry only by traversing the memory, or null if no such.
 	 */
-	public OTreeMapEntry<K, V> getPreviousInMemory() {
-		OTreeMapEntry<K, V> t = this;
-		OTreeMapEntry<K, V> p = null;
+	public OMVRBTreeEntry<K, V> getPreviousInMemory() {
+		OMVRBTreeEntry<K, V> t = this;
+		OMVRBTreeEntry<K, V> p = null;
 
 		if (t.getLeftInMemory() != null) {
 			p = t.getLeftInMemory();
@@ -132,13 +132,13 @@ public abstract class OTreeMapEntry<K, V> implements Map.Entry<K, V> {
 		return p;
 	}
 
-	protected OTreeMap<K, V> getTree() {
+	protected OMVRBTree<K, V> getTree() {
 		return tree;
 	}
 
 	public int getDepth() {
 		int level = 0;
-		OTreeMapEntry<K, V> entry = this;
+		OMVRBTreeEntry<K, V> entry = this;
 		while (entry.getParent() != null) {
 			level++;
 			entry = entry.getParent();
@@ -382,7 +382,7 @@ public abstract class OTreeMapEntry<K, V> implements Map.Entry<K, V> {
 		return getKey(0);
 	}
 
-	protected void copyFrom(final OTreeMapEntry<K, V> iSource) {
+	protected void copyFrom(final OMVRBTreeEntry<K, V> iSource) {
 		keys = (K[]) new Object[iSource.keys.length];
 		for (int i = 0; i < iSource.keys.length; ++i)
 			keys[i] = iSource.keys[i];

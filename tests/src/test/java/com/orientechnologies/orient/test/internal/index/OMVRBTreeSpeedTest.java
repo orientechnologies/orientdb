@@ -18,13 +18,13 @@ package com.orientechnologies.orient.test.internal.index;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.common.collection.OMVRBTreeMemory;
 import com.orientechnologies.common.collection.ONavigableMap;
-import com.orientechnologies.common.collection.OTreeMapMemory;
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 
-public class OTreeMapSpeedTest extends SpeedTestMonoThread {
+public class OMVRBTreeSpeedTest extends SpeedTestMonoThread {
 
-	private ONavigableMap<Integer, Integer>	tree	= new OTreeMapMemory<Integer, Integer>();
+	private ONavigableMap<Integer, Integer>	tree	= new OMVRBTreeMemory<Integer, Integer>();
 
 	@Override
 	@Test(enabled = false)
@@ -61,8 +61,8 @@ public class OTreeMapSpeedTest extends SpeedTestMonoThread {
 		}
 		data.printSnapshot();
 
-		// if (tree instanceof OTreeMap<?, ?>) {
-		// System.out.println("Total nodes: " + ((OTreeMap<?, ?>) tree).getNodes());
+		// if (tree instanceof OMVRBTree<?, ?>) {
+		// System.out.println("Total nodes: " + ((OMVRBTree<?, ?>) tree).getNodes());
 		// }
 
 		System.out.println("Delete all the elements one by one...");
