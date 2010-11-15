@@ -155,7 +155,7 @@ public class ORecordId implements ORID {
 			throw new IllegalArgumentException("Argument '" + iRecordId
 					+ "' is not a RecordId in form of string. Format must be: <cluster-id>:<cluster-position>");
 
-		final List<String> parts = OStringSerializerHelper.split(iRecordId, SEPARATOR);
+		final List<String> parts = OStringSerializerHelper.split(iRecordId, SEPARATOR, OStringSerializerHelper.LINK);
 
 		if (parts.size() != 2)
 			throw new IllegalArgumentException(

@@ -47,7 +47,7 @@ public class ComplexTypesTest {
 
 		ODocument newDoc = new ODocument();
 
-		ArrayList<ODocument> list = new ArrayList<ODocument>();
+		final ArrayList<ODocument> list = new ArrayList<ODocument>();
 		newDoc.field("embeddedList", list, OType.EMBEDDEDLIST);
 		list.add(new ODocument().field("name", "Luca"));
 		list.add(new ODocument(database, "Account").field("name", "Marcus"));
@@ -80,11 +80,11 @@ public class ComplexTypesTest {
 
 		ODocument newDoc = new ODocument();
 
-		Map<String, ODocument> list = new HashMap<String, ODocument>();
-		newDoc.field("embeddedMap", list, OType.EMBEDDEDMAP);
-		list.put("Luca", new ODocument().field("name", "Luca"));
-		list.put("Marcus", new ODocument().field("name", "Marcus"));
-		list.put("Cesare", new ODocument(database, "Account").field("name", "Cesare"));
+		final Map<String, ODocument> map = new HashMap<String, ODocument>();
+		newDoc.field("embeddedMap", map, OType.EMBEDDEDMAP);
+		map.put("Luca", new ODocument().field("name", "Luca"));
+		map.put("Marcus", new ODocument().field("name", "Marcus"));
+		map.put("Cesare", new ODocument(database, "Account").field("name", "Cesare"));
 
 		database.save(newDoc);
 		final ORID rid = newDoc.getIdentity();
@@ -105,6 +105,44 @@ public class ComplexTypesTest {
 		Assert.assertEquals(d.field("name"), "Marcus");
 
 		d = ((Map<String, ODocument>) loadedDoc.field("embeddedMap")).get("Cesare");
+		Assert.assertEquals(d.field("name"), "Cesare");
+		Assert.assertEquals(d.getClassName(), "Account");
+
+		database.close();
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test(dependsOnMethods = "testEmbeddedMap")
+	public void testLinkMap() {
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+
+		ODocument newDoc = new ODocument();
+
+		final Map<String, ODocument> map = new HashMap<String, ODocument>();
+		newDoc.field("linkedMap", map, OType.LINKMAP);
+		map.put("Luca", new ODocument().field("name", "Luca"));
+		map.put("Marcus", new ODocument().field("name", "Marcus"));
+		map.put("Cesare", new ODocument(database, "Account").field("name", "Cesare"));
+
+		database.save(newDoc);
+		final ORID rid = newDoc.getIdentity();
+
+		database.close();
+
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+
+		ODocument loadedDoc = database.load(rid);
+		Assert.assertTrue(loadedDoc.containsField("linkedMap"));
+		Assert.assertTrue(loadedDoc.field("linkedMap") instanceof Map<?, ?>);
+		Assert.assertTrue(((Map<String, ODocument>) loadedDoc.field("linkedMap")).values().iterator().next() instanceof ODocument);
+
+		ODocument d = ((Map<String, ODocument>) loadedDoc.field("linkedMap")).get("Luca");
+		Assert.assertEquals(d.field("name"), "Luca");
+
+		d = ((Map<String, ODocument>) loadedDoc.field("linkedMap")).get("Marcus");
+		Assert.assertEquals(d.field("name"), "Marcus");
+
+		d = ((Map<String, ODocument>) loadedDoc.field("linkedMap")).get("Cesare");
 		Assert.assertEquals(d.field("name"), "Cesare");
 		Assert.assertEquals(d.getClassName(), "Account");
 

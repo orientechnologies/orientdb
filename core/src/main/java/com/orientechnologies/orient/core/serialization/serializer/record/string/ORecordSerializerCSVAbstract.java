@@ -189,6 +189,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 						if (mapValue.length() > 0) {
 							if (mapValue.charAt(0) == OStringSerializerHelper.EMBEDDED)
 								iLinkedType = OType.EMBEDDED;
+							else if (mapValue.charAt(0) == OStringSerializerHelper.LINK)
+								iLinkedType = OType.LINK;
 							else if (Character.isDigit(mapValue.charAt(0)) || mapValue.charAt(0) == '+' || mapValue.charAt(0) == '-') {
 								iLinkedType = getNumber(mapValue);
 							} else if (mapValue.charAt(0) == '\'' || mapValue.charAt(0) == '"')
