@@ -315,7 +315,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				attribSameRow = true;
 				indentLevel = 0;
 			} else {
-				includeType = true;
+				includeType = false;
 				includeVer = false;
 				includeId = false;
 				includeClazz = false;

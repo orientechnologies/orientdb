@@ -163,7 +163,7 @@ public class OJSONWriter {
 				buffer.append(linked.getIdentity().toString());
 				buffer.append('\"');
 			} else {
-				buffer.append(linked.toJSON("rid,version,class,attribSameRow,indent:6"));
+				buffer.append(linked.toJSON("rid,type,version,class,attribSameRow,indent:6"));
 
 			}
 
