@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.storage.tree;
+package com.orientechnologies.orient.core.type.tree;
 
 import java.io.IOException;
 
@@ -26,8 +26,6 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterLogical;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
-import com.orientechnologies.orient.core.type.tree.OMVRBTreeEntryPersistent;
-import com.orientechnologies.orient.core.type.tree.OMVRBTreePersistent;
 
 /**
  * Persistent MVRB-Tree implementation. The difference with the class OMVRBTreeDatabase is the level. In facts this class works
@@ -134,7 +132,7 @@ public class OMVRBTreeStorage<K, V> extends OMVRBTreePersistent<K, V> {
 
 	@Override
 	protected void serializerFromStream(final OMemoryInputStream stream) throws IOException {
-		keySerializer = OStreamSerializerFactory.get(null, stream.getAsString());
-		valueSerializer = OStreamSerializerFactory.get(null, stream.getAsString());
+		keySerializer = OStreamSerializerFactory.get(stream.getAsString());
+		valueSerializer = OStreamSerializerFactory.get(stream.getAsString());
 	}
 }

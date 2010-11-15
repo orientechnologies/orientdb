@@ -13,15 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.storage.tree;
+package com.orientechnologies.orient.core.type.tree;
 
 import java.io.IOException;
 
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.type.tree.OMVRBTreeEntryPersistent;
-import com.orientechnologies.orient.core.type.tree.OMVRBTreePersistent;
 
 /**
  * Persistent TreeMap implementation that use a OStorage instance to handle the entries. This class can't be used also from the
@@ -67,7 +65,7 @@ public class OMVRBTreeEntryStorage<K, V> extends OMVRBTreeEntryPersistent<K, V> 
 	@Override
 	public OMVRBTreeEntryStorage<K, V> save() throws IOException {
 		record.fromStream(toStream());
-		
+
 		if (record.getIdentity().isValid())
 			// UPDATE IT WITHOUT VERSION CHECK SINCE ALL IT'S LOCKED
 			record.setVersion(((OMVRBTreeStorage<K, V>) tree).storage.updateRecord(0, record.getIdentity().getClusterId(), record
@@ -109,5 +107,13 @@ public class OMVRBTreeEntryStorage<K, V> extends OMVRBTreeEntryPersistent<K, V> 
 
 		super.delete();
 		return this;
+	}
+
+	protected Object keyFromStream(final int iIndex) throws IOException {
+		return pTree.keySerializer.fromStream(null, serializedKeys[iIndex]);
+	}
+
+	protected Object valueFromStream(final int iIndex) throws IOException {
+		return pTree.valueSerializer.fromStream(null, serializedValues[iIndex]);
 	}
 }

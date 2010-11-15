@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.tree.OMVRBTreeStorage;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeStorage;
 
 /**
  * Handle a cluster using a logical structure stored into a real physical local cluster.<br/>

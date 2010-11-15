@@ -16,7 +16,9 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -31,7 +33,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 @Test(groups = { "crud", "record-vobject" })
 public class ComplexTypesTest {
 	private ODatabaseDocumentTx	database;
-	private ODocument						record;
 	private String							url;
 
 	@Parameters(value = "url")
@@ -60,7 +61,7 @@ public class ComplexTypesTest {
 
 		ODocument loadedDoc = database.load(rid);
 		Assert.assertTrue(loadedDoc.containsField("embeddedList"));
-		Assert.assertTrue(loadedDoc.field("embeddedList") instanceof List);
+		Assert.assertTrue(loadedDoc.field("embeddedList") instanceof List<?>);
 		Assert.assertTrue(((List<ODocument>) loadedDoc.field("embeddedList")).get(0) instanceof ODocument);
 
 		ODocument d = ((List<ODocument>) loadedDoc.field("embeddedList")).get(0);
@@ -68,6 +69,44 @@ public class ComplexTypesTest {
 		d = ((List<ODocument>) loadedDoc.field("embeddedList")).get(1);
 		Assert.assertEquals(d.getClassName(), "Account");
 		Assert.assertEquals(d.field("name"), "Marcus");
+
+		database.close();
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test(dependsOnMethods = "testEmbeddedList")
+	public void testEmbeddedMap() {
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+
+		ODocument newDoc = new ODocument();
+
+		Map<String, ODocument> list = new HashMap<String, ODocument>();
+		newDoc.field("embeddedMap", list, OType.EMBEDDEDMAP);
+		list.put("Luca", new ODocument().field("name", "Luca"));
+		list.put("Marcus", new ODocument().field("name", "Marcus"));
+		list.put("Cesare", new ODocument(database, "Account").field("name", "Cesare"));
+
+		database.save(newDoc);
+		final ORID rid = newDoc.getIdentity();
+
+		database.close();
+
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+
+		ODocument loadedDoc = database.load(rid);
+		Assert.assertTrue(loadedDoc.containsField("embeddedMap"));
+		Assert.assertTrue(loadedDoc.field("embeddedMap") instanceof Map<?, ?>);
+		Assert.assertTrue(((Map<String, ODocument>) loadedDoc.field("embeddedMap")).values().iterator().next() instanceof ODocument);
+
+		ODocument d = ((Map<String, ODocument>) loadedDoc.field("embeddedMap")).get("Luca");
+		Assert.assertEquals(d.field("name"), "Luca");
+
+		d = ((Map<String, ODocument>) loadedDoc.field("embeddedMap")).get("Marcus");
+		Assert.assertEquals(d.field("name"), "Marcus");
+
+		d = ((Map<String, ODocument>) loadedDoc.field("embeddedMap")).get("Cesare");
+		Assert.assertEquals(d.field("name"), "Cesare");
+		Assert.assertEquals(d.getClassName(), "Account");
 
 		database.close();
 	}

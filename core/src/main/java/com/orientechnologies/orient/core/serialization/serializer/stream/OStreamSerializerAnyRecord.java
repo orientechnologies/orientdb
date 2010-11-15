@@ -35,19 +35,13 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
  * 
  */
 public class OStreamSerializerAnyRecord implements OStreamSerializer {
-	public static final String										NAME	= "ar";
-
-	private ODatabaseRecord<? extends ORecord<?>>	database;
-
-	public OStreamSerializerAnyRecord(ODatabaseRecord<? extends ORecord<?>> iDatabase) throws SecurityException,
-			NoSuchMethodException {
-		database = iDatabase;
-	}
+	public static final String											NAME			= "ar";
+	public static final OStreamSerializerAnyRecord	INSTANCE	= new OStreamSerializerAnyRecord();
 
 	/**
 	 * Re-Create any object if the class has a public constructor that accepts a String as unique parameter.
 	 */
-	public Object fromStream(byte[] iStream) throws IOException {
+	public Object fromStream(final ODatabaseRecord<?> iDatabase, byte[] iStream) throws IOException {
 		if (iStream == null || iStream.length == 0)
 			// NULL VALUE
 			return null;
@@ -64,9 +58,9 @@ public class OStreamSerializerAnyRecord implements OStreamSerializer {
 			for (Constructor<?> c : cls.getDeclaredConstructors()) {
 				Class<?>[] params = c.getParameterTypes();
 
-				if (params.length == 2 && params[0].isAssignableFrom(database.getClass()) && params[1].equals(ORID.class)) {
-					ORecord<?> rec = (ORecord<?>) c.newInstance(database, new ORecordId(content.toString()));
-//					rec.load();
+				if (params.length == 2 && params[0].isAssignableFrom(iDatabase.getClass()) && params[1].equals(ORID.class)) {
+					ORecord<?> rec = (ORecord<?>) c.newInstance(iDatabase, new ORecordId(content.toString()));
+					// rec.load();
 					return rec;
 				}
 			}
@@ -78,12 +72,12 @@ public class OStreamSerializerAnyRecord implements OStreamSerializer {
 				.instance()
 				.exception(
 						"Can'r unmarshall the record since the serialized object of class %s has no a constructor with right parameters: %s(%s, ORID)",
-						null, OSerializationException.class, cls.getSimpleName(), cls.getSimpleName(), database.getClass().getSimpleName());
+						null, OSerializationException.class, cls.getSimpleName(), cls.getSimpleName(), iDatabase.getClass().getSimpleName());
 
 		return null;
 	}
 
-	public byte[] toStream(Object iObject) throws IOException {
+	public byte[] toStream(final ODatabaseRecord<?> iDatabase, Object iObject) throws IOException {
 		if (iObject == null)
 			return null;
 

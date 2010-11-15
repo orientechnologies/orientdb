@@ -116,7 +116,7 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> {
 
 	@Override
 	protected void serializerFromStream(final OMemoryInputStream stream) throws IOException {
-		keySerializer = OStreamSerializerFactory.get(database, stream.getAsString());
-		valueSerializer = OStreamSerializerFactory.get(database, stream.getAsString());
+		keySerializer = OStreamSerializerFactory.get(stream.getAsString());
+		valueSerializer = OStreamSerializerFactory.get(stream.getAsString());
 	}
 }

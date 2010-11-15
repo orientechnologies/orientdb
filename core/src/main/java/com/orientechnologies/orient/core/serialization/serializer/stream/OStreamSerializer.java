@@ -17,10 +17,12 @@ package com.orientechnologies.orient.core.serialization.serializer.stream;
 
 import java.io.IOException;
 
-public interface OStreamSerializer {
-	public byte[] toStream(Object iObject) throws IOException;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 
-	public Object fromStream(byte[] iStream) throws IOException;
+public interface OStreamSerializer {
+	public byte[] toStream(final ODatabaseRecord<?> iDatabase, Object iObject) throws IOException;
+
+	public Object fromStream(final ODatabaseRecord<?> iDatabase, byte[] iStream) throws IOException;
 
 	public String getName();
 }

@@ -51,7 +51,8 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
  * 
  */
 @SuppressWarnings("serial")
-public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implements OMVRBTreeEventListener<K, V>, OSerializableStream {
+public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implements OMVRBTreeEventListener<K, V>,
+		OSerializableStream {
 	protected int																						optimizeThreshold;
 
 	protected OSharedResourceExternal												lock						= new OSharedResourceExternal();
@@ -72,7 +73,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	protected float																					optimizeEntryPointsFactor;
 	protected volatile List<OMVRBTreeEntryPersistent<K, V>>	entryPoints			= new ArrayList<OMVRBTreeEntryPersistent<K, V>>(
 																																							entryPointsSize);
-	protected List<OMVRBTreeEntryPersistent<K, V>>						newEntryPoints	= new ArrayList<OMVRBTreeEntryPersistent<K, V>>(
+	protected List<OMVRBTreeEntryPersistent<K, V>>					newEntryPoints	= new ArrayList<OMVRBTreeEntryPersistent<K, V>>(
 																																							entryPointsSize);
 
 	// protected Map<ORID, OMVRBTreeEntryPersistent<K, V>> cache = new HashMap<ORID, OMVRBTreeEntryPersistent<K, V>>();
@@ -583,6 +584,14 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		return super.put(key, value);
 	}
 
+	public Object getKeySerializer() {
+		return keySerializer;
+	}
+
+	public Object getValueSerializer() {
+		return valueSerializer;
+	}
+
 	/**
 	 * Updates the usage counter and check if it's higher than the configured threshold. In this case executes the optimization and
 	 * reset the usage counter.
@@ -694,7 +703,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	}
 
 	/**
-	 * Returns the first Entry in the OMVRBTree (according to the OMVRBTree's key-sort function). Returns null if the OMVRBTree is empty.
+	 * Returns the first Entry in the OMVRBTree (according to the OMVRBTree's key-sort function). Returns null if the OMVRBTree is
+	 * empty.
 	 */
 	@Override
 	protected OMVRBTreeEntry<K, V> getFirstEntry() {

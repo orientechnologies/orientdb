@@ -126,4 +126,11 @@ public class OMVRBTreeEntryDatabase<K, V> extends OMVRBTreeEntryPersistent<K, V>
 		return this;
 	}
 
+	protected Object keyFromStream(final int iIndex) throws IOException {
+		return pTree.keySerializer.fromStream(((OMVRBTreeDatabase<K, V>) pTree).getDatabase(), serializedKeys[iIndex]);
+	}
+
+	protected Object valueFromStream(final int iIndex) throws IOException {
+		return pTree.valueSerializer.fromStream(((OMVRBTreeDatabase<K, V>) pTree).getDatabase(), serializedValues[iIndex]);
+	}
 }

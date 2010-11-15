@@ -51,7 +51,7 @@ public abstract class OStringSerializerHelper {
 	public static final List<String>				EMPTY_LIST						= Collections.unmodifiableList(new ArrayList<String>());
 	public static final Map<String, String>	EMPTY_MAP							= Collections.unmodifiableMap(new HashMap<String, String>());
 
-	public static Object fieldTypeFromStream(OType iType, final Object iValue) {
+	public static Object fieldTypeFromStream(final ODatabaseRecord<?> iDatabase, OType iType, final Object iValue) {
 		if (iValue == null)
 			return null;
 
@@ -125,13 +125,13 @@ public abstract class OStringSerializerHelper {
 
 		case EMBEDDED:
 			// RECORD
-			return OStringSerializerAnyStreamable.INSTANCE.fromStream((String) iValue);
+			return OStringSerializerAnyStreamable.INSTANCE.fromStream(iDatabase, (String) iValue);
 		}
 
 		throw new IllegalArgumentException("Type " + iType + " not supported to convert value: " + iValue);
 	}
 
-	public static String fieldTypeToString(OType iType, final Object iValue) {
+	public static String fieldTypeToString(final ODatabaseRecord<?> iDatabase, OType iType, final Object iValue) {
 		if (iValue == null)
 			return null;
 
@@ -167,7 +167,7 @@ public abstract class OStringSerializerHelper {
 
 		case EMBEDDED:
 			// RECORD
-			return OStringSerializerAnyStreamable.INSTANCE.toStream(iValue);
+			return OStringSerializerAnyStreamable.INSTANCE.toStream(iDatabase, iValue);
 		}
 
 		throw new IllegalArgumentException("Type " + iType + " not supported to convert value: " + iValue);
@@ -376,7 +376,7 @@ public abstract class OStringSerializerHelper {
 		return getParameters(iText, 0);
 	}
 
-	public static Map<String, String> getMap(final String iText) {
+	public static Map<String, String> getMap(final ODatabaseRecord<?> iDatabase, final String iText) {
 		int openPos = iText.indexOf(COLLECTION_BEGIN);
 		if (openPos == -1)
 			return EMPTY_MAP;
@@ -396,7 +396,7 @@ public abstract class OStringSerializerHelper {
 			if (item != null && item.length() > 0) {
 				entry = OStringSerializerHelper.split(item, OStringSerializerHelper.ENTRY_SEPARATOR);
 
-				map.put((String) fieldTypeFromStream(OType.STRING, entry.get(0)), entry.get(1));
+				map.put((String) fieldTypeFromStream(iDatabase, OType.STRING, entry.get(0)), entry.get(1));
 			}
 		}
 

@@ -483,8 +483,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			final boolean asynch = channel.readByte() == 'a';
 
-			final OCommandRequestText command = (OCommandRequestText) OStreamSerializerAnyStreamable.INSTANCE.fromStream(channel
-					.readBytes());
+			final OCommandRequestText command = (OCommandRequestText) OStreamSerializerAnyStreamable.INSTANCE.fromStream(
+					connection.database, channel.readBytes());
 
 			final OQuery<?> query = (OQuery<?>) (command instanceof OQuery<?> ? command : null);
 
@@ -576,7 +576,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				} else {
 					// ANY OTHER (INCLUDING LITERALS)
 					channel.writeByte((byte) 'a');
-					channel.writeBytes(OStreamSerializerAnyRuntime.INSTANCE.toStream(result));
+					channel.writeBytes(OStreamSerializerAnyRuntime.INSTANCE.toStream(connection.database, result));
 				}
 			}
 			break;

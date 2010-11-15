@@ -25,25 +25,20 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 
 public class OStreamSerializerListRID implements OStreamSerializer {
 	public static final String														NAME			= "y";
-	public static final OStreamSerializerListRID					INSTANCE	= new OStreamSerializerListRID(null);
+	public static final OStreamSerializerListRID					INSTANCE	= new OStreamSerializerListRID();
 	private static final ORecordSerializerPositional2CSV	FORMAT		= (ORecordSerializerPositional2CSV) ORecordSerializerFactory
 																																			.instance().getFormat(ORecordSerializerPositional2CSV.NAME);
-	public final ODatabaseRecord<?>												database;
 
-	public OStreamSerializerListRID(final ODatabaseRecord<?> database) {
-		this.database = database;
-	}
-
-	public Object fromStream(byte[] iStream) throws IOException {
+	public Object fromStream(final ODatabaseRecord<?> iDatabase, final byte[] iStream) throws IOException {
 		if (iStream == null)
 			return null;
 
 		final String s = OBinaryProtocol.bytes2string(iStream);
 
-		return FORMAT.embeddedCollectionFromStream(database, null, OType.EMBEDDEDLIST, null, OType.LINK, s);
+		return FORMAT.embeddedCollectionFromStream(iDatabase, null, OType.EMBEDDEDLIST, null, OType.LINK, s);
 	}
 
-	public byte[] toStream(Object iObject) throws IOException {
+	public byte[] toStream(final ODatabaseRecord<?> iDatabase, final Object iObject) throws IOException {
 		if (iObject == null)
 			return null;
 

@@ -28,21 +28,8 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 
 @SuppressWarnings("unchecked")
 public class OStreamSerializerRecord implements OStreamSerializer {
-	public static final String												NAME	= "r";
-	private ODatabaseRecord<?>												database;
-	private Constructor<? extends ORecordInternal<?>>	constructor;
-
-	public OStreamSerializerRecord(ODatabaseRecord<?> iDatabase) throws SecurityException, NoSuchMethodException {
-		database = iDatabase;
-
-		Constructor<?>[] constructors = iDatabase.getRecordType().getConstructors();
-		for (Constructor<?> c : constructors) {
-			if (c.getParameterTypes().length > 0 && ODatabaseRecord.class.isAssignableFrom(c.getParameterTypes()[0])) {
-				constructor = (Constructor<? extends ORecordInternal<?>>) c;
-				break;
-			}
-		}
-	}
+	public static final String									NAME			= "r";
+	public static final OStreamSerializerRecord	INSTANCE	= new OStreamSerializerRecord();
 
 	public String getName() {
 		return NAME;
@@ -51,15 +38,25 @@ public class OStreamSerializerRecord implements OStreamSerializer {
 	/**
 	 * Re-Create any object if the class has a public constructor that accepts a String as unique parameter.
 	 */
-	public Object fromStream(byte[] iStream) throws IOException {
+	public Object fromStream(final ODatabaseRecord<?> iDatabase, final byte[] iStream) throws IOException {
 		if (iStream == null || iStream.length == 0)
 			// NULL VALUE
 			return null;
 
-		try {
-			ORecordInternal<?> obj = constructor.newInstance(database);
+		Constructor<? extends ORecordInternal<?>> constructor = null;
 
-			ORID rid = new ORecordId().fromStream(iStream);
+		try {
+			Constructor<?>[] constructors = iDatabase.getRecordType().getConstructors();
+			for (Constructor<?> c : constructors) {
+				if (c.getParameterTypes().length > 0 && ODatabaseRecord.class.isAssignableFrom(c.getParameterTypes()[0])) {
+					constructor = (Constructor<? extends ORecordInternal<?>>) c;
+					break;
+				}
+			}
+
+			final ORecordInternal<?> obj = constructor.newInstance(iDatabase);
+
+			final ORID rid = new ORecordId().fromStream(iStream);
 
 			obj.setIdentity(rid.getClusterId(), rid.getClusterPosition());
 			return obj;
@@ -70,7 +67,7 @@ public class OStreamSerializerRecord implements OStreamSerializer {
 		return null;
 	}
 
-	public byte[] toStream(Object iObject) throws IOException {
+	public byte[] toStream(final ODatabaseRecord<?> iDatabase, final Object iObject) throws IOException {
 		if (iObject == null)
 			return null;
 

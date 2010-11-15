@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.serialization.serializer.string;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerHelper;
 
@@ -30,7 +31,7 @@ public class OStringSerializerAnyRuntime implements OStringSerializer {
 	/**
 	 * Re-Create any object if the class has a public constructor that accepts a String as unique parameter.
 	 */
-	public Object fromStream(final String iStream) {
+	public Object fromStream(final ODatabaseRecord<?> iDatabase, final String iStream) {
 		if (iStream == null || iStream.length() == 0)
 			// NULL VALUE
 			return null;
@@ -50,7 +51,7 @@ public class OStringSerializerAnyRuntime implements OStringSerializer {
 		return null;
 	}
 
-	public String toStream(Object iObject) {
+	public String toStream(final ODatabaseRecord<?> iDatabase, Object iObject) {
 		if (iObject == null)
 			return "";
 		return iObject.getClass().getName() + OStreamSerializerHelper.SEPARATOR + iObject;

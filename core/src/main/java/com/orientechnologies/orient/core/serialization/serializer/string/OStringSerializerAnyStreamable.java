@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.serialization.serializer.string;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
@@ -29,7 +30,7 @@ public class OStringSerializerAnyStreamable implements OStringSerializer {
 	/**
 	 * Re-Create any object if the class has a public constructor that accepts a String as unique parameter.
 	 */
-	public Object fromStream(final String iStream) {
+	public Object fromStream(final ODatabaseRecord<?> iDatabase, final String iStream) {
 		if (iStream == null || iStream.length() == 0)
 			// NULL VALUE
 			return null;
@@ -39,7 +40,7 @@ public class OStringSerializerAnyStreamable implements OStringSerializer {
 		int pos = iStream.indexOf(OStreamSerializerHelper.SEPARATOR);
 		if (pos < 0)
 			// OLogManager.instance().error(this, "Class signature not found in ANY element: " + iStream, OSerializationException.class);
-			instance = new ODocument();
+			instance = new ODocument(iDatabase);
 		else {
 			final String className = iStream.substring(0, pos);
 			try {
@@ -57,7 +58,7 @@ public class OStringSerializerAnyStreamable implements OStringSerializer {
 	/**
 	 * Serialize the class name size + class name + object content
 	 */
-	public String toStream(final Object iObject) {
+	public String toStream(final ODatabaseRecord<?> iDatabase, final Object iObject) {
 		if (iObject == null)
 			return null;
 

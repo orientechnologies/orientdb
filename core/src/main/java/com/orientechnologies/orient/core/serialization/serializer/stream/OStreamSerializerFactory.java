@@ -15,14 +15,13 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.stream;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 
 public class OStreamSerializerFactory {
-	public static OStreamSerializer get(final ODatabaseRecord<?> iDatabase, final String iName) {
+	public static OStreamSerializer get(final String iName) {
 		try {
 			if (iName.equals(OStreamSerializerRecord.NAME))
-				return new OStreamSerializerRecord(iDatabase);
+				return OStreamSerializerRecord.INSTANCE;
 
 			else if (iName.equals(OStreamSerializerString.NAME))
 				return OStreamSerializerString.INSTANCE;
@@ -31,7 +30,7 @@ public class OStreamSerializerFactory {
 				return OStreamSerializerLong.INSTANCE;
 
 			else if (iName.equals(OStreamSerializerAnyRecord.NAME))
-				return new OStreamSerializerAnyRecord(iDatabase);
+				return OStreamSerializerAnyRecord.INSTANCE;
 
 			else if (iName.equals(OStreamSerializerAnyStreamable.NAME))
 				return OStreamSerializerAnyStreamable.INSTANCE;
@@ -43,7 +42,7 @@ public class OStreamSerializerFactory {
 				return OStreamSerializerRID.INSTANCE;
 
 			else if (iName.equals(OStreamSerializerListRID.NAME))
-				return new OStreamSerializerListRID(iDatabase);
+				return OStreamSerializerListRID.INSTANCE;
 
 			throw new OConfigurationException("Stream Serializer '" + iName + "' not registered");
 

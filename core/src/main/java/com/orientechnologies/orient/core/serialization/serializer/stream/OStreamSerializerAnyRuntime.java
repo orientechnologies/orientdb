@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.serialization.serializer.stream;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyRuntime;
 
@@ -28,8 +29,8 @@ import com.orientechnologies.orient.core.serialization.serializer.string.OString
  * 
  */
 public class OStreamSerializerAnyRuntime implements OStreamSerializer {
-	public static final OStreamSerializerAnyRuntime	INSTANCE	= new OStreamSerializerAnyRuntime();
 	private static final String											NAME			= "au";
+	public static final OStreamSerializerAnyRuntime	INSTANCE	= new OStreamSerializerAnyRuntime();
 
 	public String getName() {
 		return NAME;
@@ -38,18 +39,18 @@ public class OStreamSerializerAnyRuntime implements OStreamSerializer {
 	/**
 	 * Re-Create any object if the class has a public constructor that accepts a String as unique parameter.
 	 */
-	public Object fromStream(final byte[] iStream) throws IOException {
+	public Object fromStream(final ODatabaseRecord<?> iDatabase, final byte[] iStream) throws IOException {
 		if (iStream == null || iStream.length == 0)
 			// NULL VALUE
 			return null;
 
-		return OStringSerializerAnyRuntime.INSTANCE.fromStream(OBinaryProtocol.bytes2string(iStream));
+		return OStringSerializerAnyRuntime.INSTANCE.fromStream(iDatabase, OBinaryProtocol.bytes2string(iStream));
 	}
 
-	public byte[] toStream(final Object iObject) throws IOException {
+	public byte[] toStream(final ODatabaseRecord<?> iDatabase, final Object iObject) throws IOException {
 		if (iObject == null)
 			return new byte[0];
 
-		return OBinaryProtocol.string2bytes(OStringSerializerAnyRuntime.INSTANCE.toStream(iObject));
+		return OBinaryProtocol.string2bytes(OStringSerializerAnyRuntime.INSTANCE.toStream(iDatabase, iObject));
 	}
 }

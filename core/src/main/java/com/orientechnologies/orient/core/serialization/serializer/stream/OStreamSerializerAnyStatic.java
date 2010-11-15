@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 
@@ -27,8 +28,8 @@ public class OStreamSerializerAnyStatic implements OStreamSerializer {
 
 	private Constructor<?>			constructor;
 
-	public OStreamSerializerAnyStatic(Class<?> clazz) throws SecurityException, NoSuchMethodException {
-		constructor = clazz.getConstructor(String.class);
+	public OStreamSerializerAnyStatic(final Class<?> iClazz) throws SecurityException, NoSuchMethodException {
+		constructor = iClazz.getConstructor(String.class);
 	}
 
 	public String getName() {
@@ -39,7 +40,7 @@ public class OStreamSerializerAnyStatic implements OStreamSerializer {
 	 * Re-Create any object if the class has a public constructor that accepts a String as unique parameter.
 	 */
 
-	public Object fromStream(byte[] iStream) throws IOException {
+	public Object fromStream(final ODatabaseRecord<?> iDatabase, final byte[] iStream) throws IOException {
 		if (iStream == null || iStream.length == 0)
 			// NULL VALUE
 			return null;
@@ -53,7 +54,7 @@ public class OStreamSerializerAnyStatic implements OStreamSerializer {
 		return null;
 	}
 
-	public byte[] toStream(Object iObject) throws IOException {
+	public byte[] toStream(final ODatabaseRecord<?> iDatabase, final Object iObject) throws IOException {
 		if (iObject == null)
 			return null;
 		return OBinaryProtocol.string2bytes(iObject.toString());

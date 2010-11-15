@@ -81,16 +81,16 @@ import com.orientechnologies.orient.core.serialization.serializer.record.OSerial
  */
 @SuppressWarnings("unchecked")
 public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> implements OSerializableStream {
-	protected OMVRBTreePersistent<K, V>			pTree;
+	protected OMVRBTreePersistent<K, V>				pTree;
 
-	byte[][]																serializedKeys;
-	byte[][]																serializedValues;
+	byte[][]																	serializedKeys;
+	byte[][]																	serializedValues;
 
-	protected ORID													parentRid;
-	protected ORID													leftRid;
-	protected ORID													rightRid;
+	protected ORID														parentRid;
+	protected ORID														leftRid;
+	protected ORID														rightRid;
 
-	public ORecordBytesLazy									record;
+	public ORecordBytesLazy										record;
 
 	protected OMVRBTreeEntryPersistent<K, V>	parent;
 	protected OMVRBTreeEntryPersistent<K, V>	left;
@@ -169,6 +169,10 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 
 		markDirty();
 	}
+
+	protected abstract Object keyFromStream(final int iIndex) throws IOException;
+
+	protected abstract Object valueFromStream(final int iIndex) throws IOException;
 
 	public OMVRBTreeEntryPersistent<K, V> load() throws IOException {
 		return this;
@@ -530,7 +534,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 			try {
 				OProfiler.getInstance().updateCounter("OMVRBTreeEntryP.unserializeKey", 1);
 
-				keys[iIndex] = (K) pTree.keySerializer.fromStream(serializedKeys[iIndex]);
+				keys[iIndex] = (K) pTree.keySerializer.fromStream(null, serializedKeys[iIndex]);
 			} catch (IOException e) {
 
 				OLogManager.instance().error(this, "Can't lazy load the key #" + iIndex + " in tree node " + this, e,
@@ -546,7 +550,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 			try {
 				OProfiler.getInstance().updateCounter("OMVRBTreeEntryP.unserializeValue", 1);
 
-				values[iIndex] = (V) pTree.valueSerializer.fromStream(serializedValues[iIndex]);
+				values[iIndex] = (V) valueFromStream(iIndex);
 			} catch (IOException e) {
 
 				OLogManager.instance().error(this, "Can't lazy load the value #" + iIndex + " in tree node " + this, e,
@@ -750,7 +754,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 			if (serializedKeys[i] == null) {
 				OProfiler.getInstance().updateCounter("OMVRBTreeEntryP.serializeValue", 1);
 
-				serializedKeys[i] = pTree.keySerializer.toStream(keys[i]);
+				serializedKeys[i] = pTree.keySerializer.toStream(null, keys[i]);
 			}
 		}
 	}
@@ -765,7 +769,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 			if (serializedValues[i] == null) {
 				OProfiler.getInstance().updateCounter("OMVRBTreeEntryP.serializeKey", 1);
 
-				serializedValues[i] = pTree.valueSerializer.toStream(values[i]);
+				serializedValues[i] = pTree.valueSerializer.toStream(null, values[i]);
 			}
 		}
 	}

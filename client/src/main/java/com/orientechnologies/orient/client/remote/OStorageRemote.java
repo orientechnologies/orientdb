@@ -405,7 +405,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 				writeCommand(OChannelBinaryProtocol.REQUEST_COMMAND);
 				network.writeByte((byte) (asynch ? 'a' : 's')); // ASYNC / SYNC
-				network.writeBytes(OStreamSerializerAnyStreamable.INSTANCE.toStream(command));
+				network.writeBytes(OStreamSerializerAnyStreamable.INSTANCE.toStream(iCommand.getDatabase(), command));
 				readStatus();
 
 				if (asynch) {
@@ -452,7 +452,7 @@ public class OStorageRemote extends OStorageAbstract {
 						break;
 
 					case 'a':
-						result = OStreamSerializerAnyRuntime.INSTANCE.fromStream(network.readBytes());
+						result = OStreamSerializerAnyRuntime.INSTANCE.fromStream(iCommand.getDatabase(), network.readBytes());
 						break;
 					}
 				}
