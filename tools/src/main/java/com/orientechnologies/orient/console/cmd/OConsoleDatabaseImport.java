@@ -248,7 +248,7 @@ public class OConsoleDatabaseImport extends OConsoleDatabaseImpExpAbstract {
 
 			// REBUILD ALL THE INHERITANCE
 			for (Map.Entry<OClass, String> entry : superClasses.entrySet()) {
-				cls.setSuperClass(database.getMetadata().getSchema().getClass(entry.getValue()));
+				entry.getKey().setSuperClass(database.getMetadata().getSchema().getClass(entry.getValue()));
 			}
 
 			// SET ALL THE LINKED CLASSES
