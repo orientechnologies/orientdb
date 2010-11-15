@@ -29,9 +29,9 @@ import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.OLazyRecordList;
-import com.orientechnologies.orient.core.db.record.OLazyRecordMap;
-import com.orientechnologies.orient.core.db.record.OLazyRecordSet;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedList;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
 import com.orientechnologies.orient.core.entity.OEntityManagerInternal;
@@ -74,8 +74,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			// REMOVE BEGIN & END COLLECTIONS CHARACTERS IF IT'S A COLLECTION
 			String value = iValue.startsWith("[") ? iValue.substring(1, iValue.length() - 1) : iValue;
 
-			Collection<Object> coll = iType == OType.LINKLIST ? new OLazyRecordList(iSourceRecord, ODocument.RECORD_TYPE)
-					: new OLazyRecordSet(iSourceRecord, ODocument.RECORD_TYPE);
+			Collection<Object> coll = iType == OType.LINKLIST ? new ORecordLazyList(iSourceRecord, ODocument.RECORD_TYPE)
+					: new ORecordLazySet(iSourceRecord, ODocument.RECORD_TYPE);
 
 			if (value.length() == 0)
 				return coll;
@@ -104,7 +104,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			String value = iValue.substring(1, iValue.length() - 1);
 
 			@SuppressWarnings("rawtypes")
-			final Map map = new OLazyRecordMap(iSourceRecord, ODocument.RECORD_TYPE);
+			final Map map = new ORecordLazyMap(iSourceRecord, ODocument.RECORD_TYPE);
 
 			if (value.length() == 0)
 				return map;
@@ -167,7 +167,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		String value = iValue.substring(1, iValue.length() - 1);
 
 		@SuppressWarnings("rawtypes")
-		final Map map = new OLazyRecordMap(iSourceDocument, ODocument.RECORD_TYPE);
+		final Map map = new ORecordLazyMap(iSourceDocument, ODocument.RECORD_TYPE);
 
 		if (value.length() == 0)
 			return map;
@@ -411,10 +411,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		final Collection<Object> coll;
 		if (iLinkedType == OType.LINK) {
 			if (iDocument != null)
-				coll = iType == OType.EMBEDDEDLIST ? new OLazyRecordList(iDocument, ODocument.RECORD_TYPE) : new OLazyRecordSet(iDocument,
+				coll = iType == OType.EMBEDDEDLIST ? new ORecordLazyList(iDocument, ODocument.RECORD_TYPE) : new ORecordLazySet(iDocument,
 						ODocument.RECORD_TYPE);
 			else
-				coll = iType == OType.EMBEDDEDLIST ? new OLazyRecordList(iDatabase, ODocument.RECORD_TYPE) : new OLazyRecordSet(iDatabase,
+				coll = iType == OType.EMBEDDEDLIST ? new ORecordLazyList(iDatabase, ODocument.RECORD_TYPE) : new ORecordLazySet(iDatabase,
 						ODocument.RECORD_TYPE);
 		} else
 			coll = iType == OType.EMBEDDEDLIST ? new ORecordTrackedList(iDocument) : new ORecordTrackedSet(iDocument);

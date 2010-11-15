@@ -31,11 +31,11 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  * 
  */
 @SuppressWarnings("serial")
-public class OLazyRecordMap extends ORecordTrackedMap {
+public class ORecordLazyMap extends ORecordTrackedMap {
 	final private byte	recordType;
 	private boolean			converted	= false;
 
-	public OLazyRecordMap(final ORecord<?> iSourceRecord, final byte iRecordType) {
+	public ORecordLazyMap(final ORecord<?> iSourceRecord, final byte iRecordType) {
 		super(iSourceRecord);
 		this.recordType = iRecordType;
 	}

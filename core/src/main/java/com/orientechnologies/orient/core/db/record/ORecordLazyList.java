@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import java.util.HashSet;
 import java.util.Iterator;
 
 import com.orientechnologies.orient.core.id.ORID;
@@ -25,25 +24,25 @@ import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
 /**
- * Lazy implementation of Set. It's bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by
- * hand when the set is changed.
+ * Lazy implementation of ArrayList. It's bound to a source ORecord object to keep track of changes. This avoid to call the
+ * makeDirty() by hand when the list is changed.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-@SuppressWarnings("serial")
-public class OLazyRecordSet extends ORecordTrackedSet {
-	private final ODatabaseRecord<?>	database;
-	private final byte								recordType;
+@SuppressWarnings({ "serial" })
+public class ORecordLazyList extends ORecordTrackedList {
+	final private byte								recordType;
+	final private ODatabaseRecord<?>	database;
 	private boolean										converted	= false;
 
-	public OLazyRecordSet(final ODatabaseRecord<?> iDatabase, final byte iRecordType) {
+	public ORecordLazyList(ODatabaseRecord<?> iDatabase, final byte iRecordType) {
 		super(null);
 		this.database = iDatabase;
 		this.recordType = iRecordType;
 	}
 
-	public OLazyRecordSet(final ORecord<?> iSourceRecord, final byte iRecordType) {
+	public ORecordLazyList(final ORecord<?> iSourceRecord, final byte iRecordType) {
 		super(iSourceRecord);
 		this.database = iSourceRecord.getDatabase();
 		this.recordType = iRecordType;
@@ -55,17 +54,41 @@ public class OLazyRecordSet extends ORecordTrackedSet {
 	}
 
 	@Override
-	public boolean add(final Object e) {
-		if (converted && e instanceof ORID)
-			converted = false;
-		setDirty();
-		return super.add(e);
-	}
-
-	@Override
 	public boolean contains(final Object o) {
 		convertAll();
 		return super.contains(o);
+	}
+
+	@Override
+	public boolean add(Object element) {
+		if (converted && element instanceof ORID)
+			converted = false;
+		return super.add(element);
+	}
+
+	@Override
+	public void add(int index, Object element) {
+		if (converted && element instanceof ORID)
+			converted = false;
+		super.add(index, element);
+	}
+
+	@Override
+	public Object get(final int index) {
+		convert(index);
+		return super.get(index);
+	}
+
+	@Override
+	public int indexOf(final Object o) {
+		convertAll();
+		return super.indexOf(o);
+	}
+
+	@Override
+	public int lastIndexOf(final Object o) {
+		convertAll();
+		return super.lastIndexOf(o);
 	}
 
 	@Override
@@ -80,35 +103,34 @@ public class OLazyRecordSet extends ORecordTrackedSet {
 		return super.toArray(a);
 	}
 
-	/**
-	 * Browse all the set to convert all the items.
-	 */
 	public void convertAll() {
 		if (converted)
 			return;
 
-		HashSet<Object> copy = new HashSet<Object>();
-		for (Iterator<Object> it = iterator(); it.hasNext();)
-			copy.add(convert(it.next()));
-
-		clear();
-
-		addAll(copy);
-		copy.clear();
+		for (int i = 0; i < size(); ++i)
+			convert(i);
 
 		converted = true;
 	}
 
-	protected Object convert(final Object iElement) {
-		if (iElement != null && iElement instanceof ORecordId) {
+	/**
+	 * Convert the item requested.
+	 * 
+	 * @param iIndex
+	 *          Position of the item to convert
+	 */
+	private void convert(final int iIndex) {
+		final Object o = super.get(iIndex);
+
+		if (o != null && o instanceof ORecordId) {
 			final ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
-			final ORecordId rid = (ORecordId) iElement;
+			final ORecordId rid = (ORecordId) o;
 
 			record.setDatabase(database);
 			record.setIdentity(rid);
 			record.load();
-			return record;
+
+			super.set(iIndex, record);
 		}
-		return iElement;
 	}
 }

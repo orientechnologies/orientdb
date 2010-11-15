@@ -23,13 +23,16 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.OLazyRecordList;
-import com.orientechnologies.orient.core.db.record.OLazyRecordSet;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.ORecordTrackedList;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -340,24 +343,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	public <RET> RET field(final String iPropertyName, final Class<?> iType) {
 		RET value = this.<RET> rawField(iPropertyName);
 
-		if (value instanceof ORID && !ORID.class.equals(iType) && !ORecordId.class.equals(iType)) {
-			// CREATE THE DOCUMENT OBJECT IN LAZY WAY
-			value = (RET) new ODocument(_database, (ORID) value);
-			_fieldValues.put(iPropertyName, value);
-		} else if (Set.class.isAssignableFrom(iType) && !(value instanceof Set)) {
-			// CONVERT FROM LIST TO SET
-			final ORecordTrackedSet newValue;
-
-			if (value instanceof OLazyRecordList)
-				newValue = new OLazyRecordSet(this, RECORD_TYPE);
-			else
-				newValue = new ORecordTrackedSet(this);
-
-			newValue.addAll((Collection<Object>) value);
-
-			_fieldValues.put(iPropertyName, newValue);
-			value = (RET) newValue;
-		}
+		value = convertField(iPropertyName, iType, value);
 
 		return value;
 	}
@@ -594,5 +580,51 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	protected void setup() {
 		super.setup();
 		_recordFormat = ORecordSerializerFactory.instance().getFormat(ORecordSerializerSchemaAware2CSV.NAME);
+	}
+
+	private <RET> RET convertField(final String iPropertyName, final Class<?> iType, RET iValue) {
+		if (iType == null)
+			return iValue;
+
+		if (iValue instanceof ORID && !ORID.class.equals(iType) && !ORecordId.class.equals(iType)) {
+			// CREATE THE DOCUMENT OBJECT IN LAZY WAY
+			iValue = (RET) new ODocument(_database, (ORID) iValue);
+			_fieldValues.put(iPropertyName, iValue);
+
+		} else if (Set.class.isAssignableFrom(iType) && !(iValue instanceof Set)) {
+			// CONVERT IT TO SET
+			final Collection<Object> newValue;
+
+			if (iValue instanceof ORecordLazyList || iValue instanceof ORecordLazyMap)
+				newValue = new ORecordLazySet(this, RECORD_TYPE);
+			else
+				newValue = new ORecordTrackedSet(this);
+
+			if (iValue instanceof Collection)
+				newValue.addAll((Collection<Object>) iValue);
+			else if (iValue instanceof Map)
+				newValue.addAll(((Map<String, Object>) iValue).values());
+
+			_fieldValues.put(iPropertyName, newValue);
+			iValue = (RET) newValue;
+
+		} else if (List.class.isAssignableFrom(iType) && !(iValue instanceof List)) {
+			// CONVERT IT TO LIST
+			final Collection<Object> newValue;
+
+			if (iValue instanceof ORecordLazySet || iValue instanceof ORecordLazyMap)
+				newValue = new ORecordLazyList(this, RECORD_TYPE);
+			else
+				newValue = new ORecordTrackedList(this);
+
+			if (iValue instanceof Collection)
+				newValue.addAll((Collection<Object>) iValue);
+			else if (iValue instanceof Map)
+				newValue.addAll(((Map<String, Object>) iValue).values());
+
+			_fieldValues.put(iPropertyName, newValue);
+			iValue = (RET) newValue;
+		}
+		return iValue;
 	}
 }
