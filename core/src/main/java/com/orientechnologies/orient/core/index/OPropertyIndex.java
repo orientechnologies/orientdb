@@ -60,8 +60,6 @@ public abstract class OPropertyIndex extends OSharedResource implements Iterable
 	 */
 	public OPropertyIndex(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final String iClusterIndexName) {
 		owner = iProperty;
-		map = new OTreeMapDatabaseLazySave<String, List<ORecordId>>(iDatabase, iClusterIndexName, OStreamSerializerString.INSTANCE,
-				OStreamSerializerListRID.INSTANCE);
 	}
 
 	public abstract INDEX_TYPE getType();
@@ -69,6 +67,27 @@ public abstract class OPropertyIndex extends OSharedResource implements Iterable
 	public abstract ORID getRID();
 
 	protected abstract void put(final Object iKey, final ORecordId iValue);
+
+	/**
+	 * Creates the index.
+	 * 
+	 * @param iDatabase
+	 *          Current Database instance
+	 * @param iProperty
+	 *          Owner property
+	 * @param iClusterIndexName
+	 *          Cluster name where to place the TreeMap
+	 * @param iProgressListener
+	 *          Listener to get called on progress
+	 */
+	public OPropertyIndex create(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final String iClusterIndexName,
+			final OProgressListener iProgressListener) {
+		owner = iProperty;
+		map = new OTreeMapDatabaseLazySave<String, List<ORecordId>>(iDatabase, iClusterIndexName, OStreamSerializerString.INSTANCE,
+				OStreamSerializerListRID.INSTANCE);
+		rebuild(iProgressListener);
+		return this;
+	}
 
 	public OPropertyIndex configure(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final ORID iRecordId) {
 		owner = iProperty;

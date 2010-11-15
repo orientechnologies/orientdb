@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OFullTextIndex;
+import com.orientechnologies.orient.core.index.OPropertyIndexFullText;
 import com.orientechnologies.orient.core.index.OPropertyIndexNotUnique;
 import com.orientechnologies.orient.core.index.OPropertyIndexUnique;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -297,7 +297,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			// ONLY EQUALS IS SUPPORTED NOW!
 			if (((prop.getIndex() instanceof OPropertyIndexUnique || prop.getIndex() instanceof OPropertyIndexNotUnique) && iCondition
 					.getOperator() instanceof OQueryOperatorEquals)
-					|| prop.getIndex() instanceof OFullTextIndex
+					|| prop.getIndex() instanceof OPropertyIndexFullText
 					&& iCondition.getOperator() instanceof OQueryOperatorContainsText) {
 				final Object value = iCondition.getLeft() == iItem ? iCondition.getRight() : iCondition.getLeft();
 				if (value != null) {

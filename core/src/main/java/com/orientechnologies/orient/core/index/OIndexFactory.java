@@ -27,9 +27,9 @@ public class OIndexFactory extends ODynamicFactory<String, Class<? extends OProp
 	 * Register default index implementation.
 	 */
 	protected OIndexFactory() {
-		registry.put(INDEX_TYPE.UNIQUE.toString(), OPropertyIndexUnique.class);
-		registry.put(INDEX_TYPE.NOTUNIQUE.toString(), OPropertyIndexNotUnique.class);
-		registry.put(INDEX_TYPE.FULLTEXT.toString(), OFullTextIndex.class);
+		register(INDEX_TYPE.UNIQUE.toString(), OPropertyIndexUnique.class);
+		register(INDEX_TYPE.NOTUNIQUE.toString(), OPropertyIndexNotUnique.class);
+		register(INDEX_TYPE.FULLTEXT.toString(), OPropertyIndexFullText.class);
 	}
 
 	public <T extends OPropertyIndex> T newInstance(final String iIndexType) {

@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
@@ -39,7 +40,7 @@ import com.orientechnologies.orient.core.type.tree.OTreeMapDatabaseLazySave;
  * @author Luca Garulli
  * 
  */
-public class OFullTextIndex extends OPropertyIndex {
+public class OPropertyIndexFullText extends OPropertyIndex {
 	private static final String	FIELD_MAP_RID				= "mapRid";
 	private static final String	FIELD_CLUSTER_NAME	= "clusterName";
 	private static final String	FIELD_STOP_WORDS		= "stopWords";
@@ -53,21 +54,25 @@ public class OFullTextIndex extends OPropertyIndex {
 	private Set<String>					stopWords;
 	private ODocument						config;
 
-	public OFullTextIndex() {
+	public OPropertyIndexFullText() {
 	}
 
-	public OFullTextIndex(final ODatabaseRecord<?> iDatabase, final OProperty iProperty) {
+	public OPropertyIndexFullText(final ODatabaseRecord<?> iDatabase, final OProperty iProperty) {
 		this(iDatabase, iProperty, DEF_CLUSTER_NAME);
 	}
 
-	public OFullTextIndex(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final String iClusterIndexName) {
-		this(iDatabase, iProperty, iClusterIndexName, DEF_IGNORE_CHARS, DEF_STOP_WORDS);
+	public OPropertyIndexFullText(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final String iClusterIndexName) {
+		create(iDatabase, iProperty, iClusterIndexName, null, DEF_IGNORE_CHARS, DEF_STOP_WORDS);
 	}
 
-	public OFullTextIndex(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final String iClusterIndexName,
-			final String iIgnoreChars, final String iStopWords) {
-		super(iDatabase, iProperty, iClusterIndexName);
+	@Override
+	public OPropertyIndex create(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final String iClusterIndexName,
+			final OProgressListener iProgressListener) {
+		return create(iDatabase, iProperty, iClusterIndexName, iProgressListener, DEF_IGNORE_CHARS, DEF_STOP_WORDS);
+	}
 
+	public OPropertyIndex create(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final String iClusterIndexName,
+			final OProgressListener iProgressListener, final String iIgnoreChars, final String iStopWords) {
 		if (iDatabase.getClusterIdByName(iClusterIndexName) == -1)
 			// CREATE THE PHYSICAL CLUSTER THE FIRST TIME
 			iDatabase.addPhysicalCluster(iClusterIndexName, iClusterIndexName, -1);
@@ -88,6 +93,8 @@ public class OFullTextIndex extends OPropertyIndex {
 		config.save();
 
 		init();
+		
+		return this;
 	}
 
 	/**

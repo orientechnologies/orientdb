@@ -19,7 +19,7 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OFullTextIndex;
+import com.orientechnologies.orient.core.index.OPropertyIndexFullText;
 import com.orientechnologies.orient.core.index.OPropertyIndex;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
@@ -72,7 +72,7 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
 			return null;
 
 		final OPropertyIndex index = prop.getIndex();
-		if (index == null || !(index instanceof OFullTextIndex))
+		if (index == null || !(index instanceof OPropertyIndexFullText))
 			// NO FULL TEXT INDEX
 			return null;
 

@@ -25,12 +25,9 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OFullTextIndex;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OPropertyIndex;
-import com.orientechnologies.orient.core.index.OPropertyIndexNotUnique;
-import com.orientechnologies.orient.core.index.OPropertyIndexUnique;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
@@ -236,6 +233,17 @@ public class OProperty extends ODocumentWrapperNoClass {
 	}
 
 	/**
+	 * Creates a custom index on this property.
+	 * 
+	 * @param iIndexInstance
+	 *          OPropertyIndex implementation.
+	 * @return
+	 */
+	public OPropertyIndex createIndex(final OPropertyIndex iIndexInstance) {
+		return createIndex(iIndexInstance, null);
+	}
+
+	/**
 	 * Creates an index on this property. Indexes speed up queries but slow down insert and update operations. For massive inserts we
 	 * suggest to remove the index, make the massive insert and recreate it.
 	 * 
@@ -249,7 +257,7 @@ public class OProperty extends ODocumentWrapperNoClass {
 	 * @return
 	 */
 	public OPropertyIndex createIndex(final INDEX_TYPE iType) {
-		return createIndex(iType, null);
+		return createIndex(iType.toString(), null);
 	}
 
 	/**
@@ -258,7 +266,7 @@ public class OProperty extends ODocumentWrapperNoClass {
 	 * handle the progress status from the external.
 	 * 
 	 * @param iType
-	 *          One of types supported.
+	 *          Index type name registered in OIndexFactory. Defaults are:
 	 *          <ul>
 	 *          <li>UNIQUE: Doesn't allow duplicates</li>
 	 *          <li>NOTUNIQUE: Allow duplicates</li>
@@ -266,51 +274,8 @@ public class OProperty extends ODocumentWrapperNoClass {
 	 *          </ul>
 	 * @return
 	 */
-	public OPropertyIndex createIndex(final INDEX_TYPE iType, final OProgressListener iProgressListener) {
-		if (index != null)
-			throw new IllegalStateException("Index already created");
-
-		try {
-			switch (iType) {
-			case UNIQUE:
-				index = new OPropertyIndexUnique(document.getDatabase(), this, OStorage.CLUSTER_INDEX_NAME);
-				break;
-			case NOTUNIQUE:
-				index = new OPropertyIndexNotUnique(document.getDatabase(), this, OStorage.CLUSTER_INDEX_NAME);
-				break;
-			case FULLTEXT:
-				index = new OFullTextIndex(document.getDatabase(), this, OStorage.CLUSTER_INDEX_NAME);
-				break;
-			}
-
-			index.rebuild(iProgressListener);
-
-			setDirty();
-
-			if (document.getDatabase() != null) {
-				// / SAVE ONLY IF THE PROPERTY IS ALREADY PERSISTENT
-				index.lazySave();
-				document.getDatabase().getMetadata().getSchema().save();
-			}
-
-		} catch (OIndexException e) {
-			if (index != null) {
-				index.clear();
-				document.getDatabase().getMetadata().getSchema().save();
-			}
-			throw e;
-
-		} catch (Exception e) {
-			if (index != null) {
-				index.clear();
-				document.getDatabase().getMetadata().getSchema().save();
-			}
-
-			OLogManager.instance().exception("Unable to create '%s' index for property: %s", e, ODatabaseException.class, iType,
-					toString());
-		}
-
-		return index;
+	public OPropertyIndex createIndex(final String iType, final OProgressListener iProgressListener) {
+		return createIndex(OIndexFactory.instance().newInstance(iType), iProgressListener);
 	}
 
 	/**
@@ -404,5 +369,41 @@ public class OProperty extends ODocumentWrapperNoClass {
 				throw new OSchemaException("Invalid date format setted", e);
 			}
 		}
+	}
+
+	protected OPropertyIndex createIndex(final OPropertyIndex iIndexInstance, final OProgressListener iProgressListener) {
+		if (index != null)
+			throw new IllegalStateException("Index already created");
+
+		try {
+			index = iIndexInstance;
+			index.create(document.getDatabase(), this, OStorage.CLUSTER_INDEX_NAME, iProgressListener);
+
+			setDirty();
+
+			if (document.getDatabase() != null) {
+				// / SAVE ONLY IF THE PROPERTY IS ALREADY PERSISTENT
+				index.lazySave();
+				document.getDatabase().getMetadata().getSchema().save();
+			}
+
+		} catch (OIndexException e) {
+			if (index != null) {
+				index.clear();
+				document.getDatabase().getMetadata().getSchema().save();
+			}
+			throw e;
+
+		} catch (Exception e) {
+			if (index != null) {
+				index.clear();
+				document.getDatabase().getMetadata().getSchema().save();
+			}
+
+			OLogManager.instance().exception("Unable to create index of type '%s' for property: %s", e, ODatabaseException.class,
+					iIndexInstance.toString(), toString());
+		}
+
+		return index;
 	}
 }

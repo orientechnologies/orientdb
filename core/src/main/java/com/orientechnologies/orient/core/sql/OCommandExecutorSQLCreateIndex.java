@@ -19,7 +19,6 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 
@@ -98,7 +97,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 		if (prop == null)
 			throw new IllegalArgumentException("Property '" + field + "' was not found in class '" + cls + "'");
 
-		prop.createIndex(INDEX_TYPE.valueOf(indexType.toUpperCase()), progressListener);
+		prop.createIndex(indexType.toUpperCase(), progressListener);
 
 		return prop.getIndex().getIndexedItems();
 	}
