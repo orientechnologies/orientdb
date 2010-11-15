@@ -245,7 +245,7 @@ public class OConsoleDatabaseExport extends OConsoleDatabaseImpExpAbstract {
 						if (p.getMax() != null)
 							writer.writeAttribute(0, false, "max", p.getMax());
 						if (p.getIndex() != null) {
-							writer.writeAttribute(0, false, "index-rid", p.getIndex().getRecord().getIdentity());
+							writer.writeAttribute(0, false, "index-rid", p.getIndex().getIdentity());
 
 							OPropertyIndex idx = p.getIndex();
 							writer.writeAttribute(0, false, "index-type", idx.getType());

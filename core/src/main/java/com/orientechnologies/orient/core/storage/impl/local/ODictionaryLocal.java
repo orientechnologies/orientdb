@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -76,13 +75,9 @@ public class ODictionaryLocal<T extends Object> implements ODictionaryInternal<T
 	}
 
 	public void load() {
-		try {
-			tree = new OTreeMapDatabase<String, T>((ODatabaseRecord<?>) database, new ORecordId(
-					database.getStorage().getConfiguration().dictionaryRecordId));
-			tree.load();
-		} catch (IOException e) {
-			OLogManager.instance().error(this, "Can't load tree from the database", e, ODatabaseException.class);
-		}
+		tree = new OTreeMapDatabase<String, T>((ODatabaseRecord<?>) database, new ORecordId(
+				database.getStorage().getConfiguration().dictionaryRecordId));
+		tree.load();
 	}
 
 	public void create() {

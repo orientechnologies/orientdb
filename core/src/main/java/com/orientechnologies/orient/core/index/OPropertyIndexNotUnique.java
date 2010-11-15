@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
  * @author Luca Garulli
  * 
  */
-public class OPropertyIndexNotUnique extends OPropertyIndex {
+public class OPropertyIndexNotUnique extends OPropertyIndexMVRBTreeAbstract {
 	public OPropertyIndexNotUnique() {
 	}
 
@@ -60,13 +60,7 @@ public class OPropertyIndexNotUnique extends OPropertyIndex {
 		map.put(iKey.toString(), values);
 	}
 
-	@Override
 	public INDEX_TYPE getType() {
 		return INDEX_TYPE.NOTUNIQUE;
-	}
-
-	@Override
-	public ORID getRID() {
-		return map.getRecord().getIdentity();
 	}
 }

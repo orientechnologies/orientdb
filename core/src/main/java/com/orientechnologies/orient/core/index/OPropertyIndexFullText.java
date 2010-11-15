@@ -40,7 +40,7 @@ import com.orientechnologies.orient.core.type.tree.OTreeMapDatabaseLazySave;
  * @author Luca Garulli
  * 
  */
-public class OPropertyIndexFullText extends OPropertyIndex {
+public class OPropertyIndexFullText extends OPropertyIndexMVRBTreeAbstract {
 	private static final String	FIELD_MAP_RID				= "mapRid";
 	private static final String	FIELD_CLUSTER_NAME	= "clusterName";
 	private static final String	FIELD_STOP_WORDS		= "stopWords";
@@ -93,7 +93,7 @@ public class OPropertyIndexFullText extends OPropertyIndex {
 		config.save();
 
 		init();
-		
+
 		return this;
 	}
 
@@ -213,18 +213,17 @@ public class OPropertyIndexFullText extends OPropertyIndex {
 		return config;
 	}
 
-	@Override
 	public INDEX_TYPE getType() {
 		return INDEX_TYPE.FULLTEXT;
+	}
+
+	@Override
+	public ORID getIdentity() {
+		return config.getIdentity();
 	}
 
 	private void init() {
 		ignoreChars = (String) config.field(FIELD_IGNORE_CHARS);
 		stopWords = new HashSet<String>(OStringSerializerHelper.split((String) config.field(FIELD_STOP_WORDS), ' '));
-	}
-
-	@Override
-	public ORID getRID() {
-		return config.getIdentity();
 	}
 }

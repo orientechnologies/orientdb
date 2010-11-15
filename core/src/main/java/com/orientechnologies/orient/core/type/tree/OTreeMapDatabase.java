@@ -78,7 +78,7 @@ public class OTreeMapDatabase<K, V> extends OTreeMapPersistent<K, V> {
 	}
 
 	@Override
-	public OTreeMapPersistent<K, V> load() throws IOException {
+	public OTreeMapPersistent<K, V> load() {
 		if (!record.getIdentity().isValid())
 			// NOTHING TO LOAD
 			return this;

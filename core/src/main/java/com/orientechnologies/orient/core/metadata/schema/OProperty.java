@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.io.IOException;
 import java.text.ParseException;
 
 import com.orientechnologies.common.listener.OProgressListener;
@@ -135,11 +134,7 @@ public class OProperty extends ODocumentWrapperNoClass {
 
 		if (document.field("index") != null) {
 			setIndex(INDEX_TYPE.valueOf((String) document.field("index-type")), ((ODocument) document.field("index")).getIdentity());
-			try {
-				index.load();
-			} catch (IOException e) {
-				OLogManager.instance().error(this, "Can't load index for property %s", e, ODatabaseException.class, toString());
-			}
+			index.load();
 		}
 	}
 
@@ -159,7 +154,7 @@ public class OProperty extends ODocumentWrapperNoClass {
 		// SAVE THE INDEX
 		if (index != null) {
 			index.lazySave();
-			document.field("index", index.getRID());
+			document.field("index", index.getIdentity());
 			document.field("index-type", index.getType());
 		} else {
 			document.field("index", ORecordId.EMPTY_RECORD_ID);
@@ -283,8 +278,7 @@ public class OProperty extends ODocumentWrapperNoClass {
 	 */
 	public void removeIndex() {
 		if (index != null) {
-			index.clear();
-			index.getRecord().delete();
+			index.delete();
 			index = null;
 			setDirty();
 		}

@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
@@ -30,7 +29,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
  * @author Luca Garulli
  * 
  */
-public class OPropertyIndexUnique extends OPropertyIndex {
+public class OPropertyIndexUnique extends OPropertyIndexMVRBTreeAbstract {
 	public OPropertyIndexUnique() {
 	}
 
@@ -56,13 +55,7 @@ public class OPropertyIndexUnique extends OPropertyIndex {
 		map.put(iKey.toString(), values);
 	}
 
-	@Override
 	public INDEX_TYPE getType() {
 		return INDEX_TYPE.UNIQUE;
-	}
-
-	@Override
-	public ORID getRID() {
-		return map.getRecord().getIdentity();
 	}
 }
