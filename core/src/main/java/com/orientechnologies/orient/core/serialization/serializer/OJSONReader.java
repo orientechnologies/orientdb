@@ -139,12 +139,6 @@ public class OJSONReader {
 		while (go && in.ready()) {
 			c = nextChar();
 
-			if (c == NEW_LINE) {
-				++lineNumber;
-				columnNumber = 0;
-			} else
-				++columnNumber;
-
 			go = false;
 			for (char j : iJumpChars) {
 				if (j == c) {
@@ -160,6 +154,13 @@ public class OJSONReader {
 	private char nextChar() throws IOException {
 		c = (char) in.read();
 		cursor++;
+
+		if (c == NEW_LINE) {
+			++lineNumber;
+			columnNumber = 0;
+		} else
+			++columnNumber;
+
 		return c;
 	}
 
