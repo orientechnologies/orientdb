@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.handler.distributed.discovery;
+package com.orientechnologies.orient.server.handler.distributed;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -28,12 +28,12 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 public class ODistributedServerDiscoveryListener extends OSoftThread {
 	private final byte[]												recvBuffer	= new byte[50000];
 	private DatagramPacket											dgram;
-	private ODistributedServerDiscoveryManager	serverNode;
+	private ODistributedServerManager	serverNode;
 	private OServerNetworkListener							binaryNetworkListener;
 
 	private MulticastSocket											socket;
 
-	public ODistributedServerDiscoveryListener(final ODistributedServerDiscoveryManager iManager,
+	public ODistributedServerDiscoveryListener(final ODistributedServerManager iManager,
 			final OServerNetworkListener iNetworkListener) {
 		super(OServer.getThreadGroup(), "DiscoveryListener");
 
@@ -81,12 +81,12 @@ public class ODistributedServerDiscoveryListener extends OSoftThread {
 
 				int i = 0;
 
-				if (!parts[i].startsWith(ODistributedServerDiscoveryManager.PACKET_HEADER))
+				if (!parts[i].startsWith(ODistributedServerManager.PACKET_HEADER))
 					return;
 
-				if (Integer.parseInt(parts[++i]) != ODistributedServerDiscoveryManager.PROTOCOL_VERSION) {
+				if (Integer.parseInt(parts[++i]) != ODistributedServerManager.PROTOCOL_VERSION) {
 					OLogManager.instance().debug(this, "Received bad multicast packet with version %s not equals to the current %d",
-							parts[i], ODistributedServerDiscoveryManager.PROTOCOL_VERSION);
+							parts[i], ODistributedServerManager.PROTOCOL_VERSION);
 					return;
 				}
 

@@ -138,7 +138,10 @@ public class OServer {
 			// SHUTDOWN HANDLERS
 			for (OServerHandler h : handlers) {
 				OLogManager.instance().info(this, "Shutdowning handler %s...", h.getName());
-				h.shutdown();
+				try {
+					h.shutdown();
+				} catch (Throwable t) {
+				}
 			}
 
 			Orient.instance().shutdown();

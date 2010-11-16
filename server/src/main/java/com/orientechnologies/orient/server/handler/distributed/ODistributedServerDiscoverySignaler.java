@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.handler.distributed.discovery;
+package com.orientechnologies.orient.server.handler.distributed;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.util.TimerTask;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.thread.OPollerThread;
 import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -35,28 +37,45 @@ public class ODistributedServerDiscoverySignaler extends OPollerThread {
 	private byte[]															discoveryPacket;
 	private DatagramPacket											dgram;
 	private DatagramSocket											socket;
-	private ODistributedServerDiscoveryManager	clusterNode;
+	private ODistributedServerManager	manager;
 
-	public ODistributedServerDiscoverySignaler(final ODistributedServerDiscoveryManager iClusterNode,
+	public ODistributedServerDiscoverySignaler(final ODistributedServerManager iManager,
 			final OServerNetworkListener iNetworkListener) {
-		super(iClusterNode.networkMulticastHeartbeat * 1000, OServer.getThreadGroup(), "DiscoverySignaler");
+		super(iManager.networkMulticastHeartbeat * 1000, OServer.getThreadGroup(), "DiscoverySignaler");
 
-		clusterNode = iClusterNode;
+		manager = iManager;
 
-		final String buffer = ODistributedServerDiscoveryManager.PACKET_HEADER + OConstants.ORIENT_VERSION + "|"
-				+ ODistributedServerDiscoveryManager.PROTOCOL_VERSION + "|" + clusterNode.name + "|"
+		final String buffer = ODistributedServerManager.PACKET_HEADER + OConstants.ORIENT_VERSION + "|"
+				+ ODistributedServerManager.PROTOCOL_VERSION + "|" + manager.name + "|"
 				+ iNetworkListener.getInboundAddr().getHostName() + "|" + iNetworkListener.getInboundAddr().getPort();
 
-		discoveryPacket = OSecurityManager.instance()
-				.encrypt(clusterNode.securityAlgorithm, clusterNode.securityKey, buffer.getBytes());
+		discoveryPacket = OSecurityManager.instance().encrypt(manager.securityAlgorithm, manager.securityKey, buffer.getBytes());
+
+		startTimeoutPresenceTask();
 
 		start();
 	}
 
+	private void startTimeoutPresenceTask() {
+		Orient.getTimer().schedule(new TimerTask() {
+			@Override
+			public void run() {
+				try {
+					// TIMEOUT: STOP TO SEND PACKETS TO BEING DISCOVERED
+					sendShutdown();
+					manager.becameLeader();
+
+				} catch (Exception e) {
+					// AVOID THE TIMER IS NOT SCHEDULED ANYMORE IN CASE OF EXCEPTION
+				}
+			}
+		}, manager.networkTimeoutLeader);
+	}
+
 	public void startup() {
 		try {
-			dgram = new DatagramPacket(discoveryPacket, discoveryPacket.length, clusterNode.networkMulticastAddress,
-					clusterNode.networkMulticastPort);
+			dgram = new DatagramPacket(discoveryPacket, discoveryPacket.length, manager.networkMulticastAddress,
+					manager.networkMulticastPort);
 			socket = new DatagramSocket();
 		} catch (Exception e) {
 			OLogManager.instance().error(this, "Can't startup distributed server discovery signaler", e);

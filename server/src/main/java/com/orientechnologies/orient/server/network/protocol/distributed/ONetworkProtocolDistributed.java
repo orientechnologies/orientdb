@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.OServerMain;
-import com.orientechnologies.orient.server.handler.distributed.discovery.ODistributedServerDiscoveryManager;
+import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
 /**
@@ -37,12 +37,12 @@ import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProto
  * 
  */
 public class ONetworkProtocolDistributed extends ONetworkProtocolBinary {
-	private ODistributedServerDiscoveryManager	manager;
+	private ODistributedServerManager	manager;
 
 	public ONetworkProtocolDistributed() {
 		super("Distributed-DB");
 
-		manager = OServerMain.server().getHandler(ODistributedServerDiscoveryManager.class);
+		manager = OServerMain.server().getHandler(ODistributedServerManager.class);
 		if (manager == null)
 			throw new OConfigurationException(
 					"Can't find a ODistributedServerDiscoveryManager instance registered as handler. Check the server configuration in the handlers section.");

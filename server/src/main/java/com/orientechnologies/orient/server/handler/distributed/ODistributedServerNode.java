@@ -1,5 +1,4 @@
 /*
- * Copyright 1999-2010 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +15,10 @@
 package com.orientechnologies.orient.server.handler.distributed;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -25,10 +26,11 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.tx.OTransactionEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
-import com.orientechnologies.orient.server.handler.distributed.discovery.ODistributedServerDiscoveryManager;
 import com.orientechnologies.orient.server.network.protocol.distributed.OChannelDistributedProtocol;
 
 /**
@@ -39,19 +41,20 @@ import com.orientechnologies.orient.server.network.protocol.distributed.OChannel
  */
 public class ODistributedServerNode {
 	public enum STATUS {
-		CONNECTING, SYNCHRONIZED, UNSYNCHRONIZED
+		DISCONNECTED, CONNECTING, SYNCHRONIZED, UNSYNCHRONIZED
 	}
 
 	public String																networkAddress;
 	public int																	networkPort;
 	public Date																	joinedOn;
-	private ODistributedServerDiscoveryManager	discoveryManager;
+	private ODistributedServerManager	discoveryManager;
 	public OChannelBinaryClient									network;
 	private OContextConfiguration								configuration;
-	private STATUS															status;
+	private STATUS															status		= STATUS.DISCONNECTED;
 	private Map<String, Long>										storages	= new HashMap<String, Long>();
+	private List<OTransactionEntry<?>>					bufferedChanges;
 
-	public ODistributedServerNode(final ODistributedServerDiscoveryManager iNode, final String iServerAddress, final int iServerPort) {
+	public ODistributedServerNode(final ODistributedServerManager iNode, final String iServerAddress, final int iServerPort) {
 		discoveryManager = iNode;
 		networkAddress = iServerAddress;
 		networkPort = iServerPort;
@@ -82,7 +85,26 @@ public class ODistributedServerNode {
 		OLogManager.instance().info(this, "Connection to remote cluster node %s:%d has been established", networkAddress, networkPort);
 	}
 
-	public boolean sendKeepAlive(final int iNetworkTimeout) {
+	public long createRecord(final ORecordInternal<?> iRecord, final String iClusterName) throws IOException {
+		if (status == STATUS.DISCONNECTED) {
+			// BUFFERIZE THE CHANGE
+			bufferedChanges.add(new OTransactionEntry<ORecordInternal<?>>(iRecord, OTransactionEntry.CREATED, iClusterName));
+			return -1;
+		} else {
+			network.writeByte(OChannelDistributedProtocol.REQUEST_RECORD_CREATE);
+			network.writeInt(0);
+			network.writeShort((short) iRecord.getDatabase().getClusterIdByName(iClusterName));
+			network.writeBytes(iRecord.toStream());
+			network.writeByte(iRecord.getRecordType());
+			network.flush();
+
+			readStatus();
+
+			return network.readLong();
+		}
+	}
+
+	public boolean sendHeartBeat(final int iNetworkTimeout) {
 		configuration.setValue(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT, iNetworkTimeout);
 		OLogManager.instance().debug(this, "Sending keepalive message to remote distributed server node %s:%d...", networkAddress,
 				networkPort);
@@ -99,6 +121,16 @@ public class ODistributedServerNode {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Set the node as DISCONNECTED and begin to collect changes up to iServerOutSynchMaxBuffers entries.
+	 * 
+	 * @param iServerOutSynchMaxBuffers
+	 *          max number of entries to collect before to remove it completely from the server node list
+	 */
+	public void startToCollectChanges(final int iServerOutSynchMaxBuffers) {
+		bufferedChanges = new ArrayList<OTransactionEntry<?>>();
 	}
 
 	public void startSynchronization() {
