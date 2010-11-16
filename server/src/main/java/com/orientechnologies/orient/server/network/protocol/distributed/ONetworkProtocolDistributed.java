@@ -25,8 +25,8 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.OServerMain;
+import com.orientechnologies.orient.server.handler.distributed.ODistributedServerLoaderChecker;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
@@ -38,6 +38,7 @@ import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProto
  */
 public class ONetworkProtocolDistributed extends ONetworkProtocolBinary {
 	private ODistributedServerManager	manager;
+	private volatile long							lastHeartBeat;
 
 	public ONetworkProtocolDistributed() {
 		super("Distributed-DB");
@@ -46,21 +47,26 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary {
 		if (manager == null)
 			throw new OConfigurationException(
 					"Can't find a ODistributedServerDiscoveryManager instance registered as handler. Check the server configuration in the handlers section.");
+
+		// FIRST TIME: SCHEDULE THE HEARTBEAT CHECKER
+		Orient.getTimer().schedule(new ODistributedServerLoaderChecker(manager, this), manager.getNetworkHeartbeatDelay(),
+				manager.getNetworkHeartbeatDelay() / 2);
 	}
 
 	@Override
 	protected void parseCommand() throws IOException {
-		if (commandType < 80) {
+		if (requestType < 80) {
 			// BINARY REQUESTS
 			super.parseCommand();
 			return;
 		}
 
 		// DISTRIBUTED SERVER REQUESTS
-		switch (commandType) {
-		case OChannelDistributedProtocol.SERVERNODE_KEEPALIVE:
+		switch (requestType) {
+		case OChannelDistributedProtocol.SERVERNODE_HEARTBEAT:
 			data.commandInfo = "Keep-alive";
-			channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_OK);
+			lastHeartBeat = System.currentTimeMillis();
+			sendOk(0);
 			break;
 
 		case OChannelDistributedProtocol.SERVERNODE_CONNECT: {
@@ -68,7 +74,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary {
 
 			manager.receivedLeaderConnection(this);
 
-			channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_OK);
+			sendOk(0);
 
 			// TRANSMITS FOR ALL THE CONFIGURED STORAGES: STORAGE/VERSION
 			Map<String, Long> storages = new HashMap<String, Long>();
@@ -89,17 +95,21 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary {
 			data.commandInfo = "Update db configuration from server node leader";
 			ODocument config = (ODocument) new ODocument().fromStream(channel.readBytes());
 
-			OLogManager.instance().warn(this, "Changed distributed server configuration:\n%s", config.toJSON(""));
+			OLogManager.instance().warn(this, "Changed distributed server configuration:\n%s", config.toJSON("indent:2"));
 
-			channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_OK);
+			sendOk(0);
 			break;
 		}
 
 		default:
 			data.commandInfo = "Command not supported";
-			OLogManager.instance().error(this, "Request not supported. Code: " + commandType);
+			OLogManager.instance().error(this, "Request not supported. Code: " + requestType);
 			channel.clearInput();
 			sendError(clientTxId, null);
 		}
+	}
+
+	public long getLastHeartBeat() {
+		return lastHeartBeat;
 	}
 }

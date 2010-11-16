@@ -64,7 +64,7 @@ public class OServerAdmin {
 			storage.getNetwork().writeString(iUserPassword);
 			storage.getNetwork().flush();
 
-			storage.readStatus();
+			storage.getNetwork().readStatus();
 
 			clientId = storage.getNetwork().readInt();
 
@@ -87,7 +87,7 @@ public class OServerAdmin {
 			storage.getNetwork().writeString(storage.getName());
 			storage.getNetwork().writeString(iStorageMode);
 
-			storage.readStatus();
+			storage.getNetwork().readStatus();
 
 		} catch (Exception e) {
 			OLogManager.instance().error(this, "Can't create the remote storage: " + storage.getName(), e, OStorageException.class);
@@ -103,7 +103,7 @@ public class OServerAdmin {
 			storage.writeCommand(OChannelBinaryProtocol.REQUEST_DB_DELETE);
 			storage.getNetwork().writeString(storage.getName());
 
-			storage.readStatus();
+			storage.getNetwork().readStatus();
 
 		} catch (Exception e) {
 			OLogManager.instance().error(this, "Can't delete the remote storage: " + storage.getName(), e, OStorageException.class);
@@ -119,7 +119,7 @@ public class OServerAdmin {
 
 		try {
 			storage.writeCommand(OChannelBinaryProtocol.REQUEST_CONFIG_LIST);
-			storage.readStatus();
+			storage.getNetwork().readStatus();
 
 			final int num = storage.getNetwork().readShort();
 
@@ -139,7 +139,7 @@ public class OServerAdmin {
 		try {
 			storage.writeCommand(OChannelBinaryProtocol.REQUEST_CONFIG_GET);
 			storage.getNetwork().writeString(iConfig.getKey());
-			storage.readStatus();
+			storage.getNetwork().readStatus();
 
 			return storage.getNetwork().readString();
 
@@ -157,7 +157,7 @@ public class OServerAdmin {
 			storage.writeCommand(OChannelBinaryProtocol.REQUEST_CONFIG_SET);
 			storage.getNetwork().writeString(iConfig.getKey());
 			storage.getNetwork().writeString(iValue != null ? iValue.toString() : "");
-			storage.readStatus();
+			storage.getNetwork().readStatus();
 
 		} catch (Exception e) {
 			OLogManager.instance().error(this, "Can't set the configuration value: " + iConfig.getKey(), e, OStorageException.class);

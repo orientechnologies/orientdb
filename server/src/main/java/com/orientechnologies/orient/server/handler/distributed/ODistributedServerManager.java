@@ -27,12 +27,16 @@ import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
+import com.orientechnologies.orient.core.tx.OTransactionEntry;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.handler.OServerHandler;
+import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.distributed.ONetworkProtocolDistributed;
 
@@ -53,7 +57,7 @@ import com.orientechnologies.orient.server.network.protocol.distributed.ONetwork
  * @see ODistributedServerDiscoveryListener, ODistributedServerDiscoverySignaler
  * 
  */
-public class ODistributedServerManager implements OServerHandler {
+public class ODistributedServerManager extends OServerHandlerAbstract {
 	protected OServer																			server;
 
 	protected String																			name;
@@ -64,9 +68,9 @@ public class ODistributedServerManager implements OServerHandler {
 	protected int																					networkMulticastHeartbeat;																					// IN MS
 	protected int																					networkTimeoutLeader;																							// IN MS
 	protected int																					networkTimeoutNode;																								// IN MS
-	protected int																					networkHeartbeatDelay;																							// IN MS
-	private int																						serverUpdateDelay;																									// IN MS
-	private int																						serverOutSynchMaxBuffers;
+	private int																						networkHeartbeatDelay;																							// IN MS
+	protected int																					serverUpdateDelay;																									// IN MS
+	protected int																					serverOutSynchMaxBuffers;
 
 	private ODistributedServerDiscoverySignaler						discoverySignaler;
 	private ODistributedServerDiscoveryListener						discoveryListener;
@@ -81,6 +85,8 @@ public class ODistributedServerManager implements OServerHandler {
 
 	private OServerNetworkListener												distributedNetworkListener;
 	private ONetworkProtocolDistributed										leaderConnection;
+
+	private ODistributedServerRecordHook									trigger;
 
 	public void startup() {
 		// LAUNCH THE SIGNAL AND WAIT FOR A CONNECTION
@@ -119,12 +125,14 @@ public class ODistributedServerManager implements OServerHandler {
 		lock.acquireExclusiveLock();
 
 		try {
-			if (nodes.containsKey(key))
-				// ALREADY REGISTERED, IGNORE IT
-				return;
+			if (nodes.containsKey(key)) {
+				// ALREADY REGISTERED, MAYBE IT WAS DISCONNECTED. INVOKE THE RECONNECTION
+				node = nodes.get(key);
+			} else {
+				node = new ODistributedServerNode(this, iServerAddress, iServerPort);
+				nodes.put(key, node);
+			}
 
-			node = new ODistributedServerNode(this, iServerAddress, iServerPort);
-			nodes.put(key, node);
 		} finally {
 			lock.releaseExclusiveLock();
 		}
@@ -152,23 +160,27 @@ public class ODistributedServerManager implements OServerHandler {
 			node.connect(networkTimeoutNode);
 		} catch (IOException e) {
 			// IO ERROR: THE NODE SEEMD ALWAYS MORE DOWN: START TO COLLECT DATA FOR IT WAITING FOR A FUTURE RE-CONNECTION
-			OLogManager.instance().warn(this, "Remote server node %s:%d is down, remove from the server list", node.networkAddress,
-					node.networkPort);
+			OLogManager.instance().warn(this, "Remote server node %s:%d is down, set it as DISCONNECTED and start to buffer changes",
+					node.networkAddress, node.networkPort);
 
-			node.startToCollectChanges(serverOutSynchMaxBuffers);
+			node.setAsTemporaryDisconnected(serverOutSynchMaxBuffers);
 		}
 	}
 
 	/**
 	 * Became the cluster leader
+	 * 
+	 * @param iForce
 	 */
-	public void becameLeader() {
+	public void becameLeader(final boolean iForce) {
 		synchronized (lock) {
 			if (discoveryListener != null)
 				// I'M ALREADY THE LEADER, DO NOTHING
 				return;
 
-			if (leaderConnection != null)
+			if (iForce)
+				leaderConnection = null;
+			else if (leaderConnection != null)
 				// I'M NOT THE LEADER CAUSE I WAS BEEN CONNECTED BY THE LEADER
 				return;
 
@@ -178,6 +190,22 @@ public class ODistributedServerManager implements OServerHandler {
 			// START HEARTBEAT FOR CONNECTIONS
 			Orient.getTimer().schedule(new ODistributedServerNodeChecker(this), networkHeartbeatDelay, networkHeartbeatDelay);
 		}
+	}
+
+	/**
+	 * Install the trigger to catch all the events on records
+	 */
+	@Override
+	public void onAfterClientRequest(final OClientConnection iConnection, final byte iRequestType) {
+		if (iRequestType == OChannelBinaryProtocol.REQUEST_DB_OPEN || iRequestType == OChannelBinaryProtocol.REQUEST_DB_CREATE) {
+			trigger = new ODistributedServerRecordHook(this, iConnection);
+			iConnection.database.registerHook(trigger);
+		}
+	}
+
+	@Override
+	public void onClientError(final OClientConnection iConnection) {
+		// handleNodeFailure(node);
 	}
 
 	/**
@@ -196,6 +224,8 @@ public class ODistributedServerManager implements OServerHandler {
 			networkTimeoutNode = 5000;
 			networkHeartbeatDelay = 5000;
 			securityAlgorithm = "Blowfish";
+			serverUpdateDelay = 0;
+			serverOutSynchMaxBuffers = 300;
 			byte[] tempSecurityKey = null;
 
 			if (iParams != null)
@@ -267,11 +297,60 @@ public class ODistributedServerManager implements OServerHandler {
 		}
 	}
 
+	public void removeNode(final ODistributedServerNode iNode) {
+		try {
+			lock.acquireExclusiveLock();
+
+			OLogManager.instance().warn(this, "Removed server node %s:%d from distributed cluster", iNode.networkAddress,
+					iNode.networkPort);
+
+			nodes.remove(iNode.toString());
+
+		} finally {
+			lock.releaseExclusiveLock();
+		}
+	}
+
 	public int getServerUpdateDelay() {
 		return serverUpdateDelay;
 	}
 
+	/**
+	 * Tells if there is a distributed configuration active right now.
+	 */
+	public boolean isDistributedConfiguration() {
+		return !nodes.isEmpty();
+	}
+
 	public String getName() {
 		return name;
+	}
+
+	/**
+	 * Distributed the request to all the configured nodes. Each node has the responsibility to bring the message early (synch-mode)
+	 * or using an asynchronous queue.
+	 * 
+	 * @param iConnection
+	 */
+	public void distributeRequest(final OClientConnection iConnection, final OTransactionEntry<ORecordInternal<?>> iTransactionEntry) {
+		lock.acquireSharedLock();
+
+		try {
+			if (nodes != null) {
+				for (ODistributedServerNode node : nodes.values()) {
+					node.sendRequest(iTransactionEntry);
+				}
+			}
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			lock.releaseSharedLock();
+		}
+
+	}
+
+	public int getNetworkHeartbeatDelay() {
+		return networkHeartbeatDelay;
 	}
 }

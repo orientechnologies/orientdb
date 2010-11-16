@@ -18,6 +18,8 @@ package com.orientechnologies.orient.enterprise.channel.binary;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,7 +28,9 @@ import java.util.List;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
+import com.orientechnologies.orient.enterprise.exception.ONetworkProtocolException;
 
 public class OChannelBinary extends OChannel {
 	public DataInputStream	in;
@@ -149,8 +153,9 @@ public class OChannelBinary extends OChannel {
 	}
 
 	public void clearInput() throws IOException {
-		while (in.available() > 0)
-			in.read();
+		if (in != null)
+			while (in.available() > 0)
+				in.read();
 	}
 
 	@Override
@@ -173,4 +178,70 @@ public class OChannelBinary extends OChannel {
 
 		super.close();
 	}
+
+	public int readStatus() throws IOException {
+		flush();
+		final byte result = readByte();
+
+		// TODO: USE THIS TO ROUTE TO THE REQUESTER TX THREAD
+		final int clientTxId = readInt();
+
+		if (result == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
+			StringBuilder buffer = new StringBuilder();
+			boolean moreDetails = false;
+			String rootClassName = null;
+
+			do {
+				final String excClassName = readString();
+				final String excMessage = readString();
+
+				if (!moreDetails) {
+					// FIRST ONE: TAKE AS ROOT CLASS/MSG
+					rootClassName = excClassName;
+				} else {
+					// DETAIL: APPEND AS STRING SINCE EXCEPTIONS DON'T ALLOW TO BE REBUILT PROGRAMMATICALLY
+					buffer.append("\n-> ");
+					buffer.append(excClassName);
+					buffer.append(": ");
+				}
+				buffer.append(excMessage);
+
+				// READ IF MORE DETAILS ARE COMING
+				moreDetails = readByte() == 1;
+
+			} while (moreDetails);
+
+			throw createException(rootClassName, buffer.toString());
+		} else if (result != OChannelBinaryProtocol.RESPONSE_STATUS_OK) {
+			// PROTOCOL ERROR
+			clearInput();
+			throw new ONetworkProtocolException("Error on reading response from the server");
+		}
+
+		return clientTxId;
+	}
+
+	@SuppressWarnings("unchecked")
+	private static RuntimeException createException(final String iClassName, final String iMessage) {
+		RuntimeException rootException = null;
+		Constructor<?> c = null;
+		try {
+			final Class<RuntimeException> excClass = (Class<RuntimeException>) Class.forName(iClassName);
+			c = excClass.getConstructor(String.class);
+		} catch (Exception e) {
+			// UNABLE TO REPRODUCE THE SAME SERVER-SIZE EXCEPTION: THROW A STORAGE EXCEPTION
+			rootException = new OStorageException(iMessage, null);
+		}
+
+		if (c != null)
+			try {
+				rootException = (RuntimeException) c.newInstance(iMessage);
+			} catch (InstantiationException e) {
+			} catch (IllegalAccessException e) {
+			} catch (InvocationTargetException e) {
+			}
+
+		return rootException;
+	}
+
 }

@@ -21,6 +21,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -69,8 +70,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.handler.OServerHandler;
-import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.handler.distributed.ODistributedServerRecordHook;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 import com.orientechnologies.orient.server.tx.OTransactionRecordProxy;
@@ -83,7 +82,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	protected String									user;
 	protected String									passwd;
 	protected ODatabaseRaw						underlyingDatabase;
-	protected int											commandType;
+	protected int											requestType;
 	protected int											clientTxId;
 	private OServerUserConfiguration	serverUser;
 
@@ -100,31 +99,36 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			throws IOException {
 		channel = new OChannelBinaryServer(iSocket, iConfig);
 		connection = iConnection;
+
 		start();
 	}
 
 	@Override
 	protected void execute() throws Exception {
-		commandType = -1;
+		requestType = -1;
 		data.commandInfo = "Listening";
 		data.commandDetail = "-";
 
 		clientTxId = 0;
 
 		try {
-			commandType = channel.readByte();
+			requestType = channel.readByte();
 			clientTxId = channel.readInt();
 
 			++data.totalRequests;
 
 			data.lastCommandReceived = System.currentTimeMillis();
 
+			invokeHandlerCallbackOnBeforeClientRequest((byte) requestType);
+
 			parseCommand();
 
+			invokeHandlerCallbackOnAfterClientRequest((byte) requestType);
+
 		} catch (EOFException eof) {
-			shutdown();
+			sendShutdown();
 		} catch (SocketException e) {
-			shutdown();
+			sendShutdown();
 		} catch (OException e) {
 			sendError(clientTxId, e);
 		} catch (Throwable t) {
@@ -149,7 +153,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 	@SuppressWarnings("unchecked")
 	protected void parseCommand() throws IOException {
-		switch (commandType) {
+		switch (requestType) {
 
 		case OChannelBinaryProtocol.REQUEST_SHUTDOWN: {
 			data.commandInfo = "Shutdowning";
@@ -213,8 +217,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			underlyingDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
 
-			installClusterTrigger();
-
 			if (!(underlyingDatabase.getStorage() instanceof OStorageMemory) && !loadUserFromSchema(user, passwd)) {
 				sendError(clientTxId, new OSecurityAccessException(connection.database.getName(), "Access denied to database '"
 						+ connection.database.getName() + "' for user: " + user));
@@ -271,7 +273,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			underlyingDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
 
-			installClusterTrigger();
+			invokeHandlerCallbackOnClientConnection();
 
 			sendOk(clientTxId);
 			break;
@@ -699,32 +701,15 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 		default:
 			data.commandInfo = "Command not supported";
-			OLogManager.instance().error(this, "Request not supported. Code: " + commandType);
+			OLogManager.instance().error(this, "Request not supported. Code: " + requestType);
 			channel.clearInput();
 			sendError(clientTxId, null);
 		}
 	}
 
-	private void serverLogin(final String iUser, final String iPassword) {
-		if (!OServerMain.server().authenticate(iUser, iPassword, "connect"))
-			throw new OSecurityAccessException(
-					"Wrong user/password to [connect] to the remote OrientDB Server instance. Get the user/password from the config/orientdb-server-config.xml file");
-
-		serverUser = OServerMain.server().getUser(iUser);
-	}
-
-	private void checkServerAccess(final String iResource) {
-		if (serverUser == null)
-			throw new OSecurityAccessException("Server user not authenticated.");
-
-		if (!OServerMain.server().authenticate(serverUser.name, null, iResource))
-			throw new OSecurityAccessException("User '" + serverUser.name + "' can't access to the resource [" + iResource
-					+ "]. Use another server user or change permission in the file config/orientdb-server-config.xml");
-	}
-
 	@Override
-	public OChannel getChannel() {
-		return channel;
+	public void startup() {
+		invokeHandlerCallbackOnClientDisconnection();
 	}
 
 	@Override
@@ -732,7 +717,14 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		sendShutdown();
 		channel.close();
 
+		invokeHandlerCallbackOnClientDisconnection();
+
 		OClientConnectionManager.instance().onClientDisconnection(connection.id);
+	}
+
+	@Override
+	public OChannel getChannel() {
+		return channel;
 	}
 
 	protected void sendOk(final int iClientTxId) throws IOException {
@@ -758,6 +750,23 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		channel.writeByte((byte) 0);
 
 		channel.clearInput();
+	}
+
+	private void serverLogin(final String iUser, final String iPassword) {
+		if (!OServerMain.server().authenticate(iUser, iPassword, "connect"))
+			throw new OSecurityAccessException(
+					"Wrong user/password to [connect] to the remote OrientDB Server instance. Get the user/password from the config/orientdb-server-config.xml file");
+
+		serverUser = OServerMain.server().getUser(iUser);
+	}
+
+	private void checkServerAccess(final String iResource) {
+		if (serverUser == null)
+			throw new OSecurityAccessException("Server user not authenticated.");
+
+		if (!OServerMain.server().authenticate(serverUser.name, null, iResource))
+			throw new OSecurityAccessException("User '" + serverUser.name + "' can't access to the resource [" + iResource
+					+ "]. Use another server user or change permission in the file config/orientdb-server-config.xml");
 	}
 
 	private boolean loadUserFromSchema(final String iUserName, final String iUserPassword) {
@@ -802,10 +811,43 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		}
 	}
 
-	private void installClusterTrigger() {
-		final OServerHandler manager = OServerMain.server().getHandler(ODistributedServerManager.class);
-		if (manager != null)
-			// INSTALL TRIGGER TO CATCH ALL THE EVENTS ON RECORDS
-			connection.database.registerHook(new ODistributedServerRecordHook(connection));
+	private void invokeHandlerCallbackOnClientConnection() {
+		final List<OServerHandler> handlers = OServerMain.server().getHandlers();
+		if (handlers != null)
+			for (OServerHandler handler : handlers) {
+				handler.onClientConnection(connection);
+			}
+	}
+
+	private void invokeHandlerCallbackOnClientDisconnection() {
+		final List<OServerHandler> handlers = OServerMain.server().getHandlers();
+		if (handlers != null)
+			for (OServerHandler handler : handlers) {
+				handler.onClientDisconnection(connection);
+			}
+	}
+
+	private void invokeHandlerCallbackOnBeforeClientRequest(final byte iRequestType) {
+		final List<OServerHandler> handlers = OServerMain.server().getHandlers();
+		if (handlers != null)
+			for (OServerHandler handler : handlers) {
+				handler.onBeforeClientRequest(connection, iRequestType);
+			}
+	}
+
+	private void invokeHandlerCallbackOnAfterClientRequest(final byte iRequestType) {
+		final List<OServerHandler> handlers = OServerMain.server().getHandlers();
+		if (handlers != null)
+			for (OServerHandler handler : handlers) {
+				handler.onAfterClientRequest(connection, iRequestType);
+			}
+	}
+
+	private void invokeHandlerCallbackOnClientError() {
+		final List<OServerHandler> handlers = OServerMain.server().getHandlers();
+		if (handlers != null)
+			for (OServerHandler handler : handlers) {
+				handler.onClientError(connection);
+			}
 	}
 }

@@ -13,20 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.network.protocol;
+package com.orientechnologies.orient.server.handler;
 
-import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.server.OClientConnection;
 
-public class ONetworkProtocolException extends OException {
+public abstract class OServerHandlerAbstract implements OServerHandler {
 
-	private static final long	serialVersionUID	= -2655748565531836968L;
-
-	public ONetworkProtocolException(String string) {
-		super(string);
+	public void onClientConnection(final OClientConnection iConnection) {
 	}
 
-	public ONetworkProtocolException(String message, Throwable cause) {
-		super(message, cause);
+	public void onClientDisconnection(final OClientConnection iConnection) {
 	}
 
+	public void onBeforeClientRequest(final OClientConnection iConnection, final byte iRequestType) {
+	}
+
+	public void onAfterClientRequest(final OClientConnection iConnection, final byte iRequestType) {
+	}
+
+	public void onClientError(final OClientConnection iConnection) {
+	}
 }

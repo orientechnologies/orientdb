@@ -44,18 +44,18 @@ public class ODistributedServerNode {
 		DISCONNECTED, CONNECTING, SYNCHRONIZED, UNSYNCHRONIZED
 	}
 
-	public String																networkAddress;
-	public int																	networkPort;
-	public Date																	joinedOn;
-	private ODistributedServerManager	discoveryManager;
-	public OChannelBinaryClient									network;
-	private OContextConfiguration								configuration;
-	private STATUS															status		= STATUS.DISCONNECTED;
-	private Map<String, Long>										storages	= new HashMap<String, Long>();
-	private List<OTransactionEntry<?>>					bufferedChanges;
+	public String																				networkAddress;
+	public int																					networkPort;
+	public Date																					joinedOn;
+	private ODistributedServerManager										manager;
+	public OChannelBinaryClient													network;
+	private OContextConfiguration												configuration;
+	private STATUS																			status					= STATUS.DISCONNECTED;
+	private Map<String, Long>														storages				= new HashMap<String, Long>();
+	private List<OTransactionEntry<ORecordInternal<?>>>	bufferedChanges	= new ArrayList<OTransactionEntry<ORecordInternal<?>>>();
 
 	public ODistributedServerNode(final ODistributedServerManager iNode, final String iServerAddress, final int iServerPort) {
-		discoveryManager = iNode;
+		manager = iNode;
 		networkAddress = iServerAddress;
 		networkPort = iServerPort;
 		joinedOn = new Date();
@@ -75,7 +75,7 @@ public class ODistributedServerNode {
 
 		readStatus();
 
-		int tot = network.readInt();
+		final int tot = network.readInt();
 		for (int i = 0; i < tot; ++i)
 			storages.put(network.readString(), network.readLong());
 
@@ -85,22 +85,65 @@ public class ODistributedServerNode {
 		OLogManager.instance().info(this, "Connection to remote cluster node %s:%d has been established", networkAddress, networkPort);
 	}
 
-	public long createRecord(final ORecordInternal<?> iRecord, final String iClusterName) throws IOException {
+	public void sendRequest(final OTransactionEntry<ORecordInternal<?>> iRequest) throws IOException {
 		if (status == STATUS.DISCONNECTED) {
-			// BUFFERIZE THE CHANGE
-			bufferedChanges.add(new OTransactionEntry<ORecordInternal<?>>(iRecord, OTransactionEntry.CREATED, iClusterName));
-			return -1;
+			synchronized (bufferedChanges) {
+				if (bufferedChanges.size() > manager.serverOutSynchMaxBuffers) {
+					// BUFFER EXCEEDS THE CONFIGURED LIMIT: REMOVE MYSELF AS NODE
+					manager.removeNode(this);
+					bufferedChanges.clear();
+				} else
+					// BUFFERIZE THE REQUEST
+					bufferedChanges.add(iRequest);
+			}
 		} else {
-			network.writeByte(OChannelDistributedProtocol.REQUEST_RECORD_CREATE);
-			network.writeInt(0);
-			network.writeShort((short) iRecord.getDatabase().getClusterIdByName(iClusterName));
-			network.writeBytes(iRecord.toStream());
-			network.writeByte(iRecord.getRecordType());
-			network.flush();
+			final ORecordInternal<?> record = iRequest.getRecord();
 
-			readStatus();
+			try {
+				switch (iRequest.status) {
+				case OTransactionEntry.CREATED:
+					network.writeByte(OChannelDistributedProtocol.REQUEST_RECORD_CREATE);
+					network.writeInt(0);
+					network.writeShort((short) record.getIdentity().getClusterId());
+					network.writeBytes(record.toStream());
+					network.writeByte(record.getRecordType());
+					network.flush();
 
-			return network.readLong();
+					network.readStatus();
+					break;
+
+				case OTransactionEntry.UPDATED:
+					network.writeByte(OChannelDistributedProtocol.REQUEST_RECORD_UPDATE);
+					network.writeInt(0);
+					network.writeShort((short) record.getIdentity().getClusterId());
+					network.writeLong(record.getIdentity().getClusterPosition());
+					network.writeBytes(record.toStream());
+					network.writeInt(record.getVersion());
+					network.writeByte(record.getRecordType());
+					network.flush();
+
+					readStatus();
+
+					network.readInt();
+					break;
+
+				case OTransactionEntry.DELETED:
+					network.writeByte(OChannelDistributedProtocol.REQUEST_RECORD_DELETE);
+					network.writeInt(0);
+					network.writeShort((short) record.getIdentity().getClusterId());
+					network.writeLong(record.getIdentity().getClusterPosition());
+					network.writeInt(record.getVersion());
+					network.flush();
+
+					readStatus();
+
+					network.readLong();
+					break;
+				}
+			} catch (RuntimeException e) {
+				// RE-THROW THE EXCEPTION
+				throw e;
+			}
 		}
 	}
 
@@ -110,27 +153,29 @@ public class ODistributedServerNode {
 				networkPort);
 
 		try {
-			network.out.writeByte(OChannelDistributedProtocol.SERVERNODE_KEEPALIVE);
+			network.out.writeByte(OChannelDistributedProtocol.SERVERNODE_HEARTBEAT);
 			network.out.writeInt(0);
 			network.flush();
 
-			if (readStatus())
-				return true;
+			readStatus();
 
 		} catch (Exception e) {
+			return false;
 		}
 
-		return false;
+		return true;
 	}
 
 	/**
-	 * Set the node as DISCONNECTED and begin to collect changes up to iServerOutSynchMaxBuffers entries.
+	 * Sets the node as DISCONNECTED and begin to collect changes up to iServerOutSynchMaxBuffers entries.
 	 * 
 	 * @param iServerOutSynchMaxBuffers
 	 *          max number of entries to collect before to remove it completely from the server node list
 	 */
-	public void startToCollectChanges(final int iServerOutSynchMaxBuffers) {
-		bufferedChanges = new ArrayList<OTransactionEntry<?>>();
+	public void setAsTemporaryDisconnected(final int iServerOutSynchMaxBuffers) {
+		if (status != STATUS.DISCONNECTED) {
+			status = STATUS.DISCONNECTED;
+		}
 	}
 
 	public void startSynchronization() {
@@ -143,9 +188,13 @@ public class ODistributedServerNode {
 			network.writeBytes(config.toStream());
 			network.flush();
 
-			if (readStatus())
-				;
+			readStatus();
+			
+			if (status == STATUS.DISCONNECTED)
+				synchronizeDelta();
+
 		} catch (Exception e) {
+			e.printStackTrace();
 		}
 
 	}
@@ -157,16 +206,34 @@ public class ODistributedServerNode {
 		return builder.toString();
 	}
 
-	private boolean readStatus() throws IOException {
-		return network.readByte() != OChannelDistributedProtocol.RESPONSE_STATUS_ERROR;
+	private void synchronizeDelta() throws IOException {
+		synchronized (bufferedChanges) {
+			if (bufferedChanges.isEmpty())
+				return;
+
+			OLogManager.instance().info(this, "Started realignment of remote node %s:%d after a reconnection. Found %d updates",
+					networkAddress, networkPort, bufferedChanges.size());
+
+			for (OTransactionEntry<ORecordInternal<?>> entry : bufferedChanges) {
+				sendRequest(entry);
+			}
+			bufferedChanges.clear();
+
+			status = STATUS.UNSYNCHRONIZED;
+		}
+
+		OLogManager.instance().info(this, "Realignment of remote node %s:%d completed", networkAddress, networkPort);
+	}
+
+	private int readStatus() throws IOException {
+		return network.readStatus();
 	}
 
 	private ODocument createDatabaseConfiguration() {
 		final ODocument config = new ODocument();
 
-		config.field("servers",
-				new ODocument(discoveryManager.getName(), new ODocument("update-delay", discoveryManager.getServerUpdateDelay())));
-		config.field("clusters", new ODocument("*", new ODocument("owner", discoveryManager.getName())));
+		config.field("servers", new ODocument(manager.getName(), new ODocument("update-delay", manager.getServerUpdateDelay())));
+		config.field("clusters", new ODocument("*", new ODocument("owner", manager.getName())));
 
 		return config;
 	}
@@ -198,5 +265,9 @@ public class ODistributedServerNode {
 		}
 
 		OLogManager.instance().info(this, "+--------------------------------+----------------+----------------+");
+	}
+
+	public STATUS getStatus() {
+		return status;
 	}
 }

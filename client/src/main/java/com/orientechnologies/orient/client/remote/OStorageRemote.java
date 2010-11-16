@@ -16,8 +16,6 @@
 package com.orientechnologies.orient.client.remote;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -132,7 +130,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 			try {
 				writeCommand(OChannelBinaryProtocol.REQUEST_DB_EXIST);
-				readStatus();
+				network.readStatus();
 				return network.readByte() == 1;
 			} catch (Exception e) {
 				if (handleException("Error on checking if the database exists", e))
@@ -197,7 +195,7 @@ public class OStorageRemote extends OStorageAbstract {
 				network.writeShort((short) iClusterId);
 				network.writeBytes(iContent);
 				network.writeByte(iRecordType);
-				readStatus();
+				network.readStatus();
 				return network.readLong();
 			} catch (Exception e) {
 				if (handleException("Error on create record in cluster: " + iClusterId, e))
@@ -226,7 +224,7 @@ public class OStorageRemote extends OStorageAbstract {
 				network.writeShort((short) iClusterId);
 				network.writeLong(iPosition);
 				network.writeString(iFetchPlan != null ? iFetchPlan : "");
-				readStatus();
+				network.readStatus();
 
 				if (network.readByte() == 0)
 					return null;
@@ -267,7 +265,7 @@ public class OStorageRemote extends OStorageAbstract {
 				network.writeBytes(iContent);
 				network.writeInt(iVersion);
 				network.writeByte(iRecordType);
-				readStatus();
+				network.readStatus();
 
 				return network.readInt();
 
@@ -294,7 +292,7 @@ public class OStorageRemote extends OStorageAbstract {
 				network.writeShort((short) iClusterId);
 				network.writeLong(iPosition);
 				network.writeInt(iVersion);
-				readStatus();
+				network.readStatus();
 
 				return network.readByte() == '1';
 			} catch (Exception e) {
@@ -321,7 +319,7 @@ public class OStorageRemote extends OStorageAbstract {
 			try {
 				writeCommand(OChannelBinaryProtocol.REQUEST_DATACLUSTER_DATARANGE);
 				network.writeShort((short) iClusterId);
-				readStatus();
+				network.readStatus();
 				return new long[] { network.readLong(), network.readLong() };
 			} catch (Exception e) {
 				if (handleException("Error on getting last entry position count in cluster: " + iClusterId, e))
@@ -345,7 +343,7 @@ public class OStorageRemote extends OStorageAbstract {
 				network.writeShort((short) iClusterIds.length);
 				for (int i = 0; i < iClusterIds.length; ++i)
 					network.writeShort((short) iClusterIds[i]);
-				readStatus();
+				network.readStatus();
 				return network.readLong();
 			} catch (Exception e) {
 				if (handleException("Error on read record count in clusters: " + iClusterIds, e))
@@ -367,7 +365,7 @@ public class OStorageRemote extends OStorageAbstract {
 			try {
 				writeCommand(OChannelBinaryProtocol.REQUEST_COUNT);
 				network.writeString(iClassName);
-				readStatus();
+				network.readStatus();
 				return network.readLong();
 			} catch (Exception e) {
 				if (handleException("Error on executing count on class: " + iClassName, e))
@@ -406,7 +404,7 @@ public class OStorageRemote extends OStorageAbstract {
 				writeCommand(OChannelBinaryProtocol.REQUEST_COMMAND);
 				network.writeByte((byte) (asynch ? 'a' : 's')); // ASYNC / SYNC
 				network.writeBytes(OStreamSerializerAnyStreamable.INSTANCE.toStream(iCommand.getDatabase(), command));
-				readStatus();
+				network.readStatus();
 
 				if (asynch) {
 					byte status;
@@ -510,7 +508,7 @@ public class OStorageRemote extends OStorageAbstract {
 						break;
 					}
 				}
-				readStatus();
+				network.readStatus();
 				break;
 			} catch (Exception e) {
 				if (handleException("Error on commit", e))
@@ -588,7 +586,7 @@ public class OStorageRemote extends OStorageAbstract {
 					network.writeInt(iArguments.length > 0 ? (Integer) iArguments[0] : -1);
 					break;
 				}
-				readStatus();
+				network.readStatus();
 
 				int clusterId = network.readShort();
 				clustersIds.put(iClusterName.toLowerCase(), clusterId);
@@ -615,7 +613,7 @@ public class OStorageRemote extends OStorageAbstract {
 				writeCommand(OChannelBinaryProtocol.REQUEST_DATACLUSTER_REMOVE);
 				network.writeShort((short) iClusterId);
 
-				readStatus();
+				network.readStatus();
 
 				if (network.readByte() == '1') {
 					// REMOVE THE CLUSTER LOCALLY
@@ -653,7 +651,7 @@ public class OStorageRemote extends OStorageAbstract {
 			try {
 				writeCommand(OChannelBinaryProtocol.REQUEST_DATASEGMENT_ADD);
 				network.writeString(iSegmentName).writeString(iSegmentFileName);
-				readStatus();
+				network.readStatus();
 				return network.readShort();
 			} catch (Exception e) {
 				if (handleException("Error on add new data segment", e))
@@ -692,7 +690,7 @@ public class OStorageRemote extends OStorageAbstract {
 				network.writeByte(iRecord.getRecordType());
 				network.writeShort((short) rid.getClusterId());
 				network.writeLong(rid.getClusterPosition());
-				readStatus();
+				network.readStatus();
 
 				return (REC) readRecordFromNetwork(iDatabase);
 
@@ -716,7 +714,7 @@ public class OStorageRemote extends OStorageAbstract {
 			try {
 				writeCommand(OChannelBinaryProtocol.REQUEST_DICTIONARY_LOOKUP);
 				network.writeString(iKey);
-				readStatus();
+				network.readStatus();
 
 				return (REC) readRecordFromNetwork(iDatabase);
 
@@ -740,7 +738,7 @@ public class OStorageRemote extends OStorageAbstract {
 			try {
 				writeCommand(OChannelBinaryProtocol.REQUEST_DICTIONARY_REMOVE);
 				network.writeString(iKey.toString());
-				readStatus();
+				network.readStatus();
 
 				return (REC) readRecordFromNetwork(iDatabase);
 
@@ -763,7 +761,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 			try {
 				writeCommand(OChannelBinaryProtocol.REQUEST_DICTIONARY_SIZE);
-				readStatus();
+				network.readStatus();
 				return network.readInt();
 			} catch (Exception e) {
 				if (handleException("Error on getting size of database's dictionary", e))
@@ -788,7 +786,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 			try {
 				writeCommand(OChannelBinaryProtocol.REQUEST_DICTIONARY_KEYS);
-				readStatus();
+				network.readStatus();
 				return network.readStringSet();
 			} catch (Exception e) {
 				if (handleException("Error on getting keys of database's dictionary", e))
@@ -818,42 +816,6 @@ public class OStorageRemote extends OStorageAbstract {
 
 	public OCluster getClusterById(final int iId) {
 		throw new UnsupportedOperationException("getClusterById()");
-	}
-
-	protected void readStatus() throws IOException {
-		network.flush();
-		final byte result = network.readByte();
-
-		// TODO: USE THIS TO ROUTE TO THE REQUESTER TX THREAD
-		final int clientTxId = network.readInt();
-
-		if (result == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
-			StringBuilder buffer = new StringBuilder();
-			boolean moreDetails = false;
-			String rootClassName = null;
-
-			do {
-				final String excClassName = network.readString();
-				final String excMessage = network.readString();
-
-				if (!moreDetails) {
-					// FIRST ONE: TAKE AS ROOT CLASS/MSG
-					rootClassName = excClassName;
-				} else {
-					// DETAIL: APPEND AS STRING SINCE EXCEPTIONS DON'T ALLOW TO BE REBUILT PROGRAMMATICALLY
-					buffer.append("\n-> ");
-					buffer.append(excClassName);
-					buffer.append(": ");
-				}
-				buffer.append(excMessage);
-
-				// READ IF MORE DETAILS ARE COMING
-				moreDetails = network.readByte() == 1;
-
-			} while (moreDetails);
-
-			throw createException(rootClassName, buffer.toString());
-		}
 	}
 
 	protected boolean handleException(final String iMessage, final Exception iException) {
@@ -902,7 +864,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 		writeCommand(OChannelBinaryProtocol.REQUEST_DB_OPEN);
 		network.writeString(name).writeString(userName).writeString(userPassword);
-		readStatus();
+		network.readStatus();
 
 		txId = network.readInt();
 		OLogManager.instance().debug(null, "Client connected with session id: " + txId);
@@ -1020,28 +982,6 @@ public class OStorageRemote extends OStorageAbstract {
 		record.fromStream(network.readBytes());
 
 		return record;
-	}
-
-	private RuntimeException createException(final String iClassName, final String iMessage) {
-		RuntimeException rootException = null;
-		Constructor<?> c = null;
-		try {
-			final Class<RuntimeException> excClass = (Class<RuntimeException>) Class.forName(iClassName);
-			c = excClass.getConstructor(String.class);
-		} catch (Exception e) {
-			// UNABLE TO REPRODUCE THE SAME SERVER-SIZE EXCEPTION: THROW A STORAGE EXCEPTION
-			rootException = new OStorageException(iMessage, null);
-		}
-
-		if (c != null)
-			try {
-				rootException = (RuntimeException) c.newInstance(iMessage);
-			} catch (InstantiationException e) {
-			} catch (IllegalAccessException e) {
-			} catch (InvocationTargetException e) {
-			}
-
-		return rootException;
 	}
 
 	protected void writeCommand(final byte iCommand) throws IOException {

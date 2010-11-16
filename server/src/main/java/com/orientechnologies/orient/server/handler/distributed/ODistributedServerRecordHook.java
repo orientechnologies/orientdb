@@ -15,9 +15,10 @@
  */
 package com.orientechnologies.orient.server.handler.distributed;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.tx.OTransactionEntry;
 import com.orientechnologies.orient.server.OClientConnection;
 
 /**
@@ -27,29 +28,39 @@ import com.orientechnologies.orient.server.OClientConnection;
  */
 public class ODistributedServerRecordHook implements ORecordHook {
 
-	private int								syncReplicas;
-	private OClientConnection	connection;
+	private ODistributedServerManager	manager;
+	private OClientConnection					connection;
 
-	public ODistributedServerRecordHook(final OClientConnection iConnection) {
+	public ODistributedServerRecordHook(final ODistributedServerManager iDistributedServerManager, final OClientConnection iConnection) {
+		manager = iDistributedServerManager;
 		connection = iConnection;
-		syncReplicas = OGlobalConfiguration.DISTRIBUTED_SERVER_SYNC_REPLICAS.getValueAsInteger();
 	}
 
 	public void onTrigger(final TYPE iType, final ORecord<?> iRecord) {
+		if (!manager.isDistributedConfiguration())
+			return;
+
 		switch (iType) {
 		case AFTER_CREATE:
+			manager.distributeRequest(connection, new OTransactionEntry<ORecordInternal<?>>((ORecordInternal<?>) iRecord,
+					OTransactionEntry.CREATED, null));
 			break;
 
 		case AFTER_UPDATE:
+			manager.distributeRequest(connection, new OTransactionEntry<ORecordInternal<?>>((ORecordInternal<?>) iRecord,
+					OTransactionEntry.UPDATED, null));
 			break;
 
 		case AFTER_DELETE:
+			manager.distributeRequest(connection, new OTransactionEntry<ORecordInternal<?>>((ORecordInternal<?>) iRecord,
+					OTransactionEntry.DELETED, null));
 			break;
 
 		default:
+			// NOT DISTRIBUTED REQUEST, JUST RETURN
 			return;
 		}
 
-		// System.out.println("\nCatched update to database: " + iType + " record: " + iRecord);
+		System.out.println("\nCatched update to database: " + iType + " record: " + iRecord);
 	}
 }

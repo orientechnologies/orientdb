@@ -39,12 +39,12 @@ import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.text.OChannelTextServer;
+import com.orientechnologies.orient.enterprise.exception.ONetworkProtocolException;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
-import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolException;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {

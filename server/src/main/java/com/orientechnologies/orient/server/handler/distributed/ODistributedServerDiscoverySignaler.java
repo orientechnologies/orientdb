@@ -63,7 +63,7 @@ public class ODistributedServerDiscoverySignaler extends OPollerThread {
 				try {
 					// TIMEOUT: STOP TO SEND PACKETS TO BEING DISCOVERED
 					sendShutdown();
-					manager.becameLeader();
+					manager.becameLeader(false);
 
 				} catch (Exception e) {
 					// AVOID THE TIMER IS NOT SCHEDULED ANYMORE IN CASE OF EXCEPTION

@@ -18,6 +18,7 @@ package com.orientechnologies.orient.server.handler.distributed;
 import java.util.List;
 import java.util.TimerTask;
 
+import com.orientechnologies.orient.server.handler.distributed.ODistributedServerNode.STATUS;
 
 /**
  * Checks that active nodes are up and running
@@ -44,15 +45,17 @@ public class ODistributedServerNodeChecker extends TimerTask {
 
 			// CHECK EVERY SINGLE NODE
 			for (ODistributedServerNode node : nodeList) {
-				if (!node.sendHeartBeat(manager.networkTimeoutLeader)) {
-					manager.handleNodeFailure(node);
-				}
+				if (node.getStatus() != STATUS.DISCONNECTED)
+					if (!node.sendHeartBeat(manager.networkTimeoutLeader)) {
+						manager.handleNodeFailure(node);
+					}
 			}
 
 			nodeList.clear();
 
 		} catch (Exception e) {
 			// AVOID THE TIMER IS NOT SCHEDULED ANYMORE IN CASE OF EXCEPTION
+			e.printStackTrace();
 		}
 	}
 }

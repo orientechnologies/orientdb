@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.network.protocol.distributed;
+package com.orientechnologies.orient.enterprise.exception;
 
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.common.exception.OException;
 
-/**
- * Cluster extension to the default binary protocol. The range of requests is 80-90.
- * 
- * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
- */
-public class OChannelDistributedProtocol extends OChannelBinaryProtocol {
-	public static final byte	SERVERNODE_HEARTBEAT				= 80;
-	public static final byte	SERVERNODE_CONNECT					= 81;
-	public static final byte	SERVERNODE_DISCONNECT				= 82;
+public class ONetworkProtocolException extends OException {
 
-	public static final byte	SERVERNODE_DB_CONFIG	= 83;
+	private static final long	serialVersionUID	= -2655748565531836968L;
+
+	public ONetworkProtocolException(String string) {
+		super(string);
+	}
+
+	public ONetworkProtocolException(String message, Throwable cause) {
+		super(message, cause);
+	}
+
 }

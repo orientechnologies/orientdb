@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.handler;
 
 import com.orientechnologies.common.util.OService;
+import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 
@@ -26,5 +27,33 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
  * 
  */
 public interface OServerHandler extends OService {
-  public void config(OServer oServer, OServerParameterConfiguration[] iParams);
+	/**
+	 * Callback invoked when a client connection begins.
+	 */
+	public void onClientConnection(OClientConnection iConnection);
+
+	/**
+	 * Callback invoked when a client connection ends.
+	 */
+	public void onClientDisconnection(OClientConnection iConnection);
+
+	/**
+	 * Callback invoked before a client request is processed.
+	 */
+	public void onBeforeClientRequest(OClientConnection iConnection, byte iRequestType);
+
+	/**
+	 * Callback invoked after a client request is processed.
+	 */
+	public void onAfterClientRequest(OClientConnection iConnection, byte iRequestType);
+
+	/**
+	 * Callback invoked when a client connection has errors.
+	 */
+	public void onClientError(OClientConnection iConnection);
+
+	/**
+	 * Configures the handler. Called at startup.
+	 */
+	public void config(OServer oServer, OServerParameterConfiguration[] iParams);
 }
