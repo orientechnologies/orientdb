@@ -70,6 +70,11 @@
 			<class name="com.orientechnologies.orient.test.database.auto.WrongQueryTest" />
 		</classes>
 	</test>
+	<test name="Parsing">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.JSONTest" />
+		</classes>
+	</test>
 	<test name="Graph">
 		<classes>
 			<class name="com.orientechnologies.orient.test.database.auto.GraphTestFixedDensity" />

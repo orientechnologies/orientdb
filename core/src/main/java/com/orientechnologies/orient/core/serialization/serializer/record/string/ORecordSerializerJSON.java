@@ -20,6 +20,7 @@ import java.io.StringWriter;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -181,8 +182,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			// OBJECT OR MAP. CHECK THE TYPE ATTRIBUTE TO KNOW IT
 			String[] fields = OStringParser.getWords(iFieldValueAsString, ":,", true);
 			if (fields == null || fields.length == 0)
-				// EMPTY, WHAT EVER IT WAS
-				return null;
+				// EMPTY, RETURN an EMPTY HASHMAP
+				return new HashMap<String, Object>();
 
 			if (fields[0].equals("\"@type\""))
 				// OBJECT
