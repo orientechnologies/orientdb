@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -131,7 +132,7 @@ public abstract class OStringSerializerHelper {
 		throw new IllegalArgumentException("Type " + iType + " not supported to convert value: " + iValue);
 	}
 
-	public static String fieldTypeToString(final ODatabaseRecord<?> iDatabase, OType iType, final Object iValue) {
+	public static String fieldTypeToString(final ODatabaseComplex<?> iDatabase, OType iType, final Object iValue) {
 		if (iValue == null)
 			return null;
 

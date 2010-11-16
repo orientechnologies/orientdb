@@ -26,6 +26,7 @@ import java.util.Set;
 
 import com.orientechnologies.orient.core.annotation.OAfterSerialization;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -216,7 +217,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		return map;
 	}
 
-	public String fieldToStream(final ODocument iRecord, final ODatabaseRecord<?> iDatabase,
+	public String fieldToStream(final ODocument iRecord, final ODatabaseComplex<?> iDatabase,
 			final OUserObject2RecordHandler iObjHandler, final OType iType, final OClass iLinkedClass, final OType iLinkedType,
 			final String iName, final Object iValue, final Set<Integer> iMarshalledRecords) {
 		StringBuilder buffer = new StringBuilder();
@@ -460,7 +461,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		return coll;
 	}
 
-	public void embeddedCollectionToStream(final ODatabaseRecord<?> iDatabase, final OUserObject2RecordHandler iObjHandler,
+	public void embeddedCollectionToStream(final ODatabaseComplex<?> iDatabase, final OUserObject2RecordHandler iObjHandler,
 			final OClass iLinkedClass, final OType iLinkedType, final Object iValue, final Set<Integer> iMarshalledRecords,
 			StringBuilder buffer) {
 		buffer.append(OStringSerializerHelper.COLLECTION_BEGIN);

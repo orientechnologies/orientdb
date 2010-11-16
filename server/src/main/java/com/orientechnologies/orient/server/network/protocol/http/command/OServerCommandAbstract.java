@@ -34,172 +34,172 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 public abstract class OServerCommandAbstract implements OServerCommand {
 
-  protected boolean useCache = false;
+	private static final String	JSON_FORMAT	= "indent:2,rid,version,attribSameRow,class";
+	protected boolean						useCache		= false;
 
-  public boolean beforeExecute(final OHttpRequest iRequest) throws IOException {
-    return true;
-  }
+	public boolean beforeExecute(final OHttpRequest iRequest) throws IOException {
+		return true;
+	}
 
-  protected void sendTextContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iHeaders,
-      final String iContentType, final Object iContent) throws IOException {
-    sendTextContent(iRequest, iCode, iReason, iHeaders, iContentType, iContent, true);
-  }
+	protected void sendTextContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iHeaders,
+			final String iContentType, final Object iContent) throws IOException {
+		sendTextContent(iRequest, iCode, iReason, iHeaders, iContentType, iContent, true);
+	}
 
-  protected void sendTextContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iHeaders,
-      final String iContentType, final Object iContent, final boolean iKeepAlive) throws IOException {
-    final String content = iContent != null ? iContent.toString() : null;
+	protected void sendTextContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iHeaders,
+			final String iContentType, final Object iContent, final boolean iKeepAlive) throws IOException {
+		final String content = iContent != null ? iContent.toString() : null;
 
-    final boolean empty = content == null || content.length() == 0;
+		final boolean empty = content == null || content.length() == 0;
 
-    sendStatus(iRequest, empty && iCode == 200 ? 204 : iCode, iReason);
-    sendResponseHeaders(iRequest, iContentType, iKeepAlive);
-    if (iHeaders != null)
-      writeLine(iRequest, iHeaders);
+		sendStatus(iRequest, empty && iCode == 200 ? 204 : iCode, iReason);
+		sendResponseHeaders(iRequest, iContentType, iKeepAlive);
+		if (iHeaders != null)
+			writeLine(iRequest, iHeaders);
 
-    final String sessId = iRequest.sessionId != null ? iRequest.sessionId : "-";
+		final String sessId = iRequest.sessionId != null ? iRequest.sessionId : "-";
 
-    writeLine(iRequest, "Set-Cookie: OSESSIONID=" + sessId + "; Path=/; HttpOnly");
+		writeLine(iRequest, "Set-Cookie: OSESSIONID=" + sessId + "; Path=/; HttpOnly");
 
-    writeLine(iRequest, OHttpUtils.CONTENT_LENGTH + (empty ? 0 : content.length()));
+		writeLine(iRequest, OHttpUtils.CONTENT_LENGTH + (empty ? 0 : content.length()));
 
-    writeLine(iRequest, null);
+		writeLine(iRequest, null);
 
-    if (!empty)
-      writeContent(iRequest, content);
+		if (!empty)
+			writeContent(iRequest, content);
 
-    iRequest.channel.flush();
-  }
+		iRequest.channel.flush();
+	}
 
-  protected void sendStatus(final OHttpRequest iRequest, final int iStatus, final String iReason) throws IOException {
-    writeLine(iRequest, iRequest.httpVersion + " " + iStatus + " " + iReason);
-  }
+	protected void sendStatus(final OHttpRequest iRequest, final int iStatus, final String iReason) throws IOException {
+		writeLine(iRequest, iRequest.httpVersion + " " + iStatus + " " + iReason);
+	}
 
-  protected void sendResponseHeaders(final OHttpRequest iRequest, final String iContentType) throws IOException {
-    sendResponseHeaders(iRequest, iContentType, true);
-  }
+	protected void sendResponseHeaders(final OHttpRequest iRequest, final String iContentType) throws IOException {
+		sendResponseHeaders(iRequest, iContentType, true);
+	}
 
-  protected void sendResponseHeaders(final OHttpRequest iRequest, final String iContentType, final boolean iKeepAlive)
-      throws IOException {
-    if (!useCache) {
-      writeLine(iRequest, "Cache-Control: no-cache, no-store, max-age=0, must-revalidate");
-      writeLine(iRequest, "Pragma: no-cache");
-    }
-    writeLine(iRequest, "Date: " + new Date());
-    writeLine(iRequest, "Content-Type: " + iContentType);
-    writeLine(iRequest, "Server: " + iRequest.data.serverInfo);
-    writeLine(iRequest, "Connection: " + (iKeepAlive ? "Keep-Alive" : "Close"));
-  }
+	protected void sendResponseHeaders(final OHttpRequest iRequest, final String iContentType, final boolean iKeepAlive)
+			throws IOException {
+		if (!useCache) {
+			writeLine(iRequest, "Cache-Control: no-cache, no-store, max-age=0, must-revalidate");
+			writeLine(iRequest, "Pragma: no-cache");
+		}
+		writeLine(iRequest, "Date: " + new Date());
+		writeLine(iRequest, "Content-Type: " + iContentType);
+		writeLine(iRequest, "Server: " + iRequest.data.serverInfo);
+		writeLine(iRequest, "Connection: " + (iKeepAlive ? "Keep-Alive" : "Close"));
+	}
 
-  protected void writeLine(final OHttpRequest iRequest, final String iContent) throws IOException {
-    writeContent(iRequest, iContent);
-    iRequest.channel.outStream.write(OHttpUtils.EOL);
-  }
+	protected void writeLine(final OHttpRequest iRequest, final String iContent) throws IOException {
+		writeContent(iRequest, iContent);
+		iRequest.channel.outStream.write(OHttpUtils.EOL);
+	}
 
-  protected void writeContent(final OHttpRequest iRequest, final String iContent) throws IOException {
-    if (iContent != null)
-      iRequest.channel.outStream.write(OBinaryProtocol.string2bytes(iContent));
-  }
+	protected void writeContent(final OHttpRequest iRequest, final String iContent) throws IOException {
+		if (iContent != null)
+			iRequest.channel.outStream.write(OBinaryProtocol.string2bytes(iContent));
+	}
 
-  protected String[] checkSyntax(String iURL, final int iArgumentCount, final String iSyntax) {
-    final int parametersPos = iURL.indexOf("?");
-    if (parametersPos > -1)
-      iURL = iURL.substring(0, parametersPos);
+	protected String[] checkSyntax(String iURL, final int iArgumentCount, final String iSyntax) {
+		final int parametersPos = iURL.indexOf("?");
+		if (parametersPos > -1)
+			iURL = iURL.substring(0, parametersPos);
 
-    String[] parts = iURL.substring(1).split("/");
-    if (parts.length < iArgumentCount)
-      throw new OHttpRequestException(iSyntax);
+		String[] parts = iURL.substring(1).split("/");
+		if (parts.length < iArgumentCount)
+			throw new OHttpRequestException(iSyntax);
 
-    return parts;
-  }
+		return parts;
+	}
 
-  protected void sendRecordsContent(final OHttpRequest iRequest, final List<ORecord<?>> iRecords) throws IOException {
-    final StringWriter buffer = new StringWriter();
-    final OJSONWriter json = new OJSONWriter(buffer);
-    json.beginObject();
+	protected void sendRecordsContent(final OHttpRequest iRequest, final List<ORecord<?>> iRecords) throws IOException {
+		final StringWriter buffer = new StringWriter();
+		final OJSONWriter json = new OJSONWriter(buffer, JSON_FORMAT);
+		json.beginObject();
 
-    // WRITE ENTITY SCHEMA IF ANY
-    if (iRecords != null && iRecords.size() > 0) {
-      ORecord<?> first = iRecords.get(0);
-      if (first != null && first instanceof ODocument) {
-        ODatabaseRecord<?> db = (ODatabaseRecord<?>) ((ODocument) first).getDatabase();
+		// WRITE ENTITY SCHEMA IF ANY
+		if (iRecords != null && iRecords.size() > 0) {
+			ORecord<?> first = iRecords.get(0);
+			if (first != null && first instanceof ODocument) {
+				ODatabaseRecord<?> db = (ODatabaseRecord<?>) ((ODocument) first).getDatabase();
 
-        String className = ((ODocument) first).getClassName();
-        exportClassSchema(db, json, db.getMetadata().getSchema().getClass(className));
-      }
-    }
+				String className = ((ODocument) first).getClassName();
+				exportClassSchema(db, json, db.getMetadata().getSchema().getClass(className));
+			}
+		}
 
-    // WRITE RECORDS
-    json.beginCollection(1, true, "result");
-    if (iRecords != null) {
-      int counter = 0;
-      String objectJson;
-      for (ORecord<?> rec : iRecords) {
-        try {
-          objectJson = rec.toJSON("indent:2,rid,version,attribSameRow,class");
+		// WRITE RECORDS
+		json.beginCollection(1, true, "result");
+		if (iRecords != null) {
+			int counter = 0;
+			String objectJson;
+			for (ORecord<?> rec : iRecords) {
+				try {
+					objectJson = rec.toJSON(JSON_FORMAT);
 
-          if (counter++ > 0)
-            buffer.append(", ");
+					if (counter++ > 0)
+						buffer.append(", ");
 
-          buffer.append(objectJson);
-        } catch (Exception e) {
-        }
-      }
-    }
-    json.endCollection(1, true);
+					buffer.append(objectJson);
+				} catch (Exception e) {
+				}
+			}
+		}
+		json.endCollection(1, true);
 
-    json.endObject();
+		json.endObject();
 
-    sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, buffer.toString());
-  }
+		sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, buffer.toString());
+	}
 
-  protected void sendRecordContent(final OHttpRequest iRequest, final ORecord<?> iRecord) throws IOException {
-    if (iRecord != null)
-      sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN,
-          iRecord.toJSON("rid,version,class,attribSameRow"));
-  }
+	protected void sendRecordContent(final OHttpRequest iRequest, final ORecord<?> iRecord) throws IOException {
+		if (iRecord != null)
+			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, iRecord.toJSON(JSON_FORMAT));
+	}
 
-  protected void sendBinaryContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iContentType,
-      final InputStream iContent, final long iSize) throws IOException {
-    sendStatus(iRequest, iCode, iReason);
-    sendResponseHeaders(iRequest, iContentType);
-    writeLine(iRequest, OHttpUtils.CONTENT_LENGTH + (iSize));
-    writeLine(iRequest, null);
+	protected void sendBinaryContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iContentType,
+			final InputStream iContent, final long iSize) throws IOException {
+		sendStatus(iRequest, iCode, iReason);
+		sendResponseHeaders(iRequest, iContentType);
+		writeLine(iRequest, OHttpUtils.CONTENT_LENGTH + (iSize));
+		writeLine(iRequest, null);
 
-    while (iContent.available() > 0)
-      iRequest.channel.outStream.write((byte) iContent.read());
+		while (iContent.available() > 0)
+			iRequest.channel.outStream.write((byte) iContent.read());
 
-    iRequest.channel.flush();
-  }
+		iRequest.channel.flush();
+	}
 
-  public void exportClassSchema(final ODatabaseRecord<?> db, final OJSONWriter json, final OClass cls) throws IOException {
-    if (cls == null)
-      return;
+	public void exportClassSchema(final ODatabaseRecord<?> db, final OJSONWriter json, final OClass cls) throws IOException {
+		if (cls == null)
+			return;
 
-    json.write(" \"schema\": ");
-    json.beginObject(1, false, null);
-    json.writeAttribute(2, true, "id", cls.getId());
-    json.writeAttribute(2, true, "name", cls.getName());
+		json.write(" \"schema\": ");
+		json.beginObject(1, false, null);
+		json.writeAttribute(2, true, "id", cls.getId());
+		json.writeAttribute(2, true, "name", cls.getName());
 
-    if (cls.properties() != null && cls.properties().size() > 0) {
-      json.beginObject(2, true, "properties");
-      for (OProperty prop : cls.properties()) {
-        json.beginObject(3, true, prop.getName());
-        json.writeAttribute(4, true, "id", prop.getId());
-        json.writeAttribute(4, true, "name", prop.getName());
-        if (prop.getLinkedClass() != null)
-          json.writeAttribute(4, true, "linkedClass", prop.getLinkedClass().getName());
-        if (prop.getLinkedType() != null)
-          json.writeAttribute(4, true, "linkedType", prop.getLinkedType().toString());
-        json.writeAttribute(4, true, "type", prop.getType().toString());
-        json.writeAttribute(4, true, "mandatory", prop.isMandatory());
-        json.writeAttribute(4, true, "notNull", prop.isNotNull());
-        json.writeAttribute(4, true, "min", prop.getMin());
-        json.writeAttribute(4, true, "max", prop.getMax());
-        json.endObject(3, true);
-      }
-      json.endObject(2, true);
-    }
-    json.endObject(1, true);
-  }
+		if (cls.properties() != null && cls.properties().size() > 0) {
+			json.beginObject(2, true, "properties");
+			for (OProperty prop : cls.properties()) {
+				json.beginObject(3, true, prop.getName());
+				json.writeAttribute(4, true, "id", prop.getId());
+				json.writeAttribute(4, true, "name", prop.getName());
+				if (prop.getLinkedClass() != null)
+					json.writeAttribute(4, true, "linkedClass", prop.getLinkedClass().getName());
+				if (prop.getLinkedType() != null)
+					json.writeAttribute(4, true, "linkedType", prop.getLinkedType().toString());
+				json.writeAttribute(4, true, "type", prop.getType().toString());
+				json.writeAttribute(4, true, "mandatory", prop.isMandatory());
+				json.writeAttribute(4, true, "notNull", prop.isNotNull());
+				json.writeAttribute(4, true, "min", prop.getMin());
+				json.writeAttribute(4, true, "max", prop.getMax());
+				json.endObject(3, true);
+			}
+			json.endObject(2, true);
+		}
+		json.endObject(1, true);
+	}
 
 }

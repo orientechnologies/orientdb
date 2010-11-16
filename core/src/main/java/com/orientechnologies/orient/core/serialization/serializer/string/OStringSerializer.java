@@ -15,12 +15,12 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.string;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
 
 public interface OStringSerializer {
-	public String toStream(ODatabaseRecord<?> iDatabase, Object iSource);
+	public String toStream(ODatabaseComplex<?> iDatabase, Object iSource);
 
-	public Object fromStream(ODatabaseRecord<?> iDatabase, String iSource);
+	public Object fromStream(ODatabaseComplex<?> iDatabase, String iSource);
 
 	public String getName();
 }

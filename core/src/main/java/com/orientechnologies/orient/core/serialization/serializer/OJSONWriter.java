@@ -32,12 +32,20 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 
 @SuppressWarnings("unchecked")
 public class OJSONWriter {
-	private Writer	out;
-	private boolean	prettyPrint			= true;
-	private boolean	firstAttribute	= true;
+	private static final String	DEF_FORMAT			= "rid,type,version,class,attribSameRow,indent:6";
+	private Writer							out;
+	private boolean							prettyPrint			= true;
+	private boolean							firstAttribute	= true;
+	private final String				format;
+
+	public OJSONWriter(final Writer out, final String iJsonFormat) {
+		this.out = out;
+		format = iJsonFormat;
+	}
 
 	public OJSONWriter(final Writer out) {
 		this.out = out;
+		this.format = DEF_FORMAT;
 	}
 
 	public OJSONWriter beginObject() throws IOException {
@@ -107,11 +115,12 @@ public class OJSONWriter {
 		return this;
 	}
 
-	public void writeObjects(int iIdentLevel, boolean iNewLine, String iName, Object[]... iPairs) throws IOException {
+	public void writeObjects(int iIdentLevel, boolean iNewLine, final String iName, Object[]... iPairs)
+			throws IOException {
 		for (int i = 0; i < iPairs.length; ++i) {
 			beginObject(iIdentLevel, true, iName);
 			for (int k = 0; k < iPairs[i].length;) {
-				writeAttribute(iIdentLevel + 1, false, (String) iPairs[i][k++], iPairs[i][k++]);
+				writeAttribute(iIdentLevel + 1, false, (String) iPairs[i][k++], iPairs[i][k++], format);
 			}
 			endObject(iIdentLevel, false);
 		}
@@ -119,14 +128,19 @@ public class OJSONWriter {
 
 	public OJSONWriter writeAttribute(final int iIdentLevel, final boolean iNewLine, final String iName, final Object iValue)
 			throws IOException {
+		return writeAttribute(iIdentLevel, iNewLine, iName, iValue, format);
+	}
+
+	public OJSONWriter writeAttribute(final int iIdentLevel, final boolean iNewLine, final String iName, final Object iValue,
+			final String iFormat) throws IOException {
 		if (!firstAttribute)
 			out.append(", ");
 
 		format(iIdentLevel, iNewLine);
 
-		out.append(writeValue(iName));
+		out.append(writeValue(iName, iFormat));
 		out.append(": ");
-		out.append(writeValue(iValue));
+		out.append(writeValue(iValue, iFormat));
 
 		firstAttribute = false;
 		return this;
@@ -138,32 +152,36 @@ public class OJSONWriter {
 
 		format(iIdentLevel, iNewLine);
 
-		out.append(writeValue(iValue));
+		out.append(writeValue(iValue, format));
 
 		firstAttribute = false;
 		return this;
 	}
 
 	public static String writeValue(final Object iValue) throws IOException {
+		return writeValue(iValue, DEF_FORMAT);
+	}
+
+	public static String writeValue(final Object iValue, final String iFormat) throws IOException {
 		final StringBuilder buffer = new StringBuilder();
 
 		if (iValue == null)
 			buffer.append("null");
 
 		else if (iValue instanceof ORecordId) {
-			ORecordId rid = (ORecordId) iValue;
+			final ORecordId rid = (ORecordId) iValue;
 			buffer.append("\"");
 			buffer.append(rid.toString());
 			buffer.append('\"');
 
 		} else if (iValue instanceof ORecord<?>) {
-			ORecord<?> linked = (ORecord<?>) iValue;
+			final ORecord<?> linked = (ORecord<?>) iValue;
 			if (linked.getIdentity().isValid()) {
 				buffer.append("\"#");
 				buffer.append(linked.getIdentity().toString());
 				buffer.append('\"');
 			} else {
-				buffer.append(linked.toJSON("rid,type,version,class,attribSameRow,indent:6"));
+				buffer.append(linked.toJSON(iFormat));
 
 			}
 
@@ -171,7 +189,7 @@ public class OJSONWriter {
 
 			if (iValue instanceof byte[]) {
 				buffer.append('\"');
-				byte[] source = (byte[]) iValue;
+				final byte[] source = (byte[]) iValue;
 
 				buffer.append(OBase64Utils.encodeBytes(source));
 
@@ -181,24 +199,24 @@ public class OJSONWriter {
 				for (int i = 0; i < Array.getLength(iValue); ++i) {
 					if (i > 0)
 						buffer.append(", ");
-					buffer.append(writeValue(Array.get(iValue, i)));
+					buffer.append(writeValue(Array.get(iValue, i), iFormat));
 				}
 				buffer.append(']');
 			}
 
 		} else if (iValue instanceof Collection<?>) {
-			Collection<Object> coll = (Collection<Object>) iValue;
+			final Collection<Object> coll = (Collection<Object>) iValue;
 			buffer.append('[');
 			int i = 0;
 			for (Iterator<Object> it = coll.iterator(); it.hasNext(); ++i) {
 				if (i > 0)
 					buffer.append(", ");
-				buffer.append(writeValue(it.next()));
+				buffer.append(writeValue(it.next(), iFormat));
 			}
 			buffer.append(']');
 
 		} else if (iValue instanceof Map<?, ?>) {
-			Map<Object, Object> map = (Map<Object, Object>) iValue;
+			final Map<Object, Object> map = (Map<Object, Object>) iValue;
 			buffer.append('{');
 			int i = 0;
 			Entry<Object, Object> entry;
@@ -206,9 +224,9 @@ public class OJSONWriter {
 				entry = it.next();
 				if (i > 0)
 					buffer.append(", ");
-				buffer.append(writeValue(entry.getKey()));
+				buffer.append(writeValue(entry.getKey(), iFormat));
 				buffer.append(": ");
-				buffer.append(writeValue(entry.getValue()));
+				buffer.append(writeValue(entry.getValue(), iFormat));
 			}
 			buffer.append('}');
 
@@ -218,7 +236,7 @@ public class OJSONWriter {
 			buffer.append(dateFormat.format(iValue));
 			buffer.append('"');
 		} else if (iValue instanceof String) {
-			String v = iValue.toString();
+			final String v = iValue.toString();
 			if (v.startsWith("\""))
 				buffer.append(v);
 			else {

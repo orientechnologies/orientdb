@@ -298,7 +298,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			final Set<Integer> iMarshalledRecords) {
 		try {
 			final StringWriter buffer = new StringWriter();
-			final OJSONWriter json = new OJSONWriter(buffer);
+			final OJSONWriter json = new OJSONWriter(buffer, iFormat);
 
 			boolean includeVer;
 			boolean includeType;

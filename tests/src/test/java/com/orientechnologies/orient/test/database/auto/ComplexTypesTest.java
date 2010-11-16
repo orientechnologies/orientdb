@@ -227,6 +227,33 @@ public class ComplexTypesTest {
 	}
 
 	@Test
+	public void testEmptyEmbeddedMap() {
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+
+		ODocument newDoc = new ODocument();
+
+		final Map<String, ODocument> map = new HashMap<String, ODocument>();
+		newDoc.field("embeddedMap", map, OType.EMBEDDEDMAP);
+
+		database.save(newDoc);
+		final ORID rid = newDoc.getIdentity();
+
+		database.close();
+
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+
+		ODocument loadedDoc = database.load(rid);
+
+		Assert.assertTrue(loadedDoc.containsField("embeddedMap"));
+		Assert.assertTrue(loadedDoc.field("embeddedMap") instanceof Map<?, ?>);
+
+		final Map<String, ODocument> loadedMap = loadedDoc.field("embeddedMap");
+		Assert.assertEquals(loadedMap.size(), 0);
+
+		database.close();
+	}
+
+	@Test
 	public void testLinkMap() {
 		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 

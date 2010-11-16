@@ -88,7 +88,9 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary {
 		case OChannelDistributedProtocol.SERVERNODE_DB_CONFIG: {
 			data.commandInfo = "Update db configuration from server node leader";
 			ODocument config = (ODocument) new ODocument().fromStream(channel.readBytes());
-			config.getClassName();
+
+			OLogManager.instance().warn(this, "Changed distributed server configuration:\n%s", config.toJSON(""));
+
 			channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_OK);
 			break;
 		}
