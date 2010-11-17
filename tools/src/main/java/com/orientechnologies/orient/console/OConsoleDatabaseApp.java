@@ -177,10 +177,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 	@ConsoleCommand(description = "Create a new cluster in the current database. The cluster can be physical or logical.")
 	public void createCluster(
 			@ConsoleParameter(name = "cluster-name", description = "The name of the cluster to create") String iClusterName,
-			@ConsoleParameter(name = "cluster-type", description = "Cluster type: 'physical' or 'logical'") String iClusterType) {
+			@ConsoleParameter(name = "cluster-type", description = "Cluster type: 'physical' or 'logical'") String iClusterType,
+			@ConsoleParameter(name = "position", description = "cluster id to replace an empty position or 'append' to append at the end") String iPosition) {
 		checkCurrentDatabase();
 
-		out.println("Creating cluster [" + iClusterName + "] of type '" + iClusterType + "' in database " + currentDatabaseName + "...");
+		final int position = iPosition.toUpperCase().equals("append") ? -1 : Integer.parseInt(iPosition);
+
+		out.println("Creating cluster [" + iClusterName + "] of type '" + iClusterType + "' in database " + currentDatabaseName
+				+ (position == -1 ? " as last one" : " in place of #" + position) + "...");
 
 		int clusterId = iClusterType.equalsIgnoreCase("physical") ? currentDatabase.addPhysicalCluster(iClusterName, iClusterName, -1)
 				: currentDatabase.addLogicalCluster(iClusterName, currentDatabase.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME));
@@ -226,7 +230,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 
 			cluster.truncate();
 
-			out.println("Truncated " + recs + "records from cluster [" + iClusterName + "] in database " + currentDatabaseName);
+			out.println("Truncated " + recs + " records from cluster [" + iClusterName + "] in database " + currentDatabaseName);
 		} catch (Exception e) {
 			out.println("ERROR: " + e.toString());
 		}
@@ -245,7 +249,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 
 			cls.truncate();
 
-			out.println("Truncated " + recs + "records from class [" + iClassName + "] in database " + currentDatabaseName);
+			out.println("Truncated " + recs + " records from class [" + iClassName + "] in database " + currentDatabaseName);
 		} catch (Exception e) {
 			out.println("ERROR: " + e.toString());
 		}
