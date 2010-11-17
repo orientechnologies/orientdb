@@ -218,8 +218,16 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 * @see #equals(Object);
 	 */
 	public boolean hasSameContentOf(final ODocument iOther) {
+		if (iOther == null)
+			return false;
+
 		if (!equals(iOther) && _recordId.isValid())
 			return false;
+
+		if (_status == STATUS.NOT_LOADED)
+			load();
+		if (iOther._status == STATUS.NOT_LOADED)
+			iOther.load();
 
 		if (_fieldValues.size() != iOther._fieldValues.size())
 			return false;
