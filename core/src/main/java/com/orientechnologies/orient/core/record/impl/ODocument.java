@@ -209,6 +209,78 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	}
 
 	/**
+	 * Makes a deep comparison field by field to check if the passed ODocument instance is identical in the content to the current
+	 * one. Instead equals() just checks if the RID are the same.
+	 * 
+	 * @param iOther
+	 *          ODocument instance
+	 * @return true if the two document are identical, otherwise false
+	 * @see #equals(Object);
+	 */
+	public boolean hasSameContentOf(final ODocument iOther) {
+		if (!equals(iOther) && _recordId.isValid())
+			return false;
+
+		if (_fieldValues.size() != iOther._fieldValues.size())
+			return false;
+
+		// CHECK FIELD-BY-FIELD
+		Object myFieldValue;
+		Object otherFieldValue;
+		for (Entry<String, Object> f : _fieldValues.entrySet()) {
+			myFieldValue = f.getValue();
+			otherFieldValue = iOther._fieldValues.get(f.getKey());
+
+			// CHECK FOR NULLS
+			if (myFieldValue == null) {
+				if (otherFieldValue != null)
+					return false;
+			} else if (otherFieldValue == null)
+				return false;
+
+			if (!myFieldValue.equals(otherFieldValue)) {
+				if (myFieldValue instanceof List && otherFieldValue instanceof List) {
+					// CHECK IF THE ORDER IS RESPECTED
+					final List<?> myList = (List<?>) myFieldValue;
+					final List<?> otherList = (List<?>) otherFieldValue;
+
+					if (myList.size() != otherList.size())
+						return false;
+
+					for (int i = 0; i < myList.size(); ++i) {
+						if (myList.get(i) instanceof ODocument) {
+							if (!((ODocument) myList.get(i)).hasSameContentOf((ODocument) otherList.get(i)))
+								return false;
+						} else if (!myList.get(i).equals(otherList.get(i)))
+							return false;
+					}
+				} else if (myFieldValue instanceof Map && otherFieldValue instanceof Map) {
+					// CHECK IF THE ORDER IS RESPECTED
+					final Map<?, ?> myMap = (Map<?, ?>) myFieldValue;
+					final Map<?, ?> otherMap = (Map<?, ?>) otherFieldValue;
+
+					if (myMap.size() != otherMap.size())
+						return false;
+
+					for (Entry<?, ?> myEntry : myMap.entrySet()) {
+						if (!otherMap.containsKey(myEntry.getKey()))
+							return false;
+
+						if (myEntry.getValue() instanceof ODocument) {
+							if (!((ODocument) myEntry.getValue()).hasSameContentOf((ODocument) otherMap.get(myEntry.getKey())))
+								return false;
+						} else if (!myEntry.getValue().equals(otherMap.get(myEntry.getKey())))
+							return false;
+					}
+				} else
+					return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
 	 * Dumps the instance as string.
 	 */
 	@Override

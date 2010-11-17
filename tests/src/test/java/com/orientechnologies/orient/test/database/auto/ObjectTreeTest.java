@@ -77,7 +77,7 @@ public class ObjectTreeTest {
 		Profile p2 = iter.next();
 
 		Assert.assertNotSame(p1, p2);
-		Assert.assertEquals(p1.getLocation().getCity(), p2.getLocation().getCity());
+		Assert.assertSame(p1.getLocation().getCity(), p2.getLocation().getCity());
 	}
 
 	@Test(dependsOnMethods = "testCityEquality")

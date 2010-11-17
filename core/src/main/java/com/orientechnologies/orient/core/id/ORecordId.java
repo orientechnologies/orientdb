@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.id;
 
+import java.util.Comparator;
 import java.util.List;
 
 import com.orientechnologies.orient.core.OConstants;
@@ -22,7 +23,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
-public class ORecordId implements ORID {
+public class ORecordId implements ORID, Comparable<ORecordId>, Comparator<ORecordId> {
 	public static final int				PERSISTENT_SIZE					= OConstants.SIZE_SHORT + OConstants.SIZE_LONG;
 
 	public static final ORecordId	EMPTY_RECORD_ID					= new ORecordId();
@@ -101,6 +102,36 @@ public class ORecordId implements ORID {
 		if (clusterPosition != other.clusterPosition)
 			return false;
 		return true;
+	}
+
+	public int compareTo(final ORecordId iOther) {
+		if (iOther == this)
+			return 0;
+
+		if (iOther == null)
+			return 1;
+
+		if (clusterId == iOther.clusterId) {
+			if (clusterPosition == iOther.clusterPosition)
+				return 0;
+			else if (clusterPosition > iOther.clusterPosition)
+				return 1;
+			else if (clusterPosition < iOther.clusterPosition)
+				return -1;
+		} else if (clusterId > iOther.clusterId)
+			return 1;
+
+		return -1;
+	}
+
+	public int compare(final ORecordId iObj1, final ORecordId iObj2) {
+		if (iObj1 == iObj2)
+			return 0;
+
+		if (iObj1 != null)
+			return iObj1.compareTo(iObj2);
+
+		return -1;
 	}
 
 	public ORecordId copy() {

@@ -46,6 +46,8 @@ public class JSONTest {
 		String json = newDoc.toJSON();
 		ODocument loadedDoc = new ODocument().fromJSON(json);
 
+		Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
+
 		Assert.assertTrue(loadedDoc.containsField("embeddedList"));
 		Assert.assertTrue(loadedDoc.field("embeddedList") instanceof List<?>);
 		Assert.assertTrue(((List<ODocument>) loadedDoc.field("embeddedList")).get(0) instanceof ODocument);
@@ -66,6 +68,8 @@ public class JSONTest {
 		String json = newDoc.toJSON();
 		ODocument loadedDoc = new ODocument().fromJSON(json);
 
+		Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
+
 		Assert.assertTrue(loadedDoc.containsField("embeddedMap"));
 		Assert.assertTrue(loadedDoc.field("embeddedMap") instanceof Map<?, ?>);
 
@@ -85,6 +89,8 @@ public class JSONTest {
 
 		String json = newDoc.toJSON();
 		ODocument loadedDoc = new ODocument().fromJSON(json);
+
+		Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
 
 		Assert.assertTrue(loadedDoc.containsField("map"));
 		Assert.assertTrue(loadedDoc.field("map") instanceof Map<?, ?>);

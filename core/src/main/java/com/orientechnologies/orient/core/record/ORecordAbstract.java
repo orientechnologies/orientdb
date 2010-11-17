@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 
 @SuppressWarnings("unchecked")
-public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<T> {
+public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<T>, Comparable<ORecordAbstract<T>> {
 	@SuppressWarnings("rawtypes")
 	protected ODatabaseRecord		_database;
 	protected ORecordId					_recordId;
@@ -275,6 +275,16 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 			return false;
 
 		return true;
+	}
+
+	public int compareTo(final ORecordAbstract<T> iOther) {
+		if (iOther == null)
+			return 1;
+
+		if (_recordId == null && iOther._recordId == null)
+			return 0;
+
+		return _recordId.compareTo(iOther._recordId);
 	}
 
 	public STATUS getInternalStatus() {

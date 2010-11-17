@@ -142,6 +142,9 @@ public class OConsoleDatabaseCompare extends OConsoleDatabaseImpExpAbstract {
 			long db1Max = storage1.getClusterDataRange(clusterId)[1];
 			long db2Max = storage2.getClusterDataRange(clusterId)[1];
 
+			ODocument doc1 = new ODocument();
+			ODocument doc2 = new ODocument();
+
 			long clusterMax = Math.max(db1Max, db2Max);
 			for (int i = 0; i < clusterMax; ++i) {
 				buffer1 = i <= db1Max ? storage1.readRecord(null, 0, clusterId, i, null) : null;
@@ -188,16 +191,30 @@ public class OConsoleDatabaseCompare extends OConsoleDatabaseImpExpAbstract {
 						++differences;
 
 					} else {
-						// CHECK BYTE PER BYTE
-						for (int b = 0; b < buffer1.buffer.length; ++b) {
-							if (buffer1.buffer[b] != buffer2.buffer[b]) {
-								listener.onMessage("\n- KO: RID=" + clusterId + ":" + i + " content is different at byte #" + b + ": "
-										+ buffer1.buffer[b] + " <-> " + buffer2.buffer[b]);
+						if (buffer1.recordType == ODocument.RECORD_TYPE) {
+							// DOCUMENT: TRY TO INSTANTIATE AND COMPARE
+							doc1.fromStream(buffer1.buffer);
+							doc2.fromStream(buffer2.buffer);
+
+							if (!doc1.hasSameContentOf(doc2)) {
+								listener.onMessage("\n- KO: RID=" + clusterId + ":" + i + " document content is different");
 								listener.onMessage("\n--- REC1: " + new String(buffer1.buffer));
 								listener.onMessage("\n--- REC2: " + new String(buffer2.buffer));
 								listener.onMessage("\n");
 								++differences;
-								break;
+							}
+						} else {
+							// CHECK BYTE PER BYTE
+							for (int b = 0; b < buffer1.buffer.length; ++b) {
+								if (buffer1.buffer[b] != buffer2.buffer[b]) {
+									listener.onMessage("\n- KO: RID=" + clusterId + ":" + i + " content is different at byte #" + b + ": "
+											+ buffer1.buffer[b] + " <-> " + buffer2.buffer[b]);
+									listener.onMessage("\n--- REC1: " + new String(buffer1.buffer));
+									listener.onMessage("\n--- REC2: " + new String(buffer2.buffer));
+									listener.onMessage("\n");
+									++differences;
+									break;
+								}
 							}
 						}
 					}
