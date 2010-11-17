@@ -229,6 +229,12 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		if (iOther._status == STATUS.NOT_LOADED)
 			iOther.load();
 
+		if (_fieldValues == null) {
+			if (iOther._fieldValues != null)
+				return false;
+		} else if (iOther._fieldValues == null)
+			return false;
+
 		if (_fieldValues.size() != iOther._fieldValues.size())
 			return false;
 
