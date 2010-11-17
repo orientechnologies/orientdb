@@ -280,8 +280,10 @@ public class OConsoleDatabaseExport extends OConsoleDatabaseImpExpAbstract {
 
 			writer.append(rec.toJSON("rid,type,version,class,attribSameRow,indent:4"));
 		} catch (Throwable t) {
-			throw new ODatabaseExportException("Error on exporting record #" + rec.getIdentity() + " with content (as string): "
-					+ new String(rec.toStream()), t);
+			byte[] buffer = rec.toStream();
+
+			throw new ODatabaseExportException("Error on exporting record #" + rec.getIdentity() + ". It seems corrupted; size: "
+					+ buffer.length + " bytes, raw content (as string): " + new String(buffer), t);
 		}
 
 		recordExported++;
