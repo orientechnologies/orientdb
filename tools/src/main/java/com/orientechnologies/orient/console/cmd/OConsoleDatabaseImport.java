@@ -66,9 +66,11 @@ public class OConsoleDatabaseImport extends OConsoleDatabaseImpExpAbstract {
 
 	public OConsoleDatabaseImport importDatabase() {
 		try {
-			jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
+			listener.onMessage("\nStarted import of database '" + database.getName() + "' from " + fileName + "...");
 
 			long time = System.currentTimeMillis();
+
+			jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
 
 			String tag;
 			while (jsonReader.lastChar() != '}') {
@@ -88,7 +90,7 @@ public class OConsoleDatabaseImport extends OConsoleDatabaseImpExpAbstract {
 
 			deleteHoleRecords();
 
-			listener.onMessage("\n\nImport completed in " + ((System.currentTimeMillis() - time)) + " ms");
+			listener.onMessage("\n\nDatabase import completed in " + ((System.currentTimeMillis() - time)) + " ms");
 
 		} catch (Exception e) {
 			System.err.println("Error on database import happened just before line " + jsonReader.getLineNumber() + ", column "

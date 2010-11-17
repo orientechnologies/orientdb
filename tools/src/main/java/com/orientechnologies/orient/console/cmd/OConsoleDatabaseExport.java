@@ -50,6 +50,8 @@ public class OConsoleDatabaseExport extends OConsoleDatabaseImpExpAbstract {
 
 	public OConsoleDatabaseExport exportDatabase() {
 		try {
+			listener.onMessage("\nStarted export of database '" + database.getName() + "' to " + fileName + "...");
+
 			long time = System.currentTimeMillis();
 
 			if (includeInfo)
@@ -61,7 +63,7 @@ public class OConsoleDatabaseExport extends OConsoleDatabaseImpExpAbstract {
 			if (includeDictionary)
 				exportDictionary();
 
-			listener.onMessage("\n\nExport of database completed in " + (System.currentTimeMillis() - time) + "ms");
+			listener.onMessage("\n\nDatabase export completed in " + (System.currentTimeMillis() - time) + "ms");
 
 			writer.flush();
 		} catch (Exception e) {
