@@ -170,7 +170,7 @@ public class OJSONWriter {
 
 		else if (iValue instanceof ORecordId) {
 			final ORecordId rid = (ORecordId) iValue;
-			buffer.append("\"");
+			buffer.append("\"#");
 			buffer.append(rid.toString());
 			buffer.append('\"');
 
