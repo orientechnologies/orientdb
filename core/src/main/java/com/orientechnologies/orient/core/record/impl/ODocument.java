@@ -234,6 +234,9 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 				return false;
 		} else if (iOther._fieldValues == null)
 			return false;
+		else
+			// BOTH NULL
+			return true;
 
 		if (_fieldValues.size() != iOther._fieldValues.size())
 			return false;
