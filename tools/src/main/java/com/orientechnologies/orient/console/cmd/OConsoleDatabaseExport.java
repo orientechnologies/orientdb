@@ -271,13 +271,18 @@ public class OConsoleDatabaseExport extends OConsoleDatabaseImpExpAbstract {
 		if (rec == null)
 			return;
 
-		if (rec.getIdentity().isValid())
-			rec.load();
+		try {
+			if (rec.getIdentity().isValid())
+				rec.load();
 
-		if (recordExported > 0)
-			writer.append(",");
+			if (recordExported > 0)
+				writer.append(",");
 
-		writer.append(rec.toJSON("rid,type,version,class,attribSameRow,indent:4"));
+			writer.append(rec.toJSON("rid,type,version,class,attribSameRow,indent:4"));
+		} catch (Throwable t) {
+			throw new ODatabaseExportException("Error on exporting record #" + rec.getIdentity() + " with content (as string): "
+					+ new String(rec.toStream()), t);
+		}
 
 		recordExported++;
 		recordNum++;
