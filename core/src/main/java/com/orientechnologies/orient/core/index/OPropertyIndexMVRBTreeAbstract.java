@@ -40,7 +40,7 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
  * 
  */
 public abstract class OPropertyIndexMVRBTreeAbstract extends OSharedResource implements OPropertyIndex {
-	protected OProperty																					owner;
+	protected OProperty																						owner;
 	protected OMVRBTreeDatabaseLazySave<String, List<ORecordId>>	map;
 
 	public OPropertyIndexMVRBTreeAbstract() {
@@ -56,7 +56,8 @@ public abstract class OPropertyIndexMVRBTreeAbstract extends OSharedResource imp
 	 * @param iClusterIndexName
 	 *          Cluster name where to place the TreeMap
 	 */
-	public OPropertyIndexMVRBTreeAbstract(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final String iClusterIndexName) {
+	public OPropertyIndexMVRBTreeAbstract(final ODatabaseRecord<?> iDatabase, final OProperty iProperty,
+			final String iClusterIndexName) {
 		owner = iProperty;
 	}
 
@@ -246,5 +247,10 @@ public abstract class OPropertyIndexMVRBTreeAbstract extends OSharedResource imp
 		} finally {
 			releaseSharedLock();
 		}
+	}
+
+	@Override
+	public String toString() {
+		return getType().toString();
 	}
 }
