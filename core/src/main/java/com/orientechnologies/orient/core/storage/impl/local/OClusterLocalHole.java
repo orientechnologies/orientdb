@@ -21,8 +21,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 
 /**
- * Handle the holes inside cluster segments. The synchronization is in charge to
- * the OClusterLocal instance.<br/>
+ * Handle the holes inside cluster segments. The synchronization is in charge to the OClusterLocal instance.<br/>
  * <br/>
  * Record structure:<br/>
  * <br/>
@@ -33,14 +32,13 @@ import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
  * = 8 bytes<br/>
  */
 public class OClusterLocalHole extends OSingleFileSegment {
-	private static final int DEF_START_SIZE = 262144;
-	private static final int RECORD_SIZE = 8;
+	private static final int	DEF_START_SIZE	= 262144;
+	private static final int	RECORD_SIZE			= 8;
 
-	private OClusterLocal owner;
+	private OClusterLocal			owner;
 
-	public OClusterLocalHole(final OClusterLocal iClusterLocal,
-			final OStorageLocal iStorage,
-			final OStorageFileConfiguration iConfig) throws IOException {
+	public OClusterLocalHole(final OClusterLocal iClusterLocal, final OStorageLocal iStorage, final OStorageFileConfiguration iConfig)
+			throws IOException {
 		super(iStorage, iConfig);
 		owner = iClusterLocal;
 	}
@@ -49,17 +47,11 @@ public class OClusterLocalHole extends OSingleFileSegment {
 	 * TODO Check values removing dirty entries (equals to -1)
 	 */
 	public void defrag() throws IOException {
-		OLogManager
-				.instance()
-				.debug(this,
-						"Starting to defragment the segment %s of size=%d and filled=%d",
-						file, file.getFileSize(), file.getFilledUpTo());
+		OLogManager.instance().debug(this, "Starting to defragment the segment %s of size=%d and filled=%d", file, file.getFileSize(),
+				file.getFilledUpTo());
 
-		OLogManager
-				.instance()
-				.debug(this,
-						"Defragmentation ended for segment %s. Current size=%d and filled=%d",
-						file, file.getFileSize(), file.getFilledUpTo());
+		OLogManager.instance().debug(this, "Defragmentation ended for segment %s. Current size=%d and filled=%d", file,
+				file.getFileSize(), file.getFilledUpTo());
 	}
 
 	public void create() throws IOException {
@@ -78,9 +70,8 @@ public class OClusterLocalHole extends OSingleFileSegment {
 		file.writeLong(position, iPosition);
 
 		if (OLogManager.instance().isDebugEnabled())
-			OLogManager.instance().debug(this,
-					"Pushed new hole at #%d containing the position #%d:%d",
-					position / RECORD_SIZE, owner.getId(), iPosition);
+			OLogManager.instance().debug(this, "Pushed new hole at #%d containing the position #%d:%d", position / RECORD_SIZE,
+					owner.getId(), iPosition);
 
 		return position;
 	}
@@ -88,8 +79,7 @@ public class OClusterLocalHole extends OSingleFileSegment {
 	/**
 	 * Return the recycled position if any.
 	 * 
-	 * @return the recycled position if found, otherwise -1 that usually means
-	 *         to request more space.
+	 * @return the recycled position if found, otherwise -1 that usually means to request more space.
 	 * @throws IOException
 	 */
 	public long popLastEntryPosition() throws IOException {
@@ -99,11 +89,8 @@ public class OClusterLocalHole extends OSingleFileSegment {
 
 			if (recycledPosition > -1) {
 				if (OLogManager.instance().isDebugEnabled())
-					OLogManager
-							.instance()
-							.debug(this,
-									"Recycling hole #%d containing the position #%d:%d",
-									pos, owner.getId(), recycledPosition);
+					OLogManager.instance().debug(this, "Recycling hole #%d containing the position #%d:%d", pos, owner.getId(),
+							recycledPosition);
 
 				// SHRINK THE FILE
 				file.removeTail((getHoles() - pos) * RECORD_SIZE);
@@ -116,12 +103,11 @@ public class OClusterLocalHole extends OSingleFileSegment {
 	}
 
 	/**
-	 * Remove a hole. Called on transaction recover to invalidate a delete for a
-	 * record. Try to shrink the file if the invalidated entry is not in the
-	 * middle of valid entries.
+	 * Remove a hole. Called on transaction recover to invalidate a delete for a record. Try to shrink the file if the invalidated
+	 * entry is not in the middle of valid entries.
 	 * 
 	 * @param iPosition
-	 *            Record position to find and invalidate
+	 *          Record position to find and invalidate
 	 * @return
 	 * @throws IOException
 	 */
@@ -133,9 +119,8 @@ public class OClusterLocalHole extends OSingleFileSegment {
 
 			if (recycledPosition == iPosition) {
 				if (OLogManager.instance().isDebugEnabled())
-					OLogManager.instance().debug(this,
-							"Removing hole #%d containing the position #%d:%d",
-							pos, owner.getId(), recycledPosition);
+					OLogManager.instance().debug(this, "Removing hole #%d containing the position #%d:%d", pos, owner.getId(),
+							recycledPosition);
 
 				file.writeLong(pos * RECORD_SIZE, -1);
 				if (canShrink)

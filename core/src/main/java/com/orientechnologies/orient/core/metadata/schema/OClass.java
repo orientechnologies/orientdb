@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -386,6 +387,24 @@ public class OClass extends ODocumentWrapperNoClass {
 				polymorphicClusterIds = OArrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length + 1);
 				polymorphicClusterIds[polymorphicClusterIds.length - 1] = i;
 			}
+		}
+	}
+
+	/**
+	 * Returns the number of the records of this class.
+	 */
+	public long count() {
+		return owner.getDocument().getDatabase().countClusterElements(clusterIds);
+	}
+
+	/**
+	 * Truncates all the clusters the class uses.
+	 * 
+	 * @throws IOException
+	 */
+	public void truncate() throws IOException {
+		for (int id : clusterIds) {
+			owner.getDocument().getDatabase().getStorage().getClusterById(id).truncate();
 		}
 	}
 }

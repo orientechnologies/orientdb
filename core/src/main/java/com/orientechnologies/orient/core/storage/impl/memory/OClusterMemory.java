@@ -25,109 +25,114 @@ import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 
 public class OClusterMemory extends OSharedResource implements OCluster {
-  public static final String      TYPE    = "MEMORY";
+	public static final String			TYPE		= "MEMORY";
 
-  private int                     id;
-  private String                  name;
-  private List<OPhysicalPosition> entries = new ArrayList<OPhysicalPosition>();
-  private int                     removed = 0;
+	private int											id;
+	private String									name;
+	private List<OPhysicalPosition>	entries	= new ArrayList<OPhysicalPosition>();
+	private int											removed	= 0;
 
-  public OClusterMemory(final int id, final String name) {
-    this.id = id;
-    this.name = name;
-  }
+	public OClusterMemory(final int id, final String name) {
+		this.id = id;
+		this.name = name;
+	}
 
-  public OClusterPositionIterator absoluteIterator() throws IOException {
-    return new OClusterPositionIterator(this);
-  }
+	public OClusterPositionIterator absoluteIterator() throws IOException {
+		return new OClusterPositionIterator(this);
+	}
 
-  public void close() {
-    entries.clear();
-    removed = 0;
-  }
+	public void close() {
+		entries.clear();
+		removed = 0;
+	}
 
-  public void create(final int iStartSize) throws IOException {
-  }
+	public void open() throws IOException {
+	}
 
-  public void delete() throws IOException {
-    close();
-    entries.clear();
-  }
+	public void create(final int iStartSize) throws IOException {
+	}
 
-  public long getEntries() {
-    return entries.size() - removed;
-  }
+	public void delete() throws IOException {
+		close();
+		entries.clear();
+	}
 
-  public long getFirstEntryPosition() {
-    return entries.size() == 0 ? -1 : 0;
-  }
+	public void truncate() throws IOException {
+		entries.clear();
+		removed = 0;
+	}
 
-  public long getLastEntryPosition() {
-    return entries.size() - 1;
-  }
+	public long getEntries() {
+		return entries.size() - removed;
+	}
 
-  public int getId() {
-    return id;
-  }
+	public long getFirstEntryPosition() {
+		return entries.size() == 0 ? -1 : 0;
+	}
 
-  public String getName() {
-    return name;
-  }
+	public long getLastEntryPosition() {
+		return entries.size() - 1;
+	}
 
-  public long getAvailablePosition() throws IOException {
-    return entries.size();
-  }
+	public int getId() {
+		return id;
+	}
 
-  public long addPhysicalPosition(final int iDataSegmentId, final long iRecordPosition, final byte iRecordType) {
-    entries.add(new OPhysicalPosition(iDataSegmentId, iRecordPosition, iRecordType));
-    return entries.size() - 1;
-  }
+	public String getName() {
+		return name;
+	}
 
-  public void updateRecordType(final long iPosition, final byte iRecordType) throws IOException {
-    entries.get((int) iPosition).type = iRecordType;
-  }
+	public long getAvailablePosition() throws IOException {
+		return entries.size();
+	}
 
-  public void updateVersion(long iPosition, int iVersion) throws IOException {
-    entries.get((int) iPosition).version = iVersion;
-  }
+	public long addPhysicalPosition(final int iDataSegmentId, final long iRecordPosition, final byte iRecordType) {
+		entries.add(new OPhysicalPosition(iDataSegmentId, iRecordPosition, iRecordType));
+		return entries.size() - 1;
+	}
 
-  public OPhysicalPosition getPhysicalPosition(final long iPosition, final OPhysicalPosition iPPosition) {
-    return entries.get((int) iPosition);
-  }
+	public void updateRecordType(final long iPosition, final byte iRecordType) throws IOException {
+		entries.get((int) iPosition).type = iRecordType;
+	}
 
-  public void open() throws IOException {
-  }
+	public void updateVersion(long iPosition, int iVersion) throws IOException {
+		entries.get((int) iPosition).version = iVersion;
+	}
 
-  public void removePhysicalPosition(final long iPosition, OPhysicalPosition iPPosition) {
-    if (entries.set((int) iPosition, null) != null)
-      // ADD A REMOVED
-      removed++;
-  }
+	public OPhysicalPosition getPhysicalPosition(final long iPosition, final OPhysicalPosition iPPosition) {
+		return entries.get((int) iPosition);
+	}
 
-  public void setPhysicalPosition(final long iPosition, final int iDataId, final long iDataPosition, final byte iRecordType) {
-    final OPhysicalPosition ppos = entries.get((int) iPosition);
-    ppos.dataSegment = iDataId;
-    ppos.dataPosition = iDataPosition;
-    ppos.type = iRecordType;
-  }
+	public void removePhysicalPosition(final long iPosition, OPhysicalPosition iPPosition) {
+		if (entries.set((int) iPosition, null) != null)
+			// ADD A REMOVED
+			removed++;
+	}
 
-  public void synch() {
-  }
+	public void setPhysicalPosition(final long iPosition, final int iDataId, final long iDataPosition, final byte iRecordType) {
+		final OPhysicalPosition ppos = entries.get((int) iPosition);
+		ppos.dataSegment = iDataId;
+		ppos.dataPosition = iDataPosition;
+		ppos.type = iRecordType;
+	}
 
-  public void lock() {
-    acquireSharedLock();
-  }
+	public void synch() {
+	}
 
-  public void unlock() {
-    releaseSharedLock();
-  }
+	public void lock() {
+		acquireSharedLock();
+	}
 
-  public String getType() {
-    return TYPE;
-  }
+	public void unlock() {
+		releaseSharedLock();
+	}
 
-  @Override
-  public String toString() {
-    return "OClusterMemory [name=" + name + ", id=" + id + ", entries=" + entries.size() + ", removed=" + removed + "]";
-  }
+	public String getType() {
+		return TYPE;
+	}
+
+	@Override
+	public String toString() {
+		return "OClusterMemory [name=" + name + ", id=" + id + ", entries=" + entries.size() + ", removed=" + removed + "]";
+	}
 }

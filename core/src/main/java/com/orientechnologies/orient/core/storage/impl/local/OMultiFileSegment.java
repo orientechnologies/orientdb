@@ -132,6 +132,36 @@ public class OMultiFileSegment extends OSegment {
 		}
 	}
 
+	public void truncate() throws IOException {
+		try {
+			acquireExclusiveLock();
+
+			// SHRINK TO 0
+			files[0].shrink(0);
+
+			if (files.length > 1) {
+				// LEAVE JUST ONE FILE
+				for (int i = 1; i < files.length; ++i) {
+					if (files[i] != null)
+						files[i].delete();
+				}
+
+				// UPDATE FILE STRUCTURE
+				final OFile f = files[0];
+				files = new OFile[1];
+				files[0] = f;
+
+				// UPDATE CONFIGURATION
+				final OStorageFileConfiguration fileConfig = config.infoFiles[0];
+				config.infoFiles = new OStorageFileConfiguration[1];
+				config.infoFiles[0] = fileConfig;
+				config.root.update();
+			}
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
+
 	public void synch() {
 		try {
 			acquireSharedLock();

@@ -38,6 +38,13 @@ public interface OCluster {
 
 	public void delete() throws IOException;
 
+	/**
+	 * Truncate the cluster content. All the entries will be removed.
+	 * 
+	 * @throws IOException
+	 */
+	public void truncate() throws IOException;
+
 	public String getType();
 
 	/**

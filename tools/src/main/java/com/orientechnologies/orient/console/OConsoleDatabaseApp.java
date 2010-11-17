@@ -60,6 +60,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
+import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.command.script.OCommandScript;
 
@@ -210,6 +211,44 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 			out.println("Cluster correctly removed");
 		else
 			out.println("Can't find the cluster to remove");
+	}
+
+	@ConsoleCommand(description = "Truncate the cluster content in the current database.")
+	public void truncateCluster(
+			@ConsoleParameter(name = "cluster-name", description = "The name of the cluster to truncate") String iClusterName) {
+		checkCurrentDatabase();
+
+		out.println("Truncating cluster [" + iClusterName + "] in database " + currentDatabaseName + "...");
+		try {
+			final OCluster cluster = currentDatabase.getStorage().getClusterById(currentDatabase.getClusterIdByName(iClusterName));
+
+			final long recs = cluster.getEntries();
+
+			cluster.truncate();
+
+			out.println("Truncated " + recs + "records from cluster [" + iClusterName + "] in database " + currentDatabaseName);
+		} catch (Exception e) {
+			out.println("ERROR: " + e.toString());
+		}
+	}
+
+	@ConsoleCommand(description = "Truncate the class content in the current database.")
+	public void truncateClass(
+			@ConsoleParameter(name = "class-name", description = "The name of the class to truncate") String iClassName) {
+		checkCurrentDatabase();
+
+		out.println("Truncating class [" + iClassName + "] in database " + currentDatabaseName + "...");
+		try {
+			OClass cls = currentDatabase.getMetadata().getSchema().getClass(iClassName);
+
+			final long recs = cls.count();
+
+			cls.truncate();
+
+			out.println("Truncated " + recs + "records from class [" + iClassName + "] in database " + currentDatabaseName);
+		} catch (Exception e) {
+			out.println("ERROR: " + e.toString());
+		}
 	}
 
 	@ConsoleCommand(description = "Load a record in memory and set it as the current one")
@@ -519,13 +558,15 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		currentRecord = null;
 	}
 
-	@ConsoleCommand(description = "Export a database")
-	public void exportDatabase(@ConsoleParameter(name = "output-file", description = "Output file path") final String iOutputFilePath)
-			throws IOException {
-		out.println("Exporting current database to: " + iOutputFilePath + "...");
+	@ConsoleCommand(description = "Share a database with a remote server")
+	public void shareDatabases(
+			@ConsoleParameter(name = "db-name", description = "name of the database to share") final String iDbName,
+			@ConsoleParameter(name = "remote-url", description = "URL of the second database") final String iRemoteURL,
+			@ConsoleParameter(name = "user", description = "User name") String iUserName,
+			@ConsoleParameter(name = "password", description = "User password") String iUserPassword) {
 
 		try {
-			new OConsoleDatabaseExport(currentDatabase, iOutputFilePath, this).exportDatabase().close();
+			// srvAdmin.connect(iUserName, iUserPassword)
 		} catch (ODatabaseExportException e) {
 			out.println("ERROR: " + e.toString());
 		}
@@ -536,6 +577,18 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 			@ConsoleParameter(name = "db2-url", description = "URL of the second database") final String iDb2URL) throws IOException {
 		try {
 			new OConsoleDatabaseCompare(iDb1URL, iDb2URL, this).compare();
+		} catch (ODatabaseExportException e) {
+			out.println("ERROR: " + e.toString());
+		}
+	}
+
+	@ConsoleCommand(description = "Export a database")
+	public void exportDatabase(@ConsoleParameter(name = "output-file", description = "Output file path") final String iOutputFilePath)
+			throws IOException {
+		out.println("Exporting current database to: " + iOutputFilePath + "...");
+
+		try {
+			new OConsoleDatabaseExport(currentDatabase, iOutputFilePath, this).exportDatabase().close();
 		} catch (ODatabaseExportException e) {
 			out.println("ERROR: " + e.toString());
 		}

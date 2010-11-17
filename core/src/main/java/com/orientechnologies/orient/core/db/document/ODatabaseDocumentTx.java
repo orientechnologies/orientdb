@@ -151,12 +151,15 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 		return this;
 	}
 
+	/**
+	 * Returns the number of the records of the class iClassName.
+	 */
 	public long countClass(final String iClassName) {
 		OClass cls = getMetadata().getSchema().getClass(iClassName);
 
 		if (cls == null)
 			throw new IllegalArgumentException("Class '" + iClassName + "' not found in database");
 
-		return countClusterElements(getMetadata().getSchema().getClass(iClassName).getClusterIds());
+		return cls.count();
 	}
 }

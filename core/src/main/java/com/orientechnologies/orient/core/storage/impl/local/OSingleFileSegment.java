@@ -89,6 +89,18 @@ public class OSingleFileSegment extends OSharedResourceAdaptiveLinked {
 		}
 	}
 
+	public void truncate() throws IOException {
+		try {
+			acquireExclusiveLock();
+
+			// SHRINK TO 0
+			file.shrink(0);
+
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
+
 	public long getSize() {
 		return file.getFileSize();
 	}

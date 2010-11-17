@@ -162,6 +162,13 @@ public class OClusterLogical implements OCluster {
 		map.put(key, ppos);
 	}
 
+	public void truncate() throws IOException {
+		map.clear();
+		total = new OPhysicalPosition(0, -1, (byte) 0);
+		map.put(new Long(-1), total);
+		map.save();
+	}
+
 	/**
 	 * Remove the Logical Position entry.
 	 */
