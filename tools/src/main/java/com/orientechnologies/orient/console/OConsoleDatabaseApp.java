@@ -20,7 +20,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -47,6 +49,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -435,7 +438,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		dumpRecordDetails();
 	}
 
-	@ConsoleCommand(aliases = { "status" }, description = "Display information about current status")
+	@ConsoleCommand(aliases = { "status" }, description = "Display information about the database")
 	public void info() {
 		if (currentDatabaseName != null) {
 			out.println("Current database: " + currentDatabaseName);
@@ -444,13 +447,65 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		}
 	}
 
+	@ConsoleCommand(aliases = { "desc" }, description = "Display the schema of a class")
+	public void infoClass(@ConsoleParameter(name = "class-name", description = "The name of the class") final String iClassName) {
+		if (currentDatabaseName == null) {
+			out.println("No database selected yet.");
+			return;
+		}
+
+		final OClass cls = currentDatabase.getMetadata().getSchema().getClass(iClassName);
+
+		if (cls == null) {
+			out.println("! Class '" + iClassName + "' doesn't exist in the database '" + currentDatabaseName + "'");
+			return;
+		}
+
+		out.println();
+		out.println("Class................: " + cls + " (id=" + cls.getId() + ")");
+		if (cls.getSuperClass() != null)
+			out.println("Super class..........: " + cls.getSuperClass());
+		out.println("Default cluster......: " + currentDatabase.getClusterNameById(cls.getDefaultClusterId()) + " (id="
+				+ cls.getDefaultClusterId() + ")");
+		out.println("Supported cluster ids: " + Arrays.toString(cls.getClusterIds()));
+
+		if (cls.getBaseClasses() != null) {
+			out.print("Base classes.........: ");
+			int i = 0;
+			for (Iterator<OClass> it = cls.getBaseClasses(); it.hasNext();) {
+				if (i > 0)
+					out.print(", ");
+				out.print(it.next().getName());
+				++i;
+			}
+			out.println();
+		}
+
+		if (cls.properties().size() > 0) {
+			out.println("Properties:");
+			out.println("---------------------+------+---------------------+---------------------+-----------+------+------+");
+			out.println(" NAME                |  ID  | TYPE                | LINKED TYPE/CLASS   | INDEX     | MIN  | MAX  |");
+			out.println("---------------------+------+---------------------+---------------------+-----------+------+------+");
+
+			for (OProperty p : cls.properties()) {
+				try {
+					out.printf(" %-20s| %4d | %-20s| %-20s| %-10s| %-5s| %-5s|\n", p.getName(), p.getId(), p.getType(),
+							p.getLinkedClass() != null ? p.getLinkedClass() : p.getLinkedType(), p.getIndex() != null ? p.getIndex() : "",
+							p.getMin() != null ? p.getMin() : "", p.getMax() != null ? p.getMax() : "");
+				} catch (Exception e) {
+				}
+			}
+			out.println("---------------------+------+---------------------+---------------------+-----------+------+------+");
+		}
+	}
+
 	@ConsoleCommand(description = "Display all the configured clusters")
 	public void clusters() {
 		if (currentDatabaseName != null) {
 			out.println("CLUSTERS:");
-			out.println("--------------------+------+--------------------+-----------+");
-			out.println("NAME                |  ID  | TYPE               | ELEMENTS  |");
-			out.println("--------------------+------+--------------------+-----------+");
+			out.println("---------------------+------+---------------------+-----------+");
+			out.println(" NAME                |  ID  | TYPE                | ELEMENTS  |");
+			out.println("---------------------+------+---------------------+-----------+");
 
 			int clusterId;
 			long totalElements = 0;
@@ -460,13 +515,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 					clusterId = currentDatabase.getClusterIdByName(clusterName);
 					count = currentDatabase.countClusterElements(clusterName);
 					totalElements += count;
-					out.printf("%-20s|%6d|%-20s|%10d |\n", clusterName, clusterId, clusterId < -1 ? "Logical" : "Physical", count);
+					out.printf(" %-20s|%6d| %-20s|%10d |\n", clusterName, clusterId, clusterId < -1 ? "Logical" : "Physical", count);
 				} catch (Exception e) {
 				}
 			}
-			out.println("--------------------+------+--------------------+-----------+");
-			out.printf("TOTAL                                            %10d |\n", totalElements);
-			out.println("------------------------------------------------------------+\n");
+			out.println("---------------------+------+---------------------+-----------+");
+			out.printf(" TOTAL                                             %10d |\n", totalElements);
+			out.println("--------------------------------------------------------------+\n");
 		} else
 			out.println("No database selected yet.");
 	}

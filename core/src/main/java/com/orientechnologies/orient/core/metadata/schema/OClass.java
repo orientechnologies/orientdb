@@ -313,6 +313,9 @@ public class OClass extends ODocumentWrapperNoClass {
 	}
 
 	public Iterator<OClass> getBaseClasses() {
+		if (baseClasses == null)
+			return null;
+
 		return baseClasses.iterator();
 	}
 
