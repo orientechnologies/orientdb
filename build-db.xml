@@ -9,6 +9,8 @@
 	<property name="global.release" value="../releases/${version}" />
 	<property name="db.release"     value="../releases/${version}/db" />
 	
+	<property name="env.ORIENTDB_HOME" value="${db.release}" />
+	
   <macrodef name="delegate">
 		<attribute name="target"/>
 		<sequential>

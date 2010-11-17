@@ -50,7 +50,7 @@
 		<echo>OK</echo>
 
 		<echo>WAITING FOR SERVER STARTUP...</echo>
-		<sleep seconds="8" />
+		<sleep seconds="5" />
 		<echo>OK</echo>
 
 		<echo>EXECUTING TESTS USING REMOTE DATABASE: remote:localhost/demo</echo>
