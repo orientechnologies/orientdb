@@ -95,7 +95,10 @@ public enum OGlobalConfiguration {
 	NETWORK_SOCKET_RETRY_DELAY("network.retryDelay", "Number of ms the client wait to reconnect to the server in case of failure",
 			Integer.class, 500),
 
-	NETWORK_HTTP_MAX_CONTENT_LENGTH("network.http.maxLength", "TCP/IP max content length in Kb of HTTP requests", Integer.class,
+	NETWORK_BINARY_MAX_CONTENT_LENGTH("network.binary.maxLength", "TCP/IP max content length in bytes of BINARY requests",
+			Integer.class, 100000),
+
+	NETWORK_HTTP_MAX_CONTENT_LENGTH("network.http.maxLength", "TCP/IP max content length in bytes of HTTP requests", Integer.class,
 			100000),
 
 	// PROFILER

@@ -135,21 +135,22 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 						if (iRecord instanceof ODocument) {
 							final Object v = getValue((ODocument) iRecord, fieldName, fieldValue, fieldValueAsString, null, null);
 
-							if (v instanceof Collection<?> && ((Collection<?>) v).size() > 0) {
-								// CHECK IF THE COLLECTION IS EMBEDDED
-								Object first = ((Collection<?>) v).iterator().next();
-								if (first != null && first instanceof ORecord<?> && !((ORecord<?>) first).getIdentity().isValid()) {
-									((ODocument) iRecord).field(fieldName, v, v instanceof Set<?> ? OType.EMBEDDEDSET : OType.EMBEDDEDLIST);
-									continue;
+							if (v != null)
+								if (v instanceof Collection<?> && ((Collection<?>) v).size() > 0) {
+									// CHECK IF THE COLLECTION IS EMBEDDED
+									Object first = ((Collection<?>) v).iterator().next();
+									if (first != null && first instanceof ORecord<?> && !((ORecord<?>) first).getIdentity().isValid()) {
+										((ODocument) iRecord).field(fieldName, v, v instanceof Set<?> ? OType.EMBEDDEDSET : OType.EMBEDDEDLIST);
+										continue;
+									}
+								} else if (v instanceof Map<?, ?> && ((Map<?, ?>) v).size() > 0) {
+									// CHECK IF THE MAP IS EMBEDDED
+									Object first = ((Map<?, ?>) v).values().iterator().next();
+									if (first != null && first instanceof ORecord<?> && !((ORecord<?>) first).getIdentity().isValid()) {
+										((ODocument) iRecord).field(fieldName, v, OType.EMBEDDEDMAP);
+										continue;
+									}
 								}
-							} else if (v instanceof Map<?, ?> && ((Map<?, ?>) v).size() > 0) {
-								// CHECK IF THE MAP IS EMBEDDED
-								Object first = ((Map<?, ?>) v).values().iterator().next();
-								if (first != null && first instanceof ORecord<?> && !((ORecord<?>) first).getIdentity().isValid()) {
-									((ODocument) iRecord).field(fieldName, v, OType.EMBEDDEDMAP);
-									continue;
-								}
-							}
 
 							((ODocument) iRecord).field(fieldName, v);
 						}
