@@ -23,6 +23,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 
 /**
  * Remote administration class of OrientDB Server instances.
@@ -109,6 +110,30 @@ public class OServerAdmin {
 			OLogManager.instance().error(this, "Can't delete the remote storage: " + storage.getName(), e, OStorageException.class);
 			storage.close();
 		}
+		return this;
+	}
+
+	public OServerAdmin shareDatabase(final String iDatabaseName, final String iDatabaseUserName, final String iDatabaseUserPassword,
+			final String iRemoteServerURL, final String iRemoteUserName, String iRemoteUserPassword) throws IOException {
+
+		try {
+			storage.writeCommand(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_SENDER);
+			storage.getNetwork().writeString(iDatabaseName);
+			storage.getNetwork().writeString(iDatabaseUserName);
+			storage.getNetwork().writeString(iDatabaseUserPassword);
+			storage.getNetwork().writeString(iRemoteServerURL);
+			storage.getNetwork().writeString(iRemoteUserName);
+			storage.getNetwork().writeString(iRemoteUserPassword);
+			storage.getNetwork().flush();
+
+			storage.getNetwork().readStatus();
+
+			OLogManager.instance().info(this, "Database %s has been shared with the server %s.", iDatabaseName, iRemoteServerURL);
+
+		} catch (Exception e) {
+			OLogManager.instance().error(this, "Can't share the database: " + iDatabaseName, e, OStorageException.class);
+		}
+
 		return this;
 	}
 
