@@ -22,9 +22,16 @@ import java.util.Map.Entry;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
+import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryInputStream;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryOutputStream;
+import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerLoaderChecker;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
@@ -63,13 +70,13 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary {
 
 		// DISTRIBUTED SERVER REQUESTS
 		switch (requestType) {
-		case OChannelDistributedProtocol.SERVERNODE_HEARTBEAT:
+		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_HEARTBEAT:
 			data.commandInfo = "Keep-alive";
 			lastHeartBeat = System.currentTimeMillis();
 			sendOk(0);
 			break;
 
-		case OChannelDistributedProtocol.SERVERNODE_CONNECT: {
+		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_CONNECT: {
 			data.commandInfo = "Cluster connection";
 
 			manager.receivedLeaderConnection(this);
@@ -91,7 +98,57 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary {
 			break;
 		}
 
-		case OChannelDistributedProtocol.SERVERNODE_DB_CONFIG: {
+		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_SENDER:
+			data.commandInfo = "Share the database to a remote server";
+
+			try {
+				final String dbName = channel.readString();
+				final String dbUser = channel.readString();
+				final String dbPassword = channel.readString();
+				final String remoteServerURL = channel.readString();
+				final String remoteServerUser = channel.readString();
+				final String remoteServerPassword = channel.readString();
+
+				checkServerAccess("database.share");
+
+				final ODatabaseDocumentTx db = openDatabase(dbName, dbUser, dbPassword);
+
+				new ODatabaseExport(db, new OChannelBinaryOutputStream(channel), null);
+
+				sendOk(0);
+
+			} catch (Exception e) {
+				channel.clearInput();
+
+			} finally {
+
+			}
+			break;
+
+		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_RECEIVER:
+			data.commandInfo = "Received a shared database from a remote server to install";
+
+			try {
+				final String dbName = channel.readString();
+				final String storageMode = channel.readString();
+
+				checkServerAccess("database.share");
+
+				final ODatabaseDocument db = createDatabase(dbName, storageMode);
+
+				new ODatabaseImport(db, new OChannelBinaryInputStream(channel), null);
+
+				sendOk(0);
+
+			} catch (Exception e) {
+				channel.clearInput();
+
+			} finally {
+
+			}
+			break;
+
+		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_CONFIG: {
 			data.commandInfo = "Update db configuration from server node leader";
 			ODocument config = (ODocument) new ODocument().fromStream(channel.readBytes());
 

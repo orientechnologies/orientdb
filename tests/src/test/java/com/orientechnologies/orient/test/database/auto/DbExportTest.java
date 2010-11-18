@@ -21,12 +21,12 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.orient.console.OCommandListener;
-import com.orientechnologies.orient.console.cmd.OConsoleDatabaseExport;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 
 @Test(groups = "db")
-public class DbExportTest implements OCommandListener {
+public class DbExportTest implements OCommandOutputListener {
 	private String	url;
 
 	@Parameters(value = "url")
@@ -39,7 +39,7 @@ public class DbExportTest implements OCommandListener {
 		ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
 		database.open("admin", "admin");
 
-		OConsoleDatabaseExport export = new OConsoleDatabaseExport(database, "tests/target/db.export", this);
+		ODatabaseExport export = new ODatabaseExport(database, "tests/target/db.export", this);
 		export.exportDatabase();
 		export.close();
 

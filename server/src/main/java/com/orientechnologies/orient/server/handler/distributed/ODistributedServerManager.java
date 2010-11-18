@@ -200,6 +200,8 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		if (iRequestType == OChannelBinaryProtocol.REQUEST_DB_OPEN || iRequestType == OChannelBinaryProtocol.REQUEST_DB_CREATE) {
 			trigger = new ODistributedServerRecordHook(this, iConnection);
 			iConnection.database.registerHook(trigger);
+			
+			// TODO: SEND THE CLUSTER CONFIG TO THE CLIENT
 		}
 	}
 

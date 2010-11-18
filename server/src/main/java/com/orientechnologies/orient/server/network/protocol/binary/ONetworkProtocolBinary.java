@@ -202,18 +202,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			user = channel.readString();
 			passwd = channel.readString();
 
-			// SEARCH THE DB IN MEMORY FIRST
-			connection.database = (ODatabaseDocumentTx) OServerMain.server().getMemoryDatabases().get(dbName);
-
-			if (connection.database == null)
-				// SEARCH THE DB IN LOCAL FS
-				connection.database = new ODatabaseDocumentTx(OServerMain.server().getStoragePath(dbName));
-
-			if (connection.database.isClosed())
-				if (connection.database.getStorage() instanceof OStorageMemory)
-					connection.database.create();
-				else
-					connection.database.open(user, passwd);
+			connection.database = openDatabase(dbName, user, passwd);
 
 			underlyingDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
 
@@ -242,38 +231,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			String dbName = channel.readString();
 			String storageMode = channel.readString();
 
-			checkServerAccess("database.create");
-
-			final String path;
-
-			if (storageMode.equals(OEngineLocal.NAME)) {
-				if (OServerMain.server().existsStoragePath(dbName))
-					throw new IllegalArgumentException("Database '" + dbName + "' already exists.");
-
-				path = storageMode + ":${ORIENTDB_HOME}/databases/" + dbName + "/" + dbName;
-			} else if (storageMode.equals(OEngineMemory.NAME)) {
-				if (OServerMain.server().getMemoryDatabases().containsKey(dbName))
-					throw new IllegalArgumentException("Database '" + dbName + "' already exists.");
-
-				path = storageMode + ":" + dbName;
-			} else
-				throw new IllegalArgumentException("Can't create databse: storage mode '" + storageMode + "' is not supported.");
-
-			connection.database = new ODatabaseDocumentTx(path);
-			connection.database.create();
-
-			if (storageMode.equals(OEngineLocal.NAME)) {
-				// CLOSE IT BECAUSE IT WILL BE OPEN AT FIRST USE
-				connection.database.close();
-
-			} else if (storageMode.equals(OEngineMemory.NAME)) {
-				// SAVE THE DB IN MEMORY
-				OServerMain.server().getMemoryDatabases().put(dbName, connection.database);
-			}
-
-			underlyingDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
-
-			invokeHandlerCallbackOnClientConnection();
+			createDatabase(dbName, storageMode);
 
 			sendOk(clientTxId);
 			break;
@@ -282,7 +240,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		case OChannelBinaryProtocol.REQUEST_DB_CLOSE:
 			data.commandInfo = "Close Database";
 
-			connection.database.close();
+			if (connection.database != null)
+				connection.database.close();
 			break;
 
 		case OChannelBinaryProtocol.REQUEST_DB_EXIST: {
@@ -663,6 +622,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		case OChannelBinaryProtocol.REQUEST_CONFIG_GET: {
 			data.commandInfo = "Get config";
 
+			checkServerAccess("database.create");
+
 			final String key = channel.readString();
 			final OGlobalConfiguration cfg = OGlobalConfiguration.findByKey(key);
 			String cfgValue = cfg != null ? cfg.getValueAsString() : "";
@@ -674,6 +635,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 		case OChannelBinaryProtocol.REQUEST_CONFIG_SET: {
 			data.commandInfo = "Get config";
+
+			checkServerAccess("database.create");
 
 			final String key = channel.readString();
 			final String value = channel.readString();
@@ -687,6 +650,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 		case OChannelBinaryProtocol.REQUEST_CONFIG_LIST: {
 			data.commandInfo = "List config";
+
+			checkServerAccess("database.create");
 
 			sendOk(clientTxId);
 
@@ -760,7 +725,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		serverUser = OServerMain.server().getUser(iUser);
 	}
 
-	private void checkServerAccess(final String iResource) {
+	protected void checkServerAccess(final String iResource) {
 		if (serverUser == null)
 			throw new OSecurityAccessException("Server user not authenticated.");
 
@@ -849,5 +814,61 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			for (OServerHandler handler : handlers) {
 				handler.onClientError(connection);
 			}
+	}
+
+	protected ODatabaseDocumentTx openDatabase(final String dbName, final String iUser, final String iPassword) {
+		// SEARCH THE DB IN MEMORY FIRST
+		ODatabaseDocumentTx db = (ODatabaseDocumentTx) OServerMain.server().getMemoryDatabases().get(dbName);
+
+		if (db == null)
+			// SEARCH THE DB IN LOCAL FS
+			db = new ODatabaseDocumentTx(OServerMain.server().getStoragePath(dbName));
+
+		if (db.isClosed())
+			if (db.getStorage() instanceof OStorageMemory)
+				db.create();
+			else
+				db.open(iUser, iPassword);
+
+		return db;
+	}
+
+	protected ODatabaseDocumentTx createDatabase(final String iDbName, final String iStorageMode) {
+		checkServerAccess("database.create");
+
+		OLogManager.instance().info(this, "Creating database '%s' of type '%s'", iDbName, iStorageMode);
+
+		final String path;
+
+		if (iStorageMode.equals(OEngineLocal.NAME)) {
+			if (OServerMain.server().existsStoragePath(iDbName))
+				throw new IllegalArgumentException("Database '" + iDbName + "' already exists.");
+
+			path = iStorageMode + ":${ORIENTDB_HOME}/databases/" + iDbName + "/" + iDbName;
+		} else if (iStorageMode.equals(OEngineMemory.NAME)) {
+			if (OServerMain.server().getMemoryDatabases().containsKey(iDbName))
+				throw new IllegalArgumentException("Database '" + iDbName + "' already exists.");
+
+			path = iStorageMode + ":" + iDbName;
+		} else
+			throw new IllegalArgumentException("Can't create databse: storage mode '" + iStorageMode + "' is not supported.");
+
+		connection.database = new ODatabaseDocumentTx(path);
+		connection.database.create();
+
+		if (iStorageMode.equals(OEngineLocal.NAME)) {
+			// CLOSE IT BECAUSE IT WILL BE OPEN AT FIRST USE
+			connection.database.close();
+
+		} else if (iStorageMode.equals(OEngineMemory.NAME)) {
+			// SAVE THE DB IN MEMORY
+			OServerMain.server().getMemoryDatabases().put(iDbName, connection.database);
+		}
+
+		underlyingDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
+
+		invokeHandlerCallbackOnClientConnection();
+
+		return connection.database;
 	}
 }

@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
-import com.orientechnologies.orient.server.network.protocol.distributed.OChannelDistributedProtocol;
+import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 
 /**
  * Contains all the information about a cluster node.
@@ -69,7 +69,7 @@ public class ODistributedServerNode {
 
 		OLogManager.instance().info(this, "Connecting to remote cluster node %s:%d...", networkAddress, networkPort);
 
-		network.out.writeByte(OChannelDistributedProtocol.SERVERNODE_CONNECT);
+		network.out.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_CONNECT);
 		network.out.writeInt(0);
 		network.flush();
 
@@ -153,7 +153,7 @@ public class ODistributedServerNode {
 				networkPort);
 
 		try {
-			network.out.writeByte(OChannelDistributedProtocol.SERVERNODE_HEARTBEAT);
+			network.out.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_HEARTBEAT);
 			network.out.writeInt(0);
 			network.flush();
 
@@ -183,7 +183,7 @@ public class ODistributedServerNode {
 
 		// SEND THE LAST CONFIGURATION TO THE NODE
 		try {
-			network.out.writeByte(OChannelDistributedProtocol.SERVERNODE_DB_CONFIG);
+			network.out.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_CONFIG);
 			network.out.writeInt(0);
 			network.writeBytes(config.toStream());
 			network.flush();

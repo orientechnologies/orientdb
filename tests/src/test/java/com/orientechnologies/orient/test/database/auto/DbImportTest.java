@@ -22,12 +22,12 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.orient.console.OCommandListener;
-import com.orientechnologies.orient.console.cmd.OConsoleDatabaseImport;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 
 @Test(groups = "db")
-public class DbImportTest implements OCommandListener {
+public class DbImportTest implements OCommandOutputListener {
 
   @Parameters(value = "url")
   public DbImportTest(String iURL) {
@@ -46,7 +46,7 @@ public class DbImportTest implements OCommandListener {
     ODatabaseDocumentTx database = new ODatabaseDocumentTx("local:tests/target/test-import/test-import");
     database.create();
 
-    OConsoleDatabaseImport impor = new OConsoleDatabaseImport(database, "tests/target/db.export", this);
+    ODatabaseImport impor = new ODatabaseImport(database, "tests/target/db.export", this);
     impor.importDatabase();
     impor.close();
 

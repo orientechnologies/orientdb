@@ -36,16 +36,17 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
-import com.orientechnologies.orient.console.cmd.OConsoleDatabaseCompare;
-import com.orientechnologies.orient.console.cmd.OConsoleDatabaseExport;
-import com.orientechnologies.orient.console.cmd.OConsoleDatabaseImport;
-import com.orientechnologies.orient.console.cmd.ODatabaseExportException;
-import com.orientechnologies.orient.console.cmd.ODatabaseImportException;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
+import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
+import com.orientechnologies.orient.core.db.tool.ODatabaseExportException;
+import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
+import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -67,7 +68,7 @@ import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.command.script.OCommandScript;
 
-public class OConsoleDatabaseApp extends OrientConsole implements OCommandListener, OProgressListener {
+public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
 	protected ODatabaseDocument					currentDatabase;
 	protected String										currentDatabaseName;
 	protected ORecordInternal<?>				currentRecord;
@@ -502,10 +503,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 	@ConsoleCommand(description = "Display all the configured clusters")
 	public void clusters() {
 		if (currentDatabaseName != null) {
-			out.println("CLUSTERS:");
-			out.println("---------------------+------+---------------------+-----------+");
-			out.println(" NAME                |  ID  | TYPE                | ELEMENTS  |");
-			out.println("---------------------+------+---------------------+-----------+");
+			out.println("\nCLUSTERS:");
+			out.println("----------------------------------------------+------+---------------------+-----------+");
+			out.println(" NAME                                         |  ID  | TYPE                | RECORDS   |");
+			out.println("----------------------------------------------+------+---------------------+-----------+");
 
 			int clusterId;
 			long totalElements = 0;
@@ -515,13 +516,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 					clusterId = currentDatabase.getClusterIdByName(clusterName);
 					count = currentDatabase.countClusterElements(clusterName);
 					totalElements += count;
-					out.printf(" %-20s|%6d| %-20s|%10d |\n", clusterName, clusterId, clusterId < -1 ? "Logical" : "Physical", count);
+					out.printf(" %-45s|%6d| %-20s|%10d |\n", clusterName, clusterId, clusterId < -1 ? "Logical" : "Physical", count);
 				} catch (Exception e) {
 				}
 			}
-			out.println("---------------------+------+---------------------+-----------+");
-			out.printf(" TOTAL                                             %10d |\n", totalElements);
-			out.println("--------------------------------------------------------------+\n");
+			out.println("----------------------------------------------+------+---------------------+-----------+");
+			out.printf(" TOTAL                                                                 %15d |\n", totalElements);
+			out.println("---------------------------------------------------------------------------------------+\n");
 		} else
 			out.println("No database selected yet.");
 	}
@@ -529,10 +530,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 	@ConsoleCommand(description = "Display all the configured classes")
 	public void classes() {
 		if (currentDatabaseName != null) {
-			out.println("CLASSES:");
-			out.println("--------------------+------+------------------------------------------+-----------+");
-			out.println("NAME                |  ID  | CLUSTERS                                 | ELEMENTS  |");
-			out.println("--------------------+------+------------------------------------------+-----------+");
+			out.println("\nCLASSES:");
+			out.println("----------------------------------------------+------+---------------------+-----------+");
+			out.println(" NAME                                         |  ID  | CLUSTERS            | RECORDS   |");
+			out.println("----------------------------------------------+------+---------------------+-----------+");
 
 			long totalElements = 0;
 			long count;
@@ -542,19 +543,19 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 					for (int i = 0; i < cls.getClusterIds().length; ++i) {
 						if (i > 0)
 							clusters.append(", ");
-						clusters.append(currentDatabase.getClusterNameById(cls.getClusterIds()[i]));
+						clusters.append(cls.getClusterIds()[i]);
 					}
 
 					count = currentDatabase.countClass(cls.getName());
 					totalElements += count;
 
-					out.printf("%-20s|%6d| %-40s |%10d |\n", cls.getName(), cls.getId(), clusters, count);
+					out.printf(" %-45s| %4d | %-20s|%10d |\n", cls.getName(), cls.getId(), clusters, count);
 				} catch (Exception e) {
 				}
 			}
-			out.println("--------------------+------+------------------------------------------+-----------+");
-			out.printf("TOTAL                                                                  %10d |\n", totalElements);
-			out.println("----------------------------------------------------------------------------------+");
+			out.println("----------------------------------------------+------+---------------------+-----------+");
+			out.printf(" TOTAL                                                                 %15d |\n", totalElements);
+			out.println("---------------------------------------------------------------------------------------+");
 
 		} else
 			out.println("No database selected yet.");
@@ -635,7 +636,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 	public void compareDatabases(@ConsoleParameter(name = "db1-url", description = "URL of the first database") final String iDb1URL,
 			@ConsoleParameter(name = "db2-url", description = "URL of the second database") final String iDb2URL) throws IOException {
 		try {
-			new OConsoleDatabaseCompare(iDb1URL, iDb2URL, this).compare();
+			new ODatabaseCompare(iDb1URL, iDb2URL, this).compare();
 		} catch (ODatabaseExportException e) {
 			out.println("ERROR: " + e.toString());
 		}
@@ -647,7 +648,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		out.println("Exporting current database to: " + iOutputFilePath + "...");
 
 		try {
-			new OConsoleDatabaseExport(currentDatabase, iOutputFilePath, this).exportDatabase().close();
+			new ODatabaseExport(currentDatabase, iOutputFilePath, this).exportDatabase().close();
 		} catch (ODatabaseExportException e) {
 			out.println("ERROR: " + e.toString());
 		}
@@ -659,7 +660,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandListen
 		out.println("Importing database from file " + iInputFilePath + "...");
 
 		try {
-			new OConsoleDatabaseImport(currentDatabase, iInputFilePath, this).importDatabase().close();
+			new ODatabaseImport(currentDatabase, iInputFilePath, this).importDatabase().close();
 		} catch (ODatabaseImportException e) {
 			out.println("ERROR: " + e.toString());
 		}
