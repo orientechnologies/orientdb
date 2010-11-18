@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.exception.ONetworkProtocolException;
@@ -35,9 +36,14 @@ import com.orientechnologies.orient.enterprise.exception.ONetworkProtocolExcepti
 public class OChannelBinary extends OChannel {
 	public DataInputStream	in;
 	public DataOutputStream	out;
+	private final int				maxChunkSize;
+	private final byte[]		buffer;
 
 	public OChannelBinary(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
 		super(iSocket, iConfig);
+
+		maxChunkSize = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_BINARY_MAX_CONTENT_LENGTH);
+		buffer = new byte[maxChunkSize];
 	}
 
 	public byte readByte() throws IOException {
@@ -52,17 +58,6 @@ public class OChannelBinary extends OChannel {
 		return in.readLong();
 	}
 
-	public byte[] readBytes() throws IOException {
-		int len = in.readInt();
-
-		if (len < 0)
-			return null;
-
-		byte[] tmp = new byte[len];
-		in.readFully(tmp);
-		return tmp;
-	}
-
 	public short readShort() throws IOException {
 		return in.readShort();
 	}
@@ -73,6 +68,17 @@ public class OChannelBinary extends OChannel {
 			return null;
 
 		return new String(buffer);
+	}
+
+	public byte[] readBytes() throws IOException {
+		final int len = in.readInt();
+
+		if (len < 0)
+			return null;
+
+		byte[] tmp = new byte[len];
+		in.readFully(tmp);
+		return tmp;
 	}
 
 	public List<String> readStringList() throws IOException {
@@ -118,14 +124,15 @@ public class OChannelBinary extends OChannel {
 	public OChannelBinary writeString(final String iContent) throws IOException {
 		if (iContent == null)
 			out.writeInt(-1);
-		else {
-			byte[] temp = iContent.getBytes();
-			out.writeInt(temp.length);
-			out.write(temp);
-		}
+		else
+			writeBytes(iContent.getBytes());
+
 		return this;
 	}
 
+	/**
+	 * Send byte arrays split in chunks of maxChunkSize bytes
+	 */
 	public OChannelBinary writeBytes(final byte[] iContent) throws IOException {
 		if (iContent == null) {
 			out.writeInt(-1);
@@ -242,6 +249,14 @@ public class OChannelBinary extends OChannel {
 			}
 
 		return rootException;
+	}
+
+	public byte[] getBuffer() {
+		return buffer;
+	}
+
+	public int getMaxChunkSize() {
+		return maxChunkSize;
 	}
 
 }
