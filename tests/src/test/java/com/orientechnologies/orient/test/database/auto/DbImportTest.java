@@ -60,5 +60,6 @@ public class DbImportTest implements OCommandOutputListener {
   @Test(enabled = false)
   public void onMessage(final String iText) {
     System.out.print(iText);
+    System.out.flush();
   }
 }

@@ -50,16 +50,15 @@ public class OChannelBinaryOutputStream extends OutputStream {
 
 	@Override
 	public void flush() throws IOException {
-		if (pos > 0) {
-			System.out.println("Flushing " + pos + " bytes...");
-			channel.out.writeInt(pos);
-			channel.out.write(buffer, 0, pos);
-			pos = 0;
-		}
+		// flush(true);
 	}
 
 	private void flush(final boolean iContinue) throws IOException {
-		flush();
+		channel.out.writeInt(pos);
+		if (pos > 0) {
+			channel.out.write(buffer, 0, pos);
+			pos = 0;
+		}
 		channel.out.writeByte(iContinue ? 1 : 0);
 		channel.out.flush();
 	}
