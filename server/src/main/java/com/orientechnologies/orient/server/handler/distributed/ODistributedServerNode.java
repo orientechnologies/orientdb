@@ -20,15 +20,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
@@ -41,14 +38,14 @@ import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistr
  */
 public class ODistributedServerNode {
 	public enum STATUS {
-		DISCONNECTED, CONNECTING, SYNCHRONIZED, UNSYNCHRONIZED
+		DISCONNECTED, CONNECTING, CONNECTED, SYNCHRONIZING
 	}
 
 	public String																				networkAddress;
 	public int																					networkPort;
 	public Date																					joinedOn;
 	private ODistributedServerManager										manager;
-	public OChannelBinaryClient													network;
+	public OChannelBinaryClient													channel;
 	private OContextConfiguration												configuration;
 	private STATUS																			status					= STATUS.DISCONNECTED;
 	private Map<String, Long>														storages				= new HashMap<String, Long>();
@@ -65,23 +62,17 @@ public class ODistributedServerNode {
 
 	public void connect(final int iTimeout) throws IOException {
 		configuration.setValue(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT, iTimeout);
-		network = new OChannelBinaryClient(networkAddress, networkPort, configuration);
+		channel = new OChannelBinaryClient(networkAddress, networkPort, configuration);
 
 		OLogManager.instance().info(this, "Connecting to remote cluster node %s:%d...", networkAddress, networkPort);
 
-		network.out.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_CONNECT);
-		network.out.writeInt(0);
-		network.flush();
+		channel.out.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_CONNECT);
+		channel.out.writeInt(0);
+		channel.flush();
 
 		readStatus();
 
-		final int tot = network.readInt();
-		for (int i = 0; i < tot; ++i)
-			storages.put(network.readString(), network.readLong());
-
-		printDatabaseTable();
-
-		status = STATUS.UNSYNCHRONIZED;
+		status = STATUS.CONNECTED;
 		OLogManager.instance().info(this, "Connection to remote cluster node %s:%d has been established", networkAddress, networkPort);
 	}
 
@@ -102,42 +93,42 @@ public class ODistributedServerNode {
 			try {
 				switch (iRequest.status) {
 				case OTransactionEntry.CREATED:
-					network.writeByte(OChannelDistributedProtocol.REQUEST_RECORD_CREATE);
-					network.writeInt(0);
-					network.writeShort((short) record.getIdentity().getClusterId());
-					network.writeBytes(record.toStream());
-					network.writeByte(record.getRecordType());
-					network.flush();
+					channel.writeByte(OChannelDistributedProtocol.REQUEST_RECORD_CREATE);
+					channel.writeInt(0);
+					channel.writeShort((short) record.getIdentity().getClusterId());
+					channel.writeBytes(record.toStream());
+					channel.writeByte(record.getRecordType());
+					channel.flush();
 
-					network.readStatus();
+					channel.readStatus();
 					break;
 
 				case OTransactionEntry.UPDATED:
-					network.writeByte(OChannelDistributedProtocol.REQUEST_RECORD_UPDATE);
-					network.writeInt(0);
-					network.writeShort((short) record.getIdentity().getClusterId());
-					network.writeLong(record.getIdentity().getClusterPosition());
-					network.writeBytes(record.toStream());
-					network.writeInt(record.getVersion());
-					network.writeByte(record.getRecordType());
-					network.flush();
+					channel.writeByte(OChannelDistributedProtocol.REQUEST_RECORD_UPDATE);
+					channel.writeInt(0);
+					channel.writeShort((short) record.getIdentity().getClusterId());
+					channel.writeLong(record.getIdentity().getClusterPosition());
+					channel.writeBytes(record.toStream());
+					channel.writeInt(record.getVersion());
+					channel.writeByte(record.getRecordType());
+					channel.flush();
 
 					readStatus();
 
-					network.readInt();
+					channel.readInt();
 					break;
 
 				case OTransactionEntry.DELETED:
-					network.writeByte(OChannelDistributedProtocol.REQUEST_RECORD_DELETE);
-					network.writeInt(0);
-					network.writeShort((short) record.getIdentity().getClusterId());
-					network.writeLong(record.getIdentity().getClusterPosition());
-					network.writeInt(record.getVersion());
-					network.flush();
+					channel.writeByte(OChannelDistributedProtocol.REQUEST_RECORD_DELETE);
+					channel.writeInt(0);
+					channel.writeShort((short) record.getIdentity().getClusterId());
+					channel.writeLong(record.getIdentity().getClusterPosition());
+					channel.writeInt(record.getVersion());
+					channel.flush();
 
 					readStatus();
 
-					network.readLong();
+					channel.readLong();
 					break;
 				}
 			} catch (RuntimeException e) {
@@ -152,15 +143,20 @@ public class ODistributedServerNode {
 		OLogManager.instance().debug(this, "Sending keepalive message to remote distributed server node %s:%d...", networkAddress,
 				networkPort);
 
+		channel.acquireExclusiveLock();
+
 		try {
-			network.out.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_HEARTBEAT);
-			network.out.writeInt(0);
-			network.flush();
+			channel.out.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_HEARTBEAT);
+			channel.out.writeInt(0);
+			channel.flush();
 
 			readStatus();
 
 		} catch (Exception e) {
 			return false;
+
+		} finally {
+			channel.releaseExclusiveLock();
 		}
 
 		return true;
@@ -182,19 +178,24 @@ public class ODistributedServerNode {
 		final ODocument config = createDatabaseConfiguration();
 
 		// SEND THE LAST CONFIGURATION TO THE NODE
+		channel.acquireExclusiveLock();
+
 		try {
-			network.out.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_CONFIG);
-			network.out.writeInt(0);
-			network.writeBytes(config.toStream());
-			network.flush();
+			channel.out.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_CONFIG);
+			channel.out.writeInt(0);
+			channel.writeBytes(config.toStream());
+			channel.flush();
 
 			readStatus();
-			
+
 			if (status == STATUS.DISCONNECTED)
 				synchronizeDelta();
 
 		} catch (Exception e) {
 			e.printStackTrace();
+
+		} finally {
+			channel.releaseExclusiveLock();
 		}
 
 	}
@@ -214,19 +215,21 @@ public class ODistributedServerNode {
 			OLogManager.instance().info(this, "Started realignment of remote node %s:%d after a reconnection. Found %d updates",
 					networkAddress, networkPort, bufferedChanges.size());
 
+			status = STATUS.SYNCHRONIZING;
+
 			for (OTransactionEntry<ORecordInternal<?>> entry : bufferedChanges) {
 				sendRequest(entry);
 			}
 			bufferedChanges.clear();
 
-			status = STATUS.UNSYNCHRONIZED;
+			status = STATUS.CONNECTED;
 		}
 
 		OLogManager.instance().info(this, "Realignment of remote node %s:%d completed", networkAddress, networkPort);
 	}
 
 	private int readStatus() throws IOException {
-		return network.readStatus();
+		return channel.readStatus();
 	}
 
 	private ODocument createDatabaseConfiguration() {
@@ -236,35 +239,6 @@ public class ODistributedServerNode {
 		config.field("clusters", new ODocument("*", new ODocument("owner", manager.getName())));
 
 		return config;
-	}
-
-	private void printDatabaseTable() {
-		OLogManager.instance().info(this, "+--------------------------------+----------------+----------------+");
-		OLogManager.instance().info(this, "| STORAGE                        | LOCAL VERSION  | REMOTE VERSION |");
-		OLogManager.instance().info(this, "+--------------------------------+----------------+----------------+");
-
-		for (OStorage s : Orient.instance().getStorages()) {
-			if (storages.containsKey(s.getName()))
-				OLogManager.instance().info(this, "| %-30s | %14d | %14d |", s.getName(), s.getVersion(), storages.get(s.getName()));
-			else
-				OLogManager.instance().info(this, "| %-30s | %14d |    unavailable |", s.getName(), s.getVersion());
-		}
-
-		boolean found;
-		for (Entry<String, Long> stg : storages.entrySet()) {
-			found = false;
-			for (OStorage s : Orient.instance().getStorages()) {
-				if (s.getName().equals(stg.getKey())) {
-					found = true;
-					break;
-				}
-			}
-
-			if (!found)
-				OLogManager.instance().info(this, "| %-30s |    unavailable | %14d |", stg.getKey(), stg.getValue());
-		}
-
-		OLogManager.instance().info(this, "+--------------------------------+----------------+----------------+");
 	}
 
 	public STATUS getStatus() {

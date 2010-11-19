@@ -39,7 +39,7 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 public class OServerShutdownMain {
 	public String														networkAddress;
 	public int[]														networkPort;
-	public OChannelBinaryClient							network;
+	public OChannelBinaryClient							channel;
 	protected OServerConfigurationLoaderXml	configurationLoader;
 	protected OServerConfiguration					configuration;
 
@@ -69,7 +69,7 @@ public class OServerShutdownMain {
 				// LOAD SERVER HOST AND PORT FROM FILE
 				loadConfiguration();
 				for (OServerNetworkListenerConfiguration l : configuration.network.listeners) {
-					if (l.protocol.equals("binary")) {
+					if (l.protocol.equals("distributed")) {
 						networkAddress = l.ipAddress;
 						networkPort = OServerNetworkListener.getPorts(l.portRange);
 						break;
@@ -102,25 +102,25 @@ public class OServerShutdownMain {
 		// TRY TO CONNECT TO THE RIGHT PORT
 		for (int port : networkPort)
 			try {
-				network = new OChannelBinaryClient(networkAddress, port, contextConfig);
+				channel = new OChannelBinaryClient(networkAddress, port, contextConfig);
 				break;
 			} catch (Exception e) {
 			}
 
-		if (network == null)
+		if (channel == null)
 			throw new ONetworkProtocolException("Can't connect to server host '" + networkAddress + "', ports: "
 					+ Arrays.toString(networkPort));
 
-		network.writeByte((byte) OChannelBinaryProtocol.REQUEST_SHUTDOWN);
-		network.writeInt(0);
-		network.writeString(OServerConfiguration.SRV_ROOT_ADMIN);
-		network.writeString(rootPassword);
-		network.flush();
+		channel.writeByte((byte) OChannelBinaryProtocol.REQUEST_SHUTDOWN);
+		channel.writeInt(0);
+		channel.writeString(OServerConfiguration.SRV_ROOT_ADMIN);
+		channel.writeString(rootPassword);
+		channel.flush();
 
-		if (network.readByte() == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
-			network.readInt();
-			network.readString();
-			throw new ONetworkProtocolException(network.readString());
+		if (channel.readByte() == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
+			channel.readInt();
+			channel.readString();
+			throw new ONetworkProtocolException(channel.readString());
 		}
 	}
 

@@ -291,7 +291,7 @@ public class OStorageLocal extends OStorageAbstract {
 				throw new OStorageException("Can't delete a storage open");
 
 		// GET REAL DIRECTORY
-		File dbDir = new File(url);
+		File dbDir = new File(OSystemVariableResolver.resolveSystemVariables(url));
 		if (!dbDir.exists() || !dbDir.isDirectory())
 			dbDir = dbDir.getParentFile();
 

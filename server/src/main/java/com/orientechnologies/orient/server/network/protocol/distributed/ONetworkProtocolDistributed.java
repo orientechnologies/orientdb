@@ -16,25 +16,24 @@
 package com.orientechnologies.orient.server.network.protocol.distributed;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryInputStream;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryOutputStream;
 import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 import com.orientechnologies.orient.server.OServerMain;
-import com.orientechnologies.orient.server.handler.distributed.ODistributedServerLoaderChecker;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.handler.distributed.ODistributedServerNode;
+import com.orientechnologies.orient.server.handler.distributed.ODistributedServerNode.STATUS;
+import com.orientechnologies.orient.server.handler.distributed.ODistributedSynchronizationException;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
 /**
@@ -43,9 +42,8 @@ import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProto
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ONetworkProtocolDistributed extends ONetworkProtocolBinary {
+public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implements OCommandOutputListener {
 	private ODistributedServerManager	manager;
-	private volatile long							lastHeartBeat;
 
 	public ONetworkProtocolDistributed() {
 		super("Distributed-DB");
@@ -54,10 +52,6 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary {
 		if (manager == null)
 			throw new OConfigurationException(
 					"Can't find a ODistributedServerDiscoveryManager instance registered as handler. Check the server configuration in the handlers section.");
-
-		// FIRST TIME: SCHEDULE THE HEARTBEAT CHECKER
-		Orient.getTimer().schedule(new ODistributedServerLoaderChecker(manager, this), manager.getNetworkHeartbeatDelay(),
-				manager.getNetworkHeartbeatDelay() / 2);
 	}
 
 	@Override
@@ -72,7 +66,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary {
 		switch (requestType) {
 		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_HEARTBEAT:
 			data.commandInfo = "Keep-alive";
-			lastHeartBeat = System.currentTimeMillis();
+			manager.updateHeartBeatTime();
 			sendOk(0);
 			break;
 
@@ -80,73 +74,100 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary {
 			data.commandInfo = "Cluster connection";
 
 			manager.receivedLeaderConnection(this);
-
 			sendOk(0);
-
-			// TRANSMITS FOR ALL THE CONFIGURED STORAGES: STORAGE/VERSION
-			Map<String, Long> storages = new HashMap<String, Long>();
-			for (OStorage stg : Orient.instance().getStorages()) {
-				storages.put(stg.getName(), stg.getVersion());
-			}
-
-			channel.writeInt(storages.size());
-			for (Entry<String, Long> s : storages.entrySet()) {
-				channel.writeString(s.getKey());
-				channel.writeLong(s.getValue());
-			}
-
 			break;
 		}
 
-		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_SENDER:
+		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_SENDER: {
 			data.commandInfo = "Share the database to a remote server";
+
+			ODatabaseDocumentTx db = null;
 
 			try {
 				final String dbName = channel.readString();
 				final String dbUser = channel.readString();
 				final String dbPassword = channel.readString();
-				final String remoteServerURL = channel.readString();
-				final String remoteServerUser = channel.readString();
-				final String remoteServerPassword = channel.readString();
+				final String remoteServerName = channel.readString();
 
 				checkServerAccess("database.share");
 
-				final ODatabaseDocumentTx db = openDatabase(dbName, dbUser, dbPassword);
+				db = openDatabase(dbName, dbUser, dbPassword);
 
-				new ODatabaseExport(db, new OChannelBinaryOutputStream(channel), null);
+				final String engineName = db.getStorage() instanceof OStorageLocal ? "local" : "memory";
+
+				final ODistributedServerNode remoteServerNode = manager.getNode(remoteServerName);
+				if (remoteServerNode.getStatus() == STATUS.DISCONNECTED)
+					throw new ODistributedSynchronizationException("Can't share database '" + dbName + "' on remote server node '"
+							+ remoteServerName + "' because is disconnected");
+
+				try {
+					remoteServerNode.channel.acquireExclusiveLock();
+
+					OLogManager.instance().info(this, "Sharing database '" + dbName + "' to remote server " + remoteServerName + "...");
+
+					// EXECUTE THE REQUEST ON REMOTE SERVER NODE
+					remoteServerNode.channel.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_RECEIVER);
+					remoteServerNode.channel.writeInt(0);
+					remoteServerNode.channel.writeString(dbName);
+					remoteServerNode.channel.writeString(engineName);
+
+					OLogManager.instance().info(this, "Exporting database '%s' via streaming to remote server node: %s...", dbName,
+							remoteServerName);
+
+					// START THE EXPORT GIVING AS OUTPUTSTREAM THE CHANNEL TO STREAM THE EXPORT
+					new ODatabaseExport(db, new OChannelBinaryOutputStream(remoteServerNode.channel), this).exportDatabase();
+
+					OLogManager.instance().info(this, "Database exported correctly");
+
+					remoteServerNode.channel.readStatus();
+
+				} finally {
+					remoteServerNode.channel.releaseExclusiveLock();
+				}
 
 				sendOk(0);
 
-			} catch (Exception e) {
-				channel.clearInput();
-
 			} finally {
-
+				if (db != null)
+					db.close();
 			}
 			break;
+		}
 
-		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_RECEIVER:
+		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_RECEIVER: {
 			data.commandInfo = "Received a shared database from a remote server to install";
 
+			final String dbName = channel.readString();
+			final String engineName = channel.readString();
+
+			OLogManager.instance().info(this, "Received database '%s' to share on local server node", dbName);
+
+			final ODatabaseDocumentTx db = getDatabaseInstance(dbName, engineName);
+
 			try {
-				final String dbName = channel.readString();
-				final String storageMode = channel.readString();
+				if (db.exists()) {
+					OLogManager.instance().info(this, "Deleting existent database '%s'", db.getName());
+					db.delete();
+				}
 
-				checkServerAccess("database.share");
+				createDatabase(db);
 
-				final ODatabaseDocument db = createDatabase(dbName, storageMode);
+				if (db.isClosed())
+					db.open(OUser.ADMIN, OUser.ADMIN);
 
-				new ODatabaseImport(db, new OChannelBinaryInputStream(channel), null);
+				OLogManager.instance().info(this, "Importing database '%s' via streaming from remote server node...", dbName);
+
+				new ODatabaseImport(db, new OChannelBinaryInputStream(channel), this).importDatabase();
+
+				OLogManager.instance().info(this, "Database imported correctly", dbName);
 
 				sendOk(0);
 
-			} catch (Exception e) {
-				channel.clearInput();
-
 			} finally {
-
+				db.close();
 			}
 			break;
+		}
 
 		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_CONFIG: {
 			data.commandInfo = "Update db configuration from server node leader";
@@ -166,7 +187,6 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary {
 		}
 	}
 
-	public long getLastHeartBeat() {
-		return lastHeartBeat;
+	public void onMessage(String iText) {
 	}
 }

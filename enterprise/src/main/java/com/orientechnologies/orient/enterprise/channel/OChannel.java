@@ -20,10 +20,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
+import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
-public abstract class OChannel {
+public abstract class OChannel extends OSharedResourceExternal {
 	public Socket				socket;
 
 	public InputStream	inStream;

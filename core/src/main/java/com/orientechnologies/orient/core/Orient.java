@@ -77,7 +77,7 @@ public class Orient extends OSharedResource {
 		try {
 			acquireExclusiveLock();
 
-			OEngine engine = engines.get(engineName.toLowerCase());
+			final OEngine engine = engines.get(engineName.toLowerCase());
 
 			if (engine == null)
 				throw new OConfigurationException("Error on opening database: the engine '" + engineName + "' was not found. URL was: "
@@ -159,6 +159,24 @@ public class Orient extends OSharedResource {
 			final Class<?> cls = Class.forName(iClassName);
 			registerEngine((OEngine) cls.newInstance());
 		} catch (Exception e) {
+		}
+	}
+
+	/**
+	 * Returns the engine by its name.
+	 * 
+	 * @param iEngineName
+	 *          Engine name to retrieve
+	 * @return OEngine instance of found, otherwise null
+	 */
+	public OEngine getEngine(final String iEngineName) {
+		try {
+			acquireSharedLock();
+
+			return engines.get(iEngineName);
+
+		} finally {
+			releaseSharedLock();
 		}
 	}
 

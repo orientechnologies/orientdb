@@ -73,7 +73,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	protected String										currentDatabaseName;
 	protected ORecordInternal<?>				currentRecord;
 	protected List<ORecordInternal<?>>	currentResultSet;
-	protected OServerAdmin							srvAdmin;
+	protected OServerAdmin							serverAdmin;
 	private int													lastPercentStep;
 
 	public static void main(String[] args) {
@@ -109,6 +109,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		currentResultSet = new ArrayList<ORecordInternal<?>>();
 
 		properties.put("limit", "20");
+		properties.put("debug", "false");
 	}
 
 	@Override
@@ -117,22 +118,30 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		Orient.instance().shutdown();
 	}
 
-	@ConsoleCommand(aliases = { "use database" }, description = "Connect to a database")
+	@ConsoleCommand(aliases = { "use database" }, description = "Connect to a database or a remote Server instance")
 	public void connect(
-			@ConsoleParameter(name = "database-url", description = "The url of the database to connect in the format '<mode>:<path>'") String iDatabaseURL,
+			@ConsoleParameter(name = "url", description = "The url of the remote server or the database to connect in the format '<mode>:<path>'") String iURL,
 			@ConsoleParameter(name = "user", description = "User name") String iUserName,
-			@ConsoleParameter(name = "password", description = "User password") String iUserPassword) {
-		out.print("Connecting to database [" + iDatabaseURL + "] with user '" + iUserName + "'...");
+			@ConsoleParameter(name = "password", description = "User password") String iUserPassword) throws IOException {
+		if (iURL.contains("/")) {
+			// OPEN DB
+			out.print("Connecting to database [" + iURL + "] with user '" + iUserName + "'...");
 
-		currentDatabase = new ODatabaseDocumentTx(iDatabaseURL);
-		if (currentDatabase == null)
-			throw new OException("Database " + iDatabaseURL + " not found.");
-		currentDatabase.open(iUserName, iUserPassword);
+			currentDatabase = new ODatabaseDocumentTx(iURL);
+			if (currentDatabase == null)
+				throw new OException("Database " + iURL + " not found.");
+			currentDatabase.open(iUserName, iUserPassword);
 
-		currentDatabaseName = currentDatabase.getName();
+			currentDatabaseName = currentDatabase.getName();
 
-		if (currentDatabase.getStorage() instanceof OStorageRemote)
-			srvAdmin = new OServerAdmin((OStorageRemote) currentDatabase.getStorage());
+			if (currentDatabase.getStorage() instanceof OStorageRemote)
+				serverAdmin = new OServerAdmin((OStorageRemote) currentDatabase.getStorage());
+		} else {
+			// CONNECT TO REMOTE SERVER
+			out.print("Connecting to remote Server instance [" + iURL + "] with user '" + iUserName + "'...");
+
+			serverAdmin = new OServerAdmin(iURL).connect(iUserName, iUserPassword);
+		}
 
 		out.println("OK");
 	}
@@ -143,7 +152,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 		out.print("Disconnecting from the database [" + currentDatabaseName + "]...");
 
-		srvAdmin = null;
+		if (serverAdmin != null) {
+			serverAdmin.close();
+			serverAdmin = null;
+		}
 
 		currentDatabase.close();
 		currentDatabase = null;
@@ -236,7 +248,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 			out.println("Truncated " + recs + " records from cluster [" + iClusterName + "] in database " + currentDatabaseName);
 		} catch (Exception e) {
-			out.println("ERROR: " + e.toString());
+			printError(e);
 		}
 	}
 
@@ -255,7 +267,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 			out.println("Truncated " + recs + " records from class [" + iClassName + "] in database " + currentDatabaseName);
 		} catch (Exception e) {
-			out.println("ERROR: " + e.toString());
+			printError(e);
 		}
 	}
 
@@ -619,16 +631,23 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	}
 
 	@ConsoleCommand(description = "Share a database with a remote server")
-	public void shareDatabases(
-			@ConsoleParameter(name = "db-name", description = "name of the database to share") final String iDbName,
-			@ConsoleParameter(name = "remote-url", description = "URL of the second database") final String iRemoteURL,
-			@ConsoleParameter(name = "user", description = "User name") String iUserName,
-			@ConsoleParameter(name = "password", description = "User password") String iUserPassword) {
+	public void shareDatabase(
+			@ConsoleParameter(name = "db-name", description = "Name of the database to share") final String iDatabaseName,
+			@ConsoleParameter(name = "db-user", description = "Database user") final String iDatabaseUserName,
+			@ConsoleParameter(name = "db-password", description = "Database password") String iDatabaseUserPassword,
+			@ConsoleParameter(name = "remote-server-name", description = "Remote server's name as <address>:<port>") final String iRemoteName)
+			throws IOException {
 
 		try {
-			// srvAdmin.connect(iUserName, iUserPassword)
-		} catch (ODatabaseExportException e) {
-			out.println("ERROR: " + e.toString());
+			if (serverAdmin == null)
+				throw new IllegalStateException("You must connect to a remote server to share a database");
+
+			serverAdmin.shareDatabase(iDatabaseName, iDatabaseUserName, iDatabaseUserPassword, iRemoteName);
+
+			out.println("Database '" + iDatabaseName + "' has been shared with the server " + iRemoteName);
+
+		} catch (Exception e) {
+			printError(e);
 		}
 	}
 
@@ -638,7 +657,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		try {
 			new ODatabaseCompare(iDb1URL, iDb2URL, this).compare();
 		} catch (ODatabaseExportException e) {
-			out.println("ERROR: " + e.toString());
+			printError(e);
 		}
 	}
 
@@ -650,7 +669,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		try {
 			new ODatabaseExport(currentDatabase, iOutputFilePath, this).exportDatabase().close();
 		} catch (ODatabaseExportException e) {
-			out.println("ERROR: " + e.toString());
+			printError(e);
 		}
 	}
 
@@ -662,7 +681,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		try {
 			new ODatabaseImport(currentDatabase, iInputFilePath, this).importDatabase().close();
 		} catch (ODatabaseImportException e) {
-			out.println("ERROR: " + e.toString());
+			printError(e);
 		}
 	}
 
@@ -687,7 +706,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		try {
 			out.println(((ORecordSerializerStringAbstract) serializer).toString(currentRecord, null));
 		} catch (ODatabaseExportException e) {
-			out.println("ERROR: " + e.toString());
+			printError(e);
 		}
 	}
 
@@ -739,8 +758,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			throw new IllegalArgumentException("Configuration variable '" + iConfigName + "' wasn't found");
 
 		final String value;
-		if (srvAdmin != null) {
-			value = srvAdmin.getGlobalConfiguration(config);
+		if (serverAdmin != null) {
+			value = serverAdmin.getGlobalConfiguration(config);
 			out.print("\nRemote configuration: ");
 		} else {
 			value = config.getValueAsString();
@@ -757,8 +776,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		if (config == null)
 			throw new IllegalArgumentException("Configuration variable '" + iConfigName + "' wasn't found");
 
-		if (srvAdmin != null) {
-			srvAdmin.setGlobalConfiguration(config, iConfigValue);
+		if (serverAdmin != null) {
+			serverAdmin.setGlobalConfiguration(config, iConfigValue);
 			out.println("\nRemote configuration value changed correctly");
 		} else {
 			config.setValue(iConfigValue);
@@ -769,9 +788,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 	@ConsoleCommand(description = "Return all the configuration values")
 	public void config() throws IOException {
-		if (srvAdmin != null) {
+		if (serverAdmin != null) {
 			// REMOTE STORAGE
-			final Map<String, String> values = srvAdmin.getGlobalConfigurations();
+			final Map<String, String> values = serverAdmin.getGlobalConfigurations();
 
 			out.println("REMOTE SERVER CONFIGURATION:");
 			out.println("+------------------------------------+--------------------------------+");
@@ -1081,5 +1100,23 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		p.waitFor();
 
 		return p.exitValue();
+	}
+
+	private void printError(final Exception e) {
+		if (properties.get("debug") != null && Boolean.parseBoolean(properties.get("debug").toString())) {
+			out.println("\n!ERROR:");
+			e.printStackTrace();
+		} else {
+			// SHORT FORM
+			out.println("\n!ERROR: " + e.getMessage());
+
+			if (e.getCause() != null) {
+				Throwable t = e.getCause();
+				while (t != null) {
+					out.println("-> " + t.getMessage());
+					t = t.getCause();
+				}
+			}
+		}
 	}
 }

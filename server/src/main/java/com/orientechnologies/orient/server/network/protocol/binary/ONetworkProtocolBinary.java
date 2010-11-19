@@ -64,6 +64,7 @@ import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
+import com.orientechnologies.orient.enterprise.exception.ONetworkProtocolException;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
@@ -130,9 +131,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		} catch (SocketException e) {
 			sendShutdown();
 		} catch (OException e) {
+			channel.clearInput();
 			sendError(clientTxId, e);
 		} catch (Throwable t) {
 			OLogManager.instance().error(this, "Error on executing request", t);
+			channel.clearInput();
 			sendError(clientTxId, t);
 		} finally {
 			try {
@@ -231,7 +234,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			String dbName = channel.readString();
 			String storageMode = channel.readString();
 
-			createDatabase(dbName, storageMode);
+			checkServerAccess("database.create");
+			connection.database = getDatabaseInstance(dbName, storageMode);
+			createDatabase(connection.database);
 
 			sendOk(clientTxId);
 			break;
@@ -668,7 +673,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			data.commandInfo = "Command not supported";
 			OLogManager.instance().error(this, "Request not supported. Code: " + requestType);
 			channel.clearInput();
-			sendError(clientTxId, null);
+			sendError(clientTxId, new ONetworkProtocolException("Request not supported. Code: " + requestType));
 		}
 	}
 
@@ -703,14 +708,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 		Throwable current = t;
 		while (current != null) {
+			// MORE DETAILS ARE COMING AS EXCEPTION
+			channel.writeByte((byte) 1);
+
 			channel.writeString(current.getClass().getName());
 			channel.writeString(current != null ? current.getMessage() : null);
 
 			current = current.getCause();
-
-			if (current != null)
-				// MORE DETAILS ARE COMING
-				channel.writeByte((byte) 1);
 		}
 		channel.writeByte((byte) 0);
 
@@ -833,11 +837,27 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		return db;
 	}
 
-	protected ODatabaseDocumentTx createDatabase(final String iDbName, final String iStorageMode) {
-		checkServerAccess("database.create");
+	protected void createDatabase(final ODatabaseDocumentTx iDatabase) {
+		OLogManager.instance().info(this, "Creating database '%s' of type '%s'", iDatabase.getURL(),
+				iDatabase.getStorage() instanceof OStorageLocal ? "local" : "memory");
 
-		OLogManager.instance().info(this, "Creating database '%s' of type '%s'", iDbName, iStorageMode);
+		iDatabase.create();
 
+		if (iDatabase.getStorage() instanceof OStorageLocal) {
+			// CLOSE IT BECAUSE IT WILL BE OPEN AT FIRST USE
+			iDatabase.close();
+
+		} else {
+			// SAVE THE DB IN MEMORY
+			OServerMain.server().getMemoryDatabases().put(iDatabase.getName(), iDatabase);
+		}
+
+		underlyingDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) iDatabase.getUnderlying()).getUnderlying());
+
+		invokeHandlerCallbackOnClientConnection();
+	}
+
+	protected ODatabaseDocumentTx getDatabaseInstance(final String iDbName, final String iStorageMode) {
 		final String path;
 
 		if (iStorageMode.equals(OEngineLocal.NAME)) {
@@ -853,22 +873,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		} else
 			throw new IllegalArgumentException("Can't create databse: storage mode '" + iStorageMode + "' is not supported.");
 
-		connection.database = new ODatabaseDocumentTx(path);
-		connection.database.create();
-
-		if (iStorageMode.equals(OEngineLocal.NAME)) {
-			// CLOSE IT BECAUSE IT WILL BE OPEN AT FIRST USE
-			connection.database.close();
-
-		} else if (iStorageMode.equals(OEngineMemory.NAME)) {
-			// SAVE THE DB IN MEMORY
-			OServerMain.server().getMemoryDatabases().put(iDbName, connection.database);
-		}
-
-		underlyingDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
-
-		invokeHandlerCallbackOnClientConnection();
-
-		return connection.database;
+		return new ODatabaseDocumentTx(path);
 	}
 }

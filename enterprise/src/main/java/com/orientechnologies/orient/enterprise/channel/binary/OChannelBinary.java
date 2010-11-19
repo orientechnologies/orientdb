@@ -195,30 +195,29 @@ public class OChannelBinary extends OChannel {
 
 		if (result == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
 			StringBuilder buffer = new StringBuilder();
-			boolean moreDetails = false;
 			String rootClassName = null;
 
-			do {
+			// EXCEPTION
+			while (readByte() == 1) {
 				final String excClassName = readString();
 				final String excMessage = readString();
 
-				if (!moreDetails) {
+				if (rootClassName == null)
 					// FIRST ONE: TAKE AS ROOT CLASS/MSG
 					rootClassName = excClassName;
-				} else {
+				else {
 					// DETAIL: APPEND AS STRING SINCE EXCEPTIONS DON'T ALLOW TO BE REBUILT PROGRAMMATICALLY
 					buffer.append("\n-> ");
 					buffer.append(excClassName);
 					buffer.append(": ");
 				}
 				buffer.append(excMessage);
+			}
 
-				// READ IF MORE DETAILS ARE COMING
-				moreDetails = readByte() == 1;
+			if (rootClassName != null)
+				throw createException(rootClassName, buffer.toString());
 
-			} while (moreDetails);
-
-			throw createException(rootClassName, buffer.toString());
+			throw new ONetworkProtocolException("Network response error: " + buffer.toString());
 		} else if (result != OChannelBinaryProtocol.RESPONSE_STATUS_OK) {
 			// PROTOCOL ERROR
 			clearInput();

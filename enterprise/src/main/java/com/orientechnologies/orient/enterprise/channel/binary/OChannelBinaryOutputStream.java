@@ -36,24 +36,31 @@ public class OChannelBinaryOutputStream extends OutputStream {
 
 	@Override
 	public void write(final int iByte) throws IOException {
-		if (pos < buffer.length) {
-			buffer[pos++] = (byte) iByte;
-			return;
-		}
+		if (pos >= buffer.length)
+			flush(true);
 
-		flush();
-		channel.out.writeByte(1);
+		buffer[pos++] = (byte) iByte;
 	}
 
 	@Override
 	public void close() throws IOException {
-		flush();
-		channel.out.writeByte(0);
+		flush(false);
+		channel = null;
 	}
 
 	@Override
 	public void flush() throws IOException {
-		channel.out.writeInt(buffer.length);
-		channel.out.write(buffer, 0, pos);
+		if (pos > 0) {
+			System.out.println("Flushing " + pos + " bytes...");
+			channel.out.writeInt(pos);
+			channel.out.write(buffer, 0, pos);
+			pos = 0;
+		}
+	}
+
+	private void flush(final boolean iContinue) throws IOException {
+		flush();
+		channel.out.writeByte(iContinue ? 1 : 0);
+		channel.out.flush();
 	}
 }

@@ -74,6 +74,8 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 	private ODistributedServerDiscoverySignaler						discoverySignaler;
 	private ODistributedServerDiscoveryListener						discoveryListener;
+	private ODistributedServerLeaderChecker								leaderCheckerTask;
+	private ODistributedServerRecordHook									trigger;
 	private final OSharedResourceExternal									lock							= new OSharedResourceExternal();
 
 	private final HashMap<String, ODistributedServerNode>	nodes							= new HashMap<String, ODistributedServerNode>();	;
@@ -85,8 +87,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 	private OServerNetworkListener												distributedNetworkListener;
 	private ONetworkProtocolDistributed										leaderConnection;
-
-	private ODistributedServerRecordHook									trigger;
+	public long																						lastHeartBeat;
 
 	public void startup() {
 		// LAUNCH THE SIGNAL AND WAIT FOR A CONNECTION
@@ -101,6 +102,8 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	}
 
 	public void receivedLeaderConnection(final ONetworkProtocolDistributed iNetworkProtocolDistributed) {
+		OLogManager.instance().info(this, "Connected from the distributed node Leader");
+
 		// STOP TO SEND PACKETS TO BEING DISCOVERED
 		if (discoverySignaler != null) {
 			discoverySignaler.sendShutdown();
@@ -108,6 +111,10 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		}
 
 		leaderConnection = iNetworkProtocolDistributed;
+
+		// FIRST TIME: SCHEDULE THE HEARTBEAT CHECKER
+		leaderCheckerTask = new ODistributedServerLeaderChecker(this);
+		Orient.getTimer().schedule(leaderCheckerTask, networkHeartbeatDelay, networkHeartbeatDelay / 2);
 	}
 
 	/**
@@ -119,7 +126,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	 *          Server port
 	 */
 	public void receivedNodePresence(final String iServerAddress, final int iServerPort) {
-		final String key = iServerAddress + ":" + iServerPort;
+		final String key = getNodeName(iServerAddress, iServerPort);
 		final ODistributedServerNode node;
 
 		lock.acquireExclusiveLock();
@@ -184,6 +191,10 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 				// I'M NOT THE LEADER CAUSE I WAS BEEN CONNECTED BY THE LEADER
 				return;
 
+			if (leaderCheckerTask != null)
+				// STOP THE CHECK OF HEART-BEAT
+				leaderCheckerTask.cancel();
+
 			// NO NODE HAS JOINED: BECAME THE LEADER AND LISTEN FOR OTHER NODES
 			discoveryListener = new ODistributedServerDiscoveryListener(this, distributedNetworkListener);
 
@@ -200,7 +211,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		if (iRequestType == OChannelBinaryProtocol.REQUEST_DB_OPEN || iRequestType == OChannelBinaryProtocol.REQUEST_DB_CREATE) {
 			trigger = new ODistributedServerRecordHook(this, iConnection);
 			iConnection.database.registerHook(trigger);
-			
+
 			// TODO: SEND THE CLUSTER CONFIG TO THE CLIENT
 		}
 	}
@@ -289,6 +300,21 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		}
 	}
 
+	public ODistributedServerNode getNode(final String iNodeName) {
+		try {
+			lock.acquireSharedLock();
+
+			final ODistributedServerNode node = nodes.get(iNodeName);
+			if (node == null)
+				throw new IllegalArgumentException("Node '" + iNodeName + "' is not configured");
+
+			return node;
+
+		} finally {
+			lock.releaseSharedLock();
+		}
+	}
+
 	public List<ODistributedServerNode> getNodeList() {
 		try {
 			lock.acquireSharedLock();
@@ -354,5 +380,17 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 	public int getNetworkHeartbeatDelay() {
 		return networkHeartbeatDelay;
+	}
+
+	private static String getNodeName(final String iServerAddress, final int iServerPort) {
+		return iServerAddress + ":" + iServerPort;
+	}
+
+	public long getLastHeartBeat() {
+		return lastHeartBeat;
+	}
+
+	public void updateHeartBeatTime() {
+		this.lastHeartBeat = System.currentTimeMillis();
 	}
 }

@@ -18,6 +18,8 @@ package com.orientechnologies.orient.enterprise.channel.binary;
 import java.io.IOException;
 import java.io.InputStream;
 
+import com.orientechnologies.orient.enterprise.exception.ONetworkProtocolException;
+
 /**
  * InputStream class bound to a binary channel. Reuses the shared buffer of the channel.
  * 
@@ -28,7 +30,7 @@ public class OChannelBinaryInputStream extends InputStream {
 	private OChannelBinary	channel;
 	private final byte[]		buffer;
 	private int							pos		= 0;
-	private int							total;
+	private int							total	= -1;
 	private boolean					again	= true;
 
 	public OChannelBinaryInputStream(final OChannelBinary channel) {
@@ -38,20 +40,34 @@ public class OChannelBinaryInputStream extends InputStream {
 
 	@Override
 	public int read() throws IOException {
-		if (pos < total)
-			return buffer[pos++];
+		if (pos >= total)
+			fetch();
 
-		// FETCH DATA
-		pos = 0;
-		total = channel.in.readInt();
-		channel.in.readFully(buffer, 0, total);
-
-		again = channel.in.readByte() == 1;
 		return buffer[pos++];
 	}
 
 	@Override
 	public int available() throws IOException {
-		return again ? total - pos : 0;
+		if (total < 0)
+			// ONLY THE FIRST TIME
+			fetch();
+
+		final int remaining = total - pos;
+		return remaining > 0 ? remaining : again ? 1 : 0;
+	}
+
+	private void fetch() throws IOException {
+		// FETCH DATA
+		pos = 0;
+		total = channel.in.readInt();
+
+		System.out.println("Fetching " + total + " bytes...");
+
+		if (total > buffer.length)
+			throw new ONetworkProtocolException("Bad chunk size received: " + total + " when the maximum can be: " + buffer.length);
+
+		channel.in.readFully(buffer, 0, total);
+
+		again = channel.in.readByte() == 1;
 	}
 }

@@ -43,6 +43,9 @@ public class OServerAdmin {
 		if (iURL.startsWith(OEngineRemote.NAME))
 			iURL = iURL.substring(OEngineRemote.NAME.length() + 1);
 
+		if (!iURL.contains("/"))
+			iURL += "/";
+
 		storage = new OStorageRemote(iURL, "");
 	}
 
@@ -107,31 +110,29 @@ public class OServerAdmin {
 			storage.getNetwork().readStatus();
 
 		} catch (Exception e) {
-			OLogManager.instance().error(this, "Can't delete the remote storage: " + storage.getName(), e, OStorageException.class);
+			OLogManager.instance().exception("Can't delete the remote storage: " + storage.getName(), e, OStorageException.class);
 			storage.close();
 		}
 		return this;
 	}
 
 	public OServerAdmin shareDatabase(final String iDatabaseName, final String iDatabaseUserName, final String iDatabaseUserPassword,
-			final String iRemoteServerURL, final String iRemoteUserName, String iRemoteUserPassword) throws IOException {
+			final String iRemoteName) throws IOException {
 
 		try {
 			storage.writeCommand(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_SENDER);
 			storage.getNetwork().writeString(iDatabaseName);
 			storage.getNetwork().writeString(iDatabaseUserName);
 			storage.getNetwork().writeString(iDatabaseUserPassword);
-			storage.getNetwork().writeString(iRemoteServerURL);
-			storage.getNetwork().writeString(iRemoteUserName);
-			storage.getNetwork().writeString(iRemoteUserPassword);
+			storage.getNetwork().writeString(iRemoteName);
 			storage.getNetwork().flush();
 
 			storage.getNetwork().readStatus();
 
-			OLogManager.instance().info(this, "Database %s has been shared with the server %s.", iDatabaseName, iRemoteServerURL);
+			OLogManager.instance().debug(this, "Database %s has been shared with the server %s.", iDatabaseName, iRemoteName);
 
 		} catch (Exception e) {
-			OLogManager.instance().error(this, "Can't share the database: " + iDatabaseName, e, OStorageException.class);
+			OLogManager.instance().exception("Can't share the database: " + iDatabaseName, e, OStorageException.class);
 		}
 
 		return this;
@@ -152,7 +153,7 @@ public class OServerAdmin {
 				config.put(storage.getNetwork().readString(), storage.getNetwork().readString());
 
 		} catch (Exception e) {
-			OLogManager.instance().error(this, "Can't retrieve the configuration list", e, OStorageException.class);
+			OLogManager.instance().exception("Can't retrieve the configuration list", e, OStorageException.class);
 			storage.close();
 		}
 		return config;
@@ -169,7 +170,7 @@ public class OServerAdmin {
 			return storage.getNetwork().readString();
 
 		} catch (Exception e) {
-			OLogManager.instance().error(this, "Can't retrieve the configuration value: " + iConfig.getKey(), e, OStorageException.class);
+			OLogManager.instance().exception("Can't retrieve the configuration value: " + iConfig.getKey(), e, OStorageException.class);
 			storage.close();
 		}
 		return null;
@@ -185,7 +186,7 @@ public class OServerAdmin {
 			storage.getNetwork().readStatus();
 
 		} catch (Exception e) {
-			OLogManager.instance().error(this, "Can't set the configuration value: " + iConfig.getKey(), e, OStorageException.class);
+			OLogManager.instance().exception("Can't set the configuration value: " + iConfig.getKey(), e, OStorageException.class);
 			storage.close();
 		}
 		return this;

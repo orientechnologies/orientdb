@@ -18,8 +18,6 @@ package com.orientechnologies.orient.server.handler.distributed;
 import java.util.TimerTask;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.server.network.protocol.distributed.ONetworkProtocolDistributed;
 
 /**
  * Checks the heartbeat sent by the leader node. If too much time is gone it tries to became the new leader.
@@ -27,14 +25,12 @@ import com.orientechnologies.orient.server.network.protocol.distributed.ONetwork
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ODistributedServerLoaderChecker extends TimerTask {
-	private ODistributedServerManager		manager;
-	private ONetworkProtocolDistributed	protocol;
-	private long												heartBeatDelay;
+public class ODistributedServerLeaderChecker extends TimerTask {
+	private ODistributedServerManager	manager;
+	private long											heartBeatDelay;
 
-	public ODistributedServerLoaderChecker(final ODistributedServerManager iManager, final ONetworkProtocolDistributed iProtocol) {
+	public ODistributedServerLeaderChecker(final ODistributedServerManager iManager) {
 		this.manager = iManager;
-		this.protocol = iProtocol;
 
 		// COMPUTE THE HEARTBEAT THRESHOLD AS THE 30% MORE THAN THE HEARTBEAT TIME
 		heartBeatDelay = manager.getNetworkHeartbeatDelay() * 130 / 100;
@@ -42,7 +38,7 @@ public class ODistributedServerLoaderChecker extends TimerTask {
 
 	@Override
 	public void run() {
-		final long time = System.currentTimeMillis() - protocol.getLastHeartBeat();
+		final long time = System.currentTimeMillis() - manager.getLastHeartBeat();
 		if (time > heartBeatDelay) {
 			// NO LEADER HEARTBEAT RECEIVED FROM LONG TIME: BECAME THE LEADER!
 			OLogManager.instance().warn(this,
