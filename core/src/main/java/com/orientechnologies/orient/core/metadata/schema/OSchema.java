@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -108,11 +110,35 @@ public class OSchema extends ODocumentWrapperNoClass {
 		throw new OSchemaException("Class #" + iClassId + " was not found in current database");
 	}
 
+	/**
+	 * Returns the OClass instance by class name. If the class is not configured and the database has an entity manager with the
+	 * requested class as registered, then creates a schema class for it at the fly.
+	 * 
+	 * @param iClassName
+	 *          Name of the class to retrieve
+	 * @return
+	 */
 	public OClass getClass(final String iClassName) {
 		if (iClassName == null)
 			return null;
 
-		return classes.get(iClassName.toLowerCase());
+		OClass cls = classes.get(iClassName.toLowerCase());
+
+		if (cls == null) {
+			// CHECK IF CAN AUTO-CREATE IT
+			final ODatabase ownerDb = document.getDatabase().getDatabaseOwner();
+			if (ownerDb instanceof ODatabaseObjectTx) {
+				final Class<?> javaClass = ((ODatabaseObjectTx) ownerDb).getEntityManager().getEntityClass(iClassName);
+
+				if (javaClass != null) {
+					// AUTO REGISTER THE CLASS AT FIRST USE
+					cls = createClass(iClassName);
+					save();
+				}
+			}
+		}
+
+		return cls;
 	}
 
 	/**

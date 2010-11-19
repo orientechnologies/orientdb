@@ -28,87 +28,94 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 
 public class OEntityManager {
-  private static Map<String, OEntityManager> databaseInstances = new HashMap<String, OEntityManager>();
-  private Map<String, Class<?>>              entityClasses     = new HashMap<String, Class<?>>();
+	private static Map<String, OEntityManager>	databaseInstances	= new HashMap<String, OEntityManager>();
+	private Map<String, Class<?>>								entityClasses			= new HashMap<String, Class<?>>();
 
-  protected OEntityManager() {
-    OLogManager.instance().debug(this, "Registering entity manager");
+	protected OEntityManager() {
+		OLogManager.instance().debug(this, "Registering entity manager");
 
-    registerEntityClass(OUser.class);
-    registerEntityClass(ORole.class);
-  }
+		registerEntityClass(OUser.class);
+		registerEntityClass(ORole.class);
+	}
 
-  public static synchronized OEntityManager getEntityManagerByDatabaseURL(final String iURL) {
-    OEntityManager instance = databaseInstances.get(iURL);
-    if (instance == null) {
-      instance = new OEntityManager();
-      databaseInstances.put(iURL, instance);
-    }
-    return instance;
-  }
+	public static synchronized OEntityManager getEntityManagerByDatabaseURL(final String iURL) {
+		OEntityManager instance = databaseInstances.get(iURL);
+		if (instance == null) {
+			instance = new OEntityManager();
+			databaseInstances.put(iURL, instance);
+		}
+		return instance;
+	}
 
-  /**
-   * Create a POJO by its class name.
-   * 
-   * @see #registerEntityClasses(String)
-   */
-  public Object createPojo(final String iClassName) throws OConfigurationException {
-    if (iClassName == null)
-      throw new IllegalArgumentException("Can't create the object: class name is empty");
+	/**
+	 * Create a POJO by its class name.
+	 * 
+	 * @see #registerEntityClasses(String)
+	 */
+	public Object createPojo(final String iClassName) throws OConfigurationException {
+		if (iClassName == null)
+			throw new IllegalArgumentException("Can't create the object: class name is empty");
 
-    Class<?> entityClass = getEntityClass(iClassName);
+		Class<?> entityClass = getEntityClass(iClassName);
 
-    try {
-      if (entityClass != null)
-        return entityClass.newInstance();
+		try {
+			if (entityClass != null)
+				return entityClass.newInstance();
 
-    } catch (Exception e) {
-      throw new OConfigurationException("Error while creating new pojo of class '" + iClassName + "'", e);
-    }
+		} catch (Exception e) {
+			throw new OConfigurationException("Error while creating new pojo of class '" + iClassName + "'", e);
+		}
 
-    try {
-      // TRY TO INSTANTIATE THE CLASS DIRECTLY BY ITS NAME
-      return Class.forName(iClassName).newInstance();
-    } catch (Exception e) {
-      throw new OConfigurationException("The class '" + iClassName
-          + "' was not found between the entity classes. Assure to call the registerEntityClasses(package) before.");
-    }
-  }
+		try {
+			// TRY TO INSTANTIATE THE CLASS DIRECTLY BY ITS NAME
+			return Class.forName(iClassName).newInstance();
+		} catch (Exception e) {
+			throw new OConfigurationException("The class '" + iClassName
+					+ "' was not found between the entity classes. Assure to call the registerEntityClasses(package) before.");
+		}
+	}
 
-  public Class<?> getEntityClass(final String iClassName) {
-    return entityClasses.get(iClassName);
-  }
+	/**
+	 * Returns the Java class by its name
+	 * 
+	 * @param iClassName
+	 *          Simple class name without the package
+	 * @return Returns the Java class by its name
+	 */
+	public Class<?> getEntityClass(final String iClassName) {
+		return entityClasses.get(iClassName);
+	}
 
-  public void registerEntityClass(final Class<?> iClass) {
-    entityClasses.put(iClass.getSimpleName(), iClass);
-  }
+	public void registerEntityClass(final Class<?> iClass) {
+		entityClasses.put(iClass.getSimpleName(), iClass);
+	}
 
-  /**
-   * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
-   * 
-   * @param iPackageName
-   *          The base package
-   * @return The classes
-   */
-  public void registerEntityClasses(final String iPackageName) {
-    OLogManager.instance().debug(this, "Discovering entity classes inside package: %s", iPackageName);
+	/**
+	 * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
+	 * 
+	 * @param iPackageName
+	 *          The base package
+	 * @return The classes
+	 */
+	public void registerEntityClasses(final String iPackageName) {
+		OLogManager.instance().debug(this, "Discovering entity classes inside package: %s", iPackageName);
 
-    List<Class<?>> classes = null;
-    try {
-      classes = OReflectionHelper.getClassesForPackage(iPackageName);
-    } catch (ClassNotFoundException e) {
-      throw new OException(e);
-    }
-    for (Class<?> c : classes) {
-      String className = c.getSimpleName();
-      entityClasses.put(className, c);
-    }
+		List<Class<?>> classes = null;
+		try {
+			classes = OReflectionHelper.getClassesForPackage(iPackageName);
+		} catch (ClassNotFoundException e) {
+			throw new OException(e);
+		}
+		for (Class<?> c : classes) {
+			String className = c.getSimpleName();
+			entityClasses.put(className, c);
+		}
 
-    if (OLogManager.instance().isDebugEnabled()) {
-      for (Entry<String, Class<?>> entry : entityClasses.entrySet()) {
-        OLogManager.instance().debug(this, "Loaded entity class '%s' from: %s", entry.getKey(), entry.getValue());
-      }
-    }
-  }
+		if (OLogManager.instance().isDebugEnabled()) {
+			for (Entry<String, Class<?>> entry : entityClasses.entrySet()) {
+				OLogManager.instance().debug(this, "Loaded entity class '%s' from: %s", entry.getKey(), entry.getValue());
+			}
+		}
+	}
 
 }

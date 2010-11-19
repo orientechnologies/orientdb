@@ -198,6 +198,11 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
 		return underlying.countClass(iClassName);
 	}
 
+	public long countClass(final Class<?> iClass) {
+		checkOpeness();
+		return underlying.countClass(iClass.getSimpleName());
+	}
+
 	public ODictionary<Object> getDictionary() {
 		checkOpeness();
 		if (dictionary == null)

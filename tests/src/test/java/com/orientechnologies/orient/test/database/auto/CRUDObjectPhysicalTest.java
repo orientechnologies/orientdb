@@ -83,6 +83,21 @@ public class CRUDObjectPhysicalTest {
 	}
 
 	@Test(dependsOnMethods = "testCreate")
+	public void testAutoCreateClass() {
+		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+
+		Assert.assertNull(database.getMetadata().getSchema().getClass(Dummy.class.getSimpleName()));
+
+		database.getEntityManager().registerEntityClass(Dummy.class);
+
+		database.countClass(Dummy.class.getSimpleName());
+
+		Assert.assertNotNull(database.getMetadata().getSchema().getClass(Dummy.class.getSimpleName()));
+
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "testAutoCreateClass")
 	public void readAndBrowseDescendingAndCheckHoleUtilization() {
 		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
 
