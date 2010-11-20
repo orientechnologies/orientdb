@@ -27,9 +27,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.exception.ONetworkProtocolException;
 
@@ -37,33 +39,73 @@ public class OChannelBinary extends OChannel {
 	public DataInputStream	in;
 	public DataOutputStream	out;
 	private final int				maxChunkSize;
+	private boolean					debug;
 	private final byte[]		buffer;
 
 	public OChannelBinary(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
 		super(iSocket, iConfig);
 
 		maxChunkSize = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_BINARY_MAX_CONTENT_LENGTH);
+		debug = iConfig.getValueAsBoolean(OGlobalConfiguration.NETWORK_BINARY_DEBUG);
 		buffer = new byte[maxChunkSize];
 	}
 
 	public byte readByte() throws IOException {
+		if (debug) {
+			OLogManager.instance().debug(this, "Reading byte (1 byte)...");
+			final byte value = in.readByte();
+			OLogManager.instance().debug(this, "Read byte: " + (int) value);
+			return value;
+		}
+
 		return in.readByte();
 	}
 
 	public int readInt() throws IOException {
+		if (debug) {
+			OLogManager.instance().debug(this, "Reading int (4 bytes)...");
+			final int value = in.readInt();
+			OLogManager.instance().debug(this, "Read int: " + value);
+			return value;
+		}
+
 		return in.readInt();
 	}
 
 	public long readLong() throws IOException {
+		if (debug) {
+			OLogManager.instance().debug(this, "Reading long (8 bytes)...");
+			final long value = in.readLong();
+			OLogManager.instance().debug(this, "Read long: " + value);
+			return value;
+		}
+
 		return in.readLong();
 	}
 
 	public short readShort() throws IOException {
+		if (debug) {
+			OLogManager.instance().debug(this, "Reading short (2 bytes)...");
+			final short value = in.readShort();
+			OLogManager.instance().debug(this, "Read short: " + value);
+			return value;
+		}
+
 		return in.readShort();
 	}
 
 	public String readString() throws IOException {
-		byte[] buffer = readBytes();
+		if (debug) {
+			OLogManager.instance().debug(this, "Reading string (4+N bytes)...");
+			byte[] buffer = readBytes();
+			if (buffer == null)
+				return null;
+			String value = new String(buffer);
+			OLogManager.instance().debug(this, "Read string: " + value);
+			return value;
+		}
+
+		final byte[] buffer = readBytes();
 		if (buffer == null)
 			return null;
 
@@ -71,36 +113,69 @@ public class OChannelBinary extends OChannel {
 	}
 
 	public byte[] readBytes() throws IOException {
+		if (debug)
+			OLogManager.instance().debug(this, "Reading chunk of bytes. Reading chunk length as int (4 bytes)...");
+
 		final int len = in.readInt();
+
+		if (debug)
+			OLogManager.instance().debug(this, "Read chunk lenght: " + len);
 
 		if (len < 0)
 			return null;
 
-		byte[] tmp = new byte[len];
+		if (debug)
+			OLogManager.instance().debug(this, "Reading " + len + " bytes...");
+
+		final byte[] tmp = new byte[len];
 		in.readFully(tmp);
+
+		if (debug)
+			OLogManager.instance().debug(this, "Read " + len + " bytes (dumped in base64): " + OBase64Utils.encodeBytes(tmp));
+
 		return tmp;
 	}
 
 	public List<String> readStringList() throws IOException {
-		int size = in.readInt();
-		if (size < 0)
+		if (debug)
+			OLogManager.instance().debug(this, "Reading string list. Reading string list items as int (4 bytes)...");
+
+		final int items = in.readInt();
+
+		if (debug)
+			OLogManager.instance().debug(this, "Read string list items: " + items);
+
+		if (items < 0)
 			return null;
 
 		List<String> result = new ArrayList<String>();
-		for (int i = 0; i < size; ++i)
+		for (int i = 0; i < items; ++i)
 			result.add(readString());
+
+		if (debug)
+			OLogManager.instance().debug(this, "Read string list with %d items: ", items);
 
 		return result;
 	}
 
 	public Set<String> readStringSet() throws IOException {
-		int size = in.readInt();
-		if (size < 0)
+		if (debug)
+			OLogManager.instance().debug(this, "Reading string set. Reading string set items as int (4 bytes)...");
+
+		int items = in.readInt();
+
+		if (debug)
+			OLogManager.instance().debug(this, "Read string set items: " + items);
+
+		if (items < 0)
 			return null;
 
 		Set<String> result = new HashSet<String>();
-		for (int i = 0; i < size; ++i)
+		for (int i = 0; i < items; ++i)
 			result.add(readString());
+
+		if (debug)
+			OLogManager.instance().debug(this, "Read string set with %d items: ", items);
 
 		return result;
 	}
