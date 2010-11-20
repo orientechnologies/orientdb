@@ -130,7 +130,8 @@ public abstract class OFile {
 
 		boolean softlyClosed = isSoftlyClosed();
 
-		setSoftlyClosed(false);
+		if (softlyClosed)
+			setSoftlyClosed(false);
 
 		return softlyClosed;
 	}
