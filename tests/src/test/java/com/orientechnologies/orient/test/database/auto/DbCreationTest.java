@@ -27,6 +27,7 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
+import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -46,12 +47,16 @@ public class DbCreationTest {
 	public void testDbCreation() throws IOException {
 		if (url.startsWith(OEngineRemote.NAME)) {
 
+			System.out.println("ORIENTDB_HOME = " + OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}"));
+
 			// LAOD SERVER CONFIG FILE TO EXTRACT THE ROOT'S PASSWORD
-			File file = new File("../server/config/orientdb-server-config.xml");
+			File file = new File(OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/orientdb-server-config.xml"));
+			if (!file.exists())
+				file = new File("../releases/" + OConstants.ORIENT_VERSION + "/db/config/orientdb-server-config.xml");
 			if (!file.exists())
 				file = new File("server/config/orientdb-server-config.xml");
 			if (!file.exists())
-				file = new File(OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/orientdb-server-config.xml"));
+				file = new File("../server/config/orientdb-server-config.xml");
 			if (!file.exists())
 				throw new OConfigurationException("Can't load file orientdb-server-config.xml to execute remote tests");
 

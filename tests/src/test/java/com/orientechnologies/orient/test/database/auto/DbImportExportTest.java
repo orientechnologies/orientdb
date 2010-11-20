@@ -18,8 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import java.io.File;
 import java.io.IOException;
 
-import junit.framework.Assert;
-
+import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
