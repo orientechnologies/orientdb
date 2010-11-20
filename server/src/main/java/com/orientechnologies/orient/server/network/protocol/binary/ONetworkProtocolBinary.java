@@ -21,7 +21,6 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -70,7 +69,7 @@ import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-import com.orientechnologies.orient.server.handler.OServerHandler;
+import com.orientechnologies.orient.server.handler.OServerHandlerHelper;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 import com.orientechnologies.orient.server.tx.OTransactionRecordProxy;
@@ -120,20 +119,24 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			data.lastCommandReceived = System.currentTimeMillis();
 
-			invokeHandlerCallbackOnBeforeClientRequest((byte) requestType);
+			OServerHandlerHelper.invokeHandlerCallbackOnBeforeClientRequest(connection, (byte) requestType);
 
 			parseCommand();
 
-			invokeHandlerCallbackOnAfterClientRequest((byte) requestType);
+			OServerHandlerHelper.invokeHandlerCallbackOnAfterClientRequest(connection, (byte) requestType);
 
 		} catch (EOFException eof) {
+			OServerHandlerHelper.invokeHandlerCallbackOnClientError(connection, eof);
 			sendShutdown();
 		} catch (SocketException e) {
+			OServerHandlerHelper.invokeHandlerCallbackOnClientError(connection, e);
 			sendShutdown();
 		} catch (OException e) {
+			OServerHandlerHelper.invokeHandlerCallbackOnClientError(connection, e);
 			channel.clearInput();
 			sendError(clientTxId, e);
 		} catch (Throwable t) {
+			OServerHandlerHelper.invokeHandlerCallbackOnClientError(connection, t);
 			OLogManager.instance().error(this, "Error on executing request", t);
 			channel.clearInput();
 			sendError(clientTxId, t);
@@ -679,7 +682,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 	@Override
 	public void startup() {
-		invokeHandlerCallbackOnClientDisconnection();
+		OServerHandlerHelper.invokeHandlerCallbackOnClientConnection(connection);
 	}
 
 	@Override
@@ -687,7 +690,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		sendShutdown();
 		channel.close();
 
-		invokeHandlerCallbackOnClientDisconnection();
+		OServerHandlerHelper.invokeHandlerCallbackOnClientDisconnection(connection);
 
 		OClientConnectionManager.instance().onClientDisconnection(connection.id);
 	}
@@ -780,46 +783,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		}
 	}
 
-	private void invokeHandlerCallbackOnClientConnection() {
-		final List<OServerHandler> handlers = OServerMain.server().getHandlers();
-		if (handlers != null)
-			for (OServerHandler handler : handlers) {
-				handler.onClientConnection(connection);
-			}
-	}
-
-	private void invokeHandlerCallbackOnClientDisconnection() {
-		final List<OServerHandler> handlers = OServerMain.server().getHandlers();
-		if (handlers != null)
-			for (OServerHandler handler : handlers) {
-				handler.onClientDisconnection(connection);
-			}
-	}
-
-	private void invokeHandlerCallbackOnBeforeClientRequest(final byte iRequestType) {
-		final List<OServerHandler> handlers = OServerMain.server().getHandlers();
-		if (handlers != null)
-			for (OServerHandler handler : handlers) {
-				handler.onBeforeClientRequest(connection, iRequestType);
-			}
-	}
-
-	private void invokeHandlerCallbackOnAfterClientRequest(final byte iRequestType) {
-		final List<OServerHandler> handlers = OServerMain.server().getHandlers();
-		if (handlers != null)
-			for (OServerHandler handler : handlers) {
-				handler.onAfterClientRequest(connection, iRequestType);
-			}
-	}
-
-	private void invokeHandlerCallbackOnClientError() {
-		final List<OServerHandler> handlers = OServerMain.server().getHandlers();
-		if (handlers != null)
-			for (OServerHandler handler : handlers) {
-				handler.onClientError(connection);
-			}
-	}
-
 	protected ODatabaseDocumentTx openDatabase(final String dbName, final String iUser, final String iPassword) {
 		// SEARCH THE DB IN MEMORY FIRST
 		ODatabaseDocumentTx db = (ODatabaseDocumentTx) OServerMain.server().getMemoryDatabases().get(dbName);
@@ -853,8 +816,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		}
 
 		underlyingDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) iDatabase.getUnderlying()).getUnderlying());
-
-		invokeHandlerCallbackOnClientConnection();
 	}
 
 	protected ODatabaseDocumentTx getDatabaseInstance(final String iDbName, final String iStorageMode) {

@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import javax.crypto.SecretKey;
@@ -26,12 +27,15 @@ import javax.crypto.SecretKey;
 import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.tx.OTransactionEntry;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
@@ -57,19 +61,20 @@ import com.orientechnologies.orient.server.network.protocol.distributed.ONetwork
  * @see ODistributedServerDiscoveryListener, ODistributedServerDiscoverySignaler
  * 
  */
-public class ODistributedServerManager extends OServerHandlerAbstract {
+public class ODistributedServerManager extends OServerHandlerAbstract  {
 	protected OServer																			server;
 
 	protected String																			name;
+	protected String																			id;
 	protected SecretKey																		securityKey;
 	protected String																			securityAlgorithm;
 	protected InetAddress																	networkMulticastAddress;
 	protected int																					networkMulticastPort;
-	protected int																					networkMulticastHeartbeat;																					// IN MS
-	protected int																					networkTimeoutLeader;																							// IN MS
-	protected int																					networkTimeoutNode;																								// IN MS
-	private int																						networkHeartbeatDelay;																							// IN MS
-	protected int																					serverUpdateDelay;																									// IN MS
+	protected int																					networkMulticastHeartbeat;																								// IN
+	protected int																					networkTimeoutLeader;																										// IN
+	protected int																					networkTimeoutNode;																											// IN
+	private int																						networkHeartbeatDelay;																										// IN
+	protected int																					serverUpdateDelay;																												// IN
 	protected int																					serverOutSynchMaxBuffers;
 
 	private ODistributedServerDiscoverySignaler						discoverySignaler;
@@ -78,7 +83,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	private ODistributedServerRecordHook									trigger;
 	private final OSharedResourceExternal									lock							= new OSharedResourceExternal();
 
-	private final HashMap<String, ODistributedServerNode>	nodes							= new HashMap<String, ODistributedServerNode>();	;
+	private final HashMap<String, ODistributedServerNode>	nodes							= new LinkedHashMap<String, ODistributedServerNode>();	;
 
 	static final String																		CHECKSUM					= "ChEcKsUm1976";
 
@@ -88,8 +93,11 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	private OServerNetworkListener												distributedNetworkListener;
 	private ONetworkProtocolDistributed										leaderConnection;
 	public long																						lastHeartBeat;
+	private ODocument																			clusterConfiguration;
 
 	public void startup() {
+		trigger = new ODistributedServerRecordHook(this);
+
 		// LAUNCH THE SIGNAL AND WAIT FOR A CONNECTION
 		discoverySignaler = new ODistributedServerDiscoverySignaler(this, distributedNetworkListener);
 	}
@@ -195,6 +203,9 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 				// STOP THE CHECK OF HEART-BEAT
 				leaderCheckerTask.cancel();
 
+			if (clusterConfiguration == null)
+				clusterConfiguration = createDatabaseConfiguration();
+
 			// NO NODE HAS JOINED: BECAME THE LEADER AND LISTEN FOR OTHER NODES
 			discoveryListener = new ODistributedServerDiscoveryListener(this, distributedNetworkListener);
 
@@ -203,21 +214,8 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		}
 	}
 
-	/**
-	 * Install the trigger to catch all the events on records
-	 */
 	@Override
-	public void onAfterClientRequest(final OClientConnection iConnection, final byte iRequestType) {
-		if (iRequestType == OChannelBinaryProtocol.REQUEST_DB_OPEN || iRequestType == OChannelBinaryProtocol.REQUEST_DB_CREATE) {
-			trigger = new ODistributedServerRecordHook(this, iConnection);
-			iConnection.database.registerHook(trigger);
-
-			// TODO: SEND THE CLUSTER CONFIG TO THE CLIENT
-		}
-	}
-
-	@Override
-	public void onClientError(final OClientConnection iConnection) {
+	public void onClientError(final OClientConnection iConnection, final Throwable iThrowable) {
 		// handleNodeFailure(node);
 	}
 
@@ -295,6 +293,8 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 						"Can't find a configured network listener with 'distributed' protocol. Can't start distributed node", null,
 						OConfigurationException.class);
 
+			id = distributedNetworkListener.getInboundAddr().getHostName() + ":" + distributedNetworkListener.getInboundAddr().getPort();
+
 		} catch (Exception e) {
 			throw new OConfigurationException("Can't configure OrientDB Server as Cluster Node", e);
 		}
@@ -357,10 +357,8 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	/**
 	 * Distributed the request to all the configured nodes. Each node has the responsibility to bring the message early (synch-mode)
 	 * or using an asynchronous queue.
-	 * 
-	 * @param iConnection
 	 */
-	public void distributeRequest(final OClientConnection iConnection, final OTransactionEntry<ORecordInternal<?>> iTransactionEntry) {
+	public void distributeRequest(final OTransactionEntry<ORecordInternal<?>> iTransactionEntry) {
 		lock.acquireSharedLock();
 
 		try {
@@ -382,15 +380,32 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		return networkHeartbeatDelay;
 	}
 
-	private static String getNodeName(final String iServerAddress, final int iServerPort) {
-		return iServerAddress + ":" + iServerPort;
-	}
-
 	public long getLastHeartBeat() {
 		return lastHeartBeat;
 	}
 
 	public void updateHeartBeatTime() {
 		this.lastHeartBeat = System.currentTimeMillis();
+	}
+
+	public ODocument getClusterConfiguration() {
+		return clusterConfiguration;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	private static String getNodeName(final String iServerAddress, final int iServerPort) {
+		return iServerAddress + ":" + iServerPort;
+	}
+
+	private ODocument createDatabaseConfiguration() {
+		clusterConfiguration = new ODocument();
+
+		clusterConfiguration.field("servers", new ODocument(getId(), new ODocument("update-delay", getServerUpdateDelay())));
+		clusterConfiguration.field("clusters", new ODocument("*", new ODocument("owner", getId())));
+
+		return clusterConfiguration;
 	}
 }

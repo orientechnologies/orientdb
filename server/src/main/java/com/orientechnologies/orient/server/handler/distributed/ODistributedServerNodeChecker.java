@@ -45,7 +45,7 @@ public class ODistributedServerNodeChecker extends TimerTask {
 
 			// CHECK EVERY SINGLE NODE
 			for (ODistributedServerNode node : nodeList) {
-				if (node.getStatus() != STATUS.DISCONNECTED)
+				if (node.getStatus() == STATUS.CONNECTED)
 					if (!node.sendHeartBeat(manager.networkTimeoutLeader)) {
 						manager.handleNodeFailure(node);
 					}

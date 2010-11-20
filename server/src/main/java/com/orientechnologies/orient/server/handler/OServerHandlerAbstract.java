@@ -25,12 +25,12 @@ public abstract class OServerHandlerAbstract implements OServerHandler {
 	public void onClientDisconnection(final OClientConnection iConnection) {
 	}
 
-	public void onBeforeClientRequest(final OClientConnection iConnection, final byte iRequestType) {
+	public void onBeforeClientRequest(final OClientConnection iConnection, final Object iRequestType) {
 	}
 
-	public void onAfterClientRequest(final OClientConnection iConnection, final byte iRequestType) {
+	public void onAfterClientRequest(final OClientConnection iConnection, final Object iRequestType) {
 	}
 
-	public void onClientError(final OClientConnection iConnection) {
+	public void onClientError(final OClientConnection iConnection, final Throwable iThrowable) {
 	}
 }

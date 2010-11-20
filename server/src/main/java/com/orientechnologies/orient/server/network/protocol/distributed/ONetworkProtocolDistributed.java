@@ -20,20 +20,16 @@ import java.io.IOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryInputStream;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryOutputStream;
 import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerNode;
-import com.orientechnologies.orient.server.handler.distributed.ODistributedServerNode.STATUS;
-import com.orientechnologies.orient.server.handler.distributed.ODistributedSynchronizationException;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
 /**
@@ -88,6 +84,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 				final String dbUser = channel.readString();
 				final String dbPassword = channel.readString();
 				final String remoteServerName = channel.readString();
+				final String mode = channel.readString();
 
 				checkServerAccess("database.share");
 
@@ -96,34 +93,8 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 				final String engineName = db.getStorage() instanceof OStorageLocal ? "local" : "memory";
 
 				final ODistributedServerNode remoteServerNode = manager.getNode(remoteServerName);
-				if (remoteServerNode.getStatus() == STATUS.DISCONNECTED)
-					throw new ODistributedSynchronizationException("Can't share database '" + dbName + "' on remote server node '"
-							+ remoteServerName + "' because is disconnected");
 
-				try {
-					remoteServerNode.channel.acquireExclusiveLock();
-
-					OLogManager.instance().info(this, "Sharing database '" + dbName + "' to remote server " + remoteServerName + "...");
-
-					// EXECUTE THE REQUEST ON REMOTE SERVER NODE
-					remoteServerNode.channel.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_RECEIVER);
-					remoteServerNode.channel.writeInt(0);
-					remoteServerNode.channel.writeString(dbName);
-					remoteServerNode.channel.writeString(engineName);
-
-					OLogManager.instance().info(this, "Exporting database '%s' via streaming to remote server node: %s...", dbName,
-							remoteServerName);
-
-					// START THE EXPORT GIVING AS OUTPUTSTREAM THE CHANNEL TO STREAM THE EXPORT
-					new ODatabaseExport(db, new OChannelBinaryOutputStream(remoteServerNode.channel), this).exportDatabase();
-
-					OLogManager.instance().info(this, "Database exported correctly");
-
-					remoteServerNode.channel.readStatus();
-
-				} finally {
-					remoteServerNode.channel.releaseExclusiveLock();
-				}
+				remoteServerNode.shareDatabase(db, remoteServerName, engineName, mode);
 
 				sendOk(0);
 

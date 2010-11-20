@@ -15,52 +15,75 @@
  */
 package com.orientechnologies.orient.server.handler.distributed;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.tx.OTransactionEntry;
-import com.orientechnologies.orient.server.OClientConnection;
 
 /**
  * Record hook implementation. Catches all the relevant events and propagates to the cluster's slave nodes.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class ODistributedServerRecordHook implements ORecordHook {
+public class ODistributedServerRecordHook implements ORecordHook, ODatabaseLifecycleListener {
 
 	private ODistributedServerManager	manager;
-	private OClientConnection					connection;
 
-	public ODistributedServerRecordHook(final ODistributedServerManager iDistributedServerManager, final OClientConnection iConnection) {
+	/**
+	 * Auto install itself as lifecycle listener for databases.
+	 */
+	public ODistributedServerRecordHook(final ODistributedServerManager iDistributedServerManager) {
 		manager = iDistributedServerManager;
-		connection = iConnection;
+		Orient.instance().addDbLifecycleListener(this);
 	}
 
 	public void onTrigger(final TYPE iType, final ORecord<?> iRecord) {
 		if (!manager.isDistributedConfiguration())
 			return;
 
+		OLogManager.instance().info(
+				this,
+				"Caught change " + iType + " in database '" + iRecord.getDatabase().getName() + "', record: " + iRecord.getIdentity()
+						+ ". Distribute the change in all the cluster nodes");
+
 		switch (iType) {
 		case AFTER_CREATE:
-			manager.distributeRequest(connection, new OTransactionEntry<ORecordInternal<?>>((ORecordInternal<?>) iRecord,
-					OTransactionEntry.CREATED, null));
+			manager.distributeRequest(new OTransactionEntry<ORecordInternal<?>>((ORecordInternal<?>) iRecord, OTransactionEntry.CREATED,
+					null));
 			break;
 
 		case AFTER_UPDATE:
-			manager.distributeRequest(connection, new OTransactionEntry<ORecordInternal<?>>((ORecordInternal<?>) iRecord,
-					OTransactionEntry.UPDATED, null));
+			manager.distributeRequest(new OTransactionEntry<ORecordInternal<?>>((ORecordInternal<?>) iRecord, OTransactionEntry.UPDATED,
+					null));
 			break;
 
 		case AFTER_DELETE:
-			manager.distributeRequest(connection, new OTransactionEntry<ORecordInternal<?>>((ORecordInternal<?>) iRecord,
-					OTransactionEntry.DELETED, null));
+			manager.distributeRequest(new OTransactionEntry<ORecordInternal<?>>((ORecordInternal<?>) iRecord, OTransactionEntry.DELETED,
+					null));
 			break;
 
 		default:
 			// NOT DISTRIBUTED REQUEST, JUST RETURN
 			return;
 		}
+	}
 
-		System.out.println("\nCatched update to database: " + iType + " record: " + iRecord);
+	/**
+	 * Install the itself as trigger to catch all the events against records
+	 */
+	public void onOpen(final ODatabase iDatabase) {
+		((ODatabaseComplex<?>) iDatabase).registerHook(this);
+	}
+
+	/**
+	 * Remove itself as trigger to catch all the events against records
+	 */
+	public void onClose(final ODatabase iDatabase) {
+		((ODatabaseComplex<?>) iDatabase).unregisterHook(this);
 	}
 }
