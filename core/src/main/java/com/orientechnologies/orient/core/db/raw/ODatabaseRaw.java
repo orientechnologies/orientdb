@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.cache.OCacheRecord;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -37,21 +38,27 @@ import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+/**
+ * Lower level ODatabase implementation. It's extended or wrapped by all the others.
+ * 
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * 
+ */
 @SuppressWarnings("unchecked")
 public class ODatabaseRaw implements ODatabase {
-	private static volatile int								serialId		= 0;
+	private static volatile int			serialId		= 0;
 
-	protected int															id;
-	protected OStorage												storage;
-	protected STATUS													status;
-	protected OIntent													currentIntent;
+	protected int										id;
+	protected OStorage							storage;
+	protected STATUS								status;
+	protected OIntent								currentIntent;
 
-	private ODatabaseRecord<?>								databaseOwner;
+	private ODatabaseRecord<?>			databaseOwner;
 
-	private boolean														useCache;
-	private Map<String, Object>								properties	= new HashMap<String, Object>();
+	private boolean									useCache;
+	private Map<String, Object>			properties	= new HashMap<String, Object>();
 
-	private List<ODatabaseLifecycleListener>	listeners		= new ArrayList<ODatabaseLifecycleListener>();
+	private List<ODatabaseListener>	listeners		= new ArrayList<ODatabaseListener>();
 
 	public enum STATUS {
 		OPEN, CLOSED
@@ -80,8 +87,12 @@ public class ODatabaseRaw implements ODatabase {
 
 			storage.open(getId(), iUserName, iUserPassword);
 
+			// WAKE UP DB LIFECYCLE LISTENER
+			for (ODatabaseLifecycleListener it : Orient.instance().getDbLifecycleListeners())
+				it.onOpen(getDatabaseOwner());
+
 			// WAKE UP LISTENERS
-			for (ODatabaseLifecycleListener listener : listeners)
+			for (ODatabaseListener listener : listeners)
 				try {
 					listener.onOpen(this);
 				} catch (Throwable t) {
@@ -103,8 +114,12 @@ public class ODatabaseRaw implements ODatabase {
 
 			storage.create();
 
+			// WAKE UP DB LIFECYCLE LISTENER
+			for (ODatabaseLifecycleListener it : Orient.instance().getDbLifecycleListeners())
+				it.onOpen(getDatabaseOwner());
+
 			// WAKE UP LISTENERS
-			for (ODatabaseLifecycleListener listener : listeners)
+			for (ODatabaseListener listener : listeners)
 				try {
 					listener.onCreate(this);
 				} catch (Throwable t) {
@@ -118,16 +133,18 @@ public class ODatabaseRaw implements ODatabase {
 	}
 
 	public void delete() {
+		close();
+
 		try {
 			storage.delete();
 
 			// WAKE UP LISTENERS
-			for (ODatabaseLifecycleListener listener : listeners)
+			for (ODatabaseListener listener : listeners)
 				try {
 					listener.onDelete(this);
 				} catch (Throwable t) {
 				}
-				
+
 			status = STATUS.CLOSED;
 		} catch (Exception e) {
 			throw new ODatabaseException("Can't delete database", e);
@@ -257,8 +274,12 @@ public class ODatabaseRaw implements ODatabase {
 		if (status != STATUS.OPEN)
 			return;
 
+		// WAKE UP DB LIFECYCLE LISTENER
+		for (ODatabaseLifecycleListener it : Orient.instance().getDbLifecycleListeners())
+			it.onClose(getDatabaseOwner());
+
 		// WAKE UP LISTENERS
-		for (ODatabaseLifecycleListener listener : listeners)
+		for (ODatabaseListener listener : listeners)
 			try {
 				listener.onClose(this);
 			} catch (Throwable t) {
@@ -354,11 +375,11 @@ public class ODatabaseRaw implements ODatabase {
 		return properties.entrySet().iterator();
 	}
 
-	public void registerListener(final ODatabaseLifecycleListener iListener) {
+	public void registerListener(final ODatabaseListener iListener) {
 		listeners.add(iListener);
 	}
 
-	public List<ODatabaseLifecycleListener> getListeners() {
+	public List<ODatabaseListener> getListeners() {
 		return listeners;
 	}
 }

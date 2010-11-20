@@ -192,7 +192,7 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase, REC extends
 		return underlying.getProperties();
 	}
 
-	public void registerListener(final ODatabaseLifecycleListener iListener) {
+	public void registerListener(final ODatabaseListener iListener) {
 		underlying.registerListener(iListener);
 	}
 }

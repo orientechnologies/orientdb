@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.tx;
 import java.io.IOException;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OTransactionException;
@@ -74,7 +74,7 @@ public abstract class OTransactionAbstract<REC extends ORecordInternal<?>> imple
 
 	protected void invokeCommitAgainstListeners() {
 		// WAKE UP LISTENERS
-		for (ODatabaseLifecycleListener listener : ((ODatabaseRaw) database.getUnderlying()).getListeners())
+		for (ODatabaseListener listener : ((ODatabaseRaw) database.getUnderlying()).getListeners())
 			try {
 				listener.onBeforeTxCommit(database.getUnderlying());
 			} catch (Throwable t) {
@@ -84,7 +84,7 @@ public abstract class OTransactionAbstract<REC extends ORecordInternal<?>> imple
 
 	protected void invokeRollbackAgainstListeners() {
 		// WAKE UP LISTENERS
-		for (ODatabaseLifecycleListener listener : ((ODatabaseRaw) database.getUnderlying()).getListeners())
+		for (ODatabaseListener listener : ((ODatabaseRaw) database.getUnderlying()).getListeners())
 			try {
 				listener.onTxRollback(database.getUnderlying());
 			} catch (Throwable t) {

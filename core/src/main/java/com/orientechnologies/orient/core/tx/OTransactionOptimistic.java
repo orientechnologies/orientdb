@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.tx;
 
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -32,7 +32,7 @@ public class OTransactionOptimistic<REC extends ORecordInternal<?>> extends OTra
 
 	public void commit() {
 		// WAKE UP LISTENERS
-		for (ODatabaseLifecycleListener listener : ((ODatabaseRaw) database.getUnderlying()).getListeners())
+		for (ODatabaseListener listener : ((ODatabaseRaw) database.getUnderlying()).getListeners())
 			try {
 				listener.onBeforeTxCommit(database.getUnderlying());
 			} catch (Throwable t) {
@@ -43,7 +43,7 @@ public class OTransactionOptimistic<REC extends ORecordInternal<?>> extends OTra
 		status = TXSTATUS.INVALID;
 
 		// WAKE UP LISTENERS
-		for (ODatabaseLifecycleListener listener : ((ODatabaseRaw) database.getUnderlying()).getListeners())
+		for (ODatabaseListener listener : ((ODatabaseRaw) database.getUnderlying()).getListeners())
 			try {
 				listener.onAfterTxCommit(database.getUnderlying());
 			} catch (Throwable t) {
@@ -54,7 +54,7 @@ public class OTransactionOptimistic<REC extends ORecordInternal<?>> extends OTra
 		status = TXSTATUS.ROLLBACKING;
 
 		// WAKE UP LISTENERS
-		for (ODatabaseLifecycleListener listener : ((ODatabaseRaw) database.getUnderlying()).getListeners())
+		for (ODatabaseListener listener : ((ODatabaseRaw) database.getUnderlying()).getListeners())
 			try {
 				listener.onTxRollback(database.getUnderlying());
 			} catch (Throwable t) {

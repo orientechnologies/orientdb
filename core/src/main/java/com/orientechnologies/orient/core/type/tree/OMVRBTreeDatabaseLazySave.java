@@ -19,7 +19,7 @@ import java.io.IOException;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexException;
@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
  * @author Luca Garulli
  */
 @SuppressWarnings("serial")
-public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> implements ODatabaseLifecycleListener {
+public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> implements ODatabaseListener {
 	protected int	maxUpdatesBeforeSave;
 	protected int	updates	= 0;
 

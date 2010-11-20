@@ -16,14 +16,24 @@
 package com.orientechnologies.orient.core.db;
 
 /**
- * Listener Interface to receive callbacks on database usage.
+ * Listener Interface for all the events of the Database instances.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public interface ODatabaseLifecycleListener {
+public interface ODatabaseListener {
 
-	public void onOpen(ODatabase iDatabase);
+	public void onCreate(final ODatabase iDatabase);
 
-	public void onClose(ODatabase iDatabase);
+	public void onDelete(final ODatabase iDatabase);
+
+	public void onOpen(final ODatabase iDatabase);
+
+	public void onTxRollback(final ODatabase iDatabase);
+
+	public void onBeforeTxCommit(final ODatabase iDatabase);
+
+	public void onAfterTxCommit(final ODatabase iDatabase);
+
+	public void onClose(final ODatabase iDatabase);
 }

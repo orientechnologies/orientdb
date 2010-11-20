@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,6 +30,7 @@ import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
@@ -38,16 +40,17 @@ import com.orientechnologies.orient.core.storage.fs.OMMapManager;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 public class Orient extends OSharedResource {
-	public static final String					URL_SYNTAX		= "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
+	public static final String								URL_SYNTAX						= "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
 
-	protected Map<String, OEngine>			engines				= new HashMap<String, OEngine>();
-	protected Map<String, OStorage>			storages			= new HashMap<String, OStorage>();
-	protected volatile boolean					active				= false;
+	protected Map<String, OEngine>						engines								= new HashMap<String, OEngine>();
+	protected Map<String, OStorage>						storages							= new HashMap<String, OStorage>();
+	protected Set<ODatabaseLifecycleListener>	dbLifecycleListeners	= new HashSet<ODatabaseLifecycleListener>();
+	protected volatile boolean								active								= false;
 
-	protected static OrientShutdownHook	shutdownHook	= new OrientShutdownHook();
-	protected static Timer							timer					= new Timer(true);
+	protected static OrientShutdownHook				shutdownHook					= new OrientShutdownHook();
+	protected static Timer										timer									= new Timer(true);
 
-	protected static Orient							instance			= new Orient();
+	protected static Orient										instance							= new Orient();
 
 	protected Orient() {
 		// REGISTER THE EMBEDDED ENGINE
@@ -238,6 +241,18 @@ public class Orient extends OSharedResource {
 
 	public void removeShutdownHook() {
 		Runtime.getRuntime().removeShutdownHook(shutdownHook);
+	}
+
+	public Iterable<ODatabaseLifecycleListener> getDbLifecycleListeners() {
+		return dbLifecycleListeners;
+	}
+
+	public void addDbLifecycleListener(final ODatabaseLifecycleListener iListener) {
+		dbLifecycleListeners.add(iListener);
+	}
+
+	public void removeDbLifecycleListener(final ODatabaseLifecycleListener iListener) {
+		dbLifecycleListeners.remove(iListener);
 	}
 
 	public static Orient instance() {

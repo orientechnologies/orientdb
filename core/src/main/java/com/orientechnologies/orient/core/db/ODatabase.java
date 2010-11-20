@@ -258,5 +258,5 @@ public interface ODatabase {
 	 * 
 	 * @param iListener
 	 */
-	public void registerListener(ODatabaseLifecycleListener iListener);
+	public void registerListener(ODatabaseListener iListener);
 }
