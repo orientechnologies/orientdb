@@ -635,16 +635,18 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			@ConsoleParameter(name = "db-name", description = "Name of the database to share") final String iDatabaseName,
 			@ConsoleParameter(name = "db-user", description = "Database user") final String iDatabaseUserName,
 			@ConsoleParameter(name = "db-password", description = "Database password") String iDatabaseUserPassword,
-			@ConsoleParameter(name = "remote-server-name", description = "Remote server's name as <address>:<port>") final String iRemoteName)
+			@ConsoleParameter(name = "remote-server-name", description = "Remote server's name as <address>:<port>") final String iRemoteName,
+			@ConsoleParameter(name = "mode", description = "replication mode: 'synch' or 'asynch'") final String iMode)
 			throws IOException {
 
 		try {
 			if (serverAdmin == null)
-				throw new IllegalStateException("You must connect to a remote server to share a database");
+				throw new IllegalStateException("You must be connected to a remote server to share a database");
 
-			serverAdmin.shareDatabase(iDatabaseName, iDatabaseUserName, iDatabaseUserPassword, iRemoteName);
+			serverAdmin.shareDatabase(iDatabaseName, iDatabaseUserName, iDatabaseUserPassword, iRemoteName, iMode);
 
-			out.println("Database '" + iDatabaseName + "' has been shared with the server " + iRemoteName);
+			out.println("Database '" + iDatabaseName + "' has been shared in '" + iMode + "' mode with '" + iMode + "' the server "
+					+ iRemoteName);
 
 		} catch (Exception e) {
 			printError(e);

@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
@@ -30,9 +31,16 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 	private OStorage	storage2;
 	private int				differences	= 0;
 
-	public ODatabaseCompare(final String iDb1URL, final String iDb2URL, final OCommandOutputListener iListener) throws IOException {
+	public ODatabaseCompare(String iDb1URL, String iDb2URL, final OCommandOutputListener iListener) throws IOException {
 		super(null, null, iListener);
-		listener.onMessage("\nComparing two databases:\n1) " + iDb1URL + "\n2) " + iDb2URL + "\n");
+
+		// REMOVE THE STORAGE "LOCAL" PREFIX
+		if (iDb1URL.startsWith(OEngineLocal.NAME))
+			iDb1URL = iDb1URL.substring(OEngineLocal.NAME.length() + 1);
+		if (iDb2URL.startsWith(OEngineLocal.NAME))
+			iDb2URL = iDb2URL.substring(OEngineLocal.NAME.length() + 1);
+
+		listener.onMessage("\nComparing two local databases:\n1) " + iDb1URL + "\n2) " + iDb2URL + "\n");
 
 		storage1 = Orient.instance().accessToLocalStorage(iDb1URL, "rw");
 		storage1.open(0, null, null);
@@ -168,7 +176,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 						++differences;
 					}
 
-					if (buffer1.buffer == null && buffer2.buffer != null) {
+					if (buffer1.buffer == null && buffer2.buffer == null) {
+					} else if (buffer1.buffer == null && buffer2.buffer != null) {
 						listener.onMessage("\n- KO: RID=" + clusterId + ":" + i + " content is different: null <-> " + buffer2.buffer.length);
 						++differences;
 

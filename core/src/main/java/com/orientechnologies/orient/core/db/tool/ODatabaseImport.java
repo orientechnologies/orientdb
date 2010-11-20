@@ -29,7 +29,6 @@ import com.orientechnologies.common.parser.OStringForwardReader;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -165,7 +164,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 			if (dictionaryValue.length() >= 4)
 				rid.fromString(dictionaryValue.substring(1));
 
-			((ODictionary<ODocument>) database.getDictionary()).put(dictionaryKey, doc);
+			// AVOID TO CHANGE THE DICTIONARY BECAUSE IT'S IMPORTED BY UNDERLYING RECORDS
+			// ((ODictionary<ODocument>) database.getDictionary()).put(dictionaryKey, doc);
 			tot++;
 		} while (jsonReader.lastChar() == ',');
 

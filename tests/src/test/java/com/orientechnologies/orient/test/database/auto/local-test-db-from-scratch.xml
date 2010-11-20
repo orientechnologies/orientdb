@@ -107,8 +107,7 @@
 	</test>
 	<test name="DbTools">
 		<classes>
-			<class name="com.orientechnologies.orient.test.database.auto.DbExportTest" />
-			<class name="com.orientechnologies.orient.test.database.auto.DbImportTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.DbImportExportTest" />
 		</classes>
 	</test>
 	<test name="End">
