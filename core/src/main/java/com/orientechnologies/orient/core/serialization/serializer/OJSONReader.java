@@ -29,6 +29,7 @@ public class OJSONReader {
 	private StringBuilder				buffer						= new StringBuilder();
 	private String							value;
 	private char								c;
+	private Character						missedChar;
 	public static final char		NEW_LINE					= '\n';
 	public static final char[]	DEFAULT_JUMP			= new char[] { ' ', '\r', '\n', '\t' };
 	public static final char[]	BEGIN_OBJECT			= new char[] { '{' };
@@ -151,8 +152,36 @@ public class OJSONReader {
 		return c;
 	}
 
+	/**
+	 * Returns the next characted from the input stream. Handles Unicode decoding.
+	 */
 	private char nextChar() throws IOException {
-		c = (char) in.read();
+		if (missedChar != null) {
+			// RETURNS THE PREVIOUS PARSED CHAR
+			c = missedChar.charValue();
+			missedChar = null;
+			
+		} else {
+			c = (char) in.read();
+
+			if (c == '\\') {
+				char c2 = (char) in.read();
+				if (c2 == 'u') {
+					// DECODE UNICODE CHAR
+					final StringBuilder buff = new StringBuilder();
+					for (int i = 0; i < 4; ++i)
+						buff.append((char) in.read());
+
+					cursor += 6;
+
+					return (char) Integer.parseInt(buff.toString(), 16);
+				} else {
+					// REMEMBER THE CURRENT CHAR TO RETURN NEXT TIME
+					missedChar = c2;
+				}
+			}
+		}
+
 		cursor++;
 
 		if (c == NEW_LINE) {

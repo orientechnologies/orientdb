@@ -489,4 +489,48 @@ public abstract class OStringSerializerHelper {
 		}
 		return iLinkedClass;
 	}
+
+	public static String java2unicode(final String iInput) {
+		final StringBuffer result = new StringBuffer();
+
+		for (int i = 0; i < iInput.length(); i++) {
+			char ch = iInput.charAt(i);
+
+			if ((ch >= 0x0020) && (ch <= 0x007e)) // Does the char need to be converted to unicode?
+			{
+				result.append(ch); // No.
+			} else // Yes.
+			{
+				result.append("\\u"); // standard unicode format.
+				String hex = Integer.toHexString(iInput.charAt(i) & 0xFFFF); // Get hex value of the char.
+				for (int j = 0; j < 4 - hex.length(); j++)
+					// Prepend zeros because unicode requires 4 digits
+					result.append("0");
+				result.append(hex.toLowerCase()); // standard unicode format.
+				// ostr.append(hex.toLowerCase(Locale.ENGLISH));
+			}
+		}
+
+		return result.toString();
+	}
+
+	public static String unicode2java(final String iInput) {
+		return iInput;
+//		final int len = iInput.length();
+//		int pos = 0;
+//		int step = 0;
+//		char c;
+//		final StringBuilder buffer = new StringBuilder();
+//		while (pos < len) {
+//			c = iInput.charAt(pos);
+//			if (c == '\\')
+//				step++;
+//			else if (c == '\\' && step == 1)
+//				step++;
+//			else
+//				buffer.append(c);
+//		}
+//
+//		return buffer.toString();
+	}
 }

@@ -77,6 +77,14 @@ public class ORecordColumn extends ORecordAbstract<String> implements ORecordStr
 		return this;
 	}
 
+	@Override
+	public ORecordColumn clear() {
+		super.clear();
+		values.clear();
+		cursor = 0;
+		return this;
+	}
+
 	public ORecordColumn copy() {
 		ORecordColumn cloned = new ORecordColumn();
 		cloned._source = _source;

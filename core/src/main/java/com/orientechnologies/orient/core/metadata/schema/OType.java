@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 
 /**
@@ -60,7 +61,7 @@ public enum OType {
 	},
 	EMBEDDEDMAP("Map", 12, true, false, 8, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
 	},
-	LINK("Link", 13, true, true, 8, new Class<?>[] { Object.class }, new Class<?>[] { ORecord.class, ORID.class }) {
+	LINK("Link", 13, true, true, 8, new Class<?>[] { Object.class, ORecordId.class }, new Class<?>[] { ORecord.class, ORID.class }) {
 	},
 	LINKLIST("List", 14, true, false, 8, new Class<?>[] { List.class }, new Class<?>[] { Collection.class, Array.class }) {
 	},

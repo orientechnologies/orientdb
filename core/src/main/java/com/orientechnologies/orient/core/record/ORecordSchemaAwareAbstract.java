@@ -129,6 +129,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	@Override
 	public ORecordSchemaAwareAbstract<T> reset() {
 		super.reset();
+		_clazz = null;
 		_cursor = 0;
 		return this;
 	}

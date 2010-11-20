@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.record;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -31,6 +32,7 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 	protected Map<String, T>			_fieldOriginalValues;
 	protected Map<String, OType>	_fieldTypes;
 	protected boolean							_trackingChanges	= true;
+	protected boolean							_ordered					= false;
 
 	public ORecordVirtualAbstract() {
 	}
@@ -93,6 +95,15 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 		return (RET) this;
 	}
 
+	public boolean isOrdered() {
+		return _ordered;
+	}
+
+	public <RET extends ORecordVirtualAbstract<?>> RET setOrdered(final boolean iOrdered) {
+		this._ordered = iOrdered;
+		return (RET) this;
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (!super.equals(obj))
@@ -104,7 +115,7 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 	@Override
 	protected void checkForFields() {
 		if (_fieldValues == null)
-			_fieldValues = new LinkedHashMap<String, T>();
+			_fieldValues = _ordered ? new LinkedHashMap<String, T>() : new HashMap<String, T>();
 
 		if (_status == STATUS.LOADED && (_fieldValues == null || size() == 0))
 			// POPULATE FIELDS LAZY

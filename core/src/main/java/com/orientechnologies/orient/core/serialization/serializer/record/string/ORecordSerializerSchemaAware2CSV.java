@@ -165,8 +165,11 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 							linkedType = type == OType.EMBEDDEDLIST || type == OType.EMBEDDEDSET || type == OType.EMBEDDEDMAP ? OType.EMBEDDED
 									: OType.LINK;
 							linkedClass = getLinkInfo(database, getClassName(firstValue));
-						} else
+						} else {
 							linkedType = OType.getTypeByClass(firstValue.getClass());
+							if (linkedType == OType.LINK && type == OType.EMBEDDEDMAP)
+								type = OType.LINKMAP;
+						}
 					}
 				} else if (database != null && fieldValue instanceof ODocument) {
 					if (type == null)
