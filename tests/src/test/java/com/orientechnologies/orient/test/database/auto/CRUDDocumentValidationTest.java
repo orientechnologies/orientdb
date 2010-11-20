@@ -48,13 +48,13 @@ public class CRUDDocumentValidationTest {
 
 	@Test(dependsOnMethods = "openDb", expectedExceptions = OValidationException.class)
 	public void validationMandatory() {
-		record.reset();
+		record.clear();
 		record.save();
 	}
 
 	@Test(dependsOnMethods = "validationMandatory", expectedExceptions = OValidationException.class)
 	public void validationMinString() {
-		record.reset();
+		record.clear();
 		record.field("account", account);
 		record.field("id", 23723);
 		record.field("text", "");
@@ -63,7 +63,7 @@ public class CRUDDocumentValidationTest {
 
 	@Test(dependsOnMethods = "validationMinString", expectedExceptions = OValidationException.class, expectedExceptionsMessageRegExp = ".*more.*than.*")
 	public void validationMaxString() {
-		record.reset();
+		record.clear();
 		record.field("account", account);
 		record.field("id", 23723);
 		record
@@ -75,7 +75,7 @@ public class CRUDDocumentValidationTest {
 
 	@Test(dependsOnMethods = "validationMaxString", expectedExceptions = OValidationException.class, expectedExceptionsMessageRegExp = ".*before.*")
 	public void validationMinDate() throws ParseException {
-		record.reset();
+		record.clear();
 		record.field("account", account);
 		record.field("date", new SimpleDateFormat("dd/MM/yyyy").parse("01/01/1976"));
 		record.field("text", "test");
