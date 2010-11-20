@@ -47,8 +47,6 @@ public class DbCreationTest {
 	public void testDbCreation() throws IOException {
 		if (url.startsWith(OEngineRemote.NAME)) {
 
-			System.out.println("ORIENTDB_HOME = " + OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}"));
-
 			// LAOD SERVER CONFIG FILE TO EXTRACT THE ROOT'S PASSWORD
 			File file = new File(OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/orientdb-server-config.xml"));
 			if (!file.exists())
