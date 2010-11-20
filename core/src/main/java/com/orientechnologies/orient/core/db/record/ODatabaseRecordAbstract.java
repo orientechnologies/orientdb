@@ -280,16 +280,16 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			try {
 				final ORole role = user.allow(iResource, iOperation);
 
-				if (OLogManager.instance().isDebugEnabled())
-					OLogManager.instance().debug(this, "[checkSecurity] Granted permission for resource '%s', operation '%s' by role: %s",
-							iResource, iOperation, role.getName());
+//				if (OLogManager.instance().isDebugEnabled())
+//					OLogManager.instance().debug(this, "[checkSecurity] Granted permission for resource '%s', operation '%s' by role: %s",
+//							iResource, iOperation, role.getName());
 
 			} catch (OSecurityAccessException e) {
 
-				if (OLogManager.instance().isDebugEnabled())
-					OLogManager.instance().debug(this,
-							"[checkSecurity] User '%s' tried to access to the reserved resource '%s', operation '%s'", getUser(), iResource,
-							iOperation);
+//				if (OLogManager.instance().isDebugEnabled())
+//					OLogManager.instance().debug(this,
+//							"[checkSecurity] User '%s' tried to access to the reserved resource '%s', operation '%s'", getUser(), iResource,
+//							iOperation);
 
 				throw e;
 			}
@@ -300,9 +300,9 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 	public <DB extends ODatabaseRecord<?>> DB checkSecurity(final String iResourceGeneric, final int iOperation,
 			final Object... iResourcesSpecific) {
 
-		if (OLogManager.instance().isDebugEnabled())
-			OLogManager.instance().debug(this, "[checkSecurity] Check permissions for resource '%s', target(s) '%s', operation '%s'",
-					iResourceGeneric, Arrays.toString(iResourcesSpecific), iOperation);
+//		if (OLogManager.instance().isDebugEnabled())
+//			OLogManager.instance().debug(this, "[checkSecurity] Check permissions for resource '%s', target(s) '%s', operation '%s'",
+//					iResourceGeneric, Arrays.toString(iResourcesSpecific), iOperation);
 
 		if (user != null) {
 			try {
@@ -331,10 +331,10 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 					}
 				}
 
-				if (OLogManager.instance().isDebugEnabled())
-					OLogManager.instance().debug(this,
-							"[checkSecurity] Granted permission for resource '%s', target(s) '%s', operation '%s' by role: %s", iResourceGeneric,
-							Arrays.toString(iResourcesSpecific), iOperation, role.getName());
+//				if (OLogManager.instance().isDebugEnabled())
+//					OLogManager.instance().debug(this,
+//							"[checkSecurity] Granted permission for resource '%s', target(s) '%s', operation '%s' by role: %s", iResourceGeneric,
+//							Arrays.toString(iResourcesSpecific), iOperation, role.getName());
 
 			} catch (OSecurityAccessException e) {
 				if (OLogManager.instance().isDebugEnabled())
