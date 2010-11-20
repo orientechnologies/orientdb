@@ -106,9 +106,10 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 				linkedType = prop.getLinkedType();
 
 			} else if (fieldValue != null) {
-
 				// NOT FOUND: TRY TO DETERMINE THE TYPE FROM ITS CONTENT
-				if (fieldValue instanceof Collection<?> || fieldValue.getClass().isArray()) {
+				if (fieldValue.getClass() == byte[].class) {
+					type = OType.BINARY;
+				} else if (fieldValue instanceof Collection<?> || fieldValue.getClass().isArray()) {
 					final Collection<?> coll = fieldValue instanceof Collection<?> ? (Collection<?>) fieldValue : null;
 
 					int size = coll != null ? coll.size() : Array.getLength(fieldValue);

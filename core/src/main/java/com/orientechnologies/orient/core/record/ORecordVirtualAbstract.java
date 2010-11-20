@@ -70,6 +70,9 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 		return this;
 	}
 
+	/**
+	 * Clear all the field values and types.
+	 */
 	@Override
 	public ORecordSchemaAwareAbstract<T> clear() {
 		super.clear();
@@ -78,6 +81,9 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 		return this;
 	}
 
+	/**
+	 * Reset the record values and class type to being reused.
+	 */
 	@Override
 	public ORecordSchemaAwareAbstract<T> reset() {
 		super.reset();

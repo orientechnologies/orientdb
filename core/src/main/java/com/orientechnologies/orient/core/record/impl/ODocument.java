@@ -45,6 +45,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordVirtualAbstract;
+import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 
@@ -416,6 +417,16 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			_fieldValues.put(iPropertyName, value);
 		}
 
+		// CHECK FOR CONVERSION
+		final OType t = fieldType(iPropertyName);
+		if (t != null) {
+			if (t == OType.BINARY && value instanceof String) {
+				byte[] buffer = OBase64Utils.decode((String) value);
+				field(iPropertyName, buffer);
+				value = (RET) buffer;
+			}
+		}
+
 		return value;
 	}
 
@@ -435,6 +446,20 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		value = convertField(iPropertyName, iType, value);
 
 		return value;
+	}
+
+	/**
+	 * Reads the field value forcing the return type. Use this method to force return of binary data.
+	 * 
+	 * @param iPropertyName
+	 *          field name
+	 * @param iType
+	 *          Forced type.
+	 * @return field value if defined, otherwise null
+	 */
+	public <RET> RET field(final String iPropertyName, final OType iType) {
+		setFieldType(iPropertyName, iType);
+		return field(iPropertyName);
 	}
 
 	/**
@@ -558,12 +583,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 
 		_fieldValues.put(iPropertyName, iPropertyValue);
 
-		if (iType != null) {
-			// SAVE FORCED TYPE
-			if (_fieldTypes == null)
-				_fieldTypes = new HashMap<String, OType>();
-			_fieldTypes.put(iPropertyName, iType);
-		}
+		setFieldType(iPropertyName, iType);
 
 		return this;
 	}
@@ -715,5 +735,15 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			iValue = (RET) newValue;
 		}
 		return iValue;
+	}
+
+	protected void setFieldType(final String iPropertyName, OType iType) {
+		if (iType == null)
+			return;
+
+		// SAVE FORCED TYPE
+		if (_fieldTypes == null)
+			_fieldTypes = new HashMap<String, OType>();
+		_fieldTypes.put(iPropertyName, iType);
 	}
 }

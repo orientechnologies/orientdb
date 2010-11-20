@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.serialization;
 
+import com.orientechnologies.common.io.OIOException;
+
 /**
  * <p>
  * Encodes and decodes to and from Base64 notation.
@@ -1076,7 +1078,7 @@ public class OBase64Utils {
 	 *           If bogus characters exist in source data
 	 * @since 1.3
 	 */
-	public static byte[] decode(byte[] source, int off, int len, int options) throws java.io.IOException {
+	public static byte[] decode(byte[] source, int off, int len, int options) {
 
 		// Lots of error checking and exception throwing
 		if (source == null) {
@@ -1128,7 +1130,7 @@ public class OBase64Utils {
 			} // end if: white space, equals sign or better
 			else {
 				// There's a bad input character in the Base64 stream.
-				throw new java.io.IOException(String.format("Bad Base64 input character decimal %d in array position %d",
+				throw new OIOException(String.format("Bad Base64 input character decimal %d in array position %d",
 						((int) source[i]) & 0xFF, i));
 			} // end else:
 		} // each input character
@@ -1148,7 +1150,7 @@ public class OBase64Utils {
 	 *           If there is a problem
 	 * @since 1.4
 	 */
-	public static byte[] decode(String s) throws java.io.IOException {
+	public static byte[] decode(String s) {
 		return decode(s, NO_OPTIONS);
 	}
 
@@ -1166,7 +1168,7 @@ public class OBase64Utils {
 	 *           if <tt>s</tt> is null
 	 * @since 1.4
 	 */
-	public static byte[] decode(String s, int options) throws java.io.IOException {
+	public static byte[] decode(String s, int options) {
 
 		if (s == null) {
 			throw new NullPointerException("Input string was null.");

@@ -24,7 +24,9 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.iterator.ORecordIterator;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.OBase64Utils;
 
 @Test(groups = { "crud", "record-vobject" }, sequential = true)
 public class CRUDDocumentPhysicalTest {
@@ -33,6 +35,7 @@ public class CRUDDocumentPhysicalTest {
 	private ODatabaseDocumentTx	database;
 	private ODocument						record;
 	private String							url;
+	String											base64;
 
 	@Parameters(value = "url")
 	public CRUDDocumentPhysicalTest(final String iURL) {
@@ -66,6 +69,8 @@ public class CRUDDocumentPhysicalTest {
 		byte[] binary = new byte[100];
 		for (int b = 0; b < binary.length; ++b)
 			binary[b] = (byte) b;
+
+		base64 = OBase64Utils.encodeBytes(binary);
 
 		for (long i = startRecordNumber; i < startRecordNumber + TOT_RECORDS; ++i) {
 			record.reset();
@@ -113,7 +118,10 @@ public class CRUDDocumentPhysicalTest {
 			Assert.assertEquals(((Number) rec.field("salary")).intValue(), i + 300);
 			Assert.assertNotNull(rec.field("extra"));
 
-			binary = rec.field("binary");
+			Assert.assertEquals(rec.field("binary"), base64);
+
+			binary = rec.field("binary", OType.BINARY);
+
 			for (int b = 0; b < binary.length; ++b)
 				Assert.assertEquals(binary[b], (byte) b);
 

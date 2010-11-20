@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -105,11 +104,7 @@ public abstract class OStringSerializerHelper {
 		case BINARY:
 			if (iValue instanceof byte[])
 				return iValue;
-			try {
-				return OBase64Utils.decode((String) iValue);
-			} catch (IOException e) {
-				throw new OSerializationException("Error on decode binary data", e);
-			}
+			return OBase64Utils.decode((String) iValue);
 
 		case DATE:
 			if (iValue instanceof Date)
@@ -153,9 +148,12 @@ public abstract class OStringSerializerHelper {
 			return String.valueOf(iValue);
 
 		case BINARY:
+			final String str;
 			if (iValue instanceof Byte)
-				return new String(new byte[] { ((Byte) iValue).byteValue() });
-			return OBase64Utils.encodeBytes((byte[]) iValue);
+				str = new String(new byte[] { ((Byte) iValue).byteValue() });
+			else
+				str = OBase64Utils.encodeBytes((byte[]) iValue);
+			return "\"" + str + "\"";
 
 		case DATE:
 			return String.valueOf(((Date) iValue).getTime());
@@ -516,21 +514,21 @@ public abstract class OStringSerializerHelper {
 
 	public static String unicode2java(final String iInput) {
 		return iInput;
-//		final int len = iInput.length();
-//		int pos = 0;
-//		int step = 0;
-//		char c;
-//		final StringBuilder buffer = new StringBuilder();
-//		while (pos < len) {
-//			c = iInput.charAt(pos);
-//			if (c == '\\')
-//				step++;
-//			else if (c == '\\' && step == 1)
-//				step++;
-//			else
-//				buffer.append(c);
-//		}
-//
-//		return buffer.toString();
+		// final int len = iInput.length();
+		// int pos = 0;
+		// int step = 0;
+		// char c;
+		// final StringBuilder buffer = new StringBuilder();
+		// while (pos < len) {
+		// c = iInput.charAt(pos);
+		// if (c == '\\')
+		// step++;
+		// else if (c == '\\' && step == 1)
+		// step++;
+		// else
+		// buffer.append(c);
+		// }
+		//
+		// return buffer.toString();
 	}
 }
