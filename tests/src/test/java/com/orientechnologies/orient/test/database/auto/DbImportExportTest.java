@@ -18,14 +18,12 @@ package com.orientechnologies.orient.test.database.auto;
 import java.io.File;
 import java.io.IOException;
 
-import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 
@@ -70,18 +68,6 @@ public class DbImportExportTest implements OCommandOutputListener {
 		impor.close();
 
 		database.close();
-	}
-
-	@Test(dependsOnMethods = "testDbImport")
-	public void testCompareDatabases() throws IOException {
-		Assert.assertTrue(new ODatabaseCompare(url, DB2_URL, this).compare());
-	}
-
-	@Test(dependsOnMethods = "testCompareDatabases")
-	public void testDbDelete() throws IOException {
-		new ODatabaseDocumentTx(DB2_URL).delete();
-
-		Assert.assertFalse(new File(DB2_PATH).exists());
 	}
 
 	@Test(enabled = false)

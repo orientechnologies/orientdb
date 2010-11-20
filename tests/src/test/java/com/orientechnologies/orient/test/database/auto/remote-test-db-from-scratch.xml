@@ -90,6 +90,7 @@
 	<test name="End">
 		<classes>
 			<class name="com.orientechnologies.orient.test.database.auto.DbClosedTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.DbDeleteTest" />
 		</classes>
 	</test>
 	<test name="DbTools">
