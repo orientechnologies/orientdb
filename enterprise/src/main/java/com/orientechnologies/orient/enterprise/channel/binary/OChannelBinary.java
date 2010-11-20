@@ -31,7 +31,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.exception.ONetworkProtocolException;
 
@@ -131,7 +130,7 @@ public class OChannelBinary extends OChannel {
 		in.readFully(tmp);
 
 		if (debug)
-			OLogManager.instance().debug(this, "Read " + len + " bytes (dumped in base64): " + OBase64Utils.encodeBytes(tmp));
+			OLogManager.instance().debug(this, "Read " + len + " bytes: " + new String(tmp));
 
 		return tmp;
 	}
