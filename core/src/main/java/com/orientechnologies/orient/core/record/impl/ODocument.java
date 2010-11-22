@@ -459,7 +459,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 */
 	public <RET> RET field(final String iPropertyName, final OType iType) {
 		setFieldType(iPropertyName, iType);
-		return field(iPropertyName);
+		return (RET) field(iPropertyName);
 	}
 
 	/**
