@@ -733,7 +733,9 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 
 			_fieldValues.put(iPropertyName, newValue);
 			iValue = (RET) newValue;
-		}
+		} else
+			iValue = (RET) OType.convert(iValue, iType);
+
 		return iValue;
 	}
 

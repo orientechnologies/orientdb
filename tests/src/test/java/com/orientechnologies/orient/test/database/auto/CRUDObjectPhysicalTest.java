@@ -195,7 +195,7 @@ public class CRUDObjectPhysicalTest {
 
 		long profiles = database.countClass("Profile");
 
-		Profile neo = new Profile("Neo");
+		Profile neo = new Profile("Neo").setValue("test");
 		neo.addFollowing(new Profile("Morpheus"));
 		neo.addFollowing(new Profile("Trinity"));
 

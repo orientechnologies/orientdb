@@ -28,6 +28,7 @@ public class Profile {
 	private String				surname;
 	private Address				location;
 	private Profile				invitedBy;
+	private String				value;
 
 	public Profile() {
 	}
@@ -117,5 +118,14 @@ public class Profile {
 
 	public void setNick(String nick) {
 		this.nick = nick;
+	}
+
+	public String getValue() {
+		return value;
+	}
+
+	public Profile setValue(String value) {
+		this.value = value;
+		return this;
 	}
 }

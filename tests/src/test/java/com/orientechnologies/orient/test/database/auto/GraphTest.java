@@ -35,6 +35,7 @@ public class GraphTest {
 		database = new ODatabaseGraphTx(iURL);
 	}
 
+	@SuppressWarnings("unused")
 	@Test
 	public void populate() {
 		database.open("admin", "admin");

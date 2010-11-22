@@ -83,6 +83,7 @@ public class CRUDDocumentPhysicalTest {
 			record.field("nonSchemaBinary", binary);
 			record.field("testLong", 10000000000L); // TEST LONG
 			record.field("extra", "This is an extra field not included in the schema");
+			record.field("value", (byte) 10);
 
 			record.save("Account");
 		}
@@ -117,6 +118,7 @@ public class CRUDDocumentPhysicalTest {
 			Assert.assertEquals(((Number) rec.field("testLong")).longValue(), 10000000000L);
 			Assert.assertEquals(((Number) rec.field("salary")).intValue(), i + 300);
 			Assert.assertNotNull(rec.field("extra"));
+			Assert.assertEquals(((Byte) rec.field("value", Byte.class)).byteValue(), (byte) 10);
 
 			Assert.assertEquals(rec.field("binary"), base64);
 
