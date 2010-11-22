@@ -104,7 +104,12 @@ public abstract class OStringSerializerHelper {
 		case BINARY:
 			if (iValue instanceof byte[])
 				return iValue;
-			return OBase64Utils.decode((String) iValue);
+			if (iValue instanceof String) {
+				final String s = (String) iValue;
+				if (s.length() > 2)
+					return OBase64Utils.decode(s.substring(1, s.length() - 1));
+				return null;
+			}
 
 		case DATE:
 			if (iValue instanceof Date)
