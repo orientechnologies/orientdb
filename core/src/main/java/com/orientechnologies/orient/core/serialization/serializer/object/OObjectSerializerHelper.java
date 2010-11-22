@@ -189,44 +189,38 @@ public class OObjectSerializerHelper {
 						|| (!(fieldValue instanceof Map<?, ?>) || ((Map<?, ?>) fieldValue).size() == 0 || !(((Map<?, ?>) fieldValue).values()
 								.iterator().next() instanceof ODocument))) {
 
-					final Type genericType = p.getGenericType();
-					if (genericType != null && genericType instanceof ParameterizedType) {
-						final ParameterizedType pt = (ParameterizedType) genericType;
-						if (pt.getActualTypeArguments() != null && pt.getActualTypeArguments().length > 0) {
-							if (pt.getActualTypeArguments()[0] instanceof Class<?>) {
-								Class<?> genericTypeClass = (Class<?>) pt.getActualTypeArguments()[0];
-								if (genericTypeClass.isEnum()) {
-									if (fieldValue instanceof Collection) {
-										// TRANSFORM THE COLLECTION
-										if (fieldValue instanceof List) {
-											// LIST: TRANSFORM EACH SINGLE ITEM
-											final List<Object> list = (List<Object>) fieldValue;
-											Object v;
-											for (int i = 0; i < list.size(); ++i) {
-												v = list.get(i);
-												if (v != null) {
-													v = Enum.valueOf((Class<Enum>) genericTypeClass, v.toString());
-													list.set(i, v);
-												}
-											}
-										} else if (fieldValue instanceof List) {
-											// SET: CREATE A TEMP SET TO WORK WITH ITEMS
-											Set<Object> newColl = new HashSet<Object>();
-											final Set<Object> set = (Set<Object>) fieldValue;
-											for (Object v : set) {
-												if (v != null) {
-													v = Enum.valueOf((Class<Enum>) genericTypeClass, v.toString());
-													newColl.add(v);
-												}
-											}
-
-											fieldValue = newColl;
+					final Class<?> genericTypeClass = getGenericMultivalueType(p);
+					
+					if (genericTypeClass != null)
+						if (genericTypeClass.isEnum()) {
+							if (fieldValue instanceof Collection) {
+								// TRANSFORM THE COLLECTION
+								if (fieldValue instanceof List) {
+									// LIST: TRANSFORM EACH SINGLE ITEM
+									final List<Object> list = (List<Object>) fieldValue;
+									Object v;
+									for (int i = 0; i < list.size(); ++i) {
+										v = list.get(i);
+										if (v != null) {
+											v = Enum.valueOf((Class<Enum>) genericTypeClass, v.toString());
+											list.set(i, v);
 										}
 									}
+								} else if (fieldValue instanceof List) {
+									// SET: CREATE A TEMP SET TO WORK WITH ITEMS
+									Set<Object> newColl = new HashSet<Object>();
+									final Set<Object> set = (Set<Object>) fieldValue;
+									for (Object v : set) {
+										if (v != null) {
+											v = Enum.valueOf((Class<Enum>) genericTypeClass, v.toString());
+											newColl.add(v);
+										}
+									}
+
+									fieldValue = newColl;
 								}
 							}
 						}
-					}
 
 					setFieldValue(iPojo, fieldName, fieldValue);
 				}
@@ -289,7 +283,6 @@ public class OObjectSerializerHelper {
 				} else if (type.isEnum()) {
 
 					String enumName = ((ODocument) iLinked).field(iFieldName);
-					@SuppressWarnings("rawtypes")
 					Class<Enum> enumClass = (Class<Enum>) type;
 					fieldValue = Enum.valueOf(enumClass, enumName);
 
@@ -375,6 +368,26 @@ public class OObjectSerializerHelper {
 		return iRecord;
 	}
 
+	/**
+	 * Returns the generic class of multi-value objects.
+	 * 
+	 * @param p
+	 *          Field to examine
+	 * @return The Class<?> of generic type if any, otherwise null
+	 */
+	public static Class<?> getGenericMultivalueType(final Field p) {
+		final Type genericType = p.getGenericType();
+		if (genericType != null && genericType instanceof ParameterizedType) {
+			final ParameterizedType pt = (ParameterizedType) genericType;
+			if (pt.getActualTypeArguments() != null && pt.getActualTypeArguments().length > 0) {
+				if (pt.getActualTypeArguments()[0] instanceof Class<?>) {
+					return (Class<?>) pt.getActualTypeArguments()[0];
+				}
+			}
+		}
+		return null;
+	}
+
 	private static Object typeToStream(Object iFieldValue, OType iType, final OEntityManager iEntityManager,
 			final OUserObject2RecordHandler iObj2RecHandler) {
 		if (iFieldValue == null)
@@ -394,7 +407,7 @@ public class OObjectSerializerHelper {
 				iFieldValue = multiValueToStream(iFieldValue, iType, iEntityManager, iObj2RecHandler);
 			} else if (fieldClass.isEnum()) {
 				// ENUM
-				iFieldValue = iFieldValue.toString();
+				iFieldValue = ((Enum<?>) iFieldValue).name();
 				iType = OType.STRING;
 			} else {
 				// LINK OR EMBEDDED

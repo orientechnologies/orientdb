@@ -529,10 +529,10 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			if (prop != null) {
 				if (iPropertyValue instanceof Enum)
 					// ENUM
-					if (prop.getType().isAssignableFrom(""))
-						iPropertyValue = iPropertyValue.toString();
-					else if (prop.getType().isAssignableFrom(1))
+					if (prop.getType().isAssignableFrom(1))
 						iPropertyValue = ((Enum<?>) iPropertyValue).ordinal();
+					else
+						iPropertyValue = ((Enum<?>) iPropertyValue).name();
 
 				if (!(iPropertyValue instanceof String) && !prop.getType().isAssignableFrom(iPropertyValue))
 					throw new IllegalArgumentException("Property '" + iPropertyName + "' of type '" + prop.getType()
