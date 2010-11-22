@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -155,8 +156,22 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 		return (RET) underlying.command(iCommand);
 	}
 
-	public <RET extends List<?>> RET query(final OQuery<? extends Object> iCommand) {
-		return (RET) underlying.query(iCommand);
+	public <RET extends List<?>> RET query(final OQuery<?> iCommand) {
+		checkOpeness();
+		final List<ODocument> result = underlying.query(iCommand);
+
+		if (result == null)
+			return null;
+
+		final List<Object> resultPojo = new ArrayList<Object>();
+		Object obj;
+		for (ODocument doc : result) {
+			// GET THE ASSOCIATED DOCUMENT
+			obj = getUserObjectByRecord(doc, iCommand.getFetchPlan());
+			resultPojo.add(obj);
+		}
+
+		return (RET) resultPojo;
 	}
 
 	public ODatabaseComplex<T> delete(final REC iRecord) {

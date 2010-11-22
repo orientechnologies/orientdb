@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.core.db.object;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabasePojoAbstract;
@@ -34,7 +31,6 @@ import com.orientechnologies.orient.core.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.core.iterator.OObjectIteratorMultiCluster;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelper;
@@ -223,24 +219,6 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
 	public Object newInstance() {
 		checkOpeness();
 		return new ODocument(underlying);
-	}
-
-	public <RET extends List<?>> RET query(final OQuery<?> iCommand) {
-		checkOpeness();
-		final List<ODocument> result = underlying.query(iCommand);
-
-		if (result == null)
-			return null;
-
-		final List<Object> resultPojo = new ArrayList<Object>();
-		Object obj;
-		for (ODocument doc : result) {
-			// GET THE ASSOCIATED DOCUMENT
-			obj = getUserObjectByRecord(doc, iCommand.getFetchPlan());
-			resultPojo.add(obj);
-		}
-
-		return (RET) resultPojo;
 	}
 
 	public <DBTYPE extends ODatabase> DBTYPE checkSecurity(final String iResource, final byte iOperation) {

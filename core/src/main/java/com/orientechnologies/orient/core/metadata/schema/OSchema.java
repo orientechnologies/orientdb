@@ -110,6 +110,10 @@ public class OSchema extends ODocumentWrapperNoClass {
 		throw new OSchemaException("Class #" + iClassId + " was not found in current database");
 	}
 
+	public OClass getClass(final Class<?> iClass) {
+		return getClass(iClass.getSimpleName());
+	}
+
 	/**
 	 * Returns the OClass instance by class name. If the class is not configured and the database has an entity manager with the
 	 * requested class as registered, then creates a schema class for it at the fly.

@@ -333,7 +333,7 @@ public class OClass extends ODocumentWrapperNoClass {
 
 		// ADD DIFFERENT CLUSTER IDS TO THE "POLYMORPHIC CLUSTER IDS" ARRAY
 		OClass currentClass = iBaseClass;
-		while (currentClass != null) {
+		while (currentClass != null && currentClass != this) {
 			addPolymorphicClusterIds(currentClass);
 			currentClass = currentClass.getSuperClass();
 		}
@@ -409,5 +409,39 @@ public class OClass extends ODocumentWrapperNoClass {
 		for (int id : clusterIds) {
 			owner.getDocument().getDatabase().getStorage().getClusterById(id).truncate();
 		}
+	}
+
+	/**
+	 * Returns true if the current instance extends the passed schema class (iClass).
+	 * 
+	 * @param iClass
+	 * @return
+	 * @see #isSuperClassOf(OClass)
+	 */
+	public boolean isSubClassOf(final OClass iClass) {
+		OClass cls = this;
+		while (cls != null) {
+			if (cls.equals(iClass))
+				return true;
+			cls = cls.getSuperClass();
+		}
+		return false;
+	}
+
+	/**
+	 * Returns true if the passed schema class (iClass) extends the current instance.
+	 * 
+	 * @param iClass
+	 * @return Returns true if the passed schema class extends the current instance
+	 * @see #isSubClassOf(OClass)
+	 */
+	public boolean isSuperClassOf(final OClass iClass) {
+		OClass cls = iClass;
+		while (cls != null) {
+			if (cls.equals(this))
+				return true;
+			cls = cls.getSuperClass();
+		}
+		return false;
 	}
 }
