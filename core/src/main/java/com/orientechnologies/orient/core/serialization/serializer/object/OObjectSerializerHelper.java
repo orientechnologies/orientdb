@@ -190,36 +190,46 @@ public class OObjectSerializerHelper {
 								.iterator().next() instanceof ODocument))) {
 
 					final Class<?> genericTypeClass = getGenericMultivalueType(p);
-					
+
 					if (genericTypeClass != null)
 						if (genericTypeClass.isEnum()) {
-							if (fieldValue instanceof Collection) {
-								// TRANSFORM THE COLLECTION
-								if (fieldValue instanceof List) {
-									// LIST: TRANSFORM EACH SINGLE ITEM
-									final List<Object> list = (List<Object>) fieldValue;
-									Object v;
-									for (int i = 0; i < list.size(); ++i) {
-										v = list.get(i);
-										if (v != null) {
-											v = Enum.valueOf((Class<Enum>) genericTypeClass, v.toString());
-											list.set(i, v);
-										}
+							// TRANSFORM THE MULTI-VALUE
+							if (fieldValue instanceof List) {
+								// LIST: TRANSFORM EACH SINGLE ITEM
+								final List<Object> list = (List<Object>) fieldValue;
+								Object v;
+								for (int i = 0; i < list.size(); ++i) {
+									v = list.get(i);
+									if (v != null) {
+										v = Enum.valueOf((Class<Enum>) genericTypeClass, v.toString());
+										list.set(i, v);
 									}
-								} else if (fieldValue instanceof List) {
-									// SET: CREATE A TEMP SET TO WORK WITH ITEMS
-									Set<Object> newColl = new HashSet<Object>();
-									final Set<Object> set = (Set<Object>) fieldValue;
-									for (Object v : set) {
-										if (v != null) {
-											v = Enum.valueOf((Class<Enum>) genericTypeClass, v.toString());
-											newColl.add(v);
-										}
+								}
+							} else if (fieldValue instanceof Set) {
+								// SET: CREATE A TEMP SET TO WORK WITH ITEMS
+								Set<Object> newColl = new HashSet<Object>();
+								final Set<Object> set = (Set<Object>) fieldValue;
+								for (Object v : set) {
+									if (v != null) {
+										v = Enum.valueOf((Class<Enum>) genericTypeClass, v.toString());
+										newColl.add(v);
 									}
+								}
 
-									fieldValue = newColl;
+								fieldValue = newColl;
+							} else if (fieldValue instanceof Map) {
+								// MAP: TRANSFORM EACH SINGLE ITEM
+								final Map<String, Object> map = (Map<String, Object>) fieldValue;
+								Object v;
+								for (Entry<String, ?> entry : map.entrySet()) {
+									v = entry.getValue();
+									if (v != null) {
+										v = Enum.valueOf((Class<Enum>) genericTypeClass, v.toString());
+										map.put(entry.getKey(), v);
+									}
 								}
 							}
+
 						}
 
 					setFieldValue(iPojo, fieldName, fieldValue);
