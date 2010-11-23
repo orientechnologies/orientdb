@@ -284,7 +284,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				}
 
 			default:
-				return OStringSerializerHelper.fieldTypeFromStream(iRecord.getDatabase(), iType, iFieldValue);
+				return OStringSerializerHelper.fieldTypeFromStream(iRecord, iType, iFieldValue);
 			}
 
 		return iFieldValueAsString;

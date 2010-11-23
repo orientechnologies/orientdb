@@ -15,7 +15,9 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -23,6 +25,7 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -194,4 +197,41 @@ public class CRUDDocumentPhysicalTest {
 
 		database.close();
 	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testNestedEmbeddedMap() {
+		ODocument newDoc = new ODocument(database);
+
+		final Map<String, HashMap<?, ?>> map1 = new HashMap<String, HashMap<?, ?>>();
+		newDoc.field("map1", map1, OType.EMBEDDEDMAP);
+
+		final Map<String, HashMap<?, ?>> map2 = new HashMap<String, HashMap<?, ?>>();
+		map1.put("map2", (HashMap<?, ?>) map2);
+
+		final Map<String, HashMap<?, ?>> map3 = new HashMap<String, HashMap<?, ?>>();
+		map2.put("map3", (HashMap<?, ?>) map3);
+
+		final ORecordId rid = (ORecordId) newDoc.save().getIdentity();
+
+		final ODocument loadedDoc = database.load(rid);
+
+//		Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
+
+		Assert.assertTrue(loadedDoc.containsField("map1"));
+		Assert.assertTrue(loadedDoc.field("map1") instanceof Map<?, ?>);
+		final Map<String, ODocument> loadedMap1 = loadedDoc.field("map1");
+		Assert.assertEquals(loadedMap1.size(), 1);
+
+		Assert.assertTrue(loadedMap1.containsKey("map2"));
+		Assert.assertTrue(loadedMap1.get("map2") instanceof Map<?, ?>);
+		final Map<String, ODocument> loadedMap2 = (Map<String, ODocument>) loadedMap1.get("map2");
+		Assert.assertEquals(loadedMap2.size(), 1);
+
+		Assert.assertTrue(loadedMap2.containsKey("map3"));
+		Assert.assertTrue(loadedMap2.get("map3") instanceof Map<?, ?>);
+		final Map<String, ODocument> loadedMap3 = (Map<String, ODocument>) loadedMap2.get("map3");
+		Assert.assertEquals(loadedMap3.size(), 0);
+	}
+
 }

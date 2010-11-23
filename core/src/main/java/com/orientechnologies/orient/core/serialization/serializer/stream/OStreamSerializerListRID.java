@@ -42,11 +42,7 @@ public class OStreamSerializerListRID implements OStreamSerializer {
 		if (iObject == null)
 			return null;
 
-		final StringBuilder buffer = new StringBuilder();
-
-		FORMAT.embeddedCollectionToStream(null, null, null, OType.LINK, iObject, null, buffer);
-
-		return OBinaryProtocol.string2bytes(buffer.toString());
+		return OBinaryProtocol.string2bytes(FORMAT.embeddedCollectionToStream(null, null, null, OType.LINK, iObject, null));
 	}
 
 	public String getName() {

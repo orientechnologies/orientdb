@@ -30,7 +30,9 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 
 public abstract class OStringSerializerHelper {
@@ -51,7 +53,7 @@ public abstract class OStringSerializerHelper {
 	public static final List<String>				EMPTY_LIST						= Collections.unmodifiableList(new ArrayList<String>());
 	public static final Map<String, String>	EMPTY_MAP							= Collections.unmodifiableMap(new HashMap<String, String>());
 
-	public static Object fieldTypeFromStream(final ODatabaseRecord<?> iDatabase, OType iType, final Object iValue) {
+	public static Object fieldTypeFromStream(final ODocument iDocument, OType iType, final Object iValue) {
 		if (iValue == null)
 			return null;
 
@@ -126,7 +128,12 @@ public abstract class OStringSerializerHelper {
 
 		case EMBEDDED:
 			// RECORD
-			return OStringSerializerAnyStreamable.INSTANCE.fromStream(iDatabase, (String) iValue);
+			return OStringSerializerAnyStreamable.INSTANCE.fromStream(iDocument.getDatabase(), (String) iValue);
+
+		case EMBEDDEDMAP:
+			// RECORD
+			final String value = (String) iValue;
+			return ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedMapFromStream(iDocument, null, value);
 		}
 
 		throw new IllegalArgumentException("Type " + iType + " not supported to convert value: " + iValue);
@@ -168,6 +175,9 @@ public abstract class OStringSerializerHelper {
 				return iValue.toString();
 			else
 				return ((ORecord<?>) iValue).getIdentity().toString();
+
+		case EMBEDDEDMAP:
+			return ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedMapToStream(iDatabase, null, null, null, iValue, null);
 
 		case EMBEDDED:
 			// RECORD
@@ -400,7 +410,7 @@ public abstract class OStringSerializerHelper {
 			if (item != null && item.length() > 0) {
 				entry = OStringSerializerHelper.split(item, OStringSerializerHelper.ENTRY_SEPARATOR);
 
-				map.put((String) fieldTypeFromStream(iDatabase, OType.STRING, entry.get(0)), entry.get(1));
+				map.put((String) fieldTypeFromStream(null, OType.STRING, entry.get(0)), entry.get(1));
 			}
 		}
 

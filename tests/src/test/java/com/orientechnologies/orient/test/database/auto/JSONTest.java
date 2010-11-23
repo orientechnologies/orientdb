@@ -154,4 +154,38 @@ public class JSONTest {
 		Assert.assertEquals(((Integer) docMerge3.field("salary")).intValue(), 10000);
 		Assert.assertEquals(((Integer) docMerge3.field("years")).intValue(), 16);
 	}
+
+	@Test
+	public void testNestedEmbeddedMap() {
+		ODocument newDoc = new ODocument();
+
+		final Map<String, HashMap<?, ?>> map1 = new HashMap<String, HashMap<?, ?>>();
+		newDoc.field("map1", map1, OType.EMBEDDEDMAP);
+
+		final Map<String, HashMap<?, ?>> map2 = new HashMap<String, HashMap<?, ?>>();
+		map1.put("map2", (HashMap<?, ?>) map2);
+
+		final Map<String, HashMap<?, ?>> map3 = new HashMap<String, HashMap<?, ?>>();
+		map2.put("map3", (HashMap<?, ?>) map3);
+
+		String json = newDoc.toJSON();
+		ODocument loadedDoc = new ODocument().fromJSON(json);
+
+		Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
+
+		Assert.assertTrue(loadedDoc.containsField("map1"));
+		Assert.assertTrue(loadedDoc.field("map1") instanceof Map<?, ?>);
+		final Map<String, ODocument> loadedMap1 = loadedDoc.field("map1");
+		Assert.assertEquals(loadedMap1.size(), 1);
+
+		Assert.assertTrue(loadedMap1.containsKey("map2"));
+		Assert.assertTrue(loadedMap1.get("map2") instanceof Map<?, ?>);
+		final Map<String, ODocument> loadedMap2 = (Map<String, ODocument>) loadedMap1.get("map2");
+		Assert.assertEquals(loadedMap2.size(), 1);
+
+		Assert.assertTrue(loadedMap2.containsKey("map3"));
+		Assert.assertTrue(loadedMap2.get("map3") instanceof Map<?, ?>);
+		final Map<String, ODocument> loadedMap3 = (Map<String, ODocument>) loadedMap2.get("map3");
+		Assert.assertEquals(loadedMap3.size(), 0);
+	}
 }
