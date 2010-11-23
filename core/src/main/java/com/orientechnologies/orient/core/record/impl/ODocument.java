@@ -636,16 +636,31 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 * @return
 	 */
 	public ODocument merge(final ODocument iOther, boolean iConflictsOtherWins, boolean iMergeSingleItemsOfMultiValueFields) {
+		return merge(iOther._fieldValues, iConflictsOtherWins, iMergeSingleItemsOfMultiValueFields);
+	}
+
+	/**
+	 * Merge current document with the document passed as parameter. If the field already exists then the conflicts are managed based
+	 * on the value of the parameter 'iConflictsOtherWins'.
+	 * 
+	 * @param iOther
+	 *          Other ODocument instance to merge
+	 * @param iConflictsOtherWins
+	 *          if true, the other document wins in case of conflicts, otherwise the current document wins
+	 * @param iMergeSingleItemsOfMultiValueFields
+	 * @return
+	 */
+	public ODocument merge(final Map<String, Object> iOther, boolean iConflictsOtherWins, boolean iMergeSingleItemsOfMultiValueFields) {
 		checkForLoading();
 		checkForFields();
 
-		for (String f : iOther.fieldNames()) {
+		for (String f : iOther.keySet()) {
 			if (!containsField(f) || iConflictsOtherWins) {
 				if (iMergeSingleItemsOfMultiValueFields) {
 					Object field = field(f);
 					if (field instanceof Map<?, ?>) {
 						final Map<String, Object> map = (Map<String, Object>) field;
-						final Map<String, Object> otherMap = iOther.field(f);
+						final Map<String, Object> otherMap = (Map<String, Object>) iOther.get(f);
 
 						for (Entry<String, Object> entry : otherMap.entrySet()) {
 							map.put(entry.getKey(), entry.getValue());
@@ -653,7 +668,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 						continue;
 					} else if (field instanceof Collection<?>) {
 						final Collection<Object> coll = (Collection<Object>) field;
-						final Collection<Object> otherColl = iOther.field(f);
+						final Collection<Object> otherColl = (Collection<Object>) iOther.get(f);
 
 						for (Object item : otherColl) {
 							if (!coll.contains(item))
@@ -664,7 +679,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 
 				}
 
-				field(f, iOther.field(f));
+				field(f, iOther.get(f));
 			}
 		}
 
