@@ -105,4 +105,53 @@ public class JSONTest {
 		d = ((Map<String, ODocument>) loadedDoc.field("map")).get("Cesare");
 		Assert.assertEquals(d.field("name"), "Cesare");
 	}
+
+	@Test
+	public void testMerge() {
+		ODocument doc1 = new ODocument();
+		final ArrayList<String> list = new ArrayList<String>();
+		doc1.field("embeddedList", list, OType.EMBEDDEDLIST);
+		list.add("Luca");
+		list.add("Marcus");
+		list.add("Jay");
+		doc1.field("salary", 10000);
+		doc1.field("years", 16);
+
+		ODocument doc2 = new ODocument();
+		final ArrayList<String> list2 = new ArrayList<String>();
+		doc2.field("embeddedList", list2, OType.EMBEDDEDLIST);
+		list2.add("Luca");
+		list2.add("Michael");
+		doc2.field("years", 32);
+
+		ODocument docMerge1 = doc1.copy();
+		docMerge1.merge(doc2, true, true);
+
+		Assert.assertTrue(docMerge1.containsField("embeddedList"));
+		Assert.assertTrue(docMerge1.field("embeddedList") instanceof List<?>);
+		Assert.assertEquals(((List<String>) docMerge1.field("embeddedList")).size(), 4);
+		Assert.assertTrue(((List<String>) docMerge1.field("embeddedList")).get(0) instanceof String);
+		Assert.assertEquals(((Integer) docMerge1.field("salary")).intValue(), 10000);
+		Assert.assertEquals(((Integer) docMerge1.field("years")).intValue(), 32);
+
+		ODocument docMerge2 = doc1.copy();
+		docMerge2.merge(doc2, true, false);
+
+		Assert.assertTrue(docMerge2.containsField("embeddedList"));
+		Assert.assertTrue(docMerge2.field("embeddedList") instanceof List<?>);
+		Assert.assertEquals(((List<String>) docMerge2.field("embeddedList")).size(), 2);
+		Assert.assertTrue(((List<String>) docMerge2.field("embeddedList")).get(0) instanceof String);
+		Assert.assertEquals(((Integer) docMerge2.field("salary")).intValue(), 10000);
+		Assert.assertEquals(((Integer) docMerge2.field("years")).intValue(), 32);
+
+		ODocument docMerge3 = doc1.copy();
+		docMerge3.merge(doc2, false, false);
+
+		Assert.assertTrue(docMerge3.containsField("embeddedList"));
+		Assert.assertTrue(docMerge3.field("embeddedList") instanceof List<?>);
+		Assert.assertEquals(((List<String>) docMerge3.field("embeddedList")).size(), 3);
+		Assert.assertTrue(((List<String>) docMerge3.field("embeddedList")).get(0) instanceof String);
+		Assert.assertEquals(((Integer) docMerge3.field("salary")).intValue(), 10000);
+		Assert.assertEquals(((Integer) docMerge3.field("years")).intValue(), 16);
+	}
 }

@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.db.record;
 
 import java.util.Iterator;
 
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -107,8 +108,13 @@ public class ORecordLazyList extends ORecordTrackedList {
 		if (converted)
 			return;
 
-		for (int i = 0; i < size(); ++i)
-			convert(i);
+		for (int i = 0; i < size(); ++i) {
+			try {
+				convert(i);
+			} catch (ORecordNotFoundException e) {
+				// LEAVE THE RID DIRTY
+			}
+		}
 
 		converted = true;
 	}
@@ -128,8 +134,8 @@ public class ORecordLazyList extends ORecordTrackedList {
 
 			record.setDatabase(database);
 			record.setIdentity(rid);
-			record.load();
 
+			record.load();
 			super.set(iIndex, record);
 		}
 	}

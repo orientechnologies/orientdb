@@ -268,6 +268,27 @@ public enum OType {
 		return (iType.isArray() || Collection.class.isAssignableFrom(iType) || Map.class.isAssignableFrom(iType));
 	}
 
+	public static boolean isMultiValue(final Object iObject) {
+		if (iObject == null)
+			return false;
+		return isMultiValue(iObject.getClass());
+	}
+
+	@SuppressWarnings("unchecked")
+	public static Iterable<Object> getMultiValueIterable(final Object iObject) {
+		if (iObject == null)
+			return null;
+
+		if (!isMultiValue(iObject.getClass()))
+			return null;
+
+		if (iObject instanceof Collection<?>)
+			return ((Collection<Object>) iObject);
+		if (iObject instanceof Map<?, ?>)
+			return ((Map<?, Object>) iObject).values();
+		return null;
+	}
+
 	/**
 	 * Convert types between numbers based on the iTargetClass parameter.
 	 * 

@@ -183,8 +183,21 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		cloned._status = _status;
 		cloned._recordFormat = _recordFormat;
 
-		if (_fieldValues != null)
-			cloned._fieldValues = new LinkedHashMap<String, Object>(_fieldValues);
+		if (_fieldValues != null) {
+			cloned._fieldValues = new LinkedHashMap<String, Object>();
+			for (Entry<String, Object> entry : _fieldValues.entrySet()) {
+				if (entry.getValue() != null)
+					if (entry.getValue() instanceof List<?>) {
+						cloned._fieldValues.put(entry.getKey(), new ArrayList<Object>((List<Object>) entry.getValue()));
+					} else if (entry.getValue() instanceof Map<?, ?>) {
+						cloned._fieldValues.put(entry.getKey(), new LinkedHashMap<String, Object>((Map<String, Object>) entry.getValue()));
+					} else
+						cloned._fieldValues.put(entry.getKey(), entry.getValue());
+			}
+		}
+
+		if (_fieldTypes != null)
+			cloned._fieldTypes = new LinkedHashMap<String, OType>(_fieldTypes);
 
 		return cloned;
 	}
@@ -609,6 +622,53 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 
 		setDirty();
 		return oldValue;
+	}
+
+	/**
+	 * Merge current document with the document passed as parameter. If the field already exists then the conflicts are managed based
+	 * on the value of the parameter 'iConflictsOtherWins'.
+	 * 
+	 * @param iOther
+	 *          Other ODocument instance to merge
+	 * @param iConflictsOtherWins
+	 *          if true, the other document wins in case of conflicts, otherwise the current document wins
+	 * @param iMergeSingleItemsOfMultiValueFields
+	 * @return
+	 */
+	public ODocument merge(final ODocument iOther, boolean iConflictsOtherWins, boolean iMergeSingleItemsOfMultiValueFields) {
+		checkForLoading();
+		checkForFields();
+
+		for (String f : iOther.fieldNames()) {
+			if (!containsField(f) || iConflictsOtherWins) {
+				if (iMergeSingleItemsOfMultiValueFields) {
+					Object field = field(f);
+					if (field instanceof Map<?, ?>) {
+						final Map<String, Object> map = (Map<String, Object>) field;
+						final Map<String, Object> otherMap = iOther.field(f);
+
+						for (Entry<String, Object> entry : otherMap.entrySet()) {
+							map.put(entry.getKey(), entry.getValue());
+						}
+						continue;
+					} else if (field instanceof Collection<?>) {
+						final Collection<Object> coll = (Collection<Object>) field;
+						final Collection<Object> otherColl = iOther.field(f);
+
+						for (Object item : otherColl) {
+							if (!coll.contains(item))
+								coll.add(item);
+						}
+						continue;
+					}
+
+				}
+
+				field(f, iOther.field(f));
+			}
+		}
+
+		return this;
 	}
 
 	/**
