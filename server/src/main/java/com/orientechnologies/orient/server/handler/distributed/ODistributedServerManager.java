@@ -21,15 +21,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.crypto.SecretKey;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -41,6 +39,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
+import com.orientechnologies.orient.server.handler.distributed.ODistributedServerNode.STATUS;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.distributed.ONetworkProtocolDistributed;
 
@@ -61,7 +60,7 @@ import com.orientechnologies.orient.server.network.protocol.distributed.ONetwork
  * @see ODistributedServerDiscoveryListener, ODistributedServerDiscoverySignaler
  * 
  */
-public class ODistributedServerManager extends OServerHandlerAbstract  {
+public class ODistributedServerManager extends OServerHandlerAbstract {
 	protected OServer																			server;
 
 	protected String																			name;
@@ -93,7 +92,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract  {
 	private OServerNetworkListener												distributedNetworkListener;
 	private ONetworkProtocolDistributed										leaderConnection;
 	public long																						lastHeartBeat;
-	private ODocument																			clusterConfiguration;
+	private ODocument																			serverDistributionConfiguration;
 
 	public void startup() {
 		trigger = new ODistributedServerRecordHook(this);
@@ -143,6 +142,8 @@ public class ODistributedServerManager extends OServerHandlerAbstract  {
 			if (nodes.containsKey(key)) {
 				// ALREADY REGISTERED, MAYBE IT WAS DISCONNECTED. INVOKE THE RECONNECTION
 				node = nodes.get(key);
+				if (node.getStatus() != STATUS.DISCONNECTED)
+					return;
 			} else {
 				node = new ODistributedServerNode(this, iServerAddress, iServerPort);
 				nodes.put(key, node);
@@ -203,8 +204,8 @@ public class ODistributedServerManager extends OServerHandlerAbstract  {
 				// STOP THE CHECK OF HEART-BEAT
 				leaderCheckerTask.cancel();
 
-			if (clusterConfiguration == null)
-				clusterConfiguration = createDatabaseConfiguration();
+			if (serverDistributionConfiguration == null)
+				serverDistributionConfiguration = createInitialDatabaseConfiguration();
 
 			// NO NODE HAS JOINED: BECAME THE LEADER AND LISTEN FOR OTHER NODES
 			discoveryListener = new ODistributedServerDiscoveryListener(this, distributedNetworkListener);
@@ -358,22 +359,39 @@ public class ODistributedServerManager extends OServerHandlerAbstract  {
 	 * Distributed the request to all the configured nodes. Each node has the responsibility to bring the message early (synch-mode)
 	 * or using an asynchronous queue.
 	 */
+	@SuppressWarnings("unchecked")
 	public void distributeRequest(final OTransactionEntry<ORecordInternal<?>> iTransactionEntry) {
-		lock.acquireSharedLock();
+		final List<ODistributedServerNode> nodeList;
 
+		lock.acquireSharedLock();
 		try {
-			if (nodes != null) {
-				for (ODistributedServerNode node : nodes.values()) {
-					node.sendRequest(iTransactionEntry);
-				}
+			if (nodes == null)
+				return;
+
+			// GET THE NODES INVOLVED IN THE UPDATE
+			final ODocument clusters = serverDistributionConfiguration.field("clusters");
+			final ODocument servers = (ODocument) (clusters.containsField(iTransactionEntry.clusterName) ? clusters
+					.field(iTransactionEntry.clusterName) : clusters.field("*"));
+
+			nodeList = new ArrayList<ODistributedServerNode>();
+			for (String s : (List<String>) servers.field("synch")) {
+				nodeList.add(nodes.get(s));
+			}
+			for (String s : (List<String>) servers.field("asynch")) {
+				nodeList.add(nodes.get(s));
 			}
 
-		} catch (IOException e) {
-			e.printStackTrace();
 		} finally {
 			lock.releaseSharedLock();
 		}
 
+		try {
+			for (ODistributedServerNode node : nodeList) {
+				node.sendRequest(iTransactionEntry);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public int getNetworkHeartbeatDelay() {
@@ -389,7 +407,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract  {
 	}
 
 	public ODocument getClusterConfiguration() {
-		return clusterConfiguration;
+		return serverDistributionConfiguration;
 	}
 
 	public String getId() {
@@ -400,12 +418,56 @@ public class ODistributedServerManager extends OServerHandlerAbstract  {
 		return iServerAddress + ":" + iServerPort;
 	}
 
-	private ODocument createDatabaseConfiguration() {
-		clusterConfiguration = new ODocument();
+	private ODocument createInitialDatabaseConfiguration() {
+		serverDistributionConfiguration = new ODocument();
 
-		clusterConfiguration.field("servers", new ODocument(getId(), new ODocument("update-delay", getServerUpdateDelay())));
-		clusterConfiguration.field("clusters", new ODocument("*", new ODocument("owner", getId())));
+		addServer(getId(), getId(), "{\"*\":{\"owner\":\"" + getId() + "\"}}");
 
-		return clusterConfiguration;
+		return serverDistributionConfiguration;
+	}
+
+	@SuppressWarnings("unchecked")
+	public void addServer(final String iAlias, final String iAddress, final String iServerClusterConfiguration) {
+		// ADD IT IN THE SERVER LIST
+		ODocument servers = serverDistributionConfiguration.field("servers");
+		if (servers == null) {
+			servers = new ODocument();
+			serverDistributionConfiguration.field("servers", servers);
+		}
+		servers.field(iAlias, iAddress);
+
+		ODocument clusters = serverDistributionConfiguration.field("clusters");
+		if (clusters == null) {
+			clusters = new ODocument();
+			serverDistributionConfiguration.field("clusters", clusters);
+		}
+
+		ODocument allClusters = clusters.field("*");
+		if (allClusters == null) {
+			allClusters = new ODocument();
+			clusters.field("*", allClusters);
+		}
+
+		// MERGE CONFIG
+		ODocument cfgDoc = new ODocument().fromJSON(iServerClusterConfiguration);
+
+		Object fieldValue;
+		for (String fieldName : cfgDoc.fieldNames()) {
+			fieldValue = cfgDoc.field(fieldName);
+
+			ODocument clusterConfig = clusters.field(fieldName);
+			if (clusterConfig == null)
+				// GET THE CONFIG OF THE NEW SERVER
+				clusterConfig = (ODocument) fieldValue;
+			else {
+				// MERGE CLUSTER CONFIG
+				if (fieldValue instanceof ODocument)
+					clusterConfig.merge((ODocument) cfgDoc.field(fieldName), true, true);
+				else
+					clusterConfig.merge((Map<String, Object>) cfgDoc.field(fieldName), true, true);
+			}
+		}
+
+		OLogManager.instance().info(this, "Updated server node configuration: %s", serverDistributionConfiguration.toJSON(""));
 	}
 }
