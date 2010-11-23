@@ -111,7 +111,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 						((ODocument) iRecord).setClassNameIfExists("null".equals(fieldValueAsString) ? null : fieldValueAsString);
 
 					// RECORD VALUE(S)
-					else if (fieldName.equals("value")) {
+					else if (fieldName.equals("value") && !(iRecord instanceof ODocument)) {
 						if (iRecord instanceof ORecordColumn) {
 							fieldValueAsString = fieldValueAsString.trim();
 
