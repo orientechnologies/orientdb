@@ -15,6 +15,13 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.util.Date;
+import java.util.regex.Pattern;
+
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
 import com.orientechnologies.orient.core.record.ORecord.STATUS;
@@ -49,7 +56,7 @@ public class OSQLFilterCondition {
 		Object l = evaluate(iRecord, left);
 		Object r = evaluate(iRecord, right);
 
-		Object[] convertedValues = checkForConversion(l, r);
+		Object[] convertedValues = checkForConversion(iRecord, l, r);
 		if (convertedValues != null) {
 			l = convertedValues[0];
 			r = convertedValues[1];
@@ -62,7 +69,7 @@ public class OSQLFilterCondition {
 		return operator.evaluateRecord(iRecord, this, l, r);
 	}
 
-	private Object[] checkForConversion(final Object l, final Object r) {
+	private Object[] checkForConversion(final ORecordSchemaAware<?> iRecord, final Object l, final Object r) {
 		Object[] result = null;
 
 		// INTEGERS
@@ -84,6 +91,13 @@ public class OSQLFilterCondition {
 		else if (l instanceof Float && !(r instanceof Float))
 			result = new Object[] { l, getFloat(r) };
 
+		// DATES
+		else if (r instanceof Date && !(l instanceof Date)) {
+			result = new Object[] { getDate(iRecord, l), r };
+		} else if (l instanceof Date && !(r instanceof Date)) {
+			result = new Object[] { l, getDate(iRecord, r) };
+		}
+
 		return result;
 	}
 
@@ -91,7 +105,7 @@ public class OSQLFilterCondition {
 		if (iValue == null)
 			return null;
 
-		String stringValue = iValue.toString();
+		final String stringValue = iValue.toString();
 
 		if (NULL_VALUE.equals(stringValue))
 			return null;
@@ -106,12 +120,44 @@ public class OSQLFilterCondition {
 		if (iValue == null)
 			return null;
 
-		String stringValue = iValue.toString();
+		final String stringValue = iValue.toString();
 
 		if (NULL_VALUE.equals(stringValue))
 			return null;
 
 		return stringValue.length() > 0 ? new Float(stringValue) : new Float(0);
+	}
+
+	protected Date getDate(final ORecordSchemaAware<?> iRecord, final Object iValue) {
+		if (iValue == null)
+			return null;
+		String stringValue = iValue.toString();
+
+		if (NULL_VALUE.equals(stringValue))
+			return null;
+
+		if (stringValue.length() <= 0)
+			return null;
+
+		if (Pattern.matches("^\\d+$", stringValue)) {
+			return new Date(Long.valueOf(stringValue).longValue());
+		}
+
+		final OStorageConfiguration config = iRecord.getDatabase().getStorage().getConfiguration();
+
+		DateFormat formatter = config.getDateFormatInstance();
+
+		if (stringValue.length() > config.dateFormat.length()) {
+			// ASSUMES YOU'RE USING THE DATE-TIME FORMATTE
+			formatter = config.getDateTimeFormatInstance();
+		}
+
+		try {
+			return formatter.parse(stringValue);
+		} catch (ParseException pe) {
+			throw new OQueryParsingException("Error on conversion of date '" + stringValue + "' using the format: "
+					+ formatter.toString());
+		}
 	}
 
 	protected Object evaluate(final ORecordSchemaAware<?> iRecord, final Object iValue) {
