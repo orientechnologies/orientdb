@@ -53,7 +53,7 @@ public enum OType {
 	},
 	BINARY("Binary", 8, false, false, 8, new Class<?>[] { Array.class }, new Class<?>[] { Array.class }) {
 	},
-	EMBEDDED("Embedded", 9, true, false, 8, new Class<?>[] { Object.class }, new Class<?>[] {}) {
+	EMBEDDED("Embedded", 9, true, false, 8, new Class<?>[] { Object.class }, new Class<?>[] { Object.class }) {
 	},
 	EMBEDDEDLIST("List", 10, true, false, 8, new Class<?>[] { List.class }, new Class<?>[] { Collection.class, Array.class }) {
 	},
