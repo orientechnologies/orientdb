@@ -19,7 +19,6 @@ import java.io.IOException;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -77,31 +76,23 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_SENDER: {
 			data.commandInfo = "Share the database to a remote server";
 
-			ODatabaseDocumentTx db = null;
+			final String dbName = channel.readString();
+			final String dbUser = channel.readString();
+			final String dbPassword = channel.readString();
+			final String remoteServerName = channel.readString();
+			final boolean synchronousMode = channel.readByte() == 1;
 
-			try {
-				final String dbName = channel.readString();
-				final String dbUser = channel.readString();
-				final String dbPassword = channel.readString();
-				final String remoteServerName = channel.readString();
-				final boolean synchronousMode = channel.readByte() == 1;
+			checkServerAccess("database.share");
 
-				checkServerAccess("database.share");
+			connection.database = openDatabase(dbName, dbUser, dbPassword);
 
-				db = openDatabase(dbName, dbUser, dbPassword);
+			final String engineName = connection.database.getStorage() instanceof OStorageLocal ? "local" : "memory";
 
-				final String engineName = db.getStorage() instanceof OStorageLocal ? "local" : "memory";
+			final ODistributedServerNode remoteServerNode = manager.getNode(remoteServerName);
 
-				final ODistributedServerNode remoteServerNode = manager.getNode(remoteServerName);
+			remoteServerNode.shareDatabase(connection.database, remoteServerName, engineName, synchronousMode);
 
-				remoteServerNode.shareDatabase(db, remoteServerName, engineName, synchronousMode);
-
-				sendOk(0);
-
-			} finally {
-				if (db != null)
-					db.close();
-			}
+			sendOk(0);
 			break;
 		}
 
@@ -113,30 +104,25 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 			OLogManager.instance().info(this, "Received database '%s' to share on local server node", dbName);
 
-			final ODatabaseDocumentTx db = getDatabaseInstance(dbName, engineName);
+			connection.database = getDatabaseInstance(dbName, engineName);
 
-			try {
-				if (db.exists()) {
-					OLogManager.instance().info(this, "Deleting existent database '%s'", db.getName());
-					db.delete();
-				}
-
-				createDatabase(db);
-
-				if (db.isClosed())
-					db.open(OUser.ADMIN, OUser.ADMIN);
-
-				OLogManager.instance().info(this, "Importing database '%s' via streaming from remote server node...", dbName);
-
-				new ODatabaseImport(db, new OChannelBinaryInputStream(channel), this).importDatabase();
-
-				OLogManager.instance().info(this, "Database imported correctly", dbName);
-
-				sendOk(0);
-
-			} finally {
-				db.close();
+			if (connection.database.exists()) {
+				OLogManager.instance().info(this, "Deleting existent database '%s'", connection.database.getName());
+				connection.database.delete();
 			}
+
+			createDatabase(connection.database);
+
+			if (connection.database.isClosed())
+				connection.database.open(OUser.ADMIN, OUser.ADMIN);
+
+			OLogManager.instance().info(this, "Importing database '%s' via streaming from remote server node...", dbName);
+
+			new ODatabaseImport(connection.database, new OChannelBinaryInputStream(channel), this).importDatabase();
+
+			OLogManager.instance().info(this, "Database imported correctly", dbName);
+
+			sendOk(0);
 			break;
 		}
 

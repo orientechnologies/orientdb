@@ -46,11 +46,6 @@ public class ODistributedServerRecordHook implements ORecordHook, ODatabaseLifec
 		if (!manager.isDistributedConfiguration())
 			return;
 
-		OLogManager.instance().info(
-				this,
-				"Caught change " + iType + " in database '" + iRecord.getDatabase().getName() + "', record: " + iRecord.getIdentity()
-						+ ". Distribute the change in all the cluster nodes");
-
 		switch (iType) {
 		case AFTER_CREATE:
 			manager.distributeRequest(new OTransactionEntry<ORecordInternal<?>>((ORecordInternal<?>) iRecord, OTransactionEntry.CREATED,
@@ -71,6 +66,11 @@ public class ODistributedServerRecordHook implements ORecordHook, ODatabaseLifec
 			// NOT DISTRIBUTED REQUEST, JUST RETURN
 			return;
 		}
+
+		OLogManager.instance().info(
+				this,
+				"Caught change " + iType + " in database '" + iRecord.getDatabase().getName() + "', record: " + iRecord.getIdentity()
+						+ " and distributed to all the configured cluster nodes");
 	}
 
 	/**

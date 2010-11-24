@@ -117,7 +117,7 @@ public class OServerAdmin {
 	}
 
 	public OServerAdmin shareDatabase(final String iDatabaseName, final String iDatabaseUserName, final String iDatabaseUserPassword,
-			final String iRemoteName, final String iMode) throws IOException {
+			final String iRemoteName, final boolean iSynchronousMode) throws IOException {
 
 		try {
 			storage.writeCommand(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_SENDER);
@@ -125,13 +125,13 @@ public class OServerAdmin {
 			storage.getNetwork().writeString(iDatabaseUserName);
 			storage.getNetwork().writeString(iDatabaseUserPassword);
 			storage.getNetwork().writeString(iRemoteName);
-			storage.getNetwork().writeString(iMode);
+			storage.getNetwork().writeByte((byte) (iSynchronousMode ? 1 : 0));
 			storage.getNetwork().flush();
 
 			storage.getNetwork().readStatus();
 
-			OLogManager.instance().debug(this, "Database '%s' has been shared in mode '%s' with the server '%s'", iDatabaseName, iMode,
-					iRemoteName);
+			OLogManager.instance().debug(this, "Database '%s' has been shared in mode '%s' with the server '%s'", iDatabaseName,
+					iSynchronousMode, iRemoteName);
 
 		} catch (Exception e) {
 			OLogManager.instance().exception("Can't share the database: " + iDatabaseName, e, OStorageException.class);

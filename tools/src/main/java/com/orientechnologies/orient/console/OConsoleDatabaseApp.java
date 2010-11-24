@@ -643,7 +643,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			if (serverAdmin == null)
 				throw new IllegalStateException("You must be connected to a remote server to share a database");
 
-			serverAdmin.shareDatabase(iDatabaseName, iDatabaseUserName, iDatabaseUserPassword, iRemoteName, iMode);
+			serverAdmin.shareDatabase(iDatabaseName, iDatabaseUserName, iDatabaseUserPassword, iRemoteName,
+					iMode.equalsIgnoreCase("synch"));
 
 			out.println("Database '" + iDatabaseName + "' has been shared in '" + iMode + "' mode with '" + iMode + "' the server "
 					+ iRemoteName);

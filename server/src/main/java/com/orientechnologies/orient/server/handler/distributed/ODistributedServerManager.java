@@ -109,7 +109,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	}
 
 	public void receivedLeaderConnection(final ONetworkProtocolDistributed iNetworkProtocolDistributed) {
-		OLogManager.instance().info(this, "Connected from the distributed node Leader");
+		OLogManager.instance().info(this, "Received connected from the cluster node Leader");
 
 		// STOP TO SEND PACKETS TO BEING DISCOVERED
 		if (discoverySignaler != null) {
@@ -376,12 +376,14 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 					.field(iTransactionEntry.clusterName) : clusters.field("*"));
 
 			nodeList = new ArrayList<ODistributedServerNode>();
-			for (String s : (List<String>) servers.field("synch")) {
-				nodeList.add(nodes.get(s));
-			}
-			for (String s : (List<String>) servers.field("asynch")) {
-				nodeList.add(nodes.get(s));
-			}
+			if (servers.field("synch") != null)
+				for (String s : ((Map<String, Object>) servers.field("synch")).keySet()) {
+					nodeList.add(nodes.get(s));
+				}
+			if (servers.field("asynch") != null)
+				for (String s : ((Map<String, Object>) servers.field("asynch")).keySet()) {
+					nodeList.add(nodes.get(s));
+				}
 
 		} finally {
 			lock.releaseSharedLock();
