@@ -202,7 +202,9 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 					} else {
 						if (buffer1.recordType == ODocument.RECORD_TYPE) {
 							// DOCUMENT: TRY TO INSTANTIATE AND COMPARE
+							doc1.reset();
 							doc1.fromStream(buffer1.buffer);
+							doc2.reset();
 							doc2.fromStream(buffer2.buffer);
 
 							if (!doc1.hasSameContentOf(doc2)) {

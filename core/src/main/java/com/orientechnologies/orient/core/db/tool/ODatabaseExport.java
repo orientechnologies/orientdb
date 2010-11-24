@@ -22,6 +22,7 @@ import java.io.OutputStreamWriter;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
@@ -300,8 +301,9 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 		} catch (Throwable t) {
 			byte[] buffer = rec.toStream();
 
-			throw new ODatabaseExportException("Error on exporting record #" + rec.getIdentity() + ". It seems corrupted; size: "
-					+ buffer.length + " bytes, raw content (as string): " + new String(buffer), t);
+			OLogManager.instance().error(this,
+					"Error on exporting record #%s. It seems corrupted; size: %d bytes, raw content (as string): %s", t, rec.getIdentity(),
+					buffer.length, new String(buffer));
 		}
 
 		recordExported++;

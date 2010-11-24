@@ -141,7 +141,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		listener.onMessage("OK");
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings("unused")
 	private long importDictionary() throws IOException, ParseException {
 		listener.onMessage("\nImporting database dictionary...");
 
