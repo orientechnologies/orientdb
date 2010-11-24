@@ -25,11 +25,11 @@ import java.io.OutputStream;
  * 
  */
 public class OChannelBinaryOutputStream extends OutputStream {
-	private OChannelBinary	channel;
-	private final byte[]		buffer;
-	private int							pos	= 0;
+	private OChannelBinaryAsynch	channel;
+	private final byte[]								buffer;
+	private int													pos	= 0;
 
-	public OChannelBinaryOutputStream(final OChannelBinary channel) {
+	public OChannelBinaryOutputStream(final OChannelBinaryAsynch channel) {
 		this.channel = channel;
 		buffer = channel.getBuffer();
 	}
@@ -54,12 +54,18 @@ public class OChannelBinaryOutputStream extends OutputStream {
 	}
 
 	private void flush(final boolean iContinue) throws IOException {
-		channel.out.writeInt(pos);
-		if (pos > 0) {
-			channel.out.write(buffer, 0, pos);
-			pos = 0;
+		channel.getLockWrite().lock();
+		try {
+			channel.out.writeInt(pos);
+			if (pos > 0) {
+				channel.out.write(buffer, 0, pos);
+				pos = 0;
+			}
+			channel.out.writeByte(iContinue ? 1 : 0);
+			channel.out.flush();
+
+		} finally {
+			channel.getLockWrite().unlock();
 		}
-		channel.out.writeByte(iContinue ? 1 : 0);
-		channel.out.flush();
 	}
 }

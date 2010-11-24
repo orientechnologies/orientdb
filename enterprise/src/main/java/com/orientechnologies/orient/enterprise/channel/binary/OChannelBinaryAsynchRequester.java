@@ -13,21 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.storage.impl.local;
+package com.orientechnologies.orient.enterprise.channel.binary;
 
-import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveLinked;
+import java.util.concurrent.SynchronousQueue;
 
-public abstract class OSegment extends OSharedResourceAdaptiveLinked {
-	protected OStorageLocal	storage;
-	protected String				name;
+public interface OChannelBinaryAsynchRequester {
+	public int getRequesterId();
 
-	public OSegment(final OStorageLocal iStorage, String iName) {
-		super(iStorage.getLock());
-		storage = iStorage;
-		name = iName;
-	}
-
-	public String getName() {
-		return name;
-	}
+	public SynchronousQueue<Object> getRequesterResponseQueue();
 }

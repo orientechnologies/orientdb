@@ -26,6 +26,7 @@ import java.util.Set;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
@@ -60,13 +61,11 @@ import com.orientechnologies.orient.core.storage.impl.local.ODictionaryLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
 import com.orientechnologies.orient.enterprise.exception.ONetworkProtocolException;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
-import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.handler.OServerHandlerHelper;
@@ -76,7 +75,7 @@ import com.orientechnologies.orient.server.tx.OTransactionRecordProxy;
 
 public class ONetworkProtocolBinary extends ONetworkProtocol {
 	protected OClientConnection				connection;
-	protected OChannelBinary					channel;
+	protected OChannelBinaryServer		channel;
 	protected OUser										account;
 
 	protected String									user;
@@ -87,11 +86,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	private OServerUserConfiguration	serverUser;
 
 	public ONetworkProtocolBinary() {
-		super(OServer.getThreadGroup(), "Binary-DB");
+		super(Orient.getThreadGroup(), "IO-Binary");
 	}
 
 	public ONetworkProtocolBinary(final String iThreadName) {
-		super(OServer.getThreadGroup(), iThreadName);
+		super(Orient.getThreadGroup(), iThreadName);
 	}
 
 	@Override
@@ -99,6 +98,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			throws IOException {
 		channel = new OChannelBinaryServer(iSocket, iConfig);
 		connection = iConnection;
+
+		// SEND PROTOCOL VERSION
+		channel.writeShort((short) OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
+		channel.flush();
 
 		start();
 	}
@@ -250,6 +253,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			if (connection.database != null)
 				connection.database.close();
+			sendShutdown();
+
 			break;
 
 		case OChannelBinaryProtocol.REQUEST_DB_EXIST: {
@@ -324,7 +329,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			boolean result = connection.database.getStorage().removeCluster(id);
 
 			sendOk(clientTxId);
-			channel.writeByte((byte) (result ? '1' : '0'));
+			channel.writeByte((byte) (result ? 1 : 0));
 			break;
 		}
 
@@ -432,7 +437,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			underlyingDatabase.delete(channel.readShort(), channel.readLong(), channel.readInt());
 			sendOk(clientTxId);
 
-			channel.writeByte((byte) '1');
+			channel.writeByte((byte) 1);
 			break;
 
 		case OChannelBinaryProtocol.REQUEST_COUNT: {

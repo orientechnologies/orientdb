@@ -94,7 +94,7 @@ public class OStorageLocal extends OStorageAbstract {
 		addUser();
 		cache.addUser();
 
-		final boolean locked = acquireExclusiveLock();
+		final boolean locked = lock.acquireExclusiveLock();
 
 		try {
 			if (open)
@@ -178,7 +178,7 @@ public class OStorageLocal extends OStorageAbstract {
 			clusterMap.clear();
 			throw new OStorageException("Can't open local storage: " + url + ", with mode=" + mode, e);
 		} finally {
-			releaseExclusiveLock(locked);
+			lock.releaseExclusiveLock(locked);
 
 			OProfiler.getInstance().stopChrono("OStorageLocal.open", timer);
 		}
@@ -190,7 +190,7 @@ public class OStorageLocal extends OStorageAbstract {
 		addUser();
 		cache.addUser();
 
-		final boolean locked = acquireExclusiveLock();
+		final boolean locked = lock.acquireExclusiveLock();
 
 		try {
 			if (open)
@@ -228,7 +228,7 @@ public class OStorageLocal extends OStorageAbstract {
 			throw new OStorageException("Error on creation of storage: " + name, e);
 
 		} finally {
-			releaseExclusiveLock(locked);
+			lock.releaseExclusiveLock(locked);
 
 			OProfiler.getInstance().stopChrono("OStorageLocal.create", timer);
 		}
@@ -241,7 +241,7 @@ public class OStorageLocal extends OStorageAbstract {
 	public void close() {
 		final long timer = OProfiler.getInstance().startChrono();
 
-		final boolean locked = acquireExclusiveLock();
+		final boolean locked = lock.acquireExclusiveLock();
 
 		if (!open)
 			return;
@@ -272,7 +272,7 @@ public class OStorageLocal extends OStorageAbstract {
 			OLogManager.instance().error(this, "Error on closing of the storage '" + name, e, OStorageException.class);
 
 		} finally {
-			releaseExclusiveLock(locked);
+			lock.releaseExclusiveLock(locked);
 
 			OProfiler.getInstance().stopChrono("OStorageLocal.close", timer);
 		}
@@ -295,7 +295,7 @@ public class OStorageLocal extends OStorageAbstract {
 		if (!dbDir.exists() || !dbDir.isDirectory())
 			dbDir = dbDir.getParentFile();
 
-		final boolean locked = acquireExclusiveLock();
+		final boolean locked = lock.acquireExclusiveLock();
 
 		try {
 			// RETRIES
@@ -334,7 +334,7 @@ public class OStorageLocal extends OStorageAbstract {
 			throw new OStorageException("Can't delete database '" + name + "' located in: " + dbDir + ". Database files seems locked");
 
 		} finally {
-			releaseExclusiveLock(locked);
+			lock.releaseExclusiveLock(locked);
 
 			OProfiler.getInstance().stopChrono("OStorageLocal.delete", timer);
 		}
@@ -345,13 +345,13 @@ public class OStorageLocal extends OStorageAbstract {
 		if (iDataSegmentId >= dataSegments.length)
 			throw new IllegalArgumentException("Data segment #" + iDataSegmentId + " doesn't exist in current storage");
 
-		final boolean locked = acquireSharedLock();
+		final boolean locked = lock.acquireSharedLock();
 
 		try {
 			return dataSegments[iDataSegmentId];
 
 		} finally {
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 		}
 	}
 
@@ -368,7 +368,7 @@ public class OStorageLocal extends OStorageAbstract {
 
 		iSegmentName = iSegmentName.toLowerCase();
 
-		final boolean locked = acquireExclusiveLock();
+		final boolean locked = lock.acquireExclusiveLock();
 
 		try {
 			OStorageDataConfiguration conf = new OStorageDataConfiguration(configuration, iSegmentName);
@@ -389,7 +389,7 @@ public class OStorageLocal extends OStorageAbstract {
 			return -1;
 
 		} finally {
-			releaseExclusiveLock(locked);
+			lock.releaseExclusiveLock(locked);
 		}
 	}
 
@@ -399,7 +399,7 @@ public class OStorageLocal extends OStorageAbstract {
 	public int addCluster(String iClusterName, final OStorage.CLUSTER_TYPE iClusterType, final Object... iParameters) {
 		checkOpeness();
 
-		final boolean locked = acquireExclusiveLock();
+		final boolean locked = lock.acquireExclusiveLock();
 
 		try {
 			iClusterName = iClusterName.toLowerCase();
@@ -435,7 +435,7 @@ public class OStorageLocal extends OStorageAbstract {
 
 		} finally {
 
-			releaseExclusiveLock(locked);
+			lock.releaseExclusiveLock(locked);
 		}
 		return -1;
 	}
@@ -449,7 +449,7 @@ public class OStorageLocal extends OStorageAbstract {
 	}
 
 	public boolean removeCluster(final int iClusterId) {
-		final boolean locked = acquireExclusiveLock();
+		final boolean locked = lock.acquireExclusiveLock();
 
 		try {
 			if (iClusterId < 0 || iClusterId >= clusters.length)
@@ -474,7 +474,7 @@ public class OStorageLocal extends OStorageAbstract {
 			OLogManager.instance().exception("Error while removing cluster '" + iClusterId + "'", e, OStorageException.class);
 
 		} finally {
-			releaseExclusiveLock(locked);
+			lock.releaseExclusiveLock(locked);
 		}
 
 		return false;
@@ -485,7 +485,7 @@ public class OStorageLocal extends OStorageAbstract {
 
 		final long timer = OProfiler.getInstance().startChrono();
 
-		final boolean locked = acquireSharedLock();
+		final boolean locked = lock.acquireSharedLock();
 
 		try {
 			long tot = 0;
@@ -508,7 +508,7 @@ public class OStorageLocal extends OStorageAbstract {
 			return -1;
 
 		} finally {
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 
 			OProfiler.getInstance().stopChrono("OStorageLocal.getClusterElementCounts", timer);
 		}
@@ -522,7 +522,7 @@ public class OStorageLocal extends OStorageAbstract {
 
 		final long timer = OProfiler.getInstance().startChrono();
 
-		final boolean locked = acquireSharedLock();
+		final boolean locked = lock.acquireSharedLock();
 
 		try {
 			return new long[] { clusters[iClusterId].getFirstEntryPosition(), clusters[iClusterId].getLastEntryPosition() };
@@ -533,7 +533,7 @@ public class OStorageLocal extends OStorageAbstract {
 			return null;
 
 		} finally {
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 
 			OProfiler.getInstance().stopChrono("OStorageLocal.getClusterLastEntryPosition", timer);
 		}
@@ -548,7 +548,7 @@ public class OStorageLocal extends OStorageAbstract {
 
 		final long timer = OProfiler.getInstance().startChrono();
 
-		final boolean locked = acquireSharedLock();
+		final boolean locked = lock.acquireSharedLock();
 
 		try {
 			return clusters[iClusterId].getEntries();
@@ -559,7 +559,7 @@ public class OStorageLocal extends OStorageAbstract {
 			return -1;
 
 		} finally {
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 
 			OProfiler.getInstance().stopChrono("OStorageLocal.getClusterElementCounts", timer);
 		}
@@ -613,7 +613,7 @@ public class OStorageLocal extends OStorageAbstract {
 
 		final long timer = OProfiler.getInstance().startChrono();
 
-		final boolean locked = acquireSharedLock();
+		final boolean locked = lock.acquireSharedLock();
 
 		try {
 			OCluster cluster;
@@ -628,7 +628,7 @@ public class OStorageLocal extends OStorageAbstract {
 			OLogManager.instance().error(this, "Error on browsing elements of cluster: " + iClusterId, e);
 
 		} finally {
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 
 			OProfiler.getInstance().stopChrono("OStorageLocal.foreach", timer);
 		}
@@ -696,14 +696,14 @@ public class OStorageLocal extends OStorageAbstract {
 	public Set<String> getClusterNames() {
 		checkOpeness();
 
-		final boolean locked = acquireSharedLock();
+		final boolean locked = lock.acquireSharedLock();
 
 		try {
 
 			return clusterMap.keySet();
 
 		} finally {
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 		}
 	}
 
@@ -719,13 +719,13 @@ public class OStorageLocal extends OStorageAbstract {
 		// SEARCH IT BETWEEN PHYSICAL CLUSTERS
 		OCluster segment;
 
-		final boolean locked = acquireSharedLock();
+		final boolean locked = lock.acquireSharedLock();
 
 		try {
 			segment = clusterMap.get(iClusterName.toLowerCase());
 
 		} finally {
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 		}
 
 		if (segment != null)
@@ -743,13 +743,13 @@ public class OStorageLocal extends OStorageAbstract {
 		// SEARCH IT BETWEEN PHYSICAL CLUSTERS
 		OCluster segment;
 
-		final boolean locked = acquireSharedLock();
+		final boolean locked = lock.acquireSharedLock();
 
 		try {
 			segment = clusterMap.get(iClusterName.toLowerCase());
 
 		} finally {
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 		}
 
 		if (segment != null)
@@ -759,7 +759,7 @@ public class OStorageLocal extends OStorageAbstract {
 	}
 
 	public void commit(final int iRequesterId, final OTransaction<?> iTx) {
-		final boolean locked = acquireSharedLock();
+		final boolean locked = lock.acquireSharedLock();
 
 		try {
 			txManager.commitAllPendingRecords(iRequesterId, iTx);
@@ -771,7 +771,7 @@ public class OStorageLocal extends OStorageAbstract {
 			rollback(iRequesterId, iTx);
 
 		} finally {
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 		}
 	}
 
@@ -783,7 +783,7 @@ public class OStorageLocal extends OStorageAbstract {
 
 		final long timer = OProfiler.getInstance().startChrono();
 
-		final boolean locked = acquireSharedLock();
+		final boolean locked = lock.acquireSharedLock();
 
 		try {
 			saveVersion();
@@ -797,7 +797,7 @@ public class OStorageLocal extends OStorageAbstract {
 		} catch (IOException e) {
 			throw new OStorageException("Error on synch", e);
 		} finally {
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 
 			OProfiler.getInstance().stopChrono("OStorageLocal.synch", timer);
 		}
@@ -833,7 +833,7 @@ public class OStorageLocal extends OStorageAbstract {
 	}
 
 	public OCluster getClusterByName(final String iClusterName) {
-		final boolean locked = acquireSharedLock();
+		final boolean locked = lock.acquireSharedLock();
 
 		try {
 			final OCluster cluster = clusterMap.get(iClusterName.toLowerCase());
@@ -844,7 +844,7 @@ public class OStorageLocal extends OStorageAbstract {
 
 		} finally {
 
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 		}
 	}
 
@@ -984,7 +984,7 @@ public class OStorageLocal extends OStorageAbstract {
 
 		final long timer = OProfiler.getInstance().startChrono();
 
-		final boolean locked = acquireSharedLock();
+		final boolean locked = lock.acquireSharedLock();
 
 		try {
 			final int dataSegment = getDataSegmentForRecord(iClusterSegment, iContent);
@@ -1005,7 +1005,7 @@ public class OStorageLocal extends OStorageAbstract {
 			OLogManager.instance().error(this, "Error on creating record in cluster: " + iClusterSegment, e);
 			return -1;
 		} finally {
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 
 			OProfiler.getInstance().stopChrono("OStorageLocal.createRecord", timer);
 		}
@@ -1022,7 +1022,7 @@ public class OStorageLocal extends OStorageAbstract {
 		// USUALLY BROWSING OPERATIONS (QUERY) AVOID ATOMIC LOCKING
 		// TO IMPROVE PERFORMANCES BY LOCKING THE ENTIRE CLUSTER FROM THE
 		// OUTSIDE.
-		final boolean locked = iAtomicLock ? acquireSharedLock() : false;
+		final boolean locked = iAtomicLock ? lock.acquireSharedLock() : false;
 
 		try {
 			// lockManager.acquireLock(iRequesterId, recId, LOCK.SHARED,
@@ -1042,7 +1042,7 @@ public class OStorageLocal extends OStorageAbstract {
 			return null;
 
 		} finally {
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 
 			OProfiler.getInstance().stopChrono("OStorageLocal.readRecord", timer);
 		}
@@ -1054,7 +1054,7 @@ public class OStorageLocal extends OStorageAbstract {
 
 		final String recId = ORecordId.generateString(iClusterSegment.getId(), iPosition);
 
-		final boolean locked = acquireSharedLock();
+		final boolean locked = lock.acquireSharedLock();
 
 		try {
 			// lockManager.acquireLock(iRequesterId, recId, LOCK.EXCLUSIVE,
@@ -1097,7 +1097,7 @@ public class OStorageLocal extends OStorageAbstract {
 			OLogManager.instance().error(this, "Error on updating record #" + iPosition + " in cluster: " + iClusterSegment, e);
 
 		} finally {
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 
 			OProfiler.getInstance().stopChrono("OStorageLocal.updateRecord", timer);
 		}
@@ -1110,7 +1110,7 @@ public class OStorageLocal extends OStorageAbstract {
 
 		final String recId = ORecordId.generateString(iClusterSegment.getId(), iPosition);
 
-		final boolean locked = acquireSharedLock();
+		final boolean locked = lock.acquireSharedLock();
 
 		try {
 			final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iPosition, new OPhysicalPosition());
@@ -1139,7 +1139,7 @@ public class OStorageLocal extends OStorageAbstract {
 			OLogManager.instance().error(this, "Error on deleting record #" + iPosition + " in cluster: " + iClusterSegment, e);
 
 		} finally {
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 
 			OProfiler.getInstance().stopChrono("OStorageLocal.deleteRecord", timer);
 		}
@@ -1217,5 +1217,4 @@ public class OStorageLocal extends OStorageAbstract {
 
 		return id;
 	}
-
 }

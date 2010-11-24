@@ -24,7 +24,6 @@ import com.orientechnologies.common.thread.OPollerThread;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.security.OSecurityManager;
-import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 
 /**
@@ -34,20 +33,19 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
  * 
  */
 public class ODistributedServerDiscoverySignaler extends OPollerThread {
-	private byte[]															discoveryPacket;
-	private DatagramPacket											dgram;
-	private DatagramSocket											socket;
+	private byte[]										discoveryPacket;
+	private DatagramPacket						dgram;
+	private DatagramSocket						socket;
 	private ODistributedServerManager	manager;
 
-	public ODistributedServerDiscoverySignaler(final ODistributedServerManager iManager,
-			final OServerNetworkListener iNetworkListener) {
-		super(iManager.networkMulticastHeartbeat * 1000, OServer.getThreadGroup(), "DiscoverySignaler");
+	public ODistributedServerDiscoverySignaler(final ODistributedServerManager iManager, final OServerNetworkListener iNetworkListener) {
+		super(iManager.networkMulticastHeartbeat * 1000, Orient.getThreadGroup(), "IO-Cluster-DiscoverySignaler");
 
 		manager = iManager;
 
 		final String buffer = ODistributedServerManager.PACKET_HEADER + OConstants.ORIENT_VERSION + "|"
-				+ ODistributedServerManager.PROTOCOL_VERSION + "|" + manager.name + "|"
-				+ iNetworkListener.getInboundAddr().getHostName() + "|" + iNetworkListener.getInboundAddr().getPort();
+				+ ODistributedServerManager.PROTOCOL_VERSION + "|" + manager.name + "|" + iNetworkListener.getInboundAddr().getHostName()
+				+ "|" + iNetworkListener.getInboundAddr().getPort();
 
 		discoveryPacket = OSecurityManager.instance().encrypt(manager.securityAlgorithm, manager.securityKey, buffer.getBytes());
 

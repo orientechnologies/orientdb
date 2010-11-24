@@ -28,6 +28,7 @@ import java.util.Map.Entry;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -42,7 +43,6 @@ import com.orientechnologies.orient.enterprise.channel.text.OChannelTextServer;
 import com.orientechnologies.orient.enterprise.exception.ONetworkProtocolException;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
-import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.handler.OServerHandlerHelper;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
@@ -64,7 +64,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 	private final Map<String, OServerCommand>	wildcardCommands	= new HashMap<String, OServerCommand>();
 
 	public ONetworkProtocolHttpAbstract() {
-		super(OServer.getThreadGroup(), "HTTP");
+		super(Orient.getThreadGroup(), "IO-HTTP");
 	}
 
 	@Override
@@ -129,7 +129,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 				}
 
 				OServerHandlerHelper.invokeHandlerCallbackOnAfterClientRequest(connection, cmd);
-				
+
 			} catch (Exception e) {
 				handleError(e);
 			}

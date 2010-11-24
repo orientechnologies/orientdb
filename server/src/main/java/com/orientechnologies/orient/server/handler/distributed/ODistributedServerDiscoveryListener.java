@@ -21,21 +21,20 @@ import java.net.MulticastSocket;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.thread.OSoftThread;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.security.OSecurityManager;
-import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 
 public class ODistributedServerDiscoveryListener extends OSoftThread {
-	private final byte[]												recvBuffer	= new byte[50000];
-	private DatagramPacket											dgram;
+	private final byte[]							recvBuffer	= new byte[50000];
+	private DatagramPacket						dgram;
 	private ODistributedServerManager	serverNode;
-	private OServerNetworkListener							binaryNetworkListener;
+	private OServerNetworkListener		binaryNetworkListener;
 
-	private MulticastSocket											socket;
+	private MulticastSocket						socket;
 
-	public ODistributedServerDiscoveryListener(final ODistributedServerManager iManager,
-			final OServerNetworkListener iNetworkListener) {
-		super(OServer.getThreadGroup(), "DiscoveryListener");
+	public ODistributedServerDiscoveryListener(final ODistributedServerManager iManager, final OServerNetworkListener iNetworkListener) {
+		super(Orient.getThreadGroup(), "IO-Cluster-DiscoveryListener");
 
 		serverNode = iManager;
 		binaryNetworkListener = iNetworkListener;

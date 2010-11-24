@@ -218,10 +218,6 @@ public class OServer {
 		configurationLoader.save(configuration);
 	}
 
-	public static ThreadGroup getThreadGroup() {
-		return threadGroup;
-	}
-
 	public Map<String, ODatabaseRecord<?>> getMemoryDatabases() {
 		return memoryDatabases;
 	}

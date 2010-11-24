@@ -62,6 +62,7 @@ public class OChannelBinaryInputStream extends InputStream {
 	private void fetch() throws IOException {
 		// FETCH DATA
 		pos = 0;
+
 		total = channel.in.readInt();
 
 		if (total > buffer.length)

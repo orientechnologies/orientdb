@@ -70,7 +70,7 @@ public class OStorageMemory extends OStorageAbstract {
 	public void open(final int iRequesterId, final String iUserName, final String iUserPassword) {
 		addUser();
 
-		final boolean locked = acquireExclusiveLock();
+		final boolean locked = lock.acquireExclusiveLock();
 		try {
 			configuration = new OStorageConfiguration(this);
 
@@ -92,12 +92,12 @@ public class OStorageMemory extends OStorageAbstract {
 		} catch (IOException e) {
 		} finally {
 
-			releaseExclusiveLock(locked);
+			lock.releaseExclusiveLock(locked);
 		}
 	}
 
 	public void close() {
-		final boolean locked = acquireExclusiveLock();
+		final boolean locked = lock.acquireExclusiveLock();
 		try {
 
 			// CLOSE ALL THE CLUSTERS
@@ -111,7 +111,7 @@ public class OStorageMemory extends OStorageAbstract {
 			open = false;
 		} finally {
 
-			releaseExclusiveLock(locked);
+			lock.releaseExclusiveLock(locked);
 		}
 	}
 
@@ -120,19 +120,19 @@ public class OStorageMemory extends OStorageAbstract {
 	}
 
 	public int addCluster(final String iClusterName, final OStorage.CLUSTER_TYPE iClusterType, final Object... iParameters) {
-		final boolean locked = acquireExclusiveLock();
+		final boolean locked = lock.acquireExclusiveLock();
 		try {
 
 			clusters.add(new OClusterMemory(clusters.size(), iClusterName));
 			return clusters.size() - 1;
 		} finally {
 
-			releaseExclusiveLock(locked);
+			lock.releaseExclusiveLock(locked);
 		}
 	}
 
 	public boolean removeCluster(final int iClusterId) {
-		final boolean locked = acquireExclusiveLock();
+		final boolean locked = lock.acquireExclusiveLock();
 		try {
 
 			OCluster c = clusters.get(iClusterId);
@@ -142,7 +142,7 @@ public class OStorageMemory extends OStorageAbstract {
 		} catch (IOException e) {
 		} finally {
 
-			releaseExclusiveLock(locked);
+			lock.releaseExclusiveLock(locked);
 		}
 
 		return false;
@@ -160,7 +160,7 @@ public class OStorageMemory extends OStorageAbstract {
 	public long createRecord(final int iClusterId, final byte[] iContent, final byte iRecordType) {
 		final long timer = OProfiler.getInstance().startChrono();
 
-		final boolean locked = acquireSharedLock();
+		final boolean locked = lock.acquireSharedLock();
 		try {
 
 			final long offset = data.createRecord(iContent);
@@ -171,7 +171,7 @@ public class OStorageMemory extends OStorageAbstract {
 			throw new OStorageException("Error on create record in cluster: " + iClusterId, e);
 
 		} finally {
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 			OProfiler.getInstance().stopChrono("OStorageMemory.createRecord", timer);
 		}
 	}
@@ -182,7 +182,7 @@ public class OStorageMemory extends OStorageAbstract {
 
 		final long timer = OProfiler.getInstance().startChrono();
 
-		final boolean locked = acquireSharedLock();
+		final boolean locked = lock.acquireSharedLock();
 		try {
 			final OPhysicalPosition ppos = cluster.getPhysicalPosition(iClusterPosition, new OPhysicalPosition());
 
@@ -194,7 +194,7 @@ public class OStorageMemory extends OStorageAbstract {
 			throw new OStorageException("Error on read record in cluster: " + iClusterId, e);
 
 		} finally {
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 			OProfiler.getInstance().stopChrono("OStorageMemory.readRecord", timer);
 		}
 	}
@@ -205,7 +205,7 @@ public class OStorageMemory extends OStorageAbstract {
 
 		final OCluster cluster = getClusterById(iClusterId);
 
-		final boolean locked = acquireSharedLock();
+		final boolean locked = lock.acquireSharedLock();
 		try {
 			OPhysicalPosition ppos = cluster.getPhysicalPosition(iClusterPosition, new OPhysicalPosition());
 			if (ppos == null)
@@ -226,7 +226,7 @@ public class OStorageMemory extends OStorageAbstract {
 			throw new OStorageException("Error on update record in cluster: " + iClusterId, e);
 
 		} finally {
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 			OProfiler.getInstance().stopChrono("OStorageMemory.updateRecord", timer);
 		}
 	}
@@ -236,7 +236,7 @@ public class OStorageMemory extends OStorageAbstract {
 
 		final OCluster cluster = getClusterById(iClusterId);
 
-		final boolean locked = acquireSharedLock();
+		final boolean locked = lock.acquireSharedLock();
 		try {
 			OPhysicalPosition ppos = cluster.getPhysicalPosition(iClusterPosition, new OPhysicalPosition());
 
@@ -259,7 +259,7 @@ public class OStorageMemory extends OStorageAbstract {
 			throw new OStorageException("Error on delete record in cluster: " + iClusterId, e);
 
 		} finally {
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 			OProfiler.getInstance().stopChrono("OStorageMemory.deleteRecord", timer);
 		}
 	}
@@ -267,7 +267,7 @@ public class OStorageMemory extends OStorageAbstract {
 	public long count(final int iClusterId) {
 		final OCluster cluster = getClusterById(iClusterId);
 
-		final boolean locked = acquireSharedLock();
+		final boolean locked = lock.acquireSharedLock();
 		try {
 			return cluster.getEntries();
 
@@ -275,14 +275,14 @@ public class OStorageMemory extends OStorageAbstract {
 			throw new OStorageException("Error on count record in cluster: " + iClusterId, e);
 
 		} finally {
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 		}
 	}
 
 	public long[] getClusterDataRange(final int iClusterId) {
 		final OCluster cluster = getClusterById(iClusterId);
 
-		final boolean locked = acquireSharedLock();
+		final boolean locked = lock.acquireSharedLock();
 		try {
 
 			return new long[] { cluster.getFirstEntryPosition(), cluster.getLastEntryPosition() };
@@ -291,12 +291,12 @@ public class OStorageMemory extends OStorageAbstract {
 			throw new OStorageException("Error on getting last entry position in cluster: " + iClusterId, e);
 		} finally {
 
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 		}
 	}
 
 	public long count(final int[] iClusterIds) {
-		final boolean locked = acquireSharedLock();
+		final boolean locked = lock.acquireSharedLock();
 		try {
 
 			long tot = 0;
@@ -306,12 +306,12 @@ public class OStorageMemory extends OStorageAbstract {
 
 		} finally {
 
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 		}
 	}
 
 	public OCluster getClusterByName(final String iClusterName) {
-		final boolean locked = acquireSharedLock();
+		final boolean locked = lock.acquireSharedLock();
 		try {
 			for (int i = 0; i < clusters.size(); ++i)
 				if (getClusterById(i).getName().equals(iClusterName))
@@ -320,12 +320,12 @@ public class OStorageMemory extends OStorageAbstract {
 
 		} finally {
 
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 		}
 	}
 
 	public int getClusterIdByName(final String iClusterName) {
-		final boolean locked = acquireSharedLock();
+		final boolean locked = lock.acquireSharedLock();
 		try {
 			for (int i = 0; i < clusters.size(); ++i)
 				if (getClusterById(i).getName().equals(iClusterName))
@@ -334,7 +334,7 @@ public class OStorageMemory extends OStorageAbstract {
 
 		} finally {
 
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 		}
 	}
 
@@ -350,7 +350,7 @@ public class OStorageMemory extends OStorageAbstract {
 	}
 
 	public Set<String> getClusterNames() {
-		final boolean locked = acquireSharedLock();
+		final boolean locked = lock.acquireSharedLock();
 		try {
 
 			Set<String> result = new HashSet<String>();
@@ -360,7 +360,7 @@ public class OStorageMemory extends OStorageAbstract {
 
 		} finally {
 
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 		}
 	}
 
@@ -377,7 +377,7 @@ public class OStorageMemory extends OStorageAbstract {
 	}
 
 	public void commit(final int iRequesterId, final OTransaction<?> iTx) {
-		final boolean locked = acquireSharedLock();
+		final boolean locked = lock.acquireSharedLock();
 
 		try {
 			final List<OTransactionEntry<? extends ORecord<?>>> allEntries = new ArrayList<OTransactionEntry<? extends ORecord<?>>>();
@@ -405,7 +405,7 @@ public class OStorageMemory extends OStorageAbstract {
 			rollback(iRequesterId, iTx);
 
 		} finally {
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 		}
 	}
 

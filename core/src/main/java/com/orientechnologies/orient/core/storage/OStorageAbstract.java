@@ -16,21 +16,23 @@
 package com.orientechnologies.orient.core.storage;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
+import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.orient.core.cache.OCacheRecord;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
-public abstract class OStorageAbstract extends OSharedResourceAdaptive implements OStorage {
-	protected OStorageConfiguration	configuration;
-	protected String								name;
-	protected String								url;
-	protected String								mode;
-	protected OCacheRecord					cache		= new OCacheRecord();
-	protected long									version	= 0;
+public abstract class OStorageAbstract implements OStorage {
+	protected OStorageConfiguration						configuration;
+	protected String													name;
+	protected String													url;
+	protected String													mode;
+	protected OCacheRecord										cache		= new OCacheRecord();
+	protected long														version	= 0;
 
-	protected boolean								open		= false;
+	protected boolean													open		= false;
+	protected OSharedResourceAdaptiveExternal	lock		= new OSharedResourceAdaptiveExternal();
 
 	public OStorageAbstract(final String iName, final String iFilePath, final String iMode) {
 		if (OStringSerializerHelper.contains(iName, '/'))
@@ -74,9 +76,8 @@ public abstract class OStorageAbstract extends OSharedResourceAdaptive implement
 		return url;
 	}
 
-	@Override
 	public int removeUser() {
-		int u = super.removeUser();
+		int u = lock.removeUser();
 
 		boolean keepOpen = OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean();
 		if (u == 0 && !keepOpen)
@@ -109,5 +110,17 @@ public abstract class OStorageAbstract extends OSharedResourceAdaptive implement
 
 	public OCacheRecord getCache() {
 		return cache;
+	}
+
+	public int getUsers() {
+		return lock.getUsers();
+	}
+
+	public int addUser() {
+		return lock.addUser();
+	}
+
+	public OSharedResourceAdaptive getLock() {
+		return lock;
 	}
 }

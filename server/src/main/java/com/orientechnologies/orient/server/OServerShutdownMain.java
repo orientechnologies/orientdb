@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClientSynch;
 import com.orientechnologies.orient.enterprise.exception.ONetworkProtocolException;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerConfigurationLoaderXml;
@@ -102,7 +103,7 @@ public class OServerShutdownMain {
 		// TRY TO CONNECT TO THE RIGHT PORT
 		for (int port : networkPort)
 			try {
-				channel = new OChannelBinaryClient(networkAddress, port, contextConfig);
+				channel = new OChannelBinaryClientSynch(networkAddress, port, contextConfig);
 				break;
 			} catch (Exception e) {
 			}

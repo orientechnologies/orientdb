@@ -43,17 +43,20 @@ public abstract class OChannel extends OSharedResourceExternal {
 
 	public void close() {
 		try {
-			socket.close();
+			if (socket != null)
+				socket.close();
 		} catch (IOException e) {
 		}
 
 		try {
-			inStream.close();
+			if (inStream != null)
+				inStream.close();
 		} catch (IOException e) {
 		}
 
 		try {
-			outStream.close();
+			if (outStream != null)
+				outStream.close();
 		} catch (IOException e) {
 		}
 	}

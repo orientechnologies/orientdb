@@ -47,9 +47,9 @@ public class Orient extends OSharedResource {
 	protected Set<ODatabaseLifecycleListener>	dbLifecycleListeners	= new HashSet<ODatabaseLifecycleListener>();
 	protected volatile boolean								active								= false;
 
-	protected static OrientShutdownHook				shutdownHook					= new OrientShutdownHook();
-	protected static Timer										timer									= new Timer(true);
-
+	protected static final OrientShutdownHook	shutdownHook					= new OrientShutdownHook();
+	protected static final Timer							timer									= new Timer(true);
+	protected static final ThreadGroup				threadGroup						= new ThreadGroup("OrientDB");
 	protected static Orient										instance							= new Orient();
 
 	protected Orient() {
@@ -228,6 +228,9 @@ public class Orient extends OSharedResource {
 			OMMapManager.shutdown();
 			active = false;
 
+			// STOP ALL THE PENDING THREADS
+			threadGroup.interrupt();
+
 			OLogManager.instance().debug(this, "Orient Engine shutdown complete");
 
 		} finally {
@@ -257,5 +260,9 @@ public class Orient extends OSharedResource {
 
 	public static Orient instance() {
 		return instance;
+	}
+
+	public static ThreadGroup getThreadGroup() {
+		return threadGroup;
 	}
 }

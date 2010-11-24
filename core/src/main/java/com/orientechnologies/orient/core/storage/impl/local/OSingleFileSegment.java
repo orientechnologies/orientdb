@@ -30,7 +30,7 @@ public class OSingleFileSegment extends OSharedResourceAdaptiveLinked {
 	protected OStorageFileConfiguration	config;
 
 	public OSingleFileSegment(OStorageLocal iStorage, final OStorageFileConfiguration iConfig) throws IOException {
-		super(iStorage);
+		super(iStorage.getLock());
 		config = iConfig;
 		storage = iStorage;
 		file = OFileFactory.create(iConfig.type, iStorage.getVariableParser().resolveVariables(iConfig.path), iStorage.getMode());

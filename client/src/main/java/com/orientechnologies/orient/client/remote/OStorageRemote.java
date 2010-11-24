@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.SynchronousQueue;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
@@ -55,6 +56,8 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionEntry;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynch;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchRequester;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
@@ -62,19 +65,22 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
  * This object is bound to each remote ODatabase instances.
  */
 @SuppressWarnings("unchecked")
-public class OStorageRemote extends OStorageAbstract {
+public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAsynchRequester {
 	private static final String							DEFAULT_HOST			= "localhost";
 	private static final String[]						DEFAULT_PORTS			= new String[] { "2424" };
 	private static final String							ADDRESS_SEPARATOR	= ";";
+
+	private OStorageRemoteServiceThread			serviceThread;
 	private String													userName;
 	private String													userPassword;
 	private OContextConfiguration						clientConfiguration;
 	private int															connectionRetry;
 	private int															connectionRetryDelay;
 
-	protected List<OPair<String, String[]>>	serverURLs				= new ArrayList<OPair<String, String[]>>();
 	private OChannelBinaryClient						network;
-	protected int														txId;
+	private final SynchronousQueue<Object>	responseQueue			= new SynchronousQueue<Object>();
+	protected List<OPair<String, String[]>>	serverURLs				= new ArrayList<OPair<String, String[]>>();
+	protected int														txId							= 0;
 	protected final Map<String, Integer>		clustersIds				= new HashMap<String, Integer>();
 	protected final Map<String, String>			clustersTypes			= new HashMap<String, String>();
 	protected int														defaultClusterId;
@@ -90,7 +96,7 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public void open(final int iRequesterId, final String iUserName, final String iUserPassword) {
-		boolean locked = acquireExclusiveLock();
+		boolean locked = lock.acquireExclusiveLock();
 
 		try {
 			userName = iUserName;
@@ -113,7 +119,7 @@ public class OStorageRemote extends OStorageAbstract {
 				throw new OStorageException("Can't open the remote storage: " + name, e);
 		} finally {
 
-			releaseExclusiveLock(locked);
+			lock.releaseExclusiveLock(locked);
 		}
 	}
 
@@ -126,31 +132,44 @@ public class OStorageRemote extends OStorageAbstract {
 		checkConnection();
 
 		do {
-			boolean locked = acquireExclusiveLock();
+			boolean locked = lock.acquireExclusiveLock();
 
 			try {
-				writeCommand(OChannelBinaryProtocol.REQUEST_DB_EXIST);
-				network.readStatus();
-				return network.readByte() == 1;
+				try {
+					beginRequest(OChannelBinaryProtocol.REQUEST_DB_EXIST);
+				} finally {
+					endRequest();
+				}
+
+				try {
+					beginResponse();
+					return network.readByte() == 1;
+				} finally {
+					endResponse();
+				}
+
 			} catch (Exception e) {
 				if (handleException("Error on checking if the database exists", e))
 					break;
 
 			} finally {
-				releaseExclusiveLock(locked);
+				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
 		return false;
 	}
 
 	public void close() {
-		boolean locked = acquireExclusiveLock();
+		boolean locked = lock.acquireExclusiveLock();
 
 		try {
-			writeCommand(OChannelBinaryProtocol.REQUEST_DB_CLOSE);
-			network.out.flush();
+			beginRequest(OChannelBinaryProtocol.REQUEST_DB_CLOSE);
+			endRequest();
 
-			network.socket.close();
+			network.flush();
+			network.close();
+
+			serviceThread.sendShutdown();
 
 			cache.removeUser();
 			cache.clear();
@@ -162,7 +181,7 @@ public class OStorageRemote extends OStorageAbstract {
 		} catch (Exception e) {
 
 		} finally {
-			releaseExclusiveLock(locked);
+			lock.releaseExclusiveLock(locked);
 		}
 	}
 
@@ -174,13 +193,13 @@ public class OStorageRemote extends OStorageAbstract {
 	public Set<String> getClusterNames() {
 		checkConnection();
 
-		boolean locked = acquireSharedLock();
+		boolean locked = lock.acquireSharedLock();
 
 		try {
 			return clustersIds.keySet();
 
 		} finally {
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 		}
 	}
 
@@ -188,21 +207,31 @@ public class OStorageRemote extends OStorageAbstract {
 		checkConnection();
 
 		do {
-			boolean locked = acquireExclusiveLock();
+			boolean locked = lock.acquireExclusiveLock();
 
 			try {
-				writeCommand(OChannelBinaryProtocol.REQUEST_RECORD_CREATE);
-				network.writeShort((short) iClusterId);
-				network.writeBytes(iContent);
-				network.writeByte(iRecordType);
-				network.readStatus();
-				return network.readLong();
+				try {
+					beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_CREATE);
+					network.writeShort((short) iClusterId);
+					network.writeBytes(iContent);
+					network.writeByte(iRecordType);
+				} finally {
+					endRequest();
+				}
+
+				try {
+					beginResponse();
+					return network.readLong();
+				} finally {
+					endResponse();
+				}
+
 			} catch (Exception e) {
 				if (handleException("Error on create record in cluster: " + iClusterId, e))
 					break;
 
 			} finally {
-				releaseExclusiveLock(locked);
+				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
 		return -1;
@@ -217,35 +246,43 @@ public class OStorageRemote extends OStorageAbstract {
 			return null;
 
 		do {
-			boolean locked = acquireExclusiveLock();
+			boolean locked = lock.acquireExclusiveLock();
 
 			try {
-				writeCommand(OChannelBinaryProtocol.REQUEST_RECORD_LOAD);
-				network.writeShort((short) iClusterId);
-				network.writeLong(iPosition);
-				network.writeString(iFetchPlan != null ? iFetchPlan : "");
-				network.readStatus();
-
-				if (network.readByte() == 0)
-					return null;
-
-				final ORawBuffer buffer = new ORawBuffer(network.readBytes(), network.readInt(), network.readByte());
-
-				while (network.readByte() == 2) {
-					ORecordInternal<?> record = readRecordFromNetwork(iDatabase);
-					// PUT IN THE CLIENT LOCAL CACHE
-					cache.pushRecord(record.getIdentity().toString(),
-							new ORawBuffer(record.toStream(), record.getVersion(), record.getRecordType()));
+				try {
+					beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_LOAD);
+					network.writeShort((short) iClusterId);
+					network.writeLong(iPosition);
+					network.writeString(iFetchPlan != null ? iFetchPlan : "");
+				} finally {
+					endRequest();
 				}
 
-				return buffer;
+				try {
+					beginResponse();
+
+					if (network.readByte() == 0)
+						return null;
+
+					final ORawBuffer buffer = new ORawBuffer(network.readBytes(), network.readInt(), network.readByte());
+
+					while (network.readByte() == 2) {
+						ORecordInternal<?> record = readRecordFromNetwork(iDatabase);
+						// PUT IN THE CLIENT LOCAL CACHE
+						cache.pushRecord(record.getIdentity().toString(),
+								new ORawBuffer(record.toStream(), record.getVersion(), record.getRecordType()));
+					}
+					return buffer;
+				} finally {
+					endResponse();
+				}
 
 			} catch (Exception e) {
 				if (handleException("Error on read record: " + iClusterId + ":" + iPosition, e))
 					break;
 
 			} finally {
-				releaseExclusiveLock(locked);
+				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
 		return null;
@@ -256,25 +293,33 @@ public class OStorageRemote extends OStorageAbstract {
 		checkConnection();
 
 		do {
-			boolean locked = acquireExclusiveLock();
+			boolean locked = lock.acquireExclusiveLock();
 
 			try {
-				writeCommand(OChannelBinaryProtocol.REQUEST_RECORD_UPDATE);
-				network.writeShort((short) iClusterId);
-				network.writeLong(iPosition);
-				network.writeBytes(iContent);
-				network.writeInt(iVersion);
-				network.writeByte(iRecordType);
-				network.readStatus();
+				try {
+					beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_UPDATE);
+					network.writeShort((short) iClusterId);
+					network.writeLong(iPosition);
+					network.writeBytes(iContent);
+					network.writeInt(iVersion);
+					network.writeByte(iRecordType);
+				} finally {
+					endRequest();
+				}
 
-				return network.readInt();
+				try {
+					beginResponse();
+					return network.readInt();
+				} finally {
+					endResponse();
+				}
 
 			} catch (Exception e) {
 				if (handleException("Error on update record: " + iClusterId + ":" + iPosition, e))
 					break;
 
 			} finally {
-				releaseExclusiveLock(locked);
+				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
 
@@ -285,22 +330,31 @@ public class OStorageRemote extends OStorageAbstract {
 		checkConnection();
 
 		do {
-			boolean locked = acquireExclusiveLock();
+			boolean locked = lock.acquireExclusiveLock();
 
 			try {
-				writeCommand(OChannelBinaryProtocol.REQUEST_RECORD_DELETE);
-				network.writeShort((short) iClusterId);
-				network.writeLong(iPosition);
-				network.writeInt(iVersion);
-				network.readStatus();
+				try {
+					beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_DELETE);
+					network.writeShort((short) iClusterId);
+					network.writeLong(iPosition);
+					network.writeInt(iVersion);
+				} finally {
+					endRequest();
+				}
 
-				return network.readByte() == '1';
+				try {
+					beginResponse();
+					return network.readByte() == 1;
+				} finally {
+					endResponse();
+				}
+
 			} catch (Exception e) {
 				if (handleException("Error on delete record: " + iClusterId + ":" + iPosition, e))
 					break;
 
 			} finally {
-				releaseExclusiveLock(locked);
+				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
 		return false;
@@ -314,19 +368,29 @@ public class OStorageRemote extends OStorageAbstract {
 		checkConnection();
 
 		do {
-			boolean locked = acquireExclusiveLock();
+			boolean locked = lock.acquireExclusiveLock();
 
 			try {
-				writeCommand(OChannelBinaryProtocol.REQUEST_DATACLUSTER_DATARANGE);
-				network.writeShort((short) iClusterId);
-				network.readStatus();
-				return new long[] { network.readLong(), network.readLong() };
+				try {
+					beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_DATARANGE);
+					network.writeShort((short) iClusterId);
+				} finally {
+					endRequest();
+				}
+
+				try {
+					beginResponse();
+					return new long[] { network.readLong(), network.readLong() };
+				} finally {
+					endResponse();
+				}
+
 			} catch (Exception e) {
 				if (handleException("Error on getting last entry position count in cluster: " + iClusterId, e))
 					break;
 
 			} finally {
-				releaseExclusiveLock(locked);
+				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
 		return null;
@@ -336,21 +400,30 @@ public class OStorageRemote extends OStorageAbstract {
 		checkConnection();
 
 		do {
-			boolean locked = acquireExclusiveLock();
+			boolean locked = lock.acquireExclusiveLock();
 
 			try {
-				writeCommand(OChannelBinaryProtocol.REQUEST_DATACLUSTER_COUNT);
-				network.writeShort((short) iClusterIds.length);
-				for (int i = 0; i < iClusterIds.length; ++i)
-					network.writeShort((short) iClusterIds[i]);
-				network.readStatus();
-				return network.readLong();
+				try {
+					beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_COUNT);
+					network.writeShort((short) iClusterIds.length);
+					for (int i = 0; i < iClusterIds.length; ++i)
+						network.writeShort((short) iClusterIds[i]);
+				} finally {
+					endRequest();
+				}
+
+				try {
+					beginResponse();
+					return network.readLong();
+				} finally {
+					endResponse();
+				}
 			} catch (Exception e) {
 				if (handleException("Error on read record count in clusters: " + iClusterIds, e))
 					break;
 
 			} finally {
-				releaseExclusiveLock(locked);
+				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
 		return -1;
@@ -360,19 +433,28 @@ public class OStorageRemote extends OStorageAbstract {
 		checkConnection();
 
 		do {
-			boolean locked = acquireExclusiveLock();
+			boolean locked = lock.acquireExclusiveLock();
 
 			try {
-				writeCommand(OChannelBinaryProtocol.REQUEST_COUNT);
-				network.writeString(iClassName);
-				network.readStatus();
-				return network.readLong();
+				try {
+					beginRequest(OChannelBinaryProtocol.REQUEST_COUNT);
+					network.writeString(iClassName);
+				} finally {
+					endRequest();
+				}
+
+				try {
+					beginResponse();
+					return network.readLong();
+				} finally {
+					endResponse();
+				}
 			} catch (Exception e) {
 				if (handleException("Error on executing count on class: " + iClassName, e))
 					break;
 
 			} finally {
-				releaseExclusiveLock(locked);
+				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
 		return -1;
@@ -392,7 +474,7 @@ public class OStorageRemote extends OStorageAbstract {
 		Object result = null;
 
 		do {
-			boolean locked = acquireExclusiveLock();
+			boolean locked = lock.acquireExclusiveLock();
 
 			OStorageRemoteThreadLocal.INSTANCE.set(Boolean.TRUE);
 
@@ -401,60 +483,69 @@ public class OStorageRemote extends OStorageAbstract {
 
 				final boolean asynch = iCommand instanceof OCommandRequestAsynch;
 
-				writeCommand(OChannelBinaryProtocol.REQUEST_COMMAND);
-				network.writeByte((byte) (asynch ? 'a' : 's')); // ASYNC / SYNC
-				network.writeBytes(OStreamSerializerAnyStreamable.INSTANCE.toStream(iCommand.getDatabase(), command));
-				network.readStatus();
+				try {
+					beginRequest(OChannelBinaryProtocol.REQUEST_COMMAND);
+					network.writeByte((byte) (asynch ? 'a' : 's')); // ASYNC / SYNC
+					network.writeBytes(OStreamSerializerAnyStreamable.INSTANCE.toStream(iCommand.getDatabase(), command));
+				} finally {
+					endRequest();
+				}
 
-				if (asynch) {
-					byte status;
+				try {
+					beginResponse();
 
-					// ASYNCH: READ ONE RECORD AT TIME
-					while ((status = network.readByte()) > 0) {
-						ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) readRecordFromNetwork(iCommand.getDatabase());
-						if (record == null)
-							break;
+					if (asynch) {
+						byte status;
 
-						switch (status) {
-						case 1:
-							// PUT AS PART OF THE RESULT SET. INVOKE THE LISTENER
-							try {
-								if (!aquery.getResultListener().result(record)) {
-									// EMPTY THE INPUT CHANNEL
-									while (network.in.available() > 0)
-										network.in.read();
+						// ASYNCH: READ ONE RECORD AT TIME
+						while ((status = network.readByte()) > 0) {
+							ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) readRecordFromNetwork(iCommand.getDatabase());
+							if (record == null)
+								break;
 
-									break;
+							switch (status) {
+							case 1:
+								// PUT AS PART OF THE RESULT SET. INVOKE THE LISTENER
+								try {
+									if (!aquery.getResultListener().result(record)) {
+										// EMPTY THE INPUT CHANNEL
+										while (network.in.available() > 0)
+											network.in.read();
+
+										break;
+									}
+								} catch (Throwable t) {
+									// ABSORBE ALL THE USER EXCEPTIONS
+									t.printStackTrace();
 								}
-							} catch (Throwable t) {
-								// ABSORBE ALL THE USER EXCEPTIONS
-								t.printStackTrace();
+								break;
+
+							case 2:
+								// PUT IN THE CLIENT LOCAL CACHE
+								cache.pushRecord(record.getIdentity().toString(),
+										new ORawBuffer(record.toStream(), record.getVersion(), record.getRecordType()));
 							}
+						}
+					} else {
+						final byte type = network.readByte();
+						switch (type) {
+						case 'n':
+							result = null;
 							break;
 
-						case 2:
-							// PUT IN THE CLIENT LOCAL CACHE
-							cache.pushRecord(record.getIdentity().toString(),
-									new ORawBuffer(record.toStream(), record.getVersion(), record.getRecordType()));
+						case 'r':
+							result = readRecordFromNetwork(iCommand.getDatabase());
+							break;
+
+						case 'a':
+							result = OStreamSerializerAnyRuntime.INSTANCE.fromStream(iCommand.getDatabase(), network.readBytes());
+							break;
 						}
 					}
-				} else {
-					final byte type = network.readByte();
-					switch (type) {
-					case 'n':
-						result = null;
-						break;
-
-					case 'r':
-						result = readRecordFromNetwork(iCommand.getDatabase());
-						break;
-
-					case 'a':
-						result = OStreamSerializerAnyRuntime.INSTANCE.fromStream(iCommand.getDatabase(), network.readBytes());
-						break;
-					}
+					break;
+				} finally {
+					endResponse();
 				}
-				break;
 
 			} catch (Exception e) {
 				if (handleException("Error on executing command: " + iCommand, e))
@@ -463,7 +554,7 @@ public class OStorageRemote extends OStorageAbstract {
 			} finally {
 				OStorageRemoteThreadLocal.INSTANCE.set(Boolean.FALSE);
 
-				releaseExclusiveLock(locked);
+				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
 
@@ -474,48 +565,53 @@ public class OStorageRemote extends OStorageAbstract {
 		checkConnection();
 
 		do {
-			boolean locked = acquireExclusiveLock();
+			boolean locked = lock.acquireExclusiveLock();
 
 			try {
-				writeCommand(OChannelBinaryProtocol.REQUEST_TX_COMMIT);
-				network.writeInt(iTx.getId());
-				network.writeInt(iTx.size());
+				try {
+					beginRequest(OChannelBinaryProtocol.REQUEST_TX_COMMIT);
+					network.writeInt(iTx.getId());
+					network.writeInt(iTx.size());
 
-				for (OTransactionEntry<? extends ORecord<?>> txEntry : iTx.getEntries()) {
-					if (txEntry.status == OTransactionEntry.LOADED)
-						// JUMP LOADED OBJECTS
-						continue;
+					for (OTransactionEntry<? extends ORecord<?>> txEntry : iTx.getEntries()) {
+						if (txEntry.status == OTransactionEntry.LOADED)
+							// JUMP LOADED OBJECTS
+							continue;
 
-					network.writeByte(txEntry.status);
-					network.writeShort((short) txEntry.getRecord().getIdentity().getClusterId());
-					network.writeByte(txEntry.getRecord().getRecordType());
+						network.writeByte(txEntry.status);
+						network.writeShort((short) txEntry.getRecord().getIdentity().getClusterId());
+						network.writeByte(txEntry.getRecord().getRecordType());
 
-					switch (txEntry.status) {
-					case OTransactionEntry.CREATED:
-						network.writeString(txEntry.clusterName);
-						network.writeBytes(txEntry.getRecord().toStream());
-						break;
+						switch (txEntry.status) {
+						case OTransactionEntry.CREATED:
+							network.writeString(txEntry.clusterName);
+							network.writeBytes(txEntry.getRecord().toStream());
+							break;
 
-					case OTransactionEntry.UPDATED:
-						network.writeLong(txEntry.getRecord().getIdentity().getClusterPosition());
-						network.writeInt(txEntry.getRecord().getVersion());
-						network.writeBytes(txEntry.getRecord().toStream());
-						break;
+						case OTransactionEntry.UPDATED:
+							network.writeLong(txEntry.getRecord().getIdentity().getClusterPosition());
+							network.writeInt(txEntry.getRecord().getVersion());
+							network.writeBytes(txEntry.getRecord().toStream());
+							break;
 
-					case OTransactionEntry.DELETED:
-						network.writeLong(txEntry.getRecord().getIdentity().getClusterPosition());
-						network.writeInt(txEntry.getRecord().getVersion());
-						break;
+						case OTransactionEntry.DELETED:
+							network.writeLong(txEntry.getRecord().getIdentity().getClusterPosition());
+							network.writeInt(txEntry.getRecord().getVersion());
+							break;
+						}
 					}
+				} finally {
+					endRequest();
 				}
-				network.readStatus();
+
+				getResponse();
 				break;
 			} catch (Exception e) {
 				if (handleException("Error on commit", e))
 					break;
 
 			} finally {
-				releaseExclusiveLock(locked);
+				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
 	}
@@ -529,7 +625,7 @@ public class OStorageRemote extends OStorageAbstract {
 		if (Character.isDigit(iClusterName.charAt(0)))
 			return Integer.parseInt(iClusterName);
 
-		boolean locked = acquireSharedLock();
+		boolean locked = lock.acquireSharedLock();
 
 		try {
 			final Integer id = clustersIds.get(iClusterName.toLowerCase());
@@ -539,7 +635,7 @@ public class OStorageRemote extends OStorageAbstract {
 			return id;
 
 		} finally {
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 		}
 	}
 
@@ -549,13 +645,13 @@ public class OStorageRemote extends OStorageAbstract {
 		if (iClusterName == null)
 			return null;
 
-		boolean locked = acquireSharedLock();
+		boolean locked = lock.acquireSharedLock();
 
 		try {
 			return clustersTypes.get(iClusterName.toLowerCase());
 
 		} finally {
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 		}
 	}
 
@@ -567,37 +663,46 @@ public class OStorageRemote extends OStorageAbstract {
 		checkConnection();
 
 		do {
-			boolean locked = acquireExclusiveLock();
+			boolean locked = lock.acquireExclusiveLock();
 
 			try {
-				writeCommand(OChannelBinaryProtocol.REQUEST_DATACLUSTER_ADD);
-				network.writeString(iClusterType.toString());
-				network.writeString(iClusterName);
+				try {
+					beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_ADD);
+					network.writeString(iClusterType.toString());
+					network.writeString(iClusterName);
 
-				switch (iClusterType) {
-				case PHYSICAL:
-					// FILE PATH + START SIZE
-					network.writeString(iArguments.length > 0 ? (String) iArguments[0] : "").writeInt(
-							iArguments.length > 0 ? (Integer) iArguments[1] : -1);
-					break;
+					switch (iClusterType) {
+					case PHYSICAL:
+						// FILE PATH + START SIZE
+						network.writeString(iArguments.length > 0 ? (String) iArguments[0] : "").writeInt(
+								iArguments.length > 0 ? (Integer) iArguments[1] : -1);
+						break;
 
-				case LOGICAL:
-					// PHY CLUSTER ID
-					network.writeInt(iArguments.length > 0 ? (Integer) iArguments[0] : -1);
-					break;
+					case LOGICAL:
+						// PHY CLUSTER ID
+						network.writeInt(iArguments.length > 0 ? (Integer) iArguments[0] : -1);
+						break;
+					}
+				} finally {
+					endRequest();
 				}
-				network.readStatus();
 
-				int clusterId = network.readShort();
-				clustersIds.put(iClusterName.toLowerCase(), clusterId);
-				clustersTypes.put(iClusterName.toLowerCase(), iClusterType.toString());
-				return clusterId;
+				try {
+					beginResponse();
+					final int clusterId = network.readShort();
+
+					clustersIds.put(iClusterName.toLowerCase(), clusterId);
+					clustersTypes.put(iClusterName.toLowerCase(), iClusterType.toString());
+					return clusterId;
+				} finally {
+					endResponse();
+				}
 			} catch (Exception e) {
 				if (handleException("Error on add new cluster", e))
 					break;
 
 			} finally {
-				releaseExclusiveLock(locked);
+				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
 		return 0;
@@ -607,32 +712,41 @@ public class OStorageRemote extends OStorageAbstract {
 		checkConnection();
 
 		do {
-			boolean locked = acquireExclusiveLock();
+			boolean locked = lock.acquireExclusiveLock();
 
 			try {
-				writeCommand(OChannelBinaryProtocol.REQUEST_DATACLUSTER_REMOVE);
-				network.writeShort((short) iClusterId);
-
-				network.readStatus();
-
-				if (network.readByte() == '1') {
-					// REMOVE THE CLUSTER LOCALLY
-					for (Entry<String, Integer> entry : clustersIds.entrySet())
-						if (entry.getValue() != null && entry.getValue().intValue() == iClusterId) {
-							clustersIds.remove(entry.getKey());
-							clustersTypes.remove(entry.getKey());
-							break;
-						}
-
-					return true;
+				try {
+					beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_REMOVE);
+					network.writeShort((short) iClusterId);
+				} finally {
+					endRequest();
 				}
-				return false;
+
+				try {
+					beginResponse();
+
+					if (network.readByte() == 1) {
+						// REMOVE THE CLUSTER LOCALLY
+						for (Entry<String, Integer> entry : clustersIds.entrySet())
+							if (entry.getValue() != null && entry.getValue().intValue() == iClusterId) {
+								clustersIds.remove(entry.getKey());
+								clustersTypes.remove(entry.getKey());
+								break;
+							}
+
+						return true;
+					}
+					return false;
+				} finally {
+					endResponse();
+				}
+
 			} catch (Exception e) {
 				if (handleException("Error on removing of cluster", e))
 					break;
 
 			} finally {
-				releaseExclusiveLock(locked);
+				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
 		return false;
@@ -646,32 +760,42 @@ public class OStorageRemote extends OStorageAbstract {
 		checkConnection();
 
 		do {
-			boolean locked = acquireExclusiveLock();
+			boolean locked = lock.acquireExclusiveLock();
 
 			try {
-				writeCommand(OChannelBinaryProtocol.REQUEST_DATASEGMENT_ADD);
-				network.writeString(iSegmentName).writeString(iSegmentFileName);
-				network.readStatus();
-				return network.readShort();
+				try {
+					beginRequest(OChannelBinaryProtocol.REQUEST_DATASEGMENT_ADD);
+					network.writeString(iSegmentName).writeString(iSegmentFileName);
+				} finally {
+					endRequest();
+				}
+
+				try {
+					beginResponse();
+					return network.readShort();
+				} finally {
+					endResponse();
+				}
+
 			} catch (Exception e) {
 				if (handleException("Error on add new data segment", e))
 					break;
 
 			} finally {
-				releaseExclusiveLock(locked);
+				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
 		return 0;
 	}
 
 	public int getSessionId() {
-		boolean locked = acquireSharedLock();
+		boolean locked = lock.acquireSharedLock();
 
 		try {
 			return txId;
 
 		} finally {
-			releaseSharedLock(locked);
+			lock.releaseSharedLock(locked);
 		}
 	}
 
@@ -680,26 +804,34 @@ public class OStorageRemote extends OStorageAbstract {
 		checkConnection();
 
 		do {
-			boolean locked = acquireExclusiveLock();
+			boolean locked = lock.acquireExclusiveLock();
 
 			try {
 				final ORID rid = iRecord.getIdentity();
 
-				writeCommand(OChannelBinaryProtocol.REQUEST_DICTIONARY_PUT);
-				network.writeString(iKey);
-				network.writeByte(iRecord.getRecordType());
-				network.writeShort((short) rid.getClusterId());
-				network.writeLong(rid.getClusterPosition());
-				network.readStatus();
+				try {
+					beginRequest(OChannelBinaryProtocol.REQUEST_DICTIONARY_PUT);
+					network.writeString(iKey);
+					network.writeByte(iRecord.getRecordType());
+					network.writeShort((short) rid.getClusterId());
+					network.writeLong(rid.getClusterPosition());
+				} finally {
+					endRequest();
+				}
 
-				return (REC) readRecordFromNetwork(iDatabase);
+				try {
+					beginResponse();
+					return (REC) readRecordFromNetwork(iDatabase);
+				} finally {
+					endResponse();
+				}
 
 			} catch (Exception e) {
 				if (handleException("Error on insert record with key: " + iKey, e))
 					break;
 
 			} finally {
-				releaseExclusiveLock(locked);
+				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
 		return null;
@@ -709,21 +841,29 @@ public class OStorageRemote extends OStorageAbstract {
 		checkConnection();
 
 		do {
-			boolean locked = acquireExclusiveLock();
+			boolean locked = lock.acquireExclusiveLock();
 
 			try {
-				writeCommand(OChannelBinaryProtocol.REQUEST_DICTIONARY_LOOKUP);
-				network.writeString(iKey);
-				network.readStatus();
+				try {
+					beginRequest(OChannelBinaryProtocol.REQUEST_DICTIONARY_LOOKUP);
+					network.writeString(iKey);
+				} finally {
+					endRequest();
+				}
 
-				return (REC) readRecordFromNetwork(iDatabase);
+				try {
+					beginResponse();
+					return (REC) readRecordFromNetwork(iDatabase);
+				} finally {
+					endResponse();
+				}
 
 			} catch (Exception e) {
 				if (handleException("Error on lookup record with key: " + iKey, e))
 					break;
 
 			} finally {
-				releaseExclusiveLock(locked);
+				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
 		return null;
@@ -733,21 +873,29 @@ public class OStorageRemote extends OStorageAbstract {
 		checkConnection();
 
 		do {
-			boolean locked = acquireExclusiveLock();
+			boolean locked = lock.acquireExclusiveLock();
 
 			try {
-				writeCommand(OChannelBinaryProtocol.REQUEST_DICTIONARY_REMOVE);
-				network.writeString(iKey.toString());
-				network.readStatus();
+				try {
+					beginRequest(OChannelBinaryProtocol.REQUEST_DICTIONARY_REMOVE);
+					network.writeString(iKey.toString());
+				} finally {
+					endRequest();
+				}
 
-				return (REC) readRecordFromNetwork(iDatabase);
+				try {
+					beginResponse();
+					return (REC) readRecordFromNetwork(iDatabase);
+				} finally {
+					endResponse();
+				}
 
 			} catch (Exception e) {
 				if (handleException("Error on lookup record with key: " + iKey, e))
 					break;
 
 			} finally {
-				releaseExclusiveLock(locked);
+				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
 		return null;
@@ -757,18 +905,28 @@ public class OStorageRemote extends OStorageAbstract {
 		checkConnection();
 
 		do {
-			boolean locked = acquireExclusiveLock();
+			boolean locked = lock.acquireExclusiveLock();
 
 			try {
-				writeCommand(OChannelBinaryProtocol.REQUEST_DICTIONARY_SIZE);
-				network.readStatus();
-				return network.readInt();
+				try {
+					beginRequest(OChannelBinaryProtocol.REQUEST_DICTIONARY_SIZE);
+				} finally {
+					endRequest();
+				}
+
+				try {
+					beginResponse();
+					return network.readInt();
+				} finally {
+					endResponse();
+				}
+
 			} catch (Exception e) {
 				if (handleException("Error on getting size of database's dictionary", e))
 					break;
 
 			} finally {
-				releaseExclusiveLock(locked);
+				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
 		return -1;
@@ -782,18 +940,28 @@ public class OStorageRemote extends OStorageAbstract {
 		checkConnection();
 
 		do {
-			boolean locked = acquireExclusiveLock();
+			boolean locked = lock.acquireExclusiveLock();
 
 			try {
-				writeCommand(OChannelBinaryProtocol.REQUEST_DICTIONARY_KEYS);
-				network.readStatus();
-				return network.readStringSet();
+				try {
+					beginRequest(OChannelBinaryProtocol.REQUEST_DICTIONARY_KEYS);
+				} finally {
+					endRequest();
+				}
+
+				try {
+					beginResponse();
+					return network.readStringSet();
+				} finally {
+					endResponse();
+				}
+
 			} catch (Exception e) {
 				if (handleException("Error on getting keys of database's dictionary", e))
 					break;
 
 			} finally {
-				releaseExclusiveLock(locked);
+				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
 		return null;
@@ -816,6 +984,10 @@ public class OStorageRemote extends OStorageAbstract {
 
 	public OCluster getClusterById(final int iId) {
 		throw new UnsupportedOperationException("getClusterById()");
+	}
+
+	public long getVersion() {
+		throw new UnsupportedOperationException("getVersion");
 	}
 
 	protected boolean handleException(final String iMessage, final Exception iException) {
@@ -862,19 +1034,28 @@ public class OStorageRemote extends OStorageAbstract {
 		parseServerURLs();
 		createNetworkConnection();
 
-		writeCommand(OChannelBinaryProtocol.REQUEST_DB_OPEN);
-		network.writeString(name).writeString(userName).writeString(userPassword);
-		network.readStatus();
+		try {
+			beginRequest(OChannelBinaryProtocol.REQUEST_DB_OPEN);
+			network.writeString(name).writeString(userName).writeString(userPassword);
+		} finally {
+			endRequest();
+		}
 
-		txId = network.readInt();
-		OLogManager.instance().debug(null, "Client connected with session id: " + txId);
+		try {
+			beginResponse();
 
-		int tot = network.readInt();
-		String clusterName;
-		for (int i = 0; i < tot; ++i) {
-			clusterName = network.readString().toLowerCase();
-			clustersIds.put(clusterName, network.readInt());
-			clustersTypes.put(clusterName, network.readString());
+			txId = network.readInt();
+			OLogManager.instance().debug(null, "Client connected with session id: " + txId);
+
+			int tot = network.readInt();
+			String clusterName;
+			for (int i = 0; i < tot; ++i) {
+				clusterName = network.readString().toLowerCase();
+				clustersIds.put(clusterName, network.readInt());
+				clustersTypes.put(clusterName, network.readString());
+			}
+		} finally {
+			endResponse();
 		}
 
 		defaultClusterId = clustersIds.get(OStorage.CLUSTER_DEFAULT_NAME);
@@ -882,7 +1063,7 @@ public class OStorageRemote extends OStorageAbstract {
 		open = true;
 	}
 
-	public OChannelBinaryClient getNetwork() {
+	public OChannelBinaryAsynch getNetwork() {
 		return network;
 	}
 
@@ -939,15 +1120,20 @@ public class OStorageRemote extends OStorageAbstract {
 
 	protected void createNetworkConnection() throws IOException, UnknownHostException {
 		int port;
-
 		for (OPair<String, String[]> server : serverURLs) {
 			port = Integer.parseInt(server.getValue()[server.getValue().length - 1]);
 
 			OLogManager.instance().debug(this, "Trying to connect to the remote host %s:%d...", server.getKey(), port);
 			try {
 				network = new OChannelBinaryClient(server.getKey(), port, clientConfiguration);
+
+				OChannelBinaryProtocol.checkProtocolVersion(network);
+
+				serviceThread = new OStorageRemoteServiceThread(this);
+
 				return;
 			} catch (Exception e) {
+				e.printStackTrace();
 			}
 		}
 
@@ -962,7 +1148,7 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	protected void checkConnection() {
-		if (getNetwork() == null)
+		if (network == null)
 			throw new ODatabaseException("Connection is closed");
 	}
 
@@ -984,12 +1170,42 @@ public class OStorageRemote extends OStorageAbstract {
 		return record;
 	}
 
-	protected void writeCommand(final byte iCommand) throws IOException {
+	protected void beginRequest(final byte iCommand) throws IOException {
+		network.addRequester(this);
+
+		network.getLockWrite().lock();
 		network.writeByte(iCommand);
 		network.writeInt(txId);
 	}
 
-	public long getVersion() {
-		throw new UnsupportedOperationException("getVersion");
+	public void endRequest() throws IOException {
+		network.flush();
+		network.getLockWrite().unlock();
+	}
+
+	protected void beginResponse() throws IOException {
+		network.readStatus(this);
+	}
+
+	public void endResponse() {
+		network.getLockRead().unlock();
+	}
+
+	@Override
+	public int getRequesterId() {
+		return txId;
+	}
+
+	@Override
+	public SynchronousQueue<Object> getRequesterResponseQueue() {
+		return responseQueue;
+	}
+
+	protected void getResponse() throws IOException {
+		try {
+			beginResponse();
+		} finally {
+			endResponse();
+		}
 	}
 }

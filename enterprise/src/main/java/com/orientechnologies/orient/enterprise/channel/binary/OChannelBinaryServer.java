@@ -50,4 +50,9 @@ public class OChannelBinaryServer extends OChannelBinary {
 		out = new DataOutputStream(outStream);
 		in = new DataInputStream(inStream);
 	}
+
+	@Override
+	protected void setRequestResult(int iClientTxId, Object iResult) {
+		throw new IllegalStateException("OChannelBinaryServer.getRequester");
+	}
 }

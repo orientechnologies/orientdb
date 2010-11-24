@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.exception.ONetworkProtocolException;
 
-public class OChannelBinary extends OChannel {
+public abstract class OChannelBinary extends OChannel {
 	public DataInputStream	in;
 	public DataOutputStream	out;
 	private final int				maxChunkSize;
@@ -48,6 +48,8 @@ public class OChannelBinary extends OChannel {
 		debug = iConfig.getValueAsBoolean(OGlobalConfiguration.NETWORK_BINARY_DEBUG);
 		buffer = new byte[maxChunkSize];
 	}
+
+	protected abstract void setRequestResult(final int iClientTxId, final Object iResult);
 
 	public byte readByte() throws IOException {
 		if (debug) {
@@ -180,22 +182,38 @@ public class OChannelBinary extends OChannel {
 	}
 
 	public void writeByte(final byte iContent) throws IOException {
+		if (debug)
+			OLogManager.instance().debug(this, "Writing byte (1 byte): %d", iContent);
+
 		out.write(iContent);
 	}
 
 	public void writeInt(final int iContent) throws IOException {
+		if (debug)
+			OLogManager.instance().debug(this, "Writing int (4 bytes): %d", iContent);
+
 		out.writeInt(iContent);
 	}
 
 	public void writeLong(final long iContent) throws IOException {
+		if (debug)
+			OLogManager.instance().debug(this, "Writing long (8 bytes): %l", iContent);
+
 		out.writeLong(iContent);
 	}
 
 	public void writeShort(final short iContent) throws IOException {
+		if (debug)
+			OLogManager.instance().debug(this, "Writing long (2 bytes): %d", iContent);
+
 		out.writeShort(iContent);
 	}
 
 	public OChannelBinary writeString(final String iContent) throws IOException {
+		if (debug)
+			OLogManager.instance().debug(this, "Writing string (4+%d=%d bytes): %s", iContent != null ? iContent.length() : 0,
+					iContent != null ? iContent.length() + 4 : 4, iContent);
+
 		if (iContent == null)
 			out.writeInt(-1);
 		else
@@ -208,6 +226,10 @@ public class OChannelBinary extends OChannel {
 	 * Send byte arrays split in chunks of maxChunkSize bytes
 	 */
 	public OChannelBinary writeBytes(final byte[] iContent) throws IOException {
+		if (debug)
+			OLogManager.instance().debug(this, "Writing bytes (4+%d=%d bytes): %s", iContent != null ? iContent.length : 0,
+					iContent != null ? iContent.length + 4 : 4, iContent);
+
 		if (iContent == null) {
 			out.writeInt(-1);
 		} else {
@@ -218,6 +240,10 @@ public class OChannelBinary extends OChannel {
 	}
 
 	public OChannelBinary writeCollectionString(final Collection<String> iCollection) throws IOException {
+		if (debug)
+			OLogManager.instance().debug(this, "Writing strings (4+%d=%d items): %s", iCollection != null ? iCollection.size() : 0,
+					iCollection != null ? iCollection.size() + 4 : 4, iCollection.toString());
+
 		if (iCollection == null)
 			writeInt(-1);
 		else {
@@ -248,12 +274,14 @@ public class OChannelBinary extends OChannel {
 	@Override
 	public void close() {
 		try {
-			in.close();
+			if (in != null)
+				in.close();
 		} catch (IOException e) {
 		}
 
 		try {
-			out.close();
+			if (out != null)
+				out.close();
 		} catch (IOException e) {
 		}
 
@@ -261,13 +289,14 @@ public class OChannelBinary extends OChannel {
 	}
 
 	public int readStatus() throws IOException {
-		flush();
+		// READ THE RESPONSE
 		final byte result = readByte();
-
-		// TODO: USE THIS TO ROUTE TO THE REQUESTER TX THREAD
 		final int clientTxId = readInt();
 
-		if (result == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
+		if (result == OChannelBinaryProtocol.RESPONSE_STATUS_OK) {
+			setRequestResult(clientTxId, OChannelBinaryProtocol.RESPONSE_STATUS_OK);
+
+		} else if (result == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
 			StringBuilder buffer = new StringBuilder();
 			String rootClassName = null;
 
@@ -289,12 +318,13 @@ public class OChannelBinary extends OChannel {
 			}
 
 			if (rootClassName != null)
-				throw createException(rootClassName, buffer.toString());
-
-			throw new ONetworkProtocolException("Network response error: " + buffer.toString());
-		} else if (result != OChannelBinaryProtocol.RESPONSE_STATUS_OK) {
+				setRequestResult(clientTxId, createException(rootClassName, buffer.toString()));
+			else {
+				setRequestResult(clientTxId, new ONetworkProtocolException("Network response error: " + buffer.toString()));
+			}
+		} else {
 			// PROTOCOL ERROR
-			clearInput();
+			close();
 			throw new ONetworkProtocolException("Error on reading response from the server");
 		}
 

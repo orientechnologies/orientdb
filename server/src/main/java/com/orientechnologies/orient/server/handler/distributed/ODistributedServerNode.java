@@ -30,7 +30,9 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.tx.OTransactionEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClientSynch;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryOutputStream;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 
 /**
@@ -54,6 +56,7 @@ public class ODistributedServerNode implements OCommandOutputListener {
 	private volatile STATUS															status					= STATUS.DISCONNECTED;
 	private Map<String, Long>														storages				= new HashMap<String, Long>();
 	private List<OTransactionEntry<ORecordInternal<?>>>	bufferedChanges	= new ArrayList<OTransactionEntry<ORecordInternal<?>>>();
+	private int																					clientTxId			= 0;
 
 	public ODistributedServerNode(final ODistributedServerManager iNode, final String iServerAddress, final int iServerPort) {
 		manager = iNode;
@@ -67,7 +70,9 @@ public class ODistributedServerNode implements OCommandOutputListener {
 
 	public void connect(final int iTimeout) throws IOException {
 		configuration.setValue(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT, iTimeout);
-		channel = new OChannelBinaryClient(networkAddress, networkPort, configuration);
+		channel = new OChannelBinaryClientSynch(networkAddress, networkPort, configuration);
+
+		OChannelBinaryProtocol.checkProtocolVersion(channel);
 
 		OLogManager.instance().info(this, "Connecting to remote cluster node %s:%d...", networkAddress, networkPort);
 
@@ -111,7 +116,7 @@ public class ODistributedServerNode implements OCommandOutputListener {
 						channel.writeByte(record.getRecordType());
 						channel.flush();
 
-						channel.readStatus();
+						readStatus();
 
 					} finally {
 						channel.releaseExclusiveLock();
@@ -260,6 +265,7 @@ public class ODistributedServerNode implements OCommandOutputListener {
 			OLogManager.instance().info(this, "Database exported correctly");
 
 			channel.readStatus();
+			clientTxId = channel.readInt();
 
 			manager.addServerInConfiguration(iRemoteServerName, iRemoteServerName, iSynchronousMode);
 

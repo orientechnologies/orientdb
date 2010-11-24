@@ -27,18 +27,19 @@ import java.net.SocketAddress;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
-public class OChannelBinaryClient extends OChannelBinary {
-	protected int	timeout	= 5000; // IN MS
+public class OChannelBinaryClient extends OChannelBinaryAsynch {
+	final protected int	timeout;	// IN MS
 
-	public OChannelBinaryClient(String remoteHost, int remotePort, final OContextConfiguration iConfig) throws IOException {
+	public OChannelBinaryClient(final String remoteHost, final int remotePort, final OContextConfiguration iConfig)
+			throws IOException {
 		super(new Socket(), iConfig);
 		timeout = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
 
 		socket.setPerformancePreferences(0, 2, 1);
-		socket.setSendBufferSize(socketBufferSize);
-		socket.setReceiveBufferSize(socketBufferSize);
 
 		socket.connect(new InetSocketAddress(remoteHost, remotePort), timeout);
+		socket.setSendBufferSize(socketBufferSize);
+		socket.setReceiveBufferSize(socketBufferSize);
 
 		inStream = new BufferedInputStream(socket.getInputStream(), socketBufferSize);
 		outStream = new BufferedOutputStream(socket.getOutputStream(), socketBufferSize);
