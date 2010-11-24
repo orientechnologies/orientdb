@@ -55,7 +55,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 	public static final String								ATTRIBUTE_VERSION	= "@version";
 	public static final String								ATTRIBUTE_TYPE		= "@type";
 	public static final String								ATTRIBUTE_CLASS		= "@class";
-	public static final String								DEF_DATE_FORMAT		= "yyyy-MM-dd hh:mm:ss:SSS";
+	public static final String								DEF_DATE_FORMAT		= "yyyy-MM-dd HH:mm:ss:SSS";
 
 	private SimpleDateFormat									dateFormat				= new SimpleDateFormat(DEF_DATE_FORMAT);
 

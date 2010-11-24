@@ -29,18 +29,18 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * 
  */
 public abstract class ODatabaseImpExpAbstract {
-	protected ODatabaseRecord<?>	database;
-	protected String							fileName;
+	protected ODatabaseRecord<?>			database;
+	protected String									fileName;
 
-	protected boolean							includeInfo				= true;
-	protected Set<String>					includeClusters;
-	protected Set<String>					excludeClusters;
-	protected Set<String>					includeClasses;
-	protected Set<String>					excludeClasses;
-	protected boolean							includeSchema			= true;
-	protected boolean							includeSecurity		= false;
-	protected boolean							includeDictionary	= true;
-	protected OCommandOutputListener		listener;
+	protected boolean									includeInfo				= true;
+	protected Set<String>							includeClusters;
+	protected Set<String>							excludeClusters;
+	protected Set<String>							includeClasses;
+	protected Set<String>							excludeClasses;
+	protected boolean									includeSchema			= true;
+	protected boolean									includeSecurity		= false;
+	protected boolean									includeDictionary	= true;
+	protected OCommandOutputListener	listener;
 
 	public ODatabaseImpExpAbstract(final ODatabaseRecord<?> iDatabase, final String iFileName, final OCommandOutputListener iListener) {
 		database = iDatabase;
