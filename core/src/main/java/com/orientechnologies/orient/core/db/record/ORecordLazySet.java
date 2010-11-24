@@ -18,6 +18,8 @@ package com.orientechnologies.orient.core.db.record;
 import java.util.HashSet;
 import java.util.Iterator;
 
+import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -35,7 +37,8 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 public class ORecordLazySet extends ORecordTrackedSet {
 	private final ODatabaseRecord<?>	database;
 	private final byte								recordType;
-	private boolean										converted	= false;
+	private boolean										converted				= false;
+	private boolean										convertToRecord	= true;
 
 	public ORecordLazySet(final ODatabaseRecord<?> iDatabase, final byte iRecordType) {
 		super(null);
@@ -51,7 +54,7 @@ public class ORecordLazySet extends ORecordTrackedSet {
 
 	@Override
 	public Iterator<Object> iterator() {
-		return new OLazyRecordIterator(sourceRecord, recordType, super.iterator());
+		return new OLazyRecordIterator(sourceRecord, recordType, super.iterator(), convertToRecord);
 	}
 
 	@Override
@@ -84,7 +87,7 @@ public class ORecordLazySet extends ORecordTrackedSet {
 	 * Browse all the set to convert all the items.
 	 */
 	public void convertAll() {
-		if (converted)
+		if (converted || !convertToRecord)
 			return;
 
 		HashSet<Object> copy = new HashSet<Object>();
@@ -99,15 +102,35 @@ public class ORecordLazySet extends ORecordTrackedSet {
 		converted = true;
 	}
 
+	@Override
+	public String toString() {
+		return OMultiValue.toString(this);
+	}
+
+	public boolean isConvertToRecord() {
+		return convertToRecord;
+	}
+
+	public void setConvertToRecord(boolean convertToRecord) {
+		this.convertToRecord = convertToRecord;
+	}
+
 	protected Object convert(final Object iElement) {
+		if (converted || !convertToRecord)
+			return iElement;
+
 		if (iElement != null && iElement instanceof ORecordId) {
 			final ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
 			final ORecordId rid = (ORecordId) iElement;
 
 			record.setDatabase(database);
 			record.setIdentity(rid);
-			record.load();
-			return record;
+
+			try {
+				record.load();
+			} catch (ORecordNotFoundException e) {
+				// IGNORE THIS
+			}
 		}
 		return iElement;
 	}

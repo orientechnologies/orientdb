@@ -33,11 +33,14 @@ public class OLazyRecordIterator implements Iterator<Object> {
 	final private ORecord<?>	sourceRecord;
 	final private Iterator<?>	underlying;
 	final private byte				recordType;
+	final private boolean			convertToRecord;
 
-	public OLazyRecordIterator(final ORecord<?> iSourceRecord, final byte iRecordType, final Iterator<?> iIterator) {
+	public OLazyRecordIterator(final ORecord<?> iSourceRecord, final byte iRecordType, final Iterator<?> iIterator,
+			final boolean iConvertToRecord) {
 		this.sourceRecord = iSourceRecord;
 		this.underlying = iIterator;
 		this.recordType = iRecordType;
+		this.convertToRecord = iConvertToRecord;
 	}
 
 	public Object next() {
@@ -46,13 +49,15 @@ public class OLazyRecordIterator implements Iterator<Object> {
 		if (value == null)
 			return null;
 
-		if (value instanceof ORecordId) {
-			ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
-			record.setDatabase(sourceRecord.getDatabase());
-			record.setIdentity((ORecordId) value);
-			record.load();
-			return record;
-		}
+		if (sourceRecord != null && sourceRecord.getDatabase() != null)
+			if (value instanceof ORecordId && convertToRecord) {
+				ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
+				record.setDatabase(sourceRecord.getDatabase());
+				record.setIdentity((ORecordId) value);
+
+				record.load();
+				return record;
+			}
 
 		return value;
 	}

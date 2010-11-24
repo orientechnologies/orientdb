@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.db.record;
 
 import java.util.Iterator;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -35,7 +36,8 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 public class ORecordLazyList extends ORecordTrackedList {
 	final private byte								recordType;
 	final private ODatabaseRecord<?>	database;
-	private boolean										converted	= false;
+	private boolean										converted				= false;
+	private boolean										convertToRecord	= true;
 
 	public ORecordLazyList(ODatabaseRecord<?> iDatabase, final byte iRecordType) {
 		super(null);
@@ -51,7 +53,7 @@ public class ORecordLazyList extends ORecordTrackedList {
 
 	@Override
 	public Iterator<Object> iterator() {
-		return new OLazyRecordIterator(sourceRecord, recordType, super.iterator());
+		return new OLazyRecordIterator(sourceRecord, recordType, super.iterator(), convertToRecord);
 	}
 
 	@Override
@@ -105,7 +107,10 @@ public class ORecordLazyList extends ORecordTrackedList {
 	}
 
 	public void convertAll() {
-		if (converted)
+		if (converted || !convertToRecord)
+			return;
+
+		if (sourceRecord.getDatabase() == null)
 			return;
 
 		for (int i = 0; i < size(); ++i) {
@@ -119,6 +124,14 @@ public class ORecordLazyList extends ORecordTrackedList {
 		converted = true;
 	}
 
+	public boolean isConvertToRecord() {
+		return convertToRecord;
+	}
+
+	public void setConvertToRecord(boolean convertToDocument) {
+		this.convertToRecord = convertToDocument;
+	}
+
 	/**
 	 * Convert the item requested.
 	 * 
@@ -126,6 +139,12 @@ public class ORecordLazyList extends ORecordTrackedList {
 	 *          Position of the item to convert
 	 */
 	private void convert(final int iIndex) {
+		if (converted || !convertToRecord)
+			return;
+
+		if (sourceRecord == null || sourceRecord.getDatabase() == null)
+			return;
+
 		final Object o = super.get(iIndex);
 
 		if (o != null && o instanceof ORecordId) {
@@ -135,8 +154,17 @@ public class ORecordLazyList extends ORecordTrackedList {
 			record.setDatabase(database);
 			record.setIdentity(rid);
 
-			record.load();
-			super.set(iIndex, record);
+			try {
+				record.load();
+				super.set(iIndex, record);
+			} catch (ORecordNotFoundException e) {
+				// IGNORE THIS
+			}
 		}
+	}
+
+	@Override
+	public String toString() {
+		return OMultiValue.toString(this);
 	}
 }

@@ -17,6 +17,8 @@ package com.orientechnologies.orient.core.db.record;
 
 import java.util.Collection;
 
+import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -33,7 +35,8 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 @SuppressWarnings("serial")
 public class ORecordLazyMap extends ORecordTrackedMap {
 	final private byte	recordType;
-	private boolean			converted	= false;
+	private boolean			converted				= false;
+	private boolean			convertToRecord	= true;
 
 	public ORecordLazyMap(final ORecord<?> iSourceRecord, final byte iRecordType) {
 		super(iSourceRecord);
@@ -70,8 +73,24 @@ public class ORecordLazyMap extends ORecordTrackedMap {
 		return super.values();
 	}
 
+	@Override
+	public String toString() {
+		return OMultiValue.toString(this);
+	}
+
+	public boolean isConvertToRecord() {
+		return convertToRecord;
+	}
+
+	public void setConvertToRecord(boolean convertToRecord) {
+		this.convertToRecord = convertToRecord;
+	}
+
 	private void convertAll() {
-		if (converted)
+		if (converted || !convertToRecord)
+			return;
+
+		if (sourceRecord.getDatabase() == null)
 			return;
 
 		for (String key : super.keySet())
@@ -86,6 +105,12 @@ public class ORecordLazyMap extends ORecordTrackedMap {
 	 *          Position of the item to convert
 	 */
 	private void convert(final String iKey) {
+		if (converted || !convertToRecord)
+			return;
+
+		if (sourceRecord.getDatabase() == null)
+			return;
+
 		final Object o = super.get(iKey);
 
 		if (o != null && o instanceof ORecordId) {
@@ -94,9 +119,13 @@ public class ORecordLazyMap extends ORecordTrackedMap {
 
 			record.setDatabase(sourceRecord.getDatabase());
 			record.setIdentity(rid);
-			record.load();
 
-			super.put(iKey, record);
+			try {
+				record.load();
+				super.put(iKey, record);
+			} catch (ORecordNotFoundException e) {
+				// IGNORE THIS
+			}
 		}
 	}
 }
