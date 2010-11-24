@@ -635,7 +635,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			@ConsoleParameter(name = "db-name", description = "Name of the database to share") final String iDatabaseName,
 			@ConsoleParameter(name = "db-user", description = "Database user") final String iDatabaseUserName,
 			@ConsoleParameter(name = "db-password", description = "Database password") String iDatabaseUserPassword,
-			@ConsoleParameter(name = "remote-server-name", description = "Remote server's name as <address>:<port>") final String iRemoteName,
+			@ConsoleParameter(name = "server-name", description = "Remote server's name as <address>:<port>") final String iRemoteName,
 			@ConsoleParameter(name = "mode", description = "replication mode: 'synch' or 'asynch'") final String iMode)
 			throws IOException {
 

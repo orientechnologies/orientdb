@@ -216,7 +216,7 @@ public class CRUDDocumentPhysicalTest {
 
 		final ODocument loadedDoc = database.load(rid);
 
-//		Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
+		Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
 
 		Assert.assertTrue(loadedDoc.containsField("map1"));
 		Assert.assertTrue(loadedDoc.field("map1") instanceof Map<?, ?>);
