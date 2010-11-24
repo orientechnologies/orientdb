@@ -48,13 +48,13 @@ public class DbCreationTest {
 		if (url.startsWith(OEngineRemote.NAME)) {
 
 			// LAOD SERVER CONFIG FILE TO EXTRACT THE ROOT'S PASSWORD
-			File file = new File(OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/orientdb-server-config.xml"));
-			if (!file.exists())
-				file = new File("../releases/" + OConstants.ORIENT_VERSION + "/db/config/orientdb-server-config.xml");
+			File file = new File("../releases/" + OConstants.ORIENT_VERSION + "/db/config/orientdb-server-config.xml");
 			if (!file.exists())
 				file = new File("server/config/orientdb-server-config.xml");
 			if (!file.exists())
 				file = new File("../server/config/orientdb-server-config.xml");
+			if (!file.exists())
+				file = new File(OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/orientdb-server-config.xml"));
 			if (!file.exists())
 				throw new OConfigurationException("Can't load file orientdb-server-config.xml to execute remote tests");
 
