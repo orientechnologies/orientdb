@@ -220,7 +220,6 @@ public class ODistributedServerNode implements OCommandOutputListener {
 		} finally {
 			channel.releaseExclusiveLock();
 		}
-
 	}
 
 	@Override
@@ -233,7 +232,7 @@ public class ODistributedServerNode implements OCommandOutputListener {
 	}
 
 	public void shareDatabase(final ODatabaseRecord<?> iDatabase, final String iRemoteServerName, final String iEngineName,
-			final String iMode) throws IOException {
+			final boolean iSynchronousMode) throws IOException {
 		if (status == STATUS.DISCONNECTED)
 			throw new ODistributedSynchronizationException("Can't share database '" + iDatabase.getName() + "' on remote server node '"
 					+ iRemoteServerName + "' because is disconnected");
@@ -261,6 +260,8 @@ public class ODistributedServerNode implements OCommandOutputListener {
 			OLogManager.instance().info(this, "Database exported correctly");
 
 			channel.readStatus();
+
+			manager.addServerInConfiguration(iRemoteServerName, iRemoteServerName, iSynchronousMode);
 
 			status = STATUS.CONNECTED;
 

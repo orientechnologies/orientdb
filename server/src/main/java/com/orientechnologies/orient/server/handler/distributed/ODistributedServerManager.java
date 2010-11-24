@@ -200,6 +200,8 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 				// I'M NOT THE LEADER CAUSE I WAS BEEN CONNECTED BY THE LEADER
 				return;
 
+			OLogManager.instance().warn(this, "Current node is the new cluster Leader of distributed nodes");
+
 			if (leaderCheckerTask != null)
 				// STOP THE CHECK OF HEART-BEAT
 				leaderCheckerTask.cancel();
@@ -307,7 +309,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 			final ODistributedServerNode node = nodes.get(iNodeName);
 			if (node == null)
-				throw new IllegalArgumentException("Node '" + iNodeName + "' is not configured");
+				throw new IllegalArgumentException("Node '" + iNodeName + "' is not configured on server: " + getId());
 
 			return node;
 
@@ -420,14 +422,18 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 	private ODocument createInitialDatabaseConfiguration() {
 		serverDistributionConfiguration = new ODocument();
-
-		addServer(getId(), getId(), "{\"*\":{\"owner\":\"" + getId() + "\"}}");
-
+		addServerInConfiguration(getId(), getId(), "{\"*\":{\"owner\":{\"" + getId() + "\":{}}}}");
 		return serverDistributionConfiguration;
 	}
 
+	public void addServerInConfiguration(final String iAlias, final String iAddress, final boolean iAsynchronous) {
+		final String cfg = iAsynchronous ? "{\"*\":{\"asynch\":{\"" + iAlias + "\":{\"update-delay\":0}}}}" : "{\"*\":{\"asynch\":{\""
+				+ iAlias + "\":{\"update-delay\":0}}}}";
+		addServerInConfiguration(iAlias, iAddress, cfg);
+	}
+
 	@SuppressWarnings("unchecked")
-	public void addServer(final String iAlias, final String iAddress, final String iServerClusterConfiguration) {
+	public void addServerInConfiguration(final String iAlias, final String iAddress, final String iServerClusterConfiguration) {
 		// ADD IT IN THE SERVER LIST
 		ODocument servers = serverDistributionConfiguration.field("servers");
 		if (servers == null) {
@@ -449,7 +455,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		}
 
 		// MERGE CONFIG
-		ODocument cfgDoc = new ODocument().fromJSON(iServerClusterConfiguration);
+		final ODocument cfgDoc = new ODocument().fromJSON(iServerClusterConfiguration);
 
 		Object fieldValue;
 		for (String fieldName : cfgDoc.fieldNames()) {

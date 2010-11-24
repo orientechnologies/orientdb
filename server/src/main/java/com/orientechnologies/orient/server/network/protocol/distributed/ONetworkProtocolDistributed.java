@@ -84,7 +84,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 				final String dbUser = channel.readString();
 				final String dbPassword = channel.readString();
 				final String remoteServerName = channel.readString();
-				final String mode = channel.readString();
+				final boolean synchronousMode = channel.readByte() == 1;
 
 				checkServerAccess("database.share");
 
@@ -94,9 +94,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 				final ODistributedServerNode remoteServerNode = manager.getNode(remoteServerName);
 
-				remoteServerNode.shareDatabase(db, remoteServerName, engineName, mode);
-
-				manager.addServer(remoteServerName, remoteServerName, mode);
+				remoteServerNode.shareDatabase(db, remoteServerName, engineName, synchronousMode);
 
 				sendOk(0);
 
