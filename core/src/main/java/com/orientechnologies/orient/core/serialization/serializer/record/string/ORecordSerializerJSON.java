@@ -55,7 +55,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 	public static final String								ATTRIBUTE_VERSION	= "@version";
 	public static final String								ATTRIBUTE_TYPE		= "@type";
 	public static final String								ATTRIBUTE_CLASS		= "@class";
-	public static final String								DEF_DATE_FORMAT		= "yyyy-MM-dd hh:mm:ss";
+	public static final String								DEF_DATE_FORMAT		= "yyyy-MM-dd hh:mm:ss:SSS";
 
 	private SimpleDateFormat									dateFormat				= new SimpleDateFormat(DEF_DATE_FORMAT);
 
@@ -393,7 +393,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 	private Object encode(final Object iValue) {
 		if (iValue instanceof String) {
-			return OStringSerializerHelper.java2unicode(((String) iValue).replace('"', '\''));
+			return OStringSerializerHelper.java2unicode(((String) iValue).replace("\\", "\\\\").replace("\"", "\\\""));
 		} else
 			return iValue;
 	}

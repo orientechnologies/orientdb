@@ -243,17 +243,9 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		if (iOther._status == STATUS.NOT_LOADED)
 			iOther.load();
 
-		checkForLoading();
-		iOther.checkForLoading();
+		checkForFields();
 
-		if (_fieldValues == null) {
-			if (iOther._fieldValues != null)
-				return false;
-			else
-				// BOTH NULL
-				return true;
-		} else if (iOther._fieldValues == null)
-			return false;
+		iOther.checkForFields();
 
 		if (_fieldValues.size() != iOther._fieldValues.size())
 			return false;
@@ -273,41 +265,41 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 				return false;
 
 			if (myFieldValue != null && otherFieldValue != null)
-				if (!myFieldValue.equals(otherFieldValue)) {
-					if (myFieldValue instanceof List && otherFieldValue instanceof List) {
-						// CHECK IF THE ORDER IS RESPECTED
-						final List<?> myList = (List<?>) myFieldValue;
-						final List<?> otherList = (List<?>) otherFieldValue;
+				if (myFieldValue instanceof List && otherFieldValue instanceof List) {
+					// CHECK IF THE ORDER IS RESPECTED
+					final List<?> myList = (List<?>) myFieldValue;
+					final List<?> otherList = (List<?>) otherFieldValue;
 
-						if (myList.size() != otherList.size())
+					if (myList.size() != otherList.size())
+						return false;
+
+					for (int i = 0; i < myList.size(); ++i) {
+						if (myList.get(i) instanceof ODocument) {
+							if (!((ODocument) myList.get(i)).hasSameContentOf((ODocument) otherList.get(i)))
+								return false;
+						} else if (!myList.get(i).equals(otherList.get(i)))
+							return false;
+					}
+				} else if (myFieldValue instanceof Map && otherFieldValue instanceof Map) {
+					// CHECK IF THE ORDER IS RESPECTED
+					final Map<?, ?> myMap = (Map<?, ?>) myFieldValue;
+					final Map<?, ?> otherMap = (Map<?, ?>) otherFieldValue;
+
+					if (myMap.size() != otherMap.size())
+						return false;
+
+					for (Entry<?, ?> myEntry : myMap.entrySet()) {
+						if (!otherMap.containsKey(myEntry.getKey()))
 							return false;
 
-						for (int i = 0; i < myList.size(); ++i) {
-							if (myList.get(i) instanceof ODocument) {
-								if (!((ODocument) myList.get(i)).hasSameContentOf((ODocument) otherList.get(i)))
-									return false;
-							} else if (!myList.get(i).equals(otherList.get(i)))
+						if (myEntry.getValue() instanceof ODocument) {
+							if (!((ODocument) myEntry.getValue()).hasSameContentOf((ODocument) otherMap.get(myEntry.getKey())))
 								return false;
-						}
-					} else if (myFieldValue instanceof Map && otherFieldValue instanceof Map) {
-						// CHECK IF THE ORDER IS RESPECTED
-						final Map<?, ?> myMap = (Map<?, ?>) myFieldValue;
-						final Map<?, ?> otherMap = (Map<?, ?>) otherFieldValue;
-
-						if (myMap.size() != otherMap.size())
+						} else if (!myEntry.getValue().equals(otherMap.get(myEntry.getKey())))
 							return false;
-
-						for (Entry<?, ?> myEntry : myMap.entrySet()) {
-							if (!otherMap.containsKey(myEntry.getKey()))
-								return false;
-
-							if (myEntry.getValue() instanceof ODocument) {
-								if (!((ODocument) myEntry.getValue()).hasSameContentOf((ODocument) otherMap.get(myEntry.getKey())))
-									return false;
-							} else if (!myEntry.getValue().equals(otherMap.get(myEntry.getKey())))
-								return false;
-						}
-					} else
+					}
+				} else {
+					if (!myFieldValue.equals(otherFieldValue))
 						return false;
 				}
 		}

@@ -247,7 +247,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	}
 
 	protected void checkForLoading() {
-		if (_status == STATUS.NOT_LOADED)
+		if (_status == STATUS.NOT_LOADED && _database != null)
 			load();
 	}
 

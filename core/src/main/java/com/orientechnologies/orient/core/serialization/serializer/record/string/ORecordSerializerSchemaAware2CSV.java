@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
-import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -23,6 +22,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
@@ -110,42 +110,42 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 				if (fieldValue.getClass() == byte[].class) {
 					type = OType.BINARY;
 				} else if (fieldValue instanceof Collection<?> || fieldValue.getClass().isArray()) {
-					final Collection<?> coll = fieldValue instanceof Collection<?> ? (Collection<?>) fieldValue : null;
-
-					int size = coll != null ? coll.size() : Array.getLength(fieldValue);
+					int size = OMultiValue.getSize(fieldValue);
 
 					if (size > 0) {
-						Object firstValue = coll != null ? coll.iterator().next() : Array.get(fieldValue, 0);
+						Object firstValue = OMultiValue.getFirstValue(fieldValue);
 
-						if (database != null
-								&& (firstValue instanceof ORID || firstValue instanceof ORecordSchemaAware<?> || (database.getDatabaseOwner() instanceof ODatabaseObject && ((ODatabaseObject) database
-										.getDatabaseOwner()).getEntityManager().getEntityClass(getClassName(firstValue)) != null))) {
-							linkedClass = getLinkInfo(database, getClassName(firstValue));
-							if (type == null) {
-								// LINK: GET THE CLASS
-								linkedType = OType.LINK;
+						if (firstValue != null) {
+							if (database != null
+									&& (firstValue instanceof ORID || firstValue instanceof ORecordSchemaAware<?> || (database.getDatabaseOwner() instanceof ODatabaseObject && ((ODatabaseObject) database
+											.getDatabaseOwner()).getEntityManager().getEntityClass(getClassName(firstValue)) != null))) {
+								linkedClass = getLinkInfo(database, getClassName(firstValue));
+								if (type == null) {
+									// LINK: GET THE CLASS
+									linkedType = OType.LINK;
 
-								if (coll instanceof Set<?>)
-									type = OType.LINKSET;
-								else
-									type = OType.LINKLIST;
-							} else
-								linkedType = OType.EMBEDDED;
-						} else {
-							linkedType = OType.getTypeByAssignability(firstValue.getClass());
-
-							if (linkedType != OType.LINK) {
-								// EMBEDDED FOR SURE SINCE IT CONTAINS JAVA TYPES
-								if (linkedType == null) {
-									linkedType = OType.EMBEDDED;
-									// linkedClass = new OClass(firstValue.getClass());
-								}
-
-								if (type == null)
-									if (coll instanceof Set<?>)
-										type = OType.EMBEDDEDSET;
+									if (fieldValue instanceof Set<?>)
+										type = OType.LINKSET;
 									else
-										type = OType.EMBEDDEDLIST;
+										type = OType.LINKLIST;
+								} else
+									linkedType = OType.EMBEDDED;
+							} else {
+								linkedType = OType.getTypeByAssignability(firstValue.getClass());
+
+								if (linkedType != OType.LINK) {
+									// EMBEDDED FOR SURE SINCE IT CONTAINS JAVA TYPES
+									if (linkedType == null) {
+										linkedType = OType.EMBEDDED;
+										// linkedClass = new OClass(firstValue.getClass());
+									}
+
+									if (type == null)
+										if (fieldValue instanceof Set<?>)
+											type = OType.EMBEDDEDSET;
+										else
+											type = OType.EMBEDDEDLIST;
+								}
 							}
 						}
 					} else if (type == null)
@@ -155,9 +155,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 					if (type == null)
 						type = OType.EMBEDDEDMAP;
 
-					Map<?, ?> map = (Map<?, ?>) fieldValue;
-					if (map.size() > 0) {
-						Object firstValue = map.values().iterator().next();
+					if (OMultiValue.getSize(fieldValue) > 0) {
+						Object firstValue = OMultiValue.getFirstValue(fieldValue);
 
 						if (database != null
 								&& (firstValue instanceof ORecordSchemaAware<?> || (database.getDatabaseOwner() instanceof ODatabaseObject && ((ODatabaseObject) database
