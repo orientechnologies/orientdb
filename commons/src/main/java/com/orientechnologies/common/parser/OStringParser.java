@@ -84,10 +84,17 @@ public class OStringParser {
 		int openBraket = 0;
 		int openGraph = 0;
 		boolean charFound;
+		boolean escape = false;
 
 		for (int i = 0; i < iText.length(); ++i) {
 			c = iText.charAt(i);
-			if (openBraket == 0 && openGraph == 0 && (c == '\'' || c == '"')) {
+
+			if (!escape && c == '\\') {
+				escape = true;
+				continue;
+			}
+
+			if (openBraket == 0 && openGraph == 0 && !escape && (c == '\'' || c == '"')) {
 				if (stringBeginChar != ' ') {
 					// CLOSE THE STRING?
 					if (stringBeginChar == c) {
@@ -153,6 +160,9 @@ public class OStringParser {
 			}
 
 			buffer.append(c);
+
+			if (escape)
+				escape = false;
 		}
 
 		if (buffer.length() > 0)

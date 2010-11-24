@@ -25,6 +25,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
@@ -115,8 +118,7 @@ public class OJSONWriter {
 		return this;
 	}
 
-	public void writeObjects(int iIdentLevel, boolean iNewLine, final String iName, Object[]... iPairs)
-			throws IOException {
+	public void writeObjects(int iIdentLevel, boolean iNewLine, final String iName, Object[]... iPairs) throws IOException {
 		for (int i = 0; i < iPairs.length; ++i) {
 			beginObject(iIdentLevel, true, iName);
 			for (int k = 0; k < iPairs[i].length;) {
@@ -205,6 +207,11 @@ public class OJSONWriter {
 			}
 
 		} else if (iValue instanceof Collection<?>) {
+			if (iValue instanceof ORecordLazyList)
+				((ORecordLazyList) iValue).setConvertToRecord(false);
+			else if (iValue instanceof ORecordLazySet)
+				((ORecordLazySet) iValue).setConvertToRecord(false);
+
 			final Collection<Object> coll = (Collection<Object>) iValue;
 			buffer.append('[');
 			int i = 0;
@@ -216,6 +223,9 @@ public class OJSONWriter {
 			buffer.append(']');
 
 		} else if (iValue instanceof Map<?, ?>) {
+			if (iValue instanceof ORecordLazyMap)
+				((ORecordLazyMap) iValue).setConvertToRecord(false);
+
 			final Map<Object, Object> map = (Map<Object, Object>) iValue;
 			buffer.append('{');
 			int i = 0;

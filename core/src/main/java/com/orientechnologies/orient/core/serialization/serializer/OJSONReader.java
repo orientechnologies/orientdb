@@ -160,7 +160,7 @@ public class OJSONReader {
 			// RETURNS THE PREVIOUS PARSED CHAR
 			c = missedChar.charValue();
 			missedChar = null;
-			
+
 		} else {
 			c = (char) in.read();
 

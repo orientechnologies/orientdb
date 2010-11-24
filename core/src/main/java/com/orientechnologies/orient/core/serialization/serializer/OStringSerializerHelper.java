@@ -495,7 +495,7 @@ public abstract class OStringSerializerHelper {
 		int classSeparatorPos = iValue.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
 		if (classSeparatorPos > -1) {
 			final String className = iValue.substring(0, classSeparatorPos);
-			if (className != null)
+			if (className != null && iDatabase != null)
 				iLinkedClass = iDatabase.getMetadata().getSchema().getClass(className);
 
 			iValue = iValue.substring(classSeparatorPos + 1);
@@ -506,19 +506,20 @@ public abstract class OStringSerializerHelper {
 	public static String java2unicode(final String iInput) {
 		final StringBuffer result = new StringBuffer();
 
+		char ch;
+		String hex;
 		for (int i = 0; i < iInput.length(); i++) {
-			char ch = iInput.charAt(i);
+			ch = iInput.charAt(i);
 
-			if ((ch >= 0x0020) && (ch <= 0x007e)) // Does the char need to be converted to unicode?
-			{
+			if (ch >= 0x0020 && ch <= 0x007e) // Does the char need to be converted to unicode?
 				result.append(ch); // No.
-			} else // Yes.
+			else // Yes.
 			{
 				result.append("\\u"); // standard unicode format.
-				String hex = Integer.toHexString(iInput.charAt(i) & 0xFFFF); // Get hex value of the char.
+				hex = Integer.toHexString(iInput.charAt(i) & 0xFFFF); // Get hex value of the char.
 				for (int j = 0; j < 4 - hex.length(); j++)
 					// Prepend zeros because unicode requires 4 digits
-					result.append("0");
+					result.append('0');
 				result.append(hex.toLowerCase()); // standard unicode format.
 				// ostr.append(hex.toLowerCase(Locale.ENGLISH));
 			}
