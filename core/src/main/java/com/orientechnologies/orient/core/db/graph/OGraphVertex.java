@@ -279,11 +279,11 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 			// TRANSFORM ALL THE EDGES
 			if (docEdges != null)
 				for (ODocument d : docEdges) {
-					resultset.add((OGraphVertex) database.getUserObjectByRecord((ODocument) d.field(OGraphEdge.OUT), null));
+					resultset.add((OGraphVertex) database.getUserObjectByRecord((ODocument) d.field(OGraphEdge.IN), null));
 				}
 		} else {
 			for (OGraphEdge edge : tempList) {
-				resultset.add(edge.getOut());
+				resultset.add(edge.getIn());
 			}
 		}
 
@@ -305,11 +305,11 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 			// TRANSFORM ALL THE EDGES
 			if (docEdges != null)
 				for (ODocument d : docEdges) {
-					resultset.add((OGraphVertex) database.getUserObjectByRecord((ODocument) d.field(OGraphEdge.IN), null));
+					resultset.add((OGraphVertex) database.getUserObjectByRecord((ODocument) d.field(OGraphEdge.OUT), null));
 				}
 		} else {
 			for (OGraphEdge edge : tempList) {
-				resultset.add(edge.getIn());
+				resultset.add(edge.getOut());
 			}
 		}
 

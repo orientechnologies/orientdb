@@ -61,7 +61,7 @@ public class GraphTestFixedDensity {
 
 		long time = System.currentTimeMillis();
 
-		readSubNodes(database.getRoot("LinearGraph"));
+		readSubNodesThroughEdges(database.getRoot("LinearGraph"));
 
 		System.out.println("Read of the entire graph with deep=" + nodeReadCounter + " and fixed density=" + DENSITY + " in "
 				+ ((System.currentTimeMillis() - time) / 1000f) + " sec.");
@@ -69,26 +69,47 @@ public class GraphTestFixedDensity {
 		Assert.assertEquals(nodeReadCounter, nodeWrittenCounter);
 	}
 
-	@Test(dependsOnMethods = "populate")
-	public void checkPopulationHotCache() {
+	@Test(dependsOnMethods = "checkPopulation")
+	public void testTraverseThroughEdges() {
 		long time = System.currentTimeMillis();
 
 		nodeReadCounter = -1;
-		readSubNodes(database.getRoot("LinearGraph"));
+		readSubNodesThroughEdges(database.getRoot("LinearGraph"));
 
-		System.out.println("Read with hot cache of the entire graph with deep=" + nodeReadCounter + " and fixed density=" + DENSITY
-				+ " in " + ((System.currentTimeMillis() - time) / 1000f) + " sec.");
+		System.out.println("Indirect traverse with hot cache of the entire graph with deep=" + nodeReadCounter + " and fixed density="
+				+ DENSITY + " in " + ((System.currentTimeMillis() - time) / 1000f) + " sec.");
+
+		Assert.assertEquals(nodeReadCounter, nodeWrittenCounter);
+	}
+
+	@Test(dependsOnMethods = "testTraverseThroughEdges")
+	public void testTraverseDirectly() {
+		long time = System.currentTimeMillis();
+
+		nodeReadCounter = -1;
+		readSubNodesDirectly(database.getRoot("LinearGraph"));
+
+		System.out.println("Direct traverse with hot cache of the entire graph with deep=" + nodeReadCounter + " and fixed density="
+				+ DENSITY + " in " + ((System.currentTimeMillis() - time) / 1000f) + " sec.");
 
 		Assert.assertEquals(nodeReadCounter, nodeWrittenCounter);
 
 		database.close();
 	}
 
-	private void readSubNodes(final OGraphVertex iNode) {
+	private void readSubNodesThroughEdges(final OGraphVertex iNode) {
 		Assert.assertEquals(((Number) iNode.get("id")).intValue(), ++nodeReadCounter);
 
 		for (OGraphEdge edge : iNode.getOutEdges()) {
-			readSubNodes(edge.getIn());
+			readSubNodesThroughEdges(edge.getIn());
+		}
+	}
+
+	private void readSubNodesDirectly(final OGraphVertex iNode) {
+		Assert.assertEquals(((Number) iNode.get("id")).intValue(), ++nodeReadCounter);
+
+		for (OGraphVertex vertex : iNode.browseOutEdgesVertexes()) {
+			readSubNodesDirectly(vertex);
 		}
 	}
 
