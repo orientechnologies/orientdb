@@ -45,9 +45,11 @@ public class OStorageRemoteServiceThread extends OSoftThread implements OChannel
 				storage.updateClusterConfiguration(storage.getNetwork().readBytes());
 				break;
 			}
-		} catch (Exception e) {
-		} finally {
+			
+			// NOT IN FINALLY BECAUSE IF THE SOCKET IS KILLED COULD HAVE NOT THE LOCK
 			storage.getNetwork().endResponse();
+			
+		} catch (Exception e) {
 		}
 	}
 

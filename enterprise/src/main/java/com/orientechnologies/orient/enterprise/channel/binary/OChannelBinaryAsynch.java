@@ -44,9 +44,9 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 			lockRead.lock();
 
 			if (!channelRead) {
+				channelRead = true;
 				currentStatus = readByte();
 				currentTxId = readInt();
-				channelRead = true;
 			}
 
 			if (currentTxId == iRequester.getRequesterId())
@@ -59,7 +59,6 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 				try {
 					wait();
 				} catch (InterruptedException e) {
-					e.printStackTrace();
 				}
 			}
 		} while (true);

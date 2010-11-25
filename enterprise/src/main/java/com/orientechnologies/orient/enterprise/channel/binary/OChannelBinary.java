@@ -321,7 +321,7 @@ public abstract class OChannelBinary extends OChannel {
 			}
 		} else {
 			// PROTOCOL ERROR
-			close();
+			//close();
 			throw new ONetworkProtocolException("Error on reading response from the server");
 		}
 		return iClientTxId;
