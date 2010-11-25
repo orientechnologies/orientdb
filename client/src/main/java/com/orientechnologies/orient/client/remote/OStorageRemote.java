@@ -24,7 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
@@ -79,7 +80,7 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 	private int															connectionRetryDelay;
 
 	private OChannelBinaryClient						network;
-	private final SynchronousQueue<Object>	responseQueue					= new SynchronousQueue<Object>();
+	private final BlockingQueue<Object>			responseQueue					= new ArrayBlockingQueue<Object>(10);
 	protected List<OPair<String, String[]>>	serverURLs						= new ArrayList<OPair<String, String[]>>();
 	protected ODocument											clusterConfiguration	= new ODocument();
 	protected int														retry									= 0;
@@ -165,8 +166,8 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 		boolean locked = lock.acquireExclusiveLock();
 
 		try {
-			beginRequest(OChannelBinaryProtocol.REQUEST_DB_CLOSE);
-			endRequest();
+			// beginRequest(OChannelBinaryProtocol.REQUEST_DB_CLOSE);
+			// endRequest();
 
 			network.flush();
 			network.close();
@@ -992,6 +993,13 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 		throw new UnsupportedOperationException("getVersion");
 	}
 
+	/**
+	 * Handles exceptions. In case of IO errors retries to reconnect until the configured retry times has reached.
+	 * 
+	 * @param iMessage
+	 * @param iException
+	 * @return
+	 */
 	protected boolean handleException(final String iMessage, final Exception iException) {
 		if (iException instanceof OException)
 			// RE-THROW IT
@@ -1197,17 +1205,14 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 		network.getLockRead().unlock();
 	}
 
-	@Override
 	public int getRequesterId() {
 		return txId;
 	}
 
-	@Override
-	public SynchronousQueue<Object> getRequesterResponseQueue() {
+	public BlockingQueue<Object> getRequesterResponseQueue() {
 		return responseQueue;
 	}
 
-	@Override
 	public boolean isPermanentRequester() {
 		return false;
 	}

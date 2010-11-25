@@ -54,17 +54,14 @@ public class OStorageRemoteServiceThread extends OSoftThread implements OChannel
 		}
 	}
 
-	@Override
 	public int getRequesterId() {
 		return -10;
 	}
 
-	@Override
 	public SynchronousQueue<Object> getRequesterResponseQueue() {
 		return responseQueue;
 	}
 
-	@Override
 	public boolean isPermanentRequester() {
 		return true;
 	}
