@@ -7,8 +7,9 @@
 	<property name="project.build" value="target/classes" />
 	<property name="project.dist" value="target" />
 	<property name="project.is-debug" value="true" />
-	<property name="project.debug-level" value="lines, vars, source" />
+	<property name="project.debug-level" value="lines,vars,source" />
 	<property name="project.target-comp" value="1.5" />
+	<property name="project.source-comp" value="1.5" />
 
 	<path id="project.classpath">
 		<filelist dir=".."             files="${project.jar-deps}" />
@@ -30,7 +31,7 @@
 
 	<target name="compile" depends="init">
     <mkdir dir="${project.lib}" />
-		<javac destdir="${project.build}" debug="${project.is-debug}" debuglevel="${project.debug-level}" target="${project.target-comp}"
+		<javac destdir="${project.build}" debug="${project.is-debug}" debuglevel="${project.debug-level}" target="${project.target-comp}" source="${project.source-comp}" 
            includeantruntime="false" verbose="false">
 			<src path="${project.src}" />
 			<classpath refid="project.classpath" />

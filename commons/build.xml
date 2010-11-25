@@ -5,14 +5,13 @@
 
   <import file="../_base/base-build.xml" />
 
-
   <target name="compile" depends="init">
-    <javac destdir="${project.build}" debug="${project.is-debug}" debuglevel="${project.debug-level}" target="${project.target-comp}">
+    <javac destdir="${project.build}" debug="${project.is-debug}" debuglevel="${project.debug-level}" target="${project.target-comp}" source="${project.source-comp}">
       <src path="${project.src}" />
       <classpath refid="project.classpath" />
     </javac>
 
-    <javac destdir="${project.build}" debug="${project.is-debug}" debuglevel="${project.debug-level}" target="${project.target-comp}">
+    <javac destdir="${project.build}" debug="${project.is-debug}" debuglevel="${project.debug-level}" target="${project.target-comp}" source="${project.source-comp}">
       <src path="src/test/java" />
       <classpath refid="project.classpath" />
     </javac>
