@@ -134,4 +134,8 @@ public class ORecordLazySet extends ORecordTrackedSet {
 		}
 		return iElement;
 	}
+
+	public byte getRecordType() {
+		return recordType;
+	}
 }

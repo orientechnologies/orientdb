@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedList;
+import com.orientechnologies.orient.core.db.record.ORecordTrackedMap;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -185,14 +186,54 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 
 		if (_fieldValues != null) {
 			cloned._fieldValues = new LinkedHashMap<String, Object>();
+			Object fieldValue;
 			for (Entry<String, Object> entry : _fieldValues.entrySet()) {
-				if (entry.getValue() != null)
-					if (entry.getValue() instanceof List<?>) {
-						cloned._fieldValues.put(entry.getKey(), new ArrayList<Object>((List<Object>) entry.getValue()));
-					} else if (entry.getValue() instanceof Map<?, ?>) {
-						cloned._fieldValues.put(entry.getKey(), new LinkedHashMap<String, Object>((Map<String, Object>) entry.getValue()));
+				fieldValue = entry.getValue();
+
+				if (fieldValue != null)
+					// LISTS
+					if (fieldValue instanceof ORecordLazyList) {
+						final ORecordLazyList newList = new ORecordLazyList(cloned, ((ORecordLazyList) fieldValue).getRecordType());
+						newList.addAll((ORecordLazyList) fieldValue);
+						cloned._fieldValues.put(entry.getKey(), newList);
+
+					} else if (fieldValue instanceof ORecordTrackedList) {
+						final ORecordTrackedList newList = new ORecordTrackedList(cloned);
+						newList.addAll((ORecordTrackedList) fieldValue);
+						cloned._fieldValues.put(entry.getKey(), newList);
+
+					} else if (fieldValue instanceof List<?>) {
+						cloned._fieldValues.put(entry.getKey(), new ArrayList<Object>((List<Object>) fieldValue));
+
+						// SETS
+					} else if (fieldValue instanceof ORecordLazySet) {
+						final ORecordLazySet newList = new ORecordLazySet(cloned, ((ORecordLazySet) fieldValue).getRecordType());
+						newList.addAll((ORecordLazySet) fieldValue);
+						cloned._fieldValues.put(entry.getKey(), newList);
+
+					} else if (fieldValue instanceof ORecordTrackedSet) {
+						final ORecordTrackedSet newList = new ORecordTrackedSet(cloned);
+						newList.addAll((ORecordTrackedSet) fieldValue);
+						cloned._fieldValues.put(entry.getKey(), newList);
+
+					} else if (fieldValue instanceof Set<?>) {
+						cloned._fieldValues.put(entry.getKey(), new HashSet<Object>((Set<Object>) fieldValue));
+
+						// MAPS
+					} else if (fieldValue instanceof ORecordLazyMap) {
+						final ORecordLazyMap newMap = new ORecordLazyMap(cloned, ((ORecordLazyMap) fieldValue).getRecordType());
+						newMap.putAll((ORecordLazyMap) fieldValue);
+						cloned._fieldValues.put(entry.getKey(), newMap);
+
+					} else if (fieldValue instanceof ORecordTrackedMap) {
+						final ORecordTrackedMap newMap = new ORecordTrackedMap(cloned);
+						newMap.putAll((ORecordTrackedMap) fieldValue);
+						cloned._fieldValues.put(entry.getKey(), newMap);
+
+					} else if (fieldValue instanceof Map<?, ?>) {
+						cloned._fieldValues.put(entry.getKey(), new LinkedHashMap<String, Object>((Map<String, Object>) fieldValue));
 					} else
-						cloned._fieldValues.put(entry.getKey(), entry.getValue());
+						cloned._fieldValues.put(entry.getKey(), fieldValue);
 			}
 		}
 

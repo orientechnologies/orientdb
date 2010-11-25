@@ -109,7 +109,7 @@ public class ORecordLazyList extends ORecordTrackedList {
 	public void convertAll() {
 		if (converted || !convertToRecord)
 			return;
-		
+
 		if (sourceRecord == null || sourceRecord.getDatabase() == null)
 			return;
 
@@ -166,5 +166,9 @@ public class ORecordLazyList extends ORecordTrackedList {
 	@Override
 	public String toString() {
 		return OMultiValue.toString(this);
+	}
+
+	public byte getRecordType() {
+		return recordType;
 	}
 }

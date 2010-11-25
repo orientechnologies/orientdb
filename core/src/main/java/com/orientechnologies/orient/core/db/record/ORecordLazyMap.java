@@ -128,4 +128,8 @@ public class ORecordLazyMap extends ORecordTrackedMap {
 			}
 		}
 	}
+
+	public byte getRecordType() {
+		return recordType;
+	}
 }
