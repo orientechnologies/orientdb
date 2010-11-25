@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.common.console;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.lang.annotation.Annotation;
@@ -24,6 +26,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.parser.OStringParser;
@@ -77,7 +80,7 @@ public class OConsoleApplication {
 			}
 		} else {
 			// EXECUTE IN BATCH MODE
-			executeCommands(getCommandLine(args));
+			executeBatch(getCommandLine(args));
 		}
 
 		onAfter();
@@ -87,11 +90,33 @@ public class OConsoleApplication {
 		return args.length == 0;
 	}
 
+	protected boolean executeBatch(String commandLine) {
+		File commandFile = new File(commandLine);
+		if (commandFile.exists()) {
+			try {
+				return executeCommands(new Scanner(commandFile).useDelimiter(";"));
+			} catch (FileNotFoundException fnfe) {
+				return false;
+			}
+		} else {
+			return executeCommands(commandLine);
+		}
+	}
+
 	protected boolean executeCommands(String iCommands) {
 		String[] commandLines = iCommands.split(commandSeparator);
 		for (String commandLine : commandLines)
 			if (!execute(commandLine))
 				return false;
+		return true;
+	}
+
+	protected boolean executeCommands(Scanner iScanner) {
+		while (iScanner.hasNext()) {
+			String commandLine = iScanner.next();
+			if (!execute(commandLine))
+				return false;
+		}
 		return true;
 	}
 
