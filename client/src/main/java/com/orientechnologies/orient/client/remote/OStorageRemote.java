@@ -32,6 +32,7 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.dictionary.ODictionaryClient;
+import com.orientechnologies.orient.client.distributed.OClientClusterManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -68,9 +69,9 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
  */
 @SuppressWarnings("unchecked")
 public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAsynchRequester {
-	private static final String							DEFAULT_HOST					= "localhost";
-	private static final String[]						DEFAULT_PORTS					= new String[] { "2424" };
-	private static final String							ADDRESS_SEPARATOR			= ";";
+	private static final String							DEFAULT_HOST			= "localhost";
+	private static final String[]						DEFAULT_PORTS			= new String[] { "2424" };
+	private static final String							ADDRESS_SEPARATOR	= ";";
 
 	private OStorageRemoteServiceThread			serviceThread;
 	private String													userName;
@@ -80,13 +81,12 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 	private int															connectionRetryDelay;
 
 	private OChannelBinaryClient						network;
-	private final BlockingQueue<Object>			responseQueue					= new ArrayBlockingQueue<Object>(10);
-	protected List<OPair<String, String[]>>	serverURLs						= new ArrayList<OPair<String, String[]>>();
-	protected ODocument											clusterConfiguration	= new ODocument();
-	protected int														retry									= 0;
-	protected int														txId									= 0;
-	protected final Map<String, Integer>		clustersIds						= new HashMap<String, Integer>();
-	protected final Map<String, String>			clustersTypes					= new HashMap<String, String>();
+	private final BlockingQueue<Object>			responseQueue			= new ArrayBlockingQueue<Object>(10);
+	protected List<OPair<String, String[]>>	serverURLs				= new ArrayList<OPair<String, String[]>>();
+	protected int														retry							= 0;
+	protected int														txId							= 0;
+	protected final Map<String, Integer>		clustersIds				= new HashMap<String, Integer>();
+	protected final Map<String, String>			clustersTypes			= new HashMap<String, String>();
 	protected int														defaultClusterId;
 
 	public OStorageRemote(final String iURL, final String iMode) throws IOException {
@@ -152,27 +152,29 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 				}
 
 			} catch (Exception e) {
-				if (handleException("Error on checking if the database exists", e))
-					break;
+				handleException("Error on checking if the database exists", e);
 
 			} finally {
 				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
-		return false;
 	}
 
 	public void close() {
 		boolean locked = lock.acquireExclusiveLock();
 
 		try {
-			// beginRequest(OChannelBinaryProtocol.REQUEST_DB_CLOSE);
-			// endRequest();
+			beginRequest(OChannelBinaryProtocol.REQUEST_DB_CLOSE);
+			endRequest();
 
 			network.flush();
-			network.close();
 
 			serviceThread.sendShutdown();
+			serviceThread.interrupt();
+
+			network.close();
+
+//			serviceThread.join();
 
 			cache.removeUser();
 			cache.clear();
@@ -230,14 +232,12 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 				}
 
 			} catch (Exception e) {
-				if (handleException("Error on create record in cluster: " + iClusterId, e))
-					break;
+				handleException("Error on create record in cluster: " + iClusterId, e);
 
 			} finally {
 				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
-		return -1;
 	}
 
 	public ORawBuffer readRecord(final ODatabaseRecord<?> iDatabase, final int iRequesterId, final int iClusterId,
@@ -281,14 +281,12 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 				}
 
 			} catch (Exception e) {
-				if (handleException("Error on read record: " + iClusterId + ":" + iPosition, e))
-					break;
+				handleException("Error on read record: " + iClusterId + ":" + iPosition, e);
 
 			} finally {
 				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
-		return null;
 	}
 
 	public int updateRecord(final int iRequesterId, final int iClusterId, final long iPosition, final byte[] iContent,
@@ -318,15 +316,12 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 				}
 
 			} catch (Exception e) {
-				if (handleException("Error on update record: " + iClusterId + ":" + iPosition, e))
-					break;
+				handleException("Error on update record: " + iClusterId + ":" + iPosition, e);
 
 			} finally {
 				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
-
-		return -1;
 	}
 
 	public boolean deleteRecord(final int iRequesterId, final int iClusterId, final long iPosition, final int iVersion) {
@@ -353,14 +348,12 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 				}
 
 			} catch (Exception e) {
-				if (handleException("Error on delete record: " + iClusterId + ":" + iPosition, e))
-					break;
+				handleException("Error on delete record: " + iClusterId + ":" + iPosition, e);
 
 			} finally {
 				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
-		return false;
 	}
 
 	public long count(final int iClusterId) {
@@ -389,14 +382,12 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 				}
 
 			} catch (Exception e) {
-				if (handleException("Error on getting last entry position count in cluster: " + iClusterId, e))
-					break;
+				handleException("Error on getting last entry position count in cluster: " + iClusterId, e);
 
 			} finally {
 				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
-		return null;
 	}
 
 	public long count(final int[] iClusterIds) {
@@ -422,14 +413,12 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 					endResponse();
 				}
 			} catch (Exception e) {
-				if (handleException("Error on read record count in clusters: " + iClusterIds, e))
-					break;
+				handleException("Error on read record count in clusters: " + iClusterIds, e);
 
 			} finally {
 				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
-		return -1;
 	}
 
 	public long count(final String iClassName) {
@@ -453,14 +442,12 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 					endResponse();
 				}
 			} catch (Exception e) {
-				if (handleException("Error on executing count on class: " + iClassName, e))
-					break;
+				handleException("Error on executing count on class: " + iClassName, e);
 
 			} finally {
 				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
-		return -1;
 	}
 
 	/**
@@ -551,8 +538,7 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 				}
 
 			} catch (Exception e) {
-				if (handleException("Error on executing command: " + iCommand, e))
-					break;
+				handleException("Error on executing command: " + iCommand, e);
 
 			} finally {
 				OStorageRemoteThreadLocal.INSTANCE.set(Boolean.FALSE);
@@ -610,8 +596,7 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 				getResponse();
 				break;
 			} catch (Exception e) {
-				if (handleException("Error on commit", e))
-					break;
+				handleException("Error on commit", e);
 
 			} finally {
 				lock.releaseExclusiveLock(locked);
@@ -701,14 +686,12 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 					endResponse();
 				}
 			} catch (Exception e) {
-				if (handleException("Error on add new cluster", e))
-					break;
+				handleException("Error on add new cluster", e);
 
 			} finally {
 				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
-		return 0;
 	}
 
 	public boolean removeCluster(final int iClusterId) {
@@ -745,14 +728,12 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 				}
 
 			} catch (Exception e) {
-				if (handleException("Error on removing of cluster", e))
-					break;
+				handleException("Error on removing of cluster", e);
 
 			} finally {
 				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
-		return false;
 	}
 
 	public int addDataSegment(final String iDataSegmentName) {
@@ -781,14 +762,12 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 				}
 
 			} catch (Exception e) {
-				if (handleException("Error on add new data segment", e))
-					break;
+				handleException("Error on add new data segment", e);
 
 			} finally {
 				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
-		return 0;
 	}
 
 	public int getSessionId() {
@@ -830,14 +809,12 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 				}
 
 			} catch (Exception e) {
-				if (handleException("Error on insert record with key: " + iKey, e))
-					break;
+				handleException("Error on insert record with key: " + iKey, e);
 
 			} finally {
 				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
-		return null;
 	}
 
 	public <REC extends ORecordInternal<?>> REC dictionaryLookup(ODatabaseRecord<REC> iDatabase, final String iKey) {
@@ -862,14 +839,12 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 				}
 
 			} catch (Exception e) {
-				if (handleException("Error on lookup record with key: " + iKey, e))
-					break;
+				handleException("Error on lookup record with key: " + iKey, e);
 
 			} finally {
 				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
-		return null;
 	}
 
 	public <REC extends ORecordInternal<?>> REC dictionaryRemove(ODatabaseRecord<REC> iDatabase, Object iKey) {
@@ -894,14 +869,12 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 				}
 
 			} catch (Exception e) {
-				if (handleException("Error on lookup record with key: " + iKey, e))
-					break;
+				handleException("Error on lookup record with key: " + iKey, e);
 
 			} finally {
 				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
-		return null;
 	}
 
 	public int dictionarySize(final ODatabaseRecord<?> iDatabase) {
@@ -925,14 +898,12 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 				}
 
 			} catch (Exception e) {
-				if (handleException("Error on getting size of database's dictionary", e))
-					break;
+				handleException("Error on getting size of database's dictionary", e);
 
 			} finally {
 				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
-		return -1;
 	}
 
 	public ODictionary<?> createDictionary(final ODatabaseRecord<?> iDatabase) throws Exception {
@@ -960,14 +931,12 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 				}
 
 			} catch (Exception e) {
-				if (handleException("Error on getting keys of database's dictionary", e))
-					break;
+				handleException("Error on getting keys of database's dictionary", e);
 
 			} finally {
 				lock.releaseExclusiveLock(locked);
 			}
 		} while (true);
-		return null;
 	}
 
 	public void synch() {
@@ -998,9 +967,8 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 	 * 
 	 * @param iMessage
 	 * @param iException
-	 * @return
 	 */
-	protected boolean handleException(final String iMessage, final Exception iException) {
+	protected void handleException(final String iMessage, final Exception iException) {
 		if (iException instanceof OException)
 			// RE-THROW IT
 			throw (OException) iException;
@@ -1008,7 +976,7 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 		if (!(iException instanceof IOException))
 			throw new OStorageException(iMessage, iException);
 
-		if (retry < connectionRetry) {
+		while (retry < connectionRetry) {
 			// WAIT THE DELAY BEFORE TO RETRY
 			try {
 				Thread.sleep(connectionRetryDelay);
@@ -1026,17 +994,16 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 				OLogManager.instance().info(this,
 						"Connection re-acquired in transparent way: no errors will be thrown at application level");
 
-				return true;
+				return;
 			} catch (Throwable t) {
 				++retry;
 			}
-		} else {
-			retry = 0;
-
-			// RECONNECTION FAILED: THROW+LOG THE ORIGINAL EXCEPTION
-			throw new OStorageException(iMessage, iException);
 		}
-		return false;
+
+		retry = 0;
+
+		// RECONNECTION FAILED: THROW+LOG THE ORIGINAL EXCEPTION
+		throw new OStorageException(iMessage, iException);
 	}
 
 	protected void openRemoteDatabase() throws IOException {
@@ -1220,8 +1187,26 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 	}
 
 	public void updateClusterConfiguration(final byte[] iContent) {
+		if (iContent == null)
+			return;
+
+		ODocument clusterConfiguration;
+
+		synchronized (OClientClusterManager.INSTANCE) {
+
+			// GET DATABASE'S CLUSTER CONFIGURATION
+			clusterConfiguration = OClientClusterManager.INSTANCE.get(name);
+			if (clusterConfiguration == null) {
+				clusterConfiguration = new ODocument();
+				OClientClusterManager.INSTANCE.register(name, clusterConfiguration);
+			}
+		}
+
 		synchronized (clusterConfiguration) {
+
 			clusterConfiguration.reset();
+
+			// UPDATE IT
 			clusterConfiguration.fromStream(iContent);
 
 			if (OLogManager.instance().isInfoEnabled())

@@ -35,9 +35,9 @@ public class OStorageRemoteServiceThread extends OSoftThread implements OChannel
 
 	@Override
 	protected void execute() throws Exception {
-		storage.getNetwork().beginResponse(this);
-
 		try {
+			storage.getNetwork().beginResponse(this);
+
 			final byte request = storage.getNetwork().readByte();
 
 			switch (request) {
@@ -45,7 +45,7 @@ public class OStorageRemoteServiceThread extends OSoftThread implements OChannel
 				storage.updateClusterConfiguration(storage.getNetwork().readBytes());
 				break;
 			}
-
+		} catch (Exception e) {
 		} finally {
 			storage.getNetwork().endResponse();
 		}
