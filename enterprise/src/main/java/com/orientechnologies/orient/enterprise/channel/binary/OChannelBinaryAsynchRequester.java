@@ -15,17 +15,6 @@
  */
 package com.orientechnologies.orient.enterprise.channel.binary;
 
-import java.util.concurrent.BlockingQueue;
-
 public interface OChannelBinaryAsynchRequester {
 	public int getRequesterId();
-
-	public BlockingQueue<Object> getRequesterResponseQueue();
-
-	/**
-	 * Tells if the requester must be resident or not. Usually only service requester are permanent.
-	 * 
-	 * @return True to be resident, otherwise (default) false
-	 */
-	public boolean isPermanentRequester();
 }

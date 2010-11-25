@@ -114,7 +114,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	}
 
 	public void receivedLeaderConnection(final ONetworkProtocolDistributed iNetworkProtocolDistributed) {
-		OLogManager.instance().info(this, "Received connected from the cluster node Leader");
+		OLogManager.instance().info(this, "Joined the cluster '" + name + "'");
 
 		// STOP TO SEND PACKETS TO BEING DISCOVERED
 		if (discoverySignaler != null) {

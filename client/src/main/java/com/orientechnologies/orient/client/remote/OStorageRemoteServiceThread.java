@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.util.concurrent.SynchronousQueue;
-
 import com.orientechnologies.common.thread.OSoftThread;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchRequester;
 import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
@@ -27,13 +25,11 @@ import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistr
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OStorageRemoteServiceThread extends OSoftThread implements OChannelBinaryAsynchRequester {
-	private final OStorageRemote						storage;
-	private final SynchronousQueue<Object>	responseQueue	= new SynchronousQueue<Object>();
+	private final OStorageRemote	storage;
 
 	public OStorageRemoteServiceThread(final OStorageRemote iStorageRemote) {
 		super("StorageService");
 		storage = iStorageRemote;
-		iStorageRemote.getNetwork().addRequester(this);
 	}
 
 	@Override
@@ -56,13 +52,5 @@ public class OStorageRemoteServiceThread extends OSoftThread implements OChannel
 
 	public int getRequesterId() {
 		return -10;
-	}
-
-	public SynchronousQueue<Object> getRequesterResponseQueue() {
-		return responseQueue;
-	}
-
-	public boolean isPermanentRequester() {
-		return true;
 	}
 }

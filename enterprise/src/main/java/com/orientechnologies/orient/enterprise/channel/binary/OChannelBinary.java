@@ -49,8 +49,6 @@ public abstract class OChannelBinary extends OChannel {
 		buffer = new byte[maxChunkSize];
 	}
 
-	protected abstract void setRequestResult(final int iClientTxId, final Object iResult);
-
 	public byte readByte() throws IOException {
 		if (debug) {
 			OLogManager.instance().debug(this, "Reading byte (1 byte)...");
@@ -290,16 +288,12 @@ public abstract class OChannelBinary extends OChannel {
 
 	public int readStatus() throws IOException {
 		// READ THE RESPONSE
-		final byte result = readByte();
-		final int clientTxId = readInt();
+		return handleStatus(readByte(), readInt());
+	}
 
-		if (result == OChannelBinaryProtocol.RESPONSE_STATUS_OK) {
-			setRequestResult(clientTxId, result);
-
-		} else if (result == OChannelBinaryProtocol.PUSH_DATA) {
-			setRequestResult(clientTxId, result);
-
-		} else if (result == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
+	protected int handleStatus(final byte iResult, final int iClientTxId) throws IOException {
+		if (iResult == OChannelBinaryProtocol.RESPONSE_STATUS_OK || iResult == OChannelBinaryProtocol.PUSH_DATA) {
+		} else if (iResult == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
 			StringBuilder buffer = new StringBuilder();
 			String rootClassName = null;
 
@@ -321,17 +315,16 @@ public abstract class OChannelBinary extends OChannel {
 			}
 
 			if (rootClassName != null)
-				setRequestResult(clientTxId, createException(rootClassName, buffer.toString()));
+				throw createException(rootClassName, buffer.toString());
 			else {
-				setRequestResult(clientTxId, new ONetworkProtocolException("Network response error: " + buffer.toString()));
+				throw new ONetworkProtocolException("Network response error: " + buffer.toString());
 			}
 		} else {
 			// PROTOCOL ERROR
 			close();
 			throw new ONetworkProtocolException("Error on reading response from the server");
 		}
-
-		return clientTxId;
+		return iClientTxId;
 	}
 
 	@SuppressWarnings("unchecked")

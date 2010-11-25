@@ -1185,8 +1185,6 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 	}
 
 	protected void beginRequest(final byte iCommand) throws IOException {
-		network.addRequester(this);
-
 		network.getLockWrite().lock();
 		network.writeByte(iCommand);
 		network.writeInt(txId);
@@ -1203,14 +1201,15 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 
 	public void endResponse() {
 		network.getLockRead().unlock();
+
+		// WAKE UP ALL THE WAITING THREADS
+		synchronized (this) {
+			notifyAll();
+		}
 	}
 
 	public int getRequesterId() {
 		return txId;
-	}
-
-	public BlockingQueue<Object> getRequesterResponseQueue() {
-		return responseQueue;
 	}
 
 	public boolean isPermanentRequester() {

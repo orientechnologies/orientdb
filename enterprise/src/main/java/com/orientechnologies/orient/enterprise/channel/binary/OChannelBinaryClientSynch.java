@@ -31,10 +31,4 @@ public class OChannelBinaryClientSynch extends OChannelBinaryClient {
 			throws IOException {
 		super(remoteHost, remotePort, iConfig);
 	}
-
-	@Override
-	protected void setRequestResult(final int iClientTxId, final Object iResult) {
-		if (iResult instanceof RuntimeException)
-			throw (RuntimeException) iResult;
-	}
 }

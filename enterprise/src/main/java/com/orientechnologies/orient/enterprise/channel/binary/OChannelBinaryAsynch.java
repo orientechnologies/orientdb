@@ -17,15 +17,9 @@ package com.orientechnologies.orient.enterprise.channel.binary;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.thread.OSoftThread;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.enterprise.exception.ONetworkProtocolException;
 
 /**
  * Implementation that supports multiple client requests.
@@ -33,143 +27,45 @@ import com.orientechnologies.orient.enterprise.exception.ONetworkProtocolExcepti
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public abstract class OChannelBinaryAsynch extends OChannelBinary {
-	private final OSoftThread													reader;
-	private final List<OChannelBinaryAsynchRequester>	requestersQueue	= new ArrayList<OChannelBinaryAsynchRequester>();
-	private final ReentrantLock												lockRead				= new ReentrantLock();
-	private final ReentrantLock												lockWrite				= new ReentrantLock();
-	private volatile boolean													responseParsed	= true;
+public class OChannelBinaryAsynch extends OChannelBinary {
+	private final ReentrantLock	lockRead		= new ReentrantLock();
+	private final ReentrantLock	lockWrite		= new ReentrantLock();
+	private boolean							channelRead	= false;
+	private byte								currentStatus;
+	private int									currentTxId;
 
 	public OChannelBinaryAsynch(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
 		super(iSocket, iConfig);
-
-		reader = new OSoftThread(Orient.getThreadGroup(), "IO-Binary-ChannelReaderMulti") {
-			@Override
-			protected void execute() throws Exception {
-				if (!responseParsed || in == null) {
-					// NOT READY
-					try {
-						Thread.sleep(30);
-					} catch (InterruptedException e) {
-					}
-					return;
-				}
-
-				if (OLogManager.instance().isDebugEnabled())
-					OLogManager.instance().debug(this, "Waiting for a response from server");
-
-				// WAIT FOR A RESPONSE
-				lockRead.lock();
-				responseParsed = false;
-				try {
-					readStatus();
-				} catch (IOException e) {
-					close();
-				} catch (Exception e) {
-					e.printStackTrace();
-					close();
-				} finally {
-					lockRead.unlock();
-				}
-
-			}
-		};
-		reader.start();
-	}
-
-	@Override
-	public void close() {
-		reader.sendShutdown();
-		try {
-			if (reader != Thread.currentThread()) {
-				reader.interrupt();
-				reader.join();
-			}
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-
-		super.close();
-
-		// BREAK PENDING REQUESTS
-		acquireExclusiveLock();
-		try {
-			for (OChannelBinaryAsynchRequester req : requestersQueue) {
-				synchronized (req.getRequesterResponseQueue()) {
-					req.getRequesterResponseQueue().notifyAll();
-				}
-				req.getRequesterResponseQueue().clear();
-			}
-			requestersQueue.clear();
-		} finally {
-			releaseExclusiveLock();
-		}
 	}
 
 	public int readStatus(final OChannelBinaryAsynchRequester iRequester) throws IOException {
 		// WAIT FOR THE RESPONSE
-		final Object result;
-		try {
-			result = iRequester.getRequesterResponseQueue().take();
+		do {
+			lockRead.lock();
 
-			if (OLogManager.instance().isDebugEnabled())
-				OLogManager.instance().debug(this, "Received response for txid %d: %s", iRequester.getRequesterId(), result);
-
-		} catch (InterruptedException e) {
-			close();
-			throw new ONetworkProtocolException("Error on reading of the response from the Server", e);
-
-		}
-
-		lockRead.lock();
-		responseParsed = true;
-
-		if (result instanceof RuntimeException)
-			throw (RuntimeException) result;
-
-		return iRequester.getRequesterId();
-	}
-
-	public void addRequester(final OChannelBinaryAsynchRequester iRequester) {
-		acquireExclusiveLock();
-		try {
-			requestersQueue.add(iRequester);
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
-
-	@Override
-	protected void setRequestResult(final int iClientTxId, final Object iResult) {
-		OChannelBinaryAsynchRequester reqId;
-
-		acquireExclusiveLock();
-
-		try {
-			for (int i = 0; i < requestersQueue.size(); ++i) {
-				reqId = requestersQueue.get(i);
-				if (reqId.getRequesterId() == iClientTxId) {
-					// FOUND: SET THE RESULT, REMOVE THE REQUESTER AND UNLOCK THE WAITER THREAD
-					// try {
-					reqId.getRequesterResponseQueue().add(iResult);
-					// } catch (InterruptedException e) {
-					// e.printStackTrace();
-					// }
-
-					if (!reqId.isPermanentRequester())
-						requestersQueue.remove(i);
-
-					return;
-				}
+			if (!channelRead) {
+				currentStatus = readByte();
+				currentTxId = readInt();
 			}
 
-			// CLIENT TX NOT FOUND: LOOSE THE REQUEST
-			OLogManager.instance().warn(this, "Request %d not found in queue. Requests in queue %d: ", iClientTxId,
-					requestersQueue.size(), requestersQueue.toString());
+			if (currentTxId == iRequester.getRequesterId())
+				// IT'S FOR ME
+				break;
 
-		} finally {
-			releaseExclusiveLock();
-		}
+			lockRead.unlock();
+
+			synchronized (this) {
+				try {
+					wait();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		} while (true);
+
+		handleStatus(currentStatus, currentTxId);
+
+		return iRequester.getRequesterId();
 	}
 
 	public ReentrantLock getLockRead() {
