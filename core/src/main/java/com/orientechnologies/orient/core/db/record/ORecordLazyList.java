@@ -109,8 +109,8 @@ public class ORecordLazyList extends ORecordTrackedList {
 	public void convertAll() {
 		if (converted || !convertToRecord)
 			return;
-
-		if (sourceRecord.getDatabase() == null)
+		
+		if (sourceRecord == null || sourceRecord.getDatabase() == null)
 			return;
 
 		for (int i = 0; i < size(); ++i) {
