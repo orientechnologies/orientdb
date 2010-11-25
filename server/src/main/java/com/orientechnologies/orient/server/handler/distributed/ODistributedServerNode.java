@@ -17,9 +17,7 @@ package com.orientechnologies.orient.server.handler.distributed;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -54,7 +52,6 @@ public class ODistributedServerNode implements OCommandOutputListener {
 	public OChannelBinaryClient													channel;
 	private OContextConfiguration												configuration;
 	private volatile STATUS															status					= STATUS.DISCONNECTED;
-	private Map<String, Long>														storages				= new HashMap<String, Long>();
 	private List<OTransactionEntry<ORecordInternal<?>>>	bufferedChanges	= new ArrayList<OTransactionEntry<ORecordInternal<?>>>();
 	private int																					clientTxId			= 0;
 
@@ -168,7 +165,7 @@ public class ODistributedServerNode implements OCommandOutputListener {
 		}
 	}
 
-	public void sendConfiguration() {
+	public void sendConfiguration(final String iDatabaseName) {
 		OLogManager.instance().info(this, "Sending configuration to distributed server node %s:%d...", networkAddress, networkPort);
 
 		channel.acquireExclusiveLock();
@@ -176,7 +173,7 @@ public class ODistributedServerNode implements OCommandOutputListener {
 		try {
 			channel.out.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_CONFIG);
 			channel.out.writeInt(0);
-			channel.writeBytes(manager.getClusterConfiguration().toStream());
+			channel.writeBytes(manager.getClusterConfiguration(iDatabaseName).toStream());
 			channel.flush();
 
 			readStatus();
@@ -227,7 +224,7 @@ public class ODistributedServerNode implements OCommandOutputListener {
 
 	public void startSynchronization() {
 		// SEND THE LAST CONFIGURATION TO THE NODE
-		sendConfiguration();
+		// sendConfiguration(iDatabaseName);
 
 		channel.acquireExclusiveLock();
 		try {
@@ -248,18 +245,19 @@ public class ODistributedServerNode implements OCommandOutputListener {
 			throw new ODistributedSynchronizationException("Can't share database '" + iDatabase.getName() + "' on remote server node '"
 					+ iRemoteServerName + "' because is disconnected");
 
+		final String dbName = iDatabase.getName();
+
 		channel.acquireExclusiveLock();
 
 		try {
 			status = STATUS.SYNCHRONIZING;
 
-			OLogManager.instance().info(this,
-					"Sharing database '" + iDatabase.getName() + "' to remote server " + iRemoteServerName + "...");
+			OLogManager.instance().info(this, "Sharing database '" + dbName + "' to remote server " + iRemoteServerName + "...");
 
 			// EXECUTE THE REQUEST ON REMOTE SERVER NODE
 			channel.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_RECEIVER);
 			channel.writeInt(0);
-			channel.writeString(iDatabase.getName());
+			channel.writeString(dbName);
 			channel.writeString(iEngineName);
 
 			OLogManager.instance().info(this, "Exporting database '%s' via streaming to remote server node: %s...", iDatabase.getName(),
@@ -273,7 +271,7 @@ public class ODistributedServerNode implements OCommandOutputListener {
 			channel.readStatus();
 			clientTxId = channel.readInt();
 
-			manager.addServerInConfiguration(iRemoteServerName, iRemoteServerName, iSynchronousMode);
+			manager.addServerInConfiguration(dbName, iRemoteServerName, iRemoteServerName, iSynchronousMode);
 
 			status = STATUS.CONNECTED;
 

@@ -294,7 +294,10 @@ public abstract class OChannelBinary extends OChannel {
 		final int clientTxId = readInt();
 
 		if (result == OChannelBinaryProtocol.RESPONSE_STATUS_OK) {
-			setRequestResult(clientTxId, OChannelBinaryProtocol.RESPONSE_STATUS_OK);
+			setRequestResult(clientTxId, result);
+
+		} else if (result == OChannelBinaryProtocol.PUSH_DATA) {
+			setRequestResult(clientTxId, result);
 
 		} else if (result == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
 			StringBuilder buffer = new StringBuilder();

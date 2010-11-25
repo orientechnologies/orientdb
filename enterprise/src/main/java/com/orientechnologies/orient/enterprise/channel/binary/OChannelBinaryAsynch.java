@@ -49,7 +49,7 @@ public abstract class OChannelBinaryAsynch extends OChannelBinary {
 				if (!responseParsed || in == null) {
 					// NOT READY
 					try {
-						Thread.sleep(10);
+						Thread.sleep(30);
 					} catch (InterruptedException e) {
 					}
 					return;
@@ -79,8 +79,31 @@ public abstract class OChannelBinaryAsynch extends OChannelBinary {
 
 	@Override
 	public void close() {
-		super.close();
 		reader.sendShutdown();
+		try {
+			if (reader != Thread.currentThread()) {
+				reader.interrupt();
+				reader.join();
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+
+		super.close();
+
+		// BREAK PENDING REQUESTS
+		acquireExclusiveLock();
+		try {
+			for (OChannelBinaryAsynchRequester req : requestersQueue) {
+				synchronized (req.getRequesterResponseQueue()) {
+					req.getRequesterResponseQueue().notifyAll();
+				}
+				req.getRequesterResponseQueue().clear();
+			}
+			requestersQueue.clear();
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	public int readStatus(final OChannelBinaryAsynchRequester iRequester) throws IOException {
@@ -127,11 +150,11 @@ public abstract class OChannelBinaryAsynch extends OChannelBinary {
 				reqId = requestersQueue.get(i);
 				if (reqId.getRequesterId() == iClientTxId) {
 					// FOUND: SET THE RESULT, REMOVE THE REQUESTER AND UNLOCK THE WAITER THREAD
-					try {
-						reqId.getRequesterResponseQueue().put(iResult);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
+					// try {
+					reqId.getRequesterResponseQueue().add(iResult);
+					// } catch (InterruptedException e) {
+					// e.printStackTrace();
+					// }
 
 					if (!reqId.isPermanentRequester())
 						requestersQueue.remove(i);

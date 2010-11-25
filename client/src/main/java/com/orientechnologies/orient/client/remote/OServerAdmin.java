@@ -157,6 +157,33 @@ public class OServerAdmin {
 		return this;
 	}
 
+	public OServerAdmin updateClusterConfiguration(final String iDatabaseName, final String iDatabaseUserName, final String iDatabaseUserPassword,
+			final String iRemoteName, final boolean iSynchronousMode) throws IOException {
+
+		try {
+			try {
+				storage.beginRequest(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_SENDER);
+				storage.getNetwork().writeString(iDatabaseName);
+				storage.getNetwork().writeString(iDatabaseUserName);
+				storage.getNetwork().writeString(iDatabaseUserPassword);
+				storage.getNetwork().writeString(iRemoteName);
+				storage.getNetwork().writeByte((byte) (iSynchronousMode ? 1 : 0));
+			} finally {
+				storage.endRequest();
+			}
+
+			storage.getResponse();
+
+			OLogManager.instance().debug(this, "Database '%s' has been shared in mode '%s' with the server '%s'", iDatabaseName,
+					iSynchronousMode, iRemoteName);
+
+		} catch (Exception e) {
+			OLogManager.instance().exception("Can't share the database: " + iDatabaseName, e, OStorageException.class);
+		}
+
+		return this;
+	}
+
 	public Map<String, String> getGlobalConfigurations() throws IOException {
 		storage.checkConnection();
 
