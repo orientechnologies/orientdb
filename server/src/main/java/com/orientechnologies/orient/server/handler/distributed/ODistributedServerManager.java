@@ -137,7 +137,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	 * @param iServerPort
 	 *          Server port
 	 */
-	public void receivedNodePresence(final String iServerAddress, final int iServerPort) {
+	public void joinNode(final String iServerAddress, final int iServerPort) {
 		final String key = getNodeName(iServerAddress, iServerPort);
 		final ODistributedServerNode node;
 
@@ -147,7 +147,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 			if (nodes.containsKey(key)) {
 				// ALREADY REGISTERED, MAYBE IT WAS DISCONNECTED. INVOKE THE RECONNECTION
 				node = nodes.get(key);
-				if (node.getStatus() != STATUS.DISCONNECTED)
+				if (node.getStatus() == STATUS.CONNECTED)
 					return;
 			} else {
 				node = new ODistributedServerNode(this, iServerAddress, iServerPort);
@@ -158,13 +158,11 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 			lock.releaseExclusiveLock();
 		}
 
-		OLogManager.instance().warn(this, "Discovered new distributed server node %s. Trying to connect...", key);
-
 		try {
 			node.connect(networkTimeoutNode);
 			node.startSynchronization();
 		} catch (IOException e) {
-			OLogManager.instance().error(this, "Can't connect to  distributed server node: %s:%d", node.networkAddress, node.networkPort);
+			OLogManager.instance().error(this, "Can't connect to distributed server node: %s:%d", node.networkAddress, node.networkPort);
 		}
 	}
 
@@ -386,6 +384,15 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 			// GET THE NODES INVOLVED IN THE UPDATE
 			final ODocument database = clusterConfigurations.get(iTransactionEntry.getRecord().getDatabase().getName());
+			if (database == null)
+				return;
+
+			OLogManager.instance().info(
+					this,
+					"Caught change " + iTransactionEntry.status + " in database '" + iTransactionEntry.getRecord().getDatabase().getName()
+							+ "', record: " + iTransactionEntry.getRecord().getIdentity()
+							+ " and distributed to all the configured cluster nodes");
+
 			final ODocument clusters = database.field("clusters");
 			final ODocument servers = (ODocument) (clusters.containsField(iTransactionEntry.clusterName) ? clusters
 					.field(iTransactionEntry.clusterName) : clusters.field("*"));

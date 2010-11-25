@@ -13,9 +13,17 @@ public class OLogFormatter extends Formatter {
 		// FORMAT THE STACK TRACE
 		final StringBuilder buffer = new StringBuilder();
 		buffer.append(record.getMessage());
-		for (StackTraceElement stackTraceElement : record.getThrown().getStackTrace()) {
-			buffer.append("\n-> ");
-			buffer.append(stackTraceElement.toString());
+
+		Throwable current = record.getThrown();
+
+		while (current != null) {
+			buffer.append("\n" + current.getMessage());
+
+			for (StackTraceElement stackTraceElement : record.getThrown().getStackTrace()) {
+				buffer.append("\n-> ");
+				buffer.append(stackTraceElement.toString());
+			}
+			current = current.getCause();
 		}
 
 		return buffer.toString();

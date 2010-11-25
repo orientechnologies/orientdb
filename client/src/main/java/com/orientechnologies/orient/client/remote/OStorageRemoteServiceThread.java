@@ -28,13 +28,14 @@ public class OStorageRemoteServiceThread extends OSoftThread implements OChannel
 	private final OStorageRemote	storage;
 
 	public OStorageRemoteServiceThread(final OStorageRemote iStorageRemote) {
-		super("StorageService");
+		super("ClientService");
 		storage = iStorageRemote;
+		start();
 	}
 
 	@Override
 	protected void execute() throws Exception {
-		storage.getNetwork().readStatus(this);
+		storage.getNetwork().beginResponse(this);
 
 		try {
 			final byte request = storage.getNetwork().readByte();
@@ -46,7 +47,7 @@ public class OStorageRemoteServiceThread extends OSoftThread implements OChannel
 			}
 
 		} finally {
-			storage.getNetwork().getLockRead().unlock();
+			storage.getNetwork().endResponse();
 		}
 	}
 

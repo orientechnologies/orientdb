@@ -30,7 +30,6 @@ import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistr
  */
 public class OServerAdmin {
 	private OStorageRemote	storage;
-	private int							clientId;
 
 	/**
 	 * Creates the object passing a remote URL to connect.
@@ -73,7 +72,7 @@ public class OServerAdmin {
 
 			try {
 				storage.beginResponse();
-				clientId = storage.getNetwork().readInt();
+				storage.txId = storage.getNetwork().readInt();
 			} finally {
 				storage.endResponse();
 			}
@@ -157,8 +156,8 @@ public class OServerAdmin {
 		return this;
 	}
 
-	public OServerAdmin updateClusterConfiguration(final String iDatabaseName, final String iDatabaseUserName, final String iDatabaseUserPassword,
-			final String iRemoteName, final boolean iSynchronousMode) throws IOException {
+	public OServerAdmin updateClusterConfiguration(final String iDatabaseName, final String iDatabaseUserName,
+			final String iDatabaseUserPassword, final String iRemoteName, final boolean iSynchronousMode) throws IOException {
 
 		try {
 			try {

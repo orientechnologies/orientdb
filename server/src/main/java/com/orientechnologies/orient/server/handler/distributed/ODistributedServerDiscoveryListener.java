@@ -105,7 +105,7 @@ public class ODistributedServerDiscoveryListener extends OSoftThread {
 					return;
 
 				// GOOD PACKET, PASS TO THE DISTRIBUTED NODE MANAGER THIS INFO
-				serverNode.receivedNodePresence(serverAddress, serverPort);
+				serverNode.joinNode(serverAddress, serverPort);
 
 			} catch (Exception e) {
 				// WRONG PACKET

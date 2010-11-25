@@ -41,7 +41,7 @@ import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistr
  */
 public class ODistributedServerNode implements OCommandOutputListener {
 	public enum STATUS {
-		DISCONNECTED, CONNECTING, CONNECTED, SYNCHRONIZING
+		DISCONNECTED, CONNECTING, CONNECTED, UNREACHABLE, SYNCHRONIZING
 	}
 
 	private String																			id;
@@ -54,6 +54,7 @@ public class ODistributedServerNode implements OCommandOutputListener {
 	private volatile STATUS															status					= STATUS.DISCONNECTED;
 	private List<OTransactionEntry<ORecordInternal<?>>>	bufferedChanges	= new ArrayList<OTransactionEntry<ORecordInternal<?>>>();
 	private int																					clientTxId			= 0;
+	private long																				lastHeartBeat		= 0;
 
 	public ODistributedServerNode(final ODistributedServerManager iNode, final String iServerAddress, final int iServerPort) {
 		manager = iNode;
@@ -71,7 +72,7 @@ public class ODistributedServerNode implements OCommandOutputListener {
 
 		OChannelBinaryProtocol.checkProtocolVersion(channel);
 
-		OLogManager.instance().info(this, "Connecting to remote cluster node %s:%d...", networkAddress, networkPort);
+		OLogManager.instance().warn(this, "Joining the server node %s:%d to the cluster...", networkAddress, networkPort);
 
 		channel.out.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_CONNECT);
 		channel.out.writeInt(0);
@@ -79,12 +80,17 @@ public class ODistributedServerNode implements OCommandOutputListener {
 
 		readStatus();
 
-		status = STATUS.CONNECTED;
-		OLogManager.instance().info(this, "Connection to remote cluster node %s:%d has been established", networkAddress, networkPort);
+		if (status == STATUS.CONNECTING)
+			OLogManager.instance().info(this, "Server node %s:%d has joined the cluster", networkAddress, networkPort);
+		else
+			OLogManager.instance().info(this, "Server node %s:%d has re-joined the cluster after %d secs", networkAddress, networkPort,
+					(System.currentTimeMillis() - lastHeartBeat) / 1000);
+
+		lastHeartBeat = System.currentTimeMillis();
 	}
 
 	public void sendRequest(final OTransactionEntry<ORecordInternal<?>> iRequest) throws IOException {
-		if (status == STATUS.DISCONNECTED) {
+		if (status == STATUS.UNREACHABLE) {
 			synchronized (bufferedChanges) {
 				if (bufferedChanges.size() > manager.serverOutSynchMaxBuffers) {
 					// BUFFER EXCEEDS THE CONFIGURED LIMIT: REMOVE MYSELF AS NODE
@@ -200,6 +206,9 @@ public class ODistributedServerNode implements OCommandOutputListener {
 
 			readStatus();
 
+			// RESET LAST HEARTBEAT
+			lastHeartBeat = System.currentTimeMillis();
+
 		} catch (Exception e) {
 			return false;
 
@@ -217,19 +226,22 @@ public class ODistributedServerNode implements OCommandOutputListener {
 	 *          max number of entries to collect before to remove it completely from the server node list
 	 */
 	public void setAsTemporaryDisconnected(final int iServerOutSynchMaxBuffers) {
-		if (status != STATUS.DISCONNECTED) {
-			status = STATUS.DISCONNECTED;
+		if (status != STATUS.UNREACHABLE) {
+			status = STATUS.UNREACHABLE;
 		}
 	}
 
 	public void startSynchronization() {
-		// SEND THE LAST CONFIGURATION TO THE NODE
-		// sendConfiguration(iDatabaseName);
-
 		channel.acquireExclusiveLock();
 		try {
-			if (status == STATUS.DISCONNECTED)
+			if (status != STATUS.CONNECTED) {
+				// SEND THE LAST CONFIGURATION TO THE NODE
+				// sendConfiguration(iDatabaseName);
+
 				synchronizeDelta();
+
+				status = STATUS.CONNECTED;
+			}
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -241,7 +253,7 @@ public class ODistributedServerNode implements OCommandOutputListener {
 
 	public void shareDatabase(final ODatabaseRecord<?> iDatabase, final String iRemoteServerName, final String iEngineName,
 			final boolean iSynchronousMode) throws IOException {
-		if (status == STATUS.DISCONNECTED)
+		if (status != STATUS.CONNECTED)
 			throw new ODistributedSynchronizationException("Can't share database '" + iDatabase.getName() + "' on remote server node '"
 					+ iRemoteServerName + "' because is disconnected");
 
@@ -268,10 +280,7 @@ public class ODistributedServerNode implements OCommandOutputListener {
 
 			OLogManager.instance().info(this, "Database exported correctly");
 
-			channel.readStatus();
-			clientTxId = channel.readInt();
-
-			manager.addServerInConfiguration(dbName, iRemoteServerName, iRemoteServerName, iSynchronousMode);
+			clientTxId = channel.readStatus();
 
 			status = STATUS.CONNECTED;
 

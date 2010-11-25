@@ -355,7 +355,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 	}
 
 	public String embeddedMapToStream(final ODatabaseComplex<?> iDatabase, final OUserObject2RecordHandler iObjHandler,
-			final OClass iLinkedClass, final OType iLinkedType, final Object iValue, final Set<Integer> iMarshalledRecords) {
+			final OClass iLinkedClass, OType iLinkedType, final Object iValue, final Set<Integer> iMarshalledRecords) {
 		final StringBuilder buffer = new StringBuilder();
 		buffer.append(OStringSerializerHelper.MAP_BEGIN);
 
@@ -401,9 +401,12 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					} else if (o.getValue() instanceof Map<?, ?>) {
 						// SUB MAP
 						buffer.append(OStringSerializerHelper.fieldTypeToString(iDatabase, OType.EMBEDDEDMAP, o.getValue()));
-					} else
+					} else {
 						// EMBEDDED LITERALS
+						if (iLinkedType == null)
+							iLinkedType = OType.getTypeByClass(o.getValue().getClass());
 						buffer.append(OStringSerializerHelper.fieldTypeToString(iDatabase, iLinkedType, o.getValue()));
+					}
 				}
 
 				items++;

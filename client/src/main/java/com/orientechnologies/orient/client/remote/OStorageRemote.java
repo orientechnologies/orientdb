@@ -1196,16 +1196,11 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 	}
 
 	protected void beginResponse() throws IOException {
-		network.readStatus(this);
+		network.beginResponse(this);
 	}
 
 	public void endResponse() {
-		network.getLockRead().unlock();
-
-		// WAKE UP ALL THE WAITING THREADS
-		synchronized (this) {
-			notifyAll();
-		}
+		network.endResponse();
 	}
 
 	public int getRequesterId() {
@@ -1228,6 +1223,9 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 		synchronized (clusterConfiguration) {
 			clusterConfiguration.reset();
 			clusterConfiguration.fromStream(iContent);
+
+			if (OLogManager.instance().isInfoEnabled())
+				OLogManager.instance().info(this, "Received new cluster configuration: %s", clusterConfiguration.toJSON(""));
 		}
 	}
 }

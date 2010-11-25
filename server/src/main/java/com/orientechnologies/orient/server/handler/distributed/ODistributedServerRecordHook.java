@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.server.handler.distributed;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
@@ -66,11 +65,6 @@ public class ODistributedServerRecordHook implements ORecordHook, ODatabaseLifec
 			// NOT DISTRIBUTED REQUEST, JUST RETURN
 			return;
 		}
-
-		OLogManager.instance().info(
-				this,
-				"Caught change " + iType + " in database '" + iRecord.getDatabase().getName() + "', record: " + iRecord.getIdentity()
-						+ " and distributed to all the configured cluster nodes");
 	}
 
 	/**

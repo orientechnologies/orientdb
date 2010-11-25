@@ -38,7 +38,7 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 		super(iSocket, iConfig);
 	}
 
-	public int readStatus(final OChannelBinaryAsynchRequester iRequester) throws IOException {
+	public int beginResponse(final OChannelBinaryAsynchRequester iRequester) throws IOException {
 		// WAIT FOR THE RESPONSE
 		do {
 			lockRead.lock();
@@ -46,6 +46,7 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 			if (!channelRead) {
 				currentStatus = readByte();
 				currentTxId = readInt();
+				channelRead = true;
 			}
 
 			if (currentTxId == iRequester.getRequesterId())
@@ -68,11 +69,40 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 		return iRequester.getRequesterId();
 	}
 
+	public void endResponse() {
+		channelRead = false;
+		lockRead.unlock();
+
+		// WAKE UP ALL THE WAITING THREADS
+		synchronized (this) {
+			notifyAll();
+		}
+	}
+
 	public ReentrantLock getLockRead() {
 		return lockRead;
 	}
 
 	public ReentrantLock getLockWrite() {
 		return lockWrite;
+	}
+
+	@Override
+	public void close() {
+		synchronized (this) {
+			notifyAll();
+		}
+
+		super.close();
+	}
+
+	@Override
+	public void clearInput() throws IOException {
+		lockRead.lock();
+		try {
+			super.clearInput();
+		} finally {
+			lockRead.unlock();
+		}
 	}
 }
