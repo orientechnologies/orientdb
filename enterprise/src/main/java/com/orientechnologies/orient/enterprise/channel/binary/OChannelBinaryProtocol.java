@@ -26,7 +26,7 @@ import com.orientechnologies.orient.enterprise.exception.ONetworkProtocolExcepti
  * 
  */
 public class OChannelBinaryProtocol {
-	// REQUESTS
+	// OUTGOING
 	public static final byte	REQUEST_SHUTDOWN							= 1;
 	public static final byte	REQUEST_CONNECT								= 2;
 
@@ -64,9 +64,10 @@ public class OChannelBinaryProtocol {
 	public static final byte	REQUEST_CONFIG_SET						= 71;
 	public static final byte	REQUEST_CONFIG_LIST						= 72;
 
-	// RESPONSES
+	// INCOMING
 	public static final byte	RESPONSE_STATUS_OK						= 0;
 	public static final byte	RESPONSE_STATUS_ERROR					= 1;
+	public static final byte	PUSH_DATA											= 3;
 
 	// CONSTANTS
 	public static final int		RECORD_NULL										= -2;
