@@ -26,6 +26,7 @@ import java.util.Map;
 import javax.crypto.SecretKey;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
+import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -34,7 +35,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.tx.OTransactionEntry;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 import com.orientechnologies.orient.server.OClientConnection;
+import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
@@ -215,6 +220,16 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 			// START HEARTBEAT FOR CONNECTIONS
 			Orient.getTimer().schedule(new ODistributedServerNodeChecker(this), networkHeartbeatDelay, networkHeartbeatDelay);
 		}
+	}
+
+	@Override
+	public void onAfterClientRequest(final OClientConnection iConnection, final byte iRequestType) {
+		if (iRequestType == OChannelBinaryProtocol.REQUEST_DB_OPEN)
+			try {
+				((OChannelBinary) iConnection.protocol.getChannel()).writeBytes(serverDistributionConfiguration.toStream());
+			} catch (IOException e) {
+				throw new OIOException("Error on marshalling of cluster configuration", e);
+			}
 	}
 
 	@Override
@@ -477,5 +492,39 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		}
 
 		OLogManager.instance().info(this, "Updated server node configuration: %s", serverDistributionConfiguration.toJSON(""));
+
+		broadcastClusterConfiguration();
+	}
+
+	public void broadcastClusterConfiguration() {
+		// UPDATE ALL THE NODES
+		for (ODistributedServerNode node : getNodeList()) {
+			if (node.getStatus() == STATUS.CONNECTED)
+				node.sendConfiguration();
+		}
+
+		// UPDATE ALL THE CLIENTS
+		OChannelBinary ch;
+		for (OClientConnection c : OClientConnectionManager.instance().getConnections()) {
+			if (c.protocol.getChannel() instanceof OChannelBinary) {
+				ch = (OChannelBinary) c.protocol.getChannel();
+
+				OLogManager.instance().info(this, "Sending the configuration to the connected client %s...",
+						ch.socket.getRemoteSocketAddress());
+
+				ch.acquireExclusiveLock();
+				try {
+					ch.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_OK);
+					ch.writeInt(-10);
+					ch.writeByte(OChannelDistributedProtocol.PUSH_DISTRIBUTED_CONFIG);
+					ch.writeBytes(serverDistributionConfiguration.toStream());
+
+				} catch (IOException e) {
+					e.printStackTrace();
+				} finally {
+					ch.releaseExclusiveLock();
+				}
+			}
+		}
 	}
 }

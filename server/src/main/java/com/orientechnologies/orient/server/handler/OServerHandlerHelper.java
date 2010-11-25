@@ -38,7 +38,7 @@ public class OServerHandlerHelper {
 			}
 	}
 
-	public static void invokeHandlerCallbackOnBeforeClientRequest(final OClientConnection connection, final Object iRequestType) {
+	public static void invokeHandlerCallbackOnBeforeClientRequest(final OClientConnection connection, final byte iRequestType) {
 		final List<OServerHandler> handlers = OServerMain.server().getHandlers();
 		if (handlers != null)
 			for (OServerHandler handler : handlers) {
@@ -46,7 +46,7 @@ public class OServerHandlerHelper {
 			}
 	}
 
-	public static void invokeHandlerCallbackOnAfterClientRequest(final OClientConnection connection, final Object iRequestType) {
+	public static void invokeHandlerCallbackOnAfterClientRequest(final OClientConnection connection, final byte iRequestType) {
 		final List<OServerHandler> handlers = OServerMain.server().getHandlers();
 		if (handlers != null)
 			for (OServerHandler handler : handlers) {

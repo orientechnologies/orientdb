@@ -19,6 +19,7 @@ import java.util.concurrent.SynchronousQueue;
 
 import com.orientechnologies.common.thread.OSoftThread;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchRequester;
+import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 
 /**
  * Service thread that catches internal messages sent by the server
@@ -32,20 +33,39 @@ public class OStorageRemoteServiceThread extends OSoftThread implements OChannel
 	public OStorageRemoteServiceThread(final OStorageRemote iStorageRemote) {
 		super("StorageService");
 		storage = iStorageRemote;
+		iStorageRemote.getNetwork().addRequester(this);
 	}
 
 	@Override
 	protected void execute() throws Exception {
 		storage.getNetwork().readStatus(this);
+
+		try {
+			final byte request = storage.getNetwork().readByte();
+
+			switch (request) {
+			case OChannelDistributedProtocol.PUSH_DISTRIBUTED_CONFIG:
+				storage.updateClusterConfiguration(storage.getNetwork().readBytes());
+				break;
+			}
+
+		} finally {
+			storage.getNetwork().getLockRead().unlock();
+		}
 	}
 
 	@Override
 	public int getRequesterId() {
-		return -1;
+		return -10;
 	}
 
 	@Override
 	public SynchronousQueue<Object> getRequesterResponseQueue() {
 		return responseQueue;
+	}
+
+	@Override
+	public boolean isPermanentRequester() {
+		return true;
 	}
 }

@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyRuntime;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
@@ -66,9 +67,9 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
  */
 @SuppressWarnings("unchecked")
 public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAsynchRequester {
-	private static final String							DEFAULT_HOST			= "localhost";
-	private static final String[]						DEFAULT_PORTS			= new String[] { "2424" };
-	private static final String							ADDRESS_SEPARATOR	= ";";
+	private static final String							DEFAULT_HOST					= "localhost";
+	private static final String[]						DEFAULT_PORTS					= new String[] { "2424" };
+	private static final String							ADDRESS_SEPARATOR			= ";";
 
 	private OStorageRemoteServiceThread			serviceThread;
 	private String													userName;
@@ -78,13 +79,14 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 	private int															connectionRetryDelay;
 
 	private OChannelBinaryClient						network;
-	private final SynchronousQueue<Object>	responseQueue			= new SynchronousQueue<Object>();
-	protected List<OPair<String, String[]>>	serverURLs				= new ArrayList<OPair<String, String[]>>();
-	protected int														txId							= 0;
-	protected final Map<String, Integer>		clustersIds				= new HashMap<String, Integer>();
-	protected final Map<String, String>			clustersTypes			= new HashMap<String, String>();
+	private final SynchronousQueue<Object>	responseQueue					= new SynchronousQueue<Object>();
+	protected List<OPair<String, String[]>>	serverURLs						= new ArrayList<OPair<String, String[]>>();
+	protected ODocument											clusterConfiguration	= new ODocument();
+	protected int														retry									= 0;
+	protected int														txId									= 0;
+	protected final Map<String, Integer>		clustersIds						= new HashMap<String, Integer>();
+	protected final Map<String, String>			clustersTypes					= new HashMap<String, String>();
 	protected int														defaultClusterId;
-	protected int														retry							= 0;
 
 	public OStorageRemote(final String iURL, final String iMode) throws IOException {
 		super(iURL, iURL, iMode);
@@ -1054,6 +1056,10 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 				clustersIds.put(clusterName, network.readInt());
 				clustersTypes.put(clusterName, network.readString());
 			}
+
+			// READ CLUSTER CONFIGURATION
+			updateClusterConfiguration(network.readBytes());
+
 		} finally {
 			endResponse();
 		}
@@ -1157,7 +1163,7 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 		if (classId == OChannelBinaryProtocol.RECORD_NULL)
 			return null;
 
-		ORecordInternal<?> record = ORecordFactory.newInstance(network.readByte());
+		final ORecordInternal<?> record = ORecordFactory.newInstance(network.readByte());
 
 		if (record instanceof ORecordSchemaAware<?>)
 			((ORecordSchemaAware<?>) record).fill(iDatabase, classId, network.readShort(), network.readLong(), getNetwork().readInt());
@@ -1201,11 +1207,23 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 		return responseQueue;
 	}
 
+	@Override
+	public boolean isPermanentRequester() {
+		return false;
+	}
+
 	protected void getResponse() throws IOException {
 		try {
 			beginResponse();
 		} finally {
 			endResponse();
+		}
+	}
+
+	public void updateClusterConfiguration(final byte[] iContent) {
+		synchronized (clusterConfiguration) {
+			clusterConfiguration.reset();
+			clusterConfiguration.fromStream(iContent);
 		}
 	}
 }

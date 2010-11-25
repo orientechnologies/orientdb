@@ -40,12 +40,12 @@ public interface OServerHandler extends OService {
 	/**
 	 * Callback invoked before a client request is processed.
 	 */
-	public void onBeforeClientRequest(OClientConnection iConnection, Object iRequestType);
+	public void onBeforeClientRequest(OClientConnection iConnection, byte iRequestType);
 
 	/**
 	 * Callback invoked after a client request is processed.
 	 */
-	public void onAfterClientRequest(OClientConnection iConnection, Object iRequestType);
+	public void onAfterClientRequest(OClientConnection iConnection, byte iRequestType);
 
 	/**
 	 * Callback invoked when a client connection has errors.

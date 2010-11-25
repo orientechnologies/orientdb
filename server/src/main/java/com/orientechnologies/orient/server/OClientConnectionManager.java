@@ -17,14 +17,17 @@ package com.orientechnologies.orient.server;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 
-public class OClientConnectionManager {
+public class OClientConnectionManager extends OSharedResource {
 	protected Map<Integer, OClientConnection>			connections	= new HashMap<Integer, OClientConnection>();
 	protected Map<Integer, ONetworkProtocol>			handlers		= new HashMap<Integer, ONetworkProtocol>();
 
@@ -36,35 +39,62 @@ public class OClientConnectionManager {
 	public void connect(final Socket iSocket, final OClientConnection iConnection) throws IOException {
 		OProfiler.getInstance().updateCounter("OServer.threads.actives", +1);
 
-		connections.put(iConnection.id, iConnection);
-		handlers.put(iConnection.id, iConnection.protocol);
+		acquireExclusiveLock();
+		try {
+			connections.put(iConnection.id, iConnection);
+			handlers.put(iConnection.id, iConnection.protocol);
+
+		} finally {
+			releaseExclusiveLock();
+		}
 
 		OLogManager.instance().config(this, "Remote client connected from: " + iConnection);
 	}
 
 	public OClientConnection getConnection(final int iChannelId) {
-		return connections.get(iChannelId);
+		acquireSharedLock();
+		try {
+			return connections.get(iChannelId);
+		} finally {
+			releaseSharedLock();
+		}
 	}
 
 	public void onClientDisconnection(final int iChannelId) {
 		OProfiler.getInstance().updateCounter("OServer.threads.actives", -1);
 
-		OClientConnection conn = connections.remove(iChannelId);
-		if (conn == null)
-			return;
+		acquireExclusiveLock();
+		try {
+			final OClientConnection conn = connections.remove(iChannelId);
+			if (conn == null)
+				return;
 
-		handlers.remove(iChannelId);
+			handlers.remove(iChannelId);
+
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	public static OClientConnectionManager instance() {
 		return instance;
 	}
 
-	public Map<Integer, OClientConnection> getConnections() {
-		return connections;
+	public List<OClientConnection> getConnections() {
+		acquireSharedLock();
+		try {
+			return new ArrayList<OClientConnection>(connections.values());
+		} finally {
+			releaseSharedLock();
+		}
 	}
 
-	public Map<Integer, ONetworkProtocol> getHandlers() {
-		return handlers;
+	public List<ONetworkProtocol> getHandlers() {
+		acquireSharedLock();
+		try {
+			return new ArrayList<ONetworkProtocol>(handlers.values());
+		} finally {
+			releaseSharedLock();
+		}
 	}
 }

@@ -44,7 +44,6 @@ import com.orientechnologies.orient.enterprise.exception.ONetworkProtocolExcepti
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
-import com.orientechnologies.orient.server.handler.OServerHandlerHelper;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 
@@ -121,14 +120,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
 		if (cmd != null)
 			try {
-				OServerHandlerHelper.invokeHandlerCallbackOnBeforeClientRequest(connection, cmd);
-
 				if (cmd.beforeExecute(request)) {
 					// EXECUTE THE COMMAND
 					cmd.execute(request);
 				}
-
-				OServerHandlerHelper.invokeHandlerCallbackOnAfterClientRequest(connection, cmd);
 
 			} catch (Exception e) {
 				handleError(e);

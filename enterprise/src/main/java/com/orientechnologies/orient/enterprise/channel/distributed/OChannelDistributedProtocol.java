@@ -30,4 +30,6 @@ public class OChannelDistributedProtocol extends OChannelBinaryProtocol {
 	public static final byte	REQUEST_DISTRIBUTED_DB_CONFIG					= 83;
 	public static final byte	REQUEST_DISTRIBUTED_DB_SHARE_SENDER		= 84;
 	public static final byte	REQUEST_DISTRIBUTED_DB_SHARE_RECEIVER	= 85;
+
+	public static final byte	PUSH_DISTRIBUTED_CONFIG								= 100;
 }

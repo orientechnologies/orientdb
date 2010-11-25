@@ -132,7 +132,9 @@ public abstract class OChannelBinaryAsynch extends OChannelBinary {
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
-					requestersQueue.remove(i);
+
+					if (!reqId.isPermanentRequester())
+						requestersQueue.remove(i);
 
 					return;
 				}

@@ -229,6 +229,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 						channel.writeString(c.getType());
 					}
 				}
+
+				if (getClass().equals(ONetworkProtocolBinary.class))
+					// NO EXTENSIONS (CLUSTER): SEND NULL DOCUMENT
+					channel.writeBytes(null);
 			}
 
 			break;

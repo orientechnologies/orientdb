@@ -35,15 +35,15 @@ public class OrientServer implements OrientServerMBean {
 	}
 
 	public OClientConnection[] getConnections() {
-		Collection<OClientConnection> conns = OClientConnectionManager.instance().getConnections().values();
-		OClientConnection[] output = new OClientConnection[conns.size()];
+		final Collection<OClientConnection> conns = OClientConnectionManager.instance().getConnections();
+		final OClientConnection[] output = new OClientConnection[conns.size()];
 		conns.toArray(output);
 		return output;
 	}
 
 	public ONetworkProtocol[] getProtocols() {
-		Collection<ONetworkProtocol> handlers = OClientConnectionManager.instance().getHandlers().values();
-		ONetworkProtocol[] output = new ONetworkProtocol[handlers.size()];
+		final Collection<ONetworkProtocol> handlers = OClientConnectionManager.instance().getHandlers();
+		final ONetworkProtocol[] output = new ONetworkProtocol[handlers.size()];
 		handlers.toArray(output);
 		return output;
 	}

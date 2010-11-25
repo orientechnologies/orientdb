@@ -168,10 +168,31 @@ public class ODistributedServerNode implements OCommandOutputListener {
 		}
 	}
 
+	public void sendConfiguration() {
+		OLogManager.instance().info(this, "Sending configuration to distributed server node %s:%d...", networkAddress, networkPort);
+
+		channel.acquireExclusiveLock();
+
+		try {
+			channel.out.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_CONFIG);
+			channel.out.writeInt(0);
+			channel.writeBytes(manager.getClusterConfiguration().toStream());
+			channel.flush();
+
+			readStatus();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+
+		} finally {
+			channel.releaseExclusiveLock();
+		}
+	}
+
 	public boolean sendHeartBeat(final int iNetworkTimeout) {
 		configuration.setValue(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT, iNetworkTimeout);
-		OLogManager.instance().debug(this, "Sending keepalive message to remote distributed server node %s:%d...", networkAddress,
-				networkPort);
+		OLogManager.instance()
+				.debug(this, "Sending keepalive message to distributed server node %s:%d...", networkAddress, networkPort);
 
 		channel.acquireExclusiveLock();
 
@@ -206,16 +227,10 @@ public class ODistributedServerNode implements OCommandOutputListener {
 
 	public void startSynchronization() {
 		// SEND THE LAST CONFIGURATION TO THE NODE
+		sendConfiguration();
+
 		channel.acquireExclusiveLock();
-
 		try {
-			channel.out.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_CONFIG);
-			channel.out.writeInt(0);
-			channel.writeBytes(manager.getClusterConfiguration().toStream());
-			channel.flush();
-
-			readStatus();
-
 			if (status == STATUS.DISCONNECTED)
 				synchronizeDelta();
 
@@ -225,15 +240,6 @@ public class ODistributedServerNode implements OCommandOutputListener {
 		} finally {
 			channel.releaseExclusiveLock();
 		}
-	}
-
-	@Override
-	public String toString() {
-		return id;
-	}
-
-	public STATUS getStatus() {
-		return status;
 	}
 
 	public void shareDatabase(final ODatabaseRecord<?> iDatabase, final String iRemoteServerName, final String iEngineName,
@@ -277,6 +283,15 @@ public class ODistributedServerNode implements OCommandOutputListener {
 	}
 
 	public void onMessage(String iText) {
+	}
+
+	@Override
+	public String toString() {
+		return id;
+	}
+
+	public STATUS getStatus() {
+		return status;
 	}
 
 	private void synchronizeDelta() throws IOException {
