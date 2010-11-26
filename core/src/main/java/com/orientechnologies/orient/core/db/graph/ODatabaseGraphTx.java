@@ -148,12 +148,17 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<ODocument, OGraphEle
 		else if (iClassName.equals(OGraphEdge.class.getSimpleName()))
 			return new OGraphEdge(this);
 
-		final OClass cls = getMetadata().getSchema().getClass(iClassName);
-		if (cls != null && cls.getSuperClass() != null) {
-			if (cls.getSuperClass().getName().equals(OGraphVertex.class.getSimpleName()))
-				return new OGraphVertex(this, iClassName);
-			else if (cls.getSuperClass().getName().equals(OGraphEdge.class.getSimpleName()))
-				return new OGraphEdge(this, iClassName);
+		OClass cls = getMetadata().getSchema().getClass(iClassName);
+		if (cls != null) {
+			cls = cls.getSuperClass();
+			while (cls != null) {
+				if (cls.getName().equals(OGraphVertex.class.getSimpleName()))
+					return new OGraphVertex(this, iClassName);
+				else if (cls.getName().equals(OGraphEdge.class.getSimpleName()))
+					return new OGraphEdge(this, iClassName);
+
+				cls = cls.getSuperClass();
+			}
 		}
 
 		throw new OGraphException("Unrecognized class: " + iClassName);
