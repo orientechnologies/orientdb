@@ -110,13 +110,10 @@ public enum OGlobalConfiguration {
 	SERVER_CACHE_STATIC_RESOURCES("server.cache.staticResources", "Cache static resources after loaded", Boolean.class, false),
 
 	// DISTRIBUTED SERVERS
-	DISTRIBUTED_SERVER_SYNC_REPLICAS("distributed.server.sync.replicas",
-			"Number of synchronous replicas, use 1 to have at least a secure backup server in case of failure", Integer.class, 1),
+	DISTRIBUTED_ASYNC_TIME_DELAY("distributed.async.timeDelay",
+			"Delay time (in ms) of synchronization with slave nodes. 0 means early synchronization", Integer.class, 0),
 
-	DISTRIBUTED_SERVER_SYNC_TIME_DELAY("distributed.server.sync.timeDelay", "Delay time (in ms) of synchronization with slave nodes",
-			Integer.class, 30000),
-
-	DISTRIBUTED_SERVER_SYNC_MAXRECORDS_BUFFER("distributed.server.sync.maxRecordsBuffer",
+	DISTRIBUTED_SYNC_MAXRECORDS_BUFFER("distributed.sync.maxRecordsBuffer",
 			"Maximum number of records to buffer before to send to the slave nodes", Integer.class, 100);
 
 	private final String									key;
