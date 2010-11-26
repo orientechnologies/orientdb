@@ -74,30 +74,31 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	protected String																			securityAlgorithm;
 	protected InetAddress																	networkMulticastAddress;
 	protected int																					networkMulticastPort;
-	protected int																					networkMulticastHeartbeat;																										// IN
-	protected int																					networkTimeoutLeader;																												// IN
-	protected int																					networkTimeoutNode;																													// IN
-	private int																						networkHeartbeatDelay;																												// IN
-	protected int																					serverUpdateDelay;																														// IN
+	protected int																					networkMulticastHeartbeat;																											// IN
+	protected int																					networkTimeoutLeader;																													// IN
+	protected int																					networkTimeoutNode;																														// IN
+	private int																						networkHeartbeatDelay;																													// IN
+	protected int																					serverUpdateDelay;																															// IN
 	protected int																					serverOutSynchMaxBuffers;
 
 	private ODistributedServerDiscoverySignaler						discoverySignaler;
 	private ODistributedServerDiscoveryListener						discoveryListener;
 	private ODistributedServerLeaderChecker								leaderCheckerTask;
 	private ODistributedServerRecordHook									trigger;
-	private final OSharedResourceExternal									lock									= new OSharedResourceExternal();
+	private final OSharedResourceExternal									lock										= new OSharedResourceExternal();
 
-	private final HashMap<String, ODistributedServerNode>	nodes									= new LinkedHashMap<String, ODistributedServerNode>();	;
+	private final HashMap<String, ODistributedServerNode>	nodes										= new LinkedHashMap<String, ODistributedServerNode>();	;
 
-	static final String																		CHECKSUM							= "ChEcKsUm1976";
+	static final String																		CHECKSUM								= "ChEcKsUm1976";
 
-	static final String																		PACKET_HEADER					= "OrientDB v.";
-	static final int																			PROTOCOL_VERSION			= 0;
+	static final String																		PACKET_HEADER						= "OrientDB v.";
+	static final int																			PROTOCOL_VERSION				= 0;
 
 	private OServerNetworkListener												distributedNetworkListener;
 	private ONetworkProtocolDistributed										leaderConnection;
 	public long																						lastHeartBeat;
-	private Map<String, ODocument>												clusterConfigurations	= new HashMap<String, ODocument>();
+	private Map<String, ODocument>												clusterDbConfigurations	= new HashMap<String, ODocument>();
+	private Map<String, String[]>													clusterDbSecurity				= new HashMap<String, String[]>();
 
 	public void startup() {
 		trigger = new ODistributedServerRecordHook(this);
@@ -383,7 +384,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 				return;
 
 			// GET THE NODES INVOLVED IN THE UPDATE
-			final ODocument database = clusterConfigurations.get(iTransactionEntry.getRecord().getDatabase().getName());
+			final ODocument database = clusterDbConfigurations.get(iTransactionEntry.getRecord().getDatabase().getName());
 			if (database == null)
 				return;
 
@@ -433,7 +434,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	}
 
 	public ODocument getClusterConfiguration(final String iDatabaseName) {
-		return clusterConfigurations.get(iDatabaseName);
+		return clusterDbConfigurations.get(iDatabaseName);
 	}
 
 	public String getId() {
@@ -459,10 +460,10 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	public ODocument addServerInConfiguration(final String iDatabaseName, final String iAlias, final String iAddress,
 			final String iServerClusterConfiguration) {
 
-		ODocument dbConfiguration = clusterConfigurations.get(iDatabaseName);
+		ODocument dbConfiguration = clusterDbConfigurations.get(iDatabaseName);
 		if (dbConfiguration == null) {
 			dbConfiguration = new ODocument();
-			clusterConfigurations.put(iDatabaseName, dbConfiguration);
+			clusterDbConfigurations.put(iDatabaseName, dbConfiguration);
 		}
 
 		// ADD IT IN THE SERVER LIST
@@ -533,7 +534,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 					ch.writeByte(OChannelBinaryProtocol.PUSH_DATA);
 					ch.writeInt(-10);
 					ch.writeByte(OChannelDistributedProtocol.PUSH_DISTRIBUTED_CONFIG);
-					ch.writeBytes(clusterConfigurations.get(iDatabaseName).toStream());
+					ch.writeBytes(clusterDbConfigurations.get(iDatabaseName).toStream());
 
 				} catch (IOException e) {
 					e.printStackTrace();
@@ -542,5 +543,13 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 				}
 			}
 		}
+	}
+
+	public String[] getClusterDbSecurity(final String iDatabaseName) {
+		return clusterDbSecurity.get(iDatabaseName);
+	}
+
+	public void setClusterDbSecurity(final String iDatabaseName, String iDatabaseUser, String iDatabasePasswd) {
+		clusterDbSecurity.put(iDatabaseName, new String[] { iDatabaseUser, iDatabasePasswd });
 	}
 }

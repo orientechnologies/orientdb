@@ -19,9 +19,9 @@ import java.io.IOException;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryInputStream;
@@ -62,14 +62,26 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_HEARTBEAT:
 			data.commandInfo = "Keep-alive";
 			manager.updateHeartBeatTime();
-			sendOk(0);
+
+			sendOk(clientTxId);
+
+			// SEND DB VERSION BACK
+			channel.writeLong(connection.database == null ? 0 : connection.database.getStorage().getVersion());
 			break;
 
 		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_CONNECT: {
 			data.commandInfo = "Cluster connection";
-
 			manager.receivedLeaderConnection(this);
-			sendOk(0);
+
+			final String dbName = channel.readString();
+			if (dbName != null) {
+				// REOPEN PREVIOUSLY MANAGED DATABASE
+				connection.database = openDatabase(dbName,channel.readString(), channel.readString());
+			}
+
+			sendOk(clientTxId);
+
+			channel.writeLong(connection.database != null ? connection.database.getStorage().getVersion() : 0);
 			break;
 		}
 
@@ -90,7 +102,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 			final ODistributedServerNode remoteServerNode = manager.getNode(remoteServerName);
 
-			remoteServerNode.shareDatabase(connection.database, remoteServerName, engineName, synchronousMode);
+			remoteServerNode.shareDatabase(connection.database, remoteServerName, dbUser, dbPassword, engineName, synchronousMode);
 
 			sendOk(connection.id);
 
@@ -103,6 +115,8 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 			data.commandInfo = "Received a shared database from a remote server to install";
 
 			final String dbName = channel.readString();
+			final String dbUser = channel.readString();
+			final String dbPasswd = channel.readString();
 			final String engineName = channel.readString();
 
 			OLogManager.instance().info(this, "Received database '%s' to share on local server node", dbName);
@@ -111,13 +125,14 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 			if (connection.database.exists()) {
 				OLogManager.instance().info(this, "Deleting existent database '%s'", connection.database.getName());
+
 				connection.database.delete();
 			}
 
 			createDatabase(connection.database);
 
 			if (connection.database.isClosed())
-				connection.database.open(OUser.ADMIN, OUser.ADMIN);
+				connection.database.open(dbUser, dbPasswd);
 
 			OLogManager.instance().info(this, "Importing database '%s' via streaming from remote server node...", dbName);
 
@@ -125,7 +140,8 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 			OLogManager.instance().info(this, "Database imported correctly", dbName);
 
-			sendOk(0);
+			sendOk(clientTxId);
+			channel.writeLong(connection.database.getStorage().getVersion());
 			break;
 		}
 
@@ -135,7 +151,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 			OLogManager.instance().warn(this, "Changed distributed server configuration:\n%s", config.toJSON("indent:2"));
 
-			sendOk(0);
+			sendOk(clientTxId);
 			break;
 		}
 

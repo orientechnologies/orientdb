@@ -835,14 +835,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		final String path;
 
 		if (iStorageMode.equals(OEngineLocal.NAME)) {
-			if (OServerMain.server().existsStoragePath(iDbName))
-				throw new IllegalArgumentException("Database '" + iDbName + "' already exists.");
-
 			path = iStorageMode + ":${ORIENTDB_HOME}/databases/" + iDbName + "/" + iDbName;
 		} else if (iStorageMode.equals(OEngineMemory.NAME)) {
-			if (OServerMain.server().getMemoryDatabases().containsKey(iDbName))
-				throw new IllegalArgumentException("Database '" + iDbName + "' already exists.");
-
 			path = iStorageMode + ":" + iDbName;
 		} else
 			throw new IllegalArgumentException("Can't create databse: storage mode '" + iStorageMode + "' is not supported.");

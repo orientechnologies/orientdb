@@ -55,6 +55,8 @@ public class ODistributedServerNode implements OCommandOutputListener {
 	private List<OTransactionEntry<ORecordInternal<?>>>	bufferedChanges	= new ArrayList<OTransactionEntry<ORecordInternal<?>>>();
 	private int																					clientTxId			= 0;
 	private long																				lastHeartBeat		= 0;
+	private long																				dbVersion;
+	private String																			database;
 
 	public ODistributedServerNode(final ODistributedServerManager iNode, final String iServerAddress, final int iServerPort) {
 		manager = iNode;
@@ -74,11 +76,20 @@ public class ODistributedServerNode implements OCommandOutputListener {
 
 		OLogManager.instance().warn(this, "Joining the server node %s:%d to the cluster...", networkAddress, networkPort);
 
-		channel.out.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_CONNECT);
-		channel.out.writeInt(0);
+		channel.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_CONNECT);
+		channel.writeInt(clientTxId);
+
+		// PACKET DB INFO TO SEND
+		channel.writeString(database);
+		if (database != null) {
+			channel.writeString(manager.getClusterDbSecurity(database)[0]);
+			channel.writeString(manager.getClusterDbSecurity(database)[1]);
+		}
+
 		channel.flush();
 
 		readStatus();
+		dbVersion = channel.readLong();
 
 		if (status == STATUS.CONNECTING)
 			OLogManager.instance().info(this, "Server node %s:%d has joined the cluster", networkAddress, networkPort);
@@ -113,13 +124,16 @@ public class ODistributedServerNode implements OCommandOutputListener {
 					channel.acquireExclusiveLock();
 					try {
 						channel.writeByte(OChannelDistributedProtocol.REQUEST_RECORD_CREATE);
-						channel.writeInt(0);
+						channel.writeInt(clientTxId);
 						channel.writeShort((short) record.getIdentity().getClusterId());
 						channel.writeBytes(record.toStream());
 						channel.writeByte(record.getRecordType());
 						channel.flush();
 
+						dbVersion++;
+
 						readStatus();
+						channel.readLong();
 
 					} finally {
 						channel.releaseExclusiveLock();
@@ -130,7 +144,7 @@ public class ODistributedServerNode implements OCommandOutputListener {
 					channel.acquireExclusiveLock();
 					try {
 						channel.writeByte(OChannelDistributedProtocol.REQUEST_RECORD_UPDATE);
-						channel.writeInt(0);
+						channel.writeInt(clientTxId);
 						channel.writeShort((short) record.getIdentity().getClusterId());
 						channel.writeLong(record.getIdentity().getClusterPosition());
 						channel.writeBytes(record.toStream());
@@ -139,6 +153,8 @@ public class ODistributedServerNode implements OCommandOutputListener {
 						channel.flush();
 
 						readStatus();
+
+						dbVersion++;
 
 						channel.readInt();
 					} finally {
@@ -150,15 +166,17 @@ public class ODistributedServerNode implements OCommandOutputListener {
 					channel.acquireExclusiveLock();
 					try {
 						channel.writeByte(OChannelDistributedProtocol.REQUEST_RECORD_DELETE);
-						channel.writeInt(0);
+						channel.writeInt(clientTxId);
 						channel.writeShort((short) record.getIdentity().getClusterId());
 						channel.writeLong(record.getIdentity().getClusterPosition());
 						channel.writeInt(record.getVersion());
 						channel.flush();
 
+						dbVersion++;
+
 						readStatus();
 
-						channel.readLong();
+						channel.readByte();
 					} finally {
 						channel.releaseExclusiveLock();
 					}
@@ -177,8 +195,8 @@ public class ODistributedServerNode implements OCommandOutputListener {
 		channel.acquireExclusiveLock();
 
 		try {
-			channel.out.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_CONFIG);
-			channel.out.writeInt(0);
+			channel.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_CONFIG);
+			channel.writeInt(clientTxId);
 			channel.writeBytes(manager.getClusterConfiguration(iDatabaseName).toStream());
 			channel.flush();
 
@@ -200,14 +218,20 @@ public class ODistributedServerNode implements OCommandOutputListener {
 		channel.acquireExclusiveLock();
 
 		try {
-			channel.out.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_HEARTBEAT);
-			channel.out.writeInt(0);
+			channel.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_HEARTBEAT);
+			channel.writeInt(clientTxId);
 			channel.flush();
 
 			readStatus();
 
 			// RESET LAST HEARTBEAT
 			lastHeartBeat = System.currentTimeMillis();
+
+			// CHECK DATABASE VERSION
+			long remoteVersion = channel.readLong();
+			if (remoteVersion != dbVersion)
+				throw new ODistributedException("Database version doesn't match between current node (" + dbVersion + ") and remote ("
+						+ remoteVersion + ")");
 
 		} catch (Exception e) {
 			return false;
@@ -251,8 +275,8 @@ public class ODistributedServerNode implements OCommandOutputListener {
 		}
 	}
 
-	public void shareDatabase(final ODatabaseRecord<?> iDatabase, final String iRemoteServerName, final String iEngineName,
-			final boolean iSynchronousMode) throws IOException {
+	public void shareDatabase(final ODatabaseRecord<?> iDatabase, final String iRemoteServerName, final String iDbUser,
+			final String iDbPasswd, final String iEngineName, final boolean iSynchronousMode) throws IOException {
 		if (status != STATUS.CONNECTED)
 			throw new ODistributedSynchronizationException("Can't share database '" + iDatabase.getName() + "' on remote server node '"
 					+ iRemoteServerName + "' because is disconnected");
@@ -266,10 +290,12 @@ public class ODistributedServerNode implements OCommandOutputListener {
 
 			OLogManager.instance().info(this, "Sharing database '" + dbName + "' to remote server " + iRemoteServerName + "...");
 
-			// EXECUTE THE REQUEST ON REMOTE SERVER NODE
+			// EXECUTE THE REQUEST ON THE REMOTE SERVER NODE
 			channel.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_RECEIVER);
 			channel.writeInt(0);
 			channel.writeString(dbName);
+			channel.writeString(iDbUser);
+			channel.writeString(iDbPasswd);
 			channel.writeString(iEngineName);
 
 			OLogManager.instance().info(this, "Exporting database '%s' via streaming to remote server node: %s...", iDatabase.getName(),
@@ -281,12 +307,16 @@ public class ODistributedServerNode implements OCommandOutputListener {
 			OLogManager.instance().info(this, "Database exported correctly");
 
 			clientTxId = channel.readStatus();
-
-			status = STATUS.CONNECTED;
+			dbVersion = channel.readLong();
 
 		} finally {
 			channel.releaseExclusiveLock();
 		}
+
+		status = STATUS.CONNECTED;
+
+		database = dbName;
+		manager.setClusterDbSecurity(dbName, iDbUser, iDbPasswd);
 	}
 
 	public void onMessage(String iText) {
