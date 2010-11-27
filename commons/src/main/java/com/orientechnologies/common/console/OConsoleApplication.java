@@ -23,6 +23,8 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +53,7 @@ public class OConsoleApplication {
 
 	public void setReader(OConsoleReader iReader) {
 		this.reader = iReader;
+		reader.setConsole(this);
 	}
 
 	public OConsoleApplication(String[] iArgs) {
@@ -255,6 +258,8 @@ public class OConsoleApplication {
 
 		final List<Method> consoleMethods = new ArrayList<Method>();
 
+		final Map<String, Object> commandTree = new HashMap<String, Object>();
+
 		for (Method m : methods) {
 			if (Modifier.isAbstract(m.getModifiers()) || Modifier.isStatic(m.getModifiers()) || !Modifier.isPublic(m.getModifiers()))
 				continue;
@@ -262,10 +267,19 @@ public class OConsoleApplication {
 			if (m.getReturnType() != Void.TYPE)
 				continue;
 
+			Collections.sort(consoleMethods, new Comparator<Method>() {
+				public int compare(Method o1, Method o2) {
+					return o1.getName().compareTo(o2.getName());
+				}
+			});
 			consoleMethods.add(m);
 		}
 
 		return consoleMethods;
+	}
+
+	protected Map<String, Object> addCommand(Map<String, Object> commandsTree, String commandLine) {
+		return commandsTree;
 	}
 
 	protected void help() {
