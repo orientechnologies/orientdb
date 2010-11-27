@@ -177,7 +177,13 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 		if (p.isNotNull() && fieldValue == null)
 			throw new OValidationException("The field " + p.getName() + " is null");
 
-		OType type = p.getType();
+		if (fieldValue != null && p.getRegexp() != null) {
+			if (!fieldValue.toString().matches(p.getRegexp()))
+				throw new OValidationException("The field " + p.getName() + " doesn't match the regular expression '" + p.getRegexp()
+						+ "'. Field value is: " + fieldValue);
+		}
+
+		final OType type = p.getType();
 
 		if (p.getMin() != null) {
 			String min = p.getMin();

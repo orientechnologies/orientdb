@@ -59,6 +59,7 @@ public class OProperty extends ODocumentWrapperNoClass {
 	private boolean						notNull;
 	private String						min;
 	private String						max;
+	private String						regexp;
 
 	/**
 	 * Constructor used in unmarshalling.
@@ -127,6 +128,7 @@ public class OProperty extends ODocumentWrapperNoClass {
 		notNull = (Boolean) document.field("notNull");
 		min = document.field("min");
 		max = document.field("max");
+		regexp = document.field("regexp");
 
 		linkedClassName = (String) document.field("linkedClass");
 		if (document.field("linkedType") != null)
@@ -147,6 +149,7 @@ public class OProperty extends ODocumentWrapperNoClass {
 		document.field("notNull", notNull);
 		document.field("min", min);
 		document.field("max", max);
+		document.field("regexp", regexp);
 
 		document.field("linkedClass", linkedClass != null ? linkedClass.getName() : null);
 		document.field("linkedType", linkedType != null ? linkedType.id : null);
@@ -399,5 +402,13 @@ public class OProperty extends ODocumentWrapperNoClass {
 		}
 
 		return index;
+	}
+
+	public String getRegexp() {
+		return regexp;
+	}
+
+	public void setRegexp(String regexp) {
+		this.regexp = regexp;
 	}
 }
