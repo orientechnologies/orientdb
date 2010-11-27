@@ -643,7 +643,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		case OChannelBinaryProtocol.REQUEST_CONFIG_GET: {
 			data.commandInfo = "Get config";
 
-			checkServerAccess("database.create");
+			checkServerAccess("server.config.get");
 
 			final String key = channel.readString();
 			final OGlobalConfiguration cfg = OGlobalConfiguration.findByKey(key);
@@ -657,7 +657,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		case OChannelBinaryProtocol.REQUEST_CONFIG_SET: {
 			data.commandInfo = "Get config";
 
-			checkServerAccess("database.create");
+			checkServerAccess("server.config.set");
 
 			final String key = channel.readString();
 			final String value = channel.readString();
@@ -672,7 +672,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		case OChannelBinaryProtocol.REQUEST_CONFIG_LIST: {
 			data.commandInfo = "List config";
 
-			checkServerAccess("database.create");
+			checkServerAccess("server.config.get");
 
 			sendOk(clientTxId);
 
