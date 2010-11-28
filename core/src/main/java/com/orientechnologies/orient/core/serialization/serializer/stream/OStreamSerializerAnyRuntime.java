@@ -15,14 +15,18 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.stream;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyRuntime;
 
 /**
- * Delegates to the OStringSerializerAnyRuntime class but transform to/from bytes.
+ * Uses the Java serialization.
  * 
  * @see OStringSerializerAnyRuntime
  * @author Luca Garulli
@@ -44,13 +48,27 @@ public class OStreamSerializerAnyRuntime implements OStreamSerializer {
 			// NULL VALUE
 			return null;
 
-		return OStringSerializerAnyRuntime.INSTANCE.fromStream(iDatabase, OBinaryProtocol.bytes2string(iStream));
+		final ByteArrayInputStream is = new ByteArrayInputStream(iStream);
+		final ObjectInputStream in = new ObjectInputStream(is);
+		try {
+			return in.readObject();
+		} catch (ClassNotFoundException e) {
+			throw new OSerializationException("Can't unmarshall Java serialized object", e);
+		} finally {
+			in.close();
+			is.close();
+		}
 	}
 
 	public byte[] toStream(final ODatabaseRecord<?> iDatabase, final Object iObject) throws IOException {
 		if (iObject == null)
 			return new byte[0];
 
-		return OBinaryProtocol.string2bytes(OStringSerializerAnyRuntime.INSTANCE.toStream(iDatabase, iObject));
+		final ByteArrayOutputStream os = new ByteArrayOutputStream();
+		final ObjectOutputStream oos = new ObjectOutputStream(os);
+		oos.writeObject(iObject);
+		oos.close();
+
+		return os.toByteArray();
 	}
 }
