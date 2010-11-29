@@ -58,7 +58,7 @@ public class OStorageConfiguration implements OSerializableStream {
 	private transient OStorage								storage;
 	private transient byte[]									record;
 
-	private static final int									FIXED_CONFIG_SIZE	= 20000;
+	private static final int									FIXED_CONFIG_SIZE	= 200000;
 
 	public OStorageConfiguration load() throws OSerializationException {
 		record = storage.readRecord(null, -1, storage.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME), CONFIG_RECORD_NUM, null).buffer;
