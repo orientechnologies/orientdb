@@ -331,10 +331,10 @@ public class OClass extends ODocumentWrapperNoClass {
 
 		baseClasses.add(iBaseClass);
 
-		// ADD DIFFERENT CLUSTER IDS TO THE "POLYMORPHIC CLUSTER IDS" ARRAY
-		OClass currentClass = iBaseClass;
-		while (currentClass != null && currentClass != this) {
-			addPolymorphicClusterIds(currentClass);
+		// ADD CLUSTER IDS OF BASE CLASS TO THIS CLASS AND ALL SUPER-CLASSES
+		OClass currentClass = this;
+		while (currentClass != null) {
+			currentClass.addPolymorphicClusterIds(iBaseClass);
 			currentClass = currentClass.getSuperClass();
 		}
 
@@ -376,7 +376,7 @@ public class OClass extends ODocumentWrapperNoClass {
 	 */
 	private void addPolymorphicClusterIds(final OClass iBaseClass) {
 		boolean found;
-		for (int i : iBaseClass.clusterIds) {
+		for (int i : iBaseClass.polymorphicClusterIds) {
 			found = false;
 			for (int k : clusterIds) {
 				if (i == k) {
