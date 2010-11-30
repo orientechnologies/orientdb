@@ -20,7 +20,6 @@ import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * Abstract class for import/export of database and data in general.
@@ -46,10 +45,7 @@ public abstract class ODatabaseImpExpAbstract {
 		database = iDatabase;
 		fileName = iFileName;
 		listener = iListener;
-
 		excludeClusters = new LinkedHashSet<String>();
-		excludeClusters.add(OStorage.CLUSTER_INTERNAL_NAME);
-		excludeClusters.add(OStorage.CLUSTER_INDEX_NAME);
 	}
 
 	public Set<String> getIncludeClusters() {

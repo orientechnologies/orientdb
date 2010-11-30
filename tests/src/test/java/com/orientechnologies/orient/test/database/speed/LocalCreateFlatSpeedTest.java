@@ -28,6 +28,7 @@ import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 public class LocalCreateFlatSpeedTest extends OrientMonoThreadTest {
 	private ODatabaseFlat	database;
 	private ORecordFlat		record;
+	private long					date	= System.currentTimeMillis();
 
 	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
 		LocalCreateFlatSpeedTest test = new LocalCreateFlatSpeedTest();
@@ -52,8 +53,9 @@ public class LocalCreateFlatSpeedTest extends OrientMonoThreadTest {
 	@Override
 	public void cycle() {
 		record.reset();
-		record.value("id:" + data.getCyclesDone() + ",name:'Luca',surname:'Garulli',salary:" + (data.getCyclesDone() + 3000) + ".00")
-				.save("flat");
+		record.value(
+				"Account@id:" + data.getCyclesDone() + ",name:'Luca',surname:'Garulli',birthDate:" + date + "salary:"
+						+ (data.getCyclesDone() + 3000) + ".00").save("flat");
 
 		if (data.getCyclesDone() == data.getCycles() - 1)
 			database.commit();

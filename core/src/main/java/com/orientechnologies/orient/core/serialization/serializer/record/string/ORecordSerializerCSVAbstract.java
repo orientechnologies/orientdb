@@ -599,8 +599,6 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		ORID resultRid = null;
 		ORID rid;
 
-		buffer.append(OStringSerializerHelper.LINK);
-
 		if (iLinked instanceof ORID) {
 			// JUST THE REFERENCE
 			rid = (ORID) iLinked;
@@ -635,9 +633,11 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			}
 		}
 
-		if (rid.isValid())
+		if (rid.isValid()) {
+			buffer.append(OStringSerializerHelper.LINK);
 			buffer.append(rid.toString());
-
+		}
+		
 		return resultRid;
 	}
 }

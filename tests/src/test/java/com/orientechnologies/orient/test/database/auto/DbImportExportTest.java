@@ -17,6 +17,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -26,6 +27,7 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
+import com.orientechnologies.orient.core.hook.ORecordHook;
 
 @Test(groups = "db")
 public class DbImportExportTest implements OCommandOutputListener {
@@ -64,6 +66,12 @@ public class DbImportExportTest implements OCommandOutputListener {
 		database.create();
 
 		ODatabaseImport impor = new ODatabaseImport(database, "tests/target/db.export", this);
+		
+		// UNREGISTER ALL THE HOOKS
+		for (ORecordHook hook : new ArrayList<ORecordHook>(database.getHooks())) {
+			database.unregisterHook(hook);
+		}
+
 		impor.importDatabase();
 		impor.close();
 
