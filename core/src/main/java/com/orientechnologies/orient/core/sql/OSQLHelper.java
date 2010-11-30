@@ -118,7 +118,7 @@ public class OSQLHelper {
 		if (iValue.startsWith("'") && iValue.endsWith("'"))
 			// STRING
 			fieldValue = stringContent(iValue);
-		if (iValue.charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN
+		else if (iValue.charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN
 				&& iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.COLLECTION_END) {
 			// COLLECTION/ARRAY
 			final List<String> items = OStringSerializerHelper.smartSplit(iValue.substring(1, iValue.length() - 1),
