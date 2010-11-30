@@ -86,7 +86,7 @@ public class OStorageMemory extends OStorageAbstract {
 			defaultClusterId = addCluster(OStorage.CLUSTER_DEFAULT_NAME, null);
 
 			configuration = new OStorageConfiguration(this);
-			configuration.create();
+			configuration.create(0);
 
 			open = true;
 		} catch (IOException e) {

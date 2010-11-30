@@ -63,20 +63,23 @@ import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemory;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
 public class OStorageLocal extends OStorageAbstract {
-	public static final String[]				TYPES								= { OClusterLocal.TYPE, OClusterLogical.TYPE };
+	public static final String[]				TYPES											= { OClusterLocal.TYPE, OClusterLogical.TYPE };
 
 	// private final OLockManager<String, String> lockManager = new
 	// OLockManager<String, String>();
-	private final Map<String, OCluster>	clusterMap					= new LinkedHashMap<String, OCluster>();
-	private OCluster[]									clusters						= new OCluster[0];
-	private ODataLocal[]								dataSegments				= new ODataLocal[0];
+	private final Map<String, OCluster>	clusterMap								= new LinkedHashMap<String, OCluster>();
+	private OCluster[]									clusters									= new OCluster[0];
+	private ODataLocal[]								dataSegments							= new ODataLocal[0];
 
 	private OStorageLocalTxExecuter			txManager;
 	private String											storagePath;
 	private OStorageVariableParser			variableParser;
-	private int													defaultClusterId		= -1;
+	private int													defaultClusterId					= -1;
 
-	private static String[]							ALL_FILE_EXTENSIONS	= { ".och", ".ocl", ".oda", ".odh", ".otx" };
+	public static final int							DEFAULT_FIXED_CONFIG_SIZE	= 200000;
+	private int													fixedSize									= DEFAULT_FIXED_CONFIG_SIZE;
+
+	private static String[]							ALL_FILE_EXTENSIONS				= { ".och", ".ocl", ".oda", ".odh", ".otx" };
 
 	public OStorageLocal(final String iName, final String iFilePath, final String iMode) throws IOException {
 		super(iName, iFilePath, iMode);
@@ -217,7 +220,7 @@ public class OStorageLocal extends OStorageAbstract {
 			// ADD THE DEFAULT CLUSTER
 			defaultClusterId = addCluster(OStorage.CLUSTER_DEFAULT_NAME, OStorage.CLUSTER_TYPE.PHYSICAL);
 
-			configuration.create();
+			configuration.create(fixedSize);
 
 			txManager.create();
 		} catch (OStorageException e) {
@@ -1216,5 +1219,15 @@ public class OStorageLocal extends OStorageAbstract {
 		configuration.update();
 
 		return id;
+	}
+
+	public int getFixedSize() {
+		return fixedSize;
+	}
+
+	public void setFixedSize(int fixedSize) {
+		if (!isClosed() || exists())
+			throw new IllegalStateException("Can't change configuration size to an existent storage");
+		this.fixedSize = fixedSize;
 	}
 }

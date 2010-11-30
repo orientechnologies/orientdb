@@ -57,11 +57,11 @@ public class OStorageConfiguration implements OSerializableStream {
 	private transient DecimalFormatSymbols		unusualSymbols;
 	private transient OStorage								storage;
 	private transient byte[]									record;
-
-	private static final int									FIXED_CONFIG_SIZE	= 200000;
+	private int																fixedSize					= 0;
 
 	public OStorageConfiguration load() throws OSerializationException {
 		record = storage.readRecord(null, -1, storage.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME), CONFIG_RECORD_NUM, null).buffer;
+		fixedSize = record.length;
 
 		if (record == null)
 			throw new OStorageException("Can't load database's configuration. The database seems to be corrupted.");
@@ -78,7 +78,8 @@ public class OStorageConfiguration implements OSerializableStream {
 		storage.updateRecord(-1, storage.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME), 0, record, -1, ORecordBytes.RECORD_TYPE);
 	}
 
-	public void create() throws IOException {
+	public void create(final int iFixedSize) throws IOException {
+		fixedSize = iFixedSize;
 		record = toStream();
 		storage.createRecord(storage.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME), record, ORecordBytes.RECORD_TYPE);
 	}
@@ -262,12 +263,13 @@ public class OStorageConfiguration implements OSerializableStream {
 		for (OEntryConfiguration e : properties)
 			entryToStream(buffer, e);
 
-		if (buffer.length() > FIXED_CONFIG_SIZE)
-			throw new OConfigurationException("Configuration data exceeded size limit: " + FIXED_CONFIG_SIZE + " bytes");
+		if (fixedSize > 0 && buffer.length() > fixedSize)
+			throw new OConfigurationException("Configuration data exceeded size limit: " + fixedSize + " bytes");
 
 		// ALLOCATE ENOUGHT SPACE TO REUSE IT EVERY TIME
 		buffer.append("|");
-		buffer.setLength(FIXED_CONFIG_SIZE);
+		if (fixedSize > 0)
+			buffer.setLength(fixedSize);
 
 		return buffer.toString().getBytes();
 	}
