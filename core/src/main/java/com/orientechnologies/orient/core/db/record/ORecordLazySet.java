@@ -119,6 +119,9 @@ public class ORecordLazySet extends ORecordTrackedSet {
 		if (converted || !convertToRecord)
 			return iElement;
 
+		if (database == null)
+			return iElement;
+
 		if (iElement != null && iElement instanceof ORecordId) {
 			final ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
 			final ORecordId rid = (ORecordId) iElement;

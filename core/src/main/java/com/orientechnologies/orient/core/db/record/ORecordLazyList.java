@@ -142,7 +142,7 @@ public class ORecordLazyList extends ORecordTrackedList {
 		if (converted || !convertToRecord)
 			return;
 
-		if (sourceRecord == null || sourceRecord.getDatabase() == null)
+		if (database == null)
 			return;
 
 		final Object o = super.get(iIndex);
