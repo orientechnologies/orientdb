@@ -44,13 +44,16 @@ public class ODistributedServerLeaderChecker extends TimerTask {
 		final long time = System.currentTimeMillis() - manager.getLastHeartBeat();
 		if (time > heartBeatDelay) {
 			// NO LEADER HEARTBEAT RECEIVED FROM LONG TIME: BECAME THE LEADER!
-			OLogManager.instance().warn(this,
-					"No heartbeat message has been received from the Leader node (last was %dms ago). Trying to became the new Leader...",
-					time);
+			OLogManager
+					.instance()
+					.warn(
+							this,
+							"No heartbeat message has been received from the Leader node (last was %d ms ago). Resend presence message in broadcast...",
+							time);
 
 			cancel();
 
-			manager.becameLeader(true);
+			manager.broadcastPresence(true);
 			return;
 		}
 	}

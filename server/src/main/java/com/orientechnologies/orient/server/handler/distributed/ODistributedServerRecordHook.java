@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.server.handler.distributed;
 
+import java.io.IOException;
+
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
@@ -45,26 +47,31 @@ public class ODistributedServerRecordHook implements ORecordHook, ODatabaseLifec
 		if (!manager.isDistributedConfiguration())
 			return;
 
-		switch (iType) {
-		case AFTER_CREATE:
-			manager.distributeRequest(new OTransactionEntry<ORecordInternal<?>>((ORecordInternal<?>) iRecord, OTransactionEntry.CREATED,
-					null));
-			break;
+		try {
+			switch (iType) {
+			case AFTER_CREATE:
+				manager.distributeRequest(new OTransactionEntry<ORecordInternal<?>>((ORecordInternal<?>) iRecord,
+						OTransactionEntry.CREATED, null));
+				break;
 
-		case AFTER_UPDATE:
-			manager.distributeRequest(new OTransactionEntry<ORecordInternal<?>>((ORecordInternal<?>) iRecord, OTransactionEntry.UPDATED,
-					null));
-			break;
+			case AFTER_UPDATE:
+				manager.distributeRequest(new OTransactionEntry<ORecordInternal<?>>((ORecordInternal<?>) iRecord,
+						OTransactionEntry.UPDATED, null));
+				break;
 
-		case AFTER_DELETE:
-			manager.distributeRequest(new OTransactionEntry<ORecordInternal<?>>((ORecordInternal<?>) iRecord, OTransactionEntry.DELETED,
-					null));
-			break;
+			case AFTER_DELETE:
+				manager.distributeRequest(new OTransactionEntry<ORecordInternal<?>>((ORecordInternal<?>) iRecord,
+						OTransactionEntry.DELETED, null));
+				break;
 
-		default:
-			// NOT DISTRIBUTED REQUEST, JUST RETURN
-			return;
+			default:
+				// NOT DISTRIBUTED REQUEST, JUST RETURN
+				return;
+			}
+		} catch (IOException e) {
+			throw new ODistributedSynchronizationException("Error on distribution of the record to the configured cluster", e);
 		}
+
 	}
 
 	/**

@@ -37,11 +37,14 @@ public class ODistributedServerDiscoverySignaler extends OPollerThread {
 	private DatagramPacket						dgram;
 	private DatagramSocket						socket;
 	private ODistributedServerManager	manager;
+	private boolean										forceLeadership;
 
-	public ODistributedServerDiscoverySignaler(final ODistributedServerManager iManager, final OServerNetworkListener iNetworkListener) {
+	public ODistributedServerDiscoverySignaler(final ODistributedServerManager iManager,
+			final OServerNetworkListener iNetworkListener, final boolean iForceLeadership) {
 		super(iManager.networkMulticastHeartbeat * 1000, Orient.getThreadGroup(), "IO-Cluster-DiscoverySignaler");
 
 		manager = iManager;
+		forceLeadership = iForceLeadership;
 
 		final String buffer = ODistributedServerManager.PACKET_HEADER + OConstants.ORIENT_VERSION + "|"
 				+ ODistributedServerManager.PROTOCOL_VERSION + "|" + manager.name + "|" + iNetworkListener.getInboundAddr().getHostName()
@@ -61,7 +64,7 @@ public class ODistributedServerDiscoverySignaler extends OPollerThread {
 				try {
 					// TIMEOUT: STOP TO SEND PACKETS TO BEING DISCOVERED
 					sendShutdown();
-					manager.becameLeader(false);
+					manager.becameLeader(forceLeadership);
 
 				} catch (Exception e) {
 					// AVOID THE TIMER IS NOT SCHEDULED ANYMORE IN CASE OF EXCEPTION

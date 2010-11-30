@@ -44,6 +44,10 @@ public class ODistributedServerNode implements OCommandOutputListener {
 		DISCONNECTED, CONNECTING, CONNECTED, UNREACHABLE, SYNCHRONIZING
 	}
 
+	public enum SYNCH_TYPE {
+		SYNCHRONOUS, ASYNCHRONOUS
+	}
+
 	private String																			id;
 	public String																				networkAddress;
 	public int																					networkPort;
@@ -100,11 +104,13 @@ public class ODistributedServerNode implements OCommandOutputListener {
 		lastHeartBeat = System.currentTimeMillis();
 	}
 
-	public void sendRequest(final OTransactionEntry<ORecordInternal<?>> iRequest) throws IOException {
+	public void sendRequest(final OTransactionEntry<ORecordInternal<?>> iRequest, final SYNCH_TYPE iRequestType) throws IOException {
 		if (status == STATUS.UNREACHABLE)
 			bufferChange(iRequest);
 		else {
 			final ORecordInternal<?> record = iRequest.getRecord();
+
+			status = STATUS.SYNCHRONIZING;
 
 			try {
 				switch (iRequest.status) {
@@ -170,9 +176,18 @@ public class ODistributedServerNode implements OCommandOutputListener {
 					}
 					break;
 				}
-			} catch (RuntimeException e) {
-				// RE-THROW THE EXCEPTION
-				throw e;
+
+				status = STATUS.CONNECTED;
+
+			} catch (IOException e) {
+				manager.handleNodeFailure(this);
+
+				if (iRequestType == SYNCH_TYPE.SYNCHRONOUS) {
+					// SYNCHRONOUS CASE: RE-THROW THE EXCEPTION NOW TO BEING PROPAGATED UP TO THE CLIENT
+					throw e;
+				} else
+					// BUFFER THE REQUEST TO BE RE-EXECUTED WHEN RECONNECTED
+					bufferChange(iRequest);
 			}
 		}
 	}
@@ -184,11 +199,25 @@ public class ODistributedServerNode implements OCommandOutputListener {
 				manager.removeNode(this);
 				bufferedChanges.clear();
 			} else {
-				// BUFFERIZE THE REQUEST
-				bufferedChanges.add(iRequest);
+				try {
+					// CHECK IF ANOTHER REQUEST FOR THE SAME RECORD ID HAS BEEN ALREADY BUFFERED
+					OTransactionEntry<ORecordInternal<?>> entry;
+					for (int i = 0; i < bufferedChanges.size(); ++i) {
+						entry = bufferedChanges.get(i);
 
-				OLogManager.instance().info(this, "Server node '%s' is temporary disconnected, buffering change %d/%d for the record %s",
-						id, bufferedChanges.size(), manager.serverOutSynchMaxBuffers, iRequest.getRecord().getIdentity());
+						if (entry.getRecord().getIdentity().equals(iRequest.getRecord().getIdentity())) {
+							// FOUND: REPLACE IT
+							bufferedChanges.set(i, iRequest);
+							return;
+						}
+					}
+
+					// BUFFERIZE THE REQUEST
+					bufferedChanges.add(iRequest);
+				} finally {
+					OLogManager.instance().info(this, "Can't reach the remote node '%s', buffering change %d/%d for the record %s", id,
+							bufferedChanges.size(), manager.serverOutSynchMaxBuffers, iRequest.getRecord().getIdentity());
+				}
 			}
 		}
 	}
@@ -233,6 +262,9 @@ public class ODistributedServerNode implements OCommandOutputListener {
 
 			// CHECK DATABASE VERSION
 			long remoteVersion = channel.readLong();
+
+			OLogManager.instance().debug(this, "Checking database versions: local %d <-> remote %d", dbVersion, remoteVersion);
+
 			if (remoteVersion != dbVersion)
 				throw new ODistributedException("Database version doesn't match between current node (" + dbVersion + ") and remote ("
 						+ remoteVersion + ")");
@@ -345,17 +377,17 @@ public class ODistributedServerNode implements OCommandOutputListener {
 
 			status = STATUS.SYNCHRONIZING;
 
+			final long time = System.currentTimeMillis();
+
 			for (OTransactionEntry<ORecordInternal<?>> entry : bufferedChanges) {
-				sendRequest(entry);
+				sendRequest(entry, SYNCH_TYPE.SYNCHRONOUS);
 			}
 			bufferedChanges.clear();
 
-			OLogManager.instance().info(this, "Realignment of remote node '%s' done", id);
+			OLogManager.instance().info(this, "Realignment of remote node '%s' completed in %d ms", id, System.currentTimeMillis() - time);
 
 			status = STATUS.CONNECTED;
 		}
-
-		OLogManager.instance().info(this, "Realignment of remote node %s:%d completed", networkAddress, networkPort);
 	}
 
 	private int readStatus() throws IOException {

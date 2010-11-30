@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.crypto.SecretKey;
 
@@ -44,6 +45,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
+import com.orientechnologies.orient.server.handler.distributed.ODistributedServerNode.SYNCH_TYPE;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.distributed.ONetworkProtocolDistributed;
 
@@ -103,13 +105,11 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	private Map<String, ODocument>												clusterDbConfigurations	= new HashMap<String, ODocument>();
 	private Map<String, String[]>													clusterDbSecurity				= new HashMap<String, String[]>();
 
-	private STATUS																				status									= STATUS.ONLINE;
+	private volatile STATUS																status									= STATUS.ONLINE;
 
 	public void startup() {
 		trigger = new ODistributedServerRecordHook(this);
-
-		// LAUNCH THE SIGNAL AND WAIT FOR A CONNECTION
-		discoverySignaler = new ODistributedServerDiscoverySignaler(this, distributedNetworkListener);
+		broadcastPresence(false);
 	}
 
 	public void shutdown() {
@@ -378,10 +378,12 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	/**
 	 * Distributed the request to all the configured nodes. Each node has the responsibility to bring the message early (synch-mode)
 	 * or using an asynchronous queue.
+	 * 
+	 * @throws IOException
 	 */
 	@SuppressWarnings("unchecked")
-	public void distributeRequest(final OTransactionEntry<ORecordInternal<?>> iTransactionEntry) {
-		final List<ODistributedServerNode> nodeList;
+	public void distributeRequest(final OTransactionEntry<ORecordInternal<?>> iTransactionEntry) throws IOException {
+		final HashMap<ODistributedServerNode, SYNCH_TYPE> nodeList;
 
 		lock.acquireSharedLock();
 		try {
@@ -403,28 +405,22 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 			final ODocument servers = (ODocument) (clusters.containsField(iTransactionEntry.clusterName) ? clusters
 					.field(iTransactionEntry.clusterName) : clusters.field("*"));
 
-			nodeList = new ArrayList<ODistributedServerNode>();
+			nodeList = new HashMap<ODistributedServerNode, ODistributedServerNode.SYNCH_TYPE>();
 			if (servers.field("synch") != null)
 				for (String s : ((Map<String, Object>) servers.field("synch")).keySet()) {
-					nodeList.add(nodes.get(s));
+					nodeList.put(nodes.get(s), ODistributedServerNode.SYNCH_TYPE.SYNCHRONOUS);
 				}
 			if (servers.field("asynch") != null)
 				for (String s : ((Map<String, Object>) servers.field("asynch")).keySet()) {
-					nodeList.add(nodes.get(s));
+					nodeList.put(nodes.get(s), ODistributedServerNode.SYNCH_TYPE.ASYNCHRONOUS);
 				}
 
 		} finally {
 			lock.releaseSharedLock();
 		}
 
-		for (ODistributedServerNode node : nodeList) {
-			try {
-				node.sendRequest(iTransactionEntry);
-			} catch (Exception e) {
-				e.printStackTrace();
-				handleNodeFailure(node);
-				node.bufferChange(iTransactionEntry);
-			}
+		for (Entry<ODistributedServerNode, SYNCH_TYPE> entry : nodeList.entrySet()) {
+			entry.getKey().sendRequest(iTransactionEntry, entry.getValue());
 		}
 	}
 
@@ -566,5 +562,10 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 	public void setStatus(final STATUS iOnline) {
 		status = iOnline;
+	}
+
+	protected void broadcastPresence(final boolean iForceLeadership) {
+		// LAUNCH THE SIGNAL AND WAIT FOR A CONNECTION
+		discoverySignaler = new ODistributedServerDiscoverySignaler(this, distributedNetworkListener, iForceLeadership);
 	}
 }

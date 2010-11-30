@@ -572,7 +572,6 @@ public class OStorageLocal extends OStorageAbstract {
 		checkOpeness();
 
 		final long clusterPosition = createRecord(getClusterById(iClusterId), iContent, iRecordType);
-		incrementVersion();
 		return clusterPosition;
 	}
 
@@ -587,14 +586,12 @@ public class OStorageLocal extends OStorageAbstract {
 		checkOpeness();
 
 		final int recordVersion = updateRecord(iRequesterId, getClusterById(iClusterId), iPosition, iContent, iVersion, iRecordType);
-		incrementVersion();
 		return recordVersion;
 	}
 
 	public boolean deleteRecord(final int iRequesterId, final int iClusterId, final long iPosition, final int iVersion) {
 		checkOpeness();
 		final boolean succeed = deleteRecord(iRequesterId, getClusterById(iClusterId), iPosition, iVersion);
-		incrementVersion();
 		return succeed;
 	}
 
@@ -1069,7 +1066,7 @@ public class OStorageLocal extends OStorageAbstract {
 				return -1;
 
 			// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-			if (iVersion > -1 && ppos.version != iVersion)
+			if (iVersion > -1 && iVersion < ppos.version)
 				throw new OConcurrentModificationException(
 						"Can't update record #"
 								+ recId
