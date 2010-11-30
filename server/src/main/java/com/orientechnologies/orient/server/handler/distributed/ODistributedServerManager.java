@@ -44,7 +44,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
-import com.orientechnologies.orient.server.handler.distributed.ODistributedServerNode.STATUS;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.distributed.ONetworkProtocolDistributed;
 
@@ -66,6 +65,10 @@ import com.orientechnologies.orient.server.network.protocol.distributed.ONetwork
  * 
  */
 public class ODistributedServerManager extends OServerHandlerAbstract {
+	public enum STATUS {
+		ONLINE, SYNCHRONIZING
+	}
+
 	protected OServer																			server;
 
 	protected String																			name;
@@ -99,6 +102,8 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	public long																						lastHeartBeat;
 	private Map<String, ODocument>												clusterDbConfigurations	= new HashMap<String, ODocument>();
 	private Map<String, String[]>													clusterDbSecurity				= new HashMap<String, String[]>();
+
+	private STATUS																				status									= STATUS.ONLINE;
 
 	public void startup() {
 		trigger = new ODistributedServerRecordHook(this);
@@ -148,7 +153,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 			if (nodes.containsKey(key)) {
 				// ALREADY REGISTERED, MAYBE IT WAS DISCONNECTED. INVOKE THE RECONNECTION
 				node = nodes.get(key);
-				if (node.getStatus() == STATUS.CONNECTED)
+				if (node.getStatus() == ODistributedServerNode.STATUS.CONNECTED)
 					return;
 			} else {
 				node = new ODistributedServerNode(this, iServerAddress, iServerPort);
@@ -412,12 +417,14 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 			lock.releaseSharedLock();
 		}
 
-		try {
-			for (ODistributedServerNode node : nodeList) {
+		for (ODistributedServerNode node : nodeList) {
+			try {
 				node.sendRequest(iTransactionEntry);
+			} catch (Exception e) {
+				e.printStackTrace();
+				handleNodeFailure(node);
+				node.bufferChange(iTransactionEntry);
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
 	}
 
@@ -516,7 +523,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	public void broadcastClusterConfiguration(final String iDatabaseName) {
 		// UPDATE ALL THE NODES
 		for (ODistributedServerNode node : getNodeList()) {
-			if (node.getStatus() == STATUS.CONNECTED)
+			if (node.getStatus() == ODistributedServerNode.STATUS.CONNECTED)
 				node.sendConfiguration(iDatabaseName);
 		}
 
@@ -551,5 +558,13 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 	public void setClusterDbSecurity(final String iDatabaseName, String iDatabaseUser, String iDatabasePasswd) {
 		clusterDbSecurity.put(iDatabaseName, new String[] { iDatabaseUser, iDatabasePasswd });
+	}
+
+	public STATUS getStatus() {
+		return status;
+	}
+
+	public void setStatus(final STATUS iOnline) {
+		status = iOnline;
 	}
 }

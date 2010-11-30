@@ -19,7 +19,6 @@ import java.io.IOException;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -76,7 +75,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 			final String dbName = channel.readString();
 			if (dbName != null) {
 				// REOPEN PREVIOUSLY MANAGED DATABASE
-				connection.database = openDatabase(dbName,channel.readString(), channel.readString());
+				connection.database = openDatabase(dbName, channel.readString(), channel.readString());
 			}
 
 			sendOk(clientTxId);
@@ -119,29 +118,34 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 			final String dbPasswd = channel.readString();
 			final String engineName = channel.readString();
 
-			OLogManager.instance().info(this, "Received database '%s' to share on local server node", dbName);
+			manager.setStatus(ODistributedServerManager.STATUS.SYNCHRONIZING);
+			try {
+				OLogManager.instance().info(this, "Received database '%s' to share on local server node", dbName);
 
-			connection.database = getDatabaseInstance(dbName, engineName);
+				connection.database = getDatabaseInstance(dbName, engineName);
 
-			if (connection.database.exists()) {
-				OLogManager.instance().info(this, "Deleting existent database '%s'", connection.database.getName());
+				if (connection.database.exists()) {
+					OLogManager.instance().info(this, "Deleting existent database '%s'", connection.database.getName());
 
-				connection.database.delete();
+					connection.database.delete();
+				}
+
+				createDatabase(connection.database);
+
+				if (connection.database.isClosed())
+					connection.database.open(dbUser, dbPasswd);
+
+				OLogManager.instance().info(this, "Importing database '%s' via streaming from remote server node...", dbName);
+
+				new ODatabaseImport(connection.database, new OChannelBinaryInputStream(channel), this).importDatabase();
+
+				OLogManager.instance().info(this, "Database imported correctly", dbName);
+
+				sendOk(clientTxId);
+				channel.writeLong(connection.database.getStorage().getVersion());
+			} finally {
+				manager.setStatus(ODistributedServerManager.STATUS.ONLINE);
 			}
-
-			createDatabase(connection.database);
-
-			if (connection.database.isClosed())
-				connection.database.open(dbUser, dbPasswd);
-
-			OLogManager.instance().info(this, "Importing database '%s' via streaming from remote server node...", dbName);
-
-			new ODatabaseImport(connection.database, new OChannelBinaryInputStream(channel), this).importDatabase();
-
-			OLogManager.instance().info(this, "Database imported correctly", dbName);
-
-			sendOk(clientTxId);
-			channel.writeLong(connection.database.getStorage().getVersion());
 			break;
 		}
 

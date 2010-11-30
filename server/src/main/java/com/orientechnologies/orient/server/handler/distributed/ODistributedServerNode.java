@@ -101,21 +101,9 @@ public class ODistributedServerNode implements OCommandOutputListener {
 	}
 
 	public void sendRequest(final OTransactionEntry<ORecordInternal<?>> iRequest) throws IOException {
-		if (status == STATUS.UNREACHABLE) {
-			synchronized (bufferedChanges) {
-				if (bufferedChanges.size() > manager.serverOutSynchMaxBuffers) {
-					// BUFFER EXCEEDS THE CONFIGURED LIMIT: REMOVE MYSELF AS NODE
-					manager.removeNode(this);
-					bufferedChanges.clear();
-				} else {
-					// BUFFERIZE THE REQUEST
-					bufferedChanges.add(iRequest);
-
-					OLogManager.instance().info(this, "Server node '%s' is temporary disconnected, buffering change %d/%d for the record %s",
-							id, bufferedChanges.size(), manager.serverOutSynchMaxBuffers, iRequest.getRecord().getIdentity());
-				}
-			}
-		} else {
+		if (status == STATUS.UNREACHABLE)
+			bufferChange(iRequest);
+		else {
 			final ORecordInternal<?> record = iRequest.getRecord();
 
 			try {
@@ -185,6 +173,22 @@ public class ODistributedServerNode implements OCommandOutputListener {
 			} catch (RuntimeException e) {
 				// RE-THROW THE EXCEPTION
 				throw e;
+			}
+		}
+	}
+
+	protected void bufferChange(final OTransactionEntry<ORecordInternal<?>> iRequest) {
+		synchronized (bufferedChanges) {
+			if (bufferedChanges.size() > manager.serverOutSynchMaxBuffers) {
+				// BUFFER EXCEEDS THE CONFIGURED LIMIT: REMOVE MYSELF AS NODE
+				manager.removeNode(this);
+				bufferedChanges.clear();
+			} else {
+				// BUFFERIZE THE REQUEST
+				bufferedChanges.add(iRequest);
+
+				OLogManager.instance().info(this, "Server node '%s' is temporary disconnected, buffering change %d/%d for the record %s",
+						id, bufferedChanges.size(), manager.serverOutSynchMaxBuffers, iRequest.getRecord().getIdentity());
 			}
 		}
 	}

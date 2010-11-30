@@ -217,8 +217,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			connection.database = openDatabase(dbName, user, passwd);
 
-			underlyingDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
-
 			if (!(underlyingDatabase.getStorage() instanceof OStorageMemory) && !loadUserFromSchema(user, passwd)) {
 				sendError(clientTxId, new OSecurityAccessException(connection.database.getName(), "Access denied to database '"
 						+ connection.database.getName() + "' for user: " + user));
@@ -809,6 +807,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				db.create();
 			else
 				db.open(iUser, iPassword);
+
+		underlyingDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) db.getUnderlying()).getUnderlying());
 
 		return db;
 	}
