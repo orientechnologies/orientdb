@@ -136,16 +136,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			sendShutdown();
 		} catch (OException e) {
 			OServerHandlerHelper.invokeHandlerCallbackOnClientError(connection, e);
-			channel.clearInput();
 			sendError(clientTxId, e);
 		} catch (RuntimeException e) {
 			OServerHandlerHelper.invokeHandlerCallbackOnClientError(connection, e);
-			channel.clearInput();
 			sendError(clientTxId, e);
 		} catch (Throwable t) {
 			OServerHandlerHelper.invokeHandlerCallbackOnClientError(connection, t);
 			OLogManager.instance().error(this, "Error on executing request", t);
-			channel.clearInput();
 			sendError(clientTxId, t);
 		} finally {
 			try {

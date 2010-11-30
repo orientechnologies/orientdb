@@ -126,7 +126,6 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 				if (connection.database.exists()) {
 					OLogManager.instance().info(this, "Deleting existent database '%s'", connection.database.getName());
-
 					connection.database.delete();
 				}
 
