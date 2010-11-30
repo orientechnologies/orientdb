@@ -137,6 +137,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
 			listener.onMessage("OK (records=" + recordTot + ")");
 
+			writer.flush();
+
 			totalRecords += recordTot;
 		}
 		writer.endCollection(level, true);
