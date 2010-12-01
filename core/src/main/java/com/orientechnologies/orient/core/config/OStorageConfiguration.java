@@ -151,6 +151,10 @@ public class OStorageConfiguration implements OSerializableStream {
 
 		for (int i = 0; i < size; ++i) {
 			clusterId = Integer.parseInt(read(values[index++]));
+
+			if (clusterId == -1)
+				continue;
+
 			clusterName = read(values[index++]);
 
 			clusterType = read(values[index++]);
@@ -222,8 +226,10 @@ public class OStorageConfiguration implements OSerializableStream {
 
 		write(buffer, clusters.size());
 		for (OStorageClusterConfiguration c : clusters) {
-			if (c == null)
+			if (c == null) {
+				write(buffer, -1);
 				continue;
+			}
 
 			write(buffer, c.getId());
 			write(buffer, c.getName());

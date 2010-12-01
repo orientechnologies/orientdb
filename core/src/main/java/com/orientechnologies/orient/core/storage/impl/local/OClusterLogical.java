@@ -125,8 +125,7 @@ public class OClusterLogical implements OCluster {
 
 	public void delete() throws IOException {
 		close();
-		map.clear();
-		map.save();
+		map.delete();
 	}
 
 	/**

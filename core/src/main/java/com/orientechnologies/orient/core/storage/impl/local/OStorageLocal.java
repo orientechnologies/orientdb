@@ -153,20 +153,22 @@ public class OStorageLocal extends OStorageAbstract {
 			for (int i = 0; i < configuration.clusters.size(); ++i) {
 				clusterConfig = configuration.clusters.get(i);
 
-				pos = createClusterFromConfig(clusterConfig);
+				if (clusterConfig != null) {
+					pos = createClusterFromConfig(clusterConfig);
 
-				if (pos == -1) {
-					// CLOSE AND REOPEN TO BE SURE ALL THE FILE SEGMENTS ARE
-					// OPENED
-					clusters[i].close();
-					clusters[i] = new OClusterLocal(this, (OStoragePhysicalClusterConfiguration) clusterConfig);
-					clusterMap.put(clusters[i].getName(), clusters[i]);
-					clusters[i].open();
-				} else {
-					if (clusterConfig.getName().equals(OStorage.CLUSTER_DEFAULT_NAME))
-						defaultClusterId = pos;
+					if (pos == -1) {
+						// CLOSE AND REOPEN TO BE SURE ALL THE FILE SEGMENTS ARE
+						// OPENED
+						clusters[i].close();
+						clusters[i] = new OClusterLocal(this, (OStoragePhysicalClusterConfiguration) clusterConfig);
+						clusterMap.put(clusters[i].getName(), clusters[i]);
+						clusters[i].open();
+					} else {
+						if (clusterConfig.getName().equals(OStorage.CLUSTER_DEFAULT_NAME))
+							defaultClusterId = pos;
 
-					clusters[pos].open();
+						clusters[pos].open();
+					}
 				}
 			}
 
@@ -957,7 +959,7 @@ public class OStorageLocal extends OStorageAbstract {
 		// CREATE AND ADD THE NEW REF SEGMENT
 		clusterMap.put(iCluster.getName(), iCluster);
 
-		final int id = clusters.length;
+		final int id = iCluster.getId();
 
 		clusters = OArrays.copyOf(clusters, id + 1);
 		clusters[id] = iCluster;
