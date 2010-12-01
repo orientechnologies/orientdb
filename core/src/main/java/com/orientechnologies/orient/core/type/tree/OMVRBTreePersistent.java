@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.serialization.OMemoryOutputStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerFactory;
 
 /**
  * Persistent based MVRB-Tree implementation. The difference with the class OMVRBTreePersistent is the level. In facts this class
@@ -103,8 +104,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	public abstract OMVRBTreePersistent<K, V> load() throws IOException;
 
 	public abstract OMVRBTreePersistent<K, V> save() throws IOException;
-
-	protected abstract void serializerFromStream(OMemoryInputStream stream) throws IOException;
 
 	/**
 	 * Lazy loads a node.
@@ -744,4 +743,10 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		entryPointsSize = OGlobalConfiguration.MVRBTREE_ENTRYPOINTS.getValueAsInteger();
 		optimizeEntryPointsFactor = OGlobalConfiguration.MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR.getValueAsFloat();
 	}
+
+	protected void serializerFromStream(final OMemoryInputStream stream) throws IOException {
+		keySerializer = OStreamSerializerFactory.get(stream.getAsString());
+		valueSerializer = OStreamSerializerFactory.get(stream.getAsString());
+	}
+
 }

@@ -20,9 +20,7 @@ import java.io.IOException;
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerFactory;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterLogical;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
@@ -130,9 +128,8 @@ public class OMVRBTreeStorage<K, V> extends OMVRBTreePersistent<K, V> {
 		super.clear();
 	}
 
-	@Override
-	protected void serializerFromStream(final OMemoryInputStream stream) throws IOException {
-		keySerializer = OStreamSerializerFactory.get(stream.getAsString());
-		valueSerializer = OStreamSerializerFactory.get(stream.getAsString());
+	public void delete() {
+		clear();
+		storage.deleteRecord(0, record.getIdentity(), record.getVersion());
 	}
 }
