@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.entity;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,11 +58,11 @@ public class OEntityManager {
 		if (iClassName == null)
 			throw new IllegalArgumentException("Can't create the object: class name is empty");
 
-		Class<?> entityClass = getEntityClass(iClassName);
+		final Class<?> entityClass = getEntityClass(iClassName);
 
 		try {
 			if (entityClass != null)
-				return entityClass.newInstance();
+				return createInstance(entityClass);
 
 		} catch (Exception e) {
 			throw new OConfigurationException("Error while creating new pojo of class '" + iClassName + "'", e);
@@ -68,11 +70,32 @@ public class OEntityManager {
 
 		try {
 			// TRY TO INSTANTIATE THE CLASS DIRECTLY BY ITS NAME
-			return Class.forName(iClassName).newInstance();
+			return createInstance(Class.forName(iClassName));
 		} catch (Exception e) {
 			throw new OConfigurationException("The class '" + iClassName
-					+ "' was not found between the entity classes. Assure to call the registerEntityClasses(package) before.");
+					+ "' was not found between the entity classes. Assure to call the registerEntityClasses(package) before.", e);
 		}
+	}
+
+	protected Object createInstance(final Class<?> iClass) throws InstantiationException, IllegalAccessException,
+			InvocationTargetException {
+		Constructor<?> defaultConstructor = null;
+		for (Constructor<?> c : iClass.getDeclaredConstructors()) {
+			if (c.getParameterTypes().length == 0) {
+				defaultConstructor = c;
+				break;
+			}
+		}
+
+		if (defaultConstructor == null)
+			throw new IllegalArgumentException("Can't create an object of class '" + iClass.getName()
+					+ "' because has no default constructor. Please define the method: " + iClass.getSimpleName() + "()");
+
+		if (!defaultConstructor.isAccessible())
+			// OVERRIDE PROTECTION
+			defaultConstructor.setAccessible(true);
+
+		return defaultConstructor.newInstance();
 	}
 
 	/**

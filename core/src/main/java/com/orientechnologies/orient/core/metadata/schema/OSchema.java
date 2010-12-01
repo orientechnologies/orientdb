@@ -50,6 +50,10 @@ public class OSchema extends ODocumentWrapperNoClass {
 		return createClass(iClass.getSimpleName(), OStorage.CLUSTER_TYPE.PHYSICAL);
 	}
 
+	public OClass createClass(final Class<?> iClass, final int iDefaultClusterId) {
+		return createClass(iClass.getSimpleName(), iDefaultClusterId);
+	}
+
 	public OClass createClass(final String iClassName) {
 		return createClass(iClassName, OStorage.CLUSTER_TYPE.PHYSICAL);
 	}
