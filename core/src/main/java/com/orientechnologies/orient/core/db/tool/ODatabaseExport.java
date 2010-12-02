@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -50,6 +51,12 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 	public ODatabaseExport(final ODatabaseRecord<?> iDatabase, final String iFileName, final OCommandOutputListener iListener)
 			throws IOException {
 		super(iDatabase, iFileName, iListener);
+
+		final File f = new File(fileName);
+		if (f.exists())
+			f.delete();
+		else
+			f.mkdirs();
 
 		writer = new OJSONWriter(new FileWriter(fileName));
 		writer.beginObject();
