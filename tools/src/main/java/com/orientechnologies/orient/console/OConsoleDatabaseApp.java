@@ -887,6 +887,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 				else if (value instanceof ORecord<?>)
 					value = ((ORecord<?>) value).getIdentity().toString();
 
+				if (value instanceof byte[])
+					value = "byte[" + ((byte[]) value).length + "]";
+
 				vargs.add(value);
 			}
 
@@ -914,8 +917,12 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			out.println("--------------------------------------------------");
 			out.printf("ODocument - Class: %s   id: %s   v.%d\n", rec.getClassName(), rec.getIdentity().toString(), rec.getVersion());
 			out.println("--------------------------------------------------");
+			Object value;
 			for (String fieldName : rec.fieldNames()) {
-				out.printf("%20s : %-20s\n", fieldName, rec.field(fieldName));
+				value = rec.field(fieldName);
+				if (value instanceof byte[])
+					value = "byte[" + ((byte[]) value).length + "]";
+				out.printf("%20s : %-20s\n", fieldName, value);
 			}
 
 		} else if (currentRecord instanceof ORecordColumn) {
