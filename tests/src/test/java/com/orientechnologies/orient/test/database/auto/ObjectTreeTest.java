@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 import org.testng.Assert;
@@ -37,6 +36,7 @@ import com.orientechnologies.orient.test.domain.whiz.Profile;
 public class ObjectTreeTest {
 	private ODatabaseObjectTx	database;
 	protected long						startRecordNumber;
+	private long							beginCities;
 
 	@Parameters(value = "url")
 	public ObjectTreeTest(String iURL) {
@@ -51,6 +51,7 @@ public class ObjectTreeTest {
 		database.open("admin", "admin");
 
 		final long beginProfiles = database.countClusterElements("Profile");
+		beginCities = database.countClusterElements("City");
 
 		Country italy = new Country("Italy");
 
@@ -66,15 +67,16 @@ public class ObjectTreeTest {
 
 	@Test(dependsOnMethods = "testPersonSaving")
 	public void testCitySaving() {
-		Assert.assertEquals(database.countClusterElements("City"), 2);
+		Assert.assertEquals(database.countClusterElements("City"), beginCities + 1);
 	}
 
 	@Test(dependsOnMethods = "testCitySaving")
 	public void testCityEquality() {
-		Iterator<Profile> iter = database.browseClass(Profile.class);
+		List<Profile> resultset = database.query(new OSQLSynchQuery<Object>("select from profile where location.city.name = 'Rome'"));
+		Assert.assertEquals(resultset.size(), 2);
 
-		Profile p1 = iter.next();
-		Profile p2 = iter.next();
+		Profile p1 = resultset.get(0);
+		Profile p2 = resultset.get(1);
 
 		Assert.assertNotSame(p1, p2);
 		Assert.assertSame(p1.getLocation().getCity(), p2.getLocation().getCity());
@@ -127,8 +129,8 @@ public class ObjectTreeTest {
 	public void testQueryMultiCircular() {
 		Assert.assertEquals(database.countClusterElements("Profile"), startRecordNumber + 3);
 
-		List<ODocument> result = database.getUnderlying().command(
-				new OSQLSynchQuery<ODocument>("select * from Profile where name = 'Barack' and surname = 'Obama'")).execute();
+		List<ODocument> result = database.getUnderlying()
+				.command(new OSQLSynchQuery<ODocument>("select * from Profile where name = 'Barack' and surname = 'Obama'")).execute();
 
 		Assert.assertEquals(result.size(), 1);
 

@@ -19,9 +19,14 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import javax.persistence.Id;
+
 import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
 
 public class Account {
+	@Id
+	private Object						rid;
+
 	private int								id;
 	private String						name;
 	private String						surname;
@@ -86,5 +91,9 @@ public class Account {
 
 	public boolean isInitialized() {
 		return initialized;
+	}
+
+	public Object getRid() {
+		return rid;
 	}
 }

@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.object;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -30,13 +31,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.annotation.OAccess;
 import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
 import com.orientechnologies.orient.core.annotation.OAfterSerialization;
 import com.orientechnologies.orient.core.annotation.OBeforeDeserialization;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.annotation.ODocumentInstance;
-import com.orientechnologies.orient.core.annotation.ORawBinding;
+import com.orientechnologies.orient.core.annotation.OId;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
@@ -49,6 +52,8 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -69,7 +74,23 @@ public class OObjectSerializerHelper {
 	private static HashMap<String, Method>			callbacks									= new HashMap<String, Method>();
 	private static HashMap<String, Object>			getters										= new HashMap<String, Object>();
 	private static HashMap<String, Object>			setters										= new HashMap<String, Object>();
-	private static HashMap<String, String>			boundDocumentFields				= new HashMap<String, String>();
+	private static HashMap<Class<?>, String>		boundDocumentFields				= new HashMap<Class<?>, String>();
+	private static HashMap<Class<?>, String>		fieldIds									= new HashMap<Class<?>, String>();
+	@SuppressWarnings("rawtypes")
+	private static Class												jpaIdClass;
+	@SuppressWarnings("rawtypes")
+	private static Class												jpaAccessClass;
+
+	static {
+		// DETERMINE IF THERE IS AVAILABLE JPA 2
+		try {
+			jpaIdClass = Class.forName("javax.persistence.Id");
+
+			// DETERMINE IF THERE IS AVAILABLE JPA 2
+			jpaAccessClass = Class.forName("javax.persistence.Access");
+		} catch (Exception e) {
+		}
+	}
 
 	public static boolean hasField(final Object iPojo, final String iProperty) {
 		final Class<?> c = iPojo.getClass();
@@ -82,7 +103,7 @@ public class OObjectSerializerHelper {
 
 	public static String getDocumentBoundField(final Class<?> iClass) {
 		getClassFields(iClass);
-		return boundDocumentFields.get(iClass.getName());
+		return boundDocumentFields.get(iClass);
 	}
 
 	public static Class<?> getFieldType(final Object iPojo, final String iProperty) {
@@ -161,9 +182,9 @@ public class OObjectSerializerHelper {
 			final OUserObject2RecordHandler iObj2RecHandler, final String iFetchPlan) {
 		final long timer = OProfiler.getInstance().startChrono();
 
-		final Class<?> c = iPojo.getClass();
+		final Class<?> pojoClass = iPojo.getClass();
 
-		final List<Field> properties = getClassFields(c);
+		final List<Field> properties = getClassFields(pojoClass);
 
 		String fieldName;
 		Object fieldValue;
@@ -171,12 +192,28 @@ public class OObjectSerializerHelper {
 		if (iRecord.getInternalStatus() == STATUS.NOT_LOADED)
 			iRecord.load();
 
+		String idFieldName = fieldIds.get(pojoClass);
+
 		// CALL BEFORE UNMARSHALLING
 		invokeCallback(iPojo, iRecord, OBeforeDeserialization.class);
 
 		// BIND BASIC FIELDS, LINKS WILL BE BOUND BY THE FETCH API
 		for (Field p : properties) {
 			fieldName = p.getName();
+
+			if (idFieldName != null && idFieldName.equals(fieldName)) {
+				Class<?> fieldType = p.getType();
+
+				if (ORID.class.isAssignableFrom(fieldType))
+					setFieldValue(iPojo, idFieldName, iRecord.getIdentity());
+				else if (Number.class.isAssignableFrom(fieldType))
+					setFieldValue(iPojo, idFieldName, iRecord.getIdentity().getClusterPosition());
+				else if (fieldType.equals(String.class))
+					setFieldValue(iPojo, idFieldName, iRecord.getIdentity().toString());
+				else if (fieldType.equals(Object.class))
+					setFieldValue(iPojo, idFieldName, iRecord.getIdentity());
+				continue;
+			}
 
 			if (iRecord.containsField(fieldName)) {
 				// BIND ONLY THE SPECIFIED FIELDS
@@ -346,9 +383,27 @@ public class OObjectSerializerHelper {
 
 		OProperty schemaProperty;
 
-		Class<?> c = iPojo.getClass();
+		final Class<?> pojoClass = iPojo.getClass();
 
-		final List<Field> properties = getClassFields(c);
+		final List<Field> properties = getClassFields(pojoClass);
+
+		// CHECK FOR ID BINDING
+		final String idFieldName = fieldIds.get(pojoClass);
+		if (idFieldName != null) {
+			Object id = getFieldValue(iPojo, idFieldName);
+			if (id != null) {
+				// FOUND
+				if (id instanceof ORecordId) {
+					iRecord.setIdentity((ORecordId) id);
+				} else if (id instanceof Number) {
+					// TREATS AS CLUSTER POSITION
+					((ORecordId) iRecord.getIdentity()).clusterId = schemaClass.getDefaultClusterId();
+					((ORecordId) iRecord.getIdentity()).clusterPosition = ((Number) id).longValue();
+				} else if (id instanceof String) {
+					((ORecordId) iRecord.getIdentity()).fromString((String) id);
+				}
+			}
+		}
 
 		String fieldName;
 		Object fieldValue;
@@ -358,6 +413,10 @@ public class OObjectSerializerHelper {
 
 		for (Field p : properties) {
 			fieldName = p.getName();
+
+			if (fieldName.equals(idFieldName))
+				continue;
+
 			fieldValue = getFieldValue(iPojo, fieldName);
 
 			schemaProperty = schemaClass != null ? schemaClass.getProperty(fieldName) : null;
@@ -513,6 +572,7 @@ public class OObjectSerializerHelper {
 			classes.put(iClass.getName(), properties);
 
 			String fieldName;
+			Class<?> fieldType;
 			int fieldModifier;
 			boolean autoBinding;
 
@@ -522,15 +582,48 @@ public class OObjectSerializerHelper {
 					if (Modifier.isStatic(fieldModifier) || Modifier.isNative(fieldModifier) || Modifier.isTransient(fieldModifier))
 						continue;
 
+					fieldName = f.getName();
+					fieldType = f.getType();
 					properties.add(f);
 
-					fieldName = f.getName();
-
-					autoBinding = f.getAnnotation(ORawBinding.class) == null;
+					// CHECK FOR AUTO-BINDING
+					autoBinding = true;
+					if (f.getAnnotation(OAccess.class) == null || f.getAnnotation(OAccess.class).value() == OAccess.OAccessType.PROPERTY)
+						autoBinding = true;
+					// JPA 2+ AVAILABLE?
+					else if (jpaAccessClass != null) {
+						Annotation ann = f.getAnnotation(jpaAccessClass);
+						if (ann != null) {
+							// TODO: CHECK IF CONTAINS VALUE=FIELD
+							autoBinding = true;
+						}
+					}
 
 					if (f.getAnnotation(ODocumentInstance.class) != null)
 						// BOUND DOCUMENT ON IT
-						boundDocumentFields.put(iClass.getName(), fieldName);
+						boundDocumentFields.put(iClass, fieldName);
+
+					boolean idFound = false;
+					if (f.getAnnotation(OId.class) != null) {
+						// RECORD ID
+						fieldIds.put(iClass, fieldName);
+						idFound = true;
+					}
+					// JPA 1+ AVAILABLE?
+					else if (jpaIdClass != null && f.getAnnotation(jpaIdClass) != null) {
+						// RECORD ID
+						fieldIds.put(iClass, fieldName);
+						idFound = true;
+					}
+					if (idFound) {
+						// CHECK FOR TYPE
+						if (fieldType.isPrimitive())
+							OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' can't be a literal to manage the Record Id",
+									f.toString());
+						else if (fieldType != String.class && fieldType != Object.class && !Number.class.isAssignableFrom(fieldType))
+							OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' can't be managed as type: %s", f.toString(),
+									fieldType);
+					}
 
 					if (autoBinding)
 						// TRY TO GET THE VALUE BY THE GETTER (IF ANY)

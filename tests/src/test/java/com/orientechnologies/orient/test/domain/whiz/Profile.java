@@ -18,9 +18,12 @@ package com.orientechnologies.orient.test.domain.whiz;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.annotation.OId;
 import com.orientechnologies.orient.test.domain.business.Address;
 
 public class Profile {
+	@OId
+	private String				id;
 	private String				nick;
 	private Set<Profile>	followings	= new HashSet<Profile>();
 	private Set<Profile>	followers		= new HashSet<Profile>();
@@ -127,5 +130,9 @@ public class Profile {
 	public Profile setValue(String value) {
 		this.value = value;
 		return this;
+	}
+
+	public String getId() {
+		return id;
 	}
 }

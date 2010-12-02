@@ -15,7 +15,12 @@
  */
 package com.orientechnologies.orient.test.domain.business;
 
+import javax.persistence.Id;
+
 public class City {
+	@Id
+	private Long		id;
+
 	private String	name;
 	private Country	country;
 
@@ -41,5 +46,9 @@ public class City {
 
 	public Object setCountry(Country iCountry) {
 		return country = iCountry;
+	}
+
+	public Long getId() {
+		return id;
 	}
 }

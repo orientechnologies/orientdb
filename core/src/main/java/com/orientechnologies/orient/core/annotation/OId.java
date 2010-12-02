@@ -22,12 +22,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Tells the way OrientDB should bind the field. By default OrientDB searches for getter and setter. If they are not present, then
- * the field is accessed directly. Using this annotation, instead, forces the field level access. Use this if you want by-pass
- * getter and setter methods.
+ * Tells that the field contains the RecordID. This is needed when you work with detached object graph. OrientDb will use this field
+ * to know the Document bound across different database instances.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface ORawBinding {
+public @interface OId {
 }
