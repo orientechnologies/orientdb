@@ -107,15 +107,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	}
 
 	public Object execute(final Object... iArgs) {
-		// TODO: SUPPORTS MULTIPLE CLASSES LIKE A SQL JOIN
+		// TODO: SUPPORT MULTIPLE CLASSES LIKE A SQL JOIN
 		final int[] clusterIds;
 
 		if (compiledFilter.getTargetClasses() != null) {
-			String firstClass = compiledFilter.getTargetClasses().keySet().iterator().next();
-
-			OClass cls = database.getMetadata().getSchema().getClass(firstClass.toLowerCase());
-			if (cls == null)
-				throw new OCommandExecutionException("Class " + firstClass + " was not found");
+			OClass cls = compiledFilter.getTargetClasses().keySet().iterator().next();
 
 			database.checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, cls.getName());
 
@@ -356,7 +352,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 	private void processResultSet() {
 		if (orderedFields != null) {
-			if(tempResult == null)
+			if (tempResult == null)
 				return;
 			ODocumentSorter.sort(tempResult, orderedFields);
 

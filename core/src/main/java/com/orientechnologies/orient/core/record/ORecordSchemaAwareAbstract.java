@@ -76,6 +76,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	}
 
 	public OClass getSchemaClass() {
+		checkForFields();
 		return _clazz;
 	}
 

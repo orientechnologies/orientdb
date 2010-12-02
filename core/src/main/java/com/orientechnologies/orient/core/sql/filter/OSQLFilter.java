@@ -25,7 +25,9 @@ import java.util.Set;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandToParse;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -43,7 +45,7 @@ public class OSQLFilter extends OCommandToParse {
 	protected ODatabaseRecord<?>	database;
 	protected List<String>				targetRecords;
 	protected Map<String, String>	targetClusters;
-	protected Map<String, String>	targetClasses;
+	protected Map<OClass, String>	targetClasses;
 	protected Set<OProperty>			properties	= new HashSet<OProperty>();
 	protected OSQLFilterCondition	rootCondition;
 	protected List<String>				recordTransformed;
@@ -71,6 +73,14 @@ public class OSQLFilter extends OCommandToParse {
 	}
 
 	public boolean evaluate(final ODatabaseRecord<?> iDatabase, final ORecordSchemaAware<?> iRecord) {
+		if (targetClasses != null) {
+			final OClass cls = targetClasses.keySet().iterator().next();
+			// CHECK IF IT'S PART OF THE REQUESTED CLASS
+			if (!iRecord.getSchemaClass().isSubClassOf(cls))
+				// EXCLUDE IT
+				return false;
+		}
+
 		if (rootCondition == null)
 			return true;
 		return (Boolean) rootCondition.evaluate(iRecord);
@@ -131,8 +141,13 @@ public class OSQLFilter extends OCommandToParse {
 
 					// REGISTER AS CLASS
 					if (targetClasses == null)
-						targetClasses = new HashMap<String, String>();
-					targetClasses.put(subjectName, alias);
+						targetClasses = new HashMap<OClass, String>();
+
+					OClass cls = database.getMetadata().getSchema().getClass(subjectName);
+					if (cls == null)
+						throw new OCommandExecutionException("Class '" + subjectName + "' was not found");
+
+					targetClasses.put(cls, alias);
 				}
 			}
 		}
@@ -284,7 +299,7 @@ public class OSQLFilter extends OCommandToParse {
 		return targetClusters;
 	}
 
-	public Map<String, String> getTargetClasses() {
+	public Map<OClass, String> getTargetClasses() {
 		return targetClasses;
 	}
 
