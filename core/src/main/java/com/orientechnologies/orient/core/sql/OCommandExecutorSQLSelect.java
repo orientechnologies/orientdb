@@ -356,6 +356,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 	private void processResultSet() {
 		if (orderedFields != null) {
+			if(tempResult == null)
+				return;
 			ODocumentSorter.sort(tempResult, orderedFields);
 
 			// ORDERED RESULT: RETURN ALL THE RECORDS AT THE END
