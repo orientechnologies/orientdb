@@ -620,8 +620,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			ORecordInternal<?> iLinkedRecord = (ORecordInternal<?>) iLinked;
 			rid = iLinkedRecord.getIdentity();
 			if (rid.isNew() || iLinkedRecord.isDirty()) {
-				// OVERWRITE THE DATABASE TO THE SAME OF THE PARENT ONE
-				iLinkedRecord.setDatabase(iParentRecord.getDatabase());
+				if (iLinkedRecord.getDatabase() == null)
+					// OVERWRITE THE DATABASE TO THE SAME OF THE PARENT ONE
+					iLinkedRecord.setDatabase(iParentRecord.getDatabase());
 
 				// STORE THE TRAVERSED OBJECT TO KNOW THE RECORD ID. CALL THIS VERSION TO AVOID CLEAR OF STACK IN THREAD-LOCAL
 				((ODatabaseRecord<ORecordInternal<?>>) iLinkedRecord.getDatabase()).save((ORecordInternal<?>) iLinkedRecord);
