@@ -47,7 +47,7 @@ public enum OType {
 	},
 	DOUBLE("Double", 5, false, true, 8, new Class<?>[] { Double.TYPE, Double.class }, new Class<?>[] { Number.class }) {
 	},
-	DATE("Date", 6, false, true, 8, new Class<?>[] { Date.class }, new Class<?>[] { Date.class }) {
+	DATE("Date", 6, false, true, 8, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Long.class, Long.TYPE }) {
 	},
 	STRING("String", 7, false, false, 8, new Class<?>[] { String.class }, new Class<?>[] { String.class }) {
 	},

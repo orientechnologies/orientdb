@@ -238,18 +238,20 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		case LINKLIST: {
 			buffer.append(OStringSerializerHelper.COLLECTION_BEGIN);
 
-			ORID rid;
-			int items = 0;
-			List<Object> coll = (List<Object>) iValue;
-			// LINKED LIST
-			for (int i = 0; i < coll.size(); ++i) {
-				if (items++ > 0)
-					buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
+			if (iValue != null) {
+				ORID rid;
+				int items = 0;
+				List<Object> coll = (List<Object>) iValue;
+				// LINKED LIST
+				for (int i = 0; i < coll.size(); ++i) {
+					if (items++ > 0)
+						buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
-				rid = linkToStream(buffer, iRecord, coll.get(i));
+					rid = linkToStream(buffer, iRecord, coll.get(i));
 
-				if (rid != null)
-					coll.set(i, rid);
+					if (rid != null)
+						coll.set(i, rid);
+				}
 			}
 
 			buffer.append(OStringSerializerHelper.COLLECTION_END);
@@ -637,7 +639,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			buffer.append(OStringSerializerHelper.LINK);
 			buffer.append(rid.toString());
 		}
-		
+
 		return resultRid;
 	}
 }

@@ -168,7 +168,10 @@ public abstract class OStringSerializerHelper {
 			return "\"" + str + "\"";
 
 		case DATE:
-			return String.valueOf(((Date) iValue).getTime());
+			if (iValue instanceof Date)
+				return String.valueOf(((Date) iValue).getTime());
+			else
+				return String.valueOf(iValue);
 
 		case LINK:
 			if (iValue instanceof ORID)
