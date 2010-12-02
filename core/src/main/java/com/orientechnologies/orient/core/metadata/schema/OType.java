@@ -47,7 +47,7 @@ public enum OType {
 	},
 	DOUBLE("Double", 5, false, true, 8, new Class<?>[] { Double.TYPE, Double.class }, new Class<?>[] { Number.class }) {
 	},
-	DATE("Date", 6, false, true, 8, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Long.class, Long.TYPE }) {
+	DATE("Date", 6, false, true, 8, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Long.class }) {
 	},
 	STRING("String", 7, false, false, 8, new Class<?>[] { String.class }, new Class<?>[] { String.class }) {
 	},
@@ -69,7 +69,7 @@ public enum OType {
 	},
 	LINKMAP("Map", 16, true, false, 8, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
 	},
-	BYTE("Byte", 17, false, true, 1, new Class<?>[] { Byte.TYPE, Byte.class }, new Class<?>[] { Number.class }) {
+	BYTE("Byte", 17, false, true, 1, new Class<?>[] { Byte.TYPE, Byte.class }, new Class<?>[] { Number.class, Character.class }) {
 	};
 
 	protected static final OType[]	TYPES	= new OType[] { BOOLEAN, BYTE, INTEGER, SHORT, LONG, FLOAT, DOUBLE, DATE, STRING, BINARY,
