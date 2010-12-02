@@ -155,9 +155,16 @@ public abstract class OStringSerializerHelper {
 		case LONG:
 		case DOUBLE:
 		case SHORT:
-		case BYTE:
 		case BOOLEAN:
 			return String.valueOf(iValue);
+
+		case BYTE:
+			if (iValue instanceof Character)
+				return String.valueOf((int) ((Character) iValue).charValue());
+			else if (iValue instanceof String)
+				return String.valueOf((int) ((String) iValue).charAt(0));
+			else
+				return String.valueOf(iValue);
 
 		case BINARY:
 			final String str;
