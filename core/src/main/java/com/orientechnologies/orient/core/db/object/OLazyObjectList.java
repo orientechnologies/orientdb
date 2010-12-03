@@ -31,10 +31,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 @SuppressWarnings({ "unchecked" })
 public class OLazyObjectList<TYPE> implements List<TYPE> {
 	private ORecord<?>											sourceRecord;
-	private final ArrayList<Object>					list			= new ArrayList<Object>();
+	private final ArrayList<Object>					list						= new ArrayList<Object>();
 	private ODatabasePojoAbstract<?, TYPE>	database;
 	private String													fetchPlan;
-	private boolean													converted	= false;
+	private boolean													converted				= false;
+	private boolean													convertToRecord	= true;
 
 	public OLazyObjectList(final ODatabaseGraphTx iDatabase, final ORecord<?> iSourceRecord, final Collection<?> iSourceList) {
 		this((ODatabasePojoAbstract<?, TYPE>) iDatabase, iSourceRecord, iSourceList);
@@ -54,7 +55,7 @@ public class OLazyObjectList<TYPE> implements List<TYPE> {
 	}
 
 	public Iterator<TYPE> iterator() {
-		return new OLazyObjectIterator<TYPE>(database, sourceRecord, list.iterator());
+		return new OLazyObjectIterator<TYPE>(database, sourceRecord, list.iterator(), convertToRecord);
 	}
 
 	public boolean contains(final Object o) {
@@ -180,8 +181,16 @@ public class OLazyObjectList<TYPE> implements List<TYPE> {
 		return this;
 	}
 
+	public boolean isConvertToRecord() {
+		return convertToRecord;
+	}
+
+	public void setConvertToRecord(boolean convertToRecord) {
+		this.convertToRecord = convertToRecord;
+	}
+
 	public void convertAll() {
-		if (converted)
+		if (converted || !convertToRecord)
 			return;
 
 		for (int i = 0; i < size(); ++i)
@@ -195,6 +204,12 @@ public class OLazyObjectList<TYPE> implements List<TYPE> {
 			sourceRecord.setDirty();
 	}
 
+	public void assignDatabase(final ODatabasePojoAbstract<?, TYPE> iDatabase) {
+		if (database == null || database.isClosed()) {
+			database = iDatabase;
+		}
+	}
+
 	/**
 	 * Convert the item requested.
 	 * 
@@ -202,6 +217,9 @@ public class OLazyObjectList<TYPE> implements List<TYPE> {
 	 *          Position of the item to convert
 	 */
 	private void convert(final int iIndex) {
+		if (converted || !convertToRecord)
+			return;
+
 		final Object o = list.get(iIndex);
 
 		if (o != null && o instanceof ODocument)

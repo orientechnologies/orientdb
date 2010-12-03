@@ -29,6 +29,8 @@ import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
+import com.orientechnologies.orient.core.db.object.OLazyObjectList;
+import com.orientechnologies.orient.core.db.object.OLazyObjectMap;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
@@ -242,15 +244,24 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				ORID rid;
 				int items = 0;
 				List<Object> coll = (List<Object>) iValue;
-				// LINKED LIST
-				for (int i = 0; i < coll.size(); ++i) {
-					if (items++ > 0)
-						buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
+				if (coll instanceof OLazyObjectList<?>) {
+					((OLazyObjectList) coll).setConvertToRecord(false);
+				}
+				try {
+					// LINKED LIST
+					for (int i = 0; i < coll.size(); ++i) {
+						if (items++ > 0)
+							buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
-					rid = linkToStream(buffer, iRecord, coll.get(i));
+						rid = linkToStream(buffer, iRecord, coll.get(i));
 
-					if (rid != null)
-						coll.set(i, rid);
+						if (rid != null)
+							coll.set(i, rid);
+					}
+				} finally {
+					if (coll instanceof OLazyObjectList<?>) {
+						((OLazyObjectList) coll).setConvertToRecord(true);
+					}
 				}
 			}
 
@@ -302,23 +313,31 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			Map<String, Object> objToReplace = null;
 
 			// LINKED MAP
-			for (Map.Entry<String, Object> entry : map.entrySet()) {
-				if (items++ > 0)
-					buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
+			if (map instanceof OLazyObjectMap<?>) {
+				((OLazyObjectMap) map).setConvertToRecord(false);
+			}
+			try {
+				for (Map.Entry<String, Object> entry : map.entrySet()) {
+					if (items++ > 0)
+						buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
-				buffer.append(OStringSerializerHelper.fieldTypeToString(iDatabase, OType.STRING, entry.getKey()));
-				buffer.append(OStringSerializerHelper.ENTRY_SEPARATOR);
-				rid = linkToStream(buffer, iRecord, entry.getValue());
+					buffer.append(OStringSerializerHelper.fieldTypeToString(iDatabase, OType.STRING, entry.getKey()));
+					buffer.append(OStringSerializerHelper.ENTRY_SEPARATOR);
+					rid = linkToStream(buffer, iRecord, entry.getValue());
 
-				if (rid != null) {
-					// REMEMBER TO REPLACE THIS ITEM AFTER ALL
-					if (objToReplace == null)
-						objToReplace = new HashMap<String, Object>();
+					if (rid != null) {
+						// REMEMBER TO REPLACE THIS ITEM AFTER ALL
+						if (objToReplace == null)
+							objToReplace = new HashMap<String, Object>();
 
-					objToReplace.put(entry.getKey(), rid);
+						objToReplace.put(entry.getKey(), rid);
+					}
+				}
+			} finally {
+				if (map instanceof OLazyObjectMap<?>) {
+					((OLazyObjectMap) map).setConvertToRecord(true);
 				}
 			}
-
 			if (objToReplace != null)
 				// REPLACE ALL CHANGED ITEMS
 				for (Map.Entry<String, Object> entry : objToReplace.entrySet()) {
@@ -397,7 +416,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 												public boolean existsUserObjectByRecord(ORecordInternal<?> iRecord) {
 													return false;
 												}
-											}, iSaveOnlyDirty);
+											}, null, iSaveOnlyDirty);
 
 						buffer.append(OStringSerializerHelper.EMBEDDED);
 						// buffer.append(OStringSerializerHelper.fieldTypeToString(iLinkedType, record));
@@ -541,7 +560,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 										public boolean existsUserObjectByRecord(ORecordInternal<?> iRecord) {
 											return false;
 										}
-									}, iSaveOnlyDirty);
+									}, null, iSaveOnlyDirty);
 
 				buffer.append(toString(document, null, iObjHandler, iMarshalledRecords));
 			} else {

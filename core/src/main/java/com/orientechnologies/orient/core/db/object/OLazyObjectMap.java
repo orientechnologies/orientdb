@@ -23,14 +23,16 @@ import java.util.Set;
 import com.orientechnologies.orient.core.db.ODatabasePojoAbstract;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings("serial")
 public class OLazyObjectMap<TYPE> extends HashMap<String, Object> {
-	private final ORecord<?>											sourceRecord;
-	private final ODatabasePojoAbstract<?, TYPE>	database;
-	private final Map<String, Object>							underlying;
-	private String																fetchPlan;
-	private boolean																converted	= false;
+	private final ORecord<?>								sourceRecord;
+	private ODatabasePojoAbstract<?, TYPE>	database;
+	private final Map<String, Object>				underlying;
+	private String													fetchPlan;
+	private boolean													converted				= false;
+	private boolean													convertToRecord	= true;
 
 	public OLazyObjectMap(final ODatabasePojoAbstract<?, TYPE> database, final ORecord<?> iSourceRecord,
 			final Map<String, Object> iSource) {
@@ -59,7 +61,12 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> {
 	}
 
 	public Object put(final String iKey, final Object e) {
-		underlying.put(iKey, database.getRecordByUserObject(e, false));
+		if (e instanceof ODocument) {
+			converted = false;
+			underlying.put(iKey, e);
+		} else {
+			underlying.put(iKey, database.getRecordByUserObject(e, false));
+		}
 		setDirty();
 		return super.put(iKey, e);
 	}
@@ -79,6 +86,14 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> {
 
 	public String getFetchPlan() {
 		return fetchPlan;
+	}
+
+	public boolean isConvertToRecord() {
+		return convertToRecord;
+	}
+
+	public void setConvertToRecord(boolean convertToRecord) {
+		this.convertToRecord = convertToRecord;
 	}
 
 	public OLazyObjectMap<TYPE> setFetchPlan(String fetchPlan) {
@@ -107,7 +122,6 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> {
 	}
 
 	public void putAll(final Map<? extends String, ? extends Object> iMap) {
-		setDirty();
 		for (java.util.Map.Entry<? extends String, ? extends Object> e : iMap.entrySet()) {
 			put(e.getKey(), e.getValue());
 		}
@@ -123,11 +137,17 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> {
 			sourceRecord.setDirty();
 	}
 
+	public void assignDatabase(final ODatabasePojoAbstract<?, TYPE> iDatabase) {
+		if (database == null || database.isClosed()) {
+			database = iDatabase;
+		}
+	}
+
 	/**
 	 * Assure that the requested key is converted.
 	 */
 	private void convert(final String iKey) {
-		if (converted)
+		if (converted || !convertToRecord)
 			return;
 
 		super.put(iKey, database.getUserObjectByRecord((ORecordInternal<?>) underlying.get(iKey), null));
@@ -137,7 +157,7 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> {
 	 * Convert all the items
 	 */
 	private void convertAll() {
-		if (converted)
+		if (converted || !convertToRecord)
 			return;
 
 		for (java.util.Map.Entry<String, Object> e : underlying.entrySet())

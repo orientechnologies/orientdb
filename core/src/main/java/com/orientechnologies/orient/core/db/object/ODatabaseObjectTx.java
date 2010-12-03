@@ -175,6 +175,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
 		underlying.save(record, iClusterName);
 
 		OObjectSerializerHelper.setObjectID(record, iPojo);
+		OObjectSerializerHelper.setObjectVersion(record, iPojo);
 
 		return this;
 	}
@@ -236,7 +237,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
 
 	protected ODocument pojo2Stream(final Object iPojo, final ODocument iRecord) {
 		return OObjectSerializerHelper.toStream(iPojo, iRecord, getEntityManager(),
-				getMetadata().getSchema().getClass(iPojo.getClass().getSimpleName()), this, saveOnlyDirty);
+				getMetadata().getSchema().getClass(iPojo.getClass().getSimpleName()), this, this, saveOnlyDirty);
 	}
 
 	protected Object stream2pojo(final ODocument record, final Object iPojo, final String iFetchPlan) {

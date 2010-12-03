@@ -32,10 +32,11 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  */
 @SuppressWarnings("unchecked")
 public class OLazyObjectSet<TYPE> implements Set<Object> {
-	private final ORecord<?>											sourceRecord;
-	private final ODatabasePojoAbstract<?, TYPE>	database;
-	private final Collection<Object>							underlying;
-	private String																fetchPlan;
+	private final ORecord<?>								sourceRecord;
+	private ODatabasePojoAbstract<?, TYPE>	database;
+	private final Collection<Object>				underlying;
+	private String													fetchPlan;
+	private boolean													convertToRecord	= true;
 
 	public OLazyObjectSet(final ODatabasePojoAbstract<?, TYPE> database, final ORecord<?> iSourceRecord,
 			final Collection<Object> iSource) {
@@ -45,7 +46,7 @@ public class OLazyObjectSet<TYPE> implements Set<Object> {
 	}
 
 	public Iterator<Object> iterator() {
-		return (Iterator<Object>) new OLazyObjectIterator<TYPE>(database, sourceRecord, underlying.iterator());
+		return (Iterator<Object>) new OLazyObjectIterator<TYPE>(database, sourceRecord, underlying.iterator(), convertToRecord);
 	}
 
 	public int size() {
@@ -126,6 +127,14 @@ public class OLazyObjectSet<TYPE> implements Set<Object> {
 		return this;
 	}
 
+	public boolean isConvertToRecord() {
+		return convertToRecord;
+	}
+
+	public void setConvertToRecord(boolean convertToRecord) {
+		this.convertToRecord = convertToRecord;
+	}
+
 	@Override
 	public String toString() {
 		return underlying.toString();
@@ -134,5 +143,11 @@ public class OLazyObjectSet<TYPE> implements Set<Object> {
 	public void setDirty() {
 		if (sourceRecord != null)
 			sourceRecord.setDirty();
+	}
+
+	public void assignDatabase(final ODatabasePojoAbstract<?, TYPE> iDatabase) {
+		if (database == null || database.isClosed()) {
+			database = iDatabase;
+		}
 	}
 }

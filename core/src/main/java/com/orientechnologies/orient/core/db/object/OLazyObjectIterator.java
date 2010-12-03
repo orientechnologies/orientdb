@@ -34,12 +34,14 @@ public class OLazyObjectIterator<TYPE> implements Iterator<TYPE> {
 	private final ODatabasePojoAbstract<?, TYPE>	database;
 	private final Iterator<Object>								underlying;
 	private String																fetchPlan;
+	final private boolean													convertToRecord;
 
 	public OLazyObjectIterator(final ODatabasePojoAbstract<?, TYPE> database, final ORecord<?> iSourceRecord,
-			final Iterator<Object> iIterator) {
+			final Iterator<Object> iIterator, final boolean iConvertToRecord) {
 		this.database = database;
 		this.sourceRecord = iSourceRecord;
 		this.underlying = iIterator;
+		convertToRecord = iConvertToRecord;
 	}
 
 	public TYPE next() {
@@ -52,7 +54,7 @@ public class OLazyObjectIterator<TYPE> implements Iterator<TYPE> {
 		if (value == null)
 			return null;
 
-		if (value instanceof ODocument)
+		if (value instanceof ODocument && convertToRecord)
 			return (TYPE) database.getUserObjectByRecord((ODocument) value, iFetchPlan);
 
 		return (TYPE) value;

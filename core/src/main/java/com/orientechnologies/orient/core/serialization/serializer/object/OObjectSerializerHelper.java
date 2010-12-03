@@ -197,7 +197,7 @@ public class OObjectSerializerHelper {
 			iRecord.load();
 
 		final String idFieldName = setObjectID(iRecord, iPojo);
-		final String vFieldName = setVersionID(iRecord, iPojo);
+		final String vFieldName = setObjectVersion(iRecord, iPojo);
 
 		// CALL BEFORE UNMARSHALLING
 		invokeCallback(iPojo, iRecord, OBeforeDeserialization.class);
@@ -382,7 +382,7 @@ public class OObjectSerializerHelper {
 		return idFieldName;
 	}
 
-	public static String setVersionID(final ODocument iRecord, final Object iPojo) {
+	public static String setObjectVersion(final ODocument iRecord, final Object iPojo) {
 		final Class<?> pojoClass = iPojo.getClass();
 
 		final String vFieldName = fieldVersions.get(pojoClass);
@@ -420,7 +420,8 @@ public class OObjectSerializerHelper {
 	 * @param iObj2RecHandler
 	 */
 	public static ODocument toStream(final Object iPojo, final ODocument iRecord, final OEntityManager iEntityManager,
-			final OClass schemaClass, final OUserObject2RecordHandler iObj2RecHandler, final boolean iSaveOnlyDirty) {
+			final OClass schemaClass, final OUserObject2RecordHandler iObj2RecHandler, final ODatabaseObjectTx db,
+			final boolean iSaveOnlyDirty) {
 		if (iSaveOnlyDirty && !iRecord.isDirty())
 			return iRecord;
 
@@ -497,7 +498,7 @@ public class OObjectSerializerHelper {
 			schemaProperty = schemaClass != null ? schemaClass.getProperty(fieldName) : null;
 
 			fieldValue = typeToStream(fieldValue, schemaProperty != null ? schemaProperty.getType() : null, iEntityManager,
-					iObj2RecHandler, iSaveOnlyDirty);
+					iObj2RecHandler, db, iSaveOnlyDirty);
 
 			iRecord.field(fieldName, fieldValue);
 		}
@@ -533,7 +534,7 @@ public class OObjectSerializerHelper {
 	}
 
 	private static Object typeToStream(Object iFieldValue, OType iType, final OEntityManager iEntityManager,
-			final OUserObject2RecordHandler iObj2RecHandler, final boolean iSaveOnlyDirty) {
+			final OUserObject2RecordHandler iObj2RecHandler, final ODatabaseObjectTx db, final boolean iSaveOnlyDirty) {
 		if (iFieldValue == null)
 			return null;
 
@@ -542,13 +543,13 @@ public class OObjectSerializerHelper {
 		if (!OType.isSimpleType(fieldClass)) {
 			if (fieldClass.isArray()) {
 				// ARRAY
-				iFieldValue = multiValueToStream(Arrays.asList(iFieldValue), iType, iEntityManager, iObj2RecHandler, iSaveOnlyDirty);
+				iFieldValue = multiValueToStream(Arrays.asList(iFieldValue), iType, iEntityManager, iObj2RecHandler, db, iSaveOnlyDirty);
 			} else if (Collection.class.isAssignableFrom(fieldClass)) {
 				// COLLECTION (LIST OR SET)
-				iFieldValue = multiValueToStream(iFieldValue, iType, iEntityManager, iObj2RecHandler, iSaveOnlyDirty);
+				iFieldValue = multiValueToStream(iFieldValue, iType, iEntityManager, iObj2RecHandler, db, iSaveOnlyDirty);
 			} else if (Map.class.isAssignableFrom(fieldClass)) {
 				// MAP
-				iFieldValue = multiValueToStream(iFieldValue, iType, iEntityManager, iObj2RecHandler, iSaveOnlyDirty);
+				iFieldValue = multiValueToStream(iFieldValue, iType, iEntityManager, iObj2RecHandler, db, iSaveOnlyDirty);
 			} else if (fieldClass.isEnum()) {
 				// ENUM
 				iFieldValue = ((Enum<?>) iFieldValue).name();
@@ -559,7 +560,8 @@ public class OObjectSerializerHelper {
 				if (fieldClass != null) {
 					// RECOGNIZED TYPE, SERIALIZE IT
 					final ODocument linkedDocument = (ODocument) iObj2RecHandler.getRecordByUserObject(iFieldValue, false);
-					iFieldValue = toStream(iFieldValue, linkedDocument, iEntityManager, linkedDocument.getSchemaClass(), iObj2RecHandler,
+
+					iFieldValue = toStream(iFieldValue, linkedDocument, iEntityManager, linkedDocument.getSchemaClass(), iObj2RecHandler, db,
 							iSaveOnlyDirty);
 
 				} else
@@ -571,12 +573,19 @@ public class OObjectSerializerHelper {
 	}
 
 	private static Object multiValueToStream(final Object iMultiValue, OType iType, final OEntityManager iEntityManager,
-			final OUserObject2RecordHandler iObj2RecHandler, final boolean iSaveOnlyDirty) {
+			final OUserObject2RecordHandler iObj2RecHandler, final ODatabaseObjectTx db, final boolean iSaveOnlyDirty) {
 		if (iMultiValue == null)
 			return null;
 
-		final Collection<Object> sourceValues = (Collection<Object>) (iMultiValue instanceof Collection<?> ? iMultiValue
-				: ((Map<?, ?>) iMultiValue).values());
+		final Collection<Object> sourceValues;
+		if (iMultiValue instanceof Collection<?>) {
+			sourceValues = (Collection<Object>) iMultiValue;
+		} else {
+			if (iMultiValue instanceof OLazyObjectMap<?>) {
+				((OLazyObjectMap) iMultiValue).assignDatabase(db);
+			}
+			sourceValues = (Collection<Object>) ((Map<?, ?>) iMultiValue).values();
+		}
 
 		if (iType == null) {
 			if (sourceValues.size() == 0)
@@ -606,18 +615,19 @@ public class OObjectSerializerHelper {
 			}
 		}
 
-		Object result = null;
+		Object result = iMultiValue;
 		final OType linkedType;
 
 		// CREATE THE RETURN MULTI VALUE OBJECT BASED ON DISCOVERED TYPE
-		if (iType.equals(OType.EMBEDDEDLIST) || iType.equals(OType.LINKLIST)) {
-			result = new ArrayList<Object>();
-		} else if (iType.equals(OType.EMBEDDEDSET) || iType.equals(OType.LINKSET)) {
+		if (iType.equals(OType.EMBEDDEDSET) || iType.equals(OType.LINKSET)) {
 			result = new HashSet<Object>();
-		} else if (iType.equals(OType.EMBEDDEDMAP) || iType.equals(OType.LINKMAP)) {
-			result = new HashMap<String, Object>();
-		} else
-			throw new IllegalArgumentException("Type " + iType + " must be a collection");
+		}
+		// } else if (iType.equals(OType.EMBEDDEDLIST) || iType.equals(OType.LINKLIST)) {
+		// result = new ArrayList<Object>();
+		// } else if (iType.equals(OType.EMBEDDEDMAP) || iType.equals(OType.LINKMAP)) {
+		// result = new HashMap<String, Object>();
+		// } else
+		// throw new IllegalArgumentException("Type " + iType + " must be a collection");
 
 		if (iType.equals(OType.LINKLIST) || iType.equals(OType.LINKSET) || iType.equals(OType.LINKMAP))
 			linkedType = OType.LINK;
@@ -626,15 +636,24 @@ public class OObjectSerializerHelper {
 		else
 			throw new IllegalArgumentException("Type " + iType + " must be a multi value type (collection or map)");
 
-		if (iMultiValue instanceof Collection<?>)
+		if (iMultiValue instanceof Set<?>) {
 			for (Object o : sourceValues) {
-				((Collection<Object>) result).add(typeToStream(o, linkedType, iEntityManager, iObj2RecHandler, iSaveOnlyDirty));
+				((Collection<Object>) result).add(typeToStream(o, linkedType, iEntityManager, iObj2RecHandler, db, iSaveOnlyDirty));
 			}
-		else
+		} else if (iMultiValue instanceof List<?>) {
+			if (sourceValues instanceof OLazyObjectList<?>) {
+				((OLazyObjectList) sourceValues).assignDatabase(db);
+			}
+			for (int i = 0; i < sourceValues.size(); i++) {
+				((List<Object>) result).set(i,
+						typeToStream(((List<?>) sourceValues).get(i), linkedType, iEntityManager, iObj2RecHandler, db, iSaveOnlyDirty));
+			}
+		} else {
 			for (Entry<String, Object> entry : ((Map<String, Object>) iMultiValue).entrySet()) {
 				((Map<String, Object>) result).put(entry.getKey(),
-						typeToStream(entry.getValue(), linkedType, iEntityManager, iObj2RecHandler, iSaveOnlyDirty));
+						typeToStream(entry.getValue(), linkedType, iEntityManager, iObj2RecHandler, db, iSaveOnlyDirty));
 			}
+		}
 
 		return result;
 	}
