@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.db.object;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabasePojoAbstract;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
@@ -49,11 +50,13 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
 
 	private ODictionary<Object>	dictionary;
 	private OEntityManager			entityManager;
+	private boolean							saveOnlyDirty;
 
 	public ODatabaseObjectTx(final String iURL) {
 		super(new ODatabaseDocumentTx(iURL));
 		underlying.setDatabaseOwner(this);
 		entityManager = OEntityManager.getEntityManagerByDatabaseURL(iURL);
+		saveOnlyDirty = OGlobalConfiguration.OBJECT_SAVE_ONLY_DIRTY.getValueAsBoolean();
 	}
 
 	public <T> T newInstance(final Class<T> iType) {
@@ -171,6 +174,8 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
 
 		underlying.save(record, iClusterName);
 
+		OObjectSerializerHelper.setOID(record, iPojo);
+
 		return this;
 	}
 
@@ -231,10 +236,18 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
 
 	protected ODocument pojo2Stream(final Object iPojo, final ODocument iRecord) {
 		return OObjectSerializerHelper.toStream(iPojo, iRecord, getEntityManager(),
-				getMetadata().getSchema().getClass(iPojo.getClass().getSimpleName()), this);
+				getMetadata().getSchema().getClass(iPojo.getClass().getSimpleName()), this, saveOnlyDirty);
 	}
 
 	protected Object stream2pojo(final ODocument record, final Object iPojo, final String iFetchPlan) {
 		return OObjectSerializerHelper.fromStream(record, iPojo, getEntityManager(), this, iFetchPlan);
+	}
+
+	public boolean isSaveOnlyDirty() {
+		return saveOnlyDirty;
+	}
+
+	public void setSaveOnlyDirty(boolean saveOnlyDirty) {
+		this.saveOnlyDirty = saveOnlyDirty;
 	}
 }

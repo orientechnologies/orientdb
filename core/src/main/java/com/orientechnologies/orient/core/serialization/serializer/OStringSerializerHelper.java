@@ -187,7 +187,7 @@ public abstract class OStringSerializerHelper {
 				return ((ORecord<?>) iValue).getIdentity().toString();
 
 		case EMBEDDEDMAP:
-			return ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedMapToStream(iDatabase, null, null, null, iValue, null);
+			return ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedMapToStream(iDatabase, null, null, null, iValue, null, true);
 
 		case EMBEDDED:
 			// RECORD

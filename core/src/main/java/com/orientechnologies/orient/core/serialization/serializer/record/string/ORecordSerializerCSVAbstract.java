@@ -222,7 +222,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 	public String fieldToStream(final ODocument iRecord, final ODatabaseComplex<?> iDatabase,
 			final OUserObject2RecordHandler iObjHandler, final OType iType, final OClass iLinkedClass, final OType iLinkedType,
-			final String iName, final Object iValue, final Set<Integer> iMarshalledRecords) {
+			final String iName, final Object iValue, final Set<Integer> iMarshalledRecords, final boolean iSaveOnlyDirty) {
 		final StringBuilder buffer = new StringBuilder();
 
 		switch (iType) {
@@ -340,12 +340,14 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 		case EMBEDDEDLIST:
 		case EMBEDDEDSET: {
-			buffer.append(embeddedCollectionToStream(iDatabase, iObjHandler, iLinkedClass, iLinkedType, iValue, iMarshalledRecords));
+			buffer.append(embeddedCollectionToStream(iDatabase, iObjHandler, iLinkedClass, iLinkedType, iValue, iMarshalledRecords,
+					iSaveOnlyDirty));
 			break;
 		}
 
 		case EMBEDDEDMAP: {
-			buffer.append(embeddedMapToStream(iDatabase, iObjHandler, iLinkedClass, iLinkedType, iValue, iMarshalledRecords));
+			buffer.append(embeddedMapToStream(iDatabase, iObjHandler, iLinkedClass, iLinkedType, iValue, iMarshalledRecords,
+					iSaveOnlyDirty));
 			break;
 		}
 
@@ -357,7 +359,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 	}
 
 	public String embeddedMapToStream(final ODatabaseComplex<?> iDatabase, final OUserObject2RecordHandler iObjHandler,
-			final OClass iLinkedClass, OType iLinkedType, final Object iValue, final Set<Integer> iMarshalledRecords) {
+			final OClass iLinkedClass, OType iLinkedType, final Object iValue, final Set<Integer> iMarshalledRecords,
+			final boolean iSaveOnlyDirty) {
 		final StringBuilder buffer = new StringBuilder();
 		buffer.append(OStringSerializerHelper.MAP_BEGIN);
 
@@ -394,7 +397,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 												public boolean existsUserObjectByRecord(ORecordInternal<?> iRecord) {
 													return false;
 												}
-											});
+											}, iSaveOnlyDirty);
 
 						buffer.append(OStringSerializerHelper.EMBEDDED);
 						// buffer.append(OStringSerializerHelper.fieldTypeToString(iLinkedType, record));
@@ -480,7 +483,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 	}
 
 	public String embeddedCollectionToStream(final ODatabaseComplex<?> iDatabase, final OUserObject2RecordHandler iObjHandler,
-			final OClass iLinkedClass, final OType iLinkedType, final Object iValue, final Set<Integer> iMarshalledRecords) {
+			final OClass iLinkedClass, final OType iLinkedType, final Object iValue, final Set<Integer> iMarshalledRecords,
+			final boolean iSaveOnlyDirty) {
 		final StringBuilder buffer = new StringBuilder();
 		buffer.append(OStringSerializerHelper.COLLECTION_BEGIN);
 
@@ -537,7 +541,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 										public boolean existsUserObjectByRecord(ORecordInternal<?> iRecord) {
 											return false;
 										}
-									});
+									}, iSaveOnlyDirty);
 
 				buffer.append(toString(document, null, iObjHandler, iMarshalledRecords));
 			} else {

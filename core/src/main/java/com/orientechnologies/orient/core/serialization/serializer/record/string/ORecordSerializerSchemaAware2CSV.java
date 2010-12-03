@@ -202,7 +202,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 				type = OType.EMBEDDED;
 
 			fieldValue = fieldToStream((ODocument) iRecord, iRecord.getDatabase(), iObjHandler, type, linkedClass, linkedType,
-					f.getKey(), f.getValue(), iMarshalledRecords);
+					f.getKey(), f.getValue(), iMarshalledRecords, true);
 
 			buffer.append(f.getKey());
 			buffer.append(FIELD_VALUE_SEPARATOR);
