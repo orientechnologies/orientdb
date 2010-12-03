@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.annotation.OBeforeDeserialization;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.annotation.ODocumentInstance;
 import com.orientechnologies.orient.core.annotation.OId;
+import com.orientechnologies.orient.core.annotation.OVersion;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.db.object.OLazyObjectList;
@@ -75,8 +76,11 @@ public class OObjectSerializerHelper {
 	private static HashMap<String, Object>			setters										= new HashMap<String, Object>();
 	private static HashMap<Class<?>, String>		boundDocumentFields				= new HashMap<Class<?>, String>();
 	private static HashMap<Class<?>, String>		fieldIds									= new HashMap<Class<?>, String>();
+	private static HashMap<Class<?>, String>		fieldVersions							= new HashMap<Class<?>, String>();
 	@SuppressWarnings("rawtypes")
 	private static Class												jpaIdClass;
+	@SuppressWarnings("rawtypes")
+	private static Class												jpaVersionClass;
 	@SuppressWarnings("rawtypes")
 	private static Class												jpaAccessClass;
 
@@ -84,6 +88,7 @@ public class OObjectSerializerHelper {
 		// DETERMINE IF THERE IS AVAILABLE JPA 2
 		try {
 			jpaIdClass = Class.forName("javax.persistence.Id");
+			jpaVersionClass = Class.forName("javax.persistence.Version");
 
 			// DETERMINE IF THERE IS AVAILABLE JPA 2
 			jpaAccessClass = Class.forName("javax.persistence.Access");
@@ -191,7 +196,8 @@ public class OObjectSerializerHelper {
 		if (iRecord.getInternalStatus() == STATUS.NOT_LOADED)
 			iRecord.load();
 
-		String idFieldName = setOID(iRecord, iPojo);
+		final String idFieldName = setObjectID(iRecord, iPojo);
+		final String vFieldName = setVersionID(iRecord, iPojo);
 
 		// CALL BEFORE UNMARSHALLING
 		invokeCallback(iPojo, iRecord, OBeforeDeserialization.class);
@@ -200,7 +206,7 @@ public class OObjectSerializerHelper {
 		for (Field p : properties) {
 			fieldName = p.getName();
 
-			if (fieldName.equals(idFieldName))
+			if (fieldName.equals(idFieldName) || fieldName.equals(vFieldName))
 				continue;
 
 			if (iRecord.containsField(fieldName)) {
@@ -346,30 +352,62 @@ public class OObjectSerializerHelper {
 		return iPojo;
 	}
 
-	public static String setOID(final ODocument iRecord, final Object iPojo) {
+	public static String setObjectID(final ODocument iRecord, final Object iPojo) {
 		final Class<?> pojoClass = iPojo.getClass();
 
-		String idFieldName = fieldIds.get(pojoClass);
+		final String idFieldName = fieldIds.get(pojoClass);
 		if (idFieldName != null) {
 			final List<Field> properties = getClassFields(pojoClass);
 
-			for (Field p : properties) {
-				if (p.getName().equals(idFieldName)) {
-					Class<?> fieldType = p.getType();
+			if (properties != null)
+				for (Field p : properties) {
+					if (p.getName().equals(idFieldName)) {
+						Class<?> fieldType = p.getType();
 
-					if (ORID.class.isAssignableFrom(fieldType))
-						setFieldValue(iPojo, idFieldName, iRecord.getIdentity());
-					else if (Number.class.isAssignableFrom(fieldType))
-						setFieldValue(iPojo, idFieldName, iRecord.getIdentity().getClusterPosition());
-					else if (fieldType.equals(String.class))
-						setFieldValue(iPojo, idFieldName, iRecord.getIdentity().toString());
-					else if (fieldType.equals(Object.class))
-						setFieldValue(iPojo, idFieldName, iRecord.getIdentity());
-					break;
+						if (ORID.class.isAssignableFrom(fieldType))
+							setFieldValue(iPojo, idFieldName, iRecord.getIdentity());
+						else if (Number.class.isAssignableFrom(fieldType))
+							setFieldValue(iPojo, idFieldName, iRecord.getIdentity().getClusterPosition());
+						else if (fieldType.equals(String.class))
+							setFieldValue(iPojo, idFieldName, iRecord.getIdentity().toString());
+						else if (fieldType.equals(Object.class))
+							setFieldValue(iPojo, idFieldName, iRecord.getIdentity());
+						else
+							OLogManager.instance().warn(OObjectSerializerHelper.class,
+									"@Id field has been declared as %s while the supported are: ORID, Number, String, Object", fieldType);
+						break;
+					}
 				}
-			}
 		}
 		return idFieldName;
+	}
+
+	public static String setVersionID(final ODocument iRecord, final Object iPojo) {
+		final Class<?> pojoClass = iPojo.getClass();
+
+		final String vFieldName = fieldVersions.get(pojoClass);
+		if (vFieldName != null) {
+			final List<Field> properties = getClassFields(pojoClass);
+
+			if (properties != null)
+				for (Field p : properties) {
+					if (p.getName().equals(vFieldName)) {
+						Class<?> fieldType = p.getType();
+
+						if (Number.class.isAssignableFrom(fieldType))
+							setFieldValue(iPojo, vFieldName, iRecord.getVersion());
+						else if (fieldType.equals(String.class))
+							setFieldValue(iPojo, vFieldName, String.valueOf(iRecord.getVersion()));
+						else if (fieldType.equals(Object.class))
+							setFieldValue(iPojo, vFieldName, iRecord.getVersion());
+						else
+							OLogManager.instance().warn(OObjectSerializerHelper.class,
+									"@Version field has been declared as %s while the supported are: Number, String, Object", fieldType);
+						break;
+					}
+				}
+		}
+		return vFieldName;
 	}
 
 	/**
@@ -413,9 +451,32 @@ public class OObjectSerializerHelper {
 					// TREATS AS CLUSTER POSITION
 					((ORecordId) iRecord.getIdentity()).clusterId = schemaClass.getDefaultClusterId();
 					((ORecordId) iRecord.getIdentity()).clusterPosition = ((Number) id).longValue();
-				} else if (id instanceof String) {
+				} else if (id instanceof String)
 					((ORecordId) iRecord.getIdentity()).fromString((String) id);
-				}
+				else if (id.getClass().equals(Object.class))
+					iRecord.setIdentity((ORecordId) id);
+				else
+					OLogManager.instance().warn(OObjectSerializerHelper.class,
+							"@Id field has been declared as %s while the supported are: ORID, Number, String, Object", id.getClass());
+			}
+		}
+
+		// CHECK FOR VERSION BINDING
+		final String vFieldName = fieldVersions.get(pojoClass);
+		if (vFieldName != null) {
+			Object ver = getFieldValue(iPojo, vFieldName);
+			if (ver != null) {
+				// FOUND
+				if (ver instanceof Number) {
+					// TREATS AS CLUSTER POSITION
+					iRecord.setVersion(((Number) ver).intValue());
+				} else if (ver instanceof String)
+					iRecord.setVersion(Integer.parseInt((String) ver));
+				else if (ver.getClass().equals(Object.class))
+					iRecord.setVersion((Integer) ver);
+				else
+					OLogManager.instance().warn(OObjectSerializerHelper.class,
+							"@Version field has been declared as %s while the supported are: Number, String, Object", ver.getClass());
 			}
 		}
 
@@ -428,7 +489,7 @@ public class OObjectSerializerHelper {
 		for (Field p : properties) {
 			fieldName = p.getName();
 
-			if (fieldName.equals(idFieldName))
+			if (fieldName.equals(idFieldName) || fieldName.equals(vFieldName))
 				continue;
 
 			fieldValue = getFieldValue(iPojo, fieldName);
@@ -634,6 +695,29 @@ public class OObjectSerializerHelper {
 						// CHECK FOR TYPE
 						if (fieldType.isPrimitive())
 							OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' can't be a literal to manage the Record Id",
+									f.toString());
+						else if (!ORID.class.isAssignableFrom(fieldType) && fieldType != String.class && fieldType != Object.class
+								&& !Number.class.isAssignableFrom(fieldType))
+							OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' can't be managed as type: %s", f.toString(),
+									fieldType);
+					}
+
+					boolean vFound = false;
+					if (f.getAnnotation(OVersion.class) != null) {
+						// RECORD ID
+						fieldVersions.put(iClass, fieldName);
+						vFound = true;
+					}
+					// JPA 1+ AVAILABLE?
+					else if (jpaVersionClass != null && f.getAnnotation(jpaVersionClass) != null) {
+						// RECORD ID
+						fieldVersions.put(iClass, fieldName);
+						vFound = true;
+					}
+					if (vFound) {
+						// CHECK FOR TYPE
+						if (fieldType.isPrimitive())
+							OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' can't be a literal to manage the Version",
 									f.toString());
 						else if (fieldType != String.class && fieldType != Object.class && !Number.class.isAssignableFrom(fieldType))
 							OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' can't be managed as type: %s", f.toString(),

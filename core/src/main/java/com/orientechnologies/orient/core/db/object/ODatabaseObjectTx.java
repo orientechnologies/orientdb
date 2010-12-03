@@ -174,7 +174,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
 
 		underlying.save(record, iClusterName);
 
-		OObjectSerializerHelper.setOID(record, iPojo);
+		OObjectSerializerHelper.setObjectID(record, iPojo);
 
 		return this;
 	}
