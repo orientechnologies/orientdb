@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.annotation.OBeforeDeserialization;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.annotation.ODocumentInstance;
 import com.orientechnologies.orient.core.annotation.OId;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.db.object.OLazyObjectList;
@@ -192,7 +191,7 @@ public class OObjectSerializerHelper {
 		if (iRecord.getInternalStatus() == STATUS.NOT_LOADED)
 			iRecord.load();
 
-		String idFieldName = fieldIds.get(pojoClass);
+		String idFieldName = setOID(iRecord, iPojo);
 
 		// CALL BEFORE UNMARSHALLING
 		invokeCallback(iPojo, iRecord, OBeforeDeserialization.class);
@@ -201,19 +200,8 @@ public class OObjectSerializerHelper {
 		for (Field p : properties) {
 			fieldName = p.getName();
 
-			if (idFieldName != null && idFieldName.equals(fieldName)) {
-				Class<?> fieldType = p.getType();
-
-				if (ORID.class.isAssignableFrom(fieldType))
-					setFieldValue(iPojo, idFieldName, iRecord.getIdentity());
-				else if (Number.class.isAssignableFrom(fieldType))
-					setFieldValue(iPojo, idFieldName, iRecord.getIdentity().getClusterPosition());
-				else if (fieldType.equals(String.class))
-					setFieldValue(iPojo, idFieldName, iRecord.getIdentity().toString());
-				else if (fieldType.equals(Object.class))
-					setFieldValue(iPojo, idFieldName, iRecord.getIdentity());
+			if (fieldName.equals(idFieldName))
 				continue;
-			}
 
 			if (iRecord.containsField(fieldName)) {
 				// BIND ONLY THE SPECIFIED FIELDS
@@ -358,6 +346,32 @@ public class OObjectSerializerHelper {
 		return iPojo;
 	}
 
+	public static String setOID(final ODocument iRecord, final Object iPojo) {
+		final Class<?> pojoClass = iPojo.getClass();
+
+		String idFieldName = fieldIds.get(pojoClass);
+		if (idFieldName != null) {
+			final List<Field> properties = getClassFields(pojoClass);
+
+			for (Field p : properties) {
+				if (p.getName().equals(idFieldName)) {
+					Class<?> fieldType = p.getType();
+
+					if (ORID.class.isAssignableFrom(fieldType))
+						setFieldValue(iPojo, idFieldName, iRecord.getIdentity());
+					else if (Number.class.isAssignableFrom(fieldType))
+						setFieldValue(iPojo, idFieldName, iRecord.getIdentity().getClusterPosition());
+					else if (fieldType.equals(String.class))
+						setFieldValue(iPojo, idFieldName, iRecord.getIdentity().toString());
+					else if (fieldType.equals(Object.class))
+						setFieldValue(iPojo, idFieldName, iRecord.getIdentity());
+					break;
+				}
+			}
+		}
+		return idFieldName;
+	}
+
 	/**
 	 * Serialize the user POJO to a ORecordDocument instance.
 	 * 
@@ -368,8 +382,8 @@ public class OObjectSerializerHelper {
 	 * @param iObj2RecHandler
 	 */
 	public static ODocument toStream(final Object iPojo, final ODocument iRecord, final OEntityManager iEntityManager,
-			final OClass schemaClass, final OUserObject2RecordHandler iObj2RecHandler) {
-		if (OGlobalConfiguration.OBJECT_SAVE_ONLY_DIRTY.getValueAsBoolean() && !iRecord.isDirty())
+			final OClass schemaClass, final OUserObject2RecordHandler iObj2RecHandler, final boolean iSaveOnlyDirty) {
+		if (iSaveOnlyDirty && !iRecord.isDirty())
 			return iRecord;
 
 		long timer = OProfiler.getInstance().startChrono();
@@ -422,7 +436,7 @@ public class OObjectSerializerHelper {
 			schemaProperty = schemaClass != null ? schemaClass.getProperty(fieldName) : null;
 
 			fieldValue = typeToStream(fieldValue, schemaProperty != null ? schemaProperty.getType() : null, iEntityManager,
-					iObj2RecHandler);
+					iObj2RecHandler, iSaveOnlyDirty);
 
 			iRecord.field(fieldName, fieldValue);
 		}
@@ -458,7 +472,7 @@ public class OObjectSerializerHelper {
 	}
 
 	private static Object typeToStream(Object iFieldValue, OType iType, final OEntityManager iEntityManager,
-			final OUserObject2RecordHandler iObj2RecHandler) {
+			final OUserObject2RecordHandler iObj2RecHandler, final boolean iSaveOnlyDirty) {
 		if (iFieldValue == null)
 			return null;
 
@@ -467,13 +481,13 @@ public class OObjectSerializerHelper {
 		if (!OType.isSimpleType(fieldClass)) {
 			if (fieldClass.isArray()) {
 				// ARRAY
-				iFieldValue = multiValueToStream(Arrays.asList(iFieldValue), iType, iEntityManager, iObj2RecHandler);
+				iFieldValue = multiValueToStream(Arrays.asList(iFieldValue), iType, iEntityManager, iObj2RecHandler, iSaveOnlyDirty);
 			} else if (Collection.class.isAssignableFrom(fieldClass)) {
 				// COLLECTION (LIST OR SET)
-				iFieldValue = multiValueToStream(iFieldValue, iType, iEntityManager, iObj2RecHandler);
+				iFieldValue = multiValueToStream(iFieldValue, iType, iEntityManager, iObj2RecHandler, iSaveOnlyDirty);
 			} else if (Map.class.isAssignableFrom(fieldClass)) {
 				// MAP
-				iFieldValue = multiValueToStream(iFieldValue, iType, iEntityManager, iObj2RecHandler);
+				iFieldValue = multiValueToStream(iFieldValue, iType, iEntityManager, iObj2RecHandler, iSaveOnlyDirty);
 			} else if (fieldClass.isEnum()) {
 				// ENUM
 				iFieldValue = ((Enum<?>) iFieldValue).name();
@@ -484,7 +498,8 @@ public class OObjectSerializerHelper {
 				if (fieldClass != null) {
 					// RECOGNIZED TYPE, SERIALIZE IT
 					final ODocument linkedDocument = (ODocument) iObj2RecHandler.getRecordByUserObject(iFieldValue, false);
-					iFieldValue = toStream(iFieldValue, linkedDocument, iEntityManager, linkedDocument.getSchemaClass(), iObj2RecHandler);
+					iFieldValue = toStream(iFieldValue, linkedDocument, iEntityManager, linkedDocument.getSchemaClass(), iObj2RecHandler,
+							iSaveOnlyDirty);
 
 				} else
 					throw new OSerializationException("Linked type [" + iFieldValue.getClass() + ":" + iFieldValue
@@ -495,7 +510,7 @@ public class OObjectSerializerHelper {
 	}
 
 	private static Object multiValueToStream(final Object iMultiValue, OType iType, final OEntityManager iEntityManager,
-			final OUserObject2RecordHandler iObj2RecHandler) {
+			final OUserObject2RecordHandler iObj2RecHandler, final boolean iSaveOnlyDirty) {
 		if (iMultiValue == null)
 			return null;
 
@@ -552,12 +567,12 @@ public class OObjectSerializerHelper {
 
 		if (iMultiValue instanceof Collection<?>)
 			for (Object o : sourceValues) {
-				((Collection<Object>) result).add(typeToStream(o, linkedType, iEntityManager, iObj2RecHandler));
+				((Collection<Object>) result).add(typeToStream(o, linkedType, iEntityManager, iObj2RecHandler, iSaveOnlyDirty));
 			}
 		else
 			for (Entry<String, Object> entry : ((Map<String, Object>) iMultiValue).entrySet()) {
 				((Map<String, Object>) result).put(entry.getKey(),
-						typeToStream(entry.getValue(), linkedType, iEntityManager, iObj2RecHandler));
+						typeToStream(entry.getValue(), linkedType, iEntityManager, iObj2RecHandler, iSaveOnlyDirty));
 			}
 
 		return result;
