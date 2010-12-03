@@ -32,7 +32,7 @@ public class ODatabaseObjectPool extends ODatabasePoolBase<ODatabaseObjectTx> {
 							if (iAdditionalArgs.length < 2)
 								throw new OSecurityAccessException("Username and/or password missed");
 
-							return new ODatabaseObjectTxPooled((ODatabaseObjectPool) owner, iDatabaseName, iAdditionalArgs[0], iAdditionalArgs[0]);
+							return new ODatabaseObjectTxPooled((ODatabaseObjectPool) owner, iDatabaseName, iAdditionalArgs[0], iAdditionalArgs[1]);
 						}
 
 						@Override
