@@ -72,6 +72,10 @@ public class ODatabaseObjectTxPooled extends ODatabaseObjectTx implements ODatab
 		if (isClosed())
 			return;
 
+		objects2Records.clear();
+		records2Objects.clear();
+		rid2Records.clear();
+
 		checkOpeness();
 		rollback();
 		ownerPool.release(this);
