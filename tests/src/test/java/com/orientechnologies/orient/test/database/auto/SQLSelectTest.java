@@ -54,15 +54,14 @@ public class SQLSelectTest {
 
 		database.close();
 	}
-	
+
 	@Test
 	public void queryParentesisAsRight() {
 		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(
 				new OSQLSynchQuery<ODocument>(
-						"  select from Profile where ( name = 'Giuseppe' and ( name <> 'Napoleone' and nick is not null ))  "))
-				.execute();
+						"  select from Profile where ( name = 'Giuseppe' and ( name <> 'Napoleone' and nick is not null ))  ")).execute();
 
 		Assert.assertTrue(result.size() != 0);
 
@@ -77,9 +76,10 @@ public class SQLSelectTest {
 	public void queryTwoParentesisConditions() {
 		database.open("admin", "admin");
 
-		List<ODocument> result = database.command(
-				new OSQLSynchQuery<ODocument>(
-						"select from Profile  where ( name = 'Giuseppe' and nick is not null ) or ( name = 'Napoleone' and nick is not null ) "))
+		List<ODocument> result = database
+				.command(
+						new OSQLSynchQuery<ODocument>(
+								"select from Profile  where ( name = 'Giuseppe' and nick is not null ) or ( name = 'Napoleone' and nick is not null ) "))
 				.execute();
 
 		Assert.assertTrue(result.size() != 0);
@@ -502,6 +502,15 @@ public class SQLSelectTest {
 		database.open("admin", "admin");
 
 		database.query(new OSQLSynchQuery<ODocument>("select from Profile where name like '%\\'Jay%'"));
+
+		database.close();
+	}
+
+	@Test
+	public void queryWithLimit() {
+		database.open("admin", "admin");
+
+		Assert.assertEquals(database.query(new OSQLSynchQuery<ODocument>("select from Profile limit 3")).size(), 3);
 
 		database.close();
 	}

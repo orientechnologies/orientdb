@@ -60,14 +60,21 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	public static final String											KEYWORD_SELECT		= "SELECT";
 	public static final String											KEYWORD_ASC				= "ASC";
 	public static final String											KEYWORD_DESC			= "DESC";
+	public static final String											KEYWORD_ORDER			= "ORDER";
+	public static final String											KEYWORD_BY				= "BY";
 	public static final String											KEYWORD_ORDER_BY	= "ORDER BY";
+	public static final String											KEYWORD_LIMIT			= "LIMIT";
+	public static final String											KEYWORD_RANGE			= "RANGE";
 
 	private OSQLAsynchQuery<ORecordSchemaAware<?>>	request;
 	private OSQLFilter															compiledFilter;
 	private List<String>														projections				= new ArrayList<String>();
 	private List<OPair<String, String>>							orderedFields;
 	private List<ODocument>													tempResult;
+	private int																			limit							= -1;
 	private int																			resultCount;
+	private ORecordId																rangeFrom;
+	private ORecordId																rangeTo;
 
 	/**
 	 * Compile the filter conditions only the first time.
@@ -95,14 +102,39 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 		int endPosition = textUpperCase.indexOf(OCommandExecutorSQLSelect.KEYWORD_ORDER_BY, currentPos);
 		if (endPosition == -1) {
-			// NO OTHER STUFF: GET UNTIL THE END AND ASSURE TO RETURN FALSE IN ORDER TO AVOID PARSING OF CONDITIONS
-			endPosition = text.length();
+			endPosition = textUpperCase.indexOf(OCommandExecutorSQLSelect.KEYWORD_RANGE, currentPos);
+			if (endPosition == -1) {
+				endPosition = textUpperCase.indexOf(OCommandExecutorSQLSelect.KEYWORD_LIMIT, currentPos);
+				if (endPosition == -1) {
+					// NO OTHER STUFF: GET UNTIL THE END AND ASSURE TO RETURN FALSE IN ORDER TO AVOID PARSING OF CONDITIONS
+					endPosition = text.length();
+				}
+			}
 		}
 
 		compiledFilter = new OSQLFilter(iRequest.getDatabase(), text.substring(pos, endPosition));
 		currentPos = compiledFilter.currentPos + pos;
 
-		extractOrderBy();
+		if (currentPos > -1 && currentPos < text.length()) {
+			currentPos = OStringParser.jump(text, currentPos, " \r\n");
+
+			final StringBuilder word = new StringBuilder();
+			String w;
+
+			while (currentPos > -1) {
+				currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
+
+				if (currentPos > -1) {
+					w = word.toString();
+					if (w.equals(KEYWORD_ORDER))
+						extractOrderBy(word);
+					else if (w.equals(KEYWORD_RANGE))
+						extractRange(word);
+					else if (w.equals(KEYWORD_LIMIT))
+						extractLimit(word);
+				}
+			}
+		}
 		return this;
 	}
 
@@ -170,7 +202,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			resultCount++;
 			addResult(iRecord.copy());
 
-			if (request.getLimit() > -1 && resultCount == request.getLimit())
+			if (limit > -1 && resultCount >= limit)
+				// BREAK THE EXECUTION
+				return false;
+
+			if (request.getLimit() > -1 && resultCount >= request.getLimit())
 				// BREAK THE EXECUTION
 				return false;
 		}
@@ -185,26 +221,19 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		return orderedFields;
 	}
 
-	protected void extractOrderBy() {
-		if (currentPos == -1 || currentPos >= text.length())
-			return;
+	protected void extractOrderBy(final StringBuilder word) {
+		int newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
 
-		currentPos = OStringParser.jump(text, currentPos, " \r\n");
+		if (!KEYWORD_BY.equals(word.toString()))
+			throw new OQueryParsingException("Expected keyword " + KEYWORD_BY);
 
-		final StringBuilder word = new StringBuilder();
-		if (textUpperCase.length() - currentPos > OCommandExecutorSQLSelect.KEYWORD_ORDER_BY.length())
-			word.append(textUpperCase.substring(currentPos, currentPos + OCommandExecutorSQLSelect.KEYWORD_ORDER_BY.length()));
-
-		if (!OCommandExecutorSQLSelect.KEYWORD_ORDER_BY.equals(word.toString()))
-			throw new OQueryParsingException("Expected keyword " + OCommandExecutorSQLSelect.KEYWORD_ORDER_BY);
-
-		currentPos = currentPos += OCommandExecutorSQLSelect.KEYWORD_ORDER_BY.length();
+		currentPos = newPos;
 
 		String fieldName;
 		String fieldOrdering;
 
 		orderedFields = new ArrayList<OPair<String, String>>();
-		while (currentPos != -1 && (orderedFields.size() == 0 || word.equals(","))) {
+		while (currentPos != -1 && (orderedFields.size() == 0 || word.toString().equals(","))) {
 			currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, false);
 			if (currentPos == -1)
 				throw new OCommandSQLParsingException("Field name expected", text, currentPos);
@@ -213,7 +242,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 			currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
 			if (currentPos == -1)
-				fieldOrdering = OCommandExecutorSQLSelect.KEYWORD_ASC;
+				fieldOrdering = KEYWORD_ASC;
 			else {
 
 				if (word.toString().endsWith(",")) {
@@ -221,10 +250,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 					word.deleteCharAt(word.length() - 1);
 				}
 
-				if (word.toString().equals(OCommandExecutorSQLSelect.KEYWORD_ASC))
-					fieldOrdering = OCommandExecutorSQLSelect.KEYWORD_ASC;
-				else if (word.toString().equals(OCommandExecutorSQLSelect.KEYWORD_DESC))
-					fieldOrdering = OCommandExecutorSQLSelect.KEYWORD_DESC;
+				if (word.toString().equals(KEYWORD_ASC))
+					fieldOrdering = KEYWORD_ASC;
+				else if (word.toString().equals(KEYWORD_DESC))
+					fieldOrdering = KEYWORD_DESC;
 				else
 					throw new OCommandSQLParsingException("Ordering mode '" + word
 							+ "' not supported. Valid is 'ASC', 'DESC' or nothing ('ASC' by default)", text, currentPos);
@@ -241,6 +270,58 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		if (orderedFields.size() == 0)
 			throw new OCommandSQLParsingException("Order by field set was missed. Example: ORDER BY name ASC, salary DESC", text,
 					currentPos);
+	}
+
+	protected void extractRange(final StringBuilder word) {
+		currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
+		if (!word.toString().equals(KEYWORD_RANGE))
+			return;
+
+		int newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
+		if (!word.toString().contains(":"))
+			throw new OCommandSQLParsingException(
+					"Range must contains record id in the form of <cluster-id>:<cluster-pos>. Example: RANGE 10:50, 10:100", text, currentPos);
+
+		try {
+			rangeFrom = new ORecordId(word.toString());
+		} catch (Exception e) {
+			throw new OCommandSQLParsingException("Invalid record id setted as RANGE from. Value setted is '" + word
+					+ "' but it should be a valid record id in the form of <cluster-id>:<cluster-pos>. Example: RANGE 10:50", text,
+					currentPos);
+		}
+
+		currentPos = newPos;
+
+		newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
+		if (!word.toString().equalsIgnoreCase("LIMIT")) {
+			if (!word.toString().contains(":"))
+				throw new OCommandSQLParsingException(
+						"Range must contains record id in the form of <cluster-id>:<cluster-pos>. Example: RANGE 10:50, 10:100", text,
+						currentPos);
+
+			try {
+				rangeTo = new ORecordId(word.toString());
+			} catch (Exception e) {
+				throw new OCommandSQLParsingException("Invalid record id setted as RANGE to. Value setted is '" + word
+						+ "' but it should be a valid record id in the form of <cluster-id>:<cluster-pos>. Example: RANGE 10:50, 10:100", text,
+						currentPos);
+			}
+
+			currentPos = newPos;
+		}
+	}
+
+	protected void extractLimit(final StringBuilder word) {
+		if (!word.toString().equals(KEYWORD_LIMIT))
+			return;
+
+		currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
+		try {
+			limit = Integer.parseInt(word.toString());
+		} catch (Exception e) {
+			throw new OCommandSQLParsingException("Invalid LIMIT value setted to '" + word
+					+ "' but it should be a valid integer. Example: LIMIT 10", text, currentPos);
+		}
 	}
 
 	private void addResult(final ORecord<?> iRecord) {
@@ -326,22 +407,21 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		final StringBuilder word = new StringBuilder();
 
 		currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
-		if (!word.toString().equals(OCommandExecutorSQLSelect.KEYWORD_SELECT))
+		if (!word.toString().equals(KEYWORD_SELECT))
 			return -1;
 
-		int fromPosition = textUpperCase.indexOf(OCommandExecutorSQLAbstract.KEYWORD_FROM, currentPos);
+		int fromPosition = textUpperCase.indexOf(KEYWORD_FROM, currentPos);
 		if (fromPosition == -1)
-			throw new OQueryParsingException("Missed " + OCommandExecutorSQLAbstract.KEYWORD_FROM, text, currentPos);
+			throw new OQueryParsingException("Missed " + KEYWORD_FROM, text, currentPos);
 
 		String[] items = textUpperCase.substring(currentPos, fromPosition).split(",");
 		if (items == null || items.length == 0)
-			throw new OQueryParsingException("No projections found between " + OCommandExecutorSQLSelect.KEYWORD_SELECT + " and "
-					+ OCommandExecutorSQLAbstract.KEYWORD_FROM, text, currentPos);
+			throw new OQueryParsingException("No projections found between " + KEYWORD_SELECT + " and " + KEYWORD_FROM, text, currentPos);
 
 		for (String i : items)
 			projections.add(i.trim());
 
-		currentPos = fromPosition + OCommandExecutorSQLAbstract.KEYWORD_FROM.length() + 1;
+		currentPos = fromPosition + KEYWORD_FROM.length() + 1;
 
 		return currentPos;
 	}
