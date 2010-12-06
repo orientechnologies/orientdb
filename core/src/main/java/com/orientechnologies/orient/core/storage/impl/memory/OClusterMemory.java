@@ -41,6 +41,10 @@ public class OClusterMemory extends OSharedResource implements OCluster {
 		return new OClusterPositionIterator(this);
 	}
 
+	public OClusterPositionIterator absoluteIterator(long iBeginRange, long iEndRange) throws IOException {
+		return new OClusterPositionIterator(this, iBeginRange, iEndRange);
+	}
+
 	public void close() {
 		entries.clear();
 		removed = 0;

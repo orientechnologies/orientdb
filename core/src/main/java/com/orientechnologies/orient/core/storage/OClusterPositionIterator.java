@@ -19,14 +19,20 @@ import java.io.IOException;
 import java.util.Iterator;
 
 public class OClusterPositionIterator implements Iterator<Long> {
-	private final OCluster cluster;
-	private long current;
-	private final long max;
+	private final OCluster	cluster;
+	private long						current;
+	private final long			max;
 
 	public OClusterPositionIterator(final OCluster iCluster) throws IOException {
 		cluster = iCluster;
 		current = cluster.getFirstEntryPosition();
 		max = cluster.getLastEntryPosition();
+	}
+
+	public OClusterPositionIterator(final OCluster iCluster, final long iBeginRange, final long iEndRange) throws IOException {
+		cluster = iCluster;
+		current = iBeginRange;
+		max = iEndRange > -1 ? iEndRange : cluster.getLastEntryPosition();
 	}
 
 	public boolean hasNext() {

@@ -59,7 +59,13 @@ public class OSQLFilter extends OCommandToParse {
 
 			if (extractTargets()) {
 				// IF WHERE EXISTS EXTRACT CONDITIONS
-				rootCondition = extractConditions(null);
+
+				final StringBuilder word = new StringBuilder();
+				int newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
+				if (newPos > -1 && word.toString().equals("WHERE")) {
+					currentPos = newPos;
+					rootCondition = extractConditions(null);
+				}
 			}
 		} catch (OQueryParsingException e) {
 			if (e.getText() == null)
@@ -89,44 +95,46 @@ public class OSQLFilter extends OCommandToParse {
 	private boolean extractTargets() {
 		jumpWhiteSpaces();
 
-		int nextPosition;
-		int endPosition = textUpperCase.indexOf(OCommandExecutorSQLAbstract.KEYWORD_WHERE, currentPos);
-		if (endPosition == -1) {
-			// NO OTHER STUFF: GET UNTIL THE END AND ASSURE TO RETURN FALSE IN ORDER TO AVOID PARSING OF CONDITIONS
-			endPosition = text.length();
-			nextPosition = endPosition;
-		} else
-			nextPosition = endPosition + OCommandExecutorSQLAbstract.KEYWORD_WHERE.length();
+		if (currentPos == -1)
+			throw new OQueryParsingException("No query target found", text, 0);
 
-		final String txt = textUpperCase.substring(currentPos, endPosition);
-
-		if (Character.isDigit(txt.charAt(0))) {
+		if (Character.isDigit(text.charAt(currentPos))) {
 			// UNIQUE RID
-			targetRecords = new ArrayList<String>();
-			targetRecords.add(text);
-		} else if (txt.charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN) {
-			// COLLECTION OF RIDS
-			targetRecords = OStringSerializerHelper.getCollection(txt);
-		} else {
-			final List<String> items = OStringSerializerHelper.split(txt, ',');
-			if (items == null || items.size() == 0)
-				throw new OQueryParsingException("No clusters found after " + OCommandExecutorSQLAbstract.KEYWORD_FROM, text, 0);
+			final StringBuilder word = new StringBuilder();
+			currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
 
-			String[] words;
+			targetRecords = new ArrayList<String>();
+			targetRecords.add(word.toString());
+
+		} else if (text.charAt(currentPos) == OStringSerializerHelper.COLLECTION_BEGIN) {
+			// COLLECTION OF RIDS
+			targetRecords = OStringSerializerHelper.getCollection(text, currentPos);
+		} else {
 			String subjectName;
 			String alias;
 			String subjectToMatch;
-			for (String i : items) {
-				words = i.split(" ");
+			int newPos;
 
-				if (words != null && words.length > 1) {
-					// FOUND ALIAS
-					subjectName = words[0].trim();
-					alias = words[1].trim();
-				} else {
-					subjectName = i.trim();
+			final StringBuilder word = new StringBuilder();
+			currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
+
+			while (currentPos > -1 && (targetClasses == null && targetClusters == null)) {
+				subjectName = word.toString();
+
+				newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
+				if (newPos > -1 && word.toString().equals("AS")) {
+					currentPos = newPos;
+
+					newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
+					if (newPos == -1)
+						throw new OQueryParsingException("No alias found. Example: SELECT FROM Customer AS c", text, currentPos);
+
+					currentPos = newPos;
+
+					alias = word.toString();
+
+				} else
 					alias = subjectName;
-				}
 
 				subjectToMatch = subjectName;
 				if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX)) {
@@ -152,9 +160,7 @@ public class OSQLFilter extends OCommandToParse {
 			}
 		}
 
-		currentPos = nextPosition;
-
-		return nextPosition < text.length();
+		return currentPos < text.length();
 	}
 
 	private OSQLFilterCondition extractConditions(final OSQLFilterCondition iParentCondition) {

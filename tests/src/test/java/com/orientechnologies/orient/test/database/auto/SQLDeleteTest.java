@@ -15,15 +15,19 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.List;
+
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
-@Test(groups = "sql-delete", sequential = true)
+@Test(groups = "sql-delete")
 public class SQLDeleteTest {
 	private ODatabaseDocument	database;
 
@@ -38,10 +42,13 @@ public class SQLDeleteTest {
 
 		final Long total = database.countClass("Profile");
 
+		final List<ODocument> resultset = database.query(new OSQLSynchQuery<Object>(
+				"select from Profile set sex = 'male' where salary > 100"));
+
 		final Number records = (Number) database.command(new OCommandSQL("delete from Profile set sex = 'male' where salary > 100"))
 				.execute();
 
-		Assert.assertEquals(records.intValue(), 4);
+		Assert.assertEquals(records.intValue(), resultset.size());
 
 		Assert.assertEquals(database.countClass("Profile"), total - records.intValue());
 

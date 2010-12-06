@@ -26,6 +26,7 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.database.base.OrientTest;
@@ -331,7 +332,7 @@ public class SQLSelectTest {
 
 		String lastName = null;
 		for (ODocument d : result) {
-			if (lastName != null)
+			if (lastName != null && d.field("name") != null)
 				Assert.assertTrue(((String) d.field("name")).compareTo(lastName) > 0);
 			lastName = d.field("name");
 		}
@@ -350,7 +351,7 @@ public class SQLSelectTest {
 
 		String lastName = null;
 		for (ODocument d : result) {
-			if (lastName != null)
+			if (lastName != null && d.field("name") != null)
 				Assert.assertTrue(((String) d.field("name")).compareTo(lastName) > 0);
 			lastName = d.field("name");
 		}
@@ -369,7 +370,7 @@ public class SQLSelectTest {
 
 		String lastName = null;
 		for (ODocument d : result) {
-			if (lastName != null)
+			if (lastName != null && d.field("name") != null)
 				Assert.assertTrue(((String) d.field("name")).compareTo(lastName) < 0);
 			lastName = d.field("name");
 		}
@@ -511,6 +512,30 @@ public class SQLSelectTest {
 		database.open("admin", "admin");
 
 		Assert.assertEquals(database.query(new OSQLSynchQuery<ODocument>("select from Profile limit 3")).size(), 3);
+
+		database.close();
+	}
+
+	@Test
+	public void queryWithRange() {
+		database.open("admin", "admin");
+
+		final String query = "select from Profile limit 3";
+
+		List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>(query));
+		Assert.assertFalse(resultset.isEmpty());
+		Assert.assertTrue(resultset.size() <= 3);
+
+		ORID last = resultset.get(resultset.size() - 1).getIdentity();
+
+		while (!resultset.isEmpty()) {
+			resultset = database.query(new OSQLSynchQuery<ODocument>(query + " range " + last.next()));
+			Assert.assertTrue(resultset.size() <= 3);
+
+			for (ODocument d : resultset)
+				Assert.assertTrue(d.getIdentity().getClusterId() >= last.getClusterId()
+						&& d.getIdentity().getClusterPosition() > last.getClusterPosition());
+		}
 
 		database.close();
 	}

@@ -609,8 +609,8 @@ public class OStorageLocal extends OStorageAbstract {
 	 *          The listener to call for each record found
 	 * @param ioRecord
 	 */
-	public void browse(final int iRequesterId, final int[] iClusterId, final ORecordBrowsingListener iListener,
-			ORecordInternal<?> ioRecord, final boolean iLockEntireCluster) {
+	public void browse(final int iRequesterId, final int[] iClusterId, final ORecordId iBeginRange, final ORecordId iEndRange,
+			final ORecordBrowsingListener iListener, ORecordInternal<?> ioRecord, final boolean iLockEntireCluster) {
 		checkOpeness();
 
 		final long timer = OProfiler.getInstance().startChrono();
@@ -620,10 +620,28 @@ public class OStorageLocal extends OStorageAbstract {
 		try {
 			OCluster cluster;
 
+			long beginClusterPosition;
+			long endClusterPosition;
+
 			for (int clusterId : iClusterId) {
+				if (iBeginRange != null)
+					if (clusterId < iBeginRange.getClusterId())
+						// JUMP THIS
+						continue;
+
+				if (iEndRange != null)
+					if (clusterId > iEndRange.getClusterId())
+						// STOP
+						break;
+
 				cluster = getClusterById(clusterId);
 
-				ioRecord = browseCluster(iRequesterId, iListener, ioRecord, cluster, iLockEntireCluster);
+				beginClusterPosition = iBeginRange != null && iBeginRange.getClusterId() == clusterId ? iBeginRange.getClusterPosition()
+						: 0;
+				endClusterPosition = iEndRange != null && iEndRange.getClusterId() == clusterId ? iEndRange.getClusterPosition() : -1;
+
+				ioRecord = browseCluster(iRequesterId, iListener, ioRecord, cluster, beginClusterPosition, endClusterPosition,
+						iLockEntireCluster);
 			}
 		} catch (IOException e) {
 
@@ -637,7 +655,8 @@ public class OStorageLocal extends OStorageAbstract {
 	}
 
 	private ORecordInternal<?> browseCluster(final int iRequesterId, final ORecordBrowsingListener iListener,
-			ORecordInternal<?> ioRecord, OCluster cluster, final boolean iLockEntireCluster) throws IOException {
+			ORecordInternal<?> ioRecord, final OCluster cluster, final long iBeginRange, final long iEndRange,
+			final boolean iLockEntireCluster) throws IOException {
 		ORawBuffer recordBuffer;
 		long positionInPhyCluster;
 
@@ -646,7 +665,7 @@ public class OStorageLocal extends OStorageAbstract {
 				// LOCK THE ENTIRE CLUSTER AVOIDING TO LOCK EVERY SINGLE RECORD
 				cluster.lock();
 
-			OClusterPositionIterator iterator = cluster.absoluteIterator();
+			OClusterPositionIterator iterator = cluster.absoluteIterator(iBeginRange, iEndRange);
 
 			// BROWSE ALL THE RECORDS
 			while (iterator.hasNext()) {

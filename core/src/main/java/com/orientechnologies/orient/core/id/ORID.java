@@ -34,4 +34,6 @@ public interface ORID extends OSerializableStream {
 	public boolean isNew();
 
 	public ORID copy();
+
+	public String next();
 }

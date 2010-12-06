@@ -204,4 +204,8 @@ public class ORecordId implements ORID, Comparable<ORecordId>, Comparator<ORecor
 		clusterId = iSource.getClusterId();
 		clusterPosition = iSource.getClusterPosition();
 	}
+
+	public String next() {
+		return generateString(clusterId, clusterPosition + 1);
+	}
 }

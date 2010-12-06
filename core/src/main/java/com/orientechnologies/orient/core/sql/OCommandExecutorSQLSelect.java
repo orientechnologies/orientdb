@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2010 Luca Garulli (l.garulli--at--orientechnologies.com)
+R * Copyright 1999-2010 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -273,10 +273,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	}
 
 	protected void extractRange(final StringBuilder word) {
-		currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
-		if (!word.toString().equals(KEYWORD_RANGE))
-			return;
-
 		int newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
 		if (!word.toString().contains(":"))
 			throw new OCommandSQLParsingException(
@@ -290,9 +286,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 					currentPos);
 		}
 
+		if (newPos == -1)
+			return;
+
 		currentPos = newPos;
 
 		newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
+
+		if (newPos == -1)
+			return;
+
 		if (!word.toString().equalsIgnoreCase("LIMIT")) {
 			if (!word.toString().contains(":"))
 				throw new OCommandSQLParsingException(
@@ -427,7 +430,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	}
 
 	private void scanEntireClusters(final int[] clusterIds) {
-		((OStorageLocal) database.getStorage()).browse(database.getId(), clusterIds, this, database.newInstance(), false);
+		((OStorageLocal) database.getStorage()).browse(database.getId(), clusterIds, rangeFrom, rangeTo, this, database.newInstance(),
+				false);
 	}
 
 	private void processResultSet() {

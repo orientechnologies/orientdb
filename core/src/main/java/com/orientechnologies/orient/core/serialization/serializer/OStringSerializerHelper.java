@@ -275,12 +275,16 @@ public abstract class OStringSerializerHelper {
 	}
 
 	public static List<String> split(final String iSource, final char iRecordSeparator, final char... iJumpCharacters) {
+		return split(iSource, 0, iSource.length(), iRecordSeparator, iJumpCharacters);
+	}
+
+	public static List<String> split(final String iSource, final int iStartPosition, final int iEndPosition,
+			final char iRecordSeparator, final char... iJumpCharacters) {
 		final ArrayList<String> parts = new ArrayList<String>();
-		final int max = iSource.length();
 		final StringBuilder buffer = new StringBuilder();
 		char c;
 
-		for (int i = 0; i < max; ++i) {
+		for (int i = iStartPosition; i < iEndPosition; ++i) {
 			c = iSource.charAt(i);
 
 			if (c == iRecordSeparator) {
@@ -362,8 +366,8 @@ public abstract class OStringSerializerHelper {
 		return false;
 	}
 
-	public static List<String> getCollection(final String iText) {
-		int openPos = iText.indexOf(COLLECTION_BEGIN);
+	public static List<String> getCollection(final String iText, final int iStartPosition) {
+		int openPos = iText.indexOf(COLLECTION_BEGIN, iStartPosition);
 		if (openPos == -1)
 			return EMPTY_LIST;
 

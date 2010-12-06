@@ -100,4 +100,16 @@ public interface OCluster {
 	public String getName();
 
 	public OClusterPositionIterator absoluteIterator() throws IOException;
+
+	/**
+	 * Creates an iterator setting a range.
+	 * 
+	 * @param iBeginRange
+	 *          Lower range
+	 * @param iEndRange
+	 *          Upper range
+	 * @return
+	 * @throws IOException
+	 */
+	public OClusterPositionIterator absoluteIterator(long iBeginRange, long iEndRange) throws IOException;
 }

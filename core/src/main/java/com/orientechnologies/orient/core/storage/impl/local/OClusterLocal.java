@@ -352,6 +352,10 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 		return new OClusterPositionIterator(this);
 	}
 
+	public OClusterPositionIterator absoluteIterator(long iBeginRange, long iEndRange) throws IOException {
+		return new OClusterPositionIterator(this, iBeginRange, iEndRange);
+	}
+
 	@Override
 	public String toString() {
 		return name + " (id=" + id + ")";
