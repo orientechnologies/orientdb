@@ -50,6 +50,7 @@ import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
 import com.orientechnologies.orient.core.id.ORID;
@@ -60,6 +61,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
 @SuppressWarnings("unchecked")
 /**
@@ -464,9 +466,11 @@ public class OObjectSerializerHelper {
 
 		// CHECK FOR VERSION BINDING
 		final String vFieldName = fieldVersions.get(pojoClass);
+		boolean versionConfigured = false;
 		if (vFieldName != null) {
 			Object ver = getFieldValue(iPojo, vFieldName);
 			if (ver != null) {
+				versionConfigured = true;
 				// FOUND
 				if (ver instanceof Number) {
 					// TREATS AS CLUSTER POSITION
@@ -480,6 +484,10 @@ public class OObjectSerializerHelper {
 							"@Version field has been declared as %s while the supported are: Number, String, Object", ver.getClass());
 			}
 		}
+
+		if (!versionConfigured && iRecord.getDatabase().getTransaction() instanceof OTransactionOptimistic)
+			throw new OTransactionException("Can't involve an object of class '" + pojoClass
+					+ "' in an Optimistic Transaction commit because it doesn't define @Version or @OVersion and therefore can't handle MVCC");
 
 		String fieldName;
 		Object fieldValue;

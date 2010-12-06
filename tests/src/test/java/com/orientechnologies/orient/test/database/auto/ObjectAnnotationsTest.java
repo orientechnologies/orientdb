@@ -22,6 +22,7 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
+import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.business.City;
@@ -93,7 +94,7 @@ public class ObjectAnnotationsTest {
 
 	@SuppressWarnings("unchecked")
 	@Test(dependsOnMethods = "testOrientStringIdAnnotation")
-	public void testOrientObjectIdPlusVersionAnnotationsInTx() {
+	public void testOrientObjectIdPlusVersionAnnotationsNotInTx() {
 		// BROWSE ALL THE OBJECTS
 		Assert.assertTrue(database.countClass(Country.class) > 0);
 		for (Country c : (List<Country>) database.query(new OSQLSynchQuery<Object>("select from Country where name = 'Austria'"))) {
@@ -113,6 +114,30 @@ public class ObjectAnnotationsTest {
 			Assert.assertNotNull(c.getId());
 			Assert.assertNotNull(c.getVersion());
 			Assert.assertTrue((Integer) c.getVersion() > 0);
+		}
+	}
+
+	@Test(dependsOnMethods = "testOrientObjectIdPlusVersionAnnotationsNotInTx", expectedExceptions = OTransactionException.class)
+	public void testOrientObjectIdPlusVersionAnnotationsInTx() {
+		database.begin();
+
+		try {
+			// BROWSE ALL THE OBJECTS
+			Assert.assertTrue(database.countClass(Account.class) > 0);
+			for (Account a : database.browseClass(Account.class)) {
+				Assert.assertNotNull(a.getId());
+
+				// UPDATE IT TO GET NEWER VERSION
+				a.setName(a.getName() + " v1");
+				database.save(a);
+				break;
+			}
+
+			database.commit();
+
+			Assert.assertTrue(false);
+		} finally {
+			database.rollback();
 		}
 	}
 
