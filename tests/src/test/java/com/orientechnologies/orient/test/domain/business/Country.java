@@ -1,10 +1,15 @@
 package com.orientechnologies.orient.test.domain.business;
 
 import com.orientechnologies.orient.core.annotation.OId;
+import com.orientechnologies.orient.core.annotation.OVersion;
 
 public class Country {
 	@OId
 	private Object	id;
+
+	@OVersion
+	private Object	version;
+
 	private String	name;
 
 	public Country() {
@@ -24,5 +29,9 @@ public class Country {
 
 	public Object getId() {
 		return id;
+	}
+
+	public Object getVersion() {
+		return version;
 	}
 }

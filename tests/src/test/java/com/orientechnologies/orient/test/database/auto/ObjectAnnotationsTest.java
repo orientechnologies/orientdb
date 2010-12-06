@@ -15,11 +15,14 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.List;
+
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.business.City;
 import com.orientechnologies.orient.test.domain.business.Country;
@@ -88,7 +91,32 @@ public class ObjectAnnotationsTest {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test(dependsOnMethods = "testOrientStringIdAnnotation")
+	public void testOrientObjectIdPlusVersionAnnotationsInTx() {
+		// BROWSE ALL THE OBJECTS
+		Assert.assertTrue(database.countClass(Country.class) > 0);
+		for (Country c : (List<Country>) database.query(new OSQLSynchQuery<Object>("select from Country where name = 'Austria'"))) {
+			Assert.assertNotNull(c.getId());
+			Assert.assertNotNull(c.getVersion());
+
+			// UPDATE IT TO GET NEWER VERSION
+			c.setName(c.getName() + " v1");
+			database.save(c);
+
+			// CHECK VERSION
+			Assert.assertTrue((Integer) c.getVersion() > 0);
+		}
+
+		// BROWSE ALL THE OBJECTS
+		for (Country c : (List<Country>) database.query(new OSQLSynchQuery<Object>("select from Country where name = 'Austria'"))) {
+			Assert.assertNotNull(c.getId());
+			Assert.assertNotNull(c.getVersion());
+			Assert.assertTrue((Integer) c.getVersion() > 0);
+		}
+	}
+
+	@Test(dependsOnMethods = "testOrientObjectIdPlusVersionAnnotationsInTx")
 	public void clean() {
 		database.delete(profile);
 		database.delete(account);
