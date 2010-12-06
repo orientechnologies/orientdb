@@ -17,10 +17,13 @@ package com.orientechnologies.orient.core.query;
 
 import com.orientechnologies.orient.core.command.OCommandRequestAbstract;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.id.ORecordId;
 
 public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAbstract implements OQuery<T> {
-	protected int			limit	= -1;
-	protected String	fetchPlan;
+	protected int				limit	= -1;
+	protected ORecordId	beginRange;
+	protected ORecordId	endRange;
+	protected String		fetchPlan;
 
 	public OQueryAbstract() {
 	}
@@ -52,4 +55,19 @@ public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAb
 		return this;
 	}
 
+	public ORecordId getBeginRange() {
+		return beginRange;
+	}
+
+	public void setBeginRange(final ORecordId beginRange) {
+		this.beginRange = beginRange;
+	}
+
+	public ORecordId getEndRange() {
+		return endRange;
+	}
+
+	public void setEndRange(final ORecordId endRange) {
+		this.endRange = endRange;
+	}
 }

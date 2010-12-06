@@ -20,6 +20,7 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
+import com.orientechnologies.orient.core.id.ORecordId;
 
 /**
  * SQL synchronous query. When executed the caller wait for the result.
@@ -57,6 +58,17 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
 
 	@Override
 	public List<T> run(Object... iArgs) {
+		if (!result.isEmpty()) {
+			// HANDLE PAGINATION AUTOMATICALLY BY MOVING THE PAGE RANGE
+			if (beginRange == null)
+				beginRange = new ORecordId(database.getRecordByUserObject(result.get(result.size() - 1), true).getIdentity());
+			else
+				beginRange.copyFrom(database.getRecordByUserObject(result.get(result.size() - 1), true).getIdentity());
+
+			beginRange.clusterPosition++;
+			result.clear();
+		}
+
 		super.run(iArgs);
 		return result;
 	}

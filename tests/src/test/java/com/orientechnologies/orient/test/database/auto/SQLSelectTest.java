@@ -27,6 +27,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.database.base.OrientTest;
@@ -526,15 +527,36 @@ public class SQLSelectTest {
 		Assert.assertFalse(resultset.isEmpty());
 		Assert.assertTrue(resultset.size() <= 3);
 
-		ORID last = resultset.get(resultset.size() - 1).getIdentity();
-
 		while (!resultset.isEmpty()) {
+			ORID last = resultset.get(resultset.size() - 1).getIdentity();
+
 			resultset = database.query(new OSQLSynchQuery<ODocument>(query + " range " + last.next()));
 			Assert.assertTrue(resultset.size() <= 3);
 
 			for (ODocument d : resultset)
 				Assert.assertTrue(d.getIdentity().getClusterId() >= last.getClusterId()
 						&& d.getIdentity().getClusterPosition() > last.getClusterPosition());
+		}
+
+		database.close();
+	}
+
+	@Test
+	public void queryWithPagination() {
+		database.open("admin", "admin");
+
+		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile LIMIT 3");
+
+		ORID last = new ORecordId();
+
+		for (List<ODocument> resultset = database.query(query); !resultset.isEmpty(); resultset = database.query(query)) {
+			Assert.assertTrue(resultset.size() <= 3);
+
+			for (ODocument d : resultset)
+				Assert.assertTrue(d.getIdentity().getClusterId() >= last.getClusterId()
+						&& d.getIdentity().getClusterPosition() > last.getClusterPosition());
+
+			last = resultset.get(resultset.size() - 1).getIdentity();
 		}
 
 		database.close();

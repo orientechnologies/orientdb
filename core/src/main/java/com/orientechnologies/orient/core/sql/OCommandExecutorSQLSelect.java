@@ -85,7 +85,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 		init(iRequest.getDatabase(), iRequest.getText());
 
-		if (iRequest instanceof OSQLAsynchQuery)
+		if (iRequest instanceof OSQLSynchQuery) {
+			request = (OSQLSynchQuery<ORecordSchemaAware<?>>) iRequest;
+			rangeFrom = request.getBeginRange();
+			rangeTo = request.getEndRange();
+		} else if (iRequest instanceof OSQLAsynchQuery)
 			request = (OSQLAsynchQuery<ORecordSchemaAware<?>>) iRequest;
 		else {
 			// BUILD A QUERY OBJECT FROM THE COMMAND REQUEST
