@@ -384,6 +384,19 @@ public class OObjectSerializerHelper {
 		return idFieldName;
 	}
 
+	public static Object getObjectID(final Object iPojo) {
+		final String idFieldName = fieldIds.get(iPojo.getClass());
+		if (idFieldName != null) {
+			return getFieldValue(iPojo, idFieldName);
+		}
+		return null;
+	}
+
+	public static boolean hasObjectID(final Object iPojo) {
+		final String idFieldName = fieldIds.get(iPojo.getClass());
+		return idFieldName != null;
+	}
+
 	public static String setObjectVersion(final ODocument iRecord, final Object iPojo) {
 		final Class<?> pojoClass = iPojo.getClass();
 
@@ -410,6 +423,19 @@ public class OObjectSerializerHelper {
 				}
 		}
 		return vFieldName;
+	}
+
+	public static Object getObjectVersion(final Object iPojo) {
+		final String idFieldName = fieldVersions.get(iPojo.getClass());
+		if (idFieldName != null) {
+			return getFieldValue(iPojo, idFieldName);
+		}
+		return null;
+	}
+
+	public static boolean hasObjectVersion(final Object iPojo) {
+		final String idFieldName = fieldVersions.get(iPojo.getClass());
+		return idFieldName != null;
 	}
 
 	/**
