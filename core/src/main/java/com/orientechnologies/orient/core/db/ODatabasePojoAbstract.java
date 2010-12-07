@@ -271,6 +271,10 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 
 		if (pojo == null && iCreate) {
 			try {
+				// MAKING SURE THAT DATABASE USER IS CURRENT (IN CASE OF DETACHING)
+				if (iRecord.getDatabase() != underlying)
+					iRecord.setDatabase(underlying);
+
 				if (record.getInternalStatus() == STATUS.NOT_LOADED)
 					record.load();
 

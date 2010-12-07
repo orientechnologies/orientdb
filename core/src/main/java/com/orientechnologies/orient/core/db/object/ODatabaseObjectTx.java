@@ -114,7 +114,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
 			return this;
 
 		// GET THE ASSOCIATED DOCUMENT
-		final ODocument record = getRecordByUserObject(iPojo, true);
+		final ODocument record = getRecordByUserObject(iPojo, false);
 
 		underlying.load(record);
 

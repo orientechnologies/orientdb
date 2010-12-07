@@ -629,6 +629,8 @@ public class OObjectSerializerHelper {
 		// CREATE THE RETURN MULTI VALUE OBJECT BASED ON DISCOVERED TYPE
 		if (iType.equals(OType.EMBEDDEDSET) || iType.equals(OType.LINKSET)) {
 			result = new HashSet<Object>();
+		} else if (iType.equals(OType.EMBEDDEDLIST) || iType.equals(OType.LINKLIST)) {
+			result = new ArrayList<Object>();
 		}
 		// } else if (iType.equals(OType.EMBEDDEDLIST) || iType.equals(OType.LINKLIST)) {
 		// result = new ArrayList<Object>();
@@ -653,13 +655,17 @@ public class OObjectSerializerHelper {
 				((OLazyObjectList) sourceValues).assignDatabase(db);
 			}
 			for (int i = 0; i < sourceValues.size(); i++) {
-				((List<Object>) result).set(i,
-						typeToStream(((List<?>) sourceValues).get(i), linkedType, iEntityManager, iObj2RecHandler, db, iSaveOnlyDirty));
+				((List<Object>) result).add(typeToStream(((List<?>) sourceValues).get(i), linkedType, iEntityManager, iObj2RecHandler, db,
+						iSaveOnlyDirty));
 			}
 		} else {
-			for (Entry<String, Object> entry : ((Map<String, Object>) iMultiValue).entrySet()) {
-				((Map<String, Object>) result).put(entry.getKey(),
-						typeToStream(entry.getValue(), linkedType, iEntityManager, iObj2RecHandler, db, iSaveOnlyDirty));
+			if (iMultiValue instanceof OLazyObjectMap<?>) {
+				result = ((OLazyObjectMap) iMultiValue).getUnderlying();
+			} else {
+				for (Entry<String, Object> entry : ((Map<String, Object>) iMultiValue).entrySet()) {
+					((Map<String, Object>) result).put(entry.getKey(),
+							typeToStream(entry.getValue(), linkedType, iEntityManager, iObj2RecHandler, db, iSaveOnlyDirty));
+				}
 			}
 		}
 

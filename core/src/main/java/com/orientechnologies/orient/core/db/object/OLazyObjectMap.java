@@ -132,6 +132,10 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> {
 		return super.values();
 	}
 
+	public Map<String, Object> getUnderlying() {
+		return underlying;
+	}
+
 	public void setDirty() {
 		if (sourceRecord != null)
 			sourceRecord.setDirty();
