@@ -171,6 +171,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	 * Optimize the tree memory consumption by keeping part of nodes as entry points and clearing all the rest.
 	 */
 	public void optimize() {
+		usageCounter = 0;
+
 		final long timer = System.currentTimeMillis();// OProfiler.getInstance().startChrono();
 
 		lock.acquireExclusiveLock();
@@ -190,6 +192,11 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			if (depth < entryPointsSize * optimizeEntryPointsFactor)
 				// UNDER THRESHOLD AVOID TO OPTIMIZE
 				return;
+
+			// RECONFIG IT TO CATCH CHANGED VALUES
+			config();
+
+//			System.out.printf("\nOptimizing: total items %d, root is %s", size(), pRoot.toString());
 
 			pRoot.checkToDisconnect((int) (entryPointsSize * optimizeEntryPointsFactor));
 
@@ -736,7 +743,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			listener.signalTreeChanged(this);
 	}
 
-	private void config() {
+	protected void config() {
 		lastPageSize = OGlobalConfiguration.MVRBTREE_NODE_PAGE_SIZE.getValueAsInteger();
 		pageLoadFactor = OGlobalConfiguration.MVRBTREE_LOAD_FACTOR.getValueAsFloat();
 		optimizeThreshold = OGlobalConfiguration.MVRBTREE_OPTIMIZE_THRESHOLD.getValueAsInteger();

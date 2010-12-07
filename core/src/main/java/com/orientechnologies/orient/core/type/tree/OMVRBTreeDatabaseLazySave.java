@@ -123,6 +123,11 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> imp
 
 	private void init(ODatabaseRecord<?> iDatabase) {
 		iDatabase.registerListener(this);
+	}
+
+	@Override
+	protected void config() {
+		super.config();
 		maxUpdatesBeforeSave = OGlobalConfiguration.MVRBTREE_LAZY_UPDATES.getValueAsInteger();
 	}
 

@@ -63,9 +63,9 @@ public enum OGlobalConfiguration {
 	MVRBTREE_LOAD_FACTOR("mvrbtree.loadFactor", "HashMap load factor", Float.class, 0.7f),
 
 	MVRBTREE_OPTIMIZE_THRESHOLD("mvrbtree.optimizeThreshold", "Auto optimize the TreeMap every X operations as get, put and remove",
-			Integer.class, 50000),
+			Integer.class, 100000),
 
-	MVRBTREE_ENTRYPOINTS("mvrbtree.entryPoints", "Number of entry points to start searching entries", Integer.class, 20),
+	MVRBTREE_ENTRYPOINTS("mvrbtree.entryPoints", "Number of entry points to start searching entries", Integer.class, 7),
 
 	MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR("mvrbtree.optimizeEntryPointsFactor",
 			"Multiplicand factor to apply to entry-points list (parameter mvrbtree.entrypoints) to determine if needs of optimization",

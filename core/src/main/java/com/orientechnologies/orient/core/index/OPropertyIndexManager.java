@@ -51,7 +51,6 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 		if (indexedProperties != null)
 			for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
 				propEntry.getKey().getIndex().put(propEntry.getValue(), (ORecordId) iRecord.getIdentity());
-				propEntry.getKey().getIndex().lazySave();
 			}
 	}
 
