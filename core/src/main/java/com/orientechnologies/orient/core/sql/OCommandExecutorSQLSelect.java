@@ -87,8 +87,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 		if (iRequest instanceof OSQLSynchQuery) {
 			request = (OSQLSynchQuery<ORecordSchemaAware<?>>) iRequest;
-			rangeFrom = request.getBeginRange();
-			rangeTo = request.getEndRange();
+			rangeFrom = request.getBeginRange().isValid() ? request.getBeginRange() : null;
+			rangeTo = request.getEndRange().isValid() ? request.getEndRange() : null;
 		} else if (iRequest instanceof OSQLAsynchQuery)
 			request = (OSQLAsynchQuery<ORecordSchemaAware<?>>) iRequest;
 		else {

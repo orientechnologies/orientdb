@@ -20,6 +20,7 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.query.OQueryAbstract;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.core.serialization.OMemoryOutputStream;
@@ -75,6 +76,8 @@ public abstract class OSQLQuery<T extends Object> extends OQueryAbstract<T> impl
 		try {
 			text = buffer.getAsString();
 			limit = buffer.getAsInteger();
+			beginRange = new ORecordId().fromStream(buffer.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
+			endRange = new ORecordId().fromStream(buffer.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
 			fetchPlan = buffer.getAsString();
 		} catch (IOException e) {
 			throw new OSerializationException("Error while unmarshalling OSQLQuery", e);
@@ -87,6 +90,8 @@ public abstract class OSQLQuery<T extends Object> extends OQueryAbstract<T> impl
 		try {
 			buffer.add(text);
 			buffer.add(limit);
+			buffer.addAsFixed(beginRange.toStream());
+			buffer.addAsFixed(endRange.toStream());
 			buffer.add(fetchPlan);
 		} catch (IOException e) {
 			throw new OSerializationException("Error while marshalling OSQLQuery", e);

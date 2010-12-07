@@ -20,9 +20,9 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORecordId;
 
 public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAbstract implements OQuery<T> {
-	protected int				limit	= -1;
-	protected ORecordId	beginRange;
-	protected ORecordId	endRange;
+	protected int				limit				= -1;
+	protected ORecordId	beginRange	= new ORecordId();
+	protected ORecordId	endRange		= new ORecordId();
 	protected String		fetchPlan;
 
 	public OQueryAbstract() {
