@@ -256,6 +256,10 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 		return iRecordId.isValid() ? rid2Records.get(iRecordId) : null;
 	}
 
+	public boolean isManaged(final Object iEntity) {
+		return objects2Records.containsKey(System.identityHashCode(iEntity));
+	}
+
 	public T getUserObjectByRecord(final ORecordInternal<?> iRecord, final String iFetchPlan) {
 		return getUserObjectByRecord(iRecord, iFetchPlan, true);
 	}
