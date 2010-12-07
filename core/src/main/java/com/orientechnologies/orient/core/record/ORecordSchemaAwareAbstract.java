@@ -76,7 +76,9 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	}
 
 	public OClass getSchemaClass() {
-		checkForFields();
+		if (_clazz == null)
+			// DESERIALIZE ONLY IF THE CLASS IS NOT SETTED: THIS PREVENT TO UNMARSHALL THE RECORD EVEN IF SETTED BY fromString()
+			checkForFields();
 		return _clazz;
 	}
 

@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordVirtualAbstract;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
+import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 
@@ -859,5 +860,14 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		if (_fieldTypes == null)
 			_fieldTypes = new HashMap<String, OType>();
 		_fieldTypes.put(iPropertyName, iType);
+	}
+
+	public void fromString(final String iValue) {
+		_dirty = true;
+		_source = OBinaryProtocol.string2bytes(iValue);
+		_fieldOriginalValues = null;
+		_fieldTypes = null;
+		_fieldValues = null;
+		_cursor = 0;
 	}
 }
