@@ -10,7 +10,7 @@
 	<artifactId>orientdb-core</artifactId>
 	<packaging>jar</packaging>
 
-	<name>Orient Core</name>
+	<name>OrientDB Core</name>
 
 	<organization>
 		<name>Orient Technologies</name>
@@ -27,7 +27,6 @@
 			<artifactId>persistence-api</artifactId>
 			<version>1.0</version>
 			<type>jar</type>
-			<scope>compile</scope>
 		</dependency>
 	</dependencies>
 	<build>

@@ -7,12 +7,13 @@
     <version>0.9.24-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>Orient Parent</name>
+    <name>OrientDB Parent</name>
 
     <modules>
         <module>client</module>
         <module>commons</module>
         <module>core</module>
+        <module>distribution</module>
         <module>enterprise</module>
         <module>kv</module>
         <module>server</module>
@@ -108,7 +109,16 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>2.3</version>
+                    <version>2.3.1</version>
+                    <configuration>
+                        <archive>
+                            <manifest>
+                                <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                                <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                                <addClasspath>true</addClasspath>
+                            </manifest>
+                        </archive>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>

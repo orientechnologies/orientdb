@@ -11,7 +11,7 @@
 	<artifactId>orientdb-enterprise</artifactId>
 	<packaging>jar</packaging>
 
-	<name>Orient Enterprise</name>
+	<name>OrientDB Enterprise</name>
 
 	<organization>
 		<name>Orient Technologies</name>

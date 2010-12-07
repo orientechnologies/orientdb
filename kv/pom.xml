@@ -11,12 +11,15 @@
 	<artifactId>orientdb-kv</artifactId>
 	<packaging>jar</packaging>
 
-	<name>Orient Key/Value</name>
+	<name>OrientDB Key/Value</name>
 
 	<organization>
 		<name>Orient Technologies</name>
 		<url>http://www.orientechnologies.com</url>
 	</organization>
+	<properties>
+		<jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
+	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>com.orientechnologies</groupId>
@@ -39,6 +42,16 @@
 				<configuration>
 					<source>1.5</source>
 					<target>1.5</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<mainClass>${jar.manifest.mainclass}</mainClass>
+						</manifest>
+					</archive>
 				</configuration>
 			</plugin>
 		</plugins>

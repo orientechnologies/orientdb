@@ -9,44 +9,40 @@
 				<parameter name="network.multicast.port" value="2424" />
 				<parameter name="network.multicast.heartbeat" value="10" />
 				<parameter name="server.update.delay" value="5000" />
+				<parameter name="security.key" value="spQNSJte8hzWEe4O" />
 			</parameters>
 		</handler>
 	</handlers>
 	<network>
 		<protocols>
-			<!-- Default registered protocol. It reads commands using the HTTP protocol and write data locally -->
-			<protocol implementation="com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary" name="binary" />
-			<protocol implementation="com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb" name="http" />
-			<protocol implementation="com.orientechnologies.orient.server.network.protocol.distributed.ONetworkProtocolDistributed" name="distributed" />
+			<protocol name="binary" implementation="com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary" />
+			<protocol name="http" implementation="com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb" />
+			<protocol name="distributed" implementation="com.orientechnologies.orient.server.network.protocol.distributed.ONetworkProtocolDistributed" />
 		</protocols>
 		<listeners>
-			<listener protocol="distributed" port-range="2424-2430" ip-address="127.0.0.1" />
-			<listener protocol="http" port-range="2480-2490" ip-address="127.0.0.1">
+			<listener ip-address="127.0.0.1" port-range="2424-2430" protocol="distributed">
 				<parameters>
-					<!-- Connection's custom parameters. If not specified the global configuration will be taken -->
+					<!-- <parameter name="network.binary.debug" value="true" />  -->
 				</parameters>
+			</listener>
+			<listener ip-address="127.0.0.1" port-range="2480-2490" protocol="http">
 				<commands>
 					<command pattern="POST|*.action GET|*.action" implementation="com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostAction">
-						<parameters>
-						</parameters>
+						<parameters />
 					</command>
 				</commands>
+				<parameters />
 			</listener>
 		</listeners>
-		<cluster>
-		</cluster>
 	</network>
 	<storages>
-		<!-- Default in-memory storage. Data are not saved permanently. -->
-		<storage path="memory:temp" name="temp" loaded-at-startup="true" />
+		<storage name="temp" path="memory:temp" loaded-at-startup="true" />
 	</storages>
 	<users>
+		<user name="root" password="F805456B367A77A7D15BD59F322309231B44B6167D8B1BB570945E0805CF0264" resources="*" />
 	</users>
 	<properties>
-		<!-- Caches static contents. If enabled the files will be kept in memory the first time are loaded. Changes to the files will be taken on the next restart -->
 		<entry name="server.cache.staticResources" value="false" />
-
-		<!-- Enable/Disable logging. Levels are: finer, fine, finest, info, warning -->
 		<entry name="log.console.level" value="info" />
 		<entry name="log.file.level" value="fine" />
 	</properties>
