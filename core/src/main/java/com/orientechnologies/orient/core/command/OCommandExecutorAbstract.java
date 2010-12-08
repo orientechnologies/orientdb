@@ -57,8 +57,8 @@ public abstract class OCommandExecutorAbstract extends OCommandToParse implement
 	}
 
 	@SuppressWarnings("unchecked")
-	public OCommandExecutorAbstract setProgressListener(OProgressListener progressListener) {
+	public <RET extends OCommandExecutor> RET setProgressListener(OProgressListener progressListener) {
 		this.progressListener = progressListener;
-		return this;
+		return (RET) this;
 	}
 }

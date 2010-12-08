@@ -217,4 +217,12 @@ public class OServerNetworkListener extends Thread {
 			ports = new int[] { Integer.parseInt(iHostPortRange) };
 		return ports;
 	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append(protocolType.getSimpleName()).append(" ").append(serverSocket.getLocalSocketAddress()).append(":")
+				;
+		return builder.toString();
+	}
 }

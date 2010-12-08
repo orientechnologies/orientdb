@@ -131,7 +131,7 @@ public class OServer {
 
 			// SHUTDOWN LISTENERS
 			for (OServerNetworkListener l : listeners) {
-				OLogManager.instance().info(this, "Shutdowning connection listener...");
+				OLogManager.instance().info(this, "Shutdowning connection listener '" + l + "'...");
 				l.shutdown();
 			}
 

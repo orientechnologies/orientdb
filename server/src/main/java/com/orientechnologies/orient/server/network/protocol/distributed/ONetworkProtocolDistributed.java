@@ -27,7 +27,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryInpu
 import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.handler.distributed.ODistributedServerNode;
+import com.orientechnologies.orient.server.handler.distributed.ODistributedServerNodeRemote;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
 /**
@@ -50,19 +50,19 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 	@Override
 	protected void parseCommand() throws IOException {
-		if (requestType < 80) {
+		if (lastRequestType < 80) {
 			// BINARY REQUESTS
 			super.parseCommand();
 			return;
 		}
 
 		// DISTRIBUTED SERVER REQUESTS
-		switch (requestType) {
+		switch (lastRequestType) {
 		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_HEARTBEAT:
 			data.commandInfo = "Keep-alive";
 			manager.updateHeartBeatTime();
 
-			sendOk(clientTxId);
+			sendOk(lastClientTxId);
 
 			// SEND DB VERSION BACK
 			channel.writeLong(connection.database == null ? 0 : connection.database.getStorage().getVersion());
@@ -78,7 +78,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 				connection.database = openDatabase(dbName, channel.readString(), channel.readString());
 			}
 
-			sendOk(clientTxId);
+			sendOk(lastClientTxId);
 
 			channel.writeLong(connection.database != null ? connection.database.getStorage().getVersion() : 0);
 			break;
@@ -99,7 +99,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 			final String engineName = connection.database.getStorage() instanceof OStorageLocal ? "local" : "memory";
 
-			final ODistributedServerNode remoteServerNode = manager.getNode(remoteServerName);
+			final ODistributedServerNodeRemote remoteServerNode = manager.getNode(remoteServerName);
 
 			remoteServerNode.shareDatabase(connection.database, remoteServerName, dbUser, dbPassword, engineName, synchronousMode);
 
@@ -140,9 +140,10 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 				OLogManager.instance().info(this, "Database imported correctly", dbName);
 
-				sendOk(clientTxId);
+				sendOk(lastClientTxId);
 				channel.writeLong(connection.database.getStorage().getVersion());
 			} finally {
+				manager.updateHeartBeatTime();
 				manager.setStatus(ODistributedServerManager.STATUS.ONLINE);
 			}
 			break;
@@ -154,15 +155,15 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 			OLogManager.instance().warn(this, "Changed distributed server configuration:\n%s", config.toJSON("indent:2"));
 
-			sendOk(clientTxId);
+			sendOk(lastClientTxId);
 			break;
 		}
 
 		default:
 			data.commandInfo = "Command not supported";
-			OLogManager.instance().error(this, "Request not supported. Code: " + requestType);
+			OLogManager.instance().error(this, "Request not supported. Code: " + lastRequestType);
 			channel.clearInput();
-			sendError(clientTxId, null);
+			sendError(lastClientTxId, null);
 		}
 	}
 

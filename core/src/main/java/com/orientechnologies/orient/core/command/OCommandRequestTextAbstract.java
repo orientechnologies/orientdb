@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.command;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;

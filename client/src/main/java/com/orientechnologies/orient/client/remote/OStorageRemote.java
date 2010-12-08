@@ -24,8 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
@@ -60,7 +58,6 @@ import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynch;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchRequester;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
@@ -68,7 +65,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
  * This object is bound to each remote ODatabase instances.
  */
 @SuppressWarnings("unchecked")
-public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAsynchRequester {
+public class OStorageRemote extends OStorageAbstract {
 	private static final String							DEFAULT_HOST			= "localhost";
 	private static final String[]						DEFAULT_PORTS			= new String[] { "2424" };
 	private static final String							ADDRESS_SEPARATOR	= ";";
@@ -81,7 +78,6 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 	private int															connectionRetryDelay;
 
 	private OChannelBinaryClient						network;
-	private final BlockingQueue<Object>			responseQueue			= new ArrayBlockingQueue<Object>(10);
 	protected List<OPair<String, String[]>>	serverURLs				= new ArrayList<OPair<String, String[]>>();
 	protected int														retry							= 0;
 	protected int														txId							= 0;
@@ -174,7 +170,7 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 
 			network.close();
 
-//			serviceThread.join();
+			// serviceThread.join();
 
 			cache.removeUser();
 			cache.clear();
@@ -1163,15 +1159,11 @@ public class OStorageRemote extends OStorageAbstract implements OChannelBinaryAs
 	}
 
 	protected void beginResponse() throws IOException {
-		network.beginResponse(this);
+		network.beginResponse(txId);
 	}
 
 	public void endResponse() {
 		network.endResponse();
-	}
-
-	public int getRequesterId() {
-		return txId;
 	}
 
 	public boolean isPermanentRequester() {

@@ -45,7 +45,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
-import com.orientechnologies.orient.server.handler.distributed.ODistributedServerNode.SYNCH_TYPE;
+import com.orientechnologies.orient.server.handler.distributed.ODistributedServerNodeRemote.SYNCH_TYPE;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.distributed.ONetworkProtocolDistributed;
 
@@ -71,41 +71,41 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		ONLINE, SYNCHRONIZING
 	}
 
-	protected OServer																			server;
+	protected OServer																	server;
 
-	protected String																			name;
-	protected String																			id;
-	protected SecretKey																		securityKey;
-	protected String																			securityAlgorithm;
-	protected InetAddress																	networkMulticastAddress;
-	protected int																					networkMulticastPort;
-	protected int																					networkMulticastHeartbeat;																											// IN
-	protected int																					networkTimeoutLeader;																													// IN
-	protected int																					networkTimeoutNode;																														// IN
-	private int																						networkHeartbeatDelay;																													// IN
-	protected int																					serverUpdateDelay;																															// IN
-	protected int																					serverOutSynchMaxBuffers;
+	protected String																	name;
+	protected String																	id;
+	protected SecretKey																securityKey;
+	protected String																	securityAlgorithm;
+	protected InetAddress															networkMulticastAddress;
+	protected int																			networkMulticastPort;
+	protected int																			networkMulticastHeartbeat;																								// IN
+	protected int																			networkTimeoutLeader;																										// IN
+	protected int																			networkTimeoutNode;																											// IN
+	private int																				networkHeartbeatDelay;																										// IN
+	protected int																			serverUpdateDelay;																												// IN
+	protected int																			serverOutSynchMaxBuffers;
 
-	private ODistributedServerDiscoverySignaler						discoverySignaler;
-	private ODistributedServerDiscoveryListener						discoveryListener;
-	private ODistributedServerLeaderChecker								leaderCheckerTask;
-	private ODistributedServerRecordHook									trigger;
-	private final OSharedResourceExternal									lock										= new OSharedResourceExternal();
+	private ODistributedServerDiscoverySignaler				discoverySignaler;
+	private ODistributedServerDiscoveryListener				discoveryListener;
+	private ODistributedServerLeaderChecker						leaderCheckerTask;
+	private ODistributedServerRecordHook							trigger;
+	private final OSharedResourceExternal							lock										= new OSharedResourceExternal();
 
-	private final HashMap<String, ODistributedServerNode>	nodes										= new LinkedHashMap<String, ODistributedServerNode>();	;
+	private final HashMap<String, ODistributedServerNodeRemote>	nodes										= new LinkedHashMap<String, ODistributedServerNodeRemote>();	;
 
-	static final String																		CHECKSUM								= "ChEcKsUm1976";
+	static final String																CHECKSUM								= "ChEcKsUm1976";
 
-	static final String																		PACKET_HEADER						= "OrientDB v.";
-	static final int																			PROTOCOL_VERSION				= 0;
+	static final String																PACKET_HEADER						= "OrientDB v.";
+	static final int																	PROTOCOL_VERSION				= 0;
 
-	private OServerNetworkListener												distributedNetworkListener;
-	private ONetworkProtocolDistributed										leaderConnection;
-	public long																						lastHeartBeat;
-	private Map<String, ODocument>												clusterDbConfigurations	= new HashMap<String, ODocument>();
-	private Map<String, String[]>													clusterDbSecurity				= new HashMap<String, String[]>();
+	private OServerNetworkListener										distributedNetworkListener;
+	private ONetworkProtocolDistributed								leaderConnection;
+	public long																				lastHeartBeat;
+	private Map<String, ODocument>										clusterDbConfigurations	= new HashMap<String, ODocument>();
+	private Map<String, String[]>											clusterDbSecurity				= new HashMap<String, String[]>();
 
-	private volatile STATUS																status									= STATUS.ONLINE;
+	private volatile STATUS														status									= STATUS.ONLINE;
 
 	public void startup() {
 		trigger = new ODistributedServerRecordHook(this);
@@ -145,7 +145,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	 */
 	public void joinNode(final String iServerAddress, final int iServerPort) {
 		final String key = getNodeName(iServerAddress, iServerPort);
-		final ODistributedServerNode node;
+		final ODistributedServerNodeRemote node;
 
 		lock.acquireExclusiveLock();
 
@@ -153,10 +153,10 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 			if (nodes.containsKey(key)) {
 				// ALREADY REGISTERED, MAYBE IT WAS DISCONNECTED. INVOKE THE RECONNECTION
 				node = nodes.get(key);
-				if (node.getStatus() == ODistributedServerNode.STATUS.CONNECTED)
+				if (node.getStatus() == ODistributedServerNodeRemote.STATUS.CONNECTED)
 					return;
 			} else {
-				node = new ODistributedServerNode(this, iServerAddress, iServerPort);
+				node = new ODistributedServerNodeRemote(this, iServerAddress, iServerPort);
 				nodes.put(key, node);
 			}
 
@@ -175,7 +175,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	/**
 	 * Handle the failure of a node
 	 */
-	public void handleNodeFailure(final ODistributedServerNode node) {
+	public void handleNodeFailure(final ODistributedServerNodeRemote node) {
 		// ERROR
 		OLogManager.instance().warn(this, "Remote server node %s:%d seems down, retrying to connect...", node.networkAddress,
 				node.networkPort);
@@ -321,11 +321,11 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		}
 	}
 
-	public ODistributedServerNode getNode(final String iNodeName) {
+	public ODistributedServerNodeRemote getNode(final String iNodeName) {
 		try {
 			lock.acquireSharedLock();
 
-			final ODistributedServerNode node = nodes.get(iNodeName);
+			final ODistributedServerNodeRemote node = nodes.get(iNodeName);
 			if (node == null)
 				throw new IllegalArgumentException("Node '" + iNodeName + "' is not configured on server: " + getId());
 
@@ -336,17 +336,17 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		}
 	}
 
-	public List<ODistributedServerNode> getNodeList() {
+	public List<ODistributedServerNodeRemote> getNodeList() {
 		try {
 			lock.acquireSharedLock();
 
-			return new ArrayList<ODistributedServerNode>(nodes.values());
+			return new ArrayList<ODistributedServerNodeRemote>(nodes.values());
 		} finally {
 			lock.releaseSharedLock();
 		}
 	}
 
-	public void removeNode(final ODistributedServerNode iNode) {
+	public void removeNode(final ODistributedServerNodeRemote iNode) {
 		try {
 			lock.acquireExclusiveLock();
 
@@ -383,7 +383,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	 */
 	@SuppressWarnings("unchecked")
 	public void distributeRequest(final OTransactionEntry<ORecordInternal<?>> iTransactionEntry) throws IOException {
-		final HashMap<ODistributedServerNode, SYNCH_TYPE> nodeList;
+		final HashMap<ODistributedServerNodeRemote, SYNCH_TYPE> nodeList;
 
 		lock.acquireSharedLock();
 		try {
@@ -405,21 +405,21 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 			final ODocument servers = (ODocument) (clusters.containsField(iTransactionEntry.clusterName) ? clusters
 					.field(iTransactionEntry.clusterName) : clusters.field("*"));
 
-			nodeList = new HashMap<ODistributedServerNode, ODistributedServerNode.SYNCH_TYPE>();
+			nodeList = new HashMap<ODistributedServerNodeRemote, ODistributedServerNodeRemote.SYNCH_TYPE>();
 			if (servers.field("synch") != null)
 				for (String s : ((Map<String, Object>) servers.field("synch")).keySet()) {
-					nodeList.put(nodes.get(s), ODistributedServerNode.SYNCH_TYPE.SYNCHRONOUS);
+					nodeList.put(nodes.get(s), ODistributedServerNodeRemote.SYNCH_TYPE.SYNCHRONOUS);
 				}
 			if (servers.field("asynch") != null)
 				for (String s : ((Map<String, Object>) servers.field("asynch")).keySet()) {
-					nodeList.put(nodes.get(s), ODistributedServerNode.SYNCH_TYPE.ASYNCHRONOUS);
+					nodeList.put(nodes.get(s), ODistributedServerNodeRemote.SYNCH_TYPE.ASYNCHRONOUS);
 				}
 
 		} finally {
 			lock.releaseSharedLock();
 		}
 
-		for (Entry<ODistributedServerNode, SYNCH_TYPE> entry : nodeList.entrySet()) {
+		for (Entry<ODistributedServerNodeRemote, SYNCH_TYPE> entry : nodeList.entrySet()) {
 			entry.getKey().sendRequest(iTransactionEntry, entry.getValue());
 		}
 	}
@@ -448,9 +448,9 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		return iServerAddress + ":" + iServerPort;
 	}
 
-	private ODocument createInitialDatabaseConfiguration(final String iDatabaseName) {
-		return addServerInConfiguration(iDatabaseName, getId(), getId(), "{\"*\":{\"owner\":{\"" + getId() + "\":{}}}}");
-	}
+//	private ODocument createInitialDatabaseConfiguration(final String iDatabaseName) {
+//		return addServerInConfiguration(iDatabaseName, getId(), getId(), "{\"*\":{\"owner\":{\"" + getId() + "\":{}}}}");
+//	}
 
 	public ODocument addServerInConfiguration(final String iDatabaseName, final String iAlias, final String iAddress,
 			final boolean iAsynchronous) {
@@ -518,8 +518,8 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 	public void broadcastClusterConfiguration(final String iDatabaseName) {
 		// UPDATE ALL THE NODES
-		for (ODistributedServerNode node : getNodeList()) {
-			if (node.getStatus() == ODistributedServerNode.STATUS.CONNECTED)
+		for (ODistributedServerNodeRemote node : getNodeList()) {
+			if (node.getStatus() == ODistributedServerNodeRemote.STATUS.CONNECTED)
 				node.sendConfiguration(iDatabaseName);
 		}
 

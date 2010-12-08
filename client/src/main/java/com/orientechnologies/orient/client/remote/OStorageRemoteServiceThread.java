@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.common.thread.OSoftThread;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchRequester;
 import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 
 /**
@@ -24,8 +23,10 @@ import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistr
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class OStorageRemoteServiceThread extends OSoftThread implements OChannelBinaryAsynchRequester {
+public class OStorageRemoteServiceThread extends OSoftThread {
 	private final OStorageRemote	storage;
+
+	private static final int			REQ_ID	= -10;
 
 	public OStorageRemoteServiceThread(final OStorageRemote iStorageRemote) {
 		super("ClientService");
@@ -36,7 +37,7 @@ public class OStorageRemoteServiceThread extends OSoftThread implements OChannel
 	@Override
 	protected void execute() throws Exception {
 		try {
-			storage.getNetwork().beginResponse(this);
+			storage.getNetwork().beginResponse(REQ_ID);
 
 			final byte request = storage.getNetwork().readByte();
 
@@ -45,15 +46,11 @@ public class OStorageRemoteServiceThread extends OSoftThread implements OChannel
 				storage.updateClusterConfiguration(storage.getNetwork().readBytes());
 				break;
 			}
-			
+
 			// NOT IN FINALLY BECAUSE IF THE SOCKET IS KILLED COULD HAVE NOT THE LOCK
 			storage.getNetwork().endResponse();
-			
+
 		} catch (Exception e) {
 		}
-	}
-
-	public int getRequesterId() {
-		return -10;
 	}
 }

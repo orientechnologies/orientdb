@@ -38,7 +38,7 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 		super(iSocket, iConfig);
 	}
 
-	public int beginResponse(final OChannelBinaryAsynchRequester iRequester) throws IOException {
+	public int beginResponse(final int iRequesterId) throws IOException {
 		// WAIT FOR THE RESPONSE
 		do {
 			lockRead.lock();
@@ -49,7 +49,7 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 				currentTxId = readInt();
 			}
 
-			if (currentTxId == iRequester.getRequesterId())
+			if (currentTxId == iRequesterId)
 				// IT'S FOR ME
 				break;
 
@@ -65,7 +65,7 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 
 		handleStatus(currentStatus, currentTxId);
 
-		return iRequester.getRequesterId();
+		return iRequesterId;
 	}
 
 	public void endResponse() {
