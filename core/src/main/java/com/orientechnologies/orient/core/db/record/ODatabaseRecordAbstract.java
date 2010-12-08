@@ -278,18 +278,13 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 
 		if (user != null) {
 			try {
-				final ORole role = user.allow(iResource, iOperation);
-
-//				if (OLogManager.instance().isDebugEnabled())
-//					OLogManager.instance().debug(this, "[checkSecurity] Granted permission for resource '%s', operation '%s' by role: %s",
-//							iResource, iOperation, role.getName());
-
+				user.allow(iResource, iOperation);
 			} catch (OSecurityAccessException e) {
 
-//				if (OLogManager.instance().isDebugEnabled())
-//					OLogManager.instance().debug(this,
-//							"[checkSecurity] User '%s' tried to access to the reserved resource '%s', operation '%s'", getUser(), iResource,
-//							iOperation);
+				if (OLogManager.instance().isDebugEnabled())
+					OLogManager.instance().debug(this,
+							"[checkSecurity] User '%s' tried to access to the reserved resource '%s', operation '%s'", getUser(), iResource,
+							iOperation);
 
 				throw e;
 			}
@@ -300,9 +295,9 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 	public <DB extends ODatabaseRecord<?>> DB checkSecurity(final String iResourceGeneric, final int iOperation,
 			final Object... iResourcesSpecific) {
 
-//		if (OLogManager.instance().isDebugEnabled())
-//			OLogManager.instance().debug(this, "[checkSecurity] Check permissions for resource '%s', target(s) '%s', operation '%s'",
-//					iResourceGeneric, Arrays.toString(iResourcesSpecific), iOperation);
+		// if (OLogManager.instance().isDebugEnabled())
+		// OLogManager.instance().debug(this, "[checkSecurity] Check permissions for resource '%s', target(s) '%s', operation '%s'",
+		// iResourceGeneric, Arrays.toString(iResourcesSpecific), iOperation);
 
 		if (user != null) {
 			try {
@@ -313,7 +308,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 				keyBuffer.append('.');
 				keyBuffer.append(ODatabaseSecurityResources.ALL);
 
-				ORole role = user.allow(keyBuffer.toString(), iOperation);
+				user.allow(keyBuffer.toString(), iOperation);
 
 				for (Object target : iResourcesSpecific) {
 					if (target != null) {
@@ -326,15 +321,10 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 
 						if (user.isRuleDefined(key)) {
 							// RULE DEFINED: CHECK AGAINST IT
-							role = user.allow(key, iOperation);
+							user.allow(key, iOperation);
 						}
 					}
 				}
-
-//				if (OLogManager.instance().isDebugEnabled())
-//					OLogManager.instance().debug(this,
-//							"[checkSecurity] Granted permission for resource '%s', target(s) '%s', operation '%s' by role: %s", iResourceGeneric,
-//							Arrays.toString(iResourcesSpecific), iOperation, role.getName());
 
 			} catch (OSecurityAccessException e) {
 				if (OLogManager.instance().isDebugEnabled())

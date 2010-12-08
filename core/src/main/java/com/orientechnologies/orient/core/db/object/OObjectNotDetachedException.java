@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.db.object;
 
+@SuppressWarnings("serial")
 public class OObjectNotDetachedException extends RuntimeException {
 
 	public OObjectNotDetachedException() {

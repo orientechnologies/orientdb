@@ -245,7 +245,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				int items = 0;
 				List<Object> coll = (List<Object>) iValue;
 				if (coll instanceof OLazyObjectList<?>) {
-					((OLazyObjectList) coll).setConvertToRecord(false);
+					((OLazyObjectList<?>) coll).setConvertToRecord(false);
 				}
 				try {
 					// LINKED LIST
@@ -260,7 +260,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					}
 				} finally {
 					if (coll instanceof OLazyObjectList<?>) {
-						((OLazyObjectList) coll).setConvertToRecord(true);
+						((OLazyObjectList<?>) coll).setConvertToRecord(true);
 					}
 				}
 			}
@@ -314,7 +314,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 			// LINKED MAP
 			if (map instanceof OLazyObjectMap<?>) {
-				((OLazyObjectMap) map).setConvertToRecord(false);
+				((OLazyObjectMap<?>) map).setConvertToRecord(false);
 			}
 			try {
 				for (Map.Entry<String, Object> entry : map.entrySet()) {
@@ -335,7 +335,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				}
 			} finally {
 				if (map instanceof OLazyObjectMap<?>) {
-					((OLazyObjectMap) map).setConvertToRecord(true);
+					((OLazyObjectMap<?>) map).setConvertToRecord(true);
 				}
 			}
 			if (objToReplace != null)

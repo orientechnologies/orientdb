@@ -616,7 +616,7 @@ public class OObjectSerializerHelper {
 			sourceValues = (Collection<Object>) iMultiValue;
 		} else {
 			if (iMultiValue instanceof OLazyObjectMap<?>) {
-				((OLazyObjectMap) iMultiValue).assignDatabase(db);
+				((OLazyObjectMap<Object>) iMultiValue).assignDatabase(db);
 			}
 			sourceValues = (Collection<Object>) ((Map<?, ?>) iMultiValue).values();
 		}
@@ -678,7 +678,7 @@ public class OObjectSerializerHelper {
 			}
 		} else if (iMultiValue instanceof List<?>) {
 			if (sourceValues instanceof OLazyObjectList<?>) {
-				((OLazyObjectList) sourceValues).assignDatabase(db);
+				((OLazyObjectList<Object>) sourceValues).assignDatabase(db);
 			}
 			for (int i = 0; i < sourceValues.size(); i++) {
 				((List<Object>) result).add(typeToStream(((List<?>) sourceValues).get(i), linkedType, iEntityManager, iObj2RecHandler, db,
@@ -686,7 +686,7 @@ public class OObjectSerializerHelper {
 			}
 		} else {
 			if (iMultiValue instanceof OLazyObjectMap<?>) {
-				result = ((OLazyObjectMap) iMultiValue).getUnderlying();
+				result = ((OLazyObjectMap<?>) iMultiValue).getUnderlying();
 			} else {
 				for (Entry<String, Object> entry : ((Map<String, Object>) iMultiValue).entrySet()) {
 					((Map<String, Object>) result).put(entry.getKey(),

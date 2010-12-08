@@ -188,22 +188,6 @@ public class TTYConsoleReader implements OConsoleReader {
 		return console;
 	}
 
-	private void writeHistory(int historyNum) {
-		for (int i = 0; i < 30; i++) {
-			System.out.println();
-		}
-		if (historyNum == history.size()) {
-			System.out.print("> ");
-			return;
-		}
-		for (int i = 0; i < history.size(); i++) {
-			System.out.print(historyNum == i ? "-> " : "   ");
-			System.out.println(history.get(i));
-		}
-		System.out.println();
-		System.out.print("> " + history.get(historyNum));
-	}
-
 	private void rewriteConsole(StringBuffer buffer) {
 		System.out.print("\r");
 		System.out.print("> ");

@@ -21,9 +21,9 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.spi.PersistenceProvider;
 import javax.persistence.spi.PersistenceUnitInfo;
 
+@SuppressWarnings("rawtypes")
 public class OPersistenceProvider implements PersistenceProvider {
 
-	@SuppressWarnings("rawtypes")
 	public EntityManagerFactory createEntityManagerFactory(String emName, Map map) {
 		return OEntityManagerFactory.getInstance();
 	}
