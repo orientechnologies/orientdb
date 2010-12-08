@@ -24,6 +24,7 @@ import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.object.OObjectNotDetachedException;
 import com.orientechnologies.orient.core.db.object.OObjectNotManagedException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
@@ -35,6 +36,7 @@ import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelper;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
@@ -258,6 +260,27 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 
 	public boolean isManaged(final Object iEntity) {
 		return objects2Records.containsKey(System.identityHashCode(iEntity));
+	}
+
+	/**
+	 * Attach a previously detached object to this Database instance.
+	 * 
+	 * @param iPojo
+	 *          Object to re-attach.
+	 */
+	public void attach(final Object iPojo) {
+		checkOpeness();
+
+		ODocument record = objects2Records.get(System.identityHashCode(iPojo));
+		if (record != null)
+			// ALREADY ATTACHED
+			return;
+
+		if (OObjectSerializerHelper.hasObjectID(iPojo)) {
+			record = getRecordByUserObject(iPojo, false);
+		} else {
+			throw new OObjectNotDetachedException("Cannot attach a non-detached object");
+		}
 	}
 
 	public T getUserObjectByRecord(final ORecordInternal<?> iRecord, final String iFetchPlan) {
