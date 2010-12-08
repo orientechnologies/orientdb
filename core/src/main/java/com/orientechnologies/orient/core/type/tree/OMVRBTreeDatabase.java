@@ -66,13 +66,12 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> {
 			// NOT FOUND: CREATE IT AND PUT IT INTO THE CACHE
 			entry = new OMVRBTreeEntryDatabase<K, V>(this, (OMVRBTreeEntryDatabase<K, V>) iParent, iRecordId);
 			// cache.put(iRecordId, entry);
-		} else {
+		} //else {
 			// entry.load();
-
-			if (iParent != null)
-				// FOUND: ASSIGN IT
-				entry.setParent(iParent);
-		}
+//			if (iParent != null)
+//				// FOUND: ASSIGN IT
+//				entry.setParent(iParent);
+//		}
 		return entry;
 	}
 
