@@ -1019,6 +1019,8 @@ public class OStorageLocal extends OStorageAbstract {
 			// DATA
 			iClusterSegment.setPhysicalPosition(clusterPosition, dataSegment, dataOffset, iRecordType);
 
+			incrementVersion();
+			
 			return clusterPosition;
 
 		} catch (IOException e) {
