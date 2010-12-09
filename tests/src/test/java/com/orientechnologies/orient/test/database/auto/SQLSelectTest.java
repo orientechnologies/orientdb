@@ -296,7 +296,7 @@ public class SQLSelectTest {
 		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(
-				new OSQLSynchQuery<ODocument>("select from Profile where any() traverse(0,-1,any() ) ( any().indexOf('Navona') > -1 )"))
+				new OSQLSynchQuery<ODocument>("select from Profile where any() traverse(0,-1) ( any().indexOf('Navona') > -1 )"))
 				.execute();
 
 		Assert.assertTrue(result.size() > 0);
@@ -308,6 +308,19 @@ public class SQLSelectTest {
 
 			Assert.assertTrue(record.getClassName().equalsIgnoreCase("Profile"));
 		}
+
+		database.close();
+	}
+
+	@Test
+	public void queryTraverseEdges() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(
+				new OSQLSynchQuery<ODocument>(
+						"select from Profile where any() traverse(0,-1,'followers,followings') ( followers.size() > 0 )")).execute();
+
+		Assert.assertTrue(result.size() > 0);
 
 		database.close();
 	}
