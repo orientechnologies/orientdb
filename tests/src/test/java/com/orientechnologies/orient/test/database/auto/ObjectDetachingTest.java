@@ -30,14 +30,14 @@ import com.orientechnologies.orient.test.domain.business.Country;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
 
 @Test(groups = { "object" })
-public class ObjectAnnotationsTest {
+public class ObjectDetachingTest {
 	private ODatabaseObjectTx	database;
 	private String						url;
 	private Account						account;
 	private Profile						profile;
 
 	@Parameters(value = "url")
-	public ObjectAnnotationsTest(String iURL) {
+	public ObjectDetachingTest(String iURL) {
 		url = iURL;
 	}
 
@@ -143,6 +143,10 @@ public class ObjectAnnotationsTest {
 
 	@Test(dependsOnMethods = "testOrientObjectIdPlusVersionAnnotationsInTx")
 	public void clean() {
+		database.close();
+
+		database = new ODatabaseObjectTx(url).open("admin", "admin");
+
 		database.delete(profile);
 		database.delete(account);
 

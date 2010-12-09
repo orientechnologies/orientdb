@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.db.object.OLazyObjectList;
 import com.orientechnologies.orient.core.db.object.OLazyObjectMap;
 import com.orientechnologies.orient.core.db.object.OLazyObjectSet;
+import com.orientechnologies.orient.core.db.object.OObjectNotDetachedException;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -384,12 +385,28 @@ public class OObjectSerializerHelper {
 		return idFieldName;
 	}
 
-	public static Object getObjectID(final Object iPojo) {
+	public static ORecordId getObjectID(final ODatabaseObjectTx iDb, final Object iPojo) {
 		final String idFieldName = fieldIds.get(iPojo.getClass());
 		if (idFieldName != null) {
-			return getFieldValue(iPojo, idFieldName);
+			final Object id = getFieldValue(iPojo, idFieldName);
+
+			if (id != null) {
+				// FOUND
+				if (id instanceof ORecordId) {
+					return (ORecordId) id;
+				} else if (id instanceof Number) {
+					// TREATS AS CLUSTER POSITION
+					final OClass cls = iDb.getMetadata().getSchema().getClass(iPojo.getClass());
+					if (cls == null)
+						throw new OConfigurationException("Class " + iPojo.getClass() + " is not managed by current database");
+
+					return new ORecordId(cls.getDefaultClusterId(), ((Number) id).longValue());
+				} else if (id instanceof String)
+					return new ORecordId((String) id);
+			}
 		}
-		return null;
+
+		throw new OObjectNotDetachedException("Can't retrieve the object's ID for '" + iPojo + "' because hasn't been detached");
 	}
 
 	public static boolean hasObjectID(final Object iPojo) {
@@ -425,12 +442,21 @@ public class OObjectSerializerHelper {
 		return vFieldName;
 	}
 
-	public static Object getObjectVersion(final Object iPojo) {
+	public static int getObjectVersion(final Object iPojo) {
 		final String idFieldName = fieldVersions.get(iPojo.getClass());
 		if (idFieldName != null) {
-			return getFieldValue(iPojo, idFieldName);
+			Object ver = getFieldValue(iPojo, idFieldName);
+
+			if (ver != null) {
+				// FOUND
+				if (ver instanceof Number) {
+					// TREATS AS CLUSTER POSITION
+					return ((Number) ver).intValue();
+				} else if (ver instanceof String)
+					return Integer.parseInt((String) ver);
+			}
 		}
-		return null;
+		throw new OObjectNotDetachedException("Can't retrieve the object's VERSION for '" + iPojo + "' because hasn't been detached");
 	}
 
 	public static boolean hasObjectVersion(final Object iPojo) {
@@ -593,7 +619,7 @@ public class OObjectSerializerHelper {
 				fieldClass = iEntityManager.getEntityClass(fieldClass.getSimpleName());
 				if (fieldClass != null) {
 					// RECOGNIZED TYPE, SERIALIZE IT
-					final ODocument linkedDocument = (ODocument) iObj2RecHandler.getRecordByUserObject(iFieldValue, false);
+					final ODocument linkedDocument = (ODocument) iObj2RecHandler.getRecordByUserObject(iFieldValue, true);
 
 					iFieldValue = toStream(iFieldValue, linkedDocument, iEntityManager, linkedDocument.getSchemaClass(), iObj2RecHandler, db,
 							iSaveOnlyDirty);

@@ -108,8 +108,7 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 	public void setDirty(final Object iPojo) {
 		checkOpeness();
 
-		final ODocument record = getRecordByUserObject(iPojo, true);
-
+		final ODocument record = getRecordByUserObject(iPojo, false);
 		if (record == null)
 			throw new OObjectNotManagedException("The object " + iPojo + " is not managed by the current database");
 
@@ -143,7 +142,6 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 		checkOpeness();
 
 		final ODocument record = getRecordByUserObject(iPojo, true);
-
 		if (record == null)
 			throw new OObjectNotManagedException("The object " + iPojo + " is not managed by the current database");
 
@@ -228,7 +226,7 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 		return retainObjects;
 	}
 
-	public ODocument getRecordByUserObject(final Object iPojo, final boolean iIsMandatory) {
+	public ODocument getRecordByUserObject(final Object iPojo, final boolean iCreateIfNotAvailable) {
 		checkOpeness();
 
 		if (iPojo instanceof ODocument)
@@ -236,12 +234,8 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 
 		ODocument record = objects2Records.get(System.identityHashCode(iPojo));
 
-		if (record == null) {
-			if (iIsMandatory)
-				throw new OObjectNotManagedException("The object " + iPojo + " is not managed by the current database");
-
+		if (record == null && iCreateIfNotAvailable) {
 			record = underlying.newInstance(iPojo.getClass().getSimpleName());
-
 			registerPojo((T) iPojo, record);
 			pojo2Stream((T) iPojo, record);
 		}

@@ -36,7 +36,7 @@
 			<class name="com.orientechnologies.orient.test.database.auto.CRUDFlatPhysicalTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentValidationTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.ObjectTreeTest" />
-			<class name="com.orientechnologies.orient.test.database.auto.ObjectAnnotationsTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.ObjectDetachingTest" />
 		</classes>
 	</test>
 	<test name="Tx">

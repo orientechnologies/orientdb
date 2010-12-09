@@ -186,10 +186,11 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
 		if (iContent == null)
 			return this;
 
-		final ODocument record = getRecordByUserObject(iContent, true);
+		ODocument record = getRecordByUserObject(iContent, false);
+		if (record == null)
+			record = (ODocument) underlying.load(OObjectSerializerHelper.getObjectID(this, iContent));
 
 		underlying.delete(record);
-
 		unregisterPojo(iContent, record);
 
 		return this;
