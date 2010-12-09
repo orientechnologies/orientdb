@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -24,6 +25,9 @@ import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.object.OLazyObjectList;
+import com.orientechnologies.orient.core.db.object.OLazyObjectMap;
+import com.orientechnologies.orient.core.db.object.OLazyObjectSet;
 import com.orientechnologies.orient.core.db.object.OObjectNotDetachedException;
 import com.orientechnologies.orient.core.db.object.OObjectNotManagedException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -262,27 +266,6 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 		return objects2Records.containsKey(System.identityHashCode(iEntity));
 	}
 
-	/**
-	 * Attach a previously detached object to this Database instance.
-	 * 
-	 * @param iPojo
-	 *          Object to re-attach.
-	 */
-	public void attach(final Object iPojo) {
-		checkOpeness();
-
-		ODocument record = objects2Records.get(System.identityHashCode(iPojo));
-		if (record != null)
-			// ALREADY ATTACHED
-			return;
-
-		if (OObjectSerializerHelper.hasObjectID(iPojo)) {
-			record = getRecordByUserObject(iPojo, false);
-		} else {
-			throw new OObjectNotDetachedException("Cannot attach a non-detached object");
-		}
-	}
-
 	public T getUserObjectByRecord(final ORecordInternal<?> iRecord, final String iFetchPlan) {
 		return getUserObjectByRecord(iRecord, iFetchPlan, true);
 	}
@@ -316,6 +299,30 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 		}
 
 		return pojo;
+	}
+
+	@SuppressWarnings("rawtypes")
+	public void attach(final Object iPojo) {
+		checkOpeness();
+
+		ODocument record = objects2Records.get(System.identityHashCode(iPojo));
+		if (record != null)
+			return;
+
+		if (OObjectSerializerHelper.hasObjectID(iPojo)) {
+			for (Field field : iPojo.getClass().getDeclaredFields()) {
+				Object value = OObjectSerializerHelper.getFieldValue(iPojo, field.getName());
+				if (value instanceof OLazyObjectMap<?>) {
+					((OLazyObjectMap) value).assignDatabase(this);
+				} else if (value instanceof OLazyObjectList<?>) {
+					((OLazyObjectList) value).assignDatabase(this);
+				} else if (value instanceof OLazyObjectSet<?>) {
+					((OLazyObjectList) value).assignDatabase(this);
+				}
+			}
+		} else {
+			throw new OObjectNotDetachedException("Cannot attach a non detached object");
+		}
 	}
 
 	/**
