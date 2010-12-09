@@ -89,8 +89,8 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 				}
 			} else if (iTarget instanceof Collection<?>) {
 
-				Collection<ODocument> collection = (Collection<ODocument>) iTarget;
-				for (ODocument o : collection) {
+				Collection<Object> collection = (Collection<Object>) iTarget;
+				for (Object o : collection) {
 					if (traverse(iRecord, iCondition, o, iLevel + 1) == Boolean.TRUE)
 						return true;
 				}
