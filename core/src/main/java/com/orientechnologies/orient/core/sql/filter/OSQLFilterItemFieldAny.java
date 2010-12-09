@@ -24,7 +24,8 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
  * 
  */
 public class OSQLFilterItemFieldAny extends OSQLFilterItemFieldMultiAbstract {
-	public static final String	NAME	= "ANY";
+	public static final String	NAME			= "ANY";
+	public static final String	FULL_NAME	= "ANY()";
 
 	public OSQLFilterItemFieldAny(final OSQLFilter iQueryCompiled, final String iName) {
 		super(iQueryCompiled, iName, OStringSerializerHelper.getParameters(iName));

@@ -206,12 +206,11 @@ public class OSQLFilter extends OCommandToParse {
 
 		for (OQueryOperator op : OSQLHelper.getRecordOperators()) {
 			if (word.startsWith(op.keyword)) {
-				List<String> params = null;
-
+				final List<String> params = new ArrayList<String>();
 				// CHECK FOR PARAMETERS
-				if (word.endsWith(OStringSerializerHelper.OPEN_BRACE)) {
-					params = OStringSerializerHelper.getParameters(text, currentPos - 1);
-					currentPos = text.indexOf(OStringSerializerHelper.CLOSED_BRACE, currentPos) + 1;
+				if (word.length() > op.keyword.length() && word.charAt(op.keyword.length()) == OStringSerializerHelper.OPEN_BRACE) {
+					int paramBeginPos = currentPos - (word.length() - op.keyword.length());
+					currentPos = OStringSerializerHelper.getParameters(text, paramBeginPos, params)+1;
 				} else if (!word.equals(op.keyword))
 					throw new OQueryParsingException("Malformed usage of operator '" + op.toString() + "'. Parsed operator is: " + word);
 
@@ -232,7 +231,7 @@ public class OSQLFilter extends OCommandToParse {
 		if (words == null)
 			return null;
 
-		if (words[0].startsWith(OStringSerializerHelper.OPEN_BRACE)) {
+		if (words[0].length() > 0 && words[0].charAt(0) == OStringSerializerHelper.OPEN_BRACE) {
 			braces++;
 
 			// SUB-CONDITION

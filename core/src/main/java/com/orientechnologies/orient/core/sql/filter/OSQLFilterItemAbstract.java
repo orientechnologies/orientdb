@@ -242,7 +242,17 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
 	@Override
 	public String toString() {
-		return name != null ? name : "";
+		final StringBuilder buffer = new StringBuilder();
+		if (name != null)
+			buffer.append(name);
+		if (operationsChain != null) {
+			for (OPair<Integer, List<String>> op : operationsChain) {
+				buffer.append('.');
+				buffer.append(OSQLFilterFieldOperator.getById(op.getKey()));
+				buffer.append(op.getValue());
+			}
+		}
+		return buffer.toString();
 	}
 
 	public String getName() {

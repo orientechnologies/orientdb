@@ -89,7 +89,6 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> imp
 	}
 
 	public void onAfterTxCommit(final ODatabase iDatabase) {
-		optimize();
 	}
 
 	/**

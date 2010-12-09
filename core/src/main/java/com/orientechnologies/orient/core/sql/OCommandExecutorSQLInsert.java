@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.common.parser.OStringParser;
@@ -85,7 +86,8 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 		if (endFields == -1)
 			throw new OCommandSQLParsingException("Missed closed brace", text, beginFields);
 
-		fieldNames = OStringSerializerHelper.getParameters(text, beginFields);
+		fieldNames = new ArrayList<String>();
+		OStringSerializerHelper.getParameters(text, beginFields, fieldNames);
 		if (fieldNames.size() == 0)
 			throw new OCommandSQLParsingException("Set of fields is empty. Example: (name, surname)", text, endFields);
 

@@ -41,8 +41,8 @@ public abstract class OStringSerializerHelper {
 	public static final String							CLASS_SEPARATOR				= "@";
 	public static final char								LINK									= '#';
 	public static final char								EMBEDDED							= '*';
-	public static final String							OPEN_BRACE						= "(";
-	public static final String							CLOSED_BRACE					= ")";
+	public static final char								OPEN_BRACE						= '(';
+	public static final char								CLOSED_BRACE					= ')';
 	public static final char								COLLECTION_BEGIN			= '[';
 	public static final char								COLLECTION_END				= ']';
 	public static final char								MAP_BEGIN							= '{';
@@ -197,12 +197,13 @@ public abstract class OStringSerializerHelper {
 		throw new IllegalArgumentException("Type " + iType + " not supported to convert value: " + iValue);
 	}
 
-	public static List<String> smartSplit(final String iSource, final char iRecordSeparator) {
+	public static List<String> smartSplit(final String iSource, final char iRecordSeparator, final char... iJumpChars) {
 		StringBuilder buffer = new StringBuilder();
 		char stringBeginChar = ' ';
 		char c;
 		char previousChar = ' ';
 		boolean insideEmbedded = false;
+		int insideParameters = 0;
 		int insideCollection = 0;
 		int insideMap = 0;
 		int insideLinkPart = 0;
@@ -218,16 +219,25 @@ public abstract class OStringSerializerHelper {
 
 				if (c == COLLECTION_BEGIN)
 					insideCollection++;
-				else if (c == MAP_BEGIN)
-					insideMap++;
 				else if (c == COLLECTION_END) {
 					if (insideCollection == 0)
 						throw new OSerializationException("Found invalid " + COLLECTION_END + " character. Assure to open and close correctly.");
 					insideCollection--;
+
+				} else if (c == OPEN_BRACE) {
+					insideParameters++;
+				} else if (c == CLOSED_BRACE) {
+					if (insideParameters == 0)
+						throw new OSerializationException("Found invalid " + CLOSED_BRACE + " character. Assure to open and close correctly.");
+					insideParameters--;
+
+				} else if (c == MAP_BEGIN) {
+					insideMap++;
 				} else if (c == MAP_END) {
 					if (insideMap == 0)
 						throw new OSerializationException("Found invalid " + MAP_END + " character. Assure to open and close correctly.");
 					insideMap--;
+
 				} else if (c == EMBEDDED)
 					insideEmbedded = !insideEmbedded;
 				else if (c == LINK)
@@ -240,8 +250,8 @@ public abstract class OStringSerializerHelper {
 				if (insideLinkPart > 0 && c != '-' && !Character.isDigit(c) && c != ORID.SEPARATOR && c != LINK)
 					insideLinkPart = 0;
 
-				if (insideCollection == 0 && insideMap == 0 && !insideEmbedded && insideLinkPart == 0) {
-					// OUTSIDE A COLLECTION/MAP
+				if (insideParameters == 0 && insideCollection == 0 && insideMap == 0 && !insideEmbedded && insideLinkPart == 0) {
+					// OUTSIDE A PARAMS/COLLECTION/MAP
 					if ((c == '\'' || c == '"') && previousChar != '\\') {
 						// START STRING
 						stringBeginChar = c;
@@ -264,9 +274,21 @@ public abstract class OStringSerializerHelper {
 				}
 			}
 
-			buffer.append(c);
-
 			previousChar = c;
+
+			if (iJumpChars.length > 0) {
+				boolean found = false;
+				for (char jc : iJumpChars) {
+					if (jc == c) {
+						found = true;
+						break;
+					}
+				}
+				if (found)
+					continue;
+			}
+
+			buffer.append(c);
 		}
 
 		parts.add(buffer.toString());
@@ -378,30 +400,41 @@ public abstract class OStringSerializerHelper {
 		return split(iText.substring(openPos + 1, closePos), COLLECTION_SEPARATOR, ' ');
 	}
 
-	public static List<String> getParameters(final String iText, final int iBeginPosition) {
+	public static int getParameters(final String iText, final int iBeginPosition, final List<String> iParameters) {
+		iParameters.clear();
+
 		int openPos = iText.indexOf(OPEN_BRACE, iBeginPosition);
 		if (openPos == -1)
-			return EMPTY_LIST;
+			return iBeginPosition;
 
 		int closePos = iText.indexOf(CLOSED_BRACE, openPos + 1);
 		if (closePos == -1)
-			return EMPTY_LIST;
+			return iBeginPosition;
 
 		if (closePos - openPos == 1)
 			// EMPTY STRING: TREATS AS EMPTY
-			return EMPTY_LIST;
+			return iBeginPosition;
 
-		final List<String> pars = split(iText.substring(openPos + 1, closePos), PARAMETER_SEPARATOR, ' ');
+		String t = iText.substring(openPos);
 
-		// REMOVE TAIL AND END SPACES
-		for (int i = 0; i < pars.size(); ++i)
-			pars.set(i, pars.get(i));
+		List<String> pars = smartSplit(t, ' ');
+		if (pars.size() == 0)
+			return iBeginPosition;
 
-		return pars;
+		final int extractedPieceLength = pars.get(0).length();
+
+		t = pars.get(0).substring(1, extractedPieceLength - 1);
+		pars = smartSplit(t, PARAMETER_SEPARATOR, ' ');
+
+		iParameters.addAll(pars);
+
+		return iBeginPosition + extractedPieceLength;
 	}
 
 	public static List<String> getParameters(final String iText) {
-		return getParameters(iText, 0);
+		final List<String> params = new ArrayList<String>();
+		getParameters(iText, 0, params);
+		return params;
 	}
 
 	public static Map<String, String> getMap(final ODatabaseRecord<?> iDatabase, final String iText) {
