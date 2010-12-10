@@ -163,7 +163,14 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 
 		final int start = iParams.size() > 0 ? Integer.parseInt(iParams.get(0)) : startDeepLevel;
 		final int end = iParams.size() > 1 ? Integer.parseInt(iParams.get(1)) : endDeepLevel;
-		final String[] fields = iParams.size() > 2 ? iParams.get(2).split(",") : new String[] { "any()" };
+
+		String[] fields = new String[] { "any()" };
+		if (iParams.size() > 2) {
+			String f = iParams.get(2);
+			if (f.startsWith("'") || f.startsWith("\""))
+				f = f.substring(1, f.length() - 1);
+			fields = f.split(",");
+		}
 
 		return new OQueryOperatorTraverse(start, end, fields);
 	}
