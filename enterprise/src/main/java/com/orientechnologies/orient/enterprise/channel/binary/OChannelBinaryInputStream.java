@@ -18,7 +18,6 @@ package com.orientechnologies.orient.enterprise.channel.binary;
 import java.io.IOException;
 import java.io.InputStream;
 
-import com.orientechnologies.orient.enterprise.exception.ONetworkProtocolException;
 
 /**
  * InputStream class bound to a binary channel. Reuses the shared buffer of the channel.

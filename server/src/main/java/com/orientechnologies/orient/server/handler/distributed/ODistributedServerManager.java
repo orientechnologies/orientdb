@@ -71,41 +71,41 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		ONLINE, SYNCHRONIZING
 	}
 
-	protected OServer																	server;
+	protected OServer																						server;
 
-	protected String																	name;
-	protected String																	id;
-	protected SecretKey																securityKey;
-	protected String																	securityAlgorithm;
-	protected InetAddress															networkMulticastAddress;
-	protected int																			networkMulticastPort;
-	protected int																			networkMulticastHeartbeat;																								// IN
-	protected int																			networkTimeoutLeader;																										// IN
-	protected int																			networkTimeoutNode;																											// IN
-	private int																				networkHeartbeatDelay;																										// IN
-	protected int																			serverUpdateDelay;																												// IN
-	protected int																			serverOutSynchMaxBuffers;
+	protected String																						name;
+	protected String																						id;
+	protected SecretKey																					securityKey;
+	protected String																						securityAlgorithm;
+	protected InetAddress																				networkMulticastAddress;
+	protected int																								networkMulticastPort;
+	protected int																								networkMulticastHeartbeat;																														// IN
+	protected int																								networkTimeoutLeader;																																// IN
+	protected int																								networkTimeoutNode;																																	// IN
+	private int																									networkHeartbeatDelay;																																// IN
+	protected int																								serverUpdateDelay;																																		// IN
+	protected int																								serverOutSynchMaxBuffers;
 
-	private ODistributedServerDiscoverySignaler				discoverySignaler;
-	private ODistributedServerDiscoveryListener				discoveryListener;
-	private ODistributedServerLeaderChecker						leaderCheckerTask;
-	private ODistributedServerRecordHook							trigger;
-	private final OSharedResourceExternal							lock										= new OSharedResourceExternal();
+	private ODistributedServerDiscoverySignaler									discoverySignaler;
+	private ODistributedServerDiscoveryListener									discoveryListener;
+	private ODistributedServerLeaderChecker											leaderCheckerTask;
+	private ODistributedServerRecordHook												trigger;
+	private final OSharedResourceExternal												lock										= new OSharedResourceExternal();
 
 	private final HashMap<String, ODistributedServerNodeRemote>	nodes										= new LinkedHashMap<String, ODistributedServerNodeRemote>();	;
 
-	static final String																CHECKSUM								= "ChEcKsUm1976";
+	static final String																					CHECKSUM								= "ChEcKsUm1976";
 
-	static final String																PACKET_HEADER						= "OrientDB v.";
-	static final int																	PROTOCOL_VERSION				= 0;
+	static final String																					PACKET_HEADER						= "OrientDB v.";
+	static final int																						PROTOCOL_VERSION				= 0;
 
-	private OServerNetworkListener										distributedNetworkListener;
-	private ONetworkProtocolDistributed								leaderConnection;
-	public long																				lastHeartBeat;
-	private Map<String, ODocument>										clusterDbConfigurations	= new HashMap<String, ODocument>();
-	private Map<String, String[]>											clusterDbSecurity				= new HashMap<String, String[]>();
+	private OServerNetworkListener															distributedNetworkListener;
+	private ONetworkProtocolDistributed													leaderConnection;
+	public long																									lastHeartBeat;
+	private Map<String, ODocument>															clusterDbConfigurations	= new HashMap<String, ODocument>();
+	private Map<String, String[]>																clusterDbSecurity				= new HashMap<String, String[]>();
 
-	private volatile STATUS														status									= STATUS.ONLINE;
+	private volatile STATUS																			status									= STATUS.ONLINE;
 
 	public void startup() {
 		trigger = new ODistributedServerRecordHook(this);
@@ -376,6 +376,35 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	}
 
 	/**
+	 * Tells if the cluster's owner for the requested node is the current one or not
+	 * 
+	 * @param iDatabaseName
+	 *          Database name
+	 * @param iClusterName
+	 *          Cluster name
+	 * @return true if the cluster's owner for the requested node is the current one, otherwise false
+	 */
+	public boolean isCurrentNodeTheClusterOwner(final String iDatabaseName, final String iClusterName) {
+		// GET THE NODES INVOLVED IN THE UPDATE
+		final ODocument servers = getServersForCluster(iDatabaseName, iClusterName);
+		if (servers == null)
+			// NOT DISTRIBUTED CFG
+			return true;
+
+		return servers.field("owner").equals(getId());
+	}
+
+	public ODocument getServersForCluster(final String iDatabaseName, final String iClusterName) {
+		// GET THE NODES INVOLVED IN THE UPDATE
+		final ODocument database = clusterDbConfigurations.get(iDatabaseName);
+		if (database == null)
+			return null;
+
+		final ODocument clusters = database.field("clusters");
+		return (ODocument) (clusters.containsField(iClusterName) ? clusters.field(iClusterName) : clusters.field("*"));
+	}
+
+	/**
 	 * Distributed the request to all the configured nodes. Each node has the responsibility to bring the message early (synch-mode)
 	 * or using an asynchronous queue.
 	 * 
@@ -391,19 +420,11 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 				return;
 
 			// GET THE NODES INVOLVED IN THE UPDATE
-			final ODocument database = clusterDbConfigurations.get(iTransactionEntry.getRecord().getDatabase().getName());
-			if (database == null)
+			final ODocument servers = getServersForCluster(iTransactionEntry.getRecord().getDatabase().getName(),
+					iTransactionEntry.clusterName);
+
+			if (servers == null)
 				return;
-
-			OLogManager.instance().info(
-					this,
-					"Caught change " + iTransactionEntry.status + " in database '" + iTransactionEntry.getRecord().getDatabase().getName()
-							+ "', record: " + iTransactionEntry.getRecord().getIdentity()
-							+ " and distributed to all the configured cluster nodes");
-
-			final ODocument clusters = database.field("clusters");
-			final ODocument servers = (ODocument) (clusters.containsField(iTransactionEntry.clusterName) ? clusters
-					.field(iTransactionEntry.clusterName) : clusters.field("*"));
 
 			nodeList = new HashMap<ODistributedServerNodeRemote, ODistributedServerNodeRemote.SYNCH_TYPE>();
 			if (servers.field("synch") != null)
@@ -440,6 +461,10 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		return clusterDbConfigurations.get(iDatabaseName);
 	}
 
+	public void getClusterConfiguration(final String iDatabaseName, final ODocument iConfiguration) {
+		clusterDbConfigurations.put(iDatabaseName, iConfiguration);
+	}
+
 	public String getId() {
 		return id;
 	}
@@ -448,15 +473,26 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		return iServerAddress + ":" + iServerPort;
 	}
 
-//	private ODocument createInitialDatabaseConfiguration(final String iDatabaseName) {
-//		return addServerInConfiguration(iDatabaseName, getId(), getId(), "{\"*\":{\"owner\":{\"" + getId() + "\":{}}}}");
-//	}
+	// private ODocument createInitialDatabaseConfiguration(final String iDatabaseName) {
+	// return addServerInConfiguration(iDatabaseName, getId(), getId(), "{\"*\":{\"owner\":{\"" + getId() + "\":{}}}}");
+	// }
 
 	public ODocument addServerInConfiguration(final String iDatabaseName, final String iAlias, final String iAddress,
 			final boolean iAsynchronous) {
-		final String cfg = iAsynchronous ? "{\"*\":{\"asynch\":{\"" + iAlias + "\":{\"update-delay\":0}}}}" : "{\"*\":{\"asynch\":{\""
-				+ iAlias + "\":{\"update-delay\":0}}}}";
-		return addServerInConfiguration(iDatabaseName, iAlias, iAddress, cfg);
+		StringBuilder cfg = new StringBuilder();
+
+		cfg.append("{ \"*\" : { ");
+		cfg.append("\"owner\" : \"");
+		cfg.append(getId());
+		cfg.append("\", ");
+		cfg.append(iAsynchronous ? "\"asynch\"" : "\"synch\"");
+		cfg.append(" : { \"");
+		cfg.append(iAlias);
+		cfg.append("\" : \"");
+		cfg.append(iAlias);
+		cfg.append("\" } } }");
+
+		return addServerInConfiguration(iDatabaseName, iAlias, iAddress, cfg.toString());
 	}
 
 	@SuppressWarnings("unchecked")

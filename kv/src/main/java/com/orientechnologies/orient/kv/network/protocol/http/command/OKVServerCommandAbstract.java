@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.kv.network.protocol.http.command;
 
-import com.orientechnologies.orient.enterprise.exception.ONetworkProtocolException;
+import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.kv.network.protocol.http.OKVDictionary;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;

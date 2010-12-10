@@ -317,7 +317,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 											if (className != null)
 												linkedClass = iDatabase.getMetadata().getSchema().getClass(className);
 										}
-									} else if (value.charAt(0) == OStringSerializerHelper.EMBEDDED) {
+									} else if (value.charAt(0) == OStringSerializerHelper.PARENTHESIS_BEGIN) {
 										linkedType = OType.EMBEDDED;
 									} else if (Character.isDigit(value.charAt(0)) || value.charAt(0) == '+' || value.charAt(0) == '-') {
 										String[] items = value.split(",");
@@ -331,7 +331,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 								type = OType.EMBEDDEDMAP;
 							} else if (fieldValue.charAt(0) == OStringSerializerHelper.LINK)
 								type = OType.LINK;
-							else if (fieldValue.charAt(0) == OStringSerializerHelper.EMBEDDED)
+							else if (fieldValue.charAt(0) == OStringSerializerHelper.PARENTHESIS_BEGIN)
 								type = OType.EMBEDDED;
 							else if (fieldValue.equals("true") || fieldValue.equals("false"))
 								type = OType.BOOLEAN;

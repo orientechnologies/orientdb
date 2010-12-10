@@ -63,7 +63,7 @@ import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
-import com.orientechnologies.orient.enterprise.exception.ONetworkProtocolException;
+import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServerMain;
@@ -406,7 +406,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 		case OChannelBinaryProtocol.REQUEST_RECORD_CREATE:
 			data.commandInfo = "Create record";
-
+			
 			final long location = underlyingDatabase.save(channel.readShort(), ORID.CLUSTER_POS_INVALID, channel.readBytes(), -1,
 					channel.readByte());
 			sendOk(lastClientTxId);

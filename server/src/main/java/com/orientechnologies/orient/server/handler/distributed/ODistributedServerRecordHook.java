@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionEntry;
 
 /**
@@ -44,11 +45,25 @@ public class ODistributedServerRecordHook implements ORecordHook, ODatabaseLifec
 	}
 
 	public void onTrigger(final TYPE iType, final ORecord<?> iRecord) {
-		if (!manager.isDistributedConfiguration())
-			return;
+//		if (!manager.isDistributedConfiguration())
+//			return;
 
 		try {
 			switch (iType) {
+			case BEFORE_CREATE:
+			case BEFORE_UPDATE:
+			case BEFORE_DELETE:
+				// CHECK IF THE CURRENT NODE IS THE OWNER FOR THAT CLUSTER
+				final String clusterName = iRecord.getDatabase().getClusterNameById(iRecord.getIdentity().getClusterId());
+
+				if (!manager.isCurrentNodeTheClusterOwner(iRecord.getDatabase().getName(), clusterName)) {
+					final ODocument servers = manager.getServersForCluster(iRecord.getDatabase().getName(), clusterName);
+					throw new ODistributedException("Can't apply changes to the cluster '" + clusterName
+							+ "' because the current node is not the owner for that cluster. Please connect to the server: "
+							+ servers.field("owner"));
+				}
+				break;
+
 			case AFTER_CREATE:
 				manager.distributeRequest(new OTransactionEntry<ORecordInternal<?>>((ORecordInternal<?>) iRecord,
 						OTransactionEntry.CREATED, null));

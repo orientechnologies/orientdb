@@ -58,6 +58,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 		// DISTRIBUTED SERVER REQUESTS
 		switch (lastRequestType) {
+
 		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_HEARTBEAT:
 			data.commandInfo = "Keep-alive";
 			manager.updateHeartBeatTime();
@@ -151,7 +152,9 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_CONFIG: {
 			data.commandInfo = "Update db configuration from server node leader";
-			ODocument config = (ODocument) new ODocument().fromStream(channel.readBytes());
+			
+			final ODocument config = (ODocument) new ODocument().fromStream(channel.readBytes());
+			manager.getClusterConfiguration(connection.database.getName(), config);
 
 			OLogManager.instance().warn(this, "Changed distributed server configuration:\n%s", config.toJSON("indent:2"));
 
@@ -160,10 +163,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 		}
 
 		default:
-			data.commandInfo = "Command not supported";
-			OLogManager.instance().error(this, "Request not supported. Code: " + lastRequestType);
-			channel.clearInput();
-			sendError(lastClientTxId, null);
+			super.parseCommand();
 		}
 	}
 

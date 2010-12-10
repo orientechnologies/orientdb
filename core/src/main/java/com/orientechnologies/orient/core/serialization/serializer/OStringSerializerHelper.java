@@ -40,9 +40,8 @@ public abstract class OStringSerializerHelper {
 
 	public static final String							CLASS_SEPARATOR				= "@";
 	public static final char								LINK									= '#';
-	public static final char								EMBEDDED							= '*';
-	public static final char								OPEN_BRACE						= '(';
-	public static final char								CLOSED_BRACE					= ')';
+	public static final char								PARENTHESIS_BEGIN			= '(';
+	public static final char								PARENTHESIS_END				= ')';
 	public static final char								COLLECTION_BEGIN			= '[';
 	public static final char								COLLECTION_END				= ']';
 	public static final char								MAP_BEGIN							= '{';
@@ -202,8 +201,7 @@ public abstract class OStringSerializerHelper {
 		char stringBeginChar = ' ';
 		char c;
 		char previousChar = ' ';
-		boolean insideEmbedded = false;
-		int insideParameters = 0;
+		int insideParenthesis = 0;
 		int insideCollection = 0;
 		int insideMap = 0;
 		int insideLinkPart = 0;
@@ -224,12 +222,13 @@ public abstract class OStringSerializerHelper {
 						throw new OSerializationException("Found invalid " + COLLECTION_END + " character. Assure to open and close correctly.");
 					insideCollection--;
 
-				} else if (c == OPEN_BRACE) {
-					insideParameters++;
-				} else if (c == CLOSED_BRACE) {
-					if (insideParameters == 0)
-						throw new OSerializationException("Found invalid " + CLOSED_BRACE + " character. Assure to open and close correctly.");
-					insideParameters--;
+				} else if (c == PARENTHESIS_BEGIN) {
+					insideParenthesis++;
+				} else if (c == PARENTHESIS_END) {
+					if (insideParenthesis == 0)
+						throw new OSerializationException("Found invalid " + PARENTHESIS_END
+								+ " character. Assure to open and close correctly.");
+					insideParenthesis--;
 
 				} else if (c == MAP_BEGIN) {
 					insideMap++;
@@ -237,9 +236,8 @@ public abstract class OStringSerializerHelper {
 					if (insideMap == 0)
 						throw new OSerializationException("Found invalid " + MAP_END + " character. Assure to open and close correctly.");
 					insideMap--;
+				}
 
-				} else if (c == EMBEDDED)
-					insideEmbedded = !insideEmbedded;
 				else if (c == LINK)
 					// FIRST PART OF LINK
 					insideLinkPart = 1;
@@ -250,7 +248,7 @@ public abstract class OStringSerializerHelper {
 				if (insideLinkPart > 0 && c != '-' && !Character.isDigit(c) && c != ORID.SEPARATOR && c != LINK)
 					insideLinkPart = 0;
 
-				if (insideParameters == 0 && insideCollection == 0 && insideMap == 0 && !insideEmbedded && insideLinkPart == 0) {
+				if (insideParenthesis == 0 && insideCollection == 0 && insideMap == 0 && insideLinkPart == 0) {
 					// OUTSIDE A PARAMS/COLLECTION/MAP
 					if ((c == '\'' || c == '"') && previousChar != '\\') {
 						// START STRING
@@ -403,11 +401,11 @@ public abstract class OStringSerializerHelper {
 	public static int getParameters(final String iText, final int iBeginPosition, final List<String> iParameters) {
 		iParameters.clear();
 
-		int openPos = iText.indexOf(OPEN_BRACE, iBeginPosition);
+		int openPos = iText.indexOf(PARENTHESIS_BEGIN, iBeginPosition);
 		if (openPos == -1)
 			return iBeginPosition;
 
-		int closePos = iText.indexOf(CLOSED_BRACE, openPos + 1);
+		int closePos = iText.indexOf(PARENTHESIS_END, openPos + 1);
 		if (closePos == -1)
 			return iBeginPosition;
 

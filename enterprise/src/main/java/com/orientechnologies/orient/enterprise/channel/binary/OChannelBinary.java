@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
-import com.orientechnologies.orient.enterprise.exception.ONetworkProtocolException;
 
 public abstract class OChannelBinary extends OChannel {
 	public DataInputStream	in;

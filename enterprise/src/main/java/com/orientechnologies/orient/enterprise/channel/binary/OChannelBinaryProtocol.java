@@ -17,8 +17,6 @@ package com.orientechnologies.orient.enterprise.channel.binary;
 
 import java.io.IOException;
 
-import com.orientechnologies.orient.enterprise.exception.ONetworkProtocolException;
-
 /**
  * The range of the requests is 1-79.
  * 
@@ -71,7 +69,7 @@ public class OChannelBinaryProtocol {
 
 	// CONSTANTS
 	public static final int		RECORD_NULL										= -2;
-	public static final int		CURRENT_PROTOCOL_VERSION			= 1;	// SENT AS SHORT AS FIRST PACKET AFTER SOCKET CONNECTION
+	public static final int		CURRENT_PROTOCOL_VERSION			= 2;	// SENT AS SHORT AS FIRST PACKET AFTER SOCKET CONNECTION
 
 	public static void checkProtocolVersion(final OChannelBinary iNetwork) throws IOException {
 		// SEND PROTOCOL VERSION

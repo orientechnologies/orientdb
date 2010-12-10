@@ -208,7 +208,7 @@ public class OSQLFilter extends OCommandToParse {
 			if (word.startsWith(op.keyword)) {
 				final List<String> params = new ArrayList<String>();
 				// CHECK FOR PARAMETERS
-				if (word.length() > op.keyword.length() && word.charAt(op.keyword.length()) == OStringSerializerHelper.OPEN_BRACE) {
+				if (word.length() > op.keyword.length() && word.charAt(op.keyword.length()) == OStringSerializerHelper.PARENTHESIS_BEGIN) {
 					int paramBeginPos = currentPos - (word.length() - op.keyword.length());
 					currentPos = OStringSerializerHelper.getParameters(text, paramBeginPos, params)+1;
 				} else if (!word.equals(op.keyword))
@@ -231,7 +231,7 @@ public class OSQLFilter extends OCommandToParse {
 		if (words == null)
 			return null;
 
-		if (words[0].length() > 0 && words[0].charAt(0) == OStringSerializerHelper.OPEN_BRACE) {
+		if (words[0].length() > 0 && words[0].charAt(0) == OStringSerializerHelper.PARENTHESIS_BEGIN) {
 			braces++;
 
 			// SUB-CONDITION
@@ -278,11 +278,11 @@ public class OSQLFilter extends OCommandToParse {
 			// RECORD ATTRIB
 			result = new OSQLFilterItemRecordAttrib(this, words[0]);
 
-		} else if (words[0].startsWith(OSQLFilterItemFieldAll.NAME + OStringSerializerHelper.OPEN_BRACE)) {
+		} else if (words[0].startsWith(OSQLFilterItemFieldAll.NAME + OStringSerializerHelper.PARENTHESIS_BEGIN)) {
 
 			result = new OSQLFilterItemFieldAll(this, words[1]);
 
-		} else if (words[0].startsWith(OSQLFilterItemFieldAny.NAME + OStringSerializerHelper.OPEN_BRACE)) {
+		} else if (words[0].startsWith(OSQLFilterItemFieldAny.NAME + OStringSerializerHelper.PARENTHESIS_BEGIN)) {
 
 			result = new OSQLFilterItemFieldAny(this, words[1]);
 

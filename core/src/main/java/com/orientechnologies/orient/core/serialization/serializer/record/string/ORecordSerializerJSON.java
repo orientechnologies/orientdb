@@ -185,6 +185,10 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				// OBJECT
 				return fromString(iRecord.getDatabase(), iFieldValue, null);
 			else {
+				if (fields.length % 2 == 1)
+					throw new OSerializationException("Bad JSON format on map. Expected pairs of field:value but received '"
+							+ iFieldValueAsString + "'");
+
 				// MAP
 				final Map<String, Object> embeddedMap = new LinkedHashMap<String, Object>();
 

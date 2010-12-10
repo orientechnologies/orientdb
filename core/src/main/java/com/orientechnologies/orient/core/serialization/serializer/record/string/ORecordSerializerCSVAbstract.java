@@ -192,7 +192,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 						if (mapValue.length() > 0) {
 							final char begin = mapValue.charAt(0);
 
-							if (begin == OStringSerializerHelper.EMBEDDED)
+							if (begin == OStringSerializerHelper.PARENTHESIS_BEGIN)
 								iLinkedType = OType.EMBEDDED;
 							else if (begin == OStringSerializerHelper.LINK)
 								iLinkedType = OType.LINK;
@@ -350,9 +350,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 		case EMBEDDED:
 			if (iValue instanceof ODocument) {
-				buffer.append(OStringSerializerHelper.EMBEDDED);
+				buffer.append(OStringSerializerHelper.PARENTHESIS_BEGIN);
 				buffer.append(toString((ODocument) iValue, null, iObjHandler, iMarshalledRecords));
-				buffer.append(OStringSerializerHelper.EMBEDDED);
+				buffer.append(OStringSerializerHelper.PARENTHESIS_END);
 			} else if (iValue != null)
 				buffer.append(iValue.toString());
 			break;
@@ -418,10 +418,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 												}
 											}, null, iSaveOnlyDirty);
 
-						buffer.append(OStringSerializerHelper.EMBEDDED);
+						buffer.append(OStringSerializerHelper.PARENTHESIS_BEGIN);
 						// buffer.append(OStringSerializerHelper.fieldTypeToString(iLinkedType, record));
 						buffer.append(toString(record, null, iObjHandler, iMarshalledRecords));
-						buffer.append(OStringSerializerHelper.EMBEDDED);
+						buffer.append(OStringSerializerHelper.PARENTHESIS_END);
 					} else if (o.getValue() instanceof Map<?, ?>) {
 						// SUB MAP
 						buffer.append(OStringSerializerHelper.fieldTypeToString(iDatabase, OType.EMBEDDEDMAP, o.getValue()));
@@ -469,7 +469,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		for (String item : items) {
 			objectToAdd = null;
 
-			if (item.length() > 2 && item.charAt(0) == OStringSerializerHelper.EMBEDDED) {
+			if (item.length() > 2 && item.charAt(0) == OStringSerializerHelper.PARENTHESIS_BEGIN) {
 				// REMOVE EMBEDDED BEGIN/END CHARS
 				item = item.substring(1, item.length() - 1);
 
@@ -539,7 +539,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			}
 
 			if (document != null && iLinkedType != OType.LINK)
-				buffer.append(OStringSerializerHelper.EMBEDDED);
+				buffer.append(OStringSerializerHelper.PARENTHESIS_BEGIN);
 
 			if (linkedClass != null || document != null) {
 				if (document == null)
@@ -569,7 +569,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			}
 
 			if (document != null && iLinkedType != OType.LINK)
-				buffer.append(OStringSerializerHelper.EMBEDDED);
+				buffer.append(OStringSerializerHelper.PARENTHESIS_END);
 		}
 
 		buffer.append(OStringSerializerHelper.COLLECTION_END);

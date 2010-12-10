@@ -80,7 +80,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
 						operationsChain.add(new OPair<Integer, List<String>>(op.id, arguments));
 
-						pos = partUpperCase.indexOf(OStringSerializerHelper.CLOSED_BRACE) + OSQLFilterFieldOperator.CHAIN_SEPARATOR.length();
+						pos = partUpperCase.indexOf(OStringSerializerHelper.PARENTHESIS_END) + OSQLFilterFieldOperator.CHAIN_SEPARATOR.length();
 						operatorFound = true;
 						break;
 					}
