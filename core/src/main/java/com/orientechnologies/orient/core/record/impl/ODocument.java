@@ -52,8 +52,8 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 
 /**
- * ORecord implementation schema aware. It's able to handle records with, without or with a partial schema. Fields can be added at
- * run-time. Instances can be reused across calls by using the reset() before to re-use.
+ * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
+ * be added at run-time. Instances can be reused across calls by using the reset() before to re-use.
  */
 @SuppressWarnings("unchecked")
 public class ODocument extends ORecordVirtualAbstract<Object> implements Iterable<Entry<String, Object>> {
@@ -61,6 +61,9 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 
 	protected ODocument				_owner			= null;
 
+	/**
+	 * Internal constructor used on unmarshalling.
+	 */
 	public ODocument() {
 		setup();
 	}
@@ -149,7 +152,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	}
 
 	/**
-	 * Fill a document passing the field array in form of pairs of field name and value.
+	 * Fills a document passing the field array in form of pairs of field name and value.
 	 * 
 	 * @param iFields
 	 *          Array of field pairs
@@ -162,7 +165,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	}
 
 	/**
-	 * Fill a document passing the field names/values
+	 * Fills a document passing the field names/values pair, where the first pair is mandatory.
 	 * 
 	 */
 	public ODocument(final String iFieldName, final Object iFieldValue, final Object... iFields) {
@@ -171,7 +174,8 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	}
 
 	/**
-	 * Copies the current instance to a new one.
+	 * Copies the current instance to a new one. Hasn't been choose the clone() to let ODocument return type. Once copied the new
+	 * instance has the same identity and values but all the internal structure are totally independent by the source.
 	 */
 	public ODocument copy() {
 		ODocument cloned = new ODocument();
@@ -245,7 +249,10 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	}
 
 	/**
-	 * Loads the record using a fetch plan.
+	 * Loads the record using a fetch plan. Example:
+	 * <p>
+	 * <code>doc.load( "*:3" ); // LOAD THE DOCUMENT BY EARLY FETCHING UP TO 3rd LEVEL OF CONNECTIONS</code>
+	 * </p>
 	 */
 	public ODocument load(final String iFetchPlan) {
 		if (_database == null)
@@ -396,6 +403,30 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			buffer.append("}");
 
 		return buffer.toString();
+	}
+
+	/**
+	 * Fills the ODocument directly with the string representation of the document itself. Use it for faster insertion but pay
+	 * attention to respect the OrientDB record format.
+	 * <p>
+	 * <code>
+	 * record.reset();<br/>
+	 * record.setClassName("Account");<br/>
+	 * record.fromString(new String("Account@id:" + data.getCyclesDone() + ",name:'Luca',surname:'Garulli',birthDate:" + date.getTime()<br/>
+	 * 		+ ",salary:" + 3000f + i));<br/>
+	 * record.save();<br/>
+</code>
+	 * </p>
+	 * 
+	 * @param iValue
+	 */
+	public void fromString(final String iValue) {
+		_dirty = true;
+		_source = OBinaryProtocol.string2bytes(iValue);
+		_fieldOriginalValues = null;
+		_fieldTypes = null;
+		_fieldValues = null;
+		_cursor = 0;
 	}
 
 	/**
@@ -773,6 +804,11 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		return RECORD_TYPE;
 	}
 
+	/**
+	 * Returns the Document owner instance. It's used for embedded documents to set as dirty the owners recursively.
+	 * 
+	 * @return the Owner ODocument instance if any, otherwise null.
+	 */
 	public ODocument getOwner() {
 		return _owner;
 	}
@@ -861,14 +897,5 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		if (_fieldTypes == null)
 			_fieldTypes = new HashMap<String, OType>();
 		_fieldTypes.put(iPropertyName, iType);
-	}
-
-	public void fromString(final String iValue) {
-		_dirty = true;
-		_source = OBinaryProtocol.string2bytes(iValue);
-		_fieldOriginalValues = null;
-		_fieldTypes = null;
-		_fieldValues = null;
-		_cursor = 0;
 	}
 }
