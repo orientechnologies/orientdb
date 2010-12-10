@@ -124,7 +124,7 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 	public int getVersion(final Object iPojo) {
 		checkOpeness();
 
-		final ODocument record = getRecordByUserObject(iPojo, true);
+		final ODocument record = getRecordByUserObject(iPojo, false);
 
 		if (record == null)
 			throw new OObjectNotManagedException("The object " + iPojo + " is not managed by the current database");
@@ -141,7 +141,7 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 	public ORID getIdentity(final Object iPojo) {
 		checkOpeness();
 
-		final ODocument record = getRecordByUserObject(iPojo, true);
+		final ODocument record = getRecordByUserObject(iPojo, false);
 		if (record == null)
 			throw new OObjectNotManagedException("The object " + iPojo + " is not managed by the current database");
 

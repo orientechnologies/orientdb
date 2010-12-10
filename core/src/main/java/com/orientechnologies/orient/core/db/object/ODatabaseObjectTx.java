@@ -223,6 +223,36 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
 		return underlying;
 	}
 
+	/**
+	 * Returns the version number of the object. Version starts from 0 assigned on creation.
+	 * 
+	 * @param iPojo
+	 *          User object
+	 */
+	@Override
+	public int getVersion(final Object iPojo) {
+		checkOpeness();
+		final ODocument record = getRecordByUserObject(iPojo, false);
+		if (record != null)
+			return record.getVersion();
+
+		return OObjectSerializerHelper.getObjectVersion(iPojo);
+	}
+
+	/**
+	 * Returns the object unique identity.
+	 * 
+	 * @param iPojo
+	 *          User object
+	 */
+	public ORID getIdentity(final Object iPojo) {
+		checkOpeness();
+		final ODocument record = getRecordByUserObject(iPojo, false);
+		if (record != null)
+			return record.getIdentity();
+		return OObjectSerializerHelper.getObjectID(this, iPojo);
+	}
+
 	public Object newInstance() {
 		checkOpeness();
 		return new ODocument(underlying);
