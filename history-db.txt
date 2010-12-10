@@ -26,8 +26,28 @@
                                   ORIENT DATABASE
                          http://www.orientechnologies.com
 *******************************************************************************
+This document enlist the last changes to the OrientDB project.
 
-This document enlist the last changes to the Orient Database project.
+-------------------------------------------------------------------------------
+VERSION 0.9.24 - (December, 10th 2010)
+-------------------------------------------------------------------------------
+New features:
+- Support for Clustering with synchronous and asynchronous replication
+- New SQL RANGE keyword: SELECT FROM ... WHERE ... RANGE <from> [,<to>]
+- New SQL LIMIT keyword: SELECT FROM ... WHERE ... LIMIT 20
+- Improved CREATE INDEX command
+- New REMOVE INDEX command
+- New console command INFO CLASS
+- New console command TRUNCATE CLASS and TRUNCATE CLUSTER
+- MRB+Tree now is faster and stable
+- Improved import/export commands
+- Improved JSON compliance
+- Improved TRAVERSE operator with the optional field list to traverse
+- Fixed a lot of bugs
+
+For the complete list:
+http://code.google.com/p/orient/issues/list?can=1&q=label:v0.9.24
+
 -------------------------------------------------------------------------------
 VERSION 0.9.23 - (October, 18th 2010)
 -------------------------------------------------------------------------------
