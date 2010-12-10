@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.type.tree;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -77,7 +78,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	protected List<OMVRBTreeEntryPersistent<K, V>>					newEntryPoints	= new ArrayList<OMVRBTreeEntryPersistent<K, V>>(
 																																							entryPointsSize);
 
-	// protected Map<ORID, OMVRBTreeEntryPersistent<K, V>> cache = new HashMap<ORID, OMVRBTreeEntryPersistent<K, V>>();
+	protected Map<ORID, OMVRBTreeEntryPersistent<K, V>>			cache						= new HashMap<ORID, OMVRBTreeEntryPersistent<K, V>>();
 
 	public OMVRBTreePersistent(final String iClusterName, final ORID iRID) {
 		this(iClusterName, null, null);
@@ -126,7 +127,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			recordsToCommit.clear();
 			usageCounter = 0;
 			entryPoints.clear();
-			// cache.clear();
+			cache.clear();
 
 		} catch (IOException e) {
 			OLogManager.instance().error(this, "Error on deleting the tree: " + record.getIdentity(), e, OStorageException.class);
@@ -151,7 +152,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			entryPoints.clear();
 
 			recordsToCommit.clear();
-			// cache.clear();
+			cache.clear();
 			root = null;
 
 			usageCounter = 0;
@@ -189,14 +190,14 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 			final int depth = pRoot.getMaxDepthInMemory();
 
+			// RECONFIG IT TO CATCH CHANGED VALUES
+			config();
+
 			if (depth < entryPointsSize * optimizeEntryPointsFactor)
 				// UNDER THRESHOLD AVOID TO OPTIMIZE
 				return;
 
-			// RECONFIG IT TO CATCH CHANGED VALUES
-			config();
-
-//			System.out.printf("\nOptimizing: total items %d, root is %s", size(), pRoot.toString());
+			// System.out.printf("\nOptimizing: total items %d, root is %s", size(), pRoot.toString());
 
 			pRoot.checkToDisconnect((int) (entryPointsSize * optimizeEntryPointsFactor));
 
@@ -305,8 +306,19 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 								// REPLACE THE DATABASE WITH THE NEW ACQUIRED
 								node.record.setDatabase(iDatabase);
 
+							boolean wasNew = node.record.getIdentity().isNew();
+
 							// CREATE THE RECORD
 							node.save();
+
+							if (wasNew) {
+								// INSERT THE NEW NODE IN CACHE
+								if (node.record.getIdentity().getClusterPosition() < -1)
+									// INSERT A COPY TO PREVENT CHANGES
+									cache.put(node.record.getIdentity().copy(), node);
+								else
+									cache.put(node.record.getIdentity(), node);
+							}
 						}
 
 					tmp.clear();

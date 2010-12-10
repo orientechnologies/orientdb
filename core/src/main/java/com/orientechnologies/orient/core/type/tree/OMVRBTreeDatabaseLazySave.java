@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.type.tree;
 
 import java.io.IOException;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -74,7 +75,7 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> imp
 	}
 
 	public void onTxRollback(ODatabase iDatabase) {
-		// cache.clear();
+		cache.clear();
 		entryPoints.clear();
 		try {
 			if (root != null)
@@ -89,6 +90,19 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> imp
 	}
 
 	public void onAfterTxCommit(final ODatabase iDatabase) {
+		// FIX THE CACHE CONTENT WITH FINAL RECORD-IDS
+		final Set<ORID> keys = cache.keySet();
+		OMVRBTreeEntryDatabase<K, V> entry;
+		for (ORID rid : keys) {
+			if (rid.getClusterPosition() < -1) {
+				// FIX IT IN CACHE
+				entry = (OMVRBTreeEntryDatabase<K, V>) cache.get(rid);
+
+				// OVERWRITE IT WITH THE NEW RID
+				cache.put(entry.record.getIdentity(), entry);
+				cache.remove(rid);
+			}
+		}
 	}
 
 	/**
@@ -96,7 +110,7 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> imp
 	 */
 	public void onClose(final ODatabase iDatabase) {
 		super.commitChanges(database);
-		// cache.clear();
+		cache.clear();
 		entryPoints.clear();
 		root = null;
 	}

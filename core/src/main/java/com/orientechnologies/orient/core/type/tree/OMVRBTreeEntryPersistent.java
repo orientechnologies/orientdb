@@ -185,8 +185,8 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 	public OMVRBTreeEntryPersistent<K, V> delete() throws IOException {
 		pTree.removeEntryPoint(this);
 
-		// if (record.getIdentity().isValid())
-		// pTree.cache.remove(record.getIdentity());
+		if (record.getIdentity().isValid())
+			pTree.cache.remove(record.getIdentity());
 
 		// DELETE THE NODE FROM THE PENDING RECORDS TO COMMIT
 		for (OMVRBTreeEntryPersistent<K, V> node : pTree.recordsToCommit) {
@@ -205,11 +205,15 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 	 *          Force disconnection also if the record it's dirty
 	 */
 	protected int disconnect(final boolean iForceDirty) {
-		if (!iForceDirty && record.isDirty())
+		if (record.isDirty() && !iForceDirty)
 			// DIRTY NODE
 			return 0;
 
-		int disconnected = 1;
+		if (pTree.cache.remove(record.getIdentity()) == null) {
+			System.out.println("CACHE INVALID?");
+		}
+
+		int totalDisconnected = 1;
 
 		if (this != tree.getRoot()) {
 			// SPEED UP MEMORY CLAIM BY RESETTING INTERNAL FIELDS
@@ -235,19 +239,27 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		if (left != null) {
 			// DISCONNECT MYSELF FROM THE LEFT NODE
 			left.parent = null;
-			disconnected += left.disconnect(iForceDirty);
-			left = null;
+			int disconnected = left.disconnect(iForceDirty);
+
+			if (disconnected > 0) {
+				totalDisconnected += disconnected;
+				left = null;
+			}
 		}
 
 		// DISCONNECT RECURSIVELY THE RIGHT NODE
 		if (right != null) {
 			// DISCONNECT MYSELF FROM THE RIGHT NODE
 			right.parent = null;
-			disconnected += right.disconnect(iForceDirty);
-			right = null;
+			int disconnected = right.disconnect(iForceDirty);
+
+			if (disconnected > 0) {
+				totalDisconnected += disconnected;
+				right = null;
+			}
 		}
 
-		return disconnected;
+		return totalDisconnected;
 	}
 
 	/**
@@ -264,7 +276,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 
 		int freed = 0;
 
-		if (iDepthLevel == -1 || getDepthInMemory() >= iDepthLevel)
+		if (getDepthInMemory() >= iDepthLevel)
 			freed = disconnect(false);
 		else {
 			if (left != null)

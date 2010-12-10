@@ -61,17 +61,18 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> {
 			throws IOException {
 
 		// SEARCH INTO THE CACHE
-		OMVRBTreeEntryDatabase<K, V> entry = null;// (OMVRBTreeEntryDatabase<K, V>) cache.get(iRecordId);
+		OMVRBTreeEntryDatabase<K, V> entry = (OMVRBTreeEntryDatabase<K, V>) cache.get(iRecordId);
 		if (entry == null) {
 			// NOT FOUND: CREATE IT AND PUT IT INTO THE CACHE
 			entry = new OMVRBTreeEntryDatabase<K, V>(this, (OMVRBTreeEntryDatabase<K, V>) iParent, iRecordId);
-			// cache.put(iRecordId, entry);
-		} //else {
-			// entry.load();
-//			if (iParent != null)
-//				// FOUND: ASSIGN IT
-//				entry.setParent(iParent);
-//		}
+			cache.put(iRecordId, entry);
+		} else {
+			// COULD BE A PROBLEM BECAUSE IF A NODE IS DISCONNECTED CAN BE STAY IN CACHE?
+			//entry.load();
+			if (iParent != null)
+				// FOUND: ASSIGN IT
+				entry.setParent(iParent);
+		}
 		return entry;
 	}
 
