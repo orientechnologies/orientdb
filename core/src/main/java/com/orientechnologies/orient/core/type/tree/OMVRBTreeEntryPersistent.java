@@ -209,9 +209,9 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 			// DIRTY NODE
 			return 0;
 
-		if (pTree.cache.remove(record.getIdentity()) == null) {
-			System.out.println("CACHE INVALID?");
-		}
+//		if (pTree.cache.remove(record.getIdentity()) == null) {
+//			System.out.println("CACHE INVALID?");
+//		}
 
 		int totalDisconnected = 1;
 
