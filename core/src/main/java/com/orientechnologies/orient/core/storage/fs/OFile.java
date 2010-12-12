@@ -359,4 +359,8 @@ public abstract class OFile {
 	public void setIncrementSize(int incrementSize) {
 		this.incrementSize = incrementSize;
 	}
+
+	public boolean isOpen() {
+		return accessFile != null;
+	}
 }

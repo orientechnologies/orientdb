@@ -167,7 +167,7 @@ public class OMultiFileSegment extends OSegment {
 			acquireSharedLock();
 
 			for (OFile file : files) {
-				if (file != null)
+				if (file != null && file.isOpen())
 					file.synch();
 			}
 
