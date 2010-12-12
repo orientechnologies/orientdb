@@ -27,15 +27,15 @@ import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 
-public class OEntityManager implements EntityManager {
+public class OJPAEntityManager implements EntityManager {
 	private ODatabaseObjectTx	database;
 	private FlushModeType			flushMode	= FlushModeType.AUTO;
 	private EntityTransaction	transaction;
 
-	public OEntityManager(final Map<?, ?> map) {
+	public OJPAEntityManager(final Map<?, ?> map) {
 		final String url = (String) map.get("url");
 		database = new ODatabaseObjectTx(url);
-		transaction = new OEntityTransaction(database);
+		transaction = new OJPAEntityTransaction(database);
 	}
 
 	public void persist(Object entity) {

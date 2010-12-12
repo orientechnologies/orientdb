@@ -29,10 +29,10 @@ import javax.persistence.EntityManagerFactory;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OEntityManagerFactory implements EntityManagerFactory {
+public class OJPAEntityManagerFactory implements EntityManagerFactory {
 	private boolean															opened		= true;
-	private List<OEntityManager>								instances	= new ArrayList<OEntityManager>();
-	private static final OEntityManagerFactory	INSTANCE	= new OEntityManagerFactory();
+	private List<OJPAEntityManager>								instances	= new ArrayList<OJPAEntityManager>();
+	private static final OJPAEntityManagerFactory	INSTANCE	= new OJPAEntityManagerFactory();
 
 	public EntityManager createEntityManager() {
 		return createEntityManager(null);
@@ -40,13 +40,13 @@ public class OEntityManagerFactory implements EntityManagerFactory {
 
 	@SuppressWarnings("rawtypes")
 	public EntityManager createEntityManager(Map map) {
-		final OEntityManager newInstance = new OEntityManager(map);
+		final OJPAEntityManager newInstance = new OJPAEntityManager(map);
 		instances.add(newInstance);
 		return newInstance;
 	}
 
 	public void close() {
-		for (OEntityManager instance : instances) {
+		for (OJPAEntityManager instance : instances) {
 			instance.close();
 		}
 		instances.clear();
@@ -57,7 +57,7 @@ public class OEntityManagerFactory implements EntityManagerFactory {
 		return opened;
 	}
 
-	public static OEntityManagerFactory getInstance() {
+	public static OJPAEntityManagerFactory getInstance() {
 		return INSTANCE;
 	}
 }

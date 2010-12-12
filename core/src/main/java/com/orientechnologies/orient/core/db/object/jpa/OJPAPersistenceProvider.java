@@ -22,13 +22,13 @@ import javax.persistence.spi.PersistenceProvider;
 import javax.persistence.spi.PersistenceUnitInfo;
 
 @SuppressWarnings("rawtypes")
-public class OPersistenceProvider implements PersistenceProvider {
+public class OJPAPersistenceProvider implements PersistenceProvider {
 
 	public EntityManagerFactory createEntityManagerFactory(String emName, Map map) {
-		return OEntityManagerFactory.getInstance();
+		return OJPAEntityManagerFactory.getInstance();
 	}
 
 	public EntityManagerFactory createContainerEntityManagerFactory(PersistenceUnitInfo info, Map map) {
-		return OEntityManagerFactory.getInstance();
+		return OJPAEntityManagerFactory.getInstance();
 	}
 }

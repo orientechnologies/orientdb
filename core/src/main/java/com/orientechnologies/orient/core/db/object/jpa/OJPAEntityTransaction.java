@@ -20,10 +20,10 @@ import javax.persistence.EntityTransaction;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 
-public class OEntityTransaction implements EntityTransaction {
+public class OJPAEntityTransaction implements EntityTransaction {
 	private ODatabaseObjectTx	database;
 
-	public OEntityTransaction(final ODatabaseObjectTx iDatabase) {
+	public OJPAEntityTransaction(final ODatabaseObjectTx iDatabase) {
 		database = iDatabase;
 	}
 
