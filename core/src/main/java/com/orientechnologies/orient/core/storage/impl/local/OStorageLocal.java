@@ -63,6 +63,10 @@ import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemory;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
 public class OStorageLocal extends OStorageAbstract {
+	private static final int						DELETE_MAX_RETRIES				= 20;
+
+	private static final int						DELETE_WAIT_TIME					= 200;
+
 	public static final String[]				TYPES											= { OClusterLocal.TYPE, OClusterLogical.TYPE };
 
 	// private final OLockManager<String, String> lockManager = new
@@ -288,12 +292,12 @@ public class OStorageLocal extends OStorageAbstract {
 	 * container folder if the directory is empty. If files are locked, retry up to 10 times before to raise an exception.
 	 */
 	public void delete() {
-		final long timer = OProfiler.getInstance().startChrono();
-
 		if (!isClosed())
 			// CLOSE THE DATABASE BY REMOVING THE CURRENT USER
 			if (removeUser() > 0)
 				throw new OStorageException("Can't delete a storage open");
+
+		final long timer = OProfiler.getInstance().startChrono();
 
 		// GET REAL DIRECTORY
 		File dbDir = new File(OSystemVariableResolver.resolveSystemVariables(url));
@@ -304,7 +308,7 @@ public class OStorageLocal extends OStorageAbstract {
 
 		try {
 			// RETRIES
-			for (int i = 0; i < 20; ++i) {
+			for (int i = 0; i < DELETE_MAX_RETRIES; ++i) {
 				if (dbDir.exists() && dbDir.isDirectory()) {
 					int notDeletedFiles = 0;
 
@@ -328,10 +332,14 @@ public class OStorageLocal extends OStorageAbstract {
 					return;
 
 				try {
+					OLogManager.instance().debug(this,
+							"Can't delete database files because are locked by the OrientDB process yet: waiting a %d ms and retry %d/%d...",
+							DELETE_WAIT_TIME, i, DELETE_MAX_RETRIES);
+
 					// FORCE GARBAGE COLLECTION TO COLLECT ALL THE PENDING BUFFERS
 					System.gc();
 
-					Thread.sleep(200);
+					Thread.sleep(DELETE_WAIT_TIME);
 				} catch (InterruptedException e) {
 				}
 			}
@@ -1020,7 +1028,7 @@ public class OStorageLocal extends OStorageAbstract {
 			iClusterSegment.setPhysicalPosition(clusterPosition, dataSegment, dataOffset, iRecordType);
 
 			incrementVersion();
-			
+
 			return clusterPosition;
 
 		} catch (IOException e) {
