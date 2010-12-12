@@ -44,6 +44,6 @@ set LOG_LEVEL=warning
 set WWW_PATH=%ORIENTDB_HOME%/www
 REM set JAVA_OPTS=-Xms1024m -Xmx1024m
 
-call %JAVA% -client %JAVA_OPTS% -Dorientdb.config.file="%CONFIG_FILE%" -cp "%ORIENTDB_HOME%\lib\orientdb-server-0.9.24-SNAPSHOT.jar" com.orientechnologies.orient.server.OServerShutdownMain %CMD_LINE_ARGS%
+call %JAVA% -client %JAVA_OPTS% -Dorientdb.config.file="%CONFIG_FILE%" -cp "%ORIENTDB_HOME%\lib\orientdb-server-@VERSION@.jar" com.orientechnologies.orient.server.OServerShutdownMain %CMD_LINE_ARGS%
 
 :end
