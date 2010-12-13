@@ -86,7 +86,8 @@ public class ODatabaseRaw implements ODatabase {
 			if (status == STATUS.OPEN)
 				throw new IllegalStateException("Database " + getName() + " is already open");
 
-			storage = Orient.instance().loadStorage(url);
+			if (storage == null)
+				storage = Orient.instance().loadStorage(url);
 			storage.open(getId(), iUserName, iUserPassword);
 
 			// WAKE UP DB LIFECYCLE LISTENER
@@ -114,7 +115,8 @@ public class ODatabaseRaw implements ODatabase {
 			if (status == STATUS.OPEN)
 				throw new IllegalStateException("Database " + getName() + " is already open");
 
-			storage = Orient.instance().loadStorage(url);
+			if (storage == null)
+				storage = Orient.instance().loadStorage(url);
 			storage.create();
 
 			// WAKE UP DB LIFECYCLE LISTENER
@@ -160,6 +162,9 @@ public class ODatabaseRaw implements ODatabase {
 	public boolean exists() {
 		if (status == STATUS.OPEN)
 			return true;
+
+		if (storage == null)
+			storage = Orient.instance().loadStorage(url);
 
 		return storage.exists();
 	}
