@@ -520,9 +520,9 @@ public class OObjectSerializerHelper {
 		final String vFieldName = fieldVersions.get(pojoClass);
 		boolean versionConfigured = false;
 		if (vFieldName != null) {
+			versionConfigured = true;
 			Object ver = getFieldValue(iPojo, vFieldName);
 			if (ver != null) {
-				versionConfigured = true;
 				// FOUND
 				if (ver instanceof Number) {
 					// TREATS AS CLUSTER POSITION
