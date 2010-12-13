@@ -15,21 +15,24 @@
  */
 package com.orientechnologies.orient.client.dictionary;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.dictionary.ODictionaryInternal;
+import com.orientechnologies.orient.core.dictionary.ODictionaryAbstract;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
 @SuppressWarnings("unchecked")
-public class ODictionaryClient<T extends Object> implements ODictionaryInternal<T> {
+public class ODictionaryClient<T extends Object> extends ODictionaryAbstract<T> {
 	private OStorageRemote			storage;
 	private ODatabaseRecord<?>	database;
 
 	public ODictionaryClient(final ODatabaseRecord<?> iDatabase, final OStorageRemote iStorage) {
+		super(iDatabase);
 		this.database = iDatabase;
 		this.storage = iStorage;
 	}
@@ -59,7 +62,18 @@ public class ODictionaryClient<T extends Object> implements ODictionaryInternal<
 		if (record.isDirty())
 			record.save();
 
-		ORecordInternal<?> oldRecord = storage.dictionaryPut(database, iKey, record);
+		ORecordInternal<?> oldRecord = null;
+		if (record.getIdentity().isTemporary()) {
+			// DURING TRANSACTION, KEEP IT IN MEMORY
+			if (transactionalEntries == null)
+				transactionalEntries = new HashMap<String, ORecord<?>>();
+
+			// REMEMBER THE KEY TO RE-SET WHEN THE TX IS COMMITTED AND RID ARE NOT MORE TEMPORARIES
+			transactionalEntries.put(iKey, record);
+			oldRecord = null;
+		} else
+			// SEND TO THE SERVER
+			oldRecord = storage.dictionaryPut(database, iKey, record);
 
 		return (T) database.getUserObjectByRecord(oldRecord, null);
 	}

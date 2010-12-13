@@ -74,6 +74,9 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> imp
 	public void onOpen(final ODatabase iDatabase) {
 	}
 
+	public void onBeforeTxBegin(ODatabase iDatabase) {
+	}
+
 	public void onTxRollback(ODatabase iDatabase) {
 		cache.clear();
 		entryPoints.clear();

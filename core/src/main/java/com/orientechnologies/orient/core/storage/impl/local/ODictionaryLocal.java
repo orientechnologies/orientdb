@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -22,10 +23,11 @@ import java.util.Set;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.dictionary.ODictionaryInternal;
+import com.orientechnologies.orient.core.dictionary.ODictionaryAbstract;
 import com.orientechnologies.orient.core.dictionary.ODictionaryIterator;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyRecord;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerString;
@@ -33,15 +35,19 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabase;
 
 @SuppressWarnings("unchecked")
-public class ODictionaryLocal<T extends Object> implements ODictionaryInternal<T> {
+public class ODictionaryLocal<T extends Object> extends ODictionaryAbstract<T> {
 	public static final String						DICTIONARY_DEF_CLUSTER_NAME	= OStorage.CLUSTER_INTERNAL_NAME;
 
+	private ODatabaseRecord<?>						underlyingDatabase;
 	private ODatabaseComplex<T>						database;
 	private OMVRBTreeDatabase<String, T>	tree;
+	private HashSet<String>								transactionalEntries;
 
 	public String													clusterName									= DICTIONARY_DEF_CLUSTER_NAME;
 
 	public ODictionaryLocal(final ODatabaseRecord<?> iDatabase) throws SecurityException, NoSuchMethodException {
+		super(iDatabase);
+		underlyingDatabase = iDatabase;
 		database = (ODatabaseComplex<T>) iDatabase.getDatabaseOwner();
 	}
 
@@ -62,7 +68,17 @@ public class ODictionaryLocal<T extends Object> implements ODictionaryInternal<T
 	}
 
 	public T put(final String iKey, final T iValue) {
-		return tree.put(iKey, iValue);
+		T prev = tree.put(iKey, iValue);
+
+		if (iValue instanceof ORecord<?> && ((ORecord<?>) iValue).getIdentity().isTemporary()) {
+			if (transactionalEntries == null)
+				transactionalEntries = new HashSet<String>();
+
+			// REMEMBER THE KEY TO RE-SET WHEN THE TX IS COMMITTED AND RID ARE NOT MORE TEMPORARIES
+			transactionalEntries.add(iKey);
+		}
+
+		return prev;
 	}
 
 	public T remove(final Object iKey) {
@@ -74,14 +90,14 @@ public class ODictionaryLocal<T extends Object> implements ODictionaryInternal<T
 	}
 
 	public void load() {
-		tree = new OMVRBTreeDatabase<String, T>((ODatabaseRecord<?>) database, new ORecordId(
+		tree = new OMVRBTreeDatabase<String, T>(underlyingDatabase, new ORecordId(
 				database.getStorage().getConfiguration().dictionaryRecordId));
 		tree.load();
 	}
 
 	public void create() {
 		try {
-			tree = new OMVRBTreeDatabase<String, T>((ODatabaseRecord<?>) database, clusterName, OStreamSerializerString.INSTANCE,
+			tree = new OMVRBTreeDatabase<String, T>(underlyingDatabase, clusterName, OStreamSerializerString.INSTANCE,
 					OStreamSerializerAnyRecord.INSTANCE);
 			tree.save();
 

@@ -74,6 +74,10 @@ public class ORecordId implements ORID, Comparable<ORecordId>, Comparator<ORecor
 		return clusterPosition < 0;
 	}
 
+	public boolean isTemporary() {
+		return clusterId == -1 && clusterPosition < -1;
+	}
+
 	@Override
 	public String toString() {
 		return generateString(clusterId, clusterPosition);

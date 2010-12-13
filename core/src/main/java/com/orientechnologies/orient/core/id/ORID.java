@@ -33,6 +33,8 @@ public interface ORID extends OSerializableStream {
 
 	public boolean isNew();
 
+	public boolean isTemporary();
+
 	public ORID copy();
 
 	public String next();

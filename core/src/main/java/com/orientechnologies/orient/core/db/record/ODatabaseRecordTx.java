@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -43,6 +45,14 @@ public class ODatabaseRecordTx<REC extends ORecordInternal<?>> extends ODatabase
 	public ODatabaseRecord<REC> begin(final TXTYPE iType) {
 		currentTx.rollback();
 
+		// WAKE UP LISTENERS
+		for (ODatabaseListener listener : underlying.getListeners())
+			try {
+				listener.onBeforeTxBegin(underlying);
+			} catch (Throwable t) {
+				OLogManager.instance().error(this, "Error before tx begin", t);
+			}
+
 		switch (iType) {
 		case NOTX:
 			setDefaultTransactionMode();
@@ -61,12 +71,37 @@ public class ODatabaseRecordTx<REC extends ORecordInternal<?>> extends ODatabase
 	}
 
 	public ODatabaseRecord<REC> commit() {
+		// WAKE UP LISTENERS
+		for (ODatabaseListener listener : underlying.getListeners())
+			try {
+				listener.onBeforeTxCommit(underlying);
+			} catch (Throwable t) {
+				OLogManager.instance().error(this, "Error before tx commit", t);
+			}
+
 		currentTx.commit();
 		setDefaultTransactionMode();
+
+		// WAKE UP LISTENERS
+		for (ODatabaseListener listener : underlying.getListeners())
+			try {
+				listener.onAfterTxCommit(underlying);
+			} catch (Throwable t) {
+				OLogManager.instance().error(this, "Error after tx commit", t);
+			}
+
 		return this;
 	}
 
 	public ODatabaseRecord<REC> rollback() {
+		// WAKE UP LISTENERS
+		for (ODatabaseListener listener : underlying.getListeners())
+			try {
+				listener.onTxRollback(underlying);
+			} catch (Throwable t) {
+				OLogManager.instance().error(this, "Error before tx rollback", t);
+			}
+
 		currentTx.rollback();
 		setDefaultTransactionMode();
 		return this;

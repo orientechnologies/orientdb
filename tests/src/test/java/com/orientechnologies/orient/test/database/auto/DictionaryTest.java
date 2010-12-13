@@ -107,4 +107,17 @@ public class DictionaryTest {
 
 		database.close();
 	}
+
+	@Test(dependsOnMethods = "testDictionaryMassiveCreate")
+	public void testDictionaryInTx() throws IOException {
+		database.open("admin", "admin");
+
+		database.begin();
+		database.getDictionary().put("tx-key", database.newInstance().value("tx-test-dictionary"));
+		database.commit();
+
+		Assert.assertNotNull(database.getDictionary().get("tx-key"));
+
+		database.close();
+	}
 }

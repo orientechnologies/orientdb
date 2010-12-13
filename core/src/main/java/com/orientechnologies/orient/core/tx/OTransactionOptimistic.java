@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.tx;
 
-import com.orientechnologies.orient.core.db.ODatabaseListener;
-import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -31,34 +29,13 @@ public class OTransactionOptimistic<REC extends ORecordInternal<?>> extends OTra
 	}
 
 	public void commit() {
-		// WAKE UP LISTENERS
-		for (ODatabaseListener listener : ((ODatabaseRaw) database.getUnderlying()).getListeners())
-			try {
-				listener.onBeforeTxCommit(database.getUnderlying());
-			} catch (Throwable t) {
-			}
-
 		status = TXSTATUS.COMMITTING;
 		database.executeCommit();
 		status = TXSTATUS.INVALID;
-
-		// WAKE UP LISTENERS
-		for (ODatabaseListener listener : ((ODatabaseRaw) database.getUnderlying()).getListeners())
-			try {
-				listener.onAfterTxCommit(database.getUnderlying());
-			} catch (Throwable t) {
-			}
 	}
 
 	public void rollback() {
 		status = TXSTATUS.ROLLBACKING;
-
-		// WAKE UP LISTENERS
-		for (ODatabaseListener listener : ((ODatabaseRaw) database.getUnderlying()).getListeners())
-			try {
-				listener.onTxRollback(database.getUnderlying());
-			} catch (Throwable t) {
-			}
 
 		// INVALIDATE THE CACHE
 		database.getCache().removeRecords(entries.keySet());
