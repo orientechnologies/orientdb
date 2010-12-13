@@ -28,7 +28,7 @@ public class OEngineRemote extends OEngineAbstract {
 	public OEngineRemote() {
 	}
 
-	public OStorage getStorage(String iURL, Map<String, String> iConfiguration) {
+	public OStorage createStorage(String iURL, Map<String, String> iConfiguration) {
 		try {
 			return new OStorageRemote(iURL, "rw");
 		} catch (Throwable t) {

@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
 import com.orientechnologies.orient.core.id.ORID;
@@ -406,7 +407,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 		case OChannelBinaryProtocol.REQUEST_RECORD_CREATE:
 			data.commandInfo = "Create record";
-			
+
 			final long location = underlyingDatabase.save(channel.readShort(), ORID.CLUSTER_POS_INVALID, channel.readBytes(), -1,
 					channel.readByte());
 			sendOk(lastClientTxId);
@@ -777,17 +778,23 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	 */
 	private void writeRecord(final ORecordInternal<?> iRecord) throws IOException {
 		if (iRecord == null) {
-			channel.writeShort((short) OChannelBinaryProtocol.RECORD_NULL);
+			channel.writeInt(OChannelBinaryProtocol.RECORD_NULL);
 		} else {
-			channel.writeShort((short) (iRecord instanceof ORecordSchemaAware<?>
-					&& ((ORecordSchemaAware<?>) iRecord).getSchemaClass() != null ? ((ORecordSchemaAware<?>) iRecord).getSchemaClass()
-					.getId() : -1));
+			channel
+					.writeInt((iRecord instanceof ORecordSchemaAware<?> && ((ORecordSchemaAware<?>) iRecord).getSchemaClass() != null ? ((ORecordSchemaAware<?>) iRecord)
+							.getSchemaClass().getId() : -1));
 
 			channel.writeByte(iRecord.getRecordType());
 			channel.writeShort((short) iRecord.getIdentity().getClusterId());
 			channel.writeLong(iRecord.getIdentity().getClusterPosition());
 			channel.writeInt(iRecord.getVersion());
-			channel.writeBytes(iRecord.toStream());
+			try {
+				channel.writeBytes(iRecord.toStream());
+			} catch (Exception e) {
+				channel.writeBytes(null);
+				OLogManager.instance().error(this, "Error on unmarshalling record #" + iRecord.getIdentity().toString(),
+						OSerializationException.class);
+			}
 		}
 	}
 
@@ -811,10 +818,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	}
 
 	protected void createDatabase(final ODatabaseDocumentTx iDatabase) {
-		OLogManager.instance().info(this, "Creating database '%s' of type '%s'", iDatabase.getURL(),
-				iDatabase.getStorage() instanceof OStorageLocal ? "local" : "memory");
-
 		iDatabase.create();
+
+		OLogManager.instance().info(this, "Created database '%s' of type '%s'", iDatabase.getURL(),
+				iDatabase.getStorage() instanceof OStorageLocal ? "local" : "memory");
 
 		if (iDatabase.getStorage() instanceof OStorageLocal) {
 			// CLOSE IT BECAUSE IT WILL BE OPEN AT FIRST USE
@@ -836,7 +843,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		} else if (iStorageMode.equals(OEngineMemory.NAME)) {
 			path = iStorageMode + ":" + iDbName;
 		} else
-			throw new IllegalArgumentException("Can't create databse: storage mode '" + iStorageMode + "' is not supported.");
+			throw new IllegalArgumentException("Can't create database: storage mode '" + iStorageMode + "' is not supported.");
 
 		return new ODatabaseDocumentTx(path);
 	}

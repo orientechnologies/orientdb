@@ -95,20 +95,23 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public void open(final int iRequesterId, final String iUserName, final String iUserPassword) {
+		addUser();
+		cache.addUser();
+
 		boolean locked = lock.acquireExclusiveLock();
 
 		try {
+			if (open)
+				// ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
+				// REUSED
+				return;
+
 			userName = iUserName;
 			userPassword = iUserPassword;
 
 			openRemoteDatabase();
-			addUser();
 
 			configuration.load();
-
-			cache.addUser();
-
-			Orient.instance().registerStorage(this);
 
 		} catch (Exception e) {
 			close();
@@ -160,6 +163,9 @@ public class OStorageRemote extends OStorageAbstract {
 		boolean locked = lock.acquireExclusiveLock();
 
 		try {
+			if (!open)
+				return;
+
 			beginRequest(OChannelBinaryProtocol.REQUEST_DB_CLOSE);
 			endRequest();
 
@@ -1130,7 +1136,7 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	private ORecordInternal<?> readRecordFromNetwork(final ODatabaseRecord<?> iDatabase) throws IOException {
-		final int classId = network.readShort();
+		final int classId = network.readInt();
 		if (classId == OChannelBinaryProtocol.RECORD_NULL)
 			return null;
 

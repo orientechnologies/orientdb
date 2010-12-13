@@ -26,8 +26,7 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 
 @Test(groups = "db")
 public class DbCompareTest implements OCommandOutputListener {
-	private static final String	DB2_URL	= "local:tests/target/test-import/test-import";
-	private String							url;
+	private String	url;
 
 	@Parameters(value = "url")
 	public DbCompareTest(String iURL) {
@@ -35,7 +34,7 @@ public class DbCompareTest implements OCommandOutputListener {
 	}
 
 	public void testCompareDatabases() throws IOException {
-		Assert.assertTrue(new ODatabaseCompare(url, DB2_URL, this).compare());
+		Assert.assertTrue(new ODatabaseCompare(url, DbImportExportTest.NEW_DB_URL, this).compare());
 	}
 
 	@Test(enabled = false)

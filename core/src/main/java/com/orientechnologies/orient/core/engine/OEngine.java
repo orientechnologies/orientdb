@@ -23,7 +23,7 @@ public interface OEngine {
 
 	public String getName();
 
-	public OStorage getStorage(String iURL, Map<String, String> parameters);
+	public OStorage createStorage(String iURL, Map<String, String> parameters);
 
 	public void shutdown();
 }

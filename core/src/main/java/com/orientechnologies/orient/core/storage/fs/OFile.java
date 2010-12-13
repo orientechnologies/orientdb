@@ -22,6 +22,7 @@ import java.io.RandomAccessFile;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.io.OFileUtils;
@@ -63,6 +64,9 @@ public abstract class OFile {
 
 	private static final int		OPEN_RETRY_MAX					= 10;
 	private static final int		OPEN_DELAY_RETRY				= 100;
+
+	private static final long		LOCK_WAIT_TIME					= 300;
+	private static final int		LOCK_MAX_RETRIES				= 10;
 
 	public OFile(final String iFileName, final String iMode) throws IOException {
 		init(iFileName, iMode);
@@ -172,7 +176,27 @@ public abstract class OFile {
 	}
 
 	public void lock() throws IOException {
-		fileLock = channel.lock();
+		for (int i = 0; i < LOCK_MAX_RETRIES; ++i) {
+			try {
+				fileLock = channel.tryLock(0, 1, false);
+				break;
+			} catch (OverlappingFileLockException e) {
+				try {
+					OLogManager.instance().debug(this,
+							"Can't open file '" + osFile.getAbsolutePath() + "' because it's locked. Waiting %d ms and retry %d/%d...",
+							LOCK_WAIT_TIME, i, LOCK_MAX_RETRIES);
+
+					// FORCE FINALIZATION TO COLLECT ALL THE PENDING BUFFERS
+					System.runFinalization();
+
+					Thread.sleep(LOCK_WAIT_TIME);
+				} catch (InterruptedException ex) {
+				}
+			}
+		}
+
+		if (fileLock == null)
+			throw new OLockException("File '" + osFile.getPath() + "' is locked by another process");
 	}
 
 	public void unlock() throws IOException {
@@ -336,11 +360,8 @@ public abstract class OFile {
 		accessFile.setLength(iNewSize);
 		accessFile.seek(0);
 		channel = accessFile.getChannel();
-		fileLock = channel.tryLock(0, 1, false);
 
-		if (fileLock == null)
-			throw new OLockException("File '" + osFile.getPath() + "' is locked by another process");
-
+		lock();
 		size = maxSize > 0 && iNewSize > maxSize ? maxSize : iNewSize;
 	}
 

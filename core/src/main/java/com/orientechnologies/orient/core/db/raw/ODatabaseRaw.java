@@ -49,6 +49,7 @@ public class ODatabaseRaw implements ODatabase {
 	private static volatile int			serialId		= 0;
 
 	protected int										id;
+	protected String								url;
 	protected OStorage							storage;
 	protected STATUS								status;
 	protected OIntent								currentIntent;
@@ -66,7 +67,7 @@ public class ODatabaseRaw implements ODatabase {
 
 	public ODatabaseRaw(final String iURL) {
 		try {
-			storage = Orient.instance().getStorage(iURL);
+			url = iURL;
 			id = serialId++;
 			status = STATUS.CLOSED;
 
@@ -85,6 +86,7 @@ public class ODatabaseRaw implements ODatabase {
 			if (status == STATUS.OPEN)
 				throw new IllegalStateException("Database " + getName() + " is already open");
 
+			storage = Orient.instance().loadStorage(url);
 			storage.open(getId(), iUserName, iUserPassword);
 
 			// WAKE UP DB LIFECYCLE LISTENER
@@ -112,6 +114,7 @@ public class ODatabaseRaw implements ODatabase {
 			if (status == STATUS.OPEN)
 				throw new IllegalStateException("Database " + getName() + " is already open");
 
+			storage = Orient.instance().loadStorage(url);
 			storage.create();
 
 			// WAKE UP DB LIFECYCLE LISTENER
@@ -133,9 +136,12 @@ public class ODatabaseRaw implements ODatabase {
 	}
 
 	public void delete() {
-		close();
+		close(false);
 
 		try {
+			if (storage == null)
+				storage = Orient.instance().loadStorage(url);
+
 			storage.delete();
 
 			// WAKE UP LISTENERS
@@ -271,24 +277,7 @@ public class ODatabaseRaw implements ODatabase {
 	}
 
 	public void close() {
-		if (status != STATUS.OPEN)
-			return;
-
-		// WAKE UP DB LIFECYCLE LISTENER
-		for (ODatabaseLifecycleListener it : Orient.instance().getDbLifecycleListeners())
-			it.onClose(getDatabaseOwner());
-
-		// WAKE UP LISTENERS
-		for (ODatabaseListener listener : listeners)
-			try {
-				listener.onClose(this);
-			} catch (Throwable t) {
-			}
-
-		if (storage != null)
-			storage.removeUser();
-
-		status = STATUS.CLOSED;
+		close(true);
 	}
 
 	public int getId() {
@@ -381,5 +370,27 @@ public class ODatabaseRaw implements ODatabase {
 
 	public List<ODatabaseListener> getListeners() {
 		return listeners;
+	}
+
+	protected void close(boolean iCloseStorageToo) {
+		if (status != STATUS.OPEN)
+			return;
+
+		// WAKE UP DB LIFECYCLE LISTENER
+		for (ODatabaseLifecycleListener it : Orient.instance().getDbLifecycleListeners())
+			it.onClose(getDatabaseOwner());
+
+		// WAKE UP LISTENERS
+		for (ODatabaseListener listener : listeners)
+			try {
+				listener.onClose(this);
+			} catch (Throwable t) {
+			}
+		listeners.clear();
+
+		if (storage != null && iCloseStorageToo)
+			storage.removeUser();
+
+		status = STATUS.CLOSED;
 	}
 }

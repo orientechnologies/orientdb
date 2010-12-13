@@ -41,6 +41,8 @@ public class FetchPlanTest {
 		database.open("admin", "admin");
 
 		final long times = OProfiler.getInstance().getCounter("Cache.reused");
+
+		database.getCache().clear();
 		List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>("select * from Profile"));
 		Assert.assertEquals(OProfiler.getInstance().getCounter("Cache.reused"), times);
 

@@ -82,7 +82,6 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			recordClass = iRecordClass;
 
 			metadata = new OMetadata(this);
-			dictionary = (ODictionaryInternal<REC>) getStorage().createDictionary(this);
 
 			registerHook(new OUserTrigger());
 			registerHook(new OPropertyIndexManager());
@@ -100,6 +99,8 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			metadata.load();
 
 			recordFormat = DEF_RECORD_FORMAT;
+
+			dictionary = (ODictionaryInternal<REC>) getStorage().createDictionary(this);
 			dictionary.load();
 
 			user = getMetadata().getSecurity().getUser(iUserName);
@@ -137,6 +138,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 				createRolesAndUsers();
 			user = getMetadata().getSecurity().getUser(OUser.ADMIN);
 
+			dictionary = (ODictionaryInternal<REC>) getStorage().createDictionary(this);
 			dictionary.create();
 		} catch (Exception e) {
 			throw new ODatabaseException("Can't create database", e);

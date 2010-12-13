@@ -37,7 +37,6 @@ import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.fs.OMMapManager;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 public class Orient extends OSharedResource {
 	public static final String								URL_SYNTAX						= "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
@@ -65,7 +64,7 @@ public class Orient extends OSharedResource {
 		active = true;
 	}
 
-	public OStorage getStorage(String iURL) {
+	public OStorage loadStorage(String iURL) {
 		if (iURL == null || iURL.length() == 0)
 			throw new IllegalArgumentException("URL missed");
 
@@ -75,7 +74,7 @@ public class Orient extends OSharedResource {
 			throw new OConfigurationException("Error in database URL: the engine was not specified. Syntax is: " + URL_SYNTAX
 					+ ". URL was: " + iURL);
 
-		String engineName = iURL.substring(0, pos);
+		final String engineName = iURL.substring(0, pos);
 
 		try {
 			acquireExclusiveLock();
@@ -110,8 +109,12 @@ public class Orient extends OSharedResource {
 			} else
 				dbName = iURL;
 
-			final OStorage storage = engine.getStorage(dbName, parameters);
-			storages.put(dbName, storage);
+			OStorage storage = storages.get(dbName);
+			if (storage == null) {
+				// NOT FOUND: CREATE IT
+				storage = engine.createStorage(dbName, parameters);
+				storages.put(dbName, storage);
+			}
 			return storage;
 
 		} finally {
@@ -124,25 +127,21 @@ public class Orient extends OSharedResource {
 			acquireExclusiveLock();
 
 			if (!storages.containsKey(iStorage.getName()))
-				storages.put(iStorage.getName(), iStorage);
+				storages.put(iStorage.getURL(), iStorage);
 
 		} finally {
 			releaseExclusiveLock();
 		}
 	}
 
-	public OStorage accessToLocalStorage(String iDbName, String iMode) throws IOException {
+	public OStorage getStorage(final String iDbName) throws IOException {
 		try {
-			acquireExclusiveLock();
+			acquireSharedLock();
 
-			OStorage storage = storages.get(iDbName);
-			if (storage == null)
-				storage = new OStorageLocal(iDbName, iDbName, iMode);
-
-			return storage;
+			return storages.get(iDbName);
 
 		} finally {
-			releaseExclusiveLock();
+			releaseSharedLock();
 		}
 	}
 
@@ -195,7 +194,7 @@ public class Orient extends OSharedResource {
 	}
 
 	public void unregisterStorage(final OStorage iStorage) {
-		storages.remove(iStorage.getName());
+		storages.remove(iStorage.getURL());
 	}
 
 	public Collection<OStorage> getStorages() {

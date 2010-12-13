@@ -18,23 +18,24 @@ package com.orientechnologies.orient.core.engine.local;
 import java.util.Map;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.engine.OEngineAbstract;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 public class OEngineLocal extends OEngineAbstract {
 
 	public static final String	NAME	= "local";
 
-	public OStorage getStorage(String iDbName, Map<String, String> iConfiguration) {
+	public OStorage createStorage(final String iDbName, final Map<String, String> iConfiguration) {
 		try {
 			// GET THE STORAGE
-			return Orient.instance().accessToLocalStorage(iDbName, getMode(iConfiguration));
+			return new OStorageLocal(iDbName, iDbName, getMode(iConfiguration));
+
 		} catch (Throwable t) {
 			OLogManager.instance().error(this,
-					"Error on opening database: " + iDbName + ". Current location is: " + new java.io.File(".").getAbsolutePath(),
-					t, ODatabaseException.class);
+					"Error on opening database: " + iDbName + ". Current location is: " + new java.io.File(".").getAbsolutePath(), t,
+					ODatabaseException.class);
 		}
 		return null;
 	}

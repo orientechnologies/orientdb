@@ -29,6 +29,7 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -64,9 +65,7 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 
 public class OStorageLocal extends OStorageAbstract {
 	private static final int						DELETE_MAX_RETRIES				= 20;
-
 	private static final int						DELETE_WAIT_TIME					= 200;
-
 	public static final String[]				TYPES											= { OClusterLocal.TYPE, OClusterLogical.TYPE };
 
 	// private final OLockManager<String, String> lockManager = new
@@ -276,6 +275,8 @@ public class OStorageLocal extends OStorageAbstract {
 
 			OMMapManager.flush();
 
+			Orient.instance().unregisterStorage(this);
+
 			open = false;
 		} catch (IOException e) {
 			OLogManager.instance().error(this, "Error on closing of the storage '" + name, e, OStorageException.class);
@@ -336,7 +337,7 @@ public class OStorageLocal extends OStorageAbstract {
 							"Can't delete database files because are locked by the OrientDB process yet: waiting a %d ms and retry %d/%d...",
 							DELETE_WAIT_TIME, i, DELETE_MAX_RETRIES);
 
-					// FORCE GARBAGE COLLECTION TO COLLECT ALL THE PENDING BUFFERS
+					// FORCE FINALIZATION TO COLLECT ALL THE PENDING BUFFERS
 					System.gc();
 
 					Thread.sleep(DELETE_WAIT_TIME);

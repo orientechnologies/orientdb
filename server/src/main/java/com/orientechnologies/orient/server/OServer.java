@@ -298,7 +298,7 @@ public class OServer {
 		String type;
 		for (OServerStorageConfiguration stg : OServerMain.server().getConfiguration().storages)
 			if (stg.loadOnStartup) {
-				Orient.instance().getStorage(stg.path);
+				Orient.instance().loadStorage(stg.path);
 
 				type = stg.path.substring(0, stg.path.indexOf(":"));
 				OLogManager.instance().info(this, "-> Loaded " + type + " database '" + stg.name + "'");
