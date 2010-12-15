@@ -9,6 +9,11 @@
 
     <name>OrientDB Parent</name>
 
+    <organization>
+        <name>Orient Technologies</name>
+        <url>http://www.orientechnologies.com</url>
+    </organization>
+
     <modules>
         <module>client</module>
         <module>commons</module>
@@ -48,10 +53,6 @@
         </developer>
     </developers>
 
-    <scm>
-        <developerConnection>scm:svn:file://${basedir}</developerConnection>
-    </scm>
-
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.target>1.5</maven.compiler.target>
@@ -62,7 +63,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.3</version>
                 <configuration>
                     <source>${maven.compiler.target}</source>
                     <target>${maven.compiler.target}</target>
@@ -83,7 +83,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.7</version>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>
@@ -96,12 +95,31 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
-                <version>2.1</version>
                 <configuration>
                     <localCheckout>true</localCheckout>
                     <pushChanges>false</pushChanges>
                     <allowTimestampedSnapshots>true</allowTimestampedSnapshots>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <configuration>
+                    <excludeModules>distribution</excludeModules>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>cobertura-maven-plugin</artifactId>
+                <configuration>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>clean</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
         <pluginManagement>
@@ -109,7 +127,6 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>2.3.1</version>
                     <configuration>
                         <archive>
                             <manifest>
@@ -123,7 +140,6 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-source-plugin</artifactId>
-                    <version>2.1.2</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -132,10 +148,37 @@
             <extension>
                 <groupId>org.apache.maven.wagon</groupId>
                 <artifactId>wagon-ftp</artifactId>
-                <version>1.0-beta-6</version>
             </extension>
         </extensions>
     </build>
+
+    <licenses>
+        <license>
+            <name>Apache 2</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <scm>
+        <developerConnection>scm:svn:http://orient.googlecode.com/svn/trunk/</developerConnection>
+    </scm>
+
+    <ciManagement>
+        <system>hudson</system>
+        <url>http://www.danysoft.org/ci/job/orientdb</url>
+    </ciManagement>
+
+    <issueManagement>
+        <system>google code</system>
+        <url>http://code.google.com/p/orient/issues/list</url>
+    </issueManagement>
+
+    <mailingLists>
+      <mailingList>
+          <name>google groups</name>
+          <archive>http://groups.google.com/group/orient-database/topics</archive>
+      </mailingList>
+    </mailingLists>
 
     <distributionManagement>
         <repository>
@@ -148,13 +191,51 @@
             <url>ftp://www.orientechnologies.com/www.orientechnologies.com/listing/m2/</url>
             <uniqueVersion>false</uniqueVersion>
         </snapshotRepository>
+        <site>
+            <id>orientdb-site</id>
+            <name>Maven Site</name>
+            <url>scp://ec2-79-125-98-209.eu-west-1.compute.amazonaws.com/var/www/html/orientdb/site</url>
+        </site>
     </distributionManagement>
 
     <pluginRepositories>
-         <pluginRepository>
-             <id>apache.snapshots</id>
-             <url>http://repository.apache.org/snapshots/</url>
-         </pluginRepository>
-     </pluginRepositories>
+        <pluginRepository>
+            <id>apache.snapshots</id>
+            <url>http://repository.apache.org/snapshots/</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-report-plugin</artifactId>
+                <version>2.6</version> <!-- TODO: Remove version  -->
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>cobertura-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <configuration>
+                    <targetJdk>1.5</targetJdk>
+                    <rulesets>
+                        <ruleset>/rulesets/basic.xml</ruleset>
+                        <ruleset>/rulesets/controversial.xml</ruleset>
+                    </rulesets>
+                    <format>xml</format>
+                    <linkXref>true</linkXref>
+                    <sourceEncoding>utf-8</sourceEncoding>
+                    <minimumTokens>100</minimumTokens>
+                </configuration>
+            </plugin>
+        </plugins>
+    </reporting>
 
 </project>
