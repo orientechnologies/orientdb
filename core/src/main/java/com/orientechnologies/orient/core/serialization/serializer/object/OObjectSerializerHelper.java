@@ -714,6 +714,7 @@ public class OObjectSerializerHelper {
 			if (iMultiValue instanceof OLazyObjectMap<?>) {
 				result = ((OLazyObjectMap<?>) iMultiValue).getUnderlying();
 			} else {
+				result = new HashMap<String, Object>();
 				for (Entry<String, Object> entry : ((Map<String, Object>) iMultiValue).entrySet()) {
 					((Map<String, Object>) result).put(entry.getKey(),
 							typeToStream(entry.getValue(), linkedType, iEntityManager, iObj2RecHandler, db, iSaveOnlyDirty));
