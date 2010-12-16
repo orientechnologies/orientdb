@@ -109,12 +109,7 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<ODocument, OGraphEle
 			throw new OGraphException(
 					"The document loaded has no class, while it should be a OGraphVertex, OGraphEdge or any subclass of its");
 
-		if (doc.getClassName().equals(OGraphVertex.class.getSimpleName()))
-			return new OGraphVertex(this, doc);
-		else if (doc.getClassName().equals(OGraphEdge.class.getSimpleName()))
-			return new OGraphEdge(this, doc);
-		else
-			throw new IllegalArgumentException("RecordID is not of supported type. Class=" + doc.getClassName());
+		return newInstance(doc.getClassName()).setDocument(doc);
 	}
 
 	public ODatabaseComplex<OGraphElement> save(final OGraphElement iObject) {

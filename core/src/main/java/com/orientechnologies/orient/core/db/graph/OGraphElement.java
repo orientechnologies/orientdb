@@ -80,8 +80,9 @@ public abstract class OGraphElement extends ODocumentWrapper implements ORecordL
 		return document.fieldNames();
 	}
 
-	public void setDocument(final ODocument iDocument) {
+	public OGraphElement setDocument(final ODocument iDocument) {
 		document = iDocument;
+		return this;
 	}
 
 	public ODatabaseGraphTx getDatabase() {
