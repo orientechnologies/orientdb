@@ -18,7 +18,9 @@ package com.orientechnologies.orient.core.db.record;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXSTATUS;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
@@ -153,11 +155,14 @@ public class ODatabaseRecordTx<REC extends ORecordInternal<?>> extends ODatabase
 		return (ORecordInternal<?>) iUserObject;
 	}
 
+	public void registerPojo(final Object iObject, final ODocument iRecord) {
+	}
+
 	public Object getUserObjectByRecord(final ORecordInternal<?> record, final String iFetchPlan) {
 		return record;
 	}
 
-	public boolean existsUserObjectByRecord(final ORecordInternal<?> iRecord) {
+	public boolean existsUserObjectByRID(final ORID iRID) {
 		return true;
 	}
 

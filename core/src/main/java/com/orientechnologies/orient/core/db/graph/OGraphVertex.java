@@ -405,7 +405,7 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 		if (iTargetVertex == null)
 			throw new IllegalArgumentException("Missed the target vertex");
 
-		if (iDatabase.existsUserObjectByRecord(iSourceVertex)) {
+		if (iDatabase.existsUserObjectByRID(iSourceVertex.getIdentity())) {
 			// WORK ALSO WITH IN MEMORY OBJECTS
 
 			final OGraphVertex vertex = (OGraphVertex) iDatabase.getUserObjectByRecord(iSourceVertex, null);
@@ -418,7 +418,7 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 			}
 		}
 
-		if (iDatabase.existsUserObjectByRecord(iTargetVertex)) {
+		if (iDatabase.existsUserObjectByRID(iTargetVertex.getIdentity())) {
 			// WORK ALSO WITH IN MEMORY OBJECTS
 
 			final OGraphVertex vertex = (OGraphVertex) iDatabase.getUserObjectByRecord(iTargetVertex, null);

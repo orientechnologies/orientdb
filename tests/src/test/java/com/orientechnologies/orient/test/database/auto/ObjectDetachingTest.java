@@ -23,6 +23,7 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.business.City;
@@ -142,6 +143,134 @@ public class ObjectDetachingTest {
 	}
 
 	@Test(dependsOnMethods = "testOrientObjectIdPlusVersionAnnotationsInTx")
+	public void testInsertCommit() {
+		String initialCountryName = "insertCommit";
+		Country country = new Country(initialCountryName);
+
+		long initCount = database.countClass(Country.class);
+
+		database.begin();
+		database.save(country);
+		database.commit();
+
+		Assert.assertEquals(database.countClass(Country.class), initCount + 1);
+		Assert.assertNotNull(country.getId());
+		Assert.assertNotNull(country.getVersion());
+
+		Country found = (Country) database.load((ORecordId) country.getId());
+		Assert.assertNotNull(found);
+		Assert.assertEquals(country.getName(), found.getName());
+	}
+
+	@Test(dependsOnMethods = "testInsertCommit")
+	public void testInsertRollback() {
+		String initialCountryName = "insertRollback";
+		Country country = new Country(initialCountryName);
+
+		long initCount = database.countClass(Country.class);
+
+		database.begin();
+		database.save(country);
+		database.rollback();
+
+		Assert.assertEquals(database.countClass(Country.class), initCount);
+		Assert.assertNull(country.getId());
+		Assert.assertNull(country.getVersion());
+	}
+
+	@Test(dependsOnMethods = "testInsertRollback")
+	public void testUpdateCommit() {
+		String initialCountryName = "updateCommit";
+		Country country = new Country(initialCountryName);
+
+		database.save(country);
+		Assert.assertNotNull(country.getId());
+		Assert.assertNotNull(country.getVersion());
+
+		Integer initVersion = (Integer) country.getVersion();
+
+		database.begin();
+		Country loaded = (Country) database.load((ORecordId) country.getId());
+		Assert.assertEquals(loaded, country);
+		String newName = "ShouldBeChanged";
+		loaded.setName(newName);
+		database.save(loaded);
+		database.commit();
+
+		loaded = (Country) database.load((ORecordId) country.getId());
+		Assert.assertTrue(loaded.equals(country));
+		Assert.assertEquals(loaded.getId(), country.getId());
+		Assert.assertEquals(loaded.getVersion(), new Integer(initVersion + 1));
+		Assert.assertEquals(loaded.getName(), newName);
+	}
+
+	@Test(dependsOnMethods = "testUpdateCommit")
+	public void testUpdateRollback() {
+		String initialCountryName = "updateRollback";
+		Country country = new Country(initialCountryName);
+
+		database.save(country);
+		Assert.assertNotNull(country.getId());
+		Assert.assertNotNull(country.getVersion());
+
+		Integer initVersion = (Integer) country.getVersion();
+
+		database.begin();
+		Country loaded = (Country) database.load((ORecordId) country.getId());
+		Assert.assertEquals(loaded, country);
+		String newName = "ShouldNotBeChanged";
+		loaded.setName(newName);
+		database.save(loaded);
+		database.rollback();
+
+		loaded = (Country) database.load((ORecordId) country.getId());
+		Assert.assertNotSame(loaded, country);
+		Assert.assertEquals(loaded.getVersion(), initVersion);
+		Assert.assertEquals(loaded.getName(), initialCountryName);
+	}
+
+	@Test(dependsOnMethods = "testUpdateRollback")
+	public void testDeleteCommit() {
+		String initialCountryName = "deleteCommit";
+		Country Country = new Country(initialCountryName);
+
+		long initCount = database.countClass(Country.class);
+
+		database.save(Country);
+
+		Assert.assertEquals(database.countClass(Country.class), initCount + 1);
+
+		database.begin();
+		database.delete(Country);
+		database.commit();
+
+		Assert.assertEquals(database.countClass(Country.class), initCount);
+		Country found = (Country) database.load((ORecordId) Country.getId());
+		Assert.assertNull(found);
+	}
+
+	@Test(dependsOnMethods = "testDeleteCommit")
+	public void testDeleteRollback() {
+		String initialCountryName = "deleteRollback";
+		Country country = new Country(initialCountryName);
+
+		long initCount = database.countClass(Country.class);
+
+		database.save(country);
+
+		Assert.assertEquals(database.countClass(Country.class), initCount + 1);
+
+		database.begin();
+		database.delete(country);
+		database.rollback();
+
+		Assert.assertEquals(database.countClass(Country.class), initCount + 1);
+		Country found = (Country) database.load((ORecordId) country.getId());
+		Assert.assertNotNull(found);
+		Assert.assertEquals(found.getName(), country.getName());
+	}
+
+	@Test(dependsOnMethods = "testDeleteRollback")
 	public void clean() {
 		database.close();
 

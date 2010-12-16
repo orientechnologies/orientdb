@@ -16,7 +16,7 @@
 package com.orientechnologies.orient.core.db.graph;
 
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.IdentityHashMap;
 
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
@@ -164,7 +164,7 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<ODocument, OGraphEle
 		throw new OGraphException("Unrecognized class: " + iClassName);
 	}
 
-	public HashMap<ODocument, OGraphElement> getRecords2Objects() {
+	public IdentityHashMap<ODocument, OGraphElement> getRecords2Objects() {
 		return records2Objects;
 	}
 

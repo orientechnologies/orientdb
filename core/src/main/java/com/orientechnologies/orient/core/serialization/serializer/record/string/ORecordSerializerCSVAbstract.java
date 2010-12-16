@@ -413,8 +413,11 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 													return new ODocument(iLinkedClass);
 												}
 
-												public boolean existsUserObjectByRecord(ORecordInternal<?> iRecord) {
+												public boolean existsUserObjectByRID(ORID iRID) {
 													return false;
+												}
+
+												public void registerPojo(Object iObject, ODocument iRecord) {
 												}
 											}, null, iSaveOnlyDirty);
 
@@ -557,8 +560,11 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 											return new ODocument(linkedClass);
 										}
 
-										public boolean existsUserObjectByRecord(ORecordInternal<?> iRecord) {
+										public boolean existsUserObjectByRID(ORID iRID) {
 											return false;
+										}
+
+										public void registerPojo(Object iObject, ODocument iRecord) {
 										}
 									}, null, iSaveOnlyDirty);
 
@@ -649,6 +655,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 				// STORE THE TRAVERSED OBJECT TO KNOW THE RECORD ID. CALL THIS VERSION TO AVOID CLEAR OF STACK IN THREAD-LOCAL
 				((ODatabaseRecord<ORecordInternal<?>>) iLinkedRecord.getDatabase()).save((ORecordInternal<?>) iLinkedRecord);
+
+				((ODatabaseRecord<ORecordInternal<?>>) iLinkedRecord.getDatabase()).registerPojo(
+						((ODatabaseRecord<ORecordInternal<?>>) iLinkedRecord.getDatabase()).getUserObjectByRecord(iLinkedRecord, null),
+						(ODocument) iLinkedRecord);
 			}
 
 			if (iParentRecord.getDatabase() instanceof ODatabaseRecord<?>) {

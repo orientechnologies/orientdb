@@ -199,8 +199,8 @@ public class OObjectSerializerHelper {
 		if (iRecord.getInternalStatus() == STATUS.NOT_LOADED)
 			iRecord.load();
 
-		final String idFieldName = setObjectID(iRecord, iPojo);
-		final String vFieldName = setObjectVersion(iRecord, iPojo);
+		final String idFieldName = setObjectID(iRecord.getIdentity(), iPojo);
+		final String vFieldName = setObjectVersion(iRecord.getVersion(), iPojo);
 
 		// CALL BEFORE UNMARSHALLING
 		invokeCallback(iPojo, iRecord, OBeforeDeserialization.class);
@@ -335,7 +335,7 @@ public class OObjectSerializerHelper {
 					fieldClass = iEntityManager.getEntityClass(type.getSimpleName());
 					if (fieldClass != null) {
 						// RECOGNIZED TYPE
-						propagate = !iObj2RecHandler.existsUserObjectByRecord((ODocument) iLinked);
+						propagate = !iObj2RecHandler.existsUserObjectByRID(((ODocument) iLinked).getIdentity());
 
 						fieldValue = iObj2RecHandler.getUserObjectByRecord((ODocument) iLinked, iFetchPlan);
 					}
@@ -355,7 +355,7 @@ public class OObjectSerializerHelper {
 		return iPojo;
 	}
 
-	public static String setObjectID(final ODocument iRecord, final Object iPojo) {
+	public static String setObjectID(final ORID iIdentity, final Object iPojo) {
 		final Class<?> pojoClass = iPojo.getClass();
 
 		final String idFieldName = fieldIds.get(pojoClass);
@@ -368,13 +368,13 @@ public class OObjectSerializerHelper {
 						Class<?> fieldType = p.getType();
 
 						if (ORID.class.isAssignableFrom(fieldType))
-							setFieldValue(iPojo, idFieldName, iRecord.getIdentity());
+							setFieldValue(iPojo, idFieldName, iIdentity);
 						else if (Number.class.isAssignableFrom(fieldType))
-							setFieldValue(iPojo, idFieldName, iRecord.getIdentity().getClusterPosition());
+							setFieldValue(iPojo, idFieldName, iIdentity.getClusterPosition());
 						else if (fieldType.equals(String.class))
-							setFieldValue(iPojo, idFieldName, iRecord.getIdentity().toString());
+							setFieldValue(iPojo, idFieldName, iIdentity.toString());
 						else if (fieldType.equals(Object.class))
-							setFieldValue(iPojo, idFieldName, iRecord.getIdentity());
+							setFieldValue(iPojo, idFieldName, iIdentity);
 						else
 							OLogManager.instance().warn(OObjectSerializerHelper.class,
 									"@Id field has been declared as %s while the supported are: ORID, Number, String, Object", fieldType);
@@ -414,7 +414,7 @@ public class OObjectSerializerHelper {
 		return idFieldName != null;
 	}
 
-	public static String setObjectVersion(final ODocument iRecord, final Object iPojo) {
+	public static String setObjectVersion(final Integer iVersion, final Object iPojo) {
 		final Class<?> pojoClass = iPojo.getClass();
 
 		final String vFieldName = fieldVersions.get(pojoClass);
@@ -427,11 +427,11 @@ public class OObjectSerializerHelper {
 						Class<?> fieldType = p.getType();
 
 						if (Number.class.isAssignableFrom(fieldType))
-							setFieldValue(iPojo, vFieldName, iRecord.getVersion());
+							setFieldValue(iPojo, vFieldName, iVersion);
 						else if (fieldType.equals(String.class))
-							setFieldValue(iPojo, vFieldName, String.valueOf(iRecord.getVersion()));
+							setFieldValue(iPojo, vFieldName, String.valueOf(iVersion));
 						else if (fieldType.equals(Object.class))
-							setFieldValue(iPojo, vFieldName, iRecord.getVersion());
+							setFieldValue(iPojo, vFieldName, iVersion);
 						else
 							OLogManager.instance().warn(OObjectSerializerHelper.class,
 									"@Version field has been declared as %s while the supported are: Number, String, Object", fieldType);
@@ -479,7 +479,7 @@ public class OObjectSerializerHelper {
 		if (iSaveOnlyDirty && !iRecord.isDirty())
 			return iRecord;
 
-		long timer = OProfiler.getInstance().startChrono();
+		final long timer = OProfiler.getInstance().startChrono();
 
 		final Integer identityRecord = System.identityHashCode(iRecord);
 
@@ -562,6 +562,8 @@ public class OObjectSerializerHelper {
 
 			iRecord.field(fieldName, fieldValue);
 		}
+
+		iObj2RecHandler.registerPojo(iPojo, iRecord);
 
 		// CALL AFTER MARSHALLING
 		invokeCallback(iPojo, iRecord, OAfterSerialization.class);
@@ -730,7 +732,7 @@ public class OObjectSerializerHelper {
 			if (classes.containsKey(iClass.getName()))
 				return classes.get(iClass.getName());
 
-			List<Field> properties = new ArrayList<Field>();
+			final List<Field> properties = new ArrayList<Field>();
 			classes.put(iClass.getName(), properties);
 
 			String fieldName;

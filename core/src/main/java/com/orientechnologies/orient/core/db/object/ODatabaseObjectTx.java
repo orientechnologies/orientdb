@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.core.db.object;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -36,6 +39,8 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
+import com.orientechnologies.orient.core.tx.OTransactionEntry;
+import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 
 /**
  * Object Database instance. It's a wrapper to the class ODatabaseDocumentTx but handle the conversion between ODocument instances
@@ -131,13 +136,20 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
 		if (iRecordId == null)
 			return null;
 
-		// GET THE ASSOCIATED DOCUMENT
-		final ODocument record = underlying.load(iRecordId);
+		ODocument record = rid2Records.get(iRecordId);
+		if (record == null) {
+			// GET THE ASSOCIATED DOCUMENT
+			record = underlying.load(iRecordId);
+			if (record == null)
+				return null;
+		}
 
-		if (record == null)
-			return null;
+		Object result = records2Objects.get(record);
+		if (result != null)
+			// FOUND: JUST RETURN IT
+			return result;
 
-		final Object result = stream2pojo(record, newInstance(record.getClassName()), iFetchPlan);
+		result = stream2pojo(record, newInstance(record.getClassName()), iFetchPlan);
 		registerPojo(result, record);
 		return result;
 	}
@@ -168,13 +180,15 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
 		if (record == null)
 			record = underlying.newInstance(iPojo.getClass().getSimpleName());
 
+		// REGISTER BEFORE TO SERIALIZE TO AVOID PROBLEMS WITH CIRCULAR DEPENDENCY
 		registerPojo(iPojo, record);
+
 		pojo2Stream(iPojo, record);
 
 		underlying.save(record, iClusterName);
 
-		OObjectSerializerHelper.setObjectID(record, iPojo);
-		OObjectSerializerHelper.setObjectVersion(record, iPojo);
+		// RE-REGISTER FOR NEW RECORDS SINCE THE ID HAS CHANGED
+		registerPojo(iPojo, record);
 
 		return this;
 	}
@@ -190,7 +204,9 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
 			record = (ODocument) underlying.load(OObjectSerializerHelper.getObjectID(this, iContent));
 
 		underlying.delete(record);
-		unregisterPojo(iContent, record);
+
+		if (getTransaction() instanceof OTransactionNoTx)
+			unregisterPojo(iContent, record);
 
 		return this;
 	}
@@ -211,6 +227,80 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
 			dictionary = new ODictionaryWrapper(this, underlying);
 
 		return dictionary;
+	}
+
+	@Override
+	public ODatabasePojoAbstract<ODocument, Object> commit() {
+		// COPY ALL TX ENTRIES
+		final List<OTransactionEntry<?>> entries;
+		if (getTransaction().getEntries() != null) {
+			entries = new ArrayList<OTransactionEntry<?>>();
+			for (OTransactionEntry<?> entry : getTransaction().getEntries())
+				entries.add(entry);
+		} else
+			entries = null;
+
+		underlying.commit();
+
+		if (entries != null) {
+			// UPDATE ID & VERSION FOR ALL THE RECORDS
+			Object pojo = null;
+			for (OTransactionEntry<?> entry : entries) {
+				pojo = records2Objects.get(entry.getRecord());
+
+				switch (entry.status) {
+				case OTransactionEntry.CREATED:
+					rid2Records.put(entry.getRecord().getIdentity(), (ODocument) entry.getRecord());
+					OObjectSerializerHelper.setObjectID(entry.getRecord().getIdentity(), pojo);
+
+				case OTransactionEntry.UPDATED:
+					pojo = records2Objects.get(entry.getRecord());
+					OObjectSerializerHelper.setObjectVersion(entry.getRecord().getVersion(), pojo);
+					break;
+
+				case OTransactionEntry.DELETED:
+					pojo = records2Objects.get(entry.getRecord());
+					OObjectSerializerHelper.setObjectID(null, pojo);
+					OObjectSerializerHelper.setObjectVersion(null, pojo);
+
+					unregisterPojo(pojo, (ODocument) entry.getRecord());
+					break;
+				}
+			}
+		}
+
+		return this;
+	}
+
+	@Override
+	public ODatabasePojoAbstract<ODocument, Object> rollback() {
+		// COPY ALL TX ENTRIES
+		final List<OTransactionEntry<?>> newEntries;
+		if (getTransaction().getEntries() != null) {
+			newEntries = new ArrayList<OTransactionEntry<?>>();
+			for (OTransactionEntry<?> entry : getTransaction().getEntries())
+				if (entry.status == OTransactionEntry.CREATED)
+					newEntries.add(entry);
+		} else
+			newEntries = null;
+
+		underlying.rollback();
+
+		if (newEntries != null) {
+			Object pojo = null;
+			for (OTransactionEntry<?> entry : newEntries) {
+				pojo = records2Objects.get(entry.getRecord());
+
+				OObjectSerializerHelper.setObjectID(null, pojo);
+				OObjectSerializerHelper.setObjectVersion(null, pojo);
+			}
+		}
+
+		objects2Records.clear();
+		records2Objects.clear();
+		rid2Records.clear();
+
+		return this;
 	}
 
 	public OEntityManager getEntityManager() {

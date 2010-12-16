@@ -18,6 +18,8 @@ package com.orientechnologies.orient.core.db;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -37,6 +39,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.query.OQuery;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -47,10 +50,10 @@ import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 @SuppressWarnings("unchecked")
 public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T extends Object> extends
 		ODatabaseWrapperAbstract<ODatabaseDocumentTx, REC> implements ODatabaseComplex<T> {
-	protected HashMap<Integer, ODocument>	objects2Records	= new HashMap<Integer, ODocument>();
-	protected HashMap<ODocument, T>				records2Objects	= new HashMap<ODocument, T>();
-	protected HashMap<ORID, ODocument>		rid2Records			= new HashMap<ORID, ODocument>();
-	private boolean												retainObjects		= true;
+	protected HashMap<Integer, ODocument>		objects2Records	= new HashMap<Integer, ODocument>();
+	protected IdentityHashMap<ODocument, T>	records2Objects	= new IdentityHashMap<ODocument, T>();
+	protected HashMap<ORID, ODocument>			rid2Records			= new HashMap<ORID, ODocument>();
+	private boolean													retainObjects		= true;
 
 	public ODatabasePojoAbstract(final ODatabaseDocumentTx iDatabase) {
 		super(iDatabase);
@@ -95,6 +98,22 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 		clearNewEntriesFromCache();
 
 		underlying.rollback();
+
+		final Set<ORID> rids = new HashSet<ORID>(rid2Records.keySet());
+
+		ORecord<?> record;
+		Object object;
+		for (ORID rid : rids) {
+			if (rid.isTemporary()) {
+				record = rid2Records.remove(rid);
+				if (record != null) {
+					object = records2Objects.remove(record);
+					if (object != null) {
+						objects2Records.remove(object);
+					}
+				}
+			}
+		}
 
 		return this;
 	}
@@ -171,7 +190,7 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 		Object obj;
 		for (ODocument doc : result) {
 			// GET THE ASSOCIATED DOCUMENT
-			obj = getUserObjectByRecord(doc, iCommand.getFetchPlan());
+			obj = getUserObjectByRecord(doc, iCommand.getFetchPlan(), true);
 			resultPojo.add(obj);
 		}
 
@@ -243,12 +262,9 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 		return record;
 	}
 
-	public boolean existsUserObjectByRecord(ORecordInternal<?> iRecord) {
+	public boolean existsUserObjectByRID(ORID iRID) {
 		checkOpeness();
-		if (!(iRecord instanceof ODocument))
-			return false;
-
-		return records2Objects.containsKey(iRecord);
+		return rid2Records.containsKey(iRID);
 	}
 
 	public ODocument getRecordById(final ORID iRecordId) {
@@ -269,9 +285,13 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 		if (!(iRecord instanceof ODocument))
 			return null;
 
-		final ODocument record = (ODocument) iRecord;
+		// PASS FOR rid2Records MAP BECAUSE IDENTITY COULD BE CHANGED IF WAS NEW AND IN TX
+		ODocument record = rid2Records.get(iRecord.getIdentity());
 
-		T pojo = records2Objects.get(iRecord);
+		if (record == null)
+			record = (ODocument) iRecord;
+
+		T pojo = records2Objects.get(record);
 
 		if (pojo == null && iCreate) {
 			try {
@@ -279,8 +299,8 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 				if (iRecord.getDatabase() != underlying)
 					iRecord.setDatabase(underlying);
 
-				if (record.getInternalStatus() == STATUS.NOT_LOADED)
-					record.load();
+				if (iRecord.getInternalStatus() == STATUS.NOT_LOADED)
+					iRecord.load();
 
 				pojo = newInstance(record.getClassName());
 				registerPojo(pojo, record);
@@ -322,13 +342,18 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 	/**
 	 * Register a new POJO
 	 */
-	public void registerPojo(final T iObject, final ODocument iRecord) {
+	public void registerPojo(final Object iObject, final ODocument iRecord) {
 		if (retainObjects) {
-			objects2Records.put(System.identityHashCode(iObject), iRecord);
-			records2Objects.put(iRecord, iObject);
+			if (iObject != null) {
+				objects2Records.put(System.identityHashCode(iObject), iRecord);
+				records2Objects.put(iRecord, (T) iObject);
+
+				OObjectSerializerHelper.setObjectID(iRecord.getIdentity(), iObject);
+				OObjectSerializerHelper.setObjectVersion(iRecord.getVersion(), iObject);
+			}
 
 			final ORID rid = iRecord.getIdentity();
-			if (rid.isValid())
+			if (rid.isValid() && !rid.isTemporary())
 				rid2Records.put(rid, iRecord);
 		}
 	}
@@ -346,7 +371,7 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 		}
 	}
 
-	private void clearNewEntriesFromCache() {
+	protected void clearNewEntriesFromCache() {
 		for (Iterator<Entry<ORID, ODocument>> it = rid2Records.entrySet().iterator(); it.hasNext();) {
 			Entry<ORID, ODocument> entry = it.next();
 			if (entry.getKey().isNew()) {

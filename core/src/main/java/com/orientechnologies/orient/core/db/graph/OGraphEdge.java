@@ -114,7 +114,7 @@ public class OGraphEdge extends OGraphElement {
 
 		List<OGraphEdge> edges;
 
-		if (iDatabase.existsUserObjectByRecord(sourceVertex)) {
+		if (iDatabase.existsUserObjectByRID(sourceVertex.getIdentity())) {
 			// WORK ALSO WITH IN MEMORY OBJECTS
 
 			final OGraphVertex vertex = (OGraphVertex) iDatabase.getUserObjectByRecord(sourceVertex, null);
@@ -129,7 +129,7 @@ public class OGraphEdge extends OGraphElement {
 			}
 		}
 
-		if (iDatabase.existsUserObjectByRecord(targetVertex)) {
+		if (iDatabase.existsUserObjectByRID(targetVertex.getIdentity())) {
 			// WORK ALSO WITH IN MEMORY OBJECTS
 
 			final OGraphVertex vertex = (OGraphVertex) iDatabase.getUserObjectByRecord(targetVertex, null);
@@ -160,7 +160,7 @@ public class OGraphEdge extends OGraphElement {
 		targetVertex.setDirty();
 		targetVertex.save();
 
-		if (iDatabase.existsUserObjectByRecord(iEdge)) {
+		if (iDatabase.existsUserObjectByRID(iEdge.getIdentity())) {
 			final OGraphEdge edge = (OGraphEdge) iDatabase.getUserObjectByRecord(iEdge, null);
 			iDatabase.unregisterPojo(edge, iEdge);
 		}
