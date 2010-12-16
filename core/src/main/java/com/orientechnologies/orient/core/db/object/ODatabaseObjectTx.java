@@ -254,12 +254,10 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
 					OObjectSerializerHelper.setObjectID(entry.getRecord().getIdentity(), pojo);
 
 				case OTransactionEntry.UPDATED:
-					pojo = records2Objects.get(entry.getRecord());
 					OObjectSerializerHelper.setObjectVersion(entry.getRecord().getVersion(), pojo);
 					break;
 
 				case OTransactionEntry.DELETED:
-					pojo = records2Objects.get(entry.getRecord());
 					OObjectSerializerHelper.setObjectID(null, pojo);
 					OObjectSerializerHelper.setObjectVersion(null, pojo);
 

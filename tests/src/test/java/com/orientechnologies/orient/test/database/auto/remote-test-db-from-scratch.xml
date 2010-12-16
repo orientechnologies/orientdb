@@ -2,6 +2,7 @@
 <suite name="Test Suite Example" verbose="1" parallel="false">
 	<parameter name="url" value="remote:localhost/demo" />
 	<parameter name="path" value="@PATH@" />
+	<parameter name="testPath" value="test" />
 
 	<test name="Setup">
 		<classes>

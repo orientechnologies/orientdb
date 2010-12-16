@@ -5,6 +5,7 @@
 		/> -->
 	<parameter name="path" value="@PATH@" />
 	<parameter name="url" value="@URL@" />
+	<parameter name="testPath" value="test" />
 
 	<test name="Setup">
 		<classes>

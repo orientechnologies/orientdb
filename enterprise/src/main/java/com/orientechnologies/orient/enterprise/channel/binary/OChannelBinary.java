@@ -31,6 +31,8 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 
 public abstract class OChannelBinary extends OChannel {
@@ -178,6 +180,10 @@ public abstract class OChannelBinary extends OChannel {
 		return result;
 	}
 
+	public ORecordId readRID() throws IOException {
+		return new ORecordId(readShort(), readLong());
+	}
+
 	public void writeByte(final byte iContent) throws IOException {
 		if (debug)
 			OLogManager.instance().debug(this, "Writing byte (1 byte): %d", iContent);
@@ -256,6 +262,11 @@ public abstract class OChannelBinary extends OChannel {
 		return this;
 	}
 
+	public void writeRID(final ORID iRID) throws IOException {
+		writeShort((short) iRID.getClusterId());
+		writeLong(iRID.getClusterPosition());
+	}
+
 	public void clearInput() throws IOException {
 		if (in != null)
 			while (in.available() > 0)
@@ -320,7 +331,7 @@ public abstract class OChannelBinary extends OChannel {
 			}
 		} else {
 			// PROTOCOL ERROR
-			//close();
+			// close();
 			throw new ONetworkProtocolException("Error on reading response from the server");
 		}
 		return iClientTxId;

@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -595,7 +596,25 @@ public class OStorageRemote extends OStorageAbstract {
 					endRequest();
 				}
 
-				getResponse();
+				try {
+					beginResponse();
+					final int updatedRecords = network.readInt();
+					ORecordId rid;
+					for (int i = 0; i < updatedRecords; ++i) {
+						rid = network.readRID();
+
+						// SEARCH THE RECORD WITH THAT ID TO UPDATE THE VERSION
+						for (OTransactionEntry<? extends ORecord<?>> txEntry : iTx.getEntries()) {
+							if (txEntry.getRecord().getIdentity().equals(rid)) {
+								txEntry.getRecord().setVersion(network.readInt());
+								break;
+							}
+						}
+					}
+				} finally {
+					endResponse();
+				}
+
 				break;
 			} catch (Exception e) {
 				handleException("Error on commit", e);

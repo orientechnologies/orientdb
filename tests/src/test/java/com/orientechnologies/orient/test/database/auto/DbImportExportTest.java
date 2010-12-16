@@ -31,15 +31,17 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 
 @Test(groups = "db")
 public class DbImportExportTest implements OCommandOutputListener {
-	public static final String	EXPORT_FILE_PATH	= "tests/target/db.export";
-	public static final String	NEW_DB_PATH				= "tests/target/test-import";
-	public static final String	NEW_DB_URL				= "local:tests/target/test-import/test-import";
+	public static final String	EXPORT_FILE_PATH	= "target/db.export";
+	public static final String	NEW_DB_PATH				= "target/test-import";
+	public static final String	NEW_DB_URL				= "target/test-import/test-import";
 
 	private String							url;
+	private String							testPath;
 
-	@Parameters(value = "url")
-	public DbImportExportTest(String iURL) {
+	@Parameters(value = { "url", "testPath" })
+	public DbImportExportTest(String iURL, String iTestPath) {
 		url = iURL;
+		testPath = iTestPath;
 		OProfiler.getInstance().startRecording();
 	}
 
@@ -48,7 +50,7 @@ public class DbImportExportTest implements OCommandOutputListener {
 		ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
 		database.open("admin", "admin");
 
-		ODatabaseExport export = new ODatabaseExport(database, EXPORT_FILE_PATH, this);
+		ODatabaseExport export = new ODatabaseExport(database, testPath + "/" + EXPORT_FILE_PATH, this);
 		export.exportDatabase();
 		export.close();
 
@@ -57,17 +59,17 @@ public class DbImportExportTest implements OCommandOutputListener {
 
 	@Test(dependsOnMethods = "testDbExport")
 	public void testDbImport() throws IOException {
-		final File importDir = new File(NEW_DB_PATH);
+		final File importDir = new File(testPath + "/" + NEW_DB_PATH);
 		if (importDir.exists())
 			for (File f : importDir.listFiles())
 				f.delete();
 		else
 			importDir.mkdir();
 
-		ODatabaseDocumentTx database = new ODatabaseDocumentTx(NEW_DB_URL);
+		ODatabaseDocumentTx database = new ODatabaseDocumentTx("local:" + testPath + "/" + NEW_DB_URL);
 		database.create();
 
-		ODatabaseImport impor = new ODatabaseImport(database, EXPORT_FILE_PATH, this);
+		ODatabaseImport impor = new ODatabaseImport(database, testPath + "/" + EXPORT_FILE_PATH, this);
 
 		// UNREGISTER ALL THE HOOKS
 		for (ORecordHook hook : new ArrayList<ORecordHook>(database.getHooks())) {

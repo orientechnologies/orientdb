@@ -27,14 +27,16 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 @Test(groups = "db")
 public class DbCompareTest implements OCommandOutputListener {
 	private String	url;
+	private String	testPath;
 
-	@Parameters(value = "url")
-	public DbCompareTest(String iURL) {
+	@Parameters(value = { "url", "testPath" })
+	public DbCompareTest(String iURL, String iTestPath) {
 		url = iURL;
+		testPath = iTestPath;
 	}
 
 	public void testCompareDatabases() throws IOException {
-		Assert.assertTrue(new ODatabaseCompare(url, DbImportExportTest.NEW_DB_URL, this).compare());
+		Assert.assertTrue(new ODatabaseCompare(url, "local:" + testPath + "/" + DbImportExportTest.NEW_DB_URL, this).compare());
 	}
 
 	@Test(enabled = false)

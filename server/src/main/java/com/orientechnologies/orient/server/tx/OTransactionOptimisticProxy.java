@@ -17,13 +17,16 @@ package com.orientechnologies.orient.server.tx;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
@@ -31,8 +34,9 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 public class OTransactionOptimisticProxy extends OTransactionAbstract<OTransactionRecordProxy> {
 	private int														size;
 	private OChannelBinary								channel;
-	private List<OTransactionEntryProxy>	entries		= new ArrayList<OTransactionEntryProxy>();
-	private boolean												exhausted	= false;
+	private List<OTransactionEntryProxy>	entries					= new ArrayList<OTransactionEntryProxy>();
+	private boolean												exhausted				= false;
+	private Map<ORecordId, ORecord<?>>		updatedRecords	= new HashMap<ORecordId, ORecord<?>>();
 
 	public OTransactionOptimisticProxy(final ODatabaseRecordTx<OTransactionRecordProxy> iDatabase, final OChannelBinary iChannel)
 			throws IOException {
@@ -81,6 +85,9 @@ public class OTransactionOptimisticProxy extends OTransactionAbstract<OTransacti
 									rid.clusterPosition = channel.readLong();
 									entry.getRecord().version = channel.readInt();
 									entry.getRecord().stream = channel.readBytes();
+
+									// SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW VERSIONS TO SEND BACK TO THE REQUESTER
+									updatedRecords.put(rid, entry.getRecord());
 									break;
 
 								case OTransactionEntry.DELETED:
@@ -157,5 +164,9 @@ public class OTransactionOptimisticProxy extends OTransactionAbstract<OTransacti
 
 	public List<OTransactionEntry<?>> getEntriesByClusterIds(int[] iIds) {
 		throw new UnsupportedOperationException("getRecordsByClusterIds");
+	}
+
+	public Map<ORecordId, ORecord<?>> getUpdatedRecords() {
+		return updatedRecords;
 	}
 }

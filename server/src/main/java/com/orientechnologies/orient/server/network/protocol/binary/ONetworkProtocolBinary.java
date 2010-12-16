@@ -22,6 +22,7 @@ import java.net.SocketException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.common.exception.OException;
@@ -581,8 +582,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			String key = channel.readString();
 			ORecordInternal<?> value = ORecordFactory.newInstance(channel.readByte());
 
-			final ORecordId rid = new ORecordId(channel.readShort(), channel.readLong());
-			value.setIdentity(rid.clusterId, rid.clusterPosition);
+			final ORecordId rid = channel.readRID();
+			value.setIdentity(rid);
 			value.setDatabase(connection.database);
 
 			value = connection.database.getDictionary().putRecord(key, value);
@@ -627,14 +628,25 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			break;
 		}
 
-		case OChannelBinaryProtocol.REQUEST_TX_COMMIT:
+		case OChannelBinaryProtocol.REQUEST_TX_COMMIT: {
 			data.commandInfo = "Transaction commit";
 
-			((OStorageLocal) connection.database.getStorage()).commit(connection.database.getId(), new OTransactionOptimisticProxy(
-					(ODatabaseRecordTx<OTransactionRecordProxy>) connection.database.getUnderlying(), channel));
+			final OTransactionOptimisticProxy tx = new OTransactionOptimisticProxy(
+					(ODatabaseRecordTx<OTransactionRecordProxy>) connection.database.getUnderlying(), channel);
+
+			((OStorageLocal) connection.database.getStorage()).commit(connection.database.getId(), tx);
 
 			sendOk(lastClientTxId);
+
+			// SEND BACK ALL THE NEW VERSIONS FOR THE UPDATED RECORDS
+			channel.writeInt(tx.getUpdatedRecords().size());
+			for (Entry<ORecordId, ORecord<?>> entry : tx.getUpdatedRecords().entrySet()) {
+				channel.writeRID(entry.getKey());
+				channel.writeInt(entry.getValue().getVersion());
+			}
+
 			break;
+		}
 
 		case OChannelBinaryProtocol.REQUEST_CONFIG_GET: {
 			data.commandInfo = "Get config";
@@ -785,8 +797,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 							.getSchemaClass().getId() : -1));
 
 			channel.writeByte(iRecord.getRecordType());
-			channel.writeShort((short) iRecord.getIdentity().getClusterId());
-			channel.writeLong(iRecord.getIdentity().getClusterPosition());
+			channel.writeRID(iRecord.getIdentity());
 			channel.writeInt(iRecord.getVersion());
 			try {
 				channel.writeBytes(iRecord.toStream());
