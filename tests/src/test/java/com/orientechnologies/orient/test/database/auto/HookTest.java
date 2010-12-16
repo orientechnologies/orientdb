@@ -85,6 +85,7 @@ public class HookTest extends ORecordHookAbstract {
 	@Test(dependsOnMethods = "testHookRead")
 	public void testHookUpdate() {
 		// TEST HOOKS ON UPDATE
+		p.setValue(p.getValue()+1000);
 		database.save(p);
 		Assert.assertEquals(callbackCount, 151);
 	}
