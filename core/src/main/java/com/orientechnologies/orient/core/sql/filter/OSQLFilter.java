@@ -82,7 +82,7 @@ public class OSQLFilter extends OCommandToParse {
 		if (targetClasses != null) {
 			final OClass cls = targetClasses.keySet().iterator().next();
 			// CHECK IF IT'S PART OF THE REQUESTED CLASS
-			if (!iRecord.getSchemaClass().isSubClassOf(cls))
+			if (iRecord.getSchemaClass() == null || !iRecord.getSchemaClass().isSubClassOf(cls))
 				// EXCLUDE IT
 				return false;
 		}
@@ -210,7 +210,7 @@ public class OSQLFilter extends OCommandToParse {
 				// CHECK FOR PARAMETERS
 				if (word.length() > op.keyword.length() && word.charAt(op.keyword.length()) == OStringSerializerHelper.PARENTHESIS_BEGIN) {
 					int paramBeginPos = currentPos - (word.length() - op.keyword.length());
-					currentPos = OStringSerializerHelper.getParameters(text, paramBeginPos, params)+1;
+					currentPos = OStringSerializerHelper.getParameters(text, paramBeginPos, params) + 1;
 				} else if (!word.equals(op.keyword))
 					throw new OQueryParsingException("Malformed usage of operator '" + op.toString() + "'. Parsed operator is: " + word);
 
