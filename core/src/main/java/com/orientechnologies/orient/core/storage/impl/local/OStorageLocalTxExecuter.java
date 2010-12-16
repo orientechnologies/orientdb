@@ -170,7 +170,7 @@ public class OStorageLocalTxExecuter {
 	private void commitEntry(final int iRequesterId, final int iTxId, final OTransactionEntry<? extends ORecord<?>> txEntry)
 			throws IOException {
 
-		if (!txEntry.getRecord().isDirty())
+		if (txEntry.status != OTransactionEntry.DELETED && !txEntry.getRecord().isDirty())
 			return;
 
 		final ORecordId rid = (ORecordId) txEntry.getRecord().getIdentity();
