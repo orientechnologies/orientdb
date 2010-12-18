@@ -46,18 +46,18 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 	protected List<OPair<Integer, List<String>>>	operationsChain	= null;
 
 	public OSQLFilterItemAbstract(final OCommandToParse iQueryToParse, final String iName) {
-		int pos = iName.indexOf(OSQLFilterFieldOperator.CHAIN_SEPARATOR);
-		if (pos > -1) {
+		int separatorPos = iName.indexOf(OSQLFilterFieldOperator.CHAIN_SEPARATOR);
+		if (separatorPos > -1) {
 			// GET ALL SPECIAL OPERATIONS
-			name = iName.substring(0, pos);
+			name = iName.substring(0, separatorPos);
 
 			String part = iName;
 			String partUpperCase = part.toUpperCase();
 			boolean operatorFound;
 
-			while (pos > -1) {
-				part = part.substring(pos + OSQLFilterFieldOperator.CHAIN_SEPARATOR.length());
-				partUpperCase = partUpperCase.substring(pos + OSQLFilterFieldOperator.CHAIN_SEPARATOR.length());
+			while (separatorPos > -1) {
+				part = part.substring(separatorPos + OSQLFilterFieldOperator.CHAIN_SEPARATOR.length());
+				partUpperCase = partUpperCase.substring(separatorPos + OSQLFilterFieldOperator.CHAIN_SEPARATOR.length());
 
 				operatorFound = false;
 				for (OSQLFilterFieldOperator op : OSQLFilterFieldOperator.OPERATORS)
@@ -70,7 +70,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 							if (arguments.size() < op.minArguments || arguments.size() > op.maxArguments)
 								throw new OQueryParsingException(iQueryToParse.text, "Syntax error: field operator '" + op.keyword + "' needs "
 										+ (op.minArguments == op.maxArguments ? op.minArguments : op.minArguments + "-" + op.maxArguments)
-										+ " argument(s) while has been received " + arguments.size(), iQueryToParse.currentPos + pos);
+										+ " argument(s) while has been received " + arguments.size(), iQueryToParse.currentPos + separatorPos);
 						} else
 							arguments = null;
 
@@ -80,19 +80,20 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
 						operationsChain.add(new OPair<Integer, List<String>>(op.id, arguments));
 
-						pos = partUpperCase.indexOf(OStringSerializerHelper.PARENTHESIS_END) + OSQLFilterFieldOperator.CHAIN_SEPARATOR.length();
+						separatorPos = partUpperCase.indexOf(OStringSerializerHelper.PARENTHESIS_END)
+								+ OSQLFilterFieldOperator.CHAIN_SEPARATOR.length();
 						operatorFound = true;
 						break;
 					}
 
 				if (!operatorFound) {
-					pos = partUpperCase.indexOf(OSQLFilterFieldOperator.CHAIN_SEPARATOR, 0);
+					separatorPos = partUpperCase.indexOf(OSQLFilterFieldOperator.CHAIN_SEPARATOR, 0);
 
 					// CHECK IF IT'S A FIELD
 					int posOpenBrace = part.indexOf("(");
-					if (posOpenBrace == -1 || posOpenBrace > pos && pos > -1) {
+					if (posOpenBrace == -1 || posOpenBrace > separatorPos && separatorPos > -1) {
 						// YES, SEEMS A FIELD
-						String chainedFieldName = pos > -1 ? part.substring(0, pos) : part;
+						String chainedFieldName = separatorPos > -1 ? part.substring(0, separatorPos) : part;
 
 						if (operationsChain == null)
 							operationsChain = new ArrayList<OPair<Integer, List<String>>>();
@@ -104,13 +105,13 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 						// ERROR: OPERATOR NOT FOUND OR MISPELLED
 						throw new OQueryParsingException(iQueryToParse.text,
 								"Syntax error: field operator not recognized between the supported ones: "
-										+ Arrays.toString(OSQLFilterFieldOperator.OPERATORS), iQueryToParse.currentPos + pos);
+										+ Arrays.toString(OSQLFilterFieldOperator.OPERATORS), iQueryToParse.currentPos + separatorPos);
 				}
 
-				if (pos >= partUpperCase.length())
+				if (separatorPos >= partUpperCase.length())
 					return;
 
-				pos = partUpperCase.indexOf(OSQLFilterFieldOperator.CHAIN_SEPARATOR, pos);
+				separatorPos = partUpperCase.indexOf(OSQLFilterFieldOperator.CHAIN_SEPARATOR, separatorPos);
 			}
 		} else
 			name = iName;

@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,6 +79,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	private int																			resultCount;
 	private ORecordId																rangeFrom;
 	private ORecordId																rangeTo;
+	private String																	flattenField;
 
 	/**
 	 * Compile the filter conditions only the first time.
@@ -103,7 +105,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		}
 
 		int pos = extractProjections();
-		// TODO: IF NO PROJECTION WHAT???
 		if (pos == -1)
 			return this;
 
@@ -201,7 +202,22 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			throw new OQueryParsingException("No source found in query: specify class, clusters or single records");
 
 		applyOrderBy();
-		return request instanceof OSQLSynchQuery ? ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getResult() : tempResult;
+		applyFlatten();
+		return handleResult();
+	}
+
+	private Object handleResult() {
+		if (tempResult != null) {
+			// TEMP RESULT: RETURN ALL THE RECORDS AT THE END
+			for (ODocument doc : tempResult)
+				// CALL THE LISTENER
+				sendResultToListener(doc);
+			tempResult.clear();
+			tempResult = null;
+			return null;
+		}
+
+		return ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getResult();
 	}
 
 	public boolean foreach(final ORecordInternal<?> iRecord) {
@@ -337,7 +353,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	private void addResult(final ORecord<?> iRecord) {
 		ODocument doc = (ODocument) iRecord;
 
-		if (orderedFields != null) {
+		if (orderedFields != null || flattenField != null) {
 			// ORDER BY CLAUSE: COLLECT ALL THE RECORDS AND ORDER THEM AT THE END
 			if (tempResult == null)
 				tempResult = new ArrayList<ODocument>();
@@ -444,6 +460,18 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 					fieldName += fieldIndex;
 				}
 
+				if (i.toUpperCase().startsWith("FLATTEN(")) {
+					List<String> pars = OStringSerializerHelper.getParameters(i);
+					if (pars.size() != 1)
+						throw new OCommandSQLParsingException(
+								"FLATTEN operator expects the field name as parameter. Example FLATTEN( outEdges )");
+					flattenField = pars.get(0).trim();
+
+					// BY PASS THIS AS PROJECTION BUT TREAT IT AS SPECIAL
+					projections = null;
+					continue;
+				}
+
 				projections.put(fieldName, OSQLHelper.parseValue(database, this, i));
 			}
 		}
@@ -463,14 +491,30 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			return;
 
 		ODocumentSorter.sort(tempResult, orderedFields);
-
-		// ORDERED RESULT: RETURN ALL THE RECORDS AT THE END
-		for (ODocument doc : tempResult)
-			// CALL THE LISTENER
-			sendResultToListener(doc);
-
 		orderedFields.clear();
-		tempResult.clear();
+	}
+
+	/**
+	 * Extract the content of collections and/or links and put it as result
+	 */
+	private void applyFlatten() {
+		if (flattenField == null)
+			return;
+
+		final List<ODocument> finalResult = new ArrayList<ODocument>();
+		Object fieldValue;
+		for (ODocument record : tempResult) {
+			fieldValue = record.field(flattenField);
+			if (fieldValue instanceof Collection<?>) {
+				for (Object o : ((Collection<?>) fieldValue)) {
+					if (o instanceof ODocument)
+						finalResult.add((ODocument) o);
+				}
+			} else if (fieldValue instanceof ODocument)
+				finalResult.add((ODocument) fieldValue);
+		}
+
+		tempResult = finalResult;
 	}
 
 	private void sendResultToListener(final ODocument iRecord) {
