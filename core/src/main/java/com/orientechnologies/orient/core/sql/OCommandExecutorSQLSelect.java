@@ -217,7 +217,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			return null;
 		}
 
-		return ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getResult();
+		if (request instanceof OSQLSynchQuery)
+			return ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getResult();
+
+		return null;
 	}
 
 	public boolean foreach(final ORecordInternal<?> iRecord) {
@@ -454,6 +457,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				// EXTRACT THE FIELD NAME WITHOUT FUNCTIONS AND/OR LINKS
 				pos = i.indexOf('.');
 				fieldName = pos > -1 ? i.substring(0, pos) : i;
+
+				fieldName = OSQLHelper.stringContent(fieldName);
 
 				// FIND A UNIQUE NAME BY ADDING A COUNTER
 				for (int fieldIndex = 2; projections.containsKey(fieldName); ++fieldIndex) {

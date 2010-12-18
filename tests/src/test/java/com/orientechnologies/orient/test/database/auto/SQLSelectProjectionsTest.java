@@ -76,8 +76,8 @@ public class SQLSelectProjectionsTest {
 	public void queryProjectionSameFieldTwice() {
 		database.open("admin", "admin");
 
-		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select name, name.toUppercase() from Profile where name is not null"))
-				.execute();
+		List<ODocument> result = database.command(
+				new OSQLSynchQuery<ODocument>("select name, name.toUppercase() from Profile where name is not null")).execute();
 
 		Assert.assertTrue(result.size() != 0);
 
@@ -96,8 +96,11 @@ public class SQLSelectProjectionsTest {
 	public void queryProjectionStaticValues() {
 		database.open("admin", "admin");
 
-		List<ODocument> result = database.command(
-				new OSQLSynchQuery<ODocument>("select location.city.country.name, address.city.country.name from Profile where location.city.country.name is not null")).execute();
+		List<ODocument> result = database
+				.command(
+						new OSQLSynchQuery<ODocument>(
+								"select location.city.country.name, address.city.country.name from Profile where location.city.country.name is not null"))
+				.execute();
 
 		Assert.assertTrue(result.size() != 0);
 
@@ -127,6 +130,43 @@ public class SQLSelectProjectionsTest {
 			Assert.assertTrue(d.field("name").toString().endsWith("!"));
 
 			Assert.assertNull(d.getClassName());
+			Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
+		}
+
+		database.close();
+	}
+
+	@Test
+	public void queryProjectionSimpleValues() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select 10, 'ciao' from Profile LIMIT 1")).execute();
+
+		Assert.assertTrue(result.size() != 0);
+
+		for (ODocument d : result) {
+			Assert.assertEquals(d.field("10"), 10l);
+			Assert.assertEquals(d.field("ciao"), "ciao");
+
+			Assert.assertNull(d.getClassName());
+			Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
+		}
+
+		database.close();
+	}
+
+	@Test
+	public void queryProjectionContentCollection() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(
+				new OSQLSynchQuery<ODocument>(
+						"SELECT FLATTEN( outEdges ) FROM OGraphVertex WHERE outEdges TRAVERSE(1,1) (@class = 'OGraphEdge')")).execute();
+
+		Assert.assertTrue(result.size() != 0);
+
+		for (ODocument d : result) {
+			Assert.assertEquals(d.getClassName(), "OGraphEdge");
 			Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
 		}
 

@@ -173,6 +173,8 @@ public class OSQLHelper {
 	}
 
 	public static String stringContent(final String iContent) {
-		return iContent.substring(1, iContent.length() - 1);
+		if (iContent.startsWith("'") || iContent.startsWith("\""))
+			return iContent.substring(1, iContent.length() - 1);
+		return iContent;
 	}
 }
