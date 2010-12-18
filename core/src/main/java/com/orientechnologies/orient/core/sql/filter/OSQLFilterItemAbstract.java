@@ -173,11 +173,22 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 						iResult = iResult != null ? iResult.toString().indexOf(toFind, startIndex) : null;
 
 					} else if (operator == OSQLFilterFieldOperator.SUBSTRING.id) {
-
 						int endIndex = op.value.size() > 1 ? Integer.parseInt(op.value.get(1)) : op.value.get(0).length();
 						iResult = iResult != null ? iResult.toString().substring(Integer.parseInt(op.value.get(0)), endIndex) : null;
-					} else if (operator == OSQLFilterFieldOperator.FORMAT.id)
 
+					} else if (operator == OSQLFilterFieldOperator.APPEND.id) {
+						String v = op.value.get(0);
+						if (v.charAt(0) == '\'' || v.charAt(0) == '"')
+							v = v.substring(1, v.length() - 1);
+						iResult = iResult != null ? iResult.toString() + v : null;
+
+					} else if (operator == OSQLFilterFieldOperator.PREFIX.id) {
+						String v = op.value.get(0);
+						if (v.charAt(0) == '\'' || v.charAt(0) == '"')
+							v = v.substring(1, v.length() - 1);
+						iResult = iResult != null ? v + iResult.toString() : null;
+
+					} else if (operator == OSQLFilterFieldOperator.FORMAT.id)
 						iResult = iResult != null ? String.format(op.value.get(0), iResult) : null;
 
 					else if (operator == OSQLFilterFieldOperator.LEFT.id) {

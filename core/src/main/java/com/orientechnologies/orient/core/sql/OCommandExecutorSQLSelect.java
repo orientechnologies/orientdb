@@ -1,5 +1,5 @@
 /*
-R * Copyright 1999-2010 Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Copyright 1999-2010 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@ R * Copyright 1999-2010 Luca Garulli (l.garulli--at--orientechnologies.com)
 package com.orientechnologies.orient.core.sql;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -68,7 +71,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 	private OSQLAsynchQuery<ORecordSchemaAware<?>>	request;
 	private OSQLFilter															compiledFilter;
-	private List<String>														projections				= new ArrayList<String>();
+	private Map<String, Object>											projections				= null;
 	private List<OPair<String, String>>							orderedFields;
 	private List<ODocument>													tempResult;
 	private int																			limit							= -1;
@@ -197,7 +200,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		} else
 			throw new OQueryParsingException("No source found in query: specify class, clusters or single records");
 
-		processResultSet();
+		applyOrderBy();
 		return request instanceof OSQLSynchQuery ? ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getResult() : tempResult;
 	}
 
@@ -217,7 +220,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		return true;
 	}
 
-	public List<String> getProjections() {
+	public Map<String, Object> getProjections() {
 		return projections;
 	}
 
@@ -332,15 +335,17 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	}
 
 	private void addResult(final ORecord<?> iRecord) {
+		ODocument doc = (ODocument) iRecord;
+
 		if (orderedFields != null) {
 			// ORDER BY CLAUSE: COLLECT ALL THE RECORDS AND ORDER THEM AT THE END
 			if (tempResult == null)
 				tempResult = new ArrayList<ODocument>();
 
-			tempResult.add((ODocument) iRecord);
+			tempResult.add(doc);
 		} else
 			// CALL THE LISTENER
-			request.getResultListener().result(iRecord);
+			sendResultToListener(doc);
 	}
 
 	private List<ORecord<?>> searchForIndexes(final OClass iSchemaClass) {
@@ -407,8 +412,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	}
 
 	protected int extractProjections() {
-		final String textUpperCase = text.toUpperCase();
-
 		int currentPos = 0;
 
 		final StringBuilder word = new StringBuilder();
@@ -421,12 +424,29 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		if (fromPosition == -1)
 			throw new OQueryParsingException("Missed " + KEYWORD_FROM, text, currentPos);
 
-		String[] items = textUpperCase.substring(currentPos, fromPosition).split(",");
-		if (items == null || items.length == 0)
-			throw new OQueryParsingException("No projections found between " + KEYWORD_SELECT + " and " + KEYWORD_FROM, text, currentPos);
+		final String projectionString = textUpperCase.substring(currentPos, fromPosition).trim();
+		if (projectionString.length() > 0 && !projectionString.equals("*")) {
+			// EXTRACT PROJECTIONS
+			projections = new HashMap<String, Object>();
+			final String[] items = text.substring(currentPos, fromPosition).split(",");
 
-		for (String i : items)
-			projections.add(i.trim());
+			String fieldName;
+			int pos;
+			for (String i : items) {
+				i = i.trim();
+
+				// EXTRACT THE FIELD NAME WITHOUT FUNCTIONS AND/OR LINKS
+				pos = i.indexOf('.');
+				fieldName = pos > -1 ? i.substring(0, pos) : i;
+
+				// FIND A UNIQUE NAME BY ADDING A COUNTER
+				for (int fieldIndex = 2; projections.containsKey(fieldName); ++fieldIndex) {
+					fieldName += fieldIndex;
+				}
+
+				projections.put(fieldName, OSQLHelper.parseValue(database, this, i));
+			}
+		}
 
 		currentPos = fromPosition + KEYWORD_FROM.length() + 1;
 
@@ -438,19 +458,34 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				false);
 	}
 
-	private void processResultSet() {
-		if (orderedFields != null) {
-			if (tempResult == null)
-				return;
-			ODocumentSorter.sort(tempResult, orderedFields);
+	private void applyOrderBy() {
+		if (orderedFields == null || tempResult == null)
+			return;
 
-			// ORDERED RESULT: RETURN ALL THE RECORDS AT THE END
-			for (ODocument doc : tempResult)
-				// CALL THE LISTENER
-				request.getResultListener().result(doc);
+		ODocumentSorter.sort(tempResult, orderedFields);
 
-			orderedFields.clear();
-			tempResult.clear();
-		}
+		// ORDERED RESULT: RETURN ALL THE RECORDS AT THE END
+		for (ODocument doc : tempResult)
+			// CALL THE LISTENER
+			sendResultToListener(doc);
+
+		orderedFields.clear();
+		tempResult.clear();
+	}
+
+	private void sendResultToListener(final ODocument iRecord) {
+		if (projections != null) {
+			final ODocument result = new ODocument(database);
+
+			for (Entry<String, Object> projection : projections.entrySet()) {
+				if (projection.getValue() instanceof OSQLFilterItemField) {
+					result.field(projection.getKey(), ((OSQLFilterItemField) projection.getValue()).getValue(iRecord));
+				} else
+					result.field(projection.getKey(), projection.getValue());
+			}
+
+			request.getResultListener().result(result);
+		} else
+			request.getResultListener().result(iRecord);
 	}
 }

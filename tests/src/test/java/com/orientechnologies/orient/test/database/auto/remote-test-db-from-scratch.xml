@@ -78,6 +78,7 @@
 	<test name="sql-select">
 		<classes>
 			<class name="com.orientechnologies.orient.test.database.auto.SQLSelectTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.SQLSelectProjectionsTest" />
 		</classes>
 	</test>
 	<test name="sql-update">
