@@ -37,24 +37,23 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 	protected final int[]	clusterIds;
 	protected int					currentClusterIdx;
 
-	protected int					lastClusterId;
+	protected int					currentClusterId;
 	protected long				firstClusterPosition;
 	protected long				lastClusterPosition;
 	protected long				totalAvailableRecords;
+	protected boolean			polymorphic;
 
 	public ORecordIteratorClass(final ODatabaseRecord<REC> iDatabase, final ODatabaseRecordAbstract<REC> iLowLevelDatabase,
-			final String iClassName) {
+			final String iClassName, final boolean iPolymorphic) {
 		super(iDatabase, iLowLevelDatabase);
 
-		clusterIds = database.getMetadata().getSchema().getClass(iClassName).getClusterIds();
+		polymorphic = iPolymorphic;
+		clusterIds = polymorphic ? database.getMetadata().getSchema().getClass(iClassName).getPolymorphicClusterIds() : database
+				.getMetadata().getSchema().getClass(iClassName).getClusterIds();
 
 		currentClusterIdx = 0; // START FROM THE FIRST CLUSTER
 
-		lastClusterId = clusterIds[clusterIds.length - 1];
-
-		long[] range = database.getStorage().getClusterDataRange(lastClusterId);
-		firstClusterPosition = range[0];
-		lastClusterPosition = range[1];
+		updateClusterRange();
 
 		currentClusterPosition = firstClusterPosition - 1;
 
@@ -89,7 +88,7 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 			return false;
 
 		if (liveUpdated)
-			return currentClusterPosition > database.getStorage().getClusterDataRange(lastClusterId)[0];
+			return currentClusterPosition > database.getStorage().getClusterDataRange(currentClusterId)[0];
 
 		return currentClusterPosition > firstClusterPosition;
 	}
@@ -104,13 +103,13 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 		if (browsedRecords >= totalAvailableRecords)
 			return false;
 
-		if (currentClusterIdx < clusterIds.length - 1)
-			// PRESUME THAT IF IT'S NOT AT THE LAST CLUSTER THERE COULD BE OTHER ELEMENTS
-			return true;
+//		if (currentClusterIdx < clusterIds.length - 1)
+//			// PRESUME THAT IF IT'S NOT AT THE LAST CLUSTER THERE COULD BE OTHER ELEMENTS
+//			return true;
 
 		// COMPUTE THE NUMBER OF RECORDS TO BROWSE
 		if (liveUpdated)
-			lastClusterPosition = database.getStorage().getClusterDataRange(lastClusterId)[1];
+			lastClusterPosition = database.getStorage().getClusterDataRange(currentClusterId)[1];
 
 		final long recordsToBrowse = currentClusterPosition > -2 && lastClusterPosition > -1 ? lastClusterPosition
 				- currentClusterPosition : 0;
@@ -144,6 +143,7 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 
 			// CLUSTER EXHAUSTED, TRY WITH THE PREVIOUS ONE
 			currentClusterIdx--;
+			updateClusterRange();
 		}
 
 		throw new NoSuchElementException();
@@ -176,9 +176,14 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 
 			// CLUSTER EXHAUSTED, TRY WITH THE NEXT ONE
 			currentClusterIdx++;
+			updateClusterRange();
 		}
 
 		throw new NoSuchElementException();
+	}
+
+	public boolean isPolymorphic() {
+		return polymorphic;
 	}
 
 	public REC current() {
@@ -222,15 +227,13 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 		super.setLiveUpdated(iLiveUpdated);
 
 		// SET THE UPPER LIMIT TO -1 IF IT'S ENABLED
-		lastClusterPosition = iLiveUpdated ? -1 : database.countClusterElements(lastClusterId);
+		lastClusterPosition = iLiveUpdated ? -1 : database.countClusterElements(currentClusterId);
 
 		if (iLiveUpdated) {
 			firstClusterPosition = -1;
 			lastClusterPosition = -1;
 		} else {
-			long[] range = database.getStorage().getClusterDataRange(lastClusterId);
-			firstClusterPosition = range[0];
-			lastClusterPosition = range[1];
+			updateClusterRange();
 		}
 
 		return this;
@@ -260,6 +263,13 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 	}
 
 	protected REC loadRecord(final REC iRecord) {
-		return lowLevelDatabase.executeReadRecord(clusterIds[currentClusterIdx], currentClusterPosition, iRecord, fetchPlan);
+		return lowLevelDatabase.executeReadRecord(currentClusterId, currentClusterPosition, iRecord, fetchPlan);
+	}
+
+	protected void updateClusterRange() {
+		currentClusterId = clusterIds[currentClusterIdx];
+		long[] range = database.getStorage().getClusterDataRange(currentClusterId);
+		firstClusterPosition = range[0];
+		lastClusterPosition = range[1];
 	}
 }

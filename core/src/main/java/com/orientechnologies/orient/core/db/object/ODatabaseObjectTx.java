@@ -87,18 +87,26 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
 	}
 
 	public <RET> OObjectIteratorMultiCluster<RET> browseClass(final Class<RET> iClusterClass) {
+		return browseClass(iClusterClass, true);
+	}
+
+	public <RET> OObjectIteratorMultiCluster<RET> browseClass(final Class<RET> iClusterClass, final boolean iPolymorphic) {
 		if (iClusterClass == null)
 			return null;
 
-		return browseClass(iClusterClass.getSimpleName());
+		return browseClass(iClusterClass.getSimpleName(), iPolymorphic);
 	}
 
 	public <RET> OObjectIteratorMultiCluster<RET> browseClass(final String iClassName) {
+		return browseClass(iClassName, true);
+	}
+
+	public <RET> OObjectIteratorMultiCluster<RET> browseClass(final String iClassName, final boolean iPolymorphic) {
 		checkOpeness();
 		checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, iClassName);
 
 		return new OObjectIteratorMultiCluster<RET>(this, (ODatabaseRecordAbstract<ODocument>) getUnderlying().getUnderlying(),
-				iClassName);
+				iClassName, iPolymorphic);
 	}
 
 	public <RET> OObjectIteratorCluster<RET> browseCluster(final String iClusterName) {

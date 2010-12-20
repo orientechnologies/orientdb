@@ -27,8 +27,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public class OGraphEdgeIterator extends OGraphElementIterator<OGraphEdge> {
 
-	public OGraphEdgeIterator(final ODatabaseGraphTx iDatabase) {
-		super(iDatabase, OGraphEdge.class.getSimpleName());
+	public OGraphEdgeIterator(final ODatabaseGraphTx iDatabase, final boolean iPolymorphic) {
+		super(iDatabase, OGraphEdge.class.getSimpleName(), iPolymorphic);
 	}
 
 	public OGraphEdge next(final String iFetchPlan) {
@@ -40,8 +40,8 @@ public class OGraphEdgeIterator extends OGraphElementIterator<OGraphEdge> {
 
 		e = getObject();
 		e.fromStream(doc);
-		
-		return e; 
+
+		return e;
 	}
 
 }

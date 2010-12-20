@@ -38,11 +38,11 @@ public abstract class OGraphElementIterator<T extends OGraphElement> implements 
 	private T																	reusedObject;
 	private String														className;
 
-	public OGraphElementIterator(final ODatabaseGraphTx iDatabase, final String iClassName) {
+	public OGraphElementIterator(final ODatabaseGraphTx iDatabase, final String iClassName, final boolean iPolymorphic) {
 		database = iDatabase;
 		className = iClassName;
 		underlying = new ORecordIteratorClass<ODocument>((ODatabaseRecord<ODocument>) iDatabase.getUnderlying(),
-				(ODatabaseRecordAbstract<ODocument>) ((ODatabaseDocumentTx) iDatabase.getUnderlying()).getUnderlying(), iClassName);
+				(ODatabaseRecordAbstract<ODocument>) ((ODatabaseDocumentTx) iDatabase.getUnderlying()).getUnderlying(), iClassName,iPolymorphic);
 
 		setReuseSameObject(false);
 		underlying.setReuseSameRecord(false);

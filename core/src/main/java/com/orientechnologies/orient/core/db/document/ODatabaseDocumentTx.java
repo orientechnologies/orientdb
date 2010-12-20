@@ -44,12 +44,16 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 	}
 
 	public ORecordIteratorClass<ODocument> browseClass(final String iClassName) {
+		return browseClass(iClassName, true);
+	}
+
+	public ORecordIteratorClass<ODocument> browseClass(final String iClassName, final boolean iPolymorphic) {
 		if (getMetadata().getSchema().getClass(iClassName) == null)
 			throw new IllegalArgumentException("Class '" + iClassName + "' not found in current database");
 
 		checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, iClassName);
 
-		return new ORecordIteratorClass<ODocument>(this, underlying, iClassName);
+		return new ORecordIteratorClass<ODocument>(this, underlying, iClassName, iPolymorphic);
 	}
 
 	@Override

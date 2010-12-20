@@ -24,15 +24,15 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings("unchecked")
 public class OObjectIteratorMultiCluster<T> implements Iterator<T>, Iterable<T> {
-	private ODatabaseObject													database;
+	private ODatabaseObject									database;
 	private ORecordIteratorClass<ODocument>	underlying;
-	private String																	fetchPlan;
+	private String													fetchPlan;
 
 	public OObjectIteratorMultiCluster(final ODatabaseObject iDatabase, final ODatabaseRecordAbstract<ODocument> iUnderlyingDatabase,
-			final String iClusterName) {
+			final String iClusterName, final boolean iPolymorphic) {
 		database = iDatabase;
-		underlying = new ORecordIteratorClass<ODocument>((ODatabaseRecord<ODocument>) iDatabase.getUnderlying(),
-				iUnderlyingDatabase, iClusterName);
+		underlying = new ORecordIteratorClass<ODocument>((ODatabaseRecord<ODocument>) iDatabase.getUnderlying(), iUnderlyingDatabase,
+				iClusterName, iPolymorphic);
 	}
 
 	public boolean hasNext() {

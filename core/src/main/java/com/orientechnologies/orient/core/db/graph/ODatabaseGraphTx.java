@@ -133,7 +133,11 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<ODocument, OGraphEle
 	}
 
 	public OGraphVertexIterator browseVertexes() {
-		return new OGraphVertexIterator(this);
+		return new OGraphVertexIterator(this, true);
+	}
+
+	public OGraphVertexIterator browseVertexes(final boolean iPolymorphic) {
+		return new OGraphVertexIterator(this, iPolymorphic);
 	}
 
 	@Override

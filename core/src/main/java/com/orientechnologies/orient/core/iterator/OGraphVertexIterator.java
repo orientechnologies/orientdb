@@ -27,22 +27,21 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public class OGraphVertexIterator extends OGraphElementIterator<OGraphVertex> {
 
-	public OGraphVertexIterator(final ODatabaseGraphTx iDatabase) {
-		super(iDatabase, OGraphVertex.class.getSimpleName());
+	public OGraphVertexIterator(final ODatabaseGraphTx iDatabase, final boolean iPolymorphic) {
+		super(iDatabase, OGraphVertex.class.getSimpleName(), iPolymorphic);
 	}
 
 	public OGraphVertex next(final String iFetchPlan) {
 		final ODocument doc = underlying.next();
 
-		OGraphVertex v = (OGraphVertex) database.getUserObjectByRecord(doc,
-				null);
-		
+		OGraphVertex v = (OGraphVertex) database.getUserObjectByRecord(doc, null);
+
 		if (v != null)
 			return v;
 
 		v = getObject();
 		v.fromStream(doc);
-		
+
 		return v;
 	}
 }
