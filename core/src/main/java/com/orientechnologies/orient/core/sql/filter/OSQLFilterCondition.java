@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
 import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 
 /**
@@ -176,6 +177,10 @@ public class OSQLFilterCondition {
 		if (iValue instanceof OSQLFilterCondition)
 			// NESTED CONDITION: EVALUATE IT RECURSIVELY
 			return ((OSQLFilterCondition) iValue).evaluate(iRecord);
+
+		if (iValue instanceof OSQLFunction)
+			// FUNCTION: EXECUTE IT
+			return ((OSQLFunction) iValue).execute(iRecord);
 
 		// SIMPLE VALUE: JUST RETURN IT
 		return iValue;

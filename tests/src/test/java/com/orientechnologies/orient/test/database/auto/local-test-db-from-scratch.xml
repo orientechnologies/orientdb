@@ -83,6 +83,11 @@
 			<class name="com.orientechnologies.orient.test.database.auto.GraphTestFixedDensity" />
 		</classes>
 	</test>
+	<test name="GEO">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.GEOTest" />
+		</classes>
+	</test>
 	<test name="sql-commands">
 		<classes>
 			<class name="com.orientechnologies.orient.test.database.auto.SQLCommandsTest" />
