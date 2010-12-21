@@ -39,6 +39,10 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
 
 	protected OCommandRequestTextAbstract(final String iText, final ODatabaseRecord<ODocument> iDatabase) {
 		super(iDatabase);
+
+		if (iText == null)
+			throw new IllegalArgumentException("Text can't be null");
+
 		text = iText.trim();
 	}
 

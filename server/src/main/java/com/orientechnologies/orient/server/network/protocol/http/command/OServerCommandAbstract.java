@@ -165,7 +165,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 		writeLine(iRequest, OHttpUtils.CONTENT_LENGTH + (iSize));
 		writeLine(iRequest, null);
 
-		while (iContent.available() > 0)
+		while (iContent != null && iContent.available() > 0)
 			iRequest.channel.outStream.write((byte) iContent.read());
 
 		iRequest.channel.flush();
