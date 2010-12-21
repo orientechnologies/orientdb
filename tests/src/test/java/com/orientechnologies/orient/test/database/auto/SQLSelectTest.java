@@ -28,10 +28,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.filter.OSQLParser;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 
@@ -574,37 +571,6 @@ public class SQLSelectTest {
 			last = resultset.get(resultset.size() - 1).getIdentity();
 		}
 
-		database.close();
-	}
-
-	@Test
-	public void queryCustomFunction() {
-		database.open("admin", "admin");
-
-		OSQLParser.getInstance().registerFunction("max", new OSQLFunctionAbstract("max", 2, 2) {
-			public String getSyntax() {
-				return "max(<first>, <second>)";
-			}
-
-			public Object execute(ORecordInternal<?> iRecord, Object[] iParameters) {
-				if (iParameters[0] == null || iParameters[1] == null)
-					// CHECK BOTH EXPECTED PARAMETERS
-					return null;
-
-				// USE DOUBLE TO AVOID LOSS OF PRECISION
-				final double v1 = Double.parseDouble(iParameters[0].toString());
-				final double v2 = Double.parseDouble(iParameters[1].toString());
-
-				return Math.max(v1, v2);
-			}
-		});
-
-		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Account where max(nr,1000) > 0"))
-				.execute();
-
-		Assert.assertTrue(result.size() != 0);
-
-		OSQLParser.getInstance().unregisterFunction("max");
 		database.close();
 	}
 }
