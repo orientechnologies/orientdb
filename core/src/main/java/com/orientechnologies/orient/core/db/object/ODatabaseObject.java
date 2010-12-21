@@ -34,6 +34,14 @@ public interface ODatabaseObject extends ODatabaseSchemaAware<Object> {
    *          User object
    */
   public void setDirty(final Object iPojo);
+  
+  /**
+   * Sets as not dirty a POJO. This is useful when you change some other object and need to tell to the engine to treat this one as not dirty.
+   * 
+   * @param iPojo
+   *          User object
+   */
+  public void unsetDirty(final Object iPojo);
 
   /**
    * Browses all the records of the specified cluster.

@@ -125,6 +125,9 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 	 *          User object
 	 */
 	public void setDirty(final Object iPojo) {
+		if (iPojo == null)
+			return;
+		
 		checkOpeness();
 
 		final ODocument record = getRecordByUserObject(iPojo, false);
@@ -132,6 +135,25 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 			throw new OObjectNotManagedException("The object " + iPojo + " is not managed by the current database");
 
 		record.setDirty();
+	}
+
+	/**
+	 * Sets as not dirty a POJO. This is useful when you change some other object and need to tell to the engine to treat this one as
+	 * not dirty.
+	 * 
+	 * @param iPojo
+	 *          User object
+	 */
+	public void unsetDirty(final Object iPojo) {
+		if (iPojo == null)
+			return;
+		checkOpeness();
+
+		final ODocument record = getRecordByUserObject(iPojo, false);
+		if (record == null)
+			return;
+
+		record.unsetDirty();
 	}
 
 	/**
