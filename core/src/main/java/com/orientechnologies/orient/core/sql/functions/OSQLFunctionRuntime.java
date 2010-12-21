@@ -15,25 +15,21 @@
  */
 package com.orientechnologies.orient.core.sql.functions;
 
-import com.orientechnologies.orient.core.record.ORecordInternal;
-
 /**
- * Interface that defines a SQL Function. Functions are state-less and are reused across queries. So don't keep any run-time
- * information inside of it. Implement it and register it with: <code>OSQLParser.getInstance().registerFunction()</code> to being
- * used by the SQL engine.
+ * Represents a state-less function at run-time.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public interface OSQLFunction {
+public class OSQLFunctionRuntime {
 
-	public Object execute(final ORecordInternal<?> iRecord, final Object[] funcParams);
+	public OSQLFunction	function;
+	public Object[]			configuredParameters;
+	public Object[]			runtimeParameters;
 
-	public String getName();
-
-	public int getMinParams();
-
-	public int getMaxParams();
-
-	public String getSyntax();
+	public OSQLFunctionRuntime(final OSQLFunction function, final Object[] configuredParameters) {
+		this.function = function;
+		this.configuredParameters = configuredParameters;
+		this.runtimeParameters = configuredParameters;
+	}
 }

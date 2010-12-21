@@ -433,7 +433,8 @@ public abstract class OStringSerializerHelper {
 		t = pars.get(0).substring(1, extractedPieceLength - 1);
 		pars = smartSplit(t, PARAMETER_SEPARATOR);
 
-		iParameters.addAll(pars);
+		for (int i = 0; i < pars.size(); ++i)
+			iParameters.add(pars.get(i).trim());
 
 		return iBeginPosition + extractedPieceLength;
 	}

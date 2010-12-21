@@ -26,16 +26,15 @@ import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandToParse;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
-import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 
 /**
@@ -299,26 +298,21 @@ public class OSQLFilter extends OCommandToParse {
 				int pos = words[0].indexOf(OStringSerializerHelper.PARENTHESIS_BEGIN);
 				String funcName = words[0].substring(0, pos);
 
-				Class<? extends OSQLFunction> functionClass = OSQLParser.getInstance().getFunction(funcName);
-				if (functionClass == null)
-					throw new OCommandSQLParsingException("Unknow function " + funcName + "()");
+				final OSQLFunction function = OSQLParser.getInstance().getFunction(funcName);
 
-				final OSQLFunction function;
-				try {
-					function = functionClass.newInstance();
-				} catch (Exception e) {
-					throw new OConfigurationException("Function " + funcName
-							+ "() can be created. Something went wrong in construction. Has it the default constructor?");
-				}
+				final List<String> funcParamsText = OStringSerializerHelper.getParameters(words[1]);
 
-				final List<String> funcParams = OStringSerializerHelper.getParameters(words[1]);
-
-				if (funcParams.size() < function.getMinParams() || funcParams.size() > function.getMaxParams())
+				if (funcParamsText.size() < function.getMinParams() || funcParamsText.size() > function.getMaxParams())
 					throw new IllegalArgumentException("Syntax error. Expected: " + function.getSyntax());
 
-				function.configure(database, funcParams);
+				// PARSE PARAMETERS
+				final Object[] funcParams = new Object[funcParamsText.size()];
+				for (int i = 0; i < funcParamsText.size(); ++i) {
+					funcParams[i] = OSQLHelper.parseValue(database, this, funcParamsText.get(i));
+				}
 
-				return function;
+				// STATE-LESS FUNCTION: CRETAE A RUN-TIME CONTAINER FOR IT TO SAVE THE PARAMETERS
+				return new OSQLFunctionRuntime((OSQLFunction) function, funcParams);
 			} else {
 				if (words[0].equals("NOT")) {
 					// GET THE NEXT VALUE

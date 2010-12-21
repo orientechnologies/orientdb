@@ -20,23 +20,31 @@ import java.util.Map;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunctionDistance;
+import com.orientechnologies.orient.core.sql.functions.impl.OSQLFunctionDistance;
 
 public class OSQLParser {
-	private Map<String, Class<? extends OSQLFunction>>	functions	= new HashMap<String, Class<? extends OSQLFunction>>();
+	private Map<String, OSQLFunction>	functions	= new HashMap<String, OSQLFunction>();
 
-	private static final OSQLParser											INSTANCE	= new OSQLParser();
+	private static final OSQLParser		INSTANCE	= new OSQLParser();
 
 	protected OSQLParser() {
-		registerFunction(OSQLFunctionDistance.NAME, OSQLFunctionDistance.class);
+		registerFunction(OSQLFunctionDistance.NAME, new OSQLFunctionDistance());
 	}
 
-	public Class<? extends OSQLFunction> getFunction(final String iFunctionName) {
-		return functions.get(iFunctionName);
+	public OSQLFunction getFunction(final String iFunctionName) {
+		final OSQLFunction f = functions.get(iFunctionName);
+		if (f != null)
+			return f;
+
+		throw new IllegalArgumentException("Unknow function " + iFunctionName + "()");
 	}
 
-	private void registerFunction(final String iName, final Class<? extends OSQLFunction> iFunction) {
+	public void registerFunction(final String iName, final OSQLFunction iFunction) {
 		functions.put(iName.toUpperCase(), iFunction);
+	}
+
+	public void unregisterFunction(final String iName) {
+		functions.remove(iName.toUpperCase());
 	}
 
 	public OSQLFilter parseWhereCondition(final ODatabaseRecord<?> iDatabase, final String iText) {

@@ -17,11 +17,9 @@ package com.orientechnologies.orient.core.serialization.serializer.record.string
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 import java.util.Date;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -58,11 +56,11 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
 			record = new ODocument(database);
 
 		ByteArrayInputStream stream = null;
-		ObjectInput in = null;
+		DataInputStream in = null;
 
 		try {
 			stream = new ByteArrayInputStream(iSource);
-			in = new ObjectInputStream(stream);
+			in = new DataInputStream(stream);
 
 			// UNMARSHALL ALL THE PROPERTIES
 			Object value;
@@ -70,7 +68,6 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
 			byte[] buffer;
 			for (OProperty p : record.getSchemaClass().properties()) {
 				value = null;
-				record.field(p.getName(), in.readObject());
 
 				switch (p.getType()) {
 				case BINARY:
@@ -78,7 +75,7 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
 					if (length >= 0) {
 						// != NULL
 						buffer = new byte[length];
-						in.read(buffer);
+						in.readFully(buffer);
 						value = buffer;
 					}
 					break;
@@ -98,7 +95,7 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
 					if (length >= 0) {
 						// != NULL
 						buffer = new byte[length];
-						in.read(buffer);
+						in.readFully(buffer);
 						value = new ODocument(database, p.getLinkedClass().getName()).fromStream(buffer);
 					}
 					break;
@@ -152,11 +149,11 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
 		ODocument record = (ODocument) iRecord;
 
 		ByteArrayOutputStream stream = null;
-		ObjectOutput out = null;
+		DataOutputStream out = null;
 
 		try {
 			stream = new ByteArrayOutputStream();
-			out = new ObjectOutputStream(stream);
+			out = new DataOutputStream(stream);
 
 			// MARSHALL ALL THE PROPERTIES
 			Object value;

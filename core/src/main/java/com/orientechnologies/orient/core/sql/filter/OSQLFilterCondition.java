@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
 import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 
 /**
@@ -178,9 +178,18 @@ public class OSQLFilterCondition {
 			// NESTED CONDITION: EVALUATE IT RECURSIVELY
 			return ((OSQLFilterCondition) iValue).evaluate(iRecord);
 
-		if (iValue instanceof OSQLFunction)
-			// FUNCTION: EXECUTE IT
-			return ((OSQLFunction) iValue).execute(iRecord);
+		if (iValue instanceof OSQLFunctionRuntime) {
+			// STATELESS FUNCTION: EXECUTE IT
+			final OSQLFunctionRuntime f = (OSQLFunctionRuntime) iValue;
+
+			// RESOLVE VALUES USING THE CURRENT RECORD
+			for (int i = 0; i < f.configuredParameters.length; ++i) {
+				if (f.configuredParameters[i] instanceof OSQLFilterItemField)
+					f.runtimeParameters[i] = ((OSQLFilterItemField) f.configuredParameters[i]).getValue(iRecord);
+			}
+
+			return f.function.execute(iRecord, f.runtimeParameters);
+		}
 
 		// SIMPLE VALUE: JUST RETURN IT
 		return iValue;
