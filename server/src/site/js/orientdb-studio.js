@@ -1,31 +1,56 @@
+/*
+ * Copyright 1999-2010 Luca Garulli (l.garulli--at--orientechnologies.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 // GLOBAL VARIABLES
-var version = "0.9.14";
 var startTime = 0; // CONTAINS THE LAST EXECUTION TIME
 var databaseInfo; // CONTAINS THE DB INFO
 var classEnumeration; // CONTAINS THE DB CLASSES
 var selectedClassName; // CONTAINS LATEST SELECTED CLASS NAME
+var orientServer;
 
 function connect() {
-	orient_connect($('#server').val(), $('#database').val(),
-			function(database) {
-				databaseInfo = database;
+	if (orientServer == null) {
+		orientServer = new ODatabase;
+	}
+	orientServer.setDatabaseUrl($('#server').val());
+	orientServer.setDatabaseName($('#database').val());
+	orientServer.open();
+	if (orientServer.getErrorMessage() != null) {
+		jQuery("#output").text(msg);
+	} else {
+		databaseInfo = orientServer.getDatabaseInfo();
 
-				showDatabaseInfo();
+		showDatabaseInfo();
 
-				$("#tabs-main").show(200);
-				$("#buttonConnect").hide();
-				$("#buttonDisconnect").show();
-			});
+		$("#tabs-main").show(200);
+		$("#buttonConnect").hide();
+		$("#buttonDisconnect").show();
+	}
 }
 
 function disconnect() {
-	executeSimpleRequest($('#server').val() + '/disconnect', null, function(
-			database) {
-		databaseInfo = null;
-		$("#tabs-main").hide(200);
-		$("#buttonConnect").show();
-		$("#buttonDisconnect").hide();
-	});
+	if (orientServer == null) {
+		orientServer = new ODatabase;
+	}
+	orientServer.setDatabaseUrl($('#server').val());
+	orientServer.setDatabaseName($('#database').val());
+	orientServer.close();
+	$("#tabs-main").hide(200);
+	$("#buttonConnect").show();
+	$("#buttonDisconnect").hide();
 }
 
 function showDatabaseInfo() {
@@ -468,9 +493,13 @@ function executeQuery() {
 
 	jQuery("#queryText").val(jQuery.trim($('#queryText').val()));
 
-	executeJSONRequest($('#server').val() + '/query/' + $('#database').val()
-			+ '/sql/' + $("#queryText").val() + "/" + $('#limit').val(),
-			queryResponse);
+	orientServer.query($("#queryText").val() + "/" + $('#limit').val());
+
+	if (orientServer.getErrorMessage() != null) {
+		jQuery("#output").text(orientServer.getErrorMessage());
+	} else {
+		queryResponse(orientServer.getQueryResult());
+	}
 }
 
 function executeCommand() {
@@ -478,21 +507,15 @@ function executeCommand() {
 
 	jQuery("#commandText").val(jQuery.trim($('#commandText').val()));
 
-	$.ajax({
-		type : 'POST',
-		url : $('#server').val() + '/command/' + $('#database').val() + '/sql/'
-				+ $('#commandText').val() + '/' + $('#limit').val(),
-		success : function(msg) {
-			jQuery("#commandOutput").val(msg);
-			jQuery("#output").val(
-					"Command executed in " + stopTimer() + " sec.");
-		},
-		data : jQuery("#commandOutput").val(),
-		error : function(msg) {
-			jQuery("#commandOutput").val("");
-			jQuery("#output").val("Command response: " + msg);
-		}
-	});
+	orientServer.executeCommand(jQuery("#commandText").val());
+
+	if (orientServer.getErrorMessage() != null) {
+		jQuery("#commandOutput").val('');
+		jQuery("#output").text(orientServer.getErrorMessage());
+	} else {
+		jQuery("#commandOutput").val(orientServer.getCommandResult());
+		jQuery("#output").val("Command executed in " + stopTimer() + " sec.");
+	}
 }
 
 function executeRawCommand() {
