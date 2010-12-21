@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
@@ -298,7 +299,7 @@ public class OSQLFilter extends OCommandToParse {
 				int pos = words[0].indexOf(OStringSerializerHelper.PARENTHESIS_BEGIN);
 				String funcName = words[0].substring(0, pos);
 
-				final OSQLFunction function = OSQLParser.getInstance().getFunction(funcName);
+				final OSQLFunction function = OSQLEngine.getInstance().getFunction(funcName);
 
 				final List<String> funcParamsText = OStringSerializerHelper.getParameters(words[1]);
 

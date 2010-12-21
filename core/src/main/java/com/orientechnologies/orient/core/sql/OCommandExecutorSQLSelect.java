@@ -46,7 +46,6 @@ import com.orientechnologies.orient.core.sort.ODocumentSorter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
-import com.orientechnologies.orient.core.sql.filter.OSQLParser;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsText;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
@@ -121,7 +120,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			}
 		}
 
-		compiledFilter = OSQLParser.getInstance().parseWhereCondition(iRequest.getDatabase(), text.substring(pos, endPosition));
+		compiledFilter = OSQLEngine.getInstance().parseWhereCondition(iRequest.getDatabase(), text.substring(pos, endPosition));
 
 		currentPos = compiledFilter.currentPos + pos;
 

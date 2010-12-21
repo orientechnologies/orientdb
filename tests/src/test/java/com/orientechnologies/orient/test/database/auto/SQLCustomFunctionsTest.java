@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.filter.OSQLParser;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
@@ -42,7 +42,7 @@ public class SQLCustomFunctionsTest {
 	public void queryCustomFunction() {
 		database.open("admin", "admin");
 
-		OSQLParser.getInstance().registerFunction("max", new OSQLFunctionAbstract("max", 2, 2) {
+		OSQLEngine.getInstance().registerFunction("max", new OSQLFunctionAbstract("max", 2, 2) {
 			public String getSyntax() {
 				return "max(<first>, <second>)";
 			}
@@ -52,9 +52,13 @@ public class SQLCustomFunctionsTest {
 					// CHECK BOTH EXPECTED PARAMETERS
 					return null;
 
+				if (!(iParameters[0] instanceof Number) || !(iParameters[1] instanceof Number))
+					// EXCLUDE IT FROM THE RESULT SET
+					return null;
+
 				// USE DOUBLE TO AVOID LOSS OF PRECISION
-				final double v1 = Double.parseDouble(iParameters[0].toString());
-				final double v2 = Double.parseDouble(iParameters[1].toString());
+				final double v1 = ((Number) iParameters[0]).doubleValue();
+				final double v2 = ((Number) iParameters[1]).doubleValue();
 
 				return Math.max(v1, v2);
 			}
@@ -65,7 +69,7 @@ public class SQLCustomFunctionsTest {
 
 		Assert.assertTrue(result.size() != 0);
 
-		OSQLParser.getInstance().unregisterFunction("max");
+		OSQLEngine.getInstance().unregisterFunction("max");
 		database.close();
 	}
 }

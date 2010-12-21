@@ -13,21 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.sql.filter;
+package com.orientechnologies.orient.core.sql;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.impl.OSQLFunctionDistance;
 
-public class OSQLParser {
+public class OSQLEngine {
 	private Map<String, OSQLFunction>	functions	= new HashMap<String, OSQLFunction>();
 
-	private static final OSQLParser		INSTANCE	= new OSQLParser();
+	private static final OSQLEngine		INSTANCE	= new OSQLEngine();
 
-	protected OSQLParser() {
+	protected OSQLEngine() {
 		registerFunction(OSQLFunctionDistance.NAME, new OSQLFunctionDistance());
 	}
 
@@ -51,7 +52,7 @@ public class OSQLParser {
 		return new OSQLFilter(iDatabase, iText);
 	}
 
-	public static OSQLParser getInstance() {
+	public static OSQLEngine getInstance() {
 		return INSTANCE;
 	}
 }
