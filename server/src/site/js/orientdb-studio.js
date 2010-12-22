@@ -23,15 +23,13 @@ var orientServer;
 
 function connect() {
 	if (orientServer == null) {
-		orientServer = new ODatabase;
+		orientServer = new ODatabase($('#server').val() + '/'
+				+ $('#database').val());
 	}
-	orientServer.setDatabaseUrl($('#server').val());
-	orientServer.setDatabaseName($('#database').val());
-	orientServer.open();
-	if (orientServer.getErrorMessage() != null) {
-		jQuery("#output").text(msg);
+	databaseInfo = orientServer.open();
+	if (databaseInfo == null) {
+		jQuery("#output").text(orientServer.getErrorMessage());
 	} else {
-		databaseInfo = orientServer.getDatabaseInfo();
 
 		showDatabaseInfo();
 
@@ -493,12 +491,13 @@ function executeQuery() {
 
 	jQuery("#queryText").val(jQuery.trim($('#queryText').val()));
 
-	orientServer.query($("#queryText").val() + "/" + $('#limit').val());
+	queryResult = orientServer.query($("#queryText").val() + "/"
+			+ $('#limit').val());
 
-	if (orientServer.getErrorMessage() != null) {
+	if (queryResult == null) {
 		jQuery("#output").text(orientServer.getErrorMessage());
 	} else {
-		queryResponse(orientServer.getQueryResult());
+		queryResponse(queryResult);
 	}
 }
 
@@ -507,13 +506,13 @@ function executeCommand() {
 
 	jQuery("#commandText").val(jQuery.trim($('#commandText').val()));
 
-	orientServer.executeCommand(jQuery("#commandText").val());
+	commandResult = orientServer.executeCommand(jQuery("#commandText").val());
 
-	if (orientServer.getErrorMessage() != null) {
+	if (commandResult == null) {
 		jQuery("#commandOutput").val('');
 		jQuery("#output").text(orientServer.getErrorMessage());
 	} else {
-		jQuery("#commandOutput").val(orientServer.getCommandResult());
+		jQuery("#commandOutput").val(commandResult);
 		jQuery("#output").val("Command executed in " + stopTimer() + " sec.");
 	}
 }
@@ -558,28 +557,33 @@ function getStudioURL(context) {
 }
 
 function askServerInfo() {
-	executeJSONRequest($('#server').val() + '/server', function(server) {
-		fillStaticTable($('#serverConnections'),
-				[ 'Id', 'Remote Client', 'Database', 'User', 'Protocol',
-						'Total requests', 'Command info', 'Command detail',
-						'Last Command When', 'Last command info',
-						'Last command detail', 'Last execution time',
-						'Total working time', 'Connected since' ],
-				server['connections']);
-		fillStaticTable($('#serverDbs'), [ 'Database', 'User', 'Status',
-				'Storage' ], server['dbs']);
-		fillStaticTable($('#serverStorages'), [ 'Name', 'Type', 'Path',
-				'Active users' ], server['storages']);
-		fillStaticTable($('#serverConfigProperties'), [ 'Name', 'Value' ],
-				server['properties']);
+	serverInfo = orientServer.serverInfo();
+	if (serverInfo == null) {
+		jQuery("#output").val(orientServer.getErrorMessage());
+	} else {
+		writeServerInfo(serverInfo);
+	}
+}
 
-		fillStaticTable($('#serverProfilerStats'), [ 'Name', 'Value' ],
-				server['profiler']['stats']);
-		fillStaticTable($('#serverProfilerChronos'), [ 'Name', 'Total',
-				'Average Elapsed (ms)', 'Min Elapsed (ms)', 'Max Elapsed (ms)',
-				'Last Elapsed (ms)', 'Total Elapsed (ms)' ],
-				server['profiler']['chronos']);
-	});
+function writeServerInfo(server) {
+	fillStaticTable($('#serverConnections'), [ 'Id', 'Remote Client',
+			'Database', 'User', 'Protocol', 'Total requests', 'Command info',
+			'Command detail', 'Last Command When', 'Last command info',
+			'Last command detail', 'Last execution time', 'Total working time',
+			'Connected since' ], server['connections']);
+	fillStaticTable($('#serverDbs'),
+			[ 'Database', 'User', 'Status', 'Storage' ], server['dbs']);
+	fillStaticTable($('#serverStorages'), [ 'Name', 'Type', 'Path',
+			'Active users' ], server['storages']);
+	fillStaticTable($('#serverConfigProperties'), [ 'Name', 'Value' ],
+			server['properties']);
+
+	fillStaticTable($('#serverProfilerStats'), [ 'Name', 'Value' ],
+			server['profiler']['stats']);
+	fillStaticTable($('#serverProfilerChronos'), [ 'Name', 'Total',
+			'Average Elapsed (ms)', 'Min Elapsed (ms)', 'Max Elapsed (ms)',
+			'Last Elapsed (ms)', 'Total Elapsed (ms)' ],
+			server['profiler']['chronos']);
 }
 
 function askDatabaseInfo() {

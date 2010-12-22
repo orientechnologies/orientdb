@@ -19,15 +19,20 @@
  * 
  * @author Luca Molino
  */
-function ODatabase() {
+function ODatabase(databasePath) {
+	this.databaseUrl = "";
+	this.databaseName = "";
 	this.databaseInfo = null;
 	this.queryResult = null;
 	this.commandResult = null;
 	this.errorMessage = null;
-	this.databaseUrl = "";
-	this.databaseName = "";
-	this.userName = "";
-	this.userPass = "";
+
+	if (databasePath) {
+		this.databaseUrl = databasePath.substring(0, databasePath
+				.lastIndexOf('/'));
+		this.databaseName = databasePath.substring(databasePath
+				.lastIndexOf('/') + 1);
+	}
 
 	this.getDatabaseInfo = function() {
 		return this.databaseInfo;
@@ -71,39 +76,6 @@ function ODatabase() {
 		this.databaseName = iDatabaseName;
 	}
 
-	this.getUserName = function() {
-		return this.userName;
-	}
-	this.setUserName = function(iUserName) {
-		this.userName = iUserName;
-	}
-
-	this.getUserPass = function() {
-		return this.userPass;
-	}
-	this.setUserPass = function(iUserPass) {
-		this.userPass = iUserPass;
-	}
-
-	this.executeJSONRequest = function(iRequest, iCallback, iData, iMethod,
-			iContext) {
-		if (!iMethod)
-			iMethod = 'GET';
-		$.ajax({
-			type : iMethod,
-			url : iRequest,
-			context : iContext,
-			async : false,
-			success : function(msg) {
-				iCallback.apply($(this), [ jQuery.parseJSON(msg) ]);
-			},
-			data : iData,
-			error : function(msg) {
-				return msg;
-			}
-		});
-	}
-
 	this.open = function() {
 		$.ajax({
 			type : "GET",
@@ -115,9 +87,11 @@ function ODatabase() {
 				this.setDatabaseInfo(jQuery.parseJSON(msg));
 			},
 			error : function(msg) {
-				this.setErrorMessage('Connect error: ' + msg);
+				this.setErrorMessage('Connect error: ' + msg.responseText);
+				this.setDatabaseInfo(null);
 			}
 		});
+		return this.getDatabaseInfo();
 	}
 
 	this.query = function(iQuery) {
@@ -135,9 +109,11 @@ function ODatabase() {
 				this.setQueryResult(jQuery.parseJSON(msg));
 			},
 			error : function(msg) {
+				this.setQueryResult(null);
 				this.setErrorMessage('Query error: ' + msg.responseText);
 			}
 		});
+		return this.getQueryResult();
 	}
 
 	this.classInfo = function(iClassName) {
@@ -155,9 +131,11 @@ function ODatabase() {
 				this.setCommandResult(jQuery.parseJSON(msg));
 			},
 			error : function(msg) {
+				this.setCommandResult(null);
 				this.setErrorMessage('Command error: ' + msg.responseText);
 			}
 		});
+		return this.getCommandResult();
 	}
 
 	this.browseCluster = function(iClassName) {
@@ -175,9 +153,11 @@ function ODatabase() {
 				this.setCommandResult(jQuery.parseJSON(msg));
 			},
 			error : function(msg) {
+				this.setCommandResult(null);
 				this.setErrorMessage('Command error: ' + msg.responseText);
 			}
 		});
+		return this.getCommandResult();
 	}
 
 	this.executeCommand = function(iCommand) {
@@ -192,12 +172,67 @@ function ODatabase() {
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
-				this.setCommandResult(jQuery.parseJSON(msg));
+				if (typeof msg == 'number' || typeof msg == 'string') {
+					this.setCommandResult(msg);
+				} else {
+					this.setCommandResult(jQuery.parseJSON(msg));
+				}
 			},
 			error : function(msg) {
+				this.setCommandResult(null);
 				this.setErrorMessage('Command error: ' + msg.responseText);
 			}
 		});
+		return this.getCommandResult();
+	}
+
+	this.serverInfo = function() {
+		if (this.databaseInfo == null) {
+			this.open();
+		}
+		$.ajax({
+			type : "GET",
+			url : this.databaseUrl + '/server',
+			context : this,
+			async : false,
+			success : function(msg) {
+				this.setErrorMessage(null);
+				this.setCommandResult(jQuery.parseJSON(msg));
+			},
+			error : function(msg) {
+				this.setCommandResult(null);
+				this.setErrorMessage('Command error: ' + msg.responseText);
+			}
+		});
+		return this.getCommandResult();
+	}
+
+	this.schema = function() {
+		if (this.databaseInfo == null) {
+			this.open();
+		}
+		return this.getDatabaseInfo()['classes'];
+	}
+	
+	this.security = function() {
+		if (this.databaseInfo == null) {
+			this.open();
+		}
+		return this.getDatabaseInfo()['roles'] + this.getDatabaseInfo()['users'];
+	}
+
+	this.securityRoles = function() {
+		if (this.databaseInfo == null) {
+			this.open();
+		}
+		return this.getDatabaseInfo()['roles'];
+	}
+	
+	this.securityUsers= function() {
+		if (this.databaseInfo == null) {
+			this.open();
+		}
+		return this.getDatabaseInfo()['users'];
 	}
 
 	this.close = function() {
@@ -207,15 +242,19 @@ function ODatabase() {
 				url : this.databaseUrl + '/disconnect',
 				dataType : "json",
 				async : false,
+				context : this,
 				success : function(msg) {
-					return jQuery.parseJSON(msg);
+					this.setCommandResult(jQuery.parseJSON(msg));
+					this.setErrorMessage(null);
 				},
 				error : function(msg) {
+					this.setCommandResult(null);
 					this.setErrorMessage('Command response: '
 							+ msg.responseText);
 				}
 			});
 		}
 		this.databaseInfo = null;
+		return this.getCommandResult();
 	}
 }
