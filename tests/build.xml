@@ -20,7 +20,7 @@
 			<include name="*-test-db-from-scratch.xml" />
 
 			<replacefilter token="@PATH@" value="${orient.path}/databases/demo" />
-			<replacefilter token="@URL@" value="local:${orient.path}/databases/demo/demo" />
+			<replacefilter token="@URL@" value="local:${orient.path}/databases/demo" />
 		</replace>
 
 		<echo>EXECUTING TESTS USING LOCAL DATABASE: local:${orient.path}/databases/demo/demo</echo>

@@ -87,7 +87,15 @@ public class OStorageLocal extends OStorageAbstract {
 	public OStorageLocal(final String iName, final String iFilePath, final String iMode) throws IOException {
 		super(iName, iFilePath, iMode);
 
-		storagePath = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getParent()));
+		File f = new File(url);
+
+		if (f.exists() || !exists(f.getParent())) {
+			// ALREADY EXISTS: USE IT
+			storagePath = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getPath()));
+		} else {
+			// Check if db file exist in the parent directory for legacy mode
+			storagePath = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getParent()));
+		}
 
 		configuration = new OStorageConfiguration(this);
 		variableParser = new OStorageVariableParser(storagePath);
@@ -243,7 +251,11 @@ public class OStorageLocal extends OStorageAbstract {
 	}
 
 	public boolean exists() {
-		return new File(storagePath + "/" + OStorage.DATA_DEFAULT_NAME + ".0" + ODataLocal.DEF_EXTENSION).exists();
+		return exists(storagePath);
+	}
+
+	private boolean exists(String path) {
+		return new File(path + "/" + OStorage.DATA_DEFAULT_NAME + ".0" + ODataLocal.DEF_EXTENSION).exists();
 	}
 
 	public void close() {
