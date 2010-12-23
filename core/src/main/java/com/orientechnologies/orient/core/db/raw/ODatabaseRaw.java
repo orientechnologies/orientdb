@@ -194,7 +194,7 @@ public class ODatabaseRaw implements ODatabase {
 
 			if (useCache) {
 				// FIND IN CACHE
-				result = getCache().popRecord(recId);
+				result = getCache().getRecord(recId);
 
 				if (result != null)
 					// FOUND: JUST RETURN IT

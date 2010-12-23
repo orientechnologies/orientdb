@@ -57,6 +57,7 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynch;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
@@ -614,6 +615,9 @@ public class OStorageRemote extends OStorageAbstract {
 				} finally {
 					endResponse();
 				}
+
+				// UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT
+				OTransactionAbstract.updateCacheFromEntries(this, iTx, iTx.getEntries());
 
 				break;
 			} catch (Exception e) {
