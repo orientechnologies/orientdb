@@ -850,7 +850,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		final String path;
 
 		if (iStorageMode.equals(OEngineLocal.NAME)) {
-			path = iStorageMode + ":${ORIENTDB_HOME}/databases/" + iDbName + "/" + iDbName;
+			path = iStorageMode + ":${ORIENTDB_HOME}/databases/" + iDbName;
 		} else if (iStorageMode.equals(OEngineMemory.NAME)) {
 			path = iStorageMode + ":" + iDbName;
 		} else

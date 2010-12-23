@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 public class DbImportExportTest implements OCommandOutputListener {
 	public static final String	EXPORT_FILE_PATH	= "target/db.export";
 	public static final String	NEW_DB_PATH				= "target/test-import";
-	public static final String	NEW_DB_URL				= "target/test-import/test-import";
+	public static final String	NEW_DB_URL				= "target/test-import";
 
 	private String							url;
 	private String							testPath;
