@@ -209,11 +209,13 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 			// DIRTY NODE
 			return 0;
 
-//		if (pTree.cache.remove(record.getIdentity()) == null) {
-//			System.out.println("CACHE INVALID?");
-//		}
+		if (pTree.cache.remove(record.getIdentity()) == null)
+			OLogManager.instance().warn(this, "Can't find current node into the cache. Is the cache invalid?");
 
 		int totalDisconnected = 1;
+
+		if (tree.isDebug())
+			System.out.printf("\nDisconnected tree node %s with parent %s, left %s, right %s...", this, parentRid, leftRid, rightRid);
 
 		if (this != tree.getRoot()) {
 			// SPEED UP MEMORY CLAIM BY RESETTING INTERNAL FIELDS
@@ -795,34 +797,13 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		super.setColor(iColor);
 	}
 
-	private void markDirty() {
-		if (record == null)
+	void markDirty() {
+		if (record == null || record.isDirty())
 			return;
 
 		record.setDirty();
 		tree.getListener().signalNodeChanged(this);
 	}
-
-	// @Override
-	// public boolean equals(final Object o) {
-	// if (this == o)
-	// return true;
-	// if (!(o instanceof OMVRBTreeEntryPersistent<?, ?>))
-	// return false;
-	//
-	// final OMVRBTreeEntryPersistent<?, ?> e = (OMVRBTreeEntryPersistent<?, ?>) o;
-	//
-	// if (record != null && e.record != null)
-	// return record.getIdentity().equals(e.record.getIdentity());
-	//
-	// return false;
-	// }
-	//
-	// @Override
-	// public int hashCode() {
-	// final ORID rid = record.getIdentity();
-	// return rid == null ? 0 : rid.hashCode();
-	// }
 
 	@Override
 	protected OMVRBTreeEntry<K, V> getLeftInMemory() {
@@ -860,11 +841,15 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		if (isNew) {
 			final ORecordId rid = (ORecordId) record.getIdentity();
 
-			if (left != null)
+			if (left != null) {
 				left.parentRid = rid;
+				left.markDirty();
+			}
 
-			if (right != null)
+			if (right != null) {
 				right.parentRid = rid;
+				right.markDirty();
+			}
 
 			if (parent != null) {
 				parentRid = parent.record.getIdentity();
@@ -872,6 +857,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 					parent.leftRid = rid;
 				else if (parent.right == this)
 					parent.rightRid = rid;
+				parent.markDirty();
 			}
 		}
 	}

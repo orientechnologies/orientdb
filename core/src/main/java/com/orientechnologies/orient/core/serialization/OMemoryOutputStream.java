@@ -52,7 +52,10 @@ public class OMemoryOutputStream extends OutputStream {
 	}
 
 	public final byte[] getByteArray() {
-		return buffer;
+		final byte[] toReturn = buffer;
+		buffer = new byte[DEF_SIZE];
+		position = 0;
+		return toReturn;
 	}
 
 	/**

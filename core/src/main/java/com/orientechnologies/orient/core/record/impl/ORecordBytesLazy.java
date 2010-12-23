@@ -41,18 +41,4 @@ public class ORecordBytesLazy extends ORecordBytes {
 	public ORecordBytesLazy copy() {
 		return (ORecordBytesLazy) copyTo(new ORecordBytesLazy(serializableContent));
 	}
-	//
-	// public void onEvent(final OTransactionEntry<? extends ORecord<?>> iTxEntry, final EVENT iEvent) {
-	// switch (iEvent) {
-	// case BEFORE_COMMIT:
-	// // CONVERT TEMPORARY LINKS TO FINALS
-	// // toStream();
-	// break;
-	//
-	// case AFTER_COMMIT:
-	// // FREE ALLOCATED MEMORY
-	// // _source = null;
-	// break;
-	// }
-	// }
 }

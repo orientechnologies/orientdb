@@ -66,13 +66,24 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> {
 			// NOT FOUND: CREATE IT AND PUT IT INTO THE CACHE
 			entry = new OMVRBTreeEntryDatabase<K, V>(this, (OMVRBTreeEntryDatabase<K, V>) iParent, iRecordId);
 			cache.put(iRecordId, entry);
+
+			if (debug)
+				System.out.printf("\nLoaded entry node %s: parent %s, left %s, right %s", iRecordId, entry.parentRid, entry.leftRid,
+						entry.rightRid);
+
 		} else {
-			// COULD BE A PROBLEM BECAUSE IF A NODE IS DISCONNECTED CAN BE STAY IN CACHE?
-			//entry.load();
-			if (iParent != null)
-				// FOUND: ASSIGN IT
-				entry.setParent(iParent);
+			// COULD BE A PROBLEM BECAUSE IF A NODE IS DISCONNECTED CAN IT STAY IN CACHE?
+			// entry.load();
+			if (debug)
+				System.out.printf("\nReused entry node %s from cache: parent %s, left %s, right %s. New parent: %s", iRecordId,
+						entry.parentRid, entry.leftRid, entry.rightRid, iParent);
+
+			// FOUND: ASSIGN IT
+			entry.setParent(iParent);
 		}
+
+		entry.checkEntryStructure();
+
 		return entry;
 	}
 

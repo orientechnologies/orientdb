@@ -197,7 +197,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 				// UNDER THRESHOLD AVOID TO OPTIMIZE
 				return;
 
-			// System.out.printf("\nOptimizing: total items %d, root is %s", size(), pRoot.toString());
+			if (debug)
+				System.out.printf("\nOptimizing: total items %d, root is %s...", size(), pRoot.toString());
 
 			pRoot.checkToDisconnect((int) (entryPointsSize * optimizeEntryPointsFactor));
 
@@ -311,20 +312,30 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 							// CREATE THE RECORD
 							node.save();
 
+							if (debug)
+								System.out.printf("\nSaved %s tree node %s: parent %s, left %s, right %s", wasNew ? "new" : "",
+										node.record.getIdentity(), node.parentRid, node.leftRid, node.rightRid);
+
 							if (wasNew) {
-								// INSERT THE NEW NODE IN CACHE
-								if (node.record.getIdentity().getClusterPosition() < -1)
-									// INSERT A COPY TO PREVENT CHANGES
-									cache.put(node.record.getIdentity().copy(), node);
-								else
-									cache.put(node.record.getIdentity(), node);
+								if (node.record.getIdentity().getClusterPosition() < -1) {
+									if (cache.get(node.record) != node)
+										// INSERT A COPY TO PREVENT CHANGES
+										cache.put(node.record.getIdentity().copy(), node);
+								} else
+								// NEW RID: MAKE DIRTY THE LINKED NODES
+								if (node.parent != null)
+									((OMVRBTreeEntryPersistent<K, V>) node.parent).markDirty();
+								if (node.left != null)
+									((OMVRBTreeEntryPersistent<K, V>) node.left).markDirty();
+								if (node.right != null)
+									((OMVRBTreeEntryPersistent<K, V>) node.right).markDirty();
+
+								cache.put(node.record.getIdentity(), node);
 							}
 						}
 
 					tmp.clear();
 				}
-
-				recordsToCommit.clear();
 			}
 
 			if (record.isDirty()) {
@@ -739,12 +750,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		return super.getFirstEntry();
 	}
 
-	// private void printInMemoryStructure() {
-	// System.out.println("* Entrypoints (" + entryPoints.size() + "), in cache=" + cache.size() + ": *");
-	// for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints)
-	// printInMemoryStructure(entryPoint);
-	// }
-
 	@Override
 	protected void setRoot(final OMVRBTreeEntry<K, V> iRoot) {
 		if (iRoot == root)
@@ -768,4 +773,17 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		valueSerializer = OStreamSerializerFactory.get(stream.getAsString());
 	}
 
+	@Override
+	protected void rotateLeft(final OMVRBTreeEntry<K, V> p) {
+		if (debug)
+			System.out.printf("\nRotating to the left the node %s", ((OMVRBTreeEntryPersistent<K, V>) p).record.getIdentity());
+		super.rotateLeft(p);
+	}
+
+	@Override
+	protected void rotateRight(final OMVRBTreeEntry<K, V> p) {
+		if (debug)
+			System.out.printf("\nRotating to the right the node %s", ((OMVRBTreeEntryPersistent<K, V>) p).record.getIdentity());
+		super.rotateRight(p);
+	}
 }

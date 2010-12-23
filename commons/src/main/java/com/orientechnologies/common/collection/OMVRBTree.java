@@ -46,34 +46,31 @@ import com.orientechnologies.common.profiler.OProfiler;
 @SuppressWarnings("unchecked")
 public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavigableMap<K, V>, Cloneable, java.io.Serializable {
 	protected OMVRBTreeEventListener<K, V>		listener;
-	boolean																	pageItemFound				= false;
-	int																			pageItemComparator	= 0;
-	protected volatile int									pageIndex						= -1;
-
-	protected int														lastPageSize				= 63;		// PERSISTENT FIELDS
+	boolean																		pageItemFound				= false;
+	int																				pageItemComparator	= 0;
+	protected volatile int										pageIndex						= -1;
+	protected int															lastPageSize				= 63;		// PERSISTENT FIELDS
 
 	/**
 	 * The number of entries in the tree
 	 */
-	protected int														size								= 0;			// PERSISTENT FIELDS
-
-	protected float													pageLoadFactor			= 0.7f;
+	protected int															size								= 0;			// PERSISTENT FIELDS
+	protected float														pageLoadFactor			= 0.7f;
 
 	/**
 	 * The comparator used to maintain order in this tree map, or null if it uses the natural ordering of its keys.
 	 * 
 	 * @serial
 	 */
-	private final Comparator<? super K>			comparator;
-
+	private final Comparator<? super K>				comparator;
 	protected transient OMVRBTreeEntry<K, V>	root								= null;
 
 	/**
 	 * The number of structural modifications to the tree.
 	 */
-	transient int														modCount						= 0;
-
-	transient boolean												runtimeCheckEnabled	= false;
+	transient int															modCount						= 0;
+	protected transient boolean								runtimeCheckEnabled	= false;
+	protected boolean													debug								= false;
 
 	public OMVRBTree(final int iSize, final float iLoadFactor) {
 		lastPageSize = iSize;
@@ -1669,8 +1666,8 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		abstract class SubMapIterator<T> implements Iterator<T> {
 			OMVRBTreeEntry<K, V>	lastReturned;
 			OMVRBTreeEntry<K, V>	next;
-			final K							fenceKey;
-			int									expectedModCount;
+			final K								fenceKey;
+			int										expectedModCount;
 
 			SubMapIterator(final OMVRBTreeEntry<K, V> first, final OMVRBTreeEntry<K, V> fence) {
 				expectedModCount = m.modCount;
@@ -1989,7 +1986,8 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 */
 
 	/**
-	 * Returns the first Entry in the OMVRBTree (according to the OMVRBTree's key-sort function). Returns null if the OMVRBTree is empty.
+	 * Returns the first Entry in the OMVRBTree (according to the OMVRBTree's key-sort function). Returns null if the OMVRBTree is
+	 * empty.
 	 */
 	protected OMVRBTreeEntry<K, V> getFirstEntry() {
 		OMVRBTreeEntry<K, V> p = root;
@@ -2004,7 +2002,8 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	}
 
 	/**
-	 * Returns the last Entry in the OMVRBTree (according to the OMVRBTree's key-sort function). Returns null if the OMVRBTree is empty.
+	 * Returns the last Entry in the OMVRBTree (according to the OMVRBTree's key-sort function). Returns null if the OMVRBTree is
+	 * empty.
 	 */
 	protected final OMVRBTreeEntry<K, V> getLastEntry() {
 		OMVRBTreeEntry<K, V> p = root;
@@ -2095,7 +2094,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	}
 
 	/** From CLR */
-	private void rotateLeft(final OMVRBTreeEntry<K, V> p) {
+	protected void rotateLeft(final OMVRBTreeEntry<K, V> p) {
 		if (p != null) {
 			OMVRBTreeEntry<K, V> r = p.getRight();
 			p.setRight(r.getLeft());
@@ -2118,7 +2117,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	}
 
 	/** From CLR */
-	private void rotateRight(final OMVRBTreeEntry<K, V> p) {
+	protected void rotateRight(final OMVRBTreeEntry<K, V> p) {
 		if (p != null) {
 			OMVRBTreeEntry<K, V> l = p.getLeft();
 			p.setLeft(l.getRight());
@@ -2153,9 +2152,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 * setColor(uncle, BLACK); // SET GRANDPARENT'S COLOR TO RED setColor(grandParent, RED); // CONTINUE RECURSIVELY WITH MY
 	 * GRANDFATHER x = grandParent; } else { if (x == rightOf(parent)) { // I'M THE RIGHT x = parent; parent = parentOf(x);
 	 * grandParent = parentOf(parent); rotateLeft(x); } setColor(parent, BLACK); setColor(grandParent, RED); rotateRight(grandParent);
-	 * } } else { // MY PARENT IS THE RIGHT OF THE GRANDFATHER. GET MY UNCLE final OMVRBTreeEntry<K, V> uncle = leftOf(grandParent); if
-	 * (colorOf(uncle) == RED) { setColor(parent, BLACK); setColor(uncle, BLACK); setColor(grandParent, RED); x = grandParent; } else
-	 * { if (x == leftOf(parent)) { x = parentOf(x); parent = parentOf(x); grandParent = parentOf(parent); rotateRight(x); }
+	 * } } else { // MY PARENT IS THE RIGHT OF THE GRANDFATHER. GET MY UNCLE final OMVRBTreeEntry<K, V> uncle = leftOf(grandParent);
+	 * if (colorOf(uncle) == RED) { setColor(parent, BLACK); setColor(uncle, BLACK); setColor(grandParent, RED); x = grandParent; }
+	 * else { if (x == leftOf(parent)) { x = parentOf(x); parent = parentOf(x); grandParent = parentOf(parent); rotateRight(x); }
 	 * setColor(parent, BLACK); setColor(grandParent, RED); rotateLeft(grandParent); } } }
 	 * 
 	 * // //System.out.println("AFTER FIX"); // printInMemoryStructure(x); // }
@@ -2612,5 +2611,17 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
 	public void setChecks(boolean checks) {
 		this.runtimeCheckEnabled = checks;
+	}
+
+	public void setRuntimeCheckEnabled(boolean runtimeCheckEnabled) {
+		this.runtimeCheckEnabled = runtimeCheckEnabled;
+	}
+
+	public boolean isDebug() {
+		return debug;
+	}
+
+	public void setDebug(boolean debug) {
+		this.debug = debug;
 	}
 }

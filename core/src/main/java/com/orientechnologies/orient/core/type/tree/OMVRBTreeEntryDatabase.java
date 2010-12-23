@@ -86,13 +86,15 @@ public class OMVRBTreeEntryDatabase<K, V> extends OMVRBTreeEntryPersistent<K, V>
 
 		if (parent != null)
 			if (!parent.record.getIdentity().equals(parentRid))
-				OLogManager.instance().error(this, "checkEntryStructure: Wrong parent node loaded: " + parentRid);
+				OLogManager.instance().error(this,
+						"[save]: Tree node %s has parentRid '%s' different by the rid of the assigned parent node: %s", record.getIdentity(),
+						parentRid, parent.record.getIdentity());
 
 		checkEntryStructure();
 
-		// if (pTree.cache.get(record.getIdentity()) != this)
-		// UPDATE THE CACHE
-		// pTree.cache.put(record.getIdentity(), this);
+		if (pTree.cache.get(record.getIdentity()) != this)
+			// UPDATE THE CACHE
+			pTree.cache.put(record.getIdentity(), this);
 
 		return this;
 	}
