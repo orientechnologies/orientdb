@@ -96,16 +96,17 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> imp
 		// FIX THE CACHE CONTENT WITH FINAL RECORD-IDS
 		final Set<ORID> keys = cache.keySet();
 		OMVRBTreeEntryDatabase<K, V> entry;
-		for (ORID rid : keys) {
-			if (rid.getClusterPosition() < -1) {
-				// FIX IT IN CACHE
-				entry = (OMVRBTreeEntryDatabase<K, V>) cache.get(rid);
+		if (keys != null)
+			for (ORID rid : keys) {
+				if (rid.getClusterPosition() < -1) {
+					// FIX IT IN CACHE
+					entry = (OMVRBTreeEntryDatabase<K, V>) cache.get(rid);
 
-				// OVERWRITE IT WITH THE NEW RID
-				cache.put(entry.record.getIdentity(), entry);
-				cache.remove(rid);
+					// OVERWRITE IT WITH THE NEW RID
+					cache.put(entry.record.getIdentity(), entry);
+					cache.remove(rid);
+				}
 			}
-		}
 	}
 
 	/**

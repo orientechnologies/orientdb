@@ -90,10 +90,10 @@ public class OStorageLocal extends OStorageAbstract {
 		File f = new File(url);
 
 		if (f.exists() || !exists(f.getParent())) {
-			// ALREADY EXISTS: USE IT
+			// ALREADY EXISTS OR NOT LEGACY
 			storagePath = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getPath()));
 		} else {
-			// Check if db file exist in the parent directory for legacy mode
+			// LEGACY DB
 			storagePath = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getParent()));
 		}
 

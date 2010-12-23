@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.storage.fs;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -135,7 +136,7 @@ public class OMMapManager {
 	}
 
 	public synchronized static void shutdown() {
-		for (OMMapBufferEntry entry : buffersLRU) {
+		for (OMMapBufferEntry entry : new ArrayList<OMMapBufferEntry>(buffersLRU)) {
 			entry.close();
 		}
 		buffersLRU.clear();
