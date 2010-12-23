@@ -30,7 +30,6 @@ function connect() {
 	if (databaseInfo == null) {
 		jQuery("#output").text(orientServer.getErrorMessage());
 	} else {
-
 		showDatabaseInfo();
 
 		$("#tabs-main").show(200);
@@ -587,9 +586,12 @@ function writeServerInfo(server) {
 }
 
 function askDatabaseInfo() {
-	executeJSONRequest(
-			$('#server').val() + '/database/' + $('#database').val(),
-			showDatabaseInfo);
+	databaseInfo = orientServer.getDatabaseInfo();
+	if (databaseInfo == null) {
+		jQuery("#output").text(orientServer.getErrorMessage());
+	} else {
+		showDatabaseInfo();
+	}
 }
 
 function clear(component) {

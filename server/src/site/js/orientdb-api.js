@@ -84,7 +84,7 @@ function ODatabase(databasePath) {
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
-				this.setDatabaseInfo(jQuery.parseJSON(msg));
+				this.setDatabaseInfo(eval("(" + msg + ")"));
 			},
 			error : function(msg) {
 				this.setErrorMessage('Connect error: ' + msg.responseText);
@@ -106,7 +106,7 @@ function ODatabase(databasePath) {
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
-				this.setQueryResult(jQuery.parseJSON(msg));
+				this.setQueryResult(eval("(" + msg + ")"));
 			},
 			error : function(msg) {
 				this.setQueryResult(null);
@@ -121,6 +121,28 @@ function ODatabase(databasePath) {
 			this.open();
 		}
 		$.ajax({
+			type : "GET",
+			url : this.databaseUrl + '/class/' + this.databaseName + '/'
+					+ iClassName,
+			context : this,
+			async : false,
+			success : function(msg) {
+				this.setErrorMessage(null);
+				this.setCommandResult(eval("(" + msg + ")"));
+			},
+			error : function(msg) {
+				this.setCommandResult(null);
+				this.setErrorMessage('Command error: ' + msg.responseText);
+			}
+		});
+		return this.getCommandResult();
+	}
+
+	this.createClass = function(iClassName) {
+		if (this.databaseInfo == null) {
+			this.open();
+		}
+		$.ajax({
 			type : "POST",
 			url : this.databaseUrl + '/class/' + this.databaseName + '/'
 					+ iClassName,
@@ -128,7 +150,7 @@ function ODatabase(databasePath) {
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
-				this.setCommandResult(jQuery.parseJSON(msg));
+				this.setCommandResult(msg);
 			},
 			error : function(msg) {
 				this.setCommandResult(null);
@@ -143,14 +165,14 @@ function ODatabase(databasePath) {
 			this.open();
 		}
 		$.ajax({
-			type : "POST",
+			type : "GET",
 			url : this.databaseUrl + '/cluster/' + this.databaseName + '/'
 					+ iClassName,
 			context : this,
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
-				this.setCommandResult(jQuery.parseJSON(msg));
+				this.setCommandResult(eval("(" + msg + ")"));
 			},
 			error : function(msg) {
 				this.setCommandResult(null);
@@ -172,11 +194,7 @@ function ODatabase(databasePath) {
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
-				if (typeof msg == 'number' || typeof msg == 'string') {
-					this.setCommandResult(msg);
-				} else {
-					this.setCommandResult(jQuery.parseJSON(msg));
-				}
+				this.setCommandResult(msg);
 			},
 			error : function(msg) {
 				this.setCommandResult(null);
@@ -197,7 +215,7 @@ function ODatabase(databasePath) {
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
-				this.setCommandResult(jQuery.parseJSON(msg));
+				this.setCommandResult(eval("(" + msg + ")"));
 			},
 			error : function(msg) {
 				this.setCommandResult(null);
@@ -209,28 +227,24 @@ function ODatabase(databasePath) {
 
 	this.schema = function() {
 		if (this.databaseInfo == null) {
-			this.open();
+			this.setErrorMessage('Database is closed');
+			return null;
 		}
 		return this.getDatabaseInfo()['classes'];
-	}
-	
-	this.security = function() {
-		if (this.databaseInfo == null) {
-			this.open();
-		}
-		return this.getDatabaseInfo()['roles'] + this.getDatabaseInfo()['users'];
 	}
 
 	this.securityRoles = function() {
 		if (this.databaseInfo == null) {
-			this.open();
+			this.setErrorMessage('Database is closed');
+			return null;
 		}
 		return this.getDatabaseInfo()['roles'];
 	}
-	
-	this.securityUsers= function() {
+
+	this.securityUsers = function() {
 		if (this.databaseInfo == null) {
-			this.open();
+			this.setErrorMessage('Database is closed');
+			return null;
 		}
 		return this.getDatabaseInfo()['users'];
 	}
@@ -244,7 +258,7 @@ function ODatabase(databasePath) {
 				async : false,
 				context : this,
 				success : function(msg) {
-					this.setCommandResult(jQuery.parseJSON(msg));
+					this.setCommandResult(msg);
 					this.setErrorMessage(null);
 				},
 				error : function(msg) {
