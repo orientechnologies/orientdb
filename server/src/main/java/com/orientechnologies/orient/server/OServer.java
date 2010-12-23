@@ -165,7 +165,7 @@ public class OServer {
 			if (!f.exists())
 				throw new OConfigurationException("Database '" + iName + "' is not configured on server");
 
-			dbPath = "local:${ORIENTDB_HOME}/databases/" + iName + "/" + iName;
+			dbPath = "local:${ORIENTDB_HOME}/databases/" + iName;
 		}
 
 		return dbPath;
