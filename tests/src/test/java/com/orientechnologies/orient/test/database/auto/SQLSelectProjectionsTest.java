@@ -137,6 +137,26 @@ public class SQLSelectProjectionsTest {
 	}
 
 	@Test
+	public void queryProjectionAliases() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(
+				new OSQLSynchQuery<ODocument>("select name.append('!') as 1, surname as 2 from Profile where name is not null and surname is not null")).execute();
+
+		Assert.assertTrue(result.size() != 0);
+
+		for (ODocument d : result) {
+			Assert.assertTrue(d.field("1").toString().endsWith("!"));
+			Assert.assertNotNull(d.field("2"));
+
+			Assert.assertNull(d.getClassName());
+			Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
+		}
+
+		database.close();
+	}
+
+	@Test
 	public void queryProjectionSimpleValues() {
 		database.open("admin", "admin");
 

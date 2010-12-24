@@ -26,6 +26,8 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerCSVAbstract;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorAnd;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContains;
@@ -164,17 +166,49 @@ public class OSQLHelper {
 	public static Object parseValue(final ODatabaseRecord<?> iDatabase, final OCommandToParse iCommand, final String iWord) {
 		// TRY TO PARSE AS RAW VALUE
 		final Object v = parseValue(iDatabase, iWord);
+		if (v != VALUE_NOT_PARSED)
+			return v;
 
-		if (v == VALUE_NOT_PARSED)
-			// PARSE FIELD
-			return new OSQLFilterItemField(iCommand, iWord);
+		// TRY TO PARSE AS FUNCTION
+		final OSQLFunctionRuntime func = OSQLHelper.getFunction(iDatabase, iCommand, iWord);
+		if (func != null)
+			return func;
 
-		return v;
+		// PARSE AS FIELD
+		return new OSQLFilterItemField(iCommand, iWord);
 	}
 
 	public static String stringContent(final String iContent) {
 		if (iContent.startsWith("'") || iContent.startsWith("\""))
 			return iContent.substring(1, iContent.length() - 1);
 		return iContent;
+	}
+
+	public static OSQLFunctionRuntime getFunction(final ODatabaseRecord<?> database, final OCommandToParse iCommand,
+			final String iWord) {
+		int sepPos = iWord.indexOf('.');
+		int parPos = iWord.indexOf(OStringSerializerHelper.PARENTHESIS_BEGIN);
+
+		if (Character.isLetter(iWord.charAt(0)) && parPos > -1 && (sepPos == -1 || sepPos > parPos)) {
+			// SEARCH FOR THE FUNCTION
+			final String funcName = iWord.substring(0, parPos);
+
+			final OSQLFunction function = OSQLEngine.getInstance().getFunction(funcName);
+
+			final List<String> funcParamsText = OStringSerializerHelper.getParameters(iWord);
+
+			if (funcParamsText.size() < function.getMinParams() || funcParamsText.size() > function.getMaxParams())
+				throw new IllegalArgumentException("Syntax error. Expected: " + function.getSyntax());
+
+			// PARSE PARAMETERS
+			final Object[] funcParams = new Object[funcParamsText.size()];
+			for (int i = 0; i < funcParamsText.size(); ++i) {
+				funcParams[i] = OSQLHelper.parseValue(database, iCommand, funcParamsText.get(i));
+			}
+
+			// STATE-LESS FUNCTION: CRETAE A RUN-TIME CONTAINER FOR IT TO SAVE THE PARAMETERS
+			return new OSQLFunctionRuntime((OSQLFunction) function, funcParams);
+		}
+		return null;
 	}
 }

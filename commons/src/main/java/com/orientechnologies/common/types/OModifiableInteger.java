@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.common.number;
+package com.orientechnologies.common.types;
 
 /**
  * Modifiable Integer. Like java.lang.Integer but the value is modifiable.

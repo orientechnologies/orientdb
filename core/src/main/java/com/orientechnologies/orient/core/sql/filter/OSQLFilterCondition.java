@@ -181,14 +181,7 @@ public class OSQLFilterCondition {
 		if (iValue instanceof OSQLFunctionRuntime) {
 			// STATELESS FUNCTION: EXECUTE IT
 			final OSQLFunctionRuntime f = (OSQLFunctionRuntime) iValue;
-
-			// RESOLVE VALUES USING THE CURRENT RECORD
-			for (int i = 0; i < f.configuredParameters.length; ++i) {
-				if (f.configuredParameters[i] instanceof OSQLFilterItemField)
-					f.runtimeParameters[i] = ((OSQLFilterItemField) f.configuredParameters[i]).getValue(iRecord);
-			}
-
-			return f.function.execute(iRecord, f.runtimeParameters);
+			return f.execute(iRecord);
 		}
 
 		// SIMPLE VALUE: JUST RETURN IT

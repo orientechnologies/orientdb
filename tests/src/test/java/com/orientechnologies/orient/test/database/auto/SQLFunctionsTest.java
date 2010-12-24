@@ -21,33 +21,54 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.common.types.ORef;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 @Test(groups = "sql-select")
-public class SQLCustomFunctionsTest {
+public class SQLFunctionsTest {
 	private ODatabaseDocument	database;
 
 	@Parameters(value = "url")
-	public SQLCustomFunctionsTest(String iURL) {
+	public SQLFunctionsTest(String iURL) {
 		database = new ODatabaseDocumentTx(iURL);
+	}
+
+//	@Test
+//	public void queryMax() {
+//		database.open("admin", "admin");
+//		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select max(salary) as max from Account")).execute();
+//
+//		Assert.assertTrue(result.size() != 0);
+//		for (ODocument d : result) {
+//			Assert.assertNotNull(d.field("salary"));
+//		}
+//
+//		database.close();
+//	}
+
+	@Test(expectedExceptions = OCommandSQLParsingException.class)
+	public void queryUndefinedFunction() {
+		database.open("admin", "admin");
+		database.command(new OSQLSynchQuery<ODocument>("select blaaaa(salary) as max from Account")).execute();
+		database.close();
 	}
 
 	@Test
 	public void queryCustomFunction() {
 		database.open("admin", "admin");
 
-		OSQLEngine.getInstance().registerFunction("max", new OSQLFunctionAbstract("max", 2, 2) {
+		OSQLEngine.getInstance().registerFunction("bigger", new OSQLFunctionAbstract("bigger", 2, 2) {
 			public String getSyntax() {
-				return "max(<first>, <second>)";
+				return "bigger(<first>, <second>)";
 			}
 
-			public Object execute(ORecordInternal<?> iRecord, Object[] iParameters) {
+			public Object execute(ORef<Object> context, Object[] iParameters) {
 				if (iParameters[0] == null || iParameters[1] == null)
 					// CHECK BOTH EXPECTED PARAMETERS
 					return null;
@@ -64,12 +85,15 @@ public class SQLCustomFunctionsTest {
 			}
 		});
 
-		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Account where max(nr,1000) > 0"))
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Account where bigger(nr,1000) = 1000"))
 				.execute();
 
 		Assert.assertTrue(result.size() != 0);
+		for (ODocument d : result) {
+			Assert.assertTrue((Long) d.field("nr") <= 1000);
+		}
 
-		OSQLEngine.getInstance().unregisterFunction("max");
+		OSQLEngine.getInstance().unregisterFunction("bigger");
 		database.close();
 	}
 }

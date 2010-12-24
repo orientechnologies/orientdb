@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.common.number;
+package com.orientechnologies.common.types;
 
 /**
  * Modifiable value. Point to the real value. Useful to pass in method as parameter, letting the method to change. A sort of void*

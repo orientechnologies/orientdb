@@ -61,6 +61,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
  * @author Luca Garulli
  */
 public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract implements ORecordBrowsingListener {
+	private static final String											KEYWORD_AS				= " AS ";
 	public static final String											KEYWORD_SELECT		= "SELECT";
 	public static final String											KEYWORD_ASC				= "ASC";
 	public static final String											KEYWORD_DESC			= "DESC";
@@ -433,7 +434,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 	protected int extractProjections() {
 		int currentPos = 0;
-
 		final StringBuilder word = new StringBuilder();
 
 		currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
@@ -444,30 +444,42 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		if (fromPosition == -1)
 			throw new OQueryParsingException("Missed " + KEYWORD_FROM, text, currentPos);
 
-		final String projectionString = textUpperCase.substring(currentPos, fromPosition).trim();
+		final String projectionString = text.substring(currentPos, fromPosition).trim();
 		if (projectionString.length() > 0 && !projectionString.equals("*")) {
 			// EXTRACT PROJECTIONS
 			projections = new HashMap<String, Object>();
-			final String[] items = text.substring(currentPos, fromPosition).split(",");
+			final String[] items = projectionString.split(",");
 
 			String fieldName;
 			int pos;
-			for (String i : items) {
-				i = i.trim();
+			for (String projection : items) {
+				projection = projection.trim();
 
-				// EXTRACT THE FIELD NAME WITHOUT FUNCTIONS AND/OR LINKS
-				pos = i.indexOf('.');
-				fieldName = pos > -1 ? i.substring(0, pos) : i;
+				fieldName = null;
+				pos = projection.toUpperCase().indexOf(KEYWORD_AS);
+				if (pos > -1) {
+					// EXTRACT ALIAS
+					fieldName = projection.substring(pos + KEYWORD_AS.length()).trim();
+					projection = projection.substring(0, pos).trim();
 
-				fieldName = OSQLHelper.stringContent(fieldName);
+					if (projections.containsKey(fieldName))
+						throw new OCommandSQLParsingException("Field '" + fieldName
+								+ "' is duplicated in current SELECT, choose a different name");
+				} else {
+					// EXTRACT THE FIELD NAME WITHOUT FUNCTIONS AND/OR LINKS
+					pos = projection.indexOf('.');
+					fieldName = pos > -1 ? projection.substring(0, pos) : projection;
 
-				// FIND A UNIQUE NAME BY ADDING A COUNTER
-				for (int fieldIndex = 2; projections.containsKey(fieldName); ++fieldIndex) {
-					fieldName += fieldIndex;
+					fieldName = OSQLHelper.stringContent(fieldName);
+
+					// FIND A UNIQUE NAME BY ADDING A COUNTER
+					for (int fieldIndex = 2; projections.containsKey(fieldName); ++fieldIndex) {
+						fieldName += fieldIndex;
+					}
 				}
 
-				if (i.toUpperCase().startsWith("FLATTEN(")) {
-					List<String> pars = OStringSerializerHelper.getParameters(i);
+				if (projection.startsWith("FLATTEN(")) {
+					List<String> pars = OStringSerializerHelper.getParameters(projection);
 					if (pars.size() != 1)
 						throw new OCommandSQLParsingException(
 								"FLATTEN operator expects the field name as parameter. Example FLATTEN( outEdges )");
@@ -478,7 +490,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 					continue;
 				}
 
-				projections.put(fieldName, OSQLHelper.parseValue(database, this, i));
+				projections.put(fieldName, OSQLHelper.parseValue(database, this, projection));
 			}
 		}
 
@@ -525,6 +537,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 	private void sendResultToListener(final ODocument iRecord) {
 		if (projections != null) {
+			// APPLY PROJECTIONS
 			final ODocument result = new ODocument(database);
 
 			for (Entry<String, Object> projection : projections.entrySet()) {

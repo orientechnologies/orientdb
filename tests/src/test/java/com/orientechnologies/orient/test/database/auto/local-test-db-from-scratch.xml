@@ -102,7 +102,7 @@
 		<classes>
 			<class name="com.orientechnologies.orient.test.database.auto.SQLSelectTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.SQLSelectProjectionsTest" />
-			<class name="com.orientechnologies.orient.test.database.auto.SQLCustomFunctionsTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.SQLFunctionsTest" />
 		</classes>
 	</test>
 	<test name="sql-update">

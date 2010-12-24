@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql.functions;
 
-
 /**
  * Abstract class to extend to build Custom SQL Functions. Extend it and register it with:
  * <code>OSQLParser.getInstance().registerStatelessFunction()</code> or

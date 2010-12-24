@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.functions;
 
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.common.types.ORef;
 
 /**
  * Interface that defines a SQL Function. Functions are state-less and are reused across queries. So don't keep any run-time
@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  */
 public interface OSQLFunction {
 
-	public Object execute(final ORecordInternal<?> iRecord, final Object[] funcParams);
+	public Object execute(final ORef<Object> context, final Object[] funcParams);
 
 	public String getName();
 

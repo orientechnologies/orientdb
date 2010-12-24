@@ -21,7 +21,7 @@ import java.util.Map;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
-import com.orientechnologies.orient.core.sql.functions.impl.OSQLFunctionDistance;
+import com.orientechnologies.orient.core.sql.functions.geo.OSQLFunctionDistance;
 
 public class OSQLEngine {
 	private Map<String, OSQLFunction>	functions	= new HashMap<String, OSQLFunction>();
@@ -33,11 +33,11 @@ public class OSQLEngine {
 	}
 
 	public OSQLFunction getFunction(final String iFunctionName) {
-		final OSQLFunction f = functions.get(iFunctionName);
+		final OSQLFunction f = functions.get(iFunctionName.toUpperCase());
 		if (f != null)
 			return f;
 
-		throw new IllegalArgumentException("Unknow function " + iFunctionName + "()");
+		throw new OCommandSQLParsingException("Unknow function " + iFunctionName + "()");
 	}
 
 	public void registerFunction(final String iName, final OSQLFunction iFunction) {

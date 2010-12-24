@@ -32,10 +32,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
-import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 
 /**
@@ -291,39 +288,14 @@ public class OSQLFilter extends OCommandToParse {
 			result = new OSQLFilterItemFieldAny(this, words[1]);
 
 		} else {
-			int sepPos = words[0].indexOf('.');
-			int parPos = words[0].indexOf(OStringSerializerHelper.PARENTHESIS_BEGIN);
-
-			if (Character.isLetter(words[0].charAt(0)) && parPos > -1 && (sepPos == -1 || sepPos > parPos)) {
-				// SEARCH FOR THE FUNCTION
-				int pos = words[0].indexOf(OStringSerializerHelper.PARENTHESIS_BEGIN);
-				String funcName = words[0].substring(0, pos);
-
-				final OSQLFunction function = OSQLEngine.getInstance().getFunction(funcName);
-
-				final List<String> funcParamsText = OStringSerializerHelper.getParameters(words[1]);
-
-				if (funcParamsText.size() < function.getMinParams() || funcParamsText.size() > function.getMaxParams())
-					throw new IllegalArgumentException("Syntax error. Expected: " + function.getSyntax());
-
-				// PARSE PARAMETERS
-				final Object[] funcParams = new Object[funcParamsText.size()];
-				for (int i = 0; i < funcParamsText.size(); ++i) {
-					funcParams[i] = OSQLHelper.parseValue(database, this, funcParamsText.get(i));
-				}
-
-				// STATE-LESS FUNCTION: CRETAE A RUN-TIME CONTAINER FOR IT TO SAVE THE PARAMETERS
-				return new OSQLFunctionRuntime((OSQLFunction) function, funcParams);
-			} else {
-				if (words[0].equals("NOT")) {
-					// GET THE NEXT VALUE
-					String[] nextWord = nextValue(true);
-					if (nextWord != null && nextWord.length == 2)
-						words[1] = words[1] + " " + nextWord[1];
-				}
-
-				result = OSQLHelper.parseValue(database, this, words[1]);
+			if (words[0].equals("NOT")) {
+				// GET THE NEXT VALUE
+				String[] nextWord = nextValue(true);
+				if (nextWord != null && nextWord.length == 2)
+					words[1] = words[1] + " " + nextWord[1];
 			}
+
+			result = OSQLHelper.parseValue(database, this, words[1]);
 		}
 
 		return result;
