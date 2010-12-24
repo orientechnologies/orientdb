@@ -115,6 +115,32 @@ function ODatabase(databasePath) {
 		});
 		return this.getQueryResult();
 	}
+	
+	this.load = function(iRID) {
+		if (this.databaseInfo == null) {
+			this.open();
+		}
+		
+		if( iRID.charAt(0) == '#' )
+			iRID = iRID.substring(1);
+		
+		$.ajax({
+			type : "GET",
+			url : this.databaseUrl + '/document/' + this.databaseName + '/'
+					+ iRID,
+			context : this,
+			async : false,
+			success : function(msg) {
+				this.setErrorMessage(null);
+				this.setQueryResult(eval("(" + msg + ")"));
+			},
+			error : function(msg) {
+				this.setQueryResult(null);
+				this.setErrorMessage('Query error: ' + msg.responseText);
+			}
+		});
+		return this.getQueryResult();
+	}
 
 	this.classInfo = function(iClassName) {
 		if (this.databaseInfo == null) {
