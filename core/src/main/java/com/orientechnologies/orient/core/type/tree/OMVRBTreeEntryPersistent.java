@@ -718,7 +718,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 
 		final long timer = OProfiler.getInstance().startChrono();
 
-		OMemoryOutputStream stream = pTree.entryRecordBuffer;
+		OMemoryOutputStream stream = new OMemoryOutputStream();
 
 		try {
 			stream.add((short) pageSize);

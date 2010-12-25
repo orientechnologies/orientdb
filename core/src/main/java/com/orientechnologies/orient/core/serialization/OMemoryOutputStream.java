@@ -47,15 +47,17 @@ public class OMemoryOutputStream extends OutputStream {
 		buffer = new byte[initialCapacity];
 	}
 
+	public OMemoryOutputStream(byte[] stream) {
+		buffer = stream;
+	}
+
 	public final void writeTo(final OutputStream out) throws IOException {
 		out.write(buffer, 0, position);
 	}
 
 	public final byte[] getByteArray() {
-		final byte[] toReturn = buffer;
-		buffer = new byte[DEF_SIZE];
 		position = 0;
-		return toReturn;
+		return buffer;
 	}
 
 	/**
@@ -182,8 +184,8 @@ public class OMemoryOutputStream extends OutputStream {
 	}
 
 	private void assureSpaceFor(final int iLength) {
-		byte[] mbuf = buffer;
-		int pos = position;
+		final byte[] mbuf = buffer;
+		final int pos = position;
 		final int capacity = position + iLength;
 
 		final int mbuflen = mbuf.length;

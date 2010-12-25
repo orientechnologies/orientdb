@@ -46,7 +46,7 @@ public enum OGlobalConfiguration {
 			"Tells to the engine to not close the storage when a database is closed. Storages will be closed when the process will shutdown",
 			Boolean.class, Boolean.FALSE),
 
-	STORAGE_CACHE_SIZE("storage.cache.size", "Size of the cache that keep the record in memory", Integer.class, 5000),
+	STORAGE_CACHE_SIZE("storage.cache.size", "Size of the cache that keep the record in memory", Integer.class, 1000),
 
 	// DATABASE
 	DB_USE_CACHE("db.cache.enabled", "Uses the storage cache", Boolean.class, true),
@@ -65,7 +65,7 @@ public enum OGlobalConfiguration {
 	MVRBTREE_OPTIMIZE_THRESHOLD("mvrbtree.optimizeThreshold", "Auto optimize the TreeMap every X operations as get, put and remove",
 			Integer.class, 100000),
 
-	MVRBTREE_ENTRYPOINTS("mvrbtree.entryPoints", "Number of entry points to start searching entries", Integer.class, 9),
+	MVRBTREE_ENTRYPOINTS("mvrbtree.entryPoints", "Number of entry points to start searching entries", Integer.class, 7),
 
 	MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR("mvrbtree.optimizeEntryPointsFactor",
 			"Multiplicand factor to apply to entry-points list (parameter mvrbtree.entrypoints) to determine if needs of optimization",

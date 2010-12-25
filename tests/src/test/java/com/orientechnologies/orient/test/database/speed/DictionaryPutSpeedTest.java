@@ -26,54 +26,54 @@ import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 
 @Test(enabled = false)
 public class DictionaryPutSpeedTest extends OrientMonoThreadTest {
-  private ODatabaseFlat database;
-  private ORecordFlat   record;
-  private long          startNum;
+	private ODatabaseFlat	database;
+	private ORecordFlat		record;
+	private long					startNum;
 
-  public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
-    DictionaryPutSpeedTest test = new DictionaryPutSpeedTest();
-    test.data.go(test);
-  }
+	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
+//		System.setProperty("url", "remote:localhost:2424/demo");
+		DictionaryPutSpeedTest test = new DictionaryPutSpeedTest();
+		test.data.go(test);
+	}
 
-  public DictionaryPutSpeedTest() throws InstantiationException, IllegalAccessException {
-    super(1000000);
+	public DictionaryPutSpeedTest() throws InstantiationException, IllegalAccessException {
+		super(1000000);
 
-    // String url = "remote:localhost:2424/petshop";
-    String url = System.getProperty("url");
-    database = new ODatabaseFlat(url).open("admin", "admin");
-    database.declareIntent(new OIntentMassiveInsert());
+		String url = System.getProperty("url");
+		database = new ODatabaseFlat(url).open("admin", "admin");
+		database.declareIntent(new OIntentMassiveInsert());
 
-    record = database.newInstance();
-    startNum = 0;// database.countClusterElements("Animal");
+		record = database.newInstance();
+		startNum = 0;// database.countClusterElements("Animal");
 
-    OProfiler.getInstance().startRecording();
+		OProfiler.getInstance().startRecording();
 
-    System.out.println("Total element in the dictionary: " + startNum);
+		System.out.println("Total element in the dictionary: " + startNum);
 
-    database.begin(TXTYPE.NOTX);
-  }
+		database.begin(TXTYPE.NOTX);
+	}
 
-  @Override
-  public void cycle() {
-    int id = (int) (startNum + data.getCyclesDone());
+	@Override
+	public void cycle() {
+		int id = (int) (startNum + data.getCyclesDone());
 
-    record.reset();
-    record = record.value("{ 'id' : " + id
-        + " , 'name' : 'Gipsy' , 'type' : 'Cat' , 'race' : 'European' , 'country' : 'Italy' , 'price' :"
-        + (data.getCyclesDone() + 300) + ".00");
-    record.save("Animal");
+		record.reset();
+		record = record.value("{ 'id' : " + id
+				+ " , 'name' : 'Gipsy' , 'type' : 'Cat' , 'race' : 'European' , 'country' : 'Italy' , 'price' :"
+				+ (data.getCyclesDone() + 300) + ".00");
+		record.save("Animal");
 
-    database.getDictionary().put("doc-" + id, record);
-  }
+		database.getDictionary().put("doc-" + id, record);
+	}
 
-  @Override
-  public void deinit() {
-    System.out.println("Total element in the dictionary: " + database.getDictionary().size());
+	@Override
+	public void deinit() {
+		System.out.println("Total element in the dictionary: " + database.getDictionary().size());
 
-    database.commit();
+		database.commit();
 
-    database.close();
-    super.deinit();
-  }
+		database.close();
+		super.deinit();
+	}
 
 }

@@ -401,7 +401,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		} else
 			marshalledRecords.add(identityRecord);
 
-		OMemoryOutputStream stream = new OMemoryOutputStream();
+		OMemoryOutputStream stream = entryRecordBuffer;
 
 		try {
 			if (root != null) {
