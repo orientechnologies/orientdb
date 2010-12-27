@@ -25,61 +25,63 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @see ORecordHook
  */
 public abstract class ODocumentHookAbstract implements ORecordHook {
-	public void onRecordBeforeCreate(final ODocument iDocument) {
+	public boolean onRecordBeforeCreate(final ODocument iDocument) {
+		return false;
 	};
 
-	public void onRecordAfterCreate(final ODocument iDocument) {
+	public boolean onRecordAfterCreate(final ODocument iDocument) {
+		return false;
 	};
 
-	public void onRecordBeforeRead(final ODocument iDocument) {
+	public boolean onRecordBeforeRead(final ODocument iDocument) {
+		return false;
 	};
 
-	public void onRecordAfterRead(final ODocument iDocument) {
+	public boolean onRecordAfterRead(final ODocument iDocument) {
+		return false;
 	};
 
-	public void onRecordBeforeUpdate(final ODocument iDocument) {
+	public boolean onRecordBeforeUpdate(final ODocument iDocument) {
+		return false;
 	};
 
-	public void onRecordAfterUpdate(final ODocument iDocument) {
+	public boolean onRecordAfterUpdate(final ODocument iDocument) {
+		return false;
 	};
 
-	public void onRecordBeforeDelete(final ODocument iDocument) {
+	public boolean onRecordBeforeDelete(final ODocument iDocument) {
+		return false;
 	};
 
-	public void onRecordAfterDelete(final ODocument iDocument) {
+	public boolean onRecordAfterDelete(final ODocument iDocument) {
+		return false;
 	};
 
-	public void onTrigger(final TYPE iType, final ORecord<?> iRecord) {
+	public boolean onTrigger(final TYPE iType, final ORecord<?> iRecord) {
 		if (!(iRecord instanceof ODocument))
-			return;
+			return false;
 
-		ODocument document = (ODocument) iRecord;
+		final ODocument document = (ODocument) iRecord;
 
 		switch (iType) {
 		case BEFORE_CREATE:
-			onRecordBeforeCreate(document);
-			break;
+			return onRecordBeforeCreate(document);
 		case AFTER_CREATE:
-			onRecordAfterCreate(document);
-			break;
+			return onRecordAfterCreate(document);
 		case BEFORE_READ:
-			onRecordBeforeRead(document);
-			break;
+			return onRecordBeforeRead(document);
 		case AFTER_READ:
-			onRecordAfterRead(document);
-			break;
+			return onRecordAfterRead(document);
 		case BEFORE_UPDATE:
-			onRecordBeforeUpdate(document);
-			break;
+			return onRecordBeforeUpdate(document);
 		case AFTER_UPDATE:
-			onRecordAfterUpdate(document);
-			break;
+			return onRecordAfterUpdate(document);
 		case BEFORE_DELETE:
-			onRecordBeforeDelete(document);
-			break;
+			return onRecordBeforeDelete(document);
 		case AFTER_DELETE:
-			onRecordAfterDelete(document);
-			break;
+			return onRecordAfterDelete(document);
 		}
+
+		return false;
 	}
 }

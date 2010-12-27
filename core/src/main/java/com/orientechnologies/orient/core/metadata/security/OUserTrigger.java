@@ -26,13 +26,16 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class OUserTrigger extends ODocumentHookAbstract {
 
 	@Override
-	public void onRecordBeforeUpdate(final ODocument iRecord) {
+	public boolean onRecordBeforeUpdate(final ODocument iRecord) {
 		if ("OUser".equals(iRecord.getClassName())) {
 			final String password = (String) iRecord.field("password");
 
-			if (iRecord.getOriginalValue("password") != null)
+			if (iRecord.getOriginalValue("password") != null) {
 				// PASSWORD HAS BEEN CHANGED: ENCRYPT IT
 				iRecord.field("password", OUser.encryptPassword(password));
+				return true;
+			}
 		}
+		return false;
 	}
 }

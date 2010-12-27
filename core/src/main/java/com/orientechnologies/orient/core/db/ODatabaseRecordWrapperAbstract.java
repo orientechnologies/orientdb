@@ -169,8 +169,8 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord<
 		return (DBTYPE) this;
 	}
 
-	public void callbackHooks(final TYPE iType, final Object iObject) {
-		underlying.callbackHooks(iType, iObject);
+	public boolean callbackHooks(final TYPE iType, final Object iObject) {
+		return underlying.callbackHooks(iType, iObject);
 	}
 
 	public Set<ORecordHook> getHooks() {

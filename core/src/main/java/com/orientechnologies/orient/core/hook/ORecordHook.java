@@ -29,5 +29,5 @@ public interface ORecordHook {
 		ANY, BEFORE_CREATE, BEFORE_READ, BEFORE_UPDATE, BEFORE_DELETE, AFTER_CREATE, AFTER_READ, AFTER_UPDATE, AFTER_DELETE
 	};
 
-	public void onTrigger(TYPE iType, ORecord<?> iRecord);
+	public boolean onTrigger(TYPE iType, ORecord<?> iRecord);
 }

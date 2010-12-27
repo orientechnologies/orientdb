@@ -127,7 +127,7 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 	public void setDirty(final Object iPojo) {
 		if (iPojo == null)
 			return;
-		
+
 		checkOpeness();
 
 		final ODocument record = getRecordByUserObject(iPojo, false);
@@ -229,8 +229,8 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 		return (DBTYPE) this;
 	}
 
-	public void callbackHooks(final TYPE iType, final Object iObject) {
-		underlying.callbackHooks(iType, iObject);
+	public boolean callbackHooks(final TYPE iType, final Object iObject) {
+		return underlying.callbackHooks(iType, iObject);
 	}
 
 	public Set<ORecordHook> getHooks() {

@@ -696,11 +696,15 @@ public class OStorageLocal extends OStorageAbstract {
 					// NOT VALID POSITION (IT HAS BEEN DELETED)
 					continue;
 
-				// READ THE RAW RECORD. IF iLockEntireCluster THEN THE READ WILL
-				// BE NOT-LOCKING, OTHERWISE YES
-				recordBuffer = readRecord(iRequesterId, cluster, positionInPhyCluster, !iLockEntireCluster);
-				if (recordBuffer == null)
-					continue;
+				// TRY IN THE CACHE
+				recordBuffer = cache.getRecord(ORecordId.generateString(cluster.getId(), positionInPhyCluster));
+				if (recordBuffer == null) {
+					// READ THE RAW RECORD. IF iLockEntireCluster THEN THE READ WILL
+					// BE NOT-LOCKING, OTHERWISE YES
+					recordBuffer = readRecord(iRequesterId, cluster, positionInPhyCluster, !iLockEntireCluster);
+					if (recordBuffer == null)
+						continue;
+				}
 
 				if (recordBuffer.recordType != ODocument.RECORD_TYPE && recordBuffer.recordType != ORecordColumn.RECORD_TYPE)
 					// WRONG RECORD TYPE: JUMP IT

@@ -85,7 +85,7 @@ public class HookTest extends ORecordHookAbstract {
 	@Test(dependsOnMethods = "testHookRead")
 	public void testHookUpdate() {
 		// TEST HOOKS ON UPDATE
-		p.setValue(p.getValue()+1000);
+		p.setValue(p.getValue() + 1000);
 		database.save(p);
 		Assert.assertEquals(callbackCount, 151);
 	}
@@ -105,65 +105,73 @@ public class HookTest extends ORecordHookAbstract {
 
 	@Override
 	@Test(enabled = false)
-	public void onRecordBeforeCreate(ORecord<?> iRecord) {
+	public boolean onRecordBeforeCreate(ORecord<?> iRecord) {
 		if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
 				&& ((ODocument) iRecord).getClassName().equals("Profile"))
 			callbackCount += 1;
+		return false;
 	}
 
 	@Override
 	@Test(enabled = false)
-	public void onRecordAfterCreate(ORecord<?> iRecord) {
+	public boolean onRecordAfterCreate(ORecord<?> iRecord) {
 		if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
 				&& ((ODocument) iRecord).getClassName().equals("Profile"))
 			callbackCount += 10;
+		return false;
 	}
 
 	@Override
 	@Test(enabled = false)
-	public void onRecordBeforeRead(ORecord<?> iRecord) {
+	public boolean onRecordBeforeRead(ORecord<?> iRecord) {
 		if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
 				&& ((ODocument) iRecord).getClassName().equals("Profile"))
 			callbackCount += 20;
+		return false;
 	}
 
 	@Override
 	@Test(enabled = false)
-	public void onRecordAfterRead(ORecord<?> iRecord) {
+	public boolean onRecordAfterRead(ORecord<?> iRecord) {
 		if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
 				&& ((ODocument) iRecord).getClassName().equals("Profile"))
 			callbackCount += 15;
+		return false;
 	}
 
 	@Override
 	@Test(enabled = false)
-	public void onRecordBeforeUpdate(ORecord<?> iRecord) {
+	public boolean onRecordBeforeUpdate(ORecord<?> iRecord) {
 		if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
 				&& ((ODocument) iRecord).getClassName().equals("Profile"))
 			callbackCount += 40;
+		return false;
 	}
 
 	@Override
 	@Test(enabled = false)
-	public void onRecordAfterUpdate(ORecord<?> iRecord) {
+	public boolean onRecordAfterUpdate(ORecord<?> iRecord) {
 		if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
 				&& ((ODocument) iRecord).getClassName().equals("Profile"))
 			callbackCount += 50;
+		return false;
 	}
 
 	@Override
 	@Test(enabled = false)
-	public void onRecordBeforeDelete(ORecord<?> iRecord) {
+	public boolean onRecordBeforeDelete(ORecord<?> iRecord) {
 		if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
 				&& ((ODocument) iRecord).getClassName().equals("Profile"))
 			callbackCount += 60;
+		return false;
 	}
 
 	@Override
 	@Test(enabled = false)
-	public void onRecordAfterDelete(ORecord<?> iRecord) {
+	public boolean onRecordAfterDelete(ORecord<?> iRecord) {
 		if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
 				&& ((ODocument) iRecord).getClassName().equals("Profile"))
 			callbackCount += 70;
+		return false;
 	}
 }

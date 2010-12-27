@@ -24,48 +24,57 @@ import com.orientechnologies.orient.core.record.ORecord;
  * @see ORecordHook
  */
 public abstract class ORecordHookAbstract implements ORecordHook {
-	public void onRecordBeforeCreate(final ORecord<?> iRecord){};
+	public boolean onRecordBeforeCreate(final ORecord<?> iRecord) {
+		return false;
+	};
 
-	public void onRecordAfterCreate(final ORecord<?> iRecord){};
+	public boolean onRecordAfterCreate(final ORecord<?> iRecord) {
+		return false;
+	};
 
-	public void onRecordBeforeRead(final ORecord<?> iRecord){};
+	public boolean onRecordBeforeRead(final ORecord<?> iRecord) {
+		return false;
+	};
 
-	public void onRecordAfterRead(final ORecord<?> iRecord){};
+	public boolean onRecordAfterRead(final ORecord<?> iRecord) {
+		return false;
+	};
 
-	public void onRecordBeforeUpdate(final ORecord<?> iRecord){};
+	public boolean onRecordBeforeUpdate(final ORecord<?> iRecord) {
+		return false;
+	};
 
-	public void onRecordAfterUpdate(final ORecord<?> iRecord){};
+	public boolean onRecordAfterUpdate(final ORecord<?> iRecord) {
+		return false;
+	};
 
-	public void onRecordBeforeDelete(final ORecord<?> iRecord){};
+	public boolean onRecordBeforeDelete(final ORecord<?> iRecord) {
+		return false;
+	};
 
-	public void onRecordAfterDelete(final ORecord<?> iRecord){};
+	public boolean onRecordAfterDelete(final ORecord<?> iRecord) {
+		return false;
+	};
 
-	public void onTrigger(final TYPE iType, final ORecord<?> iRecord) {
+	public boolean onTrigger(final TYPE iType, final ORecord<?> iRecord) {
 		switch (iType) {
 		case BEFORE_CREATE:
-			onRecordBeforeCreate(iRecord);
-			break;
+			return onRecordBeforeCreate(iRecord);
 		case AFTER_CREATE:
-			onRecordAfterCreate(iRecord);
-			break;
+			return onRecordAfterCreate(iRecord);
 		case BEFORE_READ:
-			onRecordBeforeRead(iRecord);
-			break;
+			return onRecordBeforeRead(iRecord);
 		case AFTER_READ:
-			onRecordAfterRead(iRecord);
-			break;
+			return onRecordAfterRead(iRecord);
 		case BEFORE_UPDATE:
-			onRecordBeforeUpdate(iRecord);
-			break;
+			return onRecordBeforeUpdate(iRecord);
 		case AFTER_UPDATE:
-			onRecordAfterUpdate(iRecord);
-			break;
+			return onRecordAfterUpdate(iRecord);
 		case BEFORE_DELETE:
-			onRecordBeforeDelete(iRecord);
-			break;
+			return onRecordBeforeDelete(iRecord);
 		case AFTER_DELETE:
-			onRecordAfterDelete(iRecord);
-			break;
+			return onRecordAfterDelete(iRecord);
 		}
+		return false;
 	}
 }

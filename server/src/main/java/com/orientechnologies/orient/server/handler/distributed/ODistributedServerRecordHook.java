@@ -44,9 +44,9 @@ public class ODistributedServerRecordHook implements ORecordHook, ODatabaseLifec
 		Orient.instance().addDbLifecycleListener(this);
 	}
 
-	public void onTrigger(final TYPE iType, final ORecord<?> iRecord) {
-//		if (!manager.isDistributedConfiguration())
-//			return;
+	public boolean onTrigger(final TYPE iType, final ORecord<?> iRecord) {
+		// if (!manager.isDistributedConfiguration())
+		// return;
 
 		try {
 			switch (iType) {
@@ -78,15 +78,11 @@ public class ODistributedServerRecordHook implements ORecordHook, ODatabaseLifec
 				manager.distributeRequest(new OTransactionEntry<ORecordInternal<?>>((ORecordInternal<?>) iRecord,
 						OTransactionEntry.DELETED, null));
 				break;
-
-			default:
-				// NOT DISTRIBUTED REQUEST, JUST RETURN
-				return;
 			}
 		} catch (IOException e) {
 			throw new ODistributedSynchronizationException("Error on distribution of the record to the configured cluster", e);
 		}
-
+		return false;
 	}
 
 	/**

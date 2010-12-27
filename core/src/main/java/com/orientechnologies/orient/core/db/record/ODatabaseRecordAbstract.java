@@ -398,7 +398,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 
 		try {
 			// STREAM.LENGTH = 0 -> RECORD IN STACK: WILL BE SAVED AFTER
-			final byte[] stream = iRecord.toStream();
+			byte[] stream = iRecord.toStream();
 
 			boolean isNew = rid.isNew();
 
@@ -412,11 +412,15 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 				if (isNew) {
 					// CHECK ACCESS ON CLUSTER
 					checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_CREATE, iClusterName, clusterId);
-					callbackHooks(TYPE.BEFORE_CREATE, iRecord);
+					if (callbackHooks(TYPE.BEFORE_CREATE, iRecord))
+						// RECORD CHANGED IN TRIGGER, REACQUIRE IT
+						stream = iRecord.toStream();
 				} else {
 					// CHECK ACCESS ON CLUSTER
 					checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName, clusterId);
-					callbackHooks(TYPE.BEFORE_UPDATE, iRecord);
+					if (callbackHooks(TYPE.BEFORE_UPDATE, iRecord))
+						// RECORD CHANGED IN TRIGGER, REACQUIRE IT
+						stream = iRecord.toStream();
 				}
 
 				if (!iRecord.isDirty()) {
@@ -541,10 +545,15 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 	 * @param iType
 	 * @param iRecord
 	 *          Record received in the callback
+	 * @return True if the input record is changed, otherwise false
 	 */
-	public void callbackHooks(final TYPE iType, final Object iRecord) {
+	public boolean callbackHooks(final TYPE iType, final Object iRecord) {
+		boolean recordChanged = false;
 		for (ORecordHook hook : hooks)
-			hook.onTrigger(iType, (ORecord<?>) iRecord);
+			if (hook.onTrigger(iType, (ORecord<?>) iRecord))
+				recordChanged = true;
+
+		return recordChanged;
 	}
 
 	protected ORecordSerializer resolveFormat(final Object iObject) {

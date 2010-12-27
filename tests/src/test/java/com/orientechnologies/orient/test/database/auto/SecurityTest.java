@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -25,6 +26,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 @Test(groups = "security")
 public class SecurityTest {
@@ -71,4 +74,25 @@ public class SecurityTest {
 			database.close();
 		}
 	}
+
+	@Test
+	public void testEncryptPassword() throws IOException {
+		database.open("admin", "admin");
+
+		Integer updated = database.command(new OCommandSQL("update ouser set password = 'test' where name = 'reader'")).execute();
+		Assert.assertEquals(updated.intValue(), 1);
+
+		List<ODocument> result = database.query(new OSQLSynchQuery<Object>("select from ouser where name = 'reader'"));
+		Assert.assertFalse(result.get(0).field("password").equals("test"));
+
+		// RESET OLD PASSWORD
+		updated = database.command(new OCommandSQL("update ouser set password = 'reader' where name = 'reader'")).execute();
+		Assert.assertEquals(updated.intValue(), 1);
+
+		result = database.query(new OSQLSynchQuery<Object>("select from ouser where name = 'reader'"));
+		Assert.assertFalse(result.get(0).field("password").equals("reader"));
+
+		database.close();
+	}
+
 }

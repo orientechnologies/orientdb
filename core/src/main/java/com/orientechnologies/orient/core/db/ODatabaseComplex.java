@@ -236,6 +236,7 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 * @param iObject
 	 *          The object passed change based on the Database implementation: records for {@link ODatabaseRecord} implementations and
 	 *          POJO for {@link ODatabaseObject} implementations.
+	 * @return True if the input record is changed, otherwise false
 	 */
-	public void callbackHooks(TYPE iType, Object iObject);
+	public boolean callbackHooks(TYPE iType, Object iObject);
 }

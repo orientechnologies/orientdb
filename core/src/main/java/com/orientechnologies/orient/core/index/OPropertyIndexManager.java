@@ -40,27 +40,30 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class OPropertyIndexManager extends ODocumentHookAbstract {
 
 	@Override
-	public void onRecordBeforeCreate(final ODocument iRecord) {
+	public boolean onRecordBeforeCreate(final ODocument iRecord) {
 		checkIndexedProperties(iRecord);
+		return false;
 	}
 
 	@Override
-	public void onRecordAfterCreate(final ODocument iRecord) {
+	public boolean onRecordAfterCreate(final ODocument iRecord) {
 		final Map<OProperty, String> indexedProperties = getIndexedProperties(iRecord);
 
 		if (indexedProperties != null)
 			for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
 				propEntry.getKey().getIndex().put(propEntry.getValue(), (ORecordId) iRecord.getIdentity());
 			}
+		return false;
 	}
 
 	@Override
-	public void onRecordBeforeUpdate(final ODocument iRecord) {
+	public boolean onRecordBeforeUpdate(final ODocument iRecord) {
 		checkIndexedProperties(iRecord);
+		return false;
 	}
 
 	@Override
-	public void onRecordAfterUpdate(final ODocument iRecord) {
+	public boolean onRecordAfterUpdate(final ODocument iRecord) {
 		final Map<OProperty, String> indexedProperties = getIndexedProperties(iRecord);
 
 		if (indexedProperties != null) {
@@ -91,10 +94,11 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 				}
 			}
 		}
+		return false;
 	}
 
 	@Override
-	public void onRecordAfterDelete(final ODocument iRecord) {
+	public boolean onRecordAfterDelete(final ODocument iRecord) {
 		final Map<OProperty, String> indexedProperties = getIndexedProperties(iRecord);
 
 		if (indexedProperties != null) {
@@ -120,6 +124,7 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 				}
 			}
 		}
+		return false;
 	}
 
 	protected void checkIndexedProperties(final ODocument iRecord) {
