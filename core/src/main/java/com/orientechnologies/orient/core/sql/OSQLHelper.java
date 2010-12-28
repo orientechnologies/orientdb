@@ -164,6 +164,9 @@ public class OSQLHelper {
 	}
 
 	public static Object parseValue(final ODatabaseRecord<?> iDatabase, final OCommandToParse iCommand, final String iWord) {
+		if (iWord.equals("*"))
+			return "*";
+
 		// TRY TO PARSE AS RAW VALUE
 		final Object v = parseValue(iDatabase, iWord);
 		if (v != VALUE_NOT_PARSED)
@@ -202,7 +205,8 @@ public class OSQLHelper {
 			if (function == null)
 				throw new OCommandSQLParsingException("Unknow function " + funcName + "()");
 
-			if (funcParamsText.size() < function.getMinParams() || funcParamsText.size() > function.getMaxParams())
+			if (function.getMinParams() > -1 && funcParamsText.size() < function.getMinParams() || function.getMaxParams() > -1
+					&& funcParamsText.size() > function.getMaxParams())
 				throw new IllegalArgumentException("Syntax error. Expected: " + function.getSyntax());
 
 			// PARSE PARAMETERS

@@ -18,37 +18,36 @@ package com.orientechnologies.orient.core.sql.functions.misc;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMathAbstract;
 
 /**
- * Count the record that contains a field. Use * to indicate the record instead of the field. Uses the context to save the counter
- * number. When different Number class are used, take the class with most precision.
+ * Formats content.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OSQLFunctionCount extends OSQLFunctionMathAbstract {
-	public static final String	NAME	= "count";
+public class OSQLFunctionFormat extends OSQLFunctionMathAbstract {
+	public static final String	NAME	= "format";
 
-	private long								total	= 0;
-
-	public OSQLFunctionCount() {
-		super(NAME, 1, 1);
+	public OSQLFunctionFormat() {
+		super(NAME, 2, -1);
 	}
 
 	public Object execute(final Object[] iParameters) {
-		if (iParameters[0] != null)
-			total++;
-		
-		return null;
+		final Object[] args = new Object[iParameters.length - 1];
+
+		for (int i = 0; i < args.length; ++i)
+			args[i] = iParameters[i + 1];
+
+		return String.format((String) iParameters[0], args);
 	}
 
 	public boolean aggregateResults() {
-		return true;
+		return false;
 	}
 
 	public String getSyntax() {
-		return "Syntax error: count(<field>|*)";
+		return "Syntax error: format(<format>, <arg1> [,<argN>]*)";
 	}
 
 	public Object getResult() {
-		return total;
+		return null;
 	}
 }

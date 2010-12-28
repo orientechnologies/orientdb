@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionAverage;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMax;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMin;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
+import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionFormat;
 
 public class OSQLEngine {
 	private Map<String, OSQLFunction>										inlineFunctions				= new HashMap<String, OSQLFunction>();
@@ -37,6 +38,7 @@ public class OSQLEngine {
 	protected OSQLEngine() {
 		// MISC FUNCTIONS
 		registerFunction(OSQLFunctionCount.NAME, OSQLFunctionCount.class);
+		registerFunction(OSQLFunctionFormat.NAME, OSQLFunctionFormat.class);
 
 		// MATH FUNCTIONS
 		registerFunction(OSQLFunctionMax.NAME, OSQLFunctionMax.class);

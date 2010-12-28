@@ -467,7 +467,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		if (projectionString.length() > 0 && !projectionString.equals("*")) {
 			// EXTRACT PROJECTIONS
 			projections = new HashMap<String, Object>();
-			final String[] items = projectionString.split(",");
+			final List<String> items = OStringSerializerHelper.smartSplit(projectionString, ',');
 
 			String fieldName;
 			int pos;

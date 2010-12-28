@@ -84,8 +84,8 @@ public class SQLFunctionsTest {
 	public void queryComposedAggregates() {
 		database.open("admin", "admin");
 		List<ODocument> result = database.command(
-				new OSQLSynchQuery<ODocument>("select min(nr) as min, max(nr) as max, average(nr) as average, count(nr) as total from Account"))
-				.execute();
+				new OSQLSynchQuery<ODocument>(
+						"select min(nr) as min, max(nr) as max, average(nr) as average, count(nr) as total from Account")).execute();
 
 		Assert.assertTrue(result.size() == 1);
 		for (ODocument d : result) {
@@ -97,6 +97,20 @@ public class SQLFunctionsTest {
 			Assert.assertTrue(((Number) d.field("max")).longValue() > ((Number) d.field("average")).longValue());
 			Assert.assertTrue(((Number) d.field("average")).longValue() > ((Number) d.field("min")).longValue());
 			Assert.assertTrue(((Number) d.field("total")).longValue() >= ((Number) d.field("max")).longValue());
+		}
+
+		database.close();
+	}
+
+	@Test
+	public void queryFormat() {
+		database.open("admin", "admin");
+		List<ODocument> result = database.command(
+				new OSQLSynchQuery<ODocument>("select format('%d - %s (%s)', nr, street, type, dummy ) as output from Account")).execute();
+
+		Assert.assertTrue(result.size() > 1);
+		for (ODocument d : result) {
+			Assert.assertNotNull(d.field("output"));
 		}
 
 		database.close();
