@@ -94,6 +94,26 @@ function ODatabase(databasePath) {
 		return this.getDatabaseInfo();
 	}
 
+	this.open = function(userName, userPass) {
+		$.ajax({
+			type : "GET",
+			url : this.databaseUrl + '/connect/' + this.databaseName,
+			context : this,
+			async : false,
+			username : userName,
+			password : userPass,
+			success : function(msg) {
+				this.setErrorMessage(null);
+				this.setDatabaseInfo(eval("(" + msg + ")"));
+			},
+			error : function(msg) {
+				this.setErrorMessage('Connect error: ' + msg.responseText);
+				this.setDatabaseInfo(null);
+			}
+		});
+		return this.getDatabaseInfo();
+	}
+
 	this.query = function(iQuery) {
 		if (this.databaseInfo == null) {
 			this.open();
@@ -115,15 +135,15 @@ function ODatabase(databasePath) {
 		});
 		return this.getQueryResult();
 	}
-	
+
 	this.load = function(iRID) {
 		if (this.databaseInfo == null) {
 			this.open();
 		}
-		
-		if( iRID.charAt(0) == '#' )
+
+		if (iRID.charAt(0) == '#')
 			iRID = iRID.substring(1);
-		
+
 		$.ajax({
 			type : "GET",
 			url : this.databaseUrl + '/document/' + this.databaseName + '/'
