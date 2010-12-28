@@ -36,21 +36,22 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 
 public abstract class OStringSerializerHelper {
-	public static final char								RECORD_SEPARATOR			= ',';
+	public static final char								RECORD_SEPARATOR				= ',';
 
-	public static final String							CLASS_SEPARATOR				= "@";
-	public static final char								LINK									= '#';
-	public static final char								PARENTHESIS_BEGIN			= '(';
-	public static final char								PARENTHESIS_END				= ')';
-	public static final char								COLLECTION_BEGIN			= '[';
-	public static final char								COLLECTION_END				= ']';
-	public static final char								MAP_BEGIN							= '{';
-	public static final char								MAP_END								= '}';
-	public static final char								ENTRY_SEPARATOR				= ':';
-	public static final char[]							PARAMETER_SEPARATOR		= new char[] { ',', ')' };
-	public static final char								COLLECTION_SEPARATOR	= ',';
-	public static final List<String>				EMPTY_LIST						= Collections.unmodifiableList(new ArrayList<String>());
-	public static final Map<String, String>	EMPTY_MAP							= Collections.unmodifiableMap(new HashMap<String, String>());
+	public static final String							CLASS_SEPARATOR					= "@";
+	public static final char								LINK										= '#';
+	public static final char								PARENTHESIS_BEGIN				= '(';
+	public static final char								PARENTHESIS_END					= ')';
+	public static final char								COLLECTION_BEGIN				= '[';
+	public static final char								COLLECTION_END					= ']';
+	public static final char								MAP_BEGIN								= '{';
+	public static final char								MAP_END									= '}';
+	public static final char								ENTRY_SEPARATOR					= ':';
+	public static final char[]							PARAMETER_SEPARATOR			= new char[] { ',', ')' };
+	public static final char[]							PARAMETER_EXT_SAPARATOR	= new char[] { ' ', '.' };
+	public static final char								COLLECTION_SEPARATOR		= ',';
+	public static final List<String>				EMPTY_LIST							= Collections.unmodifiableList(new ArrayList<String>());
+	public static final Map<String, String>	EMPTY_MAP								= Collections.unmodifiableMap(new HashMap<String, String>());
 
 	public static Object fieldTypeFromStream(final ODocument iDocument, OType iType, final Object iValue) {
 		if (iValue == null)
@@ -197,11 +198,28 @@ public abstract class OStringSerializerHelper {
 	}
 
 	public static List<String> smartSplit(final String iSource, final char iRecordSeparator, final char... iJumpChars) {
-		return smartSplit(iSource, new char[] { iRecordSeparator }, iJumpChars);
+		return smartSplit(iSource, new char[] { iRecordSeparator }, 0, iSource.length(), iJumpChars);
 	}
 
-	public static List<String> smartSplit(final String iSource, final char[] iRecordSeparator, final char... iJumpChars) {
+	public static List<String> smartSplit(final String iSource, final char[] iRecordSeparator, int beginIndex, final int endIndex,
+			final char... iJumpChars) {
 		StringBuilder buffer = new StringBuilder();
+
+		final ArrayList<String> parts = new ArrayList<String>();
+
+		while ((beginIndex = parse(iSource, buffer, beginIndex, endIndex, iRecordSeparator, iJumpChars)) > -1) {
+			parts.add(buffer.toString());
+			buffer.setLength(0);
+		}
+
+		if (buffer.length() > 0)
+			parts.add(buffer.toString());
+
+		return parts;
+	}
+
+	public static int parse(final String iSource, final StringBuilder iBuffer, final int beginIndex, final int endIndex,
+			final char[] iRecordSeparator, final char... iJumpChars) {
 		char stringBeginChar = ' ';
 		char c;
 		char previousChar = ' ';
@@ -210,10 +228,9 @@ public abstract class OStringSerializerHelper {
 		int insideMap = 0;
 		int insideLinkPart = 0;
 
-		final ArrayList<String> parts = new ArrayList<String>();
-		final int max = iSource.length();
+		final int max = endIndex > -1 ? endIndex : iSource.length();
 
-		for (int i = 0; i < max; ++i) {
+		for (int i = beginIndex; i < max; ++i) {
 			c = iSource.charAt(i);
 
 			if (stringBeginChar == ' ') {
@@ -267,9 +284,7 @@ public abstract class OStringSerializerHelper {
 					} else {
 						if (isCharPresent(c, iRecordSeparator)) {
 							// SEPARATOR (OUTSIDE A STRING): PUSH
-							parts.add(buffer.toString());
-							buffer.setLength(0);
-							continue;
+							return i + 1;
 						}
 					}
 				}
@@ -292,12 +307,9 @@ public abstract class OStringSerializerHelper {
 					continue;
 			}
 
-			buffer.append(c);
+			iBuffer.append(c);
 		}
-
-		parts.add(buffer.toString());
-
-		return parts;
+		return -1;
 	}
 
 	public static boolean isCharPresent(final char iCharacter, final char[] iCharacters) {
@@ -414,29 +426,18 @@ public abstract class OStringSerializerHelper {
 		if (openPos == -1)
 			return iBeginPosition;
 
-		int closePos = iText.indexOf(PARENTHESIS_END, openPos + 1);
-		if (closePos == -1)
+		final StringBuilder buffer = new StringBuilder();
+		parse(iText, buffer, openPos, -1, PARAMETER_EXT_SAPARATOR);
+		if (buffer.length() == 0)
 			return iBeginPosition;
 
-		if (closePos - openPos == 1)
-			// EMPTY STRING: TREATS AS EMPTY
-			return iBeginPosition;
-
-		String t = iText.substring(openPos, closePos + 1);
-
-		List<String> pars = smartSplit(t, ' ');
-		if (pars.size() == 0)
-			return iBeginPosition;
-
-		final int extractedPieceLength = pars.get(0).length();
-
-		t = pars.get(0).substring(1, extractedPieceLength - 1);
-		pars = smartSplit(t, PARAMETER_SEPARATOR);
+		final String t = buffer.substring(1, buffer.length() - 1);
+		final List<String> pars = smartSplit(t, PARAMETER_SEPARATOR, 0, t.length());
 
 		for (int i = 0; i < pars.size(); ++i)
 			iParameters.add(pars.get(i).trim());
 
-		return iBeginPosition + extractedPieceLength;
+		return iBeginPosition + buffer.length();
 	}
 
 	public static List<String> getParameters(final String iText) {
