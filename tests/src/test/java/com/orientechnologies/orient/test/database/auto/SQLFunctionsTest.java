@@ -67,6 +67,19 @@ public class SQLFunctionsTest {
 	}
 
 	@Test
+	public void querySum() {
+		database.open("admin", "admin");
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select sum(nr) as sum from Account")).execute();
+
+		Assert.assertTrue(result.size() == 1);
+		for (ODocument d : result) {
+			Assert.assertNotNull(d.field("sum"));
+		}
+
+		database.close();
+	}
+
+	@Test
 	public void queryCount() {
 		database.open("admin", "admin");
 		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select count(*) as total from Account")).execute();

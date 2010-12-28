@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.sql.functions.geo.OSQLFunctionDistance;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionAverage;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMax;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMin;
+import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionSum;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionFormat;
 
@@ -37,12 +38,13 @@ public class OSQLEngine {
 
 	protected OSQLEngine() {
 		// MISC FUNCTIONS
+		registerFunction(OSQLFunctionFormat.NAME, new OSQLFunctionFormat());
 		registerFunction(OSQLFunctionCount.NAME, OSQLFunctionCount.class);
-		registerFunction(OSQLFunctionFormat.NAME, OSQLFunctionFormat.class);
 
 		// MATH FUNCTIONS
-		registerFunction(OSQLFunctionMax.NAME, OSQLFunctionMax.class);
 		registerFunction(OSQLFunctionMin.NAME, OSQLFunctionMin.class);
+		registerFunction(OSQLFunctionMax.NAME, OSQLFunctionMax.class);
+		registerFunction(OSQLFunctionSum.NAME, OSQLFunctionSum.class);
 		registerFunction(OSQLFunctionAverage.NAME, OSQLFunctionAverage.class);
 
 		// GEO FUNCTIONS
