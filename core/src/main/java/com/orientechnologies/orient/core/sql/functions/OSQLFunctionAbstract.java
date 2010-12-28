@@ -25,8 +25,8 @@ package com.orientechnologies.orient.core.sql.functions;
  */
 public abstract class OSQLFunctionAbstract implements OSQLFunction {
 	protected String	name;
-	private int				minParams;
-	private int				maxParams;
+	protected int			minParams;
+	protected int			maxParams;
 
 	public OSQLFunctionAbstract(final String iName, final int iMinParams, final int iMaxParams) {
 		this.name = iName;
@@ -49,5 +49,9 @@ public abstract class OSQLFunctionAbstract implements OSQLFunction {
 	@Override
 	public String toString() {
 		return name + "()";
+	}
+
+	public Object getResult() {
+		return null;
 	}
 }

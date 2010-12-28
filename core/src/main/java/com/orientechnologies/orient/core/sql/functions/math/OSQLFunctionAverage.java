@@ -16,45 +16,44 @@
 package com.orientechnologies.orient.core.sql.functions.math;
 
 /**
- * Compute the maximum value for a field. Uses the context to save the last maximum number. When different Number class are used,
+ * Compute the averahe value for a field. Uses the context to save the last average number. When different Number class are used,
  * take the class with most precision.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OSQLFunctionMax extends OSQLFunctionMathAbstract {
-	public static final String	NAME	= "max";
+public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
+	public static final String	NAME	= "average";
 
-	private Number							context;
+	private Number							sum;
+	private int									total	= 0;
 
-	public OSQLFunctionMax() {
+	public OSQLFunctionAverage() {
 		super(NAME, 1, 1);
 	}
 
 	public Object execute(final Object[] iParameters) {
 		Number value = (Number) iParameters[0];
 
+		total++;
+
 		if (value != null && value instanceof Number) {
-			if (context == null)
+			if (sum == null)
 				// FIRST TIME
-				context = value;
+				sum = value;
 			else {
-				Number contextValue = getContextValue(context, value.getClass());
+				Number contextValue = getContextValue(sum, value.getClass());
 				if (contextValue instanceof Integer) {
-					if (((Integer) contextValue).compareTo((Integer) value) < 0)
-						context = value;
+					sum = sum.intValue() + value.intValue();
 
 				} else if (contextValue instanceof Long) {
-					if (((Long) contextValue).compareTo((Long) value) < 0)
-						context = value;
+					sum = sum.longValue() + value.longValue();
 
 				} else if (contextValue instanceof Float) {
-					if (((Float) contextValue).compareTo((Float) value) < 0)
-						context = value;
+					sum = sum.floatValue() + value.floatValue();
 
 				} else if (contextValue instanceof Double) {
-					if (((Double) contextValue).compareTo((Double) value) < 0)
-						context = value;
+					sum = sum.doubleValue() + value.doubleValue();
 				}
 			}
 		}
@@ -66,10 +65,19 @@ public class OSQLFunctionMax extends OSQLFunctionMathAbstract {
 	}
 
 	public String getSyntax() {
-		return "Syntax error: max(<field>)";
+		return "Syntax error: average(<field>)";
 	}
 
 	public Object getResult() {
-		return context;
+		if (sum instanceof Integer)
+			return sum.intValue() / total;
+		else if (sum instanceof Long)
+			return sum.longValue() / total;
+		else if (sum instanceof Float)
+			return sum.floatValue() / total;
+		else if (sum instanceof Double)
+			return sum.doubleValue() / total;
+
+		return null;
 	}
 }

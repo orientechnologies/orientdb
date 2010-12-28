@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql.functions.math;
 
-import com.orientechnologies.common.types.ORef;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
 /**
@@ -30,18 +29,18 @@ public abstract class OSQLFunctionMathAbstract extends OSQLFunctionAbstract {
 		super(iName, iMinParams, iMaxParams);
 	}
 
-	protected Number getContextValue(final ORef<Object> iContext, final Class<? extends Number> iClass) {
-		if (iClass != iContext.value.getClass()) {
+	protected Number getContextValue(Object iContext, final Class<? extends Number> iClass) {
+		if (iClass != iContext.getClass()) {
 			// CHANGE TYPE
 			if (iClass == Long.class)
-				iContext.value = new Long(((Number) iContext.value).longValue());
+				iContext = new Long(((Number) iContext).longValue());
 			else if (iClass == Float.class)
-				iContext.value = new Float(((Number) iContext.value).floatValue());
+				iContext = new Float(((Number) iContext).floatValue());
 			else if (iClass == Double.class)
-				iContext.value = new Double(((Number) iContext.value).doubleValue());
+				iContext = new Double(((Number) iContext).doubleValue());
 		}
 
-		return (Number) iContext.value;
+		return (Number) iContext;
 	}
 
 	protected Class<? extends Number> getClassWithMorePrecision(final Class<? extends Number> iClass1,

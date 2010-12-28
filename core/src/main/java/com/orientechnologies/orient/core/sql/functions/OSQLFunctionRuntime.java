@@ -15,12 +15,11 @@
  */
 package com.orientechnologies.orient.core.sql.functions;
 
-import com.orientechnologies.common.types.ORef;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 
 /**
- * Represents a state-less function at run-time.
+ * Wraps functions managing the binding of parameters.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
@@ -30,7 +29,6 @@ public class OSQLFunctionRuntime {
 	public OSQLFunction	function;
 	public Object[]			configuredParameters;
 	public Object[]			runtimeParameters;
-	public ORef<Object>	context;
 
 	public OSQLFunctionRuntime(final OSQLFunction function, final Object[] configuredParameters) {
 		this.function = function;
@@ -42,8 +40,10 @@ public class OSQLFunctionRuntime {
 			if (!(configuredParameters[i] instanceof OSQLFilterItemField) && !(configuredParameters[i] instanceof OSQLFunctionRuntime))
 				runtimeParameters[i] = configuredParameters[i];
 		}
+	}
 
-		this.context = new ORef<Object>();
+	public boolean aggregateResults() {
+		return function.aggregateResults();
 	}
 
 	/**
@@ -53,7 +53,7 @@ public class OSQLFunctionRuntime {
 	 *          Current record
 	 * @return
 	 */
-	public Object execute(ORecordSchemaAware<?> iRecord) {
+	public Object execute(final ORecordSchemaAware<?> iRecord) {
 		// RESOLVE VALUES USING THE CURRENT RECORD
 		for (int i = 0; i < configuredParameters.length; ++i) {
 			if (configuredParameters[i] instanceof OSQLFilterItemField)
@@ -62,6 +62,10 @@ public class OSQLFunctionRuntime {
 				runtimeParameters[i] = ((OSQLFunctionRuntime) configuredParameters[i]).execute(iRecord);
 		}
 
-		return function.execute(context, runtimeParameters);
+		return function.execute(runtimeParameters);
+	}
+
+	public Object getResult() {
+		return function.getResult();
 	}
 }

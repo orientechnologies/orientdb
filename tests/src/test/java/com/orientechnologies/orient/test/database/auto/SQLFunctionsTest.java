@@ -21,7 +21,6 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.types.ORef;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -39,18 +38,69 @@ public class SQLFunctionsTest {
 		database = new ODatabaseDocumentTx(iURL);
 	}
 
-//	@Test
-//	public void queryMax() {
-//		database.open("admin", "admin");
-//		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select max(salary) as max from Account")).execute();
-//
-//		Assert.assertTrue(result.size() != 0);
-//		for (ODocument d : result) {
-//			Assert.assertNotNull(d.field("salary"));
-//		}
-//
-//		database.close();
-//	}
+	@Test
+	public void queryMax() {
+		database.open("admin", "admin");
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select max(nr) as max from Account")).execute();
+
+		Assert.assertTrue(result.size() == 1);
+		for (ODocument d : result) {
+			Assert.assertNotNull(d.field("max"));
+		}
+
+		database.close();
+	}
+
+	@Test
+	public void queryMin() {
+		database.open("admin", "admin");
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select min(nr) as min from Account")).execute();
+
+		Assert.assertTrue(result.size() == 1);
+		for (ODocument d : result) {
+			Assert.assertNotNull(d.field("min"));
+
+			Assert.assertEquals(((Number) d.field("min")).longValue(), 0l);
+		}
+
+		database.close();
+	}
+
+	@Test
+	public void queryCount() {
+		database.open("admin", "admin");
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select count(*) as total from Account")).execute();
+
+		Assert.assertTrue(result.size() == 1);
+		for (ODocument d : result) {
+			Assert.assertNotNull(d.field("total"));
+			Assert.assertTrue(((Number) d.field("total")).longValue() > 0);
+		}
+
+		database.close();
+	}
+
+	@Test
+	public void queryComposedAggregates() {
+		database.open("admin", "admin");
+		List<ODocument> result = database.command(
+				new OSQLSynchQuery<ODocument>("select min(nr) as min, max(nr) as max, average(nr) as average, count(nr) as total from Account"))
+				.execute();
+
+		Assert.assertTrue(result.size() == 1);
+		for (ODocument d : result) {
+			Assert.assertNotNull(d.field("min"));
+			Assert.assertNotNull(d.field("max"));
+			Assert.assertNotNull(d.field("average"));
+			Assert.assertNotNull(d.field("total"));
+
+			Assert.assertTrue(((Number) d.field("max")).longValue() > ((Number) d.field("average")).longValue());
+			Assert.assertTrue(((Number) d.field("average")).longValue() > ((Number) d.field("min")).longValue());
+			Assert.assertTrue(((Number) d.field("total")).longValue() >= ((Number) d.field("max")).longValue());
+		}
+
+		database.close();
+	}
 
 	@Test(expectedExceptions = OCommandSQLParsingException.class)
 	public void queryUndefinedFunction() {
@@ -68,7 +118,7 @@ public class SQLFunctionsTest {
 				return "bigger(<first>, <second>)";
 			}
 
-			public Object execute(ORef<Object> context, Object[] iParameters) {
+			public Object execute(final Object[] iParameters) {
 				if (iParameters[0] == null || iParameters[1] == null)
 					// CHECK BOTH EXPECTED PARAMETERS
 					return null;
@@ -83,6 +133,10 @@ public class SQLFunctionsTest {
 
 				return Math.max(v1, v2);
 			}
+
+			public boolean aggregateResults() {
+				return false;
+			}
 		});
 
 		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Account where bigger(nr,1000) = 1000"))
@@ -93,7 +147,7 @@ public class SQLFunctionsTest {
 			Assert.assertTrue((Long) d.field("nr") <= 1000);
 		}
 
-		OSQLEngine.getInstance().unregisterFunction("bigger");
+		OSQLEngine.getInstance().unregisterInlineFunction("bigger");
 		database.close();
 	}
 }

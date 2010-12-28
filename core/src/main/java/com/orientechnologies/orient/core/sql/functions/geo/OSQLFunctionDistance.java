@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql.functions.geo;
 
-import com.orientechnologies.common.types.ORef;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
@@ -28,7 +27,7 @@ public class OSQLFunctionDistance extends OSQLFunctionAbstract {
 		super(NAME, 4, 5);
 	}
 
-	public Object execute(final ORef<Object> iContext, final Object[] iParameters) {
+	public Object execute(final Object[] iParameters) {
 		double distance;
 
 		final double[] values = new double[4];
@@ -55,5 +54,9 @@ public class OSQLFunctionDistance extends OSQLFunctionAbstract {
 
 	public String getSyntax() {
 		return "Syntax error: distance(<field-x>,<field-y>,<x-value>,<y-value>[,<unit>])";
+	}
+
+	public boolean aggregateResults() {
+		return false;
 	}
 }

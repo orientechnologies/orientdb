@@ -16,18 +16,18 @@
 package com.orientechnologies.orient.core.sql.functions.math;
 
 /**
- * Compute the maximum value for a field. Uses the context to save the last maximum number. When different Number class are used,
+ * Compute the minimum value for a field. Uses the context to save the last minimum number. When different Number class are used,
  * take the class with most precision.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OSQLFunctionMax extends OSQLFunctionMathAbstract {
-	public static final String	NAME	= "max";
+public class OSQLFunctionMin extends OSQLFunctionMathAbstract {
+	public static final String	NAME	= "min";
 
 	private Number							context;
 
-	public OSQLFunctionMax() {
+	public OSQLFunctionMin() {
 		super(NAME, 1, 1);
 	}
 
@@ -41,19 +41,19 @@ public class OSQLFunctionMax extends OSQLFunctionMathAbstract {
 			else {
 				Number contextValue = getContextValue(context, value.getClass());
 				if (contextValue instanceof Integer) {
-					if (((Integer) contextValue).compareTo((Integer) value) < 0)
+					if (((Integer) contextValue).compareTo((Integer) value) > 0)
 						context = value;
 
 				} else if (contextValue instanceof Long) {
-					if (((Long) contextValue).compareTo((Long) value) < 0)
+					if (((Long) contextValue).compareTo((Long) value) > 0)
 						context = value;
 
 				} else if (contextValue instanceof Float) {
-					if (((Float) contextValue).compareTo((Float) value) < 0)
+					if (((Float) contextValue).compareTo((Float) value) > 0)
 						context = value;
 
 				} else if (contextValue instanceof Double) {
-					if (((Double) contextValue).compareTo((Double) value) < 0)
+					if (((Double) contextValue).compareTo((Double) value) > 0)
 						context = value;
 				}
 			}
@@ -66,7 +66,7 @@ public class OSQLFunctionMax extends OSQLFunctionMathAbstract {
 	}
 
 	public String getSyntax() {
-		return "Syntax error: max(<field>)";
+		return "Syntax error: min(<field>)";
 	}
 
 	public Object getResult() {

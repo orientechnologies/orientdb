@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.sort.ODocumentSorter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsText;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
@@ -61,26 +62,27 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
  * @author Luca Garulli
  */
 public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract implements ORecordBrowsingListener {
-	private static final String											KEYWORD_AS				= " AS ";
-	public static final String											KEYWORD_SELECT		= "SELECT";
-	public static final String											KEYWORD_ASC				= "ASC";
-	public static final String											KEYWORD_DESC			= "DESC";
-	public static final String											KEYWORD_ORDER			= "ORDER";
-	public static final String											KEYWORD_BY				= "BY";
-	public static final String											KEYWORD_ORDER_BY	= "ORDER BY";
-	public static final String											KEYWORD_LIMIT			= "LIMIT";
-	public static final String											KEYWORD_RANGE			= "RANGE";
+	private static final String											KEYWORD_AS						= " AS ";
+	public static final String											KEYWORD_SELECT				= "SELECT";
+	public static final String											KEYWORD_ASC						= "ASC";
+	public static final String											KEYWORD_DESC					= "DESC";
+	public static final String											KEYWORD_ORDER					= "ORDER";
+	public static final String											KEYWORD_BY						= "BY";
+	public static final String											KEYWORD_ORDER_BY			= "ORDER BY";
+	public static final String											KEYWORD_LIMIT					= "LIMIT";
+	public static final String											KEYWORD_RANGE					= "RANGE";
 
 	private OSQLAsynchQuery<ORecordSchemaAware<?>>	request;
 	private OSQLFilter															compiledFilter;
-	private Map<String, Object>											projections				= null;
+	private Map<String, Object>											projections						= null;
 	private List<OPair<String, String>>							orderedFields;
 	private List<ODocument>													tempResult;
-	private int																			limit							= -1;
+	private int																			limit									= -1;
 	private int																			resultCount;
 	private ORecordId																rangeFrom;
 	private ORecordId																rangeTo;
 	private String																	flattenField;
+	private boolean																	anyFunctionAggregates	= false;
 
 	/**
 	 * Compile the filter conditions only the first time.
@@ -205,21 +207,37 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 		applyOrderBy();
 		applyFlatten();
-		return handleResult();
+		return processResult();
 	}
 
-	private Object handleResult() {
-		if (tempResult != null) {
+	private Object processResult() {
+		if (anyFunctionAggregates) {
+			// EXECUTE AGGREGATIONS
+			Object value;
+			final ODocument result = new ODocument(database);
+			for (Entry<String, Object> projection : projections.entrySet()) {
+				if (projection.getValue() instanceof OSQLFilterItemField)
+					value = ((OSQLFilterItemField) projection.getValue()).getValue(result);
+				else if (projection.getValue() instanceof OSQLFunctionRuntime) {
+					final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection.getValue();
+					value = f.getResult();
+				} else
+					value = projection.getValue();
+
+				result.field(projection.getKey(), value);
+			}
+
+			request.getResultListener().result(result);
+
+		} else if (tempResult != null) {
 			// TEMP RESULT: RETURN ALL THE RECORDS AT THE END
 			for (ODocument doc : tempResult)
 				// CALL THE LISTENER
-				sendResultToListener(doc);
+				processRecordAsResult(doc);
 			tempResult.clear();
 			tempResult = null;
-			return null;
-		}
 
-		if (request instanceof OSQLSynchQuery)
+		} else if (request instanceof OSQLSynchQuery)
 			return ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getResult();
 
 		return null;
@@ -365,8 +383,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 			tempResult.add(doc);
 		} else
-			// CALL THE LISTENER
-			sendResultToListener(doc);
+			// CALL THE LISTENER NOW
+			processRecordAsResult(doc);
 	}
 
 	private List<ORecord<?>> searchForIndexes(final OClass iSchemaClass) {
@@ -444,6 +462,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		if (fromPosition == -1)
 			throw new OQueryParsingException("Missed " + KEYWORD_FROM, text, currentPos);
 
+		Object projectionValue;
 		final String projectionString = text.substring(currentPos, fromPosition).trim();
 		if (projectionString.length() > 0 && !projectionString.equals("*")) {
 			// EXTRACT PROJECTIONS
@@ -490,7 +509,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 					continue;
 				}
 
-				projections.put(fieldName, OSQLHelper.parseValue(database, this, projection));
+				projectionValue = OSQLHelper.parseValue(database, this, projection);
+				projections.put(fieldName, projectionValue);
+
+				if (!anyFunctionAggregates && projectionValue instanceof OSQLFunctionRuntime
+						&& ((OSQLFunctionRuntime) projectionValue).aggregateResults())
+					anyFunctionAggregates = true;
 			}
 		}
 
@@ -535,20 +559,29 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		tempResult = finalResult;
 	}
 
-	private void sendResultToListener(final ODocument iRecord) {
+	private void processRecordAsResult(final ODocument iRecord) {
 		if (projections != null) {
 			// APPLY PROJECTIONS
 			final ODocument result = new ODocument(database);
 
+			Object value;
 			for (Entry<String, Object> projection : projections.entrySet()) {
-				if (projection.getValue() instanceof OSQLFilterItemField) {
-					result.field(projection.getKey(), ((OSQLFilterItemField) projection.getValue()).getValue(iRecord));
+				if (projection.getValue() instanceof OSQLFilterItemField)
+					value = ((OSQLFilterItemField) projection.getValue()).getValue(iRecord);
+				else if (projection.getValue() instanceof OSQLFunctionRuntime) {
+					final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection.getValue();
+					value = f.execute(iRecord);
 				} else
-					result.field(projection.getKey(), projection.getValue());
+					value = projection.getValue();
+
+				result.field(projection.getKey(), value);
 			}
 
-			request.getResultListener().result(result);
+			if (!anyFunctionAggregates)
+				// INVOKE THE LISTENER
+				request.getResultListener().result(result);
 		} else
+			// INVOKE THE LISTENER
 			request.getResultListener().result(iRecord);
 	}
 }

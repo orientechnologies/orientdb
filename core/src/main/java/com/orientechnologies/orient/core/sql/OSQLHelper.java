@@ -170,7 +170,7 @@ public class OSQLHelper {
 			return v;
 
 		// TRY TO PARSE AS FUNCTION
-		final OSQLFunctionRuntime func = OSQLHelper.getFunction(iDatabase, iCommand, iWord);
+		final Object func = OSQLHelper.getFunction(iDatabase, iCommand, iWord);
 		if (func != null)
 			return func;
 
@@ -184,8 +184,7 @@ public class OSQLHelper {
 		return iContent;
 	}
 
-	public static OSQLFunctionRuntime getFunction(final ODatabaseRecord<?> database, final OCommandToParse iCommand,
-			final String iWord) {
+	public static Object getFunction(final ODatabaseRecord<?> database, final OCommandToParse iCommand, final String iWord) {
 		int sepPos = iWord.indexOf('.');
 		int parPos = iWord.indexOf(OStringSerializerHelper.PARENTHESIS_BEGIN);
 
@@ -193,9 +192,15 @@ public class OSQLHelper {
 			// SEARCH FOR THE FUNCTION
 			final String funcName = iWord.substring(0, parPos);
 
-			final OSQLFunction function = OSQLEngine.getInstance().getFunction(funcName);
-
 			final List<String> funcParamsText = OStringSerializerHelper.getParameters(iWord);
+
+			OSQLFunction function = OSQLEngine.getInstance().getInlineFunction(funcName);
+			if (function == null)
+				// AGGREGATION ?
+				function = OSQLEngine.getInstance().getAggregationFunction(funcName);
+
+			if (function == null)
+				throw new OCommandSQLParsingException("Unknow function " + funcName + "()");
 
 			if (funcParamsText.size() < function.getMinParams() || funcParamsText.size() > function.getMaxParams())
 				throw new IllegalArgumentException("Syntax error. Expected: " + function.getSyntax());
@@ -206,9 +211,10 @@ public class OSQLHelper {
 				funcParams[i] = OSQLHelper.parseValue(database, iCommand, funcParamsText.get(i));
 			}
 
-			// STATE-LESS FUNCTION: CRETAE A RUN-TIME CONTAINER FOR IT TO SAVE THE PARAMETERS
-			return new OSQLFunctionRuntime((OSQLFunction) function, funcParams);
+			// FUNCTION: CRETAE A RUN-TIME CONTAINER FOR IT TO SAVE THE PARAMETERS
+			return new OSQLFunctionRuntime(function, funcParams);
 		}
+
 		return null;
 	}
 }

@@ -46,8 +46,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
  */
 @SuppressWarnings("unchecked")
 public class ODatabaseRaw implements ODatabase {
-	private static volatile int			serialId		= 0;
-
 	protected int										id;
 	protected String								url;
 	protected OStorage							storage;
@@ -68,7 +66,6 @@ public class ODatabaseRaw implements ODatabase {
 	public ODatabaseRaw(final String iURL) {
 		try {
 			url = iURL;
-			id = serialId++;
 			status = STATUS.CLOSED;
 
 			// SET DEFAULT PROPERTIES
