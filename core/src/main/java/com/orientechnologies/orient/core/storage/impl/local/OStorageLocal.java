@@ -928,7 +928,7 @@ public class OStorageLocal extends OStorageAbstract {
 		executor.setProgressListener(iCommand.getProgressListener());
 		executor.parse(iCommand);
 		try {
-			return executor.execute();
+			return executor.execute(iCommand.getParameters());
 		} catch (OCommandExecutionException e) {
 			// PASS THROUGHT
 			throw e;

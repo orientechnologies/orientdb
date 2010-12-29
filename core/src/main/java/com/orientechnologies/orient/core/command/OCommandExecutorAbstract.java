@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.command;
 
+import java.util.Map;
+
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -38,7 +40,7 @@ public abstract class OCommandExecutorAbstract extends OCommandToParse implement
 	/**
 	 * Parse every time the request and execute it.
 	 */
-	public Object execute(final OCommandRequestText iRequest, final Object... iArgs) {
+	public Object execute(final OCommandRequestText iRequest, final Map<Object, Object> iArgs) {
 		parse(iRequest);
 		return execute(iArgs);
 	}

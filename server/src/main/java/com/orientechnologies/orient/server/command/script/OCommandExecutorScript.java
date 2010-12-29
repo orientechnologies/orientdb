@@ -71,7 +71,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
 		return this;
 	}
 
-	public Object execute(final Object... iArgs) {
+	public Object execute(final Map<Object, Object> iArgs) {
 		final String language = request.getLanguage();
 		final String script = request.getText();
 
@@ -96,8 +96,8 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
 
 		// BIND PARAMETERS INTO THE SCRIPT
 		if (iArgs != null)
-			for (int i = 0; i < iArgs.length; ++i) {
-				binding.put("$" + i, iArgs[i]);
+			for (int i = 0; i < iArgs.size(); ++i) {
+				binding.put("$" + i, iArgs.get(i));
 			}
 
 		try {

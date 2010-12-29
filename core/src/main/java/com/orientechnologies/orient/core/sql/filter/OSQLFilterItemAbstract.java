@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 /**
- * Represent an object field as value in the query condition.
+ * Represents an object field as value in the query condition.
  * 
  * @author Luca Garulli
  * 

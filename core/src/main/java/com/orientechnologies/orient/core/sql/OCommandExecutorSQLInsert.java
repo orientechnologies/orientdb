@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.sql;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -122,7 +123,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 	/**
 	 * Execute the INSERT and return the ODocument object created.
 	 */
-	public Object execute(final Object... iArgs) {
+	public Object execute(final Map<Object, Object> iArgs) {
 		if (fieldNames == null)
 			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
 

@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.Map;
+
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 
 /**
@@ -72,7 +74,7 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract {
 		return this;
 	}
 
-	public Object execute(final Object... iArgs) {
+	public Object execute(final Map<Object, Object> iArgs) {
 		return delegate.execute(iArgs);
 	}
 }

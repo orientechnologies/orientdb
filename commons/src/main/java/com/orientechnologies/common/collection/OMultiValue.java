@@ -121,8 +121,9 @@ public class OMultiValue {
 					e = it.next();
 
 					sb.append(e.getKey());
+					sb.append(":");
 					sb.append(e.getValue() == iObject ? "(this Map)" : e.getValue());
-					if (!it.hasNext())
+					if (it.hasNext())
 						sb.append(", ");
 				} catch (NoSuchElementException ex) {
 					// IGNORE THIS

@@ -16,12 +16,16 @@
 package com.orientechnologies.orient.core.sql.query;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.query.OQueryAbstract;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.core.serialization.OMemoryOutputStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
@@ -49,7 +53,7 @@ public abstract class OSQLQuery<T extends Object> extends OQueryAbstract<T> impl
 	 */
 	@SuppressWarnings("unchecked")
 	public List<T> run(final Object... iArgs) {
-		parameters = iArgs;
+		setParameters(iArgs);
 		return (List<T>) database.getStorage().command(this);
 	}
 
@@ -79,6 +83,27 @@ public abstract class OSQLQuery<T extends Object> extends OQueryAbstract<T> impl
 			beginRange = new ORecordId().fromStream(buffer.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
 			endRange = new ORecordId().fromStream(buffer.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
 			fetchPlan = buffer.getAsString();
+			if (fetchPlan.length() == 0)
+				fetchPlan = null;
+
+			byte[] paramBuffer = buffer.getAsByteArray();
+
+			if (paramBuffer.length == 0)
+				parameters = null;
+			else {
+				final ODocument param = new ODocument();
+				param.fromStream(paramBuffer);
+
+				Map<String, Object> params = param.field("params");
+
+				parameters = new HashMap<Object, Object>();
+				for (Entry<String, Object> p : params.entrySet()) {
+					if (Character.isDigit(p.getKey().charAt(0)))
+						parameters.put(Integer.parseInt(p.getKey()), p.getValue());
+					else
+						parameters.put(p.getKey(), p.getValue());
+				}
+			}
 		} catch (IOException e) {
 			throw new OSerializationException("Error while unmarshalling OSQLQuery", e);
 		}
@@ -92,7 +117,16 @@ public abstract class OSQLQuery<T extends Object> extends OQueryAbstract<T> impl
 			buffer.add(limit);
 			buffer.addAsFixed(beginRange.toStream());
 			buffer.addAsFixed(endRange.toStream());
-			buffer.add(fetchPlan);
+			buffer.add(fetchPlan != null ? fetchPlan : "");
+
+			if (parameters == null || parameters.size() == 0)
+				buffer.add(new byte[0]);
+			else {
+				final ODocument param = new ODocument();
+				param.field("params", parameters);
+				buffer.add(param.toStream());
+			}
+
 		} catch (IOException e) {
 			throw new OSerializationException("Error while marshalling OSQLQuery", e);
 		}

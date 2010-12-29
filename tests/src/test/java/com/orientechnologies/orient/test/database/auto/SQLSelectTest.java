@@ -18,6 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import java.text.ParseException;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import org.testng.Assert;
@@ -570,6 +571,36 @@ public class SQLSelectTest {
 
 			last = resultset.get(resultset.size() - 1).getIdentity();
 		}
+
+		database.close();
+	}
+
+	@Test
+	public void queryWithPositionalParameters() {
+		database.open("admin", "admin");
+
+		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile where name = ? and surname = ?");
+		List<ODocument> result = database.command(query).execute("Barack", "Obama");
+
+		Assert.assertTrue(result.size() != 0);
+
+		database.close();
+	}
+
+	@Test
+	public void queryWithNamedParameters() {
+		database.open("admin", "admin");
+
+		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument	>(
+				"select from Profile where name = :name and surname = :surname");
+
+		HashMap<String, String> params = new HashMap<String, String>();
+		params.put("name", "Barack");
+		params.put("surname", "Obama");
+
+		List<ODocument> result = database.command(query).execute(params);
+
+		Assert.assertTrue(result.size() != 0);
 
 		database.close();
 	}

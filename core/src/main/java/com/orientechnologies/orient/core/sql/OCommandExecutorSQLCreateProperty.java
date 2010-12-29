@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.Map;
+
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -86,7 +88,7 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLPermis
 	/**
 	 * Execute the CREATE PROPERTY.
 	 */
-	public Object execute(final Object... iArgs) {
+	public Object execute(final Map<Object, Object> iArgs) {
 		if (type == null)
 			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
 

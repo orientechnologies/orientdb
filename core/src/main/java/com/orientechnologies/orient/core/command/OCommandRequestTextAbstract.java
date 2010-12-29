@@ -51,7 +51,7 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
 	 */
 	@SuppressWarnings("unchecked")
 	public <RET> RET execute(final Object... iArgs) {
-		parameters = iArgs;
+		setParameters(iArgs);
 		return (RET) database.getStorage().command(this);
 	}
 

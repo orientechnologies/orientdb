@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.command;
 
+import java.util.Map;
+
 import com.orientechnologies.common.listener.OProgressListener;
 
 /**
@@ -48,7 +50,7 @@ public interface OCommandExecutor {
 	 * @see #parse(OCommandRequestInternal)
 	 * @return
 	 */
-	public Object execute(final Object... iArgs);
+	public Object execute(final Map<Object, Object> iArgs);
 
 	/**
 	 * Execute the requested command after parsing it.
@@ -61,7 +63,7 @@ public interface OCommandExecutor {
 	 * @see #execute(Object...)
 	 * @return
 	 */
-	public Object execute(OCommandRequestText iRequest, final Object... iArgs);
+	public Object execute(OCommandRequestText iRequest, final Map<Object, Object> iArgs);
 
 	/**
 	 * Set the listener invoked while the command is executing.

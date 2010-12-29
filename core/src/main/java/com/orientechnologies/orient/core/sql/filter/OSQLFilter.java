@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.common.parser.OStringParser;
@@ -42,14 +43,15 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
  * 
  */
 public class OSQLFilter extends OCommandToParse {
-	protected ODatabaseRecord<?>	database;
-	protected List<String>				targetRecords;
-	protected Map<String, String>	targetClusters;
-	protected Map<OClass, String>	targetClasses;
-	protected Set<OProperty>			properties	= new HashSet<OProperty>();
-	protected OSQLFilterCondition	rootCondition;
-	protected List<String>				recordTransformed;
-	private int										braces;
+	protected ODatabaseRecord<?>					database;
+	protected List<String>								targetRecords;
+	protected Map<String, String>					targetClusters;
+	protected Map<OClass, String>					targetClasses;
+	protected Set<OProperty>							properties	= new HashSet<OProperty>();
+	protected OSQLFilterCondition					rootCondition;
+	protected List<String>								recordTransformed;
+	private List<OSQLFilterItemConstant>	constantValues;
+	private int														braces;
 
 	public OSQLFilter(final ODatabaseRecord<?> iDatabase, final String iText) {
 		try {
@@ -287,7 +289,18 @@ public class OSQLFilter extends OCommandToParse {
 
 			result = new OSQLFilterItemFieldAny(this, words[1]);
 
+		} else if (words[0].charAt(0) == OStringSerializerHelper.PARAMETER_NAMED) {
+
+			result = new OSQLFilterItemConstant(words[0].substring(1));
+			addConstantValue(result);
+
+		} else if (words[0].length() == 1 && words[0].charAt(0) == OStringSerializerHelper.PARAMETER_POSITIONAL) {
+
+			result = new OSQLFilterItemConstant("?");
+			addConstantValue(result);
+
 		} else {
+
 			if (words[0].equals("NOT")) {
 				// GET THE NEXT VALUE
 				String[] nextWord = nextValue(true);
@@ -399,5 +412,40 @@ public class OSQLFilter extends OCommandToParse {
 		if (rootCondition != null)
 			return "Parsed: " + rootCondition.toString();
 		return "Unparsed: " + text;
+	}
+
+	/**
+	 * Binds parameters.
+	 * 
+	 * @param iArgs
+	 */
+	public void bindParameters(final Map<Object, Object> iArgs) {
+		if (constantValues == null || iArgs == null || iArgs.size() == 0)
+			return;
+
+		if (iArgs.size() < constantValues.size())
+			throw new OCommandExecutionException("Can't execute because " + (constantValues.size() - iArgs.size())
+					+ " parameter(s) are unbounded");
+
+		String paramName;
+		for (Entry<Object, Object> entry : iArgs.entrySet()) {
+			if (entry.getKey() instanceof Integer)
+				constantValues.get(((Integer) entry.getKey())).setValue(entry.setValue(entry.getValue()));
+			else {
+				paramName = entry.getKey().toString().toUpperCase();
+				for (OSQLFilterItemConstant value : constantValues) {
+					if (value.getName().equals(paramName)) {
+						value.setValue(entry.getValue());
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	protected void addConstantValue(Object result) {
+		if (constantValues == null)
+			constantValues = new ArrayList<OSQLFilterItemConstant>();
+		constantValues.add((OSQLFilterItemConstant) result);
 	}
 }

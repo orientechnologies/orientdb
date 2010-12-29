@@ -47,6 +47,8 @@ public abstract class OStringSerializerHelper {
 	public static final char								MAP_BEGIN								= '{';
 	public static final char								MAP_END									= '}';
 	public static final char								ENTRY_SEPARATOR					= ':';
+	public static final char								PARAMETER_NAMED					= ':';
+	public static final char								PARAMETER_POSITIONAL		= '?';
 	public static final char[]							PARAMETER_SEPARATOR			= new char[] { ',', ')' };
 	public static final char[]							PARAMETER_EXT_SAPARATOR	= new char[] { ' ', '.' };
 	public static final char								COLLECTION_SEPARATOR		= ',';
@@ -148,7 +150,7 @@ public abstract class OStringSerializerHelper {
 
 		switch (iType) {
 		case STRING:
-			return "\"" + encode((String) iValue) + "\"";
+			return "\"" + encode(iValue.toString()) + "\"";
 
 		case INTEGER:
 		case FLOAT:

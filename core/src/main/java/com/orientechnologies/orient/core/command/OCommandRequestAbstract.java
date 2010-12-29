@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.core.command;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 
@@ -28,7 +31,7 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
 	protected ODatabaseRecord<?>			database;
 	protected OCommandResultListener	resultListener;
 	protected OProgressListener				progressListener;
-	protected Object[]								parameters;
+	protected Map<Object, Object>			parameters;
 
 	protected OCommandRequestAbstract() {
 	}
@@ -54,8 +57,22 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
 		resultListener = iListener;
 	}
 
-	public Object[] getParameters() {
+	public Map<Object, Object> getParameters() {
 		return parameters;
+	}
+
+	@SuppressWarnings("unchecked")
+	protected void setParameters(final Object... iArgs) {
+		if (iArgs.length > 0) {
+			if (iArgs.length == 1 && iArgs[0] instanceof Map) {
+				parameters = (Map<Object, Object>) iArgs[0];
+			} else {
+				parameters = new HashMap<Object, Object>();
+				for (int i = 0; i < iArgs.length; ++i) {
+					parameters.put(i, iArgs[i]);
+				}
+			}
+		}
 	}
 
 	public OProgressListener getProgressListener() {

@@ -150,9 +150,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		return this;
 	}
 
-	public Object execute(final Object... iArgs) {
+	public Object execute(final Map<Object, Object> iArgs) {
 		// TODO: SUPPORT MULTIPLE CLASSES LIKE A SQL JOIN
 		final int[] clusterIds;
+
+		compiledFilter.bindParameters(iArgs);
 
 		if (compiledFilter.getTargetClasses() != null) {
 			OClass cls = compiledFilter.getTargetClasses().keySet().iterator().next();
