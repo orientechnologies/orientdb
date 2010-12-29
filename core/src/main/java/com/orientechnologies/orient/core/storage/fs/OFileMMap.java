@@ -193,7 +193,8 @@ public class OFileMMap extends OFile {
 
 	@Override
 	public void writeHeaderLong(final int iPosition, final long iValue) {
-		headerBuffer.putLong(HEADER_DATA_OFFSET + iPosition, iValue);
+		if (headerBuffer != null)
+			headerBuffer.putLong(HEADER_DATA_OFFSET + iPosition, iValue);
 	}
 
 	@Override
