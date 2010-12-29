@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
@@ -70,17 +69,16 @@ public class IndexTest {
 	public void testUseOfIndex() {
 		database.open("admin", "admin");
 
-		final List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select * from Profile where nick = 'Jay'"))
+		final List<Profile> result = database.command(new OSQLSynchQuery<Profile>("select * from Profile where nick = 'Jay'"))
 				.execute();
 
-		ODocument record;
+		Profile record;
 		for (int i = 0; i < result.size(); ++i) {
 			record = result.get(i);
 
 			OrientTest.printRecord(i, record);
 
-			Assert.assertTrue(record.getClassName().equalsIgnoreCase("Profile"));
-			Assert.assertTrue(record.field("name").toString().equalsIgnoreCase("Jay"));
+			Assert.assertTrue(record.getName().toString().equalsIgnoreCase("Jay"));
 		}
 
 		database.close();

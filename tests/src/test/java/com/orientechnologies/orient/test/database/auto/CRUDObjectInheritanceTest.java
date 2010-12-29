@@ -78,7 +78,7 @@ public class CRUDObjectInheritanceTest {
 	public void queryByBaseType() {
 		database.open("admin", "admin");
 
-		final List<Account> result = database.query(new OSQLSynchQuery<Account>("select from Account where name.length() > 0"));
+		final List<Account> result = database.query(new OSQLSynchQuery<Account>("select from Company where name.length() > 0"));
 
 		Assert.assertTrue(result.size() > 0);
 		Assert.assertEquals(result.size(), TOT_RECORDS);

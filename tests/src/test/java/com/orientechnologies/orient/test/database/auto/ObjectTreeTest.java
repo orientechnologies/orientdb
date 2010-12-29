@@ -103,7 +103,7 @@ public class ObjectTreeTest {
 		Profile parent;
 		for (Profile r : result) {
 
-			System.out.println(r.getName() + " " + r.getSurname());
+			System.out.println(r.getNick());
 
 			parent = r.getInvitedBy();
 

@@ -197,13 +197,16 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 		return underlying.getMetadata();
 	}
 
+	/**
+	 * Returns a wrapped OCommandRequest instance to catch the result-set by converting it before to return to the user application.
+	 */
 	public <RET extends OCommandRequest> RET command(final OCommandRequest iCommand) {
-		return (RET) underlying.command(iCommand);
+		return (RET) new OCommandSQLPojoWrapper(this, underlying.command(iCommand));
 	}
 
-	public <RET extends List<?>> RET query(final OQuery<?> iCommand) {
+	public <RET extends List<?>> RET query(final OQuery<?> iCommand, Object... iArgs) {
 		checkOpeness();
-		final List<ODocument> result = underlying.query(iCommand);
+		final List<ODocument> result = underlying.query(iCommand, iArgs);
 
 		if (result == null)
 			return null;

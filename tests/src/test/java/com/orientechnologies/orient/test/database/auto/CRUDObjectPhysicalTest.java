@@ -36,7 +36,7 @@ import com.orientechnologies.orient.test.domain.business.City;
 import com.orientechnologies.orient.test.domain.business.Country;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
 
-@Test(groups = { "crud", "object" }, sequential = true)
+@Test(groups = { "crud", "object" })
 public class CRUDObjectPhysicalTest {
 	protected static final int	TOT_RECORDS	= 100;
 	protected long							startRecordNumber;
@@ -196,7 +196,8 @@ public class CRUDObjectPhysicalTest {
 
 		long profiles = database.countClass("Profile");
 
-		Profile neo = new Profile("Neo").setValue("test");
+		Profile neo = new Profile("Neo").setValue("test").setLocation(
+				new Address("residence", new City(new Country("Spain"), "Madrid"), "Rio de Castilla"));
 		neo.addFollowing(new Profile("Morpheus"));
 		neo.addFollowing(new Profile("Trinity"));
 
@@ -247,7 +248,7 @@ public class CRUDObjectPhysicalTest {
 		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
 
 		final List<Profile> result = database.query(new OSQLSynchQuery<Profile>(
-				"select from Profile where location.city.country.name = 'Italy'"));
+				"select from Profile where location.city.country.name = 'Spain'"));
 
 		Assert.assertTrue(result.size() > 0);
 
@@ -255,7 +256,7 @@ public class CRUDObjectPhysicalTest {
 		for (int i = 0; i < result.size(); ++i) {
 			profile = result.get(i);
 
-			Assert.assertEquals(profile.getLocation().getCity().getCountry().getName(), "Italy");
+			Assert.assertEquals(profile.getLocation().getCity().getCountry().getName(), "Spain");
 		}
 
 		database.close();
@@ -279,9 +280,8 @@ public class CRUDObjectPhysicalTest {
 	}
 
 	@Test
-	public void queryWithPositionalParameters() {
+	public void commandWithPositionalParameters() {
 		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
-		database.open("admin", "admin");
 
 		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile where name = ? and surname = ?");
 		List<ODocument> result = database.command(query).execute("Barack", "Obama");
@@ -292,9 +292,20 @@ public class CRUDObjectPhysicalTest {
 	}
 
 	@Test
-	public void queryWithNamedParameters() {
+	public void queryWithPositionalParameters() {
 		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
-		database.open("admin", "admin");
+
+		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile where name = ? and surname = ?");
+		List<ODocument> result = database.query(query, "Barack", "Obama");
+
+		Assert.assertTrue(result.size() != 0);
+
+		database.close();
+	}
+
+	@Test
+	public void commandWithNamedParameters() {
+		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
 
 		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
 				"select from Profile where name = :name and surname = :surname");
@@ -304,6 +315,24 @@ public class CRUDObjectPhysicalTest {
 		params.put("surname", "Obama");
 
 		List<ODocument> result = database.command(query).execute(params);
+
+		Assert.assertTrue(result.size() != 0);
+
+		database.close();
+	}
+
+	@Test
+	public void queryWithNamedParameters() {
+		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+
+		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
+				"select from Profile where name = :name and surname = :surname");
+
+		HashMap<String, String> params = new HashMap<String, String>();
+		params.put("name", "Barack");
+		params.put("surname", "Obama");
+
+		List<ODocument> result = database.query(query, params);
 
 		Assert.assertTrue(result.size() != 0);
 

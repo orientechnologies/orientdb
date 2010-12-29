@@ -82,7 +82,7 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> imp
 		cache.clear();
 		entryPoints.clear();
 		try {
-			if (root != null)
+			if (root != null && ((OMVRBTreeEntryDatabase<K, V>) root).record.getIdentity().isValid())
 				((OMVRBTreeEntryDatabase<K, V>) root).load();
 		} catch (IOException e) {
 			throw new OIndexException("Error on loading root node");

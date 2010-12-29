@@ -86,8 +86,8 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord<
 		return (RET) underlying.command(iCommand);
 	}
 
-	public <RET extends List<?>> RET query(final OQuery<? extends Object> iCommand) {
-		return (RET) underlying.query(iCommand);
+	public <RET extends List<?>> RET query(final OQuery<? extends Object> iCommand, final Object... iArgs) {
+		return (RET) underlying.query(iCommand, iArgs);
 	}
 
 	public REC newInstance() {

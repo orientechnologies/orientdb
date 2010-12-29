@@ -157,9 +157,11 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 * 
 	 * @param iCommand
 	 *          Query command
+	 * @param iArgs
+	 *          Optional parameters to bind to the query
 	 * @return List of POJOs
 	 */
-	public <RET extends List<?>> RET query(final OQuery<? extends Object> iCommand);
+	public <RET extends List<?>> RET query(final OQuery<? extends Object> iCommand, final Object... iArgs);
 
 	/**
 	 * Execute a command against the database. A command can be a SQL statement or a Procedure. If the OStorage used is remote
