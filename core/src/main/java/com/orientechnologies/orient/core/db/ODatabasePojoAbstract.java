@@ -212,7 +212,11 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 		Object obj;
 		for (ODocument doc : result) {
 			// GET THE ASSOCIATED DOCUMENT
-			obj = getUserObjectByRecord(doc, iCommand.getFetchPlan(), true);
+			if (doc.getClassName() == null)
+				obj = doc;
+			else
+				obj = getUserObjectByRecord(doc, iCommand.getFetchPlan(), true);
+
 			resultPojo.add(obj);
 		}
 

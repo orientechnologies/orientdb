@@ -23,15 +23,18 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 @Test(groups = "sql-select")
 public class SQLSelectProjectionsTest {
+	private String						url;
 	private ODatabaseDocument	database;
 
 	@Parameters(value = "url")
 	public SQLSelectProjectionsTest(String iURL) {
+		url = iURL;
 		database = new ODatabaseDocumentTx(iURL);
 	}
 
@@ -50,6 +53,23 @@ public class SQLSelectProjectionsTest {
 		}
 
 		database.close();
+	}
+
+	@Test
+	public void queryProjectionObjectLevel() {
+		ODatabaseObjectTx db = new ODatabaseObjectTx(url);
+		db.open("admin", "admin");
+
+		List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>(" select nick, followings, followers from Profile "));
+
+		Assert.assertTrue(result.size() != 0);
+
+		for (ODocument d : result) {
+			Assert.assertNull(d.getClassName());
+			Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
+		}
+
+		db.close();
 	}
 
 	@Test
@@ -141,7 +161,8 @@ public class SQLSelectProjectionsTest {
 		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(
-				new OSQLSynchQuery<ODocument>("select name.append('!') as 1, surname as 2 from Profile where name is not null and surname is not null")).execute();
+				new OSQLSynchQuery<ODocument>(
+						"select name.append('!') as 1, surname as 2 from Profile where name is not null and surname is not null")).execute();
 
 		Assert.assertTrue(result.size() != 0);
 

@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import org.testng.Assert;
@@ -273,6 +274,38 @@ public class CRUDObjectPhysicalTest {
 		}
 
 		Assert.assertEquals(database.countClusterElements("Account"), startRecordNumber - 1);
+
+		database.close();
+	}
+
+	@Test
+	public void queryWithPositionalParameters() {
+		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+		database.open("admin", "admin");
+
+		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile where name = ? and surname = ?");
+		List<ODocument> result = database.command(query).execute("Barack", "Obama");
+
+		Assert.assertTrue(result.size() != 0);
+
+		database.close();
+	}
+
+	@Test
+	public void queryWithNamedParameters() {
+		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+		database.open("admin", "admin");
+
+		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
+				"select from Profile where name = :name and surname = :surname");
+
+		HashMap<String, String> params = new HashMap<String, String>();
+		params.put("name", "Barack");
+		params.put("surname", "Obama");
+
+		List<ODocument> result = database.command(query).execute(params);
+
+		Assert.assertTrue(result.size() != 0);
 
 		database.close();
 	}
