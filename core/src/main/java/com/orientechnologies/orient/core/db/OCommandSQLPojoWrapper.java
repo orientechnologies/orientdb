@@ -39,6 +39,8 @@ public class OCommandSQLPojoWrapper implements OCommandRequest {
 
 	@SuppressWarnings("unchecked")
 	public <RET> RET execute(Object... iArgs) {
+		database.convertParameters(iArgs);
+
 		Object result = command.execute(iArgs);
 
 		if (result instanceof Collection<?>) {

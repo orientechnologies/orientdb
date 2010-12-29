@@ -283,8 +283,8 @@ public class CRUDObjectPhysicalTest {
 	public void commandWithPositionalParameters() {
 		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
 
-		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile where name = ? and surname = ?");
-		List<ODocument> result = database.command(query).execute("Barack", "Obama");
+		final OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>("select from Profile where name = ? and surname = ?");
+		List<Profile> result = database.command(query).execute("Barack", "Obama");
 
 		Assert.assertTrue(result.size() != 0);
 
@@ -295,8 +295,8 @@ public class CRUDObjectPhysicalTest {
 	public void queryWithPositionalParameters() {
 		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
 
-		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile where name = ? and surname = ?");
-		List<ODocument> result = database.query(query, "Barack", "Obama");
+		final OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>("select from Profile where name = ? and surname = ?");
+		List<Profile> result = database.query(query, "Barack", "Obama");
 
 		Assert.assertTrue(result.size() != 0);
 
@@ -307,15 +307,14 @@ public class CRUDObjectPhysicalTest {
 	public void commandWithNamedParameters() {
 		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
 
-		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
+		final OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>(
 				"select from Profile where name = :name and surname = :surname");
 
 		HashMap<String, String> params = new HashMap<String, String>();
 		params.put("name", "Barack");
 		params.put("surname", "Obama");
 
-		List<ODocument> result = database.command(query).execute(params);
-
+		List<Profile> result = database.command(query).execute(params);
 		Assert.assertTrue(result.size() != 0);
 
 		database.close();
@@ -325,15 +324,36 @@ public class CRUDObjectPhysicalTest {
 	public void queryWithNamedParameters() {
 		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
 
-		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
+		final OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>(
 				"select from Profile where name = :name and surname = :surname");
 
 		HashMap<String, String> params = new HashMap<String, String>();
 		params.put("name", "Barack");
 		params.put("surname", "Obama");
 
-		List<ODocument> result = database.query(query, params);
+		List<Profile> result = database.query(query, params);
+		Assert.assertTrue(result.size() != 0);
 
+		database.close();
+	}
+
+	@Test
+	public void queryWithObjectAsParameter() {
+		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+
+		final OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>(
+				"select from Profile where name = :name and surname = :surname");
+
+		HashMap<String, String> params = new HashMap<String, String>();
+		params.put("name", "Barack");
+		params.put("surname", "Obama");
+
+		List<Profile> result = database.query(query, params);
+		Assert.assertTrue(result.size() != 0);
+
+		Profile obama = result.get(0);
+
+		result = database.query(new OSQLSynchQuery<Profile>("select from Profile where followings contains ( @rid = :who )"), obama);
 		Assert.assertTrue(result.size() != 0);
 
 		database.close();

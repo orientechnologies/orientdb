@@ -25,7 +25,9 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerCSVAbstract;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
@@ -132,7 +134,7 @@ public class OSQLHelper {
 			}
 			fieldValue = coll;
 
-		} else if (iValue.indexOf(":") > -1)
+		} else if (iValue.indexOf(":") > 0)
 			// RID
 			fieldValue = new ORecordId(iValue.trim());
 		else {
@@ -161,6 +163,18 @@ public class OSQLHelper {
 		}
 
 		return fieldValue;
+	}
+
+	public static Object parseValue(final OSQLFilter iSQLFilter, final ODatabaseRecord<?> iDatabase, final OCommandToParse iCommand,
+			final String iWord) {
+		if (iWord.charAt(0) == OStringSerializerHelper.PARAMETER_POSITIONAL
+				|| iWord.charAt(0) == OStringSerializerHelper.PARAMETER_NAMED) {
+			if (iSQLFilter != null)
+				return iSQLFilter.addParameter(iWord);
+			else
+				return new OSQLFilterItemParameter(iWord);
+		} else
+			return parseValue(iDatabase, iCommand, iWord);
 	}
 
 	public static Object parseValue(final ODatabaseRecord<?> iDatabase, final OCommandToParse iCommand, final String iWord) {

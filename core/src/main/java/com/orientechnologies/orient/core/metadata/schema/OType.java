@@ -186,7 +186,7 @@ public enum OType {
 	 */
 	public int asInt(final Object iValue) {
 		if (iValue instanceof Number)
-			return ((Integer) iValue).intValue();
+			return ((Number) iValue).intValue();
 		else if (iValue instanceof String)
 			return Integer.valueOf((String) iValue);
 		else if (iValue instanceof Boolean)
@@ -203,8 +203,8 @@ public enum OType {
 	 * @return The long value if the conversion succeed, otherwise the IllegalArgumentException exception
 	 */
 	public long asLong(final Object iValue) {
-		if (iValue instanceof Integer)
-			return ((Integer) iValue).longValue();
+		if (iValue instanceof Number)
+			return ((Number) iValue).longValue();
 		else if (iValue instanceof String)
 			return Long.valueOf((String) iValue);
 		else if (iValue instanceof Boolean)
@@ -221,8 +221,8 @@ public enum OType {
 	 * @return The float value if the conversion succeed, otherwise the IllegalArgumentException exception
 	 */
 	public float asFloat(final Object iValue) {
-		if (iValue instanceof Integer)
-			return ((Integer) iValue).intValue();
+		if (iValue instanceof Number)
+			return ((Number) iValue).intValue();
 		else if (iValue instanceof String)
 			return Float.valueOf((String) iValue);
 
@@ -237,8 +237,8 @@ public enum OType {
 	 * @return The double value if the conversion succeed, otherwise the IllegalArgumentException exception
 	 */
 	public double asDouble(final Object iValue) {
-		if (iValue instanceof Integer)
-			return ((Integer) iValue).doubleValue();
+		if (iValue instanceof Number)
+			return ((Number) iValue).doubleValue();
 		else if (iValue instanceof String)
 			return Double.valueOf((String) iValue);
 
@@ -256,7 +256,12 @@ public enum OType {
 		return iValue.toString();
 	}
 
-	public static boolean isSimpleType(final Class<?> iType) {
+	public static boolean isSimpleType(final Object iObject) {
+		if (iObject == null)
+			return false;
+
+		final Class<? extends Object> iType = iObject.getClass();
+
 		if (iType.isPrimitive() || Number.class.isAssignableFrom(iType) || String.class.isAssignableFrom(iType)
 				|| Boolean.class.isAssignableFrom(iType) || Date.class.isAssignableFrom(iType)
 				|| (iType.isArray() && (iType.equals(byte[].class) || iType.equals(char[].class))))

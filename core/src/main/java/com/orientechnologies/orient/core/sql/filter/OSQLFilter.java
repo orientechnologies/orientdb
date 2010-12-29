@@ -50,7 +50,7 @@ public class OSQLFilter extends OCommandToParse {
 	protected Set<OProperty>							properties	= new HashSet<OProperty>();
 	protected OSQLFilterCondition					rootCondition;
 	protected List<String>								recordTransformed;
-	private List<OSQLFilterItemConstant>	constantValues;
+	private List<OSQLFilterItemParameter>	parameterItems;
 	private int														braces;
 
 	public OSQLFilter(final ODatabaseRecord<?> iDatabase, final String iText) {
@@ -260,7 +260,7 @@ public class OSQLFilter extends OCommandToParse {
 			do {
 				item = nextValue(true);
 
-				v = OSQLHelper.parseValue(database, this, item[1]);
+				v = OSQLHelper.parseValue(this, database, this, item[1]);
 				coll.add(v);
 
 				currentPos = OStringParser.jump(text, currentPos, " ,\t\r\n");
@@ -289,16 +289,6 @@ public class OSQLFilter extends OCommandToParse {
 
 			result = new OSQLFilterItemFieldAny(this, words[1]);
 
-		} else if (words[0].charAt(0) == OStringSerializerHelper.PARAMETER_NAMED) {
-
-			result = new OSQLFilterItemConstant(words[0].substring(1));
-			addConstantValue(result);
-
-		} else if (words[0].length() == 1 && words[0].charAt(0) == OStringSerializerHelper.PARAMETER_POSITIONAL) {
-
-			result = new OSQLFilterItemConstant("?");
-			addConstantValue(result);
-
 		} else {
 
 			if (words[0].equals("NOT")) {
@@ -308,7 +298,7 @@ public class OSQLFilter extends OCommandToParse {
 					words[1] = words[1] + " " + nextWord[1];
 			}
 
-			result = OSQLHelper.parseValue(database, this, words[1]);
+			result = OSQLHelper.parseValue(this, database, this, words[1]);
 		}
 
 		return result;
@@ -420,21 +410,21 @@ public class OSQLFilter extends OCommandToParse {
 	 * @param iArgs
 	 */
 	public void bindParameters(final Map<Object, Object> iArgs) {
-		if (constantValues == null || iArgs == null || iArgs.size() == 0)
+		if (parameterItems == null || iArgs == null || iArgs.size() == 0)
 			return;
 
-		if (iArgs.size() < constantValues.size())
-			throw new OCommandExecutionException("Can't execute because " + (constantValues.size() - iArgs.size())
+		if (iArgs.size() < parameterItems.size())
+			throw new OCommandExecutionException("Can't execute because " + (parameterItems.size() - iArgs.size())
 					+ " parameter(s) are unbounded");
 
 		String paramName;
 		for (Entry<Object, Object> entry : iArgs.entrySet()) {
 			if (entry.getKey() instanceof Integer)
-				constantValues.get(((Integer) entry.getKey())).setValue(entry.setValue(entry.getValue()));
+				parameterItems.get(((Integer) entry.getKey())).setValue(entry.setValue(entry.getValue()));
 			else {
-				paramName = entry.getKey().toString().toUpperCase();
-				for (OSQLFilterItemConstant value : constantValues) {
-					if (value.getName().equals(paramName)) {
+				paramName = entry.getKey().toString();
+				for (OSQLFilterItemParameter value : parameterItems) {
+					if (value.getName().equalsIgnoreCase(paramName)) {
 						value.setValue(entry.getValue());
 						break;
 					}
@@ -443,9 +433,15 @@ public class OSQLFilter extends OCommandToParse {
 		}
 	}
 
-	protected void addConstantValue(Object result) {
-		if (constantValues == null)
-			constantValues = new ArrayList<OSQLFilterItemConstant>();
-		constantValues.add((OSQLFilterItemConstant) result);
+	public OSQLFilterItemParameter addParameter(final String iName) {
+		String name = iName.charAt(0) == OStringSerializerHelper.PARAMETER_NAMED ? iName.substring(1) : iName;
+
+		final OSQLFilterItemParameter param = new OSQLFilterItemParameter(name);
+
+		if (parameterItems == null)
+			parameterItems = new ArrayList<OSQLFilterItemParameter>();
+
+		parameterItems.add(param);
+		return param;
 	}
 }

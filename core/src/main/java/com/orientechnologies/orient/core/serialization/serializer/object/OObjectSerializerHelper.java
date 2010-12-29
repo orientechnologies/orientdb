@@ -600,9 +600,9 @@ public class OObjectSerializerHelper {
 		if (iFieldValue == null)
 			return null;
 
-		Class<?> fieldClass = iFieldValue.getClass();
+		if (!OType.isSimpleType(iFieldValue)) {
+			Class<?> fieldClass = iFieldValue.getClass();
 
-		if (!OType.isSimpleType(fieldClass)) {
 			if (fieldClass.isArray()) {
 				// ARRAY
 				iFieldValue = multiValueToStream(Arrays.asList(iFieldValue), iType, iEntityManager, iObj2RecHandler, db, iSaveOnlyDirty);
@@ -660,7 +660,7 @@ public class OObjectSerializerHelper {
 				return iMultiValue;
 
 			// DETERMINE THE RIGHT TYPE BASED ON SOURCE MULTI VALUE OBJECT
-			if (OType.isSimpleType(firstValue.getClass())) {
+			if (OType.isSimpleType(firstValue)) {
 				if (iMultiValue instanceof List)
 					iType = OType.EMBEDDEDLIST;
 				else if (iMultiValue instanceof Set)

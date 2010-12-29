@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -37,6 +38,7 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -206,6 +208,9 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 
 	public <RET extends List<?>> RET query(final OQuery<?> iCommand, Object... iArgs) {
 		checkOpeness();
+
+		convertParameters(iArgs);
+
 		final List<ODocument> result = underlying.query(iCommand, iArgs);
 
 		if (result == null)
@@ -421,5 +426,48 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 				it.remove();
 			}
 		}
+	}
+
+	/**
+	 * Convert an array of parameters: if a POJO is used, then replace it with its record id.
+	 * 
+	 * @param iArgs
+	 *          Array of parameters as Object
+	 * @see #convertParameter(Object)
+	 */
+	protected void convertParameters(final Object... iArgs) {
+		if (iArgs == null)
+			return;
+
+		// FILTER PARAMETERS
+		for (int i = 0; i < iArgs.length; ++i)
+			iArgs[i] = convertParameter(iArgs[i]);
+	}
+
+	/**
+	 * Convert a parameter: if a POJO is used, then replace it with its record id.
+	 * 
+	 * @param iParameter
+	 *          Parameter to convert, if applicable
+	 * @see #convertParameters(Object...)
+	 */
+	protected Object convertParameter(final Object iParameter) {
+		if (iParameter != null)
+			// FILTER PARAMETERS
+			if (iParameter instanceof Map<?, ?>) {
+				Map<String, Object> map = (Map<String, Object>) iParameter;
+
+				for (Entry<String, Object> e : map.entrySet()) {
+					map.put(e.getKey(), convertParameter(e.getValue()));
+				}
+
+			} else if (iParameter != null && !OType.isSimpleType(iParameter)) {
+				final ORID rid = getIdentity(iParameter);
+				if (rid != null && rid.isValid())
+					// REPLACE OBJECT INSTANCE WITH ITS RECORD ID
+					return rid;
+			}
+
+		return iParameter;
 	}
 }

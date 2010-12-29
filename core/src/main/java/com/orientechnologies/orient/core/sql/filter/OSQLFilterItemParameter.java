@@ -23,13 +23,13 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  * @author Luca Garulli
  * 
  */
-public class OSQLFilterItemConstant implements OSQLFilterItem {
+public class OSQLFilterItemParameter implements OSQLFilterItem {
 	private final String				name;
 	private Object							value				= NOT_SETTED;
 
 	private static final String	NOT_SETTED	= "?";
 
-	public OSQLFilterItemConstant(final String iName) {
+	public OSQLFilterItemParameter(final String iName) {
 		this.name = iName;
 	}
 
