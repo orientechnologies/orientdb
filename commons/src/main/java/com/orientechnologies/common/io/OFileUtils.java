@@ -9,9 +9,20 @@ public class OFileUtils {
 	private static final long	TERABYTE	= 1099511627776L;
 
 	public static long getSizeAsNumber(String iSize) {
-		try {
+		if (iSize == null)
+			throw new IllegalArgumentException("Size " + iSize + " is null");
+
+		boolean number = true;
+		for (int i = iSize.length() - 1; i >= 0; --i) {
+			if (!Character.isDigit(iSize.charAt(i))) {
+				number = false;
+				break;
+			}
+		}
+
+		if (number)
 			return Long.parseLong(iSize);
-		} catch (NumberFormatException e) {
+		else {
 			iSize = iSize.toUpperCase();
 			int pos = iSize.indexOf("KB");
 			if (pos > -1)
@@ -38,7 +49,7 @@ public class OFileUtils {
 				return -1 * Long.parseLong(iSize.substring(0, pos));
 
 			// RE-THROW THE EXCEPTION
-			throw e;
+			throw new IllegalArgumentException("Size " + iSize + " has a unrecognizable format");
 		}
 	}
 
