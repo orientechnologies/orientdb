@@ -24,14 +24,21 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.client.remote.OEngineRemote;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 @SuppressWarnings("unchecked")
 @Test
 public class JSONTest {
+	private String	url;
+
 	@Parameters(value = "url")
 	public JSONTest(final String iURL) {
+		url = iURL;
 	}
 
 	@Test
@@ -187,5 +194,25 @@ public class JSONTest {
 		Assert.assertTrue(loadedMap2.get("map3") instanceof Map<?, ?>);
 		final Map<String, ODocument> loadedMap3 = (Map<String, ODocument>) loadedMap2.get("map3");
 		Assert.assertEquals(loadedMap3.size(), 0);
+	}
+
+	@Test
+	public void testFetchedJson() {
+		Orient.instance().registerEngine(new OEngineRemote());
+
+		ODatabaseObjectTx database = new ODatabaseObjectTx(url);
+		database.open("admin", "admin");
+		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain");
+
+		List<ODocument> result = database.getUnderlying()
+				.command(new OSQLSynchQuery<ODocument>("select * from Profile where name = 'Barack' and surname = 'Obama'")).execute();
+		int i = 0;
+		for (ODocument doc : result) {
+			String jsonFull = doc.toJSON("type,rid,version,class,attribSameRow,indent:0,fetchPlan:*:-1");
+			ODocument loadedDoc = new ODocument().fromJSON(jsonFull);
+
+			Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
+			i++;
+		}
 	}
 }

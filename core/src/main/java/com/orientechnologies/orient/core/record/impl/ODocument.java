@@ -324,7 +324,16 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 
 					for (int i = 0; i < myList.size(); ++i) {
 						if (myList.get(i) instanceof ODocument) {
-							if (!((ODocument) myList.get(i)).hasSameContentOf((ODocument) otherList.get(i)))
+							if (otherList.get(i) instanceof ORID) {
+								if (!((ODocument) myList.get(i)).isDirty()) {
+									if (!((ODocument) myList.get(i)).getIdentity().equals((ORID) otherList.get(i)))
+										return false;
+								} else {
+									ODocument otherDoc = (ODocument) getDatabase().load((ORID) otherList.get(i));
+									if (!((ODocument) myList.get(i)).hasSameContentOf(otherDoc))
+										return false;
+								}
+							} else if (!((ODocument) myList.get(i)).hasSameContentOf((ODocument) otherList.get(i)))
 								return false;
 						} else if (!myList.get(i).equals(otherList.get(i)))
 							return false;
