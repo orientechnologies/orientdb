@@ -148,7 +148,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		try {
 			// DISCONNECT ALL THE NODES
 			for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints)
-				entryPoint.disconnect(true);
+				entryPoint.disconnect(true, 0);
 			entryPoints.clear();
 
 			recordsToCommit.clear();
@@ -188,25 +188,154 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 			OMVRBTreeEntryPersistent<K, V> pRoot = (OMVRBTreeEntryPersistent<K, V>) root;
 
-			final int depth = pRoot.getMaxDepthInMemory();
+			if (entryPoints.size() == 0)
+				// FIRST TIME THE LIST IS NULL: START FROM ROOT
+				entryPoints.add(pRoot);
 
 			// RECONFIG IT TO CATCH CHANGED VALUES
 			config();
 
-			if (depth < entryPointsSize * optimizeEntryPointsFactor)
+			int nodes = 0;
+			List<OMVRBTreeEntryPersistent<K, V>> tmp = null;
+
+			if (isRuntimeCheckEnabled())
+				tmp = new ArrayList<OMVRBTreeEntryPersistent<K, V>>();
+
+			for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints) {
+				for (OMVRBTreeEntryPersistent<K, V> e = (OMVRBTreeEntryPersistent<K, V>) entryPoint.getFirstInMemory(); e != null; e = e
+						.getNextInMemory()) {
+
+					if (isRuntimeCheckEnabled()) {
+						for (OMVRBTreeEntryPersistent<K, V> t : tmp)
+							if (t != e && t.record.getIdentity().equals(e.record.getIdentity())) {
+								OLogManager.instance().error(this, "Found Node loaded in memory twice with different instances: " + e);
+								continue;
+							}
+
+						tmp.add(e);
+					}
+
+					++nodes;
+				}
+			}
+
+			if (OLogManager.instance().isDebugEnabled())
+				OLogManager.instance().debug(this, "Found %d nodes in memory, %d items on disk, threshold=%d, entryPoints=%d", nodes, size,
+						(entryPointsSize * optimizeEntryPointsFactor), entryPoints.size());
+
+			if (nodes < entryPointsSize * optimizeEntryPointsFactor)
 				// UNDER THRESHOLD AVOID TO OPTIMIZE
 				return;
 
 			if (debug)
-				System.out.printf("\nOptimizing: total items %d, root is %s...", size(), pRoot.toString());
+				System.out.printf("\n------------\nOptimizing: total items %d, root is %s...", size(), pRoot.toString());
 
-			pRoot.checkToDisconnect((int) (entryPointsSize * optimizeEntryPointsFactor));
+			// COMPUTE THE DISTANCE BETWEEN NODES
+			final int distance;
+			if (nodes <= entryPointsSize)
+				distance = 1;
+			else
+				distance = nodes / entryPointsSize + 1;
+
+			newEntryPoints.clear();
+
+			OLogManager.instance().debug(this, "Compacting nodes with distance = %d", distance);
+
+			// PICK NEW ENTRYPOINTS AT EQUAL DISTANCE
+			int nodeCounter = 0;
+			OMVRBTreeEntryPersistent<K, V> lastNode = null;
+			OMVRBTreeEntryPersistent<K, V> currNode;
+
+			for (int i = 0; i < entryPoints.size(); ++i) {
+				currNode = entryPoints.get(i);
+
+				for (OMVRBTreeEntryPersistent<K, V> e = (OMVRBTreeEntryPersistent<K, V>) currNode.getFirstInMemory(); e != null; e = e
+						.getNextInMemory()) {
+
+					boolean alreadyPresent = false;
+
+					// CHECK THAT THE NODE IS NOT PART OF A NEXT ENTRY-POINTS: THIS IS THE CASE WHEN THE TREE CHUNKS ARE CONNECTED
+					// BETWEEN THEM
+					for (int k = i + 1; k < entryPoints.size(); ++k)
+						if (e == entryPoints.get(k)) {
+							alreadyPresent = true;
+							break;
+						}
+
+					if (alreadyPresent)
+						continue;
+
+					++nodeCounter;
+
+					if (newEntryPoints.size() == 0 || nodeCounter % distance == 0) {
+						for (OMVRBTreeEntryPersistent<K, V> ep : newEntryPoints)
+							if (ep == e) {
+								alreadyPresent = true;
+								break;
+							}
+
+						if (alreadyPresent)
+							--nodeCounter;
+						else
+							newEntryPoints.add(e);
+					}
+
+					lastNode = e;
+				}
+			}
+
+			if (newEntryPoints.size() > 1 && newEntryPoints.get(newEntryPoints.size() - 1) != lastNode)
+				// ADD THE LAST ONE IF IT'S NOT YET PRESENT
+				newEntryPoints.add(lastNode);
+
+			// INSERT ROOT BETWEEN ENTRY-POINTS
+			int cmp;
+			for (int i = 0; i < newEntryPoints.size(); ++i) {
+				cmp = ((Comparable<K>) pRoot.getFirstKey()).compareTo(newEntryPoints.get(i).getFirstKey());
+				if (cmp < 0) {
+					newEntryPoints.add(i, pRoot);
+					break;
+				} else if (cmp == 0)
+					// ALREADY PRESENT: DO NOTHING
+					break;
+			}
+
+			// SWAP TMP AND REAL ENTRY POINT COLLECTIONS
+			entryPoints.clear();
+			final List<OMVRBTreeEntryPersistent<K, V>> a = entryPoints;
+			entryPoints = newEntryPoints;
+			newEntryPoints = a;
+
+			if (debug) {
+				System.out.printf("\nEntrypoints (%d): ", entryPoints.size());
+				for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints) {
+					if (debug)
+						System.out.printf(entryPoint.record.getIdentity() + " ");
+				}
+			}
+
+			// FREE ALL THE NODES BUT THE ENTRY POINTS AND PUT THE ENTRYPOINT INTO THE CACHE
+			for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints) {
+				entryPoint.disconnectLinked(false);
+			}
 
 			if (isRuntimeCheckEnabled()) {
 				for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints)
 					for (OMVRBTreeEntryPersistent<K, V> e = (OMVRBTreeEntryPersistent<K, V>) entryPoint.getFirstInMemory(); e != null; e = e
 							.getNextInMemory())
 						e.checkEntryStructure();
+
+				if (OLogManager.instance().isDebugEnabled()) {
+					// COUNT ALL IN-MEMORY NODES BY BROWSING ALL THE ENTRYPOINT NODES
+					nodes = 0;
+					for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints)
+						for (OMVRBTreeEntryPersistent<K, V> e = (OMVRBTreeEntryPersistent<K, V>) entryPoint.getFirstInMemory(); e != null; e = e
+								.getNextInMemory())
+							++nodes;
+
+					OLogManager.instance().debug(this, "Now Found %d nodes in memory and threshold=%d. EntryPoints=%d", nodes,
+							(entryPointsSize * optimizeEntryPointsFactor), entryPoints.size());
+				}
 			}
 
 		} finally {
@@ -775,14 +904,14 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 	@Override
 	protected void rotateLeft(final OMVRBTreeEntry<K, V> p) {
-		if (debug)
+		if (debug && p != null)
 			System.out.printf("\nRotating to the left the node %s", ((OMVRBTreeEntryPersistent<K, V>) p).record.getIdentity());
 		super.rotateLeft(p);
 	}
 
 	@Override
 	protected void rotateRight(final OMVRBTreeEntry<K, V> p) {
-		if (debug)
+		if (debug && p != null)
 			System.out.printf("\nRotating to the right the node %s", ((OMVRBTreeEntryPersistent<K, V>) p).record.getIdentity());
 		super.rotateRight(p);
 	}

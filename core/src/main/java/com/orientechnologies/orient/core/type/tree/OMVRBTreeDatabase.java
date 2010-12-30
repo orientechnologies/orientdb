@@ -67,6 +67,28 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> {
 			entry = new OMVRBTreeEntryDatabase<K, V>(this, (OMVRBTreeEntryDatabase<K, V>) iParent, iRecordId);
 			cache.put(iRecordId, entry);
 
+			// RECONNECT THE LOADED NODE WITH IN-MEMORY PARENT, LEFT AND RIGHT
+			if (entry.parent == null && entry.parentRid.isValid()) {
+				// TRY TO ASSIGN THE PARENT IN CACHE IF ANY
+				final OMVRBTreeEntryPersistent<K, V> parentNode = cache.get(entry.parentRid);
+				if (parentNode != null)
+					entry.setParent(parentNode);
+			}
+
+			if (entry.left == null && entry.leftRid.isValid()) {
+				// TRY TO ASSIGN THE PARENT IN CACHE IF ANY
+				final OMVRBTreeEntryPersistent<K, V> leftNode = cache.get(entry.leftRid);
+				if (leftNode != null)
+					entry.setLeft(leftNode);
+			}
+
+			if (entry.right == null && entry.rightRid.isValid()) {
+				// TRY TO ASSIGN THE PARENT IN CACHE IF ANY
+				final OMVRBTreeEntryPersistent<K, V> rightNode = cache.get(entry.rightRid);
+				if (rightNode != null)
+					entry.setRight(rightNode);
+			}
+
 			if (debug)
 				System.out.printf("\nLoaded entry node %s: parent %s, left %s, right %s", iRecordId, entry.parentRid, entry.leftRid,
 						entry.rightRid);

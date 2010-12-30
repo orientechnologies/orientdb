@@ -203,37 +203,51 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 	 * 
 	 * @param iForceDirty
 	 *          Force disconnection also if the record it's dirty
+	 * @param i
 	 */
-	protected int disconnect(final boolean iForceDirty) {
-		if (record.isDirty() && !iForceDirty)
+	protected int disconnect(final boolean iForceDirty, final int iLevel) {
+		if (record == null || this == tree.getRoot() || record.isDirty() && !iForceDirty)
 			// DIRTY NODE
 			return 0;
 
+		for (OMVRBTreeEntryPersistent<K, V> entryPoint : pTree.entryPoints) {
+			if (entryPoint == this)
+				// IT'S AN ENTRYPOINT: AVOID DISCONNECTION
+				return 0;
+		}
+
+		// REMOVE ME FROM THE CACHE
 		if (pTree.cache.remove(record.getIdentity()) == null)
 			OLogManager.instance().warn(this, "Can't find current node into the cache. Is the cache invalid?");
 
 		int totalDisconnected = 1;
 
-		if (tree.isDebug())
-			System.out.printf("\nDisconnected tree node %s with parent %s, left %s, right %s...", this, parentRid, leftRid, rightRid);
+		if (tree.isDebug()) {
+			StringBuilder spaces = new StringBuilder();
+			for (int i = 0; i < iLevel + 3; ++i)
+				spaces.append(" ");
 
-		if (this != tree.getRoot()) {
-			// SPEED UP MEMORY CLAIM BY RESETTING INTERNAL FIELDS
-			keys = null;
-			values = null;
-			serializedKeys = null;
-			serializedValues = null;
-			pTree = null;
-			record = null;
+			System.out.printf("\n%sDisconnected tree node %s with parent %s, left %s, right %s (%s)...", spaces, this, parentRid,
+					leftRid, rightRid, System.identityHashCode(this));
 		}
+
+		// SPEED UP MEMORY CLAIM BY RESETTING INTERNAL FIELDS
+		keys = null;
+		values = null;
+		serializedKeys = null;
+		serializedValues = null;
+		pTree = null;
+		record = null;
 
 		// DISCONNECT FROM THE PARENT
 		if (parent != null) {
 			if (parent.left == this) {
 				parent.left = null;
-			} else {
+			} else if (parent.right == this) {
 				parent.right = null;
-			}
+			} else
+				OLogManager.instance().warn(this, "Current node's parent doesn't link it correctly");
+
 			parent = null;
 		}
 
@@ -241,7 +255,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		if (left != null) {
 			// DISCONNECT MYSELF FROM THE LEFT NODE
 			left.parent = null;
-			int disconnected = left.disconnect(iForceDirty);
+			int disconnected = left.disconnect(iForceDirty, iLevel + 1);
 
 			if (disconnected > 0) {
 				totalDisconnected += disconnected;
@@ -253,7 +267,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		if (right != null) {
 			// DISCONNECT MYSELF FROM THE RIGHT NODE
 			right.parent = null;
-			int disconnected = right.disconnect(iForceDirty);
+			int disconnected = right.disconnect(iForceDirty, iLevel + 1);
 
 			if (disconnected > 0) {
 				totalDisconnected += disconnected;
@@ -271,20 +285,28 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 	 * 
 	 * @param iSource
 	 */
-	protected int checkToDisconnect(final int iDepthLevel) {
+	protected int disconnectLinked(final boolean iForce) {
 		if (record == null || record.isDirty())
 			// DIRTY NODE OR IS ROOT
 			return 0;
 
 		int freed = 0;
 
-		if (getDepthInMemory() >= iDepthLevel)
-			freed = disconnect(false);
-		else {
-			if (left != null)
-				freed += left.checkToDisconnect(iDepthLevel);
-			if (right != null)
-				freed += right.checkToDisconnect(iDepthLevel);
+		if (tree.isDebug())
+			System.out.printf("\nChecking for disconnection of the node %s with parent %s, left %s, right %s (%s)...", this, parentRid,
+					leftRid, rightRid, System.identityHashCode(this));
+
+		if (left != null) {
+			if (tree.isDebug())
+				System.out.printf("\n-> left = %s (%s)", left, System.identityHashCode(left));
+
+			freed += left.disconnect(iForce, 0);
+		}
+		if (right != null) {
+			if (tree.isDebug())
+				System.out.printf("\n-> right = %s (%s)", right, System.identityHashCode(right));
+
+			freed += right.disconnect(iForce, 0);
 		}
 
 		return freed;
@@ -350,10 +372,12 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 
 	@Override
 	public OMVRBTreeEntry<K, V> setParent(final OMVRBTreeEntry<K, V> iParent) {
-		if (iParent != getParent()) {
-			markDirty();
-
+		if (iParent != parent) {
 			this.parent = (OMVRBTreeEntryPersistent<K, V>) iParent;
+
+			if (parent != null && !parent.record.getIdentity().equals(parentRid))
+				markDirty();
+
 			this.parentRid = iParent == null ? ORecordId.EMPTY_RECORD_ID : parent.record.getIdentity();
 
 			if (parent != null) {
@@ -390,19 +414,19 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 
 	@Override
 	public void setLeft(final OMVRBTreeEntry<K, V> iLeft) {
-		if (iLeft == left)
-			return;
+		if (iLeft != left) {
+			left = (OMVRBTreeEntryPersistent<K, V>) iLeft;
 
-		left = (OMVRBTreeEntryPersistent<K, V>) iLeft;
-		// if (left == null || !left.record.getIdentity().isValid() || !left.record.getIdentity().equals(leftRid)) {
-		markDirty();
-		this.leftRid = iLeft == null ? ORecordId.EMPTY_RECORD_ID : left.record.getIdentity();
-		// }
+			if (left != null && !left.record.getIdentity().equals(leftRid))
+				markDirty();
 
-		if (iLeft != null && iLeft.getParent() != this)
-			iLeft.setParent(this);
+			leftRid = iLeft == null ? ORecordId.EMPTY_RECORD_ID : left.record.getIdentity();
 
-		checkEntryStructure();
+			if (left != null && left.parent != this)
+				left.setParent(this);
+
+			checkEntryStructure();
+		}
 	}
 
 	@Override
@@ -410,8 +434,6 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		if (rightRid.isValid() && right == null) {
 			// LAZY LOADING OF THE RIGHT LEAF
 			try {
-				// System.out.println("Node " + record.getIdentity() + " is loading RIGHT node " + rightRid + "...");
-
 				right = pTree.loadEntry(this, rightRid);
 
 				checkEntryStructure();
@@ -425,20 +447,19 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 
 	@Override
 	public OMVRBTreeEntry<K, V> setRight(final OMVRBTreeEntry<K, V> iRight) {
-		if (iRight == right)
-			return this;
+		if (iRight != right) {
+			right = (OMVRBTreeEntryPersistent<K, V>) iRight;
 
-		right = (OMVRBTreeEntryPersistent<K, V>) iRight;
-		// if (right == null || !right.record.getIdentity().isValid() || !right.record.getIdentity().equals(rightRid)) {
-		markDirty();
-		rightRid = iRight == null ? ORecordId.EMPTY_RECORD_ID : right.record.getIdentity();
-		// }
+			if (right != null && !right.record.getIdentity().equals(rightRid))
+				markDirty();
 
-		if (iRight != null && iRight.getParent() != this)
-			iRight.setParent(this);
+			rightRid = iRight == null ? ORecordId.EMPTY_RECORD_ID : right.record.getIdentity();
 
-		checkEntryStructure();
+			if (right != null && right.parent != this)
+				right.setParent(this);
 
+			checkEntryStructure();
+		}
 		return right;
 	}
 
