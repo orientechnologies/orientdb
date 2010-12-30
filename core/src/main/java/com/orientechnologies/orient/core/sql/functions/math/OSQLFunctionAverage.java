@@ -23,7 +23,7 @@ package com.orientechnologies.orient.core.sql.functions.math;
  * 
  */
 public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
-	public static final String	NAME	= "average";
+	public static final String	NAME	= "avg";
 
 	private Number							sum;
 	private int									total	= 0;
@@ -65,7 +65,7 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
 	}
 
 	public String getSyntax() {
-		return "Syntax error: average(<field>)";
+		return "Syntax error: avg(<field>)";
 	}
 
 	public Object getResult() {
