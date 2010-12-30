@@ -33,9 +33,11 @@ public class OServerCommandPostQuery extends OServerCommandAuthenticatedDbAbstra
 		String[] urlParts = checkSyntax(
 				iRequest.url,
 				4,
-				"Syntax error: query/<database>/sql/query[/<limit>]. <br/>Limit is optional and is setted to 20 by default. Set expressely to 0 to have no limits.");
+				"Syntax error: query/<database>/sql/query[/<limit>][/<fetchPlan>]. <br/>Limit is optional and is setted to 20 by default. Set expressely to 0 to have no limits.");
 
 		final int limit = urlParts.length > 4 ? Integer.parseInt(urlParts[4]) : 20;
+
+		final String fetchPlan = urlParts.length > 5 ? urlParts[5] : null;
 
 		final String text = urlParts[3];
 
@@ -59,7 +61,7 @@ public class OServerCommandPostQuery extends OServerCommandAuthenticatedDbAbstra
 				OSharedDocumentDatabase.release(db);
 		}
 
-		sendRecordsContent(iRequest, response);
+		sendRecordsContent(iRequest, response, fetchPlan);
 	}
 
 	public String[] getNames() {

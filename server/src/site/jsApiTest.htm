@@ -83,6 +83,106 @@
 		}
 	}
 
+	function queryFetched() {
+		connectLogged();
+		orientServer.setEvalResponse(false);
+		queryResult = orientServer.query(
+				'select from Address where city.country.name = \'Italy\'',
+				null, '*:-1 type:0');
+		orientServer.setEvalResponse(true);
+		if (queryResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output").text(
+					'Query executed: returned '
+							+ eval('(' + queryResult + ')')["result"].length
+							+ ' items' + '\n' + queryResult);
+		}
+	}
+
+	function queryLimited() {
+		connectLogged();
+		queryResult = orientServer.query(
+				'select from Address where city.country.name = \'Italy\'', '5');
+		if (queryResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output").text(
+					'Query executed: returned ' + queryResult["result"].length
+							+ ' items');
+		}
+	}
+
+	function queryFetchedAndLimited() {
+		connectLogged();
+		orientServer.setEvalResponse(false);
+		queryResult = orientServer.query(
+				'select from Address where city.country.name = \'Italy\'', '7',
+				'*:-1 city:0');
+		orientServer.setEvalResponse(true);
+		if (queryResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output").text(
+					'Query executed: returned '
+							+ eval('(' + queryResult + ')')["result"].length
+							+ ' items' + '\n' + queryResult);
+		}
+	}
+
+	function queryFetchedAndLimited2() {
+		connectLogged();
+		orientServer.setEvalResponse(false);
+		queryResult = orientServer.query(
+				'select from Address where city.country.name = \'Italy\'', '7',
+				'*:-1 City.country:0');
+		orientServer.setEvalResponse(true);
+		if (queryResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output").text(
+					'Query executed: returned '
+							+ eval('(' + queryResult + ')')["result"].length
+							+ ' items' + '\n' + queryResult);
+		}
+	}
+
+	function load() {
+		connectLogged();
+		orientServer.setEvalResponse(false);
+		queryResult = orientServer.load('12:0');
+		orientServer.setEvalResponse(true);
+		if (queryResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output").text('Load executed:' + '\n' + queryResult);
+		}
+	}
+
+	function loadFetched() {
+		connectLogged();
+		orientServer.setEvalResponse(false);
+		queryResult = orientServer.load('12:0', '*:-1 type:0');
+		orientServer.setEvalResponse(true);
+		if (queryResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output").text('Load executed:' + '\n' + queryResult);
+		}
+	}
+
+	function loadFetched2() {
+		connectLogged();
+		orientServer.setEvalResponse(false);
+		queryResult = orientServer.load('12:0', '*:-1 type:0 City.country:0');
+		orientServer.setEvalResponse(true);
+		if (queryResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output").text('Load executed:' + '\n' + queryResult);
+		}
+	}
+
 	function classInfo() {
 		connectLogged();
 		queryResult = orientServer.classInfo('Address');
@@ -201,726 +301,26 @@ Browse Cluster</button>
 Server Info</button>
 <br />
 <button type="button" onclick="javascript:query();">Test Query</button>
+<button type="button" onclick="javascript:queryFetched();">Test
+Query Fetched</button>
+<button type="button" onclick="javascript:queryLimited();">Test
+Query Limited</button>
+<button type="button" onclick="javascript:queryFetchedAndLimited();">Test
+Query Fetched and Limited</button>
+<button type="button" onclick="javascript:queryFetchedAndLimited2();">Test
+Query Fetched and Limited 2</button>
+<br />
 <button type="button" onclick="javascript:insert();">Test
 Insert</button>
 <button type="button" onclick="javascript:remove();">Test
 Delete</button>
+<button type="button" onclick="javascript:load();">Test Load</button>
+<button type="button" onclick="javascript:loadFetched();">Test
+LoadFetched</button>
+<button type="button" onclick="javascript:loadFetched2();">Test
+LoadFetched 2</button>
 <br />
 <button type="button" onclick="javascript:testCode();">Test
 Code</button>
-</body>
-</html>
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html>
-<head>
-<title>OrientDB Javascript API Test Suite</title>
-<meta name="title" content="OrientDB Javascript API Test Suite" />
-<meta name="description" content="OrientDB" />
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<script src="www/js/jquery-1.4.2.min.js" type="text/javascript">
-	
-</script>
-<script src="www/js/jquery-ui-1.8.1.custom.min.js"
-	type="text/javascript">
-	
-</script>
-<script src="www/js/i18n/grid.locale-en.js" type="text/javascript">
-	
-</script>
-<script src="www/js/jquery.jqGrid.min.js" type="text/javascript">
-	
-</script>
-<script src="www/js/jQueryRotate.js" type="text/javascript">
-	
-</script>
-<script src="www/js/orientdb-api.js" type="text/javascript">
-	
-</script>
-<script type="text/javascript">
-	var orientServer;
-
-	function testCode() {
-		database = new ODatabase('http://localhost:2480/demo');
-		databaseInfo = database.open();
-		queryResult = database
-				.query('select from Address where city.country.name = \'Italy\'');
-		executeMessage = '';
-		if (queryResult["result"].length == 0) {
-			commandResult = database
-					.executeCommand('insert into Address (street,type) values (\'Via test 1\',\'Tipo test\')');
-			executeMessage = 'Created an address';
-		} else {
-			executeMessage = queryResult["result"].length + ' elements.';
-		}
-		database.close();
-		jQuery("#output").text('Code executed correctly: ' + executeMessage);
-	}
-
-	function connect() {
-		if (orientServer == null) {
-			orientServer = new ODatabase('http://localhost:2480/demo');
-		}
-		databaseInfo = orientServer.open();
-		if (databaseInfo == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#connectionStatus").text('Connected');
-			jQuery("#output").text('Connect OK.');
-		}
-	}
-
-	function query() {
-		connect();
-		queryResult = orientServer
-				.query('select from Address where city.country.name = \'Italy\'');
-		if (queryResult == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#output").text(
-					'Query executed: returned ' + queryResult["result"].length
-							+ ' items');
-		}
-	}
-
-	function classInfo() {
-		connect();
-		queryResult = orientServer.classInfo('Address');
-		if (queryResult == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#output").text('Class: ' + queryResult.name);
-		}
-	}
-
-	function browseCluster() {
-		connect();
-		queryResult = orientServer.browseCluster('Address');
-		if (queryResult == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#output").text('Cluster: ' + queryResult);
-		}
-	}
-
-	function serverInfo() {
-		connect();
-		queryResult = orientServer.serverInfo();
-		if (queryResult == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#output").text(queryResult);
-		}
-	}
-
-	function schema() {
-		connect();
-		queryResult = orientServer.schema();
-		if (queryResult == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#output").text(queryResult.length + ' classes.');
-		}
-	}
-
-	function security() {
-		connect();
-		queryResultRoles = orientServer.securityRoles();
-		queryResultUsers = orientServer.securityUsers();
-		if (queryResultUsers == null && queryResultRoles == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#output").text(queryResult);
-		}
-	}
-
-	function insert() {
-		connect();
-		commandResult = orientServer
-				.executeCommand('insert into Address (street,type) values (\'Via test 1\',\'Tipo test\')');
-		if (commandResult == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#output").text(
-					"Insert succesful: created record " + commandResult);
-		}
-	}
-
-	function remove() {
-		connect();
-		commandResult = orientServer
-				.executeCommand('delete from Address where street = \'Via test 1\' and type = \'Tipo test\'');
-		if (commandResult == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#output")
-					.text(
-							"Remove succesful: removed " + commandResult
-									+ " record(s)");
-		}
-	}
-
-	function disconnect() {
-		if (orientServer == null) {
-			orientServer = new ODatabase('http://localhost:2480/demo');
-		}
-		orientServer.close();
-		if (orientServer.getErrorMessage() != null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-			jQuery("#connectionStatus").text('Disconnected');
-		} else {
-			jQuery("#connectionStatus").text('Disconnected');
-			jQuery("#output").text('Disconnect OK.');
-		}
-	}
-</script>
-</head>
-<body>
-<span id="connectionStatusLabel">Status: </span>
-<span id="connectionStatus">Disconnected</span>
-<br />
-<span id="outputLabel">Output: </span>
-<textarea id="output" rows="5" cols="40"></textarea>
-<br />
-<button type="button" onclick="javascript:connect();">Test
-Connect</button>
-<button type="button" onclick="javascript:disconnect();">Test
-Disconnect</button>
-<br />
-<button type="button" onclick="javascript:schema();">Test
-Schema</button>
-<button type="button" onclick="javascript:security();">Test
-Security</button>
-<button type="button" onclick="javascript:classInfo();">Test
-Class Info</button>
-<button type="button" onclick="javascript:browseCluster();">Test
-Browse Cluster</button>
-<button type="button" onclick="javascript:serverInfo();">Test
-Server Info</button>
-<br />
-<button type="button" onclick="javascript:query();">Test Query</button>
-<button type="button" onclick="javascript:insert();">Test
-Insert</button>
-<button type="button" onclick="javascript:remove();">Test
-Delete</button>
-<br />
-<button type="button" onclick="javascript:testCode();">Test
-Code</button>
-</body>
-</html>
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html>
-<head>
-<title>OrientDB Javascript API Test Suite</title>
-<meta name="title" content="OrientDB Javascript API Test Suite" />
-<meta name="description" content="OrientDB" />
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<script src="www/js/jquery-1.4.2.min.js" type="text/javascript">
-	
-</script>
-<script src="www/js/jquery-ui-1.8.1.custom.min.js"
-	type="text/javascript">
-	
-</script>
-<script src="www/js/i18n/grid.locale-en.js" type="text/javascript">
-	
-</script>
-<script src="www/js/jquery.jqGrid.min.js" type="text/javascript">
-	
-</script>
-<script src="www/js/jQueryRotate.js" type="text/javascript">
-	
-</script>
-<script src="www/js/orientdb-api.js" type="text/javascript">
-	
-</script>
-<script type="text/javascript">
-	var orientServer;
-
-	function testCode() {
-		database = new ODatabase('http://localhost:2480/demo');
-		databaseInfo = database.open();
-		queryResult = database
-				.query('select from Address where city.country.name = \'Italy\'');
-		executeMessage = '';
-		if (queryResult["result"].length == 0) {
-			commandResult = database
-					.executeCommand('insert into Address (street,type) values (\'Via test 1\',\'Tipo test\')');
-			executeMessage = 'Created an address';
-		} else {
-			executeMessage = queryResult["result"].length + ' elements.';
-		}
-		database.close();
-		jQuery("#output").text('Code executed correctly: ' + executeMessage);
-	}
-
-	function connect() {
-		if (orientServer == null) {
-			orientServer = new ODatabase('http://localhost:2480/demo');
-		}
-		databaseInfo = orientServer.open();
-		if (databaseInfo == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#connectionStatus").text('Connected');
-			jQuery("#output").text('Connect OK.');
-		}
-	}
-
-	function query() {
-		connect();
-		queryResult = orientServer
-				.query('select from Address where city.country.name = \'Italy\'');
-		if (queryResult == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#output").text(
-					'Query executed: returned ' + queryResult["result"].length
-							+ ' items');
-		}
-	}
-
-	function classInfo() {
-		connect();
-		queryResult = orientServer.classInfo('Address');
-		if (queryResult == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#output").text('Class: ' + queryResult.name);
-		}
-	}
-
-	function browseCluster() {
-		connect();
-		queryResult = orientServer.browseCluster('Address');
-		if (queryResult == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#output").text('Cluster: ' + queryResult);
-		}
-	}
-
-	function serverInfo() {
-		connect();
-		queryResult = orientServer.serverInfo();
-		if (queryResult == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#output").text(queryResult);
-		}
-	}
-
-	function schema() {
-		connect();
-		queryResult = orientServer.schema();
-		if (queryResult == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#output").text(queryResult.length + ' classes.');
-		}
-	}
-
-	function security() {
-		connect();
-		queryResultRoles = orientServer.securityRoles();
-		queryResultUsers = orientServer.securityUsers();
-		if (queryResultUsers == null && queryResultRoles == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#output").text(queryResult);
-		}
-	}
-
-	function insert() {
-		connect();
-		commandResult = orientServer
-				.executeCommand('insert into Address (street,type) values (\'Via test 1\',\'Tipo test\')');
-		if (commandResult == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#output").text(
-					"Insert succesful: created record " + commandResult);
-		}
-	}
-
-	function remove() {
-		connect();
-		commandResult = orientServer
-				.executeCommand('delete from Address where street = \'Via test 1\' and type = \'Tipo test\'');
-		if (commandResult == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#output")
-					.text(
-							"Remove succesful: removed " + commandResult
-									+ " record(s)");
-		}
-	}
-
-	function disconnect() {
-		if (orientServer == null) {
-			orientServer = new ODatabase('http://localhost:2480/demo');
-		}
-		orientServer.close();
-		if (orientServer.getErrorMessage() != null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-			jQuery("#connectionStatus").text('Disconnected');
-		} else {
-			jQuery("#connectionStatus").text('Disconnected');
-			jQuery("#output").text('Disconnect OK.');
-		}
-	}
-</script>
-</head>
-<body>
-<span id="connectionStatusLabel">Status: </span>
-<span id="connectionStatus">Disconnected</span>
-<br />
-<span id="outputLabel">Output: </span>
-<textarea id="output" rows="5" cols="40"></textarea>
-<br />
-<button type="button" onclick="javascript:connect();">Test
-Connect</button>
-<button type="button" onclick="javascript:disconnect();">Test
-Disconnect</button>
-<br />
-<button type="button" onclick="javascript:schema();">Test
-Schema</button>
-<button type="button" onclick="javascript:security();">Test
-Security</button>
-<button type="button" onclick="javascript:classInfo();">Test
-Class Info</button>
-<button type="button" onclick="javascript:browseCluster();">Test
-Browse Cluster</button>
-<button type="button" onclick="javascript:serverInfo();">Test
-Server Info</button>
-<br />
-<button type="button" onclick="javascript:query();">Test Query</button>
-<button type="button" onclick="javascript:insert();">Test
-Insert</button>
-<button type="button" onclick="javascript:remove();">Test
-Delete</button>
-<br />
-<button type="button" onclick="javascript:testCode();">Test
-Code</button>
-</body>
-</html>
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html>
-<head>
-<title>OrientDB Javascript API Test Suite</title>
-<meta name="title" content="OrientDB Javascript API Test Suite" />
-<meta name="description" content="OrientDB" />
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<script src="www/js/jquery-1.4.2.min.js" type="text/javascript">
-	
-</script>
-<script src="www/js/jquery-ui-1.8.1.custom.min.js"
-	type="text/javascript">
-	
-</script>
-<script src="www/js/i18n/grid.locale-en.js" type="text/javascript">
-	
-</script>
-<script src="www/js/jquery.jqGrid.min.js" type="text/javascript">
-	
-</script>
-<script src="www/js/jQueryRotate.js" type="text/javascript">
-	
-</script>
-<script src="www/js/orientdb-api.js" type="text/javascript">
-	
-</script>
-<script type="text/javascript">
-	var orientServer;
-
-	function connect() {
-		if (orientServer == null) {
-			orientServer = new ODatabase('http://localhost:2480/demo');
-		}
-		databaseInfo = orientServer.open();
-		if (databaseInfo == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#connectionStatus").text('Connected');
-			jQuery("#output").text('Connect OK.');
-		}
-	}
-
-	function query() {
-		connect();
-		queryResult = orientServer
-				.query('select from Address where city.country.name = \'Italy\'');
-		//queryResult = jQuery.parseJSON(queryResult);
-		if (queryResult == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#output").text(queryResult);
-		}
-	}
-	
-	function classInfo() {
-		connect();
-		queryResult = orientServer.classInfo('Address');
-		if (queryResult == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#output").text(queryResult);
-		}
-	}
-	
-	function browseCluster() {
-		connect();
-		queryResult = orientServer.browseCluster('Address');
-		if (queryResult == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#output").text(queryResult);
-		}
-	}
-	
-	function serverInfo() {
-		connect();
-		queryResult = orientServer.serverInfo();
-		if (queryResult == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#output").text(queryResult);
-		}
-	}
-
-	function schema() {
-		connect();
-		queryResult = orientServer.schema();
-		if (queryResult == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#output").text(queryResult);
-		}
-	}
-
-	function security() {
-		connect();
-		queryResultRoles = orientServer.securityRoles();
-		queryResultUsers = orientServer.securityUsers();
-		if (queryResultUsers == null && queryResultRoles == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#output").text(queryResult);
-		}
-	}
-
-	function insert() {
-		connect();
-		commandResult = orientServer
-				.executeCommand('insert into Address (street,type) values (\'Via test 1\',\'Tipo test\')');
-		if (commandResult == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#output").text(
-					"Insert succesful: created record " + commandResult);
-		}
-	}
-
-	function remove() {
-		connect();
-		commandResult = orientServer
-				.executeCommand('delete from Address where street = \'Via test 1\' and type = \'Tipo test\'');
-		if (commandResult == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#output")
-					.text(
-							"Remove succesful: removed " + commandResult
-									+ " record(s)");
-		}
-	}
-
-	function disconnect() {
-		if (orientServer == null) {
-			orientServer = new ODatabase('http://localhost:2480/demo');
-		}
-		orientServer.close();
-		if (orientServer.getErrorMessage() != null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-			jQuery("#connectionStatus").text('Disconnected');
-		} else {
-			jQuery("#connectionStatus").text('Disconnected');
-			jQuery("#output").text('Disconnect OK.');
-		}
-	}
-</script>
-</head>
-<body>
-<span id="connectionStatusLabel">Status: </span>
-<span id="connectionStatus">Disconnected</span>
-<br />
-<span id="outputLabel">Output: </span>
-<textarea id="output" rows="5" cols="40"></textarea>
-<br />
-<button type="button" onclick="javascript:connect();">Test
-Connect</button>
-<button type="button" onclick="javascript:disconnect();">Test
-Disconnect</button>
-<br />
-<button type="button" onclick="javascript:schema();">Test
-Schema</button>
-<button type="button" onclick="javascript:security();">Test
-Security</button>
-<button type="button" onclick="javascript:classInfo();">Test
-Class Info</button>
-<button type="button" onclick="javascript:browseCluster();">Test
-Browse Cluster</button>
-<button type="button" onclick="javascript:serverInfo();">Test
-Server Info</button>
-<br />
-<button type="button" onclick="javascript:query();">Test Query</button>
-<button type="button" onclick="javascript:insert();">Test
-Insert</button>
-<button type="button" onclick="javascript:remove();">Test
-Delete</button>
-</body>
-</html>
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html>
-<head>
-<title>OrientDB Javascript API Test Suite</title>
-<meta name="title" content="OrientDB Javascript API Test Suite" />
-<meta name="description" content="OrientDB" />
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<script src="www/js/jquery-1.4.2.min.js" type="text/javascript">
-	
-</script>
-<script src="www/js/jquery-ui-1.8.1.custom.min.js"
-	type="text/javascript">
-	
-</script>
-<script src="www/js/i18n/grid.locale-en.js" type="text/javascript">
-	
-</script>
-<script src="www/js/jquery.jqGrid.min.js" type="text/javascript">
-	
-</script>
-<script src="www/js/jQueryRotate.js" type="text/javascript">
-	
-</script>
-<script src="www/js/orientdb-api.js" type="text/javascript">
-	
-</script>
-<script type="text/javascript">
-	var orientServer;
-
-	function connect() {
-		if (orientServer == null) {
-			orientServer = new ODatabase('http://localhost:2480/demo');
-		}
-		databaseInfo = orientServer.open();
-		if (databaseInfo == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#connectionStatus").text('Connected');
-			jQuery("#output").text('Connect OK.');
-		}
-	}
-
-	function query() {
-		connect();
-		queryResult = orientServer
-				.query('select from Address where city.country.name = \'Italy\'');
-		if (queryResult == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#output").text(
-					"Query executed correctly. Returned "
-							+ queryResult["result"].length + " record(s)");
-		}
-	}
-
-	function schema() {
-		connect();
-		queryResult = orientServer.schema();
-		if (queryResult == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#output").text(
-					"Schema: " + queryResult.length + " classes.");
-		}
-	}
-
-	function security() {
-		connect();
-		queryResultRoles = orientServer.securityRoles();
-		queryResultUsers = orientServer.securityUsers();
-		if (queryResultUsers == null && queryResultRoles == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#output").text(
-					"Security: " + queryResultRoles.length + ' roles and '
-							+ queryResultUsers.length + ' users');
-		}
-	}
-
-	function insert() {
-		connect();
-		commandResult = orientServer
-				.executeCommand('insert into Address (street,type) values (\'Via test 1\',\'Tipo test\')');
-		if (commandResult == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#output").text(
-					"Insert succesful: created record " + commandResult);
-		}
-	}
-
-	function remove() {
-		connect();
-		commandResult = orientServer
-				.executeCommand('delete from Address where street = \'Via test 1\' and type = \'Tipo test\'');
-		if (commandResult == null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-		} else {
-			jQuery("#output")
-					.text(
-							"Remove succesful: removed " + commandResult
-									+ " record(s)");
-		}
-	}
-
-	function disconnect() {
-		if (orientServer == null) {
-			orientServer = new ODatabase('http://localhost:2480/demo');
-		}
-		orientServer.close();
-		if (orientServer.getErrorMessage() != null) {
-			jQuery("#output").text(orientServer.getErrorMessage());
-			jQuery("#connectionStatus").text('Disconnected');
-		} else {
-			jQuery("#connectionStatus").text('Disconnected');
-			jQuery("#output").text('Disconnect OK.');
-		}
-	}
-</script>
-</head>
-<body>
-<span id="connectionStatusLabel">Status: </span>
-<span id="connectionStatus">Disconnected</span>
-<br />
-<span id="outputLabel">Output: </span>
-<textarea id="output" rows="5" cols="40" disabled="disabled"></textarea>
-<br />
-<button type="button" onclick="javascript:connect();">Test
-Connect</button>
-<button type="button" onclick="javascript:disconnect();">Test
-Disconnect</button>
-<br />
-<button type="button" onclick="javascript:schema();">Test
-Schema</button>
-<button type="button" onclick="javascript:security();">Test
-Security</button>
-<br />
-<button type="button" onclick="javascript:query();">Test Query</button>
-<button type="button" onclick="javascript:insert();">Test
-Insert</button>
-<button type="button" onclick="javascript:remove();">Test
-Delete</button>
 </body>
 </html>

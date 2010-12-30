@@ -29,7 +29,9 @@ public class OServerCommandGetDocument extends OServerCommandAuthenticatedDbAbst
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		ODatabaseDocumentTx db = null;
 
-		final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: document/<database>/<record-id>");
+		final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: document/<database>/<record-id>[/fetchPlan]");
+
+		final String fetchPlan = urlParts.length > 3 ? urlParts[3] : null;
 
 		iRequest.data.commandInfo = "Load document";
 
@@ -52,7 +54,7 @@ public class OServerCommandGetDocument extends OServerCommandAuthenticatedDbAbst
 			sendTextContent(iRequest, 404, "Not Found", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Record with id '" + urlParts[2]
 					+ "' was not found.");
 		else
-			sendRecordContent(iRequest, rec);
+			sendRecordContent(iRequest, rec, fetchPlan);
 	}
 
 	public String[] getNames() {

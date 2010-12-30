@@ -394,6 +394,17 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			if (iFetchPlan == null) {
 				json.writeAttribute(indentLevel + 1, true, fieldName, encode(record.field(fieldName)));
 			} else {
+				Integer depthLevel = getDepthLevel(record, iFetchPlan, fieldName);
+				if (depthLevel != null) {
+					if (depthLevel == 0) {
+						// NO FETCH THIS FIELD PLEASE
+						continue;
+					}
+					if (depthLevel >= iCurrentLevel) {
+						// MAX DEPTH REACHED: STOP TO FETCH THIS FIELD
+						continue;
+					}
+				}
 				fieldValue = record.field(fieldName);
 				if (fieldValue == null
 						|| !(fieldValue instanceof ODocument)

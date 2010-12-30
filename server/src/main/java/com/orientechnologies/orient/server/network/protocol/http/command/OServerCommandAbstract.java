@@ -114,6 +114,11 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 	}
 
 	protected void sendRecordsContent(final OHttpRequest iRequest, final List<ORecord<?>> iRecords) throws IOException {
+		sendRecordsContent(iRequest, iRecords, null);
+	}
+
+	protected void sendRecordsContent(final OHttpRequest iRequest, final List<ORecord<?>> iRecords, String iFetchPlan)
+			throws IOException {
 		final StringWriter buffer = new StringWriter();
 		final OJSONWriter json = new OJSONWriter(buffer, JSON_FORMAT);
 		json.beginObject();
@@ -129,6 +134,8 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 			}
 		}
 
+		final String format = iFetchPlan != null ? JSON_FORMAT + ",fetchPlan:" + iFetchPlan : JSON_FORMAT;
+
 		// WRITE RECORDS
 		json.beginCollection(1, true, "result");
 		if (iRecords != null) {
@@ -136,7 +143,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 			String objectJson;
 			for (ORecord<?> rec : iRecords) {
 				try {
-					objectJson = rec.toJSON(JSON_FORMAT);
+					objectJson = rec.toJSON(format);
 
 					if (counter++ > 0)
 						buffer.append(", ");
@@ -154,8 +161,13 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 	}
 
 	protected void sendRecordContent(final OHttpRequest iRequest, final ORecord<?> iRecord) throws IOException {
+		sendRecordContent(iRequest, iRecord, null);
+	}
+
+	protected void sendRecordContent(final OHttpRequest iRequest, final ORecord<?> iRecord, String iFetchPlan) throws IOException {
+		final String format = iFetchPlan != null ? JSON_FORMAT + ",fetchPlan:" + iFetchPlan : JSON_FORMAT;
 		if (iRecord != null)
-			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, iRecord.toJSON(JSON_FORMAT));
+			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, iRecord.toJSON(format));
 	}
 
 	protected void sendBinaryContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iContentType,
