@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMin;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionSum;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionFormat;
+import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionSysdate;
 
 public class OSQLEngine {
 	private Map<String, OSQLFunction>										inlineFunctions				= new HashMap<String, OSQLFunction>();
@@ -39,6 +40,7 @@ public class OSQLEngine {
 	protected OSQLEngine() {
 		// MISC FUNCTIONS
 		registerFunction(OSQLFunctionFormat.NAME, new OSQLFunctionFormat());
+		registerFunction(OSQLFunctionSysdate.NAME, OSQLFunctionSysdate.class);
 		registerFunction(OSQLFunctionCount.NAME, OSQLFunctionCount.class);
 
 		// MATH FUNCTIONS

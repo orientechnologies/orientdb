@@ -237,7 +237,8 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 							else
 								iResult = iDatabase.getStorage().getConfiguration().getDateTimeFormatInstance().parse(iResult.toString());
 						}
-					}
+					} else if (operator == OSQLFilterFieldOperator.TOJSON.id)
+						iResult = iResult != null && iResult instanceof ODocument ? ((ODocument) iResult).toJSON() : null;
 				}
 			} catch (ParseException e) {
 				OLogManager.instance().exception("Error on conversion of value '%s' using field operator %s", e,

@@ -277,10 +277,6 @@ public class OSQLFilter extends OCommandToParse {
 				throw new OQueryParsingException("Missed column number", text, currentPos);
 			result = new OSQLFilterItemColumn(this, parameters.get(0));
 
-		} else if (words[0].startsWith("@")) {
-			// RECORD ATTRIB
-			result = new OSQLFilterItemRecordAttrib(this, words[0]);
-
 		} else if (words[0].startsWith(OSQLFilterItemFieldAll.NAME + OStringSerializerHelper.PARENTHESIS_BEGIN)) {
 
 			result = new OSQLFilterItemFieldAll(this, words[1]);

@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.sort.ODocumentSorter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemRecordAttrib;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsText;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
@@ -547,16 +548,17 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 
 		final List<ODocument> finalResult = new ArrayList<ODocument>();
 		Object fieldValue;
-		for (ODocument record : tempResult) {
-			fieldValue = record.field(flattenField);
-			if (fieldValue instanceof Collection<?>) {
-				for (Object o : ((Collection<?>) fieldValue)) {
-					if (o instanceof ODocument)
-						finalResult.add((ODocument) o);
-				}
-			} else if (fieldValue instanceof ODocument)
-				finalResult.add((ODocument) fieldValue);
-		}
+		if (tempResult != null)
+			for (ODocument record : tempResult) {
+				fieldValue = record.field(flattenField);
+				if (fieldValue instanceof Collection<?>) {
+					for (Object o : ((Collection<?>) fieldValue)) {
+						if (o instanceof ODocument)
+							finalResult.add((ODocument) o);
+					}
+				} else if (fieldValue instanceof ODocument)
+					finalResult.add((ODocument) fieldValue);
+			}
 
 		tempResult = finalResult;
 	}
@@ -570,6 +572,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			for (Entry<String, Object> projection : projections.entrySet()) {
 				if (projection.getValue() instanceof OSQLFilterItemField)
 					value = ((OSQLFilterItemField) projection.getValue()).getValue(iRecord);
+				else if (projection.getValue() instanceof OSQLFilterItemRecordAttrib)
+					value = ((OSQLFilterItemRecordAttrib) projection.getValue()).getValue(iRecord);
 				else if (projection.getValue() instanceof OSQLFunctionRuntime) {
 					final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection.getValue();
 					value = f.execute(iRecord);

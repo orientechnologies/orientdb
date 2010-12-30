@@ -36,11 +36,13 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
  */
 public class OSQLFilterItemRecordAttrib extends OSQLFilterItemAbstract {
 	public OSQLFilterItemRecordAttrib(final OCommandToParse iQueryToParse, final String iName) {
-		super(iQueryToParse, iName);
+		super(iQueryToParse, iName.toUpperCase());
 	}
 
 	public Object getValue(final ORecordInternal<?> iRecord) {
-		if (name.equals("@RID"))
+		if (name.equals("@THIS"))
+			return transformValue(iRecord.getDatabase(), iRecord);
+		else if (name.equals("@RID"))
 			return transformValue(iRecord.getDatabase(), iRecord.getIdentity());
 		else if (name.equals("@VERSION"))
 			return transformValue(iRecord.getDatabase(), iRecord.getVersion());

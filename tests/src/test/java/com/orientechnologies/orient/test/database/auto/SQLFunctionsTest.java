@@ -98,7 +98,7 @@ public class SQLFunctionsTest {
 		database.open("admin", "admin");
 		List<ODocument> result = database.command(
 				new OSQLSynchQuery<ODocument>(
-						"select MIN(nr) as min, max(nr) as max, AVERAGE(nr) as average, count(nr) as total from Account")).execute();
+						"select MIN(nr) as min, max(nr) as max, AVG(nr) as average, count(nr) as total from Account")).execute();
 
 		Assert.assertTrue(result.size() == 1);
 		for (ODocument d : result) {
@@ -124,6 +124,45 @@ public class SQLFunctionsTest {
 		Assert.assertTrue(result.size() > 1);
 		for (ODocument d : result) {
 			Assert.assertNotNull(d.field("output"));
+		}
+
+		database.close();
+	}
+
+	@Test
+	public void querySysdateNoFormat() {
+		database.open("admin", "admin");
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select sysdate() as date from Account")).execute();
+
+		Assert.assertTrue(result.size() > 1);
+		Object lastDate = null;
+		for (ODocument d : result) {
+			Assert.assertNotNull(d.field("date"));
+
+			if (lastDate != null)
+				d.field("date").equals(lastDate);
+
+			lastDate = d.field("date");
+		}
+
+		database.close();
+	}
+
+	@Test
+	public void querySysdateWithFormat() {
+		database.open("admin", "admin");
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select sysdate('dd-MM-yyyy') as date from Account"))
+				.execute();
+
+		Assert.assertTrue(result.size() > 1);
+		Object lastDate = null;
+		for (ODocument d : result) {
+			Assert.assertNotNull(d.field("date"));
+
+			if (lastDate != null)
+				d.field("date").equals(lastDate);
+
+			lastDate = d.field("date");
 		}
 
 		database.close();

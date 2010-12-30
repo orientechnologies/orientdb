@@ -197,6 +197,24 @@ public class SQLSelectProjectionsTest {
 	}
 
 	@Test
+	public void queryProjectionJSON() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select @this.toJson() as json from Profile"))
+				.execute();
+
+		Assert.assertTrue(result.size() != 0);
+
+		for (ODocument d : result) {
+			Assert.assertNotNull(d.field("json"));
+
+			new ODocument().fromJSON((String) d.field("json"));
+		}
+
+		database.close();
+	}
+
+	@Test
 	public void queryProjectionContentCollection() {
 		database.open("admin", "admin");
 
