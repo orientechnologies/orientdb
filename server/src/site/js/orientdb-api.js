@@ -116,11 +116,7 @@ function ODatabase(databasePath) {
 			password : userPass,
 			success : function(msg) {
 				this.setErrorMessage(null);
-				if (this.getEvalResponse()) {
-					this.setDatabaseInfo(eval("(" + msg + ")"));
-				} else {
-					this.setDatabaseInfo(msg);
-				}
+				this.setDatabaseInfo(this.transformResponse(msg));
 			},
 			error : function(msg) {
 				this.setErrorMessage('Connect error: ' + msg.responseText);
@@ -128,32 +124,6 @@ function ODatabase(databasePath) {
 			}
 		});
 		return this.getDatabaseInfo();
-	}
-
-	this.query = function(iQuery) {
-		if (this.databaseInfo == null) {
-			this.open();
-		}
-		$.ajax({
-			type : "GET",
-			url : this.databaseUrl + '/query/' + this.databaseName + '/sql/'
-					+ iQuery,
-			context : this,
-			async : false,
-			success : function(msg) {
-				this.setErrorMessage(null);
-				if (this.getEvalResponse()) {
-					this.setQueryResult(eval("(" + msg + ")"));
-				} else {
-					this.setQueryResult(msg);
-				}
-			},
-			error : function(msg) {
-				this.setQueryResult(null);
-				this.setErrorMessage('Query error: ' + msg.responseText);
-			}
-		});
-		return this.getQueryResult();
 	}
 
 	this.query = function(iQuery, iLimit, iFetchPlan) {
@@ -181,41 +151,7 @@ function ODatabase(databasePath) {
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
-				if (this.getEvalResponse()) {
-					this.setQueryResult(eval("(" + msg + ")"));
-				} else {
-					this.setQueryResult(msg);
-				}
-			},
-			error : function(msg) {
-				this.setQueryResult(null);
-				this.setErrorMessage('Query error: ' + msg.responseText);
-			}
-		});
-		return this.getQueryResult();
-	}
-
-	this.load = function(iRID) {
-		if (this.databaseInfo == null) {
-			this.open();
-		}
-
-		if (iRID.charAt(0) == '#')
-			iRID = iRID.substring(1);
-
-		$.ajax({
-			type : "GET",
-			url : this.databaseUrl + '/document/' + this.databaseName + '/'
-					+ iRID,
-			context : this,
-			async : false,
-			success : function(msg) {
-				this.setErrorMessage(null);
-				if (this.getEvalResponse()) {
-					this.setQueryResult(eval("(" + msg + ")"));
-				} else {
-					this.setQueryResult(msg);
-				}
+				this.setQueryResult(this.transformResponse(msg));
 			},
 			error : function(msg) {
 				this.setQueryResult(null);
@@ -230,22 +166,24 @@ function ODatabase(databasePath) {
 			this.open();
 		}
 
+		if (iFetchPlan != null && iFetchPlan != '') {
+			iFetchPlan = '/' + iFetchPlan;
+		} else {
+			iFetchPlan = '';
+		}
+
 		if (iRID.charAt(0) == '#')
 			iRID = iRID.substring(1);
 
 		$.ajax({
 			type : "GET",
 			url : this.databaseUrl + '/document/' + this.databaseName + '/'
-					+ iRID + '/' + iFetchPlan,
+					+ iRID + iFetchPlan,
 			context : this,
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
-				if (this.getEvalResponse()) {
-					this.setQueryResult(eval("(" + msg + ")"));
-				} else {
-					this.setQueryResult(msg);
-				}
+				this.setQueryResult(this.transformResponse(msg));
 			},
 			error : function(msg) {
 				this.setQueryResult(null);
@@ -267,11 +205,7 @@ function ODatabase(databasePath) {
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
-				if (this.getEvalResponse()) {
-					this.setCommandResult(eval("(" + msg + ")"));
-				} else {
-					this.setCommandResult(msg);
-				}
+				this.setCommandResult(this.transformResponse(msg));
 			},
 			error : function(msg) {
 				this.setCommandResult(null);
@@ -315,11 +249,7 @@ function ODatabase(databasePath) {
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
-				if (this.getEvalResponse()) {
-					this.setCommandResult(eval("(" + msg + ")"));
-				} else {
-					this.setCommandResult(msg);
-				}
+				this.setCommandResult(this.transformResponse(msg));
 			},
 			error : function(msg) {
 				this.setCommandResult(null);
@@ -362,11 +292,7 @@ function ODatabase(databasePath) {
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
-				if (this.getEvalResponse()) {
-					this.setCommandResult(eval("(" + msg + ")"));
-				} else {
-					this.setCommandResult(msg);
-				}
+				this.setCommandResult(this.transformResponse(msg));
 			},
 			error : function(msg) {
 				this.setCommandResult(null);
@@ -381,11 +307,7 @@ function ODatabase(databasePath) {
 			this.setErrorMessage('Database is closed');
 			return null;
 		}
-		if (this.getEvalResponse()) {
-			return this.getDatabaseInfo()['classes'];
-		} else {
-			return eval('(' + this.getDatabaseInfo() + ')')['classes'];
-		}
+		return this.transformResponse(this.getDatabaseInfo())['classes'];
 	}
 
 	this.securityRoles = function() {
@@ -393,11 +315,7 @@ function ODatabase(databasePath) {
 			this.setErrorMessage('Database is closed');
 			return null;
 		}
-		if (this.getEvalResponse()) {
-			return this.getDatabaseInfo()['roles'];
-		} else {
-			return eval('(' + this.getDatabaseInfo() + ')')['roles'];
-		}
+		return this.transformResponse(this.getDatabaseInfo())['roles'];
 	}
 
 	this.securityUsers = function() {
@@ -405,11 +323,7 @@ function ODatabase(databasePath) {
 			this.setErrorMessage('Database is closed');
 			return null;
 		}
-		if (this.getEvalResponse()) {
-			return this.getDatabaseInfo()['users'];
-		} else {
-			return eval('(' + this.getDatabaseInfo() + ')')['users'];
-		}
+		return this.transformResponse(this.getDatabaseInfo())['users'];
 	}
 
 	this.close = function() {
@@ -433,5 +347,13 @@ function ODatabase(databasePath) {
 		}
 		this.databaseInfo = null;
 		return this.getCommandResult();
+	}
+
+	this.transformResponse = function(msg) {
+		if (this.getEvalResponse() && typeof msg != 'object') {
+			return eval("(" + msg + ")");
+		} else {
+			return msg;
+		}
 	}
 }

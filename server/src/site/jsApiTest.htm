@@ -230,7 +230,9 @@
 		if (queryResultUsers == null && queryResultRoles == null) {
 			jQuery("#output").text(orientServer.getErrorMessage());
 		} else {
-			jQuery("#output").text(queryResult);
+			jQuery("#output").text(
+					'Roles: ' + queryResultRoles + '\nUsers: '
+							+ queryResultUsers);
 		}
 	}
 
