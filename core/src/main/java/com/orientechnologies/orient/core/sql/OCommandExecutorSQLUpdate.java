@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,9 +31,9 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.query.OQuery;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 
 /**
@@ -136,7 +137,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 	 */
 	@SuppressWarnings("unchecked")
 	public boolean result(final Object iRecord) {
-		ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) iRecord;
+		ODocument record = (ODocument) iRecord;
 
 		// BIND VALUES TO UPDATE
 		Object v;
@@ -153,19 +154,27 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 		Collection<Object> coll;
 		Object fieldValue;
 		for (Map.Entry<String, Object> entry : addEntries.entrySet()) {
-			fieldValue = record.field(entry.getKey());
+			if (!record.containsField(entry.getKey())) {
+				coll = new ArrayList<Object>();
+				record.field(entry.getKey(), coll);
+			} else {
+				fieldValue = record.field(entry.getKey());
 
-			if (fieldValue instanceof Collection<?>) {
-				coll = (Collection<Object>) fieldValue;
-
-				v = entry.getValue();
-
-				if (v instanceof OSQLFilterItem)
-					v = ((OSQLFilterItem) v).getValue(record);
-
-				coll.add(v);
-				record.setDirty();
+				if (fieldValue instanceof Collection<?>)
+					coll = (Collection<Object>) fieldValue;
+				else
+					continue;
 			}
+
+			v = entry.getValue();
+
+			if (v instanceof OSQLFilterItem)
+				v = ((OSQLFilterItem) v).getValue(record);
+			else if (v instanceof OSQLFunctionRuntime)
+				v = ((OSQLFunctionRuntime) v).execute(record);
+
+			coll.add(v);
+			record.setDirty();
 		}
 
 		// BIND VALUES TO PUT (IN COLLECTION)
@@ -181,6 +190,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 
 				if (pair.getValue() instanceof OSQLFilterItem)
 					pair.setValue(((OSQLFilterItem) pair.getValue()).getValue(record));
+				else if (pair.getValue() instanceof OSQLFunctionRuntime)
+					v = ((OSQLFunctionRuntime) pair.getValue()).execute(record);
 
 				map.put(pair.getKey(), pair.getValue());
 				record.setDirty();
