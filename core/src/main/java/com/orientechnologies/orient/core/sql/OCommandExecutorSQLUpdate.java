@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.sql;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -28,6 +29,8 @@ import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.query.OQuery;
@@ -154,8 +157,20 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 		Collection<Object> coll;
 		Object fieldValue;
 		for (Map.Entry<String, Object> entry : addEntries.entrySet()) {
+			coll = null;
 			if (!record.containsField(entry.getKey())) {
-				coll = new ArrayList<Object>();
+				// GET THE TYPE IF ANY
+				if (record.getSchemaClass() != null) {
+					OProperty prop = record.getSchemaClass().getProperty(entry.getKey());
+					if (prop != null && prop.getType() == OType.LINKSET)
+						// SET TYPE
+						coll = new HashSet<Object>();
+				}
+
+				if (coll == null)
+					// IN ALL OTHER CASES USE A LIST
+					coll = new ArrayList<Object>();
+
 				record.field(entry.getKey(), coll);
 			} else {
 				fieldValue = record.field(entry.getKey());
@@ -177,7 +192,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 			record.setDirty();
 		}
 
-		// BIND VALUES TO PUT (IN COLLECTION)
+		// BIND VALUES TO PUT (AS MAP)
 		Map<String, Object> map;
 		OPair<String, Object> pair;
 		for (Entry<String, OPair<String, Object>> entry : putEntries.entrySet()) {
@@ -197,6 +212,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 				record.setDirty();
 			}
 		}
+
 		// REMOVE FIELD IF ANY
 		for (Map.Entry<String, Object> entry : removeEntries.entrySet()) {
 			v = entry.getValue();
