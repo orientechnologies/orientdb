@@ -45,6 +45,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.sort.ODocumentSorter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemRecordAttrib;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
@@ -82,7 +83,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	private int																			resultCount;
 	private ORecordId																rangeFrom;
 	private ORecordId																rangeTo;
-	private String																	flattenField;
+	private Object																	flattenTarget;
 	private boolean																	anyFunctionAggregates	= false;
 
 	/**
@@ -379,7 +380,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	private void addResult(final ORecord<?> iRecord) {
 		ODocument doc = (ODocument) iRecord;
 
-		if (orderedFields != null || flattenField != null) {
+		if (orderedFields != null || flattenTarget != null) {
 			// ORDER BY CLAUSE: COLLECT ALL THE RECORDS AND ORDER THEM AT THE END
 			if (tempResult == null)
 				tempResult = new ArrayList<ODocument>();
@@ -500,12 +501,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 					}
 				}
 
-				if (projection.startsWith("FLATTEN(")) {
+				if (projection.toUpperCase().startsWith("FLATTEN(")) {
 					List<String> pars = OStringSerializerHelper.getParameters(projection);
 					if (pars.size() != 1)
 						throw new OCommandSQLParsingException(
 								"FLATTEN operator expects the field name as parameter. Example FLATTEN( outEdges )");
-					flattenField = pars.get(0).trim();
+					flattenTarget = OSQLHelper.parseValue(database, this, pars.get(0).trim());
 
 					// BY PASS THIS AS PROJECTION BUT TREAT IT AS SPECIAL
 					projections = null;
@@ -543,20 +544,24 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	 * Extract the content of collections and/or links and put it as result
 	 */
 	private void applyFlatten() {
-		if (flattenField == null)
+		if (flattenTarget == null)
 			return;
 
 		final List<ODocument> finalResult = new ArrayList<ODocument>();
 		Object fieldValue;
 		if (tempResult != null)
 			for (ODocument record : tempResult) {
-				fieldValue = record.field(flattenField);
+				if (flattenTarget instanceof OSQLFilterItem)
+					fieldValue = ((OSQLFilterItem) flattenTarget).getValue(record);
+				else
+					fieldValue = flattenTarget.toString();
+
 				if (fieldValue instanceof Collection<?>) {
 					for (Object o : ((Collection<?>) fieldValue)) {
 						if (o instanceof ODocument)
 							finalResult.add((ODocument) o);
 					}
-				} else if (fieldValue instanceof ODocument)
+				} else
 					finalResult.add((ODocument) fieldValue);
 			}
 

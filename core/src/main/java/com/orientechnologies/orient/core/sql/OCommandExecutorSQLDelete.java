@@ -66,7 +66,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
 		if (query == null)
 			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
 
-		query.execute();
+		query.execute(iArgs);
 		return recordCount;
 	}
 

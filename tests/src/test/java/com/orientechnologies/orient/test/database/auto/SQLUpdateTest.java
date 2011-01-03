@@ -15,12 +15,15 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.List;
+
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 @Test(groups = "sql-update", sequential = true)
@@ -42,6 +45,22 @@ public class SQLUpdateTest {
 				.execute();
 
 		Assert.assertEquals(records.intValue(), 3);
+
+		database.close();
+	}
+
+	@Test
+	public void updateWithWhereRid() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(new OCommandSQL("select @rid as rid from Profile where surname = 'Obama'")).execute();
+
+		Assert.assertEquals(result.size(), 3);
+
+		Integer records = (Integer) database.command(new OCommandSQL("update Profile set salary = 133.00 where @rid = ?")).execute(
+				result.get(0).field("rid"));
+
+		Assert.assertEquals(records.intValue(), 1);
 
 		database.close();
 	}

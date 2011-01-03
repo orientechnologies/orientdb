@@ -131,7 +131,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 		if (className == null)
 			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
 
-		database.query(query);
+		database.query(query, iArgs);
 		return recordCount;
 	}
 
