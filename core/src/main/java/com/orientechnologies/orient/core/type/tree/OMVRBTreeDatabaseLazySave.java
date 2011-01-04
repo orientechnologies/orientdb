@@ -149,6 +149,11 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> imp
 	protected void config() {
 		super.config();
 		maxUpdatesBeforeSave = OGlobalConfiguration.MVRBTREE_LAZY_UPDATES.getValueAsInteger();
+
+		if (size() > 10000)
+			// AUTO ADJUST BASED ON TREE SIZE
+			// TODO: CONSIDER MEMORY
+			maxUpdatesBeforeSave = size() / 20;
 	}
 
 	public void onCreate(ODatabase iDatabase) {

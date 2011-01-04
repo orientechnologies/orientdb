@@ -890,10 +890,20 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	}
 
 	protected void config() {
+//		System.out.println("Total memory: " + Runtime.getRuntime().totalMemory() / 1024);
+//		System.out.println("Max   memory: " + Runtime.getRuntime().maxMemory() / 1024);
+//		System.out.println("Free  memory: " + Runtime.getRuntime().freeMemory() / 1024);
+
 		lastPageSize = OGlobalConfiguration.MVRBTREE_NODE_PAGE_SIZE.getValueAsInteger();
 		pageLoadFactor = OGlobalConfiguration.MVRBTREE_LOAD_FACTOR.getValueAsFloat();
 		optimizeThreshold = OGlobalConfiguration.MVRBTREE_OPTIMIZE_THRESHOLD.getValueAsInteger();
 		entryPointsSize = OGlobalConfiguration.MVRBTREE_ENTRYPOINTS.getValueAsInteger();
+
+		if (size() > 100000)
+			// AUTO ADJUST BASED ON TREE SIZE
+			// TODO: CONSIDER MEMORY
+			entryPointsSize = size() / 5000;
+		
 		optimizeEntryPointsFactor = OGlobalConfiguration.MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR.getValueAsFloat();
 	}
 
