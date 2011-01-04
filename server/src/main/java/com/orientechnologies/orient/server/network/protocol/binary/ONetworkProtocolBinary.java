@@ -21,6 +21,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -552,6 +553,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 					// RECORD
 					channel.writeByte((byte) 'r');
 					writeRecord((ORecordInternal<?>) result);
+				} else if (result instanceof List<?>) {
+					channel.writeByte((byte) 'l');
+					final List<ORecordInternal<?>> list = (List<ORecordInternal<?>>) result;
+					channel.writeInt(list.size());
+					for (ORecordInternal<?> o : list) {
+						writeRecord(o);
+					}
 				} else {
 					// ANY OTHER (INCLUDING LITERALS)
 					channel.writeByte((byte) 'a');

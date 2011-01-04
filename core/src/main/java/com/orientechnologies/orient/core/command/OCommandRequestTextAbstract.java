@@ -15,10 +15,16 @@
  */
 package com.orientechnologies.orient.core.command;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
+import com.orientechnologies.orient.core.serialization.OMemoryOutputStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
 /**
@@ -60,12 +66,52 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
 	}
 
 	public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
-		text = OBinaryProtocol.bytes2string(iStream);
+		final OMemoryInputStream buffer = new OMemoryInputStream(iStream);
+		try {
+			text = buffer.getAsString();
+
+			byte[] paramBuffer = buffer.getAsByteArray();
+
+			if (paramBuffer.length == 0)
+				parameters = null;
+			else {
+				final ODocument param = new ODocument(database);
+				param.fromStream(paramBuffer);
+
+				Map<String, Object> params = param.field("params");
+
+				parameters = new HashMap<Object, Object>();
+				for (Entry<String, Object> p : params.entrySet()) {
+					if (Character.isDigit(p.getKey().charAt(0)))
+						parameters.put(Integer.parseInt(p.getKey()), p.getValue());
+					else
+						parameters.put(p.getKey(), p.getValue());
+				}
+			}
+		} catch (IOException e) {
+			throw new OSerializationException("Error while unmarshalling OCommandRequestTextAbstract impl", e);
+		}
 		return this;
 	}
 
 	public byte[] toStream() throws OSerializationException {
-		return OBinaryProtocol.string2bytes(text);
+		final OMemoryOutputStream buffer = new OMemoryOutputStream();
+		try {
+			buffer.add(text);
+
+			if (parameters == null || parameters.size() == 0)
+				buffer.add(new byte[0]);
+			else {
+				final ODocument param = new ODocument(database);
+				param.field("params", parameters);
+				buffer.add(param.toStream());
+			}
+
+		} catch (IOException e) {
+			throw new OSerializationException("Error while marshalling OCommandRequestTextAbstract impl", e);
+		}
+
+		return buffer.toByteArray();
 	}
 
 	@Override

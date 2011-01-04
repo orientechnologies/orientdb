@@ -541,6 +541,15 @@ public class OStorageRemote extends OStorageAbstract {
 							result = readRecordFromNetwork(iCommand.getDatabase());
 							break;
 
+						case 'l':
+							final int tot = network.readInt();
+							final List<ORecord<?>> list = new ArrayList<ORecord<?>>();
+							for (int i = 0; i < tot; ++i) {
+								list.add(readRecordFromNetwork(iCommand.getDatabase()));
+							}
+							result = list;
+							break;
+
 						case 'a':
 							result = OStreamSerializerAnyRuntime.INSTANCE.fromStream(iCommand.getDatabase(), network.readBytes());
 							break;
