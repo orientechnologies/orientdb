@@ -207,6 +207,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		OCommandRequestInternal command = (OCommandRequestInternal) iCommand;
 
 		try {
+			command.reset();
 			command.setDatabase(this);
 
 			return command;
@@ -217,10 +218,10 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 	}
 
 	public <RET extends List<?>> RET query(final OQuery<? extends Object> iCommand, final Object... iArgs) {
+		iCommand.reset();
+
 		if (iCommand instanceof OQueryAbstract)
 			((OQueryAbstract<?>) iCommand).setDatabase(this);
-		
-		iCommand.reset();
 
 		return (RET) iCommand.execute(iArgs);
 	}

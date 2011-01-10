@@ -83,4 +83,7 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
 		this.progressListener = progressListener;
 		return this;
 	}
+
+	public void reset() {
+	}
 }

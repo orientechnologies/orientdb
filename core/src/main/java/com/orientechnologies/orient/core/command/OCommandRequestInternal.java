@@ -42,4 +42,6 @@ public interface OCommandRequestInternal extends OCommandRequest, OSerializableS
 	public OProgressListener getProgressListener();
 
 	public OCommandRequestInternal setProgressListener(OProgressListener iProgressListener);
+
+	public void reset();
 }
