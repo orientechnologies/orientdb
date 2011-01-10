@@ -80,7 +80,6 @@ public class OMVRBTreeStorage<K, V> extends OMVRBTreePersistent<K, V> {
 		lock.acquireExclusiveLock();
 
 		try {
-			usageCounter = 0;
 			ORawBuffer raw = storage.readRecord(null, -1, clusterId, record.getIdentity().getClusterPosition(), null);
 
 			if (raw == null)

@@ -51,6 +51,8 @@ public class Orient extends OSharedResource {
 	protected static final ThreadGroup				threadGroup						= new ThreadGroup("OrientDB");
 	protected static Orient										instance							= new Orient();
 
+	private final OMemoryWatchDog							memoryWatchDog;
+
 	protected Orient() {
 		// REGISTER THE EMBEDDED ENGINE
 		registerEngine(new OEngineLocal());
@@ -60,6 +62,8 @@ public class Orient extends OSharedResource {
 		if (OGlobalConfiguration.PROFILER_ENABLED.getValueAsBoolean())
 			// ACTIVATE RECORDING OF THE PROFILER
 			OProfiler.getInstance().startRecording();
+
+		memoryWatchDog = new OMemoryWatchDog(OGlobalConfiguration.MEMORY_OPTIMIZE_THRESHOLD.getValueAsFloat());
 
 		active = true;
 	}
@@ -263,5 +267,9 @@ public class Orient extends OSharedResource {
 
 	public static ThreadGroup getThreadGroup() {
 		return threadGroup;
+	}
+
+	public OMemoryWatchDog getMemoryWatchDog() {
+		return memoryWatchDog;
 	}
 }

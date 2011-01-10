@@ -122,8 +122,6 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> {
 		lock.acquireExclusiveLock();
 
 		try {
-			usageCounter = 0;
-
 			record.load();
 			fromStream(record.toStream());
 			return this;

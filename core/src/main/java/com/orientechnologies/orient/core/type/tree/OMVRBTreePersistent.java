@@ -30,6 +30,8 @@ import com.orientechnologies.common.collection.OMVRBTreeEventListener;
 import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.OMemoryWatchDog.Listener;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -68,7 +70,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	protected final String																	clusterName;
 	protected ORecordBytesLazy															record;
 	protected String																				fetchPlan;
-	protected volatile int																	usageCounter		= 0;
 
 	// STORES IN MEMORY DIRECT REFERENCES TO PORTION OF THE TREE
 	protected int																						entryPointsSize;
@@ -83,12 +84,23 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	public OMVRBTreePersistent(final String iClusterName, final ORID iRID) {
 		this(iClusterName, null, null);
 		record.setIdentity(iRID.getClusterId(), iRID.getClusterPosition());
-		config();
 	}
 
 	public OMVRBTreePersistent(String iClusterName, final OStreamSerializer iKeySerializer, final OStreamSerializer iValueSerializer) {
 		// MINIMIZE I/O USING A LARGER PAGE THAN THE DEFAULT USED IN MEMORY
 		super(1024, 0.7f);
+
+		Orient.instance().getMemoryWatchDog().addListener(new Listener() {
+			public void memoryUsageLow(final long usedMemory, final long maxMemory) {
+				OLogManager.instance().warn(this, "Low memory: running optimization against MVRB-Tree with %d items in memory..",
+						cache.size());
+
+				optimize();
+
+				OLogManager.instance().warn(this, "Done. MVRB-Tree nodes reduced to %d items", cache.size());
+			}
+		});
+
 		config();
 
 		clusterName = iClusterName;
@@ -125,7 +137,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			}
 
 			recordsToCommit.clear();
-			usageCounter = 0;
 			entryPoints.clear();
 			cache.clear();
 
@@ -155,8 +166,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			cache.clear();
 			root = null;
 
-			usageCounter = 0;
-
 			load();
 
 		} catch (IOException e) {
@@ -172,8 +181,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	 * Optimize the tree memory consumption by keeping part of nodes as entry points and clearing all the rest.
 	 */
 	public void optimize() {
-		usageCounter = 0;
-
 		final long timer = System.currentTimeMillis();// OProfiler.getInstance().startChrono();
 
 		lock.acquireExclusiveLock();
@@ -355,16 +362,12 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 			if (OLogManager.instance().isDebugEnabled())
 				OLogManager.instance().debug(this, "Optimization completed in %d ms\n", System.currentTimeMillis() - timer);
-
-			usageCounter = 0;
 		}
 	}
 
 	@Override
 	public V put(final K key, final V value) {
 		final long timer = OProfiler.getInstance().startChrono();
-
-		updateUsageCounter();
 
 		lock.acquireExclusiveLock();
 
@@ -382,8 +385,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	@Override
 	public void putAll(final Map<? extends K, ? extends V> map) {
 		final long timer = OProfiler.getInstance().startChrono();
-
-		updateUsageCounter();
 
 		lock.acquireExclusiveLock();
 
@@ -588,8 +589,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 	@Override
 	public V get(final Object iKey) {
-		updateUsageCounter();
-
 		lock.acquireSharedLock();
 
 		try {
@@ -607,8 +606,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 	@Override
 	public boolean containsKey(final Object key) {
-		updateUsageCounter();
-
 		lock.acquireSharedLock();
 
 		try {
@@ -621,8 +618,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 	@Override
 	public boolean containsValue(final Object value) {
-		updateUsageCounter();
-
 		lock.acquireSharedLock();
 
 		try {
@@ -635,8 +630,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 	@Override
 	public Set<java.util.Map.Entry<K, V>> entrySet() {
-		updateUsageCounter();
-
 		lock.acquireSharedLock();
 
 		try {
@@ -649,8 +642,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 	@Override
 	public Set<K> keySet() {
-		updateUsageCounter();
-
 		lock.acquireSharedLock();
 
 		try {
@@ -663,8 +654,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 	@Override
 	public Collection<V> values() {
-		updateUsageCounter();
-
 		lock.acquireSharedLock();
 
 		try {
@@ -751,27 +740,16 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	}
 
 	/**
-	 * Updates the usage counter and check if it's higher than the configured threshold. In this case executes the optimization and
-	 * reset the usage counter.
-	 */
-	protected void updateUsageCounter() {
-		usageCounter++;
-		if (optimizeThreshold > 0 && usageCounter > optimizeThreshold) {
-			optimize();
-		}
-	}
-
-	/**
 	 * Returns the best entry point to start the search.
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
 	protected OMVRBTreeEntry<K, V> getBestEntryPoint(final Object iKey) {
-		final Comparable<? super K> key = (Comparable<? super K>) iKey;
-
 		if (entryPoints.size() == 0)
 			// TREE EMPTY: RETURN ROOT
 			return root;
+
+		final Comparable<? super K> key = (Comparable<? super K>) iKey;
 
 		// SEARCH THE BEST KEY
 		OMVRBTreeEntryPersistent<K, V> e;
@@ -890,20 +868,15 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	}
 
 	protected void config() {
-//		System.out.println("Total memory: " + Runtime.getRuntime().totalMemory() / 1024);
-//		System.out.println("Max   memory: " + Runtime.getRuntime().maxMemory() / 1024);
-//		System.out.println("Free  memory: " + Runtime.getRuntime().freeMemory() / 1024);
-
 		lastPageSize = OGlobalConfiguration.MVRBTREE_NODE_PAGE_SIZE.getValueAsInteger();
 		pageLoadFactor = OGlobalConfiguration.MVRBTREE_LOAD_FACTOR.getValueAsFloat();
-		optimizeThreshold = OGlobalConfiguration.MVRBTREE_OPTIMIZE_THRESHOLD.getValueAsInteger();
 		entryPointsSize = OGlobalConfiguration.MVRBTREE_ENTRYPOINTS.getValueAsInteger();
 
 		if (size() > 100000)
 			// AUTO ADJUST BASED ON TREE SIZE
 			// TODO: CONSIDER MEMORY
 			entryPointsSize = size() / 5000;
-		
+
 		optimizeEntryPointsFactor = OGlobalConfiguration.MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR.getValueAsFloat();
 	}
 

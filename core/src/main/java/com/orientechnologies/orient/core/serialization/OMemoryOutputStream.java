@@ -108,20 +108,20 @@ public class OMemoryOutputStream extends OutputStream {
 	}
 
 	@Override
-	public final void write(final byte[] buf, final int offset, final int length) {
+	public final void write(final byte[] iBuffer, final int iOffset, final int iLength) {
 
 		final int pos = position;
-		final int capacity = pos + length;
+		final int capacity = pos + iLength;
 
-		assureSpaceFor(length);
+		assureSpaceFor(iLength);
 
 		byte[] mbuf = buffer;
 
-		if (length < NATIVE_COPY_THRESHOLD)
-			for (int i = 0; i < length; ++i)
-				mbuf[pos + i] = buf[offset + i];
+		if (iLength < NATIVE_COPY_THRESHOLD)
+			for (int i = 0; i < iLength; ++i)
+				mbuf[pos + i] = iBuffer[iOffset + i];
 		else
-			System.arraycopy(buf, offset, mbuf, pos, length);
+			System.arraycopy(iBuffer, iOffset, mbuf, pos, iLength);
 
 		position = capacity;
 	}

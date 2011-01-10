@@ -12,14 +12,10 @@ public class OIntentMassiveInsert implements OIntent {
 	private boolean	previousRetainRecords;
 	private boolean	previousRetainObjects;
 	private int			treeMapLazyUpdates;
-	private int			treeMapOptimizeThreshold;
 
 	public void begin(final ODatabaseRaw iDatabase, final Object... iArgs) {
 		treeMapLazyUpdates = OGlobalConfiguration.MVRBTREE_LAZY_UPDATES.getValueAsInteger();
 		OGlobalConfiguration.MVRBTREE_LAZY_UPDATES.setValue(10000);
-
-		treeMapOptimizeThreshold = OGlobalConfiguration.MVRBTREE_OPTIMIZE_THRESHOLD.getValueAsInteger();
-		OGlobalConfiguration.MVRBTREE_OPTIMIZE_THRESHOLD.setValue(1000000);
 
 		previousUseCache = iDatabase.isUseCache();
 		iDatabase.setUseCache(false);
@@ -42,7 +38,6 @@ public class OIntentMassiveInsert implements OIntent {
 
 	public void end(final ODatabaseRaw iDatabase) {
 		OGlobalConfiguration.MVRBTREE_LAZY_UPDATES.setValue(treeMapLazyUpdates);
-		OGlobalConfiguration.MVRBTREE_OPTIMIZE_THRESHOLD.setValue(treeMapOptimizeThreshold);
 
 		iDatabase.setUseCache(previousUseCache);
 

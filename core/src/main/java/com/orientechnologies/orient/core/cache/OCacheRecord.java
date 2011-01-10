@@ -19,7 +19,10 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.OMemoryWatchDog.Listener;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 
@@ -32,7 +35,7 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
  */
 @SuppressWarnings("serial")
 public class OCacheRecord extends OSharedResourceAdaptive {
-	private final int													maxSize;
+	private int																maxSize;
 	private LinkedHashMap<String, ORawBuffer>	cache;
 
 	/**
@@ -50,6 +53,21 @@ public class OCacheRecord extends OSharedResourceAdaptive {
 				return size() > maxSize;
 			}
 		};
+
+		Orient.instance().getMemoryWatchDog().addListener(new Listener() {
+			/**
+			 * Auto reduce cache size of 10%
+			 */
+			public void memoryUsageLow(final long usedMemory, final long maxMemory) {
+				final int threshold = maxSize * 90 / 100;
+
+				if (cache.size() < threshold)
+					return;
+
+				OLogManager.instance().debug(this, "Low memory: auto reduce the storage cache size from %d to %d", maxSize, threshold);
+				maxSize = threshold;
+			}
+		});
 	}
 
 	public void pushRecord(final String iRecord, ORawBuffer iContent) {

@@ -69,7 +69,6 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> imp
 
 	public void lazySave() {
 		super.commitChanges(database);
-		optimize();
 	}
 
 	public void onOpen(final ODatabase iDatabase) {

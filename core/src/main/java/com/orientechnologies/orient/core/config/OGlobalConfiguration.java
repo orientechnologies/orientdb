@@ -29,6 +29,10 @@ import com.orientechnologies.common.log.OLogManager;
  * 
  */
 public enum OGlobalConfiguration {
+	// MEMORY
+	MEMORY_OPTIMIZE_THRESHOLD("memory.optimizeThreshold", "Threshold of heap memory to start optimizing memory usage", Float.class,
+			0.85),
+
 	// LOG
 	LOG_CONSOLE_LEVEL("log.console.level", "Console's logging level", String.class, "info", new OConfigurationChangeCallback() {
 		public void change(final Object iCurrentValue, final Object iNewValue) {
@@ -55,15 +59,16 @@ public enum OGlobalConfiguration {
 
 	// TREEMAP
 	MVRBTREE_LAZY_UPDATES("mvrbtree.lazyUpdates", "Configure the TreeMaps (indexes and dictionaries) as buffered or not",
-			Integer.class, 300),
+			Integer.class, 10000),
 
 	MVRBTREE_NODE_PAGE_SIZE("mvrbtree.nodePageSize",
 			"Page size of each single node. 1,024 means that 1,024 entries can be stored inside a node", Float.class, 1024),
 
 	MVRBTREE_LOAD_FACTOR("mvrbtree.loadFactor", "HashMap load factor", Float.class, 0.7f),
 
-	MVRBTREE_OPTIMIZE_THRESHOLD("mvrbtree.optimizeThreshold", "Auto optimize the TreeMap every X operations as get, put and remove",
-			Integer.class, 100000),
+	@Deprecated
+	MVRBTREE_OPTIMIZE_THRESHOLD("mvrbtree.optimizeThreshold",
+			"Deprecated, auto optimize the TreeMap every X operations as get, put and remove", Integer.class, 100000),
 
 	MVRBTREE_ENTRYPOINTS("mvrbtree.entryPoints", "Number of entry points to start searching entries", Integer.class, 15),
 

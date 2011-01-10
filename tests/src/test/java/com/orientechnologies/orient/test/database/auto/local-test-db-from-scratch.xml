@@ -88,6 +88,11 @@
 			<class name="com.orientechnologies.orient.test.database.auto.GEOTest" />
 		</classes>
 	</test>
+	<test name="Binary">
+		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.BinaryTest" />
+		</classes>
+	</test>
 	<test name="sql-commands">
 		<classes>
 			<class name="com.orientechnologies.orient.test.database.auto.SQLCommandsTest" />

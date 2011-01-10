@@ -19,7 +19,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerDocument2Binary;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerPositional2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
@@ -36,21 +35,21 @@ public class ORecordSerializerFactory {
 		implementations.put(ORecordSerializerPositional2CSV.NAME, new ORecordSerializerPositional2CSV());
 		implementations.put(ORecordSerializerSchemaAware2CSV.NAME, new ORecordSerializerSchemaAware2CSV());
 		implementations.put(ORecordSerializerJSON.NAME, new ORecordSerializerJSON());
-		implementations.put(ORecordSerializerDocument2Binary.NAME, defaultRecordFormat);
+		implementations.put(ORecordSerializerRaw.NAME, defaultRecordFormat);
 	}
 
 	public Collection<ORecordSerializer> getFormats() {
 		return implementations.values();
 	}
 
-	public ORecordSerializer getFormat(String iFormatName) {
+	public ORecordSerializer getFormat(final String iFormatName) {
 		if (iFormatName == null)
 			return null;
 
 		return implementations.get(iFormatName);
 	}
 
-	public ORecordSerializer getFormatForObject(Object iObject, String iFormatName) {
+	public ORecordSerializer getFormatForObject(final Object iObject, final String iFormatName) {
 		if (iObject == null)
 			return null;
 
@@ -68,7 +67,7 @@ public class ORecordSerializerFactory {
 		return defaultRecordFormat;
 	}
 
-	public void setDefaultRecordFormat(ORecordSerializer iDefaultFormat) {
+	public void setDefaultRecordFormat(final ORecordSerializer iDefaultFormat) {
 		this.defaultRecordFormat = iDefaultFormat;
 	}
 
