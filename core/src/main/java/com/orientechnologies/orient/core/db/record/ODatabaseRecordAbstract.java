@@ -219,6 +219,8 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 	public <RET extends List<?>> RET query(final OQuery<? extends Object> iCommand, final Object... iArgs) {
 		if (iCommand instanceof OQueryAbstract)
 			((OQueryAbstract<?>) iCommand).setDatabase(this);
+		
+		iCommand.reset();
 
 		return (RET) iCommand.execute(iArgs);
 	}

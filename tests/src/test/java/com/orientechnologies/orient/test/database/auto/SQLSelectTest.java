@@ -561,7 +561,7 @@ public class SQLSelectTest {
 
 		ORID last = new ORecordId();
 
-		for (List<ODocument> resultset = database.query(query); !resultset.isEmpty(); resultset = database.query(query)) {
+		for (List<ODocument> resultset = database.query(query); !resultset.isEmpty(); resultset = query.execute()) {
 			Assert.assertTrue(resultset.size() <= 3);
 
 			for (ODocument d : resultset)

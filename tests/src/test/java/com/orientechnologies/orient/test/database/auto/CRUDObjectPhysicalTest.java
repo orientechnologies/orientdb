@@ -358,4 +358,24 @@ public class CRUDObjectPhysicalTest {
 
 		database.close();
 	}
+
+	@Test
+	public void queryPreparredTwice() {
+		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+
+		final OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>(
+				"select from Profile where name = :name and surname = :surname");
+
+		HashMap<String, String> params = new HashMap<String, String>();
+		params.put("name", "Barack");
+		params.put("surname", "Obama");
+
+		List<Profile> result = database.query(query, params);
+		Assert.assertTrue(result.size() != 0);
+
+		result = database.query(query, params);
+		Assert.assertTrue(result.size() != 0);
+
+		database.close();
+	}
 }

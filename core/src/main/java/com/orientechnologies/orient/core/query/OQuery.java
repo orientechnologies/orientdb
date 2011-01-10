@@ -82,4 +82,6 @@ public interface OQuery<T extends Object> extends OCommandRequest {
 	 * @return
 	 */
 	public OQuery<T> setFetchPlan(String iFetchPlan);
+
+	public void reset();
 }

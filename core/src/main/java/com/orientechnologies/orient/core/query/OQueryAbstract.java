@@ -70,4 +70,7 @@ public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAb
 	public void setEndRange(final ORecordId endRange) {
 		this.endRange = endRange;
 	}
+
+	public void reset() {
+	}
 }

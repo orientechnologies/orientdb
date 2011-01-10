@@ -47,6 +47,11 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
 		resultListener = this;
 	}
 
+	@Override
+	public void reset() {
+		result.clear();
+	}
+
 	public boolean result(final Object iRecord) {
 		database.callbackHooks(TYPE.BEFORE_READ, iRecord);
 		result.add((T) iRecord);
