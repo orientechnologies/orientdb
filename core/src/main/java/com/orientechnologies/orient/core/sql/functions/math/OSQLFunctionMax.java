@@ -69,6 +69,7 @@ public class OSQLFunctionMax extends OSQLFunctionMathAbstract {
 		return "Syntax error: max(<field>)";
 	}
 
+	@Override
 	public Object getResult() {
 		return context;
 	}

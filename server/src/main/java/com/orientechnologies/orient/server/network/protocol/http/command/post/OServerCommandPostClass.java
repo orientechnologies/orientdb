@@ -25,6 +25,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 public class OServerCommandPostClass extends OServerCommandAuthenticatedDbAbstract {
 	private static final String[]	NAMES	= { "POST|class/*" };
 
+	@Override
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: class/<database>/<class-name>");
 
@@ -51,6 +52,7 @@ public class OServerCommandPostClass extends OServerCommandAuthenticatedDbAbstra
 		}
 	}
 
+	@Override
 	public String[] getNames() {
 		return NAMES;
 	}

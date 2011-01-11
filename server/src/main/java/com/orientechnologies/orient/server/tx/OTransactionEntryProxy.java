@@ -19,7 +19,7 @@ import java.io.IOException;
 
 import com.orientechnologies.orient.core.tx.OTransactionEntry;
 
-public class OTransactionEntryProxy extends OTransactionEntry<OTransactionRecordProxy> {
+public class OTransactionEntryProxy extends OTransactionEntry {
 
 	public OTransactionEntryProxy() throws IOException {
 		super(new OTransactionRecordProxy(), (byte) 0, null);

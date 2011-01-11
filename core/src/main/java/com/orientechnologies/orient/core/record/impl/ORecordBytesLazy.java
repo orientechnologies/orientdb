@@ -38,6 +38,7 @@ public class ORecordBytesLazy extends ORecordBytes {
 		return _source;
 	}
 
+	@Override
 	public ORecordBytesLazy copy() {
 		return (ORecordBytesLazy) copyTo(new ORecordBytesLazy(serializableContent));
 	}

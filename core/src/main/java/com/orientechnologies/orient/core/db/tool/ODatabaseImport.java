@@ -483,7 +483,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 			if (record instanceof ODocument)
 				record.save();
 			else
-				((ODatabaseRecord<ORecordInternal<?>>) database.getUnderlying()).save(record);
+				((ODatabaseRecord) database.getUnderlying()).save(record);
 		} else {
 			String clusterName = database.getClusterNameById(record.getIdentity().getClusterId());
 
@@ -494,7 +494,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 				ODocument tempRecord = new ODocument(database);
 				for (int i = 0; i < holes; ++i) {
 					tempRecord.reset();
-					((ODatabaseRecord<ORecordInternal<?>>) database.getUnderlying()).save(tempRecord, clusterName);
+					((ODatabaseRecord) database.getUnderlying()).save(tempRecord, clusterName);
 					recordToDelete.add(tempRecord.getIdentity().toString());
 				}
 			}
@@ -504,7 +504,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 			if (record instanceof ODocument)
 				record.save(clusterName);
 			else
-				((ODatabaseRecord<ORecordInternal<?>>) database.getUnderlying()).save(record, clusterName);
+				((ODatabaseRecord) database.getUnderlying()).save(record, clusterName);
 		}
 
 		if (!record.getIdentity().toString().equals(rid))

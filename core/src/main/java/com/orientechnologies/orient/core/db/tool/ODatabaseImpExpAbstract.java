@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
  * 
  */
 public abstract class ODatabaseImpExpAbstract {
-	protected ODatabaseRecord<?>			database;
+	protected ODatabaseRecord					database;
 	protected String									fileName;
 
 	protected boolean									includeInfo				= true;
@@ -41,7 +41,7 @@ public abstract class ODatabaseImpExpAbstract {
 	protected boolean									includeDictionary	= true;
 	protected OCommandOutputListener	listener;
 
-	public ODatabaseImpExpAbstract(final ODatabaseRecord<?> iDatabase, final String iFileName, final OCommandOutputListener iListener) {
+	public ODatabaseImpExpAbstract(final ODatabaseRecord iDatabase, final String iFileName, final OCommandOutputListener iListener) {
 		database = iDatabase;
 		fileName = iFileName;
 		listener = iListener;
@@ -88,7 +88,7 @@ public abstract class ODatabaseImpExpAbstract {
 		this.listener = listener;
 	}
 
-	public ODatabaseRecord<?> getDatabase() {
+	public ODatabaseRecord getDatabase() {
 		return database;
 	}
 

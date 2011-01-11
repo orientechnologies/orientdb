@@ -51,10 +51,10 @@ public interface OPropertyIndex extends Iterable<Entry<String, List<ORecordId>>>
 	 * @param iProgressListener
 	 *          Listener to get called on progress
 	 */
-	public OPropertyIndex create(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final String iClusterIndexName,
+	public OPropertyIndex create(final ODatabaseRecord iDatabase, final OProperty iProperty, final String iClusterIndexName,
 			final OProgressListener iProgressListener);
 
-	public OPropertyIndex configure(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final ORID iRecordId);
+	public OPropertyIndex configure(final ODatabaseRecord iDatabase, final OProperty iProperty, final ORID iRecordId);
 
 	public List<ORecordId> get(Object iKey);
 

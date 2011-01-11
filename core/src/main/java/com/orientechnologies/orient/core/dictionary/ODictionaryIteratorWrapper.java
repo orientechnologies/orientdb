@@ -5,15 +5,15 @@ import java.util.Map.Entry;
 
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 
 public class ODictionaryIteratorWrapper implements Iterator<Entry<String, Object>> {
-	private ODatabaseDocument								database;
-	private ODictionaryIterator<ODocument>	wrapped;
+	private ODatabaseDocument														database;
+	private Iterator<Entry<String, ORecordInternal<?>>>	wrapped;
 
-	public ODictionaryIteratorWrapper(final ODatabaseDocument iDatabase, final ODictionaryIterator<ODocument> iToWrapper) {
+	public ODictionaryIteratorWrapper(final ODatabaseDocument iDatabase, final Iterator<Entry<String, ORecordInternal<?>>> iterator) {
 		database = iDatabase;
-		wrapped = iToWrapper;
+		wrapped = iterator;
 	}
 
 	public Entry<String, Object> next() {
@@ -21,7 +21,7 @@ public class ODictionaryIteratorWrapper implements Iterator<Entry<String, Object
 	}
 
 	public Entry<String, Object> next(final String iFetchPlan) {
-		Entry<String, ODocument> entry = wrapped.next();
+		final Entry<String, ? extends ORecordInternal<?>> entry = wrapped.next();
 		return new OPair<String, Object>(entry.getKey(), database.getUserObjectByRecord(entry.getValue(), iFetchPlan));
 	}
 

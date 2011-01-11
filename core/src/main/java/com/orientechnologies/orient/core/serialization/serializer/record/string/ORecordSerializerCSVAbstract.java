@@ -54,7 +54,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 	private static final char		DECIMAL_SEPARATOR			= '.';
 	public static final String	FIELD_VALUE_SEPARATOR	= ":";
 
-	protected abstract ORecordSchemaAware<?> newObject(ODatabaseRecord<?> iDatabase, String iClassName);
+	protected abstract ORecordSchemaAware<?> newObject(ODatabaseRecord iDatabase, String iClassName);
 
 	public Object fieldFromStream(final ORecord<?> iSourceRecord, final OType iType, OClass iLinkedClass, OType iLinkedType,
 			final String iName, final String iValue) {
@@ -62,7 +62,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		if (iValue == null)
 			return null;
 
-		final ODatabaseRecord<?> database = iSourceRecord.getDatabase();
+		final ODatabaseRecord database = iSourceRecord.getDatabase();
 
 		switch (iType) {
 		case EMBEDDEDLIST:
@@ -125,7 +125,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 						mapValue = entry.get(1);
 						if (mapValue != null && mapValue.length() > 0)
 							mapValue.substring(1);
-						map.put((String) OStringSerializerHelper.fieldTypeFromStream((ODocument) iSourceRecord, OType.STRING, entry.get(0)),
+						map.put(OStringSerializerHelper.fieldTypeFromStream((ODocument) iSourceRecord, OType.STRING, entry.get(0)),
 								new ORecordId(mapValue));
 					}
 
@@ -214,7 +214,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					if (mapValueObject != null && mapValueObject instanceof ODocument)
 						((ODocument) mapValueObject).setOwner(iSourceDocument);
 
-					map.put((String) OStringSerializerHelper.fieldTypeFromStream(iSourceDocument, OType.STRING, entry.get(0)), mapValueObject);
+					map.put(OStringSerializerHelper.fieldTypeFromStream(iSourceDocument, OType.STRING, entry.get(0)), mapValueObject);
 				}
 
 			}
@@ -399,7 +399,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 						if (o.getValue() instanceof ODocument)
 							record = (ODocument) o.getValue();
 						else
-							record = OObjectSerializerHelper.toStream(o.getValue(), new ODocument((ODatabaseRecord<?>) iDatabase, o.getValue()
+							record = OObjectSerializerHelper.toStream(o.getValue(), new ODocument((ODatabaseRecord) iDatabase, o.getValue()
 									.getClass().getSimpleName()),
 									iDatabase instanceof ODatabaseObjectTx ? ((ODatabaseObjectTx) iDatabase).getEntityManager()
 											: OEntityManagerInternal.INSTANCE, iLinkedClass, iObjHandler != null ? iObjHandler
@@ -444,7 +444,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		return buffer.toString();
 	}
 
-	public Object embeddedCollectionFromStream(final ODatabaseRecord<?> iDatabase, final ODocument iDocument, final OType iType,
+	public Object embeddedCollectionFromStream(final ODatabaseRecord iDatabase, final ODocument iDocument, final OType iType,
 			OClass iLinkedClass, final OType iLinkedType, final String iValue) {
 		if (iValue.length() == 0)
 			return null;
@@ -547,8 +547,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			if (linkedClass != null || document != null) {
 				if (document == null)
 					// EMBEDDED OBJECTS
-					document = OObjectSerializerHelper.toStream(o,
-							new ODocument((ODatabaseRecord<?>) iDatabase, o.getClass().getSimpleName()),
+					document = OObjectSerializerHelper.toStream(o, new ODocument((ODatabaseRecord) iDatabase, o.getClass().getSimpleName()),
 							iDatabase instanceof ODatabaseObjectTx ? ((ODatabaseObjectTx) iDatabase).getEntityManager()
 									: OEntityManagerInternal.INSTANCE, iLinkedClass, iObjHandler != null ? iObjHandler
 									: new OUserObject2RecordHandler() {
@@ -654,15 +653,14 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					iLinkedRecord.setDatabase(iParentRecord.getDatabase());
 
 				// STORE THE TRAVERSED OBJECT TO KNOW THE RECORD ID. CALL THIS VERSION TO AVOID CLEAR OF STACK IN THREAD-LOCAL
-				((ODatabaseRecord<ORecordInternal<?>>) iLinkedRecord.getDatabase()).save((ORecordInternal<?>) iLinkedRecord);
+				iLinkedRecord.getDatabase().save(iLinkedRecord);
 
-				((ODatabaseRecord<ORecordInternal<?>>) iLinkedRecord.getDatabase()).registerPojo(
-						((ODatabaseRecord<ORecordInternal<?>>) iLinkedRecord.getDatabase()).getUserObjectByRecord(iLinkedRecord, null),
+				iLinkedRecord.getDatabase().registerPojo(iLinkedRecord.getDatabase().getUserObjectByRecord(iLinkedRecord, null),
 						(ODocument) iLinkedRecord);
 			}
 
-			if (iParentRecord.getDatabase() instanceof ODatabaseRecord<?>) {
-				final ODatabaseRecord<?> db = (ODatabaseRecord<?>) iParentRecord.getDatabase();
+			if (iParentRecord.getDatabase() instanceof ODatabaseRecord) {
+				final ODatabaseRecord db = iParentRecord.getDatabase();
 				if (!db.isRetainRecords())
 					// REPLACE CURRENT RECORD WITH ITS ID: THIS SAVES A LOT OF MEMORY
 					resultRid = iLinkedRecord.getIdentity();

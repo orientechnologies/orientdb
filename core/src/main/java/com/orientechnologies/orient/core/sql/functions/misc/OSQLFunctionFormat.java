@@ -47,6 +47,7 @@ public class OSQLFunctionFormat extends OSQLFunctionMathAbstract {
 		return "Syntax error: format(<format>, <arg1> [,<argN>]*)";
 	}
 
+	@Override
 	public Object getResult() {
 		return null;
 	}

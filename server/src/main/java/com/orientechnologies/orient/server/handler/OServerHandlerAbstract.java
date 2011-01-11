@@ -19,18 +19,23 @@ import com.orientechnologies.orient.server.OClientConnection;
 
 public abstract class OServerHandlerAbstract implements OServerHandler {
 
+	@Override
 	public void onClientConnection(final OClientConnection iConnection) {
 	}
 
+	@Override
 	public void onClientDisconnection(final OClientConnection iConnection) {
 	}
 
+	@Override
 	public void onBeforeClientRequest(final OClientConnection iConnection, final byte iRequestType) {
 	}
 
+	@Override
 	public void onAfterClientRequest(final OClientConnection iConnection, final byte iRequestType) {
 	}
 
+	@Override
 	public void onClientError(final OClientConnection iConnection, final Throwable iThrowable) {
 	}
 }

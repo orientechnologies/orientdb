@@ -234,6 +234,7 @@ public class OClass extends ODocumentWrapperNoClass {
 		return prop;
 	}
 
+	@Override
 	public void fromStream() {
 		name = document.field("name");
 		id = ((Long) document.field("id")).intValue();
@@ -258,6 +259,7 @@ public class OClass extends ODocumentWrapperNoClass {
 		}
 	}
 
+	@Override
 	@OBeforeSerialization
 	public ODocument toStream() {
 		document.field("name", name);

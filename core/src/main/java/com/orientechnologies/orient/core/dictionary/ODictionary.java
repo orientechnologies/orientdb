@@ -15,8 +15,8 @@
  */
 package com.orientechnologies.orient.core.dictionary;
 
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
@@ -42,7 +42,7 @@ public interface ODictionary<T extends Object> extends Iterable<Entry<String, T>
 	 *          Key to search
 	 * @return The Record if found, otherwise null
 	 */
-	public T get(Object iKey);
+	public <RET extends Object> RET get(Object iKey);
 
 	/**
 	 * Gets a record by its key and specifying the fetch plan to use.
@@ -53,7 +53,7 @@ public interface ODictionary<T extends Object> extends Iterable<Entry<String, T>
 	 *          Fetch plan to use (see FetchPlan)
 	 * @return The Record if found, otherwise null
 	 */
-	public T get(final Object iKey, final String iFetchPlan);
+	public <RET extends Object> RET get(final Object iKey, final String iFetchPlan);
 
 	/**
 	 * Puts a new association between the iKey and the iValue. If the association already exists, replace it with the new one and
@@ -65,7 +65,7 @@ public interface ODictionary<T extends Object> extends Iterable<Entry<String, T>
 	 *          Value to bind.
 	 * @return The previous value if any, otherwise null
 	 */
-	public T put(String iKey, T iValue);
+	public <RET extends Object> RET put(String iKey, Object iValue);
 
 	/**
 	 * Checks if the dictionary contains a key.
@@ -83,7 +83,7 @@ public interface ODictionary<T extends Object> extends Iterable<Entry<String, T>
 	 *          Key to remove
 	 * @return The Value associated with the key if found, otherwise null
 	 */
-	public T remove(Object iKey);
+	public <RET extends Object> RET remove(Object iKey);
 
 	/**
 	 * Returns the total number of elements in the dictionary.

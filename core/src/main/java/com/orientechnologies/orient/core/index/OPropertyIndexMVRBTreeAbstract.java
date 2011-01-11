@@ -56,7 +56,7 @@ public abstract class OPropertyIndexMVRBTreeAbstract extends OSharedResource imp
 	 * @param iClusterIndexName
 	 *          Cluster name where to place the TreeMap
 	 */
-	public OPropertyIndexMVRBTreeAbstract(final ODatabaseRecord<?> iDatabase, final OProperty iProperty,
+	public OPropertyIndexMVRBTreeAbstract(final ODatabaseRecord iDatabase, final OProperty iProperty,
 			final String iClusterIndexName) {
 		owner = iProperty;
 	}
@@ -73,7 +73,7 @@ public abstract class OPropertyIndexMVRBTreeAbstract extends OSharedResource imp
 	 * @param iProgressListener
 	 *          Listener to get called on progress
 	 */
-	public OPropertyIndex create(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final String iClusterIndexName,
+	public OPropertyIndex create(final ODatabaseRecord iDatabase, final OProperty iProperty, final String iClusterIndexName,
 			final OProgressListener iProgressListener) {
 		owner = iProperty;
 		map = new OMVRBTreeDatabaseLazySave<String, List<ORecordId>>(iDatabase, iClusterIndexName, OStreamSerializerString.INSTANCE,
@@ -82,7 +82,7 @@ public abstract class OPropertyIndexMVRBTreeAbstract extends OSharedResource imp
 		return this;
 	}
 
-	public OPropertyIndex configure(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final ORID iRecordId) {
+	public OPropertyIndex configure(final ODatabaseRecord iDatabase, final OProperty iProperty, final ORID iRecordId) {
 		owner = iProperty;
 		init(iDatabase, iRecordId);
 		return this;
@@ -148,7 +148,7 @@ public abstract class OPropertyIndexMVRBTreeAbstract extends OSharedResource imp
 					documentNum++;
 
 					if (iProgressListener != null)
-						iProgressListener.onProgress(this, documentNum, (float) documentNum * 100f / documentTotal);
+						iProgressListener.onProgress(this, documentNum, documentNum * 100f / documentTotal);
 				}
 
 			lazySave();
@@ -233,7 +233,7 @@ public abstract class OPropertyIndexMVRBTreeAbstract extends OSharedResource imp
 		}
 	}
 
-	protected void init(final ODatabaseRecord<?> iDatabase, final ORID iRecordId) {
+	protected void init(final ODatabaseRecord iDatabase, final ORID iRecordId) {
 		map = new OMVRBTreeDatabaseLazySave<String, List<ORecordId>>(iDatabase, iRecordId);
 		map.load();
 	}

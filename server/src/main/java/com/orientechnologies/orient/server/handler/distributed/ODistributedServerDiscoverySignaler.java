@@ -73,6 +73,7 @@ public class ODistributedServerDiscoverySignaler extends OPollerThread {
 		}, manager.networkTimeoutLeader);
 	}
 
+	@Override
 	public void startup() {
 		try {
 			dgram = new DatagramPacket(discoveryPacket, discoveryPacket.length, manager.networkMulticastAddress,

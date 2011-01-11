@@ -28,6 +28,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbstract {
 	private static final String[]	NAMES	= { "POST|command/*" };
 
+	@Override
 	@SuppressWarnings("unchecked")
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: command/<database>/sql/[<command-text>]");
@@ -60,6 +61,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
 			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, response.toString());
 	}
 
+	@Override
 	public String[] getNames() {
 		return NAMES;
 	}

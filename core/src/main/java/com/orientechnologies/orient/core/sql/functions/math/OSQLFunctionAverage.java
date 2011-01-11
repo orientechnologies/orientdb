@@ -68,6 +68,7 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
 		return "Syntax error: avg(<field>)";
 	}
 
+	@Override
 	public Object getResult() {
 		if (sum instanceof Integer)
 			return sum.intValue() / total;

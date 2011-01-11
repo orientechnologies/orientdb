@@ -30,6 +30,7 @@ public class OServerCommandPostAction extends OServerCommandAuthenticatedPattern
 		super(iConfig);
 	}
 
+	@Override
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(iRequest.url, 1, "Syntax error: *.action");
 

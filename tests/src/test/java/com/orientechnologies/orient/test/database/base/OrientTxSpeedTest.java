@@ -25,7 +25,7 @@ public abstract class OrientTxSpeedTest extends SpeedTestMonoThread {
 		super(iCycles);
 	}
 
-	protected void cycle(ODatabaseRecordTx<?> iDatabase) throws UnsupportedEncodingException {
+	protected void cycle(ODatabaseRecordTx iDatabase) throws UnsupportedEncodingException {
 		if (data.getCyclesDone() == data.getCycles() - 1)
 			iDatabase.commit();
 	}

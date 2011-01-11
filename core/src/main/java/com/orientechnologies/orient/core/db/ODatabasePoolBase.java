@@ -32,7 +32,7 @@ public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
 
 	public DB acquire(final String iName, final String iUserName, final String iUserPassword) {
 		setup();
-		return (DB) dbPool.acquire(iName, iUserName, iUserPassword);
+		return dbPool.acquire(iName, iUserName, iUserPassword);
 	}
 
 	public void release(final DB iDatabase) {

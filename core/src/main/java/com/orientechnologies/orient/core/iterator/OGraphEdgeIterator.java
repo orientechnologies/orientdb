@@ -31,6 +31,7 @@ public class OGraphEdgeIterator extends OGraphElementIterator<OGraphEdge> {
 		super(iDatabase, OGraphEdge.class.getSimpleName(), iPolymorphic);
 	}
 
+	@Override
 	public OGraphEdge next(final String iFetchPlan) {
 		final ODocument doc = underlying.next();
 

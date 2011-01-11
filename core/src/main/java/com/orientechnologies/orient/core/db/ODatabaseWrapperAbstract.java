@@ -22,11 +22,10 @@ import java.util.Map.Entry;
 import com.orientechnologies.orient.core.cache.OCacheRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.intent.OIntent;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 @SuppressWarnings("unchecked")
-public abstract class ODatabaseWrapperAbstract<DB extends ODatabase, REC extends ORecordInternal<?>> implements ODatabase {
+public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements ODatabase {
 	protected DB									underlying;
 	protected ODatabaseComplex<?>	databaseOwner;
 

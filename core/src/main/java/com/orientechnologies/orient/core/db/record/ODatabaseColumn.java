@@ -15,15 +15,28 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 
 /**
  * Column based transactional database.
  * 
  */
-public class ODatabaseColumn extends ODatabaseRecordTx<ORecordColumn> {
+public class ODatabaseColumn extends ODatabaseRecordTx {
 
 	public ODatabaseColumn(String iURL) {
 		super(iURL, ORecordColumn.class);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public ORecordIteratorCluster<ORecordColumn> browseCluster(final String iClusterName) {
+		return super.browseCluster(iClusterName, ORecordColumn.class);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public ORecordColumn newInstance() {
+		return new ORecordColumn(this);
 	}
 }

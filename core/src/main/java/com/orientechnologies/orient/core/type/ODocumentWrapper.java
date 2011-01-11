@@ -26,11 +26,11 @@ public class ODocumentWrapper {
 	@ODocumentInstance
 	protected ODocument	document;
 
-	public ODocumentWrapper(final ODatabaseRecord<?> iDatabase, final ORID iRID) {
+	public ODocumentWrapper(final ODatabaseRecord iDatabase, final ORID iRID) {
 		this(new ODocument(iDatabase, iRID));
 	}
 
-	public ODocumentWrapper(final ODatabaseRecord<?> iDatabase, final String iClassName) {
+	public ODocumentWrapper(final ODatabaseRecord iDatabase, final String iClassName) {
 		this(new ODocument(iDatabase, iClassName));
 	}
 

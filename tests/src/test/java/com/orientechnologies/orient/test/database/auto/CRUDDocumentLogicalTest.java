@@ -42,7 +42,7 @@ public class CRUDDocumentLogicalTest {
 	public CRUDDocumentLogicalTest(String iURL) {
 		Orient.instance().registerEngine(new OEngineRemote());
 		database = new ODatabaseDocumentTx(iURL);
-		record = database.newInstance();
+		record = (ODocument) database.newInstance();
 	}
 
 	public void create() {
@@ -58,8 +58,8 @@ public class CRUDDocumentLogicalTest {
 		record.field("name", "Cat");
 
 		Set<ODocument> races = new HashSet<ODocument>();
-		races.add(database.newInstance("AnimalRace").field("name", "European"));
-		races.add(database.newInstance("AnimalRace").field("name", "Siamese"));
+		races.add(((ODocument) database.newInstance("AnimalRace")).field("name", "European"));
+		races.add(((ODocument) database.newInstance("AnimalRace")).field("name", "Siamese"));
 		record.field("races", races);
 
 		record.save();
@@ -81,7 +81,7 @@ public class CRUDDocumentLogicalTest {
 		database.open("admin", "admin");
 
 		// LOAD THE LAST ENTRY JUST CREATED
-		record = (ODocument) database.browseClass("Animal").last().previous();
+		record = database.browseClass("Animal").last().previous();
 
 		Assert.assertEquals(record.field("name"), "Cat");
 		Assert.assertTrue(((List<ODocument>) record.field("races")).size() == 2);
@@ -95,10 +95,10 @@ public class CRUDDocumentLogicalTest {
 
 		record.reset();
 
-		record = (ODocument) database.browseClass("Animal").last().previous();
+		record = database.browseClass("Animal").last().previous();
 
 		List<ODocument> races = record.field("races");
-		races.add(database.newInstance("AnimalRace").field("name", "Egyptian"));
+		races.add(((ODocument)database.newInstance("AnimalRace")).field("name", "Egyptian"));
 		record.setDirty();
 
 		record.save();
@@ -112,7 +112,7 @@ public class CRUDDocumentLogicalTest {
 
 		record.reset();
 
-		record = (ODocument) database.browseClass("Animal").last().previous();
+		record = database.browseClass("Animal").last().previous();
 
 		Assert.assertEquals(record.field("name"), "Cat");
 		Assert.assertTrue(((List<ODocument>) record.field("races")).size() == 3);
@@ -126,7 +126,7 @@ public class CRUDDocumentLogicalTest {
 
 		startRecordNumber = database.countClass("Animal");
 
-		record = (ODocument) database.browseClass("Animal").last().previous();
+		record = database.browseClass("Animal").last().previous();
 		record.delete();
 
 		Assert.assertEquals(database.countClass("Animal"), startRecordNumber - 1);

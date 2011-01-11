@@ -213,6 +213,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 	 * 
 	 * @param iServerCommandInstance
 	 */
+	@Override
 	public void registerCommand(final Object iServerCommandInstance) {
 		OServerCommand cmd = (OServerCommand) iServerCommandInstance;
 

@@ -112,7 +112,7 @@ public class OSQLHelper {
 	 *          Value to convert.
 	 * @return The value converted if recognized, otherwise VALUE_NOT_PARSED
 	 */
-	public static Object parseValue(final ODatabaseRecord<?> iDatabase, String iValue) {
+	public static Object parseValue(final ODatabaseRecord iDatabase, String iValue) {
 		if (iValue == null)
 			return null;
 
@@ -166,7 +166,7 @@ public class OSQLHelper {
 		return fieldValue;
 	}
 
-	public static Object parseValue(final OSQLFilter iSQLFilter, final ODatabaseRecord<?> iDatabase, final OCommandToParse iCommand,
+	public static Object parseValue(final OSQLFilter iSQLFilter, final ODatabaseRecord iDatabase, final OCommandToParse iCommand,
 			final String iWord) {
 		if (iWord.charAt(0) == OStringSerializerHelper.PARAMETER_POSITIONAL
 				|| iWord.charAt(0) == OStringSerializerHelper.PARAMETER_NAMED) {
@@ -178,7 +178,7 @@ public class OSQLHelper {
 			return parseValue(iDatabase, iCommand, iWord);
 	}
 
-	public static Object parseValue(final ODatabaseRecord<?> iDatabase, final OCommandToParse iCommand, final String iWord) {
+	public static Object parseValue(final ODatabaseRecord iDatabase, final OCommandToParse iCommand, final String iWord) {
 		if (iWord.equals("*"))
 			return "*";
 
@@ -206,7 +206,7 @@ public class OSQLHelper {
 		return iContent;
 	}
 
-	public static Object getFunction(final ODatabaseRecord<?> database, final OCommandToParse iCommand, final String iWord) {
+	public static Object getFunction(final ODatabaseRecord database, final OCommandToParse iCommand, final String iWord) {
 		int sepPos = iWord.indexOf('.');
 		int parPos = iWord.indexOf(OStringSerializerHelper.PARENTHESIS_BEGIN);
 

@@ -36,17 +36,17 @@ public class ORecordFlat extends ORecordAbstract<String> implements ORecordStrin
 		setup();
 	}
 
-	public ORecordFlat(ODatabaseRecord<?> iDatabase) {
+	public ORecordFlat(ODatabaseRecord iDatabase) {
 		super(iDatabase);
 		setup();
 	}
 
-	public ORecordFlat(ODatabaseRecord<?> iDatabase, byte[] iSource) {
+	public ORecordFlat(ODatabaseRecord iDatabase, byte[] iSource) {
 		super(iDatabase, iSource);
 		setup();
 	}
 
-	public ORecordFlat(ODatabaseRecord<?> iDatabase, ORID iRID) {
+	public ORecordFlat(ODatabaseRecord iDatabase, ORID iRID) {
 		this(iDatabase);
 		_recordId = (ORecordId) iRID;
 	}

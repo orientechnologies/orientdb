@@ -17,18 +17,18 @@ package com.orientechnologies.orient.core.tx;
 
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
-public class OTransactionEntry<REC extends ORecordInternal<?>> {
+public class OTransactionEntry {
 
-	public static final byte	LOADED	= 0;
-	public static final byte	UPDATED	= 1;
-	public static final byte	DELETED	= 2;
-	public static final byte	CREATED	= 3;
+	public static final byte		LOADED	= 0;
+	public static final byte		UPDATED	= 1;
+	public static final byte		DELETED	= 2;
+	public static final byte		CREATED	= 3;
 
-	public byte								status;
-	private REC								record;
-	public String							clusterName;
+	public byte									status;
+	private ORecordInternal<?>	record;
+	public String								clusterName;
 
-	public OTransactionEntry(final REC iRecord, final byte iStatus, final String iClusterName) {
+	public OTransactionEntry(final ORecordInternal<?> iRecord, final byte iStatus, final String iClusterName) {
 		// CLONE RECORD AND CONTENT
 		this.setRecord(iRecord);
 		this.status = iStatus;
@@ -46,12 +46,12 @@ public class OTransactionEntry<REC extends ORecordInternal<?>> {
 	/**
 	 * Save the record but after having freed previous record content.
 	 */
-	public void setRecord(final REC iRecord) {
+	public void setRecord(final ORecordInternal<?> iRecord) {
 		// SAVES THE RECORD
 		this.record = iRecord;
 	}
 
-	public REC getRecord() {
+	public ORecordInternal<?> getRecord() {
 		return record;
 	}
 }

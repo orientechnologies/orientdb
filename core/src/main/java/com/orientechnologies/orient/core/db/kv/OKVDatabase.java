@@ -14,9 +14,8 @@ public class OKVDatabase extends ODatabaseDocumentTx {
 		super(iURL);
 	}
 
-	public OMVRBTreeDatabase<String, String> getBucket(final ODatabaseRecordAbstract<ORecordBytes> iDb, final String iBucket)
-			throws IOException {
-		ORecordBytes rec = iDb.getDictionary().get(iBucket);
+	public OMVRBTreeDatabase<String, String> getBucket(final ODatabaseRecordAbstract iDb, final String iBucket) throws IOException {
+		final ORecordBytes rec = (ORecordBytes) iDb.getDictionary().get(iBucket);
 
 		OMVRBTreeDatabase<String, String> bucketTree = null;
 

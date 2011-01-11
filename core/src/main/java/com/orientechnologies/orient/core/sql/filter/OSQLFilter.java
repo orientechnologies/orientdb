@@ -43,7 +43,7 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
  * 
  */
 public class OSQLFilter extends OCommandToParse {
-	protected ODatabaseRecord<?>					database;
+	protected ODatabaseRecord					database;
 	protected List<String>								targetRecords;
 	protected Map<String, String>					targetClusters;
 	protected Map<OClass, String>					targetClasses;
@@ -53,7 +53,7 @@ public class OSQLFilter extends OCommandToParse {
 	private List<OSQLFilterItemParameter>	parameterItems;
 	private int														braces;
 
-	public OSQLFilter(final ODatabaseRecord<?> iDatabase, final String iText) {
+	public OSQLFilter(final ODatabaseRecord iDatabase, final String iText) {
 		try {
 			database = iDatabase;
 			text = iText.trim();
@@ -80,7 +80,7 @@ public class OSQLFilter extends OCommandToParse {
 		}
 	}
 
-	public boolean evaluate(final ODatabaseRecord<?> iDatabase, final ORecordSchemaAware<?> iRecord) {
+	public boolean evaluate(final ODatabaseRecord iDatabase, final ORecordSchemaAware<?> iRecord) {
 		if (targetClasses != null) {
 			final OClass cls = targetClasses.keySet().iterator().next();
 			// CHECK IF IT'S PART OF THE REQUESTED CLASS

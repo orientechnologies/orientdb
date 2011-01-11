@@ -32,6 +32,7 @@ public abstract class OServerCommandPatternAbstract extends OServerCommandAbstra
 		this.pattern = pattern;
 	}
 
+	@Override
 	public String[] getNames() {
 		return pattern;
 	}

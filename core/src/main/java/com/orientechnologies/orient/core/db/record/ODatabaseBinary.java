@@ -21,7 +21,7 @@ import com.orientechnologies.orient.core.record.impl.ORecordBytes;
  * Binary specialization of transactional database.
  * 
  */
-public class ODatabaseBinary extends ODatabaseRecordTx<ORecordBytes> {
+public class ODatabaseBinary extends ODatabaseRecordTx {
 
 	public ODatabaseBinary(String iURL) {
 		super(iURL, ORecordBytes.class);

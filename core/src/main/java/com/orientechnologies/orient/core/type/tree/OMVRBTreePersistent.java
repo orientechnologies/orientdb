@@ -417,7 +417,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		}
 	}
 
-	public void commitChanges(final ODatabaseRecord<?> iDatabase) {
+	public void commitChanges(final ODatabaseRecord iDatabase) {
 		final long timer = OProfiler.getInstance().startChrono();
 		lock.acquireExclusiveLock();
 
@@ -454,11 +454,11 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 								} else
 								// NEW RID: MAKE DIRTY THE LINKED NODES
 								if (node.parent != null)
-									((OMVRBTreeEntryPersistent<K, V>) node.parent).markDirty();
+									(node.parent).markDirty();
 								if (node.left != null)
-									((OMVRBTreeEntryPersistent<K, V>) node.left).markDirty();
+									(node.left).markDirty();
 								if (node.right != null)
-									((OMVRBTreeEntryPersistent<K, V>) node.right).markDirty();
+									(node.right).markDirty();
 
 								cache.put(node.record.getIdentity(), node);
 							}

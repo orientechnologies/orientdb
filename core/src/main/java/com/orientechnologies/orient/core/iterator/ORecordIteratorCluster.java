@@ -40,7 +40,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 	protected long	lastClusterPosition;
 	protected long	totalAvailableRecords;
 
-	public ORecordIteratorCluster(final ODatabaseRecord<REC> iDatabase, final ODatabaseRecordAbstract<REC> iLowLevelDatabase,
+	public ORecordIteratorCluster(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
 			final int iClusterId) {
 		super(iDatabase, iLowLevelDatabase);
 		if (iClusterId == ORID.CLUSTER_ID_INVALID)
@@ -60,7 +60,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 
 		if (txEntries != null)
 			// ADJUST TOTAL ELEMENT BASED ON CURRENT TRANSACTION'S ENTRIES
-			for (OTransactionEntry<?> entry : txEntries) {
+			for (OTransactionEntry entry : txEntries) {
 				switch (entry.status) {
 				case OTransactionEntry.CREATED:
 					totalAvailableRecords++;
@@ -112,17 +112,18 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 	 * 
 	 * @return the previous record found, otherwise the NoSuchElementException exception is thrown when no more records are found.
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public REC previous() {
 		checkDirection(false);
 
-		final REC record = getRecord();
+		final ORecordInternal<?> record = getRecord();
 
 		// ITERATE UNTIL THE PREVIOUS GOOD RECORD
 		while (hasPrevious()) {
 			if (readCurrentRecord(record, -1) != null)
 				// FOUND
-				return record;
+				return (REC) record;
 		}
 
 		throw new NoSuchElementException();
@@ -143,19 +144,19 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 
 		// ITERATE UNTIL THE NEXT GOOD RECORD
 		while (hasNext()) {
-			REC record = getRecord();
+			ORecordInternal<?> record = getRecord();
 
 			record = readCurrentRecord(record, +1);
 			if (record != null)
 				// FOUND
-				return record;
+				return (REC) record;
 		}
 
 		throw new NoSuchElementException();
 	}
 
-	public REC current() {
-		final REC record = getRecord();
+	public ORecordInternal<?> current() {
+		final ORecordInternal<?> record = getRecord();
 		return readCurrentRecord(record, 0);
 	}
 
@@ -260,7 +261,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 	 * @param iRecord
 	 * @return
 	 */
-	private REC readCurrentRecord(REC iRecord, final int iMovement) {
+	private ORecordInternal<?> readCurrentRecord(ORecordInternal<?> iRecord, final int iMovement) {
 		if (limit > -1 && browsedRecords >= limit)
 			// LIMIT REACHED
 			return null;

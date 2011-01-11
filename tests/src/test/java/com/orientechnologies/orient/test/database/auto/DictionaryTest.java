@@ -48,7 +48,7 @@ public class DictionaryTest {
 		database.open("admin", "admin");
 
 		Assert.assertNotNull(database.getDictionary().get("key1"));
-		Assert.assertTrue(database.getDictionary().get("key1").value().equals("Dictionary test!"));
+		Assert.assertTrue(((ORecordFlat) database.getDictionary().get("key1")).value().equals("Dictionary test!"));
 
 		database.close();
 	}
@@ -64,7 +64,7 @@ public class DictionaryTest {
 		database.close();
 		database.open("admin", "admin");
 
-		Assert.assertEquals(database.getDictionary().get("key1").value(), "Text changed");
+		Assert.assertEquals(((ORecordFlat) database.getDictionary().get("key1")).value(), "Text changed");
 		Assert.assertEquals(database.getDictionary().size(), originalSize);
 
 		database.close();

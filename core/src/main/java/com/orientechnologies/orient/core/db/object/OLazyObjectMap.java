@@ -27,14 +27,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings("serial")
 public class OLazyObjectMap<TYPE> extends HashMap<String, Object> {
-	private final ORecord<?>								sourceRecord;
-	private ODatabasePojoAbstract<?, TYPE>	database;
-	private final Map<String, Object>				underlying;
-	private String													fetchPlan;
-	private boolean													converted				= false;
-	private boolean													convertToRecord	= true;
+	private final ORecord<?>						sourceRecord;
+	private ODatabasePojoAbstract<TYPE>	database;
+	private final Map<String, Object>		underlying;
+	private String											fetchPlan;
+	private boolean											converted				= false;
+	private boolean											convertToRecord	= true;
 
-	public OLazyObjectMap(final ODatabasePojoAbstract<?, TYPE> database, final ORecord<?> iSourceRecord,
+	public OLazyObjectMap(final ODatabasePojoAbstract<TYPE> database, final ORecord<?> iSourceRecord,
 			final Map<String, Object> iSource) {
 		this.database = database;
 		this.sourceRecord = iSourceRecord;
@@ -43,23 +43,28 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> {
 		converted = iSource.isEmpty();
 	}
 
+	@Override
 	public int size() {
 		return underlying.size();
 	}
 
+	@Override
 	public boolean isEmpty() {
 		return underlying.isEmpty();
 	}
 
+	@Override
 	public boolean containsKey(final Object k) {
 		return underlying.containsKey(k);
 	}
 
+	@Override
 	public boolean containsValue(final Object o) {
 		convertAll();
 		return containsValue(o);
 	}
 
+	@Override
 	public Object put(final String iKey, final Object e) {
 		if (e instanceof ODocument) {
 			converted = false;
@@ -71,12 +76,14 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> {
 		return super.put(iKey, e);
 	}
 
+	@Override
 	public Object remove(final Object o) {
 		underlying.remove(database.getRecordByUserObject(o, false));
 		setDirty();
 		return super.remove(o);
 	}
 
+	@Override
 	public void clear() {
 		converted = true;
 		underlying.clear();
@@ -106,27 +113,32 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> {
 		return underlying.toString();
 	}
 
+	@Override
 	public Set<java.util.Map.Entry<String, Object>> entrySet() {
 		convertAll();
 		return super.entrySet();
 	}
 
+	@Override
 	public Object get(final Object iKey) {
 		convert((String) iKey);
 		return super.get(iKey);
 	}
 
+	@Override
 	public Set<String> keySet() {
 		convertAll();
 		return underlying.keySet();
 	}
 
+	@Override
 	public void putAll(final Map<? extends String, ? extends Object> iMap) {
 		for (java.util.Map.Entry<? extends String, ? extends Object> e : iMap.entrySet()) {
 			put(e.getKey(), e.getValue());
 		}
 	}
 
+	@Override
 	public Collection<Object> values() {
 		convertAll();
 		return super.values();
@@ -141,7 +153,7 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> {
 			sourceRecord.setDirty();
 	}
 
-	public void assignDatabase(final ODatabasePojoAbstract<?, TYPE> iDatabase) {
+	public void assignDatabase(final ODatabasePojoAbstract<TYPE> iDatabase) {
 		if (database == null || database.isClosed()) {
 			database = iDatabase;
 		}

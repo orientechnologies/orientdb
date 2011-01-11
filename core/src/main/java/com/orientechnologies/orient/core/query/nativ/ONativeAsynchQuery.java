@@ -33,11 +33,11 @@ public abstract class ONativeAsynchQuery<T extends ORecordInternal<?>, CTX exten
 	protected int											resultCount	= 0;
 	protected ORecordInternal<?>			record;
 
-	public ONativeAsynchQuery(final ODatabaseRecord<T> iDatabase, final String iCluster, final CTX iQueryRecordImpl) {
+	public ONativeAsynchQuery(final ODatabaseRecord iDatabase, final String iCluster, final CTX iQueryRecordImpl) {
 		this(iDatabase, iCluster, iQueryRecordImpl, null);
 	}
 
-	public ONativeAsynchQuery(final ODatabaseRecord<T> iDatabase, final String iCluster, final CTX iQueryRecordImpl,
+	public ONativeAsynchQuery(final ODatabaseRecord iDatabase, final String iCluster, final CTX iQueryRecordImpl,
 			final OCommandResultListener iResultListener) {
 		super(iDatabase, iCluster);
 		resultListener = iResultListener;
@@ -75,7 +75,8 @@ public abstract class ONativeAsynchQuery<T extends ORecordInternal<?>, CTX exten
 		if (cls == null)
 			throw new OCommandExecutionException("Cluster " + cluster + " was not found");
 
-		((OStorageLocal) database.getStorage()).browse(database.getId(), cls.getPolymorphicClusterIds(), null, null, this, record, false);
+		((OStorageLocal) database.getStorage()).browse(database.getId(), cls.getPolymorphicClusterIds(), null, null, this, record,
+				false);
 		return null;
 	}
 

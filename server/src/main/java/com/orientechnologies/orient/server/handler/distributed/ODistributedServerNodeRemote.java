@@ -51,20 +51,20 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 		SYNCHRONOUS, ASYNCHRONOUS
 	}
 
-	private String																			id;
-	public String																				networkAddress;
-	public int																					networkPort;
-	public Date																					joinedOn;
-	private ODistributedServerManager										manager;
-	private OChannelBinaryClient												channel;
-	private OContextConfiguration												configuration;
-	private volatile STATUS															status					= STATUS.DISCONNECTED;
-	private List<OTransactionEntry<ORecordInternal<?>>>	bufferedChanges	= new ArrayList<OTransactionEntry<ORecordInternal<?>>>();
-	private int																					clientTxId			= 0;
-	private long																				lastHeartBeat		= 0;
-	private volatile long																dbVersion;
-	private String																			database;
-	private final ExecutorService												asynchExecutor;
+	private String										id;
+	public String											networkAddress;
+	public int												networkPort;
+	public Date												joinedOn;
+	private ODistributedServerManager	manager;
+	private OChannelBinaryClient			channel;
+	private OContextConfiguration			configuration;
+	private volatile STATUS						status					= STATUS.DISCONNECTED;
+	private List<OTransactionEntry>		bufferedChanges	= new ArrayList<OTransactionEntry>();
+	private int												clientTxId			= 0;
+	private long											lastHeartBeat		= 0;
+	private volatile long							dbVersion;
+	private String										database;
+	private final ExecutorService			asynchExecutor;
 
 	public ODistributedServerNodeRemote(final ODistributedServerManager iNode, final String iServerAddress, final int iServerPort) {
 		manager = iNode;
@@ -110,7 +110,7 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 		lastHeartBeat = System.currentTimeMillis();
 	}
 
-	public void sendRequest(final OTransactionEntry<ORecordInternal<?>> iRequest, final SYNCH_TYPE iRequestType) throws IOException {
+	public void sendRequest(final OTransactionEntry iRequest, final SYNCH_TYPE iRequestType) throws IOException {
 		if (status == STATUS.UNREACHABLE)
 			bufferChange(iRequest);
 		else {
@@ -125,7 +125,7 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 				case OTransactionEntry.CREATED:
 					channel.acquireExclusiveLock();
 					try {
-						channel.writeByte(OChannelDistributedProtocol.REQUEST_RECORD_CREATE);
+						channel.writeByte(OChannelBinaryProtocol.REQUEST_RECORD_CREATE);
 						channel.writeInt(clientTxId);
 						channel.writeShort((short) record.getIdentity().getClusterId());
 						channel.writeBytes(record.toStream());
@@ -163,7 +163,7 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 				case OTransactionEntry.UPDATED:
 					channel.acquireExclusiveLock();
 					try {
-						channel.writeByte(OChannelDistributedProtocol.REQUEST_RECORD_UPDATE);
+						channel.writeByte(OChannelBinaryProtocol.REQUEST_RECORD_UPDATE);
 						channel.writeInt(clientTxId);
 						channel.writeShort((short) record.getIdentity().getClusterId());
 						channel.writeLong(record.getIdentity().getClusterPosition());
@@ -203,7 +203,7 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 				case OTransactionEntry.DELETED:
 					channel.acquireExclusiveLock();
 					try {
-						channel.writeByte(OChannelDistributedProtocol.REQUEST_RECORD_DELETE);
+						channel.writeByte(OChannelBinaryProtocol.REQUEST_RECORD_DELETE);
 						channel.writeInt(clientTxId);
 						channel.writeShort((short) record.getIdentity().getClusterId());
 						channel.writeLong(record.getIdentity().getClusterPosition());
@@ -254,7 +254,7 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 		}
 	}
 
-	protected void bufferChange(final OTransactionEntry<ORecordInternal<?>> iRequest) {
+	protected void bufferChange(final OTransactionEntry iRequest) {
 		synchronized (bufferedChanges) {
 			if (bufferedChanges.size() > manager.serverOutSynchMaxBuffers) {
 				// BUFFER EXCEEDS THE CONFIGURED LIMIT: REMOVE MYSELF AS NODE
@@ -263,7 +263,7 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 			} else {
 				try {
 					// CHECK IF ANOTHER REQUEST FOR THE SAME RECORD ID HAS BEEN ALREADY BUFFERED
-					OTransactionEntry<ORecordInternal<?>> entry;
+					OTransactionEntry entry;
 					for (int i = 0; i < bufferedChanges.size(); ++i) {
 						entry = bufferedChanges.get(i);
 
@@ -385,7 +385,7 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 		}
 	}
 
-	public void shareDatabase(final ODatabaseRecord<?> iDatabase, final String iRemoteServerName, final String iDbUser,
+	public void shareDatabase(final ODatabaseRecord iDatabase, final String iRemoteServerName, final String iDbUser,
 			final String iDbPasswd, final String iEngineName, final boolean iSynchronousMode) throws IOException {
 		if (status != STATUS.CONNECTED)
 			throw new ODistributedSynchronizationException("Can't share database '" + iDatabase.getName() + "' on remote server node '"
@@ -433,6 +433,7 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 		manager.setClusterDbSecurity(dbName, iDbUser, iDbPasswd);
 	}
 
+	@Override
 	public void onMessage(String iText) {
 	}
 
@@ -457,7 +458,7 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 
 			final long time = System.currentTimeMillis();
 
-			for (OTransactionEntry<ORecordInternal<?>> entry : bufferedChanges) {
+			for (OTransactionEntry entry : bufferedChanges) {
 				sendRequest(entry, SYNCH_TYPE.SYNCHRONOUS);
 			}
 			bufferedChanges.clear();

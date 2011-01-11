@@ -37,6 +37,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 	private static final String	JSON_FORMAT	= "indent:2,rid,version,attribSameRow,class";
 	protected boolean						useCache		= false;
 
+	@Override
 	public boolean beforeExecute(final OHttpRequest iRequest) throws IOException {
 		return true;
 	}
@@ -127,7 +128,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 		if (iRecords != null && iRecords.size() > 0) {
 			ORecord<?> first = iRecords.get(0);
 			if (first != null && first instanceof ODocument) {
-				ODatabaseRecord<?> db = (ODatabaseRecord<?>) ((ODocument) first).getDatabase();
+				ODatabaseRecord db = ((ODocument) first).getDatabase();
 
 				String className = ((ODocument) first).getClassName();
 				exportClassSchema(db, json, db.getMetadata().getSchema().getClass(className));
@@ -183,7 +184,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 		iRequest.channel.flush();
 	}
 
-	public void exportClassSchema(final ODatabaseRecord<?> db, final OJSONWriter json, final OClass cls) throws IOException {
+	public void exportClassSchema(final ODatabaseRecord db, final OJSONWriter json, final OClass cls) throws IOException {
 		if (cls == null)
 			return;
 

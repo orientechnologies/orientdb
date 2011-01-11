@@ -45,11 +45,11 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 		setClassName(iClassName);
 	}
 
-	public ORecordVirtualAbstract(ODatabaseRecord<?> iDatabase) {
+	public ORecordVirtualAbstract(ODatabaseRecord iDatabase) {
 		super(iDatabase);
 	}
 
-	public ORecordVirtualAbstract(ODatabaseRecord<?> iDatabase, String iClassName) {
+	public ORecordVirtualAbstract(ODatabaseRecord iDatabase, String iClassName) {
 		super(iDatabase);
 		setClassName(iClassName);
 	}
@@ -63,6 +63,7 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 		return _fieldTypes != null ? _fieldTypes.get(iPropertyName) : null;
 	}
 
+	@Override
 	public ORecordAbstract<T> unload() {
 		super.unload();
 		if (_fieldValues != null)

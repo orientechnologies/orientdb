@@ -27,6 +27,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 public class OServerCommandGetClass extends OServerCommandAuthenticatedDbAbstract {
 	private static final String[]	NAMES	= { "GET|class/*" };
 
+	@Override
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(
 				iRequest.url,
@@ -61,6 +62,7 @@ public class OServerCommandGetClass extends OServerCommandAuthenticatedDbAbstrac
 		}
 	}
 
+	@Override
 	public String[] getNames() {
 		return NAMES;
 	}

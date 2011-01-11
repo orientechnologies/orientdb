@@ -22,17 +22,17 @@ public class OIntentMassiveInsert implements OIntent {
 
 		ODatabaseComplex<?> ownerDb = iDatabase.getDatabaseOwner();
 
-		if (ownerDb instanceof ODatabaseRecord<?>) {
-			previousRetainRecords = ((ODatabaseRecord<?>) ownerDb).isRetainRecords();
-			((ODatabaseRecord<?>) ownerDb).setRetainRecords(false);
+		if (ownerDb instanceof ODatabaseRecord) {
+			previousRetainRecords = ((ODatabaseRecord) ownerDb).isRetainRecords();
+			((ODatabaseRecord) ownerDb).setRetainRecords(false);
 		}
 
 		while (ownerDb.getDatabaseOwner() != ownerDb)
 			ownerDb = ownerDb.getDatabaseOwner();
 
 		if (ownerDb instanceof ODatabasePojoAbstract) {
-			previousRetainObjects = ((ODatabasePojoAbstract<?, ?>) ownerDb).isRetainObjects();
-			((ODatabasePojoAbstract<?, ?>) ownerDb).setRetainObjects(false);
+			previousRetainObjects = ((ODatabasePojoAbstract<?>) ownerDb).isRetainObjects();
+			((ODatabasePojoAbstract<?>) ownerDb).setRetainObjects(false);
 		}
 	}
 
@@ -43,10 +43,10 @@ public class OIntentMassiveInsert implements OIntent {
 
 		final ODatabaseComplex<?> ownerDb = iDatabase.getDatabaseOwner();
 
-		if (ownerDb instanceof ODatabaseRecord<?>)
-			((ODatabaseRecord<?>) ownerDb).setRetainRecords(previousRetainRecords);
+		if (ownerDb instanceof ODatabaseRecord)
+			((ODatabaseRecord) ownerDb).setRetainRecords(previousRetainRecords);
 
 		if (ownerDb instanceof ODatabaseObject)
-			((ODatabasePojoAbstract<?, ?>) ownerDb).setRetainObjects(previousRetainObjects);
+			((ODatabasePojoAbstract<?>) ownerDb).setRetainObjects(previousRetainObjects);
 	}
 }

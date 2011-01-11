@@ -65,12 +65,12 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 	private SimpleDateFormat									dateFormat				= new SimpleDateFormat(DEF_DATE_FORMAT);
 
 	@Override
-	public ORecordInternal<?> fromString(final ODatabaseRecord<?> iDatabase, final String iSource) {
+	public ORecordInternal<?> fromString(final ODatabaseRecord iDatabase, final String iSource) {
 		return fromString(iDatabase, iSource, null);
 	}
 
 	@Override
-	public ORecordInternal<?> fromString(final ODatabaseRecord<?> iDatabase, String iSource, ORecordInternal<?> iRecord) {
+	public ORecordInternal<?> fromString(final ODatabaseRecord iDatabase, String iSource, ORecordInternal<?> iRecord) {
 		if (iSource == null)
 			throw new OSerializationException("Error on unmarshalling JSON content: content is null");
 
@@ -379,7 +379,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 						+ "' to JSON. The record type can't be exported to JSON");
 
 			json.endObject(indentLevel);
-
+			parsedRecords.clear();
 			return buffer.toString();
 		} catch (IOException e) {
 			throw new OSerializationException("Error on marshalling of record to JSON", e);
@@ -502,10 +502,10 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			boolean includeClazz, boolean attribSameRow, final Set<ORID> parsedRecords) throws IOException {
 		final Map<String, ODocument> linked = (Map<String, ODocument>) fieldValue;
 		json.beginObject(indentLevel + 1, true, fieldValue);
-		for (ODocument d : ((Map<String, ODocument>) linked).values()) {
+		for (ODocument d : (linked).values()) {
 			// GO RECURSIVELY
-			if (!parsedRecords.contains(((ODocument) d).getIdentity())) {
-				parsedRecords.add(((ODocument) d).getIdentity());
+			if (!parsedRecords.contains((d).getIdentity())) {
+				parsedRecords.add((d).getIdentity());
 				json.beginObject(indentLevel + 1, true, null);
 				writeSignature(json, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, d);
 				processRecord(json, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, d, iFetchPlan,
@@ -526,8 +526,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			json.beginCollection(indentLevel + 1, true, fieldName);
 			for (ODocument d : linked) {
 				// GO RECURSIVELY
-				if (!parsedRecords.contains(((ODocument) d).getIdentity())) {
-					parsedRecords.add(((ODocument) d).getIdentity());
+				if (!parsedRecords.contains((d).getIdentity())) {
+					parsedRecords.add((d).getIdentity());
 					json.beginObject(indentLevel + 1, true, null);
 					writeSignature(json, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, d);
 					processRecord(json, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, d, iFetchPlan,
@@ -551,8 +551,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 		json.beginCollection(indentLevel + 1, true, fieldName);
 		for (ODocument d : linked) {
 			// GO RECURSIVELY
-			if (!parsedRecords.contains(((ODocument) d).getIdentity())) {
-				parsedRecords.add(((ODocument) d).getIdentity());
+			if (!parsedRecords.contains((d).getIdentity())) {
+				parsedRecords.add((d).getIdentity());
 				json.beginObject(indentLevel + 1, true, null);
 				writeSignature(json, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, d);
 				processRecord(json, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, d, iFetchPlan,

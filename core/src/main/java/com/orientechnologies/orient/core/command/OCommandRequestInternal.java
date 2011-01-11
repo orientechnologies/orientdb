@@ -31,9 +31,9 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 public interface OCommandRequestInternal extends OCommandRequest, OSerializableStream {
 	public Map<Object, Object> getParameters();
 
-	public ODatabaseRecord<?> getDatabase();
+	public ODatabaseRecord getDatabase();
 
-	public OCommandRequestInternal setDatabase(final ODatabaseRecord<?> iDatabase);
+	public OCommandRequestInternal setDatabase(final ODatabaseRecord iDatabase);
 
 	public OCommandResultListener getResultListener();
 

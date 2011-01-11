@@ -67,7 +67,7 @@ public class OServer {
 	protected List<OServerHandler>														handlers				= new ArrayList<OServerHandler>();
 	protected Map<String, Class<? extends ONetworkProtocol>>	protocols				= new HashMap<String, Class<? extends ONetworkProtocol>>();
 	protected List<OServerNetworkListener>										listeners				= new ArrayList<OServerNetworkListener>();
-	protected Map<String, ODatabaseRecord<?>>									memoryDatabases	= new HashMap<String, ODatabaseRecord<?>>();
+	protected Map<String, ODatabaseRecord>									memoryDatabases	= new HashMap<String, ODatabaseRecord>();
 	protected static ThreadGroup															threadGroup;
 
 	private OrientServer																			managedServer;
@@ -218,7 +218,7 @@ public class OServer {
 		configurationLoader.save(configuration);
 	}
 
-	public Map<String, ODatabaseRecord<?>> getMemoryDatabases() {
+	public Map<String, ODatabaseRecord> getMemoryDatabases() {
 		return memoryDatabases;
 	}
 

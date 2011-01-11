@@ -64,26 +64,32 @@ public class OModifiableInteger extends Number implements Comparable<OModifiable
 		return (thisVal < anotherVal) ? -1 : ((thisVal == anotherVal) ? 0 : 1);
 	}
 
+	@Override
 	public byte byteValue() {
 		return (byte) value;
 	}
 
+	@Override
 	public short shortValue() {
 		return (short) value;
 	}
 
+	@Override
 	public float floatValue() {
 		return value;
 	}
 
+	@Override
 	public double doubleValue() {
 		return value;
 	}
 
+	@Override
 	public int intValue() {
 		return value;
 	}
 
+	@Override
 	public long longValue() {
 		return value;
 	}
@@ -92,6 +98,7 @@ public class OModifiableInteger extends Number implements Comparable<OModifiable
 		return Integer.valueOf(this.value);
 	}
 
+	@Override
 	public boolean equals(final Object o) {
 		if (o instanceof OModifiableInteger) {
 			return value == ((OModifiableInteger) o).value;
@@ -99,10 +106,12 @@ public class OModifiableInteger extends Number implements Comparable<OModifiable
 		return false;
 	}
 
+	@Override
 	public int hashCode() {
 		return value;
 	}
 
+	@Override
 	public String toString() {
 		return String.valueOf(this.value);
 	}

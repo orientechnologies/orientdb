@@ -34,24 +34,28 @@ public abstract class ODocumentWrapperNoClass extends ODocumentWrapper {
 
 	protected abstract void fromStream();
 
+	@Override
 	public <RET extends ODocumentWrapper> RET load() {
 		super.load();
 		fromStream();
 		return (RET) this;
 	}
 
+	@Override
 	public <RET extends ODocumentWrapper> RET load(final String iFetchPlan) {
 		super.load(iFetchPlan);
 		fromStream();
 		return (RET) this;
 	}
 
+	@Override
 	public <RET extends ODocumentWrapper> RET save() {
 		toStream();
 		super.save();
 		return (RET) this;
 	}
 
+	@Override
 	public <RET extends ODocumentWrapper> RET save(final String iClusterName) {
 		toStream();
 		super.save(iClusterName);

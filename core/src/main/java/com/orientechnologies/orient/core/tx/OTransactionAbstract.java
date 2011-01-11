@@ -22,17 +22,15 @@ import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OTransactionException;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-public abstract class OTransactionAbstract<REC extends ORecordInternal<?>> implements OTransaction<REC> {
-	protected final ODatabaseRecordTx<REC>	database;
-	protected int														id;
-	protected TXSTATUS											status	= TXSTATUS.INVALID;
+public abstract class OTransactionAbstract implements OTransaction {
+	protected final ODatabaseRecordTx	database;
+	protected int											id;
+	protected TXSTATUS								status	= TXSTATUS.INVALID;
 
-	protected OTransactionAbstract(ODatabaseRecordTx<REC> iDatabase, int iId) {
+	protected OTransactionAbstract(ODatabaseRecordTx iDatabase, int iId) {
 		database = iDatabase;
 		id = iId;
 	}
@@ -50,11 +48,11 @@ public abstract class OTransactionAbstract<REC extends ORecordInternal<?>> imple
 			throw new OTransactionException("Invalid state of the transaction. The transaction must be begun.");
 	}
 
-	public static void updateCacheFromEntries(final OStorage iStorage, final OTransaction<?> iTx,
-			final Iterable<? extends OTransactionEntry<?>> iEntries) throws IOException {
+	public static void updateCacheFromEntries(final OStorage iStorage, final OTransaction iTx,
+			final Iterable<? extends OTransactionEntry> iEntries) throws IOException {
 		String rid;
 		ORawBuffer cachedBuffer;
-		for (OTransactionEntry<? extends ORecord<?>> txEntry : iEntries) {
+		for (OTransactionEntry txEntry : iEntries) {
 			rid = txEntry.getRecord().getIdentity().toString();
 
 			cachedBuffer = iStorage.getCache().getRecord(rid);

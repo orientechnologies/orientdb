@@ -28,6 +28,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 public class OServerCommandPostQuery extends OServerCommandAuthenticatedDbAbstract {
 	private static final String[]	NAMES	= { "GET|query/*" };
 
+	@Override
 	@SuppressWarnings("unchecked")
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(
@@ -64,6 +65,7 @@ public class OServerCommandPostQuery extends OServerCommandAuthenticatedDbAbstra
 		sendRecordsContent(iRequest, response, fetchPlan);
 	}
 
+	@Override
 	public String[] getNames() {
 		return NAMES;
 	}

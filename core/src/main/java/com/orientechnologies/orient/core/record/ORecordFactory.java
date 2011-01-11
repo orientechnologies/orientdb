@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 public class ORecordFactory {
 	private static final ORecordFactory	instance	= new ORecordFactory();
 
-	public <T extends ORecord<?>> T newInstance(final ODatabaseRecord<?> iDatabase, final Class<?> iClass) {
+	public <T extends ORecord<?>> T newInstance(final ODatabaseRecord iDatabase, final Class<?> iClass) {
 		if (iClass == null)
 			return null;
 

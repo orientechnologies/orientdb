@@ -74,11 +74,11 @@ public class ORole extends ODocumentWrapper {
 	/**
 	 * Constructor used in unmarshalling.
 	 */
-	public ORole(final ODatabaseRecord<?> iDatabase) {
+	public ORole(final ODatabaseRecord iDatabase) {
 		super(iDatabase, "ORole");
 	}
 
-	public ORole(final ODatabaseRecord<?> iDatabase, final String iName, final ORole iParent, final ALLOW_MODES iAllowMode) {
+	public ORole(final ODatabaseRecord iDatabase, final String iName, final ORole iParent, final ALLOW_MODES iAllowMode) {
 		this(iDatabase);
 		document.field("name", iName);
 		parentRole = iParent;
@@ -94,6 +94,7 @@ public class ORole extends ODocumentWrapper {
 		fromStream(iSource);
 	}
 
+	@Override
 	@OBeforeDeserialization
 	public void fromStream(final ODocument iSource) {
 		if (document != null)
@@ -201,6 +202,7 @@ public class ORole extends ODocumentWrapper {
 		return this;
 	}
 
+	@Override
 	public ORole save() {
 		document.save(ORole.class.getSimpleName());
 		return this;

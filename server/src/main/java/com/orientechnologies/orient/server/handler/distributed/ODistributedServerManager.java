@@ -31,7 +31,6 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
@@ -107,11 +106,13 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 	private volatile STATUS																			status									= STATUS.ONLINE;
 
+	@Override
 	public void startup() {
 		trigger = new ODistributedServerRecordHook(this);
 		broadcastPresence(false);
 	}
 
+	@Override
 	public void shutdown() {
 		if (discoverySignaler != null)
 			discoverySignaler.sendShutdown();
@@ -243,6 +244,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	/**
 	 * Parse parameters and configure services.
 	 */
+	@Override
 	public void config(final OServer iServer, final OServerParameterConfiguration[] iParams) {
 		server = iServer;
 
@@ -371,6 +373,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		return !nodes.isEmpty();
 	}
 
+	@Override
 	public String getName() {
 		return name;
 	}
@@ -411,7 +414,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	 * @throws IOException
 	 */
 	@SuppressWarnings("unchecked")
-	public void distributeRequest(final OTransactionEntry<ORecordInternal<?>> iTransactionEntry) throws IOException {
+	public void distributeRequest(final OTransactionEntry iTransactionEntry) throws IOException {
 		final HashMap<ODistributedServerNodeRemote, SYNCH_TYPE> nodeList;
 
 		lock.acquireSharedLock();

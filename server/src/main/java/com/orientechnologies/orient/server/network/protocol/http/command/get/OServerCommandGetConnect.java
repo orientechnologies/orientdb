@@ -42,6 +42,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstract {
 	private static final String[]	NAMES	= { "GET|connect/*" };
 
+	@Override
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: connect/<database>[/<user>/<password>]");
 
@@ -241,6 +242,7 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 		json.endObject(1, false);
 	}
 
+	@Override
 	public String[] getNames() {
 		return NAMES;
 	}

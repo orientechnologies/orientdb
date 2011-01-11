@@ -176,7 +176,7 @@ public class OStorageMemory extends OStorageAbstract {
 		}
 	}
 
-	public ORawBuffer readRecord(final ODatabaseRecord<?> iDatabase, final int iRequesterId, final int iClusterId,
+	public ORawBuffer readRecord(final ODatabaseRecord iDatabase, final int iRequesterId, final int iClusterId,
 			final long iClusterPosition, String iFetchPlan) {
 		final OCluster cluster = getClusterById(iClusterId);
 
@@ -376,20 +376,20 @@ public class OStorageMemory extends OStorageAbstract {
 		throw new UnsupportedOperationException("count");
 	}
 
-	public void commit(final int iRequesterId, final OTransaction<?> iTx) {
+	public void commit(final int iRequesterId, final OTransaction iTx) {
 		final boolean locked = lock.acquireSharedLock();
 
 		try {
-			final List<OTransactionEntry<? extends ORecord<?>>> allEntries = new ArrayList<OTransactionEntry<? extends ORecord<?>>>();
-			final List<OTransactionEntry<? extends ORecord<?>>> tmpEntries = new ArrayList<OTransactionEntry<? extends ORecord<?>>>();
+			final List<OTransactionEntry> allEntries = new ArrayList<OTransactionEntry>();
+			final List<OTransactionEntry> tmpEntries = new ArrayList<OTransactionEntry>();
 
 			while (iTx.getEntries().iterator().hasNext()) {
-				for (OTransactionEntry<? extends ORecord<?>> txEntry : iTx.getEntries())
+				for (OTransactionEntry txEntry : iTx.getEntries())
 					tmpEntries.add(txEntry);
 
 				iTx.clearEntries();
 
-				for (OTransactionEntry<? extends ORecord<?>> txEntry : tmpEntries)
+				for (OTransactionEntry txEntry : tmpEntries)
 					// COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
 					commitEntry(iRequesterId, iTx.getId(), txEntry);
 
@@ -409,17 +409,18 @@ public class OStorageMemory extends OStorageAbstract {
 		}
 	}
 
-	public void rollback(int iRequesterId, OTransaction<?> iTx) {
+	public void rollback(final int iRequesterId, final OTransaction iTx) {
 	}
 
 	public void synch() {
 	}
 
-	public ODictionary<?> createDictionary(final ODatabaseRecord<?> iDatabase) throws Exception {
+	public ODictionary<?> createDictionary(final ODatabaseRecord iDatabase) throws Exception {
 		return new ODictionaryMemory<Object>(iDatabase);
 	}
 
-	public void browse(int iRequesterId, int[] iClusterId, ORecordBrowsingListener iListener, ORecord<?> iRecord) {
+	public void browse(final int iRequesterId, final int[] iClusterId, final ORecordBrowsingListener iListener,
+			final ORecord<?> iRecord) {
 	}
 
 	public boolean exists() {
@@ -453,8 +454,7 @@ public class OStorageMemory extends OStorageAbstract {
 		return true;
 	}
 
-	private void commitEntry(final int iRequesterId, final int iTxId, final OTransactionEntry<? extends ORecord<?>> txEntry)
-			throws IOException {
+	private void commitEntry(final int iRequesterId, final int iTxId, final OTransactionEntry txEntry) throws IOException {
 
 		final ORecordId rid = (ORecordId) txEntry.getRecord().getIdentity();
 

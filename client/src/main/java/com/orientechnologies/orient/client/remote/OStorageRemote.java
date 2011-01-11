@@ -247,8 +247,8 @@ public class OStorageRemote extends OStorageAbstract {
 		} while (true);
 	}
 
-	public ORawBuffer readRecord(final ODatabaseRecord<?> iDatabase, final int iRequesterId, final int iClusterId,
-			final long iPosition, final String iFetchPlan) {
+	public ORawBuffer readRecord(final ODatabaseRecord iDatabase, final int iRequesterId, final int iClusterId, final long iPosition,
+			final String iFetchPlan) {
 		checkConnection();
 
 		if (OStorageRemoteThreadLocal.INSTANCE.get())
@@ -482,7 +482,7 @@ public class OStorageRemote extends OStorageAbstract {
 			OStorageRemoteThreadLocal.INSTANCE.set(Boolean.TRUE);
 
 			try {
-				final OCommandRequestText aquery = (OCommandRequestText) iCommand;
+				final OCommandRequestText aquery = iCommand;
 
 				final boolean asynch = iCommand instanceof OCommandRequestAsynch;
 
@@ -573,7 +573,7 @@ public class OStorageRemote extends OStorageAbstract {
 		return result;
 	}
 
-	public void commit(final int iRequesterId, final OTransaction<?> iTx) {
+	public void commit(final int iRequesterId, final OTransaction iTx) {
 		checkConnection();
 
 		do {
@@ -586,7 +586,7 @@ public class OStorageRemote extends OStorageAbstract {
 					network.writeInt(iTx.getId());
 					network.writeInt(iTx.size());
 
-					for (OTransactionEntry<? extends ORecord<?>> txEntry : iTx.getEntries()) {
+					for (OTransactionEntry txEntry : iTx.getEntries()) {
 						if (txEntry.status == OTransactionEntry.LOADED)
 							// JUMP LOADED OBJECTS
 							continue;
@@ -625,7 +625,7 @@ public class OStorageRemote extends OStorageAbstract {
 						rid = network.readRID();
 
 						// SEARCH THE RECORD WITH THAT ID TO UPDATE THE VERSION
-						for (OTransactionEntry<? extends ORecord<?>> txEntry : iTx.getEntries()) {
+						for (OTransactionEntry txEntry : iTx.getEntries()) {
 							if (txEntry.getRecord().getIdentity().equals(rid)) {
 								txEntry.getRecord().setVersion(network.readInt());
 								break;
@@ -829,7 +829,7 @@ public class OStorageRemote extends OStorageAbstract {
 		}
 	}
 
-	public <REC extends ORecordInternal<?>> REC dictionaryPut(final ODatabaseRecord<REC> iDatabase, final String iKey,
+	public <REC extends ORecordInternal<?>> REC dictionaryPut(final ODatabaseRecord iDatabase, final String iKey,
 			final ORecordInternal<?> iRecord) {
 		checkConnection();
 
@@ -866,7 +866,7 @@ public class OStorageRemote extends OStorageAbstract {
 		} while (true);
 	}
 
-	public <REC extends ORecordInternal<?>> REC dictionaryLookup(ODatabaseRecord<REC> iDatabase, final String iKey) {
+	public <REC extends ORecordInternal<?>> REC dictionaryLookup(ODatabaseRecord iDatabase, final String iKey) {
 		checkConnection();
 
 		do {
@@ -897,7 +897,7 @@ public class OStorageRemote extends OStorageAbstract {
 		} while (true);
 	}
 
-	public <REC extends ORecordInternal<?>> REC dictionaryRemove(ODatabaseRecord<REC> iDatabase, Object iKey) {
+	public <REC extends ORecordInternal<?>> REC dictionaryRemove(ODatabaseRecord iDatabase, Object iKey) {
 		checkConnection();
 
 		do {
@@ -928,7 +928,7 @@ public class OStorageRemote extends OStorageAbstract {
 		} while (true);
 	}
 
-	public int dictionarySize(final ODatabaseRecord<?> iDatabase) {
+	public int dictionarySize(final ODatabaseRecord iDatabase) {
 		checkConnection();
 
 		do {
@@ -958,7 +958,7 @@ public class OStorageRemote extends OStorageAbstract {
 		} while (true);
 	}
 
-	public ODictionary<?> createDictionary(final ODatabaseRecord<?> iDatabase) throws Exception {
+	public ODictionary<?> createDictionary(final ODatabaseRecord iDatabase) throws Exception {
 		return new ODictionaryClient<Object>(iDatabase, this);
 	}
 
@@ -1011,6 +1011,7 @@ public class OStorageRemote extends OStorageAbstract {
 		throw new UnsupportedOperationException("getClusterById()");
 	}
 
+	@Override
 	public long getVersion() {
 		throw new UnsupportedOperationException("getVersion");
 	}
@@ -1187,7 +1188,7 @@ public class OStorageRemote extends OStorageAbstract {
 			throw new ODatabaseException("Connection is closed");
 	}
 
-	private ORecordInternal<?> readRecordFromNetwork(final ODatabaseRecord<?> iDatabase) throws IOException {
+	private ORecordInternal<?> readRecordFromNetwork(final ODatabaseRecord iDatabase) throws IOException {
 		final int classId = network.readInt();
 		if (classId == OChannelBinaryProtocol.RECORD_NULL)
 			return null;

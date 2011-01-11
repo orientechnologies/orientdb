@@ -449,7 +449,7 @@ public abstract class OStringSerializerHelper {
 		return params;
 	}
 
-	public static Map<String, String> getMap(final ODatabaseRecord<?> iDatabase, final String iText) {
+	public static Map<String, String> getMap(final ODatabaseRecord iDatabase, final String iText) {
 		int openPos = iText.indexOf(COLLECTION_BEGIN);
 		if (openPos == -1)
 			return EMPTY_MAP;
@@ -549,7 +549,7 @@ public abstract class OStringSerializerHelper {
 		return buffer.toString();
 	}
 
-	public static OClass getRecordClassName(final ODatabaseRecord<?> iDatabase, String iValue, OClass iLinkedClass) {
+	public static OClass getRecordClassName(final ODatabaseRecord iDatabase, String iValue, OClass iLinkedClass) {
 		// EXTRACT THE CLASS NAME
 		int classSeparatorPos = iValue.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
 		if (classSeparatorPos > -1) {

@@ -117,7 +117,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 			name = iName;
 	}
 
-	public Object transformValue(final ODatabaseRecord<?> iDatabase, Object iResult) {
+	public Object transformValue(final ODatabaseRecord iDatabase, Object iResult) {
 		if (iResult != null && operationsChain != null) {
 			// APPLY OPERATIONS FOLLOWING THE STACK ORDER
 			int operator = -2;

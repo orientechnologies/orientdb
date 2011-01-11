@@ -50,8 +50,8 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
 @SuppressWarnings("unchecked")
-public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T extends Object> extends
-		ODatabaseWrapperAbstract<ODatabaseDocumentTx, REC> implements ODatabaseComplex<T> {
+public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseWrapperAbstract<ODatabaseDocumentTx> implements
+		ODatabaseSchemaAware<T> {
 	protected HashMap<Integer, ODocument>		objects2Records	= new HashMap<Integer, ODocument>();
 	protected IdentityHashMap<ODocument, T>	records2Objects	= new IdentityHashMap<ODocument, T>();
 	protected HashMap<ORID, ODocument>			rid2Records			= new HashMap<ORID, ODocument>();
@@ -59,14 +59,12 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 
 	public ODatabasePojoAbstract(final ODatabaseDocumentTx iDatabase) {
 		super(iDatabase);
-		iDatabase.setDatabaseOwner((ODatabaseComplex<?>) this);
+		iDatabase.setDatabaseOwner(this);
 	}
 
 	protected abstract ODocument pojo2Stream(final T iPojo, final ODocument record);
 
-	protected abstract Object stream2pojo(final ODocument record, final T iPojo, final String iFetchPlan);
-
-	public abstract T newInstance(final String iClassName);
+	protected abstract Object stream2pojo(final ODocument record, final Object iPojo, final String iFetchPlan);
 
 	@Override
 	public void close() {
@@ -76,7 +74,7 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 		super.close();
 	}
 
-	public OTransaction<?> getTransaction() {
+	public OTransaction getTransaction() {
 		return underlying.getTransaction();
 	}
 
@@ -231,7 +229,7 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 		return (RET) resultPojo;
 	}
 
-	public ODatabaseComplex<T> delete(final REC iRecord) {
+	public ODatabaseComplex<T> delete(final ORecordInternal<?> iRecord) {
 		underlying.delete((ODocument) iRecord);
 		return this;
 	}
@@ -262,7 +260,7 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 	 *          True to enable, false to disable it.
 	 * @see #isRetainObjects()
 	 */
-	public ODatabasePojoAbstract<REC, T> setRetainObjects(final boolean iValue) {
+	public ODatabasePojoAbstract<T> setRetainObjects(final boolean iValue) {
 		retainObjects = iValue;
 		return this;
 	}
@@ -289,7 +287,7 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 
 		if (record == null && iCreateIfNotAvailable) {
 			record = underlying.newInstance(iPojo.getClass().getSimpleName());
-			registerPojo((T) iPojo, record);
+			registerPojo(iPojo, record);
 			pojo2Stream((T) iPojo, record);
 		}
 
@@ -325,7 +323,7 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 		if (record == null)
 			record = (ODocument) iRecord;
 
-		T pojo = records2Objects.get(record);
+		Object pojo = records2Objects.get(record);
 
 		if (pojo == null && iCreate) {
 			try {
@@ -346,7 +344,7 @@ public abstract class ODatabasePojoAbstract<REC extends ORecordInternal<?>, T ex
 			}
 		}
 
-		return pojo;
+		return (T) pojo;
 	}
 
 	@SuppressWarnings("rawtypes")

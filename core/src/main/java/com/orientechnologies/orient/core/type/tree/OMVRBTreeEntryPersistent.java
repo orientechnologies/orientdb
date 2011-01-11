@@ -147,7 +147,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		record = new ORecordBytesLazy(this);
 		record.setIdentity((ORecordId) iRecordId);
 
-		parent = (OMVRBTreeEntryPersistent<K, V>) iParent;
+		parent = iParent;
 		parentRid = iParent == null ? ORecordId.EMPTY_RECORD_ID : parent.record.getIdentity();
 	}
 
@@ -317,7 +317,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		OMVRBTreeEntryPersistent<K, V> entry = this;
 		while (entry.parent != null) {
 			level++;
-			entry = (OMVRBTreeEntryPersistent<K, V>) entry.parent;
+			entry = entry.parent;
 		}
 		return level;
 	}
@@ -633,6 +633,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 	/**
 	 * Returns the successor of the current Entry only by traversing the memory, or null if no such.
 	 */
+	@Override
 	public OMVRBTreeEntryPersistent<K, V> getNextInMemory() {
 		OMVRBTreeEntryPersistent<K, V> t = this;
 		OMVRBTreeEntryPersistent<K, V> p = null;

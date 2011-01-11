@@ -23,6 +23,7 @@ public class ODatabaseDocumentPool extends ODatabasePoolBase<ODatabaseDocumentTx
 
 	private static ODatabaseDocumentPool	globalInstance	= new ODatabaseDocumentPool();
 
+	@Override
 	public void setup(final int iMinSize, final int iMaxSize) {
 		if (dbPool == null)
 			synchronized (this) {

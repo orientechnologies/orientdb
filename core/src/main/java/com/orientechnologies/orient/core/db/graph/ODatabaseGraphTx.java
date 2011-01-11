@@ -36,12 +36,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Luca Garulli
  * 
  */
-public class ODatabaseGraphTx extends ODatabasePojoAbstract<ODocument, OGraphElement> {
+public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 
 	public ODatabaseGraphTx(final String iURL) {
 		super(new ODatabaseDocumentTx(iURL));
 	}
 
+	@Override
 	@SuppressWarnings("unchecked")
 	public <THISDB extends ODatabase> THISDB open(final String iUserName, final String iUserPassword) {
 		underlying.open(iUserName, iUserPassword);
@@ -51,6 +52,7 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<ODocument, OGraphEle
 		return (THISDB) this;
 	}
 
+	@Override
 	@SuppressWarnings("unchecked")
 	public <THISDB extends ODatabase> THISDB create() {
 		underlying.create();
@@ -69,11 +71,11 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<ODocument, OGraphEle
 	}
 
 	public OGraphVertex getRoot(final String iName) {
-		return registerPojo(new OGraphVertex(this, underlying.getDictionary().get(iName)));
+		return registerPojo(new OGraphVertex(this, (ODocument) underlying.getDictionary().get(iName)));
 	}
 
 	public OGraphVertex getRoot(final String iName, final String iFetchPlan) {
-		return registerPojo(new OGraphVertex(this, underlying.getDictionary().get(iName), iFetchPlan));
+		return registerPojo(new OGraphVertex(this, (ODocument) underlying.getDictionary().get(iName), iFetchPlan));
 	}
 
 	public ODatabaseGraphTx setRoot(final String iName, final OGraphVertex iNode) {
@@ -81,16 +83,19 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<ODocument, OGraphEle
 		return this;
 	}
 
+	@SuppressWarnings("unchecked")
 	public OGraphElement newInstance() {
 		return new OGraphVertex(this);
 	}
 
+	@SuppressWarnings("unchecked")
 	public OGraphElement load(final OGraphElement iObject) {
 		if (iObject != null)
 			iObject.getDocument().load();
 		return iObject;
 	}
 
+	@SuppressWarnings("unchecked")
 	public OGraphElement load(final ORID iRecordId) {
 		if (iRecordId == null)
 			return null;
@@ -99,15 +104,14 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<ODocument, OGraphEle
 		ODocument doc = getRecordById(iRecordId);
 		if (doc == null) {
 			// TRY TO LOAD IT
-			doc = underlying.load(iRecordId);
+			doc = (ODocument) underlying.load(iRecordId);
 			if (doc == null)
 				// NOT FOUND
 				return null;
 		}
 
 		if (doc.getClassName() == null)
-			throw new OGraphException(
-					"The document loaded has no class, while it should be a OGraphVertex, OGraphEdge or any subclass of its");
+			throw new OGraphException("The document loaded has no class, while it should be a OGraphVertex, OGraphEdge or any subclass of its");
 
 		return newInstance(doc.getClassName()).setDocument(doc);
 	}
@@ -140,7 +144,7 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<ODocument, OGraphEle
 		return new OGraphVertexIterator(this, iPolymorphic);
 	}
 
-	@Override
+	@SuppressWarnings("unchecked")
 	public OGraphElement newInstance(final String iClassName) {
 		if (iClassName.equals(OGraphVertex.class.getSimpleName()))
 			return new OGraphVertex(this);
@@ -204,12 +208,17 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<ODocument, OGraphEle
 	}
 
 	@Override
-	protected Object stream2pojo(ODocument record, final OGraphElement iPojo, String iFetchPlan) {
-		iPojo.setDocument(record);
+	protected Object stream2pojo(ODocument record, final Object iPojo, String iFetchPlan) {
+		((OGraphElement) iPojo).setDocument(record);
 		return iPojo;
 	}
 
+	@Override
 	public void delete() {
 		underlying.delete();
+	}
+
+	public long countClass(final String iClassName) {
+		return underlying.countClass(iClassName);
 	}
 }

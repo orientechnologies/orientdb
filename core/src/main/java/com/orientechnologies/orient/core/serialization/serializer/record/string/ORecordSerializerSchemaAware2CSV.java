@@ -43,7 +43,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 	public static final ORecordSerializerSchemaAware2CSV	INSTANCE	= new ORecordSerializerSchemaAware2CSV();
 
 	@Override
-	public ORecordSchemaAware<?> newObject(ODatabaseRecord<?> iDatabase, String iClassName) {
+	public ORecordSchemaAware<?> newObject(ODatabaseRecord iDatabase, String iClassName) {
 		return new ODocument(iDatabase, iClassName);
 	}
 
@@ -67,7 +67,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 		} else
 			iMarshalledRecords.add(identityRecord);
 
-		ODatabaseRecord<?> database = record.getDatabase();
+		ODatabaseRecord database = record.getDatabase();
 
 		final StringBuilder buffer = new StringBuilder();
 
@@ -246,7 +246,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 	}
 
 	@Override
-	protected ORecordInternal<?> fromString(final ODatabaseRecord<?> iDatabase, String iContent, final ORecordInternal<?> iRecord) {
+	protected ORecordInternal<?> fromString(final ODatabaseRecord iDatabase, String iContent, final ORecordInternal<?> iRecord) {
 		iContent = iContent.trim();
 
 		if (iContent.length() == 0)

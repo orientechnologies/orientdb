@@ -45,8 +45,8 @@ public class GEOTest {
 			point.reset();
 			point.setClassName("MapPoint");
 			
-			point.field("x", (double) (52.20472d + i / 10d));
-			point.field("y", (double) (0.14056d + i / 10d));
+			point.field("x", (52.20472d + i / 10d));
+			point.field("y", (0.14056d + i / 10d));
 			
 			point.save();
 		}

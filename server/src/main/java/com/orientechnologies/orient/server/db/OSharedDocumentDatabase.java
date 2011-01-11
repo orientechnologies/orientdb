@@ -29,6 +29,7 @@ public class OSharedDocumentDatabase {
 	private static final ODatabasePoolAbstract<ODatabaseDocumentTx>	dbPool	= new ODatabasePoolAbstract<ODatabaseDocumentTx>(null, 1,
 																																							20) {
 
+																																						@Override
 																																						public ODatabaseDocumentTx createNewResource(
 																																								final String iDatabaseName,
 																																								final String... iAdditionalArgs) {

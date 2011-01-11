@@ -96,6 +96,7 @@ public class OSimpleImmutableEntry<K, V> implements Entry<K, V>, java.io.Seriali
 	 * @return {@code true} if the specified object is equal to this map entry
 	 * @see #hashCode
 	 */
+	@Override
 	public boolean equals(Object o) {
 		if (!(o instanceof Map.Entry))
 			return false;
@@ -120,6 +121,7 @@ public class OSimpleImmutableEntry<K, V> implements Entry<K, V>, java.io.Seriali
 	 * @return the hash code value for this map entry
 	 * @see #equals
 	 */
+	@Override
 	public int hashCode() {
 		return (key == null ? 0 : key.hashCode()) ^ (value == null ? 0 : value.hashCode());
 	}
@@ -130,6 +132,7 @@ public class OSimpleImmutableEntry<K, V> implements Entry<K, V>, java.io.Seriali
 	 * 
 	 * @return a String representation of this map entry
 	 */
+	@Override
 	public String toString() {
 		return key + "=" + value;
 	}

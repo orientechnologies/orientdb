@@ -60,19 +60,18 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 @SuppressWarnings("unchecked")
-public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> extends ODatabaseWrapperAbstract<ODatabaseRaw, REC>
-		implements ODatabaseRecord<REC> {
+public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<ODatabaseRaw> implements ODatabaseRecord {
 
-	private ODictionaryInternal<REC>	dictionary;
-	private OMetadata									metadata;
-	private OUser											user;
-	private static final String				DEF_RECORD_FORMAT	= "csv";
-	private Class<? extends REC>			recordClass;
-	private String										recordFormat;
-	private Set<ORecordHook>					hooks							= new HashSet<ORecordHook>();
-	private boolean										retainRecords			= true;
+	private ODictionaryInternal<ORecordInternal<?>>	dictionary;
+	private OMetadata																metadata;
+	private OUser																		user;
+	private static final String											DEF_RECORD_FORMAT	= "csv";
+	private Class<? extends ORecordInternal<?>>			recordClass;
+	private String																	recordFormat;
+	private Set<ORecordHook>												hooks							= new HashSet<ORecordHook>();
+	private boolean																	retainRecords			= true;
 
-	public ODatabaseRecordAbstract(final String iURL, final Class<? extends REC> iRecordClass) {
+	public ODatabaseRecordAbstract(final String iURL, final Class<? extends ORecordInternal<?>> iRecordClass) {
 		super(new ODatabaseRaw(iURL));
 		underlying.setOwner(this);
 
@@ -100,7 +99,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 
 			recordFormat = DEF_RECORD_FORMAT;
 
-			dictionary = (ODictionaryInternal<REC>) getStorage().createDictionary(this);
+			dictionary = (ODictionaryInternal<ORecordInternal<?>>) getStorage().createDictionary(this);
 			dictionary.load();
 
 			user = getMetadata().getSecurity().getUser(iUserName);
@@ -138,7 +137,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 				createRolesAndUsers();
 			user = getMetadata().getSecurity().getUser(OUser.ADMIN);
 
-			dictionary = (ODictionaryInternal<REC>) getStorage().createDictionary(this);
+			dictionary = (ODictionaryInternal<ORecordInternal<?>>) getStorage().createDictionary(this);
 			dictionary.create();
 		} catch (Exception e) {
 			throw new ODatabaseException("Can't create database", e);
@@ -152,29 +151,31 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		user = null;
 	}
 
-	public REC load(final REC iRecord) {
-		return load(iRecord, null);
+	public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord) {
+		return (RET) load(iRecord, null);
 	}
 
 	/**
 	 * Loads a record using a fetch plan.
 	 */
-	public REC load(final REC iRecord, final String iFetchPlan) {
-		return load(iRecord.getIdentity().getClusterId(), iRecord.getIdentity().getClusterPosition(), iRecord, iFetchPlan);
+	public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord, final String iFetchPlan) {
+		return (RET) load(iRecord.getIdentity().getClusterId(), iRecord.getIdentity().getClusterPosition(), iRecord, iFetchPlan);
 	}
 
-	public REC load(final ORID iRecordId) {
-		return load(iRecordId.getClusterId(), iRecordId.getClusterPosition(), (REC) databaseOwner.newInstance(), null);
+	public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId) {
+		final ORecordInternal<?> rec = databaseOwner.newInstance();
+		return (RET) load(iRecordId.getClusterId(), iRecordId.getClusterPosition(), rec, null);
 	}
 
-	public REC load(final int iClusterId, final long iPosition, final REC iRecord, final String iFetchPlan) {
-		return executeReadRecord(iClusterId, iPosition, iRecord, iFetchPlan);
+	public <RET extends ORecordInternal<?>> RET load(final int iClusterId, final long iPosition, final ORecordInternal<?> iRecord,
+			final String iFetchPlan) {
+		return (RET) executeReadRecord(iClusterId, iPosition, iRecord, iFetchPlan);
 	}
 
 	/**
 	 * Update the record without checking the version.
 	 */
-	public ODatabaseRecord<REC> save(final REC iContent) {
+	public ODatabaseRecord save(final ORecordInternal<?> iContent) {
 		executeSaveRecord(iContent, null, iContent.getVersion(), iContent.getRecordType());
 		return this;
 	}
@@ -182,7 +183,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 	/**
 	 * Update the record in the requested cluster without checking the version.
 	 */
-	public ODatabaseRecord<REC> save(final REC iContent, final String iClusterName) {
+	public ODatabaseRecord save(final ORecordInternal<?> iContent, final String iClusterName) {
 		executeSaveRecord(iContent, iClusterName, iContent.getVersion(), iContent.getRecordType());
 		return this;
 	}
@@ -190,17 +191,25 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 	/**
 	 * Delete the record without checking the version.
 	 */
-	public ODatabaseRecord<REC> delete(final REC iRecord) {
+	public ODatabaseRecord delete(final ORecordInternal<?> iRecord) {
 		executeDeleteRecord(iRecord, -1);
 		return this;
 	}
 
-	public ORecordIteratorCluster<REC> browseCluster(String iClusterName) {
+	public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(final String iClusterName, final Class<REC> iClass) {
 		final int clusterId = getClusterIdByName(iClusterName);
 
 		checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName, clusterId);
 
 		return new ORecordIteratorCluster<REC>(this, this, clusterId);
+	}
+
+	public ORecordIteratorCluster<?> browseCluster(final String iClusterName) {
+		final int clusterId = getClusterIdByName(iClusterName);
+
+		checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName, clusterId);
+
+		return new ORecordIteratorCluster<ORecordInternal<?>>(this, this, clusterId);
 	}
 
 	public OCommandRequest command(final OCommandRequest iCommand) {
@@ -226,19 +235,19 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		return (RET) iCommand.execute(iArgs);
 	}
 
-	public Class<? extends REC> getRecordType() {
+	public Class<? extends ORecordInternal<?>> getRecordType() {
 		return recordClass;
 	}
 
-	public REC newInstance() {
+	public <RET extends Object> RET newInstance() {
 		if (recordClass == null)
 			throw new OConfigurationException("Can't create record since no record class was specified");
 
-		return (REC) ORecordFactory.instance().newInstance(this, recordClass);
+		return (RET) ORecordFactory.instance().newInstance(this, recordClass);
 	}
 
-	public REC newInstance(final Class<REC> iType) {
-		return (REC) ORecordFactory.instance().newInstance(this, iType);
+	public ORecordInternal<?> newInstance(final Class<ORecordInternal<?>> iType) {
+		return (ORecordInternal<?>) ORecordFactory.instance().newInstance(this, iType);
 	}
 
 	@Override
@@ -271,15 +280,14 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		return metadata;
 	}
 
-	public ODictionary<REC> getDictionary() {
+	public ODictionary<ORecordInternal<?>> getDictionary() {
 		checkOpeness();
 		return dictionary;
 	}
 
-	public <DB extends ODatabaseRecord<?>> DB checkSecurity(final String iResource, final int iOperation) {
+	public <DB extends ODatabaseRecord> DB checkSecurity(final String iResource, final int iOperation) {
 		if (OLogManager.instance().isDebugEnabled())
-			OLogManager.instance().debug(this, "[checkSecurity] Check permissions for resource '%s', operation '%s'", iResource,
-					iOperation);
+			OLogManager.instance().debug(this, "[checkSecurity] Check permissions for resource '%s', operation '%s'", iResource, iOperation);
 
 		if (user != null) {
 			try {
@@ -287,9 +295,8 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			} catch (OSecurityAccessException e) {
 
 				if (OLogManager.instance().isDebugEnabled())
-					OLogManager.instance().debug(this,
-							"[checkSecurity] User '%s' tried to access to the reserved resource '%s', operation '%s'", getUser(), iResource,
-							iOperation);
+					OLogManager.instance().debug(this, "[checkSecurity] User '%s' tried to access to the reserved resource '%s', operation '%s'", getUser(),
+							iResource, iOperation);
 
 				throw e;
 			}
@@ -297,8 +304,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		return (DB) this;
 	}
 
-	public <DB extends ODatabaseRecord<?>> DB checkSecurity(final String iResourceGeneric, final int iOperation,
-			final Object... iResourcesSpecific) {
+	public <DB extends ODatabaseRecord> DB checkSecurity(final String iResourceGeneric, final int iOperation, final Object... iResourcesSpecific) {
 
 		// if (OLogManager.instance().isDebugEnabled())
 		// OLogManager.instance().debug(this, "[checkSecurity] Check permissions for resource '%s', target(s) '%s', operation '%s'",
@@ -334,8 +340,8 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 			} catch (OSecurityAccessException e) {
 				if (OLogManager.instance().isDebugEnabled())
 					OLogManager.instance().debug(this,
-							"[checkSecurity] User '%s' tried to access to the reserved resource '%s', target(s) '%s', operation '%s'", getUser(),
-							iResourceGeneric, Arrays.toString(iResourcesSpecific), iOperation);
+							"[checkSecurity] User '%s' tried to access to the reserved resource '%s', target(s) '%s', operation '%s'", getUser(), iResourceGeneric,
+							Arrays.toString(iResourcesSpecific), iOperation);
 
 				throw e;
 			}
@@ -343,7 +349,8 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		return (DB) this;
 	}
 
-	public REC executeReadRecord(final int iClusterId, final long iPosition, REC iRecord, final String iFetchPlan) {
+	public <RET extends ORecordInternal<?>> RET executeReadRecord(final int iClusterId, final long iPosition, ORecordInternal<?> iRecord,
+			final String iFetchPlan) {
 		checkOpeness();
 
 		try {
@@ -357,13 +364,13 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 
 			if (iRecord.getRecordType() != recordBuffer.recordType)
 				// NO SAME RECORD TYPE: CAN'T REUSE OLD ONE BUT CREATE A NEW ONE FOR IT
-				iRecord = (REC) ORecordFactory.newInstance(recordBuffer.recordType);
+				iRecord = ORecordFactory.newInstance(recordBuffer.recordType);
 
 			iRecord.unsetDirty();
 
-			ODatabaseRecord<?> currDb = iRecord.getDatabase();
+			ODatabaseRecord currDb = iRecord.getDatabase();
 			if (currDb == null)
-				currDb = (ODatabaseRecord<?>) databaseOwner;
+				currDb = (ODatabaseRecord) databaseOwner;
 
 			iRecord.fill(currDb, iClusterId, iPosition, recordBuffer.version);
 			iRecord.fromStream(recordBuffer.buffer);
@@ -371,7 +378,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 
 			callbackHooks(TYPE.AFTER_READ, iRecord);
 
-			return iRecord;
+			return (RET) iRecord;
 		} catch (ODatabaseException e) {
 			// RE-THROW THE EXCEPTION
 			throw e;
@@ -384,7 +391,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		return null;
 	}
 
-	public void executeSaveRecord(final REC iRecord, final String iClusterName, final int iVersion, final byte iRecordType) {
+	public void executeSaveRecord(final ORecordInternal<?> iRecord, final String iClusterName, final int iVersion, final byte iRecordType) {
 		checkOpeness();
 
 		if (!iRecord.isDirty())
@@ -430,8 +437,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 					// RECORD SAVED DURING PREVIOUS STREAMING PHASE: THIS HAPPENS FOR CIRCULAR REFERENCED RECORDS
 					if (underlying.isUseCache())
 						// ADD/UPDATE IT IN CACHE
-						getCache().pushRecord(iRecord.getIdentity().toString(),
-								new ORawBuffer(iRecord.toStream(), iRecord.getVersion(), iRecordType));
+						getCache().pushRecord(iRecord.getIdentity().toString(), new ORawBuffer(iRecord.toStream(), iRecord.getVersion(), iRecordType));
 					return;
 				}
 			}
@@ -468,7 +474,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		}
 	}
 
-	public void executeDeleteRecord(final REC iRecord, final int iVersion) {
+	public void executeDeleteRecord(final ORecordInternal<?> iRecord, final int iVersion) {
 		checkOpeness();
 		final ORecordId rid = (ORecordId) iRecord.getIdentity();
 
@@ -510,7 +516,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 	}
 
 	@Override
-	public ODatabaseComplex<REC> setDatabaseOwner(ODatabaseComplex<?> iOwner) {
+	public ODatabaseComplex<ORecordInternal<?>> setDatabaseOwner(ODatabaseComplex<?> iOwner) {
 		databaseOwner = iOwner;
 		return this;
 	}
@@ -519,7 +525,7 @@ public abstract class ODatabaseRecordAbstract<REC extends ORecordInternal<?>> ex
 		return retainRecords;
 	}
 
-	public ODatabaseRecord<?> setRetainRecords(boolean retainRecords) {
+	public ODatabaseRecord setRetainRecords(boolean retainRecords) {
 		this.retainRecords = retainRecords;
 		return this;
 	}

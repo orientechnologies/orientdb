@@ -38,17 +38,17 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 public class ORecordSerializerDocument2Binary implements ORecordSerializer {
 	public static final String	NAME	= "ORecordDocument2binary";
 
-	protected ORecordSchemaAware<?> newObject(ODatabaseRecord<?> iDatabase, String iClassName) throws InstantiationException,
+	protected ORecordSchemaAware<?> newObject(ODatabaseRecord iDatabase, String iClassName) throws InstantiationException,
 			IllegalAccessException {
 		return new ODocument(iDatabase);
 	}
 
-	public ORecordInternal<?> fromStream(ODatabaseRecord<?> iDatabase, byte[] iSource) {
+	public ORecordInternal<?> fromStream(ODatabaseRecord iDatabase, byte[] iSource) {
 		// TODO: HANDLE FACTORIES
 		return fromStream(iDatabase, iSource, null);
 	}
 
-	public ORecordInternal<?> fromStream(ODatabaseRecord<?> iDatabase, byte[] iSource, ORecordInternal<?> iRecord) {
+	public ORecordInternal<?> fromStream(ODatabaseRecord iDatabase, byte[] iSource, ORecordInternal<?> iRecord) {
 		ODocument record = (ODocument) iRecord;
 		ODatabaseDocument database = (ODatabaseDocument) iDatabase;
 
@@ -145,7 +145,7 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
 		return iRecord;
 	}
 
-	public byte[] toStream(ODatabaseRecord<?> iDatabase, ORecordInternal<?> iRecord) {
+	public byte[] toStream(ODatabaseRecord iDatabase, ORecordInternal<?> iRecord) {
 		ODocument record = (ODocument) iRecord;
 
 		ByteArrayOutputStream stream = null;

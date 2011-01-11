@@ -94,6 +94,7 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 		holeSegment.close();
 	}
 
+	@Override
 	public void delete() throws IOException {
 		super.truncate();
 		holeSegment.truncate();

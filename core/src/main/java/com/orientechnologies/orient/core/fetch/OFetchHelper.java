@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -102,10 +103,14 @@ public class OFetchHelper {
 				Object userObject;
 				if (fieldValue instanceof ODocument) {
 					final ODocument linked = (ODocument) fieldValue;
-					userObject = iListener.fetchLinked(iRootRecord, iUserObject, fieldName, linked);
-					if (userObject != null)
-						// GO RECURSIVELY
-						fetch(linked, userObject, iFetchPlan, fieldName, currentLevel, iMaxFetch, iListener);
+					try {
+						userObject = iListener.fetchLinked(iRootRecord, iUserObject, fieldName, linked);
+						if (userObject != null)
+							// GO RECURSIVELY
+							fetch(linked, userObject, iFetchPlan, fieldName, currentLevel, iMaxFetch, iListener);
+					} catch (ORecordNotFoundException e) {
+						OLogManager.instance().error(null, "Linked record %s was not found", linked);
+					}
 
 				} else if (fieldValue instanceof Collection<?>) {
 					final Collection<ODocument> linked = (Collection<ODocument>) fieldValue;

@@ -44,6 +44,7 @@ public class ODistributedServerRecordHook implements ORecordHook, ODatabaseLifec
 		Orient.instance().addDbLifecycleListener(this);
 	}
 
+	@Override
 	public boolean onTrigger(final TYPE iType, final ORecord<?> iRecord) {
 		// if (!manager.isDistributedConfiguration())
 		// return;
@@ -65,17 +66,17 @@ public class ODistributedServerRecordHook implements ORecordHook, ODatabaseLifec
 				break;
 
 			case AFTER_CREATE:
-				manager.distributeRequest(new OTransactionEntry<ORecordInternal<?>>((ORecordInternal<?>) iRecord,
+				manager.distributeRequest(new OTransactionEntry((ORecordInternal<?>) iRecord,
 						OTransactionEntry.CREATED, null));
 				break;
 
 			case AFTER_UPDATE:
-				manager.distributeRequest(new OTransactionEntry<ORecordInternal<?>>((ORecordInternal<?>) iRecord,
+				manager.distributeRequest(new OTransactionEntry((ORecordInternal<?>) iRecord,
 						OTransactionEntry.UPDATED, null));
 				break;
 
 			case AFTER_DELETE:
-				manager.distributeRequest(new OTransactionEntry<ORecordInternal<?>>((ORecordInternal<?>) iRecord,
+				manager.distributeRequest(new OTransactionEntry((ORecordInternal<?>) iRecord,
 						OTransactionEntry.DELETED, null));
 				break;
 			}
@@ -88,6 +89,7 @@ public class ODistributedServerRecordHook implements ORecordHook, ODatabaseLifec
 	/**
 	 * Install the itself as trigger to catch all the events against records
 	 */
+	@Override
 	public void onOpen(final ODatabase iDatabase) {
 		((ODatabaseComplex<?>) iDatabase).registerHook(this);
 	}
@@ -95,6 +97,7 @@ public class ODistributedServerRecordHook implements ORecordHook, ODatabaseLifec
 	/**
 	 * Remove itself as trigger to catch all the events against records
 	 */
+	@Override
 	public void onClose(final ODatabase iDatabase) {
 		((ODatabaseComplex<?>) iDatabase).unregisterHook(this);
 	}

@@ -27,19 +27,19 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-public class OTransactionOptimisticProxy extends OTransactionAbstract<OTransactionRecordProxy> {
+public class OTransactionOptimisticProxy extends OTransactionAbstract {
 	private int														size;
 	private OChannelBinary								channel;
 	private List<OTransactionEntryProxy>	entries					= new ArrayList<OTransactionEntryProxy>();
 	private boolean												exhausted				= false;
 	private Map<ORecordId, ORecord<?>>		updatedRecords	= new HashMap<ORecordId, ORecord<?>>();
 
-	public OTransactionOptimisticProxy(final ODatabaseRecordTx<OTransactionRecordProxy> iDatabase, final OChannelBinary iChannel)
-			throws IOException {
+	public OTransactionOptimisticProxy(final ODatabaseRecordTx iDatabase, final OChannelBinary iChannel) throws IOException {
 		super(iDatabase, -1);
 
 		channel = iChannel;
@@ -47,14 +47,17 @@ public class OTransactionOptimisticProxy extends OTransactionAbstract<OTransacti
 		size = iChannel.readInt();
 	}
 
-	public Iterable<? extends OTransactionEntry<OTransactionRecordProxy>> getEntries() {
+	@Override
+	public Iterable<? extends OTransactionEntry> getEntries() {
 
-		return new Iterable<OTransactionEntryProxy>() {
+		return new Iterable<OTransactionEntry>() {
 
-			public Iterator<OTransactionEntryProxy> iterator() {
-				return new Iterator<OTransactionEntryProxy>() {
+			@Override
+			public Iterator<OTransactionEntry> iterator() {
+				return new Iterator<OTransactionEntry>() {
 					private int	current	= 1;
 
+					@Override
 					public boolean hasNext() {
 						if (exhausted)
 							return false;
@@ -63,6 +66,7 @@ public class OTransactionOptimisticProxy extends OTransactionAbstract<OTransacti
 						return !exhausted;
 					}
 
+					@Override
 					public OTransactionEntryProxy next() {
 						try {
 							OTransactionEntryProxy entry = new OTransactionEntryProxy();
@@ -72,19 +76,19 @@ public class OTransactionOptimisticProxy extends OTransactionAbstract<OTransacti
 
 								entry.status = channel.readByte();
 								rid.clusterId = channel.readShort();
-								entry.getRecord().recordType = channel.readByte();
+								((OTransactionRecordProxy) entry.getRecord()).setRecordType(channel.readByte());
 
 								switch (entry.status) {
 								case OTransactionEntry.CREATED:
 									rid.clusterPosition = -1;
 									entry.clusterName = channel.readString();
-									entry.getRecord().stream = channel.readBytes();
+									entry.getRecord().fromStream(channel.readBytes());
 									break;
 
 								case OTransactionEntry.UPDATED:
 									rid.clusterPosition = channel.readLong();
-									entry.getRecord().version = channel.readInt();
-									entry.getRecord().stream = channel.readBytes();
+									entry.getRecord().setVersion(channel.readInt());
+									entry.getRecord().fromStream(channel.readBytes());
 
 									// SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW VERSIONS TO SEND BACK TO THE REQUESTER
 									updatedRecords.put(rid, entry.getRecord());
@@ -92,7 +96,7 @@ public class OTransactionOptimisticProxy extends OTransactionAbstract<OTransacti
 
 								case OTransactionEntry.DELETED:
 									rid.clusterPosition = channel.readLong();
-									entry.getRecord().version = channel.readInt();
+									entry.getRecord().setVersion(channel.readInt());
 									break;
 
 								default:
@@ -112,6 +116,7 @@ public class OTransactionOptimisticProxy extends OTransactionAbstract<OTransacti
 						}
 					}
 
+					@Override
 					public void remove() {
 						throw new UnsupportedOperationException("remove");
 					}
@@ -121,48 +126,58 @@ public class OTransactionOptimisticProxy extends OTransactionAbstract<OTransacti
 
 	}
 
+	@Override
 	public int size() {
 		return size;
 	}
 
+	@Override
 	public void begin() {
 		throw new UnsupportedOperationException("begin");
 	}
 
+	@Override
 	public void commit() {
 		throw new UnsupportedOperationException("commit");
 	}
 
+	@Override
 	public void rollback() {
 		throw new UnsupportedOperationException("rollback");
 	}
 
-	public long createRecord(final OTransactionRecordProxy iContent) {
+	public long createRecord(final ORecordInternal<?> iContent) {
 		throw new UnsupportedOperationException("createRecord");
 	}
 
-	public void delete(final OTransactionRecordProxy iRecord) {
+	@Override
+	public void delete(final ORecordInternal<?> iRecord) {
 		throw new UnsupportedOperationException("delete");
 	}
 
-	public OTransactionRecordProxy load(final int iClusterId, final long iPosition, final OTransactionRecordProxy iRecord,
+	@Override
+	public ORecordInternal<?> load(final int iClusterId, final long iPosition, final ORecordInternal<?> iRecord,
 			final String iFetchPlan) {
 		throw new UnsupportedOperationException("load");
 	}
 
-	public void save(final OTransactionRecordProxy iContent, final String iClusterName) {
+	@Override
+	public void save(final ORecordInternal<?> iContent, final String iClusterName) {
 		throw new UnsupportedOperationException("save");
 	}
 
+	@Override
 	public void clearEntries() {
 		entries.clear();
 	}
 
-	public List<OTransactionEntry<?>> getEntriesByClass(String iClassName) {
+	@Override
+	public List<OTransactionEntry> getEntriesByClass(String iClassName) {
 		throw new UnsupportedOperationException("getRecordsByClass");
 	}
 
-	public List<OTransactionEntry<?>> getEntriesByClusterIds(int[] iIds) {
+	@Override
+	public List<OTransactionEntry> getEntriesByClusterIds(int[] iIds) {
 		throw new UnsupportedOperationException("getRecordsByClusterIds");
 	}
 

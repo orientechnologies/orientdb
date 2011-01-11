@@ -58,6 +58,7 @@ public class OSQLFunctionSysdate extends OSQLFunctionAbstract {
 		return "Syntax error: sysdate([<format>])";
 	}
 
+	@Override
 	public Object getResult() {
 		format = null;
 		return null;

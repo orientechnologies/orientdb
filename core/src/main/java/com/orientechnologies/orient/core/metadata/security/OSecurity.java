@@ -28,9 +28,9 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
  * 
  */
 public class OSecurity {
-	private ODatabaseRecord<?>	database;
+	private ODatabaseRecord	database;
 
-	public OSecurity(final ODatabaseRecord<?> iDatabaseOwner) {
+	public OSecurity(final ODatabaseRecord iDatabaseOwner) {
 		database = iDatabaseOwner;
 	}
 

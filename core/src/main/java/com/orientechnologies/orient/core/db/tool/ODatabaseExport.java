@@ -48,7 +48,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 	private OJSONWriter	writer;
 	private long				recordExported;
 
-	public ODatabaseExport(final ODatabaseRecord<?> iDatabase, final String iFileName, final OCommandOutputListener iListener)
+	public ODatabaseExport(final ODatabaseRecord iDatabase, final String iFileName, final OCommandOutputListener iListener)
 			throws IOException {
 		super(iDatabase, iFileName, iListener);
 
@@ -64,8 +64,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 		iDatabase.declareIntent(new OIntentMassiveRead());
 	}
 
-	public ODatabaseExport(final ODatabaseRecord<?> iDatabase, final OutputStream iOutputStream,
-			final OCommandOutputListener iListener) throws IOException {
+	public ODatabaseExport(final ODatabaseRecord iDatabase, final OutputStream iOutputStream, final OCommandOutputListener iListener)
+			throws IOException {
 		super(iDatabase, "streaming", iListener);
 
 		writer = new OJSONWriter(new OutputStreamWriter(iOutputStream));
@@ -220,16 +220,15 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 		listener.onMessage("OK");
 	}
 
-	@SuppressWarnings("unchecked")
 	private void exportDictionary() throws IOException {
 		listener.onMessage("\nExporting dictionary...");
 
 		long tot = 0;
 		writer.beginObject(1, true, "dictionary");
-		ODictionary<ODocument> d = (ODictionary<ODocument>) database.getDictionary();
+		ODictionary<ORecordInternal<?>> d = database.getDictionary();
 		if (d != null) {
-			Entry<String, ODocument> entry;
-			for (Iterator<Entry<String, ODocument>> iterator = d.iterator(); iterator.hasNext();) {
+			Entry<String, ORecordInternal<?>> entry;
+			for (Iterator<Entry<String, ORecordInternal<?>>> iterator = d.iterator(); iterator.hasNext();) {
 				entry = iterator.next();
 				writer.writeAttribute(2, true, "key", entry.getKey());
 				writer.writeAttribute(0, false, "value", OJSONWriter.writeValue(entry.getValue()));

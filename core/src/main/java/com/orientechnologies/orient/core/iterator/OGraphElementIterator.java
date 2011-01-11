@@ -41,14 +41,14 @@ public abstract class OGraphElementIterator<T extends OGraphElement> implements 
 	public OGraphElementIterator(final ODatabaseGraphTx iDatabase, final String iClassName, final boolean iPolymorphic) {
 		database = iDatabase;
 		className = iClassName;
-		underlying = new ORecordIteratorClass<ODocument>((ODatabaseRecord<ODocument>) iDatabase.getUnderlying(),
-				(ODatabaseRecordAbstract<ODocument>) ((ODatabaseDocumentTx) iDatabase.getUnderlying()).getUnderlying(), iClassName,iPolymorphic);
+		underlying = new ORecordIteratorClass<ODocument>((ODatabaseRecord) iDatabase.getUnderlying(),
+				(ODatabaseRecordAbstract) ((ODatabaseDocumentTx) iDatabase.getUnderlying()).getUnderlying(), iClassName, iPolymorphic);
 
 		setReuseSameObject(false);
 		underlying.setReuseSameRecord(false);
 	}
 
-	public OGraphElementIterator(final ODatabaseGraphTx iDatabase, ORecordIteratorClass<ODocument> iUnderlying) {
+	public OGraphElementIterator(final ODatabaseGraphTx iDatabase, final ORecordIteratorClass<ODocument> iUnderlying) {
 		database = iDatabase;
 		underlying = iUnderlying;
 	}

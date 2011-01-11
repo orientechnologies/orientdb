@@ -86,7 +86,7 @@ public class OSQLEngine {
 			aggregationFunctions.remove(iName.toUpperCase());
 	}
 
-	public OSQLFilter parseWhereCondition(final ODatabaseRecord<?> iDatabase, final String iText) {
+	public OSQLFilter parseWhereCondition(final ODatabaseRecord iDatabase, final String iText) {
 		return new OSQLFilter(iDatabase, iText);
 	}
 

@@ -112,7 +112,7 @@ public class OServerShutdownMain {
 			throw new ONetworkProtocolException("Can't connect to server host '" + networkAddress + "', ports: "
 					+ Arrays.toString(networkPort));
 
-		channel.writeByte((byte) OChannelBinaryProtocol.REQUEST_SHUTDOWN);
+		channel.writeByte(OChannelBinaryProtocol.REQUEST_SHUTDOWN);
 		channel.writeInt(0);
 		channel.writeString(OServerConfiguration.SRV_ROOT_ADMIN);
 		channel.writeString(rootPassword);

@@ -66,6 +66,7 @@ public class OGraphEdge extends OGraphElement {
 		super(iDatabase, iDocument);
 	}
 
+	@Override
 	@OAfterDeserialization
 	public void fromStream(final ODocument iDocument) {
 		super.fromStream(iDocument);
@@ -94,6 +95,7 @@ public class OGraphEdge extends OGraphElement {
 		out = null;
 	}
 
+	@Override
 	public void delete() {
 		delete(database, document);
 		document = null;

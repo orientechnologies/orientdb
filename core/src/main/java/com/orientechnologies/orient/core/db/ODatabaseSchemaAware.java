@@ -22,15 +22,12 @@ package com.orientechnologies.orient.core.db;
  * 
  */
 public interface ODatabaseSchemaAware<T extends Object> extends ODatabaseComplex<T> {
-
 	/**
-	 * Creates a new entity of the specified class.
+	 * Creates a new entity instance.
 	 * 
-	 * @param iClassName
-	 *          Class name where to originate the instance
-	 * @return New instance
+	 * @return The new instance.
 	 */
-	public T newInstance(final String iClassName);
+	public <RET extends Object> RET newInstance(String iClassName);
 
 	/**
 	 * Counts the entities contained in the specified class.

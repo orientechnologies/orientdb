@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  * 
  * @author Luca Garulli
  */
-public interface ODatabaseRecord<REC extends ORecordInternal<?>> extends ODatabaseComplex<REC> {
+public interface ODatabaseRecord extends ODatabaseComplex<ORecordInternal<?>> {
 
 	/**
 	 * Browses all the records of the specified cluster.
@@ -33,7 +33,18 @@ public interface ODatabaseRecord<REC extends ORecordInternal<?>> extends ODataba
 	 *          Cluster name to iterate
 	 * @return Iterator of ODocument instances
 	 */
-	public ORecordIteratorCluster<REC> browseCluster(String iClusterName);
+	public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(String iClusterName);
+
+	/**
+	 * Browses all the records of the specified cluster of the passed record type.
+	 * 
+	 * @param iClusterName
+	 *          Cluster name to iterate
+	 * @param iRecordClass
+	 *          The record class expected
+	 * @return Iterator of ODocument instances
+	 */
+	public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass);
 
 	/**
 	 * Loads a record using a fetch plan.
@@ -44,12 +55,12 @@ public interface ODatabaseRecord<REC extends ORecordInternal<?>> extends ODataba
 	 *          Fetch plan used
 	 * @return The record received
 	 */
-	public REC load(REC iDocument, String iFetchPlan);
+	public <RET extends ORecordInternal<?>> RET load(ORecordInternal<?> iDocument, String iFetchPlan);
 
 	/**
 	 * Returns the record type class.
 	 */
-	public Class<? extends REC> getRecordType();
+	public Class<? extends ORecordInternal<?>> getRecordType();
 
 	/**
 	 * Returns true if current configuration retains objects, otherwise false
@@ -68,7 +79,7 @@ public interface ODatabaseRecord<REC extends ORecordInternal<?>> extends ODataba
 	 *          True to enable, false to disable it.
 	 * @see #isRetainRecords()
 	 */
-	public ODatabaseRecord<?> setRetainRecords(boolean iValue);
+	public ODatabaseRecord setRetainRecords(boolean iValue);
 
 	/**
 	 * Checks if the operation on a resource is allowed for the current user.
@@ -79,7 +90,7 @@ public interface ODatabaseRecord<REC extends ORecordInternal<?>> extends ODataba
 	 *          Operation to execute against the resource
 	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
-	public <DB extends ODatabaseRecord<?>> DB checkSecurity(String iResource, int iOperation);
+	public <DB extends ODatabaseRecord> DB checkSecurity(String iResource, int iOperation);
 
 	/**
 	 * Checks if the operation on a resource is allowed for the current user. The check is made in two steps:
@@ -98,5 +109,5 @@ public interface ODatabaseRecord<REC extends ORecordInternal<?>> extends ODataba
 	 *          Target resources as an array of Objects, i.e.: ["employee", 2] to specify cluster name and id.
 	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
-	public <DB extends ODatabaseRecord<?>> DB checkSecurity(String iResourceGeneric, int iOperation, Object... iResourcesSpecific);
+	public <DB extends ODatabaseRecord> DB checkSecurity(String iResourceGeneric, int iOperation, Object... iResourcesSpecific);
 }

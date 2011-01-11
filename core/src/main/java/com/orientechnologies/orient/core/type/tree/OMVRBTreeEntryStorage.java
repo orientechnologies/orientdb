@@ -89,6 +89,7 @@ public class OMVRBTreeEntryStorage<K, V> extends OMVRBTreeEntryPersistent<K, V> 
 	 * 
 	 * @throws IOException
 	 */
+	@Override
 	public OMVRBTreeEntryStorage<K, V> delete() throws IOException {
 		// EARLY LOAD LEFT AND DELETE IT RECURSIVELY
 		if (getLeft() != null)
@@ -109,10 +110,12 @@ public class OMVRBTreeEntryStorage<K, V> extends OMVRBTreeEntryPersistent<K, V> 
 		return this;
 	}
 
+	@Override
 	protected Object keyFromStream(final int iIndex) throws IOException {
 		return pTree.keySerializer.fromStream(null, serializedKeys[iIndex]);
 	}
 
+	@Override
 	protected Object valueFromStream(final int iIndex) throws IOException {
 		return pTree.valueSerializer.fromStream(null, serializedValues[iIndex]);
 	}

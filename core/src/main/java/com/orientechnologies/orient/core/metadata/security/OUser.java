@@ -50,7 +50,7 @@ public class OUser extends ODocumentWrapper {
 	public OUser() {
 	}
 
-	public OUser(final ODatabaseRecord<?> iDatabase, final String iName) {
+	public OUser(final ODatabaseRecord iDatabase, final String iName) {
 		super(iDatabase, "OUser");
 		document.field("name", iName);
 		setAccountStatus(STATUSES.ACTIVE);
@@ -63,6 +63,7 @@ public class OUser extends ODocumentWrapper {
 		fromStream(iSource);
 	}
 
+	@Override
 	@OAfterDeserialization
 	public void fromStream(final ODocument iSource) {
 		if (document != null)
@@ -184,6 +185,7 @@ public class OUser extends ODocumentWrapper {
 		return this;
 	}
 
+	@Override
 	@SuppressWarnings("unchecked")
 	public OUser save() {
 		document.save(OUser.class.getSimpleName());

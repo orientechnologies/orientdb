@@ -44,19 +44,19 @@ public class ORecordColumn extends ORecordAbstract<String> implements ORecordStr
 		setup();
 	}
 
-	public ORecordColumn(ODatabaseRecord<?> iDatabase) {
+	public ORecordColumn(ODatabaseRecord iDatabase) {
 		super(iDatabase);
 		setup();
 	}
 
-	public ORecordColumn(ODatabaseRecord<?> iDatabase, byte[] iSource) {
+	public ORecordColumn(ODatabaseRecord iDatabase, byte[] iSource) {
 		super(iDatabase, iSource);
 		setup();
 
 		extractValues(OBinaryProtocol.bytes2string(iSource));
 	}
 
-	public ORecordColumn(ODatabaseRecord<?> iDatabase, ORID iRID) {
+	public ORecordColumn(ODatabaseRecord iDatabase, ORID iRID) {
 		this(iDatabase);
 		_recordId = (ORecordId) iRID;
 	}

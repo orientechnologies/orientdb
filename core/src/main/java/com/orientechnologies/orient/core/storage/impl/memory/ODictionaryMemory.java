@@ -18,16 +18,18 @@ package com.orientechnologies.orient.core.storage.impl.memory;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionaryInternal;
 import com.orientechnologies.orient.core.dictionary.ODictionaryIterator;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
-@SuppressWarnings("serial")
-public class ODictionaryMemory<T extends Object> extends HashMap<String, T> implements ODictionaryInternal<T> {
+@SuppressWarnings("unchecked")
+public class ODictionaryMemory<T extends Object> implements ODictionaryInternal<T> {
+	private HashMap<String, T>	underlying	= new HashMap<String, T>();
 
-	public ODictionaryMemory(final ODatabaseRecord<?> iDatabase) {
+	public ODictionaryMemory(final ODatabaseRecord iDatabase) {
 	}
 
 	public void create() {
@@ -36,16 +38,40 @@ public class ODictionaryMemory<T extends Object> extends HashMap<String, T> impl
 	public void load() {
 	}
 
-	public T get(final Object iKey, final String iFetchPlan) {
-		return get(iKey);
+	public <RET extends Object> RET get(final Object iKey) {
+		return (RET) underlying.get(iKey);
+	}
+
+	public <RET extends Object> RET get(final Object iKey, final String iFetchPlan) {
+		return (RET) underlying.get(iKey);
 	}
 
 	public Iterator<Entry<String, T>> iterator() {
-		return new ODictionaryIterator<T>(this);
+		return new ODictionaryIterator<T>(underlying);
 	}
 
-	@SuppressWarnings("unchecked")
 	public ORecordInternal<?> putRecord(final String iKey, final ORecordInternal<?> iValue) {
-		return (ORecordInternal<?>) put(iKey, (T) iValue);
+		return (ORecordInternal<?>) underlying.put(iKey, (T) iValue);
 	}
+
+	public <RET extends Object> RET put(final String iKey, final Object iValue) {
+		return (RET) underlying.put(iKey, (T) iValue);
+	}
+
+	public boolean containsKey(Object iKey) {
+		return underlying.containsKey(iKey);
+	}
+
+	public <RET extends Object> RET remove(final Object iKey) {
+		return (RET) underlying.remove(iKey);
+	}
+
+	public int size() {
+		return underlying.size();
+	}
+
+	public Set<String> keySet() {
+		return underlying.keySet();
+	}
+
 }

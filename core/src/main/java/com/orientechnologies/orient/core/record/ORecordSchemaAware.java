@@ -48,5 +48,5 @@ public interface ORecordSchemaAware<T> extends ORecordInternal<T> {
 
   public void validate() throws OValidationException;
 
-  public ORecordSchemaAware<T> fill(ODatabaseRecord<?> iDatabase, int iClassId, int iClusterId, long iPosition, int iVersion);
+  public ORecordSchemaAware<T> fill(ODatabaseRecord iDatabase, int iClassId, int iClusterId, long iPosition, int iVersion);
 }

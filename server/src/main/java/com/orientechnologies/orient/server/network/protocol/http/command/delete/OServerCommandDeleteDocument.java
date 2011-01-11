@@ -26,6 +26,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 public class OServerCommandDeleteDocument extends OServerCommandDocumentAbstract {
 	private static final String[]	NAMES	= { "DELETE|document/*" };
 
+	@Override
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		ODatabaseDocumentTx db = null;
 
@@ -55,6 +56,7 @@ public class OServerCommandDeleteDocument extends OServerCommandDocumentAbstract
 		}
 	}
 
+	@Override
 	public String[] getNames() {
 		return NAMES;
 	}

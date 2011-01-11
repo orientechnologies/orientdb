@@ -33,20 +33,20 @@ import com.orientechnologies.orient.core.tx.OTransactionEntry;
  *          Record Type
  */
 public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements Iterator<REC>, Iterable<REC> {
-	protected final ODatabaseRecord<REC>					database;
-	protected final ODatabaseRecordAbstract<REC>	lowLevelDatabase;
+	protected final ODatabaseRecord					database;
+	protected final ODatabaseRecordAbstract	lowLevelDatabase;
 
-	protected boolean															liveUpdated							= false;
-	protected long																limit										= -1;
-	protected long																browsedRecords					= 0;
-	protected long																currentClusterPosition;
-	protected String															fetchPlan;
-	private REC																		reusedRecord						= null;	// DEFAULT = NOT REUSE IT
-	protected Boolean															directionForward;
-	protected List<OTransactionEntry<?>>					txEntries;
-	protected int																	currentTxEntryPosition	= -1;
+	protected boolean												liveUpdated							= false;
+	protected long													limit										= -1;
+	protected long													browsedRecords					= 0;
+	protected long													currentClusterPosition;
+	protected String												fetchPlan;
+	private ORecordInternal<?>							reusedRecord						= null;	// DEFAULT = NOT REUSE IT
+	protected Boolean												directionForward;
+	protected List<OTransactionEntry>				txEntries;
+	protected int														currentTxEntryPosition	= -1;
 
-	public ORecordIterator(final ODatabaseRecord<REC> iDatabase, final ODatabaseRecordAbstract<REC> iLowLevelDatabase) {
+	public ORecordIterator(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase) {
 		database = iDatabase;
 		lowLevelDatabase = iLowLevelDatabase;
 
@@ -90,8 +90,8 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 	 * @param reuseSameRecord
 	 * @return @see #isReuseSameRecord()
 	 */
-	public ORecordIterator<REC> setReuseSameRecord(boolean reuseSameRecord) {
-		reusedRecord = reuseSameRecord ? database.newInstance() : null;
+	public ORecordIterator<REC> setReuseSameRecord(final boolean reuseSameRecord) {
+		reusedRecord = (ORecordInternal<?>) (reuseSameRecord ? database.newInstance() : null);
 		return this;
 	}
 
@@ -100,8 +100,8 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 	 * 
 	 * @return
 	 */
-	protected REC getRecord() {
-		final REC record;
+	protected ORecordInternal<?> getRecord() {
+		final ORecordInternal<?> record;
 		if (reusedRecord != null) {
 			// REUSE THE SAME RECORD AFTER HAVING RESETTED IT
 			record = reusedRecord;
@@ -173,7 +173,7 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 	protected boolean hasTxEntry() {
 		if (txEntries != null) {
 			// BROWSE FOR NEW RECORDS IN CURRENT TX
-			OTransactionEntry<?> entry;
+			OTransactionEntry entry;
 
 			for (int i = currentTxEntryPosition + 1; i < txEntries.size(); ++i) {
 				entry = txEntries.get(i);

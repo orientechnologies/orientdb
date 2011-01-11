@@ -76,6 +76,7 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 		return new OGraphVertex(database, document);
 	}
 
+	@Override
 	@OAfterDeserialization
 	public void fromStream(final ODocument iDocument) {
 		super.fromStream(iDocument);

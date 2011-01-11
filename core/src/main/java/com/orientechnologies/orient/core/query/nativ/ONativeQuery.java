@@ -27,7 +27,7 @@ public abstract class ONativeQuery<T extends ORecordInternal<?>, CTX extends OQu
 
 	public abstract boolean filter(CTX iRecord);
 
-	protected ONativeQuery(final ODatabaseRecord<T> iDatabase, final String iCluster) {
+	protected ONativeQuery(final ODatabaseRecord iDatabase, final String iCluster) {
 		super(iDatabase);
 		cluster = iCluster;
 	}

@@ -31,20 +31,20 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
  * Delegates all the CRUD operations to the current transaction.
  * 
  */
-public class ODatabaseRecordTx<REC extends ORecordInternal<?>> extends ODatabaseRecordAbstract<REC> {
-	private OTransaction<REC>		currentTx;
+public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
+	private OTransaction				currentTx;
 	private static volatile int	txSerial	= 0;
 
-	public ODatabaseRecordTx(final String iURL, final Class<? extends REC> iRecordClass) {
+	public ODatabaseRecordTx(final String iURL, final Class<? extends ORecordInternal<?>> iRecordClass) {
 		super(iURL, iRecordClass);
 		init();
 	}
 
-	public ODatabaseRecord<REC> begin() {
+	public ODatabaseRecord begin() {
 		return begin(TXTYPE.OPTIMISTIC);
 	}
 
-	public ODatabaseRecord<REC> begin(final TXTYPE iType) {
+	public ODatabaseRecord begin(final TXTYPE iType) {
 		currentTx.rollback();
 
 		// WAKE UP LISTENERS
@@ -61,7 +61,7 @@ public class ODatabaseRecordTx<REC extends ORecordInternal<?>> extends ODatabase
 			break;
 
 		case OPTIMISTIC:
-			currentTx = new OTransactionOptimistic<REC>(this, txSerial++);
+			currentTx = new OTransactionOptimistic(this, txSerial++);
 			break;
 
 		case PESSIMISTIC:
@@ -72,7 +72,7 @@ public class ODatabaseRecordTx<REC extends ORecordInternal<?>> extends ODatabase
 		return this;
 	}
 
-	public ODatabaseRecord<REC> commit() {
+	public ODatabaseRecord commit() {
 		// WAKE UP LISTENERS
 		for (ODatabaseListener listener : underlying.getListeners())
 			try {
@@ -95,7 +95,7 @@ public class ODatabaseRecordTx<REC extends ORecordInternal<?>> extends ODatabase
 		return this;
 	}
 
-	public ODatabaseRecord<REC> rollback() {
+	public ODatabaseRecord rollback() {
 		// WAKE UP LISTENERS
 		for (ODatabaseListener listener : underlying.getListeners())
 			try {
@@ -109,33 +109,35 @@ public class ODatabaseRecordTx<REC extends ORecordInternal<?>> extends ODatabase
 		return this;
 	}
 
-	public OTransaction<?> getTransaction() {
+	public OTransaction getTransaction() {
 		return currentTx;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public REC load(final int iClusterId, final long iPosition, final REC iRecord, final String iFetchPlan) {
-		return currentTx.load(iClusterId, iPosition, iRecord, iFetchPlan);
+	public <RET extends ORecordInternal<?>> RET load(final int iClusterId, final long iPosition, final ORecordInternal<?> iRecord,
+			final String iFetchPlan) {
+		return (RET) currentTx.load(iClusterId, iPosition, iRecord, iFetchPlan);
 	}
 
 	@Override
-	public ODatabaseRecord<REC> save(final REC iContent) {
+	public ODatabaseRecord save(final ORecordInternal<?> iContent) {
 		return save(iContent, null);
 	}
 
 	@Override
-	public ODatabaseRecord<REC> save(final REC iContent, final String iClusterName) {
+	public ODatabaseRecord save(final ORecordInternal<?> iContent, final String iClusterName) {
 		currentTx.save(iContent, iClusterName);
 		return this;
 	}
 
 	@Override
-	public ODatabaseRecord<REC> delete(final REC iRecord) {
+	public ODatabaseRecord delete(final ORecordInternal<?> iRecord) {
 		currentTx.delete(iRecord);
 		return this;
 	}
 
-	public void executeRollback(final OTransaction<?> iTransaction) {
+	public void executeRollback(final OTransaction iTransaction) {
 	}
 
 	public void executeCommit() {
@@ -148,7 +150,7 @@ public class ODatabaseRecordTx<REC extends ORecordInternal<?>> extends ODatabase
 	}
 
 	private void init() {
-		currentTx = new OTransactionNoTx<REC>(this, -1);
+		currentTx = new OTransactionNoTx(this, -1);
 	}
 
 	public ORecordInternal<?> getRecordByUserObject(final Object iUserObject, final boolean iIsMandatory) {
@@ -168,6 +170,6 @@ public class ODatabaseRecordTx<REC extends ORecordInternal<?>> extends ODatabase
 
 	private void setDefaultTransactionMode() {
 		if (!(currentTx instanceof OTransactionNoTx))
-			currentTx = new OTransactionNoTx<REC>(this, txSerial++);
+			currentTx = new OTransactionNoTx(this, txSerial++);
 	}
 }

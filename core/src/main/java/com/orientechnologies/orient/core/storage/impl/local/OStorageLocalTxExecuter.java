@@ -23,7 +23,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OStorageTxConfiguration;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -134,19 +133,19 @@ public class OStorageLocalTxExecuter {
 		return txSegment;
 	}
 
-	protected void commitAllPendingRecords(final int iRequesterId, final OTransaction<?> iTx) throws IOException {
+	protected void commitAllPendingRecords(final int iRequesterId, final OTransaction iTx) throws IOException {
 		// COPY ALL THE ENTRIES IN SEPARATE COLLECTION SINCE DURING THE COMMIT PHASE SOME NEW ENTRIES COULD BE CREATED AND
 		// CONCURRENT-EXCEPTION MAY OCCURS
-		final List<OTransactionEntry<? extends ORecord<?>>> allEntries = new ArrayList<OTransactionEntry<? extends ORecord<?>>>();
-		final List<OTransactionEntry<? extends ORecord<?>>> tmpEntries = new ArrayList<OTransactionEntry<? extends ORecord<?>>>();
+		final List<OTransactionEntry> allEntries = new ArrayList<OTransactionEntry>();
+		final List<OTransactionEntry> tmpEntries = new ArrayList<OTransactionEntry>();
 
 		while (iTx.getEntries().iterator().hasNext()) {
-			for (OTransactionEntry<? extends ORecord<?>> txEntry : iTx.getEntries())
+			for (OTransactionEntry txEntry : iTx.getEntries())
 				tmpEntries.add(txEntry);
 
 			iTx.clearEntries();
 
-			for (OTransactionEntry<? extends ORecord<?>> txEntry : tmpEntries)
+			for (OTransactionEntry txEntry : tmpEntries)
 				// COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
 				commitEntry(iRequesterId, iTx.getId(), txEntry);
 
@@ -167,8 +166,7 @@ public class OStorageLocalTxExecuter {
 		// TODO
 	}
 
-	private void commitEntry(final int iRequesterId, final int iTxId, final OTransactionEntry<? extends ORecord<?>> txEntry)
-			throws IOException {
+	private void commitEntry(final int iRequesterId, final int iTxId, final OTransactionEntry txEntry) throws IOException {
 
 		if (txEntry.status != OTransactionEntry.DELETED && !txEntry.getRecord().isDirty())
 			return;

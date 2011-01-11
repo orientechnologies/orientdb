@@ -28,7 +28,7 @@ public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAb
 	public OQueryAbstract() {
 	}
 
-	public OQueryAbstract(final ODatabaseRecord<?> iDatabase) {
+	public OQueryAbstract(final ODatabaseRecord iDatabase) {
 		super(iDatabase);
 	}
 
@@ -71,6 +71,7 @@ public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAb
 		this.endRange = endRange;
 	}
 
+	@Override
 	public void reset() {
 	}
 }

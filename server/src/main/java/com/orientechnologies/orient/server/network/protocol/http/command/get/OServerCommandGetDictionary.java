@@ -25,6 +25,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 public class OServerCommandGetDictionary extends OServerCommandAuthenticatedDbAbstract {
 	private static final String[]	NAMES	= { "GET|dictionary/*" };
 
+	@Override
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		iRequest.data.commandInfo = "Dictionary lookup";
 
@@ -47,6 +48,7 @@ public class OServerCommandGetDictionary extends OServerCommandAuthenticatedDbAb
 		}
 	}
 
+	@Override
 	public String[] getNames() {
 		return NAMES;
 	}

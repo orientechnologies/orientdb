@@ -1,8 +1,6 @@
 <!DOCTYPE suite SYSTEM "http://beust.com/testng/testng-1.0.dtd">
-<suite name="Test Suite Example" verbose="1" parallel="false">
+<suite name="Test Suite Example" verbose="2" parallel="false">
 
-	<!-- <parameter name="path" value="../../releases/0.9.25-SNAPSHOT/db/databases/demo" /> <parameter name="url" value="local:../../releases/0.9.21/db/databases/demo/demo" 
-		/> -->
 	<parameter name="path" value="@PATH@" />
 	<parameter name="url" value="@URL@" />
 	<parameter name="testPath" value="tests" />

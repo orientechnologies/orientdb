@@ -29,10 +29,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public class OCommandSQLPojoWrapper implements OCommandRequest {
-	private OCommandRequest							command;
-	private ODatabasePojoAbstract<?, ?>	database;
+	private OCommandRequest						command;
+	private ODatabasePojoAbstract<?>	database;
 
-	public OCommandSQLPojoWrapper(final ODatabasePojoAbstract<?, ?> iDatabase, final OCommandRequest iCommand) {
+	public OCommandSQLPojoWrapper(final ODatabasePojoAbstract<?> iDatabase, final OCommandRequest iCommand) {
 		database = iDatabase;
 		command = iCommand;
 	}

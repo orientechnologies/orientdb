@@ -31,12 +31,12 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 @SuppressWarnings({ "unchecked" })
 public class OLazyObjectIterator<TYPE> implements Iterator<TYPE> {
 	private final ORecord<?>											sourceRecord;
-	private final ODatabasePojoAbstract<?, TYPE>	database;
+	private final ODatabasePojoAbstract<TYPE>	database;
 	private final Iterator<Object>								underlying;
 	private String																fetchPlan;
 	final private boolean													convertToRecord;
 
-	public OLazyObjectIterator(final ODatabasePojoAbstract<?, TYPE> database, final ORecord<?> iSourceRecord,
+	public OLazyObjectIterator(final ODatabasePojoAbstract<TYPE> database, final ORecord<?> iSourceRecord,
 			final Iterator<Object> iIterator, final boolean iConvertToRecord) {
 		this.database = database;
 		this.sourceRecord = iSourceRecord;
@@ -55,7 +55,7 @@ public class OLazyObjectIterator<TYPE> implements Iterator<TYPE> {
 			return null;
 
 		if (value instanceof ODocument && convertToRecord)
-			return (TYPE) database.getUserObjectByRecord((ODocument) value, iFetchPlan);
+			return database.getUserObjectByRecord((ODocument) value, iFetchPlan);
 
 		return (TYPE) value;
 	}

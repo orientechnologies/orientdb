@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.dictionary;
 
-
 /**
  * Internal API. Don't use it!
  * 

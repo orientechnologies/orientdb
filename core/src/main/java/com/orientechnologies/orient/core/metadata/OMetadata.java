@@ -24,13 +24,13 @@ import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 public class OMetadata {
-	protected ODatabaseRecord<?>	database;
+	protected ODatabaseRecord	database;
 	protected int									schemaClusterId;
 
 	protected OSchema							schema;
 	protected OSecurity						security;
 
-	public OMetadata(ODatabaseRecord<?> iDatabase) {
+	public OMetadata(ODatabaseRecord iDatabase) {
 		this.database = iDatabase;
 	}
 

@@ -52,7 +52,7 @@ public class ODatabaseRaw implements ODatabase {
 	protected STATUS								status;
 	protected OIntent								currentIntent;
 
-	private ODatabaseRecord<?>			databaseOwner;
+	private ODatabaseRecord			databaseOwner;
 
 	private boolean									useCache;
 	private Map<String, Object>			properties	= new HashMap<String, Object>();
@@ -337,11 +337,11 @@ public class ODatabaseRaw implements ODatabase {
 			iIntent.begin(this, iParams);
 	}
 
-	public ODatabaseRecord<?> getDatabaseOwner() {
+	public ODatabaseRecord getDatabaseOwner() {
 		return databaseOwner;
 	}
 
-	public ODatabaseRaw setOwner(final ODatabaseRecord<?> iOwner) {
+	public ODatabaseRaw setOwner(final ODatabaseRecord iOwner) {
 		databaseOwner = iOwner;
 		return this;
 	}

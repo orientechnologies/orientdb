@@ -23,6 +23,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 public class OServerCommandDeleteDatabase extends OServerCommandAuthenticatedDbAbstract {
 	private static final String[]	NAMES	= { "DELETE|database/*" };
 
+	@Override
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: database/<database>");
 
@@ -46,6 +47,7 @@ public class OServerCommandDeleteDatabase extends OServerCommandAuthenticatedDbA
 		// null);
 	}
 
+	@Override
 	public String[] getNames() {
 		return NAMES;
 	}

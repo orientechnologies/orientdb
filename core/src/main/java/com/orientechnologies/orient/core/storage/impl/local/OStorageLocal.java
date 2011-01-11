@@ -598,8 +598,8 @@ public class OStorageLocal extends OStorageAbstract {
 		return clusterPosition;
 	}
 
-	public ORawBuffer readRecord(final ODatabaseRecord<?> iDatabase, final int iRequesterId, final int iClusterId,
-			final long iPosition, final String iFetchPlan) {
+	public ORawBuffer readRecord(final ODatabaseRecord iDatabase, final int iRequesterId, final int iClusterId, final long iPosition,
+			final String iFetchPlan) {
 		checkOpeness();
 		return readRecord(iRequesterId, getClusterById(iClusterId), iPosition, true);
 	}
@@ -804,7 +804,7 @@ public class OStorageLocal extends OStorageAbstract {
 		return null;
 	}
 
-	public void commit(final int iRequesterId, final OTransaction<?> iTx) {
+	public void commit(final int iRequesterId, final OTransaction iTx) {
 		final boolean locked = lock.acquireSharedLock();
 
 		try {
@@ -821,7 +821,7 @@ public class OStorageLocal extends OStorageAbstract {
 		}
 	}
 
-	public void rollback(final int iRequesterId, final OTransaction<?> iTx) {
+	public void rollback(final int iRequesterId, final OTransaction iTx) {
 	}
 
 	public void synch() {
@@ -894,7 +894,7 @@ public class OStorageLocal extends OStorageAbstract {
 		}
 	}
 
-	public ODictionary<?> createDictionary(ODatabaseRecord<?> iDatabase) throws Exception {
+	public ODictionary<?> createDictionary(ODatabaseRecord iDatabase) throws Exception {
 		return new ODictionaryLocal<Object>(iDatabase);
 	}
 

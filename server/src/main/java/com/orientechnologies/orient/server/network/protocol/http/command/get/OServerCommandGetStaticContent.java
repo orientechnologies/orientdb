@@ -42,6 +42,7 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 		useCache = true;
 	}
 
+	@Override
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		iRequest.data.commandInfo = "Get static content";
 		iRequest.data.commandDetail = iRequest.url;
@@ -126,6 +127,7 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 		}
 	}
 
+	@Override
 	public String[] getNames() {
 		return NAMES;
 	}

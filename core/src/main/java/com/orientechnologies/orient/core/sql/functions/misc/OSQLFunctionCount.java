@@ -48,6 +48,7 @@ public class OSQLFunctionCount extends OSQLFunctionMathAbstract {
 		return "Syntax error: count(<field>|*)";
 	}
 
+	@Override
 	public Object getResult() {
 		return total;
 	}

@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 
 @SuppressWarnings("unchecked")
 public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<T>, Comparable<ORecordAbstract<T>> {
-	@SuppressWarnings("rawtypes")
 	protected ODatabaseRecord		_database;
 	protected ORecordId					_recordId;
 	protected int								_version;
@@ -41,17 +40,17 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	public ORecordAbstract() {
 	}
 
-	public ORecordAbstract(final ODatabaseRecord<?> iDatabase) {
+	public ORecordAbstract(final ODatabaseRecord iDatabase) {
 		_database = iDatabase;
 	}
 
-	public ORecordAbstract(final ODatabaseRecord<?> iDatabase, final byte[] iSource) {
+	public ORecordAbstract(final ODatabaseRecord iDatabase, final byte[] iSource) {
 		this(iDatabase);
 		_source = iSource;
 		unsetDirty();
 	}
 
-	public ORecordAbstract<?> fill(final ODatabaseRecord<?> iDatabase, final int iClusterId, final long iPosition, final int iVersion) {
+	public ORecordAbstract<?> fill(final ODatabaseRecord iDatabase, final int iClusterId, final long iPosition, final int iVersion) {
 		_database = iDatabase;
 		setIdentity(iClusterId, iPosition);
 		_version = iVersion;
@@ -146,11 +145,11 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		return this;
 	}
 
-	public ODatabaseRecord<?> getDatabase() {
+	public ODatabaseRecord getDatabase() {
 		return _database;
 	}
 
-	public ORecordAbstract<?> setDatabase(final ODatabaseRecord<?> iDatabase) {
+	public ORecordAbstract<?> setDatabase(final ODatabaseRecord iDatabase) {
 		this._database = iDatabase;
 		return this;
 	}
@@ -196,7 +195,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 			throw new ORecordNotFoundException("The record has no id, probably it's new or transient yet ");
 
 		try {
-			final ORecordInternal<?> result = (ORecordInternal<?>) _database.load(this);
+			final ORecordInternal<?> result = _database.load(this);
 
 			if (result == null)
 				throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found");

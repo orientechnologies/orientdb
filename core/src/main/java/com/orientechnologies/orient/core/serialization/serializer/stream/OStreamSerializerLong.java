@@ -29,11 +29,11 @@ public class OStreamSerializerLong implements OStreamSerializer {
 		return NAME;
 	}
 
-	public Object fromStream(final ODatabaseRecord<?> iDatabase, final byte[] iStream) throws IOException {
+	public Object fromStream(final ODatabaseRecord iDatabase, final byte[] iStream) throws IOException {
 		return OBinaryProtocol.bytes2long(iStream);
 	}
 
-	public byte[] toStream(final ODatabaseRecord<?> iDatabase, final Object iObject) throws IOException {
+	public byte[] toStream(final ODatabaseRecord iDatabase, final Object iObject) throws IOException {
 		return OBinaryProtocol.long2bytes((Long) iObject);
 	}
 }

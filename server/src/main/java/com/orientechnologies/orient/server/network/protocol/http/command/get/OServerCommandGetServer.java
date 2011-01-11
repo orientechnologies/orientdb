@@ -46,6 +46,7 @@ public class OServerCommandGetServer extends OServerCommandAuthenticatedServerAb
 		super("info-server");
 	}
 
+	@Override
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		checkSyntax(iRequest.url, 1, "Syntax error: server");
 
@@ -149,6 +150,7 @@ public class OServerCommandGetServer extends OServerCommandAuthenticatedServerAb
 		}
 	}
 
+	@Override
 	public String[] getNames() {
 		return NAMES;
 	}

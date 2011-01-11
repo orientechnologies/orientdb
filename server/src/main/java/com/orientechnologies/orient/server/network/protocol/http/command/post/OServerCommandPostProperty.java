@@ -27,6 +27,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 public class OServerCommandPostProperty extends OServerCommandAuthenticatedDbAbstract {
 	private static final String[]	NAMES	= { "POST|property/*" };
 
+	@Override
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(iRequest.url, 4, "Syntax error: property/<database>/<class-name>/<property-name>");
 
@@ -56,6 +57,7 @@ public class OServerCommandPostProperty extends OServerCommandAuthenticatedDbAbs
 		}
 	}
 
+	@Override
 	public String[] getNames() {
 		return NAMES;
 	}

@@ -74,7 +74,6 @@ import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.handler.OServerHandlerHelper;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
-import com.orientechnologies.orient.server.tx.OTransactionRecordProxy;
 
 public class ONetworkProtocolBinary extends ONetworkProtocol {
 	protected OClientConnection				connection;
@@ -369,11 +368,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 						final Set<ODocument> recordsToSend = new HashSet<ODocument>();
 						OFetchHelper.fetch((ODocument) record, record, fetchPlan, null, 0, -1, new OFetchListener() {
+							@Override
 							public int size() {
 								return recordsToSend.size();
 							}
 
 							// ADD TO THE SET OF OBJECTS TO SEND
+							@Override
 							public Object fetchLinked(final ODocument iRoot, final Object iUserObject, final String iFieldName,
 									final Object iLinked) {
 								if (iLinked instanceof ODocument)
@@ -478,6 +479,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 				final Map<String, Integer> fetchPlan = query != null ? OFetchHelper.buildFetchPlan(query.getFetchPlan()) : null;
 				command.setResultListener(new OCommandResultListener() {
+					@Override
 					public boolean result(final Object iRecord) {
 						if (empty.length() == 0)
 							try {
@@ -494,12 +496,14 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 							if (fetchPlan != null && iRecord instanceof ODocument) {
 								OFetchHelper.fetch((ODocument) iRecord, iRecord, fetchPlan, null, 0, -1, new OFetchListener() {
+									@Override
 									public int size() {
 										return recordsToSend.size();
 									}
 
 									// ADD TO THE SET OF OBJECT TO
 									// SEND
+									@Override
 									public Object fetchLinked(final ODocument iRoot, final Object iUserObject, final String iFieldName,
 											final Object iLinked) {
 										if (iLinked instanceof ODocument)
@@ -573,10 +577,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			data.commandInfo = "Dictionary lookup";
 
 			final String key = channel.readString();
-			final ORecordAbstract<?> value = connection.database.getDictionary().get(key);
+			final ORecordAbstract<?> value = (ORecordAbstract<?>) connection.database.getDictionary().get(key);
 
 			if (value != null)
-				((ODatabaseRecordTx<ORecordInternal<?>>) connection.database.getUnderlying()).load(value);
+				((ODatabaseRecordTx) connection.database.getUnderlying()).load(value);
 
 			sendOk(lastClientTxId);
 
@@ -597,7 +601,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			value = connection.database.getDictionary().putRecord(key, value);
 
 			if (value != null)
-				((ODatabaseRecordTx<ORecordInternal<?>>) connection.database.getUnderlying()).load(value);
+				((ODatabaseRecordTx) connection.database.getUnderlying()).load(value);
 
 			sendOk(lastClientTxId);
 
@@ -612,7 +616,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			final ORecordInternal<?> value = connection.database.getDictionary().remove(key);
 
 			if (value != null)
-				((ODatabaseRecordTx<ORecordInternal<?>>) connection.database.getUnderlying()).load(value);
+				((ODatabaseRecordTx) connection.database.getUnderlying()).load(value);
 
 			sendOk(lastClientTxId);
 
@@ -640,7 +644,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			data.commandInfo = "Transaction commit";
 
 			final OTransactionOptimisticProxy tx = new OTransactionOptimisticProxy(
-					(ODatabaseRecordTx<OTransactionRecordProxy>) connection.database.getUnderlying(), channel);
+					(ODatabaseRecordTx) connection.database.getUnderlying(), channel);
 
 			((OStorageLocal) connection.database.getStorage()).commit(connection.database.getId(), tx);
 

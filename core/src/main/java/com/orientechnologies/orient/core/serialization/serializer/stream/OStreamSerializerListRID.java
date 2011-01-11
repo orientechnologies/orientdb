@@ -29,7 +29,7 @@ public class OStreamSerializerListRID implements OStreamSerializer {
 	private static final ORecordSerializerPositional2CSV	FORMAT		= (ORecordSerializerPositional2CSV) ORecordSerializerFactory
 																																			.instance().getFormat(ORecordSerializerPositional2CSV.NAME);
 
-	public Object fromStream(final ODatabaseRecord<?> iDatabase, final byte[] iStream) throws IOException {
+	public Object fromStream(final ODatabaseRecord iDatabase, final byte[] iStream) throws IOException {
 		if (iStream == null)
 			return null;
 
@@ -38,7 +38,7 @@ public class OStreamSerializerListRID implements OStreamSerializer {
 		return FORMAT.embeddedCollectionFromStream(iDatabase, null, OType.EMBEDDEDLIST, null, OType.LINK, s);
 	}
 
-	public byte[] toStream(final ODatabaseRecord<?> iDatabase, final Object iObject) throws IOException {
+	public byte[] toStream(final ODatabaseRecord iDatabase, final Object iObject) throws IOException {
 		if (iObject == null)
 			return null;
 

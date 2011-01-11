@@ -29,15 +29,15 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
  */
 @SuppressWarnings("serial")
 public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> {
-	protected ODatabaseRecord<?>	database;
+	protected ODatabaseRecord	database;
 
-	public OMVRBTreeDatabase(final ODatabaseRecord<?> iDatabase, final ORID iRID) {
+	public OMVRBTreeDatabase(final ODatabaseRecord iDatabase, final ORID iRID) {
 		super(iDatabase.getClusterNameById(iRID.getClusterId()), iRID);
 		database = iDatabase;
 		record.setDatabase(iDatabase);
 	}
 
-	public OMVRBTreeDatabase(final ODatabaseRecord<?> iDatabase, String iClusterName, final OStreamSerializer iKeySerializer,
+	public OMVRBTreeDatabase(final ODatabaseRecord iDatabase, String iClusterName, final OStreamSerializer iKeySerializer,
 			final OStreamSerializer iValueSerializer) {
 		super(iClusterName, iKeySerializer, iValueSerializer);
 		database = iDatabase;
@@ -109,7 +109,7 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> {
 		return entry;
 	}
 
-	public ODatabaseRecord<?> getDatabase() {
+	public ODatabaseRecord getDatabase() {
 		return database;
 	}
 

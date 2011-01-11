@@ -33,7 +33,7 @@ public class OPropertyIndexUnique extends OPropertyIndexMVRBTreeAbstract {
 	public OPropertyIndexUnique() {
 	}
 
-	public OPropertyIndexUnique(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final String iClusterIndexName) {
+	public OPropertyIndexUnique(final ODatabaseRecord iDatabase, final OProperty iProperty, final String iClusterIndexName) {
 		super(iDatabase, iProperty, iClusterIndexName);
 	}
 

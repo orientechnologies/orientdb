@@ -61,7 +61,7 @@ public interface OStorage {
 	// CRUD OPERATIONS
 	public long createRecord(int iClusterId, byte[] iContent, final byte iRecordType);
 
-	public ORawBuffer readRecord(ODatabaseRecord<?> iDatabase, int iRequesterId, int iClusterId, long iPosition, String iFetchPlan);
+	public ORawBuffer readRecord(ODatabaseRecord iDatabase, int iRequesterId, int iClusterId, long iPosition, String iFetchPlan);
 
 	public int updateRecord(int iRequesterId, int iClusterId, long iPosition, byte[] iContent, final int iVersion,
 			final byte iRecordType);
@@ -73,7 +73,7 @@ public interface OStorage {
 	public boolean deleteRecord(int iRequesterId, int iClusterId, long iPosition, final int iVersion);
 
 	// TX OPERATIONS
-	public void commit(int iRequesterId, OTransaction<?> iTx);
+	public void commit(int iRequesterId, OTransaction iTx);
 
 	public OStorageConfiguration getConfiguration();
 
@@ -126,7 +126,7 @@ public interface OStorage {
 	public String getURL();
 
 	public long getVersion();
-	
+
 	public void synch();
 
 	public int getUsers();
@@ -135,7 +135,7 @@ public interface OStorage {
 
 	public int removeUser();
 
-	public ODictionary<?> createDictionary(ODatabaseRecord<?> iDatabase) throws Exception;
+	public ODictionary<?> createDictionary(ODatabaseRecord iDatabase) throws Exception;
 
 	/**
 	 * Return the configured local Level-2 cache component. Cache component is always created even if not used.

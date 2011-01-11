@@ -24,32 +24,31 @@ import java.util.Map;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public abstract class OTransactionRealAbstract<REC extends ORecordInternal<?>> extends OTransactionAbstract<REC> {
-	protected Map<ORecordId, OTransactionEntry<REC>>	entries						= new HashMap<ORecordId, OTransactionEntry<REC>>();
-	protected int																			newObjectCounter	= -2;
+public abstract class OTransactionRealAbstract extends OTransactionAbstract {
+	protected Map<ORecordId, OTransactionEntry>	entries						= new HashMap<ORecordId, OTransactionEntry>();
+	protected int																newObjectCounter	= -2;
 
-	protected OTransactionRealAbstract(ODatabaseRecordTx<REC> iDatabase, int iId) {
+	protected OTransactionRealAbstract(ODatabaseRecordTx iDatabase, int iId) {
 		super(iDatabase, iId);
 	}
 
-	public Collection<OTransactionEntry<REC>> getEntries() {
+	public Collection<OTransactionEntry> getEntries() {
 		return entries.values();
 	}
 
-	public List<OTransactionEntry<?>> getEntriesByClass(final String iClassName) {
-		final List<OTransactionEntry<?>> result = new ArrayList<OTransactionEntry<?>>();
+	public List<OTransactionEntry> getEntriesByClass(final String iClassName) {
+		final List<OTransactionEntry> result = new ArrayList<OTransactionEntry>();
 
 		if (iClassName == null || iClassName.length() == 0)
 			// RETURN ALL THE RECORDS
-			for (OTransactionEntry<REC> entry : entries.values()) {
+			for (OTransactionEntry entry : entries.values()) {
 				result.add(entry);
 			}
 		else
 			// FILTER RECORDS BY CLASSNAME
-			for (OTransactionEntry<REC> entry : entries.values()) {
+			for (OTransactionEntry entry : entries.values()) {
 				if (entry.getRecord() != null && entry.getRecord() instanceof ODocument
 						&& iClassName.equals(((ODocument) entry.getRecord()).getClassName()))
 					result.add(entry);
@@ -58,17 +57,17 @@ public abstract class OTransactionRealAbstract<REC extends ORecordInternal<?>> e
 		return result;
 	}
 
-	public List<OTransactionEntry<?>> getEntriesByClusterIds(final int[] iIds) {
-		final List<OTransactionEntry<?>> result = new ArrayList<OTransactionEntry<?>>();
+	public List<OTransactionEntry> getEntriesByClusterIds(final int[] iIds) {
+		final List<OTransactionEntry> result = new ArrayList<OTransactionEntry>();
 
 		if (iIds == null)
 			// RETURN ALL THE RECORDS
-			for (OTransactionEntry<REC> entry : entries.values()) {
+			for (OTransactionEntry entry : entries.values()) {
 				result.add(entry);
 			}
 		else
 			// FILTER RECORDS BY ID
-			for (OTransactionEntry<REC> entry : entries.values()) {
+			for (OTransactionEntry entry : entries.values()) {
 				for (int id : iIds) {
 					if (entry.getRecord() != null && entry.getRecord().getIdentity().getClusterId() == id) {
 						result.add(entry);

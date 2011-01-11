@@ -28,6 +28,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
 		super("new-database");
 	}
 
+	@Override
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: database/<database>");
 
@@ -52,6 +53,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
 				null);
 	}
 
+	@Override
 	public String[] getNames() {
 		return NAMES;
 	}

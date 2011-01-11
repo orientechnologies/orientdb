@@ -41,7 +41,7 @@ public class OStringSerializerAnyStreamable implements OStringSerializer {
 		int pos = iStream.indexOf(OStreamSerializerHelper.SEPARATOR);
 		if (pos < 0)
 			// OLogManager.instance().error(this, "Class signature not found in ANY element: " + iStream, OSerializationException.class);
-			instance = new ODocument((ODatabaseRecord<?>) iDatabase);
+			instance = new ODocument((ODatabaseRecord) iDatabase);
 		else {
 			final String className = iStream.substring(0, pos);
 			try {

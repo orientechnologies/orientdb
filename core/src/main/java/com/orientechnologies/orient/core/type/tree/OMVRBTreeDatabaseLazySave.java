@@ -39,12 +39,12 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> imp
 	protected int	maxUpdatesBeforeSave;
 	protected int	updates	= 0;
 
-	public OMVRBTreeDatabaseLazySave(ODatabaseRecord<?> iDatabase, ORID iRID) {
+	public OMVRBTreeDatabaseLazySave(ODatabaseRecord iDatabase, ORID iRID) {
 		super(iDatabase, iRID);
 		init(iDatabase);
 	}
 
-	public OMVRBTreeDatabaseLazySave(ODatabaseRecord<?> iDatabase, String iClusterName, OStreamSerializer iKeySerializer,
+	public OMVRBTreeDatabaseLazySave(ODatabaseRecord iDatabase, String iClusterName, OStreamSerializer iKeySerializer,
 			OStreamSerializer iValueSerializer) {
 		super(iDatabase, iClusterName, iKeySerializer, iValueSerializer);
 		init(iDatabase);
@@ -54,7 +54,7 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> imp
 	 * Do nothing since all the changes will be committed expressly at lazySave() time or on closing.
 	 */
 	@Override
-	public synchronized void commitChanges(final ODatabaseRecord<?> iDatabase) {
+	public synchronized void commitChanges(final ODatabaseRecord iDatabase) {
 		if (maxUpdatesBeforeSave > 0 && ++updates >= maxUpdatesBeforeSave) {
 			lazySave();
 			updates = 0;
@@ -140,7 +140,7 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> imp
 		this.maxUpdatesBeforeSave = iValue;
 	}
 
-	private void init(ODatabaseRecord<?> iDatabase) {
+	private void init(ODatabaseRecord iDatabase) {
 		iDatabase.registerListener(this);
 	}
 

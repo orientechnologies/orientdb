@@ -21,47 +21,45 @@ import java.util.Map.Entry;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.record.ORecord;
 
 public abstract class ODictionaryAbstract<T extends Object> implements ODictionaryInternal<T>, ODatabaseListener {
-	protected HashMap<String, ORecord<?>>	transactionalEntries;
+	protected HashMap<String, T>	transactionalEntries;
 
-	public ODictionaryAbstract(final ODatabaseRecord<?> iDatabase) {
+	public ODictionaryAbstract(final ODatabaseRecord iDatabase) {
 		iDatabase.registerListener(this);
 	}
 
-	public void onCreate(ODatabase iDatabase) {
+	public void onCreate(final ODatabase iDatabase) {
 	}
 
-	public void onDelete(ODatabase iDatabase) {
+	public void onDelete(final ODatabase iDatabase) {
 	}
 
-	public void onOpen(ODatabase iDatabase) {
+	public void onOpen(final ODatabase iDatabase) {
 	}
 
 	public void onBeforeTxBegin(final ODatabase iDatabase) {
 	}
 
-	public void onTxRollback(ODatabase iDatabase) {
+	public void onTxRollback(final ODatabase iDatabase) {
 	}
 
-	public void onBeforeTxCommit(ODatabase iDatabase) {
+	public void onBeforeTxCommit(final ODatabase iDatabase) {
 	}
 
 	/**
 	 * Re-save all the record with a temporary ID with the definitive ones
 	 */
-	@SuppressWarnings("unchecked")
-	public void onAfterTxCommit(ODatabase iDatabase) {
+	public void onAfterTxCommit(final ODatabase iDatabase) {
 		if (transactionalEntries != null) {
-			for (Entry<String, ORecord<?>> entry : transactionalEntries.entrySet()) {
-				put(entry.getKey(), (T) entry.getValue());
+			for (Entry<String, T> entry : transactionalEntries.entrySet()) {
+				put(entry.getKey(), entry.getValue());
 			}
 			transactionalEntries.clear();
 			transactionalEntries = null;
 		}
 	}
 
-	public void onClose(ODatabase iDatabase) {
+	public void onClose(final ODatabase iDatabase) {
 	}
 }

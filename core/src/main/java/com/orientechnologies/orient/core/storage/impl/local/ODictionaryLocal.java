@@ -38,14 +38,14 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabase;
 public class ODictionaryLocal<T extends Object> extends ODictionaryAbstract<T> {
 	public static final String						DICTIONARY_DEF_CLUSTER_NAME	= OStorage.CLUSTER_INTERNAL_NAME;
 
-	private ODatabaseRecord<?>						underlyingDatabase;
+	private ODatabaseRecord								underlyingDatabase;
 	private ODatabaseComplex<T>						database;
 	private OMVRBTreeDatabase<String, T>	tree;
 	private HashSet<String>								transactionalEntries;
 
 	public String													clusterName									= DICTIONARY_DEF_CLUSTER_NAME;
 
-	public ODictionaryLocal(final ODatabaseRecord<?> iDatabase) throws SecurityException, NoSuchMethodException {
+	public ODictionaryLocal(final ODatabaseRecord iDatabase) throws SecurityException, NoSuchMethodException {
 		super(iDatabase);
 		underlyingDatabase = iDatabase;
 		database = (ODatabaseComplex<T>) iDatabase.getDatabaseOwner();
@@ -67,8 +67,8 @@ public class ODictionaryLocal<T extends Object> extends ODictionaryAbstract<T> {
 		return (ORecordInternal<?>) tree.put(iKey, (T) iValue);
 	}
 
-	public T put(final String iKey, final T iValue) {
-		T prev = tree.put(iKey, iValue);
+	public <RET extends Object> RET put(final String iKey, final Object iValue) {
+		final T prev = tree.put(iKey, (T) iValue);
 
 		if (iValue instanceof ORecord<?> && ((ORecord<?>) iValue).getIdentity().isTemporary()) {
 			if (transactionalEntries == null)
@@ -78,11 +78,11 @@ public class ODictionaryLocal<T extends Object> extends ODictionaryAbstract<T> {
 			transactionalEntries.add(iKey);
 		}
 
-		return prev;
+		return (RET) prev;
 	}
 
-	public T remove(final Object iKey) {
-		return tree.remove(iKey);
+	public <RET extends Object> RET remove(final Object iKey) {
+		return (RET) tree.remove(iKey);
 	}
 
 	public int size() {
@@ -90,15 +90,13 @@ public class ODictionaryLocal<T extends Object> extends ODictionaryAbstract<T> {
 	}
 
 	public void load() {
-		tree = new OMVRBTreeDatabase<String, T>(underlyingDatabase, new ORecordId(
-				database.getStorage().getConfiguration().dictionaryRecordId));
+		tree = new OMVRBTreeDatabase<String, T>(underlyingDatabase, new ORecordId(database.getStorage().getConfiguration().dictionaryRecordId));
 		tree.load();
 	}
 
 	public void create() {
 		try {
-			tree = new OMVRBTreeDatabase<String, T>(underlyingDatabase, clusterName, OStreamSerializerString.INSTANCE,
-					OStreamSerializerAnyRecord.INSTANCE);
+			tree = new OMVRBTreeDatabase<String, T>(underlyingDatabase, clusterName, OStreamSerializerString.INSTANCE, OStreamSerializerAnyRecord.INSTANCE);
 			tree.save();
 
 			database.getStorage().getConfiguration().dictionaryRecordId = tree.getRecord().getIdentity().toString();

@@ -34,121 +34,157 @@ public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
 	public OTransactionRecordProxy() {
 	}
 
+	@Override
 	public OTransactionRecordProxy copy() {
 		return null;
 	}
 
+	@Override
 	public ORID getIdentity() {
 		return recordId;
 	}
 
+	@Override
 	public int getVersion() {
 		return version;
 	}
 
+	@Override
 	public void setVersion(int iVersion) {
 		version = iVersion;
 	}
 
+	@Override
 	public boolean isDirty() {
 		return true;
 	}
 
+	@Override
 	public boolean isPinned() {
 		return false;
 	}
 
+	@Override
 	public OTransactionRecordProxy pin() {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public OTransactionRecordProxy setDirty() {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public OTransactionRecordProxy unpin() {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public OTransactionRecordProxy save() {
 		throw new UnsupportedOperationException("Can't assign a user-defined cluster to this class");
 	}
 
+	@Override
 	public OTransactionRecordProxy save(final String iCluster) {
 		throw new UnsupportedOperationException("Can't assign a user-defined cluster to this class");
 	}
 
+	@Override
 	public OTransactionRecordProxy load() {
 		throw new UnsupportedOperationException("Can't assign a user-defined cluster to this class");
 	}
 
+	@Override
 	public OTransactionRecordProxy delete() {
 		throw new UnsupportedOperationException("Can't assign a user-defined cluster to this class");
 	}
 
+	@Override
 	public ORecord<byte[]> reset() {
 		return null;
 	}
 
-	public ORecordAbstract<?> setDatabase(final ODatabaseRecord<?> iDatabase) {
+	@Override
+	public ORecordAbstract<?> setDatabase(final ODatabaseRecord iDatabase) {
 		return null;
 	}
 
+	@Override
 	public ORecordAbstract<?> setIdentity(final int iClusterId, final long iClusterPosition) {
 		return null;
 	}
 
+	@Override
 	public void unsetDirty() {
 	}
 
+	@Override
 	public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
-		return null;
+		stream = iStream;
+		return this;
 	}
 
+	@Override
 	public byte[] toStream() throws OSerializationException {
 		return stream;
 	}
 
-	public ODatabaseRecord<ORecordInternal<byte[]>> getDatabase() {
+	@Override
+	public ODatabaseRecord getDatabase() {
 		return null;
 	}
 
+	@Override
 	public com.orientechnologies.orient.core.record.ORecord.STATUS getInternalStatus() {
 		return null;
 	}
 
+	@Override
 	public void setStatus(com.orientechnologies.orient.core.record.ORecord.STATUS iStatus) {
 	}
 
-	public ORecordAbstract<?> fill(final ODatabaseRecord<?> iDatabase, final int iClusterId, final long iPosition, final int iVersion) {
+	@Override
+	public ORecordAbstract<?> fill(final ODatabaseRecord iDatabase, final int iClusterId, final long iPosition, final int iVersion) {
 		return null;
 	}
 
+	@Override
 	public byte getRecordType() {
 		return recordType;
 	}
 
-	public String toJSON(final String iFormat) {
-		return null;
+	public void setRecordType(final byte iType) {
+		recordType = iType;
 	}
 
+	@Override
 	public String toJSON() {
 		return null;
 	}
 
-	public ORecord<byte[]> fromJSON(String iJson) {
+	@Override
+	public String toJSON(String iFormat) {
 		return null;
 	}
 
-	public ORecordAbstract<?> setIdentity(final ORecordId iIdentity) {
-		return null;
-	}
-
+	@Override
 	public <RET extends ORecord<byte[]>> RET unload() {
+		// TODO Auto-generated method stub
 		return null;
 	}
 
+	@Override
 	public <RET extends ORecord<byte[]>> RET clear() {
+		return null;
+	}
+
+	@Override
+	public <RET extends ORecord<byte[]>> RET fromJSON(String iJson) {
+		return null;
+	}
+
+	@Override
+	public ORecordAbstract<?> setIdentity(ORecordId iIdentity) {
 		return null;
 	}
 }

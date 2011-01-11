@@ -52,7 +52,7 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 * 
 	 * @return The new instance.
 	 */
-	public T newInstance();
+	public <RET extends Object> RET newInstance();
 
 	/**
 	 * Returns the current user logged into the database.
@@ -68,7 +68,7 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 *          The entity to load. If the entity was already loaded it will be reloaded and all the changes will be lost.
 	 * @return
 	 */
-	public T load(final T iObject);
+	public <RET extends T> RET load(final T iObject);
 
 	/**
 	 * Loads the entity by the Record ID.
@@ -77,7 +77,7 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 *          The unique record id of the entity to load.
 	 * @return
 	 */
-	public T load(final ORID iRecordId);
+	public <RET extends T> RET load(final ORID iRecordId);
 
 	/**
 	 * Saves an entity. If the entity is not dirty, then the operation will be ignored. For custom entity implementations assure to
@@ -115,7 +115,7 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 * 
 	 * @return OTransaction implementation
 	 */
-	public OTransaction<?> getTransaction();
+	public OTransaction getTransaction();
 
 	/**
 	 * Begins a new transaction. By default the type is OPTIMISTIC. If a previous transaction was started it will be rollbacked and

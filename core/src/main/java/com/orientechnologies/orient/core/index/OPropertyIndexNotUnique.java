@@ -34,12 +34,12 @@ public class OPropertyIndexNotUnique extends OPropertyIndexMVRBTreeAbstract {
 	public OPropertyIndexNotUnique() {
 	}
 
-	public OPropertyIndexNotUnique(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final String iClusterIndexName) {
+	public OPropertyIndexNotUnique(final ODatabaseRecord iDatabase, final OProperty iProperty, final String iClusterIndexName) {
 		super(iDatabase, iProperty, iClusterIndexName);
 	}
 
 	@Override
-	public OPropertyIndex configure(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final ORID iRecordId) {
+	public OPropertyIndex configure(final ODatabaseRecord iDatabase, final OProperty iProperty, final ORID iRecordId) {
 		owner = iProperty;
 		init(iDatabase, iRecordId);
 		return this;

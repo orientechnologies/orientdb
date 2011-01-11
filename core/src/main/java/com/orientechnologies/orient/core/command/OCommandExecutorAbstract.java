@@ -28,10 +28,10 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
  * 
  */
 public abstract class OCommandExecutorAbstract extends OCommandToParse implements OCommandExecutor {
-	protected ODatabaseRecord<?>	database;
+	protected ODatabaseRecord	database;
 	protected OProgressListener		progressListener;
 
-	public OCommandExecutorAbstract init(final ODatabaseRecord<?> iDatabase, final String iText) {
+	public OCommandExecutorAbstract init(final ODatabaseRecord iDatabase, final String iText) {
 		database = iDatabase;
 		text = iText;
 		return this;

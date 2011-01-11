@@ -26,6 +26,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 public class OServerCommandGetDocument extends OServerCommandAuthenticatedDbAbstract {
 	private static final String[]	NAMES	= { "GET|document/*" };
 
+	@Override
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		ODatabaseDocumentTx db = null;
 
@@ -57,6 +58,7 @@ public class OServerCommandGetDocument extends OServerCommandAuthenticatedDbAbst
 			sendRecordContent(iRequest, rec, fetchPlan);
 	}
 
+	@Override
 	public String[] getNames() {
 		return NAMES;
 	}

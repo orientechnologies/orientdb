@@ -57,31 +57,31 @@ public class OPropertyIndexFullText extends OPropertyIndexMVRBTreeAbstract {
 	public OPropertyIndexFullText() {
 	}
 
-	public OPropertyIndexFullText(final ODatabaseRecord<?> iDatabase, final OProperty iProperty) {
+	public OPropertyIndexFullText(final ODatabaseRecord iDatabase, final OProperty iProperty) {
 		this(iDatabase, iProperty, DEF_CLUSTER_NAME);
 	}
 
-	public OPropertyIndexFullText(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final String iClusterIndexName) {
+	public OPropertyIndexFullText(final ODatabaseRecord iDatabase, final OProperty iProperty, final String iClusterIndexName) {
 		create(iDatabase, iProperty, iClusterIndexName, null, DEF_IGNORE_CHARS, DEF_STOP_WORDS);
 	}
 
 	@Override
-	public OPropertyIndex create(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final String iClusterIndexName,
+	public OPropertyIndex create(final ODatabaseRecord iDatabase, final OProperty iProperty, final String iClusterIndexName,
 			final OProgressListener iProgressListener) {
 		return create(iDatabase, iProperty, iClusterIndexName, iProgressListener, DEF_IGNORE_CHARS, DEF_STOP_WORDS);
 	}
 
-	public OPropertyIndex create(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final String iClusterIndexName,
+	public OPropertyIndex create(final ODatabaseRecord iDatabase, final OProperty iProperty, final String iClusterIndexName,
 			final OProgressListener iProgressListener, final String iIgnoreChars, final String iStopWords) {
 		if (iDatabase.getClusterIdByName(iClusterIndexName) == -1)
 			// CREATE THE PHYSICAL CLUSTER THE FIRST TIME
 			iDatabase.addPhysicalCluster(iClusterIndexName, iClusterIndexName, -1);
 
 		ODatabaseComplex<?> db = iDatabase;
-		while (db != null && !(db instanceof ODatabaseRecord<?>))
+		while (db != null && !(db instanceof ODatabaseRecord))
 			db = db.getUnderlying();
 
-		map = new OMVRBTreeDatabaseLazySave<String, List<ORecordId>>((ODatabaseRecord<?>) db, iClusterIndexName,
+		map = new OMVRBTreeDatabaseLazySave<String, List<ORecordId>>((ODatabaseRecord) db, iClusterIndexName,
 				OStreamSerializerString.INSTANCE, OStreamSerializerListRID.INSTANCE);
 		map.lazySave();
 
@@ -110,7 +110,7 @@ public class OPropertyIndexFullText extends OPropertyIndexMVRBTreeAbstract {
 	 *          Record Id of the persistent TreeMap
 	 */
 	@Override
-	public OPropertyIndex configure(final ODatabaseRecord<?> iDatabase, final OProperty iProperty, final ORID iRID) {
+	public OPropertyIndex configure(final ODatabaseRecord iDatabase, final OProperty iProperty, final ORID iRID) {
 		owner = iProperty;
 		config = new ODocument(iDatabase, iRID);
 		config.load();

@@ -26,6 +26,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 	private static final String[]	NAMES	= { "PUT|document/*" };
 
+	@Override
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		final String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: document/<database>[/<record-id>]");
 
@@ -70,6 +71,7 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 				+ " updated successfully.");
 	}
 
+	@Override
 	public String[] getNames() {
 		return NAMES;
 	}

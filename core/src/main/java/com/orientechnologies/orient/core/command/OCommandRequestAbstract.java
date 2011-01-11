@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
  * 
  */
 public abstract class OCommandRequestAbstract implements OCommandRequestInternal {
-	protected ODatabaseRecord<?>			database;
+	protected ODatabaseRecord			database;
 	protected OCommandResultListener	resultListener;
 	protected OProgressListener				progressListener;
 	protected Map<Object, Object>			parameters;
@@ -36,15 +36,15 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
 	protected OCommandRequestAbstract() {
 	}
 
-	protected OCommandRequestAbstract(final ODatabaseRecord<?> iDatabase) {
+	protected OCommandRequestAbstract(final ODatabaseRecord iDatabase) {
 		database = iDatabase;
 	}
 
-	public ODatabaseRecord<?> getDatabase() {
+	public ODatabaseRecord getDatabase() {
 		return database;
 	}
 
-	public OCommandRequestInternal setDatabase(final ODatabaseRecord<?> iDatabase) {
+	public OCommandRequestInternal setDatabase(final ODatabaseRecord iDatabase) {
 		this.database = iDatabase;
 		return this;
 	}

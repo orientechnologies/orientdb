@@ -24,13 +24,14 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabaseRecordTx<ODocument>, ODocument> implements
-		ODatabaseDocument {
+@SuppressWarnings("unchecked")
+public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabaseRecordTx> implements ODatabaseDocument {
 	public ODatabaseDocumentTx(final String iURL) {
-		super(new ODatabaseRecordTx<ODocument>(iURL, ODocument.class));
+		super(new ODatabaseRecordTx(iURL, ODocument.class));
 	}
 
 	@Override
@@ -67,33 +68,37 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 	 * If the record is new and a class was specified, the configured cluster id will be used to store the class.
 	 */
 	@Override
-	public ODatabaseDocumentTx save(final ODocument iContent) {
-		iContent.validate();
+	public ODatabaseDocumentTx save(final ORecordInternal<?> iContent) {
+		if (!(iContent instanceof ODocument))
+			return (ODatabaseDocumentTx) super.save(iContent);
+
+		final ODocument doc = (ODocument) iContent;
+		doc.validate();
 
 		try {
-			if (iContent.getIdentity().isNew()) {
+			if (doc.getIdentity().isNew()) {
 				// NEW RECORD
-				if (iContent.getClassName() != null)
-					checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, iContent.getClassName());
+				if (doc.getClassName() != null)
+					checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, doc.getClassName());
 
-				if (iContent.getSchemaClass() != null) {
+				if (doc.getSchemaClass() != null) {
 					// CLASS FOUND: FORCE THE STORING IN THE CLUSTER CONFIGURED
-					String clusterName = getClusterNameById(iContent.getSchemaClass().getDefaultClusterId());
+					String clusterName = getClusterNameById(doc.getSchemaClass().getDefaultClusterId());
 
-					super.save(iContent, clusterName);
+					super.save(doc, clusterName);
 					return this;
 				}
 			} else {
 				// UPDATE: CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
-				if (iContent.getClassName() != null)
-					checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_UPDATE, iContent.getClassName());
+				if (doc.getClassName() != null)
+					checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_UPDATE, doc.getClassName());
 			}
 
-			super.save(iContent);
+			super.save(doc);
 
 		} catch (Exception e) {
-			OLogManager.instance().exception("Error on saving record #%s of class '%s'", e, ODatabaseException.class,
-					iContent.getIdentity(), (iContent.getClassName() != null ? iContent.getClassName() : "?"));
+			OLogManager.instance().exception("Error on saving record #%s of class '%s'", e, ODatabaseException.class, iContent.getIdentity(),
+					(doc.getClassName() != null ? doc.getClassName() : "?"));
 		}
 		return this;
 	}
@@ -105,22 +110,27 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 	 * @see ORecordSchemaAware#validate()
 	 */
 	@Override
-	public ODatabaseDocumentTx save(final ODocument iContent, String iClusterName) {
-		if (!iContent.getIdentity().isValid()) {
-			if (iClusterName == null && iContent.getSchemaClass() != null)
+	public ODatabaseDocumentTx save(final ORecordInternal<?> iContent, String iClusterName) {
+		if (!(iContent instanceof ODocument))
+			return (ODatabaseDocumentTx) super.save(iContent, iClusterName);
+
+		final ODocument doc = (ODocument) iContent;
+
+		if (!doc.getIdentity().isValid()) {
+			if (iClusterName == null && doc.getSchemaClass() != null)
 				// FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
-				iClusterName = getClusterNameById(iContent.getSchemaClass().getDefaultClusterId());
+				iClusterName = getClusterNameById(doc.getSchemaClass().getDefaultClusterId());
 
 			int id = getClusterIdByName(iClusterName);
 			if (id == -1)
 				throw new IllegalArgumentException("Cluster name " + iClusterName + " is not configured");
 
 			final int[] clusterIds;
-			if (iContent.getSchemaClass() != null) {
+			if (doc.getSchemaClass() != null) {
 				// throw new IllegalArgumentException("Class '" + iClusterName + "' not configured in the record to save");
 
 				// CHECK IF THE CLUSTER IS PART OF THE CONFIGURED CLUSTERS
-				clusterIds = iContent.getSchemaClass().getClusterIds();
+				clusterIds = doc.getSchemaClass().getClusterIds();
 				int i = 0;
 				for (; i < clusterIds.length; ++i)
 					if (clusterIds[i] == id)
@@ -129,17 +139,15 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 				clusterIds = new int[] { id };
 
 			if (id == clusterIds.length)
-				throw new IllegalArgumentException("Cluster name " + iClusterName + " is not configured to store the class "
-						+ iContent.getClassName());
+				throw new IllegalArgumentException("Cluster name " + iClusterName + " is not configured to store the class " + doc.getClassName());
 		}
 
-		iContent.validate();
+		doc.validate();
 
-		super.save(iContent, iClusterName);
+		super.save(doc, iClusterName);
 		return this;
 	}
 
-	@Override
 	public ODatabaseDocumentTx delete(final ODocument iContent) {
 		// CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
 		if (iContent.getClassName() != null)
@@ -149,8 +157,8 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 			underlying.delete(iContent);
 
 		} catch (Exception e) {
-			OLogManager.instance().exception("Error on deleting record #%s of class '%s'", e, ODatabaseException.class,
-					iContent.getIdentity(), iContent.getClassName());
+			OLogManager.instance().exception("Error on deleting record #%s of class '%s'", e, ODatabaseException.class, iContent.getIdentity(),
+					iContent.getClassName());
 		}
 		return this;
 	}

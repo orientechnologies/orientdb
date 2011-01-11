@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterLogical;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
@@ -40,14 +41,14 @@ public class OMVRBTreeStorage<K, V> extends OMVRBTreePersistent<K, V> {
 	public OMVRBTreeStorage(final OStorageLocal iStorage, final String iClusterName, final ORID iRID) {
 		super(iClusterName, iRID);
 		storage = iStorage;
-		clusterId = storage.getClusterIdByName(OStorageLocal.CLUSTER_INTERNAL_NAME);
+		clusterId = storage.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME);
 	}
 
 	public OMVRBTreeStorage(final OStorageLocal iStorage, String iClusterName, final OStreamSerializer iKeySerializer,
 			final OStreamSerializer iValueSerializer) {
 		super(iClusterName, iKeySerializer, iValueSerializer);
 		storage = iStorage;
-		clusterId = storage.getClusterIdByName(OStorageLocal.CLUSTER_INTERNAL_NAME);
+		clusterId = storage.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME);
 	}
 
 	@Override

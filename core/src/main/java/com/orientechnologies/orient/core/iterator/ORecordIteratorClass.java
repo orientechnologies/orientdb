@@ -43,7 +43,7 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 	protected long				totalAvailableRecords;
 	protected boolean			polymorphic;
 
-	public ORecordIteratorClass(final ODatabaseRecord<REC> iDatabase, final ODatabaseRecordAbstract<REC> iLowLevelDatabase,
+	public ORecordIteratorClass(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
 			final String iClassName, final boolean iPolymorphic) {
 		super(iDatabase, iLowLevelDatabase);
 
@@ -63,7 +63,7 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 
 		if (txEntries != null)
 			// ADJUST TOTAL ELEMENT BASED ON CURRENT TRANSACTION'S ENTRIES
-			for (OTransactionEntry<?> entry : txEntries) {
+			for (OTransactionEntry entry : txEntries) {
 				switch (entry.status) {
 				case OTransactionEntry.CREATED:
 					totalAvailableRecords++;
@@ -103,9 +103,9 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 		if (browsedRecords >= totalAvailableRecords)
 			return false;
 
-//		if (currentClusterIdx < clusterIds.length - 1)
-//			// PRESUME THAT IF IT'S NOT AT THE LAST CLUSTER THERE COULD BE OTHER ELEMENTS
-//			return true;
+		// if (currentClusterIdx < clusterIds.length - 1)
+		// // PRESUME THAT IF IT'S NOT AT THE LAST CLUSTER THERE COULD BE OTHER ELEMENTS
+		// return true;
 
 		// COMPUTE THE NUMBER OF RECORDS TO BROWSE
 		if (liveUpdated)
@@ -125,11 +125,12 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 	 * 
 	 * @return the previous record found, otherwise the NoSuchElementException exception is thrown when no more records are found.
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public REC previous() {
 		checkDirection(false);
 
-		final REC record = getRecord();
+		final REC record = (REC) getRecord();
 
 		// ITERATE UNTIL THE PREVIOUS GOOD RECORD
 		while (currentClusterIdx > -1) {
@@ -158,7 +159,7 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 	public REC next() {
 		checkDirection(true);
 
-		final REC record = getRecord();
+		final ORecordInternal<?> record = getRecord();
 
 		if (currentTxEntryPosition > -1)
 			// IN TX
@@ -171,7 +172,7 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 			while (hasNext()) {
 				if (readCurrentRecord(record, +1) != null)
 					// FOUND
-					return record;
+					return (REC) record;
 			}
 
 			// CLUSTER EXHAUSTED, TRY WITH THE NEXT ONE
@@ -186,7 +187,7 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 		return polymorphic;
 	}
 
-	public REC current() {
+	public ORecordInternal<?> current() {
 		return readCurrentRecord(getRecord(), 0);
 	}
 
@@ -245,7 +246,7 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 	 * @param iRecord
 	 * @return
 	 */
-	private REC readCurrentRecord(REC iRecord, final int iMovement) {
+	private ORecordInternal<?> readCurrentRecord(ORecordInternal<?> iRecord, final int iMovement) {
 		if (limit > -1 && browsedRecords >= limit)
 			// LIMIT REACHED
 			return null;
@@ -262,7 +263,7 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 		return null;
 	}
 
-	protected REC loadRecord(final REC iRecord) {
+	protected ORecordInternal<?> loadRecord(final ORecordInternal<?> iRecord) {
 		return lowLevelDatabase.executeReadRecord(currentClusterId, currentClusterPosition, iRecord, fetchPlan);
 	}
 

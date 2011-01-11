@@ -21,8 +21,8 @@ import java.util.List;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
-public class OTransactionNoTx<REC extends ORecordInternal<?>> extends OTransactionAbstract<REC> {
-	public OTransactionNoTx(final ODatabaseRecordTx<REC> iDatabase, final int iId) {
+public class OTransactionNoTx extends OTransactionAbstract {
+	public OTransactionNoTx(final ODatabaseRecordTx iDatabase, final int iId) {
 		super(iDatabase, iId);
 		status = TXSTATUS.BEGUN;
 	}
@@ -31,40 +31,41 @@ public class OTransactionNoTx<REC extends ORecordInternal<?>> extends OTransacti
 	}
 
 	public void commit() {
-//		invokeCommitAgainstListeners();
+		// invokeCommitAgainstListeners();
 	}
 
 	public void rollback() {
-//		invokeRollbackAgainstListeners();
+		// invokeRollbackAgainstListeners();
 	}
 
-	public REC load(final int iClusterId, final long iPosition, final REC iRecord, final String iFetchPlan) {
+	public ORecordInternal<?> load(final int iClusterId, final long iPosition, final ORecordInternal<?> iRecord,
+			final String iFetchPlan) {
 		return database.executeReadRecord(iClusterId, iPosition, iRecord, iFetchPlan);
 	}
 
 	/**
 	 * Update the record without checking the version coherence.
 	 */
-	public void save(final REC iContent, final String iClusterName) {
+	public void save(final ORecordInternal<?> iContent, final String iClusterName) {
 		database.executeSaveRecord(iContent, iClusterName, -1, iContent.getRecordType());
 	}
 
 	/**
 	 * Delete the record without checking the version coherence.
 	 */
-	public void delete(final REC iRecord) {
+	public void delete(final ORecordInternal<?> iRecord) {
 		database.executeDeleteRecord(iRecord, -1);
 	}
 
-	public Collection<OTransactionEntry<REC>> getEntries() {
+	public Collection<OTransactionEntry> getEntries() {
 		return null;
 	}
 
-	public List<OTransactionEntry<?>> getEntriesByClass(String iClassName) {
+	public List<OTransactionEntry> getEntriesByClass(String iClassName) {
 		return null;
 	}
 
-	public List<OTransactionEntry<?>> getEntriesByClusterIds(int[] iIds) {
+	public List<OTransactionEntry> getEntriesByClusterIds(int[] iIds) {
 		return null;
 	}
 

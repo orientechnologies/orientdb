@@ -19,7 +19,7 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
-public interface OTransaction<REC extends ORecordInternal<?>> {
+public interface OTransaction {
 	public enum TXTYPE {
 		NOTX, OPTIMISTIC, PESSIMISTIC
 	}
@@ -28,11 +28,11 @@ public interface OTransaction<REC extends ORecordInternal<?>> {
 		INVALID, BEGUN, COMMITTING, ROLLBACKING
 	}
 
-	public REC load(int iClusterId, long iPosition, REC iRecord, String iFetchPlan);
+	public ORecordInternal<?> load(int iClusterId, long iPosition, ORecordInternal<?> iRecord, String iFetchPlan);
 
-	public void save(REC iContent, String iClusterName);
+	public void save(ORecordInternal<?> iContent, String iClusterName);
 
-	public void delete(REC iRecord);
+	public void delete(ORecordInternal<?> iRecord);
 
 	public void begin();
 
@@ -44,14 +44,13 @@ public interface OTransaction<REC extends ORecordInternal<?>> {
 
 	public int getId();
 
-	public Iterable<? extends OTransactionEntry<REC>> getEntries();
+	public Iterable<? extends OTransactionEntry> getEntries();
 
-	public List<OTransactionEntry<?>> getEntriesByClass(String iClassName);
+	public List<OTransactionEntry> getEntriesByClass(String iClassName);
 
-	public List<OTransactionEntry<?>> getEntriesByClusterIds(int[] iIds);
+	public List<OTransactionEntry> getEntriesByClusterIds(int[] iIds);
 
 	public void clearEntries();
 
 	public int size();
-
 }

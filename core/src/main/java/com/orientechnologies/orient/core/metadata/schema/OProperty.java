@@ -118,6 +118,7 @@ public class OProperty extends ODocumentWrapperNoClass {
 		return this;
 	}
 
+	@Override
 	public void fromStream() {
 		name = document.field("name");
 		if (document.field("type") != null)
@@ -140,6 +141,7 @@ public class OProperty extends ODocumentWrapperNoClass {
 		}
 	}
 
+	@Override
 	@OBeforeSerialization
 	public ODocument toStream() {
 		document.field("name", name);
@@ -226,6 +228,7 @@ public class OProperty extends ODocumentWrapperNoClass {
 	 * @deprecated Use {@link #createIndex(INDEX_TYPE)} instead
 	 * @return
 	 */
+	@Deprecated
 	public OPropertyIndex createIndex(final boolean iUnique) {
 		return createIndex(iUnique ? INDEX_TYPE.UNIQUE : INDEX_TYPE.NOTUNIQUE);
 	}

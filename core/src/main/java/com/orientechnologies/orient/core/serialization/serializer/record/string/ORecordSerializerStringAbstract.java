@@ -29,18 +29,18 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 	protected abstract String toString(final ORecordInternal<?> iRecord, final String iFormat,
 			final OUserObject2RecordHandler iObjHandler, final Set<Integer> iMarshalledRecords);
 
-	protected abstract ORecordInternal<?> fromString(final ODatabaseRecord<?> iDatabase, final String iContent,
+	protected abstract ORecordInternal<?> fromString(final ODatabaseRecord iDatabase, final String iContent,
 			final ORecordInternal<?> iRecord);
 
 	public String toString(final ORecordInternal<?> iRecord, final String iFormat) {
 		return toString(iRecord, iFormat, iRecord.getDatabase(), OSerializationThreadLocal.INSTANCE.get());
 	}
 
-	public ORecordInternal<?> fromString(final ODatabaseRecord<?> iDatabase, final String iSource) {
-		return fromString(iDatabase, iSource, iDatabase.newInstance());
+	public ORecordInternal<?> fromString(final ODatabaseRecord iDatabase, final String iSource) {
+		return fromString(iDatabase, iSource, (ORecordInternal<?>) iDatabase.newInstance());
 	}
 
-	public ORecordInternal<?> fromStream(final ODatabaseRecord<?> iDatabase, final byte[] iSource, final ORecordInternal<?> iRecord) {
+	public ORecordInternal<?> fromStream(final ODatabaseRecord iDatabase, final byte[] iSource, final ORecordInternal<?> iRecord) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		try {
@@ -51,7 +51,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 		}
 	}
 
-	public byte[] toStream(final ODatabaseRecord<?> iDatabase, final ORecordInternal<?> iRecord) {
+	public byte[] toStream(final ODatabaseRecord iDatabase, final ORecordInternal<?> iRecord) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		try {

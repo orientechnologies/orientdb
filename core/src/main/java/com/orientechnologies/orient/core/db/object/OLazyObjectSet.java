@@ -33,12 +33,12 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 @SuppressWarnings("unchecked")
 public class OLazyObjectSet<TYPE> implements Set<Object> {
 	private final ORecord<?>								sourceRecord;
-	private ODatabasePojoAbstract<?, TYPE>	database;
+	private ODatabasePojoAbstract<TYPE>	database;
 	private final Collection<Object>				underlying;
 	private String													fetchPlan;
 	private boolean													convertToRecord	= true;
 
-	public OLazyObjectSet(final ODatabasePojoAbstract<?, TYPE> database, final ORecord<?> iSourceRecord,
+	public OLazyObjectSet(final ODatabasePojoAbstract<TYPE> database, final ORecord<?> iSourceRecord,
 			final Collection<Object> iSource) {
 		this.database = database;
 		this.sourceRecord = iSourceRecord;
@@ -145,7 +145,7 @@ public class OLazyObjectSet<TYPE> implements Set<Object> {
 			sourceRecord.setDirty();
 	}
 
-	public void assignDatabase(final ODatabasePojoAbstract<?, TYPE> iDatabase) {
+	public void assignDatabase(final ODatabasePojoAbstract<TYPE> iDatabase) {
 		if (database == null || database.isClosed()) {
 			database = iDatabase;
 		}

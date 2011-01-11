@@ -30,19 +30,19 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings({ "unchecked" })
 public class OLazyObjectList<TYPE> implements List<TYPE> {
-	private ORecord<?>											sourceRecord;
-	private final ArrayList<Object>					list						= new ArrayList<Object>();
-	private ODatabasePojoAbstract<?, TYPE>	database;
-	private String													fetchPlan;
-	private boolean													converted				= false;
-	private boolean													convertToRecord	= true;
+	private ORecord<?>									sourceRecord;
+	private final ArrayList<Object>			list						= new ArrayList<Object>();
+	private ODatabasePojoAbstract<TYPE>	database;
+	private String											fetchPlan;
+	private boolean											converted				= false;
+	private boolean											convertToRecord	= true;
 
 	public OLazyObjectList(final ODatabaseGraphTx iDatabase, final ORecord<?> iSourceRecord, final Collection<?> iSourceList) {
-		this((ODatabasePojoAbstract<?, TYPE>) iDatabase, iSourceRecord, iSourceList);
+		this((ODatabasePojoAbstract<TYPE>) iDatabase, iSourceRecord, iSourceList);
 		this.sourceRecord = iSourceRecord;
 	}
 
-	public OLazyObjectList(final ODatabasePojoAbstract<?, TYPE> iDatabase, final ORecord<?> iSourceRecord,
+	public OLazyObjectList(final ODatabasePojoAbstract<TYPE> iDatabase, final ORecord<?> iSourceRecord,
 			final Collection<?> iSourceList) {
 		this(iDatabase);
 		this.sourceRecord = iSourceRecord;
@@ -50,7 +50,7 @@ public class OLazyObjectList<TYPE> implements List<TYPE> {
 			list.addAll(iSourceList);
 	}
 
-	public OLazyObjectList(final ODatabasePojoAbstract<?, TYPE> iDatabase) {
+	public OLazyObjectList(final ODatabasePojoAbstract<TYPE> iDatabase) {
 		this.database = iDatabase;
 	}
 
@@ -204,7 +204,7 @@ public class OLazyObjectList<TYPE> implements List<TYPE> {
 			sourceRecord.setDirty();
 	}
 
-	public void assignDatabase(final ODatabasePojoAbstract<?, TYPE> iDatabase) {
+	public void assignDatabase(final ODatabasePojoAbstract<TYPE> iDatabase) {
 		if (database == null || database.isClosed()) {
 			database = iDatabase;
 		}
@@ -223,6 +223,11 @@ public class OLazyObjectList<TYPE> implements List<TYPE> {
 		final Object o = list.get(iIndex);
 
 		if (o != null && o instanceof ODocument)
-			list.set(iIndex, (TYPE) database.getUserObjectByRecord((ORecordInternal<?>) o, fetchPlan));
+			list.set(iIndex, database.getUserObjectByRecord((ORecordInternal<?>) o, fetchPlan));
+	}
+
+	@Override
+	public String toString() {
+		return list.toString();
 	}
 }

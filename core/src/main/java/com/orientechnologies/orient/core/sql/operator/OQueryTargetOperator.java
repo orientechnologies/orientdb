@@ -50,6 +50,7 @@ public abstract class OQueryTargetOperator extends OQueryOperator {
 	 * @param iParams
 	 * @return
 	 */
+	@Override
 	public OQueryTargetOperator configure(final List<String> iParams) {
 		return this;
 	}

@@ -36,17 +36,17 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 		setup();
 	}
 
-	public ORecordBytes(ODatabaseRecord<?> iDatabase) {
+	public ORecordBytes(ODatabaseRecord iDatabase) {
 		super(iDatabase);
 		setup();
 	}
 
-	public ORecordBytes(ODatabaseRecord<?> iDatabase, byte[] iSource) {
+	public ORecordBytes(ODatabaseRecord iDatabase, byte[] iSource) {
 		super(iDatabase, iSource);
 		setup();
 	}
 
-	public ORecordBytes(ODatabaseRecord<?> iDatabase, ORID iRecordId) {
+	public ORecordBytes(ODatabaseRecord iDatabase, ORID iRecordId) {
 		super(iDatabase);
 		_recordId = (ORecordId) iRecordId;
 		setup();
@@ -61,6 +61,7 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 		return (ORecordBytes) copyTo(new ORecordBytes());
 	}
 
+	@Override
 	public ORecordBytes fromStream(final byte[] iRecordBuffer) {
 		_source = iRecordBuffer;
 		_status = STATUS.LOADED;

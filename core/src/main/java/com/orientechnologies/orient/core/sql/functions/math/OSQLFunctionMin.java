@@ -69,6 +69,7 @@ public class OSQLFunctionMin extends OSQLFunctionMathAbstract {
 		return "Syntax error: min(<field>)";
 	}
 
+	@Override
 	public Object getResult() {
 		return context;
 	}

@@ -26,7 +26,7 @@ public abstract class ONativeSynchQuery<T extends ORecordInternal<?>, CTX extend
 		ONativeAsynchQuery<T, CTX> implements OCommandResultListener {
 	protected final List<T>	result	= new ArrayList<T>();
 
-	public ONativeSynchQuery(final ODatabaseRecord<T> iDatabase, final String iCluster, final CTX iQueryRecordImpl) {
+	public ONativeSynchQuery(final ODatabaseRecord iDatabase, final String iCluster, final CTX iQueryRecordImpl) {
 		super(iDatabase, iCluster, iQueryRecordImpl, null);
 		resultListener = this;
 	}

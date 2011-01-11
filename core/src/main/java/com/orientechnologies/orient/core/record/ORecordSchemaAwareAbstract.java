@@ -36,11 +36,11 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	public ORecordSchemaAwareAbstract() {
 	}
 
-	public ORecordSchemaAwareAbstract(final ODatabaseRecord<?> iDatabase) {
+	public ORecordSchemaAwareAbstract(final ODatabaseRecord iDatabase) {
 		super(iDatabase);
 	}
 
-	public ORecordSchemaAwareAbstract<T> fill(final ODatabaseRecord<?> iDatabase, final int iClassId, final int iClusterId,
+	public ORecordSchemaAwareAbstract<T> fill(final ODatabaseRecord iDatabase, final int iClassId, final int iClusterId,
 			final long iPosition, final int iVersion) {
 		super.fill(iDatabase, iClusterId, iPosition, iVersion);
 		setClass(_database.getMetadata().getSchema().getClassById(iClassId));
@@ -116,6 +116,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 		return _cursor < size();
 	}
 
+	@Override
 	public ORecordAbstract<T> unload() {
 		super.unload();
 		_cursor = 0;

@@ -20,19 +20,17 @@ import java.util.Iterator;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings("unchecked")
 public class OObjectIteratorCluster<T> implements Iterator<T>, Iterable<T> {
-	private ODatabaseObject										database;
-	private ORecordIteratorCluster<ODocument>	underlying;
-	private String														fetchPlan;
+	private ODatabaseObject					database;
+	private ORecordIteratorCluster	underlying;
+	private String									fetchPlan;
 
-	public OObjectIteratorCluster(final ODatabaseObject iDatabase, final ODatabaseRecordAbstract<ODocument> iUnderlyingDatabase,
+	public OObjectIteratorCluster(final ODatabaseObject iDatabase, final ODatabaseRecordAbstract iUnderlyingDatabase,
 			final int iClusterId) {
 		database = iDatabase;
-		underlying = new ORecordIteratorCluster<ODocument>((ODatabaseRecord<ODocument>) iDatabase.getUnderlying(), iUnderlyingDatabase,
-				iClusterId);
+		underlying = new ORecordIteratorCluster((ODatabaseRecord) iDatabase.getUnderlying(), iUnderlyingDatabase, iClusterId);
 	}
 
 	public boolean hasNext() {

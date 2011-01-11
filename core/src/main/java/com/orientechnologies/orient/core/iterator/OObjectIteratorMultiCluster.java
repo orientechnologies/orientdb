@@ -20,19 +20,18 @@ import java.util.Iterator;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings("unchecked")
 public class OObjectIteratorMultiCluster<T> implements Iterator<T>, Iterable<T> {
-	private ODatabaseObject									database;
-	private ORecordIteratorClass<ODocument>	underlying;
-	private String													fetchPlan;
+	private ODatabaseObject				database;
+	private ORecordIteratorClass	underlying;
+	private String								fetchPlan;
 
-	public OObjectIteratorMultiCluster(final ODatabaseObject iDatabase, final ODatabaseRecordAbstract<ODocument> iUnderlyingDatabase,
+	public OObjectIteratorMultiCluster(final ODatabaseObject iDatabase, final ODatabaseRecordAbstract iUnderlyingDatabase,
 			final String iClusterName, final boolean iPolymorphic) {
 		database = iDatabase;
-		underlying = new ORecordIteratorClass<ODocument>((ODatabaseRecord<ODocument>) iDatabase.getUnderlying(), iUnderlyingDatabase,
-				iClusterName, iPolymorphic);
+		underlying = new ORecordIteratorClass((ODatabaseRecord) iDatabase.getUnderlying(), iUnderlyingDatabase, iClusterName,
+				iPolymorphic);
 	}
 
 	public boolean hasNext() {

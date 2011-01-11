@@ -2561,13 +2561,13 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 				if (prevNode.getTree() == null)
 					OLogManager.instance().error(this, "[OMVRBTree.checkTreeStructure] Freed record %d found in memory\n", i);
 
-				if (((Comparable) e.getFirstKey()).compareTo(((Comparable) e.getLastKey())) > 0) {
+				if (((Comparable) e.getFirstKey()).compareTo((e.getLastKey())) > 0) {
 					OLogManager.instance().error(this, "[OMVRBTree.checkTreeStructure] begin key is > than last key\n", e.getFirstKey(),
 							e.getLastKey());
 					printInMemoryStructure(iRootNode);
 				}
 
-				if (((Comparable) e.getFirstKey()).compareTo(((Comparable) prevNode.getLastKey())) < 0) {
+				if (((Comparable) e.getFirstKey()).compareTo((prevNode.getLastKey())) < 0) {
 					OLogManager.instance().error(this,
 							"[OMVRBTree.checkTreeStructure] Node %s starts with a key minor than the last key of the previous node %s\n", e,
 							prevNode);

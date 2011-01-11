@@ -35,12 +35,12 @@ public abstract class OGraphElement extends ODocumentWrapper implements ORecordL
 	protected ODatabaseGraphTx	database;
 
 	public OGraphElement(final ODatabaseGraphTx iDatabase, final ORID iRID) {
-		this(iDatabase, new ODocument((ODatabaseRecord<?>) iDatabase.getUnderlying(), iRID));
+		this(iDatabase, new ODocument((ODatabaseRecord) iDatabase.getUnderlying(), iRID));
 		document.setTrackingChanges(false);
 	}
 
 	public OGraphElement(final ODatabaseGraphTx iDatabase, final String iClassName) {
-		this(iDatabase, new ODocument((ODatabaseRecord<?>) iDatabase.getUnderlying(), iClassName));
+		this(iDatabase, new ODocument((ODatabaseRecord) iDatabase.getUnderlying(), iClassName));
 		document.setTrackingChanges(false);
 	}
 

@@ -86,7 +86,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 * @param iDatabase
 	 *          Database instance
 	 */
-	public ODocument(final ODatabaseRecord<?> iDatabase) {
+	public ODocument(final ODatabaseRecord iDatabase) {
 		super(iDatabase);
 		setup();
 	}
@@ -100,7 +100,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 * @param iRID
 	 *          Record Id
 	 */
-	public ODocument(final ODatabaseRecord<?> iDatabase, final ORID iRID) {
+	public ODocument(final ODatabaseRecord iDatabase, final ORID iRID) {
 		this(iDatabase);
 		_recordId = (ORecordId) iRID;
 		_status = STATUS.NOT_LOADED;
@@ -118,7 +118,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 * @param iRID
 	 *          Record Id
 	 */
-	public ODocument(final ODatabaseRecord<?> iDatabase, final String iClassName, final ORID iRID) {
+	public ODocument(final ODatabaseRecord iDatabase, final String iClassName, final ORID iRID) {
 		this(iDatabase, iClassName);
 		_recordId = (ORecordId) iRID;
 		_dirty = false;
@@ -133,7 +133,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 * @param iClassName
 	 *          Class name
 	 */
-	public ODocument(final ODatabaseRecord<?> iDatabase, final String iClassName) {
+	public ODocument(final ODatabaseRecord iDatabase, final String iClassName) {
 		super(iDatabase, iClassName);
 		setup();
 	}
@@ -326,7 +326,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 						if (myList.get(i) instanceof ODocument) {
 							if (otherList.get(i) instanceof ORID) {
 								if (!((ODocument) myList.get(i)).isDirty()) {
-									if (!((ODocument) myList.get(i)).getIdentity().equals((ORID) otherList.get(i)))
+									if (!((ODocument) myList.get(i)).getIdentity().equals(otherList.get(i)))
 										return false;
 								} else {
 									ODocument otherDoc = (ODocument) getDatabase().load((ORID) otherList.get(i));

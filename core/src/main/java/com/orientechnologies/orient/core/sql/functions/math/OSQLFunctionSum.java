@@ -65,6 +65,7 @@ public class OSQLFunctionSum extends OSQLFunctionMathAbstract {
 		return "Syntax error: sum(<field>)";
 	}
 
+	@Override
 	public Object getResult() {
 		return sum;
 	}

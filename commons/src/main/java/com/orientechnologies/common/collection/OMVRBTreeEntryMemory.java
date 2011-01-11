@@ -87,6 +87,7 @@ public class OMVRBTreeEntryMemory<K, V> extends OMVRBTreeEntry<K, V> {
 	/**
 	 * Returns the successor of the current Entry only by traversing the memory, or null if no such.
 	 */
+	@Override
 	public OMVRBTreeEntryMemory<K, V> getNextInMemory() {
 		OMVRBTreeEntryMemory<K, V> t = this;
 		OMVRBTreeEntryMemory<K, V> p = null;

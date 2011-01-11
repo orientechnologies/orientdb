@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.tx;
 
-import com.orientechnologies.orient.core.record.ORecord;
 
 /**
  * Listener interface to catch events during transactions phases.
@@ -28,5 +27,5 @@ public interface OTxListener {
 		BEFORE_COMMIT, AFTER_COMMIT, BEFORE_ROLLBACK, AFTER_ROLLBACK
 	}
 
-	public void onEvent(OTransactionEntry<? extends ORecord<?>> iTxEntry, EVENT iEvent);
+	public void onEvent(OTransactionEntry iTxEntry, EVENT iEvent);
 }

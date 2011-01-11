@@ -25,6 +25,7 @@ public class OServerCommandOptions extends OServerCommandAbstract {
 	public OServerCommandOptions() {
 	}
 
+	@Override
 	public void execute(final OHttpRequest iRequest) throws Exception {
 		iRequest.data.commandInfo = "HTTP Options";
 		iRequest.data.commandDetail = iRequest.url;
@@ -37,6 +38,7 @@ public class OServerCommandOptions extends OServerCommandAbstract {
 				OHttpUtils.CONTENT_TEXT_PLAIN, null);
 	}
 
+	@Override
 	public String[] getNames() {
 		return NAMES;
 	}

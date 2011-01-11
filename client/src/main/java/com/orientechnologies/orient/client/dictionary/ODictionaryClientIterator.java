@@ -26,11 +26,11 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 
 @SuppressWarnings("unchecked")
 public class ODictionaryClientIterator<T> implements Iterator<Entry<String, T>> {
-	private ODatabaseRecord<?>	database;
+	private ODatabaseRecord	database;
 	private List<String>				keys		= new ArrayList<String>();
 	private int									cursor	= -1;
 
-	public ODictionaryClientIterator(final ODatabaseRecord<?> iDatabase, final Set<String> iKeys) {
+	public ODictionaryClientIterator(final ODatabaseRecord iDatabase, final Set<String> iKeys) {
 		this.database = iDatabase;
 		this.keys.addAll(iKeys);
 	}

@@ -50,8 +50,7 @@ import com.orientechnologies.orient.core.tx.OTransactionNoTx;
  * @author Luca Garulli
  */
 @SuppressWarnings("unchecked")
-public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> implements ODatabaseObject,
-		OUserObject2RecordHandler {
+public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements ODatabaseObject, OUserObject2RecordHandler {
 
 	private ODictionary<Object>	dictionary;
 	private OEntityManager			entityManager;
@@ -74,12 +73,12 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
 	 * 
 	 * @see #registerEntityClasses(String)
 	 */
-	public Object newInstance(final String iClassName) {
+	public <RET extends Object> RET newInstance(final String iClassName) {
 		checkOpeness();
 		checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, iClassName);
 
 		try {
-			return entityManager.createPojo(iClassName);
+			return (RET) entityManager.createPojo(iClassName);
 		} catch (Exception e) {
 			OLogManager.instance().error(this, "Error on creating object of class " + iClassName, e, ODatabaseException.class);
 		}
@@ -105,16 +104,15 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
 		checkOpeness();
 		checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, iClassName);
 
-		return new OObjectIteratorMultiCluster<RET>(this, (ODatabaseRecordAbstract<ODocument>) getUnderlying().getUnderlying(),
-				iClassName, iPolymorphic);
+		return new OObjectIteratorMultiCluster<RET>(this, (ODatabaseRecordAbstract) getUnderlying().getUnderlying(), iClassName, iPolymorphic);
 	}
 
 	public <RET> OObjectIteratorCluster<RET> browseCluster(final String iClusterName) {
 		checkOpeness();
 		checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
-		return (OObjectIteratorCluster<RET>) new OObjectIteratorCluster<Object>(this,
-				(ODatabaseRecordAbstract<ODocument>) getUnderlying().getUnderlying(), getClusterIdByName(iClusterName));
+		return (OObjectIteratorCluster<RET>) new OObjectIteratorCluster<Object>(this, (ODatabaseRecordAbstract) getUnderlying().getUnderlying(),
+				getClusterIdByName(iClusterName));
 	}
 
 	public ODatabaseObjectTx load(final Object iPojo) {
@@ -147,7 +145,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
 		ODocument record = rid2Records.get(iRecordId);
 		if (record == null) {
 			// GET THE ASSOCIATED DOCUMENT
-			record = underlying.load(iRecordId);
+			record = (ODocument) underlying.load(iRecordId);
 			if (record == null)
 				return null;
 		}
@@ -238,12 +236,12 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
 	}
 
 	@Override
-	public ODatabasePojoAbstract<ODocument, Object> commit() {
+	public ODatabasePojoAbstract<Object> commit() {
 		// COPY ALL TX ENTRIES
-		final List<OTransactionEntry<?>> entries;
+		final List<OTransactionEntry> entries;
 		if (getTransaction().getEntries() != null) {
-			entries = new ArrayList<OTransactionEntry<?>>();
-			for (OTransactionEntry<?> entry : getTransaction().getEntries())
+			entries = new ArrayList<OTransactionEntry>();
+			for (OTransactionEntry entry : getTransaction().getEntries())
 				entries.add(entry);
 		} else
 			entries = null;
@@ -253,7 +251,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
 		if (entries != null) {
 			// UPDATE ID & VERSION FOR ALL THE RECORDS
 			Object pojo = null;
-			for (OTransactionEntry<?> entry : entries) {
+			for (OTransactionEntry entry : entries) {
 				pojo = records2Objects.get(entry.getRecord());
 
 				switch (entry.status) {
@@ -279,12 +277,12 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
 	}
 
 	@Override
-	public ODatabasePojoAbstract<ODocument, Object> rollback() {
+	public ODatabasePojoAbstract<Object> rollback() {
 		// COPY ALL TX ENTRIES
-		final List<OTransactionEntry<?>> newEntries;
+		final List<OTransactionEntry> newEntries;
 		if (getTransaction().getEntries() != null) {
-			newEntries = new ArrayList<OTransactionEntry<?>>();
-			for (OTransactionEntry<?> entry : getTransaction().getEntries())
+			newEntries = new ArrayList<OTransactionEntry>();
+			for (OTransactionEntry entry : getTransaction().getEntries())
 				if (entry.status == OTransactionEntry.CREATED)
 					newEntries.add(entry);
 		} else
@@ -294,7 +292,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
 
 		if (newEntries != null) {
 			Object pojo = null;
-			for (OTransactionEntry<?> entry : newEntries) {
+			for (OTransactionEntry entry : newEntries) {
 				pojo = records2Objects.get(entry.getRecord());
 
 				OObjectSerializerHelper.setObjectID(null, pojo);
@@ -340,6 +338,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
 	 * @param iPojo
 	 *          User object
 	 */
+	@Override
 	public ORID getIdentity(final Object iPojo) {
 		checkOpeness();
 		final ODocument record = getRecordByUserObject(iPojo, false);
@@ -361,11 +360,13 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<ODocument, Object> 
 		return (DBTYPE) underlying.checkSecurity(iResource, iOperation, iResourcesSpecific);
 	}
 
+	@Override
 	protected ODocument pojo2Stream(final Object iPojo, final ODocument iRecord) {
-		return OObjectSerializerHelper.toStream(iPojo, iRecord, getEntityManager(),
-				getMetadata().getSchema().getClass(iPojo.getClass().getSimpleName()), this, this, saveOnlyDirty);
+		return OObjectSerializerHelper.toStream(iPojo, iRecord, getEntityManager(), getMetadata().getSchema().getClass(iPojo.getClass().getSimpleName()),
+				this, this, saveOnlyDirty);
 	}
 
+	@Override
 	protected Object stream2pojo(final ODocument record, final Object iPojo, final String iFetchPlan) {
 		return OObjectSerializerHelper.fromStream(record, iPojo, getEntityManager(), this, iFetchPlan);
 	}

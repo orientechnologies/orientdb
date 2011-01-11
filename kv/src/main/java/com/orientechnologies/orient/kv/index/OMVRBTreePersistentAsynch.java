@@ -20,13 +20,13 @@ import com.orientechnologies.orient.kv.OSharedBinaryDatabase;
 @SuppressWarnings("serial")
 public class OMVRBTreePersistentAsynch<K, V> extends OMVRBTreeDatabase<K, V> {
 
-	public OMVRBTreePersistentAsynch(final ODatabaseRecord<?> iDatabase, final String iClusterName,
+	public OMVRBTreePersistentAsynch(final ODatabaseRecord iDatabase, final String iClusterName,
 			final OStreamSerializer iKeySerializer, final OStreamSerializer iValueSerializer) {
 		super(iDatabase, iClusterName, iKeySerializer, iValueSerializer);
 		OMVRBTreePersistentAsynchThread.getInstance().registerMap(this);
 	}
 
-	public OMVRBTreePersistentAsynch(final ODatabaseRecord<?> iDatabase, final ORID iRID) {
+	public OMVRBTreePersistentAsynch(final ODatabaseRecord iDatabase, final ORID iRID) {
 		super(iDatabase, iRID);
 		OMVRBTreePersistentAsynchThread.getInstance().registerMap(this);
 	}
@@ -37,7 +37,7 @@ public class OMVRBTreePersistentAsynch<K, V> extends OMVRBTreeDatabase<K, V> {
 	 * @see OMVRBTreePersistentAsynchThread#execute()
 	 */
 	@Override
-	public void commitChanges(final ODatabaseRecord<?> iDatabase) {
+	public void commitChanges(final ODatabaseRecord iDatabase) {
 	}
 
 	/**

@@ -167,6 +167,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 		}
 	}
 
+	@Override
 	public void onMessage(String iText) {
 	}
 }

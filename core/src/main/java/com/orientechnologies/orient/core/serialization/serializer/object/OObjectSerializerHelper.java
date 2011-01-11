@@ -69,8 +69,8 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
  * Helper class to manage POJO by using the reflection. 
  */
 public class OObjectSerializerHelper {
-	private static final Class<?>[]							callbackAnnotationClasses	= new Class[] { OBeforeDeserialization.class,
-			OAfterDeserialization.class, OBeforeSerialization.class, OAfterSerialization.class };
+	private static final Class<?>[]							callbackAnnotationClasses	= new Class[] { OBeforeDeserialization.class, OAfterDeserialization.class,
+			OBeforeSerialization.class, OAfterSerialization.class						};
 	private static final Class<?>[]							NO_ARGS										= new Class<?>[] {};
 
 	private static HashMap<String, List<Field>>	classes										= new HashMap<String, List<Field>>();
@@ -179,8 +179,7 @@ public class OObjectSerializerHelper {
 
 		} catch (Exception e) {
 
-			throw new OSchemaException("Can't set the value '" + iValue + "' to the property '" + iProperty + "' for the pojo: " + iPojo,
-					e);
+			throw new OSchemaException("Can't set the value '" + iValue + "' to the property '" + iProperty + "' for the pojo: " + iPojo, e);
 		}
 	}
 
@@ -218,10 +217,8 @@ public class OObjectSerializerHelper {
 
 				if (fieldValue == null
 						|| !(fieldValue instanceof ODocument)
-						|| (fieldValue instanceof Collection<?> && (((Collection<?>) fieldValue).size() == 0 || !(((Collection<?>) fieldValue)
-								.iterator().next() instanceof ODocument)))
-						|| (!(fieldValue instanceof Map<?, ?>) || ((Map<?, ?>) fieldValue).size() == 0 || !(((Map<?, ?>) fieldValue).values()
-								.iterator().next() instanceof ODocument))) {
+						|| (fieldValue instanceof Collection<?> && (((Collection<?>) fieldValue).size() == 0 || !(((Collection<?>) fieldValue).iterator().next() instanceof ODocument)))
+						|| (!(fieldValue instanceof Map<?, ?>) || ((Map<?, ?>) fieldValue).size() == 0 || !(((Map<?, ?>) fieldValue).values().iterator().next() instanceof ODocument))) {
 
 					final Class<?> genericTypeClass = getGenericMultivalueType(p);
 
@@ -312,15 +309,15 @@ public class OObjectSerializerHelper {
 				} else if (type.isAssignableFrom(Set.class)) {
 
 					final Collection<Object> set = (Collection<Object>) iLinked;
-					final Set<Object> target = new OLazyObjectSet<Object>((ODatabaseObjectTx) iRecord.getDatabase().getDatabaseOwner(),
-							iRoot, set).setFetchPlan(iFetchPlan);
+					final Set<Object> target = new OLazyObjectSet<Object>((ODatabaseObjectTx) iRecord.getDatabase().getDatabaseOwner(), iRoot, set)
+							.setFetchPlan(iFetchPlan);
 
 					fieldValue = target;
 				} else if (type.isAssignableFrom(Map.class)) {
 
 					final Map<String, Object> map = (Map<String, Object>) iLinked;
-					final Map<String, Object> target = new OLazyObjectMap<Object>((ODatabaseObjectTx) iRecord.getDatabase()
-							.getDatabaseOwner(), iRoot, map).setFetchPlan(iFetchPlan);
+					final Map<String, Object> target = new OLazyObjectMap<Object>((ODatabaseObjectTx) iRecord.getDatabase().getDatabaseOwner(), iRoot, map)
+							.setFetchPlan(iFetchPlan);
 
 					fieldValue = target;
 
@@ -473,9 +470,8 @@ public class OObjectSerializerHelper {
 	 *          Record where to update
 	 * @param iObj2RecHandler
 	 */
-	public static ODocument toStream(final Object iPojo, final ODocument iRecord, final OEntityManager iEntityManager,
-			final OClass schemaClass, final OUserObject2RecordHandler iObj2RecHandler, final ODatabaseObjectTx db,
-			final boolean iSaveOnlyDirty) {
+	public static ODocument toStream(final Object iPojo, final ODocument iRecord, final OEntityManager iEntityManager, final OClass schemaClass,
+			final OUserObject2RecordHandler iObj2RecHandler, final ODatabaseObjectTx db, final boolean iSaveOnlyDirty) {
 		if (iSaveOnlyDirty && !iRecord.isDirty())
 			return iRecord;
 
@@ -557,8 +553,8 @@ public class OObjectSerializerHelper {
 
 			schemaProperty = schemaClass != null ? schemaClass.getProperty(fieldName) : null;
 
-			fieldValue = typeToStream(fieldValue, schemaProperty != null ? schemaProperty.getType() : null, iEntityManager,
-					iObj2RecHandler, db, iSaveOnlyDirty);
+			fieldValue = typeToStream(fieldValue, schemaProperty != null ? schemaProperty.getType() : null, iEntityManager, iObj2RecHandler, db,
+					iSaveOnlyDirty);
 
 			iRecord.field(fieldName, fieldValue);
 		}
@@ -623,8 +619,7 @@ public class OObjectSerializerHelper {
 					// RECOGNIZED TYPE, SERIALIZE IT
 					final ODocument linkedDocument = (ODocument) iObj2RecHandler.getRecordByUserObject(iFieldValue, true);
 
-					iFieldValue = toStream(iFieldValue, linkedDocument, iEntityManager, linkedDocument.getSchemaClass(), iObj2RecHandler, db,
-							iSaveOnlyDirty);
+					iFieldValue = toStream(iFieldValue, linkedDocument, iEntityManager, linkedDocument.getSchemaClass(), iObj2RecHandler, db, iSaveOnlyDirty);
 
 				} else
 					throw new OSerializationException("Linked type [" + iFieldValue.getClass() + ":" + iFieldValue
@@ -709,8 +704,7 @@ public class OObjectSerializerHelper {
 				((OLazyObjectList<Object>) sourceValues).assignDatabase(db);
 			}
 			for (int i = 0; i < sourceValues.size(); i++) {
-				((List<Object>) result).add(typeToStream(((List<?>) sourceValues).get(i), linkedType, iEntityManager, iObj2RecHandler, db,
-						iSaveOnlyDirty));
+				((List<Object>) result).add(typeToStream(((List<?>) sourceValues).get(i), linkedType, iEntityManager, iObj2RecHandler, db, iSaveOnlyDirty));
 			}
 		} else {
 			if (iMultiValue instanceof OLazyObjectMap<?>) {
@@ -782,12 +776,10 @@ public class OObjectSerializerHelper {
 					if (idFound) {
 						// CHECK FOR TYPE
 						if (fieldType.isPrimitive())
-							OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' can't be a literal to manage the Record Id",
-									f.toString());
+							OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' can't be a literal to manage the Record Id", f.toString());
 						else if (!ORID.class.isAssignableFrom(fieldType) && fieldType != String.class && fieldType != Object.class
 								&& !Number.class.isAssignableFrom(fieldType))
-							OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' can't be managed as type: %s", f.toString(),
-									fieldType);
+							OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' can't be managed as type: %s", f.toString(), fieldType);
 					}
 
 					boolean vFound = false;
@@ -805,11 +797,9 @@ public class OObjectSerializerHelper {
 					if (vFound) {
 						// CHECK FOR TYPE
 						if (fieldType.isPrimitive())
-							OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' can't be a literal to manage the Version",
-									f.toString());
+							OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' can't be a literal to manage the Version", f.toString());
 						else if (fieldType != String.class && fieldType != Object.class && !Number.class.isAssignableFrom(fieldType))
-							OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' can't be managed as type: %s", f.toString(),
-									fieldType);
+							OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' can't be managed as type: %s", f.toString(), fieldType);
 					}
 
 					if (autoBinding)
@@ -872,8 +862,8 @@ public class OObjectSerializerHelper {
 				else
 					m.invoke(iPojo);
 			} catch (Exception e) {
-				throw new OConfigurationException("Error on executing user callback '" + m.getName() + "' annotated with '"
-						+ iAnnotation.getSimpleName() + "'", e);
+				throw new OConfigurationException("Error on executing user callback '" + m.getName() + "' annotated with '" + iAnnotation.getSimpleName()
+						+ "'", e);
 			}
 	}
 

@@ -68,7 +68,7 @@ public class CRUDColumnPhysicalTest {
 		database.open("admin", "admin");
 
 		int i = 0;
-		for (ORecordColumn rec : database.browseCluster(CLUSTER_NAME)) {
+		for (ORecordColumn rec : database.browseCluster(CLUSTER_NAME, ORecordColumn.class)) {
 			Assert.assertEquals(Integer.parseInt(rec.next()), i);
 			Assert.assertEquals(rec.next(), "Gipsy");
 			Assert.assertEquals(rec.next(), "Cat");

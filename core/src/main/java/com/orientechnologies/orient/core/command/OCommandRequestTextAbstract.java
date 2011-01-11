@@ -43,7 +43,7 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
 		this(iText, null);
 	}
 
-	protected OCommandRequestTextAbstract(final String iText, final ODatabaseRecord<ODocument> iDatabase) {
+	protected OCommandRequestTextAbstract(final String iText, final ODatabaseRecord iDatabase) {
 		super(iDatabase);
 
 		if (iText == null)

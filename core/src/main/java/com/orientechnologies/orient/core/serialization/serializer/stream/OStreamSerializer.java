@@ -20,9 +20,9 @@ import java.io.IOException;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 
 public interface OStreamSerializer {
-	public byte[] toStream(final ODatabaseRecord<?> iDatabase, Object iObject) throws IOException;
+	public byte[] toStream(final ODatabaseRecord iDatabase, Object iObject) throws IOException;
 
-	public Object fromStream(final ODatabaseRecord<?> iDatabase, byte[] iStream) throws IOException;
+	public Object fromStream(final ODatabaseRecord iDatabase, byte[] iStream) throws IOException;
 
 	public String getName();
 }

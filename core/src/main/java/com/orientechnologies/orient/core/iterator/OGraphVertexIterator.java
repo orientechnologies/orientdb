@@ -31,6 +31,7 @@ public class OGraphVertexIterator extends OGraphElementIterator<OGraphVertex> {
 		super(iDatabase, OGraphVertex.class.getSimpleName(), iPolymorphic);
 	}
 
+	@Override
 	public OGraphVertex next(final String iFetchPlan) {
 		final ODocument doc = underlying.next();
 

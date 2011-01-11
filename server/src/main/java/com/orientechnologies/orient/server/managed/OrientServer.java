@@ -28,12 +28,14 @@ public class OrientServer implements OrientServerMBean {
 	protected List<OStorage>	storages;
 	protected String					info;
 
+	@Override
 	public OStorage[] getOpenedStorages() {
 		OStorage[] output = new OStorage[Orient.instance().getStorages().size()];
 		output = Orient.instance().getStorages().toArray(output);
 		return output;
 	}
 
+	@Override
 	public OClientConnection[] getConnections() {
 		final Collection<OClientConnection> conns = OClientConnectionManager.instance().getConnections();
 		final OClientConnection[] output = new OClientConnection[conns.size()];
@@ -41,6 +43,7 @@ public class OrientServer implements OrientServerMBean {
 		return output;
 	}
 
+	@Override
 	public ONetworkProtocol[] getProtocols() {
 		final Collection<ONetworkProtocol> handlers = OClientConnectionManager.instance().getHandlers();
 		final ONetworkProtocol[] output = new ONetworkProtocol[handlers.size()];

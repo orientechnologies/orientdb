@@ -35,11 +35,11 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 @SuppressWarnings({ "serial" })
 public class ORecordLazyList extends ORecordTrackedList {
 	final private byte								recordType;
-	final private ODatabaseRecord<?>	database;
+	final private ODatabaseRecord	database;
 	private boolean										converted				= false;
 	private boolean										convertToRecord	= true;
 
-	public ORecordLazyList(ODatabaseRecord<?> iDatabase, final byte iRecordType) {
+	public ORecordLazyList(ODatabaseRecord iDatabase, final byte iRecordType) {
 		super(null);
 		this.database = iDatabase;
 		this.recordType = iRecordType;
