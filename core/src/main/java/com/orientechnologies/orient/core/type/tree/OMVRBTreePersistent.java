@@ -92,12 +92,12 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 		Orient.instance().getMemoryWatchDog().addListener(new Listener() {
 			public void memoryUsageLow(final long usedMemory, final long maxMemory) {
-				OLogManager.instance().warn(this, "Low memory: running optimization against MVRB-Tree with %d items in memory..",
+				OLogManager.instance().debug(this, "Low memory: running optimization against MVRB-Tree with %d items in memory..",
 						cache.size());
 
 				optimize();
 
-				OLogManager.instance().warn(this, "Done. MVRB-Tree nodes reduced to %d items", cache.size());
+				OLogManager.instance().debug(this, "Done. MVRB-Tree nodes reduced to %d items", cache.size());
 			}
 		});
 
@@ -870,14 +870,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	protected void config() {
 		lastPageSize = OGlobalConfiguration.MVRBTREE_NODE_PAGE_SIZE.getValueAsInteger();
 		pageLoadFactor = OGlobalConfiguration.MVRBTREE_LOAD_FACTOR.getValueAsFloat();
-		entryPointsSize = OGlobalConfiguration.MVRBTREE_ENTRYPOINTS.getValueAsInteger();
-
-		if (size() > 100000)
-			// AUTO ADJUST BASED ON TREE SIZE
-			// TODO: CONSIDER MEMORY
-			entryPointsSize = size() / 5000;
-
 		optimizeEntryPointsFactor = OGlobalConfiguration.MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR.getValueAsFloat();
+		entryPointsSize = OGlobalConfiguration.MVRBTREE_ENTRYPOINTS.getValueAsInteger();
 	}
 
 	protected void serializerFromStream(final OMemoryInputStream stream) throws IOException {

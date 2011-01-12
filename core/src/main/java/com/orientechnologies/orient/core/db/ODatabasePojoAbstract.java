@@ -374,11 +374,16 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 	/**
 	 * Register a new POJO
 	 */
-	public void registerPojo(final Object iObject, final ODocument iRecord) {
+	public void registerPojo(final Object iObject, final ORecordInternal<?> iRecord) {
+		if (!(iRecord instanceof ODocument))
+			return;
+
+		final ODocument doc = (ODocument) iRecord;
+
 		if (retainObjects) {
 			if (iObject != null) {
-				objects2Records.put(System.identityHashCode(iObject), iRecord);
-				records2Objects.put(iRecord, (T) iObject);
+				objects2Records.put(System.identityHashCode(iObject), doc);
+				records2Objects.put(doc, (T) iObject);
 
 				OObjectSerializerHelper.setObjectID(iRecord.getIdentity(), iObject);
 				OObjectSerializerHelper.setObjectVersion(iRecord.getVersion(), iObject);
@@ -386,7 +391,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 
 			final ORID rid = iRecord.getIdentity();
 			if (rid.isValid() && !rid.isTemporary())
-				rid2Records.put(rid, iRecord);
+				rid2Records.put(rid, doc);
 		}
 	}
 

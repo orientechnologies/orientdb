@@ -26,5 +26,5 @@ public interface OUserObject2RecordHandler {
 
 	public boolean existsUserObjectByRID(ORID iRID);
 
-	public void registerPojo(final Object iObject, final ODocument iRecord);
+	public void registerPojo(final Object iObject, final ORecordInternal<?> iRecord);
 }

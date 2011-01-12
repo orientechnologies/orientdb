@@ -24,6 +24,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
@@ -46,11 +47,11 @@ public class FetchPlanTest {
 		List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>("select * from Profile"));
 		Assert.assertEquals(OProfiler.getInstance().getCounter("Cache.reused"), times);
 
-		ODocument linked;
+		ORID linked;
 		for (ODocument d : resultset) {
-			linked = ((ODocument) d.field("location"));
+			linked = ((ORID) d.field("location", ORID.class));
 			if (linked != null)
-				Assert.assertNull(database.getCache().getRecord(linked.getIdentity().toString()));
+				Assert.assertNull(database.getCache().getRecord(linked.toString()));
 		}
 
 		database.close();

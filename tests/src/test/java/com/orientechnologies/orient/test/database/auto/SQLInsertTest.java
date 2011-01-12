@@ -38,7 +38,7 @@ public class SQLInsertTest {
 		database.open("admin", "admin");
 
 		ODocument doc = (ODocument) database.command(
-				new OCommandSQL("insert into Profile (name, surname, salary, location, dummy) values ('Luca','Smith', 109.9, 3:3, name)"))
+				new OCommandSQL("insert into Profile (name, surname, salary, location, dummy) values ('Luca','Smith', 109.9, 13:3, name)"))
 				.execute();
 
 		Assert.assertTrue(doc != null);

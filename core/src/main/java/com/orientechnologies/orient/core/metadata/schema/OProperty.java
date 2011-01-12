@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OPropertyIndex;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
@@ -136,7 +137,7 @@ public class OProperty extends ODocumentWrapperNoClass {
 			linkedType = OType.getById(((Long) document.field("linkedType")).byteValue());
 
 		if (document.field("index") != null) {
-			setIndex(INDEX_TYPE.valueOf((String) document.field("index-type")), ((ODocument) document.field("index")).getIdentity());
+			setIndex(INDEX_TYPE.valueOf((String) document.field("index-type")), ((ORecord<?>) document.field("index")).getIdentity());
 			index.load();
 		}
 	}

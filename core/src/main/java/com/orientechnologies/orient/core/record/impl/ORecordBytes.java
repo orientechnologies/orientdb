@@ -43,6 +43,7 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 
 	public ORecordBytes(ODatabaseRecord iDatabase, byte[] iSource) {
 		super(iDatabase, iSource);
+		_dirty = true;
 		setup();
 	}
 

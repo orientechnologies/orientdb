@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
@@ -141,7 +140,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 		return (ORecordInternal<?>) iUserObject;
 	}
 
-	public void registerPojo(final Object iObject, final ODocument iRecord) {
+	public void registerPojo(final Object iObject, final ORecordInternal<?> iRecord) {
 		if (databaseOwner != this)
 			getDatabaseOwner().registerPojo(iObject, iRecord);
 	}

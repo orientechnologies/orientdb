@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -163,10 +164,9 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 										.getDatabaseOwner()).getEntityManager().getEntityClass(getClassName(firstValue)) != null))) {
 							if (((ORecordInternal<?>) firstValue).getIdentity().isValid())
 								type = OType.LINKMAP;
-							
+
 							// LINK: GET THE CLASS
-							linkedType = type == OType.EMBEDDEDLIST || type == OType.EMBEDDEDSET || type == OType.EMBEDDEDMAP ? OType.EMBEDDED
-									: OType.LINK;
+							linkedType = type == OType.EMBEDDEDLIST || type == OType.EMBEDDEDSET || type == OType.EMBEDDEDMAP ? OType.EMBEDDED : OType.LINK;
 							linkedClass = getLinkInfo(database, getClassName(firstValue));
 						} else {
 							linkedType = OType.getTypeByClass(firstValue.getClass());
@@ -174,13 +174,13 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 								type = OType.LINKMAP;
 						}
 					}
-				} else if (database != null && fieldValue instanceof ODocument) {
+				} else if (database != null && fieldValue instanceof ORecord<?>) {
 					if (type == null)
 						// DETERMINE THE FIELD TYPE
-						if (((ODocument) fieldValue).getOwner() == null)
-							type = OType.LINK;
-						else
+						if (fieldValue instanceof ODocument && ((ODocument) fieldValue).getOwner() != null)
 							type = OType.EMBEDDED;
+						else
+							type = OType.LINK;
 
 					linkedClass = getLinkInfo(database, fieldClassName);
 				} else if (fieldValue instanceof ORID) {
@@ -204,8 +204,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 			if (type == null)
 				type = OType.EMBEDDED;
 
-			fieldValue = fieldToStream((ODocument) iRecord, iRecord.getDatabase(), iObjHandler, type, linkedClass, linkedType,
-					f.getKey(), f.getValue(), iMarshalledRecords, true);
+			fieldValue = fieldToStream((ODocument) iRecord, iRecord.getDatabase(), iObjHandler, type, linkedClass, linkedType, f.getKey(), f.getValue(),
+					iMarshalledRecords, true);
 
 			buffer.append(f.getKey());
 			buffer.append(FIELD_VALUE_SEPARATOR);
@@ -227,17 +227,17 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 		return iValue != null ? iValue.getClass().getSimpleName() : null;
 	}
 
-	private OClass getLinkInfo(ODatabaseComplex<?> database, String fieldClassName) {
-		OClass linkedClass = database.getMetadata().getSchema().getClass(fieldClassName);
+	private OClass getLinkInfo(final ODatabaseComplex<?> iDatabase, final String iFieldClassName) {
+		OClass linkedClass = iDatabase.getMetadata().getSchema().getClass(iFieldClassName);
 
-		if (database.getDatabaseOwner() instanceof ODatabaseObject) {
-			ODatabaseObject dbo = (ODatabaseObject) database.getDatabaseOwner();
+		if (iDatabase.getDatabaseOwner() instanceof ODatabaseObject) {
+			ODatabaseObject dbo = (ODatabaseObject) iDatabase.getDatabaseOwner();
 			if (linkedClass == null) {
-				Class<?> entityClass = dbo.getEntityManager().getEntityClass(fieldClassName);
+				Class<?> entityClass = dbo.getEntityManager().getEntityClass(iFieldClassName);
 				if (entityClass != null) {
 					// REGISTER IT
-					linkedClass = database.getMetadata().getSchema().createClass(fieldClassName);
-					database.getMetadata().getSchema().save();
+					linkedClass = iDatabase.getMetadata().getSchema().createClass(iFieldClassName);
+					iDatabase.getMetadata().getSchema().save();
 				}
 			}
 		}

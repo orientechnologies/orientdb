@@ -23,6 +23,11 @@ public class OMemoryWatchDog {
 		public void memoryUsageLow(long usedMemory, long maxMemory);
 	}
 
+	/**
+	 * Create the memory watch dog with the default memory threshold.
+	 * 
+	 * @param iThreshold
+	 */
 	public OMemoryWatchDog(final float iThreshold) {
 		OMemoryWatchDog.setPercentageUsageThreshold(iThreshold);
 
