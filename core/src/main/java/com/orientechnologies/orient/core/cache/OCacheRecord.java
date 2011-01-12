@@ -58,14 +58,16 @@ public class OCacheRecord extends OSharedResourceAdaptive {
 			/**
 			 * Auto reduce cache size of 10%
 			 */
-			public void memoryUsageLow(final long usedMemory, final long maxMemory) {
-				final int threshold = maxSize * 90 / 100;
+			public void memoryUsageLow(TYPE iType, final long usedMemory, final long maxMemory) {
+				if (iType == TYPE.JVM) {
+					final int threshold = maxSize * 90 / 100;
 
-				if (cache.size() < threshold)
-					return;
+					if (cache.size() < threshold)
+						return;
 
-				OLogManager.instance().debug(this, "Low memory: auto reduce the storage cache size from %d to %d", maxSize, threshold);
-				maxSize = threshold;
+					OLogManager.instance().debug(this, "Low memory: auto reduce the storage cache size from %d to %d", maxSize, threshold);
+					maxSize = threshold;
+				}
 			}
 		});
 	}

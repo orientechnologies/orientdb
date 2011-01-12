@@ -80,7 +80,7 @@ public enum OGlobalConfiguration {
 			"Multiplicand factor to apply to entry-points list (parameter mvrbtree.entrypoints) to determine if needs of optimization", Float.class, 1.0f),
 
 	// FILE
-	FILE_MMAP_BLOCK_SIZE("file.mmap.blockSize", "Size of the memory mapped block", Integer.class, 300000),
+	FILE_MMAP_BLOCK_SIZE("file.mmap.blockSize", "Size of the memory mapped block", Integer.class, 2048000),
 
 	FILE_MMAP_MAX_MEMORY("file.mmap.maxMemory",
 			"Max memory allocable by memory mapping manager. Note that on 32bit OS the limit is to 2Gb but can change to OS by OS", Long.class, 110000000,
@@ -254,12 +254,13 @@ public enum OGlobalConfiguration {
 				.getOperatingSystemMXBean();
 		final long maxOsMemory = bean.getTotalPhysicalMemorySize();
 		final long maxProcessMemory = Runtime.getRuntime().maxMemory();
-		long mmapBestMemory = (maxOsMemory - maxProcessMemory) * 75 / 100;
+		long mmapBestMemory = (maxOsMemory - maxProcessMemory) / 2;
 
 		final String osArch = System.getProperty("os.arch");
 		if (osArch.indexOf("64") > -1) {
 			// 64 BIT
 			FILE_MMAP_MAX_MEMORY.setValue(mmapBestMemory);
+			FILE_MMAP_BLOCK_SIZE.setValue(10000000);
 		} else {
 			// 32 BIT
 		}

@@ -12,15 +12,22 @@ import javax.management.Notification;
 import javax.management.NotificationEmitter;
 import javax.management.NotificationListener;
 
+import com.orientechnologies.orient.core.OMemoryWatchDog.Listener.TYPE;
+
 /**
  * This memory warning system will call the listener when we exceed the percentage of available memory specified. There should only
  * be one instance of this object created, since the usage threshold can only be set to one number.
  */
 public class OMemoryWatchDog {
-	private final Collection<Listener>	listeners	= new ArrayList<Listener>();
+	private final Collection<Listener>		listeners				= new ArrayList<Listener>();
+	private static final MemoryPoolMXBean	tenuredGenPool	= findTenuredGenPool();
 
 	public interface Listener {
-		public void memoryUsageLow(long usedMemory, long maxMemory);
+		public enum TYPE {
+			OS, JVM
+		}
+
+		public void memoryUsageLow(TYPE iType, long iUsedMemory, long iMaxMemory);
 	}
 
 	/**
@@ -31,15 +38,16 @@ public class OMemoryWatchDog {
 	public OMemoryWatchDog(final float iThreshold) {
 		OMemoryWatchDog.setPercentageUsageThreshold(iThreshold);
 
-		MemoryMXBean mbean = ManagementFactory.getMemoryMXBean();
-		NotificationEmitter emitter = (NotificationEmitter) mbean;
-		emitter.addNotificationListener(new NotificationListener() {
+		final MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
+
+		final NotificationEmitter memEmitter = (NotificationEmitter) memBean;
+		memEmitter.addNotificationListener(new NotificationListener() {
 			public void handleNotification(Notification n, Object hb) {
 				if (n.getType().equals(MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED)) {
 					long maxMemory = tenuredGenPool.getUsage().getMax();
 					long usedMemory = tenuredGenPool.getUsage().getUsed();
 					for (Listener listener : listeners) {
-						listener.memoryUsageLow(usedMemory, maxMemory);
+						listener.memoryUsageLow(TYPE.JVM, usedMemory, maxMemory);
 					}
 				}
 			}
@@ -53,8 +61,6 @@ public class OMemoryWatchDog {
 	public boolean removeListener(Listener listener) {
 		return listeners.remove(listener);
 	}
-
-	private static final MemoryPoolMXBean	tenuredGenPool	= findTenuredGenPool();
 
 	public static void setPercentageUsageThreshold(double percentage) {
 		if (percentage <= 0.0 || percentage > 1.0) {

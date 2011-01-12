@@ -55,8 +55,7 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
  * 
  */
 @SuppressWarnings("serial")
-public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implements OMVRBTreeEventListener<K, V>,
-		OSerializableStream {
+public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implements OMVRBTreeEventListener<K, V>, OSerializableStream {
 	protected int																						optimizeThreshold;
 
 	protected OSharedResourceExternal												lock						= new OSharedResourceExternal();
@@ -74,10 +73,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	// STORES IN MEMORY DIRECT REFERENCES TO PORTION OF THE TREE
 	protected int																						entryPointsSize;
 	protected float																					optimizeEntryPointsFactor;
-	protected volatile List<OMVRBTreeEntryPersistent<K, V>>	entryPoints			= new ArrayList<OMVRBTreeEntryPersistent<K, V>>(
-																																							entryPointsSize);
-	protected List<OMVRBTreeEntryPersistent<K, V>>					newEntryPoints	= new ArrayList<OMVRBTreeEntryPersistent<K, V>>(
-																																							entryPointsSize);
+	protected volatile List<OMVRBTreeEntryPersistent<K, V>>	entryPoints			= new ArrayList<OMVRBTreeEntryPersistent<K, V>>(entryPointsSize);
+	protected List<OMVRBTreeEntryPersistent<K, V>>					newEntryPoints	= new ArrayList<OMVRBTreeEntryPersistent<K, V>>(entryPointsSize);
 
 	protected Map<ORID, OMVRBTreeEntryPersistent<K, V>>			cache						= new HashMap<ORID, OMVRBTreeEntryPersistent<K, V>>();
 
@@ -91,13 +88,12 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		super(1024, 0.7f);
 
 		Orient.instance().getMemoryWatchDog().addListener(new Listener() {
-			public void memoryUsageLow(final long usedMemory, final long maxMemory) {
-				OLogManager.instance().debug(this, "Low memory: running optimization against MVRB-Tree with %d items in memory..",
-						cache.size());
-
-				optimize();
-
-				OLogManager.instance().debug(this, "Done. MVRB-Tree nodes reduced to %d items", cache.size());
+			public void memoryUsageLow(final TYPE iType, final long usedMemory, final long maxMemory) {
+				if (iType == TYPE.JVM) {
+					OLogManager.instance().debug(this, "Low memory: running optimization against MVRB-Tree with %d items in memory..", cache.size());
+					optimize();
+					OLogManager.instance().debug(this, "Done. MVRB-Tree nodes reduced to %d items", cache.size());
+				}
 			}
 		});
 
@@ -121,8 +117,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	/**
 	 * Lazy loads a node.
 	 */
-	protected abstract OMVRBTreeEntryPersistent<K, V> loadEntry(OMVRBTreeEntryPersistent<K, V> iParent, ORID iRecordId)
-			throws IOException;
+	protected abstract OMVRBTreeEntryPersistent<K, V> loadEntry(OMVRBTreeEntryPersistent<K, V> iParent, ORID iRecordId) throws IOException;
 
 	@Override
 	public void clear() {
@@ -209,8 +204,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 				tmp = new ArrayList<OMVRBTreeEntryPersistent<K, V>>();
 
 			for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints) {
-				for (OMVRBTreeEntryPersistent<K, V> e = (OMVRBTreeEntryPersistent<K, V>) entryPoint.getFirstInMemory(); e != null; e = e
-						.getNextInMemory()) {
+				for (OMVRBTreeEntryPersistent<K, V> e = (OMVRBTreeEntryPersistent<K, V>) entryPoint.getFirstInMemory(); e != null; e = e.getNextInMemory()) {
 
 					if (isRuntimeCheckEnabled()) {
 						for (OMVRBTreeEntryPersistent<K, V> t : tmp)
@@ -256,8 +250,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			for (int i = 0; i < entryPoints.size(); ++i) {
 				currNode = entryPoints.get(i);
 
-				for (OMVRBTreeEntryPersistent<K, V> e = (OMVRBTreeEntryPersistent<K, V>) currNode.getFirstInMemory(); e != null; e = e
-						.getNextInMemory()) {
+				for (OMVRBTreeEntryPersistent<K, V> e = (OMVRBTreeEntryPersistent<K, V>) currNode.getFirstInMemory(); e != null; e = e.getNextInMemory()) {
 
 					boolean alreadyPresent = false;
 
@@ -328,8 +321,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 			if (isRuntimeCheckEnabled()) {
 				for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints)
-					for (OMVRBTreeEntryPersistent<K, V> e = (OMVRBTreeEntryPersistent<K, V>) entryPoint.getFirstInMemory(); e != null; e = e
-							.getNextInMemory())
+					for (OMVRBTreeEntryPersistent<K, V> e = (OMVRBTreeEntryPersistent<K, V>) entryPoint.getFirstInMemory(); e != null; e = e.getNextInMemory())
 						e.checkEntryStructure();
 
 				if (OLogManager.instance().isDebugEnabled()) {
@@ -443,8 +435,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 							node.save();
 
 							if (debug)
-								System.out.printf("\nSaved %s tree node %s: parent %s, left %s, right %s", wasNew ? "new" : "",
-										node.record.getIdentity(), node.parentRid, node.leftRid, node.rightRid);
+								System.out.printf("\nSaved %s tree node %s: parent %s, left %s, right %s", wasNew ? "new" : "", node.record.getIdentity(),
+										node.parentRid, node.leftRid, node.rightRid);
 
 							if (wasNew) {
 								if (node.record.getIdentity().getClusterPosition() < -1) {
@@ -510,8 +502,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 		} catch (Exception e) {
 
-			OLogManager.instance().error(this, "Error on unmarshalling OMVRBTreePersistent object from record: %s", e,
-					OSerializationException.class, rootRid);
+			OLogManager.instance().error(this, "Error on unmarshalling OMVRBTreePersistent object from record: %s", e, OSerializationException.class,
+					rootRid);
 
 		} finally {
 			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.fromStream", timer);

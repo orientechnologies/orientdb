@@ -200,7 +200,7 @@ public abstract class OChannelBinary extends OChannel {
 
 	public void writeLong(final long iContent) throws IOException {
 		if (debug)
-			OLogManager.instance().debug(this, "Writing long (8 bytes): %l", iContent);
+			OLogManager.instance().debug(this, "Writing long (8 bytes): %d", iContent);
 
 		out.writeLong(iContent);
 	}

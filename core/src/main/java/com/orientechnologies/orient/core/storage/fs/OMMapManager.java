@@ -115,7 +115,7 @@ public class OMMapManager {
 			} catch (Exception e) {
 				// REDUCE MAX MEMORY TO FORCE EMPTY BUFFERS
 				maxMemory = maxMemory * 90 / 100;
-				OLogManager.instance().warn(OMMapManager.class, "Memory mapping error, try to reduce max memory to %l and retry...", maxMemory);
+				OLogManager.instance().warn(OMMapManager.class, "Memory mapping error, try to reduce max memory to %d and retry...", maxMemory);
 			}
 		} while (entry == null && maxMemory > MIN_MEMORY);
 
@@ -167,5 +167,9 @@ public class OMMapManager {
 
 	public static void setMaxMemory(final long iMaxMemory) {
 		maxMemory = iMaxMemory;
+	}
+
+	public static long getTotalMemory() {
+		return totalMemory;
 	}
 }
