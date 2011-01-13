@@ -56,14 +56,12 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
  */
 @SuppressWarnings("serial")
 public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implements OMVRBTreeEventListener<K, V>, OSerializableStream {
-	protected int																						optimizeThreshold;
-
-	protected OSharedResourceExternal												lock						= new OSharedResourceExternal();
+	protected OSharedResourceExternal												lock							= new OSharedResourceExternal();
 
 	protected OStreamSerializer															keySerializer;
 	protected OStreamSerializer															valueSerializer;
 
-	protected final Set<OMVRBTreeEntryPersistent<K, V>>			recordsToCommit	= new HashSet<OMVRBTreeEntryPersistent<K, V>>();
+	protected final Set<OMVRBTreeEntryPersistent<K, V>>			recordsToCommit		= new HashSet<OMVRBTreeEntryPersistent<K, V>>();
 	protected final OMemoryOutputStream											entryRecordBuffer;
 
 	protected final String																	clusterName;
@@ -71,12 +69,14 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	protected String																				fetchPlan;
 
 	// STORES IN MEMORY DIRECT REFERENCES TO PORTION OF THE TREE
+	protected int																						optimizeThreshold;
+	private int																							insertionCounter	= 0;
 	protected int																						entryPointsSize;
 	protected float																					optimizeEntryPointsFactor;
-	protected volatile List<OMVRBTreeEntryPersistent<K, V>>	entryPoints			= new ArrayList<OMVRBTreeEntryPersistent<K, V>>(entryPointsSize);
-	protected List<OMVRBTreeEntryPersistent<K, V>>					newEntryPoints	= new ArrayList<OMVRBTreeEntryPersistent<K, V>>(entryPointsSize);
+	protected volatile List<OMVRBTreeEntryPersistent<K, V>>	entryPoints				= new ArrayList<OMVRBTreeEntryPersistent<K, V>>(entryPointsSize);
+	protected List<OMVRBTreeEntryPersistent<K, V>>					newEntryPoints		= new ArrayList<OMVRBTreeEntryPersistent<K, V>>(entryPointsSize);
 
-	protected Map<ORID, OMVRBTreeEntryPersistent<K, V>>			cache						= new HashMap<ORID, OMVRBTreeEntryPersistent<K, V>>();
+	protected Map<ORID, OMVRBTreeEntryPersistent<K, V>>			cache							= new HashMap<ORID, OMVRBTreeEntryPersistent<K, V>>();
 
 	public OMVRBTreePersistent(final String iClusterName, final ORID iRID) {
 		this(iClusterName, null, null);
@@ -89,11 +89,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 		Orient.instance().getMemoryWatchDog().addListener(new Listener() {
 			public void memoryUsageLow(final TYPE iType, final long usedMemory, final long maxMemory) {
-				if (iType == TYPE.JVM) {
-					OLogManager.instance().debug(this, "Low memory: running optimization against MVRB-Tree with %d items in memory..", cache.size());
+				if (iType == TYPE.JVM)
 					optimize();
-					OLogManager.instance().debug(this, "Done. MVRB-Tree nodes reduced to %d items", cache.size());
-				}
 			}
 		});
 
@@ -184,7 +181,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			if (root == null)
 				return;
 
-			OLogManager.instance().debug(this, "Starting optimization of RB+Tree...");
+			OLogManager.instance().warn(this, "Starting optimization of MVRB+Tree with %d items in memory...", cache.size());
 
 			// printInMemoryStructure();
 
@@ -336,6 +333,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 							(entryPointsSize * optimizeEntryPointsFactor), entryPoints.size());
 				}
 			}
+
+			OLogManager.instance().warn(this, "Optimization done: MVRB-Tree nodes reduced to %d items", cache.size());
 
 		} finally {
 			// System.out.println("End of optimization.");
@@ -720,7 +719,15 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 				rec.save();
 		}
 
-		return super.put(key, value);
+		final V previous = super.put(key, value);
+
+		if (insertionCounter > optimizeThreshold) {
+			insertionCounter = 0;
+			optimize();
+		} else
+			++insertionCounter;
+
+		return previous;
 	}
 
 	public Object getKeySerializer() {
@@ -863,6 +870,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		lastPageSize = OGlobalConfiguration.MVRBTREE_NODE_PAGE_SIZE.getValueAsInteger();
 		pageLoadFactor = OGlobalConfiguration.MVRBTREE_LOAD_FACTOR.getValueAsFloat();
 		optimizeEntryPointsFactor = OGlobalConfiguration.MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR.getValueAsFloat();
+		optimizeThreshold = OGlobalConfiguration.MVRBTREE_OPTIMIZE_THRESHOLD.getValueAsInteger();
 		entryPointsSize = OGlobalConfiguration.MVRBTREE_ENTRYPOINTS.getValueAsInteger();
 	}
 

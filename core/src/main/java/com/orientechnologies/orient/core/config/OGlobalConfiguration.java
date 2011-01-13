@@ -66,24 +66,24 @@ public enum OGlobalConfiguration {
 	MVRBTREE_LAZY_UPDATES("mvrbtree.lazyUpdates", "Configure the TreeMaps (indexes and dictionaries) as buffered or not", Integer.class, 5000),
 
 	MVRBTREE_NODE_PAGE_SIZE("mvrbtree.nodePageSize", "Page size of each single node. 1,024 means that 1,024 entries can be stored inside a node",
-			Integer.class, 2048),
+			Integer.class, 1024),
 
 	MVRBTREE_LOAD_FACTOR("mvrbtree.loadFactor", "HashMap load factor", Float.class, 0.7f),
 
-	@Deprecated
-	MVRBTREE_OPTIMIZE_THRESHOLD("mvrbtree.optimizeThreshold", "Deprecated, auto optimize the TreeMap every X operations as get, put and remove",
+	MVRBTREE_OPTIMIZE_THRESHOLD("mvrbtree.optimizeThreshold",
+			"Auto optimize the TreeMap every X tree rotations. This force the optimization of the tree after many changes to recompute entrypoints",
 			Integer.class, 100000),
 
-	MVRBTREE_ENTRYPOINTS("mvrbtree.entryPoints", "Number of entry points to start searching entries", Integer.class, 15),
+	MVRBTREE_ENTRYPOINTS("mvrbtree.entryPoints", "Number of entry points to start searching entries", Integer.class, 16),
 
 	MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR("mvrbtree.optimizeEntryPointsFactor",
 			"Multiplicand factor to apply to entry-points list (parameter mvrbtree.entrypoints) to determine if needs of optimization", Float.class, 1.0f),
 
 	// FILE
-	FILE_MMAP_BLOCK_SIZE("file.mmap.blockSize", "Size of the memory mapped block", Integer.class, 2048000),
+	FILE_MMAP_BLOCK_SIZE("file.mmap.blockSize", "Size of the memory mapped block", Integer.class, 327680),
 
 	FILE_MMAP_MAX_MEMORY("file.mmap.maxMemory",
-			"Max memory allocable by memory mapping manager. Note that on 32bit OS the limit is to 2Gb but can change to OS by OS", Long.class, 110000000,
+			"Max memory allocable by memory mapping manager. Note that on 32bit OS the limit is to 2Gb but can change to OS by OS", Long.class, 134217728,
 			new OConfigurationChangeCallback() {
 				public void change(final Object iCurrentValue, final Object iNewValue) {
 					OMMapManager.setMaxMemory(((Number) iNewValue).longValue());
@@ -93,7 +93,7 @@ public enum OGlobalConfiguration {
 	FILE_MMAP_FORCE_DELAY("file.mmap.forceDelay", "Delay time in ms to wait for another force flush of the memory mapped block to the disk",
 			Integer.class, 500),
 
-	FILE_MMAP_FORCE_RETRY("file.mmap.forceRetry", "Number of times the memory mapped block will try to flush to the disk", Integer.class, 10),
+	FILE_MMAP_FORCE_RETRY("file.mmap.forceRetry", "Number of times the memory mapped block will try to flush to the disk", Integer.class, 20),
 
 	// NETWORK
 	NETWORK_SOCKET_BUFFER_SIZE("network.socketBufferSize", "TCP/IP Socket buffer size", Integer.class, 32768),
@@ -250,17 +250,18 @@ public enum OGlobalConfiguration {
 
 	@SuppressWarnings("restriction")
 	private static void autoConfig() {
-		com.sun.management.OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean) java.lang.management.ManagementFactory
-				.getOperatingSystemMXBean();
-		final long maxOsMemory = bean.getTotalPhysicalMemorySize();
-		final long maxProcessMemory = Runtime.getRuntime().maxMemory();
-		long mmapBestMemory = (maxOsMemory - maxProcessMemory) / 2;
-
 		final String osArch = System.getProperty("os.arch");
 		if (osArch.indexOf("64") > -1) {
 			// 64 BIT
+			final com.sun.management.OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean) java.lang.management.ManagementFactory
+					.getOperatingSystemMXBean();
+			final long maxOsMemory = bean.getTotalPhysicalMemorySize();
+			final long maxProcessMemory = Runtime.getRuntime().maxMemory();
+			long mmapBestMemory = (maxOsMemory - maxProcessMemory) / 3;
+
 			FILE_MMAP_MAX_MEMORY.setValue(mmapBestMemory);
-			FILE_MMAP_BLOCK_SIZE.setValue(10000000);
+			FILE_MMAP_BLOCK_SIZE.setValue(327680);
+			MVRBTREE_NODE_PAGE_SIZE.setValue(2048);
 		} else {
 			// 32 BIT
 		}

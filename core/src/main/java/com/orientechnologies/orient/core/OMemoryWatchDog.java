@@ -12,6 +12,7 @@ import javax.management.Notification;
 import javax.management.NotificationEmitter;
 import javax.management.NotificationListener;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OMemoryWatchDog.Listener.TYPE;
 
 /**
@@ -46,12 +47,19 @@ public class OMemoryWatchDog {
 				if (n.getType().equals(MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED)) {
 					long maxMemory = tenuredGenPool.getUsage().getMax();
 					long usedMemory = tenuredGenPool.getUsage().getUsed();
+
+					OLogManager.instance().warn(this, "Low memory caught, calling listeners to free memory...");
+
 					for (Listener listener : listeners) {
 						listener.memoryUsageLow(TYPE.JVM, usedMemory, maxMemory);
 					}
 				}
 			}
 		}, null, null);
+	}
+
+	public Collection<Listener> getListeners() {
+		return listeners;
 	}
 
 	public boolean addListener(Listener listener) {

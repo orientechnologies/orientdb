@@ -17,8 +17,12 @@ package com.orientechnologies.orient.core.storage.fs;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
@@ -26,15 +30,20 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 public class OMMapManager {
-	private static final long										MIN_MEMORY	= 50000000;
-	public static final int											DEF_BLOCK_SIZE;
-	private static final int										FORCE_DELAY;
-	private static final int										FORCE_RETRY;
+	public enum OPERATION_TYPE {
+		READ, WRITE
+	}
 
-	private static long													maxMemory;
-	private static long													totalMemory;
+	private static final long															MIN_MEMORY				= 50000000;
+	public static final int																DEF_BLOCK_SIZE;
+	private static final int															FORCE_DELAY;
+	private static final int															FORCE_RETRY;
 
-	private static LinkedList<OMMapBufferEntry>	buffersLRU	= new LinkedList<OMMapBufferEntry>();
+	private static long																		maxMemory;
+	private static long																		totalMemory;
+
+	private static List<OMMapBufferEntry>									bufferPoolLRU			= new ArrayList<OMMapBufferEntry>();
+	private static Map<OFileMMap, List<OMMapBufferEntry>>	bufferPoolPerFile	= new HashMap<OFileMMap, List<OMMapBufferEntry>>();
 
 	static {
 		DEF_BLOCK_SIZE = OGlobalConfiguration.FILE_MMAP_BLOCK_SIZE.getValueAsInteger();
@@ -44,19 +53,55 @@ public class OMMapManager {
 		maxMemory = OGlobalConfiguration.FILE_MMAP_MAX_MEMORY.getValueAsLong();
 	}
 
-	public static OMMapBufferEntry request(final OFileMMap iFile, final int iBeginOffset, final int iSize) {
-		return request(iFile, iBeginOffset, iSize, false);
+	public static OMMapBufferEntry request(final OFileMMap iFile, final int iBeginOffset, final int iSize, final OPERATION_TYPE iOperationType) {
+		return request(iFile, iBeginOffset, iSize, false, iOperationType);
 	}
 
-	public synchronized static OMMapBufferEntry request(final OFileMMap iFile, final int iBeginOffset, final int iSize, final boolean iForce) {
-		// SEARCH THE REQUESTED RANGE IN CACHED BUFFERS
-		for (OMMapBufferEntry e : buffersLRU) {
-			if (iFile.equals(e.file) && iBeginOffset >= e.beginOffset && iBeginOffset + iSize <= e.beginOffset + e.size) {
-				OProfiler.getInstance().updateCounter("OMMapManager.usePage", 1);
-				// FOUND: USE IT
-				return e;
+	/**
+	 * Requests a mmap buffer to use.
+	 * 
+	 * @param iFile
+	 *          MMap file
+	 * @param iBeginOffset
+	 *          Begin offset
+	 * @param iSize
+	 *          Portion size requested
+	 * @param iForce
+	 *          Tells if the size is mandatory or can be rounded to the next segment
+	 * @param iOperationType
+	 *          READ or WRITE
+	 * @return The mmap buffer entry if found, or null if the operation is READ and the buffer pool is full.
+	 */
+	public synchronized static OMMapBufferEntry request(final OFileMMap iFile, final int iBeginOffset, final int iSize, final boolean iForce,
+			final OPERATION_TYPE iOperationType) {
+
+		if (bufferPoolLRU.size() > 0) {
+			// SEARCH IF IT'S BETWEEN THE LAST 10 BLOCK USED: THIS IS THE COMMON CASE ON MASSIVE INSERTION
+			OMMapBufferEntry e;
+			final int min = Math.max(bufferPoolLRU.size() - 10, -1);
+			for (int i = bufferPoolLRU.size() - 1; i > min; --i) {
+				e = bufferPoolLRU.get(i);
+
+				if (e.file == iFile && iBeginOffset >= e.beginOffset && iBeginOffset + iSize <= e.beginOffset + e.size) {
+					// FOUND: USE IT
+					OProfiler.getInstance().updateCounter("OMMapManager.usePage", 1);
+					e.counter++;
+					return e;
+				}
 			}
 		}
+
+		// SEARCH THE REQUESTED RANGE IN THE CACHED BUFFERS
+		List<OMMapBufferEntry> fileEntries = bufferPoolPerFile.get(iFile);
+		if (fileEntries == null) {
+			fileEntries = new ArrayList<OMMapBufferEntry>();
+			bufferPoolPerFile.put(iFile, fileEntries);
+		}
+
+		int position = searchEntry(fileEntries, iBeginOffset, iSize);
+		if (position > -1)
+			// FOUND
+			return fileEntries.get(position);
 
 		int bufferSize = iForce ? iSize : iSize <= DEF_BLOCK_SIZE ? DEF_BLOCK_SIZE : iSize;
 		if (iBeginOffset + bufferSize > iFile.getFileSize())
@@ -71,18 +116,29 @@ public class OMMapManager {
 
 		// FREE LESS-USED BUFFERS UNTIL THE FREE-MEMORY IS DOWN THE CONFIGURED MAX LIMIT
 		OMMapBufferEntry entry = null;
+		boolean forceSucceed;
 		do {
 			if (totalMemory > maxMemory) {
 				int pagesUnloaded = 0;
 
-				// REMOVE THE LAST ENTRY AND UPDATE THE TOTAL MEMORY
-				for (Iterator<OMMapBufferEntry> it = buffersLRU.descendingIterator(); it.hasNext();) {
+				// SORT AS LRU, FIRT = MOST USED
+				Collections.sort(bufferPoolLRU, new Comparator<OMMapBufferEntry>() {
+					public int compare(final OMMapBufferEntry o1, final OMMapBufferEntry o2) {
+						return (int) (o1.counter - o2.counter);
+					}
+				});
+
+				// REMOVE THE LESS USED ENTRY AND UPDATE THE TOTAL MEMORY
+				for (Iterator<OMMapBufferEntry> it = bufferPoolLRU.iterator(); it.hasNext();) {
 					entry = it.next();
 					if (!entry.pin) {
 						// FORCE THE WRITE OF THE BUFFER
+						forceSucceed = false;
 						for (int i = 0; i < FORCE_RETRY; ++i) {
 							try {
 								entry.buffer.force();
+								forceSucceed = true;
+								break;
 							} catch (Exception e) {
 								OLogManager.instance().debug(entry.buffer, "Can't write memory buffer to disk. Retrying (" + (i + 1) + "/" + FORCE_RETRY + ")...");
 								try {
@@ -92,9 +148,14 @@ public class OMMapManager {
 								}
 							}
 						}
-						entry.buffer.force();
 
+						if (!forceSucceed)
+							entry.buffer.force();
+
+						// REMOVE FROM COLLECTIONS
 						it.remove();
+						bufferPoolPerFile.get(entry.file).remove(entry);
+
 						pagesUnloaded++;
 
 						entry.buffer = null;
@@ -107,6 +168,9 @@ public class OMMapManager {
 				}
 
 				OProfiler.getInstance().updateCounter("OMMapManager.pagesUnloaded", pagesUnloaded);
+
+				// RECOMPUTE THE POSITION AFTER REMOVING
+				position = searchEntry(fileEntries, iBeginOffset, iSize);
 			}
 
 			// LOAD THE PAGE
@@ -122,7 +186,8 @@ public class OMMapManager {
 		if (entry == null)
 			throw new OIOException("You can't access to the file portion " + iBeginOffset + "-" + iBeginOffset + iSize + " bytes");
 
-		buffersLRU.addFirst(entry);
+		bufferPoolLRU.add(entry);
+		fileEntries.add((position + 1) * -1, entry);
 
 		return entry;
 	}
@@ -132,33 +197,28 @@ public class OMMapManager {
 	 */
 	public synchronized static void flush() {
 		OMMapBufferEntry entry;
-		for (Iterator<OMMapBufferEntry> it = buffersLRU.iterator(); it.hasNext();) {
+		for (Iterator<OMMapBufferEntry> it = bufferPoolLRU.iterator(); it.hasNext();) {
 			entry = it.next();
 			if (entry.file != null && entry.file.isClosed()) {
 				totalMemory -= entry.size;
-				entry.close();
+
+				bufferPoolPerFile.get(entry.file).remove(entry);
 				it.remove();
+
+				entry.close();
 			}
 		}
 	}
 
 	public synchronized static void shutdown() {
-		for (OMMapBufferEntry entry : new ArrayList<OMMapBufferEntry>(buffersLRU)) {
+		for (OMMapBufferEntry entry : new ArrayList<OMMapBufferEntry>(bufferPoolLRU)) {
 			entry.close();
 		}
-		buffersLRU.clear();
-		buffersLRU = null;
+		bufferPoolLRU.clear();
+		bufferPoolLRU = null;
+		bufferPoolPerFile.clear();
+		bufferPoolPerFile = null;
 		totalMemory = 0;
-	}
-
-	private static OMMapBufferEntry mapBuffer(final OFileMMap iFile, final int iBeginOffset, final int iSize) throws IOException {
-		OProfiler.getInstance().updateCounter("OMMapManager.loadPage", 1);
-		long timer = OProfiler.getInstance().startChrono();
-		try {
-			return new OMMapBufferEntry(iFile, iFile.map(iBeginOffset, iSize), iBeginOffset, iSize);
-		} finally {
-			OProfiler.getInstance().stopChrono("OMMapManager.loadPage", timer);
-		}
 	}
 
 	public static long getMaxMemory() {
@@ -171,5 +231,55 @@ public class OMMapManager {
 
 	public static long getTotalMemory() {
 		return totalMemory;
+	}
+
+	private static OMMapBufferEntry mapBuffer(final OFileMMap iFile, final int iBeginOffset, final int iSize) throws IOException {
+		OProfiler.getInstance().updateCounter("OMMapManager.loadPage", 1);
+		long timer = OProfiler.getInstance().startChrono();
+		try {
+			return new OMMapBufferEntry(iFile, iFile.map(iBeginOffset, iSize), iBeginOffset, iSize);
+		} finally {
+			OProfiler.getInstance().stopChrono("OMMapManager.loadPage", timer);
+		}
+	}
+
+	/**
+	 * Search for a buffer in the ordered list.
+	 * 
+	 * @param fileEntries
+	 * @param iBeginOffset
+	 * @param iSize
+	 * @return negative number means not found. The position to insert is the (return value +1)*-1. Zero or positive number is the
+	 *         found position.
+	 */
+	private static int searchEntry(final List<OMMapBufferEntry> fileEntries, final int iBeginOffset, final int iSize) {
+		OMMapBufferEntry e;
+
+		// BINARY SEARCH
+		int low = 0;
+		int high = fileEntries.size() - 1;
+		int mid = -1;
+
+		while (low <= high) {
+			mid = (low + high) >>> 1;
+			e = fileEntries.get(mid);
+
+			if (iBeginOffset >= e.beginOffset && iBeginOffset + iSize <= e.beginOffset + e.size) {
+				// FOUND: USE IT
+				OProfiler.getInstance().updateCounter("OMMapManager.usePage", 1);
+				e.counter++;
+				return mid;
+			}
+
+			if (low == high)
+				return (low + 2) * -1;
+
+			if (iBeginOffset >= e.beginOffset)
+				low = mid + 1;
+			else
+				high = mid;
+		}
+
+		return mid;
 	}
 }

@@ -18,44 +18,48 @@ package com.orientechnologies.orient.core.storage.fs;
 import java.io.IOException;
 import java.nio.MappedByteBuffer;
 
-public class OMMapBufferEntry {
-  OFileMMap        file;
-  MappedByteBuffer buffer;
-  int              beginOffset;
-  int              size;
-  int              counter;
-  boolean          pin;
+public class OMMapBufferEntry implements Comparable<OMMapBufferEntry> {
+	OFileMMap					file;
+	MappedByteBuffer	buffer;
+	int								beginOffset;
+	int								size;
+	long							counter;
+	boolean						pin;
 
-  public OMMapBufferEntry(final OFileMMap iFile, final MappedByteBuffer buffer, final int beginOffset, final int size) {
-    this.file = iFile;
-    this.buffer = buffer;
-    this.beginOffset = beginOffset;
-    this.size = size;
-    this.counter = 0;
-    pin = false;
-  }
+	public OMMapBufferEntry(final OFileMMap iFile, final MappedByteBuffer buffer, final int beginOffset, final int size) {
+		this.file = iFile;
+		this.buffer = buffer;
+		this.beginOffset = beginOffset;
+		this.size = size;
+		this.counter = 0;
+		pin = false;
+	}
 
-  @Override
-  public String toString() {
-    final StringBuilder builder = new StringBuilder();
-    builder.append("OMMapBufferEntry [file=").append(file).append(", beginOffset=").append(beginOffset).append(", size=")
-        .append(size).append("]");
-    return builder.toString();
-  }
+	@Override
+	public String toString() {
+		final StringBuilder builder = new StringBuilder();
+		builder.append("OMMapBufferEntry [file=").append(file).append(", beginOffset=").append(beginOffset).append(", size=").append(size).append("]");
+		return builder.toString();
+	}
 
-  /**
-   * Force closing of file is it's opened yet.
-   */
-  public void close() {
-    if (file != null) {
-      if (!file.isClosed()) {
-        try {
-          file.close();
-        } catch (IOException e) {
-        }
-      }
-      file = null;
-    }
-    buffer = null;
-  }
+	/**
+	 * Force closing of file is it's opened yet.
+	 */
+	public void close() {
+		if (file != null) {
+			if (!file.isClosed()) {
+				try {
+					file.close();
+				} catch (IOException e) {
+				}
+			}
+			file = null;
+		}
+		buffer = null;
+		counter = 0;
+	}
+
+	public int compareTo(final OMMapBufferEntry iOther) {
+		return (int) (beginOffset - iOther.beginOffset);
+	}
 }
