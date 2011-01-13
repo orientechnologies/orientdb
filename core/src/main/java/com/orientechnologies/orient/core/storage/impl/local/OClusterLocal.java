@@ -52,8 +52,8 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 		super(iStorage, iConfig, DEF_EXTENSION, RECORD_SIZE);
 		id = iConfig.getId();
 
-		iConfig.holeFile = new OStorageClusterHoleConfiguration(iConfig, OStorageVariableParser.DB_PATH_VARIABLE + "/" + iConfig.name,
-				iConfig.fileType, iConfig.fileMaxSize);
+		iConfig.holeFile = new OStorageClusterHoleConfiguration(iConfig, OStorageVariableParser.DB_PATH_VARIABLE + "/" + iConfig.name, iConfig.fileType,
+				iConfig.fileMaxSize);
 
 		holeSegment = new OClusterLocalHole(this, iStorage, iConfig.holeFile);
 	}
@@ -111,7 +111,7 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 		try {
 			acquireSharedLock();
 
-			int[] pos = getRelativePosition(iPosition);
+			final int[] pos = getRelativePosition(iPosition);
 
 			int p = pos[1];
 
@@ -131,14 +131,13 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 	 * 
 	 * @throws IOException
 	 */
-	public void setPhysicalPosition(long iPosition, final int iDataId, final long iDataPosition, final byte iRecordType)
-			throws IOException {
+	public void setPhysicalPosition(long iPosition, final int iDataId, final long iDataPosition, final byte iRecordType) throws IOException {
 		iPosition = iPosition * RECORD_SIZE;
 
 		try {
 			acquireExclusiveLock();
 
-			int[] pos = getRelativePosition(iPosition);
+			final int[] pos = getRelativePosition(iPosition);
 
 			int p = pos[1];
 
@@ -157,7 +156,7 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 		try {
 			acquireExclusiveLock();
 
-			int[] pos = getRelativePosition(iPosition);
+			final int[] pos = getRelativePosition(iPosition);
 
 			files[pos[0]].writeInt(pos[1] + OConstants.SIZE_SHORT + OConstants.SIZE_LONG + OConstants.SIZE_BYTE, iVersion);
 
@@ -172,7 +171,7 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 		try {
 			acquireExclusiveLock();
 
-			int[] pos = getRelativePosition(iPosition);
+			final int[] pos = getRelativePosition(iPosition);
 
 			files[pos[0]].writeByte(pos[1] + OConstants.SIZE_SHORT + OConstants.SIZE_LONG, iRecordType);
 
@@ -191,7 +190,7 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 		try {
 			acquireExclusiveLock();
 
-			int[] pos = getRelativePosition(position);
+			final int[] pos = getRelativePosition(position);
 			OFile file = files[pos[0]];
 			int p = pos[1];
 

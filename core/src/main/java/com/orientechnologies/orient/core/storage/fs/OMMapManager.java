@@ -112,11 +112,23 @@ public class OMMapManager {
 			throw new IllegalArgumentException("Invalid range requested for file " + iFile + ". Requested " + iSize + " bytes from the address "
 					+ iBeginOffset + " while the total file size is " + iFile.getFileSize());
 
+		if (totalMemory + bufferSize > maxMemory) {
+			// BUFFER POOL FULL: SINCE IT'S A READ RETURN NULL TO LET TO THE CALLER TO EXECUTE A DIRECT READ WITHOUT MMAP
+
+			final int p = (position + 2) * -1;
+			if (p > -1 && p <= fileEntries.size()) {
+				// CHECK IF THERE IS A BUFFER TO COMMIT TO DISK
+				final OMMapBufferEntry entry = fileEntries.get(p);
+				if (entry.beginOffset <= iBeginOffset && entry.beginOffset + entry.size >= iBeginOffset)
+					commitBuffer(entry);
+			}
+			return null;
+		}
+
 		totalMemory += bufferSize;
 
 		// FREE LESS-USED BUFFERS UNTIL THE FREE-MEMORY IS DOWN THE CONFIGURED MAX LIMIT
 		OMMapBufferEntry entry = null;
-		boolean forceSucceed;
 		do {
 			if (totalMemory > maxMemory) {
 				int pagesUnloaded = 0;
@@ -132,25 +144,7 @@ public class OMMapManager {
 				for (Iterator<OMMapBufferEntry> it = bufferPoolLRU.iterator(); it.hasNext();) {
 					entry = it.next();
 					if (!entry.pin) {
-						// FORCE THE WRITE OF THE BUFFER
-						forceSucceed = false;
-						for (int i = 0; i < FORCE_RETRY; ++i) {
-							try {
-								entry.buffer.force();
-								forceSucceed = true;
-								break;
-							} catch (Exception e) {
-								OLogManager.instance().debug(entry.buffer, "Can't write memory buffer to disk. Retrying (" + (i + 1) + "/" + FORCE_RETRY + ")...");
-								try {
-									System.gc();
-									Thread.sleep(FORCE_DELAY);
-								} catch (InterruptedException e1) {
-								}
-							}
-						}
-
-						if (!forceSucceed)
-							entry.buffer.force();
+						commitBuffer(entry);
 
 						// REMOVE FROM COLLECTIONS
 						it.remove();
@@ -281,5 +275,27 @@ public class OMMapManager {
 		}
 
 		return mid;
+	}
+
+	protected static void commitBuffer(final OMMapBufferEntry iEntry) {
+		// FORCE THE WRITE OF THE BUFFER
+		boolean forceSucceed = false;
+		for (int i = 0; i < FORCE_RETRY; ++i) {
+			try {
+				iEntry.buffer.force();
+				forceSucceed = true;
+				break;
+			} catch (Exception e) {
+				OLogManager.instance().debug(iEntry.buffer, "Can't write memory buffer to disk. Retrying (" + (i + 1) + "/" + FORCE_RETRY + ")...");
+				try {
+					System.gc();
+					Thread.sleep(FORCE_DELAY);
+				} catch (InterruptedException e1) {
+				}
+			}
+		}
+
+		if (!forceSucceed)
+			iEntry.buffer.force();
 	}
 }

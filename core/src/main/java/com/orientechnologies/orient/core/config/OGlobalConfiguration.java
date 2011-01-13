@@ -82,6 +82,8 @@ public enum OGlobalConfiguration {
 	// FILE
 	FILE_MMAP_BLOCK_SIZE("file.mmap.blockSize", "Size of the memory mapped block", Integer.class, 327680),
 
+	FILE_MMAP_BUFFER_SIZE("file.mmap.bufferSize", "Size of the buffer for direct access to the file", Integer.class, 65536),
+
 	FILE_MMAP_MAX_MEMORY("file.mmap.maxMemory",
 			"Max memory allocable by memory mapping manager. Note that on 32bit OS the limit is to 2Gb but can change to OS by OS", Long.class, 134217728,
 			new OConfigurationChangeCallback() {
@@ -259,11 +261,11 @@ public enum OGlobalConfiguration {
 			final long maxProcessMemory = Runtime.getRuntime().maxMemory();
 			long mmapBestMemory = (maxOsMemory - maxProcessMemory) / 3;
 
-			FILE_MMAP_MAX_MEMORY.setValue(mmapBestMemory);
+			FILE_MMAP_MAX_MEMORY.setValue(20000000);
 			FILE_MMAP_BLOCK_SIZE.setValue(327680);
 			MVRBTREE_NODE_PAGE_SIZE.setValue(2048);
 		} else {
-			// 32 BIT
+			// 32 BIT, USE THE DEFAULT CONFIGURATION
 		}
 
 	}
