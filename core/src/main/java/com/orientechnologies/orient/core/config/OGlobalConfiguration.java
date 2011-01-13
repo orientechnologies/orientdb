@@ -80,8 +80,10 @@ public enum OGlobalConfiguration {
 			"Multiplicand factor to apply to entry-points list (parameter mvrbtree.entrypoints) to determine if needs of optimization", Float.class, 1.0f),
 
 	// FILE
-	FILE_MMAP_STRATEGY("file.mmap.strategy",
-			"Strategy to use with memory mapped files. 0 = USE MMAP ALWAYS, 1 = USE MMAP ON WRITES OR ONLY IF BLOCK IS ALREADY AVAILABLE", Integer.class, 1),
+	FILE_MMAP_STRATEGY(
+			"file.mmap.strategy",
+			"Strategy to use with memory mapped files. 0 = USE MMAP ALWAYS, 1 = USE MMAP ON WRITES OR WHEN THE BLOCK IS JUST ALREADY AVAILABLE, 2 = USE MMAP ONLY IF BLOCK IS ALREADY AVAILABLE",
+			Integer.class, 2),
 
 	FILE_MMAP_BLOCK_SIZE("file.mmap.blockSize", "Size of the memory mapped block", Integer.class, 327680),
 

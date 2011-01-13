@@ -31,7 +31,8 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
- * GraphDB implementation on top of Document underlying.
+ * GraphDB implementation on top of underlying Document. Graph Element are Object itself. If you want a lighter version see
+ * {@link OGraphDatabase}.
  * 
  * @author Luca Garulli
  * 
@@ -97,6 +98,15 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 
 	@SuppressWarnings("unchecked")
 	public OGraphElement load(final ORID iRecordId) {
+		ODocument doc = loadAsDocument(iRecordId);
+
+		if (doc == null)
+			return null;
+
+		return newInstance(doc.getClassName()).setDocument(doc);
+	}
+
+	public ODocument loadAsDocument(final ORID iRecordId) {
 		if (iRecordId == null)
 			return null;
 
@@ -109,11 +119,10 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 				// NOT FOUND
 				return null;
 		}
-
 		if (doc.getClassName() == null)
 			throw new OGraphException("The document loaded has no class, while it should be a OGraphVertex, OGraphEdge or any subclass of its");
 
-		return newInstance(doc.getClassName()).setDocument(doc);
+		return doc;
 	}
 
 	public ODatabaseComplex<OGraphElement> save(final OGraphElement iObject) {

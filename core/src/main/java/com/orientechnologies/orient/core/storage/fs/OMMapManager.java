@@ -35,7 +35,7 @@ public class OMMapManager {
 	}
 
 	public enum STRATEGY {
-		MMAP_ALWAYS, MMAP_ONLY_WRITE
+		MMAP_ALWAYS, MMAP_ONLY_WRITE, MMAP_ONLY_AVAILABLE_IN_POOL
 	}
 
 	private static final long															MIN_MEMORY				= 50000000;
@@ -129,6 +129,9 @@ public class OMMapManager {
 		if (bufferSize <= 0)
 			throw new IllegalArgumentException("Invalid range requested for file " + iFile + ". Requested " + iSize + " bytes from the address "
 					+ iBeginOffset + " while the total file size is " + iFile.getFileSize());
+
+		if (totalMemory + bufferSize > maxMemory && iStrategy == STRATEGY.MMAP_ONLY_AVAILABLE_IN_POOL)
+			return null;
 
 		// FREE LESS-USED BUFFERS UNTIL THE FREE-MEMORY IS DOWN THE CONFIGURED MAX LIMIT
 		OMMapBufferEntry entry = null;
