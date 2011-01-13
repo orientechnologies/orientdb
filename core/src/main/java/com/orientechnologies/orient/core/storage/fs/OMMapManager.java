@@ -109,20 +109,8 @@ public class OMMapManager {
 			// FOUND
 			return fileEntries.get(position);
 
-		if (iOperationType == OPERATION_TYPE.READ && iStrategy == STRATEGY.MMAP_ONLY_WRITE)
-			return null;
-
-		int bufferSize = iForce ? iSize : iSize <= DEF_BLOCK_SIZE ? DEF_BLOCK_SIZE : iSize;
-		if (iBeginOffset + bufferSize > iFile.getFileSize())
-			// REQUESTED BUFFER IS TOO LARGE: GET AS MAXIMUM AS POSSIBLE
-			bufferSize = iFile.getFileSize() - iBeginOffset;
-
-		if (bufferSize <= 0)
-			throw new IllegalArgumentException("Invalid range requested for file " + iFile + ". Requested " + iSize + " bytes from the address "
-					+ iBeginOffset + " while the total file size is " + iFile.getFileSize());
-
-		if (totalMemory + bufferSize > maxMemory) {
-			// BUFFER POOL FULL: SINCE IT'S A READ RETURN NULL TO LET TO THE CALLER TO EXECUTE A DIRECT READ WITHOUT MMAP
+		if (iOperationType == OPERATION_TYPE.READ && iStrategy == STRATEGY.MMAP_ONLY_WRITE) {
+			// READ NOT IN BUFFER POOL: RETURN NULL TO LET TO THE CALLER TO EXECUTE A DIRECT READ WITHOUT MMAP
 			final int p = (position + 2) * -1;
 			if (p > -1 && p <= fileEntries.size()) {
 				// CHECK IF THERE IS A BUFFER TO COMMIT TO DISK
@@ -133,12 +121,24 @@ public class OMMapManager {
 			return null;
 		}
 
-		totalMemory += bufferSize;
+		int bufferSize = iForce ? iSize : iSize <= DEF_BLOCK_SIZE ? DEF_BLOCK_SIZE : iSize;
+		if (iBeginOffset + bufferSize > iFile.getFileSize())
+			// REQUESTED BUFFER IS TOO LARGE: GET AS MAXIMUM AS POSSIBLE
+			bufferSize = iFile.getFileSize() - iBeginOffset;
+
+		if (bufferSize <= 0)
+			throw new IllegalArgumentException("Invalid range requested for file " + iFile + ". Requested " + iSize + " bytes from the address "
+					+ iBeginOffset + " while the total file size is " + iFile.getFileSize());
 
 		// FREE LESS-USED BUFFERS UNTIL THE FREE-MEMORY IS DOWN THE CONFIGURED MAX LIMIT
 		OMMapBufferEntry entry = null;
+
 		do {
-			if (totalMemory > maxMemory) {
+			if (totalMemory + bufferSize > maxMemory) {
+				final long memoryThreshold = (long) (maxMemory * 0.75);
+
+				OLogManager.instance().debug(null, "Free mmmap blocks, at least %d MB...", (totalMemory - memoryThreshold) / 1000000);
+
 				int pagesUnloaded = 0;
 
 				// SORT AS LRU, FIRT = MOST USED
@@ -152,7 +152,9 @@ public class OMMapManager {
 				for (Iterator<OMMapBufferEntry> it = bufferPoolLRU.iterator(); it.hasNext();) {
 					entry = it.next();
 					if (!entry.pin) {
-						commitBuffer(entry);
+						if (!commitBuffer(entry))
+							// ERROR ON COMMITTING BUFFER: TRY WITH THE NEXT ONE
+							continue;
 
 						// REMOVE FROM COLLECTIONS
 						it.remove();
@@ -164,7 +166,7 @@ public class OMMapManager {
 
 						totalMemory -= entry.size;
 
-						if (totalMemory < maxMemory)
+						if (totalMemory < memoryThreshold)
 							break;
 					}
 				}
@@ -188,6 +190,7 @@ public class OMMapManager {
 		if (entry == null)
 			throw new OIOException("You can't access to the file portion " + iBeginOffset + "-" + iBeginOffset + iSize + " bytes");
 
+		totalMemory += bufferSize;
 		bufferPoolLRU.add(entry);
 		fileEntries.add((position + 1) * -1, entry);
 
@@ -195,7 +198,7 @@ public class OMMapManager {
 	}
 
 	/**
-	 * Flush away all the buffers of file closed. This frees the memory.
+	 * Flush away all the buffers of closed files. This frees the memory.
 	 */
 	public synchronized static void flush() {
 		OMMapBufferEntry entry;
@@ -285,7 +288,7 @@ public class OMMapManager {
 		return mid;
 	}
 
-	protected static void commitBuffer(final OMMapBufferEntry iEntry) {
+	protected static boolean commitBuffer(final OMMapBufferEntry iEntry) {
 		// FORCE THE WRITE OF THE BUFFER
 		boolean forceSucceed = false;
 		for (int i = 0; i < FORCE_RETRY; ++i) {
@@ -294,7 +297,7 @@ public class OMMapManager {
 				forceSucceed = true;
 				break;
 			} catch (Exception e) {
-				OLogManager.instance().debug(iEntry.buffer, "Can't write memory buffer to disk. Retrying (" + (i + 1) + "/" + FORCE_RETRY + ")...");
+				OLogManager.instance().debug(iEntry, "Can't write memory buffer to disk. Retrying (" + (i + 1) + "/" + FORCE_RETRY + ")...");
 				try {
 					System.gc();
 					Thread.sleep(FORCE_DELAY);
@@ -304,6 +307,8 @@ public class OMMapManager {
 		}
 
 		if (!forceSucceed)
-			iEntry.buffer.force();
+			OLogManager.instance().debug(iEntry, "Can't commit memory buffer to disk after %d retries", FORCE_RETRY);
+
+		return forceSucceed;
 	}
 }

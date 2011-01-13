@@ -181,7 +181,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			if (root == null)
 				return;
 
-			OLogManager.instance().warn(this, "Starting optimization of MVRB+Tree with %d items in memory...", cache.size());
+			OLogManager.instance().debug(this, "Starting optimization of MVRB+Tree with %d items in memory...", cache.size());
 
 			// printInMemoryStructure();
 
@@ -334,7 +334,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 				}
 			}
 
-			OLogManager.instance().warn(this, "Optimization done: MVRB-Tree nodes reduced to %d items", cache.size());
+			OLogManager.instance().debug(this, "Optimization done: MVRB-Tree nodes reduced to %d items", cache.size());
 
 		} finally {
 			// System.out.println("End of optimization.");
