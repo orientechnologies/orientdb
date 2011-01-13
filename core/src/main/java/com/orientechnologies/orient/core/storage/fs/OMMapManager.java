@@ -34,6 +34,10 @@ public class OMMapManager {
 		READ, WRITE
 	}
 
+	public enum STRATEGY {
+		MMAP_ALWAYS, MMAP_ONLY_WRITE
+	}
+
 	private static final long															MIN_MEMORY				= 50000000;
 	public static final int																DEF_BLOCK_SIZE;
 	private static final int															FORCE_DELAY;
@@ -53,8 +57,9 @@ public class OMMapManager {
 		maxMemory = OGlobalConfiguration.FILE_MMAP_MAX_MEMORY.getValueAsLong();
 	}
 
-	public static OMMapBufferEntry request(final OFileMMap iFile, final int iBeginOffset, final int iSize, final OPERATION_TYPE iOperationType) {
-		return request(iFile, iBeginOffset, iSize, false, iOperationType);
+	public static OMMapBufferEntry request(final OFileMMap iFile, final int iBeginOffset, final int iSize, final OPERATION_TYPE iOperationType,
+			final STRATEGY iStrategy) {
+		return request(iFile, iBeginOffset, iSize, false, iOperationType, iStrategy);
 	}
 
 	/**
@@ -70,15 +75,16 @@ public class OMMapManager {
 	 *          Tells if the size is mandatory or can be rounded to the next segment
 	 * @param iOperationType
 	 *          READ or WRITE
+	 * @param iStrategy
 	 * @return The mmap buffer entry if found, or null if the operation is READ and the buffer pool is full.
 	 */
 	public synchronized static OMMapBufferEntry request(final OFileMMap iFile, final int iBeginOffset, final int iSize, final boolean iForce,
-			final OPERATION_TYPE iOperationType) {
+			final OPERATION_TYPE iOperationType, final STRATEGY iStrategy) {
 
 		if (bufferPoolLRU.size() > 0) {
-			// SEARCH IF IT'S BETWEEN THE LAST 10 BLOCK USED: THIS IS THE COMMON CASE ON MASSIVE INSERTION
+			// SEARCH IF IT'S BETWEEN THE LAST 5 BLOCK USED: THIS IS THE COMMON CASE ON MASSIVE INSERTION
 			OMMapBufferEntry e;
-			final int min = Math.max(bufferPoolLRU.size() - 10, -1);
+			final int min = Math.max(bufferPoolLRU.size() - 5, -1);
 			for (int i = bufferPoolLRU.size() - 1; i > min; --i) {
 				e = bufferPoolLRU.get(i);
 
@@ -103,6 +109,9 @@ public class OMMapManager {
 			// FOUND
 			return fileEntries.get(position);
 
+		if (iOperationType == OPERATION_TYPE.READ && iStrategy == STRATEGY.MMAP_ONLY_WRITE)
+			return null;
+
 		int bufferSize = iForce ? iSize : iSize <= DEF_BLOCK_SIZE ? DEF_BLOCK_SIZE : iSize;
 		if (iBeginOffset + bufferSize > iFile.getFileSize())
 			// REQUESTED BUFFER IS TOO LARGE: GET AS MAXIMUM AS POSSIBLE
@@ -114,7 +123,6 @@ public class OMMapManager {
 
 		if (totalMemory + bufferSize > maxMemory) {
 			// BUFFER POOL FULL: SINCE IT'S A READ RETURN NULL TO LET TO THE CALLER TO EXECUTE A DIRECT READ WITHOUT MMAP
-
 			final int p = (position + 2) * -1;
 			if (p > -1 && p <= fileEntries.size()) {
 				// CHECK IF THERE IS A BUFFER TO COMMIT TO DISK

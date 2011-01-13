@@ -55,7 +55,7 @@ public enum OGlobalConfiguration {
 			"Tells to the engine to not close the storage when a database is closed. Storages will be closed when the process will shutdown",
 			Boolean.class, Boolean.FALSE),
 
-	STORAGE_CACHE_SIZE("storage.cache.size", "Size of the cache that keep the record in memory", Integer.class, 1000),
+	STORAGE_CACHE_SIZE("storage.cache.size", "Size of the cache that keep the record in memory", Integer.class, 2000),
 
 	// DATABASE
 	DB_USE_CACHE("db.cache.enabled", "Uses the storage cache", Boolean.class, true),
@@ -80,6 +80,9 @@ public enum OGlobalConfiguration {
 			"Multiplicand factor to apply to entry-points list (parameter mvrbtree.entrypoints) to determine if needs of optimization", Float.class, 1.0f),
 
 	// FILE
+	FILE_MMAP_STRATEGY("file.mmap.strategy",
+			"Strategy to use with memory mapped files. 0 = USE MMAP ALWAYS, 1 = USE MMAP ON WRITES OR ONLY IF BLOCK IS ALREADY AVAILABLE", Integer.class, 1),
+
 	FILE_MMAP_BLOCK_SIZE("file.mmap.blockSize", "Size of the memory mapped block", Integer.class, 327680),
 
 	FILE_MMAP_BUFFER_SIZE("file.mmap.bufferSize", "Size of the buffer for direct access to the file", Integer.class, 65536),

@@ -43,23 +43,25 @@ import com.orientechnologies.orient.core.storage.fs.OMMapManager.OPERATION_TYPE;
  * <br/>
  */
 public class OFileMMap extends OFile {
-	protected MappedByteBuffer	headerBuffer;
-	protected int								bufferBeginOffset	= -1;
-	protected int								bufferSize				= 0;
-	protected List<ByteBuffer>	bufferPool				= new ArrayList<ByteBuffer>(10);
+	protected MappedByteBuffer						headerBuffer;
+	protected int													bufferBeginOffset	= -1;
+	protected int													bufferSize				= 0;
+	protected List<ByteBuffer>						bufferPool				= new ArrayList<ByteBuffer>(10);
 
-	private static int					BYTEBUFFER_POOLABLE_SIZE;
+	private static int										BYTEBUFFER_POOLABLE_SIZE;
+	private static OMMapManager.STRATEGY	strategy;
 
 	public OFileMMap(String iFileName, String iMode) throws IOException {
 		super(iFileName, iMode);
 		BYTEBUFFER_POOLABLE_SIZE = OGlobalConfiguration.FILE_MMAP_BUFFER_SIZE.getValueAsInteger();
+		strategy = OMMapManager.STRATEGY.values()[OGlobalConfiguration.FILE_MMAP_STRATEGY.getValueAsInteger()];
 	}
 
 	@Override
 	public void read(int iOffset, final byte[] iDestBuffer, final int iLenght) throws IOException {
 		iOffset = checkRegions(iOffset, iLenght);
 
-		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, iLenght, OPERATION_TYPE.READ);
+		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, iLenght, OPERATION_TYPE.READ, strategy);
 		if (entry != null) {
 			// MMAP READ
 			entry.buffer.position(iOffset - entry.beginOffset);
@@ -77,7 +79,7 @@ public class OFileMMap extends OFile {
 	@Override
 	public int readInt(int iOffset) throws IOException {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_INT);
-		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_INT, OPERATION_TYPE.READ);
+		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_INT, OPERATION_TYPE.READ, strategy);
 		if (entry != null) {
 			// MMAP READ
 			return entry.buffer.getInt(iOffset - entry.beginOffset);
@@ -95,7 +97,7 @@ public class OFileMMap extends OFile {
 	@Override
 	public long readLong(int iOffset) throws IOException {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_LONG);
-		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_LONG, OPERATION_TYPE.READ);
+		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_LONG, OPERATION_TYPE.READ, strategy);
 		if (entry != null) {
 			// MMAP READ
 			return entry.buffer.getLong(iOffset - entry.beginOffset);
@@ -113,7 +115,7 @@ public class OFileMMap extends OFile {
 	@Override
 	public short readShort(int iOffset) throws IOException {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_SHORT);
-		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_SHORT, OPERATION_TYPE.READ);
+		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_SHORT, OPERATION_TYPE.READ, strategy);
 		if (entry != null) {
 			// MMAP READ
 			return entry.buffer.getShort(iOffset - entry.beginOffset);
@@ -131,7 +133,7 @@ public class OFileMMap extends OFile {
 	@Override
 	public byte readByte(int iOffset) throws IOException {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_BYTE);
-		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_BYTE, OPERATION_TYPE.READ);
+		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_BYTE, OPERATION_TYPE.READ, strategy);
 		if (entry != null) {
 			// MMAP READ
 			return entry.buffer.get(iOffset - entry.beginOffset);
@@ -149,7 +151,7 @@ public class OFileMMap extends OFile {
 	@Override
 	public void writeInt(int iOffset, final int iValue) throws IOException {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_INT);
-		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_INT, OPERATION_TYPE.WRITE);
+		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_INT, OPERATION_TYPE.WRITE, strategy);
 		if (entry != null) {
 			// MMAP WRITE
 			entry.buffer.putInt(iOffset - entry.beginOffset, iValue);
@@ -166,7 +168,7 @@ public class OFileMMap extends OFile {
 	@Override
 	public void writeLong(int iOffset, final long iValue) throws IOException {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_LONG);
-		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_LONG, OPERATION_TYPE.WRITE);
+		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_LONG, OPERATION_TYPE.WRITE, strategy);
 		if (entry != null) {
 			// MMAP WRITE
 			entry.buffer.putLong(iOffset - entry.beginOffset, iValue);
@@ -183,7 +185,7 @@ public class OFileMMap extends OFile {
 	@Override
 	public void writeShort(int iOffset, final short iValue) throws IOException {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_SHORT);
-		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_SHORT, OPERATION_TYPE.WRITE);
+		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_SHORT, OPERATION_TYPE.WRITE, strategy);
 		if (entry != null) {
 			// MMAP WRITE
 			entry.buffer.putShort(iOffset - entry.beginOffset, iValue);
@@ -200,7 +202,7 @@ public class OFileMMap extends OFile {
 	@Override
 	public void writeByte(int iOffset, final byte iValue) throws IOException {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_BYTE);
-		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_BYTE, OPERATION_TYPE.WRITE);
+		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_BYTE, OPERATION_TYPE.WRITE, strategy);
 		if (entry != null) {
 			// MMAP WRITE
 			entry.buffer.put(iOffset - entry.beginOffset, iValue);
@@ -222,7 +224,7 @@ public class OFileMMap extends OFile {
 		iOffset = checkRegions(iOffset, iSourceBuffer.length);
 
 		try {
-			final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, iSourceBuffer.length, OPERATION_TYPE.WRITE);
+			final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, iSourceBuffer.length, OPERATION_TYPE.WRITE, strategy);
 			if (entry != null) {
 				// MMAP WRITE
 				entry.buffer.position(iOffset - entry.beginOffset);

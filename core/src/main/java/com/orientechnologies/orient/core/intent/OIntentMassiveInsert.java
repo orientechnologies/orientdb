@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.intent;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabasePojoAbstract;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
@@ -11,12 +10,8 @@ public class OIntentMassiveInsert implements OIntent {
 	private boolean	previousUseCache;
 	private boolean	previousRetainRecords;
 	private boolean	previousRetainObjects;
-	private int			treeMapLazyUpdates;
 
 	public void begin(final ODatabaseRaw iDatabase, final Object... iArgs) {
-		treeMapLazyUpdates = OGlobalConfiguration.MVRBTREE_LAZY_UPDATES.getValueAsInteger();
-		OGlobalConfiguration.MVRBTREE_LAZY_UPDATES.setValue(10000);
-
 		previousUseCache = iDatabase.isUseCache();
 		iDatabase.setUseCache(false);
 
@@ -37,8 +32,6 @@ public class OIntentMassiveInsert implements OIntent {
 	}
 
 	public void end(final ODatabaseRaw iDatabase) {
-		OGlobalConfiguration.MVRBTREE_LAZY_UPDATES.setValue(treeMapLazyUpdates);
-
 		iDatabase.setUseCache(previousUseCache);
 
 		final ODatabaseComplex<?> ownerDb = iDatabase.getDatabaseOwner();
