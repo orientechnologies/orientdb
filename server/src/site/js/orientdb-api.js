@@ -84,32 +84,23 @@ function ODatabase(databasePath) {
 		this.evalResponse = iEvalResponse;
 	}
 
-	this.open = function() {
+	this.open = function(userName, userPass, authProxy, type) {
+		if (userName == null) {
+			userName = '';
+		}
+		if (userPass == null) {
+			userPass = '';
+		}
+		if (authProxy != null && authProxy != '') {
+			authProxy = '/' + authProxy;
+		}
+		if (type == null || type == '') {
+			type = 'GET';
+		}
 		$.ajax({
-			type : "GET",
-			url : this.databaseUrl + '/connect/' + this.databaseName,
-			context : this,
-			async : false,
-			success : function(msg) {
-				this.setErrorMessage(null);
-				if (this.getEvalResponse()) {
-					this.setDatabaseInfo(eval("(" + msg + ")"));
-				} else {
-					this.setDatabaseInfo(msg);
-				}
-			},
-			error : function(msg) {
-				this.setErrorMessage('Connect error: ' + msg.responseText);
-				this.setDatabaseInfo(null);
-			}
-		});
-		return this.getDatabaseInfo();
-	}
-
-	this.open = function(userName, userPass) {
-		$.ajax({
-			type : "GET",
-			url : this.databaseUrl + '/connect/' + this.databaseName,
+			type : type,
+			url : this.databaseUrl + authProxy + '/connect/'
+					+ this.databaseName,
 			context : this,
 			async : false,
 			username : userName,

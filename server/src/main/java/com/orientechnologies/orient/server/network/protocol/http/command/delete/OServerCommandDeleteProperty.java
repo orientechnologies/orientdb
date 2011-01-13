@@ -26,7 +26,7 @@ public class OServerCommandDeleteProperty extends OServerCommandAuthenticatedDbA
 	private static final String[]	NAMES	= { "DELETE|property/*" };
 
 	@Override
-	public void execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(iRequest.url, 4, "Syntax error: property/<database>/<class-name>/<property-name>");
 
 		iRequest.data.commandInfo = "Delete property";
@@ -52,6 +52,7 @@ public class OServerCommandDeleteProperty extends OServerCommandAuthenticatedDbA
 			if (db != null)
 				OSharedDocumentDatabase.release(db);
 		}
+		return false;
 	}
 
 	@Override

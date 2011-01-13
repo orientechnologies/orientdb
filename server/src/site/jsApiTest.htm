@@ -70,6 +70,32 @@
 		}
 	}
 
+	function connectProxiedAdmin() {
+		if (orientServer == null) {
+			orientServer = new ODatabase('http://localhost:2480/demo');
+		}
+		databaseInfo = orientServer.open(null, null, 'admin');
+		if (databaseInfo == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#connectionStatus").text('Connected');
+			jQuery("#output").text('Connect OK.');
+		}
+	}
+
+	function connectProxiedWriter() {
+		if (orientServer == null) {
+			orientServer = new ODatabase('http://localhost:2480/demo');
+		}
+		databaseInfo = orientServer.open(null, null, 'admin');
+		if (databaseInfo == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#connectionStatus").text('Connected');
+			jQuery("#output").text('Connect OK.');
+		}
+	}
+
 	function query() {
 		connectLogged();
 		queryResult = orientServer
@@ -286,6 +312,10 @@
 <br />
 <button type="button" onclick="javascript:connect();">Test
 Connect</button>
+<button type="button" onclick="javascript:connectProxiedAdmin();">Test
+Connect Proxied Admin</button>
+<button type="button" onclick="javascript:connectProxiedWriter();">Test
+Connect Proxied Writer</button>
 <button type="button" onclick="javascript:connectLogged();">Test
 Connect Logged</button>
 <button type="button" onclick="javascript:disconnect();">Test

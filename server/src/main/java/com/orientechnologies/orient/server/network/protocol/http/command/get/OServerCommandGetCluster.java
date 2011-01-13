@@ -28,7 +28,7 @@ public class OServerCommandGetCluster extends OServerCommandAuthenticatedDbAbstr
 	private static final String[]	NAMES	= { "GET|cluster/*" };
 
 	@Override
-	public void execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(
 				iRequest.url,
 				3,
@@ -60,6 +60,7 @@ public class OServerCommandGetCluster extends OServerCommandAuthenticatedDbAbstr
 			if (db != null)
 				OSharedDocumentDatabase.release(db);
 		}
+		return false;
 	}
 
 	@Override

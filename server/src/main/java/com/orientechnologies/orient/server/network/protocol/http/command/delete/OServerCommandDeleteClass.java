@@ -25,7 +25,7 @@ public class OServerCommandDeleteClass extends OServerCommandAuthenticatedDbAbst
 	private static final String[]	NAMES	= { "DELETE|class/*" };
 
 	@Override
-	public void execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: class/<database>/<class-name>");
 
 		iRequest.data.commandInfo = "Delete class";
@@ -48,6 +48,7 @@ public class OServerCommandDeleteClass extends OServerCommandAuthenticatedDbAbst
 			if (db != null)
 				OSharedDocumentDatabase.release(db);
 		}
+		return false;
 	}
 
 	@Override

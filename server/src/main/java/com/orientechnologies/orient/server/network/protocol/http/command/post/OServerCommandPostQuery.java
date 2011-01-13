@@ -30,7 +30,7 @@ public class OServerCommandPostQuery extends OServerCommandAuthenticatedDbAbstra
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public void execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(
 				iRequest.url,
 				4,
@@ -63,6 +63,7 @@ public class OServerCommandPostQuery extends OServerCommandAuthenticatedDbAbstra
 		}
 
 		sendRecordsContent(iRequest, response, fetchPlan);
+		return false;
 	}
 
 	@Override

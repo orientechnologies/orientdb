@@ -28,7 +28,7 @@ public class OKVServerCommandGetEntry extends OKVServerCommandAbstract {
 		super(dictionary);
 	}
 
-	public void execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		iRequest.data.commandInfo = "Lookup entry";
 		iRequest.data.commandDetail = iRequest.url;
 
@@ -62,6 +62,7 @@ public class OKVServerCommandGetEntry extends OKVServerCommandAbstract {
 		final String content = value == null ? "The key '" + key + "' was not found in database '" + dbName + "'" : value.toString();
 
 		sendTextContent(iRequest, code, reason, null, "text/plain", content);
+		return false;
 	}
 
 	public String[] getNames() {

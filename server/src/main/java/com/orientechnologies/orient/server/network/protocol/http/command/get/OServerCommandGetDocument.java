@@ -27,7 +27,7 @@ public class OServerCommandGetDocument extends OServerCommandAuthenticatedDbAbst
 	private static final String[]	NAMES	= { "GET|document/*" };
 
 	@Override
-	public void execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		ODatabaseDocumentTx db = null;
 
 		final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: document/<database>/<record-id>[/fetchPlan]");
@@ -56,6 +56,7 @@ public class OServerCommandGetDocument extends OServerCommandAuthenticatedDbAbst
 					+ "' was not found.");
 		else
 			sendRecordContent(iRequest, rec, fetchPlan);
+		return false;
 	}
 
 	@Override

@@ -43,7 +43,7 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 	}
 
 	@Override
-	public void execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		iRequest.data.commandInfo = "Get static content";
 		iRequest.data.commandDetail = iRequest.url;
 
@@ -79,7 +79,7 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 					OLogManager.instance().debug(this, "Static resource not found: %s", url);
 
 					sendBinaryContent(iRequest, 404, "File not found", null, null, 0);
-					return;
+					return false;
 				}
 
 				if (url.endsWith(".htm") || url.endsWith(".html"))
@@ -125,6 +125,7 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 				} catch (IOException e) {
 				}
 		}
+		return false;
 	}
 
 	@Override

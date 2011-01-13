@@ -28,7 +28,7 @@ public class OKVServerCommandPostEntry extends OKVServerCommandAbstract {
 		super(dictionary);
 	}
 
-	public void execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		iRequest.data.commandInfo = "Create new entry";
 		iRequest.data.commandDetail = iRequest.url;
 
@@ -60,6 +60,7 @@ public class OKVServerCommandPostEntry extends OKVServerCommandAbstract {
 		}
 
 		sendTextContent(iRequest, code, reason, null, "text/plain", content);
+		return false;
 	}
 
 	public String[] getNames() {

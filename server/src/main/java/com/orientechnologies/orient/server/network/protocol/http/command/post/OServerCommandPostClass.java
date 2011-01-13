@@ -26,7 +26,7 @@ public class OServerCommandPostClass extends OServerCommandAuthenticatedDbAbstra
 	private static final String[]	NAMES	= { "POST|class/*" };
 
 	@Override
-	public void execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: class/<database>/<class-name>");
 
 		iRequest.data.commandInfo = "Create class";
@@ -50,6 +50,7 @@ public class OServerCommandPostClass extends OServerCommandAuthenticatedDbAbstra
 			if (db != null)
 				OSharedDocumentDatabase.release(db);
 		}
+		return false;
 	}
 
 	@Override

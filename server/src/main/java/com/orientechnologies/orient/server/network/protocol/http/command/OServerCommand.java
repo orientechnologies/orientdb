@@ -31,8 +31,10 @@ public interface OServerCommand {
 
 	/**
 	 * Executes the command requested.
+	 * 
+	 * @return boolean value that indicates if this command is part of a chain
 	 */
-	public void execute(OHttpRequest iRequest) throws Exception;
+	public boolean execute(OHttpRequest iRequest) throws Exception;
 
 	public String[] getNames();
 }

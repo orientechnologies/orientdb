@@ -27,7 +27,7 @@ public class OServerCommandDeleteDocument extends OServerCommandDocumentAbstract
 	private static final String[]	NAMES	= { "DELETE|document/*" };
 
 	@Override
-	public void execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		ODatabaseDocumentTx db = null;
 
 		try {
@@ -54,6 +54,7 @@ public class OServerCommandDeleteDocument extends OServerCommandDocumentAbstract
 			if (db != null)
 				OSharedDocumentDatabase.release(db);
 		}
+		return false;
 	}
 
 	@Override

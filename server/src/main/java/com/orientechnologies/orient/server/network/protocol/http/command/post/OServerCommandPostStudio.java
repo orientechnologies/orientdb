@@ -39,7 +39,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstract {
 	private static final String[]	NAMES	= { "POST|studio/*" };
 
-	public void execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		ODatabaseDocumentTx db = null;
 
 		try {
@@ -92,6 +92,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 			if (db != null)
 				OSharedDocumentDatabase.release(db);
 		}
+		return false;
 	}
 
 	private void executeClassProperties(final OHttpRequest iRequest, final ODatabaseDocumentTx db, final String operation,
@@ -99,8 +100,8 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 		// GET THE TARGET CLASS
 		final OClass cls = db.getMetadata().getSchema().getClass(rid);
 		if (cls == null) {
-			sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Class '" + rid
-					+ "' not found.");
+			sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Class '"
+					+ rid + "' not found.");
 			return;
 		}
 
@@ -135,8 +136,8 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 						"Property " + fields.get("name") + " created successfully with id=" + prop.getId());
 
 			} catch (Exception e) {
-				sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error on creating a new property in class " + rid + ": " + e, null,
-						OHttpUtils.CONTENT_TEXT_PLAIN, "Error on creating a new property in class " + rid + ": " + e);
+				sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, "Error on creating a new property in class " + rid + ": " + e,
+						null, OHttpUtils.CONTENT_TEXT_PLAIN, "Error on creating a new property in class " + rid + ": " + e);
 			}
 		} else if ("del".equals(operation)) {
 			iRequest.data.commandInfo = "Studio delete property";

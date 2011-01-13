@@ -27,7 +27,7 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 	private static final String[]	NAMES	= { "PUT|document/*" };
 
 	@Override
-	public void execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		final String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: document/<database>[/<record-id>]");
 
 		iRequest.data.commandInfo = "Edit Document";
@@ -56,7 +56,7 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 
 			if (recordId == null)
 				recordId = (ORecordId) doc.getIdentity();
-			
+
 			if (!recordId.isValid())
 				throw new IllegalArgumentException("Invalid Record ID in request: " + recordId);
 
@@ -69,6 +69,7 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 
 		sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + recordId
 				+ " updated successfully.");
+		return false;
 	}
 
 	@Override

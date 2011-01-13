@@ -29,7 +29,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
 	}
 
 	@Override
-	public void execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: database/<database>");
 
 		iRequest.data.commandInfo = "Create database";
@@ -51,6 +51,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
 
 		sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN,
 				null);
+		return false;
 	}
 
 	@Override

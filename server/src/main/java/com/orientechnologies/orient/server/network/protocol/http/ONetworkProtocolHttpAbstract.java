@@ -91,54 +91,57 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
 		long begin = System.currentTimeMillis();
 
-		final String command;
-		if (request.url.length() < 2) {
-			command = "";
-		} else {
-			command = request.url.substring(1);
-		}
+		boolean isChain = false;
+		do {
+			final String command;
+			if (request.url.length() < 2) {
+				command = "";
+			} else {
+				command = request.url.substring(1);
+			}
 
-		final String commandString = request.method + COMMAND_SEPARATOR + command;
+			final String commandString = request.method + COMMAND_SEPARATOR + command;
 
-		// TRY TO FIND EXACT MATCH
-		OServerCommand cmd = exactCommands.get(commandString);
+			// TRY TO FIND EXACT MATCH
+			OServerCommand cmd = exactCommands.get(commandString);
 
-		if (cmd == null) {
-			// TRY WITH WILDCARD COMMANDS
-			String partLeft, partRight;
-			for (Entry<String, OServerCommand> entry : wildcardCommands.entrySet()) {
-				int wildcardPos = entry.getKey().indexOf("*");
-				partLeft = entry.getKey().substring(0, wildcardPos);
-				partRight = entry.getKey().substring(wildcardPos + 1);
+			if (cmd == null) {
+				// TRY WITH WILDCARD COMMANDS
+				String partLeft, partRight;
+				for (Entry<String, OServerCommand> entry : wildcardCommands.entrySet()) {
+					int wildcardPos = entry.getKey().indexOf("*");
+					partLeft = entry.getKey().substring(0, wildcardPos);
+					partRight = entry.getKey().substring(wildcardPos + 1);
 
-				if (commandString.startsWith(partLeft) && commandString.endsWith(partRight)) {
-					cmd = entry.getValue();
-					break;
+					if (commandString.startsWith(partLeft) && commandString.endsWith(partRight)) {
+						cmd = entry.getValue();
+						break;
+					}
 				}
 			}
-		}
 
-		if (cmd != null)
-			try {
-				if (cmd.beforeExecute(request)) {
-					// EXECUTE THE COMMAND
-					cmd.execute(request);
+			if (cmd != null)
+				try {
+					if (cmd.beforeExecute(request)) {
+						// EXECUTE THE COMMAND
+						isChain = cmd.execute(request);
+					}
+
+				} catch (Exception e) {
+					handleError(e);
 				}
+			else {
+				try {
+					OLogManager.instance().warn(this,
+							"->" + channel.socket.getInetAddress().getHostAddress() + ": Command not found: " + request.method + "." + command);
 
-			} catch (Exception e) {
-				handleError(e);
+					sendTextContent(OHttpUtils.STATUS_INVALIDMETHOD_CODE, OHttpUtils.STATUS_INVALIDMETHOD_DESCRIPTION, null,
+							OHttpUtils.CONTENT_TEXT_PLAIN, "Command not found: " + command);
+				} catch (IOException e1) {
+					sendShutdown();
+				}
 			}
-		else {
-			try {
-				OLogManager.instance().warn(this,
-						"->" + channel.socket.getInetAddress().getHostAddress() + ": Command not found: " + request.method + "." + command);
-
-				sendTextContent(OHttpUtils.STATUS_INVALIDMETHOD_CODE, OHttpUtils.STATUS_INVALIDMETHOD_DESCRIPTION, null,
-						OHttpUtils.CONTENT_TEXT_PLAIN, "Command not found: " + command);
-			} catch (IOException e1) {
-				sendShutdown();
-			}
-		}
+		} while (isChain);
 
 		data.lastCommandInfo = data.commandInfo;
 		data.lastCommandDetail = data.commandDetail;

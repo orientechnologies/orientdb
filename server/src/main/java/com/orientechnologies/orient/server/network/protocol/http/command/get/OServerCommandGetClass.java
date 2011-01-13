@@ -28,7 +28,7 @@ public class OServerCommandGetClass extends OServerCommandAuthenticatedDbAbstrac
 	private static final String[]	NAMES	= { "GET|class/*" };
 
 	@Override
-	public void execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(
 				iRequest.url,
 				3,
@@ -60,6 +60,7 @@ public class OServerCommandGetClass extends OServerCommandAuthenticatedDbAbstrac
 			if (db != null)
 				OSharedDocumentDatabase.release(db);
 		}
+		return false;
 	}
 
 	@Override

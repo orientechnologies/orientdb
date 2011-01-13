@@ -31,7 +31,7 @@ public class OServerCommandGetDisconnect extends OServerCommandAbstract {
 	}
 
 	@Override
-	public void execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		checkSyntax(iRequest.url, 1, "Syntax error: disconnect");
 
 		iRequest.data.commandInfo = "Disconnect";
@@ -44,6 +44,7 @@ public class OServerCommandGetDisconnect extends OServerCommandAbstract {
 
 		sendTextContent(iRequest, OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN,
 				"Logged out", false);
+		return false;
 	}
 
 	@Override

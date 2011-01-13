@@ -26,7 +26,7 @@ public class OServerCommandOptions extends OServerCommandAbstract {
 	}
 
 	@Override
-	public void execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		iRequest.data.commandInfo = "HTTP Options";
 		iRequest.data.commandDetail = iRequest.url;
 
@@ -36,6 +36,7 @@ public class OServerCommandOptions extends OServerCommandAbstract {
 				OHttpUtils.STATUS_OK_DESCRIPTION,
 				"Access-Control-Allow-Origin: *\r\nAccess-Control-Allow-Methods: POST, GET, PUT, DELETE, OPTIONS\r\nAccess-Control-Max-Age: 1728000\r\nAccess-Control-Allow-Headers: if-modified-since",
 				OHttpUtils.CONTENT_TEXT_PLAIN, null);
+		return false;
 	}
 
 	@Override

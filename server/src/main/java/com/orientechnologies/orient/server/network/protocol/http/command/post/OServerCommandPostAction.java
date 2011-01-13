@@ -31,7 +31,7 @@ public class OServerCommandPostAction extends OServerCommandAuthenticatedPattern
 	}
 
 	@Override
-	public void execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(iRequest.url, 1, "Syntax error: *.action");
 
 		iRequest.data.commandInfo = "Execute action";
@@ -54,5 +54,6 @@ public class OServerCommandPostAction extends OServerCommandAuthenticatedPattern
 		}
 
 		sendTextContent(iRequest, 201, OHttpUtils.STATUS_OK_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN, doc.getIdentity());
+		return false;
 	}
 }

@@ -24,7 +24,7 @@ public class OServerCommandDeleteDatabase extends OServerCommandAuthenticatedDbA
 	private static final String[]	NAMES	= { "DELETE|database/*" };
 
 	@Override
-	public void execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: database/<database>");
 
 		iRequest.data.commandInfo = "Delete database";

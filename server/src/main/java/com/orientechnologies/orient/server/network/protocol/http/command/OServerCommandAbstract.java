@@ -215,4 +215,10 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 		json.endObject(1, true);
 	}
 
+	protected String nextChainUrl(String iCurrentUrl) {
+		String nextUrl = iCurrentUrl.startsWith("/") ? iCurrentUrl.substring(iCurrentUrl.indexOf("/", 1)) : iCurrentUrl
+				.substring(iCurrentUrl.indexOf("/"));
+		return nextUrl;
+	}
+
 }

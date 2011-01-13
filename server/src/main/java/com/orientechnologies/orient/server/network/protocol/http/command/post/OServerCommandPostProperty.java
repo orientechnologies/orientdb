@@ -28,7 +28,7 @@ public class OServerCommandPostProperty extends OServerCommandAuthenticatedDbAbs
 	private static final String[]	NAMES	= { "POST|property/*" };
 
 	@Override
-	public void execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(iRequest.url, 4, "Syntax error: property/<database>/<class-name>/<property-name>");
 
 		iRequest.data.commandInfo = "Create property";
@@ -55,6 +55,7 @@ public class OServerCommandPostProperty extends OServerCommandAuthenticatedDbAbs
 			if (db != null)
 				OSharedDocumentDatabase.release(db);
 		}
+		return false;
 	}
 
 	@Override

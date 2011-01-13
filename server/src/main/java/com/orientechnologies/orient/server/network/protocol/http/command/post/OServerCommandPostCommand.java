@@ -30,7 +30,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public void execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: command/<database>/sql/[<command-text>]");
 
 		// TRY TO GET THE COMMAND FROM THE URL, THEN FROM THE CONTENT
@@ -59,6 +59,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
 			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, response);
 		else
 			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, response.toString());
+		return false;
 	}
 
 	@Override

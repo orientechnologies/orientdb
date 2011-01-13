@@ -47,7 +47,7 @@ public class OServerCommandGetServer extends OServerCommandAuthenticatedServerAb
 	}
 
 	@Override
-	public void execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		checkSyntax(iRequest.url, 1, "Syntax error: server");
 
 		iRequest.data.commandInfo = "Server status";
@@ -148,6 +148,7 @@ public class OServerCommandGetServer extends OServerCommandAuthenticatedServerAb
 
 		} finally {
 		}
+		return false;
 	}
 
 	@Override

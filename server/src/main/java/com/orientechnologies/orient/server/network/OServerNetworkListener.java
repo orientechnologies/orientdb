@@ -67,7 +67,7 @@ public class OServerNetworkListener extends Thread {
 				try {
 					c = (Constructor<OServerCommand>) Class.forName(iCommands[i].implementation).getConstructor(
 							OServerCommandConfiguration.class);
-					commands[0] = c.newInstance(new Object[] { iCommands[i] });
+					commands[i] = c.newInstance(new Object[] { iCommands[i] });
 				} catch (Exception e) {
 					throw new IllegalArgumentException("Can't create custom command '" + iCommands[i] + "'", e);
 				}
@@ -221,8 +221,7 @@ public class OServerNetworkListener extends Thread {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append(protocolType.getSimpleName()).append(" ").append(serverSocket.getLocalSocketAddress()).append(":")
-				;
+		builder.append(protocolType.getSimpleName()).append(" ").append(serverSocket.getLocalSocketAddress()).append(":");
 		return builder.toString();
 	}
 }

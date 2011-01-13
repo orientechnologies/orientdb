@@ -21,13 +21,14 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
 	private static final String[]	NAMES	= { "GET|database/*" };
 
 	@Override
-	public void execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: database/<database>");
 
 		iRequest.data.commandInfo = "Database info";
 		iRequest.data.commandDetail = urlParts[1];
 
 		exec(iRequest, urlParts);
+		return false;
 	}
 
 	@Override

@@ -26,7 +26,7 @@ public class OServerCommandGetDictionary extends OServerCommandAuthenticatedDbAb
 	private static final String[]	NAMES	= { "GET|dictionary/*" };
 
 	@Override
-	public void execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		iRequest.data.commandInfo = "Dictionary lookup";
 
 		String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: dictionary/<database>/<key>");
@@ -46,6 +46,7 @@ public class OServerCommandGetDictionary extends OServerCommandAuthenticatedDbAb
 			if (db != null)
 				OSharedDocumentDatabase.release(db);
 		}
+		return false;
 	}
 
 	@Override

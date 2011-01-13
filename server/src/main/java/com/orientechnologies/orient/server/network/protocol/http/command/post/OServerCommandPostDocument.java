@@ -28,7 +28,7 @@ public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
 	private static final String[]	NAMES	= { "POST|document/*" };
 
 	@Override
-	public void execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: document/<database>");
 
 		iRequest.data.commandInfo = "Create document";
@@ -52,8 +52,9 @@ public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
 				OSharedDocumentDatabase.release(db);
 		}
 
-		sendTextContent(iRequest, OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN,
-				doc != null ? doc.getIdentity() : "?");
+		sendTextContent(iRequest, OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, null,
+				OHttpUtils.CONTENT_TEXT_PLAIN, doc != null ? doc.getIdentity() : "?");
+		return false;
 	}
 
 	@Override

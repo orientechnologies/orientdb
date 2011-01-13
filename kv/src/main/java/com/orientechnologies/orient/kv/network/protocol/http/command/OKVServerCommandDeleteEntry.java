@@ -29,7 +29,7 @@ public class OKVServerCommandDeleteEntry extends OKVServerCommandAbstract {
 		super(dictionary);
 	}
 
-	public void execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		iRequest.data.commandInfo = "Delete entry";
 		iRequest.data.commandDetail = iRequest.url;
 
@@ -59,6 +59,7 @@ public class OKVServerCommandDeleteEntry extends OKVServerCommandAbstract {
 		}
 
 		sendTextContent(iRequest, code, reason, null, OHttpUtils.CONTENT_TEXT_PLAIN, content);
+		return false;
 	}
 
 	public String[] getNames() {
