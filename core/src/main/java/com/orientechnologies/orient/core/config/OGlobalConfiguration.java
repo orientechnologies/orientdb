@@ -83,9 +83,13 @@ public enum OGlobalConfiguration {
 	FILE_MMAP_STRATEGY(
 			"file.mmap.strategy",
 			"Strategy to use with memory mapped files. 0 = USE MMAP ALWAYS, 1 = USE MMAP ON WRITES OR WHEN THE BLOCK IS JUST ALREADY AVAILABLE, 2 = USE MMAP ONLY IF BLOCK IS ALREADY AVAILABLE",
-			Integer.class, 2),
+			Integer.class, 1),
 
-	FILE_MMAP_BLOCK_SIZE("file.mmap.blockSize", "Size of the memory mapped block", Integer.class, 327680),
+	FILE_MMAP_BLOCK_SIZE("file.mmap.blockSize", "Size of the memory mapped block", Integer.class, 327680, new OConfigurationChangeCallback() {
+		public void change(final Object iCurrentValue, final Object iNewValue) {
+			OMMapManager.setBlockSize(((Number) iNewValue).intValue());
+		}
+	}),
 
 	FILE_MMAP_BUFFER_SIZE("file.mmap.bufferSize", "Size of the buffer for direct access to the file", Integer.class, 65536),
 
@@ -264,7 +268,7 @@ public enum OGlobalConfiguration {
 					.getOperatingSystemMXBean();
 			final long maxOsMemory = bean.getTotalPhysicalMemorySize();
 			final long maxProcessMemory = Runtime.getRuntime().maxMemory();
-			long mmapBestMemory = (maxOsMemory - maxProcessMemory) / 3;
+			long mmapBestMemory = (maxOsMemory - maxProcessMemory) / 2;
 
 			FILE_MMAP_MAX_MEMORY.setValue(mmapBestMemory);
 			FILE_MMAP_BLOCK_SIZE.setValue(327680);

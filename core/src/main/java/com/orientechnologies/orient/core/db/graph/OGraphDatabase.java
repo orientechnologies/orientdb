@@ -137,7 +137,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		final boolean safeMode = beginBlock();
 
 		try {
-			final ODocument edge = new ODocument(underlying, iClassName != null ? iClassName : EDGE_CLASS_NAME);
+			final ODocument edge = new ODocument(this, iClassName != null ? iClassName : EDGE_CLASS_NAME);
 			edge.field(EDGE_FIELD_IN, iSourceVertex);
 			edge.field(EDGE_FIELD_OUT, iDestVertex);
 
@@ -184,10 +184,18 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		return cls;
 	}
 
+	public OClass getVertexType(final String iClassName) {
+		return getMetadata().getSchema().getClass(iClassName);
+	}
+
 	public OClass createEdgeType(final String iClassName) {
 		OClass cls = getMetadata().getSchema().createClass(iClassName).setSuperClass(getMetadata().getSchema().getClass(EDGE_CLASS_NAME));
 		getMetadata().getSchema().save();
 		return cls;
+	}
+
+	public OClass getEdgeType(final String iClassName) {
+		return getMetadata().getSchema().getClass(iClassName);
 	}
 
 	private void checkForGraphSchema() {

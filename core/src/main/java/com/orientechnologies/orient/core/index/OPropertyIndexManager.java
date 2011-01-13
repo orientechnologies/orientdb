@@ -117,8 +117,7 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 
 			// REMOVE INDEX OF ENTRIES FOR THE CHANGED ONLY VALUES
 			for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
-				if (iRecord.containsField(propEntry.getKey().getName())
-						&& (dirtyFields == null || !dirtyFields.contains(propEntry.getKey().getName()))) {
+				if (iRecord.containsField(propEntry.getKey().getName()) && (dirtyFields == null || !dirtyFields.contains(propEntry.getKey().getName()))) {
 					propEntry.getKey().getIndex().remove(propEntry.getValue());
 					propEntry.getKey().getIndex().lazySave();
 				}
@@ -158,8 +157,8 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 							rid = ((ODocument) obj).getIdentity();
 
 						if (!rid.equals(iRecord.getIdentity()))
-							OLogManager.instance().exception("Found duplicated key '%s' for property '%s'", null, OIndexException.class,
-									fieldValueString, prop);
+							OLogManager.instance().exception("Found duplicated key '%s' for property '%s' assigned to the record %s", null, OIndexException.class,
+									fieldValueString, prop, rid);
 					}
 				}
 			}

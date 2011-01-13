@@ -39,10 +39,10 @@ public class OMMapManager {
 	}
 
 	private static final long															MIN_MEMORY				= 50000000;
-	public static final int																DEF_BLOCK_SIZE;
 	private static final int															FORCE_DELAY;
 	private static final int															FORCE_RETRY;
 
+	private static int																		blockSize;
 	private static long																		maxMemory;
 	private static long																		totalMemory;
 
@@ -50,7 +50,7 @@ public class OMMapManager {
 	private static Map<OFileMMap, List<OMMapBufferEntry>>	bufferPoolPerFile	= new HashMap<OFileMMap, List<OMMapBufferEntry>>();
 
 	static {
-		DEF_BLOCK_SIZE = OGlobalConfiguration.FILE_MMAP_BLOCK_SIZE.getValueAsInteger();
+		blockSize = OGlobalConfiguration.FILE_MMAP_BLOCK_SIZE.getValueAsInteger();
 		FORCE_DELAY = OGlobalConfiguration.FILE_MMAP_FORCE_DELAY.getValueAsInteger();
 		FORCE_RETRY = OGlobalConfiguration.FILE_MMAP_FORCE_RETRY.getValueAsInteger();
 
@@ -121,7 +121,7 @@ public class OMMapManager {
 			return null;
 		}
 
-		int bufferSize = iForce ? iSize : iSize <= DEF_BLOCK_SIZE ? DEF_BLOCK_SIZE : iSize;
+		int bufferSize = iForce ? iSize : iSize <= blockSize ? blockSize : iSize;
 		if (iBeginOffset + bufferSize > iFile.getFileSize())
 			// REQUESTED BUFFER IS TOO LARGE: GET AS MAXIMUM AS POSSIBLE
 			bufferSize = iFile.getFileSize() - iBeginOffset;
@@ -223,9 +223,7 @@ public class OMMapManager {
 			entry.close();
 		}
 		bufferPoolLRU.clear();
-		bufferPoolLRU = null;
 		bufferPoolPerFile.clear();
-		bufferPoolPerFile = null;
 		totalMemory = 0;
 	}
 
@@ -239,6 +237,14 @@ public class OMMapManager {
 
 	public static long getTotalMemory() {
 		return totalMemory;
+	}
+
+	public static int getBlockSize() {
+		return blockSize;
+	}
+
+	public static void setBlockSize(final int blockSize) {
+		OMMapManager.blockSize = blockSize;
 	}
 
 	private static OMMapBufferEntry mapBuffer(final OFileMMap iFile, final int iBeginOffset, final int iSize) throws IOException {
