@@ -261,7 +261,7 @@ public enum OGlobalConfiguration {
 			final long maxProcessMemory = Runtime.getRuntime().maxMemory();
 			long mmapBestMemory = (maxOsMemory - maxProcessMemory) / 3;
 
-			FILE_MMAP_MAX_MEMORY.setValue(20000000);
+			FILE_MMAP_MAX_MEMORY.setValue(mmapBestMemory);
 			FILE_MMAP_BLOCK_SIZE.setValue(327680);
 			MVRBTREE_NODE_PAGE_SIZE.setValue(2048);
 		} else {
