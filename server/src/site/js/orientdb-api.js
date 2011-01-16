@@ -93,7 +93,9 @@ function ODatabase(databasePath) {
 		}
 		if (authProxy != null && authProxy != '') {
 			authProxy = '/' + authProxy;
-		}
+		}else
+			authProxy = '';
+		
 		if (type == null || type == '') {
 			type = 'GET';
 		}
@@ -341,7 +343,7 @@ function ODatabase(databasePath) {
 	}
 
 	this.transformResponse = function(msg) {
-		if (this.getEvalResponse() && typeof msg != 'object') {
+		if (this.getEvalResponse() && msg.length > 0 && typeof msg != 'object' ) {
 			return eval("(" + msg + ")");
 		} else {
 			return msg;
