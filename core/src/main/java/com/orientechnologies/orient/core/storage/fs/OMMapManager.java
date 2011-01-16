@@ -35,7 +35,7 @@ public class OMMapManager {
 	}
 
 	public enum STRATEGY {
-		MMAP_ALWAYS, MMAP_ONLY_WRITE, MMAP_ONLY_AVAILABLE_IN_POOL
+		MMAP_ALWAYS, MMAP_WRITE_ALWAYS_READ_IF_AVAIL_POOL, MMAP_WRITE_ALWAYS_READ_IF_IN_MEM, MMAP_ONLY_AVAIL_POOL
 	}
 
 	private static final long															MIN_MEMORY				= 50000000;
@@ -90,7 +90,7 @@ public class OMMapManager {
 
 				if (e.file == iFile && iBeginOffset >= e.beginOffset && iBeginOffset + iSize <= e.beginOffset + e.size) {
 					// FOUND: USE IT
-					OProfiler.getInstance().updateCounter("OMMapManager.usePage", 1);
+					OProfiler.getInstance().updateCounter("OMMapManager.reusedPageBetweenLast", 1);
 					e.counter++;
 					return e;
 				}
@@ -109,15 +109,18 @@ public class OMMapManager {
 			// FOUND
 			return fileEntries.get(position);
 
-		if (iOperationType == OPERATION_TYPE.READ && iStrategy == STRATEGY.MMAP_ONLY_WRITE) {
+		if (iOperationType == OPERATION_TYPE.READ && iStrategy == STRATEGY.MMAP_WRITE_ALWAYS_READ_IF_IN_MEM) {
 			// READ NOT IN BUFFER POOL: RETURN NULL TO LET TO THE CALLER TO EXECUTE A DIRECT READ WITHOUT MMAP
 			final int p = (position + 2) * -1;
 			if (p > -1 && p <= fileEntries.size()) {
 				// CHECK IF THERE IS A BUFFER TO COMMIT TO DISK
 				final OMMapBufferEntry entry = fileEntries.get(p);
-				if (entry.beginOffset <= iBeginOffset && entry.beginOffset + entry.size >= iBeginOffset)
+				if (entry.beginOffset <= iBeginOffset && entry.beginOffset + entry.size >= iBeginOffset) {
+					OProfiler.getInstance().updateCounter("OMMapManager.overlappedPageUsingChannel", 1);
 					commitBuffer(entry);
+				}
 			}
+			OProfiler.getInstance().updateCounter("OMMapManager.usedChannel", 1);
 			return null;
 		}
 
@@ -130,8 +133,12 @@ public class OMMapManager {
 			throw new IllegalArgumentException("Invalid range requested for file " + iFile + ". Requested " + iSize + " bytes from the address "
 					+ iBeginOffset + " while the total file size is " + iFile.getFileSize());
 
-		if (totalMemory + bufferSize > maxMemory && iStrategy == STRATEGY.MMAP_ONLY_AVAILABLE_IN_POOL)
+		if (totalMemory + bufferSize > maxMemory
+				&& (iStrategy == STRATEGY.MMAP_ONLY_AVAIL_POOL || iOperationType == OPERATION_TYPE.READ
+						&& iStrategy == STRATEGY.MMAP_WRITE_ALWAYS_READ_IF_AVAIL_POOL)) {
+			OProfiler.getInstance().updateCounter("OMMapManager.usedChannel", 1);
 			return null;
+		}
 
 		// FREE LESS-USED BUFFERS UNTIL THE FREE-MEMORY IS DOWN THE CONFIGURED MAX LIMIT
 		OMMapBufferEntry entry = null;
@@ -141,8 +148,6 @@ public class OMMapManager {
 				final long memoryThreshold = (long) (maxMemory * 0.75);
 
 				OLogManager.instance().debug(null, "Free mmmap blocks, at least %d MB...", (totalMemory - memoryThreshold) / 1000000);
-
-				int pagesUnloaded = 0;
 
 				// SORT AS LRU, FIRT = MOST USED
 				Collections.sort(bufferPoolLRU, new Comparator<OMMapBufferEntry>() {
@@ -163,8 +168,6 @@ public class OMMapManager {
 						it.remove();
 						bufferPoolPerFile.get(entry.file).remove(entry);
 
-						pagesUnloaded++;
-
 						entry.buffer = null;
 
 						totalMemory -= entry.size;
@@ -173,8 +176,6 @@ public class OMMapManager {
 							break;
 					}
 				}
-
-				OProfiler.getInstance().updateCounter("OMMapManager.pagesUnloaded", pagesUnloaded);
 
 				// RECOMPUTE THE POSITION AFTER REMOVING
 				position = searchEntry(fileEntries, iBeginOffset, iSize);
@@ -248,7 +249,6 @@ public class OMMapManager {
 	}
 
 	private static OMMapBufferEntry mapBuffer(final OFileMMap iFile, final int iBeginOffset, final int iSize) throws IOException {
-		OProfiler.getInstance().updateCounter("OMMapManager.loadPage", 1);
 		long timer = OProfiler.getInstance().startChrono();
 		try {
 			return new OMMapBufferEntry(iFile, iFile.map(iBeginOffset, iSize), iBeginOffset, iSize);
@@ -280,7 +280,7 @@ public class OMMapManager {
 
 			if (iBeginOffset >= e.beginOffset && iBeginOffset + iSize <= e.beginOffset + e.size) {
 				// FOUND: USE IT
-				OProfiler.getInstance().updateCounter("OMMapManager.usePage", 1);
+				OProfiler.getInstance().updateCounter("OMMapManager.reusedPage", 1);
 				e.counter++;
 				return mid;
 			}
@@ -298,6 +298,8 @@ public class OMMapManager {
 	}
 
 	protected static boolean commitBuffer(final OMMapBufferEntry iEntry) {
+		final long timer = OProfiler.getInstance().startChrono();
+
 		// FORCE THE WRITE OF THE BUFFER
 		boolean forceSucceed = false;
 		for (int i = 0; i < FORCE_RETRY; ++i) {
@@ -317,6 +319,10 @@ public class OMMapManager {
 
 		if (!forceSucceed)
 			OLogManager.instance().debug(iEntry, "Can't commit memory buffer to disk after %d retries", FORCE_RETRY);
+		else
+			OProfiler.getInstance().updateCounter("OMMapManager.pagesCommitted", 1);
+
+		OProfiler.getInstance().stopChrono("OMMapManager.commitPages", timer);
 
 		return forceSucceed;
 	}
