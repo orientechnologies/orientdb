@@ -44,7 +44,7 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 
 	@Override
 	public boolean execute(final OHttpRequest iRequest) throws Exception {
-		String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: connect/<database>[/<user>/<password>]");
+		final String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: connect/<database>[/<user>/<password>]");
 
 		iRequest.data.commandInfo = "Connect";
 		iRequest.data.commandDetail = urlParts[1];
@@ -55,7 +55,7 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 
 	@Override
 	public boolean beforeExecute(OHttpRequest iRequest) throws IOException {
-		String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: connect/<database>[/<user>/<password>]");
+		final String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: connect/<database>[/<user>/<password>]");
 
 		if (urlParts == null || urlParts.length < 3)
 			return super.beforeExecute(iRequest);

@@ -32,23 +32,12 @@ import com.orientechnologies.orient.core.storage.fs.OMMapManager;
  */
 public enum OGlobalConfiguration {
 	// MEMORY
-	MEMORY_OPTIMIZE_THRESHOLD("memory.optimizeThreshold", "Threshold of heap memory to start optimizing memory usage", Float.class, 0.85,
-			new OConfigurationChangeCallback() {
+	MEMORY_OPTIMIZE_THRESHOLD("memory.optimizeThreshold", "Threshold of heap memory where to start the optimization of memory usage. ", Float.class,
+			0.85, new OConfigurationChangeCallback() {
 				public void change(final Object iCurrentValue, final Object iNewValue) {
 					OMemoryWatchDog.setPercentageUsageThreshold(((Number) iNewValue).floatValue());
 				}
 			}),
-
-	// LOG
-	LOG_CONSOLE_LEVEL("log.console.level", "Console's logging level", String.class, "info", new OConfigurationChangeCallback() {
-		public void change(final Object iCurrentValue, final Object iNewValue) {
-			OLogManager.instance().setLevel((String) iNewValue, ConsoleHandler.class);
-		}
-	}), LOG_FILE_LEVEL("log.file.level", "File's logging level", String.class, "fine", new OConfigurationChangeCallback() {
-		public void change(final Object iCurrentValue, final Object iNewValue) {
-			OLogManager.instance().setLevel((String) iNewValue, FileHandler.class);
-		}
-	}),
 
 	// STORAGE
 	STORAGE_KEEP_OPEN("storage.keepOpen",
@@ -82,7 +71,7 @@ public enum OGlobalConfiguration {
 	// FILE
 	FILE_MMAP_STRATEGY(
 			"file.mmap.strategy",
-			"Strategy to use with memory mapped files. 0 = USE MMAP ALWAYS, 1 = USE MMAP ON WRITES OR WHEN THE BLOCK IS JUST ALREADY AVAILABLE, 2 = USE MMAP ONLY IF BLOCK IS ALREADY AVAILABLE",
+			"Strategy to use with memory mapped files. 0 = USE MMAP ALWAYS, 1 = USE MMAP ON WRITES OR ON READ JUST WHEN THE BLOCK POOL IS FREE, 2 = USE MMAP ON WRITES OR ON READ JUST WHEN THE BLOCK IS ALREADY AVAILABLE, 3 = USE MMAP ONLY IF BLOCK IS ALREADY AVAILABLE",
 			Integer.class, 1),
 
 	FILE_MMAP_BLOCK_SIZE("file.mmap.blockSize", "Size of the memory mapped block", Integer.class, 327680, new OConfigurationChangeCallback() {
@@ -91,7 +80,7 @@ public enum OGlobalConfiguration {
 		}
 	}),
 
-	FILE_MMAP_BUFFER_SIZE("file.mmap.bufferSize", "Size of the buffer for direct access to the file", Integer.class, 65536),
+	FILE_MMAP_BUFFER_SIZE("file.mmap.bufferSize", "Size of the buffer for direct access to the file through the channel", Integer.class, 65536),
 
 	FILE_MMAP_MAX_MEMORY("file.mmap.maxMemory",
 			"Max memory allocable by memory mapping manager. Note that on 32bit OS the limit is to 2Gb but can change to OS by OS", Long.class, 134217728,
@@ -123,6 +112,17 @@ public enum OGlobalConfiguration {
 
 	// PROFILER
 	PROFILER_ENABLED("profiler.enabled", "Enable the recording of statistics and counters", Boolean.class, false),
+
+	// LOG
+	LOG_CONSOLE_LEVEL("log.console.level", "Console's logging level", String.class, "info", new OConfigurationChangeCallback() {
+		public void change(final Object iCurrentValue, final Object iNewValue) {
+			OLogManager.instance().setLevel((String) iNewValue, ConsoleHandler.class);
+		}
+	}), LOG_FILE_LEVEL("log.file.level", "File's logging level", String.class, "fine", new OConfigurationChangeCallback() {
+		public void change(final Object iCurrentValue, final Object iNewValue) {
+			OLogManager.instance().setLevel((String) iNewValue, FileHandler.class);
+		}
+	}),
 
 	// SERVER
 	SERVER_CACHE_STATIC_RESOURCES("server.cache.staticResources", "Cache static resources after loaded", Boolean.class, false),

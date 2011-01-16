@@ -33,17 +33,18 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerString;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabase;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
 
 @SuppressWarnings("unchecked")
 public class ODictionaryLocal<T extends Object> extends ODictionaryAbstract<T> {
-	public static final String						DICTIONARY_DEF_CLUSTER_NAME	= OStorage.CLUSTER_INTERNAL_NAME;
+	public static final String										DICTIONARY_DEF_CLUSTER_NAME	= OStorage.CLUSTER_INTERNAL_NAME;
 
-	private ODatabaseRecord								underlyingDatabase;
-	private ODatabaseComplex<T>						database;
-	private OMVRBTreeDatabase<String, T>	tree;
-	private HashSet<String>								transactionalEntries;
+	private ODatabaseRecord												underlyingDatabase;
+	private ODatabaseComplex<T>										database;
+	private OMVRBTreeDatabaseLazySave<String, T>	tree;
+	private HashSet<String>												transactionalEntries;
 
-	public String													clusterName									= DICTIONARY_DEF_CLUSTER_NAME;
+	public String																	clusterName									= DICTIONARY_DEF_CLUSTER_NAME;
 
 	public ODictionaryLocal(final ODatabaseRecord iDatabase) throws SecurityException, NoSuchMethodException {
 		super(iDatabase);
@@ -90,13 +91,14 @@ public class ODictionaryLocal<T extends Object> extends ODictionaryAbstract<T> {
 	}
 
 	public void load() {
-		tree = new OMVRBTreeDatabase<String, T>(underlyingDatabase, new ORecordId(database.getStorage().getConfiguration().dictionaryRecordId));
+		tree = new OMVRBTreeDatabaseLazySave<String, T>(underlyingDatabase, new ORecordId(database.getStorage().getConfiguration().dictionaryRecordId));
 		tree.load();
 	}
 
 	public void create() {
 		try {
-			tree = new OMVRBTreeDatabase<String, T>(underlyingDatabase, clusterName, OStreamSerializerString.INSTANCE, OStreamSerializerAnyRecord.INSTANCE);
+			tree = new OMVRBTreeDatabaseLazySave<String, T>(underlyingDatabase, clusterName, OStreamSerializerString.INSTANCE,
+					OStreamSerializerAnyRecord.INSTANCE);
 			tree.save();
 
 			database.getStorage().getConfiguration().dictionaryRecordId = tree.getRecord().getIdentity().toString();

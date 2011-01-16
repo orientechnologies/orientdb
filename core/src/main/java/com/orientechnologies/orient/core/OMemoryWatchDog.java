@@ -13,6 +13,7 @@ import javax.management.NotificationEmitter;
 import javax.management.NotificationListener;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.OMemoryWatchDog.Listener.TYPE;
 
 /**
@@ -50,8 +51,14 @@ public class OMemoryWatchDog {
 
 					OLogManager.instance().warn(this, "Low memory caught, calling listeners to free memory...");
 
-					for (Listener listener : listeners) {
-						listener.memoryUsageLow(TYPE.JVM, usedMemory, maxMemory);
+					final long timer = OProfiler.getInstance().startChrono();
+
+					try {
+						for (Listener listener : listeners) {
+							listener.memoryUsageLow(TYPE.JVM, usedMemory, maxMemory);
+						}
+					} finally {
+						OProfiler.getInstance().stopChrono("OMemoryWatchDog.freeResources", timer);
 					}
 				}
 			}
