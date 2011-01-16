@@ -177,6 +177,8 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 
 			// CLUSTER EXHAUSTED, TRY WITH THE NEXT ONE
 			currentClusterIdx++;
+			if(currentClusterIdx >= clusterIds.length)
+				break;
 			updateClusterRange();
 		}
 
