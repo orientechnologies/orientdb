@@ -43,8 +43,18 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements ORe
 	}
 
 	public DB acquire(final String iURL, final String iUserName, final String iUserPassword) throws OLockException {
-		final int separatorPos = iURL.lastIndexOf('/');
-		final String name = separatorPos > -1 ? iURL.substring(separatorPos + 1) : iURL;
+		int separatorPos = iURL.lastIndexOf('/');
+
+		final String name;
+		if (separatorPos > -1)
+			name = iURL.substring(separatorPos + 1);
+		else {
+			separatorPos = iURL.lastIndexOf(':');
+			if (separatorPos > -1)
+				name = iURL.substring(separatorPos + 1);
+			else
+				name = iURL;
+		}
 
 		OResourcePool<String, DB> pool = pools.get(name);
 		if (pool == null) {

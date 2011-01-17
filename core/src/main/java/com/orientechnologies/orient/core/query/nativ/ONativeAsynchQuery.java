@@ -24,11 +24,11 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 
 @SuppressWarnings("unchecked")
-public abstract class ONativeAsynchQuery<T extends ORecordInternal<?>, CTX extends OQueryContextNative<T>> extends
-		ONativeQuery<T, CTX> implements ORecordBrowsingListener {
+public abstract class ONativeAsynchQuery<T extends ORecordInternal<?>, CTX extends OQueryContextNative<T>> extends ONativeQuery<T, CTX> implements
+		ORecordBrowsingListener {
 	protected OCommandResultListener	resultListener;
 	protected int											resultCount	= 0;
 	protected ORecordInternal<?>			record;
@@ -65,7 +65,7 @@ public abstract class ONativeAsynchQuery<T extends ORecordInternal<?>, CTX exten
 	}
 
 	public List<T> run(final Object... iArgs) {
-		if (!(database.getStorage() instanceof OStorageLocal))
+		if (!(database.getStorage() instanceof OStorageEmbedded))
 			throw new OCommandExecutionException("Native queries can run only in embedded-local version. Not in the remote one.");
 
 		queryRecord.setSourceQuery(this);
@@ -75,8 +75,7 @@ public abstract class ONativeAsynchQuery<T extends ORecordInternal<?>, CTX exten
 		if (cls == null)
 			throw new OCommandExecutionException("Cluster " + cluster + " was not found");
 
-		((OStorageLocal) database.getStorage()).browse(database.getId(), cls.getPolymorphicClusterIds(), null, null, this, record,
-				false);
+		((OStorageEmbedded) database.getStorage()).browse(database.getId(), cls.getPolymorphicClusterIds(), null, null, this, record, false);
 		return null;
 	}
 

@@ -63,8 +63,7 @@ public interface OStorage {
 
 	public ORawBuffer readRecord(ODatabaseRecord iDatabase, int iRequesterId, int iClusterId, long iPosition, String iFetchPlan);
 
-	public int updateRecord(int iRequesterId, int iClusterId, long iPosition, byte[] iContent, final int iVersion,
-			final byte iRecordType);
+	public int updateRecord(int iRequesterId, int iClusterId, long iPosition, byte[] iContent, final int iVersion, final byte iRecordType);
 
 	public int updateRecord(int iRequesterId, ORID iRecordId, byte[] iContent, final int iVersion, final byte iRecordType);
 

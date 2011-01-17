@@ -24,12 +24,12 @@ import java.util.List;
 import java.util.Set;
 
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -39,7 +39,7 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageAbstract;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionEntry;
@@ -54,38 +54,35 @@ import com.orientechnologies.orient.core.tx.OTransactionEntry;
  * @author Luca Garulli
  * 
  */
-public class OStorageMemory extends OStorageAbstract {
+public class OStorageMemory extends OStorageEmbedded {
 	private final ODataSegmentMemory		data							= new ODataSegmentMemory();
 	private final List<OClusterMemory>	clusters					= new ArrayList<OClusterMemory>();
 	private int													defaultClusterId	= 0;
+	private ODictionary<?>							dictionary;
 
 	public OStorageMemory(final String iURL) {
 		super(iURL, iURL, "rw");
+		configuration = new OStorageConfiguration(this);
 	}
 
 	public void create() {
-		open(-1, "", "");
-	}
-
-	public void open(final int iRequesterId, final String iUserName, final String iUserPassword) {
 		addUser();
 
 		final boolean locked = lock.acquireExclusiveLock();
 		try {
 			configuration = new OStorageConfiguration(this);
 
-			addDataSegment(OStorage.CLUSTER_DEFAULT_NAME);
+			addDataSegment(OStorage.DATA_DEFAULT_NAME);
 
 			// ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
 			addCluster(OStorage.CLUSTER_INTERNAL_NAME, null);
 
 			// ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING
-			addCluster("index", null);
+			addCluster(OStorage.CLUSTER_INDEX_NAME, null);
 
 			// ADD THE DEFAULT CLUSTER
 			defaultClusterId = addCluster(OStorage.CLUSTER_DEFAULT_NAME, null);
 
-			configuration = new OStorageConfiguration(this);
 			configuration.create(0);
 
 			open = true;
@@ -96,9 +93,26 @@ public class OStorageMemory extends OStorageAbstract {
 		}
 	}
 
+	public void open(final int iRequesterId, final String iUserName, final String iUserPassword) {
+		addUser();
+		cache.addUser();
+
+		if (open)
+			// ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
+			// REUSED
+			return;
+
+		if (!exists())
+			throw new OStorageException("Can't open the storage '" + name + "' because it not exists in path: " + url);
+
+		open = true;
+	}
+
 	public void close() {
 		final boolean locked = lock.acquireExclusiveLock();
 		try {
+			if (!open)
+				return;
 
 			// CLOSE ALL THE CLUSTERS
 			for (OClusterMemory c : clusters)
@@ -123,7 +137,7 @@ public class OStorageMemory extends OStorageAbstract {
 		final boolean locked = lock.acquireExclusiveLock();
 		try {
 
-			clusters.add(new OClusterMemory(clusters.size(), iClusterName));
+			clusters.add(new OClusterMemory(clusters.size(), iClusterName.toLowerCase()));
 			return clusters.size() - 1;
 		} finally {
 
@@ -176,22 +190,25 @@ public class OStorageMemory extends OStorageAbstract {
 		}
 	}
 
-	public ORawBuffer readRecord(final ODatabaseRecord iDatabase, final int iRequesterId, final int iClusterId,
-			final long iClusterPosition, String iFetchPlan) {
-		final OCluster cluster = getClusterById(iClusterId);
+	public ORawBuffer readRecord(final ODatabaseRecord iDatabase, final int iRequesterId, final int iClusterId, final long iClusterPosition,
+			String iFetchPlan) {
+		return readRecord(iRequesterId, getClusterById(iClusterId), iClusterPosition, true);
+	}
 
+	@Override
+	protected ORawBuffer readRecord(final int iRequesterId, final OCluster iClusterSegment, final long iClusterPosition, final boolean iAtomicLock) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		final boolean locked = lock.acquireSharedLock();
 		try {
-			final OPhysicalPosition ppos = cluster.getPhysicalPosition(iClusterPosition, new OPhysicalPosition());
+			final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iClusterPosition, new OPhysicalPosition());
 
 			if (ppos == null)
 				return null;
 
 			return new ORawBuffer(data.readRecord(ppos.dataPosition), ppos.version, ppos.type);
 		} catch (IOException e) {
-			throw new OStorageException("Error on read record in cluster: " + iClusterId, e);
+			throw new OStorageException("Error on read record in cluster: " + iClusterSegment.getId(), e);
 
 		} finally {
 			lock.releaseSharedLock(locked);
@@ -199,8 +216,8 @@ public class OStorageMemory extends OStorageAbstract {
 		}
 	}
 
-	public int updateRecord(final int iRequesterId, final int iClusterId, final long iClusterPosition, final byte[] iContent,
-			final int iVersion, final byte iRecordType) {
+	public int updateRecord(final int iRequesterId, final int iClusterId, final long iClusterPosition, final byte[] iContent, final int iVersion,
+			final byte iRecordType) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		final OCluster cluster = getClusterById(iClusterId);
@@ -238,7 +255,7 @@ public class OStorageMemory extends OStorageAbstract {
 
 		final boolean locked = lock.acquireSharedLock();
 		try {
-			OPhysicalPosition ppos = cluster.getPhysicalPosition(iClusterPosition, new OPhysicalPosition());
+			final OPhysicalPosition ppos = cluster.getPhysicalPosition(iClusterPosition, new OPhysicalPosition());
 
 			if (ppos == null)
 				return false;
@@ -324,8 +341,11 @@ public class OStorageMemory extends OStorageAbstract {
 		}
 	}
 
-	public int getClusterIdByName(final String iClusterName) {
+	public int getClusterIdByName(String iClusterName) {
 		final boolean locked = lock.acquireSharedLock();
+
+		iClusterName = iClusterName.toLowerCase();
+
 		try {
 			for (int i = 0; i < clusters.size(); ++i)
 				if (getClusterById(i).getName().equals(iClusterName))
@@ -416,18 +436,23 @@ public class OStorageMemory extends OStorageAbstract {
 	}
 
 	public ODictionary<?> createDictionary(final ODatabaseRecord iDatabase) throws Exception {
-		return new ODictionaryMemory<Object>(iDatabase);
+		if (dictionary == null)
+			dictionary = new ODictionaryMemory<Object>(iDatabase);
+		return dictionary;
 	}
 
-	public void browse(final int iRequesterId, final int[] iClusterId, final ORecordBrowsingListener iListener,
-			final ORecord<?> iRecord) {
+	public void browse(final int iRequesterId, final int[] iClusterId, final ORecordBrowsingListener iListener, final ORecord<?> iRecord) {
 	}
 
 	public boolean exists() {
 		return clusters.size() > 0;
 	}
 
-	public OCluster getClusterById(final int iClusterId) {
+	public OCluster getClusterById(int iClusterId) {
+		if (iClusterId == ORID.CLUSTER_ID_INVALID)
+			// GET THE DEFAULT CLUSTER
+			iClusterId = defaultClusterId;
+
 		return clusters.get(iClusterId);
 	}
 
@@ -437,10 +462,6 @@ public class OStorageMemory extends OStorageAbstract {
 
 	public int getDefaultClusterId() {
 		return defaultClusterId;
-	}
-
-	public Object command(final OCommandRequestText iCommand) {
-		return null;
 	}
 
 	@Override
@@ -481,8 +502,7 @@ public class OStorageMemory extends OStorageAbstract {
 
 		case OTransactionEntry.UPDATED:
 			txEntry.getRecord().setVersion(
-					updateRecord(iRequesterId, rid, txEntry.getRecord().toStream(), txEntry.getRecord().getVersion(), txEntry.getRecord()
-							.getRecordType()));
+					updateRecord(iRequesterId, rid, txEntry.getRecord().toStream(), txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType()));
 			break;
 
 		case OTransactionEntry.DELETED:

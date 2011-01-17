@@ -54,7 +54,7 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -528,7 +528,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	}
 
 	private void scanEntireClusters(final int[] clusterIds) {
-		((OStorageLocal) database.getStorage()).browse(database.getId(), clusterIds, rangeFrom, rangeTo, this, (ORecordInternal<?>) database.newInstance(),
+		((OStorageEmbedded) database.getStorage()).browse(database.getId(), clusterIds, rangeFrom, rangeTo, this, (ORecordInternal<?>) database.newInstance(),
 				false);
 	}
 

@@ -1,9 +1,9 @@
 <!DOCTYPE suite SYSTEM "http://beust.com/testng/testng-1.0.dtd">
 <suite name="Test Suite Example" verbose="1" parallel="false">
 
-	<parameter name="path" value="@PATH@" />
-	<parameter name="url" value="@URL@" />
-	<parameter name="testPath" value="tests" />
+	<parameter name="path" value="-" />
+	<parameter name="url" value="memory:demo" />
+	<parameter name="testPath" value="" />
 
 	<test name="Setup">
 		<classes>
@@ -120,8 +120,6 @@
 	</test>
 	<test name="DbTools">
 		<classes>
-			<class name="com.orientechnologies.orient.test.database.auto.DbImportExportTest" />
-			<class name="com.orientechnologies.orient.test.database.auto.DbCompareTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.DbDeleteTest" />
 		</classes>
 	</test>

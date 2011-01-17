@@ -57,7 +57,9 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<ODatabaseRaw> implements ODatabaseRecord {
@@ -109,7 +111,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			if (user.getAccountStatus() != STATUSES.ACTIVE)
 				throw new OSecurityAccessException(this.getName(), "User '" + iUserName + "' is not active");
 
-			if (getStorage() instanceof OStorageLocal) {
+			if (getStorage() instanceof OStorageEmbedded) {
 				if (!user.checkPassword(iUserPassword)) {
 					// WAIT A BIT TO AVOID BRUTE FORCE
 					Thread.sleep(200);
@@ -133,8 +135,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			// CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
 			metadata.create();
 
-			if (getStorage() instanceof OStorageLocal)
-				createRolesAndUsers();
+			createRolesAndUsers();
 			user = getMetadata().getSecurity().getUser(OUser.ADMIN);
 
 			dictionary = (ODictionaryInternal<ORecordInternal<?>>) getStorage().createDictionary(this);

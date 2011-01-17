@@ -30,7 +30,7 @@ public class OClusterMemory extends OSharedResource implements OCluster {
 	private int											id;
 	private String									name;
 	private List<OPhysicalPosition>	entries	= new ArrayList<OPhysicalPosition>();
-	private int											removed	= 0;
+	private List<Integer>						removed	= new ArrayList<Integer>();
 
 	public OClusterMemory(final int id, final String name) {
 		this.id = id;
@@ -47,7 +47,7 @@ public class OClusterMemory extends OSharedResource implements OCluster {
 
 	public void close() {
 		entries.clear();
-		removed = 0;
+		removed.clear();
 	}
 
 	public void open() throws IOException {
@@ -63,11 +63,11 @@ public class OClusterMemory extends OSharedResource implements OCluster {
 
 	public void truncate() throws IOException {
 		entries.clear();
-		removed = 0;
+		removed.clear();
 	}
 
 	public long getEntries() {
-		return entries.size() - removed;
+		return entries.size() - removed.size();
 	}
 
 	public long getFirstEntryPosition() {
@@ -91,8 +91,14 @@ public class OClusterMemory extends OSharedResource implements OCluster {
 	}
 
 	public long addPhysicalPosition(final int iDataSegmentId, final long iRecordPosition, final byte iRecordType) {
-		entries.add(new OPhysicalPosition(iDataSegmentId, iRecordPosition, iRecordType));
-		return entries.size() - 1;
+		if (removed.size() > 0) {
+			final int recycledPosition = removed.remove(removed.size() - 1);
+			entries.set(recycledPosition, new OPhysicalPosition(iDataSegmentId, iRecordPosition, iRecordType));
+			return recycledPosition;
+		} else {
+			entries.add(new OPhysicalPosition(iDataSegmentId, iRecordPosition, iRecordType));
+			return entries.size() - 1;
+		}
 	}
 
 	public void updateRecordType(final long iPosition, final byte iRecordType) throws IOException {
@@ -110,7 +116,7 @@ public class OClusterMemory extends OSharedResource implements OCluster {
 	public void removePhysicalPosition(final long iPosition, OPhysicalPosition iPPosition) {
 		if (entries.set((int) iPosition, null) != null)
 			// ADD A REMOVED
-			removed++;
+			removed.add(new Integer((int) iPosition));
 	}
 
 	public void setPhysicalPosition(final long iPosition, final int iDataId, final long iDataPosition, final byte iRecordType) {

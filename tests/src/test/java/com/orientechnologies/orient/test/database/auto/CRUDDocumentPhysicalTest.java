@@ -116,7 +116,7 @@ public class CRUDDocumentPhysicalTest {
 		for (it.last(); it.hasPrevious();) {
 			ODocument rec = it.previous();
 
-			Assert.assertTrue(((Number) rec.field("id")).intValue() == i);
+			Assert.assertEquals(((Number) rec.field("id")).intValue(), i);
 			Assert.assertEquals(rec.field("name"), "Gipsy");
 			Assert.assertEquals(rec.field("location"), "Italy");
 			Assert.assertEquals(((Number) rec.field("testLong")).longValue(), 10000000000L);
@@ -266,8 +266,7 @@ public class CRUDDocumentPhysicalTest {
 		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 		database.open("admin", "admin");
 
-		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
-				"select from Profile where name = :name and surname = :surname");
+		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile where name = :name and surname = :surname");
 
 		HashMap<String, String> params = new HashMap<String, String>();
 		params.put("name", "Barack");
@@ -285,8 +284,7 @@ public class CRUDDocumentPhysicalTest {
 		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 		database.open("admin", "admin");
 
-		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
-				"select from Profile where name = :name and surname = :surname");
+		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile where name = :name and surname = :surname");
 
 		HashMap<String, String> params = new HashMap<String, String>();
 		params.put("name", "Barack");

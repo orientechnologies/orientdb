@@ -72,6 +72,9 @@ public class Orient extends OSharedResource {
 		if (iURL == null || iURL.length() == 0)
 			throw new IllegalArgumentException("URL missed");
 
+		if (iURL.endsWith("/"))
+			iURL = iURL.substring(0, iURL.length() - 1);
+
 		// SEARCH FOR ENGINE
 		int pos = iURL.indexOf(':');
 		if (pos <= 0)

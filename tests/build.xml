@@ -22,7 +22,19 @@
 			<replacefilter token="@PATH@" value="${orient.path}/databases/demo" />
 			<replacefilter token="@URL@" value="local:${orient.path}/databases/demo" />
 		</replace>
+		
+		<echo>EXECUTING TESTS USING MEMORY DATABASE: memory:demo</echo>
 
+		<testng annotations="JDK" outputDir="target/test-output" haltOnFailure="true" verbose="10">
+			<classpath>
+				<pathelement location="${project.build}" />
+				<fileset dir="${global.lib}">
+					<include name="*.jar" />
+				</fileset>
+			</classpath>
+			<xmlfileset dir="${project.build}/com/orientechnologies/orient/test/database/auto" includes="memory-test-db-from-scratch.xml" />
+		</testng>
+		
 		<echo>EXECUTING TESTS USING LOCAL DATABASE: local:${orient.path}/databases/demo/demo</echo>
 
 		<testng annotations="JDK" outputDir="target/test-output" haltOnFailure="true" verbose="10">

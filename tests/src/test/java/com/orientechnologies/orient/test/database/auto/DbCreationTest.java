@@ -28,7 +28,9 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
+import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -45,6 +47,9 @@ public class DbCreationTest {
 	}
 
 	public void testDbCreation() throws IOException {
+		if (url.startsWith(OEngineMemory.NAME))
+			OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(true);
+		
 		if (url.startsWith(OEngineRemote.NAME)) {
 
 			// LAOD SERVER CONFIG FILE TO EXTRACT THE ROOT'S PASSWORD
@@ -84,6 +89,13 @@ public class DbCreationTest {
 	}
 
 	@Test(dependsOnMethods = { "testDbOpen" })
+	public void testDbOpenWithLastAsSlash() {
+		database = new ODatabaseObjectTx(url + "/");
+		database.open("admin", "admin");
+		database.close();
+	}
+
+	@Test(dependsOnMethods = { "testDbOpenWithLastAsSlash" })
 	public void testChangeLocale() throws IOException {
 		database = new ODatabaseObjectTx(url);
 		database.open("admin", "admin");
