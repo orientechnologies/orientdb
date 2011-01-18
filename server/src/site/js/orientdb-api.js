@@ -23,7 +23,6 @@ function ODatabase(databasePath) {
 	this.databaseUrl = "";
 	this.databaseName = "";
 	this.databaseInfo = null;
-	this.queryResult = null;
 	this.commandResult = null;
 	this.commandResponse = null;
 	this.errorMessage = null;
@@ -41,13 +40,6 @@ function ODatabase(databasePath) {
 	}
 	this.setDatabaseInfo = function(iDatabaseInfo) {
 		this.databaseInfo = iDatabaseInfo;
-	}
-
-	this.getQueryResult = function() {
-		return this.queryResult;
-	}
-	this.setQueryResult = function(iQueryResult) {
-		this.queryResult = iQueryResult;
 	}
 
 	this.getCommandResult = function() {
@@ -160,14 +152,14 @@ function ODatabase(databasePath) {
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
-				this.setQueryResult(this.transformResponse(msg));
+				this.handleResponse(msg);
 			},
 			error : function(msg) {
-				this.setQueryResult(null);
+				this.handleResponse(null);
 				this.setErrorMessage('Query error: ' + msg.responseText);
 			}
 		});
-		return this.getQueryResult();
+		return this.getCommandResult();
 	}
 
 	this.load = function(iRID, iFetchPlan) {
@@ -192,14 +184,14 @@ function ODatabase(databasePath) {
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
-				this.setQueryResult(this.transformResponse(msg));
+				this.handleResponse(msg);
 			},
 			error : function(msg) {
-				this.setQueryResult(null);
+				this.handleResponse(null);
 				this.setErrorMessage('Query error: ' + msg.responseText);
 			}
 		});
-		return this.getQueryResult();
+		return this.getCommandResult();
 	}
 
 	this.classInfo = function(iClassName) {
