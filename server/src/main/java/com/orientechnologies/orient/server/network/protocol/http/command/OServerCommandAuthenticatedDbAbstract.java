@@ -43,8 +43,8 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
  */
 public abstract class OServerCommandAuthenticatedDbAbstract extends OServerCommandAbstract {
 
-	private static final String	SESSIONID_UNAUTHORIZED	= "-";
-	private static final String	SESSIONID_LOGOUT				= "!";
+	public static final String	SESSIONID_UNAUTHORIZED	= "-";
+	public static final String	SESSIONID_LOGOUT				= "!";
 
 	@Override
 	public boolean beforeExecute(final OHttpRequest iRequest) throws IOException {
@@ -106,13 +106,11 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
 	private void sendAuthorizationRequest(final OHttpRequest iRequest, final String iDatabaseName) throws IOException {
 		// UNAUTHORIZED
 		iRequest.sessionId = SESSIONID_UNAUTHORIZED;
-		sendTextContent(iRequest, OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION,
-				"WWW-Authenticate: Basic realm=\"OrientDB db-" + iDatabaseName + "\"", OHttpUtils.CONTENT_TEXT_PLAIN, "401 Unauthorized.",
-				false);
+		sendTextContent(iRequest, OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, "WWW-Authenticate: Basic realm=\"OrientDB db-"
+				+ iDatabaseName + "\"", OHttpUtils.CONTENT_TEXT_PLAIN, "401 Unauthorized.", false);
 	}
 
-	protected ODatabaseDocumentTx getProfiledDatabaseInstance(final OHttpRequest iRequest, final String iDatabaseURL)
-			throws InterruptedException {
+	protected ODatabaseDocumentTx getProfiledDatabaseInstance(final OHttpRequest iRequest, final String iDatabaseURL) throws InterruptedException {
 		if (iRequest.authorization == null)
 			throw new OSecurityAccessException(iDatabaseURL, "No user and password received");
 

@@ -80,8 +80,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 		sendResponseHeaders(iRequest, iContentType, true);
 	}
 
-	protected void sendResponseHeaders(final OHttpRequest iRequest, final String iContentType, final boolean iKeepAlive)
-			throws IOException {
+	protected void sendResponseHeaders(final OHttpRequest iRequest, final String iContentType, final boolean iKeepAlive) throws IOException {
 		if (!useCache) {
 			writeLine(iRequest, "Cache-Control: no-cache, no-store, max-age=0, must-revalidate");
 			writeLine(iRequest, "Pragma: no-cache");
@@ -118,8 +117,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 		sendRecordsContent(iRequest, iRecords, null);
 	}
 
-	protected void sendRecordsContent(final OHttpRequest iRequest, final List<ORecord<?>> iRecords, String iFetchPlan)
-			throws IOException {
+	protected void sendRecordsContent(final OHttpRequest iRequest, final List<ORecord<?>> iRecords, String iFetchPlan) throws IOException {
 		final StringWriter buffer = new StringWriter();
 		final OJSONWriter json = new OJSONWriter(buffer, JSON_FORMAT);
 		json.beginObject();
@@ -215,10 +213,8 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 		json.endObject(1, true);
 	}
 
-	protected String nextChainUrl(String iCurrentUrl) {
-		String nextUrl = iCurrentUrl.startsWith("/") ? iCurrentUrl.substring(iCurrentUrl.indexOf("/", 1)) : iCurrentUrl
-				.substring(iCurrentUrl.indexOf("/"));
-		return nextUrl;
+	protected String nextChainUrl(final String iCurrentUrl) {
+		return iCurrentUrl.startsWith("/") ? iCurrentUrl.substring(iCurrentUrl.indexOf("/", 1)) : iCurrentUrl.substring(iCurrentUrl.indexOf("/"));
 	}
 
 }

@@ -91,8 +91,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
 		long begin = System.currentTimeMillis();
 
-		boolean isChain = false;
+		boolean isChain;
 		do {
+			isChain = false;
 			final String command;
 			if (request.url.length() < 2) {
 				command = "";

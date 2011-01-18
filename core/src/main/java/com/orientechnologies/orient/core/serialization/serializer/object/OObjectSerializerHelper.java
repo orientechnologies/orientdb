@@ -623,7 +623,7 @@ public class OObjectSerializerHelper {
 
 				} else
 					throw new OSerializationException("Linked type [" + iFieldValue.getClass() + ":" + iFieldValue
-							+ "] can't be serialized because is not part of registered entities");
+							+ "] can't be serialized because is not part of registered entities. To fix this error register this class");
 			}
 		}
 		return iFieldValue;

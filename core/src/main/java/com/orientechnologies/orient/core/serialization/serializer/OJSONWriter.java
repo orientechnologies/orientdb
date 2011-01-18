@@ -128,13 +128,12 @@ public class OJSONWriter {
 		}
 	}
 
-	public OJSONWriter writeAttribute(final int iIdentLevel, final boolean iNewLine, final String iName, final Object iValue)
-			throws IOException {
+	public OJSONWriter writeAttribute(final int iIdentLevel, final boolean iNewLine, final String iName, final Object iValue) throws IOException {
 		return writeAttribute(iIdentLevel, iNewLine, iName, iValue, format);
 	}
 
-	public OJSONWriter writeAttribute(final int iIdentLevel, final boolean iNewLine, final String iName, final Object iValue,
-			final String iFormat) throws IOException {
+	public OJSONWriter writeAttribute(final int iIdentLevel, final boolean iNewLine, final String iName, final Object iValue, final String iFormat)
+			throws IOException {
 		if (!firstAttribute)
 			out.append(", ");
 
@@ -184,7 +183,6 @@ public class OJSONWriter {
 				buffer.append('\"');
 			} else {
 				buffer.append(linked.toJSON(iFormat));
-
 			}
 
 		} else if (iValue.getClass().isArray()) {
@@ -246,7 +244,7 @@ public class OJSONWriter {
 			buffer.append(dateFormat.format(iValue));
 			buffer.append('"');
 		} else if (iValue instanceof String) {
-			final String v = iValue.toString();
+			final String v = (String) iValue;
 			if (v.startsWith("\""))
 				buffer.append(v);
 			else {
@@ -297,5 +295,12 @@ public class OJSONWriter {
 
 	public void write(final String iText) throws IOException {
 		out.append(iText);
+	}
+
+	public static Object encode(final Object iValue) {
+		if (iValue instanceof String) {
+			return OStringSerializerHelper.java2unicode(((String) iValue).replace("\\", "\\\\").replace("\"", "\\\""));
+		} else
+			return iValue;
 	}
 }

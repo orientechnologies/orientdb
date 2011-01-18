@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.config.OEntryConfiguration;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
 
 /**
  * @author luca.molino
@@ -51,10 +52,17 @@ public class OServerCommandAuthProxy extends OServerCommandPatternAbstract {
 	}
 
 	@Override
-	public boolean execute(OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		iRequest.authorization = authentication;
 		checkSyntax(iRequest.url, 3, "Syntax error: " + Arrays.toString(getNames()) + "/<nextCommand>/");
 		iRequest.url = nextChainUrl(iRequest.url);
+
+		// CHECK THE SESSION VALIDITY
+		if (iRequest.sessionId == null || OServerCommandAuthenticatedDbAbstract.SESSIONID_LOGOUT.equals(iRequest.sessionId)
+				|| iRequest.sessionId.length() > 1 && OHttpSessionManager.getInstance().getSession(iRequest.sessionId) == null)
+			// AUTHENTICATED: CREATE THE SESSION
+			iRequest.sessionId = OHttpSessionManager.getInstance().createSession();
+
 		return true;
 	}
 }

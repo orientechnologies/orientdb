@@ -55,7 +55,7 @@ public class OServerCommandPostQuery extends OServerCommandAuthenticatedDbAbstra
 		try {
 			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
 
-			response = (List<ORecord<?>>) db.command(new OSQLSynchQuery<ORecordSchemaAware<?>>(text, limit)).execute();
+			response = (List<ORecord<?>>) db.command(new OSQLSynchQuery<ORecordSchemaAware<?>>(text, limit).setFetchPlan(fetchPlan)).execute();
 
 		} finally {
 			if (db != null)
