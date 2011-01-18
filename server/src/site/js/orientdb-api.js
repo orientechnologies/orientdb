@@ -272,14 +272,16 @@ function ODatabase(databasePath) {
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
-				this.handleResponse(msg);
+				this.setCommandResponse(msg);
+				this.setCommandResult(null);
 			},
 			error : function(msg) {
-				this.handleResponse(null);
+				this.setCommandResult(null);
+				this.setCommandResponse(null);
 				this.setErrorMessage('Command error: ' + msg.responseText);
 			}
 		});
-		return this.getCommandResult();
+		return this.getCommandResponse();
 	}
 
 	this.serverInfo = function() {
