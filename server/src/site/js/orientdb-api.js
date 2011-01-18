@@ -25,6 +25,7 @@ function ODatabase(databasePath) {
 	this.databaseInfo = null;
 	this.queryResult = null;
 	this.commandResult = null;
+	this.commandResponse = null;
 	this.errorMessage = null;
 	this.evalResponse = true;
 
@@ -56,6 +57,13 @@ function ODatabase(databasePath) {
 		this.commandResult = iCommandResult;
 	}
 
+	this.getCommandResponse = function() {
+		return this.commandResponse;
+	}
+	this.setCommandResponse = function(iCommandResponse) {
+		this.commandResponse = iCommandResponse;
+	}
+
 	this.getErrorMessage = function() {
 		return this.errorMessage;
 	}
@@ -84,6 +92,14 @@ function ODatabase(databasePath) {
 		this.evalResponse = iEvalResponse;
 	}
 
+	this.handleResponse = function(iResponse) {
+		this.setCommandResponse(iResponse);
+		if (iResponse != null)
+			this.setCommandResult(this.transformResponse(iResponse));
+		else
+			this.setCommandResult(null);
+	}
+
 	this.open = function(userName, userPass, authProxy, type) {
 		if (userName == null) {
 			userName = '';
@@ -93,9 +109,9 @@ function ODatabase(databasePath) {
 		}
 		if (authProxy != null && authProxy != '') {
 			authProxy = '/' + authProxy;
-		}else
+		} else
 			authProxy = '';
-		
+
 		if (type == null || type == '') {
 			type = 'GET';
 		}
@@ -198,10 +214,10 @@ function ODatabase(databasePath) {
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
-				this.setCommandResult(this.transformResponse(msg));
+				this.handleResponse(msg);
 			},
 			error : function(msg) {
-				this.setCommandResult(null);
+				this.handleResponse(null);
 				this.setErrorMessage('Command error: ' + msg.responseText);
 			}
 		});
@@ -220,10 +236,10 @@ function ODatabase(databasePath) {
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
-				this.setCommandResult(msg);
+				this.handleResponse(msg);
 			},
 			error : function(msg) {
-				this.setCommandResult(null);
+				this.handleResponse(null);
 				this.setErrorMessage('Command error: ' + msg.responseText);
 			}
 		});
@@ -242,10 +258,10 @@ function ODatabase(databasePath) {
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
-				this.setCommandResult(this.transformResponse(msg));
+				this.handleResponse(msg);
 			},
 			error : function(msg) {
-				this.setCommandResult(null);
+				this.handleResponse(null);
 				this.setErrorMessage('Command error: ' + msg.responseText);
 			}
 		});
@@ -264,10 +280,10 @@ function ODatabase(databasePath) {
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
-				this.setCommandResult(msg);
+				this.handleResponse(msg);
 			},
 			error : function(msg) {
-				this.setCommandResult(null);
+				this.handleResponse(null);
 				this.setErrorMessage('Command error: ' + msg.responseText);
 			}
 		});
@@ -285,10 +301,10 @@ function ODatabase(databasePath) {
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
-				this.setCommandResult(this.transformResponse(msg));
+				this.handleResponse(msg);
 			},
 			error : function(msg) {
-				this.setCommandResult(null);
+				this.handleResponse(null);
 				this.setErrorMessage('Command error: ' + msg.responseText);
 			}
 		});
@@ -328,11 +344,11 @@ function ODatabase(databasePath) {
 				async : false,
 				context : this,
 				success : function(msg) {
-					this.setCommandResult(msg);
+					this.handleResponse(msg);
 					this.setErrorMessage(null);
 				},
 				error : function(msg) {
-					this.setCommandResult(null);
+					this.handleResponse(null);
 					this.setErrorMessage('Command response: '
 							+ msg.responseText);
 				}
@@ -343,7 +359,7 @@ function ODatabase(databasePath) {
 	}
 
 	this.transformResponse = function(msg) {
-		if (this.getEvalResponse() && msg.length > 0 && typeof msg != 'object' ) {
+		if (this.getEvalResponse() && msg.length > 0 && typeof msg != 'object') {
 			return eval("(" + msg + ")");
 		} else {
 			return msg;
