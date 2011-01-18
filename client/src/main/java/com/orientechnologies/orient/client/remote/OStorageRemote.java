@@ -129,8 +129,7 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public void create() {
-		throw new UnsupportedOperationException(
-				"Can't create a database in a remote server. Please use the console or the OServerAdmin class.");
+		throw new UnsupportedOperationException("Can't create a database in a remote server. Please use the console or the OServerAdmin class.");
 	}
 
 	public boolean exists() {
@@ -197,8 +196,7 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public void delete() {
-		throw new UnsupportedOperationException(
-				"Can't delete a database in a remote server. Please use the console or the OServerAdmin class.");
+		throw new UnsupportedOperationException("Can't delete a database in a remote server. Please use the console or the OServerAdmin class.");
 	}
 
 	public Set<String> getClusterNames() {
@@ -278,10 +276,17 @@ public class OStorageRemote extends OStorageAbstract {
 					final ORawBuffer buffer = new ORawBuffer(network.readBytes(), network.readInt(), network.readByte());
 
 					while (network.readByte() == 2) {
-						ORecordInternal<?> record = readRecordFromNetwork(iDatabase);
+						final int classId = network.readInt();
+						if (classId == OChannelBinaryProtocol.RECORD_NULL)
+							break;
+
+						final byte recordType = network.readByte();
+						final String rid = ORecordId.generateString(network.readShort(), network.readLong());
+						final int recordVersion = network.readInt();
+						final byte[] recordContent = network.readBytes();
+
 						// PUT IN THE CLIENT LOCAL CACHE
-						cache.pushRecord(record.getIdentity().toString(),
-								new ORawBuffer(record.toStream(), record.getVersion(), record.getRecordType()));
+						cache.pushRecord(rid, new ORawBuffer(recordContent, recordVersion, recordType));
 					}
 					return buffer;
 				} finally {
@@ -297,8 +302,8 @@ public class OStorageRemote extends OStorageAbstract {
 		} while (true);
 	}
 
-	public int updateRecord(final int iRequesterId, final int iClusterId, final long iPosition, final byte[] iContent,
-			final int iVersion, final byte iRecordType) {
+	public int updateRecord(final int iRequesterId, final int iClusterId, final long iPosition, final byte[] iContent, final int iVersion,
+			final byte iRecordType) {
 		checkConnection();
 
 		do {
@@ -526,8 +531,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 							case 2:
 								// PUT IN THE CLIENT LOCAL CACHE
-								cache.pushRecord(record.getIdentity().toString(),
-										new ORawBuffer(record.toStream(), record.getVersion(), record.getRecordType()));
+								cache.pushRecord(record.getIdentity().toString(), new ORawBuffer(record.toStream(), record.getVersion(), record.getRecordType()));
 							}
 						}
 					} else {
@@ -708,8 +712,7 @@ public class OStorageRemote extends OStorageAbstract {
 					switch (iClusterType) {
 					case PHYSICAL:
 						// FILE PATH + START SIZE
-						network.writeString(iArguments.length > 0 ? (String) iArguments[0] : "").writeInt(
-								iArguments.length > 0 ? (Integer) iArguments[1] : -1);
+						network.writeString(iArguments.length > 0 ? (String) iArguments[0] : "").writeInt(iArguments.length > 0 ? (Integer) iArguments[1] : -1);
 						break;
 
 					case LOGICAL:
@@ -829,8 +832,7 @@ public class OStorageRemote extends OStorageAbstract {
 		}
 	}
 
-	public <REC extends ORecordInternal<?>> REC dictionaryPut(final ODatabaseRecord iDatabase, final String iKey,
-			final ORecordInternal<?> iRecord) {
+	public <REC extends ORecordInternal<?>> REC dictionaryPut(final ODatabaseRecord iDatabase, final String iKey, final ORecordInternal<?> iRecord) {
 		checkConnection();
 
 		do {
@@ -1045,8 +1047,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 				retry = 0;
 
-				OLogManager.instance().info(this,
-						"Connection re-acquired in transparent way: no errors will be thrown at application level");
+				OLogManager.instance().info(this, "Connection re-acquired in transparent way: no errors will be thrown at application level");
 
 				return;
 			} catch (Throwable t) {
@@ -1196,7 +1197,7 @@ public class OStorageRemote extends OStorageAbstract {
 		final ORecordInternal<?> record = ORecordFactory.newInstance(network.readByte());
 
 		if (record instanceof ORecordSchemaAware<?>)
-			((ORecordSchemaAware<?>) record).fill(iDatabase, classId, network.readShort(), network.readLong(), getNetwork().readInt());
+			((ORecordSchemaAware<?>) record).fill(iDatabase, classId, network.readShort(), network.readLong(), network.readInt());
 		else
 			// DISCARD CLASS ID
 			record.fill(iDatabase, network.readShort(), network.readLong(), network.readInt());
