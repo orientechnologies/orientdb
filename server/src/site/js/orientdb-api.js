@@ -27,6 +27,7 @@ function ODatabase(databasePath) {
 	this.commandResponse = null;
 	this.errorMessage = null;
 	this.evalResponse = true;
+	this.urlPrefix = "";
 
 	if (databasePath) {
 		this.databaseUrl = databasePath.substring(0, databasePath
@@ -100,17 +101,16 @@ function ODatabase(databasePath) {
 			userPass = '';
 		}
 		if (authProxy != null && authProxy != '') {
-			authProxy = '/' + authProxy;
+			urlPrefix = this.databaseUrl + '/' + authProxy;
 		} else
-			authProxy = '';
+			urlPrefix = this.databaseUrl;
 
 		if (type == null || type == '') {
 			type = 'GET';
 		}
 		$.ajax({
 			type : type,
-			url : this.databaseUrl + authProxy + '/connect/'
-					+ this.databaseName,
+			url : urlPrefix + '/connect/' + this.databaseName,
 			context : this,
 			async : false,
 			username : userName,
@@ -146,8 +146,8 @@ function ODatabase(databasePath) {
 		}
 		$.ajax({
 			type : "GET",
-			url : this.databaseUrl + '/query/' + this.databaseName + '/sql/'
-					+ iQuery + iLimit + iFetchPlan,
+			url : urlPrefix + '/query/' + this.databaseName + '/sql/' + iQuery
+					+ iLimit + iFetchPlan,
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -178,8 +178,8 @@ function ODatabase(databasePath) {
 
 		$.ajax({
 			type : "GET",
-			url : this.databaseUrl + '/document/' + this.databaseName + '/'
-					+ iRID + iFetchPlan,
+			url : urlPrefix + '/document/' + this.databaseName + '/' + iRID
+					+ iFetchPlan,
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -200,7 +200,7 @@ function ODatabase(databasePath) {
 		}
 		$.ajax({
 			type : "GET",
-			url : this.databaseUrl + '/class/' + this.databaseName + '/'
+			url : urlPrefix + '/class/' + this.databaseName + '/'
 					+ iClassName,
 			context : this,
 			async : false,
@@ -222,7 +222,7 @@ function ODatabase(databasePath) {
 		}
 		$.ajax({
 			type : "POST",
-			url : this.databaseUrl + '/class/' + this.databaseName + '/'
+			url : urlPrefix + '/class/' + this.databaseName + '/'
 					+ iClassName,
 			context : this,
 			async : false,
@@ -244,7 +244,7 @@ function ODatabase(databasePath) {
 		}
 		$.ajax({
 			type : "GET",
-			url : this.databaseUrl + '/cluster/' + this.databaseName + '/'
+			url : urlPrefix + '/cluster/' + this.databaseName + '/'
 					+ iClassName,
 			context : this,
 			async : false,
@@ -266,22 +266,20 @@ function ODatabase(databasePath) {
 		}
 		$.ajax({
 			type : "POST",
-			url : this.databaseUrl + '/command/' + this.databaseName + '/sql/'
+			url : urlPrefix + '/command/' + this.databaseName + '/sql/'
 					+ iCommand + "/",
 			context : this,
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
-				this.setCommandResponse(msg);
-				this.setCommandResult(null);
+				this.handleResponse(msg);
 			},
 			error : function(msg) {
-				this.setCommandResult(null);
-				this.setCommandResponse(null);
+				this.handleResponse(null);
 				this.setErrorMessage('Command error: ' + msg.responseText);
 			}
 		});
-		return this.getCommandResponse();
+		return this.getCommandResult();
 	}
 
 	this.serverInfo = function() {
@@ -290,7 +288,7 @@ function ODatabase(databasePath) {
 		}
 		$.ajax({
 			type : "GET",
-			url : this.databaseUrl + '/server',
+			url : urlPrefix + '/server',
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -333,7 +331,7 @@ function ODatabase(databasePath) {
 		if (this.databaseInfo != null) {
 			$.ajax({
 				type : 'GET',
-				url : this.databaseUrl + '/disconnect',
+				url : urlPrefix + '/disconnect',
 				dataType : "json",
 				async : false,
 				context : this,
