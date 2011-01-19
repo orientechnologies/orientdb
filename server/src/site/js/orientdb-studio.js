@@ -20,6 +20,8 @@ var databaseInfo; // CONTAINS THE DB INFO
 var classEnumeration; // CONTAINS THE DB CLASSES
 var selectedClassName; // CONTAINS LATEST SELECTED CLASS NAME
 var orientServer;
+var queryEditor;
+var commandEditor;
 
 function connect() {
 	if (orientServer == null) {
@@ -488,10 +490,10 @@ function queryResponse(data) {
 function executeQuery() {
 	startTimer();
 
-	jQuery("#queryText").val(jQuery.trim($('#queryText').val()));
+	var code = queryEditor.getCode();
+	queryEditor.setCode(jQuery.trim(code));
 
-	queryResult = orientServer.query($("#queryText").val() + "/"
-			+ $('#limit').val());
+	queryResult = orientServer.query(code + "/" + $('#limit').val());
 
 	if (queryResult == null) {
 		jQuery("#output").text(orientServer.getErrorMessage());
@@ -503,9 +505,10 @@ function executeQuery() {
 function executeCommand() {
 	startTimer();
 
-	jQuery("#commandText").val(jQuery.trim($('#commandText').val()));
+	var code = commandEditor.getCode();
+	commandEditor.setCode(jQuery.trim(code));
 
-	commandResult = orientServer.executeCommand(jQuery("#commandText").val());
+	commandResult = orientServer.executeCommand(code);
 
 	if (commandResult == null) {
 		jQuery("#commandOutput").val('');
@@ -624,7 +627,25 @@ jQuery(document).ready(function() {
 	$('#server').val(document.location.href);
 	formatServerURL();
 
-	jQuery("#queryText").val(jQuery.trim(jQuery("#queryText").val()));
-	jQuery("#commandText").val(jQuery.trim(jQuery("#commandText").val()));
 	jQuery("#output").val(jQuery.trim(jQuery("#output").val()));
+
+	jQuery("#queryText").val((jQuery.trim(jQuery("#queryText").val())));
+	queryEditor = CodeMirror.fromTextArea('queryText', {
+		width : "880px",
+		height : "100px",
+		parserfile : "parsesql.js",
+		stylesheet : "styles/codemirror/sqlcolors.css",
+		path : "www/js/codemirror/",
+		textWrapping : false
+	});
+
+	jQuery("#commandText").val((jQuery.trim(jQuery("#commandText").val())));
+	commandEditor = CodeMirror.fromTextArea('commandText', {
+		width : "880px",
+		height : "150px",
+		parserfile : "parsesql.js",
+		stylesheet : "styles/codemirror/sqlcolors.css",
+		path : "www/js/codemirror/",
+		textWrapping : false
+	});
 });
