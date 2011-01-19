@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -117,7 +118,8 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 
 			// REMOVE INDEX OF ENTRIES FOR THE CHANGED ONLY VALUES
 			for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
-				if (iRecord.containsField(propEntry.getKey().getName()) && (dirtyFields == null || !dirtyFields.contains(propEntry.getKey().getName()))) {
+				if (iRecord.containsField(propEntry.getKey().getName())
+						&& (dirtyFields == null || !dirtyFields.contains(propEntry.getKey().getName()))) {
 					propEntry.getKey().getIndex().remove(propEntry.getValue());
 					propEntry.getKey().getIndex().lazySave();
 				}
@@ -157,8 +159,8 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 							rid = ((ODocument) obj).getIdentity();
 
 						if (!rid.equals(iRecord.getIdentity()))
-							OLogManager.instance().exception("Found duplicated key '%s' for property '%s' assigned to the record %s", null, OIndexException.class,
-									fieldValueString, prop, rid);
+							OLogManager.instance().exception("Found duplicated key '%s' for property '%s' assigned to the record %s", null,
+									OIndexException.class, fieldValueString, prop, rid);
 					}
 				}
 			}
@@ -180,7 +182,11 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 		for (OProperty prop : cls.properties()) {
 			index = prop.getIndex();
 			if (index != null) {
-				fieldValue = record.field(prop.getName());
+				if (prop.getType() == OType.LINK)
+					// GET THE RID TO AVOID LOADING
+					fieldValue = record.field(prop.getName(), OType.LINK);
+				else
+					fieldValue = record.field(prop.getName());
 
 				if (fieldValue != null) {
 					fieldValueString = fieldValue.toString();
