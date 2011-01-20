@@ -27,6 +27,8 @@ import java.util.Map;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
+import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
@@ -112,6 +114,8 @@ public class OClass extends ODocumentWrapperNoClass {
 	 * @return the object itself.
 	 */
 	public OClass setSuperClass(final OClass iSuperClass) {
+		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+
 		this.superClass = iSuperClass;
 		iSuperClass.addBaseClasses(this);
 		return this;
@@ -126,6 +130,8 @@ public class OClass extends ODocumentWrapperNoClass {
 	}
 
 	public Collection<OProperty> properties() {
+		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ);
+
 		Collection<OProperty> props = new ArrayList<OProperty>();
 
 		OClass currentClass = this;
@@ -176,30 +182,32 @@ public class OClass extends ODocumentWrapperNoClass {
 	}
 
 	public OProperty createProperty(final String iPropertyName, final OType iType) {
-		// if (iType == OType.LINK || iType == OType.LINKLIST || iType == OType.LINKSET)
-		// throw new OSchemaException("Can't add property '" + iPropertyName
-		// + "' since it contains a relationship but no linked class was received");
-
 		return addProperty(iPropertyName, iType, fixedSize);
 	}
 
 	public OProperty createProperty(final String iPropertyName, final OType iType, final OClass iLinkedClass) {
+		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+
 		if (iLinkedClass == null)
 			throw new OSchemaException("Missed linked class");
 
-		OProperty prop = addProperty(iPropertyName, iType, fixedSize);
+		final OProperty prop = addProperty(iPropertyName, iType, fixedSize);
 		prop.setLinkedClass(iLinkedClass);
 		return prop;
 	}
 
 	public OProperty createProperty(final String iPropertyName, final OType iType, final OType iLinkedType) {
-		OProperty prop = addProperty(iPropertyName, iType, fixedSize);
+		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+
+		final OProperty prop = addProperty(iPropertyName, iType, fixedSize);
 		prop.setLinkedType(iLinkedType);
 		return prop;
 	}
 
 	public void removeProperty(final String iPropertyName) {
-		OProperty prop = properties.remove(iPropertyName.toLowerCase());
+		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+
+		final OProperty prop = properties.remove(iPropertyName.toLowerCase());
 
 		if (prop == null)
 			throw new OSchemaException("Property '" + iPropertyName + "' not found in class " + name + "'");
@@ -219,12 +227,14 @@ public class OClass extends ODocumentWrapperNoClass {
 	}
 
 	protected OProperty addProperty(String iName, final OType iType, final int iOffset) {
+		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+
 		final String lowerName = iName.toLowerCase();
 
 		if (properties.containsKey(lowerName))
 			throw new OSchemaException("Class " + name + " already has the property '" + iName + "'");
 
-		OProperty prop = new OProperty(this, iName, iType, iOffset);
+		final OProperty prop = new OProperty(this, iName, iType, iOffset);
 
 		properties.put(lowerName, prop);
 		fixedSize += iType.size;
@@ -328,6 +338,8 @@ public class OClass extends ODocumentWrapperNoClass {
 	 *          The base class to add.
 	 */
 	private OClass addBaseClasses(final OClass iBaseClass) {
+		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+
 		if (baseClasses == null)
 			baseClasses = new ArrayList<OClass>();
 
@@ -371,28 +383,6 @@ public class OClass extends ODocumentWrapperNoClass {
 		} else if (!owner.equals(other.owner))
 			return false;
 		return true;
-	}
-
-	/**
-	 * Add different cluster ids to the "polymorphic cluster ids" array.
-	 */
-	private void addPolymorphicClusterIds(final OClass iBaseClass) {
-		boolean found;
-		for (int i : iBaseClass.polymorphicClusterIds) {
-			found = false;
-			for (int k : clusterIds) {
-				if (i == k) {
-					found = true;
-					break;
-				}
-			}
-
-			if (!found) {
-				// ADD IT
-				polymorphicClusterIds = OArrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length + 1);
-				polymorphicClusterIds[polymorphicClusterIds.length - 1] = i;
-			}
-		}
 	}
 
 	/**
@@ -445,5 +435,27 @@ public class OClass extends ODocumentWrapperNoClass {
 			cls = cls.getSuperClass();
 		}
 		return false;
+	}
+
+	/**
+	 * Add different cluster ids to the "polymorphic cluster ids" array.
+	 */
+	private void addPolymorphicClusterIds(final OClass iBaseClass) {
+		boolean found;
+		for (int i : iBaseClass.polymorphicClusterIds) {
+			found = false;
+			for (int k : clusterIds) {
+				if (i == k) {
+					found = true;
+					break;
+				}
+			}
+
+			if (!found) {
+				// ADD IT
+				polymorphicClusterIds = OArrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length + 1);
+				polymorphicClusterIds[polymorphicClusterIds.length - 1] = i;
+			}
+		}
 	}
 }

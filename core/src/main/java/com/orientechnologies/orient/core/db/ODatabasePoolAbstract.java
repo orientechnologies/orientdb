@@ -56,13 +56,15 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements ORe
 				name = iURL;
 		}
 
-		OResourcePool<String, DB> pool = pools.get(name);
+		final String dbPooledName = iUserName + "@" + name;
+
+		OResourcePool<String, DB> pool = pools.get(dbPooledName);
 		if (pool == null) {
 			synchronized (pools) {
-				pool = pools.get(name);
+				pool = pools.get(dbPooledName);
 				if (pool == null) {
 					pool = new OResourcePool<String, DB>(maxSize, this);
-					pools.put(name, pool);
+					pools.put(dbPooledName, pool);
 				}
 			}
 		}
@@ -71,7 +73,10 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements ORe
 	}
 
 	public void release(final DB iDatabase) {
-		final OResourcePool<String, DB> pool = pools.get(iDatabase.getName());
+		final String dbPooledName = iDatabase instanceof ODatabaseComplex ? ((ODatabaseComplex<?>) iDatabase).getUser().getName() + "@"
+				+ iDatabase.getName() : iDatabase.getName();
+
+		final OResourcePool<String, DB> pool = pools.get(dbPooledName);
 		if (pool == null)
 			throw new OLockException("Can't release a database URL not acquired before. URL: " + iDatabase.getName());
 

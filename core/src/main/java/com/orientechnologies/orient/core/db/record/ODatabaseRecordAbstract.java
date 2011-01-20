@@ -58,8 +58,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
-import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<ODatabaseRaw> implements ODatabaseRecord {
@@ -197,7 +195,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		return this;
 	}
 
-	public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(final String iClusterName, final Class<REC> iClass) {
+	public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(final String iClusterName,
+			final Class<REC> iClass) {
 		final int clusterId = getClusterIdByName(iClusterName);
 
 		checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName, clusterId);
@@ -287,17 +286,15 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	}
 
 	public <DB extends ODatabaseRecord> DB checkSecurity(final String iResource, final int iOperation) {
-		if (OLogManager.instance().isDebugEnabled())
-			OLogManager.instance().debug(this, "[checkSecurity] Check permissions for resource '%s', operation '%s'", iResource, iOperation);
-
 		if (user != null) {
 			try {
 				user.allow(iResource, iOperation);
 			} catch (OSecurityAccessException e) {
 
 				if (OLogManager.instance().isDebugEnabled())
-					OLogManager.instance().debug(this, "[checkSecurity] User '%s' tried to access to the reserved resource '%s', operation '%s'", getUser(),
-							iResource, iOperation);
+					OLogManager.instance().debug(this,
+							"[checkSecurity] User '%s' tried to access to the reserved resource '%s', operation '%s'", getUser(), iResource,
+							iOperation);
 
 				throw e;
 			}
@@ -305,11 +302,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		return (DB) this;
 	}
 
-	public <DB extends ODatabaseRecord> DB checkSecurity(final String iResourceGeneric, final int iOperation, final Object... iResourcesSpecific) {
-
-		// if (OLogManager.instance().isDebugEnabled())
-		// OLogManager.instance().debug(this, "[checkSecurity] Check permissions for resource '%s', target(s) '%s', operation '%s'",
-		// iResourceGeneric, Arrays.toString(iResourcesSpecific), iOperation);
+	public <DB extends ODatabaseRecord> DB checkSecurity(final String iResourceGeneric, final int iOperation,
+			final Object... iResourcesSpecific) {
 
 		if (user != null) {
 			try {
@@ -341,8 +335,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			} catch (OSecurityAccessException e) {
 				if (OLogManager.instance().isDebugEnabled())
 					OLogManager.instance().debug(this,
-							"[checkSecurity] User '%s' tried to access to the reserved resource '%s', target(s) '%s', operation '%s'", getUser(), iResourceGeneric,
-							Arrays.toString(iResourcesSpecific), iOperation);
+							"[checkSecurity] User '%s' tried to access to the reserved resource '%s', target(s) '%s', operation '%s'", getUser(),
+							iResourceGeneric, Arrays.toString(iResourcesSpecific), iOperation);
 
 				throw e;
 			}
@@ -350,8 +344,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		return (DB) this;
 	}
 
-	public <RET extends ORecordInternal<?>> RET executeReadRecord(final int iClusterId, final long iPosition, ORecordInternal<?> iRecord,
-			final String iFetchPlan) {
+	public <RET extends ORecordInternal<?>> RET executeReadRecord(final int iClusterId, final long iPosition,
+			ORecordInternal<?> iRecord, final String iFetchPlan) {
 		checkOpeness();
 
 		try {
@@ -392,7 +386,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		return null;
 	}
 
-	public void executeSaveRecord(final ORecordInternal<?> iRecord, final String iClusterName, final int iVersion, final byte iRecordType) {
+	public void executeSaveRecord(final ORecordInternal<?> iRecord, final String iClusterName, final int iVersion,
+			final byte iRecordType) {
 		checkOpeness();
 
 		if (!iRecord.isDirty())
@@ -438,7 +433,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 					// RECORD SAVED DURING PREVIOUS STREAMING PHASE: THIS HAPPENS FOR CIRCULAR REFERENCED RECORDS
 					if (underlying.isUseCache())
 						// ADD/UPDATE IT IN CACHE
-						getCache().pushRecord(iRecord.getIdentity().toString(), new ORawBuffer(iRecord.toStream(), iRecord.getVersion(), iRecordType));
+						getCache().pushRecord(iRecord.getIdentity().toString(),
+								new ORawBuffer(iRecord.toStream(), iRecord.getVersion(), iRecordType));
 					return;
 				}
 			}
@@ -593,6 +589,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 		final ORole readerRole = metadata.getSecurity().createRole("reader", ORole.ALLOW_MODES.DENY_ALL_BUT);
 		readerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
+		readerRole.addRule(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ);
 		readerRole.addRule(ODatabaseSecurityResources.CLUSTER + "." + OStorage.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
 		readerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".orole", ORole.PERMISSION_READ);
 		readerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".ouser", ORole.PERMISSION_READ);
@@ -606,6 +603,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 		final ORole writerRole = metadata.getSecurity().createRole("writer", ORole.ALLOW_MODES.DENY_ALL_BUT);
 		writerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
+		writerRole
+				.addRule(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ + ORole.PERMISSION_CREATE + ORole.PERMISSION_UPDATE);
 		writerRole.addRule(ODatabaseSecurityResources.CLUSTER + "." + OStorage.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
 		writerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".orole", ORole.PERMISSION_READ);
 		writerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".ouser", ORole.PERMISSION_READ);

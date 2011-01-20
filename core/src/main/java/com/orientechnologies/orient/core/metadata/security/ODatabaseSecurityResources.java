@@ -25,6 +25,7 @@ public class ODatabaseSecurityResources {
 
 	public final static String	ALL							= "*";
 	public final static String	DATABASE				= "database";
+	public final static String	SCHEMA					= "database.schema";
 	public final static String	CLASS						= "database.class";
 	public final static String	ALL_CLASSES			= "database.class.*";
 	public final static String	CLUSTER					= "database.cluster";

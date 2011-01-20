@@ -168,25 +168,32 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 		} else if (e instanceof IllegalArgumentException)
 			errorCode = OHttpUtils.STATUS_INTERNALERROR;
 
-		if (e instanceof ODatabaseException || e instanceof OSecurityAccessException || e instanceof OCommandExecutionException) {
+		if (e instanceof ODatabaseException || e instanceof OSecurityAccessException || e instanceof OCommandExecutionException
+				|| e instanceof OLockException) {
 			// GENERIC DATABASE EXCEPTION
-			final Throwable cause = e instanceof OSecurityAccessException ? e : e.getCause();
-			if (cause instanceof OSecurityAccessException) {
-				// SECURITY EXCEPTION
-				if (account == null) {
-					// UNAUTHORIZED
-					errorCode = OHttpUtils.STATUS_AUTH_CODE;
-					errorReason = OHttpUtils.STATUS_AUTH_DESCRIPTION;
-					responseHeaders = "WWW-Authenticate: Basic realm=\"OrientDB db-" + ((OSecurityAccessException) cause).getDatabaseName()
-							+ "\"";
-					errorMessage = null;
-				} else {
-					// USER ACCESS DENIED
-					errorCode = 530;
-					errorReason = "Current user has not the privileges to execute the request.";
-					errorMessage = "530 User access denied";
+			Throwable cause;
+			do {
+				cause = e instanceof OSecurityAccessException ? e : e.getCause();
+				if (cause instanceof OSecurityAccessException) {
+					// SECURITY EXCEPTION
+					if (account == null) {
+						// UNAUTHORIZED
+						errorCode = OHttpUtils.STATUS_AUTH_CODE;
+						errorReason = OHttpUtils.STATUS_AUTH_DESCRIPTION;
+						responseHeaders = "WWW-Authenticate: Basic realm=\"OrientDB db-" + ((OSecurityAccessException) cause).getDatabaseName()
+								+ "\"";
+						errorMessage = null;
+					} else {
+						// USER ACCESS DENIED
+						errorCode = 530;
+						errorReason = "Current user has not the privileges to execute the request.";
+						errorMessage = "530 User access denied";
+					}
+					break;
 				}
-			}
+
+				e = (Exception) cause;
+			} while (true);
 		}
 
 		if (errorReason == null)

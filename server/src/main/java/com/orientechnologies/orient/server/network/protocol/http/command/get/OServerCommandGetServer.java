@@ -118,25 +118,45 @@ public class OServerCommandGetServer extends OServerCommandAuthenticatedServerAb
 			json.endCollection(2, true);
 
 			json.beginObject(1, true, "profiler");
-			json.beginCollection(2, true, "stats");
-			for (Entry<String, Long> s : OProfiler.getInstance().getCounters()) {
+			json.beginCollection(2, true, "counters");
+			for (String c : OProfiler.getInstance().getCounters()) {
 				json.beginObject(3);
-				writeField(json, 3, "name", s.getKey());
-				writeField(json, 3, "value", s.getValue());
+				writeField(json, 3, "name", c);
+				writeField(json, 3, "value", OProfiler.getInstance().getCounter(c));
+				json.endObject(3);
+			}
+			json.endCollection(2, false);
+
+			OProfilerEntry pEntry;
+
+			json.beginCollection(2, true, "stats");
+			for (String s : OProfiler.getInstance().getStats()) {
+				pEntry = OProfiler.getInstance().getStat(s);
+
+				json.beginObject(3);
+				writeField(json, 3, "name", s);
+				writeField(json, 3, "total", pEntry.items);
+				writeField(json, 3, "averageElapsed", pEntry.average);
+				writeField(json, 3, "minElapsed", pEntry.min);
+				writeField(json, 3, "maxElapsed", pEntry.max);
+				writeField(json, 3, "lastElapsed", pEntry.last);
+				writeField(json, 3, "totalElapsed", pEntry.total);
 				json.endObject(3);
 			}
 			json.endCollection(2, false);
 
 			json.beginCollection(2, true, "chronos");
-			for (Entry<String, OProfilerEntry> c : OProfiler.getInstance().getChronos()) {
+			for (String c : OProfiler.getInstance().getChronos()) {
+				pEntry = OProfiler.getInstance().getChrono(c);
+
 				json.beginObject(3);
-				writeField(json, 3, "name", c.getKey());
-				writeField(json, 3, "total", c.getValue().items);
-				writeField(json, 3, "averageElapsed", c.getValue().average);
-				writeField(json, 3, "minElapsed", c.getValue().min);
-				writeField(json, 3, "maxElapsed", c.getValue().max);
-				writeField(json, 3, "lastElapsed", c.getValue().last);
-				writeField(json, 3, "totalElapsed", c.getValue().total);
+				writeField(json, 3, "name", c);
+				writeField(json, 3, "total", pEntry.items);
+				writeField(json, 3, "averageElapsed", pEntry.average);
+				writeField(json, 3, "minElapsed", pEntry.min);
+				writeField(json, 3, "maxElapsed", pEntry.max);
+				writeField(json, 3, "lastElapsed", pEntry.last);
+				writeField(json, 3, "totalElapsed", pEntry.total);
 				json.endObject(3);
 			}
 			json.endCollection(2, false);

@@ -28,6 +28,8 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
+import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
@@ -42,6 +44,7 @@ public class OSchema extends ODocumentWrapperNoClass {
 	}
 
 	public Collection<OClass> classes() {
+		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ);
 		return Collections.unmodifiableCollection(classes.values());
 	}
 
@@ -76,12 +79,14 @@ public class OSchema extends ODocumentWrapperNoClass {
 	}
 
 	public OClass createClass(final String iClassName, final int[] iClusterIds, final int iDefaultClusterId) {
-		String key = iClassName.toLowerCase();
+		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_CREATE);
+
+		final String key = iClassName.toLowerCase();
 
 		if (classes.containsKey(key))
 			throw new OSchemaException("Class " + iClassName + " already exists in current database");
 
-		OClass cls = new OClass(this, classes.size(), iClassName, iClusterIds, iDefaultClusterId);
+		final OClass cls = new OClass(this, classes.size(), iClassName, iClusterIds, iDefaultClusterId);
 		classes.put(key, cls);
 		document.setDirty();
 
@@ -89,7 +94,9 @@ public class OSchema extends ODocumentWrapperNoClass {
 	}
 
 	public void removeClass(final String iClassName) {
-		String key = iClassName.toLowerCase();
+		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_DELETE);
+
+		final String key = iClassName.toLowerCase();
 
 		if (!classes.containsKey(key))
 			throw new OSchemaException("Class " + iClassName + " was not found in current database");
