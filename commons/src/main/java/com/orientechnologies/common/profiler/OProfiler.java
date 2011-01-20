@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * Profiling utility class. Handles chronos (times), statistics and counters. By default it's used as Singleton but you can create
@@ -55,8 +54,8 @@ public class OProfiler implements OProfilerMBean {
 
 		@Override
 		public String toString() {
-			return "Chrono [average=" + average + ", items=" + items + ", last=" + last + ", max=" + max + ", min=" + min + ", name=" + name + ", total="
-					+ total + "]";
+			return "Chrono [average=" + average + ", items=" + items + ", last=" + last + ", max=" + max + ", min=" + min + ", name="
+					+ name + ", total=" + total + "]";
 		}
 	}
 
@@ -232,16 +231,26 @@ public class OProfiler implements OProfilerMBean {
 		return lastReset;
 	}
 
-	public Set<Entry<String, Long>> getCounters() {
-		return counters.entrySet();
+	public List<String> getCounters() {
+		List<String> list = new ArrayList<String>(counters.keySet());
+		Collections.sort(list);
+		return list;
 	}
 
-	public Set<Entry<String, OProfilerEntry>> getChronos() {
-		return chronos.entrySet();
+	public List<String> getChronos() {
+		List<String> list = new ArrayList<String>(chronos.keySet());
+		Collections.sort(list);
+		return list;
 	}
 
-	public Set<Entry<String, OProfilerEntry>> getStats() {
-		return stats.entrySet();
+	public List<String> getStats() {
+		List<String> list = new ArrayList<String>(stats.keySet());
+		Collections.sort(list);
+		return list;
+	}
+
+	public OProfilerEntry getStat(final String iStatName) {
+		return stats.get(iStatName);
 	}
 
 	public OProfilerEntry getChrono(final String iChronoName) {
@@ -309,7 +318,8 @@ public class OProfiler implements OProfilerMBean {
 		OProfilerEntry c;
 
 		iBuffer.append(String.format("\n%45s +-------------------------------------------------------------------+", ""));
-		iBuffer.append(String.format("\n%45s | %10s %10s %10s %10s %10s %10s |", "Name", "last", "total", "min", "max", "average", "items"));
+		iBuffer.append(String.format("\n%45s | %10s %10s %10s %10s %10s %10s |", "Name", "last", "total", "min", "max", "average",
+				"items"));
 		iBuffer.append(String.format("\n%45s +-------------------------------------------------------------------+", ""));
 
 		final List<String> keys = new ArrayList<String>(iValues.keySet());
@@ -317,7 +327,8 @@ public class OProfiler implements OProfilerMBean {
 
 		for (String k : keys) {
 			c = iValues.get(k);
-			iBuffer.append(String.format("\n%-45s | %10d %10d %10d %10d %10d %10d |", k, c.last, c.total, c.min, c.max, c.average, c.items));
+			iBuffer.append(String.format("\n%-45s | %10d %10d %10d %10d %10d %10d |", k, c.last, c.total, c.min, c.max, c.average,
+					c.items));
 		}
 		iBuffer.append(String.format("\n%45s +-------------------------------------------------------------------+", ""));
 		return iBuffer.toString();

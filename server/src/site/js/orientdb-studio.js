@@ -580,7 +580,11 @@ function writeServerInfo(server) {
 	fillStaticTable($('#serverConfigProperties'), [ 'Name', 'Value' ],
 			server['properties']);
 
-	fillStaticTable($('#serverProfilerStats'), [ 'Name', 'Value' ],
+	fillStaticTable($('#serverProfilerCounters'), [ 'Name', 'Value' ],
+			server['profiler']['counters']);
+	fillStaticTable($('#serverProfilerStats'), [ 'Name', 'Total',
+			'Average Elapsed (ms)', 'Min Elapsed (ms)', 'Max Elapsed (ms)',
+			'Last Elapsed (ms)', 'Total Elapsed (ms)' ],
 			server['profiler']['stats']);
 	fillStaticTable($('#serverProfilerChronos'), [ 'Name', 'Total',
 			'Average Elapsed (ms)', 'Min Elapsed (ms)', 'Max Elapsed (ms)',
