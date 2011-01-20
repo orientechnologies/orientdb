@@ -19,6 +19,7 @@
  * 
  * @author Luca Molino
  */
+
 function ODatabase(databasePath) {
 	this.databaseUrl = "";
 	this.databaseName = "";
@@ -36,56 +37,56 @@ function ODatabase(databasePath) {
 				.lastIndexOf('/') + 1);
 	}
 
-	this.getDatabaseInfo = function() {
+	ODatabase.prototype.getDatabaseInfo = function() {
 		return this.databaseInfo;
 	}
-	this.setDatabaseInfo = function(iDatabaseInfo) {
+	ODatabase.prototype.setDatabaseInfo = function(iDatabaseInfo) {
 		this.databaseInfo = iDatabaseInfo;
 	}
 
-	this.getCommandResult = function() {
+	ODatabase.prototype.getCommandResult = function() {
 		return this.commandResult;
 	}
-	this.setCommandResult = function(iCommandResult) {
+	ODatabase.prototype.setCommandResult = function(iCommandResult) {
 		this.commandResult = iCommandResult;
 	}
 
-	this.getCommandResponse = function() {
+	ODatabase.prototype.getCommandResponse = function() {
 		return this.commandResponse;
 	}
-	this.setCommandResponse = function(iCommandResponse) {
+	ODatabase.prototype.setCommandResponse = function(iCommandResponse) {
 		this.commandResponse = iCommandResponse;
 	}
 
-	this.getErrorMessage = function() {
+	ODatabase.prototype.getErrorMessage = function() {
 		return this.errorMessage;
 	}
-	this.setErrorMessage = function(iErrorMessage) {
+	ODatabase.prototype.setErrorMessage = function(iErrorMessage) {
 		this.errorMessage = iErrorMessage;
 	}
 
-	this.getDatabaseUrl = function() {
+	ODatabase.prototype.getDatabaseUrl = function() {
 		return databaseUrl;
 	}
-	this.setDatabaseUrl = function(iDatabaseUrl) {
+	ODatabase.prototype.setDatabaseUrl = function(iDatabaseUrl) {
 		this.databaseUrl = iDatabaseUrl;
 	}
 
-	this.getDatabaseName = function() {
+	ODatabase.prototype.getDatabaseName = function() {
 		return this.databaseName;
 	}
-	this.setDatabaseName = function(iDatabaseName) {
+	ODatabase.prototype.setDatabaseName = function(iDatabaseName) {
 		this.databaseName = iDatabaseName;
 	}
 
-	this.getEvalResponse = function() {
+	ODatabase.prototype.getEvalResponse = function() {
 		return this.evalResponse;
 	}
-	this.setEvalResponse = function(iEvalResponse) {
+	ODatabase.prototype.setEvalResponse = function(iEvalResponse) {
 		this.evalResponse = iEvalResponse;
 	}
 
-	this.handleResponse = function(iResponse) {
+	ODatabase.prototype.handleResponse = function(iResponse) {
 		this.setCommandResponse(iResponse);
 		if (iResponse != null)
 			this.setCommandResult(this.transformResponse(iResponse));
@@ -93,7 +94,7 @@ function ODatabase(databasePath) {
 			this.setCommandResult(null);
 	}
 
-	this.open = function(userName, userPass, authProxy, type) {
+	ODatabase.prototype.open = function(userName, userPass, authProxy, type) {
 		if (userName == null) {
 			userName = '';
 		}
@@ -127,7 +128,7 @@ function ODatabase(databasePath) {
 		return this.getDatabaseInfo();
 	}
 
-	this.query = function(iQuery, iLimit, iFetchPlan) {
+	ODatabase.prototype.query = function(iQuery, iLimit, iFetchPlan) {
 		if (this.databaseInfo == null) {
 			this.open();
 		}
@@ -162,7 +163,7 @@ function ODatabase(databasePath) {
 		return this.getCommandResult();
 	}
 
-	this.load = function(iRID, iFetchPlan) {
+	ODatabase.prototype.load = function(iRID, iFetchPlan) {
 		if (this.databaseInfo == null) {
 			this.open();
 		}
@@ -194,14 +195,40 @@ function ODatabase(databasePath) {
 		return this.getCommandResult();
 	}
 
-	this.classInfo = function(iClassName) {
+	ODatabase.prototype.save = function(obj) {
+		if (this.databaseInfo == null) {
+			this.open();
+		}
+
+		var rid = obj['@rid'];
+		var methodType = rid == null ? 'POST' : 'PUT';
+
+		$.ajax({
+			type : methodType,
+			url : urlPrefix + '/document/' + this.databaseName + '/' + rid,
+			data : $.toJSON(obj),
+			processData : false,
+			context : this,
+			async : false,
+			success : function(msg) {
+				this.setErrorMessage(null);
+				this.handleResponse(msg);
+			},
+			error : function(msg) {
+				this.handleResponse(null);
+				this.setErrorMessage('Save error: ' + msg.responseText);
+			}
+		});
+		return this.getCommandResult();
+	}
+
+	ODatabase.prototype.classInfo = function(iClassName) {
 		if (this.databaseInfo == null) {
 			this.open();
 		}
 		$.ajax({
 			type : "GET",
-			url : urlPrefix + '/class/' + this.databaseName + '/'
-					+ iClassName,
+			url : urlPrefix + '/class/' + this.databaseName + '/' + iClassName,
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -216,14 +243,13 @@ function ODatabase(databasePath) {
 		return this.getCommandResult();
 	}
 
-	this.createClass = function(iClassName) {
+	ODatabase.prototype.createClass = function(iClassName) {
 		if (this.databaseInfo == null) {
 			this.open();
 		}
 		$.ajax({
 			type : "POST",
-			url : urlPrefix + '/class/' + this.databaseName + '/'
-					+ iClassName,
+			url : urlPrefix + '/class/' + this.databaseName + '/' + iClassName,
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -238,7 +264,7 @@ function ODatabase(databasePath) {
 		return this.getCommandResult();
 	}
 
-	this.browseCluster = function(iClassName) {
+	ODatabase.prototype.browseCluster = function(iClassName) {
 		if (this.databaseInfo == null) {
 			this.open();
 		}
@@ -260,7 +286,7 @@ function ODatabase(databasePath) {
 		return this.getCommandResult();
 	}
 
-	this.executeCommand = function(iCommand) {
+	ODatabase.prototype.executeCommand = function(iCommand) {
 		if (this.databaseInfo == null) {
 			this.open();
 		}
@@ -279,10 +305,10 @@ function ODatabase(databasePath) {
 				this.setErrorMessage('Command error: ' + msg.responseText);
 			}
 		});
-		return this.getCommandResult();
+		return this.getCommandResponse();
 	}
 
-	this.serverInfo = function() {
+	ODatabase.prototype.serverInfo = function() {
 		if (this.databaseInfo == null) {
 			this.open();
 		}
@@ -303,7 +329,7 @@ function ODatabase(databasePath) {
 		return this.getCommandResult();
 	}
 
-	this.schema = function() {
+	ODatabase.prototype.schema = function() {
 		if (this.databaseInfo == null) {
 			this.setErrorMessage('Database is closed');
 			return null;
@@ -311,7 +337,7 @@ function ODatabase(databasePath) {
 		return this.transformResponse(this.getDatabaseInfo())['classes'];
 	}
 
-	this.securityRoles = function() {
+	ODatabase.prototype.securityRoles = function() {
 		if (this.databaseInfo == null) {
 			this.setErrorMessage('Database is closed');
 			return null;
@@ -319,7 +345,7 @@ function ODatabase(databasePath) {
 		return this.transformResponse(this.getDatabaseInfo())['roles'];
 	}
 
-	this.securityUsers = function() {
+	ODatabase.prototype.securityUsers = function() {
 		if (this.databaseInfo == null) {
 			this.setErrorMessage('Database is closed');
 			return null;
@@ -327,7 +353,7 @@ function ODatabase(databasePath) {
 		return this.transformResponse(this.getDatabaseInfo())['users'];
 	}
 
-	this.close = function() {
+	ODatabase.prototype.close = function() {
 		if (this.databaseInfo != null) {
 			$.ajax({
 				type : 'GET',
@@ -350,7 +376,7 @@ function ODatabase(databasePath) {
 		return this.getCommandResult();
 	}
 
-	this.transformResponse = function(msg) {
+	ODatabase.prototype.transformResponse = function(msg) {
 		if (this.getEvalResponse() && msg.length > 0 && typeof msg != 'object') {
 			return eval("(" + msg + ")");
 		} else {
