@@ -256,9 +256,17 @@ function formatDocumentContent(doc, editable, fieldColName, valueColName) {
 		if( fieldValue == null)
 			out += 'null';		
 		else if (fieldValue instanceof Array) {
-			out += fieldValue;
+			for( v in fieldValue ){
+				if( v > 0)
+					out += ', ';
+				
+				if( typeof fieldValue[v] == 'object' )
+					out+= ('#'+fieldValue[v]['@rid']);
+				else
+					out += fieldValue[v];
+			}
 		} else if ( typeof fieldValue == 'object') {
-			out += fieldValue['@rid'];
+			out += ('#'+fieldValue['@rid']);
 		} else
 			out += fieldValue;
 

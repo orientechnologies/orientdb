@@ -141,11 +141,11 @@ function OGraph(doc, htmlComponent) {
 	var st = new $jit.ST({
 		'injectInto' : htmlComponent,
 		// set duration for the animation
-		duration : 300,
+		duration : 100,
 		// set animation transition type
 		transition : $jit.Trans.Quart.easeInOut,
 		// set distance between node and its children
-		levelDistance : 70,
+		levelDistance : 90,
 		// set max levels to show. Useful when used with
 		// the request method for requesting trees of specific depth
 		levelsToShow : 2,
