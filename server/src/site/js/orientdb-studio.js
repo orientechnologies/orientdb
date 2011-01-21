@@ -524,16 +524,18 @@ function executeCommand() {
 	commandResult = orientServer.executeCommand(code);
 
 	if (commandResult == null) {
-		jQuery("#commandOutput").val('');
+		commandOutputEditor.setCode('')
 		jQuery("#output").text(orientServer.getErrorMessage());
 	} else {
-		jQuery("#commandOutput").val(commandResult);
+		commandOutputEditor.setCode(commandResult);
 		jQuery("#output").val("Command executed in " + stopTimer() + " sec.");
 	}
 }
 
 function executeRawCommand() {
 	startTimer();
+
+	var code = rawEditor.getCode();
 
 	var req = $('#server').val() + '/' + $('#rawOperation').val() + '/'
 			+ $('#rawDatabase').val() + '/' + $('#rawArgs').val();
@@ -542,13 +544,14 @@ function executeRawCommand() {
 		type : $('#rawMethod').val(),
 		url : req,
 		success : function(msg) {
-			jQuery("#rawOutput").val(msg);
+			rawEditor.setCode(msg);
+			rawEditor.reindent();
 			jQuery("#output").val(
 					"Raw command executed in " + stopTimer() + " sec.");
 		},
-		data : jQuery("#rawOutput").val(),
+		data : code,
 		error : function(msg) {
-			jQuery("#rawOutput").val("");
+			rawEditor.setCode("");
 			jQuery("#output").val("Command response: " + msg);
 		}
 	});
@@ -653,8 +656,8 @@ jQuery(document)
 					jQuery("#queryText").val(
 							(jQuery.trim(jQuery("#queryText").val())));
 					queryEditor = CodeMirror.fromTextArea('queryText', {
-						width : "880px",
-						height : "100px",
+						width : "920px",
+						height : "60px",
 						parserfile : "parsesql.js",
 						stylesheet : "styles/codemirror/sqlcolors.css",
 						path : "www/js/codemirror/",
@@ -664,12 +667,35 @@ jQuery(document)
 					jQuery("#commandText").val(
 							(jQuery.trim(jQuery("#commandText").val())));
 					commandEditor = CodeMirror.fromTextArea('commandText', {
-						width : "880px",
+						width : "920px",
 						height : "150px",
 						parserfile : "parsesql.js",
 						stylesheet : "styles/codemirror/sqlcolors.css",
 						path : "www/js/codemirror/",
 						textWrapping : false
+					});
+
+					commandOutputEditor = CodeMirror.fromTextArea(
+							'commandOutput', {
+								width : "920px",
+								height : "250px",
+								parserfile : [ "tokenizejavascript.js",
+										"parsejavascript.js" ],
+								stylesheet : "styles/codemirror/jscolors.css",
+								path : "www/js/codemirror/",
+								textWrapping : true,
+								json : true
+							});
+
+					rawEditor = CodeMirror.fromTextArea('rawOutput', {
+						width : "920px",
+						height : "350px",
+						parserfile : [ "tokenizejavascript.js",
+								"parsejavascript.js" ],
+						stylesheet : "styles/codemirror/jscolors.css",
+						path : "www/js/codemirror/",
+						textWrapping : true,
+						json : true
 					});
 
 					$("#graphRecord")
@@ -695,7 +721,7 @@ jQuery(document)
 					$("#graphRaw")
 							.click(
 									function() {
-										var raw = $('#rawOutput').val();
+										var raw = rawEditor.getCode();
 										if (raw == null || raw.length == 0)
 											return;
 

@@ -284,13 +284,13 @@ td {
 		</div>
 		</div>
 		<div id="tab-query">
-		<table style="width: 100%;" cellpadding="0" cellspacing="2">
+		<table style="width: 100%;" cellpadding="0" cellspacing="0">
 			<tr>
 				<td valign="top">
-				<table style="width: 100%;" cellpadding="2" cellspacing="0">
+				<table style="width: 100%;" cellpadding="0" cellspacing="0">
 					<tr>
 						<td valign="top">
-						<table style="width: 100%;">
+						<table style="width: 100%;" cellpadding="0" cellspacing="0">
 							<tr>
 								<td style="border: 1px solid gray; width: 90%;"><textarea
 									id="queryText" title="value">
@@ -307,21 +307,24 @@ td {
 						</table>
 						</td>
 						<td valign="top">
-						<table style="width: 120px;">
+						<table>
 							<tr>
 								<td>
 								<button onclick="javascript:executeQuery()"
-									class="ui-button-text-icon">Execute <img border="0"
-									alt="Execute" src="www/images/execute.png" align="top" /></button>
+									class="ui-button-text-icon"
+									style="width: 80px; text-align: center">Execute<br />
+								<img border="0" alt="Execute" src="www/images/execute.png"
+									align="top" /></button>
 								</td>
 							</tr>
 							<tr>
-								<td>Limit: <input id="limit" size="1" value="20" /></td>
+								<td align="left">Limit: <input id="limit" size="1"
+									value="20" /></td>
 							</tr>
 							<tr>
 								<td style="font-size: 10pt;"><a
 									href="http://code.google.com/p/orient/wiki/SQLQuery"
-									target="help">SQL select syntax</a></td>
+									target="help">SQL syntax</a></td>
 							</tr>
 							<tr>
 								<td style="font-size: 10pt;"><a
@@ -331,7 +334,7 @@ td {
 							<tr>
 								<td>
 								<button id="newRecord" " class="ui-button-text-icon"
-									style="width: 100px; text-align: left">New <img
+									style="width: 80px; text-align: center">New <img
 									border="0" alt="New record" src="www/images/add.png"
 									align="top" /></button>
 								</td>
@@ -339,7 +342,7 @@ td {
 							<tr>
 								<td>
 								<button id="deleteRecord" class="ui-button-text-icon"
-									style="width: 100px; text-align: left">Delete <img
+									style="width: 80px; text-align: center">Delete <img
 									border="0" alt="Delete record" src="www/images/delete.png"
 									align="top" /></button>
 								</td>
@@ -347,7 +350,7 @@ td {
 							<tr>
 								<td>
 								<button id="graphRecord" class="ui-button-text-icon"
-									style="width: 100px; text-align: left">Graph <img
+									style="width: 80px; text-align: center">Graph <img
 									border="0" alt="Graph record" src="www/images/graph.png"
 									align="top" /></button>
 								</td>
@@ -361,63 +364,70 @@ td {
 		</table>
 		</div>
 		<div id="tab-command">
-		<table style="width: 100%;" cellpadding="0" cellspacing="2">
+		<table style="width: 100%;" cellpadding="0" cellspacing="0">
 			<tr>
 				<td valign="top">
-				<table style="width: 100%;" cellpadding="2" cellspacing="0">
+				<table style="width: 100%;" cellpadding="0" cellspacing="0">
 					<tr>
+						<td style="border: 1px solid gray; width: 90%;"><textarea
+							id="commandText" title="value"></textarea></td>
 						<td valign="top">
 						<table style="width: 100%;">
 							<tr>
-								<td style="border: 1px solid gray; width: 90%;"><textarea
-									id="commandText" title="value"></textarea></td>
 								<td>
-								<table style="width: 100%;">
-									<tr>
-										<td>
-										<button onclick="javascript:executeCommand()"
-											class="ui-button-text-icon">Execute <img border="0"
-											alt="Execute" src="www/images/execute.png" align="top" /></button>
-										</td>
-									</tr>
-									<tr>
-										<td align="right">Limit: <input id="limit" size="1"
-											value="20" /></td>
-									</tr>
-									<tr>
-										<td style="font-size: 10pt;"><a
-											href="http://code.google.com/p/orient/wiki/SQL" target="help">SQL
-										syntax</a></td>
-									</tr>
-									<tr>
-										<td style="font-size: 10pt;"><a
-											href="http://code.google.com/p/orient/wiki/SQLWhere"
-											target="help">SQL operators</a></td>
-									</tr>
-									<tr>
-										<td>
-										<button id="graphCommandResult" class="ui-button-text-icon"
-											style="width: 100px; text-align: left">Graph <img
-											border="0" alt="Graph result" src="www/images/graph.png"
-											align="top" /></button>
-										</td>
-									</tr>
-								</table>
+								<button onclick="javascript:executeCommand()"
+									class="ui-button-text-icon"
+									style="width: 80px; text-align: center">Execute<br />
+								<img border="0" alt="Execute" src="www/images/execute.png"
+									align="top" /></button>
 								</td>
+							</tr>
+							<tr>
+								<td align="left">Limit: <input id="limit" size="1"
+									value="20" /></td>
+							</tr>
+							<tr>
+								<td style="font-size: 10pt;"><a
+									href="http://code.google.com/p/orient/wiki/SQL" target="help">SQL
+								syntax</a></td>
+							</tr>
+							<tr>
+								<td style="font-size: 10pt;"><a
+									href="http://code.google.com/p/orient/wiki/SQLWhere"
+									target="help">SQL operators</a></td>
 							</tr>
 						</table>
 						</td>
 					</tr>
+				</table>
+				</td>
+			</tr>
+			<tr>
+				<td>
+				<table style="width: 100%;">
 					<tr>
-						<td>
-						<table style="width: 100%;">
-							<tr>
-								<td><textarea id="commandOutput" cols="132" rows="15"
-									title="value" readonly="readonly">
+						<td style="border: 1px solid gray; width: 90%;"><textarea
+							id="commandOutput" cols="132" rows="15" title="value"
+							readonly="readonly">
                                                             </textarea></td>
-								<td valign="top"><a
-									href="javascript:clear('commandOutput')"><img border="0"
-									src="www/images/clear.png" /></a></td>
+						<td valign="top">
+						<table>
+							<tr>
+								<td>
+								<button class="ui-button-text-icon"
+									onClick="javascript:commandOutputEditor.setCode('')"
+									style="width: 80px; text-align: center">Clear <img
+									border="0" alt="Graph result" src="www/images/clear.png"
+									align="top" /></button>
+								</td>
+							</tr>
+							<tr>
+								<td>
+								<button id="graphCommandResult" class="ui-button-text-icon"
+									style="width: 80px; text-align: center">Graph <img
+									border="0" alt="Graph result" src="www/images/graph.png"
+									align="top" /></button>
+								</td>
 							</tr>
 						</table>
 						</td>
@@ -508,41 +518,54 @@ td {
 						<td><input id="rawArgs" size="45" value="Address" /></td>
 					</tr>
 					<tr>
-						<td colspan="6" valign="top"><textarea id="rawOutput"
-							cols="130" rows="22" title="value">
+						<td style="border: 1px solid gray; width: 100%;" colspan="6"
+							valign="top"><textarea id="rawOutput" cols="130" rows="22"
+							title="value">
                                     </textarea></td>
 					</tr>
 				</table>
-			</td>
-			<td valign="top">
-			<table>
-				<tr>
-					<td>
-					<button onclick="javascript:executeRawCommand()"
-						style="width: 80px; text-align: center"
-						style="background-color: #F0F0F0;">Execute <img
-						border="0" alt="Execute" src="www/images/execute.png" /></button>
-					</td>
-				</tr>
-				<tr>
-					<td>
-					<button id="graphRawResult" class="ui-button-text-icon"
-						onClick="javascript:clear('rawOutput')"
-						style="width: 80px; text-align: center">Clear <img
-						border="0" alt="Graph result" src="www/images/clear.png"
-						align="top" /></button>
-					</td>
-				</tr>
-				<tr>
-					<td>
-					<button id="graphRaw" class="ui-button-text-icon"
-						style="width: 80px; text-align: center">Graph <img
-						border="0" alt="Graph result" src="www/images/graph.png"
-						align="top" /></button>
-					</td>
-				</tr>
-			</table>
-			</td>
+				</td>
+				<td valign="top">
+				<table>
+					<tr>
+						<td>
+						<button onclick="javascript:executeRawCommand()"
+							style="width: 80px; text-align: center"
+							style="background-color: #F0F0F0;">Execute <img
+							border="0" alt="Execute" src="www/images/execute.png" /></button>
+						</td>
+					</tr>
+					<tr>
+						<td>&nbsp;</td>
+					</tr>
+					<tr>
+						<td>
+						<button id="graphRawResult" class="ui-button-text-icon"
+							onClick="javascript:rawEditor.setCode('')"
+							style="width: 80px; text-align: center">Clear <img
+							border="0" alt="Graph result" src="www/images/clear.png"
+							align="top" /></button>
+						</td>
+					</tr>
+					<tr>
+						<td>
+						<button id="rawReindent" class="ui-button-text-icon"
+							onClick="javascript:rawEditor.reindent();"
+							style="width: 80px; text-align: center">Indent <img
+							border="0" alt="Graph result" src="www/images/indent.png"
+							align="top" /></button>
+						</td>
+					</tr>
+					<tr>
+						<td>
+						<button id="graphRaw" class="ui-button-text-icon"
+							style="width: 80px; text-align: center">Graph <img
+							border="0" alt="Graph result" src="www/images/graph.png"
+							align="top" /></button>
+						</td>
+					</tr>
+				</table>
+				</td>
 			</tr>
 		</table>
 		</div>
@@ -552,6 +575,7 @@ td {
 			alt="Refresh" src="www/images/execute.png" align="top" /></button>
 		<div id="tabs-server">
 		<ul>
+			<li><a href="#tab-server-intro"><span>Introduction</span></a></li>
 			<li><a href="#tab-server-conns"><span>Active
 			Connections</span></a></li>
 			<li><a href="#tab-server-config"><span>Configuration</span></a></li>
@@ -560,6 +584,18 @@ td {
 			Storages</span></a></li>
 			<li><a href="#tab-server-profiler"><span>Profiler</span></a></li>
 		</ul>
+		<div id="tab-server-intro">
+		<p class="help">This is the section with the Server's information.
+		To access it you have to provide the OrientDB Server's credentials. If
+		you have access to the server look to the orientdb-server-config.xml
+		file and search the XML user tag. Remember that the first time the
+		Server is executed the 'root' user is created with a automatically
+		generated password. Below and example:</p>
+		<p class="code">&lt;users&gt;<br />
+		&nbsp;&nbsp;&lt;user&gt; name="root"
+		password="FAFF343DD54DKFJFKDA95F05A033A6A59E2F57CDF35058E4D4AF7AE12910B508384C47"
+		resources="*" /&gt;<br />
+		&lt;/users&gt;</p>
 		<div id="tab-server-conns">
 		<table style="width: 100%;">
 			<tr>
