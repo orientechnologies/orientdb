@@ -58,7 +58,7 @@ function loadDocument(rid, level) {
 		return null;
 
 	// LAZY LOAD IT
-	var node = orientServer.load(rid);
+	var node = orientServer.load(rid, "*:" + (level + 5));
 	if (node == null)
 		return null;
 
@@ -682,7 +682,7 @@ jQuery(document)
 											displayGraph(queryResult.result[selectedRow]);
 									});
 
-					$("#graphResult")
+					$("#graphCommandResult")
 							.click(
 									function() {
 										var result = orientServer
@@ -691,6 +691,23 @@ jQuery(document)
 										if (result != null)
 											displayGraph(result.result != null ? result.result[0]
 													: result);
+									});
+					$("#graphRaw")
+							.click(
+									function() {
+										var raw = $('#rawOutput').val();
+										if (raw == null || raw.length == 0)
+											return;
+
+										try {
+											var result = jQuery.parseJSON(raw);
+											if (result != null)
+												displayGraph(result.result != null ? result.result[0]
+														: result);
+										} catch (e) {
+											alert("Error on parsing result:"
+													+ e);
+										}
 									});
 				});
 

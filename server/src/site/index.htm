@@ -396,7 +396,7 @@ td {
 									</tr>
 									<tr>
 										<td>
-										<button id="graphResult" class="ui-button-text-icon"
+										<button id="graphCommandResult" class="ui-button-text-icon"
 											style="width: 100px; text-align: left">Graph <img
 											border="0" alt="Graph result" src="www/images/graph.png"
 											align="top" /></button>
@@ -474,47 +474,75 @@ td {
 		<div id="tab-raw">
 		<table style="width: 100%;">
 			<tr>
-				<td align="left"></td>
-				<td align="left"><b>HTTP Method</b></td>
-				<td align="left"><b>Operation</b></td>
-				<td align="left"><b>Database</b></td>
-				<td align="left"><b>Argument(s)</b></td>
-				<td align="left"></td>
-			</tr>
-			<tr>
-				<td><select id="rawMethod">
-					<option value='GET'>GET</option>
-					<option value='PUT'>PUT</option>
-					<option value='POST'>POST</option>
-					<option value='DELETE'>DELETE</option>
-				</select>/</td>
-				<td id="rawServer">http://localhost:2480/</td>
-				<td><select id="rawOperation">
-					<option value='cluster'>cluster</option>
-					<option value='class'>class</option>
-					<option value='command'>command</option>
-					<option value='connect'>connect</option>
-					<option value='database'>database</option>
-					<option value='dictionary'>dictionary</option>
-					<option value='disconnect'>disconnect</option>
-					<option value='document'>document</option>
-					<option value='query'>query</option>
-					<option value='server'>server</option>
-				</select>/</td>
-				<td><input id="rawDatabase" size="15" value="demo" />/</td>
-				<td><input id="rawArgs" size="40" value="Address" /></td>
 				<td>
-				<button onclick="javascript:executeRawCommand()"
-					style="background-color: #F0F0F0;"><img border="0"
-					alt="Execute" src="www/images/execute.png" /></button>
-				</td>
-			</tr>
-			<tr>
-				<td colspan="6" valign="top"><textarea id="rawOutput"
-					cols="135" rows="22" title="value">
+				<table style="width: 100%;">
+					<tr>
+						<th align="left"></th>
+						<th align="left"><b>HTTP Method</b></th>
+						<th align="left"><b>Operation</b></th>
+						<th align="left"><b>Database</b></th>
+						<th align="left"><b>Argument(s)</b></th>
+						<th align="left"></th>
+					</tr>
+					<tr>
+						<td><select id="rawMethod">
+							<option value='GET'>GET</option>
+							<option value='PUT'>PUT</option>
+							<option value='POST'>POST</option>
+							<option value='DELETE'>DELETE</option>
+						</select>/</td>
+						<td id="rawServer">http://localhost:2480/</td>
+						<td><select id="rawOperation">
+							<option value='cluster'>cluster</option>
+							<option value='class'>class</option>
+							<option value='command'>command</option>
+							<option value='connect'>connect</option>
+							<option value='database'>database</option>
+							<option value='dictionary'>dictionary</option>
+							<option value='disconnect'>disconnect</option>
+							<option value='document'>document</option>
+							<option value='query'>query</option>
+							<option value='server'>server</option>
+						</select>/</td>
+						<td><input id="rawDatabase" size="15" value="demo" />/</td>
+						<td><input id="rawArgs" size="45" value="Address" /></td>
+					</tr>
+					<tr>
+						<td colspan="6" valign="top"><textarea id="rawOutput"
+							cols="130" rows="22" title="value">
                                     </textarea></td>
-				<td valign="top"><a href="javascript:clear('rawOutput')"><img
-					border="0" src="www/images/clear.png" /></a></td>
+					</tr>
+				</table>
+			</td>
+			<td valign="top">
+			<table>
+				<tr>
+					<td>
+					<button onclick="javascript:executeRawCommand()"
+						style="width: 80px; text-align: center"
+						style="background-color: #F0F0F0;">Execute <img
+						border="0" alt="Execute" src="www/images/execute.png" /></button>
+					</td>
+				</tr>
+				<tr>
+					<td>
+					<button id="graphRawResult" class="ui-button-text-icon"
+						onClick="javascript:clear('rawOutput')"
+						style="width: 80px; text-align: center">Clear <img
+						border="0" alt="Graph result" src="www/images/clear.png"
+						align="top" /></button>
+					</td>
+				</tr>
+				<tr>
+					<td>
+					<button id="graphRaw" class="ui-button-text-icon"
+						style="width: 80px; text-align: center">Graph <img
+						border="0" alt="Graph result" src="www/images/graph.png"
+						align="top" /></button>
+					</td>
+				</tr>
+			</table>
+			</td>
 			</tr>
 		</table>
 		</div>
