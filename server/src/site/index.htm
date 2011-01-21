@@ -6,6 +6,9 @@
 <meta name="title" content="Document | DBMS | Database | Java | Studio" />
 <meta name="description" content="OrientDB Studio" />
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link type="text/css" href="www/styles/jit/base.css" rel="stylesheet" />
+<link type="text/css" href="www/styles/jit/Spacetree.css"
+	rel="stylesheet" />
 <link rel="stylesheet" type="text/css" media="screen"
 	href="www/styles/redmond/jquery-ui-1.8.1.custom.css" />
 <link rel="stylesheet" type="text/css" media="screen"
@@ -36,10 +39,15 @@ td {
 <script src="www/js/i18n/grid.locale-en.js" type="text/javascript"></script>
 <script src="www/js/jquery.jqGrid.min.js" type="text/javascript"></script>
 <script src="www/js/jQueryRotate.js" type="text/javascript"></script>
+<script src="www/js/orientdb-form.js" type="text/javascript"></script>
+<script src="www/js/orientdb-graph.js" type="text/javascript"></script>
 <script src="www/js/orientdb-api.js" type="text/javascript"></script>
 <script src="www/js/orientdb-app.js" type="text/javascript"></script>
 <script src="www/js/orientdb-studio.js" type="text/javascript"></script>
 <script src="www/js/codemirror/codemirror.js" type="text/javascript"></script>
+<!--[if IE]><script language="javascript" type="text/javascript" src="www/js/jit/excanvas.js"></script><![endif]-->
+<script language="javascript" type="text/javascript"
+	src="www/js/jit/jit.js"></script>
 </head>
 <body>
 <table align="center" width="1000">
@@ -73,6 +81,7 @@ td {
 			<li><a href="#tab-database"><span>Database</span></a></li>
 			<li><a href="#tab-query"><span>Query</span></a></li>
 			<li><a href="#tab-command"><span>Command</span></a></li>
+			<li><a href="#tab-graph"><span>Graph</span></a></li>
 			<li><a href="#tab-dictionary"><span>Dictionary</span></a></li>
 			<li><a href="#tab-raw"><span>Raw access</span></a></li>
 			<li><a href="#tab-server"><span>Server</span></a></li>
@@ -335,6 +344,14 @@ td {
 									align="top" /></button>
 								</td>
 							</tr>
+							<tr>
+								<td>
+								<button id="graphRecord" class="ui-button-text-icon"
+									style="width: 100px; text-align: left">Graph <img
+									border="0" alt="Graph record" src="www/images/graph.png"
+									align="top" /></button>
+								</td>
+							</tr>
 						</table>
 						</td>
 					</tr>
@@ -377,6 +394,14 @@ td {
 											href="http://code.google.com/p/orient/wiki/SQLWhere"
 											target="help">SQL operators</a></td>
 									</tr>
+									<tr>
+										<td>
+										<button id="graphResult" class="ui-button-text-icon"
+											style="width: 100px; text-align: left">Graph <img
+											border="0" alt="Graph result" src="www/images/graph.png"
+											align="top" /></button>
+										</td>
+									</tr>
 								</table>
 								</td>
 							</tr>
@@ -395,6 +420,46 @@ td {
 									src="www/images/clear.png" /></a></td>
 							</tr>
 						</table>
+						</td>
+					</tr>
+				</table>
+				</td>
+			</tr>
+		</table>
+		</div>
+		<div id="tab-graph">
+		<table style="width: 100%;" cellpadding="0" cellspacing="2">
+			<tr>
+				<td valign="top">
+				<table style="width: 100%;" cellpadding="2" cellspacing="0">
+					<tr>
+						<td>
+						<div id="center-container">
+						<div id="graphPanel"></div>
+						</div>
+						</td>
+						<td valign="top" align="center">
+						<h2>Change Tree Orientation</h2>
+						<table width="100%" align="center">
+							<tr>
+								<th align="center"><label for="r-left">Left</label></th>
+								<th align="center"><label for="r-top">Top</label></th>
+								<th align="center"><label for="r-bottom">Bottom</label></th>
+								<th align="center"><label for="r-right">Right</label></th>
+							</tr>
+							<tr>
+								<td align="center"><input type="radio" id="r-left"
+									name="orientation" checked="checked" value="left" /></td>
+								<td align="center"><input type="radio" id="r-top"
+									name="orientation" value="top" /></td>
+								<td align="center"><input type="radio" id="r-bottom"
+									name="orientation" value="bottom" /></td>
+								<td align="center"><input type="radio" id="r-right"
+									name="orientation" value="right" /></td>
+							</tr>
+						</table>
+						<hr />
+						<div id="inner-details"></div>
 						</td>
 					</tr>
 				</table>
@@ -525,24 +590,21 @@ td {
 		<div id="tab-server-profiler">
 		<table style="width: 100%;">
 			<tr>
-				<td valign="top">
-				<b>Counters</b>
-				<table id="serverProfilerCounters" style="width: 100%;" cellspacing="0"
-					cellpadding="5" border="1">
-				</table>
-				</td>
-			</tr>
-			<tr>
-				<td valign="top">
-				<b>Statistics</b>
-				<table id="serverProfilerStats" style="width: 100%;"
+				<td valign="top"><b>Counters</b>
+				<table id="serverProfilerCounters" style="width: 100%;"
 					cellspacing="0" cellpadding="5" border="1">
 				</table>
 				</td>
 			</tr>
 			<tr>
-				<td valign="top">
-				<b>Chronos</b>
+				<td valign="top"><b>Statistics</b>
+				<table id="serverProfilerStats" style="width: 100%;" cellspacing="0"
+					cellpadding="5" border="1">
+				</table>
+				</td>
+			</tr>
+			<tr>
+				<td valign="top"><b>Chronos</b>
 				<table id="serverProfilerChronos" style="width: 100%;"
 					cellspacing="0" cellpadding="5" border="1">
 				</table>

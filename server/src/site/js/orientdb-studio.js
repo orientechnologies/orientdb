@@ -22,6 +22,7 @@ var selectedClassName; // CONTAINS LATEST SELECTED CLASS NAME
 var orientServer;
 var queryEditor;
 var commandEditor;
+var graphEditor;
 
 function connect() {
 	if (orientServer == null) {
@@ -50,6 +51,18 @@ function disconnect() {
 	$("#tabs-main").hide(200);
 	$("#buttonConnect").show();
 	$("#buttonDisconnect").hide();
+}
+
+function loadDocument(rid, level) {
+	if (rid == null)
+		return null;
+
+	// LAZY LOAD IT
+	var node = orientServer.load(rid);
+	if (node == null)
+		return null;
+
+	return graphEditor.document2node(node);
 }
 
 function showDatabaseInfo() {
@@ -614,42 +627,78 @@ function formatServerURL() {
 	$('#rawServer').html($('#server').val() + "/");
 }
 
-jQuery(document).ready(function() {
-	jQuery(document).ajaxError(function(event, request, settings, err) {
-		jQuery("#output").val("Error: " + request.responseText);
-	});
+jQuery(document)
+		.ready(
+				function() {
+					jQuery(document).ajaxError(
+							function(event, request, settings, err) {
+								jQuery("#output").val(
+										"Error: " + request.responseText);
+							});
 
-	$("#tabs-main").hide();
-	$("#buttonDisconnect").hide();
+					$("#tabs-main").hide();
+					$("#buttonDisconnect").hide();
 
-	$("#tabs-main").tabs();
-	$("#tabs-db").tabs();
-	$("#tabs-security").tabs();
-	$("#tabs-server").tabs();
+					$("#tabs-main").tabs();
+					$("#tabs-db").tabs();
+					$("#tabs-security").tabs();
+					$("#tabs-server").tabs();
 
-	$('#server').change(formatServerURL);
-	$('#server').val(document.location.href);
-	formatServerURL();
+					$('#server').change(formatServerURL);
+					$('#server').val(document.location.href);
+					formatServerURL();
 
-	jQuery("#output").val(jQuery.trim(jQuery("#output").val()));
+					jQuery("#output").val(jQuery.trim(jQuery("#output").val()));
 
-	jQuery("#queryText").val((jQuery.trim(jQuery("#queryText").val())));
-	queryEditor = CodeMirror.fromTextArea('queryText', {
-		width : "880px",
-		height : "100px",
-		parserfile : "parsesql.js",
-		stylesheet : "styles/codemirror/sqlcolors.css",
-		path : "www/js/codemirror/",
-		textWrapping : false
-	});
+					jQuery("#queryText").val(
+							(jQuery.trim(jQuery("#queryText").val())));
+					queryEditor = CodeMirror.fromTextArea('queryText', {
+						width : "880px",
+						height : "100px",
+						parserfile : "parsesql.js",
+						stylesheet : "styles/codemirror/sqlcolors.css",
+						path : "www/js/codemirror/",
+						textWrapping : false
+					});
 
-	jQuery("#commandText").val((jQuery.trim(jQuery("#commandText").val())));
-	commandEditor = CodeMirror.fromTextArea('commandText', {
-		width : "880px",
-		height : "150px",
-		parserfile : "parsesql.js",
-		stylesheet : "styles/codemirror/sqlcolors.css",
-		path : "www/js/codemirror/",
-		textWrapping : false
-	});
-});
+					jQuery("#commandText").val(
+							(jQuery.trim(jQuery("#commandText").val())));
+					commandEditor = CodeMirror.fromTextArea('commandText', {
+						width : "880px",
+						height : "150px",
+						parserfile : "parsesql.js",
+						stylesheet : "styles/codemirror/sqlcolors.css",
+						path : "www/js/codemirror/",
+						textWrapping : false
+					});
+
+					$("#graphRecord")
+							.click(
+									function() {
+										var selectedRow = jQuery(
+												"#queryResultTable").jqGrid(
+												'getGridParam', 'selrow');
+										if (selectedRow != null)
+											displayGraph(queryResult.result[selectedRow]);
+									});
+
+					$("#graphResult")
+							.click(
+									function() {
+										var result = orientServer
+												.getCommandResult();
+
+										if (result != null)
+											displayGraph(result.result != null ? result.result[0]
+													: result);
+									});
+				});
+
+function displayGraph(selObject) {
+	$("#tabs-main").tabs('select', "tab-graph");
+
+	if (graphEditor == null)
+		graphEditor = new OGraph(selObject, 'graphPanel');
+	else
+		graphEditor.render(selObject);
+}

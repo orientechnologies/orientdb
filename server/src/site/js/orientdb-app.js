@@ -22,7 +22,7 @@ function executeSimpleRequest(iRequest, iSuccessCallback, iErrorCallback) {
 	if (!iErrorCallback)
 		iErrorCallback = defaultSimpleRequestError;
 
-	$.ajax( {
+	$.ajax({
 		type : 'GET',
 		url : iRequest,
 		success : function(msg) {
@@ -38,7 +38,7 @@ function fillDynaTable(iTable, iTitle, iColumnsNames, iColumnsModel, iData,
 	if (!columnModel) {
 		var columnModel = new Array();
 		for (col in iColumnsNames) {
-			columnModel.push( {
+			columnModel.push({
 				name : iColumnsNames[col],
 				index : iColumnsNames[col]
 			});
@@ -160,7 +160,7 @@ function displayResultSet(result, schema) {
 	// CREATE COLUMN MODEL
 	var columnModel = new Array();
 
-	columnModel.push( {
+	columnModel.push({
 		"name" : "@rid",
 		"index" : "@rid",
 		"width" : 30,
@@ -169,7 +169,7 @@ function displayResultSet(result, schema) {
 			sopt : [ "cn" ]
 		}
 	});
-	columnModel.push( {
+	columnModel.push({
 		"name" : "@version",
 		"index" : "@version",
 		"width" : 30,
@@ -178,7 +178,7 @@ function displayResultSet(result, schema) {
 			sopt : [ "cn" ]
 		}
 	});
-	columnModel.push( {
+	columnModel.push({
 		"name" : "@class",
 		"index" : "@class",
 		"width" : 30,
@@ -187,7 +187,7 @@ function displayResultSet(result, schema) {
 			sopt : [ "cn" ]
 		}
 	});
-	columnModel.push( {
+	columnModel.push({
 		"name" : "@class",
 		"index" : "_className",
 		edittype : "select",
@@ -250,7 +250,7 @@ function displayResultSet(result, schema) {
 		editFormatter = formatter;
 
 		if (col.charAt(0) !== '@') {
-			columnModel.push( {
+			columnModel.push({
 				name : columnNames[col],
 				editable : true,
 				index : columnNames[col],
@@ -329,4 +329,5 @@ function displayResultSet(result, schema) {
 				} else
 					alert("Please Select Row to delete!");
 			});
+
 }
