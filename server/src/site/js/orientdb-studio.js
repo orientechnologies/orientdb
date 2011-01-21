@@ -44,10 +44,10 @@ function connect() {
 function disconnect() {
 	if (orientServer == null) {
 		orientServer = new ODatabase;
+		orientServer.setDatabaseUrl($('#server').val());
+		orientServer.setDatabaseName($('#database').val());
+		orientServer.close();
 	}
-	orientServer.setDatabaseUrl($('#server').val());
-	orientServer.setDatabaseName($('#database').val());
-	orientServer.close();
 	$("#tabs-main").hide(200);
 	$("#buttonConnect").show();
 	$("#buttonDisconnect").hide();
@@ -537,8 +537,11 @@ function executeRawCommand() {
 
 	var code = rawEditor.getCode();
 
-	var req = $('#server').val() + '/' + $('#rawOperation').val() + '/'
-			+ $('#rawDatabase').val() + '/' + $('#rawArgs').val();
+	var req = $('#server').val() + '/' + $('#rawOperation').val();
+	if ($('#rawDatabase').val() != null && $('#rawDatabase').val().length > 0)
+		req += '/' + $('#rawDatabase').val();
+	if ($('#rawArgs').val() != null && $('#rawArgs').val().length > 0)
+		req += '/' + $('#rawArgs').val();
 
 	$.ajax({
 		type : $('#rawMethod').val(),
@@ -638,6 +641,10 @@ jQuery(document)
 								jQuery("#output").val(
 										"Error: " + request.responseText);
 							});
+
+					$("#database").blur(function() {
+						$('#rawDatabase').val($("#database").val());
+					});
 
 					$("#tabs-main").hide();
 					$("#buttonDisconnect").hide();
