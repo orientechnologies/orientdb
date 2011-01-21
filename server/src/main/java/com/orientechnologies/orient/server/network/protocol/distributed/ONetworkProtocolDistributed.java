@@ -49,7 +49,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 	}
 
 	@Override
-	protected void parseCommand() throws IOException {
+	protected void parseCommand() throws IOException, InterruptedException {
 		if (lastRequestType < 80) {
 			// BINARY REQUESTS
 			super.parseCommand();
@@ -152,7 +152,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_CONFIG: {
 			data.commandInfo = "Update db configuration from server node leader";
-			
+
 			final ODocument config = (ODocument) new ODocument().fromStream(channel.readBytes());
 			manager.getClusterConfiguration(connection.database.getName(), config);
 

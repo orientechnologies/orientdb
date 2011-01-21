@@ -192,8 +192,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 					break;
 				}
 
-				e = (Exception) cause;
-			} while (true);
+				if (cause != null)
+					e = (Exception) cause;
+			} while (cause != null);
 		}
 
 		if (errorReason == null)

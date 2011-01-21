@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
 import com.orientechnologies.orient.core.storage.impl.local.ODataLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
@@ -84,24 +85,26 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 				json.endCollection(1, true);
 			}
 
-			json.beginCollection(1, false, "dataSegments");
-			for (ODataLocal data : ((OStorageLocal) db.getStorage()).getDataSegments()) {
-				json.beginObject(2, true, null);
-				json.writeAttribute(3, false, "id", data.getId());
-				json.writeAttribute(3, false, "name", data.getName());
-				json.writeAttribute(3, false, "size", data.getSize());
-				json.writeAttribute(3, false, "filled", data.getFilledUpTo());
-				json.writeAttribute(3, false, "maxSize", data.getConfig().maxSize);
-				json.writeAttribute(3, false, "files", Arrays.toString(data.getConfig().infoFiles));
-				json.endObject(2, false);
+			if (db.getStorage() instanceof OStorageLocal) {
+				json.beginCollection(1, false, "dataSegments");
+				for (ODataLocal data : ((OStorageLocal) db.getStorage()).getDataSegments()) {
+					json.beginObject(2, true, null);
+					json.writeAttribute(3, false, "id", data.getId());
+					json.writeAttribute(3, false, "name", data.getName());
+					json.writeAttribute(3, false, "size", data.getSize());
+					json.writeAttribute(3, false, "filled", data.getFilledUpTo());
+					json.writeAttribute(3, false, "maxSize", data.getConfig().maxSize);
+					json.writeAttribute(3, false, "files", Arrays.toString(data.getConfig().infoFiles));
+					json.endObject(2, false);
+				}
+				json.endCollection(1, true);
 			}
-			json.endCollection(1, true);
 
 			if (db.getClusterNames() != null) {
 				json.beginCollection(1, false, "clusters");
 				OCluster cluster;
 				for (String clusterName : db.getClusterNames()) {
-					cluster = ((OStorageLocal) db.getStorage()).getClusterByName(clusterName);
+					cluster = ((OStorageEmbedded) db.getStorage()).getClusterById(db.getClusterIdByName(clusterName));
 
 					try {
 						json.beginObject(2, true, null);
@@ -128,17 +131,19 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 				json.endCollection(1, true);
 			}
 
-			json.beginCollection(1, false, "txSegment");
-			final OTxSegment txSegment = ((OStorageLocal) db.getStorage()).getTxManager().getTxSegment();
-			json.beginObject(2, true, null);
-			json.writeAttribute(3, false, "totalLogs", txSegment.getTotalLogCount());
-			json.writeAttribute(3, false, "size", txSegment.getSize());
-			json.writeAttribute(3, false, "filled", txSegment.getFilledUpTo());
-			json.writeAttribute(3, false, "maxSize", txSegment.getConfig().maxSize);
-			json.writeAttribute(3, false, "file", txSegment.getConfig().path);
-			json.endObject(2, false);
-			json.endCollection(1, true);
-
+			if (db.getStorage() instanceof OStorageLocal) {
+				json.beginCollection(1, false, "txSegment");
+				final OTxSegment txSegment = ((OStorageLocal) db.getStorage()).getTxManager().getTxSegment();
+				json.beginObject(2, true, null);
+				json.writeAttribute(3, false, "totalLogs", txSegment.getTotalLogCount());
+				json.writeAttribute(3, false, "size", txSegment.getSize());
+				json.writeAttribute(3, false, "filled", txSegment.getFilledUpTo());
+				json.writeAttribute(3, false, "maxSize", txSegment.getConfig().maxSize);
+				json.writeAttribute(3, false, "file", txSegment.getConfig().path);
+				json.endObject(2, false);
+				json.endCollection(1, true);
+			}
+			
 			json.beginCollection(1, false, "users");
 			OUser user;
 			for (ODocument doc : db.getMetadata().getSecurity().getUsers()) {

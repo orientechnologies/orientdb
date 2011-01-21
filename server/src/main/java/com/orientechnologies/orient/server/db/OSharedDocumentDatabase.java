@@ -48,11 +48,11 @@ public class OSharedDocumentDatabase {
 																																								// LOCKING
 																																								// (IT'S
 																																								// THREAD SAFE)
-																																								db.create();
 																																								OServerMain.server().getMemoryDatabases()
 																																										.put(iDatabaseName, db);
-																																							} else
-																																								db.open(iAdditionalArgs[0], iAdditionalArgs[1]);
+																																							}
+																																							
+																																							db.open(iAdditionalArgs[0], iAdditionalArgs[1]);
 
 																																							return db;
 																																						}

@@ -40,6 +40,8 @@ import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.security.OSecurityManager;
@@ -67,7 +69,7 @@ public class OServer {
 	protected List<OServerHandler>														handlers				= new ArrayList<OServerHandler>();
 	protected Map<String, Class<? extends ONetworkProtocol>>	protocols				= new HashMap<String, Class<? extends ONetworkProtocol>>();
 	protected List<OServerNetworkListener>										listeners				= new ArrayList<OServerNetworkListener>();
-	protected Map<String, ODatabaseRecord>									memoryDatabases	= new HashMap<String, ODatabaseRecord>();
+	protected Map<String, ODatabaseRecord>										memoryDatabases	= new HashMap<String, ODatabaseRecord>();
 	protected static ThreadGroup															threadGroup;
 
 	private OrientServer																			managedServer;
@@ -155,17 +157,19 @@ public class OServer {
 	}
 
 	public String getStoragePath(final String iName) {
+		final String name = iName.indexOf(":") > -1 ? iName.substring(iName.indexOf(":") + 1) : iName;
+
 		// SEARCH IN CONFIGURED PATHS
-		String dbPath = configuration.getStoragePath(iName);
+		String dbPath = configuration.getStoragePath(name);
 
 		if (dbPath == null) {
 			// SEARCH IN DEFAULT DATABASE DIRECTORY
-			dbPath = OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/databases/" + iName + "/");
+			dbPath = OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/databases/" + name + "/");
 			File f = new File(dbPath + "default.odh");
 			if (!f.exists())
-				throw new OConfigurationException("Database '" + iName + "' is not configured on server");
+				throw new OConfigurationException("Database '" + name + "' is not configured on server");
 
-			dbPath = "local:${ORIENTDB_HOME}/databases/" + iName;
+			dbPath = "local:${ORIENTDB_HOME}/databases/" + name;
 		}
 
 		return dbPath;
@@ -294,14 +298,38 @@ public class OServer {
 		createAdminUser();
 	}
 
+	/**
+	 * Load configured storages.
+	 */
 	private void loadStorages() {
 		String type;
 		for (OServerStorageConfiguration stg : OServerMain.server().getConfiguration().storages)
 			if (stg.loadOnStartup) {
-				Orient.instance().loadStorage(stg.path);
+				// @COMPATIBILITY
+				if (stg.userName == null)
+					stg.userName = "admin";
+				if (stg.userPassword == null)
+					stg.userPassword = "admin";
 
 				type = stg.path.substring(0, stg.path.indexOf(":"));
-				OLogManager.instance().info(this, "-> Loaded " + type + " database '" + stg.name + "'");
+
+				ODatabaseDocument db = null;
+				try {
+					db = new ODatabaseDocumentTx(stg.path);
+
+					if (db.exists())
+						db.open(stg.userName, stg.userPassword);
+					else
+						db.create();
+
+					OLogManager.instance().info(this, "-> Loaded " + type + " database '" + stg.name + "'");
+				} catch (Exception e) {
+					OLogManager.instance().error(this, "-> Can't load " + type + " database '" + stg.name + "': " + e);
+
+				} finally {
+					if (db != null)
+						db.close();
+				}
 			}
 	}
 

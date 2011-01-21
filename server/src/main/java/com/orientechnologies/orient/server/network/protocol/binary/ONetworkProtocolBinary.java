@@ -72,6 +72,7 @@ import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
+import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.handler.OServerHandlerHelper;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
@@ -97,7 +98,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	}
 
 	@Override
-	public void config(final Socket iSocket, final OClientConnection iConnection, final OContextConfiguration iConfig) throws IOException {
+	public void config(final Socket iSocket, final OClientConnection iConnection, final OContextConfiguration iConfig)
+			throws IOException {
 		channel = new OChannelBinaryServer(iSocket, iConfig);
 		connection = iConnection;
 
@@ -164,7 +166,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	}
 
 	@SuppressWarnings("unchecked")
-	protected void parseCommand() throws IOException {
+	protected void parseCommand() throws IOException, InterruptedException {
 		switch (lastRequestType) {
 
 		case OChannelBinaryProtocol.REQUEST_SHUTDOWN: {
@@ -177,8 +179,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			passwd = channel.readString();
 
 			if (OServerMain.server().authenticate(user, passwd, "shutdown")) {
-				OLogManager.instance().info(this, "Remote client %s:%d authenticated. Starting shutdown of server...", channel.socket.getInetAddress(),
-						channel.socket.getPort());
+				OLogManager.instance().info(this, "Remote client %s:%d authenticated. Starting shutdown of server...",
+						channel.socket.getInetAddress(), channel.socket.getPort());
 
 				sendOk(lastClientTxId);
 				channel.flush();
@@ -188,8 +190,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				return;
 			}
 
-			OLogManager.instance().error(this, "Authentication error of remote client %s:%d: shutdown is aborted.", channel.socket.getInetAddress(),
-					channel.socket.getPort());
+			OLogManager.instance().error(this, "Authentication error of remote client %s:%d: shutdown is aborted.",
+					channel.socket.getInetAddress(), channel.socket.getPort());
 
 			sendError(lastClientTxId, new OSecurityAccessException("Invalid user/password to shutdown the server"));
 			break;
@@ -217,9 +219,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			connection.database = openDatabase(dbName, user, passwd);
 
 			if (!(underlyingDatabase.getStorage() instanceof OStorageEmbedded) && !loadUserFromSchema(user, passwd)) {
-				sendError(lastClientTxId,
-						new OSecurityAccessException(connection.database.getName(), "Access denied to database '" + connection.database.getName()
-								+ "' for user: " + user));
+				sendError(lastClientTxId, new OSecurityAccessException(connection.database.getName(), "Access denied to database '"
+						+ connection.database.getName() + "' for user: " + user));
 			} else {
 				sendOk(lastClientTxId);
 				channel.writeInt(connection.id);
@@ -376,7 +377,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 							// ADD TO THE SET OF OBJECTS TO SEND
 							@Override
-							public Object fetchLinked(final ODocument iRoot, final Object iUserObject, final String iFieldName, final Object iLinked) {
+							public Object fetchLinked(final ODocument iRoot, final Object iUserObject, final String iFieldName,
+									final Object iLinked) {
 								if (iLinked instanceof ODocument)
 									return recordsToSend.add((ODocument) iLinked) ? iLinked : null;
 								else if (iLinked instanceof Collection<?>)
@@ -411,7 +413,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		case OChannelBinaryProtocol.REQUEST_RECORD_CREATE:
 			data.commandInfo = "Create record";
 
-			final long location = underlyingDatabase.save(channel.readShort(), ORID.CLUSTER_POS_INVALID, channel.readBytes(), -1, channel.readByte());
+			final long location = underlyingDatabase.save(channel.readShort(), ORID.CLUSTER_POS_INVALID, channel.readBytes(), -1,
+					channel.readByte());
 			sendOk(lastClientTxId);
 			channel.writeLong(location);
 			break;
@@ -463,8 +466,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			final boolean asynch = channel.readByte() == 'a';
 
-			final OCommandRequestText command = (OCommandRequestText) OStreamSerializerAnyStreamable.INSTANCE.fromStream(connection.database,
-					channel.readBytes());
+			final OCommandRequestText command = (OCommandRequestText) OStreamSerializerAnyStreamable.INSTANCE.fromStream(
+					connection.database, channel.readBytes());
 
 			final OQuery<?> query = (OQuery<?>) (command instanceof OQuery<?> ? command : null);
 
@@ -503,7 +506,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 									// ADD TO THE SET OF OBJECT TO
 									// SEND
 									@Override
-									public Object fetchLinked(final ODocument iRoot, final Object iUserObject, final String iFieldName, final Object iLinked) {
+									public Object fetchLinked(final ODocument iRoot, final Object iUserObject, final String iFieldName,
+											final Object iLinked) {
 										if (iLinked instanceof ODocument)
 											return recordsToSend.add((ODocument) iLinked) ? iLinked : null;
 										else if (iLinked instanceof Collection<?>)
@@ -641,7 +645,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		case OChannelBinaryProtocol.REQUEST_TX_COMMIT: {
 			data.commandInfo = "Transaction commit";
 
-			final OTransactionOptimisticProxy tx = new OTransactionOptimisticProxy((ODatabaseRecordTx) connection.database.getUnderlying(), channel);
+			final OTransactionOptimisticProxy tx = new OTransactionOptimisticProxy(
+					(ODatabaseRecordTx) connection.database.getUnderlying(), channel);
 
 			((OStorageLocal) connection.database.getStorage()).commit(connection.database.getId(), tx);
 
@@ -812,18 +817,22 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				channel.writeBytes(iRecord.toStream());
 			} catch (Exception e) {
 				channel.writeBytes(null);
-				OLogManager.instance().error(this, "Error on unmarshalling record #" + iRecord.getIdentity().toString(), OSerializationException.class);
+				OLogManager.instance().error(this, "Error on unmarshalling record #" + iRecord.getIdentity().toString(),
+						OSerializationException.class);
 			}
 		}
 	}
 
-	protected ODatabaseDocumentTx openDatabase(final String dbName, final String iUser, final String iPassword) {
-		// SEARCH THE DB IN MEMORY FIRST
-		ODatabaseDocumentTx db = (ODatabaseDocumentTx) OServerMain.server().getMemoryDatabases().get(dbName);
-
-		if (db == null)
-			// SEARCH THE DB IN LOCAL FS
-			db = new ODatabaseDocumentTx(OServerMain.server().getStoragePath(dbName));
+	protected ODatabaseDocumentTx openDatabase(final String dbName, final String iUser, final String iPassword)
+			throws InterruptedException {
+		ODatabaseDocumentTx db = OSharedDocumentDatabase.acquire(dbName, iUser, iPassword);
+		//
+		// // SEARCH THE DB IN MEMORY FIRST
+		// ODatabaseDocumentTx db = (ODatabaseDocumentTx) OServerMain.server().getMemoryDatabases().get(dbName);
+		//
+		// if (db == null)
+		// // SEARCH THE DB IN LOCAL FS
+		// db = new ODatabaseDocumentTx(OServerMain.server().getStoragePath(dbName));
 
 		if (db.isClosed())
 			if (db.getStorage() instanceof OStorageMemory)
