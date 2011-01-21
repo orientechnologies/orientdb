@@ -53,10 +53,9 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 		super(iDatabase, iFileName, iListener);
 
 		final File f = new File(fileName);
+		f.mkdirs();
 		if (f.exists())
 			f.delete();
-		else
-			f.mkdirs();
 
 		writer = new OJSONWriter(new FileWriter(fileName));
 		writer.beginObject();
