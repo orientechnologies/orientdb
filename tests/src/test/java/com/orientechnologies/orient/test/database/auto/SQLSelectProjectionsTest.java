@@ -186,7 +186,7 @@ public class SQLSelectProjectionsTest {
 		Assert.assertTrue(result.size() != 0);
 
 		for (ODocument d : result) {
-			Assert.assertEquals(d.field("10"), 10l);
+			Assert.assertEquals(((Integer) d.field("10")).intValue(), 10l);
 			Assert.assertEquals(d.field("ciao"), "ciao");
 
 			Assert.assertNull(d.getClassName());

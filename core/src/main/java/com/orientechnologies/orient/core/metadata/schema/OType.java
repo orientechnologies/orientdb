@@ -35,17 +35,17 @@ import com.orientechnologies.orient.core.record.ORecord;
  * 
  */
 public enum OType {
-	BOOLEAN("Boolean", 0, false, true, 1, new Class<?>[] { Boolean.TYPE, Boolean.class }, new Class<?>[] { Boolean.class }) {
+	BOOLEAN("Boolean", 0, false, true, 1, new Class<?>[] { Boolean.class, Boolean.TYPE }, new Class<?>[] { Boolean.class }) {
 	},
-	INTEGER("Integer", 1, false, true, 4, new Class<?>[] { Integer.TYPE, Integer.class }, new Class<?>[] { Number.class }) {
+	INTEGER("Integer", 1, false, true, 4, new Class<?>[] { Integer.class, Integer.TYPE }, new Class<?>[] { Number.class }) {
 	},
-	SHORT("Short", 2, false, true, 2, new Class<?>[] { Short.TYPE, Short.class }, new Class<?>[] { Number.class }) {
+	SHORT("Short", 2, false, true, 2, new Class<?>[] { Short.class, Short.TYPE }, new Class<?>[] { Number.class }) {
 	},
-	LONG("Long", 3, false, true, 8, new Class<?>[] { Long.TYPE, Long.class }, new Class<?>[] { Number.class }) {
+	LONG("Long", 3, false, true, 8, new Class<?>[] { Long.class, Long.TYPE }, new Class<?>[] { Number.class }) {
 	},
-	FLOAT("Float", 4, false, true, 4, new Class<?>[] { Float.TYPE, Float.class }, new Class<?>[] { Number.class }) {
+	FLOAT("Float", 4, false, true, 4, new Class<?>[] { Float.class, Float.TYPE }, new Class<?>[] { Number.class }) {
 	},
-	DOUBLE("Double", 5, false, true, 8, new Class<?>[] { Double.TYPE, Double.class }, new Class<?>[] { Number.class }) {
+	DOUBLE("Double", 5, false, true, 8, new Class<?>[] { Double.class, Double.TYPE }, new Class<?>[] { Number.class }) {
 	},
 	DATE("Date", 6, false, true, 8, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Long.class }) {
 	},
@@ -69,7 +69,7 @@ public enum OType {
 	},
 	LINKMAP("Map", 16, true, false, 8, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
 	},
-	BYTE("Byte", 17, false, true, 1, new Class<?>[] { Byte.TYPE, Byte.class }, new Class<?>[] { Number.class, Character.class }) {
+	BYTE("Byte", 17, false, true, 1, new Class<?>[] { Byte.class, Byte.TYPE }, new Class<?>[] { Number.class, Character.class }) {
 	};
 
 	protected static final OType[]	TYPES	= new OType[] { BOOLEAN, BYTE, INTEGER, SHORT, LONG, FLOAT, DOUBLE, DATE, STRING, BINARY,
@@ -342,6 +342,10 @@ public enum OType {
 		}
 
 		return null;
+	}
+
+	public Class<?> getDefaultJavaType() {
+		return javaTypes[0];
 	}
 
 	public Class<?>[] getJavaTypes() {

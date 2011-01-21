@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import com.orientechnologies.common.parser.OStringParser;
@@ -154,16 +155,34 @@ public class OSQLHelper {
 				// BOOLEAN, FALSE
 				fieldValue = Boolean.FALSE;
 			else {
-				OType t = ORecordSerializerCSVAbstract.getNumber(iValue);
-				// NUMBER
-				if (t == OType.LONG)
-					fieldValue = Long.parseLong(iValue);
-				else if (t == OType.DOUBLE)
-					fieldValue = Double.parseDouble(iValue);
+				final Object v = parseStringNumber(iValue);
+				if (v != null)
+					fieldValue = v;
 			}
 		}
 
 		return fieldValue;
+	}
+
+	public static Object parseStringNumber(final String iValue) {
+		final OType t = ORecordSerializerCSVAbstract.getType(iValue);
+
+		if (t == OType.INTEGER)
+			return Integer.parseInt(iValue);
+		else if (t == OType.LONG)
+			return Integer.parseInt(iValue);
+		else if (t == OType.FLOAT)
+			return Float.parseFloat(iValue);
+		else if (t == OType.SHORT)
+			return Short.parseShort(iValue);
+		else if (t == OType.BYTE)
+			return Byte.parseByte(iValue);
+		else if (t == OType.DOUBLE)
+			return Byte.parseByte(iValue);
+		else if (t == OType.DATE)
+			return new Date(Long.parseLong(iValue));
+
+		return null;
 	}
 
 	public static Object parseValue(final OSQLFilter iSQLFilter, final ODatabaseRecord iDatabase, final OCommandToParse iCommand,

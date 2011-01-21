@@ -20,6 +20,7 @@ import java.io.StringWriter;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -54,15 +55,16 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 
 public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
-	public static final String								NAME							= "json";
-	public static final ORecordSerializerJSON	INSTANCE					= new ORecordSerializerJSON();
-	public static final String								ATTRIBUTE_ID			= "@rid";
-	public static final String								ATTRIBUTE_VERSION	= "@version";
-	public static final String								ATTRIBUTE_TYPE		= "@type";
-	public static final String								ATTRIBUTE_CLASS		= "@class";
-	public static final String								DEF_DATE_FORMAT		= "yyyy-MM-dd HH:mm:ss:SSS";
+	public static final String								NAME									= "json";
+	public static final ORecordSerializerJSON	INSTANCE							= new ORecordSerializerJSON();
+	public static final String								ATTRIBUTE_ID					= "@rid";
+	public static final String								ATTRIBUTE_VERSION			= "@version";
+	public static final String								ATTRIBUTE_TYPE				= "@type";
+	public static final String								ATTRIBUTE_FIELD_TYPES	= "@fieldTypes";
+	public static final String								ATTRIBUTE_CLASS				= "@class";
+	public static final String								DEF_DATE_FORMAT				= "yyyy-MM-dd HH:mm:ss:SSS";
 
-	private SimpleDateFormat									dateFormat				= new SimpleDateFormat(DEF_DATE_FORMAT);
+	private SimpleDateFormat									dateFormat						= new SimpleDateFormat(DEF_DATE_FORMAT);
 
 	@Override
 	public ORecordInternal<?> fromString(final ODatabaseRecord iDatabase, final String iSource) {
@@ -86,12 +88,35 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 		String[] fields = OStringParser.getWords(iSource, ":,", true);
 
+		String fieldName;
+		String fieldValue;
+		String fieldValueAsString;
+		Map<String, Character> fieldTypes = null;
+
+		// SEARCH FOR FIELD TYPES IF ANY
+		for (int i = 0; i < fields.length; i += 2) {
+			fieldName = fields[i];
+			fieldName = fieldName.substring(1, fieldName.length() - 1);
+			fieldValue = fields[i + 1];
+			fieldValueAsString = fieldValue.length() >= 2 ? fieldValue.substring(1, fieldValue.length() - 1) : fieldValue;
+
+			if (fieldName.equals(ATTRIBUTE_FIELD_TYPES) && iRecord instanceof ODocument) {
+				// LOAD THE FIELD TYPE MAP
+				final String[] fieldTypesParts = fieldValueAsString.split(",");
+				if (fieldTypesParts.length > 0) {
+					fieldTypes = new HashMap<String, Character>();
+					String[] part;
+					for (String f : fieldTypesParts) {
+						part = f.split("=");
+						if (part.length == 2)
+							fieldTypes.put(part[0], part[1].charAt(0));
+					}
+				}
+			}
+		}
+
 		try {
 			if (fields != null && fields.length > 0) {
-				String fieldName;
-				String fieldValue;
-				String fieldValueAsString;
-
 				for (int i = 0; i < fields.length; i += 2) {
 					fieldName = fields[i];
 					fieldName = fieldName.substring(1, fieldName.length() - 1);
@@ -114,6 +139,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 					} else if (fieldName.equals(ATTRIBUTE_CLASS) && iRecord instanceof ODocument)
 						((ODocument) iRecord).setClassNameIfExists("null".equals(fieldValueAsString) ? null : fieldValueAsString);
+					else if (fieldName.equals(ATTRIBUTE_FIELD_TYPES) && iRecord instanceof ODocument)
+						// JUMP IT
+						continue;
 
 					// RECORD VALUE(S)
 					else if (fieldName.equals("value") && !(iRecord instanceof ODocument)) {
@@ -133,7 +161,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 						}
 					} else {
 						if (iRecord instanceof ODocument) {
-							final Object v = getValue((ODocument) iRecord, fieldName, fieldValue, fieldValueAsString, null, null);
+							final Object v = getValue((ODocument) iRecord, fieldName, fieldValue, fieldValueAsString, null, null, fieldTypes);
 
 							if (v != null)
 								if (v instanceof Collection<?> && ((Collection<?>) v).size() > 0) {
@@ -166,7 +194,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 	}
 
 	private Object getValue(final ODocument iRecord, String iFieldName, String iFieldValue, String iFieldValueAsString, OType iType,
-			OType iLinkedType) {
+			OType iLinkedType, final Map<String, Character> iFieldTypes) {
 		if (iFieldValue.equals("null"))
 			return null;
 
@@ -204,7 +232,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 					iFieldValue = fields[i + 1];
 					iFieldValueAsString = iFieldValue.length() >= 2 ? iFieldValue.substring(1, iFieldValue.length() - 1) : iFieldValue;
 
-					embeddedMap.put(iFieldName, getValue(iRecord, null, iFieldValue, iFieldValueAsString, iLinkedType, null));
+					embeddedMap.put(iFieldName, getValue(iRecord, null, iFieldValue, iFieldValueAsString, iLinkedType, null, iFieldTypes));
 				}
 				return embeddedMap;
 			}
@@ -228,7 +256,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 					iFieldValue = item.trim();
 					iFieldValueAsString = iFieldValue.length() >= 2 ? iFieldValue.substring(1, iFieldValue.length() - 1) : iFieldValue;
 
-					collectionItem = getValue(iRecord, null, iFieldValue, iFieldValueAsString, iLinkedType, null);
+					collectionItem = getValue(iRecord, null, iFieldValue, iFieldValueAsString, iLinkedType, null, iFieldTypes);
 
 					if (collectionItem instanceof ODocument && iRecord instanceof ODocument)
 						// SET THE OWNER
@@ -246,11 +274,21 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			if (iFieldValue.charAt(0) != '\"') {
 				if (iFieldValue.equalsIgnoreCase("false") || iFieldValue.equalsIgnoreCase("true"))
 					iType = OType.BOOLEAN;
-				else if (OStringSerializerHelper.contains(iFieldValue, '.'))
-					iType = OType.DOUBLE;
-				else
-					iType = OType.LONG;
+				else {
+					Character c = null;
+					if (iFieldTypes != null) {
+						c = iFieldTypes.get(iFieldName);
+						if (c != null)
+							iType = ORecordSerializerStringAbstract.getType(iFieldValue + c);
+					}
 
+					if (c == null)
+						// TRY TO AUTODETERMINE THE BEST TYPE
+						if (OStringSerializerHelper.contains(iFieldValue, '.'))
+							iType = OType.FLOAT;
+						else
+							iType = OType.INTEGER;
+				}
 			} else if (iFieldValueAsString.length() >= 4 && iFieldValueAsString.charAt(0) == '#')
 				iType = OType.LINK;
 			else if (iFieldValueAsString.startsWith("{") && iFieldValueAsString.endsWith("}"))
@@ -314,6 +352,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			boolean attribSameRow;
 			int indentLevel;
 			String fetchPlan = null;
+			boolean keepTypes;
 
 			if (iFormat == null) {
 				includeType = true;
@@ -323,6 +362,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				attribSameRow = true;
 				indentLevel = 0;
 				fetchPlan = "";
+				keepTypes = false;
 			} else {
 				includeType = false;
 				includeVer = false;
@@ -330,6 +370,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				includeClazz = false;
 				attribSameRow = false;
 				indentLevel = 0;
+				keepTypes = false;
 
 				String[] format = iFormat.split(",");
 				for (String f : format)
@@ -347,6 +388,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 						indentLevel = Integer.parseInt(f.substring(f.indexOf(":") + 1));
 					else if (f.startsWith("fetchPlan"))
 						fetchPlan = f.substring(f.indexOf(":") + 1);
+					else if (f.startsWith("keepTypes"))
+						keepTypes = true;
 			}
 
 			json.beginObject(indentLevel);
@@ -362,8 +405,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				if (fetchPlan != null && fetchPlan.length() > 0)
 					fetchPlanMap = OFetchHelper.buildFetchPlan(fetchPlan);
 
-				processRecord(json, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, record, fetchPlanMap, 0,
-						-1, parsedRecords);
+				processRecord(json, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, record, fetchPlanMap,
+						keepTypes, 0, -1, parsedRecords);
 			} else if (iRecord instanceof ORecordStringable) {
 
 				// STRINGABLE
@@ -389,11 +432,29 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 	private void processRecord(final OJSONWriter json, int indentLevel, boolean includeType, boolean includeId, boolean includeVer,
 			boolean includeClazz, boolean attribSameRow, final ORecordSchemaAware<?> record, Map<String, Integer> iFetchPlan,
-			final int iCurrentLevel, final int iMaxFetch, final Set<ORID> parsedRecords) throws IOException {
+			boolean keepTypes, final int iCurrentLevel, final int iMaxFetch, final Set<ORID> parsedRecords) throws IOException {
 		Object fieldValue;
+
+		final StringBuilder types = new StringBuilder();
+
 		for (String fieldName : record.fieldNames()) {
 			if (iFetchPlan == null) {
-				json.writeAttribute(indentLevel + 1, true, fieldName, OJSONWriter.encode(record.field(fieldName)));
+				final Object v = record.field(fieldName);
+				if (keepTypes) {
+					if (v instanceof Long)
+						appendType(types, fieldName, 'l');
+					else if (v instanceof Float)
+						appendType(types, fieldName, 'f');
+					else if (v instanceof Short)
+						appendType(types, fieldName, 's');
+					else if (v instanceof Double)
+						appendType(types, fieldName, 'd');
+					else if (v instanceof Date)
+						appendType(types, fieldName, 't');
+					else if (v instanceof Byte)
+						appendType(types, fieldName, 'b');
+				}
+				json.writeAttribute(indentLevel + 1, true, fieldName, OJSONWriter.encode(v));
 			} else {
 				final Integer depthLevel = getDepthLevel(record, iFetchPlan, fieldName);
 				if (depthLevel != null) {
@@ -417,7 +478,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				} else {
 					try {
 						fetch(record, iFetchPlan, fieldValue, fieldName, iCurrentLevel + 1, iMaxFetch, json, indentLevel, includeType,
-								includeId, includeVer, includeClazz, attribSameRow, false, parsedRecords);
+								includeId, includeVer, includeClazz, attribSameRow, keepTypes, parsedRecords);
 					} catch (Exception e) {
 						e.printStackTrace();
 						OLogManager.instance().error(null, "Fetching error on record %s", e, record.getIdentity());
@@ -425,6 +486,17 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				}
 			}
 		}
+
+		if (keepTypes && types.length() > 0)
+			json.writeAttribute(indentLevel + 1, true, ATTRIBUTE_FIELD_TYPES, types.toString());
+	}
+
+	private void appendType(final StringBuilder iBuffer, final String iFieldName, final char iType) {
+		if (iBuffer.length() > 0)
+			iBuffer.append(',');
+		iBuffer.append(iFieldName);
+		iBuffer.append('=');
+		iBuffer.append(iType);
 	}
 
 	private void writeSignature(final OJSONWriter json, int indentLevel, boolean includeType, boolean includeId, boolean includeVer,
@@ -453,10 +525,10 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 		}
 	}
 
-	private void fetch(final ORecordSchemaAware<?> iRootRecord, Map<String, Integer> iFetchPlan, Object fieldValue, String fieldName,
-			final int iCurrentLevel, final int iMaxFetch, final OJSONWriter json, int indentLevel, boolean includeType,
-			boolean includeId, boolean includeVer, boolean includeClazz, boolean attribSameRow, boolean root,
-			final Set<ORID> parsedRecords) throws IOException {
+	private void fetch(final ORecordSchemaAware<?> iRootRecord, final Map<String, Integer> iFetchPlan, final Object fieldValue,
+			final String fieldName, final int iCurrentLevel, final int iMaxFetch, final OJSONWriter json, int indentLevel,
+			boolean includeType, final boolean includeId, final boolean includeVer, final boolean includeClazz,
+			final boolean attribSameRow, final boolean keepTypes, final Set<ORID> parsedRecords) throws IOException {
 		Integer depthLevel;
 		final Integer anyFieldDepthLevel = iFetchPlan != null ? iFetchPlan.get("*") : -1;
 		depthLevel = getDepthLevel(iRootRecord, iFetchPlan, fieldName);
@@ -477,16 +549,16 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			json.writeAttribute(indentLevel + 1, true, fieldName, null);
 		} else if (fieldValue instanceof ODocument) {
 			fetchDocument(iFetchPlan, fieldValue, fieldName, iCurrentLevel, iMaxFetch, json, indentLevel, includeType, includeId,
-					includeVer, includeClazz, attribSameRow, parsedRecords);
+					includeVer, includeClazz, attribSameRow, keepTypes, parsedRecords);
 		} else if (fieldValue instanceof Collection<?>) {
 			fetchCollection(iFetchPlan, fieldValue, fieldName, iCurrentLevel, iMaxFetch, json, indentLevel, includeType, includeId,
-					includeVer, includeClazz, attribSameRow, parsedRecords);
+					includeVer, includeClazz, attribSameRow, keepTypes, parsedRecords);
 		} else if (fieldValue.getClass().isArray()) {
 			fetchArray(iFetchPlan, fieldValue, fieldName, iCurrentLevel, iMaxFetch, json, indentLevel, includeType, includeId,
-					includeVer, includeClazz, attribSameRow, parsedRecords);
+					includeVer, includeClazz, attribSameRow, keepTypes, parsedRecords);
 		} else if (fieldValue instanceof Map<?, ?>) {
 			fetchMap(iFetchPlan, fieldValue, fieldName, iCurrentLevel, iMaxFetch, json, indentLevel, includeType, includeId, includeVer,
-					includeClazz, attribSameRow, parsedRecords);
+					includeClazz, attribSameRow, keepTypes, parsedRecords);
 		}
 		if (iMaxFetch > -1 && iCurrentLevel >= iMaxFetch) {
 			// MAX FETCH SIZE REACHED: STOP TO FETCH AT ALL
@@ -497,8 +569,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 	@SuppressWarnings("unchecked")
 	private void fetchMap(Map<String, Integer> iFetchPlan, Object fieldValue, String fieldName, final int iCurrentLevel,
-			final int iMaxFetch, final OJSONWriter json, int indentLevel, boolean includeType, boolean includeId, boolean includeVer,
-			boolean includeClazz, boolean attribSameRow, final Set<ORID> parsedRecords) throws IOException {
+			final int iMaxFetch, final OJSONWriter json, final int indentLevel, final boolean includeType, final boolean includeId,
+			final boolean includeVer, final boolean includeClazz, final boolean attribSameRow, final boolean keepTypes,
+			final Set<ORID> parsedRecords) throws IOException {
 		final Map<String, ODocument> linked = (Map<String, ODocument>) fieldValue;
 		json.beginObject(indentLevel + 1, true, fieldValue);
 		for (ODocument d : (linked).values()) {
@@ -507,7 +580,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				parsedRecords.add((d).getIdentity());
 				json.beginObject(indentLevel + 1, true, null);
 				writeSignature(json, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, d);
-				processRecord(json, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, d, iFetchPlan,
+				processRecord(json, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, d, iFetchPlan, keepTypes,
 						iCurrentLevel + 1, iMaxFetch, parsedRecords);
 				json.endObject(indentLevel + 1, true);
 			} else {
@@ -517,9 +590,10 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 		json.endObject(indentLevel + 1, true);
 	}
 
-	private void fetchArray(Map<String, Integer> iFetchPlan, Object fieldValue, String fieldName, final int iCurrentLevel,
-			final int iMaxFetch, final OJSONWriter json, int indentLevel, boolean includeType, boolean includeId, boolean includeVer,
-			boolean includeClazz, boolean attribSameRow, final Set<ORID> parsedRecords) throws IOException {
+	private void fetchArray(final Map<String, Integer> iFetchPlan, final Object fieldValue, final String fieldName,
+			final int iCurrentLevel, final int iMaxFetch, final OJSONWriter json, final int indentLevel, final boolean includeType,
+			final boolean includeId, final boolean includeVer, final boolean includeClazz, final boolean attribSameRow,
+			final boolean keepTypes, final Set<ORID> parsedRecords) throws IOException {
 		if (fieldValue instanceof ODocument[]) {
 			final ODocument[] linked = (ODocument[]) fieldValue;
 			json.beginCollection(indentLevel + 1, true, fieldName);
@@ -530,7 +604,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 					json.beginObject(indentLevel + 1, true, null);
 					writeSignature(json, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, d);
 					processRecord(json, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, d, iFetchPlan,
-							iCurrentLevel + 1, iMaxFetch, parsedRecords);
+							keepTypes, iCurrentLevel + 1, iMaxFetch, parsedRecords);
 					json.endObject(indentLevel + 1, true);
 				} else {
 					json.writeValue(indentLevel + 1, false, OJSONWriter.encode(d));
@@ -543,9 +617,10 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void fetchCollection(Map<String, Integer> iFetchPlan, Object fieldValue, String fieldName, final int iCurrentLevel,
-			final int iMaxFetch, final OJSONWriter json, int indentLevel, boolean includeType, boolean includeId, boolean includeVer,
-			boolean includeClazz, boolean attribSameRow, final Set<ORID> parsedRecords) throws IOException {
+	private void fetchCollection(final Map<String, Integer> iFetchPlan, final Object fieldValue, final String fieldName,
+			final int iCurrentLevel, final int iMaxFetch, final OJSONWriter json, final int indentLevel, final boolean includeType,
+			final boolean includeId, final boolean includeVer, final boolean includeClazz, final boolean attribSameRow,
+			final boolean keepTypes, final Set<ORID> parsedRecords) throws IOException {
 		final Collection<ODocument> linked = (Collection<ODocument>) fieldValue;
 		json.beginCollection(indentLevel + 1, true, fieldName);
 		for (ODocument d : linked) {
@@ -554,7 +629,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				parsedRecords.add((d).getIdentity());
 				json.beginObject(indentLevel + 1, true, null);
 				writeSignature(json, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, d);
-				processRecord(json, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, d, iFetchPlan,
+				processRecord(json, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, d, iFetchPlan, keepTypes,
 						iCurrentLevel + 1, iMaxFetch, parsedRecords);
 				json.endObject(indentLevel + 1, true);
 			} else {
@@ -566,14 +641,14 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 	private void fetchDocument(Map<String, Integer> iFetchPlan, Object fieldValue, String fieldName, final int iCurrentLevel,
 			final int iMaxFetch, final OJSONWriter json, int indentLevel, boolean includeType, boolean includeId, boolean includeVer,
-			boolean includeClazz, boolean attribSameRow, final Set<ORID> parsedRecords) throws IOException {
+			boolean includeClazz, boolean attribSameRow, boolean keepTypes, final Set<ORID> parsedRecords) throws IOException {
 		if (!parsedRecords.contains(((ODocument) fieldValue).getIdentity())) {
 			parsedRecords.add(((ODocument) fieldValue).getIdentity());
 			final ODocument linked = (ODocument) fieldValue;
 			json.beginObject(indentLevel + 1, true, fieldName);
 			writeSignature(json, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, linked);
 			processRecord(json, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, linked, iFetchPlan,
-					iCurrentLevel + 1, iMaxFetch, parsedRecords);
+					keepTypes, iCurrentLevel + 1, iMaxFetch, parsedRecords);
 			json.endObject(indentLevel + 1, true);
 		} else {
 			json.writeAttribute(indentLevel + 1, true, fieldName, OJSONWriter.encode(fieldValue));

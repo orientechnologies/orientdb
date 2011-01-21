@@ -64,7 +64,7 @@ public class DbCreationTest {
 				throw new OConfigurationException("Can't load file orientdb-server-config.xml to execute remote tests");
 
 			FileReader f = new FileReader(file);
-			char[] buffer = new char[(int) file.length()];
+			final char[] buffer = new char[(int) file.length()];
 			f.read(buffer);
 			f.close();
 

@@ -132,7 +132,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 								} else
 									linkedType = OType.EMBEDDED;
 							} else {
-								linkedType = OType.getTypeByAssignability(firstValue.getClass());
+								linkedType = OType.getTypeByClass(firstValue.getClass());
 
 								if (linkedType != OType.LINK) {
 									// EMBEDDED FOR SURE SINCE IT CONTAINS JAVA TYPES
@@ -166,7 +166,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 								type = OType.LINKMAP;
 
 							// LINK: GET THE CLASS
-							linkedType = type == OType.EMBEDDEDLIST || type == OType.EMBEDDEDSET || type == OType.EMBEDDEDMAP ? OType.EMBEDDED : OType.LINK;
+							linkedType = type == OType.EMBEDDEDLIST || type == OType.EMBEDDEDSET || type == OType.EMBEDDEDMAP ? OType.EMBEDDED
+									: OType.LINK;
 							linkedClass = getLinkInfo(database, getClassName(firstValue));
 						} else {
 							linkedType = OType.getTypeByClass(firstValue.getClass());
@@ -199,13 +200,25 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 						type = OType.DATE;
 				} else if (fieldValue instanceof String)
 					type = OType.STRING;
+				else if (fieldValue instanceof Integer)
+					type = OType.INTEGER;
+				else if (fieldValue instanceof Long)
+					type = OType.LONG;
+				else if (fieldValue instanceof Float)
+					type = OType.FLOAT;
+				else if (fieldValue instanceof Short)
+					type = OType.SHORT;
+				else if (fieldValue instanceof Byte)
+					type = OType.BYTE;
+				else if (fieldValue instanceof Double)
+					type = OType.DOUBLE;
 			}
 
 			if (type == null)
 				type = OType.EMBEDDED;
 
-			fieldValue = fieldToStream((ODocument) iRecord, iRecord.getDatabase(), iObjHandler, type, linkedClass, linkedType, f.getKey(), f.getValue(),
-					iMarshalledRecords, true);
+			fieldValue = fieldToStream((ODocument) iRecord, iRecord.getDatabase(), iObjHandler, type, linkedClass, linkedType,
+					f.getKey(), f.getValue(), iMarshalledRecords, true);
 
 			buffer.append(f.getKey());
 			buffer.append(FIELD_VALUE_SEPARATOR);
@@ -324,7 +337,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 										linkedType = OType.EMBEDDED;
 									} else if (Character.isDigit(value.charAt(0)) || value.charAt(0) == '+' || value.charAt(0) == '-') {
 										String[] items = value.split(",");
-										linkedType = getNumber(items[0]);
+										linkedType = getType(items[0]);
 									} else if (value.charAt(0) == '\'' || value.charAt(0) == '"')
 										linkedType = OType.STRING;
 								}
@@ -339,7 +352,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 							else if (fieldValue.equals("true") || fieldValue.equals("false"))
 								type = OType.BOOLEAN;
 							else
-								type = getNumber(fieldValue);
+								type = getType(fieldValue);
 						}
 					}
 

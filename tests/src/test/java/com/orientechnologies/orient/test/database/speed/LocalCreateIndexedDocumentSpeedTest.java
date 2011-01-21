@@ -61,7 +61,7 @@ public class LocalCreateIndexedDocumentSpeedTest extends OrientMonoThreadTest {
 		record.reset();
 
 		record.setClassName("Profile");
-		record.field("nick", String.valueOf(100+data.getCyclesDone()));
+		record.field("nick", String.valueOf(100 + data.getCyclesDone()));
 		record.field("name", "Luca");
 		record.field("surname", "Garulli");
 

@@ -123,8 +123,8 @@ public class OProperty extends ODocumentWrapperNoClass {
 	public void fromStream() {
 		name = document.field("name");
 		if (document.field("type") != null)
-			type = OType.getById(((Long) document.field("type")).byteValue());
-		offset = ((Long) document.field("offset")).intValue();
+			type = OType.getById(((Integer) document.field("type")).byteValue());
+		offset = ((Integer) document.field("offset")).intValue();
 
 		mandatory = (Boolean) document.field("mandatory");
 		notNull = (Boolean) document.field("notNull");
@@ -134,7 +134,7 @@ public class OProperty extends ODocumentWrapperNoClass {
 
 		linkedClassName = (String) document.field("linkedClass");
 		if (document.field("linkedType") != null)
-			linkedType = OType.getById(((Long) document.field("linkedType")).byteValue());
+			linkedType = OType.getById(((Integer) document.field("linkedType")).byteValue());
 
 		if (document.field("index") != null) {
 			setIndex(INDEX_TYPE.valueOf((String) document.field("index-type")), ((ORecord<?>) document.field("index")).getIdentity());

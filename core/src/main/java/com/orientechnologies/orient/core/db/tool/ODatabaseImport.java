@@ -454,7 +454,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		return total;
 	}
 
-	@SuppressWarnings("unchecked")
 	private ORID importRecord() throws IOException, ParseException {
 		String value = jsonReader.readString(OJSONReader.END_OBJECT, true);
 

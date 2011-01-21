@@ -247,13 +247,13 @@ public class OClass extends ODocumentWrapperNoClass {
 	@Override
 	public void fromStream() {
 		name = document.field("name");
-		id = ((Long) document.field("id")).intValue();
-		defaultClusterId = ((Long) document.field("defaultClusterId")).intValue();
+		id = document.field("id");
+		defaultClusterId = document.field("defaultClusterId");
 
-		Collection<Long> coll = document.field("clusterIds");
+		Collection<Integer> coll = document.field("clusterIds");
 		clusterIds = new int[coll.size()];
 		int i = 0;
-		for (Long item : coll)
+		for (Integer item : coll)
 			clusterIds[i++] = item.intValue();
 
 		polymorphicClusterIds = clusterIds;
