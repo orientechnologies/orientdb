@@ -80,6 +80,17 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	public <RET extends T> RET load(final ORID iRecordId);
 
 	/**
+	 * Loads the entity by the Record ID using a fetch plan.
+	 * 
+	 * @param iRecordId
+	 *          The unique record id of the entity to load.
+	 * @param iFetchPlan
+	 *          Fetch plan used
+	 * @return
+	 */
+	public <RET extends T> RET load(final ORID iRecordId, String iFetchPlan);
+
+	/**
 	 * Saves an entity. If the entity is not dirty, then the operation will be ignored. For custom entity implementations assure to
 	 * set the entity as dirty.
 	 * 

@@ -98,7 +98,12 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 
 	@SuppressWarnings("unchecked")
 	public OGraphElement load(final ORID iRecordId) {
-		ODocument doc = loadAsDocument(iRecordId);
+		return load(iRecordId, null);
+	}
+
+	@SuppressWarnings("unchecked")
+	public OGraphElement load(final ORID iRecordId, final String iFetchPlan) {
+		ODocument doc = loadAsDocument(iRecordId, iFetchPlan);
 
 		if (doc == null)
 			return null;
@@ -106,7 +111,7 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 		return newInstance(doc.getClassName()).setDocument(doc);
 	}
 
-	public ODocument loadAsDocument(final ORID iRecordId) {
+	public ODocument loadAsDocument(final ORID iRecordId, final String iFetchPlan) {
 		if (iRecordId == null)
 			return null;
 
@@ -114,13 +119,14 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 		ODocument doc = getRecordById(iRecordId);
 		if (doc == null) {
 			// TRY TO LOAD IT
-			doc = (ODocument) underlying.load(iRecordId);
+			doc = (ODocument) underlying.load(iRecordId, iFetchPlan);
 			if (doc == null)
 				// NOT FOUND
 				return null;
 		}
 		if (doc.getClassName() == null)
-			throw new OGraphException("The document loaded has no class, while it should be a OGraphVertex, OGraphEdge or any subclass of its");
+			throw new OGraphException(
+					"The document loaded has no class, while it should be a OGraphVertex, OGraphEdge or any subclass of its");
 
 		return doc;
 	}

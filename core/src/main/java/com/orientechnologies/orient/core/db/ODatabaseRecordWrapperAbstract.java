@@ -81,7 +81,8 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 		return underlying.browseCluster(iClusterName);
 	}
 
-	public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(final String iClusterName, final Class<REC> iRecordClass) {
+	public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(final String iClusterName,
+			final Class<REC> iRecordClass) {
 		return underlying.browseCluster(iClusterName, iRecordClass);
 	}
 
@@ -104,6 +105,10 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 
 	public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId) {
 		return (RET) underlying.load(iRecordId);
+	}
+
+	public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId, final String iFetchPlan) {
+		return (RET) underlying.load(iRecordId, iFetchPlan);
 	}
 
 	public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord) {

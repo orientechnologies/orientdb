@@ -64,7 +64,6 @@ public class OFetchHelper {
 
 		Object fieldValue;
 		Integer depthLevel;
-		int currentLevel;
 		final Integer anyFieldDepthLevel = iFetchPlan != null ? iFetchPlan.get(ANY_FIELD) : -1;
 		try {
 			// BROWSE ALL THE DOCUMENT'S FIELDS
@@ -90,15 +89,9 @@ public class OFetchHelper {
 					// NO FETCH THIS FIELD PLEASE
 					continue;
 
-				// DETERMINE CURRENT DEPTH LEVEL
-				if (fieldName.equals(iCurrentField)) {
-					currentLevel = iCurrentLevel + 1;
-
-					if (depthLevel >= currentLevel)
-						// MAX DEPTH REACHED: STOP TO FETCH THIS FIELD
-						continue;
-				} else
-					currentLevel = 0;
+				if (depthLevel > -1 && iCurrentLevel >= depthLevel)
+					// MAX DEPTH REACHED: STOP TO FETCH THIS FIELD
+					continue;
 
 				Object userObject;
 				if (fieldValue instanceof ODocument) {
@@ -107,7 +100,7 @@ public class OFetchHelper {
 						userObject = iListener.fetchLinked(iRootRecord, iUserObject, fieldName, linked);
 						if (userObject != null)
 							// GO RECURSIVELY
-							fetch(linked, userObject, iFetchPlan, fieldName, currentLevel, iMaxFetch, iListener);
+							fetch(linked, userObject, iFetchPlan, fieldName, iCurrentLevel + 1, iMaxFetch, iListener);
 					} catch (ORecordNotFoundException e) {
 						OLogManager.instance().error(null, "Linked record %s was not found", linked);
 					}
@@ -118,7 +111,7 @@ public class OFetchHelper {
 					if (userObject != null)
 						for (ODocument d : (Collection<ODocument>) userObject) {
 							// GO RECURSIVELY
-							fetch(d, d, iFetchPlan, fieldName, currentLevel, iMaxFetch, iListener);
+							fetch(d, d, iFetchPlan, fieldName, iCurrentLevel + 1, iMaxFetch, iListener);
 						}
 				} else if (fieldValue instanceof Map<?, ?>) {
 					final Map<String, ODocument> linked = (Map<String, ODocument>) fieldValue;
@@ -126,7 +119,7 @@ public class OFetchHelper {
 					if (userObject != null)
 						for (ODocument d : ((Map<String, ODocument>) userObject).values()) {
 							// GO RECURSIVELY
-							fetch(d, d, iFetchPlan, fieldName, currentLevel, iMaxFetch, iListener);
+							fetch(d, d, iFetchPlan, fieldName, iCurrentLevel + 1, iMaxFetch, iListener);
 						}
 				}
 

@@ -166,6 +166,11 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		return (RET) load(iRecordId.getClusterId(), iRecordId.getClusterPosition(), rec, null);
 	}
 
+	public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId, final String iFetchPlan) {
+		final ORecordInternal<?> rec = databaseOwner.newInstance();
+		return (RET) load(iRecordId.getClusterId(), iRecordId.getClusterPosition(), rec, iFetchPlan);
+	}
+
 	public <RET extends ORecordInternal<?>> RET load(final int iClusterId, final long iPosition, final ORecordInternal<?> iRecord,
 			final String iFetchPlan) {
 		return (RET) executeReadRecord(iClusterId, iPosition, iRecord, iFetchPlan);
