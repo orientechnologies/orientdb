@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -40,6 +41,7 @@ import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
@@ -744,7 +746,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
 		channel.writeInt(iClientTxId);
 
-		Throwable current = t;
+		Throwable current;
+		if (t instanceof OLockException && t.getCause() instanceof ODatabaseException)
+			// BYPASS THE DB POOL EXCEPTION TO PROPAGATE THE RIGHT SECURITY ONE
+			current = t.getCause();
+		else
+			current = t;
+
 		while (current != null) {
 			// MORE DETAILS ARE COMING AS EXCEPTION
 			channel.writeByte((byte) 1);
@@ -826,13 +834,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	protected ODatabaseDocumentTx openDatabase(final String dbName, final String iUser, final String iPassword)
 			throws InterruptedException {
 		ODatabaseDocumentTx db = OSharedDocumentDatabase.acquire(dbName, iUser, iPassword);
-		//
-		// // SEARCH THE DB IN MEMORY FIRST
-		// ODatabaseDocumentTx db = (ODatabaseDocumentTx) OServerMain.server().getMemoryDatabases().get(dbName);
-		//
-		// if (db == null)
-		// // SEARCH THE DB IN LOCAL FS
-		// db = new ODatabaseDocumentTx(OServerMain.server().getStoragePath(dbName));
 
 		if (db.isClosed())
 			if (db.getStorage() instanceof OStorageMemory)
