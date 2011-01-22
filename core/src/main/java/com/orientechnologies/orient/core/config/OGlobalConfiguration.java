@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.config;
 
+import java.lang.management.OperatingSystemMXBean;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.ConsoleHandler;
@@ -32,15 +33,17 @@ import com.orientechnologies.orient.core.storage.fs.OMMapManager;
  */
 public enum OGlobalConfiguration {
 	// MEMORY
-	MEMORY_OPTIMIZE_THRESHOLD("memory.optimizeThreshold", "Threshold of heap memory where to start the optimization of memory usage. ", Float.class,
-			0.85, new OConfigurationChangeCallback() {
+	MEMORY_OPTIMIZE_THRESHOLD("memory.optimizeThreshold",
+			"Threshold of heap memory where to start the optimization of memory usage. ", Float.class, 0.85,
+			new OConfigurationChangeCallback() {
 				public void change(final Object iCurrentValue, final Object iNewValue) {
 					OMemoryWatchDog.setPercentageUsageThreshold(((Number) iNewValue).floatValue());
 				}
 			}),
 
 	// STORAGE
-	STORAGE_KEEP_OPEN("storage.keepOpen",
+	STORAGE_KEEP_OPEN(
+			"storage.keepOpen",
 			"Tells to the engine to not close the storage when a database is closed. Storages will be closed when the process will shutdown",
 			Boolean.class, Boolean.FALSE),
 
@@ -52,63 +55,73 @@ public enum OGlobalConfiguration {
 	OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database saves only object bound to dirty records", Boolean.class, false),
 
 	// TREEMAP
-	MVRBTREE_LAZY_UPDATES("mvrbtree.lazyUpdates", "Configure the TreeMaps (indexes and dictionaries) as buffered or not", Integer.class, 5000),
+	MVRBTREE_LAZY_UPDATES("mvrbtree.lazyUpdates", "Configure the TreeMaps (indexes and dictionaries) as buffered or not",
+			Integer.class, 5000),
 
-	MVRBTREE_NODE_PAGE_SIZE("mvrbtree.nodePageSize", "Page size of each single node. 1,024 means that 1,024 entries can be stored inside a node",
-			Integer.class, 1024),
+	MVRBTREE_NODE_PAGE_SIZE("mvrbtree.nodePageSize",
+			"Page size of each single node. 1,024 means that 1,024 entries can be stored inside a node", Integer.class, 1024),
 
 	MVRBTREE_LOAD_FACTOR("mvrbtree.loadFactor", "HashMap load factor", Float.class, 0.7f),
 
-	MVRBTREE_OPTIMIZE_THRESHOLD("mvrbtree.optimizeThreshold",
+	MVRBTREE_OPTIMIZE_THRESHOLD(
+			"mvrbtree.optimizeThreshold",
 			"Auto optimize the TreeMap every X tree rotations. This force the optimization of the tree after many changes to recompute entrypoints",
 			Integer.class, 100000),
 
 	MVRBTREE_ENTRYPOINTS("mvrbtree.entryPoints", "Number of entry points to start searching entries", Integer.class, 16),
 
 	MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR("mvrbtree.optimizeEntryPointsFactor",
-			"Multiplicand factor to apply to entry-points list (parameter mvrbtree.entrypoints) to determine if needs of optimization", Float.class, 1.0f),
+			"Multiplicand factor to apply to entry-points list (parameter mvrbtree.entrypoints) to determine if needs of optimization",
+			Float.class, 1.0f),
 
 	// FILE
 	FILE_MMAP_STRATEGY(
 			"file.mmap.strategy",
 			"Strategy to use with memory mapped files. 0 = USE MMAP ALWAYS, 1 = USE MMAP ON WRITES OR ON READ JUST WHEN THE BLOCK POOL IS FREE, 2 = USE MMAP ON WRITES OR ON READ JUST WHEN THE BLOCK IS ALREADY AVAILABLE, 3 = USE MMAP ONLY IF BLOCK IS ALREADY AVAILABLE",
-			Integer.class, 1),
+			Integer.class, 3),
 
-	FILE_MMAP_BLOCK_SIZE("file.mmap.blockSize", "Size of the memory mapped block", Integer.class, 327680, new OConfigurationChangeCallback() {
-		public void change(final Object iCurrentValue, final Object iNewValue) {
-			OMMapManager.setBlockSize(((Number) iNewValue).intValue());
-		}
-	}),
+	FILE_MMAP_BLOCK_SIZE("file.mmap.blockSize", "Size of the memory mapped block", Integer.class, 327680,
+			new OConfigurationChangeCallback() {
+				public void change(final Object iCurrentValue, final Object iNewValue) {
+					OMMapManager.setBlockSize(((Number) iNewValue).intValue());
+				}
+			}),
 
-	FILE_MMAP_BUFFER_SIZE("file.mmap.bufferSize", "Size of the buffer for direct access to the file through the channel", Integer.class, 65536),
+	FILE_MMAP_BUFFER_SIZE("file.mmap.bufferSize", "Size of the buffer for direct access to the file through the channel",
+			Integer.class, 65536),
 
 	FILE_MMAP_MAX_MEMORY("file.mmap.maxMemory",
-			"Max memory allocable by memory mapping manager. Note that on 32bit OS the limit is to 2Gb but can change to OS by OS", Long.class, 134217728,
-			new OConfigurationChangeCallback() {
+			"Max memory allocable by memory mapping manager. Note that on 32bit OS the limit is to 2Gb but can change to OS by OS",
+			Long.class, 134217728, new OConfigurationChangeCallback() {
 				public void change(final Object iCurrentValue, final Object iNewValue) {
 					OMMapManager.setMaxMemory(((Number) iNewValue).longValue());
 				}
 			}),
 
-	FILE_MMAP_FORCE_DELAY("file.mmap.forceDelay", "Delay time in ms to wait for another force flush of the memory mapped block to the disk",
-			Integer.class, 500),
+	FILE_MMAP_FORCE_DELAY("file.mmap.forceDelay",
+			"Delay time in ms to wait for another force flush of the memory mapped block to the disk", Integer.class, 500),
 
-	FILE_MMAP_FORCE_RETRY("file.mmap.forceRetry", "Number of times the memory mapped block will try to flush to the disk", Integer.class, 20),
+	FILE_MMAP_FORCE_RETRY("file.mmap.forceRetry", "Number of times the memory mapped block will try to flush to the disk",
+			Integer.class, 20),
 
 	// NETWORK
 	NETWORK_SOCKET_BUFFER_SIZE("network.socketBufferSize", "TCP/IP Socket buffer size", Integer.class, 32768),
 
 	NETWORK_SOCKET_TIMEOUT("network.timeout", "TCP/IP Socket timeout in ms", Integer.class, 10000),
 
-	NETWORK_SOCKET_RETRY("network.retry", "Number of times the client connection retries to connect to the server in case of failure", Integer.class, 5),
+	NETWORK_SOCKET_RETRY("network.retry",
+			"Number of times the client connection retries to connect to the server in case of failure", Integer.class, 5),
 
-	NETWORK_SOCKET_RETRY_DELAY("network.retryDelay", "Number of ms the client wait to reconnect to the server in case of failure", Integer.class, 500),
+	NETWORK_SOCKET_RETRY_DELAY("network.retryDelay", "Number of ms the client wait to reconnect to the server in case of failure",
+			Integer.class, 500),
 
-	NETWORK_BINARY_MAX_CONTENT_LENGTH("network.binary.maxLength", "TCP/IP max content length in bytes of BINARY requests", Integer.class, 100000),
+	NETWORK_BINARY_MAX_CONTENT_LENGTH("network.binary.maxLength", "TCP/IP max content length in bytes of BINARY requests",
+			Integer.class, 100000),
 
 	NETWORK_BINARY_DEBUG("network.binary.debug", "Debug mode: print all the incoming data on binary channel", Boolean.class, false),
 
-	NETWORK_HTTP_MAX_CONTENT_LENGTH("network.http.maxLength", "TCP/IP max content length in bytes of HTTP requests", Integer.class, 100000),
+	NETWORK_HTTP_MAX_CONTENT_LENGTH("network.http.maxLength", "TCP/IP max content length in bytes of HTTP requests", Integer.class,
+			100000),
 
 	// PROFILER
 	PROFILER_ENABLED("profiler.enabled", "Enable the recording of statistics and counters", Boolean.class, false),
@@ -131,8 +144,8 @@ public enum OGlobalConfiguration {
 	DISTRIBUTED_ASYNC_TIME_DELAY("distributed.async.timeDelay",
 			"Delay time (in ms) of synchronization with slave nodes. 0 means early synchronization", Integer.class, 0),
 
-	DISTRIBUTED_SYNC_MAXRECORDS_BUFFER("distributed.sync.maxRecordsBuffer", "Maximum number of records to buffer before to send to the slave nodes",
-			Integer.class, 100);
+	DISTRIBUTED_SYNC_MAXRECORDS_BUFFER("distributed.sync.maxRecordsBuffer",
+			"Maximum number of records to buffer before to send to the slave nodes", Integer.class, 100);
 
 	private final String									key;
 	private final Object									defValue;
@@ -259,18 +272,26 @@ public enum OGlobalConfiguration {
 		}
 	}
 
-	@SuppressWarnings("restriction")
 	private static void autoConfig() {
 		final String osArch = System.getProperty("os.arch");
 		if (osArch.indexOf("64") > -1) {
 			// 64 BIT
-			final com.sun.management.OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean) java.lang.management.ManagementFactory
-					.getOperatingSystemMXBean();
-			final long maxOsMemory = bean.getTotalPhysicalMemorySize();
-			final long maxProcessMemory = Runtime.getRuntime().maxMemory();
-			long mmapBestMemory = (maxOsMemory - maxProcessMemory) / 2;
 
-			FILE_MMAP_MAX_MEMORY.setValue(mmapBestMemory);
+			final OperatingSystemMXBean bean = java.lang.management.ManagementFactory.getOperatingSystemMXBean();
+
+			Class<?> cls;
+			try {
+				cls = Class.forName("com.sun.management.OperatingSystemMXBean");
+				if (cls.isAssignableFrom(bean.getClass())) {
+					final Long maxOsMemory = (Long) cls.getMethod("getTotalPhysicalMemorySize", new Class[] {}).invoke(bean);
+					final long maxProcessMemory = Runtime.getRuntime().maxMemory();
+					long mmapBestMemory = (maxOsMemory.longValue() - maxProcessMemory) / 2;
+					FILE_MMAP_MAX_MEMORY.setValue(mmapBestMemory);
+				}
+			} catch (Exception e) {
+				// SUN JMX CLASS NOT AVAILABLE: CAN'T AUTO TUNE THE ENGINE
+			}
+
 			FILE_MMAP_BLOCK_SIZE.setValue(327680);
 			MVRBTREE_NODE_PAGE_SIZE.setValue(2048);
 		} else {
