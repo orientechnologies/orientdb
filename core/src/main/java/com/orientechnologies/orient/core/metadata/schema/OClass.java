@@ -247,8 +247,8 @@ public class OClass extends ODocumentWrapperNoClass {
 	@Override
 	public void fromStream() {
 		name = document.field("name");
-		id = document.field("id");
-		defaultClusterId = document.field("defaultClusterId");
+		id = (Integer) document.field("id");
+		defaultClusterId = (Integer) document.field("defaultClusterId");
 
 		Collection<Integer> coll = document.field("clusterIds");
 		clusterIds = new int[coll.size()];

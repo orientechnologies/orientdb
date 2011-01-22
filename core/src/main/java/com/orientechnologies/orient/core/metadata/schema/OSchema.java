@@ -161,7 +161,7 @@ public class OSchema extends ODocumentWrapperNoClass {
 	@Override
 	public void fromStream() {
 		// READ CURRENT SCHEMA VERSION
-		int schemaVersion = document.field("schemaVersion");
+		int schemaVersion = (Integer) document.field("schemaVersion");
 		if (schemaVersion != CURRENT_VERSION_NUMBER) {
 			// HANDLE SCHEMA UPGRADE
 			throw new OConfigurationException(
