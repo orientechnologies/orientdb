@@ -258,8 +258,6 @@ public class OConsoleApplication {
 
 		final List<Method> consoleMethods = new ArrayList<Method>();
 
-		final Map<String, Object> commandTree = new HashMap<String, Object>();
-
 		for (Method m : methods) {
 			if (Modifier.isAbstract(m.getModifiers()) || Modifier.isStatic(m.getModifiers()) || !Modifier.isPublic(m.getModifiers()))
 				continue;

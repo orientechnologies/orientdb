@@ -75,6 +75,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	protected List<ORecordInternal<?>>	currentResultSet;
 	protected OServerAdmin							serverAdmin;
 	private int													lastPercentStep;
+	private String											currentDatabaseUserName;
+	private String											currentDatabaseUserPassword;
 
 	public static void main(String[] args) {
 		try {
@@ -123,6 +125,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			@ConsoleParameter(name = "url", description = "The url of the remote server or the database to connect in the format '<mode>:<path>'") String iURL,
 			@ConsoleParameter(name = "user", description = "User name") String iUserName,
 			@ConsoleParameter(name = "password", description = "User password") String iUserPassword) throws IOException {
+		currentDatabaseUserName = iUserName;
+		currentDatabaseUserPassword = iUserPassword;
+
 		if (iURL.contains("/")) {
 			// OPEN DB
 			out.print("Connecting to database [" + iURL + "] with user '" + iUserName + "'...");
@@ -190,6 +195,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		out.println("\nCurrent database is: " + iDatabaseURL);
 	}
 
+	@ConsoleCommand(description = "Reload the database schema")
+	public void reloadSchema() throws IOException {
+		out.println("reloading database schema...");
+		updateDatabaseInfo();
+		out.println("\nDone.");
+	}
+
 	@ConsoleCommand(description = "Create a new cluster in the current database. The cluster can be physical or logical.")
 	public void createCluster(
 			@ConsoleParameter(name = "cluster-name", description = "The name of the cluster to create") String iClusterName,
@@ -207,6 +219,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 		out.println((iClusterType.equalsIgnoreCase("physical") ? "Physical" : "Logical") + " cluster created correctly with id #"
 				+ clusterId);
+		updateDatabaseInfo();
 	}
 
 	@ConsoleCommand(description = "Remove a cluster in the current database. The cluster can be physical or logical.")
@@ -231,6 +244,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			out.println("Cluster correctly removed");
 		else
 			out.println("Can't find the cluster to remove");
+		updateDatabaseInfo();
 	}
 
 	@ConsoleCommand(description = "Truncate the cluster content in the current database.")
@@ -315,12 +329,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	@ConsoleCommand(splitInWords = false, description = "Create a class")
 	public void createClass(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
 		sqlCommand("create", iCommandText, "\nClass created successfully with id=%d\n");
+		updateDatabaseInfo();
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Create a property")
 	public void createProperty(
 			@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
 		sqlCommand("create", iCommandText, "\nProperty created successfully with id=%d\n");
+		updateDatabaseInfo();
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Execute a query against the database and display the results")
@@ -1128,5 +1144,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 				}
 			}
 		}
+	}
+
+	private void updateDatabaseInfo() {
+		currentDatabase.close();
+		currentDatabase.open(currentDatabaseUserName, currentDatabaseUserPassword);
 	}
 }
