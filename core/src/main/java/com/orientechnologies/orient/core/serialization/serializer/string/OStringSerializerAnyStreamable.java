@@ -38,11 +38,12 @@ public class OStringSerializerAnyStreamable implements OStringSerializer {
 
 		OSerializableStream instance = null;
 
+		int propertyPos = iStream.indexOf(':');
 		int pos = iStream.indexOf(OStreamSerializerHelper.SEPARATOR);
-		if (pos < 0)
-			// OLogManager.instance().error(this, "Class signature not found in ANY element: " + iStream, OSerializationException.class);
+		if (pos < 0 || pos > propertyPos) {
 			instance = new ODocument((ODatabaseRecord) iDatabase);
-		else {
+			pos = -1;
+		} else {
 			final String className = iStream.substring(0, pos);
 			try {
 				final Class<?> clazz = Class.forName(className);

@@ -228,6 +228,8 @@ public class OSchema extends ODocumentWrapperNoClass {
 
 	public void create() {
 		save(OStorage.CLUSTER_INTERNAL_NAME);
+		document.getDatabase().getStorage().getConfiguration().schemaRecordId = document.getIdentity().toString();
+		document.getDatabase().getStorage().getConfiguration().update();
 	}
 
 	public OSchema setDirty() {

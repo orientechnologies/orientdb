@@ -18,18 +18,12 @@ package com.orientechnologies.orient.core.metadata.schema;
 import java.text.ParseException;
 
 import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OPropertyIndex;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 /**
@@ -137,8 +131,13 @@ public class OProperty extends ODocumentWrapperNoClass {
 			linkedType = OType.getById(((Integer) document.field("linkedType")).byteValue());
 
 		if (document.field("index") != null) {
-			setIndex(INDEX_TYPE.valueOf((String) document.field("index-type")), ((ORecord<?>) document.field("index")).getIdentity());
-			index.load();
+			if (document.field("index-type") == null)
+				index = new OPropertyIndex(document.getDatabase().getMetadata().getIndexManager()
+						.getIndex((ORecordId) document.field("index", ORID.class)), new String[] { name });
+			else
+				// @COMPATIBILITY 0.9.24
+				index = new OPropertyIndex(document.getDatabase(), owner, new String[] { name }, (String) document.field("index-type"),
+						new ORecordId((String) document.field("index")));
 		}
 	}
 
@@ -159,9 +158,8 @@ public class OProperty extends ODocumentWrapperNoClass {
 
 		// SAVE THE INDEX
 		if (index != null) {
-			index.lazySave();
-			document.field("index", index.getIdentity());
-			document.field("index-type", index.getType());
+			index.getUnderlying().lazySave();
+			document.field("index", index.getUnderlying().getIdentity());
 		} else {
 			document.field("index", ORecordId.EMPTY_RECORD_ID);
 		}
@@ -235,17 +233,6 @@ public class OProperty extends ODocumentWrapperNoClass {
 	}
 
 	/**
-	 * Creates a custom index on this property.
-	 * 
-	 * @param iIndexInstance
-	 *          OPropertyIndex implementation.
-	 * @return
-	 */
-	public OPropertyIndex createIndex(final OPropertyIndex iIndexInstance) {
-		return createIndex(iIndexInstance, null);
-	}
-
-	/**
 	 * Creates an index on this property. Indexes speed up queries but slow down insert and update operations. For massive inserts we
 	 * suggest to remove the index, make the massive insert and recreate it.
 	 * 
@@ -277,7 +264,8 @@ public class OProperty extends ODocumentWrapperNoClass {
 	 * @return
 	 */
 	public OPropertyIndex createIndex(final String iType, final OProgressListener iProgressListener) {
-		return createIndex(OIndexFactory.instance().newInstance(iType), iProgressListener);
+		index = new OPropertyIndex(document.getDatabase(), owner, new String[] { name }, iType, iProgressListener);
+		return index;
 	}
 
 	/**
@@ -285,9 +273,8 @@ public class OProperty extends ODocumentWrapperNoClass {
 	 */
 	public void removeIndex() {
 		if (index != null) {
-			index.delete();
+			document.getDatabase().getMetadata().getIndexManager().deleteIndex(index.getUnderlying().getName());
 			index = null;
-			setDirty();
 		}
 	}
 
@@ -340,28 +327,6 @@ public class OProperty extends ODocumentWrapperNoClass {
 		return true;
 	}
 
-	protected OPropertyIndex setIndex(final INDEX_TYPE iType, final ORID iRID) {
-		return setIndex(iType.toString(), iRID);
-	}
-
-	/**
-	 * Load the index
-	 * 
-	 * @param iType
-	 *          Index type (see OIndexFactory)
-	 * @param iRID
-	 *          RecordID of the persistent map
-	 * @return The Index instance
-	 * @see OIndexFactory
-	 */
-	protected OPropertyIndex setIndex(final String iType, final ORID iRID) {
-		// LOAD THE INDEX
-		if (iRID != null && iRID.isValid())
-			index = OIndexFactory.instance().newInstance(iType).configure(document.getDatabase(), this, iRID);
-
-		return index;
-	}
-
 	private void checkForDateFormat(String min) {
 		if (type == OType.DATE) {
 			try {
@@ -370,42 +335,6 @@ public class OProperty extends ODocumentWrapperNoClass {
 				throw new OSchemaException("Invalid date format setted", e);
 			}
 		}
-	}
-
-	protected OPropertyIndex createIndex(final OPropertyIndex iIndexInstance, final OProgressListener iProgressListener) {
-		if (index != null)
-			throw new IllegalStateException("Index already created");
-
-		try {
-			index = iIndexInstance;
-			index.create(document.getDatabase(), this, OStorage.CLUSTER_INDEX_NAME, iProgressListener);
-
-			setDirty();
-
-			if (document.getDatabase() != null) {
-				// / SAVE ONLY IF THE PROPERTY IS ALREADY PERSISTENT
-				index.lazySave();
-				document.getDatabase().getMetadata().getSchema().save();
-			}
-
-		} catch (OIndexException e) {
-			if (index != null) {
-				index.clear();
-				document.getDatabase().getMetadata().getSchema().save();
-			}
-			throw e;
-
-		} catch (Exception e) {
-			if (index != null) {
-				index.clear();
-				document.getDatabase().getMetadata().getSchema().save();
-			}
-
-			OLogManager.instance().exception("Unable to create index of type '%s' for property: %s", e, ODatabaseException.class,
-					iIndexInstance.toString(), toString());
-		}
-
-		return index;
 	}
 
 	public String getRegexp() {

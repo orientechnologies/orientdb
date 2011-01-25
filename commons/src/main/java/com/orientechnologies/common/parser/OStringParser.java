@@ -89,7 +89,7 @@ public class OStringParser {
 		for (int i = 0; i < iText.length(); ++i) {
 			c = iText.charAt(i);
 
-			if (!escape && c == '\\') {
+			if (openBraket == 0 && openGraph == 0 && !escape && c == '\\') {
 				escape = true;
 				continue;
 			}

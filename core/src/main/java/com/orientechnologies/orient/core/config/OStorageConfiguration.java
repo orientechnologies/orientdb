@@ -34,10 +34,13 @@ import com.orientechnologies.orient.core.storage.OStorage;
 public class OStorageConfiguration implements OSerializableStream {
 	public static final int										CONFIG_RECORD_NUM	= 0;
 
-	public int																version						= 0;
+	public static final int										CURRENT_VERSION		= 1;
+
+	public int																version						= -1;
 	public String															name;
 	public String															schemaRecordId;
 	public String															dictionaryRecordId;
+	public String															indexMgrRecordId;
 
 	public String															localeLanguage		= Locale.getDefault().getLanguage();
 	public String															localeCountry			= Locale.getDefault().getCountry();
@@ -125,10 +128,17 @@ public class OStorageConfiguration implements OSerializableStream {
 		String[] values = new String(iStream).split("\\|");
 		int index = 0;
 		version = Integer.parseInt(read(values[index++]));
+
 		name = read(values[index++]);
 
 		schemaRecordId = read(values[index++]);
 		dictionaryRecordId = read(values[index++]);
+
+		if (version > 0)
+			indexMgrRecordId = read(values[index++]);
+		else
+			// @COMPATIBILTY
+			indexMgrRecordId = null;
 
 		localeLanguage = read(values[index++]);
 		localeCountry = read(values[index++]);
@@ -213,11 +223,12 @@ public class OStorageConfiguration implements OSerializableStream {
 	public byte[] toStream() throws OSerializationException {
 		StringBuilder buffer = new StringBuilder();
 
-		write(buffer, version);
+		write(buffer, CURRENT_VERSION);
 		write(buffer, name);
 
 		write(buffer, schemaRecordId);
 		write(buffer, dictionaryRecordId);
+		write(buffer, indexMgrRecordId);
 
 		write(buffer, localeLanguage);
 		write(buffer, localeCountry);

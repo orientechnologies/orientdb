@@ -15,67 +15,100 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map.Entry;
+import java.util.Arrays;
 
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
- * Interface to handle indexes at property level.
+ * Index implementation bound to one or more schema class properties.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public interface OPropertyIndex extends Iterable<Entry<String, List<ORecordId>>> {
-	public INDEX_TYPE getType();
+public class OPropertyIndex implements OIndexCallback {
+	protected OIndex						delegate;
+	protected String[]					fields;
+	protected static final char	FIELD_SEPARATOR	= '+';
 
-	public Object getIdentity();
+	public OPropertyIndex(final ODatabaseRecord iDatabase, final OClass iClass, final String[] iFields, final String iType,
+			final OProgressListener iProgressListener) {
+		fields = iFields;
+		final String indexName = getIndexName(iClass, iFields);
 
-	public void put(final Object iKey, final ORecordId iValue);
+		delegate = iDatabase.getMetadata().getIndexManager()
+				.createIndex(indexName, iType, iClass.getClusterIds(), this, iProgressListener);
+	}
 
-	/**
-	 * Creates the index.
-	 * 
-	 * @param iDatabase
-	 *          Current Database instance
-	 * @param iProperty
-	 *          Owner property
-	 * @param iClusterIndexName
-	 *          Cluster name where to place the TreeMap
-	 * @param iProgressListener
-	 *          Listener to get called on progress
-	 */
-	public OPropertyIndex create(final ODatabaseRecord iDatabase, final OProperty iProperty, final String iClusterIndexName,
-			final OProgressListener iProgressListener);
+	public OPropertyIndex(final OIndex iIndex, final String[] iFields) {
+		fields = iFields;
+		delegate = iIndex;
+	}
 
-	public OPropertyIndex configure(final ODatabaseRecord iDatabase, final OProperty iProperty, final ORID iRecordId);
+	public OPropertyIndex(final ODatabaseRecord iDatabase, final OClass iClass, final String[] iFields, final String iType,
+			final ORecordId iRID) {
+		fields = iFields;
+		final String indexName = getIndexName(iClass, iFields);
 
-	public List<ORecordId> get(Object iKey);
+		delegate = iDatabase.getMetadata().getIndexManager().loadIndex(indexName, iRID, iType);
+		delegate.setCallback(this);
+	}
 
-	public void rebuild();
+	public void checkEntry(final ODocument iRecord) {
+		// GENERATE THE KEY
+		final String key = generateKey(iRecord);
 
-	/**
-	 * Populate the index with all the existent records.
-	 */
-	public void rebuild(final OProgressListener iProgressListener);
+		try {
+			delegate.checkEntry(iRecord, key);
+		} catch (OIndexException e) {
+			OLogManager.instance().exception("Invalid constraints on index '%s' for key '%s' in record %s for the fields '%s'", null,
+					OIndexException.class, delegate.getName(), key, iRecord.getIdentity(), Arrays.toString(fields));
+		}
+	}
 
-	public void remove(final Object iKey);
+	public void setCallback(OIndexCallback iCallback) {
+	}
 
-	public void load();
+	public OIndex getUnderlying() {
+		return delegate;
+	}
 
-	public void clear();
+	public String getDocumentValueToIndex(ODocument iDocument) {
+		return generateKey(iDocument);
+	}
 
-	public void delete();
+	private String generateKey(final ODocument iRecord) {
+		StringBuilder buffer = new StringBuilder();
+		for (String f : fields) {
+			if (buffer.length() > 0)
+				buffer.append(FIELD_SEPARATOR);
 
-	public void lazySave();
+			if (f == null)
+				buffer.append('-');
+			else
+				buffer.append(iRecord.field(f));
+		}
+		return buffer.toString();
+	}
 
-	public Iterator<Entry<String, List<ORecordId>>> iterator();
+	private String getIndexName(final OClass iClass, final String[] iFields) {
+		final StringBuilder indexName = new StringBuilder();
+		indexName.append(iClass.getName());
+		indexName.append('.');
 
-	public int getIndexedItems();
+		boolean first = true;
+		for (String f : iFields) {
+			if (first)
+				first = false;
+			else
+				indexName.append('_');
+
+			indexName.append(f);
+		}
+		return indexName.toString();
+	}
 }

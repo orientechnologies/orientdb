@@ -24,11 +24,11 @@ import java.util.Set;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerString;
@@ -40,39 +40,34 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
  * @author Luca Garulli
  * 
  */
-public class OPropertyIndexFullText extends OPropertyIndexMVRBTreeAbstract {
-	private static final String	FIELD_MAP_RID				= "mapRid";
-	private static final String	FIELD_CLUSTER_NAME	= "clusterName";
-	private static final String	FIELD_STOP_WORDS		= "stopWords";
-	private static final String	FIELD_IGNORE_CHARS	= "ignoreChars";
+public class OIndexFullText extends OIndexMVRBTreeAbstract {
+	private static final String	CONFIG_STOP_WORDS		= "stopWords";
+	private static final String	CONFIG_IGNORE_CHARS	= "ignoreChars";
 
 	private static String				DEF_CLUSTER_NAME		= "FullTextIndex";
 	private static String				DEF_IGNORE_CHARS		= " \r\n\t:;,.|+*/\\=!?[]()'\"";
 	private static String				DEF_STOP_WORDS			= "the in a at as and or for his her " + "him this that what which while "
 																											+ "up with be was is";
-	private String							ignoreChars;
+	private String							ignoreChars					= DEF_IGNORE_CHARS;
 	private Set<String>					stopWords;
-	private ODocument						config;
 
-	public OPropertyIndexFullText() {
+	public OIndexFullText() {
+		super("FULLTEXT");
+		stopWords = new HashSet<String>(OStringSerializerHelper.split(DEF_STOP_WORDS, ' '));
 	}
 
-	public OPropertyIndexFullText(final ODatabaseRecord iDatabase, final OProperty iProperty) {
-		this(iDatabase, iProperty, DEF_CLUSTER_NAME);
+	public OIndexFullText(final ODatabaseRecord iDatabase, final int[] iClusterIdsToIndex) {
+		this(iDatabase, DEF_CLUSTER_NAME, iClusterIdsToIndex);
 	}
 
-	public OPropertyIndexFullText(final ODatabaseRecord iDatabase, final OProperty iProperty, final String iClusterIndexName) {
-		create(iDatabase, iProperty, iClusterIndexName, null, DEF_IGNORE_CHARS, DEF_STOP_WORDS);
+	public OIndexFullText(final ODatabaseRecord iDatabase, final String iClusterIndexName, final int[] iClusterIdsToIndex) {
+		this();
+		create(iDatabase, iClusterIndexName, iClusterIdsToIndex, null);
 	}
 
 	@Override
-	public OPropertyIndex create(final ODatabaseRecord iDatabase, final OProperty iProperty, final String iClusterIndexName,
+	public OIndex create(final ODatabaseRecord iDatabase, final String iClusterIndexName, final int[] iClusterIdsToIndex,
 			final OProgressListener iProgressListener) {
-		return create(iDatabase, iProperty, iClusterIndexName, iProgressListener, DEF_IGNORE_CHARS, DEF_STOP_WORDS);
-	}
-
-	public OPropertyIndex create(final ODatabaseRecord iDatabase, final OProperty iProperty, final String iClusterIndexName,
-			final OProgressListener iProgressListener, final String iIgnoreChars, final String iStopWords) {
 		if (iDatabase.getClusterIdByName(iClusterIndexName) == -1)
 			// CREATE THE PHYSICAL CLUSTER THE FIRST TIME
 			iDatabase.addPhysicalCluster(iClusterIndexName, iClusterIndexName, -1);
@@ -81,19 +76,14 @@ public class OPropertyIndexFullText extends OPropertyIndexMVRBTreeAbstract {
 		while (db != null && !(db instanceof ODatabaseRecord))
 			db = db.getUnderlying();
 
+		for (int id : iClusterIdsToIndex)
+			clustersToIndex.add(iDatabase.getClusterNameById(id));
+
 		map = new OMVRBTreeDatabaseLazySave<String, List<ORecordId>>((ODatabaseRecord) db, iClusterIndexName,
 				OStreamSerializerString.INSTANCE, OStreamSerializerListRID.INSTANCE);
 		map.lazySave();
 
 		config = new ODocument(iDatabase);
-		config.field(FIELD_IGNORE_CHARS, iIgnoreChars);
-		config.field(FIELD_STOP_WORDS, iStopWords);
-		config.field(FIELD_CLUSTER_NAME, iClusterIndexName);
-		config.field(FIELD_MAP_RID, map.getRecord().getIdentity().toString());
-		config.save();
-
-		init();
-
 		return this;
 	}
 
@@ -110,13 +100,13 @@ public class OPropertyIndexFullText extends OPropertyIndexMVRBTreeAbstract {
 	 *          Record Id of the persistent TreeMap
 	 */
 	@Override
-	public OPropertyIndex configure(final ODatabaseRecord iDatabase, final OProperty iProperty, final ORID iRID) {
-		owner = iProperty;
+	public OIndex loadFromConfiguration(final ODatabaseRecord iDatabase, final ORID iRID) {
 		config = new ODocument(iDatabase, iRID);
 		config.load();
 
-		init(iDatabase, new ORecordId((String) config.field(FIELD_MAP_RID)));
-		init();
+		load(iDatabase, new ORecordId((String) config.field(CONFIG_MAP_RID)));
+		ignoreChars = (String) config.field(CONFIG_IGNORE_CHARS);
+		stopWords = new HashSet<String>(OStringSerializerHelper.split((String) config.field(CONFIG_STOP_WORDS), ' '));
 
 		return this;
 	}
@@ -138,7 +128,7 @@ public class OPropertyIndexFullText extends OPropertyIndexMVRBTreeAbstract {
 		try {
 			map.save();
 		} catch (IOException e) {
-			throw new OIndexException("Can't save index for property '" + owner.getName() + "'");
+			throw new OIndexException("Can't save index entry for document '" + iDocument.getIdentity() + "'");
 		}
 	}
 
@@ -148,8 +138,9 @@ public class OPropertyIndexFullText extends OPropertyIndexMVRBTreeAbstract {
 	 * @param iDocument
 	 *          The document to index
 	 */
-	public void put(final Object iKey, final ORecordId iSingleValue) {
+	public OIndex put(final Object iKey, final ORecordId iSingleValue) {
 		indexValue(iKey, iSingleValue);
+		return this;
 	}
 
 	/**
@@ -213,17 +204,21 @@ public class OPropertyIndexFullText extends OPropertyIndexMVRBTreeAbstract {
 		return config;
 	}
 
-	public INDEX_TYPE getType() {
-		return INDEX_TYPE.FULLTEXT;
-	}
-
 	@Override
 	public ORID getIdentity() {
 		return config.getIdentity();
 	}
 
-	private void init() {
-		ignoreChars = (String) config.field(FIELD_IGNORE_CHARS);
-		stopWords = new HashSet<String>(OStringSerializerHelper.split((String) config.field(FIELD_STOP_WORDS), ' '));
+	public byte[] toStream() throws OSerializationException {
+		config.field(CONFIG_IGNORE_CHARS, ignoreChars);
+		config.field(CONFIG_STOP_WORDS, stopWords);
+		return super.toStream();
+	}
+
+	public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
+		super.fromStream(iStream);
+		ignoreChars = (String) config.field(CONFIG_IGNORE_CHARS);
+		stopWords = new HashSet<String>(OStringSerializerHelper.split((String) config.field(CONFIG_STOP_WORDS), ' '));
+		return null;
 	}
 }

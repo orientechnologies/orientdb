@@ -18,34 +18,20 @@ package com.orientechnologies.orient.core.index;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
 
 /**
- * Handles indexing when records change.
+ * Abstract not unique index class.
  * 
  * @author Luca Garulli
  * 
  */
-public class OPropertyIndexNotUnique extends OPropertyIndexMVRBTreeAbstract {
-	public OPropertyIndexNotUnique() {
+public class OIndexNotUnique extends OIndexMVRBTreeAbstract {
+	public OIndexNotUnique() {
+		super("NOTUNIQUE");
 	}
 
-	public OPropertyIndexNotUnique(final ODatabaseRecord iDatabase, final OProperty iProperty, final String iClusterIndexName) {
-		super(iDatabase, iProperty, iClusterIndexName);
-	}
-
-	@Override
-	public OPropertyIndex configure(final ODatabaseRecord iDatabase, final OProperty iProperty, final ORID iRecordId) {
-		owner = iProperty;
-		init(iDatabase, iRecordId);
-		return this;
-	}
-
-	public void put(final Object iKey, final ORecordId iSingleValue) {
+	public OIndex put(final Object iKey, final ORecordId iSingleValue) {
 		List<ORecordId> values = map.get(iKey);
 		if (values == null)
 			values = new ArrayList<ORecordId>();
@@ -58,9 +44,6 @@ public class OPropertyIndexNotUnique extends OPropertyIndexMVRBTreeAbstract {
 			values.add(iSingleValue);
 
 		map.put(iKey.toString(), values);
-	}
-
-	public INDEX_TYPE getType() {
-		return INDEX_TYPE.NOTUNIQUE;
+		return this;
 	}
 }

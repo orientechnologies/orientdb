@@ -19,30 +19,30 @@ import com.orientechnologies.common.factory.ODynamicFactory;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
 
-@SuppressWarnings("unchecked")
-public class OIndexFactory extends ODynamicFactory<String, Class<? extends OPropertyIndex>> {
+public class OIndexFactory extends ODynamicFactory<String, Class<? extends OIndex>> {
 	private static final OIndexFactory	instance	= new OIndexFactory();
 
 	/**
 	 * Register default index implementation.
 	 */
 	protected OIndexFactory() {
-		register(INDEX_TYPE.UNIQUE.toString(), OPropertyIndexUnique.class);
-		register(INDEX_TYPE.NOTUNIQUE.toString(), OPropertyIndexNotUnique.class);
-		register(INDEX_TYPE.FULLTEXT.toString(), OPropertyIndexFullText.class);
+		register(INDEX_TYPE.UNIQUE.toString(), OIndexUnique.class);
+		register(INDEX_TYPE.NOTUNIQUE.toString(), OIndexNotUnique.class);
+		register(INDEX_TYPE.FULLTEXT.toString(), OIndexFullText.class);
 	}
 
-	public <T extends OPropertyIndex> T newInstance(final String iIndexType) {
+	@SuppressWarnings("unchecked")
+	public <T extends OIndex> T newInstance(final String iIndexType) {
 		if (iIndexType == null)
 			throw new IllegalArgumentException("Index type is null");
 
-		final Class<? extends OPropertyIndex> indexClass = registry.get(iIndexType);
+		final Class<? extends OIndex> indexClass = registry.get(iIndexType);
 
 		if (indexClass == null)
 			throw new OConfigurationException("Index type '" + iIndexType + "' is not configured");
 
 		try {
-			final OPropertyIndex index = indexClass.newInstance();
+			final OIndex index = indexClass.newInstance();
 			return (T) index;
 		} catch (Exception e) {
 			throw new OConfigurationException("Can't create index type '" + iIndexType + "'", e);

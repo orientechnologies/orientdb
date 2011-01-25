@@ -19,18 +19,20 @@ import java.io.IOException;
 
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 public class OMetadata {
 	protected ODatabaseRecord	database;
-	protected int									schemaClusterId;
+	protected int							schemaClusterId;
 
-	protected OSchema							schema;
-	protected OSecurity						security;
+	protected OSchema					schema;
+	protected OSecurity				security;
+	protected OIndexManager		indexManager;
 
-	public OMetadata(ODatabaseRecord iDatabase) {
+	public OMetadata(final ODatabaseRecord iDatabase) {
 		this.database = iDatabase;
 	}
 
@@ -43,6 +45,7 @@ public class OMetadata {
 			if (schemaClusterId == -1 || database.countClusterElements(OStorage.CLUSTER_INTERNAL_NAME) == 0)
 				return;
 
+			indexManager.load();
 			loadSchema();
 		} finally {
 			OProfiler.getInstance().stopChrono("OMetadata.load", timer);
@@ -57,9 +60,7 @@ public class OMetadata {
 		try {
 			// CREATE RECORD FOR SCHEMA
 			schema.create();
-			database.getStorage().getConfiguration().schemaRecordId = schema.getDocument().getIdentity().toString();
-
-			database.getStorage().getConfiguration().update();
+			indexManager.create();
 		} finally {
 
 			OProfiler.getInstance().stopChrono("OMetadata.create", timer);
@@ -72,6 +73,10 @@ public class OMetadata {
 
 	public OSecurity getSecurity() {
 		return security;
+	}
+
+	public OIndexManager getIndexManager() {
+		return indexManager;
 	}
 
 	public int getSchemaClusterId() {
@@ -87,5 +92,6 @@ public class OMetadata {
 
 		schema = new OSchema(database, schemaClusterId);
 		security = new OSecurity(database);
+		indexManager = new OIndexManager(database);
 	}
 }

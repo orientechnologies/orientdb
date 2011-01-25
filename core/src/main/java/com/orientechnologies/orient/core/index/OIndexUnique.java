@@ -18,44 +18,58 @@ package com.orientechnologies.orient.core.index;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
- * Handles indexing when records change.
+ * Abstract unique index class.
  * 
  * @author Luca Garulli
  * 
  */
-public class OPropertyIndexUnique extends OPropertyIndexMVRBTreeAbstract {
-	public OPropertyIndexUnique() {
+public class OIndexUnique extends OIndexMVRBTreeAbstract {
+	public OIndexUnique() {
+		super("UNIQUE");
 	}
 
-	public OPropertyIndexUnique(final ODatabaseRecord iDatabase, final OProperty iProperty, final String iClusterIndexName) {
-		super(iDatabase, iProperty, iClusterIndexName);
-	}
-
-	public void put(final Object iKey, final ORecordId iSingleValue) {
+	public OIndex put(final Object iKey, final ORecordId iSingleValue) {
 		List<ORecordId> values = map.get(iKey);
 		if (values == null)
 			values = new ArrayList<ORecordId>();
 		else if (values.size() == 1) {
 			// CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
 			if (!values.get(0).equals(iSingleValue))
-				throw new OIndexException("Found duplicated key '" + iKey + "' on unique index defined in property: " + owner);
+				throw new OIndexException("Found duplicated key '" + iKey + "' on unique index '" + name + "'");
 			else
-				return;
+				return this;
 		} else if (values.size() > 1)
-			throw new OIndexException("Found duplicated key '" + iKey + "' on unique index defined in property: " + owner);
+			throw new OIndexException("Found duplicated key '" + iKey + "' on unique index '" + name + "'");
 
 		values.add(iSingleValue);
 
 		map.put(iKey.toString(), values);
+		return this;
 	}
 
-	public INDEX_TYPE getType() {
-		return INDEX_TYPE.UNIQUE;
+	@Override
+	public void checkEntry(final ODocument iRecord, final String iKey) {
+		// CHECK IF ALREADY EXIST
+		List<ORecordId> indexedRIDs = get(iKey);
+		if (indexedRIDs != null && indexedRIDs.size() > 0) {
+			Object obj = indexedRIDs.get(0);
+
+			ORID rid;
+			if (obj instanceof ORecordId)
+				rid = (ORID) obj;
+			else
+				rid = ((ODocument) obj).getIdentity();
+
+			if (!rid.equals(iRecord.getIdentity()))
+				OLogManager.instance().exception("Found duplicated key '%s' previously assigned to the record %s", null,
+						OIndexException.class, iKey, rid);
+		}
+
 	}
 }

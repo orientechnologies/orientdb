@@ -16,18 +16,14 @@
 package com.orientechnologies.orient.core.index;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -52,7 +48,7 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 
 		if (indexedProperties != null)
 			for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
-				propEntry.getKey().getIndex().put(propEntry.getValue(), (ORecordId) iRecord.getIdentity());
+				propEntry.getKey().getIndex().getUnderlying().put(propEntry.getValue(), (ORecordId) iRecord.getIdentity());
 			}
 		return false;
 	}
@@ -73,6 +69,7 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 			if (dirtyFields != null && dirtyFields.size() > 0) {
 				// REMOVE INDEX OF ENTRIES FOR THE OLD VALUES
 				Object originalValue = null;
+				OIndex index;
 
 				for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
 					if (dirtyFields.contains(propEntry.getKey().getName())) {
@@ -81,16 +78,20 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 						if (originalValue != null)
 							originalValue = originalValue.toString();
 
-						propEntry.getKey().getIndex().remove(originalValue);
-						propEntry.getKey().getIndex().lazySave();
+						index = propEntry.getKey().getIndex().getUnderlying();
+
+						index.remove(originalValue);
+						index.lazySave();
 					}
 				}
 
 				// ADD INDEX OF ENTRIES FOR THE CHANGED ONLY VALUES
 				for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
 					if (dirtyFields.contains(propEntry.getKey().getName())) {
-						propEntry.getKey().getIndex().put(propEntry.getValue(), (ORecordId) iRecord.getIdentity());
-						propEntry.getKey().getIndex().lazySave();
+						index = propEntry.getKey().getIndex().getUnderlying();
+
+						index.put(propEntry.getValue(), (ORecordId) iRecord.getIdentity());
+						index.lazySave();
 					}
 				}
 			}
@@ -105,13 +106,16 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 		if (indexedProperties != null) {
 			final Set<String> dirtyFields = iRecord.getDirtyFields();
 
+			OIndex index;
+
 			if (dirtyFields != null && dirtyFields.size() > 0) {
 				// REMOVE INDEX OF ENTRIES FOR THE OLD VALUES
 				for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
 					if (dirtyFields.contains(propEntry.getKey().getName())) {
 						// REMOVE IT
-						propEntry.getKey().getIndex().remove(propEntry.getValue());
-						propEntry.getKey().getIndex().lazySave();
+						index = propEntry.getKey().getIndex().getUnderlying();
+						index.remove(propEntry.getValue());
+						index.lazySave();
 					}
 				}
 			}
@@ -120,8 +124,9 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 			for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
 				if (iRecord.containsField(propEntry.getKey().getName())
 						&& (dirtyFields == null || !dirtyFields.contains(propEntry.getKey().getName()))) {
-					propEntry.getKey().getIndex().remove(propEntry.getValue());
-					propEntry.getKey().getIndex().lazySave();
+					index = propEntry.getKey().getIndex().getUnderlying();
+					index.remove(propEntry.getValue());
+					index.lazySave();
 				}
 			}
 		}
@@ -134,36 +139,10 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 			return;
 
 		OPropertyIndex index;
-		Object fieldValue;
-		String fieldValueString;
-
-		List<ORecordId> indexedRIDs;
-		Object obj;
-		ORID rid;
-
 		for (OProperty prop : cls.properties()) {
 			index = prop.getIndex();
-			if (index != null && index.getType() == INDEX_TYPE.UNIQUE) {
-				fieldValue = iRecord.field(prop.getName());
-
-				if (fieldValue != null) {
-					fieldValueString = fieldValue.toString();
-
-					indexedRIDs = index.get(fieldValueString);
-					if (indexedRIDs != null && indexedRIDs.size() > 0) {
-						obj = indexedRIDs.get(0);
-
-						if (obj instanceof ORecordId)
-							rid = (ORID) obj;
-						else
-							rid = ((ODocument) obj).getIdentity();
-
-						if (!rid.equals(iRecord.getIdentity()))
-							OLogManager.instance().exception("Found duplicated key '%s' for property '%s' assigned to the record %s", null,
-									OIndexException.class, fieldValueString, prop, rid);
-					}
-				}
-			}
+			if (index != null)
+				index.checkEntry(iRecord);
 		}
 	}
 

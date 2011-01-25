@@ -30,9 +30,10 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OPropertyIndexFullText;
-import com.orientechnologies.orient.core.index.OPropertyIndexNotUnique;
-import com.orientechnologies.orient.core.index.OPropertyIndexUnique;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexFullText;
+import com.orientechnologies.orient.core.index.OIndexNotUnique;
+import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -427,13 +428,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		if (prop != null && prop.isIndexed()) {
 			// TODO: IMPROVE THIS MANAGEMENT
 			// ONLY EQUALS IS SUPPORTED NOW!
-			if (((prop.getIndex() instanceof OPropertyIndexUnique || prop.getIndex() instanceof OPropertyIndexNotUnique) && iCondition
-					.getOperator() instanceof OQueryOperatorEquals)
-					|| prop.getIndex() instanceof OPropertyIndexFullText
-					&& iCondition.getOperator() instanceof OQueryOperatorContainsText) {
+			OIndex idx = prop.getIndex().getUnderlying();
+			if (((idx instanceof OIndexUnique || idx instanceof OIndexNotUnique) && iCondition.getOperator() instanceof OQueryOperatorEquals)
+					|| idx instanceof OIndexFullText && iCondition.getOperator() instanceof OQueryOperatorContainsText) {
 				final Object value = iCondition.getLeft() == iItem ? iCondition.getRight() : iCondition.getLeft();
 				if (value != null) {
-					final List<?> resultSet = prop.getIndex().get(value.toString());
+					final List<?> resultSet = prop.getIndex().getUnderlying().get(value.toString());
 					if (resultSet != null && resultSet.size() > 0)
 						for (Object o : resultSet) {
 							if (o instanceof ORID)
@@ -528,8 +528,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	}
 
 	private void scanEntireClusters(final int[] clusterIds) {
-		((OStorageEmbedded) database.getStorage()).browse(database.getId(), clusterIds, rangeFrom, rangeTo, this, (ORecordInternal<?>) database.newInstance(),
-				false);
+		((OStorageEmbedded) database.getStorage()).browse(database.getId(), clusterIds, rangeFrom, rangeTo, this,
+				(ORecordInternal<?>) database.newInstance(), false);
 	}
 
 	private void applyOrderBy() {

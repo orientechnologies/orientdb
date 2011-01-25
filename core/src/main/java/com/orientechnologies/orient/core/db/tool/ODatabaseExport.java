@@ -27,7 +27,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
-import com.orientechnologies.orient.core.index.OPropertyIndex;
 import com.orientechnologies.orient.core.intent.OIntentMassiveRead;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -272,12 +271,9 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 							writer.writeAttribute(0, false, "min", p.getMin());
 						if (p.getMax() != null)
 							writer.writeAttribute(0, false, "max", p.getMax());
-						if (p.getIndex() != null) {
-							writer.writeAttribute(0, false, "index-rid", p.getIndex().getIdentity());
+						if (p.getIndex() != null)
+							writer.writeAttribute(0, false, "index-rid", p.getIndex().getUnderlying().getIdentity());
 
-							OPropertyIndex idx = p.getIndex();
-							writer.writeAttribute(0, false, "index-type", idx.getType());
-						}
 						writer.endObject(0, false);
 					}
 					writer.endCollection(4, true);

@@ -609,7 +609,8 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 						// BOTH NULL: UNCHANGED
 						return this;
 				} catch (Exception e) {
-					OLogManager.instance().warn(this, "Error on checking the value of property %s against the record %s", e, iPropertyName, getIdentity());
+					OLogManager.instance().warn(this, "Error on checking the value of property %s against the record %s", e, iPropertyName,
+							getIdentity());
 				}
 			}
 
@@ -625,8 +626,8 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 						iPropertyValue = ((Enum<?>) iPropertyValue).name();
 
 				if (!(iPropertyValue instanceof String) && !prop.getType().isAssignableFrom(iPropertyValue))
-					throw new IllegalArgumentException("Property '" + iPropertyName + "' of type '" + prop.getType() + "' can't accept value of type: "
-							+ iPropertyValue.getClass());
+					throw new IllegalArgumentException("Property '" + iPropertyName + "' of type '" + prop.getType()
+							+ "' can't accept value of type: " + iPropertyValue.getClass());
 			}
 		}
 
@@ -858,6 +859,9 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			iValue = (RET) new ODocument(_database, (ORID) iValue);
 			_fieldValues.put(iPropertyName, iValue);
 
+		} else if (ORID.class.equals(iType)) {
+			if (iValue instanceof ORecord<?>)
+				return (RET) ((ORecord<?>) iValue).getIdentity();
 		} else if (Set.class.isAssignableFrom(iType) && !(iValue instanceof Set)) {
 			// CONVERT IT TO SET
 			final Collection<Object> newValue;

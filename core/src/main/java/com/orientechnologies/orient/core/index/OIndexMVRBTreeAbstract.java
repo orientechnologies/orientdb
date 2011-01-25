@@ -15,20 +15,27 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
+import com.orientechnologies.orient.core.annotation.ODocumentInstance;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerString;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
@@ -39,26 +46,20 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
  * @author Luca Garulli
  * 
  */
-public abstract class OPropertyIndexMVRBTreeAbstract extends OSharedResource implements OPropertyIndex {
-	protected OProperty																						owner;
+public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements OIndex {
+	protected static final String																	CONFIG_MAP_RID	= "mapRid";
+	protected static final String																	CONFIG_CLUSTERS	= "clusters";
+	protected String																							name;
+	protected String																							type;
 	protected OMVRBTreeDatabaseLazySave<String, List<ORecordId>>	map;
+	protected Set<String>																					clustersToIndex	= new LinkedHashSet<String>();
+	protected OIndexCallback																			callback;
 
-	public OPropertyIndexMVRBTreeAbstract() {
-	}
+	@ODocumentInstance
+	protected ODocument																						config;
 
-	/**
-	 * Constructor called when a new index is created.
-	 * 
-	 * @param iDatabase
-	 *          Current Database instance
-	 * @param iProperty
-	 *          Owner property
-	 * @param iClusterIndexName
-	 *          Cluster name where to place the TreeMap
-	 */
-	public OPropertyIndexMVRBTreeAbstract(final ODatabaseRecord iDatabase, final OProperty iProperty,
-			final String iClusterIndexName) {
-		owner = iProperty;
+	public OIndexMVRBTreeAbstract(final String iType) {
+		type = iType;
 	}
 
 	/**
@@ -73,18 +74,31 @@ public abstract class OPropertyIndexMVRBTreeAbstract extends OSharedResource imp
 	 * @param iProgressListener
 	 *          Listener to get called on progress
 	 */
-	public OPropertyIndex create(final ODatabaseRecord iDatabase, final OProperty iProperty, final String iClusterIndexName,
+	public OIndex create(final ODatabaseRecord iDatabase, final String iClusterIndexName, final int[] iClusterIdsToIndex,
 			final OProgressListener iProgressListener) {
-		owner = iProperty;
+		config = new ODocument(iDatabase);
+
+		for (int id : iClusterIdsToIndex)
+			clustersToIndex.add(iDatabase.getClusterNameById(id));
+
 		map = new OMVRBTreeDatabaseLazySave<String, List<ORecordId>>(iDatabase, iClusterIndexName, OStreamSerializerString.INSTANCE,
 				OStreamSerializerListRID.INSTANCE);
 		rebuild(iProgressListener);
 		return this;
 	}
 
-	public OPropertyIndex configure(final ODatabaseRecord iDatabase, final OProperty iProperty, final ORID iRecordId) {
-		owner = iProperty;
-		init(iDatabase, iRecordId);
+	@SuppressWarnings("unchecked")
+	public OIndex loadFromConfiguration(final ODocument iConfig) {
+		config = iConfig;
+		name = config.field(OIndex.CONFIG_NAME);
+		clustersToIndex.clear();
+		clustersToIndex.addAll((Collection<? extends String>) config.field(CONFIG_CLUSTERS));
+		load(iConfig.getDatabase(), (ORID) iConfig.field(CONFIG_MAP_RID, ORID.class));
+		return this;
+	}
+
+	public OIndex loadFromConfiguration(final ODatabaseRecord iDatabase, final ORID iRecordId) {
+		load(iDatabase, iRecordId);
 		return this;
 	}
 
@@ -109,14 +123,14 @@ public abstract class OPropertyIndexMVRBTreeAbstract extends OSharedResource imp
 		return map.getRecord().getIdentity();
 	}
 
-	public void rebuild() {
-		rebuild(null);
+	public OIndex rebuild() {
+		return rebuild(null);
 	}
 
 	/**
 	 * Populate the index with all the existent records.
 	 */
-	public void rebuild(final OProgressListener iProgressListener) {
+	public OIndex rebuild(final OProgressListener iProgressListener) {
 		Object fieldValue;
 		ODocument doc;
 
@@ -128,20 +142,22 @@ public abstract class OPropertyIndexMVRBTreeAbstract extends OSharedResource imp
 
 			int documentIndexed = 0;
 			int documentNum = 0;
-			final int[] clusterIds = owner.getOwnerClass().getClusterIds();
-			final long documentTotal = map.getDatabase().countClusterElements(clusterIds);
+			long documentTotal = 0;
+
+			for (String cluster : clustersToIndex)
+				documentTotal += map.getDatabase().countClusterElements(cluster);
 
 			if (iProgressListener != null)
 				iProgressListener.onBegin(this, documentTotal);
 
-			for (int clusterId : clusterIds)
-				for (ORecord<?> record : map.getDatabase().browseCluster(map.getDatabase().getClusterNameById(clusterId))) {
+			for (String clusterName : clustersToIndex)
+				for (ORecord<?> record : map.getDatabase().browseCluster(clusterName)) {
 					if (record instanceof ODocument) {
 						doc = (ODocument) record;
-						fieldValue = doc.field(owner.getName());
+						fieldValue = callback.getDocumentValueToIndex(doc);
 
 						if (fieldValue != null) {
-							put(fieldValue.toString(), (ORecordId) doc.getIdentity());
+							put(fieldValue, (ORecordId) doc.getIdentity());
 							++documentIndexed;
 						}
 					}
@@ -162,14 +178,16 @@ public abstract class OPropertyIndexMVRBTreeAbstract extends OSharedResource imp
 
 			clear();
 
-			throw new OIndexException("Error on rebuilding the index for property: " + owner, e);
+			throw new OIndexException("Error on rebuilding the index for clusters: " + clustersToIndex, e);
 
 		} finally {
 			releaseExclusiveLock();
 		}
+
+		return this;
 	}
 
-	public void remove(final Object key) {
+	public OIndex remove(final Object key) {
 		acquireSharedLock();
 
 		try {
@@ -178,9 +196,10 @@ public abstract class OPropertyIndexMVRBTreeAbstract extends OSharedResource imp
 		} finally {
 			releaseSharedLock();
 		}
+		return this;
 	}
 
-	public void load() {
+	public OIndex load() {
 		acquireExclusiveLock();
 
 		try {
@@ -189,9 +208,10 @@ public abstract class OPropertyIndexMVRBTreeAbstract extends OSharedResource imp
 		} finally {
 			releaseExclusiveLock();
 		}
+		return this;
 	}
 
-	public void clear() {
+	public OIndex clear() {
 		acquireExclusiveLock();
 
 		try {
@@ -200,14 +220,16 @@ public abstract class OPropertyIndexMVRBTreeAbstract extends OSharedResource imp
 		} finally {
 			releaseExclusiveLock();
 		}
+		return this;
 	}
 
-	public void delete() {
+	public OIndex delete() {
 		clear();
 		getRecord().delete();
+		return this;
 	}
 
-	public void lazySave() {
+	public OIndex lazySave() {
 		acquireExclusiveLock();
 
 		try {
@@ -216,6 +238,8 @@ public abstract class OPropertyIndexMVRBTreeAbstract extends OSharedResource imp
 		} finally {
 			releaseExclusiveLock();
 		}
+
+		return this;
 	}
 
 	public ORecordBytes getRecord() {
@@ -233,12 +257,12 @@ public abstract class OPropertyIndexMVRBTreeAbstract extends OSharedResource imp
 		}
 	}
 
-	protected void init(final ODatabaseRecord iDatabase, final ORID iRecordId) {
+	protected void load(final ODatabaseRecord iDatabase, final ORID iRecordId) {
 		map = new OMVRBTreeDatabaseLazySave<String, List<ORecordId>>(iDatabase, iRecordId);
 		map.load();
 	}
 
-	public int getIndexedItems() {
+	public int getSize() {
 		acquireSharedLock();
 
 		try {
@@ -249,8 +273,58 @@ public abstract class OPropertyIndexMVRBTreeAbstract extends OSharedResource imp
 		}
 	}
 
+	public String getName() {
+		return name;
+	}
+
+	public OIndex setName(final String name) {
+		this.name = name;
+		return this;
+	}
+
+	public String getType() {
+		return type;
+	}
+
 	@Override
 	public String toString() {
-		return getType().toString();
+		return name + " (" + (type != null ? type : "?") + ")";
+	}
+
+	public OIndexCallback getCallback() {
+		return callback;
+	}
+
+	public void setCallback(final OIndexCallback callback) {
+		this.callback = callback;
+	}
+
+	@OBeforeSerialization
+	public byte[] toStream() throws OSerializationException {
+		config.field(OIndex.CONFIG_TYPE, type);
+		config.field(OIndex.CONFIG_NAME, name);
+		config.field(CONFIG_CLUSTERS, clustersToIndex, OType.EMBEDDEDSET);
+		config.field(CONFIG_MAP_RID, map.getRecord().getIdentity());
+		return config.toStream();
+	}
+
+	public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
+		config.fromStream(iStream);
+		name = config.field(OIndex.CONFIG_NAME);
+		clustersToIndex = config.field(CONFIG_CLUSTERS);
+		map.getRecord().setIdentity((ORecordId) config.field(CONFIG_MAP_RID, ORID.class));
+		return null;
+	}
+
+	public Set<String> getClusters() {
+		return Collections.unmodifiableSet(clustersToIndex);
+	}
+
+	public OIndexMVRBTreeAbstract addCluster(final String iClusterName) {
+		clustersToIndex.add(iClusterName);
+		return this;
+	}
+
+	public void checkEntry(final ODocument iRecord, final String iKey) {
 	}
 }
