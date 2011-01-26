@@ -22,7 +22,7 @@ import java.util.Map.Entry;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
@@ -32,20 +32,20 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public interface OIndex extends Iterable<Entry<String, List<ORecordId>>>, OSerializableStream {
+public interface OIndex extends Iterable<Entry<String, List<ORecord<?>>>>, OSerializableStream {
 
 	public static final String	CONFIG_TYPE	= "type";
 	public static final String	CONFIG_NAME	= "name";
 
 	public String getName();
 
-	public List<ORecordId> get(Object iKey);
+	public List<ORecord<?>> get(Object iKey);
 
-	public OIndex put(final Object iKey, final ORecordId iValue);
+	public OIndex put(final Object iKey, final ORecord<?> iValue);
 
 	public OIndex remove(final Object iKey);
 
-	public OIndex remove(Object iKey, ORID iRID);
+	public OIndex remove(Object iKey, ORecord<?> iRID);
 
 	public OIndex clear();
 
@@ -86,7 +86,7 @@ public interface OIndex extends Iterable<Entry<String, List<ORecordId>>>, OSeria
 
 	public OIndex lazySave();
 
-	public Iterator<Entry<String, List<ORecordId>>> iterator();
+	public Iterator<Entry<String, List<ORecord<?>>>> iterator();
 
 	public ORID getIdentity();
 

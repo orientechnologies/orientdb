@@ -169,7 +169,7 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> implement
 		cache.clear();
 		entryPoints.clear();
 		try {
-			if (root != null && ((OMVRBTreeEntryDatabase<K, V>) root).record.getIdentity().isValid())
+			if (root != null && ((OMVRBTreeEntryDatabase<K, V>) root).record.getIdentity().isPersistent())
 				((OMVRBTreeEntryDatabase<K, V>) root).load();
 		} catch (IOException e) {
 			throw new OIndexException("Error on loading root node");

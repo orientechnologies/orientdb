@@ -70,6 +70,10 @@ public class ORecordId implements ORID, Comparable<ORecordId>, Comparator<ORecor
 		return clusterPosition != CLUSTER_POS_INVALID;
 	}
 
+	public boolean isPersistent() {
+		return clusterPosition > -1;
+	}
+
 	public boolean isNew() {
 		return clusterPosition < 0;
 	}

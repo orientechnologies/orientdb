@@ -51,7 +51,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	protected static final String																	CONFIG_CLUSTERS	= "clusters";
 	protected String																							name;
 	protected String																							type;
-	protected OMVRBTreeDatabaseLazySave<String, List<ORecordId>>	map;
+	protected OMVRBTreeDatabaseLazySave<String, List<ORecord<?>>>	map;
 	protected Set<String>																					clustersToIndex	= new LinkedHashSet<String>();
 	protected OIndexCallback																			callback;
 
@@ -82,7 +82,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 			for (int id : iClusterIdsToIndex)
 				clustersToIndex.add(iDatabase.getClusterNameById(id));
 
-		map = new OMVRBTreeDatabaseLazySave<String, List<ORecordId>>(iDatabase, iClusterIndexName, OStreamSerializerString.INSTANCE,
+		map = new OMVRBTreeDatabaseLazySave<String, List<ORecord<?>>>(iDatabase, iClusterIndexName, OStreamSerializerString.INSTANCE,
 				OStreamSerializerListRID.INSTANCE);
 		rebuild(iProgressListener);
 		return this;
@@ -104,11 +104,11 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	}
 
 	@SuppressWarnings("unchecked")
-	public List<ORecordId> get(Object iKey) {
+	public List<ORecord<?>> get(Object iKey) {
 		acquireSharedLock();
 
 		try {
-			final List<ORecordId> values = map.get(iKey);
+			final List<ORecord<?>> values = map.get(iKey);
 
 			if (values == null)
 				return Collections.EMPTY_LIST;
@@ -158,7 +158,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 						fieldValue = callback.getDocumentValueToIndex(doc);
 
 						if (fieldValue != null) {
-							put(fieldValue, (ORecordId) doc.getIdentity());
+							put(fieldValue, doc);
 							++documentIndexed;
 						}
 					}
@@ -246,7 +246,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 		return map.getRecord();
 	}
 
-	public Iterator<Entry<String, List<ORecordId>>> iterator() {
+	public Iterator<Entry<String, List<ORecord<?>>>> iterator() {
 		acquireSharedLock();
 
 		try {
@@ -258,7 +258,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	}
 
 	protected void load(final ODatabaseRecord iDatabase, final ORID iRecordId) {
-		map = new OMVRBTreeDatabaseLazySave<String, List<ORecordId>>(iDatabase, iRecordId);
+		map = new OMVRBTreeDatabaseLazySave<String, List<ORecord<?>>>(iDatabase, iRecordId);
 		map.load();
 	}
 

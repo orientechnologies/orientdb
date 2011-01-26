@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -79,7 +80,7 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 		for (int id : iClusterIdsToIndex)
 			clustersToIndex.add(iDatabase.getClusterNameById(id));
 
-		map = new OMVRBTreeDatabaseLazySave<String, List<ORecordId>>((ODatabaseRecord) db, iClusterIndexName,
+		map = new OMVRBTreeDatabaseLazySave<String, List<ORecord<?>>>((ODatabaseRecord) db, iClusterIndexName,
 				OStreamSerializerString.INSTANCE, OStreamSerializerListRID.INSTANCE);
 		map.lazySave();
 
@@ -122,7 +123,7 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 
 		for (String fieldName : iDocument.fieldNames()) {
 			fieldValue = iDocument.field(fieldName);
-			put(fieldValue, (ORecordId) iDocument.getIdentity());
+			put(fieldValue, iDocument);
 		}
 
 		try {
@@ -139,11 +140,11 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 	 * @param iDocument
 	 *          The document to index
 	 */
-	public OIndex put(final Object iKey, final ORecordId iSingleValue) {
+	public OIndex put(final Object iKey, final ORecord<?> iSingleValue) {
 		if (iKey == null)
 			return this;
 
-		List<ORecordId> refs;
+		List<ORecord<?>> refs;
 		final StringBuilder buffer = new StringBuilder();
 		char c;
 		boolean ignore;
@@ -178,7 +179,7 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 			refs = map.get(word);
 			if (refs == null)
 				// WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
-				refs = new ArrayList<ORecordId>();
+				refs = new ArrayList<ORecord<?>>();
 
 			// ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
 			refs.add(iSingleValue);
@@ -189,11 +190,11 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 		return this;
 	}
 
-	public OIndex remove(final Object iKey, final ORID value) {
-		final List<ORecordId> rids = get(iKey);
-		if (rids != null && !rids.isEmpty()) {
-			if (rids.remove(value))
-				map.put((String) iKey, rids);
+	public OIndex remove(final Object iKey, final ORecord<?> value) {
+		final List<ORecord<?>> recs = get(iKey);
+		if (recs != null && !recs.isEmpty()) {
+			if (recs.remove(value))
+				map.put((String) iKey, recs);
 		}
 		return this;
 	}

@@ -75,11 +75,11 @@ public class HookTest extends ORecordHookAbstract {
 		Assert.assertFalse(result.size() == 0);
 
 		for (int i = 0; i < result.size(); ++i) {
-			Assert.assertEquals(callbackCount, 61);
+			Assert.assertEquals(callbackCount, 46);
 
 			p = result.get(i);
 		}
-		Assert.assertEquals(callbackCount, 61);
+		Assert.assertEquals(callbackCount, 46);
 	}
 
 	@Test(dependsOnMethods = "testHookRead")
@@ -87,14 +87,14 @@ public class HookTest extends ORecordHookAbstract {
 		// TEST HOOKS ON UPDATE
 		p.setValue(p.getValue() + 1000);
 		database.save(p);
-		Assert.assertEquals(callbackCount, 151);
+		Assert.assertEquals(callbackCount, 136);
 	}
 
 	@Test(dependsOnMethods = "testHookUpdate")
 	public void testHookDelete() {
 		// TEST HOOKS ON DELETE
 		database.delete(p);
-		Assert.assertEquals(callbackCount, 281);
+		Assert.assertEquals(callbackCount, 266);
 	}
 
 	@Test(dependsOnMethods = "testHookDelete")

@@ -20,7 +20,7 @@ import java.util.List;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -34,10 +34,10 @@ public class OIndexUnique extends OIndexMVRBTreeAbstract {
 		super("UNIQUE");
 	}
 
-	public OIndex put(final Object iKey, final ORecordId iSingleValue) {
-		List<ORecordId> values = map.get(iKey);
+	public OIndex put(final Object iKey, final ORecord<?> iSingleValue) {
+		List<ORecord<?>> values = map.get(iKey);
 		if (values == null)
-			values = new ArrayList<ORecordId>();
+			values = new ArrayList<ORecord<?>>();
 		else if (values.size() == 1) {
 			// CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
 			if (!values.get(0).equals(iSingleValue))
@@ -53,26 +53,20 @@ public class OIndexUnique extends OIndexMVRBTreeAbstract {
 		return this;
 	}
 
-	public OIndex remove(final Object key, final ORID value) {
+	public OIndex remove(final Object key, final ORecord<?> value) {
 		return remove(key, null);
 	}
 
 	@Override
 	public void checkEntry(final ODocument iRecord, final String iKey) {
 		// CHECK IF ALREADY EXIST
-		List<ORecordId> indexedRIDs = get(iKey);
+		List<ORecord<?>> indexedRIDs = get(iKey);
 		if (indexedRIDs != null && indexedRIDs.size() > 0) {
-			Object obj = indexedRIDs.get(0);
+			final ORecord<?> rec = indexedRIDs.get(0);
 
-			ORID rid;
-			if (obj instanceof ORecordId)
-				rid = (ORID) obj;
-			else
-				rid = ((ODocument) obj).getIdentity();
-
-			if (!rid.equals(iRecord.getIdentity()))
+			if (!rec.equals(iRecord))
 				OLogManager.instance().exception("Found duplicated key '%s' previously assigned to the record %s", null,
-						OIndexException.class, iKey, rid);
+						OIndexException.class, iKey, rec);
 		}
 
 	}

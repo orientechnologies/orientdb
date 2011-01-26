@@ -18,8 +18,7 @@ package com.orientechnologies.orient.core.index;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
 
 /**
  * Abstract not unique index class.
@@ -32,10 +31,10 @@ public class OIndexNotUnique extends OIndexMVRBTreeAbstract {
 		super("NOTUNIQUE");
 	}
 
-	public OIndex put(final Object iKey, final ORecordId iSingleValue) {
-		List<ORecordId> values = map.get(iKey);
+	public OIndex put(final Object iKey, final ORecord<?> iSingleValue) {
+		List<ORecord<?>> values = map.get(iKey);
 		if (values == null)
-			values = new ArrayList<ORecordId>();
+			values = new ArrayList<ORecord<?>>();
 
 		int pos = values.indexOf(iSingleValue);
 		if (pos > -1)
@@ -48,11 +47,11 @@ public class OIndexNotUnique extends OIndexMVRBTreeAbstract {
 		return this;
 	}
 
-	public OIndex remove(final Object iKey, final ORID value) {
-		final List<ORecordId> rids = get(iKey);
-		if (rids != null && !rids.isEmpty()) {
-			if (rids.remove(value))
-				map.put((String) iKey, rids);
+	public OIndex remove(final Object iKey, final ORecord<?> value) {
+		final List<ORecord<?>> recs = get(iKey);
+		if (recs != null && !recs.isEmpty()) {
+			if (recs.remove(value))
+				map.put((String) iKey, recs);
 		}
 		return this;
 	}

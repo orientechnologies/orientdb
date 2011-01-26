@@ -29,6 +29,8 @@ public interface ORID extends OSerializableStream {
 
 	public void reset();
 
+	public boolean isPersistent();
+
 	public boolean isValid();
 
 	public boolean isNew();

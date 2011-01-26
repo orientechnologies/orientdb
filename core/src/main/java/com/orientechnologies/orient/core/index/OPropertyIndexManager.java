@@ -21,7 +21,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -48,7 +47,7 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 
 		if (indexedProperties != null)
 			for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
-				propEntry.getKey().getIndex().getUnderlying().put(propEntry.getValue(), (ORecordId) iRecord.getIdentity());
+				propEntry.getKey().getIndex().getUnderlying().put(propEntry.getValue(), iRecord);
 			}
 		return false;
 	}
@@ -90,7 +89,7 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 					if (dirtyFields.contains(propEntry.getKey().getName())) {
 						index = propEntry.getKey().getIndex().getUnderlying();
 
-						index.put(propEntry.getValue(), (ORecordId) iRecord.getIdentity());
+						index.put(propEntry.getValue(), iRecord);
 						index.lazySave();
 					}
 				}

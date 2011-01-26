@@ -16,10 +16,12 @@
 package com.orientechnologies.orient.core.serialization.serializer.stream;
 
 import java.io.IOException;
+import java.util.List;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerPositional2CSV;
@@ -36,15 +38,20 @@ public class OStreamSerializerListRID implements OStreamSerializer {
 
 		final String s = OBinaryProtocol.bytes2string(iStream);
 
-		final Object coll = FORMAT.embeddedCollectionFromStream(iDatabase, null, OType.EMBEDDEDLIST, null, OType.LINK, s);
-		if (coll instanceof ORecordLazyList)
-			((ORecordLazyList) coll).setConvertToRecord(false);
-		return coll;
+		return FORMAT.embeddedCollectionFromStream(iDatabase, null, OType.EMBEDDEDLIST, null, OType.LINK, s);
 	}
 
 	public byte[] toStream(final ODatabaseRecord iDatabase, final Object iObject) throws IOException {
 		if (iObject == null)
 			return null;
+
+		if (iObject instanceof List) {
+
+			for (ORecord<?> r : (List<ORecord<?>>) iObject)
+				if (!r.getIdentity().isPersistent())
+					OLogManager.instance();
+
+		}
 
 		return OBinaryProtocol.string2bytes(FORMAT.embeddedCollectionToStream(null, null, null, OType.LINK, iObject, null, true));
 	}
