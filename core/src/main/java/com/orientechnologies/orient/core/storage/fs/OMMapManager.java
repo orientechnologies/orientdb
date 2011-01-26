@@ -57,8 +57,8 @@ public class OMMapManager {
 		maxMemory = OGlobalConfiguration.FILE_MMAP_MAX_MEMORY.getValueAsLong();
 	}
 
-	public static OMMapBufferEntry request(final OFileMMap iFile, final int iBeginOffset, final int iSize, final OPERATION_TYPE iOperationType,
-			final STRATEGY iStrategy) {
+	public static OMMapBufferEntry request(final OFileMMap iFile, final int iBeginOffset, final int iSize,
+			final OPERATION_TYPE iOperationType, final STRATEGY iStrategy) {
 		return request(iFile, iBeginOffset, iSize, false, iOperationType, iStrategy);
 	}
 
@@ -78,8 +78,8 @@ public class OMMapManager {
 	 * @param iStrategy
 	 * @return The mmap buffer entry if found, or null if the operation is READ and the buffer pool is full.
 	 */
-	public synchronized static OMMapBufferEntry request(final OFileMMap iFile, final int iBeginOffset, final int iSize, final boolean iForce,
-			final OPERATION_TYPE iOperationType, final STRATEGY iStrategy) {
+	public synchronized static OMMapBufferEntry request(final OFileMMap iFile, final int iBeginOffset, final int iSize,
+			final boolean iForce, final OPERATION_TYPE iOperationType, final STRATEGY iStrategy) {
 
 		if (bufferPoolLRU.size() > 0) {
 			// SEARCH IF IT'S BETWEEN THE LAST 5 BLOCK USED: THIS IS THE COMMON CASE ON MASSIVE INSERTION
@@ -130,8 +130,8 @@ public class OMMapManager {
 			bufferSize = iFile.getFileSize() - iBeginOffset;
 
 		if (bufferSize <= 0)
-			throw new IllegalArgumentException("Invalid range requested for file " + iFile + ". Requested " + iSize + " bytes from the address "
-					+ iBeginOffset + " while the total file size is " + iFile.getFileSize());
+			throw new IllegalArgumentException("Invalid range requested for file " + iFile + ". Requested " + iSize
+					+ " bytes from the address " + iBeginOffset + " while the total file size is " + iFile.getFileSize());
 
 		if (totalMemory + bufferSize > maxMemory
 				&& (iStrategy == STRATEGY.MMAP_ONLY_AVAIL_POOL || iOperationType == OPERATION_TYPE.READ
@@ -149,7 +149,7 @@ public class OMMapManager {
 
 				OLogManager.instance().debug(null, "Free mmmap blocks, at least %d MB...", (totalMemory - memoryThreshold) / 1000000);
 
-				// SORT AS LRU, FIRT = MOST USED
+				// SORT AS LRU, FIRST = MOST USED
 				Collections.sort(bufferPoolLRU, new Comparator<OMMapBufferEntry>() {
 					public int compare(final OMMapBufferEntry o1, final OMMapBufferEntry o2) {
 						return (int) (o1.counter - o2.counter);
@@ -176,9 +176,6 @@ public class OMMapManager {
 							break;
 					}
 				}
-
-				// RECOMPUTE THE POSITION AFTER REMOVING
-				position = searchEntry(fileEntries, iBeginOffset, iSize);
 			}
 
 			// LOAD THE PAGE
@@ -187,7 +184,8 @@ public class OMMapManager {
 			} catch (Exception e) {
 				// REDUCE MAX MEMORY TO FORCE EMPTY BUFFERS
 				maxMemory = maxMemory * 90 / 100;
-				OLogManager.instance().warn(OMMapManager.class, "Memory mapping error, try to reduce max memory to %d and retry...", maxMemory);
+				OLogManager.instance().warn(OMMapManager.class, "Memory mapping error, try to reduce max memory to %d and retry...",
+						maxMemory);
 			}
 		} while (entry == null && maxMemory > MIN_MEMORY);
 
@@ -196,6 +194,10 @@ public class OMMapManager {
 
 		totalMemory += bufferSize;
 		bufferPoolLRU.add(entry);
+
+		// RECOMPUTE THE POSITION AFTER REMOVING
+		position = searchEntry(fileEntries, iBeginOffset, iSize);
+
 		fileEntries.add((position + 1) * -1, entry);
 
 		return entry;
@@ -308,7 +310,8 @@ public class OMMapManager {
 				forceSucceed = true;
 				break;
 			} catch (Exception e) {
-				OLogManager.instance().debug(iEntry, "Can't write memory buffer to disk. Retrying (" + (i + 1) + "/" + FORCE_RETRY + ")...");
+				OLogManager.instance()
+						.debug(iEntry, "Can't write memory buffer to disk. Retrying (" + (i + 1) + "/" + FORCE_RETRY + ")...");
 				try {
 					System.gc();
 					Thread.sleep(FORCE_DELAY);
