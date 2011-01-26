@@ -53,6 +53,10 @@ public class OIndexUnique extends OIndexMVRBTreeAbstract {
 		return this;
 	}
 
+	public OIndex remove(final Object key, final ORID value) {
+		return remove(key, null);
+	}
+
 	@Override
 	public void checkEntry(final ODocument iRecord, final String iKey) {
 		// CHECK IF ALREADY EXIST

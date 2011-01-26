@@ -53,9 +53,10 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 		setup();
 	}
 
-	public void reset(byte[] iSource) {
+	public ORecordBytes reset(final byte[] iSource) {
 		reset();
 		_source = iSource;
+		return this;
 	}
 
 	public ORecordBytes copy() {

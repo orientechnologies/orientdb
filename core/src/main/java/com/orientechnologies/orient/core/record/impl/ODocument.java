@@ -372,6 +372,8 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	public String toString() {
 		checkForFields();
 
+		final boolean saveDirtyStatus = _dirty;
+
 		StringBuilder buffer = new StringBuilder();
 
 		if (_clazz != null)
@@ -410,6 +412,8 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		}
 		if (!first)
 			buffer.append("}");
+
+		_dirty = saveDirtyStatus;
 
 		return buffer.toString();
 	}
@@ -502,14 +506,15 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	public <RET> RET field(final String iPropertyName) {
 		RET value = this.<RET> rawField(iPropertyName);
 
-		if (value instanceof ORID) {
+		final OType t = fieldType(iPropertyName);
+
+		if (value instanceof ORID && t != OType.LINK) {
 			// CREATE THE DOCUMENT OBJECT IN LAZY WAY
 			value = (RET) _database.load((ORID) value);
 			_fieldValues.put(iPropertyName, value);
 		}
 
 		// CHECK FOR CONVERSION
-		final OType t = fieldType(iPropertyName);
 		if (t != null) {
 			if (t == OType.BINARY && value instanceof String) {
 				byte[] buffer = OBase64Utils.decode((String) value);

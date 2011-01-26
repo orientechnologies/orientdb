@@ -56,7 +56,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	protected OIndexCallback																			callback;
 
 	@ODocumentInstance
-	protected ODocument																						config;
+	protected ODocument																						configuration;
 
 	public OIndexMVRBTreeAbstract(final String iType) {
 		type = iType;
@@ -76,10 +76,11 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	 */
 	public OIndex create(final ODatabaseRecord iDatabase, final String iClusterIndexName, final int[] iClusterIdsToIndex,
 			final OProgressListener iProgressListener) {
-		config = new ODocument(iDatabase);
+		configuration = new ODocument(iDatabase);
 
-		for (int id : iClusterIdsToIndex)
-			clustersToIndex.add(iDatabase.getClusterNameById(id));
+		if (iClusterIdsToIndex != null)
+			for (int id : iClusterIdsToIndex)
+				clustersToIndex.add(iDatabase.getClusterNameById(id));
 
 		map = new OMVRBTreeDatabaseLazySave<String, List<ORecordId>>(iDatabase, iClusterIndexName, OStreamSerializerString.INSTANCE,
 				OStreamSerializerListRID.INSTANCE);
@@ -89,10 +90,10 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 
 	@SuppressWarnings("unchecked")
 	public OIndex loadFromConfiguration(final ODocument iConfig) {
-		config = iConfig;
-		name = config.field(OIndex.CONFIG_NAME);
+		configuration = iConfig;
+		name = configuration.field(OIndex.CONFIG_NAME);
 		clustersToIndex.clear();
-		clustersToIndex.addAll((Collection<? extends String>) config.field(CONFIG_CLUSTERS));
+		clustersToIndex.addAll((Collection<? extends String>) configuration.field(CONFIG_CLUSTERS));
 		load(iConfig.getDatabase(), (ORID) iConfig.field(CONFIG_MAP_RID, ORID.class));
 		return this;
 	}
@@ -224,8 +225,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	}
 
 	public OIndex delete() {
-		clear();
-		getRecord().delete();
+		map.delete();
 		return this;
 	}
 
@@ -288,7 +288,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 
 	@Override
 	public String toString() {
-		return name + " (" + (type != null ? type : "?") + ")";
+		return name + " (" + (type != null ? type : "?") + ")" + (map != null ? " " + map : "");
 	}
 
 	public OIndexCallback getCallback() {
@@ -301,18 +301,18 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 
 	@OBeforeSerialization
 	public byte[] toStream() throws OSerializationException {
-		config.field(OIndex.CONFIG_TYPE, type);
-		config.field(OIndex.CONFIG_NAME, name);
-		config.field(CONFIG_CLUSTERS, clustersToIndex, OType.EMBEDDEDSET);
-		config.field(CONFIG_MAP_RID, map.getRecord().getIdentity());
-		return config.toStream();
+		configuration.field(OIndex.CONFIG_TYPE, type);
+		configuration.field(OIndex.CONFIG_NAME, name);
+		configuration.field(CONFIG_CLUSTERS, clustersToIndex, OType.EMBEDDEDSET);
+		configuration.field(CONFIG_MAP_RID, map.getRecord().getIdentity());
+		return configuration.toStream();
 	}
 
 	public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
-		config.fromStream(iStream);
-		name = config.field(OIndex.CONFIG_NAME);
-		clustersToIndex = config.field(CONFIG_CLUSTERS);
-		map.getRecord().setIdentity((ORecordId) config.field(CONFIG_MAP_RID, ORID.class));
+		configuration.fromStream(iStream);
+		name = configuration.field(OIndex.CONFIG_NAME);
+		clustersToIndex = configuration.field(CONFIG_CLUSTERS);
+		map.getRecord().setIdentity((ORecordId) configuration.field(CONFIG_MAP_RID, ORID.class));
 		return null;
 	}
 
@@ -326,5 +326,13 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	}
 
 	public void checkEntry(final ODocument iRecord, final String iKey) {
+	}
+
+	public void unload() {
+		map.unload();
+	}
+
+	public ODocument getConfiguration() {
+		return configuration;
 	}
 }

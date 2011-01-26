@@ -84,7 +84,7 @@ public abstract class OTransactionAbstract implements OTransaction {
 		// WAKE UP LISTENERS
 		for (ODatabaseListener listener : ((ODatabaseRaw) database.getUnderlying()).getListeners())
 			try {
-				listener.onTxRollback(database.getUnderlying());
+				listener.onBeforeTxRollback(database.getUnderlying());
 			} catch (Throwable t) {
 				OLogManager.instance().error(this, "Error on rollback callback against listener: " + listener, t);
 			}

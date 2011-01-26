@@ -98,13 +98,23 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 		// WAKE UP LISTENERS
 		for (ODatabaseListener listener : underlying.getListeners())
 			try {
-				listener.onTxRollback(underlying);
+				listener.onBeforeTxRollback(underlying);
 			} catch (Throwable t) {
 				OLogManager.instance().error(this, "Error before tx rollback", t);
 			}
 
 		currentTx.rollback();
+
 		setDefaultTransactionMode();
+
+		// WAKE UP LISTENERS
+		for (ODatabaseListener listener : underlying.getListeners())
+			try {
+				listener.onAfterTxRollback(underlying);
+			} catch (Throwable t) {
+				OLogManager.instance().error(this, "Error after tx rollback", t);
+			}
+
 		return this;
 	}
 

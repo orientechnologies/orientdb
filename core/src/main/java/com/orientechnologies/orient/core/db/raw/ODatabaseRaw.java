@@ -52,7 +52,7 @@ public class ODatabaseRaw implements ODatabase {
 	protected STATUS								status;
 	protected OIntent								currentIntent;
 
-	private ODatabaseRecord			databaseOwner;
+	private ODatabaseRecord					databaseOwner;
 
 	private boolean									useCache;
 	private Map<String, Object>			properties	= new HashMap<String, Object>();
@@ -368,6 +368,14 @@ public class ODatabaseRaw implements ODatabase {
 
 	public void registerListener(final ODatabaseListener iListener) {
 		listeners.add(iListener);
+	}
+
+	public void unregisterListener(final ODatabaseListener iListener) {
+		for (int i = 0; i < listeners.size(); ++i)
+			if (listeners.get(i) == iListener) {
+				listeners.remove(i);
+				break;
+			}
 	}
 
 	public List<ODatabaseListener> getListeners() {

@@ -15,17 +15,11 @@
  */
 package com.orientechnologies.orient.core.type.tree;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
 /**
  * Collects changes all together and save them following the selected strategy. By default the map is saved automatically every
@@ -35,19 +29,17 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
  * @author Luca Garulli
  */
 @SuppressWarnings("serial")
-public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> implements ODatabaseListener {
+public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> {
 	protected int	maxUpdatesBeforeSave;
 	protected int	updates	= 0;
 
 	public OMVRBTreeDatabaseLazySave(ODatabaseRecord iDatabase, ORID iRID) {
 		super(iDatabase, iRID);
-		init(iDatabase);
 	}
 
 	public OMVRBTreeDatabaseLazySave(ODatabaseRecord iDatabase, String iClusterName, OStreamSerializer iKeySerializer,
 			OStreamSerializer iValueSerializer) {
 		super(iDatabase, iClusterName, iKeySerializer, iValueSerializer);
-		init(iDatabase);
 	}
 
 	/**
@@ -55,7 +47,8 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> imp
 	 */
 	@Override
 	public synchronized void commitChanges(final ODatabaseRecord iDatabase) {
-		if (maxUpdatesBeforeSave > 0 && ++updates >= maxUpdatesBeforeSave) {
+		if (database.getTransaction() instanceof OTransactionOptimistic
+				|| (maxUpdatesBeforeSave > 0 && ++updates >= maxUpdatesBeforeSave)) {
 			lazySave();
 			updates = 0;
 		}
@@ -77,56 +70,6 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> imp
 		super.optimize();
 	}
 
-	public void onOpen(final ODatabase iDatabase) {
-	}
-
-	public void onBeforeTxBegin(ODatabase iDatabase) {
-	}
-
-	public void onTxRollback(ODatabase iDatabase) {
-		cache.clear();
-		entryPoints.clear();
-		try {
-			if (root != null && ((OMVRBTreeEntryDatabase<K, V>) root).record.getIdentity().isValid())
-				((OMVRBTreeEntryDatabase<K, V>) root).load();
-		} catch (IOException e) {
-			throw new OIndexException("Error on loading root node");
-		}
-	}
-
-	public void onBeforeTxCommit(final ODatabase iDatabase) {
-		super.commitChanges(database);
-	}
-
-	public void onAfterTxCommit(final ODatabase iDatabase) {
-		if (cache.keySet().size() == 0)
-			return;
-
-		// FIX THE CACHE CONTENT WITH FINAL RECORD-IDS
-		final Set<ORID> keys = new HashSet<ORID>(cache.keySet());
-		OMVRBTreeEntryDatabase<K, V> entry;
-		for (ORID rid : keys) {
-			if (rid.getClusterPosition() < -1) {
-				// FIX IT IN CACHE
-				entry = (OMVRBTreeEntryDatabase<K, V>) cache.get(rid);
-
-				// OVERWRITE IT WITH THE NEW RID
-				cache.put(entry.record.getIdentity(), entry);
-				cache.remove(rid);
-			}
-		}
-	}
-
-	/**
-	 * Assure to save all the data without the optimization.
-	 */
-	public void onClose(final ODatabase iDatabase) {
-		super.commitChanges(database);
-		cache.clear();
-		entryPoints.clear();
-		root = null;
-	}
-
 	/**
 	 * Returns the maximum updates to save the map persistently.
 	 * 
@@ -146,10 +89,6 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> imp
 		this.maxUpdatesBeforeSave = iValue;
 	}
 
-	private void init(ODatabaseRecord iDatabase) {
-		iDatabase.registerListener(this);
-	}
-
 	@Override
 	protected void config() {
 		super.config();
@@ -159,11 +98,5 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> imp
 			// AUTO ADJUST BASED ON TREE SIZE
 			// TODO: CONSIDER MEMORY
 			maxUpdatesBeforeSave = size() / 20;
-	}
-
-	public void onCreate(ODatabase iDatabase) {
-	}
-
-	public void onDelete(ODatabase iDatabase) {
 	}
 }

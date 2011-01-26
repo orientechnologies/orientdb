@@ -45,6 +45,8 @@ public interface OIndex extends Iterable<Entry<String, List<ORecordId>>>, OSeria
 
 	public OIndex remove(final Object iKey);
 
+	public OIndex remove(Object iKey, ORID iRID);
+
 	public OIndex clear();
 
 	public OIndex rebuild();
@@ -93,4 +95,8 @@ public interface OIndex extends Iterable<Entry<String, List<ORecordId>>>, OSeria
 	public void setCallback(final OIndexCallback iCallback);
 
 	public OIndex setName(String iName);
+
+	public void unload();
+
+	public ODocument getConfiguration();
 }

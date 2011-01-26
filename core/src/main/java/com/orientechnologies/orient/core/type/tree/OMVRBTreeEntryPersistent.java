@@ -167,7 +167,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		serializedKeys = new byte[pageSize][];
 		serializedValues = new byte[pageSize][];
 
-		markDirty();
+		tree.getListener().signalNodeChanged(this);
 	}
 
 	protected abstract Object keyFromStream(final int iIndex) throws IOException;

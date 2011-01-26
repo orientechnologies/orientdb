@@ -83,7 +83,7 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 				OStreamSerializerString.INSTANCE, OStreamSerializerListRID.INSTANCE);
 		map.lazySave();
 
-		config = new ODocument(iDatabase);
+		configuration = new ODocument(iDatabase);
 		return this;
 	}
 
@@ -101,12 +101,12 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 	 */
 	@Override
 	public OIndex loadFromConfiguration(final ODatabaseRecord iDatabase, final ORID iRID) {
-		config = new ODocument(iDatabase, iRID);
-		config.load();
+		configuration = new ODocument(iDatabase, iRID);
+		configuration.load();
 
-		load(iDatabase, new ORecordId((String) config.field(CONFIG_MAP_RID)));
-		ignoreChars = (String) config.field(CONFIG_IGNORE_CHARS);
-		stopWords = new HashSet<String>(OStringSerializerHelper.split((String) config.field(CONFIG_STOP_WORDS), ' '));
+		load(iDatabase, new ORecordId((String) configuration.field(CONFIG_MAP_RID)));
+		ignoreChars = (String) configuration.field(CONFIG_IGNORE_CHARS);
+		stopWords = new HashSet<String>(OStringSerializerHelper.split((String) configuration.field(CONFIG_STOP_WORDS), ' '));
 
 		return this;
 	}
@@ -133,27 +133,15 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 	}
 
 	/**
-	 * Index a value and save the index.
+	 * Indexes a value and save the index. Splits the value in single words and index each one. Save of the index is responsibility of
+	 * the caller.
 	 * 
 	 * @param iDocument
 	 *          The document to index
 	 */
 	public OIndex put(final Object iKey, final ORecordId iSingleValue) {
-		indexValue(iKey, iSingleValue);
-		return this;
-	}
-
-	/**
-	 * Split the value in single words and index each one. Save of the index is responsability of the caller.
-	 * 
-	 * @param iKey
-	 *          Value to index
-	 * @param iOwnerRecord
-	 *          ORecordId of the owner record
-	 */
-	private void indexValue(final Object iKey, final ORecordId iOwnerRecord) {
 		if (iKey == null)
-			return;
+			return this;
 
 		List<ORecordId> refs;
 		final StringBuilder buffer = new StringBuilder();
@@ -193,32 +181,42 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 				refs = new ArrayList<ORecordId>();
 
 			// ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
-			refs.add(iOwnerRecord);
+			refs.add(iSingleValue);
 
 			// SAVE THE INDEX ENTRY
 			map.put(word, refs);
 		}
+		return this;
+	}
+
+	public OIndex remove(final Object iKey, final ORID value) {
+		final List<ORecordId> rids = get(iKey);
+		if (rids != null && !rids.isEmpty()) {
+			if (rids.remove(value))
+				map.put((String) iKey, rids);
+		}
+		return this;
 	}
 
 	public ODocument getConfiguration() {
-		return config;
+		return configuration;
 	}
 
 	@Override
 	public ORID getIdentity() {
-		return config.getIdentity();
+		return configuration.getIdentity();
 	}
 
 	public byte[] toStream() throws OSerializationException {
-		config.field(CONFIG_IGNORE_CHARS, ignoreChars);
-		config.field(CONFIG_STOP_WORDS, stopWords);
+		configuration.field(CONFIG_IGNORE_CHARS, ignoreChars);
+		configuration.field(CONFIG_STOP_WORDS, stopWords);
 		return super.toStream();
 	}
 
 	public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
 		super.fromStream(iStream);
-		ignoreChars = (String) config.field(CONFIG_IGNORE_CHARS);
-		stopWords = new HashSet<String>(OStringSerializerHelper.split((String) config.field(CONFIG_STOP_WORDS), ' '));
+		ignoreChars = (String) configuration.field(CONFIG_IGNORE_CHARS);
+		stopWords = new HashSet<String>(OStringSerializerHelper.split((String) configuration.field(CONFIG_STOP_WORDS), ' '));
 		return null;
 	}
 }

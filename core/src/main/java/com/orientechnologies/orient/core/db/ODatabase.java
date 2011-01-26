@@ -259,4 +259,11 @@ public interface ODatabase {
 	 * @param iListener
 	 */
 	public void registerListener(ODatabaseListener iListener);
+
+	/**
+	 * Unregisters a listener to the database events.
+	 * 
+	 * @param iListener
+	 */
+	public void unregisterListener(ODatabaseListener iListener);
 }

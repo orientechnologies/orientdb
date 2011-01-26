@@ -390,7 +390,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 			}
 
 			final ORID rid = iRecord.getIdentity();
-			if (rid.isValid() && !rid.isTemporary())
+			//if (rid.isValid() && !rid.isTemporary())
 				rid2Records.put(rid, doc);
 		}
 	}

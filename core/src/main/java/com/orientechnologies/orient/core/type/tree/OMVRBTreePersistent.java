@@ -172,6 +172,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	/**
 	 * Optimize the tree memory consumption by keeping part of nodes as entry points and clearing all the rest.
 	 */
+	@SuppressWarnings("unchecked")
 	public void optimize() {
 		final long timer = OProfiler.getInstance().startChrono();
 

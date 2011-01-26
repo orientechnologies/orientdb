@@ -41,7 +41,10 @@ public abstract class ODictionaryAbstract<T extends Object> implements ODictiona
 	public void onBeforeTxBegin(final ODatabase iDatabase) {
 	}
 
-	public void onTxRollback(final ODatabase iDatabase) {
+	public void onBeforeTxRollback(final ODatabase iDatabase) {
+	}
+
+	public void onAfterTxRollback(final ODatabase iDatabase) {
 	}
 
 	public void onBeforeTxCommit(final ODatabase iDatabase) {

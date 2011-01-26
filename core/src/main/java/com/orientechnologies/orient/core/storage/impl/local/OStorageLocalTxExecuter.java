@@ -88,6 +88,9 @@ public class OStorageLocalTxExecuter {
 			// READ CURRENT RECORD CONTENT
 			final ORawBuffer buffer = storage.readRecord(iRequesterId, iClusterSegment, iPosition, true);
 
+			if (buffer == null)
+				throw new OTransactionException("Can't retrieve the update record " + iClusterSegment.getId() + "." + iPosition);
+
 			final long dataOffset;
 			if (buffer.buffer != null) {
 				// CREATE A COPY OF IT IN DATASEGMENT. IF TX FAILS AT THIS POINT UN-REFERENCED DATA WILL REMAIN UNTIL NEXT DEFRAG

@@ -31,7 +31,9 @@ public interface ODatabaseListener {
 
 	public void onBeforeTxBegin(final ODatabase iDatabase);
 
-	public void onTxRollback(final ODatabase iDatabase);
+	public void onBeforeTxRollback(final ODatabase iDatabase);
+
+	public void onAfterTxRollback(final ODatabase iDatabase);
 
 	public void onBeforeTxCommit(final ODatabase iDatabase);
 

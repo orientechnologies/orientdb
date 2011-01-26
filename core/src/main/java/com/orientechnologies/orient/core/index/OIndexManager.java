@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +31,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 public class OIndexManager extends ODocumentWrapperNoClass {
+	public static final String	CONFIG_INDEXES			= "indexes";
 	private ODatabaseRecord			database;
 	private Map<String, OIndex>	indexes							= new HashMap<String, OIndex>();
 	private String							defaultClusterName	= OStorage.CLUSTER_INDEX_NAME;
@@ -54,6 +57,10 @@ public class OIndexManager extends ODocumentWrapperNoClass {
 		save(OStorage.CLUSTER_INTERNAL_NAME);
 		document.getDatabase().getStorage().getConfiguration().indexMgrRecordId = document.getIdentity().toString();
 		document.getDatabase().getStorage().getConfiguration().update();
+	}
+
+	public Collection<OIndex> getIndexes() {
+		return Collections.unmodifiableCollection(indexes.values());
 	}
 
 	public OIndex getIndex(final String iName) {
@@ -106,7 +113,7 @@ public class OIndexManager extends ODocumentWrapperNoClass {
 
 	@Override
 	protected void fromStream() {
-		final List<ODocument> idxs = document.field("indexes");
+		final List<ODocument> idxs = document.field(CONFIG_INDEXES);
 
 		if (idxs != null) {
 			OIndex index;
@@ -124,7 +131,7 @@ public class OIndexManager extends ODocumentWrapperNoClass {
 	@Override
 	@OBeforeSerialization
 	public ODocument toStream() {
-		document.field("indexes", indexes.values(), OType.EMBEDDEDSET);
+		document.field(CONFIG_INDEXES, indexes.values(), OType.EMBEDDEDSET);
 		return document;
 	}
 

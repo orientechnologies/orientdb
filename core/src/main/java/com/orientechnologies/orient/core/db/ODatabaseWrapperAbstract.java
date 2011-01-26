@@ -194,4 +194,8 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 	public void registerListener(final ODatabaseListener iListener) {
 		underlying.registerListener(iListener);
 	}
+
+	public void unregisterListener(final ODatabaseListener iListener) {
+		underlying.unregisterListener(iListener);
+	}
 }
