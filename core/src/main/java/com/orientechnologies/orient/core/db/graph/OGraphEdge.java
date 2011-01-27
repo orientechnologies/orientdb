@@ -30,10 +30,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @see OGraphVertex
  */
 public class OGraphEdge extends OGraphElement {
-	public static final String					CLASS_NAME	= "OGraphEdge";
-	public static final String					IN					= "in";
-	public static final String					OUT					= "out";
-
 	private SoftReference<OGraphVertex>	in;
 	private SoftReference<OGraphVertex>	out;
 
@@ -42,23 +38,24 @@ public class OGraphEdge extends OGraphElement {
 	}
 
 	public OGraphEdge(final ODatabaseGraphTx iDatabase) {
-		super(iDatabase, CLASS_NAME);
+		super(iDatabase, OGraphDatabase.EDGE_CLASS_NAME);
 	}
 
 	public OGraphEdge(final ODatabaseGraphTx iDatabase, final String iClassName) {
-		super(iDatabase, iClassName != null ? iClassName : CLASS_NAME);
+		super(iDatabase, iClassName != null ? iClassName : OGraphDatabase.EDGE_CLASS_NAME);
 	}
 
-	public OGraphEdge(final ODatabaseGraphTx iDatabase, final String iClassName, final OGraphVertex iOutNode, final OGraphVertex iInNode) {
+	public OGraphEdge(final ODatabaseGraphTx iDatabase, final String iClassName, final OGraphVertex iOutNode,
+			final OGraphVertex iInNode) {
 		this(iDatabase, iClassName);
 		in = new SoftReference<OGraphVertex>(iInNode);
 		out = new SoftReference<OGraphVertex>(iOutNode);
-		set(IN, iInNode.getDocument());
-		set(OUT, iOutNode.getDocument());
+		set(OGraphDatabase.EDGE_FIELD_IN, iInNode.getDocument());
+		set(OGraphDatabase.EDGE_FIELD_OUT, iOutNode.getDocument());
 	}
 
 	public OGraphEdge(final ODatabaseGraphTx iDatabase, final OGraphVertex iOutNode, final OGraphVertex iInNode) {
-		this(iDatabase, CLASS_NAME, iOutNode, iInNode);
+		this(iDatabase, OGraphDatabase.EDGE_CLASS_NAME, iOutNode, iInNode);
 	}
 
 	public OGraphEdge(final ODatabaseGraphTx iDatabase, final ODocument iDocument) {
@@ -75,14 +72,16 @@ public class OGraphEdge extends OGraphElement {
 
 	public OGraphVertex getIn() {
 		if (in == null || in.get() == null)
-			in = new SoftReference<OGraphVertex>((OGraphVertex) database.getUserObjectByRecord((ODocument) document.field(IN), null));
+			in = new SoftReference<OGraphVertex>((OGraphVertex) database.getUserObjectByRecord(
+					(ODocument) document.field(OGraphDatabase.EDGE_FIELD_IN), null));
 
 		return in.get();
 	}
 
 	public OGraphVertex getOut() {
 		if (out == null || out.get() == null)
-			out = new SoftReference<OGraphVertex>((OGraphVertex) database.getUserObjectByRecord((ODocument) document.field(OUT), null));
+			out = new SoftReference<OGraphVertex>((OGraphVertex) database.getUserObjectByRecord(
+					(ODocument) document.field(OGraphDatabase.EDGE_FIELD_OUT), null));
 
 		return out.get();
 	}
@@ -110,13 +109,13 @@ public class OGraphEdge extends OGraphElement {
 	}
 
 	public static void delete(final ODatabaseGraphTx iDatabase, final ODocument iEdge) {
-		final ODocument sourceVertex = (ODocument) iEdge.field(OUT);
-		final ODocument targetVertex = (ODocument) iEdge.field(IN);
+		final ODocument sourceVertex = (ODocument) iEdge.field(OGraphDatabase.EDGE_FIELD_OUT);
+		final ODocument targetVertex = (ODocument) iEdge.field(OGraphDatabase.EDGE_FIELD_IN);
 
 		List<OGraphEdge> edges;
 
 		if (iDatabase.existsUserObjectByRID(sourceVertex.getIdentity())) {
-			// WORK ALSO WITH IN MEMORY OBJECTS
+			// WORK ALSO WITH OGraphDatabase.EDGE_FIELD_IN MEMORY OBJECTS
 
 			final OGraphVertex vertex = (OGraphVertex) iDatabase.getUserObjectByRecord(sourceVertex, null);
 			// REMOVE THE EDGE OBJECT
@@ -131,7 +130,7 @@ public class OGraphEdge extends OGraphElement {
 		}
 
 		if (iDatabase.existsUserObjectByRID(targetVertex.getIdentity())) {
-			// WORK ALSO WITH IN MEMORY OBJECTS
+			// WORK ALSO WITH OGraphDatabase.EDGE_FIELD_IN MEMORY OBJECTS
 
 			final OGraphVertex vertex = (OGraphVertex) iDatabase.getUserObjectByRecord(targetVertex, null);
 			// REMOVE THE EDGE OBJECT FROM THE TARGET VERTEX
@@ -146,7 +145,7 @@ public class OGraphEdge extends OGraphElement {
 		}
 
 		// REMOVE THE EDGE DOCUMENT
-		List<ODocument> docs = sourceVertex.field(OGraphVertex.FIELD_OUT_EDGES);
+		List<ODocument> docs = sourceVertex.field(OGraphDatabase.VERTEX_FIELD_OUT_EDGES);
 		if (docs != null)
 			docs.remove(iEdge);
 
@@ -154,7 +153,7 @@ public class OGraphEdge extends OGraphElement {
 		sourceVertex.save();
 
 		// REMOVE THE EDGE DOCUMENT FROM THE TARGET VERTEX
-		docs = targetVertex.field(OGraphVertex.FIELD_IN_EDGES);
+		docs = targetVertex.field(OGraphDatabase.VERTEX_FIELD_IN_EDGES);
 		if (docs != null)
 			docs.remove(iEdge);
 
@@ -171,11 +170,11 @@ public class OGraphEdge extends OGraphElement {
 
 	protected void setIn(final OGraphVertex iSource) {
 		this.in = new SoftReference<OGraphVertex>(iSource);
-		document.field(IN, iSource.getDocument());
+		document.field(OGraphDatabase.EDGE_FIELD_IN, iSource.getDocument());
 	}
 
 	protected void setOut(final OGraphVertex iDestination) {
 		this.out = new SoftReference<OGraphVertex>(iDestination);
-		document.field(OUT, iDestination.getDocument());
+		document.field(OGraphDatabase.EDGE_FIELD_OUT, iDestination.getDocument());
 	}
 }

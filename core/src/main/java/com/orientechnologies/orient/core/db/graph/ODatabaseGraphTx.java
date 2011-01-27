@@ -200,18 +200,18 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 	}
 
 	private void checkForGraphSchema() {
-		if (!underlying.getMetadata().getSchema().existsClass(OGraphVertex.CLASS_NAME)) {
+		if (!underlying.getMetadata().getSchema().existsClass(OGraphDatabase.VERTEX_CLASS_NAME)) {
 			// CREATE THE META MODEL USING THE ORIENT SCHEMA
 			final OClass vertex = underlying.getMetadata().getSchema()
-					.createClass(OGraphVertex.CLASS_NAME, underlying.addPhysicalCluster(OGraphVertex.CLASS_NAME));
+					.createClass(OGraphDatabase.VERTEX_CLASS_NAME, underlying.addPhysicalCluster(OGraphDatabase.VERTEX_CLASS_NAME));
 			final OClass edge = underlying.getMetadata().getSchema()
-					.createClass(OGraphEdge.CLASS_NAME, underlying.addPhysicalCluster(OGraphEdge.CLASS_NAME));
+					.createClass(OGraphDatabase.EDGE_CLASS_NAME, underlying.addPhysicalCluster(OGraphDatabase.EDGE_CLASS_NAME));
 
-			edge.createProperty(OGraphEdge.IN, OType.LINK, vertex);
-			edge.createProperty(OGraphEdge.OUT, OType.LINK, vertex);
+			edge.createProperty(OGraphDatabase.EDGE_FIELD_IN, OType.LINK, vertex);
+			edge.createProperty(OGraphDatabase.EDGE_FIELD_OUT, OType.LINK, vertex);
 
-			vertex.createProperty(OGraphVertex.FIELD_IN_EDGES, OType.LINKLIST, edge);
-			vertex.createProperty(OGraphVertex.FIELD_OUT_EDGES, OType.LINKLIST, edge);
+			vertex.createProperty(OGraphDatabase.VERTEX_FIELD_IN_EDGES, OType.LINKLIST, edge);
+			vertex.createProperty(OGraphDatabase.VERTEX_FIELD_OUT_EDGES, OType.LINKLIST, edge);
 
 			underlying.getMetadata().getSchema().save();
 		}

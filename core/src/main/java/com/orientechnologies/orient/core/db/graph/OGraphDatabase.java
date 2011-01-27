@@ -45,6 +45,8 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	public static final String	EDGE_FIELD_OUT					= "out";
 
 	private boolean							safeMode								= false;
+	private OClass							vertexBaseClass;
+	private OClass							edgeBaseClass;
 
 	public OGraphDatabase(final String iURL) {
 		super(iURL);
@@ -179,9 +181,17 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	}
 
 	public OClass createVertexType(final String iClassName) {
-		OClass cls = getMetadata().getSchema().createClass(iClassName).setSuperClass(getMetadata().getSchema().getClass(VERTEX_CLASS_NAME));
+		return createVertexType(iClassName, vertexBaseClass);
+	}
+
+	public OClass createVertexType(final String iClassName, OClass iSuperClass) {
+		OClass cls = getMetadata().getSchema().createClass(iClassName).setSuperClass(iSuperClass);
 		getMetadata().getSchema().save();
 		return cls;
+	}
+
+	public OClass createVertexType(final String iClassName, final String iSuperClassName) {
+		return createVertexType(iClassName, getMetadata().getSchema().getClass(iSuperClassName));
 	}
 
 	public OClass getVertexType(final String iClassName) {
@@ -189,7 +199,8 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	}
 
 	public OClass createEdgeType(final String iClassName) {
-		OClass cls = getMetadata().getSchema().createClass(iClassName).setSuperClass(getMetadata().getSchema().getClass(EDGE_CLASS_NAME));
+		OClass cls = getMetadata().getSchema().createClass(iClassName)
+				.setSuperClass(getMetadata().getSchema().getClass(EDGE_CLASS_NAME));
 		getMetadata().getSchema().save();
 		return cls;
 	}
@@ -199,19 +210,22 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	}
 
 	private void checkForGraphSchema() {
-		if (!getMetadata().getSchema().existsClass(VERTEX_CLASS_NAME)) {
+		vertexBaseClass = getMetadata().getSchema().getClass(VERTEX_CLASS_NAME);
+		edgeBaseClass = getMetadata().getSchema().getClass(EDGE_CLASS_NAME);
+
+		if (vertexBaseClass == null) {
 			// CREATE THE META MODEL USING THE ORIENT SCHEMA
-			final OClass vertex = getMetadata().getSchema().createClass(VERTEX_CLASS_NAME, addPhysicalCluster(VERTEX_CLASS_NAME));
-			final OClass edge = getMetadata().getSchema().createClass(EDGE_CLASS_NAME, addPhysicalCluster(EDGE_CLASS_NAME));
+			vertexBaseClass = getMetadata().getSchema().createClass(VERTEX_CLASS_NAME, addPhysicalCluster(VERTEX_CLASS_NAME));
 
-			edge.createProperty(EDGE_FIELD_IN, OType.LINK, vertex);
-			edge.createProperty(EDGE_FIELD_OUT, OType.LINK, vertex);
+			if (edgeBaseClass == null)
+				edgeBaseClass = getMetadata().getSchema().createClass(EDGE_CLASS_NAME, addPhysicalCluster(EDGE_CLASS_NAME));
 
-			vertex.createProperty(VERTEX_FIELD_IN_EDGES, OType.LINKLIST, edge);
-			vertex.createProperty(VERTEX_FIELD_OUT_EDGES, OType.LINKLIST, edge);
-
-			getMetadata().getSchema().save();
+			vertexBaseClass.createProperty(VERTEX_FIELD_IN_EDGES, OType.LINKLIST, edgeBaseClass);
+			vertexBaseClass.createProperty(VERTEX_FIELD_OUT_EDGES, OType.LINKLIST, edgeBaseClass);
+			edgeBaseClass.createProperty(EDGE_FIELD_IN, OType.LINK, vertexBaseClass);
+			edgeBaseClass.createProperty(EDGE_FIELD_OUT, OType.LINK, vertexBaseClass);
 		}
+		getMetadata().getSchema().save();
 	}
 
 	public boolean isSafeMode() {

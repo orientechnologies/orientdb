@@ -1,0 +1,74 @@
+/*
+ * Copyright 1999-2010 Luca Garulli (l.garulli--at--orientechnologies.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.orientechnologies.orient.test.database.auto;
+
+import java.util.List;
+
+import org.testng.Assert;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+
+@Test
+public class GraphDatabaseTest {
+	private OGraphDatabase	database;
+
+	@Parameters(value = "url")
+	public GraphDatabaseTest(String iURL) {
+		database = new OGraphDatabase(iURL);
+	}
+
+	@SuppressWarnings("unused")
+	@Test
+	public void populate() {
+		database.open("admin", "admin");
+
+		OClass vehicleClass = database.createVertexType("GraphVehicle");
+
+		database.createVertexType("GraphCar", vehicleClass);
+		database.createVertexType("GraphMotocycle", "GraphVehicle");
+
+		ODocument carNode = (ODocument) database.createVertex("GraphCar").field("brand", "Hyundai").field("model", "Coupe")
+				.field("year", 2003).save();
+		ODocument motoNode = (ODocument) database.createVertex("GraphMotocycle").field("brand", "Yamaha").field("model", "X-City 250")
+				.field("year", 2009).save();
+
+		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from GraphVehicle"));
+		Assert.assertEquals(result.size(), 2);
+		for (ODocument v : result) {
+			Assert.assertTrue(v.getSchemaClass().isSubClassOf(vehicleClass));
+		}
+
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "populate")
+	public void checkAfterClose() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from GraphVehicle"));
+		Assert.assertEquals(result.size(), 2);
+		for (ODocument v : result) {
+			Assert.assertTrue(v.getSchemaClass().isSubClassOf("GraphVehicle"));
+		}
+
+		database.close();
+	}
+}
