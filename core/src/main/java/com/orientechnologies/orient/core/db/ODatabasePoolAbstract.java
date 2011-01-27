@@ -108,4 +108,23 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements ORe
 			}
 		}
 	}
+
+	public void remove(String iName, String iUser) {
+		final String dbPooledName = iUser + "@" + iName;
+
+		final OResourcePool<String, DB> pool = pools.get(dbPooledName);
+
+		if (pool != null)
+			for (DB db : pool.getResources()) {
+				pool.close();
+				try {
+					OLogManager.instance().debug(this, "Closing pooled database '%s'...", db.getName());
+					((ODatabasePooled) db).forceClose();
+					OLogManager.instance().debug(this, "OK", db.getName());
+				} catch (Exception e) {
+					OLogManager.instance().debug(this, "Error: %d", e.toString());
+				}
+
+			}
+	}
 }

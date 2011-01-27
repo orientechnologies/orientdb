@@ -70,4 +70,8 @@ public class OSharedDocumentDatabase {
 	public static Map<String, OResourcePool<String, ODatabaseDocumentTx>> getDatabasePools() {
 		return dbPool.getPools();
 	}
+
+	public static void remove(String iName, String iUser) {
+		dbPool.remove(iName, iUser);
+	}
 }

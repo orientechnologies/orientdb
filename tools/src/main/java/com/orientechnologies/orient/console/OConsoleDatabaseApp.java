@@ -662,8 +662,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			serverAdmin.shareDatabase(iDatabaseName, iDatabaseUserName, iDatabaseUserPassword, iRemoteName,
 					iMode.equalsIgnoreCase("synch"));
 
-			out.println("Database '" + iDatabaseName + "' has been shared in '" + iMode + "' mode with '" + iRemoteName + "' the server "
-					+ iRemoteName);
+			out.println("Database '" + iDatabaseName + "' has been shared in '" + iMode + "' mode with the server '" + iRemoteName + "'");
 
 		} catch (Exception e) {
 			printError(e);
