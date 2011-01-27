@@ -25,6 +25,8 @@ import java.util.Set;
 
 import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.annotation.ODocumentInstance;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -74,7 +76,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	 * @param iProgressListener
 	 *          Listener to get called on progress
 	 */
-	public OIndex create(final ODatabaseRecord iDatabase, final String iClusterIndexName, final int[] iClusterIdsToIndex,
+	public OIndex create(final String iName, final ODatabaseRecord iDatabase, final String iClusterIndexName, final int[] iClusterIdsToIndex,
 			final OProgressListener iProgressListener) {
 		configuration = new ODocument(iDatabase);
 
@@ -82,6 +84,9 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 			for (int id : iClusterIdsToIndex)
 				clustersToIndex.add(iDatabase.getClusterNameById(id));
 
+		name = iName;
+		installProfilerHooks();
+		
 		map = new OMVRBTreeDatabaseLazySave<String, List<ORecord<?>>>(iDatabase, iClusterIndexName, OStreamSerializerString.INSTANCE,
 				OStreamSerializerListRID.INSTANCE);
 		rebuild(iProgressListener);
@@ -258,6 +263,8 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	}
 
 	protected void load(final ODatabaseRecord iDatabase, final ORID iRecordId) {
+		installProfilerHooks();
+
 		map = new OMVRBTreeDatabaseLazySave<String, List<ORecord<?>>>(iDatabase, iRecordId);
 		map.load();
 	}
@@ -334,5 +341,31 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 
 	public ODocument getConfiguration() {
 		return configuration;
+	}
+
+	private void installProfilerHooks() {
+		OProfiler.getInstance().registerHookValue("index." + name + ".items", new OProfilerHookValue() {
+			public Object getValue() {
+				return map != null ? map.size() : "-";
+			}
+		});
+
+		OProfiler.getInstance().registerHookValue("index." + name + ".entryPointSize", new OProfilerHookValue() {
+			public Object getValue() {
+				return map != null ? map.getEntryPointSize() : "-";
+			}
+		});
+
+		OProfiler.getInstance().registerHookValue("index." + name + ".maxUpdateBeforeSave", new OProfilerHookValue() {
+			public Object getValue() {
+				return map != null ? map.getMaxUpdatesBeforeSave() : "-";
+			}
+		});
+
+		OProfiler.getInstance().registerHookValue("index." + name + ".optimizationThreshold", new OProfilerHookValue() {
+			public Object getValue() {
+				return map != null ? map.getOptimizeThreshold() : "-";
+			}
+		});
 	}
 }

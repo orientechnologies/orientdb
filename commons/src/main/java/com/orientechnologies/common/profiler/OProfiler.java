@@ -34,15 +34,19 @@ import java.util.Map.Entry;
  * @copyrights Orient Technologies.com
  */
 public class OProfiler implements OProfilerMBean {
-	private long												recording	= -1;
-	private Map<String, Long>						counters;
-	private Map<String, OProfilerEntry>	chronos;
-	private Map<String, OProfilerEntry>	stats;
-	private Date												lastReset;
+	private long														recording	= -1;
+	private Map<String, Long>								counters;
+	private Map<String, OProfilerEntry>			chronos;
+	private Map<String, OProfilerEntry>			stats;
+	private Map<String, OProfilerHookValue>	hooks;
+	private Date														lastReset;
 
-	protected static final OProfiler		instance	= new OProfiler();
+	protected static final OProfiler				instance	= new OProfiler();
 
-	// INNER CLASSES:
+	public interface OProfilerHookValue {
+		public Object getValue();
+	}
+
 	public class OProfilerEntry {
 		public String	name		= null;
 		public long		items		= 0;
@@ -119,7 +123,24 @@ public class OProfiler implements OProfilerMBean {
 	 * @see com.orientechnologies.common.profiler.ProfileMBean#dump()
 	 */
 	public synchronized String dump() {
-		return "\n" + dumpCounters() + "\n\n" + dumpStats() + "\n\n" + dumpChronos();
+		final float maxMem = Runtime.getRuntime().maxMemory() / 1000000f;
+		final float totMem = Runtime.getRuntime().totalMemory() / 1000000f;
+		final float freeMem = Runtime.getRuntime().freeMemory() / 1000000f;
+
+		final StringBuilder buffer = new StringBuilder();
+		buffer.append("\nOrientDB profiler dump of ");
+		buffer.append(new Date());
+		buffer.append(String.format("\nTotal memory: %2.2fMb (%2.2f%%) - Max memory: %2.2fMb - Free memory: %2.2fMb - CPUs: %d",
+				totMem, (totMem * 100 / (float) maxMem), maxMem, freeMem, Runtime.getRuntime().availableProcessors()));
+		buffer.append("\n");
+		buffer.append(dumpHookValues());
+		buffer.append("\n");
+		buffer.append(dumpCounters());
+		buffer.append("\n\n");
+		buffer.append(dumpStats());
+		buffer.append("\n\n");
+		buffer.append(dumpChronos());
+		return buffer.toString();
 	}
 
 	/*
@@ -136,6 +157,8 @@ public class OProfiler implements OProfilerMBean {
 			chronos.clear();
 		if (stats != null)
 			stats.clear();
+		if (hooks != null)
+			hooks.clear();
 	}
 
 	public synchronized long startChrono() {
@@ -191,6 +214,34 @@ public class OProfiler implements OProfilerMBean {
 
 	public String dumpStats() {
 		return dumpEntries(stats, new StringBuilder("DUMPING STATISTICS (last reset on: " + lastReset.toString() + "). Times in ms..."));
+	}
+
+	public synchronized String dumpHookValues() {
+		if (recording < 0)
+			return "HookValues: <no recording>";
+
+		if (hooks.size() == 0)
+			return "";
+
+		OProfilerHookValue hook;
+		StringBuilder buffer = new StringBuilder();
+
+		buffer.append("HOOK VALUES:");
+
+		buffer.append(String.format("\n%45s +-------------------------------------------------------------------+", ""));
+		buffer.append(String.format("\n%45s | Value                                                             |", "Name"));
+		buffer.append(String.format("\n%45s +-------------------------------------------------------------------+", ""));
+
+		final List<String> keys = new ArrayList<String>(hooks.keySet());
+		Collections.sort(keys);
+
+		for (String k : keys) {
+			hook = hooks.get(k);
+			buffer.append(String.format("\n%-45s | %-65s |", k, hook.getValue().toString()));
+		}
+
+		buffer.append(String.format("\n%45s +-------------------------------------------------------------------+", ""));
+		return buffer.toString();
 	}
 
 	/*
@@ -275,10 +326,15 @@ public class OProfiler implements OProfilerMBean {
 		return instance;
 	}
 
+	public void registerHookValue(final String iName, OProfilerHookValue iHookValue) {
+		hooks.put(iName, iHookValue);
+	}
+
 	private void init() {
 		counters = new HashMap<String, Long>();
 		chronos = new HashMap<String, OProfilerEntry>();
 		stats = new HashMap<String, OProfilerEntry>();
+		hooks = new HashMap<String, OProfiler.OProfilerHookValue>();
 
 		lastReset = new Date();
 	}
@@ -313,7 +369,10 @@ public class OProfiler implements OProfilerMBean {
 	private synchronized String dumpEntries(final Map<String, OProfilerEntry> iValues, final StringBuilder iBuffer) {
 		// CHECK IF CHRONOS ARE ACTIVED
 		if (recording < 0)
-			return "Chronos: <no recording>";
+			return "<no recording>";
+
+		if (iValues.size() == 0)
+			return "";
 
 		OProfilerEntry c;
 

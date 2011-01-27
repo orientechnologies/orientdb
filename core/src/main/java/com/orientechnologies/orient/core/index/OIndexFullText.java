@@ -57,18 +57,20 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 		stopWords = new HashSet<String>(OStringSerializerHelper.split(DEF_STOP_WORDS, ' '));
 	}
 
-	public OIndexFullText(final ODatabaseRecord iDatabase, final int[] iClusterIdsToIndex) {
-		this(iDatabase, DEF_CLUSTER_NAME, iClusterIdsToIndex);
+	public OIndexFullText(final String iName, final ODatabaseRecord iDatabase, final int[] iClusterIdsToIndex) {
+		this(iName, iDatabase, DEF_CLUSTER_NAME, iClusterIdsToIndex);
 	}
 
-	public OIndexFullText(final ODatabaseRecord iDatabase, final String iClusterIndexName, final int[] iClusterIdsToIndex) {
+	public OIndexFullText(final String iName, final ODatabaseRecord iDatabase, final String iClusterIndexName, final int[] iClusterIdsToIndex) {
 		this();
-		create(iDatabase, iClusterIndexName, iClusterIdsToIndex, null);
+		create(iName, iDatabase, iClusterIndexName, iClusterIdsToIndex, null);
 	}
 
 	@Override
-	public OIndex create(final ODatabaseRecord iDatabase, final String iClusterIndexName, final int[] iClusterIdsToIndex,
+	public OIndex create(final String iName, final ODatabaseRecord iDatabase, final String iClusterIndexName, final int[] iClusterIdsToIndex,
 			final OProgressListener iProgressListener) {
+		name = iName;
+		
 		if (iDatabase.getClusterIdByName(iClusterIndexName) == -1)
 			// CREATE THE PHYSICAL CLUSTER THE FIRST TIME
 			iDatabase.addPhysicalCluster(iClusterIndexName, iClusterIndexName, -1);

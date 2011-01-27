@@ -27,6 +27,7 @@ import java.util.Map;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 public class OMMapManager {
@@ -42,6 +43,7 @@ public class OMMapManager {
 	private static final int															FORCE_DELAY;
 	private static final int															FORCE_RETRY;
 
+	private static STRATEGY																lastStrategy;
 	private static int																		blockSize;
 	private static long																		maxMemory;
 	private static long																		totalMemory;
@@ -53,8 +55,37 @@ public class OMMapManager {
 		blockSize = OGlobalConfiguration.FILE_MMAP_BLOCK_SIZE.getValueAsInteger();
 		FORCE_DELAY = OGlobalConfiguration.FILE_MMAP_FORCE_DELAY.getValueAsInteger();
 		FORCE_RETRY = OGlobalConfiguration.FILE_MMAP_FORCE_RETRY.getValueAsInteger();
-
 		maxMemory = OGlobalConfiguration.FILE_MMAP_MAX_MEMORY.getValueAsLong();
+
+		OProfiler.getInstance().registerHookValue("mmap.totalMemory", new OProfilerHookValue() {
+			public Object getValue() {
+				return totalMemory;
+			}
+		});
+
+		OProfiler.getInstance().registerHookValue("mmap.maxMemory", new OProfilerHookValue() {
+			public Object getValue() {
+				return maxMemory;
+			}
+		});
+
+		OProfiler.getInstance().registerHookValue("mmap.blockSize", new OProfilerHookValue() {
+			public Object getValue() {
+				return blockSize;
+			}
+		});
+
+		OProfiler.getInstance().registerHookValue("mmap.blocks", new OProfilerHookValue() {
+			public Object getValue() {
+				return bufferPoolLRU.size();
+			}
+		});
+
+		OProfiler.getInstance().registerHookValue("mmap.strategy", new OProfilerHookValue() {
+			public Object getValue() {
+				return lastStrategy;
+			}
+		});
 	}
 
 	public static OMMapBufferEntry request(final OFileMMap iFile, final int iBeginOffset, final int iSize,
@@ -80,6 +111,8 @@ public class OMMapManager {
 	 */
 	public synchronized static OMMapBufferEntry request(final OFileMMap iFile, final int iBeginOffset, final int iSize,
 			final boolean iForce, final OPERATION_TYPE iOperationType, final STRATEGY iStrategy) {
+
+		lastStrategy = iStrategy;
 
 		if (bufferPoolLRU.size() > 0) {
 			// SEARCH IF IT'S BETWEEN THE LAST 5 BLOCK USED: THIS IS THE COMMON CASE ON MASSIVE INSERTION
@@ -178,6 +211,12 @@ public class OMMapManager {
 				}
 			}
 
+			// RECOMPUTE THE POSITION AFTER REMOVING
+			position = searchEntry(fileEntries, iBeginOffset, iSize);
+			if (position > -1)
+				// FOUND: THIS IS PRETT STRANGE SINCE IT WASN'T FOUND!
+				return fileEntries.get(position);
+
 			// LOAD THE PAGE
 			try {
 				entry = mapBuffer(iFile, iBeginOffset, bufferSize);
@@ -194,10 +233,6 @@ public class OMMapManager {
 
 		totalMemory += bufferSize;
 		bufferPoolLRU.add(entry);
-
-		// RECOMPUTE THE POSITION AFTER REMOVING
-		position = searchEntry(fileEntries, iBeginOffset, iSize);
-
 		fileEntries.add((position + 1) * -1, entry);
 
 		return entry;

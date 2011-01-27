@@ -21,6 +21,7 @@ import java.util.LinkedHashMap;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.orient.core.OMemoryWatchDog.Listener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -67,6 +68,33 @@ public class OCacheRecord extends OSharedResourceAdaptive {
 
 					OLogManager.instance().debug(this, "Low memory: auto reduce the storage cache size from %d to %d", maxSize, threshold);
 					maxSize = threshold;
+				}
+			}
+		});
+
+		OProfiler.getInstance().registerHookValue("cache.records.current", new OProfilerHookValue() {
+			public Object getValue() {
+				return cache.size();
+			}
+		});
+
+		OProfiler.getInstance().registerHookValue("cache.records.max", new OProfilerHookValue() {
+			public Object getValue() {
+				return maxSize;
+			}
+		});
+
+		OProfiler.getInstance().registerHookValue("cache.records.bytes", new OProfilerHookValue() {
+			public Object getValue() {
+				final boolean locked = acquireSharedLock();
+				try {
+					long tot = 0;
+					for (ORawBuffer buff : cache.values()) {
+						tot += buff.buffer.length;
+					}
+					return tot;
+				} finally {
+					releaseSharedLock(locked);
 				}
 			}
 		});

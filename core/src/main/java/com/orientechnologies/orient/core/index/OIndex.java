@@ -63,6 +63,8 @@ public interface OIndex extends Iterable<Entry<String, List<ORecord<?>>>>, OSeri
 	/**
 	 * Creates the index.
 	 * 
+	 * @param iName
+	 * 
 	 * @param iDatabase
 	 *          Current Database instance
 	 * @param iProperty
@@ -73,8 +75,8 @@ public interface OIndex extends Iterable<Entry<String, List<ORecord<?>>>>, OSeri
 	 * @param iProgressListener
 	 *          Listener to get called on progress
 	 */
-	public OIndex create(final ODatabaseRecord iDatabase, final String iClusterIndexName, final int[] iClusterIdsToIndex,
-			final OProgressListener iProgressListener);
+	public OIndex create(String iName, final ODatabaseRecord iDatabase, final String iClusterIndexName,
+			final int[] iClusterIdsToIndex, final OProgressListener iProgressListener);
 
 	public OIndex loadFromConfiguration(ODocument iConfig);
 

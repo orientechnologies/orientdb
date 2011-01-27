@@ -14,6 +14,7 @@ import javax.management.NotificationListener;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.orient.core.OMemoryWatchDog.Listener.TYPE;
 
 /**
@@ -23,6 +24,7 @@ import com.orientechnologies.orient.core.OMemoryWatchDog.Listener.TYPE;
 public class OMemoryWatchDog {
 	private final Collection<Listener>		listeners				= new ArrayList<Listener>();
 	private static final MemoryPoolMXBean	tenuredGenPool	= findTenuredGenPool();
+	private int														alertTimes			= 0;
 
 	public interface Listener {
 		public enum TYPE {
@@ -46,6 +48,7 @@ public class OMemoryWatchDog {
 		memEmitter.addNotificationListener(new NotificationListener() {
 			public void handleNotification(Notification n, Object hb) {
 				if (n.getType().equals(MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED)) {
+					alertTimes++;
 					long maxMemory = tenuredGenPool.getUsage().getMax();
 					long usedMemory = tenuredGenPool.getUsage().getUsed();
 
@@ -63,6 +66,12 @@ public class OMemoryWatchDog {
 				}
 			}
 		}, null, null);
+
+		OProfiler.getInstance().registerHookValue("memory.alerts", new OProfilerHookValue() {
+			public Object getValue() {
+				return alertTimes;
+			}
+		});
 	}
 
 	public Collection<Listener> getListeners() {

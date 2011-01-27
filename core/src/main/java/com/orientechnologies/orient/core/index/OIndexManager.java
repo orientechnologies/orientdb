@@ -86,10 +86,9 @@ public class OIndexManager extends ODocumentWrapperNoClass {
 			final OProgressListener iProgressListener) {
 		final OIndex index = OIndexFactory.instance().newInstance(iType);
 		index.setCallback(iCallback);
-		index.setName(iName);
 		indexes.put(iName.toLowerCase(), index);
 
-		index.create(database, defaultClusterName, iClusterIdsToIndex, iProgressListener);
+		index.create(iName, database, defaultClusterName, iClusterIdsToIndex, iProgressListener);
 		setDirty();
 		save();
 
