@@ -157,8 +157,6 @@ public class OProfiler implements OProfilerMBean {
 			chronos.clear();
 		if (stats != null)
 			stats.clear();
-		if (hooks != null)
-			hooks.clear();
 	}
 
 	public synchronized long startChrono() {
