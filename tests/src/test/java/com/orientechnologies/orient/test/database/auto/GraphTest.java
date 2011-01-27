@@ -40,19 +40,28 @@ public class GraphTest {
 	public void populate() {
 		database.open("admin", "admin");
 
-		OClass vehicleClass = database.getMetadata().getSchema().createClass("GraphVehicle")
-				.setSuperClass(database.getMetadata().getSchema().getClass(OGraphVertex.class));
+		OClass vehicleClass = database.getMetadata().getSchema().getClass("GraphVehicle");
+		if (vehicleClass != null) {
+			database.getMetadata().getSchema().removeClass("GraphVehicle");
+			database.getMetadata().getSchema().removeClass("GraphCar");
+			database.getMetadata().getSchema().removeClass("GraphMotocycle");
 
-		database.getMetadata().getSchema().createClass("GraphCar").setSuperClass(vehicleClass);
-		database.getMetadata().getSchema().createClass("GraphMotocycle").setSuperClass(vehicleClass);
-		database.getMetadata().getSchema().save();
+			vehicleClass = database.getMetadata().getSchema().createClass("GraphVehicle")
+					.setSuperClass(database.getMetadata().getSchema().getClass(OGraphVertex.class));
+
+			database.getMetadata().getSchema().createClass("GraphCar").setSuperClass(vehicleClass);
+			database.getMetadata().getSchema().createClass("GraphMotocycle").setSuperClass(vehicleClass);
+			database.getMetadata().getSchema().save();
+		}
+
+		int existants = database.query(new OSQLSynchQuery<OGraphVertex>("select from GraphVehicle")).size();
 
 		OGraphVertex carNode = database.createVertex("GraphCar").set("brand", "Hyundai").set("model", "Coupe").set("year", 2003).save();
 		OGraphVertex motoNode = database.createVertex("GraphMotocycle").set("brand", "Yamaha").set("model", "X-City 250")
 				.set("year", 2009).save();
 
 		List<OGraphVertex> result = database.query(new OSQLSynchQuery<OGraphVertex>("select from GraphVehicle"));
-		Assert.assertEquals(result.size(), 2);
+		Assert.assertEquals(result.size(), 2 + existants);
 		for (OGraphVertex v : result) {
 			Assert.assertTrue(v.getDocument().getSchemaClass().isSubClassOf(vehicleClass));
 		}

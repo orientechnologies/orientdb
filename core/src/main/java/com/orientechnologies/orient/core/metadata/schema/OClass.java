@@ -410,7 +410,21 @@ public class OClass extends ODocumentWrapperNoClass {
 	 * @return
 	 * @see #isSuperClassOf(OClass)
 	 */
+	public boolean isSubClassOf(final String iClassName) {
+		return isSubClassOf(owner.getClass(iClassName));
+	}
+
+	/**
+	 * Returns true if the current instance extends the passed schema class (iClass).
+	 * 
+	 * @param iClass
+	 * @return
+	 * @see #isSuperClassOf(OClass)
+	 */
 	public boolean isSubClassOf(final OClass iClass) {
+		if( iClass == null )
+			return false;
+		
 		OClass cls = this;
 		while (cls != null) {
 			if (cls.equals(iClass))
