@@ -20,6 +20,7 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -150,10 +151,10 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 			}
 			outEdges.add(edge);
 
-			List<ODocument> inEdges = ((List<ODocument>) iDestVertex.field(VERTEX_FIELD_OUT_EDGES));
+			List<ODocument> inEdges = ((List<ODocument>) iDestVertex.field(VERTEX_FIELD_IN_EDGES));
 			if (inEdges == null) {
 				inEdges = new ArrayList<ODocument>();
-				iDestVertex.field(VERTEX_FIELD_OUT_EDGES, inEdges);
+				iDestVertex.field(VERTEX_FIELD_IN_EDGES, inEdges);
 			}
 			inEdges.add(edge);
 
@@ -165,6 +166,30 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 			rollbackBlock(safeMode);
 			throw e;
 		}
+	}
+
+	public ORecordLazyList getOutEdges(final ODocument iVertex) {
+		if (!iVertex.getSchemaClass().isSubClassOf(vertexBaseClass))
+			throw new IllegalArgumentException("The document received is not a vertex");
+		return iVertex.field(VERTEX_FIELD_OUT_EDGES);
+	}
+
+	public ORecordLazyList getInEdges(final ODocument iVertex) {
+		if (!iVertex.getSchemaClass().isSubClassOf(vertexBaseClass))
+			throw new IllegalArgumentException("The document received is not a vertex");
+		return iVertex.field(VERTEX_FIELD_IN_EDGES);
+	}
+
+	public ORecordLazyList getInVertex(final ODocument iEdge) {
+		if (!iEdge.getSchemaClass().isSubClassOf(edgeBaseClass))
+			throw new IllegalArgumentException("The document received is not an edge");
+		return iEdge.field(EDGE_FIELD_IN);
+	}
+
+	public ORecordLazyList getOutVertex(final ODocument iEdge) {
+		if (!iEdge.getSchemaClass().isSubClassOf(edgeBaseClass))
+			throw new IllegalArgumentException("The document received is not an edge");
+		return iEdge.field(EDGE_FIELD_OUT);
 	}
 
 	public ODocument getRoot(final String iName) {

@@ -35,7 +35,6 @@ public class GraphDatabaseTest {
 		database = new OGraphDatabase(iURL);
 	}
 
-	@SuppressWarnings("unused")
 	@Test
 	public void populate() {
 		database.open("admin", "admin");
@@ -49,6 +48,8 @@ public class GraphDatabaseTest {
 				.field("year", 2003).save();
 		ODocument motoNode = (ODocument) database.createVertex("GraphMotocycle").field("brand", "Yamaha").field("model", "X-City 250")
 				.field("year", 2009).save();
+
+		database.createEdge(carNode, motoNode).save();
 
 		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from GraphVehicle"));
 		Assert.assertEquals(result.size(), 2);
@@ -65,9 +66,23 @@ public class GraphDatabaseTest {
 
 		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from GraphVehicle"));
 		Assert.assertEquals(result.size(), 2);
+
+		ODocument edge1 = null;
+		ODocument edge2 = null;
+
 		for (ODocument v : result) {
 			Assert.assertTrue(v.getSchemaClass().isSubClassOf("GraphVehicle"));
+
+			if (v.getClassName().equals("GraphCar")) {
+				Assert.assertTrue(database.getOutEdges(v).size() == 1);
+				edge1 = (ODocument) database.getOutEdges(v).get(0);
+			} else {
+				Assert.assertTrue(database.getInEdges(v).size() == 1);
+				edge2 = (ODocument) database.getInEdges(v).get(0);
+			}
 		}
+
+		Assert.assertEquals(edge1, edge2);
 
 		database.close();
 	}
