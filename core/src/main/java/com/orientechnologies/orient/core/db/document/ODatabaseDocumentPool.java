@@ -41,6 +41,9 @@ public class ODatabaseDocumentPool extends ODatabasePoolBase<ODatabaseDocumentTx
 						@Override
 						public ODatabaseDocumentTx reuseResource(String iKey, ODatabaseDocumentTx iValue) {
 							((ODatabaseDocumentTxPooled) iValue).reuse(owner);
+							if (iValue.getStorage().isClosed())
+								// STORAGE HAS BEEN CLOSED: REOPEN IT
+								iValue.getStorage().open(-1, iValue.getUser().getName(), iValue.getUser().getPassword());
 							return iValue;
 						}
 					};
