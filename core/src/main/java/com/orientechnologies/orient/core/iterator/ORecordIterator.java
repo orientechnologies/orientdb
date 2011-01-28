@@ -177,7 +177,7 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 
 			for (int i = currentTxEntryPosition + 1; i < txEntries.size(); ++i) {
 				entry = txEntries.get(i);
-				if (entry.status == OTransactionEntry.CREATED) {
+				if (entry.getRecord().getIdentity().isTemporary()) {
 					// SET THE CURRENT POINTER
 					currentTxEntryPosition = i;
 					return true;

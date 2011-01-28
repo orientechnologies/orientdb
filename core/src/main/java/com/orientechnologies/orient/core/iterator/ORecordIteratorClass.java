@@ -64,15 +64,10 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 		if (txEntries != null)
 			// ADJUST TOTAL ELEMENT BASED ON CURRENT TRANSACTION'S ENTRIES
 			for (OTransactionEntry entry : txEntries) {
-				switch (entry.status) {
-				case OTransactionEntry.CREATED:
+				if (entry.getRecord().getIdentity().isTemporary())
 					totalAvailableRecords++;
-					break;
-
-				case OTransactionEntry.DELETED:
+				else if (entry.status == OTransactionEntry.DELETED)
 					totalAvailableRecords--;
-					break;
-				}
 			}
 	}
 
@@ -102,10 +97,6 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 
 		if (browsedRecords >= totalAvailableRecords)
 			return false;
-
-		// if (currentClusterIdx < clusterIds.length - 1)
-		// // PRESUME THAT IF IT'S NOT AT THE LAST CLUSTER THERE COULD BE OTHER ELEMENTS
-		// return true;
 
 		// COMPUTE THE NUMBER OF RECORDS TO BROWSE
 		if (liveUpdated)
@@ -177,7 +168,7 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 
 			// CLUSTER EXHAUSTED, TRY WITH THE NEXT ONE
 			currentClusterIdx++;
-			if(currentClusterIdx >= clusterIds.length)
+			if (currentClusterIdx >= clusterIds.length)
 				break;
 			updateClusterRange();
 		}
