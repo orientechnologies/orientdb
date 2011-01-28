@@ -225,7 +225,7 @@ public abstract class OStringSerializerHelper {
 			final char[] iRecordSeparator, final char... iJumpChars) {
 		char stringBeginChar = ' ';
 		char c;
-		char previousChar = ' ';
+		boolean encodeMode = false;
 		int insideParenthesis = 0;
 		int insideCollection = 0;
 		int insideMap = 0;
@@ -281,7 +281,7 @@ public abstract class OStringSerializerHelper {
 
 				if (insideParenthesis == 0 && insideCollection == 0 && insideMap == 0 && insideLinkPart == 0) {
 					// OUTSIDE A PARAMS/COLLECTION/MAP
-					if ((c == '\'' || c == '"') && previousChar != '\\') {
+					if ((c == '\'' || c == '"') && !encodeMode) {
 						// START STRING
 						stringBeginChar = c;
 					} else {
@@ -294,7 +294,7 @@ public abstract class OStringSerializerHelper {
 
 			} else {
 				// INSIDE A STRING
-				if ((c == '\'' || c == '"') && previousChar != '\\') {
+				if ((c == '\'' || c == '"') && !encodeMode) {
 					// CLOSE THE STRING ?
 					if (stringBeginChar == c) {
 						// SAME CHAR AS THE BEGIN OF THE STRING: CLOSE IT AND PUSH
@@ -303,7 +303,10 @@ public abstract class OStringSerializerHelper {
 				}
 			}
 
-			previousChar = c;
+			if (c == '\\' && !encodeMode)
+				encodeMode = true;
+			else
+				encodeMode = false;
 
 			if (iJumpChars.length > 0) {
 				if (isCharPresent(c, iJumpChars))
