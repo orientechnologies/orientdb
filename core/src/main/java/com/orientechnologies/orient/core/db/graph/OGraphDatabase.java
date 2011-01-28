@@ -180,13 +180,13 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		return iVertex.field(VERTEX_FIELD_IN_EDGES);
 	}
 
-	public ORecordLazyList getInVertex(final ODocument iEdge) {
+	public ODocument getInVertex(final ODocument iEdge) {
 		if (!iEdge.getSchemaClass().isSubClassOf(edgeBaseClass))
 			throw new IllegalArgumentException("The document received is not an edge");
 		return iEdge.field(EDGE_FIELD_IN);
 	}
 
-	public ORecordLazyList getOutVertex(final ODocument iEdge) {
+	public ODocument getOutVertex(final ODocument iEdge) {
 		if (!iEdge.getSchemaClass().isSubClassOf(edgeBaseClass))
 			throw new IllegalArgumentException("The document received is not an edge");
 		return iEdge.field(EDGE_FIELD_OUT);
