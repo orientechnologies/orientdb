@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.config;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.DecimalFormatSymbols;
@@ -22,6 +24,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -34,7 +38,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 public class OStorageConfiguration implements OSerializableStream {
 	public static final int										CONFIG_RECORD_NUM	= 0;
 
-	public static final int										CURRENT_VERSION		= 1;
+	public static final int										CURRENT_VERSION		= 2;
 
 	public int																version						= -1;
 	public String															name;
@@ -46,6 +50,8 @@ public class OStorageConfiguration implements OSerializableStream {
 	public String															localeCountry			= Locale.getDefault().getCountry();
 	public String															dateFormat				= "yyyy-MM-dd";
 	public String															dateTimeFormat		= "yyyy-MM-dd hh:mm:ss";
+
+	public OStorageSegmentConfiguration				fileTemplate			= new OStorageSegmentConfiguration();
 
 	public List<OStorageClusterConfiguration>	clusters					= new ArrayList<OStorageClusterConfiguration>();
 	public List<OStorageDataConfiguration>		dataSegments			= new ArrayList<OStorageDataConfiguration>();
@@ -124,8 +130,30 @@ public class OStorageConfiguration implements OSerializableStream {
 		return unusualSymbols;
 	}
 
-	public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
-		String[] values = new String(iStream).split("\\|");
+	public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
+		final byte[] stream;
+		if (iStream[0] == 1) {
+			// UNCOMPRESS CONTENT
+			final ByteArrayInputStream compressedBuffer = new ByteArrayInputStream(iStream, 1, iStream.length - 1);
+			try {
+				final GZIPInputStream compression = new GZIPInputStream(compressedBuffer);
+				final ByteArrayOutputStream tempBuffer = new ByteArrayOutputStream();
+
+				int length;
+				byte[] buffer = new byte[8192];
+				while ((length = compression.read(buffer, 0, 8192)) != -1)
+					tempBuffer.write(buffer, 0, length);
+
+				compression.close();
+
+				stream = tempBuffer.toByteArray();
+			} catch (IOException ex) {
+				throw new OConfigurationException("Error while uncompressing storage configuration", ex);
+			}
+		} else
+			stream = iStream;
+
+		String[] values = new String(stream).split("\\|");
 		int index = 0;
 		version = Integer.parseInt(read(values[index++]));
 
@@ -144,6 +172,8 @@ public class OStorageConfiguration implements OSerializableStream {
 		localeCountry = read(values[index++]);
 		dateFormat = read(values[index++]);
 		dateTimeFormat = read(values[index++]);
+
+		index = phySegmentFromStream(values, index, fileTemplate);
 
 		int size = Integer.parseInt(read(values[index++]));
 		String clusterType;
@@ -235,6 +265,8 @@ public class OStorageConfiguration implements OSerializableStream {
 		write(buffer, dateFormat);
 		write(buffer, dateTimeFormat);
 
+		phySegmentToStream(buffer, fileTemplate);
+
 		write(buffer, clusters.size());
 		for (OStorageClusterConfiguration c : clusters) {
 			if (c == null) {
@@ -280,15 +312,39 @@ public class OStorageConfiguration implements OSerializableStream {
 		for (OEntryConfiguration e : properties)
 			entryToStream(buffer, e);
 
-		if (fixedSize > 0 && buffer.length() > fixedSize)
-			throw new OConfigurationException("Configuration data exceeded size limit: " + fixedSize + " bytes");
+		if (fixedSize > 0 && buffer.length() > fixedSize) {
+			// ZIP THE CONTENT
+			try {
+				final ByteArrayOutputStream compressedBuffer = new ByteArrayOutputStream();
+				compressedBuffer.write(1);
 
-		// ALLOCATE ENOUGHT SPACE TO REUSE IT EVERY TIME
-		buffer.append("|");
-		if (fixedSize > 0)
-			buffer.setLength(fixedSize);
+				GZIPOutputStream compression = new GZIPOutputStream(compressedBuffer);
+				compression.write(buffer.toString().getBytes());
+				compression.close();
 
-		return buffer.toString().getBytes();
+				if (fixedSize > 0)
+					if (compressedBuffer.size() > fixedSize)
+						throw new OConfigurationException("Configuration data exceeded size limit: " + fixedSize + " bytes");
+					else if (compressedBuffer.size() < fixedSize) {
+						// FILL THE BUFFER AT FIXED SIZE
+						for (int i = compressedBuffer.size(); i < fixedSize; ++i)
+							compressedBuffer.write(0);
+					}
+
+				return compressedBuffer.toByteArray();
+			} catch (IOException ex) {
+				throw new OConfigurationException("Error while compressing storage configuration", ex);
+			}
+		} else {
+			// PLAIN: ALLOCATE ENOUGHT SPACE TO REUSE IT EVERY TIME
+			buffer.insert(0, 0);
+
+			buffer.append("|");
+			if (fixedSize > 0)
+				buffer.setLength(fixedSize);
+
+			return buffer.toString().getBytes();
+		}
 	}
 
 	private int phySegmentFromStream(final String[] values, int index, final OStorageSegmentConfiguration iSegment) {

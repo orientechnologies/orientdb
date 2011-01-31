@@ -82,6 +82,7 @@ public class OMultiFileSegment extends OSegment {
 	}
 
 	public void open() throws IOException {
+		// @TODO: LAZY OPEN FILES
 		for (OFile file : files)
 			if (!file.open()) {
 				// LAST TIME THE FILE WAS NOT CLOSED IN SOFT WAY
@@ -296,7 +297,7 @@ public class OMultiFileSegment extends OSegment {
 
 		final OFile file = OFileFactory.create(type, storage.getStoragePath() + "/" + name + "." + num + fileExtension,
 				storage.getMode());
-		file.setMaxSize((int) OFileUtils.getSizeAsNumber(config.fileMaxSize));
+		file.setMaxSize((int) OFileUtils.getSizeAsNumber(config.root.fileTemplate.fileMaxSize));
 		file.create(fileStartSize);
 		files[num] = file;
 
@@ -314,8 +315,10 @@ public class OMultiFileSegment extends OSegment {
 		// CREATE A NEW ENTRY FOR THE NEW FILE
 		String fileNameToStore = storage.getVariableParser().convertPathToRelative(OFileUtils.getPath(file.getOsFile().getPath()));
 
-		config.infoFiles[config.infoFiles.length - 1] = new OStorageFileConfiguration(config, fileNameToStore, config.fileType,
-				config.fileMaxSize, config.fileIncrementSize);
+		final OStorageSegmentConfiguration template = config.root.fileTemplate;
+
+		config.infoFiles[config.infoFiles.length - 1] = new OStorageFileConfiguration(config, fileNameToStore, template.fileType,
+				template.fileMaxSize, template.fileIncrementSize);
 	}
 
 	public OStorageSegmentConfiguration getConfig() {
