@@ -173,7 +173,9 @@ public class OStorageConfiguration implements OSerializableStream {
 		dateFormat = read(values[index++]);
 		dateTimeFormat = read(values[index++]);
 
-		index = phySegmentFromStream(values, index, fileTemplate);
+		// @COMPATIBILTY
+		if (version > 1)
+			index = phySegmentFromStream(values, index, fileTemplate);
 
 		int size = Integer.parseInt(read(values[index++]));
 		String clusterType;
