@@ -23,7 +23,7 @@ public class OStorageSegmentConfiguration {
 	public String														maxSize						= "0";
 	public String														fileType					= "mmap";
 	public String														fileStartSize			= "500Kb";
-	public String														fileMaxSize				= "2Mb";
+	public String														fileMaxSize				= "500Mb";
 	public String														fileIncrementSize	= "50%";
 	public String														defrag						= "auto";
 
