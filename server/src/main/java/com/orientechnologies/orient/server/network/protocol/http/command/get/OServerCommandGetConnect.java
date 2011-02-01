@@ -20,6 +20,7 @@ import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Map.Entry;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OEntryConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -80,7 +81,11 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 			if (db.getMetadata().getSchema().getClasses() != null) {
 				json.beginCollection(1, false, "classes");
 				for (OClass cls : db.getMetadata().getSchema().getClasses()) {
-					exportClass(db, json, cls);
+					try {
+						exportClass(db, json, cls);
+					} catch (Exception e) {
+						OLogManager.instance().error(this, "Error on exporting class '" + cls + "'", e);
+					}
 				}
 				json.endCollection(1, true);
 			}
@@ -143,7 +148,7 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 				json.endObject(2, false);
 				json.endCollection(1, true);
 			}
-			
+
 			json.beginCollection(1, false, "users");
 			OUser user;
 			for (ODocument doc : db.getMetadata().getSecurity().getUsers()) {
