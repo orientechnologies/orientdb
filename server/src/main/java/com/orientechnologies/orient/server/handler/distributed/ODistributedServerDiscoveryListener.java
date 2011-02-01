@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.MulticastSocket;
 
+import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.thread.OSoftThread;
 import com.orientechnologies.orient.core.Orient;
@@ -50,7 +51,9 @@ public class ODistributedServerDiscoveryListener extends OSoftThread {
 			socket = new MulticastSocket(iManager.networkMulticastPort);
 			socket.joinGroup(iManager.networkMulticastAddress);
 		} catch (IOException e) {
-			OLogManager.instance().error(this, "Can't startup the Discovery Listener service to catch distributed server nodes", e);
+			throw new OIOException(
+					"Can't startup the Discovery Listener service to catch distributed server nodes, probably the IP MULTICAST is disabled in current network configuration: "
+							+ e.getMessage());
 		}
 
 		start();

@@ -9,6 +9,7 @@
 				<parameter name="network.multicast.port" value="2424" />
 				<parameter name="network.multicast.heartbeat" value="10" />
 				<parameter name="server.update.delay" value="5000" />
+				<parameter name="server.electedForLeadership" value="true" />
 			</parameters>
 		</handler>
 	</handlers>

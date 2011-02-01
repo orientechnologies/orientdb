@@ -84,6 +84,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	private int																									networkHeartbeatDelay;																																// IN
 	protected int																								serverUpdateDelay;																																		// IN
 	protected int																								serverOutSynchMaxBuffers;
+	protected boolean																						serverElectedForLeadership;
 
 	private ODistributedServerDiscoverySignaler									discoverySignaler;
 	private ODistributedServerDiscoveryListener									discoveryListener;
@@ -260,6 +261,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 			securityAlgorithm = "Blowfish";
 			serverUpdateDelay = 0;
 			serverOutSynchMaxBuffers = 300;
+			serverElectedForLeadership = true;
 			byte[] tempSecurityKey = null;
 
 			if (iParams != null)
@@ -286,6 +288,8 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 						serverUpdateDelay = Integer.parseInt(param.value);
 					else if ("server.outsynch.maxbuffers".equalsIgnoreCase(param.name))
 						serverOutSynchMaxBuffers = Integer.parseInt(param.value);
+					else if ("server.electedForLeadership".equalsIgnoreCase(param.name))
+						serverElectedForLeadership = Boolean.parseBoolean(param.value);
 				}
 
 			if (tempSecurityKey == null) {

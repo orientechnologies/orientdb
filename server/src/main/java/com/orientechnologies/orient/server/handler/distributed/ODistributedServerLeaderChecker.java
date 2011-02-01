@@ -53,7 +53,8 @@ public class ODistributedServerLeaderChecker extends TimerTask {
 
 			cancel();
 
-			manager.broadcastPresence(true);
+			if (manager.serverElectedForLeadership)
+				manager.broadcastPresence(true);
 			return;
 		}
 	}

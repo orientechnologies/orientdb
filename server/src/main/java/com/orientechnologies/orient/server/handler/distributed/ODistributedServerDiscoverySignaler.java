@@ -93,7 +93,13 @@ public class ODistributedServerDiscoverySignaler extends OPollerThread {
 		try {
 			socket.send(dgram);
 		} catch (Throwable t) {
-			OLogManager.instance().error(this, "Error on sending signal for distributed server presence", t);
+			shutdown();
+			OLogManager
+					.instance()
+					.error(
+							this,
+							"Error on sending signal for distributed server presence, probably the IP MULTICAST is disabled in current network configuration: %s",
+							t.getMessage());
 		} finally {
 		}
 	}
@@ -101,7 +107,8 @@ public class ODistributedServerDiscoverySignaler extends OPollerThread {
 	@Override
 	public void shutdown() {
 		try {
-			socket.close();
+			if (socket != null)
+				socket.close();
 		} catch (Throwable t) {
 		}
 		socket = null;
