@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.dictionary.ODictionaryWrapper;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.core.iterator.OObjectIteratorMultiCluster;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -104,15 +105,16 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 		checkOpeness();
 		checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, iClassName);
 
-		return new OObjectIteratorMultiCluster<RET>(this, (ODatabaseRecordAbstract) getUnderlying().getUnderlying(), iClassName, iPolymorphic);
+		return new OObjectIteratorMultiCluster<RET>(this, (ODatabaseRecordAbstract) getUnderlying().getUnderlying(), iClassName,
+				iPolymorphic);
 	}
 
 	public <RET> OObjectIteratorCluster<RET> browseCluster(final String iClusterName) {
 		checkOpeness();
 		checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
-		return (OObjectIteratorCluster<RET>) new OObjectIteratorCluster<Object>(this, (ODatabaseRecordAbstract) getUnderlying().getUnderlying(),
-				getClusterIdByName(iClusterName));
+		return (OObjectIteratorCluster<RET>) new OObjectIteratorCluster<Object>(this, (ODatabaseRecordAbstract) getUnderlying()
+				.getUnderlying(), getClusterIdByName(iClusterName));
 	}
 
 	public ODatabaseObjectTx load(final Object iPojo) {
@@ -182,9 +184,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 		OSerializationThreadLocal.INSTANCE.get().clear();
 
 		// GET THE ASSOCIATED DOCUMENT
-		ODocument record = objects2Records.get(System.identityHashCode(iPojo));
-		if (record == null)
-			record = underlying.newInstance(iPojo.getClass().getSimpleName());
+		final ODocument record = getRecordByUserObject(iPojo, true);
 
 		// REGISTER BEFORE TO SERIALIZE TO AVOID PROBLEMS WITH CIRCULAR DEPENDENCY
 		registerPojo(iPojo, record);
@@ -199,20 +199,25 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 		return this;
 	}
 
-	public ODatabaseObject delete(final Object iContent) {
+	public ODatabaseObject delete(final Object iPojo) {
 		checkOpeness();
 
-		if (iContent == null)
+		if (iPojo == null)
 			return this;
 
-		ODocument record = getRecordByUserObject(iContent, false);
-		if (record == null)
-			record = (ODocument) underlying.load(OObjectSerializerHelper.getObjectID(this, iContent));
+		ODocument record = getRecordByUserObject(iPojo, false);
+		if (record == null) {
+			final ORecordId rid = OObjectSerializerHelper.getObjectID(this, iPojo);
+			if (rid == null)
+				throw new OObjectNotDetachedException("Can't retrieve the object's ID for '" + iPojo + "' because hasn't been detached");
+
+			record = (ODocument) underlying.load(rid);
+		}
 
 		underlying.delete(record);
 
 		if (getTransaction() instanceof OTransactionNoTx)
-			unregisterPojo(iContent, record);
+			unregisterPojo(iPojo, record);
 
 		return this;
 	}
@@ -347,6 +352,14 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 		return OObjectSerializerHelper.getObjectID(this, iPojo);
 	}
 
+	public boolean isSaveOnlyDirty() {
+		return saveOnlyDirty;
+	}
+
+	public void setSaveOnlyDirty(boolean saveOnlyDirty) {
+		this.saveOnlyDirty = saveOnlyDirty;
+	}
+
 	public Object newInstance() {
 		checkOpeness();
 		return new ODocument(underlying);
@@ -362,20 +375,12 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 
 	@Override
 	protected ODocument pojo2Stream(final Object iPojo, final ODocument iRecord) {
-		return OObjectSerializerHelper.toStream(iPojo, iRecord, getEntityManager(), getMetadata().getSchema().getClass(iPojo.getClass().getSimpleName()),
-				this, this, saveOnlyDirty);
+		return OObjectSerializerHelper.toStream(iPojo, iRecord, getEntityManager(),
+				getMetadata().getSchema().getClass(iPojo.getClass().getSimpleName()), this, this, saveOnlyDirty);
 	}
 
 	@Override
 	protected Object stream2pojo(final ODocument record, final Object iPojo, final String iFetchPlan) {
 		return OObjectSerializerHelper.fromStream(record, iPojo, getEntityManager(), this, iFetchPlan);
-	}
-
-	public boolean isSaveOnlyDirty() {
-		return saveOnlyDirty;
-	}
-
-	public void setSaveOnlyDirty(boolean saveOnlyDirty) {
-		this.saveOnlyDirty = saveOnlyDirty;
 	}
 }

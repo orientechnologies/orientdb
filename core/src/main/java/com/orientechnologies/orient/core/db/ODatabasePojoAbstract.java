@@ -284,9 +284,18 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 			return (ODocument) iPojo;
 
 		ODocument record = objects2Records.get(System.identityHashCode(iPojo));
+		if (record == null) {
+			// SEARCH BY RID
+			final ORID rid = OObjectSerializerHelper.getObjectID(this, iPojo);
+			if (rid != null && rid.isValid()) {
+				record = rid2Records.get(rid);
+				if (record == null)
+					// LOAD IT
+					record = underlying.load(rid);
+			} else if (iCreateIfNotAvailable) {
+				record = underlying.newInstance(iPojo.getClass().getSimpleName());
+			}
 
-		if (record == null && iCreateIfNotAvailable) {
-			record = underlying.newInstance(iPojo.getClass().getSimpleName());
 			registerPojo(iPojo, record);
 			pojo2Stream((T) iPojo, record);
 		}
@@ -351,7 +360,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 	public void attach(final Object iPojo) {
 		checkOpeness();
 
-		ODocument record = objects2Records.get(System.identityHashCode(iPojo));
+		final ODocument record = objects2Records.get(System.identityHashCode(iPojo));
 		if (record != null)
 			return;
 
@@ -390,8 +399,8 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 			}
 
 			final ORID rid = iRecord.getIdentity();
-			//if (rid.isValid() && !rid.isTemporary())
-				rid2Records.put(rid, doc);
+			// if (rid.isValid() && !rid.isTemporary())
+			rid2Records.put(rid, doc);
 		}
 	}
 
