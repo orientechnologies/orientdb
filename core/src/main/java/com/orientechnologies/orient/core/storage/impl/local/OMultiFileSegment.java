@@ -214,7 +214,7 @@ public class OMultiFileSegment extends OSegment {
 	 * @return a pair file-id/file-pos
 	 * @throws IOException
 	 */
-	protected int[] allocateSpace(final int iRecordSize) throws IOException {
+	protected long[] allocateSpace(final int iRecordSize) throws IOException {
 		// TODO: RECYCLE THE HOLES IF ANY
 
 		// IT'S PREFEREABLE TO FIND SPACE WITHOUT ENLARGE ANY FILES: FIND THE FIRST FILE WITH FREE SPACE TO USE
@@ -224,7 +224,7 @@ public class OMultiFileSegment extends OSegment {
 
 			if (file.getFreeSpace() >= iRecordSize)
 				// FOUND: RETURN THIS OFFSET
-				return new int[] { i, file.allocateSpace(iRecordSize) };
+				return new long[] { i, file.allocateSpace(iRecordSize) };
 		}
 
 		// NOT FOUND: CHECK IF CAN OVERSIZE SOME FILES
@@ -233,7 +233,7 @@ public class OMultiFileSegment extends OSegment {
 
 			if (file.canOversize(iRecordSize)) {
 				// FOUND SPACE: ENLARGE IT
-				return new int[] { i, file.allocateSpace(iRecordSize) };
+				return new long[] { i, file.allocateSpace(iRecordSize) };
 			}
 		}
 
@@ -255,7 +255,7 @@ public class OMultiFileSegment extends OSegment {
 
 		config.root.update();
 
-		return new int[] { files.length - 1, 0 };
+		return new long[] { files.length - 1, 0 };
 	}
 
 	/**
@@ -265,7 +265,7 @@ public class OMultiFileSegment extends OSegment {
 	 *          as pair file-id/file-pos
 	 * @return
 	 */
-	protected long getAbsolutePosition(final int[] iFilePosition) {
+	protected long getAbsolutePosition(final long[] iFilePosition) {
 		long position = 0;
 		for (int i = 0; i < iFilePosition[0]; ++i) {
 			position += fileMaxSize;
@@ -273,9 +273,9 @@ public class OMultiFileSegment extends OSegment {
 		return position + iFilePosition[1];
 	}
 
-	protected int[] getRelativePosition(final long iPosition) {
+	protected long[] getRelativePosition(final long iPosition) {
 		if (iPosition < fileMaxSize)
-			return new int[] { 0, (int) iPosition };
+			return new long[] { 0l, iPosition };
 
 		final int fileNum = (int) (iPosition / fileMaxSize);
 
@@ -289,7 +289,7 @@ public class OMultiFileSegment extends OSegment {
 			throw new ODatabaseException("Record position #" + iPosition + " was bound to file #" + fileNum + " but the position #"
 					+ files[fileNum].getFilledUpTo() + " is out of file size");
 
-		return new int[] { fileNum, fileRec };
+		return new long[] { fileNum, fileRec };
 	}
 
 	private OFile createNewFile() throws IOException {

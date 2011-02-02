@@ -52,8 +52,8 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 		super(iStorage, iConfig, DEF_EXTENSION, RECORD_SIZE);
 		id = iConfig.getId();
 
-		iConfig.holeFile = new OStorageClusterHoleConfiguration(iConfig, OStorageVariableParser.DB_PATH_VARIABLE + "/" + iConfig.name, iConfig.fileType,
-				iConfig.fileMaxSize);
+		iConfig.holeFile = new OStorageClusterHoleConfiguration(iConfig, OStorageVariableParser.DB_PATH_VARIABLE + "/" + iConfig.name,
+				iConfig.fileType, iConfig.fileMaxSize);
 
 		holeSegment = new OClusterLocalHole(this, iStorage, iConfig.holeFile);
 	}
@@ -111,14 +111,15 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 		try {
 			acquireSharedLock();
 
-			final int[] pos = getRelativePosition(iPosition);
+			final long[] pos = getRelativePosition(iPosition);
 
-			int p = pos[1];
+			final OFile file = files[(int) pos[0]];
+			long p = pos[1];
 
-			iPPosition.dataSegment = files[pos[0]].readShort(p);
-			iPPosition.dataPosition = files[pos[0]].readLong(p += OConstants.SIZE_SHORT);
-			iPPosition.type = files[pos[0]].readByte(p += OConstants.SIZE_LONG);
-			iPPosition.version = files[pos[0]].readInt(p += OConstants.SIZE_BYTE);
+			iPPosition.dataSegment = file.readShort(p);
+			iPPosition.dataPosition = file.readLong(p += OConstants.SIZE_SHORT);
+			iPPosition.type = file.readByte(p += OConstants.SIZE_LONG);
+			iPPosition.version = file.readInt(p += OConstants.SIZE_BYTE);
 			return iPPosition;
 
 		} finally {
@@ -131,19 +132,21 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 	 * 
 	 * @throws IOException
 	 */
-	public void setPhysicalPosition(long iPosition, final int iDataId, final long iDataPosition, final byte iRecordType) throws IOException {
+	public void setPhysicalPosition(long iPosition, final int iDataId, final long iDataPosition, final byte iRecordType)
+			throws IOException {
 		iPosition = iPosition * RECORD_SIZE;
 
 		try {
 			acquireExclusiveLock();
 
-			final int[] pos = getRelativePosition(iPosition);
+			final long[] pos = getRelativePosition(iPosition);
 
-			int p = pos[1];
+			final OFile file = files[(int) pos[0]];
+			long p = pos[1];
 
-			files[pos[0]].writeShort(p, (short) iDataId);
-			files[pos[0]].writeLong(p += OConstants.SIZE_SHORT, iDataPosition);
-			files[pos[0]].writeByte(p += OConstants.SIZE_LONG, iRecordType);
+			file.writeShort(p, (short) iDataId);
+			file.writeLong(p += OConstants.SIZE_SHORT, iDataPosition);
+			file.writeByte(p += OConstants.SIZE_LONG, iRecordType);
 
 		} finally {
 			releaseExclusiveLock();
@@ -156,9 +159,9 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 		try {
 			acquireExclusiveLock();
 
-			final int[] pos = getRelativePosition(iPosition);
+			final long[] pos = getRelativePosition(iPosition);
 
-			files[pos[0]].writeInt(pos[1] + OConstants.SIZE_SHORT + OConstants.SIZE_LONG + OConstants.SIZE_BYTE, iVersion);
+			files[(int) pos[0]].writeInt(pos[1] + OConstants.SIZE_SHORT + OConstants.SIZE_LONG + OConstants.SIZE_BYTE, iVersion);
 
 		} finally {
 			releaseExclusiveLock();
@@ -171,9 +174,9 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 		try {
 			acquireExclusiveLock();
 
-			final int[] pos = getRelativePosition(iPosition);
+			final long[] pos = getRelativePosition(iPosition);
 
-			files[pos[0]].writeByte(pos[1] + OConstants.SIZE_SHORT + OConstants.SIZE_LONG, iRecordType);
+			files[(int) pos[0]].writeByte(pos[1] + OConstants.SIZE_SHORT + OConstants.SIZE_LONG, iRecordType);
 
 		} finally {
 			releaseExclusiveLock();
@@ -190,9 +193,9 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 		try {
 			acquireExclusiveLock();
 
-			final int[] pos = getRelativePosition(position);
-			OFile file = files[pos[0]];
-			int p = pos[1];
+			final long[] pos = getRelativePosition(position);
+			final OFile file = files[(int) pos[0]];
+			long p = pos[1];
 
 			// SAVE THE OLD DATA AND RETRIEVE THEM TO THE CALLER
 			iPPosition.dataSegment = file.readShort(p);
@@ -212,11 +215,11 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 					// DISCOVER THE BEGIN OF DATA
 					beginOffsetData++;
 
-					int[] fetchPos;
+					long[] fetchPos;
 					for (long currentPos = position + RECORD_SIZE; currentPos < getFilledUpTo(); currentPos += RECORD_SIZE) {
 						fetchPos = getRelativePosition(currentPos);
 
-						if (files[fetchPos[0]].readShort(fetchPos[1]) != -1)
+						if (files[(int) fetchPos[0]].readShort(fetchPos[1]) != -1)
 							// GOOD RECORD: SET IT AS BEGIN
 							break;
 
@@ -234,12 +237,12 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 					// DISCOVER THE END OF DATA
 					endOffsetData--;
 
-					int[] fetchPos;
+					long[] fetchPos;
 					for (long currentPos = position - RECORD_SIZE; currentPos >= beginOffsetData; currentPos -= RECORD_SIZE) {
 
 						fetchPos = getRelativePosition(currentPos);
 
-						if (files[fetchPos[0]].readShort(fetchPos[1]) != -1)
+						if (files[(int) fetchPos[0]].readShort(fetchPos[1]) != -1)
 							// GOOD RECORD: SET IT AS BEGIN
 							break;
 						endOffsetData--;
@@ -269,7 +272,7 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 
 			long offset = holeSegment.popLastEntryPosition();
 
-			final int[] pos;
+			final long[] pos;
 			if (offset > -1)
 				// REUSE THE HOLE
 				pos = getRelativePosition(offset);
@@ -279,8 +282,8 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 				offset = getAbsolutePosition(pos);
 			}
 
-			OFile file = files[pos[0]];
-			int p = pos[1];
+			OFile file = files[(int) pos[0]];
+			long p = pos[1];
 
 			file.writeShort(p, (short) iDataSegmentId);
 			file.writeLong(p += OConstants.SIZE_SHORT, iPosition);

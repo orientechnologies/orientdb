@@ -88,7 +88,7 @@ public class OMMapManager {
 		});
 	}
 
-	public static OMMapBufferEntry request(final OFileMMap iFile, final int iBeginOffset, final int iSize,
+	public static OMMapBufferEntry request(final OFileMMap iFile, final long iBeginOffset, final int iSize,
 			final OPERATION_TYPE iOperationType, final STRATEGY iStrategy) {
 		return request(iFile, iBeginOffset, iSize, false, iOperationType, iStrategy);
 	}
@@ -109,7 +109,7 @@ public class OMMapManager {
 	 * @param iStrategy
 	 * @return The mmap buffer entry if found, or null if the operation is READ and the buffer pool is full.
 	 */
-	public synchronized static OMMapBufferEntry request(final OFileMMap iFile, final int iBeginOffset, final int iSize,
+	public synchronized static OMMapBufferEntry request(final OFileMMap iFile, final long iBeginOffset, final int iSize,
 			final boolean iForce, final OPERATION_TYPE iOperationType, final STRATEGY iStrategy) {
 
 		lastStrategy = iStrategy;
@@ -160,7 +160,7 @@ public class OMMapManager {
 		int bufferSize = iForce ? iSize : iSize <= blockSize ? blockSize : iSize;
 		if (iBeginOffset + bufferSize > iFile.getFileSize())
 			// REQUESTED BUFFER IS TOO LARGE: GET AS MAXIMUM AS POSSIBLE
-			bufferSize = iFile.getFileSize() - iBeginOffset;
+			bufferSize = (int) (iFile.getFileSize() - iBeginOffset);
 
 		if (bufferSize <= 0)
 			throw new IllegalArgumentException("Invalid range requested for file " + iFile + ". Requested " + iSize
@@ -285,7 +285,7 @@ public class OMMapManager {
 		OMMapManager.blockSize = blockSize;
 	}
 
-	private static OMMapBufferEntry mapBuffer(final OFileMMap iFile, final int iBeginOffset, final int iSize) throws IOException {
+	private static OMMapBufferEntry mapBuffer(final OFileMMap iFile, final long iBeginOffset, final int iSize) throws IOException {
 		long timer = OProfiler.getInstance().startChrono();
 		try {
 			return new OMMapBufferEntry(iFile, iFile.map(iBeginOffset, iSize), iBeginOffset, iSize);
@@ -303,7 +303,7 @@ public class OMMapManager {
 	 * @return negative number means not found. The position to insert is the (return value +1)*-1. Zero or positive number is the
 	 *         found position.
 	 */
-	private static int searchEntry(final List<OMMapBufferEntry> fileEntries, final int iBeginOffset, final int iSize) {
+	private static int searchEntry(final List<OMMapBufferEntry> fileEntries, final long iBeginOffset, final int iSize) {
 		OMMapBufferEntry e;
 
 		// BINARY SEARCH

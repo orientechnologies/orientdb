@@ -58,13 +58,13 @@ public class OFileMMap extends OFile {
 	}
 
 	@Override
-	public void read(int iOffset, final byte[] iDestBuffer, final int iLenght) throws IOException {
+	public void read(long iOffset, final byte[] iDestBuffer, final int iLenght) throws IOException {
 		iOffset = checkRegions(iOffset, iLenght);
 
 		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, iLenght, OPERATION_TYPE.READ, strategy);
 		if (entry != null) {
 			// MMAP READ
-			entry.buffer.position(iOffset - entry.beginOffset);
+			entry.buffer.position((int) (iOffset - entry.beginOffset));
 			entry.buffer.get(iDestBuffer, 0, iLenght);
 		} else {
 			// DIRECT READ
@@ -77,12 +77,12 @@ public class OFileMMap extends OFile {
 	}
 
 	@Override
-	public int readInt(int iOffset) throws IOException {
+	public int readInt(long iOffset) throws IOException {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_INT);
 		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_INT, OPERATION_TYPE.READ, strategy);
 		if (entry != null) {
 			// MMAP READ
-			return entry.buffer.getInt(iOffset - entry.beginOffset);
+			return entry.buffer.getInt((int) (iOffset - entry.beginOffset));
 		} else {
 			// DIRECT READ
 			final ByteBuffer buffer = acquireByteBuffer(OConstants.SIZE_INT);
@@ -95,12 +95,12 @@ public class OFileMMap extends OFile {
 	}
 
 	@Override
-	public long readLong(int iOffset) throws IOException {
+	public long readLong(long iOffset) throws IOException {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_LONG);
 		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_LONG, OPERATION_TYPE.READ, strategy);
 		if (entry != null) {
 			// MMAP READ
-			return entry.buffer.getLong(iOffset - entry.beginOffset);
+			return entry.buffer.getLong((int) (iOffset - entry.beginOffset));
 		} else {
 			// DIRECT READ
 			final ByteBuffer buffer = acquireByteBuffer(OConstants.SIZE_LONG);
@@ -113,12 +113,12 @@ public class OFileMMap extends OFile {
 	}
 
 	@Override
-	public short readShort(int iOffset) throws IOException {
+	public short readShort(long iOffset) throws IOException {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_SHORT);
 		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_SHORT, OPERATION_TYPE.READ, strategy);
 		if (entry != null) {
 			// MMAP READ
-			return entry.buffer.getShort(iOffset - entry.beginOffset);
+			return entry.buffer.getShort((int) (iOffset - entry.beginOffset));
 		} else {
 			// DIRECT READ
 			final ByteBuffer buffer = acquireByteBuffer(OConstants.SIZE_SHORT);
@@ -131,12 +131,12 @@ public class OFileMMap extends OFile {
 	}
 
 	@Override
-	public byte readByte(int iOffset) throws IOException {
+	public byte readByte(long iOffset) throws IOException {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_BYTE);
 		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_BYTE, OPERATION_TYPE.READ, strategy);
 		if (entry != null) {
 			// MMAP READ
-			return entry.buffer.get(iOffset - entry.beginOffset);
+			return entry.buffer.get((int) (iOffset - entry.beginOffset));
 		} else {
 			// DIRECT READ
 			final ByteBuffer buffer = acquireByteBuffer(OConstants.SIZE_BYTE);
@@ -149,12 +149,12 @@ public class OFileMMap extends OFile {
 	}
 
 	@Override
-	public void writeInt(int iOffset, final int iValue) throws IOException {
+	public void writeInt(long iOffset, final int iValue) throws IOException {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_INT);
 		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_INT, OPERATION_TYPE.WRITE, strategy);
 		if (entry != null) {
 			// MMAP WRITE
-			entry.buffer.putInt(iOffset - entry.beginOffset, iValue);
+			entry.buffer.putInt((int) (iOffset - entry.beginOffset), iValue);
 		} else {
 			// DIRECT WRITE
 			final ByteBuffer buffer = acquireByteBuffer(OConstants.SIZE_INT);
@@ -166,12 +166,12 @@ public class OFileMMap extends OFile {
 	}
 
 	@Override
-	public void writeLong(int iOffset, final long iValue) throws IOException {
+	public void writeLong(long iOffset, final long iValue) throws IOException {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_LONG);
 		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_LONG, OPERATION_TYPE.WRITE, strategy);
 		if (entry != null) {
 			// MMAP WRITE
-			entry.buffer.putLong(iOffset - entry.beginOffset, iValue);
+			entry.buffer.putLong((int) (iOffset - entry.beginOffset), iValue);
 		} else {
 			// DIRECT WRITE
 			final ByteBuffer buffer = acquireByteBuffer(OConstants.SIZE_LONG);
@@ -183,12 +183,12 @@ public class OFileMMap extends OFile {
 	}
 
 	@Override
-	public void writeShort(int iOffset, final short iValue) throws IOException {
+	public void writeShort(long iOffset, final short iValue) throws IOException {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_SHORT);
 		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_SHORT, OPERATION_TYPE.WRITE, strategy);
 		if (entry != null) {
 			// MMAP WRITE
-			entry.buffer.putShort(iOffset - entry.beginOffset, iValue);
+			entry.buffer.putShort((int) (iOffset - entry.beginOffset), iValue);
 		} else {
 			// DIRECT WRITE
 			final ByteBuffer buffer = acquireByteBuffer(OConstants.SIZE_SHORT);
@@ -200,12 +200,12 @@ public class OFileMMap extends OFile {
 	}
 
 	@Override
-	public void writeByte(int iOffset, final byte iValue) throws IOException {
+	public void writeByte(long iOffset, final byte iValue) throws IOException {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_BYTE);
 		final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, OConstants.SIZE_BYTE, OPERATION_TYPE.WRITE, strategy);
 		if (entry != null) {
 			// MMAP WRITE
-			entry.buffer.put(iOffset - entry.beginOffset, iValue);
+			entry.buffer.put((int) (iOffset - entry.beginOffset), iValue);
 		} else {
 			// DIRECT WRITE
 			final ByteBuffer buffer = acquireByteBuffer(OConstants.SIZE_BYTE);
@@ -217,7 +217,7 @@ public class OFileMMap extends OFile {
 	}
 
 	@Override
-	public void write(int iOffset, final byte[] iSourceBuffer) throws IOException {
+	public void write(long iOffset, final byte[] iSourceBuffer) throws IOException {
 		if (iSourceBuffer.length == 0)
 			return;
 
@@ -227,7 +227,7 @@ public class OFileMMap extends OFile {
 			final OMMapBufferEntry entry = OMMapManager.request(this, iOffset, iSourceBuffer.length, OPERATION_TYPE.WRITE, strategy);
 			if (entry != null) {
 				// MMAP WRITE
-				entry.buffer.position(iOffset - entry.beginOffset);
+				entry.buffer.position((int) (iOffset - entry.beginOffset));
 				entry.buffer.put(iSourceBuffer);
 			} else {
 				// DIRECT WRITE
@@ -344,7 +344,7 @@ public class OFileMMap extends OFile {
 		synch();
 	}
 
-	MappedByteBuffer map(final int iBeginOffset, final int iSize) throws IOException {
+	MappedByteBuffer map(final long iBeginOffset, final int iSize) throws IOException {
 		return channel.map(mode.equals("r") ? FileChannel.MapMode.READ_ONLY : FileChannel.MapMode.READ_WRITE, iBeginOffset + HEADER_SIZE, iSize);
 	}
 

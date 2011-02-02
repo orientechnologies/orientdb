@@ -86,25 +86,25 @@ public abstract class OFile {
 
 	public abstract void synch();
 
-	public abstract void read(int iOffset, byte[] iDestBuffer, int iLenght) throws IOException;
+	public abstract void read(long iOffset, byte[] iDestBuffer, int iLenght) throws IOException;
 
-	public abstract short readShort(int iLogicalPosition) throws IOException;
+	public abstract short readShort(long iLogicalPosition) throws IOException;
 
-	public abstract int readInt(int iLogicalPosition) throws IOException;
+	public abstract int readInt(long iLogicalPosition) throws IOException;
 
-	public abstract long readLong(int iOffset) throws IOException;
+	public abstract long readLong(long iOffset) throws IOException;
 
-	public abstract byte readByte(int iOffset) throws IOException;
+	public abstract byte readByte(long iOffset) throws IOException;
 
-	public abstract void writeInt(int iOffset, int iValue) throws IOException;
+	public abstract void writeInt(long iOffset, int iValue) throws IOException;
 
-	public abstract void writeLong(int iOffset, long iValue) throws IOException;
+	public abstract void writeLong(long iOffset, long iValue) throws IOException;
 
-	public abstract void writeShort(int iOffset, short iValue) throws IOException;
+	public abstract void writeShort(long iOffset, short iValue) throws IOException;
 
-	public abstract void writeByte(int iOffset, byte iValue) throws IOException;
+	public abstract void writeByte(long iOffset, byte iValue) throws IOException;
 
-	public abstract void write(int iOffset, byte[] iSourceBuffer) throws IOException;
+	public abstract void write(long iOffset, byte[] iSourceBuffer) throws IOException;
 
 	public boolean open() throws IOException {
 		if (!osFile.exists() || osFile.length() == 0)
@@ -283,7 +283,7 @@ public abstract class OFile {
 		return offset;
 	}
 
-	protected int checkRegions(final int iOffset, final int iLenght) {
+	protected long checkRegions(final long iOffset, final int iLenght) {
 		if (iOffset + iLenght > filledUpTo)
 			throw new OIOException("You can't access outside the file size (" + filledUpTo + " bytes). You've requested portion "
 					+ iOffset + "-" + (iOffset + iLenght) + " bytes");

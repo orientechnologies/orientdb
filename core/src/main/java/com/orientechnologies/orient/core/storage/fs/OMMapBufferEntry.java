@@ -21,12 +21,12 @@ import java.nio.MappedByteBuffer;
 public class OMMapBufferEntry implements Comparable<OMMapBufferEntry> {
 	OFileMMap					file;
 	MappedByteBuffer	buffer;
-	int								beginOffset;
+	long							beginOffset;
 	int								size;
 	long							counter;
 	boolean						pin;
 
-	public OMMapBufferEntry(final OFileMMap iFile, final MappedByteBuffer buffer, final int beginOffset, final int size) {
+	public OMMapBufferEntry(final OFileMMap iFile, final MappedByteBuffer buffer, final long beginOffset, final int size) {
 		this.file = iFile;
 		this.buffer = buffer;
 		this.beginOffset = beginOffset;
@@ -38,7 +38,8 @@ public class OMMapBufferEntry implements Comparable<OMMapBufferEntry> {
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();
-		builder.append("OMMapBufferEntry [file=").append(file).append(", beginOffset=").append(beginOffset).append(", size=").append(size).append("]");
+		builder.append("OMMapBufferEntry [file=").append(file).append(", beginOffset=").append(beginOffset).append(", size=")
+				.append(size).append("]");
 		return builder.toString();
 	}
 

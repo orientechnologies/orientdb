@@ -50,7 +50,7 @@ public class OFileClassic extends OFile {
 	}
 
 	@Override
-	public void read(int iOffset, byte[] iDestBuffer, int iLenght)
+	public void read(long iOffset, byte[] iDestBuffer, int iLenght)
 			throws IOException {
 		iOffset = checkRegions(iOffset, iLenght);
 
@@ -59,31 +59,31 @@ public class OFileClassic extends OFile {
 	}
 
 	@Override
-	public int readInt(int iOffset) throws IOException {
+	public int readInt(long iOffset) throws IOException {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_INT);
 		return readData(iOffset, OConstants.SIZE_INT).getInt();
 	}
 
 	@Override
-	public long readLong(int iOffset) throws IOException {
+	public long readLong(long iOffset) throws IOException {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_LONG);
 		return readData(iOffset, OConstants.SIZE_LONG).getLong();
 	}
 
 	@Override
-	public short readShort(int iOffset) throws IOException {
+	public short readShort(long iOffset) throws IOException {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_SHORT);
 		return readData(iOffset, OConstants.SIZE_SHORT).getShort();
 	}
 
 	@Override
-	public byte readByte(int iOffset) throws IOException {
+	public byte readByte(long iOffset) throws IOException {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_BYTE);
 		return readData(iOffset, OConstants.SIZE_BYTE).get();
 	}
 
 	@Override
-	public void writeInt(int iOffset, int iValue) throws IOException {
+	public void writeInt(long iOffset, int iValue) throws IOException {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_INT);
 		ByteBuffer buffer = getWriteBuffer(OConstants.SIZE_INT);
 		buffer.putInt(iValue);
@@ -91,7 +91,7 @@ public class OFileClassic extends OFile {
 	}
 
 	@Override
-	public void writeLong(int iOffset, long iValue) throws IOException {
+	public void writeLong(long iOffset, long iValue) throws IOException {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_LONG);
 		ByteBuffer buffer = getWriteBuffer(OConstants.SIZE_LONG);
 		buffer.putLong(iValue);
@@ -99,7 +99,7 @@ public class OFileClassic extends OFile {
 	}
 
 	@Override
-	public void writeShort(int iOffset, short iValue) throws IOException {
+	public void writeShort(long iOffset, short iValue) throws IOException {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_INT);
 		ByteBuffer buffer = getWriteBuffer(OConstants.SIZE_SHORT);
 		buffer.putShort(iValue);
@@ -107,7 +107,7 @@ public class OFileClassic extends OFile {
 	}
 
 	@Override
-	public void writeByte(int iOffset, byte iValue) throws IOException {
+	public void writeByte(long iOffset, byte iValue) throws IOException {
 		iOffset = checkRegions(iOffset, OConstants.SIZE_BYTE);
 		ByteBuffer buffer = getWriteBuffer(OConstants.SIZE_BYTE);
 		buffer.put(iValue);
@@ -115,7 +115,7 @@ public class OFileClassic extends OFile {
 	}
 
 	@Override
-	public void write(int iOffset, byte[] iSourceBuffer) throws IOException {
+	public void write(long iOffset, byte[] iSourceBuffer) throws IOException {
 		iOffset = checkRegions(iOffset, iSourceBuffer.length);
 
 		channel.write(ByteBuffer.wrap(iSourceBuffer), iOffset);
@@ -161,7 +161,7 @@ public class OFileClassic extends OFile {
 	}
 
 	@Override
-	public void writeHeaderLong(int iPosition, long iValue)
+	public void writeHeaderLong(final int iPosition,final  long iValue)
 			throws IOException {
 		ByteBuffer buffer = getWriteBuffer(OConstants.SIZE_LONG);
 		buffer.putLong(iValue);
@@ -169,7 +169,7 @@ public class OFileClassic extends OFile {
 	}
 
 	@Override
-	public long readHeaderLong(int iPosition) throws IOException {
+	public long readHeaderLong(final int iPosition) throws IOException {
 		return readData(HEADER_DATA_OFFSET + iPosition, OConstants.SIZE_LONG).getLong();
 	}
 
@@ -179,30 +179,30 @@ public class OFileClassic extends OFile {
 	}
 
 	@Override
-	protected void setSoftlyClosed(boolean iValue) throws IOException {
-		ByteBuffer buffer = getWriteBuffer(OConstants.SIZE_BYTE);
+	protected void setSoftlyClosed(final boolean iValue) throws IOException {
+		final ByteBuffer buffer = getWriteBuffer(OConstants.SIZE_BYTE);
 		buffer.put((byte) (iValue ? 1 : 0));
 		writeData(buffer, SOFTLY_CLOSED_OFFSET);
 		synch();
 	}
 
-	private ByteBuffer readData(int iOffset, int iSize) throws IOException {
+	private ByteBuffer readData(final long iOffset,final  int iSize) throws IOException {
 		ByteBuffer buffer = getBuffer(iSize);
 		channel.read(buffer, iOffset);
 		buffer.rewind();
 		return buffer;
 	}
 
-	private void writeData(ByteBuffer iBuffer, int iOffset) throws IOException {
+	private void writeData(final ByteBuffer iBuffer, final long iOffset) throws IOException {
 		iBuffer.rewind();
 		channel.write(iBuffer, iOffset);
 	}
 
-	private ByteBuffer getBuffer(int iLenght) {
+	private ByteBuffer getBuffer(final int iLenght) {
 		return ByteBuffer.allocate(iLenght);
 	}
 
-	private ByteBuffer getWriteBuffer(int iLenght) {
+	private ByteBuffer getWriteBuffer(final int iLenght) {
 		if (iLenght <= OConstants.SIZE_LONG)
 			// RECYCLE WRITE BYTE BUFFER SINCE WRITES ARE SYNCHRONIZED
 			return (ByteBuffer) internalWriteBuffer.rewind();

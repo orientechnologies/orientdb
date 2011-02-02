@@ -85,7 +85,7 @@ public class ODataLocal extends OMultiFileSegment {
 		try {
 			acquireExclusiveLock();
 
-			final int[] newFilePosition = allocateSpace(iContent.length + RECORD_FIX_SIZE);
+			final long[] newFilePosition = allocateSpace(iContent.length + RECORD_FIX_SIZE);
 			writeRecord(newFilePosition, iClusterSegment, iClusterPosition, iContent);
 
 			return getAbsolutePosition(newFilePosition);
@@ -107,8 +107,8 @@ public class ODataLocal extends OMultiFileSegment {
 		try {
 			acquireSharedLock();
 
-			final int[] pos = getRelativePosition(iPosition);
-			final OFile file = files[pos[0]];
+			final long[] pos = getRelativePosition(iPosition);
+			final OFile file = files[(int) pos[0]];
 
 			final int recordSize = file.readInt(pos[1]);
 			if (recordSize <= 0)
@@ -132,8 +132,8 @@ public class ODataLocal extends OMultiFileSegment {
 		try {
 			acquireSharedLock();
 
-			final int[] pos = getRelativePosition(iPosition);
-			final OFile file = files[pos[0]];
+			final long[] pos = getRelativePosition(iPosition);
+			final OFile file = files[(int) pos[0]];
 
 			return file.readInt(pos[1]);
 
@@ -157,8 +157,8 @@ public class ODataLocal extends OMultiFileSegment {
 		try {
 			acquireExclusiveLock();
 
-			int[] pos = getRelativePosition(iPosition);
-			final OFile file = files[pos[0]];
+			long[] pos = getRelativePosition(iPosition);
+			final OFile file = files[(int) pos[0]];
 
 			final int recordSize = file.readInt(pos[1]);
 			// if (recordSize <= 0)
@@ -200,8 +200,8 @@ public class ODataLocal extends OMultiFileSegment {
 		try {
 			acquireExclusiveLock();
 
-			final int[] pos = getRelativePosition(iPosition);
-			final OFile file = files[pos[0]];
+			final long[] pos = getRelativePosition(iPosition);
+			final OFile file = files[(int) pos[0]];
 
 			final int recordSize = file.readInt(pos[1]);
 			if (recordSize > 0) {
@@ -217,9 +217,9 @@ public class ODataLocal extends OMultiFileSegment {
 		}
 	}
 
-	protected void writeRecord(final int[] iFilePosition, final int iClusterSegment, final long iClusterPosition,
+	protected void writeRecord(final long[] iFilePosition, final int iClusterSegment, final long iClusterPosition,
 			final byte[] iContent) throws IOException {
-		final OFile file = files[iFilePosition[0]];
+		final OFile file = files[(int) iFilePosition[0]];
 
 		file.writeInt(iFilePosition[1], iContent.length);
 		file.writeShort(iFilePosition[1] + OConstants.SIZE_INT, (short) iClusterSegment);
