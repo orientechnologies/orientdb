@@ -36,29 +36,29 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 public class OStorageConfiguration implements OSerializableStream {
-	public static final int										CONFIG_RECORD_NUM	= 0;
+	public static final int										CONFIG_RECORD_NUM				= 0;
 
-	public static final int										CURRENT_VERSION		= 2;
+	public static final int										CURRENT_VERSION					= 2;
 
-	public int																version						= -1;
+	public int																version									= -1;
 	public String															name;
 	public String															schemaRecordId;
 	public String															dictionaryRecordId;
 	public String															indexMgrRecordId;
 
-	public String															localeLanguage		= Locale.getDefault().getLanguage();
-	public String															localeCountry			= Locale.getDefault().getCountry();
-	public String															dateFormat				= "yyyy-MM-dd";
-	public String															dateTimeFormat		= "yyyy-MM-dd hh:mm:ss";
+	public String															localeLanguage					= Locale.getDefault().getLanguage();
+	public String															localeCountry						= Locale.getDefault().getCountry();
+	public String															dateFormat							= "yyyy-MM-dd";
+	public String															dateTimeFormat					= "yyyy-MM-dd hh:mm:ss";
 
-	public OStorageSegmentConfiguration				fileTemplate			= new OStorageSegmentConfiguration();
+	public OStorageSegmentConfiguration				fileTemplate						= new OStorageSegmentConfiguration();
 
-	public List<OStorageClusterConfiguration>	clusters					= new ArrayList<OStorageClusterConfiguration>();
-	public List<OStorageDataConfiguration>		dataSegments			= new ArrayList<OStorageDataConfiguration>();
+	public List<OStorageClusterConfiguration>	clusters								= new ArrayList<OStorageClusterConfiguration>();
+	public List<OStorageDataConfiguration>		dataSegments						= new ArrayList<OStorageDataConfiguration>();
 
-	public OStorageTxConfiguration						txSegment					= new OStorageTxConfiguration();
+	public OStorageTxConfiguration						txSegment								= new OStorageTxConfiguration();
 
-	public List<OEntryConfiguration>					properties				= new ArrayList<OEntryConfiguration>();
+	public List<OEntryConfiguration>					properties							= new ArrayList<OEntryConfiguration>();
 
 	private transient Locale									localeInstance;
 	private transient DateFormat							dateFormatInstance;
@@ -66,7 +66,9 @@ public class OStorageConfiguration implements OSerializableStream {
 	private transient DecimalFormatSymbols		unusualSymbols;
 	private transient OStorage								storage;
 	private transient byte[]									record;
-	private int																fixedSize					= 0;
+	private int																fixedSize								= 0;
+
+	private static final int									COMPRESSION_BUFFER_SIZE	= 8192;
 
 	public OStorageConfiguration load() throws OSerializationException {
 		record = storage.readRecord(null, -1, storage.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME), CONFIG_RECORD_NUM, null).buffer;
@@ -135,20 +137,27 @@ public class OStorageConfiguration implements OSerializableStream {
 		if (iStream[0] == 1) {
 			// UNCOMPRESS CONTENT
 			final ByteArrayInputStream compressedBuffer = new ByteArrayInputStream(iStream, 1, iStream.length - 1);
+			final ByteArrayOutputStream tempBuffer = new ByteArrayOutputStream();
 			try {
 				final GZIPInputStream compression = new GZIPInputStream(compressedBuffer);
-				final ByteArrayOutputStream tempBuffer = new ByteArrayOutputStream();
 
 				int length;
-				byte[] buffer = new byte[8192];
-				while ((length = compression.read(buffer, 0, 8192)) != -1)
+				byte[] buffer = new byte[COMPRESSION_BUFFER_SIZE];
+				while ((length = compression.read(buffer, 0, COMPRESSION_BUFFER_SIZE)) != -1)
 					tempBuffer.write(buffer, 0, length);
 
 				compression.close();
 
 				stream = tempBuffer.toByteArray();
 			} catch (IOException ex) {
-				throw new OConfigurationException("Error while uncompressing storage configuration", ex);
+				throw new OSerializationException("Error while uncompressing storage configuration", ex);
+			} finally {
+				try {
+					tempBuffer.close();
+					compressedBuffer.close();
+				} catch (IOException ex) {
+					throw new OSerializationException("Error while uncompressing storage configuration", ex);
+				}
 			}
 		} else
 			stream = iStream;
@@ -316,26 +325,32 @@ public class OStorageConfiguration implements OSerializableStream {
 
 		if (fixedSize > 0 && buffer.length() > fixedSize) {
 			// ZIP THE CONTENT
+			final ByteArrayOutputStream compressedBuffer = new ByteArrayOutputStream();
+
 			try {
-				final ByteArrayOutputStream compressedBuffer = new ByteArrayOutputStream();
 				compressedBuffer.write(1);
 
 				GZIPOutputStream compression = new GZIPOutputStream(compressedBuffer);
 				compression.write(buffer.toString().getBytes());
 				compression.close();
 
-				if (fixedSize > 0)
-					if (compressedBuffer.size() > fixedSize)
-						throw new OConfigurationException("Configuration data exceeded size limit: " + fixedSize + " bytes");
-					else if (compressedBuffer.size() < fixedSize) {
-						// FILL THE BUFFER AT FIXED SIZE
-						for (int i = compressedBuffer.size(); i < fixedSize; ++i)
-							compressedBuffer.write(0);
-					}
+				if (compressedBuffer.size() > fixedSize)
+					throw new OConfigurationException("Configuration data exceeded size limit: " + fixedSize + " bytes");
+				else if (compressedBuffer.size() < fixedSize) {
+					// FILL THE BUFFER AT FIXED SIZE
+					for (int i = compressedBuffer.size(); i < fixedSize; ++i)
+						compressedBuffer.write(0);
+				}
 
 				return compressedBuffer.toByteArray();
 			} catch (IOException ex) {
-				throw new OConfigurationException("Error while compressing storage configuration", ex);
+				throw new OSerializationException("Error while compressing storage configuration", ex);
+			} finally {
+				try {
+					compressedBuffer.close();
+				} catch (IOException ex) {
+					throw new OSerializationException("Error while compressing storage configuration", ex);
+				}
 			}
 		} else {
 			// PLAIN: ALLOCATE ENOUGHT SPACE TO REUSE IT EVERY TIME
