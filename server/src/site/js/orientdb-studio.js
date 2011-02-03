@@ -39,6 +39,7 @@ function connect() {
 		$("#tabs-main").show(200);
 		$("#buttonConnect").hide();
 		$("#buttonDisconnect").show();
+		documentView.render(null, orientServer);
 	}
 }
 

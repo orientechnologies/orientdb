@@ -193,19 +193,19 @@ function OGraph(doc, displayComponent, detailComponent, loadDepthComponent) {
 					// data property)
 					// for all the nodes adjacent to the centered node.
 					var node = ht.graph.getClosestNodeToOrigin("current");
-					var html = "<h2>" + node.name + "</h2>";
-					html += "<table width='100%' border='0' cellspacing='5' cellpadding='0'><tr><th>Field</th><th>Relationship</th><th>Actions</th></tr>";
+					var html = "<center><h3>" + node.name + "</h3></center>";
+					html += "<table width='100%' border='0' cellspacing='5' cellpadding='0' class='ograph_detail'><tr><th>Field</th><th>Relationship</th><th>Actions</th></tr>";
 					node
 							.eachAdjacency(function(adj) {
 								var child = adj.nodeTo;
 								if (child.data) {
-									var rel = (child.data.band == node.name) ? child.data.relation
-											: node.data.relation;
-									html += "<tr><td>"
+									var rel = child.data.relation != null ? child.data.relation
+											: "(undirected)";
+									html += "<tr><td align='center'>"
 											+ rel
-											+ "</td><td>"
+											+ "</td><td align='center'>"
 											+ child.name
-											+ "</td><td><button onClick=\"javascript:graphEditor.removeNode('"
+											+ "</td><td align='center'><button onClick=\"javascript:graphEditor.removeNode('"
 											+ node.id
 											+ "', '"
 											+ child.id

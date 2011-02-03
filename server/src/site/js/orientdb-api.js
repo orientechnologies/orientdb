@@ -201,12 +201,41 @@ function ODatabase(databasePath) {
 		}
 
 		var rid = obj['@rid'];
-		var methodType = rid == null ? 'POST' : 'PUT';
+		var methodType = rid == null || rid == '-1:-1' ? 'POST' : 'PUT';
 
 		$.ajax({
 			type : methodType,
 			url : urlPrefix + '/document/' + this.databaseName + '/' + rid,
 			data : $.toJSON(obj),
+			processData : false,
+			context : this,
+			async : false,
+			success : function(msg) {
+				this.setErrorMessage(null);
+				this.setCommandResponse(msg);
+				this.setCommandResult(null);
+			},
+			error : function(msg) {
+				this.handleResponse(null);
+				this.setErrorMessage('Save error: ' + msg.responseText);
+			}
+		});
+		return this.getCommandResult();
+	}
+
+	ODatabase.prototype.remove = function(obj) {
+		if (this.databaseInfo == null)
+			this.open();
+
+		var rid;
+		if (typeof obj == "string")
+			rid = obj;
+		else
+			rid = obj['@rid'];
+
+		$.ajax({
+			type : 'DELETE',
+			url : urlPrefix + '/document/' + this.databaseName + '/' + rid,
 			processData : false,
 			context : this,
 			async : false,

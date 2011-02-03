@@ -148,7 +148,12 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
 							ODocument record;
 							if (iResult instanceof String) {
-								record = new ODocument(iDatabase, new ORecordId((String) iResult));
+								try {
+									record = new ODocument(iDatabase, new ORecordId((String) iResult));
+								} catch (Exception e) {
+									OLogManager.instance().error(this, "Error on reading rid with value '%s'", null, iResult);
+									record = null;
+								}
 							} else if (iResult instanceof ORID)
 								record = new ODocument(iDatabase, (ORID) iResult);
 							else if (iResult instanceof ORecord<?>)
@@ -156,12 +161,15 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 							else
 								throw new IllegalArgumentException("Field " + name + " is not a ODocument object");
 
-							try {
-								record.load();
-								iResult = iResult != null ? record.field(op.value.get(0)) : null;
-							} catch (ORecordNotFoundException e) {
+							if (record == null)
 								iResult = null;
-							}
+							else
+								try {
+									record.load();
+									iResult = iResult != null ? record.field(op.value.get(0)) : null;
+								} catch (ORecordNotFoundException e) {
+									iResult = null;
+								}
 						}
 
 					} else if (operator == OSQLFilterFieldOperator.CHARAT.id) {

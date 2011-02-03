@@ -97,7 +97,8 @@ function ODocumentView(name, component, doc, options) {
 				+ "_header' width='100%'><tr>";
 
 		if (this.settings.showClass) {
-			fieldValue = this.doc['@class'];
+			if (this.doc != null)
+				fieldValue = this.doc['@class'];
 
 			classes = "<select id='doc__class' class='"
 					+ this.settings.classValueStyleClass + "'>";
@@ -110,41 +111,54 @@ function ODocumentView(name, component, doc, options) {
 			}
 			classes += "</select>";
 
-			if (fieldValue != null)
-				component += "<td class='" + this.settings.classLabelStyleClass
-						+ "'>@class</td><td class='"
-						+ this.settings.classValueStyleClass + "'>" + classes
-						+ "</td>";
+			component += "<td class='" + this.settings.classLabelStyleClass
+					+ "'>@class</td><td class='"
+					+ this.settings.classValueStyleClass + "'>" + classes
+					+ "</td>";
 		}
 
 		component += "<td align='left'>"
 				+ this.generateButton('doc_create', 'Create ', 'add.png', null,
 						"ODocumentView.create('" + this.name + "')") + "</td>";
 
+		component += "<td align='left'>"
+				+ this.generateButton('doc_delete', 'Delete ', 'delete.png',
+						null, "ODocumentView.remove('" + this.name + "')")
+				+ "</td>";
+
+		component += "<td align='left'>"
+				+ this.generateButton('doc_clear', 'Clear ', 'clear.png', null,
+						"ODocumentView.clear('" + this.name + "')") + "</td>";
+
 		component += "<td width='200'></td>";
 
 		var fieldValue;
 		if (this.settings.showRid) {
-			fieldValue = this.doc['@rid'];
-			if (fieldValue != null)
-				component += "<td class='" + this.settings.ridLabelStyleClass
-						+ "'>@rid</td><td class='"
-						+ this.settings.ridValueStyleClass
-						+ "'><input id='doc__rid' class='"
-						+ this.settings.ridValueStyleClass
-						+ "' disabled value='" + fieldValue + "'/></td>";
+			if (this.doc != null)
+				fieldValue = this.doc['@rid'];
+			else
+				fieldValue = "-1:-1";
+
+			component += "<td class='" + this.settings.ridLabelStyleClass
+					+ "'>@rid</td><td class='"
+					+ this.settings.ridValueStyleClass
+					+ "'><input id='doc__rid' class='"
+					+ this.settings.ridValueStyleClass + "' disabled value='"
+					+ fieldValue + "'/></td>";
 		}
 
 		if (this.settings.showVersion) {
-			fieldValue = this.doc['@version'];
-			if (fieldValue != null)
-				component += "<td class='"
-						+ this.settings.versionLabelStyleClass
-						+ "'>@version</td><td class='"
-						+ this.settings.versionValueStyleClass
-						+ "'><input id='doc__version' class='"
-						+ this.settings.versionValueStyleClass
-						+ "'disabled value='" + fieldValue + "'/></td>";
+			if (this.doc != null)
+				fieldValue = this.doc['@version'];
+			else
+				fieldValue = 0;
+
+			component += "<td class='" + this.settings.versionLabelStyleClass
+					+ "'>@version</td><td class='"
+					+ this.settings.versionValueStyleClass
+					+ "'><input id='doc__version' class='"
+					+ this.settings.versionValueStyleClass
+					+ "'disabled value='" + fieldValue + "'/></td>";
 		}
 
 		component += "</tr></table></td></tr>";
@@ -154,13 +168,14 @@ function ODocumentView(name, component, doc, options) {
 				+ "</th><th>" + this.settings.valueColumnName + "</th>";
 		var fieldValue;
 		this.fieldNum = 0;
-		for (fieldName in this.doc) {
-			if (fieldName.charAt(0) == '@')
-				continue;
+		if (this.doc != null)
+			for (fieldName in this.doc) {
+				if (fieldName.charAt(0) == '@')
+					continue;
 
-			fieldValue = this.doc[fieldName];
-			component += this.renderRow(fieldName, fieldValue);
-		}
+				fieldValue = this.doc[fieldName];
+				component += this.renderRow(fieldName, fieldValue);
+			}
 
 		component += "</table></td></tr>";
 
@@ -178,7 +193,7 @@ function ODocumentView(name, component, doc, options) {
 
 		this.component.html(component + script);
 
-		if (this.settings.editable) {
+		if (this.settings.editable && this.doc != null) {
 			var i = 0;
 			for (fieldName in this.doc) {
 				if (fieldName.charAt(0) == '@')
@@ -261,7 +276,6 @@ function ODocumentView(name, component, doc, options) {
 	}
 
 	ODocumentView.prototype.save = function() {
-		var i = 0;
 		var fieldName;
 		var fieldValue;
 		var fieldType;
@@ -269,10 +283,9 @@ function ODocumentView(name, component, doc, options) {
 
 		object['@rid'] = $('#doc__rid').val();
 		object['@class'] = $('#doc__class').val();
-		if ($('#doc__version') != null)
-			object['@version'] = parseInt($('#doc__version').val());
+		object['@version'] = parseInt($('#doc__version').val());
 
-		while (true) {
+		for ( var i = 0; i < this.fieldNum; ++i) {
 			fieldName = $('#doc_' + i + '_label').val();
 
 			if (fieldName != null) {
@@ -283,7 +296,8 @@ function ODocumentView(name, component, doc, options) {
 					object[fieldName] = [];
 					fieldValue = fieldValue.split(",");
 					for (fieldIndex in fieldValue) {
-						object[fieldName].push(jQuery.trim(fieldValue[fieldIndex]));
+						object[fieldName].push(jQuery
+								.trim(fieldValue[fieldIndex]));
 					}
 				} else {
 					if (isNaN(fieldValue))
@@ -296,9 +310,7 @@ function ODocumentView(name, component, doc, options) {
 					}
 				}
 
-				i++;
-			} else
-				break;
+			}
 		}
 
 		this.database.save(object);
@@ -315,10 +327,73 @@ function ODocumentView(name, component, doc, options) {
 
 	ODocumentView.prototype.create = function() {
 		$('#doc__rid').val("-1:-1");
-		if ($('#doc__version') != null)
-			$('#doc__version').val("0");
+		$('#doc__version').val("0");
+
+		var className = $('#doc__class').val();
+		if (className == null)
+			return;
+
+		var selectedClass = null;
+		for (cls in databaseInfo['classes']) {
+			if (databaseInfo['classes'][cls].name == className) {
+				selectedClass = databaseInfo['classes'][cls];
+				break;
+			}
+		}
+
+		if (selectedClass == null)
+			return;
+
+		var component = $('#' + this.componentId + "_fields");
+
+		// SET THE DECLARED FIELDS FOUND INTO THE SCHEMA
+		for (p in selectedClass.properties) {
+			found = false;
+
+			for ( var i = 0; i < this.fieldNum; ++i) {
+				fieldName = $('#doc_' + i + '_label').val();
+				if (fieldName != null
+						&& selectedClass.properties[p].name == fieldName) {
+					found = true;
+					break;
+				}
+			}
+
+			if (!found)
+				component.append(this.renderRow(
+						selectedClass.properties[p].name, ""));
+		}
 	}
 
+	ODocumentView.prototype.remove = function() {
+		var rid = $('#doc__rid').val();
+
+		this.database.remove(rid);
+
+		if (this.settings.log != null) {
+			var msg = this.database.getErrorMessage();
+			if (msg == null)
+				msg = this.database.getCommandResponse();
+			this.settings.log(msg);
+		}
+
+		return rid;
+	}
+
+	ODocumentView.prototype.clear = function() {
+		var i = 0;
+		var fieldName;
+
+		while (true) {
+			fieldName = $('#doc_' + i + '_label').val();
+
+			if (fieldName != null) {
+				$('#doc_' + i + '_value').val("");
+				i++;
+			} else
+				break;
+		}
+	}
 	ODocumentView.addField = function(instanceName) {
 		var instance = ODocumentViewInstances[instanceName];
 		$('#' + instance.getComponentId() + "_fields").append(
@@ -334,15 +409,20 @@ function ODocumentView(name, component, doc, options) {
 	}
 
 	ODocumentView.create = function(instanceName) {
-		var instance = ODocumentViewInstances[instanceName];
-		instance.create();
+		return ODocumentViewInstances[instanceName].create();
 	}
 
 	ODocumentView.save = function(instanceName) {
-		var instance = ODocumentViewInstances[instanceName];
-		instance.save();
+		return ODocumentViewInstances[instanceName].save();
 	}
 
+	ODocumentView.remove = function(instanceName) {
+		return ODocumentViewInstances[instanceName].remove();
+	}
+
+	ODocumentView.clear = function(instanceName) {
+		return ODocumentViewInstances[instanceName].clear();
+	}
 	if (doc != null)
 		this.render(doc);
 }
