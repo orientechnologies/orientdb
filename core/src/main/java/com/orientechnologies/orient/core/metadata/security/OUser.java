@@ -148,10 +148,10 @@ public class OUser extends ODocumentWrapper {
 	}
 
 	public OUser setPassword(final String iPassword) {
-		return setPasswordEncoded(encryptPassword(iPassword));
+		return setPasswordEncoded(iPassword);
 	}
 
-	public OUser setPasswordEncoded(String iPassword) {
+	public OUser setPasswordEncoded(final String iPassword) {
 		document.field("password", iPassword);
 		return this;
 	}
@@ -164,7 +164,7 @@ public class OUser extends ODocumentWrapper {
 		return STATUSES.valueOf((String) document.field("status"));
 	}
 
-	public void setAccountStatus(STATUSES accountStatus) {
+	public void setAccountStatus(final STATUSES accountStatus) {
 		document.field("status", accountStatus);
 	}
 
