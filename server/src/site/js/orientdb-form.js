@@ -64,7 +64,7 @@ function OForm() {
 	 *            HTML component
 	 */
 	OForm.prototype.array2component = function(array, component, prefix, level) {
-		if (component != null && component.is('table')) {
+		if (component != null ) {
 			componentChild = component.children().last();
 
 			var referenceRow = this.templateMap[prefix];
@@ -73,8 +73,7 @@ function OForm() {
 				// FIRST TIME: SEARCH THE TEMPLATE
 				referenceRow = componentChild.html();
 				this.templateMap[prefix] = referenceRow;
-			} else
-				referenceRow = this.templateMap[prefix];
+			}
 
 			component.empty();
 
@@ -176,7 +175,7 @@ function OForm() {
 	 *            HTML component
 	 */
 	OForm.prototype.component2array = function(obj, component, prefix, field) {
-		if (component != null && component.is('table')) {
+		if (component != null ) {
 			// RESET THE JSON ARRAY
 			var array = obj[field];
 
@@ -224,58 +223,18 @@ function OForm() {
 				return component.text();
 		}
 	}
-}
-
-function formatDocumentContent(doc, editable, fieldColName, valueColName) {
-	if (doc == null)
-		return "";
 	
-	if( fieldColName == null )
-		fieldColName = "Field";
-	if( valueColName == null )
-		valueColName = "Value";
-	if( editable == null )
-		editable = false;
-
-	var out = "<table width='100%'><tr><th>"+fieldColName+"</th><th>"+valueColName+"</th></tr>";
-
-	var fieldValue;
-	for (field in doc) {
-		fieldValue = doc[field];
-		
-		out += "<tr><td>";
-		out += field;
-		out += "</td><td>";
-
-		if( editable ){
-			out += "<input id='document_";
-			out += field;
-			out += "' value='";
-		}
-		
-		if( fieldValue == null)
-			out += 'null';		
-		else if (fieldValue instanceof Array) {
-			for( v in fieldValue ){
-				if( v > 0)
-					out += ', ';
-				
-				if( typeof fieldValue[v] == 'object' )
-					out+= ('#'+fieldValue[v]['@rid']);
-				else
-					out += fieldValue[v];
-			}
-		} else if ( typeof fieldValue == 'object') {
-			out += ('#'+fieldValue['@rid']);
-		} else
-			out += fieldValue;
-
-		if( editable )
-			out += "'/>";	
-
-		out += "</td></tr>";
+	OForm.prototype.generateFieldButtons(id, styleClass){
+		return "<table><tr>" + this.generateFieldRemove(id +'_remove', styleClass ); "</tr></table>";
 	}
-
-	out += "</table>"
-	return out;
+	
+	OForm.prototype.generateFieldRemove(id, styleClass ){	
+		var out = "<button id='" + id + "'";
+		if( styleClass)
+		out += " class='ui-button-text-icon'";
+		
+		style="text-align: left">Add field <img border="0"
+		alt="New field" src="www/images/add.png" align="top" /></button>
+		return var;
+	}
 }
