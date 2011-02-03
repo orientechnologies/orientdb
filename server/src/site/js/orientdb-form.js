@@ -223,18 +223,4 @@ function OForm() {
 				return component.text();
 		}
 	}
-	
-	OForm.prototype.generateFieldButtons(id, styleClass){
-		return "<table><tr>" + this.generateFieldRemove(id +'_remove', styleClass ); "</tr></table>";
-	}
-	
-	OForm.prototype.generateFieldRemove(id, styleClass ){	
-		var out = "<button id='" + id + "'";
-		if( styleClass)
-		out += " class='ui-button-text-icon'";
-		
-		style="text-align: left">Add field <img border="0"
-		alt="New field" src="www/images/add.png" align="top" /></button>
-		return var;
-	}
 }
