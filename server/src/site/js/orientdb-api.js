@@ -378,7 +378,7 @@ function ODatabase(databasePath) {
 
 	ODatabase.prototype.transformResponse = function(msg) {
 		if (this.getEvalResponse() && msg.length > 0 && typeof msg != 'object') {
-			return eval("(" + msg + ")");
+			return jQuery.parseJSON(msg);
 		} else {
 			return msg;
 		}

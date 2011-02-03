@@ -23,6 +23,7 @@ var orientServer;
 var queryEditor;
 var commandEditor;
 var graphEditor;
+var selectedObject;
 
 function connect() {
 	if (orientServer == null) {
@@ -58,7 +59,7 @@ function loadDocument(rid, level) {
 		return null;
 
 	// LAZY LOAD IT
-	var node = orientServer.load(rid, "*:" + (level + 5));
+	var node = orientServer.load(rid, "*:" + level);
 	if (node == null)
 		return null;
 
@@ -705,6 +706,17 @@ jQuery(document)
 						json : true
 					});
 
+					$("#editRecord")
+							.click(
+									function() {
+										var selectedRow = jQuery(
+												"#queryResultTable").jqGrid(
+												'getGridParam', 'selrow');
+										if (selectedRow != null)
+											displayDocument(
+													queryResult.result[selectedRow - 1],
+													orientServer);
+									});
 					$("#graphRecord")
 							.click(
 									function() {
@@ -712,7 +724,28 @@ jQuery(document)
 												"#queryResultTable").jqGrid(
 												'getGridParam', 'selrow');
 										if (selectedRow != null)
-											displayGraph(queryResult.result[selectedRow]);
+											displayGraph(queryResult.result[selectedRow - 1]);
+									});
+
+					$("#graphDocument").click(function() {
+						if (selectedObject != null)
+							displayGraph(selectedObject);
+					});
+
+					$("#editGraph").click(function() {
+						if (selectedObject != null)
+							displayDocument(selectedObject, orientServer);
+					});
+
+					$("#editCommandResult")
+							.click(
+									function() {
+										var result = orientServer
+												.getCommandResult();
+
+										if (result != null)
+											displayDocument(result.result != null ? result.result[0]
+													: result);
 									});
 
 					$("#graphCommandResult")
@@ -724,6 +757,23 @@ jQuery(document)
 										if (result != null)
 											displayGraph(result.result != null ? result.result[0]
 													: result);
+									});
+					$("#editRaw")
+							.click(
+									function() {
+										var raw = rawEditor.getCode();
+										if (raw == null || raw.length == 0)
+											return;
+
+										try {
+											var result = jQuery.parseJSON(raw);
+											if (result != null)
+												displayDocument(result.result != null ? result.result[0]
+														: result);
+										} catch (e) {
+											alert("Error on parsing result:"
+													+ e);
+										}
 									});
 					$("#graphRaw")
 							.click(
@@ -742,13 +792,30 @@ jQuery(document)
 													+ e);
 										}
 									});
+
+					documentView = new ODocumentView('edit', 'document-view',
+							null, {
+								log : function(message) {
+									$("#output").val(message);
+								}
+							});
 				});
 
+function displayDocument(selObject, database) {
+	selectedObject = selObject;
+
+	$("#tabs-main").tabs('select', "tab-document");
+	documentView.render(selObject, database);
+}
+
 function displayGraph(selObject) {
+	selectedObject = selObject;
+
 	$("#tabs-main").tabs('select', "tab-graph");
 
 	if (graphEditor == null)
-		graphEditor = new OGraph(selObject, 'graphPanel');
+		graphEditor = new OGraph(selObject, 'graphPanel',
+				'graph-inner-details', 'graph-load-depth');
 	else
 		graphEditor.render(selObject);
 }

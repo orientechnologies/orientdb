@@ -7,8 +7,6 @@
 <meta name="description" content="OrientDB Studio" />
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <link type="text/css" href="www/styles/jit/base.css" rel="stylesheet" />
-<link type="text/css" href="www/styles/jit/Spacetree.css"
-	rel="stylesheet" />
 <link rel="stylesheet" type="text/css" media="screen"
 	href="www/styles/redmond/jquery-ui-1.8.1.custom.css" />
 <link rel="stylesheet" type="text/css" media="screen"
@@ -29,8 +27,62 @@ td {
 	background-color: #6D7B8D;
 }
 
+#graph-inner-details {
+	font-size: 13pt;
+}
+
+#center-container {
+	background-color: #1a1a1a;
+}
+
 .help {
 	font-size: 13pt;
+}
+
+table.odocumentview {
+	background-color: #87B6D9;
+}
+
+td.odocumentview_header_label {
+	font-size: 13pt;
+	text-align: left;
+}
+
+td.odocumentview_header_value {
+	font-size: 13pt;
+}
+
+input.odocumentview_header_value {
+	font-size: 13pt;
+	width: 100px;
+}
+
+select.odocumentview_header_value {
+	font-size: 13pt;
+	width: 150px;
+}
+
+input.odocumentview_field_label {
+	font-size: 13pt;
+	vertical-align: top;
+	text-align: right;
+	border-color: #F8F8F8;
+}
+
+td.odocumentview_field_label {
+	font-size: 13pt;
+	vertical-align: top;
+	text-align: left;
+}
+
+td.odocumentview_field_value {
+	font-size: 13pt;
+}
+
+textarea.odocumentview_field_value {
+	font-size: 13pt;
+	vertical-align: top;
+	width: 700px;
 }
 </style>
 <script src="www/js/jquery-1.4.2.min.js" type="text/javascript"></script>
@@ -38,8 +90,10 @@ td {
 	type="text/javascript"></script>
 <script src="www/js/i18n/grid.locale-en.js" type="text/javascript"></script>
 <script src="www/js/jquery.jqGrid.min.js" type="text/javascript"></script>
-<script src="www/js/jQueryRotate.js" type="text/javascript"></script>
+<script src="www/js/jquery.json-2.2.min.js" type="text/javascript"></script>
+<script src="www/js/autoresize.jquery.min.js" type="text/javascript"></script>
 <script src="www/js/orientdb-form.js" type="text/javascript"></script>
+<script src="www/js/orientdb-view.js" type="text/javascript"></script>
 <script src="www/js/orientdb-graph.js" type="text/javascript"></script>
 <script src="www/js/orientdb-api.js" type="text/javascript"></script>
 <script src="www/js/orientdb-app.js" type="text/javascript"></script>
@@ -81,6 +135,7 @@ td {
 			<li><a href="#tab-database"><span>Database</span></a></li>
 			<li><a href="#tab-query"><span>Query</span></a></li>
 			<li><a href="#tab-command"><span>Command</span></a></li>
+			<li><a href="#tab-document"><span>Document</span></a></li>
 			<li><a href="#tab-graph"><span>Graph</span></a></li>
 			<li><a href="#tab-dictionary"><span>Dictionary</span></a></li>
 			<li><a href="#tab-raw"><span>Raw access</span></a></li>
@@ -333,17 +388,17 @@ td {
 							</tr>
 							<tr>
 								<td>
-								<button id="newRecord" " class="ui-button-text-icon"
-									style="width: 90px; text-align: center">New <img
-									border="0" alt="New record" src="www/images/add.png"
+								<button id="deleteRecord" class="ui-button-text-icon"
+									style="width: 90px; text-align: center">Delete <img
+									border="0" alt="Delete record" src="www/images/delete.png"
 									align="top" /></button>
 								</td>
 							</tr>
 							<tr>
 								<td>
-								<button id="deleteRecord" class="ui-button-text-icon"
-									style="width: 90px; text-align: center">Delete <img
-									border="0" alt="Delete record" src="www/images/delete.png"
+								<button id="editRecord" class="ui-button-text-icon"
+									style="width: 90px; text-align: center">Edit <img
+									border="0" alt="Edit record" src="www/images/set.png"
 									align="top" /></button>
 								</td>
 							</tr>
@@ -423,6 +478,14 @@ td {
 							</tr>
 							<tr>
 								<td>
+								<button id="editCommandResult" class="ui-button-text-icon"
+									style="width: 90px; text-align: center">Edit <img
+									border="0" alt="Edit record" src="www/images/set.png"
+									align="top" /></button>
+								</td>
+							</tr>
+							<tr>
+								<td>
 								<button id="graphCommandResult" class="ui-button-text-icon"
 									style="width: 90px; text-align: center">Graph <img
 									border="0" alt="Graph result" src="www/images/graph.png"
@@ -430,6 +493,52 @@ td {
 								</td>
 							</tr>
 						</table>
+						</td>
+					</tr>
+				</table>
+				</td>
+			</tr>
+		</table>
+		</div>
+		<div id="tab-document">
+		<table style="width: 100%;" cellpadding="0" cellspacing="2">
+			<tr>
+				<td valign="top">
+				<table style="width: 100%;" cellpadding="2" cellspacing="0">
+					<tr>
+						<td align="right" valign="top">
+						<table>
+							<tr>
+								<td valign="top" class="help">Edit document's content.
+								Documents can have arbitrary fields (click on 'add field' to
+								create a new one). To remove a field click on the X icon on the
+								right of the field. Once finished click on "Save' to make
+								changes permanent.</td>
+								<td>
+								<button id="deleteDocument" class="ui-button-text-icon"
+									style="width: 90px; text-align: center">Delete <img
+									border="0" alt="Delete record" src="www/images/delete.png"
+									align="top" /></button>
+								</td>
+								<td>
+								<button class="ui-button-text-icon" onClick=""
+									style="width: 90px; text-align: center">Clear <img
+									border="0" alt="Graph result" src="www/images/clear.png"
+									align="top" /></button>
+								</td>
+								<td>
+								<button id="graphDocument" class="ui-button-text-icon"
+									style="width: 90px; text-align: center">Graph <img
+									border="0" alt="Graph result" src="www/images/graph.png"
+									align="top" /></button>
+								</td>
+							</tr>
+						</table>
+						</td>
+					</tr>
+					<tr>
+						<td valign="top" align="left">
+						<div id="document-view"></div>
 						</td>
 					</tr>
 				</table>
@@ -448,30 +557,29 @@ td {
 						<div id="graphPanel"></div>
 						</div>
 						</td>
-						<td valign="top" align="center">
-						<h2>Change Tree Orientation</h2>
-						<table width="100%" align="center">
+						<td valign="top">
+						<table>
 							<tr>
-								<th align="center"><label for="r-left">Left</label></th>
-								<th align="center"><label for="r-top">Top</label></th>
-								<th align="center"><label for="r-bottom">Bottom</label></th>
-								<th align="center"><label for="r-right">Right</label></th>
+								<td valign="top" align="center">Lazy load depth <input
+									id="graph-load-depth" type="text" value="2" width="1" /></td>
 							</tr>
 							<tr>
-								<td align="center"><input type="radio" id="r-left"
-									name="orientation" checked="checked" value="left" /></td>
-								<td align="center"><input type="radio" id="r-top"
-									name="orientation" value="top" /></td>
-								<td align="center"><input type="radio" id="r-bottom"
-									name="orientation" value="bottom" /></td>
-								<td align="center"><input type="radio" id="r-right"
-									name="orientation" value="right" /></td>
+								<td>
+								<div id="graph-inner-details"></div>
+								</td>
+							</tr>
+							<tr>
+								<td>
+								<button id="editGraph" class="ui-button-text-icon"
+									style="width: 90px; text-align: center">Edit <img
+									border="0" alt="Edit record" src="www/images/set.png"
+									align="top" /></button>
+								</td>
 							</tr>
 						</table>
-						<hr />
-						<div id="inner-details"></div>
 						</td>
 					</tr>
+					<tr>
 				</table>
 				</td>
 			</tr>
@@ -540,7 +648,7 @@ td {
 					</tr>
 					<tr>
 						<td>
-						<button id="graphRawResult" class="ui-button-text-icon"
+						<button class="ui-button-text-icon"
 							onClick="javascript:rawEditor.setCode('')"
 							style="width: 90px; text-align: center">Clear <img
 							border="0" alt="Graph result" src="www/images/clear.png"
@@ -549,11 +657,18 @@ td {
 					</tr>
 					<tr>
 						<td>
-						<button id="rawReindent" class="ui-button-text-icon"
+						<button class="ui-button-text-icon"
 							onClick="javascript:rawEditor.reindent();"
 							style="width: 90px; text-align: center">Indent <img
 							border="0" alt="Graph result" src="www/images/indent.png"
 							align="top" /></button>
+						</td>
+					</tr>
+					<tr>
+						<td>
+						<button id="editRaw" class="ui-button-text-icon"
+							style="width: 90px; text-align: center">Edit <img
+							border="0" alt="Edit record" src="www/images/set.png" align="top" /></button>
 						</td>
 					</tr>
 					<tr>

@@ -14,24 +14,49 @@
  * limitations under the License.
  */
 
-function OGraph(doc, htmlComponent) {
-	this.htmlComponent = htmlComponent;
+function OGraph(doc, displayComponent, detailComponent, loadDepthComponent) {
+	this.displayComponent = displayComponent;
+	this.detailComponent = detailComponent;
+	this.doc = null;
 
 	OGraph.prototype.render = function(doc) {
 		if (doc == null)
 			return;
 
+		this.doc = doc;
+
 		var node = this.document2node(doc);
 		// load JSON data
-		st.loadJSON(node);
-		st.compute();
+		ht.loadJSON(node);
+		ht.compute();
 		// emulate a click on the root node.
-		st.onClick(st.root);
-
-		// append information about the root relations in the right column
-		$jit.id('inner-details').innerHTML = formatDocumentContent(st.graph
-				.getNode(st.root).data.document, true);
+		ht.onClick(ht.root);
 	}
+
+	OGraph.prototype.removeNode = function(nodeid, field) {
+		if (this.doc['@rid'] == nodeid) {
+			var fieldValue;
+			var valueToSearch = '#' + field;
+			for (i in this.doc) {
+				fieldValue = this.doc[i];
+
+				if (fieldValue instanceof Array) {
+					for (e in fieldValue) {
+						if (fieldValue[e] == valueToSearch)
+							fieldValue.splice(e, 1);
+					}
+				} else if (fieldValue == valueToSearch)
+					this.doc[i] = null;
+			}
+		}
+
+		ht.op.removeEdge([ [ nodeid, field ] ], {
+			type : 'fade:seq',
+			duration : 300,
+			fps : '30',
+			hideLabels : false
+		});
+	};
 
 	OGraph.prototype.document2node = function(doc) {
 		var node = {
@@ -66,7 +91,8 @@ function OGraph(doc, htmlComponent) {
 									id : rid,
 									name : '[' + rid + ']',
 									data : {
-										document : null
+										document : null,
+										relation : index
 									}
 								});
 							}
@@ -81,7 +107,8 @@ function OGraph(doc, htmlComponent) {
 						id : rid,
 						name : '[' + rid + ']',
 						data : {
-							document : null
+							document : null,
+							relation : index
 						}
 					});
 				}
@@ -106,174 +133,122 @@ function OGraph(doc, htmlComponent) {
 		animate = !(iStuff || !nativeCanvasSupport);
 	})();
 
-	// Implement a node rendering function called 'nodeline' that plots a
-	// straight line
-	// when contracting or expanding a subtree.
-	$jit.ST.Plot.NodeTypes
-			.implement({
-				'nodeline' : {
-					'render' : function(node, canvas, animating) {
-						if (animating === 'expand' || animating === 'contract') {
-							var pos = node.pos.getc(true), nconfig = this.node, data = node.data;
-							var width = nconfig.width, height = nconfig.height;
-							var algnPos = this
-									.getAlignedPos(pos, width, height);
-							var ctx = canvas.getCtx(), ort = this.config.orientation;
-							ctx.beginPath();
-							if (ort == 'left' || ort == 'right') {
-								ctx.moveTo(algnPos.x, algnPos.y + height / 2);
-								ctx.lineTo(algnPos.x + width, algnPos.y
-										+ height / 2);
-							} else {
-								ctx.moveTo(algnPos.x + width / 2, algnPos.y);
-								ctx.lineTo(algnPos.x + width / 2, algnPos.y
-										+ height);
-							}
-							ctx.stroke();
-						}
+	var infovis = document.getElementById(displayComponent);
+	var w = infovis.offsetWidth - 50, h = infovis.offsetHeight - 50;
+
+	var ht = new $jit.Hypertree(
+			{
+				// id of the visualization container
+				injectInto : displayComponent,
+				// canvas width and height
+				width : w,
+				height : h,
+				// Change node and edge styles such as
+				// color, width and dimensions.
+				Node : {
+					dim : 9,
+					color : "#f00"
+				},
+				Edge : {
+					lineWidth : 2,
+					color : "#088"
+				},
+				onBeforeCompute : function(node) {
+				},
+				// Attach event handlers and add text to the
+				// labels. This method is only triggered on label
+				// creation
+				onCreateLabel : function(domElement, node) {
+					domElement.innerHTML = node.name;
+					$jit.util.addEvent(domElement, 'click', function() {
+						ht.onClick(node.id);
+					});
+				},
+				// Change node styles when labels are placed
+				// or moved.
+				onPlaceLabel : function(domElement, node) {
+					var style = domElement.style;
+					style.display = '';
+					style.cursor = 'pointer';
+					if (node._depth <= 1) {
+						style.fontSize = "12pt";
+						style.color = "#ddd";
+
+					} else if (node._depth == 2) {
+						style.fontSize = "10pt";
+						style.color = "#555";
+
+					} else {
+						style.display = 'none';
 					}
-				}
 
-			});
+					var left = parseInt(style.left);
+					var w = domElement.offsetWidth;
+					style.left = (left - w / 2) + 'px';
+				},
 
-	// init Spacetree
-	// Create a new ST instance
-	var st = new $jit.ST({
-		'injectInto' : htmlComponent,
-		// set duration for the animation
-		duration : 100,
-		// set animation transition type
-		transition : $jit.Trans.Quart.easeInOut,
-		// set distance between node and its children
-		levelDistance : 90,
-		// set max levels to show. Useful when used with
-		// the request method for requesting trees of specific depth
-		levelsToShow : 2,
-		// set node and edge styles
-		// set overridable=true for styling individual
-		// nodes or edges
-		Node : {
-			height : 20,
-			width : 40,
-			// use a custom
-			// node rendering function
-			type : 'nodeline',
-			color : 'orange',
-			lineWidth : 1.5,
-			align : "center",
-			overridable : true
-		},
-
-		Edge : {
-			type : 'bezier',
-			lineWidth : 1.5,
-			color : 'red',
-			overridable : true
-		},
-
-		// Add a request method for requesting on-demand json trees.
-		// This method gets called when a node
-		// is clicked and its subtree has a smaller depth
-		// than the one specified by the levelsToShow parameter.
-		// In that case a subtree is requested and is added to the
-		// dataset.
-		// This method is asynchronous, so you can make an Ajax request
-		// for that
-		// subtree and then handle it to the onComplete callback.
-		// Here we just use a client-side tree generator (the getTree
-		// function).
-		request : function(nodeId, level, onComplete) {
-			var ans = loadDocument(nodeId, level);
-			if (ans != null)
-				$jit.id('inner-details').innerHTML = formatDocumentContent(
-						ans.data.document, true);
-			onComplete.onComplete(nodeId, ans);
-		},
-
-		onBeforeCompute : function(node) {
-			$jit.id('inner-details').innerHTML = formatDocumentContent(
-					node.data.document, true);
-		},
-
-		onAfterCompute : function() {
-		},
-
-		// This method is called on DOM label creation.
-		// Use this method to add event handlers and styles to
-		// your node.
-		onCreateLabel : function(label, node) {
-			label.id = node.id;
-			label.innerHTML = node.name;
-			label.onclick = function() {
-				st.onClick(node.id);
-			};
-			// set label styles
-			var style = label.style;
-			style.width = 40 + 'px';
-			style.height = 17 + 'px';
-			style.cursor = 'pointer';
-			style.color = 'black';
-			// style.backgroundColor = '#1a1a1a';
-			style.fontSize = '10pt';
-			style.textAlign = 'center';
-			style.textDecoration = 'underline';
-			style.paddingTop = '3px';
-		},
-
-		// This method is called right before plotting
-		// a node. It's useful for changing an individual node
-		// style properties before plotting it.
-		// The data properties prefixed with a dollar
-		// sign will override the global node style properties.
-		onBeforePlotNode : function(node) {
-			// add some color to the nodes in the path between the
-			// root node and the selected node.
-			if (node.selected) {
-				node.data.$color = "red";
-			} else {
-				delete node.data.$color;
-			}
-		},
-
-		// This method is called right before plotting
-		// an edge. It's useful for changing an individual edge
-		// style properties before plotting it.
-		// Edge data proprties prefixed with a dollar sign will
-		// override the Edge global style properties.
-		onBeforePlotLine : function(adj) {
-			if (adj.nodeFrom.selected && adj.nodeTo.selected) {
-				adj.data.$color = "green";
-				adj.data.$lineWidth = 3;
-			} else {
-				delete adj.data.$color;
-				delete adj.data.$lineWidth;
-			}
-		}
-	});
-
-	// Add event handlers to switch spacetree orientation.
-	function get(id) {
-		return document.getElementById(id);
-	}
-
-	var top = get('r-top'), left = get('r-left'), bottom = get('r-bottom'), right = get('r-right');
-
-	function changeHandler() {
-		if (this.checked) {
-			top.disabled = bottom.disabled = right.disabled = left.disabled = true;
-			st
-					.switchPosition(
-							this.value,
-							"animate",
-							{
-								onComplete : function() {
-									top.disabled = bottom.disabled = right.disabled = left.disabled = false;
+				onAfterCompute : function() {
+					// Build the right column relations list.
+					// This is done by collecting the information (stored in the
+					// data property)
+					// for all the nodes adjacent to the centered node.
+					var node = ht.graph.getClosestNodeToOrigin("current");
+					var html = "<h2>" + node.name + "</h2>";
+					html += "<table width='100%' border='0' cellspacing='5' cellpadding='0'><tr><th>Field</th><th>Relationship</th><th>Actions</th></tr>";
+					node
+							.eachAdjacency(function(adj) {
+								var child = adj.nodeTo;
+								if (child.data) {
+									var rel = (child.data.band == node.name) ? child.data.relation
+											: node.data.relation;
+									html += "<tr><td>"
+											+ rel
+											+ "</td><td>"
+											+ child.name
+											+ "</td><td><button onClick=\"javascript:graphEditor.removeNode('"
+											+ node.id
+											+ "', '"
+											+ child.id
+											+ "')\"><img border='0' alt='Refresh' src='www/images/remove.png' align='top' /></button></td></tr>";
 								}
 							});
-		}
-	}
+					html += "</table>";
+					$jit.id(detailComponent).innerHTML = html;
+				},
 
-	top.onchange = left.onchange = bottom.onchange = right.onchange = changeHandler;
+				Events : {
+					enable : true,
+					onClick : function(node, eventInfo, e) {
+						if (node == false)
+							return;
+
+						var level = 2;
+						if (loadDepthComponent != null)
+							level = $('#' + loadDepthComponent).val();
+
+						var ans = loadDocument(node.id, level);
+						if (ans != null) {
+							node.name = ans.name;
+						}
+
+						// $jit.id(detailComponent).innerHTML =
+						// formatDocumentContent(
+						// ans.data.document, true);
+
+						// create json graph to add.
+						var trueGraph = ans;
+						// perform sum animation.
+						ht.op.sum(trueGraph, {
+							type : 'fade:con',
+							fps : '30',
+							duration : 300,
+							hideLabels : false,
+							onComplete : function() {
+							}
+						});
+					}
+				}
+			});
 
 	this.render(doc);
 }

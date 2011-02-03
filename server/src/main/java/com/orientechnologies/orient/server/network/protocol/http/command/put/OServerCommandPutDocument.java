@@ -54,7 +54,7 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 
 			doc.fromJSON(iRequest.content);
 
-			if (recordId == null)
+			if (!recordId.isValid())
 				recordId = (ORecordId) doc.getIdentity();
 
 			if (!recordId.isValid())
