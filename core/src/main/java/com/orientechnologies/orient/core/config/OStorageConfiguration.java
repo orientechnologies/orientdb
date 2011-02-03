@@ -162,7 +162,7 @@ public class OStorageConfiguration implements OSerializableStream {
 		} else
 			stream = iStream;
 
-		String[] values = new String(stream).split("\\|");
+		final String[] values = new String(stream).split("\\|");
 		int index = 0;
 		version = Integer.parseInt(read(values[index++]));
 
@@ -262,7 +262,7 @@ public class OStorageConfiguration implements OSerializableStream {
 	}
 
 	public byte[] toStream() throws OSerializationException {
-		StringBuilder buffer = new StringBuilder();
+		final StringBuilder buffer = new StringBuilder();
 
 		write(buffer, CURRENT_VERSION);
 		write(buffer, name);
@@ -419,7 +419,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
 	private void write(final StringBuilder iBuffer, final Object iValue) {
 		if (iBuffer.length() > 0)
-			iBuffer.append("|");
-		iBuffer.append(iValue != null ? iValue.toString() : " ");
+			iBuffer.append('|');
+		iBuffer.append(iValue != null ? iValue.toString() : ' ');
 	}
 }

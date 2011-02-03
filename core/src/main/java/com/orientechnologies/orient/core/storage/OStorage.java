@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.storage;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.cache.OCacheRecord;
@@ -44,9 +45,13 @@ public interface OStorage {
 		PHYSICAL, LOGICAL, MEMORY
 	}
 
-	public void open(int iRequesterId, String iUserName, String iUserPassword);
+	public enum SIZE {
+		TINY, MEDIUM, LARGE, HUGE
+	}
 
-	public void create();
+	public void open(int iRequesterId, String iUserName, String iUserPassword, final Map<String, Object> iProperties);
+
+	public void create(Map<String, Object> iProperties);
 
 	public void delete();
 
@@ -63,7 +68,8 @@ public interface OStorage {
 
 	public ORawBuffer readRecord(ODatabaseRecord iDatabase, int iRequesterId, int iClusterId, long iPosition, String iFetchPlan);
 
-	public int updateRecord(int iRequesterId, int iClusterId, long iPosition, byte[] iContent, final int iVersion, final byte iRecordType);
+	public int updateRecord(int iRequesterId, int iClusterId, long iPosition, byte[] iContent, final int iVersion,
+			final byte iRecordType);
 
 	public int updateRecord(int iRequesterId, ORID iRecordId, byte[] iContent, final int iVersion, final byte iRecordType);
 

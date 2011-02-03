@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.common.profiler.OProfiler;
@@ -65,7 +66,7 @@ public class OStorageMemory extends OStorageEmbedded {
 		configuration = new OStorageConfiguration(this);
 	}
 
-	public void create() {
+	public void create(final Map<String, Object> iOptions) {
 		addUser();
 
 		final boolean locked = lock.acquireExclusiveLock();
@@ -93,7 +94,7 @@ public class OStorageMemory extends OStorageEmbedded {
 		}
 	}
 
-	public void open(final int iRequesterId, final String iUserName, final String iUserPassword) {
+	public void open(final int iRequesterId, final String iUserName, final String iUserPassword, final Map<String, Object> iOptions) {
 		addUser();
 		cache.addUser();
 
@@ -190,13 +191,14 @@ public class OStorageMemory extends OStorageEmbedded {
 		}
 	}
 
-	public ORawBuffer readRecord(final ODatabaseRecord iDatabase, final int iRequesterId, final int iClusterId, final long iClusterPosition,
-			String iFetchPlan) {
+	public ORawBuffer readRecord(final ODatabaseRecord iDatabase, final int iRequesterId, final int iClusterId,
+			final long iClusterPosition, String iFetchPlan) {
 		return readRecord(iRequesterId, getClusterById(iClusterId), iClusterPosition, true);
 	}
 
 	@Override
-	protected ORawBuffer readRecord(final int iRequesterId, final OCluster iClusterSegment, final long iClusterPosition, final boolean iAtomicLock) {
+	protected ORawBuffer readRecord(final int iRequesterId, final OCluster iClusterSegment, final long iClusterPosition,
+			final boolean iAtomicLock) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		final boolean locked = lock.acquireSharedLock();
@@ -216,8 +218,8 @@ public class OStorageMemory extends OStorageEmbedded {
 		}
 	}
 
-	public int updateRecord(final int iRequesterId, final int iClusterId, final long iClusterPosition, final byte[] iContent, final int iVersion,
-			final byte iRecordType) {
+	public int updateRecord(final int iRequesterId, final int iClusterId, final long iClusterPosition, final byte[] iContent,
+			final int iVersion, final byte iRecordType) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		final OCluster cluster = getClusterById(iClusterId);
@@ -441,7 +443,8 @@ public class OStorageMemory extends OStorageEmbedded {
 		return dictionary;
 	}
 
-	public void browse(final int iRequesterId, final int[] iClusterId, final ORecordBrowsingListener iListener, final ORecord<?> iRecord) {
+	public void browse(final int iRequesterId, final int[] iClusterId, final ORecordBrowsingListener iListener,
+			final ORecord<?> iRecord) {
 	}
 
 	public boolean exists() {
@@ -502,7 +505,8 @@ public class OStorageMemory extends OStorageEmbedded {
 
 		case OTransactionEntry.UPDATED:
 			txEntry.getRecord().setVersion(
-					updateRecord(iRequesterId, rid, txEntry.getRecord().toStream(), txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType()));
+					updateRecord(iRequesterId, rid, txEntry.getRecord().toStream(), txEntry.getRecord().getVersion(), txEntry.getRecord()
+							.getRecordType()));
 			break;
 
 		case OTransactionEntry.DELETED:

@@ -36,10 +36,10 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 		listener.onMessage("\nComparing two local databases:\n1) " + iDb1URL + "\n2) " + iDb2URL + "\n");
 
 		storage1 = Orient.instance().loadStorage(iDb1URL);
-		storage1.open(0, null, null);
+		storage1.open(0, null, null,null);
 
 		storage2 = Orient.instance().loadStorage(iDb2URL);
-		storage2.open(0, null, null);
+		storage2.open(0, null, null, null);
 	}
 
 	public boolean compare() {

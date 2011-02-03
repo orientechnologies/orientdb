@@ -97,7 +97,7 @@ public class OStorageRemote extends OStorageAbstract {
 		connectionRetryDelay = clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY_DELAY);
 	}
 
-	public void open(final int iRequesterId, final String iUserName, final String iUserPassword) {
+	public void open(final int iRequesterId, final String iUserName, final String iUserPassword, final Map<String, Object> iOptions) {
 		addUser();
 		cache.addUser();
 
@@ -128,8 +128,9 @@ public class OStorageRemote extends OStorageAbstract {
 		}
 	}
 
-	public void create() {
-		throw new UnsupportedOperationException("Can't create a database in a remote server. Please use the console or the OServerAdmin class.");
+	public void create(final Map<String, Object> iOptions) {
+		throw new UnsupportedOperationException(
+				"Can't create a database in a remote server. Please use the console or the OServerAdmin class.");
 	}
 
 	public boolean exists() {
@@ -196,7 +197,8 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public void delete() {
-		throw new UnsupportedOperationException("Can't delete a database in a remote server. Please use the console or the OServerAdmin class.");
+		throw new UnsupportedOperationException(
+				"Can't delete a database in a remote server. Please use the console or the OServerAdmin class.");
 	}
 
 	public Set<String> getClusterNames() {
@@ -302,8 +304,8 @@ public class OStorageRemote extends OStorageAbstract {
 		} while (true);
 	}
 
-	public int updateRecord(final int iRequesterId, final int iClusterId, final long iPosition, final byte[] iContent, final int iVersion,
-			final byte iRecordType) {
+	public int updateRecord(final int iRequesterId, final int iClusterId, final long iPosition, final byte[] iContent,
+			final int iVersion, final byte iRecordType) {
 		checkConnection();
 
 		do {
@@ -531,7 +533,8 @@ public class OStorageRemote extends OStorageAbstract {
 
 							case 2:
 								// PUT IN THE CLIENT LOCAL CACHE
-								cache.pushRecord(record.getIdentity().toString(), new ORawBuffer(record.toStream(), record.getVersion(), record.getRecordType()));
+								cache.pushRecord(record.getIdentity().toString(),
+										new ORawBuffer(record.toStream(), record.getVersion(), record.getRecordType()));
 							}
 						}
 					} else {
@@ -712,7 +715,8 @@ public class OStorageRemote extends OStorageAbstract {
 					switch (iClusterType) {
 					case PHYSICAL:
 						// FILE PATH + START SIZE
-						network.writeString(iArguments.length > 0 ? (String) iArguments[0] : "").writeInt(iArguments.length > 0 ? (Integer) iArguments[1] : -1);
+						network.writeString(iArguments.length > 0 ? (String) iArguments[0] : "").writeInt(
+								iArguments.length > 0 ? (Integer) iArguments[1] : -1);
 						break;
 
 					case LOGICAL:
@@ -832,7 +836,8 @@ public class OStorageRemote extends OStorageAbstract {
 		}
 	}
 
-	public <REC extends ORecordInternal<?>> REC dictionaryPut(final ODatabaseRecord iDatabase, final String iKey, final ORecordInternal<?> iRecord) {
+	public <REC extends ORecordInternal<?>> REC dictionaryPut(final ODatabaseRecord iDatabase, final String iKey,
+			final ORecordInternal<?> iRecord) {
 		checkConnection();
 
 		do {
@@ -1047,7 +1052,8 @@ public class OStorageRemote extends OStorageAbstract {
 
 				retry = 0;
 
-				OLogManager.instance().info(this, "Connection re-acquired in transparent way: no errors will be thrown at application level");
+				OLogManager.instance().info(this,
+						"Connection re-acquired in transparent way: no errors will be thrown at application level");
 
 				return;
 			} catch (Throwable t) {

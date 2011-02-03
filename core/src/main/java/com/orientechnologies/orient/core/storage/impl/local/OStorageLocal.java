@@ -54,25 +54,24 @@ import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemory;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
 public class OStorageLocal extends OStorageEmbedded {
-	private static final int						DELETE_MAX_RETRIES				= 20;
-	private static final int						DELETE_WAIT_TIME					= 200;
-	public static final String[]				TYPES											= { OClusterLocal.TYPE, OClusterLogical.TYPE };
+	private static final int						DELETE_MAX_RETRIES	= 20;
+	private static final int						DELETE_WAIT_TIME		= 200;
+	public static final String[]				TYPES								= { OClusterLocal.TYPE, OClusterLogical.TYPE };
 
 	// private final OLockManager<String, String> lockManager = new
 	// OLockManager<String, String>();
-	private final Map<String, OCluster>	clusterMap								= new LinkedHashMap<String, OCluster>();
-	private OCluster[]									clusters									= new OCluster[0];
-	private ODataLocal[]								dataSegments							= new ODataLocal[0];
+	private final Map<String, OCluster>	clusterMap					= new LinkedHashMap<String, OCluster>();
+	private OCluster[]									clusters						= new OCluster[0];
+	private ODataLocal[]								dataSegments				= new ODataLocal[0];
 
 	private OStorageLocalTxExecuter			txManager;
 	private String											storagePath;
 	private OStorageVariableParser			variableParser;
-	private int													defaultClusterId					= -1;
+	private int													defaultClusterId		= -1;
 
-	public static final int							DEFAULT_FIXED_CONFIG_SIZE	= 200000;
-	private int													fixedSize									= DEFAULT_FIXED_CONFIG_SIZE;
+	private int													infoTableSize;
 
-	private static String[]							ALL_FILE_EXTENSIONS				= { ".och", ".ocl", ".oda", ".odh", ".otx" };
+	private static String[]							ALL_FILE_EXTENSIONS	= { ".och", ".ocl", ".oda", ".odh", ".otx" };
 
 	public OStorageLocal(final String iName, final String iFilePath, final String iMode) throws IOException {
 		super(iName, iFilePath, iMode);
@@ -92,7 +91,8 @@ public class OStorageLocal extends OStorageEmbedded {
 		txManager = new OStorageLocalTxExecuter(this, configuration.txSegment);
 	}
 
-	public synchronized void open(final int iRequesterId, final String iUserName, final String iUserPassword) {
+	public synchronized void open(final int iRequesterId, final String iUserName, final String iUserPassword,
+			final Map<String, Object> iProperties) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		addUser();
@@ -116,14 +116,16 @@ public class OStorageLocal extends OStorageEmbedded {
 			pos = registerDataSegment(new OStorageDataConfiguration(configuration, OStorage.DATA_DEFAULT_NAME));
 			dataSegments[pos].open();
 
-			pos = createClusterFromConfig(new OStoragePhysicalClusterConfiguration(configuration, OStorage.CLUSTER_INTERNAL_NAME, clusters.length));
-			clusters[pos].open();
-
-			pos = createClusterFromConfig(new OStoragePhysicalClusterConfiguration(configuration, OStorage.CLUSTER_INDEX_NAME, clusters.length));
-			clusters[pos].open();
-
-			defaultClusterId = createClusterFromConfig(new OStoragePhysicalClusterConfiguration(configuration, OStorage.CLUSTER_DEFAULT_NAME,
+			pos = createClusterFromConfig(new OStoragePhysicalClusterConfiguration(configuration, OStorage.CLUSTER_INTERNAL_NAME,
 					clusters.length));
+			clusters[pos].open();
+
+			pos = createClusterFromConfig(new OStoragePhysicalClusterConfiguration(configuration, OStorage.CLUSTER_INDEX_NAME,
+					clusters.length));
+			clusters[pos].open();
+
+			defaultClusterId = createClusterFromConfig(new OStoragePhysicalClusterConfiguration(configuration,
+					OStorage.CLUSTER_DEFAULT_NAME, clusters.length));
 			clusters[defaultClusterId].open();
 
 			configuration.load();
@@ -188,13 +190,35 @@ public class OStorageLocal extends OStorageEmbedded {
 		}
 	}
 
-	public void create() {
+	public void create(final Map<String, Object> iProperties) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		addUser();
 		cache.addUser();
 
 		final boolean locked = lock.acquireExclusiveLock();
+
+		SIZE sizeProfile = SIZE.MEDIUM;
+
+		Object value;
+		if (iProperties != null) {
+			if (iProperties.containsKey("size")) {
+				value = iProperties.get("size");
+				if (value instanceof SIZE)
+					sizeProfile = (SIZE) value;
+				else
+					sizeProfile = SIZE.valueOf(value.toString());
+			}
+		}
+
+		if (sizeProfile == SIZE.HUGE)
+			infoTableSize = 5000000;
+		else if (sizeProfile == SIZE.LARGE)
+			infoTableSize = 1000000;
+		else if (sizeProfile == SIZE.MEDIUM)
+			infoTableSize = 200000;
+		else if (sizeProfile == SIZE.MEDIUM)
+			infoTableSize = 20000;
 
 		try {
 			if (open)
@@ -221,7 +245,7 @@ public class OStorageLocal extends OStorageEmbedded {
 			// ADD THE DEFAULT CLUSTER
 			defaultClusterId = addCluster(OStorage.CLUSTER_DEFAULT_NAME, OStorage.CLUSTER_TYPE.PHYSICAL);
 
-			configuration.create(fixedSize);
+			configuration.create(infoTableSize);
 
 			txManager.create();
 		} catch (OStorageException e) {
@@ -334,8 +358,8 @@ public class OStorageLocal extends OStorageEmbedded {
 
 				try {
 					OLogManager.instance().debug(this,
-							"Can't delete database files because are locked by the OrientDB process yet: waiting a %d ms and retry %d/%d...", DELETE_WAIT_TIME, i,
-							DELETE_MAX_RETRIES);
+							"Can't delete database files because are locked by the OrientDB process yet: waiting a %d ms and retry %d/%d...",
+							DELETE_WAIT_TIME, i, DELETE_MAX_RETRIES);
 
 					// FORCE FINALIZATION TO COLLECT ALL THE PENDING BUFFERS
 					System.gc();
@@ -428,7 +452,8 @@ public class OStorageLocal extends OStorageEmbedded {
 			}
 			case LOGICAL: {
 				// GET PARAMETERS
-				final int physicalClusterId = (iParameters.length < 1 ? getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME) : (Integer) iParameters[0]);
+				final int physicalClusterId = (iParameters.length < 1 ? getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME)
+						: (Integer) iParameters[0]);
 
 				return addLogicalCluster(iClusterName, physicalClusterId);
 			}
@@ -437,13 +462,14 @@ public class OStorageLocal extends OStorageEmbedded {
 				return addMemoryCluster(iClusterName);
 
 			default:
-				OLogManager.instance().exception("Cluster type '" + iClusterType + "' is not supported. Supported types are: " + Arrays.toString(TYPES),
-						null, OStorageException.class);
+				OLogManager.instance().exception(
+						"Cluster type '" + iClusterType + "' is not supported. Supported types are: " + Arrays.toString(TYPES), null,
+						OStorageException.class);
 			}
 
 		} catch (Exception e) {
-			OLogManager.instance()
-					.exception("Error in creation of new cluster '" + iClusterName + "' of type: " + iClusterType, e, OStorageException.class);
+			OLogManager.instance().exception("Error in creation of new cluster '" + iClusterName + "' of type: " + iClusterType, e,
+					OStorageException.class);
 
 		} finally {
 
@@ -465,7 +491,8 @@ public class OStorageLocal extends OStorageEmbedded {
 
 		try {
 			if (iClusterId < 0 || iClusterId >= clusters.length)
-				throw new IllegalArgumentException("Cluster id '" + iClusterId + "' is out of range of configured clusters (0-" + (clusters.length - 1) + ")");
+				throw new IllegalArgumentException("Cluster id '" + iClusterId + "' is out of range of configured clusters (0-"
+						+ (clusters.length - 1) + ")");
 
 			final OCluster cluster = clusters[iClusterId];
 			if (cluster == null)
@@ -589,8 +616,8 @@ public class OStorageLocal extends OStorageEmbedded {
 		return readRecord(iRequesterId, getClusterById(iClusterId), iPosition, true);
 	}
 
-	public int updateRecord(final int iRequesterId, final int iClusterId, final long iPosition, final byte[] iContent, final int iVersion,
-			final byte iRecordType) {
+	public int updateRecord(final int iRequesterId, final int iClusterId, final long iPosition, final byte[] iContent,
+			final int iVersion, final byte iRecordType) {
 		checkOpeness();
 
 		final int recordVersion = updateRecord(iRequesterId, getClusterById(iClusterId), iPosition, iContent, iVersion, iRecordType);
@@ -943,8 +970,8 @@ public class OStorageLocal extends OStorageEmbedded {
 		}
 	}
 
-	protected int updateRecord(final int iRequesterId, final OCluster iClusterSegment, final long iPosition, final byte[] iContent, final int iVersion,
-			final byte iRecordType) {
+	protected int updateRecord(final int iRequesterId, final OCluster iClusterSegment, final long iPosition, final byte[] iContent,
+			final int iVersion, final byte iRecordType) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		final String recId = ORecordId.generateString(iClusterSegment.getId(), iPosition);
@@ -962,16 +989,22 @@ public class OStorageLocal extends OStorageEmbedded {
 
 			// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
 			if (iVersion > -1 && iVersion < ppos.version)
-				throw new OConcurrentModificationException("Can't update record #" + recId + " because it has been modified by another user (v"
-						+ ppos.version + " != v" + iVersion
-						+ ") in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
+				throw new OConcurrentModificationException(
+						"Can't update record #"
+								+ recId
+								+ " because it has been modified by another user (v"
+								+ ppos.version
+								+ " != v"
+								+ iVersion
+								+ ") in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
 
 			if (ppos.type != iRecordType)
 				iClusterSegment.updateRecordType(iPosition, iRecordType);
 
 			iClusterSegment.updateVersion(iPosition, ++ppos.version);
 
-			final long newDataSegmentOffset = getDataSegment(ppos.dataSegment).setRecord(ppos.dataPosition, iClusterSegment.getId(), iPosition, iContent);
+			final long newDataSegmentOffset = getDataSegment(ppos.dataSegment).setRecord(ppos.dataPosition, iClusterSegment.getId(),
+					iPosition, iContent);
 
 			if (newDataSegmentOffset != ppos.dataPosition)
 				// UPDATE DATA SEGMENT OFFSET WITH THE NEW PHYSICAL POSITION
@@ -1061,7 +1094,8 @@ public class OStorageLocal extends OStorageEmbedded {
 	 * @throws IOException
 	 */
 	private int addPhysicalCluster(final String iClusterName, String iClusterFileName, final int iStartSize) throws IOException {
-		final OStoragePhysicalClusterConfiguration config = new OStoragePhysicalClusterConfiguration(configuration, iClusterName, clusters.length);
+		final OStoragePhysicalClusterConfiguration config = new OStoragePhysicalClusterConfiguration(configuration, iClusterName,
+				clusters.length);
 		configuration.clusters.add(config);
 
 		final OClusterLocal cluster = new OClusterLocal(this, config);
@@ -1073,7 +1107,8 @@ public class OStorageLocal extends OStorageEmbedded {
 	}
 
 	private int addLogicalCluster(final String iClusterName, final int iPhysicalCluster) throws IOException {
-		final OStorageLogicalClusterConfiguration config = new OStorageLogicalClusterConfiguration(iClusterName, clusters.length, iPhysicalCluster, null);
+		final OStorageLogicalClusterConfiguration config = new OStorageLogicalClusterConfiguration(iClusterName, clusters.length,
+				iPhysicalCluster, null);
 
 		configuration.clusters.add(config);
 
@@ -1095,15 +1130,5 @@ public class OStorageLocal extends OStorageEmbedded {
 		configuration.update();
 
 		return id;
-	}
-
-	public int getFixedSize() {
-		return fixedSize;
-	}
-
-	public void setFixedSize(int fixedSize) {
-		if (!isClosed() || exists())
-			throw new IllegalStateException("Can't change configuration size to an existent storage");
-		this.fixedSize = fixedSize;
 	}
 }

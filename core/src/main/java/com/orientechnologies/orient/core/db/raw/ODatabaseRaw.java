@@ -85,7 +85,7 @@ public class ODatabaseRaw implements ODatabase {
 
 			if (storage == null)
 				storage = Orient.instance().loadStorage(url);
-			storage.open(getId(), iUserName, iUserPassword);
+			storage.open(getId(), iUserName, iUserPassword, properties);
 
 			// WAKE UP DB LIFECYCLE LISTENER
 			for (ODatabaseLifecycleListener it : Orient.instance().getDbLifecycleListeners())
@@ -114,7 +114,7 @@ public class ODatabaseRaw implements ODatabase {
 
 			if (storage == null)
 				storage = Orient.instance().loadStorage(url);
-			storage.create();
+			storage.create(properties);
 
 			// WAKE UP DB LIFECYCLE LISTENER
 			for (ODatabaseLifecycleListener it : Orient.instance().getDbLifecycleListeners())
@@ -355,7 +355,10 @@ public class ODatabaseRaw implements ODatabase {
 	}
 
 	public Object setProperty(final String iName, final Object iValue) {
-		return properties.put(iName, iValue);
+		if (iValue == null)
+			return properties.remove(iName);
+		else
+			return properties.put(iName, iValue);
 	}
 
 	public Object getProperty(final String iName) {
