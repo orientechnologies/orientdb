@@ -45,8 +45,7 @@ public class OSecurity {
 	}
 
 	public OUser createUser(final String iUserName, final String iUserPassword, final String[] iRoles) {
-		final OUser user = new OUser(database, iUserName);
-		user.setPassword(iUserPassword);
+		final OUser user = new OUser(database, iUserName, iUserPassword);
 
 		if (iRoles != null)
 			for (String r : iRoles) {

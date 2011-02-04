@@ -56,6 +56,13 @@ public class OUser extends ODocumentWrapper {
 		setAccountStatus(STATUSES.ACTIVE);
 	}
 
+	public OUser(ODatabaseRecord iDatabase, String iUserName, final String iUserPassword) {
+		super(iDatabase, "OUser");
+		document.field("name", iUserName);
+		setPassword(encryptPassword(iUserPassword));
+		setAccountStatus(STATUSES.ACTIVE);
+	}
+
 	/**
 	 * Create the user by reading the source document.
 	 */
@@ -148,10 +155,6 @@ public class OUser extends ODocumentWrapper {
 	}
 
 	public OUser setPassword(final String iPassword) {
-		return setPasswordEncoded(iPassword);
-	}
-
-	public OUser setPasswordEncoded(final String iPassword) {
 		document.field("password", iPassword);
 		return this;
 	}
@@ -164,7 +167,7 @@ public class OUser extends ODocumentWrapper {
 		return STATUSES.valueOf((String) document.field("status"));
 	}
 
-	public void setAccountStatus(final STATUSES accountStatus) {
+	public void setAccountStatus(STATUSES accountStatus) {
 		document.field("status", accountStatus);
 	}
 
