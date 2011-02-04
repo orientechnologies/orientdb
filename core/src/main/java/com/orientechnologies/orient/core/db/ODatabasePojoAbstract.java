@@ -294,6 +294,8 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 					record = underlying.load(rid);
 			} else if (iCreateIfNotAvailable) {
 				record = underlying.newInstance(iPojo.getClass().getSimpleName());
+			} else {
+				return null;
 			}
 
 			registerPojo(iPojo, record);
