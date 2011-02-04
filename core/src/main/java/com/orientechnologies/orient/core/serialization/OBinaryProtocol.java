@@ -115,21 +115,21 @@ public class OBinaryProtocol {
 		return new String(output, 0/* offset */, j/* count */);
 	}
 
-	public static byte[] char2bytes(char value) {
+	public static byte[] char2bytes(final char value) {
 		return OBinaryProtocol.char2bytes(value, new byte[2], 0);
 	}
 
-	public static byte[] char2bytes(char value, byte[] b, int iBeginOffset) {
+	public static byte[] char2bytes(final char value, final byte[] b, final int iBeginOffset) {
 		b[iBeginOffset] = (byte) ((value >>> 8) & 0xFF);
 		b[iBeginOffset + 1] = (byte) ((value >>> 0) & 0xFF);
 		return b;
 	}
 
-	public static byte[] long2bytes(long value) {
+	public static byte[] long2bytes(final long value) {
 		return OBinaryProtocol.long2bytes(value, new byte[8], 0);
 	}
 
-	public static byte[] long2bytes(long value, byte[] b, int iBeginOffset) {
+	public static byte[] long2bytes(final long value, final byte[] b, final int iBeginOffset) {
 		b[iBeginOffset] = (byte) ((value >>> 56) & 0xFF);
 		b[iBeginOffset + 1] = (byte) ((value >>> 48) & 0xFF);
 		b[iBeginOffset + 2] = (byte) ((value >>> 40) & 0xFF);
@@ -145,7 +145,7 @@ public class OBinaryProtocol {
 		return OBinaryProtocol.int2bytes(value, new byte[4], 0);
 	}
 
-	public static byte[] int2bytes(int value, byte[] b, int iBeginOffset) {
+	public static byte[] int2bytes(final int value, final byte[] b, final int iBeginOffset) {
 		b[iBeginOffset] = (byte) ((value >>> 24) & 0xFF);
 		b[iBeginOffset + 1] = (byte) ((value >>> 16) & 0xFF);
 		b[iBeginOffset + 2] = (byte) ((value >>> 8) & 0xFF);
@@ -153,21 +153,21 @@ public class OBinaryProtocol {
 		return b;
 	}
 
-	public static byte[] short2bytes(short value) {
+	public static byte[] short2bytes(final short value) {
 		return OBinaryProtocol.short2bytes(value, new byte[2], 0);
 	}
 
-	public static byte[] short2bytes(short value, byte[] b, int iBeginOffset) {
+	public static byte[] short2bytes(final short value, final byte[] b, final int iBeginOffset) {
 		b[iBeginOffset] = (byte) ((value >>> 8) & 0xFF);
 		b[iBeginOffset + 1] = (byte) ((value >>> 0) & 0xFF);
 		return b;
 	}
 
-	public static long bytes2long(byte[] b) {
+	public static long bytes2long(final byte[] b) {
 		return OBinaryProtocol.bytes2long(b, 0);
 	}
 
-	public static long bytes2long(byte[] b, int offset) {
+	public static long bytes2long(final byte[] b, final int offset) {
 		return ((0xff & b[offset + 7]) | (0xff & b[offset + 6]) << 8 | (0xff & b[offset + 5]) << 16
 				| (long) (0xff & b[offset + 4]) << 24 | (long) (0xff & b[offset + 3]) << 32 | (long) (0xff & b[offset + 2]) << 40
 				| (long) (0xff & b[offset + 1]) << 48 | (long) (0xff & b[offset]) << 56);
@@ -180,7 +180,7 @@ public class OBinaryProtocol {
 	 *          The byte array
 	 * @return The integer
 	 */
-	public static int bytes2int(byte[] b) {
+	public static int bytes2int(final byte[] b) {
 		return OBinaryProtocol.bytes2int(b, 0);
 	}
 
@@ -193,23 +193,23 @@ public class OBinaryProtocol {
 	 *          The array offset
 	 * @return The integer
 	 */
-	public static int bytes2int(byte[] b, int offset) {
+	public static int bytes2int(final byte[] b, final int offset) {
 		return ((0xff & b[offset + 3]) | (0xff & b[offset + 2]) << 8 | (0xff & b[offset + 1]) << 16 | (b[offset]) << 24);
 	}
 
-	public static short bytes2short(byte[] b) {
+	public static short bytes2short(final byte[] b) {
 		return OBinaryProtocol.bytes2short(b, 0);
 	}
 
-	public static short bytes2short(byte[] b, int offset) {
+	public static short bytes2short(final byte[] b, final int offset) {
 		return (short) ((b[offset] << 8) | (b[offset + 1] & 0xff));
 	}
 
-	public static char bytes2char(byte[] b) {
+	public static char bytes2char(final byte[] b) {
 		return OBinaryProtocol.bytes2char(b, 0);
 	}
 
-	public static char bytes2char(byte[] b, int offset) {
+	public static char bytes2char(final byte[] b, final int offset) {
 		return (char) ((b[offset] << 8) + (b[offset + 1] << 0));
 	}
 }

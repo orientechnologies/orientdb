@@ -171,7 +171,7 @@ public class ORecordId implements ORID, Comparable<ORecordId>, Comparator<ORecor
 	public byte[] toStream() {
 		byte[] buffer = new byte[PERSISTENT_SIZE];
 		OBinaryProtocol.short2bytes((short) clusterId, buffer, 0);
-		OBinaryProtocol.long2bytes((short) clusterPosition, buffer, OConstants.SIZE_SHORT);
+		OBinaryProtocol.long2bytes(clusterPosition, buffer, OConstants.SIZE_SHORT);
 		return buffer;
 	}
 

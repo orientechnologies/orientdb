@@ -498,7 +498,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			rootRid.fromStream(stream.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
 
 			size = stream.getAsInteger();
-			lastPageSize = stream.getAsShort();
+			lastPageSize = stream.getAsInteger();
 
 			serializerFromStream(stream);
 
@@ -546,7 +546,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 				stream.addAsFixed(ORecordId.EMPTY_RECORD_ID_STREAM);
 
 			stream.add(size);
-			stream.add((short) lastPageSize);
+			stream.add(lastPageSize);
 
 			stream.add(keySerializer.getName());
 			stream.add(valueSerializer.getName());

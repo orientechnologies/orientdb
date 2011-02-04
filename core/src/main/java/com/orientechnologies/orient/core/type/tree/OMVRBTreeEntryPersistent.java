@@ -43,32 +43,32 @@ import com.orientechnologies.orient.core.serialization.serializer.record.OSerial
  * </tr>
  * <tr>
  * <td>00</td>
- * <td>02</td>
+ * <td>04</td>
  * <td>PAGE SIZE</td>
  * </tr>
  * <tr>
- * <td>02</td>
- * <td>12</td>
+ * <td>04</td>
+ * <td>14</td>
  * <td>PARENT RID</td>
  * </tr>
  * <tr>
- * <td>12</td>
- * <td>22</td>
+ * <td>14</td>
+ * <td>24</td>
  * <td>LEFT RID</td>
  * </tr>
  * <tr>
- * <td>22</td>
- * <td>32</td>
+ * <td>24</td>
+ * <td>34</td>
  * <td>RIGHT RID</td>
  * </tr>
  * <tr>
- * <td>32</td>
- * <td>33</td>
+ * <td>34</td>
+ * <td>35</td>
  * <td>COLOR</td>
  * </tr>
  * <tr>
- * <td>33</td>
  * <td>35</td>
+ * <td>37</td>
  * <td>SIZE</td>
  * </tr>
  * </table>
@@ -659,7 +659,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		final OMemoryInputStream buffer = new OMemoryInputStream(iStream);
 
 		try {
-			pageSize = buffer.getAsShort();
+			pageSize = buffer.getAsInteger();
 
 			parentRid = new ORecordId().fromStream(buffer.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
 			leftRid = new ORecordId().fromStream(buffer.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
@@ -667,7 +667,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 
 			color = buffer.getAsBoolean();
 			init();
-			size = buffer.getAsShort();
+			size = buffer.getAsInteger();
 
 			if (size > pageSize)
 				throw new OConfigurationException("Loaded index with page size setted to " + pageSize
@@ -743,14 +743,14 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		OMemoryOutputStream stream = new OMemoryOutputStream();
 
 		try {
-			stream.add((short) pageSize);
+			stream.add(pageSize);
 
 			stream.addAsFixed(parentRid.toStream());
 			stream.addAsFixed(leftRid.toStream());
 			stream.addAsFixed(rightRid.toStream());
 
 			stream.add(color);
-			stream.add((short) size);
+			stream.add(size);
 
 			serializeNewKeys();
 			serializeNewValues();
