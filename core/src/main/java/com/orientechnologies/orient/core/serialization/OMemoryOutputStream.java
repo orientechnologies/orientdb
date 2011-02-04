@@ -177,6 +177,12 @@ public class OMemoryOutputStream extends OutputStream {
 		position += OConstants.SIZE_INT;
 	}
 
+	public void add(final long iContent) throws IOException {
+		assureSpaceFor(OConstants.SIZE_LONG);
+		OBinaryProtocol.long2bytes(iContent, buffer, position);
+		position += OConstants.SIZE_LONG;
+	}
+
 	public void add(final short iContent) throws IOException {
 		assureSpaceFor(OConstants.SIZE_SHORT);
 		OBinaryProtocol.short2bytes(iContent, buffer, position);
