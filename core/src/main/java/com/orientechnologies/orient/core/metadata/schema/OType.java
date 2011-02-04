@@ -26,6 +26,7 @@ import java.util.Set;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.serialization.OBase64Utils;
 
 /**
  * Generic representation of a type.<br/>
@@ -291,14 +292,13 @@ public enum OType {
 			// COMPATIBLE TYPES: DON'T CONVERT IT
 			return iValue;
 
-		if (iTargetClass.isEnum()) {
+		if (iTargetClass == byte[].class) {
+			return OBase64Utils.decode(iValue.toString());
+		} else if (iTargetClass.isEnum()) {
 			if (iValue instanceof Number)
 				return ((Class<Enum>) iTargetClass).getEnumConstants()[((Number) iValue).intValue()];
-
 			return Enum.valueOf((Class<Enum>) iTargetClass, iValue.toString());
-		}
-
-		if (iTargetClass.equals(Byte.TYPE) || iTargetClass.equals(Byte.class)) {
+		} else if (iTargetClass.equals(Byte.TYPE) || iTargetClass.equals(Byte.class)) {
 			if (iValue instanceof Byte)
 				return iValue;
 			return ((Number) iValue).byteValue();
