@@ -20,33 +20,36 @@ import java.util.Set;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 
 /**
  * Generic record representation with a schema definition. The object can be reused across call to the database.
  */
 public interface ORecordSchemaAware<T> extends ORecordInternal<T> {
 
-  public <RET> RET field(String iPropertyName);
+	public <RET> RET field(String iPropertyName);
 
-  public ORecordSchemaAware<T> field(String iPropertyName, Object iValue);
+	public ORecordSchemaAware<T> field(String iPropertyName, Object iValue);
 
-  public Object removeField(String iPropertyName);
+	public <RET> RET field(String iPropertyName, OType iType);
 
-  public Set<String> fieldNames();
+	public Object removeField(String iPropertyName);
 
-  public Object[] fieldValues();
+	public Set<String> fieldNames();
 
-  public int size();
+	public Object[] fieldValues();
 
-  public String getClassName();
+	public int size();
 
-  public void setClassName(String iClassName);
+	public String getClassName();
 
-  public void setClassNameIfExists(String iClassName);
+	public void setClassName(String iClassName);
 
-  public OClass getSchemaClass();
+	public void setClassNameIfExists(String iClassName);
 
-  public void validate() throws OValidationException;
+	public OClass getSchemaClass();
 
-  public ORecordSchemaAware<T> fill(ODatabaseRecord iDatabase, int iClassId, int iClusterId, long iPosition, int iVersion);
+	public void validate() throws OValidationException;
+
+	public ORecordSchemaAware<T> fill(ODatabaseRecord iDatabase, int iClassId, int iClusterId, long iPosition, int iVersion);
 }
