@@ -57,7 +57,7 @@ public class OSQLFilterCondition {
 		Object l = evaluate(iRecord, left);
 		Object r = evaluate(iRecord, right);
 
-		Object[] convertedValues = checkForConversion(iRecord, l, r);
+		final Object[] convertedValues = checkForConversion(iRecord, l, r);
 		if (convertedValues != null) {
 			l = convertedValues[0];
 			r = convertedValues[1];
@@ -74,12 +74,12 @@ public class OSQLFilterCondition {
 		Object[] result = null;
 
 		// INTEGERS
-		if (r instanceof Integer && !(l instanceof Integer)) {
+		if (r instanceof Integer && !(l instanceof Number)) {
 			if (l instanceof String && ((String) l).indexOf(".") > -1)
 				result = new Object[] { new Float((String) l).intValue(), r };
 			else if (!(l instanceof OQueryRuntimeValueMulti))
 				result = new Object[] { getInteger(l), r };
-		} else if (l instanceof Integer && !(r instanceof Integer)) {
+		} else if (l instanceof Integer && !(r instanceof Number)) {
 			if (r instanceof String && ((String) r).indexOf(".") > -1)
 				result = new Object[] { l, new Float((String) r).intValue() };
 			else if (!(r instanceof OQueryRuntimeValueMulti))
