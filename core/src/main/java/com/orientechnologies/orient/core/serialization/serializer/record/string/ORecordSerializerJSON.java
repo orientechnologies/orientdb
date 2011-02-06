@@ -289,7 +289,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 						else
 							iType = OType.INTEGER;
 				}
-			} else if (iFieldValueAsString.length() >= 4 && iFieldValueAsString.charAt(0) == '#')
+			} else if (iFieldValueAsString.length() >= 4 && iFieldValueAsString.charAt(0) == '#' && iFieldValueAsString.contains(":"))
 				iType = OType.LINK;
 			else if (iFieldValueAsString.startsWith("{") && iFieldValueAsString.endsWith("}"))
 				iType = OType.EMBEDDED;
