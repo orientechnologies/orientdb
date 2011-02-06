@@ -29,11 +29,15 @@ import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
+import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfiguration;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 @Test(groups = "db")
 public class DbCreationTest {
@@ -49,7 +53,7 @@ public class DbCreationTest {
 	public void testDbCreation() throws IOException {
 		if (url.startsWith(OEngineMemory.NAME))
 			OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(true);
-		
+
 		if (url.startsWith(OEngineRemote.NAME)) {
 
 			// LAOD SERVER CONFIG FILE TO EXTRACT THE ROOT'S PASSWORD
@@ -76,7 +80,19 @@ public class DbCreationTest {
 			new OServerAdmin(url).connect("root", password).createDatabase("local").close();
 		} else {
 			database = new ODatabaseObjectTx(url);
+			//database.setProperty("size", OStorage.SIZE.MEDIUM);
 			database.create();
+//			
+//			database.getStorage().getConfiguration().fileTemplate.fileMaxSize = "2Gb";
+//			for (OStorageClusterConfiguration c : database.getStorage().getConfiguration().clusters) {
+//				if (c instanceof OStoragePhysicalClusterConfiguration)
+//					((OStoragePhysicalClusterConfiguration) c).fileMaxSize = "2Gb";
+//			}
+//			for (OStorageDataConfiguration d : database.getStorage().getConfiguration().dataSegments) {
+//				d.fileMaxSize = "2Gb";
+//			}
+//			database.getStorage().getConfiguration().update();
+			
 			database.close();
 		}
 	}
