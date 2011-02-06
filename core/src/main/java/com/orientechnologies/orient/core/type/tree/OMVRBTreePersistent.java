@@ -17,7 +17,6 @@ package com.orientechnologies.orient.core.type.tree;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -27,7 +26,6 @@ import java.util.Set;
 import com.orientechnologies.common.collection.OMVRBTree;
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.common.collection.OMVRBTreeEventListener;
-import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.OMemoryWatchDog.Listener;
@@ -38,7 +36,6 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.record.impl.ORecordBytesLazy;
@@ -58,12 +55,10 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 @SuppressWarnings("serial")
 public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implements OMVRBTreeEventListener<K, V>,
 		OSerializableStream {
-	protected OSharedResourceExternal												lock							= new OSharedResourceExternal();
-
 	protected OStreamSerializer															keySerializer;
 	protected OStreamSerializer															valueSerializer;
 
-	protected final Set<OMVRBTreeEntryPersistent<K, V>>			recordsToCommit		= new HashSet<OMVRBTreeEntryPersistent<K, V>>();
+	protected final Set<OMVRBTreeEntryPersistent<K, V>>			recordsToCommit						= new HashSet<OMVRBTreeEntryPersistent<K, V>>();
 	protected final OMemoryOutputStream											entryRecordBuffer;
 
 	protected final String																	clusterName;
@@ -72,15 +67,16 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 	// STORES IN MEMORY DIRECT REFERENCES TO PORTION OF THE TREE
 	protected int																						optimizeThreshold;
-	private int																							insertionCounter	= 0;
+	private int																							insertionCounter					= 0;
 	protected int																						entryPointsSize;
 	protected float																					optimizeEntryPointsFactor;
-	protected volatile List<OMVRBTreeEntryPersistent<K, V>>	entryPoints				= new ArrayList<OMVRBTreeEntryPersistent<K, V>>(
-																																								entryPointsSize);
-	protected List<OMVRBTreeEntryPersistent<K, V>>					newEntryPoints		= new ArrayList<OMVRBTreeEntryPersistent<K, V>>(
-																																								entryPointsSize);
+	protected volatile List<OMVRBTreeEntryPersistent<K, V>>	entryPoints								= new ArrayList<OMVRBTreeEntryPersistent<K, V>>(
+																																												entryPointsSize);
+	protected List<OMVRBTreeEntryPersistent<K, V>>					newEntryPoints						= new ArrayList<OMVRBTreeEntryPersistent<K, V>>(
+																																												entryPointsSize);
 
-	protected Map<ORID, OMVRBTreeEntryPersistent<K, V>>			cache							= new HashMap<ORID, OMVRBTreeEntryPersistent<K, V>>();
+	protected Map<ORID, OMVRBTreeEntryPersistent<K, V>>			cache											= new HashMap<ORID, OMVRBTreeEntryPersistent<K, V>>();
+	public final static byte																CURRENT_PROTOCOL_VERSION	= 0;
 
 	public OMVRBTreePersistent(final String iClusterName, final ORID iRID) {
 		this(iClusterName, null, null);
@@ -124,7 +120,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	@Override
 	public void clear() {
 		final long timer = OProfiler.getInstance().startChrono();
-		lock.acquireExclusiveLock();
+		final boolean locked = lock.acquireExclusiveLock();
 
 		try {
 			if (root != null) {
@@ -141,7 +137,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			OLogManager.instance().error(this, "Error on deleting the tree: " + record.getIdentity(), e, OStorageException.class);
 		} finally {
 
-			lock.releaseExclusiveLock();
+			lock.releaseExclusiveLock(locked);
 			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.clear", timer);
 		}
 	}
@@ -151,7 +147,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	 */
 	public void unload() {
 		final long timer = OProfiler.getInstance().startChrono();
-		lock.acquireExclusiveLock();
+		final boolean locked = lock.acquireExclusiveLock();
 
 		try {
 			// DISCONNECT ALL THE NODES
@@ -169,7 +165,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			OLogManager.instance().error(this, "Error on unload the tree: " + record.getIdentity(), e, OStorageException.class);
 		} finally {
 
-			lock.releaseExclusiveLock();
+			lock.releaseExclusiveLock(locked);
 			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.unload", timer);
 		}
 	}
@@ -181,7 +177,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	public void optimize() {
 		final long timer = OProfiler.getInstance().startChrono();
 
-		lock.acquireExclusiveLock();
+		final boolean locked = lock.acquireExclusiveLock();
 
 		try {
 			if (root == null)
@@ -357,7 +353,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 					checkTreeStructure(root);
 			}
 
-			lock.releaseExclusiveLock();
+			lock.releaseExclusiveLock(locked);
 			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.optimize", timer);
 
 			if (OLogManager.instance().isDebugEnabled())
@@ -369,7 +365,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	public V put(final K key, final V value) {
 		final long timer = OProfiler.getInstance().startChrono();
 
-		lock.acquireExclusiveLock();
+		final boolean locked = lock.acquireExclusiveLock();
 
 		try {
 			final V v = internalPut(key, value);
@@ -377,7 +373,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			return v;
 		} finally {
 
-			lock.releaseExclusiveLock();
+			lock.releaseExclusiveLock(locked);
 			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.put", timer);
 		}
 	}
@@ -386,7 +382,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	public void putAll(final Map<? extends K, ? extends V> map) {
 		final long timer = OProfiler.getInstance().startChrono();
 
-		lock.acquireExclusiveLock();
+		final boolean locked = lock.acquireExclusiveLock();
 
 		try {
 			for (Entry<? extends K, ? extends V> entry : map.entrySet()) {
@@ -396,7 +392,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 		} finally {
 
-			lock.releaseExclusiveLock();
+			lock.releaseExclusiveLock(locked);
 			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.putAll", timer);
 		}
 	}
@@ -404,7 +400,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	@Override
 	public V remove(final Object key) {
 		final long timer = OProfiler.getInstance().startChrono();
-		lock.acquireExclusiveLock();
+		final boolean locked = lock.acquireExclusiveLock();
 
 		try {
 			V v = super.remove(key);
@@ -412,14 +408,14 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			return v;
 		} finally {
 
-			lock.releaseExclusiveLock();
+			lock.releaseExclusiveLock(locked);
 			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.remove", timer);
 		}
 	}
 
 	public void commitChanges(final ODatabaseRecord iDatabase) {
 		final long timer = OProfiler.getInstance().startChrono();
-		lock.acquireExclusiveLock();
+		final boolean locked = lock.acquireExclusiveLock();
 
 		try {
 			if (recordsToCommit.size() > 0) {
@@ -482,7 +478,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 		} finally {
 
-			lock.releaseExclusiveLock();
+			lock.releaseExclusiveLock(locked);
 			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.commitChanges", timer);
 		}
 	}
@@ -494,6 +490,11 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 		try {
 			final OMemoryInputStream stream = new OMemoryInputStream(iStream);
+
+			byte protocolVersion = stream.getAsByte();
+			if (protocolVersion != CURRENT_PROTOCOL_VERSION)
+				throw new OSerializationException(
+						"The index has been created with a previous version of OrientDB. Soft transitions between version is a featured supported since 0.9.25. In order to use it with this version of OrientDB you need to export and import your database");
 
 			rootRid.fromStream(stream.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
 
@@ -534,6 +535,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		OMemoryOutputStream stream = entryRecordBuffer;
 
 		try {
+			stream.add(CURRENT_PROTOCOL_VERSION);
+
 			if (root != null) {
 				OMVRBTreeEntryPersistent<K, V> pRoot = (OMVRBTreeEntryPersistent<K, V>) root;
 				if (pRoot.record.getIdentity().isNew()) {
@@ -582,86 +585,11 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	}
 
 	protected void adjustPageSize() {
-		// int newPageSize = (int) (size * 0.2 / 100);
-		// if (newPageSize > lastPageSize)
-		// lastPageSize = newPageSize;
-	}
-
-	@Override
-	public V get(final Object iKey) {
-		lock.acquireSharedLock();
-
-		try {
-			return super.get(iKey);
-
-		} finally {
-			lock.releaseSharedLock();
-		}
 	}
 
 	public V get(final Object iKey, final String iFetchPlan) {
 		fetchPlan = iFetchPlan;
 		return get(iKey);
-	}
-
-	@Override
-	public boolean containsKey(final Object key) {
-		lock.acquireSharedLock();
-
-		try {
-			return super.containsKey(key);
-
-		} finally {
-			lock.releaseSharedLock();
-		}
-	}
-
-	@Override
-	public boolean containsValue(final Object value) {
-		lock.acquireSharedLock();
-
-		try {
-			return super.containsValue(value);
-
-		} finally {
-			lock.releaseSharedLock();
-		}
-	}
-
-	@Override
-	public Set<java.util.Map.Entry<K, V>> entrySet() {
-		lock.acquireSharedLock();
-
-		try {
-			return super.entrySet();
-
-		} finally {
-			lock.releaseSharedLock();
-		}
-	}
-
-	@Override
-	public Set<K> keySet() {
-		lock.acquireSharedLock();
-
-		try {
-			return super.keySet();
-
-		} finally {
-			lock.releaseSharedLock();
-		}
-	}
-
-	@Override
-	public Collection<V> values() {
-		lock.acquireSharedLock();
-
-		try {
-			return super.values();
-
-		} finally {
-			lock.releaseSharedLock();
-		}
 	}
 
 	public String getClusterName() {
@@ -697,15 +625,23 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 		final StringBuilder buffer = new StringBuilder();
 		buffer.append("size=");
-		buffer.append(size);
 
-		if (size > 0) {
-			final int currPageIndex = pageIndex;
-			buffer.append(" ");
-			buffer.append(getFirstEntry().getFirstKey());
-			buffer.append("-");
-			buffer.append(getLastEntry().getLastKey());
-			pageIndex = currPageIndex;
+		final boolean locked = lock.acquireSharedLock();
+		try {
+
+			buffer.append(size);
+
+			if (size > 0) {
+				final int currPageIndex = pageIndex;
+				buffer.append(" ");
+				buffer.append(getFirstEntry().getFirstKey());
+				buffer.append("-");
+				buffer.append(getLastEntry().getLastKey());
+				pageIndex = currPageIndex;
+			}
+
+		} finally {
+			lock.releaseSharedLock(locked);
 		}
 
 		return buffer.toString();

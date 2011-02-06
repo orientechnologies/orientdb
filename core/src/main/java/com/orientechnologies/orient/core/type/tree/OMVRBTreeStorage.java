@@ -78,7 +78,7 @@ public class OMVRBTreeStorage<K, V> extends OMVRBTreePersistent<K, V> {
 
 	@Override
 	public OMVRBTreePersistent<K, V> load() throws IOException {
-		lock.acquireExclusiveLock();
+		final boolean locked = lock.acquireExclusiveLock();
 
 		try {
 			ORawBuffer raw = storage.readRecord(null, -1, clusterId, record.getIdentity().getClusterPosition(), null);
@@ -92,13 +92,13 @@ public class OMVRBTreeStorage<K, V> extends OMVRBTreePersistent<K, V> {
 			return this;
 
 		} finally {
-			lock.releaseExclusiveLock();
+			lock.releaseExclusiveLock(locked);
 		}
 	}
 
 	@Override
 	public OMVRBTreePersistent<K, V> save() throws IOException {
-		lock.acquireExclusiveLock();
+		final boolean locked = lock.acquireExclusiveLock();
 
 		try {
 			record.fromStream(toStream());
@@ -117,7 +117,7 @@ public class OMVRBTreeStorage<K, V> extends OMVRBTreePersistent<K, V> {
 			return this;
 
 		} finally {
-			lock.releaseExclusiveLock();
+			lock.releaseExclusiveLock(locked);
 		}
 	}
 
