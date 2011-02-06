@@ -65,6 +65,9 @@ public class OCacheRecord extends OSharedResourceAdaptive {
 
 					if (cache.size() < threshold)
 						return;
+					
+					// CLEAR THE CACHE
+					cache.clear();
 
 					OLogManager.instance().debug(this, "Low memory: auto reduce the storage cache size from %d to %d", maxSize, threshold);
 					maxSize = threshold;
