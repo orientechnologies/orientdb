@@ -186,15 +186,17 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 		// GET THE ASSOCIATED DOCUMENT
 		final ODocument record = getRecordByUserObject(iPojo, true);
 
-		// REGISTER BEFORE TO SERIALIZE TO AVOID PROBLEMS WITH CIRCULAR DEPENDENCY
-		registerPojo(iPojo, record);
+		if (!saveOnlyDirty || record.isDirty()) {
+			// REGISTER BEFORE TO SERIALIZE TO AVOID PROBLEMS WITH CIRCULAR DEPENDENCY
+			registerPojo(iPojo, record);
 
-		pojo2Stream(iPojo, record);
+			pojo2Stream(iPojo, record);
 
-		underlying.save(record, iClusterName);
+			underlying.save(record, iClusterName);
 
-		// RE-REGISTER FOR NEW RECORDS SINCE THE ID HAS CHANGED
-		registerPojo(iPojo, record);
+			// RE-REGISTER FOR NEW RECORDS SINCE THE ID HAS CHANGED
+			registerPojo(iPojo, record);
+		}
 
 		return this;
 	}
