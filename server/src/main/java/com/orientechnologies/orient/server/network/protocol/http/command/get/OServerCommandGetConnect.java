@@ -48,6 +48,8 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		final String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: connect/<database>[/<user>/<password>]");
 
+		urlParts[1] = urlParts[1].replace(DBNAME_DIR_SEPARATOR, '/');
+
 		iRequest.data.commandInfo = "Connect";
 		iRequest.data.commandDetail = urlParts[1];
 
