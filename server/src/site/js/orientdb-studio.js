@@ -49,6 +49,9 @@ function disconnect() {
 		orientServer.setDatabaseUrl($('#server').val());
 		orientServer.setDatabaseName($('#database').val());
 		orientServer.close();
+	} else {
+		orientServer.close();
+		orientServer = null;
 	}
 	$("#tabs-main").hide(200);
 	$("#buttonConnect").show();
