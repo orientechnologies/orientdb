@@ -178,7 +178,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		return this;
 	}
 
-	public OMVRBTreeEntryPersistent<K, V> save() throws IOException {
+	public OMVRBTreeEntryPersistent<K, V> save() throws OSerializationException {
 		return this;
 	}
 
@@ -715,7 +715,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 			// FORCE DIRTY
 			parent.record.setDirty();
 
-			((OMVRBTreeEntryDatabase<K, V>) parent).save();
+			parent.save();
 			parentRid = parent.record.getIdentity();
 			record.setDirty();
 		}
@@ -724,7 +724,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 			// FORCE DIRTY
 			left.record.setDirty();
 
-			((OMVRBTreeEntryDatabase<K, V>) left).save();
+			left.save();
 			leftRid = left.record.getIdentity();
 			record.setDirty();
 		}
@@ -733,7 +733,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 			// FORCE DIRTY
 			right.record.setDirty();
 
-			((OMVRBTreeEntryDatabase<K, V>) right).save();
+			right.save();
 			rightRid = right.record.getIdentity();
 			record.setDirty();
 		}

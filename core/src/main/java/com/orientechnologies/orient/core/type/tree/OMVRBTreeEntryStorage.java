@@ -63,7 +63,7 @@ public class OMVRBTreeEntryStorage<K, V> extends OMVRBTreeEntryPersistent<K, V> 
 	}
 
 	@Override
-	public OMVRBTreeEntryStorage<K, V> save() throws IOException {
+	public OMVRBTreeEntryStorage<K, V> save() {
 		record.fromStream(toStream());
 
 		if (record.getIdentity().isValid())
