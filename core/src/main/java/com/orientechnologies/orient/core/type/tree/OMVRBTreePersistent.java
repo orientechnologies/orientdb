@@ -491,15 +491,24 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		try {
 			final OMemoryInputStream stream = new OMemoryInputStream(iStream);
 
-			byte protocolVersion = stream.getAsByte();
-			if (protocolVersion != CURRENT_PROTOCOL_VERSION)
-				throw new OSerializationException(
-						"The index has been created with a previous version of OrientDB. Soft transitions between version is a featured supported since 0.9.25. In order to use it with this version of OrientDB you need to export and import your database");
+			byte protocolVersion = stream.peek();
+			if (protocolVersion != -1) {
+				// @COMPATIBILITY BEFORE 0.9.25
+				stream.getAsByte();
+				if (protocolVersion != CURRENT_PROTOCOL_VERSION)
+					throw new OSerializationException(
+							"The index has been created with a previous version of OrientDB. Soft transitions between version is a featured supported since 0.9.25. In order to use it with this version of OrientDB you need to export and import your database. "
+									+ protocolVersion + "<->" + CURRENT_PROTOCOL_VERSION);
+			}
 
 			rootRid.fromStream(stream.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
 
 			size = stream.getAsInteger();
-			lastPageSize = stream.getAsInteger();
+			if (protocolVersion == -1)
+				// @COMPATIBILITY BEFORE 0.9.25
+				lastPageSize = stream.getAsShort();
+			else
+				lastPageSize = stream.getAsInteger();
 
 			serializerFromStream(stream);
 

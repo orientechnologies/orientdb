@@ -81,7 +81,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 			jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
 
 			String tag;
-			while (jsonReader.lastChar() != '}') {
+			while (jsonReader.hasNext() && jsonReader.lastChar() != '}') {
 				tag = jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
 
 				if (tag.equals("info"))

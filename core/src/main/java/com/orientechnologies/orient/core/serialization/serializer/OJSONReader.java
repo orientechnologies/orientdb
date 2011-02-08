@@ -96,6 +96,9 @@ public class OJSONReader {
 
 	public OJSONReader readNext(final char[] iUntil, final boolean iInclude, final char[] iJumpChars) throws IOException,
 			ParseException {
+		if (!in.ready())
+			return this;
+
 		jump(iJumpChars);
 
 		// READ WHILE THERE IS SOMETHING OF AVAILABLE
@@ -134,6 +137,9 @@ public class OJSONReader {
 
 	public char jump(final char[] iJumpChars) throws IOException, ParseException {
 		buffer.setLength(0);
+
+		if (!in.ready())
+			return 0;
 
 		// READ WHILE THERE IS SOMETHING OF AVAILABLE
 		boolean go = true;
@@ -207,5 +213,9 @@ public class OJSONReader {
 
 	public int getColumnNumber() {
 		return columnNumber;
+	}
+
+	public boolean hasNext() throws IOException {
+		return in.ready();
 	}
 }

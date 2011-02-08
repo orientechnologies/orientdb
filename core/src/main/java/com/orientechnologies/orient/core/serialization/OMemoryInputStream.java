@@ -92,4 +92,8 @@ public class OMemoryInputStream {
 	public void close() {
 		buffer = null;
 	}
+
+	public byte peek() {
+		return buffer[position];
+	}
 }
