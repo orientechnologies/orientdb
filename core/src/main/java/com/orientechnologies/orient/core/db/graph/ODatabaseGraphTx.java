@@ -72,7 +72,10 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 	}
 
 	public OGraphVertex getRoot(final String iName) {
-		return registerPojo(new OGraphVertex(this, (ODocument) underlying.getDictionary().get(iName)));
+		final ODocument doc = (ODocument) underlying.getDictionary().get(iName);
+		if (doc != null)
+			return registerPojo(new OGraphVertex(this, doc));
+		return null;
 	}
 
 	public OGraphVertex getRoot(final String iName, final String iFetchPlan) {
