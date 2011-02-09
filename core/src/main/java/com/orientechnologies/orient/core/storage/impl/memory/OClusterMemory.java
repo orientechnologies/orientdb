@@ -70,6 +70,14 @@ public class OClusterMemory extends OSharedResource implements OCluster {
 		return entries.size() - removed.size();
 	}
 
+	public long getSize() {
+		long size = 0;
+		for (OPhysicalPosition e : entries)
+			if (e != null)
+				size += e.recordSize;
+		return size;
+	}
+
 	public long getFirstEntryPosition() {
 		return entries.size() == 0 ? -1 : 0;
 	}

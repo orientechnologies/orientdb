@@ -259,4 +259,11 @@ public class OClusterLogical implements OCluster {
 	public int getLocalClusterId() {
 		return localClusterId;
 	}
+
+	/**
+	 * Returns always 0 because the real size is computed into local and memory clusters.
+	 */
+	public long getSize() {
+		return 0;
+	}
 }

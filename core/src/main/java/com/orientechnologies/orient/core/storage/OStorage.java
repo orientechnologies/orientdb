@@ -116,6 +116,11 @@ public interface OStorage {
 
 	public long count(int[] iClusterIds);
 
+	/**
+	 * Returns the size of the database.
+	 */
+	public long getSize();
+
 	public int getDefaultClusterId();
 
 	public int getClusterIdByName(String iClusterName);

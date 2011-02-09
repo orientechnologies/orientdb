@@ -99,6 +99,13 @@ public interface OCluster {
 
 	public String getName();
 
+	/**
+	 * Returns the size of the cluster in bytes.
+	 * 
+	 * @return
+	 */
+	public long getSize();
+
 	public OClusterPositionIterator absoluteIterator() throws IOException;
 
 	/**

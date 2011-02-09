@@ -28,11 +28,12 @@ public class OChannelBinaryProtocol {
 	public static final byte	REQUEST_SHUTDOWN							= 1;
 	public static final byte	REQUEST_CONNECT								= 2;
 
-	public static final byte	REQUEST_DB_OPEN								= 5;
-	public static final byte	REQUEST_DB_CREATE							= 6;
-	public static final byte	REQUEST_DB_CLOSE							= 7;
-	public static final byte	REQUEST_DB_EXIST							= 8;
-	public static final byte	REQUEST_DB_DELETE							= 9;
+	public static final byte	REQUEST_DB_OPEN								= 4;
+	public static final byte	REQUEST_DB_CREATE							= 5;
+	public static final byte	REQUEST_DB_CLOSE							= 6;
+	public static final byte	REQUEST_DB_EXIST							= 7;
+	public static final byte	REQUEST_DB_DELETE							= 8;
+	public static final byte	REQUEST_DB_SIZE								= 9;
 
 	public static final byte	REQUEST_DATACLUSTER_ADD				= 10;
 	public static final byte	REQUEST_DATACLUSTER_REMOVE		= 11;
@@ -69,7 +70,7 @@ public class OChannelBinaryProtocol {
 
 	// CONSTANTS
 	public static final int		RECORD_NULL										= -2;
-	public static final int		CURRENT_PROTOCOL_VERSION			= 2;	// SENT AS SHORT AS FIRST PACKET AFTER SOCKET CONNECTION
+	public static final int		CURRENT_PROTOCOL_VERSION			= 3;	// SENT AS SHORT AS FIRST PACKET AFTER SOCKET CONNECTION
 
 	public static void checkProtocolVersion(final OChannelBinary iNetwork) throws IOException {
 		// SEND PROTOCOL VERSION

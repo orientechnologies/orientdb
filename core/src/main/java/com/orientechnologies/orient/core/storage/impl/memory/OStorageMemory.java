@@ -467,12 +467,23 @@ public class OStorageMemory extends OStorageEmbedded {
 		return defaultClusterId;
 	}
 
+	public long getSize() {
+		long size = 0;
+
+		size += data.getSize();
+
+		for (OClusterMemory c : clusters)
+			size += c.getSize();
+
+		return size;
+	}
+
 	@Override
 	public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
 		if (ppos.dataSegment > 0)
 			return false;
 
-		if (ppos.dataPosition >= data.size())
+		if (ppos.dataPosition >= data.count())
 			return false;
 
 		return true;

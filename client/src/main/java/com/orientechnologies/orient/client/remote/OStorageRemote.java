@@ -408,6 +408,35 @@ public class OStorageRemote extends OStorageAbstract {
 		} while (true);
 	}
 
+	public long getSize() {
+		checkConnection();
+
+		do {
+			boolean locked = lock.acquireExclusiveLock();
+
+			try {
+				final int reqId;
+				try {
+					reqId = beginRequest(OChannelBinaryProtocol.REQUEST_DB_SIZE);
+				} finally {
+					endRequest();
+				}
+
+				try {
+					beginResponse(reqId);
+					return network.readLong();
+				} finally {
+					endResponse();
+				}
+			} catch (Exception e) {
+				handleException("Error on read database size", e);
+
+			} finally {
+				lock.releaseExclusiveLock(locked);
+			}
+		} while (true);
+	}
+
 	public long count(final int[] iClusterIds) {
 		checkConnection();
 

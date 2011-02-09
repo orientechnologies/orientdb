@@ -1131,4 +1131,17 @@ public class OStorageLocal extends OStorageEmbedded {
 
 		return id;
 	}
+
+	public long getSize() {
+		long size = 0;
+
+		for (ODataLocal d : dataSegments)
+			size += d.getSize();
+
+		for (OCluster c : clusters)
+			if (c instanceof OClusterLocal)
+				size += ((OClusterLocal) c).getSize();
+
+		return size;
+	}
 }

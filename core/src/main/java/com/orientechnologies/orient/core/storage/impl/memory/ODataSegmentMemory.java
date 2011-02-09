@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ODataSegmentMemory {
-	private List<byte[]>	entries	= new ArrayList<byte[]>();
+	private final List<byte[]>	entries	= new ArrayList<byte[]>();
 
 	public ODataSegmentMemory() {
 	}
@@ -28,8 +28,16 @@ public class ODataSegmentMemory {
 		entries.clear();
 	}
 
-	public int size() {
+	public int count() {
 		return entries.size();
+	}
+
+	public long getSize() {
+		long size = 0;
+		for (byte[] e : entries)
+			size += e.length;
+
+		return size;
 	}
 
 	public long createRecord(byte[] iContent) {
