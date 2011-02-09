@@ -53,7 +53,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	protected static final String																	CONFIG_CLUSTERS	= "clusters";
 	protected String																							name;
 	protected String																							type;
-	protected OMVRBTreeDatabaseLazySave<String, List<ORecord<?>>>	map;
+	protected OMVRBTreeDatabaseLazySave<Object, List<ORecord<?>>>	map;
 	protected Set<String>																					clustersToIndex	= new LinkedHashSet<String>();
 	protected OIndexCallback																			callback;
 	protected boolean																							automatic;
@@ -89,7 +89,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 		name = iName;
 		installProfilerHooks();
 
-		map = new OMVRBTreeDatabaseLazySave<String, List<ORecord<?>>>(iDatabase, iClusterIndexName, OStreamSerializerString.INSTANCE,
+		map = new OMVRBTreeDatabaseLazySave<Object, List<ORecord<?>>>(iDatabase, iClusterIndexName, OStreamSerializerString.INSTANCE,
 				OStreamSerializerListRID.INSTANCE);
 		rebuild(iProgressListener);
 		return this;
@@ -255,7 +255,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 		return map.getRecord();
 	}
 
-	public Iterator<Entry<String, List<ORecord<?>>>> iterator() {
+	public Iterator<Entry<Object, List<ORecord<?>>>> iterator() {
 		acquireSharedLock();
 
 		try {
@@ -269,7 +269,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	protected void load(final ODatabaseRecord iDatabase, final ORID iRecordId) {
 		installProfilerHooks();
 
-		map = new OMVRBTreeDatabaseLazySave<String, List<ORecord<?>>>(iDatabase, iRecordId);
+		map = new OMVRBTreeDatabaseLazySave<Object, List<ORecord<?>>>(iDatabase, iRecordId);
 		map.load();
 	}
 
@@ -339,7 +339,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 		return this;
 	}
 
-	public void checkEntry(final ODocument iRecord, final String iKey) {
+	public void checkEntry(final ODocument iRecord, final Object iKey) {
 	}
 
 	public void unload() {

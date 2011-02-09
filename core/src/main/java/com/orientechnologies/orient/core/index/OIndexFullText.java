@@ -84,7 +84,7 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 		for (int id : iClusterIdsToIndex)
 			clustersToIndex.add(iDatabase.getClusterNameById(id));
 
-		map = new OMVRBTreeDatabaseLazySave<String, List<ORecord<?>>>((ODatabaseRecord) db, iClusterIndexName,
+		map = new OMVRBTreeDatabaseLazySave<Object, List<ORecord<?>>>((ODatabaseRecord) db, iClusterIndexName,
 				OStreamSerializerString.INSTANCE, OStreamSerializerListRID.INSTANCE);
 		map.lazySave();
 

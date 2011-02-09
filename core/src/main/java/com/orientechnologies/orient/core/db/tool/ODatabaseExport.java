@@ -254,8 +254,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
 				writer.beginObject(2, true, i.getName());
 
-				Entry<String, List<ORecord<?>>> entry;
-				for (Iterator<Entry<String, List<ORecord<?>>>> iterator = i.iterator(); iterator.hasNext();) {
+				Entry<Object, List<ORecord<?>>> entry;
+				for (Iterator<Entry<Object, List<ORecord<?>>>> iterator = i.iterator(); iterator.hasNext();) {
 					entry = iterator.next();
 					writer.writeAttribute(3, true, "key", entry.getKey());
 					writer.writeAttribute(0, false, "value", OJSONWriter.writeValue(entry.getValue()));

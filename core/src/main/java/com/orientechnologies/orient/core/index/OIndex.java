@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public interface OIndex extends Iterable<Entry<String, List<ORecord<?>>>>, OSerializableStream {
+public interface OIndex extends Iterable<Entry<Object, List<ORecord<?>>>>, OSerializableStream {
 
 	public static final String	CONFIG_TYPE				= "type";
 	public static final String	CONFIG_NAME				= "name";
@@ -88,11 +88,11 @@ public interface OIndex extends Iterable<Entry<String, List<ORecord<?>>>>, OSeri
 
 	public OIndex lazySave();
 
-	public Iterator<Entry<String, List<ORecord<?>>>> iterator();
+	public Iterator<Entry<Object, List<ORecord<?>>>> iterator();
 
 	public ORID getIdentity();
 
-	public void checkEntry(final ODocument iRecord, final String iKey);
+	public void checkEntry(final ODocument iRecord, final Object iKey);
 
 	public void setCallback(final OIndexCallback iCallback);
 

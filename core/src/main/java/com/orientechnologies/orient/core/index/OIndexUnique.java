@@ -57,7 +57,7 @@ public class OIndexUnique extends OIndexMVRBTreeAbstract {
 	}
 
 	@Override
-	public void checkEntry(final ODocument iRecord, final String iKey) {
+	public void checkEntry(final ODocument iRecord, final Object iKey) {
 		// CHECK IF ALREADY EXIST
 		List<ORecord<?>> indexedRIDs = get(iKey);
 		if (indexedRIDs != null && indexedRIDs.size() > 0) {
