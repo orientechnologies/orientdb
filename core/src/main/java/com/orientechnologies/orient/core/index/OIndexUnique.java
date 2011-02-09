@@ -48,7 +48,7 @@ public class OIndexUnique extends OIndexMVRBTreeAbstract {
 
 		values.add(iSingleValue);
 
-		map.put(iKey.toString(), values);
+		map.put(iKey, values);
 		return this;
 	}
 

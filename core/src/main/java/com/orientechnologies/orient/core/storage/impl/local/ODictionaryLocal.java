@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyRecord;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerString;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerLiteral;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabase;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
@@ -91,13 +91,14 @@ public class ODictionaryLocal<T extends Object> extends ODictionaryAbstract<T> {
 	}
 
 	public void load() {
-		tree = new OMVRBTreeDatabaseLazySave<String, T>(underlyingDatabase, new ORecordId(database.getStorage().getConfiguration().dictionaryRecordId));
+		tree = new OMVRBTreeDatabaseLazySave<String, T>(underlyingDatabase, new ORecordId(
+				database.getStorage().getConfiguration().dictionaryRecordId));
 		tree.load();
 	}
 
 	public void create() {
 		try {
-			tree = new OMVRBTreeDatabaseLazySave<String, T>(underlyingDatabase, clusterName, OStreamSerializerString.INSTANCE,
+			tree = new OMVRBTreeDatabaseLazySave<String, T>(underlyingDatabase, clusterName, OStreamSerializerLiteral.INSTANCE,
 					OStreamSerializerAnyRecord.INSTANCE);
 			tree.save();
 

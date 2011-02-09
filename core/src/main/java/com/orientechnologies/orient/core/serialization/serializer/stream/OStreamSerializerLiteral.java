@@ -23,7 +23,7 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 
 public class OStreamSerializerLiteral implements OStreamSerializer {
-	public static final String										NAME			= "r";
+	public static final String										NAME			= "li";
 
 	public static final OStreamSerializerLiteral	INSTANCE	= new OStreamSerializerLiteral();
 

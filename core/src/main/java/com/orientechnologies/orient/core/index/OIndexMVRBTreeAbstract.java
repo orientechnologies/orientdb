@@ -39,7 +39,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerString;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerLiteral;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
 
 /**
@@ -89,7 +89,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 		name = iName;
 		installProfilerHooks();
 
-		map = new OMVRBTreeDatabaseLazySave<Object, List<ORecord<?>>>(iDatabase, iClusterIndexName, OStreamSerializerString.INSTANCE,
+		map = new OMVRBTreeDatabaseLazySave<Object, List<ORecord<?>>>(iDatabase, iClusterIndexName, OStreamSerializerLiteral.INSTANCE,
 				OStreamSerializerListRID.INSTANCE);
 		rebuild(iProgressListener);
 		return this;

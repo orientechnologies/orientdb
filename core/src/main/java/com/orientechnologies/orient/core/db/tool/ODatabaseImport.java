@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.parser.OStringForwardReader;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -93,12 +92,12 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 					importInfo();
 				else if (tag.equals("clusters"))
 					importClusters();
-				else if (tag.equals("indexes"))
-					importIndexes();
 				else if (tag.equals("schema"))
 					importSchema();
 				else if (tag.equals("records"))
 					importRecords();
+				else if (tag.equals("indexes"))
+					importManualIndexes();
 				else if (tag.equals("dictionary"))
 					importDictionary();
 			}
@@ -127,23 +126,23 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 			e.getKey().setIndex(database.getMetadata().getIndexManager().getIndex(e.getValue()));
 			e.getKey().getIndex().getUnderlying().setCallback(e.getKey().getIndex());
 
-//			listener.onMessage("\n- Index '" + e.getKey().getIndex().getUnderlying().getName() + "'...");
-//
-//			e.getKey().getIndex().getUnderlying().rebuild(new OProgressListener() {
-//				public boolean onProgress(Object iTask, long iCounter, float iPercent) {
-//					if (iPercent % 10 == 0)
-//						listener.onMessage(".");
-//					return false;
-//				}
-//
-//				public void onCompletition(Object iTask, boolean iSucceed) {
-//				}
-//
-//				public void onBegin(Object iTask, long iTotal) {
-//				}
-//			});
-//
-//			listener.onMessage("OK (" + e.getKey().getIndex().getUnderlying().getSize() + " records)");
+			// listener.onMessage("\n- Index '" + e.getKey().getIndex().getUnderlying().getName() + "'...");
+			//
+			// e.getKey().getIndex().getUnderlying().rebuild(new OProgressListener() {
+			// public boolean onProgress(Object iTask, long iCounter, float iPercent) {
+			// if (iPercent % 10 == 0)
+			// listener.onMessage(".");
+			// return false;
+			// }
+			//
+			// public void onCompletition(Object iTask, boolean iSucceed) {
+			// }
+			//
+			// public void onBegin(Object iTask, long iTotal) {
+			// }
+			// });
+			//
+			// listener.onMessage("OK (" + e.getKey().getIndex().getUnderlying().getSize() + " records)");
 		}
 	}
 
@@ -212,8 +211,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 	}
 
 	@SuppressWarnings("unused")
-	private void importIndexes() throws IOException, ParseException {
-		listener.onMessage("\nImporting database indexes...");
+	private void importManualIndexes() throws IOException, ParseException {
+		listener.onMessage("\nImporting manual indexes...");
 
 		String key;
 		String value;
@@ -245,19 +244,19 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 					value = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"value\"")
 							.readString(OJSONReader.NEXT_IN_OBJECT);
 
-//					if (index != null)
-//						if (value.length() >= 4) {
-//							if (value.charAt(0) == '[')
-//								// REMOVE []
-//								value = value.substring(1, value.length() - 1);
-//
-//							List<String> rids = OStringSerializerHelper.split(value, ',', new char[] { '#', '"' });
-//
-//							for (String rid : rids) {
-//								doc.setIdentity(new ORecordId(rid));
-//								index.put(key, doc);
-//							}
-//						}
+					if (index != null)
+						if (value.length() >= 4) {
+							if (value.charAt(0) == '[')
+								// REMOVE []
+								value = value.substring(1, value.length() - 1);
+
+							List<String> rids = OStringSerializerHelper.split(value, ',', new char[] { '#', '"' });
+
+							for (String rid : rids) {
+								doc.setIdentity(new ORecordId(rid));
+								index.put(key, doc);
+							}
+						}
 
 					tot++;
 				}

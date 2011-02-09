@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerString;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerLiteral;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
 
 /**
@@ -85,7 +85,7 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 			clustersToIndex.add(iDatabase.getClusterNameById(id));
 
 		map = new OMVRBTreeDatabaseLazySave<Object, List<ORecord<?>>>((ODatabaseRecord) db, iClusterIndexName,
-				OStreamSerializerString.INSTANCE, OStreamSerializerListRID.INSTANCE);
+				OStreamSerializerLiteral.INSTANCE, OStreamSerializerListRID.INSTANCE);
 		map.lazySave();
 
 		configuration = new ODocument(iDatabase);
@@ -198,7 +198,7 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 		final List<ORecord<?>> recs = get(iKey);
 		if (recs != null && !recs.isEmpty()) {
 			if (recs.remove(value))
-				map.put((String) iKey, recs);
+				map.put(iKey, recs);
 		}
 		return this;
 	}

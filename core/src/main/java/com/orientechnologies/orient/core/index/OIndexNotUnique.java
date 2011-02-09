@@ -43,7 +43,7 @@ public class OIndexNotUnique extends OIndexMVRBTreeAbstract {
 		else
 			values.add(iSingleValue);
 
-		map.put(iKey.toString(), values);
+		map.put(iKey, values);
 		return this;
 	}
 
@@ -51,7 +51,7 @@ public class OIndexNotUnique extends OIndexMVRBTreeAbstract {
 		final List<ORecord<?>> recs = get(iKey);
 		if (recs != null && !recs.isEmpty()) {
 			if (recs.remove(value))
-				map.put((String) iKey, recs);
+				map.put(iKey, recs);
 		}
 		return this;
 	}

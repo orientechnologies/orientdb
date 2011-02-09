@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 
 @SuppressWarnings("unchecked")
 public class OStreamSerializerRecord implements OStreamSerializer {
-	public static final String									NAME			= "r";
+	public static final String									NAME			= "l";
 	public static final OStreamSerializerRecord	INSTANCE	= new OStreamSerializerRecord();
 
 	public String getName() {
@@ -61,8 +61,12 @@ public class OStreamSerializerRecord implements OStreamSerializer {
 			obj.setIdentity(rid.getClusterId(), rid.getClusterPosition());
 			return obj;
 		} catch (Exception e) {
-			OLogManager.instance().error(this, "Error on unmarshalling record class: " + constructor.getDeclaringClass(), e,
-					OSerializationException.class);
+			if (constructor == null)
+				OLogManager.instance().error(this, "Constructor not found for record class '%s'", e, OSerializationException.class,
+						iDatabase.getRecordType());
+			else
+				OLogManager.instance().error(this, "Error on unmarshalling record class: " + constructor.getDeclaringClass(), e,
+						OSerializationException.class);
 		}
 		return null;
 	}
