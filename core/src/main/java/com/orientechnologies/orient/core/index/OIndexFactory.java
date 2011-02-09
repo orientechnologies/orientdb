@@ -16,8 +16,10 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.factory.ODynamicFactory;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OIndexFactory extends ODynamicFactory<String, Class<? extends OIndex>> {
 	private static final OIndexFactory	instance	= new OIndexFactory();
@@ -51,5 +53,11 @@ public class OIndexFactory extends ODynamicFactory<String, Class<? extends OInde
 
 	public static OIndexFactory instance() {
 		return instance;
+	}
+
+	public OIndex load(final ODatabaseRecord iDatabase, final ODocument iConfiguration) {
+		final OIndex index = newInstance((String) iConfiguration.field(OIndex.CONFIG_TYPE));
+		index.loadFromConfiguration(iConfiguration);
+		return index;
 	}
 }

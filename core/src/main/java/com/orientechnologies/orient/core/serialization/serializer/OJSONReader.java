@@ -77,7 +77,7 @@ public class OJSONReader {
 		if (readNext(iUntil, iInclude) == null)
 			return null;
 
-		if (value.startsWith("\"")) {
+		if (!iInclude && value.startsWith("\"")) {
 			return value.substring(1, value.lastIndexOf("\""));
 		}
 

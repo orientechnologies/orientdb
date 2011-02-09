@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OPropertyIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
@@ -134,10 +135,12 @@ public class OProperty extends ODocumentWrapperNoClass {
 			if (document.field("index-type") == null)
 				index = new OPropertyIndex(document.getDatabase().getMetadata().getIndexManager()
 						.getIndex((ORecordId) document.field("index", ORID.class)), new String[] { name });
-			else
+			else {
 				// @COMPATIBILITY 0.9.24
-				index = new OPropertyIndex(document.getDatabase(), owner, new String[] { name }, (String) document.field("index-type"),
-						new ORecordId((String) document.field("index")));
+				ODocument cfg = new ODocument(document.getDatabase());
+				cfg.field(OIndex.CONFIG_TYPE, (String) document.field("index-type"));
+				index = new OPropertyIndex(document.getDatabase(), owner, new String[] { name }, cfg);
+			}
 		}
 	}
 
@@ -265,6 +268,16 @@ public class OProperty extends ODocumentWrapperNoClass {
 	 */
 	public OPropertyIndex createIndex(final String iType, final OProgressListener iProgressListener) {
 		index = new OPropertyIndex(document.getDatabase(), owner, new String[] { name }, iType, iProgressListener);
+		return index;
+	}
+
+	public OPropertyIndex setIndex(final OIndex iIndex) {
+		index = new OPropertyIndex(iIndex, new String[] { name });
+		return index;
+	}
+
+	public OPropertyIndex createIndex(final ODocument iToLoad) {
+		index = new OPropertyIndex(document.getDatabase(), owner, new String[] { name }, iToLoad);
 		return index;
 	}
 

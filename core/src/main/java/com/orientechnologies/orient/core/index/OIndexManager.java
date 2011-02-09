@@ -64,7 +64,7 @@ public class OIndexManager extends ODocumentWrapperNoClass {
 	}
 
 	public OIndex getIndex(final String iName) {
-		return indexes.get(iName);
+		return indexes.get(iName.toLowerCase());
 	}
 
 	public OIndex getIndex(final ORecordId iRID) {
@@ -84,11 +84,16 @@ public class OIndexManager extends ODocumentWrapperNoClass {
 
 	public OIndex createIndex(final String iName, final String iType, final int[] iClusterIdsToIndex, OIndexCallback iCallback,
 			final OProgressListener iProgressListener) {
+		return createIndex(iName, iType, iClusterIdsToIndex, iCallback, iProgressListener, false);
+	}
+
+	public OIndex createIndex(final String iName, final String iType, final int[] iClusterIdsToIndex, OIndexCallback iCallback,
+			final OProgressListener iProgressListener, final boolean iAutomatic) {
 		final OIndex index = OIndexFactory.instance().newInstance(iType);
 		index.setCallback(iCallback);
 		indexes.put(iName.toLowerCase(), index);
 
-		index.create(iName, database, defaultClusterName, iClusterIdsToIndex, iProgressListener);
+		index.create(iName, database, defaultClusterName, iClusterIdsToIndex, iProgressListener, iAutomatic);
 		setDirty();
 		save();
 
@@ -139,10 +144,8 @@ public class OIndexManager extends ODocumentWrapperNoClass {
 	 * 
 	 * @COMPATIBILITY
 	 */
-	public OIndex loadIndex(final String iName, final ORecordId iRID, final String iType) {
-		final OIndex index = OIndexFactory.instance().newInstance(iType);
-		index.loadFromConfiguration(database, iRID);
-
+	public OIndex loadIndex(final String iName, final ODocument iConfiguration) {
+		final OIndex index = OIndexFactory.instance().load(database, iConfiguration);
 		indexes.put(iName.toLowerCase(), index);
 		setDirty();
 		save();

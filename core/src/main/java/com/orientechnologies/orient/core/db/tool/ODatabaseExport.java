@@ -21,16 +21,19 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map.Entry;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.intent.OIntentMassiveRead;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
@@ -84,6 +87,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 			if (includeSchema)
 				exportSchema();
 			exportRecords();
+			if (includeIndexes)
+				exportIndexes();
 			if (includeDictionary)
 				exportDictionary();
 
@@ -120,7 +125,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 				continue;
 
 			long recordTot = database.countClusterElements(clusterName);
-			listener.onMessage("\n- Exporting record of cluster '" + clusterName + "'...");
+			listener.onMessage("\n- Cluster '" + clusterName + "'...");
 
 			long recordNum = 0;
 			for (ORecordInternal<?> rec : database.browseCluster(clusterName)) {
@@ -238,6 +243,34 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 		listener.onMessage("OK (" + tot + " entries)");
 	}
 
+	private void exportIndexes() throws IOException {
+		listener.onMessage("\nExporting indexes...");
+
+		writer.beginObject(1, true, "indexes");
+		for (OIndex i : database.getMetadata().getIndexManager().getIndexes()) {
+			if (i != null && !i.isAutomatic()) {
+				long tot = 0;
+				listener.onMessage("\n- Index '" + i.getName() + "' [" + i.getType() + "]...");
+
+				writer.beginObject(2, true, i.getName());
+
+				Entry<String, List<ORecord<?>>> entry;
+				for (Iterator<Entry<String, List<ORecord<?>>>> iterator = i.iterator(); iterator.hasNext();) {
+					entry = iterator.next();
+					writer.writeAttribute(3, true, "key", entry.getKey());
+					writer.writeAttribute(0, false, "value", OJSONWriter.writeValue(entry.getValue()));
+					++tot;
+				}
+
+				listener.onMessage("OK (entries=" + tot + ")");
+
+				writer.endObject(2, true);
+			}
+		}
+
+		writer.endObject(1, true);
+	}
+
 	private void exportSchema() throws IOException {
 		listener.onMessage("\nExporting schema...");
 
@@ -272,7 +305,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 						if (p.getMax() != null)
 							writer.writeAttribute(0, false, "max", p.getMax());
 						if (p.getIndex() != null)
-							writer.writeAttribute(0, false, "index-rid", p.getIndex().getUnderlying().getIdentity());
+							writer.writeAttribute(0, false, "index", p.getIndex().getUnderlying().getName());
 
 						writer.endObject(0, false);
 					}

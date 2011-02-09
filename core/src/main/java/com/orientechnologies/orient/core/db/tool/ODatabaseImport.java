@@ -22,9 +22,12 @@ import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
+import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.parser.OStringForwardReader;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -33,6 +36,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -57,6 +61,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 	private OStringForwardReader		reader;
 	private ORecordInternal<?>			record;
 	private Set<String>							recordToDelete	= new HashSet<String>();
+	private Map<OProperty, String>	propertyIndexes	= new HashMap<OProperty, String>();
 
 	public ODatabaseImport(final ODatabaseDocument database, final String iFileName, final OCommandOutputListener iListener)
 			throws IOException {
@@ -88,6 +93,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 					importInfo();
 				else if (tag.equals("clusters"))
 					importClusters();
+				else if (tag.equals("indexes"))
+					importIndexes();
 				else if (tag.equals("schema"))
 					importSchema();
 				else if (tag.equals("records"))
@@ -97,6 +104,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 			}
 
 			deleteHoleRecords();
+			rebuildAutomaticIndexes();
 
 			listener.onMessage("\n\nDatabase import completed in " + ((System.currentTimeMillis() - time)) + " ms");
 
@@ -110,6 +118,33 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		}
 
 		return this;
+	}
+
+	private void rebuildAutomaticIndexes() {
+		listener.onMessage("\nRebuilding " + propertyIndexes.size() + " indexes...");
+
+		for (Entry<OProperty, String> e : propertyIndexes.entrySet()) {
+			e.getKey().setIndex(database.getMetadata().getIndexManager().getIndex(e.getValue()));
+			e.getKey().getIndex().getUnderlying().setCallback(e.getKey().getIndex());
+
+//			listener.onMessage("\n- Index '" + e.getKey().getIndex().getUnderlying().getName() + "'...");
+//
+//			e.getKey().getIndex().getUnderlying().rebuild(new OProgressListener() {
+//				public boolean onProgress(Object iTask, long iCounter, float iPercent) {
+//					if (iPercent % 10 == 0)
+//						listener.onMessage(".");
+//					return false;
+//				}
+//
+//				public void onCompletition(Object iTask, boolean iSucceed) {
+//				}
+//
+//				public void onBegin(Object iTask, long iTotal) {
+//				}
+//			});
+//
+//			listener.onMessage("OK (" + e.getKey().getIndex().getUnderlying().getSize() + " records)");
+		}
 	}
 
 	/**
@@ -174,6 +209,69 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		jsonReader.readNext(OJSONReader.END_OBJECT);
 
 		return tot;
+	}
+
+	@SuppressWarnings("unused")
+	private void importIndexes() throws IOException, ParseException {
+		listener.onMessage("\nImporting database indexes...");
+
+		String key;
+		String value;
+
+		final ODocument doc = new ODocument(database);
+
+		// FORCE RELOADING
+		database.getMetadata().getIndexManager().load();
+
+		jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
+
+		do {
+			final String indexName = jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
+
+			listener.onMessage("\n- Index '" + indexName + "'...");
+
+			final OIndex index = database.getMetadata().getIndexManager().getIndex(indexName);
+
+			long tot = 0;
+
+			jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
+
+			String n;
+			do {
+				jsonReader.readNext(new char[] { ':', '}' });
+
+				if (jsonReader.lastChar() != '}') {
+					key = jsonReader.checkContent("\"key\"").readString(OJSONReader.COMMA_SEPARATOR);
+					value = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"value\"")
+							.readString(OJSONReader.NEXT_IN_OBJECT);
+
+//					if (index != null)
+//						if (value.length() >= 4) {
+//							if (value.charAt(0) == '[')
+//								// REMOVE []
+//								value = value.substring(1, value.length() - 1);
+//
+//							List<String> rids = OStringSerializerHelper.split(value, ',', new char[] { '#', '"' });
+//
+//							for (String rid : rids) {
+//								doc.setIdentity(new ORecordId(rid));
+//								index.put(key, doc);
+//							}
+//						}
+
+					tot++;
+				}
+			} while (jsonReader.lastChar() == ',');
+
+			if (index != null)
+				listener.onMessage("OK (" + tot + " entries)");
+			else
+				listener.onMessage("KO, the index wasn't found in configuration");
+
+			jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
+
+		} while (jsonReader.lastChar() == ',');
+
 	}
 
 	private void importSchema() throws IOException, ParseException {
@@ -303,7 +401,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		String max = null;
 		String linkedClass = null;
 		OType linkedType = null;
-		ORecordId indexRid = null;
+		String indexName = null;
 		String indexType = null;
 
 		while (jsonReader.lastChar() == ',') {
@@ -320,8 +418,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 				linkedClass = value;
 			else if (attrib.equals("\"linked-type\""))
 				linkedType = OType.valueOf(value);
-			else if (attrib.equals("\"index-rid\""))
-				indexRid = new ORecordId(value);
+			else if (attrib.equals("\"index\""))
+				indexName = value;
 			else if (attrib.equals("\"index-type\""))
 				indexType = value;
 		}
@@ -344,8 +442,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 			linkedClasses.put(prop, linkedClass);
 		if (linkedType != null)
 			prop.setLinkedType(linkedType);
-		if (indexRid != null)
-			prop.createIndex(OProperty.INDEX_TYPE.valueOf(indexType));
+		if (indexName != null)
+			// PUSH INDEX TO CREATE AFTER ALL
+			propertyIndexes.put(prop, indexName);
 	}
 
 	private long importClusters() throws ParseException, IOException {
@@ -455,7 +554,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 	}
 
 	private ORID importRecord() throws IOException, ParseException {
-		String value = jsonReader.readString(OJSONReader.END_OBJECT, true);
+		final String value = jsonReader.readString(OJSONReader.END_OBJECT, true);
 
 		record = ORecordSerializerJSON.INSTANCE.fromString(database, value, record);
 

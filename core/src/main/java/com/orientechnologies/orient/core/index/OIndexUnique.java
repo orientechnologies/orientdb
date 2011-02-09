@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 

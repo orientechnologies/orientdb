@@ -34,8 +34,9 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  */
 public interface OIndex extends Iterable<Entry<String, List<ORecord<?>>>>, OSerializableStream {
 
-	public static final String	CONFIG_TYPE	= "type";
-	public static final String	CONFIG_NAME	= "name";
+	public static final String	CONFIG_TYPE				= "type";
+	public static final String	CONFIG_NAME				= "name";
+	public static final String	CONFIG_AUTOMATIC	= "automatic";
 
 	public String getName();
 
@@ -74,13 +75,12 @@ public interface OIndex extends Iterable<Entry<String, List<ORecord<?>>>>, OSeri
 	 * @param iClusterIdsToIndex
 	 * @param iProgressListener
 	 *          Listener to get called on progress
+	 * @param iAutomatic
 	 */
 	public OIndex create(String iName, final ODatabaseRecord iDatabase, final String iClusterIndexName,
-			final int[] iClusterIdsToIndex, final OProgressListener iProgressListener);
+			final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, final boolean iAutomatic);
 
 	public OIndex loadFromConfiguration(ODocument iConfig);
-
-	public OIndex loadFromConfiguration(final ODatabaseRecord iDatabase, final ORID iRecordId);
 
 	public OIndex load();
 
@@ -101,4 +101,6 @@ public interface OIndex extends Iterable<Entry<String, List<ORecord<?>>>>, OSeri
 	public void unload();
 
 	public ODocument getConfiguration();
+
+	public boolean isAutomatic();
 }

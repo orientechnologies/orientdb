@@ -20,7 +20,6 @@ import java.util.Arrays;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -41,7 +40,7 @@ public class OPropertyIndex implements OIndexCallback {
 		final String indexName = getIndexName(iClass, iFields);
 
 		delegate = iDatabase.getMetadata().getIndexManager()
-				.createIndex(indexName, iType, iClass.getClusterIds(), this, iProgressListener);
+				.createIndex(indexName, iType, iClass.getClusterIds(), this, iProgressListener, true);
 	}
 
 	public OPropertyIndex(final OIndex iIndex, final String[] iFields) {
@@ -49,12 +48,11 @@ public class OPropertyIndex implements OIndexCallback {
 		delegate = iIndex;
 	}
 
-	public OPropertyIndex(final ODatabaseRecord iDatabase, final OClass iClass, final String[] iFields, final String iType,
-			final ORecordId iRID) {
+	public OPropertyIndex(final ODatabaseRecord iDatabase, final OClass iClass, final String[] iFields, final ODocument iConfiguration) {
 		fields = iFields;
 		final String indexName = getIndexName(iClass, iFields);
 
-		delegate = iDatabase.getMetadata().getIndexManager().loadIndex(indexName, iRID, iType);
+		delegate = iDatabase.getMetadata().getIndexManager().loadIndex(indexName, iConfiguration);
 		delegate.setCallback(this);
 	}
 

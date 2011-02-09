@@ -56,6 +56,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	protected OMVRBTreeDatabaseLazySave<String, List<ORecord<?>>>	map;
 	protected Set<String>																					clustersToIndex	= new LinkedHashSet<String>();
 	protected OIndexCallback																			callback;
+	protected boolean																							automatic;
 
 	@ODocumentInstance
 	protected ODocument																						configuration;
@@ -76,9 +77,10 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	 * @param iProgressListener
 	 *          Listener to get called on progress
 	 */
-	public OIndex create(final String iName, final ODatabaseRecord iDatabase, final String iClusterIndexName, final int[] iClusterIdsToIndex,
-			final OProgressListener iProgressListener) {
+	public OIndex create(final String iName, final ODatabaseRecord iDatabase, final String iClusterIndexName,
+			final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, final boolean iAutomatic) {
 		configuration = new ODocument(iDatabase);
+		automatic = iAutomatic;
 
 		if (iClusterIdsToIndex != null)
 			for (int id : iClusterIdsToIndex)
@@ -86,7 +88,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 
 		name = iName;
 		installProfilerHooks();
-		
+
 		map = new OMVRBTreeDatabaseLazySave<String, List<ORecord<?>>>(iDatabase, iClusterIndexName, OStreamSerializerString.INSTANCE,
 				OStreamSerializerListRID.INSTANCE);
 		rebuild(iProgressListener);
@@ -97,6 +99,8 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	public OIndex loadFromConfiguration(final ODocument iConfig) {
 		configuration = iConfig;
 		name = configuration.field(OIndex.CONFIG_NAME);
+		automatic = (Boolean) (configuration.field(OIndex.CONFIG_AUTOMATIC) != null ? configuration.field(OIndex.CONFIG_AUTOMATIC)
+				: true);
 		clustersToIndex.clear();
 		clustersToIndex.addAll((Collection<? extends String>) configuration.field(CONFIG_CLUSTERS));
 		load(iConfig.getDatabase(), (ORID) iConfig.field(CONFIG_MAP_RID, ORID.class));
@@ -310,6 +314,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	public byte[] toStream() throws OSerializationException {
 		configuration.field(OIndex.CONFIG_TYPE, type);
 		configuration.field(OIndex.CONFIG_NAME, name);
+		configuration.field(OIndex.CONFIG_AUTOMATIC, automatic);
 		configuration.field(CONFIG_CLUSTERS, clustersToIndex, OType.EMBEDDEDSET);
 		configuration.field(CONFIG_MAP_RID, map.getRecord().getIdentity());
 		return configuration.toStream();
@@ -318,6 +323,8 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
 		configuration.fromStream(iStream);
 		name = configuration.field(OIndex.CONFIG_NAME);
+		automatic = (Boolean) (configuration.field(OIndex.CONFIG_AUTOMATIC) != null ? configuration.field(OIndex.CONFIG_AUTOMATIC)
+				: true);
 		clustersToIndex = configuration.field(CONFIG_CLUSTERS);
 		map.getRecord().setIdentity((ORecordId) configuration.field(CONFIG_MAP_RID, ORID.class));
 		return null;
@@ -341,6 +348,10 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 
 	public ODocument getConfiguration() {
 		return configuration;
+	}
+
+	public boolean isAutomatic() {
+		return automatic;
 	}
 
 	private void installProfilerHooks() {

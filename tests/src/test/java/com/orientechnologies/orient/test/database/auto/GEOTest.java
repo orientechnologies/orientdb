@@ -23,6 +23,10 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.index.OPropertyIndex;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
@@ -36,6 +40,18 @@ public class GEOTest {
 	}
 
 	@Test
+	public void indexMapPoint() {
+		database.open("admin", "admin");
+
+		final OClass mapPointClass = database.getMetadata().getSchema().createClass("MapPoint");
+		mapPointClass.createProperty("x", OType.DOUBLE).createIndex(INDEX_TYPE.NOTUNIQUE);
+		mapPointClass.createProperty("y", OType.DOUBLE).createIndex(INDEX_TYPE.NOTUNIQUE);
+		database.getMetadata().getSchema().save();
+
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "indexMapPoint")
 	public void queryCreatePoints() {
 		database.open("admin", "admin");
 
@@ -44,10 +60,10 @@ public class GEOTest {
 		for (int i = 0; i < 10000; ++i) {
 			point.reset();
 			point.setClassName("MapPoint");
-			
+
 			point.field("x", (52.20472d + i / 10d));
 			point.field("y", (0.14056d + i / 10d));
-			
+
 			point.save();
 		}
 
@@ -70,6 +86,17 @@ public class GEOTest {
 			Assert.assertEquals(d.getClassName(), "MapPoint");
 			Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
 		}
+
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "queryDistance")
+	public void spatialRange() {
+		database.open("admin", "admin");
+
+		final OPropertyIndex xIndex = database.getMetadata().getSchema().getClass("MapPoint").getProperty("x").getIndex();
+		final OPropertyIndex yIndex = database.getMetadata().getSchema().getClass("MapPoint").getProperty("y").getIndex();
+		
 
 		database.close();
 	}

@@ -57,20 +57,22 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 		stopWords = new HashSet<String>(OStringSerializerHelper.split(DEF_STOP_WORDS, ' '));
 	}
 
-	public OIndexFullText(final String iName, final ODatabaseRecord iDatabase, final int[] iClusterIdsToIndex) {
-		this(iName, iDatabase, DEF_CLUSTER_NAME, iClusterIdsToIndex);
+	public OIndexFullText(final String iName, final ODatabaseRecord iDatabase, final int[] iClusterIdsToIndex,
+			final boolean iAutomatic) {
+		this(iName, iDatabase, DEF_CLUSTER_NAME, iClusterIdsToIndex, iAutomatic);
 	}
 
-	public OIndexFullText(final String iName, final ODatabaseRecord iDatabase, final String iClusterIndexName, final int[] iClusterIdsToIndex) {
+	public OIndexFullText(final String iName, final ODatabaseRecord iDatabase, final String iClusterIndexName,
+			final int[] iClusterIdsToIndex, final boolean iAutomatic) {
 		this();
-		create(iName, iDatabase, iClusterIndexName, iClusterIdsToIndex, null);
+		create(iName, iDatabase, iClusterIndexName, iClusterIdsToIndex, null, iAutomatic);
 	}
 
 	@Override
-	public OIndex create(final String iName, final ODatabaseRecord iDatabase, final String iClusterIndexName, final int[] iClusterIdsToIndex,
-			final OProgressListener iProgressListener) {
+	public OIndex create(final String iName, final ODatabaseRecord iDatabase, final String iClusterIndexName,
+			final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, final boolean iAutomatic) {
 		name = iName;
-		
+
 		if (iDatabase.getClusterIdByName(iClusterIndexName) == -1)
 			// CREATE THE PHYSICAL CLUSTER THE FIRST TIME
 			iDatabase.addPhysicalCluster(iClusterIndexName, iClusterIndexName, -1);

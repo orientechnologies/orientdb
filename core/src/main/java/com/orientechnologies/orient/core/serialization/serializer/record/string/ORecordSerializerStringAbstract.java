@@ -295,21 +295,23 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 				else if (c == DECIMAL_SEPARATOR)
 					integer = false;
 				else {
-					if (index > 0)
-						if (c == 'f')
-							return new Float(iValue.substring(0, index));
-						else if (c == 'l')
-							return new Long(iValue.substring(0, index));
-						else if (c == 'd')
-							return new Double(iValue.substring(0, index));
-						else if (c == 'b')
-							return new Byte(iValue.substring(0, index));
-						else if (c == 't')
-							return new Date(Long.parseLong(iValue.substring(0, index)));
-						else if (c == 's')
-							return new Short(iValue.substring(0, index));
+					if (index > 0) {
+						final String v = iValue.substring(0, index);
 
-					return OType.STRING;
+						if (c == 'f')
+							return new Float(v);
+						else if (c == 'l')
+							return new Long(v);
+						else if (c == 'd')
+							return new Double(v);
+						else if (c == 'b')
+							return new Byte(v);
+						else if (c == 't')
+							return new Date(Long.parseLong(v));
+						else if (c == 's')
+							return new Short(v);
+					}
+					return iValue;
 				}
 		}
 
