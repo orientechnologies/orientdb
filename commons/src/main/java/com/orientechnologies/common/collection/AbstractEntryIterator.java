@@ -23,10 +23,10 @@ import java.util.NoSuchElementException;
  * Base class for OMVRBTree Iterators
  */
 abstract class AbstractEntryIterator<K, V, T> implements Iterator<T> {
-	OMVRBTree<K, V>			tree;
+	OMVRBTree<K, V>				tree;
 	OMVRBTreeEntry<K, V>	next;
 	OMVRBTreeEntry<K, V>	lastReturned;
-	int									expectedModCount;
+	int										expectedModCount;
 
 	AbstractEntryIterator(OMVRBTreeEntry<K, V> first) {
 		if (first == null)
@@ -48,7 +48,7 @@ abstract class AbstractEntryIterator<K, V, T> implements Iterator<T> {
 		if (next == null)
 			throw new NoSuchElementException();
 
-		if (tree.pageIndex < next.getSize() - 1) {
+		if (tree.pageIndex < next.size - 1) {
 			// ITERATE INSIDE THE NODE
 			tree.pageIndex++;
 		} else {
@@ -56,8 +56,8 @@ abstract class AbstractEntryIterator<K, V, T> implements Iterator<T> {
 			if (tree.modCount != expectedModCount)
 				throw new ConcurrentModificationException();
 
-			tree.pageIndex = 0;
 			next = OMVRBTree.successor(next);
+			tree.pageIndex = 0;
 			lastReturned = next;
 		}
 
@@ -68,10 +68,19 @@ abstract class AbstractEntryIterator<K, V, T> implements Iterator<T> {
 		OMVRBTreeEntry<K, V> e = next;
 		if (e == null)
 			throw new NoSuchElementException();
-		if (tree.modCount != expectedModCount)
-			throw new ConcurrentModificationException();
-		next = OMVRBTree.predecessor(e);
-		lastReturned = e;
+
+		if (tree.pageIndex > 0) {
+			// ITERATE INSIDE THE NODE
+			tree.pageIndex--;
+		} else {
+			if (tree.modCount != expectedModCount)
+				throw new ConcurrentModificationException();
+
+			next = OMVRBTree.predecessor(e);
+			tree.pageIndex = next.size - 1;
+			lastReturned = e;
+		}
+
 		return e;
 	}
 

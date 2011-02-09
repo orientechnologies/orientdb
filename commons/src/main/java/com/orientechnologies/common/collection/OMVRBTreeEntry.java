@@ -210,13 +210,14 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V> {
 
 		final StringBuilder buffer = new StringBuilder();
 
+		buffer.append(getKey());
+		buffer.append(" (size=");
 		buffer.append(size);
-		buffer.append('[');
+		buffer.append(" [");
 		buffer.append(keys[0] != null ? keys[0] : "{lazy}");
 		buffer.append('-');
 		buffer.append(keys[size - 1] != null ? keys[size - 1] : "{lazy}");
-
-		buffer.append(']');
+		buffer.append("])");
 
 		return buffer.toString();
 	}

@@ -57,7 +57,7 @@ public class LocalCreateGraphVariableDensityTest {
 
 		database.setRoot("HighDensityGraph", rootNode);
 
-		System.out.println("\nCreation of the graph with deep=" + maxDeep + " and density variable (" + START_DENSITY + "/"
+		System.out.println("\nCreation of the graph with depth=" + maxDeep + " and density variable (" + START_DENSITY + "/"
 				+ DENSITY_FACTOR + "). Total " + nodeWrittenCounter + " nodes and " + arcWrittenCounter + " arcs in "
 				+ ((lap - time) / 1000f) + " sec.");
 

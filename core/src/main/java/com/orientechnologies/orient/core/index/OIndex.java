@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.index;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -103,4 +104,6 @@ public interface OIndex extends Iterable<Entry<Object, List<ORecord<?>>>>, OSeri
 	public ODocument getConfiguration();
 
 	public boolean isAutomatic();
+
+	public Set<ORecord<?>> getBetween(Object iRangeFrom, Object iRangeTo);
 }

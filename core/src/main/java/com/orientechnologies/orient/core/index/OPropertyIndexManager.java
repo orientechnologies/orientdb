@@ -43,11 +43,12 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 
 	@Override
 	public boolean onRecordAfterCreate(final ODocument iRecord) {
-		final Map<OProperty, String> indexedProperties = getIndexedProperties(iRecord);
+		final Map<OProperty, Object> indexedProperties = getIndexedProperties(iRecord);
 
 		if (indexedProperties != null)
-			for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
-				propEntry.getKey().getIndex().getUnderlying().put(propEntry.getValue(), iRecord);
+			for (Entry<OProperty, Object> propEntry : indexedProperties.entrySet()) {
+				// SAVE A COPY TO AVOID PROBLEN ON RECYCLING OF THE RECORD
+				propEntry.getKey().getIndex().getUnderlying().put(propEntry.getValue(), iRecord.copy());
 			}
 		return false;
 	}
@@ -60,7 +61,7 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 
 	@Override
 	public boolean onRecordAfterUpdate(final ODocument iRecord) {
-		final Map<OProperty, String> indexedProperties = getIndexedProperties(iRecord);
+		final Map<OProperty, Object> indexedProperties = getIndexedProperties(iRecord);
 
 		if (indexedProperties != null) {
 			final Set<String> dirtyFields = iRecord.getDirtyFields();
@@ -70,7 +71,7 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 				Object originalValue = null;
 				OIndex index;
 
-				for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
+				for (Entry<OProperty, Object> propEntry : indexedProperties.entrySet()) {
 					if (dirtyFields.contains(propEntry.getKey().getName())) {
 						// REMOVE IT
 						originalValue = iRecord.getOriginalValue(propEntry.getKey().getName());
@@ -85,11 +86,12 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 				}
 
 				// ADD INDEX OF ENTRIES FOR THE CHANGED ONLY VALUES
-				for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
+				for (Entry<OProperty, Object> propEntry : indexedProperties.entrySet()) {
 					if (dirtyFields.contains(propEntry.getKey().getName())) {
 						index = propEntry.getKey().getIndex().getUnderlying();
 
-						index.put(propEntry.getValue(), iRecord);
+						// SAVE A COPY TO AVOID PROBLEN ON RECYCLING OF THE RECORD
+						index.put(propEntry.getValue(), iRecord.copy());
 						index.lazySave();
 					}
 				}
@@ -100,7 +102,7 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 
 	@Override
 	public boolean onRecordAfterDelete(final ODocument iRecord) {
-		final Map<OProperty, String> indexedProperties = getIndexedProperties(iRecord);
+		final Map<OProperty, Object> indexedProperties = getIndexedProperties(iRecord);
 
 		if (indexedProperties != null) {
 			final Set<String> dirtyFields = iRecord.getDirtyFields();
@@ -109,7 +111,7 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 
 			if (dirtyFields != null && dirtyFields.size() > 0) {
 				// REMOVE INDEX OF ENTRIES FOR THE OLD VALUES
-				for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
+				for (Entry<OProperty, Object> propEntry : indexedProperties.entrySet()) {
 					if (dirtyFields.contains(propEntry.getKey().getName())) {
 						// REMOVE IT
 						index = propEntry.getKey().getIndex().getUnderlying();
@@ -120,7 +122,7 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 			}
 
 			// REMOVE INDEX OF ENTRIES FOR THE CHANGED ONLY VALUES
-			for (Entry<OProperty, String> propEntry : indexedProperties.entrySet()) {
+			for (Entry<OProperty, Object> propEntry : indexedProperties.entrySet()) {
 				if (iRecord.containsField(propEntry.getKey().getName())
 						&& (dirtyFields == null || !dirtyFields.contains(propEntry.getKey().getName()))) {
 					index = propEntry.getKey().getIndex().getUnderlying();
@@ -145,7 +147,7 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 		}
 	}
 
-	protected Map<OProperty, String> getIndexedProperties(final ODocument iRecord) {
+	protected Map<OProperty, Object> getIndexedProperties(final ODocument iRecord) {
 		final ORecordSchemaAware<?> record = iRecord;
 		final OClass cls = record.getSchemaClass();
 		if (cls == null)
@@ -153,9 +155,8 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 
 		OPropertyIndex index;
 		Object fieldValue;
-		String fieldValueString;
 
-		Map<OProperty, String> indexedProperties = null;
+		Map<OProperty, Object> indexedProperties = null;
 
 		for (OProperty prop : cls.properties()) {
 			index = prop.getIndex();
@@ -167,12 +168,10 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 					fieldValue = record.field(prop.getName());
 
 				if (fieldValue != null) {
-					fieldValueString = fieldValue.toString();
-
 					// PUSH THE PROPERTY IN THE SET TO BE WORKED BY THE EXTERNAL
 					if (indexedProperties == null)
-						indexedProperties = new HashMap<OProperty, String>();
-					indexedProperties.put(prop, fieldValueString);
+						indexedProperties = new HashMap<OProperty, Object>();
+					indexedProperties.put(prop, fieldValue);
 				}
 			}
 		}

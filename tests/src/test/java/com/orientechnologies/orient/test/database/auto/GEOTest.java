@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.util.List;
+import java.util.Set;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -27,6 +28,7 @@ import com.orientechnologies.orient.core.index.OPropertyIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
@@ -61,8 +63,8 @@ public class GEOTest {
 			point.reset();
 			point.setClassName("MapPoint");
 
-			point.field("x", (52.20472d + i / 10d));
-			point.field("y", (0.14056d + i / 10d));
+			point.field("x", (52.20472d + i / 100d));
+			point.field("y", (0.14056d + i / 100d));
 
 			point.save();
 		}
@@ -82,7 +84,6 @@ public class GEOTest {
 		Assert.assertTrue(result.size() != 0);
 
 		for (ODocument d : result) {
-
 			Assert.assertEquals(d.getClassName(), "MapPoint");
 			Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
 		}
@@ -96,7 +97,13 @@ public class GEOTest {
 
 		final OPropertyIndex xIndex = database.getMetadata().getSchema().getClass("MapPoint").getProperty("x").getIndex();
 		final OPropertyIndex yIndex = database.getMetadata().getSchema().getClass("MapPoint").getProperty("y").getIndex();
-		
+
+		final Set<ORecord<?>> xResult = xIndex.getUnderlying().getBetween(52.20472, 82.20472);
+		final Set<ORecord<?>> yResult = yIndex.getUnderlying().getBetween(0.14056, 30.14056);
+
+		xResult.retainAll(yResult);
+
+		Assert.assertTrue(xResult.size() != 0);
 
 		database.close();
 	}

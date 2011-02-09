@@ -18,6 +18,12 @@ package com.orientechnologies.orient.core.sql.functions.geo;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
+/**
+ * Haversine formula to compute the distance between 2 gro points.
+ * 
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * 
+ */
 public class OSQLFunctionDistance extends OSQLFunctionAbstract {
 	public static final String	NAME					= "distance";
 
@@ -37,16 +43,13 @@ public class OSQLFunctionDistance extends OSQLFunctionAbstract {
 				return null;
 
 			values[i] = ((Double) OType.convert(iParameters[i], Double.class)).doubleValue();
-
-			// CONVERT VALUES IN RADIANS
-			values[i] = Math.toRadians(values[i]);
 		}
 
-		final double deltaLat = values[2] - values[0];
-		final double deltaLon = values[3] - values[1];
+		final double deltaLat = Math.toRadians(values[2] - values[0]);
+		final double deltaLon = Math.toRadians(values[3] - values[1]);
 
-		final double a = Math.pow(Math.sin(deltaLat / 2), 2) + Math.cos(values[0]) * Math.cos(values[2])
-				* Math.pow(Math.sin(deltaLon / 2), 2);
+		final double a = Math.pow(Math.sin(deltaLat / 2), 2) + Math.cos(Math.toRadians(values[0]))
+				* Math.cos(Math.toRadians(values[2])) * Math.pow(Math.sin(deltaLon / 2), 2);
 		distance = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * EARTH_RADIUS;
 
 		return distance;

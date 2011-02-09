@@ -17,12 +17,14 @@ package com.orientechnologies.orient.core.index;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.orientechnologies.common.collection.ONavigableMap;
 import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -123,6 +125,56 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 				return Collections.EMPTY_LIST;
 
 			return values;
+
+		} finally {
+			releaseSharedLock();
+		}
+	}
+
+	/**
+	 * Returns a set of records with key between the range passed as parameter. Range bounds are included.
+	 * 
+	 * @param iRangeFrom
+	 *          Starting range
+	 * @param iRangeTo
+	 *          Ending range
+	 * @see #getBetween(Object, Object, boolean)
+	 * @return
+	 */
+	public Set<ORecord<?>> getBetween(final Object iRangeFrom, final Object iRangeTo) {
+		return getBetween(iRangeFrom, iRangeTo, true);
+	}
+
+	/**
+	 * Returns a set of records with key between the range passed as parameter.
+	 * 
+	 * @param iRangeFrom
+	 *          Starting range
+	 * @param iRangeTo
+	 *          Ending range
+	 * @param iInclusive
+	 *          Include from/to bounds
+	 * @see #getBetween(Object, Object)
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public Set<ORecord<?>> getBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {
+		if (iRangeFrom.getClass() != iRangeTo.getClass())
+			throw new IllegalArgumentException("Range from-to parameters are of different types");
+
+		acquireSharedLock();
+
+		try {
+			final ONavigableMap<Object, List<ORecord<?>>> subSet = map.subMap(iRangeFrom, iInclusive, iRangeTo, iInclusive);
+			if (subSet == null)
+				return Collections.EMPTY_SET;
+
+			final Set<ORecord<?>> result = new HashSet<ORecord<?>>();
+			for (List<ORecord<?>> v : subSet.values()) {
+				result.addAll(v);
+			}
+
+			return result;
 
 		} finally {
 			releaseSharedLock();

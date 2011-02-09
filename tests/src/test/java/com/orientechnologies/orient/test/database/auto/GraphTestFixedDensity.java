@@ -49,7 +49,7 @@ public class GraphTestFixedDensity {
 
 		database.setRoot("LinearGraph", rootNode);
 
-		System.out.println("Creation of the graph with deep=" + MAX_DEEP + " and fixed density=1"
+		System.out.println("Creation of the graph with depth=" + MAX_DEEP + " and fixed density=1"
 				+ ((System.currentTimeMillis() - time) / 1000f) + " sec.");
 
 		database.close();
@@ -63,7 +63,7 @@ public class GraphTestFixedDensity {
 
 		readSubNodesThroughEdges(database.getRoot("LinearGraph"));
 
-		System.out.println("Read of the entire graph with deep=" + nodeReadCounter + " and fixed density=" + DENSITY + " in "
+		System.out.println("Read of the entire graph with depth=" + nodeReadCounter + " and fixed density=" + DENSITY + " in "
 				+ ((System.currentTimeMillis() - time) / 1000f) + " sec.");
 
 		Assert.assertEquals(nodeReadCounter, nodeWrittenCounter);
@@ -76,7 +76,7 @@ public class GraphTestFixedDensity {
 		nodeReadCounter = -1;
 		readSubNodesThroughEdges(database.getRoot("LinearGraph"));
 
-		System.out.println("Indirect traverse with hot cache of the entire graph with deep=" + nodeReadCounter + " and fixed density="
+		System.out.println("Indirect traverse with hot cache of the entire graph with depth=" + nodeReadCounter + " and fixed density="
 				+ DENSITY + " in " + ((System.currentTimeMillis() - time) / 1000f) + " sec.");
 
 		Assert.assertEquals(nodeReadCounter, nodeWrittenCounter);
@@ -89,7 +89,7 @@ public class GraphTestFixedDensity {
 		nodeReadCounter = -1;
 		readSubNodesDirectly(database.getRoot("LinearGraph"));
 
-		System.out.println("Direct traverse with hot cache of the entire graph with deep=" + nodeReadCounter + " and fixed density="
+		System.out.println("Direct traverse with hot cache of the entire graph with depth=" + nodeReadCounter + " and fixed density="
 				+ DENSITY + " in " + ((System.currentTimeMillis() - time) / 1000f) + " sec.");
 
 		Assert.assertEquals(nodeReadCounter, nodeWrittenCounter);

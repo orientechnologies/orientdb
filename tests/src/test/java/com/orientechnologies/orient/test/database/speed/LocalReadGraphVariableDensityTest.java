@@ -40,7 +40,7 @@ public class LocalReadGraphVariableDensityTest {
 
 		OGraphVertexOutIterator iterator = readSubNodes(database.getRoot("HighDensityGraph"));
 
-		System.out.println("Read of the entire graph with deep=" + iterator.getMaxDeepLevel() + ". Total " + iterator.getCount()
+		System.out.println("Read of the entire graph with depth=" + iterator.getMaxDeepLevel() + ". Total " + iterator.getCount()
 				+ " nodes in " + ((System.currentTimeMillis() - time) / 1000f) + " sec.");
 
 		System.out.println("Repeating the same operation but with hot cache");
@@ -49,7 +49,7 @@ public class LocalReadGraphVariableDensityTest {
 
 		iterator = readSubNodes(database.getRoot("HighDensityGraph"));
 
-		System.out.println("Read using the cache of the entire graph with deep=" + iterator.getMaxDeepLevel() + ". Total "
+		System.out.println("Read using the cache of the entire graph with depth=" + iterator.getMaxDeepLevel() + ". Total "
 				+ iterator.getCount() + " nodes in " + ((System.currentTimeMillis() - time) / 1000f) + " sec.");
 
 		database.close();
