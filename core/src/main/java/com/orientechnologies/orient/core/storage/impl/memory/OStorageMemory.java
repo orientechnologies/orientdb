@@ -290,9 +290,6 @@ public class OStorageMemory extends OStorageEmbedded {
 		try {
 			return cluster.getEntries();
 
-		} catch (IOException e) {
-			throw new OStorageException("Error on count record in cluster: " + iClusterId, e);
-
 		} finally {
 			lock.releaseSharedLock(locked);
 		}

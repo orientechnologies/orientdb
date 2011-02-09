@@ -123,4 +123,13 @@ public abstract class OStorageAbstract implements OStorage {
 	public OSharedResourceAdaptive getLock() {
 		return lock;
 	}
+
+	public long getTotalRecords() {
+		long tot = 0;
+
+		for (OCluster c : getClusters())
+			tot += c.getEntries();
+
+		return tot;
+	}
 }

@@ -121,6 +121,11 @@ public interface OStorage {
 	 */
 	public long getSize();
 
+	/**
+	 * Returns the total number of records.
+	 */
+	public long getTotalRecords();
+
 	public int getDefaultClusterId();
 
 	public int getClusterIdByName(String iClusterName);

@@ -73,7 +73,7 @@ public interface OCluster {
 
 	public void updateVersion(long iPosition, int iVersion) throws IOException;
 
-	public long getEntries() throws IOException;
+	public long getEntries();
 
 	public long getFirstEntryPosition() throws IOException;
 

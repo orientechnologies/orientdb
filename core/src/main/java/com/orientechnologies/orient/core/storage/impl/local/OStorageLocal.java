@@ -540,11 +540,6 @@ public class OStorageLocal extends OStorageEmbedded {
 
 			return tot;
 
-		} catch (IOException e) {
-
-			OLogManager.instance().error(this, "Error on getting element counts", e);
-			return -1;
-
 		} finally {
 			lock.releaseSharedLock(locked);
 
@@ -590,11 +585,6 @@ public class OStorageLocal extends OStorageEmbedded {
 
 		try {
 			return clusters[iClusterId].getEntries();
-
-		} catch (IOException e) {
-
-			OLogManager.instance().error(this, "Error on getting element counts", e);
-			return -1;
 
 		} finally {
 			lock.releaseSharedLock(locked);
@@ -1139,8 +1129,7 @@ public class OStorageLocal extends OStorageEmbedded {
 			size += d.getSize();
 
 		for (OCluster c : clusters)
-			if (c instanceof OClusterLocal)
-				size += ((OClusterLocal) c).getSize();
+			size += c.getSize();
 
 		return size;
 	}
