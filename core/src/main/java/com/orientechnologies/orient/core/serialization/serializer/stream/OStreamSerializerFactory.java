@@ -29,8 +29,8 @@ public class OStreamSerializerFactory {
 			else if (iName.equals(OStreamSerializerLong.NAME))
 				return OStreamSerializerLong.INSTANCE;
 
-			else if (iName.equals(OStreamSerializerNumber.NAME))
-				return OStreamSerializerNumber.INSTANCE;
+			else if (iName.equals(OStreamSerializerLiteral.NAME))
+				return OStreamSerializerLiteral.INSTANCE;
 
 			else if (iName.equals(OStreamSerializerAnyRecord.NAME))
 				return OStreamSerializerAnyRecord.INSTANCE;
