@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.db.graph;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -135,7 +134,6 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		return createEdge(iSourceVertex, iDestVertex, null);
 	}
 
-	@SuppressWarnings("unchecked")
 	public ODocument createEdge(final ODocument iSourceVertex, final ODocument iDestVertex, final String iClassName) {
 		final boolean safeMode = beginBlock();
 
@@ -144,16 +142,16 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 			edge.field(EDGE_FIELD_IN, iSourceVertex);
 			edge.field(EDGE_FIELD_OUT, iDestVertex);
 
-			List<ODocument> outEdges = ((List<ODocument>) iSourceVertex.field(VERTEX_FIELD_OUT_EDGES));
+			ORecordLazyList outEdges = ((ORecordLazyList) iSourceVertex.field(VERTEX_FIELD_OUT_EDGES));
 			if (outEdges == null) {
-				outEdges = new ArrayList<ODocument>();
+				outEdges = new ORecordLazyList(underlying, ODocument.RECORD_TYPE);
 				iSourceVertex.field(VERTEX_FIELD_OUT_EDGES, outEdges);
 			}
 			outEdges.add(edge);
 
-			List<ODocument> inEdges = ((List<ODocument>) iDestVertex.field(VERTEX_FIELD_IN_EDGES));
+			ORecordLazyList inEdges = ((ORecordLazyList) iDestVertex.field(VERTEX_FIELD_IN_EDGES));
 			if (inEdges == null) {
-				inEdges = new ArrayList<ODocument>();
+				inEdges = new ORecordLazyList(underlying, ODocument.RECORD_TYPE);
 				iDestVertex.field(VERTEX_FIELD_IN_EDGES, inEdges);
 			}
 			inEdges.add(edge);
