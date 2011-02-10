@@ -114,7 +114,7 @@ public class OGraphEdge extends OGraphElement {
 
 		List<OGraphEdge> edges;
 
-		if (iDatabase.existsUserObjectByRID(sourceVertex.getIdentity())) {
+		if (sourceVertex != null && iDatabase.existsUserObjectByRID(sourceVertex.getIdentity())) {
 			// WORK ALSO WITH OGraphDatabase.EDGE_FIELD_IN MEMORY OBJECTS
 
 			final OGraphVertex vertex = (OGraphVertex) iDatabase.getUserObjectByRecord(sourceVertex, null);
@@ -129,7 +129,7 @@ public class OGraphEdge extends OGraphElement {
 			}
 		}
 
-		if (iDatabase.existsUserObjectByRID(targetVertex.getIdentity())) {
+		if (targetVertex != null && iDatabase.existsUserObjectByRID(targetVertex.getIdentity())) {
 			// WORK ALSO WITH OGraphDatabase.EDGE_FIELD_IN MEMORY OBJECTS
 
 			final OGraphVertex vertex = (OGraphVertex) iDatabase.getUserObjectByRecord(targetVertex, null);
