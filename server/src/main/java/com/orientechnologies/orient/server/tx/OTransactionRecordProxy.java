@@ -187,4 +187,9 @@ public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
 	public ORecordAbstract<?> setIdentity(ORecordId iIdentity) {
 		return null;
 	}
+
+	@Override
+	public long getSize() {
+		return 0;
+	}
 }

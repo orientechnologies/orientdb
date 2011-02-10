@@ -189,4 +189,11 @@ public interface ORecord<T> {
 	 * @return Object content in JSON format
 	 */
 	public String toJSON(String iFormat);
+
+	/**
+	 * Returns the size in bytes of the record.
+	 * 
+	 * @return
+	 */
+	public long getSize();
 }

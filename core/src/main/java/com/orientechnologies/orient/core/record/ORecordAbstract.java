@@ -237,6 +237,12 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		return this;
 	}
 
+	public long getSize() {
+		if (_source != null)
+			return _source.length;
+		return 0;
+	}
+
 	protected void setup() {
 		if (_recordId == null)
 			_recordId = new ORecordId();

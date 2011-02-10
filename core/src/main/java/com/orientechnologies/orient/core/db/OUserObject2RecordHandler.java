@@ -17,7 +17,6 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public interface OUserObject2RecordHandler {
 	public ORecordInternal<?> getRecordByUserObject(Object iPojo, boolean iIsMandatory);
