@@ -42,7 +42,7 @@ public class OServerCommandGetDocument extends OServerCommandAuthenticatedDbAbst
 		final String rid = parametersPos > -1 ? urlParts[2].substring(0, parametersPos) : urlParts[2];
 
 		try {
-			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
+			db = getProfiledDatabaseInstance(iRequest);
 
 			rec = db.load(new ORecordId(rid), fetchPlan);
 

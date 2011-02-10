@@ -37,7 +37,7 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 		final ODocument doc;
 
 		try {
-			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
+			db = getProfiledDatabaseInstance(iRequest);
 
 			if (urlParts.length > 2) {
 				// EXTRACT RID

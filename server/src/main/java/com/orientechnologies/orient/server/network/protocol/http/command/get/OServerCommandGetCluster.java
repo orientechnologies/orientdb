@@ -40,7 +40,7 @@ public class OServerCommandGetCluster extends OServerCommandAuthenticatedDbAbstr
 		ODatabaseDocumentTx db = null;
 
 		try {
-			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
+			db = getProfiledDatabaseInstance(iRequest);
 
 			if (db.getClusterIdByName(urlParts[2]) == -1)
 				throw new IllegalArgumentException("Invalid cluster '" + urlParts[2] + "'");

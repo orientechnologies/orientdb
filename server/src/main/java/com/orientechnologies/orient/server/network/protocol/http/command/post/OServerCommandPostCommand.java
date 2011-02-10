@@ -44,7 +44,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
 		final Object response;
 
 		try {
-			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
+			db = getProfiledDatabaseInstance(iRequest);
 
 			response = db.command(new OCommandSQL(text)).execute();
 

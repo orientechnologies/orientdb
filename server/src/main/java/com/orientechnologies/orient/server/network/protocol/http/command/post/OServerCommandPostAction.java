@@ -32,7 +32,7 @@ public class OServerCommandPostAction extends OServerCommandAuthenticatedPattern
 
 	@Override
 	public boolean execute(final OHttpRequest iRequest) throws Exception {
-		String[] urlParts = checkSyntax(iRequest.url, 1, "Syntax error: *.action");
+		final String[] urlParts = checkSyntax(iRequest.url, 1, "Syntax error: *.action");
 
 		iRequest.data.commandInfo = "Execute action";
 
@@ -43,7 +43,7 @@ public class OServerCommandPostAction extends OServerCommandAuthenticatedPattern
 		((ORecordId) doc.getIdentity()).clusterPosition = ORID.CLUSTER_POS_INVALID;
 
 		try {
-			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
+			db = getProfiledDatabaseInstance(iRequest);
 
 			doc.setDatabase(db);
 			doc.save();

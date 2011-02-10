@@ -35,7 +35,7 @@ public class OServerCommandDeleteDocument extends OServerCommandDocumentAbstract
 
 			iRequest.data.commandInfo = "Delete document";
 
-			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
+			db = getProfiledDatabaseInstance(iRequest);
 
 			// PARSE PARAMETERS
 			final int parametersPos = urlParts[2].indexOf("?");

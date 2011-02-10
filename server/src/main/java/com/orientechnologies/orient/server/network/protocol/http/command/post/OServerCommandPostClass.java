@@ -35,7 +35,7 @@ public class OServerCommandPostClass extends OServerCommandAuthenticatedDbAbstra
 		ODatabaseDocumentTx db = null;
 
 		try {
-			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
+			db = getProfiledDatabaseInstance(iRequest);
 
 			if (db.getMetadata().getSchema().getClass(urlParts[2]) != null)
 				throw new IllegalArgumentException("Class '" + urlParts[2] + "' already exists");

@@ -40,7 +40,7 @@ public class OServerCommandGetClass extends OServerCommandAuthenticatedDbAbstrac
 		ODatabaseDocumentTx db = null;
 
 		try {
-			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
+			db = getProfiledDatabaseInstance(iRequest);
 
 			if (db.getMetadata().getSchema().getClass(urlParts[2]) == null)
 				throw new IllegalArgumentException("Invalid class '" + urlParts[2] + "'");

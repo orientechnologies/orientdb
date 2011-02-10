@@ -53,24 +53,24 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
 		if (urlParts.length < 2)
 			throw new OHttpRequestException("Syntax error in URL. Expected is: <command>/<database>[/...]");
 
-		String dbName = urlParts[1];
+		iRequest.databaseName = urlParts[1];
 
-		dbName = dbName.replace(DBNAME_DIR_SEPARATOR, '/');
+		iRequest.databaseName = iRequest.databaseName.replace(DBNAME_DIR_SEPARATOR, '/');
 
 		if (iRequest.sessionId == null || (iRequest.sessionId != null && iRequest.sessionId.length() == 1)) {
 			// NO SESSION
 			if (iRequest.authorization == null || SESSIONID_LOGOUT.equals(iRequest.sessionId)) {
-				sendAuthorizationRequest(iRequest, dbName);
+				sendAuthorizationRequest(iRequest, iRequest.databaseName);
 				return false;
 			} else {
 				if (iRequest.url != null)
-					return authenticate(iRequest, dbName);
+					return authenticate(iRequest, iRequest.databaseName);
 			}
 		} else {
 			// CHECK THE SESSION VALIDITY
 			if (iRequest.sessionId.length() > 1 && OHttpSessionManager.getInstance().getSession(iRequest.sessionId) == null) {
 				// SESSION EXPIRED
-				sendAuthorizationRequest(iRequest, dbName);
+				sendAuthorizationRequest(iRequest, iRequest.databaseName);
 				return false;
 			}
 			return true;
@@ -87,7 +87,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
 			db = OSharedDocumentDatabase.acquire(iDatabaseName, parts.get(0), parts.get(1));
 
 			// AUTHENTICATED: CREATE THE SESSION
-			iRequest.sessionId = OHttpSessionManager.getInstance().createSession();
+			iRequest.sessionId = OHttpSessionManager.getInstance().createSession(iDatabaseName, parts.get(0));
 			return true;
 
 		} catch (OSecurityAccessException e) {
@@ -114,13 +114,12 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
 				false);
 	}
 
-	protected ODatabaseDocumentTx getProfiledDatabaseInstance(final OHttpRequest iRequest, final String iDatabaseURL)
-			throws InterruptedException {
+	protected ODatabaseDocumentTx getProfiledDatabaseInstance(final OHttpRequest iRequest) throws InterruptedException {
 		if (iRequest.authorization == null)
-			throw new OSecurityAccessException(iDatabaseURL, "No user and password received");
+			throw new OSecurityAccessException(iRequest.databaseName, "No user and password received");
 
 		final List<String> parts = OStringSerializerHelper.split(iRequest.authorization, ':');
 
-		return OSharedDocumentDatabase.acquire(iDatabaseURL, parts.get(0), parts.get(1));
+		return OSharedDocumentDatabase.acquire(iRequest.databaseName, parts.get(0), parts.get(1));
 	}
 }

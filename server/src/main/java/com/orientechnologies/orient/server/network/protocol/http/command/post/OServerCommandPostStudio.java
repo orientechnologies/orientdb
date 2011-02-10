@@ -45,7 +45,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 		try {
 			final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: studio/<database>/<context>");
 
-			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
+			db = getProfiledDatabaseInstance(iRequest);
 
 			final String req = iRequest.content;
 

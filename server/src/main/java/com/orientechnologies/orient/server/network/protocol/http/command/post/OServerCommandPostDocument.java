@@ -38,7 +38,7 @@ public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
 		ODocument doc = null;
 
 		try {
-			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
+			db = getProfiledDatabaseInstance(iRequest);
 
 			doc = new ODocument(db).fromJSON(iRequest.content);
 

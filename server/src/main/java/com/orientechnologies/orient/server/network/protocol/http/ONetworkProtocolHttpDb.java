@@ -32,6 +32,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.get.OSe
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDictionary;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDisconnect;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDocument;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetQuery;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetServer;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContent;
 import com.orientechnologies.orient.server.network.protocol.http.command.options.OServerCommandOptions;
@@ -40,7 +41,6 @@ import com.orientechnologies.orient.server.network.protocol.http.command.post.OS
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostDocument;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostProperty;
-import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostQuery;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostStudio;
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutDocument;
 
@@ -61,7 +61,7 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 		registerCommand(new OServerCommandGetDatabase());
 		registerCommand(new OServerCommandGetDictionary());
 		registerCommand(new OServerCommandGetDocument());
-		registerCommand(new OServerCommandPostQuery());
+		registerCommand(new OServerCommandGetQuery());
 		registerCommand(new OServerCommandGetServer());
 		registerCommand(new OServerCommandGetStaticContent());
 

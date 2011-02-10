@@ -34,7 +34,7 @@ public class OServerCommandGetDictionary extends OServerCommandAuthenticatedDbAb
 		ODatabaseDocumentTx db = null;
 
 		try {
-			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
+			db = getProfiledDatabaseInstance(iRequest);
 
 			final ORecord<?> record = db.getDictionary().get(urlParts[2]);
 			if (record == null)

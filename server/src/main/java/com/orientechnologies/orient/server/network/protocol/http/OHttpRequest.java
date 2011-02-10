@@ -32,6 +32,7 @@ public class OHttpRequest {
 	public String												url;
 	public String												httpVersion;
 	public String												content;
+	public String												databaseName;
 	public ONetworkProtocolData					data;
 	public ONetworkProtocolHttpAbstract	executor;
 

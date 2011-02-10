@@ -74,7 +74,7 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 			if (urlParts.length > 2) {
 				db = OSharedDocumentDatabase.acquire(urlParts[1], urlParts[2], urlParts[3]);
 			} else
-				db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
+				db = getProfiledDatabaseInstance(iRequest);
 
 			final StringWriter buffer = new StringWriter();
 			final OJSONWriter json = new OJSONWriter(buffer);
