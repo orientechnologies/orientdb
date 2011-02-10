@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.network.protocol.http.command.post;
+package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
 import java.util.List;
 
@@ -25,7 +25,7 @@ import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
-public class OServerCommandPostQuery extends OServerCommandAuthenticatedDbAbstract {
+public class OServerCommandGetQuery extends OServerCommandAuthenticatedDbAbstract {
 	private static final String[]	NAMES	= { "GET|query/*" };
 
 	@Override
@@ -34,7 +34,7 @@ public class OServerCommandPostQuery extends OServerCommandAuthenticatedDbAbstra
 		String[] urlParts = checkSyntax(
 				iRequest.url,
 				4,
-				"Syntax error: query/<database>/sql/query[/<limit>][/<fetchPlan>]. <br/>Limit is optional and is setted to 20 by default. Set expressely to 0 to have no limits.");
+				"Syntax error: query/<database>/sql/query[/<limit>][/<fetchPlan>].<br/>Limit is optional and is setted to 20 by default. Set expressely to 0 to have no limits.");
 
 		final int limit = urlParts.length > 4 ? Integer.parseInt(urlParts[4]) : 20;
 
@@ -46,16 +46,17 @@ public class OServerCommandPostQuery extends OServerCommandAuthenticatedDbAbstra
 		iRequest.data.commandDetail = text;
 
 		if (!text.toLowerCase().startsWith("select"))
-			throw new IllegalArgumentException("Only SQL Select are valid using Query command");
+			throw new IllegalArgumentException("Only SQL Select commands are valid using Query command");
 
 		ODatabaseDocumentTx db = null;
 
 		final List<ORecord<?>> response;
 
 		try {
-			db = getProfiledDatabaseInstance(iRequest, urlParts[1]);
+			db = getProfiledDatabaseInstance(iRequest);
 
-			response = (List<ORecord<?>>) db.command(new OSQLSynchQuery<ORecordSchemaAware<?>>(text, limit).setFetchPlan(fetchPlan)).execute();
+			response = (List<ORecord<?>>) db.command(new OSQLSynchQuery<ORecordSchemaAware<?>>(text, limit).setFetchPlan(fetchPlan))
+					.execute();
 
 		} finally {
 			if (db != null)
