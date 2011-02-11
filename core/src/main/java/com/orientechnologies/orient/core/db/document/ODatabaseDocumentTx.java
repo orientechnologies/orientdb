@@ -97,8 +97,8 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 			super.save(doc);
 
 		} catch (Exception e) {
-			OLogManager.instance().exception("Error on saving record #%s of class '%s'", e, ODatabaseException.class, iContent.getIdentity(),
-					(doc.getClassName() != null ? doc.getClassName() : "?"));
+			OLogManager.instance().exception("Error on saving record #%s of class '%s'", e, ODatabaseException.class,
+					iContent.getIdentity(), (doc.getClassName() != null ? doc.getClassName() : "?"));
 		}
 		return this;
 	}
@@ -139,7 +139,8 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 				clusterIds = new int[] { id };
 
 			if (id == clusterIds.length)
-				throw new IllegalArgumentException("Cluster name " + iClusterName + " is not configured to store the class " + doc.getClassName());
+				throw new IllegalArgumentException("Cluster name " + iClusterName + " is not configured to store the class "
+						+ doc.getClassName());
 		}
 
 		doc.validate();
@@ -157,8 +158,8 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 			underlying.delete(iContent);
 
 		} catch (Exception e) {
-			OLogManager.instance().exception("Error on deleting record #%s of class '%s'", e, ODatabaseException.class, iContent.getIdentity(),
-					iContent.getClassName());
+			OLogManager.instance().exception("Error on deleting record #%s of class '%s'", e, ODatabaseException.class,
+					iContent.getIdentity(), iContent.getClassName());
 		}
 		return this;
 	}

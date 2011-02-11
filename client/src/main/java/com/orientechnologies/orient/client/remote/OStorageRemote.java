@@ -617,38 +617,28 @@ public class OStorageRemote extends OStorageAbstract {
 
 			try {
 				final int reqId;
+				final List<OTransactionEntry> allEntries = new ArrayList<OTransactionEntry>();
 				try {
 					reqId = beginRequest(OChannelBinaryProtocol.REQUEST_TX_COMMIT);
 					network.writeInt(iTx.getId());
-					network.writeInt(iTx.size());
 
-					for (OTransactionEntry txEntry : iTx.getEntries()) {
-						if (txEntry.status == OTransactionEntry.LOADED)
-							// JUMP LOADED OBJECTS
-							continue;
+					final List<OTransactionEntry> tmpEntries = new ArrayList<OTransactionEntry>();
 
-						network.writeByte(txEntry.status);
-						network.writeShort((short) txEntry.getRecord().getIdentity().getClusterId());
-						network.writeByte(txEntry.getRecord().getRecordType());
+					while (iTx.getEntries().iterator().hasNext()) {
+						for (OTransactionEntry txEntry : iTx.getEntries())
+							tmpEntries.add(txEntry);
 
-						switch (txEntry.status) {
-						case OTransactionEntry.CREATED:
-							network.writeString(txEntry.clusterName);
-							network.writeBytes(txEntry.getRecord().toStream());
-							break;
+						iTx.clearEntries();
 
-						case OTransactionEntry.UPDATED:
-							network.writeLong(txEntry.getRecord().getIdentity().getClusterPosition());
-							network.writeInt(txEntry.getRecord().getVersion());
-							network.writeBytes(txEntry.getRecord().toStream());
-							break;
-
-						case OTransactionEntry.DELETED:
-							network.writeLong(txEntry.getRecord().getIdentity().getClusterPosition());
-							network.writeInt(txEntry.getRecord().getVersion());
-							break;
+						for (OTransactionEntry txEntry : tmpEntries) {
+							network.writeByte((byte) 1);
+							commitEntry(txEntry);
 						}
+
+						allEntries.addAll(tmpEntries);
+						tmpEntries.clear();
 					}
+					network.writeByte((byte) 0);
 				} finally {
 					endRequest();
 				}
@@ -661,7 +651,7 @@ public class OStorageRemote extends OStorageAbstract {
 						rid = network.readRID();
 
 						// SEARCH THE RECORD WITH THAT ID TO UPDATE THE VERSION
-						for (OTransactionEntry txEntry : iTx.getEntries()) {
+						for (OTransactionEntry txEntry : allEntries) {
 							if (txEntry.getRecord().getIdentity().equals(rid)) {
 								txEntry.getRecord().setVersion(network.readInt());
 								break;
@@ -673,7 +663,7 @@ public class OStorageRemote extends OStorageAbstract {
 				}
 
 				// UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT
-				OTransactionAbstract.updateCacheFromEntries(this, iTx, iTx.getEntries());
+				OTransactionAbstract.updateCacheFromEntries(this, iTx, allEntries);
 
 				break;
 			} catch (Exception e) {
@@ -1303,6 +1293,33 @@ public class OStorageRemote extends OStorageAbstract {
 
 			if (OLogManager.instance().isInfoEnabled())
 				OLogManager.instance().info(this, "Received new cluster configuration: %s", clusterConfiguration.toJSON(""));
+		}
+	}
+
+	private void commitEntry(final OTransactionEntry txEntry) throws IOException {
+		if (txEntry.status == OTransactionEntry.LOADED)
+			// JUMP LOADED OBJECTS
+			return;
+
+		network.writeByte(txEntry.status);
+		network.writeShort((short) txEntry.getRecord().getIdentity().getClusterId());
+		network.writeLong(txEntry.getRecord().getIdentity().getClusterPosition());
+		network.writeByte(txEntry.getRecord().getRecordType());
+
+		switch (txEntry.status) {
+		case OTransactionEntry.CREATED:
+			network.writeString(txEntry.clusterName);
+			network.writeBytes(txEntry.getRecord().toStream());
+			break;
+
+		case OTransactionEntry.UPDATED:
+			network.writeInt(txEntry.getRecord().getVersion());
+			network.writeBytes(txEntry.getRecord().toStream());
+			break;
+
+		case OTransactionEntry.DELETED:
+			network.writeInt(txEntry.getRecord().getVersion());
+			break;
 		}
 	}
 }

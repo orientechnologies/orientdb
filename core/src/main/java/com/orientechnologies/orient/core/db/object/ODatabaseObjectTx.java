@@ -261,22 +261,23 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 			for (OTransactionEntry entry : entries) {
 				pojo = records2Objects.get(entry.getRecord());
 
-				switch (entry.status) {
-				case OTransactionEntry.CREATED:
-					rid2Records.put(entry.getRecord().getIdentity(), (ODocument) entry.getRecord());
-					OObjectSerializerHelper.setObjectID(entry.getRecord().getIdentity(), pojo);
+				if (pojo != null)
+					switch (entry.status) {
+					case OTransactionEntry.CREATED:
+						rid2Records.put(entry.getRecord().getIdentity(), (ODocument) entry.getRecord());
+						OObjectSerializerHelper.setObjectID(entry.getRecord().getIdentity(), pojo);
 
-				case OTransactionEntry.UPDATED:
-					OObjectSerializerHelper.setObjectVersion(entry.getRecord().getVersion(), pojo);
-					break;
+					case OTransactionEntry.UPDATED:
+						OObjectSerializerHelper.setObjectVersion(entry.getRecord().getVersion(), pojo);
+						break;
 
-				case OTransactionEntry.DELETED:
-					OObjectSerializerHelper.setObjectID(null, pojo);
-					OObjectSerializerHelper.setObjectVersion(null, pojo);
+					case OTransactionEntry.DELETED:
+						OObjectSerializerHelper.setObjectID(null, pojo);
+						OObjectSerializerHelper.setObjectVersion(null, pojo);
 
-					unregisterPojo(pojo, (ODocument) entry.getRecord());
-					break;
-				}
+						unregisterPojo(pojo, (ODocument) entry.getRecord());
+						break;
+					}
 			}
 		}
 

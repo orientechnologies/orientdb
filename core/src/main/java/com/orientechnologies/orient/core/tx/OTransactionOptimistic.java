@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.tx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
 	public OTransactionOptimistic(final ODatabaseRecordTx iDatabase, final int iId) {
@@ -85,7 +86,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 	private void addRecord(final ORecordInternal<?> iRecord, final byte iStatus, final String iClusterName) {
 		checkTransaction();
 
-		if (status == OTransaction.TXSTATUS.COMMITTING) {
+		if (status == OTransaction.TXSTATUS.COMMITTING && database.getStorage() instanceof OStorageEmbedded) {
 			// I'M COMMITTING, BYPASS LOCAL BUFFER
 			switch (iStatus) {
 			case OTransactionEntry.CREATED:

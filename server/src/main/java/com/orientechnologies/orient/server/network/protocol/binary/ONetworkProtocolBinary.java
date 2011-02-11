@@ -650,15 +650,20 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			final OTransactionOptimisticProxy tx = new OTransactionOptimisticProxy(
 					(ODatabaseRecordTx) connection.database.getUnderlying(), channel);
 
-			((OStorageLocal) connection.database.getStorage()).commit(connection.database.getId(), tx);
+			connection.database.begin(tx);
+			try {
+				connection.database.commit();
+				sendOk(lastClientTxId);
 
-			sendOk(lastClientTxId);
-
-			// SEND BACK ALL THE NEW VERSIONS FOR THE UPDATED RECORDS
-			channel.writeInt(tx.getUpdatedRecords().size());
-			for (Entry<ORecordId, ORecord<?>> entry : tx.getUpdatedRecords().entrySet()) {
-				channel.writeRID(entry.getKey());
-				channel.writeInt(entry.getValue().getVersion());
+				// SEND BACK ALL THE NEW VERSIONS FOR THE UPDATED RECORDS
+				channel.writeInt(tx.getUpdatedRecords().size());
+				for (Entry<ORecordId, ORecord<?>> entry : tx.getUpdatedRecords().entrySet()) {
+					channel.writeRID(entry.getKey());
+					channel.writeInt(entry.getValue().getVersion());
+				}
+			} catch (Exception e) {
+				connection.database.rollback();
+				sendError(lastClientTxId, e);
 			}
 
 			break;

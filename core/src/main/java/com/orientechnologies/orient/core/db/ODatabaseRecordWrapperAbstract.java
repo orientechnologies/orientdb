@@ -53,6 +53,10 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 		return underlying.begin(iType);
 	}
 
+	public ODatabaseComplex<ORecordInternal<?>> begin(final OTransaction iTx) {
+		return underlying.begin(iTx);
+	}
+
 	public ODatabaseComplex<ORecordInternal<?>> commit() {
 		return underlying.commit();
 	}

@@ -86,6 +86,10 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 		return (ODatabaseComplex<T>) underlying.begin(iType);
 	}
 
+	public ODatabaseComplex<T> begin(final OTransaction iTx) {
+		return (ODatabaseComplex<T>) underlying.begin(iTx);
+	}
+
 	public ODatabaseComplex<T> commit() {
 		clearNewEntriesFromCache();
 

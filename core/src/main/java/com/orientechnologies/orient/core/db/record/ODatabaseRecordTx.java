@@ -71,6 +71,23 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 		return this;
 	}
 
+	public ODatabaseRecord begin(final OTransaction iTx) {
+		currentTx.rollback();
+
+		// WAKE UP LISTENERS
+		for (ODatabaseListener listener : underlying.getListeners())
+			try {
+				listener.onBeforeTxBegin(underlying);
+			} catch (Throwable t) {
+				OLogManager.instance().error(this, "Error before tx begin", t);
+			}
+
+		currentTx = iTx;
+		currentTx.begin();
+		
+		return this;
+	}
+
 	public ODatabaseRecord commit() {
 		// WAKE UP LISTENERS
 		for (ODatabaseListener listener : underlying.getListeners())

@@ -147,6 +147,13 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	public ODatabaseComplex<T> begin(TXTYPE iStatus);
 
 	/**
+	 * Attaches a transaction as current.
+	 * 
+	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 */
+	public ODatabaseComplex<T> begin(OTransaction iTx);
+
+	/**
 	 * Commits the current transaction. The approach is all or nothing. All changes will be permanent following the storage type. If
 	 * the operation succeed all the entities changed inside the transaction context will be effectives. If the operation fails, all
 	 * the changed entities will be restored in the datastore. Memory instances are not guaranteed to being restored as well.
