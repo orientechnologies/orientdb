@@ -279,16 +279,16 @@ public abstract class OStringSerializerHelper {
 				if (insideLinkPart > 0 && c != '-' && !Character.isDigit(c) && c != ORID.SEPARATOR && c != LINK)
 					insideLinkPart = 0;
 
+				if ((c == '\'' || c == '"') && !encodeMode) {
+					// START STRING
+					stringBeginChar = c;
+				}
+
 				if (insideParenthesis == 0 && insideCollection == 0 && insideMap == 0 && insideLinkPart == 0) {
 					// OUTSIDE A PARAMS/COLLECTION/MAP
-					if ((c == '\'' || c == '"') && !encodeMode) {
-						// START STRING
-						stringBeginChar = c;
-					} else {
-						if (isCharPresent(c, iRecordSeparator)) {
-							// SEPARATOR (OUTSIDE A STRING): PUSH
-							return i + 1;
-						}
+					if (isCharPresent(c, iRecordSeparator)) {
+						// SEPARATOR (OUTSIDE A STRING): PUSH
+						return i + 1;
 					}
 				}
 
