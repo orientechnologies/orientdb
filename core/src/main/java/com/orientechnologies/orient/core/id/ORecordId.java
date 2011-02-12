@@ -24,6 +24,8 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 public class ORecordId implements ORID, Comparable<ORecordId>, Comparator<ORecordId> {
+	private static final long			serialVersionUID				= 247070594054408657L;
+
 	public static final int				PERSISTENT_SIZE					= OConstants.SIZE_SHORT + OConstants.SIZE_LONG;
 
 	public static final ORecordId	EMPTY_RECORD_ID					= new ORecordId();

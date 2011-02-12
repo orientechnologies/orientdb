@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.object;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,14 +26,15 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-@SuppressWarnings("serial")
-public class OLazyObjectMap<TYPE> extends HashMap<String, Object> {
+public class OLazyObjectMap<TYPE> extends HashMap<String, Object> implements Serializable {
+	private static final long						serialVersionUID	= 4146521893082733694L;
+	
 	private final ORecord<?>						sourceRecord;
 	private ODatabasePojoAbstract<TYPE>	database;
 	private final Map<String, Object>		underlying;
 	private String											fetchPlan;
-	private boolean											converted				= false;
-	private boolean											convertToRecord	= true;
+	private boolean											converted					= false;
+	private boolean											convertToRecord		= true;
 
 	public OLazyObjectMap(final ODatabasePojoAbstract<TYPE> database, final ORecord<?> iSourceRecord,
 			final Map<String, Object> iSource) {

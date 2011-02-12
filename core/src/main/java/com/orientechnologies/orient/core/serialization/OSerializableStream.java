@@ -15,9 +15,11 @@
  */
 package com.orientechnologies.orient.core.serialization;
 
+import java.io.Serializable;
+
 import com.orientechnologies.orient.core.exception.OSerializationException;
 
-public interface OSerializableStream {
+public interface OSerializableStream extends Serializable {
 	public byte[] toStream() throws OSerializationException;
 
 	public OSerializableStream fromStream(byte[] iStream) throws OSerializationException;

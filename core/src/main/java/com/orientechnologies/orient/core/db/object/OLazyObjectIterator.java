@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.object;
 
+import java.io.Serializable;
 import java.util.Iterator;
 
 import com.orientechnologies.orient.core.db.ODatabasePojoAbstract;
@@ -29,12 +30,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 @SuppressWarnings({ "unchecked" })
-public class OLazyObjectIterator<TYPE> implements Iterator<TYPE> {
-	private final ORecord<?>											sourceRecord;
+public class OLazyObjectIterator<TYPE> implements Iterator<TYPE>, Serializable {
+	private static final long									serialVersionUID	= -4012483076050044405L;
+
+	private final ORecord<?>									sourceRecord;
 	private final ODatabasePojoAbstract<TYPE>	database;
-	private final Iterator<Object>								underlying;
-	private String																fetchPlan;
-	final private boolean													convertToRecord;
+	private final Iterator<Object>						underlying;
+	private String														fetchPlan;
+	final private boolean											convertToRecord;
 
 	public OLazyObjectIterator(final ODatabasePojoAbstract<TYPE> database, final ORecord<?> iSourceRecord,
 			final Iterator<Object> iIterator, final boolean iConvertToRecord) {
