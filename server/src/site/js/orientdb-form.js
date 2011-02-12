@@ -14,18 +14,31 @@
  * limitations under the License.
  */
 
-function OForm() {
+function OForm(options) {
 	this.object = null;
 	this.templateMap = {};
 	this.fieldTypes = {};
+	this.options = {
+		debug : false
+	};
+
+	if (options != null) {
+		for (o in options)
+			this.options[o] = options[o];
+	}
 
 	/**
 	 * Binds an object to the current page. When called recursively, prefix
 	 * parameter contains the caller object's field.
 	 */
-	OForm.prototype.object2form = function(obj, prefix, level) {
+	OForm.prototype.object2form = function(obj, prefix, template, level) {
 		if (this.object == null)
 			this.object = obj;
+
+		if (template == null)
+			template = "";
+		else
+			template = template + "_";
 
 		if (prefix == null)
 			prefix = "";
@@ -47,9 +60,10 @@ function OForm() {
 			var component = $("#" + componentName);
 
 			if (value instanceof Array)
-				this.array2component(value, component, componentName, level);
+				this.array2component(value, component, componentName, template
+						+ field, level);
 			else if (typeof value == "object")
-				this.object2form(value, prefix + field, level);
+				this.object2form(value, componentName, template + field, level);
 			else
 				this.value2component(value, component, level);
 		}
@@ -63,16 +77,24 @@ function OForm() {
 	 * @param component
 	 *            HTML component
 	 */
-	OForm.prototype.array2component = function(array, component, prefix, level) {
+	OForm.prototype.array2component = function(array, component, prefix,
+			template, level) {
 		if (component != null) {
 			componentChild = component.children().last();
 
-			var referenceRow = this.templateMap[prefix];
-
+			var referenceRow = this.templateMap[template];
 			if (referenceRow == null) {
 				// FIRST TIME: SEARCH THE TEMPLATE
 				referenceRow = componentChild.html();
-				this.templateMap[prefix] = referenceRow;
+				this.templateMap[template] = referenceRow;
+			}
+
+			if (referenceRow == null) {
+				// NOT FOUND
+				if (this.options.debug)
+					alert("OrientDB Forms: can't find id for template \""
+							+ template + "\"");
+				return;
 			}
 
 			component.empty();
@@ -90,7 +112,8 @@ function OForm() {
 					if (index == 0)
 						this.fieldTypes[prefix] = 'o';
 
-					this.object2form(value, prefix + "_" + index, level + 1);
+					this.object2form(value, prefix + "_" + index, template
+							+ "_?0", level + 1);
 				} else {
 					if (index == 0)
 						this.fieldTypes[prefix] = 'v';

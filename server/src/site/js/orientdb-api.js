@@ -32,13 +32,13 @@ function ODatabase(databasePath) {
 	this.urlPrefix = "";
 
 	if (databasePath) {
-		this.databaseUrl = document.location.origin;
-		this.databaseName = databasePath.substring(this.databaseUrl.length + 1);
+		this.databaseUrl = document.location.href;
+		this.databaseName = databasePath.substring(this.databaseUrl.length);
 		if (this.databaseName.indexOf('/') > -1) {
 			this.encodedDatabaseName = "";
 			var parts = this.databaseName.split('/');
 			for (p in parts) {
-				if( this.encodedDatabaseName.length > 0 )
+				if (this.encodedDatabaseName.length > 0)
 					this.encodedDatabaseName += '$';
 				this.encodedDatabaseName += parts[p];
 			}
@@ -111,7 +111,7 @@ function ODatabase(databasePath) {
 			userPass = '';
 		}
 		if (authProxy != null && authProxy != '') {
-			urlPrefix = this.databaseUrl + '/' + authProxy;
+			urlPrefix = this.databaseUrl + '/' + authProxy + "/";
 		} else
 			urlPrefix = this.databaseUrl;
 
@@ -120,7 +120,7 @@ function ODatabase(databasePath) {
 		}
 		$.ajax({
 			type : type,
-			url : urlPrefix + '/connect/' + this.encodedDatabaseName,
+			url : urlPrefix + 'connect/' + this.encodedDatabaseName,
 			context : this,
 			async : false,
 			username : userName,
@@ -156,8 +156,8 @@ function ODatabase(databasePath) {
 		}
 		$.ajax({
 			type : "GET",
-			url : urlPrefix + '/query/' + this.encodedDatabaseName + '/sql/' + iQuery
-					+ iLimit + iFetchPlan,
+			url : urlPrefix + 'query/' + this.encodedDatabaseName + '/sql/'
+					+ iQuery + iLimit + iFetchPlan,
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -188,8 +188,8 @@ function ODatabase(databasePath) {
 
 		$.ajax({
 			type : "GET",
-			url : urlPrefix + '/document/' + this.encodedDatabaseName + '/' + iRID
-					+ iFetchPlan,
+			url : urlPrefix + 'document/' + this.encodedDatabaseName + '/'
+					+ iRID + iFetchPlan,
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -214,7 +214,8 @@ function ODatabase(databasePath) {
 
 		$.ajax({
 			type : methodType,
-			url : urlPrefix + '/document/' + this.encodedDatabaseName + '/' + rid,
+			url : urlPrefix + 'document/' + this.encodedDatabaseName + '/'
+					+ rid,
 			data : $.toJSON(obj),
 			processData : false,
 			context : this,
@@ -244,7 +245,8 @@ function ODatabase(databasePath) {
 
 		$.ajax({
 			type : 'DELETE',
-			url : urlPrefix + '/document/' + this.encodedDatabaseName + '/' + rid,
+			url : urlPrefix + 'document/' + this.encodedDatabaseName + '/'
+					+ rid,
 			processData : false,
 			context : this,
 			async : false,
@@ -266,7 +268,8 @@ function ODatabase(databasePath) {
 		}
 		$.ajax({
 			type : "GET",
-			url : urlPrefix + '/class/' + this.encodedDatabaseName + '/' + iClassName,
+			url : urlPrefix + 'class/' + this.encodedDatabaseName + '/'
+					+ iClassName,
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -287,7 +290,8 @@ function ODatabase(databasePath) {
 		}
 		$.ajax({
 			type : "POST",
-			url : urlPrefix + '/class/' + this.encodedDatabaseName + '/' + iClassName,
+			url : urlPrefix + 'class/' + this.encodedDatabaseName + '/'
+					+ iClassName,
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -308,7 +312,7 @@ function ODatabase(databasePath) {
 		}
 		$.ajax({
 			type : "GET",
-			url : urlPrefix + '/cluster/' + this.encodedDatabaseName + '/'
+			url : urlPrefix + 'cluster/' + this.encodedDatabaseName + '/'
 					+ iClassName,
 			context : this,
 			async : false,
@@ -330,7 +334,7 @@ function ODatabase(databasePath) {
 		}
 		$.ajax({
 			type : "POST",
-			url : urlPrefix + '/command/' + this.encodedDatabaseName + '/sql/'
+			url : urlPrefix + 'command/' + this.encodedDatabaseName + '/sql/'
 					+ iCommand + "/",
 			context : this,
 			async : false,
@@ -352,7 +356,7 @@ function ODatabase(databasePath) {
 		}
 		$.ajax({
 			type : "GET",
-			url : urlPrefix + '/server',
+			url : urlPrefix + 'server',
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -395,7 +399,7 @@ function ODatabase(databasePath) {
 		if (this.databaseInfo != null) {
 			$.ajax({
 				type : 'GET',
-				url : urlPrefix + '/disconnect',
+				url : urlPrefix + 'disconnect',
 				dataType : "json",
 				async : false,
 				context : this,
