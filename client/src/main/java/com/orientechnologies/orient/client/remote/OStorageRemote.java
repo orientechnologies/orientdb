@@ -1136,7 +1136,7 @@ public class OStorageRemote extends OStorageAbstract {
 		String remoteHost;
 		String[] remotePorts;
 
-		int dbPos = url.indexOf("/");
+		int dbPos = url.indexOf('/');
 		if (dbPos == -1) {
 			// SHORT FORM
 			name = url;
@@ -1154,7 +1154,7 @@ public class OStorageRemote extends OStorageAbstract {
 				else
 					endPos = dbPos;
 
-				int posRemotePort = url.indexOf(":", startPos);
+				int posRemotePort = url.indexOf(':', startPos);
 
 				if (posRemotePort != -1 && posRemotePort < endPos) {
 					remoteHost = url.substring(startPos, posRemotePort);

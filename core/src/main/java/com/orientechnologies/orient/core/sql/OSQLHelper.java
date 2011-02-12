@@ -136,7 +136,7 @@ public class OSQLHelper {
 			}
 			fieldValue = coll;
 
-		} else if (iValue.indexOf(":") > 0)
+		} else if (iValue.indexOf(':') > 0)
 			// RID
 			fieldValue = new ORecordId(iValue.trim());
 		else {

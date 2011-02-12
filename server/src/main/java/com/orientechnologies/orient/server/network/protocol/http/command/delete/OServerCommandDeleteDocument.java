@@ -38,7 +38,7 @@ public class OServerCommandDeleteDocument extends OServerCommandDocumentAbstract
 			db = getProfiledDatabaseInstance(iRequest);
 
 			// PARSE PARAMETERS
-			final int parametersPos = urlParts[2].indexOf("?");
+			final int parametersPos = urlParts[2].indexOf('?');
 			final String rid = parametersPos > -1 ? urlParts[2].substring(0, parametersPos) : urlParts[2];
 			final ORecordId recorId = new ORecordId(rid);
 

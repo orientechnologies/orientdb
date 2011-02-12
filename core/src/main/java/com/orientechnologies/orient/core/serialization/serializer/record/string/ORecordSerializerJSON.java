@@ -310,7 +310,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				return OStringSerializerHelper.unicode2java(iFieldValueAsString);
 
 			case LINK:
-				final int pos = iFieldValueAsString.indexOf("@");
+				final int pos = iFieldValueAsString.indexOf('@');
 				if (pos > -1)
 					// CREATE DOCUMENT
 					return new ODocument(iRecord.getDatabase(), iFieldValueAsString.substring(1, pos), new ORecordId(
@@ -385,9 +385,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 					else if (f.equals("attribSameRow"))
 						attribSameRow = true;
 					else if (f.startsWith("indent"))
-						indentLevel = Integer.parseInt(f.substring(f.indexOf(":") + 1));
+						indentLevel = Integer.parseInt(f.substring(f.indexOf(':') + 1));
 					else if (f.startsWith("fetchPlan"))
-						fetchPlan = f.substring(f.indexOf(":") + 1);
+						fetchPlan = f.substring(f.indexOf(':') + 1);
 					else if (f.startsWith("keepTypes"))
 						keepTypes = true;
 			}

@@ -110,7 +110,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 				// TRY WITH WILDCARD COMMANDS
 				String partLeft, partRight;
 				for (Entry<String, OServerCommand> entry : wildcardCommands.entrySet()) {
-					final int wildcardPos = entry.getKey().indexOf("*");
+					final int wildcardPos = entry.getKey().indexOf('*');
 					partLeft = entry.getKey().substring(0, wildcardPos);
 					partRight = entry.getKey().substring(wildcardPos + 1);
 
@@ -489,7 +489,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 	}
 
 	private String getCommandString(final String command) {
-		final int getQueryPosition = command.indexOf("?");
+		final int getQueryPosition = command.indexOf('?');
 
 		final StringBuilder commandString = new StringBuilder();
 		commandString.append(request.method);

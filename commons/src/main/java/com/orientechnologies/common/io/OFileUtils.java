@@ -40,11 +40,11 @@ public class OFileUtils {
 			if (pos > -1)
 				return Long.parseLong(iSize.substring(0, pos)) * TERABYTE;
 
-			pos = iSize.indexOf("B");
+			pos = iSize.indexOf('B');
 			if (pos > -1)
 				return Long.parseLong(iSize.substring(0, pos));
 
-			pos = iSize.indexOf("%");
+			pos = iSize.indexOf('%');
 			if (pos > -1)
 				return -1 * Long.parseLong(iSize.substring(0, pos));
 

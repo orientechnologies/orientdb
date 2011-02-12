@@ -185,7 +185,7 @@ public class OConsoleApplication {
 
 			// BUILD PARAMETERS
 			if (ann != null && !ann.splitInWords()) {
-				methodArgs = new String[] { iCommand.substring(iCommand.indexOf(" ") + 1) };
+				methodArgs = new String[] { iCommand.substring(iCommand.indexOf(' ') + 1) };
 			} else {
 				methodArgs = OArrays.copyOfRange(commandWords, commandWordCount, commandWords.length);
 			}

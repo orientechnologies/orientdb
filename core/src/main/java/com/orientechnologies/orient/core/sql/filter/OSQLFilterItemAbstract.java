@@ -90,7 +90,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 					separatorPos = partUpperCase.indexOf(OSQLFilterFieldOperator.CHAIN_SEPARATOR, 0);
 
 					// CHECK IF IT'S A FIELD
-					int posOpenBrace = part.indexOf("(");
+					int posOpenBrace = part.indexOf('(');
 					if (posOpenBrace == -1 || posOpenBrace > separatorPos && separatorPos > -1) {
 						// YES, SEEMS A FIELD
 						String chainedFieldName = separatorPos > -1 ? part.substring(0, separatorPos) : part;

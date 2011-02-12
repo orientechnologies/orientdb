@@ -157,7 +157,7 @@ public class OServer {
 	}
 
 	public String getStoragePath(final String iName) {
-		final String name = iName.indexOf(":") > -1 ? iName.substring(iName.indexOf(":") + 1) : iName;
+		final String name = iName.indexOf(':') > -1 ? iName.substring(iName.indexOf(':') + 1) : iName;
 
 		// SEARCH IN CONFIGURED PATHS
 		String dbPath = configuration.getStoragePath(name);
@@ -311,7 +311,7 @@ public class OServer {
 				if (stg.userPassword == null)
 					stg.userPassword = "admin";
 
-				type = stg.path.substring(0, stg.path.indexOf(":"));
+				type = stg.path.substring(0, stg.path.indexOf(':'));
 
 				ODatabaseDocument db = null;
 				try {

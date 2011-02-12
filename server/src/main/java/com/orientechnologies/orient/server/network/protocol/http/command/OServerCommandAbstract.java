@@ -102,7 +102,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 	}
 
 	protected String[] checkSyntax(String iURL, final int iArgumentCount, final String iSyntax) {
-		final int parametersPos = iURL.indexOf("?");
+		final int parametersPos = iURL.indexOf('?');
 		if (parametersPos > -1)
 			iURL = iURL.substring(0, parametersPos);
 
@@ -214,7 +214,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 	}
 
 	protected String nextChainUrl(final String iCurrentUrl) {
-		return iCurrentUrl.startsWith("/") ? iCurrentUrl.substring(iCurrentUrl.indexOf("/", 1)) : iCurrentUrl.substring(iCurrentUrl.indexOf("/"));
+		return iCurrentUrl.startsWith("/") ? iCurrentUrl.substring(iCurrentUrl.indexOf('/', 1)) : iCurrentUrl.substring(iCurrentUrl.indexOf("/"));
 	}
 
 }
