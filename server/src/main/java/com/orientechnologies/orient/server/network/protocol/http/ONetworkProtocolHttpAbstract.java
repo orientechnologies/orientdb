@@ -101,7 +101,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 				command = request.url.substring(1);
 			}
 
-			final String commandString = request.method + COMMAND_SEPARATOR + command;
+			final String commandString = getCommandString(command);
 
 			// TRY TO FIND EXACT MATCH
 			OServerCommand cmd = exactCommands.get(commandString);
@@ -110,7 +110,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 				// TRY WITH WILDCARD COMMANDS
 				String partLeft, partRight;
 				for (Entry<String, OServerCommand> entry : wildcardCommands.entrySet()) {
-					int wildcardPos = entry.getKey().indexOf("*");
+					final int wildcardPos = entry.getKey().indexOf("*");
 					partLeft = entry.getKey().substring(0, wildcardPos);
 					partRight = entry.getKey().substring(wildcardPos + 1);
 
@@ -486,5 +486,19 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
 	public OUser getAccount() {
 		return account;
+	}
+
+	private String getCommandString(final String command) {
+		final int getQueryPosition = command.indexOf("?");
+
+		final StringBuilder commandString = new StringBuilder();
+		commandString.append(request.method);
+		commandString.append(COMMAND_SEPARATOR);
+
+		if (getQueryPosition > -1)
+			commandString.append(command.substring(0, getQueryPosition));
+		else
+			commandString.append(command);
+		return commandString.toString();
 	}
 }

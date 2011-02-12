@@ -31,8 +31,9 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
 
 public class OServerCommandGetStaticContent extends OServerCommandAbstract {
-	private static final String[]										NAMES			= { "GET|www", "GET|", "GET|*.htm", "GET|*.xml", "GET|*.jpeg",
-			"GET|*.jpg", "GET|*.png", "GET|*.gif", "GET|*.js", "GET|*.css", "GET|favicon.ico", "GET|robots.txt" };
+	private static final String[]										NAMES			= { "GET|www", "GET|", "GET|*.htm", "GET|*.html", "GET|*.xml",
+			"GET|*.jpeg", "GET|*.jpg", "GET|*.png", "GET|*.gif", "GET|*.js", "GET|*.css", "GET|*.swf", "GET|favicon.ico",
+			"GET|robots.txt"																			};
 
 	static final String															WWW_PATH	= System.getProperty("orientdb.www.path", "src/site");
 
@@ -56,9 +57,21 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 		String type = null;
 
 		try {
-			String url = OHttpUtils.URL_SEPARATOR.equals(iRequest.url) ? url = "/www/index.htm" : iRequest.url;
-			if (url.contains("www"))
-				url = WWW_PATH + url.substring("www".length() + 1, url.length());
+			String url;
+
+			if (OHttpUtils.URL_SEPARATOR.equals(iRequest.url))
+				url = "/www/index.htm";
+			else {
+				int pos = iRequest.url.indexOf('?');
+				if (pos > -1)
+					url = iRequest.url.substring(0, pos);
+				else
+					url = iRequest.url;
+			}
+
+			// REPLACE WWW WITH REAL PATH
+			if (url.startsWith("/www"))
+				url = WWW_PATH + url.substring("/www".length(), url.length());
 			else
 				url = WWW_PATH + url;
 
@@ -98,7 +111,7 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 
 				if (cache != null) {
 					// READ AL THE STREAM AND CACHE IT IN MEMORY
-					byte[] buffer = new byte[(int) contentSize];
+					final byte[] buffer = new byte[(int) contentSize];
 					for (int i = 0; i < contentSize; ++i)
 						buffer[i] = (byte) is.read();
 
