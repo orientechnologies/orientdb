@@ -867,7 +867,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 				final int reqId;
 				try {
-					reqId = beginRequest(OChannelBinaryProtocol.REQUEST_DICTIONARY_PUT);
+					reqId = beginRequest(OChannelBinaryProtocol.REQUEST_INDEX_PUT);
 					network.writeString(iKey);
 					network.writeByte(iRecord.getRecordType());
 					network.writeShort((short) rid.getClusterId());
@@ -901,7 +901,7 @@ public class OStorageRemote extends OStorageAbstract {
 			try {
 				final int reqId;
 				try {
-					reqId = beginRequest(OChannelBinaryProtocol.REQUEST_DICTIONARY_LOOKUP);
+					reqId = beginRequest(OChannelBinaryProtocol.REQUEST_INDEX_LOOKUP);
 					network.writeString(iKey);
 				} finally {
 					endRequest();
@@ -932,7 +932,7 @@ public class OStorageRemote extends OStorageAbstract {
 			try {
 				final int reqId;
 				try {
-					reqId = beginRequest(OChannelBinaryProtocol.REQUEST_DICTIONARY_REMOVE);
+					reqId = beginRequest(OChannelBinaryProtocol.REQUEST_INDEX_REMOVE);
 					network.writeString(iKey.toString());
 				} finally {
 					endRequest();
@@ -963,7 +963,7 @@ public class OStorageRemote extends OStorageAbstract {
 			try {
 				final int reqId;
 				try {
-					reqId = beginRequest(OChannelBinaryProtocol.REQUEST_DICTIONARY_SIZE);
+					reqId = beginRequest(OChannelBinaryProtocol.REQUEST_INDEX_SIZE);
 				} finally {
 					endRequest();
 				}
@@ -997,7 +997,7 @@ public class OStorageRemote extends OStorageAbstract {
 			try {
 				final int reqId;
 				try {
-					reqId = beginRequest(OChannelBinaryProtocol.REQUEST_DICTIONARY_KEYS);
+					reqId = beginRequest(OChannelBinaryProtocol.REQUEST_INDEX_KEYS);
 				} finally {
 					endRequest();
 				}

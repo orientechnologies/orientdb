@@ -577,8 +577,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			break;
 		}
 
-		case OChannelBinaryProtocol.REQUEST_DICTIONARY_LOOKUP: {
-			data.commandInfo = "Dictionary lookup";
+		case OChannelBinaryProtocol.REQUEST_INDEX_LOOKUP: {
+			data.commandInfo = "Index lookup";
 
 			final String key = channel.readString();
 			final ORecordAbstract<?> value = (ORecordAbstract<?>) connection.database.getDictionary().get(key);
@@ -592,8 +592,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			break;
 		}
 
-		case OChannelBinaryProtocol.REQUEST_DICTIONARY_PUT: {
-			data.commandInfo = "Dictionary put";
+		case OChannelBinaryProtocol.REQUEST_INDEX_PUT: {
+			data.commandInfo = "Index put";
 
 			String key = channel.readString();
 			ORecordInternal<?> value = ORecordFactory.newInstance(channel.readByte());
@@ -613,8 +613,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			break;
 		}
 
-		case OChannelBinaryProtocol.REQUEST_DICTIONARY_REMOVE: {
-			data.commandInfo = "Dictionary remove";
+		case OChannelBinaryProtocol.REQUEST_INDEX_REMOVE: {
+			data.commandInfo = "Index remove";
 
 			final String key = channel.readString();
 			final ORecordInternal<?> value = connection.database.getDictionary().remove(key);
@@ -628,16 +628,16 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			break;
 		}
 
-		case OChannelBinaryProtocol.REQUEST_DICTIONARY_SIZE: {
-			data.commandInfo = "Dictionary size";
+		case OChannelBinaryProtocol.REQUEST_INDEX_SIZE: {
+			data.commandInfo = "Index size";
 
 			sendOk(lastClientTxId);
 			channel.writeInt(connection.database.getDictionary().size());
 			break;
 		}
 
-		case OChannelBinaryProtocol.REQUEST_DICTIONARY_KEYS: {
-			data.commandInfo = "Dictionary keys";
+		case OChannelBinaryProtocol.REQUEST_INDEX_KEYS: {
+			data.commandInfo = "Index keys";
 
 			sendOk(lastClientTxId);
 			channel.writeCollectionString(connection.database.getDictionary().keySet());
