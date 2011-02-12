@@ -64,7 +64,7 @@ function OForm() {
 	 *            HTML component
 	 */
 	OForm.prototype.array2component = function(array, component, prefix, level) {
-		if (component != null ) {
+		if (component != null) {
 			componentChild = component.children().last();
 
 			var referenceRow = this.templateMap[prefix];
@@ -126,7 +126,7 @@ function OForm() {
 
 		if (component != null) {
 			// SET THE VALUE
-			if (component.is('input')) {
+			if (component.is('input') || component.is('select')) {
 				component.val(value);
 			} else
 				// AS TEXT
@@ -175,7 +175,7 @@ function OForm() {
 	 *            HTML component
 	 */
 	OForm.prototype.component2array = function(obj, component, prefix, field) {
-		if (component != null ) {
+		if (component != null) {
 			// RESET THE JSON ARRAY
 			var array = obj[field];
 
@@ -186,7 +186,8 @@ function OForm() {
 					componentName = prefix + "_" + index;
 
 					if (componentType == 'o')
-						array[index] = this.form2object(array[index], componentName);
+						array[index] = this.form2object(array[index],
+								componentName);
 					else
 						array[index] = this.component2value(componentName);
 
