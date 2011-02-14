@@ -43,6 +43,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	public static final String	EDGE_CLASS_NAME					= "OGraphEdge";
 	public static final String	EDGE_FIELD_IN						= "in";
 	public static final String	EDGE_FIELD_OUT					= "out";
+	public static final String	LABEL										= "label";
 
 	private boolean							safeMode								= false;
 	private OClass							vertexBaseClass;

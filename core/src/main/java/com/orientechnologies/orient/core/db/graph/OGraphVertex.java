@@ -177,6 +177,13 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 	 * Returns the incoming edges of current node. If there are no edged, then an empty list is returned.
 	 */
 	public List<OGraphEdge> getInEdges() {
+		return getInEdges(null);
+	}
+
+	/**
+	 * Returns the incoming edges of current node having the requested label. If there are no edged, then an empty list is returned.
+	 */
+	public List<OGraphEdge> getInEdges(final String iEdgeLabel) {
 		List<OGraphEdge> tempList = inEdges != null ? inEdges.get() : null;
 
 		if (tempList == null) {
@@ -194,6 +201,9 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 					else
 						doc = database.getRecordById((ORID) o);
 
+					if (iEdgeLabel != null && !iEdgeLabel.equals(doc.field(OGraphDatabase.LABEL)))
+						continue;
+
 					tempList.add((OGraphEdge) database.getUserObjectByRecord(doc, null));
 				}
 			}
@@ -203,9 +213,16 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 	}
 
 	/**
-	 * Returns the outgoing edges of current node. If there are no edged, then an empty list is returned.
+	 * Returns all the outgoing edges of current node. If there are no edged, then an empty list is returned.
 	 */
 	public List<OGraphEdge> getOutEdges() {
+		return getOutEdges(null);
+	}
+
+	/**
+	 * Returns the outgoing edge of current node having the requested label. If there are no edged, then an empty list is returned.
+	 */
+	public List<OGraphEdge> getOutEdges(final String iEdgeLabel) {
 		List<OGraphEdge> tempList = outEdges != null ? outEdges.get() : null;
 
 		if (tempList == null) {
@@ -222,6 +239,9 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 						doc = (ODocument) o;
 					else
 						doc = database.getRecordById((ORID) o);
+
+					if (iEdgeLabel != null && !iEdgeLabel.equals(doc.field(OGraphDatabase.LABEL)))
+						continue;
 
 					tempList.add((OGraphEdge) database.getUserObjectByRecord(doc, null));
 				}
