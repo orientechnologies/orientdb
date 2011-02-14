@@ -32,8 +32,9 @@ function ODatabase(databasePath) {
 	this.urlPrefix = "";
 
 	if (databasePath) {
-		this.databaseUrl = document.location.href;
-		this.databaseName = databasePath.substring(this.databaseUrl.length);
+		var pos = databasePath.indexOf('/', 8);
+		this.databaseUrl = databasePath.substring(0, pos);
+		this.databaseName = databasePath.substring(pos + 1);
 		if (this.databaseName.indexOf('/') > -1) {
 			this.encodedDatabaseName = "";
 			var parts = this.databaseName.split('/');
