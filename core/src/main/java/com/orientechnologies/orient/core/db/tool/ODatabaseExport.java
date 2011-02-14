@@ -23,6 +23,7 @@ import java.io.OutputStreamWriter;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -254,8 +255,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
 				writer.beginObject(2, true, i.getName());
 
-				Entry<Object, List<ORecord<?>>> entry;
-				for (Iterator<Entry<Object, List<ORecord<?>>>> iterator = i.iterator(); iterator.hasNext();) {
+				Entry<Object, Set<ORecord<?>>> entry;
+				for (Iterator<Entry<Object, Set<ORecord<?>>>> iterator = i.iterator(); iterator.hasNext();) {
 					entry = iterator.next();
 					writer.writeAttribute(3, true, "key", entry.getKey());
 					writer.writeAttribute(0, false, "value", OJSONWriter.writeValue(entry.getValue()));

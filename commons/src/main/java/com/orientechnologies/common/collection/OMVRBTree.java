@@ -343,7 +343,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 * @throws NullPointerException
 	 *           if the specified key is null and this map uses natural ordering, or its comparator does not permit null keys
 	 */
-	final OMVRBTreeEntry<K, V> getEntry(final Object key) {
+	protected final OMVRBTreeEntry<K, V> getEntry(final Object key) {
 		return getEntry(key, false);
 	}
 

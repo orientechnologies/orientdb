@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.index;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -41,6 +40,7 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
  * @author Luca Garulli
  * 
  */
+@SuppressWarnings("serial")
 public class OIndexFullText extends OIndexMVRBTreeAbstract {
 	private static final String	CONFIG_STOP_WORDS		= "stopWords";
 	private static final String	CONFIG_IGNORE_CHARS	= "ignoreChars";
@@ -84,7 +84,7 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 		for (int id : iClusterIdsToIndex)
 			clustersToIndex.add(iDatabase.getClusterNameById(id));
 
-		map = new OMVRBTreeDatabaseLazySave<Object, List<ORecord<?>>>((ODatabaseRecord) db, iClusterIndexName,
+		map = new OMVRBTreeDatabaseLazySave<Object, Set<ORecord<?>>>((ODatabaseRecord) db, iClusterIndexName,
 				OStreamSerializerLiteral.INSTANCE, OStreamSerializerListRID.INSTANCE);
 		map.lazySave();
 
@@ -148,7 +148,7 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 		if (iKey == null)
 			return this;
 
-		List<ORecord<?>> refs;
+		Set<ORecord<?>> refs;
 		final StringBuilder buffer = new StringBuilder();
 		char c;
 		boolean ignore;
@@ -183,7 +183,7 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 			refs = map.get(word);
 			if (refs == null)
 				// WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
-				refs = new ArrayList<ORecord<?>>();
+				refs = new HashSet<ORecord<?>>();
 
 			// ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
 			refs.add(iSingleValue);
@@ -195,7 +195,7 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 	}
 
 	public OIndex remove(final Object iKey, final ORecord<?> value) {
-		final List<ORecord<?>> recs = get(iKey);
+		final Set<ORecord<?>> recs = get(iKey);
 		if (recs != null && !recs.isEmpty()) {
 			if (recs.remove(value))
 				map.put(iKey, recs);

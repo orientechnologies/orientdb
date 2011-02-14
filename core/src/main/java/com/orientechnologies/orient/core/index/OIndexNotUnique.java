@@ -15,8 +15,8 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.record.ORecord;
 
@@ -26,29 +26,31 @@ import com.orientechnologies.orient.core.record.ORecord;
  * @author Luca Garulli
  * 
  */
+@SuppressWarnings("serial")
 public class OIndexNotUnique extends OIndexMVRBTreeAbstract {
 	public OIndexNotUnique() {
 		super("NOTUNIQUE");
 	}
 
 	public OIndex put(final Object iKey, final ORecord<?> iSingleValue) {
-		List<ORecord<?>> values = map.get(iKey);
+		Set<ORecord<?>> values = map.get(iKey);
 		if (values == null)
-			values = new ArrayList<ORecord<?>>();
+			values = new HashSet<ORecord<?>>();
 
-		int pos = values.indexOf(iSingleValue);
-		if (pos > -1)
-			// REPLACE IT
-			values.set(pos, iSingleValue);
-		else
-			values.add(iSingleValue);
+		if (!iSingleValue.getIdentity().isValid())
+			iSingleValue.save();
+
+		if (iSingleValue.getIdentity().isTemporary())
+			tempItems.add(iKey);
+
+		values.add(iSingleValue);
 
 		map.put(iKey, values);
 		return this;
 	}
 
 	public OIndex remove(final Object iKey, final ORecord<?> value) {
-		final List<ORecord<?>> recs = get(iKey);
+		final Set<ORecord<?>> recs = get(iKey);
 		if (recs != null && !recs.isEmpty()) {
 			if (recs.remove(value))
 				map.put(iKey, recs);

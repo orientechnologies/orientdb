@@ -36,9 +36,9 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 @SuppressWarnings("serial")
 public class ORecordLazySet extends ORecordTrackedSet {
 	private final ODatabaseRecord	database;
-	private final byte								recordType;
-	private boolean										converted				= false;
-	private boolean										convertToRecord	= true;
+	private final byte						recordType;
+	private boolean								converted				= false;
+	private boolean								convertToRecord	= true;
 
 	public ORecordLazySet(final ODatabaseRecord iDatabase, final byte iRecordType) {
 		super(null);
@@ -54,7 +54,7 @@ public class ORecordLazySet extends ORecordTrackedSet {
 
 	@Override
 	public Iterator<Object> iterator() {
-		return new OLazyRecordIterator(sourceRecord, recordType, super.iterator(), convertToRecord);
+		return new OLazyRecordIterator(sourceRecord, database, recordType, super.iterator(), convertToRecord);
 	}
 
 	@Override

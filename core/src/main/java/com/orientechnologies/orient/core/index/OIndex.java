@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.index;
 
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -33,7 +32,7 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public interface OIndex extends Iterable<Entry<Object, List<ORecord<?>>>>, OSerializableStream {
+public interface OIndex extends Iterable<Entry<Object, Set<ORecord<?>>>>, OSerializableStream {
 
 	public static final String	CONFIG_TYPE				= "type";
 	public static final String	CONFIG_NAME				= "name";
@@ -41,7 +40,7 @@ public interface OIndex extends Iterable<Entry<Object, List<ORecord<?>>>>, OSeri
 
 	public String getName();
 
-	public List<ORecord<?>> get(Object iKey);
+	public Set<ORecord<?>> get(Object iKey);
 
 	public OIndex put(final Object iKey, final ORecord<?> iValue);
 
@@ -89,7 +88,7 @@ public interface OIndex extends Iterable<Entry<Object, List<ORecord<?>>>>, OSeri
 
 	public OIndex lazySave();
 
-	public Iterator<Entry<Object, List<ORecord<?>>>> iterator();
+	public Iterator<Entry<Object, Set<ORecord<?>>>> iterator();
 
 	public ORID getIdentity();
 

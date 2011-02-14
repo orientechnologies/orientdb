@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
+import java.util.Collection;
 import java.util.List;
 
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
@@ -49,7 +50,7 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
 	}
 
 	@Override
-	public List<ORecord<?>> filterRecords(final ODatabaseComplex<?> iDatabase, final List<String> iTargetClasses,
+	public Collection<ORecord<?>> filterRecords(final ODatabaseComplex<?> iDatabase, final List<String> iTargetClasses,
 			final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight) {
 
 		final String fieldName;

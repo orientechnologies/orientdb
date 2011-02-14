@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -433,7 +434,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 					|| idx instanceof OIndexFullText && iCondition.getOperator() instanceof OQueryOperatorContainsText) {
 				final Object value = iCondition.getLeft() == iItem ? iCondition.getRight() : iCondition.getLeft();
 				if (value != null) {
-					final List<?> resultSet = prop.getIndex().getUnderlying().get(value.toString());
+					final Set<?> resultSet = prop.getIndex().getUnderlying().get(value.toString());
 					if (resultSet != null && resultSet.size() > 0)
 						for (Object o : resultSet) {
 							if (o instanceof ORID)

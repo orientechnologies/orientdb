@@ -65,7 +65,7 @@ public class ORecordFactory {
 		else if (iRecordType == ORecordColumn.RECORD_TYPE)
 			return "column";
 
-		throw new IllegalArgumentException("Unsupported record type" + iRecordType);
+		throw new IllegalArgumentException("Unsupported record type: " + iRecordType);
 	}
 
 	public static ORecordInternal<?> newInstance(final byte iRecordType) {
@@ -78,6 +78,6 @@ public class ORecordFactory {
 		else if (iRecordType == ORecordColumn.RECORD_TYPE)
 			return new ORecordColumn();
 
-		throw new IllegalArgumentException("Unsupported record type" + iRecordType);
+		throw new IllegalArgumentException("Unsupported record type: " + iRecordType);
 	}
 }

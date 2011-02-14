@@ -34,10 +34,10 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  */
 @SuppressWarnings({ "serial" })
 public class ORecordLazyList extends ORecordTrackedList {
-	final private byte								recordType;
+	final private byte						recordType;
 	final private ODatabaseRecord	database;
-	private boolean										converted				= false;
-	private boolean										convertToRecord	= true;
+	private boolean								converted				= false;
+	private boolean								convertToRecord	= true;
 
 	public ORecordLazyList(ODatabaseRecord iDatabase, final byte iRecordType) {
 		super(null);
@@ -53,7 +53,7 @@ public class ORecordLazyList extends ORecordTrackedList {
 
 	@Override
 	public Iterator<Object> iterator() {
-		return new OLazyRecordIterator(sourceRecord, recordType, super.iterator(), convertToRecord);
+		return new OLazyRecordIterator(sourceRecord, database, recordType, super.iterator(), convertToRecord);
 	}
 
 	@Override

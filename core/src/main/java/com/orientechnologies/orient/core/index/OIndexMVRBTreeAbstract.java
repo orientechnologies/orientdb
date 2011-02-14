@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -31,6 +30,8 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.annotation.ODocumentInstance;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -50,15 +51,17 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
  * @author Luca Garulli
  * 
  */
-public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements OIndex {
+@SuppressWarnings("serial")
+public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements OIndex, ODatabaseListener {
 	protected static final String																	CONFIG_MAP_RID	= "mapRid";
 	protected static final String																	CONFIG_CLUSTERS	= "clusters";
 	protected String																							name;
 	protected String																							type;
-	protected OMVRBTreeDatabaseLazySave<Object, List<ORecord<?>>>	map;
+	protected OMVRBTreeDatabaseLazySave<Object, Set<ORecord<?>>>	map;
 	protected Set<String>																					clustersToIndex	= new LinkedHashSet<String>();
 	protected OIndexCallback																			callback;
 	protected boolean																							automatic;
+	protected Set<Object>																					tempItems				= new HashSet<Object>();
 
 	@ODocumentInstance
 	protected ODocument																						configuration;
@@ -91,7 +94,9 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 		name = iName;
 		installProfilerHooks();
 
-		map = new OMVRBTreeDatabaseLazySave<Object, List<ORecord<?>>>(iDatabase, iClusterIndexName, OStreamSerializerLiteral.INSTANCE,
+		iDatabase.registerListener(this);
+
+		map = new OMVRBTreeDatabaseLazySave<Object, Set<ORecord<?>>>(iDatabase, iClusterIndexName, OStreamSerializerLiteral.INSTANCE,
 				OStreamSerializerListRID.INSTANCE);
 		rebuild(iProgressListener);
 		return this;
@@ -115,14 +120,14 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	}
 
 	@SuppressWarnings("unchecked")
-	public List<ORecord<?>> get(Object iKey) {
+	public Set<ORecord<?>> get(Object iKey) {
 		acquireSharedLock();
 
 		try {
-			final List<ORecord<?>> values = map.get(iKey);
+			final Set<ORecord<?>> values = map.get(iKey);
 
 			if (values == null)
-				return Collections.EMPTY_LIST;
+				return Collections.EMPTY_SET;
 
 			return values;
 
@@ -165,12 +170,12 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 		acquireSharedLock();
 
 		try {
-			final ONavigableMap<Object, List<ORecord<?>>> subSet = map.subMap(iRangeFrom, iInclusive, iRangeTo, iInclusive);
+			final ONavigableMap<Object, Set<ORecord<?>>> subSet = map.subMap(iRangeFrom, iInclusive, iRangeTo, iInclusive);
 			if (subSet == null)
 				return Collections.EMPTY_SET;
 
 			final Set<ORecord<?>> result = new HashSet<ORecord<?>>();
-			for (List<ORecord<?>> v : subSet.values()) {
+			for (Set<ORecord<?>> v : subSet.values()) {
 				result.addAll(v);
 			}
 
@@ -307,7 +312,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 		return map.getRecord();
 	}
 
-	public Iterator<Entry<Object, List<ORecord<?>>>> iterator() {
+	public Iterator<Entry<Object, Set<ORecord<?>>>> iterator() {
 		acquireSharedLock();
 
 		try {
@@ -321,8 +326,10 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	protected void load(final ODatabaseRecord iDatabase, final ORID iRecordId) {
 		installProfilerHooks();
 
-		map = new OMVRBTreeDatabaseLazySave<Object, List<ORecord<?>>>(iDatabase, iRecordId);
+		map = new OMVRBTreeDatabaseLazySave<Object, Set<ORecord<?>>>(iDatabase, iRecordId);
 		map.load();
+
+		iDatabase.registerListener(this);
 	}
 
 	public int getSize() {
@@ -430,5 +437,47 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 				return map != null ? map.getOptimizeThreshold() : "-";
 			}
 		});
+	}
+
+	public void onCreate(ODatabase iDatabase) {
+	}
+
+	public void onDelete(ODatabase iDatabase) {
+	}
+
+	public void onOpen(ODatabase iDatabase) {
+	}
+
+	public void onBeforeTxBegin(ODatabase iDatabase) {
+	}
+
+	public void onBeforeTxRollback(ODatabase iDatabase) {
+	}
+
+	public void onAfterTxRollback(ODatabase iDatabase) {
+	}
+
+	public void onBeforeTxCommit(ODatabase iDatabase) {
+	}
+
+	/**
+	 * Reset documents into the set to update its hashcode.
+	 */
+	public void onAfterTxCommit(ODatabase iDatabase) {
+		if (tempItems.size() > 0) {
+			for (Object key : tempItems) {
+				Set<ORecord<?>> set = map.get(key);
+				if (set != null) {
+					// RE-ADD ALL THE ITEM TO UPDATE THE HASHCODE (CHANGED AFTER SAVE+COMMIT)
+					final Set<ORecord<?>> newSet = new HashSet<ORecord<?>>();
+					newSet.addAll(set);
+					map.put(key, newSet);
+				}
+			}
+		}
+		tempItems.clear();
+	}
+
+	public void onClose(ODatabase iDatabase) {
 	}
 }

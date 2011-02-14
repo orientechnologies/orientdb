@@ -30,14 +30,16 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  * 
  */
 public class OLazyRecordIterator implements Iterator<Object> {
-	final private ORecord<?>	sourceRecord;
-	final private Iterator<?>	underlying;
-	final private byte				recordType;
-	final private boolean			convertToRecord;
+	final private ODatabaseRecord	sourceDatabase;
+	final private ORecord<?>			sourceRecord;
+	final private Iterator<?>			underlying;
+	final private byte						recordType;
+	final private boolean					convertToRecord;
 
-	public OLazyRecordIterator(final ORecord<?> iSourceRecord, final byte iRecordType, final Iterator<?> iIterator,
-			final boolean iConvertToRecord) {
+	public OLazyRecordIterator(final ORecord<?> iSourceRecord, final ODatabaseRecord iSourceDatabase, final byte iRecordType,
+			final Iterator<?> iIterator, final boolean iConvertToRecord) {
 		this.sourceRecord = iSourceRecord;
+		this.sourceDatabase = iSourceDatabase;
 		this.underlying = iIterator;
 		this.recordType = iRecordType;
 		this.convertToRecord = iConvertToRecord;
@@ -49,10 +51,10 @@ public class OLazyRecordIterator implements Iterator<Object> {
 		if (value == null)
 			return null;
 
-		if (sourceRecord != null && sourceRecord.getDatabase() != null)
+		if (sourceDatabase != null)
 			if (value instanceof ORecordId && convertToRecord) {
 				ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
-				record.setDatabase(sourceRecord.getDatabase());
+				record.setDatabase(sourceDatabase);
 				record.setIdentity((ORecordId) value);
 
 				record.load();

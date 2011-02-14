@@ -97,11 +97,11 @@ public class LocalDocumentAndBinarySpeedTest {
 				else
 					System.out.println("already loaded");
 
-				List result = index.getUnderlying().get("key" + Integer.toString(rand));
+				Set result = index.getUnderlying().get("key" + Integer.toString(rand));
 				Assert.assertTrue(result.size() > 0);
 
 				if (result != null && result.size() > 0) {
-					ODocument doc = (ODocument) result.get(0);
+					ODocument doc = (ODocument) result.iterator().next();
 					System.out.println("loaded " + i + "(" + rand + "), binary record: " + doc.field("binary", ORID.class));
 					ORecordBytes record = doc.field("binary");
 					Assert.assertNotNull(record);
