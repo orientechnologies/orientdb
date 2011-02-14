@@ -85,7 +85,7 @@ function OForm(options) {
 			var referenceRow = this.templateMap[template];
 			if (referenceRow == null) {
 				// FIRST TIME: SEARCH THE TEMPLATE
-				referenceRow = componentChild.html();
+				referenceRow = component.html();
 				this.templateMap[template] = referenceRow;
 			}
 
