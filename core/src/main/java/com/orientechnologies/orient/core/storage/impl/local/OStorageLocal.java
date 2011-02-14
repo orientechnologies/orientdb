@@ -1126,7 +1126,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		long size = 0;
 
 		for (ODataLocal d : dataSegments)
-			size += d.getSize();
+			size += d.getFilledUpTo();
 
 		for (OCluster c : clusters)
 			size += c.getSize();

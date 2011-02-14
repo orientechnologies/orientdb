@@ -360,6 +360,11 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 	}
 
 	@Override
+	public long getSize() {
+		return super.getFilledUpTo();
+	}
+
+	@Override
 	public String toString() {
 		return name + " (id=" + id + ")";
 	}
