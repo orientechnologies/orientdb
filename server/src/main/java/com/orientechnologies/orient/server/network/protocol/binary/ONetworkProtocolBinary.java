@@ -268,10 +268,22 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 		case OChannelBinaryProtocol.REQUEST_DB_EXIST: {
 			data.commandInfo = "Exists database";
-
-			channel.writeByte((byte) (connection.database.exists() ? 1 : 0));
-
 			sendOk(lastClientTxId);
+			channel.writeByte((byte) (connection.database.exists() ? 1 : 0));
+			break;
+		}
+
+		case OChannelBinaryProtocol.REQUEST_DB_SIZE: {
+			data.commandInfo = "Database size";
+			sendOk(lastClientTxId);
+			channel.writeLong(connection.database.getStorage().getSize());
+			break;
+		}
+
+		case OChannelBinaryProtocol.REQUEST_DB_COUNTRECORDS: {
+			data.commandInfo = "Database count records";
+			sendOk(lastClientTxId);
+			channel.writeLong(connection.database.getStorage().countRecords());
 			break;
 		}
 

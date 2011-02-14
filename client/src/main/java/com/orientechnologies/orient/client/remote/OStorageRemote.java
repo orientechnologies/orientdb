@@ -437,6 +437,36 @@ public class OStorageRemote extends OStorageAbstract {
 		} while (true);
 	}
 
+	@Override
+	public long countRecords() {
+		checkConnection();
+
+		do {
+			boolean locked = lock.acquireExclusiveLock();
+
+			try {
+				final int reqId;
+				try {
+					reqId = beginRequest(OChannelBinaryProtocol.REQUEST_DB_COUNTRECORDS);
+				} finally {
+					endRequest();
+				}
+
+				try {
+					beginResponse(reqId);
+					return network.readLong();
+				} finally {
+					endResponse();
+				}
+			} catch (Exception e) {
+				handleException("Error on read database record count", e);
+
+			} finally {
+				lock.releaseExclusiveLock(locked);
+			}
+		} while (true);
+	}
+
 	public long count(final int[] iClusterIds) {
 		checkConnection();
 

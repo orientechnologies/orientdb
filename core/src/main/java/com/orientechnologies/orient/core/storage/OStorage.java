@@ -124,7 +124,7 @@ public interface OStorage {
 	/**
 	 * Returns the total number of records.
 	 */
-	public long getTotalRecords();
+	public long countRecords();
 
 	public int getDefaultClusterId();
 

@@ -124,7 +124,7 @@ public abstract class OStorageAbstract implements OStorage {
 		return lock;
 	}
 
-	public long getTotalRecords() {
+	public long countRecords() {
 		long tot = 0;
 
 		for (OCluster c : getClusters())

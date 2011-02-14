@@ -28,12 +28,13 @@ public class OChannelBinaryProtocol {
 	public static final byte	REQUEST_SHUTDOWN							= 1;
 	public static final byte	REQUEST_CONNECT								= 2;
 
-	public static final byte	REQUEST_DB_OPEN								= 4;
-	public static final byte	REQUEST_DB_CREATE							= 5;
-	public static final byte	REQUEST_DB_CLOSE							= 6;
-	public static final byte	REQUEST_DB_EXIST							= 7;
-	public static final byte	REQUEST_DB_DELETE							= 8;
-	public static final byte	REQUEST_DB_SIZE								= 9;
+	public static final byte	REQUEST_DB_OPEN								= 3;
+	public static final byte	REQUEST_DB_CREATE							= 4;
+	public static final byte	REQUEST_DB_CLOSE							= 5;
+	public static final byte	REQUEST_DB_EXIST							= 6;
+	public static final byte	REQUEST_DB_DELETE							= 7;
+	public static final byte	REQUEST_DB_SIZE								= 8;
+	public static final byte	REQUEST_DB_COUNTRECORDS					= 9;
 
 	public static final byte	REQUEST_DATACLUSTER_ADD				= 10;
 	public static final byte	REQUEST_DATACLUSTER_REMOVE		= 11;
