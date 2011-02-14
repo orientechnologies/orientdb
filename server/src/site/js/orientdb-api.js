@@ -33,7 +33,7 @@ function ODatabase(databasePath) {
 
 	if (databasePath) {
 		var pos = databasePath.indexOf('/', 8);
-		this.databaseUrl = databasePath.substring(0, pos);
+		this.databaseUrl = databasePath.substring(0, pos + 1);
 		this.databaseName = databasePath.substring(pos + 1);
 		if (this.databaseName.indexOf('/') > -1) {
 			this.encodedDatabaseName = "";
@@ -112,7 +112,7 @@ function ODatabase(databasePath) {
 			userPass = '';
 		}
 		if (authProxy != null && authProxy != '') {
-			urlPrefix = this.databaseUrl + '/' + authProxy + "/";
+			urlPrefix = this.databaseUrl + authProxy + "/";
 		} else
 			urlPrefix = this.databaseUrl;
 
