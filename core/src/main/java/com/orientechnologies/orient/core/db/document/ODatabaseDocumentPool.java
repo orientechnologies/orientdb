@@ -35,7 +35,7 @@ public class ODatabaseDocumentPool extends ODatabasePoolBase<ODatabaseDocumentTx
 								throw new OSecurityAccessException("Username and/or password missed");
 
 							return new ODatabaseDocumentTxPooled((ODatabaseDocumentPool) owner, iDatabaseName, iAdditionalArgs[0],
-									iAdditionalArgs[0]);
+									iAdditionalArgs[1]);
 						}
 
 						@Override
