@@ -146,9 +146,11 @@ public class OIndexManager extends ODocumentWrapperNoClass {
 	 */
 	public OIndex loadIndex(final String iName, final ODocument iConfiguration) {
 		final OIndex index = OIndexFactory.instance().load(database, iConfiguration);
-		indexes.put(iName.toLowerCase(), index);
-		setDirty();
-		save();
+		if (index != null) {
+			indexes.put(iName.toLowerCase(), index);
+			setDirty();
+			save();
+		}
 
 		return index;
 	}

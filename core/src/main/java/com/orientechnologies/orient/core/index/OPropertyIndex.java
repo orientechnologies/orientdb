@@ -53,7 +53,8 @@ public class OPropertyIndex implements OIndexCallback {
 		final String indexName = getIndexName(iClass, iFields);
 
 		delegate = iDatabase.getMetadata().getIndexManager().loadIndex(indexName, iConfiguration);
-		delegate.setCallback(this);
+		if (delegate != null)
+			delegate.setCallback(this);
 	}
 
 	public void checkEntry(final ODocument iRecord) {

@@ -102,15 +102,23 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 		return this;
 	}
 
-	@SuppressWarnings("unchecked")
 	public OIndex loadFromConfiguration(final ODocument iConfig) {
+		final ORID rid = (ORID) iConfig.field(CONFIG_MAP_RID, ORID.class);
+		if (rid == null)
+			return null;
+		
 		configuration = iConfig;
 		name = configuration.field(OIndex.CONFIG_NAME);
 		automatic = (Boolean) (configuration.field(OIndex.CONFIG_AUTOMATIC) != null ? configuration.field(OIndex.CONFIG_AUTOMATIC)
 				: true);
 		clustersToIndex.clear();
-		clustersToIndex.addAll((Collection<? extends String>) configuration.field(CONFIG_CLUSTERS));
-		load(iConfig.getDatabase(), (ORID) iConfig.field(CONFIG_MAP_RID, ORID.class));
+
+		final Collection<? extends String> clusters = configuration.field(CONFIG_CLUSTERS);
+		if (clusters != null)
+			clustersToIndex.addAll(clusters);
+
+		load(iConfig.getDatabase(), rid);
+
 		return this;
 	}
 

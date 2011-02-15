@@ -56,8 +56,8 @@ public class OIndexFactory extends ODynamicFactory<String, Class<? extends OInde
 	}
 
 	public OIndex load(final ODatabaseRecord iDatabase, final ODocument iConfiguration) {
-		final OIndex index = newInstance((String) iConfiguration.field(OIndex.CONFIG_TYPE));
-		index.loadFromConfiguration(iConfiguration);
+		OIndex index = newInstance((String) iConfiguration.field(OIndex.CONFIG_TYPE));
+		index = index.loadFromConfiguration(iConfiguration);
 		return index;
 	}
 }
