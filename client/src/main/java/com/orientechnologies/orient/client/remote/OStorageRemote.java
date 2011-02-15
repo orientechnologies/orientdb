@@ -20,6 +20,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -647,7 +648,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 			try {
 				final int reqId;
-				final List<OTransactionEntry> allEntries = new ArrayList<OTransactionEntry>();
+				final Set<OTransactionEntry> allEntries = new HashSet<OTransactionEntry>();
 				try {
 					reqId = beginRequest(OChannelBinaryProtocol.REQUEST_TX_COMMIT);
 					network.writeInt(iTx.getId());
@@ -656,19 +657,22 @@ public class OStorageRemote extends OStorageAbstract {
 
 					while (iTx.getEntries().iterator().hasNext()) {
 						for (OTransactionEntry txEntry : iTx.getEntries())
-							tmpEntries.add(txEntry);
+							if (!allEntries.contains(txEntry))
+								tmpEntries.add(txEntry);
 
 						iTx.clearEntries();
 
-						for (OTransactionEntry txEntry : tmpEntries) {
-							network.writeByte((byte) 1);
-							commitEntry(txEntry);
-						}
+						if (tmpEntries.size() > 0) {
+							for (OTransactionEntry txEntry : tmpEntries)
+								commitEntry(txEntry);
 
-						allEntries.addAll(tmpEntries);
-						tmpEntries.clear();
+							allEntries.addAll(tmpEntries);
+							tmpEntries.clear();
+						}
 					}
+
 					network.writeByte((byte) 0);
+
 				} finally {
 					endRequest();
 				}
@@ -1326,11 +1330,27 @@ public class OStorageRemote extends OStorageAbstract {
 		}
 	}
 
+	/**
+	 * Invoke serialization.
+	 * 
+	 * @param txEntry
+	 * @throws IOException
+	 */
+	private void preCommitEntry(final OTransactionEntry txEntry) throws IOException {
+		switch (txEntry.status) {
+		case OTransactionEntry.CREATED:
+		case OTransactionEntry.UPDATED:
+			txEntry.getRecord().toStream();
+			break;
+		}
+	}
+
 	private void commitEntry(final OTransactionEntry txEntry) throws IOException {
 		if (txEntry.status == OTransactionEntry.LOADED)
 			// JUMP LOADED OBJECTS
 			return;
 
+		network.writeByte((byte) 1);
 		network.writeByte(txEntry.status);
 		network.writeShort((short) txEntry.getRecord().getIdentity().getClusterId());
 		network.writeLong(txEntry.getRecord().getIdentity().getClusterPosition());

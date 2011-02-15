@@ -17,7 +17,9 @@ package com.orientechnologies.orient.core.storage.impl.local;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OStorageTxConfiguration;
@@ -139,21 +141,24 @@ public class OStorageLocalTxExecuter {
 	protected void commitAllPendingRecords(final int iRequesterId, final OTransaction iTx) throws IOException {
 		// COPY ALL THE ENTRIES IN SEPARATE COLLECTION SINCE DURING THE COMMIT PHASE SOME NEW ENTRIES COULD BE CREATED AND
 		// CONCURRENT-EXCEPTION MAY OCCURS
-		final List<OTransactionEntry> allEntries = new ArrayList<OTransactionEntry>();
+		final Set<OTransactionEntry> allEntries = new HashSet<OTransactionEntry>();
 		final List<OTransactionEntry> tmpEntries = new ArrayList<OTransactionEntry>();
 
 		while (iTx.getEntries().iterator().hasNext()) {
 			for (OTransactionEntry txEntry : iTx.getEntries())
-				tmpEntries.add(txEntry);
+				if (!allEntries.contains(txEntry))
+					tmpEntries.add(txEntry);
 
 			iTx.clearEntries();
 
-			for (OTransactionEntry txEntry : tmpEntries)
-				// COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
-				commitEntry(iRequesterId, iTx.getId(), txEntry);
+			if (tmpEntries.size() > 0) {
+				for (OTransactionEntry txEntry : tmpEntries)
+					// COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
+					commitEntry(iRequesterId, iTx.getId(), txEntry);
 
-			allEntries.addAll(tmpEntries);
-			tmpEntries.clear();
+				allEntries.addAll(tmpEntries);
+				tmpEntries.clear();
+			}
 		}
 
 		// CLEAR ALL TEMPORARY RECORDS

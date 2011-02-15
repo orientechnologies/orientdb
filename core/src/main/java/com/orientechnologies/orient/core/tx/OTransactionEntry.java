@@ -36,6 +36,19 @@ public class OTransactionEntry {
 	}
 
 	@Override
+	public int hashCode() {
+		return record.getIdentity().hashCode();
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (!(obj instanceof OTransactionEntry))
+			return false;
+
+		return record.equals(((OTransactionEntry) obj).record);
+	}
+
+	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();
 		builder.append("OTransactionEntry [record=").append(record).append(", status=").append(status).append(", clusterName=")
