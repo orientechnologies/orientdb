@@ -196,7 +196,10 @@ public abstract class OFile {
 		}
 
 		if (fileLock == null)
-			throw new OLockException("File '" + osFile.getPath() + "' is locked by another process");
+			throw new OLockException(
+					"File '"
+							+ osFile.getPath()
+							+ "' is locked by another process, maybe the database is in use by another process. Use the remote mode with a OrientDB server to allow multiple access to the same database.");
 	}
 
 	public void unlock() throws IOException {
