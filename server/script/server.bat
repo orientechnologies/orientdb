@@ -1,6 +1,6 @@
 @echo off
 rem
-rem Copyright (c) 1999-2010 Luca Garulli
+rem Copyright (c) 1999-2011 Luca Garulli @www.orientechnologies.com
 rem
 
 echo           .                                              

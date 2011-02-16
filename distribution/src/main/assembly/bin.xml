@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <assembly>
 	<!-- id typically identifies the "type" (src vs bin etc) of the assembly -->
-	<id></id>
+	<id>distribution</id>
 	<formats>
 		<format>dir</format>
 		<format>tar.gz</format>

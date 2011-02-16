@@ -54,6 +54,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
+				<version>2.2</version>
 				<executions>
 					<execution>
 						<id>distribution-package</id>
@@ -65,6 +66,10 @@
 							<descriptors>
 								<descriptor>src/main/assembly/bin.xml</descriptor>
 							</descriptors>
+							<filters>
+								<filter></filter>
+							</filters>
+							<ignoreDirFormatExtensions>false</ignoreDirFormatExtensions>
 							<tarLongFileMode>gnu</tarLongFileMode>
 						</configuration>
 					</execution>
