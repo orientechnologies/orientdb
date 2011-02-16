@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -29,6 +30,7 @@ import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
@@ -57,9 +59,9 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
  */
 @SuppressWarnings("unchecked")
 public class ODocument extends ORecordVirtualAbstract<Object> implements Iterable<Entry<String, Object>> {
-	public static final byte	RECORD_TYPE	= 'd';
+	public static final byte											RECORD_TYPE	= 'd';
 
-	protected ODocument				_owner			= null;
+	protected List<WeakReference<ORecordElement>>	_owners			= null;
 
 	/**
 	 * Internal constructor used on unmarshalling.
@@ -799,6 +801,17 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		return _fieldValues.entrySet().iterator();
 	}
 
+	@Override
+	public void setDatabase(final ODatabaseRecord iDatabase) {
+		super.setDatabase(iDatabase);
+
+		if (_fieldValues != null)
+			for (Object f : _fieldValues.values()) {
+				if (f instanceof ORecordElement)
+					((ORecordElement) f).setDatabase(iDatabase);
+			}
+	}
+
 	/**
 	 * Checks if a field exists.
 	 * 
@@ -819,20 +832,33 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	}
 
 	/**
-	 * Returns the Document owner instance. It's used for embedded documents to set as dirty the owners recursively.
-	 * 
-	 * @return the Owner ODocument instance if any, otherwise null.
+	 * Returns true if the record has some owner.
 	 */
-	public ODocument getOwner() {
-		return _owner;
+	public boolean hasOwners() {
+		return _owners != null && !_owners.isEmpty();
 	}
 
 	/**
 	 * Internal.
 	 */
-	public ODocument setOwner(ODocument owner) {
-		this._owner = owner;
-		return this;
+	public void addOwner(final ORecordElement iOwner) {
+		if (_owners == null)
+			_owners = new ArrayList<WeakReference<ORecordElement>>();
+		this._owners.add(new WeakReference<ORecordElement>(iOwner));
+	}
+
+	public void removeOwner(final ORecordElement iRecordElement) {
+		if (_owners != null) {
+			// PROPAGATES TO THE OWNER
+			ORecordElement e;
+			for (int i = 0; i < _owners.size(); ++i) {
+				e = _owners.get(i).get();
+				if (e == iRecordElement) {
+					_owners.remove(i);
+					break;
+				}
+			}
+		}
 	}
 
 	/**
@@ -840,10 +866,30 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 */
 	@Override
 	public ORecordAbstract<Object> setDirty() {
-		if (_owner != null)
+		if (_owners != null) {
 			// PROPAGATES TO THE OWNER
-			_owner.setDirty();
+			ORecordElement e;
+			for (WeakReference<ORecordElement> o : _owners) {
+				e = o.get();
+				if (e != null)
+					e.setDirty();
+			}
+		}
 		return super.setDirty();
+	}
+
+	@Override
+	public void onIdentityChanged(final ORecord<?> iRecord, final int iOldHashCode) {
+		if (_owners != null) {
+			final List<WeakReference<ORecordElement>> temp = new ArrayList<WeakReference<ORecordElement>>(_owners);
+
+			ORecordElement e;
+			for (WeakReference<ORecordElement> o : temp) {
+				e = o.get();
+				if (e != null)
+					e.onIdentityChanged(iRecord, iOldHashCode);
+			}
+		}
 	}
 
 	/**

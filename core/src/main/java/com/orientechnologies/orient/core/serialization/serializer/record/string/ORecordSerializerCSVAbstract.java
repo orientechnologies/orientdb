@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.serialization.serializer.record.string
 import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,7 @@ import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.db.object.OLazyObjectList;
 import com.orientechnologies.orient.core.db.object.OLazyObjectMap;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
@@ -210,7 +212,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					mapValueObject = fieldTypeFromStream(iSourceDocument, iLinkedType, mapValue);
 
 					if (mapValueObject != null && mapValueObject instanceof ODocument)
-						((ODocument) mapValueObject).setOwner(iSourceDocument);
+						((ODocument) mapValueObject).addOwner(iSourceDocument);
 
 					map.put(fieldTypeFromStream(iSourceDocument, OType.STRING, entry.get(0)), mapValueObject);
 				}
@@ -272,7 +274,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 			ORID rid;
 			int items = 0;
-			Set<Object> coll = (Set<Object>) iValue;
+			Set<Object> coll = new HashSet<Object>((Collection<? extends Object>) iValue);
 			Map<Object, Object> objToReplace = null;
 
 			// LINKED SET
@@ -283,7 +285,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				rid = linkToStream(buffer, iRecord, item);
 
 				if (rid != null) {
-					// REMEMBER TO REPLACE THIS ITEM AFTER ALL
+					// IDENTITY IS CHANGED, RE-SET INTO THE COLLECTION TO RECOMPUTE THE HASH
 					if (objToReplace == null)
 						objToReplace = new HashMap<Object, Object>();
 
@@ -493,8 +495,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			}
 
 			if (objectToAdd != null) {
-				if (objectToAdd instanceof ODocument)
-					((ODocument) objectToAdd).setOwner(iDocument);
+				if (objectToAdd instanceof ODocument && coll instanceof ORecordElement)
+					((ODocument) objectToAdd).addOwner((ORecordElement) coll);
 				coll.add(objectToAdd);
 			}
 		}

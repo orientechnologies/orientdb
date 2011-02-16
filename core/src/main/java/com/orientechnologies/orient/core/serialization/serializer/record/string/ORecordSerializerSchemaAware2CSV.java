@@ -178,7 +178,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 				} else if (database != null && fieldValue instanceof ORecord<?>) {
 					if (type == null)
 						// DETERMINE THE FIELD TYPE
-						if (fieldValue instanceof ODocument && ((ODocument) fieldValue).getOwner() != null)
+						if (fieldValue instanceof ODocument && ((ODocument) fieldValue).hasOwners())
 							type = OType.EMBEDDED;
 						else
 							type = OType.LINK;

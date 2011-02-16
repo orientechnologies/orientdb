@@ -16,13 +16,13 @@
 package com.orientechnologies.orient.core.db.graph;
 
 import java.lang.ref.SoftReference;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
 import com.orientechnologies.orient.core.exception.OGraphException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.iterator.OGraphVertexOutIterator;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
@@ -35,8 +35,8 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
  * @see OGraphEdge
  */
 public class OGraphVertex extends OGraphElement implements Cloneable {
-	private SoftReference<List<OGraphEdge>>	inEdges;
-	private SoftReference<List<OGraphEdge>>	outEdges;
+	private SoftReference<Set<OGraphEdge>>	inEdges;
+	private SoftReference<Set<OGraphEdge>>	outEdges;
 
 	public OGraphVertex(final ODatabaseGraphTx iDatabase) {
 		super(iDatabase, OGraphDatabase.VERTEX_CLASS_NAME);
@@ -63,7 +63,7 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 		return (RET) this;
 	}
 
-	public List<OGraphVertex> traverse(final int iStartLevel, final int iEndLevel) {
+	public Set<OGraphVertex> traverse(final int iStartLevel, final int iEndLevel) {
 		return null;
 	}
 
@@ -98,9 +98,9 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 		final OGraphEdge edge = new OGraphEdge(database, iClassName, this, iTargetVertex);
 		getOutEdges().add(edge);
 
-		List<ODocument> recordEdges = ((List<ODocument>) document.field(OGraphDatabase.VERTEX_FIELD_OUT_EDGES));
+		Set<ODocument> recordEdges = ((Set<ODocument>) document.field(OGraphDatabase.VERTEX_FIELD_OUT_EDGES));
 		if (recordEdges == null) {
-			recordEdges = new ArrayList<ODocument>();
+			recordEdges = new HashSet<ODocument>();
 			document.field(OGraphDatabase.VERTEX_FIELD_OUT_EDGES, recordEdges);
 		}
 		recordEdges.add(edge.getDocument());
@@ -109,9 +109,9 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 		// INSERT INTO THE INGOING EDGES OF TARGET
 		iTargetVertex.getInEdges().add(edge);
 
-		recordEdges = ((List<ODocument>) iTargetVertex.getDocument().field(OGraphDatabase.VERTEX_FIELD_IN_EDGES));
+		recordEdges = ((Set<ODocument>) iTargetVertex.getDocument().field(OGraphDatabase.VERTEX_FIELD_IN_EDGES));
 		if (recordEdges == null) {
-			recordEdges = new ArrayList<ODocument>();
+			recordEdges = new HashSet<ODocument>();
 			iTargetVertex.getDocument().field(OGraphDatabase.VERTEX_FIELD_IN_EDGES, recordEdges);
 		}
 
@@ -149,19 +149,10 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 	}
 
 	/**
-	 * Returns the iterator to browse all linked outgoing vertexes.
-	 * 
-	 * @return
-	 */
-	public OGraphVertexOutIterator outIterator() {
-		return new OGraphVertexOutIterator(this);
-	}
-
-	/**
 	 * Returns true if the vertex has at least one incoming edge, otherwise false.
 	 */
 	public boolean hasInEdges() {
-		final List<ODocument> docs = document.field(OGraphDatabase.VERTEX_FIELD_IN_EDGES);
+		final Set<ODocument> docs = document.field(OGraphDatabase.VERTEX_FIELD_IN_EDGES);
 		return docs != null && !docs.isEmpty();
 	}
 
@@ -169,28 +160,29 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 	 * Returns true if the vertex has at least one outgoing edge, otherwise false.
 	 */
 	public boolean hasOutEdges() {
-		final List<ODocument> docs = document.field(OGraphDatabase.VERTEX_FIELD_OUT_EDGES);
+		final Set<ODocument> docs = document.field(OGraphDatabase.VERTEX_FIELD_OUT_EDGES);
 		return docs != null && !docs.isEmpty();
 	}
 
 	/**
-	 * Returns the incoming edges of current node. If there are no edged, then an empty list is returned.
+	 * Returns the incoming edges of current node. If there are no edged, then an empty set is returned.
 	 */
-	public List<OGraphEdge> getInEdges() {
+	public Set<OGraphEdge> getInEdges() {
 		return getInEdges(null);
 	}
 
 	/**
-	 * Returns the incoming edges of current node having the requested label. If there are no edged, then an empty list is returned.
+	 * Returns the incoming edges of current node having the requested label. If there are no edged, then an empty set is returned.
 	 */
-	public List<OGraphEdge> getInEdges(final String iEdgeLabel) {
-		List<OGraphEdge> tempList = inEdges != null ? inEdges.get() : null;
+	public Set<OGraphEdge> getInEdges(final String iEdgeLabel) {
+		Set<OGraphEdge> temp = inEdges != null ? inEdges.get() : null;
 
-		if (tempList == null) {
-			tempList = new ArrayList<OGraphEdge>();
-			inEdges = new SoftReference<List<OGraphEdge>>(tempList);
+		if (temp == null) {
+			if (iEdgeLabel == null)
+				temp = new HashSet<OGraphEdge>();
+			inEdges = new SoftReference<Set<OGraphEdge>>(temp);
 
-			final List<Object> docs = document.field(OGraphDatabase.VERTEX_FIELD_IN_EDGES);
+			final Set<Object> docs = document.field(OGraphDatabase.VERTEX_FIELD_IN_EDGES);
 
 			if (docs != null) {
 				// TRANSFORM ALL THE ARCS
@@ -204,32 +196,41 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 					if (iEdgeLabel != null && !iEdgeLabel.equals(doc.field(OGraphDatabase.LABEL)))
 						continue;
 
-					tempList.add((OGraphEdge) database.getUserObjectByRecord(doc, null));
+					temp.add((OGraphEdge) database.getUserObjectByRecord(doc, null));
 				}
 			}
+		} else if (iEdgeLabel != null) {
+			// FILTER THE EXISTENT COLLECTION
+			HashSet<OGraphEdge> filtered = new HashSet<OGraphEdge>();
+			for (OGraphEdge e : temp) {
+				if (iEdgeLabel.equals(e.get(OGraphDatabase.LABEL)))
+					filtered.add(e);
+			}
+			temp = filtered;
 		}
 
-		return tempList;
+		return temp;
 	}
 
 	/**
-	 * Returns all the outgoing edges of current node. If there are no edged, then an empty list is returned.
+	 * Returns all the outgoing edges of current node. If there are no edged, then an empty set is returned.
 	 */
-	public List<OGraphEdge> getOutEdges() {
+	public Set<OGraphEdge> getOutEdges() {
 		return getOutEdges(null);
 	}
 
 	/**
-	 * Returns the outgoing edge of current node having the requested label. If there are no edged, then an empty list is returned.
+	 * Returns the outgoing edge of current node having the requested label. If there are no edged, then an empty set is returned.
 	 */
-	public List<OGraphEdge> getOutEdges(final String iEdgeLabel) {
-		List<OGraphEdge> tempList = outEdges != null ? outEdges.get() : null;
+	public Set<OGraphEdge> getOutEdges(final String iEdgeLabel) {
+		Set<OGraphEdge> temp = outEdges != null ? outEdges.get() : null;
 
-		if (tempList == null) {
-			tempList = new ArrayList<OGraphEdge>();
-			outEdges = new SoftReference<List<OGraphEdge>>(tempList);
+		if (temp == null) {
+			temp = new HashSet<OGraphEdge>();
+			if (iEdgeLabel == null)
+				outEdges = new SoftReference<Set<OGraphEdge>>(temp);
 
-			final List<Object> docs = document.field(OGraphDatabase.VERTEX_FIELD_OUT_EDGES);
+			final Set<Object> docs = document.field(OGraphDatabase.VERTEX_FIELD_OUT_EDGES);
 
 			if (docs != null) {
 				// TRANSFORM ALL THE ARCS
@@ -243,56 +244,33 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 					if (iEdgeLabel != null && !iEdgeLabel.equals(doc.field(OGraphDatabase.LABEL)))
 						continue;
 
-					tempList.add((OGraphEdge) database.getUserObjectByRecord(doc, null));
+					temp.add((OGraphEdge) database.getUserObjectByRecord(doc, null));
 				}
 			}
+		} else if (iEdgeLabel != null) {
+			// FILTER THE EXISTENT COLLECTION
+			HashSet<OGraphEdge> filtered = new HashSet<OGraphEdge>();
+			for (OGraphEdge e : temp) {
+				if (iEdgeLabel.equals(e.get(OGraphDatabase.LABEL)))
+					filtered.add(e);
+			}
+			temp = filtered;
 		}
 
-		return tempList;
+		return temp;
 	}
 
 	/**
-	 * Returns the outgoing vertex at given position.
-	 * 
-	 * @param iIndex
-	 *          edge position
-	 * @param iCurrentVertex
-	 *          Object to recycle to save memory. Used on iteration
-	 * @param iCurrentVertex
-	 */
-	public OGraphVertex getOutEdgeVertex(int iIndex, final OGraphVertex iCurrentVertex) {
-		final List<ODocument> docs = document.field(OGraphDatabase.VERTEX_FIELD_OUT_EDGES);
-		iCurrentVertex.fromStream((ODocument) docs.get(iIndex).field(OGraphDatabase.EDGE_FIELD_OUT));
-		return iCurrentVertex;
-	}
-
-	/**
-	 * Returns the incoming vertex at given position.
-	 * 
-	 * @param iIndex
-	 * 
-	 *          edge position
-	 * @param iCurrentVertex
-	 *          Object to recycle to save memory. Used on iteration
-	 * @param iCurrentVertex
-	 */
-	public OGraphVertex getInEdgeVertex(int iIndex, final OGraphVertex iCurrentVertex) {
-		final List<ODocument> docs = document.field(OGraphDatabase.VERTEX_FIELD_IN_EDGES);
-		iCurrentVertex.fromStream((ODocument) docs.get(iIndex).field(OGraphDatabase.EDGE_FIELD_IN));
-		return iCurrentVertex;
-	}
-
-	/**
-	 * Returns the list of Vertexes from the outgoing edges. It avoids to unmarshall edges.
+	 * Returns the set of Vertexes from the outgoing edges. It avoids to unmarshall edges.
 	 */
 	@SuppressWarnings("unchecked")
-	public List<OGraphVertex> browseOutEdgesVertexes() {
-		final List<OGraphVertex> resultset = new ArrayList<OGraphVertex>();
+	public Set<OGraphVertex> browseOutEdgesVertexes() {
+		final Set<OGraphVertex> resultset = new HashSet<OGraphVertex>();
 
-		List<OGraphEdge> tempList = outEdges != null ? outEdges.get() : null;
+		Set<OGraphEdge> temp = outEdges != null ? outEdges.get() : null;
 
-		if (tempList == null) {
-			final List<ODocument> docEdges = (List<ODocument>) document.field(OGraphDatabase.VERTEX_FIELD_OUT_EDGES);
+		if (temp == null) {
+			final Set<ODocument> docEdges = (Set<ODocument>) document.field(OGraphDatabase.VERTEX_FIELD_OUT_EDGES);
 
 			// TRANSFORM ALL THE EDGES
 			if (docEdges != null)
@@ -300,7 +278,7 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 					resultset.add((OGraphVertex) database.getUserObjectByRecord((ODocument) d.field(OGraphDatabase.EDGE_FIELD_IN), null));
 				}
 		} else {
-			for (OGraphEdge edge : tempList) {
+			for (OGraphEdge edge : temp) {
 				resultset.add(edge.getIn());
 			}
 		}
@@ -309,16 +287,16 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 	}
 
 	/**
-	 * Returns the list of Vertexes from the incoming edges. It avoids to unmarshall edges.
+	 * Returns the set of Vertexes from the incoming edges. It avoids to unmarshall edges.
 	 */
 	@SuppressWarnings("unchecked")
-	public List<OGraphVertex> browseInEdgesVertexes() {
-		final List<OGraphVertex> resultset = new ArrayList<OGraphVertex>();
+	public Set<OGraphVertex> browseInEdgesVertexes() {
+		final Set<OGraphVertex> resultset = new HashSet<OGraphVertex>();
 
-		List<OGraphEdge> tempList = inEdges != null ? inEdges.get() : null;
+		Set<OGraphEdge> temp = inEdges != null ? inEdges.get() : null;
 
-		if (tempList == null) {
-			final List<ODocument> docEdges = (List<ODocument>) document.field(OGraphDatabase.VERTEX_FIELD_IN_EDGES);
+		if (temp == null) {
+			final Set<ODocument> docEdges = (Set<ODocument>) document.field(OGraphDatabase.VERTEX_FIELD_IN_EDGES);
 
 			// TRANSFORM ALL THE EDGES
 			if (docEdges != null)
@@ -326,7 +304,7 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 					resultset.add((OGraphVertex) database.getUserObjectByRecord((ODocument) d.field(OGraphDatabase.EDGE_FIELD_OUT), null));
 				}
 		} else {
-			for (OGraphEdge edge : tempList) {
+			for (OGraphEdge edge : temp) {
 				resultset.add(edge.getOut());
 			}
 		}
@@ -334,39 +312,39 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 		return resultset;
 	}
 
-	public int findInVertex(final OGraphVertex iVertexDocument) {
-		final List<ODocument> docs = document.field(OGraphDatabase.VERTEX_FIELD_IN_EDGES);
+	public ODocument findInVertex(final OGraphVertex iVertexDocument) {
+		final Set<ODocument> docs = document.field(OGraphDatabase.VERTEX_FIELD_IN_EDGES);
 		if (docs == null || docs.size() == 0)
-			return -1;
+			return null;
 
-		for (int i = 0; i < docs.size(); ++i) {
-			if (docs.get(i).field(OGraphDatabase.EDGE_FIELD_IN).equals(iVertexDocument.getDocument()))
-				return i;
+		for (ODocument d : docs) {
+			if (d.field(OGraphDatabase.EDGE_FIELD_IN).equals(iVertexDocument.getDocument()))
+				return d;
 		}
 
-		return -1;
+		return null;
 	}
 
-	public int findOutVertex(final OGraphVertex iVertexDocument) {
-		final List<ODocument> docs = document.field(OGraphDatabase.VERTEX_FIELD_OUT_EDGES);
+	public ODocument findOutVertex(final OGraphVertex iVertexDocument) {
+		final Set<ODocument> docs = document.field(OGraphDatabase.VERTEX_FIELD_OUT_EDGES);
 		if (docs == null || docs.size() == 0)
-			return -1;
+			return null;
 
-		for (int i = 0; i < docs.size(); ++i) {
-			if (docs.get(i).field(OGraphDatabase.EDGE_FIELD_OUT).equals(iVertexDocument.getDocument()))
-				return i;
+		for (ODocument d : docs) {
+			if (d.field(OGraphDatabase.EDGE_FIELD_OUT).equals(iVertexDocument.getDocument()))
+				return d;
 		}
 
-		return -1;
+		return null;
 	}
 
 	public int getInEdgeCount() {
-		final List<ODocument> docs = document.field(OGraphDatabase.VERTEX_FIELD_IN_EDGES);
+		final Set<ODocument> docs = document.field(OGraphDatabase.VERTEX_FIELD_IN_EDGES);
 		return docs == null ? 0 : docs.size();
 	}
 
 	public int getOutEdgeCount() {
-		final List<ODocument> docs = document.field(OGraphDatabase.VERTEX_FIELD_OUT_EDGES);
+		final Set<ODocument> docs = document.field(OGraphDatabase.VERTEX_FIELD_OUT_EDGES);
 		return docs == null ? 0 : docs.size();
 	}
 
@@ -389,15 +367,15 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 			outEdges.get().clear();
 		outEdges = null;
 
-		List<ODocument> docs = (List<ODocument>) document.field(OGraphDatabase.VERTEX_FIELD_IN_EDGES);
+		Set<ODocument> docs = (Set<ODocument>) document.field(OGraphDatabase.VERTEX_FIELD_IN_EDGES);
 		if (docs != null)
-			while (!docs.isEmpty())
-				OGraphEdge.delete(database, docs.get(0));
+			for (Iterator<ODocument> it = docs.iterator(); it.hasNext();)
+				OGraphEdge.delete(database, it.next());
 
-		docs = (List<ODocument>) document.field(OGraphDatabase.VERTEX_FIELD_OUT_EDGES);
+		docs = (Set<ODocument>) document.field(OGraphDatabase.VERTEX_FIELD_OUT_EDGES);
 		if (docs != null)
-			while (!docs.isEmpty())
-				OGraphEdge.delete(database, docs.get(0));
+			for (Iterator<ODocument> it = docs.iterator(); it.hasNext();)
+				OGraphEdge.delete(database, it.next());
 
 		database.unregisterPojo(this, document);
 
@@ -453,7 +431,7 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 
 		// REMOVE THE EDGE DOCUMENT
 		ODocument edge = null;
-		List<ODocument> docs = iSourceVertex.field(OGraphDatabase.VERTEX_FIELD_OUT_EDGES);
+		Set<ODocument> docs = iSourceVertex.field(OGraphDatabase.VERTEX_FIELD_OUT_EDGES);
 		if (docs != null) {
 			for (ODocument d : docs)
 				if (d.field(OGraphDatabase.EDGE_FIELD_IN).equals(iTargetVertex)) {

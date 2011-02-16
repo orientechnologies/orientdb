@@ -74,6 +74,9 @@ public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
 		throw new UnsupportedOperationException();
 	}
 
+	public void onIdentityChanged(final ORecord<?> iRecord, final int iOldIdentity) {
+	}
+
 	@Override
 	public OTransactionRecordProxy unpin() {
 		throw new UnsupportedOperationException();
@@ -105,8 +108,7 @@ public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
 	}
 
 	@Override
-	public ORecordAbstract<?> setDatabase(final ODatabaseRecord iDatabase) {
-		return null;
+	public void setDatabase(final ODatabaseRecord iDatabase) {
 	}
 
 	@Override

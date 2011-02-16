@@ -108,8 +108,12 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 						return;
 				}
 
+				final int oldHashCode = rid.hashCode();
+
 				// ASSIGN A UNIQUE SERIAL TEMPORARY ID
 				rid.clusterPosition = newObjectCounter--;
+
+				iRecord.onIdentityChanged(iRecord, oldHashCode);
 			}
 
 			OTransactionEntry txEntry = entries.get(rid);

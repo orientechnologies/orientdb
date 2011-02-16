@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Lazy implementation of ArrayList. It's bound to a source ORecord object to keep track of changes. This avoid to call the
@@ -34,12 +35,18 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  */
 @SuppressWarnings({ "serial" })
 public class ORecordLazyList extends ORecordTrackedList {
-	final private byte						recordType;
-	final private ODatabaseRecord	database;
-	private boolean								converted				= false;
-	private boolean								convertToRecord	= true;
+	final private byte			recordType;
+	private ODatabaseRecord	database;
+	private boolean					converted				= false;
+	private boolean					convertToRecord	= true;
 
-	public ORecordLazyList(ODatabaseRecord iDatabase, final byte iRecordType) {
+	public ORecordLazyList(final ODatabaseRecord iDatabase) {
+		super(null);
+		this.database = iDatabase;
+		this.recordType = ODocument.RECORD_TYPE;
+	}
+
+	public ORecordLazyList(final ODatabaseRecord iDatabase, final byte iRecordType) {
 		super(null);
 		this.database = iDatabase;
 		this.recordType = iRecordType;
@@ -170,5 +177,10 @@ public class ORecordLazyList extends ORecordTrackedList {
 
 	public byte getRecordType() {
 		return recordType;
+	}
+
+	@Override
+	public void setDatabase(final ODatabaseRecord iDatabase) {
+		database = iDatabase;
 	}
 }

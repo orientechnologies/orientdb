@@ -78,7 +78,7 @@ public enum OGlobalConfiguration {
 	FILE_MMAP_STRATEGY(
 			"file.mmap.strategy",
 			"Strategy to use with memory mapped files. 0 = USE MMAP ALWAYS, 1 = USE MMAP ON WRITES OR ON READ JUST WHEN THE BLOCK POOL IS FREE, 2 = USE MMAP ON WRITES OR ON READ JUST WHEN THE BLOCK IS ALREADY AVAILABLE, 3 = USE MMAP ONLY IF BLOCK IS ALREADY AVAILABLE",
-			Integer.class, 1),
+			Integer.class, 3),
 
 	FILE_MMAP_BLOCK_SIZE("file.mmap.blockSize", "Size of the memory mapped block", Integer.class, 327680,
 			new OConfigurationChangeCallback() {

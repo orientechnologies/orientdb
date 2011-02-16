@@ -369,7 +369,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 				return true;
 			}
 
-		}));
+		}).setFetchPlan("*:1"));
 
 		if (currentResultSet.size() > 0 && currentResultSet.size() < limit)
 			printHeaderLine(columns);

@@ -103,7 +103,7 @@ public class OMultiValue {
 				try {
 					Object e = it.next();
 					sb.append(e == iObject ? "(this Collection)" : e);
-					if (!it.hasNext())
+					if (it.hasNext())
 						sb.append(", ");
 				} catch (NoSuchElementException ex) {
 					// IGNORE THIS

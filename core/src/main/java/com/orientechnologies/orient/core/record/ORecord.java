@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.record;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
@@ -23,7 +24,7 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 /**
  * Generic record representation. The object can be reused across call to the database.
  */
-public interface ORecord<T> {
+public interface ORecord<T> extends ORecordElement {
 	/**
 	 * Available record statuses.
 	 */
@@ -87,13 +88,6 @@ public interface ORecord<T> {
 	 * @return True if dirty, otherwise false
 	 */
 	public boolean isDirty();
-
-	/**
-	 * Marks the record as dirty. Only dirty records are updated in the storage.
-	 * 
-	 * @return The object it self. Useful to call methods in chain.
-	 */
-	public <RET extends ORecord<T>> RET setDirty();
 
 	/**
 	 * Checks if the record is pinned.

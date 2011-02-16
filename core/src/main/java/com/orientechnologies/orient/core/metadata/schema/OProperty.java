@@ -357,4 +357,32 @@ public class OProperty extends ODocumentWrapperNoClass {
 	public void setRegexp(String regexp) {
 		this.regexp = regexp;
 	}
+
+	/**
+	 * Change the type. It checks for compatibility between the change of type.
+	 * 
+	 * @param iType
+	 */
+	public void setType(final OType iType) {
+		if (iType == type)
+			// NO CHANGES
+			return;
+
+		boolean ok = false;
+		switch (type) {
+		case LINKLIST:
+			ok = iType == OType.LINKSET;
+			break;
+
+		case LINKSET:
+			ok = iType == OType.LINKLIST;
+			break;
+		}
+
+		if (!ok)
+			throw new IllegalArgumentException("Can't change property type from " + type + " to " + iType);
+
+		type = iType;
+		setDirty();
+	}
 }

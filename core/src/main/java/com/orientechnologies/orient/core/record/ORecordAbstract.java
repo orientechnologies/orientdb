@@ -125,6 +125,9 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		return this;
 	}
 
+	public void onIdentityChanged(final ORecord<?> iRecord, final int iOldHashCode) {
+	}
+
 	public boolean isDirty() {
 		return _dirty;
 	}
@@ -149,9 +152,8 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		return _database;
 	}
 
-	public ORecordAbstract<?> setDatabase(final ODatabaseRecord iDatabase) {
+	public void setDatabase(final ODatabaseRecord iDatabase) {
 		this._database = iDatabase;
-		return this;
 	}
 
 	public <RET extends ORecord<T>> RET fromJSON(final String iSource) {
@@ -260,13 +262,13 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		if (obj == null)
 			return false;
 		if (getClass() == obj.getClass()) {
-			// DOCUMENT <-> DOCUMENT
+			// RECORD <-> RECORD
 			final ORecordAbstract<?> other = (ORecordAbstract<?>) obj;
 			if (_recordId == null) {
 				if (other._recordId != null)
 					return false;
 			} else if (!_recordId.equals(other._recordId))
-				return false;
+				return _recordId.isValid();
 		} else if (obj instanceof ORID) {
 			// DOCUMENT <-> ORID
 			final ORID other = (ORID) obj;
@@ -275,7 +277,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 				if (other != null)
 					return false;
 			} else if (!_recordId.equals(other))
-				return false;
+				return _recordId.isValid();
 		} else
 			return false;
 

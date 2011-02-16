@@ -20,6 +20,7 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
@@ -58,7 +59,7 @@ public class ORecordId implements ORID, Comparable<ORecordId>, Comparator<ORecor
 	 * @param parentRid
 	 *          Source object
 	 */
-	public ORecordId(ORID parentRid) {
+	public ORecordId(final ORID parentRid) {
 		clusterId = parentRid.getClusterId();
 		clusterPosition = parentRid.getClusterPosition();
 	}
@@ -104,9 +105,15 @@ public class ORecordId implements ORID, Comparable<ORecordId>, Comparator<ORecor
 			return true;
 		if (obj == null)
 			return false;
-		if (getClass() != obj.getClass())
+
+		final ORecordId other;
+		if (obj instanceof ORecordId)
+			other = (ORecordId) obj;
+		else if (obj instanceof ORecord<?>)
+			other = (ORecordId) ((ORecord<?>) obj).getIdentity();
+		else
 			return false;
-		final ORecordId other = (ORecordId) obj;
+
 		if (clusterId != other.clusterId)
 			return false;
 		if (clusterPosition != other.clusterPosition)

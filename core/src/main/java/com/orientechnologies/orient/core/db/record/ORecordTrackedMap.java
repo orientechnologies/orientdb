@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.db.record;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 
 /**
@@ -28,15 +29,17 @@ import com.orientechnologies.orient.core.record.ORecord;
  * 
  */
 @SuppressWarnings("serial")
-public class ORecordTrackedMap extends LinkedHashMap<String, Object> {
+public class ORecordTrackedMap extends LinkedHashMap<Object, Object> implements ORecordElement {
 	final protected ORecord<?>	sourceRecord;
 
 	public ORecordTrackedMap(final ORecord<?> iSourceRecord) {
 		this.sourceRecord = iSourceRecord;
+		if (iSourceRecord != null)
+			iSourceRecord.setDirty();
 	}
 
 	@Override
-	public Object put(final String iKey, final Object iValue) {
+	public Object put(final Object iKey, final Object iValue) {
 		setDirty();
 		return super.put(iKey, iValue);
 	}
@@ -54,13 +57,24 @@ public class ORecordTrackedMap extends LinkedHashMap<String, Object> {
 	}
 
 	@Override
-	public void putAll(Map<? extends String, ? extends Object> m) {
+	public void putAll(Map<? extends Object, ? extends Object> m) {
 		setDirty();
 		super.putAll(m);
 	}
 
-	public void setDirty() {
+	@SuppressWarnings("unchecked")
+	public ORecordTrackedMap setDirty() {
 		if (sourceRecord != null)
 			sourceRecord.setDirty();
+		return this;
+	}
+
+	public void onIdentityChanged(final ORecord<?> iRecord, final int iOldHashCode) {
+		final Object old = remove(iRecord);
+		if (old != null)
+			put(iRecord.getIdentity(), iRecord);
+	}
+
+	public void setDatabase(final ODatabaseRecord iDatabase) {
 	}
 }

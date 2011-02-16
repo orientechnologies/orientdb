@@ -16,7 +16,7 @@
 package com.orientechnologies.orient.core.db.graph;
 
 import java.lang.ref.SoftReference;
-import java.util.List;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
 import com.orientechnologies.orient.core.id.ORID;
@@ -112,7 +112,7 @@ public class OGraphEdge extends OGraphElement {
 		final ODocument sourceVertex = (ODocument) iEdge.field(OGraphDatabase.EDGE_FIELD_OUT);
 		final ODocument targetVertex = (ODocument) iEdge.field(OGraphDatabase.EDGE_FIELD_IN);
 
-		List<OGraphEdge> edges;
+		Set<OGraphEdge> edges;
 
 		if (sourceVertex != null && iDatabase.existsUserObjectByRID(sourceVertex.getIdentity())) {
 			// WORK ALSO WITH OGraphDatabase.EDGE_FIELD_IN MEMORY OBJECTS
@@ -145,7 +145,7 @@ public class OGraphEdge extends OGraphElement {
 		}
 
 		// REMOVE THE EDGE DOCUMENT
-		List<ODocument> docs = sourceVertex.field(OGraphDatabase.VERTEX_FIELD_OUT_EDGES);
+		Set<ODocument> docs = sourceVertex.field(OGraphDatabase.VERTEX_FIELD_OUT_EDGES);
 		if (docs != null)
 			docs.remove(iEdge);
 

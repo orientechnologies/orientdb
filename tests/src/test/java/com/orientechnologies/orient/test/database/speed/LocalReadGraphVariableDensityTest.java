@@ -19,9 +19,9 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.db.graph.ODatabaseGraphTx;
+import com.orientechnologies.orient.core.db.graph.OGraphEdge;
 import com.orientechnologies.orient.core.db.graph.OGraphVertex;
 import com.orientechnologies.orient.core.intent.OIntentMassiveRead;
-import com.orientechnologies.orient.core.iterator.OGraphVertexOutIterator;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
 @Test(sequential = true)
@@ -38,28 +38,26 @@ public class LocalReadGraphVariableDensityTest {
 
 		long time = System.currentTimeMillis();
 
-		OGraphVertexOutIterator iterator = readSubNodes(database.getRoot("HighDensityGraph"));
+		int count = readSubNodes(database.getRoot("HighDensityGraph"));
 
-		System.out.println("Read of the entire graph with depth=" + iterator.getMaxDeepLevel() + ". Total " + iterator.getCount()
-				+ " nodes in " + ((System.currentTimeMillis() - time) / 1000f) + " sec.");
+		System.out.println("Read of the entire graph. Total " + count + " nodes in " + ((System.currentTimeMillis() - time) / 1000f)
+				+ " sec.");
 
 		System.out.println("Repeating the same operation but with hot cache");
 
 		time = System.currentTimeMillis();
 
-		iterator = readSubNodes(database.getRoot("HighDensityGraph"));
+		count = readSubNodes(database.getRoot("HighDensityGraph"));
 
-		System.out.println("Read using the cache of the entire graph with depth=" + iterator.getMaxDeepLevel() + ". Total "
-				+ iterator.getCount() + " nodes in " + ((System.currentTimeMillis() - time) / 1000f) + " sec.");
+		System.out.println("Read using the cache of the entire graph. Total " + count + " nodes in "
+				+ ((System.currentTimeMillis() - time) / 1000f) + " sec.");
 
 		database.close();
 	}
 
-	private static OGraphVertexOutIterator readSubNodes(final OGraphVertex iNode) {
-		OGraphVertexOutIterator iterator = iNode.outIterator();
-
+	private static int readSubNodes(final OGraphVertex iNode) {
 		int i = 0;
-		for (OGraphVertex v : iNode.outIterator()) {
+		for (OGraphEdge e : iNode.getOutEdges()) {
 			// System.out.print(v.get("id") + " - ");
 			++i;
 
@@ -67,6 +65,6 @@ public class LocalReadGraphVariableDensityTest {
 				System.out.print(".");
 		}
 
-		return iterator;
+		return i;
 	}
 }

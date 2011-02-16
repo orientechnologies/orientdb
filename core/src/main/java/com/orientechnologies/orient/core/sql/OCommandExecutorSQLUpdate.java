@@ -225,6 +225,10 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 					coll = (Collection<Object>) fieldValue;
 					coll.remove(v);
 					record.setDirty();
+				} else if (fieldValue instanceof Map<?, ?>) {
+					map = (Map<String, Object>) fieldValue;
+					map.remove(v);
+					record.setDirty();
 				}
 			}
 		}

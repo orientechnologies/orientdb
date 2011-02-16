@@ -15,11 +15,11 @@
  */
 package com.orientechnologies.orient.core.db.graph;
 
-import java.util.List;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -69,12 +69,14 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		return (THISDB) this;
 	}
 
-	public ODocument createVertex(final String iClassName) {
-		return new ODocument(this, iClassName);
+	public ODocument createVertex() {
+		return createVertex(null);
 	}
 
-	public ODocument createVertex() {
-		return new ODocument(this, VERTEX_CLASS_NAME);
+	public ODocument createVertex(String iClassName) {
+		if (iClassName == null)
+			iClassName = VERTEX_CLASS_NAME;
+		return new ODocument(this, iClassName);
 	}
 
 	public ODocument createEdge(final ORID iSourceVertexRid, final ORID iDestVertexRid) {
@@ -93,35 +95,75 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		return createEdge(sourceVertex, destVertex, iClassName);
 	}
 
+	public void removeVertex(final ODocument iVertex) {
+		final boolean safeMode = beginBlock();
+
+		try {
+			ODocument otherVertex;
+			Set<ODocument> otherEdges;
+
+			// REMOVE OUT EDGES
+			Set<ODocument> edges = iVertex.field(VERTEX_FIELD_OUT_EDGES);
+			if (edges != null) {
+				for (ODocument edge : edges) {
+					otherVertex = edge.field(EDGE_FIELD_IN);
+					if (otherVertex != null) {
+						otherEdges = otherVertex.field(VERTEX_FIELD_IN_EDGES);
+						if (otherEdges != null && otherEdges.remove(edge))
+							save(otherVertex);
+					}
+					delete(edge);
+				}
+				edges.clear();
+				iVertex.field(VERTEX_FIELD_OUT_EDGES, edges);
+			}
+
+			// REMOVE IN EDGES
+			edges = iVertex.field(VERTEX_FIELD_IN_EDGES);
+			if (edges != null) {
+				for (ODocument edge : edges) {
+					otherVertex = edge.field(EDGE_FIELD_OUT);
+					if (otherVertex != null) {
+						otherEdges = otherVertex.field(VERTEX_FIELD_OUT_EDGES);
+						if (otherEdges != null && otherEdges.remove(edge))
+							save(otherVertex);
+					}
+					delete(edge);
+				}
+				edges.clear();
+				iVertex.field(VERTEX_FIELD_IN_EDGES, edges);
+			}
+
+			// DELETE VERTEX AS DOCUMENT
+			delete(iVertex);
+
+			commitBlock(safeMode);
+
+		} catch (RuntimeException e) {
+			rollbackBlock(safeMode);
+			throw e;
+		}
+	}
+
 	@SuppressWarnings("unchecked")
 	public void removeEdge(final ODocument iEdge) {
 		final boolean safeMode = beginBlock();
 
 		try {
-			final ODocument sourceVertex = iEdge.field(EDGE_FIELD_IN);
-			final ODocument destVertex = iEdge.field(EDGE_FIELD_OUT);
+			final ODocument outVertex = iEdge.field(EDGE_FIELD_OUT);
+			final ODocument inVertex = iEdge.field(EDGE_FIELD_IN);
 
-			final ORID edgeIdentity = iEdge.getIdentity();
+			Set<ODocument> outEdges = ((Set<ODocument>) outVertex.field(VERTEX_FIELD_OUT_EDGES));
+			if (outEdges != null)
+				outEdges.remove(iEdge);
 
-			List<ODocument> outEdges = ((List<ODocument>) sourceVertex.field(VERTEX_FIELD_OUT_EDGES));
-			for (int i = 0; i < outEdges.size(); ++i) {
-				if (outEdges.get(i).getIdentity().equals(edgeIdentity)) {
-					outEdges.remove(i);
-					break;
-				}
-			}
+			Set<ODocument> inEdges = ((Set<ODocument>) inVertex.field(VERTEX_FIELD_IN_EDGES));
+			if (inEdges != null)
+				inEdges.remove(iEdge);
 
-			List<ODocument> inEdges = ((List<ODocument>) destVertex.field(VERTEX_FIELD_IN_EDGES));
-			for (int i = 0; i < inEdges.size(); ++i) {
-				if (inEdges.get(i).getIdentity().equals(edgeIdentity)) {
-					inEdges.remove(i);
-					break;
-				}
-			}
-
-			iEdge.delete();
-			sourceVertex.delete();
-			destVertex.delete();
+			delete(iEdge);
+			save(outVertex);
+			save(inVertex);
 
 			commitBlock(safeMode);
 
@@ -135,29 +177,35 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		return createEdge(iSourceVertex, iDestVertex, null);
 	}
 
-	public ODocument createEdge(final ODocument iSourceVertex, final ODocument iDestVertex, final String iClassName) {
+	public ODocument createEdge(final ODocument iOutVertex, final ODocument iInVertex, final String iClassName) {
 		final boolean safeMode = beginBlock();
 
 		try {
-			final ODocument edge = new ODocument(this, iClassName != null ? iClassName : EDGE_CLASS_NAME);
-			edge.field(EDGE_FIELD_IN, iSourceVertex);
-			edge.field(EDGE_FIELD_OUT, iDestVertex);
+			iInVertex.setDatabase(this);
+			iOutVertex.setDatabase(this);
 
-			ORecordLazyList outEdges = ((ORecordLazyList) iSourceVertex.field(VERTEX_FIELD_OUT_EDGES));
+			final ODocument edge = new ODocument(this, iClassName != null ? iClassName : EDGE_CLASS_NAME);
+			edge.field(EDGE_FIELD_OUT, iOutVertex);
+			edge.field(EDGE_FIELD_IN, iInVertex);
+
+			ORecordLazySet outEdges = ((ORecordLazySet) iOutVertex.field(VERTEX_FIELD_OUT_EDGES));
 			if (outEdges == null) {
-				outEdges = new ORecordLazyList(underlying, ODocument.RECORD_TYPE);
-				iSourceVertex.field(VERTEX_FIELD_OUT_EDGES, outEdges);
+				outEdges = new ORecordLazySet(iOutVertex, ODocument.RECORD_TYPE);
+				iOutVertex.field(VERTEX_FIELD_OUT_EDGES, outEdges);
 			}
 			outEdges.add(edge);
 
-			ORecordLazyList inEdges = ((ORecordLazyList) iDestVertex.field(VERTEX_FIELD_IN_EDGES));
+			ORecordLazySet inEdges = ((ORecordLazySet) iInVertex.field(VERTEX_FIELD_IN_EDGES));
 			if (inEdges == null) {
-				inEdges = new ORecordLazyList(underlying, ODocument.RECORD_TYPE);
-				iDestVertex.field(VERTEX_FIELD_IN_EDGES, inEdges);
+				inEdges = new ORecordLazySet(iInVertex, ODocument.RECORD_TYPE);
+				iInVertex.field(VERTEX_FIELD_IN_EDGES, inEdges);
 			}
 			inEdges.add(edge);
 
-			commitBlock(safeMode);
+			if (safeMode) {
+				save(edge);
+				commitBlock(safeMode);
+			}
 
 			return edge;
 
@@ -167,16 +215,44 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		}
 	}
 
-	public ORecordLazyList getOutEdges(final ODocument iVertex) {
-		if (!iVertex.getSchemaClass().isSubClassOf(vertexBaseClass))
-			throw new IllegalArgumentException("The document received is not a vertex");
-		return iVertex.field(VERTEX_FIELD_OUT_EDGES);
+	public ORecordLazySet getOutEdges(final ODocument iVertex) {
+		return getOutEdges(iVertex, null);
 	}
 
-	public ORecordLazyList getInEdges(final ODocument iVertex) {
+	public ORecordLazySet getOutEdges(final ODocument iVertex, final String iLabel) {
 		if (!iVertex.getSchemaClass().isSubClassOf(vertexBaseClass))
 			throw new IllegalArgumentException("The document received is not a vertex");
-		return iVertex.field(VERTEX_FIELD_IN_EDGES);
+
+		final ORecordLazySet result = new ORecordLazySet(underlying, ODocument.RECORD_TYPE);
+
+		final ORecordLazySet set = iVertex.field(VERTEX_FIELD_OUT_EDGES);
+		if (set != null)
+			for (Object item : set) {
+				if (iLabel == null || iLabel.equals(((ODocument) item).field(LABEL)))
+					result.add(item);
+			}
+
+		return result;
+	}
+
+	public ORecordLazySet getInEdges(final ODocument iVertex) {
+		return getInEdges(iVertex, null);
+	}
+
+	public ORecordLazySet getInEdges(final ODocument iVertex, final String iLabel) {
+		if (!iVertex.getSchemaClass().isSubClassOf(vertexBaseClass))
+			throw new IllegalArgumentException("The document received is not a vertex");
+
+		final ORecordLazySet result = new ORecordLazySet(underlying, ODocument.RECORD_TYPE);
+
+		final ORecordLazySet set = iVertex.field(VERTEX_FIELD_IN_EDGES);
+		if (set != null)
+			for (Object item : set) {
+				if (iLabel == null || iLabel.equals(((ODocument) item).field(LABEL)))
+					result.add(item);
+			}
+
+		return result;
 	}
 
 	public ODocument getInVertex(final ODocument iEdge) {
@@ -244,12 +320,19 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 			if (edgeBaseClass == null)
 				edgeBaseClass = getMetadata().getSchema().createClass(EDGE_CLASS_NAME, addPhysicalCluster(EDGE_CLASS_NAME));
 
-			vertexBaseClass.createProperty(VERTEX_FIELD_IN_EDGES, OType.LINKLIST, edgeBaseClass);
-			vertexBaseClass.createProperty(VERTEX_FIELD_OUT_EDGES, OType.LINKLIST, edgeBaseClass);
+			vertexBaseClass.createProperty(VERTEX_FIELD_IN_EDGES, OType.LINKSET, edgeBaseClass);
+			vertexBaseClass.createProperty(VERTEX_FIELD_OUT_EDGES, OType.LINKSET, edgeBaseClass);
 			edgeBaseClass.createProperty(EDGE_FIELD_IN, OType.LINK, vertexBaseClass);
 			edgeBaseClass.createProperty(EDGE_FIELD_OUT, OType.LINK, vertexBaseClass);
+
+			getMetadata().getSchema().save();
+		} else {
+			// @COMPATIBILITY 0.9.25
+			if (vertexBaseClass.getProperty(VERTEX_FIELD_OUT_EDGES).getType() == OType.LINKLIST)
+				vertexBaseClass.getProperty(VERTEX_FIELD_OUT_EDGES).setType(OType.LINKSET);
+			if (vertexBaseClass.getProperty(VERTEX_FIELD_IN_EDGES).getType() == OType.LINKLIST)
+				vertexBaseClass.getProperty(VERTEX_FIELD_IN_EDGES).setType(OType.LINKSET);
 		}
-		getMetadata().getSchema().save();
 	}
 
 	public boolean isSafeMode() {
@@ -258,6 +341,14 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 
 	public void setSafeMode(boolean safeMode) {
 		this.safeMode = safeMode;
+	}
+
+	public OClass getVertexBaseClass() {
+		return vertexBaseClass;
+	}
+
+	public OClass getEdgeBaseClass() {
+		return edgeBaseClass;
 	}
 
 	protected boolean beginBlock() {

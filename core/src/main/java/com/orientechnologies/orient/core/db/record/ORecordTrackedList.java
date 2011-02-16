@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.db.record;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 
 /**
@@ -28,11 +29,13 @@ import com.orientechnologies.orient.core.record.ORecord;
  * 
  */
 @SuppressWarnings({ "serial" })
-public class ORecordTrackedList extends ArrayList<Object> {
+public class ORecordTrackedList extends ArrayList<Object> implements ORecordElement {
 	protected final ORecord<?>	sourceRecord;
 
 	public ORecordTrackedList(final ORecord<?> iSourceRecord) {
 		this.sourceRecord = iSourceRecord;
+		if (iSourceRecord != null)
+			iSourceRecord.setDirty();
 	}
 
 	@Override
@@ -106,8 +109,19 @@ public class ORecordTrackedList extends ArrayList<Object> {
 		super.clear();
 	}
 
-	public void setDirty() {
+	@SuppressWarnings("unchecked")
+	public ORecordTrackedList setDirty() {
 		if (sourceRecord != null)
 			sourceRecord.setDirty();
+		return this;
+	}
+
+	/**
+	 * The item's identity doesn't affect nothing.
+	 */
+	public void onIdentityChanged(final ORecord<?> iRecord, final int iOldHashCode) {
+	}
+
+	public void setDatabase(final ODatabaseRecord iDatabase) {
 	}
 }

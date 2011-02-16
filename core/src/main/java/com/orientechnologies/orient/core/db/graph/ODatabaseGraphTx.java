@@ -203,20 +203,29 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 	}
 
 	private void checkForGraphSchema() {
-		if (!underlying.getMetadata().getSchema().existsClass(OGraphDatabase.VERTEX_CLASS_NAME)) {
+		OClass vertex = underlying.getMetadata().getSchema().getClass(OGraphDatabase.VERTEX_CLASS_NAME);
+		OClass edge = underlying.getMetadata().getSchema().getClass(OGraphDatabase.EDGE_CLASS_NAME);
+
+		if (vertex == null) {
 			// CREATE THE META MODEL USING THE ORIENT SCHEMA
-			final OClass vertex = underlying.getMetadata().getSchema()
+			vertex = underlying.getMetadata().getSchema()
 					.createClass(OGraphDatabase.VERTEX_CLASS_NAME, underlying.addPhysicalCluster(OGraphDatabase.VERTEX_CLASS_NAME));
-			final OClass edge = underlying.getMetadata().getSchema()
+			edge = underlying.getMetadata().getSchema()
 					.createClass(OGraphDatabase.EDGE_CLASS_NAME, underlying.addPhysicalCluster(OGraphDatabase.EDGE_CLASS_NAME));
 
 			edge.createProperty(OGraphDatabase.EDGE_FIELD_IN, OType.LINK, vertex);
 			edge.createProperty(OGraphDatabase.EDGE_FIELD_OUT, OType.LINK, vertex);
 
-			vertex.createProperty(OGraphDatabase.VERTEX_FIELD_IN_EDGES, OType.LINKLIST, edge);
-			vertex.createProperty(OGraphDatabase.VERTEX_FIELD_OUT_EDGES, OType.LINKLIST, edge);
+			vertex.createProperty(OGraphDatabase.VERTEX_FIELD_IN_EDGES, OType.LINKSET, edge);
+			vertex.createProperty(OGraphDatabase.VERTEX_FIELD_OUT_EDGES, OType.LINKSET, edge);
 
 			underlying.getMetadata().getSchema().save();
+		} else {
+			// @COMPATIBILITY 0.9.25
+			if (vertex.getProperty(OGraphDatabase.VERTEX_FIELD_OUT_EDGES).getType() == OType.LINKLIST)
+				vertex.getProperty(OGraphDatabase.VERTEX_FIELD_OUT_EDGES).setType(OType.LINKSET);
+			if (vertex.getProperty(OGraphDatabase.VERTEX_FIELD_IN_EDGES).getType() == OType.LINKLIST)
+				vertex.getProperty(OGraphDatabase.VERTEX_FIELD_IN_EDGES).setType(OType.LINKSET);
 		}
 	}
 

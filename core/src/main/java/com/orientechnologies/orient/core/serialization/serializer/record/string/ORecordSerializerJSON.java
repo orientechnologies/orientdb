@@ -260,7 +260,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 					if (collectionItem instanceof ODocument && iRecord instanceof ODocument)
 						// SET THE OWNER
-						((ODocument) collectionItem).setOwner(iRecord);
+						((ODocument) collectionItem).addOwner(iRecord);
 
 					embeddedCollection.add(collectionItem);
 				}

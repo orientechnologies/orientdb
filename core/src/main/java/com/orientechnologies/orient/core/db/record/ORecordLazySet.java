@@ -33,12 +33,11 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-@SuppressWarnings("serial")
 public class ORecordLazySet extends ORecordTrackedSet {
-	private final ODatabaseRecord	database;
-	private final byte						recordType;
-	private boolean								converted				= false;
-	private boolean								convertToRecord	= true;
+	private ODatabaseRecord	database;
+	private final byte			recordType;
+	private boolean					converted				= false;
+	private boolean					convertToRecord	= true;
 
 	public ORecordLazySet(final ODatabaseRecord iDatabase, final byte iRecordType) {
 		super(null);
@@ -61,7 +60,6 @@ public class ORecordLazySet extends ORecordTrackedSet {
 	public boolean add(final Object e) {
 		if (converted && e instanceof ORID)
 			converted = false;
-		setDirty();
 		return super.add(e);
 	}
 
@@ -140,5 +138,10 @@ public class ORecordLazySet extends ORecordTrackedSet {
 
 	public byte getRecordType() {
 		return recordType;
+	}
+
+	@Override
+	public void setDatabase(final ODatabaseRecord iDatabase) {
+		database = iDatabase;
 	}
 }

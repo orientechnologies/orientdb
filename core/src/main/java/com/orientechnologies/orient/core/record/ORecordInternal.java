@@ -29,8 +29,6 @@ public interface ORecordInternal<T> extends ORecord<T>, OSerializableStream {
 
 	public ORecordAbstract<?> setIdentity(ORecordId iIdentity);
 
-	public ORecordInternal<?> setDatabase(ODatabaseRecord iDatabase);
-
 	public void unsetDirty();
 
 	public void setStatus(STATUS iStatus);

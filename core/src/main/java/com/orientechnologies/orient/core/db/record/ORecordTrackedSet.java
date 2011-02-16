@@ -15,11 +15,15 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import java.util.AbstractCollection;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Implementation of Set bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by hand when
@@ -28,57 +32,127 @@ import com.orientechnologies.orient.core.record.ORecord;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-@SuppressWarnings({ "serial" })
-public class ORecordTrackedSet extends HashSet<Object> {
-	protected final ORecord<?>	sourceRecord;
+public class ORecordTrackedSet extends AbstractCollection<Object> implements Set<Object>, ORecordElement {
+	protected final ORecord<?>		sourceRecord;
+	protected Map<Object, Object>	map	= new HashMap<Object, Object>();
 
 	public ORecordTrackedSet(final ORecord<?> iSourceRecord) {
 		this.sourceRecord = iSourceRecord;
+		if (iSourceRecord != null)
+			iSourceRecord.setDirty();
 	}
 
-	@Override
 	public Iterator<Object> iterator() {
-		return new ORecordTrackedIterator(sourceRecord, super.iterator());
+		return new ORecordTrackedIterator(sourceRecord, map.values().iterator());
 	}
 
-	@Override
 	public boolean add(final Object e) {
+		final int h = e.hashCode();
+		final Object previous = map.get(h);
+		if (previous != null && previous != e)
+			map.put(System.currentTimeMillis(), e);
+		else
+			map.put(h, e);
 		setDirty();
-		return super.add(e);
+
+		if (e instanceof ODocument)
+			((ODocument) e).addOwner(this);
+		return true;
+	}
+
+	/**
+	 * Update an entry with hash changed.
+	 * 
+	 * @param iRecord
+	 * @param o
+	 * @return
+	 */
+	public boolean update(final ORecord<?> iRecord, final int iOldHashCode) {
+		Object entry;
+		for (Iterator<Object> it = map.keySet().iterator(); it.hasNext();) {
+			entry = it.next();
+			if ((Integer) entry == iOldHashCode) {
+				it.remove();
+				add(iRecord);
+				setDirty();
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override
+	public boolean contains(Object o) {
+		return map.containsKey(o.hashCode());
+	}
+
 	public boolean remove(Object o) {
-		setDirty();
-		return super.remove(o);
+		final Object old = map.remove(o.hashCode());
+		if (old != null) {
+
+			if (o instanceof ODocument)
+				((ODocument) o).removeOwner(this);
+
+			setDirty();
+			return true;
+		}
+		return false;
 	}
 
-	@Override
 	public void clear() {
 		setDirty();
-		super.clear();
+		map.clear();
+	}
+
+	public boolean removeAll(final Collection<?> c) {
+		boolean changed = false;
+		for (Object item : c) {
+			if (map.remove(item) != null)
+				changed = true;
+		}
+
+		if (changed)
+			setDirty();
+
+		return changed;
+	}
+
+	public boolean addAll(final Collection<? extends Object> c) {
+		if (c.size() == 0)
+			return false;
+
+		for (Object o : c) {
+			add(o);
+		}
+
+		setDirty();
+		return true;
+	}
+
+	public boolean retainAll(final Collection<?> c) {
+		if (super.removeAll(c)) {
+			setDirty();
+			return true;
+		}
+		return false;
 	}
 
 	@Override
-	public boolean removeAll(Collection<?> c) {
-		setDirty();
-		return super.removeAll(c);
+	public int size() {
+		return map.size();
 	}
 
-	@Override
-	public boolean addAll(Collection<? extends Object> c) {
-		setDirty();
-		return super.addAll(c);
-	}
-
-	@Override
-	public boolean retainAll(Collection<?> c) {
-		setDirty();
-		return super.retainAll(c);
-	}
-
-	public void setDirty() {
+	@SuppressWarnings("unchecked")
+	public ORecordTrackedSet setDirty() {
 		if (sourceRecord != null)
 			sourceRecord.setDirty();
+		return this;
+	}
+
+	public void onIdentityChanged(final ORecord<?> iRecord, final int iOldHashCode) {
+		update(iRecord, iOldHashCode);
+	}
+
+	public void setDatabase(final ODatabaseRecord iDatabase) {
 	}
 }

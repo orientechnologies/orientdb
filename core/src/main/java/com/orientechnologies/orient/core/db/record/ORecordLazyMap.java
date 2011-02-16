@@ -34,12 +34,14 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  */
 @SuppressWarnings("serial")
 public class ORecordLazyMap extends ORecordTrackedMap {
-	final private byte	recordType;
-	private boolean			converted				= false;
-	private boolean			convertToRecord	= true;
+	private ODatabaseRecord	database;
+	final private byte			recordType;
+	private boolean					converted				= false;
+	private boolean					convertToRecord	= true;
 
 	public ORecordLazyMap(final ORecord<?> iSourceRecord, final byte iRecordType) {
 		super(iSourceRecord);
+		this.database = iSourceRecord.getDatabase();
 		this.recordType = iRecordType;
 	}
 
@@ -61,7 +63,7 @@ public class ORecordLazyMap extends ORecordTrackedMap {
 	}
 
 	@Override
-	public Object put(final String iKey, final Object iValue) {
+	public Object put(final Object iKey, final Object iValue) {
 		if (converted && iValue instanceof ORID)
 			converted = false;
 		return super.put(iKey, iValue);
@@ -93,7 +95,7 @@ public class ORecordLazyMap extends ORecordTrackedMap {
 		if (sourceRecord.getDatabase() == null)
 			return;
 
-		for (String key : super.keySet())
+		for (Object key : super.keySet())
 			convert(key);
 		converted = true;
 	}
@@ -104,11 +106,11 @@ public class ORecordLazyMap extends ORecordTrackedMap {
 	 * @param iIndex
 	 *          Position of the item to convert
 	 */
-	private void convert(final String iKey) {
+	private void convert(final Object iKey) {
 		if (converted || !convertToRecord)
 			return;
 
-		if (sourceRecord.getDatabase() == null)
+		if (database == null)
 			return;
 
 		final Object o = super.get(iKey);
@@ -117,7 +119,7 @@ public class ORecordLazyMap extends ORecordTrackedMap {
 			final ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
 			final ORecordId rid = (ORecordId) o;
 
-			record.setDatabase(sourceRecord.getDatabase());
+			record.setDatabase(database);
 			record.setIdentity(rid);
 
 			try {
@@ -131,5 +133,10 @@ public class ORecordLazyMap extends ORecordTrackedMap {
 
 	public byte getRecordType() {
 		return recordType;
+	}
+
+	@Override
+	public void setDatabase(final ODatabaseRecord iDatabase) {
+		database = iDatabase;
 	}
 }

@@ -412,6 +412,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			byte[] stream = iRecord.toStream();
 
 			boolean isNew = rid.isNew();
+			final int oldHashCode = isNew ? rid.hashCode() : 0;
 
 			final int clusterId;
 			if (isNew)
@@ -460,6 +461,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				iRecord.setStatus(STATUS.LOADED);
 				if (stream.length > 0)
 					callbackHooks(TYPE.AFTER_CREATE, iRecord);
+
+				// NOTIFY IDENTITY HAS CHANGED
+				iRecord.onIdentityChanged(iRecord, oldHashCode);
 			} else {
 				// UPDATE INFORMATION: VERSION
 				iRecord.fill(iRecord.getDatabase(), clusterId, rid.getClusterPosition(), (int) result);
