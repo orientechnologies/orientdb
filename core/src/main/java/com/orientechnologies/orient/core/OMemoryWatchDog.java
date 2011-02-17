@@ -12,6 +12,7 @@ import javax.management.Notification;
 import javax.management.NotificationEmitter;
 import javax.management.NotificationListener;
 
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
@@ -49,10 +50,11 @@ public class OMemoryWatchDog {
 			public void handleNotification(Notification n, Object hb) {
 				if (n.getType().equals(MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED)) {
 					alertTimes++;
-					long maxMemory = tenuredGenPool.getUsage().getMax();
-					long usedMemory = tenuredGenPool.getUsage().getUsed();
+					final long maxMemory = tenuredGenPool.getUsage().getMax();
+					final long usedMemory = tenuredGenPool.getUsage().getUsed();
 
-					OLogManager.instance().warn(this, "Low memory caught, calling listeners to free memory...");
+					OLogManager.instance().warn(this, "Low memory (%s of %s), calling listeners to free memory...",
+							OFileUtils.getSizeAsString(usedMemory), OFileUtils.getSizeAsString(maxMemory));
 
 					final long timer = OProfiler.getInstance().startChrono();
 
