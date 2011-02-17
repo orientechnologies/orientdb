@@ -130,8 +130,8 @@ public class OProfiler implements OProfilerMBean {
 		final StringBuilder buffer = new StringBuilder();
 		buffer.append("\nOrientDB profiler dump of ");
 		buffer.append(new Date());
-		buffer.append(String.format("\nTotal memory: %2.2fMb (%2.2f%%) - Max memory: %2.2fMb - Free memory: %2.2fMb - CPUs: %d",
-				totMem, (totMem * 100 / (float) maxMem), maxMem, freeMem, Runtime.getRuntime().availableProcessors()));
+		buffer.append(String.format("\nFree memory: %2.2fMb (%2.2f%%) - Total memory: %2.2fMb - Max memory: %2.2fMb - CPUs: %d",
+				freeMem, (freeMem * 100 / (float) maxMem), totMem, maxMem, Runtime.getRuntime().availableProcessors()));
 		buffer.append("\n");
 		buffer.append(dumpHookValues());
 		buffer.append("\n");
