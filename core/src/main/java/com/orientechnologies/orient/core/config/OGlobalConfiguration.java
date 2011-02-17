@@ -78,7 +78,7 @@ public enum OGlobalConfiguration {
 	FILE_MMAP_STRATEGY(
 			"file.mmap.strategy",
 			"Strategy to use with memory mapped files. 0 = USE MMAP ALWAYS, 1 = USE MMAP ON WRITES OR ON READ JUST WHEN THE BLOCK POOL IS FREE, 2 = USE MMAP ON WRITES OR ON READ JUST WHEN THE BLOCK IS ALREADY AVAILABLE, 3 = USE MMAP ONLY IF BLOCK IS ALREADY AVAILABLE",
-			Integer.class, 3),
+			Integer.class, 1),
 
 	FILE_MMAP_BLOCK_SIZE("file.mmap.blockSize", "Size of the memory mapped block", Integer.class, 327680,
 			new OConfigurationChangeCallback() {
@@ -276,10 +276,15 @@ public enum OGlobalConfiguration {
 	}
 
 	private static void autoConfig() {
-		final String osArch = System.getProperty("os.arch");
-		if (osArch.indexOf("64") > -1) {
-			// 64 BIT
+		if (System.getProperty("os.name").indexOf("Windows") > -1) {
+			// WINDOWS
 
+			// AVOID TO USE MMAP, SINCE COULD BE BUGGY
+			FILE_MMAP_STRATEGY.setValue(3);
+		}
+
+		if (System.getProperty("os.arch").indexOf("64") > -1) {
+			// 64 BIT
 			final OperatingSystemMXBean bean = java.lang.management.ManagementFactory.getOperatingSystemMXBean();
 
 			Class<?> cls;
