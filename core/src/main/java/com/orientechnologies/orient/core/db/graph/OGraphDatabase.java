@@ -19,8 +19,10 @@ import java.util.Set;
 
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -67,6 +69,34 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		super.create();
 		checkForGraphSchema();
 		return (THISDB) this;
+	}
+
+	public long countVertexes() {
+		return countClass(VERTEX_CLASS_NAME);
+	}
+
+	public long countEdges() {
+		return countClass(EDGE_CLASS_NAME);
+	}
+
+	public Iterable<ODocument> browseVertices() {
+		return browseElements(VERTEX_CLASS_NAME, true);
+	}
+
+	public Iterable<ODocument> browseVertices(final boolean iPolymorphic) {
+		return browseElements(VERTEX_CLASS_NAME, iPolymorphic);
+	}
+
+	public Iterable<ODocument> browseEdges() {
+		return browseElements(EDGE_CLASS_NAME, true);
+	}
+
+	public Iterable<ODocument> browseEdges(final boolean iPolymorphic) {
+		return browseElements(EDGE_CLASS_NAME, iPolymorphic);
+	}
+
+	public Iterable<ODocument> browseElements(final String iClass, final boolean iPolymorphic) {
+		return new ORecordIteratorClass<ODocument>(this, (ODatabaseRecordAbstract) getUnderlying(), iClass, iPolymorphic);
 	}
 
 	public ODocument createVertex() {
