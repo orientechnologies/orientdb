@@ -30,8 +30,11 @@ public class OMemoryInputStream {
 	private byte[]	buffer;
 	private int			position	= 0;
 
-	public OMemoryInputStream(byte[] iBuffer) {
-		buffer = iBuffer;
+	public OMemoryInputStream() {
+	}
+
+	public OMemoryInputStream(final byte[] iBuffer) {
+		setSource(iBuffer);
 	}
 
 	public byte[] getAsByteArrayFixed(final int iSize) throws IOException {
@@ -42,6 +45,36 @@ public class OMemoryInputStream {
 		position += iSize;
 
 		return portion;
+	}
+
+	/**
+	 * Browse the stream but just return the begin of the byte array. This is used to lazy load the information only when needed.
+	 * 
+	 */
+	public int getAsByteArrayOffset() {
+		if (position >= buffer.length)
+			return -1;
+
+		final int begin = position;
+
+		final int size = OBinaryProtocol.bytes2int(buffer, position);
+		position += OConstants.SIZE_INT + size;
+
+		return begin;
+	}
+
+	public byte[] getAsByteArray(int iOffset) throws IOException {
+		if (buffer == null || iOffset >= buffer.length)
+			return null;
+
+		final int size = OBinaryProtocol.bytes2int(buffer, iOffset);
+
+		if (size == 0)
+			return null;
+
+		iOffset += OConstants.SIZE_INT;
+
+		return OArrays.copyOfRange(buffer, iOffset, iOffset + size);
 	}
 
 	public byte[] getAsByteArray() throws IOException {
@@ -95,5 +128,27 @@ public class OMemoryInputStream {
 
 	public byte peek() {
 		return buffer[position];
+	}
+
+	public void setSource(final byte[] iBuffer) {
+		buffer = iBuffer;
+		position = 0;
+	}
+
+	public byte[] move(final int iOffset, final int iCopyToOffset) {
+		final byte[] copy = new byte[buffer.length - iOffset + iCopyToOffset];
+		System.arraycopy(buffer, iOffset, copy, iCopyToOffset, copy.length);
+		return copy;
+	}
+
+	public byte[] copy() {
+		if (buffer == null)
+			return null;
+
+		final int size = position > 0 ? position : buffer.length;
+
+		final byte[] copy = new byte[size];
+		System.arraycopy(buffer, 0, copy, 0, size);
+		return copy;
 	}
 }

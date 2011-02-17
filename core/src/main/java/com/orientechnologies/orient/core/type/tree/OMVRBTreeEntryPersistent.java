@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.type.tree;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Set;
 
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
@@ -83,8 +84,8 @@ import com.orientechnologies.orient.core.serialization.serializer.record.OSerial
 public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> implements OSerializableStream {
 	protected OMVRBTreePersistent<K, V>				pTree;
 
-	byte[][]																	serializedKeys;
-	byte[][]																	serializedValues;
+	int[]																			serializedKeys;
+	int[]																			serializedValues;
 
 	protected ORID														parentRid;
 	protected ORID														leftRid;
@@ -95,6 +96,9 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 	protected OMVRBTreeEntryPersistent<K, V>	parent;
 	protected OMVRBTreeEntryPersistent<K, V>	left;
 	protected OMVRBTreeEntryPersistent<K, V>	right;
+
+	protected OMemoryInputStream							inStream								= new OMemoryInputStream();
+	private static final int									PERSISTENT_HEADER_SIZE	= 39;
 
 	/**
 	 * Called on event of splitting an entry.
@@ -119,13 +123,18 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		pageSize = pTree.getPageSize();
 
 		// COPY ALSO THE SERIALIZED KEYS/VALUES
-		serializedKeys = new byte[pageSize][];
-		serializedValues = new byte[pageSize][];
+		serializedKeys = new int[pageSize];
+		serializedValues = new int[pageSize];
 
 		final OMVRBTreeEntryPersistent<K, V> p = (OMVRBTreeEntryPersistent<K, V>) iParent;
 
+		inStream.setSource(p.inStream.copy());
+
 		System.arraycopy(p.serializedKeys, iPosition, serializedKeys, 0, size);
 		System.arraycopy(p.serializedValues, iPosition, serializedValues, 0, size);
+
+		Arrays.fill(p.serializedKeys, iPosition, p.pageSize, 0);
+		Arrays.fill(p.serializedValues, iPosition, p.pageSize, 0);
 
 		markDirty();
 	}
@@ -164,8 +173,8 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 
 		pageSize = pTree.getPageSize();
 
-		serializedKeys = new byte[pageSize][];
-		serializedValues = new byte[pageSize][];
+		serializedKeys = new int[pageSize];
+		serializedValues = new int[pageSize];
 
 		tree.getListener().signalNodeChanged(this);
 	}
@@ -227,7 +236,11 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 
 		// SPEED UP MEMORY CLAIM BY RESETTING INTERNAL FIELDS
 		keys = null;
-		values = null;
+		if (inStream != null) {
+			inStream.close();
+			values = null;
+			inStream = null;
+		}
 		serializedKeys = null;
 		serializedValues = null;
 		pTree = null;
@@ -501,11 +514,11 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		leftRid = source.leftRid;
 		rightRid = source.rightRid;
 
-		serializedKeys = new byte[source.serializedKeys.length][];
+		serializedKeys = new int[source.serializedKeys.length];
 		for (int i = 0; i < source.serializedKeys.length; ++i)
 			serializedKeys[i] = source.serializedKeys[i];
 
-		serializedValues = new byte[source.serializedValues.length][];
+		serializedValues = new int[source.serializedValues.length];
 		for (int i = 0; i < source.serializedValues.length; ++i)
 			serializedValues[i] = source.serializedValues[i];
 
@@ -521,8 +534,8 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 			System.arraycopy(serializedValues, iPosition, serializedValues, iPosition + 1, size - iPosition);
 		}
 
-		serializedKeys[iPosition] = null;
-		serializedValues[iPosition] = null;
+		serializedKeys[iPosition] = 0;
+		serializedValues[iPosition] = 0;
 
 		super.insert(iPosition, key, value);
 	}
@@ -542,8 +555,8 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		}
 
 		// FREE RESOURCES
-		serializedKeys[size - 1] = null;
-		serializedValues[size - 1] = null;
+		serializedKeys[size - 1] = 0;
+		serializedValues[size - 1] = 0;
 
 		super.remove();
 	}
@@ -560,7 +573,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 			try {
 				OProfiler.getInstance().updateCounter("OMVRBTreeEntryP.unserializeKey", 1);
 
-				keys[iIndex] = (K) pTree.keySerializer.fromStream(null, serializedKeys[iIndex]);
+				keys[iIndex] = (K) keyFromStream(iIndex);
 			} catch (IOException e) {
 
 				OLogManager.instance().error(this, "Can't lazy load the key #" + iIndex + " in tree node " + this, e,
@@ -594,7 +607,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		markDirty();
 
 		V oldValue = super.setValue(value);
-		serializedValues[tree.getPageIndex()] = null;
+		serializedValues[tree.getPageIndex()] = -1;
 		return oldValue;
 	}
 
@@ -647,36 +660,36 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 	public final OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
 		final long timer = OProfiler.getInstance().startChrono();
 
-		final OMemoryInputStream buffer = new OMemoryInputStream(iStream);
+		inStream.setSource(iStream);
 
 		try {
-			pageSize = buffer.getAsInteger();
+			pageSize = inStream.getAsInteger();
 
-			parentRid = new ORecordId().fromStream(buffer.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
-			leftRid = new ORecordId().fromStream(buffer.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
-			rightRid = new ORecordId().fromStream(buffer.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
+			parentRid = new ORecordId().fromStream(inStream.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
+			leftRid = new ORecordId().fromStream(inStream.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
+			rightRid = new ORecordId().fromStream(inStream.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
 
-			color = buffer.getAsBoolean();
+			color = inStream.getAsBoolean();
 			init();
-			size = buffer.getAsInteger();
+			size = inStream.getAsInteger();
 
 			if (size > pageSize)
 				throw new OConfigurationException("Loaded index with page size setted to " + pageSize
 						+ " while the loaded was built with: " + size);
 
 			// UNCOMPACT KEYS SEPARATELY
-			serializedKeys = new byte[pageSize][];
+			serializedKeys = new int[pageSize];
 			for (int i = 0; i < size; ++i) {
-				serializedKeys[i] = buffer.getAsByteArray();
+				serializedKeys[i] = inStream.getAsByteArrayOffset();
 			}
 
 			// KEYS WILL BE LOADED LAZY
 			keys = (K[]) new Object[pageSize];
 
 			// UNCOMPACT VALUES SEPARATELY
-			serializedValues = new byte[pageSize][];
+			serializedValues = new int[pageSize];
 			for (int i = 0; i < size; ++i) {
-				serializedValues[i] = buffer.getAsByteArray();
+				serializedValues[i] = inStream.getAsByteArrayOffset();
 			}
 
 			// VALUES WILL BE LOADED LAZY
@@ -686,8 +699,6 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		} catch (IOException e) {
 			throw new OSerializationException("Can't unmarshall RB+Tree node", e);
 		} finally {
-			buffer.close();
-
 			OProfiler.getInstance().stopChrono("OMVRBTreeEntryP.fromStream", timer);
 		}
 	}
@@ -731,38 +742,36 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 
 		final long timer = OProfiler.getInstance().startChrono();
 
-		OMemoryOutputStream stream = new OMemoryOutputStream();
+		final OMemoryOutputStream outStream = new OMemoryOutputStream();
 
 		try {
-			stream.add(pageSize);
+			outStream.add(pageSize);
 
-			stream.addAsFixed(parentRid.toStream());
-			stream.addAsFixed(leftRid.toStream());
-			stream.addAsFixed(rightRid.toStream());
+			outStream.addAsFixed(parentRid.toStream());
+			outStream.addAsFixed(leftRid.toStream());
+			outStream.addAsFixed(rightRid.toStream());
 
-			stream.add(color);
-			stream.add(size);
-
-			serializeNewKeys();
-			serializeNewValues();
+			outStream.add(color);
+			outStream.add(size);
 
 			for (int i = 0; i < size; ++i)
-				stream.add(serializedKeys[i]);
+				serializedKeys[i] = outStream.add(serializeNewKey(i));
 
 			for (int i = 0; i < size; ++i)
-				stream.add(serializedValues[i]);
+				serializedValues[i] = outStream.add(serializeNewValue(i));
 
-			stream.flush();
+			outStream.flush();
 
-			final byte[] buffer = stream.getByteArray();
+			final byte[] buffer = outStream.getByteArray();
+
+			inStream.setSource(buffer);
+
 			record.fromStream(buffer);
 			return buffer;
 
 		} catch (IOException e) {
 			throw new OSerializationException("Can't marshall RB+Tree node", e);
 		} finally {
-			stream.close();
-
 			marshalledRecords.remove(identityRecord);
 
 			checkEntryStructure();
@@ -774,16 +783,18 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 	/**
 	 * Serialize only the new keys or the changed.
 	 * 
+	 * @return
+	 * 
 	 * @throws IOException
 	 */
-	private void serializeNewKeys() throws IOException {
-		for (int i = 0; i < size; ++i) {
-			if (serializedKeys[i] == null) {
-				OProfiler.getInstance().updateCounter("OMVRBTreeEntryP.serializeValue", 1);
-
-				serializedKeys[i] = pTree.keySerializer.toStream(null, keys[i]);
-			}
+	private byte[] serializeNewKey(final int iIndex) throws IOException {
+		if (serializedKeys[iIndex] <= 0) {
+			// NEW OR MODIFIED: MARSHALL CONTENT
+			OProfiler.getInstance().updateCounter("OMVRBTreeEntryP.serializeValue", 1);
+			return pTree.keySerializer.toStream(null, keys[iIndex]);
 		}
+		// RETURN ORIGINAL CONTENT
+		return inStream.getAsByteArray(serializedKeys[iIndex]);
 	}
 
 	/**
@@ -791,14 +802,14 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 	 * 
 	 * @throws IOException
 	 */
-	private void serializeNewValues() throws IOException {
-		for (int i = 0; i < size; ++i) {
-			if (serializedValues[i] == null) {
-				OProfiler.getInstance().updateCounter("OMVRBTreeEntryP.serializeKey", 1);
-
-				serializedValues[i] = pTree.valueSerializer.toStream(null, values[i]);
-			}
+	private byte[] serializeNewValue(final int iIndex) throws IOException {
+		if (serializedValues[iIndex] <= 0) {
+			// NEW OR MODIFIED: MARSHALL CONTENT
+			OProfiler.getInstance().updateCounter("OMVRBTreeEntryP.serializeKey", 1);
+			return pTree.valueSerializer.toStream(null, values[iIndex]);
 		}
+		// RETURN ORIGINAL CONTENT
+		return inStream.getAsByteArray(serializedValues[iIndex]);
 	}
 
 	@Override

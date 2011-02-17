@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.common.collection;
 
+import java.util.Arrays;
 import java.util.Map;
 
 @SuppressWarnings("unchecked")
@@ -70,6 +71,10 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V> {
 		this.size = iParent.size - iPosition;
 		System.arraycopy(iParent.keys, iPosition, keys, 0, size);
 		System.arraycopy(iParent.values, iPosition, values, 0, size);
+
+		Arrays.fill(iParent.keys, iPosition, iParent.size, null);
+		Arrays.fill(iParent.values, iPosition, iParent.size, null);
+
 		iParent.size = iPosition;
 
 		init();
@@ -210,7 +215,9 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V> {
 
 		final StringBuilder buffer = new StringBuilder();
 
-		buffer.append(getKey());
+		final Object k = tree.pageIndex >= size ? '?' : getKey();
+
+		buffer.append(k);
 		buffer.append(" (size=");
 		buffer.append(size);
 		buffer.append(" [");

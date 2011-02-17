@@ -59,7 +59,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	protected OStreamSerializer															valueSerializer;
 
 	protected final Set<OMVRBTreeEntryPersistent<K, V>>			recordsToCommit						= new HashSet<OMVRBTreeEntryPersistent<K, V>>();
-	protected final OMemoryOutputStream											entryRecordBuffer;
 
 	protected final String																	clusterName;
 	protected ORecordBytesLazy															record;
@@ -76,6 +75,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 																																												entryPointsSize);
 
 	protected Map<ORID, OMVRBTreeEntryPersistent<K, V>>			cache											= new HashMap<ORID, OMVRBTreeEntryPersistent<K, V>>();
+	private final OMemoryOutputStream												entryRecordBuffer;
 	public final static byte																CURRENT_PROTOCOL_VERSION	= 0;
 
 	public OMVRBTreePersistent(final String iClusterName, final ORID iRID) {

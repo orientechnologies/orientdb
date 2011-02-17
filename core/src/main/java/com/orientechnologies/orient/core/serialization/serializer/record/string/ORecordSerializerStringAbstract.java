@@ -284,6 +284,9 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 	 * @return The closest type recognized
 	 */
 	public static Object getSimpleValue(final String iValue) {
+		if (iValue == null)
+			return null;
+
 		if (iValue.length() > 1 && iValue.charAt(0) == '"' && iValue.charAt(iValue.length() - 1) == '"')
 			// STRING
 			return iValue.substring(1, iValue.length() - 1);

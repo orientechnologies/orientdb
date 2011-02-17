@@ -59,7 +59,7 @@ public enum OGlobalConfiguration {
 			Integer.class, 5000),
 
 	MVRBTREE_NODE_PAGE_SIZE("mvrbtree.nodePageSize",
-			"Page size of each single node. 1,024 means that 1,024 entries can be stored inside a node", Integer.class, 1024),
+			"Page size of each single node. 256 means that 256 entries can be stored inside a node", Integer.class, 256),
 
 	MVRBTREE_LOAD_FACTOR("mvrbtree.loadFactor", "HashMap load factor", Float.class, 0.7f),
 
@@ -301,7 +301,6 @@ public enum OGlobalConfiguration {
 			}
 
 			FILE_MMAP_BLOCK_SIZE.setValue(327680);
-			MVRBTREE_NODE_PAGE_SIZE.setValue(2048);
 		} else {
 			// 32 BIT, USE THE DEFAULT CONFIGURATION
 		}

@@ -112,11 +112,11 @@ public class OMVRBTreeEntryStorage<K, V> extends OMVRBTreeEntryPersistent<K, V> 
 
 	@Override
 	protected Object keyFromStream(final int iIndex) throws IOException {
-		return pTree.keySerializer.fromStream(null, serializedKeys[iIndex]);
+		return pTree.keySerializer.fromStream(null, inStream.getAsByteArray(serializedKeys[iIndex]));
 	}
 
 	@Override
 	protected Object valueFromStream(final int iIndex) throws IOException {
-		return pTree.valueSerializer.fromStream(null, serializedValues[iIndex]);
+		return pTree.valueSerializer.fromStream(null, inStream.getAsByteArray(serializedValues[iIndex]));
 	}
 }

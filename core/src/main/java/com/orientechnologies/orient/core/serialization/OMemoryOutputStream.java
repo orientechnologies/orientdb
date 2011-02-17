@@ -141,15 +141,19 @@ public class OMemoryOutputStream extends OutputStream {
 		write(iContent, 0, iContent.length);
 	}
 
-	public final void add(final byte[] iContent) throws IOException {
+	public final int add(final byte[] iContent) throws IOException {
 		if (iContent == null)
-			return;
+			return -1;
+		
+		final int begin = position;
 
 		assureSpaceFor(OConstants.SIZE_INT + iContent.length);
 
 		OBinaryProtocol.int2bytes(iContent.length, buffer, position);
 		position += OConstants.SIZE_INT;
 		write(iContent, 0, iContent.length);
+		
+		return begin;
 	}
 
 	public void add(final byte iContent) throws IOException {
