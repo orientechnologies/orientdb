@@ -79,7 +79,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.OSerial
  * @param <K>
  * @param <V>
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "serial" })
 public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> implements OSerializableStream {
 	protected OMVRBTreePersistent<K, V>				pTree;
 
@@ -188,13 +188,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 		if (record.getIdentity().isValid())
 			pTree.cache.remove(record.getIdentity());
 
-		// DELETE THE NODE FROM THE PENDING RECORDS TO COMMIT
-		for (OMVRBTreeEntryPersistent<K, V> node : pTree.recordsToCommit) {
-			if (node.record.getIdentity().equals(record.getIdentity())) {
-				pTree.recordsToCommit.remove(node);
-				break;
-			}
-		}
+		pTree.removeEntry(record.getIdentity());
 		return this;
 	}
 
@@ -348,9 +342,6 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 				checkEntryStructure();
 
 				if (parent != null) {
-					// if (!parent.record.isDirty())
-					// parent.load();
-
 					// TRY TO ASSIGN IT FOLLOWING THE RID
 					if (parent.leftRid.isValid() && parent.leftRid.equals(record.getIdentity()))
 						parent.left = this;

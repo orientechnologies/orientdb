@@ -118,7 +118,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			throws IOException;
 
 	@Override
-	public void clear() {
+	public synchronized void clear() {
 		final long timer = OProfiler.getInstance().startChrono();
 		final boolean locked = lock.acquireExclusiveLock();
 
@@ -145,7 +145,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	/**
 	 * Unload all the in-memory nodes. This is called on transaction rollback.
 	 */
-	public void unload() {
+	public synchronized void unload() {
 		final long timer = OProfiler.getInstance().startChrono();
 		final boolean locked = lock.acquireExclusiveLock();
 
@@ -174,7 +174,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	 * Optimize the tree memory consumption by keeping part of nodes as entry points and clearing all the rest.
 	 */
 	@SuppressWarnings("unchecked")
-	public void optimize() {
+	public synchronized void optimize() {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		final boolean locked = lock.acquireExclusiveLock();
@@ -413,7 +413,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		}
 	}
 
-	public void commitChanges(final ODatabaseRecord iDatabase) {
+	public synchronized void commitChanges(final ODatabaseRecord iDatabase) {
 		final long timer = OProfiler.getInstance().startChrono();
 		final boolean locked = lock.acquireExclusiveLock();
 
@@ -579,7 +579,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		record.setDirty();
 	}
 
-	public void signalNodeChanged(final OMVRBTreeEntry<K, V> iNode) {
+	public synchronized void signalNodeChanged(final OMVRBTreeEntry<K, V> iNode) {
 		recordsToCommit.add((OMVRBTreeEntryPersistent<K, V>) iNode);
 	}
 
@@ -692,6 +692,61 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		return valueSerializer;
 	}
 
+	@Override
+	public synchronized boolean containsKey(final Object key) {
+		return super.containsKey(key);
+	}
+
+	@Override
+	public synchronized boolean containsValue(final Object value) {
+		return super.containsValue(value);
+	}
+
+	@Override
+	public synchronized V get(final Object key) {
+		return super.get(key);
+	}
+
+	@Override
+	public synchronized Entry<K, V> pollFirstEntry() {
+		return super.pollFirstEntry();
+	}
+
+	@Override
+	public synchronized Entry<K, V> pollLastEntry() {
+		return super.pollLastEntry();
+	}
+
+	@Override
+	public synchronized Entry<K, V> floorEntry(final K key) {
+		return super.floorEntry(key);
+	}
+
+	@Override
+	public synchronized K floorKey(final K key) {
+		return super.floorKey(key);
+	}
+
+	@Override
+	public synchronized Entry<K, V> ceilingEntry(final K key) {
+		return super.ceilingEntry(key);
+	}
+
+	@Override
+	public synchronized K ceilingKey(final K key) {
+		return super.ceilingKey(key);
+	}
+
+	@Override
+	public synchronized Entry<K, V> higherEntry(final K key) {
+		return super.higherEntry(key);
+	}
+
+	@Override
+	public synchronized K higherKey(final K key) {
+		return super.higherKey(key);
+	}
+
 	/**
 	 * Returns the best entry point to start the search.
 	 */
@@ -789,6 +844,16 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 				entryPoints.remove(i);
 				break;
 			}
+	}
+
+	synchronized void removeEntry(final ORID iEntryId) {
+		// DELETE THE NODE FROM THE PENDING RECORDS TO COMMIT
+		for (OMVRBTreeEntryPersistent<K, V> node : recordsToCommit) {
+			if (node.record.getIdentity().equals(iEntryId)) {
+				recordsToCommit.remove(node);
+				break;
+			}
+		}
 	}
 
 	/**
