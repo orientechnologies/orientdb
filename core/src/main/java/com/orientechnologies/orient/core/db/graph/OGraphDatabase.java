@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 
@@ -151,19 +152,25 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 
 		try {
 			final ODocument outVertex = iEdge.field(EDGE_FIELD_OUT);
+			if (outVertex != null) {
+				Set<ODocument> outEdges = ((Set<ODocument>) outVertex.field(VERTEX_FIELD_OUT_EDGES));
+				if (outEdges != null)
+					outEdges.remove(iEdge);
+			}
+
 			final ODocument inVertex = iEdge.field(EDGE_FIELD_IN);
-
-			Set<ODocument> outEdges = ((Set<ODocument>) outVertex.field(VERTEX_FIELD_OUT_EDGES));
-			if (outEdges != null)
-				outEdges.remove(iEdge);
-
-			Set<ODocument> inEdges = ((Set<ODocument>) inVertex.field(VERTEX_FIELD_IN_EDGES));
-			if (inEdges != null)
-				inEdges.remove(iEdge);
+			if (inVertex != null) {
+				Set<ODocument> inEdges = ((Set<ODocument>) inVertex.field(VERTEX_FIELD_IN_EDGES));
+				if (inEdges != null)
+					inEdges.remove(iEdge);
+			}
 
 			delete(iEdge);
-			save(outVertex);
-			save(inVertex);
+
+			if (outVertex != null)
+				save(outVertex);
+			if (inVertex != null)
+				save(inVertex);
 
 			commitBlock(safeMode);
 
