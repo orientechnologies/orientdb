@@ -55,18 +55,25 @@ public abstract class OTransactionAbstract implements OTransaction {
 		for (OTransactionEntry txEntry : iEntries) {
 			rid = txEntry.getRecord().getIdentity().toString();
 
-			cachedBuffer = iStorage.getCache().getRecord(rid);
+			if (txEntry.status == OTransactionEntry.DELETED)
+				iStorage.getCache().removeRecord(rid);
+			else if (txEntry.status == OTransactionEntry.UPDATED) {
+				cachedBuffer = iStorage.getCache().getRecord(rid);
 
-			if (cachedBuffer != null) {
-				// UPDATE CACHE
-				cachedBuffer.buffer = txEntry.getRecord().toStream();
-				cachedBuffer.version = txEntry.getRecord().getVersion();
-				cachedBuffer.recordType = txEntry.getRecord().getRecordType();
+				if (cachedBuffer != null) {
+					// UPDATE CACHE
+					cachedBuffer.buffer = txEntry.getRecord().toStream();
+					cachedBuffer.version = txEntry.getRecord().getVersion();
+					cachedBuffer.recordType = txEntry.getRecord().getRecordType();
 
-			} else if (txEntry.getRecord().isPinned())
-				// INSERT NEW ENTRY IN THE CACHE
-				iStorage.getCache().pushRecord(rid,
-						new ORawBuffer(txEntry.getRecord().toStream(), txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType()));
+				} else if (txEntry.getRecord().isPinned())
+					// INSERT NEW ENTRY IN THE CACHE
+					iStorage.getCache()
+							.pushRecord(
+									rid,
+									new ORawBuffer(txEntry.getRecord().toStream(), txEntry.getRecord().getVersion(), txEntry.getRecord()
+											.getRecordType()));
+			}
 		}
 	}
 
