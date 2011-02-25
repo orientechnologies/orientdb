@@ -287,7 +287,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 		String fieldValue;
 		int newPos = pos;
 
-		while (pos != -1 && (setEntries.size() == 0 || word.toString().equals(","))) {
+		while (pos != -1 && (setEntries.size() == 0 || word.toString().equals(",")) && !word.toString().equals(KEYWORD_WHERE)) {
 			newPos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
 			if (newPos == -1)
 				throw new OCommandSQLParsingException("Field name expected", text, pos);
@@ -332,7 +332,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 		String fieldValue;
 		int newPos = pos;
 
-		while (pos != -1 && (setEntries.size() == 0 || word.toString().equals(","))) {
+		while (pos != -1 && (setEntries.size() == 0 || word.toString().equals(",")) && !word.toString().equals(KEYWORD_WHERE)) {
 			newPos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
 			if (newPos == -1)
 				throw new OCommandSQLParsingException("Field name expected", text, pos);
@@ -346,7 +346,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 				throw new OCommandSQLParsingException("Character '=' was expected", text, pos);
 
 			pos = newPos;
-			newPos = OSQLHelper.nextWord(text, textUpperCase, pos + 1, word, false, " =><");
+			newPos = OSQLHelper.nextWord(text, textUpperCase, pos + 1, word, false, " =><,");
 			if (pos == -1)
 				throw new OCommandSQLParsingException("Key expected", text, pos);
 
@@ -365,7 +365,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 				pos = newPos;
 			}
 
-			newPos = OSQLHelper.nextWord(text, textUpperCase, pos + 1, word, false, " =><");
+			newPos = OSQLHelper.nextWord(text, textUpperCase, pos + 1, word, false, " =><,");
 			if (pos == -1)
 				throw new OCommandSQLParsingException("Value expected", text, pos);
 
@@ -399,7 +399,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 		Object value;
 		int newPos = pos;
 
-		while (pos != -1 && (removeEntries.size() == 0 || word.toString().equals(","))) {
+		while (pos != -1 && (removeEntries.size() == 0 || word.toString().equals(",")) && !word.toString().equals(KEYWORD_WHERE)) {
 			newPos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
 			if (newPos == -1)
 				throw new OCommandSQLParsingException("Field name expected", text, pos);
@@ -409,7 +409,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 			pos = OStringParser.jumpWhiteSpaces(text, newPos);
 
 			if (pos > -1 && text.charAt(pos) == '=') {
-				pos = OSQLHelper.nextWord(text, textUpperCase, pos + 1, word, false, " =><");
+				pos = OSQLHelper.nextWord(text, textUpperCase, pos + 1, word, false, " =><,");
 				if (pos == -1)
 					throw new OCommandSQLParsingException("Value expected", text, pos);
 
