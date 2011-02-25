@@ -43,7 +43,7 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
  * 
  */
 public class OSQLFilter extends OCommandToParse {
-	protected ODatabaseRecord					database;
+	protected ODatabaseRecord							database;
 	protected List<String>								targetRecords;
 	protected Map<String, String>					targetClusters;
 	protected Map<OClass, String>					targetClasses;
@@ -270,12 +270,6 @@ public class OSQLFilter extends OCommandToParse {
 			currentPos++;
 
 			return coll;
-		} else if (words[0].startsWith(OCommandExecutorSQLAbstract.KEYWORD_COLUMN)) {
-
-			final List<String> parameters = OStringSerializerHelper.getParameters(words[0]);
-			if (parameters.size() != 1)
-				throw new OQueryParsingException("Missed column number", text, currentPos);
-			result = new OSQLFilterItemColumn(this, parameters.get(0));
 
 		} else if (words[0].startsWith(OSQLFilterItemFieldAll.NAME + OStringSerializerHelper.PARENTHESIS_BEGIN)) {
 

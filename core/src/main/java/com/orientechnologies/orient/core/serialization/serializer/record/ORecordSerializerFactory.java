@@ -20,7 +20,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerPositional2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 
 public class ORecordSerializerFactory {
@@ -32,7 +31,6 @@ public class ORecordSerializerFactory {
 	public ORecordSerializerFactory() {
 		defaultRecordFormat = new ORecordSerializerRaw();
 
-		implementations.put(ORecordSerializerPositional2CSV.NAME, new ORecordSerializerPositional2CSV());
 		implementations.put(ORecordSerializerSchemaAware2CSV.NAME, new ORecordSerializerSchemaAware2CSV());
 		implementations.put(ORecordSerializerJSON.NAME, new ORecordSerializerJSON());
 		implementations.put(ORecordSerializerRaw.NAME, defaultRecordFormat);

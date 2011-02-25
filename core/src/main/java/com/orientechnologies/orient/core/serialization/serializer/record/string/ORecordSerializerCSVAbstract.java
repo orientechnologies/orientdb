@@ -544,7 +544,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			if (document != null && iLinkedType != OType.LINK)
 				buffer.append(OStringSerializerHelper.PARENTHESIS_BEGIN);
 
-			if (linkedClass != null || document != null) {
+			if (iLinkedType != OType.LINK && (linkedClass != null || document != null)) {
 				if (document == null)
 					// EMBEDDED OBJECTS
 					document = OObjectSerializerHelper.toStream(o, new ODocument((ODatabaseRecord) iDatabase, o.getClass().getSimpleName()),

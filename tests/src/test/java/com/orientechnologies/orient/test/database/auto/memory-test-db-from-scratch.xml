@@ -35,7 +35,6 @@
 		<classes>
 			<class name="com.orientechnologies.orient.test.database.auto.ComplexTypesTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.CRUDFlatPhysicalTest" />
-			<class name="com.orientechnologies.orient.test.database.auto.CRUDColumnPhysicalTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentLogicalTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentPhysicalTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.CRUDObjectPhysicalTest" />

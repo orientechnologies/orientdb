@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 
 public class OClassDictionary {
@@ -38,8 +37,8 @@ public class OClassDictionary {
 		switch (iType) {
 		case '0':
 			return ODocument.class;
-		case '1':
-			return ORecordColumn.class;
+			// case '1':
+			// return ORecordColumn.class;
 		case '2':
 			return ORecordFlat.class;
 		case '3':
@@ -74,8 +73,8 @@ public class OClassDictionary {
 	public Character getCodeByClass(final Class<?> iClass) {
 		if (iClass.equals(ODocument.class))
 			return '0';
-		if (iClass.equals(ORecordColumn.class))
-			return '1';
+		// if (iClass.equals(ORecordColumn.class))
+		// return '1';
 		if (iClass.equals(ORecordFlat.class))
 			return '2';
 		if (iClass.equals(ORecordBytes.class))

@@ -57,7 +57,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAwareAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
@@ -896,8 +895,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 				if (iRecord instanceof ORecordSchemaAwareAbstract<?>)
 					value = ((ORecordSchemaAwareAbstract<?>) iRecord).field(colName);
-				else if (iRecord instanceof ORecordColumn)
-					value = ((ORecordColumn) iRecord).field(Integer.parseInt(colName));
 
 				if (value instanceof Collection<?>)
 					value = "[" + ((Collection<?>) value).size() + "]";
@@ -940,17 +937,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 				if (value instanceof byte[])
 					value = "byte[" + ((byte[]) value).length + "]";
 				out.printf("%20s : %-20s\n", fieldName, value);
-			}
-
-		} else if (currentRecord instanceof ORecordColumn) {
-			ORecordColumn rec = (ORecordColumn) currentRecord;
-			out.println("--------------------------------------------------");
-			out.printf("Column - id: %s   v.%d\n", rec.getIdentity().toString(), rec.getVersion());
-			out.println("--------------------------------------------------");
-			for (int i = 0; i < rec.size(); ++i) {
-				if (i > 0)
-					out.print(", ");
-				out.print(rec.field(i));
 			}
 
 		} else if (currentRecord instanceof ORecordFlat) {
@@ -997,13 +983,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 			if (currentRecord instanceof ORecordSchemaAwareAbstract<?>)
 				dumpRecordInTable(currentResultSet.size(), (ORecordSchemaAwareAbstract<?>) currentRecord, columns);
-			else if (currentRecord instanceof ORecordColumn) {
-				// CREATE NUMBERED COLUMNS
-				List<String> cols = new ArrayList<String>();
-				for (int i = 0; i < ((ORecordColumn) currentRecord).size(); ++i)
-					cols.add(String.valueOf(i));
-				dumpRecordInTable(currentResultSet.size(), (ORecordColumn) currentRecord, cols, columns);
-			} else if (currentRecord != null) {
+			else if (currentRecord != null) {
 				dumpRecordDetails();
 				out.println();
 			}

@@ -114,47 +114,6 @@ public class SQLSelectTest {
 	}
 
 	@Test
-	public void queryColumnOrAndRange() {
-		database.open("admin", "admin");
-
-		List<ODocument> result = database.command(
-				new OSQLSynchQuery<ODocument>("SELECT * FROM cluster:animal WHERE column(0) < 5 OR column(0) >= 3 AND column(5) < 7"))
-				.execute();
-
-		for (int i = 0; i < result.size(); ++i) {
-			record = result.get(i);
-
-			OrientTest.printRecord(i, record);
-
-			Assert.assertTrue(record.getClassName().equalsIgnoreCase("Animal"));
-			Assert.assertTrue((Integer) record.field("id") < 5 || (Integer) record.field("id") >= 3 && (Float) record.field("id") < 7);
-		}
-
-		database.close();
-	}
-
-	@Test
-	public void queryColumnAndOrRange() {
-		database.open("admin", "admin");
-
-		List<ODocument> result = database.command(
-				new OSQLSynchQuery<ODocument>("SELECT * FROM cluster:animal WHERE column(0) < 5 AND column(0) >= 3 OR column(5) <= 403"))
-				.execute();
-
-		for (int i = 0; i < result.size(); ++i) {
-			record = result.get(i);
-
-			OrientTest.printRecord(i, record);
-
-			Assert.assertTrue(record.getClassName().equalsIgnoreCase("Animal"));
-			Assert.assertTrue((Integer) record.field("id") < 5 && (Integer) record.field("id") >= 3
-					|| (Float) record.field("price") <= 403);
-		}
-
-		database.close();
-	}
-
-	@Test
 	public void queryLogicalCluster() throws ParseException {
 		database.open("admin", "admin");
 

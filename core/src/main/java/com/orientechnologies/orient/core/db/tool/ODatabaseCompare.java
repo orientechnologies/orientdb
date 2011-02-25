@@ -20,7 +20,6 @@ import java.io.IOException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -36,7 +35,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 		listener.onMessage("\nComparing two local databases:\n1) " + iDb1URL + "\n2) " + iDb2URL + "\n");
 
 		storage1 = Orient.instance().loadStorage(iDb1URL);
-		storage1.open(0, null, null,null);
+		storage1.open(0, null, null, null);
 
 		storage2 = Orient.instance().loadStorage(iDb2URL);
 		storage2.open(0, null, null, null);
@@ -182,11 +181,9 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 					} else if (buffer1.buffer.length != buffer2.buffer.length) {
 						listener.onMessage("\n- KO: RID=" + clusterId + ":" + i + " content length is different: " + buffer1.buffer.length
 								+ " <-> " + buffer2.buffer.length);
-						if (buffer1.recordType == ODocument.RECORD_TYPE || buffer1.recordType == ORecordFlat.RECORD_TYPE
-								|| buffer1.recordType == ORecordColumn.RECORD_TYPE)
+						if (buffer1.recordType == ODocument.RECORD_TYPE || buffer1.recordType == ORecordFlat.RECORD_TYPE)
 							listener.onMessage("\n--- REC1: " + new String(buffer1.buffer));
-						if (buffer2.recordType == ODocument.RECORD_TYPE || buffer2.recordType == ORecordFlat.RECORD_TYPE
-								|| buffer2.recordType == ORecordColumn.RECORD_TYPE)
+						if (buffer2.recordType == ODocument.RECORD_TYPE || buffer2.recordType == ORecordFlat.RECORD_TYPE)
 							listener.onMessage("\n--- REC2: " + new String(buffer2.buffer));
 						listener.onMessage("\n");
 

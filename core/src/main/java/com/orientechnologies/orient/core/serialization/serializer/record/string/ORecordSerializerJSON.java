@@ -48,7 +48,6 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.ORecordStringable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -145,15 +144,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 					// RECORD VALUE(S)
 					else if (fieldName.equals("value") && !(iRecord instanceof ODocument)) {
-						if (iRecord instanceof ORecordColumn) {
-							fieldValueAsString = fieldValueAsString.trim();
-
-							final String[] items = OStringParser.getWords(fieldValueAsString, ",");
-							for (String item : items) {
-								((ORecordColumn) iRecord).add(item);
-							}
-
-						} else if (iRecord instanceof ORecordBytes) {
+						if (iRecord instanceof ORecordBytes) {
 							// BYTES
 							iRecord.fromStream(OBase64Utils.decode(fieldValueAsString));
 						} else if (iRecord instanceof ORecordStringable) {

@@ -63,10 +63,11 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
 		// CHECK IF THE RECORD IS PENDING TO BE MARSHALLED
 		final Integer identityRecord = System.identityHashCode(record);
-		if (iMarshalledRecords.contains(identityRecord)) {
-			return "";
-		} else
-			iMarshalledRecords.add(identityRecord);
+		if (iMarshalledRecords != null)
+			if (iMarshalledRecords.contains(identityRecord)) {
+				return "";
+			} else
+				iMarshalledRecords.add(identityRecord);
 
 		ODatabaseRecord database = record.getDatabase();
 
@@ -228,7 +229,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 			i++;
 		}
 
-		iMarshalledRecords.remove(identityRecord);
+		if (iMarshalledRecords != null)
+			iMarshalledRecords.remove(identityRecord);
 
 		return buffer.toString();
 	}

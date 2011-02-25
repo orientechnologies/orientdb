@@ -19,7 +19,6 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 
 @SuppressWarnings("unchecked")
@@ -40,9 +39,6 @@ public class ORecordFactory {
 			else if (iClass.equals(ORecordBytes.class))
 				return (T) new ORecordBytes(iDatabase);
 
-			else if (iClass.equals(ORecordColumn.class))
-				return (T) new ORecordColumn(iDatabase);
-
 			return (T) iClass.newInstance();
 
 		} catch (Exception e) {
@@ -62,8 +58,6 @@ public class ORecordFactory {
 			return "flat";
 		else if (iRecordType == ORecordBytes.RECORD_TYPE)
 			return "bytes";
-		else if (iRecordType == ORecordColumn.RECORD_TYPE)
-			return "column";
 
 		throw new IllegalArgumentException("Unsupported record type: " + iRecordType);
 	}
@@ -75,8 +69,6 @@ public class ORecordFactory {
 			return new ORecordFlat();
 		else if (iRecordType == ORecordBytes.RECORD_TYPE)
 			return new ORecordBytes();
-		else if (iRecordType == ORecordColumn.RECORD_TYPE)
-			return new ORecordColumn();
 
 		throw new IllegalArgumentException("Unsupported record type: " + iRecordType);
 	}

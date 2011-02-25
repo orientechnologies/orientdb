@@ -213,9 +213,9 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 
 		case LINK:
 			if (iValue instanceof ORID)
-				return iValue.toString();
+				return '#' + iValue.toString();
 			else
-				return ((ORecord<?>) iValue).getIdentity().toString();
+				return '#' + ((ORecord<?>) iValue).getIdentity().toString();
 
 		case EMBEDDEDMAP:
 			return ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedMapToStream(iDatabase, null, null, null, iValue, null, true);

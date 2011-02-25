@@ -21,13 +21,13 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerPositional2CSV;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 
 public class OStreamSerializerListRID implements OStreamSerializer {
 	public static final String														NAME			= "y";
 	public static final OStreamSerializerListRID					INSTANCE	= new OStreamSerializerListRID();
-	private static final ORecordSerializerPositional2CSV	FORMAT		= (ORecordSerializerPositional2CSV) ORecordSerializerFactory
-																																			.instance().getFormat(ORecordSerializerPositional2CSV.NAME);
+	private static final ORecordSerializerSchemaAware2CSV	FORMAT		= (ORecordSerializerSchemaAware2CSV) ORecordSerializerFactory
+																																			.instance().getFormat(ORecordSerializerSchemaAware2CSV.NAME);
 
 	public Object fromStream(final ODatabaseRecord iDatabase, final byte[] iStream) throws IOException {
 		if (iStream == null)
