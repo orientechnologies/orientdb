@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "serial" })
 public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
 	protected int			version;
 	protected byte[]	stream;
@@ -66,40 +66,60 @@ public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
 
 	@Override
 	public OTransactionRecordProxy pin() {
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("pin()");
+
 	}
 
 	@Override
 	public OTransactionRecordProxy setDirty() {
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("setDirty()");
+
 	}
 
-	public void onIdentityChanged(final ORecord<?> iRecord, final int iOldIdentity) {
+	/**
+	 * The item's identity doesn't affect nothing.
+	 */
+	public void onBeforeIdentityChanged(final ORID iRID) {
+	}
+
+	/**
+	 * The item's identity doesn't affect nothing.
+	 */
+	public void onAfterIdentityChanged(final ORecord<?> iRecord) {
 	}
 
 	@Override
 	public OTransactionRecordProxy unpin() {
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("unpin()");
 	}
 
 	@Override
 	public OTransactionRecordProxy save() {
-		throw new UnsupportedOperationException("Can't assign a user-defined cluster to this class");
+		throw new UnsupportedOperationException("save()");
+	}
+
+	public OTransactionRecordProxy detach() {
+		return this;
 	}
 
 	@Override
 	public OTransactionRecordProxy save(final String iCluster) {
-		throw new UnsupportedOperationException("Can't assign a user-defined cluster to this class");
+		throw new UnsupportedOperationException("save()");
 	}
 
 	@Override
 	public OTransactionRecordProxy load() {
-		throw new UnsupportedOperationException("Can't assign a user-defined cluster to this class");
+		throw new UnsupportedOperationException("load()");
+	}
+
+	@Override
+	public OTransactionRecordProxy reload() {
+		throw new UnsupportedOperationException("reload()");
 	}
 
 	@Override
 	public OTransactionRecordProxy delete() {
-		throw new UnsupportedOperationException("Can't assign a user-defined cluster to this class");
+		throw new UnsupportedOperationException("delete()");
 	}
 
 	@Override
@@ -108,7 +128,8 @@ public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
 	}
 
 	@Override
-	public void setDatabase(final ODatabaseRecord iDatabase) {
+	public boolean setDatabase(final ODatabaseRecord iDatabase) {
+		return false;
 	}
 
 	@Override

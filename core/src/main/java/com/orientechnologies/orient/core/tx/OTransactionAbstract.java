@@ -20,9 +20,10 @@ import java.io.IOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OTransactionException;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 public abstract class OTransactionAbstract implements OTransaction {
@@ -43,6 +44,10 @@ public abstract class OTransactionAbstract implements OTransaction {
 		return status;
 	}
 
+	public ODatabaseRecordTx getDatabase() {
+		return database;
+	}
+
 	protected void checkTransaction() {
 		if (status == TXSTATUS.INVALID)
 			throw new OTransactionException("Invalid state of the transaction. The transaction must be begun.");
@@ -50,29 +55,15 @@ public abstract class OTransactionAbstract implements OTransaction {
 
 	public static void updateCacheFromEntries(final OStorage iStorage, final OTransaction iTx,
 			final Iterable<? extends OTransactionEntry> iEntries) throws IOException {
-		String rid;
-		ORawBuffer cachedBuffer;
+		ORID rid;
+		ODatabaseRecord db = iTx.getDatabase();
 		for (OTransactionEntry txEntry : iEntries) {
-			rid = txEntry.getRecord().getIdentity().toString();
+			rid = txEntry.getRecord().getIdentity();
 
 			if (txEntry.status == OTransactionEntry.DELETED)
-				iStorage.getCache().removeRecord(rid);
+				db.getCache().deleteRecord(rid);
 			else if (txEntry.status == OTransactionEntry.UPDATED) {
-				cachedBuffer = iStorage.getCache().getRecord(rid);
-
-				if (cachedBuffer != null) {
-					// UPDATE CACHE
-					cachedBuffer.buffer = txEntry.getRecord().toStream();
-					cachedBuffer.version = txEntry.getRecord().getVersion();
-					cachedBuffer.recordType = txEntry.getRecord().getRecordType();
-
-				} else if (txEntry.getRecord().isPinned())
-					// INSERT NEW ENTRY IN THE CACHE
-					iStorage.getCache()
-							.pushRecord(
-									rid,
-									new ORawBuffer(txEntry.getRecord().toStream(), txEntry.getRecord().getVersion(), txEntry.getRecord()
-											.getRecordType()));
+				db.getCache().freeRecord(rid);
 			}
 		}
 	}

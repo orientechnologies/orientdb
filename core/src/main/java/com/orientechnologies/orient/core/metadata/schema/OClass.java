@@ -19,28 +19,31 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 @SuppressWarnings("unchecked")
-public class OClass extends ODocumentWrapperNoClass {
+public class OClass extends ODocumentWrapperNoClass implements Comparable<OClass> {
 
 	protected int											id;
 	protected OSchema									owner;
 	protected String									name;
 	protected Class<?>								javaClass;
 	protected int											fixedSize		= 0;
-	protected Map<String, OProperty>	properties	= new LinkedHashMap<String, OProperty>();
+	protected Map<String, OProperty>	properties	= new HashMap<String, OProperty>();
 	protected int[]										clusterIds;
 	protected int											defaultClusterId;
 	protected OClass									superClass;
@@ -250,17 +253,21 @@ public class OClass extends ODocumentWrapperNoClass {
 		id = (Integer) document.field("id");
 		defaultClusterId = (Integer) document.field("defaultClusterId");
 
-		Collection<Integer> coll = document.field("clusterIds");
-		clusterIds = new int[coll.size()];
-		int i = 0;
-		for (Integer item : coll)
-			clusterIds[i++] = item.intValue();
+		final Object cc = document.field("clusterIds");
+		if (cc instanceof Collection<?>) {
+			Collection<Integer> coll = document.field("clusterIds");
+			clusterIds = new int[coll.size()];
+			int i = 0;
+			for (Integer item : coll)
+				clusterIds[i++] = item.intValue();
+		} else
+			clusterIds = (int[]) cc;
 
 		polymorphicClusterIds = clusterIds;
 
 		// READ PROPERTIES
 		OProperty prop;
-		List<ODocument> storedProperties = document.field("properties");
+		Collection<ODocument> storedProperties = document.field("properties");
 		for (ODocument p : storedProperties) {
 			p.setDatabase(document.getDatabase());
 			prop = new OProperty(this, p);
@@ -272,13 +279,27 @@ public class OClass extends ODocumentWrapperNoClass {
 	@Override
 	@OBeforeSerialization
 	public ODocument toStream() {
-		document.field("name", name);
-		document.field("id", id);
-		document.field("defaultClusterId", defaultClusterId);
-		document.field("clusterIds", clusterIds);
-		document.field("properties", properties.values(), OType.EMBEDDEDSET);
-		if (superClass != null)
-			document.field("superClass", superClass.getName());
+		document.setStatus(STATUS.UNMARSHALLING);
+
+		try {
+			document.field("name", name);
+			document.field("id", id);
+			document.field("defaultClusterId", defaultClusterId);
+			document.field("clusterIds", clusterIds);
+
+			Set<ODocument> props = new HashSet<ODocument>();
+			for (OProperty p : properties.values()) {
+				props.add(p.toStream());
+			}
+			document.field("properties", props, OType.EMBEDDEDSET);
+
+			if (superClass != null)
+				document.field("superClass", superClass.getName());
+
+		} finally {
+			document.setStatus(STATUS.LOADED);
+		}
+
 		return document;
 	}
 
@@ -385,6 +406,10 @@ public class OClass extends ODocumentWrapperNoClass {
 		return true;
 	}
 
+	public int compareTo(OClass o) {
+		return id - o.getId();
+	}
+
 	/**
 	 * Returns the number of the records of this class.
 	 */
@@ -422,12 +447,12 @@ public class OClass extends ODocumentWrapperNoClass {
 	 * @see #isSuperClassOf(OClass)
 	 */
 	public boolean isSubClassOf(final OClass iClass) {
-		if( iClass == null )
+		if (iClass == null)
 			return false;
-		
+
 		OClass cls = this;
 		while (cls != null) {
-			if (cls.equals(iClass))
+			if (cls.getName().equals(iClass.getName()))
 				return true;
 			cls = cls.getSuperClass();
 		}

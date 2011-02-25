@@ -33,6 +33,13 @@ public interface ORecord<T> extends ORecordElement {
 	}
 
 	/**
+	 * Remove all the dependencies by other records. All the relationships remain in form of RecordID.
+	 * 
+	 * @return The object it self. Useful to call methods in chain.
+	 */
+	public <RET extends ORecord<T>> RET detach();
+
+	/**
 	 * Resets the record to be reused.
 	 * 
 	 * @return The object it self. Useful to call methods in chain.
@@ -119,12 +126,21 @@ public interface ORecord<T> extends ORecordElement {
 	public STATUS getInternalStatus();
 
 	/**
-	 * Loads the record content in memory. If the record is dirty, then it returns to the original content. If the record doesn't
-	 * exist a ORecordNotFoundException exception is thrown.
+	 * Loads the record content in memory. If the record is in cache will be returned a new instance, so pay attention to use the
+	 * returned. If the record is dirty, then it returns to the original content. If the record doesn't exist a
+	 * ORecordNotFoundException exception is thrown.
 	 * 
-	 * @return The object it self. Useful to call methods in chain.
+	 * @return The record loaded or itself if the record has been reloaded from the storage. Useful to call methods in chain.
 	 */
 	public <RET extends ORecord<T>> RET load() throws ORecordNotFoundException;
+
+	/**
+	 * Loads the record content in memory. No cache is used. If the record is dirty, then it returns to the original content. If the
+	 * record doesn't exist a ORecordNotFoundException exception is thrown.
+	 * 
+	 * @return Always the object it self. Useful to call methods in chain.
+	 */
+	public <RET extends ORecord<T>> RET reload() throws ORecordNotFoundException;
 
 	/**
 	 * Saves in-memory changes to the storage. Behavior depends by the current running transaction if any. If no transaction is

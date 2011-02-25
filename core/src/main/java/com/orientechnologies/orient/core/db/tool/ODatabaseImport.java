@@ -491,16 +491,15 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 				// CREATE IT
 				if (type.equals("PHYSICAL"))
 					clusterId = database.addPhysicalCluster(name, name, -1);
-				else if (type.equals("LOGICAL")) {
+				else if (type.equals("LOGICAL"))
 					clusterId = database.addLogicalCluster(name, database.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME));
-				}
 			}
 
 			if (clusterId != id)
 				throw new OConfigurationException("Imported cluster '" + name + "' has id=" + clusterId + " different from the original: "
 						+ id);
 
-			listener.onMessage("OK");
+			listener.onMessage("OK, assigned id=" + clusterId);
 
 			total++;
 

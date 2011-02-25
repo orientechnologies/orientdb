@@ -17,6 +17,8 @@ package com.orientechnologies.orient.core.tx;
 
 import java.util.List;
 
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
 public interface OTransaction {
@@ -53,4 +55,8 @@ public interface OTransaction {
 	public void clearEntries();
 
 	public int size();
+
+	public ORecordInternal<?> getEntry(ORecordId rid);
+
+	public ODatabaseRecordTx getDatabase();
 }

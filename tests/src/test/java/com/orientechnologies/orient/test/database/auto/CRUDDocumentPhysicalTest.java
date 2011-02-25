@@ -124,8 +124,6 @@ public class CRUDDocumentPhysicalTest {
 			Assert.assertNotNull(rec.field("extra"));
 			Assert.assertEquals(((Byte) rec.field("value", Byte.class)).byteValue(), (byte) 10);
 
-			Assert.assertEquals(rec.field("binary"), base64);
-
 			binary = rec.field("binary", OType.BINARY);
 
 			for (int b = 0; b < binary.length; ++b)

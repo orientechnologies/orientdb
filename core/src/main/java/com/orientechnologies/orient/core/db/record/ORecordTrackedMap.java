@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.db.record;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 
 /**
@@ -30,7 +30,8 @@ import com.orientechnologies.orient.core.record.ORecord;
  */
 @SuppressWarnings("serial")
 public class ORecordTrackedMap extends LinkedHashMap<Object, Object> implements ORecordElement {
-	final protected ORecord<?>	sourceRecord;
+	final protected ORecord<?>		sourceRecord;
+	protected final static Object	ENTRY_REMOVAL	= new Object();
 
 	public ORecordTrackedMap(final ORecord<?> iSourceRecord) {
 		this.sourceRecord = iSourceRecord;
@@ -69,12 +70,27 @@ public class ORecordTrackedMap extends LinkedHashMap<Object, Object> implements 
 		return this;
 	}
 
-	public void onIdentityChanged(final ORecord<?> iRecord, final int iOldHashCode) {
-		final Object old = remove(iRecord);
-		if (old != null)
-			put(iRecord.getIdentity(), iRecord);
+	public void onBeforeIdentityChanged(final ORID iRID) {
+		remove(iRID);
 	}
 
-	public void setDatabase(final ODatabaseRecord iDatabase) {
+	public void onAfterIdentityChanged(final ORecord<?> iRecord) {
+		super.put(iRecord.getIdentity(), iRecord);
+	}
+
+	public boolean setDatabase(final ODatabaseRecord iDatabase) {
+		boolean changed = false;
+
+		for (Map.Entry<Object, Object> e : entrySet()) {
+			if (e.getKey() instanceof ORecordElement)
+				if (((ORecordElement) e.getKey()).setDatabase(iDatabase))
+					changed = true;
+
+			if (e.getValue() instanceof ORecordElement)
+				if (((ORecordElement) e.getValue()).setDatabase(iDatabase))
+					changed = true;
+		}
+
+		return changed;
 	}
 }

@@ -68,6 +68,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
 	public void create(final Map<String, Object> iOptions) {
 		addUser();
+		level2cache.startup();
 
 		final boolean locked = lock.acquireExclusiveLock();
 		try {
@@ -96,7 +97,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
 	public void open(final int iRequesterId, final String iUserName, final String iUserPassword, final Map<String, Object> iOptions) {
 		addUser();
-		cache.addUser();
+		level2cache.startup();
 
 		if (open)
 			// ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
@@ -122,6 +123,8 @@ public class OStorageMemory extends OStorageEmbedded {
 
 			// CLOSE THE DATA SEGMENT
 			data.close();
+
+			level2cache.shutdown();
 
 			open = false;
 		} finally {

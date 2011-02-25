@@ -593,10 +593,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			data.commandInfo = "Index lookup";
 
 			final String key = channel.readString();
-			final ORecordAbstract<?> value = (ORecordAbstract<?>) connection.database.getDictionary().get(key);
+			ORecordAbstract<?> value = (ORecordAbstract<?>) connection.database.getDictionary().get(key);
 
 			if (value != null)
-				((ODatabaseRecordTx) connection.database.getUnderlying()).load(value);
+				value = ((ODatabaseRecordTx) connection.database.getUnderlying()).load(value);
 
 			sendOk(lastClientTxId);
 

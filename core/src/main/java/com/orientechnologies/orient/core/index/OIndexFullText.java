@@ -23,12 +23,10 @@ import java.util.Set;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerLiteral;
@@ -40,7 +38,6 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
  * @author Luca Garulli
  * 
  */
-@SuppressWarnings("serial")
 public class OIndexFullText extends OIndexMVRBTreeAbstract {
 	private static final String	CONFIG_STOP_WORDS		= "stopWords";
 	private static final String	CONFIG_IGNORE_CHARS	= "ignoreChars";
@@ -89,30 +86,6 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 		map.lazySave();
 
 		configuration = new ODocument(iDatabase);
-		return this;
-	}
-
-	/**
-	 * Configure the index to be loaded.
-	 * 
-	 * @param iDatabase
-	 *          Current Database instance
-	 * @param iProperty
-	 *          Owner property
-	 * @param iClusterIndexName
-	 *          Cluster name where to place the TreeMap
-	 * @param iRecordId
-	 *          Record Id of the persistent TreeMap
-	 */
-	@Override
-	public OIndex loadFromConfiguration(final ODatabaseRecord iDatabase, final ORID iRID) {
-		configuration = new ODocument(iDatabase, iRID);
-		configuration.load();
-
-		load(iDatabase, new ORecordId((String) configuration.field(CONFIG_MAP_RID)));
-		ignoreChars = (String) configuration.field(CONFIG_IGNORE_CHARS);
-		stopWords = new HashSet<String>(OStringSerializerHelper.split((String) configuration.field(CONFIG_STOP_WORDS), ' '));
-
 		return this;
 	}
 
@@ -203,25 +176,23 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 		return this;
 	}
 
-	public ODocument getConfiguration() {
-		return configuration;
-	}
-
 	@Override
 	public ORID getIdentity() {
 		return configuration.getIdentity();
 	}
 
-	public byte[] toStream() throws OSerializationException {
-		configuration.field(CONFIG_IGNORE_CHARS, ignoreChars);
-		configuration.field(CONFIG_STOP_WORDS, stopWords);
-		return super.toStream();
-	}
+	@Override
+	public ODocument updateConfiguration() {
+		super.updateConfiguration();
+		configuration.setStatus(STATUS.UNMARSHALLING);
 
-	public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
-		super.fromStream(iStream);
-		ignoreChars = (String) configuration.field(CONFIG_IGNORE_CHARS);
-		stopWords = new HashSet<String>(OStringSerializerHelper.split((String) configuration.field(CONFIG_STOP_WORDS), ' '));
-		return null;
+		try {
+			configuration.field(CONFIG_IGNORE_CHARS, ignoreChars);
+			configuration.field(CONFIG_STOP_WORDS, stopWords);
+
+		} finally {
+			configuration.setStatus(STATUS.LOADED);
+		}
+		return configuration;
 	}
 }

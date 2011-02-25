@@ -121,16 +121,16 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 	public REC previous() {
 		checkDirection(false);
 
-		final REC record = (REC) getRecord();
+		ORecordInternal<?> record = getRecord();
 
 		// ITERATE UNTIL THE PREVIOUS GOOD RECORD
 		while (currentClusterIdx > -1) {
 
 			// MOVE BACKWARD IN THE CURRENT CLUSTER
 			while (hasPrevious()) {
-				if (readCurrentRecord(record, -1) != null)
+				if ((record = readCurrentRecord(record, -1)) != null)
 					// FOUND
-					return record;
+					return (REC) record;
 			}
 
 			// CLUSTER EXHAUSTED, TRY WITH THE PREVIOUS ONE
@@ -150,7 +150,7 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 	public REC next() {
 		checkDirection(true);
 
-		final ORecordInternal<?> record = getRecord();
+		ORecordInternal<?> record = getRecord();
 
 		if (currentTxEntryPosition > -1)
 			// IN TX
@@ -161,7 +161,7 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 
 			// MOVE FORWARD IN THE CURRENT CLUSTER
 			while (hasNext()) {
-				if (readCurrentRecord(record, +1) != null)
+				if ((record = readCurrentRecord(record, +1)) != null)
 					// FOUND
 					return (REC) record;
 			}
@@ -257,7 +257,7 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 	}
 
 	protected ORecordInternal<?> loadRecord(final ORecordInternal<?> iRecord) {
-		return lowLevelDatabase.executeReadRecord(currentClusterId, currentClusterPosition, iRecord, fetchPlan);
+		return lowLevelDatabase.executeReadRecord(currentClusterId, currentClusterPosition, iRecord, fetchPlan, false);
 	}
 
 	protected void updateClusterRange() {

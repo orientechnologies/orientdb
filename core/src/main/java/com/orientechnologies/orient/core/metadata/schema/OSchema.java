@@ -17,9 +17,10 @@ package com.orientechnologies.orient.core.metadata.schema;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -30,12 +31,13 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 public class OSchema extends ODocumentWrapperNoClass {
-	protected Map<String, OClass>	classes									= new LinkedHashMap<String, OClass>();
+	protected Map<String, OClass>	classes									= new HashMap<String, OClass>();
 	private static final int			CURRENT_VERSION_NUMBER	= 4;
 
 	public OSchema(final ODatabaseRecord iDatabaseOwner, final int schemaClusterId) {
@@ -171,7 +173,7 @@ public class OSchema extends ODocumentWrapperNoClass {
 		// REGISTER ALL THE CLASSES
 		classes.clear();
 		OClass cls;
-		List<ODocument> storedClasses = document.field("classes");
+		Collection<ODocument> storedClasses = document.field("classes");
 		for (ODocument c : storedClasses) {
 			c.setDatabase(document.getDatabase());
 			cls = new OClass(this, c);
@@ -206,8 +208,21 @@ public class OSchema extends ODocumentWrapperNoClass {
 	@Override
 	@OBeforeSerialization
 	public ODocument toStream() {
-		document.field("schemaVersion", CURRENT_VERSION_NUMBER);
-		document.field("classes", classes.values(), OType.EMBEDDEDSET);
+		document.setStatus(STATUS.UNMARSHALLING);
+
+		try {
+			document.field("schemaVersion", CURRENT_VERSION_NUMBER);
+
+			Set<ODocument> cc = new HashSet<ODocument>();
+			for (OClass c : classes.values()) {
+				cc.add(c.toStream());
+			}
+			document.field("classes", cc, OType.EMBEDDEDSET);
+
+		} finally {
+			document.setStatus(STATUS.LOADED);
+		}
+
 		return document;
 	}
 

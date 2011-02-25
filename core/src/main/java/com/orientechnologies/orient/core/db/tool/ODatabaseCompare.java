@@ -140,11 +140,11 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
 			clusterId = storage1.getClusterIdByName(clusterName);
 
-			long db1Max = storage1.getClusterDataRange(clusterId)[1];
-			long db2Max = storage2.getClusterDataRange(clusterId)[1];
+			final long db1Max = storage1.getClusterDataRange(clusterId)[1];
+			final long db2Max = storage2.getClusterDataRange(clusterId)[1];
 
-			ODocument doc1 = new ODocument();
-			ODocument doc2 = new ODocument();
+			final ODocument doc1 = new ODocument();
+			final ODocument doc2 = new ODocument();
 
 			long clusterMax = Math.max(db1Max, db2Max);
 			for (int i = 0; i < clusterMax; ++i) {

@@ -20,6 +20,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -30,7 +32,6 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.intent.OIntentMassiveRead;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -62,8 +63,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
 		writer = new OJSONWriter(new FileWriter(fileName));
 		writer.beginObject();
-
-		iDatabase.declareIntent(new OIntentMassiveRead());
+		iDatabase.setUseCache(false);
 	}
 
 	public ODatabaseExport(final ODatabaseRecord iDatabase, final OutputStream iOutputStream, final OCommandOutputListener iListener)
@@ -72,8 +72,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
 		writer = new OJSONWriter(new OutputStreamWriter(iOutputStream));
 		writer.beginObject();
-
-		iDatabase.declareIntent(new OIntentMassiveRead());
+		iDatabase.setUseCache(false);
 	}
 
 	public ODatabaseExport exportDatabase() {
@@ -281,7 +280,11 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
 		if (s.getClasses().size() > 0) {
 			writer.beginCollection(2, true, "classes");
-			for (OClass cls : s.getClasses()) {
+
+			final List<OClass> classes = new ArrayList<OClass>(s.getClasses());
+			Collections.sort(classes);
+
+			for (OClass cls : classes) {
 				writer.beginObject(3, true, null);
 				writer.writeAttribute(0, false, "name", cls.getName());
 				writer.writeAttribute(0, false, "id", cls.getId());
@@ -292,7 +295,11 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
 				if (cls.properties().size() > 0) {
 					writer.beginCollection(4, true, "properties");
-					for (OProperty p : cls.declaredProperties()) {
+
+					final List<OProperty> properties = new ArrayList<OProperty>(cls.declaredProperties());
+					Collections.sort(properties);
+
+					for (OProperty p : properties) {
 						writer.beginObject(5, true, null);
 						writer.writeAttribute(0, false, "name", p.getName());
 						writer.writeAttribute(0, false, "id", p.getId());
@@ -329,7 +336,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
 		try {
 			if (rec.getIdentity().isValid())
-				rec.load();
+				rec.reload();
 
 			if (recordExported > 0)
 				writer.append(",");

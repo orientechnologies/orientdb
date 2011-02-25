@@ -53,7 +53,6 @@ public class ORecordFlat extends ORecordAbstract<String> implements ORecordStrin
 
 	public ORecordFlat value(String iValue) {
 		value = iValue;
-		_source = null;
 		setDirty();
 		return this;
 	}
@@ -79,11 +78,10 @@ public class ORecordFlat extends ORecordAbstract<String> implements ORecordStrin
 		if (value == null) {
 			// LAZY DESERIALIZATION
 			if (_source == null && getIdentity() != null && getIdentity().isValid())
-				load();
+				reload();
 
 			// LAZY LOADING: LOAD THE RECORD FIRST
 			value = OBinaryProtocol.bytes2string(_source);
-			_source = null;
 		}
 
 		return value;
@@ -91,18 +89,14 @@ public class ORecordFlat extends ORecordAbstract<String> implements ORecordStrin
 
 	@Override
 	public String toString() {
-		return value();
+		return super.toString() + " " + value();
 	}
 
 	@Override
 	public byte[] toStream() {
-		return _source != null ? _source : OBinaryProtocol.string2bytes(value());
-	}
-
-	@Override
-	public ORecordFlat fromStream(byte[] iRecordBuffer) {
-		super.fromStream(iRecordBuffer);
-		return this;
+		if (_source == null && value != null)
+			_source = OBinaryProtocol.string2bytes(value);
+		return _source;
 	}
 
 	public int size() {

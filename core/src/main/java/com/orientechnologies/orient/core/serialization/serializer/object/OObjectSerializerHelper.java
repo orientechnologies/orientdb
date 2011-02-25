@@ -134,9 +134,10 @@ public class OObjectSerializerHelper {
 		}
 	}
 
-	public static Class<?> getFieldType(final ODocument iDocument, final OEntityManager iEntityManager) {
+	public static Class<?> getFieldType(ODocument iDocument, final OEntityManager iEntityManager) {
 		if (iDocument.getInternalStatus() == STATUS.NOT_LOADED)
-			iDocument.load();
+			iDocument = (ODocument) iDocument.load();
+		
 		if (iDocument.getClassName() == null) {
 			return null;
 		} else {
@@ -196,9 +197,6 @@ public class OObjectSerializerHelper {
 
 		String fieldName;
 		Object fieldValue;
-
-		if (iRecord.getInternalStatus() == STATUS.NOT_LOADED)
-			iRecord.load();
 
 		final String idFieldName = setObjectID(iRecord.getIdentity(), iPojo);
 		final String vFieldName = setObjectVersion(iRecord.getVersion(), iPojo);

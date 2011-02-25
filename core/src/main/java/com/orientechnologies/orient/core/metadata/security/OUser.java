@@ -184,7 +184,12 @@ public class OUser extends ODocumentWrapper {
 	public OUser addRole(final ORole iRole) {
 		if (iRole != null)
 			roles.add(iRole);
-		document.field("roles", roles, OType.LINKSET);
+
+		final HashSet<ODocument> persistentRoles = new HashSet<ODocument>();
+		for (ORole r : roles) {
+			persistentRoles.add(r.toStream());
+		}
+		document.field("roles", persistentRoles, OType.LINKSET);
 		return this;
 	}
 

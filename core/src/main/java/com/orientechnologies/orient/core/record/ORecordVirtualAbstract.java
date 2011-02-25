@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
  * Abstract implementation for record-free implementations. The object can be reused across calls to the database by using the
  * reset() at every re-use. Field population and serialization occurs always in lazy way.
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstract<T> {
 	protected Map<String, T>			_fieldValues;
 	protected Map<String, T>			_fieldOriginalValues;

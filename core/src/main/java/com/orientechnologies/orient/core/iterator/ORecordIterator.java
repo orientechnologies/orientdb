@@ -107,8 +107,7 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 			record = reusedRecord;
 			record.reset();
 		} else
-			// CREATE A NEW ONE
-			record = database.newInstance();
+			record = null;
 		return record;
 	}
 

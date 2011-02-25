@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<T>, Comparable<ORecordAbstract<T>> {
 	protected ODatabaseRecord		_database;
 	protected ORecordId					_recordId;
@@ -61,12 +61,12 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		return _recordId;
 	}
 
-	public ORecordAbstract<?> setIdentity(final int iClusterId, final long iPosition) {
+	public ORecordAbstract<?> setIdentity(final int iClusterId, final long iClusterPosition) {
 		if (_recordId == null || _recordId == ORecordId.EMPTY_RECORD_ID)
-			_recordId = new ORecordId(iClusterId, iPosition);
+			_recordId = new ORecordId(iClusterId, iClusterPosition);
 		else {
 			_recordId.clusterId = iClusterId;
-			_recordId.clusterPosition = iPosition;
+			_recordId.clusterPosition = iClusterPosition;
 		}
 		return this;
 	}
@@ -74,6 +74,10 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	public ORecordAbstract<?> setIdentity(final ORecordId iIdentity) {
 		_recordId = iIdentity;
 		return this;
+	}
+
+	public <RET extends ORecord<T>> RET detach() {
+		return (RET) this;
 	}
 
 	public ORecordAbstract<T> clear() {
@@ -125,7 +129,10 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		return this;
 	}
 
-	public void onIdentityChanged(final ORecord<?> iRecord, final int iOldHashCode) {
+	public void onBeforeIdentityChanged(final ORID iRID) {
+	}
+
+	public void onAfterIdentityChanged(final ORecord<?> iRecord) {
 	}
 
 	public boolean isDirty() {
@@ -152,8 +159,12 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		return _database;
 	}
 
-	public void setDatabase(final ODatabaseRecord iDatabase) {
-		this._database = iDatabase;
+	public boolean setDatabase(final ODatabaseRecord iDatabase) {
+		if (_database != iDatabase) {
+			this._database = iDatabase;
+			return true;
+		}
+		return false;
 	}
 
 	public <RET extends ORecord<T>> RET fromJSON(final String iSource) {
@@ -171,7 +182,8 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 
 	@Override
 	public String toString() {
-		return "@" + (_recordId.isValid() ? _recordId : "") + "[" + Arrays.toString(_source) + "]";
+		return "@" + (_recordId.isValid() ? _recordId : "") + "[" + (_source != null ? Arrays.toString(_source) : "") + "] v"
+				+ _version;
 	}
 
 	public int getVersion() {
@@ -184,12 +196,13 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 
 	public ORecordAbstract<T> unload() {
 		_status = STATUS.NOT_LOADED;
+		_source = null;
 		unsetDirty();
 		invokeListenerEvent(ORecordListener.EVENT.UNLOAD);
 		return this;
 	}
 
-	public ORecordAbstract<T> load() {
+	public ORecordInternal<T> load() {
 		if (_database == null)
 			throw new ODatabaseException("No database assigned to current record");
 
@@ -202,14 +215,39 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 			if (result == null)
 				throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found");
 
-			if (result != this)
+			if (result != this) {
 				// GET CONTENT
-				fromStream(result.toStream());
+				// result.toStream();
+				// fromStream(result.toStream());
+			}
+
+			return (ORecordInternal<T>) result;
 		} catch (Exception e) {
 			throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found", e);
 		}
+	}
 
-		return this;
+	public ORecordInternal<T> reload() {
+		return reload(null);
+	}
+
+	public ORecordInternal<T> reload(final String iFetchPlan) {
+		if (_database == null)
+			throw new ODatabaseException("No database assigned to current record");
+
+		if (!getIdentity().isValid())
+			throw new ORecordNotFoundException("The record has no id, probably it's new or transient yet ");
+
+		try {
+			_database.reload(this, iFetchPlan);
+
+			// GET CONTENT
+			fromStream(toStream());
+
+			return this;
+		} catch (Exception e) {
+			throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found", e);
+		}
 	}
 
 	public ORecordAbstract<T> save() {

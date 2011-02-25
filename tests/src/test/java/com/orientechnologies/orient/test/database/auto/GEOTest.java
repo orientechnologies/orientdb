@@ -42,7 +42,7 @@ public class GEOTest {
 	}
 
 	@Test
-	public void indexMapPoint() {
+	public void geoSchema() {
 		database.open("admin", "admin");
 
 		final OClass mapPointClass = database.getMetadata().getSchema().createClass("MapPoint");
@@ -50,10 +50,29 @@ public class GEOTest {
 		mapPointClass.createProperty("y", OType.DOUBLE).createIndex(INDEX_TYPE.NOTUNIQUE);
 		database.getMetadata().getSchema().save();
 
+		final OPropertyIndex xIndex = database.getMetadata().getSchema().getClass("MapPoint").getProperty("x").getIndex();
+		Assert.assertNotNull(xIndex);
+
+		final OPropertyIndex yIndex = database.getMetadata().getSchema().getClass("MapPoint").getProperty("y").getIndex();
+		Assert.assertNotNull(yIndex);
+
 		database.close();
 	}
 
-	@Test(dependsOnMethods = "indexMapPoint")
+	@Test(dependsOnMethods = "geoSchema")
+	public void checkGeoIndexes() {
+		database.open("admin", "admin");
+
+		final OPropertyIndex xIndex = database.getMetadata().getSchema().getClass("MapPoint").getProperty("x").getIndex();
+		Assert.assertNotNull(xIndex);
+
+		final OPropertyIndex yIndex = database.getMetadata().getSchema().getClass("MapPoint").getProperty("y").getIndex();
+		Assert.assertNotNull(yIndex);
+
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "checkGeoIndexes")
 	public void queryCreatePoints() {
 		database.open("admin", "admin");
 
@@ -96,7 +115,10 @@ public class GEOTest {
 		database.open("admin", "admin");
 
 		final OPropertyIndex xIndex = database.getMetadata().getSchema().getClass("MapPoint").getProperty("x").getIndex();
+		Assert.assertNotNull(xIndex);
+
 		final OPropertyIndex yIndex = database.getMetadata().getSchema().getClass("MapPoint").getProperty("y").getIndex();
+		Assert.assertNotNull(yIndex);
 
 		final Set<ORecord<?>> xResult = xIndex.getUnderlying().getBetween(52.20472, 82.20472);
 		final Set<ORecord<?>> yResult = yIndex.getUnderlying().getBetween(0.14056, 30.14056);

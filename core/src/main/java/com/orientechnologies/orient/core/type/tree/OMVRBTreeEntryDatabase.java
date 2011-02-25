@@ -21,6 +21,7 @@ import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.impl.ORecordBytesLazy;
 
 /**
  * Persistent TreeMap implementation that use a ODatabase instance to handle the entries. This class can be used also from the user.
@@ -33,6 +34,7 @@ import com.orientechnologies.orient.core.id.ORID;
  * @param <V>
  *          Value type
  */
+@SuppressWarnings("serial")
 public class OMVRBTreeEntryDatabase<K, V> extends OMVRBTreeEntryPersistent<K, V> {
 	/**
 	 * Called on event of splitting an entry.
@@ -72,7 +74,8 @@ public class OMVRBTreeEntryDatabase<K, V> extends OMVRBTreeEntryPersistent<K, V>
 
 	@Override
 	public OMVRBTreeEntryDatabase<K, V> load() throws IOException {
-		record.load();
+		record = (ORecordBytesLazy) record.load();
+		record.recycle(this);
 		fromStream(record.toStream());
 		return this;
 	}

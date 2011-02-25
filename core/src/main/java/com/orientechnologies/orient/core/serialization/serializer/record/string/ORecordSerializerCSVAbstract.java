@@ -17,7 +17,6 @@ package com.orientechnologies.orient.core.serialization.serializer.record.string
 
 import java.lang.reflect.Array;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -230,10 +229,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		switch (iType) {
 
 		case LINK: {
-			final ORID rid = linkToStream(buffer, iRecord, iValue);
-			if (rid != null)
+			final Object link = linkToStream(buffer, iRecord, iValue);
+			if (link != null)
 				// OVERWRITE CONTENT
-				iRecord.field(iName, rid);
+				iRecord.field(iName, link);
 			break;
 		}
 
@@ -241,7 +240,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			buffer.append(OStringSerializerHelper.COLLECTION_BEGIN);
 
 			if (iValue != null) {
-				ORID rid;
+				Object link;
 				int items = 0;
 				List<Object> coll = (List<Object>) iValue;
 				if (coll instanceof OLazyObjectList<?>) {
@@ -253,10 +252,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 						if (items++ > 0)
 							buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
-						rid = linkToStream(buffer, iRecord, coll.get(i));
+						link = linkToStream(buffer, iRecord, coll.get(i));
 
-						if (rid != null)
-							coll.set(i, rid);
+						if (link != null)
+							coll.set(i, link);
 					}
 				} finally {
 					if (coll instanceof OLazyObjectList<?>) {
@@ -272,34 +271,33 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		case LINKSET: {
 			buffer.append(OStringSerializerHelper.COLLECTION_BEGIN);
 
-			ORID rid;
+			Object link;
 			int items = 0;
 			Set<Object> coll = new HashSet<Object>((Collection<? extends Object>) iValue);
-			Map<Object, Object> objToReplace = null;
+			boolean invalidSet = false;
 
 			// LINKED SET
 			for (Object item : coll) {
 				if (items++ > 0)
 					buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
-				rid = linkToStream(buffer, iRecord, item);
+				link = linkToStream(buffer, iRecord, item);
 
-				if (rid != null) {
+				if (link != null && !invalidSet)
 					// IDENTITY IS CHANGED, RE-SET INTO THE COLLECTION TO RECOMPUTE THE HASH
-					if (objToReplace == null)
-						objToReplace = new HashMap<Object, Object>();
-
-					objToReplace.put(item, rid);
-				}
+					invalidSet = true;
 			}
 
-			if (objToReplace != null)
-				// REPLACE ALL CHANGED ITEMS
-				for (Map.Entry<Object, Object> entry : objToReplace.entrySet()) {
-					coll.remove(entry.getKey());
-					coll.add(entry.getValue());
-				}
+			if (invalidSet) {
+				final ORecordLazySet newSet = new ORecordLazySet(iRecord, ODocument.RECORD_TYPE);
 
+				// REPLACE ALL CHANGED ITEMS
+				for (Object item : coll) {
+					newSet.add(item);
+				}
+				coll.clear();
+				iRecord.field(iName, newSet);
+			}
 			buffer.append(OStringSerializerHelper.COLLECTION_END);
 			break;
 		}
@@ -307,10 +305,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		case LINKMAP: {
 			buffer.append(OStringSerializerHelper.MAP_BEGIN);
 
-			ORID rid;
+			Object link;
 			int items = 0;
 			Map<String, Object> map = (Map<String, Object>) iValue;
-			Map<String, Object> objToReplace = null;
+			boolean invalidMap = false;
 
 			// LINKED MAP
 			if (map instanceof OLazyObjectMap<?>) {
@@ -323,26 +321,28 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 					buffer.append(fieldTypeToString(iDatabase, OType.STRING, entry.getKey()));
 					buffer.append(OStringSerializerHelper.ENTRY_SEPARATOR);
-					rid = linkToStream(buffer, iRecord, entry.getValue());
+					link = linkToStream(buffer, iRecord, entry.getValue());
 
-					if (rid != null) {
-						// REMEMBER TO REPLACE THIS ITEM AFTER ALL
-						if (objToReplace == null)
-							objToReplace = new HashMap<String, Object>();
-
-						objToReplace.put(entry.getKey(), rid);
-					}
+					if (link != null && !invalidMap)
+						// IDENTITY IS CHANGED, RE-SET INTO THE COLLECTION TO RECOMPUTE THE HASH
+						invalidMap = true;
 				}
 			} finally {
 				if (map instanceof OLazyObjectMap<?>) {
 					((OLazyObjectMap<?>) map).setConvertToRecord(true);
 				}
 			}
-			if (objToReplace != null)
+
+			if (invalidMap) {
+				final ORecordLazyMap newMap = new ORecordLazyMap(iRecord, ODocument.RECORD_TYPE);
+
 				// REPLACE ALL CHANGED ITEMS
-				for (Map.Entry<String, Object> entry : objToReplace.entrySet()) {
-					map.put(entry.getKey(), entry.getValue());
+				for (Map.Entry<String, Object> entry : map.entrySet()) {
+					newMap.put(entry.getKey(), entry.getValue());
 				}
+				map.clear();
+				iRecord.field(iName, newMap);
+			}
 
 			buffer.append(OStringSerializerHelper.MAP_END);
 			break;
@@ -592,12 +592,12 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 	 *          Can be an instance of ORID or a Record<?>
 	 * @return
 	 */
-	private ORID linkToStream(final StringBuilder buffer, final ORecordSchemaAware<?> iParentRecord, Object iLinked) {
+	private Object linkToStream(final StringBuilder buffer, final ORecordSchemaAware<?> iParentRecord, Object iLinked) {
 		if (iLinked == null)
 			// NULL REFERENCE
 			return null;
 
-		ORID resultRid = null;
+		Object resultRid = null;
 		ORID rid;
 
 		if (iLinked instanceof ORID) {
@@ -618,16 +618,24 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			// RECORD
 			ORecordInternal<?> iLinkedRecord = (ORecordInternal<?>) iLinked;
 			rid = iLinkedRecord.getIdentity();
+
 			if (rid.isNew() || iLinkedRecord.isDirty()) {
 				if (iLinkedRecord.getDatabase() == null)
 					// OVERWRITE THE DATABASE TO THE SAME OF THE PARENT ONE
 					iLinkedRecord.setDatabase(iParentRecord.getDatabase());
 
-				// STORE THE TRAVERSED OBJECT TO KNOW THE RECORD ID. CALL THIS VERSION TO AVOID CLEAR OF STACK IN THREAD-LOCAL
-				iLinkedRecord.getDatabase().save(iLinkedRecord);
+				if (iLinkedRecord instanceof ODocument) {
+					final OClass schemaClass = ((ODocument) iLinkedRecord).getSchemaClass();
+					iLinkedRecord.getDatabase().save(iLinkedRecord,
+							schemaClass != null ? iLinkedRecord.getDatabase().getClusterNameById(schemaClass.getDefaultClusterId()) : null);
+				} else
+					// STORE THE TRAVERSED OBJECT TO KNOW THE RECORD ID. CALL THIS VERSION TO AVOID CLEAR OF STACK IN THREAD-LOCAL
+					iLinkedRecord.getDatabase().save(iLinkedRecord);
 
 				iLinkedRecord.getDatabase().registerPojo(iLinkedRecord.getDatabase().getUserObjectByRecord(iLinkedRecord, null),
 						iLinkedRecord);
+
+				resultRid = iLinkedRecord;
 			}
 
 			if (iParentRecord.getDatabase() instanceof ODatabaseRecord) {

@@ -28,19 +28,16 @@ import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
-import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.annotation.ODocumentInstance;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerLiteral;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
@@ -51,7 +48,6 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
  * @author Luca Garulli
  * 
  */
-@SuppressWarnings("serial")
 public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements OIndex, ODatabaseListener {
 	protected static final String																	CONFIG_MAP_RID	= "mapRid";
 	protected static final String																	CONFIG_CLUSTERS	= "clusters";
@@ -106,7 +102,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 		final ORID rid = (ORID) iConfig.field(CONFIG_MAP_RID, ORID.class);
 		if (rid == null)
 			return null;
-		
+
 		configuration = iConfig;
 		name = configuration.field(OIndex.CONFIG_NAME);
 		automatic = (Boolean) (configuration.field(OIndex.CONFIG_AUTOMATIC) != null ? configuration.field(OIndex.CONFIG_AUTOMATIC)
@@ -119,11 +115,6 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 
 		load(iConfig.getDatabase(), rid);
 
-		return this;
-	}
-
-	public OIndex loadFromConfiguration(final ODatabaseRecord iDatabase, final ORID iRecordId) {
-		load(iDatabase, iRecordId);
 		return this;
 	}
 
@@ -377,26 +368,6 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 		this.callback = callback;
 	}
 
-	@OBeforeSerialization
-	public byte[] toStream() throws OSerializationException {
-		configuration.field(OIndex.CONFIG_TYPE, type);
-		configuration.field(OIndex.CONFIG_NAME, name);
-		configuration.field(OIndex.CONFIG_AUTOMATIC, automatic);
-		configuration.field(CONFIG_CLUSTERS, clustersToIndex, OType.EMBEDDEDSET);
-		configuration.field(CONFIG_MAP_RID, map.getRecord().getIdentity());
-		return configuration.toStream();
-	}
-
-	public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
-		configuration.fromStream(iStream);
-		name = configuration.field(OIndex.CONFIG_NAME);
-		automatic = (Boolean) (configuration.field(OIndex.CONFIG_AUTOMATIC) != null ? configuration.field(OIndex.CONFIG_AUTOMATIC)
-				: true);
-		clustersToIndex = configuration.field(CONFIG_CLUSTERS);
-		map.getRecord().setIdentity((ORecordId) configuration.field(CONFIG_MAP_RID, ORID.class));
-		return null;
-	}
-
 	public Set<String> getClusters() {
 		return Collections.unmodifiableSet(clustersToIndex);
 	}
@@ -411,6 +382,22 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 
 	public void unload() {
 		map.unload();
+	}
+
+	public ODocument updateConfiguration() {
+		configuration.setStatus(STATUS.UNMARSHALLING);
+
+		try {
+			configuration.field(OIndex.CONFIG_TYPE, type);
+			configuration.field(OIndex.CONFIG_NAME, name);
+			configuration.field(OIndex.CONFIG_AUTOMATIC, automatic);
+			configuration.field(CONFIG_CLUSTERS, clustersToIndex, OType.EMBEDDEDSET);
+			configuration.field(CONFIG_MAP_RID, map.getRecord().getIdentity());
+
+		} finally {
+			configuration.setStatus(STATUS.LOADED);
+		}
+		return configuration;
 	}
 
 	public ODocument getConfiguration() {

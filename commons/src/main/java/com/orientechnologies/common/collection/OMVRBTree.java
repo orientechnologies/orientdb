@@ -374,7 +374,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		final Comparable<? super K> k = (Comparable<? super K>) key;
 
 		try {
-			while (p != null) {
+			while (p != null && p.getSize() > 0) {
 				steps++;
 
 				lastNode = p;
@@ -612,8 +612,10 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 					// EXACT MATCH: UPDATE THE VALUE
 					return parentNode.setValue(value);
 
-				if (parentNode == null)
+				if (parentNode == null) {
 					parentNode = root;
+					pageIndex = 0;
+				}
 
 				// System.out.println("Parent node free space: " + parentNode.getFreeSpace());
 
@@ -2313,7 +2315,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 			// DELETE INSIDE THE NODE
 			p.remove();
 
-			if (p.getSize() > 0)
+			if (p.getSize() > 0 || p == root)
 				return;
 		}
 

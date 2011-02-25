@@ -22,13 +22,13 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ORecordColumn;
 
 /**
  * Interface for embedded storage.
@@ -43,7 +43,8 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 		super(iName, iFilePath, iMode);
 	}
 
-	protected abstract ORawBuffer readRecord(final int iRequesterId, final OCluster iClusterSegment, final long iPosition, boolean iAtomicLock);
+	protected abstract ORawBuffer readRecord(final int iRequesterId, final OCluster iClusterSegment, final long iPosition,
+			boolean iAtomicLock);
 
 	/**
 	 * Execute the command request and return the result back.
@@ -101,10 +102,12 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 
 				cluster = getClusterById(clusterId);
 
-				beginClusterPosition = iBeginRange != null && iBeginRange.getClusterId() == clusterId ? iBeginRange.getClusterPosition() : 0;
+				beginClusterPosition = iBeginRange != null && iBeginRange.getClusterId() == clusterId ? iBeginRange.getClusterPosition()
+						: 0;
 				endClusterPosition = iEndRange != null && iEndRange.getClusterId() == clusterId ? iEndRange.getClusterPosition() : -1;
 
-				ioRecord = browseCluster(iRequesterId, iListener, ioRecord, cluster, beginClusterPosition, endClusterPosition, iLockEntireCluster);
+				ioRecord = browseCluster(iRequesterId, iListener, ioRecord, cluster, beginClusterPosition, endClusterPosition,
+						iLockEntireCluster);
 			}
 		} catch (IOException e) {
 
@@ -117,8 +120,10 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 		}
 	}
 
-	public ORecordInternal<?> browseCluster(final int iRequesterId, final ORecordBrowsingListener iListener, ORecordInternal<?> ioRecord,
-			final OCluster cluster, final long iBeginRange, final long iEndRange, final boolean iLockEntireCluster) throws IOException {
+	public ORecordInternal<?> browseCluster(final int iRequesterId, final ORecordBrowsingListener iListener,
+			ORecordInternal<?> ioRecord, final OCluster cluster, final long iBeginRange, final long iEndRange,
+			final boolean iLockEntireCluster) throws IOException {
+		ORecordInternal<?> record;
 		ORawBuffer recordBuffer;
 		long positionInPhyCluster;
 
@@ -129,6 +134,10 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 
 			OClusterPositionIterator iterator = cluster.absoluteIterator(iBeginRange, iEndRange);
 
+			final ORecordId rid = new ORecordId(cluster.getId());
+			final ODatabaseRecord database = ioRecord.getDatabase();
+			ORecordInternal<?> recordToCheck;
+
 			// BROWSE ALL THE RECORDS
 			while (iterator.hasNext()) {
 				positionInPhyCluster = iterator.next();
@@ -137,36 +146,47 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 					// NOT VALID POSITION (IT HAS BEEN DELETED)
 					continue;
 
-				// TRY IN THE CACHE
-				recordBuffer = cache.getRecord(ORecordId.generateString(cluster.getId(), positionInPhyCluster));
-				if (recordBuffer == null) {
+				rid.clusterPosition = positionInPhyCluster;
+
+				// TRY IN TX
+				record = database.getTransaction().getEntry(rid);
+				if (record == null)
+					// TRY IN CACHE
+					record = database.getCache().findRecord(rid);
+
+				if (record != null && record.getRecordType() != ODocument.RECORD_TYPE)
+					// WRONG RECORD TYPE: JUMP IT
+					continue;
+
+				if (record == null) {
 					// READ THE RAW RECORD. IF iLockEntireCluster THEN THE READ WILL
 					// BE NOT-LOCKING, OTHERWISE YES
 					recordBuffer = readRecord(iRequesterId, cluster, positionInPhyCluster, !iLockEntireCluster);
 					if (recordBuffer == null)
 						continue;
-				}
 
-				if (recordBuffer.recordType != ODocument.RECORD_TYPE && recordBuffer.recordType != ORecordColumn.RECORD_TYPE)
-					// WRONG RECORD TYPE: JUMP IT
-					continue;
+					if (recordBuffer.recordType != ODocument.RECORD_TYPE)
+						// WRONG RECORD TYPE: JUMP IT
+						continue;
 
-				if (ioRecord == null)
-					// RECORD NULL OR DIFFERENT IN TYPE: CREATE A NEW ONE
-					ioRecord = ORecordFactory.newInstance(recordBuffer.recordType);
-				else if (ioRecord.getRecordType() != recordBuffer.recordType) {
-					// RECORD NULL OR DIFFERENT IN TYPE: CREATE A NEW ONE
-					final ORecordInternal<?> newRecord = ORecordFactory.newInstance(recordBuffer.recordType);
-					newRecord.setDatabase(ioRecord.getDatabase());
-					ioRecord = newRecord;
+					if (ioRecord.getRecordType() != recordBuffer.recordType) {
+						// RECORD NULL OR DIFFERENT IN TYPE: CREATE A NEW ONE
+						final ORecordInternal<?> newRecord = ORecordFactory.newInstance(recordBuffer.recordType);
+						newRecord.setDatabase(ioRecord.getDatabase());
+						ioRecord = newRecord;
+					} else
+						// RESET CURRENT RECORD
+						ioRecord.reset();
+
+					ioRecord.setVersion(recordBuffer.version);
+					ioRecord.setIdentity(cluster.getId(), positionInPhyCluster);
+					ioRecord.fromStream(recordBuffer.buffer);
+					recordToCheck = ioRecord;
 				} else
-					// RESET CURRENT RECORD
-					ioRecord.reset();
+					// GET THE RECORD CACHED
+					recordToCheck = record;
 
-				ioRecord.setVersion(recordBuffer.version);
-				ioRecord.setIdentity(cluster.getId(), positionInPhyCluster);
-				ioRecord.fromStream(recordBuffer.buffer);
-				if (!iListener.foreach(ioRecord))
+				if (!iListener.foreach(recordToCheck))
 					// LISTENER HAS INTERRUPTED THE EXECUTION
 					break;
 			}

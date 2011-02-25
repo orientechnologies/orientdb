@@ -117,11 +117,11 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 	public REC previous() {
 		checkDirection(false);
 
-		final ORecordInternal<?> record = getRecord();
+		ORecordInternal<?> record = getRecord();
 
 		// ITERATE UNTIL THE PREVIOUS GOOD RECORD
 		while (hasPrevious()) {
-			if (readCurrentRecord(record, -1) != null)
+			if ((record = readCurrentRecord(record, -1)) != null)
 				// FOUND
 				return (REC) record;
 		}
@@ -142,12 +142,11 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 			// IN TX
 			return (REC) txEntries.get(currentTxEntryPosition).getRecord();
 
+		ORecordInternal<?> record = getRecord();
+
 		// ITERATE UNTIL THE NEXT GOOD RECORD
 		while (hasNext()) {
-			ORecordInternal<?> record = getRecord();
-
-			record = readCurrentRecord(record, +1);
-			if (record != null)
+			if ((record = readCurrentRecord(record, +1)) != null)
 				// FOUND
 				return (REC) record;
 		}
@@ -268,7 +267,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 
 		currentClusterPosition += iMovement;
 
-		iRecord = lowLevelDatabase.executeReadRecord(currentClusterId, currentClusterPosition, iRecord, fetchPlan);
+		iRecord = lowLevelDatabase.executeReadRecord(currentClusterId, currentClusterPosition, iRecord, fetchPlan, false);
 		if (iRecord != null)
 			browsedRecords++;
 

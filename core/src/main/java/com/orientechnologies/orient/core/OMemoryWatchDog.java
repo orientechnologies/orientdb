@@ -58,11 +58,12 @@ public class OMemoryWatchDog {
 
 					final long timer = OProfiler.getInstance().startChrono();
 
-					try {
-						for (Listener listener : listeners) {
+					for (Listener listener : listeners) {
+						try {
 							listener.memoryUsageLow(TYPE.JVM, usedMemory, maxMemory);
+						} catch (Exception e) {
+							e.printStackTrace();
 						}
-					} finally {
 						OProfiler.getInstance().stopChrono("OMemoryWatchDog.freeResources", timer);
 					}
 				}
@@ -80,8 +81,9 @@ public class OMemoryWatchDog {
 		return listeners;
 	}
 
-	public boolean addListener(Listener listener) {
-		return listeners.add(listener);
+	public Listener addListener(Listener listener) {
+		listeners.add(listener);
+		return listener;
 	}
 
 	public boolean removeListener(Listener listener) {

@@ -220,11 +220,14 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V> {
 		buffer.append(k);
 		buffer.append(" (size=");
 		buffer.append(size);
-		buffer.append(" [");
-		buffer.append(keys[0] != null ? keys[0] : "{lazy}");
-		buffer.append('-');
-		buffer.append(keys[size - 1] != null ? keys[size - 1] : "{lazy}");
-		buffer.append("])");
+		if (size > 0) {
+			buffer.append(" [");
+			buffer.append(keys[0] != null ? keys[0] : "{lazy}");
+			buffer.append('-');
+			buffer.append(keys[size - 1] != null ? keys[size - 1] : "{lazy}");
+			buffer.append(']');
+		}
+		buffer.append(')');
 
 		return buffer.toString();
 	}
@@ -367,7 +370,7 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V> {
 		values[size - 1] = null;
 
 		size--;
-		tree.pageIndex = -1;
+		tree.pageIndex = 0;
 	}
 
 	protected void setColor(final boolean iColor) {

@@ -25,9 +25,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
@@ -128,12 +126,13 @@ public class OJSONWriter {
 		}
 	}
 
-	public OJSONWriter writeAttribute(final int iIdentLevel, final boolean iNewLine, final String iName, final Object iValue) throws IOException {
+	public OJSONWriter writeAttribute(final int iIdentLevel, final boolean iNewLine, final String iName, final Object iValue)
+			throws IOException {
 		return writeAttribute(iIdentLevel, iNewLine, iName, iValue, format);
 	}
 
-	public OJSONWriter writeAttribute(final int iIdentLevel, final boolean iNewLine, final String iName, final Object iValue, final String iFormat)
-			throws IOException {
+	public OJSONWriter writeAttribute(final int iIdentLevel, final boolean iNewLine, final String iName, final Object iValue,
+			final String iFormat) throws IOException {
 		if (!firstAttribute)
 			out.append(", ");
 
@@ -165,6 +164,14 @@ public class OJSONWriter {
 
 	public static String writeValue(final Object iValue, final String iFormat) throws IOException {
 		final StringBuilder buffer = new StringBuilder();
+
+		final boolean oldAutoConvertSettings;
+
+		if (iValue instanceof ORecordLazyMultiValue) {
+			oldAutoConvertSettings = ((ORecordLazyMultiValue) iValue).isAutoConvertToRecord();
+			((ORecordLazyMultiValue) iValue).setAutoConvertToRecord(false);
+		} else
+			oldAutoConvertSettings = false;
 
 		if (iValue == null)
 			buffer.append("null");
@@ -205,11 +212,6 @@ public class OJSONWriter {
 			}
 
 		} else if (iValue instanceof Collection<?>) {
-			if (iValue instanceof ORecordLazyList)
-				((ORecordLazyList) iValue).setConvertToRecord(false);
-			else if (iValue instanceof ORecordLazySet)
-				((ORecordLazySet) iValue).setConvertToRecord(false);
-
 			final Collection<Object> coll = (Collection<Object>) iValue;
 			buffer.append('[');
 			int i = 0;
@@ -221,9 +223,6 @@ public class OJSONWriter {
 			buffer.append(']');
 
 		} else if (iValue instanceof Map<?, ?>) {
-			if (iValue instanceof ORecordLazyMap)
-				((ORecordLazyMap) iValue).setConvertToRecord(false);
-
 			final Map<Object, Object> map = (Map<Object, Object>) iValue;
 			buffer.append('{');
 			int i = 0;
@@ -254,6 +253,9 @@ public class OJSONWriter {
 			}
 		} else
 			buffer.append(iValue.toString());
+
+		if (iValue instanceof ORecordLazyMultiValue)
+			((ORecordLazyMultiValue) iValue).setAutoConvertToRecord(oldAutoConvertSettings);
 
 		return buffer.toString();
 	}

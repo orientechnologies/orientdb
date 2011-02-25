@@ -19,7 +19,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import com.orientechnologies.orient.core.cache.OCacheRecord;
+import com.orientechnologies.orient.core.cache.ODatabaseRecordCache;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -36,7 +36,7 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 
 	@Override
 	public void finalize() {
-		//close();
+		// close();
 	}
 
 	public <THISDB extends ODatabase> THISDB open(final String iUserName, final String iUserPassword) {
@@ -77,9 +77,19 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 		return underlying.getStorage();
 	}
 
-	public OCacheRecord getCache() {
+	public ODatabaseRecordCache getCache() {
 		checkOpeness();
 		return underlying.getCache();
+	}
+
+	public boolean isUseCache() {
+		checkOpeness();
+		return underlying.isUseCache();
+	}
+
+	public void setUseCache(final boolean useCache) {
+		checkOpeness();
+		underlying.setUseCache(useCache);
 	}
 
 	public boolean isClosed() {
@@ -146,9 +156,9 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 		return underlying.getDefaultClusterId();
 	}
 
-	public void declareIntent(final OIntent iIntent, final Object... iParams) {
+	public void declareIntent(final OIntent iIntent) {
 		checkOpeness();
-		underlying.declareIntent(iIntent, iParams);
+		underlying.declareIntent(iIntent);
 	}
 
 	public <DBTYPE extends ODatabase> DBTYPE getUnderlying() {
@@ -177,6 +187,11 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 		final ODatabase other = (ODatabase) iOther;
 
 		return other.getName().equals(getName());
+	}
+
+	@Override
+	public String toString() {
+		return underlying.toString();
 	}
 
 	public Object setProperty(final String iName, final Object iValue) {

@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -84,7 +85,7 @@ public class CRUDDocumentLogicalTest {
 		record = database.browseClass("Animal").last().previous();
 
 		Assert.assertEquals(record.field("name"), "Cat");
-		Assert.assertTrue(((List<ODocument>) record.field("races")).size() == 2);
+		Assert.assertTrue(((Collection<ODocument>) record.field("races")).size() == 2);
 
 		database.close();
 	}
@@ -98,7 +99,7 @@ public class CRUDDocumentLogicalTest {
 		record = database.browseClass("Animal").last().previous();
 
 		List<ODocument> races = record.field("races");
-		races.add(((ODocument)database.newInstance("AnimalRace")).field("name", "Egyptian"));
+		races.add(((ODocument) database.newInstance("AnimalRace")).field("name", "Egyptian"));
 		record.setDirty();
 
 		record.save();

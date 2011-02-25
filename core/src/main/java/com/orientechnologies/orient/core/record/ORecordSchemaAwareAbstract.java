@@ -27,11 +27,10 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> implements ORecordSchemaAware<T> {
 
 	protected OClass	_clazz;
-	protected int			_cursor;
 
 	public ORecordSchemaAwareAbstract() {
 	}
@@ -111,30 +110,10 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 		setClass(_database.getMetadata().getSchema().getClass(iClassName));
 	}
 
-	public boolean hasNext() {
-		checkForFields();
-		return _cursor < size();
-	}
-
-	@Override
-	public ORecordAbstract<T> unload() {
-		super.unload();
-		_cursor = 0;
-		return this;
-	}
-
-	@Override
-	public ORecordSchemaAwareAbstract<T> clear() {
-		super.clear();
-		_cursor = 0;
-		return this;
-	}
-
 	@Override
 	public ORecordSchemaAwareAbstract<T> reset() {
 		super.reset();
 		_clazz = null;
-		_cursor = 0;
 		return this;
 	}
 
@@ -258,7 +237,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 
 	protected void checkForLoading() {
 		if (_status == STATUS.NOT_LOADED && _database != null)
-			load();
+			reload();
 	}
 
 }

@@ -319,10 +319,12 @@ public abstract class OStringSerializerHelper {
 	}
 
 	public static boolean isCharPresent(final char iCharacter, final char[] iCharacters) {
-		for (char c : iCharacters)
-			if (iCharacter == c) {
+		final int len = iCharacters.length;
+		for (int i = 0; i < len; ++i) {
+			if (iCharacter == iCharacters[i]) {
 				return true;
 			}
+		}
 
 		return false;
 	}

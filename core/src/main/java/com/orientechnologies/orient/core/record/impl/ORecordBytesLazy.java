@@ -23,7 +23,7 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "serial" })
 public class ORecordBytesLazy extends ORecordBytes {
 	private OSerializableStream	serializableContent;
 
@@ -41,5 +41,13 @@ public class ORecordBytesLazy extends ORecordBytes {
 	@Override
 	public ORecordBytesLazy copy() {
 		return (ORecordBytesLazy) copyTo(new ORecordBytesLazy(serializableContent));
+	}
+
+	public OSerializableStream getSerializableContent() {
+		return serializableContent;
+	}
+
+	public void recycle(final OSerializableStream serializableContent) {
+		this.serializableContent = serializableContent;
 	}
 }

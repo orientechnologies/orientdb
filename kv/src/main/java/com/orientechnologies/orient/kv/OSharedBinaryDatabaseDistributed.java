@@ -56,7 +56,7 @@ public class OSharedBinaryDatabaseDistributed {
 		final ODatabaseBinary db = dbPool.acquire(iName, "admin", "admin");
 
 		// DISABLE CACHE SINCE THERE IS HAZELCAST FOR IT
-		((ODatabaseRaw) db.getUnderlying()).setUseCache(false);
+		db.setUseCache(false);
 
 		return db;
 	}

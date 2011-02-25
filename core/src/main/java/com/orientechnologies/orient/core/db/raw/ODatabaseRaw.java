@@ -25,7 +25,7 @@ import java.util.Map.Entry;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.OCacheRecord;
+import com.orientechnologies.orient.core.cache.ODatabaseRecordCache;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -53,11 +52,11 @@ public class ODatabaseRaw implements ODatabase {
 	protected OIntent								currentIntent;
 
 	private ODatabaseRecord					databaseOwner;
-
-	private boolean									useCache;
 	private Map<String, Object>			properties	= new HashMap<String, Object>();
-
 	private List<ODatabaseListener>	listeners		= new ArrayList<ODatabaseListener>();
+
+	private ODatabaseRecordCache		level1Cache;
+	private boolean									useCache;
 
 	public enum STATUS {
 		OPEN, CLOSED
@@ -98,6 +97,8 @@ public class ODatabaseRaw implements ODatabase {
 				} catch (Throwable t) {
 				}
 
+			level1Cache.startup();
+
 			status = STATUS.OPEN;
 		} catch (ODatabaseException e) {
 			throw e;
@@ -126,6 +127,8 @@ public class ODatabaseRaw implements ODatabase {
 					listener.onCreate(this);
 				} catch (Throwable t) {
 				}
+
+			level1Cache.startup();
 
 			status = STATUS.OPEN;
 		} catch (Exception e) {
@@ -183,28 +186,8 @@ public class ODatabaseRaw implements ODatabase {
 			return null;
 
 		try {
-
-			final String recId = ORecordId.generateString(iClusterId, iPosition);
-
 			// SEARCH IT IN CACHE
-			ORawBuffer result;
-
-			if (useCache) {
-				// FIND IN CACHE
-				result = getCache().getRecord(recId);
-
-				if (result != null)
-					// FOUND: JUST RETURN IT
-					return result;
-			}
-
-			result = storage.readRecord(databaseOwner, id, iClusterId, iPosition, iFetchPlan);
-
-			if (useCache)
-				// ADD THE RECORD TO THE LOCAL CACHE
-				getCache().pushRecord(recId, result);
-
-			return result;
+			return storage.readRecord(databaseOwner, id, iClusterId, iPosition, iFetchPlan);
 
 		} catch (Throwable t) {
 			throw new ODatabaseException("Error on retrieving record #" + iPosition + " in cluster '"
@@ -216,22 +199,11 @@ public class ODatabaseRaw implements ODatabase {
 		try {
 			if (iPosition < 0) {
 				// CREATE
-				iPosition = storage.createRecord(iClusterId, iContent, iRecordType);
+				return storage.createRecord(iClusterId, iContent, iRecordType);
 
-				if (useCache)
-					// ADD/UPDATE IT IN CACHE
-					getCache().pushRecord(ORecordId.generateString(iClusterId, iPosition), new ORawBuffer(iContent, 0, iRecordType));
-
-				return iPosition;
 			} else {
 				// UPDATE
-				int newVersion = storage.updateRecord(id, iClusterId, iPosition, iContent, iVersion, iRecordType);
-
-				if (useCache)
-					// ADD/UPDATE IT IN CACHE
-					getCache().pushRecord(ORecordId.generateString(iClusterId, iPosition), new ORawBuffer(iContent, newVersion, iRecordType));
-
-				return newVersion;
+				return storage.updateRecord(id, iClusterId, iPosition, iContent, iVersion, iRecordType);
 			}
 		} catch (Throwable t) {
 			throw new ODatabaseException("Error on saving record in cluster id: " + iClusterId + ", position: " + iPosition, t);
@@ -247,10 +219,6 @@ public class ODatabaseRaw implements ODatabase {
 			if (!storage.deleteRecord(id, iClusterId, iPosition, iVersion))
 				throw new ORecordNotFoundException("The record with id '" + iClusterId + ":" + iPosition + "' was not found");
 
-			// DELETE IT ALSO IN CACHE
-			if (useCache)
-				getCache().removeRecord(ORecordId.generateString(iClusterId, iPosition));
-
 		} catch (Exception e) {
 			OLogManager.instance().exception("Error on deleting record #%d in cluster '%s'", e, ODatabaseException.class, iPosition,
 					storage.getPhysicalClusterNameById(iClusterId));
@@ -259,6 +227,14 @@ public class ODatabaseRaw implements ODatabase {
 
 	public OStorage getStorage() {
 		return storage;
+	}
+
+	public boolean isUseCache() {
+		return useCache;
+	}
+
+	public void setUseCache(final boolean useCache) {
+		this.useCache = useCache;
 	}
 
 	public boolean isClosed() {
@@ -318,15 +294,15 @@ public class ODatabaseRaw implements ODatabase {
 		return storage.getClusterNames();
 	}
 
-	public OCacheRecord getCache() {
-		return storage.getCache();
+	public ODatabaseRecordCache getCache() {
+		return level1Cache;
 	}
 
 	public int getDefaultClusterId() {
 		return storage.getDefaultClusterId();
 	}
 
-	public void declareIntent(final OIntent iIntent, final Object... iParams) {
+	public void declareIntent(final OIntent iIntent) {
 		if (currentIntent != null)
 			// END CURRENT INTENT
 			currentIntent.end(this);
@@ -334,7 +310,7 @@ public class ODatabaseRaw implements ODatabase {
 		currentIntent = iIntent;
 
 		if (iIntent != null)
-			iIntent.begin(this, iParams);
+			iIntent.begin(this);
 	}
 
 	public ODatabaseRecord getDatabaseOwner() {
@@ -343,15 +319,8 @@ public class ODatabaseRaw implements ODatabase {
 
 	public ODatabaseRaw setOwner(final ODatabaseRecord iOwner) {
 		databaseOwner = iOwner;
+		level1Cache = new ODatabaseRecordCache(databaseOwner);
 		return this;
-	}
-
-	public boolean isUseCache() {
-		return useCache;
-	}
-
-	public void setUseCache(boolean useCache) {
-		this.useCache = useCache;
 	}
 
 	public Object setProperty(final String iName, final Object iValue) {
@@ -398,6 +367,7 @@ public class ODatabaseRaw implements ODatabase {
 			try {
 				listener.onClose(this);
 			} catch (Throwable t) {
+				t.printStackTrace();
 			}
 		listeners.clear();
 
@@ -405,5 +375,12 @@ public class ODatabaseRaw implements ODatabase {
 			storage.removeUser();
 
 		status = STATUS.CLOSED;
+
+		level1Cache.shutdown();
+	}
+
+	@Override
+	public String toString() {
+		return "OrientDB[" + getStorage().getURL() + "]";
 	}
 }

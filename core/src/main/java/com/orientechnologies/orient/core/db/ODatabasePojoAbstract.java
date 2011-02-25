@@ -347,7 +347,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 					iRecord.setDatabase(underlying);
 
 				if (iRecord.getInternalStatus() == STATUS.NOT_LOADED)
-					iRecord.load();
+					record = (ODocument) record.load();
 
 				pojo = newInstance(record.getClassName());
 				registerPojo(pojo, record);

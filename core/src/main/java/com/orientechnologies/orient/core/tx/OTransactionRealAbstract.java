@@ -23,12 +23,14 @@ import java.util.Map;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public abstract class OTransactionRealAbstract extends OTransactionAbstract {
-	protected Map<ORecordId, OTransactionEntry>	entries						= new HashMap<ORecordId, OTransactionEntry>();
-	protected int																newObjectCounter	= -2;
+	protected Map<ORID, OTransactionEntry>	entries						= new HashMap<ORID, OTransactionEntry>();
+	protected int														newObjectCounter	= -2;
 
 	protected OTransactionRealAbstract(ODatabaseRecordTx iDatabase, int iId) {
 		super(iDatabase, iId);
@@ -36,6 +38,13 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 
 	public Collection<OTransactionEntry> getEntries() {
 		return entries.values();
+	}
+
+	public ORecordInternal<?> getEntry(final ORecordId rid) {
+		OTransactionEntry e = entries.get(rid);
+		if (e != null)
+			return e.getRecord();
+		return null;
 	}
 
 	public List<OTransactionEntry> getEntriesByClass(final String iClassName) {

@@ -19,7 +19,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
-import com.orientechnologies.orient.core.cache.OCacheRecord;
+import com.orientechnologies.orient.core.cache.ODatabaseRecordCache;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -68,10 +68,8 @@ public interface ODatabase {
 	 * 
 	 * @param iIntent
 	 *          The intent
-	 * @param iParams
-	 *          Additional parameters
 	 */
-	public void declareIntent(final OIntent iIntent, Object... iParams);
+	public void declareIntent(final OIntent iIntent);
 
 	/**
 	 * Checks if the database exists.
@@ -119,7 +117,22 @@ public interface ODatabase {
 	 * 
 	 * @return Current cache.
 	 */
-	public OCacheRecord getCache();
+	public ODatabaseRecordCache getCache();
+
+	/**
+	 * Returns is the database instance uses the cache or not.
+	 * 
+	 * @return true if cache is enabled, otherwise false
+	 */
+	public boolean isUseCache();
+
+	/**
+	 * Overwrite caching usage settings.
+	 * 
+	 * @param useCache
+	 *          true to enable the cache, otherwise false
+	 */
+	public void setUseCache(boolean useCache);
 
 	/**
 	 * Returns the default cluster id. If not specified all the new entities will be stored in the default cluster.

@@ -95,8 +95,18 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 	@SuppressWarnings("unchecked")
 	public OGraphElement load(final OGraphElement iObject) {
 		if (iObject != null)
-			iObject.getDocument().load();
+			iObject.load();
 		return iObject;
+	}
+
+	public void reload(final OGraphElement iObject) {
+		if (iObject != null)
+			iObject.reload();
+	}
+
+	public void reload(final OGraphElement iObject, final String iFetchPlan) {
+		if (iObject != null)
+			iObject.reload(iFetchPlan);
 	}
 
 	@SuppressWarnings("unchecked")

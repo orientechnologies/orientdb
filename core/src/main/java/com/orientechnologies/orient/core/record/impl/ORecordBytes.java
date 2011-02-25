@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
  * content. Useful also to store multimedia contents and binary files. The object can be reused across calls to the database by
  * using the reset() at every re-use.
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "serial" })
 public class ORecordBytes extends ORecordAbstract<byte[]> {
 
 	public static final byte	RECORD_TYPE	= 'b';

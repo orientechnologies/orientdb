@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.core.iterator.OObjectIteratorMultiCluster;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelper;
@@ -121,14 +122,30 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 		return load(iPojo, null);
 	}
 
+	public void reload(final Object iPojo) {
+		reload(iPojo, null);
+	}
+
+	public void reload(final Object iPojo, final String iFetchPlan) {
+		checkOpeness();
+		if (iPojo == null)
+			return;
+
+		// GET THE ASSOCIATED DOCUMENT
+		final ODocument record = getRecordByUserObject(iPojo, true);
+		underlying.reload(record);
+
+		stream2pojo(record, iPojo, iFetchPlan);
+	}
+
 	public ODatabaseObjectTx load(final Object iPojo, final String iFetchPlan) {
 		checkOpeness();
 		if (iPojo == null)
 			return this;
 
 		// GET THE ASSOCIATED DOCUMENT
-		final ODocument record = getRecordByUserObject(iPojo, true);
-		underlying.load(record);
+		ODocument record = getRecordByUserObject(iPojo, true);
+		record = underlying.load(record);
 
 		stream2pojo(record, iPojo, iFetchPlan);
 
@@ -383,7 +400,10 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 	}
 
 	@Override
-	protected Object stream2pojo(final ODocument record, final Object iPojo, final String iFetchPlan) {
-		return OObjectSerializerHelper.fromStream(record, iPojo, getEntityManager(), this, iFetchPlan);
+	protected Object stream2pojo(ODocument iRecord, final Object iPojo, final String iFetchPlan) {
+		if (iRecord.getInternalStatus() == STATUS.NOT_LOADED)
+			iRecord = (ODocument) iRecord.load();
+
+		return OObjectSerializerHelper.fromStream(iRecord, iPojo, getEntityManager(), this, iFetchPlan);
 	}
 }

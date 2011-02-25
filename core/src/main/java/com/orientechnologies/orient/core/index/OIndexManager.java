@@ -18,14 +18,14 @@ package com.orientechnologies.orient.core.index;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
@@ -117,7 +117,7 @@ public class OIndexManager extends ODocumentWrapperNoClass {
 
 	@Override
 	protected void fromStream() {
-		final List<ODocument> idxs = document.field(CONFIG_INDEXES);
+		final Collection<ODocument> idxs = document.field(CONFIG_INDEXES);
 
 		if (idxs != null) {
 			OIndex index;
@@ -133,9 +133,22 @@ public class OIndexManager extends ODocumentWrapperNoClass {
 	 * Binds POJO to ODocument.
 	 */
 	@Override
-	@OBeforeSerialization
 	public ODocument toStream() {
-		document.field(CONFIG_INDEXES, indexes.values(), OType.EMBEDDEDSET);
+		document.setStatus(STATUS.UNMARSHALLING);
+
+		try {
+			ORecordTrackedSet idxs = new ORecordTrackedSet(document);
+
+			for (OIndex i : indexes.values()) {
+				idxs.add(i.updateConfiguration());
+			}
+			document.field(CONFIG_INDEXES, idxs, OType.EMBEDDEDSET);
+
+		} finally {
+			document.setStatus(STATUS.LOADED);
+		}
+		document.setDirty();
+
 		return document;
 	}
 

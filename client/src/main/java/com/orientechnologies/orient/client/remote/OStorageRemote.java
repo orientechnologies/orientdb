@@ -100,7 +100,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 	public void open(final int iRequesterId, final String iUserName, final String iUserPassword, final Map<String, Object> iOptions) {
 		addUser();
-		cache.addUser();
+		level2cache.startup();
 
 		boolean locked = lock.acquireExclusiveLock();
 
@@ -181,10 +181,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 			network.close();
 
-			// serviceThread.join();
-
-			cache.removeUser();
-			cache.clear();
+			level2cache.shutdown();
 
 			open = false;
 
@@ -278,18 +275,12 @@ public class OStorageRemote extends OStorageAbstract {
 
 					final ORawBuffer buffer = new ORawBuffer(network.readBytes(), network.readInt(), network.readByte());
 
+					ORecordInternal<?> record;
 					while (network.readByte() == 2) {
-						final int classId = network.readInt();
-						if (classId == OChannelBinaryProtocol.RECORD_NULL)
-							break;
-
-						final byte recordType = network.readByte();
-						final String rid = ORecordId.generateString(network.readShort(), network.readLong());
-						final int recordVersion = network.readInt();
-						final byte[] recordContent = network.readBytes();
+						record = readRecordFromNetwork(iDatabase);
 
 						// PUT IN THE CLIENT LOCAL CACHE
-						cache.pushRecord(rid, new ORawBuffer(recordContent, recordVersion, recordType));
+						level2cache.pushRecord(record);
 					}
 					return buffer;
 				} finally {
@@ -593,8 +584,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 							case 2:
 								// PUT IN THE CLIENT LOCAL CACHE
-								cache.pushRecord(record.getIdentity().toString(),
-										new ORawBuffer(record.toStream(), record.getVersion(), record.getRecordType()));
+								level2cache.pushRecord(record);
 							}
 						}
 					} else {
@@ -1327,21 +1317,6 @@ public class OStorageRemote extends OStorageAbstract {
 
 			if (OLogManager.instance().isInfoEnabled())
 				OLogManager.instance().info(this, "Received new cluster configuration: %s", clusterConfiguration.toJSON(""));
-		}
-	}
-
-	/**
-	 * Invoke serialization.
-	 * 
-	 * @param txEntry
-	 * @throws IOException
-	 */
-	private void preCommitEntry(final OTransactionEntry txEntry) throws IOException {
-		switch (txEntry.status) {
-		case OTransactionEntry.CREATED:
-		case OTransactionEntry.UPDATED:
-			txEntry.getRecord().toStream();
-			break;
 		}
 	}
 

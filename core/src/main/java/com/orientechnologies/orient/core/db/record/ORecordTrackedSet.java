@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -34,7 +35,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public class ORecordTrackedSet extends AbstractCollection<Object> implements Set<Object>, ORecordElement {
 	protected final ORecord<?>		sourceRecord;
-	protected Map<Object, Object>	map	= new HashMap<Object, Object>();
+	protected Map<Object, Object>	map						= new HashMap<Object, Object>();
+	protected final static Object	ENTRY_REMOVAL	= new Object();
 
 	public ORecordTrackedSet(final ORecord<?> iSourceRecord) {
 		this.sourceRecord = iSourceRecord;
@@ -43,16 +45,11 @@ public class ORecordTrackedSet extends AbstractCollection<Object> implements Set
 	}
 
 	public Iterator<Object> iterator() {
-		return new ORecordTrackedIterator(sourceRecord, map.values().iterator());
+		return new ORecordTrackedIterator(sourceRecord, map.keySet().iterator());
 	}
 
 	public boolean add(final Object e) {
-		final int h = e.hashCode();
-		final Object previous = map.get(h);
-		if (previous != null && previous != e)
-			map.put(System.currentTimeMillis(), e);
-		else
-			map.put(h, e);
+		map.put(e, ENTRY_REMOVAL);
 		setDirty();
 
 		if (e instanceof ODocument)
@@ -60,34 +57,13 @@ public class ORecordTrackedSet extends AbstractCollection<Object> implements Set
 		return true;
 	}
 
-	/**
-	 * Update an entry with hash changed.
-	 * 
-	 * @param iRecord
-	 * @param o
-	 * @return
-	 */
-	public boolean update(final ORecord<?> iRecord, final int iOldHashCode) {
-		Object entry;
-		for (Iterator<Object> it = map.keySet().iterator(); it.hasNext();) {
-			entry = it.next();
-			if ((Integer) entry == iOldHashCode) {
-				it.remove();
-				add(iRecord);
-				setDirty();
-				return true;
-			}
-		}
-		return false;
-	}
-
 	@Override
 	public boolean contains(Object o) {
-		return map.containsKey(o.hashCode());
+		return map.containsKey(o);
 	}
 
 	public boolean remove(Object o) {
-		final Object old = map.remove(o.hashCode());
+		final Object old = map.remove(o);
 		if (old != null) {
 
 			if (o instanceof ODocument)
@@ -118,18 +94,20 @@ public class ORecordTrackedSet extends AbstractCollection<Object> implements Set
 	}
 
 	public boolean addAll(final Collection<? extends Object> c) {
-		if (c.size() == 0)
+		if (c == null || c.size() == 0)
 			return false;
 
-		for (Object o : c) {
+		for (Object o : c)
 			add(o);
-		}
 
 		setDirty();
 		return true;
 	}
 
 	public boolean retainAll(final Collection<?> c) {
+		if (c == null || c.size() == 0)
+			return false;
+
 		if (super.removeAll(c)) {
 			setDirty();
 			return true;
@@ -144,15 +122,29 @@ public class ORecordTrackedSet extends AbstractCollection<Object> implements Set
 
 	@SuppressWarnings("unchecked")
 	public ORecordTrackedSet setDirty() {
-		if (sourceRecord != null)
+		if (sourceRecord != null && !sourceRecord.isDirty())
 			sourceRecord.setDirty();
 		return this;
 	}
 
-	public void onIdentityChanged(final ORecord<?> iRecord, final int iOldHashCode) {
-		update(iRecord, iOldHashCode);
+	public void onBeforeIdentityChanged(final ORID iRID) {
+		map.remove(iRID);
+		setDirty();
 	}
 
-	public void setDatabase(final ODatabaseRecord iDatabase) {
+	public void onAfterIdentityChanged(final ORecord<?> iRecord) {
+		map.put(iRecord, ENTRY_REMOVAL);
+	}
+
+	public boolean setDatabase(final ODatabaseRecord iDatabase) {
+		boolean changed = false;
+
+		for (Object o : map.keySet()) {
+			if (o instanceof ORecordElement)
+				if (((ORecordElement) o).setDatabase(iDatabase))
+					changed = true;
+		}
+
+		return changed;
 	}
 }

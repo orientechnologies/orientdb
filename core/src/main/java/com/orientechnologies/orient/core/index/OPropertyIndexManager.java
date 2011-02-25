@@ -47,8 +47,8 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 
 		if (indexedProperties != null)
 			for (Entry<OProperty, Object> propEntry : indexedProperties.entrySet()) {
-				// SAVE A COPY TO AVOID PROBLEN ON RECYCLING OF THE RECORD
-				propEntry.getKey().getIndex().getUnderlying().put(propEntry.getValue(), iRecord.copy());
+				// SAVE A COPY TO AVOID PROBLEM ON RECYCLING OF THE RECORD
+				propEntry.getKey().getIndex().getUnderlying().put(propEntry.getValue(), iRecord.placeholder());
 			}
 		return false;
 	}
@@ -91,7 +91,7 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 						index = propEntry.getKey().getIndex().getUnderlying();
 
 						// SAVE A COPY TO AVOID PROBLEN ON RECYCLING OF THE RECORD
-						index.put(propEntry.getValue(), iRecord.copy());
+						index.put(propEntry.getValue(), iRecord.placeholder());
 						index.lazySave();
 					}
 				}

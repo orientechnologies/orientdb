@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.graph;
 
+import java.util.Collections;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -251,17 +252,25 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		}
 	}
 
-	public ORecordLazySet getOutEdges(final ODocument iVertex) {
+	public Set<Object> getOutEdges(final ODocument iVertex) {
 		return getOutEdges(iVertex, null);
 	}
 
-	public ORecordLazySet getOutEdges(final ODocument iVertex, final String iLabel) {
+	public Set<Object> getOutEdges(final ODocument iVertex, final String iLabel) {
 		if (!iVertex.getSchemaClass().isSubClassOf(vertexBaseClass))
 			throw new IllegalArgumentException("The document received is not a vertex");
 
-		final ORecordLazySet result = new ORecordLazySet(underlying, ODocument.RECORD_TYPE);
-
 		final ORecordLazySet set = iVertex.field(VERTEX_FIELD_OUT_EDGES);
+
+		if (iLabel == null)
+			// RETURN THE ENTIRE COLLECTION
+			if (set != null)
+				return Collections.unmodifiableSet(set);
+			else
+				return Collections.emptySet();
+
+		// FILTER BY LABEL
+		final ORecordLazySet result = new ORecordLazySet(underlying, ODocument.RECORD_TYPE);
 		if (set != null)
 			for (Object item : set) {
 				if (iLabel == null || iLabel.equals(((ODocument) item).field(LABEL)))
@@ -271,17 +280,25 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		return result;
 	}
 
-	public ORecordLazySet getInEdges(final ODocument iVertex) {
+	public Set<Object> getInEdges(final ODocument iVertex) {
 		return getInEdges(iVertex, null);
 	}
 
-	public ORecordLazySet getInEdges(final ODocument iVertex, final String iLabel) {
+	public Set<Object> getInEdges(final ODocument iVertex, final String iLabel) {
 		if (!iVertex.getSchemaClass().isSubClassOf(vertexBaseClass))
 			throw new IllegalArgumentException("The document received is not a vertex");
 
-		final ORecordLazySet result = new ORecordLazySet(underlying, ODocument.RECORD_TYPE);
-
 		final ORecordLazySet set = iVertex.field(VERTEX_FIELD_IN_EDGES);
+
+		if (iLabel == null)
+			// RETURN THE ENTIRE COLLECTION
+			if (set != null)
+				return Collections.unmodifiableSet(set);
+			else
+				return Collections.emptySet();
+
+		// FILTER BY LABEL
+		final ORecordLazySet result = new ORecordLazySet(underlying, ODocument.RECORD_TYPE);
 		if (set != null)
 			for (Object item : set) {
 				if (iLabel == null || iLabel.equals(((ODocument) item).field(LABEL)))

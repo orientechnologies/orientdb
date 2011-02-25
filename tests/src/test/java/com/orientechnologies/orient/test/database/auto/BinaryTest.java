@@ -49,8 +49,7 @@ public class BinaryTest {
 	public void testBasicRead() {
 		database.open("admin", "admin");
 
-		ORecordBytes record = new ORecordBytes(database, rid);
-		record.load();
+		ORecordBytes record = database.load(rid);
 
 		Assert.assertEquals("This is a test", new String(record.toStream()));
 

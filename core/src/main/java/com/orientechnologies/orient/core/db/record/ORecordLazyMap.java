@@ -17,13 +17,10 @@ package com.orientechnologies.orient.core.db.record;
 
 import java.util.Collection;
 
-import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.db.record.ORecordMultiValueHelper.MULTIVALUE_STATUS;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordFactory;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 
 /**
  * Lazy implementation of LinkedHashMap. It's bound to a source ORecord object to keep track of changes. This avoid to call the
@@ -32,12 +29,12 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-@SuppressWarnings("serial")
-public class ORecordLazyMap extends ORecordTrackedMap {
-	private ODatabaseRecord	database;
-	final private byte			recordType;
-	private boolean					converted				= false;
-	private boolean					convertToRecord	= true;
+@SuppressWarnings({ "serial", "unchecked" })
+public class ORecordLazyMap extends ORecordTrackedMap implements ORecordLazyMultiValue {
+	private ODatabaseRecord														database;
+	final private byte																recordType;
+	private ORecordMultiValueHelper.MULTIVALUE_STATUS	status							= MULTIVALUE_STATUS.EMPTY;
+	private boolean																		autoConvertToRecord	= true;
 
 	public ORecordLazyMap(final ORecord<?> iSourceRecord, final byte iRecordType) {
 		super(iSourceRecord);
@@ -47,7 +44,7 @@ public class ORecordLazyMap extends ORecordTrackedMap {
 
 	@Override
 	public boolean containsValue(final Object o) {
-		convertAll();
+		//convertLinks2Records();
 		return super.containsValue(o);
 	}
 
@@ -58,72 +55,109 @@ public class ORecordLazyMap extends ORecordTrackedMap {
 
 		final String key = iKey.toString();
 
-		convert(key);
+		convertLink2Record(key);
 		return super.get(key);
 	}
 
 	@Override
-	public Object put(final Object iKey, final Object iValue) {
-		if (converted && iValue instanceof ORID)
-			converted = false;
+	public Object put(final Object iKey, Object iValue) {
+		if (status == MULTIVALUE_STATUS.ALL_RIDS && iValue instanceof ORecord<?>)
+			// IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
+			iValue = ((ORecord<?>) iValue).getIdentity();
+		else
+			status = ORecordMultiValueHelper.getStatus(status, iValue);
+
 		return super.put(iKey, iValue);
 	}
 
 	@Override
 	public Collection<Object> values() {
-		convertAll();
+		convertLinks2Records();
 		return super.values();
 	}
 
 	@Override
+	public Object remove(Object o) {
+		final Object result = super.remove(o);
+		if (size() == 0)
+			status = MULTIVALUE_STATUS.EMPTY;
+		return result;
+	}
+
+	@Override
+	public void clear() {
+		super.clear();
+		status = MULTIVALUE_STATUS.EMPTY;
+	}
+
+	@Override
 	public String toString() {
-		return OMultiValue.toString(this);
+		return ORecordMultiValueHelper.toString(this);
 	}
 
-	public boolean isConvertToRecord() {
-		return convertToRecord;
+	public boolean isAutoConvertToRecord() {
+		return autoConvertToRecord;
 	}
 
-	public void setConvertToRecord(boolean convertToRecord) {
-		this.convertToRecord = convertToRecord;
+	public void setAutoConvertToRecord(boolean convertToRecord) {
+		this.autoConvertToRecord = convertToRecord;
 	}
 
-	private void convertAll() {
-		if (converted || !convertToRecord)
+	public void convertLinks2Records() {
+		if (status == MULTIVALUE_STATUS.ALL_RECORDS || !autoConvertToRecord || database == null)
+			// PRECONDITIONS
 			return;
 
-		if (sourceRecord.getDatabase() == null)
+		for (Object k : keySet())
+			convertLink2Record(k);
+
+		status = MULTIVALUE_STATUS.ALL_RECORDS;
+	}
+
+	public void convertRecords2Links() {
+		if (status == MULTIVALUE_STATUS.ALL_RIDS || database == null)
+			// PRECONDITIONS
 			return;
 
-		for (Object key : super.keySet())
-			convert(key);
-		converted = true;
+		for (Object k : keySet())
+			convertRecord2Link(k);
+
+		status = MULTIVALUE_STATUS.ALL_RIDS;
+	}
+
+	private void convertRecord2Link(final Object iKey) {
+		if (status == MULTIVALUE_STATUS.ALL_RIDS || database == null)
+			return;
+
+		final Object value = super.get(iKey);
+		if (value != null && value instanceof ORecord<?>)
+			// OVERWRITE
+			super.put(iKey, ((ORecord<?>) value).getIdentity());
 	}
 
 	/**
-	 * Convert the item requested.
+	 * Convert the item with the received key to a record.
 	 * 
 	 * @param iIndex
 	 *          Position of the item to convert
 	 */
-	private void convert(final Object iKey) {
-		if (converted || !convertToRecord)
+	private void convertLink2Record(final Object iKey) {
+		if (status == MULTIVALUE_STATUS.ALL_RECORDS || database == null)
 			return;
 
-		if (database == null)
-			return;
+		final Object value;
 
-		final Object o = super.get(iKey);
+		if (iKey instanceof ORID)
+			value = iKey;
+		else
+			value = super.get(iKey);
 
-		if (o != null && o instanceof ORecordId) {
-			final ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
-			final ORecordId rid = (ORecordId) o;
-
-			record.setDatabase(database);
-			record.setIdentity(rid);
+		if (value != null && value instanceof ORID) {
+			final ORID rid = (ORID) value;
 
 			try {
-				record.load();
+				final ORecord<?> record = database.load(rid);
+				// OVERWRITE IT
 				super.put(iKey, record);
 			} catch (ORecordNotFoundException e) {
 				// IGNORE THIS
@@ -136,7 +170,12 @@ public class ORecordLazyMap extends ORecordTrackedMap {
 	}
 
 	@Override
-	public void setDatabase(final ODatabaseRecord iDatabase) {
-		database = iDatabase;
+	public boolean setDatabase(final ODatabaseRecord iDatabase) {
+		if (database != iDatabase) {
+			database = iDatabase;
+			super.setDatabase(iDatabase);
+			return true;
+		}
+		return false;
 	}
 }

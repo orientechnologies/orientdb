@@ -19,8 +19,6 @@ import java.util.Iterator;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordFactory;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 
 /**
  * Lazy implementation of Iterator that load the records only when accessed. It keep also track of changes to the source record
@@ -52,14 +50,8 @@ public class OLazyRecordIterator implements Iterator<Object> {
 			return null;
 
 		if (sourceDatabase != null)
-			if (value instanceof ORecordId && convertToRecord) {
-				ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
-				record.setDatabase(sourceDatabase);
-				record.setIdentity((ORecordId) value);
-
-				record.load();
-				return record;
-			}
+			if (value instanceof ORecordId && convertToRecord)
+				return sourceDatabase.load((ORecordId) value);
 
 		return value;
 	}

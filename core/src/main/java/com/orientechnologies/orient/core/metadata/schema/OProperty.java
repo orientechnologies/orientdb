@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OPropertyIndex;
+import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
@@ -33,7 +34,7 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  * @author Luca Garulli
  * 
  */
-public class OProperty extends ODocumentWrapperNoClass {
+public class OProperty extends ODocumentWrapperNoClass implements Comparable<OProperty> {
 	public static enum INDEX_TYPE {
 		UNIQUE, NOTUNIQUE, FULLTEXT
 	};
@@ -97,6 +98,10 @@ public class OProperty extends ODocumentWrapperNoClass {
 		return id;
 	}
 
+	public int compareTo(final OProperty o) {
+		return id - o.getId();
+	}
+
 	/**
 	 * Returns the linked class in lazy mode because while unmarshalling the class could be not loaded yet.
 	 * 
@@ -132,10 +137,16 @@ public class OProperty extends ODocumentWrapperNoClass {
 			linkedType = OType.getById(((Integer) document.field("linkedType")).byteValue());
 
 		if (document.field("index") != null) {
-			if (document.field("index-type") == null)
-				index = new OPropertyIndex(document.getDatabase().getMetadata().getIndexManager()
-						.getIndex((ORecordId) document.field("index", ORID.class)), new String[] { name });
-			else {
+			if (document.field("index-type") == null) {
+				final OIndex underlyingIndex = document.getDatabase().getMetadata().getIndexManager()
+						.getIndex((ORecordId) document.field("index", ORID.class));
+
+				if (underlyingIndex != null)
+					index = new OPropertyIndex(underlyingIndex, new String[] { name });
+				else
+					// REMOVE WRONG INDEX REF
+					document.removeField("index");
+			} else {
 				// @COMPATIBILITY 0.9.24
 				ODocument cfg = new ODocument(document.getDatabase());
 				cfg.field(OIndex.CONFIG_TYPE, (String) document.field("index-type"));
@@ -147,24 +158,31 @@ public class OProperty extends ODocumentWrapperNoClass {
 	@Override
 	@OBeforeSerialization
 	public ODocument toStream() {
-		document.field("name", name);
-		document.field("type", type.id);
-		document.field("offset", offset);
-		document.field("mandatory", mandatory);
-		document.field("notNull", notNull);
-		document.field("min", min);
-		document.field("max", max);
-		document.field("regexp", regexp);
+		document.setStatus(STATUS.UNMARSHALLING);
 
-		document.field("linkedClass", linkedClass != null ? linkedClass.getName() : null);
-		document.field("linkedType", linkedType != null ? linkedType.id : null);
+		try {
+			document.field("name", name);
+			document.field("type", type.id);
+			document.field("offset", offset);
+			document.field("mandatory", mandatory);
+			document.field("notNull", notNull);
+			document.field("min", min);
+			document.field("max", max);
+			document.field("regexp", regexp);
 
-		// SAVE THE INDEX
-		if (index != null) {
-			index.getUnderlying().lazySave();
-			document.field("index", index.getUnderlying().getIdentity());
-		} else {
-			document.field("index", ORecordId.EMPTY_RECORD_ID);
+			document.field("linkedClass", linkedClass != null ? linkedClass.getName() : null);
+			document.field("linkedType", linkedType != null ? linkedType.id : null);
+
+			// SAVE THE INDEX
+			if (index != null) {
+				index.getUnderlying().lazySave();
+				document.field("index", index.getUnderlying().getIdentity());
+			} else {
+				document.field("index", ORecordId.EMPTY_RECORD_ID);
+			}
+
+		} finally {
+			document.setStatus(STATUS.LOADED);
 		}
 		return document;
 	}

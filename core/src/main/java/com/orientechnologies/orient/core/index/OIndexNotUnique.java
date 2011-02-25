@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.record.ORecord;
  * @author Luca Garulli
  * 
  */
-@SuppressWarnings("serial")
 public class OIndexNotUnique extends OIndexMVRBTreeAbstract {
 	public OIndexNotUnique() {
 		super("NOTUNIQUE");

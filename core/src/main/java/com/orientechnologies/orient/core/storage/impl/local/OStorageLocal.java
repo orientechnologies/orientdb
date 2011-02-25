@@ -96,7 +96,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		addUser();
-		cache.addUser();
+		level2cache.startup();
 
 		final boolean locked = lock.acquireExclusiveLock();
 
@@ -194,7 +194,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		addUser();
-		cache.addUser();
+		level2cache.startup();
 
 		final boolean locked = lock.acquireExclusiveLock();
 
@@ -293,8 +293,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
 			txManager.close();
 
-			cache.removeUser();
-			cache.clear();
+			level2cache.shutdown();
 			configuration = new OStorageConfiguration(this);
 
 			OMMapManager.flush();
@@ -317,10 +316,14 @@ public class OStorageLocal extends OStorageEmbedded {
 	 * container folder if the directory is empty. If files are locked, retry up to 10 times before to raise an exception.
 	 */
 	public void delete() {
-		if (!isClosed())
+		if (!isClosed()) {
 			// CLOSE THE DATABASE BY REMOVING THE CURRENT USER
-			if (removeUser() > 0)
-				throw new OStorageException("Can't delete a storage open");
+			if (getUsers() > 0)
+				while (removeUser() > 0)
+					;
+			close();
+		}
+		level2cache.shutdown();
 
 		final long timer = OProfiler.getInstance().startChrono();
 
@@ -616,8 +619,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
 	public boolean deleteRecord(final int iRequesterId, final int iClusterId, final long iPosition, final int iVersion) {
 		checkOpeness();
-		final boolean succeed = deleteRecord(iRequesterId, getClusterById(iClusterId), iPosition, iVersion);
-		return succeed;
+		return deleteRecord(iRequesterId, getClusterById(iClusterId), iPosition, iVersion);
 	}
 
 	public Set<String> getClusterNames() {
@@ -733,11 +735,16 @@ public class OStorageLocal extends OStorageEmbedded {
 	public String getPhysicalClusterNameById(final int iClusterId) {
 		checkOpeness();
 
-		for (OCluster cluster : clusters)
-			if (cluster != null && cluster.getId() == iClusterId)
-				return cluster.getName();
+		// @TEST: AVOID SEARCH
+		if (iClusterId >= clusters.length)
+			return null;
 
-		return null;
+		return clusters[iClusterId].getName();
+
+		// for (OCluster cluster : clusters)
+		// if (cluster != null && cluster.getId() == iClusterId)
+		// return cluster.getName();
+		// return null;
 	}
 
 	@Override

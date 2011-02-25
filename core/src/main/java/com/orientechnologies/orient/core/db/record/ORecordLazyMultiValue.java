@@ -15,26 +15,20 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecord;
+public interface ORecordLazyMultiValue {
 
-/**
- * Base interface that represents a record element.
- * 
- * @author Luca
- * 
- */
-public interface ORecordElement {
 	/**
-	 * Marks the instance as dirty. The dirty status could be propagated up if the implementation supports ownership concept.
-	 * 
-	 * @return The object it self. Useful to call methods in chain.
+	 * Browse all the set to convert all the items into records.
 	 */
-	public <RET extends ORecordElement> RET setDirty();
+	public void convertLinks2Records();
 
-	public void onBeforeIdentityChanged(ORID iRID);
+	/**
+	 * Browse all the set to convert all the items into links.
+	 */
+	public void convertRecords2Links();
 
-	public void onAfterIdentityChanged(ORecord<?> iRecord);
+	public boolean isAutoConvertToRecord();
 
-	public boolean setDatabase(ODatabaseRecord iDatabase);
+	public void setAutoConvertToRecord(boolean convertToRecord);
+
 }

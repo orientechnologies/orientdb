@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
 /**
  * Interface to handle index.
@@ -32,7 +31,7 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public interface OIndex extends Iterable<Entry<Object, Set<ORecord<?>>>>, OSerializableStream {
+public interface OIndex extends Iterable<Entry<Object, Set<ORecord<?>>>> {
 
 	public static final String	CONFIG_TYPE				= "type";
 	public static final String	CONFIG_NAME				= "name";
@@ -80,8 +79,6 @@ public interface OIndex extends Iterable<Entry<Object, Set<ORecord<?>>>>, OSeria
 	public OIndex create(String iName, final ODatabaseRecord iDatabase, final String iClusterIndexName,
 			final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, final boolean iAutomatic);
 
-	public OIndex loadFromConfiguration(ODocument iConfig);
-
 	public OIndex load();
 
 	public OIndex delete();
@@ -102,7 +99,12 @@ public interface OIndex extends Iterable<Entry<Object, Set<ORecord<?>>>>, OSeria
 
 	public ODocument getConfiguration();
 
+	public OIndex loadFromConfiguration(ODocument iConfig);
+
+	public ODocument updateConfiguration();
+
 	public boolean isAutomatic();
 
 	public Set<ORecord<?>> getBetween(Object iRangeFrom, Object iRangeTo);
+
 }

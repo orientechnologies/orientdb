@@ -154,6 +154,14 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		return (RET) load(iRecord, null);
 	}
 
+	public void reload(final ORecordInternal<?> iRecord) {
+		executeReadRecord(iRecord.getIdentity().getClusterId(), iRecord.getIdentity().getClusterPosition(), iRecord, null, true);
+	}
+
+	public void reload(final ORecordInternal<?> iRecord, final String iFetchPlan) {
+		executeReadRecord(iRecord.getIdentity().getClusterId(), iRecord.getIdentity().getClusterPosition(), iRecord, iFetchPlan, true);
+	}
+
 	/**
 	 * Loads a record using a fetch plan.
 	 */
@@ -162,18 +170,16 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	}
 
 	public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId) {
-		final ORecordInternal<?> rec = databaseOwner.newInstance();
-		return (RET) load(iRecordId.getClusterId(), iRecordId.getClusterPosition(), rec, null);
+		return (RET) load(iRecordId.getClusterId(), iRecordId.getClusterPosition(), null, null);
 	}
 
 	public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId, final String iFetchPlan) {
-		final ORecordInternal<?> rec = databaseOwner.newInstance();
-		return (RET) load(iRecordId.getClusterId(), iRecordId.getClusterPosition(), rec, iFetchPlan);
+		return (RET) load(iRecordId.getClusterId(), iRecordId.getClusterPosition(), null, iFetchPlan);
 	}
 
 	public <RET extends ORecordInternal<?>> RET load(final int iClusterId, final long iPosition, final ORecordInternal<?> iRecord,
 			final String iFetchPlan) {
-		return (RET) executeReadRecord(iClusterId, iPosition, iRecord, iFetchPlan);
+		return (RET) executeReadRecord(iClusterId, iPosition, iRecord, iFetchPlan, false);
 	}
 
 	/**
@@ -350,7 +356,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	}
 
 	public <RET extends ORecordInternal<?>> RET executeReadRecord(final int iClusterId, final long iPosition,
-			ORecordInternal<?> iRecord, final String iFetchPlan) {
+			ORecordInternal<?> iRecord, final String iFetchPlan, final boolean iIgnoreCache) {
 		checkOpeness();
 
 		try {
@@ -358,11 +364,25 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 			callbackHooks(TYPE.BEFORE_READ, iRecord);
 
+			final ORecordId rid = new ORecordId(iClusterId, iPosition);
+
+			if (!iIgnoreCache) {
+				// SEARCH INTO THE CACHE
+				ORecordInternal<?> record = getCache().findRecord(rid);
+				if (record != null) {
+					if (record.getInternalStatus() == STATUS.NOT_LOADED)
+						record.reload();
+					
+					callbackHooks(TYPE.AFTER_READ, record);
+					return (RET) record;
+				}
+			}
+
 			final ORawBuffer recordBuffer = underlying.read(iClusterId, iPosition, iFetchPlan);
 			if (recordBuffer == null)
 				return null;
 
-			if (iRecord.getRecordType() != recordBuffer.recordType)
+			if (iRecord == null || iRecord.getRecordType() != recordBuffer.recordType)
 				// NO SAME RECORD TYPE: CAN'T REUSE OLD ONE BUT CREATE A NEW ONE FOR IT
 				iRecord = ORecordFactory.newInstance(recordBuffer.recordType);
 
@@ -412,7 +432,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			byte[] stream = iRecord.toStream();
 
 			boolean isNew = rid.isNew();
-			final int oldHashCode = isNew ? rid.hashCode() : 0;
+			if (isNew)
+				// NOTIFY IDENTITY HAS CHANGED
+				iRecord.onBeforeIdentityChanged(rid);
 
 			final int clusterId;
 			if (isNew)
@@ -437,10 +459,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 				if (!iRecord.isDirty()) {
 					// RECORD SAVED DURING PREVIOUS STREAMING PHASE: THIS HAPPENS FOR CIRCULAR REFERENCED RECORDS
-					if (underlying.isUseCache())
+					if (isUseCache())
 						// ADD/UPDATE IT IN CACHE
-						getCache().pushRecord(iRecord.getIdentity().toString(),
-								new ORawBuffer(iRecord.toStream(), iRecord.getVersion(), iRecordType));
+						getStorage().getCache().pushRecord(iRecord);
 					return;
 				}
 			}
@@ -463,7 +484,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 					callbackHooks(TYPE.AFTER_CREATE, iRecord);
 
 				// NOTIFY IDENTITY HAS CHANGED
-				iRecord.onIdentityChanged(iRecord, oldHashCode);
+				iRecord.onAfterIdentityChanged(iRecord);
 			} else {
 				// UPDATE INFORMATION: VERSION
 				iRecord.fill(iRecord.getDatabase(), clusterId, rid.getClusterPosition(), (int) result);
@@ -471,6 +492,11 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				if (stream.length > 0)
 					callbackHooks(TYPE.AFTER_UPDATE, iRecord);
 			}
+
+			if (isUseCache())
+				// ADD/UPDATE IT IN CACHE
+				getStorage().getCache().pushRecord(iRecord);
+
 		} catch (ODatabaseException e) {
 			// RE-THROW THE EXCEPTION
 			throw e;
@@ -500,6 +526,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			underlying.delete(clusterId, rid.getClusterPosition(), iVersion);
 
 			callbackHooks(TYPE.AFTER_DELETE, iRecord);
+
+			// REMOVE THE RECORD FROM 1 AND 2 LEVEL CACHES
+			getCache().deleteRecord(rid);
 
 		} catch (ODatabaseException e) {
 			// RE-THROW THE EXCEPTION

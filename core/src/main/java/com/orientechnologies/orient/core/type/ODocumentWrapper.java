@@ -51,12 +51,22 @@ public class ODocumentWrapper {
 	}
 
 	public <RET extends ODocumentWrapper> RET load() {
-		document.load();
+		document = (ODocument) document.load();
 		return (RET) this;
 	}
 
 	public <RET extends ODocumentWrapper> RET load(final String iFetchPlan) {
-		document.load(iFetchPlan);
+		document = document.load(iFetchPlan);
+		return (RET) this;
+	}
+
+	public <RET extends ODocumentWrapper> RET reload() {
+		document.reload();
+		return (RET) this;
+	}
+
+	public <RET extends ODocumentWrapper> RET reload(final String iFetchPlan) {
+		document.reload(iFetchPlan);
 		return (RET) this;
 	}
 

@@ -57,7 +57,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 			final String iFetchPlan) {
 		checkTransaction();
 
-		OTransactionEntry txEntry = getRecord(iClusterId, iPosition);
+		OTransactionEntry txEntry = entries.get(new ORecordId(iClusterId, iPosition));
 
 		if (txEntry != null) {
 			switch (txEntry.status) {
@@ -72,7 +72,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 		}
 
 		// DELEGATE TO THE STORAGE
-		return database.executeReadRecord(iClusterId, iPosition, iRecord, iFetchPlan);
+		return database.executeReadRecord(iClusterId, iPosition, iRecord, iFetchPlan, false);
 	}
 
 	public void delete(final ORecordInternal<?> iRecord) {
@@ -101,20 +101,22 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 			final ORecordId rid = (ORecordId) iRecord.getIdentity();
 
 			if (!rid.isValid()) {
-				// TODO: NEET IT FOR REAL?
+				// TODO: NEED IT FOR REAL?
 				// NEW RECORD: CHECK IF IT'S ALREADY IN
 				for (OTransactionEntry entry : entries.values()) {
 					if (entry.getRecord() == iRecord)
 						return;
 				}
 
-				final int oldHashCode = rid.hashCode();
+				iRecord.onBeforeIdentityChanged(rid);
 
 				// ASSIGN A UNIQUE SERIAL TEMPORARY ID
 				rid.clusterPosition = newObjectCounter--;
 
-				iRecord.onIdentityChanged(iRecord, oldHashCode);
-			}
+				iRecord.onAfterIdentityChanged(iRecord);
+			} else
+				// REMOVE FROM THE DB'S CACHE
+				database.getCache().removeRecord(rid);
 
 			OTransactionEntry txEntry = entries.get(rid);
 
@@ -157,10 +159,6 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 				}
 			}
 		}
-	}
-
-	private OTransactionEntry getRecord(final int iClusterId, final long iPosition) {
-		return entries.get(new ORecordId(iClusterId, iPosition));
 	}
 
 	@Override

@@ -611,7 +611,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		if (currentRecord == null)
 			out.println("Entry not found in dictionary.");
 		else {
-			currentRecord.load();
+			currentRecord = (ORecordInternal<?>) currentRecord.load();
 			displayRecord(null);
 		}
 	}

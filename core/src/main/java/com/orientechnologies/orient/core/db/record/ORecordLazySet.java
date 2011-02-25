@@ -18,13 +18,10 @@ package com.orientechnologies.orient.core.db.record;
 import java.util.HashSet;
 import java.util.Iterator;
 
-import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.db.record.ORecordMultiValueHelper.MULTIVALUE_STATUS;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordFactory;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 
 /**
  * Lazy implementation of Set. It's bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by
@@ -33,11 +30,12 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ORecordLazySet extends ORecordTrackedSet {
-	private ODatabaseRecord	database;
-	private final byte			recordType;
-	private boolean					converted				= false;
-	private boolean					convertToRecord	= true;
+@SuppressWarnings("unchecked")
+public class ORecordLazySet extends ORecordTrackedSet implements ORecordLazyMultiValue {
+	private ODatabaseRecord														database;
+	private final byte																recordType;
+	private ORecordMultiValueHelper.MULTIVALUE_STATUS	status							= MULTIVALUE_STATUS.EMPTY;
+	private boolean																		autoConvertToRecord	= true;
 
 	public ORecordLazySet(final ODatabaseRecord iDatabase, final byte iRecordType) {
 		super(null);
@@ -53,86 +51,135 @@ public class ORecordLazySet extends ORecordTrackedSet {
 
 	@Override
 	public Iterator<Object> iterator() {
-		return new OLazyRecordIterator(sourceRecord, database, recordType, super.iterator(), convertToRecord);
+		return new OLazyRecordIterator(sourceRecord, database, recordType, super.iterator(), autoConvertToRecord);
 	}
 
 	@Override
-	public boolean add(final Object e) {
-		if (converted && e instanceof ORID)
-			converted = false;
+	public boolean add(Object e) {
+		if (status == MULTIVALUE_STATUS.ALL_RIDS && e instanceof ORecord<?>)
+			// IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
+			e = ((ORecord<?>) e).getIdentity();
+		else
+			status = ORecordMultiValueHelper.getStatus(status, e);
+
 		return super.add(e);
 	}
 
 	@Override
 	public boolean contains(final Object o) {
-		convertAll();
+//		convertLinks2Records();
 		return super.contains(o);
 	}
 
 	@Override
 	public Object[] toArray() {
-		convertAll();
+		convertLinks2Records();
 		return super.toArray();
 	}
 
 	@Override
 	public <T> T[] toArray(final T[] a) {
-		convertAll();
+		convertLinks2Records();
 		return super.toArray(a);
 	}
 
-	/**
-	 * Browse all the set to convert all the items.
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue#convertLinks2Records()
 	 */
-	public void convertAll() {
-		if (converted || !convertToRecord)
+	public void convertLinks2Records() {
+		if (status == MULTIVALUE_STATUS.ALL_RECORDS || !autoConvertToRecord || database == null)
+			// PRECONDITIONS
 			return;
 
-		HashSet<Object> copy = new HashSet<Object>();
-		for (Iterator<Object> it = iterator(); it.hasNext();)
-			copy.add(convert(it.next()));
+		final HashSet<Object> copy = new HashSet<Object>();
+		for (Object k : map.keySet())
+			copy.add(convertLink2Record(k));
 
 		clear();
 
 		addAll(copy);
 		copy.clear();
 
-		converted = true;
+		status = MULTIVALUE_STATUS.ALL_RECORDS;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue#convertRecords2Links()
+	 */
+	public void convertRecords2Links() {
+		if (status == MULTIVALUE_STATUS.ALL_RIDS || database == null)
+			// PRECONDITIONS
+			return;
+
+		final HashSet<Object> copy = new HashSet<Object>();
+		for (Object k : map.keySet())
+			copy.add(convertRecord2Link(k));
+
+		clear();
+
+		addAll(copy);
+		copy.clear();
+
+		status = MULTIVALUE_STATUS.ALL_RIDS;
+	}
+
+	@Override
+	public boolean remove(Object o) {
+		final boolean result = super.remove(o);
+		if (size() == 0)
+			status = MULTIVALUE_STATUS.EMPTY;
+		return result;
+	}
+
+	@Override
+	public void clear() {
+		super.clear();
+		status = MULTIVALUE_STATUS.EMPTY;
 	}
 
 	@Override
 	public String toString() {
-		return OMultiValue.toString(this);
+		return ORecordMultiValueHelper.toString(this);
 	}
 
-	public boolean isConvertToRecord() {
-		return convertToRecord;
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue#isAutoConvertToRecord()
+	 */
+	public boolean isAutoConvertToRecord() {
+		return autoConvertToRecord;
 	}
 
-	public void setConvertToRecord(boolean convertToRecord) {
-		this.convertToRecord = convertToRecord;
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue#setAutoConvertToRecord(boolean)
+	 */
+	public void setAutoConvertToRecord(boolean convertToRecord) {
+		this.autoConvertToRecord = convertToRecord;
 	}
 
-	protected Object convert(final Object iElement) {
-		if (converted || !convertToRecord)
-			return iElement;
-
-		if (database == null)
-			return iElement;
-
-		if (iElement != null && iElement instanceof ORecordId) {
-			final ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
-			final ORecordId rid = (ORecordId) iElement;
-
-			record.setDatabase(database);
-			record.setIdentity(rid);
+	protected Object convertLink2Record(final Object iElement) {
+		if (iElement != null && iElement instanceof ORID) {
+			final ORID rid = (ORID) iElement;
 
 			try {
-				record.load();
+				return database.load(rid);
 			} catch (ORecordNotFoundException e) {
 				// IGNORE THIS
 			}
 		}
+		return iElement;
+	}
+
+	protected Object convertRecord2Link(final Object iElement) {
+		if (iElement != null && iElement instanceof ORecord<?>)
+			return ((ORecord<?>) iElement).getIdentity();
 		return iElement;
 	}
 
@@ -141,7 +188,12 @@ public class ORecordLazySet extends ORecordTrackedSet {
 	}
 
 	@Override
-	public void setDatabase(final ODatabaseRecord iDatabase) {
-		database = iDatabase;
+	public boolean setDatabase(final ODatabaseRecord iDatabase) {
+		if (database != iDatabase) {
+			database = iDatabase;
+			super.setDatabase(iDatabase);
+			return true;
+		}
+		return false;
 	}
 }

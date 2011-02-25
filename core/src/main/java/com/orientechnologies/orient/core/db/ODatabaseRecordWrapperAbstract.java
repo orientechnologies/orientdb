@@ -123,6 +123,14 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 		return (RET) underlying.load(iRecord, iFetchPlan);
 	}
 
+	public void reload(final ORecordInternal<?> iRecord) {
+		underlying.reload(iRecord);
+	}
+
+	public void reload(final ORecordInternal<?> iRecord, final String iFetchPlan) {
+		underlying.reload(iRecord, iFetchPlan);
+	}
+
 	public ODatabaseComplex<ORecordInternal<?>> save(final ORecordInternal<?> iRecord, final String iClusterName) {
 		underlying.save(iRecord, iClusterName);
 		return this;

@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedList;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedMap;
@@ -57,7 +58,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
  * be added at run-time. Instances can be reused across calls by using the reset() before to re-use.
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "serial" })
 public class ODocument extends ORecordVirtualAbstract<Object> implements Iterable<Entry<String, Object>> {
 	public static final byte											RECORD_TYPE	= 'd';
 
@@ -250,6 +251,22 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		return cloned;
 	}
 
+	public ODocument detach() {
+		if (_fieldValues != null) {
+			Object fieldValue;
+			for (Map.Entry<String, Object> entry : _fieldValues.entrySet()) {
+				fieldValue = entry.getValue();
+
+				if (fieldValue instanceof ORecord<?>)
+					_fieldValues.put(entry.getKey(), ((ORecord<?>) fieldValue).getIdentity());
+				else if (fieldValue instanceof ORecordLazyMultiValue)
+					((ORecordLazyMultiValue) fieldValue).convertRecords2Links();
+			}
+		}
+
+		return this;
+	}
+
 	/**
 	 * Loads the record using a fetch plan. Example:
 	 * <p>
@@ -270,7 +287,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		if (result == null)
 			throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found");
 
-		return this;
+		return (ODocument) result;
 	}
 
 	/**
@@ -282,7 +299,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 * @return true if the two document are identical, otherwise false
 	 * @see #equals(Object);
 	 */
-	public boolean hasSameContentOf(final ODocument iOther) {
+	public boolean hasSameContentOf(ODocument iOther) {
 		if (iOther == null)
 			return false;
 
@@ -290,9 +307,9 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			return false;
 
 		if (_status == STATUS.NOT_LOADED)
-			load();
+			reload();
 		if (iOther._status == STATUS.NOT_LOADED)
-			iOther.load();
+			iOther = (ODocument) iOther.load();
 
 		checkForFields();
 
@@ -316,29 +333,18 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 				return false;
 
 			if (myFieldValue != null && otherFieldValue != null)
-				if (myFieldValue instanceof List && otherFieldValue instanceof List) {
-					// CHECK IF THE ORDER IS RESPECTED
-					final List<?> myList = (List<?>) myFieldValue;
-					final List<?> otherList = (List<?>) otherFieldValue;
+				if (myFieldValue instanceof Collection && otherFieldValue instanceof Collection) {
+					final Collection<?> myCollection = (Collection<?>) myFieldValue;
+					final Collection<?> otherCollection = (Collection<?>) otherFieldValue;
 
-					if (myList.size() != otherList.size())
+					if (myCollection.size() != otherCollection.size())
 						return false;
 
-					for (int i = 0; i < myList.size(); ++i) {
-						if (myList.get(i) instanceof ODocument) {
-							if (otherList.get(i) instanceof ORID) {
-								if (!((ODocument) myList.get(i)).isDirty()) {
-									if (!((ODocument) myList.get(i)).getIdentity().equals(otherList.get(i)))
-										return false;
-								} else {
-									ODocument otherDoc = (ODocument) getDatabase().load((ORID) otherList.get(i));
-									if (!((ODocument) myList.get(i)).hasSameContentOf(otherDoc))
-										return false;
-								}
-							} else if (!((ODocument) myList.get(i)).hasSameContentOf((ODocument) otherList.get(i)))
-								return false;
-						} else if (!myList.get(i).equals(otherList.get(i)))
-							return false;
+					Iterator<?> myIterator = myCollection.iterator();
+					Iterator<?> otherIterator = otherCollection.iterator();
+
+					while (myIterator.hasNext()) {
+						hasSameContentItem(myIterator.next(), otherIterator.next());
 					}
 				} else if (myFieldValue instanceof Map && otherFieldValue instanceof Map) {
 					// CHECK IF THE ORDER IS RESPECTED
@@ -367,6 +373,24 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		return true;
 	}
 
+	private boolean hasSameContentItem(final Object my, final Object other) {
+		if (my instanceof ODocument) {
+			if (other instanceof ORID) {
+				if (!((ODocument) my).isDirty()) {
+					if (!((ODocument) my).getIdentity().equals(other))
+						return false;
+				} else {
+					ODocument otherDoc = (ODocument) getDatabase().load((ORID) other);
+					if (!((ODocument) my).hasSameContentOf(otherDoc))
+						return false;
+				}
+			} else if (!((ODocument) my).hasSameContentOf((ODocument) other))
+				return false;
+		} else if (!my.equals(other))
+			return false;
+		return true;
+	}
+
 	/**
 	 * Dumps the instance as string.
 	 */
@@ -374,48 +398,53 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	public String toString() {
 		checkForFields();
 
+		final StringBuilder buffer = new StringBuilder();
+
 		final boolean saveDirtyStatus = _dirty;
+		try {
+			if (_clazz != null)
+				buffer.append(_clazz.getName());
 
-		StringBuilder buffer = new StringBuilder();
+			if (_recordId != null) {
+				if (buffer.length() > 0)
+					buffer.append('@');
+				if (_recordId != null && _recordId.isValid())
+					buffer.append(_recordId);
+			}
 
-		if (_clazz != null)
-			buffer.append(_clazz.getName());
+			boolean first = true;
+			ORecord<?> record;
+			for (Entry<String, Object> f : _fieldValues.entrySet()) {
+				buffer.append(first ? '{' : ',');
+				buffer.append(f.getKey());
+				buffer.append(':');
+				if (f.getValue() instanceof Collection<?>) {
+					buffer.append('[');
+					buffer.append(((Collection<?>) f.getValue()).size());
+					buffer.append(']');
+				} else if (f.getValue() instanceof ORecord<?>) {
+					record = (ORecord<?>) f.getValue();
 
-		if (_recordId != null) {
-			if (buffer.length() > 0)
-				buffer.append("@");
-			if (_recordId != null && _recordId.isValid())
-				buffer.append(_recordId);
-		}
-
-		boolean first = true;
-		ORecord<?> record;
-		for (Entry<String, Object> f : _fieldValues.entrySet()) {
-			buffer.append(first ? "{" : ",");
-			buffer.append(f.getKey());
-			buffer.append(":");
-			if (f.getValue() instanceof Collection<?>) {
-				buffer.append("[");
-				buffer.append(((Collection<?>) f.getValue()).size());
-				buffer.append("]");
-			} else if (f.getValue() instanceof ORecord<?>) {
-				record = (ORecord<?>) f.getValue();
-
-				if (record.getIdentity() != null) {
-					buffer.append("#");
-					buffer.append(record.getIdentity());
+					if (record.getIdentity() != null) {
+						buffer.append('#');
+						buffer.append(record.getIdentity());
+					} else
+						buffer.append(record.toString());
 				} else
-					buffer.append(record.toString());
-			} else
-				buffer.append(f.getValue());
+					buffer.append(f.getValue());
 
-			if (first)
-				first = false;
+				if (first)
+					first = false;
+			}
+			if (!first)
+				buffer.append('}');
+
+			buffer.append(" v");
+			buffer.append(_version);
+
+		} finally {
+			_dirty = saveDirtyStatus;
 		}
-		if (!first)
-			buffer.append("}");
-
-		_dirty = saveDirtyStatus;
 
 		return buffer.toString();
 	}
@@ -441,7 +470,6 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		_fieldOriginalValues = null;
 		_fieldTypes = null;
 		_fieldValues = null;
-		_cursor = 0;
 	}
 
 	/**
@@ -638,15 +666,16 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			}
 		}
 
-		if (knownProperty && _trackingChanges) {
-			// SAVE THE OLD VALUE IN A SEPARATE MAP
-			if (_fieldOriginalValues == null)
-				_fieldOriginalValues = new HashMap<String, Object>();
-			_fieldOriginalValues.put(iPropertyName, oldValue);
-		}
-
-		if (_status != STATUS.UNMARSHALLING)
+		if (_status != STATUS.UNMARSHALLING) {
 			setDirty();
+
+			if (knownProperty && _trackingChanges) {
+				// SAVE THE OLD VALUE IN A SEPARATE MAP
+				if (_fieldOriginalValues == null)
+					_fieldOriginalValues = new HashMap<String, Object>();
+				_fieldOriginalValues.put(iPropertyName, oldValue);
+			}
+		}
 
 		if (oldValue != null) {
 			// DETERMINE THE TYPE FROM THE PREVIOUS CONTENT
@@ -802,14 +831,16 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	}
 
 	@Override
-	public void setDatabase(final ODatabaseRecord iDatabase) {
-		super.setDatabase(iDatabase);
-
-		if (_fieldValues != null)
-			for (Object f : _fieldValues.values()) {
-				if (f instanceof ORecordElement)
-					((ORecordElement) f).setDatabase(iDatabase);
-			}
+	public boolean setDatabase(final ODatabaseRecord iDatabase) {
+		if (super.setDatabase(iDatabase)) {
+			if (_fieldValues != null)
+				for (Object f : _fieldValues.values()) {
+					if (f instanceof ORecordElement)
+						((ORecordElement) f).setDatabase(iDatabase);
+				}
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -879,7 +910,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	}
 
 	@Override
-	public void onIdentityChanged(final ORecord<?> iRecord, final int iOldHashCode) {
+	public void onBeforeIdentityChanged(final ORID iRID) {
 		if (_owners != null) {
 			final List<WeakReference<ORecordElement>> temp = new ArrayList<WeakReference<ORecordElement>>(_owners);
 
@@ -887,7 +918,21 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			for (WeakReference<ORecordElement> o : temp) {
 				e = o.get();
 				if (e != null)
-					e.onIdentityChanged(iRecord, iOldHashCode);
+					e.onBeforeIdentityChanged(iRID);
+			}
+		}
+	}
+
+	@Override
+	public void onAfterIdentityChanged(final ORecord<?> iRecord) {
+		if (_owners != null) {
+			final List<WeakReference<ORecordElement>> temp = new ArrayList<WeakReference<ORecordElement>>(_owners);
+
+			ORecordElement e;
+			for (WeakReference<ORecordElement> o : temp) {
+				e = o.get();
+				if (e != null)
+					e.onAfterIdentityChanged(iRecord);
 			}
 		}
 	}
@@ -960,5 +1005,19 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		if (_fieldTypes == null)
 			_fieldTypes = new HashMap<String, OType>();
 		_fieldTypes.put(iPropertyName, iType);
+	}
+
+	/**
+	 * returns an empty record as placeholder of the current. Used when a record is requested, but only the identity is needed.
+	 * 
+	 * @return
+	 */
+	public ORecord<?> placeholder() {
+		final ODocument cloned = new ODocument();
+		cloned._source = _source;
+		cloned._database = _database;
+		cloned._recordId = _recordId.copy();
+		cloned._status = _status;
+		return cloned;
 	}
 }

@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.record.impl.ORecordBytesLazy;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 
 /**
@@ -142,7 +143,8 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> implement
 		final boolean locked = lock.acquireExclusiveLock();
 
 		try {
-			record.load();
+			record = (ORecordBytesLazy) record.load();
+			record.recycle(this);
 			fromStream(record.toStream());
 			return this;
 
@@ -179,8 +181,10 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> implement
 
 			cache.clear();
 			entryPoints.clear();
-			if (root != null && ((OMVRBTreeEntryDatabase<K, V>) root).record.getIdentity().isPersistent())
-				((OMVRBTreeEntryDatabase<K, V>) root).load();
+			if (root != null && ((OMVRBTreeEntryDatabase<K, V>) root).record.getIdentity().isPersistent()) {
+				if (record.getDatabase() != null && !record.getDatabase().isClosed())
+					((OMVRBTreeEntryDatabase<K, V>) root).load();
+			}
 		} catch (IOException e) {
 			throw new OIndexException("Error on loading root node");
 
@@ -225,7 +229,7 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> implement
 		final boolean locked = lock.acquireExclusiveLock();
 		try {
 			lock.removeUser();
-			
+
 			if (lock.getUsers() == 0) {
 				super.commitChanges(database);
 				cache.clear();

@@ -45,12 +45,14 @@ public enum OGlobalConfiguration {
 	STORAGE_KEEP_OPEN(
 			"storage.keepOpen",
 			"Tells to the engine to not close the storage when a database is closed. Storages will be closed when the process will shutdown",
-			Boolean.class, Boolean.FALSE),
+			Boolean.class, Boolean.TRUE),
 
-	STORAGE_CACHE_SIZE("storage.cache.size", "Size of the cache that keep the record in memory", Integer.class, 2000),
+	STORAGE_CACHE_SIZE("storage.cache.size", "Size of the cache that keep the record in memory", Integer.class, -1),
 
 	// DATABASE
 	DB_USE_CACHE("db.cache.enabled", "Uses the storage cache", Boolean.class, true),
+
+	DB_CACHE_SIZE("db.cache.size", "Size of the cache that keep the record in memory", Integer.class, -1),
 
 	OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database saves only object bound to dirty records", Boolean.class, false),
 

@@ -17,13 +17,10 @@ package com.orientechnologies.orient.core.db.record;
 
 import java.util.Iterator;
 
-import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.db.record.ORecordMultiValueHelper.MULTIVALUE_STATUS;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordFactory;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -33,12 +30,12 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-@SuppressWarnings({ "serial" })
-public class ORecordLazyList extends ORecordTrackedList {
-	final private byte			recordType;
-	private ODatabaseRecord	database;
-	private boolean					converted				= false;
-	private boolean					convertToRecord	= true;
+@SuppressWarnings({ "serial", "unchecked" })
+public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMultiValue {
+	final private byte																recordType;
+	private ODatabaseRecord														database;
+	private ORecordMultiValueHelper.MULTIVALUE_STATUS	status							= MULTIVALUE_STATUS.ALL_RECORDS;
+	private boolean																		autoConvertToRecord	= true;
 
 	public ORecordLazyList(final ODatabaseRecord iDatabase) {
 		super(null);
@@ -60,109 +57,131 @@ public class ORecordLazyList extends ORecordTrackedList {
 
 	@Override
 	public Iterator<Object> iterator() {
-		return new OLazyRecordIterator(sourceRecord, database, recordType, super.iterator(), convertToRecord);
+		return new OLazyRecordIterator(sourceRecord, database, recordType, super.iterator(), autoConvertToRecord);
 	}
 
 	@Override
 	public boolean contains(final Object o) {
-		convertAll();
+		//convertLinks2Records();
 		return super.contains(o);
 	}
 
 	@Override
-	public boolean add(Object element) {
-		if (converted && element instanceof ORID)
-			converted = false;
-		return super.add(element);
+	public boolean add(Object e) {
+		if (status == MULTIVALUE_STATUS.ALL_RIDS && e instanceof ORecord<?>)
+			// IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
+			e = ((ORecord<?>) e).getIdentity();
+		else
+			status = ORecordMultiValueHelper.getStatus(status, e);
+
+		return super.add(e);
 	}
 
 	@Override
-	public void add(int index, Object element) {
-		if (converted && element instanceof ORID)
-			converted = false;
-		super.add(index, element);
+	public void add(int index, Object e) {
+		if (status == MULTIVALUE_STATUS.ALL_RIDS && e instanceof ORecord<?>)
+			// IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
+			e = ((ORecord<?>) e).getIdentity();
+		else
+			status = ORecordMultiValueHelper.getStatus(status, e);
+
+		super.add(index, e);
 	}
 
 	@Override
 	public Object get(final int index) {
-		convert(index);
+		convertLink2Record(index);
 		return super.get(index);
 	}
 
 	@Override
 	public int indexOf(final Object o) {
-		convertAll();
+		//convertLinks2Records();
 		return super.indexOf(o);
 	}
 
 	@Override
 	public int lastIndexOf(final Object o) {
-		convertAll();
+		//convertLinks2Records();
 		return super.lastIndexOf(o);
 	}
 
 	@Override
+	public boolean remove(Object o) {
+		final boolean result = super.remove(o);
+		if (size() == 0)
+			status = MULTIVALUE_STATUS.EMPTY;
+		return result;
+	}
+
+	@Override
+	public void clear() {
+		super.clear();
+		status = MULTIVALUE_STATUS.EMPTY;
+	}
+
+	@Override
 	public Object[] toArray() {
-		convertAll();
+		convertLinks2Records();
 		return super.toArray();
 	}
 
 	@Override
 	public <T> T[] toArray(final T[] a) {
-		convertAll();
+		convertLinks2Records();
 		return super.toArray(a);
 	}
 
-	public void convertAll() {
-		if (converted || !convertToRecord)
-			return;
-
-		if (sourceRecord == null || sourceRecord.getDatabase() == null)
+	public void convertLinks2Records() {
+		if (status == MULTIVALUE_STATUS.ALL_RECORDS || !autoConvertToRecord || database == null)
+			// PRECONDITIONS
 			return;
 
 		for (int i = 0; i < size(); ++i) {
 			try {
-				convert(i);
+				convertLink2Record(i);
 			} catch (ORecordNotFoundException e) {
 				// LEAVE THE RID DIRTY
 			}
 		}
 
-		converted = true;
+		status = MULTIVALUE_STATUS.ALL_RECORDS;
 	}
 
-	public boolean isConvertToRecord() {
-		return convertToRecord;
-	}
+	public void convertRecords2Links() {
+		if (status == MULTIVALUE_STATUS.ALL_RIDS || sourceRecord == null || database == null)
+			// PRECONDITIONS
+			return;
 
-	public void setConvertToRecord(boolean convertToDocument) {
-		this.convertToRecord = convertToDocument;
+		for (int i = 0; i < size(); ++i) {
+			try {
+				convertRecord2Link(i);
+			} catch (ORecordNotFoundException e) {
+				// LEAVE THE RID DIRTY
+			}
+		}
+
+		status = MULTIVALUE_STATUS.ALL_RIDS;
 	}
 
 	/**
-	 * Convert the item requested.
+	 * Convert the item requested from link to record.
 	 * 
 	 * @param iIndex
 	 *          Position of the item to convert
 	 */
-	private void convert(final int iIndex) {
-		if (converted || !convertToRecord)
-			return;
-
-		if (database == null)
+	private void convertLink2Record(final int iIndex) {
+		if (status == MULTIVALUE_STATUS.ALL_RECORDS || !autoConvertToRecord || database == null)
+			// PRECONDITIONS
 			return;
 
 		final Object o = super.get(iIndex);
 
 		if (o != null && o instanceof ORecordId) {
-			final ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
 			final ORecordId rid = (ORecordId) o;
 
-			record.setDatabase(database);
-			record.setIdentity(rid);
-
 			try {
-				record.load();
+				final ORecord<?> record = database.load(rid);
 				super.set(iIndex, record);
 			} catch (ORecordNotFoundException e) {
 				// IGNORE THIS
@@ -170,9 +189,39 @@ public class ORecordLazyList extends ORecordTrackedList {
 		}
 	}
 
+	/**
+	 * Convert the item requested from record to link.
+	 * 
+	 * @param iIndex
+	 *          Position of the item to convert
+	 */
+	private void convertRecord2Link(final int iIndex) {
+		if (status == MULTIVALUE_STATUS.ALL_RIDS || database == null)
+			// PRECONDITIONS
+			return;
+
+		final Object o = super.get(iIndex);
+
+		if (o != null && o instanceof ORecord<?>) {
+			try {
+				super.set(iIndex, ((ORecord<?>) o).getIdentity());
+			} catch (ORecordNotFoundException e) {
+				// IGNORE THIS
+			}
+		}
+	}
+
+	public boolean isAutoConvertToRecord() {
+		return autoConvertToRecord;
+	}
+
+	public void setAutoConvertToRecord(boolean convertToDocument) {
+		this.autoConvertToRecord = convertToDocument;
+	}
+
 	@Override
 	public String toString() {
-		return OMultiValue.toString(this);
+		return ORecordMultiValueHelper.toString(this);
 	}
 
 	public byte getRecordType() {
@@ -180,7 +229,12 @@ public class ORecordLazyList extends ORecordTrackedList {
 	}
 
 	@Override
-	public void setDatabase(final ODatabaseRecord iDatabase) {
-		database = iDatabase;
+	public boolean setDatabase(final ODatabaseRecord iDatabase) {
+		if (database != iDatabase) {
+			database = iDatabase;
+			super.setDatabase(iDatabase);
+			return true;
+		}
+		return false;
 	}
 }

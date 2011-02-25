@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.db.record;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 
 /**
@@ -119,9 +119,24 @@ public class ORecordTrackedList extends ArrayList<Object> implements ORecordElem
 	/**
 	 * The item's identity doesn't affect nothing.
 	 */
-	public void onIdentityChanged(final ORecord<?> iRecord, final int iOldHashCode) {
+	public void onBeforeIdentityChanged(final ORID iRID) {
 	}
 
-	public void setDatabase(final ODatabaseRecord iDatabase) {
+	/**
+	 * The item's identity doesn't affect nothing.
+	 */
+	public void onAfterIdentityChanged(final ORecord<?> iRecord) {
+	}
+
+	public boolean setDatabase(final ODatabaseRecord iDatabase) {
+		boolean changed = false;
+
+		for (Object o : this) {
+			if (o instanceof ORecordElement)
+				if (((ORecordElement) o).setDatabase(iDatabase))
+					changed = true;
+		}
+
+		return changed;
 	}
 }

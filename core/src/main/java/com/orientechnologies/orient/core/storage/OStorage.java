@@ -20,7 +20,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.cache.OCacheRecord;
+import com.orientechnologies.orient.core.cache.OStorageRecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -157,7 +157,7 @@ public interface OStorage {
 	 * 
 	 * @return
 	 */
-	public OCacheRecord getCache();
+	public OStorageRecordCache getCache();
 
 	/**
 	 * Execute the command request and return the result back.

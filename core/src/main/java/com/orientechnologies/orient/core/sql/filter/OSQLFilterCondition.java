@@ -161,11 +161,11 @@ public class OSQLFilterCondition {
 		}
 	}
 
-	protected Object evaluate(final ORecordSchemaAware<?> iRecord, final Object iValue) {
+	protected Object evaluate(ORecordSchemaAware<?> iRecord, final Object iValue) {
 		if (iValue instanceof OSQLFilterItem) {
 			if (iRecord.getInternalStatus() == STATUS.NOT_LOADED) {
 				try {
-					iRecord.load();
+					iRecord = (ORecordSchemaAware<?>) iRecord.load();
 				} catch (ORecordNotFoundException e) {
 					return null;
 				}
