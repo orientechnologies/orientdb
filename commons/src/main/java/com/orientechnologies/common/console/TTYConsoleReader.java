@@ -1,5 +1,11 @@
 package com.orientechnologies.common.console;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -7,23 +13,58 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.orientechnologies.common.log.OLogManager;
+
 public class TTYConsoleReader implements OConsoleReader {
 
-	public static int							DOWN_CHAR						= 66;
+	private static final String	HISTORY_FILE_NAME		= ".orientdb_history";
 
-	public static int							UP_CHAR							= 65;
+	private static int					MAX_HISTORY_ENTRIES	= 50;
 
-	public static int							HORIZONTAL_TAB_CHAR	= 9;
+	public static int						END_CHAR						= 70;
 
-	public static int							VERTICAL_TAB_CHAR		= 11;
+	public static int						BEGIN_CHAR					= 72;
 
-	public static int							DEL_CHAR						= 127;
+	public static int						DEL_CHAR						= 126;
 
-	public static int							NEW_LINE_CHAR				= 10;
+	public static int						DOWN_CHAR						= 66;
 
-	public static int							UNIT_SEPARATOR_CHAR	= 31;
+	public static int						UP_CHAR							= 65;
 
-	protected List<String>				history							= new ArrayList<String>();
+	public static int						RIGHT_CHAR					= 67;
+
+	public static int						LEFT_CHAR						= 68;
+
+	public static int						HORIZONTAL_TAB_CHAR	= 9;
+
+	public static int						VERTICAL_TAB_CHAR		= 11;
+
+	public static int						BACKSPACE_CHAR			= 127;
+
+	public static int						NEW_LINE_CHAR				= 10;
+
+	public static int						UNIT_SEPARATOR_CHAR	= 31;
+
+	protected int								currentPos					= 0;
+
+	protected List<String>			history							= new ArrayList<String>();
+
+	public TTYConsoleReader() {
+		File file = getHistoryFile(true);
+		BufferedReader reader;
+		try {
+			reader = new BufferedReader(new FileReader(file));
+			String historyEntry = reader.readLine();
+			while (historyEntry != null) {
+				history.add(historyEntry);
+				historyEntry = reader.readLine();
+			}
+		} catch (FileNotFoundException fnfe) {
+			OLogManager.instance().error(this, "History file not found", fnfe, "");
+		} catch (IOException ioe) {
+			OLogManager.instance().error(this, "Error reading history file.", ioe, "");
+		}
+	}
 
 	protected OConsoleApplication	console;
 
@@ -31,10 +72,12 @@ public class TTYConsoleReader implements OConsoleReader {
 		String consoleInput = "";
 		try {
 			StringBuffer buffer = new StringBuffer();
+			currentPos = 0;
 			int historyNum = history.size();
 			while (true) {
 
 				boolean escape = false;
+				boolean ctrl = false;
 				int next = System.in.read();
 				if (next == 27) {
 					escape = true;
@@ -42,49 +85,140 @@ public class TTYConsoleReader implements OConsoleReader {
 					next = System.in.read();
 				}
 				if (escape) {
-					if (next == UP_CHAR && !history.isEmpty()) {
-						if (history.size() > 0) { // UP
-							StringBuffer cleaner = new StringBuffer();
-							for (int i = 0; i < buffer.length(); i++) {
-								cleaner.append(" ");
-							}
-							rewriteConsole(cleaner);
-							historyNum = historyNum > 0 ? historyNum - 1 : 0;
-							buffer = new StringBuffer(history.get(historyNum));
-							rewriteConsole(buffer);
-							// writeHistory(historyNum);
-						}
+					writetempFile("escape char " + next);
+					if (next == 49) {
+						System.in.read();
+						next = System.in.read();
+						writetempFile("escape char maybe ctrl" + next);
 					}
-					if (next == DOWN_CHAR && !history.isEmpty()) { // DOWN
-						if (history.size() > 0) {
+					if (next == 53) {
+						ctrl = true;
+						next = System.in.read();
+					}
+					if (ctrl) {
+						writetempFile("ctrl char " + next);
+						if (next == RIGHT_CHAR) {
+							currentPos = buffer.indexOf(" ", currentPos) + 1;
+							if (currentPos == 0)
+								currentPos = buffer.length();
 							StringBuffer cleaner = new StringBuffer();
 							for (int i = 0; i < buffer.length(); i++) {
 								cleaner.append(" ");
 							}
-							rewriteConsole(cleaner);
-
-							historyNum = historyNum < history.size() ? historyNum + 1 : history.size();
-							if (historyNum == history.size()) {
-								buffer = new StringBuffer("");
+							rewriteConsole(cleaner, true);
+							rewriteConsole(buffer, false);
+						} else if (next == LEFT_CHAR) {
+							if (currentPos > 1 && currentPos < buffer.length() && buffer.charAt(currentPos - 1) == ' ') {
+								currentPos = buffer.lastIndexOf(" ", (currentPos - 2)) + 1;
 							} else {
-								buffer = new StringBuffer(history.get(historyNum));
+								currentPos = buffer.lastIndexOf(" ", currentPos) + 1;
 							}
-							rewriteConsole(buffer);
-							// writeHistory(historyNum);
+							if (currentPos < 0)
+								currentPos = 0;
+							StringBuffer cleaner = new StringBuffer();
+							for (int i = 0; i < buffer.length(); i++) {
+								cleaner.append(" ");
+							}
+							rewriteConsole(cleaner, true);
+							rewriteConsole(buffer, false);
+						} else {
 						}
 					} else {
+						if (next == UP_CHAR && !history.isEmpty()) {
+							if (history.size() > 0) { // UP
+								StringBuffer cleaner = new StringBuffer();
+								for (int i = 0; i < buffer.length(); i++) {
+									cleaner.append(" ");
+								}
+								rewriteConsole(cleaner, true);
+								historyNum = historyNum > 0 ? historyNum - 1 : 0;
+								buffer = new StringBuffer(history.get(historyNum));
+								currentPos = buffer.length();
+								rewriteConsole(buffer, false);
+								// writeHistory(historyNum);
+							}
+						} else if (next == DOWN_CHAR && !history.isEmpty()) { // DOWN
+							if (history.size() > 0) {
+								StringBuffer cleaner = new StringBuffer();
+								for (int i = 0; i < buffer.length(); i++) {
+									cleaner.append(" ");
+								}
+								rewriteConsole(cleaner, true);
+
+								historyNum = historyNum < history.size() ? historyNum + 1 : history.size();
+								if (historyNum == history.size()) {
+									buffer = new StringBuffer("");
+								} else {
+									buffer = new StringBuffer(history.get(historyNum));
+								}
+								currentPos = buffer.length();
+								rewriteConsole(buffer, false);
+								// writeHistory(historyNum);
+							}
+						} else if (next == RIGHT_CHAR) {
+							if (currentPos < buffer.length()) {
+								currentPos++;
+								StringBuffer cleaner = new StringBuffer();
+								for (int i = 0; i < buffer.length(); i++) {
+									cleaner.append(" ");
+								}
+								rewriteConsole(cleaner, true);
+								rewriteConsole(buffer, false);
+							}
+						} else if (next == LEFT_CHAR) {
+							if (currentPos > 0) {
+								currentPos--;
+								StringBuffer cleaner = new StringBuffer();
+								for (int i = 0; i < buffer.length(); i++) {
+									cleaner.append(" ");
+								}
+								rewriteConsole(cleaner, true);
+								rewriteConsole(buffer, false);
+							}
+						} else if (next == END_CHAR) {
+							currentPos = buffer.length();
+							StringBuffer cleaner = new StringBuffer();
+							for (int i = 0; i < buffer.length(); i++) {
+								cleaner.append(" ");
+							}
+							rewriteConsole(cleaner, true);
+							rewriteConsole(buffer, false);
+						} else if (next == BEGIN_CHAR) {
+							currentPos = 0;
+							StringBuffer cleaner = new StringBuffer();
+							for (int i = 0; i < buffer.length(); i++) {
+								cleaner.append(" ");
+							}
+							rewriteConsole(cleaner, true);
+							rewriteConsole(buffer, false);
+						} else {
+						}
 					}
 				} else {
+					writetempFile("standard char " + next);
 					if (next == NEW_LINE_CHAR) {
 						System.out.println();
 						break;
+					} else if (next == BACKSPACE_CHAR) {
+						if (buffer.length() > 0 && currentPos > 0) {
+							StringBuffer cleaner = new StringBuffer();
+							for (int i = 0; i < buffer.length(); i++) {
+								cleaner.append(" ");
+							}
+							buffer.deleteCharAt(currentPos - 1);
+							currentPos--;
+							rewriteConsole(cleaner, true);
+							rewriteConsole(buffer, false);
+						}
 					} else if (next == DEL_CHAR) {
-						if (buffer.length() > 0) {
-							buffer.deleteCharAt(buffer.length() - 1);
-							StringBuffer cleaner = new StringBuffer(buffer);
-							cleaner.append(" ");
-							rewriteConsole(cleaner);
-							rewriteConsole(buffer);
+						if (buffer.length() > 0 && currentPos > 0 && currentPos < buffer.length()) {
+							StringBuffer cleaner = new StringBuffer();
+							for (int i = 0; i < buffer.length(); i++) {
+								cleaner.append(" ");
+							}
+							buffer.deleteCharAt(currentPos);
+							rewriteConsole(cleaner, true);
+							rewriteConsole(buffer, false);
 						}
 					} else if (next == HORIZONTAL_TAB_CHAR) {
 						StringBuffer cleaner = new StringBuffer();
@@ -92,12 +226,23 @@ public class TTYConsoleReader implements OConsoleReader {
 							cleaner.append(" ");
 						}
 						buffer = writeHint(buffer);
-						rewriteConsole(cleaner);
-						rewriteConsole(buffer);
+						rewriteConsole(cleaner, true);
+						rewriteConsole(buffer, false);
+						currentPos = buffer.length();
 					} else {
-						if (next > UNIT_SEPARATOR_CHAR && next < DEL_CHAR) {
-							System.out.print((char) next);
-							buffer.append((char) next);
+						if (next > UNIT_SEPARATOR_CHAR && next < BACKSPACE_CHAR) {
+							StringBuffer cleaner = new StringBuffer();
+							for (int i = 0; i < buffer.length(); i++) {
+								cleaner.append(" ");
+							}
+							if (currentPos == buffer.length()) {
+								buffer.append((char) next);
+							} else {
+								buffer.insert(currentPos, (char) next);
+							}
+							currentPos++;
+							rewriteConsole(cleaner, true);
+							rewriteConsole(buffer, false);
 						} else {
 							System.out.println();
 							System.out.print(buffer);
@@ -110,10 +255,39 @@ public class TTYConsoleReader implements OConsoleReader {
 			history.remove(consoleInput);
 			history.add(consoleInput);
 			historyNum = history.size();
+			writeHistory(historyNum);
 		} catch (IOException e) {
 			return null;
 		}
 		return consoleInput;
+	}
+
+	private void writeHistory(int historyNum) throws IOException {
+		if (historyNum < MAX_HISTORY_ENTRIES) {
+			File historyFile = getHistoryFile(false);
+			BufferedWriter writer = new BufferedWriter(new FileWriter(historyFile));
+			try {
+				for (String historyEntry : history) {
+					writer.write(historyEntry);
+					writer.newLine();
+				}
+			} finally {
+				writer.flush();
+				writer.close();
+			}
+		} else {
+			File historyFile = getHistoryFile(false);
+			BufferedWriter writer = new BufferedWriter(new FileWriter(historyFile));
+			try {
+				for (String historyEntry : history.subList(historyNum - MAX_HISTORY_ENTRIES - 1, historyNum - 1)) {
+					writer.write(historyEntry);
+					writer.newLine();
+				}
+			} finally {
+				writer.flush();
+				writer.close();
+			}
+		}
 	}
 
 	private StringBuffer writeHint(StringBuffer buffer) {
@@ -188,10 +362,15 @@ public class TTYConsoleReader implements OConsoleReader {
 		return console;
 	}
 
-	private void rewriteConsole(StringBuffer buffer) {
+	private void rewriteConsole(StringBuffer buffer, boolean cleaner) {
 		System.out.print("\r");
 		System.out.print("> ");
-		System.out.print(buffer);
+		if (currentPos < buffer.length() && buffer.length() > 0 && !cleaner) {
+			System.out.print("\033[0m" + buffer.substring(0, currentPos) + "\033[0;30;47m" + buffer.substring(currentPos, currentPos + 1)
+					+ "\033[0m" + buffer.substring(currentPos + 1) + "\033[0m");
+		} else {
+			System.out.print(buffer);
+		}
 	}
 
 	private void rewriteHintConsole(StringBuffer buffer) {
@@ -199,4 +378,38 @@ public class TTYConsoleReader implements OConsoleReader {
 		System.out.print(buffer);
 	}
 
+	private File getHistoryFile(boolean read) {
+		File file = new File(HISTORY_FILE_NAME);
+		if (!file.exists()) {
+			try {
+				file.createNewFile();
+			} catch (IOException ioe) {
+				OLogManager.instance().error(this, "Error creating history file.", ioe, "");
+			}
+		} else if (!read) {
+			file.delete();
+			try {
+				file.createNewFile();
+			} catch (IOException ioe) {
+				OLogManager.instance().error(this, "Error creating history file.", ioe, "");
+			}
+		}
+		return file;
+	}
+
+	private void writetempFile(String ivalue) throws IOException {
+		File file = new File("temp");
+		if (!file.exists()) {
+			try {
+				file.createNewFile();
+			} catch (IOException ioe) {
+				OLogManager.instance().error(this, "Error creating history file.", ioe, "");
+			}
+		}
+		BufferedWriter writer = new BufferedWriter(new FileWriter(file, true));
+		writer.append(ivalue);
+		writer.newLine();
+		writer.flush();
+		writer.close();
+	}
 }
