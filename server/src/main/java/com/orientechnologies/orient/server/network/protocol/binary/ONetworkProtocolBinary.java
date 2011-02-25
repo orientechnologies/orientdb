@@ -110,6 +110,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		channel.flush();
 
 		start();
+
+		OGlobalConfiguration.DB_CACHE_SIZE.setValue(0);
+		OGlobalConfiguration.STORAGE_CACHE_SIZE.setValue(0);
+		OGlobalConfiguration.DB_USE_CACHE.setValue(0);
 	}
 
 	@Override
@@ -393,9 +397,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 							@Override
 							public Object fetchLinked(final ODocument iRoot, final Object iUserObject, final String iFieldName,
 									final Object iLinked) {
-								if (iLinked instanceof ODocument)
-									return recordsToSend.add((ODocument) iLinked) ? iLinked : null;
-								else if (iLinked instanceof Collection<?>)
+								if (iLinked instanceof ODocument) {
+									if (((ODocument) iLinked).getIdentity().isValid())
+										return recordsToSend.add((ODocument) iLinked) ? iLinked : null;
+									return null;
+								} else if (iLinked instanceof Collection<?>)
 									return recordsToSend.addAll((Collection<? extends ODocument>) iLinked) ? iLinked : null;
 								else if (iLinked instanceof Map<?, ?>)
 									return recordsToSend.addAll(((Map<String, ? extends ODocument>) iLinked).values()) ? iLinked : null;
@@ -406,12 +412,14 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 						// SEND RECORDS TO LOAD IN CLIENT CACHE
 						for (ODocument doc : recordsToSend) {
-							channel.writeByte((byte) 2); // CLIENT CACHE
-							// RECORD. IT
-							// ISN'T PART OF
-							// THE RESULT
-							// SET
-							writeRecord(doc);
+							if (doc.getIdentity().isValid()) {
+								channel.writeByte((byte) 2); // CLIENT CACHE
+								// RECORD. IT
+								// ISN'T PART OF
+								// THE RESULT
+								// SET
+								writeRecord(doc);
+							}
 						}
 					}
 
