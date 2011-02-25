@@ -15,59 +15,137 @@
  */
 
 function OForm(options) {
+	
 	this.object = null;
 	this.templateMap = {};
 	this.fieldTypes = {};
 	this.options = {
-		debug : false
+		debug : false,
+		onBeforeAdd : function(){},
+		onAfterAdd : function(){},
+		onBeforeRemove : function(){},
+		onAfterRemove : function(){}
 	};
 
-	if (options != null) {
+	if (options) {
 		for (o in options)
 			this.options[o] = options[o];
 	}
+	
+	/*
+	$(".arrayRemove").live("click", function(event) {
+		event.preventDefault();
+		form.arrayRemove($(this));
+	});
+	*/
+	
+}
 
-	/**
-	 * Binds an object to the current page. When called recursively, prefix
-	 * parameter contains the caller object's field.
-	 */
-	OForm.prototype.object2form = function(obj, prefix, template, level) {
-		if (this.object == null)
-			this.object = obj;
-
-		if (template == null)
-			template = "";
-		else
-			template = template + "_";
-
-		if (prefix == null)
-			prefix = "";
-		else
-			prefix = prefix + "_";
-
-		if (level == null)
-			level = 0;
-
-		this.fieldTypes[prefix] = 'o';
-
-		for (field in obj) {
-			if (field.charAt(0) == "@")
-				continue;
-
-			var value = obj[field];
-
-			var componentName = prefix + field;
+OForm.prototype.arrayAdd = function(componentName) {
+		this.options.onBeforeAdd(componentName, index);
+	
+		if (this.templateMap[componentName]) {
+			var referenceRow = this.templateMap[componentName];
 			var component = $("#" + componentName);
+			if (component.size() > 0) {
+				var componentChild = component.children().last();
+				var html = componentChild.html();
+				var toFind = componentName + "_";
+				var posixFrom = html.indexOf(toFind) + toFind.length;
+				var posixTo = html.indexOf("_", posixFrom);
+				if (posixFrom > 0 && posixTo > 0) {
+					var value = html.substring(posixFrom, posixTo);
+					var indexToFind = "_?" + 0;
+					var index = parseInt(value) + 1;
+				
+					var row = referenceRow;
+					while (row.indexOf(indexToFind) > -1)
+						row = row.replace(indexToFind, "_" + index);
 
-			if (value instanceof Array)
-				this.array2component(value, component, componentName, template
-						+ field, level);
-			else if (typeof value == "object")
-				this.object2form(value, componentName, template + field, level);
-			else
-				this.value2component(value, component, level);
+					component.append(row);
+					
+					var buttonRemove = document.getElementById(componentName+"_"+index+"!remove");
+					if (buttonRemove) {
+						$(buttonRemove).bind("click", function(event) {
+							event.preventDefault();
+							form.arrayRemove($(this));
+						});
+					}
+				}		
+			} 
+		}
+		
+		this.options.onAfterAdd(componentName, index);
+	}
+	
+OForm.prototype.arrayRemoveElem = function(componentName, index) {
+	this.options.onBeforeRemove(componentName, index);
+	
+	var component = $("#" + componentName);
+	if (component.size() > 0) {
+		var target = component.children().eq(index);
+		if (target.length > 0) {
+			target.hide();
 		}
 	}
+		
+	this.options.onAfterRemove(componentName, index);
+}
+	
+OForm.prototype.arrayRemove = function(obj) {
+	var id = obj.attr("id");
+		
+	var from = id.indexOf("_");
+	var to = id.indexOf("!",  from + 1);
+		
+	var componentName = id.substring(0, from);
+	var index = id.substring(from+1, to);
+		
+	this.arrayRemoveElem(componentName, parseInt(index));
+}
+	
+
+/**
+ * Binds an object to the current page. When called recursively, prefix
+ * parameter contains the caller object's field.
+ */
+OForm.prototype.object2form = function(obj, prefix, template, level) {
+	if (this.object == null)
+		this.object = obj;
+
+	if (template == null)
+		template = "";
+	else
+		template = template + "_";
+
+	if (prefix == null)
+		prefix = "";
+	else
+		prefix = prefix + "_";
+
+	if (level == null)
+		level = 0;
+
+	this.fieldTypes[prefix] = 'o';
+
+	for (field in obj) {
+		if (field.charAt(0) == "@")
+			continue;
+
+		var value = obj[field];
+
+		var componentName = prefix + field;
+		var component = $("#" + componentName);
+
+		if (value instanceof Array)
+			this.array2component(value, component, componentName, template
+					+ field, level);
+		else if (typeof value == "object")
+			this.object2form(value, componentName, template + field, level);
+		else
+			this.value2component(value, component, level);
+	}
+}
 
 	/**
 	 * Binds an array to a component.
@@ -106,7 +184,15 @@ function OForm(options) {
 					row = row.replace(indexToFind, "_" + index);
 
 				component.append(row);
-
+				
+				var buttonRemove = document.getElementById(prefix+"_"+index+"!remove");
+				if (buttonRemove) {
+					$(buttonRemove).bind("click", function(event) {
+						event.preventDefault();
+						form.arrayRemove($(this));
+					});
+				}
+				
 				var value = array[index];
 				if (value != null && typeof value == "object") {
 					if (index == 0)
@@ -122,6 +208,15 @@ function OForm(options) {
 									level + 1);
 				}
 			}
+			
+			var buttonAdd= document.getElementById(prefix+"!add");
+			if (buttonAdd) {
+				$(buttonAdd).bind("click", function(event) {
+					event.preventDefault();
+					form.arrayAdd(prefix);
+				});
+			}
+			
 		}
 	}
 
@@ -247,4 +342,3 @@ function OForm(options) {
 				return component.text();
 		}
 	}
-}
