@@ -138,7 +138,7 @@ public class ODatabaseRaw implements ODatabase {
 	}
 
 	public void delete() {
-		close(false);
+		close(true);
 
 		try {
 			if (storage == null)
