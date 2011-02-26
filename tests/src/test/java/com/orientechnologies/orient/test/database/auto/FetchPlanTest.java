@@ -51,7 +51,7 @@ public class FetchPlanTest {
 		for (ODocument d : resultset) {
 			linked = ((ORID) d.field("location", ORID.class));
 			if (linked != null)
-				Assert.assertNull(database.getCache().existsRecord(linked));
+				Assert.assertFalse(database.getCache().existsRecord(linked));
 		}
 
 		database.close();
