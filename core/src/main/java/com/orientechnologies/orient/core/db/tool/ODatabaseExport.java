@@ -79,6 +79,12 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 		try {
 			listener.onMessage("\nStarted export of database '" + database.getName() + "' to " + fileName + "...");
 
+			database.setUseCache(false);
+			database.getCache().setMaxSize(0);
+			database.getCache().clear();
+			database.getStorage().getCache().setMaxSize(0);
+			database.getStorage().getCache().clear();
+
 			long time = System.currentTimeMillis();
 
 			if (includeInfo)
@@ -111,7 +117,15 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 		listener.onMessage("\nExporting records...");
 
 		writer.beginCollection(level, true, "records");
-		for (String clusterName : database.getClusterNames()) {
+		int exportedClusters = 0;
+		int totalClusters = database.getClusterNames().size();
+		for (int i = 0; exportedClusters < totalClusters; ++i) {
+			String clusterName = database.getClusterNameById(i);
+			if (clusterName == null)
+				continue;
+
+			exportedClusters++;
+
 			// CHECK IF THE CLUSTER IS INCLUDED
 			if (includeClusters != null) {
 				if (!includeClusters.contains(clusterName))

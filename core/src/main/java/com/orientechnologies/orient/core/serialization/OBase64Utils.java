@@ -644,6 +644,9 @@ public class OBase64Utils {
 	 * @since 1.4
 	 */
 	public static String encodeBytes(byte[] source) {
+		if (source == null)
+			return null;
+		
 		// Since we're not going to have the GZIP encoding turned on,
 		// we're not going to have an java.io.IOException thrown, so
 		// we should not force the user to have to catch it.
@@ -1130,8 +1133,7 @@ public class OBase64Utils {
 			} // end if: white space, equals sign or better
 			else {
 				// There's a bad input character in the Base64 stream.
-				throw new OIOException(String.format("Bad Base64 input character decimal %d in array position %d",
-						(source[i]) & 0xFF, i));
+				throw new OIOException(String.format("Bad Base64 input character decimal %d in array position %d", (source[i]) & 0xFF, i));
 			} // end else:
 		} // each input character
 

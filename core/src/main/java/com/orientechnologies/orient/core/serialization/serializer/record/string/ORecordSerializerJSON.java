@@ -77,7 +77,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 		iSource = iSource.trim();
 		if (!iSource.startsWith("{") || !iSource.endsWith("}"))
-			throw new OSerializationException("Error on unmarshalling JSON content: content must be embraced by { }");
+			throw new OSerializationException("Error on unmarshalling JSON content: content must be between { }");
 
 		if (iRecord != null)
 			// RESET ALL THE FIELDS
@@ -144,7 +144,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 					// RECORD VALUE(S)
 					else if (fieldName.equals("value") && !(iRecord instanceof ODocument)) {
-						if (iRecord instanceof ORecordBytes) {
+						if ("null".equals(fieldValue))
+							iRecord.fromStream(new byte[] {});
+						else if (iRecord instanceof ORecordBytes) {
 							// BYTES
 							iRecord.fromStream(OBase64Utils.decode(fieldValueAsString));
 						} else if (iRecord instanceof ORecordStringable) {
@@ -179,7 +181,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new OSerializationException("Error on unmarshalling JSON content", e);
+			throw new OSerializationException("Error on unmarshalling JSON content for record " + iRecord.getIdentity(), e);
 		}
 		return iRecord;
 	}

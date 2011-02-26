@@ -372,7 +372,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				if (record != null) {
 					if (record.getInternalStatus() == STATUS.NOT_LOADED)
 						record.reload();
-					
+
 					callbackHooks(TYPE.AFTER_READ, record);
 					return (RET) record;
 				}
@@ -442,7 +442,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			else
 				clusterId = rid.clusterId;
 
-			if (stream.length > 0) {
+			if (stream != null && stream.length > 0) {
 				if (isNew) {
 					// CHECK ACCESS ON CLUSTER
 					checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_CREATE, iClusterName, clusterId);
@@ -472,7 +472,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			// SAVE IT
 			long result = underlying.save(clusterId, rid.getClusterPosition(), stream, realVersion, iRecord.getRecordType());
 
-			if (stream.length > 0)
+			if (stream != null && stream.length > 0)
 				// FILLED RECORD
 				iRecord.unsetDirty();
 
@@ -480,7 +480,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				// UPDATE INFORMATION: CLUSTER ID+POSITION
 				iRecord.fill(iRecord.getDatabase(), clusterId, result, 0);
 				iRecord.setStatus(STATUS.LOADED);
-				if (stream.length > 0)
+				if (stream != null && stream.length > 0)
 					callbackHooks(TYPE.AFTER_CREATE, iRecord);
 
 				// NOTIFY IDENTITY HAS CHANGED
@@ -489,7 +489,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				// UPDATE INFORMATION: VERSION
 				iRecord.fill(iRecord.getDatabase(), clusterId, rid.getClusterPosition(), (int) result);
 				iRecord.setStatus(STATUS.LOADED);
-				if (stream.length > 0)
+				if (stream != null && stream.length > 0)
 					callbackHooks(TYPE.AFTER_UPDATE, iRecord);
 			}
 

@@ -56,7 +56,7 @@ public abstract class OTransactionAbstract implements OTransaction {
 	public static void updateCacheFromEntries(final OStorage iStorage, final OTransaction iTx,
 			final Iterable<? extends OTransactionEntry> iEntries) throws IOException {
 		ORID rid;
-		ODatabaseRecord db = iTx.getDatabase();
+		final ODatabaseRecord db = iTx.getDatabase();
 		for (OTransactionEntry txEntry : iEntries) {
 			rid = txEntry.getRecord().getIdentity();
 

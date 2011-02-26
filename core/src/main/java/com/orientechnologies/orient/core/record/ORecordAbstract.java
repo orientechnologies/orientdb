@@ -242,7 +242,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 			_database.reload(this, iFetchPlan);
 
 			// GET CONTENT
-			fromStream(toStream());
+			//fromStream(toStream());
 
 			return this;
 		} catch (Exception e) {
