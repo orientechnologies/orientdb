@@ -177,7 +177,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
 			txManager.open();
 
-		} catch (IOException e) {
+		} catch (Exception e) {
 			open = false;
 			dataSegments = new ODataLocal[0];
 			clusters = new OCluster[0];

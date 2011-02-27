@@ -226,6 +226,9 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> implement
 	 * Assure to save all the data without the optimization.
 	 */
 	public void onClose(final ODatabase iDatabase) {
+		if( database.isClosed())
+			return;
+		
 		final boolean locked = lock.acquireExclusiveLock();
 		try {
 			lock.removeUser();
