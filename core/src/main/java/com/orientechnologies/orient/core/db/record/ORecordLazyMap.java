@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.db.record.ORecordMultiValueHelper.MULTI
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 
 /**
  * Lazy implementation of LinkedHashMap. It's bound to a source ORecord object to keep track of changes. This avoid to call the
@@ -130,9 +131,13 @@ public class ORecordLazyMap extends ORecordTrackedMap implements ORecordLazyMult
 			return;
 
 		final Object value = super.get(iKey);
-		if (value != null && value instanceof ORecord<?> && !((ORecord<?>) value).getIdentity().isNew())
+		if (value != null && value instanceof ORecord<?> && !((ORecord<?>) value).getIdentity().isNew()) {
+			if (((ORecord<?>) value).isDirty())
+				database.save((ORecordInternal<?>) value);
+
 			// OVERWRITE
 			super.put(iKey, ((ORecord<?>) value).getIdentity());
+		}
 	}
 
 	/**

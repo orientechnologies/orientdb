@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.db.record.ORecordMultiValueHelper.MULTI
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 
 /**
  * Lazy implementation of Set. It's bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by
@@ -178,8 +179,12 @@ public class ORecordLazySet extends ORecordTrackedSet implements ORecordLazyMult
 	}
 
 	protected Object convertRecord2Link(final Object iElement) {
-		if (iElement != null && iElement instanceof ORecord<?> && !((ORecord<?>) iElement).getIdentity().isNew())
+		if (iElement != null && iElement instanceof ORecord<?> && !((ORecord<?>) iElement).getIdentity().isNew()) {
+			if (((ORecord<?>) iElement).isDirty())
+				database.save((ORecordInternal<?>) iElement);
+
 			return ((ORecord<?>) iElement).getIdentity();
+		}
 		return iElement;
 	}
 

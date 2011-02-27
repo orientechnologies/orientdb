@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.db.record.ORecordMultiValueHelper.MULTI
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -210,6 +211,9 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 
 		if (o != null && o instanceof ORecord<?> && !((ORecord<?>) o).getIdentity().isNew())
 			try {
+				if (((ORecord<?>) o).isDirty())
+					database.save((ORecordInternal<?>) o);
+
 				super.set(iIndex, ((ORecord<?>) o).getIdentity());
 			} catch (ORecordNotFoundException e) {
 				// IGNORE THIS
