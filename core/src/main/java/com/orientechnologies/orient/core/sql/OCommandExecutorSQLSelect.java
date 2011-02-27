@@ -49,6 +49,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemRecordAttrib;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsText;
@@ -432,8 +433,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			OIndex idx = prop.getIndex().getUnderlying();
 			if (((idx instanceof OIndexUnique || idx instanceof OIndexNotUnique) && iCondition.getOperator() instanceof OQueryOperatorEquals)
 					|| idx instanceof OIndexFullText && iCondition.getOperator() instanceof OQueryOperatorContainsText) {
-				final Object value = iCondition.getLeft() == iItem ? iCondition.getRight() : iCondition.getLeft();
+				Object value = iCondition.getLeft() == iItem ? iCondition.getRight() : iCondition.getLeft();
 				if (value != null) {
+					if (value instanceof OSQLFilterItemParameter)
+						value = ((OSQLFilterItemParameter) value).getValue(null);
+
 					final Set<?> resultSet = prop.getIndex().getUnderlying().get(value);
 					if (resultSet != null && resultSet.size() > 0)
 						for (Object o : resultSet) {

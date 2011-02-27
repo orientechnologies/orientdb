@@ -182,7 +182,7 @@ public class CRUDDocumentPhysicalTest {
 		database.close();
 	}
 
-	@Test
+	@Test(dependsOnMethods = "testUpdate")
 	public void testDoubleChanges() {
 		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 
@@ -209,7 +209,38 @@ public class CRUDDocumentPhysicalTest {
 		database.close();
 	}
 
-	@Test(dependsOnMethods = "testUpdate")
+	@Test(dependsOnMethods = "testDoubleChanges")
+	public void testMultiValues() {
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+
+		ODocument vDoc = database.newInstance();
+		vDoc.setClassName("Profile");
+		vDoc.field("nick", "Jacky").field("name", "Jack").field("surname", "Tramiel");
+		vDoc.save();
+
+		// add a new record with the same name "nameA".
+		vDoc = database.newInstance();
+		vDoc.setClassName("Profile");
+		vDoc.field("nick", "Jack").field("name", "Jack").field("surname", "Bauer");
+		vDoc.save();
+
+		OPropertyIndex indexName = database.getMetadata().getSchema().getClass("Profile").getProperty("name").getIndex();
+
+		// We must get 2 records for "nameA".
+		Set<ORecord<?>> vName1 = indexName.getUnderlying().get("Jack");
+		Assert.assertEquals(vName1.size(), 2);
+
+		// Remove this last record.
+		database.delete(vDoc);
+
+		// We must get 1 record for "nameA".
+		vName1 = indexName.getUnderlying().get("Jack");
+		Assert.assertEquals(vName1.size(), 1);
+
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "testMultiValues")
 	public void testUpdateLazyDirtyPropagation() {
 		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 

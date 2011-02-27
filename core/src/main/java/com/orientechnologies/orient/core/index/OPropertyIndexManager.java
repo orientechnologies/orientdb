@@ -80,7 +80,7 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 
 						index = propEntry.getKey().getIndex().getUnderlying();
 
-						index.remove(originalValue);
+						index.remove(originalValue, iRecord);
 						index.lazySave();
 					}
 				}
@@ -115,7 +115,7 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 					if (dirtyFields.contains(propEntry.getKey().getName())) {
 						// REMOVE IT
 						index = propEntry.getKey().getIndex().getUnderlying();
-						index.remove(propEntry.getValue());
+						index.remove(propEntry.getValue(), iRecord);
 						index.lazySave();
 					}
 				}
@@ -126,7 +126,7 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 				if (iRecord.containsField(propEntry.getKey().getName())
 						&& (dirtyFields == null || !dirtyFields.contains(propEntry.getKey().getName()))) {
 					index = propEntry.getKey().getIndex().getUnderlying();
-					index.remove(propEntry.getValue());
+					index.remove(propEntry.getValue(), iRecord);
 					index.lazySave();
 				}
 			}

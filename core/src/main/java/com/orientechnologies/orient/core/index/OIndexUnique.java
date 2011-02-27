@@ -54,7 +54,7 @@ public class OIndexUnique extends OIndexMVRBTreeAbstract {
 	}
 
 	public OIndex remove(final Object key, final ORecord<?> value) {
-		return remove(key, null);
+		return remove(key);
 	}
 
 	@Override
