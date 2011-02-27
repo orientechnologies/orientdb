@@ -107,4 +107,5 @@ public interface OIndex extends Iterable<Entry<Object, Set<ORecord<?>>>> {
 
 	public Set<ORecord<?>> getBetween(Object iRangeFrom, Object iRangeTo);
 
+	public long size();
 }

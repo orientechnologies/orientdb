@@ -434,6 +434,10 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 		});
 	}
 
+	public long size() {
+		return map.size();
+	}
+
 	public void onCreate(ODatabase iDatabase) {
 	}
 
