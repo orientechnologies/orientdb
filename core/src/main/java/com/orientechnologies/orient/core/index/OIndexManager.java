@@ -47,7 +47,6 @@ public class OIndexManager extends ODocumentWrapperNoClass {
 			// @COMPATIBILITY: CREATE THE INDEX MGR
 			create();
 
-		document.reset();
 		((ORecordId) document.getIdentity()).fromString(document.getDatabase().getStorage().getConfiguration().indexMgrRecordId);
 		super.load("*:-1 index:0");
 		return this;

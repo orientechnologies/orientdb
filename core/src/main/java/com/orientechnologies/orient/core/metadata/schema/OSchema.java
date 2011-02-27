@@ -236,7 +236,6 @@ public class OSchema extends ODocumentWrapperNoClass {
 	@Override
 	@SuppressWarnings("unchecked")
 	public OSchema load() {
-		document.reset();
 		((ORecordId) document.getIdentity()).fromString(document.getDatabase().getStorage().getConfiguration().schemaRecordId);
 		return super.load("*:-1 index:0");
 	}
