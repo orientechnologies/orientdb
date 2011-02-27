@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.db.record;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 
 import com.orientechnologies.orient.core.id.ORID;
@@ -52,6 +53,13 @@ public class ORecordTrackedList extends ArrayList<Object> implements ORecordElem
 	public boolean add(Object element) {
 		setDirty();
 		return super.add(element);
+	}
+
+	@Override
+	public boolean addAll(Collection<? extends Object> c) {
+		for (Object o : c)
+			add(o);
+		return true;
 	}
 
 	@Override

@@ -44,7 +44,7 @@ public class ORecordLazyMap extends ORecordTrackedMap implements ORecordLazyMult
 
 	@Override
 	public boolean containsValue(final Object o) {
-		//convertLinks2Records();
+		// convertLinks2Records();
 		return super.containsValue(o);
 	}
 
@@ -61,7 +61,7 @@ public class ORecordLazyMap extends ORecordTrackedMap implements ORecordLazyMult
 
 	@Override
 	public Object put(final Object iKey, Object iValue) {
-		if (status == MULTIVALUE_STATUS.ALL_RIDS && iValue instanceof ORecord<?>)
+		if (status == MULTIVALUE_STATUS.ALL_RIDS && iValue instanceof ORecord<?> && !((ORecord<?>) iValue).getIdentity().isNew())
 			// IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
 			iValue = ((ORecord<?>) iValue).getIdentity();
 		else
@@ -130,7 +130,7 @@ public class ORecordLazyMap extends ORecordTrackedMap implements ORecordLazyMult
 			return;
 
 		final Object value = super.get(iKey);
-		if (value != null && value instanceof ORecord<?>)
+		if (value != null && value instanceof ORecord<?> && !((ORecord<?>) value).getIdentity().isNew())
 			// OVERWRITE
 			super.put(iKey, ((ORecord<?>) value).getIdentity());
 	}

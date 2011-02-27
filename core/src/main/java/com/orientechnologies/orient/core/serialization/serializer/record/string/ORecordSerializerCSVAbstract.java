@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedList;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
@@ -246,6 +247,14 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				if (coll instanceof OLazyObjectList<?>) {
 					((OLazyObjectList<?>) coll).setConvertToRecord(false);
 				}
+
+				boolean autoConvert = false;
+				if (coll instanceof ORecordLazyMultiValue) {
+					autoConvert = ((ORecordLazyMultiValue) coll).isAutoConvertToRecord();
+					((ORecordLazyMultiValue) coll).convertRecords2Links();
+					((ORecordLazyMultiValue) coll).setAutoConvertToRecord(false);
+				}
+
 				try {
 					// LINKED LIST
 					for (int i = 0; i < coll.size(); ++i) {
@@ -262,6 +271,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 						((OLazyObjectList<?>) coll).setConvertToRecord(true);
 					}
 				}
+
+				if (coll instanceof ORecordLazyMultiValue)
+					((ORecordLazyMultiValue) coll).setAutoConvertToRecord(autoConvert);
 			}
 
 			buffer.append(OStringSerializerHelper.COLLECTION_END);

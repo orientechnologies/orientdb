@@ -116,7 +116,7 @@ public class CRUDDocumentLogicalTest {
 		record = database.browseClass("Animal").last().previous();
 
 		Assert.assertEquals(record.field("name"), "Cat");
-		Assert.assertTrue(((List<ODocument>) record.field("races")).size() == 3);
+		Assert.assertEquals(((List<ODocument>) record.field("races")).size(), 3);
 
 		database.close();
 	}

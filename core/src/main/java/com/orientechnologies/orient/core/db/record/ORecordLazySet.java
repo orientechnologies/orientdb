@@ -56,7 +56,7 @@ public class ORecordLazySet extends ORecordTrackedSet implements ORecordLazyMult
 
 	@Override
 	public boolean add(Object e) {
-		if (status == MULTIVALUE_STATUS.ALL_RIDS && e instanceof ORecord<?>)
+		if (status == MULTIVALUE_STATUS.ALL_RIDS && e instanceof ORecord<?> && !((ORecord<?>) e).getIdentity().isNew())
 			// IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
 			e = ((ORecord<?>) e).getIdentity();
 		else
@@ -67,7 +67,7 @@ public class ORecordLazySet extends ORecordTrackedSet implements ORecordLazyMult
 
 	@Override
 	public boolean contains(final Object o) {
-//		convertLinks2Records();
+		// convertLinks2Records();
 		return super.contains(o);
 	}
 
@@ -178,7 +178,7 @@ public class ORecordLazySet extends ORecordTrackedSet implements ORecordLazyMult
 	}
 
 	protected Object convertRecord2Link(final Object iElement) {
-		if (iElement != null && iElement instanceof ORecord<?>)
+		if (iElement != null && iElement instanceof ORecord<?> && !((ORecord<?>) iElement).getIdentity().isNew())
 			return ((ORecord<?>) iElement).getIdentity();
 		return iElement;
 	}

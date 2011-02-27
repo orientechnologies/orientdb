@@ -68,7 +68,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 
 	@Override
 	public boolean add(Object e) {
-		if (status == MULTIVALUE_STATUS.ALL_RIDS && e instanceof ORecord<?>)
+		if (status == MULTIVALUE_STATUS.ALL_RIDS && e instanceof ORecord<?> && !((ORecord<?>) e).getIdentity().isNew())
 			// IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
 			e = ((ORecord<?>) e).getIdentity();
 		else
@@ -86,6 +86,12 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 			status = ORecordMultiValueHelper.getStatus(status, e);
 
 		super.add(index, e);
+	}
+
+	@Override
+	public Object set(int index, Object e) {
+		status = ORecordMultiValueHelper.getStatus(status, e);
+		return super.set(index, e);
 	}
 
 	@Override
@@ -182,7 +188,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 
 			try {
 				final ORecord<?> record = database.load(rid);
-				super.set(iIndex, record);
+				set(iIndex, record);
 			} catch (ORecordNotFoundException e) {
 				// IGNORE THIS
 			}
@@ -202,13 +208,12 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 
 		final Object o = super.get(iIndex);
 
-		if (o != null && o instanceof ORecord<?>) {
+		if (o != null && o instanceof ORecord<?> && !((ORecord<?>) o).getIdentity().isNew())
 			try {
 				super.set(iIndex, ((ORecord<?>) o).getIdentity());
 			} catch (ORecordNotFoundException e) {
 				// IGNORE THIS
 			}
-		}
 	}
 
 	public boolean isAutoConvertToRecord() {
