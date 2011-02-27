@@ -538,6 +538,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				linkedClass = iLinkedClass;
 			} else {
 				document = (ODocument) o;
+
+				if (document.getIdentity().isTemporary())
+					document.save();
+
 				linkedClass = document.getSchemaClass();
 			}
 
