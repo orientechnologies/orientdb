@@ -125,7 +125,7 @@ public class ODatabaseRecordCache extends OAbstractRecordCache {
 			final ORecordInternal<?> record = entries.remove(iRID);
 			if (record != null) {
 				//record.detach();
-				level2cache.pushRecord(entries.remove(iRID));
+				level2cache.pushRecord(record);
 			}
 		} finally {
 			releaseExclusiveLock();
