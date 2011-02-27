@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMultiValue {
 	final private byte																recordType;
 	private ODatabaseRecord														database;
-	private ORecordMultiValueHelper.MULTIVALUE_STATUS	status							= MULTIVALUE_STATUS.ALL_RECORDS;
+	private ORecordMultiValueHelper.MULTIVALUE_STATUS	status							= MULTIVALUE_STATUS.EMPTY;
 	private boolean																		autoConvertToRecord	= true;
 
 	public ORecordLazyList(final ODatabaseRecord iDatabase) {
@@ -62,7 +62,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 
 	@Override
 	public boolean contains(final Object o) {
-		//convertLinks2Records();
+		// convertLinks2Records();
 		return super.contains(o);
 	}
 
@@ -96,13 +96,13 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 
 	@Override
 	public int indexOf(final Object o) {
-		//convertLinks2Records();
+		// convertLinks2Records();
 		return super.indexOf(o);
 	}
 
 	@Override
 	public int lastIndexOf(final Object o) {
-		//convertLinks2Records();
+		// convertLinks2Records();
 		return super.lastIndexOf(o);
 	}
 
