@@ -59,7 +59,7 @@ public class OPropertyIndex implements OIndexCallback {
 
 	public void checkEntry(final ODocument iRecord) {
 		// GENERATE THE KEY
-		final String key = generateKey(iRecord);
+		final Object key = generateKey(iRecord);
 
 		try {
 			delegate.checkEntry(iRecord, key);
@@ -76,11 +76,16 @@ public class OPropertyIndex implements OIndexCallback {
 		return delegate;
 	}
 
-	public String getDocumentValueToIndex(ODocument iDocument) {
+	public Object getDocumentValueToIndex(ODocument iDocument) {
 		return generateKey(iDocument);
 	}
 
-	private String generateKey(final ODocument iRecord) {
+	private Object generateKey(final ODocument iRecord) {
+		if (fields.length == 1)
+			// ONE-FIELD KEY
+			return iRecord.field(fields[0]);
+
+		// MULTI KEY USED IN COMPOSED PROPERTY INDEXES
 		StringBuilder buffer = new StringBuilder();
 		for (String f : fields) {
 			if (buffer.length() > 0)

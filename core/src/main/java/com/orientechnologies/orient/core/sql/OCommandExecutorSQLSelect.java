@@ -434,7 +434,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 					|| idx instanceof OIndexFullText && iCondition.getOperator() instanceof OQueryOperatorContainsText) {
 				final Object value = iCondition.getLeft() == iItem ? iCondition.getRight() : iCondition.getLeft();
 				if (value != null) {
-					final Set<?> resultSet = prop.getIndex().getUnderlying().get(value.toString());
+					final Set<?> resultSet = prop.getIndex().getUnderlying().get(value);
 					if (resultSet != null && resultSet.size() > 0)
 						for (Object o : resultSet) {
 							if (o instanceof ORID)
