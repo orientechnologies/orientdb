@@ -673,7 +673,10 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 				// SAVE THE OLD VALUE IN A SEPARATE MAP
 				if (_fieldOriginalValues == null)
 					_fieldOriginalValues = new HashMap<String, Object>();
-				_fieldOriginalValues.put(iPropertyName, oldValue);
+
+				// INSERT IT ONLY IF NOT EXISTS TO AVOID LOOSE OF THE ORIGINAL VALUE (FUNDAMENTAL FOR INDEX HOOK)
+				if (!_fieldOriginalValues.containsKey(iPropertyName))
+					_fieldOriginalValues.put(iPropertyName, oldValue);
 			}
 		}
 
@@ -729,7 +732,10 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			// SAVE THE OLD VALUE IN A SEPARATE MAP
 			if (_fieldOriginalValues == null)
 				_fieldOriginalValues = new HashMap<String, Object>();
-			_fieldOriginalValues.put(iPropertyName, oldValue);
+			
+			// INSERT IT ONLY IF NOT EXISTS TO AVOID LOOSE OF THE ORIGINAL VALUE (FUNDAMENTAL FOR INDEX HOOK)
+			if (!_fieldOriginalValues.containsKey(iPropertyName))
+				_fieldOriginalValues.put(iPropertyName, oldValue);
 		}
 
 		_fieldValues.remove(iPropertyName);

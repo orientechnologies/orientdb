@@ -18,6 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -26,8 +27,10 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OPropertyIndex;
 import com.orientechnologies.orient.core.iterator.ORecordIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -179,6 +182,33 @@ public class CRUDDocumentPhysicalTest {
 		database.close();
 	}
 
+	@Test
+	public void testDoubleChanges() {
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+
+		ODocument vDoc = database.newInstance();
+		vDoc.setClassName("Profile");
+		vDoc.field("nick", "JayM1").field("name", "Jay").field("surname", "Miner");
+		vDoc.save();
+
+		vDoc = database.load(vDoc.getIdentity());
+		vDoc.field("nick", "JayM2");
+		vDoc.field("nick", "JayM3");
+		vDoc.save();
+
+		OPropertyIndex index = database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getIndex();
+
+		Set<ORecord<?>> vOldName = index.getUnderlying().get("JayM1");
+		Set<ORecord<?>> vIntermediateName = index.getUnderlying().get("JayM2");
+		Set<ORecord<?>> vNewName = index.getUnderlying().get("JayM3");
+
+		Assert.assertEquals(vOldName.size(), 0);
+		Assert.assertEquals(vIntermediateName.size(), 0);
+		Assert.assertEquals(vNewName.size(), 1);
+
+		database.close();
+	}
+
 	@Test(dependsOnMethods = "testUpdate")
 	public void testUpdateLazyDirtyPropagation() {
 		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
@@ -264,7 +294,8 @@ public class CRUDDocumentPhysicalTest {
 		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 		database.open("admin", "admin");
 
-		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile where name = :name and surname = :surname");
+		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
+				"select from Profile where name = :name and surname = :surname");
 
 		HashMap<String, String> params = new HashMap<String, String>();
 		params.put("name", "Barack");
@@ -282,7 +313,8 @@ public class CRUDDocumentPhysicalTest {
 		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 		database.open("admin", "admin");
 
-		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile where name = :name and surname = :surname");
+		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
+				"select from Profile where name = :name and surname = :surname");
 
 		HashMap<String, String> params = new HashMap<String, String>();
 		params.put("name", "Barack");

@@ -305,7 +305,7 @@ public class SQLSelectTest {
 		String lastName = null;
 		for (ODocument d : result) {
 			if (lastName != null && d.field("name") != null)
-				Assert.assertTrue(((String) d.field("name")).compareTo(lastName) > 0);
+				Assert.assertTrue(((String) d.field("name")).compareTo(lastName) >= 0);
 			lastName = d.field("name");
 		}
 
@@ -324,7 +324,7 @@ public class SQLSelectTest {
 		String lastName = null;
 		for (ODocument d : result) {
 			if (lastName != null && d.field("name") != null)
-				Assert.assertTrue(((String) d.field("name")).compareTo(lastName) > 0);
+				Assert.assertTrue(((String) d.field("name")).compareTo(lastName) >= 0);
 			lastName = d.field("name");
 		}
 
@@ -343,7 +343,7 @@ public class SQLSelectTest {
 		String lastName = null;
 		for (ODocument d : result) {
 			if (lastName != null && d.field("name") != null)
-				Assert.assertTrue(((String) d.field("name")).compareTo(lastName) < 0);
+				Assert.assertTrue(((String) d.field("name")).compareTo(lastName) <= 0);
 			lastName = d.field("name");
 		}
 
