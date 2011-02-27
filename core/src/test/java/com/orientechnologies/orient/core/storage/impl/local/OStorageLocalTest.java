@@ -20,6 +20,8 @@ public class OStorageLocalTest {
 		ODatabaseDocumentTx db = new ODatabaseDocumentTx("local:" + dbPath);
 		db.create();
 		db.close();
+		
+		db.getStorage().close(true);
 
 		System.out.println("Reopen it...");
 		// Something was added to dbPath so the legacy situation was simulated
