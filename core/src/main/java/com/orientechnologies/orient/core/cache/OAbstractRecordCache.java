@@ -39,7 +39,7 @@ public abstract class OAbstractRecordCache extends OSharedResource {
 	protected LinkedHashMap<ORID, ORecordInternal<?>>	entries;
 
 	protected Listener																watchDogListener;
-	final protected String														profilerPrefix;
+	protected String																	profilerPrefix;
 
 	/**
 	 * Create the cache of iMaxSize size.

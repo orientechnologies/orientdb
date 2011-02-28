@@ -24,21 +24,23 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 public abstract class OStorageAbstract implements OStorage {
+	protected final String										url;
+	protected final String										mode;
+	protected final OStorageRecordCache				level2cache;
 	protected OStorageConfiguration						configuration;
 	protected String													name;
-	protected String													url;
-	protected String													mode;
-	protected OStorageRecordCache							level2cache	= new OStorageRecordCache(this);
-	protected long														version			= 0;
+	protected long														version	= 0;
 
-	protected boolean													open				= false;
-	protected OSharedResourceAdaptiveExternal	lock				= new OSharedResourceAdaptiveExternal();
+	protected boolean													open		= false;
+	protected OSharedResourceAdaptiveExternal	lock		= new OSharedResourceAdaptiveExternal();
 
 	public OStorageAbstract(final String iName, final String iFilePath, final String iMode) {
 		if (OStringSerializerHelper.contains(iName, '/'))
 			name = iName.substring(iName.lastIndexOf("/") + 1);
 		else
 			name = iName;
+
+		level2cache = new OStorageRecordCache(this);
 
 		if (OStringSerializerHelper.contains(iName, ','))
 			throw new IllegalArgumentException("Invalid character in storage name: " + name);

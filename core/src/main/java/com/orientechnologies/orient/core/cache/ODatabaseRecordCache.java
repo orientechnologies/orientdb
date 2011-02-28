@@ -31,22 +31,24 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  */
 public class ODatabaseRecordCache extends OAbstractRecordCache {
 
-	final private ODatabaseRecord	database;
+	private final ODatabaseRecord	database;
 	private OStorageRecordCache		level2cache;
-	final private String					PROFILER_CACHE_FOUND;
-	final private String					PROFILER_CACHE_NOTFOUND;
+	private String								PROFILER_CACHE_FOUND;
+	private String								PROFILER_CACHE_NOTFOUND;
 
 	public ODatabaseRecordCache(final ODatabaseRecord iDatabase) {
 		super("db." + iDatabase.getName(), OGlobalConfiguration.DB_CACHE_SIZE.getValueAsInteger());
 		database = iDatabase;
-
-		PROFILER_CACHE_FOUND = profilerPrefix + ".cache.found";
-		PROFILER_CACHE_NOTFOUND = profilerPrefix + ".cache.notFound";
 	}
 
 	@Override
 	public void startup() {
+		profilerPrefix = "db." + database.getName();
+		PROFILER_CACHE_FOUND = profilerPrefix + ".cache.found";
+		PROFILER_CACHE_NOTFOUND = profilerPrefix + ".cache.notFound";
+
 		super.startup();
+
 		level2cache = database.getStorage().getCache();
 	}
 

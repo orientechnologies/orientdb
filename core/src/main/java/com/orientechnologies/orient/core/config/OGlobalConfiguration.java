@@ -22,6 +22,7 @@ import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.OMemoryWatchDog;
 import com.orientechnologies.orient.core.storage.fs.OMMapManager;
 
@@ -129,7 +130,15 @@ public enum OGlobalConfiguration {
 			Integer.class, 60000),
 
 	// PROFILER
-	PROFILER_ENABLED("profiler.enabled", "Enable the recording of statistics and counters", Boolean.class, false),
+	PROFILER_ENABLED("profiler.enabled", "Enable the recording of statistics and counters", Boolean.class, false,
+			new OConfigurationChangeCallback() {
+				public void change(final Object iCurrentValue, final Object iNewValue) {
+					if ((Boolean) iNewValue)
+						OProfiler.getInstance().startRecording();
+					else
+						OProfiler.getInstance().stopRecording();
+				}
+			}),
 
 	// LOG
 	LOG_CONSOLE_LEVEL("log.console.level", "Console's logging level", String.class, "info", new OConfigurationChangeCallback() {
