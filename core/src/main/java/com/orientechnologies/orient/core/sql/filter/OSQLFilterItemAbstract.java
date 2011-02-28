@@ -18,10 +18,10 @@ package com.orientechnologies.orient.core.sql.filter;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandToParse;
@@ -128,7 +128,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
 					// NO ARGS OPERATORS
 					if (operator == OSQLFilterFieldOperator.SIZE.id)
-						iResult = iResult != null ? ((Collection<?>) iResult).size() : 0;
+						iResult = iResult != null ? OMultiValue.getSize(iResult) : 0;
 
 					else if (operator == OSQLFilterFieldOperator.LENGTH.id)
 						iResult = iResult != null ? iResult.toString().length() : 0;

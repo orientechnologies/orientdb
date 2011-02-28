@@ -241,6 +241,23 @@ public class CRUDDocumentPhysicalTest {
 	}
 
 	@Test(dependsOnMethods = "testMultiValues")
+	public void testUnderscoreField() {
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+
+		ODocument vDoc = database.newInstance();
+		vDoc.setClassName("Profile");
+		vDoc.field("nick", "MostFamousJack").field("name", "OKiefer").field("surname", "Sutherland")
+				.field("tag_list", new String[] { "actor", "myth" });
+		vDoc.save();
+
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where tag_list.size() > 0 "))
+				.execute();
+
+		Assert.assertEquals(result.size(), 1);
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "testUnderscoreField")
 	public void testUpdateLazyDirtyPropagation() {
 		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 
