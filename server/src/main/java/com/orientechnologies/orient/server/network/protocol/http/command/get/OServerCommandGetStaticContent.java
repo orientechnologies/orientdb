@@ -110,7 +110,7 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 				contentSize = inputFile.length();
 
 				if (cache != null) {
-					// READ AL THE STREAM AND CACHE IT IN MEMORY
+					// READ THE ENTIRE STREAM AND CACHE IT IN MEMORY
 					final byte[] buffer = new byte[(int) contentSize];
 					for (int i = 0; i < contentSize; ++i)
 						buffer[i] = (byte) is.read();

@@ -26,6 +26,10 @@ public class OChannelTextServer extends OChannelText {
 	public OChannelTextServer(final Socket iSocket, final OContextConfiguration iConfiguration) throws IOException {
 		super(iSocket, iConfiguration);
 
+		socket.setPerformancePreferences(1, 2, 0);
+		socket.setSendBufferSize(socketBufferSize);
+		socket.setReceiveBufferSize(socketBufferSize);
+
 		inStream = new BufferedInputStream(socket.getInputStream(), socketBufferSize);
 		outStream = new BufferedOutputStream(socket.getOutputStream(), socketBufferSize);
 	}
