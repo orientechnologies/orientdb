@@ -397,6 +397,10 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			iRecord.setStatus(STATUS.LOADED);
 
 			callbackHooks(TYPE.AFTER_READ, iRecord);
+			
+			if (!iIgnoreCache) {
+				getCache().pushRecord(iRecord);
+			}
 
 			return (RET) iRecord;
 		} catch (ODatabaseException e) {

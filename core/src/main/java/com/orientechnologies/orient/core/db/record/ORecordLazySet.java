@@ -180,7 +180,7 @@ public class ORecordLazySet extends ORecordTrackedSet implements ORecordLazyMult
 
 	protected Object convertRecord2Link(final Object iElement) {
 		if (iElement != null && iElement instanceof ORecord<?> && !((ORecord<?>) iElement).getIdentity().isNew()) {
-			if (((ORecord<?>) iElement).isDirty())
+			if (((ORecord<?>) iElement).isDirty() && !database.isClosed())
 				database.save((ORecordInternal<?>) iElement);
 
 			return ((ORecord<?>) iElement).getIdentity();

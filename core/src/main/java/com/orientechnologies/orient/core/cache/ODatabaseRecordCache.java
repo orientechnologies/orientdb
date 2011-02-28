@@ -50,6 +50,15 @@ public class ODatabaseRecordCache extends OAbstractRecordCache {
 		level2cache = database.getStorage().getCache();
 	}
 
+	public void pushRecord(final ORecordInternal<?> iRecord) {
+		acquireExclusiveLock();
+		try {
+			entries.put(iRecord.getIdentity(), iRecord);
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
+
 	/**
 	 * Search a record in the cache and if found add in the Database's level-1 cache.
 	 * 
@@ -124,7 +133,7 @@ public class ODatabaseRecordCache extends OAbstractRecordCache {
 		try {
 			final ORecordInternal<?> record = entries.remove(iRID);
 			if (record != null) {
-				//record.detach();
+				record.detach();
 				level2cache.pushRecord(record);
 			}
 		} finally {
@@ -184,7 +193,7 @@ public class ODatabaseRecordCache extends OAbstractRecordCache {
 			// MOVE ALL THE LEVEL-1 CACHE INTO THE LEVEL-2 CACHE
 			for (ORecordInternal<?> record : entries.values()) {
 				if (!record.isDirty() && !record.getIdentity().isNew()) {
-					//record.detach();
+					record.detach();
 					level2cache.pushRecord(record);
 				}
 			}

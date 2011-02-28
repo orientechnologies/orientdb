@@ -259,8 +259,8 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 
 				if (fieldValue instanceof ORecord<?>)
 					_fieldValues.put(entry.getKey(), ((ORecord<?>) fieldValue).getIdentity());
-				else if (fieldValue instanceof ORecordLazyMultiValue)
-					((ORecordLazyMultiValue) fieldValue).convertRecords2Links();
+//				else if (fieldValue instanceof ORecordLazyMultiValue)
+//					((ORecordLazyMultiValue) fieldValue).convertRecords2Links();
 			}
 		}
 

@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
-@Test(sequential = true)
+@Test
 public class FullTextIndexerTest {
 	private static final int	DOCUMENTS	= 1000;
 
