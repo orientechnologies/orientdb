@@ -54,24 +54,24 @@ import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemory;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
 public class OStorageLocal extends OStorageEmbedded {
-	private static final int						DELETE_MAX_RETRIES	= 20;
-	private static final int						DELETE_WAIT_TIME		= 200;
-	public static final String[]				TYPES								= { OClusterLocal.TYPE, OClusterLogical.TYPE };
+	private static final int							DELETE_MAX_RETRIES	= 20;
+	private static final int							DELETE_WAIT_TIME		= 200;
+	public static final String[]					TYPES								= { OClusterLocal.TYPE, OClusterLogical.TYPE };
 
 	// private final OLockManager<String, String> lockManager = new
 	// OLockManager<String, String>();
-	private final Map<String, OCluster>	clusterMap					= new LinkedHashMap<String, OCluster>();
-	private OCluster[]									clusters						= new OCluster[0];
-	private ODataLocal[]								dataSegments				= new ODataLocal[0];
+	private final Map<String, OCluster>		clusterMap					= new LinkedHashMap<String, OCluster>();
+	private OCluster[]										clusters						= new OCluster[0];
+	private ODataLocal[]									dataSegments				= new ODataLocal[0];
 
-	private OStorageLocalTxExecuter			txManager;
-	private String											storagePath;
-	private OStorageVariableParser			variableParser;
-	private int													defaultClusterId		= -1;
+	private OStorageLocalTxExecuter				txManager;
+	private String												storagePath;
+	private OStorageVariableParser				variableParser;
+	private int														defaultClusterId		= -1;
 
-	private int													infoTableSize;
+	private OStorageConfigurationSegment	configurationSegment;
 
-	private static String[]							ALL_FILE_EXTENSIONS	= { ".och", ".ocl", ".oda", ".odh", ".otx" };
+	private static String[]								ALL_FILE_EXTENSIONS	= { "ocf", ".och", ".ocl", ".oda", ".odh", ".otx" };
 
 	public OStorageLocal(final String iName, final String iFilePath, final String iMode) throws IOException {
 		super(iName, iFilePath, iMode);
@@ -86,8 +86,8 @@ public class OStorageLocal extends OStorageEmbedded {
 			storagePath = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getParent()));
 		}
 
-		configuration = new OStorageConfiguration(this);
 		variableParser = new OStorageVariableParser(storagePath);
+		configuration = new OStorageConfigurationSegment(this, storagePath);
 		txManager = new OStorageLocalTxExecuter(this, configuration.txSegment);
 	}
 
@@ -120,6 +120,8 @@ public class OStorageLocal extends OStorageEmbedded {
 					clusters.length));
 			clusters[pos].open();
 
+			configuration.load();
+
 			pos = createClusterFromConfig(new OStoragePhysicalClusterConfiguration(configuration, OStorage.CLUSTER_INDEX_NAME,
 					clusters.length));
 			clusters[pos].open();
@@ -127,11 +129,6 @@ public class OStorageLocal extends OStorageEmbedded {
 			defaultClusterId = createClusterFromConfig(new OStoragePhysicalClusterConfiguration(configuration,
 					OStorage.CLUSTER_DEFAULT_NAME, clusters.length));
 			clusters[defaultClusterId].open();
-
-			configuration.load();
-
-			if (configuration.isEmpty())
-				throw new OStorageException("Can't open storage because it not exists. Storage path: " + url);
 
 			// REGISTER DATA SEGMENT
 			OStorageDataConfiguration dataConfig;
@@ -198,28 +195,6 @@ public class OStorageLocal extends OStorageEmbedded {
 
 		final boolean locked = lock.acquireExclusiveLock();
 
-		SIZE sizeProfile = SIZE.MEDIUM;
-
-		Object value;
-		if (iProperties != null) {
-			if (iProperties.containsKey("size")) {
-				value = iProperties.get("size");
-				if (value instanceof SIZE)
-					sizeProfile = (SIZE) value;
-				else
-					sizeProfile = SIZE.valueOf(value.toString());
-			}
-		}
-
-		if (sizeProfile == SIZE.HUGE)
-			infoTableSize = 5000000;
-		else if (sizeProfile == SIZE.LARGE)
-			infoTableSize = 1000000;
-		else if (sizeProfile == SIZE.MEDIUM)
-			infoTableSize = 200000;
-		else if (sizeProfile == SIZE.MEDIUM)
-			infoTableSize = 20000;
-
 		try {
 			if (open)
 				throw new OStorageException("Can't create new storage " + name + " because it isn't closed");
@@ -245,7 +220,7 @@ public class OStorageLocal extends OStorageEmbedded {
 			// ADD THE DEFAULT CLUSTER
 			defaultClusterId = addCluster(OStorage.CLUSTER_DEFAULT_NAME, OStorage.CLUSTER_TYPE.PHYSICAL);
 
-			configuration.create(infoTableSize);
+			configuration.create();
 
 			txManager.create();
 		} catch (OStorageException e) {
@@ -294,7 +269,7 @@ public class OStorageLocal extends OStorageEmbedded {
 			txManager.close();
 
 			level2cache.shutdown();
-			configuration = new OStorageConfiguration(this);
+			configuration.close();
 
 			OMMapManager.flush();
 
@@ -735,16 +710,10 @@ public class OStorageLocal extends OStorageEmbedded {
 	public String getPhysicalClusterNameById(final int iClusterId) {
 		checkOpeness();
 
-		// @TEST: AVOID SEARCH
 		if (iClusterId >= clusters.length)
 			return null;
 
 		return clusters[iClusterId].getName();
-
-		// for (OCluster cluster : clusters)
-		// if (cluster != null && cluster.getId() == iClusterId)
-		// return cluster.getName();
-		// return null;
 	}
 
 	@Override
@@ -1139,5 +1108,9 @@ public class OStorageLocal extends OStorageEmbedded {
 			size += c.getSize();
 
 		return size;
+	}
+
+	public OStorageConfigurationSegment getConfigurationSegment() {
+		return configurationSegment;
 	}
 }

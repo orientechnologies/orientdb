@@ -112,4 +112,8 @@ public class OSingleFileSegment extends OSharedResourceAdaptiveLinked {
 	public OStorageFileConfiguration getConfig() {
 		return config;
 	}
+
+	public OFile getFile() {
+		return file;
+	}
 }

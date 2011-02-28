@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.DecimalFormatSymbols;
@@ -24,10 +22,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
-import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -35,44 +30,53 @@ import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+@SuppressWarnings("serial")
 public class OStorageConfiguration implements OSerializableStream {
-	public static final int										CONFIG_RECORD_NUM				= 0;
+	public static final int										CONFIG_RECORD_NUM	= 0;
 
-	public static final int										CURRENT_VERSION					= 2;
+	public static final int										CURRENT_VERSION		= 2;
 
-	public int																version									= -1;
+	public int																version						= -1;
 	public String															name;
 	public String															schemaRecordId;
 	public String															dictionaryRecordId;
 	public String															indexMgrRecordId;
 
-	public String															localeLanguage					= Locale.getDefault().getLanguage();
-	public String															localeCountry						= Locale.getDefault().getCountry();
-	public String															dateFormat							= "yyyy-MM-dd";
-	public String															dateTimeFormat					= "yyyy-MM-dd hh:mm:ss";
+	public String															localeLanguage		= Locale.getDefault().getLanguage();
+	public String															localeCountry			= Locale.getDefault().getCountry();
+	public String															dateFormat				= "yyyy-MM-dd";
+	public String															dateTimeFormat		= "yyyy-MM-dd hh:mm:ss";
 
-	public OStorageSegmentConfiguration				fileTemplate						= new OStorageSegmentConfiguration();
+	public OStorageSegmentConfiguration				fileTemplate			= new OStorageSegmentConfiguration();
 
-	public List<OStorageClusterConfiguration>	clusters								= new ArrayList<OStorageClusterConfiguration>();
-	public List<OStorageDataConfiguration>		dataSegments						= new ArrayList<OStorageDataConfiguration>();
+	public List<OStorageClusterConfiguration>	clusters					= new ArrayList<OStorageClusterConfiguration>();
+	public List<OStorageDataConfiguration>		dataSegments			= new ArrayList<OStorageDataConfiguration>();
 
-	public OStorageTxConfiguration						txSegment								= new OStorageTxConfiguration();
+	public OStorageTxConfiguration						txSegment					= new OStorageTxConfiguration();
 
-	public List<OEntryConfiguration>					properties							= new ArrayList<OEntryConfiguration>();
+	public List<OEntryConfiguration>					properties				= new ArrayList<OEntryConfiguration>();
 
 	private transient Locale									localeInstance;
 	private transient DateFormat							dateFormatInstance;
 	private transient DateFormat							dateTimeFormatInstance;
 	private transient DecimalFormatSymbols		unusualSymbols;
-	private transient OStorage								storage;
-	private transient byte[]									record;
-	private int																fixedSize								= 0;
+	protected transient OStorage							storage;
 
-	private static final int									COMPRESSION_BUFFER_SIZE	= 8192;
+	public OStorageConfiguration(final OStorage iStorage) {
+		storage = iStorage;
+	}
 
+	/**
+	 * This method load the record information by the internal cluster segment. It's for compatibility with older database than
+	 * 0.9.25.
+	 * 
+	 * @compatibility 0.9.25
+	 * @return
+	 * @throws OSerializationException
+	 */
 	public OStorageConfiguration load() throws OSerializationException {
-		record = storage.readRecord(null, -1, storage.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME), CONFIG_RECORD_NUM, null).buffer;
-		fixedSize = record.length;
+		final byte[] record = storage.readRecord(null, -1, storage.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME),
+				CONFIG_RECORD_NUM, null).buffer;
 
 		if (record == null)
 			throw new OStorageException("Can't load database's configuration. The database seems to be corrupted.");
@@ -82,21 +86,8 @@ public class OStorageConfiguration implements OSerializableStream {
 	}
 
 	public void update() throws OSerializationException {
-		if (record == null)
-			return;
-
-		record = toStream();
+		final byte[] record = toStream();
 		storage.updateRecord(-1, storage.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME), 0, record, -1, ORecordBytes.RECORD_TYPE);
-	}
-
-	public void create(final int iFixedSize) throws IOException {
-		fixedSize = iFixedSize;
-		record = toStream();
-		storage.createRecord(storage.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME), record, ORecordBytes.RECORD_TYPE);
-	}
-
-	public OStorageConfiguration(final OStorage iStorage) {
-		storage = iStorage;
 	}
 
 	public boolean isEmpty() {
@@ -133,36 +124,7 @@ public class OStorageConfiguration implements OSerializableStream {
 	}
 
 	public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
-		final byte[] stream;
-		if (iStream[0] == 1) {
-			// UNCOMPRESS CONTENT
-			final ByteArrayInputStream compressedBuffer = new ByteArrayInputStream(iStream, 1, iStream.length - 1);
-			final ByteArrayOutputStream tempBuffer = new ByteArrayOutputStream();
-			try {
-				final GZIPInputStream compression = new GZIPInputStream(compressedBuffer);
-
-				int length;
-				byte[] buffer = new byte[COMPRESSION_BUFFER_SIZE];
-				while ((length = compression.read(buffer, 0, COMPRESSION_BUFFER_SIZE)) != -1)
-					tempBuffer.write(buffer, 0, length);
-
-				compression.close();
-
-				stream = tempBuffer.toByteArray();
-			} catch (IOException ex) {
-				throw new OSerializationException("Error while uncompressing storage configuration", ex);
-			} finally {
-				try {
-					tempBuffer.close();
-					compressedBuffer.close();
-				} catch (IOException ex) {
-					throw new OSerializationException("Error while uncompressing storage configuration", ex);
-				}
-			}
-		} else
-			stream = iStream;
-
-		final String[] values = new String(stream).split("\\|");
+		final String[] values = new String(iStream).split("\\|");
 		int index = 0;
 		version = Integer.parseInt(read(values[index++]));
 
@@ -323,45 +285,10 @@ public class OStorageConfiguration implements OSerializableStream {
 		for (OEntryConfiguration e : properties)
 			entryToStream(buffer, e);
 
-		if (fixedSize > 0 && buffer.length() > fixedSize) {
-			// ZIP THE CONTENT
-			final ByteArrayOutputStream compressedBuffer = new ByteArrayOutputStream();
+		// PLAIN: ALLOCATE ENOUGHT SPACE TO REUSE IT EVERY TIME
+		buffer.append("|");
 
-			try {
-				compressedBuffer.write(1);
-
-				GZIPOutputStream compression = new GZIPOutputStream(compressedBuffer);
-				compression.write(buffer.toString().getBytes());
-				compression.close();
-
-				if (compressedBuffer.size() > fixedSize)
-					throw new OConfigurationException("Configuration data exceeded size limit: " + fixedSize + " bytes");
-				else if (compressedBuffer.size() < fixedSize) {
-					// FILL THE BUFFER AT FIXED SIZE
-					for (int i = compressedBuffer.size(); i < fixedSize; ++i)
-						compressedBuffer.write(0);
-				}
-
-				return compressedBuffer.toByteArray();
-			} catch (IOException ex) {
-				throw new OSerializationException("Error while compressing storage configuration", ex);
-			} finally {
-				try {
-					compressedBuffer.close();
-				} catch (IOException ex) {
-					throw new OSerializationException("Error while compressing storage configuration", ex);
-				}
-			}
-		} else {
-			// PLAIN: ALLOCATE ENOUGHT SPACE TO REUSE IT EVERY TIME
-			buffer.insert(0, 0);
-
-			buffer.append("|");
-			if (fixedSize > 0)
-				buffer.setLength(fixedSize);
-
-			return buffer.toString().getBytes();
-		}
+		return buffer.toString().getBytes();
 	}
 
 	private int phySegmentFromStream(final String[] values, int index, final OStorageSegmentConfiguration iSegment) {
@@ -421,5 +348,11 @@ public class OStorageConfiguration implements OSerializableStream {
 		if (iBuffer.length() > 0)
 			iBuffer.append('|');
 		iBuffer.append(iValue != null ? iValue.toString() : ' ');
+	}
+
+	public void close() throws IOException {
+	}
+
+	public void create() throws IOException {
 	}
 }

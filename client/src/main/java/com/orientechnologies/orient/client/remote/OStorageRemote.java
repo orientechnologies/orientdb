@@ -91,7 +91,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 	public OStorageRemote(final String iURL, final String iMode) throws IOException {
 		super(iURL, iURL, iMode);
-		configuration = new OStorageConfiguration(this);
+		configuration = null;
 
 		clientConfiguration = new OContextConfiguration();
 		connectionRetry = clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY);
@@ -115,6 +115,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 			openRemoteDatabase();
 
+			configuration = new OStorageConfiguration(this);
 			configuration.load();
 
 		} catch (Exception e) {

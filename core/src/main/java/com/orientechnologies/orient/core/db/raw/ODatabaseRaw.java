@@ -186,7 +186,6 @@ public class ODatabaseRaw implements ODatabase {
 			return null;
 
 		try {
-			// SEARCH IT IN CACHE
 			return storage.readRecord(databaseOwner, id, iClusterId, iPosition, iFetchPlan);
 
 		} catch (Throwable t) {

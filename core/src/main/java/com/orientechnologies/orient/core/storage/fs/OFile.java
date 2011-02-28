@@ -387,4 +387,8 @@ public abstract class OFile {
 	public boolean isOpen() {
 		return accessFile != null;
 	}
+
+	public boolean exists() {
+		return osFile != null && osFile.exists();
+	}
 }

@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionEntry;
@@ -72,8 +73,6 @@ public class OStorageMemory extends OStorageEmbedded {
 
 		final boolean locked = lock.acquireExclusiveLock();
 		try {
-			configuration = new OStorageConfiguration(this);
-
 			addDataSegment(OStorage.DATA_DEFAULT_NAME);
 
 			// ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
@@ -85,10 +84,7 @@ public class OStorageMemory extends OStorageEmbedded {
 			// ADD THE DEFAULT CLUSTER
 			defaultClusterId = addCluster(OStorage.CLUSTER_DEFAULT_NAME, null);
 
-			configuration.create(0);
-
 			open = true;
-		} catch (IOException e) {
 		} finally {
 
 			lock.releaseExclusiveLock(locked);
@@ -524,5 +520,10 @@ public class OStorageMemory extends OStorageEmbedded {
 			deleteRecord(iRequesterId, rid, txEntry.getRecord().getVersion());
 			break;
 		}
+	}
+
+	public OStorageConfigurationSegment getConfigurationSegment() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

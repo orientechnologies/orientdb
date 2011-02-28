@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
 /**
@@ -80,6 +81,7 @@ public interface OStorage {
 	// TX OPERATIONS
 	public void commit(int iRequesterId, OTransaction iTx);
 
+	// MISC
 	public OStorageConfiguration getConfiguration();
 
 	public Set<String> getClusterNames();
