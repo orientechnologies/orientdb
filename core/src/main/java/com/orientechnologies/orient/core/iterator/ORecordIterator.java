@@ -171,6 +171,10 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 
 	protected boolean hasTxEntry() {
 		if (txEntries != null) {
+			if (currentTxEntryPosition >= txEntries.size())
+				// END OF TX ENTRIES
+				return false;
+
 			// BROWSE FOR NEW RECORDS IN CURRENT TX
 			OTransactionEntry entry;
 
