@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.iterator;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
@@ -43,6 +44,10 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 	protected String												fetchPlan;
 	private ORecordInternal<?>							reusedRecord						= null;	// DEFAULT = NOT REUSE IT
 	protected Boolean												directionForward;
+	protected int														currentClusterId;
+	protected long													firstClusterPosition;
+	protected long													lastClusterPosition;
+	protected long													totalAvailableRecords;
 	protected List<OTransactionEntry>				txEntries;
 	protected int														currentTxEntryPosition	= -1;
 
@@ -60,6 +65,31 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 	public abstract ORecordIterator<REC> begin();
 
 	public abstract ORecordIterator<REC> last();
+
+	@SuppressWarnings("unchecked")
+	protected REC getTransactionEntry() {
+		long physicalRecordTobrowse = currentClusterPosition > -2 && lastClusterPosition > -1 ? lastClusterPosition
+				- currentClusterPosition : 0;
+
+		if (physicalRecordTobrowse == 0 && txEntries != null) {
+			// IN TX
+			currentTxEntryPosition++;
+			if (currentTxEntryPosition >= txEntries.size())
+				throw new NoSuchElementException();
+			else
+				return (REC) txEntries.get(currentTxEntryPosition).getRecord();
+		}
+		return null;
+	}
+
+	protected long getRecordsToBrowse() {
+		long recordsToBrowse = currentClusterPosition > -2 && lastClusterPosition > -1 ? lastClusterPosition - currentClusterPosition
+				: 0;
+
+		if (txEntries != null)
+			recordsToBrowse += txEntries.size() - (currentTxEntryPosition + 1);
+		return recordsToBrowse;
+	}
 
 	public String getFetchPlan() {
 		return fetchPlan;
@@ -167,27 +197,6 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 	public ORecordIterator<REC> setLiveUpdated(boolean liveUpdated) {
 		this.liveUpdated = liveUpdated;
 		return this;
-	}
-
-	protected boolean hasTxEntry() {
-		if (txEntries != null) {
-			if (currentTxEntryPosition >= txEntries.size())
-				// END OF TX ENTRIES
-				return false;
-
-			// BROWSE FOR NEW RECORDS IN CURRENT TX
-			OTransactionEntry entry;
-
-			for (int i = currentTxEntryPosition + 1; i < txEntries.size(); ++i) {
-				entry = txEntries.get(i);
-				if (entry.getRecord().getIdentity().isTemporary()) {
-					// SET THE CURRENT POINTER
-					currentTxEntryPosition = i;
-					return true;
-				}
-			}
-		}
-		return false;
 	}
 
 	protected void checkDirection(final boolean iForward) {

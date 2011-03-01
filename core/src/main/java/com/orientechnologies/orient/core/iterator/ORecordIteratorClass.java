@@ -36,11 +36,6 @@ import com.orientechnologies.orient.core.tx.OTransactionEntry;
 public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecordIterator<REC> {
 	protected final int[]	clusterIds;
 	protected int					currentClusterIdx;
-
-	protected int					currentClusterId;
-	protected long				firstClusterPosition;
-	protected long				lastClusterPosition;
-	protected long				totalAvailableRecords;
 	protected boolean			polymorphic;
 
 	public ORecordIteratorClass(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
@@ -102,14 +97,9 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 		if (liveUpdated)
 			lastClusterPosition = database.getStorage().getClusterDataRange(currentClusterId)[1];
 
-		final long recordsToBrowse = currentClusterPosition > -2 && lastClusterPosition > -1 ? lastClusterPosition
-				- currentClusterPosition : 0;
-
-		if (recordsToBrowse <= 0)
-			return hasTxEntry();
-
-		return true;
+		return getRecordsToBrowse() > 0;
 	}
+
 
 	/**
 	 * Return the element at the current position and move backward the cursor to the previous position available.
@@ -152,21 +142,14 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 
 		ORecordInternal<?> record = getRecord();
 
-		if (currentTxEntryPosition > -1)
-			// IN TX
-			if (currentTxEntryPosition >= txEntries.size())
-				throw new NoSuchElementException();
-			else
-				return (REC) txEntries.get(currentTxEntryPosition++).getRecord();
-
 		// ITERATE UNTIL THE NEXT GOOD RECORD
 		while (currentClusterIdx < clusterIds.length) {
 
 			// MOVE FORWARD IN THE CURRENT CLUSTER
 			while (hasNext()) {
-				if (currentTxEntryPosition > -1)
-					// IN TX
-					return (REC) txEntries.get(currentTxEntryPosition++).getRecord();
+				record = getTransactionEntry();
+				if (record != null)
+					return (REC) record;
 
 				if ((record = readCurrentRecord(record, +1)) != null)
 					// FOUND

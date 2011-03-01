@@ -33,12 +33,8 @@ import com.orientechnologies.orient.core.tx.OTransactionEntry;
  *          Record Type
  */
 public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORecordIterator<REC> {
-	protected int		currentClusterId;
 	protected long	rangeFrom;
 	protected long	rangeTo;
-	protected long	firstClusterPosition;
-	protected long	lastClusterPosition;
-	protected long	totalAvailableRecords;
 
 	public ORecordIteratorCluster(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
 			final int iClusterId) {
@@ -98,13 +94,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 		if (liveUpdated)
 			lastClusterPosition = getRangeTo();
 
-		final long recordsToBrowse = currentClusterPosition > -2 && lastClusterPosition > -1 ? lastClusterPosition
-				- currentClusterPosition : 0;
-
-		if (recordsToBrowse <= 0)
-			return hasTxEntry();
-
-		return true;
+		return getRecordsToBrowse() > 0;
 	}
 
 	/**
@@ -138,20 +128,13 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 	public REC next() {
 		checkDirection(true);
 
-		if (currentTxEntryPosition > -1)
-			// IN TX
-			return (REC) txEntries.get(currentTxEntryPosition++).getRecord();
-
 		ORecordInternal<?> record = getRecord();
 
 		// ITERATE UNTIL THE NEXT GOOD RECORD
 		while (hasNext()) {
-			if (currentTxEntryPosition > -1)
-				// IN TX
-				if (currentTxEntryPosition >= txEntries.size())
-					throw new NoSuchElementException();
-				else
-					return (REC) txEntries.get(currentTxEntryPosition++).getRecord();
+			record = getTransactionEntry();
+			if (record != null)
+				return (REC) record;
 
 			if ((record = readCurrentRecord(record, +1)) != null)
 				// FOUND
