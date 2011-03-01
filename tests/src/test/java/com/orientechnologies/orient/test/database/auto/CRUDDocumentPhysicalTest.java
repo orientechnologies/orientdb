@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -246,14 +247,39 @@ public class CRUDDocumentPhysicalTest {
 
 		ODocument vDoc = database.newInstance();
 		vDoc.setClassName("Profile");
-		vDoc.field("nick", "MostFamousJack").field("name", "OKiefer").field("surname", "Sutherland")
+		vDoc.field("nick", "MostFamousJack").field("name", "Kiefer").field("surname", "Sutherland")
 				.field("tag_list", new String[] { "actor", "myth" });
 		vDoc.save();
 
-		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where tag_list.size() > 0 "))
+		List<ODocument> result = database.command(
+				new OSQLSynchQuery<ODocument>("select from Profile where name = 'Kiefer' and tag_list.size() > 0 ")).execute();
+
+		Assert.assertEquals(result.size(), 1);
+		database.close();
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testDbCacheUpdated() {
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+
+		ODocument vDoc = database.newInstance();
+		vDoc.setClassName("Profile");
+		vDoc.field("nick", "Dexter").field("name", "Michael").field("surname", "Hall").field("tag_list", new String[] { "raw" });
+		vDoc.save();
+
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where name = 'Michael'"))
 				.execute();
 
 		Assert.assertEquals(result.size(), 1);
+		ODocument dexter = result.get(0);
+		((Collection<String>) dexter.field("tag_list")).add("actor");
+		dexter.save();
+
+		result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where tag_list in 'actor' and tag_list in 'raw'"))
+				.execute();
+		Assert.assertEquals(result.size(), 1);
+
 		database.close();
 	}
 

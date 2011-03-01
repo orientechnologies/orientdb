@@ -113,6 +113,18 @@ public class ODatabaseRecordCache extends OAbstractRecordCache {
 		return record;
 	}
 
+	public void updateRecord(final ORecordInternal<?> iRecord) {
+		// ASSURE TO REMOVE IT FROM DB CACHE
+		acquireExclusiveLock();
+		try {
+			entries.remove(iRecord.getIdentity());
+		} finally {
+			releaseExclusiveLock();
+		}
+
+		level2cache.pushRecord(iRecord);
+	}
+
 	public boolean existsRecord(final ORID iRID) {
 		if (maxSize == 0)
 			// PRECONDITIONS
