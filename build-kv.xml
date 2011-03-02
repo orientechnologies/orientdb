@@ -1,11 +1,11 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <project basedir="." default="install" name="orient-ant">
-  <!-- Copyright (c) 1999-2010 Luca Garulli - LICENSE: Apache 2.0 -->
+  <!-- Copyright (c) 1999-2011 Luca Garulli - LICENSE: Apache 2.0 -->
   
 	<property environment="env" />
 	<property name="vendor"         value="Orient Technologies" />
 	<property name="product"        value="OrientDB Key/Value Server" />
-	<property name="version"        value="0.9.25-SNAPSHOT" />
+	<property name="version"        value="0.9.25" />
 	<property name="global.release" value="../releases/${version}" />
 	<property name="db.release"     value="../releases/${version}/db" />
 	<property name="kv.release"     value="../releases/${version}/kv" />

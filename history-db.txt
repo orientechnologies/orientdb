@@ -23,10 +23,28 @@
                  ``                                   
                  `                                    
 *******************************************************************************
-                                  ORIENT DATABASE
-                         http://www.orientechnologies.com
+                                 ORIENT DATABASE
+                        http://www.orientechnologies.com
 *******************************************************************************
 This document enlist the last changes to the OrientDB project.
+
+-------------------------------------------------------------------------------
+VERSION 0.9.25 - (March, 2nd 2011)
+-------------------------------------------------------------------------------
+- Brand new memory model with level-1 and level-2 caches (Issue #242)
+- SQL prepared statement (Issue #49)
+- SQL Projections with the support of links (Issue #15)
+- Graphical editor for documents in OrientDB Studio app (Issue #217)
+- Graph representation in OrientDB Studio app
+- Support for JPA annotation by the Object Database interface (Issue #102)
+- Smart Console under bash: history, auto completition, etc. (Issue #228)
+- Operations to work with GEO-spatial points (Issue #182)
+- @rid support in SQL UPDATE statement (Issue #72)
+- Range queries against Indexes (Issue #231)
+- 100% support of TinkerPop Blueprints 0.5
+- Many bugs fixed
+
+Full list: http://code.google.com/p/orient/issues/list?can=1&q=label:v0.9.25
 
 -------------------------------------------------------------------------------
 VERSION 0.9.24 - (December, 10th 2010)

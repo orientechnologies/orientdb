@@ -4,7 +4,7 @@
 
     <groupId>com.orientechnologies</groupId>
     <artifactId>orientdb-parent</artifactId>
-    <version>0.9.25-SNAPSHOT</version>
+    <version>0.9.25</version>
     <packaging>pom</packaging>
 
     <name>OrientDB Parent</name>
