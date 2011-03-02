@@ -1,46 +1,54 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <orient-server>
-    <handlers>
-        <handler class="com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager">
-            <parameters>
-                <parameter name="name" value="default"/>
-                <parameter name="security.algorithm" value="Blowfish"/>
-                <parameter name="network.multicast.address" value="235.1.1.1"/>
-                <parameter name="network.multicast.port" value="2424"/>
-                <parameter name="network.multicast.heartbeat" value="10"/>
-                <parameter name="server.update.delay" value="5000"/>
-                <parameter name="server.electedForLeadership" value="true"/>
-                <parameter name="security.key" value="2uKKjid/WrrSDqOu"/>
-            </parameters>
-        </handler>
-    </handlers>
-    <network>
-        <protocols>
-            <protocol name="binary" implementation="com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary"/>
-            <protocol name="http" implementation="com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb"/>
-            <protocol name="distributed" implementation="com.orientechnologies.orient.server.network.protocol.distributed.ONetworkProtocolDistributed"/>
-        </protocols>
-        <listeners>
-            <listener ip-address="127.0.0.1" port-range="2424-2430" protocol="distributed"/>
-            <listener ip-address="127.0.0.1" port-range="2480-2490" protocol="http">
-                <commands>
-                    <command pattern="POST|*.action GET|*.action" implementation="com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostAction">
-                        <parameters/>
-                    </command>
-                </commands>
-                <parameters/>
-            </listener>
-        </listeners>
-    </network>
-    <storages>
-        <storage name="temp" path="memory:temp" userName="admin" userPassword="admin" loaded-at-startup="true"/>
-    </storages>
-    <users>
-        <user name="root" password="72A0D8D40AB25DF03F18ECF2A9273E0C53CB2990F383149DF5F4599FDED24074" resources="*"/>
-    </users>
-    <properties>
-        <entry name="server.cache.staticResources" value="false"/>
-        <entry name="log.console.level" value="info"/>
-        <entry name="log.file.level" value="fine"/>
-    </properties>
+	<handlers>
+		<handler class="com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager">
+			<parameters>
+				<parameter name="name" value="default" />
+				<parameter name="security.algorithm" value="Blowfish" />
+				<parameter name="network.multicast.address" value="235.1.1.1" />
+				<parameter name="network.multicast.port" value="2424" />
+				<parameter name="network.multicast.heartbeat" value="10" />
+				<parameter name="server.update.delay" value="5000" />
+				<parameter name="server.electedForLeadership" value="true" />
+			</parameters>
+		</handler>
+	</handlers>
+	<network>
+		<protocols>
+			<!-- Default registered protocol. It reads commands using the HTTP protocol and write data locally -->
+			<protocol implementation="com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary" name="binary" />
+			<protocol implementation="com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb" name="http" />
+			<protocol implementation="com.orientechnologies.orient.server.network.protocol.distributed.ONetworkProtocolDistributed" name="distributed" />
+		</protocols>
+		<listeners>
+			<listener protocol="distributed" port-range="2424-2430" ip-address="127.0.0.1" />
+			<listener protocol="http" port-range="2480-2490" ip-address="127.0.0.1">
+				<parameters>
+					<!-- Connection's custom parameters. If not specified the global configuration will be taken -->
+				</parameters>
+				<commands>
+					<command pattern="POST|*.action GET|*.action" implementation="com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostAction">
+						<parameters>
+						</parameters>
+					</command>
+				</commands>
+			</listener>
+		</listeners>
+		<cluster>
+		</cluster>
+	</network>
+	<storages>
+		<!-- Default in-memory storage. Data are not saved permanently. -->
+		<storage path="memory:temp" name="temp" userName="admin" userPassword="admin" loaded-at-startup="true" />
+	</storages>
+	<users>
+	</users>
+	<properties>
+		<!-- Caches static contents. If enabled the files will be kept in memory the first time are loaded. Changes to the files will be taken on the next restart -->
+		<entry name="server.cache.staticResources" value="false" />
+
+		<!-- Enable/Disable logging. Levels are: finer, fine, finest, info, warning -->
+		<entry name="log.console.level" value="info" />
+		<entry name="log.file.level" value="fine" />
+	</properties>
 </orient-server>
