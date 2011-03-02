@@ -53,6 +53,10 @@ public class ODatabaseRecordCache extends OAbstractRecordCache {
 	}
 
 	public void pushRecord(final ORecordInternal<?> iRecord) {
+		if (maxSize == 0)
+			// PRECONDITIONS
+			return;
+
 		acquireExclusiveLock();
 		try {
 			entries.put(iRecord.getIdentity(), iRecord);
@@ -143,15 +147,17 @@ public class ODatabaseRecordCache extends OAbstractRecordCache {
 			// PRECONDITIONS
 			return;
 
+		final ORecordInternal<?> record;
 		acquireExclusiveLock();
 		try {
-			final ORecordInternal<?> record = entries.remove(iRID);
-			if (record != null) {
-				record.detach();
-				level2cache.pushRecord(record);
-			}
+			record = entries.remove(iRID);
 		} finally {
 			releaseExclusiveLock();
+		}
+
+		if (record != null) {
+			record.detach();
+			level2cache.pushRecord(record);
 		}
 	}
 

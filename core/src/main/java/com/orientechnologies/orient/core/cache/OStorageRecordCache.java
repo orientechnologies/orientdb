@@ -66,8 +66,7 @@ public class OStorageRecordCache extends OAbstractRecordCache {
 
 		acquireExclusiveLock();
 		try {
-			final ORecordInternal<?> record = entries.remove(iRID);
-			return record;
+			return entries.remove(iRID);
 		} finally {
 			releaseExclusiveLock();
 		}
