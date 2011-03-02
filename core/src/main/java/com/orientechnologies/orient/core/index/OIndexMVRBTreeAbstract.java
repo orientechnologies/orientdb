@@ -80,6 +80,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	 */
 	public OIndex create(final String iName, final ODatabaseRecord iDatabase, final String iClusterIndexName,
 			final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, final boolean iAutomatic) {
+		name = iName;
 		configuration = new ODocument(iDatabase);
 		automatic = iAutomatic;
 
@@ -87,7 +88,6 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 			for (int id : iClusterIdsToIndex)
 				clustersToIndex.add(iDatabase.getClusterNameById(id));
 
-		name = iName;
 		installProfilerHooks();
 
 		iDatabase.registerListener(this);
@@ -120,7 +120,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 
 	@SuppressWarnings("unchecked")
 	public Set<ORecord<?>> get(Object iKey) {
-		acquireSharedLock();
+		acquireExclusiveLock();
 
 		try {
 			final Set<ORecord<?>> values = map.get(iKey);
@@ -131,7 +131,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 			return values;
 
 		} finally {
-			releaseSharedLock();
+			releaseExclusiveLock();
 		}
 	}
 
@@ -166,7 +166,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 		if (iRangeFrom.getClass() != iRangeTo.getClass())
 			throw new IllegalArgumentException("Range from-to parameters are of different types");
 
-		acquireSharedLock();
+		acquireExclusiveLock();
 
 		try {
 			final ONavigableMap<Object, Set<ORecord<?>>> subSet = map.subMap(iRangeFrom, iInclusive, iRangeTo, iInclusive);
@@ -181,7 +181,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 			return result;
 
 		} finally {
-			releaseSharedLock();
+			releaseExclusiveLock();
 		}
 	}
 
@@ -254,13 +254,13 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	}
 
 	public OIndex remove(final Object key) {
-		acquireSharedLock();
+		acquireExclusiveLock();
 
 		try {
 			map.remove(key);
 
 		} finally {
-			releaseSharedLock();
+			releaseExclusiveLock();
 		}
 		return this;
 	}
@@ -290,8 +290,14 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	}
 
 	public OIndex delete() {
-		map.delete();
-		return this;
+		acquireExclusiveLock();
+
+		try {
+			map.delete();
+			return this;
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	public OIndex lazySave() {
@@ -312,13 +318,13 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	}
 
 	public Iterator<Entry<Object, Set<ORecord<?>>>> iterator() {
-		acquireSharedLock();
+		acquireExclusiveLock();
 
 		try {
 			return map.entrySet().iterator();
 
 		} finally {
-			releaseSharedLock();
+			releaseExclusiveLock();
 		}
 	}
 
@@ -331,7 +337,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 		iDatabase.registerListener(this);
 	}
 
-	public int getSize() {
+	public long size() {
 		acquireSharedLock();
 
 		try {
@@ -381,7 +387,14 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	}
 
 	public void unload() {
-		map.unload();
+		acquireExclusiveLock();
+
+		try {
+			map.unload();
+
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	public ODocument updateConfiguration() {
@@ -408,7 +421,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 		return automatic;
 	}
 
-	private void installProfilerHooks() {
+	protected void installProfilerHooks() {
 		OProfiler.getInstance().registerHookValue("index." + name + ".items", new OProfilerHookValue() {
 			public Object getValue() {
 				return map != null ? map.size() : "-";
@@ -432,10 +445,6 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 				return map != null ? map.getOptimizeThreshold() : "-";
 			}
 		});
-	}
-
-	public long size() {
-		return map.size();
 	}
 
 	public void onCreate(ODatabase iDatabase) {
@@ -463,18 +472,25 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	 * Reset documents into the set to update its hashcode.
 	 */
 	public void onAfterTxCommit(ODatabase iDatabase) {
-		if (tempItems.size() > 0) {
-			for (Object key : tempItems) {
-				Set<ORecord<?>> set = map.get(key);
-				if (set != null) {
-					// RE-ADD ALL THE ITEM TO UPDATE THE HASHCODE (CHANGED AFTER SAVE+COMMIT)
-					final Set<ORecord<?>> newSet = new HashSet<ORecord<?>>();
-					newSet.addAll(set);
-					map.put(key, newSet);
+		acquireExclusiveLock();
+
+		try {
+			if (tempItems.size() > 0) {
+				for (Object key : tempItems) {
+					Set<ORecord<?>> set = map.get(key);
+					if (set != null) {
+						// RE-ADD ALL THE ITEM TO UPDATE THE HASHCODE (CHANGED AFTER SAVE+COMMIT)
+						final Set<ORecord<?>> newSet = new HashSet<ORecord<?>>();
+						newSet.addAll(set);
+						map.put(key, newSet);
+					}
 				}
 			}
+			tempItems.clear();
+
+		} finally {
+			releaseExclusiveLock();
 		}
-		tempItems.clear();
 	}
 
 	public void onClose(ODatabase iDatabase) {

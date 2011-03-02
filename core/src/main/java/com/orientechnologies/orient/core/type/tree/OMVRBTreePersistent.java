@@ -118,9 +118,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			throws IOException;
 
 	@Override
-	public synchronized void clear() {
+	public void clear() {
 		final long timer = OProfiler.getInstance().startChrono();
-		final boolean locked = lock.acquireExclusiveLock();
 
 		try {
 			if (root != null) {
@@ -137,7 +136,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			OLogManager.instance().error(this, "Error on deleting the tree: " + record.getIdentity(), e, OStorageException.class);
 		} finally {
 
-			lock.releaseExclusiveLock(locked);
 			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.clear", timer);
 		}
 	}
@@ -145,9 +143,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	/**
 	 * Unload all the in-memory nodes. This is called on transaction rollback.
 	 */
-	public synchronized void unload() {
+	public void unload() {
 		final long timer = OProfiler.getInstance().startChrono();
-		final boolean locked = lock.acquireExclusiveLock();
 
 		try {
 			// DISCONNECT ALL THE NODES
@@ -165,7 +162,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			OLogManager.instance().error(this, "Error on unload the tree: " + record.getIdentity(), e, OStorageException.class);
 		} finally {
 
-			lock.releaseExclusiveLock(locked);
 			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.unload", timer);
 		}
 	}
@@ -174,10 +170,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	 * Optimize the tree memory consumption by keeping part of nodes as entry points and clearing all the rest.
 	 */
 	@SuppressWarnings("unchecked")
-	public synchronized void optimize() {
+	public void optimize() {
 		final long timer = OProfiler.getInstance().startChrono();
-
-		final boolean locked = lock.acquireExclusiveLock();
 
 		try {
 			if (root == null)
@@ -353,7 +347,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 					checkTreeStructure(root);
 			}
 
-			lock.releaseExclusiveLock(locked);
 			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.optimize", timer);
 
 			if (OLogManager.instance().isDebugEnabled())
@@ -365,15 +358,12 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	public V put(final K key, final V value) {
 		final long timer = OProfiler.getInstance().startChrono();
 
-		final boolean locked = lock.acquireExclusiveLock();
-
 		try {
 			final V v = internalPut(key, value);
 			commitChanges(null);
 			return v;
 		} finally {
 
-			lock.releaseExclusiveLock(locked);
 			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.put", timer);
 		}
 	}
@@ -382,8 +372,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	public void putAll(final Map<? extends K, ? extends V> map) {
 		final long timer = OProfiler.getInstance().startChrono();
 
-		final boolean locked = lock.acquireExclusiveLock();
-
 		try {
 			for (Entry<? extends K, ? extends V> entry : map.entrySet()) {
 				internalPut(entry.getKey(), entry.getValue());
@@ -391,8 +379,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			commitChanges(null);
 
 		} finally {
-
-			lock.releaseExclusiveLock(locked);
 			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.putAll", timer);
 		}
 	}
@@ -400,7 +386,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	@Override
 	public V remove(final Object key) {
 		final long timer = OProfiler.getInstance().startChrono();
-		final boolean locked = lock.acquireExclusiveLock();
 
 		try {
 			V v = super.remove(key);
@@ -408,14 +393,12 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			return v;
 		} finally {
 
-			lock.releaseExclusiveLock(locked);
 			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.remove", timer);
 		}
 	}
 
-	public synchronized void commitChanges(final ODatabaseRecord iDatabase) {
+	public void commitChanges(final ODatabaseRecord iDatabase) {
 		final long timer = OProfiler.getInstance().startChrono();
-		final boolean locked = lock.acquireExclusiveLock();
 
 		try {
 			if (recordsToCommit.size() > 0) {
@@ -478,7 +461,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 		} finally {
 
-			lock.releaseExclusiveLock(locked);
 			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.commitChanges", timer);
 		}
 	}
@@ -579,7 +561,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		record.setDirty();
 	}
 
-	public synchronized void signalNodeChanged(final OMVRBTreeEntry<K, V> iNode) {
+	public void signalNodeChanged(final OMVRBTreeEntry<K, V> iNode) {
 		recordsToCommit.add((OMVRBTreeEntryPersistent<K, V>) iNode);
 	}
 
@@ -635,22 +617,15 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		final StringBuilder buffer = new StringBuilder();
 		buffer.append("size=");
 
-		final boolean locked = lock.acquireSharedLock();
-		try {
+		buffer.append(size);
 
-			buffer.append(size);
-
-			if (size > 0) {
-				final int currPageIndex = pageIndex;
-				buffer.append(" ");
-				buffer.append(getFirstEntry().getFirstKey());
-				buffer.append("-");
-				buffer.append(getLastEntry().getLastKey());
-				pageIndex = currPageIndex;
-			}
-
-		} finally {
-			lock.releaseSharedLock(locked);
+		if (size > 0) {
+			final int currPageIndex = pageIndex;
+			buffer.append(" ");
+			buffer.append(getFirstEntry().getFirstKey());
+			buffer.append("-");
+			buffer.append(getLastEntry().getLastKey());
+			pageIndex = currPageIndex;
 		}
 
 		return buffer.toString();
@@ -690,61 +665,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 	public Object getValueSerializer() {
 		return valueSerializer;
-	}
-
-	@Override
-	public synchronized boolean containsKey(final Object key) {
-		return super.containsKey(key);
-	}
-
-	@Override
-	public synchronized boolean containsValue(final Object value) {
-		return super.containsValue(value);
-	}
-
-	@Override
-	public synchronized V get(final Object key) {
-		return super.get(key);
-	}
-
-	@Override
-	public synchronized Entry<K, V> pollFirstEntry() {
-		return super.pollFirstEntry();
-	}
-
-	@Override
-	public synchronized Entry<K, V> pollLastEntry() {
-		return super.pollLastEntry();
-	}
-
-	@Override
-	public synchronized Entry<K, V> floorEntry(final K key) {
-		return super.floorEntry(key);
-	}
-
-	@Override
-	public synchronized K floorKey(final K key) {
-		return super.floorKey(key);
-	}
-
-	@Override
-	public synchronized Entry<K, V> ceilingEntry(final K key) {
-		return super.ceilingEntry(key);
-	}
-
-	@Override
-	public synchronized K ceilingKey(final K key) {
-		return super.ceilingKey(key);
-	}
-
-	@Override
-	public synchronized Entry<K, V> higherEntry(final K key) {
-		return super.higherEntry(key);
-	}
-
-	@Override
-	public synchronized K higherKey(final K key) {
-		return super.higherKey(key);
 	}
 
 	/**

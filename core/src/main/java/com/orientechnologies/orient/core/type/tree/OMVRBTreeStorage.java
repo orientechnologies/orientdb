@@ -78,47 +78,33 @@ public class OMVRBTreeStorage<K, V> extends OMVRBTreePersistent<K, V> {
 
 	@Override
 	public OMVRBTreePersistent<K, V> load() throws IOException {
-		final boolean locked = lock.acquireExclusiveLock();
+		ORawBuffer raw = storage.readRecord(null, -1, clusterId, record.getIdentity().getClusterPosition(), null);
 
-		try {
-			ORawBuffer raw = storage.readRecord(null, -1, clusterId, record.getIdentity().getClusterPosition(), null);
+		if (raw == null)
+			throw new OConfigurationException("Can't load map with id " + clusterId + ":" + record.getIdentity().getClusterPosition());
 
-			if (raw == null)
-				throw new OConfigurationException("Can't load map with id " + clusterId + ":" + record.getIdentity().getClusterPosition());
+		record.setVersion(raw.version);
 
-			record.setVersion(raw.version);
-
-			fromStream(raw.buffer);
-			return this;
-
-		} finally {
-			lock.releaseExclusiveLock(locked);
-		}
+		fromStream(raw.buffer);
+		return this;
 	}
 
 	@Override
 	public OMVRBTreePersistent<K, V> save() throws IOException {
-		final boolean locked = lock.acquireExclusiveLock();
-
-		try {
-			record.fromStream(toStream());
-			if (record.getIdentity().isValid())
-				// UPDATE IT WITHOUT VERSION CHECK SINCE ALL IT'S LOCKED
-				record.setVersion(storage.updateRecord(0, record.getIdentity().getClusterId(), record.getIdentity().getClusterPosition(),
-						record.toStream(), -1, record.getRecordType()));
-			else {
-				// CREATE IT
-				int cluster = record.getIdentity().getClusterId() == ORID.CLUSTER_ID_INVALID ? clusterId : record.getIdentity()
-						.getClusterId();
-				record.setIdentity(cluster, storage.createRecord(cluster, record.toStream(), record.getRecordType()));
-			}
-			record.unsetDirty();
-
-			return this;
-
-		} finally {
-			lock.releaseExclusiveLock(locked);
+		record.fromStream(toStream());
+		if (record.getIdentity().isValid())
+			// UPDATE IT WITHOUT VERSION CHECK SINCE ALL IT'S LOCKED
+			record.setVersion(storage.updateRecord(0, record.getIdentity().getClusterId(), record.getIdentity().getClusterPosition(),
+					record.toStream(), -1, record.getRecordType()));
+		else {
+			// CREATE IT
+			int cluster = record.getIdentity().getClusterId() == ORID.CLUSTER_ID_INVALID ? clusterId : record.getIdentity()
+					.getClusterId();
+			record.setIdentity(cluster, storage.createRecord(cluster, record.toStream(), record.getRecordType()));
 		}
+		record.unsetDirty();
+
+		return this;
 	}
 
 	@Override

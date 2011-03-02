@@ -32,28 +32,42 @@ public class OIndexNotUnique extends OIndexMVRBTreeAbstract {
 	}
 
 	public OIndex put(final Object iKey, final ORecord<?> iSingleValue) {
-		Set<ORecord<?>> values = map.get(iKey);
-		if (values == null)
-			values = new HashSet<ORecord<?>>();
+		acquireExclusiveLock();
 
-		if (!iSingleValue.getIdentity().isValid())
-			iSingleValue.save();
+		try {
+			Set<ORecord<?>> values = map.get(iKey);
+			if (values == null)
+				values = new HashSet<ORecord<?>>();
 
-		if (iSingleValue.getIdentity().isTemporary())
-			tempItems.add(iKey);
+			if (!iSingleValue.getIdentity().isValid())
+				iSingleValue.save();
 
-		values.add(iSingleValue);
+			if (iSingleValue.getIdentity().isTemporary())
+				tempItems.add(iKey);
 
-		map.put(iKey, values);
-		return this;
+			values.add(iSingleValue);
+
+			map.put(iKey, values);
+			return this;
+
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	public OIndex remove(final Object iKey, final ORecord<?> value) {
-		final Set<ORecord<?>> recs = get(iKey);
-		if (recs != null && !recs.isEmpty()) {
-			if (recs.remove(value))
-				map.put(iKey, recs);
+		acquireExclusiveLock();
+
+		try {
+			final Set<ORecord<?>> recs = get(iKey);
+			if (recs != null && !recs.isEmpty()) {
+				if (recs.remove(value))
+					map.put(iKey, recs);
+			}
+			return this;
+
+		} finally {
+			releaseExclusiveLock();
 		}
-		return this;
 	}
 }

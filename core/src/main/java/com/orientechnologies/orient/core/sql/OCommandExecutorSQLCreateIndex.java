@@ -101,6 +101,6 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 
 		prop.createIndex(indexType.toUpperCase(), progressListener);
 
-		return prop.getIndex().getUnderlying().getSize();
+		return prop.getIndex().getUnderlying().size();
 	}
 }

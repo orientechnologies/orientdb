@@ -56,8 +56,6 @@ public interface OIndex extends Iterable<Entry<Object, Set<ORecord<?>>>> {
 	 */
 	public OIndex rebuild(final OProgressListener iProgressListener);
 
-	public int getSize();
-
 	public String getType();
 
 	/**

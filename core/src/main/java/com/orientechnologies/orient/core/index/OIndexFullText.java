@@ -20,17 +20,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerLiteral;
-import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
 
 /**
  * Fast index for full-text searches.
@@ -65,30 +59,6 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 		create(iName, iDatabase, iClusterIndexName, iClusterIdsToIndex, null, iAutomatic);
 	}
 
-	@Override
-	public OIndex create(final String iName, final ODatabaseRecord iDatabase, final String iClusterIndexName,
-			final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, final boolean iAutomatic) {
-		name = iName;
-
-		if (iDatabase.getClusterIdByName(iClusterIndexName) == -1)
-			// CREATE THE PHYSICAL CLUSTER THE FIRST TIME
-			iDatabase.addPhysicalCluster(iClusterIndexName, iClusterIndexName, -1);
-
-		ODatabaseComplex<?> db = iDatabase;
-		while (db != null && !(db instanceof ODatabaseRecord))
-			db = db.getUnderlying();
-
-		for (int id : iClusterIdsToIndex)
-			clustersToIndex.add(iDatabase.getClusterNameById(id));
-
-		map = new OMVRBTreeDatabaseLazySave<Object, Set<ORecord<?>>>((ODatabaseRecord) db, iClusterIndexName,
-				OStreamSerializerLiteral.INSTANCE, OStreamSerializerListRID.INSTANCE);
-		map.lazySave();
-
-		configuration = new ODocument(iDatabase);
-		return this;
-	}
-
 	/**
 	 * Index an entire document field by field and save the index at the end.
 	 * 
@@ -103,10 +73,14 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 			put(fieldValue, iDocument);
 		}
 
+		acquireExclusiveLock();
+
 		try {
 			map.save();
 		} catch (IOException e) {
 			throw new OIndexException("Can't save index entry for document '" + iDocument.getIdentity() + "'");
+		} finally {
+			releaseExclusiveLock();
 		}
 	}
 
@@ -152,33 +126,41 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 			if (stopWords.contains(word))
 				continue;
 
-			// SEARCH FOR THE WORD
-			refs = map.get(word);
-			if (refs == null)
-				// WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
-				refs = new HashSet<ORecord<?>>();
+			acquireExclusiveLock();
 
-			// ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
-			refs.add(iSingleValue);
+			try {
+				// SEARCH FOR THE WORD
+				refs = map.get(word);
+				if (refs == null)
+					// WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
+					refs = new HashSet<ORecord<?>>();
 
-			// SAVE THE INDEX ENTRY
-			map.put(word, refs);
+				// ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
+				refs.add(iSingleValue);
+
+				// SAVE THE INDEX ENTRY
+				map.put(word, refs);
+
+			} finally {
+				releaseExclusiveLock();
+			}
 		}
 		return this;
 	}
 
 	public OIndex remove(final Object iKey, final ORecord<?> value) {
-		final Set<ORecord<?>> recs = get(iKey);
-		if (recs != null && !recs.isEmpty()) {
-			if (recs.remove(value))
-				map.put(iKey, recs);
+		acquireExclusiveLock();
+
+		try {
+			final Set<ORecord<?>> recs = get(iKey);
+			if (recs != null && !recs.isEmpty()) {
+				if (recs.remove(value))
+					map.put(iKey, recs);
+			}
+		} finally {
+			releaseExclusiveLock();
 		}
 		return this;
-	}
-
-	@Override
-	public ORID getIdentity() {
-		return configuration.getIdentity();
 	}
 
 	@Override

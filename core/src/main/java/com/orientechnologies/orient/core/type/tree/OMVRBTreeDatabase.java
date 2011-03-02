@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 @SuppressWarnings("serial")
 public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> implements ODatabaseListener {
 	protected ODatabaseRecord	database;
+	private int								users;
 
 	public OMVRBTreeDatabase(final ODatabaseRecord iDatabase, final ORID iRID) {
 		super(iDatabase.getClusterNameById(iRID.getClusterId()), iRID);
@@ -53,16 +54,9 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> implement
 	}
 
 	public void delete() {
-		final boolean locked = lock.acquireExclusiveLock();
-		try {
-
-			clear();
-			record.delete();
-			deinit(database);
-
-		} finally {
-			lock.releaseExclusiveLock(locked);
-		}
+		clear();
+		record.delete();
+		deinit(database);
 	}
 
 	@Override
@@ -140,30 +134,16 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> implement
 			// NOTHING TO LOAD
 			return this;
 
-		final boolean locked = lock.acquireExclusiveLock();
-
-		try {
-			record = (ORecordBytesLazy) record.load();
-			record.recycle(this);
-			fromStream(record.toStream());
-			return this;
-
-		} finally {
-			lock.releaseExclusiveLock(locked);
-		}
+		record = (ORecordBytesLazy) record.load();
+		record.recycle(this);
+		fromStream(record.toStream());
+		return this;
 	}
 
 	@Override
 	public OMVRBTreePersistent<K, V> save() throws IOException {
-		final boolean locked = lock.acquireExclusiveLock();
-		try {
-
-			record.save(clusterName);
-			return this;
-
-		} finally {
-			lock.releaseExclusiveLock(locked);
-		}
+		record.save(clusterName);
+		return this;
 	}
 
 	public void onOpen(final ODatabase iDatabase) {
@@ -175,8 +155,7 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> implement
 	public void onBeforeTxRollback(ODatabase iDatabase) {
 	}
 
-	public void onAfterTxRollback(ODatabase iDatabase) {
-		final boolean locked = lock.acquireExclusiveLock();
+	public void onAfterTxRollback(final ODatabase iDatabase) {
 		try {
 
 			cache.clear();
@@ -187,9 +166,6 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> implement
 			}
 		} catch (IOException e) {
 			throw new OIndexException("Error on loading root node");
-
-		} finally {
-			lock.releaseExclusiveLock(locked);
 		}
 	}
 
@@ -198,27 +174,21 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> implement
 	}
 
 	public void onAfterTxCommit(final ODatabase iDatabase) {
-		final boolean locked = lock.acquireExclusiveLock();
-		try {
+		if (cache.keySet().size() == 0)
+			return;
 
-			if (cache.keySet().size() == 0)
-				return;
+		// FIX THE CACHE CONTENT WITH FINAL RECORD-IDS
+		final Set<ORID> keys = new HashSet<ORID>(cache.keySet());
+		OMVRBTreeEntryDatabase<K, V> entry;
+		for (ORID rid : keys) {
+			if (rid.getClusterPosition() < -1) {
+				// FIX IT IN CACHE
+				entry = (OMVRBTreeEntryDatabase<K, V>) cache.get(rid);
 
-			// FIX THE CACHE CONTENT WITH FINAL RECORD-IDS
-			final Set<ORID> keys = new HashSet<ORID>(cache.keySet());
-			OMVRBTreeEntryDatabase<K, V> entry;
-			for (ORID rid : keys) {
-				if (rid.getClusterPosition() < -1) {
-					// FIX IT IN CACHE
-					entry = (OMVRBTreeEntryDatabase<K, V>) cache.get(rid);
-
-					// OVERWRITE IT WITH THE NEW RID
-					cache.put(entry.record.getIdentity(), entry);
-					cache.remove(rid);
-				}
+				// OVERWRITE IT WITH THE NEW RID
+				cache.put(entry.record.getIdentity(), entry);
+				cache.remove(rid);
 			}
-		} finally {
-			lock.releaseExclusiveLock(locked);
 		}
 	}
 
@@ -226,21 +196,14 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> implement
 	 * Assure to save all the data without the optimization.
 	 */
 	public void onClose(final ODatabase iDatabase) {
-		if( database.isClosed())
+		if (database.isClosed())
 			return;
-		
-		final boolean locked = lock.acquireExclusiveLock();
-		try {
-			lock.removeUser();
 
-			if (lock.getUsers() == 0) {
-				super.commitChanges(database);
-				cache.clear();
-				entryPoints.clear();
-				root = null;
-			}
-		} finally {
-			lock.releaseExclusiveLock(locked);
+		if (--users == 0) {
+			super.commitChanges(database);
+			cache.clear();
+			entryPoints.clear();
+			root = null;
 		}
 	}
 
@@ -251,7 +214,7 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> implement
 	}
 
 	private void init(final ODatabaseRecord iDatabase) {
-		lock.addUser();
+		users++;
 		iDatabase.registerListener(this);
 	}
 

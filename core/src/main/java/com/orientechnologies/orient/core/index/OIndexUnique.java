@@ -28,29 +28,36 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Luca Garulli
  * 
  */
-@SuppressWarnings("serial")
 public class OIndexUnique extends OIndexMVRBTreeAbstract {
 	public OIndexUnique() {
 		super("UNIQUE");
 	}
 
 	public OIndex put(final Object iKey, final ORecord<?> iSingleValue) {
-		Set<ORecord<?>> values = map.get(iKey);
-		if (values == null)
-			values = new HashSet<ORecord<?>>();
-		else if (values.size() == 1) {
-			// CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
-			if (!values.contains(iSingleValue))
+		acquireExclusiveLock();
+
+		try {
+			Set<ORecord<?>> values = map.get(iKey);
+
+			if (values == null)
+				values = new HashSet<ORecord<?>>();
+			else if (values.size() == 1) {
+				// CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
+				if (!values.contains(iSingleValue))
+					throw new OIndexException("Found duplicated key '" + iKey + "' on unique index '" + name + "'");
+				else
+					return this;
+			} else if (values.size() > 1)
 				throw new OIndexException("Found duplicated key '" + iKey + "' on unique index '" + name + "'");
-			else
-				return this;
-		} else if (values.size() > 1)
-			throw new OIndexException("Found duplicated key '" + iKey + "' on unique index '" + name + "'");
 
-		values.add(iSingleValue);
+			values.add(iSingleValue);
 
-		map.put(iKey, values);
-		return this;
+			map.put(iKey, values);
+			return this;
+			
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	public OIndex remove(final Object key, final ORecord<?> value) {

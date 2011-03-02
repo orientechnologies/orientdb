@@ -43,7 +43,7 @@ public class OCommandExecutorSQLRemoveIndex extends OCommandExecutorSQLPermissio
 
 		init(iRequest.getDatabase(), iRequest.getText());
 
-		StringBuilder word = new StringBuilder();
+		final StringBuilder word = new StringBuilder();
 
 		int oldPos = 0;
 		int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
@@ -81,18 +81,18 @@ public class OCommandExecutorSQLRemoveIndex extends OCommandExecutorSQLPermissio
 		if (field == null)
 			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
 
-		OClass cls = database.getMetadata().getSchema().getClass(sourceClassName);
+		final OClass cls = database.getMetadata().getSchema().getClass(sourceClassName);
 		if (cls == null)
 			throw new OCommandExecutionException("Class '" + sourceClassName + "' not found");
 
-		OProperty prop = cls.getProperty(field);
+		final OProperty prop = cls.getProperty(field);
 		if (prop == null)
 			throw new IllegalArgumentException("Property '" + field + "' was not found in class '" + cls + "'");
 
 		if (prop.getIndex() == null)
 			throw new IllegalArgumentException("Property '" + cls + "." + field + "' has not index");
 
-		final int indexedItems = prop.getIndex().getUnderlying().getSize();
+		final long indexedItems = prop.getIndex().getUnderlying().size();
 
 		prop.removeIndex();
 

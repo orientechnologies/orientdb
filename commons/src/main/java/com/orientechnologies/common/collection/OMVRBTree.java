@@ -30,7 +30,6 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 
-import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 
@@ -50,12 +49,12 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	boolean																		pageItemFound				= false;
 	int																				pageItemComparator	= 0;
 	protected volatile int										pageIndex						= -1;
-	protected int															lastPageSize				= 63;																		// PERSISTENT FIELDS
+	protected int															lastPageSize				= 63;		// PERSISTENT FIELDS
 
 	/**
 	 * The number of entries in the tree
 	 */
-	protected int															size								= 0;																			// PERSISTENT FIELDS
+	protected int															size								= 0;			// PERSISTENT FIELDS
 	protected float														pageLoadFactor			= 0.7f;
 
 	/**
@@ -65,8 +64,6 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 */
 	private final Comparator<? super K>				comparator;
 	protected transient OMVRBTreeEntry<K, V>	root								= null;
-
-	protected OSharedResourceAdaptiveExternal	lock								= new OSharedResourceAdaptiveExternal();
 
 	/**
 	 * The number of structural modifications to the tree.
@@ -167,17 +164,10 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	public int getNodes() {
 		int counter = -1;
 
-		final boolean locked = lock.acquireSharedLock();
-		try {
-
-			OMVRBTreeEntry<K, V> entry = getFirstEntry();
-			while (entry != null) {
-				entry = successor(entry);
-				counter++;
-			}
-
-		} finally {
-			lock.releaseSharedLock(locked);
+		OMVRBTreeEntry<K, V> entry = getFirstEntry();
+		while (entry != null) {
+			entry = successor(entry);
+			counter++;
 		}
 
 		return counter;
@@ -206,15 +196,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 */
 	@Override
 	public boolean containsKey(final Object key) {
-		final boolean locked = lock.acquireSharedLock();
-		try {
-
-			OMVRBTreeEntry<K, V> entry = getEntry(key);
-			return entry != null;
-
-		} finally {
-			lock.releaseSharedLock(locked);
-		}
+		return getEntry(key) != null;
 	}
 
 	/**
@@ -230,17 +212,10 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 */
 	@Override
 	public boolean containsValue(final Object value) {
-		final boolean locked = lock.acquireSharedLock();
-		try {
-
-			for (OMVRBTreeEntry<K, V> e = getFirstEntry(); e != null; e = next(e))
-				if (valEquals(value, e.getValue()))
-					return true;
-			return false;
-
-		} finally {
-			lock.releaseSharedLock(locked);
-		}
+		for (OMVRBTreeEntry<K, V> e = getFirstEntry(); e != null; e = next(e))
+			if (valEquals(value, e.getValue()))
+				return true;
+		return false;
 	}
 
 	/**
@@ -263,18 +238,11 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 */
 	@Override
 	public V get(final Object key) {
-		final boolean locked = lock.acquireSharedLock();
-		try {
+		if (size == 0)
+			return null;
 
-			if (size == 0)
-				return null;
-
-			OMVRBTreeEntry<K, V> entry = getEntry(key);
-			return entry == null ? null : entry.getValue();
-
-		} finally {
-			lock.releaseSharedLock(locked);
-		}
+		OMVRBTreeEntry<K, V> entry = getEntry(key);
+		return entry == null ? null : entry.getValue();
 	}
 
 	public Comparator<? super K> comparator() {
@@ -310,28 +278,20 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 */
 	@Override
 	public void putAll(final Map<? extends K, ? extends V> map) {
-
-		final boolean locked = lock.acquireExclusiveLock();
-		try {
-
-			int mapSize = map.size();
-			if (size == 0 && mapSize != 0 && map instanceof SortedMap) {
-				Comparator<?> c = ((SortedMap<? extends K, ? extends V>) map).comparator();
-				if (c == comparator || (c != null && c.equals(comparator))) {
-					++modCount;
-					try {
-						buildFromSorted(mapSize, map.entrySet().iterator(), null, null);
-					} catch (java.io.IOException cannotHappen) {
-					} catch (ClassNotFoundException cannotHappen) {
-					}
-					return;
+		int mapSize = map.size();
+		if (size == 0 && mapSize != 0 && map instanceof SortedMap) {
+			Comparator<?> c = ((SortedMap<? extends K, ? extends V>) map).comparator();
+			if (c == comparator || (c != null && c.equals(comparator))) {
+				++modCount;
+				try {
+					buildFromSorted(mapSize, map.entrySet().iterator(), null, null);
+				} catch (java.io.IOException cannotHappen) {
+				} catch (ClassNotFoundException cannotHappen) {
 				}
+				return;
 			}
-			super.putAll(map);
-
-		} finally {
-			lock.releaseExclusiveLock(locked);
 		}
+		super.putAll(map);
 	}
 
 	/**
@@ -582,91 +542,84 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 */
 	@Override
 	public V put(final K key, final V value) {
-		final boolean locked = lock.acquireExclusiveLock();
+		OMVRBTreeEntry<K, V> parentNode = null;
+
 		try {
+			if (root == null) {
+				root = createEntry(key, value);
+				root.setColor(BLACK);
 
-			OMVRBTreeEntry<K, V> parentNode = null;
-
-			try {
-				if (root == null) {
-					root = createEntry(key, value);
-					root.setColor(BLACK);
-
-					size = 1;
-					modCount++;
-
-					if (listener != null)
-						listener.signalTreeChanged(this);
-
-					return null;
-				}
-
-				// System.out.println("Put of key " + key + "...");
-
-				// SEARCH THE ITEM
-				parentNode = getEntry(key, true);
-
-				// System.out.println("Parent node: " + parentNode+", pageItemFound="+pageItemFound);
-
-				if (pageItemFound)
-					// EXACT MATCH: UPDATE THE VALUE
-					return parentNode.setValue(value);
-
-				if (parentNode == null) {
-					parentNode = root;
-					pageIndex = 0;
-				}
-
-				// System.out.println("Parent node free space: " + parentNode.getFreeSpace());
-
-				if (parentNode.getFreeSpace() > 0) {
-					// INSERT INTO THE PAGE
-					parentNode.insert(pageIndex, key, value);
-				} else {
-					// CREATE NEW NODE AND COPY HALF OF VALUES FROM THE ORIGIN TO THE NEW ONE IN ORDER TO GET VALUES BALANCED
-					final OMVRBTreeEntry<K, V> newNode = createEntry(parentNode);
-
-					// System.out.println("Created new entry: " + newEntry+ ", insert the key as index="+pageIndex);
-
-					if (pageIndex < parentNode.getPageSplitItems())
-						// INSERT IN THE ORIGINAL NODE
-						parentNode.insert(pageIndex, key, value);
-					else
-						// INSERT IN THE NEW NODE
-						newNode.insert(pageIndex - parentNode.getPageSplitItems(), key, value);
-
-					final OMVRBTreeEntry<K, V> prevNode = parentNode.getRight();
-
-					// REPLACE THE RIGHT ONE WITH THE NEW NODE
-					parentNode.setRight(newNode);
-
-					if (prevNode != null) {
-						// INSERT THE NODE IN THE TREE IN THE RIGHT MOVING CURRENT RIGHT TO THE RIGHT OF THE NEW NODE
-						newNode.setRight(prevNode);
-						fixAfterInsertion(prevNode);
-					} else
-						fixAfterInsertion(newNode);
-
-					checkTreeStructure(parentNode);
-
-					modCount++;
-				}
-
-				checkTreeStructure(parentNode);
-
-				size++;
+				size = 1;
+				modCount++;
 
 				if (listener != null)
 					listener.signalTreeChanged(this);
-			} finally {
-				checkTreeStructure(parentNode);
+
+				return null;
 			}
 
-			return null;
+			// System.out.println("Put of key " + key + "...");
 
+			// SEARCH THE ITEM
+			parentNode = getEntry(key, true);
+
+			// System.out.println("Parent node: " + parentNode+", pageItemFound="+pageItemFound);
+
+			if (pageItemFound)
+				// EXACT MATCH: UPDATE THE VALUE
+				return parentNode.setValue(value);
+
+			if (parentNode == null) {
+				parentNode = root;
+				pageIndex = 0;
+			}
+
+			// System.out.println("Parent node free space: " + parentNode.getFreeSpace());
+
+			if (parentNode.getFreeSpace() > 0) {
+				// INSERT INTO THE PAGE
+				parentNode.insert(pageIndex, key, value);
+			} else {
+				// CREATE NEW NODE AND COPY HALF OF VALUES FROM THE ORIGIN TO THE NEW ONE IN ORDER TO GET VALUES BALANCED
+				final OMVRBTreeEntry<K, V> newNode = createEntry(parentNode);
+
+				// System.out.println("Created new entry: " + newEntry+ ", insert the key as index="+pageIndex);
+
+				if (pageIndex < parentNode.getPageSplitItems())
+					// INSERT IN THE ORIGINAL NODE
+					parentNode.insert(pageIndex, key, value);
+				else
+					// INSERT IN THE NEW NODE
+					newNode.insert(pageIndex - parentNode.getPageSplitItems(), key, value);
+
+				final OMVRBTreeEntry<K, V> prevNode = parentNode.getRight();
+
+				// REPLACE THE RIGHT ONE WITH THE NEW NODE
+				parentNode.setRight(newNode);
+
+				if (prevNode != null) {
+					// INSERT THE NODE IN THE TREE IN THE RIGHT MOVING CURRENT RIGHT TO THE RIGHT OF THE NEW NODE
+					newNode.setRight(prevNode);
+					fixAfterInsertion(prevNode);
+				} else
+					fixAfterInsertion(newNode);
+
+				checkTreeStructure(parentNode);
+
+				modCount++;
+			}
+
+			checkTreeStructure(parentNode);
+
+			size++;
+
+			if (listener != null)
+				listener.signalTreeChanged(this);
 		} finally {
-			lock.releaseExclusiveLock(locked);
+			checkTreeStructure(parentNode);
 		}
+
+		return null;
 	}
 
 	/**
@@ -683,20 +636,13 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 */
 	@Override
 	public V remove(final Object key) {
-		final boolean locked = lock.acquireExclusiveLock();
-		try {
+		OMVRBTreeEntry<K, V> p = getEntry(key);
+		if (p == null)
+			return null;
 
-			OMVRBTreeEntry<K, V> p = getEntry(key);
-			if (p == null)
-				return null;
-
-			V oldValue = p.getValue();
-			deleteEntry(p);
-			return oldValue;
-
-		} finally {
-			lock.releaseExclusiveLock(locked);
-		}
+		V oldValue = p.getValue();
+		deleteEntry(p);
+		return oldValue;
 	}
 
 	/**
@@ -704,16 +650,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 */
 	@Override
 	public void clear() {
-		final boolean locked = lock.acquireExclusiveLock();
-		try {
-
-			modCount++;
-			size = 0;
-			setRoot(null);
-
-		} finally {
-			lock.releaseExclusiveLock(locked);
-		}
+		modCount++;
+		size = 0;
+		setRoot(null);
 	}
 
 	/**
@@ -723,42 +662,35 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 */
 	@Override
 	public Object clone() {
-		final boolean locked = lock.acquireSharedLock();
+		OMVRBTree<K, V> clone = null;
 		try {
-
-			OMVRBTree<K, V> clone = null;
-			try {
-				clone = (OMVRBTree<K, V>) super.clone();
-			} catch (CloneNotSupportedException e) {
-				throw new InternalError();
-			}
-
-			// Put clone into "virgin" state (except for comparator)
-			clone.listener = listener;
-			clone.lastPageSize = lastPageSize;
-			clone.pageIndex = pageIndex;
-			clone.pageItemFound = pageItemFound;
-			clone.pageLoadFactor = pageLoadFactor;
-
-			clone.root = null;
-			clone.size = 0;
-			clone.modCount = 0;
-			clone.entrySet = null;
-			clone.navigableKeySet = null;
-			clone.descendingMap = null;
-
-			// Initialize clone with our mappings
-			try {
-				clone.buildFromSorted(size, entrySet().iterator(), null, null);
-			} catch (java.io.IOException cannotHappen) {
-			} catch (ClassNotFoundException cannotHappen) {
-			}
-
-			return clone;
-
-		} finally {
-			lock.releaseSharedLock(locked);
+			clone = (OMVRBTree<K, V>) super.clone();
+		} catch (CloneNotSupportedException e) {
+			throw new InternalError();
 		}
+
+		// Put clone into "virgin" state (except for comparator)
+		clone.listener = listener;
+		clone.lastPageSize = lastPageSize;
+		clone.pageIndex = pageIndex;
+		clone.pageItemFound = pageItemFound;
+		clone.pageLoadFactor = pageLoadFactor;
+
+		clone.root = null;
+		clone.size = 0;
+		clone.modCount = 0;
+		clone.entrySet = null;
+		clone.navigableKeySet = null;
+		clone.descendingMap = null;
+
+		// Initialize clone with our mappings
+		try {
+			clone.buildFromSorted(size, entrySet().iterator(), null, null);
+		} catch (java.io.IOException cannotHappen) {
+		} catch (ClassNotFoundException cannotHappen) {
+		}
+
+		return clone;
 	}
 
 	// ONavigableMap API methods
@@ -936,16 +868,8 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 */
 	@Override
 	public Collection<V> values() {
-
-		final boolean locked = lock.acquireSharedLock();
-		try {
-
-			Collection<V> vs = super.values();
-			return (vs != null) ? vs : null;
-
-		} finally {
-			lock.releaseSharedLock(locked);
-		}
+		final Collection<V> vs = super.values();
+		return (vs != null) ? vs : null;
 	}
 
 	/**
