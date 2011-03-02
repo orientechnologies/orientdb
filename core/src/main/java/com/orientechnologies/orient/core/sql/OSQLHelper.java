@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemRecordAttrib;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
@@ -200,10 +199,6 @@ public class OSQLHelper {
 	public static Object parseValue(final ODatabaseRecord iDatabase, final OCommandToParse iCommand, final String iWord) {
 		if (iWord.equals("*"))
 			return "*";
-
-		if (iWord.startsWith("@"))
-			// RECORD ATTRIB
-			return new OSQLFilterItemRecordAttrib(iCommand, iWord);
 
 		// TRY TO PARSE AS RAW VALUE
 		final Object v = parseValue(iDatabase, iWord);

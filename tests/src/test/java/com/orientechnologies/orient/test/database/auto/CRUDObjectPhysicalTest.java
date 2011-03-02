@@ -353,8 +353,19 @@ public class CRUDObjectPhysicalTest {
 
 		Profile obama = result.get(0);
 
-		result = database.query(new OSQLSynchQuery<Profile>("select from Profile where followings contains ( @rid = :who )"), obama);
+		result = database.query(new OSQLSynchQuery<Profile>("select from Profile where followings contains ( @Rid = :who )"), obama);
 		Assert.assertTrue(result.size() != 0);
+
+		database.close();
+	}
+
+	@Test
+	public void queryConcatAttrib() {
+		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+
+		Assert.assertTrue(database.query(new OSQLSynchQuery<Profile>("select from City where country.@class = 'Country'")).size() > 0);
+		Assert.assertEquals(database.query(new OSQLSynchQuery<Profile>("select from City where country.@class = 'Country22'")).size(),
+				0);
 
 		database.close();
 	}

@@ -50,7 +50,6 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemRecordAttrib;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsText;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
@@ -582,8 +581,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			for (Entry<String, Object> projection : projections.entrySet()) {
 				if (projection.getValue() instanceof OSQLFilterItemField)
 					value = ((OSQLFilterItemField) projection.getValue()).getValue(iRecord);
-				else if (projection.getValue() instanceof OSQLFilterItemRecordAttrib)
-					value = ((OSQLFilterItemRecordAttrib) projection.getValue()).getValue(iRecord);
 				else if (projection.getValue() instanceof OSQLFunctionRuntime) {
 					final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection.getValue();
 					value = f.execute(iRecord);

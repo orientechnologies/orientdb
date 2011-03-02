@@ -32,6 +32,10 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecord.STATUS;
+import com.orientechnologies.orient.core.record.ORecordFactory;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
@@ -100,7 +104,10 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
 						final List<String> list = new ArrayList<String>();
 						list.add(chainedFieldName);
-						operationsChain.add(new OPair<Integer, List<String>>(OSQLFilterFieldOperator.FIELD.id, list));
+						if (chainedFieldName.charAt(0) == '@')
+							operationsChain.add(new OPair<Integer, List<String>>(OSQLFilterFieldOperator.ATTRIB.id, list));
+						else
+							operationsChain.add(new OPair<Integer, List<String>>(OSQLFilterFieldOperator.FIELD.id, list));
 					} else
 						// ERROR: OPERATOR NOT FOUND OR MISPELLED
 						throw new OQueryParsingException(iQueryToParse.text,
@@ -117,8 +124,8 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 			name = iName;
 	}
 
-	public Object transformValue(final ODatabaseRecord iDatabase, Object iResult) {
-		if (iResult != null && operationsChain != null) {
+	public Object transformValue(final ODatabaseRecord iDatabase, Object ioResult) {
+		if (ioResult != null && operationsChain != null) {
 			// APPLY OPERATIONS FOLLOWING THE STACK ORDER
 			int operator = -2;
 
@@ -128,133 +135,165 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
 					// NO ARGS OPERATORS
 					if (operator == OSQLFilterFieldOperator.SIZE.id)
-						iResult = iResult != null ? OMultiValue.getSize(iResult) : 0;
+						ioResult = ioResult != null ? OMultiValue.getSize(ioResult) : 0;
 
 					else if (operator == OSQLFilterFieldOperator.LENGTH.id)
-						iResult = iResult != null ? iResult.toString().length() : 0;
+						ioResult = ioResult != null ? ioResult.toString().length() : 0;
 
 					else if (operator == OSQLFilterFieldOperator.TOUPPERCASE.id)
-						iResult = iResult != null ? iResult.toString().toUpperCase() : 0;
+						ioResult = ioResult != null ? ioResult.toString().toUpperCase() : 0;
 
 					else if (operator == OSQLFilterFieldOperator.TOLOWERCASE.id)
-						iResult = iResult != null ? iResult.toString().toLowerCase() : 0;
+						ioResult = ioResult != null ? ioResult.toString().toLowerCase() : 0;
 
 					else if (operator == OSQLFilterFieldOperator.TRIM.id)
-						iResult = iResult != null ? iResult.toString().trim() : null;
+						ioResult = ioResult != null ? ioResult.toString().trim() : null;
 
-					// OTHER OPERATORS
-					else if (operator == OSQLFilterFieldOperator.FIELD.id) {
-						if (iResult != null) {
+					else if (operator == OSQLFilterFieldOperator.ATTRIB.id) {
+						ioResult = getRecordAttribute(iDatabase, (ORecordInternal<?>) ioResult, op.value.get(0));
+
+					} else if (operator == OSQLFilterFieldOperator.FIELD.id) {
+						if (ioResult != null) {
 
 							ODocument record;
-							if (iResult instanceof String) {
+							if (ioResult instanceof String) {
 								try {
-									record = new ODocument(iDatabase, new ORecordId((String) iResult));
+									record = new ODocument(iDatabase, new ORecordId((String) ioResult));
 								} catch (Exception e) {
-									OLogManager.instance().error(this, "Error on reading rid with value '%s'", null, iResult);
+									OLogManager.instance().error(this, "Error on reading rid with value '%s'", null, ioResult);
 									record = null;
 								}
-							} else if (iResult instanceof ORID)
-								record = new ODocument(iDatabase, (ORID) iResult);
-							else if (iResult instanceof ORecord<?>)
-								record = (ODocument) iResult;
+							} else if (ioResult instanceof ORID)
+								record = new ODocument(iDatabase, (ORID) ioResult);
+							else if (ioResult instanceof ORecord<?>)
+								record = (ODocument) ioResult;
 							else
 								throw new IllegalArgumentException("Field " + name + " is not a ODocument object");
 
 							if (record == null)
-								iResult = null;
+								ioResult = null;
 							else
 								try {
-									record.load();
-									iResult = iResult != null ? record.field(op.value.get(0)) : null;
+									if (record.getInternalStatus() == STATUS.NOT_LOADED)
+										record.load();
+
+									ioResult = ioResult != null ? record.field(op.value.get(0)) : null;
 								} catch (ORecordNotFoundException e) {
-									iResult = null;
+									ioResult = null;
 								}
 						}
 
+						// OTHER OPERATORS
 					} else if (operator == OSQLFilterFieldOperator.CHARAT.id) {
 						int index = Integer.parseInt(op.value.get(0));
-						iResult = iResult != null ? iResult.toString().substring(index, index + 1) : null;
+						ioResult = ioResult != null ? ioResult.toString().substring(index, index + 1) : null;
 
 					} else if (operator == OSQLFilterFieldOperator.INDEXOF.id && op.value.get(0).length() > 2) {
 						String toFind = op.value.get(0).substring(1, op.value.get(0).length() - 1);
 						int startIndex = op.value.size() > 1 ? Integer.parseInt(op.value.get(1)) : 0;
-						iResult = iResult != null ? iResult.toString().indexOf(toFind, startIndex) : null;
+						ioResult = ioResult != null ? ioResult.toString().indexOf(toFind, startIndex) : null;
 
 					} else if (operator == OSQLFilterFieldOperator.SUBSTRING.id) {
 						int endIndex = op.value.size() > 1 ? Integer.parseInt(op.value.get(1)) : op.value.get(0).length();
-						iResult = iResult != null ? iResult.toString().substring(Integer.parseInt(op.value.get(0)), endIndex) : null;
+						ioResult = ioResult != null ? ioResult.toString().substring(Integer.parseInt(op.value.get(0)), endIndex) : null;
 
 					} else if (operator == OSQLFilterFieldOperator.APPEND.id) {
 						String v = op.value.get(0);
 						if (v.charAt(0) == '\'' || v.charAt(0) == '"')
 							v = v.substring(1, v.length() - 1);
-						iResult = iResult != null ? iResult.toString() + v : null;
+						ioResult = ioResult != null ? ioResult.toString() + v : null;
 
 					} else if (operator == OSQLFilterFieldOperator.PREFIX.id) {
 						String v = op.value.get(0);
 						if (v.charAt(0) == '\'' || v.charAt(0) == '"')
 							v = v.substring(1, v.length() - 1);
-						iResult = iResult != null ? v + iResult.toString() : null;
+						ioResult = ioResult != null ? v + ioResult.toString() : null;
 
 					} else if (operator == OSQLFilterFieldOperator.FORMAT.id)
-						iResult = iResult != null ? String.format(op.value.get(0), iResult) : null;
+						ioResult = ioResult != null ? String.format(op.value.get(0), ioResult) : null;
 
 					else if (operator == OSQLFilterFieldOperator.LEFT.id) {
 						final int len = Integer.parseInt(op.value.get(0));
-						iResult = iResult != null ? iResult.toString().substring(0,
-								len <= iResult.toString().length() ? len : iResult.toString().length()) : null;
+						ioResult = ioResult != null ? ioResult.toString().substring(0,
+								len <= ioResult.toString().length() ? len : ioResult.toString().length()) : null;
 
 					} else if (operator == OSQLFilterFieldOperator.RIGHT.id) {
 						final int offset = Integer.parseInt(op.value.get(0));
-						iResult = iResult != null ? iResult.toString().substring(
-								offset <= iResult.toString().length() - 1 ? offset : iResult.toString().length() - 1) : null;
+						ioResult = ioResult != null ? ioResult.toString().substring(
+								offset <= ioResult.toString().length() - 1 ? offset : ioResult.toString().length() - 1) : null;
 
 					} else if (operator == OSQLFilterFieldOperator.ASSTRING.id)
-						iResult = iResult != null ? iResult.toString() : null;
+						ioResult = ioResult != null ? ioResult.toString() : null;
 					else if (operator == OSQLFilterFieldOperator.ASINTEGER.id)
-						iResult = iResult != null ? new Integer(iResult.toString()) : null;
+						ioResult = ioResult != null ? new Integer(ioResult.toString()) : null;
 					else if (operator == OSQLFilterFieldOperator.ASFLOAT.id)
-						iResult = iResult != null ? new Float(iResult.toString()) : null;
+						ioResult = ioResult != null ? new Float(ioResult.toString()) : null;
 					else if (operator == OSQLFilterFieldOperator.ASBOOLEAN.id) {
-						if (iResult != null) {
-							if (iResult instanceof String)
-								iResult = new Boolean((String) iResult);
-							else if (iResult instanceof Number) {
-								final int bValue = ((Number) iResult).intValue();
+						if (ioResult != null) {
+							if (ioResult instanceof String)
+								ioResult = new Boolean((String) ioResult);
+							else if (ioResult instanceof Number) {
+								final int bValue = ((Number) ioResult).intValue();
 								if (bValue == 0)
-									iResult = Boolean.FALSE;
+									ioResult = Boolean.FALSE;
 								else if (bValue == 1)
-									iResult = Boolean.TRUE;
+									ioResult = Boolean.TRUE;
 								else
 									// IGNORE OTHER VALUES
-									iResult = null;
+									ioResult = null;
 							}
 						}
 					} else if (operator == OSQLFilterFieldOperator.ASDATE.id) {
-						if (iResult != null) {
-							if (iResult instanceof Long)
-								iResult = new Date((Long) iResult);
+						if (ioResult != null) {
+							if (ioResult instanceof Long)
+								ioResult = new Date((Long) ioResult);
 							else
-								iResult = iDatabase.getStorage().getConfiguration().getDateFormatInstance().parse(iResult.toString());
+								ioResult = iDatabase.getStorage().getConfiguration().getDateFormatInstance().parse(ioResult.toString());
 						}
 					} else if (operator == OSQLFilterFieldOperator.ASDATETIME.id) {
-						if (iResult != null) {
-							if (iResult instanceof Long)
-								iResult = new Date((Long) iResult);
+						if (ioResult != null) {
+							if (ioResult instanceof Long)
+								ioResult = new Date((Long) ioResult);
 							else
-								iResult = iDatabase.getStorage().getConfiguration().getDateTimeFormatInstance().parse(iResult.toString());
+								ioResult = iDatabase.getStorage().getConfiguration().getDateTimeFormatInstance().parse(ioResult.toString());
 						}
 					} else if (operator == OSQLFilterFieldOperator.TOJSON.id)
-						iResult = iResult != null && iResult instanceof ODocument ? ((ODocument) iResult).toJSON() : null;
+						ioResult = ioResult != null && ioResult instanceof ODocument ? ((ODocument) ioResult).toJSON() : null;
 				}
 			} catch (ParseException e) {
 				OLogManager.instance().exception("Error on conversion of value '%s' using field operator %s", e,
-						OCommandExecutionException.class, iResult, OSQLFilterFieldOperator.getById(operator));
+						OCommandExecutionException.class, ioResult, OSQLFilterFieldOperator.getById(operator));
 			}
 		}
 
-		return iResult;
+		return ioResult;
+	}
+
+	protected Object getRecordAttribute(final ODatabaseRecord iDatabase, final ORecordInternal<?> iRecord, String iFieldName) {
+		iFieldName = iFieldName.toUpperCase();
+
+		Object result = null;
+
+		if (iFieldName.charAt(0) == '@') {
+			if (iFieldName.equals("@THIS"))
+				result = iRecord;
+			else if (iFieldName.equals("@RID"))
+				result = iRecord.getIdentity();
+			else if (iFieldName.equals("@VERSION"))
+				result = iRecord.getVersion();
+			else if (iFieldName.equals("@CLASS") && iRecord instanceof ORecordSchemaAware<?>)
+				result = ((ORecordSchemaAware<?>) iRecord).getClassName();
+			else if (iFieldName.equals("@TYPE"))
+				result = ORecordFactory.getRecordTypeName(iRecord.getRecordType());
+			else if (iFieldName.equals("@FIELDS") && iRecord instanceof ORecordSchemaAware<?>)
+				result = ((ORecordSchemaAware<?>) iRecord).fieldNames();
+			else if (iFieldName.equals("@SIZE")) {
+				final byte[] stream = iRecord.toStream();
+				if (stream != null)
+					result = stream.length;
+			}
+		}
+		return result;
 	}
 
 	public boolean hasChainOperators() {

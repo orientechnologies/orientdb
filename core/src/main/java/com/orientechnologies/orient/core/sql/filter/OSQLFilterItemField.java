@@ -31,6 +31,9 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
 	}
 
 	public Object getValue(final ORecordInternal<?> iRecord) {
-		return transformValue(iRecord.getDatabase(), ((ORecordSchemaAware<?>) iRecord).field(name));
+		if (name.charAt(0) == '@')
+			return transformValue(iRecord.getDatabase(), getRecordAttribute(iRecord.getDatabase(), iRecord, name));
+		else
+			return transformValue(iRecord.getDatabase(), ((ORecordSchemaAware<?>) iRecord).field(name));
 	}
 }
