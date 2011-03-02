@@ -6,11 +6,11 @@
 <meta name="title" content="Document | DBMS | Database | Java | Studio" />
 <meta name="description" content="OrientDB Studio" />
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<link type="text/css" href="www/styles/jit/base.css" rel="stylesheet" />
+<link type="text/css" href="styles/jit/base.css" rel="stylesheet" />
 <link rel="stylesheet" type="text/css" media="screen"
-	href="www/styles/redmond/jquery-ui-1.8.1.custom.css" />
+	href="styles/redmond/jquery-ui-1.8.1.custom.css" />
 <link rel="stylesheet" type="text/css" media="screen"
-	href="www/styles/ui.jqgrid.css" />
+	href="styles/ui.jqgrid.css" />
 <style>
 body {
 	font-size: 9pt;
@@ -89,23 +89,23 @@ textarea.odocumentview_field_value {
 	width: 700px;
 }
 </style>
-<script src="www/js/jquery-1.4.2.min.js" type="text/javascript"></script>
-<script src="www/js/jquery-ui-1.8.1.custom.min.js"
+<script src="js/jquery-1.4.2.min.js" type="text/javascript"></script>
+<script src="js/jquery-ui-1.8.1.custom.min.js"
 	type="text/javascript"></script>
-<script src="www/js/i18n/grid.locale-en.js" type="text/javascript"></script>
-<script src="www/js/jquery.jqGrid.min.js" type="text/javascript"></script>
-<script src="www/js/jquery.json-2.2.min.js" type="text/javascript"></script>
-<script src="www/js/autoresize.jquery.min.js" type="text/javascript"></script>
-<script src="www/js/orientdb-form.js" type="text/javascript"></script>
-<script src="www/js/orientdb-view.js" type="text/javascript"></script>
-<script src="www/js/orientdb-graph.js" type="text/javascript"></script>
-<script src="www/js/orientdb-api.js" type="text/javascript"></script>
-<script src="www/js/orientdb-app.js" type="text/javascript"></script>
-<script src="www/js/orientdb-studio.js" type="text/javascript"></script>
-<script src="www/js/codemirror/codemirror.js" type="text/javascript"></script>
-<!--[if IE]><script language="javascript" type="text/javascript" src="www/js/jit/excanvas.js"></script><![endif]-->
+<script src="js/i18n/grid.locale-en.js" type="text/javascript"></script>
+<script src="js/jquery.jqGrid.min.js" type="text/javascript"></script>
+<script src="js/jquery.json-2.2.min.js" type="text/javascript"></script>
+<script src="js/autoresize.jquery.min.js" type="text/javascript"></script>
+<script src="js/orientdb-form.js" type="text/javascript"></script>
+<script src="js/orientdb-view.js" type="text/javascript"></script>
+<script src="js/orientdb-graph.js" type="text/javascript"></script>
+<script src="js/orientdb-api.js" type="text/javascript"></script>
+<script src="js/orientdb-app.js" type="text/javascript"></script>
+<script src="js/orientdb-studio.js" type="text/javascript"></script>
+<script src="js/codemirror/codemirror.js" type="text/javascript"></script>
+<!--[if IE]><script language="javascript" type="text/javascript" src="js/jit/excanvas.js"></script><![endif]-->
 <script language="javascript" type="text/javascript"
-	src="www/js/jit/jit-yc.js"></script>
+	src="js/jit/jit-yc.js"></script>
 </head>
 <body>
 <table align="center" width="1000">
@@ -115,16 +115,16 @@ textarea.odocumentview_field_value {
 			<tr>
 				<td align="left"><a
 					href="http://www.orientechnologies.com/orient-db.htm"><img
-					border="0" src="www/images/orient_db.png" /></a></td>
+					border="0" src="images/orient_db.png" /></a></td>
 				<td class="ui-widget">Server: <input id="server" size="25"
 					value="" />&nbsp;Database: <input id="database" size="10"
 					value="demo" />
 				<button id="buttonConnect" onclick="javascript:connect()"
 					class="ui-button-text-icon">Connect <img border="0"
-					alt="Refresh" src="www/images/connect.png" align="top" /></button>
+					alt="Refresh" src="images/connect.png" align="top" /></button>
 				<button id="buttonDisconnect" onclick="javascript:disconnect()"
 					class="ui-button-text-icon">Disconnect <img border="0"
-					alt="Refresh" src="www/images/disconnect.png" align="top" /></button>
+					alt="Refresh" src="images/disconnect.png" align="top" /></button>
 				&nbsp;&nbsp;<a
 					href="http://code.google.com/p/orient/wiki/OrientDB_Studio"
 					target="help">Help</a></td>
@@ -148,7 +148,7 @@ textarea.odocumentview_field_value {
 		<div id="tab-database">
 		<button onclick="javascript:askDatabaseInfo()"
 			class="ui-button-text-icon">Refresh <img border="0"
-			alt="Refresh" src="www/images/execute.png" align="top" /></button>
+			alt="Refresh" src="images/execute.png" align="top" /></button>
 		<div id="tabs-db">
 		<ul>
 			<li><a href="#tab-db-schema"><span>Schema</span></a></li>
@@ -177,12 +177,12 @@ textarea.odocumentview_field_value {
 						<td>
 						<button id="addClass" class="ui-button-text-icon"
 							style="text-align: left">Add class <img border="0"
-							alt="New record" src="www/images/add.png" align="top" /></button>
+							alt="New record" src="images/add.png" align="top" /></button>
 						</td>
 						<td>
 						<button id="deleteClass" class="ui-button-text-icon"
 							style="text-align: left">Delete class <img border="0"
-							alt="Delete record" src="www/images/delete.png" align="top" /></button>
+							alt="Delete record" src="images/delete.png" align="top" /></button>
 						</td>
 					</tr>
 				</table>
@@ -202,12 +202,12 @@ textarea.odocumentview_field_value {
 						<td>
 						<button id="addProperty" " class="ui-button-text-icon"
 							style="text-align: left">Add property <img border="0"
-							alt="New record" src="www/images/add.png" align="top" /></button>
+							alt="New record" src="images/add.png" align="top" /></button>
 						</td>
 						<td>
 						<button id="deleteProperty" class="ui-button-text-icon"
 							style="text-align: left">Delete property <img border="0"
-							alt="Delete record" src="www/images/delete.png" align="top" /></button>
+							alt="Delete record" src="images/delete.png" align="top" /></button>
 						</td>
 					</tr>
 				</table>
@@ -248,19 +248,19 @@ textarea.odocumentview_field_value {
 						<td>
 						<button id="addPhysicalCluster" class="ui-button-text-icon"
 							style="text-align: left">Add Physical Cluster <img
-							border="0" alt="Add Physical Cluster" src="www/images/add.png"
+							border="0" alt="Add Physical Cluster" src="images/add.png"
 							align="top" /></button>
 						</td>
 						<td>
 						<button id="addLogicalCluster" class="ui-button-text-icon"
 							style="text-align: left">Add Logical Cluster <img
-							border="0" alt="Add Logical Cluster" src="www/images/add.png"
+							border="0" alt="Add Logical Cluster" src="images/add.png"
 							align="top" /></button>
 						</td>
 						<td>
 						<button id="removeCluster" class="ui-button-text-icon"
 							style="text-align: left">Remove Cluster <img border="0"
-							alt="Remove Cluster" src="www/images/delete.png" align="top" /></button>
+							alt="Remove Cluster" src="images/delete.png" align="top" /></button>
 						</td>
 					</tr>
 				</table>
@@ -372,7 +372,7 @@ textarea.odocumentview_field_value {
 								<button onclick="javascript:executeQuery()"
 									class="ui-button-text-icon"
 									style="width: 90px; text-align: center">Execute<br />
-								<img border="0" alt="Execute" src="www/images/execute.png"
+								<img border="0" alt="Execute" src="images/execute.png"
 									align="top" /></button>
 								</td>
 							</tr>
@@ -394,7 +394,7 @@ textarea.odocumentview_field_value {
 								<td>
 								<button id="deleteRecord" class="ui-button-text-icon"
 									style="width: 90px; text-align: center">Delete <img
-									border="0" alt="Delete record" src="www/images/delete.png"
+									border="0" alt="Delete record" src="images/delete.png"
 									align="top" /></button>
 								</td>
 							</tr>
@@ -402,7 +402,7 @@ textarea.odocumentview_field_value {
 								<td>
 								<button id="editRecord" class="ui-button-text-icon"
 									style="width: 90px; text-align: center">Edit <img
-									border="0" alt="Edit record" src="www/images/set.png"
+									border="0" alt="Edit record" src="images/set.png"
 									align="top" /></button>
 								</td>
 							</tr>
@@ -410,7 +410,7 @@ textarea.odocumentview_field_value {
 								<td>
 								<button id="graphRecord" class="ui-button-text-icon"
 									style="width: 90px; text-align: center">Graph <img
-									border="0" alt="Graph record" src="www/images/graph.png"
+									border="0" alt="Graph record" src="images/graph.png"
 									align="top" /></button>
 								</td>
 							</tr>
@@ -437,7 +437,7 @@ textarea.odocumentview_field_value {
 								<button onclick="javascript:executeCommand()"
 									class="ui-button-text-icon"
 									style="width: 90px; text-align: center">Execute<br />
-								<img border="0" alt="Execute" src="www/images/execute.png"
+								<img border="0" alt="Execute" src="images/execute.png"
 									align="top" /></button>
 								</td>
 							</tr>
@@ -476,7 +476,7 @@ textarea.odocumentview_field_value {
 								<button class="ui-button-text-icon"
 									onClick="javascript:commandOutputEditor.setCode('')"
 									style="width: 90px; text-align: center">Clear <img
-									border="0" alt="Graph result" src="www/images/clear.png"
+									border="0" alt="Graph result" src="images/clear.png"
 									align="top" /></button>
 								</td>
 							</tr>
@@ -484,7 +484,7 @@ textarea.odocumentview_field_value {
 								<td>
 								<button id="editCommandResult" class="ui-button-text-icon"
 									style="width: 90px; text-align: center">Edit <img
-									border="0" alt="Edit record" src="www/images/set.png"
+									border="0" alt="Edit record" src="images/set.png"
 									align="top" /></button>
 								</td>
 							</tr>
@@ -492,7 +492,7 @@ textarea.odocumentview_field_value {
 								<td>
 								<button id="graphCommandResult" class="ui-button-text-icon"
 									style="width: 90px; text-align: center">Graph <img
-									border="0" alt="Graph result" src="www/images/graph.png"
+									border="0" alt="Graph result" src="images/graph.png"
 									align="top" /></button>
 								</td>
 							</tr>
@@ -521,7 +521,7 @@ textarea.odocumentview_field_value {
 								<td>
 								<button id="graphDocument" class="ui-button-text-icon"
 									style="width: 90px; text-align: center">Graph <img
-									border="0" alt="Graph result" src="www/images/graph.png"
+									border="0" alt="Graph result" src="images/graph.png"
 									align="top" /></button>
 								</td>
 							</tr>
@@ -564,7 +564,7 @@ textarea.odocumentview_field_value {
 								<td>
 								<button id="editGraph" class="ui-button-text-icon"
 									style="width: 90px; text-align: center">Edit <img
-									border="0" alt="Edit record" src="www/images/set.png"
+									border="0" alt="Edit record" src="images/set.png"
 									align="top" /></button>
 								</td>
 							</tr>
@@ -632,7 +632,7 @@ textarea.odocumentview_field_value {
 						<button onclick="javascript:executeRawCommand()"
 							style="width: 90px; text-align: center"
 							style="background-color: #F0F0F0;">Execute <img
-							border="0" alt="Execute" src="www/images/execute.png" /></button>
+							border="0" alt="Execute" src="images/execute.png" /></button>
 						</td>
 					</tr>
 					<tr>
@@ -643,7 +643,7 @@ textarea.odocumentview_field_value {
 						<button class="ui-button-text-icon"
 							onClick="javascript:rawEditor.setCode('')"
 							style="width: 90px; text-align: center">Clear <img
-							border="0" alt="Graph result" src="www/images/clear.png"
+							border="0" alt="Graph result" src="images/clear.png"
 							align="top" /></button>
 						</td>
 					</tr>
@@ -652,7 +652,7 @@ textarea.odocumentview_field_value {
 						<button class="ui-button-text-icon"
 							onClick="javascript:rawEditor.reindent();"
 							style="width: 90px; text-align: center">Indent <img
-							border="0" alt="Graph result" src="www/images/indent.png"
+							border="0" alt="Graph result" src="images/indent.png"
 							align="top" /></button>
 						</td>
 					</tr>
@@ -660,14 +660,14 @@ textarea.odocumentview_field_value {
 						<td>
 						<button id="editRaw" class="ui-button-text-icon"
 							style="width: 90px; text-align: center">Edit <img
-							border="0" alt="Edit record" src="www/images/set.png" align="top" /></button>
+							border="0" alt="Edit record" src="images/set.png" align="top" /></button>
 						</td>
 					</tr>
 					<tr>
 						<td>
 						<button id="graphRaw" class="ui-button-text-icon"
 							style="width: 90px; text-align: center">Graph <img
-							border="0" alt="Graph result" src="www/images/graph.png"
+							border="0" alt="Graph result" src="images/graph.png"
 							align="top" /></button>
 						</td>
 					</tr>
@@ -679,7 +679,7 @@ textarea.odocumentview_field_value {
 		<div id="tab-server">
 		<button onclick="javascript:askServerInfo()"
 			class="ui-button-text-icon">Refresh <img border="0"
-			alt="Refresh" src="www/images/execute.png" align="top" /></button>
+			alt="Refresh" src="images/execute.png" align="top" /></button>
 		<div id="tabs-server">
 		<ul>
 			<li><a href="#tab-server-intro"><span>Introduction</span></a></li>
