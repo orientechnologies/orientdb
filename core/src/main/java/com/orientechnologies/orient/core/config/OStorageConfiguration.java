@@ -301,9 +301,20 @@ public class OStorageConfiguration implements OSerializableStream {
 
 		final int size = Integer.parseInt(read(values[index++]));
 		iSegment.infoFiles = new OStorageFileConfiguration[size];
+		String fileName;
 		for (int i = 0; i < size; ++i) {
-			iSegment.infoFiles[i] = new OStorageFileConfiguration(iSegment, read(values[index++]), read(values[index++]),
-					read(values[index++]), iSegment.fileIncrementSize);
+			fileName = read(values[index++]);
+
+			if (!fileName.contains("$")) {
+				// @COMPATIBILITY 0.9.25
+				int pos = fileName.indexOf("/databases");
+				if (pos > -1) {
+					fileName = "${ORIENTDB_HOME}" + fileName.substring(pos);
+				}
+			}
+
+			iSegment.infoFiles[i] = new OStorageFileConfiguration(iSegment, fileName, read(values[index++]), read(values[index++]),
+					iSegment.fileIncrementSize);
 		}
 
 		return index;
