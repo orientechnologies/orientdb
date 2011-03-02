@@ -62,7 +62,7 @@
 		<echo>OK</echo>
 
 		<echo>WAITING FOR SERVER STARTUP...</echo>
-		<sleep seconds="8" />
+		<sleep seconds="5" />
 		<echo>OK</echo>
 
 		<echo>EXECUTING TESTS USING REMOTE DATABASE: remote:localhost/demo</echo>
@@ -78,6 +78,19 @@
 		</testng>
 
 		<echo>OK</echo>
+		
+		
+		<echo>SHUTDOWNING THE SERVER...</echo>
+		<echo>OK</echo>
+
+		<exec dir="../${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
+			<arg value="/c shutdown.bat" />
+		</exec>
+
+		<exec dir="../${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
+			<arg value="./shutdown.sh" />
+		</exec>
+
 	</target>
 
 	<target name="stress-test">
@@ -121,17 +134,6 @@
 			<jvmarg value="-XX:CompileThreshold=200" />
 		</java>
 				
-		<echo>SHUTDOWNING THE SERVER...</echo>
-		<echo>OK</echo>
-
-		<exec dir="../${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
-			<arg value="/c start shutdown.bat" />
-		</exec>
-
-		<exec dir="../${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
-			<arg value="./shutdown.sh" />
-		</exec>
-
 	</target>
 
 	<target name="reports" depends="test">
