@@ -98,7 +98,8 @@ public class ODistributedServerDiscoveryListener extends OSoftThread {
 					return;
 				}
 
-				final String serverAddress = parts[++i];
+				String serverAddress = parts[++i];
+				serverAddress = dgram.getAddress().getHostAddress();
 				final int serverPort = Integer.parseInt(parts[++i]);
 
 				// CHECK IF THE PACKET WAS SENT BY MYSELF
