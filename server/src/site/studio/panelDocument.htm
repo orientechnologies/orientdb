@@ -1,0 +1,44 @@
+<script src="js/orientdb-view.js" type="text/javascript"></script>
+<div id="tab-document">
+<table style="width: 100%;" cellpadding="0" cellspacing="2">
+	<tr>
+		<td valign="top">
+		<table style="width: 100%;" cellpadding="2" cellspacing="0">
+			<tr>
+				<td align="right" valign="top">
+				<table>
+					<tr>
+						<td valign="top" class="help">Edit document's content. Documents can have arbitrary fields (click on 'add field' to create a new
+						one). To remove a field click on the X icon on the right of the field. Once finished click on "Save' to make changes permanent.</td>
+						<td>
+						<button id="graphDocument" class="ui-button-text-icon" style="width: 90px; text-align: center">Graph <img border="0"
+							alt="Graph result" src="images/graph.png" align="top" /></button>
+						</td>
+					</tr>
+				</table>
+				</td>
+			</tr>
+			<tr>
+				<td valign="top" align="left">
+				<div id="document-view"></div>
+				</td>
+			</tr>
+		</table>
+		</td>
+	</tr>
+</table>
+</div>
+
+<script language="javascript">
+	documentView = new ODocumentView('edit', 'document-view', null, {
+		log : function(message) {
+			$("#output").val(message);
+		}
+	});
+	documentView.render(null, orientServer);
+
+	$("#graphDocument").click(function() {
+		if (selectedObject != null)
+			displayGraph(selectedObject);
+	});
+</script>

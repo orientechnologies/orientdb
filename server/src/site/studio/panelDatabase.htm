@@ -1,0 +1,625 @@
+<div id="tab-database">
+<button onclick="javascript:askDatabaseInfo()" class="ui-button-text-icon">Refresh <img border="0" alt="Refresh"
+	src="images/execute.png" align="top" /></button>
+<div id="tabs-db">
+<ul>
+	<li><a href="#tab-db-schema"><span>Schema</span></a></li>
+	<li><a href="#tab-db-structure"><span>Structure</span></a></li>
+	<li><a href="#tab-db-security"><span>Security</span></a></li>
+	<li><a href="#tab-db-config"><span>Configuration</span></a></li>
+</ul>
+<div id="tab-db-schema">
+<table style="width: 100%;" cellpadding="5">
+	<tr>
+		<td valign="top">
+		<table id="databaseClasses" cellspacing="0" cellpadding="5" border="1">
+		</table>
+		</td>
+		<td valign="top" class="help" width="400">Select the class to display the properties associated. Each class can store its records
+		into one or multiple <b>Clusters</b> (see "Structure" tab). A class can be <b>schema-less</b> (has no properties), <b>schema-full</b> (all
+		properties as mandatories) or with a <b>partial schema</b>.</td>
+	</tr>
+	<tr>
+		<td valign="top" align="left">
+		<table>
+			<tr>
+				<td>
+				<button id="addClass" class="ui-button-text-icon" style="text-align: left">Add class <img border="0" alt="New record"
+					src="images/add.png" align="top" /></button>
+				</td>
+				<td>
+				<button id="deleteClass" class="ui-button-text-icon" style="text-align: left">Delete class <img border="0" alt="Delete record"
+					src="images/delete.png" align="top" /></button>
+				</td>
+			</tr>
+		</table>
+		</td>
+	</tr>
+	<tr>
+		<td valign="top" colspan="2">
+		<table id="classProperties" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+		</table>
+		</td>
+	</tr>
+	<tr>
+		<td valign="top" align="left">
+		<table>
+			<tr>
+				<td>
+				<button id="addProperty" " class="ui-button-text-icon" style="text-align: left">Add property <img border="0" alt="New record"
+					src="images/add.png" align="top" /></button>
+				</td>
+				<td>
+				<button id="deleteProperty" class="ui-button-text-icon" style="text-align: left">Delete property <img border="0"
+					alt="Delete record" src="images/delete.png" align="top" /></button>
+				</td>
+			</tr>
+		</table>
+		</td>
+	</tr>
+</table>
+</div>
+<div id="tab-db-structure">
+<table style="width: 100%;" cellpadding="5">
+	<tr>
+		<td valign="top" class="help"><b><a href="http://code.google.com/p/orient/wiki/Concepts#Cluster">Clusters</a></b> are sets of records
+		grouped by a mean. Any mean you want to assign. You can use a Cluster like a Table of the Relational DBMS world, namely to group records
+		of the same type. Or you could want to group records by different logics. <br />
+		<br />
+		There are two kinds of clusters: <b><a href="http://code.google.com/p/orient/wiki/Concepts#Local_Physical_Cluster">Physical</a></b> and <b><a
+			href="http://code.google.com/p/orient/wiki/Concepts#Logical_Cluster">Logical</a></b>. The first one uses ad-hoc files to speed up the I/O
+		while the second one saves more space but it's slower. The suggestion is to use Physical Clusters for the records accessed often and where
+		you need light speed.</td>
+	</tr>
+	<tr>
+		<td valign="top" width="500">
+		<table id="databaseClusters" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+		</table>
+		</td>
+	</tr>
+	<tr>
+		<td valign="top" align="left">
+		<table>
+			<tr>
+				<td>
+				<button id="addPhysicalCluster" class="ui-button-text-icon" style="text-align: left">Add Physical Cluster <img border="0"
+					alt="Add Physical Cluster" src="images/add.png" align="top" /></button>
+				</td>
+				<td>
+				<button id="addLogicalCluster" class="ui-button-text-icon" style="text-align: left">Add Logical Cluster <img border="0"
+					alt="Add Logical Cluster" src="images/add.png" align="top" /></button>
+				</td>
+				<td>
+				<button id="removeCluster" class="ui-button-text-icon" style="text-align: left">Remove Cluster <img border="0"
+					alt="Remove Cluster" src="images/delete.png" align="top" /></button>
+				</td>
+			</tr>
+		</table>
+		</td>
+	</tr>
+	<tr>
+		<td valign="top" class="help"><b><a href="http://code.google.com/p/orient/wiki/Concepts#Data_Segment">Data segments</a></b> are the
+		segments that contain data pointed by Clusters.</td>
+	</tr>
+	<tr>
+		<td valign="top" width="500">
+		<table id="databaseDataSegments" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+		</table>
+		</td>
+	</tr>
+	<tr>
+		<td valign="top" class="help"><b>Tx Segment</b> handles the transaction log for the entire database. It's used in Transactions.</td>
+	</tr>
+	<tr>
+		<td valign="top" width="500">
+		<table id="databaseTxSegment" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+		</table>
+		</td>
+	</tr>
+</table>
+</div>
+<div id="tab-db-security">
+<div id="tabs-security">
+<ul>
+	<li><a href="#tab-security-users"><span>Users</span></a></li>
+	<li><a href="#tab-security-roles"><span>Roles</span></a></li>
+</ul>
+<div id="tab-security-users">
+<table id="databaseUsers" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+</table>
+</div>
+<div id="tab-security-roles">
+<table style="width: 100%;" cellpadding="5" cellspacing="0">
+	<tr>
+		<td>
+		<table id="databaseRoles" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+		</table>
+		</td>
+		<td>
+		<table id="databaseRolesRules" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+		</table>
+		</td>
+	</tr>
+</table>
+</div>
+</div>
+</div>
+<div id="tab-db-config">
+<table style="width: 100%;" cellpadding="5">
+	<tr>
+		<td valign="top">
+		<table id="databaseConfig" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+		</table>
+		</td>
+		<td valign="top" class="help"></td>
+	</tr>
+	<tr>
+		<td valign="top">
+		<table id="databaseConfigProperties" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+		</table>
+		</td>
+		<td valign="top" class="help"></td>
+	</tr>
+</table>
+</div>
+</div>
+</div>
+
+<script language="javascript">
+	function showDatabaseInfo() {
+		fillDynaTable($('#databaseClusters'), "Clusters", [ 'id', 'name',
+				'type', 'records', 'size', 'filled', 'maxSize', 'files' ], [ {
+			name : 'id',
+			index : 'id',
+			width : '30px',
+			editable : false
+		}, {
+			name : 'name',
+			index : 'name',
+			width : '100px',
+			editable : false
+		}, {
+			name : 'type',
+			index : 'type',
+			width : '80px',
+			editable : false
+		}, {
+			name : 'records',
+			index : 'records',
+			width : '80px',
+			editable : false
+		}, {
+			name : 'size',
+			index : 'size',
+			width : '80px',
+			editable : false
+		}, {
+			name : 'filled',
+			index : 'filled',
+			width : '80px',
+			editable : false
+		}, {
+			name : 'maxSize',
+			index : 'maxSize',
+			width : '80px',
+			editable : false
+		}, {
+			name : 'files',
+			index : 'files',
+			width : '450px',
+			editable : false
+		} ], databaseInfo['clusters'], {
+			sortname : 'id',
+			editurl : getStudioURL('clusters')
+		});
+
+		$("#addPhysicalCluster").click(function() {
+			jQuery("#databaseClusters").jqGrid('editGridRow', "newp", {
+				height : 320,
+				reloadAfterSubmit : false,
+				closeOnEscape : true,
+				closeAfterAdd : true,
+				editData : [ selectedClassName ],
+				afterSubmit : function(response, postdata) {
+					jQuery("#output").val(response.responseText);
+					return true;
+				}
+			});
+		});
+		$("#addLogicalCluster").click(function() {
+			jQuery("#databaseClusters").jqGrid('editGridRow', "newl", {
+				height : 320,
+				reloadAfterSubmit : false,
+				closeOnEscape : true,
+				closeAfterAdd : true,
+				editData : [ selectedClassName ],
+				afterSubmit : function(response, postdata) {
+					jQuery("#output").val(response.responseText);
+					return true;
+				}
+			});
+		});
+		$("#removeCluster").click(
+				function() {
+					var selectedRow = jQuery("#databaseClusters").jqGrid(
+							'getGridParam', 'selrow');
+					if (selectedRow != null) {
+						jQuery("#databaseClusters").jqGrid(
+								'delGridRow',
+								selectedRow,
+								{
+									reloadAfterSubmit : false,
+									closeOnEscape : true,
+									delData : [ selectedClassName ],
+									afterSubmit : function(response, postdata) {
+										jQuery("#output").val(
+												response.responseText);
+										return [ true, response.responseText ];
+									}
+								});
+					} else
+						alert("Please select the cluster to delete!");
+				});
+
+		fillDynaTable($('#databaseDataSegments'), "Data Segments", [ 'id',
+				'name', 'size', 'filled', 'maxSize', 'files' ], [ {
+			name : 'id',
+			index : 'id',
+			width : '30px',
+			editable : false
+		}, {
+			name : 'name',
+			index : 'name',
+			width : '100px',
+			editable : false
+		}, {
+			name : 'size',
+			index : 'size',
+			width : '80px',
+			editable : false
+		}, {
+			name : 'filled',
+			index : 'filled',
+			width : '80px',
+			editable : false
+		}, {
+			name : 'maxSize',
+			index : 'maxSize',
+			width : '80px',
+			editable : false
+		}, {
+			name : 'files',
+			index : 'files',
+			width : '600px',
+			editable : false
+		} ], databaseInfo['dataSegments'], {
+			height : '40px'
+		});
+
+		fillDynaTable($('#databaseTxSegment'), "Tx Segment", [ 'totalLogs',
+				'size', 'filled', 'maxSize', 'file' ], [ {
+			name : 'totalLogs',
+			index : 'Total Logs',
+			width : '100px',
+			editable : false
+		}, {
+			name : 'size',
+			index : 'Size',
+			width : '80px',
+			editable : false
+		}, {
+			name : 'filled',
+			index : 'Filled',
+			width : '80px',
+			editable : false
+		}, {
+			name : 'maxSize',
+			index : 'Max Size',
+			width : '80px',
+			editable : false
+		}, {
+			name : 'file',
+			index : 'File',
+			width : '600px',
+			editable : false
+		} ], databaseInfo['txSegment'], {
+			height : '25px'
+		});
+
+		fillDynaTable($('#databaseUsers'), "Users", [ 'name', 'roles' ], null,
+				databaseInfo['users']);
+		fillDynaTable($('#databaseRolesRules'), "Rules", [ 'Name', 'Create',
+				'Read', 'Update', 'Delete' ], [ {
+			name : 'name',
+			index : 'name',
+			formatter : 'text',
+			edittype : 'text',
+			editable : false
+		}, {
+			name : 'create',
+			index : 'create',
+			formatter : 'checkbox',
+			edittype : 'checkbox',
+			editable : true
+		}, {
+			name : 'read',
+			index : 'read',
+			formatter : 'checkbox',
+			edittype : 'checkbox',
+			editable : true
+		}, {
+			name : 'update',
+			index : 'update',
+			formatter : 'checkbox',
+			edittype : 'checkbox',
+			editable : true
+		}, {
+			name : 'delete',
+			index : 'delete',
+			formatter : 'checkbox',
+			edittype : 'checkbox',
+			editable : true
+		} ], null);
+		fillDynaTable(
+				$('#databaseRoles'),
+				"Roles",
+				[ 'name', 'mode' ],
+				null,
+				databaseInfo['roles'],
+				{
+					sortname : 'name',
+					onSelectRow : function(roleRowNum) {
+						var role = databaseInfo['roles'][roleRowNum - 1];
+						fillDynaTableRows($('#databaseRolesRules'), role.rules);
+					}
+				});
+
+		classEnumeration = ":;";
+		for (cls in databaseInfo['classes']) {
+			if (classEnumeration.length > 2)
+				classEnumeration += ";";
+			classEnumeration += databaseInfo['classes'][cls].name + ":"
+					+ databaseInfo['classes'][cls].name;
+		}
+
+		jQuery($('#classProperties')).jqGrid('GridUnload');
+		fillDynaTable(
+				$('#classProperties'),
+				"Properties",
+				[ 'id', 'name', 'type', 'linkedType', 'linkedClass',
+						'mandatory', 'notNull', 'min', 'max', 'indexed' ],
+				[
+						{
+							name : 'id',
+							index : 'id',
+							width : 30
+						},
+						{
+							name : 'name',
+							index : 'name',
+							width : 180,
+							editable : true,
+							editrules : {
+								required : true
+							},
+							formoptions : {
+								elmprefix : '(*)'
+							}
+						},
+						{
+							name : 'type',
+							index : 'type',
+							width : 100,
+							edittype : "select",
+							editoptions : {
+								value : ":;BINARY:BINARY;BOOLEAN:BOOLEAN;EMBEDDED:EMBEDDED;EMBEDDEDLIST:EMBEDDEDLIST;EMBEDDEDMAP:EMBEDDEDMAP;EMBEDDEDSET:EMBEDDEDSET;FLOAT:FLOAT;DATE:DATE;DOUBLE:DOUBLE;INTEGER:INTEGER;LINK:LINK;LINKLIST:LINKLIST;LINKMAP:LINKMAP;LINKSET:LINKSET;LONG:LONG;SHORT:SHORT;STRING:STRING"
+							},
+							editable : true,
+							editrules : {
+								required : true
+							},
+							formoptions : {
+								elmprefix : '(*)'
+							}
+						},
+						{
+							name : 'linkedType',
+							index : 'linkedType',
+							width : 150,
+							edittype : "select",
+							editoptions : {
+								value : ":;BINARY:BINARY;BOOLEAN:BOOLEAN;EMBEDDED:EMBEDDED;EMBEDDEDLIST:EMBEDDEDLIST;EMBEDDEDMAP:EMBEDDEDMAP;EMBEDDEDSET:EMBEDDEDSET;FLOAT:FLOAT;DATE:DATE;DOUBLE:DOUBLE;INTEGER:INTEGER;LINK:LINK;LINKLIST:LINKLIST;LINKMAP:LINKMAP;LINKSET:LINKSET;LONG:LONG;SHORT:SHORT;STRING:STRING"
+							},
+							editable : true
+						}, {
+							name : 'linkedClass',
+							index : 'linkedClass',
+							width : 150,
+							edittype : "select",
+							editoptions : {
+								value : classEnumeration
+							},
+							editable : true
+						}, {
+							name : 'mandatory',
+							index : 'mandatory',
+							width : 90,
+							formatter : 'checkbox',
+							edittype : 'checkbox',
+							editable : true
+						}, {
+							name : 'notNull',
+							index : 'notNull',
+							width : 80,
+							formatter : 'checkbox',
+							edittype : 'checkbox',
+							editable : true
+						}, {
+							name : 'min',
+							index : 'min',
+							width : 120,
+							editable : true
+						}, {
+							name : 'max',
+							index : 'max',
+							width : 120,
+							editable : true
+						}, {
+							name : 'indexed',
+							index : 'indexed',
+							width : 80,
+							edittype : "select",
+							editoptions : {
+								value : ":;Unique:Unique;Not unique:Not Unique"
+							},
+							editable : true
+						} ], null, {
+					editurl : getStudioURL('classProperties'),
+					sortname : 'id'
+				});
+
+		$("#addProperty").click(function() {
+			jQuery("#classProperties").jqGrid('editGridRow', "new", {
+				height : 320,
+				reloadAfterSubmit : false,
+				closeOnEscape : true,
+				closeAfterAdd : true,
+				editData : [ selectedClassName ],
+				afterSubmit : function(response, postdata) {
+					jQuery("#output").val(response.responseText);
+					return true;
+				}
+			});
+		});
+		$("#deleteProperty").click(
+				function() {
+					var selectedRow = jQuery("#classProperties").jqGrid(
+							'getGridParam', 'selrow');
+					if (selectedRow != null) {
+						var propName = jQuery('#classProperties').jqGrid(
+								'getRowData', selectedRow)["name"];
+						jQuery("#classProperties").jqGrid(
+								'delGridRow',
+								selectedRow,
+								{
+									reloadAfterSubmit : false,
+									closeOnEscape : true,
+									delData : [ selectedClassName, propName ],
+									afterSubmit : function(response, postdata) {
+										jQuery("#output").val(
+												response.responseText);
+										return [ true, response.responseText ];
+									}
+								});
+					} else
+						alert("Please select the property to delete!");
+				});
+
+		fillDynaTable(
+				$('#databaseClasses'),
+				"Classes",
+				[ 'id', 'name', 'clusters', 'defaultCluster', 'records' ],
+				[ {
+					name : 'id',
+					index : 'id',
+					width : 30
+				}, {
+					name : 'name',
+					index : 'name',
+					width : 280,
+					editable : true,
+					editrules : {
+						required : true
+					},
+					formoptions : {
+						elmprefix : '(*)'
+					}
+				}, {
+					name : 'clusters',
+					index : 'clusters',
+					width : 80,
+					editable : false
+				}, {
+					name : 'defaultCluster',
+					index : 'defaultCluster',
+					width : 80,
+					editable : false
+				}, {
+					name : 'records',
+					index : 'records',
+					width : 150,
+					editable : false
+				} ],
+				databaseInfo['classes'],
+				{
+					sortname : 'id',
+					editurl : getStudioURL('classes'),
+					onSelectRow : function(classRowNum) {
+						selectedClassName = databaseInfo['classes'][classRowNum - 1].name;
+						fillDynaTableRows(
+								$('#classProperties'),
+								databaseInfo['classes'][classRowNum - 1]['properties']);
+					}
+				});
+
+		$("#addClass").click(function() {
+			jQuery("#databaseClasses").jqGrid('editGridRow', "new", {
+				height : 320,
+				reloadAfterSubmit : false,
+				closeOnEscape : true,
+				closeAfterAdd : true,
+				editData : [ selectedClassName ],
+				afterSubmit : function(response, postdata) {
+					jQuery("#output").val(response.responseText);
+					return true;
+				}
+			});
+		});
+		$("#deleteClass").click(
+				function() {
+					var selectedRow = jQuery("#databaseClasses").jqGrid(
+							'getGridParam', 'selrow');
+					if (selectedRow != null) {
+						jQuery("#databaseClasses").jqGrid(
+								'delGridRow',
+								selectedRow,
+								{
+									reloadAfterSubmit : false,
+									closeOnEscape : true,
+									delData : [ selectedClassName ],
+									afterSubmit : function(response, postdata) {
+										jQuery("#output").val(
+												response.responseText);
+										return [ true, response.responseText ];
+									}
+								});
+					} else
+						alert("Please select the class to delete!");
+				});
+
+		fillDynaTable($('#databaseConfig'), "Configuration",
+				[ 'name', 'value' ], null, databaseInfo['config'].values, {
+					sortname : 'name'
+				});
+
+		fillDynaTable($('#databaseConfigProperties'),
+				"Configuration properties", [ 'name', 'value' ], null,
+				databaseInfo['config'].properties, {
+					sortname : 'name'
+				});
+	}
+
+	function askDatabaseInfo() {
+		databaseInfo = orientServer.getDatabaseInfo();
+		if (databaseInfo == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			showDatabaseInfo();
+		}
+	}
+
+	$('#tabs-db').tabs();
+	$('#tabs-security').tabs();
+
+	showDatabaseInfo();
+</script>

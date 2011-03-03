@@ -1,0 +1,164 @@
+body {
+	font-size: 9pt;
+	font-family: Arial;
+}
+
+td {
+	font-size: 9pt;
+	font-family: Arial;
+}
+
+.cell_readonly {
+	color: white;
+	background-color: #6D7B8D;
+}
+
+#graph-inner-details {
+	font-size: 13pt;
+}
+
+#center-container {
+	background-color: #1a1a1a;
+}
+
+.help {
+	font-size: 13pt;
+}
+
+table.odocumentview {
+	background-color: #87B6D9;
+}
+
+table.ograph_detail {
+	background-color: #87B6D9;
+}
+
+td.odocumentview_header_label {
+	font-size: 13pt;
+	text-align: left;
+}
+
+td.odocumentview_header_value {
+	font-size: 13pt;
+}
+
+input.odocumentview_header_value {
+	font-size: 13pt;
+	width: 100px;
+}
+
+select.odocumentview_header_value {
+	font-size: 13pt;
+	width: 150px;
+}
+
+input.odocumentview_field_label {
+	font-size: 13pt;
+	vertical-align: top;
+	text-align: right;
+	border-color: #F8F8F8;
+}
+
+td.odocumentview_field_label {
+	font-size: 13pt;
+	vertical-align: top;
+	text-align: left;
+}
+
+td.odocumentview_field_value {
+	font-size: 13pt;
+}
+
+textarea.odocumentview_field_value {
+	font-size: 13pt;
+	vertical-align: top;
+	width: 700px;
+}
+
+.navigation {
+	position: fixed;
+	margin: 0px;
+	padding: 0px;
+	top: 0px;
+	right: 10px;
+	list-style: none;
+	z-index: 999999;
+	width: 721px;
+}
+
+.navigation-ie {
+	position: absolute;
+	margin: 0px;
+	padding: 0px;
+	top: 0px;
+	right: 10px;
+	list-style: none;
+	z-index: 999999;
+	width: 721px;
+}
+
+ul#navigation li {
+	width: 103px;
+	display: inline;
+	float: left;
+}
+
+ul#navigation li a {
+	display: block;
+	float: left;
+	margin-top: -2px;
+	width: 100px;
+	height: 25px;
+	background-color: #6ea8d0;
+	background-repeat: no-repeat;
+	background-position: 50% 10px;
+	border: 1px solid #BDDCEF;
+	-moz-border-radius: 0px 0px 10px 10px;
+	-webkit-border-bottom-right-radius: 10px;
+	-webkit-border-bottom-left-radius: 10px;
+	-khtml-border-bottom-right-radius: 10px;
+	-khtml-border-bottom-left-radius: 10px;
+	text-decoration: none;
+	text-align: center;
+	padding-top: 80px;
+	opacity: 0.7;
+	filter: progid :   DXImageTransform.Microsoft.Alpha (   opacity =   70 );
+}
+
+ul#navigation li a:hover {
+	background-color: #CAE3F2;
+}
+
+ul#navigation li a span {
+	letter-spacing: 2px;
+	font-size: 11px;
+	color: white;
+}
+
+ul#navigation .menu-database a {
+	background-image: url(../images/menu-database.png);
+}
+
+ul#navigation .menu-query a {
+	background-image: url(../images/menu-query.png);
+}
+
+ul#navigation .menu-command a {
+	background-image: url(../images/menu-command.png);
+}
+
+ul#navigation .menu-document a {
+	background-image: url(../images/menu-document.png);
+}
+
+ul#navigation .menu-graph a {
+	background-image: url(../images/menu-graph.png);
+}
+
+ul#navigation .menu-raw a {
+	background-image: url(../images/menu-raw.png);
+}
+
+ul#navigation .menu-server a {
+	background-image: url(../images/menu-server.png);
+}
