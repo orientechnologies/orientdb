@@ -279,7 +279,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 		case OChannelBinaryProtocol.REQUEST_DB_DELETE: {
 			data.commandInfo = "Delete database";
-			underlyingDatabase.delete();
+			String dbName = channel.readString();
+
+			checkServerAccess("database.delete");
+
+			connection.database = getDatabaseInstance(dbName, "local");
+			connection.database.delete();
 			sendOk(lastClientTxId);
 			break;
 		}
