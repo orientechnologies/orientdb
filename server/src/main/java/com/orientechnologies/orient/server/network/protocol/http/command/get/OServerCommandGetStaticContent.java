@@ -31,8 +31,8 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
 
 public class OServerCommandGetStaticContent extends OServerCommandAbstract {
-	private static final String[]										NAMES			= { "GET|www", "GET|", "GET|*.htm", "GET|*.html", "GET|*.xml",
-			"GET|*.jpeg", "GET|*.jpg", "GET|*.png", "GET|*.gif", "GET|*.js", "GET|*.css", "GET|*.swf", "GET|favicon.ico",
+	private static final String[]										NAMES			= { "GET|www", "GET|studio/", "GET|", "GET|*.htm", "GET|*.html",
+			"GET|*.xml", "GET|*.jpeg", "GET|*.jpg", "GET|*.png", "GET|*.gif", "GET|*.js", "GET|*.css", "GET|*.swf", "GET|favicon.ico",
 			"GET|robots.txt"																			};
 
 	static final String															WWW_PATH	= System.getProperty("orientdb.www.path", "src/site");
@@ -87,12 +87,23 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 			}
 
 			if (is == null) {
-				final File inputFile = new File(url);
+				File inputFile = new File(url);
 				if (!inputFile.exists()) {
 					OLogManager.instance().debug(this, "Static resource not found: %s", url);
 
 					sendBinaryContent(iRequest, 404, "File not found", null, null, 0);
 					return false;
+				}
+
+				if (inputFile.isDirectory()) {
+					inputFile = new File(url + "/index.htm");
+					if (inputFile.exists())
+						url = url + "/index.htm";
+					else {
+						inputFile = new File(url + "/index.html");
+						if (inputFile.exists())
+							url = url + "/index.html";
+					}
 				}
 
 				if (url.endsWith(".htm") || url.endsWith(".html"))
