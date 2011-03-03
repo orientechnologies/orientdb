@@ -85,18 +85,15 @@ public class TTYConsoleReader implements OConsoleReader {
 					next = System.in.read();
 				}
 				if (escape) {
-					writetempFile("escape char " + next);
 					if (next == 49) {
 						System.in.read();
 						next = System.in.read();
-						writetempFile("escape char maybe ctrl" + next);
 					}
 					if (next == 53) {
 						ctrl = true;
 						next = System.in.read();
 					}
 					if (ctrl) {
-						writetempFile("ctrl char " + next);
 						if (next == RIGHT_CHAR) {
 							currentPos = buffer.indexOf(" ", currentPos) + 1;
 							if (currentPos == 0)
@@ -195,7 +192,6 @@ public class TTYConsoleReader implements OConsoleReader {
 						}
 					}
 				} else {
-					writetempFile("standard char " + next);
 					if (next == NEW_LINE_CHAR) {
 						System.out.println();
 						break;
@@ -263,7 +259,7 @@ public class TTYConsoleReader implements OConsoleReader {
 	}
 
 	private void writeHistory(int historyNum) throws IOException {
-		if (historyNum < MAX_HISTORY_ENTRIES) {
+		if (historyNum <= MAX_HISTORY_ENTRIES) {
 			File historyFile = getHistoryFile(false);
 			BufferedWriter writer = new BufferedWriter(new FileWriter(historyFile));
 			try {
@@ -395,21 +391,5 @@ public class TTYConsoleReader implements OConsoleReader {
 			}
 		}
 		return file;
-	}
-
-	private void writetempFile(String ivalue) throws IOException {
-		File file = new File("temp");
-		if (!file.exists()) {
-			try {
-				file.createNewFile();
-			} catch (IOException ioe) {
-				OLogManager.instance().error(this, "Error creating history file.", ioe, "");
-			}
-		}
-		BufferedWriter writer = new BufferedWriter(new FileWriter(file, true));
-		writer.append(ivalue);
-		writer.newLine();
-		writer.flush();
-		writer.close();
 	}
 }
