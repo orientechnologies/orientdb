@@ -301,7 +301,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		level2cache.shutdown();
 
 		try {
-			Orient.instance().registerStorage(this);
+			Orient.instance().unregisterStorage(this);
 		} catch (Exception e) {
 			OLogManager.instance().error(this, "Can't unregister storage", e);
 		}
