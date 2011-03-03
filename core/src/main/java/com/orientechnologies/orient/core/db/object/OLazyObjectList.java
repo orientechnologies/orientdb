@@ -31,13 +31,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings({ "unchecked" })
 public class OLazyObjectList<TYPE> implements List<TYPE>, Serializable {
-	private static final long						serialVersionUID	= 289711963195698937L;
-	private ORecord<?>									sourceRecord;
-	private final ArrayList<Object>			list							= new ArrayList<Object>();
-	private ODatabasePojoAbstract<TYPE>	database;
-	private String											fetchPlan;
-	private boolean											converted					= false;
-	private boolean											convertToRecord		= true;
+	private static final long											serialVersionUID	= 289711963195698937L;
+	private ORecord<?>														sourceRecord;
+	private final ArrayList<Object>								list							= new ArrayList<Object>();
+	private transient ODatabasePojoAbstract<TYPE>	database;
+	private String																fetchPlan;
+	private boolean																converted					= false;
+	private boolean																convertToRecord		= true;
 
 	public OLazyObjectList(final ODatabaseGraphTx iDatabase, final ORecord<?> iSourceRecord, final Collection<?> iSourceList) {
 		this((ODatabasePojoAbstract<TYPE>) iDatabase, iSourceRecord, iSourceList);

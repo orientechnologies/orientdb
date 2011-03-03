@@ -33,13 +33,13 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  */
 @SuppressWarnings("unchecked")
 public class OLazyObjectSet<TYPE> implements Set<Object>, Serializable {
-	private static final long						serialVersionUID	= -2497274705163041241L;
-	
-	private final ORecord<?>						sourceRecord;
-	private ODatabasePojoAbstract<TYPE>	database;
-	private final Collection<Object>		underlying;
-	private String											fetchPlan;
-	private boolean											convertToRecord		= true;
+	private static final long											serialVersionUID	= -2497274705163041241L;
+
+	private final ORecord<?>											sourceRecord;
+	private transient ODatabasePojoAbstract<TYPE>	database;
+	private final Collection<Object>							underlying;
+	private String																fetchPlan;
+	private boolean																convertToRecord		= true;
 
 	public OLazyObjectSet(final ODatabasePojoAbstract<TYPE> database, final ORecord<?> iSourceRecord, final Collection<Object> iSource) {
 		this.database = database;
