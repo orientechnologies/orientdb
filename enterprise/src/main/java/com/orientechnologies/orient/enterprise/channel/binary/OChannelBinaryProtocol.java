@@ -76,7 +76,13 @@ public class OChannelBinaryProtocol {
 
 	public static void checkProtocolVersion(final OChannelBinary iNetwork) throws IOException {
 		// SEND PROTOCOL VERSION
-		final short srvProtocolVersion = iNetwork.readShort();
+		final short srvProtocolVersion;
+		try {
+			srvProtocolVersion = iNetwork.readShort();
+		} catch (IOException e) {
+			throw new ONetworkProtocolException("Can't read data from remote server " + iNetwork.socket.getRemoteSocketAddress() + ": "
+					+ e);
+		}
 
 		if (srvProtocolVersion != OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION) {
 			iNetwork.close();
