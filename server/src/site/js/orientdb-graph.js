@@ -209,7 +209,7 @@ function OGraph(doc, displayComponent, detailComponent, loadDepthComponent) {
 											+ node.id
 											+ "', '"
 											+ child.id
-											+ "')\"><img border='0' alt='Refresh' src='www/images/remove.png' align='top' /></button></td></tr>";
+											+ "')\"><img border='0' alt='Refresh' src='images/remove.png' align='top' /></button></td></tr>";
 								}
 							});
 					html += "</table>";
