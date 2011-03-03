@@ -277,6 +277,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			break;
 		}
 
+		case OChannelBinaryProtocol.REQUEST_DB_DELETE: {
+			data.commandInfo = "Delete database";
+			underlyingDatabase.delete();
+			sendOk(lastClientTxId);
+			break;
+		}
+
 		case OChannelBinaryProtocol.REQUEST_DB_SIZE: {
 			data.commandInfo = "Database size";
 			sendOk(lastClientTxId);
