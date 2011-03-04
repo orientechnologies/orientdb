@@ -255,7 +255,17 @@ public class TTYConsoleReader implements OConsoleReader {
 		} catch (IOException e) {
 			return null;
 		}
-		return consoleInput;
+		if (consoleInput.equals("clear")) {
+			System.out.flush();
+			for (int i = 0; i < 150; i++) {
+				System.out.println();
+			}
+			System.out.print("\r");
+			System.out.print("> ");
+			return readLine();
+		} else {
+			return consoleInput;
+		}
 	}
 
 	private void writeHistory(int historyNum) throws IOException {
