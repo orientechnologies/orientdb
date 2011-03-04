@@ -32,7 +32,13 @@ function ODatabase(databasePath) {
 	this.urlPrefix = "";
 
 	if (databasePath) {
-		var pos = databasePath.indexOf('/', 8);
+		var pos = databasePath.indexOf('orientdb_proxy', 8); // JUMP HTTP
+		if (pos > -1) {
+			pos = databasePath.indexOf('/', pos); // END OF PROXY
+		} else {
+			pos = databasePath.indexOf('/', 8);
+		}
+
 		this.databaseUrl = databasePath.substring(0, pos + 1);
 		this.databaseName = databasePath.substring(pos + 1);
 		if (this.databaseName.indexOf('/') > -1) {
