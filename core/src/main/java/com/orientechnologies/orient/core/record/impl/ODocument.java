@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedList;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedMap;
@@ -258,8 +259,8 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 
 				if (fieldValue instanceof ORecord<?>)
 					_fieldValues.put(entry.getKey(), ((ORecord<?>) fieldValue).getIdentity());
-				// else if (fieldValue instanceof ORecordLazyMultiValue)
-				// ((ORecordLazyMultiValue) fieldValue).convertRecords2Links();
+//				else if (fieldValue instanceof ORecordLazyMultiValue)
+//					((ORecordLazyMultiValue) fieldValue).convertRecords2Links();
 			}
 		}
 
@@ -507,7 +508,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		if (separatorPos > -1) {
 			// GET THE LINKED OBJECT IF ANY
 			String fieldName = iPropertyName.substring(0, separatorPos);
-			Object linkedObject = _fieldValues.get(fieldName.toLowerCase());
+			Object linkedObject = _fieldValues.get(fieldName);
 
 			if (linkedObject == null || !(linkedObject instanceof ODocument))
 				// IGNORE IT BY RETURNING NULL
@@ -522,7 +523,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			return (RET) linkedRecord.field(iPropertyName.substring(separatorPos + 1));
 		}
 
-		return (RET) _fieldValues.get(iPropertyName.toLowerCase());
+		return (RET) _fieldValues.get(iPropertyName);
 	}
 
 	/**
@@ -540,7 +541,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		if (value instanceof ORID && t != OType.LINK) {
 			// CREATE THE DOCUMENT OBJECT IN LAZY WAY
 			value = (RET) _database.load((ORID) value);
-			_fieldValues.put(iPropertyName.toLowerCase(), value);
+			_fieldValues.put(iPropertyName, value);
 		}
 
 		// CHECK FOR CONVERSION
@@ -628,9 +629,8 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		checkForLoading();
 		checkForFields();
 
-		final String propertyName = iPropertyName.toLowerCase();
-		final boolean knownProperty = _fieldValues.containsKey(propertyName);
-		final Object oldValue = _fieldValues.get(propertyName);
+		final boolean knownProperty = _fieldValues.containsKey(iPropertyName);
+		final Object oldValue = _fieldValues.get(iPropertyName);
 
 		if (knownProperty)
 			// CHECK IF IS REALLY CHANGED
@@ -675,8 +675,8 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 					_fieldOriginalValues = new HashMap<String, Object>();
 
 				// INSERT IT ONLY IF NOT EXISTS TO AVOID LOOSE OF THE ORIGINAL VALUE (FUNDAMENTAL FOR INDEX HOOK)
-				if (!_fieldOriginalValues.containsKey(propertyName))
-					_fieldOriginalValues.put(propertyName, oldValue);
+				if (!_fieldOriginalValues.containsKey(iPropertyName))
+					_fieldOriginalValues.put(iPropertyName, oldValue);
 			}
 		}
 
@@ -711,9 +711,9 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 				iPropertyValue = iPropertyValue.toString();
 		}
 
-		_fieldValues.put(propertyName, iPropertyValue);
+		_fieldValues.put(iPropertyName, iPropertyValue);
 
-		setFieldType(propertyName, iType);
+		setFieldType(iPropertyName, iType);
 
 		return this;
 	}
@@ -725,21 +725,20 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		checkForLoading();
 		checkForFields();
 
-		final String propertyName = iPropertyName.toLowerCase();
-		final boolean knownProperty = _fieldValues.containsKey(propertyName);
-		final Object oldValue = _fieldValues.get(propertyName);
+		final boolean knownProperty = _fieldValues.containsKey(iPropertyName);
+		final Object oldValue = _fieldValues.get(iPropertyName);
 
 		if (knownProperty && _trackingChanges) {
 			// SAVE THE OLD VALUE IN A SEPARATE MAP
 			if (_fieldOriginalValues == null)
 				_fieldOriginalValues = new HashMap<String, Object>();
-
+			
 			// INSERT IT ONLY IF NOT EXISTS TO AVOID LOOSE OF THE ORIGINAL VALUE (FUNDAMENTAL FOR INDEX HOOK)
-			if (!_fieldOriginalValues.containsKey(propertyName))
-				_fieldOriginalValues.put(propertyName, oldValue);
+			if (!_fieldOriginalValues.containsKey(iPropertyName))
+				_fieldOriginalValues.put(iPropertyName, oldValue);
 		}
 
-		_fieldValues.remove(propertyName);
+		_fieldValues.remove(iPropertyName);
 
 		setDirty();
 		return oldValue;
@@ -824,7 +823,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 *          Property name to retrieve the original value
 	 */
 	public Object getOriginalValue(final String iPropertyName) {
-		return _fieldOriginalValues != null ? _fieldOriginalValues.get(iPropertyName.toLowerCase()) : null;
+		return _fieldOriginalValues != null ? _fieldOriginalValues.get(iPropertyName) : null;
 	}
 
 	/**
@@ -859,7 +858,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	public boolean containsField(final String iFieldName) {
 		checkForLoading();
 		checkForFields();
-		return _fieldValues.containsKey(iFieldName.toLowerCase());
+		return _fieldValues.containsKey(iFieldName);
 	}
 
 	/**
@@ -960,7 +959,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		if (iValue instanceof ORID && !ORID.class.equals(iType) && !ORecordId.class.equals(iType)) {
 			// CREATE THE DOCUMENT OBJECT IN LAZY WAY
 			iValue = (RET) new ODocument(_database, (ORID) iValue);
-			_fieldValues.put(iPropertyName.toLowerCase(), iValue);
+			_fieldValues.put(iPropertyName, iValue);
 
 		} else if (ORID.class.equals(iType)) {
 			if (iValue instanceof ORecord<?>)
@@ -979,7 +978,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			else if (iValue instanceof Map)
 				newValue.addAll(((Map<String, Object>) iValue).values());
 
-			_fieldValues.put(iPropertyName.toLowerCase(), newValue);
+			_fieldValues.put(iPropertyName, newValue);
 			iValue = (RET) newValue;
 
 		} else if (List.class.isAssignableFrom(iType) && !(iValue instanceof List)) {
@@ -996,7 +995,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			else if (iValue instanceof Map)
 				newValue.addAll(((Map<String, Object>) iValue).values());
 
-			_fieldValues.put(iPropertyName.toLowerCase(), newValue);
+			_fieldValues.put(iPropertyName, newValue);
 			iValue = (RET) newValue;
 		} else
 			iValue = (RET) OType.convert(iValue, iType);
@@ -1011,7 +1010,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		// SAVE FORCED TYPE
 		if (_fieldTypes == null)
 			_fieldTypes = new HashMap<String, OType>();
-		_fieldTypes.put(iPropertyName.toLowerCase(), iType);
+		_fieldTypes.put(iPropertyName, iType);
 	}
 
 	/**
