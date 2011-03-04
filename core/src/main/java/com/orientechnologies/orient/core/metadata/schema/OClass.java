@@ -226,7 +226,7 @@ public class OClass extends ODocumentWrapperNoClass implements Comparable<OClass
 	}
 
 	public boolean existsProperty(final String iPropertyName) {
-		return properties.containsKey(iPropertyName);
+		return properties.containsKey(iPropertyName.toLowerCase());
 	}
 
 	protected OProperty addProperty(String iName, final OType iType, final int iOffset) {
