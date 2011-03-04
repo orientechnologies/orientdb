@@ -38,10 +38,17 @@ function clear(component) {
 
 function formatServerURL() {
 	var s = $('#server').val();
-	var index = s.indexOf('/', 8); // JUMP HTTP://
-	if (index > -1)
-		$('#server').val(s.substring(0, index));
 
+	var index = s.indexOf('orientdb_proxy', 8); // JUMP HTTP://
+	if (index > -1) {
+		index = s.indexOf('/', index); // END OF PROXY
+		$('#server').val(s.substring(0, index));
+	} else {
+		index = s.indexOf('/', 8); // JUMP HTTP://
+		if (index > -1)
+			$('#server').val(s.substring(0, index));
+	}
+	
 	$('#rawServer').html($('#server').val() + "/");
 }
 
@@ -62,5 +69,6 @@ jQuery(document).ready(function() {
 
 	$("#tabs-main").hide();
 	$("#buttonDisconnect").hide();
-	
-	controller.loadPage('panel', 'panelHome.htm');});
+
+	controller.loadPage('panel', 'panelHome.htm');
+});
