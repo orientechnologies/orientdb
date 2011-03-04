@@ -64,6 +64,14 @@
 </div>
 
 <script language="javascript">
+	var previous = controller.parameter('commandRequest');
+	if (previous != null)
+		$('#commandText').val(previous);
+
+	previous = controller.parameter('commandResponse');
+	if (previous != null)
+		$('#commandOutput').val(previous);
+
 	jQuery("#commandText").val((jQuery.trim(jQuery("#commandText").val())));
 	commandEditor = CodeMirror.fromTextArea('commandText', {
 		width : "920px",
@@ -103,16 +111,19 @@
 
 		var code = commandEditor.getCode();
 		commandEditor.setCode(jQuery.trim(code));
+		controller.parameter('commandRequest', commandEditor.getCode());
 
 		commandResult = orientServer.executeCommand(code);
 
 		if (commandResult == null) {
 			commandOutputEditor.setCode('')
+			controller.parameter('commandResponse', '');
 			jQuery("#output").text(orientServer.getErrorMessage());
 		} else {
 			commandOutputEditor.setCode(commandResult);
-			jQuery("#output").val("Command executed in " + stopTimer() + " sec.");
+			controller.parameter('commandResponse', commandResult);
+			jQuery("#output").val(
+					"Command executed in " + stopTimer() + " sec.");
 		}
 	}
-
 </script>

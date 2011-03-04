@@ -132,7 +132,7 @@ function buildColumnNames(table) {
 }
 
 function linkFormatter(cellvalue, options, rowObject) {
-	return cellvalue + " <img src='www/images/link.png' onclick=\"openLink('"
+	return cellvalue + " <img src='images/link.png' onclick=\"openLink('"
 			+ cellvalue + "');\" />";
 }
 function linkUnformatter(cellvalue, options) {
@@ -142,7 +142,7 @@ function linkUnformatter(cellvalue, options) {
 	return "";
 }
 function embeddedFormatter(cellvalue, options, rowObject) {
-	return "<img src='www/images/embedded.png' />";
+	return "<img src='images/embedded.png' />";
 }
 
 function openLink(cellvalue) {

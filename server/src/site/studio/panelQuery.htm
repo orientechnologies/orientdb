@@ -67,15 +67,6 @@
 <script language="javascript">
 	jQuery("#queryText").val((jQuery.trim(jQuery("#queryText").val())));
 
-	queryEditor = CodeMirror.fromTextArea('queryText', {
-		width : "920px",
-		height : "60px",
-		parserfile : "parsesql.js",
-		stylesheet : "styles/codemirror/sqlcolors.css",
-		path : "js/codemirror/",
-		textWrapping : false
-	});
-
 	$("#editRecord").click(
 			function() {
 				var selectedRow = jQuery("#queryResultTable").jqGrid(
@@ -101,8 +92,10 @@
 
 		var code = queryEditor.getCode();
 		queryEditor.setCode(jQuery.trim(code));
+		controller.parameter('queryRequest', queryEditor.getCode());
 
 		queryResult = orientServer.query(code + "/" + $('#limit').val());
+		controller.parameter('queryResponse', queryResult);
 
 		if (queryResult == null) {
 			jQuery("#output").text(orientServer.getErrorMessage());
@@ -114,4 +107,21 @@
 	function clearResultset() {
 		jQuery("#queryResultTable").jqGrid('clearGridData');
 	}
+
+	var previous = controller.parameter('queryRequest');
+	if (previous != null)
+		$('#queryText').val(previous);
+
+	previous = controller.parameter('queryResponse');
+	if (previous != null)
+		queryResponse(previous);
+
+	queryEditor = CodeMirror.fromTextArea('queryText', {
+		width : "920px",
+		height : "60px",
+		parserfile : "parsesql.js",
+		stylesheet : "styles/codemirror/sqlcolors.css",
+		path : "js/codemirror/",
+		textWrapping : false
+	});
 </script>

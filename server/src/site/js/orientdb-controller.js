@@ -71,7 +71,7 @@ function OController(options) {
 		else if (value == null)
 			// REMOVE
 			return this.parameters.slice(name);
-		else if (value == null)
+		else
 			// SET
 			return this.parameters[name] = value;
 	}

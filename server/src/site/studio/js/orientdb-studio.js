@@ -28,7 +28,7 @@ function stopTimer() {
 }
 
 function getStudioURL(context) {
-	return $('#server').val() + '/studio/' + $('#database').val() + '/'
+	return $('#header-server').val() + '/studio/' + $('#header-database').val() + '/'
 			+ context;
 }
 
