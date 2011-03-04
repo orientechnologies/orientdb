@@ -40,8 +40,8 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	}
 
 	public ORecordSchemaAwareAbstract<T> fill(final ODatabaseRecord iDatabase, final int iClassId, final int iClusterId,
-			final long iPosition, final int iVersion) {
-		super.fill(iDatabase, iClusterId, iPosition, iVersion);
+			final long iPosition, final int iVersion, final byte[] iBuffer) {
+		super.fill(iDatabase, iClusterId, iPosition, iVersion, iBuffer);
 		setClass(_database.getMetadata().getSchema().getClassById(iClassId));
 		return this;
 	}

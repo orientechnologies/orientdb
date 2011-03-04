@@ -392,12 +392,12 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			if (currDb == null)
 				currDb = (ODatabaseRecord) databaseOwner;
 
-			iRecord.fill(currDb, iClusterId, iPosition, recordBuffer.version);
+			iRecord.fill(currDb, iClusterId, iPosition, recordBuffer.version, recordBuffer.buffer);
 			iRecord.fromStream(recordBuffer.buffer);
 			iRecord.setStatus(STATUS.LOADED);
 
 			callbackHooks(TYPE.AFTER_READ, iRecord);
-			
+
 			if (!iIgnoreCache) {
 				getCache().pushRecord(iRecord);
 			}
@@ -482,7 +482,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 			if (isNew) {
 				// UPDATE INFORMATION: CLUSTER ID+POSITION
-				iRecord.fill(iRecord.getDatabase(), clusterId, result, 0);
+				iRecord.fill(iRecord.getDatabase(), clusterId, result, 0, stream);
 				iRecord.setStatus(STATUS.LOADED);
 				if (stream != null && stream.length > 0)
 					callbackHooks(TYPE.AFTER_CREATE, iRecord);
@@ -491,7 +491,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				iRecord.onAfterIdentityChanged(iRecord);
 			} else {
 				// UPDATE INFORMATION: VERSION
-				iRecord.fill(iRecord.getDatabase(), clusterId, rid.getClusterPosition(), (int) result);
+				iRecord.fill(iRecord.getDatabase(), clusterId, rid.getClusterPosition(), (int) result, stream);
 				iRecord.setStatus(STATUS.LOADED);
 				if (stream != null && stream.length > 0)
 					callbackHooks(TYPE.AFTER_UPDATE, iRecord);

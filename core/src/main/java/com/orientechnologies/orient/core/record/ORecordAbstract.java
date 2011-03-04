@@ -50,10 +50,14 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		unsetDirty();
 	}
 
-	public ORecordAbstract<?> fill(final ODatabaseRecord iDatabase, final int iClusterId, final long iPosition, final int iVersion) {
+	public ORecordAbstract<?> fill(final ODatabaseRecord iDatabase, final int iClusterId, final long iPosition, final int iVersion,
+			final byte[] iBuffer) {
 		_database = iDatabase;
 		setIdentity(iClusterId, iPosition);
 		_version = iVersion;
+		_status = STATUS.LOADED;
+		_source = iBuffer;
+
 		return this;
 	}
 
@@ -242,7 +246,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 			_database.reload(this, iFetchPlan);
 
 			// GET CONTENT
-			//fromStream(toStream());
+			// fromStream(toStream());
 
 			return this;
 		} catch (Exception e) {
