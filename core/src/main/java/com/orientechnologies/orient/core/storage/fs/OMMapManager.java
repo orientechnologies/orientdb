@@ -36,7 +36,7 @@ public class OMMapManager {
 	}
 
 	public enum STRATEGY {
-		MMAP_ALWAYS, MMAP_WRITE_ALWAYS_READ_IF_AVAIL_POOL, MMAP_WRITE_ALWAYS_READ_IF_IN_MEM, MMAP_ONLY_AVAIL_POOL
+		MMAP_ALWAYS, MMAP_WRITE_ALWAYS_READ_IF_AVAIL_POOL, MMAP_WRITE_ALWAYS_READ_IF_IN_MEM, MMAP_ONLY_AVAIL_POOL, MMAP_NEVER
 	}
 
 	private static final long															MIN_MEMORY				= 50000000;
@@ -111,6 +111,9 @@ public class OMMapManager {
 	 */
 	public synchronized static OMMapBufferEntry request(final OFileMMap iFile, final long iBeginOffset, final int iSize,
 			final boolean iForce, final OPERATION_TYPE iOperationType, final STRATEGY iStrategy) {
+
+		if (iStrategy == STRATEGY.MMAP_NEVER)
+			return null;
 
 		lastStrategy = iStrategy;
 

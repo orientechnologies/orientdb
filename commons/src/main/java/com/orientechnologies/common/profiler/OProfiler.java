@@ -233,9 +233,11 @@ public class OProfiler implements OProfilerMBean {
 		final List<String> keys = new ArrayList<String>(hooks.keySet());
 		Collections.sort(keys);
 
+		Object hookValue;
 		for (String k : keys) {
 			hook = hooks.get(k);
-			buffer.append(String.format("\n%-45s | %-65s |", k, hook.getValue().toString()));
+			hookValue = hook.getValue();
+			buffer.append(String.format("\n%-45s | %-65s |", k, hookValue != null ? hookValue.toString() : "null"));
 		}
 
 		buffer.append(String.format("\n%45s +-------------------------------------------------------------------+", ""));
