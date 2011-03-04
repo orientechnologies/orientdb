@@ -145,6 +145,7 @@ public class ODatabaseRaw implements ODatabase {
 				storage = Orient.instance().loadStorage(url);
 
 			storage.delete();
+			storage = null;
 
 			// WAKE UP LISTENERS
 			for (ODatabaseListener listener : listeners)
@@ -372,7 +373,8 @@ public class ODatabaseRaw implements ODatabase {
 
 		if (storage != null && iCloseStorageToo)
 			storage.removeUser();
-
+		
+		storage = null;
 		status = STATUS.CLOSED;
 
 		level1Cache.shutdown();
