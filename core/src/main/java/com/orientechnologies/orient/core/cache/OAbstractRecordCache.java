@@ -149,14 +149,14 @@ public abstract class OAbstractRecordCache extends OSharedResource {
 
 					acquireExclusiveLock();
 
-					final int oldSize = entries.size();
-					if (oldSize == 0)
-						// UNACTIVE
-						return;
-
-					final int threshold = (int) (maxSize > -1 ? maxSize * 0.7f : oldSize * 0.7f);
-
 					try {
+						final int oldSize = entries.size();
+						if (oldSize == 0)
+							// UNACTIVE
+							return;
+
+						final int threshold = (int) (maxSize > -1 ? maxSize * 0.7f : oldSize * 0.7f);
+
 						if (entries.size() < threshold)
 							return;
 
@@ -174,13 +174,13 @@ public abstract class OAbstractRecordCache extends OSharedResource {
 						for (ORID rid : ridToRemove)
 							entries.remove(rid);
 
+						OLogManager.instance().debug(this, "Low memory: auto reduce the record cache size from %d to %d", oldSize, threshold);
+						maxSize = threshold;
+
 					} finally {
 						System.err.println("Size after free: " + entries.size());
 						releaseExclusiveLock();
 					}
-
-					OLogManager.instance().debug(this, "Low memory: auto reduce the record cache size from %d to %d", oldSize, threshold);
-					maxSize = threshold;
 				}
 			}
 		});
