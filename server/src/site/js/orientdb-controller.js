@@ -24,6 +24,7 @@ function OController(options) {
 	this.parameters = {};
 	this.cachedPages = {};
 	this.options = {
+		rewriteUrl : false,
 		debug : false,
 		cachePages : false
 	}
@@ -44,7 +45,7 @@ function OController(options) {
 			$('#' + component).load(file, function(content) {
 				if (cache)
 					me.cachedPages[file] = content;
-				
+
 				try {
 					onPageLoad();
 				} catch (e) {
@@ -61,7 +62,8 @@ function OController(options) {
 			});
 		}
 
-		parent.location.hash = file;
+		if (this.rewriteUrl)
+			parent.location.hash = file;
 	}
 
 	OController.prototype.parameter = function(name, value) {
