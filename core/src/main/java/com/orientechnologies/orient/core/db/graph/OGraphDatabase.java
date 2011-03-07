@@ -49,8 +49,8 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	public static final String	LABEL										= "label";
 
 	private boolean							safeMode								= false;
-	private OClass							vertexBaseClass;
-	private OClass							edgeBaseClass;
+	protected OClass							vertexBaseClass;
+	protected OClass							edgeBaseClass;
 
 	public OGraphDatabase(final String iURL) {
 		super(iURL);

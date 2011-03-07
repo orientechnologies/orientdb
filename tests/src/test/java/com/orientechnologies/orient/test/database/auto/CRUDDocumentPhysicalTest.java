@@ -366,7 +366,6 @@ public class CRUDDocumentPhysicalTest {
 	@Test
 	public void commandWithNamedParameters() {
 		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-		database.open("admin", "admin");
 
 		final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
 				"select from Profile where name = :name and surname = :surname");
