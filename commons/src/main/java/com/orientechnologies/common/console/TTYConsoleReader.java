@@ -207,7 +207,7 @@ public class TTYConsoleReader implements OConsoleReader {
 							rewriteConsole(buffer, false);
 						}
 					} else if (next == DEL_CHAR) {
-						if (buffer.length() > 0 && currentPos > 0 && currentPos < buffer.length()) {
+						if (buffer.length() > 0 && currentPos >= 0 && currentPos < buffer.length()) {
 							StringBuffer cleaner = new StringBuffer();
 							for (int i = 0; i < buffer.length(); i++) {
 								cleaner.append(" ");
