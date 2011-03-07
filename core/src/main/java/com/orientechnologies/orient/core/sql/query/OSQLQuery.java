@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  * @param <T>
  *          Record type to return.
  */
+@SuppressWarnings("serial")
 public abstract class OSQLQuery<T extends Object> extends OQueryAbstract<T> implements OCommandRequestText {
 	protected String	text;
 
@@ -117,15 +118,18 @@ public abstract class OSQLQuery<T extends Object> extends OQueryAbstract<T> impl
 	public byte[] toStream() throws OSerializationException {
 		final OMemoryOutputStream buffer = new OMemoryOutputStream();
 		try {
-			buffer.add(text);
-			buffer.add(limit);
-			buffer.addAsFixed(beginRange.toStream());
-			buffer.addAsFixed(endRange.toStream());
-			buffer.add(fetchPlan != null ? fetchPlan : "");
+			buffer.add(text); // TEXT AS STRING
+			buffer.add(limit); // LIMIT AS INTEGER
+			buffer.addAsFixed(beginRange.toStream()); // THE RID WHERE TO BEGIN, OR -1:-1 to ignore it
+			buffer.addAsFixed(endRange.toStream()); // THE RID WHERE TO END, OR -1:-1 to ignore it
+			buffer.add(fetchPlan != null ? fetchPlan : ""); // FETCH PLAN IN FORM OF STRING (to know more goto:
+																											// http://code.google.com/p/orient/wiki/FetchingStrategies)
 
 			if (parameters == null || parameters.size() == 0)
+				// NO PARAMETER, JUST SEND 0
 				buffer.add(new byte[0]);
 			else {
+				// PARAMETERS FOUND, SEND THEM AS DOCUMENT ITSELF
 				final ODocument param = new ODocument();
 				param.field("params", parameters);
 				buffer.add(param.toStream());

@@ -69,7 +69,10 @@ public class OStreamSerializerAnyStreamable implements OStreamSerializer {
 
 		OSerializableStream stream = (OSerializableStream) iObject;
 
+		// SERIALIZE THE CLASS NAME
 		byte[] className = OBinaryProtocol.string2bytes(iObject.getClass().getName());
+		
+		// SERIALIZE THE OBJECT CONTENT
 		byte[] objectContent = stream.toStream();
 
 		byte[] result = new byte[4 + className.length + objectContent.length];

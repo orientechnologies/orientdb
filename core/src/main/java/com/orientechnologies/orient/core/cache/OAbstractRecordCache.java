@@ -146,9 +146,7 @@ public abstract class OAbstractRecordCache extends OSharedResource {
 			 */
 			public void memoryUsageLow(TYPE iType, final long usedMemory, final long maxMemory) {
 				if (iType == TYPE.JVM) {
-
 					acquireExclusiveLock();
-
 					try {
 						final int oldSize = entries.size();
 						if (oldSize == 0)

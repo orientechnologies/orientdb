@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
  * @author Luca Garulli
  * 
  */
+@SuppressWarnings("serial")
 public abstract class OCommandRequestAbstract implements OCommandRequestInternal {
 	protected ODatabaseRecord			database;
 	protected OCommandResultListener	resultListener;

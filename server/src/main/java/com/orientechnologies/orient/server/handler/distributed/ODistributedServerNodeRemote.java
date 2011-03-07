@@ -394,7 +394,6 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 		final String dbName = iDatabase.getName();
 
 		channel.acquireExclusiveLock();
-
 		try {
 			status = STATUS.SYNCHRONIZING;
 

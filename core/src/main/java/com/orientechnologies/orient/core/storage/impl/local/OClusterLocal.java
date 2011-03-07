@@ -73,9 +73,8 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 
 	@Override
 	public void open() throws IOException {
+		acquireExclusiveLock();
 		try {
-			acquireExclusiveLock();
-
 			super.open();
 			holeSegment.open();
 
@@ -108,9 +107,8 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 	public OPhysicalPosition getPhysicalPosition(long iPosition, final OPhysicalPosition iPPosition) throws IOException {
 		iPosition = iPosition * RECORD_SIZE;
 
+		acquireSharedLock();
 		try {
-			acquireSharedLock();
-
 			final long[] pos = getRelativePosition(iPosition);
 
 			final OFile file = files[(int) pos[0]];
@@ -136,9 +134,8 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 			throws IOException {
 		iPosition = iPosition * RECORD_SIZE;
 
+		acquireExclusiveLock();
 		try {
-			acquireExclusiveLock();
-
 			final long[] pos = getRelativePosition(iPosition);
 
 			final OFile file = files[(int) pos[0]];
@@ -156,9 +153,8 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 	public void updateVersion(long iPosition, final int iVersion) throws IOException {
 		iPosition = iPosition * RECORD_SIZE;
 
+		acquireExclusiveLock();
 		try {
-			acquireExclusiveLock();
-
 			final long[] pos = getRelativePosition(iPosition);
 
 			files[(int) pos[0]].writeInt(pos[1] + OConstants.SIZE_SHORT + OConstants.SIZE_LONG + OConstants.SIZE_BYTE, iVersion);
@@ -171,9 +167,8 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 	public void updateRecordType(long iPosition, final byte iRecordType) throws IOException {
 		iPosition = iPosition * RECORD_SIZE;
 
+		acquireExclusiveLock();
 		try {
-			acquireExclusiveLock();
-
 			final long[] pos = getRelativePosition(iPosition);
 
 			files[(int) pos[0]].writeByte(pos[1] + OConstants.SIZE_SHORT + OConstants.SIZE_LONG, iRecordType);
@@ -190,9 +185,9 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 	 */
 	public void removePhysicalPosition(long iPosition, final OPhysicalPosition iPPosition) throws IOException {
 		final long position = iPosition * RECORD_SIZE;
-		try {
-			acquireExclusiveLock();
 
+		acquireExclusiveLock();
+		try {
 			final long[] pos = getRelativePosition(position);
 			final OFile file = files[(int) pos[0]];
 			long p = pos[1];
@@ -267,9 +262,8 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 	 * @throws IOException
 	 */
 	public long addPhysicalPosition(final int iDataSegmentId, final long iPosition, final byte iRecordType) throws IOException {
+		acquireExclusiveLock();
 		try {
-			acquireExclusiveLock();
-
 			long offset = holeSegment.popLastEntryPosition();
 
 			final long[] pos;
@@ -312,11 +306,9 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 	}
 
 	public long getFirstEntryPosition() throws IOException {
+		acquireSharedLock();
 		try {
-			acquireSharedLock();
-
 			return beginOffsetData;
-
 		} finally {
 			releaseSharedLock();
 		}
@@ -326,9 +318,8 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 	 * Returns the endOffsetData value if it's not equals to the last one, otherwise the total entries.
 	 */
 	public long getLastEntryPosition() throws IOException {
+		acquireSharedLock();
 		try {
-			acquireSharedLock();
-
 			return endOffsetData > -1 ? endOffsetData : getFilledUpTo() / RECORD_SIZE - 1;
 
 		} finally {
@@ -337,11 +328,9 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 	}
 
 	public long getEntries() {
+		acquireSharedLock();
 		try {
-			acquireSharedLock();
-
 			return getFilledUpTo() / RECORD_SIZE - holeSegment.getHoles();
-
 		} finally {
 			releaseSharedLock();
 		}

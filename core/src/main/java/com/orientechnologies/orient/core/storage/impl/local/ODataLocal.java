@@ -82,9 +82,8 @@ public class ODataLocal extends OMultiFileSegment {
 	 * @throws IOException
 	 */
 	public long addRecord(final int iClusterSegment, final long iClusterPosition, final byte[] iContent) throws IOException {
+		acquireExclusiveLock();
 		try {
-			acquireExclusiveLock();
-
 			final long[] newFilePosition = allocateSpace(iContent.length + RECORD_FIX_SIZE);
 			writeRecord(newFilePosition, iClusterSegment, iClusterPosition, iContent);
 
@@ -104,9 +103,8 @@ public class ODataLocal extends OMultiFileSegment {
 		if (iPosition == -1)
 			return null;
 
+		acquireSharedLock();
 		try {
-			acquireSharedLock();
-
 			final long[] pos = getRelativePosition(iPosition);
 			final OFile file = files[(int) pos[0]];
 
@@ -129,9 +127,8 @@ public class ODataLocal extends OMultiFileSegment {
 	 * @throws IOException
 	 */
 	public int getRecordSize(final long iPosition) throws IOException {
+		acquireSharedLock();
 		try {
-			acquireSharedLock();
-
 			final long[] pos = getRelativePosition(iPosition);
 			final OFile file = files[(int) pos[0]];
 
@@ -154,9 +151,8 @@ public class ODataLocal extends OMultiFileSegment {
 	 */
 	public long setRecord(long iPosition, final int iClusterSegment, final long iClusterPosition, final byte[] iContent)
 			throws IOException {
+		acquireExclusiveLock();
 		try {
-			acquireExclusiveLock();
-
 			long[] pos = getRelativePosition(iPosition);
 			final OFile file = files[(int) pos[0]];
 
@@ -197,9 +193,8 @@ public class ODataLocal extends OMultiFileSegment {
 	}
 
 	public int deleteRecord(final long iPosition) throws IOException {
+		acquireExclusiveLock();
 		try {
-			acquireExclusiveLock();
-
 			final long[] pos = getRelativePosition(iPosition);
 			final OFile file = files[(int) pos[0]];
 

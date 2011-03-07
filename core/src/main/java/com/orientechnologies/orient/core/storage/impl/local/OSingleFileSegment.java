@@ -39,9 +39,8 @@ public class OSingleFileSegment extends OSharedResourceAdaptiveLinked {
 	}
 
 	public boolean open() throws IOException {
+		acquireExclusiveLock();
 		try {
-			acquireExclusiveLock();
-
 			boolean softClosed = file.open();
 			if (!softClosed) {
 				// LAST TIME THE FILE WAS NOT CLOSED IN SOFT WAY
@@ -56,9 +55,8 @@ public class OSingleFileSegment extends OSharedResourceAdaptiveLinked {
 	}
 
 	public void create(int iStartSize) throws IOException {
+		acquireExclusiveLock();
 		try {
-			acquireExclusiveLock();
-
 			file.create(iStartSize);
 		} finally {
 			releaseExclusiveLock();
@@ -66,9 +64,8 @@ public class OSingleFileSegment extends OSharedResourceAdaptiveLinked {
 	}
 
 	public void close() throws IOException {
+		acquireExclusiveLock();
 		try {
-			acquireExclusiveLock();
-
 			if (file != null)
 				file.close();
 
@@ -78,9 +75,8 @@ public class OSingleFileSegment extends OSharedResourceAdaptiveLinked {
 	}
 
 	public void delete() throws IOException {
+		acquireExclusiveLock();
 		try {
-			acquireExclusiveLock();
-
 			if (file != null)
 				file.delete();
 
@@ -90,9 +86,8 @@ public class OSingleFileSegment extends OSharedResourceAdaptiveLinked {
 	}
 
 	public void truncate() throws IOException {
+		acquireExclusiveLock();
 		try {
-			acquireExclusiveLock();
-
 			// SHRINK TO 0
 			file.shrink(0);
 

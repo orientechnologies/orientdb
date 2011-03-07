@@ -106,9 +106,8 @@ public class OMultiFileSegment extends OSegment {
 	}
 
 	public void close() throws IOException {
+		acquireExclusiveLock();
 		try {
-			acquireExclusiveLock();
-
 			for (OFile file : files) {
 				if (file != null)
 					file.close();
@@ -120,22 +119,20 @@ public class OMultiFileSegment extends OSegment {
 	}
 
 	public void delete() throws IOException {
+		acquireExclusiveLock();
 		try {
-			acquireExclusiveLock();
-
 			for (OFile file : files) {
 				if (file != null)
 					file.delete();
 			}
-
 		} finally {
 			releaseExclusiveLock();
 		}
 	}
 
 	public void truncate() throws IOException {
+		acquireExclusiveLock();
 		try {
-			acquireExclusiveLock();
 
 			// SHRINK TO 0
 			files[0].shrink(0);
@@ -164,9 +161,8 @@ public class OMultiFileSegment extends OSegment {
 	}
 
 	public void synch() {
+		acquireSharedLock();
 		try {
-			acquireSharedLock();
-
 			for (OFile file : files) {
 				if (file != null && file.isOpen())
 					file.synch();
@@ -178,9 +174,8 @@ public class OMultiFileSegment extends OSegment {
 	}
 
 	public long getFilledUpTo() {
+		acquireSharedLock();
 		try {
-			acquireSharedLock();
-
 			long filled = 0;
 			for (OFile file : files)
 				filled += file.getFilledUpTo();
@@ -193,9 +188,8 @@ public class OMultiFileSegment extends OSegment {
 	}
 
 	public long getSize() {
+		acquireSharedLock();
 		try {
-			acquireSharedLock();
-
 			long size = 0;
 			for (OFile file : files)
 				size += file.getFileSize();

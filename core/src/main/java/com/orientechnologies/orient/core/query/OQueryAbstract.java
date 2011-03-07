@@ -19,6 +19,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestAbstract;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORecordId;
 
+@SuppressWarnings("serial")
 public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAbstract implements OQuery<T> {
 	protected int				limit				= -1;
 	protected ORecordId	beginRange	= new ORecordId();

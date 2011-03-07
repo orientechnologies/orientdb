@@ -328,9 +328,8 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	}
 
 	public ODistributedServerNodeRemote getNode(final String iNodeName) {
+		lock.acquireSharedLock();
 		try {
-			lock.acquireSharedLock();
-
 			final ODistributedServerNodeRemote node = nodes.get(iNodeName);
 			if (node == null)
 				throw new IllegalArgumentException("Node '" + iNodeName + "' is not configured on server: " + getId());
@@ -343,9 +342,8 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	}
 
 	public List<ODistributedServerNodeRemote> getNodeList() {
+		lock.acquireSharedLock();
 		try {
-			lock.acquireSharedLock();
-
 			return new ArrayList<ODistributedServerNodeRemote>(nodes.values());
 		} finally {
 			lock.releaseSharedLock();
@@ -353,9 +351,8 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	}
 
 	public void removeNode(final ODistributedServerNodeRemote iNode) {
+		lock.acquireExclusiveLock();
 		try {
-			lock.acquireExclusiveLock();
-
 			OLogManager.instance().warn(this, "Removed server node %s:%d from distributed cluster", iNode.networkAddress,
 					iNode.networkPort);
 

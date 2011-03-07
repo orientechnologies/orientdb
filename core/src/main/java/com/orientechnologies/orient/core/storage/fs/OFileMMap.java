@@ -238,8 +238,9 @@ public class OFileMMap extends OFile {
 				releaseByteBuffer(buffer);
 			}
 		} catch (BufferOverflowException e) {
-			OLogManager.instance().error(this, "Error on write in the range " + iOffset + "-" + iOffset + iSourceBuffer.length + "." + toString(), e,
-					OIOException.class);
+			OLogManager.instance()
+					.error(this, "Error on write in the range " + iOffset + "-" + iOffset + iSourceBuffer.length + "." + toString(), e,
+							OIOException.class);
 		}
 	}
 
@@ -345,7 +346,8 @@ public class OFileMMap extends OFile {
 	}
 
 	MappedByteBuffer map(final long iBeginOffset, final int iSize) throws IOException {
-		return channel.map(mode.equals("r") ? FileChannel.MapMode.READ_ONLY : FileChannel.MapMode.READ_WRITE, iBeginOffset + HEADER_SIZE, iSize);
+		return channel.map(mode.equals("r") ? FileChannel.MapMode.READ_ONLY : FileChannel.MapMode.READ_WRITE, iBeginOffset
+				+ HEADER_SIZE, iSize);
 	}
 
 	@Override
@@ -369,7 +371,7 @@ public class OFileMMap extends OFile {
 	protected ByteBuffer acquireByteBuffer(final int iSize) {
 		if (iSize > BYTEBUFFER_POOLABLE_SIZE)
 			// CREATE A BUFFER AT THE FLY. IT WILL BE DISCARDED WHEN FINISHED
-			return ByteBuffer.allocate(iSize);
+			return ByteBuffer.allocateDirect(iSize);
 
 		final ByteBuffer buffer;
 

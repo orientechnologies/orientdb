@@ -96,7 +96,6 @@ public class OTxSegment extends OSingleFileSegment {
 	public void addLog(final byte iOperation, final int iReqId, final int iTxId, final int iClusterId, final long iPosition,
 			final long iDataOffset) throws IOException {
 		acquireExclusiveLock();
-
 		try {
 			int offset = file.allocateSpace(RECORD_SIZE);
 
@@ -139,7 +138,6 @@ public class OTxSegment extends OSingleFileSegment {
 	 */
 	public void clearLogEntries(final int iReqId, final int iTxId) throws IOException {
 		acquireExclusiveLock();
-
 		try {
 			int size = (file.getFilledUpTo() / RECORD_SIZE);
 			byte status;
@@ -213,10 +211,8 @@ public class OTxSegment extends OSingleFileSegment {
 
 	public int getTotalLogCount() {
 		acquireSharedLock();
-
 		try {
 			return (file.getFilledUpTo() / RECORD_SIZE);
-
 		} finally {
 			releaseSharedLock();
 		}

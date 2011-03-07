@@ -82,9 +82,8 @@ public class Orient extends OSharedResource {
 
 		final String engineName = iURL.substring(0, pos);
 
+		acquireExclusiveLock();
 		try {
-			acquireExclusiveLock();
-
 			final OEngine engine = engines.get(engineName.toLowerCase());
 
 			if (engine == null)
@@ -128,9 +127,8 @@ public class Orient extends OSharedResource {
 	}
 
 	public void registerStorage(final OStorage iStorage) throws IOException {
+		acquireExclusiveLock();
 		try {
-			acquireExclusiveLock();
-
 			if (!storages.containsKey(iStorage.getName()))
 				storages.put(iStorage.getURL(), iStorage);
 
@@ -151,11 +149,9 @@ public class Orient extends OSharedResource {
 	}
 
 	public void registerEngine(OEngine iEngine) {
+		acquireExclusiveLock();
 		try {
-			acquireExclusiveLock();
-
 			engines.put(iEngine.getName(), iEngine);
-
 		} finally {
 			releaseExclusiveLock();
 		}
@@ -177,22 +173,18 @@ public class Orient extends OSharedResource {
 	 * @return OEngine instance of found, otherwise null
 	 */
 	public OEngine getEngine(final String iEngineName) {
+		acquireSharedLock();
 		try {
-			acquireSharedLock();
-
 			return engines.get(iEngineName);
-
 		} finally {
 			releaseSharedLock();
 		}
 	}
 
 	public Set<String> getEngines() {
+		acquireSharedLock();
 		try {
-			acquireSharedLock();
-
 			return Collections.unmodifiableSet(engines.keySet());
-
 		} finally {
 			releaseSharedLock();
 		}
@@ -214,9 +206,8 @@ public class Orient extends OSharedResource {
 	}
 
 	public void shutdown() {
+		acquireExclusiveLock();
 		try {
-			acquireExclusiveLock();
-
 			if (!active)
 				return;
 
