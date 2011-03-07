@@ -118,8 +118,15 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 						Object firstValue = OMultiValue.getFirstValue(fieldValue);
 
 						if (firstValue != null) {
-							if (database != null
-									&& (firstValue instanceof ORID || firstValue instanceof ORecordSchemaAware<?> || (database.getDatabaseOwner() instanceof ODatabaseObject && ((ODatabaseObject) database
+							if (firstValue instanceof ORID) {
+								linkedClass = null;
+								linkedType = OType.LINK;
+								if (fieldValue instanceof Set<?>)
+									type = OType.LINKSET;
+								else
+									type = OType.LINKLIST;
+							} else if (database != null
+									&& (firstValue instanceof ORecordSchemaAware<?> || (database.getDatabaseOwner() instanceof ODatabaseObject && ((ODatabaseObject) database
 											.getDatabaseOwner()).getEntityManager().getEntityClass(getClassName(firstValue)) != null))) {
 								linkedClass = getLinkInfo(database, getClassName(firstValue));
 								if (type == null) {
@@ -160,7 +167,11 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 					if (OMultiValue.getSize(fieldValue) > 0) {
 						Object firstValue = OMultiValue.getFirstValue(fieldValue);
 
-						if (database != null
+						if (firstValue instanceof ORID) {
+							linkedClass = null;
+							linkedType = OType.LINK;
+							type = OType.LINKMAP;
+						} else if (database != null
 								&& (firstValue instanceof ORecordSchemaAware<?> || (database.getDatabaseOwner() instanceof ODatabaseObject && ((ODatabaseObject) database
 										.getDatabaseOwner()).getEntityManager().getEntityClass(getClassName(firstValue)) != null))) {
 							if (((ORecordInternal<?>) firstValue).getIdentity().isValid())

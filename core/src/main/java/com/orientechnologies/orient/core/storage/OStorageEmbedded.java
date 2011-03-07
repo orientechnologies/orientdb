@@ -127,16 +127,16 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 		ORawBuffer recordBuffer;
 		long positionInPhyCluster;
 
-		try {
-			if (iLockEntireCluster)
-				// LOCK THE ENTIRE CLUSTER AVOIDING TO LOCK EVERY SINGLE RECORD
-				cluster.lock();
+		if (iLockEntireCluster)
+			// LOCK THE ENTIRE CLUSTER AVOIDING TO LOCK EVERY SINGLE RECORD
+			cluster.lock();
 
-			OClusterPositionIterator iterator = cluster.absoluteIterator(iBeginRange, iEndRange);
+		try {
+			final OClusterPositionIterator iterator = cluster.absoluteIterator(iBeginRange, iEndRange);
 
 			final ORecordId rid = new ORecordId(cluster.getId());
 			final ODatabaseRecord database = ioRecord.getDatabase();
-			ORecordInternal<?> recordToCheck;
+			ORecordInternal<?> recordToCheck = null;
 
 			// BROWSE ALL THE RECORDS
 			while (iterator.hasNext()) {
@@ -158,37 +158,41 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 					// WRONG RECORD TYPE: JUMP IT
 					continue;
 
-				if (record == null) {
-					// READ THE RAW RECORD. IF iLockEntireCluster THEN THE READ WILL
-					// BE NOT-LOCKING, OTHERWISE YES
-					recordBuffer = readRecord(iRequesterId, cluster, positionInPhyCluster, !iLockEntireCluster);
-					if (recordBuffer == null)
-						continue;
+				try {
+					if (record == null) {
+						// READ THE RAW RECORD. IF iLockEntireCluster THEN THE READ WILL
+						// BE NOT-LOCKING, OTHERWISE YES
+						recordBuffer = readRecord(iRequesterId, cluster, positionInPhyCluster, !iLockEntireCluster);
+						if (recordBuffer == null)
+							continue;
 
-					if (recordBuffer.recordType != ODocument.RECORD_TYPE)
-						// WRONG RECORD TYPE: JUMP IT
-						continue;
+						if (recordBuffer.recordType != ODocument.RECORD_TYPE)
+							// WRONG RECORD TYPE: JUMP IT
+							continue;
 
-					if (ioRecord.getRecordType() != recordBuffer.recordType) {
-						// RECORD NULL OR DIFFERENT IN TYPE: CREATE A NEW ONE
-						final ORecordInternal<?> newRecord = ORecordFactory.newInstance(recordBuffer.recordType);
-						newRecord.setDatabase(ioRecord.getDatabase());
-						ioRecord = newRecord;
+						if (ioRecord.getRecordType() != recordBuffer.recordType) {
+							// RECORD NULL OR DIFFERENT IN TYPE: CREATE A NEW ONE
+							final ORecordInternal<?> newRecord = ORecordFactory.newInstance(recordBuffer.recordType);
+							newRecord.setDatabase(ioRecord.getDatabase());
+							ioRecord = newRecord;
+						} else
+							// RESET CURRENT RECORD
+							ioRecord.reset();
+
+						ioRecord.setVersion(recordBuffer.version);
+						ioRecord.setIdentity(cluster.getId(), positionInPhyCluster);
+						ioRecord.fromStream(recordBuffer.buffer);
+						recordToCheck = ioRecord;
 					} else
-						// RESET CURRENT RECORD
-						ioRecord.reset();
+						// GET THE RECORD CACHED
+						recordToCheck = record;
 
-					ioRecord.setVersion(recordBuffer.version);
-					ioRecord.setIdentity(cluster.getId(), positionInPhyCluster);
-					ioRecord.fromStream(recordBuffer.buffer);
-					recordToCheck = ioRecord;
-				} else
-					// GET THE RECORD CACHED
-					recordToCheck = record;
-
-				if (!iListener.foreach(recordToCheck))
-					// LISTENER HAS INTERRUPTED THE EXECUTION
-					break;
+					if (!iListener.foreach(recordToCheck))
+						// LISTENER HAS INTERRUPTED THE EXECUTION
+						break;
+				} catch (Exception e) {
+					OLogManager.instance().error(this, "Error on loading record %s. Cause: ", recordToCheck.getIdentity(), e.getMessage());
+				}
 			}
 		} finally {
 

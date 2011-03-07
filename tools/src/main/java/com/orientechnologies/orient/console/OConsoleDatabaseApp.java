@@ -844,7 +844,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 	protected void dumpRecordInTable(final int iIndex, final ORecordSchemaAwareAbstract<?> iRecord, final List<String> iColumns) {
 		// CHECK IF HAVE TO ADD NEW COLUMN (BECAUSE IT CAN BE SCHEMA-LESS)
-		List<String> recordColumns = new ArrayList<String>();
+		final List<String> recordColumns = new ArrayList<String>();
 		for (String fieldName : iRecord.fieldNames())
 			recordColumns.add(fieldName);
 
@@ -981,14 +981,18 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		while (it.hasNext()) {
 			currentRecord = it.next();
 
-			if (currentRecord instanceof ORecordSchemaAwareAbstract<?>)
-				dumpRecordInTable(currentResultSet.size(), (ORecordSchemaAwareAbstract<?>) currentRecord, columns);
-			else if (currentRecord != null) {
-				dumpRecordDetails();
-				out.println();
-			}
+			try {
+				if (currentRecord instanceof ORecordSchemaAwareAbstract<?>)
+					dumpRecordInTable(currentResultSet.size(), (ORecordSchemaAwareAbstract<?>) currentRecord, columns);
+				else if (currentRecord != null) {
+					dumpRecordDetails();
+					out.println();
+				}
 
-			currentResultSet.add(currentRecord);
+				currentResultSet.add(currentRecord);
+			} catch (Exception e) {
+				out.printf("\n!Error on displaying record " + currentRecord.getIdentity() + ". Cause: " + e.getMessage());
+			}
 
 			if (currentResultSet.size() >= limit) {
 				printHeaderLine(columns);
