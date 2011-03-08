@@ -49,6 +49,8 @@ public class TTYConsoleReader implements OConsoleReader {
 
 	protected List<String>			history							= new ArrayList<String>();
 
+	protected String						historyBuffer;
+
 	public TTYConsoleReader() {
 		File file = getHistoryFile(true);
 		BufferedReader reader;
@@ -73,7 +75,9 @@ public class TTYConsoleReader implements OConsoleReader {
 		try {
 			StringBuffer buffer = new StringBuffer();
 			currentPos = 0;
+			historyBuffer = null;
 			int historyNum = history.size();
+			boolean hintedHistory = false;
 			while (true) {
 
 				boolean escape = false;
@@ -128,7 +132,15 @@ public class TTYConsoleReader implements OConsoleReader {
 									cleaner.append(" ");
 								}
 								rewriteConsole(cleaner, true);
-								historyNum = historyNum > 0 ? historyNum - 1 : 0;
+								if (!hintedHistory && (historyNum == history.size() || !buffer.toString().equals(history.get(historyNum)))) {
+									if (buffer.length() > 0) {
+										hintedHistory = true;
+										historyBuffer = buffer.toString();
+									} else {
+										historyBuffer = null;
+									}
+								}
+								historyNum = getHintedHistoryIndexUp(historyNum);
 								buffer = new StringBuffer(history.get(historyNum));
 								currentPos = buffer.length();
 								rewriteConsole(buffer, false);
@@ -142,9 +154,13 @@ public class TTYConsoleReader implements OConsoleReader {
 								}
 								rewriteConsole(cleaner, true);
 
-								historyNum = historyNum < history.size() ? historyNum + 1 : history.size();
+								historyNum = getHintedHistoryIndexDown(historyNum);
 								if (historyNum == history.size()) {
-									buffer = new StringBuffer("");
+									if (historyBuffer != null) {
+										buffer = new StringBuffer(historyBuffer);
+									} else {
+										buffer = new StringBuffer("");
+									}
 								} else {
 									buffer = new StringBuffer(history.get(historyNum));
 								}
@@ -245,6 +261,7 @@ public class TTYConsoleReader implements OConsoleReader {
 						}
 					}
 					historyNum = history.size();
+					hintedHistory = false;
 				}
 			}
 			consoleInput = buffer.toString();
@@ -382,6 +399,30 @@ public class TTYConsoleReader implements OConsoleReader {
 	private void rewriteHintConsole(StringBuffer buffer) {
 		System.out.print("\r");
 		System.out.print(buffer);
+	}
+
+	private int getHintedHistoryIndexUp(int historyNum) {
+		if (historyBuffer != null && !historyBuffer.equals("")) {
+			for (int i = (historyNum - 1); i >= 0; i--) {
+				if (history.get(i).startsWith(historyBuffer)) {
+					return i;
+				}
+			}
+			return historyNum;
+		}
+		return historyNum = historyNum > 0 ? historyNum - 1 : 0;
+	}
+
+	private int getHintedHistoryIndexDown(int historyNum) throws IOException {
+		if (historyBuffer != null && !historyBuffer.equals("")) {
+			for (int i = historyNum + 1; i < history.size(); i++) {
+				if (history.get(i).startsWith(historyBuffer)) {
+					return i;
+				}
+			}
+			return history.size();
+		}
+		return historyNum = historyNum < history.size() ? historyNum + 1 : history.size();
 	}
 
 	private File getHistoryFile(boolean read) {
