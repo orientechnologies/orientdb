@@ -142,6 +142,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 	public boolean result(final Object iRecord) {
 		ODocument record = (ODocument) iRecord;
 
+		boolean recordUpdated = false;
+
 		// BIND VALUES TO UPDATE
 		Object v;
 		for (Map.Entry<String, Object> entry : setEntries.entrySet()) {
@@ -151,6 +153,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 				v = ((OSQLFilterItem) v).getValue(record);
 
 			record.field(entry.getKey(), v);
+			recordUpdated = true;
 		}
 
 		// BIND VALUES TO ADD
@@ -189,7 +192,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 				v = ((OSQLFunctionRuntime) v).execute(record);
 
 			coll.add(v);
-			record.setDirty();
+			recordUpdated = true;
 		}
 
 		// BIND VALUES TO PUT (AS MAP)
@@ -209,32 +212,37 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 					v = ((OSQLFunctionRuntime) pair.getValue()).execute(record);
 
 				map.put(pair.getKey(), pair.getValue());
-				record.setDirty();
+				recordUpdated = true;
 			}
 		}
 
 		// REMOVE FIELD IF ANY
 		for (Map.Entry<String, Object> entry : removeEntries.entrySet()) {
 			v = entry.getValue();
-			if (v == EMPTY_VALUE)
+			if (v == EMPTY_VALUE) {
 				record.removeField(entry.getKey());
-			else {
+				recordUpdated = true;
+			} else {
 				fieldValue = record.field(entry.getKey());
 
 				if (fieldValue instanceof Collection<?>) {
 					coll = (Collection<Object>) fieldValue;
-					coll.remove(v);
-					record.setDirty();
+					if (coll.remove(v))
+						recordUpdated = true;
 				} else if (fieldValue instanceof Map<?, ?>) {
 					map = (Map<String, Object>) fieldValue;
-					map.remove(v);
-					record.setDirty();
+					if (map.remove(v) != null)
+						recordUpdated = true;
 				}
 			}
 		}
 
-		record.save();
-		recordCount++;
+		if (recordUpdated) {
+			record.setDirty();
+			record.save();
+			recordCount++;
+		}
+
 		return true;
 	}
 
