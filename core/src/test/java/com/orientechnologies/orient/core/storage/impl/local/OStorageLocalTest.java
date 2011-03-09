@@ -5,12 +5,15 @@ import java.io.File;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 @Test
 public class OStorageLocalTest {
 
 	public void withLegacyPath() {
+		OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
+
 		String dbPath = getDatabasePath();
 
 		System.out.println("Using db = local:" + dbPath);
@@ -20,8 +23,6 @@ public class OStorageLocalTest {
 		ODatabaseDocumentTx db = new ODatabaseDocumentTx("local:" + dbPath);
 		db.create();
 		db.close();
-		
-		db.getStorage().close(true);
 
 		System.out.println("Reopen it...");
 		// Something was added to dbPath so the legacy situation was simulated
