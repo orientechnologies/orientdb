@@ -79,12 +79,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 		try {
 			recordClass = iRecordClass;
-
-			metadata = new OMetadata(this);
-
-			registerHook(new OUserTrigger());
-			registerHook(new OPropertyIndexManager());
-
 		} catch (Throwable t) {
 			throw new ODatabaseException("Error on opening database '" + getName() + "'", t);
 		}
@@ -95,6 +89,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		try {
 			super.open(iUserName, iUserPassword);
 
+			metadata = new OMetadata(this);
 			metadata.load();
 
 			recordFormat = DEF_RECORD_FORMAT;
@@ -109,7 +104,11 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			if (user.getAccountStatus() != STATUSES.ACTIVE)
 				throw new OSecurityAccessException(this.getName(), "User '" + iUserName + "' is not active");
 
+			registerHook(new OUserTrigger());
+			registerHook(new OPropertyIndexManager());
+
 			if (getStorage() instanceof OStorageEmbedded) {
+			
 				if (!user.checkPassword(iUserPassword)) {
 					// WAIT A BIT TO AVOID BRUTE FORCE
 					Thread.sleep(200);
@@ -131,6 +130,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			super.create();
 
 			// CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
+			metadata = new OMetadata(this);
 			metadata.create();
 
 			createRolesAndUsers();
@@ -138,6 +138,12 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 			dictionary = (ODictionaryInternal<ORecordInternal<?>>) getStorage().createDictionary(this);
 			dictionary.create();
+
+			//if (getStorage() instanceof OStorageEmbedded) {
+				registerHook(new OUserTrigger());
+				registerHook(new OPropertyIndexManager());
+			//}
+
 		} catch (Exception e) {
 			throw new ODatabaseException("Can't create database", e);
 		}
@@ -147,6 +153,11 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	@Override
 	public void close() {
 		super.close();
+
+		metadata = null;
+		dictionary = null;
+		hooks.clear();
+
 		user = null;
 	}
 
