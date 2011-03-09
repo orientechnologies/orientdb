@@ -153,17 +153,19 @@ public abstract class OAbstractRecordCache extends OSharedResource {
 							// UNACTIVE
 							return;
 
-						final int threshold = (int) (maxSize > -1 ? maxSize * 0.7f : oldSize * 0.7f);
+						final int threshold = (int) (oldSize * 0.5f);
 
 						if (entries.size() < threshold)
 							return;
 
 						// CLEAR THE CACHE: USE A TEMP ARRAY TO AVOID ITERATOR EXCEPTIONS
 						final ORID[] ridToRemove = new ORID[entries.size() - threshold];
-						int i = 0;
 
+						int i = 0;
 						for (ORID rid : entries.keySet()) {
-							ridToRemove[i++] = rid;
+							if (i >= threshold)
+								// ADD ONLY AFTER THRESHOLD. THIS IS TO GET THE LESS USED
+								ridToRemove[i++] = rid;
 
 							if (i >= ridToRemove.length)
 								break;
@@ -173,10 +175,9 @@ public abstract class OAbstractRecordCache extends OSharedResource {
 							entries.remove(rid);
 
 						OLogManager.instance().debug(this, "Low memory: auto reduce the record cache size from %d to %d", oldSize, threshold);
-						maxSize = threshold;
-
+					} catch (Exception e) {
+						OLogManager.instance().error(this, "Error while freeing resources", e);
 					} finally {
-						System.err.println("Size after free: " + entries.size());
 						releaseExclusiveLock();
 					}
 				}
@@ -185,7 +186,12 @@ public abstract class OAbstractRecordCache extends OSharedResource {
 
 		OProfiler.getInstance().registerHookValue(profilerPrefix + ".cache.current", new OProfilerHookValue() {
 			public Object getValue() {
-				return entries.size();
+				acquireSharedLock();
+				try {
+					return entries.size();
+				} finally {
+					releaseSharedLock();
+				}
 			}
 		});
 

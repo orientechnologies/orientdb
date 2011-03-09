@@ -118,15 +118,12 @@ public class ODatabaseRecordCache extends OAbstractRecordCache {
 	}
 
 	public void updateRecord(final ORecordInternal<?> iRecord) {
-		// ASSURE TO REMOVE IT FROM DB CACHE
 		acquireExclusiveLock();
 		try {
-			entries.remove(iRecord.getIdentity());
+			entries.put(iRecord.getIdentity(), iRecord);
 		} finally {
 			releaseExclusiveLock();
 		}
-
-		level2cache.pushRecord(iRecord);
 	}
 
 	public boolean existsRecord(final ORID iRID) {
