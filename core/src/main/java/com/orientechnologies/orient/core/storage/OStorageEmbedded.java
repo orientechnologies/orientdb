@@ -191,7 +191,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 						// LISTENER HAS INTERRUPTED THE EXECUTION
 						break;
 				} catch (Exception e) {
-					OLogManager.instance().error(this, "Error on loading record %s. Cause: ", recordToCheck.getIdentity(), e);
+					OLogManager.instance().error(this, "Error on loading record %s. Cause: %s", recordToCheck.getIdentity(), e);
 				}
 			}
 		} finally {
