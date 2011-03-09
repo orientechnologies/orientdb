@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.core.id;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Comparator;
 import java.util.List;
 
@@ -171,10 +174,22 @@ public class ORecordId implements ORID, Comparable<ORecordId>, Comparator<ORecor
 		return buffer.toString();
 	}
 
+	public ORecordId fromStream(final InputStream iStream) throws IOException {
+		clusterId = OBinaryProtocol.bytes2short(iStream);
+		clusterPosition = OBinaryProtocol.bytes2long(iStream);
+		return this;
+	}
+
 	public ORecordId fromStream(final byte[] iBuffer) {
 		clusterId = OBinaryProtocol.bytes2short(iBuffer, 0);
 		clusterPosition = OBinaryProtocol.bytes2long(iBuffer, OConstants.SIZE_SHORT);
 		return this;
+	}
+
+	public int toStream(final OutputStream iStream) throws IOException {
+		final int beginOffset = OBinaryProtocol.short2bytes((short) clusterId, iStream);
+		OBinaryProtocol.long2bytes(clusterPosition, iStream);
+		return beginOffset;
 	}
 
 	public byte[] toStream() {

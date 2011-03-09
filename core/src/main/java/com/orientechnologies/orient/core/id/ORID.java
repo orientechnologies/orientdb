@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.core.id;
 
+import java.io.IOException;
+import java.io.OutputStream;
+
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
 public interface ORID extends OSerializableStream {
@@ -40,4 +43,6 @@ public interface ORID extends OSerializableStream {
 	public ORID copy();
 
 	public String next();
+
+	public int toStream(OutputStream iStream) throws IOException;
 }

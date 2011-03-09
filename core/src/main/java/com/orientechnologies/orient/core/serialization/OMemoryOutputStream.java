@@ -98,20 +98,14 @@ public class OMemoryOutputStream extends OutputStream {
 
 	@Override
 	public final void write(final int b) {
-		final int pos = position;
-		byte[] mbuf = buffer;
-
-		assureSpaceFor(1);
-
-		mbuf[pos] = (byte) b;
-		position = pos + 1;
+		assureSpaceFor(OConstants.SIZE_BYTE);
+		buffer[position++] = (byte) b;
 	}
 
 	@Override
 	public final void write(final byte[] iBuffer, final int iOffset, final int iLength) {
-
 		final int pos = position;
-		final int capacity = pos + iLength;
+		final int tot = pos + iLength;
 
 		assureSpaceFor(iLength);
 
@@ -123,7 +117,7 @@ public class OMemoryOutputStream extends OutputStream {
 		else
 			System.arraycopy(iBuffer, iOffset, mbuf, pos, iLength);
 
-		position = capacity;
+		position = tot;
 	}
 
 	/**
@@ -137,14 +131,36 @@ public class OMemoryOutputStream extends OutputStream {
 	public final void addAsFixed(final byte[] iContent) throws IOException {
 		if (iContent == null)
 			return;
-		assureSpaceFor(iContent.length);
 		write(iContent, 0, iContent.length);
 	}
 
-	public final int add(final byte[] iContent) throws IOException {
+	public int copy(final OMemoryInputStreamCursor iInput) throws IOException {
+		if (iInput == null)
+			return -1;
+
+		final int begin = position;
+
+		final int size = iInput.getSize();
+		assureSpaceFor(OConstants.SIZE_INT + size);
+
+		add(size);
+		for (int i = 0; i < size; ++i)
+			write(iInput.read());
+
+		return begin;
+	}
+
+	/**
+	 * Append byte[] to the stream.
+	 * 
+	 * @param iContent
+	 * @return The begin offset of the appended content
+	 * @throws IOException
+	 */
+	public int add(final byte[] iContent) throws IOException {
 		if (iContent == null)
 			return -1;
-		
+
 		final int begin = position;
 
 		assureSpaceFor(OConstants.SIZE_INT + iContent.length);
@@ -152,7 +168,7 @@ public class OMemoryOutputStream extends OutputStream {
 		OBinaryProtocol.int2bytes(iContent.length, buffer, position);
 		position += OConstants.SIZE_INT;
 		write(iContent, 0, iContent.length);
-		
+
 		return begin;
 	}
 
@@ -160,13 +176,12 @@ public class OMemoryOutputStream extends OutputStream {
 		write(iContent);
 	}
 
-	// TODO: AVOID TEMP BUFFER BUT USE DIRECTLY THE CURRENT ONE
-	public final void add(final String iContent) throws IOException {
-		add(OBinaryProtocol.string2bytes(iContent));
+	public final int add(final String iContent) throws IOException {
+		return add(OBinaryProtocol.string2bytes(iContent));
 	}
 
 	public void add(final boolean iContent) throws IOException {
-		add((byte) (iContent ? 1 : 0));
+		write(iContent ? 1 : 0);
 	}
 
 	public void add(final char iContent) throws IOException {
@@ -181,16 +196,24 @@ public class OMemoryOutputStream extends OutputStream {
 		position += OConstants.SIZE_INT;
 	}
 
-	public void add(final long iContent) throws IOException {
+	public int add(final long iContent) throws IOException {
 		assureSpaceFor(OConstants.SIZE_LONG);
+		final int begin = position;
 		OBinaryProtocol.long2bytes(iContent, buffer, position);
 		position += OConstants.SIZE_LONG;
+		return begin;
 	}
 
-	public void add(final short iContent) throws IOException {
+	public int add(final short iContent) throws IOException {
 		assureSpaceFor(OConstants.SIZE_SHORT);
+		final int begin = position;
 		OBinaryProtocol.short2bytes(iContent, buffer, position);
 		position += OConstants.SIZE_SHORT;
+		return begin;
+	}
+
+	public int getPosition() {
+		return position;
 	}
 
 	private void assureSpaceFor(final int iLength) {
@@ -200,7 +223,7 @@ public class OMemoryOutputStream extends OutputStream {
 
 		final int mbuflen = mbuf.length;
 
-		if (mbuflen < capacity) {
+		if (mbuflen <= capacity) {
 			OProfiler.getInstance().updateCounter("OMemOutStream.resize", +1);
 
 			final byte[] newbuf = new byte[Math.max(mbuflen << 1, capacity)];

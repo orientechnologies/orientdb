@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.serialization;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.OConstants;
@@ -26,7 +27,7 @@ import com.orientechnologies.orient.core.OConstants;
  * @author Luca Garulli
  * 
  */
-public class OMemoryInputStream {
+public class OMemoryInputStream extends InputStream {
 	private byte[]	buffer;
 	private int			position	= 0;
 
@@ -63,6 +64,35 @@ public class OMemoryInputStream {
 		return begin;
 	}
 
+	public OMemoryInputStreamCursor getCursor(final int iOffset) throws IOException {
+		if (buffer == null || iOffset >= buffer.length)
+			return null;
+
+		position = iOffset;
+		return new OMemoryInputStreamCursor(this, iOffset, getVariableSize());
+	}
+
+	@Override
+	public int read() throws IOException {
+		return buffer[position++];
+	}
+
+	@Override
+	public int read(final byte[] b) throws IOException {
+		return read(b, 0, b.length);
+	}
+
+	@Override
+	public int read(final byte[] b, final int off, final int len) throws IOException {
+		if (position >= buffer.length)
+			return 0;
+
+		System.arraycopy(buffer, position, b, off, len);
+		position += len;
+
+		return len;
+	}
+
 	public byte[] getAsByteArray(int iOffset) throws IOException {
 		if (buffer == null || iOffset >= buffer.length)
 			return null;
@@ -91,7 +121,10 @@ public class OMemoryInputStream {
 	}
 
 	public String getAsString() throws IOException {
-		return OBinaryProtocol.bytes2string(getAsByteArray());
+		final int size = getVariableSize();
+		if (size < 0)
+			return null;
+		return OBinaryProtocol.bytes2string(this, size);
 	}
 
 	public boolean getAsBoolean() throws IOException {
@@ -105,8 +138,12 @@ public class OMemoryInputStream {
 	}
 
 	public byte getAsByte() throws IOException {
-		final byte value = buffer[position];
-		position += OConstants.SIZE_BYTE;
+		return buffer[position++];
+	}
+
+	public long getAsLong() throws IOException {
+		final long value = OBinaryProtocol.bytes2long(buffer, position);
+		position += OConstants.SIZE_LONG;
 		return value;
 	}
 
@@ -150,5 +187,23 @@ public class OMemoryInputStream {
 		final byte[] copy = new byte[size];
 		System.arraycopy(buffer, 0, copy, 0, size);
 		return copy;
+	}
+
+	public int getVariableSize() throws IOException {
+		if (position >= buffer.length)
+			return -1;
+
+		final int size = OBinaryProtocol.bytes2int(buffer, position);
+		position += OConstants.SIZE_INT;
+
+		return size;
+	}
+
+	public int getSize() {
+		return buffer.length;
+	}
+
+	public int getPosition() {
+		return position;
 	}
 }
