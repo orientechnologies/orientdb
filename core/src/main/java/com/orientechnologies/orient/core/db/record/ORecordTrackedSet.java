@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ORecordTrackedSet extends AbstractCollection<Object> implements Set<Object>, ORecordElement {
+public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> implements Set<OIdentifiable>, ORecordElement {
 	protected final ORecord<?>		sourceRecord;
 	protected Map<Object, Object>	map						= new HashMap<Object, Object>();
 	protected final static Object	ENTRY_REMOVAL	= new Object();
@@ -44,11 +44,11 @@ public class ORecordTrackedSet extends AbstractCollection<Object> implements Set
 			iSourceRecord.setDirty();
 	}
 
-	public Iterator<Object> iterator() {
+	public Iterator<OIdentifiable> iterator() {
 		return new ORecordTrackedIterator(sourceRecord, map.keySet().iterator());
 	}
 
-	public boolean add(final Object e) {
+	public boolean add(final OIdentifiable e) {
 		map.put(e, ENTRY_REMOVAL);
 		setDirty();
 
@@ -93,11 +93,11 @@ public class ORecordTrackedSet extends AbstractCollection<Object> implements Set
 		return changed;
 	}
 
-	public boolean addAll(final Collection<? extends Object> c) {
+	public boolean addAll(final Collection<? extends OIdentifiable> c) {
 		if (c == null || c.size() == 0)
 			return false;
 
-		for (Object o : c)
+		for (OIdentifiable o : c)
 			add(o);
 
 		setDirty();

@@ -16,8 +16,8 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
 import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -32,13 +32,14 @@ import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.db.object.OLazyObjectList;
 import com.orientechnologies.orient.core.db.object.OLazyObjectMap;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.db.record.ORecordTrackedList;
-import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.entity.OEntityManagerInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -57,7 +58,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 	protected abstract ORecordSchemaAware<?> newObject(ODatabaseRecord iDatabase, String iClassName);
 
-	public Object fieldFromStream(final ORecord<?> iSourceRecord, final OType iType, OClass iLinkedClass, OType iLinkedType,
+	public Object fieldFromStream(final ORecordInternal<?> iSourceRecord, final OType iType, OClass iLinkedClass, OType iLinkedType,
 			final String iName, final String iValue) {
 
 		if (iValue == null)
@@ -78,8 +79,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			// REMOVE BEGIN & END COLLECTIONS CHARACTERS IF IT'S A COLLECTION
 			String value = iValue.startsWith("[") ? iValue.substring(1, iValue.length() - 1) : iValue;
 
-			Collection<Object> coll = iType == OType.LINKLIST ? new ORecordLazyList(iSourceRecord, ODocument.RECORD_TYPE)
-					: new ORecordLazySet(iSourceRecord, ODocument.RECORD_TYPE);
+			Collection<?> coll = iType == OType.LINKLIST ? new ORecordLazyList(iSourceRecord) : new ORecordLazySet(iSourceRecord);
 
 			if (value.length() == 0)
 				return coll;
@@ -94,7 +94,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				if (item.length() == 0)
 					continue;
 
-				coll.add(new ORecordId(item));
+				((Collection<Object>) coll).add(new ORecordId(item));
 			}
 
 			return coll;
@@ -285,7 +285,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 			Object link;
 			int items = 0;
-			Set<Object> coll = new HashSet<Object>((Collection<? extends Object>) iValue);
+			List<OIdentifiable> coll = new ArrayList<OIdentifiable>((Collection<? extends OIdentifiable>) iValue);
 			boolean invalidSet = false;
 
 			// LINKED SET
@@ -301,10 +301,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			}
 
 			if (invalidSet) {
-				final ORecordLazySet newSet = new ORecordLazySet(iRecord, ODocument.RECORD_TYPE);
+				final ORecordLazySet newSet = new ORecordLazySet(iRecord);
 
 				// REPLACE ALL CHANGED ITEMS
-				for (Object item : coll) {
+				for (OIdentifiable item : coll) {
 					newSet.add(item);
 				}
 				coll.clear();
@@ -464,16 +464,14 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		// REMOVE BEGIN & END COLLECTIONS CHARACTERS IF IT'S A COLLECTION
 		final String value = iValue.startsWith("[") ? iValue.substring(1, iValue.length() - 1) : iValue;
 
-		final Collection<Object> coll;
+		final Collection<?> coll;
 		if (iLinkedType == OType.LINK) {
 			if (iDocument != null)
-				coll = iType == OType.EMBEDDEDLIST ? new ORecordLazyList(iDocument, ODocument.RECORD_TYPE) : new ORecordLazySet(iDocument,
-						ODocument.RECORD_TYPE);
+				coll = iType == OType.EMBEDDEDLIST ? new ORecordLazyList(iDocument) : new ORecordLazySet(iDocument);
 			else
-				coll = iType == OType.EMBEDDEDLIST ? new ORecordLazyList(iDatabase, ODocument.RECORD_TYPE) : new ORecordLazySet(iDatabase,
-						ODocument.RECORD_TYPE);
+				coll = iType == OType.EMBEDDEDLIST ? new ORecordLazyList(iDatabase) : new ORecordLazySet(iDatabase, ODocument.RECORD_TYPE);
 		} else
-			coll = iType == OType.EMBEDDEDLIST ? new ORecordTrackedList(iDocument) : new ORecordTrackedSet(iDocument);
+			coll = iType == OType.EMBEDDEDLIST ? new OTrackedList<Object>(iDocument) : new OTrackedSet<Object>(iDocument);
 
 		if (value.length() == 0)
 			return coll;
@@ -509,7 +507,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 			if (objectToAdd != null) {
 				if (objectToAdd instanceof ODocument && coll instanceof ORecordElement)
 					((ODocument) objectToAdd).addOwner((ORecordElement) coll);
-				coll.add(objectToAdd);
+				((Collection<Object>) coll).add(objectToAdd);
 			}
 		}
 

@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.tx;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -216,4 +217,15 @@ public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
 	public long getSize() {
 		return 0;
 	}
+
+	@Override
+	public int compare(OIdentifiable o1, OIdentifiable o2) {
+		return -1;
+	}
+
+	@Override
+	public int compareTo(OIdentifiable o) {
+		return -1;
+	}
+
 }

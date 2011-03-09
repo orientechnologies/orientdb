@@ -32,8 +32,10 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ORecordTrackedList;
-import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.id.ORID;
@@ -158,6 +160,11 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 							if (v != null)
 								if (v instanceof Collection<?> && ((Collection<?>) v).size() > 0) {
+									if (v instanceof ORecordLazySet)
+										((ORecordLazySet) v).setAutoConvertToRecord(false);
+									else if (v instanceof ORecordLazyList)
+										((ORecordLazyList) v).setAutoConvertToRecord(false);
+
 									// CHECK IF THE COLLECTION IS EMBEDDED
 									Object first = ((Collection<?>) v).iterator().next();
 									if (first != null && first instanceof ORecord<?> && !((ORecord<?>) first).getIdentity().isValid()) {
@@ -186,6 +193,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 		return iRecord;
 	}
 
+	@SuppressWarnings("unchecked")
 	private Object getValue(final ODocument iRecord, String iFieldName, String iFieldValue, String iFieldValueAsString, OType iType,
 			OType iLinkedType, final Map<String, Character> iFieldTypes) {
 		if (iFieldValue.equals("null"))
@@ -232,11 +240,15 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 		} else if (iFieldValue.startsWith("[") && iFieldValue.endsWith("]")) {
 
 			// EMBEDDED VALUES
-			final Collection<Object> embeddedCollection;
-			if (iType == OType.LINKSET || iType == OType.EMBEDDEDSET)
-				embeddedCollection = new ORecordTrackedSet(iRecord);
+			final Collection<?> embeddedCollection;
+			if (iType == OType.LINKSET)
+				embeddedCollection = new ORecordLazySet(iRecord);
+			else if (iType == OType.EMBEDDEDSET)
+				embeddedCollection = new OTrackedSet<Object>(iRecord);
+			else if (iType == OType.LINKLIST)
+				embeddedCollection = new ORecordLazyList(iRecord);
 			else
-				embeddedCollection = new ORecordTrackedList(iRecord);
+				embeddedCollection = new OTrackedList<Object>(iRecord);
 
 			iFieldValue = iFieldValue.substring(1, iFieldValue.length() - 1);
 
@@ -255,7 +267,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 						// SET THE OWNER
 						((ODocument) collectionItem).addOwner(iRecord);
 
-					embeddedCollection.add(collectionItem);
+					((Collection<Object>) embeddedCollection).add(collectionItem);
 				}
 			}
 

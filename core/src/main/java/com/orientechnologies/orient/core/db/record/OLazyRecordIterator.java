@@ -27,11 +27,10 @@ import com.orientechnologies.orient.core.record.ORecord;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OLazyRecordIterator implements Iterator<Object> {
+public class OLazyRecordIterator implements Iterator<OIdentifiable> {
 	final private ODatabaseRecord	sourceDatabase;
 	final private ORecord<?>			sourceRecord;
 	final private Iterator<?>			underlying;
-	final private byte						recordType;
 	final private boolean					convertToRecord;
 
 	public OLazyRecordIterator(final ORecord<?> iSourceRecord, final ODatabaseRecord iSourceDatabase, final byte iRecordType,
@@ -39,19 +38,18 @@ public class OLazyRecordIterator implements Iterator<Object> {
 		this.sourceRecord = iSourceRecord;
 		this.sourceDatabase = iSourceDatabase;
 		this.underlying = iIterator;
-		this.recordType = iRecordType;
 		this.convertToRecord = iConvertToRecord;
 	}
 
-	public Object next() {
-		final Object value = underlying.next();
+	public OIdentifiable next() {
+		final OIdentifiable value = (OIdentifiable) underlying.next();
 
 		if (value == null)
 			return null;
 
 		if (sourceDatabase != null)
 			if (value instanceof ORecordId && convertToRecord)
-				return sourceDatabase.load((ORecordId) value);
+				return (OIdentifiable) sourceDatabase.load((ORecordId) value);
 
 		return value;
 	}

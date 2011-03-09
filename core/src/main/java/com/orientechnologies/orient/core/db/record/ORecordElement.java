@@ -21,7 +21,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 /**
  * Base interface that represents a record element.
  * 
- * @author Luca
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
 public interface ORecordElement {
@@ -30,7 +30,7 @@ public interface ORecordElement {
 	 * 
 	 * @return The object it self. Useful to call methods in chain.
 	 */
-	public <RET extends ORecordElement> RET setDirty();
+	public <RET> RET setDirty();
 
 	public void onBeforeIdentityChanged(ORID iRID);
 

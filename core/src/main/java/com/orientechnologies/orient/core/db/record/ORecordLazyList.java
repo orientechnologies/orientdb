@@ -50,14 +50,14 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 		this.recordType = iRecordType;
 	}
 
-	public ORecordLazyList(final ORecord<?> iSourceRecord, final byte iRecordType) {
+	public ORecordLazyList(final ORecordInternal<?> iSourceRecord) {
 		super(iSourceRecord);
 		this.database = iSourceRecord.getDatabase();
-		this.recordType = iRecordType;
+		this.recordType = iSourceRecord.getRecordType();
 	}
 
 	@Override
-	public Iterator<Object> iterator() {
+	public Iterator<OIdentifiable> iterator() {
 		return new OLazyRecordIterator(sourceRecord, database, recordType, super.iterator(), autoConvertToRecord);
 	}
 
@@ -68,7 +68,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 	}
 
 	@Override
-	public boolean add(Object e) {
+	public boolean add(OIdentifiable e) {
 		if (status == MULTIVALUE_STATUS.ALL_RIDS && e instanceof ORecord<?> && !((ORecord<?>) e).getIdentity().isNew())
 			// IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
 			e = ((ORecord<?>) e).getIdentity();
@@ -79,7 +79,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 	}
 
 	@Override
-	public void add(int index, Object e) {
+	public void add(int index, OIdentifiable e) {
 		if (status == MULTIVALUE_STATUS.ALL_RIDS && e instanceof ORecord<?>)
 			// IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
 			e = ((ORecord<?>) e).getIdentity();
@@ -90,13 +90,13 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 	}
 
 	@Override
-	public Object set(int index, Object e) {
+	public OIdentifiable set(int index, OIdentifiable e) {
 		status = ORecordMultiValueHelper.getStatus(status, e);
 		return super.set(index, e);
 	}
 
 	@Override
-	public Object get(final int index) {
+	public OIdentifiable get(final int index) {
 		convertLink2Record(index);
 		return super.get(index);
 	}
@@ -182,14 +182,14 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 			// PRECONDITIONS
 			return;
 
-		final Object o = super.get(iIndex);
+		final OIdentifiable o = super.get(iIndex);
 
 		if (o != null && o instanceof ORecordId) {
 			final ORecordId rid = (ORecordId) o;
 
 			try {
-				final ORecord<?> record = database.load(rid);
-				set(iIndex, record);
+				final ORecordInternal<?> record = database.load(rid);
+				set(iIndex, (OIdentifiable) record);
 			} catch (ORecordNotFoundException e) {
 				// IGNORE THIS
 			}

@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.record.ORecord;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ORecordTrackedIterator implements Iterator<Object> {
+public class ORecordTrackedIterator implements Iterator<OIdentifiable> {
 	final private ORecord<?>	sourceRecord;
 	final private Iterator<?>	underlying;
 
@@ -34,8 +34,8 @@ public class ORecordTrackedIterator implements Iterator<Object> {
 		this.underlying = iIterator;
 	}
 
-	public Object next() {
-		return underlying.next();
+	public OIdentifiable next() {
+		return (OIdentifiable) underlying.next();
 	}
 
 	public boolean hasNext() {
