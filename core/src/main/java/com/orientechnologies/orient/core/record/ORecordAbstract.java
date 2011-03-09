@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.record;
 import java.util.Arrays;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -26,7 +27,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 
 @SuppressWarnings({ "unchecked", "serial" })
-public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<T>, Comparable<ORecordAbstract<T>> {
+public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<T> {
 	protected ODatabaseRecord		_database;
 	protected ORecordId					_recordId;
 	protected int								_version;
@@ -326,14 +327,20 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		return true;
 	}
 
-	public int compareTo(final ORecordAbstract<T> iOther) {
+	public int compare(final OIdentifiable iFirst, final OIdentifiable iSecond) {
+		if (iFirst == null || iSecond == null)
+			return -1;
+		return iFirst.compareTo(iSecond);
+	}
+
+	public int compareTo(final OIdentifiable iOther) {
 		if (iOther == null)
 			return 1;
 
-		if (_recordId == null && iOther._recordId == null)
+		if (_recordId == null && iOther.getIdentity() == null)
 			return 0;
 
-		return _recordId.compareTo(iOther._recordId);
+		return _recordId.compareTo(iOther.getIdentity());
 	}
 
 	public STATUS getInternalStatus() {

@@ -33,11 +33,12 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedList;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedMap;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -201,7 +202,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 				if (fieldValue != null)
 					// LISTS
 					if (fieldValue instanceof ORecordLazyList) {
-						final ORecordLazyList newList = new ORecordLazyList(cloned, ((ORecordLazyList) fieldValue).getRecordType());
+						final ORecordLazyList newList = new ORecordLazyList(cloned);
 						newList.addAll((ORecordLazyList) fieldValue);
 						cloned._fieldValues.put(entry.getKey(), newList);
 
@@ -210,18 +211,28 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 						newList.addAll((ORecordTrackedList) fieldValue);
 						cloned._fieldValues.put(entry.getKey(), newList);
 
+					} else if (fieldValue instanceof OTrackedList<?>) {
+						final OTrackedList<Object> newList = new OTrackedList<Object>(cloned);
+						newList.addAll((OTrackedList<Object>) fieldValue);
+						cloned._fieldValues.put(entry.getKey(), newList);
+
 					} else if (fieldValue instanceof List<?>) {
 						cloned._fieldValues.put(entry.getKey(), new ArrayList<Object>((List<Object>) fieldValue));
 
 						// SETS
 					} else if (fieldValue instanceof ORecordLazySet) {
-						final ORecordLazySet newList = new ORecordLazySet(cloned, ((ORecordLazySet) fieldValue).getRecordType());
+						final ORecordLazySet newList = new ORecordLazySet(cloned);
 						newList.addAll((ORecordLazySet) fieldValue);
 						cloned._fieldValues.put(entry.getKey(), newList);
 
 					} else if (fieldValue instanceof ORecordTrackedSet) {
 						final ORecordTrackedSet newList = new ORecordTrackedSet(cloned);
 						newList.addAll((ORecordTrackedSet) fieldValue);
+						cloned._fieldValues.put(entry.getKey(), newList);
+
+					} else if (fieldValue instanceof OTrackedSet<?>) {
+						final OTrackedSet<Object> newList = new OTrackedSet<Object>(cloned);
+						newList.addAll((OTrackedSet<Object>) fieldValue);
 						cloned._fieldValues.put(entry.getKey(), newList);
 
 					} else if (fieldValue instanceof Set<?>) {
@@ -257,10 +268,11 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			for (Map.Entry<String, Object> entry : _fieldValues.entrySet()) {
 				fieldValue = entry.getValue();
 
-				if (fieldValue instanceof ORecord<?>)
+				if (fieldValue instanceof ORecord<?>) {// && ((ORecord) fieldValue).getIdentity().isValid()) {
 					_fieldValues.put(entry.getKey(), ((ORecord<?>) fieldValue).getIdentity());
-//				else if (fieldValue instanceof ORecordLazyMultiValue)
-//					((ORecordLazyMultiValue) fieldValue).convertRecords2Links();
+					// else if (fieldValue instanceof ORecordLazyMultiValue)
+					// ((ORecordLazyMultiValue) fieldValue).convertRecords2Links();
+				}
 			}
 		}
 
@@ -732,7 +744,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			// SAVE THE OLD VALUE IN A SEPARATE MAP
 			if (_fieldOriginalValues == null)
 				_fieldOriginalValues = new HashMap<String, Object>();
-			
+
 			// INSERT IT ONLY IF NOT EXISTS TO AVOID LOOSE OF THE ORIGINAL VALUE (FUNDAMENTAL FOR INDEX HOOK)
 			if (!_fieldOriginalValues.containsKey(iPropertyName))
 				_fieldOriginalValues.put(iPropertyName, oldValue);
@@ -966,34 +978,34 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 				return (RET) ((ORecord<?>) iValue).getIdentity();
 		} else if (Set.class.isAssignableFrom(iType) && !(iValue instanceof Set)) {
 			// CONVERT IT TO SET
-			final Collection<Object> newValue;
+			final Collection<?> newValue;
 
 			if (iValue instanceof ORecordLazyList || iValue instanceof ORecordLazyMap)
-				newValue = new ORecordLazySet(this, RECORD_TYPE);
+				newValue = new ORecordLazySet(this);
 			else
-				newValue = new ORecordTrackedSet(this);
+				newValue = new OTrackedSet<Object>(this);
 
-			if (iValue instanceof Collection)
-				newValue.addAll((Collection<Object>) iValue);
+			if (iValue instanceof Collection<?>)
+				((Collection<Object>) newValue).addAll((Collection<Object>) iValue);
 			else if (iValue instanceof Map)
-				newValue.addAll(((Map<String, Object>) iValue).values());
+				((Collection<Object>) newValue).addAll(((Map<String, Object>) iValue).values());
 
 			_fieldValues.put(iPropertyName, newValue);
 			iValue = (RET) newValue;
 
 		} else if (List.class.isAssignableFrom(iType) && !(iValue instanceof List)) {
 			// CONVERT IT TO LIST
-			final Collection<Object> newValue;
+			final Collection<?> newValue;
 
 			if (iValue instanceof ORecordLazySet || iValue instanceof ORecordLazyMap)
-				newValue = new ORecordLazyList(this, RECORD_TYPE);
+				newValue = new ORecordLazyList(this);
 			else
-				newValue = new ORecordTrackedList(this);
+				newValue = new OTrackedList<Object>(this);
 
 			if (iValue instanceof Collection)
-				newValue.addAll((Collection<Object>) iValue);
+				((Collection<Object>) newValue).addAll((Collection<Object>) iValue);
 			else if (iValue instanceof Map)
-				newValue.addAll(((Map<String, Object>) iValue).values());
+				((Collection<Object>) newValue).addAll(((Map<String, Object>) iValue).values());
 
 			_fieldValues.put(iPropertyName, newValue);
 			iValue = (RET) newValue;

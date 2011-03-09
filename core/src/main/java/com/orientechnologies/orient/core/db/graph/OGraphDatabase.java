@@ -21,6 +21,7 @@ import java.util.Set;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
@@ -234,14 +235,14 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 
 			ORecordLazySet outEdges = ((ORecordLazySet) iOutVertex.field(VERTEX_FIELD_OUT_EDGES));
 			if (outEdges == null) {
-				outEdges = new ORecordLazySet(iOutVertex, ODocument.RECORD_TYPE);
+				outEdges = new ORecordLazySet(iOutVertex);
 				iOutVertex.field(VERTEX_FIELD_OUT_EDGES, outEdges);
 			}
 			outEdges.add(edge);
 
 			ORecordLazySet inEdges = ((ORecordLazySet) iInVertex.field(VERTEX_FIELD_IN_EDGES));
 			if (inEdges == null) {
-				inEdges = new ORecordLazySet(iInVertex, ODocument.RECORD_TYPE);
+				inEdges = new ORecordLazySet(iInVertex);
 				iInVertex.field(VERTEX_FIELD_IN_EDGES, inEdges);
 			}
 			inEdges.add(edge);
@@ -259,11 +260,11 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		}
 	}
 
-	public Set<Object> getOutEdges(final ODocument iVertex) {
+	public Set<OIdentifiable> getOutEdges(final ODocument iVertex) {
 		return getOutEdges(iVertex, null);
 	}
 
-	public Set<Object> getOutEdges(final ODocument iVertex, final String iLabel) {
+	public Set<OIdentifiable> getOutEdges(final ODocument iVertex, final String iLabel) {
 		if (!iVertex.getSchemaClass().isSubClassOf(vertexBaseClass))
 			throw new IllegalArgumentException("The document received is not a vertex");
 
@@ -279,7 +280,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		// FILTER BY LABEL
 		final ORecordLazySet result = new ORecordLazySet(underlying, ODocument.RECORD_TYPE);
 		if (set != null)
-			for (Object item : set) {
+			for (OIdentifiable item : set) {
 				if (iLabel == null || iLabel.equals(((ODocument) item).field(LABEL)))
 					result.add(item);
 			}
@@ -287,11 +288,11 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		return result;
 	}
 
-	public Set<Object> getInEdges(final ODocument iVertex) {
+	public Set<OIdentifiable> getInEdges(final ODocument iVertex) {
 		return getInEdges(iVertex, null);
 	}
 
-	public Set<Object> getInEdges(final ODocument iVertex, final String iLabel) {
+	public Set<OIdentifiable> getInEdges(final ODocument iVertex, final String iLabel) {
 		if (!iVertex.getSchemaClass().isSubClassOf(vertexBaseClass))
 			throw new IllegalArgumentException("The document received is not a vertex");
 
@@ -307,7 +308,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		// FILTER BY LABEL
 		final ORecordLazySet result = new ORecordLazySet(underlying, ODocument.RECORD_TYPE);
 		if (set != null)
-			for (Object item : set) {
+			for (OIdentifiable item : set) {
 				if (iLabel == null || iLabel.equals(((ODocument) item).field(LABEL)))
 					result.add(item);
 			}

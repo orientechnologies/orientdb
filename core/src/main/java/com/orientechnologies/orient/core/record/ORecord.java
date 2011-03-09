@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.record;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -24,7 +25,7 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 /**
  * Generic record representation. The object can be reused across call to the database.
  */
-public interface ORecord<T> extends ORecordElement {
+public interface ORecord<T> extends ORecordElement, OIdentifiable {
 	/**
 	 * Available record statuses.
 	 */

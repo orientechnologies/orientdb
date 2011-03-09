@@ -18,16 +18,16 @@ package com.orientechnologies.orient.core.id;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Comparator;
 import java.util.List;
 
 import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
-public class ORecordId implements ORID, Comparable<ORecordId>, Comparator<ORecordId> {
+public class ORecordId implements ORID {
 	private static final long			serialVersionUID				= 247070594054408657L;
 
 	public static final int				PERSISTENT_SIZE					= OConstants.SIZE_SHORT + OConstants.SIZE_LONG;
@@ -124,27 +124,29 @@ public class ORecordId implements ORID, Comparable<ORecordId>, Comparator<ORecor
 		return true;
 	}
 
-	public int compareTo(final ORecordId iOther) {
+	public int compareTo(final OIdentifiable iOther) {
 		if (iOther == this)
 			return 0;
 
 		if (iOther == null)
 			return 1;
 
-		if (clusterId == iOther.clusterId) {
-			if (clusterPosition == iOther.clusterPosition)
+		ORID other = iOther.getIdentity();
+
+		if (clusterId == other.getClusterId()) {
+			if (clusterPosition == other.getClusterPosition())
 				return 0;
-			else if (clusterPosition > iOther.clusterPosition)
+			else if (clusterPosition > other.getClusterPosition())
 				return 1;
-			else if (clusterPosition < iOther.clusterPosition)
+			else if (clusterPosition < other.getClusterPosition())
 				return -1;
-		} else if (clusterId > iOther.clusterId)
+		} else if (clusterId > other.getClusterId())
 			return 1;
 
 		return -1;
 	}
 
-	public int compare(final ORecordId iObj1, final ORecordId iObj2) {
+	public int compare(final OIdentifiable iObj1, final OIdentifiable iObj2) {
 		if (iObj1 == iObj2)
 			return 0;
 
@@ -239,5 +241,9 @@ public class ORecordId implements ORID, Comparable<ORecordId>, Comparator<ORecor
 
 	public String next() {
 		return generateString(clusterId, clusterPosition + 1);
+	}
+
+	public ORID getIdentity() {
+		return this;
 	}
 }
