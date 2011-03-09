@@ -76,8 +76,8 @@ public class OMMapManager {
 		});
 
 		OProfiler.getInstance().registerHookValue("mmap.blocks", new OProfilerHookValue() {
-			public Object getValue() {
-				return bufferPoolLRU.size();
+			public synchronized Object getValue() {
+					return bufferPoolLRU.size();
 			}
 		});
 

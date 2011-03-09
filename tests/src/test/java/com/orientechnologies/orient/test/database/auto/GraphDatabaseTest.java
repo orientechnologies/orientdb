@@ -74,10 +74,10 @@ public class GraphDatabaseTest {
 			Assert.assertTrue(v.getSchemaClass().isSubClassOf("GraphVehicle"));
 
 			if (v.getClassName().equals("GraphCar")) {
-				Assert.assertTrue(database.getOutEdges(v).size() == 1);
+				Assert.assertEquals(database.getOutEdges(v).size(), 1);
 				edge1 = (ODocument) database.getOutEdges(v).iterator().next();
 			} else {
-				Assert.assertTrue(database.getInEdges(v).size() == 1);
+				Assert.assertEquals(database.getInEdges(v).size(), 1);
 				edge2 = (ODocument) database.getInEdges(v).iterator().next();
 			}
 		}

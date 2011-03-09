@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  * @author Luca Garulli
  * 
  */
+@SuppressWarnings("serial")
 public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstract implements OCommandRequestText {
 	protected String	text;
 
