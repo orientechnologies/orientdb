@@ -301,36 +301,56 @@ public enum OType {
 		} else if (iTargetClass.equals(Byte.TYPE) || iTargetClass.equals(Byte.class)) {
 			if (iValue instanceof Byte)
 				return iValue;
-			return ((Number) iValue).byteValue();
+			else if (iValue instanceof String)
+				return Byte.parseByte((String) iValue);
+			else
+				return ((Number) iValue).byteValue();
 
 		} else if (iTargetClass.equals(Short.TYPE) || iTargetClass.equals(Short.class)) {
 			if (iValue instanceof Short)
 				return iValue;
-			return ((Number) iValue).shortValue();
+			else if (iValue instanceof String)
+				return Short.parseShort((String) iValue);
+			else
+				return ((Number) iValue).shortValue();
 
 		} else if (iTargetClass.equals(Integer.TYPE) || iTargetClass.equals(Integer.class)) {
 			if (iValue instanceof Integer)
 				return iValue;
-			return ((Number) iValue).intValue();
+			else if (iValue instanceof String)
+				return Integer.parseInt((String) iValue);
+			else
+				return ((Number) iValue).intValue();
 
 		} else if (iTargetClass.equals(Long.TYPE) || iTargetClass.equals(Long.class)) {
 			if (iValue instanceof Long)
 				return iValue;
-			return ((Number) iValue).longValue();
+			else if (iValue instanceof String)
+				return Long.parseLong((String) iValue);
+			else
+				return ((Number) iValue).longValue();
 
 		} else if (iTargetClass.equals(Float.TYPE) || iTargetClass.equals(Float.class)) {
 			if (iValue instanceof Float)
 				return iValue;
-			return ((Number) iValue).floatValue();
+			else if (iValue instanceof String)
+				return Float.parseFloat((String) iValue);
+			else
+				return ((Number) iValue).floatValue();
 
 		} else if (iTargetClass.equals(Double.TYPE) || iTargetClass.equals(Double.class)) {
 			if (iValue instanceof Double)
 				return iValue;
-			return ((Number) iValue).doubleValue();
+			else if (iValue instanceof String)
+				return Double.parseDouble((String) iValue);
+			else
+				return ((Number) iValue).doubleValue();
 
 		} else if (iTargetClass.equals(Boolean.TYPE) || iTargetClass.equals(Boolean.class)) {
 			if (iValue instanceof Boolean)
 				return ((Boolean) iValue).booleanValue();
+			else if (iValue instanceof String)
+				return Boolean.parseBoolean((String) iValue);
 			else if (iValue instanceof Number)
 				return ((Number) iValue).intValue() != 0;
 
