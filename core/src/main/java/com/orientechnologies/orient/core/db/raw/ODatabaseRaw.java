@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.intent.OIntent;
+import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -196,6 +197,9 @@ public class ODatabaseRaw implements ODatabase {
 	}
 
 	public long save(final int iClusterId, long iPosition, final byte[] iContent, final int iVersion, final byte iRecordType) {
+		// CHECK IF RECORD TYPE IS SUPPORTED
+		ORecordFactory.getRecordTypeName(iRecordType);
+
 		try {
 			if (iPosition < 0) {
 				// CREATE
@@ -373,7 +377,7 @@ public class ODatabaseRaw implements ODatabase {
 
 		if (storage != null && iCloseStorageToo)
 			storage.removeUser();
-		
+
 		storage = null;
 		status = STATUS.CLOSED;
 
