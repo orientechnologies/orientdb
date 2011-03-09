@@ -49,8 +49,8 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	public static final String	LABEL										= "label";
 
 	private boolean							safeMode								= false;
-	protected OClass							vertexBaseClass;
-	protected OClass							edgeBaseClass;
+	protected OClass						vertexBaseClass;
+	protected OClass						edgeBaseClass;
 
 	public OGraphDatabase(final String iURL) {
 		super(iURL);
@@ -70,6 +70,13 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		super.create();
 		checkForGraphSchema();
 		return (THISDB) this;
+	}
+
+	@Override
+	public void close() {
+		super.close();
+		vertexBaseClass = null;
+		edgeBaseClass = null;
 	}
 
 	public long countVertexes() {
