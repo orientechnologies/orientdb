@@ -28,8 +28,6 @@ import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.common.collection.OMVRBTreeEventListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.orient.core.OMemoryWatchDog.Listener;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -86,14 +84,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	public OMVRBTreePersistent(String iClusterName, final OStreamSerializer iKeySerializer, final OStreamSerializer iValueSerializer) {
 		// MINIMIZE I/O USING A LARGER PAGE THAN THE DEFAULT USED IN MEMORY
 		super(1024, 0.7f);
-
-		Orient.instance().getMemoryWatchDog().addListener(new Listener() {
-			public void memoryUsageLow(final TYPE iType, final long usedMemory, final long maxMemory) {
-				if (iType == TYPE.JVM)
-					optimize();
-			}
-		});
-
 		config();
 
 		clusterName = iClusterName;
@@ -170,7 +160,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	 * Optimize the tree memory consumption by keeping part of nodes as entry points and clearing all the rest.
 	 */
 	@SuppressWarnings("unchecked")
-	public void optimize() {
+	public void optimize(final boolean iForce) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		try {
@@ -218,7 +208,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 				OLogManager.instance().debug(this, "Found %d nodes in memory, %d items on disk, threshold=%d, entryPoints=%d", nodes, size,
 						(entryPointsSize * optimizeEntryPointsFactor), entryPoints.size());
 
-			if (nodes < entryPointsSize * optimizeEntryPointsFactor)
+			if (!iForce && nodes < entryPointsSize * optimizeEntryPointsFactor)
 				// UNDER THRESHOLD AVOID TO OPTIMIZE
 				return;
 
@@ -652,7 +642,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 		if (insertionCounter > optimizeThreshold) {
 			insertionCounter = 0;
-			optimize();
+			optimize(false);
 		} else
 			++insertionCounter;
 

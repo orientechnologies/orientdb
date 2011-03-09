@@ -65,9 +65,9 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> {
 	}
 
 	@Override
-	public void optimize() {
+	public void optimize(final boolean iForce) {
 		lazySave();
-		super.optimize();
+		super.optimize(iForce);
 	}
 
 	/**

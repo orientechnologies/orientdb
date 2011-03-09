@@ -26,8 +26,11 @@ import java.util.Set;
 import com.orientechnologies.common.collection.ONavigableMap;
 import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
+import com.orientechnologies.orient.core.OMemoryWatchDog.Listener;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.annotation.ODocumentInstance;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
@@ -61,9 +64,28 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 
 	@ODocumentInstance
 	protected ODocument																						configuration;
+	private Listener																							watchDog;
 
 	public OIndexMVRBTreeAbstract(final String iType) {
 		type = iType;
+
+		watchDog = new Listener() {
+			public void memoryUsageLow(final TYPE iType, final long usedMemory, final long maxMemory) {
+				if (iType == TYPE.JVM) {
+					if (map != null) {
+						acquireExclusiveLock();
+						try {
+							OLogManager.instance().warn(this, "Starting optimization of Index with %d items...", map.size());
+							map.optimize(true);
+						} finally {
+							releaseExclusiveLock();
+						}
+					}
+				}
+			}
+		};
+
+		Orient.instance().getMemoryWatchDog().addListener(watchDog);
 	}
 
 	/**
@@ -424,7 +446,12 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	protected void installProfilerHooks() {
 		OProfiler.getInstance().registerHookValue("index." + name + ".items", new OProfilerHookValue() {
 			public Object getValue() {
-				return map != null ? map.size() : "-";
+				acquireSharedLock();
+				try {
+					return map != null ? map.size() : "-";
+				} finally {
+					releaseSharedLock();
+				}
 			}
 		});
 
@@ -494,5 +521,6 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	}
 
 	public void onClose(ODatabase iDatabase) {
+		Orient.instance().getMemoryWatchDog().removeListener(watchDog);
 	}
 }

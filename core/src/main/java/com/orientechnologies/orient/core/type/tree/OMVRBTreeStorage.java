@@ -68,10 +68,7 @@ public class OMVRBTreeStorage<K, V> extends OMVRBTreePersistent<K, V> {
 		if (entry == null) {
 			// NOT FOUND: CREATE IT AND PUT IT INTO THE CACHE
 			entry = new OMVRBTreeEntryStorage<K, V>(this, iParent, iRecordId);
-			// cache.put(iRecordId, entry);
-		} // else
-			// FOUND: ASSIGN IT
-			// entry.setParent(iParent);
+		}
 
 		return entry;
 	}
