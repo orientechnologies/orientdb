@@ -189,6 +189,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		cloned._version = _version;
 		cloned._dirty = _dirty;
 		cloned._pinned = _pinned;
+		cloned._ordered = _ordered;
 		cloned._clazz = _clazz;
 		cloned._status = _status;
 		cloned._recordFormat = _recordFormat;
