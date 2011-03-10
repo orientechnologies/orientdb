@@ -51,6 +51,7 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 		delegate.onAfterIdentityChanged(iRecord);
 	}
 
+	@SuppressWarnings("unchecked")
 	public <RET> RET setDirty() {
 		return (RET) delegate.setDirty();
 	}

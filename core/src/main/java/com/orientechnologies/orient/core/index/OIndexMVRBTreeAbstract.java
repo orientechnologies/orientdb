@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.annotation.ODocumentInstance;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -53,19 +54,19 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
  * 
  */
 public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements OIndex, ODatabaseListener {
-	protected static final String																CONFIG_MAP_RID	= "mapRid";
-	protected static final String																CONFIG_CLUSTERS	= "clusters";
-	protected String																						name;
-	protected String																						type;
-	protected OMVRBTreeDatabaseLazySave<Object, ORecordLazySet>	map;
-	protected Set<String>																				clustersToIndex	= new LinkedHashSet<String>();
-	protected OIndexCallback																		callback;
-	protected boolean																						automatic;
-	protected Set<Object>																				tempItems				= new HashSet<Object>();
+	protected static final String																		CONFIG_MAP_RID	= "mapRid";
+	protected static final String																		CONFIG_CLUSTERS	= "clusters";
+	protected String																								name;
+	protected String																								type;
+	protected OMVRBTreeDatabaseLazySave<Object, Set<OIdentifiable>>	map;
+	protected Set<String>																						clustersToIndex	= new LinkedHashSet<String>();
+	protected OIndexCallback																				callback;
+	protected boolean																								automatic;
+	protected Set<Object>																						tempItems				= new HashSet<Object>();
 
 	@ODocumentInstance
-	protected ODocument																					configuration;
-	private Listener																						watchDog;
+	protected ODocument																							configuration;
+	private Listener																								watchDog;
 
 	public OIndexMVRBTreeAbstract(final String iType) {
 		type = iType;
@@ -115,8 +116,8 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 
 		iDatabase.registerListener(this);
 
-		map = new OMVRBTreeDatabaseLazySave<Object, ORecordLazySet>(iDatabase, iClusterIndexName, OStreamSerializerLiteral.INSTANCE,
-				OStreamSerializerListRID.INSTANCE);
+		map = new OMVRBTreeDatabaseLazySave<Object, Set<OIdentifiable>>(iDatabase, iClusterIndexName,
+				OStreamSerializerLiteral.INSTANCE, OStreamSerializerListRID.INSTANCE);
 		rebuild(iProgressListener);
 		return this;
 	}
@@ -141,12 +142,11 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 		return this;
 	}
 
-	@SuppressWarnings("unchecked")
-	public ORecordLazySet get(Object iKey) {
+	public Set<OIdentifiable> get(Object iKey) {
 		acquireExclusiveLock();
 
 		try {
-			final ORecordLazySet values = map.get(iKey);
+			final Set<OIdentifiable> values = map.get(iKey);
 
 			if (values == null)
 				return ORecordLazySet.EMPTY_SET;
@@ -168,7 +168,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	 * @see #getBetween(Object, Object, boolean)
 	 * @return
 	 */
-	public ORecordLazySet getBetween(final Object iRangeFrom, final Object iRangeTo) {
+	public Set<OIdentifiable> getBetween(final Object iRangeFrom, final Object iRangeTo) {
 		return getBetween(iRangeFrom, iRangeTo, true);
 	}
 
@@ -184,20 +184,19 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	 * @see #getBetween(Object, Object)
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
-	public ORecordLazySet getBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {
+	public Set<OIdentifiable> getBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {
 		if (iRangeFrom.getClass() != iRangeTo.getClass())
 			throw new IllegalArgumentException("Range from-to parameters are of different types");
 
 		acquireExclusiveLock();
 
 		try {
-			final ONavigableMap<Object, ORecordLazySet> subSet = map.subMap(iRangeFrom, iInclusive, iRangeTo, iInclusive);
+			final ONavigableMap<Object, Set<OIdentifiable>> subSet = map.subMap(iRangeFrom, iInclusive, iRangeTo, iInclusive);
 			if (subSet == null)
 				return ORecordLazySet.EMPTY_SET;
 
-			final ORecordLazySet result = new ORecordLazySet(configuration.getDatabase(), ODocument.RECORD_TYPE);
-			for (ORecordLazySet v : subSet.values()) {
+			final Set<OIdentifiable> result = new ORecordLazySet(configuration.getDatabase(), ODocument.RECORD_TYPE);
+			for (Set<OIdentifiable> v : subSet.values()) {
 				result.addAll(v);
 			}
 
@@ -340,7 +339,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 		return map.getRecord();
 	}
 
-	public Iterator<Entry<Object, ORecordLazySet>> iterator() {
+	public Iterator<Entry<Object, Set<OIdentifiable>>> iterator() {
 		acquireExclusiveLock();
 
 		try {
@@ -354,7 +353,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	protected void load(final ODatabaseRecord iDatabase, final ORID iRecordId) {
 		installProfilerHooks();
 
-		map = new OMVRBTreeDatabaseLazySave<Object, ORecordLazySet>(iDatabase, iRecordId);
+		map = new OMVRBTreeDatabaseLazySave<Object, Set<OIdentifiable>>(iDatabase, iRecordId);
 		map.load();
 
 		iDatabase.registerListener(this);
@@ -505,7 +504,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 		try {
 			if (tempItems.size() > 0) {
 				for (Object key : tempItems) {
-					ORecordLazySet set = map.get(key);
+					Set<OIdentifiable> set = map.get(key);
 					if (set != null) {
 						// RE-ADD ALL THE ITEM TO UPDATE THE HASHCODE (CHANGED AFTER SAVE+COMMIT)
 						final ORecordLazySet newSet = new ORecordLazySet(configuration.getDatabase(), ODocument.RECORD_TYPE);

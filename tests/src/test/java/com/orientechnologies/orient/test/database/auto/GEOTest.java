@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.util.List;
+import java.util.Set;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -23,7 +24,7 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OPropertyIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
@@ -119,8 +120,8 @@ public class GEOTest {
 		final OPropertyIndex yIndex = database.getMetadata().getSchema().getClass("MapPoint").getProperty("y").getIndex();
 		Assert.assertNotNull(yIndex);
 
-		final ORecordLazySet xResult = xIndex.getUnderlying().getBetween(52.20472, 82.20472);
-		final ORecordLazySet yResult = yIndex.getUnderlying().getBetween(0.14056, 30.14056);
+		final Set<OIdentifiable> xResult = xIndex.getUnderlying().getBetween(52.20472, 82.20472);
+		final Set<OIdentifiable> yResult = yIndex.getUnderlying().getBetween(0.14056, 30.14056);
 
 		xResult.retainAll(yResult);
 

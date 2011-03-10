@@ -16,9 +16,10 @@
 package com.orientechnologies.orient.core.sql.operator;
 
 import java.util.List;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndexFullText;
 import com.orientechnologies.orient.core.index.OPropertyIndex;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -49,7 +50,7 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
 	}
 
 	@Override
-	public ORecordLazySet filterRecords(final ODatabaseComplex<?> iDatabase, final List<String> iTargetClasses,
+	public Set<OIdentifiable> filterRecords(final ODatabaseComplex<?> iDatabase, final List<String> iTargetClasses,
 			final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight) {
 
 		final String fieldName;

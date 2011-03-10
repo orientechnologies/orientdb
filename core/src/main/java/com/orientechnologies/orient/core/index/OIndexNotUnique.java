@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.Set;
+
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -34,7 +37,7 @@ public class OIndexNotUnique extends OIndexMVRBTreeAbstract {
 		acquireExclusiveLock();
 
 		try {
-			ORecordLazySet values = map.get(iKey);
+			Set<OIdentifiable> values = map.get(iKey);
 			if (values == null)
 				values = new ORecordLazySet(configuration.getDatabase(), ODocument.RECORD_TYPE);
 
@@ -58,7 +61,7 @@ public class OIndexNotUnique extends OIndexMVRBTreeAbstract {
 		acquireExclusiveLock();
 
 		try {
-			final ORecordLazySet recs = get(iKey);
+			final Set<OIdentifiable> recs = get(iKey);
 			if (recs != null && !recs.isEmpty()) {
 				if (recs.remove(value))
 					map.put(iKey, recs);

@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -26,7 +27,7 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OPropertyIndex;
 import com.orientechnologies.orient.core.iterator.ORecordIterator;
@@ -198,9 +199,9 @@ public class CRUDDocumentPhysicalTest {
 
 		OPropertyIndex index = database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getIndex();
 
-		ORecordLazySet vOldName = index.getUnderlying().get("JayM1");
-		ORecordLazySet vIntermediateName = index.getUnderlying().get("JayM2");
-		ORecordLazySet vNewName = index.getUnderlying().get("JayM3");
+		Set<OIdentifiable> vOldName = index.getUnderlying().get("JayM1");
+		Set<OIdentifiable> vIntermediateName = index.getUnderlying().get("JayM2");
+		Set<OIdentifiable> vNewName = index.getUnderlying().get("JayM3");
 
 		Assert.assertEquals(vOldName.size(), 0);
 		Assert.assertEquals(vIntermediateName.size(), 0);
@@ -227,7 +228,7 @@ public class CRUDDocumentPhysicalTest {
 		OPropertyIndex indexName = database.getMetadata().getSchema().getClass("Profile").getProperty("name").getIndex();
 
 		// We must get 2 records for "nameA".
-		ORecordLazySet vName1 = indexName.getUnderlying().get("Jack");
+		Set<OIdentifiable> vName1 = indexName.getUnderlying().get("Jack");
 		Assert.assertEquals(vName1.size(), 2);
 
 		// Remove this last record.

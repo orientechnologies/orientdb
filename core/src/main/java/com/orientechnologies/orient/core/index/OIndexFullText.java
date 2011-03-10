@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecord.STATUS;
@@ -96,7 +97,7 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 		if (iKey == null)
 			return this;
 
-		ORecordLazySet refs;
+		Set<OIdentifiable> refs;
 		final StringBuilder buffer = new StringBuilder();
 		char c;
 		boolean ignore;
@@ -153,7 +154,7 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 		acquireExclusiveLock();
 
 		try {
-			final ORecordLazySet recs = get(iKey);
+			final Set<OIdentifiable> recs = get(iKey);
 			if (recs != null && !recs.isEmpty()) {
 				if (recs.remove(value))
 					map.put(iKey, recs);
