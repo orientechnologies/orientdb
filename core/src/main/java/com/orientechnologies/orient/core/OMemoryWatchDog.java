@@ -17,6 +17,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.orient.core.OMemoryWatchDog.Listener.TYPE;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 /**
  * This memory warning system will call the listener when we exceed the percentage of available memory specified. There should only
@@ -32,7 +33,29 @@ public class OMemoryWatchDog {
 			OS, JVM
 		}
 
+		/**
+		 * Execute a soft free of memory resources.
+		 * 
+		 * @param iType
+		 *          OS or JVM
+		 * @param iUsedMemory
+		 *          Current used memory
+		 * @param iMaxMemory
+		 *          Max memory
+		 */
 		public void memoryUsageLow(TYPE iType, long iUsedMemory, long iMaxMemory);
+
+		/**
+		 * Execute a hard free of memory resources.
+		 * 
+		 * @param iType
+		 *          OS or JVM
+		 * @param iUsedMemory
+		 *          Current used memory
+		 * @param iMaxMemory
+		 *          Max memory
+		 */
+		public void memoryUsageCritical(TYPE iType, long iUsedMemory, long iMaxMemory);
 	}
 
 	/**
@@ -51,10 +74,11 @@ public class OMemoryWatchDog {
 				if (n.getType().equals(MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED)) {
 					alertTimes++;
 					final long maxMemory = tenuredGenPool.getUsage().getMax();
-					final long usedMemory = tenuredGenPool.getUsage().getUsed();
+					long usedMemory = tenuredGenPool.getUsage().getUsed();
+					long freeMemory = maxMemory - usedMemory;
 
-					OLogManager.instance().warn(this, "Low memory (%s of %s), calling listeners to free memory...",
-							OFileUtils.getSizeAsString(usedMemory), OFileUtils.getSizeAsString(maxMemory));
+					OLogManager.instance().warn(this, "Low memory %s%% (%s of %s), calling listeners to free memory in soft way...",
+							freeMemory * 100 / maxMemory, OFileUtils.getSizeAsString(usedMemory), OFileUtils.getSizeAsString(maxMemory));
 
 					final long timer = OProfiler.getInstance().startChrono();
 
@@ -64,8 +88,34 @@ public class OMemoryWatchDog {
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
-						OProfiler.getInstance().stopChrono("OMemoryWatchDog.freeResources", timer);
 					}
+
+					System.gc();
+					try {
+						Thread.sleep(400);
+					} catch (InterruptedException e) {
+					}
+
+					usedMemory = maxMemory - Runtime.getRuntime().freeMemory();
+					freeMemory = maxMemory - usedMemory;
+					final long threshold = (long) (maxMemory * (1 - OGlobalConfiguration.MEMORY_OPTIMIZE_THRESHOLD.getValueAsFloat()));
+
+					if (freeMemory < threshold) {
+						OLogManager.instance().warn(this,
+								"Low memory %s%% (%s of %s) while the threshold is %s, calling listeners to free memory in hard way...",
+								usedMemory * 100 / maxMemory, OFileUtils.getSizeAsString(usedMemory), OFileUtils.getSizeAsString(maxMemory),
+								OFileUtils.getSizeAsString(threshold));
+
+						for (Listener listener : listeners) {
+							try {
+								listener.memoryUsageCritical(TYPE.JVM, usedMemory, maxMemory);
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
+						}
+					}
+
+					OProfiler.getInstance().stopChrono("OMemoryWatchDog.freeResources", timer);
 				}
 			}
 		}, null, null);

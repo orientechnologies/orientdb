@@ -126,19 +126,6 @@ public class ODatabaseRecordCache extends OAbstractRecordCache {
 		}
 	}
 
-	public boolean existsRecord(final ORID iRID) {
-		if (maxSize == 0)
-			// PRECONDITIONS
-			return false;
-
-		acquireSharedLock();
-		try {
-			return entries.containsKey(iRID);
-		} finally {
-			releaseSharedLock();
-		}
-	}
-
 	public void freeRecord(final ORID iRID) {
 		if (maxSize == 0)
 			// PRECONDITIONS

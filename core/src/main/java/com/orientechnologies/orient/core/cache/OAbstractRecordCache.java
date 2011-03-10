@@ -60,6 +60,19 @@ public abstract class OAbstractRecordCache extends OSharedResource {
 		};
 	}
 
+	public boolean existsRecord(final ORID iRID) {
+		if (maxSize == 0)
+			// PRECONDITIONS
+			return false;
+
+		acquireSharedLock();
+		try {
+			return entries.containsKey(iRID);
+		} finally {
+			releaseSharedLock();
+		}
+	}
+
 	/**
 	 * Remove a record from the cache.
 	 * 
@@ -142,7 +155,7 @@ public abstract class OAbstractRecordCache extends OSharedResource {
 	public void startup() {
 		watchDogListener = Orient.instance().getMemoryWatchDog().addListener(new Listener() {
 			/**
-			 * Auto reduce cache size of 10%
+			 * Auto reduce cache size of 50%
 			 */
 			public void memoryUsageLow(TYPE iType, final long usedMemory, final long maxMemory) {
 				if (iType == TYPE.JVM) {
@@ -161,9 +174,10 @@ public abstract class OAbstractRecordCache extends OSharedResource {
 						// CLEAR THE CACHE: USE A TEMP ARRAY TO AVOID ITERATOR EXCEPTIONS
 						final ORID[] ridToRemove = new ORID[entries.size() - threshold];
 
+						int entryNum = 0;
 						int i = 0;
 						for (ORID rid : entries.keySet()) {
-							if (i >= threshold)
+							if (entryNum++ >= threshold)
 								// ADD ONLY AFTER THRESHOLD. THIS IS TO GET THE LESS USED
 								ridToRemove[i++] = rid;
 
@@ -175,6 +189,22 @@ public abstract class OAbstractRecordCache extends OSharedResource {
 							entries.remove(rid);
 
 						OLogManager.instance().debug(this, "Low memory: auto reduce the record cache size from %d to %d", oldSize, threshold);
+					} catch (Exception e) {
+						OLogManager.instance().error(this, "Error while freeing resources", e);
+					} finally {
+						releaseExclusiveLock();
+					}
+				}
+			}
+
+			/**
+			 * Free the entire cache
+			 */
+			public void memoryUsageCritical(TYPE iType, final long usedMemory, final long maxMemory) {
+				if (iType == TYPE.JVM) {
+					acquireExclusiveLock();
+					try {
+						entries.clear();
 					} catch (Exception e) {
 						OLogManager.instance().error(this, "Error while freeing resources", e);
 					} finally {

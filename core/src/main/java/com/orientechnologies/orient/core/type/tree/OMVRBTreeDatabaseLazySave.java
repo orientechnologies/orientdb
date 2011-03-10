@@ -94,4 +94,8 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> {
 		super.config();
 		maxUpdatesBeforeSave = OGlobalConfiguration.MVRBTREE_LAZY_UPDATES.getValueAsInteger();
 	}
+
+	public int getInMemoryEntries() {
+		return cache.size();
+	}
 }

@@ -77,13 +77,48 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 					if (map != null) {
 						acquireExclusiveLock();
 						try {
-							OLogManager.instance().warn(this, "Starting optimization of Index with %d items...", map.size());
-							map.optimize(true);
+							// REDUCE OF 10% LAZY UPDATES
+							int maxUpdates = map.getMaxUpdatesBeforeSave();
+							if (maxUpdates > 10)
+								maxUpdates *= 0.90;
+
+							map.setMaxUpdatesBeforeSave(maxUpdates);
+
+							optimize();
 						} finally {
 							releaseExclusiveLock();
 						}
 					}
 				}
+			}
+
+			public void memoryUsageCritical(final TYPE iType, final long usedMemory, final long maxMemory) {
+				if (iType == TYPE.JVM) {
+					if (map != null) {
+						acquireExclusiveLock();
+						try {
+							// REDUCE SOME PARAMETERS
+							int maxUpdates = map.getMaxUpdatesBeforeSave();
+							if (maxUpdates > 10)
+								maxUpdates *= 0.5;
+
+							map.setMaxUpdatesBeforeSave(maxUpdates);
+
+							optimize();
+						} finally {
+							releaseExclusiveLock();
+						}
+					}
+				}
+			}
+
+			private void optimize() {
+				OLogManager.instance().warn(this, "Starting hard optimization of Index %s (%d items). Found %d entries in memory...", name,
+						map.size(), map.getInMemoryEntries());
+
+				map.optimize(true);
+
+				OLogManager.instance().warn(this, "Completed! Now %d entries resides in memory", map.getInMemoryEntries());
 			}
 		};
 
