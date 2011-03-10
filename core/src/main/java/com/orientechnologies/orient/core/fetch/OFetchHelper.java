@@ -72,10 +72,10 @@ public class OFetchHelper {
 
 				if (fieldValue == null
 						|| !(fieldValue instanceof ODocument)
-						&& (!(fieldValue instanceof Collection<?>) || ((Collection<?>) fieldValue).size() == 0 || !(((Collection<?>) fieldValue)
-								.iterator().next() instanceof ODocument))
-						&& (!(fieldValue instanceof Map<?, ?>) || ((Map<?, ?>) fieldValue).size() == 0 || !(((Map<?, ?>) fieldValue).values()
+						&& (!(fieldValue instanceof Collection<?>) || (((Collection<?>) fieldValue).size() > 0 && !(((Collection<?>) fieldValue)
 								.iterator().next() instanceof ODocument)))
+						&& (!(fieldValue instanceof Map<?, ?>) || (((Map<?, ?>) fieldValue).size() > 0 && !(((Map<?, ?>) fieldValue).values()
+								.iterator().next() instanceof ODocument))))
 					// NULL NEITHER LINK, NOR COLLECTION OF LINKS OR MAP OF LINKS
 					continue;
 
