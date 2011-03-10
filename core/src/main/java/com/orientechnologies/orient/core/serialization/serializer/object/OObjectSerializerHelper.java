@@ -137,7 +137,7 @@ public class OObjectSerializerHelper {
 	public static Class<?> getFieldType(ODocument iDocument, final OEntityManager iEntityManager) {
 		if (iDocument.getInternalStatus() == STATUS.NOT_LOADED)
 			iDocument = (ODocument) iDocument.load();
-		
+
 		if (iDocument.getClassName() == null) {
 			return null;
 		} else {
@@ -369,9 +369,9 @@ public class OObjectSerializerHelper {
 						if (ORID.class.isAssignableFrom(fieldType))
 							setFieldValue(iPojo, idFieldName, iIdentity);
 						else if (Number.class.isAssignableFrom(fieldType))
-							setFieldValue(iPojo, idFieldName, iIdentity.getClusterPosition());
+							setFieldValue(iPojo, idFieldName, iIdentity != null ? iIdentity.getClusterPosition() : null);
 						else if (fieldType.equals(String.class))
-							setFieldValue(iPojo, idFieldName, iIdentity.toString());
+							setFieldValue(iPojo, idFieldName, iIdentity != null ? iIdentity.toString() : null);
 						else if (fieldType.equals(Object.class))
 							setFieldValue(iPojo, idFieldName, iIdentity);
 						else

@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.db.object.OLazyObjectMap;
 import com.orientechnologies.orient.core.db.object.OLazyObjectSet;
 import com.orientechnologies.orient.core.db.object.OObjectNotDetachedException;
 import com.orientechnologies.orient.core.db.object.OObjectNotManagedException;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
@@ -243,7 +244,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 		return (DBTYPE) this;
 	}
 
-	public boolean callbackHooks(final TYPE iType, final Object iObject) {
+	public boolean callbackHooks(final TYPE iType, final OIdentifiable iObject) {
 		return underlying.callbackHooks(iType, iObject);
 	}
 

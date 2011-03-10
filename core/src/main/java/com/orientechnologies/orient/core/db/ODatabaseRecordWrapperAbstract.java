@@ -20,6 +20,7 @@ import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
@@ -189,7 +190,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 		return (DBTYPE) this;
 	}
 
-	public boolean callbackHooks(final TYPE iType, final Object iObject) {
+	public boolean callbackHooks(final TYPE iType, final OIdentifiable iObject) {
 		return underlying.callbackHooks(iType, iObject);
 	}
 

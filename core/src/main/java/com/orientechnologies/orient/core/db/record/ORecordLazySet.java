@@ -139,4 +139,9 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 	public byte getRecordType() {
 		return delegate.getRecordType();
 	}
+
+	@Override
+	public String toString() {
+		return delegate.toString();
+	}
 }

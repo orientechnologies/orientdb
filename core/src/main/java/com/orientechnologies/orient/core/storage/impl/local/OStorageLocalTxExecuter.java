@@ -24,6 +24,7 @@ import java.util.Set;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OStorageTxConfiguration;
 import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -154,7 +155,7 @@ public class OStorageLocalTxExecuter {
 			if (tmpEntries.size() > 0) {
 				for (OTransactionEntry txEntry : tmpEntries)
 					// COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
-					commitEntry(iRequesterId, iTx.getId(), txEntry);
+					commitEntry(iRequesterId, iTx, txEntry);
 
 				allEntries.addAll(tmpEntries);
 				tmpEntries.clear();
@@ -174,7 +175,7 @@ public class OStorageLocalTxExecuter {
 		// TODO
 	}
 
-	private void commitEntry(final int iRequesterId, final int iTxId, final OTransactionEntry txEntry) throws IOException {
+	private void commitEntry(final int iRequesterId, final OTransaction iTx, final OTransactionEntry txEntry) throws IOException {
 
 		if (txEntry.status != OTransactionEntry.DELETED && !txEntry.getRecord().isDirty())
 			return;
@@ -197,26 +198,44 @@ public class OStorageLocalTxExecuter {
 
 		case OTransactionEntry.CREATED:
 			// CHECK 2 TIMES TO ASSURE THAT IT'S A CREATE OR AN UPDATE BASED ON RECURSIVE TO-STREAM METHOD
-			final byte[] stream = txEntry.getRecord().toStream();
+			byte[] stream = txEntry.getRecord().toStream();
 
 			if (rid.isNew()) {
-				rid.clusterPosition = createRecord(iRequesterId, iTxId, cluster, stream, txEntry.getRecord().getRecordType());
+				if (iTx.getDatabase().callbackHooks(ORecordHook.TYPE.BEFORE_CREATE, txEntry.getRecord()))
+					// RECORD CHANGED: RE-STREAM IT
+					stream = txEntry.getRecord().toStream();
+
+				rid.clusterPosition = createRecord(iRequesterId, iTx.getId(), cluster, stream, txEntry.getRecord().getRecordType());
 				rid.clusterId = cluster.getId();
+
+				iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_CREATE, txEntry.getRecord());
 			} else {
 				txEntry.getRecord().setVersion(
-						updateRecord(iRequesterId, iTxId, cluster, rid.clusterPosition, stream, txEntry.getRecord().getVersion(), txEntry
+						updateRecord(iRequesterId, iTx.getId(), cluster, rid.clusterPosition, stream, txEntry.getRecord().getVersion(), txEntry
 								.getRecord().getRecordType()));
 			}
 			break;
 
 		case OTransactionEntry.UPDATED:
+			if (iTx.getDatabase().callbackHooks(ORecordHook.TYPE.BEFORE_UPDATE, txEntry.getRecord()))
+				// RECORD CHANGED: RE-STREAM IT
+				stream = txEntry.getRecord().toStream();
+
 			txEntry.getRecord().setVersion(
-					updateRecord(iRequesterId, iTxId, cluster, rid.clusterPosition, txEntry.getRecord().toStream(), txEntry.getRecord()
+					updateRecord(iRequesterId, iTx.getId(), cluster, rid.clusterPosition, txEntry.getRecord().toStream(), txEntry.getRecord()
 							.getVersion(), txEntry.getRecord().getRecordType()));
+
+			iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_UPDATE, txEntry.getRecord());
 			break;
 
 		case OTransactionEntry.DELETED:
-			deleteRecord(iRequesterId, iTxId, cluster, rid.clusterPosition, txEntry.getRecord().getVersion());
+			if (iTx.getDatabase().callbackHooks(ORecordHook.TYPE.BEFORE_DELETE, txEntry.getRecord()))
+				// RECORD CHANGED: RE-STREAM IT
+				stream = txEntry.getRecord().toStream();
+
+			deleteRecord(iRequesterId, iTx.getId(), cluster, rid.clusterPosition, txEntry.getRecord().getVersion());
+
+			iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_DELETE, txEntry.getRecord());
 			break;
 		}
 

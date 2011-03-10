@@ -21,6 +21,7 @@ import java.util.Set;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
@@ -276,5 +277,5 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 *          POJO for {@link ODatabaseObject} implementations.
 	 * @return True if the input record is changed, otherwise false
 	 */
-	public boolean callbackHooks(TYPE iType, Object iObject);
+	public boolean callbackHooks(TYPE iType, OIdentifiable iObject);
 }

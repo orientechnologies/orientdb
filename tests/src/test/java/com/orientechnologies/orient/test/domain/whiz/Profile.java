@@ -19,11 +19,14 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.annotation.OId;
+import com.orientechnologies.orient.core.annotation.OVersion;
 import com.orientechnologies.orient.test.domain.business.Address;
 
 public class Profile {
 	@OId
 	private String				id;
+	@OVersion
+	private Integer				version;
 	private String				nick;
 	private Set<Profile>	followings	= new HashSet<Profile>();
 	private Set<Profile>	followers		= new HashSet<Profile>();

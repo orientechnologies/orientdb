@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.dictionary.ODictionaryInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.hook.OHookThreadLocal;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
@@ -108,7 +109,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			registerHook(new OPropertyIndexManager());
 
 			if (getStorage() instanceof OStorageEmbedded) {
-			
+
 				if (!user.checkPassword(iUserPassword)) {
 					// WAIT A BIT TO AVOID BRUTE FORCE
 					Thread.sleep(200);
@@ -139,10 +140,10 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			dictionary = (ODictionaryInternal<ORecordInternal<?>>) getStorage().createDictionary(this);
 			dictionary.create();
 
-			//if (getStorage() instanceof OStorageEmbedded) {
-				registerHook(new OUserTrigger());
-				registerHook(new OPropertyIndexManager());
-			//}
+			// if (getStorage() instanceof OStorageEmbedded) {
+			registerHook(new OUserTrigger());
+			registerHook(new OPropertyIndexManager());
+			// }
 
 		} catch (Exception e) {
 			throw new ODatabaseException("Can't create database", e);
@@ -606,13 +607,20 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	 *          Record received in the callback
 	 * @return True if the input record is changed, otherwise false
 	 */
-	public boolean callbackHooks(final TYPE iType, final Object iRecord) {
-		boolean recordChanged = false;
-		for (ORecordHook hook : hooks)
-			if (hook.onTrigger(iType, (ORecord<?>) iRecord))
-				recordChanged = true;
+	public boolean callbackHooks(final TYPE iType, final OIdentifiable iRecord) {
+		if (!OHookThreadLocal.INSTANCE.push(iRecord))
+			return false;
 
-		return recordChanged;
+		try {
+			boolean recordChanged = false;
+			for (ORecordHook hook : hooks)
+				if (hook.onTrigger(iType, (ORecord<?>) iRecord))
+					recordChanged = true;
+			return recordChanged;
+
+		} finally {
+			OHookThreadLocal.INSTANCE.pop(iRecord);
+		}
 	}
 
 	protected ORecordSerializer resolveFormat(final Object iObject) {

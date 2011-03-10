@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionEntry;
+import com.orientechnologies.orient.server.tx.OTransactionRecordProxy;
 
 /**
  * Record hook implementation. Catches all the relevant events and propagates to the cluster's slave nodes.
@@ -49,6 +50,9 @@ public class ODistributedServerRecordHook implements ORecordHook, ODatabaseLifec
 		// if (!manager.isDistributedConfiguration())
 		// return;
 
+		if (iRecord instanceof OTransactionRecordProxy)
+			return false;
+
 		try {
 			switch (iType) {
 			case BEFORE_CREATE:
@@ -66,18 +70,15 @@ public class ODistributedServerRecordHook implements ORecordHook, ODatabaseLifec
 				break;
 
 			case AFTER_CREATE:
-				manager.distributeRequest(new OTransactionEntry((ORecordInternal<?>) iRecord,
-						OTransactionEntry.CREATED, null));
+				manager.distributeRequest(new OTransactionEntry((ORecordInternal<?>) iRecord, OTransactionEntry.CREATED, null));
 				break;
 
 			case AFTER_UPDATE:
-				manager.distributeRequest(new OTransactionEntry((ORecordInternal<?>) iRecord,
-						OTransactionEntry.UPDATED, null));
+				manager.distributeRequest(new OTransactionEntry((ORecordInternal<?>) iRecord, OTransactionEntry.UPDATED, null));
 				break;
 
 			case AFTER_DELETE:
-				manager.distributeRequest(new OTransactionEntry((ORecordInternal<?>) iRecord,
-						OTransactionEntry.DELETED, null));
+				manager.distributeRequest(new OTransactionEntry((ORecordInternal<?>) iRecord, OTransactionEntry.DELETED, null));
 				break;
 			}
 		} catch (IOException e) {

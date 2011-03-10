@@ -29,6 +29,7 @@
 	<test name="Hook">
 		<classes>
 			<class name="com.orientechnologies.orient.test.database.auto.HookTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.HookTxTest" />
 		</classes>
 	</test>
 	<test name="Population">

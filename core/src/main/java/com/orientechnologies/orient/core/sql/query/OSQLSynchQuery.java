@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 
 /**
@@ -53,9 +54,9 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
 	}
 
 	public boolean result(final Object iRecord) {
-		database.callbackHooks(TYPE.BEFORE_READ, iRecord);
+		database.callbackHooks(TYPE.BEFORE_READ, (OIdentifiable) iRecord);
 		result.add((T) iRecord);
-		database.callbackHooks(TYPE.AFTER_READ, iRecord);
+		database.callbackHooks(TYPE.AFTER_READ, (OIdentifiable) iRecord);
 
 		return true;
 	}

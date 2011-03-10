@@ -974,7 +974,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		cloned._source = _source;
 		cloned._database = _database;
 		cloned._recordId = _recordId.copy();
-		cloned._status = _status;
+		cloned._status = STATUS.NOT_LOADED;
 		return cloned;
 	}
 

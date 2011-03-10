@@ -444,9 +444,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 								iResultSet.add(database.load((ORID) o));
 							else
 								iResultSet.add((ORecord<?>) o);
-
 						}
-
 				}
 			}
 		}
