@@ -31,10 +31,16 @@ public class OStorageRecordCache extends OAbstractRecordCache {
 
 	@SuppressWarnings("unused")
 	final private OStorage	storage;
+	private STRATEGY				strategy;
+
+	public enum STRATEGY {
+		POP_RECORD, COPY_RECORD
+	}
 
 	public OStorageRecordCache(final OStorage iStorage) {
 		super("storage." + iStorage.getName(), OGlobalConfiguration.STORAGE_CACHE_SIZE.getValueAsInteger());
 		storage = iStorage;
+		setStrategy(OGlobalConfiguration.STORAGE_CACHE_STRATEGY.getValueAsInteger());
 	}
 
 	public void pushRecord(final ORecordInternal<?> iRecord) {
@@ -54,22 +60,50 @@ public class OStorageRecordCache extends OAbstractRecordCache {
 	}
 
 	/**
-	 * Remove, if found, a record from the cache. used by database's cache.
+	 * Retrieve the record if any following the supported strategies: 0 = If found remove it (pop): the client (database instances)
+	 * will push it back when finished or on close. 1 = Return the instance but keep a copy in 2-level cache; this could help
+	 * highly-concurrent environment.
 	 * 
+	 * @author Luca Garulli
+	 * @author Sylvain Spinelli
 	 * @param iRID
 	 * @return
 	 */
-	protected ORecordInternal<?> popRecord(final ORID iRID) {
+	protected ORecordInternal<?> retrieveRecord(final ORID iRID) {
 		if (maxSize == 0)
 			// PRECONDITIONS
 			return null;
 
 		acquireExclusiveLock();
 		try {
-			return entries.remove(iRID);
+			if (strategy == STRATEGY.POP_RECORD)
+				// POP THE RECORD
+				return entries.remove(iRID);
+			else {
+				// COPY THE RECORD
+				final ORecordInternal<?> record = entries.get(iRID);
+				if (record == null)
+					return null;
+
+				// PUT IT AGAIN FOR REFRESHING ORDER ENTRIES (LRU CACHE)
+				entries.put(iRID, (ORecordInternal<?>) record.copy());
+				return record;
+			}
 		} finally {
 			releaseExclusiveLock();
 		}
+	}
+
+	public STRATEGY getStrategy() {
+		return strategy;
+	}
+
+	public void setStrategy(final STRATEGY iStrategy) {
+		strategy = iStrategy;
+	}
+
+	public void setStrategy(final int iStrategy) {
+		strategy = STRATEGY.values()[iStrategy];
 	}
 
 	@Override

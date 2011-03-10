@@ -182,83 +182,21 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 * instance has the same identity and values but all the internal structure are totally independent by the source.
 	 */
 	public ODocument copy() {
-		ODocument cloned = new ODocument();
-		cloned._source = _source;
-		cloned._database = _database;
-		cloned._recordId = _recordId.copy();
-		cloned._version = _version;
-		cloned._dirty = _dirty;
-		cloned._pinned = _pinned;
+		final ODocument cloned = (ODocument) copyTo(new ODocument());
 		cloned._ordered = _ordered;
 		cloned._clazz = _clazz;
-		cloned._status = _status;
-		cloned._recordFormat = _recordFormat;
+		cloned._trackingChanges = _trackingChanges;
 
 		if (_fieldValues != null) {
 			cloned._fieldValues = new LinkedHashMap<String, Object>();
-			Object fieldValue;
-			for (Entry<String, Object> entry : _fieldValues.entrySet()) {
-				fieldValue = entry.getValue();
-
-				if (fieldValue != null)
-					// LISTS
-					if (fieldValue instanceof ORecordLazyList) {
-						final ORecordLazyList newList = new ORecordLazyList(cloned);
-						newList.addAll((ORecordLazyList) fieldValue);
-						cloned._fieldValues.put(entry.getKey(), newList);
-
-					} else if (fieldValue instanceof ORecordTrackedList) {
-						final ORecordTrackedList newList = new ORecordTrackedList(cloned);
-						newList.addAll((ORecordTrackedList) fieldValue);
-						cloned._fieldValues.put(entry.getKey(), newList);
-
-					} else if (fieldValue instanceof OTrackedList<?>) {
-						final OTrackedList<Object> newList = new OTrackedList<Object>(cloned);
-						newList.addAll((OTrackedList<Object>) fieldValue);
-						cloned._fieldValues.put(entry.getKey(), newList);
-
-					} else if (fieldValue instanceof List<?>) {
-						cloned._fieldValues.put(entry.getKey(), new ArrayList<Object>((List<Object>) fieldValue));
-
-						// SETS
-					} else if (fieldValue instanceof ORecordLazySet) {
-						final ORecordLazySet newList = new ORecordLazySet(cloned);
-						newList.addAll((ORecordLazySet) fieldValue);
-						cloned._fieldValues.put(entry.getKey(), newList);
-
-					} else if (fieldValue instanceof ORecordTrackedSet) {
-						final ORecordTrackedSet newList = new ORecordTrackedSet(cloned);
-						newList.addAll((ORecordTrackedSet) fieldValue);
-						cloned._fieldValues.put(entry.getKey(), newList);
-
-					} else if (fieldValue instanceof OTrackedSet<?>) {
-						final OTrackedSet<Object> newList = new OTrackedSet<Object>(cloned);
-						newList.addAll((OTrackedSet<Object>) fieldValue);
-						cloned._fieldValues.put(entry.getKey(), newList);
-
-					} else if (fieldValue instanceof Set<?>) {
-						cloned._fieldValues.put(entry.getKey(), new HashSet<Object>((Set<Object>) fieldValue));
-
-						// MAPS
-					} else if (fieldValue instanceof ORecordLazyMap) {
-						final ORecordLazyMap newMap = new ORecordLazyMap(cloned, ((ORecordLazyMap) fieldValue).getRecordType());
-						newMap.putAll((ORecordLazyMap) fieldValue);
-						cloned._fieldValues.put(entry.getKey(), newMap);
-
-					} else if (fieldValue instanceof ORecordTrackedMap) {
-						final ORecordTrackedMap newMap = new ORecordTrackedMap(cloned);
-						newMap.putAll((ORecordTrackedMap) fieldValue);
-						cloned._fieldValues.put(entry.getKey(), newMap);
-
-					} else if (fieldValue instanceof Map<?, ?>) {
-						cloned._fieldValues.put(entry.getKey(), new LinkedHashMap<String, Object>((Map<String, Object>) fieldValue));
-					} else
-						cloned._fieldValues.put(entry.getKey(), fieldValue);
-			}
+			for (Entry<String, Object> entry : _fieldValues.entrySet())
+				copyFieldValue(cloned, entry);
 		}
 
 		if (_fieldTypes != null)
-			cloned._fieldTypes = new LinkedHashMap<String, OType>(_fieldTypes);
+			cloned._fieldTypes = new HashMap<String, OType>(_fieldTypes);
+
+		cloned._fieldOriginalValues = null;
 
 		return cloned;
 	}
@@ -1038,5 +976,65 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		cloned._recordId = _recordId.copy();
 		cloned._status = _status;
 		return cloned;
+	}
+
+	private void copyFieldValue(ODocument cloned, Entry<String, Object> entry) {
+		Object fieldValue;
+		fieldValue = entry.getValue();
+
+		if (fieldValue != null)
+			// LISTS
+			if (fieldValue instanceof ORecordLazyList) {
+				final ORecordLazyList newList = new ORecordLazyList(cloned);
+				newList.addAll((ORecordLazyList) fieldValue);
+				cloned._fieldValues.put(entry.getKey(), newList);
+
+			} else if (fieldValue instanceof ORecordTrackedList) {
+				final ORecordTrackedList newList = new ORecordTrackedList(cloned);
+				newList.addAll((ORecordTrackedList) fieldValue);
+				cloned._fieldValues.put(entry.getKey(), newList);
+
+			} else if (fieldValue instanceof OTrackedList<?>) {
+				final OTrackedList<Object> newList = new OTrackedList<Object>(cloned);
+				newList.addAll((OTrackedList<Object>) fieldValue);
+				cloned._fieldValues.put(entry.getKey(), newList);
+
+			} else if (fieldValue instanceof List<?>) {
+				cloned._fieldValues.put(entry.getKey(), new ArrayList<Object>((List<Object>) fieldValue));
+
+				// SETS
+			} else if (fieldValue instanceof ORecordLazySet) {
+				final ORecordLazySet newList = new ORecordLazySet(cloned);
+				newList.addAll((ORecordLazySet) fieldValue);
+				cloned._fieldValues.put(entry.getKey(), newList);
+
+			} else if (fieldValue instanceof ORecordTrackedSet) {
+				final ORecordTrackedSet newList = new ORecordTrackedSet(cloned);
+				newList.addAll((ORecordTrackedSet) fieldValue);
+				cloned._fieldValues.put(entry.getKey(), newList);
+
+			} else if (fieldValue instanceof OTrackedSet<?>) {
+				final OTrackedSet<Object> newList = new OTrackedSet<Object>(cloned);
+				newList.addAll((OTrackedSet<Object>) fieldValue);
+				cloned._fieldValues.put(entry.getKey(), newList);
+
+			} else if (fieldValue instanceof Set<?>) {
+				cloned._fieldValues.put(entry.getKey(), new HashSet<Object>((Set<Object>) fieldValue));
+
+				// MAPS
+			} else if (fieldValue instanceof ORecordLazyMap) {
+				final ORecordLazyMap newMap = new ORecordLazyMap(cloned, ((ORecordLazyMap) fieldValue).getRecordType());
+				newMap.putAll((ORecordLazyMap) fieldValue);
+				cloned._fieldValues.put(entry.getKey(), newMap);
+
+			} else if (fieldValue instanceof ORecordTrackedMap) {
+				final ORecordTrackedMap newMap = new ORecordTrackedMap(cloned);
+				newMap.putAll((ORecordTrackedMap) fieldValue);
+				cloned._fieldValues.put(entry.getKey(), newMap);
+
+			} else if (fieldValue instanceof Map<?, ?>) {
+				cloned._fieldValues.put(entry.getKey(), new LinkedHashMap<String, Object>((Map<String, Object>) fieldValue));
+			} else
+				cloned._fieldValues.put(entry.getKey(), fieldValue);
 	}
 }

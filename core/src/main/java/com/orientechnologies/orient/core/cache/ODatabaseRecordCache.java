@@ -91,7 +91,7 @@ public class ODatabaseRecordCache extends OAbstractRecordCache {
 
 		if (record == null) {
 			// SEARCH INTO THE STORAGE'S 2-LEVEL CACHE
-			record = level2cache.popRecord(iRID);
+			record = level2cache.retrieveRecord(iRID);
 
 			if (record != null) {
 				// FOUND

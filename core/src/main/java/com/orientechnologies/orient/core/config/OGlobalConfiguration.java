@@ -24,6 +24,7 @@ import java.util.logging.FileHandler;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.OMemoryWatchDog;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.fs.OMMapManager;
 
 /**
@@ -49,6 +50,17 @@ public enum OGlobalConfiguration {
 			Boolean.class, Boolean.TRUE),
 
 	STORAGE_CACHE_SIZE("storage.cache.size", "Size of the cache that keep the record in memory", Integer.class, -1),
+
+	STORAGE_CACHE_STRATEGY("storage.cache.strategy",
+			"Strategy to use when a database asks for a record: 0 = pop the record, 1 = copy the record", Integer.class, 0,
+			new OConfigurationChangeCallback() {
+				public void change(final Object iCurrentValue, final Object iNewValue) {
+					// UPDATE ALL THE OPENED STORAGES SETTING THE NEW STRATEGY
+					for (OStorage s : com.orientechnologies.orient.core.Orient.instance().getStorages()) {
+						s.getCache().setStrategy((Integer) iNewValue);
+					}
+				}
+			}),
 
 	// DATABASE
 	DB_USE_CACHE("db.cache.enabled", "Uses the storage cache", Boolean.class, true),

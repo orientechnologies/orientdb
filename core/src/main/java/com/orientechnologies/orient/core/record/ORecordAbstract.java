@@ -336,15 +336,15 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	}
 
 	public ORecordAbstract<T> copyTo(final ORecordAbstract<T> cloned) {
+		cloned._source = _source;
 		cloned._database = _database;
 		cloned._recordId = _recordId.copy();
 		cloned._version = _version;
-		cloned._source = null;
-		cloned._recordFormat = _recordFormat;
 		cloned._pinned = _pinned;
-		cloned._dirty = _dirty;
 		cloned._status = _status;
-		cloned._listener = _listener;
+		cloned._recordFormat = _recordFormat;
+		cloned._listener = null;
+		cloned._dirty = false;
 		return cloned;
 	}
 
