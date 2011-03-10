@@ -52,7 +52,7 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 	}
 
 	public <RET> RET setDirty() {
-		return delegate.setDirty();
+		return (RET) delegate.setDirty();
 	}
 
 	public boolean setDatabase(final ODatabaseRecord iDatabase) {
