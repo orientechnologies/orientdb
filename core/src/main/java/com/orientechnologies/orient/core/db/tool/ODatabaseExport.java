@@ -25,11 +25,12 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -267,8 +268,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
 				writer.beginObject(2, true, i.getName());
 
-				Entry<Object, ORecordLazySet> entry;
-				for (Iterator<Entry<Object, ORecordLazySet>> iterator = i.iterator(); iterator.hasNext();) {
+				Entry<Object, Set<OIdentifiable>> entry;
+				for (Iterator<Entry<Object, Set<OIdentifiable>>> iterator = i.iterator(); iterator.hasNext();) {
 					entry = iterator.next();
 					writer.writeAttribute(3, true, "key", entry.getKey());
 					writer.writeAttribute(0, false, "value", OJSONWriter.writeValue(entry.getValue()));
