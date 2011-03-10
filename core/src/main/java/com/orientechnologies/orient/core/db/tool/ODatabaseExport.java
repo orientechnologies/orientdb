@@ -25,17 +25,16 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
@@ -268,8 +267,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
 				writer.beginObject(2, true, i.getName());
 
-				Entry<Object, Set<ORecord<?>>> entry;
-				for (Iterator<Entry<Object, Set<ORecord<?>>>> iterator = i.iterator(); iterator.hasNext();) {
+				Entry<Object, ORecordLazySet> entry;
+				for (Iterator<Entry<Object, ORecordLazySet>> iterator = i.iterator(); iterator.hasNext();) {
 					entry = iterator.next();
 					writer.writeAttribute(3, true, "key", entry.getKey());
 					writer.writeAttribute(0, false, "value", OJSONWriter.writeValue(entry.getValue()));

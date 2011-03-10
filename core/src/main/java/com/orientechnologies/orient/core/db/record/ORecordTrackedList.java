@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import java.util.Iterator;
-
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 
@@ -27,15 +25,10 @@ import com.orientechnologies.orient.core.record.ORecord;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-@SuppressWarnings({ "serial"})
+@SuppressWarnings({ "serial" })
 public class ORecordTrackedList extends OTrackedList<OIdentifiable> {
 	public ORecordTrackedList(final ORecord<?> iSourceRecord) {
 		super(iSourceRecord);
-	}
-
-	@Override
-	public Iterator<OIdentifiable> iterator() {
-		return new ORecordTrackedIterator(sourceRecord, super.iterator());
 	}
 
 	/**

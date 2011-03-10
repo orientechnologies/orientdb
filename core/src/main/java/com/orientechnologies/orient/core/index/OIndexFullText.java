@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -95,7 +96,7 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 		if (iKey == null)
 			return this;
 
-		Set<ORecord<?>> refs;
+		ORecordLazySet refs;
 		final StringBuilder buffer = new StringBuilder();
 		char c;
 		boolean ignore;
@@ -133,7 +134,7 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 				refs = map.get(word);
 				if (refs == null)
 					// WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
-					refs = new HashSet<ORecord<?>>();
+					refs = new ORecordLazySet(configuration.getDatabase(), ODocument.RECORD_TYPE);
 
 				// ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
 				refs.add(iSingleValue);
@@ -152,7 +153,7 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 		acquireExclusiveLock();
 
 		try {
-			final Set<ORecord<?>> recs = get(iKey);
+			final ORecordLazySet recs = get(iKey);
 			if (recs != null && !recs.isEmpty()) {
 				if (recs.remove(value))
 					map.put(iKey, recs);

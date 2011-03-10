@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -283,32 +282,25 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		case LINKSET: {
 			buffer.append(OStringSerializerHelper.COLLECTION_BEGIN);
 
-			Object link;
 			int items = 0;
-			List<OIdentifiable> coll = new ArrayList<OIdentifiable>((Collection<? extends OIdentifiable>) iValue);
-			boolean invalidSet = false;
+
+			ORecordLazySet coll;
+			if (!(iValue instanceof ORecordLazySet)) {
+				// FIRST TIME: CONVERT THE ENTIRE COLLECTION
+				coll = new ORecordLazySet(iRecord);
+				coll.addAll((Collection<? extends OIdentifiable>) iValue);
+				((Collection<? extends OIdentifiable>) iValue).clear();
+
+				iRecord.field(iName, coll);
+			} else
+				coll = (ORecordLazySet) iValue;
 
 			// LINKED SET
-			for (Object item : coll) {
+			for (Iterator<OIdentifiable> it = coll.rawIterator(); it.hasNext();) {
 				if (items++ > 0)
 					buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
-				link = linkToStream(buffer, iRecord, item);
-
-				if (link != null && !invalidSet)
-					// IDENTITY IS CHANGED, RE-SET INTO THE COLLECTION TO RECOMPUTE THE HASH
-					invalidSet = true;
-			}
-
-			if (invalidSet) {
-				final ORecordLazySet newSet = new ORecordLazySet(iRecord);
-
-				// REPLACE ALL CHANGED ITEMS
-				for (OIdentifiable item : coll) {
-					newSet.add(item);
-				}
-				coll.clear();
-				iRecord.field(iName, newSet);
+				linkToStream(buffer, iRecord, it.next());
 			}
 			buffer.append(OStringSerializerHelper.COLLECTION_END);
 			break;

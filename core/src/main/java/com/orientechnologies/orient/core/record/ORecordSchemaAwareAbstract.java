@@ -59,7 +59,11 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	@Override
 	public ORecordAbstract<T> save(String iClusterName) {
 		OSerializationThreadLocal.INSTANCE.get().clear();
-		return super.save(iClusterName);
+		try {
+			return super.save(iClusterName);
+		} finally {
+			OSerializationThreadLocal.INSTANCE.get().clear();
+		}
 	}
 
 	/**

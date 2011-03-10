@@ -22,6 +22,7 @@ import java.util.Set;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Lazy implementation of Set. It's bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by
@@ -31,23 +32,8 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  * 
  */
 public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue, ORecordElement {
-	protected ORecordLazyList	delegate;
-
-	public void onBeforeIdentityChanged(ORID iRID) {
-		delegate.onBeforeIdentityChanged(iRID);
-	}
-
-	public void onAfterIdentityChanged(ORecord<?> iRecord) {
-		delegate.onAfterIdentityChanged(iRecord);
-	}
-
-	public <RET> RET setDirty() {
-		return delegate.setDirty();
-	}
-
-	public boolean setDatabase(ODatabaseRecord iDatabase) {
-		return delegate.setDatabase(iDatabase);
-	}
+	public static final ORecordLazySet	EMPTY_SET	= new ORecordLazySet(null, ODocument.RECORD_TYPE);
+	protected ORecordLazyList						delegate;
 
 	public ORecordLazySet(final ODatabaseRecord iDatabase, final byte iRecordType) {
 		delegate = new ORecordLazyList(iDatabase, iRecordType);
@@ -57,8 +43,28 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 		delegate = new ORecordLazyList(iSourceRecord);
 	}
 
+	public void onBeforeIdentityChanged(final ORID iRID) {
+		delegate.onBeforeIdentityChanged(iRID);
+	}
+
+	public void onAfterIdentityChanged(final ORecord<?> iRecord) {
+		delegate.onAfterIdentityChanged(iRecord);
+	}
+
+	public <RET> RET setDirty() {
+		return delegate.setDirty();
+	}
+
+	public boolean setDatabase(final ODatabaseRecord iDatabase) {
+		return delegate.setDatabase(iDatabase);
+	}
+
 	public Iterator<OIdentifiable> iterator() {
 		return delegate.iterator();
+	}
+
+	public Iterator<OIdentifiable> rawIterator() {
+		return delegate.rawIterator();
 	}
 
 	public void convertLinks2Records() {
@@ -97,11 +103,15 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 		return toArray(a);
 	}
 
-	public boolean add(OIdentifiable e) {
-		return delegate.add(e);
+	public boolean add(final OIdentifiable e) {
+		if (!contains(e)) {
+			delegate.add(e);
+			return true;
+		}
+		return false;
 	}
 
-	public boolean remove(Object o) {
+	public boolean remove(final Object o) {
 		return delegate.remove(o);
 	}
 

@@ -23,7 +23,6 @@ import java.util.List;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
@@ -109,19 +108,13 @@ public class ORecordId implements ORID {
 		if (obj == null)
 			return false;
 
-		final ORecordId other;
-		if (obj instanceof ORecordId)
-			other = (ORecordId) obj;
-		else if (obj instanceof ORecord<?>)
-			other = (ORecordId) ((ORecord<?>) obj).getIdentity();
-		else
-			return false;
+		if (obj instanceof OIdentifiable) {
+			final ORecordId other = (ORecordId) ((OIdentifiable) obj).getIdentity();
+			if (clusterId == other.clusterId && clusterPosition == other.clusterPosition)
+				return true;
+		}
 
-		if (clusterId != other.clusterId)
-			return false;
-		if (clusterPosition != other.clusterPosition)
-			return false;
-		return true;
+		return false;
 	}
 
 	public int compareTo(final OIdentifiable iOther) {

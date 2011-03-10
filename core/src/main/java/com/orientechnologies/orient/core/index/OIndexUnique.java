@@ -15,10 +15,8 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -37,10 +35,10 @@ public class OIndexUnique extends OIndexMVRBTreeAbstract {
 		acquireExclusiveLock();
 
 		try {
-			Set<ORecord<?>> values = map.get(iKey);
+			ORecordLazySet values = map.get(iKey);
 
 			if (values == null)
-				values = new HashSet<ORecord<?>>();
+				values = new ORecordLazySet(configuration.getDatabase(), ODocument.RECORD_TYPE);
 			else if (values.size() == 1) {
 				// CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
 				if (!values.contains(iSingleValue))
@@ -54,7 +52,7 @@ public class OIndexUnique extends OIndexMVRBTreeAbstract {
 
 			map.put(iKey, values);
 			return this;
-			
+
 		} finally {
 			releaseExclusiveLock();
 		}
@@ -67,7 +65,7 @@ public class OIndexUnique extends OIndexMVRBTreeAbstract {
 	@Override
 	public void checkEntry(final ODocument iRecord, final Object iKey) {
 		// CHECK IF ALREADY EXIST
-		Set<ORecord<?>> indexedRIDs = get(iKey);
+		ORecordLazySet indexedRIDs = get(iKey);
 		if (indexedRIDs != null && indexedRIDs.size() > 0) {
 
 			if (!indexedRIDs.contains(iRecord))

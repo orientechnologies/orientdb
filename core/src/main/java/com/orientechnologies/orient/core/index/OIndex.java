@@ -17,10 +17,10 @@ package com.orientechnologies.orient.core.index;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public interface OIndex extends Iterable<Entry<Object, Set<ORecord<?>>>> {
+public interface OIndex extends Iterable<Entry<Object, ORecordLazySet>> {
 
 	public static final String	CONFIG_TYPE				= "type";
 	public static final String	CONFIG_NAME				= "name";
@@ -39,7 +39,7 @@ public interface OIndex extends Iterable<Entry<Object, Set<ORecord<?>>>> {
 
 	public String getName();
 
-	public Set<ORecord<?>> get(Object iKey);
+	public ORecordLazySet get(Object iKey);
 
 	public OIndex put(final Object iKey, final ORecord<?> iValue);
 
@@ -83,7 +83,7 @@ public interface OIndex extends Iterable<Entry<Object, Set<ORecord<?>>>> {
 
 	public OIndex lazySave();
 
-	public Iterator<Entry<Object, Set<ORecord<?>>>> iterator();
+	public Iterator<Entry<Object, ORecordLazySet>> iterator();
 
 	public ORID getIdentity();
 
@@ -103,7 +103,7 @@ public interface OIndex extends Iterable<Entry<Object, Set<ORecord<?>>>> {
 
 	public boolean isAutomatic();
 
-	public Set<ORecord<?>> getBetween(Object iRangeFrom, Object iRangeTo);
+	public ORecordLazySet getBetween(Object iRangeFrom, Object iRangeTo);
 
 	public long size();
 }

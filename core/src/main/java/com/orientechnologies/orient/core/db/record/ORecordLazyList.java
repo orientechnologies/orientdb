@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-@SuppressWarnings({ "serial", "unchecked" })
+@SuppressWarnings({ "serial" })
 public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMultiValue {
 	final private byte																recordType;
 	private ODatabaseRecord														database;
@@ -54,6 +54,34 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 		super(iSourceRecord);
 		this.database = iSourceRecord.getDatabase();
 		this.recordType = iSourceRecord.getRecordType();
+	}
+
+	/**
+	 * Returns a iterator that just returns the elements without convertion.
+	 * 
+	 * @return
+	 */
+	public Iterator<OIdentifiable> rawIterator() {
+		final Iterator<OIdentifiable> subIterator = new Iterator<OIdentifiable>() {
+			private int	pos	= 0;
+
+			public boolean hasNext() {
+				return pos < size();
+			}
+
+			public OIdentifiable next() {
+				return ORecordLazyList.this.rawGet(pos++);
+			}
+
+			public void remove() {
+				ORecordLazyList.this.remove(pos);
+			}
+		};
+		return new OLazyRecordIterator(sourceRecord, database, recordType, subIterator, false);
+	}
+
+	public OIdentifiable rawGet(final int index) {
+		return super.get(index);
 	}
 
 	@Override

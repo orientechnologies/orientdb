@@ -15,11 +15,10 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.Collection;
 import java.util.List;
 
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
@@ -34,7 +33,7 @@ public abstract class OQueryTargetOperator extends OQueryOperator {
 		super(iKeyword, iPrecedence, iLogical);
 	}
 
-	public abstract Collection<ORecord<?>> filterRecords(final ODatabaseComplex<?> iRecord, final List<String> iTargetClasses,
+	public abstract ORecordLazySet filterRecords(final ODatabaseComplex<?> iRecord, final List<String> iTargetClasses,
 			final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight);
 
 	/**

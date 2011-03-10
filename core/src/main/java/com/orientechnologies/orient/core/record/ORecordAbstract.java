@@ -304,27 +304,11 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 			return true;
 		if (obj == null)
 			return false;
-		if (getClass() == obj.getClass()) {
-			// RECORD <-> RECORD
-			final ORecordAbstract<?> other = (ORecordAbstract<?>) obj;
-			if (_recordId == null) {
-				if (other._recordId != null)
-					return false;
-			} else if (!_recordId.equals(other._recordId))
-				return _recordId.isValid();
-		} else if (obj instanceof ORID) {
-			// DOCUMENT <-> ORID
-			final ORID other = (ORID) obj;
 
-			if (_recordId == null) {
-				if (other != null)
-					return false;
-			} else if (!_recordId.equals(other))
-				return _recordId.isValid();
-		} else
-			return false;
+		if (obj instanceof OIdentifiable)
+			return _recordId.equals(((OIdentifiable) obj).getIdentity());
 
-		return true;
+		return false;
 	}
 
 	public int compare(final OIdentifiable iFirst, final OIdentifiable iSecond) {
