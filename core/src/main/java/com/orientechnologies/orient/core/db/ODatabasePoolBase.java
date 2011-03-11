@@ -15,6 +15,10 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import java.util.Map;
+
+import com.orientechnologies.common.concur.resource.OResourcePool;
+
 /**
  * Database pool base class.
  * 
@@ -41,6 +45,14 @@ public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
 
 	public void close() {
 		dbPool.close();
+	}
+
+	public Map<String, OResourcePool<String, DB>> getPools() {
+		return dbPool.getPools();
+	}
+
+	public void remove(final String iName, final String iUser) {
+		dbPool.remove(iName, iUser);
 	}
 
 	@Override
