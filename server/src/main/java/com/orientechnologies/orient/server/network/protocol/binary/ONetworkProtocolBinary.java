@@ -466,20 +466,17 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			final int clusterId = channel.readShort();
 			final long clusterPosition = channel.readLong();
 
-			final byte[] buffer = channel.readBytes();
-			final int version = channel.readInt();
-			final byte recordType = channel.readByte();
+//			final byte[] buffer = channel.readBytes();
+//			final int version = channel.readInt();
+//			final byte recordType = channel.readByte();
+//
+//			ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
+//			record.fill(connection.database, clusterId, clusterPosition, version, buffer);
+//
+//			connection.database.save(record);
 
-			ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
-			record.fill(connection.database, clusterId, clusterPosition, version, buffer);
-
-			connection.database.save(record);
-
-			// final int clusterId = channel.readShort();
-			// final long clusterPosition = channel.readLong();
-			//
-			// long newVersion = underlyingDatabase.save(clusterId, clusterPosition, channel.readBytes(), channel.readInt(),
-			// channel.readByte());
+			 long newVersion = underlyingDatabase.save(clusterId, clusterPosition, channel.readBytes(), channel.readInt(),
+			 channel.readByte());
 
 			// TODO: Handle it by using triggers
 			if (connection.database.getMetadata().getSchema().getDocument().getIdentity().getClusterId() == clusterId
@@ -491,8 +488,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			sendOk(lastClientTxId);
 
-			channel.writeInt(record.getVersion());
-			// channel.writeInt((int) newVersion);
+			//channel.writeInt(record.getVersion());
+			 channel.writeInt((int) newVersion);
 			break;
 
 		case OChannelBinaryProtocol.REQUEST_RECORD_DELETE:
