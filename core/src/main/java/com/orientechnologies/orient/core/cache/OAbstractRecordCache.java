@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.core.cache;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -25,7 +22,6 @@ import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.orient.core.OMemoryWatchDog.Listener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 
 /**
  * Cache of documents.
@@ -33,13 +29,12 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  * @author Luca Garulli
  * 
  */
-@SuppressWarnings("serial")
 public abstract class OAbstractRecordCache extends OSharedResource {
-	protected int																			maxSize;
-	protected LinkedHashMap<ORID, ORecordInternal<?>>	entries;
+	protected int						maxSize;
+	protected ORecordCache	entries;
 
-	protected Listener																watchDogListener;
-	protected String																	profilerPrefix;
+	protected Listener			watchDogListener;
+	protected String				profilerPrefix;
 
 	/**
 	 * Create the cache of iMaxSize size.
@@ -52,12 +47,7 @@ public abstract class OAbstractRecordCache extends OSharedResource {
 		maxSize = iMaxSize;
 
 		final int initialSize = maxSize > -1 ? maxSize + 1 : 1000;
-		entries = new LinkedHashMap<ORID, ORecordInternal<?>>(initialSize, 0.75f, true) {
-			@Override
-			protected boolean removeEldestEntry(Map.Entry<ORID, ORecordInternal<?>> iEldest) {
-				return maxSize > -1 && size() > maxSize;
-			}
-		};
+		entries = new ORecordCache(maxSize, initialSize, 0.75f);
 	}
 
 	public boolean existsRecord(final ORID iRID) {
@@ -168,27 +158,9 @@ public abstract class OAbstractRecordCache extends OSharedResource {
 
 						final int threshold = (int) (oldSize * 0.5f);
 
-						if (entries.size() < threshold)
-							return;
+						entries.removeEldestItems(threshold);
 
-						// CLEAR THE CACHE: USE A TEMP ARRAY TO AVOID ITERATOR EXCEPTIONS
-						final ORID[] ridToRemove = new ORID[entries.size() - threshold];
-
-						int entryNum = 0;
-						int i = 0;
-						for (ORID rid : entries.keySet()) {
-							if (entryNum++ >= threshold)
-								// ADD ONLY AFTER THRESHOLD. THIS IS TO GET THE LESS USED
-								ridToRemove[i++] = rid;
-
-							if (i >= ridToRemove.length)
-								break;
-						}
-
-						for (ORID rid : ridToRemove)
-							entries.remove(rid);
-
-						OLogManager.instance().debug(this, "Low memory: auto reduce the record cache size from %d to %d", oldSize, threshold);
+						OLogManager.instance().warn(this, "Low memory: auto reduce the record cache size from %d to %d", oldSize, threshold);
 					} catch (Exception e) {
 						OLogManager.instance().error(this, "Error while freeing resources", e);
 					} finally {

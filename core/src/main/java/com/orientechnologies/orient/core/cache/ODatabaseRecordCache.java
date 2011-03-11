@@ -118,6 +118,10 @@ public class ODatabaseRecordCache extends OAbstractRecordCache {
 	}
 
 	public void updateRecord(final ORecordInternal<?> iRecord) {
+		if (maxSize == 0)
+			// PRECONDITIONS
+			return;
+
 		acquireExclusiveLock();
 		try {
 			entries.put(iRecord.getIdentity(), iRecord);

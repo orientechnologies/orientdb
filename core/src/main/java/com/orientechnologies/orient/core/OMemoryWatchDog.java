@@ -77,7 +77,7 @@ public class OMemoryWatchDog {
 					long usedMemory = tenuredGenPool.getUsage().getUsed();
 					long freeMemory = maxMemory - usedMemory;
 
-					OLogManager.instance().warn(this, "Low memory %s%% (%s of %s), calling listeners to free memory in soft way...",
+					OLogManager.instance().warn(this, "Low memory %s%% (used %s of %s), calling listeners to free memory in soft way...",
 							freeMemory * 100 / maxMemory, OFileUtils.getSizeAsString(usedMemory), OFileUtils.getSizeAsString(maxMemory));
 
 					final long timer = OProfiler.getInstance().startChrono();
@@ -96,13 +96,15 @@ public class OMemoryWatchDog {
 					} catch (InterruptedException e) {
 					}
 
-					usedMemory = maxMemory - Runtime.getRuntime().freeMemory();
-					freeMemory = maxMemory - usedMemory;
+					freeMemory = Runtime.getRuntime().freeMemory();
+					usedMemory = maxMemory - freeMemory;
 					final long threshold = (long) (maxMemory * (1 - OGlobalConfiguration.MEMORY_OPTIMIZE_THRESHOLD.getValueAsFloat()));
+
+					System.out.println("free: " + freeMemory + ", threshold: " + threshold);
 
 					if (freeMemory < threshold) {
 						OLogManager.instance().warn(this,
-								"Low memory %s%% (%s of %s) while the threshold is %s, calling listeners to free memory in hard way...",
+								"Low memory %s%% (used %s of %s) while the threshold is %s, calling listeners to free memory in hard way...",
 								usedMemory * 100 / maxMemory, OFileUtils.getSizeAsString(usedMemory), OFileUtils.getSizeAsString(maxMemory),
 								OFileUtils.getSizeAsString(threshold));
 

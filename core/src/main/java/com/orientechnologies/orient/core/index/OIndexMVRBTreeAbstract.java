@@ -113,7 +113,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 			}
 
 			private void optimize() {
-				OLogManager.instance().warn(this, "Starting hard optimization of Index %s (%d items). Found %d entries in memory...", name,
+				OLogManager.instance().warn(this, "Forcing optimization of Index %s (%d items). Found %d entries in memory...", name,
 						map.size(), map.getInMemoryEntries());
 
 				map.optimize(true);
