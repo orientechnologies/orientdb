@@ -206,8 +206,7 @@ public abstract class OStringSerializerHelper {
 
 	public static List<String> smartSplit(final String iSource, final char[] iRecordSeparator, int beginIndex, final int endIndex,
 			final char... iJumpChars) {
-		StringBuilder buffer = new StringBuilder();
-
+		final StringBuilder buffer = new StringBuilder();
 		final ArrayList<String> parts = new ArrayList<String>();
 
 		while ((beginIndex = parse(iSource, buffer, beginIndex, endIndex, iRecordSeparator, iJumpChars)) > -1) {
@@ -224,7 +223,6 @@ public abstract class OStringSerializerHelper {
 	public static int parse(final String iSource, final StringBuilder iBuffer, final int beginIndex, final int endIndex,
 			final char[] iRecordSeparator, final char... iJumpChars) {
 		char stringBeginChar = ' ';
-		char c;
 		boolean encodeMode = false;
 		int insideParenthesis = 0;
 		int insideCollection = 0;
@@ -234,7 +232,7 @@ public abstract class OStringSerializerHelper {
 		final int max = endIndex > -1 ? endIndex : iSource.length();
 
 		for (int i = beginIndex; i < max; ++i) {
-			c = iSource.charAt(i);
+			char c = iSource.charAt(i);
 
 			if (stringBeginChar == ' ') {
 				// OUTSIDE A STRING
@@ -337,10 +335,9 @@ public abstract class OStringSerializerHelper {
 			final char iRecordSeparator, final char... iJumpCharacters) {
 		final ArrayList<String> parts = new ArrayList<String>();
 		final StringBuilder buffer = new StringBuilder();
-		char c;
 
 		for (int i = iStartPosition; i < iEndPosition; ++i) {
-			c = iSource.charAt(i);
+			char c = iSource.charAt(i);
 
 			if (c == iRecordSeparator) {
 				parts.add(buffer.toString());
@@ -590,25 +587,5 @@ public abstract class OStringSerializerHelper {
 		}
 
 		return result.toString();
-	}
-
-	public static String unicode2java(final String iInput) {
-		return iInput;
-		// final int len = iInput.length();
-		// int pos = 0;
-		// int step = 0;
-		// char c;
-		// final StringBuilder buffer = new StringBuilder();
-		// while (pos < len) {
-		// c = iInput.charAt(pos);
-		// if (c == '\\')
-		// step++;
-		// else if (c == '\\' && step == 1)
-		// step++;
-		// else
-		// buffer.append(c);
-		// }
-		//
-		// return buffer.toString();
 	}
 }

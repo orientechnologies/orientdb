@@ -312,7 +312,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 		if (iType != null)
 			switch (iType) {
 			case STRING:
-				return OStringSerializerHelper.unicode2java(iFieldValueAsString);
+				return iFieldValueAsString;
 
 			case LINK:
 				final int pos = iFieldValueAsString.indexOf('@');
