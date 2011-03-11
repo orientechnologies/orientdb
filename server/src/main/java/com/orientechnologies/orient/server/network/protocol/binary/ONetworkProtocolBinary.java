@@ -67,9 +67,11 @@ import com.orientechnologies.orient.core.storage.impl.local.ODictionaryLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
+import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServerMain;
@@ -138,20 +140,20 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			OServerHandlerHelper.invokeHandlerCallbackOnAfterClientRequest(connection, (byte) lastRequestType);
 
-		} catch (EOFException eof) {
-			OServerHandlerHelper.invokeHandlerCallbackOnClientError(connection, eof);
+		} catch (EOFException e) {
+			handleError(e);
 			sendShutdown();
 		} catch (SocketException e) {
-			OServerHandlerHelper.invokeHandlerCallbackOnClientError(connection, e);
+			handleError(e);
 			sendShutdown();
 		} catch (OException e) {
-			OServerHandlerHelper.invokeHandlerCallbackOnClientError(connection, e);
+			handleError(e);
 			sendError(lastClientTxId, e);
 		} catch (RuntimeException e) {
-			OServerHandlerHelper.invokeHandlerCallbackOnClientError(connection, e);
+			handleError(e);
 			sendError(lastClientTxId, e);
 		} catch (Throwable t) {
-			OServerHandlerHelper.invokeHandlerCallbackOnClientError(connection, t);
+			handleError(t);
 			OLogManager.instance().error(this, "Error on executing request", t);
 			sendError(lastClientTxId, t);
 		} finally {
@@ -169,6 +171,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			data.lastCommandInfo = data.commandInfo;
 			data.lastCommandDetail = data.commandDetail;
 		}
+	}
+
+	private void handleError(Throwable e) {
+		OServerHandlerHelper.invokeHandlerCallbackOnClientError(connection, e);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -458,21 +464,35 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			data.commandInfo = "Update record";
 
 			final int clusterId = channel.readShort();
-			final long position = channel.readLong();
+			final long clusterPosition = channel.readLong();
 
-			long newVersion = underlyingDatabase.save(clusterId, position, channel.readBytes(), channel.readInt(), channel.readByte());
+			final byte[] buffer = channel.readBytes();
+			final int version = channel.readInt();
+			final byte recordType = channel.readByte();
+
+			ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
+			record.fill(connection.database, clusterId, clusterPosition, version, buffer);
+
+			connection.database.save(record);
+
+			// final int clusterId = channel.readShort();
+			// final long clusterPosition = channel.readLong();
+			//
+			// long newVersion = underlyingDatabase.save(clusterId, clusterPosition, channel.readBytes(), channel.readInt(),
+			// channel.readByte());
 
 			// TODO: Handle it by using triggers
 			if (connection.database.getMetadata().getSchema().getDocument().getIdentity().getClusterId() == clusterId
-					&& connection.database.getMetadata().getSchema().getDocument().getIdentity().getClusterPosition() == position)
+					&& connection.database.getMetadata().getSchema().getDocument().getIdentity().getClusterPosition() == clusterPosition)
 				connection.database.getMetadata().loadSchema();
 			else if (((ODictionaryLocal<?>) connection.database.getDictionary()).getTree().getRecord().getIdentity().getClusterId() == clusterId
-					&& ((ODictionaryLocal<?>) connection.database.getDictionary()).getTree().getRecord().getIdentity().getClusterPosition() == position)
+					&& ((ODictionaryLocal<?>) connection.database.getDictionary()).getTree().getRecord().getIdentity().getClusterPosition() == clusterPosition)
 				((ODictionaryLocal<?>) connection.database.getDictionary()).load();
 
 			sendOk(lastClientTxId);
 
-			channel.writeInt((int) newVersion);
+			channel.writeInt(record.getVersion());
+			// channel.writeInt((int) newVersion);
 			break;
 
 		case OChannelBinaryProtocol.REQUEST_RECORD_DELETE:
@@ -767,6 +787,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 		OServerHandlerHelper.invokeHandlerCallbackOnClientDisconnection(connection);
 
+		if (connection.database != null)
+			connection.database.close();
+
 		OClientConnectionManager.instance().onClientDisconnection(connection.id);
 	}
 
@@ -913,5 +936,36 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			throw new IllegalArgumentException("Can't create database: storage mode '" + iStorageMode + "' is not supported.");
 
 		return new ODatabaseDocumentTx(path);
+	}
+
+	protected void broadcastRecordChanged(final ORecordInternal<?> iRecord) {
+		// UPDATE ALL THE CLIENTS
+		final List<OClientConnection> connections = OClientConnectionManager.instance().getConnections();
+
+		if (OLogManager.instance().isDebugEnabled())
+			OLogManager.instance().debug(this, "Pushing record %s to the %d connected clients...", iRecord.getIdentity(),
+					connections.size());
+
+		for (OClientConnection c : connections) {
+			if (c.protocol.getChannel() instanceof OChannelBinary) {
+				OChannelBinary ch = (OChannelBinary) c.protocol.getChannel();
+
+				if (OLogManager.instance().isDebugEnabled())
+					OLogManager.instance().debug(this, "-> Pushing record to the connected client %s...", ch.socket.getRemoteSocketAddress());
+
+				ch.acquireExclusiveLock();
+				try {
+					ch.writeByte(OChannelBinaryProtocol.PUSH_DATA);
+					ch.writeInt(-10);
+					ch.writeByte(OChannelDistributedProtocol.PUSH_SCHEMA_CHANGED);
+					ch.writeBytes(iRecord.toStream());
+
+				} catch (IOException e) {
+					e.printStackTrace();
+				} finally {
+					ch.releaseExclusiveLock();
+				}
+			}
+		}
 	}
 }

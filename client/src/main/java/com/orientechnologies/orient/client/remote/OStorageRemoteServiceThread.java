@@ -45,6 +45,10 @@ public class OStorageRemoteServiceThread extends OSoftThread {
 			case OChannelDistributedProtocol.PUSH_DISTRIBUTED_CONFIG:
 				storage.updateClusterConfiguration(storage.getNetwork().readBytes());
 				break;
+
+			case OChannelDistributedProtocol.PUSH_SCHEMA_CHANGED:
+				storage.updateClusterConfiguration(storage.getNetwork().readBytes());
+				break;
 			}
 
 			// NOT IN FINALLY BECAUSE IF THE SOCKET IS KILLED COULD HAVE NOT THE LOCK

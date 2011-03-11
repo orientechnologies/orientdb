@@ -136,7 +136,17 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	public boolean exists() {
-		checkConnection();
+		if (network == null) {
+			boolean locked = lock.acquireExclusiveLock();
+			try {
+				parseServerURLs();
+				createNetworkConnection();
+			} catch (Exception e) {
+				return false;
+			} finally {
+				lock.releaseExclusiveLock(locked);
+			}
+		}
 
 		do {
 			boolean locked = lock.acquireExclusiveLock();
