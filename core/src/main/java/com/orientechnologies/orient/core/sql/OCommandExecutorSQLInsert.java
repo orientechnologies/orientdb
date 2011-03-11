@@ -40,6 +40,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 	private static final String	KEYWORD_VALUES	= "VALUES";
 	private static final String	KEYWORD_INTO		= "INTO";
 	private String							className				= null;
+	private String							clusterName			= null;
 	private List<String>				fieldNames;
 	private Object[]						fieldValues;
 
@@ -69,15 +70,20 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 
 		String subjectName = word.toString();
 
-		if (subjectName.startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX))
-			subjectName = subjectName.substring(OCommandExecutorSQLAbstract.CLASS_PREFIX.length());
+		if (subjectName.startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX))
+			// CLUSTEr
+			clusterName = subjectName.substring(OCommandExecutorSQLAbstract.CLUSTER_PREFIX.length());
+		else {
+			// CLASS
+			if (subjectName.startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX))
+				subjectName = subjectName.substring(OCommandExecutorSQLAbstract.CLASS_PREFIX.length());
 
-		// CLASS
-		final OClass cls = database.getMetadata().getSchema().getClass(subjectName);
-		if (cls == null)
-			throw new OCommandSQLParsingException("Class " + subjectName + " not found in database", text, pos);
+			final OClass cls = database.getMetadata().getSchema().getClass(subjectName);
+			if (cls == null)
+				throw new OCommandSQLParsingException("Class " + subjectName + " not found in database", text, pos);
 
-		className = cls.getName();
+			className = cls.getName();
+		}
 
 		final int beginFields = OStringParser.jumpWhiteSpaces(text, pos);
 		if (beginFields == -1 || text.charAt(beginFields) != '(')
@@ -141,7 +147,10 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 			doc.field(fieldNames.get(i), v);
 		}
 
-		doc.save();
+		if (clusterName != null)
+			doc.save(clusterName);
+		else
+			doc.save();
 
 		return doc;
 	}

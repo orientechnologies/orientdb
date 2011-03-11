@@ -120,7 +120,7 @@ public class OSQLHelper {
 
 		Object fieldValue = VALUE_NOT_PARSED;
 
-		if (iValue.startsWith("'") && iValue.endsWith("'"))
+		if (iValue.startsWith("'") && iValue.endsWith("'") || iValue.startsWith("\"") && iValue.endsWith("\""))
 			// STRING
 			fieldValue = stringContent(iValue);
 		else if (iValue.charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN
