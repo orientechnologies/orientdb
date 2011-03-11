@@ -62,6 +62,9 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract {
 			else if (textUpperCase.startsWith(OCommandExecutorSQLCreateProperty.KEYWORD_CREATE + " "
 					+ OCommandExecutorSQLCreateProperty.KEYWORD_PROPERTY))
 				delegate = new OCommandExecutorSQLCreateProperty().parse(iCommand);
+			else if (textUpperCase.startsWith(OCommandExecutorSQLRemoveClass.KEYWORD_REMOVE + " "
+					+ OCommandExecutorSQLRemoveClass.KEYWORD_CLASS))
+				delegate = new OCommandExecutorSQLRemoveClass().parse(iCommand);
 			else if (textUpperCase.startsWith(OCommandExecutorSQLRemoveProperty.KEYWORD_REMOVE + " "
 					+ OCommandExecutorSQLRemoveProperty.KEYWORD_PROPERTY))
 				delegate = new OCommandExecutorSQLRemoveProperty().parse(iCommand);

@@ -413,6 +413,22 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		out.println("\nIndex removed succesfully");
 	}
 
+	@ConsoleCommand(splitInWords = false, description = "Remove a class from the schema")
+	public void removeClass(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText)
+			throws IOException {
+		sqlCommand("remove", iCommandText, "\nRemoved class in %f sec(s).\n");
+
+		out.println("\nClass removed succesfully");
+	}
+
+	@ConsoleCommand(splitInWords = false, description = "Remove a property from a class")
+	public void removeProperty(
+			@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) throws IOException {
+		sqlCommand("remove", iCommandText, "\nRemoved class property in %f sec(s).\n");
+
+		out.println("\nClass property removed succesfully");
+	}
+
 	@ConsoleCommand(description = "Browse all the records of a class")
 	public void browseClass(@ConsoleParameter(name = "class-name", description = "The name of the class") final String iClassName) {
 		checkCurrentDatabase();
