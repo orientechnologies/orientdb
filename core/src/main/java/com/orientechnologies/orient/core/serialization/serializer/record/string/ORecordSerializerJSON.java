@@ -121,7 +121,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				for (int i = 0; i < fields.length; i += 2) {
 					fieldName = fields[i];
 					fieldName = fieldName.substring(1, fieldName.length() - 1);
-					fieldValue = fields[i + 1];
+					fieldValue = fields[i + 1].trim();
 					fieldValueAsString = fieldValue.length() >= 2 ? fieldValue.substring(1, fieldValue.length() - 1) : fieldValue;
 
 					// RECORD ATTRIBUTES
