@@ -62,6 +62,13 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 		return super.fromStream(iRecordBuffer);
 	}
 
+	@Override
+	public void unsetDirty() {
+		// _fieldOriginalValues = null;
+		_source = null;
+		super.unsetDirty();
+	}
+
 	/**
 	 * Returns the forced field type if any.
 	 * 

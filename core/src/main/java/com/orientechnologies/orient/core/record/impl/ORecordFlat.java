@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
  * It's schema less. Use this if you need to store Strings at low level. The object can be reused across calls to the database by
  * using the reset() at every re-use.
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "serial" })
 public class ORecordFlat extends ORecordAbstract<String> implements ORecordStringable {
 	protected String					value;
 
@@ -55,6 +55,12 @@ public class ORecordFlat extends ORecordAbstract<String> implements ORecordStrin
 		value = iValue;
 		setDirty();
 		return this;
+	}
+
+	@Override
+	public void unsetDirty() {
+		_source = null;
+		super.unsetDirty();
 	}
 
 	@Override
