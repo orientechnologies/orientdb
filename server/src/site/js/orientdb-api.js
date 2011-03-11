@@ -29,6 +29,7 @@ function ODatabase(databasePath) {
 	this.commandResponse = null;
 	this.errorMessage = null;
 	this.evalResponse = true;
+	this.parseResponseLink = true;
 	this.urlPrefix = "";
 
 	if (databasePath) {
@@ -102,12 +103,11 @@ function ODatabase(databasePath) {
 		this.evalResponse = iEvalResponse;
 	}
 
-	ODatabase.prototype.handleResponse = function(iResponse) {
-		this.setCommandResponse(iResponse);
-		if (iResponse != null)
-			this.setCommandResult(this.transformResponse(iResponse));
-		else
-			this.setCommandResult(null);
+	ODatabase.prototype.getParseResponseLinks = function() {
+		return this.parseResponseLink;
+	}
+	ODatabase.prototype.setParseResponseLinks = function(iParseResponseLinks) {
+		this.parseResponseLink = iParseResponseLinks;
 	}
 
 	ODatabase.prototype.open = function(userName, userPass, authProxy, type) {
@@ -240,7 +240,7 @@ function ODatabase(databasePath) {
 		return this.getCommandResult();
 	}
 
-	ODatabase.prototype.remove = function(obj) {
+	ODatabase.prototype.remove = function(obj, onsuccess, onerror) {
 		if (this.databaseInfo == null)
 			this.open();
 
@@ -260,10 +260,16 @@ function ODatabase(databasePath) {
 			success : function(msg) {
 				this.setErrorMessage(null);
 				this.handleResponse(msg);
+				if (onsuccess) {
+					onsuccess();
+				}
 			},
 			error : function(msg) {
 				this.handleResponse(null);
 				this.setErrorMessage('Save error: ' + msg.responseText);
+				if (onerror) {
+					onerror();
+				}
 			}
 		});
 		return this.getCommandResult();
@@ -425,11 +431,85 @@ function ODatabase(databasePath) {
 		return this.getCommandResult();
 	}
 
+	ODatabase.prototype.handleResponse = function(iResponse) {
+		this.setCommandResponse(iResponse);
+		if (iResponse != null)
+			this.setCommandResult(this.transformResponse(iResponse));
+		else
+			this.setCommandResult(null);
+	}
+
 	ODatabase.prototype.transformResponse = function(msg) {
 		if (this.getEvalResponse() && msg.length > 0 && typeof msg != 'object') {
-			return jQuery.parseJSON(msg);
+			if (this.getParseResponseLinks()) {
+				return this.parseConnections(jQuery.parseJSON(msg));
+			} else {
+				return jQuery.parseJSON(msg);
+			}
 		} else {
 			return msg;
 		}
 	}
+
+	ODatabase.prototype.parseConnections = function(obj) {
+		if (typeof obj == 'object') {
+			var linkMap = {"foo" : 0};
+			linkMap = this.createObjectsLinksMap(obj, linkMap);
+			if (linkMap["foo"] == 1 ) {
+				linkMap = this.putObjectInLinksMap(obj, linkMap);
+				obj = this.getObjectFromLinksMap(obj, linkMap);
+			}
+		}
+		return obj;
+	}
+
+	ODatabase.prototype.createObjectsLinksMap = function(obj, linkMap) {
+		for (field in obj) {
+			var value = obj[field];
+			if (typeof value == 'object') {
+				this.createObjectsLinksMap(value, linkMap);
+			} else {
+				if (typeof value == 'string') {
+					if (value.length > 0 && value.charAt(0) == '#') {
+						if (!linkMap.hasOwnProperty(value)) {
+							linkMap["foo"] = 1;
+							linkMap[value] = null;
+						}
+					}
+				}
+			}
+		}
+		return linkMap;
+	}
+
+	ODatabase.prototype.putObjectInLinksMap = function(obj, linkMap) {
+		for (field in obj) {
+			var value = obj[field];
+			if (typeof value == 'object') {
+				this.putObjectInLinksMap(value, linkMap);
+			} else {
+				if (field == '@rid' && value.length > 0
+						&& linkMap.hasOwnProperty("#" + value)
+						&& linkMap["#" + value] === null) {
+					linkMap["#" + value] = obj;
+				}
+			}
+		}
+		return linkMap;
+	}
+
+	ODatabase.prototype.getObjectFromLinksMap = function(obj, linkMap) {
+		for (field in obj) {
+			var value = obj[field];
+			if (typeof value == 'object') {
+				this.getObjectFromLinksMap(value, linkMap);
+			} else {
+				if (value.length > 0 && value.charAt(0) == '#') {
+					obj[field] = linkMap[value];
+				}
+			}
+		}
+		return obj;
+	}
+
 }

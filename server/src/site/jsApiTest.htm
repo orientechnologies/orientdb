@@ -114,7 +114,7 @@
 		orientServer.setEvalResponse(false);
 		queryResult = orientServer.query(
 				'select from Address where city.country.name = \'Italy\'',
-				null, '*:-1 type:0');
+				null, '*:-1');
 		orientServer.setEvalResponse(true);
 		if (queryResult == null) {
 			jQuery("#output").text(orientServer.getErrorMessage());
