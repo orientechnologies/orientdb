@@ -97,6 +97,12 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 				}
 			}
 		}
+
+		if (iRecord.isTrackingChanges()) {
+			iRecord.setTrackingChanges(false);
+			iRecord.setTrackingChanges(true);
+		}
+
 		return false;
 	}
 
@@ -131,6 +137,12 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 				}
 			}
 		}
+
+		if (iRecord.isTrackingChanges()) {
+			iRecord.setTrackingChanges(false);
+			iRecord.setTrackingChanges(true);
+		}
+
 		return false;
 	}
 

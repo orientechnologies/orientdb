@@ -64,7 +64,6 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 
 	@Override
 	public void unsetDirty() {
-		// _fieldOriginalValues = null;
 		_source = null;
 		super.unsetDirty();
 	}
@@ -114,6 +113,9 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 
 	public <RET extends ORecordVirtualAbstract<?>> RET setTrackingChanges(final boolean iTrackingChanges) {
 		this._trackingChanges = iTrackingChanges;
+		if (!iTrackingChanges)
+			// FREE RESOURCES
+			this._fieldOriginalValues = null;
 		return (RET) this;
 	}
 
