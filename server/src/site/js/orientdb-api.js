@@ -164,7 +164,7 @@ function ODatabase(databasePath) {
 		$.ajax({
 			type : "GET",
 			url : urlPrefix + 'query/' + this.encodedDatabaseName + '/sql/'
-					+ iQuery + iLimit + iFetchPlan,
+			+ iQuery + iLimit + iFetchPlan,
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -196,7 +196,7 @@ function ODatabase(databasePath) {
 		$.ajax({
 			type : "GET",
 			url : urlPrefix + 'document/' + this.encodedDatabaseName + '/'
-					+ iRID + iFetchPlan,
+			+ iRID + iFetchPlan,
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -222,7 +222,7 @@ function ODatabase(databasePath) {
 		$.ajax({
 			type : methodType,
 			url : urlPrefix + 'document/' + this.encodedDatabaseName + '/'
-					+ rid,
+			+ rid,
 			data : $.toJSON(obj),
 			processData : false,
 			context : this,
@@ -253,7 +253,7 @@ function ODatabase(databasePath) {
 		$.ajax({
 			type : 'DELETE',
 			url : urlPrefix + 'document/' + this.encodedDatabaseName + '/'
-					+ rid,
+			+ rid,
 			processData : false,
 			context : this,
 			async : false,
@@ -282,7 +282,7 @@ function ODatabase(databasePath) {
 		$.ajax({
 			type : "GET",
 			url : urlPrefix + 'class/' + this.encodedDatabaseName + '/'
-					+ iClassName,
+			+ iClassName,
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -304,7 +304,7 @@ function ODatabase(databasePath) {
 		$.ajax({
 			type : "POST",
 			url : urlPrefix + 'class/' + this.encodedDatabaseName + '/'
-					+ iClassName,
+			+ iClassName,
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -326,7 +326,7 @@ function ODatabase(databasePath) {
 		$.ajax({
 			type : "GET",
 			url : urlPrefix + 'cluster/' + this.encodedDatabaseName + '/'
-					+ iClassName,
+			+ iClassName,
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -348,7 +348,7 @@ function ODatabase(databasePath) {
 		$.ajax({
 			type : "POST",
 			url : urlPrefix + 'command/' + this.encodedDatabaseName + '/sql/'
-					+ iCommand + "/",
+			+ iCommand + "/",
 			context : this,
 			async : false,
 			success : function(msg) {
@@ -453,11 +453,15 @@ function ODatabase(databasePath) {
 
 	ODatabase.prototype.parseConnections = function(obj) {
 		if (typeof obj == 'object') {
-			var linkMap = {"foo" : 0};
+			var linkMap = {
+					"foo" : 0
+			};
 			linkMap = this.createObjectsLinksMap(obj, linkMap);
-			if (linkMap["foo"] == 1 ) {
+			if (linkMap["foo"] == 1) {
 				linkMap = this.putObjectInLinksMap(obj, linkMap);
-				obj = this.getObjectFromLinksMap(obj, linkMap);
+				if (linkMap["foo"] == 2) {
+					obj = this.getObjectFromLinksMap(obj, linkMap);
+				}
 			}
 		}
 		return obj;
@@ -491,6 +495,7 @@ function ODatabase(databasePath) {
 				if (field == '@rid' && value.length > 0
 						&& linkMap.hasOwnProperty("#" + value)
 						&& linkMap["#" + value] === null) {
+					linkMap["foo"] = 2;
 					linkMap["#" + value] = obj;
 				}
 			}
@@ -504,7 +509,8 @@ function ODatabase(databasePath) {
 			if (typeof value == 'object') {
 				this.getObjectFromLinksMap(value, linkMap);
 			} else {
-				if (value.length > 0 && value.charAt(0) == '#') {
+				if (value.length > 0 && value.charAt(0) == '#'
+					&& linkMap[value] != null) {
 					obj[field] = linkMap[value];
 				}
 			}
