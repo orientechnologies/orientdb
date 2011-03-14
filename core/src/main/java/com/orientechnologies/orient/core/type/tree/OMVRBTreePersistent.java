@@ -83,7 +83,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 	public OMVRBTreePersistent(String iClusterName, final OStreamSerializer iKeySerializer, final OStreamSerializer iValueSerializer) {
 		// MINIMIZE I/O USING A LARGER PAGE THAN THE DEFAULT USED IN MEMORY
-		super(1024, 0.7f);
+		super(OGlobalConfiguration.MVRBTREE_NODE_PAGE_SIZE.getValueAsInteger(), 0.7f);
 		config();
 
 		clusterName = iClusterName;
@@ -640,7 +640,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 		final V previous = super.put(key, value);
 
-		if (insertionCounter > optimizeThreshold) {
+		if (optimizeThreshold > -1 && insertionCounter > optimizeThreshold) {
 			insertionCounter = 0;
 			optimize(false);
 		} else
