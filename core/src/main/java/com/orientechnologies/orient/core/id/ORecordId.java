@@ -92,6 +92,12 @@ public class ORecordId implements ORID {
 		return generateString(clusterId, clusterPosition);
 	}
 
+	public void toString(final StringBuilder iBuffer) {
+		iBuffer.append(clusterId);
+		iBuffer.append(SEPARATOR);
+		iBuffer.append(clusterPosition);
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -162,7 +168,7 @@ public class ORecordId implements ORID {
 	}
 
 	public static String generateString(final int iClusterId, final long iPosition) {
-		final StringBuilder buffer = new StringBuilder();
+		final StringBuilder buffer = new StringBuilder(8);
 		buffer.append(iClusterId);
 		buffer.append(SEPARATOR);
 		buffer.append(iPosition);

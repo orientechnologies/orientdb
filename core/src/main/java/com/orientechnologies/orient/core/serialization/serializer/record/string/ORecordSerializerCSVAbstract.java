@@ -323,7 +323,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					if (items++ > 0)
 						buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
-					buffer.append(fieldTypeToString(iDatabase, OType.STRING, entry.getKey()));
+					fieldTypeToString(buffer, iDatabase, OType.STRING, entry.getKey());
 					buffer.append(OStringSerializerHelper.ENTRY_SEPARATOR);
 					link = linkToStream(buffer, iRecord, entry.getValue());
 
@@ -375,7 +375,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		}
 
 		default:
-			return fieldTypeToString(iDatabase, iType, iValue);
+			fieldTypeToString(buffer, iDatabase, iType, iValue);
 		}
 
 		return buffer.toString();
@@ -396,7 +396,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
 				if (o != null) {
-					buffer.append(fieldTypeToString(iDatabase, OType.STRING, o.getKey()));
+					fieldTypeToString(buffer, iDatabase, OType.STRING, o.getKey());
 					buffer.append(OStringSerializerHelper.ENTRY_SEPARATOR);
 
 					if (o.getValue() instanceof ORecord<?>) {
@@ -431,12 +431,12 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 						buffer.append(OStringSerializerHelper.PARENTHESIS_END);
 					} else if (o.getValue() instanceof Map<?, ?>) {
 						// SUB MAP
-						buffer.append(fieldTypeToString(iDatabase, OType.EMBEDDEDMAP, o.getValue()));
+						fieldTypeToString(buffer, iDatabase, OType.EMBEDDEDMAP, o.getValue());
 					} else {
 						// EMBEDDED LITERALS
 						if (iLinkedType == null)
 							iLinkedType = OType.getTypeByClass(o.getValue().getClass());
-						buffer.append(fieldTypeToString(iDatabase, iLinkedType, o.getValue()));
+						fieldTypeToString(buffer, iDatabase, iLinkedType, o.getValue());
 					}
 				}
 
@@ -576,7 +576,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				buffer.append(toString(document, null, iObjHandler, iMarshalledRecords));
 			} else {
 				// EMBEDDED LITERALS
-				buffer.append(fieldTypeToString(iDatabase, iLinkedType, o));
+				fieldTypeToString(buffer, iDatabase, iLinkedType, o);
 			}
 
 			if (document != null && iLinkedType != OType.LINK)
@@ -654,7 +654,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 		if (rid.isValid()) {
 			buffer.append(OStringSerializerHelper.LINK);
-			buffer.append(rid.toString());
+			rid.toString(buffer);
 		}
 
 		return resultRid;

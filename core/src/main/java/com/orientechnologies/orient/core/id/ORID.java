@@ -46,4 +46,6 @@ public interface ORID extends OIdentifiable, OSerializableStream {
 	public String next();
 
 	public int toStream(OutputStream iStream) throws IOException;
+
+	public void toString(StringBuilder iBuffer);
 }

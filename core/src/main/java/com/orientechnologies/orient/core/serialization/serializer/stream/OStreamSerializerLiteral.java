@@ -39,7 +39,8 @@ public class OStreamSerializerLiteral implements OStreamSerializer {
 		if (iObject == null)
 			return null;
 
-		return OBinaryProtocol.string2bytes(ORecordSerializerStringAbstract.fieldTypeToString(iDatabase,
-				OType.getTypeByClass(iObject.getClass()), iObject));
+		final StringBuilder buffer = new StringBuilder();
+		ORecordSerializerStringAbstract.fieldTypeToString(buffer, iDatabase, OType.getTypeByClass(iObject.getClass()), iObject);
+		return OBinaryProtocol.string2bytes(buffer.toString());
 	}
 }

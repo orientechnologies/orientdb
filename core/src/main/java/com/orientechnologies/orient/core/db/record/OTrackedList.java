@@ -43,7 +43,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement {
 	}
 
 	@Override
-	public boolean addAll(Collection<? extends T> c) {
+	public boolean addAll(final Collection<? extends T> c) {
 		for (T o : c)
 			add(o);
 		return true;

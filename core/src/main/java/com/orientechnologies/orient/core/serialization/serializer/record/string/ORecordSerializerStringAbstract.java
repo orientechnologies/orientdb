@@ -165,67 +165,91 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 		return OType.convert(v, iExpectedType.getDefaultJavaType());
 	}
 
-	public static String fieldTypeToString(final ODatabaseComplex<?> iDatabase, OType iType, final Object iValue) {
+	public static void fieldTypeToString(final StringBuilder iBuffer, final ODatabaseComplex<?> iDatabase, OType iType,
+			final Object iValue) {
 		if (iValue == null)
-			return null;
+			return;
 
 		if (iType == null)
 			iType = OType.EMBEDDED;
 
 		switch (iType) {
 		case STRING:
-			return "\"" + OStringSerializerHelper.encode(iValue.toString()) + "\"";
+			iBuffer.append('"');
+			iBuffer.append(OStringSerializerHelper.encode(iValue.toString()));
+			iBuffer.append('"');
+			break;
 
 		case BOOLEAN:
 		case INTEGER:
-			return String.valueOf(iValue);
+			iBuffer.append(String.valueOf(iValue));
+			break;
 
 		case FLOAT:
-			return String.valueOf(iValue) + 'f';
+			iBuffer.append(String.valueOf(iValue));
+			iBuffer.append('f');
+			break;
 		case LONG:
-			return String.valueOf(iValue) + 'l';
+			iBuffer.append(String.valueOf(iValue));
+			iBuffer.append('l');
+			break;
 		case DOUBLE:
-			return String.valueOf(iValue) + 'd';
+			iBuffer.append(String.valueOf(iValue));
+			iBuffer.append('d');
+			break;
 		case SHORT:
-			return String.valueOf(iValue) + 's';
+			iBuffer.append(String.valueOf(iValue));
+			iBuffer.append('s');
+			break;
 
 		case BYTE:
 			if (iValue instanceof Character)
-				return String.valueOf((int) ((Character) iValue).charValue()) + 'b';
+				iBuffer.append((int) ((Character) iValue).charValue());
 			else if (iValue instanceof String)
-				return String.valueOf((int) ((String) iValue).charAt(0)) + 'b';
+				iBuffer.append(String.valueOf((int) ((String) iValue).charAt(0)));
 			else
-				return String.valueOf(iValue) + 'b';
+				iBuffer.append(String.valueOf(iValue));
+			iBuffer.append('b');
+			break;
 
 		case BINARY:
-			final String str;
+			iBuffer.append('"');
 			if (iValue instanceof Byte)
-				str = new String(new byte[] { ((Byte) iValue).byteValue() });
+				iBuffer.append(new String(new byte[] { ((Byte) iValue).byteValue() }));
 			else
-				str = OBase64Utils.encodeBytes((byte[]) iValue);
-			return "\"" + str + "\"";
+				iBuffer.append(OBase64Utils.encodeBytes((byte[]) iValue));
+			iBuffer.append('"');
+			break;
 
 		case DATE:
 			if (iValue instanceof Date)
-				return String.valueOf(((Date) iValue).getTime()) + 't';
+				iBuffer.append(((Date) iValue).getTime());
 			else
-				return String.valueOf(iValue) + 't';
+				iBuffer.append(iValue);
+			iBuffer.append('t');
+			break;
 
 		case LINK:
-			if (iValue instanceof ORID)
-				return '#' + iValue.toString();
+			iBuffer.append('#');
+			if (iValue instanceof ORecordId)
+				((ORecordId) iValue).toString(iBuffer);
 			else
-				return '#' + ((ORecord<?>) iValue).getIdentity().toString();
+				((ORecord<?>) iValue).getIdentity().toString(iBuffer);
+			break;
 
 		case EMBEDDEDMAP:
-			return ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedMapToStream(iDatabase, null, null, null, iValue, null, true);
+			iBuffer
+					.append(ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedMapToStream(iDatabase, null, null, null, iValue, null, true));
+			break;
 
 		case EMBEDDED:
 			// RECORD
-			return OStringSerializerAnyStreamable.INSTANCE.toStream(iDatabase, iValue);
-		}
+			iBuffer.append(OStringSerializerAnyStreamable.INSTANCE.toStream(iDatabase, iValue));
+			break;
 
-		throw new IllegalArgumentException("Type " + iType + " not supported to convert value: " + iValue);
+		default:
+			throw new IllegalArgumentException("Type " + iType + " not supported to convert value: " + iValue);
+		}
 	}
 
 	/**
