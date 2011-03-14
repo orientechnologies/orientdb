@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.db.record;
 
 import java.util.Collection;
+import java.util.Iterator;
 
 import com.orientechnologies.orient.core.db.record.ORecordMultiValueHelper.MULTIVALUE_STATUS;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -182,5 +183,9 @@ public class ORecordLazyMap extends ORecordTrackedMap implements ORecordLazyMult
 			return true;
 		}
 		return false;
+	}
+
+	public Iterator<OIdentifiable> rawIterator() {
+		throw new UnsupportedOperationException("rawIterator()");
 	}
 }

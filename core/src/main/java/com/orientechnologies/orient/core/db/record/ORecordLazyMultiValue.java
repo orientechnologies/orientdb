@@ -15,7 +15,10 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import java.util.Iterator;
+
 public interface ORecordLazyMultiValue {
+	public Iterator<OIdentifiable> rawIterator();
 
 	/**
 	 * Browse all the set to convert all the items into records.

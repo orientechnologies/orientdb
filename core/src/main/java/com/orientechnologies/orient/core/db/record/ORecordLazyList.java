@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import java.util.Collection;
 import java.util.Iterator;
 
 import com.orientechnologies.orient.core.db.record.ORecordMultiValueHelper.MULTIVALUE_STATUS;
@@ -54,6 +55,18 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 		super(iSourceRecord);
 		this.database = iSourceRecord.getDatabase();
 		this.recordType = iSourceRecord.getRecordType();
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean addAll(Collection<? extends OIdentifiable> c) {
+		final Iterator<OIdentifiable> it = (Iterator<OIdentifiable>) (c instanceof ORecordLazyMultiValue ? ((ORecordLazyMultiValue) c)
+				.rawIterator() : c.iterator());
+
+		while (it.hasNext())
+			add(it.next());
+
+		return true;
 	}
 
 	/**
