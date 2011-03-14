@@ -77,7 +77,7 @@ public class OMMapManager {
 
 		OProfiler.getInstance().registerHookValue("mmap.blocks", new OProfilerHookValue() {
 			public synchronized Object getValue() {
-					return bufferPoolLRU.size();
+				return bufferPoolLRU.size();
 			}
 		});
 
@@ -145,19 +145,25 @@ public class OMMapManager {
 			// FOUND
 			return fileEntries.get(position);
 
-		if (iOperationType == OPERATION_TYPE.READ && iStrategy == STRATEGY.MMAP_WRITE_ALWAYS_READ_IF_IN_MEM) {
-			// READ NOT IN BUFFER POOL: RETURN NULL TO LET TO THE CALLER TO EXECUTE A DIRECT READ WITHOUT MMAP
-			final int p = (position + 2) * -1;
-			if (p > -1 && p <= fileEntries.size()) {
-				// CHECK IF THERE IS A BUFFER TO COMMIT TO DISK
-				final OMMapBufferEntry entry = fileEntries.get(p);
-				if (entry.beginOffset <= iBeginOffset && entry.beginOffset + entry.size >= iBeginOffset) {
-					OProfiler.getInstance().updateCounter("OMMapManager.overlappedPageUsingChannel", 1);
-					commitBuffer(entry);
-				}
+		// CHECK IF THERE IS A BUFFER THAT OVERLAPS
+		final int p = (position + 2) * -1;
+		if (p > -1 && p <= fileEntries.size()) {
+			// CHECK LOWER OFFSET
+			OMMapBufferEntry entry = fileEntries.get(p);
+			boolean overlaps = entry.beginOffset <= iBeginOffset && entry.beginOffset + entry.size >= iBeginOffset;
+			if (!overlaps && p < fileEntries.size() - 1) {
+				// CHECK HIGHER OFFSET
+				entry = fileEntries.get(p);
+				overlaps = iBeginOffset + iSize >= entry.beginOffset;
 			}
-			OProfiler.getInstance().updateCounter("OMMapManager.usedChannel", 1);
-			return null;
+
+			if (overlaps) {
+				// READ NOT IN BUFFER POOL: RETURN NULL TO LET TO THE CALLER TO EXECUTE A DIRECT READ WITHOUT MMAP
+				OProfiler.getInstance().updateCounter("OMMapManager.overlappedPageUsingChannel", 1);
+				commitBuffer(entry);
+				OProfiler.getInstance().updateCounter("OMMapManager.usedChannel", 1);
+				return null;
+			}
 		}
 
 		int bufferSize = iForce ? iSize : iSize <= blockSize ? blockSize : iSize;
@@ -176,9 +182,8 @@ public class OMMapManager {
 			return null;
 		}
 
-		// FREE LESS-USED BUFFERS UNTIL THE FREE-MEMORY IS DOWN THE CONFIGURED MAX LIMIT
 		OMMapBufferEntry entry = null;
-
+		// FREE LESS-USED BUFFERS UNTIL THE FREE-MEMORY IS DOWN THE CONFIGURED MAX LIMIT
 		do {
 			if (totalMemory + bufferSize > maxMemory) {
 				final long memoryThreshold = (long) (maxMemory * 0.75);
@@ -217,7 +222,7 @@ public class OMMapManager {
 			// RECOMPUTE THE POSITION AFTER REMOVING
 			position = searchEntry(fileEntries, iBeginOffset, iSize);
 			if (position > -1)
-				// FOUND: THIS IS PRETT STRANGE SINCE IT WASN'T FOUND!
+				// FOUND: THIS IS PRETTY STRANGE SINCE IT WASN'T FOUND!
 				return fileEntries.get(position);
 
 			// LOAD THE PAGE
@@ -236,6 +241,19 @@ public class OMMapManager {
 
 		totalMemory += bufferSize;
 		bufferPoolLRU.add(entry);
+
+		// TEST
+		// int pos = (position + 2) * -1;
+		// if (pos > -1 && pos < fileEntries.size() - 1) {
+		// if (fileEntries.size() > 0) {
+		// OMMapBufferEntry entry2 = fileEntries.get(pos);
+		// Assert.assertTrue(entry2.beginOffset + entry2.size < entry.beginOffset);
+		//
+		// entry2 = fileEntries.get(pos + 1);
+		// Assert.assertTrue(entry.beginOffset + entry.size < entry2.beginOffset);
+		// }
+		// }
+
 		fileEntries.add((position + 1) * -1, entry);
 
 		return entry;
@@ -288,6 +306,32 @@ public class OMMapManager {
 		OMMapManager.blockSize = blockSize;
 	}
 
+	public static synchronized int getOverlappedBlocks() {
+		int count = 0;
+		for (OFile f : bufferPoolPerFile.keySet()) {
+			count += getOverlappedBlocks(f);
+		}
+		return count;
+	}
+
+	public static synchronized int getOverlappedBlocks(final OFile iFile) {
+		int count = 0;
+
+		final List<OMMapBufferEntry> blocks = bufferPoolPerFile.get(iFile);
+		long lastPos = -1;
+		for (OMMapBufferEntry block : blocks) {
+			if (lastPos > -1 && lastPos >= block.beginOffset)
+				count++;
+
+			lastPos = block.beginOffset + block.size;
+		}
+
+		if (count > 0)
+			OLogManager.instance().warn(null, "Overlapped blocks for file %s %d", iFile, count);
+
+		return count;
+	}
+
 	private static OMMapBufferEntry mapBuffer(final OFileMMap iFile, final long iBeginOffset, final int iSize) throws IOException {
 		long timer = OProfiler.getInstance().startChrono();
 		try {
@@ -307,12 +351,16 @@ public class OMMapManager {
 	 *         found position.
 	 */
 	private static int searchEntry(final List<OMMapBufferEntry> fileEntries, final long iBeginOffset, final int iSize) {
-		OMMapBufferEntry e;
+		int high = fileEntries.size() - 1;
+		if (high < 0)
+			// NOT FOUND
+			return -1;
+
+		int low = 0;
+		int mid = -1;
 
 		// BINARY SEARCH
-		int low = 0;
-		int high = fileEntries.size() - 1;
-		int mid = -1;
+		OMMapBufferEntry e;
 
 		while (low <= high) {
 			mid = (low + high) >>> 1;
@@ -325,8 +373,13 @@ public class OMMapManager {
 				return mid;
 			}
 
-			if (low == high)
+			if (low == high) {
+				if (e.beginOffset > iBeginOffset)
+					low--;
+
+				// NOT FOUND
 				return (low + 2) * -1;
+			}
 
 			if (iBeginOffset >= e.beginOffset)
 				low = mid + 1;
@@ -334,6 +387,7 @@ public class OMMapManager {
 				high = mid;
 		}
 
+		// NOT FOUND
 		return mid;
 	}
 
