@@ -51,8 +51,10 @@ public class OStorageRecordCache extends OAbstractRecordCache {
 		acquireExclusiveLock();
 		try {
 			final ORecord<?> record = entries.get(iRecord.getIdentity());
-			if (record == null || iRecord.getVersion() > record.getVersion())
+			if (record == null || iRecord.getVersion() > record.getVersion()) {
+				iRecord.detach();
 				entries.put(iRecord.getIdentity(), iRecord);
+			}
 
 		} finally {
 			releaseExclusiveLock();

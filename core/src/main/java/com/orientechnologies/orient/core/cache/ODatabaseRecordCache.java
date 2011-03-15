@@ -144,7 +144,6 @@ public class ODatabaseRecordCache extends OAbstractRecordCache {
 		}
 
 		if (record != null) {
-			record.detach();
 			level2cache.pushRecord(record);
 		}
 	}
@@ -201,7 +200,6 @@ public class ODatabaseRecordCache extends OAbstractRecordCache {
 			// MOVE ALL THE LEVEL-1 CACHE INTO THE LEVEL-2 CACHE
 			for (ORecordInternal<?> record : entries.values()) {
 				if (!record.isDirty() && !record.getIdentity().isNew()) {
-					record.detach();
 					level2cache.pushRecord(record);
 				}
 			}
