@@ -144,16 +144,17 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 			int counter = 0;
 			String objectJson;
 			for (ORecord<?> rec : iRecords) {
-				try {
-					objectJson = rec.toJSON(format);
+				if (rec != null)
+					try {
+						objectJson = rec.toJSON(format);
 
-					if (counter++ > 0)
-						buffer.append(", ");
+						if (counter++ > 0)
+							buffer.append(", ");
 
-					buffer.append(objectJson);
-				} catch (Exception e) {
-					OLogManager.instance().error(this, "Error transforming record " + rec.getIdentity() + " to JSON", e);
-				}
+						buffer.append(objectJson);
+					} catch (Exception e) {
+						OLogManager.instance().error(this, "Error transforming record " + rec.getIdentity() + " to JSON", e);
+					}
 			}
 		}
 		json.endCollection(1, true);
