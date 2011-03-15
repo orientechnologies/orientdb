@@ -33,6 +33,7 @@
 	var orientServer;
 
 	var controller = new OController({
+		component : "panel",	
 		cachePages : false
 	});
 
@@ -51,13 +52,13 @@
 		$("#buttonDisconnect").hide();
 		$("#buttonConnect").show();
 
-		controller.loadPage('panel', 'panelHome.htm');
+		controller.loadFragment('panelHome.htm');
 	}
 
 	function displayDocument(selObject, database) {
 		selectedObject = selObject;
 
-		controller.loadPage('panel', "panelDocument.htm", function() {
+		controller.loadFragment("panelDocument.htm", function() {
 			documentView.render(selObject, database);
 		});
 	}
@@ -65,7 +66,7 @@
 	function displayGraph(selObject) {
 		selectedObject = selObject;
 
-		controller.loadPage('panel', "panelGraph.htm", function() {
+		controller.loadFragment("panelGraph.htm", function() {
 			graphEditor.render(selObject);
 		});
 	}
@@ -91,13 +92,13 @@
 		<td>
 		<div>
 		<ul id="navigation">
-			<li class="menu-database"><a href="javascript:controller.loadPage('panel', 'panelDatabase.htm')"><span>Database</span></a></li>
-			<li class="menu-query"><a href="javascript:controller.loadPage('panel', 'panelQuery.htm')"><span>Query</span></a></li>
-			<li class="menu-command"><a href="javascript:controller.loadPage('panel', 'panelCommand.htm')"><span>Command</span></a></li>
-			<li class="menu-document"><a href="javascript:controller.loadPage('panel', 'panelDocument.htm')"><span>Document</span></a></li>
-			<li class="menu-graph"><a href="javascript:controller.loadPage('panel', 'panelGraph.htm')"><span>Graph</span></a></li>
-			<li class="menu-raw"><a href="javascript:controller.loadPage('panel', 'panelRaw.htm')"><span>Raw access</span></a></li>
-			<li class="menu-server"><a href="javascript:controller.loadPage('panel', 'panelServer.htm')"><span>Server</span></a></li>
+			<li class="menu-database"><a href="javascript:controller.loadFragment('panelDatabase.htm')"><span>Database</span></a></li>
+			<li class="menu-query"><a href="javascript:controller.loadFragment('panelQuery.htm')"><span>Query</span></a></li>
+			<li class="menu-command"><a href="javascript:controller.loadFragment('panelCommand.htm')"><span>Command</span></a></li>
+			<li class="menu-document"><a href="javascript:controller.loadFragment('panelDocument.htm')"><span>Document</span></a></li>
+			<li class="menu-graph"><a href="javascript:controller.loadFragment('panelGraph.htm')"><span>Graph</span></a></li>
+			<li class="menu-raw"><a href="javascript:controller.loadFragment('panelRaw.htm')"><span>Raw access</span></a></li>
+			<li class="menu-server"><a href="javascript:controller.loadFragment('panelServer.htm')"><span>Server</span></a></li>
 		</ul>
 		<div id="panel"></div>
 		</div>

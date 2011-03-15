@@ -100,7 +100,7 @@
 		if (databaseInfo == null) {
 			jQuery("#output").text(orientServer.getErrorMessage());
 		} else {
-			controller.loadPage('panel', "panelDatabase.htm");
+			controller.loadFragment("panelDatabase.htm", null, null, 'panel');
 
 			$("#navigation").show().ready(function() {
 				if (/MSIE (\d+\.\d+);/.test(navigator.userAgent))

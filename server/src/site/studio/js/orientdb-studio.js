@@ -70,5 +70,5 @@ jQuery(document).ready(function() {
 	$("#tabs-main").hide();
 	$("#buttonDisconnect").hide();
 
-	controller.loadPage('panel', 'panelHome.htm');
+	controller.loadFragment('panelHome.htm');
 });
