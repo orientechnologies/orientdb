@@ -13,6 +13,7 @@
 
 	<test name="DbCreation">
 		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.DbListenerTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.DbCreationTest" />
 		</classes>
 	</test>

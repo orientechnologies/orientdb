@@ -46,18 +46,18 @@ import com.orientechnologies.orient.core.storage.OStorage;
  */
 @SuppressWarnings("unchecked")
 public class ODatabaseRaw implements ODatabase {
-	protected int										id;
-	protected String								url;
-	protected OStorage							storage;
-	protected STATUS								status;
-	protected OIntent								currentIntent;
+	protected int													id;
+	protected String											url;
+	protected OStorage										storage;
+	protected STATUS											status;
+	protected OIntent											currentIntent;
 
-	private ODatabaseRecord					databaseOwner;
-	private Map<String, Object>			properties	= new HashMap<String, Object>();
-	private List<ODatabaseListener>	listeners		= new ArrayList<ODatabaseListener>();
+	private ODatabaseRecord								databaseOwner;
+	private final Map<String, Object>			properties	= new HashMap<String, Object>();
+	private final List<ODatabaseListener>	listeners		= new ArrayList<ODatabaseListener>();
 
-	private ODatabaseRecordCache		level1Cache;
-	private boolean									useCache;
+	private ODatabaseRecordCache					level1Cache;
+	private boolean												useCache;
 
 	public enum STATUS {
 		OPEN, CLOSED
@@ -139,6 +139,7 @@ public class ODatabaseRaw implements ODatabase {
 	}
 
 	public void delete() {
+		final List<ODatabaseListener> tmpListeners = new ArrayList<ODatabaseListener>(listeners);
 		close(true);
 
 		try {
@@ -149,7 +150,7 @@ public class ODatabaseRaw implements ODatabase {
 			storage = null;
 
 			// WAKE UP LISTENERS
-			for (ODatabaseListener listener : listeners)
+			for (ODatabaseListener listener : tmpListeners)
 				try {
 					listener.onDelete(this);
 				} catch (Throwable t) {
@@ -250,7 +251,7 @@ public class ODatabaseRaw implements ODatabase {
 	}
 
 	public String getURL() {
-		return storage != null ? storage.getURL() : "<no-url>";
+		return url != null ? url : storage.getURL();
 	}
 
 	@Override
