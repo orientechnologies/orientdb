@@ -488,6 +488,25 @@ public class SQLSelectTest {
 		database.close();
 	}
 
+	@SuppressWarnings("unused")
+	@Test
+	public void testRecordNumbers() {
+		database.open("admin", "admin");
+
+		long tot = database.countClass("OGraphVertex");
+
+		int count = 0;
+		for (ODocument record : database.browseClass("OGraphVertex")) {
+			count++;
+		}
+
+		Assert.assertEquals(count, tot);
+
+		Assert.assertTrue(database.query(new OSQLSynchQuery<ODocument>("select from OGraphVertex")).size() >= tot);
+
+		database.close();
+	}
+
 	@Test
 	public void queryWithRange() {
 		database.open("admin", "admin");
