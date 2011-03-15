@@ -33,7 +33,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	protected int								_version;
 	protected byte[]						_source;
 	protected ORecordSerializer	_recordFormat;
-	protected boolean						_pinned		= false;
+	protected boolean						_pinned		= true;
 	protected boolean						_dirty		= true;
 	protected STATUS						_status		= STATUS.NEW;
 	protected ORecordListener		_listener	= null;

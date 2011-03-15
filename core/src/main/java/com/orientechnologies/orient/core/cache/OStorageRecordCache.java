@@ -44,7 +44,7 @@ public class OStorageRecordCache extends OAbstractRecordCache {
 	}
 
 	public void pushRecord(final ORecordInternal<?> iRecord) {
-		if (maxSize == 0 || iRecord == null || iRecord.isDirty() || iRecord.getIdentity().isNew())
+		if (maxSize == 0 || iRecord == null || iRecord.isDirty() || iRecord.getIdentity().isNew() || !iRecord.isPinned())
 			// PRECONDITIONS
 			return;
 

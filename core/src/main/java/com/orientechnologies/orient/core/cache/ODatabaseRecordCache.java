@@ -53,7 +53,7 @@ public class ODatabaseRecordCache extends OAbstractRecordCache {
 	}
 
 	public void pushRecord(final ORecordInternal<?> iRecord) {
-		if (maxSize == 0)
+		if (maxSize == 0 || !iRecord.isPinned())
 			// PRECONDITIONS
 			return;
 
