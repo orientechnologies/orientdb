@@ -15,23 +15,16 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.Locale;
 
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.orient.client.remote.OEngineRemote;
-import com.orientechnologies.orient.client.remote.OServerAdmin;
-import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
@@ -50,47 +43,7 @@ public class DbCreationTest {
 		if (url.startsWith(OEngineMemory.NAME))
 			OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(true);
 
-		if (url.startsWith(OEngineRemote.NAME)) {
-
-			// LAOD SERVER CONFIG FILE TO EXTRACT THE ROOT'S PASSWORD
-			File file = new File("../releases/" + OConstants.ORIENT_VERSION + "/db/config/orientdb-server-config.xml");
-			if (!file.exists())
-				file = new File("server/config/orientdb-server-config.xml");
-			if (!file.exists())
-				file = new File("../server/config/orientdb-server-config.xml");
-			if (!file.exists())
-				file = new File(OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/orientdb-server-config.xml"));
-			if (!file.exists())
-				throw new OConfigurationException("Can't load file orientdb-server-config.xml to execute remote tests");
-
-			FileReader f = new FileReader(file);
-			final char[] buffer = new char[(int) file.length()];
-			f.read(buffer);
-			f.close();
-
-			String fileContent = new String(buffer);
-			int pos = fileContent.indexOf("password=\"");
-			pos += "password=\"".length();
-			String password = fileContent.substring(pos, fileContent.indexOf('"', pos));
-
-			new OServerAdmin(url).connect("root", password).createDatabase("local").close();
-		} else {
-			database = new ODatabaseObjectTx(url);
-			// database.setProperty("size", OStorage.SIZE.MEDIUM);
-			database.create();
-			//
-			// database.getStorage().getConfiguration().fileTemplate.fileMaxSize = "2Gb";
-			// for (OStorageClusterConfiguration c : database.getStorage().getConfiguration().clusters) {
-			// if (c instanceof OStoragePhysicalClusterConfiguration)
-			// ((OStoragePhysicalClusterConfiguration) c).fileMaxSize = "2Gb";
-			// }
-			// for (OStorageDataConfiguration d : database.getStorage().getConfiguration().dataSegments) {
-			// d.fileMaxSize = "2Gb";
-			// }
-			// database.getStorage().getConfiguration().update();
-
-			database.close();
-		}
+		TestUtils.createDatabase(new ODatabaseObjectTx(url), url);
 	}
 
 	@Test(dependsOnMethods = { "testDbCreation" })

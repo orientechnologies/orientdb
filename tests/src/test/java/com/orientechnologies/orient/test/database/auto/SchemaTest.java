@@ -39,7 +39,10 @@ public class SchemaTest {
 
 	public void createSchema() {
 		database = new ODatabaseFlat(url);
-		database.open("admin", "admin");
+		if (database.exists())
+			database.open("admin", "admin");
+		else
+			database.create();
 
 		if (database.getMetadata().getSchema().existsClass("Account"))
 			return;
