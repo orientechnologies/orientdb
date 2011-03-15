@@ -111,7 +111,8 @@ public class OFetchHelper {
 					if (userObject != null)
 						for (ODocument d : (Collection<ODocument>) userObject) {
 							// GO RECURSIVELY
-							fetch(d, d, iFetchPlan, fieldName, iCurrentLevel + 1, iMaxFetch, iListener);
+							if (d != null)
+								fetch(d, d, iFetchPlan, fieldName, iCurrentLevel + 1, iMaxFetch, iListener);
 						}
 				} else if (fieldValue instanceof Map<?, ?>) {
 					final Map<String, ODocument> linked = (Map<String, ODocument>) fieldValue;
@@ -119,7 +120,8 @@ public class OFetchHelper {
 					if (userObject != null)
 						for (ODocument d : ((Map<String, ODocument>) userObject).values()) {
 							// GO RECURSIVELY
-							fetch(d, d, iFetchPlan, fieldName, iCurrentLevel + 1, iMaxFetch, iListener);
+							if (d != null)
+								fetch(d, d, iFetchPlan, fieldName, iCurrentLevel + 1, iMaxFetch, iListener);
 						}
 				}
 

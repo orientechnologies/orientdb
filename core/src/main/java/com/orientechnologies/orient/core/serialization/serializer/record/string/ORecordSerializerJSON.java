@@ -32,6 +32,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
@@ -474,11 +475,11 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				}
 				fieldValue = record.field(fieldName);
 				if (fieldValue == null
-						|| !(fieldValue instanceof ODocument)
+						|| !(fieldValue instanceof OIdentifiable)
 						&& (!(fieldValue instanceof Collection<?>) || ((Collection<?>) fieldValue).size() == 0 || !(((Collection<?>) fieldValue)
-								.iterator().next() instanceof ODocument))
+								.iterator().next() instanceof OIdentifiable))
 						&& (!(fieldValue instanceof Map<?, ?>) || ((Map<?, ?>) fieldValue).size() == 0 || !(((Map<?, ?>) fieldValue).values()
-								.iterator().next() instanceof ODocument))) {
+								.iterator().next() instanceof OIdentifiable))) {
 					json.writeAttribute(indentLevel + 1, true, fieldName, OJSONWriter.encode(fieldValue));
 				} else {
 					try {
@@ -556,8 +557,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			fetchDocument(iFetchPlan, fieldValue, fieldName, iCurrentLevel, iMaxFetch, json, indentLevel, includeType, includeId,
 					includeVer, includeClazz, attribSameRow, keepTypes, parsedRecords);
 		} else if (fieldValue instanceof Collection<?>) {
-			fetchCollection(iFetchPlan, fieldValue, fieldName, iCurrentLevel, iMaxFetch, json, indentLevel, includeType, includeId,
-					includeVer, includeClazz, attribSameRow, keepTypes, parsedRecords);
+			fetchCollection(iRootRecord.getDatabase(), iFetchPlan, fieldValue, fieldName, iCurrentLevel, iMaxFetch, json, indentLevel,
+					includeType, includeId, includeVer, includeClazz, attribSameRow, keepTypes, parsedRecords);
 		} else if (fieldValue.getClass().isArray()) {
 			fetchArray(iFetchPlan, fieldValue, fieldName, iCurrentLevel, iMaxFetch, json, indentLevel, includeType, includeId,
 					includeVer, includeClazz, attribSameRow, keepTypes, parsedRecords);
@@ -622,21 +623,28 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void fetchCollection(final Map<String, Integer> iFetchPlan, final Object fieldValue, final String fieldName,
-			final int iCurrentLevel, final int iMaxFetch, final OJSONWriter json, final int indentLevel, final boolean includeType,
-			final boolean includeId, final boolean includeVer, final boolean includeClazz, final boolean attribSameRow,
-			final boolean keepTypes, final Set<ORID> parsedRecords) throws IOException {
+	private void fetchCollection(final ODatabaseRecord iDatabase, final Map<String, Integer> iFetchPlan, final Object fieldValue,
+			final String fieldName, final int iCurrentLevel, final int iMaxFetch, final OJSONWriter json, final int indentLevel,
+			final boolean includeType, final boolean includeId, final boolean includeVer, final boolean includeClazz,
+			final boolean attribSameRow, final boolean keepTypes, final Set<ORID> parsedRecords) throws IOException {
 		final Collection<ODocument> linked = (Collection<ODocument>) fieldValue;
 		json.beginCollection(indentLevel + 1, true, fieldName);
-		for (ODocument d : linked) {
+		for (OIdentifiable d : linked) {
 			// GO RECURSIVELY
 			if (!parsedRecords.contains((d).getIdentity())) {
 				parsedRecords.add((d).getIdentity());
-				json.beginObject(indentLevel + 1, true, null);
-				writeSignature(json, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, d);
-				processRecord(json, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, d, iFetchPlan, keepTypes,
-						iCurrentLevel + 1, iMaxFetch, parsedRecords);
-				json.endObject(indentLevel + 1, true);
+				if (d instanceof ORecordId) {
+					d = iDatabase.load((ORecordId) d);
+				}
+				if (!(d instanceof ODocument)) {
+					json.writeValue(indentLevel + 1, false, OJSONWriter.encode(d));
+				} else {
+					json.beginObject(indentLevel + 1, true, null);
+					writeSignature(json, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, (ODocument) d);
+					processRecord(json, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, (ODocument) d,
+							iFetchPlan, keepTypes, iCurrentLevel + 1, iMaxFetch, parsedRecords);
+					json.endObject(indentLevel + 1, true);
+				}
 			} else {
 				json.writeValue(indentLevel + 1, false, OJSONWriter.encode(d));
 			}
