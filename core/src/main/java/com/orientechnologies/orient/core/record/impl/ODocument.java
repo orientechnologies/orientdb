@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedList;
-import com.orientechnologies.orient.core.db.record.ORecordTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
@@ -1027,9 +1027,9 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 				newMap.putAll((ORecordLazyMap) fieldValue);
 				cloned._fieldValues.put(entry.getKey(), newMap);
 
-			} else if (fieldValue instanceof ORecordTrackedMap) {
-				final ORecordTrackedMap newMap = new ORecordTrackedMap(cloned);
-				newMap.putAll((ORecordTrackedMap) fieldValue);
+			} else if (fieldValue instanceof OTrackedMap) {
+				final OTrackedMap newMap = new OTrackedMap(cloned);
+				newMap.putAll((OTrackedMap) fieldValue);
 				cloned._fieldValues.put(entry.getKey(), newMap);
 
 			} else if (fieldValue instanceof Map<?, ?>) {

@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  * 
  */
 @SuppressWarnings({ "serial", "unchecked" })
-public class ORecordLazyMap extends ORecordTrackedMap implements ORecordLazyMultiValue {
+public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecordLazyMultiValue {
 	private ODatabaseRecord														database;
 	final private byte																recordType;
 	private ORecordMultiValueHelper.MULTIVALUE_STATUS	status							= MULTIVALUE_STATUS.EMPTY;
@@ -51,7 +51,7 @@ public class ORecordLazyMap extends ORecordTrackedMap implements ORecordLazyMult
 	}
 
 	@Override
-	public Object get(final Object iKey) {
+	public OIdentifiable get(final Object iKey) {
 		if (iKey == null)
 			return null;
 
@@ -62,7 +62,7 @@ public class ORecordLazyMap extends ORecordTrackedMap implements ORecordLazyMult
 	}
 
 	@Override
-	public Object put(final Object iKey, Object iValue) {
+	public OIdentifiable put(final Object iKey, OIdentifiable iValue) {
 		if (status == MULTIVALUE_STATUS.ALL_RIDS && iValue instanceof ORecord<?> && !((ORecord<?>) iValue).getIdentity().isNew())
 			// IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
 			iValue = ((ORecord<?>) iValue).getIdentity();
@@ -73,14 +73,14 @@ public class ORecordLazyMap extends ORecordTrackedMap implements ORecordLazyMult
 	}
 
 	@Override
-	public Collection<Object> values() {
+	public Collection<OIdentifiable> values() {
 		convertLinks2Records();
 		return super.values();
 	}
 
 	@Override
-	public Object remove(Object o) {
-		final Object result = super.remove(o);
+	public OIdentifiable remove(Object o) {
+		final OIdentifiable result = super.remove(o);
 		if (size() == 0)
 			status = MULTIVALUE_STATUS.EMPTY;
 		return result;

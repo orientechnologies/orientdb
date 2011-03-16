@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.entity.OEntityManagerInternal;
 import com.orientechnologies.orient.core.id.ORID;
@@ -169,7 +170,11 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		String value = iValue.substring(1, iValue.length() - 1);
 
 		@SuppressWarnings("rawtypes")
-		final Map map = new ORecordLazyMap(iSourceDocument, ODocument.RECORD_TYPE);
+		final Map map;
+		if (iLinkedType == OType.LINK || iLinkedType == OType.EMBEDDED)
+			map = new ORecordLazyMap(iSourceDocument, ODocument.RECORD_TYPE);
+		else
+			map = new OTrackedMap<Object>(iSourceDocument);
 
 		if (value.length() == 0)
 			return map;
@@ -342,7 +347,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
 				// REPLACE ALL CHANGED ITEMS
 				for (Map.Entry<String, Object> entry : map.entrySet()) {
-					newMap.put(entry.getKey(), entry.getValue());
+					newMap.put(entry.getKey(), (OIdentifiable) entry.getValue());
 				}
 				map.clear();
 				iRecord.field(iName, newMap);

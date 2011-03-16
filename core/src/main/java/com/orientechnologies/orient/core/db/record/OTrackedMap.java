@@ -29,24 +29,24 @@ import com.orientechnologies.orient.core.record.ORecord;
  * 
  */
 @SuppressWarnings("serial")
-public class ORecordTrackedMap extends LinkedHashMap<Object, Object> implements ORecordElement {
+public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordElement {
 	final protected ORecord<?>		sourceRecord;
 	protected final static Object	ENTRY_REMOVAL	= new Object();
 
-	public ORecordTrackedMap(final ORecord<?> iSourceRecord) {
+	public OTrackedMap(final ORecord<?> iSourceRecord) {
 		this.sourceRecord = iSourceRecord;
 		if (iSourceRecord != null)
 			iSourceRecord.setDirty();
 	}
 
 	@Override
-	public Object put(final Object iKey, final Object iValue) {
+	public T put(final Object iKey, final T iValue) {
 		setDirty();
 		return super.put(iKey, iValue);
 	}
 
 	@Override
-	public Object remove(final Object iKey) {
+	public T remove(final Object iKey) {
 		setDirty();
 		return super.remove(iKey);
 	}
@@ -58,13 +58,13 @@ public class ORecordTrackedMap extends LinkedHashMap<Object, Object> implements 
 	}
 
 	@Override
-	public void putAll(Map<? extends Object, ? extends Object> m) {
+	public void putAll(Map<? extends Object, ? extends T> m) {
 		setDirty();
 		super.putAll(m);
 	}
 
-	@SuppressWarnings("unchecked")
-	public ORecordTrackedMap setDirty() {
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public OTrackedMap setDirty() {
 		if (sourceRecord != null)
 			sourceRecord.setDirty();
 		return this;
@@ -74,14 +74,15 @@ public class ORecordTrackedMap extends LinkedHashMap<Object, Object> implements 
 		remove(iRID);
 	}
 
+	@SuppressWarnings("unchecked")
 	public void onAfterIdentityChanged(final ORecord<?> iRecord) {
-		super.put(iRecord.getIdentity(), iRecord);
+		super.put(iRecord.getIdentity(), (T) iRecord);
 	}
 
 	public boolean setDatabase(final ODatabaseRecord iDatabase) {
 		boolean changed = false;
 
-		for (Map.Entry<Object, Object> e : entrySet()) {
+		for (Map.Entry<Object, T> e : entrySet()) {
 			if (e.getKey() instanceof ORecordElement)
 				if (((ORecordElement) e.getKey()).setDatabase(iDatabase))
 					changed = true;
