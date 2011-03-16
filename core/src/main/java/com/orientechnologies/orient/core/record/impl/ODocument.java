@@ -35,9 +35,9 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedList;
-import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -347,12 +347,12 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 */
 	@Override
 	public String toString() {
-		checkForFields();
+		final boolean saveDirtyStatus = _dirty;
 
 		final StringBuilder buffer = new StringBuilder();
 
-		final boolean saveDirtyStatus = _dirty;
 		try {
+			checkForFields();
 			if (_clazz != null)
 				buffer.append(_clazz.getName());
 
@@ -1028,8 +1028,8 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 				cloned._fieldValues.put(entry.getKey(), newMap);
 
 			} else if (fieldValue instanceof OTrackedMap) {
-				final OTrackedMap newMap = new OTrackedMap(cloned);
-				newMap.putAll((OTrackedMap) fieldValue);
+				final OTrackedMap<Object> newMap = new OTrackedMap<Object>(cloned);
+				newMap.putAll((OTrackedMap<Object>) fieldValue);
 				cloned._fieldValues.put(entry.getKey(), newMap);
 
 			} else if (fieldValue instanceof Map<?, ?>) {
