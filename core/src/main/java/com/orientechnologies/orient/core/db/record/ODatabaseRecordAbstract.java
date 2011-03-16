@@ -451,6 +451,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			if (isNew)
 				// NOTIFY IDENTITY HAS CHANGED
 				iRecord.onBeforeIdentityChanged(rid);
+			else if( stream.length == 0 )
+				// ALREADY CREATED AND WAITING FOR THE RIGHT UPDATE (WE'RE IN A GRAPH)
+				return;
 
 			final int clusterId;
 			if (isNew)

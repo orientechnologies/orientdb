@@ -35,15 +35,19 @@ public class OMMapManager {
 		READ, WRITE
 	}
 
-	public enum STRATEGY {
+	public enum ALLOC_STRATEGY {
 		MMAP_ALWAYS, MMAP_WRITE_ALWAYS_READ_IF_AVAIL_POOL, MMAP_WRITE_ALWAYS_READ_IF_IN_MEM, MMAP_ONLY_AVAIL_POOL, MMAP_NEVER
+	}
+
+	public enum OVERLAP_STRATEGY {
+		NO_OVERLAP_USE_CHANNEL, NO_OVERLAP_FLUSH_AND_USE_CHANNEL, OVERLAP
 	}
 
 	private static final long															MIN_MEMORY				= 50000000;
 	private static final int															FORCE_DELAY;
 	private static final int															FORCE_RETRY;
-
-	private static STRATEGY																lastStrategy;
+	private static OVERLAP_STRATEGY												overlapStrategy;
+	private static ALLOC_STRATEGY													lastStrategy;
 	private static int																		blockSize;
 	private static long																		maxMemory;
 	private static long																		totalMemory;
@@ -56,6 +60,7 @@ public class OMMapManager {
 		FORCE_DELAY = OGlobalConfiguration.FILE_MMAP_FORCE_DELAY.getValueAsInteger();
 		FORCE_RETRY = OGlobalConfiguration.FILE_MMAP_FORCE_RETRY.getValueAsInteger();
 		maxMemory = OGlobalConfiguration.FILE_MMAP_MAX_MEMORY.getValueAsLong();
+		setOverlapStrategy(OGlobalConfiguration.FILE_MMAP_OVERLAP_STRATEGY.getValueAsInteger());
 
 		OProfiler.getInstance().registerHookValue("mmap.totalMemory", new OProfilerHookValue() {
 			public Object getValue() {
@@ -81,15 +86,21 @@ public class OMMapManager {
 			}
 		});
 
-		OProfiler.getInstance().registerHookValue("mmap.strategy", new OProfilerHookValue() {
+		OProfiler.getInstance().registerHookValue("mmap.alloc.strategy", new OProfilerHookValue() {
 			public Object getValue() {
 				return lastStrategy;
+			}
+		});
+
+		OProfiler.getInstance().registerHookValue("mmap.overlap.strategy", new OProfilerHookValue() {
+			public Object getValue() {
+				return overlapStrategy;
 			}
 		});
 	}
 
 	public static OMMapBufferEntry request(final OFileMMap iFile, final long iBeginOffset, final int iSize,
-			final OPERATION_TYPE iOperationType, final STRATEGY iStrategy) {
+			final OPERATION_TYPE iOperationType, final ALLOC_STRATEGY iStrategy) {
 		return request(iFile, iBeginOffset, iSize, false, iOperationType, iStrategy);
 	}
 
@@ -110,9 +121,9 @@ public class OMMapManager {
 	 * @return The mmap buffer entry if found, or null if the operation is READ and the buffer pool is full.
 	 */
 	public synchronized static OMMapBufferEntry request(final OFileMMap iFile, final long iBeginOffset, final int iSize,
-			final boolean iForce, final OPERATION_TYPE iOperationType, final STRATEGY iStrategy) {
+			final boolean iForce, final OPERATION_TYPE iOperationType, final ALLOC_STRATEGY iStrategy) {
 
-		if (iStrategy == STRATEGY.MMAP_NEVER)
+		if (iStrategy == ALLOC_STRATEGY.MMAP_NEVER)
 			return null;
 
 		lastStrategy = iStrategy;
@@ -136,14 +147,16 @@ public class OMMapManager {
 		int p = (position + 2) * -1;
 
 		// CHECK IF THERE IS A BUFFER THAT OVERLAPS
-		if (isOverlapping(iBeginOffset, iSize, fileEntries, p))
+		if (!allocIfOverlaps(iBeginOffset, iSize, fileEntries, p)) {
+			OProfiler.getInstance().updateCounter("OMMapManager.usedChannel", 1);
 			return null;
+		}
 
 		int bufferSize = computeBestEntrySize(iFile, iBeginOffset, iSize, iForce, fileEntries, p);
 
 		if (totalMemory + bufferSize > maxMemory
-				&& (iStrategy == STRATEGY.MMAP_ONLY_AVAIL_POOL || iOperationType == OPERATION_TYPE.READ
-						&& iStrategy == STRATEGY.MMAP_WRITE_ALWAYS_READ_IF_AVAIL_POOL)) {
+				&& (iStrategy == ALLOC_STRATEGY.MMAP_ONLY_AVAIL_POOL || iOperationType == OPERATION_TYPE.READ
+						&& iStrategy == ALLOC_STRATEGY.MMAP_WRITE_ALWAYS_READ_IF_AVAIL_POOL)) {
 			OProfiler.getInstance().updateCounter("OMMapManager.usedChannel", 1);
 			return null;
 		}
@@ -214,7 +227,7 @@ public class OMMapManager {
 		fileEntries.add(p, entry);
 
 		// TEST
-		getOverlappedBlocks(iFile);
+		//getOverlappedBlocks(iFile);
 
 		return entry;
 	}
@@ -283,6 +296,18 @@ public class OMMapManager {
 
 	public static void setBlockSize(final int blockSize) {
 		OMMapManager.blockSize = blockSize;
+	}
+
+	public static OVERLAP_STRATEGY getOverlapStrategy() {
+		return overlapStrategy;
+	}
+
+	public static void setOverlapStrategy(int overlapStrategy) {
+		OMMapManager.overlapStrategy = OVERLAP_STRATEGY.values()[overlapStrategy];
+	}
+
+	public static void setOverlapStrategy(OVERLAP_STRATEGY overlapStrategy) {
+		OMMapManager.overlapStrategy = overlapStrategy;
 	}
 
 	public static synchronized int getOverlappedBlocks() {
@@ -401,8 +426,11 @@ public class OMMapManager {
 		return forceSucceed;
 	}
 
-	private static boolean isOverlapping(final long iBeginOffset, final int iSize, final List<OMMapBufferEntry> fileEntries,
+	private static boolean allocIfOverlaps(final long iBeginOffset, final int iSize, final List<OMMapBufferEntry> fileEntries,
 			final int p) {
+		if (overlapStrategy == OVERLAP_STRATEGY.OVERLAP)
+			return true;
+
 		boolean overlaps = false;
 		OMMapBufferEntry entry = null;
 		if (p > 0) {
@@ -420,12 +448,12 @@ public class OMMapManager {
 		if (overlaps) {
 			// READ NOT IN BUFFER POOL: RETURN NULL TO LET TO THE CALLER TO EXECUTE A DIRECT READ WITHOUT MMAP
 			OProfiler.getInstance().updateCounter("OMMapManager.overlappedPageUsingChannel", 1);
-			commitBuffer(entry);
-			OProfiler.getInstance().updateCounter("OMMapManager.usedChannel", 1);
-			return true;
+			if (overlapStrategy == OVERLAP_STRATEGY.NO_OVERLAP_FLUSH_AND_USE_CHANNEL)
+				commitBuffer(entry);
+			return false;
 		}
 
-		return false;
+		return true;
 	}
 
 	private static int computeBestEntrySize(final OFileMMap iFile, final long iBeginOffset, final int iSize, final boolean iForce,
@@ -447,7 +475,7 @@ public class OMMapManager {
 		if (bufferSize <= 0)
 			throw new IllegalArgumentException("Invalid range requested for file " + iFile + ". Requested " + iSize
 					+ " bytes from the address " + iBeginOffset + " while the total file size is " + iFile.getFileSize());
-		
+
 		return bufferSize;
 	}
 }

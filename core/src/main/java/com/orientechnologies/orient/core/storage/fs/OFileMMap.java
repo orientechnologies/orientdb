@@ -49,12 +49,12 @@ public class OFileMMap extends OFile {
 	protected List<ByteBuffer>						bufferPool				= new ArrayList<ByteBuffer>(10);
 
 	private static int										BYTEBUFFER_POOLABLE_SIZE;
-	private static OMMapManager.STRATEGY	strategy;
+	private static OMMapManager.ALLOC_STRATEGY	strategy;
 
 	public OFileMMap(String iFileName, String iMode) throws IOException {
 		super(iFileName, iMode);
 		BYTEBUFFER_POOLABLE_SIZE = OGlobalConfiguration.FILE_MMAP_BUFFER_SIZE.getValueAsInteger();
-		strategy = OMMapManager.STRATEGY.values()[OGlobalConfiguration.FILE_MMAP_STRATEGY.getValueAsInteger()];
+		strategy = OMMapManager.ALLOC_STRATEGY.values()[OGlobalConfiguration.FILE_MMAP_STRATEGY.getValueAsInteger()];
 	}
 
 	@Override

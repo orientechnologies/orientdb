@@ -94,9 +94,9 @@ public enum OGlobalConfiguration {
 	FILE_MMAP_STRATEGY(
 			"file.mmap.strategy",
 			"Strategy to use with memory mapped files. 0 = USE MMAP ALWAYS, 1 = USE MMAP ON WRITES OR ON READ JUST WHEN THE BLOCK POOL IS FREE, 2 = USE MMAP ON WRITES OR ON READ JUST WHEN THE BLOCK IS ALREADY AVAILABLE, 3 = USE MMAP ONLY IF BLOCK IS ALREADY AVAILABLE, 4 = NEVER USE MMAP",
-			Integer.class, 1),
+			Integer.class, 0),
 
-	FILE_MMAP_BLOCK_SIZE("file.mmap.blockSize", "Size of the memory mapped block", Integer.class, 327680,
+	FILE_MMAP_BLOCK_SIZE("file.mmap.blockSize", "Size of the memory mapped block, default is 1Mb", Integer.class, 1048576,
 			new OConfigurationChangeCallback() {
 				public void change(final Object iCurrentValue, final Object iNewValue) {
 					OMMapManager.setBlockSize(((Number) iNewValue).intValue());
@@ -104,13 +104,22 @@ public enum OGlobalConfiguration {
 			}),
 
 	FILE_MMAP_BUFFER_SIZE("file.mmap.bufferSize", "Size of the buffer for direct access to the file through the channel",
-			Integer.class, 65536),
+			Integer.class, 8192),
 
 	FILE_MMAP_MAX_MEMORY("file.mmap.maxMemory",
 			"Max memory allocable by memory mapping manager. Note that on 32bit OS the limit is to 2Gb but can change to OS by OS",
 			Long.class, 134217728, new OConfigurationChangeCallback() {
 				public void change(final Object iCurrentValue, final Object iNewValue) {
 					OMMapManager.setMaxMemory(((Number) iNewValue).longValue());
+				}
+			}),
+
+	FILE_MMAP_OVERLAP_STRATEGY(
+			"file.mmap.overlapStrategy",
+			"Strategy when a request overlap in-memory buffers: 0 = Use the channel access, 1 = force the in memory buffer and use the channel access, 2 = create an overlapped in-memory buffer. Default = false",
+			Integer.class, 2, new OConfigurationChangeCallback() {
+				public void change(final Object iCurrentValue, final Object iNewValue) {
+					OMMapManager.setOverlapStrategy((Integer) iNewValue);
 				}
 			}),
 
@@ -304,7 +313,7 @@ public enum OGlobalConfiguration {
 			// WINDOWS
 
 			// AVOID TO USE MMAP, SINCE COULD BE BUGGY
-			FILE_MMAP_STRATEGY.setValue(3);
+			//FILE_MMAP_STRATEGY.setValue(3);
 		}
 
 		if (System.getProperty("os.arch").indexOf("64") > -1) {
@@ -323,8 +332,6 @@ public enum OGlobalConfiguration {
 			} catch (Exception e) {
 				// SUN JMX CLASS NOT AVAILABLE: CAN'T AUTO TUNE THE ENGINE
 			}
-
-			FILE_MMAP_BLOCK_SIZE.setValue(327680);
 		} else {
 			// 32 BIT, USE THE DEFAULT CONFIGURATION
 		}
