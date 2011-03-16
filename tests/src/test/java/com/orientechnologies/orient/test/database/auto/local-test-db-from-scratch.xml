@@ -120,6 +120,12 @@
 			<class name="com.orientechnologies.orient.test.database.auto.SQLDeleteTest" />
 		</classes>
 	</test>
+	<test name="sql-findReferences">
+		<classes>
+			<class
+				name="com.orientechnologies.orient.test.database.auto.SQLFindReferencesTest" />
+		</classes>
+	</test>
 	<test name="DbTools">
 		<classes>
 			<class name="com.orientechnologies.orient.test.database.auto.DbImportExportTest" />

@@ -68,6 +68,9 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract {
 			else if (textUpperCase.startsWith(OCommandExecutorSQLRemoveProperty.KEYWORD_REMOVE + " "
 					+ OCommandExecutorSQLRemoveProperty.KEYWORD_PROPERTY))
 				delegate = new OCommandExecutorSQLRemoveProperty().parse(iCommand);
+			else if (textUpperCase.startsWith(OCommandExecutorSQLFindReferences.KEYWORD_FIND + " "
+					+ OCommandExecutorSQLFindReferences.KEYWORD_REFERENCES))
+				delegate = new OCommandExecutorSQLFindReferences().parse(iCommand);
 			else
 				throw new IllegalArgumentException("Can't find a command executor for the command request: " + iCommand);
 

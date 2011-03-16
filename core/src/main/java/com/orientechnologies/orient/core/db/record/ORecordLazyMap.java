@@ -186,6 +186,6 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
 	}
 
 	public Iterator<OIdentifiable> rawIterator() {
-		throw new UnsupportedOperationException("rawIterator()");
+		return new OLazyRecordIterator(sourceRecord, database, recordType, super.values().iterator(), false);
 	}
 }

@@ -325,6 +325,12 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		sqlCommand("create", iCommandText, "\nCreated %d link(s) in %f sec(s).\n");
 	}
 
+	@ConsoleCommand(splitInWords = false, description = "Find references in all database of target record given @rid")
+	public void findReferences(
+			@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
+		sqlCommand("find", iCommandText, "\nFound %s in %f sec(s).\n");
+	}
+
 	@ConsoleCommand(splitInWords = false, description = "Create a class")
 	public void createClass(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
 		sqlCommand("create", iCommandText, "\nClass created successfully with id=%d\n");
