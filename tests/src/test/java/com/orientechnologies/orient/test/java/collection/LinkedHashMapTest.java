@@ -3,7 +3,7 @@ package com.orientechnologies.orient.test.java.collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 
 public class LinkedHashMapTest {
 
