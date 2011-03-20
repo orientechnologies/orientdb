@@ -3,8 +3,8 @@ package com.orientechnologies.common.test;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.TreeMap;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
@@ -22,6 +22,11 @@ public abstract class SpeedTestGroup {
 	public void go() {
 		for (SpeedTestAbstract test : tests) {
 			test.data().go(test);
+			Runtime.getRuntime().gc();
+			try {
+				Thread.sleep(3000);
+			} catch (InterruptedException e) {
+			}
 		}
 	}
 

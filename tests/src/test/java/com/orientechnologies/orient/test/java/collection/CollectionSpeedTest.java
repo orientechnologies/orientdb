@@ -23,9 +23,9 @@ public class CollectionSpeedTest extends SpeedTestGroup {
 	protected static final String	SEARCHED_VALUE	= String.valueOf(COLLECTION_SIZE - 1);
 
 	public void testOnce() {
-		addTest(new HashMapSpeedTest()).data().setCycles(TEST_CYCLES).config(COLLECTION_SIZE, SEARCHED_VALUE);
-
 		addTest(new ArrayListSpeedTest()).data().setCycles(TEST_CYCLES).config(COLLECTION_SIZE, SEARCHED_VALUE);
+
+		addTest(new HashMapSpeedTest()).data().setCycles(TEST_CYCLES).config(COLLECTION_SIZE, SEARCHED_VALUE);
 
 		addTest(new ArraySpeedTest()).data().setCycles(TEST_CYCLES).config(COLLECTION_SIZE, SEARCHED_VALUE);
 

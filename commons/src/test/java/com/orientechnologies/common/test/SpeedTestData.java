@@ -116,6 +116,10 @@ public class SpeedTestData {
 			testGroup.setResult("Execution time", currentTestName, elapsed);
 			testGroup.setResult("Free memory", currentTestName, freeMemory);
 		}
+
+		currentTestFreeMemory = freeMemory;
+		currentTestTotalMemory = totalMemory;
+		currentTestMaxMemory = maxMemory;
 	}
 
 	/*
