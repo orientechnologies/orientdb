@@ -122,6 +122,7 @@ public class OIndexManager extends ODocumentWrapperNoClass {
 			OIndex index;
 			for (ODocument d : idxs) {
 				index = OIndexFactory.instance().newInstance((String) d.field(OIndex.CONFIG_TYPE));
+				d.setDatabase(document.getDatabase());
 				index.loadFromConfiguration(d);
 				indexes.put(index.getName().toLowerCase(), index);
 			}
