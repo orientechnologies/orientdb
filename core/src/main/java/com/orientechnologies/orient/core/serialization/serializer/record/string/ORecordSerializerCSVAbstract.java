@@ -229,6 +229,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 	public String fieldToStream(final ODocument iRecord, final ODatabaseComplex<?> iDatabase,
 			final OUserObject2RecordHandler iObjHandler, final OType iType, final OClass iLinkedClass, final OType iLinkedType,
 			final String iName, final Object iValue, final Set<Integer> iMarshalledRecords, final boolean iSaveOnlyDirty) {
+		if (iValue == null)
+			return "";
+
 		final StringBuilder buffer = new StringBuilder();
 
 		switch (iType) {

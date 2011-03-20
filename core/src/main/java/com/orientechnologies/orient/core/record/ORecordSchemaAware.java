@@ -33,6 +33,8 @@ public interface ORecordSchemaAware<T> extends ORecordInternal<T> {
 
 	public <RET> RET field(String iPropertyName, OType iType);
 
+	public ORecordSchemaAware<T> field(String iPropertyName, Object iPropertyValue, OType iType);
+
 	public Object removeField(String iPropertyName);
 
 	public Set<String> fieldNames();
