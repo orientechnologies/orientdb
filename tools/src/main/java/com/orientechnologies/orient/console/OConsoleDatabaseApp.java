@@ -63,7 +63,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
-import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.command.script.OCommandScript;
 
@@ -133,7 +132,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 			currentDatabase = new ODatabaseDocumentTx(iURL);
 			if (currentDatabase == null)
-				throw new OException("Database " + iURL + " not found.");
+				throw new OException("Database " + iURL + " not found");
 			currentDatabase.open(iUserName, iUserPassword);
 
 			currentDatabaseName = currentDatabase.getName();
@@ -174,7 +173,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			@ConsoleParameter(name = "database-url", description = "The url of the database to create in the format '<mode>:<path>'") String iDatabaseURL,
 			@ConsoleParameter(name = "user", description = "Server administrator name") String iUserName,
 			@ConsoleParameter(name = "password", description = "Server administrator password") String iUserPassword,
-			@ConsoleParameter(name = "storage-type", description = "The type of the storage between 'local' for disk-based database and 'memory' for in memory only database.") String iStorageType)
+			@ConsoleParameter(name = "storage-type", description = "The type of the storage between 'local' for disk-based database and 'memory' for in memory only database") String iStorageType)
 			throws IOException {
 		out.println("Creating database [" + iDatabaseURL + "] using the storage type [" + iStorageType + "]...");
 
@@ -201,7 +200,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		out.println("\nDone.");
 	}
 
-	@ConsoleCommand(description = "Create a new cluster in the current database. The cluster can be physical or logical.")
+	@ConsoleCommand(description = "Create a new cluster in the current database. The cluster can be physical or logical")
 	public void createCluster(
 			@ConsoleParameter(name = "cluster-name", description = "The name of the cluster to create") String iClusterName,
 			@ConsoleParameter(name = "cluster-type", description = "Cluster type: 'physical' or 'logical'") String iClusterType,
@@ -221,7 +220,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		updateDatabaseInfo();
 	}
 
-	@ConsoleCommand(description = "Remove a cluster in the current database. The cluster can be physical or logical.")
+	@ConsoleCommand(description = "Remove a cluster in the current database. The cluster can be physical or logical")
 	public void removeCluster(
 			@ConsoleParameter(name = "cluster-name", description = "The name or the id of the cluster to remove") String iClusterName) {
 		checkCurrentDatabase();
@@ -246,42 +245,16 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		updateDatabaseInfo();
 	}
 
-	@ConsoleCommand(description = "Truncate the cluster content in the current database.")
-	public void truncateCluster(
-			@ConsoleParameter(name = "cluster-name", description = "The name of the cluster to truncate") String iClusterName) {
-		checkCurrentDatabase();
-
-		out.println("Truncating cluster [" + iClusterName + "] in database " + currentDatabaseName + "...");
-		try {
-			final OCluster cluster = currentDatabase.getStorage().getClusterById(currentDatabase.getClusterIdByName(iClusterName));
-
-			final long recs = cluster.getEntries();
-
-			cluster.truncate();
-
-			out.println("Truncated " + recs + " records from cluster [" + iClusterName + "] in database " + currentDatabaseName);
-		} catch (Exception e) {
-			printError(e);
-		}
+	@ConsoleCommand(splitInWords = false, description = "Truncate the class content in the current database")
+	public void truncateClass(
+			@ConsoleParameter(name = "class-name", description = "The name of the class to truncate") String iCommandText) {
+		sqlCommand("truncate", iCommandText, "\nTruncated %d record(s) in %f sec(s).\n");
 	}
 
-	@ConsoleCommand(description = "Truncate the class content in the current database.")
-	public void truncateClass(
-			@ConsoleParameter(name = "class-name", description = "The name of the class to truncate") String iClassName) {
-		checkCurrentDatabase();
-
-		out.println("Truncating class [" + iClassName + "] in database " + currentDatabaseName + "...");
-		try {
-			OClass cls = currentDatabase.getMetadata().getSchema().getClass(iClassName);
-
-			final long recs = cls.count();
-
-			cls.truncate();
-
-			out.println("Truncated " + recs + " records from class [" + iClassName + "] in database " + currentDatabaseName);
-		} catch (Exception e) {
-			printError(e);
-		}
+	@ConsoleCommand(splitInWords = false, description = "Truncate the cluster content in the current database")
+	public void truncateCluster(
+			@ConsoleParameter(name = "class-name", description = "The name of the class to truncate") String iCommandText) {
+		sqlCommand("truncate", iCommandText, "\nTruncated %d record(s) in %f sec(s).\n");
 	}
 
 	@ConsoleCommand(description = "Load a record in memory and set it as the current one")
@@ -383,7 +356,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 				+ (float) (System.currentTimeMillis() - start) / 1000 + " sec(s).");
 	}
 
-	@ConsoleCommand(splitInWords = false, description = "Execute a script against the current database. If the database is remote, then the script will be executed remotely.")
+	@ConsoleCommand(splitInWords = false, description = "Execute a script against the current database. If the database is remote, then the script will be executed remotely")
 	public void script(@ConsoleParameter(name = "script-text", description = "The script text to execute") final String iScriptText) {
 		checkCurrentDatabase();
 

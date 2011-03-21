@@ -46,6 +46,8 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 	protected abstract ORawBuffer readRecord(final int iRequesterId, final OCluster iClusterSegment, final long iPosition,
 			boolean iAtomicLock);
 
+	public abstract OCluster getClusterByName(final String iClusterName);
+
 	/**
 	 * Execute the command request and return the result back.
 	 */

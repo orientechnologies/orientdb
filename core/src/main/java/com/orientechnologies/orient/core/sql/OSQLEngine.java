@@ -62,6 +62,10 @@ public class OSQLEngine {
 				OCommandExecutorSQLRemoveProperty.class);
 		commands.put(OCommandExecutorSQLFindReferences.KEYWORD_FIND + " " + OCommandExecutorSQLFindReferences.KEYWORD_REFERENCES,
 				OCommandExecutorSQLFindReferences.class);
+		commands.put(OCommandExecutorSQLTruncateClass.KEYWORD_TRUNCATE + " " + OCommandExecutorSQLTruncateClass.KEYWORD_CLASS,
+				OCommandExecutorSQLTruncateClass.class);
+		commands.put(OCommandExecutorSQLTruncateCluster.KEYWORD_TRUNCATE + " " + OCommandExecutorSQLTruncateCluster.KEYWORD_CLUSTER,
+				OCommandExecutorSQLTruncateCluster.class);
 
 		// MISC FUNCTIONS
 		registerFunction(OSQLFunctionFormat.NAME, new OSQLFunctionFormat());

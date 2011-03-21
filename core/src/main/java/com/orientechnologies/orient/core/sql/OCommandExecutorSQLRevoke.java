@@ -81,7 +81,7 @@ public class OCommandExecutorSQLRevoke extends OCommandExecutorSQLPermissionAbst
 	}
 
 	/**
-	 * Execute the GRANT.
+	 * Execute the command.
 	 */
 	public Object execute(final Map<Object, Object> iArgs) {
 		if (role == null)
