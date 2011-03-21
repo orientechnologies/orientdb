@@ -74,37 +74,37 @@ public abstract class OStringSerializerHelper {
 		case INTEGER:
 			if (iValue instanceof Integer)
 				return iValue;
-			return new Integer(iValue.toString());
+			return new Integer(getStringContent(iValue));
 
 		case BOOLEAN:
 			if (iValue instanceof Boolean)
 				return iValue;
-			return new Boolean(iValue.toString());
+			return new Boolean(getStringContent(iValue));
 
 		case FLOAT:
 			if (iValue instanceof Float)
 				return iValue;
-			return new Float(iValue.toString());
+			return new Float(getStringContent(iValue));
 
 		case LONG:
 			if (iValue instanceof Long)
 				return iValue;
-			return new Long(iValue.toString());
+			return new Long(getStringContent(iValue));
 
 		case DOUBLE:
 			if (iValue instanceof Double)
 				return iValue;
-			return new Double(iValue.toString());
+			return new Double(getStringContent(iValue));
 
 		case SHORT:
 			if (iValue instanceof Short)
 				return iValue;
-			return new Short(iValue.toString());
+			return new Short(getStringContent(iValue));
 
 		case BYTE:
 			if (iValue instanceof Byte)
 				return iValue;
-			return new Byte(iValue.toString());
+			return new Byte(getStringContent(iValue));
 
 		case BINARY:
 			if (iValue instanceof byte[])
@@ -119,7 +119,7 @@ public abstract class OStringSerializerHelper {
 		case DATE:
 			if (iValue instanceof Date)
 				return iValue;
-			return new Date(Long.parseLong(iValue.toString()));
+			return new Date(Long.parseLong(getStringContent(iValue)));
 
 		case LINK:
 			if (iValue instanceof ORID)
@@ -587,5 +587,21 @@ public abstract class OStringSerializerHelper {
 		}
 
 		return result.toString();
+	}
+
+	public static String getStringContent(final Object iValue) {
+		if (iValue == null)
+			return null;
+
+		final String s = iValue.toString();
+
+		if (s == null)
+			return null;
+
+		if (s.length() > 1
+				&& (s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\'' || s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"'))
+			return s.substring(1, s.length() - 1);
+
+		return s;
 	}
 }
