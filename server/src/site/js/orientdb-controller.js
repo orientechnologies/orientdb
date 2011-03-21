@@ -18,6 +18,7 @@
  * Client-side controller to develop rich-client web applications.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * @author Fabio Ercoli (f.ercoli--at--assetdata.it)
  */
 
 function OController(options) {
@@ -26,7 +27,7 @@ function OController(options) {
     this.options = {
         rewriteUrl : false,
         debug : false,
-        cachePages : false,
+        cachePages : false
     }
 
     if (options) {

@@ -31,6 +31,10 @@
 				<button id="deleteClass" class="ui-button-text-icon" style="text-align: left">Delete class <img border="0" alt="Delete record"
 					src="images/delete.png" align="top" /></button>
 				</td>
+				<td>
+				<button id="queryClass" class="ui-button-text-icon" style="text-align: left">Query <img border="0" alt="Query"
+					src="images/execute.png" align="top" /></button>
+				</td>
 			</tr>
 		</table>
 		</td>
@@ -596,6 +600,22 @@
 					} else
 						alert("Please select the class to delete!");
 				});
+		$("#queryClass").click(
+				function() {
+					var selectedRow = jQuery("#databaseClasses").jqGrid(
+							'getGridParam', 'selrow');
+					if (selectedRow != null) {
+						selObject = jQuery('#databaseClasses').jqGrid(
+								'getRowData', selectedRow)["name"];
+
+						controller.parameter('queryLoad', function() {
+							queryEditor.setCode("select from " + selObject);
+							executeQuery();
+						});
+
+						controller.loadFragment("panelQuery.htm");
+					}
+				});
 
 		fillDynaTable($('#databaseConfig'), "Configuration",
 				[ 'name', 'value' ], null, databaseInfo['config'].values, {
@@ -610,7 +630,7 @@
 	}
 
 	function askDatabaseInfo() {
-		databaseInfo = orientServer.getDatabaseInfo();
+		databaseInfo = orientServer.open();
 		if (databaseInfo == null) {
 			jQuery("#output").text(orientServer.getErrorMessage());
 		} else {
