@@ -35,45 +35,11 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract {
 			final String text = sql.getText();
 			final String textUpperCase = text.toUpperCase();
 
-			if (textUpperCase.startsWith(OCommandExecutorSQLSelect.KEYWORD_SELECT))
-				delegate = new OCommandExecutorSQLSelect().parse(iCommand);
-			else if (textUpperCase.startsWith(OCommandExecutorSQLInsert.KEYWORD_INSERT))
-				delegate = new OCommandExecutorSQLInsert().parse(iCommand);
-			else if (textUpperCase.startsWith(OCommandExecutorSQLUpdate.KEYWORD_UPDATE))
-				delegate = new OCommandExecutorSQLUpdate().parse(iCommand);
-			else if (textUpperCase.startsWith(OCommandExecutorSQLDelete.KEYWORD_DELETE))
-				delegate = new OCommandExecutorSQLDelete().parse(iCommand);
-			else if (textUpperCase.startsWith(OCommandExecutorSQLGrant.KEYWORD_GRANT))
-				delegate = new OCommandExecutorSQLGrant().parse(iCommand);
-			else if (textUpperCase.startsWith(OCommandExecutorSQLRevoke.KEYWORD_REVOKE))
-				delegate = new OCommandExecutorSQLRevoke().parse(iCommand);
-			else if (textUpperCase.startsWith(OCommandExecutorSQLCreateLink.KEYWORD_CREATE + " "
-					+ OCommandExecutorSQLCreateLink.KEYWORD_LINK))
-				delegate = new OCommandExecutorSQLCreateLink().parse(iCommand);
-			else if (textUpperCase.startsWith(OCommandExecutorSQLCreateIndex.KEYWORD_CREATE + " "
-					+ OCommandExecutorSQLCreateIndex.KEYWORD_INDEX))
-				delegate = new OCommandExecutorSQLCreateIndex().parse(iCommand);
-			else if (textUpperCase.startsWith(OCommandExecutorSQLRemoveIndex.KEYWORD_REMOVE + " "
-					+ OCommandExecutorSQLRemoveIndex.KEYWORD_INDEX))
-				delegate = new OCommandExecutorSQLRemoveIndex().parse(iCommand);
-			else if (textUpperCase.startsWith(OCommandExecutorSQLCreateClass.KEYWORD_CREATE + " "
-					+ OCommandExecutorSQLCreateClass.KEYWORD_CLASS))
-				delegate = new OCommandExecutorSQLCreateClass().parse(iCommand);
-			else if (textUpperCase.startsWith(OCommandExecutorSQLCreateProperty.KEYWORD_CREATE + " "
-					+ OCommandExecutorSQLCreateProperty.KEYWORD_PROPERTY))
-				delegate = new OCommandExecutorSQLCreateProperty().parse(iCommand);
-			else if (textUpperCase.startsWith(OCommandExecutorSQLRemoveClass.KEYWORD_REMOVE + " "
-					+ OCommandExecutorSQLRemoveClass.KEYWORD_CLASS))
-				delegate = new OCommandExecutorSQLRemoveClass().parse(iCommand);
-			else if (textUpperCase.startsWith(OCommandExecutorSQLRemoveProperty.KEYWORD_REMOVE + " "
-					+ OCommandExecutorSQLRemoveProperty.KEYWORD_PROPERTY))
-				delegate = new OCommandExecutorSQLRemoveProperty().parse(iCommand);
-			else if (textUpperCase.startsWith(OCommandExecutorSQLFindReferences.KEYWORD_FIND + " "
-					+ OCommandExecutorSQLFindReferences.KEYWORD_REFERENCES))
-				delegate = new OCommandExecutorSQLFindReferences().parse(iCommand);
-			else
+			delegate = (OCommandExecutorSQLAbstract) OSQLEngine.getInstance().getCommand(textUpperCase);
+			if (delegate == null)
 				throw new IllegalArgumentException("Can't find a command executor for the command request: " + iCommand);
 
+			delegate.parse(iCommand);
 			delegate.setProgressListener(progressListener);
 		} else
 			throw new IllegalArgumentException("Can't find a command executor for the command request: " + iCommand);

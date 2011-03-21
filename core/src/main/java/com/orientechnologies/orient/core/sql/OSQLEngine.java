@@ -32,12 +32,37 @@ import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionFormat;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionSysdate;
 
 public class OSQLEngine {
-	private Map<String, OSQLFunction>										inlineFunctions				= new HashMap<String, OSQLFunction>();
-	private Map<String, Class<? extends OSQLFunction>>	aggregationFunctions	= new HashMap<String, Class<? extends OSQLFunction>>();
+	private Map<String, OSQLFunction>																	inlineFunctions				= new HashMap<String, OSQLFunction>();
+	private Map<String, Class<? extends OSQLFunction>>								aggregationFunctions	= new HashMap<String, Class<? extends OSQLFunction>>();
+	private Map<String, Class<? extends OCommandExecutorSQLAbstract>>	commands							= new HashMap<String, Class<? extends OCommandExecutorSQLAbstract>>();
 
-	private static final OSQLEngine											INSTANCE							= new OSQLEngine();
+	private static final OSQLEngine																		INSTANCE							= new OSQLEngine();
 
 	protected OSQLEngine() {
+		// COMMANDS
+		commands.put(OCommandExecutorSQLSelect.KEYWORD_SELECT, OCommandExecutorSQLSelect.class);
+		commands.put(OCommandExecutorSQLInsert.KEYWORD_INSERT, OCommandExecutorSQLInsert.class);
+		commands.put(OCommandExecutorSQLUpdate.KEYWORD_UPDATE, OCommandExecutorSQLUpdate.class);
+		commands.put(OCommandExecutorSQLDelete.KEYWORD_DELETE, OCommandExecutorSQLDelete.class);
+		commands.put(OCommandExecutorSQLGrant.KEYWORD_GRANT, OCommandExecutorSQLGrant.class);
+		commands.put(OCommandExecutorSQLRevoke.KEYWORD_REVOKE, OCommandExecutorSQLRevoke.class);
+		commands.put(OCommandExecutorSQLCreateLink.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateLink.KEYWORD_LINK,
+				OCommandExecutorSQLCreateLink.class);
+		commands.put(OCommandExecutorSQLCreateIndex.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateIndex.KEYWORD_INDEX,
+				OCommandExecutorSQLCreateIndex.class);
+		commands.put(OCommandExecutorSQLRemoveIndex.KEYWORD_REMOVE + " " + OCommandExecutorSQLRemoveIndex.KEYWORD_INDEX,
+				OCommandExecutorSQLRemoveIndex.class);
+		commands.put(OCommandExecutorSQLCreateClass.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateClass.KEYWORD_CLASS,
+				OCommandExecutorSQLCreateClass.class);
+		commands.put(OCommandExecutorSQLCreateProperty.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateProperty.KEYWORD_PROPERTY,
+				OCommandExecutorSQLCreateProperty.class);
+		commands.put(OCommandExecutorSQLRemoveClass.KEYWORD_REMOVE + " " + OCommandExecutorSQLRemoveClass.KEYWORD_CLASS,
+				OCommandExecutorSQLRemoveClass.class);
+		commands.put(OCommandExecutorSQLRemoveProperty.KEYWORD_REMOVE + " " + OCommandExecutorSQLRemoveProperty.KEYWORD_PROPERTY,
+				OCommandExecutorSQLRemoveProperty.class);
+		commands.put(OCommandExecutorSQLFindReferences.KEYWORD_FIND + " " + OCommandExecutorSQLFindReferences.KEYWORD_REFERENCES,
+				OCommandExecutorSQLFindReferences.class);
+
 		// MISC FUNCTIONS
 		registerFunction(OSQLFunctionFormat.NAME, new OSQLFunctionFormat());
 		registerFunction(OSQLFunctionSysdate.NAME, OSQLFunctionSysdate.class);
@@ -84,6 +109,29 @@ public class OSQLEngine {
 	public void unregisterFunction(final String iName) {
 		if (inlineFunctions.remove(iName.toUpperCase()) == null)
 			aggregationFunctions.remove(iName.toUpperCase());
+	}
+
+	public OCommandExecutorSQLAbstract getCommand(final String iText) {
+		int pos = -1;
+		Class<? extends OCommandExecutorSQLAbstract> commandClass = null;
+		while (commandClass == null) {
+			pos = iText.indexOf(' ', pos + 1);
+			if (pos > -1) {
+				String piece = iText.substring(0, pos);
+				commandClass = commands.get(piece);
+			} else
+				break;
+		}
+
+		if (commandClass != null)
+			try {
+				return commandClass.newInstance();
+			} catch (Exception e) {
+				throw new OCommandExecutionException("Error in creation of command " + commandClass
+						+ "(). Probably there is not an empty constructor or the constructor generates errors", e);
+			}
+
+		return null;
 	}
 
 	public OSQLFilter parseWhereCondition(final ODatabaseRecord iDatabase, final String iText) {
