@@ -331,11 +331,16 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				return fromString(iRecord.getDatabase(), iFieldValueAsString);
 
 			case DATE:
-				// TRY TO PARSE AS DATE
 				try {
-					return dateFormat.parseObject(iFieldValueAsString);
-				} catch (ParseException e) {
-					throw new OSerializationException("Unable to unmarshall date: " + iFieldValueAsString, e);
+					// TRY TO PARSE AS LONG
+					return Long.parseLong(iFieldValueAsString);
+				} catch (NumberFormatException e) {
+					try {
+						// TRY TO PARSE AS DATE
+						return dateFormat.parseObject(iFieldValueAsString);
+					} catch (ParseException ex) {
+						throw new OSerializationException("Unable to unmarshall date: " + iFieldValueAsString, e);
+					}
 				}
 
 			default:
