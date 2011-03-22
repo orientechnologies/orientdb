@@ -303,7 +303,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				if (iFieldValueAsString.length() == DEF_DATE_FORMAT.length())
 					// TRY TO PARSE AS DATE
 					try {
-						return dateFormat.parseObject(iFieldValueAsString);
+						synchronized (dateFormat) {
+							return dateFormat.parseObject(iFieldValueAsString);
+						}
 					} catch (Exception e) {
 					}
 

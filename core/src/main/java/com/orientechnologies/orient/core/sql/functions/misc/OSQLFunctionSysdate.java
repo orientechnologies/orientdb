@@ -47,7 +47,9 @@ public class OSQLFunctionSysdate extends OSQLFunctionAbstract {
 		if (format == null)
 			format = new SimpleDateFormat((String) iParameters[0]);
 
-		return format.format(now);
+		synchronized (format) {
+			return format.format(now);
+		}
 	}
 
 	public boolean aggregateResults() {

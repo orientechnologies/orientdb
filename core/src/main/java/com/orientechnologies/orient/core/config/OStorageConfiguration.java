@@ -57,8 +57,6 @@ public class OStorageConfiguration implements OSerializableStream {
 	public List<OEntryConfiguration>					properties				= new ArrayList<OEntryConfiguration>();
 
 	private transient Locale									localeInstance;
-	private transient DateFormat							dateFormatInstance;
-	private transient DateFormat							dateTimeFormatInstance;
 	private transient DecimalFormatSymbols		unusualSymbols;
 	protected transient OStorage							storage;
 
@@ -102,18 +100,14 @@ public class OStorageConfiguration implements OSerializableStream {
 	}
 
 	public DateFormat getDateFormatInstance() {
-		if (dateFormatInstance == null) {
-			dateFormatInstance = new SimpleDateFormat(dateFormat);
-			dateFormatInstance.setLenient(false);
-		}
+		SimpleDateFormat dateFormatInstance = new SimpleDateFormat(dateFormat);
+		dateFormatInstance.setLenient(false);
 		return dateFormatInstance;
 	}
 
 	public DateFormat getDateTimeFormatInstance() {
-		if (dateTimeFormatInstance == null) {
-			dateTimeFormatInstance = new SimpleDateFormat(dateTimeFormat);
-			dateTimeFormatInstance.setLenient(false);
-		}
+		SimpleDateFormat dateTimeFormatInstance = new SimpleDateFormat(dateTimeFormat);
+		dateTimeFormatInstance.setLenient(false);
 		return dateTimeFormatInstance;
 	}
 

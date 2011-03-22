@@ -60,13 +60,15 @@ public class OLogManager {
 
 		final StringBuilder buffer = new StringBuilder();
 		buffer.append('\n');
-		buffer.append(dateFormat.format(new Date()));
+		synchronized (dateFormat) {
+			buffer.append(dateFormat.format(new Date()));
+		}
 		buffer.append(' ');
 		buffer.append(iLevel.getName().substring(0, 4));
 		if (iRequester != null) {
 			buffer.append(" [");
 			buffer.append(iRequester.getClass().getSimpleName());
-			buffer.append("]");
+			buffer.append(']');
 		}
 		buffer.append(' ');
 

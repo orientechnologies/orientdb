@@ -59,8 +59,17 @@ public class OServerCommandGetServer extends OServerCommandAuthenticatedServerAb
 			json.beginObject();
 
 			json.beginCollection(1, true, "connections");
-			OClientConnection[] conns = OServerMain.server().getManagedServer().getConnections();
+
+			String lastCommandOn;
+			String connectedOn;
+
+			final OClientConnection[] conns = OServerMain.server().getManagedServer().getConnections();
 			for (OClientConnection c : conns) {
+				synchronized (dateTimeFormat) {
+					lastCommandOn = dateTimeFormat.format(new Date(c.protocol.getData().lastCommandReceived));
+					connectedOn = dateTimeFormat.format(new Date(c.since));
+				}
+
 				json.beginObject(2);
 				writeField(json, 2, "id", c.id);
 				writeField(json, 2, "id", c.id);
@@ -71,12 +80,12 @@ public class OServerCommandGetServer extends OServerCommandAuthenticatedServerAb
 				writeField(json, 2, "totalRequests", c.protocol.getData().totalRequests);
 				writeField(json, 2, "commandInfo", c.protocol.getData().commandInfo);
 				writeField(json, 2, "commandDetail", c.protocol.getData().commandDetail);
-				writeField(json, 2, "lastCommandOn", dateTimeFormat.format(new Date(c.protocol.getData().lastCommandReceived)));
+				writeField(json, 2, "lastCommandOn", lastCommandOn);
 				writeField(json, 2, "lastCommandInfo", c.protocol.getData().lastCommandInfo);
 				writeField(json, 2, "lastCommandDetail", c.protocol.getData().lastCommandDetail);
 				writeField(json, 2, "lastExecutionTime", c.protocol.getData().lastCommandExecutionTime);
 				writeField(json, 2, "totalWorkingTime", c.protocol.getData().totalCommandExecutionTime);
-				writeField(json, 2, "connectedOn", dateTimeFormat.format(new Date(c.since)));
+				writeField(json, 2, "connectedOn", connectedOn);
 				json.endObject(2);
 			}
 			json.endCollection(1, false);
