@@ -269,8 +269,8 @@ function ODocumentView(name, component, doc, options) {
 		out += ">";
 		out += label;
 		if (image != null)
-			out += "<img border='0' alt='" + label + "' src='images/"
-					+ image + "'/>";
+			out += "<img border='0' alt='" + label + "' src='images/" + image
+					+ "'/>";
 		out += "</button>";
 		return out;
 	}
@@ -325,11 +325,13 @@ function ODocumentView(name, component, doc, options) {
 		return object;
 	}
 
-	ODocumentView.prototype.create = function() {
+	ODocumentView.prototype.create = function(className) {
 		$('#doc__rid').val("-1:-1");
 		$('#doc__version').val("0");
 
-		var className = $('#doc__class').val();
+		if (className == null)
+			className = $('#doc__class').val();
+
 		if (className == null)
 			return;
 
@@ -337,6 +339,7 @@ function ODocumentView(name, component, doc, options) {
 		for (cls in databaseInfo['classes']) {
 			if (databaseInfo['classes'][cls].name == className) {
 				selectedClass = databaseInfo['classes'][cls];
+				$('#doc__class').val( className );
 				break;
 			}
 		}
@@ -345,6 +348,7 @@ function ODocumentView(name, component, doc, options) {
 			return;
 
 		var component = $('#' + this.componentId + "_fields");
+		component.empty();
 
 		// SET THE DECLARED FIELDS FOUND INTO THE SCHEMA
 		for (p in selectedClass.properties) {

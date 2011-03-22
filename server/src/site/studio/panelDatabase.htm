@@ -12,50 +12,83 @@
 <table style="width: 100%;" cellpadding="5">
 	<tr>
 		<td valign="top">
-		<table id="databaseClasses" cellspacing="0" cellpadding="5" border="1">
-		</table>
-		</td>
-		<td valign="top" class="help" width="400">Select the class to display the properties associated. Each class can store its records
-		into one or multiple <b>Clusters</b> (see "Structure" tab). A class can be <b>schema-less</b> (has no properties), <b>schema-full</b> (all
-		properties as mandatories) or with a <b>partial schema</b>.</td>
-	</tr>
-	<tr>
-		<td valign="top" align="left">
-		<table>
+		<table width="100%">
 			<tr>
-				<td>
-				<button id="addClass" class="ui-button-text-icon" style="text-align: left">Add class <img border="0" alt="New record"
-					src="images/add.png" align="top" /></button>
+				<td width="600">
+				<table id="databaseClasses" cellspacing="0" cellpadding="5" border="1" width="100%">
+				</table>
 				</td>
-				<td>
-				<button id="deleteClass" class="ui-button-text-icon" style="text-align: left">Delete class <img border="0" alt="Delete record"
-					src="images/delete.png" align="top" /></button>
+				<td valign="top" align="left" width="150">
+				<table>
+					<tr>
+						<td>
+						<button id="queryClass" class="ui-button-text-icon" style="text-align: left">Query <img border="0" alt="Query"
+							src="images/execute.png" align="top" /></button>
+						</td>
+					</tr>
+					<tr>
+						<td>
+						<button id="createObject" class="ui-button-text-icon" style="text-align: left">Create object <img border="0"
+							alt="Create object" src="images/set.png" align="top" /></button>
+						</td>
+					</tr>
+					<tr>
+						<td>
+						<button id="deleteClass" class="ui-button-text-icon" style="text-align: left">Delete class <img border="0"
+							alt="Delete record" src="images/delete.png" align="top" /></button>
+						</td>
+					</tr>
+				</table>
 				</td>
-				<td>
-				<button id="queryClass" class="ui-button-text-icon" style="text-align: left">Query <img border="0" alt="Query"
-					src="images/execute.png" align="top" /></button>
+				<td valign="top" class="help">Select the class to display the properties associated. Each class can store its records into one or
+				multiple <b>Clusters</b> (see "Structure" tab). A class can be <b>schema-less</b> (has no properties), <b>schema-full</b> (all
+				properties as mandatories) or with a <b>partial schema</b>.</td>
+			</tr>
+			<tr>
+				<td valign="top" align="left">
+				<table>
+					<tr>
+						<td>
+						<button id="addClass" class="ui-button-text-icon" style="text-align: left">Add class <img border="0" alt="New record"
+							src="images/add.png" align="top" /></button>
+						</td>
+						<td>
+					</tr>
+				</table>
 				</td>
 			</tr>
 		</table>
 		</td>
 	</tr>
 	<tr>
-		<td valign="top" colspan="2">
-		<table id="classProperties" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
-		</table>
-		</td>
-	</tr>
-	<tr>
-		<td valign="top" align="left">
-		<table>
+		<td valign="top">
+		<table width="100%">
 			<tr>
-				<td>
-				<button id="addProperty" " class="ui-button-text-icon" style="text-align: left">Add property <img border="0" alt="New record"
-					src="images/add.png" align="top" /></button>
+				<td valign="top" width="850">
+				<table id="classProperties" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+				</table>
 				</td>
-				<td>
-				<button id="deleteProperty" class="ui-button-text-icon" style="text-align: left">Delete property <img border="0"
-					alt="Delete record" src="images/delete.png" align="top" /></button>
+				<td valign="top" align="left">
+				<table>
+					<tr>
+						<td>
+						<button id="deleteProperty" class="ui-button-text-icon" style="text-align: left">Delete property <img border="0"
+							alt="Delete record" src="images/delete.png" align="top" /></button>
+						</td>
+					</tr>
+				</table>
+				</td>
+			</tr>
+			<tr>
+				<td valign="top" align="left">
+				<table>
+					<tr>
+						<td>
+						<button id="addProperty" " class="ui-button-text-icon" style="text-align: left">Add property <img border="0" alt="New record"
+							src="images/add.png" align="top" /></button>
+						</td>
+					</tr>
+				</table>
 				</td>
 			</tr>
 		</table>
@@ -611,12 +644,26 @@
 						controller.parameter('queryLoad', function() {
 							queryEditor.setCode("select from " + selObject);
 							executeQuery();
+							queryEditor.focus();
 						});
 
 						controller.loadFragment("panelQuery.htm");
 					}
 				});
+		$("#createObject").click(
+				function() {
+					var selectedRow = jQuery("#databaseClasses").jqGrid(
+							'getGridParam', 'selrow');
+					if (selectedRow != null) {
+						selObject = jQuery('#databaseClasses').jqGrid(
+								'getRowData', selectedRow)["name"];
 
+						controller.loadFragment("panelDocument.htm",
+								function() {
+									documentView.create(selObject);
+								});
+					}
+				});
 		fillDynaTable($('#databaseConfig'), "Configuration",
 				[ 'name', 'value' ], null, databaseInfo['config'].values, {
 					sortname : 'name'
