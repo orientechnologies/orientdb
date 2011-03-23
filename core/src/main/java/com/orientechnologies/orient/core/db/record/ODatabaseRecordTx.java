@@ -97,8 +97,14 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 				OLogManager.instance().error(this, "Error before tx commit", t);
 			}
 
-		currentTx.commit();
-		setDefaultTransactionMode();
+		try {
+			currentTx.commit();
+		} catch (RuntimeException e) {
+			getCache().clear();
+			throw e;
+		} finally {
+			setDefaultTransactionMode();
+		}
 
 		// WAKE UP LISTENERS
 		for (ODatabaseListener listener : underlying.getListeners())
@@ -120,9 +126,11 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 				OLogManager.instance().error(this, "Error before tx rollback", t);
 			}
 
-		currentTx.rollback();
-
-		setDefaultTransactionMode();
+		try {
+			currentTx.rollback();
+		} finally {
+			setDefaultTransactionMode();
+		}
 
 		// WAKE UP LISTENERS
 		for (ODatabaseListener listener : underlying.getListeners())
