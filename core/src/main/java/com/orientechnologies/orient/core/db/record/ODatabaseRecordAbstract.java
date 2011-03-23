@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.dictionary.ODictionaryInternal;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -451,7 +452,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			if (isNew)
 				// NOTIFY IDENTITY HAS CHANGED
 				iRecord.onBeforeIdentityChanged(rid);
-			else if( stream.length == 0 )
+			else if (stream.length == 0)
 				// ALREADY CREATED AND WAITING FOR THE RIGHT UPDATE (WE'RE IN A GRAPH)
 				return;
 
@@ -491,14 +492,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			// SAVE IT
 			long result = underlying.save(clusterId, rid.getClusterPosition(), stream, realVersion, iRecord.getRecordType());
 
-			if (stream != null && stream.length > 0)
-				// FILLED RECORD
-				iRecord.unsetDirty();
-
 			if (isNew) {
 				// UPDATE INFORMATION: CLUSTER ID+POSITION
 				iRecord.fill(iRecord.getDatabase(), clusterId, result, 0, stream);
-				iRecord.setStatus(STATUS.LOADED);
 				if (stream != null && stream.length > 0)
 					callbackHooks(TYPE.AFTER_CREATE, iRecord);
 
@@ -507,16 +503,22 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			} else {
 				// UPDATE INFORMATION: VERSION
 				iRecord.fill(iRecord.getDatabase(), clusterId, rid.getClusterPosition(), (int) result, stream);
-				iRecord.setStatus(STATUS.LOADED);
 				if (stream != null && stream.length > 0)
 					callbackHooks(TYPE.AFTER_UPDATE, iRecord);
 			}
+
+			if (stream != null && stream.length > 0)
+				// FILLED RECORD
+				iRecord.unsetDirty();
 
 			if (isUseCache())
 				// ADD/UPDATE IT IN CACHE
 				getCache().updateRecord(iRecord);
 
 		} catch (ODatabaseException e) {
+			// RE-THROW THE EXCEPTION
+			throw e;
+		} catch (OConcurrentModificationException e) {
 			// RE-THROW THE EXCEPTION
 			throw e;
 		} catch (Throwable t) {
@@ -550,6 +552,10 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			getCache().deleteRecord(rid);
 
 		} catch (ODatabaseException e) {
+			// RE-THROW THE EXCEPTION
+			throw e;
+
+		} catch (OConcurrentModificationException e) {
 			// RE-THROW THE EXCEPTION
 			throw e;
 

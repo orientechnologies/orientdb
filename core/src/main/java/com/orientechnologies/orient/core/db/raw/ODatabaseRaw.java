@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.intent.OIntent;
@@ -210,6 +211,8 @@ public class ODatabaseRaw implements ODatabase {
 				// UPDATE
 				return storage.updateRecord(id, iClusterId, iPosition, iContent, iVersion, iRecordType);
 			}
+		} catch (OConcurrentModificationException e) {
+			throw e;
 		} catch (Throwable t) {
 			throw new ODatabaseException("Error on saving record in cluster id: " + iClusterId + ", position: " + iPosition, t);
 		}
