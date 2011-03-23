@@ -156,7 +156,7 @@ public abstract class OAbstractRecordCache extends OSharedResource {
 							// UNACTIVE
 							return;
 
-						final int threshold = (int) (oldSize * 0.5f);
+						final int threshold = (int) (oldSize * 0.9f);
 
 						entries.removeEldestItems(threshold);
 

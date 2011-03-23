@@ -84,7 +84,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 
 							map.setMaxUpdatesBeforeSave(maxUpdates);
 
-							optimize();
+							optimize(false);
 						} finally {
 							releaseExclusiveLock();
 						}
@@ -97,14 +97,14 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 					if (map != null) {
 						acquireExclusiveLock();
 						try {
-							// REDUCE SOME PARAMETERS
+							// REDUCE OF 10% LAZY UPDATES
 							int maxUpdates = map.getMaxUpdatesBeforeSave();
 							if (maxUpdates > 10)
-								maxUpdates *= 0.5;
+								maxUpdates *= 0.50;
 
 							map.setMaxUpdatesBeforeSave(maxUpdates);
 
-							optimize();
+							optimize(true);
 						} finally {
 							releaseExclusiveLock();
 						}
@@ -112,13 +112,15 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 				}
 			}
 
-			private void optimize() {
+			private void optimize(final boolean iHardMode) {
 				OLogManager.instance().debug(this, "Forcing optimization of Index %s (%d items). Found %d entries in memory...", name,
 						map.size(), map.getInMemoryEntries());
 
+				if (iHardMode)
+					map.freeInMemoryResources();
 				map.optimize(true);
 
-				OLogManager.instance().debug(this, "Completed! Now %d entries resides in memory", map.getInMemoryEntries());
+				OLogManager.instance().debug(this, "Completed! Now %d entries reside in memory", map.getInMemoryEntries());
 			}
 		};
 

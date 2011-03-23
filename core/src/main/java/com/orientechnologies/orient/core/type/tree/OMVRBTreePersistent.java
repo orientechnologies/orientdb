@@ -69,8 +69,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	protected float																					optimizeEntryPointsFactor;
 	protected volatile List<OMVRBTreeEntryPersistent<K, V>>	entryPoints								= new ArrayList<OMVRBTreeEntryPersistent<K, V>>(
 																																												entryPointsSize);
-	protected List<OMVRBTreeEntryPersistent<K, V>>					newEntryPoints						= new ArrayList<OMVRBTreeEntryPersistent<K, V>>(
-																																												entryPointsSize);
 
 	protected Map<ORID, OMVRBTreeEntryPersistent<K, V>>			cache											= new HashMap<ORID, OMVRBTreeEntryPersistent<K, V>>();
 	private final OMemoryOutputStream												entryRecordBuffer;
@@ -157,6 +155,13 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	}
 
 	/**
+	 * Frees all the in memory objects. It's called under hard memory pressure.
+	 */
+	public void freeInMemoryResources() {
+		entryPoints.clear();
+	}
+
+	/**
 	 * Optimize the tree memory consumption by keeping part of nodes as entry points and clearing all the rest.
 	 */
 	@SuppressWarnings("unchecked")
@@ -222,7 +227,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			else
 				distance = nodes / entryPointsSize + 1;
 
-			newEntryPoints.clear();
+			final List<OMVRBTreeEntryPersistent<K, V>> newEntryPoints = new ArrayList<OMVRBTreeEntryPersistent<K, V>>(entryPointsSize + 1);
 
 			OLogManager.instance().debug(this, "Compacting nodes with distance = %d", distance);
 
@@ -287,9 +292,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 			// SWAP TMP AND REAL ENTRY POINT COLLECTIONS
 			entryPoints.clear();
-			final List<OMVRBTreeEntryPersistent<K, V>> a = entryPoints;
 			entryPoints = newEntryPoints;
-			newEntryPoints = a;
 
 			if (debug) {
 				System.out.printf("\nEntrypoints (%d): ", entryPoints.size());

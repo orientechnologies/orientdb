@@ -313,7 +313,7 @@ public enum OGlobalConfiguration {
 			// WINDOWS
 
 			// AVOID TO USE MMAP, SINCE COULD BE BUGGY
-			//FILE_MMAP_STRATEGY.setValue(3);
+			FILE_MMAP_STRATEGY.setValue(3);
 		}
 
 		if (System.getProperty("os.arch").indexOf("64") > -1) {

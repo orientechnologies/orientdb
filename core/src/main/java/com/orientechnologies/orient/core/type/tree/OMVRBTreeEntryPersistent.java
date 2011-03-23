@@ -221,7 +221,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 
 		// REMOVE ME FROM THE CACHE
 		if (pTree.cache.remove(record.getIdentity()) == null)
-			OLogManager.instance().warn(this, "Can't find current node into the cache. Is the cache invalid?");
+			OLogManager.instance().debug(this, "Can't find current node into the cache. Is the cache invalid?");
 
 		int totalDisconnected = 1;
 
