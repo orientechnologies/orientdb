@@ -148,7 +148,7 @@ public class OSchema extends ODocumentWrapperNoClass {
 
 				if (javaClass != null) {
 					// AUTO REGISTER THE CLASS AT FIRST USE
-					cls = createClass(iClassName);
+					cls = cascadeCreate(javaClass);
 					save();
 				}
 			}
@@ -156,7 +156,21 @@ public class OSchema extends ODocumentWrapperNoClass {
 
 		return cls;
 	}
+	
+	private OClass cascadeCreate(final Class<?> javaClass) {
+		final OClass cls = createClass(javaClass.getSimpleName());
+		
+		final Class<?> javaSuperClass = javaClass.getSuperclass();
+		if (javaSuperClass != null && !javaSuperClass.getName().equals("java.lang.Object")) {
+			OClass superClass = classes.get(javaSuperClass.getSimpleName().toLowerCase());
+			if (superClass == null)
+				superClass = cascadeCreate(javaSuperClass);
+			cls.setSuperClass(superClass);
+		}
 
+		return cls;
+	}
+	
 	/**
 	 * Binds ODocument to POJO.
 	 */
