@@ -100,7 +100,7 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 	}
 
 	/**
-	 * Fill and return the PhysicalPosition object received as parameter with the physical position of logical record iPosition
+	 * Fills and return the PhysicalPosition object received as parameter with the physical position of logical record iPosition
 	 * 
 	 * @throws IOException
 	 */
@@ -126,7 +126,7 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 	}
 
 	/**
-	 * Change the PhysicalPosition of the logical record iPosition.
+	 * Changes the PhysicalPosition of the logical record iPosition.
 	 * 
 	 * @throws IOException
 	 */
@@ -257,7 +257,7 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 	}
 
 	/**
-	 * Add a new entry.
+	 * Adds a new entry.
 	 * 
 	 * @throws IOException
 	 */

@@ -239,7 +239,7 @@ public class OFileMMap extends OFile {
 			}
 		} catch (BufferOverflowException e) {
 			OLogManager.instance()
-					.error(this, "Error on write in the range " + iOffset + "-" + iOffset + iSourceBuffer.length + "." + toString(), e,
+					.error(this, "Error on write in the range " + iOffset + "-" + ( iOffset + iSourceBuffer.length ) + "." + toString(), e,
 							OIOException.class);
 		}
 	}

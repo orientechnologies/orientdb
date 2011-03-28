@@ -16,11 +16,14 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
 import com.orientechnologies.orient.core.config.OStorageDataHoleConfiguration;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 
 /**
@@ -84,9 +87,17 @@ public class ODataLocal extends OMultiFileSegment {
 	public long addRecord(final int iClusterSegment, final long iClusterPosition, final byte[] iContent) throws IOException {
 		acquireExclusiveLock();
 		try {
-			final long[] newFilePosition = allocateSpace(iContent.length + RECORD_FIX_SIZE);
-			writeRecord(newFilePosition, iClusterSegment, iClusterPosition, iContent);
+			final int recordSize = iContent.length + RECORD_FIX_SIZE;
 
+			final long[] newFilePosition;
+			final long position = holeSegment.popFirstAvailableHole(recordSize);
+			if (position > -1)
+				newFilePosition = getRelativePosition(position);
+			else
+				// ALLOCATE NEW SPACE FOR IT
+				newFilePosition = allocateSpace(iContent.length + RECORD_FIX_SIZE);
+
+			writeRecord(newFilePosition, iClusterSegment, iClusterPosition, iContent);
 			return getAbsolutePosition(newFilePosition);
 
 		} finally {
@@ -225,6 +236,27 @@ public class ODataLocal extends OMultiFileSegment {
 
 	public void createHole(long iRecordOffset, int iRecordSize) throws IOException {
 		holeSegment.createHole(iRecordOffset, iRecordSize);
+	}
+
+	/**
+	 * Returns the list of holes as pair of position & ppos
+	 * 
+	 * @throws IOException
+	 */
+	public List<OPhysicalPosition> getHoles() throws IOException {
+		final List<OPhysicalPosition> holes = new ArrayList<OPhysicalPosition>();
+
+		acquireExclusiveLock();
+		try {
+			final int tot = holeSegment.getHoles();
+			for (int i = 0; i < tot; ++i) {
+				final OPhysicalPosition ppos = holeSegment.getHole(i, new OPhysicalPosition());
+				holes.add(ppos);
+			}
+		} finally {
+			releaseExclusiveLock();
+		}
+		return holes;
 	}
 
 	public int getId() {

@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
+@SuppressWarnings("serial")
 public class OPhysicalPosition implements OSerializableStream {
 	public int	dataSegment;	// ID OF DATA SEGMENT
 	public long	dataPosition; // OFFSET IN BYTES INSIDE THE DATA SEGMENT

@@ -17,9 +17,11 @@ package com.orientechnologies.orient.core.storage.impl.local;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -710,6 +712,24 @@ public class OStorageLocal extends OStorageEmbedded {
 			lock.releaseSharedLock(locked);
 
 			OProfiler.getInstance().stopChrono("OStorageLocal.synch", timer);
+		}
+	}
+
+	/**
+	 * Returns the list of holes as pair of position & ppos
+	 * 
+	 * @throws IOException
+	 */
+	public List<OPhysicalPosition> getHoles() throws IOException {
+		final boolean locked = lock.acquireSharedLock();
+		try {
+			final List<OPhysicalPosition> holes = new ArrayList<OPhysicalPosition>();
+			for (ODataLocal d : dataSegments) {
+				holes.addAll(d.getHoles());
+			}
+			return holes;
+		} finally {
+			lock.releaseSharedLock(locked);
 		}
 	}
 

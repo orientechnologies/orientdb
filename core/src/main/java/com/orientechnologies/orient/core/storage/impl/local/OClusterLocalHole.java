@@ -77,7 +77,7 @@ public class OClusterLocalHole extends OSingleFileSegment {
 	}
 
 	/**
-	 * Return the recycled position if any.
+	 * Return and remove the recycled position if any.
 	 * 
 	 * @return the recycled position if found, otherwise -1 that usually means to request more space.
 	 * @throws IOException
@@ -89,7 +89,7 @@ public class OClusterLocalHole extends OSingleFileSegment {
 
 			if (recycledPosition > -1) {
 				if (OLogManager.instance().isDebugEnabled())
-					OLogManager.instance().debug(this, "Recycling hole #%d containing the position #%d:%d", pos, owner.getId(),
+					OLogManager.instance().debug(this, "Recycling hole cluster #%d containing the position #%d:%d", pos, owner.getId(),
 							recycledPosition);
 
 				// SHRINK THE FILE
@@ -100,6 +100,16 @@ public class OClusterLocalHole extends OSingleFileSegment {
 		}
 
 		return -1;
+	}
+
+	/**
+	 * Return the recycled position if any.
+	 * 
+	 * @return the recycled position if found, otherwise -1 that usually means to request more space.
+	 * @throws IOException
+	 */
+	public long getEntryPosition(final long iPosition) throws IOException {
+		return file.readLong(iPosition * RECORD_SIZE);
 	}
 
 	/**

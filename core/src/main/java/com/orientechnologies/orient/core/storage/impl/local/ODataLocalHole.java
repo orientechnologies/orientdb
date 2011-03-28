@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.storage.impl.local;
 
 import java.io.IOException;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -59,6 +60,48 @@ public class ODataLocalHole extends OSingleFileSegment {
 	}
 
 	/**
+	 * Returns the first available hole (at least iRecordSize length) to be reused.
+	 * 
+	 * @return
+	 * 
+	 * @throws IOException
+	 */
+	public long popFirstAvailableHole(final int iRecordSize) throws IOException {
+		// BROWSE IN ASCENDING ORDER UNTIL A GOOD POSITION IS FOUND (!=-1)
+		int jumpedHoles = 0;
+		for (int pos = getHoles() - 1; pos >= 0; --pos) {
+			final long recycledPosition = file.readLong(pos * RECORD_SIZE);
+
+			if (recycledPosition > -1) {
+				// VALID HOLE
+				final int recordSize = file.readInt(pos * RECORD_SIZE + OConstants.SIZE_LONG);
+
+				if (recordSize >= iRecordSize) {
+					// GOOD SIZE: USE IT
+					if (OLogManager.instance().isDebugEnabled())
+						OLogManager.instance().debug(this, "Recycling hole data #%d", pos);
+
+					if (recordSize == iRecordSize)
+						if (jumpedHoles == 0)
+							// SHRINK THE FILE TOO
+							file.removeTail((getHoles() - pos) * RECORD_SIZE);
+						else
+							// PERFECT MATCH: DELETE THE HOLE
+							deleteHole(pos);
+					else
+						// UPDATE THE HOLE WITH THE DIFFERENCE
+						updateHole(pos, recycledPosition + iRecordSize, recordSize - iRecordSize);
+
+					return recycledPosition;
+				} else
+					jumpedHoles++;
+			}
+		}
+
+		return -1;
+	}
+
+	/**
 	 * Return hole data
 	 * 
 	 * @throws IOException
@@ -75,23 +118,20 @@ public class ODataLocalHole extends OSingleFileSegment {
 	 * 
 	 * @throws IOException
 	 */
-	public void updateHole(int iPosition, final OPhysicalPosition iPPosition) throws IOException {
+	public void updateHole(int iPosition, final long iNewDataPosition, final int iNewRecordSize) throws IOException {
 		iPosition = iPosition * RECORD_SIZE;
-		file.writeLong(iPosition, iPPosition.dataPosition);
-		file.writeInt(iPosition + OConstants.SIZE_LONG, iPPosition.recordSize);
+		file.writeLong(iPosition, iNewDataPosition);
+		file.writeInt(iPosition + OConstants.SIZE_LONG, iNewRecordSize);
 	}
 
 	/**
-	 * Delete the hole TODO: USELESS?
+	 * Delete the hole
 	 * 
 	 * @throws IOException
 	 */
-	public void deleteHole(int iPosition, final OPhysicalPosition iPPosition) throws IOException {
+	public void deleteHole(int iPosition) throws IOException {
 		iPosition = iPosition * RECORD_SIZE;
-
-		iPPosition.dataPosition = file.readLong(iPosition);
-
-		file.writeInt(iPosition, -1);
+		file.writeLong(iPosition, -1);
 	}
 
 	public int getHoles() {
