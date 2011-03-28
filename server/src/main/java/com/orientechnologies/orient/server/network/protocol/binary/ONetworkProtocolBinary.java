@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -48,6 +49,7 @@ import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -58,7 +60,7 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyRuntime;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -466,17 +468,17 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			final int clusterId = channel.readShort();
 			final long clusterPosition = channel.readLong();
 
-//			final byte[] buffer = channel.readBytes();
-//			final int version = channel.readInt();
-//			final byte recordType = channel.readByte();
-//
-//			ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
-//			record.fill(connection.database, clusterId, clusterPosition, version, buffer);
-//
-//			connection.database.save(record);
+			// final byte[] buffer = channel.readBytes();
+			// final int version = channel.readInt();
+			// final byte recordType = channel.readByte();
+			//
+			// ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
+			// record.fill(connection.database, clusterId, clusterPosition, version, buffer);
+			//
+			// connection.database.save(record);
 
-			 long newVersion = underlyingDatabase.save(clusterId, clusterPosition, channel.readBytes(), channel.readInt(),
-			 channel.readByte());
+			long newVersion = underlyingDatabase.save(clusterId, clusterPosition, channel.readBytes(), channel.readInt(),
+					channel.readByte());
 
 			// TODO: Handle it by using triggers
 			if (connection.database.getMetadata().getSchema().getDocument().getIdentity().getClusterId() == clusterId
@@ -488,8 +490,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			sendOk(lastClientTxId);
 
-			//channel.writeInt(record.getVersion());
-			 channel.writeInt((int) newVersion);
+			// channel.writeInt(record.getVersion());
+			channel.writeInt((int) newVersion);
 			break;
 
 		case OChannelBinaryProtocol.REQUEST_RECORD_DELETE:
@@ -611,17 +613,20 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 					// RECORD
 					channel.writeByte((byte) 'r');
 					writeRecord((ORecordInternal<?>) result);
-				} else if (result instanceof List<?>) {
+				} else if (result instanceof Collection<?>) {
 					channel.writeByte((byte) 'l');
-					final List<ORecordInternal<?>> list = (List<ORecordInternal<?>>) result;
+					final Collection<OIdentifiable> list = (Collection<OIdentifiable>) result;
 					channel.writeInt(list.size());
-					for (ORecordInternal<?> o : list) {
+					for (OIdentifiable o : list) {
 						writeRecord(o);
 					}
 				} else {
 					// ANY OTHER (INCLUDING LITERALS)
 					channel.writeByte((byte) 'a');
-					channel.writeBytes(OStreamSerializerAnyRuntime.INSTANCE.toStream(connection.database, result));
+					final StringBuilder value = new StringBuilder();
+					ORecordSerializerStringAbstract.fieldTypeToString(value, connection.database, OType.getTypeByClass(result.getClass()),
+							result);
+					channel.writeString(value.toString());
 				}
 			}
 			break;
@@ -865,25 +870,29 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	 * - 4 bytes: record version <br/>
 	 * - x bytes: record vontent <br/>
 	 * 
-	 * @param iRecord
+	 * @param o
 	 * @throws IOException
 	 */
-	private void writeRecord(final ORecordInternal<?> iRecord) throws IOException {
-		if (iRecord == null) {
+	private void writeRecord(final OIdentifiable o) throws IOException {
+		if (o == null)
 			channel.writeInt(OChannelBinaryProtocol.RECORD_NULL);
+		else if (o instanceof ORecordId) {
+			channel.writeInt(OChannelBinaryProtocol.RECORD_RID);
+			channel.writeRID((ORID) o);
 		} else {
 			channel
-					.writeInt((iRecord instanceof ORecordSchemaAware<?> && ((ORecordSchemaAware<?>) iRecord).getSchemaClass() != null ? ((ORecordSchemaAware<?>) iRecord)
+					.writeInt((o instanceof ORecordSchemaAware<?> && ((ORecordSchemaAware<?>) o).getSchemaClass() != null ? ((ORecordSchemaAware<?>) o)
 							.getSchemaClass().getId() : -1));
 
-			channel.writeByte(iRecord.getRecordType());
-			channel.writeRID(iRecord.getIdentity());
-			channel.writeInt(iRecord.getVersion());
+			ORecordInternal<?> rec = (ORecordInternal<?>) o;
+			channel.writeByte(rec.getRecordType());
+			channel.writeRID(rec.getIdentity());
+			channel.writeInt(rec.getVersion());
 			try {
-				channel.writeBytes(iRecord.toStream());
+				channel.writeBytes(rec.toStream());
 			} catch (Exception e) {
 				channel.writeBytes(null);
-				OLogManager.instance().error(this, "Error on unmarshalling record #" + iRecord.getIdentity().toString(),
+				OLogManager.instance().error(this, "Error on unmarshalling record #" + o.getIdentity().toString(),
 						OSerializationException.class);
 			}
 		}

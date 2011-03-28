@@ -72,6 +72,7 @@ public class OChannelBinaryProtocol {
 
 	// CONSTANTS
 	public static final int		RECORD_NULL										= -2;
+	public static final int		RECORD_RID										= -3;
 	public static final int		CURRENT_PROTOCOL_VERSION			= 3;	// SENT AS SHORT AS FIRST PACKET AFTER SOCKET CONNECTION
 
 	public static void checkProtocolVersion(final OChannelBinary iNetwork) throws IOException {

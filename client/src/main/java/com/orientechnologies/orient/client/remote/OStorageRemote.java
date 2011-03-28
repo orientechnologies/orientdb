@@ -39,19 +39,19 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyRuntime;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -288,7 +288,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 					ORecordInternal<?> record;
 					while (network.readByte() == 2) {
-						record = readRecordFromNetwork(iDatabase);
+						record = (ORecordInternal<?>) readRecordFromNetwork(iDatabase);
 
 						// PUT IN THE CLIENT LOCAL CACHE
 						level2cache.pushRecord(record);
@@ -611,7 +611,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 						case 'l':
 							final int tot = network.readInt();
-							final List<ORecord<?>> list = new ArrayList<ORecord<?>>();
+							final Collection<OIdentifiable> list = new ArrayList<OIdentifiable>();
 							for (int i = 0; i < tot; ++i) {
 								list.add(readRecordFromNetwork(iCommand.getDatabase()));
 							}
@@ -619,7 +619,9 @@ public class OStorageRemote extends OStorageAbstract {
 							break;
 
 						case 'a':
-							result = OStreamSerializerAnyRuntime.INSTANCE.fromStream(iCommand.getDatabase(), network.readBytes());
+							final String value = new String(network.readBytes());
+							result = ORecordSerializerStringAbstract.fieldTypeFromStream(null, ORecordSerializerStringAbstract.getType(value),
+									value);
 							break;
 						}
 					}
@@ -1249,21 +1251,25 @@ public class OStorageRemote extends OStorageAbstract {
 			throw new ODatabaseException("Connection is closed");
 	}
 
-	private ORecordInternal<?> readRecordFromNetwork(final ODatabaseRecord iDatabase) throws IOException {
+	private OIdentifiable readRecordFromNetwork(final ODatabaseRecord iDatabase) throws IOException {
 		final int classId = network.readInt();
 		if (classId == OChannelBinaryProtocol.RECORD_NULL)
 			return null;
 
-		final ORecordInternal<?> record = ORecordFactory.newInstance(network.readByte());
+		if (classId == OChannelBinaryProtocol.RECORD_RID) {
+			return new ORecordId(network.readShort(), network.readLong());
+		} else {
+			final ORecordInternal<?> record = ORecordFactory.newInstance(network.readByte());
 
-		if (record instanceof ORecordSchemaAware<?>)
-			((ORecordSchemaAware<?>) record).fill(iDatabase, classId, network.readShort(), network.readLong(), network.readInt(),
-					network.readBytes());
-		else
-			// DISCARD CLASS ID
-			record.fill(iDatabase, network.readShort(), network.readLong(), network.readInt(), network.readBytes());
+			if (record instanceof ORecordSchemaAware<?>)
+				((ORecordSchemaAware<?>) record).fill(iDatabase, classId, network.readShort(), network.readLong(), network.readInt(),
+						network.readBytes());
+			else
+				// DISCARD CLASS ID
+				record.fill(iDatabase, network.readShort(), network.readLong(), network.readInt(), network.readBytes());
 
-		return record;
+			return record;
+		}
 	}
 
 	protected int beginRequest(final byte iCommand) throws IOException {
