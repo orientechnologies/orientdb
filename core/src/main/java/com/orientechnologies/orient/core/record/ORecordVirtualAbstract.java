@@ -33,6 +33,7 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 	protected Map<String, OType>	_fieldTypes;
 	protected boolean							_trackingChanges	= true;
 	protected boolean							_ordered					= false;
+	protected boolean							_lazyLoad					= true;
 
 	public ORecordVirtualAbstract() {
 	}
@@ -105,6 +106,14 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 		if (_fieldValues != null)
 			_fieldValues.clear();
 		return this;
+	}
+
+	public boolean isLazyLoad() {
+		return _lazyLoad;
+	}
+
+	public void setLazyLoad(final boolean iLazyLoad) {
+		this._lazyLoad = iLazyLoad;
 	}
 
 	public boolean isTrackingChanges() {

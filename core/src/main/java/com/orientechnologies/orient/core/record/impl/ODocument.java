@@ -489,7 +489,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 
 		final OType t = fieldType(iPropertyName);
 
-		if (value instanceof ORID && t != OType.LINK) {
+		if (_lazyLoad && value instanceof ORID && t != OType.LINK) {
 			// CREATE THE DOCUMENT OBJECT IN LAZY WAY
 			value = (RET) _database.load((ORID) value);
 			_fieldValues.put(iPropertyName, value);

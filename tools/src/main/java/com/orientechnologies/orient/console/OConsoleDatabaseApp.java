@@ -885,6 +885,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 		try {
 			Object value = null;
+
+			if (iRecord instanceof ODocument)
+				((ODocument) iRecord).setLazyLoad(false);
+
 			for (String colName : iColumns) {
 				format.append("|%-20s");
 
