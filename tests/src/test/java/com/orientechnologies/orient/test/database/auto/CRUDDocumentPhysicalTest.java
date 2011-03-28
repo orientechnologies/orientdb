@@ -17,6 +17,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -265,7 +266,12 @@ public class CRUDDocumentPhysicalTest {
 
 		ODocument vDoc = database.newInstance();
 		vDoc.setClassName("Profile");
-		vDoc.field("nick", "Dexter").field("name", "Michael").field("surname", "Hall").field("tag_list", new String[] { "raw" });
+
+		Set<String> tags = new HashSet<String>();
+		tags.add("test");
+		tags.add("yeah");
+
+		vDoc.field("nick", "Dexter").field("name", "Michael").field("surname", "Hall").field("tag_list", tags);
 		vDoc.save();
 
 		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where name = 'Michael'"))
@@ -276,7 +282,7 @@ public class CRUDDocumentPhysicalTest {
 		((Collection<String>) dexter.field("tag_list")).add("actor");
 		dexter.save();
 
-		result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where tag_list in 'actor' and tag_list in 'raw'"))
+		result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where tag_list in 'actor' and tag_list in 'test'"))
 				.execute();
 		Assert.assertEquals(result.size(), 1);
 
