@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 public class ODataLocalHole extends OSingleFileSegment {
 	private static final int	DEF_START_SIZE	= 262144;
 	private static final int	RECORD_SIZE			= 12;
+	private int								maxHoleSize			= -1;
 
 	public ODataLocalHole(final OStorageLocal iStorage, final OStorageFileConfiguration iConfig) throws IOException {
 		super(iStorage, iConfig);
@@ -67,14 +68,22 @@ public class ODataLocalHole extends OSingleFileSegment {
 	 * @throws IOException
 	 */
 	public long popFirstAvailableHole(final int iRecordSize) throws IOException {
+		if (maxHoleSize > -1 && iRecordSize > maxHoleSize)
+			// DON'T BROWSE: NO ONE HOLE WITH THIS SIZE IS AVAILABLE
+			return -1;
+
 		// BROWSE IN ASCENDING ORDER UNTIL A GOOD POSITION IS FOUND (!=-1)
 		int jumpedHoles = 0;
+		int tempMaxHoleSize = 0;
 		for (int pos = getHoles() - 1; pos >= 0; --pos) {
 			final long recycledPosition = file.readLong(pos * RECORD_SIZE);
 
 			if (recycledPosition > -1) {
 				// VALID HOLE
 				final int recordSize = file.readInt(pos * RECORD_SIZE + OConstants.SIZE_LONG);
+
+				if (recordSize > tempMaxHoleSize)
+					tempMaxHoleSize = recordSize;
 
 				if (recordSize >= iRecordSize) {
 					// GOOD SIZE: USE IT
@@ -97,6 +106,8 @@ public class ODataLocalHole extends OSingleFileSegment {
 					jumpedHoles++;
 			}
 		}
+		
+		maxHoleSize = tempMaxHoleSize;
 
 		return -1;
 	}
