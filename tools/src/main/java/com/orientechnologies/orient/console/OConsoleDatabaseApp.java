@@ -63,7 +63,10 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.enterprise.command.script.OCommandScript;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
@@ -243,6 +246,31 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		else
 			out.println("Can't find the cluster to remove");
 		updateDatabaseInfo();
+	}
+
+	@ConsoleCommand(description = "Shows the holes in current storage")
+	public void showHoles() throws IOException {
+		checkCurrentDatabase();
+
+		if (!(currentDatabase.getStorage() instanceof OStorageLocal)) {
+			out.println("Error: can't show holes in remote databases: connect as local");
+			return;
+		}
+
+		final OStorageLocal storage = (OStorageLocal) currentDatabase.getStorage();
+
+		out.println("List of holes in database " + currentDatabaseName + "...");
+
+		out.println("--------------------------------------------------");
+		out.println("Position             Size");
+		out.println("--------------------------------------------------");
+
+		final List<OPhysicalPosition> result = storage.getHoles();
+
+		for (OPhysicalPosition ppos : result) {
+			out.printf("%20d %11d\n", ppos.dataPosition, ppos.recordSize);
+		}
+		out.println("--------------------------------------------------");
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Truncate the class content in the current database")
@@ -459,6 +487,19 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		}
 
 		dumpRecordDetails();
+	}
+
+	@ConsoleCommand(description = "Display a record as raw bytes")
+	public void displayRawRecord(@ConsoleParameter(name = "rid", description = "The record id to display") final String iRecordId) {
+		checkCurrentDatabase();
+
+		ORecordId rid = new ORecordId(iRecordId);
+		final ORawBuffer buffer = currentDatabase.getStorage().readRecord(currentDatabase, 0, rid.clusterId, rid.clusterPosition, null);
+
+		if (buffer == null)
+			throw new OException("The record has been deleted");
+
+		out.println("Raw record content (size=" + buffer.buffer.length + "):\n\n" + new String(buffer.buffer));
 	}
 
 	@ConsoleCommand(aliases = { "status" }, description = "Display information about the database")
