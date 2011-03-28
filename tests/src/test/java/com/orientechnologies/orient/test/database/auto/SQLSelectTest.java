@@ -251,6 +251,26 @@ public class SQLSelectTest {
 	}
 
 	@Test
+	public void queryTraverseAndClass() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(
+				new OSQLSynchQuery<ODocument>("select from Profile where any() traverse(0,7) (@class = 'City')"))
+				.execute();
+
+		Assert.assertTrue(result.size() > 0);
+
+		for (int i = 0; i < result.size(); ++i) {
+			record = result.get(i);
+
+			OrientTest.printRecord(i, record);
+
+			Assert.assertTrue(record.getClassName().equalsIgnoreCase("Profile"));
+		}
+
+		database.close();
+	}
+	@Test
 	public void queryTraverseInfiniteLevelOperator() {
 		database.open("admin", "admin");
 
