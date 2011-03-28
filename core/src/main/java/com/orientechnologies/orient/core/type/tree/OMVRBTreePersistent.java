@@ -158,6 +158,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	 * Frees all the in memory objects. It's called under hard memory pressure.
 	 */
 	public void freeInMemoryResources() {
+		OLogManager.instance().debug(this, "Removing %d entrypoints from memory", entryPoints.size());
 		entryPoints.clear();
 	}
 

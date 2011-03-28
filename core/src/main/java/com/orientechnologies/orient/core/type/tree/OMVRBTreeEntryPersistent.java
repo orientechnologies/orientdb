@@ -209,42 +209,53 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 	 * @param i
 	 */
 	protected int disconnect(final boolean iForceDirty, final int iLevel) {
-		if (record == null || this == tree.getRoot() || record.isDirty() && !iForceDirty)
-			// DIRTY NODE
+		if (record == null)
+			// DIRTY NODE, JUST REMOVE IT
+			return 1;
+
+		if (this == tree.getRoot() || record.isDirty() && !iForceDirty)
+			// DON'T REMOVE IT
 			return 0;
 
+		boolean isEntryPoint = false;
 		for (OMVRBTreeEntryPersistent<K, V> entryPoint : pTree.entryPoints) {
-			if (entryPoint == this)
-				// IT'S AN ENTRYPOINT: AVOID DISCONNECTION
-				return 0;
+			if (entryPoint == this) {
+				// IT'S AN ENTRYPOINT: DON'T DISCONNECT IT BUT GO RECURSIVELY IN DEPTH
+				isEntryPoint = true;
+				break;
+			}
 		}
 
-		// REMOVE ME FROM THE CACHE
-		if (pTree.cache.remove(record.getIdentity()) == null)
-			OLogManager.instance().debug(this, "Can't find current node into the cache. Is the cache invalid?");
+		int totalDisconnected = 0;
 
-		int totalDisconnected = 1;
+		if (!isEntryPoint) {
+			// REMOVE ME FROM THE CACHE
+			if (pTree.cache.remove(record.getIdentity()) == null)
+				OLogManager.instance().debug(this, "Can't find current node into the cache. Is the cache invalid?");
 
-		if (tree.isDebug()) {
-			StringBuilder spaces = new StringBuilder();
-			for (int i = 0; i < iLevel + 3; ++i)
-				spaces.append(" ");
+			totalDisconnected = 1;
 
-			System.out.printf("\n%sDisconnected tree node %s with parent %s, left %s, right %s (%s)...", spaces, this, parentRid,
-					leftRid, rightRid, System.identityHashCode(this));
+			if (tree.isDebug()) {
+				final StringBuilder spaces = new StringBuilder();
+				for (int i = 0; i < iLevel + 3; ++i)
+					spaces.append(" ");
+
+				System.out.printf("\n%sDisconnected tree node %s with parent %s, left %s, right %s (%s)...", spaces, this, parentRid,
+						leftRid, rightRid, System.identityHashCode(this));
+			}
+
+			// SPEED UP MEMORY CLAIM BY RESETTING INTERNAL FIELDS
+			keys = null;
+			if (inStream != null) {
+				inStream.close();
+				values = null;
+				inStream = null;
+			}
+			serializedKeys = null;
+			serializedValues = null;
+			pTree = null;
+			record = null;
 		}
-
-		// SPEED UP MEMORY CLAIM BY RESETTING INTERNAL FIELDS
-		keys = null;
-		if (inStream != null) {
-			inStream.close();
-			values = null;
-			inStream = null;
-		}
-		serializedKeys = null;
-		serializedValues = null;
-		pTree = null;
-		record = null;
 
 		// DISCONNECT FROM THE PARENT
 		if (parent != null) {
