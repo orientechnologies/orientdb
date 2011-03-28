@@ -1252,7 +1252,7 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	private OIdentifiable readRecordFromNetwork(final ODatabaseRecord iDatabase) throws IOException {
-		final int classId = network.readInt();
+		final int classId = network.readShort();
 		if (classId == OChannelBinaryProtocol.RECORD_NULL)
 			return null;
 

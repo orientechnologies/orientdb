@@ -875,13 +875,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	 */
 	private void writeRecord(final OIdentifiable o) throws IOException {
 		if (o == null)
-			channel.writeInt(OChannelBinaryProtocol.RECORD_NULL);
+			channel.writeShort(OChannelBinaryProtocol.RECORD_NULL);
 		else if (o instanceof ORecordId) {
-			channel.writeInt(OChannelBinaryProtocol.RECORD_RID);
+			channel.writeShort(OChannelBinaryProtocol.RECORD_RID);
 			channel.writeRID((ORID) o);
 		} else {
 			channel
-					.writeInt((o instanceof ORecordSchemaAware<?> && ((ORecordSchemaAware<?>) o).getSchemaClass() != null ? ((ORecordSchemaAware<?>) o)
+					.writeShort((short) (o instanceof ORecordSchemaAware<?> && ((ORecordSchemaAware<?>) o).getSchemaClass() != null ? ((ORecordSchemaAware<?>) o)
 							.getSchemaClass().getId() : -1));
 
 			ORecordInternal<?> rec = (ORecordInternal<?>) o;
