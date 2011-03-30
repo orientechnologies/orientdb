@@ -161,7 +161,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 
 		json.endObject();
 
-		sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, buffer.toString());
+		sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
 	}
 
 	protected void sendRecordContent(final OHttpRequest iRequest, final ORecord<?> iRecord) throws IOException {
@@ -171,7 +171,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 	protected void sendRecordContent(final OHttpRequest iRequest, final ORecord<?> iRecord, String iFetchPlan) throws IOException {
 		final String format = iFetchPlan != null ? JSON_FORMAT + ",fetchPlan:" + iFetchPlan : JSON_FORMAT;
 		if (iRecord != null)
-			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, iRecord.toJSON(format));
+			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, iRecord.toJSON(format));
 	}
 
 	protected void sendBinaryContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iContentType,

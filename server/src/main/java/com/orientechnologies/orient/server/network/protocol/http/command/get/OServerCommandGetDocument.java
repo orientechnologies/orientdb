@@ -52,7 +52,7 @@ public class OServerCommandGetDocument extends OServerCommandAuthenticatedDbAbst
 		}
 
 		if (rec == null)
-			sendTextContent(iRequest, 404, "Not Found", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Record with id '" + urlParts[2]
+			sendTextContent(iRequest, 404, "Not Found", null, OHttpUtils.CONTENT_JSON, "Record with id '" + urlParts[2]
 					+ "' was not found.");
 		else
 			sendRecordContent(iRequest, rec, fetchPlan);

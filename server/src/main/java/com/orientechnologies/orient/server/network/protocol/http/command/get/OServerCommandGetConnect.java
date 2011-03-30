@@ -213,7 +213,7 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 			json.endObject();
 			json.flush();
 
-			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, buffer.toString());
+			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
 		} finally {
 			if (db != null)
 				OSharedDocumentDatabase.release(db);

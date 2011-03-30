@@ -173,7 +173,7 @@ public class OServerCommandGetServer extends OServerCommandAuthenticatedServerAb
 
 			json.endObject();
 
-			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, jsonBuffer.toString());
+			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, jsonBuffer.toString());
 
 		} finally {
 		}
