@@ -334,6 +334,7 @@ public class OClass extends ODocumentWrapperNoClass implements Comparable<OClass
 				return this;
 
 		clusterIds = OArrays.copyOf(clusterIds, clusterIds.length + 1);
+		clusterIds[clusterIds.length - 1] = iId;
 		setDirty();
 		return this;
 	}
