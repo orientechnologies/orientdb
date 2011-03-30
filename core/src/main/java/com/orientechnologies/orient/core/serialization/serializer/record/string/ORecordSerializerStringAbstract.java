@@ -63,11 +63,11 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 		}
 	}
 
-	public byte[] toStream(final ODatabaseRecord iDatabase, final ORecordInternal<?> iRecord) {
+	public byte[] toStream(final ODatabaseRecord iDatabase, final ORecordInternal<?> iRecord, final float iOversize) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		try {
-			return OBinaryProtocol.string2bytes(toString(iRecord, null, iDatabase, OSerializationThreadLocal.INSTANCE.get()));
+			return OBinaryProtocol.string2bytes(toString(iRecord, null, iDatabase, OSerializationThreadLocal.INSTANCE.get()), iOversize);
 		} finally {
 
 			OProfiler.getInstance().stopChrono("ORecordSerializerStringAbstract.toStream", timer);

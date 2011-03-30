@@ -38,8 +38,14 @@ public class ORecordSerializerRaw implements ORecordSerializer {
 		return record;
 	}
 
-	public byte[] toStream(final ODatabaseRecord iDatabase, final ORecordInternal<?> iSource) {
+	public byte[] toStream(final ODatabaseRecord iDatabase, final ORecordInternal<?> iSource, final float iOversize) {
 		try {
+			if (iOversize > 0) {
+				final byte[] stream = iSource.toStream();
+				final byte[] oversizedStream = new byte[(int) (stream.length * iOversize)];
+				System.arraycopy(stream, 0, oversizedStream, 0, stream.length);
+				return oversizedStream;
+			}
 
 			return iSource.toStream();
 		} catch (Exception e) {

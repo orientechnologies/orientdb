@@ -56,6 +56,10 @@ public class OBinaryProtocol {
 	}
 
 	public static final byte[] string2bytes(final String iInputText) {
+		return string2bytes(iInputText, 0);
+	}
+
+	public static final byte[] string2bytes(final String iInputText, final float iOversize) {
 		if (iInputText == null)
 			return null;
 

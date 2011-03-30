@@ -91,6 +91,9 @@ public enum OGlobalConfiguration {
 			Float.class, 1.0f),
 
 	// FILE
+	FILE_DEFRAG_HOLE_MAX_DISTANCE("file.defrag.holeMaxDistance", "Max distance in bytes between holes to execute the defrag of them",
+			Integer.class, 32768),
+
 	FILE_MMAP_STRATEGY(
 			"file.mmap.strategy",
 			"Strategy to use with memory mapped files. 0 = USE MMAP ALWAYS, 1 = USE MMAP ON WRITES OR ON READ JUST WHEN THE BLOCK POOL IS FREE, 2 = USE MMAP ON WRITES OR ON READ JUST WHEN THE BLOCK IS ALREADY AVAILABLE, 3 = USE MMAP ONLY IF BLOCK IS ALREADY AVAILABLE, 4 = NEVER USE MMAP",

@@ -209,8 +209,6 @@ public class OMultiFileSegment extends OSegment {
 	 * @throws IOException
 	 */
 	protected long[] allocateSpace(final int iRecordSize) throws IOException {
-		// TODO: RECYCLE THE HOLES IF ANY
-
 		// IT'S PREFEREABLE TO FIND SPACE WITHOUT ENLARGE ANY FILES: FIND THE FIRST FILE WITH FREE SPACE TO USE
 		OFile file;
 		for (int i = 0; i < files.length; ++i) {

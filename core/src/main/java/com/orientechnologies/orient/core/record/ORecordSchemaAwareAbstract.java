@@ -80,7 +80,8 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 
 	public OClass getSchemaClass() {
 		if (_clazz == null)
-			// DESERIALIZE ONLY IF THE CLASS IS NOT SETTED: THIS PREVENT TO UNMARSHALL THE RECORD EVEN IF SETTED BY fromString()
+			// DESERIALIZE ONLY IF THE CLASS IS NOT SETTED: THIS PREVENT TO
+			// UNMARSHALL THE RECORD EVEN IF SETTED BY fromString()
 			checkForFields();
 		return _clazz;
 	}
@@ -120,6 +121,17 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 		super.reset();
 		_clazz = null;
 		return this;
+	}
+
+	public byte[] toStream() {
+		final float oversize = 0;//_recordId.isNew() ? 1.5f : 0;
+
+		if (_source == null)
+			_source = _recordFormat.toStream(_database, this, oversize);
+
+		invokeListenerEvent(ORecordListener.EVENT.MARSHALL);
+
+		return _source;
 	}
 
 	public void remove() {
@@ -244,5 +256,4 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 		if (_status == STATUS.NOT_LOADED && _database != null)
 			reload();
 	}
-
 }

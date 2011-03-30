@@ -150,6 +150,28 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 		}
 	}
 
+	/**
+	 * Update position in data segment (usually on defrag)
+	 * 
+	 * @throws IOException
+	 */
+	public void setPhysicalPosition(long iPosition, final long iDataPosition) throws IOException {
+		iPosition = iPosition * RECORD_SIZE;
+
+		acquireExclusiveLock();
+		try {
+			final long[] pos = getRelativePosition(iPosition);
+
+			final OFile file = files[(int) pos[0]];
+			long p = pos[1];
+
+			file.writeLong(p += OConstants.SIZE_SHORT, iDataPosition);
+
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
+
 	public void updateVersion(long iPosition, final int iVersion) throws IOException {
 		iPosition = iPosition * RECORD_SIZE;
 

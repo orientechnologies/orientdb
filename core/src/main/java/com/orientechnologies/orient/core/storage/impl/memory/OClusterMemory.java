@@ -127,6 +127,11 @@ public class OClusterMemory extends OSharedResource implements OCluster {
 			removed.add(new Integer((int) iPosition));
 	}
 
+	public void setPhysicalPosition(final long iPosition, final long iDataPosition) {
+		final OPhysicalPosition ppos = entries.get((int) iPosition);
+		ppos.dataPosition = iDataPosition;
+	}
+
 	public void setPhysicalPosition(final long iPosition, final int iDataId, final long iDataPosition, final byte iRecordType) {
 		final OPhysicalPosition ppos = entries.get((int) iPosition);
 		ppos.dataSegment = iDataId;

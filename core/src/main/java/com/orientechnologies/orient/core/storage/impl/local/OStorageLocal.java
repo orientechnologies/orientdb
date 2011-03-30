@@ -45,7 +45,6 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -733,6 +732,26 @@ public class OStorageLocal extends OStorageEmbedded {
 		}
 	}
 
+	/**
+	 * Returns the total size used by holes
+	 * 
+	 * @throws IOException
+	 */
+	public long getHoleSize() throws IOException {
+		final boolean locked = lock.acquireSharedLock();
+		try {
+			final List<OPhysicalPosition> holes = getHoles();
+			long size = 0;
+			for (OPhysicalPosition h : holes) {
+				if (h.dataPosition > -1 && h.recordSize > 0)
+					size += h.recordSize;
+			}
+			return size;
+		} finally {
+			lock.releaseSharedLock(locked);
+		}
+	}
+
 	public String getPhysicalClusterNameById(final int iClusterId) {
 		checkOpeness();
 
@@ -966,8 +985,6 @@ public class OStorageLocal extends OStorageEmbedded {
 			final int iVersion, final byte iRecordType) {
 		final long timer = OProfiler.getInstance().startChrono();
 
-		final String recId = ORecordId.generateString(iClusterSegment.getId(), iPosition);
-
 		final boolean locked = lock.acquireSharedLock();
 
 		try {
@@ -983,7 +1000,9 @@ public class OStorageLocal extends OStorageEmbedded {
 			if (iVersion > -1 && iVersion < ppos.version)
 				throw new OConcurrentModificationException(
 						"Can't update record #"
-								+ recId
+								+ iClusterSegment.getId()
+								+ ":"
+								+ iPosition
 								+ " because it has been modified by another user (v"
 								+ ppos.version
 								+ " != v"
@@ -1022,8 +1041,6 @@ public class OStorageLocal extends OStorageEmbedded {
 	protected boolean deleteRecord(final int iRequesterId, final OCluster iClusterSegment, final long iPosition, final int iVersion) {
 		final long timer = OProfiler.getInstance().startChrono();
 
-		final String recId = ORecordId.generateString(iClusterSegment.getId(), iPosition);
-
 		final boolean locked = lock.acquireSharedLock();
 
 		try {
@@ -1037,7 +1054,9 @@ public class OStorageLocal extends OStorageEmbedded {
 			if (iVersion > -1 && ppos.version != iVersion)
 				throw new OConcurrentModificationException(
 						"Can't delete the record #"
-								+ recId
+								+ iClusterSegment.getId()
+								+ ":"
+								+ iPosition
 								+ " because it was modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
 
 			iClusterSegment.removePhysicalPosition(iPosition, ppos);

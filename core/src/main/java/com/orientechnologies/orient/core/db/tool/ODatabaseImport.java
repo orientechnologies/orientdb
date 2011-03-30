@@ -129,7 +129,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		listener.onMessage("\nRebuilding " + propertyIndexes.size() + " indexes...");
 
 		database.getMetadata().getIndexManager().load();
-		
+
 		for (Entry<OProperty, String> e : propertyIndexes.entrySet()) {
 			e.getKey().setIndex(database.getMetadata().getIndexManager().getIndex(e.getValue()));
 			e.getKey().getIndex().getUnderlying().setCallback(e.getKey().getIndex());

@@ -21,7 +21,7 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
 @SuppressWarnings("serial")
-public class OPhysicalPosition implements OSerializableStream {
+public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysicalPosition> {
 	public int	dataSegment;	// ID OF DATA SEGMENT
 	public long	dataPosition; // OFFSET IN BYTES INSIDE THE DATA SEGMENT
 	public byte	type;				// RECORD TYPE
@@ -56,7 +56,7 @@ public class OPhysicalPosition implements OSerializableStream {
 				+ ", v=" + version;
 	}
 
-	public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
+	public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
 		int pos = 0;
 
 		dataSegment = OBinaryProtocol.bytes2int(iStream, pos);
@@ -95,5 +95,9 @@ public class OPhysicalPosition implements OSerializableStream {
 
 		OBinaryProtocol.int2bytes(version, buffer, pos);
 		return buffer;
+	}
+
+	public int compareTo(final OPhysicalPosition iOther) {
+		return (int) (dataPosition - iOther.dataPosition);
 	}
 }

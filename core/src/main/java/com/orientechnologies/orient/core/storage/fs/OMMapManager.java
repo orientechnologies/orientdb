@@ -227,7 +227,7 @@ public class OMMapManager {
 		fileEntries.add(p, entry);
 
 		// TEST
-		//getOverlappedBlocks(iFile);
+		// getOverlappedBlocks(iFile);
 
 		return entry;
 	}
@@ -462,6 +462,9 @@ public class OMMapManager {
 		if (p > -1 && p < fileEntries.size()) {
 			// GET NEXT ENTRY AS SIZE LIMIT
 			bufferSize = (int) (fileEntries.get(p).beginOffset - iBeginOffset);
+			if (bufferSize < iSize)
+				bufferSize = iSize;
+			
 			if (bufferSize > blockSize)
 				bufferSize = blockSize;
 		} else {

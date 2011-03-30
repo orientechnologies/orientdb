@@ -289,7 +289,7 @@ public abstract class OFile {
 	protected long checkRegions(final long iOffset, final int iLenght) {
 		if (iOffset + iLenght > filledUpTo)
 			throw new OIOException("You can't access outside the file size (" + filledUpTo + " bytes). You've requested portion "
-					+ iOffset + "-" + (iOffset + iLenght) + " bytes");
+					+ iOffset + "-" + (iOffset + iLenght) + " bytes. File: " + toString());
 
 		return iOffset;// + HEADER_SIZE;
 	}

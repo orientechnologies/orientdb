@@ -23,6 +23,7 @@ import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OStorageTxConfiguration;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -60,21 +61,23 @@ public class OStorageLocalTxExecuter {
 
 	protected long createRecord(final int iRequesterId, final int iTxId, final OCluster iClusterSegment, final byte[] iContent,
 			final byte iRecordType) throws IOException {
-		long recordPosition = -1;
+		long clusterPosition = -1;
 
 		try {
 			// CREATE DATA SEGMENT. IF TX FAILS AT THIS POINT UN-REFERENCED DATA WILL REMAIN UNTIL NEXT DEFRAG
 			final int dataSegment = storage.getDataSegmentForRecord(iClusterSegment, iContent);
 			ODataLocal data = storage.getDataSegment(dataSegment);
-			final long dataOffset = data.addRecord(-1, -1, iContent);
 
-			// REFERENCE IN THE CLUSTER THE DATA JUST CREATED. IF TX FAILS AT THIS POINT ???
-			// TODO
-			recordPosition = iClusterSegment.addPhysicalPosition(dataSegment, dataOffset, iRecordType);
+			// REFERENCE IN THE CLUSTER THE DATA JUST CREATED. IF TX FAILS AT THIS POINT AN EMPTY ENTRY IS KEPT UNTIL DEFRAG
+			clusterPosition = iClusterSegment.addPhysicalPosition(-1, -1, iRecordType);
 
-			// SAVE INTO THE LOG THE POSITION OF THE RECORD JUST CREATED. IF TX FAILS AT THIS POINT ???
-			// TODO
-			txSegment.addLog(OTxSegment.OPERATION_CREATE, iRequesterId, iTxId, iClusterSegment.getId(), recordPosition, dataOffset);
+			final long dataOffset = data.addRecord(iClusterSegment.getId(), clusterPosition, iContent);
+
+			// UPDATE THE POSITION IN CLUSTER WITH THE POSITION OF RECORD IN DATA
+			iClusterSegment.setPhysicalPosition(clusterPosition, dataSegment, dataOffset, iRecordType);
+
+			// SAVE INTO THE LOG THE POSITION OF THE RECORD JUST CREATED. IF TX FAILS AT THIS POINT A GHOST RECORD IS CREATED UNTIL DEFRAG
+			txSegment.addLog(OTxSegment.OPERATION_CREATE, iRequesterId, iTxId, iClusterSegment.getId(), clusterPosition, dataOffset);
 
 		} catch (IOException e) {
 
@@ -82,7 +85,7 @@ public class OStorageLocalTxExecuter {
 					OTransactionException.class);
 		}
 
-		return recordPosition;
+		return clusterPosition;
 	}
 
 	protected int updateRecord(final int iRequesterId, final int iTxId, final OCluster iClusterSegment, final long iPosition,
@@ -120,7 +123,20 @@ public class OStorageLocalTxExecuter {
 			final int iVersion) {
 		try {
 			// GET THE PPOS OF THE RECORD
-			OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iPosition, new OPhysicalPosition());
+			final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iPosition, new OPhysicalPosition());
+
+			if (!storage.checkForRecordValidity(ppos))
+				// ALREADY DELETED
+				return;
+
+			// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
+			if (iVersion > -1 && ppos.version != iVersion)
+				throw new OConcurrentModificationException(
+						"Can't delete the record #"
+								+ iClusterSegment.getId()
+								+ ":"
+								+ iPosition
+								+ " because it was modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
 
 			// SAVE INTO THE LOG THE POSITION OF THE RECORD JUST DELETED
 			txSegment.addLog(OTxSegment.OPERATION_DELETE, iRequesterId, iTxId, iClusterSegment.getId(), iPosition, ppos.dataPosition);
@@ -128,6 +144,9 @@ public class OStorageLocalTxExecuter {
 			// DELETE THE RECORD BUT LEAVING THE PPOS INTACT BUT THE VERSION = -1 TO RECOGNIZE THAT THE ENTRY HAS BEEN DELETED. IF TX
 			// FAILS AT THIS POINT CAN BE RECOVERED THANKS TO THE TX-LOG
 			iClusterSegment.removePhysicalPosition(iPosition, ppos);
+
+			storage.getDataSegment(ppos.dataSegment).deleteRecord(ppos.dataPosition);
+
 		} catch (IOException e) {
 
 			OLogManager.instance().error(this, "Error on deleting entry #" + iPosition + " in log segment: " + iClusterSegment, e,

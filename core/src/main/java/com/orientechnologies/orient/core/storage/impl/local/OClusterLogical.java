@@ -136,6 +136,16 @@ public class OClusterLogical implements OCluster {
 	}
 
 	/**
+	 * Update position in data segment (usually on defrag)
+	 */
+	public void setPhysicalPosition(final long iPosition, final long iDataPosition) {
+		Long key = new Long(iPosition);
+		final OPhysicalPosition ppos = map.get(key);
+		ppos.dataPosition = iDataPosition;
+		map.put(key, ppos);
+	}
+
+	/**
 	 * Change the PhysicalPosition of the logical record iPosition.
 	 */
 	public void setPhysicalPosition(final long iPosition, final int iDataId, final long iDataPosition, final byte iRecordType) {

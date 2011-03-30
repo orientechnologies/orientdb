@@ -105,7 +105,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 
 	public byte[] toStream() {
 		if (_source == null)
-			_source = _recordFormat.toStream(_database, this);
+			_source = _recordFormat.toStream(_database, this, 1f);
 
 		invokeListenerEvent(ORecordListener.EVENT.MARSHALL);
 

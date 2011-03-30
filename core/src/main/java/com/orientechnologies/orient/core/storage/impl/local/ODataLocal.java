@@ -21,8 +21,11 @@ import java.util.List;
 
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
 import com.orientechnologies.orient.core.config.OStorageDataHoleConfiguration;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 
@@ -40,9 +43,10 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
 public class ODataLocal extends OMultiFileSegment {
 	static final String							DEF_EXTENSION		= ".oda";
 	private static final int				DEF_START_SIZE	= 10000000;
-	private static final int				RECORD_FIX_SIZE	= 14;
+	public static final int					RECORD_FIX_SIZE	= 14;
 	protected final int							id;
 	protected final ODataLocalHole	holeSegment;
+	protected final int							defragMaxHoleDistance;
 
 	public ODataLocal(final OStorageLocal iStorage, final OStorageDataConfiguration iConfig, final int iId) throws IOException {
 		super(iStorage, iConfig, DEF_EXTENSION, 0);
@@ -51,6 +55,8 @@ public class ODataLocal extends OMultiFileSegment {
 		iConfig.holeFile = new OStorageDataHoleConfiguration(iConfig, OStorageVariableParser.DB_PATH_VARIABLE + "/" + name,
 				iConfig.fileType, iConfig.maxSize);
 		holeSegment = new ODataLocalHole(iStorage, iConfig.holeFile);
+
+		defragMaxHoleDistance = OGlobalConfiguration.FILE_DEFRAG_HOLE_MAX_DISTANCE.getValueAsInteger();
 	}
 
 	@Override
@@ -89,14 +95,7 @@ public class ODataLocal extends OMultiFileSegment {
 		try {
 			final int recordSize = iContent.length + RECORD_FIX_SIZE;
 
-			final long[] newFilePosition;
-			final long position = holeSegment.popFirstAvailableHole(recordSize);
-			if (position > -1)
-				newFilePosition = getRelativePosition(position);
-			else
-				// ALLOCATE NEW SPACE FOR IT
-				newFilePosition = allocateSpace(iContent.length + RECORD_FIX_SIZE);
-
+			final long[] newFilePosition = getFreeSpace(recordSize);
 			writeRecord(newFilePosition, iClusterSegment, iClusterPosition, iContent);
 			return getAbsolutePosition(newFilePosition);
 
@@ -121,6 +120,7 @@ public class ODataLocal extends OMultiFileSegment {
 
 			final int recordSize = file.readInt(pos[1]);
 			if (recordSize <= 0)
+				// RECORD DELETED
 				return null;
 
 			byte[] content = new byte[recordSize];
@@ -176,22 +176,22 @@ public class ODataLocal extends OMultiFileSegment {
 				file.write(pos[1] + RECORD_FIX_SIZE, iContent);
 
 				OProfiler.getInstance().updateCounter("ODataLocal.setRecord:tot.reused.space", +1);
-			} else if (iContent.length < recordSize) {
+			} else if (recordSize - iContent.length > RECORD_FIX_SIZE) {
 				// USE THE OLD SPACE BUT UPDATE THE CURRENT SIZE. IT'S PREFEREABLE TO USE THE SAME INSTEAD FINDING A BEST SUITED FOR IT TO
 				// AVOID CHANGES TO REF FILE AS WELL.
 				writeRecord(pos, iClusterSegment, iClusterPosition, iContent);
 
 				// CREATE A HOLE WITH THE DIFFERENCE OF SPACE
-				holeSegment.createHole(iPosition + RECORD_FIX_SIZE + iContent.length, iContent.length - recordSize);
+				createHole(iPosition + RECORD_FIX_SIZE + iContent.length, recordSize - iContent.length - RECORD_FIX_SIZE);
 
 				OProfiler.getInstance().updateCounter("ODataLocal.setRecord:part.reused.space", +1);
 			} else {
-				// USE A NEW SPACE
-				pos = allocateSpace(iContent.length + RECORD_FIX_SIZE);
-				writeRecord(pos, iClusterSegment, iClusterPosition, iContent);
-
 				// CREATE A HOLE FOR THE ENTIRE OLD RECORD
-				holeSegment.createHole(iPosition, recordSize);
+				createHole(iPosition, recordSize);
+
+				// USE A NEW SPACE
+				pos = getFreeSpace(iContent.length + RECORD_FIX_SIZE);
+				writeRecord(pos, iClusterSegment, iClusterPosition, iContent);
 
 				OProfiler.getInstance().updateCounter("ODataLocal.setRecord:new.space", +1);
 			}
@@ -211,10 +211,8 @@ public class ODataLocal extends OMultiFileSegment {
 
 			final int recordSize = file.readInt(pos[1]);
 			if (recordSize > 0) {
-				// VALID RECORD: CREATE A HOLE FOR IT
-				file.writeInt(pos[1], 0);
-
-				holeSegment.createHole(iPosition, recordSize);
+				// VALID RECORD: CREATE A HOLE
+				createHole(iPosition, recordSize);
 			}
 			return recordSize;
 
@@ -234,8 +232,176 @@ public class ODataLocal extends OMultiFileSegment {
 		file.write(iFilePosition[1] + RECORD_FIX_SIZE, iContent);
 	}
 
-	public void createHole(long iRecordOffset, int iRecordSize) throws IOException {
-		holeSegment.createHole(iRecordOffset, iRecordSize);
+	public void createHole(final long iRecordOffset, final int iRecordSize) throws IOException {
+		acquireExclusiveLock();
+		try {
+			long holePositionOffset = iRecordOffset;
+			int holeSize = iRecordSize + RECORD_FIX_SIZE;
+
+			final int holes = holeSegment.getHoles();
+
+			if (holes > 0) {
+				final OPhysicalPosition ppos = new OPhysicalPosition();
+
+				// FIND THE CLOSEST HOLE
+				int closestHoleIndex = -1;
+				long closestHoleOffset = Integer.MAX_VALUE;
+				OPhysicalPosition closestPpos = new OPhysicalPosition();
+				for (int i = 0; i < holes; ++i) {
+					holeSegment.getHole(i, ppos);
+
+					if (ppos.dataPosition == -1)
+						// FREE HOLE
+						continue;
+
+					boolean closest = false;
+
+					if (iRecordOffset > ppos.dataPosition) {
+						if (closestHoleIndex == -1 || iRecordOffset - (ppos.dataPosition + ppos.recordSize) < Math.abs(closestHoleOffset)) {
+							closestHoleOffset = (ppos.dataPosition + ppos.recordSize) - iRecordOffset;
+							closest = true;
+						}
+					} else {
+						if (closestHoleIndex == -1 || ppos.dataPosition - (iRecordOffset + iRecordSize) < Math.abs(closestHoleOffset)) {
+							closestHoleOffset = ppos.dataPosition - (iRecordOffset + iRecordSize);
+							closest = true;
+						}
+					}
+
+					if (closest) {
+						closestHoleIndex = i;
+						ppos.copyTo(closestPpos);
+					}
+				}
+
+				if (closestPpos.dataPosition + closestPpos.recordSize == iRecordOffset) {
+					// IT'S CONSECUTIVE TO ANOTHER HOLE AT THE LEFT: UPDATE LAST ONE
+					holeSize += closestPpos.recordSize;
+					holeSegment.updateHole(closestHoleIndex, closestPpos.dataPosition, holeSize);
+
+				} else if (holePositionOffset + holeSize == closestPpos.dataPosition) {
+					// IT'S CONSECUTIVE TO ANOTHER HOLE AT THE RIGHT: UPDATE LAST ONE
+					holeSize += closestPpos.recordSize;
+					holeSegment.updateHole(closestHoleIndex, holePositionOffset, holeSize);
+
+				} else {
+					if (Math.abs(closestHoleOffset) < defragMaxHoleDistance) {
+						// QUITE CLOSE, AUTO-DEFRAG!
+
+						if (closestHoleOffset < 0) {
+							// MOVE THE DATA ON THE RIGHT AND USE ONE HOLE FOR BOTH
+							closestHoleOffset *= -1;
+
+							// SEARCH LAST SEGMENT
+							long moveFrom = closestPpos.dataPosition + closestPpos.recordSize;
+							int recordSize;
+
+							final long offsetLimit = Math.min(iRecordOffset, getFilledUpTo());
+
+							final List<long[]> segmentPositions = new ArrayList<long[]>();
+							do {
+								final long[] pos = getRelativePosition(moveFrom);
+								final OFile file = files[(int) pos[0]];
+
+								recordSize = file.readInt(pos[1]) + RECORD_FIX_SIZE;
+
+								// SAVE DATA IN ARRAY
+								segmentPositions.add(0, new long[] { moveFrom, recordSize });
+
+								moveFrom += recordSize;
+							} while (moveFrom < offsetLimit);
+
+							long gap = offsetLimit + holeSize;
+
+							for (long[] item : segmentPositions) {
+								final int sizeMoved = moveRecord(item[0], gap - item[1]);
+
+								if (sizeMoved != item[1])
+									throw new IllegalStateException("Corrupted holes: Found size " + sizeMoved + " instead of " + item[1]);
+
+								gap -= sizeMoved;
+							}
+
+							holePositionOffset = closestPpos.dataPosition;
+							holeSize += closestPpos.recordSize;
+
+						} else {
+							// MOVE THE DATA ON THE LEFT AND USE ONE HOLE FOR BOTH
+							long moveFrom = iRecordOffset + iRecordSize + RECORD_FIX_SIZE;
+							long moveTo = iRecordOffset;
+							long moveUpTo = closestPpos.dataPosition;
+
+							do {
+								final int sizeMoved = moveRecord(moveFrom, moveTo);
+
+								moveFrom += sizeMoved;
+								moveTo += sizeMoved;
+
+							} while (moveFrom < moveUpTo);
+
+							if (moveFrom != moveUpTo)
+								throw new IllegalStateException("Corrupted holes: Found offset " + moveFrom + " instead of " + moveUpTo);
+
+							holePositionOffset = moveTo;
+							holeSize += closestPpos.recordSize;
+						}
+
+						holeSegment.updateHole(closestHoleIndex, holePositionOffset, holeSize);
+
+					} else {
+						// CREATE A NEW ONE
+						holeSegment.createHole(iRecordOffset, holeSize);
+					}
+				}
+			} else
+				// CREATE A NEW ONE
+				holeSegment.createHole(iRecordOffset, holeSize);
+
+			// WRITE NEGATIVE RECORD SIZE TO MARK AS DELETED
+			final long[] pos = getRelativePosition(holePositionOffset);
+			files[(int) pos[0]].writeInt(pos[1], holeSize * -1);
+
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
+
+	private int moveRecord(long iSourcePosition, long iDestinationPosition) throws IOException {
+		final long timer = OProfiler.getInstance().startChrono();
+
+		// GET RECORD TO MOVE
+		final long[] pos = getRelativePosition(iSourcePosition);
+		final OFile file = files[(int) pos[0]];
+
+		final int recordSize = file.readInt(pos[1]);
+
+		if (recordSize < 0)
+			// FOUND HOLE
+			return -1;
+
+		final short clusterId = file.readShort(pos[1] + OConstants.SIZE_INT);
+		final long clusterPosition = file.readLong(pos[1] + OConstants.SIZE_INT + OConstants.SIZE_SHORT);
+
+		byte[] content = new byte[recordSize];
+		file.read(pos[1] + RECORD_FIX_SIZE, content, recordSize);
+
+		if (clusterId > -1) {
+			// CHANGE THE POINTMENT OF CLUSTER TO THE NEW POSITION
+			final OCluster cluster = storage.getClusterById(clusterId);
+			final OPhysicalPosition ppos = cluster.getPhysicalPosition(clusterPosition, new OPhysicalPosition());
+
+			if (ppos.dataPosition != iSourcePosition)
+				throw new OStorageException("Found corrupted record hole for rid " + clusterId + ":" + clusterPosition
+						+ ": data position is wrong: " + ppos.dataPosition + "<->" + iSourcePosition);
+
+			cluster.setPhysicalPosition(clusterPosition, iDestinationPosition);
+		}
+
+		writeRecord(getRelativePosition(iDestinationPosition), clusterId, clusterPosition, content);
+
+		OProfiler.getInstance().stopChrono("Storage.data.move", timer);
+
+		return recordSize + RECORD_FIX_SIZE;
 	}
 
 	/**
@@ -261,5 +427,16 @@ public class ODataLocal extends OMultiFileSegment {
 
 	public int getId() {
 		return id;
+	}
+
+	private long[] getFreeSpace(final int recordSize) throws IOException {
+		final long[] newFilePosition;
+		final long position = holeSegment.popBestHole(recordSize);
+		if (position > -1)
+			newFilePosition = getRelativePosition(position);
+		else
+			// ALLOCATE NEW SPACE FOR IT
+			newFilePosition = allocateSpace(recordSize);
+		return newFilePosition;
 	}
 }
