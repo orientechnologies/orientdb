@@ -781,6 +781,9 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 * Returns the iterator against the field entries as name and value.
 	 */
 	public Iterator<Entry<String, Object>> iterator() {
+		checkForLoading();
+		checkForFields();
+
 		if (_fieldValues == null)
 			return OEmptyIterator.INSTANCE;
 
