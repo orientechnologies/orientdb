@@ -1014,8 +1014,14 @@ public class OStorageLocal extends OStorageEmbedded {
 
 			iClusterSegment.updateVersion(iPosition, ++ppos.version);
 
-			final long newDataSegmentOffset = getDataSegment(ppos.dataSegment).setRecord(ppos.dataPosition, iClusterSegment.getId(),
-					iPosition, iContent);
+			final long newDataSegmentOffset;
+			if (ppos.dataPosition == -1)
+				// WAS EMPTY FIRST TIME, CREATE IT NOW
+				newDataSegmentOffset = getDataSegment(ppos.dataSegment).addRecord(iClusterSegment.getId(), iPosition, iContent);
+			else
+				// UPDATE IT
+				newDataSegmentOffset = getDataSegment(ppos.dataSegment).setRecord(ppos.dataPosition, iClusterSegment.getId(), iPosition,
+						iContent);
 
 			if (newDataSegmentOffset != ppos.dataPosition)
 				// UPDATE DATA SEGMENT OFFSET WITH THE NEW PHYSICAL POSITION

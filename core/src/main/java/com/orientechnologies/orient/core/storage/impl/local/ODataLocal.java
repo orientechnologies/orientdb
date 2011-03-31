@@ -91,6 +91,10 @@ public class ODataLocal extends OMultiFileSegment {
 	 * @throws IOException
 	 */
 	public long addRecord(final int iClusterSegment, final long iClusterPosition, final byte[] iContent) throws IOException {
+		if (iContent.length == 0)
+			// AVOID UNUSEFUL CREATION OF EMPTY RECORD: IT WILL BE CREATED AT FIRST UPDATE
+			return -1;
+
 		acquireExclusiveLock();
 		try {
 			final int recordSize = iContent.length + RECORD_FIX_SIZE;
