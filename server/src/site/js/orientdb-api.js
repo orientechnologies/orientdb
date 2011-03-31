@@ -230,14 +230,18 @@ function ODatabase(databasePath) {
 			success : function(msg) {
 				this.setErrorMessage(null);
 				this.setCommandResponse(msg);
-				this.setCommandResult(null);
+				this.setCommandResult(msg);
 			},
 			error : function(msg) {
 				this.handleResponse(null);
 				this.setErrorMessage('Save error: ' + msg.responseText);
 			}
 		});
-		return this.getCommandResult();
+		if (methodType == 'PUT'){
+			return rid;	
+		} else {
+			return this.getCommandResult();
+		}
 	}
 
 	ODatabase.prototype.remove = function(obj, onsuccess, onerror) {
@@ -512,6 +516,22 @@ function ODatabase(databasePath) {
 				if (value.length > 0 && value.charAt(0) == '#'
 					&& linkMap[value] != null) {
 					obj[field] = linkMap[value];
+				}
+			}
+		}
+		return obj;
+	}
+	
+	ODatabase.prototype.removeCircleReferences = function(obj) {
+		if (typeof obj == 'object') {
+			var linkMap = {
+					"foo" : 0
+			};
+			linkMap = this.createObjectsLinksMap(obj, linkMap);
+			if (linkMap["foo"] == 1) {
+				linkMap = this.putObjectInLinksMap(obj, linkMap);
+				if (linkMap["foo"] == 2) {
+					obj = this.getObjectFromLinksMap(obj, linkMap);
 				}
 			}
 		}
