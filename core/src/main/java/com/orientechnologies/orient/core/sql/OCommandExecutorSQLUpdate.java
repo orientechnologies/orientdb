@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -51,13 +50,13 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 	private static final String									KEYWORD_ADD			= "ADD";
 	private static final String									KEYWORD_PUT			= "PUT";
 	private static final String									KEYWORD_REMOVE	= "REMOVE";
-	private String															className				= null;
 	private Map<String, Object>									setEntries			= new HashMap<String, Object>();
 	private Map<String, Object>									addEntries			= new HashMap<String, Object>();
 	private Map<String, OPair<String, Object>>	putEntries			= new HashMap<String, OPair<String, Object>>();
 	private Map<String, Object>									removeEntries		= new HashMap<String, Object>();
 	private OQuery<?>														query;
 	private int																	recordCount			= 0;
+	private String															subjectName;
 	private static final Object									EMPTY_VALUE			= new Object();
 
 	@SuppressWarnings("unchecked")
@@ -66,7 +65,6 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 
 		init(iRequest.getDatabase(), iRequest.getText());
 
-		className = null;
 		setEntries.clear();
 		query = null;
 		recordCount = 0;
@@ -79,21 +77,11 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 
 		int newPos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		if (newPos == -1)
-			throw new OCommandSQLParsingException("Invalid cluster/class name", text, pos);
+			throw new OCommandSQLParsingException("Invalid target", text, pos);
 
 		pos = newPos;
 
-		String subjectName = word.toString();
-
-		if (subjectName.startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX))
-			subjectName = subjectName.substring(OCommandExecutorSQLAbstract.CLASS_PREFIX.length());
-
-		// CLASS
-		final OClass cls = database.getMetadata().getSchema().getClass(subjectName);
-		if (cls == null)
-			throw new OCommandSQLParsingException("Class " + subjectName + " not found in database", text, pos);
-
-		className = cls.getName();
+		subjectName = word.toString();
 
 		newPos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		if (newPos == -1
@@ -120,15 +108,15 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 		String whereCondition = word.toString();
 
 		if (whereCondition.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE))
-			query = new OSQLAsynchQuery<ODocument>("select from " + className + " where " + text.substring(pos), this);
+			query = new OSQLAsynchQuery<ODocument>("select from " + subjectName + " where " + text.substring(pos), this);
 		else
-			query = new OSQLAsynchQuery<ODocument>("select from " + className, this);
+			query = new OSQLAsynchQuery<ODocument>("select from " + subjectName, this);
 
 		return this;
 	}
 
 	public Object execute(final Map<Object, Object> iArgs) {
-		if (className == null)
+		if (subjectName == null)
 			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
 
 		database.query(query, iArgs);
