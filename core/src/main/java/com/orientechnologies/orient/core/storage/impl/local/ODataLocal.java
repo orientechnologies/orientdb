@@ -77,11 +77,6 @@ public class ODataLocal extends OMultiFileSegment {
 		holeSegment.close();
 	}
 
-	public long getAvailablePosition(int iSize) throws IOException {
-		// TODO: REUSE SPACE FROM THE HOLE FILE
-		return getAbsolutePosition(allocateSpace(iSize + RECORD_FIX_SIZE));
-	}
-
 	/**
 	 * Add the record content in file.
 	 * 
@@ -214,10 +209,7 @@ public class ODataLocal extends OMultiFileSegment {
 			final OFile file = files[(int) pos[0]];
 
 			final int recordSize = file.readInt(pos[1]);
-			if (recordSize > 0) {
-				// VALID RECORD: CREATE A HOLE
-				createHole(iPosition, recordSize);
-			}
+			createHole(iPosition, recordSize);
 			return recordSize;
 
 		} finally {

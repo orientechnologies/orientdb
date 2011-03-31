@@ -1067,7 +1067,8 @@ public class OStorageLocal extends OStorageEmbedded {
 
 			iClusterSegment.removePhysicalPosition(iPosition, ppos);
 
-			getDataSegment(ppos.dataSegment).deleteRecord(ppos.dataPosition);
+			if (ppos.dataPosition > -1)
+				getDataSegment(ppos.dataSegment).deleteRecord(ppos.dataPosition);
 
 			incrementVersion();
 
