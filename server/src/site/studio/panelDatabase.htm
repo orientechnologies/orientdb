@@ -281,6 +281,7 @@
 </div>
 
 <script language="javascript">
+<!--
 	function showDatabaseInfo() {
 		fillDynaTable($('#databaseClusters'), "Clusters", [ 'id', 'name',
 				'type', 'records', 'size', 'filled', 'maxSize', 'files' ], [ {
@@ -763,14 +764,14 @@
 		}
 	}
 
-	function Graph(canvas, size, block) {
+	function Graph(canvas, size) {
 		this.canvas = canvas;
 		this.context = canvas.getContext("2d");
 		this.size = size;
-		this.block = block;
-		this.xpadding = 2;
-		this.ypadding = 2;
-		this.rows = size / block;
+		this.block = this.canvas.width;
+		this.xpadding = 0;
+		this.ypadding = 0;
+		this.rows = size / this.block;
 		this.unitWidthPx = this.canvas.width / this.block - this.xpadding * 2;
 		this.unitHeightPx = this.canvas.height / this.rows - this.ypadding * 2;
 		this.cursor = 0;
@@ -840,10 +841,7 @@
 													var canv = document
 															.getElementById("allocation-canvas");
 													var ff = new Graph(canv,
-															alloc.size / 10, 1);
-
-													var dataSize = 0;
-													var holeSize = 0;
+															alloc.size / 100);
 
 													for (i in alloc.segments) {
 														var segment = alloc.segments[i];
@@ -851,30 +849,27 @@
 														if (segment.type == 'd') {
 															ff
 																	.fill(
-																			segment.size / 10,
+																			segment.size / 100,
 																			'#00FF00');
-															dataSize += segment.size;
 														} else {
 															ff
 																	.fill(
-																			segment.size / 10,
+																			segment.size / 100,
 																			'#FF0000');
-															holeSize += segment.size;
 														}
 													}
-													ff.close('#000000');
 
 													$('#data-value')
 															.text(
-																	dataSize
+																	alloc.dataSize
 																			+ ' ('
-																			+ (dataSize * 100 / alloc.size)
+																			+ alloc.dataSizePercent
 																			+ '%)');
 													$('#holes-value')
 															.text(
-																	dataSize
+																	alloc.holesSize
 																			+ ' ('
-																			+ (holeSize * 100 / alloc.size)
+																			+ alloc.holesSizePercent
 																			+ '%)');
 												}
 											},
@@ -892,4 +887,5 @@
 	$('#tabs-security').tabs();
 
 	showDatabaseInfo();
+//-->
 </script>

@@ -51,12 +51,14 @@ public class OServerCommandGetStorageAllocation extends OServerCommandAuthentica
 			final OJSONWriter json = new OJSONWriter(buffer);
 
 			final ODataLocal dataSegment = ((OStorageLocal) db.getStorage()).getDataSegment(0);
-			final long dataSize = dataSegment.getFilledUpTo();
+			final long dbSize = dataSegment.getFilledUpTo();
 
 			json.beginObject();
-			json.writeAttribute(1, true, "size", dataSize);
+			json.writeAttribute(1, true, "size", dbSize);
 
 			long current = 0;
+
+			long holesSize = 0;
 
 			json.beginCollection(1, true, "segments");
 			for (OPhysicalPosition h : holes) {
@@ -75,22 +77,29 @@ public class OServerCommandGetStorageAllocation extends OServerCommandAuthentica
 				json.beginObject(2, true, null);
 				json.writeAttribute(3, false, "type", "h");
 				json.writeAttribute(3, false, "offset", h.dataPosition);
-				json.writeAttribute(3, false, "size", h.recordSize + ODataLocal.RECORD_FIX_SIZE);
+				json.writeAttribute(3, false, "size", h.recordSize);
 				json.endObject(2, false);
+				holesSize += h.recordSize;
 
-				current = h.dataPosition + h.recordSize + ODataLocal.RECORD_FIX_SIZE;
+				current = h.dataPosition + h.recordSize;
 			}
 
-			if (dataSize > current) {
+			if (dbSize > current) {
 				// DATA SEGMENT
 				json.beginObject(2, true, null);
 				json.writeAttribute(3, false, "type", "d");
 				json.writeAttribute(3, false, "offset", current);
-				json.writeAttribute(3, false, "size", dataSize - current);
+				json.writeAttribute(3, false, "size", dbSize - current);
 				json.endObject(2, false);
 			}
 
 			json.endCollection(1, true);
+
+			json.writeAttribute(1, true, "dataSize", dbSize - holesSize);
+			json.writeAttribute(1, true, "dataSizePercent", (dbSize - holesSize) * 100 / dbSize);
+			json.writeAttribute(1, true, "holesSize", holesSize);
+			json.writeAttribute(1, true, "holesSizePercent", 100 - (dbSize - holesSize) * 100 / dbSize);
+
 			json.endObject();
 			json.flush();
 
