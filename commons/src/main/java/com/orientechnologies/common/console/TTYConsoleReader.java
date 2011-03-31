@@ -141,7 +141,11 @@ public class TTYConsoleReader implements OConsoleReader {
 									}
 								}
 								historyNum = getHintedHistoryIndexUp(historyNum);
-								buffer = new StringBuffer(history.get(historyNum));
+								if (historyNum > -1) {
+									buffer = new StringBuffer(history.get(historyNum));
+								} else {
+									buffer = new StringBuffer(historyBuffer);
+								}
 								currentPos = buffer.length();
 								rewriteConsole(buffer, false);
 								// writeHistory(historyNum);
@@ -408,9 +412,9 @@ public class TTYConsoleReader implements OConsoleReader {
 					return i;
 				}
 			}
-			return historyNum;
+			return -1;
 		}
-		return historyNum = historyNum > 0 ? historyNum - 1 : 0;
+		return historyNum > 0 ? (historyNum - 1) : 0;
 	}
 
 	private int getHintedHistoryIndexDown(int historyNum) throws IOException {
@@ -422,7 +426,7 @@ public class TTYConsoleReader implements OConsoleReader {
 			}
 			return history.size();
 		}
-		return historyNum = historyNum < history.size() ? historyNum + 1 : history.size();
+		return historyNum < history.size() ? (historyNum + 1) : history.size();
 	}
 
 	private File getHistoryFile(boolean read) {
