@@ -1,10 +1,20 @@
+<style>
+<!--
+.alloc-table {
+	font-size: 8pt;
+	text-align: right;
+}
+-->
+</style>
 <div id="tab-database">
-<button onclick="javascript:askDatabaseInfo()" class="ui-button-text-icon">Refresh <img border="0" alt="Refresh"
-	src="images/execute.png" align="top" /></button>
+<button onclick="javascript:askDatabaseInfo()"
+	class="ui-button-text-icon">Refresh <img border="0"
+	alt="Refresh" src="images/execute.png" align="top" /></button>
 <div id="tabs-db">
 <ul>
 	<li><a href="#tab-db-schema"><span>Schema</span></a></li>
 	<li><a href="#tab-db-structure"><span>Structure</span></a></li>
+	<li><a href="#tab-db-allocation"><span>Allocation</span></a></li>
 	<li><a href="#tab-db-security"><span>Security</span></a></li>
 	<li><a href="#tab-db-config"><span>Configuration</span></a></li>
 </ul>
@@ -15,42 +25,49 @@
 		<table width="100%">
 			<tr>
 				<td width="600">
-				<table id="databaseClasses" cellspacing="0" cellpadding="5" border="1" width="100%">
+				<table id="databaseClasses" cellspacing="0" cellpadding="5"
+					border="1" width="100%">
 				</table>
 				</td>
 				<td valign="top" align="left" width="150">
 				<table>
 					<tr>
 						<td>
-						<button id="queryClass" class="ui-button-text-icon" style="text-align: left">Query <img border="0" alt="Query"
-							src="images/execute.png" align="top" /></button>
+						<button id="queryClass" class="ui-button-text-icon"
+							style="text-align: left">Query <img border="0"
+							alt="Query" src="images/execute.png" align="top" /></button>
 						</td>
 					</tr>
 					<tr>
 						<td>
-						<button id="createObject" class="ui-button-text-icon" style="text-align: left">Create object <img border="0"
+						<button id="createObject" class="ui-button-text-icon"
+							style="text-align: left">Create object <img border="0"
 							alt="Create object" src="images/set.png" align="top" /></button>
 						</td>
 					</tr>
 					<tr>
 						<td>
-						<button id="deleteClass" class="ui-button-text-icon" style="text-align: left">Delete class <img border="0"
+						<button id="deleteClass" class="ui-button-text-icon"
+							style="text-align: left">Delete class <img border="0"
 							alt="Delete record" src="images/delete.png" align="top" /></button>
 						</td>
 					</tr>
 				</table>
 				</td>
-				<td valign="top" class="help">Select the class to display the properties associated. Each class can store its records into one or
-				multiple <b>Clusters</b> (see "Structure" tab). A class can be <b>schema-less</b> (has no properties), <b>schema-full</b> (all
-				properties as mandatories) or with a <b>partial schema</b>.</td>
+				<td valign="top" class="help">Select the class to display the
+				properties associated. Each class can store its records into one or
+				multiple <b>Clusters</b> (see "Structure" tab). A class can be <b>schema-less</b>
+				(has no properties), <b>schema-full</b> (all properties as
+				mandatories) or with a <b>partial schema</b>.</td>
 			</tr>
 			<tr>
 				<td valign="top" align="left">
 				<table>
 					<tr>
 						<td>
-						<button id="addClass" class="ui-button-text-icon" style="text-align: left">Add class <img border="0" alt="New record"
-							src="images/add.png" align="top" /></button>
+						<button id="addClass" class="ui-button-text-icon"
+							style="text-align: left">Add class <img border="0"
+							alt="New record" src="images/add.png" align="top" /></button>
 						</td>
 						<td>
 					</tr>
@@ -65,14 +82,16 @@
 		<table width="100%">
 			<tr>
 				<td valign="top" width="850">
-				<table id="classProperties" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+				<table id="classProperties" style="width: 100%;" cellspacing="0"
+					cellpadding="5" border="1">
 				</table>
 				</td>
 				<td valign="top" align="left">
 				<table>
 					<tr>
 						<td>
-						<button id="deleteProperty" class="ui-button-text-icon" style="text-align: left">Delete property <img border="0"
+						<button id="deleteProperty" class="ui-button-text-icon"
+							style="text-align: left">Delete property <img border="0"
 							alt="Delete record" src="images/delete.png" align="top" /></button>
 						</td>
 					</tr>
@@ -84,8 +103,9 @@
 				<table>
 					<tr>
 						<td>
-						<button id="addProperty" " class="ui-button-text-icon" style="text-align: left">Add property <img border="0" alt="New record"
-							src="images/add.png" align="top" /></button>
+						<button id="addProperty" " class="ui-button-text-icon"
+							style="text-align: left">Add property <img border="0"
+							alt="New record" src="images/add.png" align="top" /></button>
 						</td>
 					</tr>
 				</table>
@@ -99,18 +119,26 @@
 <div id="tab-db-structure">
 <table style="width: 100%;" cellpadding="5">
 	<tr>
-		<td valign="top" class="help"><b><a href="http://code.google.com/p/orient/wiki/Concepts#Cluster">Clusters</a></b> are sets of records
-		grouped by a mean. Any mean you want to assign. You can use a Cluster like a Table of the Relational DBMS world, namely to group records
-		of the same type. Or you could want to group records by different logics. <br />
+		<td valign="top" class="help"><b><a
+			href="http://code.google.com/p/orient/wiki/Concepts#Cluster">Clusters</a></b>
+		are sets of records grouped by a mean. Any mean you want to assign.
+		You can use a Cluster like a Table of the Relational DBMS world,
+		namely to group records of the same type. Or you could want to group
+		records by different logics. <br />
 		<br />
-		There are two kinds of clusters: <b><a href="http://code.google.com/p/orient/wiki/Concepts#Local_Physical_Cluster">Physical</a></b> and <b><a
-			href="http://code.google.com/p/orient/wiki/Concepts#Logical_Cluster">Logical</a></b>. The first one uses ad-hoc files to speed up the I/O
-		while the second one saves more space but it's slower. The suggestion is to use Physical Clusters for the records accessed often and where
-		you need light speed.</td>
+		There are two kinds of clusters: <b><a
+			href="http://code.google.com/p/orient/wiki/Concepts#Local_Physical_Cluster">Physical</a></b>
+		and <b><a
+			href="http://code.google.com/p/orient/wiki/Concepts#Logical_Cluster">Logical</a></b>.
+		The first one uses ad-hoc files to speed up the I/O while the second
+		one saves more space but it's slower. The suggestion is to use
+		Physical Clusters for the records accessed often and where you need
+		light speed.</td>
 	</tr>
 	<tr>
 		<td valign="top" width="500">
-		<table id="databaseClusters" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+		<table id="databaseClusters" style="width: 100%;" cellspacing="0"
+			cellpadding="5" border="1">
 		</table>
 		</td>
 	</tr>
@@ -119,15 +147,20 @@
 		<table>
 			<tr>
 				<td>
-				<button id="addPhysicalCluster" class="ui-button-text-icon" style="text-align: left">Add Physical Cluster <img border="0"
-					alt="Add Physical Cluster" src="images/add.png" align="top" /></button>
+				<button id="addPhysicalCluster" class="ui-button-text-icon"
+					style="text-align: left">Add Physical Cluster <img
+					border="0" alt="Add Physical Cluster" src="images/add.png"
+					align="top" /></button>
 				</td>
 				<td>
-				<button id="addLogicalCluster" class="ui-button-text-icon" style="text-align: left">Add Logical Cluster <img border="0"
-					alt="Add Logical Cluster" src="images/add.png" align="top" /></button>
+				<button id="addLogicalCluster" class="ui-button-text-icon"
+					style="text-align: left">Add Logical Cluster <img
+					border="0" alt="Add Logical Cluster" src="images/add.png"
+					align="top" /></button>
 				</td>
 				<td>
-				<button id="removeCluster" class="ui-button-text-icon" style="text-align: left">Remove Cluster <img border="0"
+				<button id="removeCluster" class="ui-button-text-icon"
+					style="text-align: left">Remove Cluster <img border="0"
 					alt="Remove Cluster" src="images/delete.png" align="top" /></button>
 				</td>
 			</tr>
@@ -135,21 +168,61 @@
 		</td>
 	</tr>
 	<tr>
-		<td valign="top" class="help"><b><a href="http://code.google.com/p/orient/wiki/Concepts#Data_Segment">Data segments</a></b> are the
-		segments that contain data pointed by Clusters.</td>
+		<td valign="top" class="help"><b><a
+			href="http://code.google.com/p/orient/wiki/Concepts#Data_Segment">Data
+		segments</a></b> are the segments that contain data pointed by Clusters.</td>
 	</tr>
 	<tr>
 		<td valign="top" width="500">
-		<table id="databaseDataSegments" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+		<table id="databaseDataSegments" style="width: 100%;" cellspacing="0"
+			cellpadding="5" border="1">
 		</table>
 		</td>
 	</tr>
 	<tr>
-		<td valign="top" class="help"><b>Tx Segment</b> handles the transaction log for the entire database. It's used in Transactions.</td>
+		<td valign="top" class="help"><b>Tx Segment</b> handles the
+		transaction log for the entire database. It's used in Transactions.</td>
 	</tr>
 	<tr>
 		<td valign="top" width="500">
-		<table id="databaseTxSegment" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+		<table id="databaseTxSegment" style="width: 100%;" cellspacing="0"
+			cellpadding="5" border="1">
+		</table>
+		</td>
+	</tr>
+</table>
+</div>
+<div id="tab-db-allocation">
+<table style="width: 100%;" cellpadding="5">
+	<tr>
+		<td valign="top" class="help"><canvas id="allocation-canvas"
+			width="850" height="500"></canvas></td>
+		<td>
+		<td valign="top">
+		<table>
+			<tr>
+				<td>
+				<table>
+					<tr>
+						<td>Legenda:</td>
+					</tr>
+					<tr>
+						<td>Data</td>
+						<td id='data-value' style='background-color: #00FF00'>?</td>
+					</tr>
+					<tr>
+						<td>Free:</td>
+						<td id='holes-value' style='background-color: #FF0000'>?</td>
+					</tr>
+				</table>
+				</td>
+			</tr>
+			<tr>
+				<td>
+				<table id='allocation-data' cellpadding="2" cellspacing="2"
+					width="100%" border="0"></table>
+				</td>
+			</tr>
 		</table>
 		</td>
 	</tr>
@@ -162,18 +235,21 @@
 	<li><a href="#tab-security-roles"><span>Roles</span></a></li>
 </ul>
 <div id="tab-security-users">
-<table id="databaseUsers" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+<table id="databaseUsers" style="width: 100%;" cellspacing="0"
+	cellpadding="5" border="1">
 </table>
 </div>
 <div id="tab-security-roles">
 <table style="width: 100%;" cellpadding="5" cellspacing="0">
 	<tr>
 		<td>
-		<table id="databaseRoles" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+		<table id="databaseRoles" style="width: 100%;" cellspacing="0"
+			cellpadding="5" border="1">
 		</table>
 		</td>
 		<td>
-		<table id="databaseRolesRules" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+		<table id="databaseRolesRules" style="width: 100%;" cellspacing="0"
+			cellpadding="5" border="1">
 		</table>
 		</td>
 	</tr>
@@ -185,14 +261,16 @@
 <table style="width: 100%;" cellpadding="5">
 	<tr>
 		<td valign="top">
-		<table id="databaseConfig" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+		<table id="databaseConfig" style="width: 100%;" cellspacing="0"
+			cellpadding="5" border="1">
 		</table>
 		</td>
 		<td valign="top" class="help"></td>
 	</tr>
 	<tr>
 		<td valign="top">
-		<table id="databaseConfigProperties" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+		<table id="databaseConfigProperties" style="width: 100%;"
+			cellspacing="0" cellpadding="5" border="1">
 		</table>
 		</td>
 		<td valign="top" class="help"></td>
@@ -685,7 +763,132 @@
 		}
 	}
 
-	$('#tabs-db').tabs();
+	function Graph(canvas, size, block) {
+		this.canvas = canvas;
+		this.context = canvas.getContext("2d");
+		this.size = size;
+		this.block = block;
+		this.xpadding = 2;
+		this.ypadding = 2;
+		this.rows = size / block;
+		this.unitWidthPx = this.canvas.width / this.block - this.xpadding * 2;
+		this.unitHeightPx = this.canvas.height / this.rows - this.ypadding * 2;
+		this.cursor = 0;
+		this.cursorRow = 0;
+
+		this.fill = function(size, color) {
+			this.context.fillStyle = color;
+			var baseSize = size;
+			do {
+				if (this.cursor + baseSize >= this.block) {
+					var x = this.getPx(this.cursor, this.unitWidthPx,
+							this.xpadding)
+							+ this.xpadding;
+					var y = this.getPx(this.cursorRow, this.unitHeightPx,
+							this.ypadding);
+					var w = this.getPx(this.block - this.cursor,
+							this.unitWidthPx, this.xpadding)
+							- this.xpadding;
+					this.context.fillRect(x, y, w, this.unitHeightPx);
+					baseSize = baseSize - (this.block - this.cursor);
+					this.cursor = 0;
+					this.cursorRow++;
+				} else {
+					var x = this.getPx(this.cursor, this.unitWidthPx,
+							this.xpadding)
+							+ this.xpadding;
+					var y = this.getPx(this.cursorRow, this.unitHeightPx,
+							this.ypadding);
+					var w = this.getPx(baseSize, this.unitWidthPx,
+							this.xpadding)
+							- this.xpadding;
+					this.context.fillRect(x, y, w, this.unitHeightPx);
+					this.cursor += baseSize;
+					baseSize = 0;
+				}
+
+			} while (baseSize > 0);
+		}
+		this.close = function(color) {
+			var size = this.block - this.cursor;
+			size += this.rows * this.block;
+			this.fill(size, color);
+		}
+		this.getPx = function(pos, size, padding) {
+			var paddingSize = padding * 2 * pos;
+			var ogbjectSize = pos * size;
+			return paddingSize + ogbjectSize;
+		}
+	}
+
+	$('#tabs-db')
+			.tabs(
+					{
+						select : function(event, ui) {
+							if (ui.tab.textContent == 'Allocation') {
+								$
+										.ajax({
+											type : "GET",
+											url : urlPrefix
+													+ 'allocation/'
+													+ $('#header-database')
+															.val(),
+											context : this,
+											async : false,
+											success : function(alloc) {
+												if (alloc != null) {
+													var canv = document
+															.getElementById("allocation-canvas");
+													var ff = new Graph(canv,
+															alloc.size / 10, 1);
+
+													var dataSize = 0;
+													var holeSize = 0;
+
+													for (i in alloc.segments) {
+														var segment = alloc.segments[i];
+
+														if (segment.type == 'd') {
+															ff
+																	.fill(
+																			segment.size / 10,
+																			'#00FF00');
+															dataSize += segment.size;
+														} else {
+															ff
+																	.fill(
+																			segment.size / 10,
+																			'#FF0000');
+															holeSize += segment.size;
+														}
+													}
+													ff.close('#000000');
+
+													$('#data-value')
+															.text(
+																	dataSize
+																			+ ' ('
+																			+ (dataSize * 100 / alloc.size)
+																			+ '%)');
+													$('#holes-value')
+															.text(
+																	dataSize
+																			+ ' ('
+																			+ (holeSize * 100 / alloc.size)
+																			+ '%)');
+												}
+											},
+											error : function(msg) {
+												var canv = $("#allocation-data");
+												canv.empty();
+												canv
+														.append("Error on retrieving database's allocation table");
+											}
+										});
+
+							}
+						}
+					});
 	$('#tabs-security').tabs();
 
 	showDatabaseInfo();

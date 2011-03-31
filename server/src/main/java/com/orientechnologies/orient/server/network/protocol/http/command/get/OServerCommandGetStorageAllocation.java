@@ -34,10 +34,10 @@ public class OServerCommandGetStorageAllocation extends OServerCommandAuthentica
 
 	@Override
 	public boolean execute(final OHttpRequest iRequest) throws Exception {
-		String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: allocation/<database>");
+		String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: allocation/<database>");
 
 		iRequest.data.commandInfo = "Storage allocation";
-		iRequest.data.commandDetail = urlParts[2];
+		iRequest.data.commandDetail = urlParts[1];
 
 		ODatabaseDocumentTx db = null;
 
@@ -50,29 +50,47 @@ public class OServerCommandGetStorageAllocation extends OServerCommandAuthentica
 			final StringWriter buffer = new StringWriter();
 			final OJSONWriter json = new OJSONWriter(buffer);
 
+			final ODataLocal dataSegment = ((OStorageLocal) db.getStorage()).getDataSegment(0);
+			final long dataSize = dataSegment.getFilledUpTo();
+
 			json.beginObject();
+			json.writeAttribute(1, true, "size", dataSize);
 
 			long current = 0;
 
+			json.beginCollection(1, true, "segments");
 			for (OPhysicalPosition h : holes) {
+				if (h.dataPosition == -1)
+					continue;
+
 				if (current < h.dataPosition) {
 					// DATA SEGMENT
-					json.beginObject(1, true, null);
-					json.writeAttribute(2, false, "type", "d");
-					json.writeAttribute(2, false, "offset", current);
-					json.writeAttribute(2, false, "size", h.dataPosition - current);
-					json.endObject(1);
+					json.beginObject(2, true, null);
+					json.writeAttribute(3, false, "type", "d");
+					json.writeAttribute(3, false, "offset", current);
+					json.writeAttribute(3, false, "size", h.dataPosition - current);
+					json.endObject(2, false);
 				}
 
-				json.beginObject(1, true, null);
-				json.writeAttribute(2, false, "type", "h");
-				json.writeAttribute(2, false, "offset", h.dataPosition);
-				json.writeAttribute(2, false, "size", h.recordSize + ODataLocal.RECORD_FIX_SIZE);
-				json.endObject(1);
+				json.beginObject(2, true, null);
+				json.writeAttribute(3, false, "type", "h");
+				json.writeAttribute(3, false, "offset", h.dataPosition);
+				json.writeAttribute(3, false, "size", h.recordSize + ODataLocal.RECORD_FIX_SIZE);
+				json.endObject(2, false);
 
 				current = h.dataPosition + h.recordSize + ODataLocal.RECORD_FIX_SIZE;
 			}
 
+			if (dataSize > current) {
+				// DATA SEGMENT
+				json.beginObject(2, true, null);
+				json.writeAttribute(3, false, "type", "d");
+				json.writeAttribute(3, false, "offset", current);
+				json.writeAttribute(3, false, "size", dataSize - current);
+				json.endObject(2, false);
+			}
+
+			json.endCollection(1, true);
 			json.endObject();
 			json.flush();
 
