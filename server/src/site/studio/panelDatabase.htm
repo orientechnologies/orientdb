@@ -202,17 +202,19 @@
 		<table>
 			<tr>
 				<td>
-				<table>
+				<table cellpadding="5" cellspacing="5">
 					<tr>
-						<td>Legenda:</td>
+						<td colspan="2">Legenda:</td>
 					</tr>
 					<tr>
-						<td>Data</td>
-						<td id='data-value' style='background-color: #00FF00'>?</td>
+						<td>Data:</td>
+						<td id='data-value' style='background-color: #00FF00'
+							align="center">?</td>
 					</tr>
 					<tr>
 						<td>Free:</td>
-						<td id='holes-value' style='background-color: #FF0000'>?</td>
+						<td id='holes-value' style='background-color: #FF0000'
+							align="center">?</td>
 					</tr>
 				</table>
 				</td>
@@ -281,7 +283,6 @@
 </div>
 
 <script language="javascript">
-<!--
 	function showDatabaseInfo() {
 		fillDynaTable($('#databaseClusters'), "Clusters", [ 'id', 'name',
 				'type', 'records', 'size', 'filled', 'maxSize', 'files' ], [ {
@@ -764,6 +765,16 @@
 		}
 	}
 
+	function formatFileSize(size) {
+		if (size > 1000000000)
+			return Math.round(size / 10000000) / 100 + " Tb";
+		else if (size > 1000000)
+			return Math.round(size / 1000000) / 100 + " Mb";
+		else if (size > 1000)
+			return Math.round(size / 1000) / 100 + " Kb";
+		return size + " b";
+	}
+
 	function Graph(canvas, size) {
 		this.canvas = canvas;
 		this.size = size;
@@ -864,13 +875,13 @@
 
 													$('#data-value')
 															.text(
-																	alloc.dataSize
+																	formatFileSize(alloc.dataSize)
 																			+ ' ('
 																			+ alloc.dataSizePercent
 																			+ '%)');
 													$('#holes-value')
 															.text(
-																	alloc.holesSize
+																	formatFileSize(alloc.holesSize)
 																			+ ' ('
 																			+ alloc.holesSizePercent
 																			+ '%)');
@@ -890,5 +901,4 @@
 	$('#tabs-security').tabs();
 
 	showDatabaseInfo();
-//-->
 </script>
