@@ -196,7 +196,7 @@
 <table style="width: 100%;" cellpadding="5">
 	<tr>
 		<td valign="top" class="help"><canvas id="allocation-canvas"
-			width="850" height="500"></canvas></td>
+			width="1850" height="1500"></canvas></td>
 		<td>
 		<td valign="top">
 		<table>
@@ -766,12 +766,15 @@
 
 	function Graph(canvas, size) {
 		this.canvas = canvas;
-		this.context = canvas.getContext("2d");
 		this.size = size;
-		this.block = this.canvas.width;
+
+		this.gridSize = this.canvas.width * this.canvas.height;
+		this.pixelFactor = size / this.gridSize;
+		this.context = canvas.getContext("2d");
 		this.xpadding = 0;
 		this.ypadding = 0;
-		this.rows = size / this.block;
+		this.block = this.canvas.width;
+		this.rows = this.canvas.height;
 		this.unitWidthPx = this.canvas.width / this.block - this.xpadding * 2;
 		this.unitHeightPx = this.canvas.height / this.rows - this.ypadding * 2;
 		this.cursor = 0;
@@ -779,7 +782,7 @@
 
 		this.fill = function(size, color) {
 			this.context.fillStyle = color;
-			var baseSize = size;
+			var baseSize = size / this.pixelFactor;
 			do {
 				if (this.cursor + baseSize >= this.block) {
 					var x = this.getPx(this.cursor, this.unitWidthPx,
@@ -841,7 +844,7 @@
 													var canv = document
 															.getElementById("allocation-canvas");
 													var ff = new Graph(canv,
-															alloc.size / 100);
+															alloc.size);
 
 													for (i in alloc.segments) {
 														var segment = alloc.segments[i];
@@ -849,12 +852,12 @@
 														if (segment.type == 'd') {
 															ff
 																	.fill(
-																			segment.size / 100,
+																			segment.size,
 																			'#00FF00');
 														} else {
 															ff
 																	.fill(
-																			segment.size / 100,
+																			segment.size,
 																			'#FF0000');
 														}
 													}
