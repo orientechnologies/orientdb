@@ -16,7 +16,7 @@
 package com.orientechnologies.orient.core.db.tool;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -26,6 +26,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.zip.GZIPOutputStream;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -56,12 +57,15 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 			throws IOException {
 		super(iDatabase, iFileName, iListener);
 
+		if (!fileName.endsWith(".gz")) {
+			fileName += ".gz";
+		}
 		final File f = new File(fileName);
 		f.mkdirs();
 		if (f.exists())
 			f.delete();
 
-		writer = new OJSONWriter(new FileWriter(fileName));
+		writer = new OJSONWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(fileName))));
 		writer.beginObject();
 		iDatabase.setUseCache(false);
 	}

@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.zip.GZIPInputStream;
 
 import com.orientechnologies.common.parser.OStringForwardReader;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -65,7 +66,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 	public ODatabaseImport(final ODatabaseDocument database, final String iFileName, final OCommandOutputListener iListener)
 			throws IOException {
 		super(database, iFileName, iListener);
-		jsonReader = new OJSONReader(new FileReader(fileName));
+		jsonReader = new OJSONReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(fileName))));
 		database.declareIntent(new OIntentMassiveInsert());
 	}
 
