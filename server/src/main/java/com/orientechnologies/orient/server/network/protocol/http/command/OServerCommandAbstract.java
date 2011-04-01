@@ -22,6 +22,7 @@ import java.util.Date;
 import java.util.List;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -36,7 +37,11 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 public abstract class OServerCommandAbstract implements OServerCommand {
 
 	private static final String	JSON_FORMAT	= "type,indent:2,rid,version,attribSameRow,class";
-	protected boolean						useCache		= false;
+	protected final boolean			useCache;
+
+	public OServerCommandAbstract() {
+		useCache = OGlobalConfiguration.SERVER_CACHE_HTTP_STATIC.getValueAsBoolean();
+	}
 
 	@Override
 	public boolean beforeExecute(final OHttpRequest iRequest) throws IOException {
@@ -86,7 +91,9 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 		if (!useCache) {
 			writeLine(iRequest, "Cache-Control: no-cache, no-store, max-age=0, must-revalidate");
 			writeLine(iRequest, "Pragma: no-cache");
-		}
+		} else
+			writeLine(iRequest, "Cache-Control: max-age=3000");
+
 		writeLine(iRequest, "Date: " + new Date());
 		writeLine(iRequest, "Content-Type: " + iContentType);
 		writeLine(iRequest, "Server: " + iRequest.data.serverInfo);

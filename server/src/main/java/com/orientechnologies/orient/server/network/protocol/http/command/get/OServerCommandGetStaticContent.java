@@ -48,7 +48,7 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 		iRequest.data.commandInfo = "Get static content";
 		iRequest.data.commandDetail = iRequest.url;
 
-		if (cache == null && OGlobalConfiguration.SERVER_CACHE_STATIC_RESOURCES.getValueAsBoolean())
+		if (cache == null && OGlobalConfiguration.SERVER_CACHE_FILE_STATIC.getValueAsBoolean())
 			// CREATE THE CACHE IF ENABLED
 			cache = new HashMap<String, OStaticContentCachedEntry>();
 
