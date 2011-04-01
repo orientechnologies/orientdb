@@ -558,13 +558,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				else
 					fieldValue = flattenTarget.toString();
 
-				if (fieldValue instanceof Collection<?>) {
-					for (Object o : ((Collection<?>) fieldValue)) {
-						if (o instanceof ODocument)
-							finalResult.add((ODocument) o);
-					}
-				} else
-					finalResult.add((ODocument) fieldValue);
+				if (fieldValue != null)
+					if (fieldValue instanceof Collection<?>) {
+						for (Object o : ((Collection<?>) fieldValue)) {
+							if (o instanceof ODocument)
+								finalResult.add((ODocument) o);
+						}
+					} else
+						finalResult.add((ODocument) fieldValue);
 			}
 
 		tempResult = finalResult;
