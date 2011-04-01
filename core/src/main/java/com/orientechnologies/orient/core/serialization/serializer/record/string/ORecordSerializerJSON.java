@@ -525,7 +525,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			if (attribSameRow)
 				firstAttribute = false;
 		}
-		if (includeVer && record.getVersion() > 0) {
+		if (includeVer) {
 			json.writeAttribute(firstAttribute ? indentLevel + 1 : 0, firstAttribute, ATTRIBUTE_VERSION, record.getVersion());
 			if (attribSameRow)
 				firstAttribute = false;
