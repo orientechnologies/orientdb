@@ -40,7 +40,7 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 	private Map<String, OStaticContentCachedEntry>	cache;
 
 	public OServerCommandGetStaticContent() {
-		useCache = true;
+		super(OGlobalConfiguration.SERVER_CACHE_HTTP_STATIC.getValueAsBoolean());
 	}
 
 	@Override
