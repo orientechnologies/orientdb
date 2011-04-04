@@ -288,9 +288,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 							iType = ORecordSerializerStringAbstract.getType(iFieldValue + c);
 					}
 
-					if (c == null) {
+					if (c == null && iFieldValue.length() > 0) {
 						// TRY TO AUTODETERMINE THE BEST TYPE
-						if (iFieldValueAsString.charAt(0) == '#' && iFieldValueAsString.contains(":"))
+						if (iFieldValue.charAt(0) == '#' && iFieldValue.contains(":"))
 							iType = OType.LINK;
 						else if (OStringSerializerHelper.contains(iFieldValue, '.'))
 							iType = OType.FLOAT;
