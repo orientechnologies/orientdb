@@ -38,15 +38,8 @@ public class ORecordSerializerRaw implements ORecordSerializer {
 		return record;
 	}
 
-	public byte[] toStream(final ODatabaseRecord iDatabase, final ORecordInternal<?> iSource, final float iOversize) {
+	public byte[] toStream(final ODatabaseRecord iDatabase, final ORecordInternal<?> iSource) {
 		try {
-			if (iOversize > 0) {
-				final byte[] stream = iSource.toStream();
-				final byte[] oversizedStream = new byte[(int) (stream.length * iOversize)];
-				System.arraycopy(stream, 0, oversizedStream, 0, stream.length);
-				return oversizedStream;
-			}
-
 			return iSource.toStream();
 		} catch (Exception e) {
 			OLogManager.instance().error(this, "Error on unmarshalling object in binary format: " + iSource.getIdentity(), e,

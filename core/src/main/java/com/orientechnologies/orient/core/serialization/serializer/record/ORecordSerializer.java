@@ -36,5 +36,5 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 public interface ORecordSerializer {
 	public ORecordInternal<?> fromStream(ODatabaseRecord iDatabase, byte[] iSource, ORecordInternal<?> iRecord);
 
-	public byte[] toStream(ODatabaseRecord iDatabase, ORecordInternal<?> iSource, float iOversize);
+	public byte[] toStream(ODatabaseRecord iDatabase, ORecordInternal<?> iSource);
 }

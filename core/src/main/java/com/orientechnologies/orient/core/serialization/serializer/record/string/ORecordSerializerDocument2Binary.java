@@ -145,7 +145,7 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
 		return iRecord;
 	}
 
-	public byte[] toStream(final ODatabaseRecord iDatabase, final ORecordInternal<?> iRecord, final float iOversize) {
+	public byte[] toStream(final ODatabaseRecord iDatabase, final ORecordInternal<?> iRecord) {
 		ODocument record = (ODocument) iRecord;
 
 		ByteArrayOutputStream stream = null;

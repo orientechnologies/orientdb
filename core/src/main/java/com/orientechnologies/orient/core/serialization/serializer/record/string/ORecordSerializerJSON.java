@@ -355,7 +355,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 	@Override
 	public String toString(final ORecordInternal<?> iRecord, final String iFormat, final OUserObject2RecordHandler iObjHandler,
-			final Set<Integer> iMarshalledRecords, final float iOversize) {
+			final Set<Integer> iMarshalledRecords) {
 		try {
 			final StringWriter buffer = new StringWriter();
 			final OJSONWriter json = new OJSONWriter(buffer, iFormat);

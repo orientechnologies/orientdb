@@ -125,7 +125,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 
 	public byte[] toStream() {
 		if (_source == null)
-			_source = _recordFormat.toStream(_database, this, 0);
+			_source = _recordFormat.toStream(_database, this);
 
 		invokeListenerEvent(ORecordListener.EVENT.MARSHALL);
 
