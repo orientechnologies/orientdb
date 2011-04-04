@@ -254,7 +254,7 @@ public class OClass extends ODocumentWrapperNoClass implements Comparable<OClass
 		id = (Integer) document.field("id");
 		defaultClusterId = (Integer) document.field("defaultClusterId");
 
-		overSize = document.field("overSize");
+		overSize = (Float) document.field("overSize");
 
 		final Object cc = document.field("clusterIds");
 		if (cc instanceof Collection<?>) {
