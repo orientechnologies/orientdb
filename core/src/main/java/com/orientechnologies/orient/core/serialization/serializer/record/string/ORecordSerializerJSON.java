@@ -288,12 +288,15 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 							iType = ORecordSerializerStringAbstract.getType(iFieldValue + c);
 					}
 
-					if (c == null)
+					if (c == null) {
 						// TRY TO AUTODETERMINE THE BEST TYPE
-						if (OStringSerializerHelper.contains(iFieldValue, '.'))
+						if (iFieldValueAsString.charAt(0) == '#' && iFieldValueAsString.contains(":"))
+							iType = OType.LINK;
+						else if (OStringSerializerHelper.contains(iFieldValue, '.'))
 							iType = OType.FLOAT;
 						else
 							iType = OType.INTEGER;
+					}
 				}
 			} else if (iFieldValueAsString.length() >= 4 && iFieldValueAsString.charAt(0) == '#' && iFieldValueAsString.contains(":"))
 				iType = OType.LINK;

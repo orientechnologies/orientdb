@@ -47,15 +47,17 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 
 				if (!recordId.isValid())
 					throw new IllegalArgumentException("Invalid Record ID in request: " + recordId);
-
-				doc = new ODocument(db, recordId);
 			} else
-				doc = new ODocument(db);
+				recordId = new ORecordId();
 
+			// UNMARSHALL DOCUMENT WITH REQUEST CONTENT
+			doc = new ODocument(db);
 			doc.fromJSON(iRequest.content);
 
 			if (!recordId.isValid())
 				recordId = (ORecordId) doc.getIdentity();
+			else
+				doc.setIdentity(recordId);
 
 			if (!recordId.isValid())
 				throw new IllegalArgumentException("Invalid Record ID in request: " + recordId);
