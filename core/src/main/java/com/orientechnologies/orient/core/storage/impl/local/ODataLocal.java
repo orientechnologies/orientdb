@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -46,7 +47,7 @@ public class ODataLocal extends OMultiFileSegment {
 	public static final int					RECORD_FIX_SIZE	= 14;
 	protected final int							id;
 	protected final ODataLocalHole	holeSegment;
-	protected final int							defragMaxHoleDistance;
+	protected int										defragMaxHoleDistance;
 
 	public ODataLocal(final OStorageLocal iStorage, final OStorageDataConfiguration iConfig, final int iId) throws IOException {
 		super(iStorage, iConfig, DEF_EXTENSION, 0);
@@ -236,6 +237,17 @@ public class ODataLocal extends OMultiFileSegment {
 
 			final int holes = holeSegment.getHoles();
 
+			// COMPUTE DEFRAG HOLE DISTANCE
+			final int defragHoleDistance;
+			if (defragMaxHoleDistance > 0)
+				// FIXED SIZE
+				defragHoleDistance = defragMaxHoleDistance;
+			else {
+				// DYNAMIC SIZE
+				final long size = getSize();
+				defragHoleDistance = Math.max(32768 * (int) (size / 10000000), 32768);
+			}
+
 			if (holes > 0) {
 				final OPhysicalPosition ppos = new OPhysicalPosition();
 
@@ -281,7 +293,7 @@ public class ODataLocal extends OMultiFileSegment {
 					holeSegment.updateHole(closestHoleIndex, holePositionOffset, holeSize);
 
 				} else {
-					if (Math.abs(closestHoleOffset) < defragMaxHoleDistance) {
+					if (Math.abs(closestHoleOffset) < defragHoleDistance) {
 						// QUITE CLOSE, AUTO-DEFRAG!
 
 						if (closestHoleOffset < 0) {

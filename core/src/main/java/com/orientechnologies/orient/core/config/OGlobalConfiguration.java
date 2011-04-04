@@ -91,7 +91,9 @@ public enum OGlobalConfiguration {
 			Float.class, 1.0f),
 
 	// FILE
-	FILE_DEFRAG_HOLE_MAX_DISTANCE("file.defrag.holeMaxDistance", "Max distance in bytes between holes to execute the defrag of them",
+	FILE_DEFRAG_HOLE_MAX_DISTANCE(
+			"file.defrag.holeMaxDistance",
+			"Max distance in bytes between holes to execute the defrag of them. Set it to -1 to use dynamic size. Pay attention that is db is huge, then moving blocks to defrag could be expensive",
 			Integer.class, 32768),
 
 	FILE_MMAP_STRATEGY(
