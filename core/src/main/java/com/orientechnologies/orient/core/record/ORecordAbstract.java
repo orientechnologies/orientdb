@@ -60,7 +60,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		_version = iVersion;
 		_status = STATUS.LOADED;
 		_source = iBuffer;
-		_size = iBuffer.length;
+		_size = iBuffer != null ? iBuffer.length : 0;
 
 		return this;
 	}
