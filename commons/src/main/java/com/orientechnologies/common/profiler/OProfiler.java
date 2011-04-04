@@ -125,7 +125,7 @@ public class OProfiler implements OProfilerMBean {
 	public synchronized String dump() {
 		final float maxMem = Runtime.getRuntime().maxMemory() / 1000000f;
 		final float totMem = Runtime.getRuntime().totalMemory() / 1000000f;
-		final float freeMem = Runtime.getRuntime().freeMemory() / 1000000f;
+		final float freeMem = maxMem - totMem;
 
 		final long now = System.currentTimeMillis();
 
