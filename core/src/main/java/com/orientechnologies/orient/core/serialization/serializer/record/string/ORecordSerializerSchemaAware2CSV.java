@@ -253,7 +253,10 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
 		// APPEND BLANKS IF NEEDED
 		final int newSize;
-		if (record.getSize() == buffer.length())
+		if (record.hasOwners())
+			// EMBEDDED: GET REAL SIZE
+			newSize = buffer.length();
+		else if (record.getSize() == buffer.length())
 			// IDENTICAL! DO NOTHING
 			newSize = record.getSize();
 		else if (record.getSize() > buffer.length()) {
