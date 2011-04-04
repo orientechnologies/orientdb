@@ -133,7 +133,6 @@ public class OMultiFileSegment extends OSegment {
 	public void truncate() throws IOException {
 		acquireExclusiveLock();
 		try {
-
 			// SHRINK TO 0
 			files[0].shrink(0);
 

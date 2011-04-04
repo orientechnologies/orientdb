@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
 
 /**
  * Handle the table to resolve logical address to physical address.<br/>
- * <br/>
+ * Deleted records have version = -1. <br/>
  * Record structure:<br/>
  * <br/>
  * +----------------------+----------------------+-------------+---------------- ------+<br/>
@@ -95,6 +95,21 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 
 	@Override
 	public void delete() throws IOException {
+		truncate();
+	}
+
+	@Override
+	public void truncate() throws IOException {
+		// REMOVE ALL DATA BLOCKS
+		final long tot = getEntries();
+		final OPhysicalPosition ppos = new OPhysicalPosition();
+		for (long i = 0; i < tot; ++i) {
+			getPhysicalPosition(i, ppos);
+
+			if (storage.checkForRecordValidity(ppos))
+				storage.getDataSegment(ppos.dataSegment).deleteRecord(ppos.dataPosition);
+		}
+
 		super.truncate();
 		holeSegment.truncate();
 	}
