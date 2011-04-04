@@ -127,9 +127,14 @@ public class OProfiler implements OProfilerMBean {
 		final float totMem = Runtime.getRuntime().totalMemory() / 1000000f;
 		final float freeMem = Runtime.getRuntime().freeMemory() / 1000000f;
 
+		final long now = System.currentTimeMillis();
+
 		final StringBuilder buffer = new StringBuilder();
 		buffer.append("\nOrientDB profiler dump of ");
-		buffer.append(new Date());
+		buffer.append(new Date(now));
+		buffer.append(" after ");
+		buffer.append((now - recording) / 1000);
+		buffer.append(" secs of profiling");
 		buffer.append(String.format("\nFree memory: %2.2fMb (%2.2f%%) - Total memory: %2.2fMb - Max memory: %2.2fMb - CPUs: %d",
 				freeMem, (freeMem * 100 / (float) maxMem), totMem, maxMem, Runtime.getRuntime().availableProcessors()));
 		buffer.append("\n");
