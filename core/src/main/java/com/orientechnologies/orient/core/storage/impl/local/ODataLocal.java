@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -48,6 +47,7 @@ public class ODataLocal extends OMultiFileSegment {
 	protected final int							id;
 	protected final ODataLocalHole	holeSegment;
 	protected int										defragMaxHoleDistance;
+	protected int										defragStrategy;
 
 	public ODataLocal(final OStorageLocal iStorage, final OStorageDataConfiguration iConfig, final int iId) throws IOException {
 		super(iStorage, iConfig, DEF_EXTENSION, 0);
@@ -58,6 +58,7 @@ public class ODataLocal extends OMultiFileSegment {
 		holeSegment = new ODataLocalHole(iStorage, iConfig.holeFile);
 
 		defragMaxHoleDistance = OGlobalConfiguration.FILE_DEFRAG_HOLE_MAX_DISTANCE.getValueAsInteger();
+		defragStrategy = OGlobalConfiguration.FILE_DEFRAG_STRATEGY.getValueAsInteger();
 	}
 
 	@Override
@@ -176,6 +177,7 @@ public class ODataLocal extends OMultiFileSegment {
 				file.write(pos[1] + RECORD_FIX_SIZE, iContent);
 
 				OProfiler.getInstance().updateCounter("ODataLocal.setRecord:tot.reused.space", +1);
+				return iPosition;
 			} else if (recordSize - iContent.length > RECORD_FIX_SIZE) {
 				// USE THE OLD SPACE BUT UPDATE THE CURRENT SIZE. IT'S PREFEREABLE TO USE THE SAME INSTEAD FINDING A BEST SUITED FOR IT TO
 				// AVOID CHANGES TO REF FILE AS WELL.
@@ -438,8 +440,14 @@ public class ODataLocal extends OMultiFileSegment {
 	}
 
 	private long[] getFreeSpace(final int recordSize) throws IOException {
+		// GET THE POSITION TO RECYCLE FOLLOWING THE CONFIGURED STRATEGY IF ANY
+		final long position;
+		if (defragStrategy == 0)
+			position = holeSegment.popFirstAvailableHole(recordSize);
+		else
+			position = holeSegment.popBestHole(recordSize);
+
 		final long[] newFilePosition;
-		final long position = holeSegment.popBestHole(recordSize);
 		if (position > -1)
 			newFilePosition = getRelativePosition(position);
 		else

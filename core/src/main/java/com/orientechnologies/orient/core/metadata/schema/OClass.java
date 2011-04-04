@@ -49,6 +49,7 @@ public class OClass extends ODocumentWrapperNoClass implements Comparable<OClass
 	protected OClass									superClass;
 	protected int[]										polymorphicClusterIds;
 	protected List<OClass>						baseClasses;
+	protected float										overSize		= 0;
 
 	/**
 	 * Constructor used in unmarshalling.
@@ -253,6 +254,8 @@ public class OClass extends ODocumentWrapperNoClass implements Comparable<OClass
 		id = (Integer) document.field("id");
 		defaultClusterId = (Integer) document.field("defaultClusterId");
 
+		overSize = document.field("overSize");
+
 		final Object cc = document.field("clusterIds");
 		if (cc instanceof Collection<?>) {
 			Collection<Integer> coll = document.field("clusterIds");
@@ -286,6 +289,7 @@ public class OClass extends ODocumentWrapperNoClass implements Comparable<OClass
 			document.field("id", id);
 			document.field("defaultClusterId", defaultClusterId);
 			document.field("clusterIds", clusterIds);
+			document.field("overSize", overSize);
 
 			Set<ODocument> props = new HashSet<ODocument>();
 			for (OProperty p : properties.values()) {
@@ -375,6 +379,14 @@ public class OClass extends ODocumentWrapperNoClass implements Comparable<OClass
 		}
 
 		return this;
+	}
+
+	public float getOverSize() {
+		return overSize;
+	}
+
+	public void setOverSize(final float overSize) {
+		this.overSize = overSize;
 	}
 
 	@Override

@@ -206,5 +206,5 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable {
 	 * 
 	 * @return
 	 */
-	public long getSize();
+	public int getSize();
 }

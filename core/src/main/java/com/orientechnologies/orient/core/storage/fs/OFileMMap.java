@@ -43,12 +43,12 @@ import com.orientechnologies.orient.core.storage.fs.OMMapManager.OPERATION_TYPE;
  * <br/>
  */
 public class OFileMMap extends OFile {
-	protected MappedByteBuffer						headerBuffer;
-	protected int													bufferBeginOffset	= -1;
-	protected int													bufferSize				= 0;
-	protected List<ByteBuffer>						bufferPool				= new ArrayList<ByteBuffer>(10);
+	protected MappedByteBuffer									headerBuffer;
+	protected int																bufferBeginOffset	= -1;
+	protected int																bufferSize				= 0;
+	protected List<ByteBuffer>									bufferPool				= new ArrayList<ByteBuffer>(10);
 
-	private static int										BYTEBUFFER_POOLABLE_SIZE;
+	private static int													BYTEBUFFER_POOLABLE_SIZE;
 	private static OMMapManager.ALLOC_STRATEGY	strategy;
 
 	public OFileMMap(String iFileName, String iMode) throws IOException {
@@ -238,9 +238,9 @@ public class OFileMMap extends OFile {
 				releaseByteBuffer(buffer);
 			}
 		} catch (BufferOverflowException e) {
-			OLogManager.instance()
-					.error(this, "Error on write in the range " + iOffset + "-" + ( iOffset + iSourceBuffer.length ) + "." + toString(), e,
-							OIOException.class);
+			OLogManager.instance().error(this,
+					"Error on write in the range " + iOffset + "-" + (iOffset + iSourceBuffer.length) + "." + toString(), e,
+					OIOException.class);
 		}
 	}
 

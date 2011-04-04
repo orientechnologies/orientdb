@@ -38,14 +38,19 @@ import com.orientechnologies.orient.core.serialization.serializer.string.OString
 public abstract class ORecordSerializerStringAbstract implements ORecordSerializer {
 	private static final char	DECIMAL_SEPARATOR	= '.';
 
+	protected String toString(final ODocument iRecord, final String iFormat, final OUserObject2RecordHandler iObjHandler,
+			final Set<Integer> iMarshalledRecords) {
+		return toString(iRecord, iFormat, iObjHandler, iMarshalledRecords, 0);
+	}
+
 	protected abstract String toString(final ORecordInternal<?> iRecord, final String iFormat,
-			final OUserObject2RecordHandler iObjHandler, final Set<Integer> iMarshalledRecords);
+			final OUserObject2RecordHandler iObjHandler, final Set<Integer> iMarshalledRecords, float iOversize);
 
 	protected abstract ORecordInternal<?> fromString(final ODatabaseRecord iDatabase, final String iContent,
 			final ORecordInternal<?> iRecord);
 
 	public String toString(final ORecordInternal<?> iRecord, final String iFormat) {
-		return toString(iRecord, iFormat, iRecord.getDatabase(), OSerializationThreadLocal.INSTANCE.get());
+		return toString(iRecord, iFormat, iRecord.getDatabase(), OSerializationThreadLocal.INSTANCE.get(), 0);
 	}
 
 	public ORecordInternal<?> fromString(final ODatabaseRecord iDatabase, final String iSource) {
@@ -67,7 +72,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 		final long timer = OProfiler.getInstance().startChrono();
 
 		try {
-			return OBinaryProtocol.string2bytes(toString(iRecord, null, iDatabase, OSerializationThreadLocal.INSTANCE.get()), iOversize);
+			return OBinaryProtocol.string2bytes(toString(iRecord, null, iDatabase, OSerializationThreadLocal.INSTANCE.get(), iOversize));
 		} finally {
 
 			OProfiler.getInstance().stopChrono("ORecordSerializerStringAbstract.toStream", timer);

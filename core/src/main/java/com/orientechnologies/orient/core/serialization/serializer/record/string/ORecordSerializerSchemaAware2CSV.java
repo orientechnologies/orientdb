@@ -55,7 +55,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
 	@Override
 	protected String toString(ORecordInternal<?> iRecord, final String iFormat, final OUserObject2RecordHandler iObjHandler,
-			final Set<Integer> iMarshalledRecords) {
+			final Set<Integer> iMarshalledRecords, final float iOversize) {
 		if (!(iRecord instanceof ODocument))
 			throw new OSerializationException("Can't marshall a record of type " + iRecord.getClass().getSimpleName() + " to CSV");
 
@@ -242,6 +242,33 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
 		if (iMarshalledRecords != null)
 			iMarshalledRecords.remove(identityRecord);
+
+		// GET THE OVERSIZE IF ANY
+		final float overSize;
+		if (record.getIdentity().isNew() && record.getSchemaClass() != null)
+			// GET THE CONFIGURED OVERSIZE SETTED PER CLASS
+			overSize = record.getSchemaClass().getOverSize();
+		else
+			overSize = 0;
+
+		// APPEND BLANKS IF NEEDED
+		final int newSize;
+		if (record.getSize() == buffer.length())
+			// IDENTICAL! DO NOTHING
+			newSize = record.getSize();
+		else if (record.getSize() > buffer.length()) {
+			// APPEND EXTRA SPACES TO FILL ALL THE AVAILABLE SPACE AND AVOID FRAGMENTATION
+			newSize = record.getSize();
+		} else if (overSize > 0) {
+			// APPEND EXTRA SPACES TO GET A LARGER BUFFER
+			newSize = (int) (buffer.length() * overSize);
+		} else
+			// NEW
+			newSize = buffer.length();
+
+		if (newSize > 0)
+			for (int b = buffer.length(); b < newSize; ++b)
+				buffer.append(' ');
 
 		return buffer.toString();
 	}

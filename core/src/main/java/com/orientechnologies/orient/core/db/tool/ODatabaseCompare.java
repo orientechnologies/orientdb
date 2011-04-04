@@ -179,15 +179,22 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 						++differences;
 
 					} else if (buffer1.buffer.length != buffer2.buffer.length) {
-						listener.onMessage("\n- KO: RID=" + clusterId + ":" + i + " content length is different: " + buffer1.buffer.length
-								+ " <-> " + buffer2.buffer.length);
-						if (buffer1.recordType == ODocument.RECORD_TYPE || buffer1.recordType == ORecordFlat.RECORD_TYPE)
-							listener.onMessage("\n--- REC1: " + new String(buffer1.buffer));
-						if (buffer2.recordType == ODocument.RECORD_TYPE || buffer2.recordType == ORecordFlat.RECORD_TYPE)
-							listener.onMessage("\n--- REC2: " + new String(buffer2.buffer));
-						listener.onMessage("\n");
+						// CHECK IF THE TRIMMED SIZE IS THE SAME
+						final String rec1 = new String(buffer1.buffer).trim();
+						final String rec2 = new String(buffer2.buffer).trim();
 
-						++differences;
+						if (rec1.length() != rec2.length()) {
+							listener.onMessage("\n- KO: RID=" + clusterId + ":" + i + " content length is different: " + buffer1.buffer.length
+									+ " <-> " + buffer2.buffer.length);
+
+							if (buffer1.recordType == ODocument.RECORD_TYPE || buffer1.recordType == ORecordFlat.RECORD_TYPE)
+								listener.onMessage("\n--- REC1: " + rec1);
+							if (buffer2.recordType == ODocument.RECORD_TYPE || buffer2.recordType == ORecordFlat.RECORD_TYPE)
+								listener.onMessage("\n--- REC2: " + rec2);
+							listener.onMessage("\n");
+
+							++differences;
+						}
 
 					} else {
 						if (buffer1.recordType == ODocument.RECORD_TYPE) {

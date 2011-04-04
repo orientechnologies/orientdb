@@ -105,20 +105,16 @@ public class ODataLocalHole extends OSingleFileSegment {
 				if (recordSize > tempMaxHoleSize)
 					tempMaxHoleSize = recordSize;
 
-				if (recordSize >= iRecordSize) {
-					// GOOD SIZE: USE IT
-					if (OLogManager.instance().isDebugEnabled())
-						OLogManager.instance().debug(this, "Recycling hole data #%d", pos);
+				if (recordSize == iRecordSize) {
+					// PERFECT MATCH: DELETE THE HOLE
+					OProfiler.getInstance().stopChrono("Storage.data.recycled.complete", timer);
+					deleteHole(pos);
+					return recycledPosition;
 
-					if (recordSize == iRecordSize) {
-						// PERFECT MATCH: DELETE THE HOLE
-						OProfiler.getInstance().stopChrono("Storage.data.recycled.complete", timer);
-						deleteHole(pos);
-					} else {
-						// UPDATE THE HOLE WITH THE DIFFERENCE
-						OProfiler.getInstance().stopChrono("Storage.data.recycled.partial", timer);
-						updateHole(pos, recycledPosition + iRecordSize, recordSize - iRecordSize);
-					}
+				} else if (recordSize > iRecordSize + ODataLocal.RECORD_FIX_SIZE + 50) {
+					// GOOD MATCH SINCE THE HOLE IS BIG ENOUGH ALSO FOR ANOTHER RECORD: UPDATE THE HOLE WITH THE DIFFERENCE
+					OProfiler.getInstance().stopChrono("Storage.data.recycled.partial", timer);
+					updateHole(pos, recycledPosition + iRecordSize, recordSize - iRecordSize);
 					return recycledPosition;
 				}
 			}

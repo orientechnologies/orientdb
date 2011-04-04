@@ -32,6 +32,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	protected ORecordId					_recordId;
 	protected int								_version;
 	protected byte[]						_source;
+	protected int								_size;
 	protected ORecordSerializer	_recordFormat;
 	protected boolean						_pinned		= true;
 	protected boolean						_dirty		= true;
@@ -48,6 +49,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	public ORecordAbstract(final ODatabaseRecord iDatabase, final byte[] iSource) {
 		this(iDatabase);
 		_source = iSource;
+		_size = iSource.length;
 		unsetDirty();
 	}
 
@@ -58,6 +60,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		_version = iVersion;
 		_status = STATUS.LOADED;
 		_source = iBuffer;
+		_size = iBuffer.length;
 
 		return this;
 	}
@@ -105,7 +108,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 
 	public byte[] toStream() {
 		if (_source == null)
-			_source = _recordFormat.toStream(_database, this, 1f);
+			_source = _recordFormat.toStream(_database, this, 0);
 
 		invokeListenerEvent(ORecordListener.EVENT.MARSHALL);
 
@@ -115,6 +118,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	public ORecordAbstract<T> fromStream(final byte[] iRecordBuffer) {
 		_dirty = false;
 		_source = iRecordBuffer;
+		_size = iRecordBuffer.length;
 		_status = STATUS.LOADED;
 
 		invokeListenerEvent(ORecordListener.EVENT.UNMARSHALL);
@@ -282,10 +286,8 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		return this;
 	}
 
-	public long getSize() {
-		if (_source != null)
-			return _source.length;
-		return 0;
+	public int getSize() {
+		return _size;
 	}
 
 	protected void setup() {
@@ -337,6 +339,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 
 	public ORecordAbstract<T> copyTo(final ORecordAbstract<T> cloned) {
 		cloned._source = _source;
+		cloned._size = _size;
 		cloned._database = _database;
 		cloned._recordId = _recordId.copy();
 		cloned._version = _version;

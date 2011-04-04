@@ -214,7 +214,7 @@ public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
 	}
 
 	@Override
-	public long getSize() {
+	public int getSize() {
 		return 0;
 	}
 

@@ -240,7 +240,7 @@ public class OObjectSerializerHelper {
 								}
 							} else if (fieldValue instanceof Set) {
 								// SET: CREATE A TEMP SET TO WORK WITH ITEMS
-								Set<Object> newColl = new HashSet<Object>();
+								final Set<Object> newColl = new HashSet<Object>();
 								final Set<Object> set = (Set<Object>) fieldValue;
 								for (Object v : set) {
 									if (v != null) {

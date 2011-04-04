@@ -124,10 +124,8 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	}
 
 	public byte[] toStream() {
-		final float oversize = 0;//_recordId.isNew() ? 1.5f : 0;
-
 		if (_source == null)
-			_source = _recordFormat.toStream(_database, this, oversize);
+			_source = _recordFormat.toStream(_database, this, 0);
 
 		invokeListenerEvent(ORecordListener.EVENT.MARSHALL);
 

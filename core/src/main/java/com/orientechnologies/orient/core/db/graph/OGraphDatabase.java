@@ -377,6 +377,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		if (vertexBaseClass == null) {
 			// CREATE THE META MODEL USING THE ORIENT SCHEMA
 			vertexBaseClass = getMetadata().getSchema().createClass(VERTEX_CLASS_NAME, addPhysicalCluster(VERTEX_CLASS_NAME));
+			vertexBaseClass.setOverSize(2);
 
 			if (edgeBaseClass == null)
 				edgeBaseClass = getMetadata().getSchema().createClass(EDGE_CLASS_NAME, addPhysicalCluster(EDGE_CLASS_NAME));

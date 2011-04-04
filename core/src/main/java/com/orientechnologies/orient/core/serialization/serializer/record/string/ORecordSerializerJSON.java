@@ -355,7 +355,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 	@Override
 	public String toString(final ORecordInternal<?> iRecord, final String iFormat, final OUserObject2RecordHandler iObjHandler,
-			final Set<Integer> iMarshalledRecords) {
+			final Set<Integer> iMarshalledRecords, final float iOversize) {
 		try {
 			final StringWriter buffer = new StringWriter();
 			final OJSONWriter json = new OJSONWriter(buffer, iFormat);
@@ -388,7 +388,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				indentLevel = 0;
 				keepTypes = false;
 
-				String[] format = iFormat.split(",");
+				final String[] format = iFormat.split(",");
 				for (String f : format)
 					if (f.equals("type"))
 						includeType = true;
@@ -440,6 +440,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 			json.endObject(indentLevel);
 			parsedRecords.clear();
+
 			return buffer.toString();
 		} catch (IOException e) {
 			throw new OSerializationException("Error on marshalling of record to JSON", e);
