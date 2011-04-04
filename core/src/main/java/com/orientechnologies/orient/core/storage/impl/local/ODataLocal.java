@@ -309,7 +309,8 @@ public class ODataLocal extends OMultiFileSegment {
 							final long offsetLimit = Math.min(iRecordOffset, getFilledUpTo());
 
 							final List<long[]> segmentPositions = new ArrayList<long[]>();
-							do {
+
+							while (moveFrom < offsetLimit) {
 								final long[] pos = getRelativePosition(moveFrom);
 								final OFile file = files[(int) pos[0]];
 
@@ -319,7 +320,7 @@ public class ODataLocal extends OMultiFileSegment {
 								segmentPositions.add(0, new long[] { moveFrom, recordSize });
 
 								moveFrom += recordSize;
-							} while (moveFrom < offsetLimit);
+							}
 
 							long gap = offsetLimit + holeSize;
 
@@ -341,13 +342,12 @@ public class ODataLocal extends OMultiFileSegment {
 							long moveTo = iRecordOffset;
 							long moveUpTo = closestPpos.dataPosition;
 
-							do {
+							while (moveFrom < moveUpTo) {
 								final int sizeMoved = moveRecord(moveFrom, moveTo);
 
 								moveFrom += sizeMoved;
 								moveTo += sizeMoved;
-
-							} while (moveFrom < moveUpTo);
+							}
 
 							if (moveFrom != moveUpTo)
 								throw new IllegalStateException("Corrupted holes: Found offset " + moveFrom + " instead of " + moveUpTo);

@@ -266,7 +266,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 			// NEW
 			newSize = buffer.length();
 
-		if (newSize > 0)
+		if (newSize > buffer.length())
 			for (int b = buffer.length(); b < newSize; ++b)
 				buffer.append(' ');
 
