@@ -66,7 +66,15 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 	public ODatabaseImport(final ODatabaseDocument database, final String iFileName, final OCommandOutputListener iListener)
 			throws IOException {
 		super(database, iFileName, iListener);
-		jsonReader = new OJSONReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(fileName))));
+
+		InputStream inStream;
+		try {
+			inStream = new GZIPInputStream(new FileInputStream(fileName));
+		} catch (Exception e) {
+			inStream = new FileInputStream(fileName);
+		}
+
+		jsonReader = new OJSONReader(new InputStreamReader(inStream));
 		database.declareIntent(new OIntentMassiveInsert());
 	}
 

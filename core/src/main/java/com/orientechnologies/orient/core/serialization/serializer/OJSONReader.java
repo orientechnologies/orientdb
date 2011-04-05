@@ -66,7 +66,7 @@ public class OJSONReader {
 		if (readNext(iUntil, iInclude) == null)
 			throw new ParseException("Expected integer", cursor);
 
-		return Integer.parseInt(value);
+		return Integer.parseInt(value.trim());
 	}
 
 	public String readString(final char[] iUntil) throws IOException, ParseException {
