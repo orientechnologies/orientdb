@@ -382,7 +382,16 @@ public class OClass extends ODocumentWrapperNoClass implements Comparable<OClass
 	}
 
 	public float getOverSize() {
-		return overSize;
+		if (overSize > 0)
+			// CUSTOM OVERSIZE SETTED
+			return overSize;
+
+		if (superClass != null)
+			// RETURN THE OVERSIZE OF THE SUPER CLASS
+			return superClass.getOverSize();
+
+		// NO OVERSIZE
+		return 0;
 	}
 
 	public void setOverSize(final float overSize) {
