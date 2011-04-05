@@ -7,7 +7,7 @@
 	<property name="product"        value="OrientDB Database" />
 	<property name="version"        value="1.0rc1-SNAPSHOT" />
 	<property name="global.release" value="../releases/${version}" />
-	<property name="db.release"     value="../releases/${version}/db" />
+	<property name="db.release"     value="../releases/${version}" />
 	
 	<property name="env.ORIENTDB_HOME" value="${db.release}" />
 	
@@ -120,8 +120,8 @@
 		<delegate target="install"/>
 		
     <copy todir="${db.release}"              file="license.txt" />
-    <copy tofile="${db.release}/readme.txt"  file="readme-db.txt" />
-    <copy tofile="${db.release}/history.txt" file="history-db.txt" />
+    <copy tofile="${db.release}/readme.txt"  file="readme.txt" />
+    <copy tofile="${db.release}/history.txt" file="history.txt" />
 
     <copy todir="${db.release}/bin/" flatten="true">
       <fileset dir="." includes="tools/script/*.sh tools/script/*.bat server/script/*.sh server/script/*.bat" />
