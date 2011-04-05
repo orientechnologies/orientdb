@@ -20,7 +20,6 @@
         <module>core</module>
         <module>distribution</module>
         <module>enterprise</module>
-        <module>kv</module>
         <module>server</module>
         <module>tools</module>
         <module>tests</module>
