@@ -104,7 +104,7 @@ public enum OGlobalConfiguration {
 	FILE_MMAP_STRATEGY(
 			"file.mmap.strategy",
 			"Strategy to use with memory mapped files. 0 = USE MMAP ALWAYS, 1 = USE MMAP ON WRITES OR ON READ JUST WHEN THE BLOCK POOL IS FREE, 2 = USE MMAP ON WRITES OR ON READ JUST WHEN THE BLOCK IS ALREADY AVAILABLE, 3 = USE MMAP ONLY IF BLOCK IS ALREADY AVAILABLE, 4 = NEVER USE MMAP",
-			Integer.class, 3),
+			Integer.class, 0),
 
 	FILE_MMAP_BLOCK_SIZE("file.mmap.blockSize", "Size of the memory mapped block, default is 1Mb", Integer.class, 1048576,
 			new OConfigurationChangeCallback() {
@@ -326,7 +326,7 @@ public enum OGlobalConfiguration {
 			// WINDOWS
 
 			// AVOID TO USE MMAP, SINCE COULD BE BUGGY
-			FILE_MMAP_STRATEGY.setValue(3);
+			//FILE_MMAP_STRATEGY.setValue(3);
 		}
 
 		if (System.getProperty("os.arch").indexOf("64") > -1) {
