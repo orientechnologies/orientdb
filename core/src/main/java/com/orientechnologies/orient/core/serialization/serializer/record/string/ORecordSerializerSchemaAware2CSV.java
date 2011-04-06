@@ -245,7 +245,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
 		// GET THE OVERSIZE IF ANY
 		final float overSize;
-		if (record.getIdentity().isNew() && record.getSchemaClass() != null)
+		if (record.getSchemaClass() != null)
 			// GET THE CONFIGURED OVERSIZE SETTED PER CLASS
 			overSize = record.getSchemaClass().getOverSize();
 		else
@@ -266,7 +266,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 			// APPEND EXTRA SPACES TO GET A LARGER BUFFER
 			newSize = (int) (buffer.length() * overSize);
 		} else
-			// NEW
+			// NO OVERSIZE
 			newSize = buffer.length();
 
 		if (newSize > buffer.length())
