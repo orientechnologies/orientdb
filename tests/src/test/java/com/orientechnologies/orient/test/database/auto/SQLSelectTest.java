@@ -18,7 +18,9 @@ package com.orientechnologies.orient.test.database.auto;
 import java.text.ParseException;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -255,8 +257,7 @@ public class SQLSelectTest {
 		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(
-				new OSQLSynchQuery<ODocument>("select from Profile where any() traverse(0,7) (@class = 'City')"))
-				.execute();
+				new OSQLSynchQuery<ODocument>("select from Profile where any() traverse(0,7) (@class = 'City')")).execute();
 
 		Assert.assertTrue(result.size() > 0);
 
@@ -270,6 +271,7 @@ public class SQLSelectTest {
 
 		database.close();
 	}
+
 	@Test
 	public void queryTraverseInfiniteLevelOperator() {
 		database.open("admin", "admin");
@@ -568,6 +570,27 @@ public class SQLSelectTest {
 
 			last = resultset.get(resultset.size() - 1).getIdentity();
 		}
+
+		database.close();
+	}
+
+	@Test
+	public void queryContainsInEmbeddedCollection() {
+		database.open("admin", "admin");
+
+		Set<String> tags = new HashSet<String>();
+		tags.add("smart");
+		tags.add("nice");
+
+		ODocument doc = new ODocument(database, "Profile");
+		doc.field("tags", tags);
+
+		doc.save();
+
+		List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>("select from Profile where tags CONTAINS 'smart'"));
+
+		Assert.assertEquals(resultset.size(), 1);
+		Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
 
 		database.close();
 	}

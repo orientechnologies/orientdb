@@ -17,7 +17,6 @@ package com.orientechnologies.orient.core.sql.operator;
 
 import java.util.Collection;
 
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
@@ -38,28 +37,48 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
 	@SuppressWarnings("unchecked")
 	protected boolean evaluateExpression(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight) {
-		OSQLFilterCondition condition;
+		final OSQLFilterCondition condition;
 
-		try {
-			condition = (OSQLFilterCondition) (iCondition.getLeft() instanceof OSQLFilterCondition ? iCondition.getLeft() : iCondition
-					.getRight());
-		} catch (Exception e) {
-			throw new OCommandExecutionException("Operator contains needs a condition to apply", e);
-		}
+		if (iCondition.getLeft() instanceof OSQLFilterCondition)
+			condition = (OSQLFilterCondition) iCondition.getLeft();
+		else if (iCondition.getRight() instanceof OSQLFilterCondition)
+			condition = (OSQLFilterCondition) iCondition.getRight();
+		else
+			condition = null;
 
 		if (iLeft instanceof Collection<?>) {
 
-			Collection<ORecordSchemaAware<?>> collection = (Collection<ORecordSchemaAware<?>>) iLeft;
-			for (ORecordSchemaAware<?> o : collection) {
-				if ((Boolean) condition.evaluate(o) == Boolean.TRUE)
-					return true;
+			final Collection<ORecordSchemaAware<?>> collection = (Collection<ORecordSchemaAware<?>>) iLeft;
+
+			if (condition != null) {
+				// CHECK AGAINST A CONDITION
+				for (ORecordSchemaAware<?> o : collection) {
+					if ((Boolean) condition.evaluate(o) == Boolean.TRUE)
+						return true;
+				}
+			} else {
+				// CHECK AGAINST A SINGLE VALUE
+				for (Object o : collection) {
+					if (OQueryOperatorEquals.equals(iRight, o))
+						return true;
+				}
 			}
 		} else if (iRight instanceof Collection<?>) {
 
-			Collection<ORecordSchemaAware<?>> collection = (Collection<ORecordSchemaAware<?>>) iRight;
-			for (ORecordSchemaAware<?> o : collection) {
-				if ((Boolean) condition.evaluate(o) == Boolean.TRUE)
-					return true;
+			// CHECK AGAINST A CONDITION
+			final Collection<ORecordSchemaAware<?>> collection = (Collection<ORecordSchemaAware<?>>) iRight;
+
+			if (condition != null) {
+				for (ORecordSchemaAware<?> o : collection) {
+					if ((Boolean) condition.evaluate(o) == Boolean.TRUE)
+						return true;
+				}
+			} else {
+				// CHECK AGAINST A SINGLE VALUE
+				for (Object o : collection) {
+					if (OQueryOperatorEquals.equals(iLeft, o))
+						return true;
+				}
 			}
 		}
 		return false;

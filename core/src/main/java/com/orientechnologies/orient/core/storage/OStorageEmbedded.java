@@ -192,6 +192,9 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 					if (!iListener.foreach(recordToCheck))
 						// LISTENER HAS INTERRUPTED THE EXECUTION
 						break;
+				} catch (OCommandExecutionException e) {
+					// PASS THROUGH
+					throw e;
 				} catch (Exception e) {
 					OLogManager.instance().error(this, "Error on loading record %s. Cause: %s", recordToCheck.getIdentity(), e);
 				}
