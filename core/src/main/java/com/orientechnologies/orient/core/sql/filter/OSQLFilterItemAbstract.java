@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
@@ -259,6 +260,12 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 						}
 					} else if (operator == OSQLFilterFieldOperator.TOJSON.id)
 						ioResult = ioResult != null && ioResult instanceof ODocument ? ((ODocument) ioResult).toJSON() : null;
+
+					else if (operator == OSQLFilterFieldOperator.KEYS.id)
+						ioResult = ioResult != null && ioResult instanceof Map<?, ?> ? ((Map<?, ?>) ioResult).keySet() : null;
+
+					else if (operator == OSQLFilterFieldOperator.VALUES.id)
+						ioResult = ioResult != null && ioResult instanceof Map<?, ?> ? ((Map<?, ?>) ioResult).values() : null;
 				}
 			} catch (ParseException e) {
 				OLogManager.instance().exception("Error on conversion of value '%s' using field operator %s", e,

@@ -168,7 +168,7 @@ public class SQLSelectTest {
 	}
 
 	@Test
-	public void queryContainsInEmbeddedMap() {
+	public void queryContainsInEmbeddedMapClassic() {
 		database.open("admin", "admin");
 
 		Map<String, ODocument> customReferences = new HashMap<String, ODocument>();
@@ -191,6 +191,38 @@ public class SQLSelectTest {
 
 		Assert.assertEquals(resultset.size(), 1);
 		Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
+
+		doc.delete();
+
+		database.close();
+	}
+
+	@Test
+	public void queryContainsInEmbeddedMapNew() {
+		database.open("admin", "admin");
+
+		Map<String, ODocument> customReferences = new HashMap<String, ODocument>();
+		customReferences.put("first", new ODocument("name", "Luca", "surname", "Garulli"));
+		customReferences.put("second", new ODocument("name", "Jay", "surname", "Miner"));
+
+		ODocument doc = new ODocument(database, "Profile");
+		doc.field("customReferences", customReferences, OType.EMBEDDEDMAP);
+
+		doc.save();
+
+		List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>(
+				"select from Profile where customReferences.keys() CONTAINS 'first'"));
+
+		Assert.assertEquals(resultset.size(), 1);
+		Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
+
+		resultset = database.query(new OSQLSynchQuery<ODocument>(
+				"select from Profile where customReferences.values() CONTAINS ( name like 'Ja%')"));
+
+		Assert.assertEquals(resultset.size(), 1);
+		Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
+
+		doc.delete();
 
 		database.close();
 	}
