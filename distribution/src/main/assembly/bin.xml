@@ -85,12 +85,12 @@
 			<fileMode>644</fileMode>
 		</file>
 		<file>
-			<source>${basedir}/../history-db.txt</source>
+			<source>${basedir}/../history.txt</source>
 			<destName>history.txt</destName>
 			<fileMode>644</fileMode>
 		</file>
 		<file>
-			<source>${basedir}/../readme-db.txt</source>
+			<source>${basedir}/../readme.txt</source>
 			<destName>readme.txt</destName>
 			<fileMode>644</fileMode>
 		</file>
