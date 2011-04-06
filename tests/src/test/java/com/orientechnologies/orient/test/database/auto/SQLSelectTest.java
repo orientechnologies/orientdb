@@ -18,8 +18,10 @@ package com.orientechnologies.orient.test.database.auto;
 import java.text.ParseException;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.testng.Assert;
@@ -30,6 +32,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.database.base.OrientTest;
@@ -139,6 +142,55 @@ public class SQLSelectTest {
 			Assert.assertTrue(((Date) record.field("date")).before(rangeToDate));
 			Assert.assertTrue(record.field("name").toString().startsWith("G"));
 		}
+
+		database.close();
+	}
+
+	@Test
+	public void queryContainsInEmbeddedCollection() {
+		database.open("admin", "admin");
+
+		Set<String> tags = new HashSet<String>();
+		tags.add("smart");
+		tags.add("nice");
+
+		ODocument doc = new ODocument(database, "Profile");
+		doc.field("tags", tags);
+
+		doc.save();
+
+		List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>("select from Profile where tags CONTAINS 'smart'"));
+
+		Assert.assertEquals(resultset.size(), 1);
+		Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
+
+		database.close();
+	}
+
+	@Test
+	public void queryContainsInEmbeddedMap() {
+		database.open("admin", "admin");
+
+		Map<String, ODocument> customReferences = new HashMap<String, ODocument>();
+		customReferences.put("first", new ODocument("name", "Luca", "surname", "Garulli"));
+		customReferences.put("second", new ODocument("name", "Jay", "surname", "Miner"));
+
+		ODocument doc = new ODocument(database, "Profile");
+		doc.field("customReferences", customReferences, OType.EMBEDDEDMAP);
+
+		doc.save();
+
+		List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>(
+				"select from Profile where customReferences CONTAINSKEY 'first'"));
+
+		Assert.assertEquals(resultset.size(), 1);
+		Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
+
+		resultset = database.query(new OSQLSynchQuery<ODocument>(
+				"select from Profile where customReferences CONTAINSVALUE ( name like 'Ja%')"));
+
+		Assert.assertEquals(resultset.size(), 1);
+		Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
 
 		database.close();
 	}
@@ -570,27 +622,6 @@ public class SQLSelectTest {
 
 			last = resultset.get(resultset.size() - 1).getIdentity();
 		}
-
-		database.close();
-	}
-
-	@Test
-	public void queryContainsInEmbeddedCollection() {
-		database.open("admin", "admin");
-
-		Set<String> tags = new HashSet<String>();
-		tags.add("smart");
-		tags.add("nice");
-
-		ODocument doc = new ODocument(database, "Profile");
-		doc.field("tags", tags);
-
-		doc.save();
-
-		List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>("select from Profile where tags CONTAINS 'smart'"));
-
-		Assert.assertEquals(resultset.size(), 1);
-		Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
 
 		database.close();
 	}

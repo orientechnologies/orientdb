@@ -38,7 +38,6 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
 	protected boolean evaluateExpression(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight) {
 		final OSQLFilterCondition condition;
-
 		if (iCondition.getLeft() instanceof OSQLFilterCondition)
 			condition = (OSQLFilterCondition) iCondition.getLeft();
 		else if (iCondition.getRight() instanceof OSQLFilterCondition)

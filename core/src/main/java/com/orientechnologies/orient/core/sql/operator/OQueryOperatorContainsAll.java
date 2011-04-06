@@ -37,22 +37,48 @@ public class OQueryOperatorContainsAll extends OQueryOperatorEqualityNotNulls {
 	@SuppressWarnings("unchecked")
 	protected boolean evaluateExpression(final ORecordInternal<?> iRecord, OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight) {
+		final OSQLFilterCondition condition;
+
+		if (iCondition.getLeft() instanceof OSQLFilterCondition)
+			condition = (OSQLFilterCondition) iCondition.getLeft();
+		else if (iCondition.getRight() instanceof OSQLFilterCondition)
+			condition = (OSQLFilterCondition) iCondition.getRight();
+		else
+			condition = null;
+
 		if (iLeft instanceof Collection<?>) {
-			Collection<ORecordSchemaAware<?>> collection = (Collection<ORecordSchemaAware<?>>) iLeft;
-			Boolean result;
-			for (ORecordSchemaAware<?> o : collection) {
-				result = (Boolean) ((OSQLFilterCondition) iCondition.getRight()).evaluate(o);
-				if (result == Boolean.FALSE)
-					return false;
+
+			final Collection<ORecordSchemaAware<?>> collection = (Collection<ORecordSchemaAware<?>>) iLeft;
+
+			if (condition != null) {
+				// CHECK AGAINST A CONDITION
+				for (ORecordSchemaAware<?> o : collection) {
+					if ((Boolean) condition.evaluate(o) == Boolean.FALSE)
+						return false;
+				}
+			} else {
+				// CHECK AGAINST A SINGLE VALUE
+				for (Object o : collection) {
+					if (!OQueryOperatorEquals.equals(iRight, o))
+						return false;
+				}
 			}
 		} else if (iRight instanceof Collection<?>) {
 
-			Collection<ORecordSchemaAware<?>> collection = (Collection<ORecordSchemaAware<?>>) iRight;
-			Boolean result;
-			for (ORecordSchemaAware<?> o : collection) {
-				result = (Boolean) ((OSQLFilterCondition) iCondition.getLeft()).evaluate(o);
-				if (result == Boolean.FALSE)
-					return false;
+			// CHECK AGAINST A CONDITION
+			final Collection<ORecordSchemaAware<?>> collection = (Collection<ORecordSchemaAware<?>>) iRight;
+
+			if (condition != null) {
+				for (ORecordSchemaAware<?> o : collection) {
+					if ((Boolean) condition.evaluate(o) == Boolean.FALSE)
+						return false;
+				}
+			} else {
+				// CHECK AGAINST A SINGLE VALUE
+				for (Object o : collection) {
+					if (!OQueryOperatorEquals.equals(iLeft, o))
+						return false;
+				}
 			}
 		}
 		return true;

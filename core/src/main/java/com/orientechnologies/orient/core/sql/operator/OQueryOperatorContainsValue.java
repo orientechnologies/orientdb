@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.sql.operator;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
 /**
@@ -36,15 +37,35 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
 	@SuppressWarnings("unchecked")
 	protected boolean evaluateExpression(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight) {
+		final OSQLFilterCondition condition;
+		if (iCondition.getLeft() instanceof OSQLFilterCondition)
+			condition = (OSQLFilterCondition) iCondition.getLeft();
+		else if (iCondition.getRight() instanceof OSQLFilterCondition)
+			condition = (OSQLFilterCondition) iCondition.getRight();
+		else
+			condition = null;
 
 		if (iLeft instanceof Map<?, ?>) {
+			final Map<String, ?> map = (Map<String, ?>) iLeft;
 
-			Map<String, ?> map = (Map<String, ?>) iLeft;
-			return map.containsValue(iRight);
+			if (condition != null) {
+				// CHECK AGAINST A CONDITION
+				for (Object o : map.values())
+					if ((Boolean) condition.evaluate((ORecordSchemaAware<?>) o))
+						return true;
+			} else
+				return map.containsValue(iRight);
+
 		} else if (iRight instanceof Map<?, ?>) {
+			final Map<String, ?> map = (Map<String, ?>) iRight;
 
-			Map<String, ?> map = (Map<String, ?>) iRight;
-			return map.containsValue(iLeft);
+			if (condition != null)
+				// CHECK AGAINST A CONDITION
+				for (Object o : map.values())
+					if ((Boolean) condition.evaluate((ORecordSchemaAware<?>) o))
+						return true;
+					else
+						return map.containsValue(iLeft);
 		}
 		return false;
 	}

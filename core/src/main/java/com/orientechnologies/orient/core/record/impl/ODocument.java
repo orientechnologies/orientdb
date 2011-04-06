@@ -162,6 +162,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 *          Array of field pairs
 	 */
 	public ODocument(final Object[] iFields) {
+		_recordId = new ORecordId();
 		if (iFields != null && iFields.length > 0)
 			for (int i = 0; i < iFields.length; i += 2) {
 				field(iFields[i].toString(), iFields[i + 1]);
