@@ -32,7 +32,7 @@ public class TestUtils {
 	public static void createDatabase(ODatabase database, final String iURL) throws IOException {
 		if (iURL.startsWith(OEngineRemote.NAME)) {
 			// LOAD SERVER CONFIG FILE TO EXTRACT THE ROOT'S PASSWORD
-			File file = new File("../releases/" + OConstants.ORIENT_VERSION + "/db/config/orientdb-server-config.xml");
+			File file = new File("../releases/" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
 			if (!file.exists())
 				file = new File("server/config/orientdb-server-config.xml");
 			if (!file.exists())
@@ -62,7 +62,7 @@ public class TestUtils {
 	public static void deleteDatabase(final ODatabaseDocumentTx database) throws IOException {
 		if (database.getStorage() instanceof OStorageRemote) {
 			// LOAD SERVER CONFIG FILE TO EXTRACT THE ROOT'S PASSWORD
-			File file = new File("../releases/" + OConstants.ORIENT_VERSION + "/db/config/orientdb-server-config.xml");
+			File file = new File("../releases/" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
 			if (!file.exists())
 				file = new File("server/config/orientdb-server-config.xml");
 			if (!file.exists())
