@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.db.graph;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -260,6 +261,75 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		}
 	}
 
+	/**
+	 * Returns all the edges between the vertexes iVertex1 and iVertex2.
+	 * 
+	 * @param iVertex1
+	 *          First Vertex
+	 * @param iVertex2
+	 *          Second Vertex
+	 * @return The Set with the common Edges between the two vertexes. If edges aren't found the set is empty
+	 */
+	public Set<ODocument> getEdgesBetweenVertexes(final ODocument iVertex1, final ODocument iVertex2) {
+		return getEdgesBetweenVertexes(iVertex1, iVertex2, null, null);
+	}
+
+	/**
+	 * Returns all the edges between the vertexes iVertex1 and iVertex2 with label between the array of labels passed as iLabels.
+	 * 
+	 * @param iVertex1
+	 *          First Vertex
+	 * @param iVertex2
+	 *          Second Vertex
+	 * @param iLabels
+	 *          Array of strings with the labels to get as filter
+	 * @return The Set with the common Edges between the two vertexes. If edges aren't found the set is empty
+	 */
+	public Set<ODocument> getEdgesBetweenVertexes(final ODocument iVertex1, final ODocument iVertex2, final String[] iLabels) {
+		return getEdgesBetweenVertexes(iVertex1, iVertex2, iLabels, null);
+	}
+
+	/**
+	 * Returns all the edges between the vertexes iVertex1 and iVertex2 with label between the array of labels passed as iLabels and
+	 * with class between the array of class names passed as iClassNames.
+	 * 
+	 * @param iVertex1
+	 *          First Vertex
+	 * @param iVertex2
+	 *          Second Vertex
+	 * @param iLabels
+	 *          Array of strings with the labels to get as filter
+	 * @param iClassNames
+	 *          Array of strings with the name of the classes to get as filter
+	 * @return The Set with the common Edges between the two vertexes. If edges aren't found the set is empty
+	 */
+	public Set<ODocument> getEdgesBetweenVertexes(final ODocument iVertex1, final ODocument iVertex2, final String[] iLabels,
+			final String[] iClassNames) {
+		final Set<ODocument> result = new HashSet<ODocument>();
+
+		// CHECK OUT EDGES
+		for (OIdentifiable e : getOutEdges(iVertex1)) {
+			final ODocument edge = (ODocument) e;
+
+			if (checkEdge(edge, iLabels, iClassNames)) {
+				if (edge.field("in", OType.LINK).equals(iVertex2))
+					result.add(edge);
+			}
+		}
+
+		// CHECK IN EDGES
+		for (OIdentifiable e : getInEdges(iVertex1)) {
+			final ODocument edge = (ODocument) e;
+
+			if (checkEdge(edge, iLabels, iClassNames)) {
+				if (edge.field("out", OType.LINK).equals(iVertex2))
+					result.add(edge);
+			}
+		}
+
+		return result;
+	}
+
 	public Set<OIdentifiable> getOutEdges(final ODocument iVertex) {
 		return getOutEdges(iVertex, null);
 	}
@@ -430,4 +500,32 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		if (iOpenTxInSafeMode)
 			rollback();
 	}
+
+	protected boolean checkEdge(final ODocument iEdge, final String[] iLabels, final String[] iClassNames) {
+		boolean good = true;
+
+		if (iClassNames != null) {
+			// CHECK AGAINST CLASS NAMES
+			good = false;
+			for (String c : iClassNames) {
+				if (c.equals(iEdge.getClassName())) {
+					good = true;
+					break;
+				}
+			}
+		}
+
+		if (good && iLabels != null) {
+			// CHECK AGAINST LABELS
+			good = false;
+			for (String c : iLabels) {
+				if (c.equals(iEdge.field(LABEL))) {
+					good = true;
+					break;
+				}
+			}
+		}
+		return good;
+	}
+
 }
