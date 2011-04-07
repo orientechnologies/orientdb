@@ -21,6 +21,8 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
+	private boolean	usingLog	= true;
+
 	public OTransactionOptimistic(final ODatabaseRecordTx iDatabase, final int iId) {
 		super(iDatabase, iId);
 	}
@@ -101,12 +103,12 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 			final ORecordId rid = (ORecordId) iRecord.getIdentity();
 
 			if (!rid.isValid()) {
-				// TODO: NEED IT FOR REAL?
-				// NEW RECORD: CHECK IF IT'S ALREADY IN
-				for (OTransactionEntry entry : entries.values()) {
-					if (entry.getRecord() == iRecord)
-						return;
-				}
+//				// TODO: NEED IT FOR REAL?
+//				// NEW RECORD: CHECK IF IT'S ALREADY IN
+//				for (OTransactionEntry entry : entries.values()) {
+//					if (entry.getRecord() == iRecord)
+//						return;
+//				}
 
 				iRecord.onBeforeIdentityChanged(rid);
 
@@ -164,5 +166,13 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 	@Override
 	public String toString() {
 		return "OTransactionOptimistic [id=" + id + ", status=" + status + ", entries=" + entries.size() + "]";
+	}
+
+	public boolean isUsingLog() {
+		return usingLog;
+	}
+
+	public void setUsingLog(final boolean useLog) {
+		this.usingLog = useLog;
 	}
 }

@@ -46,6 +46,10 @@ public interface OTransaction {
 
 	public int getId();
 
+	public boolean isUsingLog();
+
+	public void setUsingLog(boolean useLog);
+
 	public Iterable<? extends OTransactionEntry> getEntries();
 
 	public List<OTransactionEntry> getEntriesByClass(String iClassName);

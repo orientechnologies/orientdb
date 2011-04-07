@@ -118,7 +118,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	public ORecordAbstract<T> fromStream(final byte[] iRecordBuffer) {
 		_dirty = false;
 		_source = iRecordBuffer;
-		_size = iRecordBuffer.length;
+		_size = iRecordBuffer != null ? iRecordBuffer.length : 0;
 		_status = STATUS.LOADED;
 
 		invokeListenerEvent(ORecordListener.EVENT.UNMARSHALL);

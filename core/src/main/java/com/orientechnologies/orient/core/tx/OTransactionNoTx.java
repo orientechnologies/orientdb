@@ -80,4 +80,11 @@ public class OTransactionNoTx extends OTransactionAbstract {
 	public ORecordInternal<?> getEntry(ORecordId rid) {
 		return null;
 	}
+
+	public boolean isUsingLog() {
+		return false;
+	}
+
+	public void setUsingLog(final boolean useLog) {
+	}
 }
