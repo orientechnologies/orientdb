@@ -96,22 +96,30 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 		Map<String, Character> fieldTypes = null;
 
 		// SEARCH FOR FIELD TYPES IF ANY
-		for (int i = 0; i < fields.length; i += 2) {
-			fieldName = fields[i];
-			fieldName = fieldName.substring(1, fieldName.length() - 1);
-			fieldValue = fields[i + 1];
-			fieldValueAsString = fieldValue.length() >= 2 ? fieldValue.substring(1, fieldValue.length() - 1) : fieldValue;
+		if (fields != null && fields.length > 0) {
+			for (int i = 0; i < fields.length; i += 2) {
+				fieldName = fields[i];
+				fieldName = fieldName.substring(1, fieldName.length() - 1);
+				fieldValue = fields[i + 1];
+				fieldValueAsString = fieldValue.length() >= 2 ? fieldValue.substring(1, fieldValue.length() - 1) : fieldValue;
 
-			if (fieldName.equals(ATTRIBUTE_FIELD_TYPES) && iRecord instanceof ODocument) {
-				// LOAD THE FIELD TYPE MAP
-				final String[] fieldTypesParts = fieldValueAsString.split(",");
-				if (fieldTypesParts.length > 0) {
-					fieldTypes = new HashMap<String, Character>();
-					String[] part;
-					for (String f : fieldTypesParts) {
-						part = f.split("=");
-						if (part.length == 2)
-							fieldTypes.put(part[0], part[1].charAt(0));
+				if (fieldName.equals(ATTRIBUTE_FIELD_TYPES) && iRecord instanceof ODocument) {
+					// LOAD THE FIELD TYPE MAP
+					final String[] fieldTypesParts = fieldValueAsString.split(",");
+					if (fieldTypesParts.length > 0) {
+						fieldTypes = new HashMap<String, Character>();
+						String[] part;
+						for (String f : fieldTypesParts) {
+							part = f.split("=");
+							if (part.length == 2)
+								fieldTypes.put(part[0], part[1].charAt(0));
+						}
+					}
+				} else if (fieldName.equals(ATTRIBUTE_TYPE)) {
+					if (iRecord == null || iRecord.getRecordType() != fieldValueAsString.charAt(0)) {
+						// CREATE THE RIGHT RECORD INSTANCE
+						iRecord = ORecordFactory.newInstance((byte) fieldValueAsString.charAt(0));
+						iRecord.setDatabase(iDatabase);
 					}
 				}
 			}
@@ -133,12 +141,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 						iRecord.setVersion(Integer.parseInt(fieldValue));
 
 					else if (fieldName.equals(ATTRIBUTE_TYPE)) {
-						if (iRecord == null || iRecord.getRecordType() != fieldValueAsString.charAt(0)) {
-							// CREATE THE RIGHT RECORD INSTANCE
-							iRecord = ORecordFactory.newInstance((byte) fieldValueAsString.charAt(0));
-							iRecord.setDatabase(iDatabase);
-						}
-
+						continue;
 					} else if (fieldName.equals(ATTRIBUTE_CLASS) && iRecord instanceof ODocument)
 						((ODocument) iRecord).setClassNameIfExists("null".equals(fieldValueAsString) ? null : fieldValueAsString);
 					else if (fieldName.equals(ATTRIBUTE_FIELD_TYPES) && iRecord instanceof ODocument)
