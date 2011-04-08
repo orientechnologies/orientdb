@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.List;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
@@ -39,9 +40,11 @@ public class OTransactionNoTx extends OTransactionAbstract {
 		// invokeRollbackAgainstListeners();
 	}
 
-	public ORecordInternal<?> load(final int iClusterId, final long iPosition, final ORecordInternal<?> iRecord,
-			final String iFetchPlan) {
-		return database.executeReadRecord(iClusterId, iPosition, iRecord, iFetchPlan, false);
+	public ORecordInternal<?> load(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan) {
+		if (iRid.isNew())
+			return null;
+
+		return database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, false);
 	}
 
 	/**

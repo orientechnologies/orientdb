@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -145,10 +146,13 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 			final ODocument doc1 = new ODocument();
 			final ODocument doc2 = new ODocument();
 
+			final ORecordId rid = new ORecordId(clusterId);
+
 			long clusterMax = Math.max(db1Max, db2Max);
 			for (int i = 0; i < clusterMax; ++i) {
-				buffer1 = i <= db1Max ? storage1.readRecord(null, 0, clusterId, i, null) : null;
-				buffer2 = i <= db2Max ? storage2.readRecord(null, 0, clusterId, i, null) : null;
+				rid.clusterPosition = i;
+				buffer1 = i <= db1Max ? storage1.readRecord(null, 0, rid, null) : null;
+				buffer2 = i <= db2Max ? storage2.readRecord(null, 0, rid, null) : null;
 
 				if (buffer1 == null && buffer2 == null)
 					// BOTH RECORD NULL, OK

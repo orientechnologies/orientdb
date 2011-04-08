@@ -32,29 +32,29 @@ import com.orientechnologies.orient.core.storage.OStorage;
 
 @SuppressWarnings("serial")
 public class OStorageConfiguration implements OSerializableStream {
-	public static final int										CONFIG_RECORD_NUM	= 0;
+	public static final ORecordId							CONFIG_RID			= new ORecordId(0, 0);
 
-	public static final int										CURRENT_VERSION		= 2;
+	public static final int										CURRENT_VERSION	= 2;
 
-	public int																version						= -1;
+	public int																version					= -1;
 	public String															name;
 	public String															schemaRecordId;
 	public String															dictionaryRecordId;
 	public String															indexMgrRecordId;
 
-	public String															localeLanguage		= Locale.getDefault().getLanguage();
-	public String															localeCountry			= Locale.getDefault().getCountry();
-	public String															dateFormat				= "yyyy-MM-dd";
-	public String															dateTimeFormat		= "yyyy-MM-dd hh:mm:ss";
+	public String															localeLanguage	= Locale.getDefault().getLanguage();
+	public String															localeCountry		= Locale.getDefault().getCountry();
+	public String															dateFormat			= "yyyy-MM-dd";
+	public String															dateTimeFormat	= "yyyy-MM-dd hh:mm:ss";
 
-	public OStorageSegmentConfiguration				fileTemplate			= new OStorageSegmentConfiguration();
+	public OStorageSegmentConfiguration				fileTemplate		= new OStorageSegmentConfiguration();
 
-	public List<OStorageClusterConfiguration>	clusters					= new ArrayList<OStorageClusterConfiguration>();
-	public List<OStorageDataConfiguration>		dataSegments			= new ArrayList<OStorageDataConfiguration>();
+	public List<OStorageClusterConfiguration>	clusters				= new ArrayList<OStorageClusterConfiguration>();
+	public List<OStorageDataConfiguration>		dataSegments		= new ArrayList<OStorageDataConfiguration>();
 
-	public OStorageTxConfiguration						txSegment					= new OStorageTxConfiguration();
+	public OStorageTxConfiguration						txSegment				= new OStorageTxConfiguration();
 
-	public List<OEntryConfiguration>					properties				= new ArrayList<OEntryConfiguration>();
+	public List<OEntryConfiguration>					properties			= new ArrayList<OEntryConfiguration>();
 
 	private transient Locale									localeInstance;
 	private transient DecimalFormatSymbols		unusualSymbols;
@@ -73,8 +73,7 @@ public class OStorageConfiguration implements OSerializableStream {
 	 * @throws OSerializationException
 	 */
 	public OStorageConfiguration load() throws OSerializationException {
-		final byte[] record = storage.readRecord(null, -1, storage.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME),
-				CONFIG_RECORD_NUM, null).buffer;
+		final byte[] record = storage.readRecord(null, -1, CONFIG_RID, null).buffer;
 
 		if (record == null)
 			throw new OStorageException("Can't load database's configuration. The database seems to be corrupted.");
@@ -85,7 +84,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
 	public void update() throws OSerializationException {
 		final byte[] record = toStream();
-		storage.updateRecord(-1, storage.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME), 0, record, -1, ORecordBytes.RECORD_TYPE);
+		storage.updateRecord(-1, CONFIG_RID, record, -1, ORecordBytes.RECORD_TYPE);
 	}
 
 	public boolean isEmpty() {

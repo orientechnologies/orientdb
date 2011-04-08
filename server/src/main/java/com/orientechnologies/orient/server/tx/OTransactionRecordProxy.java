@@ -168,7 +168,7 @@ public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
 	}
 
 	@Override
-	public ORecordAbstract<?> fill(final ODatabaseRecord iDatabase, final int iClusterId, final long iPosition, final int iVersion,
+	public ORecordAbstract<?> fill(final ODatabaseRecord iDatabase, final ORecordId iRid, final int iVersion,
 			final byte[] iBuffer) {
 		return null;
 	}

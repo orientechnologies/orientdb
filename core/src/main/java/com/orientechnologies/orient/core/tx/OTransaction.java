@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.tx;
 import java.util.List;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
@@ -30,7 +31,7 @@ public interface OTransaction {
 		INVALID, BEGUN, COMMITTING, ROLLBACKING
 	}
 
-	public ORecordInternal<?> load(int iClusterId, long iPosition, ORecordInternal<?> iRecord, String iFetchPlan);
+	public ORecordInternal<?> load(ORID iRid, ORecordInternal<?> iRecord, String iFetchPlan);
 
 	public void save(ORecordInternal<?> iContent, String iClusterName);
 

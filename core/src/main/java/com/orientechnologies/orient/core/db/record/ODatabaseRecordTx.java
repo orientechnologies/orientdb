@@ -84,7 +84,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 
 		currentTx = iTx;
 		currentTx.begin();
-		
+
 		return this;
 	}
 
@@ -149,9 +149,26 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <RET extends ORecordInternal<?>> RET load(final int iClusterId, final long iPosition, final ORecordInternal<?> iRecord,
-			final String iFetchPlan) {
-		return (RET) currentTx.load(iClusterId, iPosition, iRecord, iFetchPlan);
+	public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord, final String iFetchPlan) {
+		return (RET) currentTx.load(iRecord.getIdentity(), iRecord, iFetchPlan);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <RET extends ORecordInternal<?>> RET load(ORecordInternal<?> iRecord) {
+		return (RET) currentTx.load(iRecord.getIdentity(), iRecord, null);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <RET extends ORecordInternal<?>> RET load(ORID iRecordId) {
+		return (RET) currentTx.load(iRecordId, null, null);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <RET extends ORecordInternal<?>> RET load(ORID iRecordId, String iFetchPlan) {
+		return (RET) currentTx.load(iRecordId, null, iFetchPlan);
 	}
 
 	@Override

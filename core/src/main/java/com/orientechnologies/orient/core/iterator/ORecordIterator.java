@@ -21,6 +21,7 @@ import java.util.NoSuchElementException;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.tx.OTransactionEntry;
 
@@ -40,11 +41,10 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 	protected boolean												liveUpdated							= false;
 	protected long													limit										= -1;
 	protected long													browsedRecords					= 0;
-	protected long													currentClusterPosition;
 	protected String												fetchPlan;
-	private ORecordInternal<?>							reusedRecord						= null;	// DEFAULT = NOT REUSE IT
+	private ORecordInternal<?>							reusedRecord						= null;						// DEFAULT = NOT REUSE IT
 	protected Boolean												directionForward;
-	protected int														currentClusterId;
+	protected final ORecordId								current									= new ORecordId();
 	protected long													firstClusterPosition;
 	protected long													lastClusterPosition;
 	protected long													totalAvailableRecords;
@@ -55,7 +55,7 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 		database = iDatabase;
 		lowLevelDatabase = iLowLevelDatabase;
 
-		currentClusterPosition = -1; // DEFAULT = START FROM THE BEGIN
+		current.clusterPosition = -1; // DEFAULT = START FROM THE BEGIN
 	}
 
 	public abstract boolean hasPrevious();
@@ -68,8 +68,8 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 
 	@SuppressWarnings("unchecked")
 	protected REC getTransactionEntry() {
-		long physicalRecordTobrowse = currentClusterPosition > -2 && lastClusterPosition > -1 ? lastClusterPosition
-				- currentClusterPosition : 0;
+		long physicalRecordTobrowse = current.clusterPosition > -2 && lastClusterPosition > -1 ? lastClusterPosition
+				- current.clusterPosition : 0;
 
 		if (physicalRecordTobrowse == 0 && txEntries != null) {
 			// IN TX
@@ -83,7 +83,7 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 	}
 
 	protected long getRecordsToBrowse() {
-		long recordsToBrowse = currentClusterPosition > -2 && lastClusterPosition > -1 ? lastClusterPosition - currentClusterPosition
+		long recordsToBrowse = current.clusterPosition > -2 && lastClusterPosition > -1 ? lastClusterPosition - current.clusterPosition
 				: 0;
 
 		if (txEntries != null)

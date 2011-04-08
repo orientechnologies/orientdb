@@ -59,9 +59,9 @@ public class OStorageLocalTxExecuter {
 		txSegment.close();
 	}
 
-	protected long createRecord(final int iRequesterId, final int iTxId, final OCluster iClusterSegment, final byte[] iContent,
-			final byte iRecordType) throws IOException {
-		long clusterPosition = -1;
+	protected long createRecord(final int iRequesterId, final int iTxId, final OCluster iClusterSegment, final ORecordId iRid,
+			final byte[] iContent, final byte iRecordType) throws IOException {
+		iRid.clusterPosition = -1;
 
 		try {
 			// CREATE DATA SEGMENT. IF TX FAILS AT THIS POINT UN-REFERENCED DATA WILL REMAIN UNTIL NEXT DEFRAG
@@ -69,15 +69,15 @@ public class OStorageLocalTxExecuter {
 			ODataLocal data = storage.getDataSegment(dataSegment);
 
 			// REFERENCE IN THE CLUSTER THE DATA JUST CREATED. IF TX FAILS AT THIS POINT AN EMPTY ENTRY IS KEPT UNTIL DEFRAG
-			clusterPosition = iClusterSegment.addPhysicalPosition(-1, -1, iRecordType);
+			iRid.clusterPosition = iClusterSegment.addPhysicalPosition(-1, -1, iRecordType);
 
-			final long dataOffset = data.addRecord(iClusterSegment.getId(), clusterPosition, iContent);
+			final long dataOffset = data.addRecord(iRid, iContent);
 
 			// UPDATE THE POSITION IN CLUSTER WITH THE POSITION OF RECORD IN DATA
-			iClusterSegment.setPhysicalPosition(clusterPosition, dataSegment, dataOffset, iRecordType);
+			iClusterSegment.setPhysicalPosition(iRid.clusterPosition, dataSegment, dataOffset, iRecordType);
 
 			// SAVE INTO THE LOG THE POSITION OF THE RECORD JUST CREATED. IF TX FAILS AT THIS POINT A GHOST RECORD IS CREATED UNTIL DEFRAG
-			txSegment.addLog(OTxSegment.OPERATION_CREATE, iRequesterId, iTxId, iClusterSegment.getId(), clusterPosition, dataOffset);
+			txSegment.addLog(OTxSegment.OPERATION_CREATE, iRequesterId, iTxId, iClusterSegment.getId(), iRid.clusterPosition, dataOffset);
 
 		} catch (IOException e) {
 
@@ -85,35 +85,35 @@ public class OStorageLocalTxExecuter {
 					OTransactionException.class);
 		}
 
-		return clusterPosition;
+		return iRid.clusterPosition;
 	}
 
-	protected int updateRecord(final int iRequesterId, final int iTxId, final OCluster iClusterSegment, final long iPosition,
+	protected int updateRecord(final int iRequesterId, final int iTxId, final OCluster iClusterSegment, final ORecordId iRid,
 			final byte[] iContent, final int iVersion, final byte iRecordType) {
 		try {
 			// READ CURRENT RECORD CONTENT
-			final ORawBuffer buffer = storage.readRecord(iRequesterId, iClusterSegment, iPosition, true);
+			final ORawBuffer buffer = storage.readRecord(iRequesterId, iClusterSegment, iRid, true);
 
 			if (buffer == null)
-				throw new OTransactionException("Can't retrieve the update record " + iClusterSegment.getId() + "." + iPosition);
+				throw new OTransactionException("Can't retrieve the updated record #" + iRid);
 
 			final long dataOffset;
 			if (buffer.buffer != null) {
 				// CREATE A COPY OF IT IN DATASEGMENT. IF TX FAILS AT THIS POINT UN-REFERENCED DATA WILL REMAIN UNTIL NEXT DEFRAG
-				dataOffset = storage.getDataSegment(storage.getDataSegmentForRecord(iClusterSegment, buffer.buffer)).addRecord(-1, -1,
-						buffer.buffer);
+				dataOffset = storage.getDataSegment(storage.getDataSegmentForRecord(iClusterSegment, buffer.buffer)).addRecord(
+						ORecordId.EMPTY_RECORD_ID, buffer.buffer);
 			} else
 				// NO DATA
 				dataOffset = -1;
 
 			// SAVE INTO THE LOG THE POSITION OF THE RECORD JUST DELETED. IF TX FAILS AT THIS POINT AS ABOVE
-			txSegment.addLog(OTxSegment.OPERATION_UPDATE, iRequesterId, iTxId, iClusterSegment.getId(), iPosition, dataOffset);
+			txSegment.addLog(OTxSegment.OPERATION_UPDATE, iRequesterId, iTxId, iClusterSegment.getId(), iRid.clusterPosition, dataOffset);
 
 			// UPDATE THE RECORD FOR REAL. IF TX FAILS AT THIS POINT CAN BE RECOVERED THANKS TO THE TX-LOG
-			return storage.updateRecord(iRequesterId, iClusterSegment, iPosition, iContent, iVersion, iRecordType);
+			return storage.updateRecord(iRequesterId, iClusterSegment, iRid, iContent, iVersion, iRecordType);
 		} catch (IOException e) {
 
-			OLogManager.instance().error(this, "Error on updating entry #" + iPosition + " in log segment: " + iClusterSegment, e,
+			OLogManager.instance().error(this, "Error on updating entry #" + iRid + " in log segment: " + iClusterSegment, e,
 					OTransactionException.class);
 		}
 		return -1;
@@ -226,17 +226,17 @@ public class OStorageLocalTxExecuter {
 						// RECORD CHANGED: RE-STREAM IT
 						stream = txEntry.getRecord().toStream();
 
-					rid.clusterPosition = createRecord(iRequesterId, iTx.getId(), cluster, stream, txEntry.getRecord().getRecordType());
 					rid.clusterId = cluster.getId();
+					createRecord(iRequesterId, iTx.getId(), cluster, rid, stream, txEntry.getRecord().getRecordType());
 
 					iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_CREATE, txEntry.getRecord());
 				} else {
 					txEntry.getRecord().setVersion(
-							updateRecord(iRequesterId, iTx.getId(), cluster, rid.clusterPosition, stream, txEntry.getRecord().getVersion(),
-									txEntry.getRecord().getRecordType()));
+							updateRecord(iRequesterId, iTx.getId(), cluster, rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord()
+									.getRecordType()));
 				}
 			} else {
-				iTx.getDatabase().getStorage().createRecord(cluster.getId(), stream, txEntry.getRecord().getRecordType());
+				iTx.getDatabase().getStorage().createRecord(rid, stream, txEntry.getRecord().getRecordType());
 			}
 			break;
 		}
@@ -249,8 +249,8 @@ public class OStorageLocalTxExecuter {
 				stream = txEntry.getRecord().toStream();
 
 			txEntry.getRecord().setVersion(
-					updateRecord(iRequesterId, iTx.getId(), cluster, rid.clusterPosition, stream, txEntry.getRecord().getVersion(), txEntry
-							.getRecord().getRecordType()));
+					updateRecord(iRequesterId, iTx.getId(), cluster, rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord()
+							.getRecordType()));
 
 			iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_UPDATE, txEntry.getRecord());
 			break;

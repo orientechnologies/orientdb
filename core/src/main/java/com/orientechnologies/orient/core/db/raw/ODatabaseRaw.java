@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -185,51 +186,46 @@ public class ODatabaseRaw implements ODatabase {
 		return storage.count(iClusterIds);
 	}
 
-	public ORawBuffer read(final int iClusterId, final long iPosition, final String iFetchPlan) {
-		if (iClusterId < 0 || iPosition < 0)
+	public ORawBuffer read(final ORecordId iRid, final String iFetchPlan) {
+		if (!iRid.isValid())
 			return null;
 
 		try {
-			return storage.readRecord(databaseOwner, id, iClusterId, iPosition, iFetchPlan);
+			return storage.readRecord(databaseOwner, id, iRid, iFetchPlan);
 
 		} catch (Throwable t) {
-			throw new ODatabaseException("Error on retrieving record #" + iPosition + " in cluster '"
-					+ storage.getPhysicalClusterNameById(iClusterId) + "'", t);
+			throw new ODatabaseException("Error on retrieving record #" + iRid + "(cluster: "
+					+ storage.getPhysicalClusterNameById(iRid.clusterId) + ")", t);
 		}
 	}
 
-	public long save(final int iClusterId, long iPosition, final byte[] iContent, final int iVersion, final byte iRecordType) {
+	public long save(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType) {
 		// CHECK IF RECORD TYPE IS SUPPORTED
 		ORecordFactory.getRecordTypeName(iRecordType);
 
 		try {
-			if (iPosition < 0) {
+			if (iRid.clusterPosition < 0) {
 				// CREATE
-				return storage.createRecord(iClusterId, iContent, iRecordType);
+				return storage.createRecord(iRid, iContent, iRecordType);
 
 			} else {
 				// UPDATE
-				return storage.updateRecord(id, iClusterId, iPosition, iContent, iVersion, iRecordType);
+				return storage.updateRecord(id, iRid, iContent, iVersion, iRecordType);
 			}
 		} catch (OConcurrentModificationException e) {
 			throw e;
 		} catch (Throwable t) {
-			throw new ODatabaseException("Error on saving record in cluster id: " + iClusterId + ", position: " + iPosition, t);
+			throw new ODatabaseException("Error on saving record #" + iRid, t);
 		}
 	}
 
-	public void delete(final String iClusterName, final long iPosition, final int iVersion) {
-		delete(getClusterIdByName(iClusterName), iPosition, iVersion);
-	}
-
-	public void delete(final int iClusterId, final long iPosition, final int iVersion) {
+	public void delete(final ORecordId iRid, final int iVersion) {
 		try {
-			if (!storage.deleteRecord(id, iClusterId, iPosition, iVersion))
-				throw new ORecordNotFoundException("The record with id '" + iClusterId + ":" + iPosition + "' was not found");
+			if (!storage.deleteRecord(id, iRid, iVersion))
+				throw new ORecordNotFoundException("The record with id #" + iRid + " was not found");
 
 		} catch (Exception e) {
-			OLogManager.instance().exception("Error on deleting record #%d in cluster '%s'", e, ODatabaseException.class, iPosition,
-					storage.getPhysicalClusterNameById(iClusterId));
+			OLogManager.instance().exception("Error on deleting record #" + iRid, e, ODatabaseException.class);
 		}
 	}
 

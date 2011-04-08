@@ -25,8 +25,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
 /**
@@ -65,18 +64,13 @@ public interface OStorage {
 	public boolean isClosed();
 
 	// CRUD OPERATIONS
-	public long createRecord(int iClusterId, byte[] iContent, final byte iRecordType);
+	public long createRecord(ORecordId iRecordId, byte[] iContent, final byte iRecordType);
 
-	public ORawBuffer readRecord(ODatabaseRecord iDatabase, int iRequesterId, int iClusterId, long iPosition, String iFetchPlan);
+	public ORawBuffer readRecord(ODatabaseRecord iDatabase, int iRequesterId, ORecordId iRid, String iFetchPlan);
 
-	public int updateRecord(int iRequesterId, int iClusterId, long iPosition, byte[] iContent, final int iVersion,
-			final byte iRecordType);
+	public int updateRecord(int iRequesterId, ORecordId iRecordId, byte[] iContent, final int iVersion, final byte iRecordType);
 
-	public int updateRecord(int iRequesterId, ORID iRecordId, byte[] iContent, final int iVersion, final byte iRecordType);
-
-	public boolean deleteRecord(int iRequesterId, ORID iRecordId, final int iVersion);
-
-	public boolean deleteRecord(int iRequesterId, int iClusterId, long iPosition, final int iVersion);
+	public boolean deleteRecord(int iRequesterId, ORecordId iRecordId, final int iVersion);
 
 	// TX OPERATIONS
 	public void commit(int iRequesterId, OTransaction iTx);

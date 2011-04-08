@@ -42,15 +42,15 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 		if (iClusterId == ORID.CLUSTER_ID_INVALID)
 			throw new IllegalArgumentException("The clusterId is invalid");
 
-		currentClusterId = iClusterId;
+		current.clusterId = iClusterId;
 		rangeFrom = -1;
 		rangeTo = -1;
 
-		long[] range = database.getStorage().getClusterDataRange(currentClusterId);
+		long[] range = database.getStorage().getClusterDataRange(current.clusterId);
 		firstClusterPosition = range[0];
 		lastClusterPosition = range[1];
 
-		totalAvailableRecords = database.countClusterElements(currentClusterId);
+		totalAvailableRecords = database.countClusterElements(current.clusterId);
 
 		txEntries = iDatabase.getTransaction().getEntriesByClusterIds(new int[] { iClusterId });
 
@@ -77,7 +77,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 			// LIMIT REACHED
 			return false;
 
-		return currentClusterPosition > getRangeFrom() + 1;
+		return current.clusterPosition > getRangeFrom() + 1;
 	}
 
 	public boolean hasNext() {
@@ -156,7 +156,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 	 */
 	@Override
 	public ORecordIterator<REC> begin() {
-		currentClusterPosition = getRangeFrom();
+		current.clusterPosition = getRangeFrom();
 		return this;
 	}
 
@@ -167,7 +167,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 	 */
 	@Override
 	public ORecordIterator<REC> last() {
-		currentClusterPosition = getRangeTo();
+		current.clusterPosition = getRangeTo();
 		return this;
 	}
 
@@ -183,7 +183,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 	public ORecordIteratorCluster<REC> setRange(final long iFrom, final long iEnd) {
 		firstClusterPosition = iFrom;
 		rangeTo = iEnd;
-		currentClusterPosition = firstClusterPosition;
+		current.clusterPosition = firstClusterPosition;
 		return this;
 	}
 
@@ -196,7 +196,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 		if (!liveUpdated)
 			return firstClusterPosition - 1;
 
-		final long limit = database.getStorage().getClusterDataRange(currentClusterId)[0] - 1;
+		final long limit = database.getStorage().getClusterDataRange(current.clusterId)[0] - 1;
 		if (rangeFrom > -1)
 			return Math.max(rangeFrom, limit);
 		return limit;
@@ -211,7 +211,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 		if (!liveUpdated)
 			return lastClusterPosition + 1;
 
-		final long limit = database.getStorage().getClusterDataRange(currentClusterId)[1] + 1;
+		final long limit = database.getStorage().getClusterDataRange(current.clusterId)[1] + 1;
 		if (rangeTo > -1)
 			return Math.min(rangeTo, limit);
 		return limit;
@@ -234,12 +234,12 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 			firstClusterPosition = -1;
 			lastClusterPosition = -1;
 		} else {
-			long[] range = database.getStorage().getClusterDataRange(currentClusterId);
+			long[] range = database.getStorage().getClusterDataRange(current.clusterId);
 			firstClusterPosition = range[0];
 			lastClusterPosition = range[1];
 		}
 
-		totalAvailableRecords = database.countClusterElements(currentClusterId);
+		totalAvailableRecords = database.countClusterElements(current.clusterId);
 
 		return this;
 	}
@@ -255,9 +255,9 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 			// LIMIT REACHED
 			return null;
 
-		currentClusterPosition += iMovement;
+		current.clusterPosition += iMovement;
 
-		iRecord = lowLevelDatabase.executeReadRecord(currentClusterId, currentClusterPosition, iRecord, fetchPlan, false);
+		iRecord = lowLevelDatabase.executeReadRecord(current, iRecord, fetchPlan, false);
 		if (iRecord != null)
 			browsedRecords++;
 

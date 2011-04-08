@@ -223,7 +223,7 @@ public class OStorageRemote extends OStorageAbstract {
 		}
 	}
 
-	public long createRecord(final int iClusterId, final byte[] iContent, final byte iRecordType) {
+	public long createRecord(final ORecordId iRid, final byte[] iContent, final byte iRecordType) {
 		checkConnection();
 
 		do {
@@ -233,7 +233,7 @@ public class OStorageRemote extends OStorageAbstract {
 				final int reqId;
 				try {
 					reqId = beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_CREATE);
-					network.writeShort((short) iClusterId);
+					network.writeShort((short) iRid.clusterId);
 					network.writeBytes(iContent);
 					network.writeByte(iRecordType);
 				} finally {
@@ -242,13 +242,15 @@ public class OStorageRemote extends OStorageAbstract {
 
 				try {
 					beginResponse(reqId);
-					return network.readLong();
+					
+					iRid.clusterPosition = network.readLong();
+					return iRid.clusterPosition;
 				} finally {
 					endResponse();
 				}
 
 			} catch (Exception e) {
-				handleException("Error on create record in cluster: " + iClusterId, e);
+				handleException("Error on create record in cluster: " + iRid.clusterId, e);
 
 			} finally {
 				lock.releaseExclusiveLock(locked);
@@ -256,7 +258,7 @@ public class OStorageRemote extends OStorageAbstract {
 		} while (true);
 	}
 
-	public ORawBuffer readRecord(final ODatabaseRecord iDatabase, final int iRequesterId, final int iClusterId, final long iPosition,
+	public ORawBuffer readRecord(final ODatabaseRecord iDatabase, final int iRequesterId, final ORecordId iRid,
 			final String iFetchPlan) {
 		checkConnection();
 
@@ -271,8 +273,7 @@ public class OStorageRemote extends OStorageAbstract {
 				final int reqId;
 				try {
 					reqId = beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_LOAD);
-					network.writeShort((short) iClusterId);
-					network.writeLong(iPosition);
+					network.writeRID(iRid);
 					network.writeString(iFetchPlan != null ? iFetchPlan : "");
 				} finally {
 					endRequest();
@@ -299,7 +300,7 @@ public class OStorageRemote extends OStorageAbstract {
 				}
 
 			} catch (Exception e) {
-				handleException("Error on read record: " + iClusterId + ":" + iPosition, e);
+				handleException("Error on read record #" + iRid, e);
 
 			} finally {
 				lock.releaseExclusiveLock(locked);
@@ -307,8 +308,8 @@ public class OStorageRemote extends OStorageAbstract {
 		} while (true);
 	}
 
-	public int updateRecord(final int iRequesterId, final int iClusterId, final long iPosition, final byte[] iContent,
-			final int iVersion, final byte iRecordType) {
+	public int updateRecord(final int iRequesterId, final ORecordId iRid, final byte[] iContent, final int iVersion,
+			final byte iRecordType) {
 		checkConnection();
 
 		do {
@@ -318,8 +319,7 @@ public class OStorageRemote extends OStorageAbstract {
 				final int reqId;
 				try {
 					reqId = beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_UPDATE);
-					network.writeShort((short) iClusterId);
-					network.writeLong(iPosition);
+					network.writeRID(iRid);
 					network.writeBytes(iContent);
 					network.writeInt(iVersion);
 					network.writeByte(iRecordType);
@@ -335,7 +335,7 @@ public class OStorageRemote extends OStorageAbstract {
 				}
 
 			} catch (Exception e) {
-				handleException("Error on update record: " + iClusterId + ":" + iPosition, e);
+				handleException("Error on update record #" + iRid, e);
 
 			} finally {
 				lock.releaseExclusiveLock(locked);
@@ -343,7 +343,7 @@ public class OStorageRemote extends OStorageAbstract {
 		} while (true);
 	}
 
-	public boolean deleteRecord(final int iRequesterId, final int iClusterId, final long iPosition, final int iVersion) {
+	public boolean deleteRecord(final int iRequesterId, final ORecordId iRid, final int iVersion) {
 		checkConnection();
 
 		do {
@@ -353,8 +353,7 @@ public class OStorageRemote extends OStorageAbstract {
 				final int reqId;
 				try {
 					reqId = beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_DELETE);
-					network.writeShort((short) iClusterId);
-					network.writeLong(iPosition);
+					network.writeRID(iRid);
 					network.writeInt(iVersion);
 				} finally {
 					endRequest();
@@ -368,7 +367,7 @@ public class OStorageRemote extends OStorageAbstract {
 				}
 
 			} catch (Exception e) {
-				handleException("Error on delete record: " + iClusterId + ":" + iPosition, e);
+				handleException("Error on delete record #" + iRid, e);
 
 			} finally {
 				lock.releaseExclusiveLock(locked);
@@ -1262,11 +1261,10 @@ public class OStorageRemote extends OStorageAbstract {
 			final ORecordInternal<?> record = ORecordFactory.newInstance(network.readByte());
 
 			if (record instanceof ORecordSchemaAware<?>)
-				((ORecordSchemaAware<?>) record).fill(iDatabase, classId, network.readShort(), network.readLong(), network.readInt(),
-						network.readBytes());
+				((ORecordSchemaAware<?>) record).fill(iDatabase, classId, network.readRID(), network.readInt(), network.readBytes());
 			else
 				// DISCARD CLASS ID
-				record.fill(iDatabase, network.readShort(), network.readLong(), network.readInt(), network.readBytes());
+				record.fill(iDatabase, network.readRID(), network.readInt(), network.readBytes());
 
 			return record;
 		}

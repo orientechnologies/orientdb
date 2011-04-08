@@ -24,6 +24,7 @@ import java.util.Map.Entry;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OStorageTxConfiguration;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 
@@ -315,8 +316,6 @@ public class OTxSegment extends OSingleFileSegment {
 		byte operation;
 		int reqId;
 		int txId;
-		int clusterId;
-		long clusterOffset;
 		long oldDataOffset;
 
 		int offset;
@@ -324,6 +323,7 @@ public class OTxSegment extends OSingleFileSegment {
 
 		int size = (file.getFilledUpTo() / RECORD_SIZE);
 		int recordsRecovered = 0;
+		final ORecordId rid = new ORecordId();
 
 		for (int i = 0; i < size; ++i) {
 			offset = i * RECORD_SIZE;
@@ -348,15 +348,15 @@ public class OTxSegment extends OSingleFileSegment {
 						// TX ID FOUND
 						offset += OConstants.SIZE_INT;
 
-						clusterId = file.readShort(offset);
+						rid.clusterId = file.readShort(offset);
 						offset += OConstants.SIZE_SHORT;
 
-						clusterOffset = file.readLong(offset);
+						rid.clusterPosition = file.readLong(offset);
 						offset += OConstants.SIZE_LONG;
 
 						oldDataOffset = file.readLong(offset);
 
-						recoverTransactionEntry(status, operation, reqId, txId, clusterId, clusterOffset, oldDataOffset, ppos);
+						recoverTransactionEntry(status, operation, reqId, txId, rid, oldDataOffset, ppos);
 						recordsRecovered++;
 
 						// CLEAR THE ENTRY BY WRITING '0'
@@ -368,10 +368,10 @@ public class OTxSegment extends OSingleFileSegment {
 		return recordsRecovered;
 	}
 
-	private void recoverTransactionEntry(byte status, byte operation, int reqId, int txId, int clusterId, long clusterOffset,
-			long oldDataOffset, OPhysicalPosition ppos) throws IOException {
+	private void recoverTransactionEntry(byte status, byte operation, int reqId, int txId, final ORecordId iRid, long oldDataOffset,
+			OPhysicalPosition ppos) throws IOException {
 
-		final OCluster cluster = storage.getClusterById(clusterId);
+		final OCluster cluster = storage.getClusterById(iRid.clusterId);
 
 		if (!(cluster instanceof OClusterLocal))
 			return;
@@ -379,13 +379,13 @@ public class OTxSegment extends OSingleFileSegment {
 		final OClusterLocal logCluster = (OClusterLocal) cluster;
 
 		OLogManager.instance().info(this,
-				"Recovering tx <%d> by req <%d>. Operation <%d> was in status <%d> on record %d:%d in data space %d...", txId, reqId,
-				operation, status, clusterId, clusterOffset, oldDataOffset);
+				"Recovering tx <%d> by req <%d>. Operation <%d> was in status <%d> on record %s in data space %d...", txId, reqId,
+				operation, status, iRid, oldDataOffset);
 
 		switch (operation) {
 		case OPERATION_CREATE:
 			// JUST DELETE THE RECORD
-			storage.deleteRecord(-1, clusterId, clusterOffset, -1);
+			storage.deleteRecord(-1, iRid, -1);
 			break;
 
 		case OPERATION_UPDATE:
@@ -393,7 +393,7 @@ public class OTxSegment extends OSingleFileSegment {
 			// final int recSize = storage.getDataSegment(ppos.dataSegment).getRecordSize(oldDataOffset);
 
 			// RETRIEVE THE CURRENT PPOS
-			cluster.getPhysicalPosition(clusterOffset, ppos);
+			cluster.getPhysicalPosition(iRid.clusterPosition, ppos);
 
 			long newPosition = ppos.dataPosition;
 			int newSize = ppos.recordSize;
@@ -402,7 +402,7 @@ public class OTxSegment extends OSingleFileSegment {
 			ppos.dataPosition = oldDataOffset;
 
 			// UPDATE THE PPOS WITH THE COORDS OF THE OLD RECORD
-			storage.getClusterById(clusterId).setPhysicalPosition(clusterOffset, ppos.dataSegment, oldDataOffset, ppos.type);
+			storage.getClusterById(iRid.clusterId).setPhysicalPosition(iRid.clusterPosition, ppos.dataSegment, oldDataOffset, ppos.type);
 
 			// CREATE A HOLE
 			storage.getDataSegment(ppos.dataSegment).createHole(newPosition, newSize);
@@ -410,13 +410,13 @@ public class OTxSegment extends OSingleFileSegment {
 
 		case OPERATION_DELETE:
 			// GET THE PPOS
-			cluster.getPhysicalPosition(clusterOffset, ppos);
+			cluster.getPhysicalPosition(iRid.clusterPosition, ppos);
 
 			// SAVE THE PPOS WITH THE VERSION TO 0 (VALID IF >-1)
-			cluster.updateVersion(clusterOffset, 0);
+			cluster.updateVersion(iRid.clusterPosition, 0);
 
 			// REMOVE THE HOLE
-			logCluster.removeHole(clusterOffset);
+			logCluster.removeHole(iRid.clusterPosition);
 			break;
 		}
 	}

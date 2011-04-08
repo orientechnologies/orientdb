@@ -453,20 +453,20 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			break;
 		}
 
-		case OChannelBinaryProtocol.REQUEST_RECORD_CREATE:
+		case OChannelBinaryProtocol.REQUEST_RECORD_CREATE: {
 			data.commandInfo = "Create record";
 
-			final long location = underlyingDatabase.save(channel.readShort(), ORID.CLUSTER_POS_INVALID, channel.readBytes(), -1,
-					channel.readByte());
+			final ORecordId rid = new ORecordId(channel.readShort(), ORID.CLUSTER_POS_INVALID);
+			final long location = underlyingDatabase.save(rid, channel.readBytes(), -1, channel.readByte());
 			sendOk(lastClientTxId);
 			channel.writeLong(location);
 			break;
+		}
 
-		case OChannelBinaryProtocol.REQUEST_RECORD_UPDATE:
+		case OChannelBinaryProtocol.REQUEST_RECORD_UPDATE: {
 			data.commandInfo = "Update record";
 
-			final int clusterId = channel.readShort();
-			final long clusterPosition = channel.readLong();
+			final ORecordId rid = channel.readRID();
 
 			// final byte[] buffer = channel.readBytes();
 			// final int version = channel.readInt();
@@ -477,15 +477,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			//
 			// connection.database.save(record);
 
-			long newVersion = underlyingDatabase.save(clusterId, clusterPosition, channel.readBytes(), channel.readInt(),
-					channel.readByte());
+			long newVersion = underlyingDatabase.save(rid, channel.readBytes(), channel.readInt(), channel.readByte());
 
 			// TODO: Handle it by using triggers
-			if (connection.database.getMetadata().getSchema().getDocument().getIdentity().getClusterId() == clusterId
-					&& connection.database.getMetadata().getSchema().getDocument().getIdentity().getClusterPosition() == clusterPosition)
+			if (connection.database.getMetadata().getSchema().getDocument().getIdentity().equals(rid))
 				connection.database.getMetadata().loadSchema();
-			else if (((ODictionaryLocal<?>) connection.database.getDictionary()).getTree().getRecord().getIdentity().getClusterId() == clusterId
-					&& ((ODictionaryLocal<?>) connection.database.getDictionary()).getTree().getRecord().getIdentity().getClusterPosition() == clusterPosition)
+			else if (((ODictionaryLocal<?>) connection.database.getDictionary()).getTree().getRecord().getIdentity().equals(rid))
 				((ODictionaryLocal<?>) connection.database.getDictionary()).load();
 
 			sendOk(lastClientTxId);
@@ -493,16 +490,18 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			// channel.writeInt(record.getVersion());
 			channel.writeInt((int) newVersion);
 			break;
+		}
 
-		case OChannelBinaryProtocol.REQUEST_RECORD_DELETE:
+		case OChannelBinaryProtocol.REQUEST_RECORD_DELETE: {
 			data.commandInfo = "Delete record";
-
-			underlyingDatabase.delete(channel.readShort(), channel.readLong(), channel.readInt());
+			final ORecordId rid = new ORecordId(channel.readShort(), channel.readLong());
+			underlyingDatabase.delete(rid, channel.readInt());
 			sendOk(lastClientTxId);
 
 			channel.writeByte((byte) 1);
 			break;
-
+		}
+		
 		case OChannelBinaryProtocol.REQUEST_COUNT: {
 			data.commandInfo = "Count cluster records";
 

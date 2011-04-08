@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.tx;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
@@ -55,11 +56,10 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 		status = TXSTATUS.INVALID;
 	}
 
-	public ORecordInternal<?> load(final int iClusterId, final long iPosition, final ORecordInternal<?> iRecord,
-			final String iFetchPlan) {
+	public ORecordInternal<?> load(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan) {
 		checkTransaction();
 
-		OTransactionEntry txEntry = entries.get(new ORecordId(iClusterId, iPosition));
+		OTransactionEntry txEntry = entries.get(iRid);
 
 		if (txEntry != null) {
 			switch (txEntry.status) {
@@ -74,7 +74,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 		}
 
 		// DELEGATE TO THE STORAGE
-		return database.executeReadRecord(iClusterId, iPosition, iRecord, iFetchPlan, false);
+		return database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, false);
 	}
 
 	public void delete(final ORecordInternal<?> iRecord) {
@@ -103,12 +103,12 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 			final ORecordId rid = (ORecordId) iRecord.getIdentity();
 
 			if (!rid.isValid()) {
-//				// TODO: NEED IT FOR REAL?
-//				// NEW RECORD: CHECK IF IT'S ALREADY IN
-//				for (OTransactionEntry entry : entries.values()) {
-//					if (entry.getRecord() == iRecord)
-//						return;
-//				}
+				// // TODO: NEED IT FOR REAL?
+				// // NEW RECORD: CHECK IF IT'S ALREADY IN
+				// for (OTransactionEntry entry : entries.values()) {
+				// if (entry.getRecord() == iRecord)
+				// return;
+				// }
 
 				iRecord.onBeforeIdentityChanged(rid);
 

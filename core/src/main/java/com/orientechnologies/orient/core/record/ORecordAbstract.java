@@ -53,10 +53,10 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		unsetDirty();
 	}
 
-	public ORecordAbstract<?> fill(final ODatabaseRecord iDatabase, final int iClusterId, final long iPosition, final int iVersion,
-			final byte[] iBuffer) {
+	public ORecordAbstract<?> fill(final ODatabaseRecord iDatabase, final ORecordId iRid, final int iVersion, final byte[] iBuffer) {
 		_database = iDatabase;
-		setIdentity(iClusterId, iPosition);
+		_recordId.clusterId = iRid.clusterId;
+		_recordId.clusterPosition = iRid.clusterPosition;
 		_version = iVersion;
 		_status = STATUS.LOADED;
 		_source = iBuffer;

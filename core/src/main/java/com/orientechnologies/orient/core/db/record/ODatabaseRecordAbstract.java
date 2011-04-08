@@ -168,31 +168,26 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	}
 
 	public void reload(final ORecordInternal<?> iRecord) {
-		executeReadRecord(iRecord.getIdentity().getClusterId(), iRecord.getIdentity().getClusterPosition(), iRecord, null, true);
+		executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, null, true);
 	}
 
 	public void reload(final ORecordInternal<?> iRecord, final String iFetchPlan) {
-		executeReadRecord(iRecord.getIdentity().getClusterId(), iRecord.getIdentity().getClusterPosition(), iRecord, iFetchPlan, true);
+		executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, true);
 	}
 
 	/**
 	 * Loads a record using a fetch plan.
 	 */
 	public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord, final String iFetchPlan) {
-		return (RET) load(iRecord.getIdentity().getClusterId(), iRecord.getIdentity().getClusterPosition(), iRecord, iFetchPlan);
+		return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, false);
 	}
 
 	public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId) {
-		return (RET) load(iRecordId.getClusterId(), iRecordId.getClusterPosition(), null, null);
+		return (RET) executeReadRecord((ORecordId) iRecordId, null, null, false);
 	}
 
 	public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId, final String iFetchPlan) {
-		return (RET) load(iRecordId.getClusterId(), iRecordId.getClusterPosition(), null, iFetchPlan);
-	}
-
-	public <RET extends ORecordInternal<?>> RET load(final int iClusterId, final long iPosition, final ORecordInternal<?> iRecord,
-			final String iFetchPlan) {
-		return (RET) executeReadRecord(iClusterId, iPosition, iRecord, iFetchPlan, false);
+		return (RET) executeReadRecord((ORecordId) iRecordId, null, iFetchPlan, false);
 	}
 
 	/**
@@ -368,20 +363,19 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		return (DB) this;
 	}
 
-	public <RET extends ORecordInternal<?>> RET executeReadRecord(final int iClusterId, final long iPosition,
-			ORecordInternal<?> iRecord, final String iFetchPlan, final boolean iIgnoreCache) {
+	public <RET extends ORecordInternal<?>> RET executeReadRecord(final ORecordId iRid, ORecordInternal<?> iRecord,
+			final String iFetchPlan, final boolean iIgnoreCache) {
 		checkOpeness();
 
 		try {
-			checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, getClusterNameById(iClusterId), iClusterId);
+			checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, getClusterNameById(iRid.getClusterId()),
+					iRid.getClusterId());
 
 			callbackHooks(TYPE.BEFORE_READ, iRecord);
 
-			final ORecordId rid = new ORecordId(iClusterId, iPosition);
-
 			if (!iIgnoreCache) {
 				// SEARCH INTO THE CACHE
-				ORecordInternal<?> record = getCache().findRecord(rid);
+				final ORecordInternal<?> record = getCache().findRecord(iRid);
 				if (record != null) {
 					if (record.getInternalStatus() == STATUS.NOT_LOADED)
 						record.reload();
@@ -391,7 +385,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				}
 			}
 
-			final ORawBuffer recordBuffer = underlying.read(iClusterId, iPosition, iFetchPlan);
+			final ORawBuffer recordBuffer = underlying.read(iRid, iFetchPlan);
 			if (recordBuffer == null)
 				return null;
 
@@ -405,7 +399,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			if (currDb == null)
 				currDb = (ODatabaseRecord) databaseOwner;
 
-			iRecord.fill(currDb, iClusterId, iPosition, recordBuffer.version, recordBuffer.buffer);
+			iRecord.fill(currDb, iRid, recordBuffer.version, recordBuffer.buffer);
 			iRecord.fromStream(recordBuffer.buffer);
 			iRecord.setStatus(STATUS.LOADED);
 
@@ -422,8 +416,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 		} catch (Exception e) {
 			// WRAP IT AS ODATABASE EXCEPTION
-			OLogManager.instance().exception("Error on retrieving record #%d in cluster '%s'", e, ODatabaseException.class, iPosition,
-					getStorage().getPhysicalClusterNameById(iClusterId));
+			OLogManager.instance().exception("Error on retrieving record #" + iRid, e, ODatabaseException.class);
 		}
 		return null;
 	}
@@ -456,22 +449,19 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				// ALREADY CREATED AND WAITING FOR THE RIGHT UPDATE (WE'RE IN A GRAPH)
 				return;
 
-			final int clusterId;
 			if (isNew)
-				clusterId = iClusterName != null ? getClusterIdByName(iClusterName) : getDefaultClusterId();
-			else
-				clusterId = rid.clusterId;
+				rid.clusterId = iClusterName != null ? getClusterIdByName(iClusterName) : getDefaultClusterId();
 
 			if (stream != null && stream.length > 0) {
 				if (isNew) {
 					// CHECK ACCESS ON CLUSTER
-					checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_CREATE, iClusterName, clusterId);
+					checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_CREATE, iClusterName, rid.clusterId);
 					if (callbackHooks(TYPE.BEFORE_CREATE, iRecord))
 						// RECORD CHANGED IN TRIGGER, REACQUIRE IT
 						stream = iRecord.toStream();
 				} else {
 					// CHECK ACCESS ON CLUSTER
-					checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName, clusterId);
+					checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName, rid.clusterId);
 					if (callbackHooks(TYPE.BEFORE_UPDATE, iRecord))
 						// RECORD CHANGED IN TRIGGER, REACQUIRE IT
 						stream = iRecord.toStream();
@@ -490,11 +480,11 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			final int realVersion = iVersion == -1 ? -1 : iRecord.getVersion();
 
 			// SAVE IT
-			long result = underlying.save(clusterId, rid.getClusterPosition(), stream, realVersion, iRecord.getRecordType());
+			final long result = underlying.save(rid, stream, realVersion, iRecord.getRecordType());
 
 			if (isNew) {
 				// UPDATE INFORMATION: CLUSTER ID+POSITION
-				iRecord.fill(iRecord.getDatabase(), clusterId, result, 0, stream);
+				iRecord.fill(iRecord.getDatabase(), rid, 0, stream);
 				if (stream != null && stream.length > 0)
 					callbackHooks(TYPE.AFTER_CREATE, iRecord);
 
@@ -502,7 +492,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				iRecord.onAfterIdentityChanged(iRecord);
 			} else {
 				// UPDATE INFORMATION: VERSION
-				iRecord.fill(iRecord.getDatabase(), clusterId, rid.getClusterPosition(), (int) result, stream);
+				iRecord.fill(iRecord.getDatabase(), rid, (int) result, stream);
 				if (stream != null && stream.length > 0)
 					callbackHooks(TYPE.AFTER_UPDATE, iRecord);
 			}
@@ -538,13 +528,12 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		if (!rid.isValid())
 			return;
 
-		final int clusterId = rid.getClusterId();
-		checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(clusterId), clusterId);
+		checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(rid.clusterId), rid.clusterId);
 
 		try {
 			callbackHooks(TYPE.BEFORE_DELETE, iRecord);
 
-			underlying.delete(clusterId, rid.getClusterPosition(), iVersion);
+			underlying.delete(rid, iVersion);
 
 			callbackHooks(TYPE.AFTER_DELETE, iRecord);
 

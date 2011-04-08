@@ -171,18 +171,19 @@ public class OStorageMemory extends OStorageEmbedded {
 		return addDataSegment(iSegmentName);
 	}
 
-	public long createRecord(final int iClusterId, final byte[] iContent, final byte iRecordType) {
+	public long createRecord(final ORecordId iRid, final byte[] iContent, final byte iRecordType) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		final boolean locked = lock.acquireSharedLock();
 		try {
 
 			final long offset = data.createRecord(iContent);
-			final OCluster cluster = getClusterById(iClusterId);
+			final OCluster cluster = getClusterById(iRid.clusterId);
 
-			return cluster.addPhysicalPosition(0, offset, iRecordType);
+			iRid.clusterPosition = cluster.addPhysicalPosition(0, offset, iRecordType);
+			return iRid.clusterPosition;
 		} catch (IOException e) {
-			throw new OStorageException("Error on create record in cluster: " + iClusterId, e);
+			throw new OStorageException("Error on create record in cluster: " + iRid.clusterId, e);
 
 		} finally {
 			lock.releaseSharedLock(locked);
@@ -190,19 +191,18 @@ public class OStorageMemory extends OStorageEmbedded {
 		}
 	}
 
-	public ORawBuffer readRecord(final ODatabaseRecord iDatabase, final int iRequesterId, final int iClusterId,
-			final long iClusterPosition, String iFetchPlan) {
-		return readRecord(iRequesterId, getClusterById(iClusterId), iClusterPosition, true);
+	public ORawBuffer readRecord(final ODatabaseRecord iDatabase, final int iRequesterId, final ORecordId iRid, String iFetchPlan) {
+		return readRecord(iRequesterId, getClusterById(iRid.clusterId), iRid, true);
 	}
 
 	@Override
-	protected ORawBuffer readRecord(final int iRequesterId, final OCluster iClusterSegment, final long iClusterPosition,
+	protected ORawBuffer readRecord(final int iRequesterId, final OCluster iClusterSegment, final ORecordId iRid,
 			final boolean iAtomicLock) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		final boolean locked = lock.acquireSharedLock();
 		try {
-			final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iClusterPosition, new OPhysicalPosition());
+			final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());
 
 			if (ppos == null)
 				return null;
@@ -217,15 +217,15 @@ public class OStorageMemory extends OStorageEmbedded {
 		}
 	}
 
-	public int updateRecord(final int iRequesterId, final int iClusterId, final long iClusterPosition, final byte[] iContent,
-			final int iVersion, final byte iRecordType) {
+	public int updateRecord(final int iRequesterId, final ORecordId iRid, final byte[] iContent, final int iVersion,
+			final byte iRecordType) {
 		final long timer = OProfiler.getInstance().startChrono();
 
-		final OCluster cluster = getClusterById(iClusterId);
+		final OCluster cluster = getClusterById(iRid.clusterId);
 
 		final boolean locked = lock.acquireSharedLock();
 		try {
-			OPhysicalPosition ppos = cluster.getPhysicalPosition(iClusterPosition, new OPhysicalPosition());
+			OPhysicalPosition ppos = cluster.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());
 			if (ppos == null)
 				return -1;
 
@@ -233,7 +233,7 @@ public class OStorageMemory extends OStorageEmbedded {
 			if (iVersion > -1 && ppos.version != iVersion)
 				throw new OConcurrentModificationException(
 						"Can't update record #"
-								+ ORecordId.generateString(iClusterId, iClusterPosition)
+								+ iRid
 								+ " because it was modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
 
 			data.updateRecord(ppos.dataPosition, iContent);
@@ -241,7 +241,7 @@ public class OStorageMemory extends OStorageEmbedded {
 			return ++(ppos.version);
 
 		} catch (IOException e) {
-			throw new OStorageException("Error on update record in cluster: " + iClusterId, e);
+			throw new OStorageException("Error on update record #" + iRid, e);
 
 		} finally {
 			lock.releaseSharedLock(locked);
@@ -249,14 +249,14 @@ public class OStorageMemory extends OStorageEmbedded {
 		}
 	}
 
-	public boolean deleteRecord(final int iRequesterId, final int iClusterId, final long iClusterPosition, final int iVersion) {
+	public boolean deleteRecord(final int iRequesterId, final ORecordId iRid, final int iVersion) {
 		final long timer = OProfiler.getInstance().startChrono();
 
-		final OCluster cluster = getClusterById(iClusterId);
+		final OCluster cluster = getClusterById(iRid.clusterId);
 
 		final boolean locked = lock.acquireSharedLock();
 		try {
-			final OPhysicalPosition ppos = cluster.getPhysicalPosition(iClusterPosition, new OPhysicalPosition());
+			final OPhysicalPosition ppos = cluster.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());
 
 			if (ppos == null)
 				return false;
@@ -265,16 +265,16 @@ public class OStorageMemory extends OStorageEmbedded {
 			if (iVersion > -1 && ppos.version != iVersion)
 				throw new OConcurrentModificationException(
 						"Can't update record #"
-								+ ORecordId.generateString(iClusterId, iClusterPosition)
+								+ iRid
 								+ " because it was modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
 
-			cluster.removePhysicalPosition(iClusterPosition, null);
+			cluster.removePhysicalPosition(iRid.clusterPosition, null);
 			data.deleteRecord(ppos.dataPosition);
 
 			return true;
 
 		} catch (IOException e) {
-			throw new OStorageException("Error on delete record in cluster: " + iClusterId, e);
+			throw new OStorageException("Error on delete record #" + iRid, e);
 
 		} finally {
 			lock.releaseSharedLock(locked);
@@ -490,6 +490,7 @@ public class OStorageMemory extends OStorageEmbedded {
 		final ORecordId rid = (ORecordId) txEntry.getRecord().getIdentity();
 
 		final OCluster cluster = txEntry.clusterName != null ? getClusterByName(txEntry.clusterName) : getClusterById(rid.clusterId);
+		rid.clusterId = cluster.getId();
 
 		switch (txEntry.status) {
 		case OTransactionEntry.LOADED:
@@ -501,8 +502,7 @@ public class OStorageMemory extends OStorageEmbedded {
 				final byte[] stream = txEntry.getRecord().toStream();
 
 				if (rid.isNew()) {
-					rid.clusterPosition = createRecord(cluster.getId(), stream, txEntry.getRecord().getRecordType());
-					rid.clusterId = cluster.getId();
+					createRecord(rid, stream, txEntry.getRecord().getRecordType());
 				} else {
 					txEntry.getRecord().setVersion(
 							updateRecord(iRequesterId, rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType()));

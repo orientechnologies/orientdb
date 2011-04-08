@@ -43,7 +43,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 		super(iName, iFilePath, iMode);
 	}
 
-	protected abstract ORawBuffer readRecord(final int iRequesterId, final OCluster iClusterSegment, final long iPosition,
+	protected abstract ORawBuffer readRecord(final int iRequesterId, final OCluster iClusterSegment, final ORecordId iRid,
 			boolean iAtomicLock);
 
 	public abstract OCluster getClusterByName(final String iClusterName);
@@ -164,7 +164,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 					if (record == null) {
 						// READ THE RAW RECORD. IF iLockEntireCluster THEN THE READ WILL
 						// BE NOT-LOCKING, OTHERWISE YES
-						recordBuffer = readRecord(iRequesterId, cluster, positionInPhyCluster, !iLockEntireCluster);
+						recordBuffer = readRecord(iRequesterId, cluster, rid, !iLockEntireCluster);
 						if (recordBuffer == null)
 							continue;
 

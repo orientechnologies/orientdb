@@ -20,7 +20,6 @@ import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExter
 import com.orientechnologies.orient.core.cache.OStorageRecordCache;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 public abstract class OStorageAbstract implements OStorage {
@@ -47,15 +46,6 @@ public abstract class OStorageAbstract implements OStorage {
 
 		url = iFilePath;
 		mode = iMode;
-	}
-
-	public int updateRecord(final int iRequesterId, final ORID iRecordId, final byte[] iContent, final int iVersion,
-			final byte iRecordType) {
-		return updateRecord(iRequesterId, iRecordId.getClusterId(), iRecordId.getClusterPosition(), iContent, iVersion, iRecordType);
-	}
-
-	public boolean deleteRecord(final int iRequesterId, final ORID iRecordId, final int iVersion) {
-		return deleteRecord(iRequesterId, iRecordId.getClusterId(), iRecordId.getClusterPosition(), iVersion);
 	}
 
 	public OStorageConfiguration getConfiguration() {

@@ -50,7 +50,7 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 
 		updateClusterRange();
 
-		currentClusterPosition = firstClusterPosition - 1;
+		current.clusterPosition = firstClusterPosition - 1;
 
 		totalAvailableRecords = database.countClusterElements(clusterIds);
 
@@ -78,9 +78,9 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 			return false;
 
 		if (liveUpdated)
-			return currentClusterPosition > database.getStorage().getClusterDataRange(currentClusterId)[0];
+			return current.clusterPosition > database.getStorage().getClusterDataRange(current.clusterId)[0];
 
-		return currentClusterPosition > firstClusterPosition;
+		return current.clusterPosition > firstClusterPosition;
 	}
 
 	public boolean hasNext() {
@@ -95,11 +95,10 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 
 		// COMPUTE THE NUMBER OF RECORDS TO BROWSE
 		if (liveUpdated)
-			lastClusterPosition = database.getStorage().getClusterDataRange(currentClusterId)[1];
+			lastClusterPosition = database.getStorage().getClusterDataRange(current.clusterId)[1];
 
 		return getRecordsToBrowse() > 0;
 	}
-
 
 	/**
 	 * Return the element at the current position and move backward the cursor to the previous position available.
@@ -182,7 +181,7 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 	@Override
 	public ORecordIterator<REC> begin() {
 		currentClusterIdx = 0;
-		currentClusterPosition = -1;
+		current.clusterPosition = -1;
 		return this;
 	}
 
@@ -194,7 +193,7 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 	@Override
 	public ORecordIterator<REC> last() {
 		currentClusterIdx = clusterIds.length - 1;
-		currentClusterPosition = liveUpdated ? database.countClusterElements(clusterIds[currentClusterIdx]) : lastClusterPosition + 1;
+		current.clusterPosition = liveUpdated ? database.countClusterElements(clusterIds[currentClusterIdx]) : lastClusterPosition + 1;
 		return this;
 	}
 
@@ -211,7 +210,7 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 		super.setLiveUpdated(iLiveUpdated);
 
 		// SET THE UPPER LIMIT TO -1 IF IT'S ENABLED
-		lastClusterPosition = iLiveUpdated ? -1 : database.countClusterElements(currentClusterId);
+		lastClusterPosition = iLiveUpdated ? -1 : database.countClusterElements(current.clusterId);
 
 		if (iLiveUpdated) {
 			firstClusterPosition = -1;
@@ -234,7 +233,7 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 			// LIMIT REACHED
 			return null;
 
-		currentClusterPosition += iMovement;
+		current.clusterPosition += iMovement;
 
 		iRecord = loadRecord(iRecord);
 
@@ -247,12 +246,12 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 	}
 
 	protected ORecordInternal<?> loadRecord(final ORecordInternal<?> iRecord) {
-		return lowLevelDatabase.executeReadRecord(currentClusterId, currentClusterPosition, iRecord, fetchPlan, false);
+		return lowLevelDatabase.executeReadRecord(current, iRecord, fetchPlan, false);
 	}
 
 	protected void updateClusterRange() {
-		currentClusterId = clusterIds[currentClusterIdx];
-		long[] range = database.getStorage().getClusterDataRange(currentClusterId);
+		current.clusterId = clusterIds[currentClusterIdx];
+		long[] range = database.getStorage().getClusterDataRange(current.clusterId);
 		firstClusterPosition = range[0];
 		lastClusterPosition = range[1];
 	}

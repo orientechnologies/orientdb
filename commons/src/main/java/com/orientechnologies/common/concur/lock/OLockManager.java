@@ -36,7 +36,12 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 	public OLockManager() {
 	}
 
-	public void acquireLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, LOCK iLockType, long iTimeout) {
+	public void acquireLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, final LOCK iLockType) {
+		acquireLock(iRequester, iResourceId, iLockType, acquireTimeout);
+	}
+
+	public void acquireLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, final LOCK iLockType,
+			final long iTimeout) {
 		if (tryToAcquireLock(iRequester, iResourceId, iLockType))
 			return;
 

@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
 import com.orientechnologies.orient.core.config.OStorageDataHoleConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.fs.OFile;
@@ -87,7 +88,7 @@ public class ODataLocal extends OMultiFileSegment {
 	 * @return The record offset.
 	 * @throws IOException
 	 */
-	public long addRecord(final int iClusterSegment, final long iClusterPosition, final byte[] iContent) throws IOException {
+	public long addRecord(final ORecordId iRid, final byte[] iContent) throws IOException {
 		if (iContent.length == 0)
 			// AVOID UNUSEFUL CREATION OF EMPTY RECORD: IT WILL BE CREATED AT FIRST UPDATE
 			return -1;
@@ -97,7 +98,7 @@ public class ODataLocal extends OMultiFileSegment {
 			final int recordSize = iContent.length + RECORD_FIX_SIZE;
 
 			final long[] newFilePosition = getFreeSpace(recordSize);
-			writeRecord(newFilePosition, iClusterSegment, iClusterPosition, iContent);
+			writeRecord(newFilePosition, iRid.clusterId, iRid.clusterPosition, iContent);
 			return getAbsolutePosition(newFilePosition);
 
 		} finally {
@@ -161,8 +162,7 @@ public class ODataLocal extends OMultiFileSegment {
 	 * @return The new record offset or the same received as parameter is the old space was reused.
 	 * @throws IOException
 	 */
-	public long setRecord(long iPosition, final int iClusterSegment, final long iClusterPosition, final byte[] iContent)
-			throws IOException {
+	public long setRecord(final long iPosition, final ORecordId iRid, final byte[] iContent) throws IOException {
 		acquireExclusiveLock();
 		try {
 			long[] pos = getRelativePosition(iPosition);
@@ -181,7 +181,7 @@ public class ODataLocal extends OMultiFileSegment {
 			} else if (recordSize - iContent.length > RECORD_FIX_SIZE) {
 				// USE THE OLD SPACE BUT UPDATE THE CURRENT SIZE. IT'S PREFEREABLE TO USE THE SAME INSTEAD FINDING A BEST SUITED FOR IT TO
 				// AVOID CHANGES TO REF FILE AS WELL.
-				writeRecord(pos, iClusterSegment, iClusterPosition, iContent);
+				writeRecord(pos, iRid.clusterId, iRid.clusterPosition, iContent);
 
 				// CREATE A HOLE WITH THE DIFFERENCE OF SPACE
 				createHole(iPosition + RECORD_FIX_SIZE + iContent.length, recordSize - iContent.length - RECORD_FIX_SIZE);
@@ -193,7 +193,7 @@ public class ODataLocal extends OMultiFileSegment {
 
 				// USE A NEW SPACE
 				pos = getFreeSpace(iContent.length + RECORD_FIX_SIZE);
-				writeRecord(pos, iClusterSegment, iClusterPosition, iContent);
+				writeRecord(pos, iRid.clusterId, iRid.clusterPosition, iContent);
 
 				OProfiler.getInstance().updateCounter("ODataLocal.setRecord:new.space", +1);
 			}

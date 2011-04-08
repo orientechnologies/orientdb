@@ -20,6 +20,7 @@ import java.io.IOException;
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -75,7 +76,8 @@ public class OMVRBTreeStorage<K, V> extends OMVRBTreePersistent<K, V> {
 
 	@Override
 	public OMVRBTreePersistent<K, V> load() throws IOException {
-		ORawBuffer raw = storage.readRecord(null, -1, clusterId, record.getIdentity().getClusterPosition(), null);
+		((ORecordId) record.getIdentity()).clusterId = clusterId;
+		ORawBuffer raw = storage.readRecord(null, -1, (ORecordId) record.getIdentity(), null);
 
 		if (raw == null)
 			throw new OConfigurationException("Can't load map with id " + clusterId + ":" + record.getIdentity().getClusterPosition());
@@ -91,13 +93,13 @@ public class OMVRBTreeStorage<K, V> extends OMVRBTreePersistent<K, V> {
 		record.fromStream(toStream());
 		if (record.getIdentity().isValid())
 			// UPDATE IT WITHOUT VERSION CHECK SINCE ALL IT'S LOCKED
-			record.setVersion(storage.updateRecord(0, record.getIdentity().getClusterId(), record.getIdentity().getClusterPosition(),
-					record.toStream(), -1, record.getRecordType()));
+			record.setVersion(storage.updateRecord(0, (ORecordId) record.getIdentity(), record.toStream(), -1, record.getRecordType()));
 		else {
 			// CREATE IT
-			int cluster = record.getIdentity().getClusterId() == ORID.CLUSTER_ID_INVALID ? clusterId : record.getIdentity()
-					.getClusterId();
-			record.setIdentity(cluster, storage.createRecord(cluster, record.toStream(), record.getRecordType()));
+			if (record.getIdentity().getClusterId() == ORID.CLUSTER_ID_INVALID)
+				((ORecordId) record.getIdentity()).clusterId = clusterId;
+
+			storage.createRecord((ORecordId) record.getIdentity(), record.toStream(), record.getRecordType());
 		}
 		record.unsetDirty();
 
@@ -106,13 +108,13 @@ public class OMVRBTreeStorage<K, V> extends OMVRBTreePersistent<K, V> {
 
 	@Override
 	public void clear() {
-		storage.deleteRecord(0, record.getIdentity().getClusterId(), record.getIdentity().getClusterPosition(), record.getVersion());
+		storage.deleteRecord(0, (ORecordId) record.getIdentity(), record.getVersion());
 		root = null;
 		super.clear();
 	}
 
 	public void delete() {
 		clear();
-		storage.deleteRecord(0, record.getIdentity(), record.getVersion());
+		storage.deleteRecord(0, (ORecordId) record.getIdentity(), record.getVersion());
 	}
 }

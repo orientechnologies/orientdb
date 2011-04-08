@@ -21,6 +21,7 @@ import java.util.Date;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -39,14 +40,14 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 		super(iDatabase);
 	}
 
-	public ORecordSchemaAwareAbstract<T> fill(final ODatabaseRecord iDatabase, final int iClassId, final int iClusterId,
-			final long iPosition, final int iVersion, final byte[] iBuffer) {
-		super.fill(iDatabase, iClusterId, iPosition, iVersion, iBuffer);
+	public abstract boolean containsField(String name);
+
+	public ORecordSchemaAwareAbstract<T> fill(final ODatabaseRecord iDatabase, final int iClassId, final ORecordId iRid,
+			final int iVersion, final byte[] iBuffer) {
+		fill(iDatabase, iRid, iVersion, iBuffer);
 		setClass(_database.getMetadata().getSchema().getClassById(iClassId));
 		return this;
 	}
-
-	public abstract boolean containsField(String name);
 
 	@Override
 	public ORecordAbstract<T> save() {

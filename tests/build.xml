@@ -35,7 +35,7 @@
 			<xmlfileset dir="${project.build}/com/orientechnologies/orient/test/database/auto" includes="memory-test-db-from-scratch.xml" />
 		</testng>
 		
-		<echo>EXECUTING TESTS USING LOCAL DATABASE: local:${orient.path}/databases/demo/demo</echo>
+		<echo>EXECUTING TESTS USING LOCAL DATABASE: local:${orient.path}/databases/demo</echo>
 
 		<testng annotations="JDK" outputDir="target/test-output" haltOnFailure="true" verbose="10">
 			<classpath>
@@ -102,7 +102,7 @@
 					<include name="*.jar" />
 				</fileset>
 			</classpath>
-			<sysproperty key="url" value="local:../${orient.path}/databases/demo/demo" />
+			<sysproperty key="url" value="local:../${orient.path}/databases/demo" />
 			<jvmarg value="-server" />
 			<jvmarg value="-XX:+AggressiveOpts" />
 			<jvmarg value="-XX:CompileThreshold=200" />
@@ -116,7 +116,7 @@
 					<include name="*.jar" />
 				</fileset>
 			</classpath>
-			<sysproperty key="url" value="local:../${orient.path}/databases/demo/demo" />
+			<sysproperty key="url" value="local:../${orient.path}/databases/demo" />
 			<jvmarg value="-server" />
 		</java>
 
@@ -128,7 +128,7 @@
 					<include name="*.jar" />
 				</fileset>
 			</classpath>
-			<sysproperty key="url" value="local:../${orient.path}/databases/demo/demo" />
+			<sysproperty key="url" value="local:../${orient.path}/databases/demo" />
 			<jvmarg value="-server" />
 			<jvmarg value="-XX:+AggressiveOpts" />
 			<jvmarg value="-XX:CompileThreshold=200" />
