@@ -59,15 +59,12 @@ public abstract class OSoftThread extends Thread implements OService {
 		return running;
 	}
 
-	public boolean pause(final long iTime) {
-		try {
-			sleep(iTime);
-			return true;
-		} catch (InterruptedException e) {
-			return false;
-		}
-	}
-
+	/**
+	 * Pauses current thread until iTime timeout or a wake up by another thread.
+	 * 
+	 * @param iTime
+	 * @return true if timeout has reached, otherwise false. False is the case of wakeup by another thread.
+	 */
 	public static boolean pauseCurrentThread(long iTime) {
 		try {
 			if (iTime <= 0)

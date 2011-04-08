@@ -1,18 +1,18 @@
 package com.orientechnologies.common.concur.lock;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.thread.OSoftThread;
 
 /**
- * Manage the synchronization among Runnable requesters. Each resource can be acquired by only one Runnable instance.
+ * Manages the queue of waiters for a resource.
  */
 public class OLockQueue<RESOURCE_TYPE> {
-	protected final LinkedHashMap<RESOURCE_TYPE, Runnable>	queue	= new LinkedHashMap<RESOURCE_TYPE, Runnable>();
-
-	public OLockQueue() {
-	}
+	private static final int																			DEFAULT_WAITERS	= 3;
+	protected final LinkedHashMap<RESOURCE_TYPE, List<Runnable>>	queue						= new LinkedHashMap<RESOURCE_TYPE, List<Runnable>>();
 
 	/**
 	 * Wait forever until the requested resource is unlocked.
@@ -29,17 +29,28 @@ public class OLockQueue<RESOURCE_TYPE> {
 			OLogManager.instance().debug(this,
 					"Thread [" + Thread.currentThread() + "] is waiting for the resource " + iResource + " until " + iTimeout + "ms");
 
-		queue.put(iResource, Thread.currentThread());
+		// GET OR CREATE THE LIST OF WAITERS
+		List<Runnable> waiters = queue.get(iResource);
+		if (waiters == null) {
+			waiters = new ArrayList<Runnable>(DEFAULT_WAITERS);
+			queue.put(iResource, waiters);
+		}
+
+		// ADD CURRENT WAITER TO THE LIST
+		waiters.add(Thread.currentThread());
+
+		// WAIT UNTIL TIMOUT OR THE RESOURCE IS FREE
 		return !OSoftThread.pauseCurrentThread(iTimeout);
 	}
 
 	public synchronized void wakeupWaiters(final RESOURCE_TYPE iResource) {
-		final Runnable waiter = queue.remove(iResource);
-		if (waiter == null)
+		final List<Runnable> waiters = queue.get(iResource);
+		if (waiters == null || waiters.size() == 0)
 			return;
 
-		synchronized (waiter) {
-			waiter.notifyAll();
-		}
+		for (Runnable w : waiters)
+			synchronized (w) {
+				w.notifyAll();
+			}
 	}
 }

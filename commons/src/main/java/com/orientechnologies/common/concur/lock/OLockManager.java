@@ -8,11 +8,14 @@ import java.util.Map;
 import com.orientechnologies.common.profiler.OProfiler;
 
 /**
- * Manage the locks across all the client connections. To optimize speed and space in memory the shared lock map holds the client
- * connections directly if only one client is locking the resource. When multiple clients acquire the same resource, then a List is
- * put in place of the single object.<br/>
+ * Manages the locks at record level. To optimize speed and space in memory the shared locks map holds the requester threads
+ * directly if only one thread is locking the resource. When multiple threads acquire the same resource, then a List is put in place
+ * of the single object.<br/>
  * On lock removing the list is maintained even if the client remains only one because the cost to replace the List to the object
  * directly is higher then just remove the item and the probability to add another again is high.
+ * <p>
+ * Separate Maps are managed for exclusive and shared locks.
+ * </p>
  */
 @SuppressWarnings("unchecked")
 public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
@@ -107,7 +110,7 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 			if (sharedLock instanceof List<?>) {
 				clients = (List<REQUESTER_TYPE>) sharedLock;
 			} else {
-				// FROM 1 TO 2 MULTIPLE SHARED CLIENTS: CREATE A LIST TO PUT ALL TOGETHER IN PLACE OF SINGLE OBJECT
+				// TRANSFORM THE SINGLE CLIENT IN A LIST
 				clients = new ArrayList<REQUESTER_TYPE>(concurrencyLevel);
 				sharedLocks.put(iResourceId, clients);
 
