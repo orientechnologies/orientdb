@@ -24,7 +24,7 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 	}
 
 	private static final int														DEFAULT_ACQUIRE_TIMEOUT				= 5000;
-	private static final int														DEFAULT_CONCURRENCY_LEVEL			= 1;
+	private static final int														DEFAULT_CONCURRENCY_LEVEL			= 3;
 
 	protected final OLockQueue<RESOURCE_TYPE>						lockQueue											= new OLockQueue<RESOURCE_TYPE>();
 	protected final Map<RESOURCE_TYPE, Object>					sharedLocks										= new HashMap<RESOURCE_TYPE, Object>();
@@ -42,22 +42,26 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 
 	public void acquireLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, final LOCK iLockType,
 			final long iTimeout) {
-		if (tryToAcquireLock(iRequester, iResourceId, iLockType))
-			return;
+		while (!tryToAcquireLock(iRequester, iResourceId, iLockType))
+			lockQueue.waitForResource(iResourceId, iTimeout);
 
-		// PUT CURRENT THREAD IN WAIT UNTIL TIMEOUT OR UNLOCK BY ANOTHER THREAD THAT UNLOCK THE RESOURCE
-		if (lockQueue.waitForResource(iResourceId, iTimeout))
-			// TIMEOUT EXPIRED
-			throw new OLockException("Resource " + iResourceId + " is locked");
-
-		// THREAD UNLOCKED: TRY TO RE-ACQUIRE
-		if (!tryToAcquireLock(iRequester, iResourceId, iLockType))
-			// TIMEOUT EXPIRED
-			throw new OLockException("Resource " + iResourceId + " is locked");
+		// if (tryToAcquireLock(iRequester, iResourceId, iLockType))
+		// return;
+		//
+		// // PUT CURRENT THREAD IN WAIT UNTIL TIMEOUT OR UNLOCK BY ANOTHER THREAD THAT UNLOCK THE RESOURCE
+		// if (!lockQueue.waitForResource(iResourceId, iTimeout))
+		// // TIMEOUT EXPIRED
+		// throw new OLockException("Resource " + iResourceId + " is locked");
+		//
+		// // THREAD UNLOCKED: TRY TO RE-ACQUIRE
+		// if (!tryToAcquireLock(iRequester, iResourceId, iLockType))
+		// // TIMEOUT EXPIRED
+		// throw new OLockException("Resource " + iResourceId + " is locked");
 	}
 
 	public synchronized void releaseLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, final LOCK iLockType)
 			throws OLockException {
+		// System.out.println("Release " + iLockType + " lock for " + iResourceId + " by " + iRequester);
 		if (iLockType == LOCK.SHARED) {
 			final Object sharedLock = sharedLocks.get(iResourceId);
 			if (sharedLock == null)
@@ -79,7 +83,7 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 	}
 
 	public void setDefaultConcurrencyLevel(final int concurrencyLevel) {
-		this.concurrencyLevel = concurrencyLevel;
+		this.concurrencyLevel = Math.max(2, concurrencyLevel);
 	}
 
 	public boolean isDownsizeSharedLockRetainList() {
@@ -94,8 +98,12 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 			final LOCK iLockType) {
 		OProfiler.getInstance().updateCounter("LockMgr.tryToAcquire", +1);
 
+		// System.out.println("Try acquire " + iLockType + " lock for " + iResourceId + " by " + iRequester);
+
 		REQUESTER_TYPE client = exclusiveLocks.get(iResourceId);
 		if (client != null) {
+			if (client.equals(iRequester))
+				return true;
 			// THE RESOURCE IS ALREADY LOCKED IN EXCLUSIVE MODE
 			OProfiler.getInstance().updateCounter("LockMgr.tryToAcquire.locked", +1);
 			return false;
@@ -125,9 +133,11 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 
 			// ADD THE SHARED LOCK
 			clients.add(iRequester);
+			return true;
 		} else {
 			if (sharedLock == null) {
 				// NO ONE IS LOCKING IN SHARED MODE: ACQUIRE THE EXCLUSIVE LOCK
+				// System.out.println("Exclusive lock for " + iResourceId + " by " + iRequester);
 				exclusiveLocks.put(iResourceId, iRequester);
 				return true;
 			}
@@ -135,8 +145,14 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 			// CHECK IF CAN GAIN THE EXCLUSIVE LOCK
 			if (sharedLock instanceof List<?>) {
 				clients = (List<REQUESTER_TYPE>) sharedLock;
+				if (clients.size() == 0) {
+					// System.out.println("Exclusive lock for " + iResourceId + " by " + iRequester);
+					exclusiveLocks.put(iResourceId, iRequester);
+					return true;
+				}
 				if (clients.size() == 1 && clients.get(0).equals(iRequester)) {
 					// EXCALATION FROM SHARED TO EXCLUSIVE LOCK
+					// System.out.println("Exclusive lock promoted for " + iResourceId + " by " + iResourceId);
 					promoteLock(iRequester, iResourceId, sharedLock);
 					return true;
 				}
