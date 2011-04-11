@@ -101,7 +101,7 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 	}
 
 	public <T> T[] toArray(final T[] a) {
-		return toArray(a);
+		return delegate.toArray(a);
 	}
 
 	public boolean add(final OIdentifiable e) {

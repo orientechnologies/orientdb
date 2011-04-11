@@ -369,13 +369,13 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 
 		Set<ODocument> docs = (Set<ODocument>) document.field(OGraphDatabase.VERTEX_FIELD_IN_EDGES);
 		if (docs != null)
-			for (Iterator<ODocument> it = docs.iterator(); it.hasNext();)
-				OGraphEdge.delete(database, it.next());
+			for (ODocument doc : docs.toArray(new ODocument[docs.size()]))
+				OGraphEdge.delete(database, doc);
 
 		docs = (Set<ODocument>) document.field(OGraphDatabase.VERTEX_FIELD_OUT_EDGES);
 		if (docs != null)
-			for (Iterator<ODocument> it = docs.iterator(); it.hasNext();)
-				OGraphEdge.delete(database, it.next());
+			for (ODocument doc : docs.toArray(new ODocument[docs.size()]))
+				OGraphEdge.delete(database, doc);
 
 		database.unregisterPojo(this, document);
 
