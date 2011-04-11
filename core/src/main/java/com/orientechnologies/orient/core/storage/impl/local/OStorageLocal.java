@@ -67,9 +67,9 @@ public class OStorageLocal extends OStorageEmbedded {
 	private OCluster[]													clusters						= new OCluster[0];
 	private ODataLocal[]												dataSegments				= new ODataLocal[0];
 
-	private OStorageLocalTxExecuter							txManager;
+	private final OStorageLocalTxExecuter				txManager;
 	private String															storagePath;
-	private OStorageVariableParser							variableParser;
+	private final OStorageVariableParser				variableParser;
 	private int																	defaultClusterId		= -1;
 
 	private OStorageConfigurationSegment				configurationSegment;
@@ -788,6 +788,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		return clusters[iClusterId];
 	}
 
+	@Override
 	public OCluster getClusterByName(final String iClusterName) {
 		final boolean locked = lock.acquireSharedLock();
 
@@ -959,6 +960,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		}
 	}
 
+	@Override
 	protected ORawBuffer readRecord(final int iRequesterId, final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock) {
 		if (iRid.clusterPosition < 0)
 			throw new IllegalArgumentException("Can't read the record #" + iRid + " since the position is invalid");
@@ -974,22 +976,24 @@ public class OStorageLocal extends OStorageEmbedded {
 
 		try {
 			lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.SHARED);
+			try {
+				final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());
+				if (ppos == null || !checkForRecordValidity(ppos))
+					// DELETED
+					return null;
 
-			final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());
-			if (ppos == null || !checkForRecordValidity(ppos))
-				// DELETED
-				return null;
+				final ODataLocal data = getDataSegment(ppos.dataSegment);
+				return new ORawBuffer(data.getRecord(ppos.dataPosition), ppos.version, ppos.type);
 
-			final ODataLocal data = getDataSegment(ppos.dataSegment);
-			return new ORawBuffer(data.getRecord(ppos.dataPosition), ppos.version, ppos.type);
-
+			} finally {
+				lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.SHARED);
+			}
 		} catch (IOException e) {
 
 			OLogManager.instance().error(this, "Error on reading record #" + iRid + " (cluster: " + iClusterSegment + ")", e);
 			return null;
 
 		} finally {
-			lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.SHARED);
 			lock.releaseSharedLock(locked);
 
 			OProfiler.getInstance().stopChrono("OStorageLocal.readRecord", timer);
@@ -1004,50 +1008,52 @@ public class OStorageLocal extends OStorageEmbedded {
 
 		try {
 			lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+			try {
+				final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());
+				if (!checkForRecordValidity(ppos))
+					// DELETED
+					return -1;
 
-			final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());
-			if (!checkForRecordValidity(ppos))
-				// DELETED
-				return -1;
+				// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
+				if (iVersion > -1 && iVersion < ppos.version)
+					throw new OConcurrentModificationException(
+							"Can't update record #"
+									+ iRid
+									+ " because it has been modified by another user (v"
+									+ ppos.version
+									+ " != v"
+									+ iVersion
+									+ ") in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
 
-			// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-			if (iVersion > -1 && iVersion < ppos.version)
-				throw new OConcurrentModificationException(
-						"Can't update record #"
-								+ iRid
-								+ " because it has been modified by another user (v"
-								+ ppos.version
-								+ " != v"
-								+ iVersion
-								+ ") in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
+				if (ppos.type != iRecordType)
+					iClusterSegment.updateRecordType(iRid.clusterPosition, iRecordType);
 
-			if (ppos.type != iRecordType)
-				iClusterSegment.updateRecordType(iRid.clusterPosition, iRecordType);
+				iClusterSegment.updateVersion(iRid.clusterPosition, ++ppos.version);
 
-			iClusterSegment.updateVersion(iRid.clusterPosition, ++ppos.version);
+				final long newDataSegmentOffset;
+				if (ppos.dataPosition == -1)
+					// WAS EMPTY FIRST TIME, CREATE IT NOW
+					newDataSegmentOffset = getDataSegment(ppos.dataSegment).addRecord(iRid, iContent);
+				else
+					// UPDATE IT
+					newDataSegmentOffset = getDataSegment(ppos.dataSegment).setRecord(ppos.dataPosition, iRid, iContent);
 
-			final long newDataSegmentOffset;
-			if (ppos.dataPosition == -1)
-				// WAS EMPTY FIRST TIME, CREATE IT NOW
-				newDataSegmentOffset = getDataSegment(ppos.dataSegment).addRecord(iRid, iContent);
-			else
-				// UPDATE IT
-				newDataSegmentOffset = getDataSegment(ppos.dataSegment).setRecord(ppos.dataPosition, iRid, iContent);
+				if (newDataSegmentOffset != ppos.dataPosition)
+					// UPDATE DATA SEGMENT OFFSET WITH THE NEW PHYSICAL POSITION
+					iClusterSegment.setPhysicalPosition(iRid.clusterPosition, ppos.dataSegment, newDataSegmentOffset, iRecordType);
 
-			if (newDataSegmentOffset != ppos.dataPosition)
-				// UPDATE DATA SEGMENT OFFSET WITH THE NEW PHYSICAL POSITION
-				iClusterSegment.setPhysicalPosition(iRid.clusterPosition, ppos.dataSegment, newDataSegmentOffset, iRecordType);
+				incrementVersion();
 
-			incrementVersion();
+				return ppos.version;
 
-			return ppos.version;
-
+			} finally {
+				lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+			}
 		} catch (IOException e) {
 
 			OLogManager.instance().error(this, "Error on updating record #" + iRid + " (cluster: " + iClusterSegment + ")", e);
 
 		} finally {
-			lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
 			lock.releaseSharedLock(locked);
 
 			OProfiler.getInstance().stopChrono("OStorageLocal.updateRecord", timer);
@@ -1063,34 +1069,37 @@ public class OStorageLocal extends OStorageEmbedded {
 
 		try {
 			lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
-			final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());
+			try {
+				final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());
 
-			if (!checkForRecordValidity(ppos))
-				// ALREADY DELETED
-				return false;
+				if (!checkForRecordValidity(ppos))
+					// ALREADY DELETED
+					return false;
 
-			// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-			if (iVersion > -1 && ppos.version != iVersion)
-				throw new OConcurrentModificationException(
-						"Can't delete the record #"
-								+ iRid
-								+ " because it was modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
+				// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
+				if (iVersion > -1 && ppos.version != iVersion)
+					throw new OConcurrentModificationException(
+							"Can't delete the record #"
+									+ iRid
+									+ " because it was modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
 
-			iClusterSegment.removePhysicalPosition(iRid.clusterPosition, ppos);
+				iClusterSegment.removePhysicalPosition(iRid.clusterPosition, ppos);
 
-			if (ppos.dataPosition > -1)
-				getDataSegment(ppos.dataSegment).deleteRecord(ppos.dataPosition);
+				if (ppos.dataPosition > -1)
+					getDataSegment(ppos.dataSegment).deleteRecord(ppos.dataPosition);
 
-			incrementVersion();
+				incrementVersion();
 
-			return true;
+				return true;
 
+			} finally {
+				lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+			}
 		} catch (IOException e) {
 
 			OLogManager.instance().error(this, "Error on deleting record #" + iRid + "( cluster: " + iClusterSegment + ")", e);
 
 		} finally {
-			lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
 			lock.releaseSharedLock(locked);
 
 			OProfiler.getInstance().stopChrono("OStorageLocal.deleteRecord", timer);

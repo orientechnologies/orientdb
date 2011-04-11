@@ -126,7 +126,7 @@ public enum OGlobalConfiguration {
 
 	FILE_MMAP_OVERLAP_STRATEGY(
 			"file.mmap.overlapStrategy",
-			"Strategy when a request overlap in-memory buffers: 0 = Use the channel access, 1 = force the in memory buffer and use the channel access, 2 = create an overlapped in-memory buffer. Default = false",
+			"Strategy when a request overlap in-memory buffers: 0 = Use the channel access, 1 = force the in memory buffer and use the channel access, 2 = create an overlapped in-memory buffer. Default = 2",
 			Integer.class, 2, new OConfigurationChangeCallback() {
 				public void change(final Object iCurrentValue, final Object iNewValue) {
 					OMMapManager.setOverlapStrategy((Integer) iNewValue);

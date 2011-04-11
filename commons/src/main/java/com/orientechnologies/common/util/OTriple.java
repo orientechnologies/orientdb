@@ -15,39 +15,35 @@
  */
 package com.orientechnologies.common.util;
 
-import java.util.Map.Entry;
-
 /**
- * Keeps a pair of values as Key/Value.
+ * Keeps in memory the information about a hole in data segment.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  * @param <K>
- *          Key
+ *          Hole size
  * @param <V>
  *          Value
- * @see OTriple
+ * @param <SV>
+ *          Sub value
+ * @see OPair
  */
-public class OPair<K extends Comparable<K>, V> implements Entry<K, V>, Comparable<OPair<K, V>> {
+public class OTriple<K extends Comparable<K>, V, SV> implements Comparable<OTriple<K, V, SV>> {
 	public K	key;
 	public V	value;
+	public SV	subValue;
 
-	public OPair() {
+	public OTriple() {
 	}
 
-	public OPair(final K iKey, final V iValue) {
+	public OTriple(final K iKey, final V iValue, final SV iSubValue) {
+		init(iKey, iValue, iSubValue);
+	}
+
+	public void init(final K iKey, final V iValue, final SV iSubValue) {
 		key = iKey;
 		value = iValue;
-	}
-
-	public OPair(final Entry<K, V> iSource) {
-		key = iSource.getKey();
-		value = iSource.getValue();
-	}
-
-	public void init(final K iKey, final V iValue) {
-		key = iKey;
-		value = iValue;
+		subValue = iSubValue;
 	}
 
 	public K getKey() {
@@ -58,15 +54,25 @@ public class OPair<K extends Comparable<K>, V> implements Entry<K, V>, Comparabl
 		return value;
 	}
 
+	public SV getSubValue() {
+		return subValue;
+	}
+
 	public V setValue(final V iValue) {
 		V oldValue = value;
 		value = iValue;
 		return oldValue;
 	}
 
+	public SV setSubValue(final SV iSubValue) {
+		SV oldSubValue = subValue;
+		subValue = iSubValue;
+		return oldSubValue;
+	}
+
 	@Override
 	public String toString() {
-		return key + ":" + value;
+		return key + ":" + value + "/" + value;
 	}
 
 	@Override
@@ -85,7 +91,7 @@ public class OPair<K extends Comparable<K>, V> implements Entry<K, V>, Comparabl
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		OPair<?, ?> other = (OPair<?, ?>) obj;
+		OTriple<?, ?, ?> other = (OTriple<?, ?, ?>) obj;
 		if (key == null) {
 			if (other.key != null)
 				return false;
@@ -94,7 +100,7 @@ public class OPair<K extends Comparable<K>, V> implements Entry<K, V>, Comparabl
 		return true;
 	}
 
-	public int compareTo(final OPair<K, V> o) {
+	public int compareTo(final OTriple<K, V, SV> o) {
 		return key.compareTo(o.key);
 	}
 }

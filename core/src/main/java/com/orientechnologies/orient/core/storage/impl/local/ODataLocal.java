@@ -178,7 +178,7 @@ public class ODataLocal extends OMultiFileSegment {
 
 				OProfiler.getInstance().updateCounter("ODataLocal.setRecord:tot.reused.space", +1);
 				return iPosition;
-			} else if (recordSize - iContent.length > RECORD_FIX_SIZE) {
+			} else if (recordSize - iContent.length > RECORD_FIX_SIZE + 50) {
 				// USE THE OLD SPACE BUT UPDATE THE CURRENT SIZE. IT'S PREFEREABLE TO USE THE SAME INSTEAD FINDING A BEST SUITED FOR IT TO
 				// AVOID CHANGES TO REF FILE AS WELL.
 				writeRecord(pos, iRid.clusterId, iRid.clusterPosition, iContent);
@@ -258,9 +258,7 @@ public class ODataLocal extends OMultiFileSegment {
 				long closestHoleOffset = Integer.MAX_VALUE;
 				OPhysicalPosition closestPpos = new OPhysicalPosition();
 				for (int i = 0; i < holes; ++i) {
-					holeSegment.getHole(i, ppos);
-
-					if (ppos.dataPosition == -1)
+					if (!holeSegment.getHole(i, ppos))
 						// FREE HOLE
 						continue;
 
@@ -312,7 +310,12 @@ public class ODataLocal extends OMultiFileSegment {
 
 							while (moveFrom < offsetLimit) {
 								final long[] pos = getRelativePosition(moveFrom);
+
 								final OFile file = files[(int) pos[0]];
+
+								if (pos[0] >= file.getFilledUpTo())
+									// END OF FILE
+									break;
 
 								recordSize = file.readInt(pos[1]) + RECORD_FIX_SIZE;
 
@@ -340,7 +343,7 @@ public class ODataLocal extends OMultiFileSegment {
 							// MOVE THE DATA ON THE LEFT AND USE ONE HOLE FOR BOTH
 							long moveFrom = iRecordOffset + iRecordSize + RECORD_FIX_SIZE;
 							long moveTo = iRecordOffset;
-							long moveUpTo = closestPpos.dataPosition;
+							final long moveUpTo = closestPpos.dataPosition;
 
 							while (moveFrom < moveUpTo) {
 								final int sizeMoved = moveRecord(moveFrom, moveTo);
@@ -392,7 +395,7 @@ public class ODataLocal extends OMultiFileSegment {
 		final short clusterId = file.readShort(pos[1] + OConstants.SIZE_INT);
 		final long clusterPosition = file.readLong(pos[1] + OConstants.SIZE_INT + OConstants.SIZE_SHORT);
 
-		byte[] content = new byte[recordSize];
+		final byte[] content = new byte[recordSize];
 		file.read(pos[1] + RECORD_FIX_SIZE, content, recordSize);
 
 		if (clusterId > -1) {
@@ -426,8 +429,9 @@ public class ODataLocal extends OMultiFileSegment {
 		try {
 			final int tot = holeSegment.getHoles();
 			for (int i = 0; i < tot; ++i) {
-				final OPhysicalPosition ppos = holeSegment.getHole(i, new OPhysicalPosition());
-				holes.add(ppos);
+				final OPhysicalPosition ppos = new OPhysicalPosition();
+				if (holeSegment.getHole(i, ppos))
+					holes.add(ppos);
 			}
 		} finally {
 			releaseExclusiveLock();
@@ -441,11 +445,7 @@ public class ODataLocal extends OMultiFileSegment {
 
 	private long[] getFreeSpace(final int recordSize) throws IOException {
 		// GET THE POSITION TO RECYCLE FOLLOWING THE CONFIGURED STRATEGY IF ANY
-		final long position;
-		if (defragStrategy == 0)
-			position = holeSegment.popFirstAvailableHole(recordSize);
-		else
-			position = holeSegment.popBestHole(recordSize);
+		final long position = holeSegment.popFirstAvailableHole(recordSize);
 
 		final long[] newFilePosition;
 		if (position > -1)
