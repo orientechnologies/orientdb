@@ -44,7 +44,7 @@ public class OServerCommandGetStorageAllocation extends OServerCommandAuthentica
 		try {
 			db = getProfiledDatabaseInstance(iRequest);
 
-			final List<OPhysicalPosition> holes = ((OStorageLocal) db.getStorage()).getHoles();
+			final List<OPhysicalPosition> holes = ((OStorageLocal) db.getStorage()).getHolesList();
 			Collections.sort(holes);
 
 			final StringWriter buffer = new StringWriter();

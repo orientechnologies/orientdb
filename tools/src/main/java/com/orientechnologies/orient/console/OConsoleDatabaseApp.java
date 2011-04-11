@@ -265,7 +265,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		out.println("Position             Size");
 		out.println("--------------------------------------------------");
 
-		final List<OPhysicalPosition> result = storage.getHoles();
+		final List<OPhysicalPosition> result = storage.getHolesList();
 
 		for (OPhysicalPosition ppos : result) {
 			out.printf("%20d %11d\n", ppos.dataPosition, ppos.recordSize);

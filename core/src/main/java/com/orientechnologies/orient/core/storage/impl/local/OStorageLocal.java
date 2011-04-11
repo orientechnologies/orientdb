@@ -31,6 +31,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
@@ -75,6 +76,10 @@ public class OStorageLocal extends OStorageEmbedded {
 	private OStorageConfigurationSegment				configurationSegment;
 
 	private static String[]											ALL_FILE_EXTENSIONS	= { "ocf", ".och", ".ocl", ".oda", ".odh", ".otx" };
+	private final String												PROFILER_CREATE_RECORD;
+	private final String												PROFILER_READ_RECORD;
+	private final String												PROFILER_UPDATE_RECORD;
+	private final String												PROFILER_DELETE_RECORD;
 
 	public OStorageLocal(final String iName, final String iFilePath, final String iMode) throws IOException {
 		super(iName, iFilePath, iMode);
@@ -92,6 +97,13 @@ public class OStorageLocal extends OStorageEmbedded {
 		variableParser = new OStorageVariableParser(storagePath);
 		configuration = new OStorageConfigurationSegment(this, storagePath);
 		txManager = new OStorageLocalTxExecuter(this, configuration.txSegment);
+
+		PROFILER_CREATE_RECORD = "storage." + name + "createRecord";
+		PROFILER_READ_RECORD = "storage." + name + "readRecord";
+		PROFILER_UPDATE_RECORD = "storage." + name + "updateRecord";
+		PROFILER_DELETE_RECORD = "storage." + name + "deleteRecord";
+
+		installProfilerHooks();
 	}
 
 	public synchronized void open(final int iRequesterId, final String iUserName, final String iUserPassword,
@@ -719,13 +731,31 @@ public class OStorageLocal extends OStorageEmbedded {
 	 * 
 	 * @throws IOException
 	 */
-	public List<OPhysicalPosition> getHoles() throws IOException {
+	public List<OPhysicalPosition> getHolesList() {
 		final boolean locked = lock.acquireSharedLock();
 		try {
 			final List<OPhysicalPosition> holes = new ArrayList<OPhysicalPosition>();
 			for (ODataLocal d : dataSegments) {
-				holes.addAll(d.getHoles());
+				holes.addAll(d.getHolesList());
 			}
+			return holes;
+
+		} finally {
+			lock.releaseSharedLock(locked);
+		}
+	}
+
+	/**
+	 * Returns the total number of holes.
+	 * 
+	 * @throws IOException
+	 */
+	public long getHoles() {
+		final boolean locked = lock.acquireSharedLock();
+		try {
+			long holes = 0;
+			for (ODataLocal d : dataSegments)
+				holes += d.getHoles();
 			return holes;
 
 		} finally {
@@ -738,10 +768,10 @@ public class OStorageLocal extends OStorageEmbedded {
 	 * 
 	 * @throws IOException
 	 */
-	public long getHoleSize() throws IOException {
+	public long getHoleSize() {
 		final boolean locked = lock.acquireSharedLock();
 		try {
-			final List<OPhysicalPosition> holes = getHoles();
+			final List<OPhysicalPosition> holes = getHolesList();
 			long size = 0;
 			for (OPhysicalPosition h : holes) {
 				if (h.dataPosition > -1 && h.recordSize > 0)
@@ -956,7 +986,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		} finally {
 			lock.releaseSharedLock(locked);
 
-			OProfiler.getInstance().stopChrono("OStorageLocal.createRecord", timer);
+			OProfiler.getInstance().stopChrono(PROFILER_CREATE_RECORD, timer);
 		}
 	}
 
@@ -996,7 +1026,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		} finally {
 			lock.releaseSharedLock(locked);
 
-			OProfiler.getInstance().stopChrono("OStorageLocal.readRecord", timer);
+			OProfiler.getInstance().stopChrono(PROFILER_READ_RECORD, timer);
 		}
 	}
 
@@ -1056,7 +1086,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		} finally {
 			lock.releaseSharedLock(locked);
 
-			OProfiler.getInstance().stopChrono("OStorageLocal.updateRecord", timer);
+			OProfiler.getInstance().stopChrono(PROFILER_UPDATE_RECORD, timer);
 		}
 
 		return -1;
@@ -1102,7 +1132,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		} finally {
 			lock.releaseSharedLock(locked);
 
-			OProfiler.getInstance().stopChrono("OStorageLocal.deleteRecord", timer);
+			OProfiler.getInstance().stopChrono(PROFILER_DELETE_RECORD, timer);
 		}
 
 		return false;
@@ -1185,5 +1215,18 @@ public class OStorageLocal extends OStorageEmbedded {
 
 	public OStorageConfigurationSegment getConfigurationSegment() {
 		return configurationSegment;
+	}
+
+	private void installProfilerHooks() {
+		OProfiler.getInstance().registerHookValue("storage." + name + ".data.holes", new OProfilerHookValue() {
+			public Object getValue() {
+				return getHoles();
+			}
+		});
+		OProfiler.getInstance().registerHookValue("storage." + name + ".data.holeSize", new OProfilerHookValue() {
+			public Object getValue() {
+				return getHoleSize();
+			}
+		});
 	}
 }

@@ -47,8 +47,17 @@ public class ODataLocalHole extends OSingleFileSegment {
 	private final List<Integer>													freeHoles						= new ArrayList<Integer>();
 	private final static ODataHoleInfo									cursor							= new ODataHoleInfo();
 
+	private final String																PROFILER_DATA_RECYCLED_COMPLETE;
+	private final String																PROFILER_DATA_RECYCLED_PARTIAL;
+	private final String																PROFILER_DATA_RECYCLED_NOTFOUND;
+
 	public ODataLocalHole(final OStorageLocal iStorage, final OStorageFileConfiguration iConfig) throws IOException {
 		super(iStorage, iConfig);
+
+		PROFILER_DATA_RECYCLED_COMPLETE = "storage." + storage.getName() + ".data.recycled.complete";
+		PROFILER_DATA_RECYCLED_PARTIAL = "storage." + storage.getName() + ".data.recycled.partial";
+		PROFILER_DATA_RECYCLED_NOTFOUND = "storage." + storage.getName() + ".data.recycled.notFound";
+
 		loadHolesInMemory();
 	}
 
@@ -111,7 +120,7 @@ public class ODataLocalHole extends OSingleFileSegment {
 			ODataHoleInfo hole = availableHoles.get(cursor);
 			if (hole != null && hole.size == iRecordSize) {
 				// PERFECT MATCH: DELETE THE HOLE
-				OProfiler.getInstance().stopChrono("Storage.data.recycled.complete", timer);
+				OProfiler.getInstance().stopChrono(PROFILER_DATA_RECYCLED_COMPLETE, timer);
 				final long pos = hole.dataOffset;
 				deleteHole(hole.holeOffset);
 				return pos;
@@ -122,13 +131,13 @@ public class ODataLocalHole extends OSingleFileSegment {
 			if (hole.size > iRecordSize + ODataLocal.RECORD_FIX_SIZE + 50) {
 				// GOOD MATCH SINCE THE HOLE IS BIG ENOUGH ALSO FOR ANOTHER RECORD: UPDATE THE HOLE WITH THE DIFFERENCE
 				final long pos = hole.dataOffset;
-				OProfiler.getInstance().stopChrono("Storage.data.recycled.partial", timer);
+				OProfiler.getInstance().stopChrono(PROFILER_DATA_RECYCLED_PARTIAL, timer);
 				updateHole(hole.holeOffset, hole.dataOffset + iRecordSize, hole.size - iRecordSize);
 				return pos;
 			}
 		}
 
-		OProfiler.getInstance().stopChrono("Storage.data.recycled.notfound", timer);
+		OProfiler.getInstance().stopChrono(PROFILER_DATA_RECYCLED_NOTFOUND, timer);
 
 		return -1;
 	}
@@ -139,7 +148,7 @@ public class ODataLocalHole extends OSingleFileSegment {
 	 * @return true, if it's a valid hole, otherwise false
 	 * @throws IOException
 	 */
-	public boolean getHole(final int iPosition, final OPhysicalPosition iPPosition) throws IOException {
+	public boolean getHole(final int iPosition, final OPhysicalPosition iPPosition) {
 		final ODataHoleInfo hole = availableHolesList.get(iPosition);
 		if (hole.dataOffset == -1)
 			return false;
