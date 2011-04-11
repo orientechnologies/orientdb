@@ -313,7 +313,7 @@ public class ODataLocal extends OMultiFileSegment {
 
 								final OFile file = files[(int) pos[0]];
 
-								if (pos[0] >= file.getFilledUpTo())
+								if (pos[1] >= file.getFilledUpTo())
 									// END OF FILE
 									break;
 
@@ -418,11 +418,25 @@ public class ODataLocal extends OMultiFileSegment {
 	}
 
 	/**
+	 * Returns the total number of holes.
+	 * 
+	 * @throws IOException
+	 */
+	public long getHoles() {
+		acquireSharedLock();
+		try {
+			return holeSegment.getHoles();
+		} finally {
+			releaseSharedLock();
+		}
+	}
+
+	/**
 	 * Returns the list of holes as pair of position & ppos
 	 * 
 	 * @throws IOException
 	 */
-	public List<OPhysicalPosition> getHoles() throws IOException {
+	public List<OPhysicalPosition> getHolesList() {
 		final List<OPhysicalPosition> holes = new ArrayList<OPhysicalPosition>();
 
 		acquireExclusiveLock();
