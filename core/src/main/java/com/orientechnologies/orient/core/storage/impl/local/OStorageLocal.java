@@ -98,10 +98,10 @@ public class OStorageLocal extends OStorageEmbedded {
 		configuration = new OStorageConfigurationSegment(this, storagePath);
 		txManager = new OStorageLocalTxExecuter(this, configuration.txSegment);
 
-		PROFILER_CREATE_RECORD = "storage." + name + "createRecord";
-		PROFILER_READ_RECORD = "storage." + name + "readRecord";
-		PROFILER_UPDATE_RECORD = "storage." + name + "updateRecord";
-		PROFILER_DELETE_RECORD = "storage." + name + "deleteRecord";
+		PROFILER_CREATE_RECORD = "storage." + name + ".createRecord";
+		PROFILER_READ_RECORD = "storage." + name + ".readRecord";
+		PROFILER_UPDATE_RECORD = "storage." + name + ".updateRecord";
+		PROFILER_DELETE_RECORD = "storage." + name + ".deleteRecord";
 
 		installProfilerHooks();
 	}
@@ -198,7 +198,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		} finally {
 			lock.releaseExclusiveLock(locked);
 
-			OProfiler.getInstance().stopChrono("OStorageLocal.open", timer);
+			OProfiler.getInstance().stopChrono("storage." + name + ".open", timer);
 		}
 	}
 
@@ -248,7 +248,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		} finally {
 			lock.releaseExclusiveLock(locked);
 
-			OProfiler.getInstance().stopChrono("OStorageLocal.create", timer);
+			OProfiler.getInstance().stopChrono("storage." + name + ".create", timer);
 		}
 	}
 
@@ -297,7 +297,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		} finally {
 			lock.releaseExclusiveLock(locked);
 
-			OProfiler.getInstance().stopChrono("OStorageLocal.close", timer);
+			OProfiler.getInstance().stopChrono("storage." + name + ".close", timer);
 		}
 	}
 
@@ -373,7 +373,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		} finally {
 			lock.releaseExclusiveLock(locked);
 
-			OProfiler.getInstance().stopChrono("OStorageLocal.delete", timer);
+			OProfiler.getInstance().stopChrono("storage." + name + ".delete", timer);
 		}
 	}
 
@@ -520,8 +520,6 @@ public class OStorageLocal extends OStorageEmbedded {
 	public long count(final int[] iClusterIds) {
 		checkOpeness();
 
-		final long timer = OProfiler.getInstance().startChrono();
-
 		final boolean locked = lock.acquireSharedLock();
 
 		try {
@@ -541,8 +539,6 @@ public class OStorageLocal extends OStorageEmbedded {
 
 		} finally {
 			lock.releaseSharedLock(locked);
-
-			OProfiler.getInstance().stopChrono("OStorageLocal.getClusterElementCounts", timer);
 		}
 	}
 
@@ -551,8 +547,6 @@ public class OStorageLocal extends OStorageEmbedded {
 			throw new OStorageException("Cluster Id is invalid: " + iClusterId);
 
 		checkOpeness();
-
-		final long timer = OProfiler.getInstance().startChrono();
 
 		final boolean locked = lock.acquireSharedLock();
 
@@ -566,8 +560,6 @@ public class OStorageLocal extends OStorageEmbedded {
 
 		} finally {
 			lock.releaseSharedLock(locked);
-
-			OProfiler.getInstance().stopChrono("OStorageLocal.getClusterLastEntryPosition", timer);
 		}
 	}
 
@@ -578,8 +570,6 @@ public class OStorageLocal extends OStorageEmbedded {
 		// COUNT PHYSICAL CLUSTER IF ANY
 		checkOpeness();
 
-		final long timer = OProfiler.getInstance().startChrono();
-
 		final boolean locked = lock.acquireSharedLock();
 
 		try {
@@ -587,8 +577,6 @@ public class OStorageLocal extends OStorageEmbedded {
 
 		} finally {
 			lock.releaseSharedLock(locked);
-
-			OProfiler.getInstance().stopChrono("OStorageLocal.getClusterElementCounts", timer);
 		}
 	}
 
@@ -722,7 +710,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		} finally {
 			lock.releaseSharedLock(locked);
 
-			OProfiler.getInstance().stopChrono("OStorageLocal.synch", timer);
+			OProfiler.getInstance().stopChrono("storage." + name + ".synch", timer);
 		}
 	}
 

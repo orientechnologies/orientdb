@@ -195,19 +195,19 @@ public class OProfiler implements OProfilerMBean {
 
 		buffer.append("DUMPING COUNTERS (last reset on: " + lastReset.toString() + ")...");
 
-		buffer.append(String.format("\n%45s +-------------------------------------------------------------------+", ""));
-		buffer.append(String.format("\n%45s | Value                                                             |", "Name"));
-		buffer.append(String.format("\n%45s +-------------------------------------------------------------------+", ""));
+		buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
+		buffer.append(String.format("\n%50s | Value                                                             |", "Name"));
+		buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
 
 		final List<String> keys = new ArrayList<String>(counters.keySet());
 		Collections.sort(keys);
 
 		for (String k : keys) {
 			stat = counters.get(k);
-			buffer.append(String.format("\n%-45s | %-65d |", k, stat));
+			buffer.append(String.format("\n%-50s | %-65d |", k, stat));
 		}
 
-		buffer.append(String.format("\n%45s +-------------------------------------------------------------------+", ""));
+		buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
 		return buffer.toString();
 	}
 
@@ -231,9 +231,9 @@ public class OProfiler implements OProfilerMBean {
 
 		buffer.append("HOOK VALUES:");
 
-		buffer.append(String.format("\n%45s +-------------------------------------------------------------------+", ""));
-		buffer.append(String.format("\n%45s | Value                                                             |", "Name"));
-		buffer.append(String.format("\n%45s +-------------------------------------------------------------------+", ""));
+		buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
+		buffer.append(String.format("\n%50s | Value                                                             |", "Name"));
+		buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
 
 		final List<String> keys = new ArrayList<String>(hooks.keySet());
 		Collections.sort(keys);
@@ -242,10 +242,10 @@ public class OProfiler implements OProfilerMBean {
 		for (String k : keys) {
 			hook = hooks.get(k);
 			hookValue = hook.getValue();
-			buffer.append(String.format("\n%-45s | %-65s |", k, hookValue != null ? hookValue.toString() : "null"));
+			buffer.append(String.format("\n%-50s | %-65s |", k, hookValue != null ? hookValue.toString() : "null"));
 		}
 
-		buffer.append(String.format("\n%45s +-------------------------------------------------------------------+", ""));
+		buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
 		return buffer.toString();
 	}
 
@@ -381,20 +381,20 @@ public class OProfiler implements OProfilerMBean {
 
 		OProfilerEntry c;
 
-		iBuffer.append(String.format("\n%45s +-------------------------------------------------------------------+", ""));
-		iBuffer.append(String.format("\n%45s | %10s %10s %10s %10s %10s %10s |", "Name", "last", "total", "min", "max", "average",
+		iBuffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
+		iBuffer.append(String.format("\n%50s | %10s %10s %10s %10s %10s %10s |", "Name", "last", "total", "min", "max", "average",
 				"items"));
-		iBuffer.append(String.format("\n%45s +-------------------------------------------------------------------+", ""));
+		iBuffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
 
 		final List<String> keys = new ArrayList<String>(iValues.keySet());
 		Collections.sort(keys);
 
 		for (String k : keys) {
 			c = iValues.get(k);
-			iBuffer.append(String.format("\n%-45s | %10d %10d %10d %10d %10d %10d |", k, c.last, c.total, c.min, c.max, c.average,
+			iBuffer.append(String.format("\n%-50s | %10d %10d %10d %10d %10d %10d |", k, c.last, c.total, c.min, c.max, c.average,
 					c.items));
 		}
-		iBuffer.append(String.format("\n%45s +-------------------------------------------------------------------+", ""));
+		iBuffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
 		return iBuffer.toString();
 	}
 }
