@@ -123,10 +123,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 					}
 				}
 			}
-		}
 
-		try {
-			if (fields != null && fields.length > 0) {
+			try {
 				for (int i = 0; i < fields.length; i += 2) {
 					fieldName = fields[i];
 					fieldName = fieldName.substring(1, fieldName.length() - 1);
@@ -188,11 +186,11 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 						}
 					}
 				}
-			}
 
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new OSerializationException("Error on unmarshalling JSON content for record " + iRecord.getIdentity(), e);
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw new OSerializationException("Error on unmarshalling JSON content for record " + iRecord.getIdentity(), e);
+			}
 		}
 		return iRecord;
 	}
