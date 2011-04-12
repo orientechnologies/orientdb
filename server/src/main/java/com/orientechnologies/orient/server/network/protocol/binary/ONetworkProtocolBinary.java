@@ -50,6 +50,7 @@ import com.orientechnologies.orient.core.fetch.OFetchListener;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -263,7 +264,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			checkServerAccess("database.create");
 			connection.database = getDatabaseInstance(dbName, storageMode);
-			createDatabase(connection.database);
+			createDatabase(connection.database, null, null);
 
 			sendOk(lastClientTxId);
 			break;
@@ -501,7 +502,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			channel.writeByte((byte) 1);
 			break;
 		}
-		
+
 		case OChannelBinaryProtocol.REQUEST_COUNT: {
 			data.commandInfo = "Count cluster records";
 
@@ -912,9 +913,18 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		return db;
 	}
 
-	protected void createDatabase(final ODatabaseDocumentTx iDatabase) {
+	protected void createDatabase(final ODatabaseDocumentTx iDatabase, String dbUser, String dbPasswd) {
 		iDatabase.create();
+		if (dbUser != null) {
 
+			OUser oUser = iDatabase.getMetadata().getSecurity().getUser(dbUser);
+			if (oUser == null) {
+				iDatabase.getMetadata().getSecurity().createUser(dbUser, dbPasswd, new String[] { ORole.ADMIN });
+			} else {
+				oUser.setPassword(dbPasswd);
+				oUser.save();
+			}
+		}
 		OLogManager.instance().info(this, "Created database '%s' of type '%s'", iDatabase.getURL(),
 				iDatabase.getStorage() instanceof OStorageLocal ? "local" : "memory");
 
