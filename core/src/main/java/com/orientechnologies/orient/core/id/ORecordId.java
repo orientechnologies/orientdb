@@ -223,7 +223,7 @@ public class ORecordId implements ORID {
 
 		if (parts.size() != 2)
 			throw new IllegalArgumentException(
-					"Argument is not a RecordId in form of string. Format must be: <cluster-id>:<cluster-position>");
+					"Argument is not a RecordId in form of string. Format must be: #<cluster-id>:<cluster-position>. Example: #3:12");
 
 		clusterId = Integer.parseInt(parts.get(0));
 		checkClusterLimits();
