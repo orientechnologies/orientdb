@@ -50,6 +50,12 @@ public class ODataLocal extends OMultiFileSegment {
 	protected int										defragMaxHoleDistance;
 	protected int										defragStrategy;
 
+	private final String						PROFILER_HOLE_FIND_CLOSER;
+	private final String						PROFILER_UPDATE_REUSED_ALL;
+	private final String						PROFILER_UPDATE_REUSED_PARTIAL;
+	private final String						PROFILER_UPDATE_NOT_REUSED;
+	private final String						PROFILER_MOVE_RECORD;
+
 	public ODataLocal(final OStorageLocal iStorage, final OStorageDataConfiguration iConfig, final int iId) throws IOException {
 		super(iStorage, iConfig, DEF_EXTENSION, 0);
 		id = iId;
@@ -60,6 +66,12 @@ public class ODataLocal extends OMultiFileSegment {
 
 		defragMaxHoleDistance = OGlobalConfiguration.FILE_DEFRAG_HOLE_MAX_DISTANCE.getValueAsInteger();
 		defragStrategy = OGlobalConfiguration.FILE_DEFRAG_STRATEGY.getValueAsInteger();
+
+		PROFILER_HOLE_FIND_CLOSER = "storage." + storage.getName() + ".data.findClosest";
+		PROFILER_UPDATE_REUSED_ALL = "storage." + storage.getName() + ".data.update.reusedAll";
+		PROFILER_UPDATE_REUSED_PARTIAL = "storage." + storage.getName() + ".data.update.reusedPartial";
+		PROFILER_UPDATE_NOT_REUSED = "storage." + storage.getName() + ".data.update.notReused";
+		PROFILER_MOVE_RECORD = "storage." + storage.getName() + ".data.move";
 	}
 
 	@Override
@@ -176,7 +188,7 @@ public class ODataLocal extends OMultiFileSegment {
 				// USE THE OLD SPACE SINCE SIZE IT ISN'T CHANGED
 				file.write(pos[1] + RECORD_FIX_SIZE, iContent);
 
-				OProfiler.getInstance().updateCounter("ODataLocal.setRecord:tot.reused.space", +1);
+				OProfiler.getInstance().updateCounter(PROFILER_UPDATE_REUSED_ALL, +1);
 				return iPosition;
 			} else if (recordSize - iContent.length > RECORD_FIX_SIZE + 50) {
 				// USE THE OLD SPACE BUT UPDATE THE CURRENT SIZE. IT'S PREFEREABLE TO USE THE SAME INSTEAD FINDING A BEST SUITED FOR IT TO
@@ -186,7 +198,7 @@ public class ODataLocal extends OMultiFileSegment {
 				// CREATE A HOLE WITH THE DIFFERENCE OF SPACE
 				createHole(iPosition + RECORD_FIX_SIZE + iContent.length, recordSize - iContent.length - RECORD_FIX_SIZE);
 
-				OProfiler.getInstance().updateCounter("ODataLocal.setRecord:part.reused.space", +1);
+				OProfiler.getInstance().updateCounter(PROFILER_UPDATE_REUSED_PARTIAL, +1);
 			} else {
 				// CREATE A HOLE FOR THE ENTIRE OLD RECORD
 				createHole(iPosition, recordSize);
@@ -195,7 +207,7 @@ public class ODataLocal extends OMultiFileSegment {
 				pos = getFreeSpace(iContent.length + RECORD_FIX_SIZE);
 				writeRecord(pos, iRid.clusterId, iRid.clusterPosition, iContent);
 
-				OProfiler.getInstance().updateCounter("ODataLocal.setRecord:new.space", +1);
+				OProfiler.getInstance().updateCounter(PROFILER_UPDATE_NOT_REUSED, +1);
 			}
 
 			return getAbsolutePosition(pos);
@@ -251,6 +263,8 @@ public class ODataLocal extends OMultiFileSegment {
 			}
 
 			if (holes > 0) {
+				final long timer = OProfiler.getInstance().startChrono();
+
 				final OPhysicalPosition ppos = new OPhysicalPosition();
 
 				// FIND THE CLOSEST HOLE
@@ -295,6 +309,8 @@ public class ODataLocal extends OMultiFileSegment {
 						ppos.copyTo(closestPpos);
 					}
 				}
+
+				OProfiler.getInstance().stopChrono(PROFILER_HOLE_FIND_CLOSER, timer);
 
 				if (closestPpos.dataPosition + closestPpos.recordSize == iRecordOffset) {
 					// IT'S CONSECUTIVE TO ANOTHER HOLE AT THE LEFT: UPDATE LAST ONE
@@ -392,8 +408,6 @@ public class ODataLocal extends OMultiFileSegment {
 	}
 
 	private int moveRecord(long iSourcePosition, long iDestinationPosition) throws IOException {
-		final long timer = OProfiler.getInstance().startChrono();
-
 		// GET RECORD TO MOVE
 		final long[] pos = getRelativePosition(iSourcePosition);
 		final OFile file = files[(int) pos[0]];
@@ -403,6 +417,8 @@ public class ODataLocal extends OMultiFileSegment {
 		if (recordSize < 0)
 			// FOUND HOLE
 			return -1;
+
+		final long timer = OProfiler.getInstance().startChrono();
 
 		final short clusterId = file.readShort(pos[1] + OConstants.SIZE_INT);
 		final long clusterPosition = file.readLong(pos[1] + OConstants.SIZE_INT + OConstants.SIZE_SHORT);
@@ -424,7 +440,7 @@ public class ODataLocal extends OMultiFileSegment {
 
 		writeRecord(getRelativePosition(iDestinationPosition), clusterId, clusterPosition, content);
 
-		OProfiler.getInstance().stopChrono("Storage.data.move", timer);
+		OProfiler.getInstance().stopChrono(PROFILER_MOVE_RECORD, timer);
 
 		return recordSize + RECORD_FIX_SIZE;
 	}
