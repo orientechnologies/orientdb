@@ -487,14 +487,14 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	// }
 
 	public ODocument addServerInConfiguration(final String iDatabaseName, final String iAlias, final String iAddress,
-			final boolean iAsynchronous) {
-		StringBuilder cfg = new StringBuilder();
+			final boolean iSynchronous) {
+		final StringBuilder cfg = new StringBuilder();
 
 		cfg.append("{ \"*\" : { ");
 		cfg.append("\"owner\" : \"");
 		cfg.append(getId());
 		cfg.append("\", ");
-		cfg.append(iAsynchronous ? "\"asynch\"" : "\"synch\"");
+		cfg.append(iSynchronous ? "\"synch\"" : "\"asynch\"");
 		cfg.append(" : { \"");
 		cfg.append(iAlias);
 		cfg.append("\" : \"");
