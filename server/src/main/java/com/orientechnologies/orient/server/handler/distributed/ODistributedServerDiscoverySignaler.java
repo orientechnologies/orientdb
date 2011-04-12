@@ -52,7 +52,8 @@ public class ODistributedServerDiscoverySignaler extends OPollerThread {
 
 		discoveryPacket = OSecurityManager.instance().encrypt(manager.securityAlgorithm, manager.securityKey, buffer.getBytes());
 
-		startTimeoutPresenceTask();
+		if (forceLeadership)
+			startTimeoutPresenceTask();
 
 		start();
 	}
@@ -87,7 +88,7 @@ public class ODistributedServerDiscoverySignaler extends OPollerThread {
 
 	@Override
 	protected void execute() throws Exception {
-		OLogManager.instance().debug(this, "Discovering distributed server nodes using IP Multicast with address %s, port %d...",
+		OLogManager.instance().warn(this, "Discovering distributed server nodes using IP Multicast with address %s, port %d...",
 				dgram.getAddress(), dgram.getPort());
 
 		try {
