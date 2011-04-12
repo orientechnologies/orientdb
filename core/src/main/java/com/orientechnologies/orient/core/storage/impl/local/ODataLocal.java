@@ -254,6 +254,16 @@ public class ODataLocal extends OMultiFileSegment {
 				final OPhysicalPosition ppos = new OPhysicalPosition();
 
 				// FIND THE CLOSEST HOLE
+				long[] pos = getRelativePosition(iRecordOffset);
+				final OFile file = files[(int) pos[0]];
+
+				// GET FILE RANGE
+				final int[] fileRanges;
+				if (pos[0] == 0)
+					fileRanges = new int[] { 0, file.getFilledUpTo() };
+				else
+					fileRanges = new int[] { files[(int) pos[0] - 1].getFileSize(), file.getFilledUpTo() };
+
 				int closestHoleIndex = -1;
 				long closestHoleOffset = Integer.MAX_VALUE;
 				OPhysicalPosition closestPpos = new OPhysicalPosition();
@@ -264,17 +274,21 @@ public class ODataLocal extends OMultiFileSegment {
 
 					boolean closest = false;
 
-					if (iRecordOffset > ppos.dataPosition) {
-						if (closestHoleIndex == -1 || iRecordOffset - (ppos.dataPosition + ppos.recordSize) < Math.abs(closestHoleOffset)) {
-							closestHoleOffset = (ppos.dataPosition + ppos.recordSize) - iRecordOffset;
-							closest = true;
+					if (ppos.dataPosition >= fileRanges[0] && ppos.dataPosition < fileRanges[1])
+						// IT'S IN CURRENT FILE, OK
+						if (iRecordOffset > ppos.dataPosition) {
+							// ON THE RIGHT
+							if (closestHoleIndex == -1 || iRecordOffset - (ppos.dataPosition + ppos.recordSize) < Math.abs(closestHoleOffset)) {
+								closestHoleOffset = (ppos.dataPosition + ppos.recordSize) - iRecordOffset;
+								closest = true;
+							}
+						} else {
+							// ON THE LEFT
+							if (closestHoleIndex == -1 || ppos.dataPosition - (iRecordOffset + iRecordSize) < Math.abs(closestHoleOffset)) {
+								closestHoleOffset = ppos.dataPosition - (iRecordOffset + iRecordSize);
+								closest = true;
+							}
 						}
-					} else {
-						if (closestHoleIndex == -1 || ppos.dataPosition - (iRecordOffset + iRecordSize) < Math.abs(closestHoleOffset)) {
-							closestHoleOffset = ppos.dataPosition - (iRecordOffset + iRecordSize);
-							closest = true;
-						}
-					}
 
 					if (closest) {
 						closestHoleIndex = i;
@@ -304,14 +318,12 @@ public class ODataLocal extends OMultiFileSegment {
 							long moveFrom = closestPpos.dataPosition + closestPpos.recordSize;
 							int recordSize;
 
-							final long offsetLimit = Math.min(iRecordOffset, getFilledUpTo());
+							final long offsetLimit = iRecordOffset;
 
 							final List<long[]> segmentPositions = new ArrayList<long[]>();
 
 							while (moveFrom < offsetLimit) {
-								final long[] pos = getRelativePosition(moveFrom);
-
-								final OFile file = files[(int) pos[0]];
+								pos = getRelativePosition(moveFrom);
 
 								if (pos[1] >= file.getFilledUpTo())
 									// END OF FILE
