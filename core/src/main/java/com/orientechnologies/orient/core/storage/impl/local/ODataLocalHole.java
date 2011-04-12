@@ -57,8 +57,13 @@ public class ODataLocalHole extends OSingleFileSegment {
 		PROFILER_DATA_RECYCLED_COMPLETE = "storage." + storage.getName() + ".data.recycled.complete";
 		PROFILER_DATA_RECYCLED_PARTIAL = "storage." + storage.getName() + ".data.recycled.partial";
 		PROFILER_DATA_RECYCLED_NOTFOUND = "storage." + storage.getName() + ".data.recycled.notFound";
+	}
 
+	@Override
+	public boolean open() throws IOException {
+		final boolean status = super.open();
 		loadHolesInMemory();
+		return status;
 	}
 
 	@Override
