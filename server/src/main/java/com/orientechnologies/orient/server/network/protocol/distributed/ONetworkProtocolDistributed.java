@@ -104,7 +104,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 			remoteServerNode.shareDatabase(connection.database, remoteServerName, dbUser, dbPassword, engineName, synchronousMode);
 
-			sendOk(connection.id);
+			sendOk(lastClientTxId);
 
 			manager.addServerInConfiguration(dbName, remoteServerName, engineName, synchronousMode);
 

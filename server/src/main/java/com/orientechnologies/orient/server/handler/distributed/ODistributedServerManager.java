@@ -420,7 +420,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 		lock.acquireSharedLock();
 		try {
-			if (nodes == null)
+			if (nodes.isEmpty())
 				return;
 
 			// GET THE NODES INVOLVED IN THE UPDATE
@@ -459,6 +459,11 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 	public void updateHeartBeatTime() {
 		this.lastHeartBeat = System.currentTimeMillis();
+		if (discoverySignaler != null) {
+			// SIGNALER ON: SHUT DOWN IT
+			discoverySignaler.sendShutdown();
+			discoverySignaler = null;
+		}
 	}
 
 	public ODocument getClusterConfiguration(final String iDatabaseName) {
