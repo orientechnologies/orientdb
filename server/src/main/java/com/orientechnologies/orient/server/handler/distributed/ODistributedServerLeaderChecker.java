@@ -51,10 +51,11 @@ public class ODistributedServerLeaderChecker extends TimerTask {
 							"No heartbeat message has been received from the Leader node (last was %d ms ago). Resend presence message in broadcast...",
 							time);
 
-			cancel();
-
-			if (manager.serverElectedForLeadership)
+			if (manager.serverElectedForLeadership) {
+				cancel();
 				manager.broadcastPresence(true);
+			}
+			
 			return;
 		}
 	}
