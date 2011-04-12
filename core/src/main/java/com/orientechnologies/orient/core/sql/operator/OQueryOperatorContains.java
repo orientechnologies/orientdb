@@ -47,12 +47,12 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
 
 		if (iLeft instanceof Collection<?>) {
 
-			final Collection<ORecordSchemaAware<?>> collection = (Collection<ORecordSchemaAware<?>>) iLeft;
+			final Collection<Object> collection = (Collection<Object>) iLeft;
 
 			if (condition != null) {
 				// CHECK AGAINST A CONDITION
-				for (ORecordSchemaAware<?> o : collection) {
-					if ((Boolean) condition.evaluate(o) == Boolean.TRUE)
+				for (Object o : collection) {
+					if ((Boolean) condition.evaluate((ORecordSchemaAware<?>) o) == Boolean.TRUE)
 						return true;
 				}
 			} else {
