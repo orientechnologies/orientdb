@@ -130,7 +130,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 					connection.database.delete();
 				}
 
-				createDatabase(connection.database);
+				createDatabase(connection.database, dbUser, dbPasswd);
 
 				if (connection.database.isClosed())
 					connection.database.open(dbUser, dbPasswd);
