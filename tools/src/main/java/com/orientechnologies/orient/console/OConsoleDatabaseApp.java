@@ -717,6 +717,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	@ConsoleCommand(description = "Export a database")
 	public void exportDatabase(@ConsoleParameter(name = "output-file", description = "Output file path") final String iOutputFilePath)
 			throws IOException {
+		checkCurrentDatabase();
+
 		out.println("Exporting current database to: " + iOutputFilePath + "...");
 
 		try {
@@ -727,8 +729,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	}
 
 	@ConsoleCommand(description = "Import a database into the current one")
-	public void importDatabase(@ConsoleParameter(name = "imput-file", description = "Input file path") final String iInputFilePath)
+	public void importDatabase(@ConsoleParameter(name = "input-file", description = "Input file path") final String iInputFilePath)
 			throws IOException {
+		checkCurrentDatabase();
+
 		out.println("Importing database from file " + iInputFilePath + "...");
 
 		try {
