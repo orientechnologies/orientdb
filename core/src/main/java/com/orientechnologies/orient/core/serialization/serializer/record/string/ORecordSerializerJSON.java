@@ -217,7 +217,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				// EMPTY, RETURN an EMPTY HASHMAP
 				return new HashMap<String, Object>();
 
-			if (fields[0].equals("\"@type\""))
+			if (hasTypeField(fields))
 				// OBJECT
 				return fromString(iRecord.getDatabase(), iFieldValue, null);
 			else {
@@ -335,6 +335,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				return fromString(iRecord.getDatabase(), iFieldValueAsString);
 
 			case DATE:
+				if (iFieldValueAsString == null || iFieldValueAsString.equals(""))
+					return null;
 				try {
 					// TRY TO PARSE AS LONG
 					return Long.parseLong(iFieldValueAsString);
@@ -701,6 +703,15 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 			depthLevel = -1;
 
 		return depthLevel;
+	}
+
+	private boolean hasTypeField(String[] fields) {
+		for (int i = 0; i < fields.length; i = i + 2) {
+			if (fields[i].equals("\"@type\"")) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override
