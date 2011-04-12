@@ -30,6 +30,7 @@ function ODatabase(databasePath) {
 	this.errorMessage = null;
 	this.evalResponse = true;
 	this.parseResponseLink = true;
+	this.removeObjectCircleReferences = true;
 	this.urlPrefix = "";
 
 	if (databasePath) {
@@ -108,6 +109,13 @@ function ODatabase(databasePath) {
 	}
 	ODatabase.prototype.setParseResponseLinks = function(iParseResponseLinks) {
 		this.parseResponseLink = iParseResponseLinks;
+	}
+	
+	ODatabase.prototype.getRemoveObjectCircleReferences = function() {
+		return this.removeObjectCircleReferences;
+	}
+	ODatabase.prototype.setRemoveObjectCircleReferences = function(iRemoveObjectCircleReferences) {
+		this.removeObjectCircleReferences = iRemoveObjectCircleReferences;
 	}
 
 	ODatabase.prototype.open = function(userName, userPass, authProxy, type) {
@@ -190,7 +198,7 @@ function ODatabase(databasePath) {
 			iFetchPlan = '';
 		}
 
-		if (iRID.charAt(0) == '#')
+		if (iRID && iRID.charAt(0) == '#')
 			iRID = iRID.substring(1);
 
 		$.ajax({
@@ -212,37 +220,41 @@ function ODatabase(databasePath) {
 	}
 
 	ODatabase.prototype.save = function(obj) {
-		if (this.databaseInfo == null) {
-			this.open();
+        if (this.databaseInfo == null) {
+            this.open();
+        }
+
+        var rid = obj['@rid'];
+        var methodType = rid == null || rid == '-1:-1' ? 'POST' : 'PUT';
+        
+        if (this.removeObjectCircleReferences && typeof ojb == 'object'){
+			this.removeCircleReferences(obj, {});
 		}
 
-		var rid = obj['@rid'];
-		var methodType = rid == null || rid == '-1:-1' ? 'POST' : 'PUT';
-
-		$.ajax({
-			type : methodType,
-			url : urlPrefix + 'document/' + this.encodedDatabaseName + '/'
-			+ rid,
-			data : $.toJSON(obj),
-			processData : false,
-			context : this,
-			async : false,
-			success : function(msg) {
-				this.setErrorMessage(null);
-				this.setCommandResponse(msg);
-				this.setCommandResult(msg);
-			},
-			error : function(msg) {
-				this.handleResponse(null);
-				this.setErrorMessage('Save error: ' + msg.responseText);
-			}
-		});
-		if (methodType == 'PUT'){
-			return rid;	
-		} else {
-			return this.getCommandResult();
-		}
-	}
+        $.ajax({
+            type : methodType,
+            url : urlPrefix + 'document/' + this.encodedDatabaseName + '/'
+            + rid,
+            data : $.toJSON(obj),
+            processData : false,
+            context : this,
+            async : false,
+            success : function(msg) {
+                this.setErrorMessage(null);
+                this.setCommandResponse(msg);
+                this.setCommandResult(msg);
+            },
+            error : function(msg) {
+                this.handleResponse(null);
+                this.setErrorMessage('Save error: ' + msg.responseText);
+            }
+        });
+        if (methodType == 'PUT'){
+            return rid;    
+        } else {
+            return this.getCommandResult();
+        }
+    }
 
 	ODatabase.prototype.remove = function(obj, onsuccess, onerror) {
 		if (this.databaseInfo == null)
@@ -522,20 +534,18 @@ function ODatabase(databasePath) {
 		return obj;
 	}
 	
-	ODatabase.prototype.removeCircleReferences = function(obj) {
-		if (typeof obj == 'object') {
-			var linkMap = {
-					"foo" : 0
-			};
-			linkMap = this.createObjectsLinksMap(obj, linkMap);
-			if (linkMap["foo"] == 1) {
-				linkMap = this.putObjectInLinksMap(obj, linkMap);
-				if (linkMap["foo"] == 2) {
-					obj = this.getObjectFromLinksMap(obj, linkMap);
+	ODatabase.prototype.removeCircleReferences = function(obj, linkMap) {
+		for (field in obj) {
+			var value = obj[field];
+			if (typeof value == 'object') {
+				if (linkMap[value] != null && value['@rid'] != null ){
+					obj[field] = '#' + obj['@rid'];
+				} else {
+					linkMap[value] = 'foo';
+					this.removeCircleReferences(value, linkMap);
 				}
 			}
 		}
-		return obj;
 	}
 
 }
