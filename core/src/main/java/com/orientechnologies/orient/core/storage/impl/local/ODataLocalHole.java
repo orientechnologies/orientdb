@@ -206,14 +206,15 @@ public class ODataLocalHole extends OSingleFileSegment {
 
 		for (int pos = 0; pos < holes; ++pos) {
 			final long dataOffset = file.readLong(pos * RECORD_SIZE);
+			final int recordSize = file.readInt(pos * RECORD_SIZE + OConstants.SIZE_LONG);
+
+			final ODataHoleInfo hole = new ODataHoleInfo(recordSize, dataOffset, pos);
+
+			availableHolesList.add(hole);
+
 			if (dataOffset == -1)
 				freeHoles.add(pos);
 			else {
-				final int recordSize = file.readInt(pos * RECORD_SIZE + OConstants.SIZE_LONG);
-
-				final ODataHoleInfo hole = new ODataHoleInfo(recordSize, dataOffset, pos);
-
-				availableHolesList.add(hole);
 				availableHoles.put(hole, hole);
 
 				if (maxHoleSize < recordSize)
