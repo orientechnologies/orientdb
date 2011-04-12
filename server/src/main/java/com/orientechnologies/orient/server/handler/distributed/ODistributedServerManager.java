@@ -110,7 +110,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	@Override
 	public void startup() {
 		trigger = new ODistributedServerRecordHook(this);
-		broadcastPresence(false);
+		broadcastPresence(serverElectedForLeadership);
 	}
 
 	@Override
@@ -605,6 +605,12 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	}
 
 	protected void broadcastPresence(final boolean iForceLeadership) {
+		if (discoverySignaler != null) {
+			// SHUT DOWN PREVIOUS THREAD
+			discoverySignaler.sendShutdown();
+			discoverySignaler = null;
+		}
+
 		// LAUNCH THE SIGNAL AND WAIT FOR A CONNECTION
 		discoverySignaler = new ODistributedServerDiscoverySignaler(this, distributedNetworkListener, iForceLeadership);
 	}
