@@ -63,9 +63,9 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.ODataHoleInfo;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.enterprise.command.script.OCommandScript;
 
@@ -271,10 +271,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		out.println("Position             Size");
 		out.println("--------------------------------------------------");
 
-		final List<OPhysicalPosition> result = storage.getHolesList();
+		final List<ODataHoleInfo> result = storage.getHolesList();
 
-		for (OPhysicalPosition ppos : result) {
-			out.printf("%20d %11d\n", ppos.dataPosition, ppos.recordSize);
+		for (ODataHoleInfo ppos : result) {
+			out.printf("%20d %11d\n", ppos.dataOffset, ppos.size);
 		}
 		out.println("--------------------------------------------------");
 	}

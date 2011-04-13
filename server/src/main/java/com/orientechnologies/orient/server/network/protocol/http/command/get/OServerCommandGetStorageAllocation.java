@@ -21,7 +21,7 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.impl.local.ODataHoleInfo;
 import com.orientechnologies.orient.core.storage.impl.local.ODataLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
@@ -44,7 +44,7 @@ public class OServerCommandGetStorageAllocation extends OServerCommandAuthentica
 		try {
 			db = getProfiledDatabaseInstance(iRequest);
 
-			final List<OPhysicalPosition> holes = ((OStorageLocal) db.getStorage()).getHolesList();
+			final List<ODataHoleInfo> holes = ((OStorageLocal) db.getStorage()).getHolesList();
 			Collections.sort(holes);
 
 			final StringWriter buffer = new StringWriter();
@@ -61,27 +61,27 @@ public class OServerCommandGetStorageAllocation extends OServerCommandAuthentica
 			long holesSize = 0;
 
 			json.beginCollection(1, true, "segments");
-			for (OPhysicalPosition h : holes) {
-				if (h.dataPosition == -1)
+			for (ODataHoleInfo h : holes) {
+				if (h.dataOffset == -1)
 					continue;
 
-				if (current < h.dataPosition) {
+				if (current < h.dataOffset) {
 					// DATA SEGMENT
 					json.beginObject(2, true, null);
 					json.writeAttribute(3, false, "type", "d");
 					json.writeAttribute(3, false, "offset", current);
-					json.writeAttribute(3, false, "size", h.dataPosition - current);
+					json.writeAttribute(3, false, "size", h.dataOffset - current);
 					json.endObject(2, false);
 				}
 
 				json.beginObject(2, true, null);
 				json.writeAttribute(3, false, "type", "h");
-				json.writeAttribute(3, false, "offset", h.dataPosition);
-				json.writeAttribute(3, false, "size", h.recordSize);
+				json.writeAttribute(3, false, "offset", h.dataOffset);
+				json.writeAttribute(3, false, "size", h.size);
 				json.endObject(2, false);
-				holesSize += h.recordSize;
+				holesSize += h.size;
 
-				current = h.dataPosition + h.recordSize;
+				current = h.dataOffset + h.size;
 			}
 
 			if (dbSize > current) {

@@ -18,6 +18,8 @@ package com.orientechnologies.orient.core.storage.impl.local;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.SortedMap;
 
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.OConstants;
@@ -249,8 +251,6 @@ public class ODataLocal extends OMultiFileSegment {
 			long holePositionOffset = iRecordOffset;
 			int holeSize = iRecordSize + RECORD_FIX_SIZE;
 
-			final int holes = holeSegment.getHoles();
-
 			// COMPUTE DEFRAG HOLE DISTANCE
 			final int defragHoleDistance;
 			if (defragMaxHoleDistance > 0)
@@ -262,14 +262,15 @@ public class ODataLocal extends OMultiFileSegment {
 				defragHoleDistance = Math.max(32768 * (int) (size / 10000000), 32768);
 			}
 
+			final int holes = holeSegment.getHoles();
 			if (holes > 0) {
 				final long timer = OProfiler.getInstance().startChrono();
-
-				final OPhysicalPosition ppos = new OPhysicalPosition();
 
 				// FIND THE CLOSEST HOLE
 				long[] pos = getRelativePosition(iRecordOffset);
 				final OFile file = files[(int) pos[0]];
+
+				final SortedMap<ODataHoleInfo, ODataHoleInfo> closestHoles = holeSegment.getCloserHole(iRecordOffset, defragHoleDistance);
 
 				// GET FILE RANGE
 				final int[] fileRanges;
@@ -278,122 +279,121 @@ public class ODataLocal extends OMultiFileSegment {
 				else
 					fileRanges = new int[] { files[(int) pos[0] - 1].getFileSize(), file.getFilledUpTo() };
 
-				int closestHoleIndex = -1;
+				ODataHoleInfo closestHole = null;
 				long closestHoleOffset = Integer.MAX_VALUE;
-				OPhysicalPosition closestPpos = new OPhysicalPosition();
-				for (int i = 0; i < holes; ++i) {
-					if (!holeSegment.getHole(i, ppos))
+				for (Entry<ODataHoleInfo, ODataHoleInfo> h : closestHoles.entrySet()) {
+					final ODataHoleInfo hole = h.getKey();
+					if (hole.dataOffset == -1)
 						// FREE HOLE
 						continue;
 
 					boolean closest = false;
 
-					if (ppos.dataPosition >= fileRanges[0] && ppos.dataPosition < fileRanges[1])
+					if (hole.dataOffset >= fileRanges[0] && hole.dataOffset < fileRanges[1])
 						// IT'S IN CURRENT FILE, OK
-						if (iRecordOffset > ppos.dataPosition) {
+						if (iRecordOffset > hole.dataOffset) {
 							// ON THE RIGHT
-							if (closestHoleIndex == -1 || iRecordOffset - (ppos.dataPosition + ppos.recordSize) < Math.abs(closestHoleOffset)) {
-								closestHoleOffset = (ppos.dataPosition + ppos.recordSize) - iRecordOffset;
+							if (closestHole == null || iRecordOffset - (hole.dataOffset + hole.size) < Math.abs(closestHoleOffset)) {
+								closestHoleOffset = (hole.dataOffset + hole.size) - iRecordOffset;
 								closest = true;
 							}
 						} else {
 							// ON THE LEFT
-							if (closestHoleIndex == -1 || ppos.dataPosition - (iRecordOffset + iRecordSize) < Math.abs(closestHoleOffset)) {
-								closestHoleOffset = ppos.dataPosition - (iRecordOffset + iRecordSize);
+							if (closestHole == null || hole.dataOffset - (iRecordOffset + iRecordSize) < Math.abs(closestHoleOffset)) {
+								closestHoleOffset = hole.dataOffset - (iRecordOffset + iRecordSize);
 								closest = true;
 							}
 						}
 
-					if (closest) {
-						closestHoleIndex = i;
-						ppos.copyTo(closestPpos);
-					}
+					if (closest)
+						closestHole = hole;
 				}
 
 				OProfiler.getInstance().stopChrono(PROFILER_HOLE_FIND_CLOSER, timer);
 
-				if (closestPpos.dataPosition + closestPpos.recordSize == iRecordOffset) {
-					// IT'S CONSECUTIVE TO ANOTHER HOLE AT THE LEFT: UPDATE LAST ONE
-					holeSize += closestPpos.recordSize;
-					holeSegment.updateHole(closestHoleIndex, closestPpos.dataPosition, holeSize);
+				if (closestHole != null)
+					if (closestHole.dataOffset + closestHole.size == iRecordOffset) {
+						// IT'S CONSECUTIVE TO ANOTHER HOLE AT THE LEFT: UPDATE LAST ONE
+						holeSize += closestHole.size;
+						holeSegment.updateHole(closestHole.holeOffset, closestHole.dataOffset, holeSize);
 
-				} else if (holePositionOffset + holeSize == closestPpos.dataPosition) {
-					// IT'S CONSECUTIVE TO ANOTHER HOLE AT THE RIGHT: UPDATE LAST ONE
-					holeSize += closestPpos.recordSize;
-					holeSegment.updateHole(closestHoleIndex, holePositionOffset, holeSize);
-
-				} else {
-					if (Math.abs(closestHoleOffset) < defragHoleDistance) {
-						// QUITE CLOSE, AUTO-DEFRAG!
-
-						if (closestHoleOffset < 0) {
-							// MOVE THE DATA ON THE RIGHT AND USE ONE HOLE FOR BOTH
-							closestHoleOffset *= -1;
-
-							// SEARCH LAST SEGMENT
-							long moveFrom = closestPpos.dataPosition + closestPpos.recordSize;
-							int recordSize;
-
-							final long offsetLimit = iRecordOffset;
-
-							final List<long[]> segmentPositions = new ArrayList<long[]>();
-
-							while (moveFrom < offsetLimit) {
-								pos = getRelativePosition(moveFrom);
-
-								if (pos[1] >= file.getFilledUpTo())
-									// END OF FILE
-									break;
-
-								recordSize = file.readInt(pos[1]) + RECORD_FIX_SIZE;
-
-								// SAVE DATA IN ARRAY
-								segmentPositions.add(0, new long[] { moveFrom, recordSize });
-
-								moveFrom += recordSize;
-							}
-
-							long gap = offsetLimit + holeSize;
-
-							for (long[] item : segmentPositions) {
-								final int sizeMoved = moveRecord(item[0], gap - item[1]);
-
-								if (sizeMoved != item[1])
-									throw new IllegalStateException("Corrupted holes: Found size " + sizeMoved + " instead of " + item[1]);
-
-								gap -= sizeMoved;
-							}
-
-							holePositionOffset = closestPpos.dataPosition;
-							holeSize += closestPpos.recordSize;
-
-						} else {
-							// MOVE THE DATA ON THE LEFT AND USE ONE HOLE FOR BOTH
-							long moveFrom = iRecordOffset + iRecordSize + RECORD_FIX_SIZE;
-							long moveTo = iRecordOffset;
-							final long moveUpTo = closestPpos.dataPosition;
-
-							while (moveFrom < moveUpTo) {
-								final int sizeMoved = moveRecord(moveFrom, moveTo);
-
-								moveFrom += sizeMoved;
-								moveTo += sizeMoved;
-							}
-
-							if (moveFrom != moveUpTo)
-								throw new IllegalStateException("Corrupted holes: Found offset " + moveFrom + " instead of " + moveUpTo);
-
-							holePositionOffset = moveTo;
-							holeSize += closestPpos.recordSize;
-						}
-
-						holeSegment.updateHole(closestHoleIndex, holePositionOffset, holeSize);
+					} else if (holePositionOffset + holeSize == closestHole.dataOffset) {
+						// IT'S CONSECUTIVE TO ANOTHER HOLE AT THE RIGHT: UPDATE LAST ONE
+						holeSize += closestHole.size;
+						holeSegment.updateHole(closestHole.holeOffset, holePositionOffset, holeSize);
 
 					} else {
-						// CREATE A NEW ONE
-						holeSegment.createHole(iRecordOffset, holeSize);
+						if (Math.abs(closestHoleOffset) < defragHoleDistance) {
+							// QUITE CLOSE, AUTO-DEFRAG!
+
+							if (closestHoleOffset < 0) {
+								// MOVE THE DATA ON THE RIGHT AND USE ONE HOLE FOR BOTH
+								closestHoleOffset *= -1;
+
+								// SEARCH LAST SEGMENT
+								long moveFrom = closestHole.dataOffset + closestHole.size;
+								int recordSize;
+
+								final long offsetLimit = iRecordOffset;
+
+								final List<long[]> segmentPositions = new ArrayList<long[]>();
+
+								while (moveFrom < offsetLimit) {
+									pos = getRelativePosition(moveFrom);
+
+									if (pos[1] >= file.getFilledUpTo())
+										// END OF FILE
+										break;
+
+									recordSize = file.readInt(pos[1]) + RECORD_FIX_SIZE;
+
+									// SAVE DATA IN ARRAY
+									segmentPositions.add(0, new long[] { moveFrom, recordSize });
+
+									moveFrom += recordSize;
+								}
+
+								long gap = offsetLimit + holeSize;
+
+								for (long[] item : segmentPositions) {
+									final int sizeMoved = moveRecord(item[0], gap - item[1]);
+
+									if (sizeMoved != item[1])
+										throw new IllegalStateException("Corrupted holes: Found size " + sizeMoved + " instead of " + item[1]);
+
+									gap -= sizeMoved;
+								}
+
+								holePositionOffset = closestHole.dataOffset;
+								holeSize += closestHole.size;
+
+							} else {
+								// MOVE THE DATA ON THE LEFT AND USE ONE HOLE FOR BOTH
+								long moveFrom = iRecordOffset + iRecordSize + RECORD_FIX_SIZE;
+								long moveTo = iRecordOffset;
+								final long moveUpTo = closestHole.dataOffset;
+
+								while (moveFrom < moveUpTo) {
+									final int sizeMoved = moveRecord(moveFrom, moveTo);
+
+									moveFrom += sizeMoved;
+									moveTo += sizeMoved;
+								}
+
+								if (moveFrom != moveUpTo)
+									throw new IllegalStateException("Corrupted holes: Found offset " + moveFrom + " instead of " + moveUpTo);
+
+								holePositionOffset = moveTo;
+								holeSize += closestHole.size;
+							}
+
+							holeSegment.updateHole(closestHole.holeOffset, holePositionOffset, holeSize);
+
+						} else {
+							// CREATE A NEW ONE
+							holeSegment.createHole(iRecordOffset, holeSize);
+						}
 					}
-				}
 			} else
 				// CREATE A NEW ONE
 				holeSegment.createHole(iRecordOffset, holeSize);
@@ -464,16 +464,14 @@ public class ODataLocal extends OMultiFileSegment {
 	 * 
 	 * @throws IOException
 	 */
-	public List<OPhysicalPosition> getHolesList() {
-		final List<OPhysicalPosition> holes = new ArrayList<OPhysicalPosition>();
+	public List<ODataHoleInfo> getHolesList() {
+		final List<ODataHoleInfo> holes = new ArrayList<ODataHoleInfo>();
 
 		acquireExclusiveLock();
 		try {
 			final int tot = holeSegment.getHoles();
 			for (int i = 0; i < tot; ++i) {
-				final OPhysicalPosition ppos = new OPhysicalPosition();
-				if (holeSegment.getHole(i, ppos))
-					holes.add(ppos);
+				holes.add(holeSegment.getHole(i));
 			}
 		} finally {
 			releaseExclusiveLock();

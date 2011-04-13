@@ -17,13 +17,14 @@ package com.orientechnologies.orient.core.storage.impl.local;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.SortedMap;
 import java.util.TreeMap;
 
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 
 /**
  * Handles the holes inside data segments. Exists only 1 hole segment per data-segment even if multiple data-files are configured.
@@ -38,14 +39,23 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
  * = 12 bytes<br/>
  */
 public class ODataLocalHole extends OSingleFileSegment {
-	private static final int														DEF_START_SIZE			= 262144;
-	private static final int														RECORD_SIZE					= 12;
-	private int																					maxHoleSize					= -1;
+	private static final int														DEF_START_SIZE						= 262144;
+	private static final int														RECORD_SIZE								= 12;
+	private int																					maxHoleSize								= -1;
 
-	private final List<ODataHoleInfo>										availableHolesList	= new ArrayList<ODataHoleInfo>();
-	private final TreeMap<ODataHoleInfo, ODataHoleInfo>	availableHoles			= new TreeMap<ODataHoleInfo, ODataHoleInfo>();
-	private final List<Integer>													freeHoles						= new ArrayList<Integer>();
-	private final static ODataHoleInfo									cursor							= new ODataHoleInfo();
+	private final List<Integer>													freeHoles									= new ArrayList<Integer>();
+	private final static ODataHoleInfo									cursorFrom								= new ODataHoleInfo();
+	private final static ODataHoleInfo									cursorTo									= new ODataHoleInfo();
+
+	private final List<ODataHoleInfo>										availableHolesList				= new ArrayList<ODataHoleInfo>();
+	private final TreeMap<ODataHoleInfo, ODataHoleInfo>	availableHolesBySize			= new TreeMap<ODataHoleInfo, ODataHoleInfo>();
+	private final TreeMap<ODataHoleInfo, ODataHoleInfo>	availableHolesByPosition	= new TreeMap<ODataHoleInfo, ODataHoleInfo>(
+																																										new Comparator<ODataHoleInfo>() {
+																																											public int compare(final ODataHoleInfo o1,
+																																													final ODataHoleInfo o2) {
+																																												return (int) (o1.dataOffset - o2.dataOffset);
+																																											}
+																																										});
 
 	private final String																PROFILER_DATA_RECYCLED_COMPLETE;
 	private final String																PROFILER_DATA_RECYCLED_PARTIAL;
@@ -92,7 +102,8 @@ public class ODataLocalHole extends OSingleFileSegment {
 			hole = new ODataHoleInfo(iRecordSize, iRecordOffset, recycledPosition);
 			availableHolesList.add(hole);
 			file.allocateSpace(RECORD_SIZE);
-			availableHoles.put(hole, hole);
+			availableHolesBySize.put(hole, hole);
+			availableHolesByPosition.put(hole, hole);
 		}
 
 		if (maxHoleSize < iRecordSize)
@@ -102,6 +113,12 @@ public class ODataLocalHole extends OSingleFileSegment {
 		final long p = recycledPosition * RECORD_SIZE;
 		file.writeLong(p, iRecordOffset);
 		file.writeInt(p + OConstants.SIZE_LONG, iRecordSize);
+	}
+
+	public SortedMap<ODataHoleInfo, ODataHoleInfo> getCloserHole(final long iPosition, final int iRange) {
+		cursorFrom.dataOffset = iPosition - iRange;
+		cursorTo.dataOffset = iPosition + iRange;
+		return availableHolesByPosition.subMap(cursorFrom, cursorTo);
 	}
 
 	/**
@@ -118,11 +135,11 @@ public class ODataLocalHole extends OSingleFileSegment {
 
 		final long timer = OProfiler.getInstance().startChrono();
 
-		if (availableHoles.size() > 0) {
-			cursor.size = iRecordSize;
+		if (availableHolesBySize.size() > 0) {
+			cursorFrom.size = iRecordSize;
 
 			// SEARCH THE HOLE WITH THE SAME SIZE
-			ODataHoleInfo hole = availableHoles.get(cursor);
+			ODataHoleInfo hole = availableHolesBySize.get(cursorFrom);
 			if (hole != null && hole.size == iRecordSize) {
 				// PERFECT MATCH: DELETE THE HOLE
 				OProfiler.getInstance().stopChrono(PROFILER_DATA_RECYCLED_COMPLETE, timer);
@@ -132,7 +149,7 @@ public class ODataLocalHole extends OSingleFileSegment {
 			}
 
 			// TRY WITH THE BIGGEST HOLE
-			hole = availableHoles.lastKey();
+			hole = availableHolesBySize.lastKey();
 			if (hole.size > iRecordSize + ODataLocal.RECORD_FIX_SIZE + 50) {
 				// GOOD MATCH SINCE THE HOLE IS BIG ENOUGH ALSO FOR ANOTHER RECORD: UPDATE THE HOLE WITH THE DIFFERENCE
 				final long pos = hole.dataOffset;
@@ -148,18 +165,16 @@ public class ODataLocalHole extends OSingleFileSegment {
 	}
 
 	/**
-	 * Fills the hols information into OPhysicalPosition object given as parameter.
+	 * Fills the holes information into OPhysicalPosition object given as parameter.
 	 * 
 	 * @return true, if it's a valid hole, otherwise false
 	 * @throws IOException
 	 */
-	public boolean getHole(final int iPosition, final OPhysicalPosition iPPosition) {
+	public ODataHoleInfo getHole(final int iPosition) {
 		final ODataHoleInfo hole = availableHolesList.get(iPosition);
 		if (hole.dataOffset == -1)
-			return false;
-		iPPosition.dataPosition = hole.dataOffset;
-		iPPosition.recordSize = hole.size;
-		return true;
+			return null;
+		return hole;
 	}
 
 	/**
@@ -172,10 +187,14 @@ public class ODataLocalHole extends OSingleFileSegment {
 	public void updateHole(int iHolePosition, final long iNewDataPosition, final int iNewRecordSize) throws IOException {
 		// IN MEMORY
 		final ODataHoleInfo hole = availableHolesList.get(iHolePosition);
-		availableHoles.remove(hole);
+		availableHolesBySize.remove(hole);
+		availableHolesByPosition.remove(hole);
+
 		hole.dataOffset = iNewDataPosition;
 		hole.size = iNewRecordSize;
-		availableHoles.put(hole, hole);
+
+		availableHolesBySize.put(hole, hole);
+		availableHolesByPosition.put(hole, hole);
 
 		// TO FILE
 		iHolePosition = iHolePosition * RECORD_SIZE;
@@ -194,7 +213,8 @@ public class ODataLocalHole extends OSingleFileSegment {
 		// IN MEMORY
 		final ODataHoleInfo hole = availableHolesList.get(iHolePosition);
 		hole.dataOffset = -1;
-		availableHoles.remove(hole);
+		availableHolesBySize.remove(hole);
+		availableHolesByPosition.remove(hole);
 		freeHoles.add(iHolePosition);
 
 		// TO FILE
@@ -220,7 +240,8 @@ public class ODataLocalHole extends OSingleFileSegment {
 			if (dataOffset == -1)
 				freeHoles.add(pos);
 			else {
-				availableHoles.put(hole, hole);
+				availableHolesBySize.put(hole, hole);
+				availableHolesByPosition.put(hole, hole);
 
 				if (maxHoleSize < recordSize)
 					maxHoleSize = recordSize;

@@ -715,14 +715,14 @@ public class OStorageLocal extends OStorageEmbedded {
 	}
 
 	/**
-	 * Returns the list of holes as pair of position & ppos
+	 * Returns the list of holes as pair of position & ODataHoleInfo
 	 * 
 	 * @throws IOException
 	 */
-	public List<OPhysicalPosition> getHolesList() {
+	public List<ODataHoleInfo> getHolesList() {
 		final boolean locked = lock.acquireSharedLock();
 		try {
-			final List<OPhysicalPosition> holes = new ArrayList<OPhysicalPosition>();
+			final List<ODataHoleInfo> holes = new ArrayList<ODataHoleInfo>();
 			for (ODataLocal d : dataSegments) {
 				holes.addAll(d.getHolesList());
 			}
@@ -759,11 +759,11 @@ public class OStorageLocal extends OStorageEmbedded {
 	public long getHoleSize() {
 		final boolean locked = lock.acquireSharedLock();
 		try {
-			final List<OPhysicalPosition> holes = getHolesList();
+			final List<ODataHoleInfo> holes = getHolesList();
 			long size = 0;
-			for (OPhysicalPosition h : holes) {
-				if (h.dataPosition > -1 && h.recordSize > 0)
-					size += h.recordSize;
+			for (ODataHoleInfo h : holes) {
+				if (h.dataOffset > -1 && h.size > 0)
+					size += h.size;
 			}
 			return size;
 
