@@ -47,7 +47,7 @@ import com.orientechnologies.common.profiler.OProfiler;
 public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavigableMap<K, V>, Cloneable, java.io.Serializable {
 	protected OMVRBTreeEventListener<K, V>		listener;
 	boolean																		pageItemFound				= false;
-	int																				pageItemComparator	= 0;
+	protected int															pageItemComparator	= 0;
 	protected volatile int										pageIndex						= -1;
 	protected int															lastPageSize				= 63;		// PERSISTENT FIELDS
 
@@ -311,6 +311,16 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		if (key == null)
 			return OMVRBTreeThreadLocal.INSTANCE.push(key, null);
 
+		// 1^ CHANCE - TRY TO SEE IF LAST USED NODE IS GOOD: THIS IS VERY COMMON CASE ON INSERTION WITH AN INCREMENTING KEY
+//		OMVRBTreeEntry<K, V> entry = OMVRBTreeThreadLocal.INSTANCE.getLatest();
+//		if (entry != null && entry.getSize() > 0) {
+//			final Comparable k = (Comparable) key;
+//			if (k.compareTo(entry.getFirstKey()) >= 0)
+//				if (k.compareTo(entry.getLastKey()) <= 0 || successor(entry) == null) {
+//					return entry;
+//				}
+//		}
+
 		pageItemFound = false;
 
 		// Off-load comparator-based version for sake of performance
@@ -389,8 +399,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 					return OMVRBTreeThreadLocal.INSTANCE.push(key, lastNode);
 
 				// NOT FOUND
-				OMVRBTreeThreadLocal.INSTANCE.push(key, lastNode);
-				return null;
+				return OMVRBTreeThreadLocal.INSTANCE.push(key, null);
 			}
 		} finally {
 			checkTreeStructure(p);
@@ -565,8 +574,6 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 			if (parentNode == null)
 				// SEARCH THE ITEM
 				parentNode = getEntry(key, true);
-			else
-				OMVRBTreeThreadLocal.INSTANCE.reset();
 
 			// System.out.println("Parent node: " + parentNode+", pageItemFound="+pageItemFound);
 

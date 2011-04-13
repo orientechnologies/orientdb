@@ -48,4 +48,11 @@ public class OMVRBTreeThreadLocal extends ThreadLocal<Object[]> {
 		value[0] = null;
 		value[1] = null;
 	}
+
+	public <RET extends OMVRBTreeEntry<?, ?>> RET getLatest() {
+		final Object[] value = get();
+		if (value != null && value[1] != null)
+			return (RET) value[1];
+		return null;
+	}
 }

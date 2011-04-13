@@ -667,17 +667,22 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 	@SuppressWarnings("unchecked")
 	@Override
 	protected OMVRBTreeEntry<K, V> getBestEntryPoint(final Object iKey) {
-		if (entryPoints.size() == 0)
+		final Comparable<? super K> key = (Comparable<? super K>) iKey;
+
+		OMVRBTreeEntryPersistent<K, V> bestNode = null;
+		int entryPointSize = entryPoints.size();
+
+		if (entryPointSize == 0)
 			// TREE EMPTY: RETURN ROOT
 			return root;
 
-		final Comparable<? super K> key = (Comparable<? super K>) iKey;
+		// 2^ CHANCE - TRY TO SEE IF LAST ENTRYPOINT IS GOOD: THIS IS VERY COMMON CASE ON INSERTION WITH AN INCREMENTING KEY
+		OMVRBTreeEntryPersistent<K, V> e = entryPoints.get(entryPointSize - 1);
+		int cmp = key.compareTo(e.getFirstKey());
+		if (cmp <= 0)
+			return e;
 
-		// SEARCH THE BEST KEY
-		OMVRBTreeEntryPersistent<K, V> e;
-		int entryPointSize = entryPoints.size();
-		int cmp;
-		OMVRBTreeEntryPersistent<K, V> bestNode = null;
+		// SEARCH THE CLOSEST KEY
 		if (entryPointSize < OMVRBTreeEntry.BINARY_SEARCH_THRESHOLD) {
 			// LINEAR SEARCH
 			for (int i = 0; i < entryPointSize; ++i) {

@@ -255,6 +255,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 			serializedValues = null;
 			pTree = null;
 			record = null;
+			size = 0;
 		}
 
 		// DISCONNECT FROM THE PARENT
