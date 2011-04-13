@@ -70,7 +70,7 @@ public class OStringParser {
 	}
 
 	public static String[] getWords(String iRecord, final String iSeparatorChars, final boolean iIncludeStringSep) {
-		return getWords(iRecord, iSeparatorChars, " \n\r", iIncludeStringSep);
+		return getWords(iRecord, iSeparatorChars, " \n\r\t", iIncludeStringSep);
 	}
 
 	public static String[] getWords(String iText, final String iSeparatorChars, final String iJumpChars,
