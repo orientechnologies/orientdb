@@ -88,8 +88,7 @@ public class ODistributedServerDiscoverySignaler extends OPollerThread {
 
 	@Override
 	protected void execute() throws Exception {
-		OLogManager.instance().warn(this, "Discovering distributed server nodes using IP Multicast with address %s, port %d...",
-				dgram.getAddress(), dgram.getPort());
+		OLogManager.instance().warn(this, "Discovering servers using IP Multicast on %s:%d...", dgram.getAddress(), dgram.getPort());
 
 		try {
 			socket.send(dgram);
