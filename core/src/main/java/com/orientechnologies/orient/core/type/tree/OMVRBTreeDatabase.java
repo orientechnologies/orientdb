@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
+import com.orientechnologies.common.collection.OMVRBTreeThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -137,6 +138,7 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> implement
 		record = (ORecordBytesLazy) record.load();
 		record.recycle(this);
 		fromStream(record.toStream());
+		OMVRBTreeThreadLocal.INSTANCE.reset();
 		return this;
 	}
 

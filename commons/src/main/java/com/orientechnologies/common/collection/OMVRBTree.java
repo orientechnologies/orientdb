@@ -309,13 +309,13 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
 	final OMVRBTreeEntry<K, V> getEntry(final Object key, final boolean iGetContainer) {
 		if (key == null)
-			return null;
+			return OMVRBTreeThreadLocal.INSTANCE.push(key, null);
 
 		pageItemFound = false;
 
 		// Off-load comparator-based version for sake of performance
 		if (comparator != null)
-			return getEntryUsingComparator(key, iGetContainer);
+			return OMVRBTreeThreadLocal.INSTANCE.push(key, getEntryUsingComparator(key, iGetContainer));
 
 		OMVRBTreeEntry<K, V> p = getBestEntryPoint(key);
 
@@ -324,7 +324,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		checkTreeStructure(p);
 
 		if (p == null)
-			return null;
+			return OMVRBTreeThreadLocal.INSTANCE.push(key, null);
 
 		OMVRBTreeEntry<K, V> lastNode = p;
 		OMVRBTreeEntry<K, V> prevNode = null;
@@ -349,7 +349,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 					pageIndex = 0;
 					pageItemFound = true;
 					pageItemComparator = 0;
-					return p;
+					return OMVRBTreeThreadLocal.INSTANCE.push(key, p);
 				}
 
 				pageItemComparator = k.compareTo(p.getLastKey());
@@ -386,9 +386,10 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 				final V value = lastNode.search(k);
 				if (value != null || iGetContainer)
 					// FOUND: RETURN CURRENT NODE OR AT LEAST THE CONTAINER NODE
-					return lastNode;
+					return OMVRBTreeThreadLocal.INSTANCE.push(key, lastNode);
 
 				// NOT FOUND
+				OMVRBTreeThreadLocal.INSTANCE.push(key, lastNode);
 				return null;
 			}
 		} finally {
@@ -397,7 +398,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 			OProfiler.getInstance().updateStat("[OMVRBTree.getEntry] Steps of search", steps);
 		}
 
-		return null;
+		return OMVRBTreeThreadLocal.INSTANCE.push(key, null);
 	}
 
 	/**
@@ -560,8 +561,12 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
 			// System.out.println("Put of key " + key + "...");
 
-			// SEARCH THE ITEM
-			parentNode = getEntry(key, true);
+			parentNode = OMVRBTreeThreadLocal.INSTANCE.search(key);
+			if (parentNode == null)
+				// SEARCH THE ITEM
+				parentNode = getEntry(key, true);
+			else
+				OMVRBTreeThreadLocal.INSTANCE.reset();
 
 			// System.out.println("Parent node: " + parentNode+", pageItemFound="+pageItemFound);
 
