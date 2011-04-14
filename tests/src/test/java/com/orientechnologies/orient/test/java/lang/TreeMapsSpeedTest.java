@@ -17,8 +17,6 @@ package com.orientechnologies.orient.test.java.lang;
 
 import java.util.TreeMap;
 
-import junit.framework.Assert;
-
 import com.orientechnologies.common.collection.OMVRBTreeMemory;
 
 public class TreeMapsSpeedTest {
