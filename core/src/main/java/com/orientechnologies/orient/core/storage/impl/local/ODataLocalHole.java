@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.SortedMap;
 import java.util.TreeMap;
 
 import com.orientechnologies.common.profiler.OProfiler;
@@ -44,8 +43,7 @@ public class ODataLocalHole extends OSingleFileSegment {
 	private int																					maxHoleSize								= -1;
 
 	private final List<Integer>													freeHoles									= new ArrayList<Integer>();
-	private final static ODataHoleInfo									cursorFrom								= new ODataHoleInfo();
-	private final static ODataHoleInfo									cursorTo									= new ODataHoleInfo();
+	private final static ODataHoleInfo									cursor										= new ODataHoleInfo();
 
 	private final List<ODataHoleInfo>										availableHolesList				= new ArrayList<ODataHoleInfo>();
 	private final TreeMap<ODataHoleInfo, ODataHoleInfo>	availableHolesBySize			= new TreeMap<ODataHoleInfo, ODataHoleInfo>();
@@ -102,9 +100,10 @@ public class ODataLocalHole extends OSingleFileSegment {
 			hole = new ODataHoleInfo(iRecordSize, iRecordOffset, recycledPosition);
 			availableHolesList.add(hole);
 			file.allocateSpace(RECORD_SIZE);
-			availableHolesBySize.put(hole, hole);
-			availableHolesByPosition.put(hole, hole);
 		}
+
+		availableHolesBySize.put(hole, hole);
+		availableHolesByPosition.put(hole, hole);
 
 		if (maxHoleSize < iRecordSize)
 			maxHoleSize = iRecordSize;
@@ -115,10 +114,34 @@ public class ODataLocalHole extends OSingleFileSegment {
 		file.writeInt(p + OConstants.SIZE_LONG, iRecordSize);
 	}
 
-	public SortedMap<ODataHoleInfo, ODataHoleInfo> getCloserHole(final long iPosition, final int iRange) {
-		cursorFrom.dataOffset = iPosition - iRange;
-		cursorTo.dataOffset = iPosition + iRange;
-		return availableHolesByPosition.subMap(cursorFrom, cursorTo);
+	public ODataHoleInfo getCloserHole(final long iHolePosition, final int iHoleSize, final long iLowerRange, final long iHigherRange) {
+		cursor.dataOffset = iHolePosition;
+		ODataHoleInfo lowerHole = availableHolesByPosition.lowerKey(cursor);
+
+		cursor.dataOffset = iHolePosition + iHoleSize;
+		ODataHoleInfo higherHole = availableHolesByPosition.higherKey(cursor);
+
+		final ODataHoleInfo closestHole;
+		if (lowerHole != null && lowerHole.dataOffset < iLowerRange)
+			// OUT OF RANGE: INVALID IT
+			lowerHole = null;
+
+		if (higherHole != null && higherHole.dataOffset > iHigherRange)
+			// OUT OF RANGE: INVALID IT
+			higherHole = null;
+
+		if (lowerHole == higherHole)
+			closestHole = higherHole;
+		else if (lowerHole == null && higherHole != null)
+			closestHole = higherHole;
+		else if (lowerHole != null && higherHole == null)
+			closestHole = lowerHole;
+		else if (iHolePosition - (lowerHole.dataOffset + lowerHole.size) > higherHole.dataOffset - iHolePosition)
+			closestHole = higherHole;
+		else
+			closestHole = lowerHole;
+
+		return closestHole;
 	}
 
 	/**
@@ -136,10 +159,10 @@ public class ODataLocalHole extends OSingleFileSegment {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		if (availableHolesBySize.size() > 0) {
-			cursorFrom.size = iRecordSize;
+			cursor.size = iRecordSize;
 
 			// SEARCH THE HOLE WITH THE SAME SIZE
-			ODataHoleInfo hole = availableHolesBySize.get(cursorFrom);
+			ODataHoleInfo hole = availableHolesBySize.get(cursor);
 			if (hole != null && hole.size == iRecordSize) {
 				// PERFECT MATCH: DELETE THE HOLE
 				OProfiler.getInstance().stopChrono(PROFILER_DATA_RECYCLED_COMPLETE, timer);
@@ -154,7 +177,7 @@ public class ODataLocalHole extends OSingleFileSegment {
 				// GOOD MATCH SINCE THE HOLE IS BIG ENOUGH ALSO FOR ANOTHER RECORD: UPDATE THE HOLE WITH THE DIFFERENCE
 				final long pos = hole.dataOffset;
 				OProfiler.getInstance().stopChrono(PROFILER_DATA_RECYCLED_PARTIAL, timer);
-				updateHole(hole.holeOffset, hole.dataOffset + iRecordSize, hole.size - iRecordSize);
+				updateHole(hole, hole.dataOffset + iRecordSize, hole.size - iRecordSize);
 				return pos;
 			}
 		}
@@ -184,22 +207,21 @@ public class ODataLocalHole extends OSingleFileSegment {
 	 * 
 	 * @throws IOException
 	 */
-	public void updateHole(int iHolePosition, final long iNewDataPosition, final int iNewRecordSize) throws IOException {
+	public void updateHole(final ODataHoleInfo iHole, final long iNewDataPosition, final int iNewRecordSize) throws IOException {
 		// IN MEMORY
-		final ODataHoleInfo hole = availableHolesList.get(iHolePosition);
-		availableHolesBySize.remove(hole);
-		availableHolesByPosition.remove(hole);
+		availableHolesBySize.remove(iHole);
+		availableHolesByPosition.remove(iHole);
 
-		hole.dataOffset = iNewDataPosition;
-		hole.size = iNewRecordSize;
+		iHole.dataOffset = iNewDataPosition;
+		iHole.size = iNewRecordSize;
 
-		availableHolesBySize.put(hole, hole);
-		availableHolesByPosition.put(hole, hole);
+		availableHolesBySize.put(iHole, iHole);
+		availableHolesByPosition.put(iHole, iHole);
 
 		// TO FILE
-		iHolePosition = iHolePosition * RECORD_SIZE;
-		file.writeLong(iHolePosition, iNewDataPosition);
-		file.writeInt(iHolePosition + OConstants.SIZE_LONG, iNewRecordSize);
+		final long holePosition = iHole.holeOffset * RECORD_SIZE;
+		file.writeLong(holePosition, iNewDataPosition);
+		file.writeInt(holePosition + OConstants.SIZE_LONG, iNewRecordSize);
 	}
 
 	/**
@@ -212,9 +234,9 @@ public class ODataLocalHole extends OSingleFileSegment {
 	public void deleteHole(int iHolePosition) throws IOException {
 		// IN MEMORY
 		final ODataHoleInfo hole = availableHolesList.get(iHolePosition);
-		hole.dataOffset = -1;
 		availableHolesBySize.remove(hole);
 		availableHolesByPosition.remove(hole);
+		hole.dataOffset = -1;
 		freeHoles.add(iHolePosition);
 
 		// TO FILE
