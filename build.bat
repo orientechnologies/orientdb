@@ -1,6 +1,6 @@
 @REM 
 @REM  Copyright (c) 1999-2011 Luca Garulli
 @REM 
-call ant -f build.xml
+call ant
 
 pause
