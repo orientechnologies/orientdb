@@ -25,8 +25,9 @@ package com.orientechnologies.common.collection;
 public class OMVRBTreeThreadLocal extends ThreadLocal<Object[]> {
 	public static OMVRBTreeThreadLocal	INSTANCE	= new OMVRBTreeThreadLocal();
 
-	public OMVRBTreeThreadLocal() {
-		set(new Object[] { null, null });
+	@Override
+	protected Object[] initialValue() {
+		return new Object[] { null, null };
 	}
 
 	public <RET extends OMVRBTreeEntry<?, ?>> RET push(final Object iKey, final OMVRBTreeEntry<?, ?> iValue) {
