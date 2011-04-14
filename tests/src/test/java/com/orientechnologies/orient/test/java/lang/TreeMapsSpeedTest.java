@@ -42,7 +42,9 @@ public class TreeMapsSpeedTest {
 		timer = System.currentTimeMillis();
 
 		for (int i = 0; i < MAX; ++i) {
-			Assert.assertSame(orientTreeMap.get(i), DUMMY);
+			if (orientTreeMap.get(i) != DUMMY) {
+				System.out.println("Error in map content");
+			}
 		}
 
 		System.out.println("OrientDB Tree Map read: " + (System.currentTimeMillis() - timer - fixed));
@@ -62,7 +64,9 @@ public class TreeMapsSpeedTest {
 		timer = System.currentTimeMillis();
 
 		for (int i = 0; i < MAX; ++i) {
-			Assert.assertSame(javaTreeMap.get(i), DUMMY);
+			if (javaTreeMap.get(i) != DUMMY) {
+				System.out.println("Error in map content");
+			}
 		}
 
 		System.out.println("Java Tree Map read: " + (System.currentTimeMillis() - timer - fixed));
