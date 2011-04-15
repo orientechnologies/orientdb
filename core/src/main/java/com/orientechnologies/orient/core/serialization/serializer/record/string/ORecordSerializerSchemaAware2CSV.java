@@ -54,8 +54,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 	}
 
 	@Override
-	protected String toString(ORecordInternal<?> iRecord, final String iFormat, final OUserObject2RecordHandler iObjHandler,
-			final Set<Integer> iMarshalledRecords) {
+	protected StringBuilder toString(ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat,
+			final OUserObject2RecordHandler iObjHandler, final Set<Integer> iMarshalledRecords) {
 		if (!(iRecord instanceof ODocument))
 			throw new OSerializationException("Can't marshall a record of type " + iRecord.getClass().getSimpleName() + " to CSV");
 
@@ -65,18 +65,16 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 		final Integer identityRecord = System.identityHashCode(record);
 		if (iMarshalledRecords != null)
 			if (iMarshalledRecords.contains(identityRecord)) {
-				return "";
+				return iOutput;
 			} else
 				iMarshalledRecords.add(identityRecord);
 
-		ODatabaseRecord database = record.getDatabase();
-
-		final StringBuilder buffer = new StringBuilder();
+		final ODatabaseRecord database = record.getDatabase();
 
 		if (record.getClassName() != null) {
 			// MARSHALL THE CLASSNAME
-			buffer.append(record.getClassName());
-			buffer.append(OStringSerializerHelper.CLASS_SEPARATOR);
+			iOutput.append(record.getClassName());
+			iOutput.append(OStringSerializerHelper.CLASS_SEPARATOR);
 		}
 
 		OProperty prop;
@@ -90,7 +88,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 		// MARSHALL ALL THE CONFIGURED FIELDS
 		for (Entry<String, Object> f : record) {
 			if (i > 0)
-				buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
+				iOutput.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
 			// SEARCH FOR A CONFIGURED PROPERTY
 			prop = record.getSchemaClass() != null ? record.getSchemaClass().getProperty(f.getKey()) : null;
@@ -229,13 +227,10 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 			if (type == null)
 				type = OType.EMBEDDED;
 
-			fieldValue = fieldToStream((ODocument) iRecord, iRecord.getDatabase(), iObjHandler, type, linkedClass, linkedType,
-					f.getKey(), f.getValue(), iMarshalledRecords, true);
-
-			buffer.append(f.getKey());
-			buffer.append(FIELD_VALUE_SEPARATOR);
-			if (fieldValue != null)
-				buffer.append(fieldValue);
+			iOutput.append(f.getKey());
+			iOutput.append(FIELD_VALUE_SEPARATOR);
+			fieldToStream((ODocument) iRecord, iRecord.getDatabase(), iOutput, iObjHandler, type, linkedClass, linkedType, f.getKey(),
+					f.getValue(), iMarshalledRecords, true);
 
 			i++;
 		}
@@ -255,25 +250,25 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 		final int newSize;
 		if (record.hasOwners())
 			// EMBEDDED: GET REAL SIZE
-			newSize = buffer.length();
-		else if (record.getSize() == buffer.length())
+			newSize = iOutput.length();
+		else if (record.getSize() == iOutput.length())
 			// IDENTICAL! DO NOTHING
 			newSize = record.getSize();
-		else if (record.getSize() > buffer.length()) {
+		else if (record.getSize() > iOutput.length()) {
 			// APPEND EXTRA SPACES TO FILL ALL THE AVAILABLE SPACE AND AVOID FRAGMENTATION
 			newSize = record.getSize();
 		} else if (overSize > 0) {
-			// APPEND EXTRA SPACES TO GET A LARGER BUFFER
-			newSize = (int) (buffer.length() * overSize);
+			// APPEND EXTRA SPACES TO GET A LARGER iOutput
+			newSize = (int) (iOutput.length() * overSize);
 		} else
 			// NO OVERSIZE
-			newSize = buffer.length();
+			newSize = iOutput.length();
 
-		if (newSize > buffer.length())
-			for (int b = buffer.length(); b < newSize; ++b)
-				buffer.append(' ');
+		if (newSize > iOutput.length())
+			for (int b = iOutput.length(); b < newSize; ++b)
+				iOutput.append(' ');
 
-		return buffer.toString();
+		return iOutput;
 	}
 
 	private String getClassName(final Object iValue) {

@@ -135,7 +135,7 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 				refs = map.get(word);
 				if (refs == null)
 					// WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
-					refs = new ORecordLazySet(configuration.getDatabase(), ODocument.RECORD_TYPE);
+					refs = new ORecordLazySet(configuration.getDatabase());
 
 				// ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
 				refs.add(iSingleValue);

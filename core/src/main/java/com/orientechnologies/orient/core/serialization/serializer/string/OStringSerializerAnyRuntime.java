@@ -51,9 +51,13 @@ public class OStringSerializerAnyRuntime implements OStringSerializer {
 		return null;
 	}
 
-	public String toStream(final ODatabaseComplex<?> iDatabase, Object iObject) {
-		if (iObject == null)
-			return "";
-		return iObject.getClass().getName() + OStreamSerializerHelper.SEPARATOR + iObject;
+	public StringBuilder toStream(final ODatabaseComplex<?> iDatabase, final StringBuilder iOutput, Object iObject) {
+		if (iObject != null) {
+			iOutput.append(iObject.getClass().getName());
+			iOutput.append(OStreamSerializerHelper.SEPARATOR);
+			iOutput.append(iObject.toString());
+		}
+
+		return iOutput;
 	}
 }

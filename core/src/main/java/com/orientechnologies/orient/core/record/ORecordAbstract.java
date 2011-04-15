@@ -186,7 +186,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	}
 
 	public String toJSON(final String iFormat) {
-		return ORecordSerializerJSON.INSTANCE.toString(this, iFormat);
+		return ORecordSerializerJSON.INSTANCE.toString(this, new StringBuilder(), iFormat).toString();
 	}
 
 	@Override

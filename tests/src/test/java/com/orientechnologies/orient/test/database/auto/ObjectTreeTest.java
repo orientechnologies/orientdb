@@ -134,12 +134,11 @@ public class ObjectTreeTest {
 
 		Assert.assertEquals(result.size(), 1);
 
-		Collection<ODocument> followers;
 		for (ODocument profile : result) {
 
 			System.out.println(profile.field("name") + " " + profile.field("surname"));
 
-			followers = profile.field("followers");
+			final Collection<ODocument> followers = profile.field("followers");
 
 			if (followers != null) {
 				for (ODocument follower : followers) {

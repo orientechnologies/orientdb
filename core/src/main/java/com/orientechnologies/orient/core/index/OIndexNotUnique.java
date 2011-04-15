@@ -39,7 +39,7 @@ public class OIndexNotUnique extends OIndexMVRBTreeAbstract {
 		try {
 			Set<OIdentifiable> values = map.get(iKey);
 			if (values == null)
-				values = new ORecordLazySet(configuration.getDatabase(), ODocument.RECORD_TYPE);
+				values = new ORecordLazySet(configuration.getDatabase());
 
 			if (!iSingleValue.getIdentity().isValid())
 				iSingleValue.save();

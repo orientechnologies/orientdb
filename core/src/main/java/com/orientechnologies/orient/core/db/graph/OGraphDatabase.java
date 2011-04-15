@@ -348,7 +348,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 				return Collections.emptySet();
 
 		// FILTER BY LABEL
-		final ORecordLazySet result = new ORecordLazySet(underlying, ODocument.RECORD_TYPE);
+		final ORecordLazySet result = new ORecordLazySet(underlying);
 		if (set != null)
 			for (OIdentifiable item : set) {
 				if (iLabel == null || iLabel.equals(((ODocument) item).field(LABEL)))
@@ -376,7 +376,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 				return Collections.emptySet();
 
 		// FILTER BY LABEL
-		final ORecordLazySet result = new ORecordLazySet(underlying, ODocument.RECORD_TYPE);
+		final ORecordLazySet result = new ORecordLazySet(underlying);
 		if (set != null)
 			for (OIdentifiable item : set) {
 				if (iLabel == null || iLabel.equals(((ODocument) item).field(LABEL)))

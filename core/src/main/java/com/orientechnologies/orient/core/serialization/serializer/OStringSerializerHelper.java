@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -137,64 +136,6 @@ public abstract class OStringSerializerHelper {
 			// RECORD
 			final String value = (String) iValue;
 			return ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedMapFromStream(iDocument, null, value);
-		}
-
-		throw new IllegalArgumentException("Type " + iType + " not supported to convert value: " + iValue);
-	}
-
-	public static String fieldTypeToString(final ODatabaseComplex<?> iDatabase, OType iType, final Object iValue) {
-		if (iValue == null)
-			return null;
-
-		if (iType == null)
-			iType = OType.EMBEDDED;
-
-		switch (iType) {
-		case STRING:
-			return "\"" + encode(iValue.toString()) + "\"";
-
-		case INTEGER:
-		case FLOAT:
-		case LONG:
-		case DOUBLE:
-		case SHORT:
-		case BOOLEAN:
-			return String.valueOf(iValue);
-
-		case BYTE:
-			if (iValue instanceof Character)
-				return String.valueOf((int) ((Character) iValue).charValue());
-			else if (iValue instanceof String)
-				return String.valueOf((int) ((String) iValue).charAt(0));
-			else
-				return String.valueOf(iValue);
-
-		case BINARY:
-			final String str;
-			if (iValue instanceof Byte)
-				str = new String(new byte[] { ((Byte) iValue).byteValue() });
-			else
-				str = OBase64Utils.encodeBytes((byte[]) iValue);
-			return "\"" + str + "\"";
-
-		case DATE:
-			if (iValue instanceof Date)
-				return String.valueOf(((Date) iValue).getTime());
-			else
-				return String.valueOf(iValue);
-
-		case LINK:
-			if (iValue instanceof ORID)
-				return iValue.toString();
-			else
-				return ((ORecord<?>) iValue).getIdentity().toString();
-
-		case EMBEDDEDMAP:
-			return ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedMapToStream(iDatabase, null, null, null, iValue, null, true);
-
-		case EMBEDDED:
-			// RECORD
-			return OStringSerializerAnyStreamable.INSTANCE.toStream(iDatabase, iValue);
 		}
 
 		throw new IllegalArgumentException("Type " + iType + " not supported to convert value: " + iValue);
@@ -486,33 +427,48 @@ public abstract class OStringSerializerHelper {
 	 * @return Modified string if needed, otherwise the same input object
 	 * @see OStringSerializerHelper#decode(String)
 	 */
-	public static String encode(final String iText) {
+	public static StringBuilder encode(final String iText) {
+		return encode(new StringBuilder(), iText);
+	}
+
+	/**
+	 * Transforms, only if needed, the source string escaping the characters \ and ".
+	 * 
+	 * @param iText
+	 *          Input String
+	 * @return Modified string if needed, otherwise the same input object
+	 * @see OStringSerializerHelper#decode(String)
+	 */
+	public static StringBuilder encode(final StringBuilder iOutput, final String iText) {
 		int pos = -1;
 
-		for (int i = 0; i < iText.length(); ++i)
-			if (iText.charAt(i) == '"' || iText.charAt(i) == '\\' || iText.charAt(i) == '\'') {
+		final int begin = iOutput.length();
+		iOutput.append(iText);
+
+		final int newSize = iOutput.length();
+		for (int i = begin; i < newSize; ++i) {
+			final char c = iOutput.charAt(i);
+
+			if (c == '"' || c == '\\' || c == '\'') {
 				pos = i;
 				break;
 			}
+		}
 
-		if (pos == -1)
-			// NOT FOUND, RETURN THE SAME STRING (AVOID COPIES)
-			return iText;
+		if (pos > -1) {
+			// CHANGE THE INPUT STRING
+			char c;
+			for (int i = pos; i < iOutput.length(); ++i) {
+				c = iOutput.charAt(i);
 
-		// CHANGE THE INPUT STRING
-		final StringBuilder buffer = new StringBuilder(iText);
-
-		char c;
-		for (int i = pos; i < buffer.length(); ++i) {
-			c = buffer.charAt(i);
-
-			if (c == '"' || c == '\\' || c == '\'') {
-				buffer.insert(i, '\\');
-				++i;
+				if (c == '"' || c == '\\' || c == '\'') {
+					iOutput.insert(i, '\\');
+					++i;
+				}
 			}
 		}
 
-		return buffer.toString();
+		return iOutput;
 	}
 
 	/**

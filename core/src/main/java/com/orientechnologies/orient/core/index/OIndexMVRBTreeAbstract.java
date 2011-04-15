@@ -232,7 +232,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 			if (subSet == null)
 				return ORecordLazySet.EMPTY_SET;
 
-			final Set<OIdentifiable> result = new ORecordLazySet(configuration.getDatabase(), ODocument.RECORD_TYPE);
+			final Set<OIdentifiable> result = new ORecordLazySet(configuration.getDatabase());
 			for (Set<OIdentifiable> v : subSet.values()) {
 				result.addAll(v);
 			}
@@ -544,7 +544,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 					Set<OIdentifiable> set = map.get(key);
 					if (set != null) {
 						// RE-ADD ALL THE ITEM TO UPDATE THE HASHCODE (CHANGED AFTER SAVE+COMMIT)
-						final ORecordLazySet newSet = new ORecordLazySet(configuration.getDatabase(), ODocument.RECORD_TYPE);
+						final ORecordLazySet newSet = new ORecordLazySet(configuration.getDatabase());
 						newSet.addAll(set);
 						map.put(key, newSet);
 					}

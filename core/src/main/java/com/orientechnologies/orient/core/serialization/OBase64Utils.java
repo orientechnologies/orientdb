@@ -643,10 +643,34 @@ public class OBase64Utils {
 	 *           if source array is null
 	 * @since 1.4
 	 */
-	public static String encodeBytes(byte[] source) {
+	public static StringBuilder encodeBytes(final StringBuilder iOutput, final byte[] source) {
+		if (source != null) {
+			// Since we're not going to have the GZIP encoding turned on,
+			// we're not going to have an java.io.IOException thrown, so
+			// we should not force the user to have to catch it.
+			try {
+				iOutput.append(encodeBytes(source, 0, source.length, NO_OPTIONS));
+			} catch (java.io.IOException ex) {
+				assert false : ex.getMessage();
+			}
+		}
+		return iOutput;
+	}
+
+	/**
+	 * Encodes a byte array into Base64 notation. Does not GZip-compress data.
+	 * 
+	 * @param source
+	 *          The data to convert
+	 * @return The data in Base64-encoded form
+	 * @throws NullPointerException
+	 *           if source array is null
+	 * @since 1.4
+	 */
+	public static String encodeBytes(final byte[] source) {
 		if (source == null)
 			return null;
-		
+
 		// Since we're not going to have the GZIP encoding turned on,
 		// we're not going to have an java.io.IOException thrown, so
 		// we should not force the user to have to catch it.
@@ -776,8 +800,8 @@ public class OBase64Utils {
 	 *           if source array, offset, or length are invalid
 	 * @since 2.0
 	 */
-	public static String encodeBytes(byte[] source, int off, int len, int options) throws java.io.IOException {
-		byte[] encoded = encodeBytesToBytes(source, off, len, options);
+	public static String encodeBytes(final byte[] source, final int off, final int len, final int options) throws java.io.IOException {
+		final byte[] encoded = encodeBytesToBytes(source, off, len, options);
 
 		// Return value according to relevant encoding.
 		try {

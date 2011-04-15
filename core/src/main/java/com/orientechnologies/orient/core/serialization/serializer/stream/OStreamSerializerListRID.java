@@ -41,7 +41,8 @@ public class OStreamSerializerListRID implements OStreamSerializer {
 	public byte[] toStream(final ODatabaseRecord iDatabase, final Object iObject) throws IOException {
 		if (iObject == null)
 			return null;
-		return OBinaryProtocol.string2bytes(FORMAT.embeddedCollectionToStream(null, null, null, OType.LINK, iObject, null, true));
+		return OBinaryProtocol.string2bytes(FORMAT.embeddedCollectionToStream(null, null, new StringBuilder(), null, OType.LINK,
+				iObject, null, true).toString());
 	}
 
 	public String getName() {

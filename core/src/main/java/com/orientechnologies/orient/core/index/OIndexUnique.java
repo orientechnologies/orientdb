@@ -41,7 +41,7 @@ public class OIndexUnique extends OIndexMVRBTreeAbstract {
 			Set<OIdentifiable> values = map.get(iKey);
 
 			if (values == null)
-				values = new ORecordLazySet(configuration.getDatabase(), ODocument.RECORD_TYPE);
+				values = new ORecordLazySet(configuration.getDatabase());
 			else if (values.size() == 1) {
 				// CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
 				if (!values.contains(iSingleValue))

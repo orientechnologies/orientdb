@@ -38,14 +38,18 @@ import com.orientechnologies.orient.core.serialization.serializer.string.OString
 public abstract class ORecordSerializerStringAbstract implements ORecordSerializer {
 	private static final char	DECIMAL_SEPARATOR	= '.';
 
-	protected abstract String toString(final ORecordInternal<?> iRecord, final String iFormat,
+	protected abstract StringBuilder toString(final ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat,
 			final OUserObject2RecordHandler iObjHandler, final Set<Integer> iMarshalledRecords);
 
 	protected abstract ORecordInternal<?> fromString(final ODatabaseRecord iDatabase, final String iContent,
 			final ORecordInternal<?> iRecord);
 
-	public String toString(final ORecordInternal<?> iRecord, final String iFormat) {
-		return toString(iRecord, iFormat, iRecord.getDatabase(), OSerializationThreadLocal.INSTANCE.get());
+	public StringBuilder toString(final ORecordInternal<?> iRecord, final String iFormat) {
+		return toString(iRecord, new StringBuilder(), iFormat, iRecord.getDatabase(), OSerializationThreadLocal.INSTANCE.get());
+	}
+
+	public StringBuilder toString(final ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat) {
+		return toString(iRecord, iOutput, iFormat, iRecord.getDatabase(), OSerializationThreadLocal.INSTANCE.get());
 	}
 
 	public ORecordInternal<?> fromString(final ODatabaseRecord iDatabase, final String iSource) {
@@ -67,7 +71,8 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 		final long timer = OProfiler.getInstance().startChrono();
 
 		try {
-			return OBinaryProtocol.string2bytes(toString(iRecord, null, iDatabase, OSerializationThreadLocal.INSTANCE.get()));
+			return OBinaryProtocol.string2bytes(toString(iRecord, new StringBuilder(), null, iDatabase,
+					OSerializationThreadLocal.INSTANCE.get()).toString());
 		} finally {
 
 			OProfiler.getInstance().stopChrono("ORecordSerializerStringAbstract.toStream", timer);
@@ -170,6 +175,8 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 		if (iValue == null)
 			return;
 
+		final long timer = OProfiler.getInstance().startChrono();
+
 		if (iType == null)
 			iType = OType.EMBEDDED;
 
@@ -178,28 +185,41 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 			iBuffer.append('"');
 			iBuffer.append(OStringSerializerHelper.encode(iValue.toString()));
 			iBuffer.append('"');
+			OProfiler.getInstance().stopChrono("serializer.rec.str.string2string", timer);
 			break;
 
 		case BOOLEAN:
+			iBuffer.append(String.valueOf(iValue));
+			OProfiler.getInstance().stopChrono("serializer.rec.str.bool2string", timer);
+			break;
+
 		case INTEGER:
 			iBuffer.append(String.valueOf(iValue));
+			OProfiler.getInstance().stopChrono("serializer.rec.str.int2string", timer);
 			break;
 
 		case FLOAT:
 			iBuffer.append(String.valueOf(iValue));
 			iBuffer.append('f');
+			OProfiler.getInstance().stopChrono("serializer.rec.str.float2string", timer);
 			break;
+
 		case LONG:
 			iBuffer.append(String.valueOf(iValue));
 			iBuffer.append('l');
+			OProfiler.getInstance().stopChrono("serializer.rec.str.long2string", timer);
 			break;
+
 		case DOUBLE:
 			iBuffer.append(String.valueOf(iValue));
 			iBuffer.append('d');
+			OProfiler.getInstance().stopChrono("serializer.rec.str.double2string", timer);
 			break;
+
 		case SHORT:
 			iBuffer.append(String.valueOf(iValue));
 			iBuffer.append('s');
+			OProfiler.getInstance().stopChrono("serializer.rec.str.short2string", timer);
 			break;
 
 		case BYTE:
@@ -210,6 +230,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 			else
 				iBuffer.append(String.valueOf(iValue));
 			iBuffer.append('b');
+			OProfiler.getInstance().stopChrono("serializer.rec.str.byte2string", timer);
 			break;
 
 		case BINARY:
@@ -219,6 +240,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 			else
 				iBuffer.append(OBase64Utils.encodeBytes((byte[]) iValue));
 			iBuffer.append('"');
+			OProfiler.getInstance().stopChrono("serializer.rec.str.binary2string", timer);
 			break;
 
 		case DATE:
@@ -227,6 +249,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 			else
 				iBuffer.append(iValue);
 			iBuffer.append('t');
+			OProfiler.getInstance().stopChrono("serializer.rec.str.date2string", timer);
 			break;
 
 		case LINK:
@@ -235,16 +258,18 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 				((ORecordId) iValue).toString(iBuffer);
 			else
 				((ORecord<?>) iValue).getIdentity().toString(iBuffer);
+			OProfiler.getInstance().stopChrono("serializer.rec.str.link2string", timer);
 			break;
 
 		case EMBEDDEDMAP:
-			iBuffer
-					.append(ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedMapToStream(iDatabase, null, null, null, iValue, null, true));
+			ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedMapToStream(iDatabase, null, iBuffer, null, null, iValue, null, true);
+			OProfiler.getInstance().stopChrono("serializer.rec.str.embedMap2string", timer);
 			break;
 
 		case EMBEDDED:
 			// RECORD
-			iBuffer.append(OStringSerializerAnyStreamable.INSTANCE.toStream(iDatabase, iValue));
+			OStringSerializerAnyStreamable.INSTANCE.toStream(iDatabase, iBuffer, iValue);
+			OProfiler.getInstance().stopChrono("serializer.rec.str.embed2string", timer);
 			break;
 
 		default:

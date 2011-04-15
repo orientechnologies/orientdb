@@ -130,7 +130,7 @@ public class ORecordId implements ORID {
 		if (iOther == null)
 			return 1;
 
-		ORID other = iOther.getIdentity();
+		final ORID other = iOther.getIdentity();
 
 		if (clusterId == other.getClusterId()) {
 			if (clusterPosition == other.getClusterPosition())

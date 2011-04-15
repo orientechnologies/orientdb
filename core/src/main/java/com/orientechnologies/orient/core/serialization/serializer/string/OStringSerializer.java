@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.serialization.serializer.string;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 
 public interface OStringSerializer {
-	public String toStream(ODatabaseComplex<?> iDatabase, Object iSource);
+	public StringBuilder toStream(ODatabaseComplex<?> iDatabase, StringBuilder iOutput, Object iSource);
 
 	public Object fromStream(ODatabaseComplex<?> iDatabase, String iSource);
 

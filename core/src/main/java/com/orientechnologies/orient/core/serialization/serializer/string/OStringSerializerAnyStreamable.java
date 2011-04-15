@@ -59,17 +59,21 @@ public class OStringSerializerAnyStreamable implements OStringSerializer {
 
 	/**
 	 * Serialize the class name size + class name + object content
+	 * 
+	 * @param iValue
 	 */
-	public String toStream(final ODatabaseComplex<?> iDatabase, final Object iObject) {
-		if (iObject == null)
-			return null;
+	public StringBuilder toStream(final ODatabaseComplex<?> iDatabase, final StringBuilder iOutput, Object iValue) {
+		if (iValue != null) {
+			OSerializableStream stream = (OSerializableStream) iValue;
 
-		OSerializableStream stream = (OSerializableStream) iObject;
+			if (!(iValue instanceof OSerializableStream))
+				throw new OSerializationException("Can't serialize the object since it's not implements the OSerializableStream interface");
 
-		if (!(iObject instanceof OSerializableStream))
-			throw new OSerializationException("Can't serialize the object since it's not implements the OSerializableStream interface");
-
-		return iObject.getClass().getName() + OStreamSerializerHelper.SEPARATOR + OBinaryProtocol.bytes2string(stream.toStream());
+			iOutput.append(iValue.getClass().getName());
+			iOutput.append(OStreamSerializerHelper.SEPARATOR);
+			iOutput.append(OBinaryProtocol.bytes2string(stream.toStream()));
+		}
+		return iOutput;
 	}
 
 	public String getName() {
