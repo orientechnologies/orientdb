@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedList;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
@@ -202,21 +203,27 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		return cloned;
 	}
 
-	public ODocument detach() {
+	public boolean detach() {
+		boolean fullyDetached = true;
+
 		if (_fieldValues != null) {
 			Object fieldValue;
 			for (Map.Entry<String, Object> entry : _fieldValues.entrySet()) {
 				fieldValue = entry.getValue();
 
-				if (fieldValue instanceof ORecord<?>) {// && ((ORecord) fieldValue).getIdentity().isValid()) {
-					_fieldValues.put(entry.getKey(), ((ORecord<?>) fieldValue).getIdentity());
-					// else if (fieldValue instanceof ORecordLazyMultiValue)
-					// ((ORecordLazyMultiValue) fieldValue).convertRecords2Links();
+				if (fieldValue instanceof ORecord<?>)
+					if (((ORecord<?>) fieldValue).getIdentity().isNew())
+						fullyDetached = false;
+					else
+						_fieldValues.put(entry.getKey(), ((ORecord<?>) fieldValue).getIdentity());
+				else if (fieldValue instanceof ORecordLazyMultiValue) {
+					if (!((ORecordLazyMultiValue) fieldValue).convertRecords2Links())
+						fullyDetached = false;
 				}
 			}
 		}
 
-		return this;
+		return fullyDetached;
 	}
 
 	/**

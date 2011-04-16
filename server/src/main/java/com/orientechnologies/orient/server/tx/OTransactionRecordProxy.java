@@ -99,8 +99,8 @@ public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
 		throw new UnsupportedOperationException("save()");
 	}
 
-	public OTransactionRecordProxy detach() {
-		return this;
+	public boolean detach() {
+		return true;
 	}
 
 	@Override
@@ -168,8 +168,7 @@ public class OTransactionRecordProxy implements ORecordInternal<byte[]> {
 	}
 
 	@Override
-	public ORecordAbstract<?> fill(final ODatabaseRecord iDatabase, final ORecordId iRid, final int iVersion,
-			final byte[] iBuffer) {
+	public ORecordAbstract<?> fill(final ODatabaseRecord iDatabase, final ORecordId iRid, final int iVersion, final byte[] iBuffer) {
 		return null;
 	}
 

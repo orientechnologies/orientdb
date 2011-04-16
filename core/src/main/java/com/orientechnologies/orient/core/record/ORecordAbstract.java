@@ -84,8 +84,8 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 		return this;
 	}
 
-	public <RET extends ORecord<T>> RET detach() {
-		return (RET) this;
+	public boolean detach() {
+		return true;
 	}
 
 	public ORecordAbstract<T> clear() {

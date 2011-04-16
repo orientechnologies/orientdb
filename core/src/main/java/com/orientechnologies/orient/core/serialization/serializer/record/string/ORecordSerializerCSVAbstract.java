@@ -78,9 +78,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				return null;
 
 			// REMOVE BEGIN & END COLLECTIONS CHARACTERS IF IT'S A COLLECTION
-			String value = iValue.startsWith("[") ? iValue.substring(1, iValue.length() - 1) : iValue;
+			final String value = iValue.startsWith("[") ? iValue.substring(1, iValue.length() - 1) : iValue;
 
-			Collection<?> coll = iType == OType.LINKLIST ? new ORecordLazyList(iSourceRecord) : new ORecordLazySet(iSourceRecord);
+			final Collection<?> coll = iType == OType.LINKLIST ? new ORecordLazyList(iSourceRecord).setStreamedContent(value)
+					: new ORecordLazySet(iSourceRecord).setStreamedContent(value);
 
 			if (value.length() == 0)
 				return coll;
@@ -249,7 +250,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		case LINKLIST: {
 			iOutput.append(OStringSerializerHelper.COLLECTION_BEGIN);
 
-			if (iValue != null) {
+			if (iValue instanceof ORecordLazyList && ((ORecordLazyList) iValue).getStreamedContent() != null) {
+				iOutput.append(((ORecordLazyList) iValue).getStreamedContent());
+				OProfiler.getInstance().updateCounter("serializer.rec.str.linkList2string.cached", +1);
+			} else {
 				Object link;
 				int items = 0;
 				List<Object> coll = (List<Object>) iValue;
@@ -260,7 +264,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				boolean autoConvert = false;
 				if (coll instanceof ORecordLazyMultiValue) {
 					autoConvert = ((ORecordLazyMultiValue) coll).isAutoConvertToRecord();
-					((ORecordLazyMultiValue) coll).convertRecords2Links();
+					// ((ORecordLazyMultiValue) coll).convertRecords2Links();
 					((ORecordLazyMultiValue) coll).setAutoConvertToRecord(false);
 				}
 
@@ -293,31 +297,34 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		case LINKSET: {
 			iOutput.append(OStringSerializerHelper.COLLECTION_BEGIN);
 
-			int items = 0;
+			if (iValue instanceof ORecordLazySet && ((ORecordLazySet) iValue).getStreamedContent() != null) {
+				iOutput.append(((ORecordLazySet) iValue).getStreamedContent());
+				OProfiler.getInstance().updateCounter("serializer.rec.str.linkSet2string.cached", +1);
+			} else {
+				int items = 0;
 
-			ORecordLazySet coll;
-			if (!(iValue instanceof ORecordLazySet)) {
-				// FIRST TIME: CONVERT THE ENTIRE COLLECTION
-				coll = new ORecordLazySet(iRecord);
-				coll.addAll((Collection<? extends OIdentifiable>) iValue);
-				((Collection<? extends OIdentifiable>) iValue).clear();
+				ORecordLazySet coll;
+				if (!(iValue instanceof ORecordLazySet)) {
+					// FIRST TIME: CONVERT THE ENTIRE COLLECTION
+					coll = new ORecordLazySet(iRecord);
+					coll.addAll((Collection<? extends OIdentifiable>) iValue);
+					((Collection<? extends OIdentifiable>) iValue).clear();
 
-				iRecord.field(iName, coll);
-			} else
-				coll = (ORecordLazySet) iValue;
+					iRecord.field(iName, coll);
+				} else
+					coll = (ORecordLazySet) iValue;
 
-			// LINKED SET
-			boolean containsNew = false;
-			for (Iterator<OIdentifiable> it = coll.rawIterator(); it.hasNext();) {
-				if (items++ > 0)
-					iOutput.append(OStringSerializerHelper.RECORD_SEPARATOR);
+				// LINKED SET
+				for (Iterator<OIdentifiable> it = coll.rawIterator(); it.hasNext();) {
+					if (items++ > 0)
+						iOutput.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
-				final OIdentifiable item = it.next();
+					final OIdentifiable item = it.next();
 
-				linkToStream(iOutput, iRecord, item);
+					linkToStream(iOutput, iRecord, item);
+				}
+				coll.convertRecords2Links();
 			}
-
-			coll.savedAllNewItems();
 
 			iOutput.append(OStringSerializerHelper.COLLECTION_END);
 			OProfiler.getInstance().stopChrono("serializer.rec.str.linkSet2string", timer);
@@ -479,9 +486,11 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		final Collection<?> coll;
 		if (iLinkedType == OType.LINK) {
 			if (iDocument != null)
-				coll = iType == OType.EMBEDDEDLIST ? new ORecordLazyList(iDocument) : new ORecordLazySet(iDocument);
+				coll = iType == OType.EMBEDDEDLIST ? new ORecordLazyList(iDocument).setStreamedContent(value) : new ORecordLazySet(
+						iDocument).setStreamedContent(value);
 			else
-				coll = iType == OType.EMBEDDEDLIST ? new ORecordLazyList(iDatabase) : new ORecordLazySet(iDatabase);
+				coll = iType == OType.EMBEDDEDLIST ? new ORecordLazyList(iDatabase).setStreamedContent(value) : new ORecordLazySet(
+						iDatabase).setStreamedContent(value);
 		} else
 			coll = iType == OType.EMBEDDEDLIST ? new OTrackedList<Object>(iDocument) : new OTrackedSet<Object>(iDocument);
 

@@ -16,11 +16,13 @@
 package com.orientechnologies.orient.core.db.record;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
 import com.orientechnologies.orient.core.db.record.ORecordMultiValueHelper.MULTIVALUE_STATUS;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -73,7 +75,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 			return super.isEmpty();
 		else
 			// AVOID TO LAZY LOAD IT, JUST CHECK IF STREAM IS EMPTY OR NULL
-			return stream == null || stream.length() == 0;
+			return stream.length() == 0;
 	}
 
 	/**
@@ -120,13 +122,14 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 
 	@Override
 	public boolean add(OIdentifiable e) {
+		lazyLoad(true);
+
 		if (status == MULTIVALUE_STATUS.ALL_RIDS && e instanceof ORecord<?> && !((ORecord<?>) e).getIdentity().isNew())
 			// IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
 			e = ((ORecord<?>) e).getIdentity();
 		else
 			status = ORecordMultiValueHelper.getStatus(status, e);
 
-		lazyLoad(true);
 		return super.add(e);
 	}
 
@@ -152,7 +155,8 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 	@Override
 	public OIdentifiable get(final int index) {
 		lazyLoad(false);
-		convertLink2Record(index);
+		if (autoConvertToRecord)
+			convertLink2Record(index);
 		return super.get(index);
 	}
 
@@ -226,21 +230,25 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 		status = MULTIVALUE_STATUS.ALL_RECORDS;
 	}
 
-	public void convertRecords2Links() {
-		lazyLoad(false);
+	public boolean convertRecords2Links() {
 		if (status == MULTIVALUE_STATUS.ALL_RIDS || sourceRecord == null || database == null)
 			// PRECONDITIONS
-			return;
+			return true;
 
+		boolean allConverted = true;
 		for (int i = 0; i < size(); ++i) {
 			try {
-				convertRecord2Link(i);
+				if (!convertRecord2Link(i))
+					allConverted = false;
 			} catch (ORecordNotFoundException e) {
 				// LEAVE THE RID DIRTY
 			}
 		}
 
-		status = MULTIVALUE_STATUS.ALL_RIDS;
+		if (allConverted)
+			status = MULTIVALUE_STATUS.ALL_RIDS;
+
+		return allConverted;
 	}
 
 	/**
@@ -275,23 +283,27 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 	 * @param iIndex
 	 *          Position of the item to convert
 	 */
-	private void convertRecord2Link(final int iIndex) {
-		lazyLoad(false);
+	private boolean convertRecord2Link(final int iIndex) {
 		if (status == MULTIVALUE_STATUS.ALL_RIDS || database == null)
 			// PRECONDITIONS
-			return;
+			return true;
 
 		final Object o = super.get(iIndex);
 
-		if (o != null && o instanceof ORecord<?> && !((ORecord<?>) o).getIdentity().isNew())
-			try {
-				if (((ORecord<?>) o).isDirty())
-					database.save((ORecordInternal<?>) o);
-
-				super.set(iIndex, ((ORecord<?>) o).getIdentity());
-			} catch (ORecordNotFoundException e) {
-				// IGNORE THIS
-			}
+		if (o != null) {
+			if (o instanceof ORecord<?> && !((ORecord<?>) o).isDirty())
+				try {
+					super.set(iIndex, ((ORecord<?>) o).getIdentity());
+					// CONVERTED
+					return true;
+				} catch (ORecordNotFoundException e) {
+					// IGNORE THIS
+				}
+			else if (o instanceof ORID)
+				// ALREADY CONVERTED
+				return true;
+		}
+		return false;
 	}
 
 	public boolean isAutoConvertToRecord() {
@@ -326,12 +338,14 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 	}
 
 	public ORecordLazyList setStreamedContent(final String iStream) {
-		if (iStream != null && iStream.length() == 0)
-			stream = null;
-		else {
-			stream = iStream;
-		}
-		loaded = false;
+		// if (iStream != null && iStream.length() == 0)
+		// stream = null;
+		// else {
+		// // CREATE A COPY TO FREE ORIGINAL BUFFER
+		// stream = new String(iStream);
+		// loaded = false;
+		// }
+
 		return this;
 	}
 
@@ -340,20 +354,21 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 	}
 
 	protected boolean lazyLoad(final boolean iInvalidateStream) {
-		if (loaded || stream == null)
+		if (loaded)
 			return false;
 
-		final List<String> items = OStringSerializerHelper.smartSplit(stream, OStringSerializerHelper.RECORD_SEPARATOR);
+		if (super.isEmpty()) {
+			final List<String> items = OStringSerializerHelper.smartSplit(stream, OStringSerializerHelper.RECORD_SEPARATOR);
 
-		super.clear();
-		for (String item : items) {
-			if (item != null && item.length() > 0)
-				item = item.substring(1);
+			for (String item : items) {
+				if (item != null && item.length() > 0)
+					item = item.substring(1);
 
-			if (item.length() == 0)
-				continue;
+				if (item.length() == 0)
+					continue;
 
-			super.add(new ORecordId(item));
+				super.add(new ORecordId(item));
+			}
 		}
 
 		if (iInvalidateStream)

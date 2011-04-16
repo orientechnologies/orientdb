@@ -273,7 +273,7 @@ public class ComplexTypesTest {
 		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 
 		ODocument loadedDoc = database.load(rid);
-		Assert.assertTrue(loadedDoc.containsField("linkedMap"));
+		Assert.assertNotNull(loadedDoc.field("linkedMap", OType.LINKMAP));
 		Assert.assertTrue(loadedDoc.field("linkedMap") instanceof Map<?, ?>);
 		Assert.assertTrue(((Map<String, ODocument>) loadedDoc.field("linkedMap")).values().iterator().next() instanceof ODocument);
 

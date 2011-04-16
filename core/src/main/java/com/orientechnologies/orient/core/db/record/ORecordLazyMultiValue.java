@@ -27,8 +27,10 @@ public interface ORecordLazyMultiValue {
 
 	/**
 	 * Browse all the set to convert all the items into links.
+	 * 
+	 * @return
 	 */
-	public void convertRecords2Links();
+	public boolean convertRecords2Links();
 
 	public boolean isAutoConvertToRecord();
 

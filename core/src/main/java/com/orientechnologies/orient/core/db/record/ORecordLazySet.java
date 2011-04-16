@@ -42,10 +42,11 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  * 
  */
 public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue, ORecordElement {
-	public static final ORecordLazySet					EMPTY_SET	= new ORecordLazySet((ODatabaseRecord) null);
-	protected ORecordLazyList										delegate;
-	protected IdentityHashMap<ORecord<?>, ORID>	newItems;
-	private boolean															sorted		= true;
+	public static final ORecordLazySet						EMPTY_SET			= new ORecordLazySet((ODatabaseRecord) null);
+	protected ORecordLazyList											delegate;
+	protected IdentityHashMap<ORecord<?>, Object>	newItems;
+	private boolean																sorted				= true;
+	private static final Object										NEWMAP_VALUE	= new Object();
 
 	public ORecordLazySet(final ODatabaseRecord iDatabase) {
 		delegate = new ORecordLazyList(iDatabase);
@@ -73,25 +74,26 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 	}
 
 	public Iterator<OIdentifiable> iterator() {
-		if (newItems == null)
-			return delegate.iterator();
-
-		lazyLoad(false);
-		return new OLazyRecordMultiIterator(delegate.sourceRecord, delegate.database, delegate.recordType, new Object[] {
-				delegate.iterator(), newItems.keySet().iterator() }, delegate.autoConvertToRecord);
+		if (hasNewItems()) {
+			lazyLoad(false);
+			return new OLazyRecordMultiIterator(delegate.sourceRecord, delegate.database, delegate.recordType, new Object[] {
+					delegate.iterator(), newItems.keySet().iterator() }, delegate.autoConvertToRecord);
+		}
+		return delegate.iterator();
 	}
 
 	public Iterator<OIdentifiable> rawIterator() {
-		if (newItems == null || newItems.size() == 0)
-			return delegate.rawIterator();
-
-		lazyLoad(false);
-		return new OLazyRecordMultiIterator(delegate.sourceRecord, delegate.database, delegate.recordType, new Object[] {
-				delegate.iterator(), newItems.keySet().iterator() }, false);
+		if (hasNewItems()) {
+			lazyLoad(false);
+			return new OLazyRecordMultiIterator(delegate.sourceRecord, delegate.database, delegate.recordType, new Object[] {
+					delegate.iterator(), newItems.keySet().iterator() }, false);
+		}
+		return delegate.rawIterator();
 	}
 
-	public void convertRecords2Links() {
-		delegate.convertRecords2Links();
+	public boolean convertRecords2Links() {
+		savedAllNewItems();
+		return delegate.convertRecords2Links();
 	}
 
 	public boolean isAutoConvertToRecord() {
@@ -120,8 +122,8 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 
 	public boolean contains(final Object o) {
 		lazyLoad(false);
-		boolean found = Collections.binarySearch(delegate, (OIdentifiable) o) > -1;
-		if (!found && newItems != null)
+		boolean found = indexOf((OIdentifiable) o) > -1;
+		if (!found && hasNewItems())
 			// SEARCH INSIDE NEW ITEMS MAP
 			found = newItems.containsKey(o);
 
@@ -144,18 +146,44 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 		return internalAdd(e);
 	}
 
+	/**
+	 * Returns the position of the element in the set. Execute a binary search since the elements are always ordered.
+	 * 
+	 * @param iElement
+	 *          element to find
+	 * @return The position of the element if found, otherwise false
+	 */
+	public int indexOf(final OIdentifiable iElement) {
+		final boolean prevConvert = delegate.isAutoConvertToRecord();
+		if (prevConvert)
+			delegate.setAutoConvertToRecord(false);
+
+		final int pos = Collections.binarySearch(delegate, iElement);
+
+		if (prevConvert)
+			// RESET PREVIOUS SETTINGS
+			delegate.setAutoConvertToRecord(true);
+
+		return pos;
+	}
+
 	public boolean remove(final Object o) {
 		lazyLoad(true);
 
-		final int pos = Collections.binarySearch(delegate, (OIdentifiable) o);
+		final int pos = indexOf((OIdentifiable) o);
 		if (pos > -1) {
 			delegate.remove(pos);
 			return true;
 		}
 
-		if (newItems != null)
+		if (hasNewItems()) {
 			// SEARCH INSIDE NEW ITEMS MAP
-			return newItems.remove(o) != null;
+			final boolean removed = newItems.remove(o) != null;
+			if (newItems.size() == 0)
+				// EARLY REMOVE THE MAP TO SAVE MEMORY
+				newItems = null;
+			return removed;
+		}
 
 		return false;
 	}
@@ -186,8 +214,10 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 
 	public void clear() {
 		delegate.clear();
-		if (newItems != null)
+		if (newItems != null) {
 			newItems.clear();
+			newItems = null;
+		}
 	}
 
 	public byte getRecordType() {
@@ -197,20 +227,19 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 	@Override
 	public String toString() {
 		if (isLoaded()) {
-			if (newItems == null || newItems.size() == 0)
-				return ORecordMultiValueHelper.toString(this);
-			else {
+			if (hasNewItems()) {
 				final StringBuilder buffer = new StringBuilder(ORecordMultiValueHelper.toString(this));
 				for (ORecord<?> item : newItems.keySet())
 					buffer.insert(buffer.length() - 2, item.toString());
 				return buffer.toString();
 			}
+			return ORecordMultiValueHelper.toString(this);
 		} else {
 			return "NOT LOADED: " + getStreamedContent();
 		}
 	}
 
-	public void resort() {
+	public void sort() {
 		if (!sorted && isLoaded()) {
 			Collections.sort(delegate);
 			sorted = true;
@@ -246,11 +275,11 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 			final ORecord<?> record = (ORecord<?>) e;
 			// ADD IN TEMP LIST
 			if (newItems == null)
-				newItems = new IdentityHashMap<ORecord<?>, ORID>();
-			newItems.put(record, record.getIdentity());
+				newItems = new IdentityHashMap<ORecord<?>, Object>();
+			newItems.put(record, NEWMAP_VALUE);
 			return true;
 		} else {
-			final int pos = Collections.binarySearch(delegate, e);
+			final int pos = indexOf(e);
 
 			if (pos < 0) {
 				// FOUND
@@ -261,11 +290,17 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 		}
 	}
 
+	private boolean hasNewItems() {
+		return newItems != null && newItems.size() > 0;
+	}
+
 	public void savedAllNewItems() {
-		if (newItems != null && newItems.size() > 0) {
-			for (OIdentifiable item : newItems.keySet())
-				add(item);
+		if (hasNewItems()) {
+			for (ORecord<?> record : newItems.keySet())
+				internalAdd(record.getIdentity());
+
 			newItems.clear();
+			newItems = null;
 		}
 	}
 }

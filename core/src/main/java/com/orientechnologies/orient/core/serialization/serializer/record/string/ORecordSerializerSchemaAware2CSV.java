@@ -346,11 +346,12 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 						linkedType = prop.getLinkedType();
 
 					} else {
+						type = iRecord instanceof ODocument ? ((ODocument) iRecord).fieldType(fieldName) : null;
 						linkedClass = null;
 						linkedType = null;
 
 						// NOT FOUND: TRY TO DETERMINE THE TYPE FROM ITS CONTENT
-						if (fieldValue != null) {
+						if (fieldValue != null && type == null ) {
 							if (fieldValue.length() > 1 && fieldValue.charAt(0) == '"' && fieldValue.charAt(fieldValue.length() - 1) == '"') {
 								type = OType.STRING;
 							} else if (fieldValue.charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN

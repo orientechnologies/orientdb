@@ -164,14 +164,16 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 	/**
 	 * Optimize the tree memory consumption by keeping part of nodes as entry points and clearing all the rest.
+	 * 
+	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public void optimize(final boolean iForce) {
+	public int optimize(final boolean iForce) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		try {
 			if (root == null)
-				return;
+				return 0;
 
 			OLogManager.instance().debug(this, "Starting optimization of MVRB+Tree with %d items in memory...", cache.size());
 
@@ -216,7 +218,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 			if (!iForce && nodes < entryPointsSize * optimizeEntryPointsFactor)
 				// UNDER THRESHOLD AVOID TO OPTIMIZE
-				return;
+				return 0;
 
 			if (debug)
 				System.out.printf("\n------------\nOptimizing: total items %d, root is %s...", size(), pRoot.toString());
@@ -304,8 +306,9 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 			}
 
 			// FREE ALL THE NODES BUT THE ENTRY POINTS AND PUT THE ENTRYPOINT INTO THE CACHE
+			int totalDisconnected = 0;
 			for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints) {
-				entryPoint.disconnectLinked(false);
+				totalDisconnected += entryPoint.disconnectLinked(false);
 			}
 
 			if (isRuntimeCheckEnabled()) {
@@ -329,6 +332,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 			OLogManager.instance().debug(this, "Optimization done: MVRB-Tree nodes reduced to %d items", cache.size());
 
+			return totalDisconnected;
 		} finally {
 			// System.out.println("End of optimization.");
 			// printInMemoryStructure();
@@ -391,9 +395,10 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 		}
 	}
 
-	public void commitChanges(final ODatabaseRecord iDatabase) {
+	public int commitChanges(final ODatabaseRecord iDatabase) {
 		final long timer = OProfiler.getInstance().startChrono();
 
+		int totalCommitted = 0;
 		try {
 			if (recordsToCommit.size() > 0) {
 				final List<OMVRBTreeEntryPersistent<K, V>> tmp = new ArrayList<OMVRBTreeEntryPersistent<K, V>>();
@@ -437,6 +442,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 							}
 						}
 
+					totalCommitted += tmp.size();
 					tmp.clear();
 				}
 			}
@@ -457,6 +463,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> implemen
 
 			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.commitChanges", timer);
 		}
+
+		return totalCommitted;
 	}
 
 	public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {

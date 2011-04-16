@@ -116,29 +116,42 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
 		status = MULTIVALUE_STATUS.ALL_RECORDS;
 	}
 
-	public void convertRecords2Links() {
+	public boolean convertRecords2Links() {
 		if (status == MULTIVALUE_STATUS.ALL_RIDS || database == null)
 			// PRECONDITIONS
-			return;
+			return true;
 
+		boolean allConverted = true;
 		for (Object k : keySet())
-			convertRecord2Link(k);
+			if (!convertRecord2Link(k))
+				allConverted = false;
 
-		status = MULTIVALUE_STATUS.ALL_RIDS;
+		if (allConverted)
+			status = MULTIVALUE_STATUS.ALL_RIDS;
+
+		return allConverted;
 	}
 
-	private void convertRecord2Link(final Object iKey) {
+	private boolean convertRecord2Link(final Object iKey) {
 		if (status == MULTIVALUE_STATUS.ALL_RIDS || database == null)
-			return;
+			return true;
 
 		final Object value = super.get(iKey);
-		if (value != null && value instanceof ORecord<?> && !((ORecord<?>) value).getIdentity().isNew()) {
-			if (((ORecord<?>) value).isDirty())
-				database.save((ORecordInternal<?>) value);
+		if (value != null)
+			if (value instanceof ORecord<?> && !((ORecord<?>) value).getIdentity().isNew()) {
+				if (((ORecord<?>) value).isDirty())
+					database.save((ORecordInternal<?>) value);
 
-			// OVERWRITE
-			super.put(iKey, ((ORecord<?>) value).getIdentity());
-		}
+				// OVERWRITE
+				super.put(iKey, ((ORecord<?>) value).getIdentity());
+
+				// CONVERTED
+				return true;
+			} else if (value instanceof ORID)
+				// ALREADY CONVERTED
+				return true;
+
+		return false;
 	}
 
 	/**

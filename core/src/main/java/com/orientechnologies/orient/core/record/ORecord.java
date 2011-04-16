@@ -34,11 +34,12 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable {
 	}
 
 	/**
-	 * Remove all the dependencies by other records. All the relationships remain in form of RecordID.
+	 * Remove all the dependencies by other records. All the relationships remain in form of RecordID. If some links contain dirty
+	 * records, the detach can't be complete and this method returns false.
 	 * 
-	 * @return The object it self. Useful to call methods in chain.
+	 * @return True if the document has been successfully detached, otherwise false.
 	 */
-	public <RET extends ORecord<T>> RET detach();
+	public boolean detach();
 
 	/**
 	 * Resets the record to be reused.
