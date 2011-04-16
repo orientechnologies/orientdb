@@ -86,7 +86,7 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 		if (hasNewItems()) {
 			lazyLoad(false);
 			return new OLazyRecordMultiIterator(delegate.sourceRecord, delegate.database, delegate.recordType, new Object[] {
-					delegate.iterator(), newItems.keySet().iterator() }, false);
+					delegate.rawIterator(), newItems.keySet().iterator() }, false);
 		}
 		return delegate.rawIterator();
 	}
@@ -230,7 +230,7 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 			if (hasNewItems()) {
 				final StringBuilder buffer = new StringBuilder(ORecordMultiValueHelper.toString(this));
 				for (ORecord<?> item : newItems.keySet())
-					buffer.insert(buffer.length() - 2, item.toString());
+					buffer.insert(buffer.length() - 1, ", " + item.toString());
 				return buffer.toString();
 			}
 			return ORecordMultiValueHelper.toString(this);
@@ -271,6 +271,7 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 	 * Adds the item in the underlying List preserving the order of the collection.
 	 */
 	protected boolean internalAdd(final OIdentifiable e) {
+		setDirty();
 		if (e.getIdentity().isNew()) {
 			final ORecord<?> record = (ORecord<?>) e;
 			// ADD IN TEMP LIST
