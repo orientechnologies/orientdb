@@ -118,9 +118,10 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 
 				if (iHardMode)
 					map.freeInMemoryResources();
-				map.optimize(true);
+				final int saved = map.optimize(true);
 
-				OLogManager.instance().debug(this, "Completed! Now %d entries reside in memory", map.getInMemoryEntries());
+				OLogManager.instance().debug(this, "Completed! Saved %d and now %d entries reside in memory", saved,
+						map.getInMemoryEntries());
 			}
 		};
 
