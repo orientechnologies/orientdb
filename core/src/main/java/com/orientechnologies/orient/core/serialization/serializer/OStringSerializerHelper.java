@@ -50,7 +50,7 @@ public abstract class OStringSerializerHelper {
 	public static final char								PARAMETER_NAMED					= ':';
 	public static final char								PARAMETER_POSITIONAL		= '?';
 	public static final char[]							PARAMETER_SEPARATOR			= new char[] { ',', ')' };
-	public static final char[]							PARAMETER_EXT_SAPARATOR	= new char[] { ' ', '.' };
+	public static final char[]							PARAMETER_EXT_SEPARATOR	= new char[] { ' ', '.' };
 	public static final char								COLLECTION_SEPARATOR		= ',';
 	public static final List<String>				EMPTY_LIST							= Collections.unmodifiableList(new ArrayList<String>());
 	public static final Map<String, String>	EMPTY_MAP								= Collections.unmodifiableMap(new HashMap<String, String>());
@@ -368,14 +368,21 @@ public abstract class OStringSerializerHelper {
 	public static int getParameters(final String iText, final int iBeginPosition, final List<String> iParameters) {
 		iParameters.clear();
 
-		int openPos = iText.indexOf(PARENTHESIS_BEGIN, iBeginPosition);
+		final int openPos = iText.indexOf(PARENTHESIS_BEGIN, iBeginPosition);
 		if (openPos == -1)
 			return iBeginPosition;
 
 		final StringBuilder buffer = new StringBuilder();
-		parse(iText, buffer, openPos, -1, PARAMETER_EXT_SAPARATOR);
+		parse(iText, buffer, openPos, -1, PARAMETER_EXT_SEPARATOR);
 		if (buffer.length() == 0)
 			return iBeginPosition;
+
+		final int firstClose = buffer.indexOf(")", 1);
+		if (firstClose > -1 && firstClose < buffer.length() - 1) {
+			final int otherParenthesis = buffer.indexOf("(", firstClose);
+			if (otherParenthesis > -1)
+				buffer.delete(otherParenthesis, buffer.length());
+		}
 
 		final String t = buffer.substring(1, buffer.length() - 1);
 		final List<String> pars = smartSplit(t, PARAMETER_SEPARATOR, 0, t.length());

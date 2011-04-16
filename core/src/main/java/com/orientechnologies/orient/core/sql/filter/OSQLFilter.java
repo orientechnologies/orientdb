@@ -213,7 +213,7 @@ public class OSQLFilter extends OCommandToParse {
 				// CHECK FOR PARAMETERS
 				if (word.length() > op.keyword.length() && word.charAt(op.keyword.length()) == OStringSerializerHelper.PARENTHESIS_BEGIN) {
 					int paramBeginPos = currentPos - (word.length() - op.keyword.length());
-					currentPos = OStringSerializerHelper.getParameters(text, paramBeginPos, params) + 1;
+					currentPos = OStringSerializerHelper.getParameters(text, paramBeginPos, params);
 				} else if (!word.equals(op.keyword))
 					throw new OQueryParsingException("Malformed usage of operator '" + op.toString() + "'. Parsed operator is: " + word);
 
@@ -284,8 +284,12 @@ public class OSQLFilter extends OCommandToParse {
 			if (words[0].equals("NOT")) {
 				// GET THE NEXT VALUE
 				String[] nextWord = nextValue(true);
-				if (nextWord != null && nextWord.length == 2)
+				if (nextWord != null && nextWord.length == 2) {
 					words[1] = words[1] + " " + nextWord[1];
+
+					if (words[1].endsWith(")"))
+						words[1] = words[1].substring(0, words[1].length() - 1);
+				}
 			}
 
 			result = OSQLHelper.parseValue(this, database, this, words[1]);
