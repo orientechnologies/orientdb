@@ -445,8 +445,10 @@ public class ODataLocal extends OMultiFileSegment {
 		final int[] fileRanges;
 		if (pos[0] == 0)
 			fileRanges = new int[] { 0, file.getFilledUpTo() };
-		else
-			fileRanges = new int[] { files[(int) pos[0] - 1].getFileSize(), file.getFilledUpTo() };
+		else {
+			final int size = (int) (files[0].getFileSize() * pos[0]);
+			fileRanges = new int[] { size, size + file.getFilledUpTo() };
+		}
 
 		// FIND THE CLOSEST HOLE
 		return holeSegment.getCloserHole(iRecordOffset, iRecordSize, Math.max(iRecordOffset - defragHoleDistance, fileRanges[0]),
