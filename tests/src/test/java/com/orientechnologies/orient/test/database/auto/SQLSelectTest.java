@@ -419,6 +419,24 @@ public class SQLSelectTest {
 	}
 
 	@Test
+	public void queryOrderByAndLimit() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile order by name limit 2")).execute();
+
+		Assert.assertTrue(result.size() <= 2);
+
+		String lastName = null;
+		for (ODocument d : result) {
+			if (lastName != null && d.field("name") != null)
+				Assert.assertTrue(((String) d.field("name")).compareTo(lastName) >= 0);
+			lastName = d.field("name");
+		}
+
+		database.close();
+	}
+
+	@Test
 	public void queryConditionAndOrderBy() {
 		database.open("admin", "admin");
 

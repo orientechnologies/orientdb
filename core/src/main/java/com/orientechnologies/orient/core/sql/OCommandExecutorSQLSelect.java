@@ -293,7 +293,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			fieldName = word.toString();
 
 			currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
-			if (currentPos == -1)
+			if (currentPos == -1 || word.toString().equals(KEYWORD_LIMIT))
+				// END/NEXT CLAUSE: SET AS ASC BY DEFAULT
 				fieldOrdering = KEYWORD_ASC;
 			else {
 
@@ -322,6 +323,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		if (orderedFields.size() == 0)
 			throw new OCommandSQLParsingException("Order by field set was missed. Example: ORDER BY name ASC, salary DESC", text,
 					currentPos);
+
+		if (word.toString().equals(KEYWORD_LIMIT))
+			// GO BACK
+			currentPos -= KEYWORD_LIMIT.length();
 	}
 
 	protected void extractRange(final StringBuilder word) {
