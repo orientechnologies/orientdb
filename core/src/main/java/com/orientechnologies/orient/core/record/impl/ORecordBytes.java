@@ -15,6 +15,12 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -83,5 +89,27 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 	protected void setup() {
 		super.setup();
 		_recordFormat = ORecordSerializerFactory.instance().getFormat(ORecordSerializerRaw.NAME);
+	}
+
+	public void fromInputStream(InputStream in) throws IOException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		try {
+			while (in.available() > 0) {
+				out.write(in.read());
+			}
+			out.flush();
+			_source = out.toByteArray();
+		} finally {
+			out.close();
+		}
+	}
+
+	public void toOutputStream(OutputStream out) throws IOException {
+		if (_source.length > 0) {
+			ByteArrayInputStream in = new ByteArrayInputStream(_source);
+			while (in.available() > 0) {
+				out.write(in.read());
+			}
+		}
 	}
 }
