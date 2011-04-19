@@ -46,6 +46,7 @@ import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
+import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
 
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 	private static final String								COMMAND_SEPARATOR	= "|";
@@ -72,7 +73,6 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 		requestMaxContentLength = iConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_HTTP_MAX_CONTENT_LENGTH);
 		socketTimeout = iConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
 
-		iSocket.setSoTimeout(socketTimeout);
 		channel = new OChannelTextServer(iSocket, iConfiguration);
 		connection = iConnection;
 		configuration = new OServerConfiguration();
@@ -318,6 +318,13 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 									this,
 									"->" + channel.socket.getInetAddress().getHostAddress() + ": Error on content size " + contentLength
 											+ ": the maximum allowed is " + requestMaxContentLength);
+					} else if (lineUpperCase.startsWith(OHttpUtils.CONTENT_TYPE)) {
+						String contentType = lineUpperCase.substring(OHttpUtils.CONTENT_TYPE.length());
+						if (contentType.startsWith(OHttpUtils.CONTENT_TYPE_MULTIPART)) {
+							iRequest.isMultipart = true;
+							iRequest.boundary = new String(contentType.substring(
+									OHttpUtils.CONTENT_TYPE_MULTIPART.length() + 2 + OHttpUtils.BOUNDARY.length() + 1).toLowerCase());
+						}
 					}
 				}
 
@@ -339,13 +346,19 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 				request.setLength(0);
 			} else if (endOfHeaders && request.length() == 0 && currChar != '\r' && currChar != '\n') {
 				// END OF HEADERS
-				byte[] buffer = new byte[contentLength];
-				buffer[0] = (byte) currChar;
+				if (iRequest.isMultipart) {
+					iRequest.content = "";
+					iRequest.multipartStream = new OHttpMultipartBaseInputStream(channel.inStream, in, contentLength);
+					return;
+				} else {
+					byte[] buffer = new byte[contentLength];
+					buffer[0] = (byte) currChar;
 
-				channel.read(buffer, 1, contentLength - 1);
+					channel.read(buffer, 1, contentLength - 1);
 
-				iRequest.content = new String(buffer);
-				return;
+					iRequest.content = new String(buffer);
+					return;
+				}
 			} else
 				request.append(currChar);
 		}
@@ -368,6 +381,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 		data.commandDetail = null;
 
 		try {
+			channel.socket.setSoTimeout(socketTimeout);
 			data.lastCommandReceived = -1;
 
 			char c = (char) channel.inStream.read();
@@ -377,6 +391,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 				return;
 			}
 
+			channel.socket.setSoTimeout(socketTimeout);
 			data.lastCommandReceived = OProfiler.getInstance().startChrono();
 
 			requestContent.setLength(0);
@@ -393,6 +408,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 					if (words.length < 3) {
 						OLogManager.instance().warn(this,
 								"->" + channel.socket.getInetAddress().getHostAddress() + ": Error on invalid content:\n" + requestContent);
+						while (channel.inStream.available() > 0) {
+							channel.inStream.read();
+						}
 						break;
 					}
 
@@ -440,17 +458,17 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 	}
 
 	protected void connectionClosed() {
-		OProfiler.getInstance().updateCounter("OrientKV-Server.http.closed", +1);
+		OProfiler.getInstance().updateCounter("OrientDB-Server.http.closed", +1);
 		sendShutdown();
 	}
 
 	protected void timeout() {
-		OProfiler.getInstance().updateCounter("OrientKV-Server.http.timeout", +1);
+		OProfiler.getInstance().updateCounter("OrientDB-Server.http.timeout", +1);
 		sendShutdown();
 	}
 
 	protected void connectionError() {
-		OProfiler.getInstance().updateCounter("OrientKV-Server.http.error", +1);
+		OProfiler.getInstance().updateCounter("OrientDB-Server.http.error", +1);
 		sendShutdown();
 	}
 

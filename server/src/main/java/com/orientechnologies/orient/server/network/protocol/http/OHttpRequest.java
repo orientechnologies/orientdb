@@ -17,6 +17,7 @@ package com.orientechnologies.orient.server.network.protocol.http;
 
 import com.orientechnologies.orient.enterprise.channel.text.OChannelTextServer;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
+import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
 
 /**
  * Mantain information about current HTTP request.
@@ -25,16 +26,19 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData
  * 
  */
 public class OHttpRequest {
-	public OChannelTextServer						channel;
-	public String												method;
-	public String												authorization;
-	public String												sessionId;
-	public String												url;
-	public String												httpVersion;
-	public String												content;
-	public String												databaseName;
-	public ONetworkProtocolData					data;
-	public ONetworkProtocolHttpAbstract	executor;
+	public OChannelTextServer							channel;
+	public String													method;
+	public String													authorization;
+	public String													sessionId;
+	public String													url;
+	public String													httpVersion;
+	public String													content;
+	public OHttpMultipartBaseInputStream	multipartStream;
+	public String													boundary;
+	public String													databaseName;
+	public boolean												isMultipart;
+	public ONetworkProtocolData						data;
+	public ONetworkProtocolHttpAbstract		executor;
 
 	public OHttpRequest(final ONetworkProtocolHttpAbstract iExecutor, final OChannelTextServer iChannel,
 			final ONetworkProtocolData iData) {

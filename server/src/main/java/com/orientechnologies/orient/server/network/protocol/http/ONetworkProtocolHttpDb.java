@@ -43,6 +43,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.post.OS
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostDocument;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostProperty;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostStudio;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostUploadSingleFile;
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutDocument;
 
 public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
@@ -73,6 +74,7 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 		registerCommand(new OServerCommandPostDocument());
 		registerCommand(new OServerCommandPostProperty());
 		registerCommand(new OServerCommandPostStudio());
+		registerCommand(new OServerCommandPostUploadSingleFile());
 
 		registerCommand(new OServerCommandPutDocument());
 
