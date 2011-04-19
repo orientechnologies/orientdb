@@ -18,8 +18,8 @@ package com.orientechnologies.orient.server.network.protocol.http.command;
 
 import java.util.Arrays;
 
-import com.orientechnologies.orient.core.config.OEntryConfiguration;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
@@ -45,7 +45,7 @@ public class OServerCommandAuthProxy extends OServerCommandPatternAbstract {
 
 		userName = "";
 		String userpassword = "";
-		for (OEntryConfiguration conf : iConfig.parameters) {
+		for (OServerEntryConfiguration conf : iConfig.parameters) {
 			if (conf.name.equals(USERNAME_CONF))
 				userName = conf.value;
 			else if (conf.name.equals(USERPASSWORD_CONF))

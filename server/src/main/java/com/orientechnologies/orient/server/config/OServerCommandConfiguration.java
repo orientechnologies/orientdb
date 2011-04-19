@@ -21,7 +21,6 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
-import com.orientechnologies.orient.core.config.OEntryConfiguration;
 
 @XmlRootElement(name = "command")
 @XmlType(propOrder = { "parameters", "implementation", "pattern" })
@@ -33,6 +32,6 @@ public class OServerCommandConfiguration {
 	public String									implementation;
 
 	@XmlElementWrapper(required = false)
-	@XmlElementRef(type = OEntryConfiguration.class)
-	public OEntryConfiguration[]	parameters;
+	@XmlElementRef(type = OServerEntryConfiguration.class)
+	public OServerEntryConfiguration[]	parameters;
 }

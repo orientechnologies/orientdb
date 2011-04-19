@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.config;
+package com.orientechnologies.orient.server.config;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -21,17 +21,17 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "entry")
 @XmlType(propOrder = { "value", "name" })
-public class OEntryConfiguration {
+public class OServerEntryConfiguration {
 	@XmlAttribute
 	public String	name;
 
 	@XmlAttribute
 	public String	value;
 
-	public OEntryConfiguration() {
+	public OServerEntryConfiguration() {
 	}
 
-	public OEntryConfiguration(final String iName, final String iValue) {
+	public OServerEntryConfiguration(final String iName, final String iValue) {
 		name = iName;
 		value = iValue;
 	}

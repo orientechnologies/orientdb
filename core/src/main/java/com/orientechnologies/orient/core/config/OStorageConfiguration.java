@@ -54,7 +54,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
 	public OStorageTxConfiguration						txSegment				= new OStorageTxConfiguration();
 
-	public List<OEntryConfiguration>					properties			= new ArrayList<OEntryConfiguration>();
+	public List<OStorageEntryConfiguration>		properties			= new ArrayList<OStorageEntryConfiguration>();
 
 	private transient Locale									localeInstance;
 	private transient DecimalFormatSymbols		unusualSymbols;
@@ -208,9 +208,9 @@ public class OStorageConfiguration implements OSerializableStream {
 				read(values[index++]), read(values[index++]));
 
 		size = Integer.parseInt(read(values[index++]));
-		properties = new ArrayList<OEntryConfiguration>(size);
+		properties = new ArrayList<OStorageEntryConfiguration>(size);
 		for (int i = 0; i < size; ++i) {
-			properties.add(new OEntryConfiguration(read(values[index++]), read(values[index++])));
+			properties.add(new OStorageEntryConfiguration(read(values[index++]), read(values[index++])));
 		}
 
 		return this;
@@ -275,7 +275,7 @@ public class OStorageConfiguration implements OSerializableStream {
 		write(buffer, txSegment.isSynchTx());
 
 		write(buffer, properties.size());
-		for (OEntryConfiguration e : properties)
+		for (OStorageEntryConfiguration e : properties)
 			entryToStream(buffer, e);
 
 		// PLAIN: ALLOCATE ENOUGHT SPACE TO REUSE IT EVERY TIME
@@ -337,7 +337,7 @@ public class OStorageConfiguration implements OSerializableStream {
 		write(iBuffer, iFile.maxSize);
 	}
 
-	private void entryToStream(final StringBuilder iBuffer, final OEntryConfiguration iEntry) {
+	private void entryToStream(final StringBuilder iBuffer, final OStorageEntryConfiguration iEntry) {
 		write(iBuffer, iEntry.name);
 		write(iBuffer, iEntry.value);
 	}

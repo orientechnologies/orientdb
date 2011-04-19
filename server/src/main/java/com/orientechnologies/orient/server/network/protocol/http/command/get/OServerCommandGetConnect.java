@@ -21,7 +21,7 @@ import java.util.Arrays;
 import java.util.Map.Entry;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.config.OEntryConfiguration;
+import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -199,7 +199,7 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 
 			json.beginCollection(2, true, "properties");
 			if (db.getStorage().getConfiguration().properties != null)
-				for (OEntryConfiguration entry : db.getStorage().getConfiguration().properties) {
+				for (OStorageEntryConfiguration entry : db.getStorage().getConfiguration().properties) {
 					if (entry != null) {
 						json.beginObject(3, true, null);
 						json.writeAttribute(4, false, "name", entry.name);

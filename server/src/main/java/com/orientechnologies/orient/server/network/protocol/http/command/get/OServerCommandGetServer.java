@@ -26,13 +26,13 @@ import java.util.Map.Entry;
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerEntry;
-import com.orientechnologies.orient.core.config.OEntryConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServerMain;
+import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -118,7 +118,7 @@ public class OServerCommandGetServer extends OServerCommandAuthenticatedServerAb
 			json.endCollection(1, false);
 
 			json.beginCollection(2, true, "properties");
-			for (OEntryConfiguration entry : OServerMain.server().getConfiguration().properties) {
+			for (OServerEntryConfiguration entry : OServerMain.server().getConfiguration().properties) {
 				json.beginObject(3, true, null);
 				json.writeAttribute(4, false, "name", entry.name);
 				json.writeAttribute(4, false, "value", entry.value);

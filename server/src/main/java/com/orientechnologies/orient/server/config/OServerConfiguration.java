@@ -22,7 +22,6 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
-import com.orientechnologies.orient.core.config.OEntryConfiguration;
 
 @XmlRootElement(name = "orient-server")
 public class OServerConfiguration {
@@ -48,8 +47,8 @@ public class OServerConfiguration {
 	public OServerUserConfiguration[]					users;
 
 	@XmlElementWrapper
-	@XmlElementRef(type = OEntryConfiguration.class)
-	public OEntryConfiguration[]							properties;
+	@XmlElementRef(type = OServerEntryConfiguration.class)
+	public OServerEntryConfiguration[]							properties;
 
 	public static final String																DEFAULT_CONFIG_FILE		= "config/orientdb-server-config.xml";
 
@@ -99,7 +98,7 @@ public class OServerConfiguration {
 		if (properties == null)
 			return null;
 
-		for (OEntryConfiguration p : properties) {
+		for (OServerEntryConfiguration p : properties) {
 			if (p.name.equals(iName))
 				return p.value;
 		}
