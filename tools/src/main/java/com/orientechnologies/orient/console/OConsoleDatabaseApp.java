@@ -186,6 +186,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			throws IOException {
 		out.println("Creating database [" + iDatabaseURL + "] using the storage type [" + iStorageType + "]...");
 
+		currentDatabaseUserName = iUserName;
+		currentDatabaseUserPassword = iUserPassword;
+
 		if (iDatabaseURL.startsWith(OEngineRemote.NAME)) {
 			// REMOTE CONNECTION
 			final String dbURL = iDatabaseURL.substring(OEngineRemote.NAME.length() + 1);
@@ -304,7 +307,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 	@ConsoleCommand(splitInWords = false, description = "Insert a new record into the database")
 	public void insert(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-		sqlCommand("insert", iCommandText, "\nInserted record %s in %f sec(s).\n");
+		sqlCommand("insert", iCommandText, "\nInserted record '%s' in %f sec(s).\n");
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Update records in the database")
@@ -500,7 +503,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		checkCurrentDatabase();
 
 		ORecordId rid = new ORecordId(iRecordId);
-		final ORawBuffer buffer = currentDatabase.getStorage().readRecord(currentDatabase, 0, rid, null);
+		final ORawBuffer buffer = currentDatabase.getStorage().readRecord(currentDatabase, rid, null);
 
 		if (buffer == null)
 			throw new OException("The record has been deleted");
