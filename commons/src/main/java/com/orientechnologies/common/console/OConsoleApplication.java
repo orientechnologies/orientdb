@@ -93,8 +93,8 @@ public class OConsoleApplication {
 		return args.length == 0;
 	}
 
-	protected boolean executeBatch(String commandLine) {
-		File commandFile = new File(commandLine);
+	protected boolean executeBatch(final String commandLine) {
+		final File commandFile = new File(commandLine);
 		if (commandFile.exists()) {
 			try {
 				return executeCommands(new Scanner(commandFile).useDelimiter(";"));
@@ -106,7 +106,7 @@ public class OConsoleApplication {
 		}
 	}
 
-	protected boolean executeCommands(String iCommands) {
+	protected boolean executeCommands(final String iCommands) {
 		String[] commandLines = iCommands.split(commandSeparator);
 		for (String commandLine : commandLines)
 			if (!execute(commandLine))
@@ -114,7 +114,7 @@ public class OConsoleApplication {
 		return true;
 	}
 
-	protected boolean executeCommands(Scanner iScanner) {
+	protected boolean executeCommands(final Scanner iScanner) {
 		while (iScanner.hasNext()) {
 			String commandLine = iScanner.next();
 			if (!execute(commandLine))
@@ -125,6 +125,11 @@ public class OConsoleApplication {
 
 	protected boolean execute(String iCommand) {
 		iCommand = iCommand.trim();
+
+		if (iCommand.length() == 0)
+			// NULL LINE: JUMP IT
+			return true;
+
 		final String[] commandWords = OStringParser.getWords(iCommand, wordSeparator);
 
 		for (String cmd : helpCommands)
@@ -141,7 +146,9 @@ public class OConsoleApplication {
 		String methodName;
 		ConsoleCommand ann;
 		Method lastMethodInvoked = null;
-		StringBuilder lastCommandInvoked = new StringBuilder();
+		final StringBuilder lastCommandInvoked = new StringBuilder();
+
+		final String commandLowerCase = iCommand.toLowerCase();
 
 		for (Method m : getConsoleMethods()) {
 			methodName = m.getName();
@@ -160,7 +167,7 @@ public class OConsoleApplication {
 				commandName.append(ch);
 			}
 
-			if (!iCommand.startsWith(commandName.toString())) {
+			if (!commandLowerCase.startsWith(commandName.toString())) {
 				if (ann == null)
 					continue;
 
