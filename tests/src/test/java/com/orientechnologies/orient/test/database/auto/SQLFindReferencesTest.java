@@ -43,15 +43,15 @@ public class SQLFindReferencesTest {
 		Collection<ORID> result = database.command(new OCommandSQL("find references 14:58")).execute();
 
 		Assert.assertTrue(result.size() == 1);
-		Assert.assertTrue(result.iterator().next().toString().equals("13:54"));
+		Assert.assertTrue(result.iterator().next().toString().equals("#13:54"));
 
 		result = database.command(new OCommandSQL("find references 19:0")).execute();
 
 		Assert.assertTrue(result.size() == 2);
 		ORID rid = result.iterator().next();
-		Assert.assertTrue(rid.toString().equals("22:0") || rid.toString().equals("21:0"));
+		Assert.assertTrue(rid.toString().equals("#22:0") || rid.toString().equals("#21:0"));
 		rid = result.iterator().next();
-		Assert.assertTrue(rid.toString().equals("22:0") || rid.toString().equals("21:0"));
+		Assert.assertTrue(rid.toString().equals("#22:0") || rid.toString().equals("#21:0"));
 
 		result = database.command(new OCommandSQL("find references 9:0")).execute();
 		Assert.assertTrue(result.size() == 0);
@@ -70,12 +70,12 @@ public class SQLFindReferencesTest {
 		Collection<ORID> result = database.command(new OCommandSQL("find references 19:0 [GraphCar]")).execute();
 
 		Assert.assertTrue(result.size() == 1);
-		Assert.assertTrue(result.iterator().next().toString().equals("21:0"));
+		Assert.assertTrue(result.iterator().next().toString().equals("#21:0"));
 
 		result = database.command(new OCommandSQL("find references 19:0 [company,cluster:GraphMotocycle]")).execute();
 
 		Assert.assertTrue(result.size() == 1);
-		Assert.assertTrue(result.iterator().next().toString().equals("22:0"));
+		Assert.assertTrue(result.iterator().next().toString().equals("#22:0"));
 
 		result = database.command(new OCommandSQL("find references 19:0 [company,account,cluster:OGraphEdge]")).execute();
 

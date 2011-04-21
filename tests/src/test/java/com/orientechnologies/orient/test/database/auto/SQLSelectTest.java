@@ -483,7 +483,7 @@ public class SQLSelectTest {
 		Assert.assertTrue(result.size() == 1);
 
 		for (ODocument d : result) {
-			Assert.assertTrue(d.getIdentity().toString().equals("10:0"));
+			Assert.assertTrue(d.getIdentity().toString().equals("#10:0"));
 		}
 
 		database.close();
@@ -497,8 +497,8 @@ public class SQLSelectTest {
 
 		Assert.assertTrue(result.size() == 2);
 
-		Assert.assertTrue(result.get(0).getIdentity().toString().equals("10:0"));
-		Assert.assertTrue(result.get(1).getIdentity().toString().equals("10:1"));
+		Assert.assertTrue(result.get(0).getIdentity().toString().equals("#10:0"));
+		Assert.assertTrue(result.get(1).getIdentity().toString().equals("#10:1"));
 
 		database.close();
 	}
@@ -512,7 +512,7 @@ public class SQLSelectTest {
 		Assert.assertTrue(result.size() == 1);
 
 		for (ODocument d : result) {
-			Assert.assertTrue(d.getIdentity().toString().equals("10:0"));
+			Assert.assertTrue(d.getIdentity().toString().equals("#10:0"));
 		}
 
 		database.close();
