@@ -17,7 +17,6 @@ package com.orientechnologies.orient.core.index;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map.Entry;
@@ -62,7 +61,6 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	protected Set<String>																						clustersToIndex	= new LinkedHashSet<String>();
 	protected OIndexCallback																				callback;
 	protected boolean																								automatic;
-	protected Set<Object>																						tempItems				= new HashSet<Object>();
 
 	@ODocumentInstance
 	protected ODocument																							configuration;
@@ -533,29 +531,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	public void onBeforeTxCommit(ODatabase iDatabase) {
 	}
 
-	/**
-	 * Reset documents into the set to update its hashcode.
-	 */
 	public void onAfterTxCommit(ODatabase iDatabase) {
-		acquireExclusiveLock();
-
-		try {
-			if (tempItems.size() > 0) {
-				for (Object key : tempItems) {
-					Set<OIdentifiable> set = map.get(key);
-					if (set != null) {
-						// RE-ADD ALL THE ITEM TO UPDATE THE HASHCODE (CHANGED AFTER SAVE+COMMIT)
-						final ORecordLazySet newSet = new ORecordLazySet(configuration.getDatabase());
-						newSet.addAll(set);
-						map.put(key, newSet);
-					}
-				}
-			}
-			tempItems.clear();
-
-		} finally {
-			releaseExclusiveLock();
-		}
 	}
 
 	public void onClose(ODatabase iDatabase) {

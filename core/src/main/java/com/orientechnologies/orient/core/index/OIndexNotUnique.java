@@ -43,9 +43,6 @@ public class OIndexNotUnique extends OIndexMVRBTreeAbstract {
 			if (!iSingleValue.getIdentity().isValid())
 				iSingleValue.save();
 
-			if (iSingleValue.getIdentity().isTemporary())
-				tempItems.add(iKey);
-
 			values.add(iSingleValue);
 
 			map.put(iKey, values);
