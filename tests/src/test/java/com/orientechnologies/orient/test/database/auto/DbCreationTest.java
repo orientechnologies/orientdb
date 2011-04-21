@@ -18,11 +18,13 @@ package com.orientechnologies.orient.test.database.auto;
 import java.io.IOException;
 import java.util.Locale;
 
+import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -47,6 +49,11 @@ public class DbCreationTest {
 	}
 
 	@Test(dependsOnMethods = { "testDbCreation" })
+	public void testDbExists() throws IOException {
+		Assert.assertTrue(TestUtils.existsDatabase(new ODatabaseDocumentTx(url)));
+	}
+
+	@Test(dependsOnMethods = { "testDbExists" })
 	public void testDbOpen() {
 		database = new ODatabaseObjectTx(url);
 		database.open("admin", "admin");
@@ -66,7 +73,7 @@ public class DbCreationTest {
 		database.open("admin", "admin");
 		database.getStorage().getConfiguration().localeLanguage = Locale.ENGLISH.getLanguage();
 		database.getStorage().getConfiguration().localeCountry = Locale.ENGLISH.getCountry();
-		database.getStorage().getConfiguration().update();
+		database.getStorage().getConfiguration().update(database.getId());
 		database.close();
 	}
 

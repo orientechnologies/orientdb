@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.io.IOException;
+
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -37,9 +39,9 @@ public class SchemaTest {
 		url = iURL;
 	}
 
-	public void createSchema() {
+	public void createSchema() throws IOException {
 		database = new ODatabaseFlat(url);
-		if (database.exists())
+		if (TestUtils.existsDatabase(database))
 			database.open("admin", "admin");
 		else
 			database.create();

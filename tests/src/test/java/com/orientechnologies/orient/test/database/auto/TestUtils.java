@@ -26,33 +26,13 @@ import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 
 public class TestUtils {
 	public static void createDatabase(ODatabase database, final String iURL) throws IOException {
 		if (iURL.startsWith(OEngineRemote.NAME)) {
-			// LOAD SERVER CONFIG FILE TO EXTRACT THE ROOT'S PASSWORD
-			File file = new File("../releases/" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
-			if (!file.exists())
-				file = new File("server/config/orientdb-server-config.xml");
-			if (!file.exists())
-				file = new File("../server/config/orientdb-server-config.xml");
-			if (!file.exists())
-				file = new File(OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/orientdb-server-config.xml"));
-			if (!file.exists())
-				throw new OConfigurationException("Can't load file orientdb-server-config.xml to execute remote tests");
-
-			FileReader f = new FileReader(file);
-			final char[] buffer = new char[(int) file.length()];
-			f.read(buffer);
-			f.close();
-
-			String fileContent = new String(buffer);
-			int pos = fileContent.indexOf("password=\"");
-			pos += "password=\"".length();
-			String password = fileContent.substring(pos, fileContent.indexOf('"', pos));
-
-			new OServerAdmin(iURL).connect("root", password).createDatabase("local").close();
+			new OServerAdmin(iURL).connect("root", getServerRootPassword()).createDatabase("local").close();
 		} else {
 			database.create();
 			database.close();
@@ -61,30 +41,40 @@ public class TestUtils {
 
 	public static void deleteDatabase(final ODatabaseDocumentTx database) throws IOException {
 		if (database.getStorage() instanceof OStorageRemote) {
-			// LOAD SERVER CONFIG FILE TO EXTRACT THE ROOT'S PASSWORD
-			File file = new File("../releases/" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
-			if (!file.exists())
-				file = new File("server/config/orientdb-server-config.xml");
-			if (!file.exists())
-				file = new File("../server/config/orientdb-server-config.xml");
-			if (!file.exists())
-				file = new File(OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/orientdb-server-config.xml"));
-			if (!file.exists())
-				throw new OConfigurationException("Can't load file orientdb-server-config.xml to execute remote tests");
-
-			FileReader f = new FileReader(file);
-			final char[] buffer = new char[(int) file.length()];
-			f.read(buffer);
-			f.close();
-
-			String fileContent = new String(buffer);
-			int pos = fileContent.indexOf("password=\"");
-			pos += "password=\"".length();
-			String password = fileContent.substring(pos, fileContent.indexOf('"', pos));
-
-			new OServerAdmin((OStorageRemote) database.getStorage()).connect("root", password).deleteDatabase();
+			new OServerAdmin((OStorageRemote) database.getStorage()).connect("root", getServerRootPassword()).deleteDatabase();
 		} else {
 			database.delete();
 		}
+	}
+
+	public static boolean existsDatabase(final ODatabaseRecord database) throws IOException {
+		if (database.getURL().startsWith("remote")) {
+			return new OServerAdmin(database.getURL()).connect("root", getServerRootPassword()).existsDatabase();
+		} else {
+			return database.exists();
+		}
+	}
+
+	protected static String getServerRootPassword() throws IOException {
+		// LOAD SERVER CONFIG FILE TO EXTRACT THE ROOT'S PASSWORD
+		File file = new File("../releases/" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
+		if (!file.exists())
+			file = new File("server/config/orientdb-server-config.xml");
+		if (!file.exists())
+			file = new File("../server/config/orientdb-server-config.xml");
+		if (!file.exists())
+			file = new File(OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/orientdb-server-config.xml"));
+		if (!file.exists())
+			throw new OConfigurationException("Can't load file orientdb-server-config.xml to execute remote tests");
+
+		FileReader f = new FileReader(file);
+		final char[] buffer = new char[(int) file.length()];
+		f.read(buffer);
+		f.close();
+
+		String fileContent = new String(buffer);
+		int pos = fileContent.indexOf("password=\"");
+		pos += "password=\"".length();
+		return fileContent.substring(pos, fileContent.indexOf('"', pos));
 	}
 }
