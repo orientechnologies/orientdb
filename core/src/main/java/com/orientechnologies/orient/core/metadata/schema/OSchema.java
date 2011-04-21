@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 public class OSchema extends ODocumentWrapperNoClass {
@@ -107,6 +108,14 @@ public class OSchema extends ODocumentWrapperNoClass {
 		document.setDirty();
 	}
 
+	@SuppressWarnings("unchecked")
+	@Override
+	public <RET extends ODocumentWrapper> RET reload() {
+		super.reload();
+		fromStream();
+		return (RET) this;
+	}
+
 	public boolean existsClass(final String iClassName) {
 		return classes.containsKey(iClassName.toLowerCase());
 	}
@@ -141,19 +150,25 @@ public class OSchema extends ODocumentWrapperNoClass {
 		OClass cls = classes.get(iClassName.toLowerCase());
 
 		if (cls == null) {
-			// CHECK IF CAN AUTO-CREATE IT
-			final ODatabase ownerDb = document.getDatabase().getDatabaseOwner();
-			if (ownerDb instanceof ODatabaseObjectTx) {
-				final Class<?> javaClass = ((ODatabaseObjectTx) ownerDb).getEntityManager().getEntityClass(iClassName);
+			// CHECK IF THE SCHEMA IS OLD: RELOAD IT
+			//reload();
 
-				if (javaClass != null) {
-					// AUTO REGISTER THE CLASS AT FIRST USE
-					cls = cascadeCreate(javaClass);
-					save();
+			//cls = classes.get(iClassName.toLowerCase());
+
+			if (cls == null) {
+				// CHECK IF CAN AUTO-CREATE IT
+				final ODatabase ownerDb = document.getDatabase().getDatabaseOwner();
+				if (ownerDb instanceof ODatabaseObjectTx) {
+					final Class<?> javaClass = ((ODatabaseObjectTx) ownerDb).getEntityManager().getEntityClass(iClassName);
+
+					if (javaClass != null) {
+						// AUTO REGISTER THE CLASS AT FIRST USE
+						cls = cascadeCreate(javaClass);
+						save();
+					}
 				}
 			}
 		}
-
 		return cls;
 	}
 
