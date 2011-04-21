@@ -47,6 +47,8 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
 
 	protected String							fileType;
 
+	//protected String							now;
+
 	@Override
 	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		if (!iRequest.isMultipart) {
@@ -90,7 +92,6 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
 				writer.beginObject();
 				writer.writeAttribute(1, true, "name", fileName);
 				writer.writeAttribute(1, true, "type", fileType);
-				writer.writeAttribute(1, true, "rid", fileRID.toString());
 				writer.endObject();
 			}
 		}
@@ -99,6 +100,9 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
 	public void saveRecord(OHttpRequest iRequest) throws InterruptedException, IOException {
 		if (fileDocument != null) {
 			if (fileRID != null) {
+//				if (fileDocument.contains("$now")) {
+//					fileDocument = fileDocument.replace("$now", now);
+//				}
 				if (fileDocument.contains("$fileName")) {
 					fileDocument = fileDocument.replace("$fileName", fileName);
 				}
