@@ -178,14 +178,14 @@ public class OJSONWriter {
 
 		else if (iValue instanceof ORecordId) {
 			final ORecordId rid = (ORecordId) iValue;
-			buffer.append("\"#");
+			buffer.append('\"');
 			rid.toString(buffer);
 			buffer.append('\"');
 
 		} else if (iValue instanceof ORecord<?>) {
 			final ORecord<?> linked = (ORecord<?>) iValue;
 			if (linked.getIdentity().isValid()) {
-				buffer.append("\"#");
+				buffer.append('\"');
 				linked.getIdentity().toString(buffer);
 				buffer.append('\"');
 			} else {

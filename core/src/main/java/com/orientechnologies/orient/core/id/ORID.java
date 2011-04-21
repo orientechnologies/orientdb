@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
 public interface ORID extends OIdentifiable, OSerializableStream {
+	public static final char	PREFIX							= '#';
 	public static final char	SEPARATOR						= ':';
 	public static final int		CLUSTER_MAX					= 32767;
 	public static final int		CLUSTER_ID_INVALID	= -1;
@@ -47,5 +48,5 @@ public interface ORID extends OIdentifiable, OSerializableStream {
 
 	public int toStream(OutputStream iStream) throws IOException;
 
-	public void toString(StringBuilder iBuffer);
+	public StringBuilder toString(StringBuilder iBuffer);
 }

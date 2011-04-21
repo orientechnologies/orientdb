@@ -253,7 +253,6 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 			break;
 
 		case LINK:
-			iBuffer.append('#');
 			if (iValue instanceof ORecordId)
 				((ORecordId) iValue).toString(iBuffer);
 			else

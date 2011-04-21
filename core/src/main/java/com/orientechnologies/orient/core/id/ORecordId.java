@@ -92,10 +92,24 @@ public class ORecordId implements ORID {
 		return generateString(clusterId, clusterPosition);
 	}
 
-	public void toString(final StringBuilder iBuffer) {
+	public StringBuilder toString(StringBuilder iBuffer) {
+		if (iBuffer == null)
+			iBuffer = new StringBuilder();
+
+		iBuffer.append(PREFIX);
 		iBuffer.append(clusterId);
 		iBuffer.append(SEPARATOR);
 		iBuffer.append(clusterPosition);
+		return iBuffer;
+	}
+
+	public static String generateString(final int iClusterId, final long iPosition) {
+		final StringBuilder buffer = new StringBuilder(12);
+		buffer.append(PREFIX);
+		buffer.append(iClusterId);
+		buffer.append(SEPARATOR);
+		buffer.append(iPosition);
+		return buffer.toString();
 	}
 
 	@Override
@@ -167,14 +181,6 @@ public class ORecordId implements ORID {
 			throw new ODatabaseException("RecordId can't support cluster id major than 32767. You've used: " + clusterId);
 	}
 
-	public static String generateString(final int iClusterId, final long iPosition) {
-		final StringBuilder buffer = new StringBuilder(8);
-		buffer.append(iClusterId);
-		buffer.append(SEPARATOR);
-		buffer.append(iPosition);
-		return buffer.toString();
-	}
-
 	public ORecordId fromStream(final InputStream iStream) throws IOException {
 		clusterId = OBinaryProtocol.bytes2short(iStream);
 		clusterPosition = OBinaryProtocol.bytes2long(iStream);
@@ -219,11 +225,11 @@ public class ORecordId implements ORID {
 			throw new IllegalArgumentException("Argument '" + iRecordId
 					+ "' is not a RecordId in form of string. Format must be: <cluster-id>:<cluster-position>");
 
-		final List<String> parts = OStringSerializerHelper.split(iRecordId, SEPARATOR, OStringSerializerHelper.LINK);
+		final List<String> parts = OStringSerializerHelper.split(iRecordId, SEPARATOR, PREFIX);
 
 		if (parts.size() != 2)
-			throw new IllegalArgumentException(
-					"Argument is not a RecordId in form of string. Format must be: #<cluster-id>:<cluster-position>. Example: #3:12");
+			throw new IllegalArgumentException("Argument received '" + iRecordId
+					+ "' is not a RecordId in form of string. Format must be: #<cluster-id>:<cluster-position>. Example: #3:12");
 
 		clusterId = Integer.parseInt(parts.get(0));
 		checkClusterLimits();
