@@ -49,13 +49,13 @@ public interface OStorage {
 		TINY, MEDIUM, LARGE, HUGE
 	}
 
-	public void open(int iRequesterId, String iUserName, String iUserPassword, final Map<String, Object> iProperties);
+	public int open(String iUserName, String iUserPassword, final Map<String, Object> iProperties);
 
-	public void create(Map<String, Object> iProperties);
-
-	public void delete();
+	public int create(Map<String, Object> iProperties);
 
 	public boolean exists();
+
+	public void delete();
 
 	public void close();
 
@@ -66,14 +66,14 @@ public interface OStorage {
 	// CRUD OPERATIONS
 	public long createRecord(ORecordId iRecordId, byte[] iContent, final byte iRecordType);
 
-	public ORawBuffer readRecord(ODatabaseRecord iDatabase, int iRequesterId, ORecordId iRid, String iFetchPlan);
+	public ORawBuffer readRecord(ODatabaseRecord iDatabase, ORecordId iRid, String iFetchPlan);
 
-	public int updateRecord(int iRequesterId, ORecordId iRecordId, byte[] iContent, final int iVersion, final byte iRecordType);
+	public int updateRecord(ORecordId iRecordId, byte[] iContent, final int iVersion, final byte iRecordType);
 
-	public boolean deleteRecord(int iRequesterId, ORecordId iRecordId, final int iVersion);
+	public boolean deleteRecord(ORecordId iRecordId, final int iVersion);
 
 	// TX OPERATIONS
-	public void commit(int iRequesterId, OTransaction iTx);
+	public void commit(OTransaction iTx);
 
 	// MISC
 	public OStorageConfiguration getConfiguration();

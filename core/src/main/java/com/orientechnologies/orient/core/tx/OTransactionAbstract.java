@@ -28,16 +28,10 @@ import com.orientechnologies.orient.core.storage.OStorage;
 
 public abstract class OTransactionAbstract implements OTransaction {
 	protected final ODatabaseRecordTx	database;
-	protected int											id;
 	protected TXSTATUS								status	= TXSTATUS.INVALID;
 
-	protected OTransactionAbstract(ODatabaseRecordTx iDatabase, int iId) {
+	protected OTransactionAbstract(ODatabaseRecordTx iDatabase) {
 		database = iDatabase;
-		id = iId;
-	}
-
-	public int getId() {
-		return id;
 	}
 
 	public TXSTATUS getStatus() {

@@ -105,10 +105,10 @@ public class ODictionaryClient<T extends Object> extends ODictionaryAbstract<T> 
 	 * Preload all the keys to fetch values in lazy way.
 	 */
 	public Iterator<Entry<String, T>> iterator() {
-		return new ODictionaryClientIterator<T>(database, storage.dictionaryKeys());
+		return new ODictionaryClientIterator<T>(database, storage.dictionaryKeys(database));
 	}
 
 	public Set<String> keySet() {
-		return storage.dictionaryKeys();
+		return storage.dictionaryKeys(database);
 	}
 }

@@ -152,7 +152,7 @@ public class OMultiFileSegment extends OSegment {
 				final OStorageFileConfiguration fileConfig = config.infoFiles[0];
 				config.infoFiles = new OStorageFileConfiguration[1];
 				config.infoFiles[0] = fileConfig;
-				config.root.update();
+				config.root.update(-1);
 			}
 		} finally {
 			releaseExclusiveLock();
@@ -244,7 +244,7 @@ public class OMultiFileSegment extends OSegment {
 		file = createNewFile();
 		file.allocateSpace(iRecordSize);
 
-		config.root.update();
+		config.root.update(-1);
 
 		return new long[] { files.length - 1, 0 };
 	}

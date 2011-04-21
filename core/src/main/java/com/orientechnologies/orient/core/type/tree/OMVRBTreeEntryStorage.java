@@ -54,7 +54,7 @@ public class OMVRBTreeEntryStorage<K, V> extends OMVRBTreeEntryPersistent<K, V> 
 
 	@Override
 	public OMVRBTreeEntryStorage<K, V> load() throws IOException {
-		ORawBuffer raw = ((OMVRBTreeStorage<K, V>) tree).storage.readRecord(null, -1, (ORecordId) record.getIdentity(), null);
+		ORawBuffer raw = ((OMVRBTreeStorage<K, V>) tree).storage.readRecord(null, (ORecordId) record.getIdentity(), null);
 
 		record.setVersion(raw.version);
 
@@ -69,8 +69,8 @@ public class OMVRBTreeEntryStorage<K, V> extends OMVRBTreeEntryPersistent<K, V> 
 
 		if (record.getIdentity().isValid())
 			// UPDATE IT WITHOUT VERSION CHECK SINCE ALL IT'S LOCKED
-			record.setVersion(((OMVRBTreeStorage<K, V>) tree).storage.updateRecord(0, (ORecordId) record.getIdentity(),
-					record.toStream(), -1, record.getRecordType()));
+			record.setVersion(((OMVRBTreeStorage<K, V>) tree).storage.updateRecord((ORecordId) record.getIdentity(), record.toStream(),
+					-1, record.getRecordType()));
 		else {
 			// CREATE IT
 			record.setIdentity(
@@ -101,7 +101,7 @@ public class OMVRBTreeEntryStorage<K, V> extends OMVRBTreeEntryPersistent<K, V> 
 			((OMVRBTreeEntryPersistent<K, V>) getRight()).delete();
 
 		// DELETE MYSELF
-		((OMVRBTreeStorage<K, V>) tree).storage.deleteRecord(0, (ORecordId) record.getIdentity(), record.getVersion());
+		((OMVRBTreeStorage<K, V>) tree).storage.deleteRecord((ORecordId) record.getIdentity(), record.getVersion());
 
 		// FORCE REMOVING OF K/V AND SEIALIZED K/V AS WELL
 		keys = null;

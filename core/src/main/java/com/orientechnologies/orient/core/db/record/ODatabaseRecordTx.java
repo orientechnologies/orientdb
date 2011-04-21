@@ -31,8 +31,7 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
  * 
  */
 public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
-	private OTransaction				currentTx;
-	private static volatile int	txSerial	= 0;
+	private OTransaction	currentTx;
 
 	public ODatabaseRecordTx(final String iURL, final Class<? extends ORecordInternal<?>> iRecordClass) {
 		super(iURL, iRecordClass);
@@ -60,7 +59,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 			break;
 
 		case OPTIMISTIC:
-			currentTx = new OTransactionOptimistic(this, txSerial++);
+			currentTx = new OTransactionOptimistic(this);
 			break;
 
 		case PESSIMISTIC:
@@ -192,7 +191,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 	}
 
 	public void executeCommit() {
-		getStorage().commit(getId(), currentTx);
+		getStorage().commit(currentTx);
 	}
 
 	protected void checkTransaction() {
@@ -201,7 +200,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 	}
 
 	private void init() {
-		currentTx = new OTransactionNoTx(this, -1);
+		currentTx = new OTransactionNoTx(this);
 	}
 
 	public ORecordInternal<?> getRecordByUserObject(final Object iUserObject, final boolean iIsMandatory) {
@@ -221,6 +220,6 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 
 	private void setDefaultTransactionMode() {
 		if (!(currentTx instanceof OTransactionNoTx))
-			currentTx = new OTransactionNoTx(this, txSerial++);
+			currentTx = new OTransactionNoTx(this);
 	}
 }

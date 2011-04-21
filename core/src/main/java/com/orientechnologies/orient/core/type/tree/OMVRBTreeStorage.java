@@ -77,7 +77,7 @@ public class OMVRBTreeStorage<K, V> extends OMVRBTreePersistent<K, V> {
 	@Override
 	public OMVRBTreePersistent<K, V> load() throws IOException {
 		((ORecordId) record.getIdentity()).clusterId = clusterId;
-		ORawBuffer raw = storage.readRecord(null, -1, (ORecordId) record.getIdentity(), null);
+		ORawBuffer raw = storage.readRecord(null, (ORecordId) record.getIdentity(), null);
 
 		if (raw == null)
 			throw new OConfigurationException("Can't load map with id " + clusterId + ":" + record.getIdentity().getClusterPosition());
@@ -93,7 +93,7 @@ public class OMVRBTreeStorage<K, V> extends OMVRBTreePersistent<K, V> {
 		record.fromStream(toStream());
 		if (record.getIdentity().isValid())
 			// UPDATE IT WITHOUT VERSION CHECK SINCE ALL IT'S LOCKED
-			record.setVersion(storage.updateRecord(0, (ORecordId) record.getIdentity(), record.toStream(), -1, record.getRecordType()));
+			record.setVersion(storage.updateRecord((ORecordId) record.getIdentity(), record.toStream(), -1, record.getRecordType()));
 		else {
 			// CREATE IT
 			if (record.getIdentity().getClusterId() == ORID.CLUSTER_ID_INVALID)
@@ -108,13 +108,13 @@ public class OMVRBTreeStorage<K, V> extends OMVRBTreePersistent<K, V> {
 
 	@Override
 	public void clear() {
-		storage.deleteRecord(0, (ORecordId) record.getIdentity(), record.getVersion());
+		storage.deleteRecord((ORecordId) record.getIdentity(), record.getVersion());
 		root = null;
 		super.clear();
 	}
 
 	public void delete() {
 		clear();
-		storage.deleteRecord(0, (ORecordId) record.getIdentity(), record.getVersion());
+		storage.deleteRecord((ORecordId) record.getIdentity(), record.getVersion());
 	}
 }

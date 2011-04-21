@@ -54,9 +54,9 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
 	}
 
 	public boolean result(final Object iRecord) {
-		database.callbackHooks(TYPE.BEFORE_READ, (OIdentifiable) iRecord);
+		//database.callbackHooks(TYPE.BEFORE_READ, (OIdentifiable) iRecord);
 		result.add((T) iRecord);
-		database.callbackHooks(TYPE.AFTER_READ, (OIdentifiable) iRecord);
+		//database.callbackHooks(TYPE.AFTER_READ, (OIdentifiable) iRecord);
 
 		return true;
 	}

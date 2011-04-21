@@ -30,10 +30,16 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 	protected Map<ORID, OTransactionEntry>	entries						= new HashMap<ORID, OTransactionEntry>();
+	protected int														id;
 	protected int														newObjectCounter	= -2;
 
 	protected OTransactionRealAbstract(ODatabaseRecordTx iDatabase, int iId) {
-		super(iDatabase, iId);
+		super(iDatabase);
+		id = iId;
+	}
+
+	public int getId() {
+		return id;
 	}
 
 	public Collection<OTransactionEntry> getEntries() {

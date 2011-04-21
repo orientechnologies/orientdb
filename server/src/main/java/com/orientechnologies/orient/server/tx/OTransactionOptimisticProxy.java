@@ -30,9 +30,11 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
 public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 	private final Map<ORecordId, ORecord<?>>	updatedRecords	= new HashMap<ORecordId, ORecord<?>>();
+	private int																clientTxId;
 
 	public OTransactionOptimisticProxy(final ODatabaseRecordTx iDatabase, final OChannelBinary iChannel) throws IOException {
-		super(iDatabase, iChannel.readInt());
+		super(iDatabase);
+		clientTxId = iChannel.readInt();
 
 		while (iChannel.readByte() == 1) {
 			try {

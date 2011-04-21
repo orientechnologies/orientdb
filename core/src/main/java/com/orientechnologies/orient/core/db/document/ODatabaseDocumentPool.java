@@ -43,7 +43,7 @@ public class ODatabaseDocumentPool extends ODatabasePoolBase<ODatabaseDocumentTx
 							((ODatabaseDocumentTxPooled) iValue).reuse(owner);
 							if (iValue.getStorage().isClosed())
 								// STORAGE HAS BEEN CLOSED: REOPEN IT
-								iValue.getStorage().open(-1, iValue.getUser().getName(), iValue.getUser().getPassword(), null);
+								iValue.getStorage().open(iValue.getUser().getName(), iValue.getUser().getPassword(), null);
 							return iValue;
 						}
 					};

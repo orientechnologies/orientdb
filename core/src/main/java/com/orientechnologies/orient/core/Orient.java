@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Timer;
 
@@ -52,6 +53,7 @@ public class Orient extends OSharedResource {
 	protected static Orient										instance							= new Orient();
 
 	private final OMemoryWatchDog							memoryWatchDog;
+	private static volatile int								serialId							= 0;
 
 	protected Orient() {
 		// REGISTER THE EMBEDDED ENGINE
@@ -78,7 +80,8 @@ public class Orient extends OSharedResource {
 		// SEARCH FOR ENGINE
 		int pos = iURL.indexOf(':');
 		if (pos <= 0)
-			throw new OConfigurationException("Error in database URL: the engine was not specified. Syntax is: " + URL_SYNTAX + ". URL was: " + iURL);
+			throw new OConfigurationException("Error in database URL: the engine was not specified. Syntax is: " + URL_SYNTAX
+					+ ". URL was: " + iURL);
 
 		final String engineName = iURL.substring(0, pos);
 
@@ -87,7 +90,8 @@ public class Orient extends OSharedResource {
 			final OEngine engine = engines.get(engineName.toLowerCase());
 
 			if (engine == null)
-				throw new OConfigurationException("Error on opening database: the engine '" + engineName + "' was not found. URL was: " + iURL);
+				throw new OConfigurationException("Error on opening database: the engine '" + engineName + "' was not found. URL was: "
+						+ iURL);
 
 			// SEARCH FOR DB-NAME
 			iURL = iURL.substring(pos + 1);
@@ -106,19 +110,28 @@ public class Orient extends OSharedResource {
 				for (String pair : pairs) {
 					kv = pair.split("=");
 					if (kv.length < 2)
-						throw new OConfigurationException("Error on opening database: the parameter has no value. Syntax is: " + URL_SYNTAX + ". URL was: "
-								+ iURL);
+						throw new OConfigurationException("Error on opening database: the parameter has no value. Syntax is: " + URL_SYNTAX
+								+ ". URL was: " + iURL);
 					parameters.put(kv[0], kv[1]);
 				}
 			} else
 				dbName = iURL;
 
-			OStorage storage = storages.get(dbName);
-			if (storage == null) {
-				// NOT FOUND: CREATE IT
+			OStorage storage;
+			if (engine.isShared()) {
+				// SEARCH IF ALREADY USED
+				storage = storages.get(dbName);
+				if (storage == null) {
+					// NOT FOUND: CREATE IT
+					storage = engine.createStorage(dbName, parameters);
+					storages.put(dbName, storage);
+				}
+			} else {
+				// REGISTER IT WITH A SERIAL NAME TO AVOID BEING REUSED
 				storage = engine.createStorage(dbName, parameters);
-				storages.put(dbName, storage);
+				storages.put(dbName + "__" + serialId++, storage);
 			}
+
 			return storage;
 
 		} finally {
@@ -191,7 +204,12 @@ public class Orient extends OSharedResource {
 	}
 
 	public void unregisterStorage(final OStorage iStorage) {
-		storages.remove(iStorage.getURL());
+		for (Entry<String, OStorage> s : storages.entrySet()) {
+			if (s.getValue() == iStorage) {
+				storages.remove(s.getKey());
+				break;
+			}
+		}
 	}
 
 	public Collection<OStorage> getStorages() {

@@ -45,6 +45,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageConfiguratio
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionEntry;
+import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 
 /**
  * Memory implementation of storage. This storage works only in memory and has the following features:
@@ -67,7 +68,7 @@ public class OStorageMemory extends OStorageEmbedded {
 		configuration = new OStorageConfiguration(this);
 	}
 
-	public void create(final Map<String, Object> iOptions) {
+	public int create(final Map<String, Object> iOptions) {
 		addUser();
 		level2cache.startup();
 
@@ -89,21 +90,23 @@ public class OStorageMemory extends OStorageEmbedded {
 
 			lock.releaseExclusiveLock(locked);
 		}
+		return -1;
 	}
 
-	public void open(final int iRequesterId, final String iUserName, final String iUserPassword, final Map<String, Object> iOptions) {
+	public int open(final String iUserName, final String iUserPassword, final Map<String, Object> iOptions) {
 		addUser();
 		level2cache.startup();
 
 		if (open)
 			// ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
 			// REUSED
-			return;
+			return 0;
 
 		if (!exists())
 			throw new OStorageException("Can't open the storage '" + name + "' because it not exists in path: " + url);
 
 		open = true;
+		return 0;
 	}
 
 	public void close() {
@@ -191,13 +194,12 @@ public class OStorageMemory extends OStorageEmbedded {
 		}
 	}
 
-	public ORawBuffer readRecord(final ODatabaseRecord iDatabase, final int iRequesterId, final ORecordId iRid, String iFetchPlan) {
-		return readRecord(iRequesterId, getClusterById(iRid.clusterId), iRid, true);
+	public ORawBuffer readRecord(final ODatabaseRecord iDatabase, final ORecordId iRid, String iFetchPlan) {
+		return readRecord(getClusterById(iRid.clusterId), iRid, true);
 	}
 
 	@Override
-	protected ORawBuffer readRecord(final int iRequesterId, final OCluster iClusterSegment, final ORecordId iRid,
-			final boolean iAtomicLock) {
+	protected ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, final boolean iAtomicLock) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		final boolean locked = lock.acquireSharedLock();
@@ -217,8 +219,7 @@ public class OStorageMemory extends OStorageEmbedded {
 		}
 	}
 
-	public int updateRecord(final int iRequesterId, final ORecordId iRid, final byte[] iContent, final int iVersion,
-			final byte iRecordType) {
+	public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		final OCluster cluster = getClusterById(iRid.clusterId);
@@ -249,7 +250,7 @@ public class OStorageMemory extends OStorageEmbedded {
 		}
 	}
 
-	public boolean deleteRecord(final int iRequesterId, final ORecordId iRid, final int iVersion) {
+	public boolean deleteRecord(final ORecordId iRid, final int iVersion) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		final OCluster cluster = getClusterById(iRid.clusterId);
@@ -386,15 +387,15 @@ public class OStorageMemory extends OStorageEmbedded {
 		throw new UnsupportedOperationException("count");
 	}
 
-	public List<ORecordSchemaAware<?>> query(final int iRequesterId, final OQuery<?> iQuery, final int iLimit) {
+	public List<ORecordSchemaAware<?>> query(final OQuery<?> iQuery, final int iLimit) {
 		throw new UnsupportedOperationException("count");
 	}
 
-	public ORecordSchemaAware<?> queryFirst(final int iRequesterId, final OQuery<?> iQuery) {
+	public ORecordSchemaAware<?> queryFirst(final OQuery<?> iQuery) {
 		throw new UnsupportedOperationException("count");
 	}
 
-	public void commit(final int iRequesterId, final OTransaction iTx) {
+	public void commit(final OTransaction iTx) {
 		final boolean locked = lock.acquireSharedLock();
 
 		try {
@@ -409,7 +410,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
 				for (OTransactionEntry txEntry : tmpEntries)
 					// COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
-					commitEntry(iRequesterId, iTx.getId(), txEntry);
+					commitEntry(((OTransactionRealAbstract) iTx).getId(), txEntry);
 
 				allEntries.addAll(tmpEntries);
 				tmpEntries.clear();
@@ -420,14 +421,14 @@ public class OStorageMemory extends OStorageEmbedded {
 
 			allEntries.clear();
 		} catch (IOException e) {
-			rollback(iRequesterId, iTx);
+			rollback(iTx);
 
 		} finally {
 			lock.releaseSharedLock(locked);
 		}
 	}
 
-	public void rollback(final int iRequesterId, final OTransaction iTx) {
+	public void rollback(final OTransaction iTx) {
 	}
 
 	public void synch() {
@@ -439,8 +440,7 @@ public class OStorageMemory extends OStorageEmbedded {
 		return dictionary;
 	}
 
-	public void browse(final int iRequesterId, final int[] iClusterId, final ORecordBrowsingListener iListener,
-			final ORecord<?> iRecord) {
+	public void browse(final int[] iClusterId, final ORecordBrowsingListener iListener, final ORecord<?> iRecord) {
 	}
 
 	public boolean exists() {
@@ -485,7 +485,7 @@ public class OStorageMemory extends OStorageEmbedded {
 		return true;
 	}
 
-	private void commitEntry(final int iRequesterId, final int iTxId, final OTransactionEntry txEntry) throws IOException {
+	private void commitEntry(final int iTxId, final OTransactionEntry txEntry) throws IOException {
 
 		final ORecordId rid = (ORecordId) txEntry.getRecord().getIdentity();
 
@@ -505,19 +505,18 @@ public class OStorageMemory extends OStorageEmbedded {
 					createRecord(rid, stream, txEntry.getRecord().getRecordType());
 				} else {
 					txEntry.getRecord().setVersion(
-							updateRecord(iRequesterId, rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType()));
+							updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType()));
 				}
 			}
 			break;
 
 		case OTransactionEntry.UPDATED:
 			txEntry.getRecord().setVersion(
-					updateRecord(iRequesterId, rid, txEntry.getRecord().toStream(), txEntry.getRecord().getVersion(), txEntry.getRecord()
-							.getRecordType()));
+					updateRecord(rid, txEntry.getRecord().toStream(), txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType()));
 			break;
 
 		case OTransactionEntry.DELETED:
-			deleteRecord(iRequesterId, rid, txEntry.getRecord().getVersion());
+			deleteRecord(rid, txEntry.getRecord().getVersion());
 			break;
 		}
 	}

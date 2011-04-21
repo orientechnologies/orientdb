@@ -41,4 +41,8 @@ public class OEngineMemory extends OEngineAbstract {
 	public String getName() {
 		return NAME;
 	}
+
+	public boolean isShared() {
+		return true;
+	}
 }

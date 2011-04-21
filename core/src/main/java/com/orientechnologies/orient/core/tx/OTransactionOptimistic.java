@@ -22,10 +22,11 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
-	private boolean	usingLog	= true;
+	private boolean							usingLog	= true;
+	private static volatile int	txSerial	= 0;
 
-	public OTransactionOptimistic(final ODatabaseRecordTx iDatabase, final int iId) {
-		super(iDatabase, iId);
+	public OTransactionOptimistic(final ODatabaseRecordTx iDatabase) {
+		super(iDatabase, txSerial++);
 	}
 
 	public void begin() {

@@ -36,10 +36,10 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 		listener.onMessage("\nComparing two local databases:\n1) " + iDb1URL + "\n2) " + iDb2URL + "\n");
 
 		storage1 = Orient.instance().loadStorage(iDb1URL);
-		storage1.open(0, null, null, null);
+		storage1.open(null, null, null);
 
 		storage2 = Orient.instance().loadStorage(iDb2URL);
-		storage2.open(0, null, null, null);
+		storage2.open(null, null, null);
 	}
 
 	public boolean compare() {
@@ -151,8 +151,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 			long clusterMax = Math.max(db1Max, db2Max);
 			for (int i = 0; i < clusterMax; ++i) {
 				rid.clusterPosition = i;
-				buffer1 = i <= db1Max ? storage1.readRecord(null, 0, rid, null) : null;
-				buffer2 = i <= db2Max ? storage2.readRecord(null, 0, rid, null) : null;
+				buffer1 = i <= db1Max ? storage1.readRecord(null, rid, null) : null;
+				buffer2 = i <= db2Max ? storage2.readRecord(null, rid, null) : null;
 
 				if (buffer1 == null && buffer2 == null)
 					// BOTH RECORD NULL, OK

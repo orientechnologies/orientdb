@@ -43,4 +43,8 @@ public class OEngineLocal extends OEngineAbstract {
 	public String getName() {
 		return NAME;
 	}
+
+	public boolean isShared() {
+		return true;
+	}
 }

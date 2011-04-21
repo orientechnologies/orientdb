@@ -43,8 +43,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 		super(iName, iFilePath, iMode);
 	}
 
-	protected abstract ORawBuffer readRecord(final int iRequesterId, final OCluster iClusterSegment, final ORecordId iRid,
-			boolean iAtomicLock);
+	protected abstract ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock);
 
 	public abstract OCluster getClusterByName(final String iClusterName);
 
@@ -77,7 +76,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 	 *          The listener to call for each record found
 	 * @param ioRecord
 	 */
-	public void browse(final int iRequesterId, final int[] iClusterId, final ORecordId iBeginRange, final ORecordId iEndRange,
+	public void browse(final int[] iClusterId, final ORecordId iBeginRange, final ORecordId iEndRange,
 			final ORecordBrowsingListener iListener, ORecordInternal<?> ioRecord, final boolean iLockEntireCluster) {
 		checkOpeness();
 
@@ -108,8 +107,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 						: 0;
 				endClusterPosition = iEndRange != null && iEndRange.getClusterId() == clusterId ? iEndRange.getClusterPosition() : -1;
 
-				ioRecord = browseCluster(iRequesterId, iListener, ioRecord, cluster, beginClusterPosition, endClusterPosition,
-						iLockEntireCluster);
+				ioRecord = browseCluster(iListener, ioRecord, cluster, beginClusterPosition, endClusterPosition, iLockEntireCluster);
 			}
 		} catch (IOException e) {
 
@@ -122,9 +120,8 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 		}
 	}
 
-	public ORecordInternal<?> browseCluster(final int iRequesterId, final ORecordBrowsingListener iListener,
-			ORecordInternal<?> ioRecord, final OCluster cluster, final long iBeginRange, final long iEndRange,
-			final boolean iLockEntireCluster) throws IOException {
+	public ORecordInternal<?> browseCluster(final ORecordBrowsingListener iListener, ORecordInternal<?> ioRecord,
+			final OCluster cluster, final long iBeginRange, final long iEndRange, final boolean iLockEntireCluster) throws IOException {
 		ORecordInternal<?> record;
 		ORawBuffer recordBuffer;
 		long positionInPhyCluster;
@@ -164,7 +161,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 					if (record == null) {
 						// READ THE RAW RECORD. IF iLockEntireCluster THEN THE READ WILL
 						// BE NOT-LOCKING, OTHERWISE YES
-						recordBuffer = readRecord(iRequesterId, cluster, rid, !iLockEntireCluster);
+						recordBuffer = readRecord(cluster, rid, !iLockEntireCluster);
 						if (recordBuffer == null)
 							continue;
 

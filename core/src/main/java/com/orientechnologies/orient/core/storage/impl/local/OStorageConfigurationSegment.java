@@ -51,7 +51,7 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
 	}
 
 	@Override
-	public OStorageConfiguration load() throws OSerializationException {
+	public OStorageConfiguration load(final int iRequesterId) throws OSerializationException {
 		try {
 			if (segment.getFile().exists())
 				segment.open();
@@ -60,11 +60,11 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
 
 				// @COMPATIBILITY0.9.25
 				// CHECK FOR OLD VERSION OF DATABASE
-				final ORawBuffer rawRecord = storage.readRecord(null, 0, CONFIGURATION_RID, null);
+				final ORawBuffer rawRecord = storage.readRecord(null, CONFIGURATION_RID, null);
 				if (rawRecord != null)
 					fromStream(rawRecord.buffer);
 
-				update();
+				update(-1);
 				return this;
 			}
 
@@ -80,7 +80,7 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
 	}
 
 	@Override
-	public void update() throws OSerializationException {
+	public void update(final int iRequesterId) throws OSerializationException {
 		try {
 			if (!segment.getFile().isOpen())
 				return;

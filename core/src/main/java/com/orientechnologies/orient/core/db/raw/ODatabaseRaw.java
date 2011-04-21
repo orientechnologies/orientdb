@@ -87,7 +87,7 @@ public class ODatabaseRaw implements ODatabase {
 
 			if (storage == null)
 				storage = Orient.instance().loadStorage(url);
-			storage.open(getId(), iUserName, iUserPassword, properties);
+			id = storage.open(iUserName, iUserPassword, properties);
 
 			// WAKE UP DB LIFECYCLE LISTENER
 			for (ODatabaseLifecycleListener it : Orient.instance().getDbLifecycleListeners())
@@ -191,7 +191,7 @@ public class ODatabaseRaw implements ODatabase {
 			return null;
 
 		try {
-			return storage.readRecord(databaseOwner, id, iRid, iFetchPlan);
+			return storage.readRecord(databaseOwner, iRid, iFetchPlan);
 
 		} catch (Throwable t) {
 			throw new ODatabaseException("Error on retrieving record #" + iRid + "(cluster: "
@@ -210,7 +210,7 @@ public class ODatabaseRaw implements ODatabase {
 
 			} else {
 				// UPDATE
-				return storage.updateRecord(id, iRid, iContent, iVersion, iRecordType);
+				return storage.updateRecord(iRid, iContent, iVersion, iRecordType);
 			}
 		} catch (OConcurrentModificationException e) {
 			throw e;
@@ -221,7 +221,7 @@ public class ODatabaseRaw implements ODatabase {
 
 	public void delete(final ORecordId iRid, final int iVersion) {
 		try {
-			if (!storage.deleteRecord(id, iRid, iVersion))
+			if (!storage.deleteRecord(iRid, iVersion))
 				throw new ORecordNotFoundException("The record with id #" + iRid + " was not found");
 
 		} catch (Exception e) {

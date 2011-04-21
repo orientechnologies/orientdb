@@ -535,7 +535,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	}
 
 	private void scanEntireClusters(final int[] clusterIds) {
-		((OStorageEmbedded) database.getStorage()).browse(database.getId(), clusterIds, rangeFrom, rangeTo, this,
+		((OStorageEmbedded) database.getStorage()).browse(clusterIds, rangeFrom, rangeTo, this,
 				(ORecordInternal<?>) database.newInstance(), false);
 	}
 

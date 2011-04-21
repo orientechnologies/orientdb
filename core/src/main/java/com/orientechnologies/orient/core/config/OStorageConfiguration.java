@@ -68,12 +68,14 @@ public class OStorageConfiguration implements OSerializableStream {
 	 * This method load the record information by the internal cluster segment. It's for compatibility with older database than
 	 * 0.9.25.
 	 * 
+	 * @param iRequesterId
+	 * 
 	 * @compatibility 0.9.25
 	 * @return
 	 * @throws OSerializationException
 	 */
-	public OStorageConfiguration load() throws OSerializationException {
-		final byte[] record = storage.readRecord(null, -1, CONFIG_RID, null).buffer;
+	public OStorageConfiguration load(final int iRequesterId) throws OSerializationException {
+		final byte[] record = storage.readRecord(null, CONFIG_RID, null).buffer;
 
 		if (record == null)
 			throw new OStorageException("Can't load database's configuration. The database seems to be corrupted.");
@@ -82,9 +84,9 @@ public class OStorageConfiguration implements OSerializableStream {
 		return this;
 	}
 
-	public void update() throws OSerializationException {
+	public void update(final int iRequesterId) throws OSerializationException {
 		final byte[] record = toStream();
-		storage.updateRecord(-1, CONFIG_RID, record, -1, ORecordBytes.RECORD_TYPE);
+		storage.updateRecord(CONFIG_RID, record, -1, ORecordBytes.RECORD_TYPE);
 	}
 
 	public boolean isEmpty() {

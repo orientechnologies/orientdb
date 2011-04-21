@@ -32,11 +32,11 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
  * Handle the records that wait to be committed. This class is not synchronized because the caller is responsible of it.<br/>
  * Record structure:<br/>
  * <br/>
- * +--------+--------+---------+---------+---------+----------------+-------------+<br/>
- * | STATUS | OPERAT | REQ ID .| TX ID . | CLUSTER | CLUSTER OFFSET | DATA OFFSET |<br/>
- * | 1 byte | 1 byte | 2 bytes | 4 bytes | 2 bytes | 8 bytes ...... | 8 bytes ... |<br/>
- * +--------+--------+---------+---------+---------+----------------+-------------+<br/>
- * = 26 bytes<br/>
+ * +--------+--------+---------+---------+----------------+-------------+<br/>
+ * | STATUS | OPERAT | TX ID . | CLUSTER | CLUSTER OFFSET | DATA OFFSET |<br/>
+ * | 1 byte | 1 byte | 4 bytes | 2 bytes | 8 bytes ...... | 8 bytes ... |<br/>
+ * +--------+--------+---------+---------+----------------+-------------+<br/>
+ * = 24 bytes<br/>
  */
 public class OTxSegment extends OSingleFileSegment {
 	public static final byte	STATUS_FREE				= 0;
@@ -94,8 +94,8 @@ public class OTxSegment extends OSingleFileSegment {
 	 * 
 	 * @throws IOException
 	 */
-	public void addLog(final byte iOperation, final int iReqId, final int iTxId, final int iClusterId, final long iPosition,
-			final long iDataOffset) throws IOException {
+	public void addLog(final byte iOperation, final int iTxId, final int iClusterId, final long iPosition, final long iDataOffset)
+			throws IOException {
 		acquireExclusiveLock();
 		try {
 			int offset = file.allocateSpace(RECORD_SIZE);
@@ -105,9 +105,6 @@ public class OTxSegment extends OSingleFileSegment {
 
 			file.writeByte(offset, iOperation);
 			offset += OConstants.SIZE_BYTE;
-
-			file.writeShort(offset, (short) iReqId);
-			offset += OConstants.SIZE_SHORT;
 
 			file.writeInt(offset, iTxId);
 			offset += OConstants.SIZE_INT;
@@ -137,12 +134,11 @@ public class OTxSegment extends OSingleFileSegment {
 	 * 
 	 * @throws IOException
 	 */
-	public void clearLogEntries(final int iReqId, final int iTxId) throws IOException {
+	public void clearLogEntries(final int iTxId) throws IOException {
 		acquireExclusiveLock();
 		try {
 			int size = (file.getFilledUpTo() / RECORD_SIZE);
 			byte status;
-			int reqId;
 			int txId;
 			int offset;
 
@@ -157,18 +153,12 @@ public class OTxSegment extends OSingleFileSegment {
 				if (status == STATUS_COMMITTING) {
 					// READ THE REQ-ID
 					offset += OConstants.SIZE_BYTE + OConstants.SIZE_BYTE;
-					reqId = file.readShort(offset);
+					txId = file.readInt(offset);
 
-					if (reqId == iReqId) {
-						// CURRENT REQUESTER, CHECKING FOR THE TX
-						offset += OConstants.SIZE_SHORT;
-						txId = file.readInt(offset);
-
-						if (txId == iTxId) {
-							// CURRENT REQUESTER & TX: CLEAR THE ENTRY BY WRITING THE "FREE" STATUS
-							file.writeByte(i * RECORD_SIZE, STATUS_FREE);
-							recordFreed++;
-						}
+					if (txId == iTxId) {
+						// CURRENT REQUESTER & TX: CLEAR THE ENTRY BY WRITING THE "FREE" STATUS
+						file.writeByte(i * RECORD_SIZE, STATUS_FREE);
+						recordFreed++;
 					}
 				}
 			}
@@ -184,12 +174,6 @@ public class OTxSegment extends OSingleFileSegment {
 				offset += OConstants.SIZE_BYTE;
 				offset += OConstants.SIZE_BYTE;
 
-				reqId = file.readShort(offset);
-				if (reqId != iReqId)
-					// NO MY REQ, EXIT
-					break;
-
-				offset += OConstants.SIZE_SHORT;
 				txId = file.readShort(offset);
 
 				if (txId != iTxId)
@@ -385,7 +369,7 @@ public class OTxSegment extends OSingleFileSegment {
 		switch (operation) {
 		case OPERATION_CREATE:
 			// JUST DELETE THE RECORD
-			storage.deleteRecord(-1, iRid, -1);
+			storage.deleteRecord(iRid, -1);
 			break;
 
 		case OPERATION_UPDATE:

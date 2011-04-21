@@ -45,8 +45,6 @@ public interface OTransaction {
 
 	public TXSTATUS getStatus();
 
-	public int getId();
-
 	public boolean isUsingLog();
 
 	public void setUsingLog(boolean useLog);

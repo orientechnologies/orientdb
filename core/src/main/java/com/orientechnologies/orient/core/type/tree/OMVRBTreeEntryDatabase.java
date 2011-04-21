@@ -74,7 +74,11 @@ public class OMVRBTreeEntryDatabase<K, V> extends OMVRBTreeEntryPersistent<K, V>
 
 	@Override
 	public OMVRBTreeEntryDatabase<K, V> load() throws IOException {
-		record = (ORecordBytesLazy) record.load();
+		try {
+			record = (ORecordBytesLazy) record.load();
+		} catch (Exception e) {
+			// ERROR, MAYBE THE RECORD WASN'T CREATED
+		}
 		record.recycle(this);
 		fromStream(record.toStream());
 		return this;

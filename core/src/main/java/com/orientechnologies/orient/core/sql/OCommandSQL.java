@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestTextAbstract;
  * @author Luca Garulli
  * 
  */
+@SuppressWarnings("serial")
 public class OCommandSQL extends OCommandRequestTextAbstract {
 	public OCommandSQL() {
 	}

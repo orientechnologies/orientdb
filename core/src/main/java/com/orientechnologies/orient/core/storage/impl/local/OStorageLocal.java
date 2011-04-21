@@ -57,6 +57,7 @@ import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.fs.OMMapManager;
 import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemory;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 
 public class OStorageLocal extends OStorageEmbedded {
 	private static final int										DELETE_MAX_RETRIES	= 20;
@@ -106,8 +107,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		installProfilerHooks();
 	}
 
-	public synchronized void open(final int iRequesterId, final String iUserName, final String iUserPassword,
-			final Map<String, Object> iProperties) {
+	public synchronized int open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		addUser();
@@ -119,7 +119,7 @@ public class OStorageLocal extends OStorageEmbedded {
 			if (open)
 				// ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
 				// REUSED
-				return;
+				return 0;
 
 			if (!exists())
 				throw new OStorageException("Can't open the storage '" + name + "' because it not exists in path: " + url);
@@ -135,7 +135,7 @@ public class OStorageLocal extends OStorageEmbedded {
 					clusters.length));
 			clusters[pos].open();
 
-			configuration.load();
+			configuration.load(-1);
 
 			pos = createClusterFromConfig(new OStoragePhysicalClusterConfiguration(configuration, OStorage.CLUSTER_INDEX_NAME,
 					clusters.length));
@@ -200,9 +200,10 @@ public class OStorageLocal extends OStorageEmbedded {
 
 			OProfiler.getInstance().stopChrono("storage." + name + ".open", timer);
 		}
+		return 0;
 	}
 
-	public void create(final Map<String, Object> iProperties) {
+	public int create(final Map<String, Object> iProperties) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		addUser();
@@ -250,6 +251,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
 			OProfiler.getInstance().stopChrono("storage." + name + ".create", timer);
 		}
+		return 0;
 	}
 
 	public boolean exists() {
@@ -417,7 +419,7 @@ public class OStorageLocal extends OStorageEmbedded {
 				throw new OConfigurationException("Can't add segment " + conf.name + " because it's already part of current storage");
 
 			dataSegments[pos].create(-1);
-			configuration.update();
+			configuration.update(-1);
 
 			return pos;
 		} catch (Throwable e) {
@@ -504,7 +506,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
 			// UPDATE CONFIGURATION
 			configuration.clusters.set(iClusterId, null);
-			configuration.update();
+			configuration.update(-1);
 
 			return true;
 		} catch (Exception e) {
@@ -587,21 +589,19 @@ public class OStorageLocal extends OStorageEmbedded {
 		return iRid.clusterPosition;
 	}
 
-	public ORawBuffer readRecord(final ODatabaseRecord iDatabase, final int iRequesterId, final ORecordId iRid,
-			final String iFetchPlan) {
+	public ORawBuffer readRecord(final ODatabaseRecord iDatabase, final ORecordId iRid, final String iFetchPlan) {
 		checkOpeness();
-		return readRecord(iRequesterId, getClusterById(iRid.clusterId), iRid, true);
+		return readRecord(getClusterById(iRid.clusterId), iRid, true);
 	}
 
-	public int updateRecord(final int iRequesterId, final ORecordId iRid, final byte[] iContent, final int iVersion,
-			final byte iRecordType) {
+	public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType) {
 		checkOpeness();
-		return updateRecord(iRequesterId, getClusterById(iRid.clusterId), iRid, iContent, iVersion, iRecordType);
+		return updateRecord(getClusterById(iRid.clusterId), iRid, iContent, iVersion, iRecordType);
 	}
 
-	public boolean deleteRecord(final int iRequesterId, final ORecordId iRid, final int iVersion) {
+	public boolean deleteRecord(final ORecordId iRid, final int iVersion) {
 		checkOpeness();
-		return deleteRecord(iRequesterId, getClusterById(iRid.clusterId), iRid, iVersion);
+		return deleteRecord(getClusterById(iRid.clusterId), iRid, iVersion);
 	}
 
 	public Set<String> getClusterNames() {
@@ -669,24 +669,24 @@ public class OStorageLocal extends OStorageEmbedded {
 		return null;
 	}
 
-	public void commit(final int iRequesterId, final OTransaction iTx) {
+	public void commit(final OTransaction iTx) {
 		final boolean locked = lock.acquireSharedLock();
 
 		try {
-			txManager.commitAllPendingRecords(iRequesterId, iTx);
+			txManager.commitAllPendingRecords((OTransactionRealAbstract) iTx);
 
 			incrementVersion();
 			synch();
 
 		} catch (IOException e) {
-			rollback(iRequesterId, iTx);
+			rollback(iTx);
 
 		} finally {
 			lock.releaseSharedLock(locked);
 		}
 	}
 
-	public void rollback(final int iRequesterId, final OTransaction iTx) {
+	public void rollback(final OTransaction iTx) {
 	}
 
 	public void synch() {
@@ -979,9 +979,9 @@ public class OStorageLocal extends OStorageEmbedded {
 	}
 
 	@Override
-	protected ORawBuffer readRecord(final int iRequesterId, final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock) {
+	protected ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock) {
 		if (iRid.clusterPosition < 0)
-			throw new IllegalArgumentException("Can't read the record #" + iRid + " since the position is invalid");
+			throw new IllegalArgumentException("Can't read the record " + iRid + " since the position is invalid");
 
 		// NOT FOUND: SEARCH IT IN THE STORAGE
 		final long timer = OProfiler.getInstance().startChrono();
@@ -1008,7 +1008,7 @@ public class OStorageLocal extends OStorageEmbedded {
 			}
 		} catch (IOException e) {
 
-			OLogManager.instance().error(this, "Error on reading record #" + iRid + " (cluster: " + iClusterSegment + ")", e);
+			OLogManager.instance().error(this, "Error on reading record " + iRid + " (cluster: " + iClusterSegment + ")", e);
 			return null;
 
 		} finally {
@@ -1018,8 +1018,8 @@ public class OStorageLocal extends OStorageEmbedded {
 		}
 	}
 
-	protected int updateRecord(final int iRequesterId, final OCluster iClusterSegment, final ORecordId iRid, final byte[] iContent,
-			final int iVersion, final byte iRecordType) {
+	protected int updateRecord(final OCluster iClusterSegment, final ORecordId iRid, final byte[] iContent, final int iVersion,
+			final byte iRecordType) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		final boolean locked = lock.acquireSharedLock();
@@ -1035,7 +1035,7 @@ public class OStorageLocal extends OStorageEmbedded {
 				// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
 				if (iVersion > -1 && iVersion < ppos.version)
 					throw new OConcurrentModificationException(
-							"Can't update record #"
+							"Can't update record "
 									+ iRid
 									+ " because it has been modified by another user (v"
 									+ ppos.version
@@ -1069,7 +1069,7 @@ public class OStorageLocal extends OStorageEmbedded {
 			}
 		} catch (IOException e) {
 
-			OLogManager.instance().error(this, "Error on updating record #" + iRid + " (cluster: " + iClusterSegment + ")", e);
+			OLogManager.instance().error(this, "Error on updating record " + iRid + " (cluster: " + iClusterSegment + ")", e);
 
 		} finally {
 			lock.releaseSharedLock(locked);
@@ -1080,7 +1080,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		return -1;
 	}
 
-	protected boolean deleteRecord(final int iRequesterId, final OCluster iClusterSegment, final ORecordId iRid, final int iVersion) {
+	protected boolean deleteRecord(final OCluster iClusterSegment, final ORecordId iRid, final int iVersion) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		final boolean locked = lock.acquireSharedLock();
@@ -1097,7 +1097,7 @@ public class OStorageLocal extends OStorageEmbedded {
 				// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
 				if (iVersion > -1 && ppos.version != iVersion)
 					throw new OConcurrentModificationException(
-							"Can't delete the record #"
+							"Can't delete the record "
 									+ iRid
 									+ " because it was modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
 
@@ -1115,7 +1115,7 @@ public class OStorageLocal extends OStorageEmbedded {
 			}
 		} catch (IOException e) {
 
-			OLogManager.instance().error(this, "Error on deleting record #" + iRid + "( cluster: " + iClusterSegment + ")", e);
+			OLogManager.instance().error(this, "Error on deleting record " + iRid + "( cluster: " + iClusterSegment + ")", e);
 
 		} finally {
 			lock.releaseSharedLock(locked);
@@ -1159,7 +1159,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		final int id = registerCluster(cluster);
 
 		clusters[id].create(iStartSize);
-		configuration.update();
+		configuration.update(-1);
 		return id;
 	}
 
@@ -1173,7 +1173,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		config.map = cluster.getRID();
 		final int id = registerCluster(cluster);
 
-		configuration.update();
+		configuration.update(-1);
 		return id;
 	}
 
@@ -1184,7 +1184,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
 		final OClusterMemory cluster = new OClusterMemory(clusters.length, iClusterName);
 		final int id = registerCluster(cluster);
-		configuration.update();
+		configuration.update(-1);
 
 		return id;
 	}

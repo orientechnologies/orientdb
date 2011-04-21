@@ -78,7 +78,7 @@ public abstract class OStorageAbstract implements OStorage {
 		return u;
 	}
 
-	public void close(boolean iForce) {
+	public void close(final boolean iForce) {
 		close();
 	}
 

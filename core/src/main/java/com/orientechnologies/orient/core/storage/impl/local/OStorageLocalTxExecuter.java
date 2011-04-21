@@ -30,9 +30,9 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionEntry;
+import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
 
 public class OStorageLocalTxExecuter {
@@ -59,8 +59,8 @@ public class OStorageLocalTxExecuter {
 		txSegment.close();
 	}
 
-	protected long createRecord(final int iRequesterId, final int iTxId, final OCluster iClusterSegment, final ORecordId iRid,
-			final byte[] iContent, final byte iRecordType) throws IOException {
+	protected long createRecord(final int iTxId, final OCluster iClusterSegment, final ORecordId iRid, final byte[] iContent,
+			final byte iRecordType) throws IOException {
 		iRid.clusterPosition = -1;
 
 		try {
@@ -77,7 +77,7 @@ public class OStorageLocalTxExecuter {
 			iClusterSegment.setPhysicalPosition(iRid.clusterPosition, dataSegment, dataOffset, iRecordType);
 
 			// SAVE INTO THE LOG THE POSITION OF THE RECORD JUST CREATED. IF TX FAILS AT THIS POINT A GHOST RECORD IS CREATED UNTIL DEFRAG
-			txSegment.addLog(OTxSegment.OPERATION_CREATE, iRequesterId, iTxId, iClusterSegment.getId(), iRid.clusterPosition, dataOffset);
+			txSegment.addLog(OTxSegment.OPERATION_CREATE, iTxId, iClusterSegment.getId(), iRid.clusterPosition, dataOffset);
 
 		} catch (IOException e) {
 
@@ -88,11 +88,11 @@ public class OStorageLocalTxExecuter {
 		return iRid.clusterPosition;
 	}
 
-	protected int updateRecord(final int iRequesterId, final int iTxId, final OCluster iClusterSegment, final ORecordId iRid,
-			final byte[] iContent, final int iVersion, final byte iRecordType) {
+	protected int updateRecord(final int iTxId, final OCluster iClusterSegment, final ORecordId iRid, final byte[] iContent,
+			final int iVersion, final byte iRecordType) {
 		try {
 			// READ CURRENT RECORD CONTENT
-			final ORawBuffer buffer = storage.readRecord(iRequesterId, iClusterSegment, iRid, true);
+			final ORawBuffer buffer = storage.readRecord(iClusterSegment, iRid, true);
 
 			if (buffer == null)
 				throw new OTransactionException("Can't retrieve the updated record #" + iRid);
@@ -107,10 +107,10 @@ public class OStorageLocalTxExecuter {
 				dataOffset = -1;
 
 			// SAVE INTO THE LOG THE POSITION OF THE RECORD JUST DELETED. IF TX FAILS AT THIS POINT AS ABOVE
-			txSegment.addLog(OTxSegment.OPERATION_UPDATE, iRequesterId, iTxId, iClusterSegment.getId(), iRid.clusterPosition, dataOffset);
+			txSegment.addLog(OTxSegment.OPERATION_UPDATE, iTxId, iClusterSegment.getId(), iRid.clusterPosition, dataOffset);
 
 			// UPDATE THE RECORD FOR REAL. IF TX FAILS AT THIS POINT CAN BE RECOVERED THANKS TO THE TX-LOG
-			return storage.updateRecord(iRequesterId, iClusterSegment, iRid, iContent, iVersion, iRecordType);
+			return storage.updateRecord(iClusterSegment, iRid, iContent, iVersion, iRecordType);
 		} catch (IOException e) {
 
 			OLogManager.instance().error(this, "Error on updating entry #" + iRid + " in log segment: " + iClusterSegment, e,
@@ -119,8 +119,7 @@ public class OStorageLocalTxExecuter {
 		return -1;
 	}
 
-	protected void deleteRecord(final int iRequesterId, final int iTxId, final OCluster iClusterSegment, final long iPosition,
-			final int iVersion) {
+	protected void deleteRecord(final int iTxId, final OCluster iClusterSegment, final long iPosition, final int iVersion) {
 		try {
 			// GET THE PPOS OF THE RECORD
 			final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iPosition, new OPhysicalPosition());
@@ -139,7 +138,7 @@ public class OStorageLocalTxExecuter {
 								+ " because it was modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
 
 			// SAVE INTO THE LOG THE POSITION OF THE RECORD JUST DELETED
-			txSegment.addLog(OTxSegment.OPERATION_DELETE, iRequesterId, iTxId, iClusterSegment.getId(), iPosition, ppos.dataPosition);
+			txSegment.addLog(OTxSegment.OPERATION_DELETE, iTxId, iClusterSegment.getId(), iPosition, ppos.dataPosition);
 
 			// DELETE THE RECORD BUT LEAVING THE PPOS INTACT BUT THE VERSION = -1 TO RECOGNIZE THAT THE ENTRY HAS BEEN DELETED. IF TX
 			// FAILS AT THIS POINT CAN BE RECOVERED THANKS TO THE TX-LOG
@@ -158,7 +157,7 @@ public class OStorageLocalTxExecuter {
 		return txSegment;
 	}
 
-	protected void commitAllPendingRecords(final int iRequesterId, final OTransaction iTx) throws IOException {
+	protected void commitAllPendingRecords(final OTransactionRealAbstract iTx) throws IOException {
 		// COPY ALL THE ENTRIES IN SEPARATE COLLECTION SINCE DURING THE COMMIT PHASE SOME NEW ENTRIES COULD BE CREATED AND
 		// CONCURRENT-EXCEPTION MAY OCCURS
 		final Set<OTransactionEntry> allEntries = new HashSet<OTransactionEntry>();
@@ -174,7 +173,7 @@ public class OStorageLocalTxExecuter {
 			if (tmpEntries.size() > 0) {
 				for (OTransactionEntry txEntry : tmpEntries)
 					// COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
-					commitEntry(iRequesterId, iTx, txEntry, iTx.isUsingLog());
+					commitEntry(iTx, txEntry, iTx.isUsingLog());
 
 				allEntries.addAll(tmpEntries);
 				tmpEntries.clear();
@@ -182,7 +181,7 @@ public class OStorageLocalTxExecuter {
 		}
 
 		// CLEAR ALL TEMPORARY RECORDS
-		txSegment.clearLogEntries(iRequesterId, iTx.getId());
+		txSegment.clearLogEntries(iTx.getId());
 
 		// UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT
 		OTransactionAbstract.updateCacheFromEntries(storage, iTx, allEntries);
@@ -194,7 +193,7 @@ public class OStorageLocalTxExecuter {
 		// TODO
 	}
 
-	private void commitEntry(final int iRequesterId, final OTransaction iTx, final OTransactionEntry txEntry, final boolean iUseLog)
+	private void commitEntry(final OTransactionRealAbstract iTx, final OTransactionEntry txEntry, final boolean iUseLog)
 			throws IOException {
 
 		if (txEntry.status != OTransactionEntry.DELETED && !txEntry.getRecord().isDirty())
@@ -227,13 +226,14 @@ public class OStorageLocalTxExecuter {
 						stream = txEntry.getRecord().toStream();
 
 					rid.clusterId = cluster.getId();
-					createRecord(iRequesterId, iTx.getId(), cluster, rid, stream, txEntry.getRecord().getRecordType());
+					createRecord(iTx.getId(), cluster, rid, stream, txEntry.getRecord().getRecordType());
 
 					iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_CREATE, txEntry.getRecord());
 				} else {
-					txEntry.getRecord().setVersion(
-							updateRecord(iRequesterId, iTx.getId(), cluster, rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord()
-									.getRecordType()));
+					txEntry.getRecord()
+							.setVersion(
+									updateRecord(iTx.getId(), cluster, rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord()
+											.getRecordType()));
 				}
 			} else {
 				iTx.getDatabase().getStorage().createRecord(rid, stream, txEntry.getRecord().getRecordType());
@@ -249,8 +249,7 @@ public class OStorageLocalTxExecuter {
 				stream = txEntry.getRecord().toStream();
 
 			txEntry.getRecord().setVersion(
-					updateRecord(iRequesterId, iTx.getId(), cluster, rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord()
-							.getRecordType()));
+					updateRecord(iTx.getId(), cluster, rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType()));
 
 			iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_UPDATE, txEntry.getRecord());
 			break;
@@ -259,7 +258,7 @@ public class OStorageLocalTxExecuter {
 		case OTransactionEntry.DELETED: {
 			iTx.getDatabase().callbackHooks(ORecordHook.TYPE.BEFORE_DELETE, txEntry.getRecord());
 
-			deleteRecord(iRequesterId, iTx.getId(), cluster, rid.clusterPosition, txEntry.getRecord().getVersion());
+			deleteRecord(iTx.getId(), cluster, rid.clusterPosition, txEntry.getRecord().getVersion());
 
 			iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_DELETE, txEntry.getRecord());
 		}

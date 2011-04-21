@@ -156,10 +156,10 @@ public class OSchema extends ODocumentWrapperNoClass {
 
 		return cls;
 	}
-	
+
 	private OClass cascadeCreate(final Class<?> javaClass) {
 		final OClass cls = createClass(javaClass.getSimpleName());
-		
+
 		final Class<?> javaSuperClass = javaClass.getSuperclass();
 		if (javaSuperClass != null && !javaSuperClass.getName().equals("java.lang.Object")) {
 			OClass superClass = classes.get(javaSuperClass.getSimpleName().toLowerCase());
@@ -170,7 +170,7 @@ public class OSchema extends ODocumentWrapperNoClass {
 
 		return cls;
 	}
-	
+
 	/**
 	 * Binds ODocument to POJO.
 	 */
@@ -257,7 +257,7 @@ public class OSchema extends ODocumentWrapperNoClass {
 	public void create() {
 		save(OStorage.CLUSTER_INTERNAL_NAME);
 		document.getDatabase().getStorage().getConfiguration().schemaRecordId = document.getIdentity().toString();
-		document.getDatabase().getStorage().getConfiguration().update();
+		document.getDatabase().getStorage().getConfiguration().update(document.getDatabase().getId());
 	}
 
 	public OSchema setDirty() {

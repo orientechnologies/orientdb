@@ -371,12 +371,12 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, getClusterNameById(iRid.getClusterId()),
 					iRid.getClusterId());
 
-			callbackHooks(TYPE.BEFORE_READ, iRecord);
-
 			if (!iIgnoreCache) {
 				// SEARCH INTO THE CACHE
 				final ORecordInternal<?> record = getCache().findRecord(iRid);
 				if (record != null) {
+					callbackHooks(TYPE.BEFORE_READ, record);
+
 					if (record.getInternalStatus() == STATUS.NOT_LOADED)
 						record.reload();
 
@@ -400,6 +400,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				currDb = (ODatabaseRecord) databaseOwner;
 
 			iRecord.fill(currDb, iRid, recordBuffer.version, recordBuffer.buffer);
+
+			callbackHooks(TYPE.BEFORE_READ, iRecord);
+
 			iRecord.fromStream(recordBuffer.buffer);
 			iRecord.setStatus(STATUS.LOADED);
 

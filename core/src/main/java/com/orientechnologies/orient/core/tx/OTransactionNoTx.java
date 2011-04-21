@@ -24,8 +24,8 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
 public class OTransactionNoTx extends OTransactionAbstract {
-	public OTransactionNoTx(final ODatabaseRecordTx iDatabase, final int iId) {
-		super(iDatabase, iId);
+	public OTransactionNoTx(final ODatabaseRecordTx iDatabase) {
+		super(iDatabase);
 		status = TXSTATUS.BEGUN;
 	}
 

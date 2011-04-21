@@ -69,12 +69,10 @@ public class OIndexUnique extends OIndexMVRBTreeAbstract {
 	public void checkEntry(final ODocument iRecord, final Object iKey) {
 		// CHECK IF ALREADY EXIST
 		Set<OIdentifiable> indexedRIDs = get(iKey);
-		if (indexedRIDs != null && indexedRIDs.size() > 0) {
-
+		if (indexedRIDs != null && !indexedRIDs.isEmpty()) {
 			if (!indexedRIDs.contains(iRecord))
 				OLogManager.instance().exception("Found duplicated key '%s' previously assigned to the record %s", null,
 						OIndexException.class, iKey, indexedRIDs.iterator().next());
 		}
-
 	}
 }

@@ -97,8 +97,7 @@ public abstract class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V
 	protected OMVRBTreeEntryPersistent<K, V>	left;
 	protected OMVRBTreeEntryPersistent<K, V>	right;
 
-	protected OMemoryInputStream							inStream								= new OMemoryInputStream();
-	private static final int									PERSISTENT_HEADER_SIZE	= 39;
+	protected OMemoryInputStream							inStream	= new OMemoryInputStream();
 
 	/**
 	 * Called on event of splitting an entry.
