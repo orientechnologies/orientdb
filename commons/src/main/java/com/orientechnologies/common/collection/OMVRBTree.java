@@ -312,14 +312,14 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 			return OMVRBTreeThreadLocal.INSTANCE.push(key, null);
 
 		// 1^ CHANCE - TRY TO SEE IF LAST USED NODE IS GOOD: THIS IS VERY COMMON CASE ON INSERTION WITH AN INCREMENTING KEY
-//		OMVRBTreeEntry<K, V> entry = OMVRBTreeThreadLocal.INSTANCE.getLatest();
-//		if (entry != null && entry.getSize() > 0) {
-//			final Comparable k = (Comparable) key;
-//			if (k.compareTo(entry.getFirstKey()) >= 0)
-//				if (k.compareTo(entry.getLastKey()) <= 0 || successor(entry) == null) {
-//					return entry;
-//				}
-//		}
+		// OMVRBTreeEntry<K, V> entry = OMVRBTreeThreadLocal.INSTANCE.getLatest();
+		// if (entry != null && entry.getSize() > 0) {
+		// final Comparable k = (Comparable) key;
+		// if (k.compareTo(entry.getFirstKey()) >= 0)
+		// if (k.compareTo(entry.getLastKey()) <= 0 || successor(entry) == null) {
+		// return entry;
+		// }
+		// }
 
 		pageItemFound = false;
 
@@ -394,12 +394,15 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
 				// SEARCH INSIDE THE NODE
 				final V value = lastNode.search(k);
+
+				OMVRBTreeThreadLocal.INSTANCE.push(key, lastNode);
+
 				if (value != null || iGetContainer)
 					// FOUND: RETURN CURRENT NODE OR AT LEAST THE CONTAINER NODE
-					return OMVRBTreeThreadLocal.INSTANCE.push(key, lastNode);
+					return lastNode;
 
 				// NOT FOUND
-				return OMVRBTreeThreadLocal.INSTANCE.push(key, null);
+				return null;
 			}
 		} finally {
 			checkTreeStructure(p);
@@ -568,14 +571,16 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 				return null;
 			}
 
-			// System.out.println("Put of key " + key + "...");
-
-			parentNode = OMVRBTreeThreadLocal.INSTANCE.search(key);
-			if (parentNode == null)
+			// TRY TO GET LATEST SEARCH
+			final Object[] threadLocalResult = OMVRBTreeThreadLocal.INSTANCE.search(key);
+			if (threadLocalResult != null)
+				// REUSE LAST SEARCH
+				parentNode = (OMVRBTreeEntry<K, V>) threadLocalResult[1];
+			else
 				// SEARCH THE ITEM
 				parentNode = getEntry(key, true);
 
-			// System.out.println("Parent node: " + parentNode+", pageItemFound="+pageItemFound);
+			OMVRBTreeThreadLocal.INSTANCE.reset();
 
 			if (pageItemFound)
 				// EXACT MATCH: UPDATE THE VALUE
@@ -586,16 +591,12 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 				pageIndex = 0;
 			}
 
-			// System.out.println("Parent node free space: " + parentNode.getFreeSpace());
-
 			if (parentNode.getFreeSpace() > 0) {
 				// INSERT INTO THE PAGE
 				parentNode.insert(pageIndex, key, value);
 			} else {
 				// CREATE NEW NODE AND COPY HALF OF VALUES FROM THE ORIGIN TO THE NEW ONE IN ORDER TO GET VALUES BALANCED
 				final OMVRBTreeEntry<K, V> newNode = createEntry(parentNode);
-
-				// System.out.println("Created new entry: " + newEntry+ ", insert the key as index="+pageIndex);
 
 				if (pageIndex < parentNode.getPageSplitItems())
 					// INSERT IN THE ORIGINAL NODE
@@ -649,6 +650,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	@Override
 	public V remove(final Object key) {
 		OMVRBTreeEntry<K, V> p = getEntry(key);
+		OMVRBTreeThreadLocal.INSTANCE.reset();
 		if (p == null)
 			return null;
 
@@ -664,6 +666,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	public void clear() {
 		modCount++;
 		size = 0;
+		OMVRBTreeThreadLocal.INSTANCE.reset();
 		setRoot(null);
 	}
 

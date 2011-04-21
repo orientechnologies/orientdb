@@ -37,10 +37,10 @@ public class OMVRBTreeThreadLocal extends ThreadLocal<Object[]> {
 		return (RET) iValue;
 	}
 
-	public <RET extends OMVRBTreeEntry<?, ?>> RET search(final Object key) {
+	public Object[] search(final Object key) {
 		final Object[] value = get();
 		if (value != null && value[0] != null && value[0].equals(key))
-			return (RET) value[1];
+			return value;
 		return null;
 	}
 
