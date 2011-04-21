@@ -137,8 +137,17 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 	}
 
 	public boolean contains(final Object o) {
-		lazyLoad(false);
-		boolean found = indexOf((OIdentifiable) o) > -1;
+		boolean found;
+
+		final OIdentifiable obj = (OIdentifiable) o;
+
+		if (OGlobalConfiguration.LAZYSET_WORK_ON_STREAM.getValueAsBoolean() && getStreamedContent() != null) {
+			found = getStreamedContent().indexOf(obj.getIdentity().toString()) > -1;
+		} else {
+			lazyLoad(false);
+			found = indexOf((OIdentifiable) o) > -1;
+		}
+
 		if (!found && hasNewItems())
 			// SEARCH INSIDE NEW ITEMS MAP
 			found = newItems.containsKey(o);
@@ -208,12 +217,17 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 	}
 
 	public boolean remove(final Object o) {
-		lazyLoad(true);
-
-		final int pos = indexOf((OIdentifiable) o);
-		if (pos > -1) {
-			delegate.remove(pos);
-			return true;
+		if (OGlobalConfiguration.LAZYSET_WORK_ON_STREAM.getValueAsBoolean() && getStreamedContent() != null) {
+			// WORK ON STREAM
+			if (delegate.remove(o))
+				return true;
+		} else {
+			lazyLoad(true);
+			final int pos = indexOf((OIdentifiable) o);
+			if (pos > -1) {
+				delegate.remove(pos);
+				return true;
+			}
 		}
 
 		if (hasNewItems()) {

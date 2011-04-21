@@ -116,6 +116,9 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 
 	@Override
 	public boolean contains(final Object o) {
+		if (OGlobalConfiguration.LAZYSET_WORK_ON_STREAM.getValueAsBoolean() && getStreamedContent() != null)
+			return getStreamedContent().indexOf(((OIdentifiable) o).getIdentity().toString()) > -1;
+
 		lazyLoad(false);
 		return super.contains(o);
 	}
@@ -174,11 +177,36 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 	}
 
 	@Override
-	public boolean remove(Object o) {
+	public OIdentifiable remove(final int iIndex) {
 		lazyLoad(true);
-		final boolean result = super.remove(o);
-		if (size() == 0)
+		return super.remove(iIndex);
+	}
+
+	@Override
+	public boolean remove(final Object iElement) {
+		final boolean result;
+		if (OGlobalConfiguration.LAZYSET_WORK_ON_STREAM.getValueAsBoolean() && getStreamedContent() != null) {
+			// WORK ON STREAM
+			final StringBuilder stream = getStreamedContent();
+			final String rid = ((OIdentifiable) iElement).getIdentity().toString();
+			int pos = stream.indexOf(rid);
+			if (pos > -1) {
+				// FOUND: REMOVE IT DIRECTLY FROM STREAM
+				if (pos > 0)
+					pos--;
+				stream.delete(pos, pos + rid.length() + 1);
+				if (stream.length() == 0)
+					setStreamedContent(null);
+			}
+			result = true;
+		} else {
+			lazyLoad(true);
+			result = super.remove(iElement);
+		}
+
+		if (isEmpty())
 			contentType = MULTIVALUE_CONTENT_TYPE.EMPTY;
+
 		return result;
 	}
 
