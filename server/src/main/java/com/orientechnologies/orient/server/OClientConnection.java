@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.Socket;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 
 public class OClientConnection {
@@ -26,6 +27,7 @@ public class OClientConnection {
 	public ONetworkProtocol			protocol;
 	public long									since;
 	public ODatabaseDocumentTx	database;
+	public ODatabaseRaw					rawDatabase;
 
 	public OClientConnection(final int iId, final Socket iSocket, final ONetworkProtocol iProtocol) throws IOException {
 		this.id = iId;

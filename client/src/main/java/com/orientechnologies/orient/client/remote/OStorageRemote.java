@@ -70,22 +70,23 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
  */
 @SuppressWarnings("unchecked")
 public class OStorageRemote extends OStorageAbstract {
-	private static final String														DEFAULT_HOST			= "localhost";
-	private static final String[]													DEFAULT_PORTS			= new String[] { "2424" };
-	private static final String														ADDRESS_SEPARATOR	= ";";
+	private static final String																	DEFAULT_HOST			= "localhost";
+	private static final String[]																DEFAULT_PORTS			= new String[] { "2424" };
+	private static final String																	ADDRESS_SEPARATOR	= ";";
 
-	private int																						sessionId					= -1;
-	private OStorageRemoteServiceThread										serviceThread;
-	private OContextConfiguration													clientConfiguration;
-	private int																						connectionRetry;
-	private int																						connectionRetryDelay;
+	private int																									sessionId					= -1;
+	private OStorageRemoteServiceThread													serviceThread;
+	private OContextConfiguration																clientConfiguration;
+	private int																									connectionRetry;
+	private int																									connectionRetryDelay;
 
-	private ONetworkConnectionPool<OChannelBinaryClient>	networkPool;
-	protected List<OPair<String, String[]>>								serverURLs				= new ArrayList<OPair<String, String[]>>();
-	protected int																					retry							= 0;
-	protected final Map<String, Integer>									clustersIds				= new HashMap<String, Integer>();
-	protected final Map<String, String>										clustersTypes			= new HashMap<String, String>();
-	protected int																					defaultClusterId;
+	private OChannelBinaryClient																network;
+	private static ONetworkConnectionPool<OChannelBinaryClient>	networkPool;
+	protected List<OPair<String, String[]>>											serverURLs				= new ArrayList<OPair<String, String[]>>();
+	protected int																								retry							= 0;
+	protected final Map<String, Integer>												clustersIds				= new HashMap<String, Integer>();
+	protected final Map<String, String>													clustersTypes			= new HashMap<String, String>();
+	protected int																								defaultClusterId;
 
 	public OStorageRemote(final String iURL, final String iMode) throws IOException {
 		super(iURL, iURL, iMode);
@@ -95,7 +96,7 @@ public class OStorageRemote extends OStorageAbstract {
 		connectionRetry = clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY);
 		connectionRetryDelay = clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY_DELAY);
 
-		networkPool = new ONetworkConnectionPool<OChannelBinaryClient>(1, 3);
+		//networkPool = new ONetworkConnectionPool<OChannelBinaryClient>(1, 3);
 	}
 
 	public void setSessionId(final int iSessionId) {
@@ -1130,28 +1131,43 @@ public class OStorageRemote extends OStorageAbstract {
 		}
 	}
 
-	protected int beginRequest(final byte iCommand) throws IOException {
-		networkPool.acquire(iRemoteAddress)
-		
-		network.getLockWrite().lock();
+	/**
+	 * Acquire a network channel from the pool. Don't lock the write stream since the connection usage is exclusive.
+	 * 
+	 * @param iCommand
+	 * @return
+	 * @throws IOException
+	 */
+	protected OChannelBinaryClient beginRequest(final byte iCommand) throws IOException {
+		//final OChannelBinaryClient network = networkPool.acquire(url);
 
 		network.writeByte(iCommand);
 		network.writeInt(sessionId);
 
-		return sessionId;
+		return network;
 	}
 
+	/**
+	 * Ends the request and unlock the write lock
+	 */
 	public void endRequest() throws IOException {
 		network.flush();
-		network.getLockWrite().unlock();
 	}
 
+	/**
+	 * Starts listening the response.
+	 */
 	protected void beginResponse() throws IOException {
 		network.beginResponse(sessionId);
 	}
 
+	/**
+	 * End response reached: release the channel in the pool to being reused
+	 */
 	public void endResponse() {
 		network.endResponse();
+		//networkPool.release(network);
+		//network = null;
 	}
 
 	public boolean isPermanentRequester() {

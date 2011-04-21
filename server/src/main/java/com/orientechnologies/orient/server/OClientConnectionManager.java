@@ -28,27 +28,42 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 
 public class OClientConnectionManager extends OSharedResource {
-	protected Map<Integer, OClientConnection>			connections	= new HashMap<Integer, OClientConnection>();
-	protected Map<Integer, ONetworkProtocol>			handlers		= new HashMap<Integer, ONetworkProtocol>();
+	protected Map<Integer, OClientConnection>			connections				= new HashMap<Integer, OClientConnection>();
+	protected Map<Integer, ONetworkProtocol>			handlers					= new HashMap<Integer, ONetworkProtocol>();
+	protected int																	connectionSerial	= 0;
 
-	private static final OClientConnectionManager	instance		= new OClientConnectionManager();
+	private static final OClientConnectionManager	instance					= new OClientConnectionManager();
 
 	public OClientConnectionManager() {
 	}
 
-	public void connect(final Socket iSocket, final OClientConnection iConnection) throws IOException {
+	/**
+	 * Create a connection.
+	 * 
+	 * @param iSocket
+	 * @param iProtocol
+	 * @return
+	 * @throws IOException
+	 */
+	public OClientConnection connect(final Socket iSocket, final ONetworkProtocol iProtocol) throws IOException {
 		OProfiler.getInstance().updateCounter("OServer.threads.actives", +1);
+
+		final OClientConnection connection;
 
 		acquireExclusiveLock();
 		try {
-			connections.put(iConnection.id, iConnection);
-			handlers.put(iConnection.id, iConnection.protocol);
+			connection = new OClientConnection(++connectionSerial, iSocket, iProtocol);
+
+			connections.put(connection.id, connection);
+			handlers.put(connection.id, connection.protocol);
 
 		} finally {
 			releaseExclusiveLock();
 		}
 
-		OLogManager.instance().config(this, "Remote client connected from: " + iConnection);
+		OLogManager.instance().config(this, "Remote client connected from: " + connection);
+
+		return connection;
 	}
 
 	public OClientConnection getConnection(final int iChannelId) {

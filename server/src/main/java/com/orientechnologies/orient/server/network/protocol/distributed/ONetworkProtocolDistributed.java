@@ -76,7 +76,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 			final String dbName = channel.readString();
 			if (dbName != null) {
 				// REOPEN PREVIOUSLY MANAGED DATABASE
-				connection.database = openDatabase(dbName, channel.readString(), channel.readString());
+				openDatabase(dbName, channel.readString(), channel.readString());
 			}
 
 			sendOk(lastClientTxId);
@@ -96,7 +96,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 			checkServerAccess("database.share");
 
-			connection.database = openDatabase(dbName, dbUser, dbPassword);
+			openDatabase(dbName, dbUser, dbPassword);
 
 			final String engineName = connection.database.getStorage() instanceof OStorageLocal ? "local" : "memory";
 

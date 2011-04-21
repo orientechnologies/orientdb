@@ -91,7 +91,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 	protected String									user;
 	protected String									passwd;
-	protected ODatabaseRaw						underlyingDatabase;
 	protected int											lastRequestType;
 	protected int											lastClientTxId;
 	private OServerUserConfiguration	serverUser;
@@ -119,6 +118,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		OGlobalConfiguration.DB_CACHE_SIZE.setValue(0);
 		OGlobalConfiguration.STORAGE_CACHE_SIZE.setValue(0);
 		OGlobalConfiguration.DB_USE_CACHE.setValue(0);
+		OGlobalConfiguration.MVRBTREE_LAZY_UPDATES.setValue(0);
+		OGlobalConfiguration.LAZYSET_WORK_ON_STREAM.setValue(false);
 	}
 
 	@Override
@@ -132,6 +133,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		try {
 			lastRequestType = channel.readByte();
 			lastClientTxId = channel.readInt();
+
+			if (lastClientTxId > -1)
+				connection = OClientConnectionManager.instance().getConnection(lastClientTxId);
+			else
+				connection = OClientConnectionManager.instance().connect(connection.protocol.getChannel().socket, this);
 
 			++data.totalRequests;
 
@@ -231,9 +237,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			user = channel.readString();
 			passwd = channel.readString();
 
-			connection.database = openDatabase(dbName, user, passwd);
+			openDatabase(dbName, user, passwd);
 
-			if (!(underlyingDatabase.getStorage() instanceof OStorageEmbedded) && !loadUserFromSchema(user, passwd)) {
+			if (!(connection.database.getStorage() instanceof OStorageEmbedded) && !loadUserFromSchema(user, passwd)) {
 				sendError(lastClientTxId, new OSecurityAccessException(connection.database.getName(), "Access denied to database '"
 						+ connection.database.getName() + "' for user: " + user));
 			} else {
@@ -281,6 +287,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 		case OChannelBinaryProtocol.REQUEST_DB_EXIST: {
 			data.commandInfo = "Exists database";
+			String dbName = channel.readString();
+
+			checkServerAccess("database.exists");
+
+			connection.database = getDatabaseInstance(dbName, "local");
 			sendOk(lastClientTxId);
 			channel.writeByte((byte) (connection.database.exists() ? 1 : 0));
 			break;
@@ -391,7 +402,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				// SEND THE DB CONFIGURATION INSTEAD SINCE IT WAS ON RECORD 0:0
 				sendOk(lastClientTxId);
 				channel.writeByte((byte) 1);
-				channel.writeBytes(underlyingDatabase.getStorage().getConfiguration().toStream());
+				channel.writeBytes(connection.database.getStorage().getConfiguration().toStream());
 				channel.writeInt(0);
 				channel.writeByte(ORecordBytes.RECORD_TYPE);
 			} else {
@@ -458,7 +469,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			data.commandInfo = "Create record";
 
 			final ORecordId rid = new ORecordId(channel.readShort(), ORID.CLUSTER_POS_INVALID);
-			final long location = underlyingDatabase.save(rid, channel.readBytes(), -1, channel.readByte());
+			final long location = connection.rawDatabase.save(rid, channel.readBytes(), -1, channel.readByte());
 			sendOk(lastClientTxId);
 			channel.writeLong(location);
 			break;
@@ -478,7 +489,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			//
 			// connection.database.save(record);
 
-			long newVersion = underlyingDatabase.save(rid, channel.readBytes(), channel.readInt(), channel.readByte());
+			long newVersion = connection.rawDatabase.save(rid, channel.readBytes(), channel.readInt(), channel.readByte());
 
 			// TODO: Handle it by using triggers
 			if (connection.database.getMetadata().getSchema().getDocument().getIdentity().equals(rid))
@@ -496,7 +507,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		case OChannelBinaryProtocol.REQUEST_RECORD_DELETE: {
 			data.commandInfo = "Delete record";
 			final ORecordId rid = new ORecordId(channel.readShort(), channel.readLong());
-			underlyingDatabase.delete(rid, channel.readInt());
+			connection.rawDatabase.delete(rid, channel.readInt());
 			sendOk(lastClientTxId);
 
 			channel.writeByte((byte) 1);
@@ -787,6 +798,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		sendShutdown();
 		channel.close();
 
+		if (connection == null)
+			return;
+
 		OServerHandlerHelper.invokeHandlerCallbackOnClientDisconnection(connection);
 
 		if (connection.database != null)
@@ -900,17 +914,17 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 	protected ODatabaseDocumentTx openDatabase(final String dbName, final String iUser, final String iPassword)
 			throws InterruptedException {
-		ODatabaseDocumentTx db = OSharedDocumentDatabase.acquire(dbName, iUser, iPassword);
+		connection.database = OSharedDocumentDatabase.acquire(dbName, iUser, iPassword);
 
-		if (db.isClosed())
-			if (db.getStorage() instanceof OStorageMemory)
-				db.create();
+		if (connection.database.isClosed())
+			if (connection.database.getStorage() instanceof OStorageMemory)
+				connection.database.create();
 			else
-				db.open(iUser, iPassword);
+				connection.database.open(iUser, iPassword);
 
-		underlyingDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) db.getUnderlying()).getUnderlying());
+		connection.rawDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
 
-		return db;
+		return connection.database;
 	}
 
 	protected void createDatabase(final ODatabaseDocumentTx iDatabase, String dbUser, String dbPasswd) {
@@ -937,7 +951,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			OServerMain.server().getMemoryDatabases().put(iDatabase.getName(), iDatabase);
 		}
 
-		underlyingDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) iDatabase.getUnderlying()).getUnderlying());
+		connection.rawDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) iDatabase.getUnderlying()).getUnderlying());
 	}
 
 	protected ODatabaseDocumentTx getDatabaseInstance(final String iDbName, final String iStorageMode) {

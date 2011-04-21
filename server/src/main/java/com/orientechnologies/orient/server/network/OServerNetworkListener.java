@@ -41,8 +41,7 @@ public class OServerNetworkListener extends Thread {
 	private ServerSocket											serverSocket;
 	private InetSocketAddress									inboundAddr;
 	private Class<? extends ONetworkProtocol>	protocolType;
-	private volatile int											connectionSerial	= 0;
-	private volatile boolean									active						= true;
+	private volatile boolean									active	= true;
 	private OServerCommand[]									commands;
 	private int																socketBufferSize;
 	private OContextConfiguration							configuration;
@@ -139,7 +138,7 @@ public class OServerNetworkListener extends Thread {
 					protocol = protocolType.newInstance();
 
 					// CREATE THE CLIENT CONNECTION
-					connection = new OClientConnection(++connectionSerial, socket, protocol);
+					connection = OClientConnectionManager.instance().connect(socket, protocol);
 
 					// CONFIGURE THE PROTOCOL FOR THE INCOMING CONNECTION
 					protocol.config(socket, connection, configuration);
@@ -149,9 +148,6 @@ public class OServerNetworkListener extends Thread {
 						for (OServerCommand c : commands) {
 							protocol.registerCommand(c);
 						}
-
-					// EXECUTE THE CONNECTION
-					OClientConnectionManager.instance().connect(socket, connection);
 
 				} catch (Throwable e) {
 					OLogManager.instance().error(this, "Error on client connection", e);
