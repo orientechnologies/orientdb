@@ -90,6 +90,9 @@ public enum OGlobalConfiguration {
 			"Multiplicand factor to apply to entry-points list (parameter mvrbtree.entrypoints) to determine if needs of optimization",
 			Float.class, 1.0f),
 
+	// COLLECTIONS
+	LAZYSET_WORK_ON_STREAM("lazyset.unmarshallOnAdd", "Upon add avoid to unmarshall set", Boolean.class, true),
+
 	// FILE
 	FILE_DEFRAG_STRATEGY(
 			"file.defrag.strategy",
@@ -326,7 +329,7 @@ public enum OGlobalConfiguration {
 			// WINDOWS
 
 			// AVOID TO USE MMAP, SINCE COULD BE BUGGY
-			//FILE_MMAP_STRATEGY.setValue(3);
+			// FILE_MMAP_STRATEGY.setValue(3);
 		}
 
 		if (System.getProperty("os.arch").indexOf("64") > -1) {

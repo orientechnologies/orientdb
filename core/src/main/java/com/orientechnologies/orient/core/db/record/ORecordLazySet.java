@@ -21,6 +21,7 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -56,6 +57,13 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 		delegate = new ORecordLazyList(iSourceRecord);
 	}
 
+	public ORecordLazySet(final ORecordLazySet iSource) {
+		delegate = iSource.delegate.copy();
+		sorted = iSource.sorted;
+		if (iSource.newItems != null)
+			newItems = new IdentityHashMap<ORecord<?>, Object>(iSource.newItems);
+	}
+
 	public void onBeforeIdentityChanged(final ORID iRID) {
 		delegate.onBeforeIdentityChanged(iRID);
 	}
@@ -89,6 +97,14 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 					delegate.rawIterator(), newItems.keySet().iterator() }, false);
 		}
 		return delegate.rawIterator();
+	}
+
+	public Iterator<OIdentifiable> newItemsIterator() {
+		if (hasNewItems()) {
+			return new OLazyRecordIterator(delegate.sourceRecord, delegate.database, delegate.recordType, newItems.keySet().iterator(),
+					false);
+		}
+		return null;
 	}
 
 	public boolean convertRecords2Links() {
@@ -142,8 +158,29 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 	 * Adds the item in the underlying List preserving the order of the collection.
 	 */
 	public boolean add(final OIdentifiable e) {
-		lazyLoad(true);
-		return internalAdd(e);
+		if (e.getIdentity().isNew()) {
+			// NEW RECORD OR YET UNMARSHALLED CONTENT: ADD IN NEW ITEMS
+			final ORecord<?> record = (ORecord<?>) e;
+			// ADD IN TEMP LIST
+			if (newItems == null)
+				newItems = new IdentityHashMap<ORecord<?>, Object>();
+			newItems.put(record, NEWMAP_VALUE);
+			setDirty();
+			return true;
+		} else if (OGlobalConfiguration.LAZYSET_WORK_ON_STREAM.getValueAsBoolean() && getStreamedContent() != null) {
+			// FAST INSERT
+			delegate.add(e);
+			return true;
+		} else {
+			final int pos = indexOf(e);
+
+			if (pos < 0) {
+				// FOUND
+				delegate.add(pos * -1 - 1, e);
+				return true;
+			}
+			return false;
+		}
 	}
 
 	/**
@@ -154,6 +191,9 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 	 * @return The position of the element if found, otherwise false
 	 */
 	public int indexOf(final OIdentifiable iElement) {
+		if (delegate.isEmpty())
+			return -1;
+
 		final boolean prevConvert = delegate.isAutoConvertToRecord();
 		if (prevConvert)
 			delegate.setAutoConvertToRecord(false);
@@ -226,69 +266,41 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 
 	@Override
 	public String toString() {
-		if (isLoaded()) {
-			if (hasNewItems()) {
-				final StringBuilder buffer = new StringBuilder(ORecordMultiValueHelper.toString(this));
-				for (ORecord<?> item : newItems.keySet())
-					buffer.insert(buffer.length() - 1, ", " + item.toString());
-				return buffer.toString();
+		final StringBuilder buffer = new StringBuilder(delegate.toString());
+		if (hasNewItems()) {
+			for (ORecord<?> item : newItems.keySet()) {
+				if (buffer.length() > 2)
+					buffer.insert(buffer.length() - 1, ", ");
+
+				buffer.insert(buffer.length() - 1, item.toString());
 			}
-			return ORecordMultiValueHelper.toString(this);
-		} else {
-			return "NOT LOADED: " + getStreamedContent();
+			return buffer.toString();
 		}
+		return buffer.toString();
 	}
 
 	public void sort() {
-		if (!sorted && isLoaded()) {
+		if (!sorted && !delegate.isEmpty()) {
 			Collections.sort(delegate);
 			sorted = true;
 		}
 	}
 
-	public boolean isLoaded() {
-		return delegate.isLoaded();
-	}
-
-	public ORecordLazySet setStreamedContent(final String iStream) {
+	public ORecordLazySet setStreamedContent(final StringBuilder iStream) {
 		delegate.setStreamedContent(iStream);
 		return this;
 	}
 
-	public String getStreamedContent() {
+	public StringBuilder getStreamedContent() {
 		return delegate.getStreamedContent();
 	}
 
-	protected boolean lazyLoad(final boolean iInvalidateStream) {
-		return delegate.lazyLoad(iInvalidateStream);
+	protected boolean lazyLoad(final boolean iNotIdempotent) {
+		return delegate.lazyLoad(iNotIdempotent);
 	}
 
 	public void convertLinks2Records() {
 		delegate.convertLinks2Records();
-	}
-
-	/**
-	 * Adds the item in the underlying List preserving the order of the collection.
-	 */
-	protected boolean internalAdd(final OIdentifiable e) {
-		setDirty();
-		if (e.getIdentity().isNew()) {
-			final ORecord<?> record = (ORecord<?>) e;
-			// ADD IN TEMP LIST
-			if (newItems == null)
-				newItems = new IdentityHashMap<ORecord<?>, Object>();
-			newItems.put(record, NEWMAP_VALUE);
-			return true;
-		} else {
-			final int pos = indexOf(e);
-
-			if (pos < 0) {
-				// FOUND
-				delegate.add(pos * -1 - 1, e);
-				return true;
-			}
-			return false;
-		}
 	}
 
 	private boolean hasNewItems() {
@@ -297,11 +309,19 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 
 	public void savedAllNewItems() {
 		if (hasNewItems()) {
-			for (ORecord<?> record : newItems.keySet())
-				internalAdd(record.getIdentity());
+			for (ORecord<?> record : newItems.keySet()) {
+				if (record.getIdentity().isNew() || getStreamedContent() == null
+						|| getStreamedContent().indexOf(record.getIdentity().toString()) == -1)
+					// NEW ITEM OR NOT CONTENT IN STREAMED BUFFER
+					add(record.getIdentity());
+			}
 
 			newItems.clear();
 			newItems = null;
 		}
+	}
+
+	public ORecordLazySet copy() {
+		return new ORecordLazySet(this);
 	}
 }

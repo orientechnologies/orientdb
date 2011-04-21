@@ -27,29 +27,29 @@ import com.orientechnologies.orient.core.record.ORecord;
  * 
  */
 public class ORecordMultiValueHelper {
-	public enum MULTIVALUE_STATUS {
+	public enum MULTIVALUE_CONTENT_TYPE {
 		EMPTY, ALL_RECORDS, ALL_RIDS, HYBRID
 	}
 
-	public static MULTIVALUE_STATUS getStatus(final MULTIVALUE_STATUS iPreviousStatus, final Object iValue) {
-		if (iPreviousStatus == MULTIVALUE_STATUS.HYBRID) {
+	public static MULTIVALUE_CONTENT_TYPE updateContentType(final MULTIVALUE_CONTENT_TYPE iPreviousStatus, final Object iValue) {
+		if (iPreviousStatus == MULTIVALUE_CONTENT_TYPE.HYBRID) {
 			// DO NOTHING
 
-		} else if (iPreviousStatus == MULTIVALUE_STATUS.EMPTY) {
+		} else if (iPreviousStatus == MULTIVALUE_CONTENT_TYPE.EMPTY) {
 			if (iValue instanceof ORID)
-				return MULTIVALUE_STATUS.ALL_RIDS;
+				return MULTIVALUE_CONTENT_TYPE.ALL_RIDS;
 			else if (iValue instanceof ORecord<?>)
-				return MULTIVALUE_STATUS.ALL_RECORDS;
+				return MULTIVALUE_CONTENT_TYPE.ALL_RECORDS;
 			else
-				return MULTIVALUE_STATUS.HYBRID;
+				return MULTIVALUE_CONTENT_TYPE.HYBRID;
 
-		} else if (iPreviousStatus == MULTIVALUE_STATUS.ALL_RECORDS) {
+		} else if (iPreviousStatus == MULTIVALUE_CONTENT_TYPE.ALL_RECORDS) {
 			if (iValue instanceof ORID)
-				return MULTIVALUE_STATUS.HYBRID;
+				return MULTIVALUE_CONTENT_TYPE.HYBRID;
 
-		} else if (iPreviousStatus == MULTIVALUE_STATUS.ALL_RIDS) {
+		} else if (iPreviousStatus == MULTIVALUE_CONTENT_TYPE.ALL_RIDS) {
 			if (!(iValue instanceof ORID))
-				return MULTIVALUE_STATUS.HYBRID;
+				return MULTIVALUE_CONTENT_TYPE.HYBRID;
 		}
 		return iPreviousStatus;
 	}

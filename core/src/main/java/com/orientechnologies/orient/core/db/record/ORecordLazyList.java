@@ -16,11 +16,11 @@
 package com.orientechnologies.orient.core.db.record;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import com.orientechnologies.orient.core.db.record.ORecordMultiValueHelper.MULTIVALUE_STATUS;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.record.ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -31,19 +31,19 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 
 /**
  * Lazy implementation of ArrayList. It's bound to a source ORecord object to keep track of changes. This avoid to call the
- * makeDirty() by hand when the list is changed.
+ * makeDirty() by hand when the list is changed. It handles an internal contentType to speed up some operations like conversion
+ * to/from record/links.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
 @SuppressWarnings({ "serial" })
 public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMultiValue {
-	protected final byte																recordType;
-	protected ODatabaseRecord														database;
-	protected ORecordMultiValueHelper.MULTIVALUE_STATUS	status							= MULTIVALUE_STATUS.EMPTY;
-	protected boolean																		loaded							= true;
-	protected String																		stream;
-	protected boolean																		autoConvertToRecord	= true;
+	protected final byte																			recordType;
+	protected ODatabaseRecord																	database;
+	protected ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE	contentType					= MULTIVALUE_CONTENT_TYPE.EMPTY;
+	protected StringBuilder																		stream;
+	protected boolean																					autoConvertToRecord	= true;
 
 	public ORecordLazyList(final ODatabaseRecord iDatabase) {
 		super(null);
@@ -71,7 +71,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 
 	@Override
 	public boolean isEmpty() {
-		if (loaded)
+		if (stream == null)
 			return super.isEmpty();
 		else
 			// AVOID TO LAZY LOAD IT, JUST CHECK IF STREAM IS EMPTY OR NULL
@@ -122,24 +122,25 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 
 	@Override
 	public boolean add(OIdentifiable e) {
-		lazyLoad(true);
-
-		if (status == MULTIVALUE_STATUS.ALL_RIDS && e instanceof ORecord<?> && !((ORecord<?>) e).getIdentity().isNew())
+		if ((contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS || OGlobalConfiguration.LAZYSET_WORK_ON_STREAM.getValueAsBoolean())
+				&& e instanceof ORecord<?> && !((ORecord<?>) e).getIdentity().isNew())
 			// IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
-			e = ((ORecord<?>) e).getIdentity();
+			e = e.getIdentity();
 		else
-			status = ORecordMultiValueHelper.getStatus(status, e);
+			contentType = ORecordMultiValueHelper.updateContentType(contentType, e);
 
+		lazyLoad(true);
 		return super.add(e);
 	}
 
 	@Override
 	public void add(int index, OIdentifiable e) {
-		if (status == MULTIVALUE_STATUS.ALL_RIDS && e instanceof ORecord<?>)
+		if ((contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS || OGlobalConfiguration.LAZYSET_WORK_ON_STREAM.getValueAsBoolean())
+				&& e instanceof ORecord<?> && !((ORecord<?>) e).getIdentity().isNew())
 			// IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
-			e = ((ORecord<?>) e).getIdentity();
+			e = e.getIdentity();
 		else
-			status = ORecordMultiValueHelper.getStatus(status, e);
+			contentType = ORecordMultiValueHelper.updateContentType(contentType, e);
 
 		lazyLoad(true);
 		super.add(index, e);
@@ -148,7 +149,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 	@Override
 	public OIdentifiable set(int index, OIdentifiable e) {
 		lazyLoad(true);
-		status = ORecordMultiValueHelper.getStatus(status, e);
+		contentType = ORecordMultiValueHelper.updateContentType(contentType, e);
 		return super.set(index, e);
 	}
 
@@ -177,16 +178,15 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 		lazyLoad(true);
 		final boolean result = super.remove(o);
 		if (size() == 0)
-			status = MULTIVALUE_STATUS.EMPTY;
+			contentType = MULTIVALUE_CONTENT_TYPE.EMPTY;
 		return result;
 	}
 
 	@Override
 	public void clear() {
 		super.clear();
-		status = MULTIVALUE_STATUS.EMPTY;
+		contentType = MULTIVALUE_CONTENT_TYPE.EMPTY;
 		stream = null;
-		loaded = true;
 	}
 
 	@Override
@@ -209,13 +209,9 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 		return super.toArray(a);
 	}
 
-	public boolean isLoaded() {
-		return loaded;
-	}
-
 	public void convertLinks2Records() {
 		lazyLoad(false);
-		if (status == MULTIVALUE_STATUS.ALL_RECORDS || !autoConvertToRecord || database == null)
+		if (contentType == MULTIVALUE_CONTENT_TYPE.ALL_RECORDS || !autoConvertToRecord || database == null)
 			// PRECONDITIONS
 			return;
 
@@ -227,16 +223,16 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 			}
 		}
 
-		status = MULTIVALUE_STATUS.ALL_RECORDS;
+		contentType = MULTIVALUE_CONTENT_TYPE.ALL_RECORDS;
 	}
 
 	public boolean convertRecords2Links() {
-		if (status == MULTIVALUE_STATUS.ALL_RIDS || sourceRecord == null || database == null)
+		if (contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS || sourceRecord == null || database == null)
 			// PRECONDITIONS
 			return true;
 
 		boolean allConverted = true;
-		for (int i = 0; i < size(); ++i) {
+		for (int i = 0; i < super.size(); ++i) {
 			try {
 				if (!convertRecord2Link(i))
 					allConverted = false;
@@ -246,7 +242,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 		}
 
 		if (allConverted)
-			status = MULTIVALUE_STATUS.ALL_RIDS;
+			contentType = MULTIVALUE_CONTENT_TYPE.ALL_RIDS;
 
 		return allConverted;
 	}
@@ -258,8 +254,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 	 *          Position of the item to convert
 	 */
 	private void convertLink2Record(final int iIndex) {
-		lazyLoad(false);
-		if (status == MULTIVALUE_STATUS.ALL_RECORDS || !autoConvertToRecord || database == null)
+		if (contentType == MULTIVALUE_CONTENT_TYPE.ALL_RECORDS || !autoConvertToRecord || database == null)
 			// PRECONDITIONS
 			return;
 
@@ -284,7 +279,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 	 *          Position of the item to convert
 	 */
 	private boolean convertRecord2Link(final int iIndex) {
-		if (status == MULTIVALUE_STATUS.ALL_RIDS || database == null)
+		if (contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS || database == null)
 			// PRECONDITIONS
 			return true;
 
@@ -316,10 +311,10 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 
 	@Override
 	public String toString() {
-		if (loaded)
+		if (stream == null)
 			return ORecordMultiValueHelper.toString(this);
 		else {
-			return "NOT LOADED: " + stream;
+			return "[NOT LOADED: " + stream + ']';
 		}
 	}
 
@@ -337,44 +332,56 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 		return false;
 	}
 
-	public ORecordLazyList setStreamedContent(final String iStream) {
-		// if (iStream != null && iStream.length() == 0)
-		// stream = null;
-		// else {
-		// // CREATE A COPY TO FREE ORIGINAL BUFFER
-		// stream = new String(iStream);
-		// loaded = false;
-		// }
+	public ORecordLazyList copy() {
+		ORecordLazyList copy = new ORecordLazyList(database);
+		copy.contentType = contentType;
+		copy.stream = stream;
+		copy.autoConvertToRecord = autoConvertToRecord;
 
+		final int tot = super.size();
+		for (int i = 0; i < tot; ++i)
+			copy.rawAdd(rawGet(i));
+
+		return copy;
+	}
+
+	public Iterator<OIdentifiable> newItemsIterator() {
+		return null;
+	}
+
+	public ORecordLazyList setStreamedContent(final StringBuilder iStream) {
+		if (iStream == null || iStream.length() == 0)
+			stream = null;
+		else {
+			// CREATE A COPY TO FREE ORIGINAL BUFFER
+			stream = iStream;
+			reset();
+		}
+
+		contentType = MULTIVALUE_CONTENT_TYPE.ALL_RIDS;
 		return this;
 	}
 
-	public String getStreamedContent() {
+	public StringBuilder getStreamedContent() {
 		return stream;
 	}
 
 	protected boolean lazyLoad(final boolean iInvalidateStream) {
-		if (loaded)
+		if (stream == null)
 			return false;
 
-		if (super.isEmpty()) {
-			final List<String> items = OStringSerializerHelper.smartSplit(stream, OStringSerializerHelper.RECORD_SEPARATOR);
+		final List<String> items = OStringSerializerHelper.smartSplit(stream.toString(), OStringSerializerHelper.RECORD_SEPARATOR);
 
-			for (String item : items) {
-				if (item != null && item.length() > 0)
-					item = item.substring(1);
+		for (String item : items) {
+			if (item.length() == 0)
+				continue;
 
-				if (item.length() == 0)
-					continue;
-
-				super.add(new ORecordId(item));
-			}
+			super.rawAdd(new ORecordId(item));
 		}
 
-		if (iInvalidateStream)
-			stream = null;
-
-		loaded = true;
+		// if (iInvalidateStream)
+		stream = null;
+		contentType = MULTIVALUE_CONTENT_TYPE.ALL_RIDS;
 
 		return true;
 	}

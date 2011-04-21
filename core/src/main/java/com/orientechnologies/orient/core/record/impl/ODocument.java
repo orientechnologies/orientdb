@@ -365,9 +365,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 				buffer.append(_clazz.getName());
 
 			if (_recordId != null) {
-				if (buffer.length() > 0)
-					buffer.append('@');
-				if (_recordId != null && _recordId.isValid())
+				if (_recordId.isValid())
 					buffer.append(_recordId);
 			}
 
@@ -384,10 +382,9 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 				} else if (f.getValue() instanceof ORecord<?>) {
 					record = (ORecord<?>) f.getValue();
 
-					if (record.getIdentity() != null) {
-						buffer.append('#');
-						buffer.append(record.getIdentity());
-					} else
+					if (record.getIdentity() != null)
+						record.getIdentity().toString(buffer);
+					else
 						buffer.append(record.toString());
 				} else
 					buffer.append(f.getValue());
@@ -996,9 +993,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		if (fieldValue != null)
 			// LISTS
 			if (fieldValue instanceof ORecordLazyList) {
-				final ORecordLazyList newList = new ORecordLazyList(cloned);
-				newList.addAll((ORecordLazyList) fieldValue);
-				cloned._fieldValues.put(entry.getKey(), newList);
+				cloned._fieldValues.put(entry.getKey(), ((ORecordLazyList) fieldValue).copy());
 
 			} else if (fieldValue instanceof ORecordTrackedList) {
 				final ORecordTrackedList newList = new ORecordTrackedList(cloned);
@@ -1015,9 +1010,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 
 				// SETS
 			} else if (fieldValue instanceof ORecordLazySet) {
-				final ORecordLazySet newList = new ORecordLazySet(cloned);
-				newList.addAll((ORecordLazySet) fieldValue);
-				cloned._fieldValues.put(entry.getKey(), newList);
+				cloned._fieldValues.put(entry.getKey(), ((ORecordLazySet) fieldValue).copy());
 
 			} else if (fieldValue instanceof ORecordTrackedSet) {
 				final ORecordTrackedSet newList = new ORecordTrackedSet(cloned);

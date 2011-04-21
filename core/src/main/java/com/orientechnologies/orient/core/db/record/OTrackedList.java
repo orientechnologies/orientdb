@@ -44,8 +44,9 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement {
 
 	@Override
 	public boolean addAll(final Collection<? extends T> c) {
+		setDirty();
 		for (T o : c)
-			add(o);
+			rawAdd(o);
 		return true;
 	}
 
@@ -79,6 +80,11 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement {
 		super.clear();
 	}
 
+	public void reset() {
+		super.clear();
+	}
+
+	@SuppressWarnings("unchecked")
 	public <RET> RET setDirty() {
 		if (sourceRecord != null)
 			sourceRecord.setDirty();
@@ -95,5 +101,9 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement {
 		if (sourceRecord != null)
 			return sourceRecord.setDatabase(iDatabase);
 		return false;
+	}
+
+	protected boolean rawAdd(T element) {
+		return super.add(element);
 	}
 }
