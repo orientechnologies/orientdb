@@ -227,7 +227,6 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 
 	@Override
 	public Object[] toArray() {
-		lazyLoad(false);
 		convertLinks2Records();
 		return super.toArray();
 	}

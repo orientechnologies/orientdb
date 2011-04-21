@@ -299,7 +299,16 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 
 	public void sort() {
 		if (!sorted && !delegate.isEmpty()) {
+			final boolean prevConvert = delegate.isAutoConvertToRecord();
+			if (prevConvert)
+				delegate.setAutoConvertToRecord(false);
+
 			Collections.sort(delegate);
+
+			if (prevConvert)
+				// RESET PREVIOUS SETTINGS
+				delegate.setAutoConvertToRecord(true);
+
 			sorted = true;
 		}
 	}
