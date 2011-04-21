@@ -39,9 +39,9 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
 
 	protected StringWriter				buffer;
 
-	protected ORID								file;
+	protected ORID								fileRID;
 
-	protected String							fileMapping;
+	protected String							fileDocument;
 
 	protected String							fileName;
 
@@ -56,7 +56,6 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
 			sendTextContent(iRequest, OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Content stream is null or empty", null,
 					OHttpUtils.CONTENT_TEXT_PLAIN, "Content stream is null or empty");
 		} else {
-			iRequest.channel.socket.setSoTimeout(100000);
 			buffer = new StringWriter();
 			parse(iRequest, new OHttpMultipartContentBaseParser(), new OHttpMultipartFileToRecordContentParser());
 			saveRecord(iRequest);
@@ -69,7 +68,7 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
 	protected void processBaseContent(OHttpRequest iRequest, String iContentResult, HashMap<String, String> headers) throws Exception {
 		if (headers.containsKey(OHttpUtils.MULTIPART_CONTENT_NAME)
 				&& headers.get(OHttpUtils.MULTIPART_CONTENT_NAME).equals(getDocumentParamenterName())) {
-			fileMapping = iContentResult;
+			fileDocument = iContentResult;
 		}
 	}
 
@@ -77,7 +76,7 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
 	protected void processFileContent(OHttpRequest iRequest, ORID iContentResult, HashMap<String, String> headers) throws Exception {
 		if (headers.containsKey(OHttpUtils.MULTIPART_CONTENT_NAME)
 				&& headers.get(OHttpUtils.MULTIPART_CONTENT_NAME).equals(getFileParamenterName())) {
-			file = iContentResult;
+			fileRID = iContentResult;
 			if (headers.containsKey(OHttpUtils.MULTIPART_CONTENT_FILENAME)) {
 				fileName = headers.get(OHttpUtils.MULTIPART_CONTENT_FILENAME);
 				if (fileName.charAt(0) == '"') {
@@ -91,31 +90,32 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
 				writer.beginObject();
 				writer.writeAttribute(1, true, "name", fileName);
 				writer.writeAttribute(1, true, "type", fileType);
-				writer.writeAttribute(1, true, "rid", file.toString());
+				writer.writeAttribute(1, true, "rid", fileRID.toString());
 				writer.endObject();
 			}
 		}
 	}
 
 	public void saveRecord(OHttpRequest iRequest) throws InterruptedException, IOException {
-		if (fileMapping != null) {
-			if (file != null) {
-				if (fileMapping.contains("$fileName")) {
-					fileMapping = new String(fileMapping.replace("$fileName", fileName));
+		if (fileDocument != null) {
+			if (fileRID != null) {
+				if (fileDocument.contains("$fileName")) {
+					fileDocument = fileDocument.replace("$fileName", fileName);
 				}
-				if (fileMapping.contains("$fileType")) {
-					fileMapping = new String(fileMapping.replace("$fileType", fileType));
+				if (fileDocument.contains("$fileType")) {
+					fileDocument = fileDocument.replace("$fileType", fileType);
 				}
-				if (fileMapping.contains("$file")) {
-					fileMapping = new String(fileMapping.replace("$file", "#" + file.toString()));
+				if (fileDocument.contains("$file")) {
+					fileDocument = fileDocument.replace("$file", fileRID.toString());
 				}
 				ODocument doc = new ODocument(getProfiledDatabaseInstance(iRequest));
-				doc.fromJSON(fileMapping);
+				doc.fromJSON(fileDocument);
 				doc.save();
 			} else {
 				sendTextContent(iRequest, OHttpUtils.STATUS_INVALIDMETHOD_CODE, "File cannot be null", null, OHttpUtils.CONTENT_TEXT_PLAIN,
 						"File cannot be null");
 			}
+			fileDocument = null;
 		}
 	}
 
