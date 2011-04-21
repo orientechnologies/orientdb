@@ -99,7 +99,7 @@ public abstract class OHttpMultipartRequestCommand<B, F> extends OServerCommandA
 			in = iRequest.multipartStream.read();
 			currChar = (char) in;
 			if (currChar == '\n') {
-				parseStatus = STATUS.STATUS_EXPECTED_PART_HEADERS;
+				return false;
 			}
 		} else if (currChar == '-') {
 			in = iRequest.multipartStream.read();
@@ -201,10 +201,22 @@ public abstract class OHttpMultipartRequestCommand<B, F> extends OServerCommandA
 			in = iRequest.multipartStream.read();
 			currChar = (char) in;
 			if (currChar == ';') {
+				if (header.charAt(0) == '"') {
+					header.deleteCharAt(0);
+				}
+				if (header.charAt(header.length() - 1) == '"') {
+					header.deleteCharAt(header.length() - 1);
+				}
 				headers.put(headerName, header.toString());
 				in = iRequest.multipartStream.read();
 				return (char) in;
 			} else if (currChar == '\r') {
+				if (header.charAt(0) == '"') {
+					header.deleteCharAt(0);
+				}
+				if (header.charAt(header.length() - 1) == '"') {
+					header.deleteCharAt(header.length() - 1);
+				}
 				headers.put(headerName, header.toString());
 				return currChar;
 			}
@@ -235,4 +247,7 @@ public abstract class OHttpMultipartRequestCommand<B, F> extends OServerCommandA
 	protected abstract void processFileContent(final OHttpRequest iRequest, F iContentResult, HashMap<String, String> headers)
 			throws Exception;
 
+	protected abstract String getFileParamenterName();
+
+	protected abstract String getDocumentParamenterName();
 }

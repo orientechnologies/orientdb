@@ -112,4 +112,8 @@ public class OHttpMultipartBaseInputStream extends InputStream {
 		buffer.setLength(0);
 	}
 
+	public int wrappedAvailable() throws IOException {
+		return wrappedInputStream.available();
+	}
+
 }

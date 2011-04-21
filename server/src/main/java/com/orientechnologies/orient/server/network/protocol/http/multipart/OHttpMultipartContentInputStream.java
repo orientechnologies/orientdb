@@ -89,6 +89,9 @@ public class OHttpMultipartContentInputStream extends InputStream {
 	public synchronized void reset() throws IOException {
 		previousData = wrappedInputStream.read();
 		internalAvailable = true;
+		if (((char) previousData) == '\r') {
+			bufferData();
+		}
 	}
 
 	@Override

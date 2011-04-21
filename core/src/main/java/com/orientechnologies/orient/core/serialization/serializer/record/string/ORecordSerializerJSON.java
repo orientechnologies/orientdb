@@ -278,7 +278,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 		if (iType == null)
 			// TRY TO DETERMINE THE CONTAINED TYPE from THE FIRST VALUE
-			if (iFieldValue.charAt(0) != '\"') {
+			if (iFieldValue.charAt(0) != '\"' && iFieldValue.charAt(0) != '\'') {
 				if (iFieldValue.equalsIgnoreCase("false") || iFieldValue.equalsIgnoreCase("true"))
 					iType = OType.BOOLEAN;
 				else {
@@ -291,7 +291,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 					if (c == null && iFieldValue.length() > 0) {
 						// TRY TO AUTODETERMINE THE BEST TYPE
-						if (iFieldValue.charAt(0) == '#' && iFieldValue.contains(":"))
+						if (iFieldValue.charAt(0) == ORID.PREFIX && iFieldValue.contains(":"))
 							iType = OType.LINK;
 						else if (OStringSerializerHelper.contains(iFieldValue, '.'))
 							iType = OType.FLOAT;
@@ -299,7 +299,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 							iType = OType.INTEGER;
 					}
 				}
-			} else if (iFieldValueAsString.length() >= 4 && iFieldValueAsString.charAt(0) == '#' && iFieldValueAsString.contains(":"))
+			} else if (iFieldValueAsString.length() >= 4 && iFieldValueAsString.charAt(0) == ORID.PREFIX
+					&& iFieldValueAsString.contains(":"))
 				iType = OType.LINK;
 			else if (iFieldValueAsString.startsWith("{") && iFieldValueAsString.endsWith("}"))
 				iType = OType.EMBEDDED;
