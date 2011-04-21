@@ -42,7 +42,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue, ORecordElement {
+public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue, ORecordElement, ORecordLazyListener {
 	public static final ORecordLazySet						EMPTY_SET			= new ORecordLazySet((ODatabaseRecord) null);
 	protected ORecordLazyList											delegate;
 	protected IdentityHashMap<ORecord<?>, Object>	newItems;
@@ -50,15 +50,15 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 	private static final Object										NEWMAP_VALUE	= new Object();
 
 	public ORecordLazySet(final ODatabaseRecord iDatabase) {
-		delegate = new ORecordLazyList(iDatabase);
+		delegate = new ORecordLazyList(iDatabase).setListener(this);
 	}
 
 	public ORecordLazySet(final ORecordInternal<?> iSourceRecord) {
-		delegate = new ORecordLazyList(iSourceRecord);
+		delegate = new ORecordLazyList(iSourceRecord).setListener(this);
 	}
 
 	public ORecordLazySet(final ORecordLazySet iSource) {
-		delegate = iSource.delegate.copy();
+		delegate = iSource.delegate.copy().setListener(this);
 		sorted = iSource.sorted;
 		if (iSource.newItems != null)
 			newItems = new IdentityHashMap<ORecord<?>, Object>(iSource.newItems);
@@ -178,7 +178,11 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 			return true;
 		} else if (OGlobalConfiguration.LAZYSET_WORK_ON_STREAM.getValueAsBoolean() && getStreamedContent() != null) {
 			// FAST INSERT
-			delegate.add(e);
+			final StringBuilder buffer = getStreamedContent();
+			if (buffer.length() > 0)
+				buffer.append(',');
+			e.getIdentity().toString(buffer);
+			setDirty();
 			return true;
 		} else {
 			final int pos = indexOf(e);
@@ -310,7 +314,11 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 	}
 
 	protected boolean lazyLoad(final boolean iNotIdempotent) {
-		return delegate.lazyLoad(iNotIdempotent);
+		if (delegate.lazyLoad(iNotIdempotent)) {
+			sort();
+			return true;
+		}
+		return false;
 	}
 
 	public void convertLinks2Records() {
@@ -337,5 +345,10 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 
 	public ORecordLazySet copy() {
 		return new ORecordLazySet(this);
+	}
+
+	public void onLazyLoad() {
+		sorted = false;
+		sort();
 	}
 }

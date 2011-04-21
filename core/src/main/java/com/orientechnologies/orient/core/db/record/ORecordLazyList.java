@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
  */
 @SuppressWarnings({ "serial" })
 public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMultiValue {
+	protected ORecordLazyListener															listener;
 	protected final byte																			recordType;
 	protected ODatabaseRecord																	database;
 	protected ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE	contentType					= MULTIVALUE_CONTENT_TYPE.EMPTY;
@@ -191,6 +192,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 			final String rid = ((OIdentifiable) iElement).getIdentity().toString();
 			int pos = stream.indexOf(rid);
 			if (pos > -1) {
+				setDirty();
 				// FOUND: REMOVE IT DIRECTLY FROM STREAM
 				if (pos > 0)
 					pos--;
@@ -394,6 +396,15 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 		return stream;
 	}
 
+	public ORecordLazyListener getListener() {
+		return listener;
+	}
+
+	public ORecordLazyList setListener(final ORecordLazyListener listener) {
+		this.listener = listener;
+		return this;
+	}
+
 	protected boolean lazyLoad(final boolean iInvalidateStream) {
 		if (stream == null)
 			return false;
@@ -410,6 +421,9 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 		// if (iInvalidateStream)
 		stream = null;
 		contentType = MULTIVALUE_CONTENT_TYPE.ALL_RIDS;
+
+		if (listener != null)
+			listener.onLazyLoad();
 
 		return true;
 	}
