@@ -39,8 +39,8 @@ public class OPropertyIndex implements OIndexCallback {
 		fields = iFields;
 		final String indexName = getIndexName(iClass, iFields);
 
-		delegate = iDatabase.getMetadata().getIndexManager().createIndex(indexName, iType, iClass.getClusterIds(), this,
-				iProgressListener, true);
+		delegate = iDatabase.getMetadata().getIndexManager()
+				.createIndex(indexName, iType, iClass.getClusterIds(), this, iProgressListener, true);
 	}
 
 	public OPropertyIndex(final OIndex iIndex, final String[] iFields) {
@@ -97,6 +97,11 @@ public class OPropertyIndex implements OIndexCallback {
 				buffer.append(iRecord.field(f));
 		}
 		return buffer.toString();
+	}
+
+	@Override
+	public String toString() {
+		return delegate != null ? delegate.toString() : "no-index";
 	}
 
 	private String getIndexName(final OClass iClass, final String[] iFields) {
