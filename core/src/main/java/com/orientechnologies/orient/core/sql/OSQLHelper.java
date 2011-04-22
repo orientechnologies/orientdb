@@ -177,7 +177,7 @@ public class OSQLHelper {
 		else if (t == OType.BYTE)
 			return Byte.parseByte(iValue);
 		else if (t == OType.DOUBLE)
-			return Byte.parseByte(iValue);
+			return Double.parseDouble(iValue);
 		else if (t == OType.DATE)
 			return new Date(Long.parseLong(iValue));
 
