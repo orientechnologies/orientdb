@@ -25,7 +25,6 @@ public class OServerShutdownHook extends Thread {
 	 */
 	@Override
 	public void run() {
-		if (OServerMain.server() != null)
-			OServerMain.server().shutdown();
+		OServerMain.server().shutdown();
 	}
 }

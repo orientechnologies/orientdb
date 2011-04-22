@@ -43,7 +43,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolEx
 import com.orientechnologies.orient.enterprise.channel.text.OChannelTextServer;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
-import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
@@ -54,6 +54,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 	private static int												socketTimeout;
 
 	protected OClientConnection								connection;
+	protected OServerConfiguration						configuration;
 	protected OChannelTextServer							channel;
 	protected OUser														account;
 	protected OHttpRequest										request;
@@ -67,16 +68,16 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 	}
 
 	@Override
-	public void config(final OServer iServer, final Socket iSocket, final OClientConnection iConnection,
-			final OContextConfiguration iConfiguration) throws IOException {
-		server = iServer;
+	public void config(final Socket iSocket, final OClientConnection iConnection, final OContextConfiguration iConfiguration)
+			throws IOException {
 		requestMaxContentLength = iConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_HTTP_MAX_CONTENT_LENGTH);
 		socketTimeout = iConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
 
 		channel = new OChannelTextServer(iSocket, iConfiguration);
 		connection = iConnection;
+		configuration = new OServerConfiguration();
 
-		request = new OHttpRequest(this, channel, data, iConfiguration);
+		request = new OHttpRequest(this, channel, data);
 
 		start();
 	}

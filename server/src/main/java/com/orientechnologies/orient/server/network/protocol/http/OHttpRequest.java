@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
-import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.enterprise.channel.text.OChannelTextServer;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
@@ -27,7 +26,6 @@ import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttp
  * 
  */
 public class OHttpRequest {
-	public OContextConfiguration					configuration;
 	public OChannelTextServer							channel;
 	public String													method;
 	public String													authorization;
@@ -43,10 +41,9 @@ public class OHttpRequest {
 	public ONetworkProtocolHttpAbstract		executor;
 
 	public OHttpRequest(final ONetworkProtocolHttpAbstract iExecutor, final OChannelTextServer iChannel,
-			final ONetworkProtocolData iData, final OContextConfiguration iConfiguration) {
+			final ONetworkProtocolData iData) {
 		executor = iExecutor;
 		channel = iChannel;
 		data = iData;
-		configuration = iConfiguration;
 	}
 }

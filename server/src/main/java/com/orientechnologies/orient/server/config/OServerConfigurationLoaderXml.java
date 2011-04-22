@@ -18,64 +18,57 @@ package com.orientechnologies.orient.server.config;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.StringReader;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.validation.Schema;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 public class OServerConfigurationLoaderXml {
 	private Class<? extends OServerConfiguration>	rootClass;
+	private String																filePath;
 	private JAXBContext														context;
-	private String																configurationText;
 	private File																	file;
 
-	public OServerConfigurationLoaderXml(Class<? extends OServerConfiguration> iRootClass, String iConfigurationText) {
+	public OServerConfigurationLoaderXml(Class<? extends OServerConfiguration> iRootClass, String iFilePath) {
+		filePath = OSystemVariableResolver.resolveSystemVariables(iFilePath);
 		rootClass = iRootClass;
-		configurationText = iConfigurationText;
-	}
-
-	public OServerConfigurationLoaderXml(Class<? extends OServerConfiguration> iRootClass, File iFile) {
-		rootClass = iRootClass;
-		file = iFile;
+		file = new File(filePath);
+		filePath = iFilePath;
 	}
 
 	public OServerConfiguration load() throws IOException {
 		try {
-			context = JAXBContext.newInstance(rootClass);
-			Unmarshaller unmarshaller = context.createUnmarshaller();
-			unmarshaller.setSchema(null);
+			if (file.exists()) {
+				context = JAXBContext.newInstance(rootClass);
+				Unmarshaller unmarshaller = context.createUnmarshaller();
 
-			final OServerConfiguration obj;
+				Schema schema = null; // SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(new File("Item.xsd"));
 
-			if (file != null) {
-				if (file.exists())
-					obj = rootClass.cast(unmarshaller.unmarshal(file));
-				else
-					return rootClass.getConstructor(OServerConfigurationLoaderXml.class, String.class).newInstance(this, file);
-				obj.location = file.getAbsolutePath();
-			} else {
-				obj = rootClass.cast(unmarshaller.unmarshal(new StringReader(configurationText)));
-				obj.location = "memory";
-			}
+				unmarshaller.setSchema(schema);
+				OServerConfiguration obj = rootClass.cast(unmarshaller.unmarshal(file));
+				obj.location = filePath;
 
-			// AUTO CONFIGURE SYSTEM CONFIGURATION
-			OGlobalConfiguration config;
-			for (OServerEntryConfiguration prop : obj.properties) {
-				try {
-					config = OGlobalConfiguration.findByKey(prop.name);
-					if (config != null) {
-						config.setValue(prop.value);
+				// AUTO CONFIGURE SYSTEM CONFIGURATION
+				OGlobalConfiguration config;
+				for (OServerEntryConfiguration prop : obj.properties) {
+					try {
+						config = OGlobalConfiguration.findByKey(prop.name);
+						if (config != null) {
+							config.setValue(prop.value);
+						}
+					} catch (Exception e) {
 					}
-				} catch (Exception e) {
 				}
-			}
 
-			return obj;
+				return obj;
+			} else
+				return rootClass.getConstructor(OServerConfigurationLoaderXml.class, String.class).newInstance(this, filePath);
 		} catch (Exception e) {
 			// SYNTAX ERROR? PRINT AN EXAMPLE
 			OLogManager.instance().error(this, "Invalid syntax. Below an example of how it should be:", e);
@@ -99,7 +92,7 @@ public class OServerConfigurationLoaderXml {
 			context = JAXBContext.newInstance(rootClass);
 			Marshaller marshaller = context.createMarshaller();
 			marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-			marshaller.marshal(iRootObject, new FileWriter(file));
+			marshaller.marshal(iRootObject, new FileWriter(filePath));
 		} catch (JAXBException e) {
 			throw new IOException(e);
 		}

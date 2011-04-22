@@ -26,7 +26,7 @@ import java.util.Map;
  * 
  */
 public class OContextConfiguration {
-	private Map<String, Object>	config	= new HashMap<String, Object>();	;
+	private Map<String, Object>	config;
 
 	/**
 	 * Empty constructor to create just a proxy for the OGlobalConfiguration. No values are setted.
@@ -44,17 +44,10 @@ public class OContextConfiguration {
 		this.config = iConfig;
 	}
 
-	public OContextConfiguration(final OContextConfiguration iParent) {
-		if (iParent != null)
-			config.putAll(iParent.config);
-	}
-
 	public Object setValue(final OGlobalConfiguration iConfig, final Object iValue) {
+		if (config == null)
+			config = new HashMap<String, Object>();
 		return config.put(iConfig.getKey(), iValue);
-	}
-
-	public Object setValue(final String iName, final Object iValue) {
-		return config.put(iName, iValue);
 	}
 
 	public Object getValue(final OGlobalConfiguration iConfig) {
@@ -63,20 +56,9 @@ public class OContextConfiguration {
 		return iConfig.getValue();
 	}
 
-	@SuppressWarnings("unchecked")
-	public <T> T getValue(final String iName, final T iDefaultValue) {
-		if (config != null && config.containsKey(iName))
-			return (T) config.get(iName);
-		return iDefaultValue;
-	}
-
 	public boolean getValueAsBoolean(final OGlobalConfiguration iConfig) {
 		final Object v = getValue(iConfig);
 		return v instanceof Boolean ? ((Boolean) v).booleanValue() : Boolean.parseBoolean(v.toString());
-	}
-
-	public String getValueAsString(final String iName, final String iDefaultValue) {
-		return getValue(iName, iDefaultValue);
 	}
 
 	public String getValueAsString(final OGlobalConfiguration iConfig) {

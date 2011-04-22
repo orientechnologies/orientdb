@@ -21,7 +21,6 @@ import java.net.Socket;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.server.OClientConnection;
-import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteClass;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteDocument;
@@ -51,9 +50,8 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 	private static final String	ORIENT_SERVER_DB	= "OrientDB Server v." + OConstants.ORIENT_VERSION;
 
 	@Override
-	public void config(final OServer iServer, final Socket iSocket, final OClientConnection iConnection,
-			final OContextConfiguration iConfiguration) throws IOException {
-		server = iServer;
+	public void config(final Socket iSocket, final OClientConnection iConnection, final OContextConfiguration iConfiguration)
+			throws IOException {
 		setName("HTTP-DB");
 		data.serverInfo = ORIENT_SERVER_DB;
 
@@ -87,6 +85,6 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 
 		registerCommand(new OServerCommandOptions());
 
-		super.config(server, iSocket, iConnection, iConfiguration);
+		super.config(iSocket, iConnection, iConfiguration);
 	}
 }

@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.server;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -23,8 +22,8 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClientSynch;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClientSynch;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerConfigurationLoaderXml;
@@ -96,7 +95,7 @@ public class OServerShutdownMain {
 		if (System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE) != null)
 			config = System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE);
 
-		configurationLoader = new OServerConfigurationLoaderXml(OServerConfiguration.class, new File(config));
+		configurationLoader = new OServerConfigurationLoaderXml(OServerConfiguration.class, config);
 		configuration = configurationLoader.load();
 	}
 
