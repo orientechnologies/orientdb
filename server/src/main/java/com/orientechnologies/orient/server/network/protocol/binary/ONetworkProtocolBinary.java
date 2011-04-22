@@ -77,6 +77,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolEx
 import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
+import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
@@ -104,8 +105,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	}
 
 	@Override
-	public void config(final Socket iSocket, final OClientConnection iConnection, final OContextConfiguration iConfig)
+	public void config(final OServer iServer, final Socket iSocket, final OClientConnection iConnection, final OContextConfiguration iConfig)
 			throws IOException {
+		server = iServer;
 		channel = new OChannelBinaryServer(iSocket, iConfig);
 		connection = iConnection;
 
