@@ -36,7 +36,9 @@ import com.orientechnologies.orient.core.serialization.serializer.record.OSerial
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 
 public abstract class ORecordSerializerStringAbstract implements ORecordSerializer {
-	private static final char	DECIMAL_SEPARATOR	= '.';
+	private static final char		DECIMAL_SEPARATOR			= '.';
+	private static final String	MAX_INTEGER_AS_STRING	= String.valueOf(Integer.MAX_VALUE);
+	private static final int		MAX_INTEGER_DIGITS		= MAX_INTEGER_AS_STRING.length();
 
 	protected abstract StringBuilder toString(final ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat,
 			final OUserObject2RecordHandler iObjHandler, final Set<Integer> iMarshalledRecords);
@@ -315,6 +317,13 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 
 					return OType.STRING;
 				}
+		}
+
+		if (integer) {
+			// AUTO CONVERT TO LONG IF THE INTEGER IS TOO BIG
+			final int numberLength = iValue.length();
+			if (numberLength > MAX_INTEGER_DIGITS || (numberLength == MAX_INTEGER_DIGITS && iValue.compareTo(MAX_INTEGER_AS_STRING) > 0))
+				return OType.LONG;
 		}
 
 		return integer ? OType.INTEGER : OType.FLOAT;

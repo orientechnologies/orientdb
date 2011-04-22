@@ -169,7 +169,7 @@ public class OSQLHelper {
 		if (t == OType.INTEGER)
 			return Integer.parseInt(iValue);
 		else if (t == OType.LONG)
-			return Integer.parseInt(iValue);
+			return Long.parseLong(iValue);
 		else if (t == OType.FLOAT)
 			return Float.parseFloat(iValue);
 		else if (t == OType.SHORT)
