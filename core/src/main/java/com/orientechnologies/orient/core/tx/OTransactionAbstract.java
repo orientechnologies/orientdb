@@ -18,12 +18,11 @@ package com.orientechnologies.orient.core.tx;
 import java.io.IOException;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.cache.ODatabaseRecordCache;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OTransactionException;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 public abstract class OTransactionAbstract implements OTransaction {
@@ -49,16 +48,13 @@ public abstract class OTransactionAbstract implements OTransaction {
 
 	public static void updateCacheFromEntries(final OStorage iStorage, final OTransaction iTx,
 			final Iterable<? extends OTransactionEntry> iEntries) throws IOException {
-		ORID rid;
-		final ODatabaseRecord db = iTx.getDatabase();
-		for (OTransactionEntry txEntry : iEntries) {
-			rid = txEntry.getRecord().getIdentity();
+		final ODatabaseRecordCache dbCache = iTx.getDatabase().getCache();
 
+		for (OTransactionEntry txEntry : iEntries) {
 			if (txEntry.status == OTransactionEntry.DELETED)
-				db.getCache().deleteRecord(rid);
-			else if (txEntry.status == OTransactionEntry.UPDATED) {
-				db.getCache().freeRecord(rid);
-			}
+				dbCache.deleteRecord(txEntry.getRecord().getIdentity());
+			else if (txEntry.status == OTransactionEntry.UPDATED || txEntry.status == OTransactionEntry.CREATED)
+				dbCache.updateRecord(txEntry.getRecord());
 		}
 	}
 
