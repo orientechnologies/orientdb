@@ -107,11 +107,8 @@ public class OStorageLocal extends OStorageEmbedded {
 		installProfilerHooks();
 	}
 
-	public synchronized int open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
+	public synchronized void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
 		final long timer = OProfiler.getInstance().startChrono();
-
-		addUser();
-		level2cache.startup();
 
 		final boolean locked = lock.acquireExclusiveLock();
 
@@ -119,11 +116,14 @@ public class OStorageLocal extends OStorageEmbedded {
 			if (open)
 				// ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
 				// REUSED
-				return 0;
+				return;
+
+			addUser();
 
 			if (!exists())
 				throw new OStorageException("Can't open the storage '" + name + "' because it not exists in path: " + url);
 
+			level2cache.startup();
 			open = true;
 
 			// OPEN BASIC SEGMENTS
@@ -135,7 +135,7 @@ public class OStorageLocal extends OStorageEmbedded {
 					clusters.length));
 			clusters[pos].open();
 
-			configuration.load(-1);
+			configuration.load();
 
 			pos = createClusterFromConfig(new OStoragePhysicalClusterConfiguration(configuration, OStorage.CLUSTER_INDEX_NAME,
 					clusters.length));
@@ -200,14 +200,10 @@ public class OStorageLocal extends OStorageEmbedded {
 
 			OProfiler.getInstance().stopChrono("storage." + name + ".open", timer);
 		}
-		return 0;
 	}
 
-	public int create(final Map<String, Object> iProperties) {
+	public void create(final Map<String, Object> iProperties) {
 		final long timer = OProfiler.getInstance().startChrono();
-
-		addUser();
-		level2cache.startup();
 
 		final boolean locked = lock.acquireExclusiveLock();
 
@@ -215,7 +211,10 @@ public class OStorageLocal extends OStorageEmbedded {
 			if (open)
 				throw new OStorageException("Can't create new storage " + name + " because it isn't closed");
 
-			File storageFolder = new File(storagePath);
+			addUser();
+			level2cache.startup();
+
+			final File storageFolder = new File(storagePath);
 			if (!storageFolder.exists())
 				storageFolder.mkdir();
 
@@ -251,7 +250,6 @@ public class OStorageLocal extends OStorageEmbedded {
 
 			OProfiler.getInstance().stopChrono("storage." + name + ".create", timer);
 		}
-		return 0;
 	}
 
 	public boolean exists() {
@@ -262,15 +260,15 @@ public class OStorageLocal extends OStorageEmbedded {
 		return new File(path + "/" + OStorage.DATA_DEFAULT_NAME + ".0" + ODataLocal.DEF_EXTENSION).exists();
 	}
 
-	public void close() {
+	public void close(final boolean iForce) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		final boolean locked = lock.acquireExclusiveLock();
 
-		if (!open)
-			return;
-
 		try {
+			if (!checkForClose(iForce))
+				return;
+
 			saveVersion();
 
 			for (OCluster cluster : clusters)
@@ -291,7 +289,6 @@ public class OStorageLocal extends OStorageEmbedded {
 			OMMapManager.flush();
 
 			Orient.instance().unregisterStorage(this);
-
 			open = false;
 		} catch (IOException e) {
 			OLogManager.instance().error(this, "Error on closing of the storage '" + name, e, OStorageException.class);
@@ -308,13 +305,14 @@ public class OStorageLocal extends OStorageEmbedded {
 	 * container folder if the directory is empty. If files are locked, retry up to 10 times before to raise an exception.
 	 */
 	public void delete() {
-		if (!isClosed()) {
-			// CLOSE THE DATABASE BY REMOVING THE CURRENT USER
-			if (getUsers() > 0)
+		// CLOSE THE DATABASE BY REMOVING THE CURRENT USER
+		if (open) {
+			if (getUsers() > 0) {
 				while (removeUser() > 0)
 					;
-			close();
+			}
 		}
+		close(true);
 		level2cache.shutdown();
 
 		try {
@@ -343,8 +341,9 @@ public class OStorageLocal extends OStorageEmbedded {
 						// DELETE ONLY THE SUPPORTED FILES
 						for (String ext : ALL_FILE_EXTENSIONS)
 							if (f.getPath().endsWith(ext)) {
-								if (!f.delete())
+								if (!f.delete()) {
 									notDeletedFiles++;
+								}
 								break;
 							}
 					}
@@ -419,7 +418,7 @@ public class OStorageLocal extends OStorageEmbedded {
 				throw new OConfigurationException("Can't add segment " + conf.name + " because it's already part of current storage");
 
 			dataSegments[pos].create(-1);
-			configuration.update(-1);
+			configuration.update();
 
 			return pos;
 		} catch (Throwable e) {
@@ -506,7 +505,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
 			// UPDATE CONFIGURATION
 			configuration.clusters.set(iClusterId, null);
-			configuration.update(-1);
+			configuration.update();
 
 			return true;
 		} catch (Exception e) {
@@ -1033,7 +1032,7 @@ public class OStorageLocal extends OStorageEmbedded {
 					return -1;
 
 				// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-				if (iVersion > -1 && iVersion < ppos.version)
+				if (iVersion > -1 && iVersion != ppos.version)
 					throw new OConcurrentModificationException(
 							"Can't update record "
 									+ iRid
@@ -1159,7 +1158,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		final int id = registerCluster(cluster);
 
 		clusters[id].create(iStartSize);
-		configuration.update(-1);
+		configuration.update();
 		return id;
 	}
 
@@ -1173,7 +1172,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		config.map = cluster.getRID();
 		final int id = registerCluster(cluster);
 
-		configuration.update(-1);
+		configuration.update();
 		return id;
 	}
 
@@ -1184,7 +1183,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
 		final OClusterMemory cluster = new OClusterMemory(clusters.length, iClusterName);
 		final int id = registerCluster(cluster);
-		configuration.update(-1);
+		configuration.update();
 
 		return id;
 	}
