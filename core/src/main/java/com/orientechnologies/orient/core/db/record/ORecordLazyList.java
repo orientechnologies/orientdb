@@ -45,6 +45,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 	protected ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE	contentType					= MULTIVALUE_CONTENT_TYPE.EMPTY;
 	protected StringBuilder																		stream;
 	protected boolean																					autoConvertToRecord	= true;
+	protected boolean																					marshalling					= false;
 
 	public ORecordLazyList(final ODatabaseRecord iDatabase) {
 		super(null);
@@ -225,6 +226,14 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 		return super.size();
 	}
 
+	@SuppressWarnings("unchecked")
+	@Override
+	public <RET> RET setDirty() {
+		if (!marshalling)
+			return (RET) super.setDirty();
+		return (RET) this;
+	}
+
 	@Override
 	public Object[] toArray() {
 		convertLinks2Records();
@@ -292,11 +301,14 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 		if (o != null && o instanceof ORecordId) {
 			final ORecordId rid = (ORecordId) o;
 
+			marshalling = true;
 			try {
 				final ORecordInternal<?> record = database.load(rid);
 				set(iIndex, (OIdentifiable) record);
 			} catch (ORecordNotFoundException e) {
 				// IGNORE THIS
+			} finally {
+				marshalling = false;
 			}
 		}
 	}
@@ -315,15 +327,18 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 		final Object o = super.get(iIndex);
 
 		if (o != null) {
-			if (o instanceof ORecord<?> && !((ORecord<?>) o).isDirty())
+			if (o instanceof ORecord<?> && !((ORecord<?>) o).isDirty()) {
+				marshalling = true;
 				try {
 					super.set(iIndex, ((ORecord<?>) o).getIdentity());
 					// CONVERTED
 					return true;
 				} catch (ORecordNotFoundException e) {
 					// IGNORE THIS
+				} finally {
+					marshalling = false;
 				}
-			else if (o instanceof ORID)
+			} else if (o instanceof ORID)
 				// ALREADY CONVERTED
 				return true;
 		}
@@ -408,6 +423,8 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 		if (stream == null)
 			return false;
 
+		marshalling = true;
+		int currentModCount = modCount;
 		final List<String> items = OStringSerializerHelper.smartSplit(stream.toString(), OStringSerializerHelper.RECORD_SEPARATOR);
 
 		for (String item : items) {
@@ -416,6 +433,9 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 
 			super.rawAdd(new ORecordId(item));
 		}
+
+		modCount = currentModCount;
+		marshalling = false;
 
 		// if (iInvalidateStream)
 		stream = null;

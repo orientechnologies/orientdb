@@ -303,7 +303,9 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 			if (prevConvert)
 				delegate.setAutoConvertToRecord(false);
 
+			delegate.marshalling = true;
 			Collections.sort(delegate);
+			delegate.marshalling = false;
 
 			if (prevConvert)
 				// RESET PREVIOUS SETTINGS
