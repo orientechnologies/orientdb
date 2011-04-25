@@ -87,7 +87,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
 	public ODatabaseImport importDatabase() {
 		try {
-			listener.onMessage("\nStarted import of database '" + database.getName() + "' from " + fileName + "...");
+			listener.onMessage("\nStarted import of database '" + database.getURL() + "' from " + fileName + "...");
 
 			long time = System.currentTimeMillis();
 

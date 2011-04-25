@@ -63,6 +63,6 @@ public abstract class OChannel extends OSharedResourceExternal {
 
 	@Override
 	public String toString() {
-		return socket != null ? socket.getRemoteSocketAddress().toString().substring(1) : "Not connected";
+		return socket != null ? socket.getRemoteSocketAddress().toString() : "Not connected";
 	}
 }

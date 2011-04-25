@@ -151,9 +151,9 @@ public class OSchema extends ODocumentWrapperNoClass {
 
 		if (cls == null) {
 			// CHECK IF THE SCHEMA IS OLD: RELOAD IT
-			//reload();
+			// reload();
 
-			//cls = classes.get(iClassName.toLowerCase());
+			// cls = classes.get(iClassName.toLowerCase());
 
 			if (cls == null) {
 				// CHECK IF CAN AUTO-CREATE IT
@@ -272,7 +272,7 @@ public class OSchema extends ODocumentWrapperNoClass {
 	public void create() {
 		save(OStorage.CLUSTER_INTERNAL_NAME);
 		document.getDatabase().getStorage().getConfiguration().schemaRecordId = document.getIdentity().toString();
-		document.getDatabase().getStorage().getConfiguration().update(document.getDatabase().getId());
+		document.getDatabase().getStorage().getConfiguration().update();
 	}
 
 	public OSchema setDirty() {

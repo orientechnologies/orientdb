@@ -74,7 +74,7 @@ public class OStorageConfiguration implements OSerializableStream {
 	 * @return
 	 * @throws OSerializationException
 	 */
-	public OStorageConfiguration load(final int iRequesterId) throws OSerializationException {
+	public OStorageConfiguration load() throws OSerializationException {
 		final byte[] record = storage.readRecord(null, CONFIG_RID, null).buffer;
 
 		if (record == null)
@@ -84,7 +84,7 @@ public class OStorageConfiguration implements OSerializableStream {
 		return this;
 	}
 
-	public void update(final int iRequesterId) throws OSerializationException {
+	public void update() throws OSerializationException {
 		final byte[] record = toStream();
 		storage.updateRecord(CONFIG_RID, record, -1, ORecordBytes.RECORD_TYPE);
 	}

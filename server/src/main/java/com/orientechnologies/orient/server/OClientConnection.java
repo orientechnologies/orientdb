@@ -35,6 +35,11 @@ public class OClientConnection {
 		this.since = System.currentTimeMillis();
 	}
 
+	public void close() {
+		if (database != null)
+			database.close();
+	}
+
 	@Override
 	public String toString() {
 		return "OClientConnection [id=" + id + ", source="

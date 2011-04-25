@@ -22,6 +22,7 @@ import java.util.Map;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 
@@ -59,24 +60,23 @@ public class OServerAdmin {
 	}
 
 	public OServerAdmin connect(final String iUserName, final String iUserPassword) throws IOException {
-		storage.parseServerURLs();
-		storage.createNetworkConnection();
+		storage.createConnectionPool();
 
 		try {
+			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONNECT);
 			try {
-				storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONNECT);
-				storage.getNetwork().writeString(iUserName);
-				storage.getNetwork().writeString(iUserPassword);
+				network.writeString(iUserName);
+				network.writeString(iUserPassword);
 			} finally {
-				storage.endRequest();
+				storage.endRequest(network);
 			}
 
 			try {
-				storage.beginResponse();
-				sessionId = storage.getNetwork().readInt();
+				storage.beginResponse(network);
+				sessionId = network.readInt();
 				storage.setSessionId(sessionId);
 			} finally {
-				storage.endResponse();
+				storage.endResponse(network);
 			}
 
 		} catch (Exception e) {
@@ -97,15 +97,15 @@ public class OServerAdmin {
 			if (iStorageMode == null)
 				iStorageMode = "csv";
 
+			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_CREATE);
 			try {
-				storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_CREATE);
-				storage.getNetwork().writeString(storage.getName());
-				storage.getNetwork().writeString(iStorageMode);
+				network.writeString(storage.getName());
+				network.writeString(iStorageMode);
 			} finally {
-				storage.endRequest();
+				storage.endRequest(network);
 			}
 
-			storage.getResponse();
+			storage.getResponse(network);
 
 		} catch (Exception e) {
 			OLogManager.instance().error(this, "Can't create the remote storage: " + storage.getName(), e, OStorageException.class);
@@ -118,18 +118,18 @@ public class OServerAdmin {
 		storage.checkConnection();
 
 		try {
+			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_EXIST);
 			try {
-				storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_EXIST);
-				storage.getNetwork().writeString(storage.getName());
+				network.writeString(storage.getName());
 			} finally {
-				storage.endRequest();
+				storage.endRequest(network);
 			}
 
 			try {
-				storage.beginResponse();
-				return storage.getNetwork().readByte() == 1;
+				storage.beginResponse(network);
+				return network.readByte() == 1;
 			} finally {
-				storage.endResponse();
+				storage.endResponse(network);
 			}
 
 		} catch (Exception e) {
@@ -145,14 +145,14 @@ public class OServerAdmin {
 
 		try {
 
+			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_DELETE);
 			try {
-				storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_DELETE);
-				storage.getNetwork().writeString(storage.getName());
+				network.writeString(storage.getName());
 			} finally {
-				storage.endRequest();
+				storage.endRequest(network);
 			}
 
-			storage.getResponse();
+			storage.getResponse(network);
 
 		} catch (Exception e) {
 			OLogManager.instance().exception("Can't delete the remote storage: " + storage.getName(), e, OStorageException.class);
@@ -163,21 +163,22 @@ public class OServerAdmin {
 
 	public OServerAdmin shareDatabase(final String iDatabaseName, final String iDatabaseUserName, final String iDatabaseUserPassword,
 			final String iRemoteName, final boolean iSynchronousMode) throws IOException {
+		storage.checkConnection();
 
 		try {
 
+			final OChannelBinaryClient network = storage.beginRequest(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_SENDER);
 			try {
-				storage.beginRequest(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_SENDER);
-				storage.getNetwork().writeString(iDatabaseName);
-				storage.getNetwork().writeString(iDatabaseUserName);
-				storage.getNetwork().writeString(iDatabaseUserPassword);
-				storage.getNetwork().writeString(iRemoteName);
-				storage.getNetwork().writeByte((byte) (iSynchronousMode ? 1 : 0));
+				network.writeString(iDatabaseName);
+				network.writeString(iDatabaseUserName);
+				network.writeString(iDatabaseUserPassword);
+				network.writeString(iRemoteName);
+				network.writeByte((byte) (iSynchronousMode ? 1 : 0));
 			} finally {
-				storage.endRequest();
+				storage.endRequest(network);
 			}
 
-			storage.getResponse();
+			storage.getResponse(network);
 
 			OLogManager.instance().debug(this, "Database '%s' has been shared in mode '%s' with the server '%s'", iDatabaseName,
 					iSynchronousMode, iRemoteName);
@@ -195,19 +196,16 @@ public class OServerAdmin {
 		final Map<String, String> config = new HashMap<String, String>();
 
 		try {
-			try {
-				storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_LIST);
-			} finally {
-				storage.endRequest();
-			}
+			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_LIST);
+			storage.endRequest(network);
 
 			try {
-				storage.beginResponse();
-				final int num = storage.getNetwork().readShort();
+				storage.beginResponse(network);
+				final int num = network.readShort();
 				for (int i = 0; i < num; ++i)
-					config.put(storage.getNetwork().readString(), storage.getNetwork().readString());
+					config.put(network.readString(), network.readString());
 			} finally {
-				storage.endResponse();
+				storage.endResponse(network);
 			}
 
 		} catch (Exception e) {
@@ -221,11 +219,11 @@ public class OServerAdmin {
 		storage.checkConnection();
 
 		try {
-			storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_GET);
-			storage.getNetwork().writeString(iConfig.getKey());
-			storage.beginResponse();
+			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_GET);
+			network.writeString(iConfig.getKey());
+			storage.beginResponse(network);
 
-			return storage.getNetwork().readString();
+			return network.readString();
 
 		} catch (Exception e) {
 			OLogManager.instance().exception("Can't retrieve the configuration value: " + iConfig.getKey(), e, OStorageException.class);
@@ -238,10 +236,10 @@ public class OServerAdmin {
 		storage.checkConnection();
 
 		try {
-			storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_SET);
-			storage.getNetwork().writeString(iConfig.getKey());
-			storage.getNetwork().writeString(iValue != null ? iValue.toString() : "");
-			storage.beginResponse();
+			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_SET);
+			network.writeString(iConfig.getKey());
+			network.writeString(iValue != null ? iValue.toString() : "");
+			storage.beginResponse(network);
 
 		} catch (Exception e) {
 			OLogManager.instance().exception("Can't set the configuration value: " + iConfig.getKey(), e, OStorageException.class);

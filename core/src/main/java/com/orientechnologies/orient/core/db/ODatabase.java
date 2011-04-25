@@ -84,13 +84,6 @@ public interface ODatabase {
 	public void close();
 
 	/**
-	 * Returns the database id. The id is auto-generated on opening and creation and it's unique in the current JVM.
-	 * 
-	 * @return
-	 */
-	public int getId();
-
-	/**
 	 * Returns the database name.
 	 * 
 	 * @return Name of the database

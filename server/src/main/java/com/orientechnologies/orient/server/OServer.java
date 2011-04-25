@@ -39,6 +39,7 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandManager;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -49,6 +50,7 @@ import com.orientechnologies.orient.enterprise.command.script.OCommandScript;
 import com.orientechnologies.orient.server.command.script.OCommandExecutorScript;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerConfigurationLoaderXml;
+import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerNetworkListenerConfiguration;
 import com.orientechnologies.orient.server.config.OServerNetworkProtocolConfiguration;
@@ -65,6 +67,7 @@ public class OServer {
 	protected volatile boolean																running					= true;
 	protected OServerConfigurationLoaderXml										configurationLoader;
 	protected OServerConfiguration														configuration;
+	protected OContextConfiguration														contextConfiguration;
 	protected OServerShutdownHook															shutdownHook;
 	protected List<OServerHandler>														handlers				= new ArrayList<OServerHandler>();
 	protected Map<String, Class<? extends ONetworkProtocol>>	protocols				= new HashMap<String, Class<? extends ONetworkProtocol>>();
@@ -96,12 +99,35 @@ public class OServer {
 		shutdownHook = new OServerShutdownHook();
 	}
 
-	@SuppressWarnings("unchecked")
 	public void startup() throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException,
 			SecurityException, InvocationTargetException, NoSuchMethodException {
+		String config = OServerConfiguration.DEFAULT_CONFIG_FILE;
+		if (System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE) != null)
+			config = System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE);
+
+		startup(new File(config));
+	}
+
+	public void startup(final File iConfigurationFile) throws InstantiationException, IllegalAccessException, ClassNotFoundException,
+			IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException {
+		startup(loadConfigurationFromFile(iConfigurationFile));
+	}
+
+	public void startup(final String iConfiguration) throws InstantiationException, IllegalAccessException, ClassNotFoundException,
+			IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException, IOException {
+
+		configurationLoader = new OServerConfigurationLoaderXml(OServerConfiguration.class, iConfiguration);
+		configuration = configurationLoader.load();
+
+		startup(configuration);
+	}
+
+	@SuppressWarnings("unchecked")
+	public void startup(final OServerConfiguration iConfiguration) throws InstantiationException, IllegalAccessException,
+			ClassNotFoundException, IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException {
 		OLogManager.instance().info(this, "OrientDB Server v" + OConstants.ORIENT_VERSION + " is starting up...");
 
-		loadConfiguration();
+		loadConfiguration(iConfiguration);
 
 		Orient.instance();
 		Orient.instance().removeShutdownHook();
@@ -112,7 +138,7 @@ public class OServer {
 
 		// STARTUP LISTENERS
 		for (OServerNetworkListenerConfiguration l : configuration.network.listeners)
-			listeners.add(new OServerNetworkListener(l.ipAddress, l.portRange, l.protocol, protocols.get(l.protocol), l.parameters,
+			listeners.add(new OServerNetworkListener(this, l.ipAddress, l.portRange, l.protocol, protocols.get(l.protocol), l.parameters,
 					l.commands));
 
 		registerHandlers();
@@ -260,6 +286,10 @@ public class OServer {
 		return handlers;
 	}
 
+	public OContextConfiguration getContextConfiguration() {
+		return contextConfiguration;
+	}
+
 	@SuppressWarnings("unchecked")
 	public <RET extends OServerHandler> RET getHandler(final Class<RET> iHandlerClass) {
 		for (OServerHandler h : handlers)
@@ -269,14 +299,15 @@ public class OServer {
 		return null;
 	}
 
-	protected void loadConfiguration() {
+	protected void loadConfiguration(final OServerConfiguration iConfiguration) {
 		try {
-			String config = OServerConfiguration.DEFAULT_CONFIG_FILE;
-			if (System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE) != null)
-				config = System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE);
+			configuration = iConfiguration;
 
-			configurationLoader = new OServerConfigurationLoaderXml(OServerConfiguration.class, config);
-			configuration = configurationLoader.load();
+			// FILL THE CONTEXT CONFIGURATION WITH SERVER'S PARAMETERS
+			contextConfiguration = new OContextConfiguration();
+			if (iConfiguration.properties != null)
+				for (OServerEntryConfiguration prop : iConfiguration.properties)
+					contextConfiguration.setValue(prop.name, prop.value);
 
 			loadStorages();
 			loadUsers();
@@ -284,6 +315,18 @@ public class OServer {
 		} catch (IOException e) {
 			OLogManager.instance().error(this, "Error on reading server configuration.", OConfigurationException.class);
 		}
+	}
+
+	protected OServerConfiguration loadConfigurationFromFile(final File iFile) {
+		try {
+			configurationLoader = new OServerConfigurationLoaderXml(OServerConfiguration.class, iFile);
+			return configurationLoader.load();
+
+		} catch (IOException e) {
+			OLogManager.instance()
+					.error(this, "Error on reading server configuration from file: " + iFile, OConfigurationException.class);
+		}
+		return null;
 	}
 
 	private void loadUsers() throws IOException {
@@ -302,6 +345,9 @@ public class OServer {
 	 * Load configured storages.
 	 */
 	private void loadStorages() {
+		if (configuration.storages == null)
+			return;
+
 		String type;
 		for (OServerStorageConfiguration stg : OServerMain.server().getConfiguration().storages)
 			if (stg.loadOnStartup) {

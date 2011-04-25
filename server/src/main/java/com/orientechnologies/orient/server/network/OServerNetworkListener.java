@@ -23,8 +23,6 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.HashMap;
-import java.util.Map;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -32,6 +30,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
+import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
@@ -45,18 +44,21 @@ public class OServerNetworkListener extends Thread {
 	private OServerCommand[]									commands;
 	private int																socketBufferSize;
 	private OContextConfiguration							configuration;
+	private OServer														server;
 
 	@SuppressWarnings("unchecked")
-	public OServerNetworkListener(final String iHostName, final String iHostPortRange, final String iProtocolName,
-			final Class<? extends ONetworkProtocol> iProtocol, final OServerParameterConfiguration[] iParameters,
-			final OServerCommandConfiguration[] iCommands) {
+	public OServerNetworkListener(final OServer iServer, final String iHostName, final String iHostPortRange,
+			final String iProtocolName, final Class<? extends ONetworkProtocol> iProtocol,
+			final OServerParameterConfiguration[] iParameters, final OServerCommandConfiguration[] iCommands) {
+		server = iServer;
+
 		if (iProtocol == null)
 			throw new IllegalArgumentException("Can't start listener: protocol not found");
 
 		listen(iHostName, iHostPortRange, iProtocolName);
 		protocolType = iProtocol;
 
-		readParameters(iParameters);
+		readParameters(iServer.getContextConfiguration(), iParameters);
 
 		if (iCommands != null) {
 			// CREATE COMMANDS
@@ -141,7 +143,7 @@ public class OServerNetworkListener extends Thread {
 					connection = OClientConnectionManager.instance().connect(socket, protocol);
 
 					// CONFIGURE THE PROTOCOL FOR THE INCOMING CONNECTION
-					protocol.config(socket, connection, configuration);
+					protocol.config(server, socket, connection, configuration);
 
 					if (commands != null)
 						// REGISTER ADDITIONAL COMMANDS
@@ -174,17 +176,18 @@ public class OServerNetworkListener extends Thread {
 	/**
 	 * Initializes connection parameters by the reading XML configuration. If not specified, get the parameters defined as global
 	 * configuration.
+	 * 
+	 * @param iServerConfig
 	 */
-	private void readParameters(final OServerParameterConfiguration[] iParameters) {
+	private void readParameters(final OContextConfiguration iServerConfig, final OServerParameterConfiguration[] iParameters) {
+		configuration = new OContextConfiguration(iServerConfig);
+
+		// SET NETWORK PARAMETERS
 		if (iParameters != null && iParameters.length > 0) {
 			// CONVERT PARAMETERS IN MAP TO INTIALIZE THE CONTEXT-CONFIGURATION
-			final Map<String, Object> params = new HashMap<String, Object>();
-			for (OServerParameterConfiguration param : iParameters) {
-				params.put(param.name, param.value);
-			}
-			configuration = new OContextConfiguration(params);
-		} else
-			configuration = new OContextConfiguration();
+			for (OServerParameterConfiguration param : iParameters)
+				configuration.setValue(param.name, param.value);
+		}
 
 		socketBufferSize = configuration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_BUFFER_SIZE);
 	}

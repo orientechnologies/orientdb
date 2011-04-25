@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.client.remote;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.engine.OEngineAbstract;
@@ -23,14 +24,21 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 public class OEngineRemote extends OEngineAbstract {
-	public static final String	NAME	= "remote";
+	public static final String												NAME						= "remote";
+	private static final Map<String, OStorageRemote>	sharedStorages	= new ConcurrentHashMap<String, OStorageRemote>();
 
 	public OEngineRemote() {
 	}
 
-	public OStorage createStorage(String iURL, Map<String, String> iConfiguration) {
+	public OStorage createStorage(final String iURL, final Map<String, String> iConfiguration) {
 		try {
-			return new OStorageRemote(iURL, "rw");
+			OStorageRemote sharedStorage = sharedStorages.get(iURL);
+			if (sharedStorage == null) {
+				sharedStorage = new OStorageRemote(iURL, "rw");
+				sharedStorages.put(iURL, sharedStorage);
+			}
+
+			return new OStorageRemoteThread(sharedStorage);
 		} catch (Throwable t) {
 			OLogManager.instance().error(this, "Error on opening database: " + iURL, t, ODatabaseException.class);
 		}

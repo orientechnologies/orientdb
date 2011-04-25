@@ -27,17 +27,17 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 @Test(groups = "db")
 public class DbDeleteTest {
-	private static final String	DB2_PATH	= "tests/target/test-import";
-	private static final String	DB2_URL		= "local:tests/target/test-import/test-import";
+	private String	testPath;
 
-	@Parameters(value = "url")
-	public DbDeleteTest(String iURL) {
+	@Parameters(value = { "url", "testPath" })
+	public DbDeleteTest(String iURL, String iTestPath) {
+		testPath = iTestPath;
 		OProfiler.getInstance().startRecording();
 	}
 
 	public void testDbDelete() throws IOException {
-		new ODatabaseDocumentTx(DB2_URL).delete();
+		new ODatabaseDocumentTx("local:" + testPath + "/" + DbImportExportTest.NEW_DB_URL).delete();
 
-		Assert.assertFalse(new File(DB2_PATH).exists());
+		Assert.assertFalse(new File(testPath + "/" + DbImportExportTest.NEW_DB_PATH).exists());
 	}
 }

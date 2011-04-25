@@ -103,7 +103,7 @@ public class ODictionaryLocal<T extends Object> extends ODictionaryAbstract<T> {
 			tree.save();
 
 			database.getStorage().getConfiguration().dictionaryRecordId = tree.getRecord().getIdentity().toString();
-			database.getStorage().getConfiguration().update(database.getId());
+			database.getStorage().getConfiguration().update();
 		} catch (Exception e) {
 			OLogManager.instance().error(this, "Can't create the local database's dictionary", e, ODatabaseException.class);
 		}

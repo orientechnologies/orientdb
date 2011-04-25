@@ -31,13 +31,12 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
 
 public class OServerCommandGetStaticContent extends OServerCommandAbstract {
-	private static final String[]										NAMES			= { "GET|www", "GET|studio/", "GET|", "GET|*.htm", "GET|*.html",
+	private static final String[]										NAMES	= { "GET|www", "GET|studio/", "GET|", "GET|*.htm", "GET|*.html",
 			"GET|*.xml", "GET|*.jpeg", "GET|*.jpg", "GET|*.png", "GET|*.gif", "GET|*.js", "GET|*.css", "GET|*.swf", "GET|favicon.ico",
-			"GET|robots.txt"																			};
-
-	static final String															WWW_PATH	= System.getProperty("orientdb.www.path", "src/site");
+			"GET|robots.txt"																	};
 
 	private Map<String, OStaticContentCachedEntry>	cache;
+	private String																	wwwPath;
 
 	public OServerCommandGetStaticContent() {
 		super(OGlobalConfiguration.SERVER_CACHE_HTTP_STATIC.getValueAsBoolean());
@@ -47,6 +46,9 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 	public boolean execute(final OHttpRequest iRequest) throws Exception {
 		iRequest.data.commandInfo = "Get static content";
 		iRequest.data.commandDetail = iRequest.url;
+
+		if (wwwPath == null)
+			wwwPath = iRequest.configuration.getValueAsString("orientdb.www.path", "src/site");
 
 		if (cache == null && OGlobalConfiguration.SERVER_CACHE_FILE_STATIC.getValueAsBoolean())
 			// CREATE THE CACHE IF ENABLED
@@ -71,9 +73,9 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 
 			// REPLACE WWW WITH REAL PATH
 			if (url.startsWith("/www"))
-				url = WWW_PATH + url.substring("/www".length(), url.length());
+				url = wwwPath + url.substring("/www".length(), url.length());
 			else
-				url = WWW_PATH + url;
+				url = wwwPath + url;
 
 			if (cache != null) {
 				synchronized (cache) {

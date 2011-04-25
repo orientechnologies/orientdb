@@ -22,10 +22,9 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
-
 @XmlRootElement(name = "orient-server")
 public class OServerConfiguration {
-	public static final String								FILE_NAME	= "server-config.xml";
+	public static final String								FILE_NAME							= "server-config.xml";
 	// private static final String HEADER = "OrientDB Server configuration";
 
 	@XmlTransient
@@ -48,13 +47,13 @@ public class OServerConfiguration {
 
 	@XmlElementWrapper
 	@XmlElementRef(type = OServerEntryConfiguration.class)
-	public OServerEntryConfiguration[]							properties;
+	public OServerEntryConfiguration[]				properties;
 
-	public static final String																DEFAULT_CONFIG_FILE		= "config/orientdb-server-config.xml";
+	public static final String								DEFAULT_CONFIG_FILE		= "config/orientdb-server-config.xml";
 
-	public static final String																PROPERTY_CONFIG_FILE	= "orientdb.config.file";
+	public static final String								PROPERTY_CONFIG_FILE	= "orientdb.config.file";
 
-	public static final String																SRV_ROOT_ADMIN				= "root";
+	public static final String								SRV_ROOT_ADMIN				= "root";
 
 	/**
 	 * Empty constructor for JAXB
@@ -69,9 +68,10 @@ public class OServerConfiguration {
 	}
 
 	public String getStoragePath(String iURL) {
-		for (OServerStorageConfiguration stg : storages)
-			if (stg.name.equals(iURL))
-				return stg.path;
+		if (storages != null)
+			for (OServerStorageConfiguration stg : storages)
+				if (stg.name.equals(iURL))
+					return stg.path;
 
 		return null;
 	}

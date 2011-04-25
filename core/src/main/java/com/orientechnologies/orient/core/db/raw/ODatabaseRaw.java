@@ -48,7 +48,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
  */
 @SuppressWarnings("unchecked")
 public class ODatabaseRaw implements ODatabase {
-	protected int													id;
 	protected String											url;
 	protected OStorage										storage;
 	protected STATUS											status;
@@ -87,7 +86,7 @@ public class ODatabaseRaw implements ODatabase {
 
 			if (storage == null)
 				storage = Orient.instance().loadStorage(url);
-			id = storage.open(iUserName, iUserPassword, properties);
+			storage.open(iUserName, iUserPassword, properties);
 
 			// WAKE UP DB LIFECYCLE LISTENER
 			for (ODatabaseLifecycleListener it : Orient.instance().getDbLifecycleListeners())
@@ -142,7 +141,7 @@ public class ODatabaseRaw implements ODatabase {
 
 	public void delete() {
 		final List<ODatabaseListener> tmpListeners = new ArrayList<ODatabaseListener>(listeners);
-		close(true);
+		close();
 
 		try {
 			if (storage == null)
@@ -258,14 +257,6 @@ public class ODatabaseRaw implements ODatabase {
 		close();
 	}
 
-	public void close() {
-		close(true);
-	}
-
-	public int getId() {
-		return id;
-	}
-
 	public String getClusterType(final String iClusterName) {
 		return storage.getClusterTypeByName(iClusterName);
 	}
@@ -358,7 +349,7 @@ public class ODatabaseRaw implements ODatabase {
 		return listeners;
 	}
 
-	protected void close(boolean iCloseStorageToo) {
+	public void close() {
 		if (status != STATUS.OPEN)
 			return;
 
@@ -375,8 +366,8 @@ public class ODatabaseRaw implements ODatabase {
 			}
 		listeners.clear();
 
-		if (storage != null && iCloseStorageToo)
-			storage.removeUser();
+		if (storage != null)
+			storage.close();
 
 		storage = null;
 		status = STATUS.CLOSED;

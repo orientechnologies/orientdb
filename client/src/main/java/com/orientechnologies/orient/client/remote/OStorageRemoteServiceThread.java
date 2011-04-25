@@ -16,6 +16,8 @@
 package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.common.thread.OSoftThread;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 
 /**
@@ -24,35 +26,37 @@ import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistr
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OStorageRemoteServiceThread extends OSoftThread {
-	private final OStorageRemote	storage;
+	private final OStorage				storage;
+	private OChannelBinaryClient	network;
 
-	private static final int			REQ_ID	= -10;
+	public static final int				REQ_ID	= -10;
 
-	public OStorageRemoteServiceThread(final OStorageRemote iStorageRemote) {
+	public OStorageRemoteServiceThread(final OStorage iStorageRemote, final OChannelBinaryClient iFirstChannel) {
 		super("ClientService");
 		storage = iStorageRemote;
+		network = iFirstChannel;
 		start();
 	}
 
 	@Override
 	protected void execute() throws Exception {
 		try {
-			storage.getNetwork().beginResponse(REQ_ID);
-
-			final byte request = storage.getNetwork().readByte();
-
-			switch (request) {
-			case OChannelDistributedProtocol.PUSH_DISTRIBUTED_CONFIG:
-				storage.updateClusterConfiguration(storage.getNetwork().readBytes());
-				break;
-
-			case OChannelDistributedProtocol.PUSH_SCHEMA_CHANGED:
-				storage.updateClusterConfiguration(storage.getNetwork().readBytes());
-				break;
-			}
+//			storage.beginResponse(network);
+//
+//			final byte request = network.readByte();
+//
+//			switch (request) {
+//			case OChannelDistributedProtocol.PUSH_DISTRIBUTED_CONFIG:
+//				storage.updateClusterConfiguration(network.readBytes());
+//				break;
+//
+//			case OChannelDistributedProtocol.PUSH_SCHEMA_CHANGED:
+//				storage.updateClusterConfiguration(network.readBytes());
+//				break;
+//			}
 
 			// NOT IN FINALLY BECAUSE IF THE SOCKET IS KILLED COULD HAVE NOT THE LOCK
-			storage.getNetwork().endResponse();
+			network.endResponse();
 
 		} catch (Exception e) {
 		}

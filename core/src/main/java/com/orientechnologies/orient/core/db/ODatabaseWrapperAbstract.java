@@ -61,10 +61,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 		underlying.delete();
 	}
 
-	public int getId() {
-		return underlying.getId();
-	}
-
 	public String getName() {
 		return underlying.getName();
 	}

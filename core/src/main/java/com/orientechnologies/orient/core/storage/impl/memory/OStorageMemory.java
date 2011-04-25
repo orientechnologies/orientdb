@@ -68,7 +68,7 @@ public class OStorageMemory extends OStorageEmbedded {
 		configuration = new OStorageConfiguration(this);
 	}
 
-	public int create(final Map<String, Object> iOptions) {
+	public void create(final Map<String, Object> iOptions) {
 		addUser();
 		level2cache.startup();
 
@@ -90,29 +90,27 @@ public class OStorageMemory extends OStorageEmbedded {
 
 			lock.releaseExclusiveLock(locked);
 		}
-		return -1;
 	}
 
-	public int open(final String iUserName, final String iUserPassword, final Map<String, Object> iOptions) {
+	public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iOptions) {
 		addUser();
 		level2cache.startup();
 
 		if (open)
 			// ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
 			// REUSED
-			return 0;
+			return;
 
 		if (!exists())
 			throw new OStorageException("Can't open the storage '" + name + "' because it not exists in path: " + url);
 
 		open = true;
-		return 0;
 	}
 
-	public void close() {
+	public void close(final boolean iForce) {
 		final boolean locked = lock.acquireExclusiveLock();
 		try {
-			if (!open)
+			if (!checkForClose(iForce))
 				return;
 
 			// CLOSE ALL THE CLUSTERS

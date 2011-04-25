@@ -77,6 +77,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolEx
 import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
+import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
@@ -104,8 +105,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	}
 
 	@Override
-	public void config(final Socket iSocket, final OClientConnection iConnection, final OContextConfiguration iConfig)
-			throws IOException {
+	public void config(final OServer iServer, final Socket iSocket, final OClientConnection iConnection,
+			final OContextConfiguration iConfig) throws IOException {
+		server = iServer;
 		channel = new OChannelBinaryServer(iSocket, iConfig);
 		connection = iConnection;
 
@@ -279,10 +281,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		case OChannelBinaryProtocol.REQUEST_DB_CLOSE:
 			data.commandInfo = "Close Database";
 
-			if (connection.database != null)
-				connection.database.close();
-			sendShutdown();
+			if (connection != null) {
+				connection.close();
 
+				OClientConnectionManager.instance().disconnect(connection.id);
+				// sendShutdown();
+			}
+			sendOk(lastClientTxId);
 			break;
 
 		case OChannelBinaryProtocol.REQUEST_DB_EXIST: {
@@ -806,7 +811,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		if (connection.database != null)
 			connection.database.close();
 
-		OClientConnectionManager.instance().onClientDisconnection(connection.id);
+		OClientConnectionManager.instance().disconnect(connection.id);
 	}
 
 	@Override

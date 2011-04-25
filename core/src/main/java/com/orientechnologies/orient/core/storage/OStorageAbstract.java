@@ -68,18 +68,8 @@ public abstract class OStorageAbstract implements OStorage {
 		return url;
 	}
 
-	public int removeUser() {
-		int u = lock.removeUser();
-
-		boolean keepOpen = OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean();
-		if (u == 0 && !keepOpen)
-			close();
-
-		return u;
-	}
-
-	public void close(final boolean iForce) {
-		close();
+	public void close() {
+		close(false);
 	}
 
 	/**
@@ -104,12 +94,25 @@ public abstract class OStorageAbstract implements OStorage {
 		return level2cache;
 	}
 
+	protected boolean checkForClose(final boolean iForce) {
+		if (!open)
+			return false;
+
+		final int remainingUsers = getUsers() > 0 ? removeUser() : 0;
+
+		return iForce || (!OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean() && remainingUsers == 0);
+	}
+
 	public int getUsers() {
 		return lock.getUsers();
 	}
 
 	public int addUser() {
 		return lock.addUser();
+	}
+
+	public int removeUser() {
+		return lock.removeUser();
 	}
 
 	public OSharedResourceAdaptive getLock() {

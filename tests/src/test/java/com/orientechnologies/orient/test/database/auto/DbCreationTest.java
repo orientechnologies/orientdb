@@ -73,7 +73,7 @@ public class DbCreationTest {
 		database.open("admin", "admin");
 		database.getStorage().getConfiguration().localeLanguage = Locale.ENGLISH.getLanguage();
 		database.getStorage().getConfiguration().localeCountry = Locale.ENGLISH.getCountry();
-		database.getStorage().getConfiguration().update(database.getId());
+		database.getStorage().getConfiguration().update();
 		database.close();
 	}
 

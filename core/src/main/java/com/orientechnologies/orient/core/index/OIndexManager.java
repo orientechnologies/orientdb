@@ -55,7 +55,7 @@ public class OIndexManager extends ODocumentWrapperNoClass {
 	public void create() {
 		save(OStorage.CLUSTER_INTERNAL_NAME);
 		document.getDatabase().getStorage().getConfiguration().indexMgrRecordId = document.getIdentity().toString();
-		document.getDatabase().getStorage().getConfiguration().update(database.getId());
+		document.getDatabase().getStorage().getConfiguration().update();
 	}
 
 	public Collection<OIndex> getIndexes() {

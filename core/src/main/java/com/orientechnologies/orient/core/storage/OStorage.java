@@ -49,9 +49,9 @@ public interface OStorage {
 		TINY, MEDIUM, LARGE, HUGE
 	}
 
-	public int open(String iUserName, String iUserPassword, final Map<String, Object> iProperties);
+	public void open(String iUserName, String iUserPassword, final Map<String, Object> iProperties);
 
-	public int create(Map<String, Object> iProperties);
+	public void create(Map<String, Object> iProperties);
 
 	public boolean exists();
 

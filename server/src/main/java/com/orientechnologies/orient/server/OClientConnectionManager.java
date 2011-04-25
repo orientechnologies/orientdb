@@ -75,7 +75,7 @@ public class OClientConnectionManager extends OSharedResource {
 		}
 	}
 
-	public void onClientDisconnection(final int iChannelId) {
+	public void disconnect(final int iChannelId) {
 		OProfiler.getInstance().updateCounter("OServer.threads.actives", -1);
 
 		acquireExclusiveLock();
