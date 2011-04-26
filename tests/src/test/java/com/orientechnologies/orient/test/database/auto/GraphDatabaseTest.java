@@ -63,6 +63,7 @@ public class GraphDatabaseTest {
 	@Test(dependsOnMethods = "populate")
 	public void checkAfterClose() {
 		database.open("admin", "admin");
+		database.getMetadata().getSchema().reload();
 
 		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from GraphVehicle"));
 		Assert.assertEquals(result.size(), 2);

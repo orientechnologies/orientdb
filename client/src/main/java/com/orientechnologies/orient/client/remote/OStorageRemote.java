@@ -85,6 +85,8 @@ public class OStorageRemote extends OStorageAbstract {
 	protected final Map<String, String>				clustersTypes			= new HashMap<String, String>();
 	protected int															defaultClusterId;
 	private int																networkPoolCursor	= 0;
+	private int																minPool;
+	private int																maxPool;
 
 	public OStorageRemote(final String iURL, final String iMode) throws IOException {
 		super(iURL, iURL, iMode);
@@ -164,9 +166,8 @@ public class OStorageRemote extends OStorageAbstract {
 				serviceThread.interrupt();
 			}
 
-			for (OChannelBinaryClient n : networkPool) {
+			for (OChannelBinaryClient n : networkPool)
 				n.close();
-			}
 			networkPool.clear();
 
 			level2cache.shutdown();
@@ -1107,8 +1108,15 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	protected void checkConnection() {
-		if (networkPool.size() == 0)
-			throw new ODatabaseException("Connection is closed");
+		final boolean locked = lock.acquireSharedLock();
+
+		try {
+			if (networkPool.size() == 0)
+				throw new ODatabaseException("Connection is closed");
+
+		} finally {
+			lock.releaseSharedLock(locked);
+		}
 	}
 
 	private OIdentifiable readRecordFromNetwork(final OChannelBinaryClient network, final ODatabaseRecord iDatabase)
@@ -1143,7 +1151,9 @@ public class OStorageRemote extends OStorageAbstract {
 		OChannelBinaryClient network = null;
 
 		// FIND THE FIRST FREE CHANNEL AVAILABLE
-		synchronized (networkPool) {
+		final boolean locked = lock.acquireSharedLock();
+
+		try {
 			while (network == null) {
 				if (networkPoolCursor >= networkPool.size())
 					networkPoolCursor = 0;
@@ -1154,6 +1164,9 @@ public class OStorageRemote extends OStorageAbstract {
 
 				networkPoolCursor++;
 			}
+			
+		} finally {
+			lock.releaseSharedLock(locked);
 		}
 
 		network.writeByte(iCommand);
@@ -1252,12 +1265,25 @@ public class OStorageRemote extends OStorageAbstract {
 	}
 
 	protected void createConnectionPool() throws IOException, UnknownHostException {
-		if (networkPool.size() == 0) {
-			// CONNECT TO THE SERVER
-			final OChannelBinaryClient firstChannel = createNetworkConnection();
-			networkPool.add(firstChannel);
+		final boolean locked = lock.acquireExclusiveLock();
+		try {
+			if (networkPool.size() == 0) {
+				// CREATE THE CHANNEL POOL
 
-			serviceThread = new OStorageRemoteServiceThread(new OStorageRemoteThread(this), firstChannel);
+				minPool = OGlobalConfiguration.CLIENT_CHANNEL_MIN_POOL.getValueAsInteger();
+				maxPool = OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL.getValueAsInteger();
+
+				// CONNECT TO THE SERVER
+				final OChannelBinaryClient firstChannel = createNetworkConnection();
+				networkPool.add(firstChannel);
+				serviceThread = new OStorageRemoteServiceThread(new OStorageRemoteThread(this), firstChannel);
+
+				for (int i = 1; i < minPool; ++i)
+					networkPool.add(createNetworkConnection());
+			}
+
+		} finally {
+			lock.releaseExclusiveLock(locked);
 		}
 	}
 }

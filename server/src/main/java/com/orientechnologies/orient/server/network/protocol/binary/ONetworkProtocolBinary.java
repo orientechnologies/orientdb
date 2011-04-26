@@ -398,11 +398,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		case OChannelBinaryProtocol.REQUEST_RECORD_LOAD: {
 			data.commandInfo = "Load record";
 
-			final short clusterId = channel.readShort();
-			final long clusterPosition = channel.readLong();
+			final ORecordId rid = channel.readRID();
 			final String fetchPlanString = channel.readString();
 
-			if (clusterId == 0 && clusterPosition == 0) {
+			if (rid.clusterId == 0 && rid.clusterPosition == 0) {
 				// @COMPATIBILITY 0.9.25
 				// SEND THE DB CONFIGURATION INSTEAD SINCE IT WAS ON RECORD 0:0
 				sendOk(lastClientTxId);
@@ -411,7 +410,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				channel.writeInt(0);
 				channel.writeByte(ORecordBytes.RECORD_TYPE);
 			} else {
-				final ORecordInternal<?> record = connection.database.load(new ORecordId(clusterId, clusterPosition));
+				final ORecordInternal<?> record = connection.database.load(rid);
+
+				if (rid.equals(connection.database.getMetadata().getSchema().getDocument().getIdentity()))
+					connection.database.getMetadata().getSchema().reload();
+
 				sendOk(lastClientTxId);
 
 				if (record != null) {
@@ -498,7 +501,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			// TODO: Handle it by using triggers
 			if (connection.database.getMetadata().getSchema().getDocument().getIdentity().equals(rid))
-				connection.database.getMetadata().loadSchema();
+				connection.database.getMetadata().getSchema().reload();
+			else if (connection.database.getMetadata().getIndexManager().getDocument().getIdentity().equals(rid))
+				connection.database.getMetadata().getIndexManager().reload();
 			else if (((ODictionaryLocal<?>) connection.database.getDictionary()).getTree().getRecord().getIdentity().equals(rid))
 				((ODictionaryLocal<?>) connection.database.getDictionary()).load();
 

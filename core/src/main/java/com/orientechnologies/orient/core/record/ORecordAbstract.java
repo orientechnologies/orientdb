@@ -238,8 +238,12 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	public ORecordInternal<T> reload() {
 		return reload(null);
 	}
-
+	
 	public ORecordInternal<T> reload(final String iFetchPlan) {
+		return reload(null, true);
+	}
+
+	public ORecordInternal<T> reload(final String iFetchPlan, final boolean iIgnoreCache) {
 		if (_database == null)
 			throw new ODatabaseException("No database assigned to current record");
 
@@ -247,7 +251,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 			throw new ORecordNotFoundException("The record has no id, probably it's new or transient yet ");
 
 		try {
-			_database.reload(this, iFetchPlan);
+			_database.reload(this, iFetchPlan, iIgnoreCache);
 
 			// GET CONTENT
 			// fromStream(toStream());

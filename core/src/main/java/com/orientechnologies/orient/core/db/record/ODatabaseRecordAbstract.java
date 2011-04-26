@@ -175,6 +175,10 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, true);
 	}
 
+	public void reload(final ORecordInternal<?> iRecord, final String iFetchPlan, boolean iIgnoreCache) {
+		executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache);
+	}
+
 	/**
 	 * Loads a record using a fetch plan.
 	 */

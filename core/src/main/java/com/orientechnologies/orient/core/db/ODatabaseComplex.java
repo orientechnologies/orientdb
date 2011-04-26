@@ -76,18 +76,10 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 * 
 	 * @param iObject
 	 *          The entity to load. If the entity was already loaded it will be reloaded and all the changes will be lost.
-	 */
-	public void reload(final T iObject);
-
-	/**
-	 * Force the reloading of the entity.
-	 * 
-	 * @param iObject
-	 *          The entity to load. If the entity was already loaded it will be reloaded and all the changes will be lost.
+	 * @param iIgnoreCache
 	 * @param iFetchPlan
-	 *          Fetch plan used
 	 */
-	public void reload(final T iObject, String iFetchPlan);
+	public void reload(final T iObject, String iFetchPlan, boolean iIgnoreCache);
 
 	/**
 	 * Loads the entity by the Record ID.

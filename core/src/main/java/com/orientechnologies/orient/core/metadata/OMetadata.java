@@ -46,7 +46,7 @@ public class OMetadata {
 				return;
 
 			indexManager.load();
-			loadSchema();
+			schema.load();
 		} finally {
 			OProfiler.getInstance().stopChrono("OMetadata.load", timer);
 		}
@@ -81,10 +81,6 @@ public class OMetadata {
 
 	public int getSchemaClusterId() {
 		return schemaClusterId;
-	}
-
-	public void loadSchema() {
-		schema.load();
 	}
 
 	private void init() {

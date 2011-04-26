@@ -123,17 +123,17 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 	}
 
 	public void reload(final Object iPojo) {
-		reload(iPojo, null);
+		reload(iPojo, null, true);
 	}
 
-	public void reload(final Object iPojo, final String iFetchPlan) {
+	public void reload(final Object iPojo, final String iFetchPlan, final boolean iIgnoreCache) {
 		checkOpeness();
 		if (iPojo == null)
 			return;
 
 		// GET THE ASSOCIATED DOCUMENT
 		final ODocument record = getRecordByUserObject(iPojo, true);
-		underlying.reload(record);
+		underlying.reload(record, iFetchPlan, iIgnoreCache);
 
 		stream2pojo(record, iPojo, iFetchPlan);
 	}

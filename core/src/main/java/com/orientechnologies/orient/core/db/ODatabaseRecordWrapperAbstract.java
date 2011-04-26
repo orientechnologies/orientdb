@@ -125,11 +125,11 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 	}
 
 	public void reload(final ORecordInternal<?> iRecord) {
-		underlying.reload(iRecord);
+		underlying.reload(iRecord, null, true);
 	}
 
-	public void reload(final ORecordInternal<?> iRecord, final String iFetchPlan) {
-		underlying.reload(iRecord, iFetchPlan);
+	public void reload(final ORecordInternal<?> iRecord, final String iFetchPlan, final boolean iIgnoreCache) {
+		underlying.reload(iRecord, iFetchPlan, iIgnoreCache);
 	}
 
 	public ODatabaseComplex<ORecordInternal<?>> save(final ORecordInternal<?> iRecord, final String iClusterName) {

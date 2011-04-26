@@ -48,7 +48,7 @@ public class OIndexManager extends ODocumentWrapperNoClass {
 			create();
 
 		((ORecordId) document.getIdentity()).fromString(document.getDatabase().getStorage().getConfiguration().indexMgrRecordId);
-		super.load("*:-1 index:0");
+		super.reload("*:-1 index:0");
 		return this;
 	}
 

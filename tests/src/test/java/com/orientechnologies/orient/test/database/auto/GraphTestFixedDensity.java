@@ -22,6 +22,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.db.graph.ODatabaseGraphTx;
 import com.orientechnologies.orient.core.db.graph.OGraphEdge;
 import com.orientechnologies.orient.core.db.graph.OGraphVertex;
+import com.orientechnologies.orient.core.id.ORID;
 
 @Test
 public class GraphTestFixedDensity {
@@ -31,6 +32,7 @@ public class GraphTestFixedDensity {
 	private ODatabaseGraphTx	database;
 	private int								nodeWrittenCounter	= 0;
 	private int								nodeReadCounter			= -1;
+	private ORID							rootId;
 
 	@Parameters(value = "url")
 	public GraphTestFixedDensity(String iURL) {
@@ -47,6 +49,8 @@ public class GraphTestFixedDensity {
 
 		createSubNodes(rootNode, 0);
 
+		rootId = rootNode.getId();
+
 		database.setRoot("LinearGraph", rootNode);
 
 		System.out.println("Creation of the graph with depth=" + MAX_DEEP + " and fixed density=1"
@@ -61,7 +65,7 @@ public class GraphTestFixedDensity {
 
 		long time = System.currentTimeMillis();
 
-		readSubNodesThroughEdges(database.getRoot("LinearGraph"));
+		readSubNodesThroughEdges((OGraphVertex) database.load(rootId));
 
 		System.out.println("Read of the entire graph with depth=" + nodeReadCounter + " and fixed density=" + DENSITY + " in "
 				+ ((System.currentTimeMillis() - time) / 1000f) + " sec.");
@@ -74,7 +78,7 @@ public class GraphTestFixedDensity {
 		long time = System.currentTimeMillis();
 
 		nodeReadCounter = -1;
-		readSubNodesThroughEdges(database.getRoot("LinearGraph"));
+		readSubNodesThroughEdges((OGraphVertex) database.load(rootId));
 
 		System.out.println("Indirect traverse with hot cache of the entire graph with depth=" + nodeReadCounter + " and fixed density="
 				+ DENSITY + " in " + ((System.currentTimeMillis() - time) / 1000f) + " sec.");
@@ -87,7 +91,7 @@ public class GraphTestFixedDensity {
 		long time = System.currentTimeMillis();
 
 		nodeReadCounter = -1;
-		readSubNodesDirectly(database.getRoot("LinearGraph"));
+		readSubNodesThroughEdges((OGraphVertex) database.load(rootId));
 
 		System.out.println("Direct traverse with hot cache of the entire graph with depth=" + nodeReadCounter + " and fixed density="
 				+ DENSITY + " in " + ((System.currentTimeMillis() - time) / 1000f) + " sec.");

@@ -66,7 +66,12 @@ public class ODocumentWrapper {
 	}
 
 	public <RET extends ODocumentWrapper> RET reload(final String iFetchPlan) {
-		document.reload(iFetchPlan);
+		document.reload(iFetchPlan, true);
+		return (RET) this;
+	}
+
+	public <RET extends ODocumentWrapper> RET reload(final String iFetchPlan, final boolean iIgnoreCache) {
+		document.reload(iFetchPlan, iIgnoreCache);
 		return (RET) this;
 	}
 

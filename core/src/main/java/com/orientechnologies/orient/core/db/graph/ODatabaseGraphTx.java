@@ -104,9 +104,9 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 			iObject.reload();
 	}
 
-	public void reload(final OGraphElement iObject, final String iFetchPlan) {
+	public void reload(final OGraphElement iObject, final String iFetchPlan, final boolean iIgnoreCache) {
 		if (iObject != null)
-			iObject.reload(iFetchPlan);
+			iObject.reload(iFetchPlan, iIgnoreCache);
 	}
 
 	@SuppressWarnings("unchecked")
