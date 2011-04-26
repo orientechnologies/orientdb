@@ -18,6 +18,7 @@ package com.orientechnologies.orient.client.remote;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.orient.core.cache.OStorageRecordCache;
@@ -38,17 +39,14 @@ import com.orientechnologies.orient.core.tx.OTransaction;
  */
 @SuppressWarnings("unchecked")
 public class OStorageRemoteThread implements OStorage {
-	private OStorageRemote	delegate;
-	private int							sessionId;
+	private static AtomicInteger	sessionSerialId	= new AtomicInteger(-1);
+
+	private OStorageRemote				delegate;
+	private int										sessionId;
 
 	public OStorageRemoteThread(final OStorageRemote iSharedStorage) {
 		delegate = iSharedStorage;
-		sessionId = -1;
-	}
-
-	public OStorageRemoteThread(final OStorageRemote iSharedStorage, final int iSessionId) {
-		delegate = iSharedStorage;
-		sessionId = iSessionId;
+		sessionId = sessionSerialId.decrementAndGet();
 	}
 
 	public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iOptions) {

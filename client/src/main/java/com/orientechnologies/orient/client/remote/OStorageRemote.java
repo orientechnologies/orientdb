@@ -152,7 +152,7 @@ public class OStorageRemote extends OStorageAbstract {
 			endRequest(network);
 
 			getResponse(network);
-			
+
 			OStorageRemoteThreadLocal.INSTANCE.get().sessionId = -1;
 
 			if (!checkForClose(iForce))
@@ -1257,8 +1257,7 @@ public class OStorageRemote extends OStorageAbstract {
 			final OChannelBinaryClient firstChannel = createNetworkConnection();
 			networkPool.add(firstChannel);
 
-			serviceThread = new OStorageRemoteServiceThread(new OStorageRemoteThread(this, OStorageRemoteServiceThread.REQ_ID),
-					firstChannel);
+			serviceThread = new OStorageRemoteServiceThread(new OStorageRemoteThread(this), firstChannel);
 		}
 	}
 }
