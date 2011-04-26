@@ -67,6 +67,11 @@ public class OContextConfiguration {
 	public <T> T getValue(final String iName, final T iDefaultValue) {
 		if (config != null && config.containsKey(iName))
 			return (T) config.get(iName);
+
+		final String sysProperty = System.getProperty("orientdb.www.path");
+		if (sysProperty != null)
+			return (T) sysProperty;
+
 		return iDefaultValue;
 	}
 

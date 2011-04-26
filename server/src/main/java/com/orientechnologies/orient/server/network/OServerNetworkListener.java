@@ -182,7 +182,7 @@ public class OServerNetworkListener extends Thread {
 	private void readParameters(final OContextConfiguration iServerConfig, final OServerParameterConfiguration[] iParameters) {
 		configuration = new OContextConfiguration(iServerConfig);
 
-		// SET NETWORK PARAMETERS
+		// SET PARAMETERS
 		if (iParameters != null && iParameters.length > 0) {
 			// CONVERT PARAMETERS IN MAP TO INTIALIZE THE CONTEXT-CONFIGURATION
 			for (OServerParameterConfiguration param : iParameters)
