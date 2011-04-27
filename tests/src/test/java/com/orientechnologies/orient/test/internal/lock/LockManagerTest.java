@@ -14,8 +14,8 @@ import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 
 public class LockManagerTest {
 
-	public static final int														THREADS					= 100;
-	public static int																	cyclesByProcess	= 1000;
+	public static final int														THREADS					= 20;
+	public static int																	cyclesByProcess	= 1000000;
 	public static boolean															verbose					= false;
 	public static OLockManager<Callable<?>, Runnable>	lockMgr					= new OLockManager<Callable<?>, Runnable>();
 	protected List<Callable<?>>												resources				= new ArrayList<Callable<?>>();
@@ -24,12 +24,12 @@ public class LockManagerTest {
 	protected AtomicInteger														counter					= new AtomicInteger();
 
 	public static class ResourceRead implements Callable<Void> {
-		volatile int	countRead	= 0;
+		AtomicInteger	countRead	= new AtomicInteger(0);
 
 		public Void call() throws Exception {
 			lockMgr.acquireLock(Thread.currentThread(), this, LOCK.SHARED);
 			try {
-				countRead++;
+				countRead.incrementAndGet();
 				// try {
 				// Thread.sleep(1 + Math.abs(new Random().nextInt() % 3));
 				// } catch (Exception e) {
@@ -37,7 +37,7 @@ public class LockManagerTest {
 				if (verbose)
 					System.out.println("ResourceRead locked by " + Thread.currentThread());
 			} finally {
-				countRead--;
+				countRead.decrementAndGet();
 				lockMgr.releaseLock(Thread.currentThread(), this, LOCK.SHARED);
 			}
 			return null;
@@ -45,22 +45,22 @@ public class LockManagerTest {
 	}
 
 	public static class ResourceWrite implements Callable<Void> {
-		volatile int	countWrite	= 0;
+		AtomicInteger	countWrite	= new AtomicInteger(0);
 
 		public Void call() throws Exception {
 			lockMgr.acquireLock(Thread.currentThread(), this, LOCK.EXCLUSIVE);
 			try {
-				countWrite++;
+				countWrite.incrementAndGet();
 				// try {
 				// Thread.sleep(1 + Math.abs(new Random().nextInt() % 3));
 				// } catch (Exception e) {
 				// }
 				if (verbose)
 					System.out.println("ResourceWrite locked by " + Thread.currentThread());
-				if (countWrite != 1)
+				if (countWrite.get() != 1)
 					throw new AssertionError("countWrite:" + countWrite);
 			} finally {
-				countWrite--;
+				countWrite.decrementAndGet();
 				lockMgr.releaseLock(Thread.currentThread(), this, LOCK.EXCLUSIVE);
 			}
 			return null;
@@ -68,8 +68,8 @@ public class LockManagerTest {
 	}
 
 	public static class ResourceReadWrite implements Callable<Void> {
-		volatile int			countRead		= 0;
-		volatile int			countWrite	= 0;
+		AtomicInteger			countRead		= new AtomicInteger(0);
+		AtomicInteger			countWrite	= new AtomicInteger(0);
 		volatile boolean	lastWasRead;
 
 		public Void call() throws Exception {
@@ -85,14 +85,14 @@ public class LockManagerTest {
 		void read() {
 			lockMgr.acquireLock(Thread.currentThread(), this, LOCK.SHARED);
 			try {
-				countRead++;
+				countRead.incrementAndGet();
 				if (verbose)
 					System.out.println("ResourceReadWrite SHARED locked by " + Thread.currentThread());
 			} catch (RuntimeException e) {
 				e.printStackTrace();
 				throw e;
 			} finally {
-				countRead--;
+				countRead.decrementAndGet();
 				lockMgr.releaseLock(Thread.currentThread(), this, LOCK.SHARED);
 			}
 		}
@@ -100,19 +100,19 @@ public class LockManagerTest {
 		void write() {
 			lockMgr.acquireLock(Thread.currentThread(), this, LOCK.EXCLUSIVE);
 			try {
-				countWrite++;
+				countWrite.incrementAndGet();
 				// try {
 				// Thread.sleep(1 + Math.abs(new Random().nextInt() % 3));
 				// } catch (Exception e) {
 				// }
 				if (verbose)
 					System.out.println("ResourceReadWrite EXCLUSIVE locked by " + Thread.currentThread());
-				if (countWrite != 1)
+				if (countWrite.get() != 1)
 					throw new AssertionError("countWrite:" + countWrite);
-				if (countRead != 0)
+				if (countRead.get() != 0)
 					throw new AssertionError("countRead:" + countRead);
 			} finally {
-				countWrite--;
+				countWrite.decrementAndGet();
 				lockMgr.releaseLock(Thread.currentThread(), this, LOCK.EXCLUSIVE);
 			}
 		}
@@ -120,10 +120,10 @@ public class LockManagerTest {
 
 	public static class ResourceReantrance implements Callable<Void> {
 
-		volatile int	countRead						= 0;
-		volatile int	countReentrantRead	= 0;
-		volatile int	countWrite					= 0;
-		volatile int	countReentrantWrite	= 0;
+		AtomicInteger	countRead						= new AtomicInteger(0);
+		AtomicInteger	countReentrantRead	= new AtomicInteger(0);
+		AtomicInteger	countWrite					= new AtomicInteger(0);
+		AtomicInteger	countReentrantWrite	= new AtomicInteger(0);
 
 		public Void call() throws Exception {
 			read();
@@ -133,33 +133,32 @@ public class LockManagerTest {
 		void read() {
 			lockMgr.acquireLock(Thread.currentThread(), this, LOCK.SHARED);
 			try {
-				countRead++;
+				countRead.incrementAndGet();
 				// while (countRead < 3) {
 				// // wait for 3 concurrent threads at this point.
 				// Thread.yield();
 				// }
-				rentrantRead();
-				write();
+				reentrantRead();
 			} catch (RuntimeException e) {
 				e.printStackTrace();
 				throw e;
 			} finally {
-				countRead--;
+				countRead.decrementAndGet();
 				lockMgr.releaseLock(Thread.currentThread(), this, LOCK.SHARED);
 			}
 		}
 
-		void rentrantRead() {
+		void reentrantRead() {
 			lockMgr.acquireLock(Thread.currentThread(), this, LOCK.SHARED);
 			try {
-				countReentrantRead++;
+				countReentrantRead.incrementAndGet();
 				// while (countRead < 2) {
 				// // wait an other thread.
 				// Thread.yield();
 				// }
 				write();
 			} finally {
-				countReentrantRead--;
+				countReentrantRead.decrementAndGet();
 				lockMgr.releaseLock(Thread.currentThread(), this, LOCK.SHARED);
 			}
 		}
@@ -167,15 +166,15 @@ public class LockManagerTest {
 		void write() {
 			lockMgr.acquireLock(Thread.currentThread(), this, LOCK.EXCLUSIVE);
 			try {
-				countWrite++;
+				countWrite.incrementAndGet();
 				reentrantWrite();
 				// for (int i = 0; i < 10000000; i++) {
 				// }
 				// if(log) System.out.println("ResourceReantrance locked by " + Thread.currentThread());
-				if (countWrite != 1)
+				if (countWrite.get() != 1)
 					throw new AssertionError("countWrite:" + countWrite);
 			} finally {
-				countWrite--;
+				countWrite.decrementAndGet();
 				lockMgr.releaseLock(Thread.currentThread(), this, LOCK.EXCLUSIVE);
 			}
 		}
@@ -183,17 +182,17 @@ public class LockManagerTest {
 		void reentrantWrite() {
 			lockMgr.acquireLock(Thread.currentThread(), this, LOCK.EXCLUSIVE);
 			try {
-				countReentrantWrite++;
+				countReentrantWrite.incrementAndGet();
 				// try {
 				// Thread.sleep(1 + Math.abs(new Random().nextInt() % 3));
 				// } catch (Exception e) {
 				// }
 				if (verbose)
 					System.out.println("ResourceReantrance locked by " + Thread.currentThread());
-				if (countReentrantWrite != 1)
+				if (countReentrantWrite.get() != 1)
 					throw new AssertionError("countReentrantWrite:" + countReentrantWrite);
 			} finally {
-				countReentrantWrite--;
+				countReentrantWrite.decrementAndGet();
 				lockMgr.releaseLock(Thread.currentThread(), this, LOCK.EXCLUSIVE);
 			}
 		}
@@ -222,6 +221,8 @@ public class LockManagerTest {
 	@Test
 	public void testConcurrentAccess() throws Throwable {
 
+		final long start = System.currentTimeMillis();
+
 		resources.add(new ResourceRead());
 		resources.add(new ResourceWrite());
 		resources.add(new ResourceReadWrite());
@@ -249,7 +250,8 @@ public class LockManagerTest {
 			processes.get(i).join();
 		}
 
-		System.out.println("\nOk, all threads back");
+		System.out.println("\nOk, all threads back : " + counter.get() + " in: " + ((System.currentTimeMillis() - start) / 1000)
+				+ " secs");
 
 		// Pulish exceptions.
 		if (exceptions.size() > 0) {
