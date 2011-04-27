@@ -102,6 +102,7 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 		} finally {
 			out.close();
 		}
+		_size = _source.length;
 	}
 
 	public void toOutputStream(OutputStream out) throws IOException {
