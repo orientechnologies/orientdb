@@ -1,11 +1,29 @@
+/*
+ * Copyright 1999-2010 Luca Garulli (l.garulli--at--orientechnologies.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.orientechnologies.common.concur.lock;
 
 import com.orientechnologies.common.profiler.OProfiler;
 
 /**
  * Manages the locks at record level.
+ * 
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * @author Sylvain Spinelli
+ * 
  */
-@SuppressWarnings("unchecked")
 public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 	public enum LOCK {
 		SHARED, EXCLUSIVE
@@ -21,23 +39,7 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 
 	protected LockEntry<RESOURCE_TYPE, REQUESTER_TYPE>	firstLock;
 
-	public static class SharedLockEntry<REQUESTER_TYPE> {
-		protected REQUESTER_TYPE									requester;
-		protected SharedLockEntry<REQUESTER_TYPE>	nextSharedLock;
-		protected int															countSharedLocks;
-
-		public SharedLockEntry(REQUESTER_TYPE iRequester) {
-			super();
-			requester = iRequester;
-			countSharedLocks = 1;
-		}
-
-		protected SharedLockEntry() {
-			super();
-		}
-	}
-
-	public static class LockEntry<RESOURCE_TYPE, REQUESTER_TYPE> extends SharedLockEntry<REQUESTER_TYPE> {
+	public static class LockEntry<RESOURCE_TYPE, REQUESTER_TYPE> extends OSharedLockEntry<REQUESTER_TYPE> {
 		protected RESOURCE_TYPE															resource;
 		protected volatile LOCK_STATUS											status;
 		protected int																				countExclLocks;
@@ -164,17 +166,17 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 		}
 	}
 
-	protected synchronized LockEntry tryToAcquireLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId,
-			final LOCK iLockType) {
+	protected synchronized LockEntry<RESOURCE_TYPE, REQUESTER_TYPE> tryToAcquireLock(final REQUESTER_TYPE iRequester,
+			final RESOURCE_TYPE iResourceId, final LOCK iLockType) {
 		OProfiler.getInstance().updateCounter("LockMgr.tryToAcquire", +1);
 
 		// System.out.println("Try acquire " + iLockType + " lock for " + iResourceId + " by " + iRequester);
 
 		LockEntry<RESOURCE_TYPE, REQUESTER_TYPE> currentLock = lookForEntry(iResourceId);
 		if (currentLock == null)
-			return addEntry(new LockEntry(iLockType, iRequester, iResourceId, LOCK_STATUS.LIVE));
+			return addEntry(new LockEntry<RESOURCE_TYPE, REQUESTER_TYPE>(iLockType, iRequester, iResourceId, LOCK_STATUS.LIVE));
 
-		SharedLockEntry<REQUESTER_TYPE> curentSharedLock = currentLock;
+		OSharedLockEntry<REQUESTER_TYPE> curentSharedLock = currentLock;
 		do {
 			if (curentSharedLock.requester.equals(iRequester)) {
 				// REENTRANCE
@@ -235,9 +237,10 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 	}
 
 	protected LockEntry<RESOURCE_TYPE, REQUESTER_TYPE> addWaitingEntry(LockEntry<RESOURCE_TYPE, REQUESTER_TYPE> iCurrentLock,
-			SharedLockEntry<REQUESTER_TYPE> iCurrentSharedLock, LOCK iLockType, REQUESTER_TYPE iRequester, RESOURCE_TYPE iResource) {
+			OSharedLockEntry<REQUESTER_TYPE> iCurrentSharedLock, LOCK iLockType, REQUESTER_TYPE iRequester, RESOURCE_TYPE iResource) {
 		assert (Thread.holdsLock(this));
-		LockEntry<RESOURCE_TYPE, REQUESTER_TYPE> newEntry = new LockEntry(iLockType, iRequester, iResource, LOCK_STATUS.WAITING);
+		LockEntry<RESOURCE_TYPE, REQUESTER_TYPE> newEntry = new LockEntry<RESOURCE_TYPE, REQUESTER_TYPE>(iLockType, iRequester,
+				iResource, LOCK_STATUS.WAITING);
 		// APPEND THIS NEW ENTRY TO THE STACK
 		LockEntry<RESOURCE_TYPE, REQUESTER_TYPE> vLastWaiter = iCurrentLock;
 		while (vLastWaiter.nextWaiter != null)
@@ -255,7 +258,7 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 	protected LockEntry<RESOURCE_TYPE, REQUESTER_TYPE> addSharedLockEntry(LockEntry<RESOURCE_TYPE, REQUESTER_TYPE> iRoot,
 			REQUESTER_TYPE iRequester) {
 		assert (Thread.holdsLock(this));
-		SharedLockEntry<REQUESTER_TYPE> newLock = new SharedLockEntry<REQUESTER_TYPE>(iRequester);
+		OSharedLockEntry<REQUESTER_TYPE> newLock = new OSharedLockEntry<REQUESTER_TYPE>(iRequester);
 		newLock.nextSharedLock = iRoot.nextSharedLock;
 		iRoot.nextSharedLock = newLock;
 		return iRoot;
@@ -283,8 +286,8 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 
 	protected void removeSharedLockEntry(LockEntry<RESOURCE_TYPE, REQUESTER_TYPE> iRoot, REQUESTER_TYPE iRequester) {
 		assert (Thread.holdsLock(this));
-		SharedLockEntry<REQUESTER_TYPE> previous = null;
-		SharedLockEntry<REQUESTER_TYPE> next = iRoot;
+		OSharedLockEntry<REQUESTER_TYPE> previous = null;
+		OSharedLockEntry<REQUESTER_TYPE> next = iRoot;
 		while (!iRequester.equals(next.requester)) {
 			previous = next;
 			next = next.nextSharedLock;
