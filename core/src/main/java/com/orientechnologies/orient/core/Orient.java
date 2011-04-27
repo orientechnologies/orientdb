@@ -235,7 +235,7 @@ public class Orient extends OSharedResource {
 			final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
 			for (OStorage stg : storagesCopy) {
 				OLogManager.instance().debug(this, "Shutdowning storage: " + stg.getName() + "...");
-				stg.close();
+				stg.close(true);
 			}
 
 			OMMapManager.shutdown();
