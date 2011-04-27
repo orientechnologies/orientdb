@@ -16,16 +16,26 @@
 package com.orientechnologies.common.concur.lock;
 
 /**
- * Manages the lock requester list.
+ * Manages the shared lock requester list for the same resource.
  * 
- * @author Sylvain Spinelli
+ * @author Sylvain Spinelli (sylvain.spinelli@kelis.fr)
  * 
  * @param <REQUESTER_TYPE>
  */
 public class OSharedLockEntry<REQUESTER_TYPE> {
+
+	/** The requester lock : generally {@link Thread} or {@link Runnable}. */
 	protected REQUESTER_TYPE										requester;
-	protected OSharedLockEntry<REQUESTER_TYPE>	nextSharedLock;
+
+	/**
+	 * Count shared locks held by this requester for the resource.
+	 * <p>
+	 * Used for reentrancy : when the same requester acquire a shared lock for the same resource in a nested code.
+	 */
 	protected int																countSharedLocks;
+
+	/** Next shared lock for the same resource by an other requester. */
+	protected OSharedLockEntry<REQUESTER_TYPE>	nextSharedLock;
 
 	protected OSharedLockEntry() {
 	}

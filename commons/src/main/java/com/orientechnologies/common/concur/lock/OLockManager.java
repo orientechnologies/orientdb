@@ -19,32 +19,110 @@ import com.orientechnologies.common.profiler.OProfiler;
 
 /**
  * Manages the locks at record level.
+ * <p>
+ * For each acquired lock, a {@link LockEntry} or a {@link OSharedLockEntry} is created and is inserted in the right place depending
+ * of the situation:
+ * <ul>
+ * 
+ * <li>When the resource is not already locked, a {@link LockEntry} is created and added to the main linked list that references all
+ * the resources currrently locked (list managed by {@link OLockManager#firstLiveLock} and {@link LockEntry#nextLiveLock}. The locks
+ * referenced in this main list are in {@link LOCK_STATUS#LIVE} status.
+ * 
+ * <li>When a requester ask for a shared lock and the resource is already shared locked by an other requester, a
+ * {@link OSharedLockEntry} is created and appended to the {@link OSharedLockEntry#nextSharedLock} list.
+ * 
+ * <li>When a requester want to lock a resource but is already incompatibly locked by an other requester (shared + exclusive or
+ * exclusive + exclusive), the {@link LockEntry} created is appended a waiting stack for this resource :
+ * {@link LockEntry#nextWaiter}. This created lock is first set in the {@link LOCK_STATUS#WILLWAIT} status and will be set in
+ * {@link LOCK_STATUS#WAITING} status. If the timeout is reached, and the lock is always held by an other requester, the lock will
+ * be set in the {@link LOCK_STATUS#EXPIRED} status.
+ * 
+ * <li>When a requester ask for a shared or exclusive lock in a recursive manner on the same resource (reentrancy), the counters
+ * {@link OSharedLockEntry#countSharedLocks} and {@link LockEntry#countExclLocks} are incremented. In this special case, no
+ * {@link LockEntry} nor {@link OSharedLockEntry} are created.
+ * 
+ * </ul>
+ * 
+ * <p>
+ * On release, the resource live lock is found from the main list and the counter is decremented (
+ * {@link OSharedLockEntry#countSharedLocks} or {@link LockEntry#countExclLocks}). If these 2 counters are 0, then this lock is
+ * removed from the main list and:
+ * <ul>
+ * <li>if a sharedLock is setted ({@link OSharedLockEntry#nextSharedLock} not null) this shared lock is promoted as the live lock.
+ * <li>else if a waiting lock is setted ({@link OSharedLockEntry#nextSharedLock} no null) this waiting lock is awaited and setted as
+ * live lock.
+ * </ul>
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * @author Sylvain Spinelli
- * 
+ * @author Sylvain Spinelli (sylvain.spinelli@kelis.fr)
  */
 public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 	public enum LOCK {
 		SHARED, EXCLUSIVE
 	}
 
+	/** Statuses for {@link LockEntry}. */
 	protected enum LOCK_STATUS {
-		LIVE, WAITING, SLEEPING, EXPIRED
+		/**
+		 * This lock is in the header position. This lock is referenced by the main linked list {@link OLockManager#firstLock} or
+		 * {@link LockEntry#nextLockEntry}. Only one lock can be LIVE for the same resource.
+		 */
+		LIVE,
+
+		/**
+		 * This lock will wait for the release of the header lock : This lock is referenced by {@link LockEntry#nextWaiter}. This status
+		 * is a short time transition status, it will quickly setted as {@link #SLEEPING}.
+		 */
+		WILLWAIT,
+
+		/** The thread asking for this lock is waiting for a notify() call. */
+		WAITING,
+
+		/** The lock has failed because the timeout is expired. */
+		EXPIRED
 	}
 
 	private static final int														DEFAULT_ACQUIRE_TIMEOUT	= 5000;
 
 	protected final long																acquireTimeout					= DEFAULT_ACQUIRE_TIMEOUT;	// MS
 
-	protected LockEntry<RESOURCE_TYPE, REQUESTER_TYPE>	firstLock;
+	/**
+	 * First entry for the linked list of resources currently locked. Next entries of this list is managed by
+	 * {@link LockEntry#nextLiveLock}.
+	 */
+	protected LockEntry<RESOURCE_TYPE, REQUESTER_TYPE>	firstLiveLock;
 
+	/**
+	 * Manages the lock for one resource.
+	 * 
+	 */
 	public static class LockEntry<RESOURCE_TYPE, REQUESTER_TYPE> extends OSharedLockEntry<REQUESTER_TYPE> {
+
+		/** The resource currently locked. */
 		protected RESOURCE_TYPE															resource;
+
+		/** Lock status. */
 		protected volatile LOCK_STATUS											status;
+
+		/**
+		 * Count exclusive locks held by this requester for this resource.
+		 * <p>
+		 * Used for reentrancy : when the same requester acquire a exclusive lock multiple times for the same resource in a nested code.
+		 */
 		protected int																				countExclLocks;
-		protected LockEntry<RESOURCE_TYPE, REQUESTER_TYPE>	nextLockEntry;
+
+		/**
+		 * Linked list for waiters : these locks for the same resource are held by other requesters and are waiting for the release of
+		 * the header lock.
+		 */
 		protected LockEntry<RESOURCE_TYPE, REQUESTER_TYPE>	nextWaiter;
+
+		/**
+		 * Next resource currently locked.
+		 * 
+		 * @see OLockManager#firstLiveLock
+		 */
+		protected LockEntry<RESOURCE_TYPE, REQUESTER_TYPE>	nextLiveLock;
 
 		public LockEntry(LOCK iLockType, REQUESTER_TYPE iRequester, RESOURCE_TYPE iResource, LOCK_STATUS iStatus) {
 			super();
@@ -76,7 +154,7 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 
 		// PUT CURRENT THREAD IN WAIT UNTIL TIMEOUT OR UNLOCK BY ANOTHER THREAD THAT UNLOCK THE RESOURCE
 		synchronized (lock) {
-			lock.status = LOCK_STATUS.SLEEPING;
+			lock.status = LOCK_STATUS.WAITING;
 			long time = iTimeout > 0 ? System.currentTimeMillis() : 0;
 			do {
 				// DO...WHILE FOR SPURIOUS WAKEUP
@@ -84,8 +162,8 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 					lock.wait(iTimeout <= 0 ? Long.MAX_VALUE : iTimeout);
 				} catch (InterruptedException e) {
 				}
-			} while (lock.status == LOCK_STATUS.SLEEPING && (iTimeout > 0 && time + iTimeout > System.currentTimeMillis()));
-			if (lock.status == LOCK_STATUS.SLEEPING) {
+			} while (lock.status == LOCK_STATUS.WAITING && (iTimeout > 0 && time + iTimeout > System.currentTimeMillis()));
+			if (lock.status == LOCK_STATUS.WAITING) {
 				// THE RESOURCE IS LOCKED.
 				lock.status = LOCK_STATUS.EXPIRED;
 				throw new OLockException("Resource " + iResourceId + " is locked");
@@ -135,15 +213,15 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 						Thread.yield();
 					synchronized (nextWaiter) {
 						switch (nextWaiter.status) {
-						case WAITING:
-							// nextWaiter FOR SLEEP
+						case WILLWAIT:
+							// THE nextWaiter WILL BE IN WAITING STATUS VERY QUICKLY, WE TRY AGAIN.
 							wait = true;
 							continue waiting;
-						case SLEEPING:
-							//
+						case WAITING:
+							// THE nextWaiter IS WAITING : WE CAN SET IT AS THE LIVE LOCK.
 							addEntry(nextWaiter);
 							nextWaiter.status = LOCK_STATUS.LIVE;
-							// WAKEUP NEXT WAITER THREAD
+							// WAKEUP nextWaiter THREAD
 							nextWaiter.notify();
 							break waiting;
 						case LIVE:
@@ -215,24 +293,24 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 	}
 
 	public synchronized void clear() {
-		firstLock = null;
+		firstLiveLock = null;
 	}
 
 	protected LockEntry<RESOURCE_TYPE, REQUESTER_TYPE> lookForEntry(RESOURCE_TYPE iRes) {
 		assert (Thread.holdsLock(this));
-		LockEntry<RESOURCE_TYPE, REQUESTER_TYPE> nextLock = firstLock;
+		LockEntry<RESOURCE_TYPE, REQUESTER_TYPE> nextLock = firstLiveLock;
 		while (nextLock != null) {
 			if (nextLock.resource.equals(iRes))
 				return nextLock;
-			nextLock = nextLock.nextLockEntry;
+			nextLock = nextLock.nextLiveLock;
 		}
 		return null;
 	}
 
 	protected LockEntry<RESOURCE_TYPE, REQUESTER_TYPE> addEntry(LockEntry<RESOURCE_TYPE, REQUESTER_TYPE> iLockEntry) {
 		assert (Thread.holdsLock(this));
-		iLockEntry.nextLockEntry = firstLock;
-		firstLock = iLockEntry;
+		iLockEntry.nextLiveLock = firstLiveLock;
+		firstLiveLock = iLockEntry;
 		return iLockEntry;
 	}
 
@@ -240,12 +318,12 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 			OSharedLockEntry<REQUESTER_TYPE> iCurrentSharedLock, LOCK iLockType, REQUESTER_TYPE iRequester, RESOURCE_TYPE iResource) {
 		assert (Thread.holdsLock(this));
 		LockEntry<RESOURCE_TYPE, REQUESTER_TYPE> newEntry = new LockEntry<RESOURCE_TYPE, REQUESTER_TYPE>(iLockType, iRequester,
-				iResource, LOCK_STATUS.WAITING);
+				iResource, LOCK_STATUS.WILLWAIT);
 		// APPEND THIS NEW ENTRY TO THE STACK
-		LockEntry<RESOURCE_TYPE, REQUESTER_TYPE> vLastWaiter = iCurrentLock;
-		while (vLastWaiter.nextWaiter != null)
-			vLastWaiter = vLastWaiter.nextWaiter;
-		vLastWaiter.nextWaiter = newEntry;
+		LockEntry<RESOURCE_TYPE, REQUESTER_TYPE> lastWaiter = iCurrentLock;
+		while (lastWaiter.nextWaiter != null)
+			lastWaiter = lastWaiter.nextWaiter;
+		lastWaiter.nextWaiter = newEntry;
 		// MOVE ALL SHARED LOCKS FROM THE SAME REQUESTER TO THIS NEW WAITING ENTRY
 		if (iCurrentSharedLock != null) {
 			newEntry.countSharedLocks += iCurrentSharedLock.countSharedLocks;
@@ -267,19 +345,19 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 	protected LockEntry<RESOURCE_TYPE, REQUESTER_TYPE> removeLockEntry(RESOURCE_TYPE iRes) {
 		assert (Thread.holdsLock(this));
 		LockEntry<RESOURCE_TYPE, REQUESTER_TYPE> previousLock = null;
-		LockEntry<RESOURCE_TYPE, REQUESTER_TYPE> nextLock = firstLock;
+		LockEntry<RESOURCE_TYPE, REQUESTER_TYPE> nextLock = firstLiveLock;
 		while (nextLock != null) {
 			if (nextLock.resource.equals(iRes)) {
 				if (previousLock == null) {
-					firstLock = nextLock.nextLockEntry;
+					firstLiveLock = nextLock.nextLiveLock;
 				} else {
-					previousLock.nextLockEntry = nextLock.nextLockEntry;
+					previousLock.nextLiveLock = nextLock.nextLiveLock;
 				}
-				nextLock.nextLockEntry = null;
+				nextLock.nextLiveLock = null;
 				return nextLock;
 			}
 			previousLock = nextLock;
-			nextLock = nextLock.nextLockEntry;
+			nextLock = nextLock.nextLiveLock;
 		}
 		return null;
 	}
