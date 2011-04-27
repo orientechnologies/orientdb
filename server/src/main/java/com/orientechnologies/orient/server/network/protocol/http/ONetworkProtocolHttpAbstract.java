@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -161,9 +162,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
 		if (e instanceof ORecordNotFoundException)
 			errorCode = 404;
+		else if (e instanceof OConcurrentModificationException)
+			errorCode = 409;
 		else if (e instanceof OLockException) {
 			errorCode = 423;
-			// e = (Exception) e.getCause();
 		} else if (e instanceof IllegalArgumentException)
 			errorCode = OHttpUtils.STATUS_INTERNALERROR;
 
