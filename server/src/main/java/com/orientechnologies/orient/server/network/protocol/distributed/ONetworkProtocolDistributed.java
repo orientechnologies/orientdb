@@ -72,16 +72,21 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_CONNECT: {
 			data.commandInfo = "Cluster connection";
 			manager.receivedLeaderConnection(this);
+			sendOk(lastClientTxId);
+			break;
+		}
 
+		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_OPEN: {
+			data.commandInfo = "Open database connection";
+
+			// REOPEN PREVIOUSLY MANAGED DATABASE
 			final String dbName = channel.readString();
-			if (dbName != null) {
-				// REOPEN PREVIOUSLY MANAGED DATABASE
-				openDatabase(dbName, channel.readString(), channel.readString());
-			}
+			openDatabase(dbName, channel.readString(), channel.readString());
 
 			sendOk(lastClientTxId);
 
-			channel.writeLong(connection.database != null ? connection.database.getStorage().getVersion() : 0);
+			channel.writeInt(connection.id);
+			channel.writeLong(connection.database.getStorage().getVersion());
 			break;
 		}
 

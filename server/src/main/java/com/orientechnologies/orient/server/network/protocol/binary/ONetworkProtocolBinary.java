@@ -21,7 +21,6 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -70,11 +69,9 @@ import com.orientechnologies.orient.core.storage.impl.local.ODictionaryLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
-import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
@@ -969,36 +966,5 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			throw new IllegalArgumentException("Can't create database: storage mode '" + iStorageMode + "' is not supported.");
 
 		return new ODatabaseDocumentTx(path);
-	}
-
-	protected void broadcastRecordChanged(final ORecordInternal<?> iRecord) {
-		// UPDATE ALL THE CLIENTS
-		final List<OClientConnection> connections = OClientConnectionManager.instance().getConnections();
-
-		if (OLogManager.instance().isDebugEnabled())
-			OLogManager.instance().debug(this, "Pushing record %s to the %d connected clients...", iRecord.getIdentity(),
-					connections.size());
-
-		for (OClientConnection c : connections) {
-			if (c.protocol.getChannel() instanceof OChannelBinary) {
-				OChannelBinary ch = (OChannelBinary) c.protocol.getChannel();
-
-				if (OLogManager.instance().isDebugEnabled())
-					OLogManager.instance().debug(this, "-> Pushing record to the connected client %s...", ch.socket.getRemoteSocketAddress());
-
-				ch.acquireExclusiveLock();
-				try {
-					ch.writeByte(OChannelBinaryProtocol.PUSH_DATA);
-					ch.writeInt(-10);
-					ch.writeByte(OChannelDistributedProtocol.PUSH_SCHEMA_CHANGED);
-					ch.writeBytes(iRecord.toStream());
-
-				} catch (IOException e) {
-					e.printStackTrace();
-				} finally {
-					ch.releaseExclusiveLock();
-				}
-			}
-		}
 	}
 }

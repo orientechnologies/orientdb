@@ -20,11 +20,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
-import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
+import com.orientechnologies.common.concur.resource.OSharedResourceExternalTimeout;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
-public abstract class OChannel extends OSharedResourceExternal {
+public abstract class OChannel extends OSharedResourceExternalTimeout {
 	public Socket				socket;
 
 	public InputStream	inStream;
@@ -33,6 +33,7 @@ public abstract class OChannel extends OSharedResourceExternal {
 	public int					socketBufferSize;
 
 	public OChannel(Socket iSocket, final OContextConfiguration iConfig) throws IOException {
+		super(OGlobalConfiguration.NETWORK_LOCK_TIMEOUT.getValueAsInteger());
 		socket = iSocket;
 		socketBufferSize = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_BUFFER_SIZE);
 	}

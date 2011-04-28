@@ -103,7 +103,6 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	private ONetworkProtocolDistributed													leaderConnection;
 	public long																									lastHeartBeat;
 	private Map<String, ODocument>															clusterDbConfigurations	= new HashMap<String, ODocument>();
-	private Map<String, String[]>																clusterDbSecurity				= new HashMap<String, String[]>();
 
 	private volatile STATUS																			status									= STATUS.ONLINE;
 
@@ -169,7 +168,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		try {
 			node.connect(networkTimeoutNode);
 			node.startSynchronization();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			OLogManager.instance().error(this, "Can't connect to distributed server node: %s:%d", node.networkAddress, node.networkPort);
 		}
 	}
@@ -577,28 +576,26 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 				OLogManager.instance().info(this, "Sending the configuration to the connected client %s...",
 						ch.socket.getRemoteSocketAddress());
 
-				ch.acquireExclusiveLock();
 				try {
-					ch.writeByte(OChannelBinaryProtocol.PUSH_DATA);
-					ch.writeInt(-10);
-					ch.writeByte(OChannelDistributedProtocol.PUSH_DISTRIBUTED_CONFIG);
-					ch.writeBytes(clusterDbConfigurations.get(iDatabaseName).toStream());
+					ch.acquireExclusiveLock();
 
-				} catch (IOException e) {
-					e.printStackTrace();
-				} finally {
-					ch.releaseExclusiveLock();
+					try {
+						ch.writeByte(OChannelBinaryProtocol.PUSH_DATA);
+						ch.writeInt(-10);
+						ch.writeByte(OChannelDistributedProtocol.PUSH_DISTRIBUTED_CONFIG);
+						ch.writeBytes(clusterDbConfigurations.get(iDatabaseName).toStream());
+
+					} catch (IOException e) {
+						e.printStackTrace();
+					} finally {
+						ch.releaseExclusiveLock();
+					}
+				} catch (InterruptedException e1) {
+					OLogManager.instance().warn(this, "[broadcastClusterConfiguration] Timeout on sending configuration to remote node %s",
+							ch.socket.getRemoteSocketAddress());
 				}
 			}
 		}
-	}
-
-	public String[] getClusterDbSecurity(final String iDatabaseName) {
-		return clusterDbSecurity.get(iDatabaseName);
-	}
-
-	public void setClusterDbSecurity(final String iDatabaseName, String iDatabaseUser, String iDatabasePasswd) {
-		clusterDbSecurity.put(iDatabaseName, new String[] { iDatabaseUser, iDatabasePasswd });
 	}
 
 	public STATUS getStatus() {

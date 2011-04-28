@@ -158,7 +158,9 @@ public enum OGlobalConfiguration {
 	// NETWORK
 	NETWORK_SOCKET_BUFFER_SIZE("network.socketBufferSize", "TCP/IP Socket buffer size", Integer.class, 32768),
 
-	NETWORK_SOCKET_TIMEOUT("network.timeout", "TCP/IP Socket timeout in ms", Integer.class, 10000),
+	NETWORK_LOCK_TIMEOUT("network.lockTimeout", "Timeout in ms to acquire a lock against a channel", Integer.class, 10000),
+
+	NETWORK_SOCKET_TIMEOUT("network.socketTimeout", "TCP/IP Socket timeout in ms", Integer.class, 10000),
 
 	NETWORK_SOCKET_RETRY("network.retry",
 			"Number of times the client connection retries to connect to the server in case of failure", Integer.class, 5),
