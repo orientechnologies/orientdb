@@ -66,7 +66,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 			sendOk(lastClientTxId);
 
 			// SEND DB VERSION BACK
-			channel.writeLong(connection.database == null ? 0 : connection.database.getStorage().getVersion());
+			// channel.writeLong(connection.database == null ? 0 : connection.database.getStorage().getVersion());
 			break;
 
 		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_CONNECT: {
@@ -147,6 +147,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 				OLogManager.instance().info(this, "Database imported correctly", dbName);
 
 				sendOk(lastClientTxId);
+				channel.writeInt(connection.id);
 				channel.writeLong(connection.database.getStorage().getVersion());
 			} finally {
 				manager.updateHeartBeatTime();

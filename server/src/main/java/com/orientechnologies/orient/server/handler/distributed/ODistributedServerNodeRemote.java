@@ -346,7 +346,7 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 			channel.writeInt(clientTxId);
 			channel.flush();
 
-			long remoteVersion = -1;
+			//long remoteVersion = -1;
 
 			try {
 				channel.beginResponse(clientTxId);
