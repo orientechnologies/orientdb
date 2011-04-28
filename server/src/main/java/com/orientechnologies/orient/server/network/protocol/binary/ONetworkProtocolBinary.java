@@ -116,12 +116,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		channel.flush();
 
 		start();
-
-		OGlobalConfiguration.DB_CACHE_SIZE.setValue(0);
-		OGlobalConfiguration.STORAGE_CACHE_SIZE.setValue(0);
-		OGlobalConfiguration.DB_USE_CACHE.setValue(0);
-		OGlobalConfiguration.MVRBTREE_LAZY_UPDATES.setValue(0);
-		OGlobalConfiguration.LAZYSET_WORK_ON_STREAM.setValue(false);
 	}
 
 	@Override

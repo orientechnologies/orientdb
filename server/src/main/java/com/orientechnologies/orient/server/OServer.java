@@ -79,6 +79,8 @@ public class OServer {
 
 	public OServer() throws ClassNotFoundException, MalformedObjectNameException, NullPointerException,
 			InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
+		defaultSettings();
+
 		threadGroup = new ThreadGroup("OrientDB Server");
 
 		// REGISTER THE COMMAND SCRIPT
@@ -329,7 +331,7 @@ public class OServer {
 		return null;
 	}
 
-	private void loadUsers() throws IOException {
+	protected void loadUsers() throws IOException {
 		if (configuration.users != null && configuration.users.length > 0) {
 			for (OServerUserConfiguration u : configuration.users) {
 				if (u.name.equals(OServerConfiguration.SRV_ROOT_ADMIN))
@@ -344,7 +346,7 @@ public class OServer {
 	/**
 	 * Load configured storages.
 	 */
-	private void loadStorages() {
+	protected void loadStorages() {
 		if (configuration.storages == null)
 			return;
 
@@ -379,7 +381,7 @@ public class OServer {
 			}
 	}
 
-	private void createAdminUser() throws IOException {
+	protected void createAdminUser() throws IOException {
 		configuration.users = new OServerUserConfiguration[1];
 
 		final long generatedPassword = new Random(System.currentTimeMillis()).nextLong();
@@ -389,7 +391,7 @@ public class OServer {
 		saveConfiguration();
 	}
 
-	private void registerHandlers() throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+	protected void registerHandlers() throws InstantiationException, IllegalAccessException, ClassNotFoundException {
 		if (configuration.handlers != null) {
 			// ACTIVATE HANDLERS
 			OServerHandler handler;
@@ -401,5 +403,15 @@ public class OServer {
 				handler.startup();
 			}
 		}
+	}
+
+	protected void defaultSettings() {
+		OGlobalConfiguration.STORAGE_CACHE_SIZE.setValue(0);
+		OGlobalConfiguration.DB_USE_CACHE.setValue(0);
+		OGlobalConfiguration.DB_CACHE_SIZE.setValue(0);
+		OGlobalConfiguration.MVRBTREE_LAZY_UPDATES.setValue(1);
+		OGlobalConfiguration.LAZYSET_WORK_ON_STREAM.setValue(false);
+		OGlobalConfiguration.TX_USE_LOG.setValue(true);
+		OGlobalConfiguration.TX_COMMIT_SYNCH.setValue(true);
 	}
 }
