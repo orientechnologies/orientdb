@@ -147,10 +147,10 @@ public enum OGlobalConfiguration {
 			}),
 
 	FILE_MMAP_FORCE_DELAY("file.mmap.forceDelay",
-			"Delay time in ms to wait for another force flush of the memory mapped block to the disk", Integer.class, 500),
+			"Delay time in ms to wait for another force flush of the memory mapped block to the disk", Integer.class, 10),
 
 	FILE_MMAP_FORCE_RETRY("file.mmap.forceRetry", "Number of times the memory mapped block will try to flush to the disk",
-			Integer.class, 20),
+			Integer.class, 50),
 
 	// NETWORK
 	NETWORK_SOCKET_BUFFER_SIZE("network.socketBufferSize", "TCP/IP Socket buffer size", Integer.class, 32768),
