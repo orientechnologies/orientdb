@@ -61,8 +61,8 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 
 public class OStorageLocal extends OStorageEmbedded {
-	private static final int										DELETE_MAX_RETRIES	= 20;
-	private static final int										DELETE_WAIT_TIME		= 200;
+	private final int														DELETE_MAX_RETRIES;
+	private final int														DELETE_WAIT_TIME;
 	public static final String[]								TYPES								= { OClusterLocal.TYPE, OClusterLogical.TYPE };
 
 	private final OLockManager<ORID, Runnable>	lockManager					= new OLockManager<ORID, Runnable>();
@@ -104,6 +104,9 @@ public class OStorageLocal extends OStorageEmbedded {
 		PROFILER_READ_RECORD = "storage." + name + ".readRecord";
 		PROFILER_UPDATE_RECORD = "storage." + name + ".updateRecord";
 		PROFILER_DELETE_RECORD = "storage." + name + ".deleteRecord";
+
+		DELETE_MAX_RETRIES = OGlobalConfiguration.FILE_MMAP_FORCE_RETRY.getValueAsInteger();
+		DELETE_WAIT_TIME = OGlobalConfiguration.FILE_MMAP_FORCE_DELAY.getValueAsInteger();
 
 		installProfilerHooks();
 	}

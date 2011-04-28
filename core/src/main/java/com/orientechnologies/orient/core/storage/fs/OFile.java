@@ -28,6 +28,7 @@ import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 
 /**
@@ -153,7 +154,8 @@ public abstract class OFile {
 
 	public void close() throws IOException {
 		try {
-			unlock();
+			if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean())
+				unlock();
 			if (channel != null && channel.isOpen()) {
 				channel.close();
 				channel = null;
@@ -364,7 +366,8 @@ public abstract class OFile {
 		accessFile.seek(0);
 		channel = accessFile.getChannel();
 
-		lock();
+		if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean())
+			lock();
 		size = maxSize > 0 && iNewSize > maxSize ? maxSize : iNewSize;
 	}
 
