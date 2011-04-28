@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.tx;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -22,11 +23,12 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
-	private boolean							usingLog	= true;
+	private boolean							usingLog;
 	private static volatile int	txSerial	= 0;
 
 	public OTransactionOptimistic(final ODatabaseRecordTx iDatabase) {
 		super(iDatabase, txSerial++);
+		usingLog = OGlobalConfiguration.TX_USE_LOG.getValueAsBoolean();
 	}
 
 	public void begin() {

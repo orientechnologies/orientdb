@@ -219,24 +219,29 @@ public class OStorageLocalTxExecuter {
 			// CHECK 2 TIMES TO ASSURE THAT IT'S A CREATE OR AN UPDATE BASED ON RECURSIVE TO-STREAM METHOD
 			byte[] stream = txEntry.getRecord().toStream();
 
-			if (iUseLog) {
-				if (rid.isNew()) {
-					if (iTx.getDatabase().callbackHooks(ORecordHook.TYPE.BEFORE_CREATE, txEntry.getRecord()))
-						// RECORD CHANGED: RE-STREAM IT
-						stream = txEntry.getRecord().toStream();
+			if (rid.isNew()) {
+				if (iTx.getDatabase().callbackHooks(ORecordHook.TYPE.BEFORE_CREATE, txEntry.getRecord()))
+					// RECORD CHANGED: RE-STREAM IT
+					stream = txEntry.getRecord().toStream();
 
-					rid.clusterId = cluster.getId();
+				rid.clusterId = cluster.getId();
+
+				if (iUseLog)
 					createRecord(iTx.getId(), cluster, rid, stream, txEntry.getRecord().getRecordType());
+				else
+					iTx.getDatabase().getStorage().createRecord(rid, stream, txEntry.getRecord().getRecordType());
 
-					iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_CREATE, txEntry.getRecord());
-				} else {
+				iTx.getDatabase().callbackHooks(ORecordHook.TYPE.AFTER_CREATE, txEntry.getRecord());
+			} else {
+				if (iUseLog)
 					txEntry.getRecord()
 							.setVersion(
 									updateRecord(iTx.getId(), cluster, rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord()
 											.getRecordType()));
-				}
-			} else {
-				iTx.getDatabase().getStorage().createRecord(rid, stream, txEntry.getRecord().getRecordType());
+				else
+					txEntry.getRecord().setVersion(
+							iTx.getDatabase().getStorage()
+									.updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType()));
 			}
 			break;
 		}

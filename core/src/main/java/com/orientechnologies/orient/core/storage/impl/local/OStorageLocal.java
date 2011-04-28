@@ -35,6 +35,7 @@ import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
@@ -675,7 +676,8 @@ public class OStorageLocal extends OStorageEmbedded {
 			txManager.commitAllPendingRecords((OTransactionRealAbstract) iTx);
 
 			incrementVersion();
-			synch();
+			if (OGlobalConfiguration.TX_COMMIT_SYNCH.getValueAsBoolean())
+				synch();
 
 		} catch (IOException e) {
 			rollback(iTx);

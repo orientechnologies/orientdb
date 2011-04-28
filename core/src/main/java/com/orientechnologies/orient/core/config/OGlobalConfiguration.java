@@ -69,6 +69,16 @@ public enum OGlobalConfiguration {
 
 	OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database saves only object bound to dirty records", Boolean.class, false),
 
+	// TRANSACTIONS
+	TX_USE_LOG("tx.useLog", "Transactions use log file to store temporary data to being rollbacked in case of crash", Boolean.class,
+			false),
+
+	TX_COMMIT_SYNCH("tx.commit.synch", "Synchronizes the storage after transaction commit", Boolean.class, false),
+
+	// GRAPH
+	BLUEPRINTS_TX_MODE("blueprints.graph.txMode",
+			"Transaction mode used in TinkerPop Blueprints implementation. 0 = Automatic (default), 1 = Manual", Integer.class, 0),
+
 	// TREEMAP
 	MVRBTREE_LAZY_UPDATES("mvrbtree.lazyUpdates",
 			"Configure the TreeMaps (indexes and dictionaries) as buffered or not. -1 means buffered up to tx.commit() or db.close().",
@@ -129,7 +139,7 @@ public enum OGlobalConfiguration {
 
 	FILE_MMAP_OVERLAP_STRATEGY(
 			"file.mmap.overlapStrategy",
-			"Strategy when a request overlap in-memory buffers: 0 = Use the channel access, 1 = force the in memory buffer and use the channel access, 2 = create an overlapped in-memory buffer. Default = 2",
+			"Strategy when a request overlap in-memory buffers: 0 = Use the channel access, 1 = force the in memory buffer and use the channel access, 2 = create an overlapped in-memory buffer (default)",
 			Integer.class, 2, new OConfigurationChangeCallback() {
 				public void change(final Object iCurrentValue, final Object iNewValue) {
 					OMMapManager.setOverlapStrategy((Integer) iNewValue);
