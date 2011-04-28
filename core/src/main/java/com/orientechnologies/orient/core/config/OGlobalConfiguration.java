@@ -101,7 +101,7 @@ public enum OGlobalConfiguration {
 			Float.class, 1.0f),
 
 	// COLLECTIONS
-	LAZYSET_WORK_ON_STREAM("lazyset.unmarshallOnAdd", "Upon add avoid to unmarshall set", Boolean.class, true),
+	LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Upon add avoid to unmarshall set", Boolean.class, true),
 
 	// FILE
 	FILE_DEFRAG_STRATEGY(
@@ -139,7 +139,7 @@ public enum OGlobalConfiguration {
 
 	FILE_MMAP_OVERLAP_STRATEGY(
 			"file.mmap.overlapStrategy",
-			"Strategy when a request overlap in-memory buffers: 0 = Use the channel access, 1 = force the in memory buffer and use the channel access, 2 = create an overlapped in-memory buffer (default)",
+			"Strategy when a request overlap in-memory buffers: 0 = Use the channel access, 1 = force the in memory buffer and use the channel access, 2 = always create an overlapped in-memory buffer (default)",
 			Integer.class, 2, new OConfigurationChangeCallback() {
 				public void change(final Object iCurrentValue, final Object iNewValue) {
 					OMMapManager.setOverlapStrategy((Integer) iNewValue);
@@ -171,7 +171,7 @@ public enum OGlobalConfiguration {
 	NETWORK_HTTP_MAX_CONTENT_LENGTH("network.http.maxLength", "TCP/IP max content length in bytes of HTTP requests", Integer.class,
 			100000),
 
-	NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT("network.http.sessionExpireTimeout", "Timeout to consider a http session expired",
+	NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT("network.http.sessionExpireTimeout", "Timeout to consider a http session expired in ms",
 			Integer.class, 60000),
 
 	// PROFILER
