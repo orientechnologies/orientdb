@@ -21,7 +21,6 @@ import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.impl.ORecordBytesLazy;
 
 /**
  * Persistent TreeMap implementation that use a ODatabase instance to handle the entries. This class can be used also from the user.
@@ -75,7 +74,7 @@ public class OMVRBTreeEntryDatabase<K, V> extends OMVRBTreeEntryPersistent<K, V>
 	@Override
 	public OMVRBTreeEntryDatabase<K, V> load() throws IOException {
 		try {
-			record = (ORecordBytesLazy) record.load();
+			record.reload();
 		} catch (Exception e) {
 			// ERROR, MAYBE THE RECORD WASN'T CREATED
 		}
