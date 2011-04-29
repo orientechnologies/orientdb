@@ -709,7 +709,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 	private boolean hasTypeField(String[] fields) {
 		for (int i = 0; i < fields.length; i = i + 2) {
-			if (fields[i].equals("\"@type\"")) {
+			if (fields[i].equals("\"@type\"") || fields[i].equals("'@type'")) {
 				return true;
 			}
 		}
