@@ -174,6 +174,10 @@ public class OServer {
 				}
 			}
 
+			// PROTOCOL HANDLERS
+			protocols.clear();
+			memoryDatabases.clear();
+
 			Orient.instance().shutdown();
 
 		} finally {
