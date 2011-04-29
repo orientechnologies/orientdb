@@ -18,8 +18,12 @@ package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.HashMap;
 
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
@@ -39,6 +43,8 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
 
 	protected StringWriter				buffer;
 
+	protected OJSONWriter					writer;
+
 	protected ORID								fileRID;
 
 	protected String							fileDocument;
@@ -47,7 +53,9 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
 
 	protected String							fileType;
 
-	//protected String							now;
+	protected long								now;
+
+	protected ODatabaseRecord			database;
 
 	@Override
 	public boolean execute(final OHttpRequest iRequest) throws Exception {
@@ -58,8 +66,11 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
 			sendTextContent(iRequest, OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Content stream is null or empty", null,
 					OHttpUtils.CONTENT_TEXT_PLAIN, "Content stream is null or empty");
 		} else {
+			database = getProfiledDatabaseInstance(iRequest);
 			buffer = new StringWriter();
-			parse(iRequest, new OHttpMultipartContentBaseParser(), new OHttpMultipartFileToRecordContentParser());
+			writer = new OJSONWriter(buffer);
+			writer.beginObject();
+			parse(iRequest, new OHttpMultipartContentBaseParser(), new OHttpMultipartFileToRecordContentParser(), database);
 			saveRecord(iRequest);
 			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
 		}
@@ -88,10 +99,16 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
 					fileName = new String(fileName.substring(0, fileName.length() - 1));
 				}
 				fileType = headers.get(OHttpUtils.MULTIPART_CONTENT_TYPE);
-				OJSONWriter writer = new OJSONWriter(buffer);
-				writer.beginObject();
+
+				final Calendar cal = Calendar.getInstance();
+				final DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy kk:mm");
+				now = cal.getTimeInMillis();
+
+				writer.beginObject("uploadedFile");
 				writer.writeAttribute(1, true, "name", fileName);
 				writer.writeAttribute(1, true, "type", fileType);
+				writer.writeAttribute(1, true, "date", formatter.format(cal.getTime()));
+				writer.writeAttribute(1, true, "rid", fileRID);
 				writer.endObject();
 			}
 		}
@@ -100,9 +117,9 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
 	public void saveRecord(OHttpRequest iRequest) throws InterruptedException, IOException {
 		if (fileDocument != null) {
 			if (fileRID != null) {
-//				if (fileDocument.contains("$now")) {
-//					fileDocument = fileDocument.replace("$now", now);
-//				}
+				if (fileDocument.contains("$now")) {
+					fileDocument = fileDocument.replace("$now", String.valueOf(now));
+				}
 				if (fileDocument.contains("$fileName")) {
 					fileDocument = fileDocument.replace("$fileName", fileName);
 				}
@@ -112,9 +129,13 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
 				if (fileDocument.contains("$file")) {
 					fileDocument = fileDocument.replace("$file", fileRID.toString());
 				}
-				ODocument doc = new ODocument(getProfiledDatabaseInstance(iRequest));
+				ODocument doc = new ODocument(database);
 				doc.fromJSON(fileDocument);
 				doc.save();
+				writer.beginObject("updatedDocument");
+				writer.writeAttribute(1, true, "rid", doc.getIdentity().toString());
+				writer.endObject();
+				writer.endObject();
 			} else {
 				sendTextContent(iRequest, OHttpUtils.STATUS_INVALIDMETHOD_CODE, "File cannot be null", null, OHttpUtils.CONTENT_TEXT_PLAIN,
 						"File cannot be null");
