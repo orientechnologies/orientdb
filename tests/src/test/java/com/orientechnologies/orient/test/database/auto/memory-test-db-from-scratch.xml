@@ -146,8 +146,9 @@
 				name="com.orientechnologies.orient.test.database.auto.SQLDeleteTest" />
 		</classes>
 	</test>
-	<test name="sql-findReferences">
+	<test name="misc">
 		<classes>
+			<class name="com.orientechnologies.orient.test.database.auto.DateTest" />
 			<class
 				name="com.orientechnologies.orient.test.database.auto.SQLFindReferencesTest" />
 		</classes>

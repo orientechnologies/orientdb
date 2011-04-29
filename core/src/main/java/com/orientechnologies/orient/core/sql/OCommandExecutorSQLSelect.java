@@ -111,7 +111,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				request.setResultListener(iRequest.getResultListener());
 		}
 
-		int pos = extractProjections();
+		final int pos = extractProjections();
 		if (pos == -1)
 			return this;
 

@@ -19,6 +19,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -502,10 +503,17 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 
 		// CHECK FOR CONVERSION
 		if (t != null) {
-			if (t == OType.BINARY && value instanceof String) {
-				byte[] buffer = OBase64Utils.decode((String) value);
-				field(iPropertyName, buffer);
-				value = (RET) buffer;
+			Object newValue = null;
+
+			if (t == OType.BINARY && value instanceof String)
+				newValue = OBase64Utils.decode((String) value);
+			else if (t == OType.DATE && value instanceof Long)
+				newValue = (RET) new Date(((Long) value).longValue());
+
+			if (newValue != null) {
+				// VALUE CHANGED: SET THE NEW ONE
+				_fieldValues.put(iPropertyName, newValue);
+				value = (RET) newValue;
 			}
 		}
 
@@ -581,7 +589,9 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 *          Forced type (not auto-determined)
 	 * @return The Record instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
-	public ODocument field(final String iPropertyName, Object iPropertyValue, OType iType) {
+	public ODocument field(String iPropertyName, Object iPropertyValue, OType iType) {
+		iPropertyName = checkFieldName(iPropertyName);
+
 		checkForLoading();
 		checkForFields();
 
@@ -605,22 +615,17 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 				}
 			}
 
-		if (_clazz != null) {
-			OProperty prop = _clazz.getProperty(iPropertyName);
-
-			if (prop != null) {
-				if (iPropertyValue instanceof Enum)
-					// ENUM
-					if (prop.getType().isAssignableFrom(1))
-						iPropertyValue = ((Enum<?>) iPropertyValue).ordinal();
-					else
-						iPropertyValue = ((Enum<?>) iPropertyValue).name();
-
-				if (!(iPropertyValue instanceof String) && !prop.getType().isAssignableFrom(iPropertyValue))
-					throw new IllegalArgumentException("Property '" + iPropertyName + "' of type '" + prop.getType()
-							+ "' can't accept value of type: " + iPropertyValue.getClass());
-			}
+		if (iType != null)
+			setFieldType(iPropertyName, iType);
+		else if (_clazz != null) {
+			// SCHEMAFULL?
+			final OProperty prop = _clazz.getProperty(iPropertyName);
+			if (prop != null)
+				iType = prop.getType();
 		}
+
+		if (iType != null)
+			convertField(iPropertyName, iType.getDefaultJavaType(), iPropertyValue);
 
 		if (_status != STATUS.UNMARSHALLING) {
 			setDirty();
@@ -636,7 +641,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			}
 		}
 
-		if (oldValue != null) {
+		if (oldValue != null && iType != null) {
 			// DETERMINE THE TYPE FROM THE PREVIOUS CONTENT
 			if (oldValue instanceof ORecord<?> && iPropertyValue instanceof String)
 				// CONVERT TO RECORD-ID
@@ -668,8 +673,6 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		}
 
 		_fieldValues.put(iPropertyName, iPropertyValue);
-
-		setFieldType(iPropertyName, iType);
 
 		return this;
 	}
@@ -911,9 +914,9 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		_recordFormat = ORecordSerializerFactory.instance().getFormat(ORecordSerializerSchemaAware2CSV.NAME);
 	}
 
-	private <RET> RET convertField(final String iPropertyName, final Class<?> iType, RET iValue) {
+	private <RET> RET convertField(final String iPropertyName, final Class<?> iType, Object iValue) {
 		if (iType == null)
-			return iValue;
+			return (RET) iValue;
 
 		if (iValue instanceof ORID && !ORID.class.equals(iType) && !ORecordId.class.equals(iType)) {
 			// CREATE THE DOCUMENT OBJECT IN LAZY WAY
@@ -956,10 +959,21 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 
 			_fieldValues.put(iPropertyName, newValue);
 			iValue = (RET) newValue;
-		} else
-			iValue = (RET) OType.convert(iValue, iType);
+		} else if (iValue instanceof Enum) {
+			// ENUM
+			if (iType.isAssignableFrom(Integer.TYPE))
+				iValue = ((Enum<?>) iValue).ordinal();
+			else
+				iValue = ((Enum<?>) iValue).name();
 
-		return iValue;
+			if (!(iValue instanceof String) && !iType.isAssignableFrom(iValue.getClass()))
+				throw new IllegalArgumentException("Property '" + iPropertyName + "' of type '" + iType + "' can't accept value of type: "
+						+ iValue.getClass());
+		}
+
+		iValue = OType.convert(iValue, iType);
+
+		return (RET) iValue;
 	}
 
 	protected void setFieldType(final String iPropertyName, OType iType) {
@@ -1040,5 +1054,17 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 				cloned._fieldValues.put(entry.getKey(), new LinkedHashMap<String, Object>((Map<String, Object>) fieldValue));
 			} else
 				cloned._fieldValues.put(entry.getKey(), fieldValue);
+	}
+
+	protected String checkFieldName(String iPropertyName) {
+		if (iPropertyName == null)
+			throw new IllegalArgumentException("Field name is null");
+
+		iPropertyName = iPropertyName.trim();
+
+		if (iPropertyName.length() == 0)
+			throw new IllegalArgumentException("Field name is empty");
+
+		return iPropertyName;
 	}
 }

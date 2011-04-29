@@ -17,7 +17,6 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.text.ParseException;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -122,25 +121,10 @@ public class SQLSelectTest {
 	public void queryLogicalCluster() throws ParseException {
 		database.open("admin", "admin");
 
-		String rangeFrom = "2009-09-30";
-		String rangeTo = "2009-11-01";
-
-		Date rangeFromDate = database.getStorage().getConfiguration().getDateFormatInstance().parse(rangeFrom);
-		Date rangeToDate = database.getStorage().getConfiguration().getDateFormatInstance().parse(rangeTo);
-
-		List<ODocument> result = database.command(
-				new OSQLSynchQuery<ODocument>("select * from cluster:Order where date > '" + rangeFrom + "' and date < '" + rangeTo + "'"))
-				.execute();
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select * from cluster:Order")).execute();
 
 		for (int i = 0; i < result.size(); ++i) {
 			record = result.get(i);
-
-			OrientTest.printRecord(i, record);
-
-			Assert.assertTrue(record.getClassName().equalsIgnoreCase("order"));
-			Assert.assertTrue(((Date) record.field("date")).after(rangeFromDate));
-			Assert.assertTrue(((Date) record.field("date")).before(rangeToDate));
-			Assert.assertTrue(record.field("name").toString().startsWith("G"));
 		}
 
 		database.close();

@@ -359,6 +359,8 @@ public enum OType {
 			set.addAll((Collection<? extends Object>) iValue);
 			return set;
 
+		} else if (iTargetClass.equals(Date.class) && iValue instanceof Number) {
+			return new Date(((Number) iValue).longValue());
 		}
 
 		return null;
