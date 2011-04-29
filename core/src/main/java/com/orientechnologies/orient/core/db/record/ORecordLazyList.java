@@ -200,8 +200,9 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 				stream.delete(pos, pos + rid.length() + 1);
 				if (stream.length() == 0)
 					setStreamedContent(null);
-			}
-			result = true;
+				result = true;
+			} else
+				result = false;
 		} else {
 			lazyLoad(true);
 			result = super.remove(iElement);

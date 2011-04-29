@@ -240,6 +240,10 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 			if (newItems.size() == 0)
 				// EARLY REMOVE THE MAP TO SAVE MEMORY
 				newItems = null;
+
+			if (removed)
+				setDirty();
+
 			return removed;
 		}
 
