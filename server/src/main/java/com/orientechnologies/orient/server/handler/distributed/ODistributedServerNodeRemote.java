@@ -98,7 +98,8 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 		channel.readStatus();
 
 		// CONNECT EACH DATABASES
-		for (OServerNodeDatabaseEntry entry : databases.values()) {
+		final List<OServerNodeDatabaseEntry> servers = new ArrayList<OServerNodeDatabaseEntry>(databases.values());
+		for (OServerNodeDatabaseEntry entry : servers) {
 			channel.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_OPEN);
 			channel.writeInt(clientTxId);
 
@@ -110,7 +111,22 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 
 			channel.readStatus();
 			entry.sessionId = channel.readInt();
-			entry.version = channel.readLong();
+
+			// GET AND CHECK VERSION IF IT'S THE SAME
+			final long version = channel.readLong();
+			if (version != entry.version) {
+				OLogManager.instance().warn(
+						this,
+						"Remote database '" + entry.databaseName + "' has different version than Leader node (" + entry.version
+								+ ") and remote (" + version + "). Removing database from shared list.");
+
+				databases.remove(entry.databaseName);
+
+				// throw new ODistributedException("Database version doesn't match between current node (" + entry.version +
+				// ") and remote ("
+				// + version + ")");
+			} else
+				sendConfiguration(entry.databaseName);
 		}
 
 		if (status == STATUS.CONNECTING)
@@ -126,13 +142,15 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 		if (status == STATUS.UNREACHABLE)
 			bufferChange(iRequest);
 		else {
+			final OServerNodeDatabaseEntry databaseEntry = databases.get(iRequest.getRecord().getDatabase().getName());
+			if (databaseEntry == null)
+				return;
+
 			OLogManager.instance().info(this, "-> Sending request to remote server %s in %s mode...", this, iRequestType);
 
 			final ORecordInternal<?> record = iRequest.getRecord();
 
 			status = STATUS.SYNCHRONIZING;
-
-			final OServerNodeDatabaseEntry databaseEntry = databases.get(iRequest.getRecord().getDatabase().getName());
 
 			try {
 				switch (iRequest.status) {
@@ -311,17 +329,21 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 	public void sendConfiguration(final String iDatabaseName) {
 		OLogManager.instance().info(this, "Sending configuration to distributed server node %s:%d...", networkAddress, networkPort);
 
+		final OServerNodeDatabaseEntry dbEntry = databases.get(iDatabaseName);
+		if (dbEntry == null)
+			throw new IllegalArgumentException("Database name '" + iDatabaseName + "' is not configured as distributed");
+
 		try {
 			channel.acquireExclusiveLock();
 
 			try {
 				channel.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_CONFIG);
-				channel.writeInt(clientTxId);
+				channel.writeInt(dbEntry.sessionId);
 				channel.writeBytes(manager.getClusterConfiguration(iDatabaseName).toStream());
 				channel.flush();
 
 				try {
-					beginResponse();
+					beginResponse(dbEntry.sessionId);
 				} finally {
 					endResponse();
 				}
@@ -346,7 +368,7 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 			channel.writeInt(clientTxId);
 			channel.flush();
 
-			//long remoteVersion = -1;
+			// long remoteVersion = -1;
 
 			try {
 				channel.beginResponse(clientTxId);

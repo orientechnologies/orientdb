@@ -64,7 +64,7 @@ public class ODistributedServerRecordHook implements ORecordHook, ODatabaseLifec
 				if (!manager.isCurrentNodeTheClusterOwner(iRecord.getDatabase().getName(), clusterName)) {
 					final ODocument servers = manager.getServersForCluster(iRecord.getDatabase().getName(), clusterName);
 					throw new ODistributedException("Can't apply changes to the cluster '" + clusterName
-							+ "' because the current node is not the owner for that cluster. Please connect to the server: "
+							+ "' because the current node is not the owner for that record cluster. Please connect to the server: "
 							+ servers.field("owner"));
 				}
 				break;
