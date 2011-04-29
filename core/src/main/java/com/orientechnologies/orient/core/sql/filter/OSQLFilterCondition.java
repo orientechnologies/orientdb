@@ -73,35 +73,36 @@ public class OSQLFilterCondition {
 	private Object[] checkForConversion(final ORecordSchemaAware<?> iRecord, final Object l, final Object r) {
 		Object[] result = null;
 
-		// INTEGERS
-		if (r instanceof Integer && !(l instanceof Number)) {
-			if (l instanceof String && ((String) l).indexOf('.') > -1)
-				result = new Object[] { new Float((String) l).intValue(), r };
-			else if (l instanceof Date)
-				result = new Object[] { ((Date) l).getTime(), r };
-			else if (!(l instanceof OQueryRuntimeValueMulti))
-				result = new Object[] { getInteger(l), r };
-		} else if (l instanceof Integer && !(r instanceof Number)) {
-			if (r instanceof String && ((String) r).indexOf('.') > -1)
-				result = new Object[] { l, new Float((String) r).intValue() };
-			else if (r instanceof Date)
-				result = new Object[] { l, ((Date) r).getTime() };
-			else if (!(r instanceof OQueryRuntimeValueMulti))
-				result = new Object[] { l, getInteger(r) };
-		}
+		if (l != null && r != null && !l.getClass().isAssignableFrom(r.getClass()) && !r.getClass().isAssignableFrom(l.getClass()))
+			// INTEGERS
+			if (r instanceof Integer && !(l instanceof Number)) {
+				if (l instanceof String && ((String) l).indexOf('.') > -1)
+					result = new Object[] { new Float((String) l).intValue(), r };
+				else if (l instanceof Date)
+					result = new Object[] { ((Date) l).getTime(), r };
+				else if (!(l instanceof OQueryRuntimeValueMulti))
+					result = new Object[] { getInteger(l), r };
+			} else if (l instanceof Integer && !(r instanceof Number)) {
+				if (r instanceof String && ((String) r).indexOf('.') > -1)
+					result = new Object[] { l, new Float((String) r).intValue() };
+				else if (r instanceof Date)
+					result = new Object[] { l, ((Date) r).getTime() };
+				else if (!(r instanceof OQueryRuntimeValueMulti))
+					result = new Object[] { l, getInteger(r) };
+			}
 
-		// FLOATS
-		else if (r instanceof Float && !(l instanceof Float))
-			result = new Object[] { getFloat(l), r };
-		else if (l instanceof Float && !(r instanceof Float))
-			result = new Object[] { l, getFloat(r) };
+			// FLOATS
+			else if (r instanceof Float && !(l instanceof Float))
+				result = new Object[] { getFloat(l), r };
+			else if (l instanceof Float && !(r instanceof Float))
+				result = new Object[] { l, getFloat(r) };
 
-		// DATES
-		else if (r instanceof Date && !(l instanceof Date)) {
-			result = new Object[] { getDate(iRecord, l), r };
-		} else if (l instanceof Date && !(r instanceof Date)) {
-			result = new Object[] { l, getDate(iRecord, r) };
-		}
+			// DATES
+			else if (r instanceof Date && !(l instanceof Date)) {
+				result = new Object[] { getDate(iRecord, l), r };
+			} else if (l instanceof Date && !(r instanceof Date)) {
+				result = new Object[] { l, getDate(iRecord, r) };
+			}
 
 		return result;
 	}
@@ -136,6 +137,10 @@ public class OSQLFilterCondition {
 	protected Date getDate(final ORecordSchemaAware<?> iRecord, final Object iValue) {
 		if (iValue == null)
 			return null;
+
+		if (iValue instanceof Long)
+			return new Date(((Long) iValue).longValue());
+
 		String stringValue = iValue.toString();
 
 		if (NULL_VALUE.equals(stringValue))
