@@ -428,7 +428,16 @@ public class OSQLFilter extends OCommandToParse {
 	}
 
 	public OSQLFilterItemParameter addParameter(final String iName) {
-		String name = iName.charAt(0) == OStringSerializerHelper.PARAMETER_NAMED ? iName.substring(1) : iName;
+		final String name;
+		if (iName.charAt(0) == OStringSerializerHelper.PARAMETER_NAMED) {
+			name = iName.substring(1);
+
+			// CHECK THE PARAMETER NAME IS CORRECT
+			if (!OStringSerializerHelper.isAlphanumeric(name)) {
+				throw new OQueryParsingException("Parameter name '" + name + "' is invalid, only alphanumeric characters are allowed");
+			}
+		} else
+			name = iName;
 
 		final OSQLFilterItemParameter param = new OSQLFilterItemParameter(name);
 

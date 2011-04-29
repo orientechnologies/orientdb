@@ -26,6 +26,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectPool;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -309,6 +310,23 @@ public class CRUDObjectPhysicalTest {
 
 		final OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>(
 				"select from Profile where name = :name and surname = :surname");
+
+		HashMap<String, String> params = new HashMap<String, String>();
+		params.put("name", "Barack");
+		params.put("surname", "Obama");
+
+		List<Profile> result = database.command(query).execute(params);
+		Assert.assertTrue(result.size() != 0);
+
+		database.close();
+	}
+
+	@Test(expectedExceptions = OQueryParsingException.class)
+	public void commandWithWrongNamedParameters() {
+		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+
+		final OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>(
+				"select from Profile where name = :name and surname = :surname%");
 
 		HashMap<String, String> params = new HashMap<String, String>();
 		params.put("name", "Barack");

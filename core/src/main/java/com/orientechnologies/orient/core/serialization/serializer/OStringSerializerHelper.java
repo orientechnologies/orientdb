@@ -567,4 +567,20 @@ public abstract class OStringSerializerHelper {
 
 		return s;
 	}
+
+	/**
+	 * Checks if a string contains alphanumeric only characters.
+	 * 
+	 * @param iContent
+	 *          String to check
+	 * @return true is all the content is alphanumeric, otherwise false
+	 */
+	public static boolean isAlphanumeric(final String iContent) {
+		final int tot = iContent.length();
+		for (int i = 0; i < tot; ++i) {
+			if (!Character.isLetterOrDigit(iContent.charAt(i)))
+				return false;
+		}
+		return true;
+	}
 }
