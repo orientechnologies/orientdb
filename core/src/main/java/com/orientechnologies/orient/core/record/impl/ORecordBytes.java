@@ -42,18 +42,18 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
 		setup();
 	}
 
-	public ORecordBytes(ODatabaseRecord iDatabase) {
+	public ORecordBytes(final ODatabaseRecord iDatabase) {
 		super(iDatabase);
 		setup();
 	}
 
-	public ORecordBytes(ODatabaseRecord iDatabase, byte[] iSource) {
+	public ORecordBytes(final ODatabaseRecord iDatabase, final byte[] iSource) {
 		super(iDatabase, iSource);
 		_dirty = true;
 		setup();
 	}
 
-	public ORecordBytes(ODatabaseRecord iDatabase, ORID iRecordId) {
+	public ORecordBytes(final ODatabaseRecord iDatabase, final ORID iRecordId) {
 		super(iDatabase);
 		_recordId = (ORecordId) iRecordId;
 		setup();

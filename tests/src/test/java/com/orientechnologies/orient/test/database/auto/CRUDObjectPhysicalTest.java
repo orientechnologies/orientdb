@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.db.object.ODatabaseObjectPool;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -424,6 +425,29 @@ public class CRUDObjectPhysicalTest {
 
 		result = database.command(query).execute(params);
 		Assert.assertTrue(result.size() != 0);
+
+		database.close();
+	}
+
+	public void testEmbeddedBinary() {
+		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+
+		Account a = new Account(0, "Chris", "Martin");
+		a.setThumbnail(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+		database.save(a);
+		database.close();
+
+		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+		Account aa = (Account) database.load((ORID) a.getRid());
+		Assert.assertNotNull(a.getThumbnail());
+		byte[] b = aa.getThumbnail();
+		for (int i = 0; i < 10; ++i)
+			Assert.assertEquals(b[i], i);
+
+		Assert.assertNotNull(aa.getPhoto());
+		b = aa.getPhoto();
+		for (int i = 0; i < 10; ++i)
+			Assert.assertEquals(b[i], i);
 
 		database.close();
 	}
