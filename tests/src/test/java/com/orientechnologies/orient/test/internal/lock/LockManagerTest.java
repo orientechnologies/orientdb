@@ -35,7 +35,7 @@ import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
  */
 public class LockManagerTest {
 
-	public static final int														THREADS					= 20;
+	public static final int														THREADS					= 100;
 	public static int																	cyclesByProcess	= 10000;
 	public static boolean															verbose					= false;
 	public static OLockManager<Callable<?>, Runnable>	lockMgr					= new OLockManager<Callable<?>, Runnable>();
@@ -147,7 +147,7 @@ public class LockManagerTest {
 		AtomicInteger	countReentrantWrite	= new AtomicInteger(0);
 
 		public Void call() throws Exception {
-			read();
+			write();
 			return null;
 		}
 
@@ -177,7 +177,7 @@ public class LockManagerTest {
 				// // wait an other thread.
 				// Thread.yield();
 				// }
-				write();
+				// write();
 			} finally {
 				countReentrantRead.decrementAndGet();
 				lockMgr.releaseLock(Thread.currentThread(), this, LOCK.SHARED);
@@ -204,6 +204,7 @@ public class LockManagerTest {
 			lockMgr.acquireLock(Thread.currentThread(), this, LOCK.EXCLUSIVE);
 			try {
 				countReentrantWrite.incrementAndGet();
+				read();
 				// try {
 				// Thread.sleep(1 + Math.abs(new Random().nextInt() % 3));
 				// } catch (Exception e) {
@@ -244,6 +245,7 @@ public class LockManagerTest {
 
 		final long start = System.currentTimeMillis();
 
+		// for (int i = 0; i < 10; i++)
 		resources.add(new ResourceRead());
 		resources.add(new ResourceWrite());
 		resources.add(new ResourceReadWrite());
@@ -271,7 +273,7 @@ public class LockManagerTest {
 			processes.get(i).join();
 		}
 
-		System.out.println("\nOk, all threads back : " + counter.get() + " in: " + ((System.currentTimeMillis() - start) / 1000)
+		System.out.println("\nOk, all threads back : " + counter.get() + " in: " + ((System.currentTimeMillis() - start) / 1000f)
 				+ " secs");
 
 		// Pulish exceptions.
@@ -283,5 +285,7 @@ public class LockManagerTest {
 		}
 
 		Assert.assertEquals(counter.get(), processes.size() * resources.size() * cyclesByProcess);
+
+		Assert.assertEquals(lockMgr.getCountCurrentLocks(), 0);
 	}
 }
