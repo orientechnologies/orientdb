@@ -244,7 +244,7 @@ public class SQLSelectTest {
 		record.setClassName("Animal");
 		record.field("name", "Cat");
 
-		Set<ODocument> races = new HashSet<ODocument>();
+		Collection<ODocument> races = new HashSet<ODocument>();
 		races.add(((ODocument) database.newInstance("AnimalRace")).field("name", "European"));
 		races.add(((ODocument) database.newInstance("AnimalRace")).field("name", "Siamese"));
 		record.field("races", races);
