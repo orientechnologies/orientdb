@@ -263,9 +263,9 @@ public class OSQLFilter extends OCommandToParse {
 				v = OSQLHelper.parseValue(this, database, this, item[1]);
 				coll.add(v);
 
-				currentPos = OStringParser.jump(text, currentPos, " ,\t\r\n");
+				currentPos = OStringParser.jump(text, currentPos, " \t\r\n");
 				item = nextValue(true);
-			} while (item != null && item[0].equals(OStringSerializerHelper.COLLECTION_SEPARATOR));
+			} while (item != null && item[0].charAt(0) == OStringSerializerHelper.COLLECTION_SEPARATOR);
 
 			currentPos++;
 

@@ -34,7 +34,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.test.database.base.OrientTest;
 
 @Test(groups = "sql-select")
 public class SQLSelectTest {
@@ -106,8 +105,6 @@ public class SQLSelectTest {
 
 		for (int i = 0; i < result.size(); ++i) {
 			record = result.get(i);
-
-			OrientTest.printRecord(i, record);
 
 			Assert.assertTrue(record.getClassName().equalsIgnoreCase("Animal"));
 			Assert.assertEquals(record.field("id"), 10);
@@ -222,8 +219,6 @@ public class SQLSelectTest {
 		for (int i = 0; i < result.size(); ++i) {
 			record = result.get(i);
 
-			OrientTest.printRecord(i, record);
-
 			Assert.assertTrue(record.getClassName().equalsIgnoreCase("animaltype"));
 			Assert.assertNotNull(record.field("races"));
 
@@ -245,28 +240,76 @@ public class SQLSelectTest {
 	public void queryCollectionContainsIn() {
 		database.open("admin", "admin");
 
+		record.reset();
+		record.setClassName("Animal");
+		record.field("name", "Cat");
+
+		Set<ODocument> races = new HashSet<ODocument>();
+		races.add(((ODocument) database.newInstance("AnimalRace")).field("name", "European"));
+		races.add(((ODocument) database.newInstance("AnimalRace")).field("name", "Siamese"));
+		record.field("races", races);
+		record.save();
+
 		List<ODocument> result = database.command(
 				new OSQLSynchQuery<ODocument>("select * from cluster:animal where races contains (name in ['European','Asiatic'])"))
 				.execute();
 
-		for (int i = 0; i < result.size(); ++i) {
+		boolean found = false;
+		for (int i = 0; i < result.size() && !found; ++i) {
 			record = result.get(i);
-
-			OrientTest.printRecord(i, record);
 
 			Assert.assertTrue(record.getClassName().equalsIgnoreCase("animal"));
 			Assert.assertNotNull(record.field("races"));
 
-			Collection<ODocument> races = record.field("races");
-			boolean found = false;
+			races = record.field("races");
 			for (ODocument race : races) {
 				if (((String) race.field("name")).equals("European") || ((String) race.field("name")).equals("Asiatic")) {
 					found = true;
 					break;
 				}
 			}
-			Assert.assertTrue(found);
 		}
+		Assert.assertTrue(found);
+
+		result = database.command(
+				new OSQLSynchQuery<ODocument>("select * from cluster:animal where races contains (name in ['Asiatic','European'])"))
+				.execute();
+
+		found = false;
+		for (int i = 0; i < result.size() && !found; ++i) {
+			record = result.get(i);
+
+			Assert.assertTrue(record.getClassName().equalsIgnoreCase("animal"));
+			Assert.assertNotNull(record.field("races"));
+
+			races = record.field("races");
+			for (ODocument race : races) {
+				if (((String) race.field("name")).equals("European") || ((String) race.field("name")).equals("Asiatic")) {
+					found = true;
+					break;
+				}
+			}
+		}
+		Assert.assertTrue(found);
+
+		result = database.command(
+				new OSQLSynchQuery<ODocument>("select * from cluster:animal where races contains (name in ['aaa','bbb'])")).execute();
+
+		Assert.assertEquals(result.size(), 0);
+
+		result = database.command(
+				new OSQLSynchQuery<ODocument>("select * from cluster:animal where races containsall (name in ['European','Asiatic'])"))
+				.execute();
+
+		Assert.assertEquals(result.size(), 0);
+
+		result = database.command(
+				new OSQLSynchQuery<ODocument>("select * from cluster:animal where races containsall (name in ['European','Siamese'])"))
+				.execute();
+
+		Assert.assertEquals(result.size(), 1);
+
+		record.delete();
 
 		database.close();
 	}
@@ -281,8 +324,6 @@ public class SQLSelectTest {
 
 		for (int i = 0; i < result.size(); ++i) {
 			record = result.get(i);
-
-			OrientTest.printRecord(i, record);
 
 			Assert.assertTrue(record.getClassName().equalsIgnoreCase("Profile"));
 
@@ -312,8 +353,6 @@ public class SQLSelectTest {
 		for (int i = 0; i < result.size(); ++i) {
 			record = result.get(i);
 
-			OrientTest.printRecord(i, record);
-
 			Assert.assertTrue(record.getClassName().equalsIgnoreCase("Profile"));
 		}
 
@@ -332,8 +371,6 @@ public class SQLSelectTest {
 		for (int i = 0; i < result.size(); ++i) {
 			record = result.get(i);
 
-			OrientTest.printRecord(i, record);
-
 			Assert.assertTrue(record.getClassName().equalsIgnoreCase("Profile"));
 		}
 
@@ -351,8 +388,6 @@ public class SQLSelectTest {
 
 		for (int i = 0; i < result.size(); ++i) {
 			record = result.get(i);
-
-			OrientTest.printRecord(i, record);
 
 			Assert.assertTrue(record.getClassName().equalsIgnoreCase("Profile"));
 		}
