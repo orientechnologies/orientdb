@@ -538,8 +538,12 @@ function ODatabase(databasePath) {
 		for (field in obj) {
 			var value = obj[field];
 			if (typeof value == 'object') {
-				if (linkMap[value] != null && value['@rid'] != null ){
-					obj[field] = '#' + obj['@rid'];
+				if (linkMap[value] != null && value['@rid'] != null) {
+					if (value['@rid'].indexOf('', 0) > -1) {
+						obj[field] = value['@rid'];
+					} else {
+						obj[field] = '#' + value['@rid'];
+					}
 				} else {
 					linkMap[value] = 'foo';
 					this.removeCircleReferences(value, linkMap);
