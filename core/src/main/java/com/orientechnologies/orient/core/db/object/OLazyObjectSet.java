@@ -60,7 +60,7 @@ public class OLazyObjectSet<TYPE> implements Set<Object>, Serializable {
 	}
 
 	public boolean contains(final Object o) {
-		return underlying.contains(underlying.contains(database.getRecordByUserObject(o, false)));
+		return underlying.contains(database.getRecordByUserObject(o, false));
 	}
 
 	public Object[] toArray() {
@@ -81,7 +81,7 @@ public class OLazyObjectSet<TYPE> implements Set<Object>, Serializable {
 
 	public boolean remove(final Object o) {
 		setDirty();
-		return underlying.remove(underlying.contains(database.getRecordByUserObject(o, false)));
+		return underlying.remove(database.getRecordByUserObject(o, false));
 	}
 
 	public boolean containsAll(final Collection<?> c) {
