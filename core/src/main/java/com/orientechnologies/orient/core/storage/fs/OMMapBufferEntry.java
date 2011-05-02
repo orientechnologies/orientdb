@@ -16,28 +16,15 @@
 package com.orientechnologies.orient.core.storage.fs;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.nio.MappedByteBuffer;
 
-import com.orientechnologies.common.log.OLogManager;
-
 public class OMMapBufferEntry implements Comparable<OMMapBufferEntry> {
-	static Class<?>		sunClass	= null;
 	OFileMMap					file;
 	MappedByteBuffer	buffer;
 	long							beginOffset;
 	int								size;
 	long							counter;
 	boolean						pin;
-
-	static {
-		// GET SUN JDK METHOD TO CLEAN MMAP BUFFERS
-		try {
-			sunClass = Class.forName("sun.nio.ch.DirectBuffer");
-		} catch (Exception e) {
-			// IGNORE IT AND USE GC TO FREE RESOURCES
-		}
-	}
 
 	public OMMapBufferEntry(final OFileMMap iFile, final MappedByteBuffer buffer, final long beginOffset, final int size) {
 		this.file = iFile;
@@ -69,18 +56,6 @@ public class OMMapBufferEntry implements Comparable<OMMapBufferEntry> {
 			}
 			file = null;
 		}
-
-		if (buffer != null && sunClass != null) {
-			// USE SUN JVM SPECIAL METHOD TO FREE RESOURCES
-			try {
-				final Method m = sunClass.getMethod("cleaner");
-				final Object cleaner = m.invoke(buffer);
-				cleaner.getClass().getMethod("clean").invoke(cleaner);
-			} catch (Exception e) {
-				OLogManager.instance().error(this, "Error on calling MMap buffer clean", e);
-			}
-		}
-
 		buffer = null;
 		counter = 0;
 	}
