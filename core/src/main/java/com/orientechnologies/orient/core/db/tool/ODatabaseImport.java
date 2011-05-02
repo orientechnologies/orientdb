@@ -182,6 +182,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 	private void importInfo() throws IOException, ParseException {
 		listener.onMessage("\nImporting database info...");
 
+		jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
 		jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
 		jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT);
 		@SuppressWarnings("unused")
@@ -539,7 +540,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		System.out.print("\nImporting records...");
 
 		ORID rid;
-		int lastClusterId = 0;
+		int lastClusterId = -1;
 		long clusterRecords = 0;
 		while (jsonReader.lastChar() != ']') {
 			rid = importRecord();
@@ -547,14 +548,13 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 			if (rid != null) {
 				++clusterRecords;
 
-				if (rid.getClusterId() != lastClusterId) {
+				if (rid.getClusterId() != lastClusterId || jsonReader.lastChar() == ']') {
 					// CHANGED CLUSTERID: DUMP STATISTICS
 					System.out.print("\n- Imported records into the cluster '" + database.getClusterNameById(lastClusterId) + "': "
 							+ clusterRecords + " records");
 					clusterRecords = 0;
+					lastClusterId = rid.getClusterId();
 				}
-
-				lastClusterId = rid.getClusterId();
 
 				++totalRecords;
 			} else

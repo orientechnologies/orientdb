@@ -103,26 +103,57 @@ public class OJSONReader {
 
 		// READ WHILE THERE IS SOMETHING OF AVAILABLE
 		int openBrackets = 0;
+		char beginStringChar = ' ';
+		boolean encodeMode = false;
 		boolean found;
 		do {
 			found = false;
-			if (openBrackets == 0) {
-				for (char u : iUntil) {
-					if (u == c) {
-						found = true;
-						break;
+			if (beginStringChar == ' ') {
+				// NO INSIDE A STRING
+				if (openBrackets == 0) {
+					// FIND FOR SEPARATOR
+					for (char u : iUntil) {
+						if (u == c) {
+							found = true;
+							break;
+						}
 					}
 				}
-			} else if (c == '}')
-				openBrackets--;
+
+				if (c == '\'' || c == '"' && !encodeMode)
+					// BEGIN OF STRING
+					beginStringChar = c;
+				else if (c == '{')
+					// OPEN EMBEDDED
+					openBrackets++;
+				else if (c == '}' && openBrackets > 0)
+					// CLOSE EMBEDDED
+					openBrackets--;
+
+				if (!found && openBrackets == 0) {
+					// FIND FOR SEPARATOR
+					for (char u : iUntil) {
+						if (u == c) {
+							found = true;
+							break;
+						}
+					}
+				}
+			} else if (beginStringChar == c && !encodeMode)
+				// END OF STRING
+				beginStringChar = ' ';
+
+			if (c == '\\' && !encodeMode)
+				encodeMode = true;
+			else
+				encodeMode = false;
 
 			if (!found) {
-				if (buffer.length() > 1 && c == '{')
-					openBrackets++;
-
+				// APPEND IT
 				c = nextChar();
 				buffer.append(c);
 			}
+
 		} while (!found && in.ready());
 
 		if (buffer.length() == 0)
@@ -159,7 +190,7 @@ public class OJSONReader {
 	}
 
 	/**
-	 * Returns the next characted from the input stream. Handles Unicode decoding.
+	 * Returns the next character from the input stream. Handles Unicode decoding.
 	 */
 	private char nextChar() throws IOException {
 		if (missedChar != null) {
