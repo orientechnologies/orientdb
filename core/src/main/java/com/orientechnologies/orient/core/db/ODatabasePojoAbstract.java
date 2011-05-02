@@ -304,7 +304,6 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 			}
 
 			registerPojo(iPojo, record);
-			//pojo2Stream((T) iPojo, record);
 		}
 
 		return record;
