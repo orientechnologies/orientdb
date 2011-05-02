@@ -16,6 +16,7 @@
 package com.orientechnologies.common.concur.lock;
 
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
@@ -24,12 +25,16 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 	}
 
 	private static final int												DEFAULT_ACQUIRE_TIMEOUT	= 5000;
-	protected final long														acquireTimeout					= DEFAULT_ACQUIRE_TIMEOUT;											// MS
+	protected long																	acquireTimeout					= DEFAULT_ACQUIRE_TIMEOUT;											// MS
 	protected HashMap<RESOURCE_TYPE, CountableLock>	map											= new HashMap<RESOURCE_TYPE, CountableLock>();
 
 	@SuppressWarnings("serial")
 	protected static class CountableLock extends ReentrantReadWriteLock {
 		protected int	countLocks	= 0;
+
+		public CountableLock(final boolean iFair) {
+			super(false);
+		}
 	}
 
 	public OLockManager() {
@@ -44,16 +49,30 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 		synchronized (map) {
 			lock = map.get(iResourceId);
 			if (lock == null) {
-				lock = new CountableLock();
+				lock = new CountableLock(iTimeout > 0);
 				map.put(iResourceId, lock);
 			}
 			lock.countLocks++;
 		}
 		try {
-			if (iLockType == LOCK.SHARED)
-				lock.readLock().lock();
-			else
-				lock.writeLock().lock();
+			if (iTimeout <= 0) {
+				if (iLockType == LOCK.SHARED)
+					lock.readLock().lock();
+				else
+					lock.writeLock().lock();
+			} else {
+				try {
+					if (iLockType == LOCK.SHARED) {
+						if (!lock.readLock().tryLock(iTimeout, TimeUnit.MILLISECONDS))
+							throw new OLockException("Resource " + iResourceId + " is locked");
+					} else {
+						if (!lock.writeLock().tryLock(iTimeout, TimeUnit.MILLISECONDS))
+							throw new OLockException("Resource " + iResourceId + " is locked");
+					}
+				} catch (InterruptedException e) {
+					throw new OLockException("Thread interrupted while waiting for resource " + iResourceId);
+				}
+			}
 		} catch (RuntimeException e) {
 			synchronized (map) {
 				lock.countLocks--;
@@ -89,6 +108,10 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 		synchronized (map) {
 			map.clear();
 		}
+	}
+
+	public void setAcquireTimeout(long iAcquireTimeout) {
+		acquireTimeout = iAcquireTimeout;
 	}
 
 	// For tests purposes.
