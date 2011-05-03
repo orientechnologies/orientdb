@@ -524,7 +524,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		}
 	}
 
-	public void executeDeleteRecord(final ORecordInternal<?> iRecord, final int iVersion) {
+	public void executeDeleteRecord(final OIdentifiable iRecord, final int iVersion) {
 		checkOpeness();
 		final ORecordId rid = (ORecordId) iRecord.getIdentity();
 
