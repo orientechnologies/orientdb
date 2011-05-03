@@ -18,15 +18,29 @@
            ,::::,,,. `:   ,,   :::::    :     :   .:  
            ,,:` `,,.                                  
           ,,,    .,`                                  
-         ,,.     `,                 D A T A B A S E   
+         ,,.     `,                 DOCUMENT-GRAPH DB   
        ``        `.                                   
                  ``                                   
-                 `                                    
+                 `                                 
 *******************************************************************************
-                                 ORIENT DATABASE
-                        http://www.orientechnologies.com
+                                ORIENT DATABASE
+                       http://www.orientechnologies.com
 *******************************************************************************
 This document enlist the last changes to the OrientDB project.
+
+-------------------------------------------------------------------------------
+VERSION 1.0rc1 - (May, 3rd 2011)
+-------------------------------------------------------------------------------
+- New defrag algorithm to reduce holes and therefore disk space
+- New super fast lazy collections that optimizes marshalling/unmarshalling
+- HTTP protocol handles multipart requestes
+- New HTTP Download and Upload commands
+- Fixed problems with cluster configuration when multiple dbs was opened
+- Added 8 new configuration parameters
+- new OLockManager class to lock at record level
+- Many bugs fixed
+
+Full list: http://code.google.com/p/orient/issues/list?can=1&q=label:v1.0rc1
 
 -------------------------------------------------------------------------------
 VERSION 0.9.25 - (March, 2nd 2011)
