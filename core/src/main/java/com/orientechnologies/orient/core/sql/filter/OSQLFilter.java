@@ -347,6 +347,8 @@ public class OSQLFilter extends OCommandToParse {
 					if (escapingOn)
 						escapingOn = false;
 				}
+			} else if (c == '#' && currentPos == begin) {
+				// BEGIN OF RID
 			} else if (c == '(') {
 				openBraces++;
 			} else if (c == ')') {

@@ -380,6 +380,17 @@ public class SQLSelectTest {
 	}
 
 	@Test
+	public void queryWhereRidDirectMatching() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select * from OUser where roles in #3:0")).execute();
+
+		Assert.assertEquals(result.size(), 1);
+
+		database.close();
+	}
+
+	@Test
 	public void queryAnyOperator() {
 		database.open("admin", "admin");
 
