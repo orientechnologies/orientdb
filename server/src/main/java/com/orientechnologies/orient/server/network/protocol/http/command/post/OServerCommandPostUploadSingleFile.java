@@ -26,6 +26,7 @@ import java.util.HashMap;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -67,12 +68,31 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
 					OHttpUtils.CONTENT_TEXT_PLAIN, "Content stream is null or empty");
 		} else {
 			database = getProfiledDatabaseInstance(iRequest);
-			buffer = new StringWriter();
-			writer = new OJSONWriter(buffer);
-			writer.beginObject();
-			parse(iRequest, new OHttpMultipartContentBaseParser(), new OHttpMultipartFileToRecordContentParser(), database);
-			saveRecord(iRequest);
-			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
+			try {
+				buffer = new StringWriter();
+				writer = new OJSONWriter(buffer);
+				writer.beginObject();
+				parse(iRequest, new OHttpMultipartContentBaseParser(), new OHttpMultipartFileToRecordContentParser(), database);
+				saveRecord(iRequest);
+				writer.flush();
+				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
+			} finally {
+				if (database != null)
+					database.close();
+				database = null;
+				if (buffer != null)
+					buffer.close();
+				buffer = null;
+				if (writer != null)
+					writer.close();
+				writer = null;
+				fileDocument = null;
+				fileName = null;
+				fileType = null;
+				if (fileRID != null)
+					fileRID.reset();
+				fileRID = null;
+			}
 		}
 		return false;
 	}
@@ -140,7 +160,15 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
 				sendTextContent(iRequest, OHttpUtils.STATUS_INVALIDMETHOD_CODE, "File cannot be null", null, OHttpUtils.CONTENT_TEXT_PLAIN,
 						"File cannot be null");
 			}
+
 			fileDocument = null;
+		} else {
+			if (fileRID != null) {
+				ORecordBytes file = new ORecordBytes(database, fileRID);
+				database.delete(file);
+			}
+			sendTextContent(iRequest, OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Document template cannot be null", null,
+					OHttpUtils.CONTENT_TEXT_PLAIN, "Document template cannot be null");
 		}
 	}
 

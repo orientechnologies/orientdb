@@ -323,8 +323,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 						String contentType = lineUpperCase.substring(OHttpUtils.CONTENT_TYPE.length());
 						if (contentType.startsWith(OHttpUtils.CONTENT_TYPE_MULTIPART)) {
 							iRequest.isMultipart = true;
-							iRequest.boundary = new String(contentType.substring(
-									OHttpUtils.CONTENT_TYPE_MULTIPART.length() + 2 + OHttpUtils.BOUNDARY.length() + 1).toLowerCase());
+							iRequest.boundary = new String(line.substring(
+									OHttpUtils.CONTENT_TYPE.length() + OHttpUtils.CONTENT_TYPE_MULTIPART.length() + 2 + OHttpUtils.BOUNDARY.length()
+											+ 1));
 						}
 					}
 				}

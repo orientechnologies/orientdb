@@ -539,7 +539,7 @@ function ODatabase(databasePath) {
 			var value = obj[field];
 			if (typeof value == 'object') {
 				if (linkMap[value] != null && value['@rid'] != null) {
-					if (value['@rid'].indexOf('', 0) > -1) {
+					if (value['@rid'].indexOf('#', 0) > -1) {
 						obj[field] = value['@rid'];
 					} else {
 						obj[field] = '#' + value['@rid'];
@@ -547,6 +547,22 @@ function ODatabase(databasePath) {
 				} else {
 					linkMap[value] = 'foo';
 					this.removeCircleReferences(value, linkMap);
+				}
+			} else if ($.isArray(value)){
+				for (i in value){
+					var arrayValue = value[i];
+					if (typeof arrayValue == 'object'){
+						if (linkMap[value] != null && value['@rid'] != null) {
+							if (value['@rid'].indexOf('#', 0) > -1) {
+								obj[field] = value['@rid'];
+							} else {
+								obj[field] = '#' + value['@rid'];
+							}
+						} else {
+							linkMap[value] = 'foo';
+							this.removeCircleReferences(value, linkMap);
+						}
+					}
 				}
 			}
 		}

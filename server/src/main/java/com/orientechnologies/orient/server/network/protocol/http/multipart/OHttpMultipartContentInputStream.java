@@ -110,6 +110,7 @@ public class OHttpMultipartContentInputStream extends InputStream {
 		StringBuilder buffer = new StringBuilder();
 		while (wrappedInputStream.available() > 0 && checkingEnd) {
 			int value = wrappedInputStream.read();
+			buffer.append((char) value);
 			if (((char) value) == boundary.charAt(boundaryCursor)) {
 				internalAvailable = false;
 				boundaryCursor++;
@@ -120,9 +121,9 @@ public class OHttpMultipartContentInputStream extends InputStream {
 			} else {
 				internalAvailable = true;
 				checkingEnd = false;
-				wrappedInputStream.setSkipInput(buffer);
+				if (buffer.length() > 0)
+					wrappedInputStream.setSkipInput(buffer);
 			}
-			buffer.append(value);
 		}
 	}
 }

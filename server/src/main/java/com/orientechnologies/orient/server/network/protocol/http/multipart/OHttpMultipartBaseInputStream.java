@@ -49,7 +49,7 @@ public class OHttpMultipartBaseInputStream extends InputStream {
 
 	public void setSkipInput(StringBuilder iSkipInput) {
 		this.buffer.append(iSkipInput);
-		contentLength++;
+		contentLength += iSkipInput.length();
 	}
 
 	@Override

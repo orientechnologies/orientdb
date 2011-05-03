@@ -37,22 +37,22 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
 
 	@Override
 	public boolean execute(OHttpRequest iRequest) throws Exception {
+		ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
 		String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: fileDownload/<database>/rid/[/<fileName>][/<fileType>].");
 
-		final String fileName = urlParts.length > 3 ? urlParts[3] : "unknown";
+		final String fileName = urlParts.length > 3 ? encodeResponseText(urlParts[3]) : "unknown";
 
-		final String fileType = urlParts.length > 5 ? urlParts[4] + '/' + urlParts[5] : (urlParts.length > 4 ? urlParts[4] : "");
+		final String fileType = urlParts.length > 5 ? encodeResponseText(urlParts[4]) + '/' + encodeResponseText(urlParts[5])
+				: (urlParts.length > 4 ? encodeResponseText(urlParts[4]) : "");
 
 		final String rid = urlParts[2];
 
 		iRequest.data.commandInfo = "Download";
 		iRequest.data.commandDetail = rid;
-		ODatabaseDocumentTx db = null;
 
 		final ORecordBytes response;
 
 		try {
-			db = getProfiledDatabaseInstance(iRequest);
 
 			response = db.load(new ORecordId(rid));
 			if (response != null) {
@@ -89,6 +89,12 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
 	@Override
 	public String[] getNames() {
 		return NAMES;
+	}
+
+	private String encodeResponseText(String iText) {
+		iText = new String(iText.replaceAll(" ", "%20"));
+		iText = new String(iText.replaceAll("&", "%26"));
+		return iText;
 	}
 
 }
