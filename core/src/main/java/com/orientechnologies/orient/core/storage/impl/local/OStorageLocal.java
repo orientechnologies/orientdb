@@ -65,7 +65,7 @@ public class OStorageLocal extends OStorageEmbedded {
 	private final int														DELETE_WAIT_TIME;
 	public static final String[]								TYPES								= { OClusterLocal.TYPE, OClusterLogical.TYPE };
 
-	private final OLockManager<ORID, Runnable>	lockManager					= new OLockManager<ORID, Runnable>();
+	private final OLockManager<ORID, Runnable>	lockManager;
 	private final Map<String, OCluster>					clusterMap					= new LinkedHashMap<String, OCluster>();
 	private OCluster[]													clusters						= new OCluster[0];
 	private ODataLocal[]												dataSegments				= new ODataLocal[0];
@@ -99,6 +99,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		variableParser = new OStorageVariableParser(storagePath);
 		configuration = new OStorageConfigurationSegment(this, storagePath);
 		txManager = new OStorageLocalTxExecuter(this, configuration.txSegment);
+		lockManager = new OLockManager<ORID, Runnable>(OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
 
 		PROFILER_CREATE_RECORD = "storage." + name + ".createRecord";
 		PROFILER_READ_RECORD = "storage." + name + ".readRecord";

@@ -49,6 +49,8 @@ public enum OGlobalConfiguration {
 			"Tells to the engine to not close the storage when a database is closed. Storages will be closed when the process will shutdown",
 			Boolean.class, Boolean.TRUE),
 
+	STORAGE_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum timeout in milliseconds to lock a shared record", Integer.class, 5000),
+
 	STORAGE_CACHE_SIZE("storage.cache.size", "Size of the cache that keep the record in memory", Integer.class, -1),
 
 	STORAGE_CACHE_STRATEGY("storage.cache.strategy",

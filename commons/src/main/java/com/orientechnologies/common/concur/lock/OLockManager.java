@@ -24,9 +24,8 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 		SHARED, EXCLUSIVE
 	}
 
-	private static final int												DEFAULT_ACQUIRE_TIMEOUT	= 5000;
-	protected long																	acquireTimeout					= DEFAULT_ACQUIRE_TIMEOUT;											// MS
-	protected HashMap<RESOURCE_TYPE, CountableLock>	map											= new HashMap<RESOURCE_TYPE, CountableLock>();
+	protected long																	acquireTimeout;
+	protected HashMap<RESOURCE_TYPE, CountableLock>	map	= new HashMap<RESOURCE_TYPE, CountableLock>();
 
 	@SuppressWarnings("serial")
 	protected static class CountableLock extends ReentrantReadWriteLock {
@@ -37,7 +36,8 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 		}
 	}
 
-	public OLockManager() {
+	public OLockManager(final int iAcquireTimeout) {
+		acquireTimeout = iAcquireTimeout;
 	}
 
 	public void acquireLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, final LOCK iLockType) {

@@ -38,7 +38,7 @@ public class LockManagerTest {
 	public static final int														THREADS					= 100;
 	public static int																	cyclesByProcess	= 10000;
 	public static boolean															verbose					= false;
-	public static OLockManager<Callable<?>, Runnable>	lockMgr					= new OLockManager<Callable<?>, Runnable>();
+	public static OLockManager<Callable<?>, Runnable>	lockMgr					= new OLockManager<Callable<?>, Runnable>(5000);
 	protected List<Callable<?>>												resources				= new ArrayList<Callable<?>>();
 	protected List<Thread>														processes				= Collections.synchronizedList(new ArrayList<Thread>());
 	protected List<Throwable>													exceptions			= Collections.synchronizedList(new ArrayList<Throwable>());
