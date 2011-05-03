@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.metadata.security;
 
 import java.util.List;
 
+import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -35,7 +36,7 @@ public class OSecurity {
 	}
 
 	public OUser getUser(final String iUserName) {
-		final List<ODocument> result = database.command(
+		final List<ODocument> result = database.<OCommandRequest>command(
 				new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "'").setFetchPlan("*:-1")).execute();
 
 		if (result != null && result.size() > 0)
@@ -56,7 +57,7 @@ public class OSecurity {
 	}
 
 	public ORole getRole(final String iRoleName) {
-		final List<ODocument> result = database.command(
+		final List<ODocument> result = database.<OCommandRequest>command(
 				new OSQLSynchQuery<ODocument>("select from ORole where name = '" + iRoleName + "'").setFetchPlan("*:-1")).execute();
 
 		if (result != null && result.size() > 0)
@@ -79,10 +80,10 @@ public class OSecurity {
 	}
 
 	public List<ODocument> getUsers() {
-		return database.command(new OSQLSynchQuery<ODocument>("select from OUser")).execute();
+		return database.<OCommandRequest>command(new OSQLSynchQuery<ODocument>("select from OUser")).execute();
 	}
 
 	public List<ODocument> getRoles() {
-		return database.command(new OSQLSynchQuery<ODocument>("select from ORole")).execute();
+		return database.<OCommandRequest>command(new OSQLSynchQuery<ODocument>("select from ORole")).execute();
 	}
 }

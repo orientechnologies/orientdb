@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -184,7 +185,7 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 								value = null;
 							else {
 								value = "'" + value + "'";
-								result = database.command(new OSQLSynchQuery<ODocument>(cmd + value)).execute();
+								result = database.<OCommandRequest>command(new OSQLSynchQuery<ODocument>(cmd + value)).execute();
 
 								if (result == null || result.size() == 0)
 									// throw new

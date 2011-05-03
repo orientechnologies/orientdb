@@ -312,7 +312,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 			final ODocument edge = (ODocument) e;
 
 			if (checkEdge(edge, iLabels, iClassNames)) {
-				if (edge.field("in", OType.LINK).equals(iVertex2))
+				if (edge.<ODocument>field("in", OType.LINK).equals(iVertex2))
 					result.add(edge);
 			}
 		}
@@ -322,7 +322,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 			final ODocument edge = (ODocument) e;
 
 			if (checkEdge(edge, iLabels, iClassNames)) {
-				if (edge.field("out", OType.LINK).equals(iVertex2))
+				if (edge.<ODocument>field("out", OType.LINK).equals(iVertex2))
 					result.add(edge);
 			}
 		}

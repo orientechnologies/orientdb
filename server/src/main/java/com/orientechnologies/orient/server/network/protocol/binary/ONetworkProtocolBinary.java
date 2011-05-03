@@ -468,8 +468,16 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			data.commandInfo = "Create record";
 
 			final ORecordId rid = new ORecordId(channel.readShort(), ORID.CLUSTER_POS_INVALID);
-			final long location = connection.rawDatabase.save(rid, channel.readBytes(), -1, channel.readByte());
+
+			final byte[] buffer = channel.readBytes();
+			final byte recordType = channel.readByte();
+
+//			final ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
+//			record.fill(connection.database, rid, 0, buffer);
+//			connection.database.save(record);
+			 final long location = connection.rawDatabase.save(rid, buffer, -1, recordType);
 			sendOk(lastClientTxId);
+			//channel.writeLong(rid.getClusterPosition());
 			channel.writeLong(location);
 			break;
 		}
@@ -482,9 +490,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			// final byte[] buffer = channel.readBytes();
 			// final int version = channel.readInt();
 			// final byte recordType = channel.readByte();
-			//
-			// ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
-			// record.fill(connection.database, clusterId, clusterPosition, version, buffer);
+			// final ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
+			// record.fill(connection.database, rid, version, buffer);
 			//
 			// connection.database.save(record);
 
@@ -500,8 +507,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			sendOk(lastClientTxId);
 
-			// channel.writeInt(record.getVersion());
 			channel.writeInt((int) newVersion);
+			// channel.writeInt(record.getVersion());
 			break;
 		}
 
