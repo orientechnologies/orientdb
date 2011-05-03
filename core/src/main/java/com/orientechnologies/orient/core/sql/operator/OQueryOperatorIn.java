@@ -37,15 +37,28 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
 	protected boolean evaluateExpression(final ORecordInternal<?> iRecord, OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight) {
 		if (iLeft instanceof Collection<?>) {
-			final Collection<Object> collection = (Collection<Object>) iLeft;
-			for (Object o : collection) {
-				if (OQueryOperatorEquals.equals(iRight, o))
-					return true;
+			final Collection<Object> sourceCollection = (Collection<Object>) iLeft;
+
+			if (iRight instanceof Collection<?>) {
+				// AGAINST COLLECTION OF ITEMS
+				final Collection<Object> collectionToMatch = (Collection<Object>) iRight;
+				for (Object o1 : sourceCollection) {
+					for (Object o2 : collectionToMatch) {
+						if (OQueryOperatorEquals.equals(o1, o2))
+							return true;
+					}
+				}
+			} else {
+				// AGAINST SINGLE ITEM
+				for (Object o : sourceCollection) {
+					if (OQueryOperatorEquals.equals(iRight, o))
+						return true;
+				}
 			}
 		} else if (iRight instanceof Collection<?>) {
 
-			final Collection<Object> collection = (Collection<Object>) iRight;
-			for (Object o : collection) {
+			final Collection<Object> sourceCollection = (Collection<Object>) iRight;
+			for (Object o : sourceCollection) {
 				if (OQueryOperatorEquals.equals(iLeft, o))
 					return true;
 			}

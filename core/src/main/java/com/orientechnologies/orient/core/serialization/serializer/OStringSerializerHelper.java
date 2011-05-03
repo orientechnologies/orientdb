@@ -272,16 +272,25 @@ public abstract class OStringSerializerHelper {
 		return split(iSource, 0, iSource.length(), iRecordSeparator, iJumpCharacters);
 	}
 
+	public static List<String> split(final List<String> iParts, final String iSource, final char iRecordSeparator,
+			final char... iJumpCharacters) {
+		return split(iParts, iSource, 0, iSource.length(), iRecordSeparator, iJumpCharacters);
+	}
+
 	public static List<String> split(final String iSource, final int iStartPosition, final int iEndPosition,
 			final char iRecordSeparator, final char... iJumpCharacters) {
-		final ArrayList<String> parts = new ArrayList<String>();
+		return split(new ArrayList<String>(), iSource, 0, iSource.length(), iRecordSeparator, iJumpCharacters);
+	}
+
+	public static List<String> split(final List<String> iParts, final String iSource, final int iStartPosition,
+			final int iEndPosition, final char iRecordSeparator, final char... iJumpCharacters) {
 		final StringBuilder buffer = new StringBuilder();
 
 		for (int i = iStartPosition; i < iEndPosition; ++i) {
 			char c = iSource.charAt(i);
 
 			if (c == iRecordSeparator) {
-				parts.add(buffer.toString());
+				iParts.add(buffer.toString());
 				buffer.setLength(0);
 			} else {
 				if (iJumpCharacters.length > 0 && buffer.length() == 0) {
@@ -316,9 +325,9 @@ public abstract class OStringSerializerHelper {
 				buffer.setLength(buffer.length() - newSize);
 		}
 
-		parts.add(buffer.toString());
+		iParts.add(buffer.toString());
 
-		return parts;
+		return iParts;
 	}
 
 	public static String joinIntArray(int[] iArray) {
@@ -353,16 +362,18 @@ public abstract class OStringSerializerHelper {
 		return false;
 	}
 
-	public static List<String> getCollection(final String iText, final int iStartPosition) {
+	public static int getCollection(final String iText, final int iStartPosition, final List<String> iCollection) {
 		int openPos = iText.indexOf(COLLECTION_BEGIN, iStartPosition);
 		if (openPos == -1)
-			return EMPTY_LIST;
+			return -1;
 
 		int closePos = iText.indexOf(COLLECTION_END, openPos + 1);
 		if (closePos == -1)
-			return EMPTY_LIST;
+			return -1;
 
-		return split(iText.substring(openPos + 1, closePos), COLLECTION_SEPARATOR, ' ');
+		split(iCollection, iText.substring(openPos + 1, closePos), COLLECTION_SEPARATOR, ' ');
+
+		return closePos;
 	}
 
 	public static int getParameters(final String iText, final int iBeginPosition, final List<String> iParameters) {
@@ -400,11 +411,11 @@ public abstract class OStringSerializerHelper {
 	}
 
 	public static Map<String, String> getMap(final ODatabaseRecord iDatabase, final String iText) {
-		int openPos = iText.indexOf(COLLECTION_BEGIN);
+		int openPos = iText.indexOf(MAP_BEGIN);
 		if (openPos == -1)
 			return EMPTY_MAP;
 
-		int closePos = iText.indexOf(COLLECTION_END, openPos + 1);
+		int closePos = iText.indexOf(MAP_END, openPos + 1);
 		if (closePos == -1)
 			return EMPTY_MAP;
 

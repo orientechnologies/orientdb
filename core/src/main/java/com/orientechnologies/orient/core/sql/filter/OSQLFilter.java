@@ -101,17 +101,18 @@ public class OSQLFilter extends OCommandToParse {
 		if (currentPos == -1)
 			throw new OQueryParsingException("No query target found", text, 0);
 
+		targetRecords = new ArrayList<String>();
+
 		if (Character.isDigit(text.charAt(currentPos))) {
 			// UNIQUE RID
 			final StringBuilder word = new StringBuilder();
 			currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
 
-			targetRecords = new ArrayList<String>();
 			targetRecords.add(word.toString());
 
 		} else if (text.charAt(currentPos) == OStringSerializerHelper.COLLECTION_BEGIN) {
 			// COLLECTION OF RIDS
-			targetRecords = OStringSerializerHelper.getCollection(text, currentPos);
+			currentPos = OStringSerializerHelper.getCollection(text, currentPos, targetRecords);
 		} else {
 			String subjectName;
 			String alias;
@@ -252,20 +253,15 @@ public class OSQLFilter extends OCommandToParse {
 			return subCondition;
 		} else if (words[0].charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN) {
 			// COLLECTION OF ELEMENTS
-			currentPos = currentPos - words[0].length() + 1;
+			currentPos = currentPos - words[0].length();
+
+			final List<String> stringItems = new ArrayList<String>();
+			currentPos = OStringSerializerHelper.getCollection(text, currentPos, stringItems);
+
 			final List<Object> coll = new ArrayList<Object>();
-
-			String[] item;
-			Object v;
-			do {
-				item = nextValue(true);
-
-				v = OSQLHelper.parseValue(this, database, this, item[1]);
-				coll.add(v);
-
-				currentPos = OStringParser.jump(text, currentPos, " \t\r\n");
-				item = nextValue(true);
-			} while (item != null && item[0].charAt(0) == OStringSerializerHelper.COLLECTION_SEPARATOR);
+			for (String s : stringItems) {
+				coll.add(OSQLHelper.parseValue(this, database, this, s));
+			}
 
 			currentPos++;
 

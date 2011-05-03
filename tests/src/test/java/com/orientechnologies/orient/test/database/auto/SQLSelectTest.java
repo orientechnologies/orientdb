@@ -237,7 +237,7 @@ public class SQLSelectTest {
 	}
 
 	@Test
-	public void queryCollectionContainsIn() {
+	public void queryCollectionContainsInRecords() {
 		database.open("admin", "admin");
 
 		record.reset();
@@ -294,19 +294,84 @@ public class SQLSelectTest {
 
 		result = database.command(
 				new OSQLSynchQuery<ODocument>("select * from cluster:animal where races contains (name in ['aaa','bbb'])")).execute();
-
 		Assert.assertEquals(result.size(), 0);
 
 		result = database.command(
 				new OSQLSynchQuery<ODocument>("select * from cluster:animal where races containsall (name in ['European','Asiatic'])"))
 				.execute();
-
 		Assert.assertEquals(result.size(), 0);
 
 		result = database.command(
 				new OSQLSynchQuery<ODocument>("select * from cluster:animal where races containsall (name in ['European','Siamese'])"))
 				.execute();
+		Assert.assertEquals(result.size(), 1);
 
+		record.delete();
+
+		database.close();
+	}
+
+	@Test
+	public void queryCollectionInNumbers() {
+		database.open("admin", "admin");
+
+		record.reset();
+		record.setClassName("Animal");
+		record.field("name", "Cat");
+
+		Collection<Integer> rates = new HashSet<Integer>();
+		rates.add(100);
+		rates.add(200);
+		record.field("rates", rates);
+
+		record.save();
+
+		List<ODocument> result = database.command(
+				new OSQLSynchQuery<ODocument>("select * from cluster:animal where rates in [100,105]")).execute();
+
+		boolean found = false;
+		for (int i = 0; i < result.size() && !found; ++i) {
+			record = result.get(i);
+
+			Assert.assertTrue(record.getClassName().equalsIgnoreCase("animal"));
+			Assert.assertNotNull(record.field("rates"));
+
+			rates = record.field("rates");
+			for (Integer rate : rates) {
+				if (rate == 100 || rate == 105) {
+					found = true;
+					break;
+				}
+			}
+		}
+		Assert.assertTrue(found);
+
+		result = database.command(new OSQLSynchQuery<ODocument>("select * from cluster:animal where rates in [200,10333]")).execute();
+
+		found = false;
+		for (int i = 0; i < result.size() && !found; ++i) {
+			record = result.get(i);
+
+			Assert.assertTrue(record.getClassName().equalsIgnoreCase("animal"));
+			Assert.assertNotNull(record.field("rates"));
+
+			rates = record.field("rates");
+			for (Integer rate : rates) {
+				if (rate == 100 || rate == 105) {
+					found = true;
+					break;
+				}
+			}
+		}
+		Assert.assertTrue(found);
+
+		result = database.command(new OSQLSynchQuery<ODocument>("select * from cluster:animal where rates in [500]")).execute();
+		Assert.assertEquals(result.size(), 0);
+
+		result = database.command(new OSQLSynchQuery<ODocument>("select * from cluster:animal where rates in 500")).execute();
+		Assert.assertEquals(result.size(), 0);
+
+		result = database.command(new OSQLSynchQuery<ODocument>("select * from cluster:animal where rates in [100])")).execute();
 		Assert.assertEquals(result.size(), 1);
 
 		record.delete();
