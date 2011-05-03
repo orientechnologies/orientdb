@@ -4,8 +4,8 @@
   
 	<property environment="env" />
 	<property name="vendor"         value="Orient Technologies" />
-	<property name="product"        value="OrientDB Database" />
-	<property name="version"        value="1.0rc1-SNAPSHOT" />
+	<property name="product"        value="OrientDB" />
+	<property name="version"        value="1.0rc1" />
 	<property name="global.release" value="../releases/${version}" />
 	<property name="db.release"     value="../releases/${version}" />
 	
