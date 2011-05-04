@@ -31,14 +31,14 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLRemoveIndex extends OCommandExecutorSQLPermissionAbstract {
-	public static final String	KEYWORD_REMOVE	= "REMOVE";
-	public static final String	KEYWORD_INDEX		= "INDEX";
+public class OCommandExecutorSQLDropIndex extends OCommandExecutorSQLPermissionAbstract {
+	public static final String	KEYWORD_DROP	= "DROP";
+	public static final String	KEYWORD_INDEX	= "INDEX";
 
 	private String							sourceClassName;
 	private String							field;
 
-	public OCommandExecutorSQLRemoveIndex parse(final OCommandRequestText iRequest) {
+	public OCommandExecutorSQLDropIndex parse(final OCommandRequestText iRequest) {
 		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_CREATE);
 
 		init(iRequest.getDatabase(), iRequest.getText());
@@ -47,8 +47,8 @@ public class OCommandExecutorSQLRemoveIndex extends OCommandExecutorSQLPermissio
 
 		int oldPos = 0;
 		int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		if (pos == -1 || !word.toString().equals(KEYWORD_REMOVE))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_REMOVE + " not found", text, oldPos);
+		if (pos == -1 || !word.toString().equals(KEYWORD_DROP))
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found", text, oldPos);
 
 		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_INDEX))

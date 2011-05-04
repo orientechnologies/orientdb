@@ -19,7 +19,6 @@ import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 
@@ -30,14 +29,13 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLRemoveProperty extends OCommandExecutorSQLPermissionAbstract {
-	public static final String	KEYWORD_REMOVE		= "REMOVE";
-	public static final String	KEYWORD_PROPERTY	= "PROPERTY";
+public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLPermissionAbstract {
+	public static final String	KEYWORD_DROP	= "DROP";
+	public static final String	KEYWORD_CLASS	= "CLASS";
 
 	private String							className;
-	private String							fieldName;
 
-	public OCommandExecutorSQLRemoveProperty parse(final OCommandRequestText iRequest) {
+	public OCommandExecutorSQLDropClass parse(final OCommandRequestText iRequest) {
 		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_DELETE);
 
 		init(iRequest.getDatabase(), iRequest.getText());
@@ -46,25 +44,20 @@ public class OCommandExecutorSQLRemoveProperty extends OCommandExecutorSQLPermis
 
 		int oldPos = 0;
 		int pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
-		if (pos == -1 || !word.toString().equals(KEYWORD_REMOVE))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_REMOVE + " not found", text, oldPos);
+		if (pos == -1 || !word.toString().equals(KEYWORD_DROP))
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found", text, oldPos);
 
 		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
-		if (pos == -1 || !word.toString().equals(KEYWORD_PROPERTY))
-			throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found", text, oldPos);
+		if (pos == -1 || !word.toString().equals(KEYWORD_CLASS))
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLASS + " not found", text, oldPos);
 
 		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
 		if (pos == -1)
-			throw new OCommandSQLParsingException("Expected <class>.<property>", text, pos);
+			throw new OCommandSQLParsingException("Expected <class>", text, pos);
 
-		String[] parts = word.toString().split("\\.");
-		if (parts.length != 2)
-			throw new OCommandSQLParsingException("Expected <class>.<property>", text, pos);
-
-		className = parts[0];
+		className = word.toString();
 		if (className == null)
 			throw new OCommandSQLParsingException("Class not found", text, pos);
-		fieldName = parts[1];
 
 		return this;
 	}
@@ -73,15 +66,10 @@ public class OCommandExecutorSQLRemoveProperty extends OCommandExecutorSQLPermis
 	 * Execute the CREATE PROPERTY.
 	 */
 	public Object execute(final Map<Object, Object> iArgs) {
-		if (fieldName == null)
+		if (className == null)
 			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
 
-		OClass sourceClass = database.getMetadata().getSchema().getClass(className);
-		if (sourceClass == null)
-			throw new OCommandExecutionException("Source class '" + className + "' not found");
-
-		// REMOVE THE PROPERTY
-		sourceClass.removeProperty(fieldName);
+		database.getMetadata().getSchema().removeClass(className);
 
 		database.getMetadata().getSchema().save();
 

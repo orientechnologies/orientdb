@@ -50,16 +50,16 @@ public class OSQLEngine {
 				OCommandExecutorSQLCreateLink.class);
 		commands.put(OCommandExecutorSQLCreateIndex.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateIndex.KEYWORD_INDEX,
 				OCommandExecutorSQLCreateIndex.class);
-		commands.put(OCommandExecutorSQLRemoveIndex.KEYWORD_REMOVE + " " + OCommandExecutorSQLRemoveIndex.KEYWORD_INDEX,
-				OCommandExecutorSQLRemoveIndex.class);
+		commands.put(OCommandExecutorSQLDropIndex.KEYWORD_DROP + " " + OCommandExecutorSQLDropIndex.KEYWORD_INDEX,
+				OCommandExecutorSQLDropIndex.class);
 		commands.put(OCommandExecutorSQLCreateClass.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateClass.KEYWORD_CLASS,
 				OCommandExecutorSQLCreateClass.class);
 		commands.put(OCommandExecutorSQLCreateProperty.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateProperty.KEYWORD_PROPERTY,
 				OCommandExecutorSQLCreateProperty.class);
-		commands.put(OCommandExecutorSQLRemoveClass.KEYWORD_REMOVE + " " + OCommandExecutorSQLRemoveClass.KEYWORD_CLASS,
-				OCommandExecutorSQLRemoveClass.class);
-		commands.put(OCommandExecutorSQLRemoveProperty.KEYWORD_REMOVE + " " + OCommandExecutorSQLRemoveProperty.KEYWORD_PROPERTY,
-				OCommandExecutorSQLRemoveProperty.class);
+		commands.put(OCommandExecutorSQLDropClass.KEYWORD_DROP + " " + OCommandExecutorSQLDropClass.KEYWORD_CLASS,
+				OCommandExecutorSQLDropClass.class);
+		commands.put(OCommandExecutorSQLDropProperty.KEYWORD_DROP + " " + OCommandExecutorSQLDropProperty.KEYWORD_PROPERTY,
+				OCommandExecutorSQLDropProperty.class);
 		commands.put(OCommandExecutorSQLFindReferences.KEYWORD_FIND + " " + OCommandExecutorSQLFindReferences.KEYWORD_REFERENCES,
 				OCommandExecutorSQLFindReferences.class);
 		commands.put(OCommandExecutorSQLTruncateClass.KEYWORD_TRUNCATE + " " + OCommandExecutorSQLTruncateClass.KEYWORD_CLASS,
