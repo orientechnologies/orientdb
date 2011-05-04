@@ -976,7 +976,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		return (RET) iValue;
 	}
 
-	protected void setFieldType(final String iPropertyName, OType iType) {
+	protected void setFieldType(final String iPropertyName, final OType iType) {
 		if (iType == null)
 			return;
 
@@ -987,7 +987,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	}
 
 	/**
-	 * returns an empty record as placeholder of the current. Used when a record is requested, but only the identity is needed.
+	 * returns an empty record as place-holder of the current. Used when a record is requested, but only the identity is needed.
 	 * 
 	 * @return
 	 */
