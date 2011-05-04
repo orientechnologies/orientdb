@@ -79,6 +79,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
 		request = new OHttpRequest(this, channel, data, iConfiguration);
 
+		data.caller = channel.toString();
+
 		start();
 	}
 
@@ -323,10 +325,12 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 						String contentType = lineUpperCase.substring(OHttpUtils.CONTENT_TYPE.length());
 						if (contentType.startsWith(OHttpUtils.CONTENT_TYPE_MULTIPART)) {
 							iRequest.isMultipart = true;
-							iRequest.boundary = new String(line.substring(
-									OHttpUtils.CONTENT_TYPE.length() + OHttpUtils.CONTENT_TYPE_MULTIPART.length() + 2 + OHttpUtils.BOUNDARY.length()
-											+ 1));
+							iRequest.boundary = new String(line.substring(OHttpUtils.CONTENT_TYPE.length()
+									+ OHttpUtils.CONTENT_TYPE_MULTIPART.length() + 2 + OHttpUtils.BOUNDARY.length() + 1));
 						}
+					} else if (lineUpperCase.startsWith(OHttpUtils.X_FORWARDED_FOR)) {
+						String callerAddress = lineUpperCase.substring(OHttpUtils.X_FORWARDED_FOR.length());
+						getData().caller = callerAddress;
 					}
 				}
 

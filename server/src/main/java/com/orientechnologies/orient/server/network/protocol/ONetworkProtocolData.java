@@ -31,4 +31,5 @@ public class ONetworkProtocolData {
 	public long		lastCommandReceived				= 0;
 	public long		totalCommandExecutionTime	= 0;
 	public String	serverInfo;
+	public String	caller;
 }

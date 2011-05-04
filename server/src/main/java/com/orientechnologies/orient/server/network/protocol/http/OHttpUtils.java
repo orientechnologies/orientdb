@@ -35,6 +35,8 @@ public class OHttpUtils {
 	public static final String	CONTENT_LENGTH											= "CONTENT-LENGTH: ";
 	public static final String	CONTENT_TYPE												= "CONTENT-TYPE: ";
 
+	public static final String	X_FORWARDED_FOR											= "X-FORWARDED-FOR: ";
+
 	public static final String	MULTIPART_CONTENT_DISPOSITION				= "Content-Disposition";
 	public static final String	MULTIPART_CONTENT_TRANSFER_ENCODING	= "Content-Transfer-Encoding";
 	public static final String	MULTIPART_CONTENT_CHARSET						= "charset";
