@@ -151,102 +151,30 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				}
 			}
 		}
+		if (limit == 0){
+			throw new IllegalArgumentException("Limit must be > 0 or = -1 (no limit)");
+		}
 		return this;
 	}
 
 	public Object execute(final Map<Object, Object> iArgs) {
 		// TODO: SUPPORT MULTIPLE CLASSES LIKE A SQL JOIN
-		final int[] clusterIds;
-
 		compiledFilter.bindParameters(iArgs);
 
-		if (compiledFilter.getTargetClasses() != null) {
-			OClass cls = compiledFilter.getTargetClasses().keySet().iterator().next();
-
-			database.checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, cls.getName());
-
-			clusterIds = cls.getPolymorphicClusterIds();
-
-			// CHECK PERMISSION TO ACCESS TO ALL THE CONFIGURED CLUSTERS
-			for (int clusterId : clusterIds)
-				database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, database.getClusterNameById(clusterId),
-						clusterId);
-
-			final List<ORecord<?>> resultSet = searchForIndexes(cls);
-
-			if (resultSet.size() > 0) {
-				OProfiler.getInstance().updateCounter("Query.indexUsage", 1);
-
-				// FOUND USING INDEXES
-				for (ORecord<?> record : resultSet)
-					addResult(record);
-			} else
-				// NO INDEXES: SCAN THE ENTIRE CLUSTER
-				scanEntireClusters(clusterIds);
-
-		} else if (compiledFilter.getTargetClusters() != null) {
-			String firstCluster = compiledFilter.getTargetClusters().keySet().iterator().next();
-
-			if (firstCluster == null || firstCluster.length() == 0)
-				throw new OCommandExecutionException("No cluster or schema class selected in query");
-
-			if (Character.isDigit(firstCluster.charAt(0)))
-				// GET THE CLUSTER NUMBER
-				clusterIds = OStringSerializerHelper.splitIntArray(firstCluster);
-			else
-				// GET THE CLUSTER NUMBER BY THE CLASS NAME
-				clusterIds = new int[] { database.getClusterIdByName(firstCluster.toLowerCase()) };
-
-			database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, firstCluster.toLowerCase(), clusterIds[0]);
-
-			scanEntireClusters(clusterIds);
-		} else if (compiledFilter.getTargetRecords() != null) {
-			ORecordId rid = new ORecordId();
-			ORecordInternal<?> record;
-			for (String rec : compiledFilter.getTargetRecords()) {
-				rid.fromString(rec);
-				record = database.load(rid);
-				foreach(record);
-			}
-		} else
+		if (compiledFilter.getTargetClasses() != null)
+			searchInClasses();
+		else if (compiledFilter.getTargetClusters() != null)
+			searchInClusters();
+		else if (compiledFilter.getTargetIndex() != null)
+			searchInIndex();
+		else if (compiledFilter.getTargetRecords() != null)
+			searchInRecords();
+		else
 			throw new OQueryParsingException("No source found in query: specify class, clusters or single records");
 
 		applyOrderBy();
 		applyFlatten();
 		return processResult();
-	}
-
-	private Object processResult() {
-		if (anyFunctionAggregates) {
-			// EXECUTE AGGREGATIONS
-			Object value;
-			final ODocument result = new ODocument(database);
-			for (Entry<String, Object> projection : projections.entrySet()) {
-				if (projection.getValue() instanceof OSQLFilterItemField)
-					value = ((OSQLFilterItemField) projection.getValue()).getValue(result);
-				else if (projection.getValue() instanceof OSQLFunctionRuntime) {
-					final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection.getValue();
-					value = f.getResult();
-				} else
-					value = projection.getValue();
-
-				result.field(projection.getKey(), value);
-			}
-
-			request.getResultListener().result(result);
-
-		} else if (tempResult != null) {
-			// TEMP RESULT: RETURN ALL THE RECORDS AT THE END
-			for (ODocument doc : tempResult)
-				// CALL THE LISTENER
-				processRecordAsResult(doc);
-			tempResult.clear();
-			tempResult = null;
-
-		} else if (request instanceof OSQLSynchQuery)
-			return ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getResult();
-
-		return null;
 	}
 
 	public boolean foreach(final ORecordInternal<?> iRecord) {
@@ -600,5 +528,101 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		} else
 			// INVOKE THE LISTENER
 			request.getResultListener().result(iRecord);
+	}
+
+	private void searchInClasses() {
+		final int[] clusterIds;
+		final OClass cls = compiledFilter.getTargetClasses().keySet().iterator().next();
+
+		database.checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, cls.getName());
+
+		clusterIds = cls.getPolymorphicClusterIds();
+
+		// CHECK PERMISSION TO ACCESS TO ALL THE CONFIGURED CLUSTERS
+		for (int clusterId : clusterIds)
+			database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, database.getClusterNameById(clusterId),
+					clusterId);
+
+		final List<ORecord<?>> resultSet = searchForIndexes(cls);
+
+		if (resultSet.size() > 0) {
+			OProfiler.getInstance().updateCounter("Query.indexUsage", 1);
+
+			// FOUND USING INDEXES
+			for (ORecord<?> record : resultSet)
+				addResult(record);
+		} else
+			// NO INDEXES: SCAN THE ENTIRE CLUSTER
+			scanEntireClusters(clusterIds);
+	}
+
+	private void searchInClusters() {
+		final int[] clusterIds;
+		String firstCluster = compiledFilter.getTargetClusters().keySet().iterator().next();
+
+		if (firstCluster == null || firstCluster.length() == 0)
+			throw new OCommandExecutionException("No cluster or schema class selected in query");
+
+		if (Character.isDigit(firstCluster.charAt(0)))
+			// GET THE CLUSTER NUMBER
+			clusterIds = OStringSerializerHelper.splitIntArray(firstCluster);
+		else
+			// GET THE CLUSTER NUMBER BY THE CLASS NAME
+			clusterIds = new int[] { database.getClusterIdByName(firstCluster.toLowerCase()) };
+
+		database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, firstCluster.toLowerCase(), clusterIds[0]);
+
+		scanEntireClusters(clusterIds);
+	}
+
+	private void searchInRecords() {
+		ORecordId rid = new ORecordId();
+		ORecordInternal<?> record;
+		for (String rec : compiledFilter.getTargetRecords()) {
+			rid.fromString(rec);
+			record = database.load(rid);
+			foreach(record);
+		}
+	}
+
+	private void searchInIndex() {
+		final OIndex index = database.getMetadata().getIndexManager().getIndex(compiledFilter.getTargetIndex());
+		if (index == null)
+			throw new OCommandExecutionException("Target index '" + compiledFilter.getTargetIndex() + "' not found");
+
+		//index.get();
+	}
+
+	private Object processResult() {
+		if (anyFunctionAggregates) {
+			// EXECUTE AGGREGATIONS
+			Object value;
+			final ODocument result = new ODocument(database);
+			for (Entry<String, Object> projection : projections.entrySet()) {
+				if (projection.getValue() instanceof OSQLFilterItemField)
+					value = ((OSQLFilterItemField) projection.getValue()).getValue(result);
+				else if (projection.getValue() instanceof OSQLFunctionRuntime) {
+					final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection.getValue();
+					value = f.getResult();
+				} else
+					value = projection.getValue();
+
+				result.field(projection.getKey(), value);
+			}
+
+			request.getResultListener().result(result);
+
+		} else if (tempResult != null) {
+			// TEMP RESULT: RETURN ALL THE RECORDS AT THE END
+			for (ODocument doc : tempResult)
+				// CALL THE LISTENER
+				processRecordAsResult(doc);
+			tempResult.clear();
+			tempResult = null;
+
+		} else if (request instanceof OSQLSynchQuery)
+			return ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getResult();
+
+		return null;
 	}
 }
