@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
@@ -35,7 +36,16 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
 	@SuppressWarnings("unchecked")
 	protected boolean evaluateExpression(final ORecordInternal<?> iRecord, OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight) {
-		return ((Comparable<Object>) iLeft).compareTo(OType.convert(iRight, iLeft.getClass())) >= 0;
+		if (!iRight.getClass().isArray())
+			throw new IllegalArgumentException("Found '" + iRight + "' while was expected: " + getSyntax());
+
+		final Object[] values = (Object[]) iRight;
+
+		if (values.length != 3)
+			throw new IllegalArgumentException("Found '" + OMultiValue.toString(iRight) + "' while was expected: " + getSyntax());
+
+		return ((Comparable<Object>) iLeft).compareTo(OType.convert(values[0], iLeft.getClass())) >= 0
+				&& ((Comparable<Object>) iLeft).compareTo(OType.convert(values[2], iLeft.getClass())) <= 0;
 	}
 
 	@Override

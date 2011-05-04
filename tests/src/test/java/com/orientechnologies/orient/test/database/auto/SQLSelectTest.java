@@ -776,12 +776,12 @@ public class SQLSelectTest {
 		database.open("admin", "admin");
 
 		List<ODocument> result = database.command(
-				new OSQLSynchQuery<ODocument>("select * from cluster:Animal where ID between 10 and 20")).execute();
+				new OSQLSynchQuery<ODocument>("select * from account where nr between 10 and 20")).execute();
 
 		for (int i = 0; i < result.size(); ++i) {
 			record = result.get(i);
 
-			Assert.assertTrue(((Integer) record.field("id")) >= 10 && ((Integer) record.field("id")) <= 20);
+			Assert.assertTrue(((Integer) record.field("nr")) >= 10 && ((Integer) record.field("nr")) <= 20);
 		}
 
 		database.close();
