@@ -25,9 +25,7 @@ import com.orientechnologies.orient.core.cache.OStorageRecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -37,7 +35,6 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 /**
  * Wrapper of OStorageRemote that maintains the sessionId. It's bound to the ODatabase and allow to use the shared OStorageRemote.
  */
-@SuppressWarnings("unchecked")
 public class OStorageRemoteThread implements OStorage {
 	private static AtomicInteger	sessionSerialId	= new AtomicInteger(-1);
 
@@ -222,37 +219,6 @@ public class OStorageRemoteThread implements OStorage {
 		return delegate.addDataSegment(iSegmentName, iSegmentFileName);
 	}
 
-	public <REC extends ORecordInternal<?>> REC dictionaryPut(final ODatabaseRecord iDatabase, final String iKey,
-			final ORecordInternal<?> iRecord) {
-		delegate.setSessionId(sessionId);
-		return (REC) delegate.dictionaryPut(iDatabase, iKey, iRecord);
-	}
-
-	public <REC extends ORecordInternal<?>> REC dictionaryLookup(final ODatabaseRecord iDatabase, final String iKey) {
-		delegate.setSessionId(sessionId);
-		return (REC) delegate.dictionaryLookup(iDatabase, iKey);
-	}
-
-	public <REC extends ORecordInternal<?>> REC dictionaryRemove(final ODatabaseRecord iDatabase, final Object iKey) {
-		delegate.setSessionId(sessionId);
-		return (REC) delegate.dictionaryRemove(iDatabase, iKey);
-	}
-
-	public int dictionarySize(final ODatabaseRecord iDatabase) {
-		delegate.setSessionId(sessionId);
-		return delegate.dictionarySize(iDatabase);
-	}
-
-	public ODictionary<?> createDictionary(final ODatabaseRecord iDatabase) throws Exception {
-		delegate.setSessionId(sessionId);
-		return delegate.createDictionary(iDatabase);
-	}
-
-	public Set<String> dictionaryKeys(final ODatabaseRecord iDatabase) {
-		delegate.setSessionId(sessionId);
-		return delegate.dictionaryKeys(iDatabase);
-	}
-
 	public void synch() {
 		delegate.setSessionId(sessionId);
 		delegate.synch();
@@ -311,5 +277,13 @@ public class OStorageRemoteThread implements OStorage {
 	public String getURL() {
 		delegate.setSessionId(sessionId);
 		return delegate.getURL();
+	}
+
+	public Object getSharedResource(final String iName) {
+		return delegate.getSharedResource(iName);
+	}
+
+	public void setSharedResource(final String iName, final Object iResource) {
+		delegate.setSharedResource(iName, iResource);
 	}
 }

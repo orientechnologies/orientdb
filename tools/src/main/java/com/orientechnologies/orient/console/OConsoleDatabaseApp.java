@@ -26,7 +26,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
@@ -637,14 +636,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	public void dictionaryKeys() {
 		checkCurrentDatabase();
 
-		Set<String> keys = currentDatabase.getDictionary().keySet();
-
-		out.println("Found " + keys.size() + " keys:");
+		Iterable<Object> keys = currentDatabase.getDictionary().keys();
 
 		int i = 0;
-		for (String k : keys) {
+		for (Object k : keys) {
 			out.print(String.format("#%d: %s\n", i++, k));
 		}
+
+		out.println("Found " + i + " keys:");
 	}
 
 	@ConsoleCommand(description = "Loookup for a record using the dictionary. If found set it as the current record")
@@ -680,14 +679,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	public void dictionaryRemove(@ConsoleParameter(name = "key", description = "The key to remove") final String iKey) {
 		checkCurrentDatabase();
 
-		currentRecord = currentDatabase.getDictionary().remove(iKey);
-		if (currentRecord == null)
+		boolean result = currentDatabase.getDictionary().remove(iKey);
+		if (!result)
 			out.println("Entry not found in dictionary.");
-		else {
-			out.println("Entry removed from the dictionary. Last value of entry was: ");
-			displayRecord(null);
-		}
-		currentRecord = null;
+		else
+			out.println("Entry removed from the dictionary.");
 	}
 
 	@ConsoleCommand(description = "Share a database with a remote server")

@@ -56,7 +56,7 @@ public class OIndexManager extends ODocumentWrapperNoClass {
 
 	public void create() {
 		save(OStorage.CLUSTER_INTERNAL_NAME);
-		createIndex(DICTIONARY_NAME, OProperty.INDEX_TYPE.UNIQUE.toString(), null, null, null);
+		createIndex(DICTIONARY_NAME, OProperty.INDEX_TYPE.DICTIONARY.toString(), null, null, null);
 		document.getDatabase().getStorage().getConfiguration().indexMgrRecordId = document.getIdentity().toString();
 		document.getDatabase().getStorage().getConfiguration().update();
 	}
@@ -177,5 +177,9 @@ public class OIndexManager extends ODocumentWrapperNoClass {
 
 	public void setDefaultClusterName(String defaultClusterName) {
 		this.defaultClusterName = defaultClusterName;
+	}
+
+	public OIndex getDictionaryIndex() {
+		return getIndex(DICTIONARY_NAME);
 	}
 }

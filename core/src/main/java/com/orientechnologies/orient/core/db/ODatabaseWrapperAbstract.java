@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.cache.ODatabaseRecordCache;
+import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.storage.OStorage;

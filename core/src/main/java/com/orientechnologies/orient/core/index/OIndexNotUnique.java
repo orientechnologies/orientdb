@@ -32,7 +32,7 @@ public class OIndexNotUnique extends OIndexMVRBTreeAbstract {
 		super("NOTUNIQUE");
 	}
 
-	public OIndex put(final Object iKey, final ORecord<?> iSingleValue) {
+	public OIndex put(final Object iKey, final OIdentifiable iSingleValue) {
 		acquireExclusiveLock();
 
 		try {
@@ -41,7 +41,7 @@ public class OIndexNotUnique extends OIndexMVRBTreeAbstract {
 				values = new ORecordLazySet(configuration.getDatabase());
 
 			if (!iSingleValue.getIdentity().isValid())
-				iSingleValue.save();
+				((ORecord<?>) iSingleValue).save();
 
 			values.add(iSingleValue);
 
@@ -53,16 +53,18 @@ public class OIndexNotUnique extends OIndexMVRBTreeAbstract {
 		}
 	}
 
-	public OIndex remove(final Object iKey, final ORecord<?> value) {
+	public boolean remove(final Object iKey, final OIdentifiable iValue) {
 		acquireExclusiveLock();
 
 		try {
 			final Set<OIdentifiable> recs = get(iKey);
 			if (recs != null && !recs.isEmpty()) {
-				if (recs.remove(value))
+				if (recs.remove(iValue)) {
 					map.put(iKey, recs);
+					return true;
+				}
 			}
-			return this;
+			return false;
 
 		} finally {
 			releaseExclusiveLock();

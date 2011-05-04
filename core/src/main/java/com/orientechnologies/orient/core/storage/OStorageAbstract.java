@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.core.storage;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.orient.core.cache.OStorageRecordCache;
@@ -28,10 +31,11 @@ public abstract class OStorageAbstract implements OStorage {
 	protected final OStorageRecordCache				level2cache;
 	protected OStorageConfiguration						configuration;
 	protected String													name;
-	protected long														version	= 0;
+	protected long														version					= 0;
+	protected Map<String, Object>							sharedResources	= new HashMap<String, Object>();
 
-	protected boolean													open		= false;
-	protected OSharedResourceAdaptiveExternal	lock		= new OSharedResourceAdaptiveExternal();
+	protected boolean													open						= false;
+	protected OSharedResourceAdaptiveExternal	lock						= new OSharedResourceAdaptiveExternal();
 
 	public OStorageAbstract(final String iName, final String iFilePath, final String iMode) {
 		if (OStringSerializerHelper.contains(iName, '/'))
@@ -70,6 +74,14 @@ public abstract class OStorageAbstract implements OStorage {
 
 	public void close() {
 		close(false);
+	}
+
+	public Object getSharedResource(final String iName) {
+		return sharedResources.get(iName);
+	}
+
+	public void setSharedResource(final String iName, final Object iResource) {
+		sharedResources.put(iName, iResource);
 	}
 
 	/**

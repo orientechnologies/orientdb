@@ -32,7 +32,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -99,8 +98,6 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 			exportRecords();
 			if (includeIndexes)
 				exportIndexes();
-			if (includeDictionary)
-				exportDictionary();
 
 			listener.onMessage("\n\nDatabase export completed in " + (System.currentTimeMillis() - time) + "ms");
 
@@ -237,26 +234,6 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 		writer.endObject(1, true);
 
 		listener.onMessage("OK");
-	}
-
-	private void exportDictionary() throws IOException {
-		listener.onMessage("\nExporting dictionary...");
-
-		long tot = 0;
-		writer.beginObject(1, true, "dictionary");
-		ODictionary<ORecordInternal<?>> d = database.getDictionary();
-		if (d != null) {
-			Entry<String, ORecordInternal<?>> entry;
-			for (Iterator<Entry<String, ORecordInternal<?>>> iterator = d.iterator(); iterator.hasNext();) {
-				entry = iterator.next();
-				writer.writeAttribute(2, true, "key", entry.getKey());
-				writer.writeAttribute(0, false, "value", OJSONWriter.writeValue(entry.getValue()));
-				++tot;
-			}
-		}
-		writer.endObject(1, true);
-
-		listener.onMessage("OK (" + tot + " entries)");
 	}
 
 	private void exportIndexes() throws IOException {

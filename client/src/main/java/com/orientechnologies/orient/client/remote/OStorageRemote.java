@@ -30,7 +30,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.client.dictionary.ODictionaryClient;
 import com.orientechnologies.orient.client.distributed.OClientClusterManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
@@ -40,11 +39,9 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -67,7 +64,6 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 /**
  * This object is bound to each remote ODatabase instances.
  */
-@SuppressWarnings("unchecked")
 public class OStorageRemote extends OStorageAbstract {
 	private static final String								DEFAULT_HOST			= "localhost";
 	private static final String[]							DEFAULT_PORTS			= new String[] { "2424" };
@@ -171,6 +167,7 @@ public class OStorageRemote extends OStorageAbstract {
 			networkPool.clear();
 
 			level2cache.shutdown();
+			sharedResources.clear();
 
 			Orient.instance().unregisterStorage(this);
 			open = false;
@@ -785,144 +782,6 @@ public class OStorageRemote extends OStorageAbstract {
 		} while (true);
 	}
 
-	public <REC extends ORecordInternal<?>> REC dictionaryPut(final ODatabaseRecord iDatabase, final String iKey,
-			final ORecordInternal<?> iRecord) {
-		checkConnection();
-
-		do {
-
-			try {
-				final ORID rid = iRecord.getIdentity();
-
-				final OChannelBinaryClient network = beginRequest(OChannelBinaryProtocol.REQUEST_INDEX_PUT);
-				try {
-					network.writeString(iKey);
-					network.writeByte(iRecord.getRecordType());
-					network.writeRID(rid);
-				} finally {
-					endRequest(network);
-				}
-
-				try {
-					beginResponse(network);
-					return (REC) readRecordFromNetwork(network, iDatabase);
-				} finally {
-					endResponse(network);
-				}
-
-			} catch (Exception e) {
-				handleException("Error on insert record with key: " + iKey, e);
-
-			}
-		} while (true);
-	}
-
-	public <REC extends ORecordInternal<?>> REC dictionaryLookup(ODatabaseRecord iDatabase, final String iKey) {
-		checkConnection();
-
-		do {
-
-			try {
-
-				final OChannelBinaryClient network = beginRequest(OChannelBinaryProtocol.REQUEST_INDEX_LOOKUP);
-				try {
-					network.writeString(iKey);
-				} finally {
-					endRequest(network);
-				}
-
-				try {
-					beginResponse(network);
-					return (REC) readRecordFromNetwork(network, iDatabase);
-				} finally {
-					endResponse(network);
-				}
-
-			} catch (Exception e) {
-				handleException("Error on lookup record with key: " + iKey, e);
-
-			}
-		} while (true);
-	}
-
-	public <REC extends ORecordInternal<?>> REC dictionaryRemove(ODatabaseRecord iDatabase, Object iKey) {
-		checkConnection();
-
-		do {
-			try {
-
-				final OChannelBinaryClient network = beginRequest(OChannelBinaryProtocol.REQUEST_INDEX_REMOVE);
-				try {
-					network.writeString(iKey.toString());
-				} finally {
-					endRequest(network);
-				}
-
-				try {
-					beginResponse(network);
-					return (REC) readRecordFromNetwork(network, iDatabase);
-				} finally {
-					endResponse(network);
-				}
-
-			} catch (Exception e) {
-				handleException("Error on lookup record with key: " + iKey, e);
-
-			}
-		} while (true);
-	}
-
-	public int dictionarySize(final ODatabaseRecord iDatabase) {
-		checkConnection();
-
-		do {
-
-			try {
-
-				final OChannelBinaryClient network = beginRequest(OChannelBinaryProtocol.REQUEST_INDEX_SIZE);
-				endRequest(network);
-
-				try {
-					beginResponse(network);
-					return network.readInt();
-				} finally {
-					endResponse(network);
-				}
-
-			} catch (Exception e) {
-				handleException("Error on getting size of database's dictionary", e);
-
-			}
-		} while (true);
-	}
-
-	public ODictionary<?> createDictionary(final ODatabaseRecord iDatabase) throws Exception {
-		return new ODictionaryClient<Object>(iDatabase, this);
-	}
-
-	public Set<String> dictionaryKeys(final ODatabaseRecord iDatabase) {
-		checkConnection();
-
-		do {
-			try {
-
-				final OChannelBinaryClient network = beginRequest(OChannelBinaryProtocol.REQUEST_INDEX_KEYS);
-				endRequest(network);
-
-				try {
-					beginResponse(network);
-					return network.readStringSet();
-				} finally {
-					endResponse(network);
-				}
-
-			} catch (Exception e) {
-				handleException("Error on getting keys of database's dictionary", e);
-
-			}
-		} while (true);
-	}
-
 	public void synch() {
 	}
 
@@ -1164,7 +1023,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 				networkPoolCursor++;
 			}
-			
+
 		} finally {
 			lock.releaseSharedLock(locked);
 		}

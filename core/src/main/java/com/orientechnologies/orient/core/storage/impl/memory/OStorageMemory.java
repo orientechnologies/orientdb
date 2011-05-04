@@ -122,6 +122,7 @@ public class OStorageMemory extends OStorageEmbedded {
 			data.close();
 
 			level2cache.shutdown();
+			sharedResources.clear();
 
 			open = false;
 		} finally {
@@ -430,12 +431,6 @@ public class OStorageMemory extends OStorageEmbedded {
 	}
 
 	public void synch() {
-	}
-
-	public ODictionary<?> createDictionary(final ODatabaseRecord iDatabase) throws Exception {
-		if (dictionary == null)
-			dictionary = new ODictionaryMemory<Object>(iDatabase);
-		return dictionary;
 	}
 
 	public void browse(final int[] iClusterId, final ORecordBrowsingListener iListener, final ORecord<?> iRecord) {

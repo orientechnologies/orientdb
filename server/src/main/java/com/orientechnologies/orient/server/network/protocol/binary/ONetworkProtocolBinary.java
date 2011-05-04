@@ -53,8 +53,6 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordAbstract;
-import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -65,7 +63,6 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
-import com.orientechnologies.orient.core.storage.impl.local.ODictionaryLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
@@ -472,12 +469,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			final byte[] buffer = channel.readBytes();
 			final byte recordType = channel.readByte();
 
-//			final ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
-//			record.fill(connection.database, rid, 0, buffer);
-//			connection.database.save(record);
-			 final long location = connection.rawDatabase.save(rid, buffer, -1, recordType);
+			// final ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
+			// record.fill(connection.database, rid, 0, buffer);
+			// connection.database.save(record);
+			final long location = connection.rawDatabase.save(rid, buffer, -1, recordType);
 			sendOk(lastClientTxId);
-			//channel.writeLong(rid.getClusterPosition());
+			// channel.writeLong(rid.getClusterPosition());
 			channel.writeLong(location);
 			break;
 		}
@@ -502,8 +499,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				connection.database.getMetadata().getSchema().reload();
 			else if (connection.database.getMetadata().getIndexManager().getDocument().getIdentity().equals(rid))
 				connection.database.getMetadata().getIndexManager().reload();
-			else if (((ODictionaryLocal<?>) connection.database.getDictionary()).getTree().getRecord().getIdentity().equals(rid))
-				((ODictionaryLocal<?>) connection.database.getDictionary()).load();
 
 			sendOk(lastClientTxId);
 
@@ -647,73 +642,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 					channel.writeString(value.toString());
 				}
 			}
-			break;
-		}
-
-		case OChannelBinaryProtocol.REQUEST_INDEX_LOOKUP: {
-			data.commandInfo = "Index lookup";
-
-			final String key = channel.readString();
-			ORecordAbstract<?> value = (ORecordAbstract<?>) connection.database.getDictionary().get(key);
-
-			if (value != null)
-				value = ((ODatabaseRecordTx) connection.database.getUnderlying()).load(value);
-
-			sendOk(lastClientTxId);
-
-			writeRecord(value);
-			break;
-		}
-
-		case OChannelBinaryProtocol.REQUEST_INDEX_PUT: {
-			data.commandInfo = "Index put";
-
-			String key = channel.readString();
-			ORecordInternal<?> value = ORecordFactory.newInstance(channel.readByte());
-
-			final ORecordId rid = channel.readRID();
-			value.setIdentity(rid);
-			value.setDatabase(connection.database);
-
-			value = connection.database.getDictionary().putRecord(key, value);
-
-			if (value != null)
-				((ODatabaseRecordTx) connection.database.getUnderlying()).load(value);
-
-			sendOk(lastClientTxId);
-
-			writeRecord(value);
-			break;
-		}
-
-		case OChannelBinaryProtocol.REQUEST_INDEX_REMOVE: {
-			data.commandInfo = "Index remove";
-
-			final String key = channel.readString();
-			final ORecordInternal<?> value = connection.database.getDictionary().remove(key);
-
-			if (value != null)
-				((ODatabaseRecordTx) connection.database.getUnderlying()).load(value);
-
-			sendOk(lastClientTxId);
-
-			writeRecord(value);
-			break;
-		}
-
-		case OChannelBinaryProtocol.REQUEST_INDEX_SIZE: {
-			data.commandInfo = "Index size";
-
-			sendOk(lastClientTxId);
-			channel.writeInt(connection.database.getDictionary().size());
-			break;
-		}
-
-		case OChannelBinaryProtocol.REQUEST_INDEX_KEYS: {
-			data.commandInfo = "Index keys";
-
-			sendOk(lastClientTxId);
-			channel.writeCollectionString(connection.database.getDictionary().keySet());
 			break;
 		}
 

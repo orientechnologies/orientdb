@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  */
 public class OProperty extends ODocumentWrapperNoClass implements Comparable<OProperty> {
 	public static enum INDEX_TYPE {
-		UNIQUE, NOTUNIQUE, FULLTEXT
+		UNIQUE, NOTUNIQUE, FULLTEXT, DICTIONARY
 	};
 
 	private OClass						owner;

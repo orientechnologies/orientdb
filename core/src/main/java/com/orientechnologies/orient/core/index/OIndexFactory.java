@@ -31,6 +31,7 @@ public class OIndexFactory extends ODynamicFactory<String, Class<? extends OInde
 		register(INDEX_TYPE.UNIQUE.toString(), OIndexUnique.class);
 		register(INDEX_TYPE.NOTUNIQUE.toString(), OIndexNotUnique.class);
 		register(INDEX_TYPE.FULLTEXT.toString(), OIndexFullText.class);
+		register(INDEX_TYPE.DICTIONARY.toString(), OIndexDictionary.class);
 	}
 
 	@SuppressWarnings("unchecked")

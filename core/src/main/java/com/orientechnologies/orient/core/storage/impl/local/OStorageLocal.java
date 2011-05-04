@@ -44,7 +44,6 @@ import com.orientechnologies.orient.core.config.OStorageMemoryClusterConfigurati
 import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -290,6 +289,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
 			level2cache.shutdown();
 			configuration.close();
+			sharedResources.clear();
 
 			OMMapManager.flush();
 
@@ -825,10 +825,6 @@ public class OStorageLocal extends OStorageEmbedded {
 		} finally {
 			lock.releaseSharedLock(locked);
 		}
-	}
-
-	public ODictionary<?> createDictionary(ODatabaseRecord iDatabase) throws Exception {
-		return new ODictionaryLocal<Object>(iDatabase);
 	}
 
 	public String getStoragePath() {

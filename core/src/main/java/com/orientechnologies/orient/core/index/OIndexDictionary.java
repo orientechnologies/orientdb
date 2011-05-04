@@ -17,7 +17,6 @@ package com.orientechnologies.orient.core.index;
 
 import java.util.Set;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 
@@ -27,9 +26,9 @@ import com.orientechnologies.orient.core.db.record.ORecordLazySet;
  * @author Luca Garulli
  * 
  */
-public class OIndexUnique extends OIndexMVRBTreeAbstract {
-	public OIndexUnique() {
-		super("UNIQUE");
+public class OIndexDictionary extends OIndexMVRBTreeAbstract {
+	public OIndexDictionary() {
+		super("DICTIONARY");
 	}
 
 	public OIndex put(final Object iKey, final OIdentifiable iSingleValue) {
@@ -40,14 +39,8 @@ public class OIndexUnique extends OIndexMVRBTreeAbstract {
 
 			if (values == null)
 				values = new ORecordLazySet(configuration.getDatabase());
-			else if (values.size() == 1) {
-				// CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
-				if (!values.contains(iSingleValue))
-					throw new OIndexException("Found duplicated key '" + iKey + "' on unique index '" + name + "'");
-				else
-					return this;
-			} else if (values.size() > 1)
-				throw new OIndexException("Found duplicated key '" + iKey + "' on unique index '" + name + "'");
+			else
+				values.clear();
 
 			values.add(iSingleValue);
 
@@ -56,17 +49,6 @@ public class OIndexUnique extends OIndexMVRBTreeAbstract {
 
 		} finally {
 			releaseExclusiveLock();
-		}
-	}
-
-	@Override
-	public void checkEntry(final OIdentifiable iRecord, final Object iKey) {
-		// CHECK IF ALREADY EXIST
-		Set<OIdentifiable> indexedRIDs = get(iKey);
-		if (indexedRIDs != null && !indexedRIDs.isEmpty()) {
-			if (!indexedRIDs.contains(iRecord))
-				OLogManager.instance().exception("Found duplicated key '%s' previously assigned to the record %s", null,
-						OIndexException.class, iKey, indexedRIDs.iterator().next());
 		}
 	}
 }

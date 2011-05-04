@@ -23,7 +23,6 @@ import java.util.Set;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -93,7 +92,7 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 	 * @param iDocument
 	 *          The document to index
 	 */
-	public OIndex put(final Object iKey, final ORecord<?> iSingleValue) {
+	public OIndex put(final Object iKey, final OIdentifiable iSingleValue) {
 		if (iKey == null)
 			return this;
 
@@ -150,19 +149,21 @@ public class OIndexFullText extends OIndexMVRBTreeAbstract {
 		return this;
 	}
 
-	public OIndex remove(final Object iKey, final ORecord<?> value) {
+	public boolean remove(final Object iKey, final OIdentifiable value) {
 		acquireExclusiveLock();
 
 		try {
 			final Set<OIdentifiable> recs = get(iKey);
 			if (recs != null && !recs.isEmpty()) {
-				if (recs.remove(value))
+				if (recs.remove(value)) {
 					map.put(iKey, recs);
+					return true;
+				}
 			}
 		} finally {
 			releaseExclusiveLock();
 		}
-		return this;
+		return false;
 	}
 
 	@Override

@@ -57,7 +57,7 @@ public class DictionaryTest {
 	public void testDictionaryUpdate() throws IOException {
 		database.open("admin", "admin");
 
-		final int originalSize = database.getDictionary().size();
+		final long originalSize = database.getDictionary().size();
 
 		database.getDictionary().put("key1", database.newInstance().value("Text changed"));
 
@@ -74,7 +74,7 @@ public class DictionaryTest {
 	public void testDictionaryDelete() throws IOException {
 		database.open("admin", "admin");
 
-		final int originalSize = database.getDictionary().size();
+		final long originalSize = database.getDictionary().size();
 		Assert.assertNotNull(database.getDictionary().remove("key1"));
 
 		database.close();
@@ -89,7 +89,7 @@ public class DictionaryTest {
 	public void testDictionaryMassiveCreate() throws IOException {
 		database.open("admin", "admin");
 
-		final int originalSize = database.getDictionary().size();
+		final long originalSize = database.getDictionary().size();
 
 		// ASSURE TO STORE THE PAGE-SIZE + 3 FORCING THE CREATION OF LEFT AND RIGHT
 		final int total = 1000;

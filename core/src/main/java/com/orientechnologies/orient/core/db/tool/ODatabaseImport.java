@@ -113,8 +113,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 					importRecords();
 				else if (tag.equals("indexes"))
 					importManualIndexes();
-				else if (tag.equals("dictionary"))
-					importDictionary();
 			}
 
 			deleteHoleRecords();
@@ -191,41 +189,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
 
 		listener.onMessage("OK");
-	}
-
-	@SuppressWarnings("unused")
-	private long importDictionary() throws IOException, ParseException {
-		listener.onMessage("\nImporting database dictionary...");
-
-		String dictionaryKey;
-		String dictionaryValue;
-
-		final ODocument doc = new ODocument(database);
-		final ORecordId rid = new ORecordId();
-
-		long tot = 0;
-
-		jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
-
-		do {
-			dictionaryKey = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"key\"")
-					.readString(OJSONReader.COMMA_SEPARATOR);
-			dictionaryValue = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"value\"")
-					.readString(OJSONReader.NEXT_IN_OBJECT);
-
-			if (dictionaryValue.length() >= 4)
-				rid.fromString(dictionaryValue.substring(1));
-
-			// AVOID TO CHANGE THE DICTIONARY BECAUSE IT'S IMPORTED BY UNDERLYING RECORDS
-			// ((ODictionary<ODocument>) database.getDictionary()).put(dictionaryKey, doc);
-			tot++;
-		} while (jsonReader.lastChar() == ',');
-
-		listener.onMessage("OK (" + tot + " entries)");
-
-		jsonReader.readNext(OJSONReader.END_OBJECT);
-
-		return tot;
 	}
 
 	@SuppressWarnings("unused")

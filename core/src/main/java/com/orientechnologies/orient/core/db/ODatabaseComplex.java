@@ -55,6 +55,8 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 */
 	public <RET extends Object> RET newInstance();
 
+	public ODictionary<T> getDictionary();
+
 	/**
 	 * Returns the current user logged into the database.
 	 * 
@@ -209,13 +211,6 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 * @return The OMetadata instance.
 	 */
 	public OMetadata getMetadata();
-
-	/**
-	 * Return the database dictionary. Can't be null.
-	 * 
-	 * @return The ODictionary instance.
-	 */
-	public ODictionary<T> getDictionary();
 
 	/**
 	 * Returns the database owner. Used in wrapped instances to know the up level ODatabase instance.

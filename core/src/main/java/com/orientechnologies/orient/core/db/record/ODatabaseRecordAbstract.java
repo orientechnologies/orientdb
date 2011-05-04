@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
-import com.orientechnologies.orient.core.dictionary.ODictionaryInternal;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -64,14 +63,13 @@ import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<ODatabaseRaw> implements ODatabaseRecord {
 
-	private ODictionaryInternal<ORecordInternal<?>>	dictionary;
-	private OMetadata																metadata;
-	private OUser																		user;
-	private static final String											DEF_RECORD_FORMAT	= "csv";
-	private Class<? extends ORecordInternal<?>>			recordClass;
-	private String																	recordFormat;
-	private Set<ORecordHook>												hooks							= new HashSet<ORecordHook>();
-	private boolean																	retainRecords			= true;
+	private OMetadata														metadata;
+	private OUser																user;
+	private static final String									DEF_RECORD_FORMAT	= "csv";
+	private Class<? extends ORecordInternal<?>>	recordClass;
+	private String															recordFormat;
+	private Set<ORecordHook>										hooks							= new HashSet<ORecordHook>();
+	private boolean															retainRecords			= true;
 
 	public ODatabaseRecordAbstract(final String iURL, final Class<? extends ORecordInternal<?>> iRecordClass) {
 		super(new ODatabaseRaw(iURL));
@@ -95,9 +93,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			metadata.load();
 
 			recordFormat = DEF_RECORD_FORMAT;
-
-			dictionary = (ODictionaryInternal<ORecordInternal<?>>) getStorage().createDictionary(this);
-			dictionary.load();
 
 			user = getMetadata().getSecurity().getUser(iUserName);
 			if (user == null)
@@ -138,9 +133,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			createRolesAndUsers();
 			user = getMetadata().getSecurity().getUser(OUser.ADMIN);
 
-			dictionary = (ODictionaryInternal<ORecordInternal<?>>) getStorage().createDictionary(this);
-			dictionary.create();
-
 			// if (getStorage() instanceof OStorageEmbedded) {
 			registerHook(new OUserTrigger());
 			registerHook(new OPropertyIndexManager());
@@ -157,10 +149,14 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		super.close();
 
 		metadata = null;
-		dictionary = null;
 		hooks.clear();
 
 		user = null;
+	}
+
+	public ODictionary<ORecordInternal<?>> getDictionary() {
+		checkOpeness();
+		return new ODictionary<ORecordInternal<?>>(metadata.getIndexManager().getDictionaryIndex());
 	}
 
 	public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord) {
@@ -301,11 +297,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	public OMetadata getMetadata() {
 		checkOpeness();
 		return metadata;
-	}
-
-	public ODictionary<ORecordInternal<?>> getDictionary() {
-		checkOpeness();
-		return dictionary;
 	}
 
 	public <DB extends ODatabaseRecord> DB checkSecurity(final String iResource, final int iOperation) {

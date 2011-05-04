@@ -52,13 +52,6 @@ public class OChannelBinaryProtocol {
 	public static final byte	REQUEST_COUNT									= 40;
 	public static final byte	REQUEST_COMMAND								= 41;
 
-	public static final byte	REQUEST_INDEX_LOOKUP					= 50;
-	public static final byte	REQUEST_INDEX_PUT							= 51;
-	public static final byte	REQUEST_INDEX_REMOVE					= 52;
-	public static final byte	REQUEST_INDEX_SIZE						= 53;
-	public static final byte	REQUEST_INDEX_KEYS						= 54;
-	public static final byte	REQUEST_INDEX_QUERY						= 55;
-
 	public static final byte	REQUEST_TX_COMMIT							= 60;
 
 	public static final byte	REQUEST_CONFIG_GET						= 70;

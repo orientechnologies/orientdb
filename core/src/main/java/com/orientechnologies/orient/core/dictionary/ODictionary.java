@@ -15,85 +15,51 @@
  */
 package com.orientechnologies.orient.core.dictionary;
 
-import java.util.Map.Entry;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
-/**
- * Main TreeMap to handle pairs of Key/Values. This is the entry point for all the root objects.<br/>
- * <br/>
- * Usage:<br/>
- * <br/>
- * // BIND WITH NAME 'company'<br/>
- * db.getDictionary().put("company", company );<br/>
- * <br/>
- * // RETRIEVE IT<br/>
- * company = db.getDictionary().get("company");
- * 
- * @author Luca Garulli
- * 
- */
-public interface ODictionary<T extends Object> extends Iterable<Entry<String, T>> {
-	/**
-	 * Gets a record by its key.
-	 * 
-	 * @param iKey
-	 *          Key to search
-	 * @return The Record if found, otherwise null
-	 */
-	public <RET extends Object> RET get(Object iKey);
+@SuppressWarnings("unchecked")
+public class ODictionary<T extends Object> {
+	private OIndex	index;
 
-	/**
-	 * Gets a record by its key and specifying the fetch plan to use.
-	 * 
-	 * @param iKey
-	 *          Key to search
-	 * @param iFetchPlan
-	 *          Fetch plan to use (see FetchPlan)
-	 * @return The Record if found, otherwise null
-	 */
-	public <RET extends Object> RET get(final Object iKey, final String iFetchPlan);
+	public ODictionary(final OIndex iIndex) {
+		index = iIndex;
+	}
 
-	/**
-	 * Puts a new association between the iKey and the iValue. If the association already exists, replace it with the new one and
-	 * return the previous value.
-	 * 
-	 * @param iKey
-	 *          Key to bind
-	 * @param iValue
-	 *          Value to bind.
-	 * @return The previous value if any, otherwise null
-	 */
-	public <RET extends Object> RET put(String iKey, Object iValue);
+	public <RET extends T> RET get(final String iKey) {
+		final Set<OIdentifiable> values = index.get(iKey);
+		if (values.isEmpty())
+			return null;
+		return (RET) values.iterator().next();
+	}
 
-	/**
-	 * Checks if the dictionary contains a key.
-	 * 
-	 * @param iKey
-	 *          Key to search
-	 * @return True if found, otherwise false
-	 */
-	public boolean containsKey(Object iKey);
+	public <RET extends T> RET get(final String iKey, final String iFetchPlan) {
+		final Set<OIdentifiable> values = index.get(iKey);
+		if (values.isEmpty())
+			return null;
+		return (RET) ((ODocument) values.iterator().next()).load(iFetchPlan);
+	}
 
-	/**
-	 * Removes an entry if exists.
-	 * 
-	 * @param iKey
-	 *          Key to remove
-	 * @return The Value associated with the key if found, otherwise null
-	 */
-	public <RET extends Object> RET remove(Object iKey);
+	public void put(final String iKey, final Object iValue) {
+		index.put(iKey, (OIdentifiable) iValue);
+	}
 
-	/**
-	 * Returns the total number of elements in the dictionary.
-	 */
-	public int size();
+	public boolean containsKey(final String iKey) {
+		return index.contains(iKey);
+	}
 
-	/**
-	 * Returns the set of all the keys.
-	 */
-	public Set<String> keySet();
+	public boolean remove(final String iKey) {
+		return index.remove(iKey);
+	}
 
-	public ORecordInternal<?> putRecord(String iKey, ORecordInternal<?> iValue);
+	public long size() {
+		return index.size();
+	}
+
+	public Iterable<Object> keys() {
+		return index.keys();
+	}
 }

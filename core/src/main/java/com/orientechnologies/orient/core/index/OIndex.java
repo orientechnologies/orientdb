@@ -23,7 +23,6 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -40,13 +39,22 @@ public interface OIndex extends Iterable<Entry<Object, Set<OIdentifiable>>> {
 
 	public String getName();
 
+	/**
+	 * Gets the set of records associated with the passed key.
+	 * 
+	 * @param iKey
+	 *          Key to search
+	 * @return The Record set if found, otherwise an empty Set
+	 */
 	public Set<OIdentifiable> get(Object iKey);
 
-	public OIndex put(final Object iKey, final ORecord<?> iValue);
+	public boolean contains(Object iKey);
 
-	public OIndex remove(final Object iKey);
+	public OIndex put(final Object iKey, final OIdentifiable iValue);
 
-	public OIndex remove(Object iKey, ORecord<?> iRID);
+	public boolean remove(final Object iKey);
+
+	public boolean remove(Object iKey, OIdentifiable iRID);
 
 	public OIndex clear();
 
@@ -86,9 +94,11 @@ public interface OIndex extends Iterable<Entry<Object, Set<OIdentifiable>>> {
 
 	public Iterator<Entry<Object, Set<OIdentifiable>>> iterator();
 
+	public Iterable<Object> keys();
+
 	public ORID getIdentity();
 
-	public void checkEntry(final ODocument iRecord, final Object iKey);
+	public void checkEntry(final OIdentifiable iRecord, final Object iKey);
 
 	public void setCallback(final OIndexCallback iCallback);
 

@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.core.dictionary;
 
-import java.util.Iterator;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -27,56 +23,45 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 /**
  * Wrapper of dictionary instance that convert values in records.
  */
-public class ODictionaryWrapper implements ODictionary<Object> {
+public class ODictionaryWrapper extends ODictionary<Object> {
 	private ODatabaseObject		database;
 	private ODatabaseDocument	recordDatabase;
 
 	public ODictionaryWrapper(final ODatabaseObject iDatabase, final ODatabaseDocument iRecordDatabase) {
+		super(iRecordDatabase.getMetadata().getIndexManager().getDictionaryIndex());
 		this.database = iDatabase;
 		this.recordDatabase = iRecordDatabase;
 	}
 
-	public boolean containsKey(final Object iKey) {
+	public boolean containsKey(final String iKey) {
 		return recordDatabase.getDictionary().containsKey(iKey);
 	}
 
 	@SuppressWarnings("unchecked")
-	public <RET extends Object> RET get(final Object iKey) {
+	public <RET extends Object> RET get(final String iKey) {
 		return (RET) get(iKey, null);
 	}
 
 	@SuppressWarnings("unchecked")
-	public <RET extends Object> RET get(final Object iKey, final String iFetchPlan) {
+	public <RET extends Object> RET get(final String iKey, final String iFetchPlan) {
 		final ORecordInternal<?> record = recordDatabase.getDictionary().get(iKey);
 		return (RET) database.getUserObjectByRecord(record, iFetchPlan);
 	}
 
-	public ORecordInternal<?> putRecord(String iKey, ORecordInternal<?> iValue) {
-		return (ORecordInternal<?>) put(iKey, iValue);
-	}
-
-	@SuppressWarnings("unchecked")
-	public <RET extends Object> RET put(final String iKey, final Object iValue) {
+	public void put(final String iKey, final Object iValue) {
 		final ODocument record = (ODocument) database.getRecordByUserObject(iValue, false);
-		final ORecordInternal<?> oldRecord = recordDatabase.getDictionary().put(iKey, record);
-		return (RET) database.getUserObjectByRecord(oldRecord, null);
+		recordDatabase.getDictionary().put(iKey, record);
 	}
 
-	@SuppressWarnings("unchecked")
-	public <RET extends Object> RET remove(final Object iKey) {
-		final ORecordInternal<?> record = recordDatabase.getDictionary().remove(iKey);
-		return (RET) database.getUserObjectByRecord(record, null);
+	public boolean remove(final String iKey) {
+		return recordDatabase.getDictionary().remove(iKey);
 	}
 
-	public Iterator<Entry<String, Object>> iterator() {
-		return new ODictionaryIteratorWrapper(recordDatabase, recordDatabase.getDictionary().iterator());
-	}
-
-	public int size() {
+	public long size() {
 		return recordDatabase.getDictionary().size();
 	}
 
-	public Set<String> keySet() {
-		return recordDatabase.getDictionary().keySet();
+	public Iterable<Object> keys() {
+		return recordDatabase.getDictionary().keys();
 	}
 }

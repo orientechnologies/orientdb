@@ -31,15 +31,14 @@ public abstract class ODatabaseImpExpAbstract {
 	protected ODatabaseRecord					database;
 	protected String									fileName;
 
-	protected boolean									includeInfo				= true;
+	protected boolean									includeInfo			= true;
 	protected Set<String>							includeClusters;
 	protected Set<String>							excludeClusters;
 	protected Set<String>							includeClasses;
 	protected Set<String>							excludeClasses;
-	protected boolean									includeIndexes		= true;
-	protected boolean									includeSchema			= true;
-	protected boolean									includeSecurity		= false;
-	protected boolean									includeDictionary	= true;
+	protected boolean									includeIndexes	= true;
+	protected boolean									includeSchema		= true;
+	protected boolean									includeSecurity	= false;
 	protected OCommandOutputListener	listener;
 
 	public ODatabaseImpExpAbstract(final ODatabaseRecord iDatabase, final String iFileName, final OCommandOutputListener iListener) {

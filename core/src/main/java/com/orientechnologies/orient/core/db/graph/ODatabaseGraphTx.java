@@ -87,6 +87,10 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 		return this;
 	}
 
+	public ODictionary<OGraphElement> getDictionary() {
+		throw null;
+	}
+
 	@SuppressWarnings("unchecked")
 	public OGraphElement newInstance() {
 		return new OGraphVertex(this);
@@ -158,10 +162,6 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 		iObject.getDocument().delete();
 		unregisterPojo(iObject, iObject.getDocument());
 		return this;
-	}
-
-	public ODictionary<OGraphElement> getDictionary() {
-		return null;
 	}
 
 	public OGraphVertexIterator browseVertexes() {

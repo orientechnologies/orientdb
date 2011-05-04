@@ -178,7 +178,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 		return this;
 	}
 
-	public Set<OIdentifiable> get(Object iKey) {
+	public Set<OIdentifiable> get(final Object iKey) {
 		acquireExclusiveLock();
 
 		try {
@@ -188,6 +188,17 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 				return ORecordLazySet.EMPTY_SET;
 
 			return values;
+
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
+
+	public boolean contains(final Object iKey) {
+		acquireExclusiveLock();
+
+		try {
+			return map.containsKey(iKey);
 
 		} finally {
 			releaseExclusiveLock();
@@ -311,16 +322,19 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 		return this;
 	}
 
-	public OIndex remove(final Object key) {
+	public boolean remove(final Object iKey, final OIdentifiable iValue) {
+		return remove(iKey);
+	}
+
+	public boolean remove(final Object key) {
 		acquireExclusiveLock();
 
 		try {
-			map.remove(key);
+			return map.remove(key) != null;
 
 		} finally {
 			releaseExclusiveLock();
 		}
-		return this;
 	}
 
 	public OIndex load() {
@@ -386,6 +400,17 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 		}
 	}
 
+	public Iterable<Object> keys() {
+		acquireExclusiveLock();
+
+		try {
+			return map.keySet();
+
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
+
 	protected void load(final ODatabaseRecord iDatabase, final ORID iRecordId) {
 		installProfilerHooks();
 
@@ -441,7 +466,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 		return this;
 	}
 
-	public void checkEntry(final ODocument iRecord, final Object iKey) {
+	public void checkEntry(final OIdentifiable iRecord, final Object iKey) {
 	}
 
 	public void unload() {
