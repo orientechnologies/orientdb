@@ -15,32 +15,31 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
 /**
- * Base equality operator that not admit NULL in the LEFT and in the RIGHT operands. Abstract class.
+ * BETWEEN operator.
  * 
  * @author Luca Garulli
  * 
  */
-public abstract class OQueryOperatorEqualityNotNulls extends OQueryOperatorEquality {
+public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
 
-	protected OQueryOperatorEqualityNotNulls(final String iKeyword, final int iPrecedence, final boolean iLogical) {
-		super(iKeyword, iPrecedence, iLogical);
-	}
-
-	protected OQueryOperatorEqualityNotNulls(final String iKeyword, final int iPrecedence, final boolean iLogical,
-			final int iExpectedRightWords) {
-		super(iKeyword, iPrecedence, iLogical, iExpectedRightWords);
+	public OQueryOperatorBetween() {
+		super("BETWEEN", 5, false, 3);
 	}
 
 	@Override
-	public boolean evaluateRecord(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
+	@SuppressWarnings("unchecked")
+	protected boolean evaluateExpression(final ORecordInternal<?> iRecord, OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight) {
-		if (iLeft == null || iRight == null)
-			return false;
+		return ((Comparable<Object>) iLeft).compareTo(OType.convert(iRight, iLeft.getClass())) >= 0;
+	}
 
-		return super.evaluateRecord(iRecord, iCondition, iLeft, iRight);
+	@Override
+	public String getSyntax() {
+		return "<left> " + keyword + " <minRange> AND <maxRange>";
 	}
 }

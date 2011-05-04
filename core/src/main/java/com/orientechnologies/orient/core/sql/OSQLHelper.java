@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorAnd;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContains;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsAll;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsKey;
@@ -68,7 +69,7 @@ public class OSQLHelper {
 			new OQueryOperatorMinor(), new OQueryOperatorMajorEquals(), new OQueryOperatorContainsAll(), new OQueryOperatorMajor(),
 			new OQueryOperatorLike(), new OQueryOperatorIs(), new OQueryOperatorIn(), new OQueryOperatorContainsKey(),
 			new OQueryOperatorContainsValue(), new OQueryOperatorContainsText(), new OQueryOperatorContains(),
-			new OQueryOperatorContainsText(), new OQueryOperatorTraverse() };
+			new OQueryOperatorContainsText(), new OQueryOperatorTraverse(), new OQueryOperatorBetween() };
 
 	public static int nextWord(final String iText, final String iTextUpperCase, int ioCurrentPosition, final StringBuilder ioWord,
 			final boolean iForceUpperCase) {

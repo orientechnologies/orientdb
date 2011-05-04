@@ -770,4 +770,20 @@ public class SQLSelectTest {
 
 		database.close();
 	}
+
+	@Test
+	public void queryBetween() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(
+				new OSQLSynchQuery<ODocument>("select * from cluster:Animal where ID between 10 and 20")).execute();
+
+		for (int i = 0; i < result.size(); ++i) {
+			record = result.get(i);
+
+			Assert.assertTrue(((Integer) record.field("id")) >= 10 && ((Integer) record.field("id")) <= 20);
+		}
+
+		database.close();
+	}
 }

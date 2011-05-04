@@ -73,8 +73,8 @@ public class SQLCommandsTest {
 	public void removeProperty() {
 		database.open("admin", "admin");
 
-		database.command(new OCommandSQL("remove property account.timesheet")).execute();
-		database.command(new OCommandSQL("remove property account.tags")).execute();
+		database.command(new OCommandSQL("drop property account.timesheet")).execute();
+		database.command(new OCommandSQL("drop property account.tags")).execute();
 
 		Assert.assertFalse(database.getMetadata().getSchema().getClass("account").existsProperty("timesheet"));
 		Assert.assertFalse(database.getMetadata().getSchema().getClass("account").existsProperty("tags"));

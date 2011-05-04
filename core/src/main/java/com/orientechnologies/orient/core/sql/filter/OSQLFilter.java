@@ -47,6 +47,7 @@ public class OSQLFilter extends OCommandToParse {
 	protected List<String>								targetRecords;
 	protected Map<String, String>					targetClusters;
 	protected Map<OClass, String>					targetClasses;
+	protected String											targetIndex;
 	protected Set<OProperty>							properties	= new HashSet<OProperty>();
 	protected OSQLFilterCondition					rootCondition;
 	protected List<String>								recordTransformed;
@@ -146,6 +147,10 @@ public class OSQLFilter extends OCommandToParse {
 					if (targetClusters == null)
 						targetClusters = new HashMap<String, String>();
 					targetClusters.put(subjectName.substring(OCommandExecutorSQLAbstract.CLUSTER_PREFIX.length()), alias);
+
+				} else if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.INDEX_PREFIX)) {
+					// REGISTER AS CLUSTER
+					targetIndex = subjectName.substring(OCommandExecutorSQLAbstract.CLUSTER_PREFIX.length());
 				} else {
 					if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX))
 						// REGISTER AS CLASS
@@ -168,7 +173,7 @@ public class OSQLFilter extends OCommandToParse {
 	}
 
 	private OSQLFilterCondition extractConditions(final OSQLFilterCondition iParentCondition) {
-		OSQLFilterCondition currentCondition = extractCondition();
+		final OSQLFilterCondition currentCondition = extractCondition();
 
 		// CHECK IF THERE IS ANOTHER CONDITION ON RIGHT
 		if (!jumpWhiteSpaces())
@@ -178,9 +183,9 @@ public class OSQLFilter extends OCommandToParse {
 		if (currentPos > -1 && text.charAt(currentPos) == ')')
 			return currentCondition;
 
-		OQueryOperator nextOperator = extractConditionOperator();
+		final OQueryOperator nextOperator = extractConditionOperator();
 
-		OSQLFilterCondition parentCondition = new OSQLFilterCondition(currentCondition, nextOperator);
+		final OSQLFilterCondition parentCondition = new OSQLFilterCondition(currentCondition, nextOperator);
 
 		parentCondition.right = extractConditions(parentCondition);
 
@@ -192,8 +197,13 @@ public class OSQLFilter extends OCommandToParse {
 			// END OF TEXT
 			return null;
 
+		// EXTRACT ITEMS
+		final Object left = extractConditionItem(1);
+		final OQueryOperator oper = extractConditionOperator();
+		final Object right = oper != null ? extractConditionItem(oper.expectedRightWords) : null;
+
 		// CREATE THE CONDITION OBJECT
-		return new OSQLFilterCondition(extractConditionItem(), extractConditionOperator(), extractConditionItem());
+		return new OSQLFilterCondition(left, oper, right);
 	}
 
 	private OQueryOperator extractConditionOperator() {
@@ -229,69 +239,69 @@ public class OSQLFilter extends OCommandToParse {
 		throw new OQueryParsingException("Unknown operator " + word, text, currentPos);
 	}
 
-	private Object extractConditionItem() {
-		Object result = null;
-		String[] words = nextValue(true);
-		if (words == null)
-			return null;
+	private Object extractConditionItem(final int iExpectedWords) {
+		final Object[] result = new Object[iExpectedWords];
 
-		if (words[0].length() > 0 && words[0].charAt(0) == OStringSerializerHelper.PARENTHESIS_BEGIN) {
-			braces++;
+		for (int i = 0; i < iExpectedWords; ++i) {
+			String[] words = nextValue(true);
+			if (words == null)
+				break;
 
-			// SUB-CONDITION
-			currentPos = currentPos - words[0].length() + 1;
+			if (words[0].length() > 0 && words[0].charAt(0) == OStringSerializerHelper.PARENTHESIS_BEGIN) {
+				braces++;
 
-			OSQLFilterCondition subCondition = extractConditions(null);
+				// SUB-CONDITION
+				currentPos = currentPos - words[0].length() + 1;
 
-			// OSQLFilterCondition subCondition = new OSQLFilterCondition(extractConditionItem(), extractConditionOperator(),
-			// extractConditionItem());
+				OSQLFilterCondition subCondition = extractConditions(null);
 
-			if (!jumpWhiteSpaces() || text.charAt(currentPos) == ')')
-				braces--;
-			currentPos++;
+				if (!jumpWhiteSpaces() || text.charAt(currentPos) == ')')
+					braces--;
+				currentPos++;
 
-			return subCondition;
-		} else if (words[0].charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN) {
-			// COLLECTION OF ELEMENTS
-			currentPos = currentPos - words[0].length();
+				result[i] = subCondition;
+			} else if (words[0].charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN) {
+				// COLLECTION OF ELEMENTS
+				currentPos = currentPos - words[0].length();
 
-			final List<String> stringItems = new ArrayList<String>();
-			currentPos = OStringSerializerHelper.getCollection(text, currentPos, stringItems);
+				final List<String> stringItems = new ArrayList<String>();
+				currentPos = OStringSerializerHelper.getCollection(text, currentPos, stringItems);
 
-			final List<Object> coll = new ArrayList<Object>();
-			for (String s : stringItems) {
-				coll.add(OSQLHelper.parseValue(this, database, this, s));
-			}
-
-			currentPos++;
-
-			return coll;
-
-		} else if (words[0].startsWith(OSQLFilterItemFieldAll.NAME + OStringSerializerHelper.PARENTHESIS_BEGIN)) {
-
-			result = new OSQLFilterItemFieldAll(this, words[1]);
-
-		} else if (words[0].startsWith(OSQLFilterItemFieldAny.NAME + OStringSerializerHelper.PARENTHESIS_BEGIN)) {
-
-			result = new OSQLFilterItemFieldAny(this, words[1]);
-
-		} else {
-
-			if (words[0].equals("NOT")) {
-				// GET THE NEXT VALUE
-				String[] nextWord = nextValue(true);
-				if (nextWord != null && nextWord.length == 2) {
-					words[1] = words[1] + " " + nextWord[1];
-
-					if (words[1].endsWith(")"))
-						words[1] = words[1].substring(0, words[1].length() - 1);
+				final List<Object> coll = new ArrayList<Object>();
+				for (String s : stringItems) {
+					coll.add(OSQLHelper.parseValue(this, database, this, s));
 				}
-			}
 
-			result = OSQLHelper.parseValue(this, database, this, words[1]);
+				currentPos++;
+
+				result[i] = coll;
+
+			} else if (words[0].startsWith(OSQLFilterItemFieldAll.NAME + OStringSerializerHelper.PARENTHESIS_BEGIN)) {
+
+				result[i] = new OSQLFilterItemFieldAll(this, words[1]);
+
+			} else if (words[0].startsWith(OSQLFilterItemFieldAny.NAME + OStringSerializerHelper.PARENTHESIS_BEGIN)) {
+
+				result[i] = new OSQLFilterItemFieldAny(this, words[1]);
+
+			} else {
+
+				if (words[0].equals("NOT")) {
+					// GET THE NEXT VALUE
+					String[] nextWord = nextValue(true);
+					if (nextWord != null && nextWord.length == 2) {
+						words[1] = words[1] + " " + nextWord[1];
+
+						if (words[1].endsWith(")"))
+							words[1] = words[1].substring(0, words[1].length() - 1);
+					}
+				}
+
+				result[i] = OSQLHelper.parseValue(this, database, this, words[1]);
+			}
 		}
 
-		return result;
+		return iExpectedWords == 1 ? result[0] : result;
 	}
 
 	public Map<String, String> getTargetClusters() {
@@ -304,6 +314,10 @@ public class OSQLFilter extends OCommandToParse {
 
 	public List<String> getTargetRecords() {
 		return targetRecords;
+	}
+
+	public String getTargetIndex() {
+		return targetIndex;
 	}
 
 	public OSQLFilterCondition getRootCondition() {
