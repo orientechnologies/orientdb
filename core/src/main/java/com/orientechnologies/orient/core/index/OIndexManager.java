@@ -24,6 +24,7 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -32,6 +33,7 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 public class OIndexManager extends ODocumentWrapperNoClass {
 	public static final String	CONFIG_INDEXES			= "indexes";
+	public static final String	DICTIONARY_NAME			= "dictionary";
 	private ODatabaseRecord			database;
 	private Map<String, OIndex>	indexes							= new HashMap<String, OIndex>();
 	private String							defaultClusterName	= OStorage.CLUSTER_INDEX_NAME;
@@ -54,6 +56,7 @@ public class OIndexManager extends ODocumentWrapperNoClass {
 
 	public void create() {
 		save(OStorage.CLUSTER_INTERNAL_NAME);
+		createIndex(DICTIONARY_NAME, OProperty.INDEX_TYPE.UNIQUE.toString(), null, null, null);
 		document.getDatabase().getStorage().getConfiguration().indexMgrRecordId = document.getIdentity().toString();
 		document.getDatabase().getStorage().getConfiguration().update();
 	}

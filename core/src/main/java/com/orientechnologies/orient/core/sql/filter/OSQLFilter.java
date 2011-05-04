@@ -123,7 +123,7 @@ public class OSQLFilter extends OCommandToParse {
 			final StringBuilder word = new StringBuilder();
 			currentPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
 
-			while (currentPos > -1 && (targetClasses == null && targetClusters == null)) {
+			while (currentPos > -1 && (targetClasses == null && targetClusters == null && targetIndex == null)) {
 				subjectName = word.toString();
 
 				newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
@@ -149,8 +149,8 @@ public class OSQLFilter extends OCommandToParse {
 					targetClusters.put(subjectName.substring(OCommandExecutorSQLAbstract.CLUSTER_PREFIX.length()), alias);
 
 				} else if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.INDEX_PREFIX)) {
-					// REGISTER AS CLUSTER
-					targetIndex = subjectName.substring(OCommandExecutorSQLAbstract.CLUSTER_PREFIX.length());
+					// REGISTER AS INDEX
+					targetIndex = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_PREFIX.length());
 				} else {
 					if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX))
 						// REGISTER AS CLASS

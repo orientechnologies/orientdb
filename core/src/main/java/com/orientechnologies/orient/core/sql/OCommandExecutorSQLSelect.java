@@ -27,6 +27,7 @@ import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -151,7 +152,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				}
 			}
 		}
-		if (limit == 0){
+		if (limit == 0) {
 			throw new IllegalArgumentException("Limit must be > 0 or = -1 (no limit)");
 		}
 		return this;
@@ -178,18 +179,20 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	}
 
 	public boolean foreach(final ORecordInternal<?> iRecord) {
-		if (filter(iRecord)) {
-			resultCount++;
-			addResult(iRecord.copy());
+		if (filter(iRecord))
+			return addResult(iRecord);
 
-			if (limit > -1 && resultCount >= limit)
-				// BREAK THE EXECUTION
-				return false;
+		return true;
+	}
 
-			if (request.getLimit() > -1 && resultCount >= request.getLimit())
-				// BREAK THE EXECUTION
-				return false;
-		}
+	protected boolean addResult(final ORecordInternal<?> iRecord) {
+		resultCount++;
+		addResult(iRecord.copy());
+
+		if (limit > -1 && resultCount >= limit || request.getLimit() > -1 && resultCount >= request.getLimit())
+			// BREAK THE EXECUTION
+			return false;
+
 		return true;
 	}
 
@@ -590,7 +593,15 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		if (index == null)
 			throw new OCommandExecutionException("Target index '" + compiledFilter.getTargetIndex() + "' not found");
 
-		//index.get();
+		if (!"KEY".equalsIgnoreCase(compiledFilter.getRootCondition().getLeft().toString()))
+			throw new OCommandExecutionException("'Key' field is required for queries against indexes");
+
+		final Object keyValue = compiledFilter.getRootCondition().getRight();
+
+		final Set<OIdentifiable> result = index.get(keyValue);
+		for (OIdentifiable r : result) {
+			addResult((ORecord<?>) r);
+		}
 	}
 
 	private Object processResult() {

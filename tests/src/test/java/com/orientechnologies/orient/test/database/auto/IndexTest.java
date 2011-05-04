@@ -116,4 +116,14 @@ public class IndexTest {
 
 		database.close();
 	}
+
+	@Test(dependsOnMethods = "testChangeOfIndexToUnique")
+	public void testQueryIndex() {
+		database.open("admin", "admin");
+
+		List<?> result = database.query(new OSQLSynchQuery<Object>("select from index:dictionary where key = 'root'"));
+		//Assert.assertTrue(result.size() > 0);
+
+		database.close();
+	}
 }
