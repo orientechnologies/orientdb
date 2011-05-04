@@ -433,7 +433,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	public void removeClass(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText)
 			throws IOException {
 		sqlCommand("remove", iCommandText, "\nRemoved class in %f sec(s).\n");
-
+		currentDatabase.getMetadata().getSchema().reload();
 		out.println("\nClass removed succesfully");
 	}
 

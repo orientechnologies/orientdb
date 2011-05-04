@@ -627,7 +627,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				if (result == null) {
 					// NULL VALUE
 					channel.writeByte((byte) 'n');
-					channel.writeBytes(null);
 				} else if (result instanceof ORecord<?>) {
 					// RECORD
 					channel.writeByte((byte) 'r');
