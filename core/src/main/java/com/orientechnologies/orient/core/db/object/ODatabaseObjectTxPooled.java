@@ -48,7 +48,7 @@ public class ODatabaseObjectTxPooled extends ODatabaseObjectTx implements ODatab
 		checkOpeness();
 		if (!getUser().getName().equals(iUserName))
 			throw new UnsupportedOperationException("Database instance was retrieved from a pool and has been used with the user '"
-					+ getUser().getName() + "'. Get another database instance fro mthe pool with the right username and password");
+					+ getUser().getName() + "'. Get another database instance from the pool with the right username and password");
 
 		return this;
 	}
