@@ -23,20 +23,23 @@ import java.util.Map;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
+import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord.STATUS;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 public class OIndexManager extends ODocumentWrapperNoClass {
-	public static final String	CONFIG_INDEXES			= "indexes";
-	public static final String	DICTIONARY_NAME			= "dictionary";
-	private ODatabaseRecord			database;
-	private Map<String, OIndex>	indexes							= new HashMap<String, OIndex>();
-	private String							defaultClusterName	= OStorage.CLUSTER_INDEX_NAME;
+	public static final String							CONFIG_INDEXES			= "indexes";
+	public static final String							DICTIONARY_NAME			= "dictionary";
+	private ODatabaseRecord									database;
+	private Map<String, OIndex>							indexes							= new HashMap<String, OIndex>();
+	private String													defaultClusterName	= OStorage.CLUSTER_INDEX_NAME;
+	private ODictionary<ORecordInternal<?>>	dictionary;
 
 	public OIndexManager(final ODatabaseRecord iDatabase) {
 		super(new ODocument(iDatabase));
@@ -51,12 +54,16 @@ public class OIndexManager extends ODocumentWrapperNoClass {
 
 		((ORecordId) document.getIdentity()).fromString(document.getDatabase().getStorage().getConfiguration().indexMgrRecordId);
 		super.reload("*:-1 index:0");
+
+		dictionary = new ODictionary<ORecordInternal<?>>(getIndex(DICTIONARY_NAME));
+
 		return this;
 	}
 
 	public void create() {
 		save(OStorage.CLUSTER_INTERNAL_NAME);
 		createIndex(DICTIONARY_NAME, OProperty.INDEX_TYPE.DICTIONARY.toString(), null, null, null);
+		dictionary = new ODictionary<ORecordInternal<?>>(getIndex(DICTIONARY_NAME));
 		document.getDatabase().getStorage().getConfiguration().indexMgrRecordId = document.getIdentity().toString();
 		document.getDatabase().getStorage().getConfiguration().update();
 	}
@@ -179,7 +186,7 @@ public class OIndexManager extends ODocumentWrapperNoClass {
 		this.defaultClusterName = defaultClusterName;
 	}
 
-	public OIndex getDictionaryIndex() {
-		return getIndex(DICTIONARY_NAME);
+	public ODictionary<ORecordInternal<?>> getDictionary() {
+		return dictionary;
 	}
 }

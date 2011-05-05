@@ -15,8 +15,8 @@
  */
 package com.orientechnologies.orient.core.dictionary;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -24,44 +24,21 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * Wrapper of dictionary instance that convert values in records.
  */
 public class ODictionaryWrapper extends ODictionary<Object> {
-	private ODatabaseObject		database;
-	private ODatabaseDocument	recordDatabase;
+	private ODatabaseObject	database;
 
-	public ODictionaryWrapper(final ODatabaseObject iDatabase, final ODatabaseDocument iRecordDatabase) {
-		super(iRecordDatabase.getMetadata().getIndexManager().getDictionaryIndex());
+	public ODictionaryWrapper(final ODatabaseObject iDatabase) {
+		super(((ODatabaseRecord) iDatabase.getUnderlying()).getMetadata().getIndexManager().getDictionary().getIndex());
 		this.database = iDatabase;
-		this.recordDatabase = iRecordDatabase;
-	}
-
-	public boolean containsKey(final String iKey) {
-		return recordDatabase.getDictionary().containsKey(iKey);
-	}
-
-	@SuppressWarnings("unchecked")
-	public <RET extends Object> RET get(final String iKey) {
-		return (RET) get(iKey, null);
 	}
 
 	@SuppressWarnings("unchecked")
 	public <RET extends Object> RET get(final String iKey, final String iFetchPlan) {
-		final ORecordInternal<?> record = recordDatabase.getDictionary().get(iKey);
+		final ORecordInternal<?> record = super.get(iKey);
 		return (RET) database.getUserObjectByRecord(record, iFetchPlan);
 	}
 
 	public void put(final String iKey, final Object iValue) {
 		final ODocument record = (ODocument) database.getRecordByUserObject(iValue, false);
-		recordDatabase.getDictionary().put(iKey, record);
-	}
-
-	public boolean remove(final String iKey) {
-		return recordDatabase.getDictionary().remove(iKey);
-	}
-
-	public long size() {
-		return recordDatabase.getDictionary().size();
-	}
-
-	public Iterable<Object> keys() {
-		return recordDatabase.getDictionary().keys();
+		super.put(iKey, record);
 	}
 }

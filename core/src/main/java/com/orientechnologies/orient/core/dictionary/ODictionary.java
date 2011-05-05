@@ -62,4 +62,8 @@ public class ODictionary<T extends Object> {
 	public Iterable<Object> keys() {
 		return index.keys();
 	}
+
+	public OIndex getIndex() {
+		return index;
+	}
 }

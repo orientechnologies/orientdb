@@ -156,7 +156,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 	public ODictionary<ORecordInternal<?>> getDictionary() {
 		checkOpeness();
-		return new ODictionary<ORecordInternal<?>>(metadata.getIndexManager().getDictionaryIndex());
+		return metadata.getIndexManager().getDictionary();
 	}
 
 	public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord) {
