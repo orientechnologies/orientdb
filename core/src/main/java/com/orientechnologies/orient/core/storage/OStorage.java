@@ -20,7 +20,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.cache.OStorageRecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -61,10 +60,6 @@ public interface OStorage {
 	public void close(boolean iForce);
 
 	public boolean isClosed();
-
-	public Object getSharedResource(String iName);
-
-	public void setSharedResource(String iName, Object iResource);
 
 	// CRUD OPERATIONS
 	public long createRecord(ORecordId iRecordId, byte[] iContent, final byte iRecordType);
@@ -148,13 +143,6 @@ public interface OStorage {
 	public int addUser();
 
 	public int removeUser();
-
-	/**
-	 * Return the configured local Level-2 cache component. Cache component is always created even if not used.
-	 * 
-	 * @return
-	 */
-	public OStorageRecordCache getCache();
 
 	/**
 	 * Execute the command request and return the result back.

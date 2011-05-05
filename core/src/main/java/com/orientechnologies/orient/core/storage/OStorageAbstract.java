@@ -15,12 +15,8 @@
  */
 package com.orientechnologies.orient.core.storage;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
-import com.orientechnologies.orient.core.cache.OStorageRecordCache;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -28,22 +24,18 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 public abstract class OStorageAbstract implements OStorage {
 	protected final String										url;
 	protected final String										mode;
-	protected final OStorageRecordCache				level2cache;
 	protected OStorageConfiguration						configuration;
 	protected String													name;
-	protected long														version					= 0;
-	protected Map<String, Object>							sharedResources	= new HashMap<String, Object>();
+	protected long														version	= 0;
 
-	protected boolean													open						= false;
-	protected OSharedResourceAdaptiveExternal	lock						= new OSharedResourceAdaptiveExternal();
+	protected boolean													open		= false;
+	protected OSharedResourceAdaptiveExternal	lock		= new OSharedResourceAdaptiveExternal();
 
 	public OStorageAbstract(final String iName, final String iFilePath, final String iMode) {
 		if (OStringSerializerHelper.contains(iName, '/'))
 			name = iName.substring(iName.lastIndexOf("/") + 1);
 		else
 			name = iName;
-
-		level2cache = new OStorageRecordCache(this);
 
 		if (OStringSerializerHelper.contains(iName, ','))
 			throw new IllegalArgumentException("Invalid character in storage name: " + name);
@@ -76,14 +68,6 @@ public abstract class OStorageAbstract implements OStorage {
 		close(false);
 	}
 
-	public Object getSharedResource(final String iName) {
-		return sharedResources.get(iName);
-	}
-
-	public void setSharedResource(final String iName, final Object iResource) {
-		sharedResources.put(iName, iResource);
-	}
-
 	/**
 	 * Returns current storage's version as serial.
 	 */
@@ -100,10 +84,6 @@ public abstract class OStorageAbstract implements OStorage {
 
 	public boolean removeCluster(final String iClusterName) {
 		return removeCluster(getClusterIdByName(iClusterName));
-	}
-
-	public OStorageRecordCache getCache() {
-		return level2cache;
 	}
 
 	protected boolean checkForClose(final boolean iForce) {

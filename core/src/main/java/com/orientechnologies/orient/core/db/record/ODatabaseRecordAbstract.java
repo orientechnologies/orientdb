@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -70,6 +71,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	private String															recordFormat;
 	private Set<ORecordHook>										hooks							= new HashSet<ORecordHook>();
 	private boolean															retainRecords			= true;
+	private OLevel1RecordCache									level1Cache;
 
 	public ODatabaseRecordAbstract(final String iURL, final Class<? extends ORecordInternal<?>> iRecordClass) {
 		super(new ODatabaseRaw(iURL));
@@ -88,6 +90,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	public <DB extends ODatabase> DB open(final String iUserName, final String iUserPassword) {
 		try {
 			super.open(iUserName, iUserPassword);
+			level1Cache = new OLevel1RecordCache(this);
+			level1Cache.startup();
 
 			metadata = new OMetadata(this);
 			metadata.load();
@@ -126,6 +130,11 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		try {
 			super.create();
 
+			level1Cache = new OLevel1RecordCache(this);
+			level1Cache.startup();
+
+			getStorage().getConfiguration().update();
+
 			// CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
 			metadata = new OMetadata(this);
 			metadata.create();
@@ -137,7 +146,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			registerHook(new OUserTrigger());
 			registerHook(new OPropertyIndexManager());
 			// }
-
 		} catch (Exception e) {
 			throw new ODatabaseException("Can't create database", e);
 		}
@@ -152,6 +160,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		hooks.clear();
 
 		user = null;
+		level1Cache.shutdown();
 	}
 
 	public ODictionary<ORecordInternal<?>> getDictionary() {
@@ -368,7 +377,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 			if (!iIgnoreCache) {
 				// SEARCH INTO THE CACHE
-				final ORecordInternal<?> record = getCache().findRecord(iRid);
+				final ORecordInternal<?> record = getLevel1Cache().findRecord(iRid);
 				if (record != null) {
 					callbackHooks(TYPE.BEFORE_READ, record);
 
@@ -404,7 +413,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			callbackHooks(TYPE.AFTER_READ, iRecord);
 
 			if (!iIgnoreCache) {
-				getCache().pushRecord(iRecord);
+				getLevel1Cache().pushRecord(iRecord);
 			}
 
 			return (RET) iRecord;
@@ -469,7 +478,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 					// RECORD SAVED DURING PREVIOUS STREAMING PHASE: THIS HAPPENS FOR CIRCULAR REFERENCED RECORDS
 					if (isUseCache())
 						// ADD/UPDATE IT IN CACHE
-						getCache().updateRecord(iRecord);
+						getLevel1Cache().updateRecord(iRecord);
 					return;
 				}
 			}
@@ -501,7 +510,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 			if (isUseCache())
 				// ADD/UPDATE IT IN CACHE
-				getCache().updateRecord(iRecord);
+				getLevel1Cache().updateRecord(iRecord);
 
 		} catch (ODatabaseException e) {
 			// RE-THROW THE EXCEPTION
@@ -536,7 +545,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			callbackHooks(TYPE.AFTER_DELETE, iRecord);
 
 			// REMOVE THE RECORD FROM 1 AND 2 LEVEL CACHES
-			getCache().deleteRecord(rid);
+			getLevel1Cache().deleteRecord(rid);
 
 		} catch (ODatabaseException e) {
 			// RE-THROW THE EXCEPTION
@@ -589,6 +598,11 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	public <DB extends ODatabaseComplex<?>> DB unregisterHook(final ORecordHook iHookImpl) {
 		hooks.remove(iHookImpl);
 		return (DB) this;
+	}
+
+	@Override
+	public OLevel1RecordCache getLevel1Cache() {
+		return level1Cache;
 	}
 
 	public Set<ORecordHook> getHooks() {

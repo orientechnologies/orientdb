@@ -51,23 +51,23 @@ public enum OGlobalConfiguration {
 
 	STORAGE_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum timeout in milliseconds to lock a shared record", Integer.class, 5000),
 
-	STORAGE_CACHE_SIZE("storage.cache.size", "Size of the cache that keep the record in memory", Integer.class, -1),
+	CACHE_LEVEL2_SIZE("cache.level2.size", "Size of the cache that keep the record in memory", Integer.class, -1),
 
-	STORAGE_CACHE_STRATEGY("storage.cache.strategy",
+	CACHE_LEVEL2_STRATEGY("cache.level2.strategy",
 			"Strategy to use when a database asks for a record: 0 = pop the record, 1 = copy the record", Integer.class, 0,
 			new OConfigurationChangeCallback() {
 				public void change(final Object iCurrentValue, final Object iNewValue) {
 					// UPDATE ALL THE OPENED STORAGES SETTING THE NEW STRATEGY
 					for (OStorage s : com.orientechnologies.orient.core.Orient.instance().getStorages()) {
-						s.getCache().setStrategy((Integer) iNewValue);
+						// s.getCache().setStrategy((Integer) iNewValue);
 					}
 				}
 			}),
 
 	// DATABASE
-	DB_USE_CACHE("db.cache.enabled", "Uses the storage cache", Boolean.class, true),
+	CACHE_LEVEL2_ENABLED("cache.level2.enabled", "Uses the level2 cache", Boolean.class, true),
 
-	DB_CACHE_SIZE("db.cache.size", "Size of the cache that keep the record in memory", Integer.class, -1),
+	CACHE_LEVEL1_SIZE("cache.level1.size", "Size of the cache that keep the record in memory", Integer.class, -1),
 
 	OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database saves only object bound to dirty records", Boolean.class, false),
 

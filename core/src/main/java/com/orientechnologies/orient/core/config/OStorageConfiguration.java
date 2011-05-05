@@ -360,5 +360,6 @@ public class OStorageConfiguration implements OSerializableStream {
 	}
 
 	public void create() throws IOException {
+		storage.createRecord(CONFIG_RID, new byte[] { 0, 0, 0, 0 }, ORecordBytes.RECORD_TYPE);
 	}
 }

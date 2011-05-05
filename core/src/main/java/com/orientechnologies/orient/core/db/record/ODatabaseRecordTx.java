@@ -99,7 +99,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 		try {
 			currentTx.commit();
 		} catch (RuntimeException e) {
-			getCache().clear();
+			getLevel1Cache().clear();
 			throw e;
 		} finally {
 			setDefaultTransactionMode();

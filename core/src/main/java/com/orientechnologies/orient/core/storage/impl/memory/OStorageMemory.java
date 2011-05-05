@@ -27,7 +27,6 @@ import java.util.Set;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -61,7 +60,6 @@ public class OStorageMemory extends OStorageEmbedded {
 	private final ODataSegmentMemory		data							= new ODataSegmentMemory();
 	private final List<OClusterMemory>	clusters					= new ArrayList<OClusterMemory>();
 	private int													defaultClusterId	= 0;
-	private ODictionary<?>							dictionary;
 
 	public OStorageMemory(final String iURL) {
 		super(iURL, iURL, "rw");
@@ -70,7 +68,6 @@ public class OStorageMemory extends OStorageEmbedded {
 
 	public void create(final Map<String, Object> iOptions) {
 		addUser();
-		level2cache.startup();
 
 		final boolean locked = lock.acquireExclusiveLock();
 		try {
@@ -85,7 +82,17 @@ public class OStorageMemory extends OStorageEmbedded {
 			// ADD THE DEFAULT CLUSTER
 			defaultClusterId = addCluster(OStorage.CLUSTER_DEFAULT_NAME, null);
 
+			configuration.create();
+
 			open = true;
+			
+		} catch (OStorageException e) {
+			close();
+			throw e;
+		} catch (IOException e) {
+			close();
+			throw new OStorageException("Error on creation of storage: " + name, e);
+
 		} finally {
 
 			lock.releaseExclusiveLock(locked);
@@ -94,7 +101,6 @@ public class OStorageMemory extends OStorageEmbedded {
 
 	public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iOptions) {
 		addUser();
-		level2cache.startup();
 
 		if (open)
 			// ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
@@ -120,9 +126,6 @@ public class OStorageMemory extends OStorageEmbedded {
 
 			// CLOSE THE DATA SEGMENT
 			data.close();
-
-			level2cache.shutdown();
-			sharedResources.clear();
 
 			open = false;
 		} finally {

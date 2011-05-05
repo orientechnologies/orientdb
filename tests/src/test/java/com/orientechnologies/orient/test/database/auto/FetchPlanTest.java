@@ -43,7 +43,7 @@ public class FetchPlanTest {
 
 		final long times = OProfiler.getInstance().getCounter("Cache.reused");
 
-		database.getCache().clear();
+		database.getLevel1Cache().clear();
 		List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>("select * from Profile"));
 		Assert.assertEquals(OProfiler.getInstance().getCounter("Cache.reused"), times);
 
@@ -51,7 +51,7 @@ public class FetchPlanTest {
 		for (ODocument d : resultset) {
 			linked = ((ORID) d.field("location", ORID.class));
 			if (linked != null)
-				Assert.assertFalse(database.getCache().existsRecord(linked));
+				Assert.assertFalse(database.getLevel1Cache().existsRecord(linked));
 		}
 
 		database.close();
@@ -69,7 +69,7 @@ public class FetchPlanTest {
 		for (ODocument d : resultset) {
 			linked = ((ODocument) d.field("location"));
 			if (linked != null)
-				Assert.assertNotNull(database.getCache().findRecord(linked.getIdentity()));
+				Assert.assertNotNull(database.getLevel1Cache().findRecord(linked.getIdentity()));
 		}
 
 		database.close();

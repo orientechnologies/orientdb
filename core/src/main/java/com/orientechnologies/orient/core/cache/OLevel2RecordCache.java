@@ -16,10 +16,10 @@
 package com.orientechnologies.orient.core.cache;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * Per database cache of documents.
@@ -27,20 +27,20 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * @author Luca Garulli
  * 
  */
-public class OStorageRecordCache extends OAbstractRecordCache {
+public class OLevel2RecordCache extends OAbstractRecordCache {
 
 	@SuppressWarnings("unused")
-	final private OStorage	storage;
-	private STRATEGY				strategy;
+	final private ODatabaseRaw	database;
+	private STRATEGY						strategy;
 
 	public enum STRATEGY {
 		POP_RECORD, COPY_RECORD
 	}
 
-	public OStorageRecordCache(final OStorage iStorage) {
-		super("storage." + iStorage.getName(), OGlobalConfiguration.STORAGE_CACHE_SIZE.getValueAsInteger());
-		storage = iStorage;
-		setStrategy(OGlobalConfiguration.STORAGE_CACHE_STRATEGY.getValueAsInteger());
+	public OLevel2RecordCache(final ODatabaseRaw iDatabase) {
+		super("storage." + iDatabase.getName(), OGlobalConfiguration.CACHE_LEVEL2_SIZE.getValueAsInteger());
+		database = iDatabase;
+		setStrategy(OGlobalConfiguration.CACHE_LEVEL2_STRATEGY.getValueAsInteger());
 	}
 
 	public void pushRecord(final ORecordInternal<?> iRecord) {

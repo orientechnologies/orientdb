@@ -118,8 +118,6 @@ public class OClass extends ODocumentWrapperNoClass implements Comparable<OClass
 	 * @return the object itself.
 	 */
 	public OClass setSuperClass(final OClass iSuperClass) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
-
 		this.superClass = iSuperClass;
 		iSuperClass.addBaseClasses(this);
 		return this;
@@ -365,8 +363,6 @@ public class OClass extends ODocumentWrapperNoClass implements Comparable<OClass
 	 *          The base class to add.
 	 */
 	private OClass addBaseClasses(final OClass iBaseClass) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
-
 		if (baseClasses == null)
 			baseClasses = new ArrayList<OClass>();
 

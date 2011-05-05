@@ -74,7 +74,7 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
 
 		checkOpeness();
 		rollback();
-		getCache().free();
+		getLevel1Cache().clear();
 		ownerPool.release(this);
 		ownerPool = null;
 	}

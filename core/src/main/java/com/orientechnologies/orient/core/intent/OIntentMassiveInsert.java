@@ -7,8 +7,8 @@ import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 
 public class OIntentMassiveInsert implements OIntent {
-	private int			previousDatabaseCacheSize;
-	private int			previousStorageCacheSize;
+	private int			previousLevel1CacheSize;
+	private int			previousLevel2CacheSize;
 	private boolean	previousUseCache;
 	private boolean	previousRetainRecords;
 	private boolean	previousRetainObjects;
@@ -16,10 +16,10 @@ public class OIntentMassiveInsert implements OIntent {
 	public void begin(final ODatabaseRaw iDatabase, final Object... iArgs) {
 		previousUseCache = iDatabase.isUseCache();
 		iDatabase.setUseCache(false);
-		previousDatabaseCacheSize = iDatabase.getCache().getMaxSize();
-		iDatabase.getCache().setMaxSize(0);
-		previousStorageCacheSize = iDatabase.getStorage().getCache().getMaxSize();
-		iDatabase.getStorage().getCache().setMaxSize(0);
+		previousLevel1CacheSize = iDatabase.getDatabaseOwner().getLevel1Cache().getMaxSize();
+		iDatabase.getDatabaseOwner().getLevel1Cache().setMaxSize(0);
+		previousLevel2CacheSize = iDatabase.getLevel2Cache().getMaxSize();
+		iDatabase.getLevel2Cache().setMaxSize(0);
 
 		ODatabaseComplex<?> ownerDb = iDatabase.getDatabaseOwner();
 
@@ -39,8 +39,8 @@ public class OIntentMassiveInsert implements OIntent {
 
 	public void end(final ODatabaseRaw iDatabase) {
 		iDatabase.setUseCache(previousUseCache);
-		iDatabase.getCache().setMaxSize(previousDatabaseCacheSize);
-		iDatabase.getStorage().getCache().setMaxSize(previousStorageCacheSize);
+		iDatabase.getDatabaseOwner().getLevel2Cache().setMaxSize(previousLevel1CacheSize);
+		iDatabase.getLevel2Cache().setMaxSize(previousLevel2CacheSize);
 
 		final ODatabaseComplex<?> ownerDb = iDatabase.getDatabaseOwner();
 

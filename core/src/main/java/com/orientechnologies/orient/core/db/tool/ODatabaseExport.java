@@ -83,10 +83,10 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 			listener.onMessage("\nStarted export of database '" + database.getName() + "' to " + fileName + "...");
 
 			database.setUseCache(false);
-			database.getCache().setMaxSize(0);
-			database.getCache().clear();
-			database.getStorage().getCache().setMaxSize(0);
-			database.getStorage().getCache().clear();
+			database.getLevel1Cache().setMaxSize(0);
+			database.getLevel1Cache().clear();
+			database.getLevel2Cache().setMaxSize(0);
+			database.getLevel2Cache().clear();
 
 			long time = System.currentTimeMillis();
 

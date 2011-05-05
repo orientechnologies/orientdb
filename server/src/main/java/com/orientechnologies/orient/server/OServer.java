@@ -410,9 +410,9 @@ public class OServer {
 	}
 
 	protected void defaultSettings() {
-		OGlobalConfiguration.STORAGE_CACHE_SIZE.setValue(0);
-		OGlobalConfiguration.DB_USE_CACHE.setValue(0);
-		OGlobalConfiguration.DB_CACHE_SIZE.setValue(0);
+		OGlobalConfiguration.CACHE_LEVEL2_SIZE.setValue(0);
+		OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(0);
+		OGlobalConfiguration.CACHE_LEVEL1_SIZE.setValue(0);
 		OGlobalConfiguration.FILE_LOCK.setValue(true);
 		OGlobalConfiguration.MVRBTREE_LAZY_UPDATES.setValue(1);
 		OGlobalConfiguration.LAZYSET_WORK_ON_STREAM.setValue(false);

@@ -21,7 +21,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
-import com.orientechnologies.orient.core.cache.OStorageRecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -67,11 +66,6 @@ public class OStorageRemoteThread implements OStorage {
 	public boolean removeCluster(final String iClusterName) {
 		delegate.setSessionId(sessionId);
 		return delegate.removeCluster(iClusterName);
-	}
-
-	public OStorageRecordCache getCache() {
-		delegate.setSessionId(sessionId);
-		return delegate.getCache();
 	}
 
 	public int getUsers() {
@@ -277,13 +271,5 @@ public class OStorageRemoteThread implements OStorage {
 	public String getURL() {
 		delegate.setSessionId(sessionId);
 		return delegate.getURL();
-	}
-
-	public Object getSharedResource(final String iName) {
-		return delegate.getSharedResource(iName);
-	}
-
-	public void setSharedResource(final String iName, final Object iResource) {
-		delegate.setSharedResource(iName, iResource);
 	}
 }

@@ -21,8 +21,6 @@ import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 
 /**
@@ -30,9 +28,8 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
  */
 @SuppressWarnings("serial")
 public class OStorageConfigurationSegment extends OStorageConfiguration {
-	private static final int				START_SIZE				= 10000;
-	private static final ORecordId	CONFIGURATION_RID	= new ORecordId(0, 0);
-	private OSingleFileSegment			segment;
+	private static final int		START_SIZE	= 10000;
+	private OSingleFileSegment	segment;
 
 	public OStorageConfigurationSegment(final OStorageLocal iStorage, final String iPath) throws IOException {
 		super(iStorage);
@@ -47,7 +44,7 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
 
 	public void create() throws IOException {
 		segment.create(START_SIZE);
-		storage.createRecord(CONFIGURATION_RID, new byte[] { 0, 0, 0, 0 }, ORecordBytes.RECORD_TYPE);
+		super.create();
 	}
 
 	@Override
@@ -60,7 +57,7 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
 
 				// @COMPATIBILITY0.9.25
 				// CHECK FOR OLD VERSION OF DATABASE
-				final ORawBuffer rawRecord = storage.readRecord(null, CONFIGURATION_RID, null);
+				final ORawBuffer rawRecord = storage.readRecord(null, CONFIG_RID, null);
 				if (rawRecord != null)
 					fromStream(rawRecord.buffer);
 

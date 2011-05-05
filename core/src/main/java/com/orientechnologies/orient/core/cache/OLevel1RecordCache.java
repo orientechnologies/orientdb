@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.cache;
 
-import java.util.Collection;
-
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -29,15 +27,15 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  * @author Luca Garulli
  * 
  */
-public class ODatabaseRecordCache extends OAbstractRecordCache {
+public class OLevel1RecordCache extends OAbstractRecordCache {
 
 	private final ODatabaseRecord	database;
-	private OStorageRecordCache		level2cache;
+	private OLevel2RecordCache		level2cache;
 	private String								PROFILER_CACHE_FOUND;
 	private String								PROFILER_CACHE_NOTFOUND;
 
-	public ODatabaseRecordCache(final ODatabaseRecord iDatabase) {
-		super("db." + iDatabase.getName(), OGlobalConfiguration.DB_CACHE_SIZE.getValueAsInteger());
+	public OLevel1RecordCache(final ODatabaseRecord iDatabase) {
+		super("db." + iDatabase.getName(), OGlobalConfiguration.CACHE_LEVEL1_SIZE.getValueAsInteger());
 		database = iDatabase;
 	}
 
@@ -49,7 +47,7 @@ public class ODatabaseRecordCache extends OAbstractRecordCache {
 
 		super.startup();
 
-		level2cache = database.getStorage().getCache();
+		level2cache = (OLevel2RecordCache) database.getLevel2Cache();
 	}
 
 	public void pushRecord(final ORecordInternal<?> iRecord) {
@@ -117,57 +115,6 @@ public class ODatabaseRecordCache extends OAbstractRecordCache {
 		return record;
 	}
 
-	public void updateRecord(final ORecordInternal<?> iRecord) {
-		if (maxSize == 0)
-			// PRECONDITIONS
-			return;
-
-		acquireExclusiveLock();
-		try {
-			entries.put(iRecord.getIdentity(), iRecord);
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
-
-	public void freeRecord(final ORID iRID) {
-		if (maxSize == 0)
-			// PRECONDITIONS
-			return;
-
-		final ORecordInternal<?> record;
-		acquireExclusiveLock();
-		try {
-			record = entries.remove(iRID);
-		} finally {
-			releaseExclusiveLock();
-		}
-
-		if (record != null) {
-			level2cache.pushRecord(record);
-		}
-	}
-
-	/**
-	 * Remove multiple records from the cache in one shot.
-	 * 
-	 * @param iRecords
-	 *          List of RIDs as RecordID instances
-	 */
-	public void removeRecords(final Collection<ORID> iRecords) {
-		if (maxSize == 0)
-			// PRECONDITIONS
-			return;
-
-		acquireExclusiveLock();
-		try {
-			for (ORID id : iRecords)
-				entries.remove(id);
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
-
 	/**
 	 * Delete a record entry from both database and storage caches.
 	 * 
@@ -175,26 +122,26 @@ public class ODatabaseRecordCache extends OAbstractRecordCache {
 	 *          Record to remove
 	 */
 	public void deleteRecord(final ORID iRecord) {
-		if (maxSize == 0)
-			// PRECONDITIONS
-			return;
+		super.deleteRecord(iRecord);
+		level2cache.freeRecord(iRecord);
+	}
 
-		acquireExclusiveLock();
-		try {
-			entries.remove(iRecord);
-		} finally {
-			releaseExclusiveLock();
-		}
+	public ORecordInternal<?> freeRecord(final ORID iRID) {
 
-		level2cache.removeRecord(iRecord);
+		final ORecordInternal<?> record = super.freeRecord(iRID);
+		if (record != null)
+			level2cache.pushRecord(record);
+
+		return record;
 	}
 
 	public void shutdown() {
-		free();
+		clear();
 		super.shutdown();
 	}
 
-	public void free() {
+	@Override
+	public void clear() {
 		acquireExclusiveLock();
 		try {
 			// MOVE ALL THE LEVEL-1 CACHE INTO THE LEVEL-2 CACHE

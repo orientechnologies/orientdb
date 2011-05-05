@@ -127,7 +127,6 @@ public class OStorageLocal extends OStorageEmbedded {
 			if (!exists())
 				throw new OStorageException("Can't open the storage '" + name + "' because it not exists in path: " + url);
 
-			level2cache.startup();
 			open = true;
 
 			// OPEN BASIC SEGMENTS
@@ -216,7 +215,6 @@ public class OStorageLocal extends OStorageEmbedded {
 				throw new OStorageException("Can't create new storage " + name + " because it isn't closed");
 
 			addUser();
-			level2cache.startup();
 
 			final File storageFolder = new File(storagePath);
 			if (!storageFolder.exists())
@@ -287,9 +285,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
 			txManager.close();
 
-			level2cache.shutdown();
 			configuration.close();
-			sharedResources.clear();
 
 			OMMapManager.flush();
 
@@ -318,7 +314,6 @@ public class OStorageLocal extends OStorageEmbedded {
 			}
 		}
 		close(true);
-		level2cache.shutdown();
 
 		try {
 			Orient.instance().unregisterStorage(this);

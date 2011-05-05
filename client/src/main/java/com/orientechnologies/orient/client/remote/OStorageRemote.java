@@ -92,8 +92,6 @@ public class OStorageRemote extends OStorageAbstract {
 		connectionRetry = clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY);
 		connectionRetryDelay = clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY_DELAY);
 
-		level2cache.startup();
-
 		parseServerURLs();
 	}
 
@@ -165,9 +163,6 @@ public class OStorageRemote extends OStorageAbstract {
 			for (OChannelBinaryClient n : networkPool)
 				n.close();
 			networkPool.clear();
-
-			level2cache.shutdown();
-			sharedResources.clear();
 
 			Orient.instance().unregisterStorage(this);
 			open = false;
@@ -259,7 +254,7 @@ public class OStorageRemote extends OStorageAbstract {
 						record = (ORecordInternal<?>) readRecordFromNetwork(network, iDatabase);
 
 						// PUT IN THE CLIENT LOCAL CACHE
-						level2cache.pushRecord(record);
+						iDatabase.getLevel2Cache().pushRecord(record);
 					}
 					return buffer;
 				} finally {
@@ -523,7 +518,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 							case 2:
 								// PUT IN THE CLIENT LOCAL CACHE
-								level2cache.pushRecord(record);
+								iCommand.getDatabase().getLevel1Cache().pushRecord(record);
 							}
 						}
 					} else {

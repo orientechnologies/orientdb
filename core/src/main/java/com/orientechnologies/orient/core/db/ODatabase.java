@@ -19,7 +19,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
-import com.orientechnologies.orient.core.cache.ODatabaseRecordCache;
+import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
+import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -106,11 +107,18 @@ public interface ODatabase {
 	public OStorage getStorage();
 
 	/**
-	 * Returns the database cache. Can't be null.
+	 * Returns the level1 cache. Can't be null.
 	 * 
 	 * @return Current cache.
 	 */
-	public ODatabaseRecordCache getCache();
+	public OLevel1RecordCache getLevel1Cache();
+
+	/**
+	 * Returns the level1 cache. Can't be null.
+	 * 
+	 * @return Current cache.
+	 */
+	public OLevel2RecordCache getLevel2Cache();
 
 	/**
 	 * Returns is the database instance uses the cache or not.

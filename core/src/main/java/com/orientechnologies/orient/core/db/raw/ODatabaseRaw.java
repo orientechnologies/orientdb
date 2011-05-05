@@ -25,7 +25,8 @@ import java.util.Map.Entry;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.ODatabaseRecordCache;
+import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
+import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
@@ -57,7 +58,7 @@ public class ODatabaseRaw implements ODatabase {
 	private final Map<String, Object>			properties	= new HashMap<String, Object>();
 	private final List<ODatabaseListener>	listeners		= new ArrayList<ODatabaseListener>();
 
-	private ODatabaseRecordCache					level1Cache;
+	protected OLevel2RecordCache					level2Cache;
 	private boolean												useCache;
 
 	public enum STATUS {
@@ -72,7 +73,7 @@ public class ODatabaseRaw implements ODatabase {
 			// SET DEFAULT PROPERTIES
 			setProperty("fetch-max", 50);
 
-			useCache = OGlobalConfiguration.DB_USE_CACHE.getValueAsBoolean();
+			useCache = OGlobalConfiguration.CACHE_LEVEL2_ENABLED.getValueAsBoolean();
 
 		} catch (Throwable t) {
 			throw new ODatabaseException("Error on opening database '" + iURL + "'", t);
@@ -99,7 +100,7 @@ public class ODatabaseRaw implements ODatabase {
 				} catch (Throwable t) {
 				}
 
-			level1Cache.startup();
+			level2Cache.startup();
 
 			status = STATUS.OPEN;
 		} catch (ODatabaseException e) {
@@ -130,7 +131,7 @@ public class ODatabaseRaw implements ODatabase {
 				} catch (Throwable t) {
 				}
 
-			level1Cache.startup();
+			level2Cache.startup();
 
 			status = STATUS.OPEN;
 		} catch (Exception e) {
@@ -193,7 +194,7 @@ public class ODatabaseRaw implements ODatabase {
 			return storage.readRecord(databaseOwner, iRid, iFetchPlan);
 
 		} catch (Throwable t) {
-			throw new ODatabaseException("Error on retrieving record #" + iRid + "(cluster: "
+			throw new ODatabaseException("Error on retrieving record " + iRid + " (cluster: "
 					+ storage.getPhysicalClusterNameById(iRid.clusterId) + ")", t);
 		}
 	}
@@ -214,17 +215,17 @@ public class ODatabaseRaw implements ODatabase {
 		} catch (OConcurrentModificationException e) {
 			throw e;
 		} catch (Throwable t) {
-			throw new ODatabaseException("Error on saving record #" + iRid, t);
+			throw new ODatabaseException("Error on saving record " + iRid, t);
 		}
 	}
 
 	public void delete(final ORecordId iRid, final int iVersion) {
 		try {
 			if (!storage.deleteRecord(iRid, iVersion))
-				throw new ORecordNotFoundException("The record with id #" + iRid + " was not found");
+				throw new ORecordNotFoundException("The record with id " + iRid + " was not found");
 
 		} catch (Exception e) {
-			OLogManager.instance().exception("Error on deleting record #" + iRid, e, ODatabaseException.class);
+			OLogManager.instance().exception("Error on deleting record " + iRid, e, ODatabaseException.class);
 		}
 	}
 
@@ -289,8 +290,22 @@ public class ODatabaseRaw implements ODatabase {
 		return storage.getClusterNames();
 	}
 
-	public ODatabaseRecordCache getCache() {
-		return level1Cache;
+	/**
+	 * Returns always null
+	 * 
+	 * @return
+	 */
+	public OLevel1RecordCache getLevel1Cache() {
+		return null;
+	}
+
+	/**
+	 * Returns the configured local Level-2 cache component. Cache component is always created even if not used.
+	 * 
+	 * @return
+	 */
+	public OLevel2RecordCache getLevel2Cache() {
+		return level2Cache;
 	}
 
 	public int getDefaultClusterId() {
@@ -314,7 +329,7 @@ public class ODatabaseRaw implements ODatabase {
 
 	public ODatabaseRaw setOwner(final ODatabaseRecord iOwner) {
 		databaseOwner = iOwner;
-		level1Cache = new ODatabaseRecordCache(databaseOwner);
+		level2Cache = new OLevel2RecordCache(this);
 		return this;
 	}
 
@@ -372,7 +387,7 @@ public class ODatabaseRaw implements ODatabase {
 		storage = null;
 		status = STATUS.CLOSED;
 
-		level1Cache.shutdown();
+		level2Cache.shutdown();
 	}
 
 	@Override

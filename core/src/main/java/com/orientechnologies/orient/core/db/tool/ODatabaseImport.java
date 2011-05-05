@@ -94,10 +94,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 			jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
 
 			database.setUseCache(false);
-			database.getCache().setMaxSize(0);
-			database.getCache().clear();
-			database.getStorage().getCache().setMaxSize(0);
-			database.getStorage().getCache().clear();
+			database.getLevel1Cache().setMaxSize(0);
+			database.getLevel1Cache().clear();
+			database.getLevel2Cache().setMaxSize(0);
+			database.getLevel2Cache().clear();
 
 			String tag;
 			while (jsonReader.hasNext() && jsonReader.lastChar() != '}') {

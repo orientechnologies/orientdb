@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.tx;
 import java.io.IOException;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.cache.ODatabaseRecordCache;
+import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -48,7 +48,7 @@ public abstract class OTransactionAbstract implements OTransaction {
 
 	public static void updateCacheFromEntries(final OStorage iStorage, final OTransaction iTx,
 			final Iterable<? extends OTransactionEntry> iEntries) throws IOException {
-		final ODatabaseRecordCache dbCache = iTx.getDatabase().getCache();
+		final OLevel1RecordCache dbCache = (OLevel1RecordCache) iTx.getDatabase().getLevel1Cache();
 
 		for (OTransactionEntry txEntry : iEntries) {
 			if (txEntry.status == OTransactionEntry.DELETED)

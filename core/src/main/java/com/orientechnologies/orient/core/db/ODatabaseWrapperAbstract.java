@@ -19,8 +19,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import com.orientechnologies.orient.core.cache.ODatabaseRecordCache;
-import com.orientechnologies.orient.core.dictionary.ODictionary;
+import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
+import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -74,9 +74,14 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 		return underlying.getStorage();
 	}
 
-	public ODatabaseRecordCache getCache() {
+	public OLevel1RecordCache getLevel1Cache() {
 		checkOpeness();
-		return underlying.getCache();
+		return underlying.getLevel1Cache();
+	}
+
+	public OLevel2RecordCache getLevel2Cache() {
+		checkOpeness();
+		return underlying.getLevel2Cache();
 	}
 
 	public boolean isUseCache() {

@@ -151,7 +151,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 				record = database.getTransaction().getEntry(rid);
 				if (record == null)
 					// TRY IN CACHE
-					record = database.getCache().findRecord(rid);
+					record = database.getLevel1Cache().findRecord(rid);
 
 				if (record != null && record.getRecordType() != ODocument.RECORD_TYPE)
 					// WRONG RECORD TYPE: JUMP IT

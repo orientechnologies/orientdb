@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.cache;
 
+import java.util.Collection;
+
 import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -22,6 +24,7 @@ import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.orient.core.OMemoryWatchDog.Listener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 
 /**
  * Cache of documents.
@@ -50,6 +53,77 @@ public abstract class OAbstractRecordCache extends OSharedResource {
 		entries = new ORecordCache(maxSize, initialSize, 0.75f);
 	}
 
+	public abstract void pushRecord(ORecordInternal<?> iRecord);
+
+	public ORecordInternal<?> findRecord(final ORID iRid) {
+		return null;
+	}
+
+	public void updateRecord(final ORecordInternal<?> iRecord) {
+		if (maxSize == 0)
+			// PRECONDITIONS
+			return;
+
+		acquireExclusiveLock();
+		try {
+			entries.put(iRecord.getIdentity(), iRecord);
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
+
+	public ORecordInternal<?> freeRecord(final ORID iRID) {
+		if (maxSize == 0)
+			// PRECONDITIONS
+			return null;
+
+		acquireExclusiveLock();
+		try {
+			return entries.remove(iRID);
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
+
+	/**
+	 * Remove multiple records from the cache in one shot.
+	 * 
+	 * @param iRecords
+	 *          List of RIDs as RecordID instances
+	 */
+	public void removeRecords(final Collection<ORID> iRecords) {
+		if (maxSize == 0)
+			// PRECONDITIONS
+			return;
+
+		acquireExclusiveLock();
+		try {
+			for (ORID id : iRecords)
+				entries.remove(id);
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
+
+	/**
+	 * Delete a record entry from both database and storage caches.
+	 * 
+	 * @param iRecord
+	 *          Record to remove
+	 */
+	public void deleteRecord(final ORID iRecord) {
+		if (maxSize == 0)
+			// PRECONDITIONS
+			return;
+
+		acquireExclusiveLock();
+		try {
+			entries.remove(iRecord);
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
+
 	public boolean existsRecord(final ORID iRID) {
 		if (maxSize == 0)
 			// PRECONDITIONS
@@ -60,26 +134,6 @@ public abstract class OAbstractRecordCache extends OSharedResource {
 			return entries.containsKey(iRID);
 		} finally {
 			releaseSharedLock();
-		}
-	}
-
-	/**
-	 * Remove a record from the cache.
-	 * 
-	 * @param iRID
-	 *          RecordID to remove
-	 */
-	public void removeRecord(final ORID iRID) {
-		if (maxSize == 0)
-			// PRECONDITIONS
-			return;
-
-		acquireExclusiveLock();
-		try {
-			entries.remove(iRID);
-
-		} finally {
-			releaseExclusiveLock();
 		}
 	}
 
