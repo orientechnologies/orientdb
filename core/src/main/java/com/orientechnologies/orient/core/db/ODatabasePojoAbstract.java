@@ -209,7 +209,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 		return (RET) new OCommandSQLPojoWrapper(this, underlying.command(iCommand));
 	}
 
-	public <RET extends List<?>> RET query(final OQuery<?> iCommand, Object... iArgs) {
+	public <RET extends List<?>> RET query(final OQuery<?> iCommand, final Object... iArgs) {
 		checkOpeness();
 
 		convertParameters(iArgs);
