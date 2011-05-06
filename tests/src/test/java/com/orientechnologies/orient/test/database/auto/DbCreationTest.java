@@ -68,6 +68,13 @@ public class DbCreationTest {
 	}
 
 	@Test(dependsOnMethods = { "testDbOpenWithLastAsSlash" })
+	public void testDbOpenWithBackSlash() {
+		database = new ODatabaseObjectTx(url.replace('/', '\\'));
+		database.open("admin", "admin");
+		database.close();
+	}
+
+	@Test(dependsOnMethods = { "testDbOpenWithBackSlash" })
 	public void testChangeLocale() throws IOException {
 		database = new ODatabaseObjectTx(url);
 		database.open("admin", "admin");
