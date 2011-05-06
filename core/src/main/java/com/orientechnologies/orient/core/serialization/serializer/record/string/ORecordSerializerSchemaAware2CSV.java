@@ -224,6 +224,10 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 					type = OType.DOUBLE;
 			}
 
+			if (type == OType.TRANSIENT)
+				// TRANSIENT FIELD
+				continue;
+
 			if (type == null)
 				type = OType.EMBEDDED;
 
@@ -351,7 +355,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 						linkedType = null;
 
 						// NOT FOUND: TRY TO DETERMINE THE TYPE FROM ITS CONTENT
-						if (fieldValue != null && type == null ) {
+						if (fieldValue != null && type == null) {
 							if (fieldValue.length() > 1 && fieldValue.charAt(0) == '"' && fieldValue.charAt(fieldValue.length() - 1) == '"') {
 								type = OType.STRING;
 							} else if (fieldValue.charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN

@@ -68,6 +68,7 @@ public class SchemaTest {
 		profile.createProperty("surname", OType.STRING).setMin("3").setMax("30");
 		profile.createProperty("registeredOn", OType.DATE).setMin("2010-01-01 00:00:00");
 		profile.createProperty("lastAccessOn", OType.DATE).setMin("2010-01-01 00:00:00");
+		profile.createProperty("photo", OType.TRANSIENT);
 
 		OClass whiz = database.getMetadata().getSchema().createClass("Whiz");
 		whiz.createProperty("id", OType.INTEGER);

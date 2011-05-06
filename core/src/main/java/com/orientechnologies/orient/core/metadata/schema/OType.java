@@ -71,10 +71,12 @@ public enum OType {
 	LINKMAP("Map", 16, true, false, 8, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
 	},
 	BYTE("Byte", 17, false, true, 1, new Class<?>[] { Byte.class, Byte.TYPE }, new Class<?>[] { Number.class, Character.class }) {
+	},
+	TRANSIENT("Transient", 18, false, true, 0, new Class<?>[] {}, new Class<?>[] {}) {
 	};
 
 	protected static final OType[]	TYPES	= new OType[] { BOOLEAN, BYTE, INTEGER, SHORT, LONG, FLOAT, DOUBLE, DATE, STRING, BINARY,
-			EMBEDDED, EMBEDDEDLIST, EMBEDDEDSET, EMBEDDEDMAP, LINK, LINKLIST, LINKSET, LINKMAP };
+			EMBEDDED, EMBEDDEDLIST, EMBEDDEDSET, EMBEDDEDMAP, LINK, LINKLIST, LINKSET, LINKMAP, TRANSIENT };
 
 	protected String								name;
 	protected int										id;
@@ -367,7 +369,7 @@ public enum OType {
 	}
 
 	public Class<?> getDefaultJavaType() {
-		return javaTypes[0];
+		return javaTypes.length > 0 ? javaTypes[0] : null;
 	}
 
 	public Class<?>[] getJavaTypes() {

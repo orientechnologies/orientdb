@@ -282,8 +282,8 @@ public class CRUDDocumentPhysicalTest {
 		((Collection<String>) dexter.field("tag_list")).add("actor");
 		dexter.save();
 
-		result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where tag_list in 'actor' and tag_list in 'test'"))
-				.execute();
+		result = database
+				.command(new OSQLSynchQuery<ODocument>("select from Profile where tag_list in 'actor' and tag_list in 'test'")).execute();
 		Assert.assertEquals(result.size(), 1);
 
 		database.close();
@@ -402,6 +402,23 @@ public class CRUDDocumentPhysicalTest {
 		List<ODocument> result = database.query(query, params);
 
 		Assert.assertTrue(result.size() != 0);
+
+		database.close();
+	}
+
+	@Test
+	public void testTransientField() {
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+		database.open("admin", "admin");
+
+		ODocument doc = new ODocument(database, "Profile");
+		doc.field("nick", "LucaPhotoTest");
+		doc.field("photo", "testPhoto");
+		doc.save();
+
+		doc.reload();
+		Assert.assertEquals(doc.field("nick"), "LucaPhotoTest");
+		Assert.assertFalse(doc.containsField("photo"));
 
 		database.close();
 	}
