@@ -817,6 +817,9 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 */
 	@Override
 	public boolean containsField(final String iFieldName) {
+		if (iFieldName == null)
+			return false;
+
 		checkForLoading();
 		checkForFields();
 		return _fieldValues.containsKey(iFieldName);

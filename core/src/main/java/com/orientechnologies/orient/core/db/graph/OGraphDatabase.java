@@ -17,6 +17,8 @@ package com.orientechnologies.orient.core.db.graph;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -334,6 +336,15 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		return getOutEdges(iVertex, null);
 	}
 
+	/**
+	 * Retrieves the outgoing edges of vertex iVertex having label equals to iLabel.
+	 * 
+	 * @param iVertex
+	 *          Target vertex
+	 * @param iLabel
+	 *          Label to search
+	 * @return
+	 */
 	public Set<OIdentifiable> getOutEdges(final ODocument iVertex, final String iLabel) {
 		if (!iVertex.getSchemaClass().isSubClassOf(vertexBaseClass))
 			throw new IllegalArgumentException("The document received is not a vertex");
@@ -356,6 +367,38 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 			}
 
 		return result;
+	}
+
+	/**
+	 * Retrieves the outgoing edges of vertex iVertex having the requested properties iProperties set to the passed values
+	 * 
+	 * @param iVertex
+	 *          Target vertex
+	 * @param iProperties
+	 *          Map where keys are property names and values the expected values
+	 * @return
+	 */
+	public Set<OIdentifiable> getOutEdgesHavingProperties(final ODocument iVertex, final Map<String, Object> iProperties) {
+		if (!iVertex.getSchemaClass().isSubClassOf(vertexBaseClass))
+			throw new IllegalArgumentException("The document received is not a vertex");
+
+		return filterEdgesByProperties((ORecordLazySet) iVertex.field(VERTEX_FIELD_OUT_EDGES), iProperties);
+	}
+
+	/**
+	 * Retrieves the outgoing edges of vertex iVertex having the requested properties iProperties
+	 * 
+	 * @param iVertex
+	 *          Target vertex
+	 * @param iProperties
+	 *          Map where keys are property names and values the expected values
+	 * @return
+	 */
+	public Set<OIdentifiable> getOutEdgesHavingProperties(final ODocument iVertex, Iterable<String> iProperties) {
+		if (!iVertex.getSchemaClass().isSubClassOf(vertexBaseClass))
+			throw new IllegalArgumentException("The document received is not a vertex");
+
+		return filterEdgesByProperties((ORecordLazySet) iVertex.field(VERTEX_FIELD_OUT_EDGES), iProperties);
 	}
 
 	public Set<OIdentifiable> getInEdges(final ODocument iVertex) {
@@ -384,6 +427,38 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 			}
 
 		return result;
+	}
+
+	/**
+	 * Retrieves the incoming edges of vertex iVertex having the requested properties iProperties
+	 * 
+	 * @param iVertex
+	 *          Target vertex
+	 * @param iProperties
+	 *          Map where keys are property names and values the expected values
+	 * @return
+	 */
+	public Set<OIdentifiable> getInEdgesHavingProperties(final ODocument iVertex, Iterable<String> iProperties) {
+		if (!iVertex.getSchemaClass().isSubClassOf(vertexBaseClass))
+			throw new IllegalArgumentException("The document received is not a vertex");
+
+		return filterEdgesByProperties((ORecordLazySet) iVertex.field(VERTEX_FIELD_IN_EDGES), iProperties);
+	}
+
+	/**
+	 * Retrieves the incoming edges of vertex iVertex having the requested properties iProperties set to the passed values
+	 * 
+	 * @param iVertex
+	 *          Target vertex
+	 * @param iProperties
+	 *          Map where keys are property names and values the expected values
+	 * @return
+	 */
+	public Set<OIdentifiable> getInEdgesHavingProperties(final ODocument iVertex, final Map<String, Object> iProperties) {
+		if (!iVertex.getSchemaClass().isSubClassOf(vertexBaseClass))
+			throw new IllegalArgumentException("The document received is not a vertex");
+
+		return filterEdgesByProperties((ORecordLazySet) iVertex.field(VERTEX_FIELD_IN_EDGES), iProperties);
 	}
 
 	public ODocument getInVertex(final ODocument iEdge) {
@@ -481,6 +556,58 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 
 	public OClass getEdgeBaseClass() {
 		return edgeBaseClass;
+	}
+
+	public Set<OIdentifiable> filterEdgesByProperties(final ORecordLazySet iEdges, final Iterable<String> iPropertyNames) {
+		if (iPropertyNames == null)
+			// RETURN THE ENTIRE COLLECTION
+			if (iEdges != null)
+				return Collections.unmodifiableSet(iEdges);
+			else
+				return Collections.emptySet();
+
+		// FILTER BY PROPERTY VALUES
+		final ORecordLazySet result = new ORecordLazySet(underlying);
+		if (iEdges != null)
+			for (OIdentifiable item : iEdges) {
+				final ODocument doc = (ODocument) item;
+				for (String propName : iPropertyNames) {
+					if (doc.containsField(propName))
+						// FOUND: ADD IT
+						result.add(item);
+				}
+			}
+
+		return result;
+	}
+
+	public Set<OIdentifiable> filterEdgesByProperties(final ORecordLazySet iEdges, final Map<String, Object> iProperties) {
+		if (iProperties == null)
+			// RETURN THE ENTIRE COLLECTION
+			if (iEdges != null)
+				return Collections.unmodifiableSet(iEdges);
+			else
+				return Collections.emptySet();
+
+		// FILTER BY PROPERTY VALUES
+		final ORecordLazySet result = new ORecordLazySet(underlying);
+		if (iEdges != null)
+			for (OIdentifiable item : iEdges) {
+				final ODocument doc = (ODocument) item;
+				for (Entry<String, Object> prop : iProperties.entrySet()) {
+					if (prop.getKey() != null && doc.containsField(prop.getKey())) {
+						if (prop.getValue() == null) {
+							if (doc.field(prop.getKey()) == null)
+								// BOTH NULL: ADD IT
+								result.add(item);
+						} else if (prop.getValue().equals(doc.field(prop.getKey())))
+							// SAME VALUE: ADD IT
+							result.add(item);
+					}
+				}
+			}
+
+		return result;
 	}
 
 	protected boolean beginBlock() {
