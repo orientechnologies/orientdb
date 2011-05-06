@@ -215,8 +215,6 @@ public abstract class OFile {
 	}
 
 	public void changeSize(final int iSize) {
-		if (iSize > Integer.MAX_VALUE)
-			OLogManager.instance().error(this, "You can't upsize the file more than 2GB", OIOException.class);
 
 		if (OLogManager.instance().isDebugEnabled())
 			OLogManager.instance().debug(this, "Changing file size to " + iSize + " bytes. " + toString());
