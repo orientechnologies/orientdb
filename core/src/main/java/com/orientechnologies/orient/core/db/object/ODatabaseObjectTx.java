@@ -61,7 +61,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 	public ODatabaseObjectTx(final String iURL) {
 		super(new ODatabaseDocumentTx(iURL));
 		underlying.setDatabaseOwner(this);
-		entityManager = OEntityManager.getEntityManagerByDatabaseURL(iURL);
+		entityManager = OEntityManager.getEntityManagerByDatabaseURL(getURL());
 		saveOnlyDirty = OGlobalConfiguration.OBJECT_SAVE_ONLY_DIRTY.getValueAsBoolean();
 	}
 

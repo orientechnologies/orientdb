@@ -67,7 +67,7 @@ public class ODatabaseRaw implements ODatabase {
 
 	public ODatabaseRaw(final String iURL) {
 		try {
-			url = iURL;
+			url = iURL.replace('\\', '/');
 			status = STATUS.CLOSED;
 
 			// SET DEFAULT PROPERTIES
