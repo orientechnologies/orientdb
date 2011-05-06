@@ -418,7 +418,7 @@ public class CRUDDocumentPhysicalTest {
 
 		doc.reload();
 		Assert.assertEquals(doc.field("nick"), "LucaPhotoTest");
-		Assert.assertFalse(doc.containsField("photo"));
+		Assert.assertFalse(doc.containsField("photo")); // THIS IS DECLARED TRANSIENT IN SCHEMA (see SchemaTest.java)
 
 		database.close();
 	}
