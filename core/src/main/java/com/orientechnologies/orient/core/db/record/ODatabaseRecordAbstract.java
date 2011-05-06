@@ -84,13 +84,13 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		} catch (Throwable t) {
 			throw new ODatabaseException("Error on opening database '" + getName() + "'", t);
 		}
+		level1Cache = new OLevel1RecordCache(this);
 	}
 
 	@Override
 	public <DB extends ODatabase> DB open(final String iUserName, final String iUserPassword) {
 		try {
 			super.open(iUserName, iUserPassword);
-			level1Cache = new OLevel1RecordCache(this);
 			level1Cache.startup();
 
 			metadata = new OMetadata(this);
@@ -130,7 +130,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		try {
 			super.create();
 
-			level1Cache = new OLevel1RecordCache(this);
 			level1Cache.startup();
 
 			getStorage().getConfiguration().update();
