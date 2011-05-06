@@ -78,7 +78,7 @@ public class OHttpSessionManager extends OSharedResource {
 		acquireSharedLock();
 		try {
 
-			return (OHttpSession[]) sessions.values().toArray();
+			return (OHttpSession[]) sessions.values().toArray(new OHttpSession[sessions.size()]);
 
 		} finally {
 			releaseSharedLock();
