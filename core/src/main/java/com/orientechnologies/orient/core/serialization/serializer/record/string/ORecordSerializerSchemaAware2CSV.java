@@ -395,7 +395,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 						}
 					}
 
-					if (type == OType.EMBEDDEDLIST || type == OType.EMBEDDEDLIST || type == OType.EMBEDDEDMAP)
+					if (type == OType.EMBEDDEDLIST || type == OType.EMBEDDEDSET || type == OType.EMBEDDEDMAP)
 						// SAVE THE TYPE AS EMBEDDED
 						record.field(fieldName, fieldFromStream(iRecord, type, linkedClass, linkedType, fieldName, fieldValue), type);
 					else
