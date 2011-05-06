@@ -378,7 +378,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 				} else if (value instanceof OLazyObjectList<?>) {
 					((OLazyObjectList) value).assignDatabase(this);
 				} else if (value instanceof OLazyObjectSet<?>) {
-					((OLazyObjectList) value).assignDatabase(this);
+					((OLazyObjectSet) value).assignDatabase(this);
 				}
 			}
 		} else {
