@@ -44,7 +44,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  */
 public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue, ORecordElement, ORecordLazyListener {
 	public static final ORecordLazySet						EMPTY_SET			= new ORecordLazySet((ODatabaseRecord) null);
-	protected ORecordLazyList											delegate;
+	protected final ORecordLazyList								delegate;
 	protected IdentityHashMap<ORecord<?>, Object>	newItems;
 	private boolean																sorted				= true;
 	private static final Object										NEWMAP_VALUE	= new Object();
