@@ -317,11 +317,13 @@ public abstract class OFile {
 		StringBuilder builder = new StringBuilder();
 		builder.append("File: ");
 		builder.append(osFile.getName());
-		builder.append(" os-size=");
-		try {
-			builder.append(accessFile.length());
-		} catch (IOException e) {
-			builder.append("?");
+		if (accessFile != null) {
+			builder.append(" os-size=");
+			try {
+				builder.append(accessFile.length());
+			} catch (IOException e) {
+				builder.append("?");
+			}
 		}
 		builder.append(", stored=");
 		builder.append(size);
