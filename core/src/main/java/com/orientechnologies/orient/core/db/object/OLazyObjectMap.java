@@ -63,7 +63,7 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> implements Ser
 	@Override
 	public boolean containsValue(final Object o) {
 		convertAll();
-		return containsValue(o);
+		return underlying.containsValue(o);
 	}
 
 	@Override
