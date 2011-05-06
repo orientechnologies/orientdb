@@ -649,9 +649,8 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			else if (oldValue instanceof Collection<?> && iPropertyValue instanceof String) {
 				// CONVERT TO COLLECTION
 				final List<ODocument> newValue = new ArrayList<ODocument>();
-				iPropertyValue = newValue;
-
 				final String stringValue = (String) iPropertyValue;
+				iPropertyValue = newValue;
 
 				if (stringValue != null && stringValue.length() > 0) {
 					final String[] items = stringValue.split(",");
