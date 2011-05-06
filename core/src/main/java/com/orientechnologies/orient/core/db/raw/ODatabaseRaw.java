@@ -392,6 +392,6 @@ public class ODatabaseRaw implements ODatabase {
 
 	@Override
 	public String toString() {
-		return "OrientDB[" + getStorage().getURL() + "]";
+		return "OrientDB[" + (getStorage() != null ? getStorage().getURL() : "?") + "]";
 	}
 }
