@@ -64,10 +64,11 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 				final ORecordId rid = channel.readRID();
 				final byte[] content = channel.readBytes();
-				final byte recordType = channel.readByte();
+				@SuppressWarnings("unused")
 				final int version = channel.readInt();
 
-				final long newVersion = connection.rawDatabase.save(rid, content, -1, recordType);
+				// BYPASS VERSION CHECK BY USING -1
+				final long newVersion = connection.rawDatabase.save(rid, content, -1, channel.readByte());
 
 				// TODO: Handle it by using triggers
 				if (connection.database.getMetadata().getSchema().getDocument().getIdentity().equals(rid))
@@ -119,7 +120,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 				final String dbUser = channel.readString();
 				final String dbPassword = channel.readString();
 				final String remoteServerName = channel.readString();
-				final boolean synchronousMode = recordType == 1;
+				final boolean synchronousMode = channel.readByte() == 1;
 
 				checkServerAccess("database.share");
 
@@ -181,7 +182,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 			case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_CONFIG: {
 				data.commandInfo = "Update db configuration from server node leader";
 
-				final ODocument config = (ODocument) new ODocument().fromStream(content);
+				final ODocument config = (ODocument) new ODocument().fromStream(channel.readBytes());
 				manager.getClusterConfiguration(connection.database.getName(), config);
 
 				OLogManager.instance().warn(this, "Changed distributed server configuration:\n%s", config.toJSON("indent:2"));
