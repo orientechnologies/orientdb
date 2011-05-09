@@ -361,9 +361,9 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 		OLogManager.instance()
 				.debug(this, "Sending keepalive message to distributed server node %s:%d...", networkAddress, networkPort);
 
-		channel.acquireExclusiveLock();
-
 		try {
+			channel.acquireExclusiveLock();
+
 			channel.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_HEARTBEAT);
 			channel.writeInt(clientTxId);
 			channel.flush();
@@ -391,7 +391,7 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 			// }
 
 		} catch (Exception e) {
-			OLogManager.instance().warn(this, "Error on sending heartbeat to server node", e, toString());
+			OLogManager.instance().debug(this, "Error on sending heartbeat to server node", e, toString());
 			return false;
 
 		} finally {

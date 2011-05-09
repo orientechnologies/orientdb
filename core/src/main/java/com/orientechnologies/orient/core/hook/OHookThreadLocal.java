@@ -35,7 +35,7 @@ public class OHookThreadLocal extends ThreadLocal<Set<OIdentifiable>> {
 	}
 
 	public boolean push(final OIdentifiable iRecord) {
-		Set<OIdentifiable> set = get();
+		final Set<OIdentifiable> set = get();
 		if (set.contains(iRecord))
 			return false;
 

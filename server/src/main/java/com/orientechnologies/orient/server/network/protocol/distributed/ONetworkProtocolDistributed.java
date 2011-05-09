@@ -21,9 +21,11 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryInputStream;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
@@ -50,126 +52,147 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 	@Override
 	protected void parseCommand() throws IOException, InterruptedException {
-		if (lastRequestType < 80) {
-			// BINARY REQUESTS
-			super.parseCommand();
-			return;
-		}
 
-		// DISTRIBUTED SERVER REQUESTS
-		switch (lastRequestType) {
+		ODistributedRequesterThreadLocal.INSTANCE.set(channel.toString());
 
-		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_HEARTBEAT:
-			data.commandInfo = "Keep-alive";
-			manager.updateHeartBeatTime();
+		try {
+			// DISTRIBUTED SERVER REQUESTS
+			switch (lastRequestType) {
 
-			sendOk(lastClientTxId);
+			case OChannelBinaryProtocol.REQUEST_RECORD_UPDATE: {
+				data.commandInfo = "Update record";
 
-			// SEND DB VERSION BACK
-			// channel.writeLong(connection.database == null ? 0 : connection.database.getStorage().getVersion());
-			break;
+				final ORecordId rid = channel.readRID();
+				final long newVersion = connection.rawDatabase.save(rid, channel.readBytes(), channel.readInt(), channel.readByte());
 
-		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_CONNECT: {
-			data.commandInfo = "Cluster connection";
-			manager.receivedLeaderConnection(this);
-			sendOk(lastClientTxId);
-			break;
-		}
-
-		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_OPEN: {
-			data.commandInfo = "Open database connection";
-
-			// REOPEN PREVIOUSLY MANAGED DATABASE
-			final String dbName = channel.readString();
-			openDatabase(dbName, channel.readString(), channel.readString());
-
-			sendOk(lastClientTxId);
-
-			channel.writeInt(connection.id);
-			channel.writeLong(connection.database.getStorage().getVersion());
-			break;
-		}
-
-		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_SENDER: {
-			data.commandInfo = "Share the database to a remote server";
-
-			final String dbName = channel.readString();
-			final String dbUser = channel.readString();
-			final String dbPassword = channel.readString();
-			final String remoteServerName = channel.readString();
-			final boolean synchronousMode = channel.readByte() == 1;
-
-			checkServerAccess("database.share");
-
-			openDatabase(dbName, dbUser, dbPassword);
-
-			final String engineName = connection.database.getStorage() instanceof OStorageLocal ? "local" : "memory";
-
-			final ODistributedServerNodeRemote remoteServerNode = manager.getNode(remoteServerName);
-
-			remoteServerNode.shareDatabase(connection.database, remoteServerName, dbUser, dbPassword, engineName, synchronousMode);
-
-			sendOk(lastClientTxId);
-
-			manager.addServerInConfiguration(dbName, remoteServerName, engineName, synchronousMode);
-
-			break;
-		}
-
-		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_RECEIVER: {
-			data.commandInfo = "Received a shared database from a remote server to install";
-
-			final String dbName = channel.readString();
-			final String dbUser = channel.readString();
-			final String dbPasswd = channel.readString();
-			final String engineName = channel.readString();
-
-			manager.setStatus(ODistributedServerManager.STATUS.SYNCHRONIZING);
-			try {
-				OLogManager.instance().info(this, "Received database '%s' to share on local server node", dbName);
-
-				connection.database = getDatabaseInstance(dbName, engineName);
-
-				if (connection.database.exists()) {
-					OLogManager.instance().info(this, "Deleting existent database '%s'", connection.database.getName());
-					connection.database.delete();
-				}
-
-				createDatabase(connection.database, dbUser, dbPasswd);
-
-				if (connection.database.isClosed())
-					connection.database.open(dbUser, dbPasswd);
-
-				OLogManager.instance().info(this, "Importing database '%s' via streaming from remote server node...", dbName);
-
-				new ODatabaseImport(connection.database, new OChannelBinaryInputStream(channel), this).importDatabase();
-
-				OLogManager.instance().info(this, "Database imported correctly", dbName);
+				// TODO: Handle it by using triggers
+				if (connection.database.getMetadata().getSchema().getDocument().getIdentity().equals(rid))
+					connection.database.getMetadata().getSchema().reload();
+				else if (connection.database.getMetadata().getIndexManager().getDocument().getIdentity().equals(rid))
+					connection.database.getMetadata().getIndexManager().reload();
 
 				sendOk(lastClientTxId);
+
+				channel.writeInt((int) newVersion);
+				break;
+			}
+
+			case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_HEARTBEAT:
+				data.commandInfo = "Keep-alive";
+				manager.updateHeartBeatTime();
+
+				sendOk(lastClientTxId);
+
+				// SEND DB VERSION BACK
+				// channel.writeLong(connection.database == null ? 0 : connection.database.getStorage().getVersion());
+				break;
+
+			case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_CONNECT: {
+				data.commandInfo = "Cluster connection";
+				manager.receivedLeaderConnection(this);
+				sendOk(lastClientTxId);
+				break;
+			}
+
+			case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_OPEN: {
+				data.commandInfo = "Open database connection";
+
+				// REOPEN PREVIOUSLY MANAGED DATABASE
+				final String dbName = channel.readString();
+				openDatabase(dbName, channel.readString(), channel.readString());
+
+				sendOk(lastClientTxId);
+
 				channel.writeInt(connection.id);
 				channel.writeLong(connection.database.getStorage().getVersion());
-			} finally {
-				manager.updateHeartBeatTime();
-				manager.setStatus(ODistributedServerManager.STATUS.ONLINE);
+				break;
 			}
-			break;
-		}
 
-		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_CONFIG: {
-			data.commandInfo = "Update db configuration from server node leader";
+			case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_SENDER: {
+				data.commandInfo = "Share the database to a remote server";
 
-			final ODocument config = (ODocument) new ODocument().fromStream(channel.readBytes());
-			manager.getClusterConfiguration(connection.database.getName(), config);
+				final String dbName = channel.readString();
+				final String dbUser = channel.readString();
+				final String dbPassword = channel.readString();
+				final String remoteServerName = channel.readString();
+				final boolean synchronousMode = channel.readByte() == 1;
 
-			OLogManager.instance().warn(this, "Changed distributed server configuration:\n%s", config.toJSON("indent:2"));
+				checkServerAccess("database.share");
 
-			sendOk(lastClientTxId);
-			break;
-		}
+				openDatabase(dbName, dbUser, dbPassword);
 
-		default:
-			super.parseCommand();
+				final String engineName = connection.database.getStorage() instanceof OStorageLocal ? "local" : "memory";
+
+				final ODistributedServerNodeRemote remoteServerNode = manager.getNode(remoteServerName);
+
+				remoteServerNode.shareDatabase(connection.database, remoteServerName, dbUser, dbPassword, engineName, synchronousMode);
+
+				sendOk(lastClientTxId);
+
+				manager.addServerInConfiguration(dbName, remoteServerName, engineName, synchronousMode);
+
+				break;
+			}
+
+			case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_RECEIVER: {
+				data.commandInfo = "Received a shared database from a remote server to install";
+
+				final String dbName = channel.readString();
+				final String dbUser = channel.readString();
+				final String dbPasswd = channel.readString();
+				final String engineName = channel.readString();
+
+				manager.setStatus(ODistributedServerManager.STATUS.SYNCHRONIZING);
+				try {
+					OLogManager.instance().info(this, "Received database '%s' to share on local server node", dbName);
+
+					connection.database = getDatabaseInstance(dbName, engineName);
+
+					if (connection.database.exists()) {
+						OLogManager.instance().info(this, "Deleting existent database '%s'", connection.database.getName());
+						connection.database.delete();
+					}
+
+					createDatabase(connection.database, dbUser, dbPasswd);
+
+					if (connection.database.isClosed())
+						connection.database.open(dbUser, dbPasswd);
+
+					OLogManager.instance().info(this, "Importing database '%s' via streaming from remote server node...", dbName);
+
+					new ODatabaseImport(connection.database, new OChannelBinaryInputStream(channel), this).importDatabase();
+
+					OLogManager.instance().info(this, "Database imported correctly", dbName);
+
+					sendOk(lastClientTxId);
+					channel.writeInt(connection.id);
+					channel.writeLong(connection.database.getStorage().getVersion());
+				} finally {
+					manager.updateHeartBeatTime();
+					manager.setStatus(ODistributedServerManager.STATUS.ONLINE);
+				}
+				break;
+			}
+
+			case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_CONFIG: {
+				data.commandInfo = "Update db configuration from server node leader";
+
+				final ODocument config = (ODocument) new ODocument().fromStream(channel.readBytes());
+				manager.getClusterConfiguration(connection.database.getName(), config);
+
+				OLogManager.instance().warn(this, "Changed distributed server configuration:\n%s", config.toJSON("indent:2"));
+
+				sendOk(lastClientTxId);
+				break;
+			}
+
+			default:
+				// BINARY REQUESTS
+				super.parseCommand();
+
+			}
+		} finally {
+			ODistributedRequesterThreadLocal.INSTANCE.remove();
 		}
 	}
 

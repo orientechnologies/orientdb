@@ -46,6 +46,7 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerNodeRemote.SYNCH_TYPE;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
+import com.orientechnologies.orient.server.network.protocol.distributed.ODistributedRequesterThreadLocal;
 import com.orientechnologies.orient.server.network.protocol.distributed.ONetworkProtocolDistributed;
 
 /**
@@ -186,7 +187,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 			node.connect(networkTimeoutNode);
 		} catch (IOException e) {
 			// IO ERROR: THE NODE SEEMD ALWAYS MORE DOWN: START TO COLLECT DATA FOR IT WAITING FOR A FUTURE RE-CONNECTION
-			OLogManager.instance().warn(this, "Remote server node %s:%d is down, set it as DISCONNECTED and start to buffer changes",
+			OLogManager.instance().debug(this, "Remote server node %s:%d is down, set it as DISCONNECTED and start to buffer changes",
 					node.networkAddress, node.networkPort);
 
 			node.setAsTemporaryDisconnected(serverOutSynchMaxBuffers);
@@ -394,7 +395,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 			// NOT DISTRIBUTED CFG
 			return true;
 
-		return servers.field("owner").equals(getId());
+		return servers.field("owner").equals(ODistributedRequesterThreadLocal.INSTANCE.get());
 	}
 
 	public ODocument getServersForCluster(final String iDatabaseName, final String iClusterName) {
