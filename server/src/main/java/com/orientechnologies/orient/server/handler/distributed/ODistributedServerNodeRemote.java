@@ -95,9 +95,11 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 
 		// CONNECT TO THE SERVER
 		channel.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_CONNECT);
+		channel.writeInt(clientTxId);
+
 		channel.writeString(iClusterName);
 		channel.writeBytes(iSecurityKey.getEncoded());
-		channel.writeInt(clientTxId);
+
 		channel.flush();
 		channel.readStatus();
 
