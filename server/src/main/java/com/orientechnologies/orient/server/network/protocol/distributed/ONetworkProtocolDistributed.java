@@ -81,6 +81,21 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 			break;
 		}
 
+		case OChannelBinaryProtocol.REQUEST_RECORD_DELETE: {
+			data.commandInfo = "Delete record";
+			final ORecordId rid = new ORecordId(channel.readShort(), channel.readLong());
+			@SuppressWarnings("unused")
+			final int version = channel.readInt();
+
+			// BYPASS VERSION CHECK BY USING -1
+			connection.rawDatabase.delete(rid, -1);
+			
+			sendOk(lastClientTxId);
+
+			channel.writeByte((byte) 1);
+			break;
+		}
+
 		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_HEARTBEAT:
 			checkConnected();
 			data.commandInfo = "Keep-alive";
