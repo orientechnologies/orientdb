@@ -20,12 +20,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
 import com.orientechnologies.common.parser.OStringForwardReader;
@@ -60,7 +59,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 	private OJSONReader							jsonReader;
 	private OStringForwardReader		reader;
 	private ORecordInternal<?>			record;
-	private Set<String>							recordToDelete	= new HashSet<String>();
+	private List<String>						recordToDelete	= new ArrayList<String>();
 	private Map<OProperty, String>	propertyIndexes	= new HashMap<OProperty, String>();
 
 	public ODatabaseImport(final ODatabaseDocument database, final String iFileName, final OCommandOutputListener iListener)
