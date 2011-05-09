@@ -78,7 +78,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 			try {
 				listener.onBeforeTxBegin(underlying);
 			} catch (Throwable t) {
-				OLogManager.instance().error(this, "Error before tx begin", t);
+				OLogManager.instance().error(this, "Error before the transaction begin", t, OTransactionException.class);
 			}
 
 		currentTx = iTx;
@@ -93,7 +93,9 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 			try {
 				listener.onBeforeTxCommit(underlying);
 			} catch (Throwable t) {
-				OLogManager.instance().error(this, "Error before tx commit", t);
+				OLogManager.instance().debug(this, "Can't commit the transaction: caught exception on execution of %s.onBeforeTxCommit()",
+						t, OTransactionException.class, listener.getClass());
+				rollback();
 			}
 
 		try {
@@ -110,7 +112,12 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 			try {
 				listener.onAfterTxCommit(underlying);
 			} catch (Throwable t) {
-				OLogManager.instance().error(this, "Error after tx commit", t);
+				OLogManager
+						.instance()
+						.debug(
+								this,
+								"Error after the transaction has been committed. The transaction remains valid. The exception caught was on execution of %s.onAfterTxCommit()",
+								t, OTransactionException.class, listener.getClass());
 			}
 
 		return this;

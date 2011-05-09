@@ -95,6 +95,21 @@ public class OLogManager {
 			log(iRequester, Level.FINE, iMessage, iException, iAdditionalArgs);
 	}
 
+	public void debug(final Object iRequester, final String iMessage, final Throwable iException,
+			final Class<? extends OException> iExceptionClass, final Object... iAdditionalArgs) {
+		debug(iRequester, iMessage, iException, iAdditionalArgs);
+
+		try {
+			throw iExceptionClass.getConstructor(String.class, Throwable.class).newInstance(iMessage, iException);
+		} catch (NoSuchMethodException e) {
+		} catch (IllegalArgumentException e) {
+		} catch (SecurityException e) {
+		} catch (InstantiationException e) {
+		} catch (IllegalAccessException e) {
+		} catch (InvocationTargetException e) {
+		}
+	}
+
 	public void info(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
 		if (isInfoEnabled())
 			log(iRequester, Level.INFO, iMessage, null, iAdditionalArgs);

@@ -23,7 +23,10 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
+import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 
 @Test(groups = "dictionary")
@@ -60,5 +63,49 @@ public class TransactionAtomicTest {
 
 		db1.close();
 		db2.close();
+	}
+
+	@Test(expectedExceptions = OTransactionException.class)
+	public void testTransactionPreListenerRollback() throws IOException {
+		ODatabaseFlat db = new ODatabaseFlat(url);
+		db.open("admin", "admin");
+
+		ORecordFlat record1 = new ORecordFlat(db);
+		record1.value("This is the first version").save();
+
+		db.registerListener(new ODatabaseListener() {
+
+			public void onAfterTxCommit(ODatabase iDatabase) {
+			}
+
+			public void onAfterTxRollback(ODatabase iDatabase) {
+			}
+
+			public void onBeforeTxBegin(ODatabase iDatabase) {
+			}
+
+			public void onBeforeTxCommit(ODatabase iDatabase) {
+				throw new RuntimeException("Rollback test");
+			}
+
+			public void onBeforeTxRollback(ODatabase iDatabase) {
+			}
+
+			public void onClose(ODatabase iDatabase) {
+			}
+
+			public void onCreate(ODatabase iDatabase) {
+			}
+
+			public void onDelete(ODatabase iDatabase) {
+			}
+
+			public void onOpen(ODatabase iDatabase) {
+			}
+		});
+
+		db.commit();
+
+		db.close();
 	}
 }
