@@ -16,11 +16,13 @@
 package com.orientechnologies.orient.server.network.protocol.distributed;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
@@ -93,6 +95,12 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 			case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_CONNECT: {
 				data.commandInfo = "Cluster connection";
+				final String clusterName = channel.readString();
+				final byte[] encodedSecurityKey = channel.readBytes();
+
+				if (!clusterName.equals(manager.getName()) || Arrays.equals(encodedSecurityKey, manager.getSecurityKey()))
+					throw new OSecurityException("Invalid combination of cluster name and key received");
+
 				manager.receivedLeaderConnection(this);
 				sendOk(lastClientTxId);
 				break;
@@ -210,4 +218,10 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 	@Override
 	public void onMessage(String iText) {
 	}
+
+	protected void checkConnected() {
+		if (!manager.isLeaderConnected())
+			throw new OSecurityException("Invalid request from a non-connected node");
+	}
+
 }

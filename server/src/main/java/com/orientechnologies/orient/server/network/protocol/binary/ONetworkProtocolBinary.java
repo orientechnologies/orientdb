@@ -788,16 +788,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	}
 
 	protected void checkServerAccess(final String iResource) {
-		checkConnected();
+		if (serverUser == null)
+			throw new OSecurityAccessException("Server user not authenticated.");
 
 		if (!OServerMain.server().authenticate(serverUser.name, null, iResource))
 			throw new OSecurityAccessException("User '" + serverUser.name + "' can't access to the resource [" + iResource
 					+ "]. Use another server user or change permission in the file config/orientdb-server-config.xml");
-	}
-
-	protected void checkConnected() {
-		if (serverUser == null)
-			throw new OSecurityAccessException("Server user not authenticated.");
 	}
 
 	private boolean loadUserFromSchema(final String iUserName, final String iUserPassword) {

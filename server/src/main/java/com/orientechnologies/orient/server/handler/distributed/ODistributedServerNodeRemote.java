@@ -26,6 +26,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.crypto.SecretKey;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -81,7 +83,7 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 		asynchExecutor = Executors.newSingleThreadExecutor();
 	}
 
-	public void connect(final int iTimeout) throws IOException {
+	public void connect(final int iTimeout, final String iClusterName, final SecretKey iSecurityKey) throws IOException {
 		configuration.setValue(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT, iTimeout);
 		channel = new OChannelBinaryClient(networkAddress, networkPort, configuration);
 
@@ -93,6 +95,8 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 
 		// CONNECT TO THE SERVER
 		channel.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_CONNECT);
+		channel.writeString(iClusterName);
+		channel.writeBytes(iSecurityKey.getEncoded());
 		channel.writeInt(clientTxId);
 		channel.flush();
 		channel.readStatus();

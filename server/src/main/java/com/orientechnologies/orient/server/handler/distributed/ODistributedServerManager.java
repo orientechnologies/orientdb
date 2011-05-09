@@ -167,7 +167,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		}
 
 		try {
-			node.connect(networkTimeoutNode);
+			node.connect(networkTimeoutNode, name, securityKey);
 			node.startSynchronization();
 		} catch (Exception e) {
 			OLogManager.instance().error(this, "Can't connect to distributed server node: %s:%d", node.networkAddress, node.networkPort);
@@ -184,7 +184,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 
 		// RETRY TO CONNECT
 		try {
-			node.connect(networkTimeoutNode);
+			node.connect(networkTimeoutNode, name, securityKey);
 		} catch (IOException e) {
 			// IO ERROR: THE NODE SEEMD ALWAYS MORE DOWN: START TO COLLECT DATA FOR IT WAITING FOR A FUTURE RE-CONNECTION
 			OLogManager.instance().debug(this, "Remote server node %s:%d is down, set it as DISCONNECTED and start to buffer changes",
@@ -603,6 +603,18 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		}
 	}
 
+	public boolean isLeaderConnected() {
+		return leaderConnection != null;
+	}
+
+	public String getSecurityAlgorithm() {
+		return securityAlgorithm;
+	}
+
+	public byte[] getSecurityKey() {
+		return securityKey.getEncoded();
+	}
+
 	public STATUS getStatus() {
 		return status;
 	}
@@ -621,4 +633,5 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		// LAUNCH THE SIGNAL AND WAIT FOR A CONNECTION
 		discoverySignaler = new ODistributedServerDiscoverySignaler(this, distributedNetworkListener, iForceLeadership);
 	}
+
 }
