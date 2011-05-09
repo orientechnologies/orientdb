@@ -225,19 +225,19 @@ public abstract class OChannelBinary extends OChannel {
 		return this;
 	}
 
-	/**
-	 * Send byte arrays split in chunks of maxChunkSize bytes
-	 */
 	public OChannelBinary writeBytes(final byte[] iContent) throws IOException {
+		return writeBytes(iContent, iContent != null ? iContent.length : 0);
+	}
+
+	public OChannelBinary writeBytes(final byte[] iContent, final int iLength) throws IOException {
 		if (debug)
-			OLogManager.instance().debug(this, "Writing bytes (4+%d=%d bytes): %s", iContent != null ? iContent.length : 0,
-					iContent != null ? iContent.length + 4 : 4, iContent);
+			OLogManager.instance().debug(this, "Writing bytes (4+%d=%d bytes): %s", iLength, iLength + 4, iContent);
 
 		if (iContent == null) {
 			out.writeInt(-1);
 		} else {
-			out.writeInt(iContent.length);
-			out.write(iContent);
+			out.writeInt(iLength);
+			out.write(iContent, 0, iLength);
 		}
 		return this;
 	}

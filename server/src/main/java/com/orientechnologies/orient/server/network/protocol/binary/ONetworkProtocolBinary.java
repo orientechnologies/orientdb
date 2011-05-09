@@ -838,7 +838,18 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			channel.writeRID(rec.getIdentity());
 			channel.writeInt(rec.getVersion());
 			try {
-				channel.writeBytes(rec.toStream());
+				byte[] stream = rec.toStream();
+
+				// TRIM TAILING SPACES (DUE TO OVERSIZE)
+				int realLength = stream.length;
+				for (int i = stream.length - 1; i > -1; --i) {
+					if (stream[i] == 32)
+						--realLength;
+					else
+						break;
+				}
+
+				channel.writeBytes(stream, realLength);
 			} catch (Exception e) {
 				channel.writeBytes(null);
 				OLogManager.instance().error(this, "Error on unmarshalling record #" + o.getIdentity().toString(),
