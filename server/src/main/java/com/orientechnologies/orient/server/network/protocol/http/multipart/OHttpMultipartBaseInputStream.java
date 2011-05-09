@@ -37,6 +37,13 @@ public class OHttpMultipartBaseInputStream extends InputStream {
 		buffer = new StringBuilder();
 		buffer.append((char) iSkipInput);
 	}
+	
+	public OHttpMultipartBaseInputStream(InputStream in, char iSkipInput, int iContentLength) {
+		wrappedInputStream = in;
+		contentLength = iContentLength;
+		buffer = new StringBuilder();
+		buffer.append(iSkipInput);
+	}
 
 	public InputStream getWrappedInputStream() {
 		return wrappedInputStream;

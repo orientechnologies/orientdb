@@ -83,11 +83,14 @@ public abstract class OHttpMultipartRequestCommand<B, F> extends OServerCommandA
 					endRequest = OHttpMultipartHelper.isEndRequest(iRequest);
 					if (!endRequest) {
 						parseStatus = STATUS.STATUS_EXPECTED_BOUNDARY_CRLF;
+					} else {
+						parseStatus = STATUS.STATUS_EXPECTED_BOUNDARY;
 					}
 					break;
 				}
 				}
 			}
+			parseStatus = STATUS.STATUS_EXPECTED_BOUNDARY;
 		} catch (Exception e) {
 			sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR, e.getMessage(), null, OHttpUtils.CONTENT_TEXT_PLAIN,
 					e.getMessage());

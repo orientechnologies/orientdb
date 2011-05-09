@@ -354,7 +354,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 				// END OF HEADERS
 				if (iRequest.isMultipart) {
 					iRequest.content = "";
-					iRequest.multipartStream = new OHttpMultipartBaseInputStream(channel.inStream, in, contentLength);
+					iRequest.multipartStream = new OHttpMultipartBaseInputStream(channel.inStream, currChar, contentLength);
 					return;
 				} else {
 					byte[] buffer = new byte[contentLength];
@@ -401,6 +401,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 			data.lastCommandReceived = OProfiler.getInstance().startChrono();
 
 			requestContent.setLength(0);
+			request.isMultipart = false;
 
 			if (c != '\n')
 				// AVOID INITIAL /N
