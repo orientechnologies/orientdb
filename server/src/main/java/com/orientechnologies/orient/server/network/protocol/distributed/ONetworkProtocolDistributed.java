@@ -53,8 +53,6 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 	@Override
 	protected void parseCommand() throws IOException, InterruptedException {
 
-		ODistributedRequesterThreadLocal.INSTANCE.set(channel.toString());
-
 		try {
 			// DISTRIBUTED SERVER REQUESTS
 			switch (lastRequestType) {
@@ -83,6 +81,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 			}
 
 			case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_HEARTBEAT:
+				checkConnected();
 				data.commandInfo = "Keep-alive";
 				manager.updateHeartBeatTime();
 
@@ -100,11 +99,14 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 			}
 
 			case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_OPEN: {
+				checkConnected();
 				data.commandInfo = "Open database connection";
 
 				// REOPEN PREVIOUSLY MANAGED DATABASE
 				final String dbName = channel.readString();
 				openDatabase(dbName, channel.readString(), channel.readString());
+
+				ODistributedRequesterThreadLocal.INSTANCE.set(true);
 
 				sendOk(lastClientTxId);
 
@@ -140,12 +142,15 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 			}
 
 			case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_RECEIVER: {
+				checkConnected();
 				data.commandInfo = "Received a shared database from a remote server to install";
 
 				final String dbName = channel.readString();
 				final String dbUser = channel.readString();
 				final String dbPasswd = channel.readString();
 				final String engineName = channel.readString();
+
+				ODistributedRequesterThreadLocal.INSTANCE.set(true);
 
 				manager.setStatus(ODistributedServerManager.STATUS.SYNCHRONIZING);
 				try {
@@ -180,10 +185,11 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 			}
 
 			case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_CONFIG: {
+				checkConnected();
 				data.commandInfo = "Update db configuration from server node leader";
 
 				final ODocument config = (ODocument) new ODocument().fromStream(channel.readBytes());
-				manager.getClusterConfiguration(connection.database.getName(), config);
+				manager.setClusterConfiguration(connection.database.getName(), config);
 
 				OLogManager.instance().warn(this, "Changed distributed server configuration:\n%s", config.toJSON("indent:2"));
 

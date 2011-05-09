@@ -395,11 +395,11 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 			// NOT DISTRIBUTED CFG
 			return true;
 
-		String requesterNode = ODistributedRequesterThreadLocal.INSTANCE.get();
-		if (requesterNode == null)
-			requesterNode = getId();
+		if (ODistributedRequesterThreadLocal.INSTANCE.get())
+			return true;
 
-		return servers.field("owner").equals(requesterNode);
+		return servers.field("owner").equals(getId());
+
 	}
 
 	public ODocument getServersForCluster(final String iDatabaseName, final String iClusterName) {
@@ -474,7 +474,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 		return clusterDbConfigurations.get(iDatabaseName);
 	}
 
-	public void getClusterConfiguration(final String iDatabaseName, final ODocument iConfiguration) {
+	public void setClusterConfiguration(final String iDatabaseName, final ODocument iConfiguration) {
 		clusterDbConfigurations.put(iDatabaseName, iConfiguration);
 	}
 

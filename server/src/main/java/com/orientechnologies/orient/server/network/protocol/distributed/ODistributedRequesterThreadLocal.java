@@ -21,6 +21,12 @@ package com.orientechnologies.orient.server.network.protocol.distributed;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ODistributedRequesterThreadLocal extends ThreadLocal<String> {
+public class ODistributedRequesterThreadLocal extends ThreadLocal<Boolean> {
 	public static ODistributedRequesterThreadLocal	INSTANCE	= new ODistributedRequesterThreadLocal();
+
+	@Override
+	protected Boolean initialValue() {
+		return Boolean.FALSE;
+	}
+
 }
