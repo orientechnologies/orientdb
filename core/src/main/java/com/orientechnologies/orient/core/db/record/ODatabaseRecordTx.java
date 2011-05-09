@@ -19,6 +19,8 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
+import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXSTATUS;
@@ -161,19 +163,19 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <RET extends ORecordInternal<?>> RET load(ORecordInternal<?> iRecord) {
+	public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord) {
 		return (RET) currentTx.load(iRecord.getIdentity(), iRecord, null);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <RET extends ORecordInternal<?>> RET load(ORID iRecordId) {
+	public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId) {
 		return (RET) currentTx.load(iRecordId, null, null);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <RET extends ORecordInternal<?>> RET load(ORID iRecordId, String iFetchPlan) {
+	public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId, final String iFetchPlan) {
 		return (RET) currentTx.load(iRecordId, null, iFetchPlan);
 	}
 
@@ -184,6 +186,11 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 
 	@Override
 	public ODatabaseRecord save(final ORecordInternal<?> iContent, final String iClusterName) {
+		if (!iContent.getIdentity().isValid())
+			checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_CREATE, iClusterName);
+		else
+			checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName);
+
 		currentTx.save(iContent, iClusterName);
 		return this;
 	}

@@ -55,6 +55,8 @@ public class SecurityTest {
 		try {
 			new ODocument(database, "Profile").save("internal");
 			Assert.assertTrue(false);
+		} catch (OSecurityAccessException e) {
+			Assert.assertTrue(true);
 		} catch (ODatabaseException e) {
 			Assert.assertTrue(e.getCause() instanceof OSecurityAccessException);
 		} finally {
@@ -68,6 +70,8 @@ public class SecurityTest {
 
 		try {
 			new ODocument(database, "Profile").save();
+		} catch (OSecurityAccessException e) {
+			Assert.assertTrue(true);
 		} catch (ODatabaseException e) {
 			Assert.assertTrue(e.getCause() instanceof OSecurityAccessException);
 		} finally {

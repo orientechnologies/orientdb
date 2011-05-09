@@ -27,6 +27,8 @@ import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
+import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -40,6 +42,42 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 	public ODatabaseRecordWrapperAbstract(final DB iDatabase) {
 		super(iDatabase);
 		iDatabase.setDatabaseOwner(this);
+	}
+
+	@Override
+	public <THISDB extends ODatabase> THISDB create() {
+		checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_CREATE);
+		return super.create();
+	}
+
+	@Override
+	public void delete() {
+		checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_DELETE);
+		super.delete();
+	}
+
+	@Override
+	public int addLogicalCluster(final String iClassName, final int iPhyClusterContainerId) {
+		checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
+		return super.addLogicalCluster(iClassName, iPhyClusterContainerId);
+	}
+
+	@Override
+	public int addPhysicalCluster(final String iClusterName, final String iClusterFileName, final int iStartSize) {
+		checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
+		return super.addPhysicalCluster(iClusterName, iClusterFileName, iStartSize);
+	}
+
+	@Override
+	public int addPhysicalCluster(final String iClusterName) {
+		checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
+		return super.addPhysicalCluster(iClusterName);
+	}
+
+	@Override
+	public int addDataSegment(final String iSegmentName, final String iSegmentFileName) {
+		checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
+		return super.addDataSegment(iSegmentName, iSegmentFileName);
 	}
 
 	public OTransaction getTransaction() {

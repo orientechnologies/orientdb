@@ -117,6 +117,9 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 		final ODocument doc = (ODocument) iContent;
 
 		if (!doc.getIdentity().isValid()) {
+			if (doc.getClassName() != null)
+				checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, doc.getClassName());
+
 			if (iClusterName == null && doc.getSchemaClass() != null)
 				// FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
 				iClusterName = getClusterNameById(doc.getSchemaClass().getDefaultClusterId());
@@ -141,6 +144,10 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 			if (id == clusterIds.length)
 				throw new IllegalArgumentException("Cluster name " + iClusterName + " is not configured to store the class "
 						+ doc.getClassName());
+		} else {
+			// UPDATE: CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
+			if (doc.getClassName() != null)
+				checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_UPDATE, doc.getClassName());
 		}
 
 		doc.validate();
