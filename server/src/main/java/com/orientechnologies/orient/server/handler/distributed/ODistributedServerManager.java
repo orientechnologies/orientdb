@@ -395,7 +395,11 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 			// NOT DISTRIBUTED CFG
 			return true;
 
-		return servers.field("owner").equals(ODistributedRequesterThreadLocal.INSTANCE.get());
+		String requesterNode = ODistributedRequesterThreadLocal.INSTANCE.get();
+		if (requesterNode == null)
+			requesterNode = getId();
+
+		return servers.field("owner").equals(requesterNode);
 	}
 
 	public ODocument getServersForCluster(final String iDatabaseName, final String iClusterName) {
