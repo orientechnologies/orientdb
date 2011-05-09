@@ -107,7 +107,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 					if (entry.size() > 0) {
 						mapValue = entry.get(1);
 						if (mapValue != null && mapValue.length() > 0)
-							mapValue.substring(1);
+							mapValue = mapValue.substring(1);
 						map.put(fieldTypeFromStream((ODocument) iSourceRecord, OType.STRING, entry.get(0)), new ORecordId(mapValue));
 					}
 
