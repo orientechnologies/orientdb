@@ -79,10 +79,10 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> implements Ser
 	}
 
 	@Override
-	public Object remove(final Object o) {
-		underlying.remove(database.getRecordByUserObject(o, false));
+	public Object remove(final Object iKey) {
+		underlying.remove((String) iKey);
 		setDirty();
-		return super.remove(o);
+		return super.remove(iKey);
 	}
 
 	@Override
