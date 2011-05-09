@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -301,6 +302,40 @@ public class CRUDObjectPhysicalTest {
 		List<Profile> result = database.query(query, "Barack", "Obama");
 
 		Assert.assertTrue(result.size() != 0);
+
+		database.close();
+	}
+
+	@Test
+	public void queryWithRidAsParameters() {
+		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+
+		Profile profile = (Profile) database.browseClass("Profile").next();
+
+		final OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>("select from Profile where @rid = ?");
+		List<Profile> result = database.query(query, new ORecordId(profile.getId()));
+
+		Assert.assertEquals(result.size(), 1);
+
+		database.close();
+	}
+
+	@Test
+	public void queryWithRidStringAsParameters() {
+		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+
+		Profile profile = (Profile) database.browseClass("Profile").next();
+
+		OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>("select from Profile where @rid = ?");
+		List<Profile> result = database.query(query, profile.getId());
+
+		Assert.assertEquals(result.size(), 1);
+
+		// TEST WITHOUT # AS PREFIX
+		query = new OSQLSynchQuery<Profile>("select from Profile where @rid = ?");
+		result = database.query(query, profile.getId().substring(1));
+
+		Assert.assertEquals(result.size(), 1);
 
 		database.close();
 	}

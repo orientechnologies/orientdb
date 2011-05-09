@@ -24,6 +24,8 @@ import java.util.regex.Pattern;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
 import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
@@ -103,6 +105,13 @@ public class OSQLFilterCondition {
 				result = new Object[] { getDate(iRecord, l), r };
 			} else if (l instanceof Date && !(r instanceof Date)) {
 				result = new Object[] { l, getDate(iRecord, r) };
+			}
+
+			// RIDS
+			else if (r instanceof ORID && l instanceof String) {
+				result = new Object[] { new ORecordId((String) l), r };
+			} else if (l instanceof ORID && r instanceof String) {
+				result = new Object[] { l, new ORecordId((String) r) };
 			}
 
 		return result;
