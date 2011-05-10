@@ -31,10 +31,11 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
- * GraphDB implementation on top of underlying Document. Graph Element are Object itself. If you want a lighter version see
- * {@link OGraphDatabase}.
+ * GraphDB implementation on top of underlying Document. Graph Element are Object itself. This API will be not more supported in the
+ * future in favor of {@link OGraphDatabase} class much lighter and faster than this. Otherwise, you can use the TinkerPop
+ * Blueprints entry-point.
  * 
- * @author Luca Garulli
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
 public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
@@ -88,7 +89,7 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 	}
 
 	public ODictionary<OGraphElement> getDictionary() {
-		throw null;
+		throw new UnsupportedOperationException("getDictionary()");
 	}
 
 	@SuppressWarnings("unchecked")
