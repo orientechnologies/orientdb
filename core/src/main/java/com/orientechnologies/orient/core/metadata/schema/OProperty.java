@@ -151,6 +151,9 @@ public class OProperty extends ODocumentWrapperNoClass implements Comparable<OPr
 				ODocument cfg = new ODocument(document.getDatabase());
 				cfg.field(OIndex.CONFIG_TYPE, (String) document.field("index-type"));
 				index = new OPropertyIndex(document.getDatabase(), owner, new String[] { name }, cfg);
+				if (index.getUnderlying() == null)
+					// INVALID INDEX: THE UNDERLYING HAS BEEN REMOVED
+					index = null;
 			}
 		}
 	}
