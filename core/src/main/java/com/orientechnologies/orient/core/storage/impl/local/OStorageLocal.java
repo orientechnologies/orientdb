@@ -183,6 +183,7 @@ public class OStorageLocal extends OStorageEmbedded {
 						if (clusterConfig.getName().equals(OStorage.CLUSTER_DEFAULT_NAME))
 							defaultClusterId = pos;
 
+
 						clusters[pos].open();
 					}
 				}
@@ -940,7 +941,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		checkOpeness();
 
 		if (iContent == null)
-			throw new IllegalArgumentException("Record " + iContent + " is null");
+			throw new IllegalArgumentException("Record is null");
 
 		final long timer = OProfiler.getInstance().startChrono();
 

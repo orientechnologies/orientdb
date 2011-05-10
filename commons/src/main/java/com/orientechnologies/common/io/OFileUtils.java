@@ -10,7 +10,7 @@ public class OFileUtils {
 
 	public static long getSizeAsNumber(String iSize) {
 		if (iSize == null)
-			throw new IllegalArgumentException("Size " + iSize + " is null");
+			throw new IllegalArgumentException("Size is null");
 
 		boolean number = true;
 		for (int i = iSize.length() - 1; i >= 0; --i) {

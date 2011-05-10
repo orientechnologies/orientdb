@@ -309,7 +309,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
 	final OMVRBTreeEntry<K, V> getEntry(final Object key, final boolean iGetContainer) {
 		if (key == null)
-			return OMVRBTreeThreadLocal.INSTANCE.push(key, null);
+			return OMVRBTreeThreadLocal.INSTANCE.push(null, null);
 
 		// 1^ CHANCE - TRY TO SEE IF LAST USED NODE IS GOOD: THIS IS VERY COMMON CASE ON INSERTION WITH AN INCREMENTING KEY
 		// OMVRBTreeEntry<K, V> entry = OMVRBTreeThreadLocal.INSTANCE.getLatest();

@@ -150,7 +150,7 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 				if (record != null)
 					return (REC) record;
 
-				if ((record = readCurrentRecord(record, +1)) != null)
+				if ((record = readCurrentRecord(null, +1)) != null)
 					// FOUND
 					return (REC) record;
 			}

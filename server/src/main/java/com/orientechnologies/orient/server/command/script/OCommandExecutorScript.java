@@ -84,7 +84,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
 			throw new OCommandScriptException("Unsupported language: " + language + ". Supported languages are: " + engines);
 
 		if (script == null)
-			throw new OCommandScriptException("Invalid script: " + script);
+			throw new OCommandScriptException("Invalid script: null");
 
 		final ScriptEngine scriptEngine = engines.get(language);
 
