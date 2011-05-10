@@ -444,7 +444,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			iRecord.setDatabase(this);
 
 		try {
-			// STREAM.LENGTH = 0 -> RECORD IN STACK: WILL BE SAVED AFTER
+			boolean wasNew = rid.isNew();
+
+			// STREAM.LENGTH == 0 -> RECORD IN STACK: WILL BE SAVED AFTER
 			byte[] stream = iRecord.toStream();
 
 			boolean isNew = rid.isNew();
@@ -459,7 +461,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				rid.clusterId = iClusterName != null ? getClusterIdByName(iClusterName) : getDefaultClusterId();
 
 			if (stream != null && stream.length > 0) {
-				if (isNew) {
+				if (wasNew) {
 					// CHECK ACCESS ON CLUSTER
 					checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_CREATE, iClusterName, rid.clusterId);
 					if (callbackHooks(TYPE.BEFORE_CREATE, iRecord))
@@ -491,17 +493,15 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			if (isNew) {
 				// UPDATE INFORMATION: CLUSTER ID+POSITION
 				iRecord.fill(iRecord.getDatabase(), rid, 0, stream);
-				if (stream != null && stream.length > 0)
-					callbackHooks(TYPE.AFTER_CREATE, iRecord);
-
 				// NOTIFY IDENTITY HAS CHANGED
 				iRecord.onAfterIdentityChanged(iRecord);
 			} else {
 				// UPDATE INFORMATION: VERSION
 				iRecord.fill(iRecord.getDatabase(), rid, (int) result, stream);
-				if (stream != null && stream.length > 0)
-					callbackHooks(TYPE.AFTER_UPDATE, iRecord);
 			}
+
+			if (stream != null && stream.length > 0)
+				callbackHooks(wasNew ? TYPE.AFTER_CREATE : TYPE.AFTER_UPDATE, iRecord);
 
 			if (stream != null && stream.length > 0)
 				// FILLED RECORD
