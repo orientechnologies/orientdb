@@ -57,13 +57,13 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLPermissionA
 
 		className = word.toString();
 		if (className == null)
-			throw new OCommandSQLParsingException("Class not found", text, pos);
+			throw new OCommandSQLParsingException("Class is null", text, pos);
 
 		return this;
 	}
 
 	/**
-	 * Execute the CREATE PROPERTY.
+	 * Execute the DROP CLASS.
 	 */
 	public Object execute(final Map<Object, Object> iArgs) {
 		if (className == null)

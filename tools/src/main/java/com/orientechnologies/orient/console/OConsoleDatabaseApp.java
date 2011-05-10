@@ -418,28 +418,67 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		out.println("\nIndex created succesfully");
 	}
 
+	@ConsoleCommand(description = "Delete the current database")
+	public void dropDatabase() throws IOException {
+		checkCurrentDatabase();
+
+		final String dbName = currentDatabase.getName();
+
+		if (currentDatabase.getURL().startsWith(OEngineRemote.NAME)) {
+			// REMOTE CONNECTION
+			final String dbURL = currentDatabase.getURL().substring(OEngineRemote.NAME.length() + 1);
+			new OServerAdmin(dbURL).connect(currentDatabaseUserName, currentDatabaseUserPassword).deleteDatabase();
+		} else {
+			// LOCAL CONNECTION
+			currentDatabase.delete();
+			currentDatabase = null;
+		}
+
+		out.println("\nDatabase '" + dbName + "' deleted succesfully");
+	}
+
+	@ConsoleCommand(description = "Delete the specified database")
+	public void dropDatabase(
+			@ConsoleParameter(name = "database-url", description = "The url of the database to create in the format '<mode>:<path>'") String iDatabaseURL,
+			@ConsoleParameter(name = "user", description = "Server administrator name") String iUserName,
+			@ConsoleParameter(name = "password", description = "Server administrator password") String iUserPassword) throws IOException {
+
+		if (iDatabaseURL.startsWith(OEngineRemote.NAME)) {
+			// REMOTE CONNECTION
+			final String dbURL = iDatabaseURL.substring(OEngineRemote.NAME.length() + 1);
+			new OServerAdmin(dbURL).connect(iUserName, iUserPassword).deleteDatabase();
+		} else {
+			// LOCAL CONNECTION
+			currentDatabase = new ODatabaseDocumentTx(iDatabaseURL);
+			currentDatabase.delete();
+			currentDatabase = null;
+		}
+
+		out.println("\nDatabase '" + iDatabaseURL + "' deleted succesfully");
+	}
+
 	@ConsoleCommand(splitInWords = false, description = "Remove an index")
-	public void removeIndex(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText)
+	public void dropIndex(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText)
 			throws IOException {
 		out.println("\nRemoving index...");
 
-		sqlCommand("remove", iCommandText, "\nRemoved index %d link(s) in %f sec(s).\n");
+		sqlCommand("drop", iCommandText, "\nRemoved index %d link(s) in %f sec(s).\n");
 
 		out.println("\nIndex removed succesfully");
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Remove a class from the schema")
-	public void removeClass(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText)
+	public void dropClass(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText)
 			throws IOException {
-		sqlCommand("remove", iCommandText, "\nRemoved class in %f sec(s).\n");
+		sqlCommand("drop", iCommandText, "\nRemoved class in %f sec(s).\n");
 		currentDatabase.getMetadata().getSchema().reload();
 		out.println("\nClass removed succesfully");
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Remove a property from a class")
-	public void removeProperty(
-			@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) throws IOException {
-		sqlCommand("remove", iCommandText, "\nRemoved class property in %f sec(s).\n");
+	public void dropProperty(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText)
+			throws IOException {
+		sqlCommand("drop", iCommandText, "\nRemoved class property in %f sec(s).\n");
 
 		out.println("\nClass property removed succesfully");
 	}

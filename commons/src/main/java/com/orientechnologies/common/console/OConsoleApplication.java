@@ -154,7 +154,7 @@ public class OConsoleApplication {
 			methodName = m.getName();
 			ann = m.getAnnotation(ConsoleCommand.class);
 
-			StringBuilder commandName = new StringBuilder();
+			final StringBuilder commandName = new StringBuilder();
 			char ch;
 			int commandWordCount = 1;
 			for (int i = 0; i < methodName.length(); ++i) {
