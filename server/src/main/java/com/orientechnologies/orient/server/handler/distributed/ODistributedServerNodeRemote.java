@@ -106,33 +106,40 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 		// CONNECT EACH DATABASES
 		final List<OServerNodeDatabaseEntry> servers = new ArrayList<OServerNodeDatabaseEntry>(databases.values());
 		for (OServerNodeDatabaseEntry entry : servers) {
-			channel.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_OPEN);
-			channel.writeInt(clientTxId);
+			try {
+				channel.writeByte(OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_OPEN);
+				channel.writeInt(clientTxId);
 
-			// PACKET DB INFO TO SEND
-			channel.writeString(entry.databaseName);
-			channel.writeString(entry.userName);
-			channel.writeString(entry.userPassword);
-			channel.flush();
+				// PACKET DB INFO TO SEND
+				channel.writeString(entry.databaseName);
+				channel.writeString(entry.userName);
+				channel.writeString(entry.userPassword);
+				channel.flush();
 
-			channel.readStatus();
-			entry.sessionId = channel.readInt();
+				channel.readStatus();
+				entry.sessionId = channel.readInt();
 
-			// GET AND CHECK VERSION IF IT'S THE SAME
-			final long version = channel.readLong();
-			if (version != entry.version) {
-				OLogManager.instance().warn(
-						this,
-						"Remote database '" + entry.databaseName + "' has different version than Leader node (" + entry.version
-								+ ") and remote (" + version + "). Removing database from shared list.");
+				// GET AND CHECK VERSION IF IT'S THE SAME
+				final long version = channel.readLong();
+				if (version != entry.version) {
+					OLogManager.instance().warn(
+							this,
+							"Remote database '" + entry.databaseName + "' has different version than Leader node (" + entry.version
+									+ ") and remote (" + version + "). Removing database from shared list.");
 
+					databases.remove(entry.databaseName);
+
+					// throw new ODistributedException("Database version doesn't match between current node (" + entry.version +
+					// ") and remote ("
+					// + version + ")");
+				} else
+					sendConfiguration(entry.databaseName);
+			} catch (Exception e) {
 				databases.remove(entry.databaseName);
+				OLogManager.instance().warn(this,
+						"Database '" + entry.databaseName + "' is not present on remote server. Removing database from shared list.");
 
-				// throw new ODistributedException("Database version doesn't match between current node (" + entry.version +
-				// ") and remote ("
-				// + version + ")");
-			} else
-				sendConfiguration(entry.databaseName);
+			}
 		}
 
 		if (status == STATUS.CONNECTING)

@@ -170,7 +170,8 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 			node.connect(networkTimeoutNode, name, securityKey);
 			node.startSynchronization();
 		} catch (Exception e) {
-			OLogManager.instance().error(this, "Can't connect to distributed server node: %s:%d", node.networkAddress, node.networkPort);
+			OLogManager.instance().error(this, "Can't connect to distributed server node: %s:%d", e, node.networkAddress,
+					node.networkPort);
 		}
 	}
 
