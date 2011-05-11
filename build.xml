@@ -8,6 +8,7 @@
 	<property name="version"        value="1.0rc2-SNAPSHOT" />
 	<property name="global.release" value="../releases/${version}" />
 	<property name="db.release"     value="../releases/${version}" />
+	<property name="graph.release"     value="../releases/G${version}" />
 	
 	<property name="env.ORIENTDB_HOME" value="${db.release}" />
 	
@@ -86,7 +87,7 @@
   	<javadoc sourcepath="." packagenames="com.orientechnologies.*" destdir="${global.release}/javadoc" public="true"
              useexternalfile="yes" linksource="yes" use="yes" verbose="no" windowtitle="OrientDB v. ${version} Javadocs"
              header="&lt;a target='_parent' href='http://www.orientechnologies.com/orient-db.htm' &gt;&lt;img src='orient_db.png' border='0' /&gt;&lt;/a&gt;"
-             bottom="&lt;center&gt;Copyrights 2010 (c) Luca Garulli. All Rights Reserved. This software is released as Open Source using the &lt;a target='_parent' href='http://www.apache.org/licenses/LICENSE-2.0'&gt;Apache 2.0 license&lt;/a&gt;.&lt;/center&gt;"
+             bottom="&lt;center&gt;Copyrights 2010-2011 (c) Luca Garulli. All Rights Reserved. This software is released as Open Source using the &lt;a target='_parent' href='http://www.apache.org/licenses/LICENSE-2.0'&gt;Apache 2.0 license&lt;/a&gt;.&lt;/center&gt;"
              overview="overview.html">
   		<packageset dir="." defaultexcludes="yes">
         <include name="commons/src/main/java/**"/>
@@ -140,6 +141,23 @@
     
     <copy todir="${db.release}/benchmarks" flatten="true">
       <fileset dir="." includes="server/benchmarks/*"/>
+    </copy>
+	</target>
+	
+	<target name="installg" depends="install">
+    <copy todir="${graph.release}">
+      <fileset dir="${db.release}"/>
+    </copy>
+
+    <copy todir="${graph.release}/bin/" flatten="true">
+      <fileset dir="graphdb/script" includes="*.sh *.bat" />
+      <filterset>
+        <filter token="VERSION" value="${version}"/>
+      </filterset>
+    </copy>
+    
+    <copy todir="${graph.release}/lib" flatten="true">
+      <fileset dir="graphdb/lib" includes="*.jar"/>
     </copy>
 	</target>
 	
