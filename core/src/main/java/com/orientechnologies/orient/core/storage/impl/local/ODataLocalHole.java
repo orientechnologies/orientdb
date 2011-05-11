@@ -24,6 +24,7 @@ import java.util.TreeMap;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
+import com.orientechnologies.orient.core.exception.OStorageException;
 
 /**
  * Handles the holes inside data segments. Exists only 1 hole segment per data-segment even if multiple data-files are configured.
@@ -51,7 +52,11 @@ public class ODataLocalHole extends OSingleFileSegment {
 																																										new Comparator<ODataHoleInfo>() {
 																																											public int compare(final ODataHoleInfo o1,
 																																													final ODataHoleInfo o2) {
-																																												return (int) (o1.dataOffset - o2.dataOffset);
+																																												if (o1.dataOffset == o2.dataOffset)
+																																													return 0;
+																																												if (o1.dataOffset > o2.dataOffset)
+																																													return 1;
+																																												return -1;
 																																											}
 																																										});
 
@@ -120,6 +125,10 @@ public class ODataLocalHole extends OSingleFileSegment {
 
 		cursor.dataOffset = iHolePosition + iHoleSize;
 		ODataHoleInfo higherHole = availableHolesByPosition.higherKey(cursor);
+
+		if (lowerHole != null && higherHole != null && lowerHole.dataOffset >= higherHole.dataOffset)
+			// CHECK ERROR
+			throw new OStorageException("Found bad order in hole list: " + lowerHole + " is higher than " + higherHole);
 
 		final ODataHoleInfo closestHole;
 		if (lowerHole != null && lowerHole.dataOffset < iLowerRange)
@@ -207,21 +216,32 @@ public class ODataLocalHole extends OSingleFileSegment {
 	 * 
 	 * @throws IOException
 	 */
-	public void updateHole(final ODataHoleInfo iHole, final long iNewDataPosition, final int iNewRecordSize) throws IOException {
+	public void updateHole(final ODataHoleInfo iHole, final long iNewDataOffset, final int iNewRecordSize) throws IOException {
+		final boolean offsetChanged = iNewDataOffset != iHole.dataOffset;
+		final boolean sizeChanged = iNewRecordSize != iHole.size;
+
 		// IN MEMORY
-		availableHolesBySize.remove(iHole);
-		availableHolesByPosition.remove(iHole);
+		if (offsetChanged)
+			availableHolesByPosition.remove(iHole);
+		if (sizeChanged)
+			availableHolesBySize.remove(iHole);
 
-		iHole.dataOffset = iNewDataPosition;
-		iHole.size = iNewRecordSize;
+		if (offsetChanged)
+			iHole.dataOffset = iNewDataOffset;
+		if (sizeChanged)
+			iHole.size = iNewRecordSize;
 
-		availableHolesBySize.put(iHole, iHole);
-		availableHolesByPosition.put(iHole, iHole);
+		if (offsetChanged)
+			availableHolesByPosition.put(iHole, iHole);
+		if (sizeChanged)
+			availableHolesBySize.put(iHole, iHole);
 
 		// TO FILE
 		final long holePosition = iHole.holeOffset * RECORD_SIZE;
-		file.writeLong(holePosition, iNewDataPosition);
-		file.writeInt(holePosition + OConstants.SIZE_LONG, iNewRecordSize);
+		if (offsetChanged)
+			file.writeLong(holePosition, iNewDataOffset);
+		if (sizeChanged)
+			file.writeInt(holePosition + OConstants.SIZE_LONG, iNewRecordSize);
 	}
 
 	/**

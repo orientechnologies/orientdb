@@ -463,12 +463,14 @@ public class OMMapManager {
 			// GET NEXT ENTRY AS SIZE LIMIT
 			bufferSize = (int) (fileEntries.get(p).beginOffset - iBeginOffset);
 			if (bufferSize < iSize)
+				// ROUND TO THE BUFFER SIZE
 				bufferSize = iSize;
-			
-			if (bufferSize > blockSize)
+
+			if (bufferSize < blockSize)
 				bufferSize = blockSize;
 		} else {
-			bufferSize = iForce ? iSize : iSize <= blockSize ? blockSize : iSize;
+			// ROUND TO THE BUFFER SIZE
+			bufferSize = iForce ? iSize : iSize < blockSize ? blockSize : iSize;
 
 			if (iBeginOffset + bufferSize > iFile.getFileSize())
 				// REQUESTED BUFFER IS TOO LARGE: GET AS MAXIMUM AS POSSIBLE

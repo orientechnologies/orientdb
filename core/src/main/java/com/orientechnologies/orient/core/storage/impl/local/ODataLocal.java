@@ -341,7 +341,8 @@ public class ODataLocal extends OMultiFileSegment {
 						final int sizeMoved = moveRecord(item[0], gap - item[1]);
 
 						if (sizeMoved != item[1])
-							throw new IllegalStateException("Corrupted holes: Found size " + sizeMoved + " instead of " + item[1]);
+							throw new IllegalStateException("Corrupted hole at position " + item[0] + ": found size " + sizeMoved
+									+ " instead of " + item[1]);
 
 						gap -= sizeMoved;
 					}
@@ -381,52 +382,6 @@ public class ODataLocal extends OMultiFileSegment {
 	}
 
 	private ODataHoleInfo getCloserHole(final long iRecordOffset, final int iRecordSize, final OFile file, final long[] pos) {
-		// if (holeSegment.getHoles() == 0)
-		// return null;
-		//
-		// // GET FILE RANGE
-		// final int[] fileRanges;
-		// if (pos[0] == 0)
-		// fileRanges = new int[] { 0, file.getFilledUpTo() };
-		// else
-		// fileRanges = new int[] { files[(int) pos[0] - 1].getFileSize(), file.getFilledUpTo() };
-		//
-		// ODataHoleInfo closestHole = null;
-		//
-		// final int holes = holeSegment.getHoles();
-		// for (int i = 0; i < holes; ++i) {
-		// final ODataHoleInfo hole = holeSegment.getHole(i);
-		//
-		// if (hole == null)
-		// // FREE HOLE
-		// continue;
-		//
-		// boolean closest = false;
-		//
-		// long closestHoleOffset = Integer.MAX_VALUE;
-		// if (hole.dataOffset >= fileRanges[0] && hole.dataOffset < fileRanges[1])
-		// // IT'S IN CURRENT FILE, OK
-		// if (iRecordOffset > hole.dataOffset) {
-		// // ON THE RIGHT
-		// if (closestHole == null || iRecordOffset - (hole.dataOffset + hole.size) < Math.abs(closestHoleOffset)) {
-		// closestHoleOffset = (hole.dataOffset + hole.size) - iRecordOffset;
-		// closest = true;
-		// }
-		// } else {
-		// // ON THE LEFT
-		// if (closestHole == null || hole.dataOffset - (iRecordOffset + iRecordSize) < Math.abs(closestHoleOffset)) {
-		// closestHoleOffset = hole.dataOffset - (iRecordOffset + iRecordSize);
-		// closest = true;
-		// }
-		// }
-		//
-		// if (closest && Math.abs(closestHoleOffset) < 32768) {
-		// closestHole = hole;
-		// }
-		// }
-		//
-		// return closestHole;
-
 		if (holeSegment.getHoles() == 0)
 			return null;
 
@@ -442,12 +397,12 @@ public class ODataLocal extends OMultiFileSegment {
 		}
 
 		// GET FILE RANGE
-		final int[] fileRanges;
+		final long[] fileRanges;
 		if (pos[0] == 0)
-			fileRanges = new int[] { 0, file.getFilledUpTo() };
+			fileRanges = new long[] { 0, file.getFilledUpTo() };
 		else {
-			final int size = (int) (files[0].getFileSize() * pos[0]);
-			fileRanges = new int[] { size, size + file.getFilledUpTo() };
+			final long size = (files[0].getFileSize() * pos[0]);
+			fileRanges = new long[] { size, size + file.getFilledUpTo() };
 		}
 
 		// FIND THE CLOSEST HOLE
