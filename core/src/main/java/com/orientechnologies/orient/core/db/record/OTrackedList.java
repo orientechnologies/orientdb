@@ -20,6 +20,7 @@ import java.util.Collection;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 
 /**
  * Implementation of ArrayList bound to a source ORecord object to keep track of changes for literal types. This avoid to call the
@@ -30,9 +31,9 @@ import com.orientechnologies.orient.core.record.ORecord;
  */
 @SuppressWarnings({ "serial" })
 public class OTrackedList<T> extends ArrayList<T> implements ORecordElement {
-	protected final ORecord<?>	sourceRecord;
+	protected final ORecordInternal<?>	sourceRecord;
 
-	public OTrackedList(final ORecord<?> iSourceRecord) {
+	public OTrackedList(final ORecordInternal<?> iSourceRecord) {
 		this.sourceRecord = iSourceRecord;
 	}
 

@@ -226,6 +226,12 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	}
 
 	public ODocument createEdge(final ODocument iOutVertex, final ODocument iInVertex, final String iClassName) {
+		if (iOutVertex == null)
+			throw new IllegalArgumentException("iOutVertex is null");
+
+		if (iInVertex == null)
+			throw new IllegalArgumentException("iInVertex is null");
+
 		final boolean safeMode = beginBlock();
 
 		try {
@@ -307,25 +313,28 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	 */
 	public Set<ODocument> getEdgesBetweenVertexes(final ODocument iVertex1, final ODocument iVertex2, final String[] iLabels,
 			final String[] iClassNames) {
+
 		final Set<ODocument> result = new HashSet<ODocument>();
 
-		// CHECK OUT EDGES
-		for (OIdentifiable e : getOutEdges(iVertex1)) {
-			final ODocument edge = (ODocument) e;
+		if (iVertex1 != null && iVertex2 != null) {
+			// CHECK OUT EDGES
+			for (OIdentifiable e : getOutEdges(iVertex1)) {
+				final ODocument edge = (ODocument) e;
 
-			if (checkEdge(edge, iLabels, iClassNames)) {
-				if (edge.<ODocument> field("in").equals(iVertex2))
-					result.add(edge);
+				if (checkEdge(edge, iLabels, iClassNames)) {
+					if (edge.<ODocument> field("in").equals(iVertex2))
+						result.add(edge);
+				}
 			}
-		}
 
-		// CHECK IN EDGES
-		for (OIdentifiable e : getInEdges(iVertex1)) {
-			final ODocument edge = (ODocument) e;
+			// CHECK IN EDGES
+			for (OIdentifiable e : getInEdges(iVertex1)) {
+				final ODocument edge = (ODocument) e;
 
-			if (checkEdge(edge, iLabels, iClassNames)) {
-				if (edge.<ODocument> field("out").equals(iVertex2))
-					result.add(edge);
+				if (checkEdge(edge, iLabels, iClassNames)) {
+					if (edge.<ODocument> field("out").equals(iVertex2))
+						result.add(edge);
+				}
 			}
 		}
 

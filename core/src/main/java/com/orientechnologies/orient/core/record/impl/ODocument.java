@@ -1002,60 +1002,59 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		return cloned;
 	}
 
-	private void copyFieldValue(ODocument cloned, Entry<String, Object> entry) {
-		Object fieldValue;
-		fieldValue = entry.getValue();
+	private void copyFieldValue(final ODocument iCloned, final Entry<String, Object> iEntry) {
+		final Object fieldValue = iEntry.getValue();
 
 		if (fieldValue != null)
 			// LISTS
 			if (fieldValue instanceof ORecordLazyList) {
-				cloned._fieldValues.put(entry.getKey(), ((ORecordLazyList) fieldValue).copy());
+				iCloned._fieldValues.put(iEntry.getKey(), ((ORecordLazyList) fieldValue).copy(iCloned));
 
 			} else if (fieldValue instanceof ORecordTrackedList) {
-				final ORecordTrackedList newList = new ORecordTrackedList(cloned);
+				final ORecordTrackedList newList = new ORecordTrackedList(iCloned);
 				newList.addAll((ORecordTrackedList) fieldValue);
-				cloned._fieldValues.put(entry.getKey(), newList);
+				iCloned._fieldValues.put(iEntry.getKey(), newList);
 
 			} else if (fieldValue instanceof OTrackedList<?>) {
-				final OTrackedList<Object> newList = new OTrackedList<Object>(cloned);
+				final OTrackedList<Object> newList = new OTrackedList<Object>(iCloned);
 				newList.addAll((OTrackedList<Object>) fieldValue);
-				cloned._fieldValues.put(entry.getKey(), newList);
+				iCloned._fieldValues.put(iEntry.getKey(), newList);
 
 			} else if (fieldValue instanceof List<?>) {
-				cloned._fieldValues.put(entry.getKey(), new ArrayList<Object>((List<Object>) fieldValue));
+				iCloned._fieldValues.put(iEntry.getKey(), new ArrayList<Object>((List<Object>) fieldValue));
 
 				// SETS
 			} else if (fieldValue instanceof ORecordLazySet) {
-				cloned._fieldValues.put(entry.getKey(), ((ORecordLazySet) fieldValue).copy());
+				iCloned._fieldValues.put(iEntry.getKey(), ((ORecordLazySet) fieldValue).copy(iCloned));
 
 			} else if (fieldValue instanceof ORecordTrackedSet) {
-				final ORecordTrackedSet newList = new ORecordTrackedSet(cloned);
+				final ORecordTrackedSet newList = new ORecordTrackedSet(iCloned);
 				newList.addAll((ORecordTrackedSet) fieldValue);
-				cloned._fieldValues.put(entry.getKey(), newList);
+				iCloned._fieldValues.put(iEntry.getKey(), newList);
 
 			} else if (fieldValue instanceof OTrackedSet<?>) {
-				final OTrackedSet<Object> newList = new OTrackedSet<Object>(cloned);
+				final OTrackedSet<Object> newList = new OTrackedSet<Object>(iCloned);
 				newList.addAll((OTrackedSet<Object>) fieldValue);
-				cloned._fieldValues.put(entry.getKey(), newList);
+				iCloned._fieldValues.put(iEntry.getKey(), newList);
 
 			} else if (fieldValue instanceof Set<?>) {
-				cloned._fieldValues.put(entry.getKey(), new HashSet<Object>((Set<Object>) fieldValue));
+				iCloned._fieldValues.put(iEntry.getKey(), new HashSet<Object>((Set<Object>) fieldValue));
 
 				// MAPS
 			} else if (fieldValue instanceof ORecordLazyMap) {
-				final ORecordLazyMap newMap = new ORecordLazyMap(cloned, ((ORecordLazyMap) fieldValue).getRecordType());
+				final ORecordLazyMap newMap = new ORecordLazyMap(iCloned, ((ORecordLazyMap) fieldValue).getRecordType());
 				newMap.putAll((ORecordLazyMap) fieldValue);
-				cloned._fieldValues.put(entry.getKey(), newMap);
+				iCloned._fieldValues.put(iEntry.getKey(), newMap);
 
 			} else if (fieldValue instanceof OTrackedMap) {
-				final OTrackedMap<Object> newMap = new OTrackedMap<Object>(cloned);
+				final OTrackedMap<Object> newMap = new OTrackedMap<Object>(iCloned);
 				newMap.putAll((OTrackedMap<Object>) fieldValue);
-				cloned._fieldValues.put(entry.getKey(), newMap);
+				iCloned._fieldValues.put(iEntry.getKey(), newMap);
 
 			} else if (fieldValue instanceof Map<?, ?>) {
-				cloned._fieldValues.put(entry.getKey(), new LinkedHashMap<String, Object>((Map<String, Object>) fieldValue));
+				iCloned._fieldValues.put(iEntry.getKey(), new LinkedHashMap<String, Object>((Map<String, Object>) fieldValue));
 			} else
-				cloned._fieldValues.put(entry.getKey(), fieldValue);
+				iCloned._fieldValues.put(iEntry.getKey(), fieldValue);
 	}
 
 	protected String checkFieldName(String iPropertyName) {

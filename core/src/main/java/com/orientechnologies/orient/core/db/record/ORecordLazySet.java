@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Lazy implementation of Set. Can be bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty()
@@ -57,8 +58,8 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 		delegate = new ORecordLazyList(iSourceRecord).setListener(this);
 	}
 
-	public ORecordLazySet(final ORecordLazySet iSource) {
-		delegate = iSource.delegate.copy().setListener(this);
+	public ORecordLazySet(final ODocument iSourceRecord, final ORecordLazySet iSource) {
+		delegate = iSource.delegate.copy(iSourceRecord).setListener(this);
 		sorted = iSource.sorted;
 		if (iSource.newItems != null)
 			newItems = new IdentityHashMap<ORecord<?>, Object>(iSource.newItems);
@@ -358,8 +359,8 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 		}
 	}
 
-	public ORecordLazySet copy() {
-		return new ORecordLazySet(this);
+	public ORecordLazySet copy(final ODocument iSourceRecord) {
+		return new ORecordLazySet(iSourceRecord, this);
 	}
 
 	public void onLazyLoad() {

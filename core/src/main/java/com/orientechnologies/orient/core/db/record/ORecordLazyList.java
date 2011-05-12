@@ -377,8 +377,9 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 		return false;
 	}
 
-	public ORecordLazyList copy() {
-		ORecordLazyList copy = new ORecordLazyList(database);
+	public ORecordLazyList copy(final ODocument iSourceRecord) {
+		final ORecordLazyList copy = new ORecordLazyList(iSourceRecord);
+		copy.database = database;
 		copy.contentType = contentType;
 		copy.stream = stream;
 		copy.autoConvertToRecord = autoConvertToRecord;
