@@ -50,6 +50,7 @@ public class OClass extends ODocumentWrapperNoClass implements Comparable<OClass
 	protected int[]										polymorphicClusterIds;
 	protected List<OClass>						baseClasses;
 	protected float										overSize		= 0;
+	protected String									shortName;
 
 	/**
 	 * Constructor used in unmarshalling.
@@ -124,7 +125,11 @@ public class OClass extends ODocumentWrapperNoClass implements Comparable<OClass
 	}
 
 	public String getName() {
-		return this.name;
+		return name;
+	}
+
+	public String getStreamableName() {
+		return shortName != null ? shortName : name;
 	}
 
 	public Collection<OProperty> declaredProperties() {
@@ -249,6 +254,7 @@ public class OClass extends ODocumentWrapperNoClass implements Comparable<OClass
 	@Override
 	public void fromStream() {
 		name = document.field("name");
+		shortName = document.field("shortName");
 		id = (Integer) document.field("id");
 		defaultClusterId = (Integer) document.field("defaultClusterId");
 
@@ -285,6 +291,7 @@ public class OClass extends ODocumentWrapperNoClass implements Comparable<OClass
 
 		try {
 			document.field("name", name);
+			document.field("shortName", shortName);
 			document.field("id", id);
 			document.field("defaultClusterId", defaultClusterId);
 			document.field("clusterIds", clusterIds);
@@ -493,6 +500,21 @@ public class OClass extends ODocumentWrapperNoClass implements Comparable<OClass
 			cls = cls.getSuperClass();
 		}
 		return false;
+	}
+
+	public String getShortName() {
+		return shortName;
+	}
+
+	public void setShortName(final String shortName) {
+		if (this.shortName != null)
+			// UNREGISTER ANY PREVIOUS SHORT NAME
+			owner.classes.remove(shortName);
+
+		this.shortName = shortName;
+
+		// REGISTER IT
+		owner.classes.put(shortName.toLowerCase(), this);
 	}
 
 	/**

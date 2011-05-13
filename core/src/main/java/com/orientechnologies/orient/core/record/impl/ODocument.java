@@ -363,7 +363,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		try {
 			checkForFields();
 			if (_clazz != null)
-				buffer.append(_clazz.getName());
+				buffer.append(_clazz.getStreamableName());
 
 			if (_recordId != null) {
 				if (_recordId.isValid())

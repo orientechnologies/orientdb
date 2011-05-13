@@ -524,33 +524,6 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		return getMetadata().getSchema().getClass(iClassName);
 	}
 
-	private void checkForGraphSchema() {
-		vertexBaseClass = getMetadata().getSchema().getClass(VERTEX_CLASS_NAME);
-		edgeBaseClass = getMetadata().getSchema().getClass(EDGE_CLASS_NAME);
-
-		if (vertexBaseClass == null) {
-			// CREATE THE META MODEL USING THE ORIENT SCHEMA
-			vertexBaseClass = getMetadata().getSchema().createClass(VERTEX_CLASS_NAME, addPhysicalCluster(VERTEX_CLASS_NAME));
-			vertexBaseClass.setOverSize(2);
-
-			if (edgeBaseClass == null)
-				edgeBaseClass = getMetadata().getSchema().createClass(EDGE_CLASS_NAME, addPhysicalCluster(EDGE_CLASS_NAME));
-
-			vertexBaseClass.createProperty(VERTEX_FIELD_IN_EDGES, OType.LINKSET, edgeBaseClass);
-			vertexBaseClass.createProperty(VERTEX_FIELD_OUT_EDGES, OType.LINKSET, edgeBaseClass);
-			edgeBaseClass.createProperty(EDGE_FIELD_IN, OType.LINK, vertexBaseClass);
-			edgeBaseClass.createProperty(EDGE_FIELD_OUT, OType.LINK, vertexBaseClass);
-
-			getMetadata().getSchema().save();
-		} else {
-			// @COMPATIBILITY 0.9.25
-			if (vertexBaseClass.getProperty(VERTEX_FIELD_OUT_EDGES).getType() == OType.LINKLIST)
-				vertexBaseClass.getProperty(VERTEX_FIELD_OUT_EDGES).setType(OType.LINKSET);
-			if (vertexBaseClass.getProperty(VERTEX_FIELD_IN_EDGES).getType() == OType.LINKLIST)
-				vertexBaseClass.getProperty(VERTEX_FIELD_IN_EDGES).setType(OType.LINKSET);
-		}
-	}
-
 	public boolean isSafeMode() {
 		return safeMode;
 	}
@@ -664,4 +637,33 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 		return good;
 	}
 
+	private void checkForGraphSchema() {
+		vertexBaseClass = getMetadata().getSchema().getClass(VERTEX_CLASS_NAME);
+		edgeBaseClass = getMetadata().getSchema().getClass(EDGE_CLASS_NAME);
+
+		if (vertexBaseClass == null) {
+			// CREATE THE META MODEL USING THE ORIENT SCHEMA
+			vertexBaseClass = getMetadata().getSchema().createClass(VERTEX_CLASS_NAME, addPhysicalCluster(VERTEX_CLASS_NAME));
+			vertexBaseClass.setShortName("V");
+			vertexBaseClass.setOverSize(2);
+
+			if (edgeBaseClass == null) {
+				edgeBaseClass = getMetadata().getSchema().createClass(EDGE_CLASS_NAME, addPhysicalCluster(EDGE_CLASS_NAME));
+				edgeBaseClass.setShortName("E");
+			}
+
+			vertexBaseClass.createProperty(VERTEX_FIELD_IN_EDGES, OType.LINKSET, edgeBaseClass);
+			vertexBaseClass.createProperty(VERTEX_FIELD_OUT_EDGES, OType.LINKSET, edgeBaseClass);
+			edgeBaseClass.createProperty(EDGE_FIELD_IN, OType.LINK, vertexBaseClass);
+			edgeBaseClass.createProperty(EDGE_FIELD_OUT, OType.LINK, vertexBaseClass);
+
+			getMetadata().getSchema().save();
+		} else {
+			// @COMPATIBILITY 0.9.25
+			if (vertexBaseClass.getProperty(VERTEX_FIELD_OUT_EDGES).getType() == OType.LINKLIST)
+				vertexBaseClass.getProperty(VERTEX_FIELD_OUT_EDGES).setType(OType.LINKSET);
+			if (vertexBaseClass.getProperty(VERTEX_FIELD_IN_EDGES).getType() == OType.LINKLIST)
+				vertexBaseClass.getProperty(VERTEX_FIELD_IN_EDGES).setType(OType.LINKSET);
+		}
+	}
 }

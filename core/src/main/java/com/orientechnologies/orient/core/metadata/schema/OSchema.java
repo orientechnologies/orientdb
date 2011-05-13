@@ -91,6 +91,11 @@ public class OSchema extends ODocumentWrapperNoClass {
 
 		final OClass cls = new OClass(this, classes.size(), iClassName, iClusterIds, iDefaultClusterId);
 		classes.put(key, cls);
+
+		if (cls.getShortName() != null)
+			// BIND SHORT NAME TOO
+			classes.put(cls.getShortName().toLowerCase(), cls);
+
 		document.setDirty();
 
 		return cls;
@@ -208,6 +213,9 @@ public class OSchema extends ODocumentWrapperNoClass {
 			cls = new OClass(this, c);
 			cls.fromStream();
 			classes.put(cls.getName().toLowerCase(), cls);
+
+			if (cls.getShortName() != null)
+				classes.put(cls.getShortName().toLowerCase(), cls);
 		}
 
 		// REBUILD THE INHERITANCE TREE

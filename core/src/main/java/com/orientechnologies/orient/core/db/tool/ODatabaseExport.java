@@ -285,6 +285,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 				writer.writeAttribute(0, false, "cluster-ids", cls.getClusterIds());
 				if (cls.getSuperClass() != null)
 					writer.writeAttribute(0, false, "super-class", cls.getSuperClass().getName());
+				if (cls.getShortName() != null)
+					writer.writeAttribute(0, false, "short-name", cls.getShortName());
 
 				if (cls.properties().size() > 0) {
 					writer.beginCollection(4, true, "properties");

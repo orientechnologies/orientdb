@@ -71,9 +71,9 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
 		final ODatabaseRecord database = record.getDatabase();
 
-		if (record.getClassName() != null) {
+		if (record.getSchemaClass() != null) {
 			// MARSHALL THE CLASSNAME
-			iOutput.append(record.getClassName());
+			iOutput.append(record.getSchemaClass().getStreamableName());
 			iOutput.append(OStringSerializerHelper.CLASS_SEPARATOR);
 		}
 

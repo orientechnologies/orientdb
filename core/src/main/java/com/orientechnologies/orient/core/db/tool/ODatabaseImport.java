@@ -314,7 +314,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 					jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT);
 					value = jsonReader.getValue();
 
-					if (value.equals("\"super-class\"")) {
+					if (value.equals("\"short-name\"")) {
+						final String shortName = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
+						cls.setShortName(shortName);
+					} else if (value.equals("\"super-class\"")) {
 						classSuper = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
 						superClasses.put(cls, classSuper);
 					} else if (value.equals("\"properties\"")) {

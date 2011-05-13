@@ -150,7 +150,7 @@ public abstract class ORecordVirtualAbstract<T> extends ORecordSchemaAwareAbstra
 		if (_fieldValues == null)
 			_fieldValues = _ordered ? new LinkedHashMap<String, T>() : new HashMap<String, T>();
 
-		if (_status == STATUS.LOADED && (_fieldValues == null || size() == 0))
+		if (_status == STATUS.LOADED && size() == 0)
 			// POPULATE FIELDS LAZY
 			deserializeFields();
 	}
