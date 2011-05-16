@@ -83,18 +83,18 @@ public enum OGlobalConfiguration {
 
 	// TREEMAP
 	MVRBTREE_LAZY_UPDATES("mvrbtree.lazyUpdates",
-			"Configure the TreeMaps (indexes and dictionaries) as buffered or not. -1 means buffered up to tx.commit() or db.close().",
-			Integer.class, -1),
+			"Configure the TreeMaps (indexes and dictionaries) as buffered or not. -1 means buffered up to tx.commit() or db.close()",
+			Integer.class, 20000),
 
 	MVRBTREE_NODE_PAGE_SIZE("mvrbtree.nodePageSize",
-			"Page size of each single node. 256 means that 256 entries can be stored inside a node", Integer.class, 256),
+			"Page size of each single node. 256 means that 256 entries can be stored inside a node", Integer.class, 128),
 
 	MVRBTREE_LOAD_FACTOR("mvrbtree.loadFactor", "HashMap load factor", Float.class, 0.7f),
 
 	MVRBTREE_OPTIMIZE_THRESHOLD(
 			"mvrbtree.optimizeThreshold",
 			"Auto optimize the TreeMap every X tree rotations. This force the optimization of the tree after many changes to recompute entrypoints. -1 means never",
-			Integer.class, -1),
+			Integer.class, 200000),
 
 	MVRBTREE_ENTRYPOINTS("mvrbtree.entryPoints", "Number of entry points to start searching entries", Integer.class, 16),
 
