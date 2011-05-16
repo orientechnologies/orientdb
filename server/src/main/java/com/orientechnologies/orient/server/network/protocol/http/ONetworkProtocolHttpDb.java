@@ -33,6 +33,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.get.OSe
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDictionary;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDisconnect;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDocument;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDocumentByClass;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetFileDownload;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetQuery;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetServer;
@@ -66,6 +67,7 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 		registerCommand(new OServerCommandGetDatabase());
 		registerCommand(new OServerCommandGetDictionary());
 		registerCommand(new OServerCommandGetDocument());
+		registerCommand(new OServerCommandGetDocumentByClass());
 		registerCommand(new OServerCommandGetQuery());
 		registerCommand(new OServerCommandGetServer());
 		registerCommand(new OServerCommandGetStaticContent());
