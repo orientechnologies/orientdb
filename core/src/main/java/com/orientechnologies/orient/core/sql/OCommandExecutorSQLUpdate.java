@@ -189,6 +189,19 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLAbstract imple
 		for (Entry<String, OPair<String, Object>> entry : putEntries.entrySet()) {
 			fieldValue = record.field(entry.getKey());
 
+			if (fieldValue == null) {
+				if (record.getSchemaClass() != null) {
+					final OProperty property = record.getSchemaClass().getProperty(entry.getKey());
+					if (property != null
+							&& (property.getType() != null && (!property.getType().equals(OType.EMBEDDEDMAP) && !property.getType().equals(
+									OType.LINKMAP)))) {
+						throw new OCommandExecutionException("field " + entry.getKey() + " is not defined as a map");
+					}
+				}
+				fieldValue = new HashMap();
+				record.field(entry.getKey(), fieldValue);
+			}
+
 			if (fieldValue instanceof Map<?, ?>) {
 				map = (Map<String, Object>) fieldValue;
 
