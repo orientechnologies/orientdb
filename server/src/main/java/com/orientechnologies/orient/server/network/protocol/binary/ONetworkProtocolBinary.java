@@ -235,8 +235,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			openDatabase(dbName, user, passwd);
 
 			if (!(connection.database.getStorage() instanceof OStorageEmbedded) && !loadUserFromSchema(user, passwd)) {
-				sendError(lastClientTxId, new OSecurityAccessException(connection.database.getName(), "Access denied to database '"
-						+ connection.database.getName() + "' for user: " + user));
+				sendError(lastClientTxId, new OSecurityAccessException(connection.database.getName(),
+						"User or password not valid for database: '" + connection.database.getName() + "'"));
 			} else {
 
 				channel.acquireExclusiveLock();
@@ -925,8 +925,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	private boolean loadUserFromSchema(final String iUserName, final String iUserPassword) {
 		account = connection.database.getMetadata().getSecurity().getUser(iUserName);
 		if (account == null)
-			throw new OSecurityAccessException(connection.database.getName(), "User '" + iUserName + "' was not found in database: "
-					+ connection.database.getName());
+			throw new OSecurityAccessException(connection.database.getName(), "User or password not valid for database: '"
+					+ connection.database.getName() + "'");
 
 		boolean allow = account.checkPassword(iUserPassword);
 

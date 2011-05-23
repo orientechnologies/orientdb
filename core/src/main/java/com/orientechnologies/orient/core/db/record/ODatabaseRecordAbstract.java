@@ -102,7 +102,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 			user = getMetadata().getSecurity().getUser(iUserName);
 			if (user == null)
-				throw new OSecurityAccessException(this.getName(), "User or password not valid for database: " + getName());
+				throw new OSecurityAccessException(this.getName(), "User or password not valid for database: '" + getName() + "'");
 
 			if (user.getAccountStatus() != STATUSES.ACTIVE)
 				throw new OSecurityAccessException(this.getName(), "User '" + iUserName + "' is not active");
@@ -117,7 +117,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				if (!user.checkPassword(iUserPassword)) {
 					// WAIT A BIT TO AVOID BRUTE FORCE
 					Thread.sleep(200);
-					throw new OSecurityAccessException(this.getName(), "User or password not valid for database: " + getName());
+					throw new OSecurityAccessException(this.getName(), "User or password not valid for database: '" + getName() + "'");
 				}
 			}
 
