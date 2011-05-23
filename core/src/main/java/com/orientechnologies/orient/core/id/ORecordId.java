@@ -115,10 +115,10 @@ public class ORecordId implements ORID {
 	@Override
 	public int hashCode() {
 		final int prime = 31;
-		long result = 1;
+		int result = 1;
 		result = prime * result + clusterId;
-		result = prime * result + clusterPosition;
-		return (int) result;
+		result = prime * result + (int) (clusterPosition ^ (clusterPosition >>> 32));
+		return result;
 	}
 
 	@Override
@@ -127,14 +127,14 @@ public class ORecordId implements ORID {
 			return true;
 		if (obj == null)
 			return false;
-
-		if (obj instanceof OIdentifiable) {
-			final ORecordId other = (ORecordId) ((OIdentifiable) obj).getIdentity();
-			if (clusterId == other.clusterId && clusterPosition == other.clusterPosition)
-				return true;
-		}
-
-		return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final ORecordId other = (ORecordId) obj;
+		if (clusterId != other.clusterId)
+			return false;
+		if (clusterPosition != other.clusterPosition)
+			return false;
+		return true;
 	}
 
 	public int compareTo(final OIdentifiable iOther) {
