@@ -340,9 +340,22 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		sqlCommand("find", iCommandText, "\nFound %s in %f sec(s).\n");
 	}
 
+	@ConsoleCommand(splitInWords = false, description = "Alter a class in the database schema")
+	public void alterClass(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
+		sqlCommand("alter", iCommandText, "\nClass updated successfully\n");
+		updateDatabaseInfo();
+	}
+
 	@ConsoleCommand(splitInWords = false, description = "Create a class")
 	public void createClass(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
 		sqlCommand("create", iCommandText, "\nClass created successfully with id=%d\n");
+		updateDatabaseInfo();
+	}
+
+	@ConsoleCommand(splitInWords = false, description = "Alter a class's property in the database schema")
+	public void alterProperty(
+			@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
+		sqlCommand("alter", iCommandText, "\nProperty updated successfully\n");
 		updateDatabaseInfo();
 	}
 
