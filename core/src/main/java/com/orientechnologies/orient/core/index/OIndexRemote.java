@@ -46,14 +46,14 @@ public class OIndexRemote implements OIndex {
 
 	private final static String		QUERY_GET				= "select from index:%s where key = ?";
 	private final static String		QUERY_GET_RANGE	= "select from index:%s where key between ? and ?";
-	private final static String		QUERY_PUT				= "insert into index:%s (key,value) values (%s,%s)";
+	private final static String		QUERY_PUT				= "insert into index:%s (key,rid) values (%s,%s)";
 	private final static String		QUERY_REMOVE		= "delete from index:%s where key = %s";
-	private final static String		QUERY_REMOVE2		= "delete from index:%s where key = %s and value = %s";
-	private final static String		QUERY_REMOVE3		= "delete from index:%s where value = ?";
+	private final static String		QUERY_REMOVE2		= "delete from index:%s where key = %s and rid = %s";
+	private final static String		QUERY_REMOVE3		= "delete from index:%s where rid = ?";
 	private final static String		QUERY_CONTAINS	= "select count(*) as size from	index:%s where key = ?";
 	private final static String		QUERY_SIZE			= "select count(*) as size from index:%s";
 	private final static String		QUERY_KEYS			= "select key from index:%s";
-	private final static String		QUERY_ENTRIES		= "select key, value from index:%s";
+	private final static String		QUERY_ENTRIES		= "select key, rid from index:%s";
 	private final static String		QUERY_CLEAR			= "delete from index:%s";
 
 	public OIndexRemote(final ODatabaseRecord iDatabase, final String iName, final String iWrappedType, final ORID iRid) {

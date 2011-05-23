@@ -154,9 +154,9 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 			OIdentifiable value = null;
 			for (int i = 0; i < fieldNames.size(); ++i) {
 				final String fieldName = fieldNames.get(i);
-				if (fieldName.equalsIgnoreCase("KEY"))
+				if (fieldName.equalsIgnoreCase(KEYWORD_KEY))
 					key = fieldValues[i];
-				else if (fieldName.equalsIgnoreCase("VALUE"))
+				else if (fieldName.equalsIgnoreCase(KEYWORD_RID))
 					value = (OIdentifiable) fieldValues[i];
 			}
 

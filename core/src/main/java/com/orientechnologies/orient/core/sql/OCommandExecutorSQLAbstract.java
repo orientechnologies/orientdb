@@ -28,6 +28,8 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 
 	public static final String	KEYWORD_FROM		= "FROM";
 	public static final String	KEYWORD_WHERE		= "WHERE";
+	public static final String	KEYWORD_KEY			= "KEY";
+	public static final String	KEYWORD_RID			= "RID";
 	public static final String	CLUSTER_PREFIX	= "CLUSTER:";
 	public static final String	CLASS_PREFIX		= "CLASS:";
 	public static final String	INDEX_PREFIX		= "INDEX:";

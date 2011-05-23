@@ -105,17 +105,17 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
 			Object key = null;
 			Object value = VALUE_NOT_FOUND;
 
-			if ("KEY".equalsIgnoreCase(compiledFilter.getRootCondition().getLeft().toString()))
+			if (KEYWORD_KEY.equalsIgnoreCase(compiledFilter.getRootCondition().getLeft().toString()))
 				// FOUND KEY ONLY
 				key = compiledFilter.getRootCondition().getRight();
 			else if (compiledFilter.getRootCondition().getLeft() instanceof OSQLFilterCondition) {
 				// KEY AND VALUE
 				final OSQLFilterCondition leftCondition = (OSQLFilterCondition) compiledFilter.getRootCondition().getLeft();
-				if ("KEY".equalsIgnoreCase(leftCondition.getLeft().toString()))
+				if (KEYWORD_KEY.equalsIgnoreCase(leftCondition.getLeft().toString()))
 					key = leftCondition.getRight();
 
 				final OSQLFilterCondition rightCondition = (OSQLFilterCondition) compiledFilter.getRootCondition().getRight();
-				if ("VALUE".equalsIgnoreCase(rightCondition.getLeft().toString()))
+				if (KEYWORD_RID.equalsIgnoreCase(rightCondition.getLeft().toString()))
 					value = rightCondition.getRight();
 
 			}
