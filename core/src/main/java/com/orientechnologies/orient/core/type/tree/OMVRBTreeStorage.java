@@ -106,13 +106,6 @@ public class OMVRBTreeStorage<K, V> extends OMVRBTreePersistent<K, V> {
 		return this;
 	}
 
-	@Override
-	public void clear() {
-		storage.deleteRecord((ORecordId) record.getIdentity(), record.getVersion());
-		root = null;
-		super.clear();
-	}
-
 	public void delete() {
 		clear();
 		storage.deleteRecord((ORecordId) record.getIdentity(), record.getVersion());
