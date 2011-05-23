@@ -84,6 +84,11 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 		return name;
 	}
 
+	public OProperty setName(final String iName) {
+		this.name = iName;
+		return this;
+	}
+
 	public String getFullName() {
 		return owner.getName() + "." + name;
 	}
@@ -377,6 +382,8 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 			return isMandatory();
 		case MAX:
 			return getMax();
+		case NAME:
+			return getName();
 		case NOTNULL:
 			return isNotNull();
 		case REGEXP:
@@ -412,6 +419,9 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 			break;
 		case MAX:
 			setMaxInternal(stringValue);
+			break;
+		case NAME:
+			setName(stringValue);
 			break;
 		case NOTNULL:
 			setNotNullInternal(Boolean.parseBoolean(stringValue));

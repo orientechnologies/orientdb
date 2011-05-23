@@ -29,10 +29,12 @@ public interface OProperty extends Comparable<OProperty> {
 	}
 
 	public static enum ATTRIBUTES {
-		INDEX, LINKEDTYPE, LINKEDCLASS, MIN, MAX, MANDATORY, NOTNULL, REGEXP, TYPE
+		INDEX, LINKEDTYPE, LINKEDCLASS, MIN, MAX, MANDATORY, NAME, NOTNULL, REGEXP, TYPE
 	}
 
 	public String getName();
+
+	public OProperty setName(String iName);
 
 	public OType getType();
 
