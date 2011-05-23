@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -70,23 +71,25 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
  * Helper class to manage POJO by using the reflection. 
  */
 public class OObjectSerializerHelper {
-	private static final Class<?>[]							callbackAnnotationClasses	= new Class[] { OBeforeDeserialization.class,
-			OAfterDeserialization.class, OBeforeSerialization.class, OAfterSerialization.class };
-	private static final Class<?>[]							NO_ARGS										= new Class<?>[] {};
+	private static final Class<?>[]															callbackAnnotationClasses	= new Class[] {
+			OBeforeDeserialization.class, OAfterDeserialization.class, OBeforeSerialization.class, OAfterSerialization.class };
+	private static final Class<?>[]															NO_ARGS										= new Class<?>[] {};
 
-	private static HashMap<String, List<Field>>	classes										= new HashMap<String, List<Field>>();
-	private static HashMap<String, Method>			callbacks									= new HashMap<String, Method>();
-	private static HashMap<String, Object>			getters										= new HashMap<String, Object>();
-	private static HashMap<String, Object>			setters										= new HashMap<String, Object>();
-	private static HashMap<Class<?>, String>		boundDocumentFields				= new HashMap<Class<?>, String>();
-	private static HashMap<Class<?>, String>		fieldIds									= new HashMap<Class<?>, String>();
-	private static HashMap<Class<?>, String>		fieldVersions							= new HashMap<Class<?>, String>();
+	private static HashMap<Class<?>, OObjectSerializerContext>	serializerContexts				= new LinkedHashMap<Class<?>, OObjectSerializerContext>();
+
+	private static HashMap<String, List<Field>>									classes										= new HashMap<String, List<Field>>();
+	private static HashMap<String, Method>											callbacks									= new HashMap<String, Method>();
+	private static HashMap<String, Object>											getters										= new HashMap<String, Object>();
+	private static HashMap<String, Object>											setters										= new HashMap<String, Object>();
+	private static HashMap<Class<?>, String>										boundDocumentFields				= new HashMap<Class<?>, String>();
+	private static HashMap<Class<?>, String>										fieldIds									= new HashMap<Class<?>, String>();
+	private static HashMap<Class<?>, String>										fieldVersions							= new HashMap<Class<?>, String>();
 	@SuppressWarnings("rawtypes")
-	private static Class												jpaIdClass;
+	private static Class																				jpaIdClass;
 	@SuppressWarnings("rawtypes")
-	private static Class												jpaVersionClass;
+	private static Class																				jpaVersionClass;
 	@SuppressWarnings("rawtypes")
-	private static Class												jpaAccessClass;
+	private static Class																				jpaAccessClass;
 
 	static {
 		// DETERMINE IF THERE IS AVAILABLE JPA 2
@@ -265,7 +268,7 @@ public class OObjectSerializerHelper {
 
 						}
 
-					setFieldValue(iPojo, fieldName, fieldValue);
+					setFieldValue(iPojo, fieldName, unserializeFieldValue(iPojo, fieldName, fieldValue));
 				}
 			}
 		}
@@ -340,7 +343,7 @@ public class OObjectSerializerHelper {
 					}
 				}
 
-				setFieldValue(iUserObject, iFieldName, fieldValue);
+				setFieldValue(iUserObject, iFieldName, unserializeFieldValue(iPojo, iFieldName, fieldValue));
 
 				return propagate ? fieldValue : null;
 			}
@@ -551,7 +554,7 @@ public class OObjectSerializerHelper {
 			if (fieldName.equals(idFieldName) || fieldName.equals(vFieldName))
 				continue;
 
-			fieldValue = getFieldValue(iPojo, fieldName);
+			fieldValue = serializeFieldValue(iPojo, fieldName, getFieldValue(iPojo, fieldName));
 
 			schemaProperty = schemaClass != null ? schemaClass.getProperty(fieldName) : null;
 
@@ -571,6 +574,32 @@ public class OObjectSerializerHelper {
 		OProfiler.getInstance().stopChrono("Object.toStream", timer);
 
 		return iRecord;
+	}
+
+	public static Object serializeFieldValue(final Object iPojo, final String iFieldName, final Object iFieldValue) {
+		for (Class<?> classContext : serializerContexts.keySet()) {
+			if (classContext != null && classContext.isInstance(iPojo)) {
+				return serializerContexts.get(classContext).serializeFieldValue(iPojo, iFieldName, iFieldValue);
+			}
+		}
+
+		if (serializerContexts.get(null) != null)
+			return serializerContexts.get(null).serializeFieldValue(iPojo, iFieldName, iFieldValue);
+
+		return iFieldValue;
+	}
+
+	public static Object unserializeFieldValue(final Object iPojo, final String iFieldName, Object iFieldValue) {
+		for (Class<?> classContext : serializerContexts.keySet()) {
+			if (classContext != null && classContext.isInstance(iPojo)) {
+				return serializerContexts.get(classContext).unserializeFieldValue(iPojo, iFieldName, iFieldValue);
+			}
+		}
+
+		if (serializerContexts.get(null) != null)
+			return serializerContexts.get(null).unserializeFieldValue(iPojo, iFieldName, iFieldValue);
+
+		return iFieldValue;
 	}
 
 	/**
@@ -873,6 +902,14 @@ public class OObjectSerializerHelper {
 				throw new OConfigurationException("Error on executing user callback '" + m.getName() + "' annotated with '"
 						+ iAnnotation.getSimpleName() + "'", e);
 			}
+	}
+
+	public static void bindSerializerContext(final Class<?> iClassContext, final OObjectSerializerContext iSerializerContext) {
+		serializerContexts.put(iClassContext, iSerializerContext);
+	}
+
+	public static void unbindSerializerContext(final Class<?> iClassContext) {
+		serializerContexts.remove(iClassContext);
 	}
 
 	private static void registerFieldSetter(final Class<?> iClass, String fieldName, Field f) {
