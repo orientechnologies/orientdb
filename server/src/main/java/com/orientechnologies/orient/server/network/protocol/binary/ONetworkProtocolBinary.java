@@ -48,13 +48,15 @@ import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndexManagerImpl;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
@@ -140,19 +142,16 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			OServerHandlerHelper.invokeHandlerCallbackOnAfterClientRequest(connection, (byte) lastRequestType);
 
 		} catch (EOFException e) {
-			handleError(e);
+			handleConnectionError(e);
 			sendShutdown();
 		} catch (SocketException e) {
-			handleError(e);
+			handleConnectionError(e);
 			sendShutdown();
 		} catch (OException e) {
-			handleError(e);
 			sendError(lastClientTxId, e);
 		} catch (RuntimeException e) {
-			handleError(e);
 			sendError(lastClientTxId, e);
 		} catch (Throwable t) {
-			handleError(t);
 			OLogManager.instance().error(this, "Error on executing request", t);
 			sendError(lastClientTxId, t);
 		} finally {
@@ -172,10 +171,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		}
 	}
 
-	private void handleError(Throwable e) {
-		OServerHandlerHelper.invokeHandlerCallbackOnClientError(connection, e);
-	}
-
 	@SuppressWarnings("unchecked")
 	protected void parseCommand() throws IOException, InterruptedException {
 		switch (lastRequestType) {
@@ -193,7 +188,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				OLogManager.instance().info(this, "Remote client %s:%d authenticated. Starting shutdown of server...",
 						channel.socket.getInetAddress(), channel.socket.getPort());
 
-				sendOk(lastClientTxId);
+				channel.acquireExclusiveLock();
+				try {
+					sendOk(lastClientTxId);
+				} finally {
+					channel.releaseExclusiveLock();
+				}
 				channel.flush();
 				channel.close();
 				OServerMain.server().shutdown();
@@ -213,8 +213,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			serverLogin(channel.readString(), channel.readString());
 
-			sendOk(lastClientTxId);
-			channel.writeInt(connection.id);
+			channel.acquireExclusiveLock();
+			try {
+				sendOk(lastClientTxId);
+				channel.writeInt(connection.id);
+			} finally {
+				channel.releaseExclusiveLock();
+			}
 			break;
 		}
 
@@ -233,20 +238,26 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				sendError(lastClientTxId, new OSecurityAccessException(connection.database.getName(), "Access denied to database '"
 						+ connection.database.getName() + "' for user: " + user));
 			} else {
-				sendOk(lastClientTxId);
-				channel.writeInt(connection.id);
-				channel.writeInt(connection.database.getClusterNames().size());
-				for (OCluster c : (connection.database.getStorage()).getClusters()) {
-					if (c != null) {
-						channel.writeString(c.getName());
-						channel.writeInt(c.getId());
-						channel.writeString(c.getType());
-					}
-				}
 
-				if (getClass().equals(ONetworkProtocolBinary.class))
-					// NO EXTENSIONS (CLUSTER): SEND NULL DOCUMENT
-					channel.writeBytes(null);
+				channel.acquireExclusiveLock();
+				try {
+					sendOk(lastClientTxId);
+					channel.writeInt(connection.id);
+					channel.writeInt(connection.database.getClusterNames().size());
+					for (OCluster c : (connection.database.getStorage()).getClusters()) {
+						if (c != null) {
+							channel.writeString(c.getName());
+							channel.writeInt(c.getId());
+							channel.writeString(c.getType());
+						}
+					}
+
+					if (getClass().equals(ONetworkProtocolBinary.class))
+						// NO EXTENSIONS (CLUSTER): SEND NULL DOCUMENT
+						channel.writeBytes(null);
+				} finally {
+					channel.releaseExclusiveLock();
+				}
 			}
 
 			break;
@@ -262,7 +273,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			connection.database = getDatabaseInstance(dbName, storageMode);
 			createDatabase(connection.database, null, null);
 
-			sendOk(lastClientTxId);
+			channel.acquireExclusiveLock();
+			try {
+				sendOk(lastClientTxId);
+			} finally {
+				channel.releaseExclusiveLock();
+			}
 			break;
 		}
 
@@ -275,7 +291,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				OClientConnectionManager.instance().disconnect(connection.id);
 				// sendShutdown();
 			}
-			sendOk(lastClientTxId);
+
+			channel.acquireExclusiveLock();
+			try {
+				sendOk(lastClientTxId);
+			} finally {
+				channel.releaseExclusiveLock();
+			}
 			break;
 
 		case OChannelBinaryProtocol.REQUEST_DB_EXIST: {
@@ -285,8 +307,14 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			checkServerAccess("database.exists");
 
 			connection.database = getDatabaseInstance(dbName, "local");
-			sendOk(lastClientTxId);
-			channel.writeByte((byte) (connection.database.exists() ? 1 : 0));
+
+			channel.acquireExclusiveLock();
+			try {
+				sendOk(lastClientTxId);
+				channel.writeByte((byte) (connection.database.exists() ? 1 : 0));
+			} finally {
+				channel.releaseExclusiveLock();
+			}
 			break;
 		}
 
@@ -298,21 +326,39 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			connection.database = getDatabaseInstance(dbName, "local");
 			connection.database.delete();
-			sendOk(lastClientTxId);
+
+			channel.acquireExclusiveLock();
+			try {
+				sendOk(lastClientTxId);
+			} finally {
+				channel.releaseExclusiveLock();
+			}
 			break;
 		}
 
 		case OChannelBinaryProtocol.REQUEST_DB_SIZE: {
 			data.commandInfo = "Database size";
-			sendOk(lastClientTxId);
-			channel.writeLong(connection.database.getStorage().getSize());
+
+			channel.acquireExclusiveLock();
+			try {
+				sendOk(lastClientTxId);
+				channel.writeLong(connection.database.getStorage().getSize());
+			} finally {
+				channel.releaseExclusiveLock();
+			}
 			break;
 		}
 
 		case OChannelBinaryProtocol.REQUEST_DB_COUNTRECORDS: {
 			data.commandInfo = "Database count records";
-			sendOk(lastClientTxId);
-			channel.writeLong(connection.database.getStorage().countRecords());
+
+			channel.acquireExclusiveLock();
+			try {
+				sendOk(lastClientTxId);
+				channel.writeLong(connection.database.getStorage().countRecords());
+			} finally {
+				channel.releaseExclusiveLock();
+			}
 			break;
 		}
 
@@ -323,10 +369,15 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			for (int i = 0; i < clusterIds.length; ++i)
 				clusterIds[i] = channel.readShort();
 
-			long count = connection.database.countClusterElements(clusterIds);
+			final long count = connection.database.countClusterElements(clusterIds);
 
-			sendOk(lastClientTxId);
-			channel.writeLong(count);
+			channel.acquireExclusiveLock();
+			try {
+				sendOk(lastClientTxId);
+				channel.writeLong(count);
+			} finally {
+				channel.releaseExclusiveLock();
+			}
 			break;
 		}
 
@@ -335,9 +386,14 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			long[] pos = connection.database.getStorage().getClusterDataRange(channel.readShort());
 
-			sendOk(lastClientTxId);
-			channel.writeLong(pos[0]);
-			channel.writeLong(pos[1]);
+			channel.acquireExclusiveLock();
+			try {
+				sendOk(lastClientTxId);
+				channel.writeLong(pos[0]);
+				channel.writeLong(pos[1]);
+			} finally {
+				channel.releaseExclusiveLock();
+			}
 			break;
 		}
 
@@ -366,8 +422,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				throw new IllegalArgumentException("Cluster type " + type + " is not supported");
 			}
 
-			sendOk(lastClientTxId);
-			channel.writeShort((short) num);
+			channel.acquireExclusiveLock();
+			try {
+				sendOk(lastClientTxId);
+				channel.writeShort((short) num);
+			} finally {
+				channel.releaseExclusiveLock();
+			}
 			break;
 		}
 
@@ -378,8 +439,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			boolean result = connection.database.getStorage().removeCluster(id);
 
-			sendOk(lastClientTxId);
-			channel.writeByte((byte) (result ? 1 : 0));
+			channel.acquireExclusiveLock();
+			try {
+				sendOk(lastClientTxId);
+				channel.writeByte((byte) (result ? 1 : 0));
+			} finally {
+				channel.releaseExclusiveLock();
+			}
 			break;
 		}
 
@@ -392,69 +458,76 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			if (rid.clusterId == 0 && rid.clusterPosition == 0) {
 				// @COMPATIBILITY 0.9.25
 				// SEND THE DB CONFIGURATION INSTEAD SINCE IT WAS ON RECORD 0:0
-				sendOk(lastClientTxId);
-				channel.writeByte((byte) 1);
-				channel.writeBytes(connection.database.getStorage().getConfiguration().toStream());
-				channel.writeInt(0);
-				channel.writeByte(ORecordBytes.RECORD_TYPE);
+				channel.acquireExclusiveLock();
+				try {
+					sendOk(lastClientTxId);
+					channel.writeByte((byte) 1);
+					channel.writeBytes(connection.database.getStorage().getConfiguration().toStream());
+					channel.writeInt(0);
+					channel.writeByte(ORecordBytes.RECORD_TYPE);
+				} finally {
+					channel.releaseExclusiveLock();
+				}
 			} else {
 				final ORecordInternal<?> record = connection.database.load(rid);
 
-				if (rid.equals(connection.database.getMetadata().getSchema().getDocument().getIdentity()))
-					connection.database.getMetadata().getSchema().reload();
+				// if (rid.equals(((OSchemaImpl) connection.database.getMetadata().getSchema()).getDocument().getIdentity()))
+				// connection.database.getMetadata().getSchema().reload();
 
-				sendOk(lastClientTxId);
+				channel.acquireExclusiveLock();
+				try {
+					sendOk(lastClientTxId);
 
-				if (record != null) {
-					channel.writeByte((byte) 1);
-					channel.writeBytes(record.toStream());
-					channel.writeInt(record.getVersion());
-					channel.writeByte(record.getRecordType());
+					if (record != null) {
+						channel.writeByte((byte) 1);
+						channel.writeBytes(record.toStream());
+						channel.writeInt(record.getVersion());
+						channel.writeByte(record.getRecordType());
 
-					if (fetchPlanString.length() > 0) {
-						// BUILD THE SERVER SIDE RECORD TO ACCES TO THE FETCH
-						// PLAN
-						if (record instanceof ODocument) {
-							final Map<String, Integer> fetchPlan = OFetchHelper.buildFetchPlan(fetchPlanString);
+						if (fetchPlanString.length() > 0) {
+							// BUILD THE SERVER SIDE RECORD TO ACCES TO THE FETCH
+							// PLAN
+							if (record instanceof ODocument) {
+								final Map<String, Integer> fetchPlan = OFetchHelper.buildFetchPlan(fetchPlanString);
 
-							final Set<ODocument> recordsToSend = new HashSet<ODocument>();
-							OFetchHelper.fetch((ODocument) record, record, fetchPlan, null, 0, -1, new OFetchListener() {
-								@Override
-								public int size() {
-									return recordsToSend.size();
-								}
+								final Set<ODocument> recordsToSend = new HashSet<ODocument>();
+								OFetchHelper.fetch((ODocument) record, record, fetchPlan, null, 0, -1, new OFetchListener() {
+									@Override
+									public int size() {
+										return recordsToSend.size();
+									}
 
-								// ADD TO THE SET OF OBJECTS TO SEND
-								@Override
-								public Object fetchLinked(final ODocument iRoot, final Object iUserObject, final String iFieldName,
-										final Object iLinked) {
-									if (iLinked instanceof ODocument) {
-										if (((ODocument) iLinked).getIdentity().isValid())
-											return recordsToSend.add((ODocument) iLinked) ? iLinked : null;
-										return null;
-									} else if (iLinked instanceof Collection<?>)
-										return recordsToSend.addAll((Collection<? extends ODocument>) iLinked) ? iLinked : null;
-									else if (iLinked instanceof Map<?, ?>)
-										return recordsToSend.addAll(((Map<String, ? extends ODocument>) iLinked).values()) ? iLinked : null;
-									else
-										throw new IllegalArgumentException("Unrecognized type while fetching records: " + iLinked);
-								}
-							});
+									// ADD TO THE SET OF OBJECTS TO SEND
+									@Override
+									public Object fetchLinked(final ODocument iRoot, final Object iUserObject, final String iFieldName,
+											final Object iLinked) {
+										if (iLinked instanceof ODocument) {
+											if (((ODocument) iLinked).getIdentity().isValid())
+												return recordsToSend.add((ODocument) iLinked) ? iLinked : null;
+											return null;
+										} else if (iLinked instanceof Collection<?>)
+											return recordsToSend.addAll((Collection<? extends ODocument>) iLinked) ? iLinked : null;
+										else if (iLinked instanceof Map<?, ?>)
+											return recordsToSend.addAll(((Map<String, ? extends ODocument>) iLinked).values()) ? iLinked : null;
+										else
+											throw new IllegalArgumentException("Unrecognized type while fetching records: " + iLinked);
+									}
+								});
 
-							// SEND RECORDS TO LOAD IN CLIENT CACHE
-							for (ODocument doc : recordsToSend) {
-								if (doc.getIdentity().isValid()) {
-									channel.writeByte((byte) 2); // CLIENT CACHE
-									// RECORD. IT
-									// ISN'T PART OF
-									// THE RESULT
-									// SET
-									writeRecord(doc);
+								// SEND RECORDS TO LOAD IN CLIENT CACHE
+								for (ODocument doc : recordsToSend) {
+									if (doc.getIdentity().isValid()) {
+										channel.writeByte((byte) 2); // CLIENT CACHE
+										// RECORD. IT ISN'T PART OF THE RESULT SET
+										writeIdentifiable(doc);
+									}
 								}
 							}
-						}
 
+						}
 					}
+				} finally {
+					channel.releaseExclusiveLock();
 				}
 			}
 			channel.writeByte((byte) 0); // NO MORE RECORDS
@@ -469,13 +542,17 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			final byte[] buffer = channel.readBytes();
 			final byte recordType = channel.readByte();
 
-			// final ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
-			// record.fill(connection.database, rid, 0, buffer);
-			// connection.database.save(record);
-			final long location = connection.rawDatabase.save(rid, buffer, -1, recordType);
-			sendOk(lastClientTxId);
-			// channel.writeLong(rid.getClusterPosition());
-			channel.writeLong(location);
+			final ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
+			record.fill(connection.database, rid, 0, buffer);
+			connection.database.save(record);
+
+			channel.acquireExclusiveLock();
+			try {
+				sendOk(lastClientTxId);
+				channel.writeLong(record.getIdentity().getClusterPosition());
+			} finally {
+				channel.releaseExclusiveLock();
+			}
 			break;
 		}
 
@@ -484,36 +561,51 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			final ORecordId rid = channel.readRID();
 
-			// final byte[] buffer = channel.readBytes();
-			// final int version = channel.readInt();
-			// final byte recordType = channel.readByte();
-			// final ORecordInternal<?> record = ORecordFactory.newInstance(recordType);
-			// record.fill(connection.database, rid, version, buffer);
-			//
-			// connection.database.save(record);
+			final byte[] buffer = channel.readBytes();
+			final int version = channel.readInt();
+			final byte recordType = channel.readByte();
+			final ORecordInternal<?> newRecord = ORecordFactory.newInstance(recordType);
+			newRecord.fill(connection.database, rid, version, buffer);
 
-			long newVersion = connection.rawDatabase.save(rid, channel.readBytes(), channel.readInt(), channel.readByte());
+			if (((OSchemaProxy) connection.database.getMetadata().getSchema()).getIdentity().equals(rid)
+					|| ((OIndexManagerImpl) connection.database.getMetadata().getIndexManager()).getDocument().getIdentity().equals(rid)) {
+				throw new OSecurityAccessException("Can't update internal record " + rid);
+			}
 
-			// TODO: Handle it by using triggers
-			if (connection.database.getMetadata().getSchema().getDocument().getIdentity().equals(rid))
-				connection.database.getMetadata().getSchema().reload();
-			else if (connection.database.getMetadata().getIndexManager().getDocument().getIdentity().equals(rid))
-				connection.database.getMetadata().getIndexManager().reload();
+			final ORecordInternal<?> currentRecord;
+			if (newRecord instanceof ODocument) {
+				currentRecord = connection.database.load(rid);
+				final ODocument doc = (ODocument) currentRecord;
+				doc.merge((ODocument) newRecord, false, false);
 
-			sendOk(lastClientTxId);
+			} else
+				currentRecord = newRecord;
 
-			channel.writeInt((int) newVersion);
-			// channel.writeInt(record.getVersion());
+			connection.database.save(currentRecord);
+
+			channel.acquireExclusiveLock();
+			try {
+				sendOk(lastClientTxId);
+				channel.writeInt(currentRecord.getVersion());
+			} finally {
+				channel.releaseExclusiveLock();
+			}
 			break;
 		}
 
 		case OChannelBinaryProtocol.REQUEST_RECORD_DELETE: {
 			data.commandInfo = "Delete record";
-			final ORecordId rid = new ORecordId(channel.readShort(), channel.readLong());
-			connection.rawDatabase.delete(rid, channel.readInt());
-			sendOk(lastClientTxId);
+			ORecordInternal<?> record = connection.database.load(channel.readRID());
+			record.setVersion(channel.readInt());
+			record.delete();
 
-			channel.writeByte((byte) 1);
+			channel.acquireExclusiveLock();
+			try {
+				sendOk(lastClientTxId);
+				channel.writeByte((byte) 1);
+			} finally {
+				channel.releaseExclusiveLock();
+			}
 			break;
 		}
 
@@ -523,9 +615,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			final String clusterName = channel.readString();
 			final long size = connection.database.countClusterElements(clusterName);
 
-			sendOk(lastClientTxId);
-
-			channel.writeLong(size);
+			channel.acquireExclusiveLock();
+			try {
+				sendOk(lastClientTxId);
+				channel.writeLong(size);
+			} finally {
+				channel.releaseExclusiveLock();
+			}
 			break;
 		}
 
@@ -541,106 +637,109 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			data.commandDetail = command.getText();
 
-			if (asynch) {
-				// ASYNCHRONOUS
-				final StringBuilder empty = new StringBuilder();
-				final Set<ODocument> recordsToSend = new HashSet<ODocument>();
-				final int txId = lastClientTxId;
+			channel.acquireExclusiveLock();
+			try {
+				if (asynch) {
+					// ASYNCHRONOUS
+					final StringBuilder empty = new StringBuilder();
+					final Set<ODocument> recordsToSend = new HashSet<ODocument>();
+					final int txId = lastClientTxId;
 
-				final Map<String, Integer> fetchPlan = query != null ? OFetchHelper.buildFetchPlan(query.getFetchPlan()) : null;
-				command.setResultListener(new OCommandResultListener() {
-					@Override
-					public boolean result(final Object iRecord) {
-						if (empty.length() == 0)
+					final Map<String, Integer> fetchPlan = query != null ? OFetchHelper.buildFetchPlan(query.getFetchPlan()) : null;
+					command.setResultListener(new OCommandResultListener() {
+						@Override
+						public boolean result(final Object iRecord) {
+							if (empty.length() == 0)
+								try {
+									sendOk(txId);
+									empty.append("-");
+								} catch (IOException e1) {
+								}
+
 							try {
-								sendOk(txId);
-								empty.append("-");
-							} catch (IOException e1) {
+								channel.writeByte((byte) 1); // ONE MORE RECORD
+								writeIdentifiable((ORecordInternal<?>) iRecord);
+
+								if (fetchPlan != null && iRecord instanceof ODocument) {
+									OFetchHelper.fetch((ODocument) iRecord, iRecord, fetchPlan, null, 0, -1, new OFetchListener() {
+										@Override
+										public int size() {
+											return recordsToSend.size();
+										}
+
+										// ADD TO THE SET OF OBJECT TO
+										// SEND
+										@Override
+										public Object fetchLinked(final ODocument iRoot, final Object iUserObject, final String iFieldName,
+												final Object iLinked) {
+											if (iLinked instanceof ODocument)
+												return recordsToSend.add((ODocument) iLinked) ? iLinked : null;
+											else if (iLinked instanceof Collection<?>)
+												return recordsToSend.addAll((Collection<? extends ODocument>) iLinked) ? iLinked : null;
+											else if (iLinked instanceof Map<?, ?>)
+												return recordsToSend.addAll(((Map<String, ? extends ODocument>) iLinked).values()) ? iLinked : null;
+											else
+												throw new IllegalArgumentException("Unrecognized type while fetching records: " + iLinked);
+										}
+									});
+								}
+
+							} catch (IOException e) {
+								return false;
 							}
 
+							return true;
+						}
+					});
+
+					((OCommandRequestInternal) connection.database.command(command)).execute();
+
+					if (empty.length() == 0)
 						try {
-							channel.writeByte((byte) 1); // ONE MORE RECORD
-							writeRecord((ORecordInternal<?>) iRecord);
-							// TEMPORARY TEST: ON LINUX THIS SLOW DOWN A LOT
-							// channel.flush();
-
-							if (fetchPlan != null && iRecord instanceof ODocument) {
-								OFetchHelper.fetch((ODocument) iRecord, iRecord, fetchPlan, null, 0, -1, new OFetchListener() {
-									@Override
-									public int size() {
-										return recordsToSend.size();
-									}
-
-									// ADD TO THE SET OF OBJECT TO
-									// SEND
-									@Override
-									public Object fetchLinked(final ODocument iRoot, final Object iUserObject, final String iFieldName,
-											final Object iLinked) {
-										if (iLinked instanceof ODocument)
-											return recordsToSend.add((ODocument) iLinked) ? iLinked : null;
-										else if (iLinked instanceof Collection<?>)
-											return recordsToSend.addAll((Collection<? extends ODocument>) iLinked) ? iLinked : null;
-										else if (iLinked instanceof Map<?, ?>)
-											return recordsToSend.addAll(((Map<String, ? extends ODocument>) iLinked).values()) ? iLinked : null;
-										else
-											throw new IllegalArgumentException("Unrecognized type while fetching records: " + iLinked);
-									}
-								});
-							}
-
-						} catch (IOException e) {
-							return false;
+							sendOk(lastClientTxId);
+						} catch (IOException e1) {
 						}
 
-						return true;
-					}
-				});
-
-				((OCommandRequestInternal) connection.database.command(command)).execute();
-
-				if (empty.length() == 0)
-					try {
-						sendOk(lastClientTxId);
-					} catch (IOException e1) {
+					// SEND RECORDS TO LOAD IN CLIENT CACHE
+					for (ODocument doc : recordsToSend) {
+						channel.writeByte((byte) 2); // CLIENT CACHE RECORD. IT
+						// ISN'T PART OF THE
+						// RESULT SET
+						writeIdentifiable(doc);
 					}
 
-				// SEND RECORDS TO LOAD IN CLIENT CACHE
-				for (ODocument doc : recordsToSend) {
-					channel.writeByte((byte) 2); // CLIENT CACHE RECORD. IT
-					// ISN'T PART OF THE
-					// RESULT SET
-					writeRecord(doc);
-				}
-
-				channel.writeByte((byte) 0); // NO MORE RECORDS
-			} else {
-				// SYNCHRONOUS
-				final Object result = ((OCommandRequestInternal) connection.database.command(command)).execute();
-
-				sendOk(lastClientTxId);
-
-				if (result == null) {
-					// NULL VALUE
-					channel.writeByte((byte) 'n');
-				} else if (result instanceof ORecord<?>) {
-					// RECORD
-					channel.writeByte((byte) 'r');
-					writeRecord((ORecordInternal<?>) result);
-				} else if (result instanceof Collection<?>) {
-					channel.writeByte((byte) 'l');
-					final Collection<OIdentifiable> list = (Collection<OIdentifiable>) result;
-					channel.writeInt(list.size());
-					for (OIdentifiable o : list) {
-						writeRecord(o);
-					}
+					channel.writeByte((byte) 0); // NO MORE RECORDS
 				} else {
-					// ANY OTHER (INCLUDING LITERALS)
-					channel.writeByte((byte) 'a');
-					final StringBuilder value = new StringBuilder();
-					ORecordSerializerStringAbstract.fieldTypeToString(value, connection.database, OType.getTypeByClass(result.getClass()),
-							result);
-					channel.writeString(value.toString());
+					// SYNCHRONOUS
+					final Object result = ((OCommandRequestInternal) connection.database.command(command)).execute();
+
+					sendOk(lastClientTxId);
+
+					if (result == null) {
+						// NULL VALUE
+						channel.writeByte((byte) 'n');
+					} else if (result instanceof ORecord<?>) {
+						// RECORD
+						channel.writeByte((byte) 'r');
+						writeIdentifiable((ORecordInternal<?>) result);
+					} else if (result instanceof Collection<?>) {
+						channel.writeByte((byte) 'l');
+						final Collection<OIdentifiable> list = (Collection<OIdentifiable>) result;
+						channel.writeInt(list.size());
+						for (OIdentifiable o : list) {
+							writeIdentifiable(o);
+						}
+					} else {
+						// ANY OTHER (INCLUDING LITERALS)
+						channel.writeByte((byte) 'a');
+						final StringBuilder value = new StringBuilder();
+						ORecordSerializerStringAbstract.fieldTypeToString(value, connection.database, OType.getTypeByClass(result.getClass()),
+								result);
+						channel.writeString(value.toString());
+					}
 				}
+			} finally {
+				channel.releaseExclusiveLock();
 			}
 			break;
 		}
@@ -654,13 +753,18 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			connection.database.begin(tx);
 			try {
 				connection.database.commit();
-				sendOk(lastClientTxId);
+				channel.acquireExclusiveLock();
+				try {
+					sendOk(lastClientTxId);
 
-				// SEND BACK ALL THE NEW VERSIONS FOR THE UPDATED RECORDS
-				channel.writeInt(tx.getUpdatedRecords().size());
-				for (Entry<ORecordId, ORecord<?>> entry : tx.getUpdatedRecords().entrySet()) {
-					channel.writeRID(entry.getKey());
-					channel.writeInt(entry.getValue().getVersion());
+					// SEND BACK ALL THE NEW VERSIONS FOR THE UPDATED RECORDS
+					channel.writeInt(tx.getUpdatedRecords().size());
+					for (Entry<ORecordId, ORecord<?>> entry : tx.getUpdatedRecords().entrySet()) {
+						channel.writeRID(entry.getKey());
+						channel.writeInt(entry.getValue().getVersion());
+					}
+				} finally {
+					channel.releaseExclusiveLock();
 				}
 			} catch (Exception e) {
 				connection.database.rollback();
@@ -679,8 +783,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			final OGlobalConfiguration cfg = OGlobalConfiguration.findByKey(key);
 			String cfgValue = cfg != null ? cfg.getValueAsString() : "";
 
-			sendOk(lastClientTxId);
-			channel.writeString(cfgValue);
+			channel.acquireExclusiveLock();
+			try {
+				sendOk(lastClientTxId);
+				channel.writeString(cfgValue);
+			} finally {
+				channel.releaseExclusiveLock();
+			}
 			break;
 		}
 
@@ -695,7 +804,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			if (cfg != null)
 				cfg.setValue(value);
 
-			sendOk(lastClientTxId);
+			channel.acquireExclusiveLock();
+			try {
+				sendOk(lastClientTxId);
+			} finally {
+				channel.releaseExclusiveLock();
+			}
 			break;
 		}
 
@@ -704,12 +818,17 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			checkServerAccess("server.config.get");
 
-			sendOk(lastClientTxId);
+			channel.acquireExclusiveLock();
+			try {
+				sendOk(lastClientTxId);
 
-			channel.writeShort((short) OGlobalConfiguration.values().length);
-			for (OGlobalConfiguration cfg : OGlobalConfiguration.values()) {
-				channel.writeString(cfg.getKey());
-				channel.writeString(cfg.getValueAsString() != null ? cfg.getValueAsString() : "");
+				channel.writeShort((short) OGlobalConfiguration.values().length);
+				for (OGlobalConfiguration cfg : OGlobalConfiguration.values()) {
+					channel.writeString(cfg.getKey());
+					channel.writeString(cfg.getValueAsString() != null ? cfg.getValueAsString() : "");
+				}
+			} finally {
+				channel.releaseExclusiveLock();
 			}
 
 			break;
@@ -754,29 +873,36 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		channel.writeInt(iClientTxId);
 	}
 
-	protected void sendError(final int iClientTxId, final Throwable t) throws IOException {
-		channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
-		channel.writeInt(iClientTxId);
+	protected void sendError(final int iClientTxId, final Throwable t) throws IOException, InterruptedException {
+		channel.acquireExclusiveLock();
 
-		Throwable current;
-		if (t instanceof OLockException && t.getCause() instanceof ODatabaseException)
-			// BYPASS THE DB POOL EXCEPTION TO PROPAGATE THE RIGHT SECURITY ONE
-			current = t.getCause();
-		else
-			current = t;
+		try {
+			channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
+			channel.writeInt(iClientTxId);
 
-		while (current != null) {
-			// MORE DETAILS ARE COMING AS EXCEPTION
-			channel.writeByte((byte) 1);
+			Throwable current;
+			if (t instanceof OLockException && t.getCause() instanceof ODatabaseException)
+				// BYPASS THE DB POOL EXCEPTION TO PROPAGATE THE RIGHT SECURITY ONE
+				current = t.getCause();
+			else
+				current = t;
 
-			channel.writeString(current.getClass().getName());
-			channel.writeString(current != null ? current.getMessage() : null);
+			while (current != null) {
+				// MORE DETAILS ARE COMING AS EXCEPTION
+				channel.writeByte((byte) 1);
 
-			current = current.getCause();
+				channel.writeString(current.getClass().getName());
+				channel.writeString(current != null ? current.getMessage() : null);
+
+				current = current.getCause();
+			}
+			channel.writeByte((byte) 0);
+
+			channel.clearInput();
+
+		} finally {
+			channel.releaseExclusiveLock();
 		}
-		channel.writeByte((byte) 0);
-
-		channel.clearInput();
 	}
 
 	private void serverLogin(final String iUser, final String iPassword) {
@@ -811,7 +937,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	}
 
 	/**
-	 * Write a record using this format:<br/>
+	 * Write a OIdentifiable instance using this format:<br/>
 	 * - 2 bytes: class id [-2=no record, -1=no class id, > -1 = valid] <br/>
 	 * - 1 byte: record type [v,c,b] <br/>
 	 * - 2 bytes: cluster id <br/>
@@ -822,39 +948,43 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	 * @param o
 	 * @throws IOException
 	 */
-	private void writeRecord(final OIdentifiable o) throws IOException {
+	public void writeIdentifiable(final OIdentifiable o) throws IOException {
 		if (o == null)
 			channel.writeShort(OChannelBinaryProtocol.RECORD_NULL);
 		else if (o instanceof ORecordId) {
 			channel.writeShort(OChannelBinaryProtocol.RECORD_RID);
 			channel.writeRID((ORID) o);
 		} else {
-			channel
-					.writeShort((short) (o instanceof ORecordSchemaAware<?> && ((ORecordSchemaAware<?>) o).getSchemaClass() != null ? ((ORecordSchemaAware<?>) o)
-							.getSchemaClass().getId() : -1));
+			writeRecord((ORecordInternal<?>) o);
+		}
+	}
 
-			ORecordInternal<?> rec = (ORecordInternal<?>) o;
-			channel.writeByte(rec.getRecordType());
-			channel.writeRID(rec.getIdentity());
-			channel.writeInt(rec.getVersion());
-			try {
-				byte[] stream = rec.toStream();
+	private void writeRecord(final ORecordInternal<?> iRecord) throws IOException {
+		channel.writeShort((short) 0);
+		// channel.writeShort((short) (iRecord instanceof ORecordSchemaAware<?>
+		// && ((ORecordSchemaAware<?>) iRecord).getSchemaClass() != null ? ((ORecordSchemaAware<?>) iRecord).getSchemaClass().getId()
+		// : -1));
 
-				// TRIM TAILING SPACES (DUE TO OVERSIZE)
-				int realLength = stream.length;
-				for (int i = stream.length - 1; i > -1; --i) {
-					if (stream[i] == 32)
-						--realLength;
-					else
-						break;
-				}
+		channel.writeByte(iRecord.getRecordType());
+		channel.writeRID(iRecord.getIdentity());
+		channel.writeInt(iRecord.getVersion());
+		try {
+			final byte[] stream = iRecord.toStream();
 
-				channel.writeBytes(stream, realLength);
-			} catch (Exception e) {
-				channel.writeBytes(null);
-				OLogManager.instance().error(this, "Error on unmarshalling record #" + o.getIdentity().toString(),
-						OSerializationException.class);
+			// TRIM TAILING SPACES (DUE TO OVERSIZE)
+			int realLength = stream.length;
+			for (int i = stream.length - 1; i > -1; --i) {
+				if (stream[i] == 32)
+					--realLength;
+				else
+					break;
 			}
+
+			channel.writeBytes(stream, realLength);
+		} catch (Exception e) {
+			channel.writeBytes(null);
+			OLogManager.instance().error(this, "Error on unmarshalling record #" + iRecord.getIdentity().toString(),
+					OSerializationException.class);
 		}
 	}
 
@@ -911,5 +1041,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			throw new IllegalArgumentException("Can't create database: storage mode '" + iStorageMode + "' is not supported.");
 
 		return new ODatabaseDocumentTx(path);
+	}
+
+	private void handleConnectionError(Throwable e) {
+		OServerHandlerHelper.invokeHandlerCallbackOnClientError(connection, e);
 	}
 }

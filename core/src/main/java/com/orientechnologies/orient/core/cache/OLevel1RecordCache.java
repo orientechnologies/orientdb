@@ -126,15 +126,6 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
 		level2cache.freeRecord(iRecord);
 	}
 
-	public ORecordInternal<?> freeRecord(final ORID iRID) {
-
-		final ORecordInternal<?> record = super.freeRecord(iRID);
-		if (record != null)
-			level2cache.pushRecord(record);
-
-		return record;
-	}
-
 	public void shutdown() {
 		clear();
 		super.shutdown();

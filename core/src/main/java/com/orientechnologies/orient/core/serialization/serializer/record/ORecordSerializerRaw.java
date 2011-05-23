@@ -38,7 +38,7 @@ public class ORecordSerializerRaw implements ORecordSerializer {
 		return record;
 	}
 
-	public byte[] toStream(final ODatabaseRecord iDatabase, final ORecordInternal<?> iSource) {
+	public byte[] toStream(final ODatabaseRecord iDatabase, final ORecordInternal<?> iSource, boolean iOnlyDelta) {
 		try {
 			return iSource.toStream();
 		} catch (Exception e) {

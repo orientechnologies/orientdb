@@ -41,7 +41,7 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
-import com.orientechnologies.orient.core.tx.OTransactionEntry;
+import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 
 /**
@@ -262,10 +262,10 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 	@Override
 	public ODatabasePojoAbstract<Object> commit() {
 		// COPY ALL TX ENTRIES
-		final List<OTransactionEntry> entries;
-		if (getTransaction().getEntries() != null) {
-			entries = new ArrayList<OTransactionEntry>();
-			for (OTransactionEntry entry : getTransaction().getEntries())
+		final List<OTransactionRecordEntry> entries;
+		if (getTransaction().getRecordEntries() != null) {
+			entries = new ArrayList<OTransactionRecordEntry>();
+			for (OTransactionRecordEntry entry : getTransaction().getRecordEntries())
 				entries.add(entry);
 		} else
 			entries = null;
@@ -275,20 +275,20 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 		if (entries != null) {
 			// UPDATE ID & VERSION FOR ALL THE RECORDS
 			Object pojo = null;
-			for (OTransactionEntry entry : entries) {
+			for (OTransactionRecordEntry entry : entries) {
 				pojo = records2Objects.get(entry.getRecord());
 
 				if (pojo != null)
 					switch (entry.status) {
-					case OTransactionEntry.CREATED:
+					case OTransactionRecordEntry.CREATED:
 						rid2Records.put(entry.getRecord().getIdentity(), (ODocument) entry.getRecord());
 						OObjectSerializerHelper.setObjectID(entry.getRecord().getIdentity(), pojo);
 
-					case OTransactionEntry.UPDATED:
+					case OTransactionRecordEntry.UPDATED:
 						OObjectSerializerHelper.setObjectVersion(entry.getRecord().getVersion(), pojo);
 						break;
 
-					case OTransactionEntry.DELETED:
+					case OTransactionRecordEntry.DELETED:
 						OObjectSerializerHelper.setObjectID(null, pojo);
 						OObjectSerializerHelper.setObjectVersion(null, pojo);
 
@@ -304,11 +304,11 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 	@Override
 	public ODatabasePojoAbstract<Object> rollback() {
 		// COPY ALL TX ENTRIES
-		final List<OTransactionEntry> newEntries;
-		if (getTransaction().getEntries() != null) {
-			newEntries = new ArrayList<OTransactionEntry>();
-			for (OTransactionEntry entry : getTransaction().getEntries())
-				if (entry.status == OTransactionEntry.CREATED)
+		final List<OTransactionRecordEntry> newEntries;
+		if (getTransaction().getRecordEntries() != null) {
+			newEntries = new ArrayList<OTransactionRecordEntry>();
+			for (OTransactionRecordEntry entry : getTransaction().getRecordEntries())
+				if (entry.status == OTransactionRecordEntry.CREATED)
 					newEntries.add(entry);
 		} else
 			newEntries = null;
@@ -317,7 +317,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 
 		if (newEntries != null) {
 			Object pojo = null;
-			for (OTransactionEntry entry : newEntries) {
+			for (OTransactionRecordEntry entry : newEntries) {
 				pojo = records2Objects.get(entry.getRecord());
 
 				OObjectSerializerHelper.setObjectID(null, pojo);

@@ -39,8 +39,15 @@ public class OPropertyIndex implements OIndexCallback {
 		fields = iFields;
 		final String indexName = getIndexName(iClass, iFields);
 
-		delegate = iDatabase.getMetadata().getIndexManager()
-				.createIndex(indexName, iType, iClass.getClusterIds(), this, iProgressListener, true);
+		delegate = ((OIndexManagerImpl) iDatabase.getMetadata().getIndexManager()).createIndexInternal(indexName, iType,
+				iClass.getClusterIds(), this, iProgressListener, true);
+	}
+
+	public OPropertyIndex(final ODatabaseRecord iDatabase, final OClass iClass, final String[] iFields, final String iType) {
+		fields = iFields;
+		final String indexName = getIndexName(iClass, iFields);
+
+		delegate = iDatabase.getMetadata().getIndexManager().createIndex(indexName, iType, iClass.getClusterIds(), this, null, true);
 	}
 
 	public OPropertyIndex(final OIndex iIndex, final String[] iFields) {
@@ -48,21 +55,12 @@ public class OPropertyIndex implements OIndexCallback {
 		delegate = iIndex;
 	}
 
-	public OPropertyIndex(final ODatabaseRecord iDatabase, final OClass iClass, final String[] iFields, final ODocument iConfiguration) {
-		fields = iFields;
-		final String indexName = getIndexName(iClass, iFields);
-
-		delegate = iDatabase.getMetadata().getIndexManager().loadIndex(indexName, iConfiguration);
-		if (delegate != null)
-			delegate.setCallback(this);
-	}
-
 	public void checkEntry(final ODocument iRecord) {
 		// GENERATE THE KEY
 		final Object key = generateKey(iRecord);
 
 		try {
-			delegate.checkEntry(iRecord, key);
+			((OIndexInternal) delegate).checkEntry(iRecord, key);
 		} catch (OIndexException e) {
 			OLogManager.instance().exception("Invalid constraints on index '%s' for key '%s' in record %s for the fields '%s'", e,
 					OIndexException.class, delegate.getName(), key, iRecord.getIdentity(), Arrays.toString(fields));

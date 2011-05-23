@@ -19,6 +19,7 @@ import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 
@@ -69,9 +70,7 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLPermissionA
 		if (className == null)
 			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
 
-		database.getMetadata().getSchema().removeClass(className);
-
-		database.getMetadata().getSchema().save();
+		((OSchemaProxy) database.getMetadata().getSchema()).dropClassInternal(className);
 
 		return null;
 	}

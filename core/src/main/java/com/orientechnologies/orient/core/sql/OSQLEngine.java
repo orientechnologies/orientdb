@@ -54,8 +54,12 @@ public class OSQLEngine {
 				OCommandExecutorSQLDropIndex.class);
 		commands.put(OCommandExecutorSQLCreateClass.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateClass.KEYWORD_CLASS,
 				OCommandExecutorSQLCreateClass.class);
+		commands.put(OCommandExecutorSQLAlterClass.KEYWORD_ALTER + " " + OCommandExecutorSQLAlterClass.KEYWORD_CLASS,
+				OCommandExecutorSQLAlterClass.class);
 		commands.put(OCommandExecutorSQLCreateProperty.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateProperty.KEYWORD_PROPERTY,
 				OCommandExecutorSQLCreateProperty.class);
+		commands.put(OCommandExecutorSQLAlterProperty.KEYWORD_ALTER + " " + OCommandExecutorSQLAlterProperty.KEYWORD_PROPERTY,
+				OCommandExecutorSQLAlterProperty.class);
 		commands.put(OCommandExecutorSQLDropClass.KEYWORD_DROP + " " + OCommandExecutorSQLDropClass.KEYWORD_CLASS,
 				OCommandExecutorSQLDropClass.class);
 		commands.put(OCommandExecutorSQLDropProperty.KEYWORD_DROP + " " + OCommandExecutorSQLDropProperty.KEYWORD_PROPERTY,
@@ -138,7 +142,7 @@ public class OSQLEngine {
 		return null;
 	}
 
-	public OSQLFilter parseWhereCondition(final ODatabaseRecord iDatabase, final String iText) {
+	public OSQLFilter parseFromWhereCondition(final ODatabaseRecord iDatabase, final String iText) {
 		return new OSQLFilter(iDatabase, iText);
 	}
 

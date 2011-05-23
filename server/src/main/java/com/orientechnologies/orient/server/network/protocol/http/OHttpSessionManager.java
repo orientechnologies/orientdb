@@ -22,7 +22,7 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.TimerTask;
 
-import com.orientechnologies.common.concur.resource.OSharedResource;
+import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
  * 
  * @author Luca Garulli
  */
-public class OHttpSessionManager extends OSharedResource {
+public class OHttpSessionManager extends OSharedResourceAbstract {
 	private static final OHttpSessionManager	instance	= new OHttpSessionManager();
 	private Map<String, OHttpSession>					sessions	= new HashMap<String, OHttpSession>();
 	private int																expirationTime;

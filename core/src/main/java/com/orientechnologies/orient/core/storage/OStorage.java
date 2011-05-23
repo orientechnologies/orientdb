@@ -20,6 +20,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.common.concur.resource.OSharedContainer;
+import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -33,7 +35,7 @@ import com.orientechnologies.orient.core.tx.OTransaction;
  * @author Luca Garulli
  * 
  */
-public interface OStorage {
+public interface OStorage extends OSharedContainer {
 	public static final String	CLUSTER_INTERNAL_NAME	= "internal";
 	public static final String	CLUSTER_INDEX_NAME		= "index";
 	public static final String	CLUSTER_DEFAULT_NAME	= "default";
@@ -60,6 +62,13 @@ public interface OStorage {
 	public void close(boolean iForce);
 
 	public boolean isClosed();
+
+	/**
+	 * Returns the level1 cache. Can't be null.
+	 * 
+	 * @return Current cache.
+	 */
+	public OLevel2RecordCache getLevel2Cache();
 
 	// CRUD OPERATIONS
 	public long createRecord(ORecordId iRecordId, byte[] iContent, final byte iRecordType);

@@ -23,11 +23,9 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryInputStream;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.handler.distributed.ODistributedServerManager;
@@ -57,45 +55,6 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 		// DISTRIBUTED SERVER REQUESTS
 		switch (lastRequestType) {
-
-		case OChannelBinaryProtocol.REQUEST_RECORD_UPDATE: {
-			data.commandInfo = "Update record";
-
-			final ORecordId rid = channel.readRID();
-			final byte[] content = channel.readBytes();
-			@SuppressWarnings("unused")
-			final int version = channel.readInt();
-
-			// BYPASS VERSION CHECK BY USING -1
-			final long newVersion = connection.rawDatabase.save(rid, content, -1, channel.readByte());
-
-			// TODO: Handle it by using triggers
-			if (connection.database.getMetadata().getSchema().getDocument().getIdentity().equals(rid))
-				connection.database.getMetadata().getSchema().reload();
-			else if (connection.database.getMetadata().getIndexManager().getDocument().getIdentity().equals(rid))
-				connection.database.getMetadata().getIndexManager().reload();
-
-			sendOk(lastClientTxId);
-
-			channel.writeInt((int) newVersion);
-			break;
-		}
-
-		case OChannelBinaryProtocol.REQUEST_RECORD_DELETE: {
-			data.commandInfo = "Delete record";
-			final ORecordId rid = new ORecordId(channel.readShort(), channel.readLong());
-			@SuppressWarnings("unused")
-			final int version = channel.readInt();
-
-			// BYPASS VERSION CHECK BY USING -1
-			connection.rawDatabase.delete(rid, -1);
-			
-			sendOk(lastClientTxId);
-
-			channel.writeByte((byte) 1);
-			break;
-		}
-
 		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_HEARTBEAT:
 			checkConnected();
 			data.commandInfo = "Keep-alive";

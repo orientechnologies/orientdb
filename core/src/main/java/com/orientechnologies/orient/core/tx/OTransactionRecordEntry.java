@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.tx;
 
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
-public class OTransactionEntry {
+public class OTransactionRecordEntry {
 
 	public static final byte		LOADED	= 0;
 	public static final byte		UPDATED	= 1;
@@ -28,7 +28,7 @@ public class OTransactionEntry {
 	private ORecordInternal<?>	record;
 	public String								clusterName;
 
-	public OTransactionEntry(final ORecordInternal<?> iRecord, final byte iStatus, final String iClusterName) {
+	public OTransactionRecordEntry(final ORecordInternal<?> iRecord, final byte iStatus, final String iClusterName) {
 		// CLONE RECORD AND CONTENT
 		this.setRecord(iRecord);
 		this.status = iStatus;
@@ -42,10 +42,10 @@ public class OTransactionEntry {
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (!(obj instanceof OTransactionEntry))
+		if (!(obj instanceof OTransactionRecordEntry))
 			return false;
 
-		return record.equals(((OTransactionEntry) obj).record);
+		return record.equals(((OTransactionRecordEntry) obj).record);
 	}
 
 	@Override

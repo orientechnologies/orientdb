@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.storage;
 
 import java.io.IOException;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
@@ -56,7 +57,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 		executor.parse(iCommand);
 		try {
 			return executor.execute(iCommand.getParameters());
-		} catch (OCommandExecutionException e) {
+		} catch (OException e) {
 			// PASS THROUGHT
 			throw e;
 		} catch (Exception e) {
@@ -148,7 +149,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 				rid.clusterPosition = positionInPhyCluster;
 
 				// TRY IN TX
-				record = database.getTransaction().getEntry(rid);
+				record = database.getTransaction().getRecordEntry(rid);
 				if (record == null)
 					// TRY IN CACHE
 					record = database.getLevel1Cache().findRecord(rid);

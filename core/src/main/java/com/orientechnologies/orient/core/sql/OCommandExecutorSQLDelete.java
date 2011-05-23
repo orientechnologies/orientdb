@@ -19,11 +19,15 @@ import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 
@@ -35,9 +39,13 @@ import com.orientechnologies.orient.core.sql.query.OSQLQuery;
  */
 public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract implements OCommandResultListener {
 	public static final String		KEYWORD_DELETE	= "DELETE";
+	private static final String		VALUE_NOT_FOUND	= "_not_found_";
 
 	private OSQLQuery<ODocument>	query;
+	private String								indexName				= null;
 	private int										recordCount			= 0;
+
+	private OSQLFilter						compiledFilter;
 
 	public OCommandExecutorSQLDelete() {
 	}
@@ -57,17 +65,72 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
 		if (pos == -1 || !word.toString().equals(OCommandExecutorSQLDelete.KEYWORD_DELETE))
 			throw new OCommandSQLParsingException("Keyword " + OCommandExecutorSQLDelete.KEYWORD_DELETE + " not found", text, 0);
 
-		query = database.command(new OSQLAsynchQuery<ODocument>("select " + text.substring(pos), this));
+		int oldPos = pos;
+		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+		if (pos == -1 || !word.toString().equals(KEYWORD_FROM))
+			throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found", text, oldPos);
+
+		oldPos = pos;
+		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
+		if (pos == -1)
+			throw new OCommandSQLParsingException("Invalid subject name. Expected cluster, class or index", text, oldPos);
+
+		final String subjectName = word.toString();
+
+		if (subjectName.startsWith(OCommandExecutorSQLAbstract.INDEX_PREFIX)) {
+			// INDEX
+			indexName = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_PREFIX.length());
+			compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(iRequest.getDatabase(), text.substring(oldPos));
+		} else {
+			query = database.command(new OSQLAsynchQuery<ODocument>("select from " + subjectName + " " + text.substring(pos), this));
+		}
 
 		return this;
 	}
 
 	public Object execute(final Map<Object, Object> iArgs) {
-		if (query == null)
+		if (query == null && indexName == null)
 			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
 
-		query.execute(iArgs);
-		return recordCount;
+		if (query != null) {
+			// AGAINST CLUSTERS AND CLASSES
+			query.execute(iArgs);
+			return recordCount;
+		} else {
+			// AGAINST INDEXES
+			final OIndex index = database.getMetadata().getIndexManager().getIndex(indexName);
+			if (index == null)
+				throw new OCommandExecutionException("Target index '" + indexName + "' not found");
+
+			Object key = null;
+			Object value = VALUE_NOT_FOUND;
+
+			if ("KEY".equalsIgnoreCase(compiledFilter.getRootCondition().getLeft().toString()))
+				// FOUND KEY ONLY
+				key = compiledFilter.getRootCondition().getRight();
+			else if (compiledFilter.getRootCondition().getLeft() instanceof OSQLFilterCondition) {
+				// KEY AND VALUE
+				final OSQLFilterCondition leftCondition = (OSQLFilterCondition) compiledFilter.getRootCondition().getLeft();
+				if ("KEY".equalsIgnoreCase(leftCondition.getLeft().toString()))
+					key = leftCondition.getRight();
+
+				final OSQLFilterCondition rightCondition = (OSQLFilterCondition) compiledFilter.getRootCondition().getRight();
+				if ("VALUE".equalsIgnoreCase(rightCondition.getLeft().toString()))
+					value = rightCondition.getRight();
+
+			}
+
+			if (key == null)
+				throw new OCommandExecutionException("'Key' field is required for queries against indexes");
+
+			final boolean result;
+			if (value != VALUE_NOT_FOUND)
+				result = index.remove(key, (OIdentifiable) value);
+			else
+				result = index.remove(key);
+
+			return result;
+		}
 	}
 
 	/**

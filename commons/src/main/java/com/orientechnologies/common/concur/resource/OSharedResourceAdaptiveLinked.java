@@ -6,7 +6,7 @@ package com.orientechnologies.common.concur.resource;
  * @author Luca Garulli
  * 
  */
-public class OSharedResourceAdaptiveLinked extends OSharedResource {
+public class OSharedResourceAdaptiveLinked extends OSharedResourceAbstract {
 	private OSharedResourceAdaptive	source;
 
 	public OSharedResourceAdaptiveLinked(OSharedResourceAdaptive source) {

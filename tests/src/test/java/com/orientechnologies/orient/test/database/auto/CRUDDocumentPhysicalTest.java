@@ -200,12 +200,13 @@ public class CRUDDocumentPhysicalTest {
 
 		OPropertyIndex index = database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getIndex();
 
-		Set<OIdentifiable> vOldName = index.getUnderlying().get("JayM1");
-		Set<OIdentifiable> vIntermediateName = index.getUnderlying().get("JayM2");
-		Set<OIdentifiable> vNewName = index.getUnderlying().get("JayM3");
-
+		Collection<OIdentifiable> vOldName = index.getUnderlying().get("JayM1");
 		Assert.assertEquals(vOldName.size(), 0);
+
+		Collection<OIdentifiable> vIntermediateName = index.getUnderlying().get("JayM2");
 		Assert.assertEquals(vIntermediateName.size(), 0);
+
+		Collection<OIdentifiable> vNewName = index.getUnderlying().get("JayM3");
 		Assert.assertEquals(vNewName.size(), 1);
 
 		database.close();
@@ -229,7 +230,7 @@ public class CRUDDocumentPhysicalTest {
 		OPropertyIndex indexName = database.getMetadata().getSchema().getClass("Profile").getProperty("name").getIndex();
 
 		// We must get 2 records for "nameA".
-		Set<OIdentifiable> vName1 = indexName.getUnderlying().get("Jack");
+		Collection<OIdentifiable> vName1 = indexName.getUnderlying().get("Jack");
 		Assert.assertEquals(vName1.size(), 2);
 
 		// Remove this last record.

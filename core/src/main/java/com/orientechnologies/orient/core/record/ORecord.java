@@ -30,7 +30,7 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable {
 	 * Available record statuses.
 	 */
 	public enum STATUS {
-		NOT_LOADED, LOADED, NEW, MARSHALLING, UNMARSHALLING
+		NOT_LOADED, LOADED, MARSHALLING, UNMARSHALLING
 	}
 
 	/**

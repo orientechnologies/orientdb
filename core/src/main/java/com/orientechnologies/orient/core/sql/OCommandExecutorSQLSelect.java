@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -52,6 +51,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsText;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
@@ -128,7 +128,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			}
 		}
 
-		compiledFilter = OSQLEngine.getInstance().parseWhereCondition(iRequest.getDatabase(), text.substring(pos, endPosition));
+		compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(iRequest.getDatabase(), text.substring(pos, endPosition));
 
 		currentPos = compiledFilter.currentPos + pos;
 
@@ -316,27 +316,25 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 	}
 
 	private void addResult(final ORecord<?> iRecord) {
-		ODocument doc = (ODocument) iRecord;
-
 		if (orderedFields != null || flattenTarget != null) {
 			// ORDER BY CLAUSE: COLLECT ALL THE RECORDS AND ORDER THEM AT THE END
 			if (tempResult == null)
 				tempResult = new ArrayList<ODocument>();
 
-			tempResult.add(doc);
+			tempResult.add((ODocument) iRecord);
 		} else
 			// CALL THE LISTENER NOW
-			processRecordAsResult(doc);
+			processRecordAsResult(iRecord);
 	}
 
-	private List<ORecord<?>> searchForIndexes(final OClass iSchemaClass) {
-		return analyzeQueryBranch(new ArrayList<ORecord<?>>(), iSchemaClass, compiledFilter.getRootCondition());
+	private boolean searchForIndexes(final List<ORecord<?>> iResultSet, final OClass iSchemaClass) {
+		return analyzeQueryBranch(iResultSet, iSchemaClass, compiledFilter.getRootCondition());
 	}
 
-	private List<ORecord<?>> analyzeQueryBranch(final List<ORecord<?>> iResultSet, final OClass iSchemaClass,
+	private boolean analyzeQueryBranch(final List<ORecord<?>> iResultSet, final OClass iSchemaClass,
 			final OSQLFilterCondition iCondition) {
 		if (iCondition == null)
-			return iResultSet;
+			return false;
 
 		if (iCondition.getLeft() != null)
 			if (iCondition.getLeft() instanceof OSQLFilterCondition)
@@ -346,18 +344,31 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			if (iCondition.getRight() instanceof OSQLFilterCondition)
 				analyzeQueryBranch(iResultSet, iSchemaClass, (OSQLFilterCondition) iCondition.getRight());
 
-		searchIndexedProperty(iResultSet, iSchemaClass, iCondition, iCondition.getLeft());
+		if (!searchIndexedProperty(iResultSet, iSchemaClass, iCondition, iCondition.getLeft()))
+			if (!searchIndexedProperty(iResultSet, iSchemaClass, iCondition, iCondition.getRight()))
+				return false;
 
-		if (iResultSet.size() == 0)
-			searchIndexedProperty(iResultSet, iSchemaClass, iCondition, iCondition.getRight());
-
-		return iResultSet;
+		// INDEX FOUND
+		return true;
 	}
 
-	private List<ORecord<?>> searchIndexedProperty(final List<ORecord<?>> iResultSet, final OClass iSchemaClass,
+	/**
+	 * Searches a value in index if the property defines it.
+	 * 
+	 * @param iResultSet
+	 *          result set to fill
+	 * @param iSchemaClass
+	 *          Schema class
+	 * @param iCondition
+	 *          Condition item
+	 * @param iItem
+	 *          Value to search
+	 * @return true if the property was indexed, otherwise false
+	 */
+	private boolean searchIndexedProperty(final List<ORecord<?>> iResultSet, final OClass iSchemaClass,
 			final OSQLFilterCondition iCondition, final Object iItem) {
 		if (iItem == null || !(iItem instanceof OSQLFilterItemField))
-			return null;
+			return false;
 
 		OSQLFilterItemField item = (OSQLFilterItemField) iItem;
 
@@ -365,7 +376,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		if (prop != null && prop.isIndexed()) {
 			// TODO: IMPROVE THIS MANAGEMENT
 			// ONLY EQUALS IS SUPPORTED NOW!
-			OIndex idx = prop.getIndex().getUnderlying();
+			final OIndex idx = prop.getIndex().getUnderlying();
 			if (((idx instanceof OIndexUnique || idx instanceof OIndexNotUnique) && iCondition.getOperator() instanceof OQueryOperatorEquals)
 					|| idx instanceof OIndexFullText && iCondition.getOperator() instanceof OQueryOperatorContainsText) {
 				Object value = iCondition.getLeft() == iItem ? iCondition.getRight() : iCondition.getLeft();
@@ -373,7 +384,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 					if (value instanceof OSQLFilterItemParameter)
 						value = ((OSQLFilterItemParameter) value).getValue(null);
 
-					final Set<?> resultSet = prop.getIndex().getUnderlying().get(value);
+					final Collection<?> resultSet = prop.getIndex().getUnderlying().get(value);
 					if (resultSet != null && resultSet.size() > 0)
 						for (Object o : resultSet) {
 							if (o instanceof ORID)
@@ -381,11 +392,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 							else
 								iResultSet.add((ORecord<?>) o);
 						}
+
+					return true;
 				}
 			}
 		}
 
-		return iResultSet;
+		return false;
 	}
 
 	protected boolean filter(final ORecordInternal<?> iRecord) {
@@ -507,18 +520,19 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		tempResult = finalResult;
 	}
 
-	private void processRecordAsResult(final ODocument iRecord) {
+	private void processRecordAsResult(final ORecord<?> iRecord) {
 		if (projections != null) {
 			// APPLY PROJECTIONS
+			final ODocument doc = (ODocument) iRecord;
 			final ODocument result = new ODocument(database);
 
 			Object value;
 			for (Entry<String, Object> projection : projections.entrySet()) {
 				if (projection.getValue() instanceof OSQLFilterItemField)
-					value = ((OSQLFilterItemField) projection.getValue()).getValue(iRecord);
+					value = ((OSQLFilterItemField) projection.getValue()).getValue(doc);
 				else if (projection.getValue() instanceof OSQLFunctionRuntime) {
 					final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection.getValue();
-					value = f.execute(iRecord);
+					value = f.execute(doc);
 				} else
 					value = projection.getValue();
 
@@ -546,9 +560,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, database.getClusterNameById(clusterId),
 					clusterId);
 
-		final List<ORecord<?>> resultSet = searchForIndexes(cls);
-
-		if (resultSet.size() > 0) {
+		final List<ORecord<?>> resultSet = new ArrayList<ORecord<?>>();
+		if (searchForIndexes(resultSet, cls)) {
 			OProfiler.getInstance().updateCounter("Query.indexUsage", 1);
 
 			// FOUND USING INDEXES
@@ -593,14 +606,33 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 		if (index == null)
 			throw new OCommandExecutionException("Target index '" + compiledFilter.getTargetIndex() + "' not found");
 
-		if (!"KEY".equalsIgnoreCase(compiledFilter.getRootCondition().getLeft().toString()))
-			throw new OCommandExecutionException("'Key' field is required for queries against indexes");
+		if (compiledFilter.getRootCondition() != null) {
+			if (!"KEY".equalsIgnoreCase(compiledFilter.getRootCondition().getLeft().toString()))
+				throw new OCommandExecutionException("'Key' field is required for queries against indexes");
 
-		final Object keyValue = compiledFilter.getRootCondition().getRight();
+			final Object right = compiledFilter.getRootCondition().getRight();
 
-		final Set<OIdentifiable> result = index.get(keyValue);
-		for (OIdentifiable r : result) {
-			addResult((ORecord<?>) r);
+			Collection<OIdentifiable> result = null;
+			if (compiledFilter.getRootCondition().getOperator() instanceof OQueryOperatorBetween) {
+				final Object[] values = (Object[]) compiledFilter.getRootCondition().getRight();
+				result = index.getBetween(OSQLHelper.getValue(values[0]), OSQLHelper.getValue(values[2]));
+
+			} else
+				result = index.get(OSQLHelper.getValue(right));
+
+			if (result != null)
+				for (OIdentifiable r : result) {
+					addResult((ORecord<?>) r);
+				}
+		} else {
+			if (anyFunctionAggregates) {
+				for (Entry<String, Object> projection : projections.entrySet()) {
+					if (projection.getValue() instanceof OSQLFunctionRuntime) {
+						final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection.getValue();
+						f.setResult(index.getSize());
+					}
+				}
+			}
 		}
 	}
 
@@ -631,7 +663,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			tempResult.clear();
 			tempResult = null;
 
-		} else if (request instanceof OSQLSynchQuery)
+		}
+
+		if (request instanceof OSQLSynchQuery)
 			return ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getResult();
 
 		return null;

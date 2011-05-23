@@ -15,13 +15,18 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import java.util.List;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXSTATUS;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
@@ -161,25 +166,25 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord, final String iFetchPlan) {
-		return (RET) currentTx.load(iRecord.getIdentity(), iRecord, iFetchPlan);
+		return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord) {
-		return (RET) currentTx.load(iRecord.getIdentity(), iRecord, null);
+		return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, null);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId) {
-		return (RET) currentTx.load(iRecordId, null, null);
+		return (RET) currentTx.loadRecord(iRecordId, null, null);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId, final String iFetchPlan) {
-		return (RET) currentTx.load(iRecordId, null, iFetchPlan);
+		return (RET) currentTx.loadRecord(iRecordId, null, iFetchPlan);
 	}
 
 	@Override
@@ -194,21 +199,32 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 		else
 			checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName);
 
-		currentTx.save(iContent, iClusterName);
+		currentTx.saveRecord(iContent, iClusterName);
 		return this;
 	}
 
 	@Override
 	public ODatabaseRecord delete(final ORecordInternal<?> iRecord) {
-		currentTx.delete(iRecord);
+		currentTx.deleteRecord(iRecord);
 		return this;
 	}
 
 	public void executeRollback(final OTransaction iTransaction) {
 	}
 
+	@SuppressWarnings("unchecked")
 	public void executeCommit() {
 		getStorage().commit(currentTx);
+
+		// COMMIT INDEX CHANGES
+		final ODocument indexEntries = currentTx.getIndexEntries();
+
+		if (indexEntries != null) {
+			for (Entry<String, Object> indexEntry : indexEntries) {
+				final OIndex index = getMetadata().getIndexManager().getIndex(indexEntry.getKey());
+				index.commit((List<ODocument>) indexEntry.getValue());
+			}
+		}
 	}
 
 	protected void checkTransaction() {

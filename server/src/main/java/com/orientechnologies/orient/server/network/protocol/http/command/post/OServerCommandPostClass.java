@@ -41,7 +41,6 @@ public class OServerCommandPostClass extends OServerCommandAuthenticatedDbAbstra
 				throw new IllegalArgumentException("Class '" + urlParts[2] + "' already exists");
 
 			final OClass cls = db.getMetadata().getSchema().createClass(urlParts[2]);
-			db.getMetadata().getSchema().save();
 
 			sendTextContent(iRequest, OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, null,
 					OHttpUtils.CONTENT_TEXT_PLAIN, cls.getId());

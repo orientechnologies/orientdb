@@ -17,17 +17,21 @@ package com.orientechnologies.orient.server;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 
 public class OClientConnection {
-	public int									id;
-	public ONetworkProtocol			protocol;
-	public long									since;
-	public ODatabaseDocumentTx	database;
-	public ODatabaseRaw					rawDatabase;
+	public int											id;
+	public ONetworkProtocol					protocol;
+	public long											since;
+	public ODatabaseDocumentTx			database;
+	public ODatabaseRaw							rawDatabase;
+	public List<ORecordInternal<?>>	records2Push	= new ArrayList<ORecordInternal<?>>();
 
 	public OClientConnection(final int iId, final Socket iSocket, final ONetworkProtocol iProtocol) throws IOException {
 		this.id = iId;

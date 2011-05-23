@@ -135,7 +135,8 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> implement
 			// NOTHING TO LOAD
 			return this;
 
-		record = (ORecordBytesLazy) record.load();
+		record.setDatabase(database);
+		record.reload();
 		record.recycle(this);
 		fromStream(record.toStream());
 		OMVRBTreeThreadLocal.INSTANCE.reset();

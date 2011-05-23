@@ -19,8 +19,9 @@ import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.index.OIndexManagerImpl;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 
@@ -35,8 +36,7 @@ public class OCommandExecutorSQLDropIndex extends OCommandExecutorSQLPermissionA
 	public static final String	KEYWORD_DROP	= "DROP";
 	public static final String	KEYWORD_INDEX	= "INDEX";
 
-	private String							sourceClassName;
-	private String							field;
+	private String							name;
 
 	public OCommandExecutorSQLDropIndex parse(final OCommandRequestText iRequest) {
 		iRequest.getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_CREATE);
@@ -50,26 +50,17 @@ public class OCommandExecutorSQLDropIndex extends OCommandExecutorSQLPermissionA
 		if (pos == -1 || !word.toString().equals(KEYWORD_DROP))
 			throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found", text, oldPos);
 
+		oldPos = pos;
 		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_INDEX))
 			throw new OCommandSQLParsingException("Keyword " + KEYWORD_INDEX + " not found", text, oldPos);
 
-		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
+		oldPos = pos;
+		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
 		if (pos == -1)
-			throw new OCommandSQLParsingException("Expected <class>.<property>", text, pos);
+			throw new OCommandSQLParsingException("Expected index name", text, oldPos);
 
-		String[] parts = word.toString().split("\\.");
-		if (parts.length != 2)
-			throw new OCommandSQLParsingException("Expected <class>.<property>", text, pos);
-
-		sourceClassName = parts[0];
-		if (sourceClassName == null)
-			throw new OCommandSQLParsingException("Class not found", text, pos);
-		field = parts[1];
-
-		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
-		if (pos == -1)
-			return this;
+		name = word.toString();
 
 		return this;
 	}
@@ -78,24 +69,30 @@ public class OCommandExecutorSQLDropIndex extends OCommandExecutorSQLPermissionA
 	 * Execute the REMOVE INDEX.
 	 */
 	public Object execute(final Map<Object, Object> iArgs) {
-		if (field == null)
+		if (name == null)
 			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
 
-		final OClass cls = database.getMetadata().getSchema().getClass(sourceClassName);
-		if (cls == null)
-			throw new OCommandExecutionException("Class '" + sourceClassName + "' not found");
+		if (name.indexOf('.') > -1) {
+			// PROPERTY INDEX
+			final String[] parts = name.split("\\.");
+			final String className = parts[0];
+			if (className == null)
+				throw new OCommandExecutionException("Class " + className + " not found");
+			String fieldName = parts[1];
 
-		final OProperty prop = cls.getProperty(field);
-		if (prop == null)
-			throw new IllegalArgumentException("Property '" + field + "' was not found in class '" + cls + "'");
+			final OClass cls = database.getMetadata().getSchema().getClass(className);
+			if (cls == null)
+				throw new OCommandExecutionException("Class '" + className + "' not found");
 
-		if (prop.getIndex() == null)
-			throw new IllegalArgumentException("Property '" + cls + "." + field + "' has not index");
+			final OPropertyImpl prop = (OPropertyImpl) cls.getProperty(fieldName);
+			if (prop == null)
+				throw new IllegalArgumentException("Property '" + fieldName + "' was not found in class '" + cls + "'");
 
-		final long indexedItems = prop.getIndex().getUnderlying().size();
+			prop.dropIndexInternal();
+		} else {
+			((OIndexManagerImpl) database.getMetadata().getIndexManager()).dropIndexInternal(name);
+		}
 
-		prop.removeIndex();
-
-		return indexedItems;
+		return null;
 	}
 }

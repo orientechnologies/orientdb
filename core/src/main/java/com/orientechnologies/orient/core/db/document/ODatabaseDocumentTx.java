@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.document;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordWrapperAbstract;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -96,8 +97,11 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
 			super.save(doc);
 
+		} catch (OException e) {
+			// PASS THROUGH
+			throw e;
 		} catch (Exception e) {
-			OLogManager.instance().exception("Error on saving record #%s of class '%s'", e, ODatabaseException.class,
+			OLogManager.instance().exception("Error on saving record %s of class '%s'", e, ODatabaseException.class,
 					iContent.getIdentity(), (doc.getClassName() != null ? doc.getClassName() : "?"));
 		}
 		return this;
@@ -165,7 +169,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 			underlying.delete(iContent);
 
 		} catch (Exception e) {
-			OLogManager.instance().exception("Error on deleting record #%s of class '%s'", e, ODatabaseException.class,
+			OLogManager.instance().exception("Error on deleting record %s of class '%s'", e, ODatabaseException.class,
 					iContent.getIdentity(), iContent.getClassName());
 		}
 		return this;

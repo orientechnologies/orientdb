@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.tx.OTransactionEntry;
+import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.server.tx.OTransactionRecordProxy;
 
 /**
@@ -70,15 +70,15 @@ public class ODistributedServerRecordHook implements ORecordHook, ODatabaseLifec
 				break;
 
 			case AFTER_CREATE:
-				manager.distributeRequest(new OTransactionEntry((ORecordInternal<?>) iRecord, OTransactionEntry.CREATED, null));
+				manager.distributeRequest(new OTransactionRecordEntry((ORecordInternal<?>) iRecord, OTransactionRecordEntry.CREATED, null));
 				break;
 
 			case AFTER_UPDATE:
-				manager.distributeRequest(new OTransactionEntry((ORecordInternal<?>) iRecord, OTransactionEntry.UPDATED, null));
+				manager.distributeRequest(new OTransactionRecordEntry((ORecordInternal<?>) iRecord, OTransactionRecordEntry.UPDATED, null));
 				break;
 
 			case AFTER_DELETE:
-				manager.distributeRequest(new OTransactionEntry((ORecordInternal<?>) iRecord, OTransactionEntry.DELETED, null));
+				manager.distributeRequest(new OTransactionRecordEntry((ORecordInternal<?>) iRecord, OTransactionRecordEntry.DELETED, null));
 				break;
 			}
 		} catch (IOException e) {

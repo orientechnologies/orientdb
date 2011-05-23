@@ -36,7 +36,7 @@ public class OSQLFunctionCount extends OSQLFunctionMathAbstract {
 	public Object execute(final Object[] iParameters) {
 		if (iParameters[0] != null)
 			total++;
-		
+
 		return null;
 	}
 
@@ -51,5 +51,10 @@ public class OSQLFunctionCount extends OSQLFunctionMathAbstract {
 	@Override
 	public Object getResult() {
 		return total;
+	}
+
+	@Override
+	public void setResult(final Object iResult) {
+		total = ((Number) iResult).longValue();
 	}
 }

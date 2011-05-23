@@ -58,6 +58,8 @@ public class OChannelBinaryProtocol {
 	public static final byte	REQUEST_CONFIG_SET						= 71;
 	public static final byte	REQUEST_CONFIG_LIST						= 72;
 
+	public static final byte	REQUEST_PUSH_RECORD						= 79;
+
 	// INCOMING
 	public static final byte	RESPONSE_STATUS_OK						= 0;
 	public static final byte	RESPONSE_STATUS_ERROR					= 1;

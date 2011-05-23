@@ -23,8 +23,6 @@ import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.intent.OIntent;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 @SuppressWarnings("unchecked")
@@ -83,7 +81,7 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 
 	public OLevel2RecordCache getLevel2Cache() {
 		checkOpeness();
-		return underlying.getLevel2Cache();
+		return getStorage().getLevel2Cache();
 	}
 
 	public boolean isUseCache() {

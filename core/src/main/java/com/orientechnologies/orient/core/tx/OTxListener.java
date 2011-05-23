@@ -27,5 +27,5 @@ public interface OTxListener {
 		BEFORE_COMMIT, AFTER_COMMIT, BEFORE_ROLLBACK, AFTER_ROLLBACK
 	}
 
-	public void onEvent(OTransactionEntry iTxEntry, EVENT iEvent);
+	public void onEvent(OTransactionRecordEntry iTxEntry, EVENT iEvent);
 }

@@ -45,33 +45,34 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 		status = TXSTATUS.ROLLBACKING;
 
 		// INVALIDATE THE CACHE
-		database.getLevel1Cache().removeRecords(entries.keySet());
+		database.getLevel1Cache().removeRecords(recordEntries.keySet());
 
 		// REMOVE ALL THE ENTRIES AND INVALIDATE THE DOCUMENTS TO AVOID TO BE RE-USED DIRTY AT USER-LEVEL. IN THIS WAY RE-LOADING MUST
 		// EXECUTED
-		for (OTransactionEntry v : entries.values()) {
+		for (OTransactionRecordEntry v : recordEntries.values()) {
 			v.getRecord().unload();
 		}
-		entries.clear();
+		recordEntries.clear();
+		indexEntries.clear();
 
 		newObjectCounter = -2;
 
 		status = TXSTATUS.INVALID;
 	}
 
-	public ORecordInternal<?> load(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan) {
+	public ORecordInternal<?> loadRecord(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan) {
 		checkTransaction();
 
-		OTransactionEntry txEntry = entries.get(iRid);
+		OTransactionRecordEntry txEntry = recordEntries.get(iRid);
 
 		if (txEntry != null) {
 			switch (txEntry.status) {
-			case OTransactionEntry.LOADED:
-			case OTransactionEntry.UPDATED:
-			case OTransactionEntry.CREATED:
+			case OTransactionRecordEntry.LOADED:
+			case OTransactionRecordEntry.UPDATED:
+			case OTransactionRecordEntry.CREATED:
 				return txEntry.getRecord();
 
-			case OTransactionEntry.DELETED:
+			case OTransactionRecordEntry.DELETED:
 				return null;
 			}
 		}
@@ -80,12 +81,13 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 		return database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, false);
 	}
 
-	public void delete(final ORecordInternal<?> iRecord) {
-		addRecord(iRecord, OTransactionEntry.DELETED, null);
+	public void deleteRecord(final ORecordInternal<?> iRecord) {
+		addRecord(iRecord, OTransactionRecordEntry.DELETED, null);
 	}
 
-	public void save(final ORecordInternal<?> iRecord, final String iClusterName) {
-		addRecord(iRecord, iRecord.getIdentity().isValid() ? OTransactionEntry.UPDATED : OTransactionEntry.CREATED, iClusterName);
+	public void saveRecord(final ORecordInternal<?> iRecord, final String iClusterName) {
+		addRecord(iRecord, iRecord.getIdentity().isValid() ? OTransactionRecordEntry.UPDATED : OTransactionRecordEntry.CREATED,
+				iClusterName);
 	}
 
 	private void addRecord(final ORecordInternal<?> iRecord, final byte iStatus, final String iClusterName) {
@@ -94,11 +96,11 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 		if (status == OTransaction.TXSTATUS.COMMITTING && database.getStorage() instanceof OStorageEmbedded) {
 			// I'M COMMITTING, BYPASS LOCAL BUFFER
 			switch (iStatus) {
-			case OTransactionEntry.CREATED:
-			case OTransactionEntry.UPDATED:
+			case OTransactionRecordEntry.CREATED:
+			case OTransactionRecordEntry.UPDATED:
 				database.executeSaveRecord(iRecord, iClusterName, iRecord.getVersion(), iRecord.getRecordType());
 				break;
-			case OTransactionEntry.DELETED:
+			case OTransactionRecordEntry.DELETED:
 				database.executeDeleteRecord(iRecord, iRecord.getVersion());
 				break;
 			}
@@ -123,41 +125,41 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 				// REMOVE FROM THE DB'S CACHE
 				database.getLevel1Cache().freeRecord(rid);
 
-			OTransactionEntry txEntry = entries.get(rid);
+			OTransactionRecordEntry txEntry = recordEntries.get(rid);
 
 			if (txEntry == null) {
 				// NEW ENTRY: JUST REGISTER IT
-				txEntry = new OTransactionEntry(iRecord, iStatus, iClusterName);
+				txEntry = new OTransactionRecordEntry(iRecord, iStatus, iClusterName);
 
-				entries.put(rid, txEntry);
+				recordEntries.put(rid, txEntry);
 			} else {
 				// UPDATE PREVIOUS STATUS
 				txEntry.setRecord(iRecord);
 
 				switch (txEntry.status) {
-				case OTransactionEntry.LOADED:
+				case OTransactionRecordEntry.LOADED:
 					switch (iStatus) {
-					case OTransactionEntry.UPDATED:
-						txEntry.status = OTransactionEntry.UPDATED;
+					case OTransactionRecordEntry.UPDATED:
+						txEntry.status = OTransactionRecordEntry.UPDATED;
 						break;
-					case OTransactionEntry.DELETED:
-						txEntry.status = OTransactionEntry.DELETED;
-						break;
-					}
-					break;
-				case OTransactionEntry.UPDATED:
-					switch (iStatus) {
-					case OTransactionEntry.DELETED:
-						txEntry.status = OTransactionEntry.DELETED;
+					case OTransactionRecordEntry.DELETED:
+						txEntry.status = OTransactionRecordEntry.DELETED;
 						break;
 					}
 					break;
-				case OTransactionEntry.DELETED:
-					break;
-				case OTransactionEntry.CREATED:
+				case OTransactionRecordEntry.UPDATED:
 					switch (iStatus) {
-					case OTransactionEntry.DELETED:
-						entries.remove(rid);
+					case OTransactionRecordEntry.DELETED:
+						txEntry.status = OTransactionRecordEntry.DELETED;
+						break;
+					}
+					break;
+				case OTransactionRecordEntry.DELETED:
+					break;
+				case OTransactionRecordEntry.CREATED:
+					switch (iStatus) {
+					case OTransactionRecordEntry.DELETED:
+						recordEntries.remove(rid);
 						break;
 					}
 					break;
@@ -168,7 +170,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
 	@Override
 	public String toString() {
-		return "OTransactionOptimistic [id=" + id + ", status=" + status + ", entries=" + entries.size() + "]";
+		return "OTransactionOptimistic [id=" + id + ", status=" + status + ", entries=" + recordEntries.size() + "]";
 	}
 
 	public boolean isUsingLog() {

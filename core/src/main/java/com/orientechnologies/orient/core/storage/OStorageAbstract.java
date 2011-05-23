@@ -15,18 +15,21 @@
  */
 package com.orientechnologies.orient.core.storage;
 
+import com.orientechnologies.common.concur.resource.OSharedContainerImpl;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
+import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
-public abstract class OStorageAbstract implements OStorage {
+public abstract class OStorageAbstract extends OSharedContainerImpl implements OStorage {
 	protected final String										url;
 	protected final String										mode;
 	protected OStorageConfiguration						configuration;
 	protected String													name;
 	protected long														version	= 0;
+	protected OLevel2RecordCache							level2Cache;
 
 	protected boolean													open		= false;
 	protected OSharedResourceAdaptiveExternal	lock		= new OSharedResourceAdaptiveExternal();
@@ -39,6 +42,9 @@ public abstract class OStorageAbstract implements OStorage {
 
 		if (OStringSerializerHelper.contains(iName, ','))
 			throw new IllegalArgumentException("Invalid character in storage name: " + name);
+
+		level2Cache = new OLevel2RecordCache(this);
+		level2Cache.startup();
 
 		url = iFilePath;
 		mode = iMode;
@@ -58,6 +64,15 @@ public abstract class OStorageAbstract implements OStorage {
 
 	public String getName() {
 		return name;
+	}
+
+	/**
+	 * Returns the configured local Level-2 cache component. Cache component is always created even if not used.
+	 * 
+	 * @return
+	 */
+	public OLevel2RecordCache getLevel2Cache() {
+		return level2Cache;
 	}
 
 	public String getURL() {

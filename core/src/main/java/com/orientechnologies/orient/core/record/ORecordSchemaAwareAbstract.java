@@ -45,7 +45,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	public ORecordSchemaAwareAbstract<T> fill(final ODatabaseRecord iDatabase, final int iClassId, final ORecordId iRid,
 			final int iVersion, final byte[] iBuffer) {
 		fill(iDatabase, iRid, iVersion, iBuffer);
-		setClass(_database.getMetadata().getSchema().getClassById(iClassId));
+		setClass(null);
 		return this;
 	}
 
@@ -73,6 +73,9 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	 * @see OProperty
 	 */
 	public void validate() throws OValidationException {
+		checkForLoading();
+		checkForFields();
+
 		if (_clazz != null)
 			for (OProperty p : _clazz.properties()) {
 				validateField(this, p);
@@ -101,11 +104,9 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 
 		setClass(_database.getMetadata().getSchema().getClass(iClassName));
 
-		if (_clazz == null) {
+		if (_clazz == null)
 			// CREATE THE CLASS AT THE FLY
 			setClass(_database.getMetadata().getSchema().createClass(iClassName));
-			_database.getMetadata().getSchema().save();
-		}
 	}
 
 	public void setClassNameIfExists(final String iClassName) {
@@ -125,8 +126,12 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 	}
 
 	public byte[] toStream() {
+		return toStream(false);
+	}
+
+	public byte[] toStream(final boolean iOnlyDelta) {
 		if (_source == null)
-			_source = _recordFormat.toStream(_database, this);
+			_source = _recordFormat.toStream(_database, this, iOnlyDelta);
 
 		invokeListenerEvent(ORecordListener.EVENT.MARSHALL);
 
@@ -204,10 +209,19 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 			else if (p.getType().equals(OType.DATE)) {
 				try {
 					if (fieldValue != null
-							&& ((Date) fieldValue).before(iRecord.getDatabase().getStorage().getConfiguration().getDateTimeFormatInstance()
+							&& ((Date) fieldValue).before(iRecord.getDatabase().getStorage().getConfiguration().getDateFormatInstance()
 									.parse(min)))
 						throw new OValidationException("The field " + iRecord.getClassName() + "." + p.getName() + " contains the date "
 								+ fieldValue + "that is before the date accepted (" + min + ")");
+				} catch (ParseException e) {
+				}
+			} else if (p.getType().equals(OType.DATETIME)) {
+				try {
+					if (fieldValue != null
+							&& ((Date) fieldValue).before(iRecord.getDatabase().getStorage().getConfiguration().getDateTimeFormatInstance()
+									.parse(min)))
+						throw new OValidationException("The field " + iRecord.getClassName() + "." + p.getName() + " contains the datetime "
+								+ fieldValue + "that is before the datetime accepted (" + min + ")");
 				} catch (ParseException e) {
 				}
 			} else if (p.getType().equals(OType.EMBEDDEDLIST) || p.getType().equals(OType.EMBEDDEDSET)
@@ -237,10 +251,19 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 			else if (p.getType().equals(OType.DATE)) {
 				try {
 					if (fieldValue != null
-							&& ((Date) fieldValue).before(iRecord.getDatabase().getStorage().getConfiguration().getDateTimeFormatInstance()
+							&& ((Date) fieldValue).before(iRecord.getDatabase().getStorage().getConfiguration().getDateFormatInstance()
 									.parse(max)))
 						throw new OValidationException("The field " + iRecord.getClassName() + "." + p.getName() + " contains the date "
 								+ fieldValue + "that is after the date accepted (" + max + ")");
+				} catch (ParseException e) {
+				}
+			} else if (p.getType().equals(OType.DATETIME)) {
+				try {
+					if (fieldValue != null
+							&& ((Date) fieldValue).before(iRecord.getDatabase().getStorage().getConfiguration().getDateTimeFormatInstance()
+									.parse(max)))
+						throw new OValidationException("The field " + iRecord.getClassName() + "." + p.getName() + " contains the datetime "
+								+ fieldValue + "that is after the datetime accepted (" + max + ")");
 				} catch (ParseException e) {
 				}
 			} else if (p.getType().equals(OType.EMBEDDEDLIST) || p.getType().equals(OType.EMBEDDEDSET)

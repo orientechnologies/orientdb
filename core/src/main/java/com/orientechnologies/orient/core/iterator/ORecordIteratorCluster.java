@@ -21,7 +21,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.tx.OTransactionEntry;
+import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 
 /**
  * Iterator class to browse forward and backward the records of a cluster. Once browsed in a direction, the iterator can't change
@@ -52,17 +52,17 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends ORec
 
 		totalAvailableRecords = database.countClusterElements(current.clusterId);
 
-		txEntries = iDatabase.getTransaction().getEntriesByClusterIds(new int[] { iClusterId });
+		txEntries = iDatabase.getTransaction().getRecordEntriesByClusterIds(new int[] { iClusterId });
 
 		if (txEntries != null)
 			// ADJUST TOTAL ELEMENT BASED ON CURRENT TRANSACTION'S ENTRIES
-			for (OTransactionEntry entry : txEntries) {
+			for (OTransactionRecordEntry entry : txEntries) {
 				switch (entry.status) {
-				case OTransactionEntry.CREATED:
+				case OTransactionRecordEntry.CREATED:
 					totalAvailableRecords++;
 					break;
 
-				case OTransactionEntry.DELETED:
+				case OTransactionRecordEntry.DELETED:
 					totalAvailableRecords--;
 					break;
 				}

@@ -54,4 +54,7 @@ public abstract class OSQLFunctionAbstract implements OSQLFunction {
 	public Object getResult() {
 		return null;
 	}
+
+	public void setResult(final Object iResult) {
+	}
 }

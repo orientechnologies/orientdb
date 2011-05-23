@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -111,11 +112,12 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 			try {
 				OType type = OType.valueOf(fields.get("type"));
 
-				OProperty prop;
+				OPropertyImpl prop;
 				if (type == OType.LINK || type == OType.LINKLIST || type == OType.LINKSET || type == OType.LINKMAP)
-					prop = cls.createProperty(fields.get("name"), type, db.getMetadata().getSchema().getClass(fields.get("linkedClass")));
+					prop = (OPropertyImpl) cls.createProperty(fields.get("name"), type,
+							db.getMetadata().getSchema().getClass(fields.get("linkedClass")));
 				else
-					prop = cls.createProperty(fields.get("name"), type);
+					prop = (OPropertyImpl) cls.createProperty(fields.get("name"), type);
 
 				if (fields.get("linkedType") != null)
 					prop.setLinkedType(OType.valueOf(fields.get("linkedType")));
@@ -130,8 +132,6 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 				if (fields.get("indexed") != null)
 					prop.createIndex(fields.get("indexed").equals("Unique") ? OProperty.INDEX_TYPE.UNIQUE : OProperty.INDEX_TYPE.NOTUNIQUE);
 
-				db.getMetadata().getSchema().save();
-
 				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN,
 						"Property " + fields.get("name") + " created successfully with id=" + prop.getId());
 
@@ -142,9 +142,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 		} else if ("del".equals(operation)) {
 			iRequest.data.commandInfo = "Studio delete property";
 
-			cls.removeProperty(className);
-
-			db.getMetadata().getSchema().save();
+			cls.dropProperty(className);
 
 			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN,
 					"Property " + fields.get("name") + " deleted successfully.");
@@ -161,7 +159,6 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 
 			try {
 				final OClass cls = db.getMetadata().getSchema().createClass(fields.get("name"));
-				db.getMetadata().getSchema().save();
 
 				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Class '" + rid
 						+ "' created successfully with id=" + cls.getId());
@@ -173,8 +170,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 		} else if ("del".equals(operation)) {
 			iRequest.data.commandInfo = "Studio delete class";
 
-			db.getMetadata().getSchema().removeClass(rid);
-			db.getMetadata().getSchema().save();
+			db.getMetadata().getSchema().dropClass(rid);
 
 			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Class '" + rid
 					+ "' deleted successfully.");
@@ -186,12 +182,8 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 		if ("add".equals(operation)) {
 			iRequest.data.commandInfo = "Studio add cluster";
 
-			// int defCluster = fields.get("defaultCluster") != null ? Integer.parseInt(fields.get("defaultCluster")) : db
-			// .getDefaultClusterId();
-
 			try {
 				final OClass cls = db.getMetadata().getSchema().createClass(fields.get("name"));
-				db.getMetadata().getSchema().save();
 
 				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Class '" + rid
 						+ "' created successfully with id=" + cls.getId());
@@ -203,8 +195,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 		} else if ("del".equals(operation)) {
 			iRequest.data.commandInfo = "Studio delete cluster";
 
-			db.getMetadata().getSchema().removeClass(rid);
-			db.getMetadata().getSchema().save();
+			db.getMetadata().getSchema().dropClass(rid);
 
 			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Class '" + rid
 					+ "' deleted successfully.");

@@ -19,11 +19,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.common.collection.ONavigableMap;
-import com.orientechnologies.common.concur.resource.OSharedResource;
+import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -44,6 +45,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerLiteral;
+import com.orientechnologies.orient.core.tx.OTransactionIndexEntry;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
 
 /**
@@ -52,7 +54,7 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
  * @author Luca Garulli
  * 
  */
-public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements OIndex, ODatabaseListener {
+public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract implements OIndexInternal, ODatabaseListener {
 	protected static final String																		CONFIG_MAP_RID	= "mapRid";
 	protected static final String																		CONFIG_CLUSTERS	= "clusters";
 	protected String																								name;
@@ -111,14 +113,14 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 			}
 
 			private void optimize(final boolean iHardMode) {
-				OLogManager.instance().debug(this, "Forcing optimization of Index %s (%d items). Found %d entries in memory...", name,
+				OLogManager.instance().warn(this, "Forcing optimization of Index %s (%d items). Found %d entries in memory...", name,
 						map.size(), map.getInMemoryEntries());
 
 				if (iHardMode)
 					map.freeInMemoryResources();
 				final int saved = map.optimize(true);
 
-				OLogManager.instance().debug(this, "Completed! Saved %d and now %d entries reside in memory", saved,
+				OLogManager.instance().warn(this, "Completed! Saved %d and now %d entries reside in memory", saved,
 						map.getInMemoryEntries());
 			}
 		};
@@ -138,7 +140,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 	 * @param iProgressListener
 	 *          Listener to get called on progress
 	 */
-	public OIndex create(final String iName, final ODatabaseRecord iDatabase, final String iClusterIndexName,
+	public OIndexInternal create(final String iName, final ODatabaseRecord iDatabase, final String iClusterIndexName,
 			final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, final boolean iAutomatic) {
 		name = iName;
 		configuration = new ODocument(iDatabase);
@@ -155,18 +157,19 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 		map = new OMVRBTreeDatabaseLazySave<Object, Set<OIdentifiable>>(iDatabase, iClusterIndexName,
 				OStreamSerializerLiteral.INSTANCE, OStreamSerializerListRID.INSTANCE);
 		rebuild(iProgressListener);
+		updateConfiguration();
 		return this;
 	}
 
-	public OIndex loadFromConfiguration(final ODocument iConfig) {
+	public OIndexInternal loadFromConfiguration(final ODocument iConfig) {
 		final ORID rid = (ORID) iConfig.field(CONFIG_MAP_RID, ORID.class);
 		if (rid == null)
 			return null;
 
 		configuration = iConfig;
-		name = configuration.field(OIndex.CONFIG_NAME);
-		automatic = (Boolean) (configuration.field(OIndex.CONFIG_AUTOMATIC) != null ? configuration.field(OIndex.CONFIG_AUTOMATIC)
-				: true);
+		name = configuration.field(OIndexInternal.CONFIG_NAME);
+		automatic = (Boolean) (configuration.field(OIndexInternal.CONFIG_AUTOMATIC) != null ? configuration
+				.field(OIndexInternal.CONFIG_AUTOMATIC) : true);
 		clustersToIndex.clear();
 
 		final Collection<? extends String> clusters = configuration.field(CONFIG_CLUSTERS);
@@ -258,14 +261,14 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 		return map.getRecord().getIdentity();
 	}
 
-	public OIndex rebuild() {
+	public OIndexInternal rebuild() {
 		return rebuild(null);
 	}
 
 	/**
 	 * Populate the index with all the existent records.
 	 */
-	public OIndex rebuild(final OProgressListener iProgressListener) {
+	public OIndexInternal rebuild(final OProgressListener iProgressListener) {
 		Object fieldValue;
 		ODocument doc;
 
@@ -337,7 +340,50 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 		}
 	}
 
-	public OIndex load() {
+	public int remove(final OIdentifiable iRecord) {
+		acquireExclusiveLock();
+
+		int tot = 0;
+		try {
+			Set<OIdentifiable> rids;
+			for (Entry<Object, Set<OIdentifiable>> entries : map.entrySet()) {
+				rids = entries.getValue();
+				if (rids != null) {
+					if (rids.contains(iRecord)) {
+						remove(entries.getKey(), iRecord);
+						++tot;
+					}
+				}
+			}
+		} finally {
+			releaseExclusiveLock();
+		}
+
+		return tot;
+	}
+
+	public int count(final OIdentifiable iRecord) {
+		acquireExclusiveLock();
+
+		int tot = 0;
+		try {
+			Set<OIdentifiable> rids;
+			for (Entry<Object, Set<OIdentifiable>> entries : map.entrySet()) {
+				rids = entries.getValue();
+				if (rids != null) {
+					if (rids.contains(iRecord)) {
+						++tot;
+					}
+				}
+			}
+		} finally {
+			releaseExclusiveLock();
+		}
+
+		return tot;
+	}
+
+	public OIndexInternal load() {
 		acquireExclusiveLock();
 
 		try {
@@ -361,7 +407,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 		return this;
 	}
 
-	public OIndex delete() {
+	public OIndexInternal delete() {
 		acquireExclusiveLock();
 
 		try {
@@ -372,7 +418,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 		}
 	}
 
-	public OIndex lazySave() {
+	public OIndexInternal lazySave() {
 		acquireExclusiveLock();
 
 		try {
@@ -420,7 +466,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 		iDatabase.registerListener(this);
 	}
 
-	public long size() {
+	public long getSize() {
 		acquireSharedLock();
 
 		try {
@@ -433,11 +479,6 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 
 	public String getName() {
 		return name;
-	}
-
-	public OIndex setName(final String name) {
-		this.name = name;
-		return this;
 	}
 
 	public String getType() {
@@ -484,9 +525,9 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 		configuration.setStatus(STATUS.UNMARSHALLING);
 
 		try {
-			configuration.field(OIndex.CONFIG_TYPE, type);
-			configuration.field(OIndex.CONFIG_NAME, name);
-			configuration.field(OIndex.CONFIG_AUTOMATIC, automatic);
+			configuration.field(OIndexInternal.CONFIG_TYPE, type);
+			configuration.field(OIndexInternal.CONFIG_NAME, name);
+			configuration.field(OIndexInternal.CONFIG_AUTOMATIC, automatic);
 			configuration.field(CONFIG_CLUSTERS, clustersToIndex, OType.EMBEDDEDSET);
 			configuration.field(CONFIG_MAP_RID, map.getRecord().getIdentity());
 
@@ -494,6 +535,28 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResource implements 
 			configuration.setStatus(STATUS.LOADED);
 		}
 		return configuration;
+	}
+
+	public void commit(final List<ODocument> iEntries) {
+		if (iEntries == null)
+			return;
+
+		acquireExclusiveLock();
+
+		try {
+			for (ODocument entry : iEntries) {
+				final int status = (Integer) entry.field("s");
+
+				if (status == OTransactionIndexEntry.STATUSES.CLEAR.ordinal())
+					clear();
+				else if (status == OTransactionIndexEntry.STATUSES.PUT.ordinal())
+					put(entry.field("k"), (OIdentifiable) entry.field("v"));
+				else if (status == OTransactionIndexEntry.STATUSES.REMOVE.ordinal())
+					remove(entry.field("k"), (OIdentifiable) entry.field("v"));
+			}
+		} finally {
+			releaseExclusiveLock();
+		}
 	}
 
 	public ODocument getConfiguration() {

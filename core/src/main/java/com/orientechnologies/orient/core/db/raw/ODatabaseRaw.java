@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
@@ -32,7 +33,6 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -58,7 +58,6 @@ public class ODatabaseRaw implements ODatabase {
 	private final Map<String, Object>			properties	= new HashMap<String, Object>();
 	private final List<ODatabaseListener>	listeners		= new ArrayList<ODatabaseListener>();
 
-	protected OLevel2RecordCache					level2Cache;
 	private boolean												useCache;
 
 	public enum STATUS {
@@ -100,10 +99,9 @@ public class ODatabaseRaw implements ODatabase {
 				} catch (Throwable t) {
 				}
 
-			level2Cache.startup();
-
 			status = STATUS.OPEN;
-		} catch (ODatabaseException e) {
+		} catch (OException e) {
+			// PASS THROUGH
 			throw e;
 		} catch (Exception e) {
 			throw new ODatabaseException("Can't open database", e);
@@ -131,8 +129,6 @@ public class ODatabaseRaw implements ODatabase {
 				} catch (Throwable t) {
 				}
 
-			level2Cache.startup();
-
 			status = STATUS.OPEN;
 		} catch (Exception e) {
 			throw new ODatabaseException("Can't create database", e);
@@ -159,6 +155,9 @@ public class ODatabaseRaw implements ODatabase {
 				}
 
 			status = STATUS.CLOSED;
+		} catch (OException e) {
+			// PASS THROUGH
+			throw e;
 		} catch (Exception e) {
 			throw new ODatabaseException("Can't delete database", e);
 		}
@@ -212,7 +211,8 @@ public class ODatabaseRaw implements ODatabase {
 				// UPDATE
 				return storage.updateRecord(iRid, iContent, iVersion, iRecordType);
 			}
-		} catch (OConcurrentModificationException e) {
+		} catch (OException e) {
+			// PASS THROUGH
 			throw e;
 		} catch (Throwable t) {
 			throw new ODatabaseException("Error on saving record " + iRid, t);
@@ -224,6 +224,9 @@ public class ODatabaseRaw implements ODatabase {
 			if (!storage.deleteRecord(iRid, iVersion))
 				throw new ORecordNotFoundException("The record with id " + iRid + " was not found");
 
+		} catch (OException e) {
+			// PASS THROUGH
+			throw e;
 		} catch (Exception e) {
 			OLogManager.instance().exception("Error on deleting record " + iRid, e, ODatabaseException.class);
 		}
@@ -299,15 +302,6 @@ public class ODatabaseRaw implements ODatabase {
 		return null;
 	}
 
-	/**
-	 * Returns the configured local Level-2 cache component. Cache component is always created even if not used.
-	 * 
-	 * @return
-	 */
-	public OLevel2RecordCache getLevel2Cache() {
-		return level2Cache;
-	}
-
 	public int getDefaultClusterId() {
 		return storage.getDefaultClusterId();
 	}
@@ -329,7 +323,6 @@ public class ODatabaseRaw implements ODatabase {
 
 	public ODatabaseRaw setOwner(final ODatabaseRecord iOwner) {
 		databaseOwner = iOwner;
-		level2Cache = new OLevel2RecordCache(this);
 		return this;
 	}
 
@@ -364,6 +357,10 @@ public class ODatabaseRaw implements ODatabase {
 		return listeners;
 	}
 
+	public OLevel2RecordCache getLevel2Cache() {
+		return storage.getLevel2Cache();
+	}
+
 	public void close() {
 		if (status != STATUS.OPEN)
 			return;
@@ -386,8 +383,6 @@ public class ODatabaseRaw implements ODatabase {
 
 		storage = null;
 		status = STATUS.CLOSED;
-
-		level2Cache.shutdown();
 	}
 
 	@Override

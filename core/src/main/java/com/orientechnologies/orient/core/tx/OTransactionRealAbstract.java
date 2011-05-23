@@ -20,18 +20,24 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 
 public abstract class OTransactionRealAbstract extends OTransactionAbstract {
-	protected Map<ORID, OTransactionEntry>	entries						= new HashMap<ORID, OTransactionEntry>();
-	protected int														id;
-	protected int														newObjectCounter	= -2;
+	protected Map<ORID, OTransactionRecordEntry>				recordEntries			= new HashMap<ORID, OTransactionRecordEntry>();
+	protected Map<String, List<OTransactionIndexEntry>>	indexEntries			= new HashMap<String, List<OTransactionIndexEntry>>();
+	protected int																				id;
+	protected int																				newObjectCounter	= -2;
 
 	protected OTransactionRealAbstract(ODatabaseRecordTx iDatabase, int iId) {
 		super(iDatabase);
@@ -42,28 +48,32 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 		return id;
 	}
 
-	public Collection<OTransactionEntry> getEntries() {
-		return entries.values();
+	public void clearRecordEntries() {
+		recordEntries.clear();
 	}
 
-	public ORecordInternal<?> getEntry(final ORecordId rid) {
-		OTransactionEntry e = entries.get(rid);
+	public Collection<OTransactionRecordEntry> getRecordEntries() {
+		return recordEntries.values();
+	}
+
+	public ORecordInternal<?> getRecordEntry(final ORecordId rid) {
+		OTransactionRecordEntry e = recordEntries.get(rid);
 		if (e != null)
 			return e.getRecord();
 		return null;
 	}
 
-	public List<OTransactionEntry> getEntriesByClass(final String iClassName) {
-		final List<OTransactionEntry> result = new ArrayList<OTransactionEntry>();
+	public List<OTransactionRecordEntry> getRecordEntriesByClass(final String iClassName) {
+		final List<OTransactionRecordEntry> result = new ArrayList<OTransactionRecordEntry>();
 
 		if (iClassName == null || iClassName.length() == 0)
 			// RETURN ALL THE RECORDS
-			for (OTransactionEntry entry : entries.values()) {
+			for (OTransactionRecordEntry entry : recordEntries.values()) {
 				result.add(entry);
 			}
 		else
 			// FILTER RECORDS BY CLASSNAME
-			for (OTransactionEntry entry : entries.values()) {
+			for (OTransactionRecordEntry entry : recordEntries.values()) {
 				if (entry.getRecord() != null && entry.getRecord() instanceof ODocument
 						&& iClassName.equals(((ODocument) entry.getRecord()).getClassName()))
 					result.add(entry);
@@ -72,17 +82,17 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 		return result;
 	}
 
-	public List<OTransactionEntry> getEntriesByClusterIds(final int[] iIds) {
-		final List<OTransactionEntry> result = new ArrayList<OTransactionEntry>();
+	public List<OTransactionRecordEntry> getRecordEntriesByClusterIds(final int[] iIds) {
+		final List<OTransactionRecordEntry> result = new ArrayList<OTransactionRecordEntry>();
 
 		if (iIds == null)
 			// RETURN ALL THE RECORDS
-			for (OTransactionEntry entry : entries.values()) {
+			for (OTransactionRecordEntry entry : recordEntries.values()) {
 				result.add(entry);
 			}
 		else
 			// FILTER RECORDS BY ID
-			for (OTransactionEntry entry : entries.values()) {
+			for (OTransactionRecordEntry entry : recordEntries.values()) {
 				for (int id : iIds) {
 					if (entry.getRecord() != null && entry.getRecord().getIdentity().getClusterId() == id) {
 						result.add(entry);
@@ -94,12 +104,60 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 		return result;
 	}
 
-	public void clearEntries() {
-		entries.clear();
+	public int getRecordEntriesSize() {
+		return recordEntries.size();
 	}
 
-	public int size() {
-		return entries.size();
+	public void clearIndexEntries() {
+		indexEntries.clear();
+	}
+
+	public ODocument getIndexEntries() {
+		final StringBuilder value = new StringBuilder();
+
+		final ODocument doc = new ODocument();
+		for (Entry<String, List<OTransactionIndexEntry>> indexEntry : indexEntries.entrySet()) {
+			// STORE INDEX NAME
+			final List<ODocument> indexDocs = new ArrayList<ODocument>();
+			doc.field(indexEntry.getKey(), indexDocs);
+
+			// STORE INDEX ENTRIES
+			for (OTransactionIndexEntry entry : indexEntry.getValue()) {
+				final ODocument indexDoc = new ODocument();
+
+				// END OF INDEX ENTRIES
+				indexDoc.field("s", entry.status.ordinal());
+
+				// SERIALIZE KEY
+				value.setLength(0);
+				ORecordSerializerStringAbstract.fieldTypeToString(value, null, OType.getTypeByClass(entry.key.getClass()), entry.key);
+				indexDoc.field("k", value.toString());
+
+				// SERIALIZE VALUE
+				if (entry.value != null) {
+					value.setLength(0);
+					ORecordSerializerStringAbstract.fieldTypeToString(value, null, OType.getTypeByClass(entry.value.getClass()), entry.value);
+					indexDoc.field("v", value.toString());
+				}
+
+				indexDocs.add(indexDoc);
+			}
+		}
+		return doc;
+	}
+
+	/**
+	 * Bufferizes index changes to be flushed at commit time.
+	 */
+	public void addIndexEntry(final OIndex delegate, final String iIndexName, final OTransactionIndexEntry.STATUSES iStatus,
+			final Object iKey, final OIdentifiable iValue) {
+		List<OTransactionIndexEntry> indexEntry = indexEntries.get(iIndexName);
+		if (indexEntry == null) {
+			indexEntry = new ArrayList<OTransactionIndexEntry>();
+			indexEntries.put(iIndexName, indexEntry);
+		}
+
+		indexEntry.add(new OTransactionIndexEntry(iStatus, iKey, iValue));
 	}
 
 	@Override

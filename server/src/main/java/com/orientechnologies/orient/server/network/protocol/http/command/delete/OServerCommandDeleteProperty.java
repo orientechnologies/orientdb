@@ -42,9 +42,7 @@ public class OServerCommandDeleteProperty extends OServerCommandAuthenticatedDbA
 
 			final OClass cls = db.getMetadata().getSchema().getClass(urlParts[2]);
 
-			cls.removeProperty(urlParts[3]);
-
-			db.getMetadata().getSchema().save();
+			cls.dropProperty(urlParts[3]);
 
 			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, null);
 

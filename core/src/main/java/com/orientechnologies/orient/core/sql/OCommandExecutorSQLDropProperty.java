@@ -19,7 +19,7 @@ import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 
@@ -76,14 +76,12 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLPermissi
 		if (fieldName == null)
 			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
 
-		OClass sourceClass = database.getMetadata().getSchema().getClass(className);
+		OClassImpl sourceClass = (OClassImpl) database.getMetadata().getSchema().getClass(className);
 		if (sourceClass == null)
 			throw new OCommandExecutionException("Source class '" + className + "' not found");
 
 		// REMOVE THE PROPERTY
-		sourceClass.removeProperty(fieldName);
-
-		database.getMetadata().getSchema().save();
+		sourceClass.dropPropertyInternal(fieldName);
 
 		return null;
 	}

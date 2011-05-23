@@ -500,9 +500,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	}
 
 	public OClass createVertexType(final String iClassName, OClass iSuperClass) {
-		OClass cls = getMetadata().getSchema().createClass(iClassName).setSuperClass(iSuperClass);
-		getMetadata().getSchema().save();
-		return cls;
+		return getMetadata().getSchema().createClass(iClassName, iSuperClass);
 	}
 
 	public OClass createVertexType(final String iClassName, final String iSuperClassName) {
@@ -514,10 +512,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 	}
 
 	public OClass createEdgeType(final String iClassName) {
-		OClass cls = getMetadata().getSchema().createClass(iClassName)
-				.setSuperClass(getMetadata().getSchema().getClass(EDGE_CLASS_NAME));
-		getMetadata().getSchema().save();
-		return cls;
+		return getMetadata().getSchema().createClass(iClassName, getMetadata().getSchema().getClass(EDGE_CLASS_NAME));
 	}
 
 	public OClass getEdgeType(final String iClassName) {
@@ -656,8 +651,6 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 			vertexBaseClass.createProperty(VERTEX_FIELD_OUT_EDGES, OType.LINKSET, edgeBaseClass);
 			edgeBaseClass.createProperty(EDGE_FIELD_IN, OType.LINK, vertexBaseClass);
 			edgeBaseClass.createProperty(EDGE_FIELD_OUT, OType.LINK, vertexBaseClass);
-
-			getMetadata().getSchema().save();
 		} else {
 			// @COMPATIBILITY 0.9.25
 			if (vertexBaseClass.getProperty(VERTEX_FIELD_OUT_EDGES).getType() == OType.LINKLIST)

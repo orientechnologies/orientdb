@@ -20,7 +20,8 @@ import java.util.Map;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
+import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -53,30 +54,34 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLPermis
 		if (pos == -1 || !word.toString().equals(KEYWORD_CREATE))
 			throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found", text, oldPos);
 
-		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+		oldPos = pos;
+		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_PROPERTY))
 			throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found", text, oldPos);
 
-		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
+		oldPos = pos;
+		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
 		if (pos == -1)
-			throw new OCommandSQLParsingException("Expected <class>.<property>", text, pos);
+			throw new OCommandSQLParsingException("Expected <class>.<property>", text, oldPos);
 
 		String[] parts = word.toString().split("\\.");
 		if (parts.length != 2)
-			throw new OCommandSQLParsingException("Expected <class>.<property>", text, pos);
+			throw new OCommandSQLParsingException("Expected <class>.<property>", text, oldPos);
 
 		className = parts[0];
 		if (className == null)
-			throw new OCommandSQLParsingException("Class not found", text, pos);
+			throw new OCommandSQLParsingException("Class not found", text, oldPos);
 		fieldName = parts[1];
 
-		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
+		oldPos = pos;
+		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, true);
 		if (pos == -1)
 			throw new OCommandSQLParsingException("Missed property type", text, oldPos);
 
 		type = OType.valueOf(word.toString());
 
-		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, false);
+		oldPos = pos;
+		pos = OSQLHelper.nextWord(text, textUpperCase, oldPos, word, false);
 		if (pos == -1)
 			return this;
 
@@ -92,11 +97,11 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLPermis
 		if (type == null)
 			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
 
-		OClass sourceClass = database.getMetadata().getSchema().getClass(className);
+		final OClassImpl sourceClass = (OClassImpl) database.getMetadata().getSchema().getClass(className);
 		if (sourceClass == null)
 			throw new OCommandExecutionException("Source class '" + className + "' not found");
 
-		OProperty prop = sourceClass.getProperty(fieldName);
+		OPropertyImpl prop = (OPropertyImpl) sourceClass.getProperty(fieldName);
 		if (prop != null)
 			throw new OCommandExecutionException("Property '" + className + "." + fieldName
 					+ "' already exists. Remove it before to retry.");
@@ -113,14 +118,8 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLPermis
 				linkedType = OType.valueOf(linked.toUpperCase());
 		}
 
-		if (linkedClass != null)
-			prop = sourceClass.createProperty(fieldName, type, linkedClass);
-		else if (linkedType != null)
-			prop = sourceClass.createProperty(fieldName, type, linkedType);
-		else
-			prop = sourceClass.createProperty(fieldName, type);
-
-		database.getMetadata().getSchema().save();
+		// CREATE IT LOCALLY
+		prop = sourceClass.addPropertyInternal(fieldName, type, linkedType, linkedClass);
 
 		return prop.getId();
 	}

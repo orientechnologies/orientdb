@@ -16,177 +16,35 @@
 package com.orientechnologies.orient.core.index;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
+import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecord.STATUS;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
-public class OIndexManager extends ODocumentWrapperNoClass {
-	public static final String							CONFIG_INDEXES			= "indexes";
-	public static final String							DICTIONARY_NAME			= "dictionary";
-	private ODatabaseRecord									database;
-	private Map<String, OIndex>							indexes							= new HashMap<String, OIndex>();
-	private String													defaultClusterName	= OStorage.CLUSTER_INDEX_NAME;
-	private ODictionary<ORecordInternal<?>>	dictionary;
+public interface OIndexManager extends OSharedResource {
+	public static final String	CONFIG_INDEXES	= "indexes";
+	public static final String	DICTIONARY_NAME	= "dictionary";
 
-	public OIndexManager(final ODatabaseRecord iDatabase) {
-		super(new ODocument(iDatabase));
-		this.database = iDatabase;
-	}
+	public OIndexManager load();
 
-	@SuppressWarnings("unchecked")
-	public OIndexManager load() {
-		if (document.getDatabase().getStorage().getConfiguration().indexMgrRecordId == null)
-			// @COMPATIBILITY: CREATE THE INDEX MGR
-			create();
+	public void create();
 
-		((ORecordId) document.getIdentity()).fromString(document.getDatabase().getStorage().getConfiguration().indexMgrRecordId);
-		super.reload("*:-1 index:0");
+	public Collection<OIndex> getIndexes();
 
-		dictionary = new ODictionary<ORecordInternal<?>>(getIndex(DICTIONARY_NAME));
+	public OIndex getIndex(final String iName);
 
-		return this;
-	}
-
-	public void create() {
-		save(OStorage.CLUSTER_INTERNAL_NAME);
-		createIndex(DICTIONARY_NAME, OProperty.INDEX_TYPE.DICTIONARY.toString(), null, null, null);
-		dictionary = new ODictionary<ORecordInternal<?>>(getIndex(DICTIONARY_NAME));
-		document.getDatabase().getStorage().getConfiguration().indexMgrRecordId = document.getIdentity().toString();
-		document.getDatabase().getStorage().getConfiguration().update();
-	}
-
-	public Collection<OIndex> getIndexes() {
-		return Collections.unmodifiableCollection(indexes.values());
-	}
-
-	public OIndex getIndex(final String iName) {
-		return indexes.get(iName.toLowerCase());
-	}
-
-	public OIndex getIndex(final ORecordId iRID) {
-		for (OIndex idx : indexes.values()) {
-			if (idx.getIdentity().equals(iRID))
-				return idx;
-		}
-		return null;
-	}
-
-	public OIndex createIndex(final OIndex iIndex) {
-		indexes.put(iIndex.getName().toLowerCase(), iIndex);
-		setDirty();
-		save();
-		return iIndex;
-	}
+	public OIndex getIndex(final ORID iRID);
 
 	public OIndex createIndex(final String iName, final String iType, final int[] iClusterIdsToIndex, OIndexCallback iCallback,
-			final OProgressListener iProgressListener) {
-		return createIndex(iName, iType, iClusterIdsToIndex, iCallback, iProgressListener, false);
-	}
+			final OProgressListener iProgressListener, final boolean iAutomatic);
 
-	public OIndex createIndex(final String iName, final String iType, final int[] iClusterIdsToIndex, OIndexCallback iCallback,
-			final OProgressListener iProgressListener, final boolean iAutomatic) {
-		final OIndex index = OIndexFactory.instance().newInstance(iType);
-		index.setCallback(iCallback);
-		indexes.put(iName.toLowerCase(), index);
+	public OIndexManager dropIndex(final String iIndexName);
 
-		index.create(iName, database, defaultClusterName, iClusterIdsToIndex, iProgressListener, iAutomatic);
-		setDirty();
-		save();
+	public String getDefaultClusterName();
 
-		return index;
-	}
+	public void setDefaultClusterName(String defaultClusterName);
 
-	public OIndexManager deleteIndex(final String iIndexName) {
-		final OIndex idx = indexes.remove(iIndexName.toLowerCase());
-		if (idx != null) {
-			idx.delete();
-			setDirty();
-			save();
-		}
-		return this;
-	}
-
-	public OIndexManager setDirty() {
-		document.setDirty();
-		return this;
-	}
-
-	@Override
-	protected void fromStream() {
-		final Collection<ODocument> idxs = document.field(CONFIG_INDEXES);
-
-		if (idxs != null) {
-			OIndex index;
-			for (ODocument d : idxs) {
-				index = OIndexFactory.instance().newInstance((String) d.field(OIndex.CONFIG_TYPE));
-				d.setDatabase(document.getDatabase());
-				index.loadFromConfiguration(d);
-				indexes.put(index.getName().toLowerCase(), index);
-			}
-		}
-	}
-
-	/**
-	 * Binds POJO to ODocument.
-	 */
-	@Override
-	public ODocument toStream() {
-		document.setStatus(STATUS.UNMARSHALLING);
-
-		try {
-			ORecordTrackedSet idxs = new ORecordTrackedSet(document);
-
-			for (OIndex i : indexes.values()) {
-				idxs.add(i.updateConfiguration());
-			}
-			document.field(CONFIG_INDEXES, idxs, OType.EMBEDDEDSET);
-
-		} finally {
-			document.setStatus(STATUS.LOADED);
-		}
-		document.setDirty();
-
-		return document;
-	}
-
-	/**
-	 * Load a previously created index. This method is kept for compatibility with 0.9.24 databases
-	 * 
-	 * @COMPATIBILITY
-	 */
-	public OIndex loadIndex(final String iName, final ODocument iConfiguration) {
-		final OIndex index = OIndexFactory.instance().load(database, iConfiguration);
-		if (index != null) {
-			indexes.put(iName.toLowerCase(), index);
-			setDirty();
-			save();
-		}
-
-		return index;
-	}
-
-	public String getDefaultClusterName() {
-		return defaultClusterName;
-	}
-
-	public void setDefaultClusterName(String defaultClusterName) {
-		this.defaultClusterName = defaultClusterName;
-	}
-
-	public ODictionary<ORecordInternal<?>> getDictionary() {
-		return dictionary;
-	}
+	public ODictionary<ORecordInternal<?>> getDictionary();
 }

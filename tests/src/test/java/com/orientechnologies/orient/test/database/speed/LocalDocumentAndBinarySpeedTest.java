@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.test.database.speed;
 
+import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.testng.Assert;
@@ -52,7 +52,6 @@ public class LocalDocumentAndBinarySpeedTest {
 		OClass chunk = database.getMetadata().getSchema().createClass("Chunk");
 		index = chunk.createProperty("hash", OType.STRING).createIndex(INDEX_TYPE.UNIQUE);
 		chunk.createProperty("binary", OType.LINK);
-		database.getMetadata().getSchema().save();
 
 		try {
 			byte[] data = new byte[size];
@@ -97,7 +96,7 @@ public class LocalDocumentAndBinarySpeedTest {
 				else
 					System.out.println("already loaded");
 
-				Set result = index.getUnderlying().get("key" + Integer.toString(rand));
+				Collection<?> result = index.getUnderlying().get("key" + Integer.toString(rand));
 				Assert.assertTrue(result.size() > 0);
 
 				if (result != null && result.size() > 0) {

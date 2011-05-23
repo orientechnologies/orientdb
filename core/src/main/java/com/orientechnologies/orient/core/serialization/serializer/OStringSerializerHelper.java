@@ -116,6 +116,7 @@ public abstract class OStringSerializerHelper {
 			}
 
 		case DATE:
+		case DATETIME:
 			if (iValue instanceof Date)
 				return iValue;
 			return new Date(Long.parseLong(getStringContent(iValue)));
@@ -445,27 +446,12 @@ public abstract class OStringSerializerHelper {
 	 * @return Modified string if needed, otherwise the same input object
 	 * @see OStringSerializerHelper#decode(String)
 	 */
-	public static StringBuilder encode(final String iText) {
-		return encode(new StringBuilder(), iText);
-	}
-
-	/**
-	 * Transforms, only if needed, the source string escaping the characters \ and ".
-	 * 
-	 * @param iText
-	 *          Input String
-	 * @return Modified string if needed, otherwise the same input object
-	 * @see OStringSerializerHelper#decode(String)
-	 */
-	public static StringBuilder encode(final StringBuilder iOutput, final String iText) {
+	public static String encode(final String iText) {
 		int pos = -1;
 
-		final int begin = iOutput.length();
-		iOutput.append(iText);
-
-		final int newSize = iOutput.length();
-		for (int i = begin; i < newSize; ++i) {
-			final char c = iOutput.charAt(i);
+		final int newSize = iText.length();
+		for (int i = 0; i < newSize; ++i) {
+			final char c = iText.charAt(i);
 
 			if (c == '"' || c == '\\' || c == '\'') {
 				pos = i;
@@ -475,18 +461,21 @@ public abstract class OStringSerializerHelper {
 
 		if (pos > -1) {
 			// CHANGE THE INPUT STRING
-			char c;
-			for (int i = pos; i < iOutput.length(); ++i) {
-				c = iOutput.charAt(i);
+			final StringBuilder iOutput = new StringBuilder();
 
-				if (c == '"' || c == '\\' || c == '\'') {
-					iOutput.insert(i, '\\');
-					++i;
-				}
+			char c;
+			for (int i = 0; i < iText.length(); ++i) {
+				c = iText.charAt(i);
+
+				if (c == '"' || c == '\\' || c == '\'')
+					iOutput.append('\\');
+
+				iOutput.append(c);
 			}
+			return iOutput.toString();
 		}
 
-		return iOutput;
+		return iText;
 	}
 
 	/**
@@ -593,5 +582,15 @@ public abstract class OStringSerializerHelper {
 				return false;
 		}
 		return true;
+	}
+
+	public static String removeQuotationMarks(final String iValue) {
+		if (iValue != null
+				&& iValue.length() > 1
+				&& (iValue.charAt(0) == '\'' && iValue.charAt(iValue.length() - 1) == '\'' || iValue.charAt(0) == '"'
+						&& iValue.charAt(iValue.length() - 1) == '"'))
+			return iValue.substring(1, iValue.length() - 1);
+
+		return iValue;
 	}
 }

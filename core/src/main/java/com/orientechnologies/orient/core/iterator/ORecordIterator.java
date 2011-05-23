@@ -23,7 +23,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.tx.OTransactionEntry;
+import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 
 /**
  * Iterator class to browse forward and backward the records of a cluster. Once browsed in a direction, the iterator can't change
@@ -48,7 +48,7 @@ public abstract class ORecordIterator<REC extends ORecordInternal<?>> implements
 	protected long													firstClusterPosition;
 	protected long													lastClusterPosition;
 	protected long													totalAvailableRecords;
-	protected List<OTransactionEntry>				txEntries;
+	protected List<OTransactionRecordEntry>				txEntries;
 	protected int														currentTxEntryPosition	= -1;
 
 	public ORecordIterator(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase) {

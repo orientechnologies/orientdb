@@ -20,7 +20,7 @@ import java.util.NoSuchElementException;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.tx.OTransactionEntry;
+import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 
 /**
  * Iterator class to browse forward and backward the records of a cluster. Once browsed in a direction, the iterator can't change
@@ -54,14 +54,14 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 
 		totalAvailableRecords = database.countClusterElements(clusterIds);
 
-		txEntries = iDatabase.getTransaction().getEntriesByClass(iClassName);
+		txEntries = iDatabase.getTransaction().getRecordEntriesByClass(iClassName);
 
 		if (txEntries != null)
 			// ADJUST TOTAL ELEMENT BASED ON CURRENT TRANSACTION'S ENTRIES
-			for (OTransactionEntry entry : txEntries) {
+			for (OTransactionRecordEntry entry : txEntries) {
 				if (entry.getRecord().getIdentity().isTemporary())
 					totalAvailableRecords++;
-				else if (entry.status == OTransactionEntry.DELETED)
+				else if (entry.status == OTransactionRecordEntry.DELETED)
 					totalAvailableRecords--;
 			}
 	}

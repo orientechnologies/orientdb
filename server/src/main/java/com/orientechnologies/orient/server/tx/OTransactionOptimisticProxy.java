@@ -24,13 +24,15 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.tx.OTransactionEntry;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
+import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
 public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 	private final Map<ORecordId, ORecord<?>>	updatedRecords	= new HashMap<ORecordId, ORecord<?>>();
 	private int																clientTxId;
+	private ODocument													indexEntries		= null;
 
 	public OTransactionOptimisticProxy(final ODatabaseRecordTx iDatabase, final OChannelBinary iChannel) throws IOException {
 		super(iDatabase);
@@ -48,12 +50,12 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 				((OTransactionRecordProxy) entry.getRecord()).setRecordType(iChannel.readByte());
 
 				switch (entry.status) {
-				case OTransactionEntry.CREATED:
+				case OTransactionRecordEntry.CREATED:
 					entry.clusterName = iChannel.readString();
 					entry.getRecord().fromStream(iChannel.readBytes());
 					break;
 
-				case OTransactionEntry.UPDATED:
+				case OTransactionRecordEntry.UPDATED:
 					entry.getRecord().setVersion(iChannel.readInt());
 					entry.getRecord().fromStream(iChannel.readBytes());
 
@@ -61,7 +63,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 					updatedRecords.put(rid, entry.getRecord());
 					break;
 
-				case OTransactionEntry.DELETED:
+				case OTransactionRecordEntry.DELETED:
 					entry.getRecord().setVersion(iChannel.readInt());
 					break;
 
@@ -70,12 +72,19 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 				}
 
 				// PUT IN TEMPORARY LIST TO GET FETCHED AFTER ALL FOR CACHE
-				entries.put((ORecordId) entry.getRecord().getIdentity(), entry);
+				recordEntries.put((ORecordId) entry.getRecord().getIdentity(), entry);
 
 			} catch (IOException e) {
 				throw new OSerializationException("Can't read transaction record from the network", e);
 			}
 		}
+
+		indexEntries = new ODocument(iChannel.readBytes());
+	}
+
+	@Override
+	public ODocument getIndexEntries() {
+		return indexEntries;
 	}
 
 	public Map<ORecordId, ORecord<?>> getUpdatedRecords() {

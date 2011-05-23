@@ -169,6 +169,9 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 	 */
 	public boolean add(final OIdentifiable e) {
 		if (e.getIdentity().isNew()) {
+			if (!(e instanceof ORecord<?>))
+				throw new IllegalArgumentException("Can't add invalid RID");
+
 			// NEW RECORD OR YET UNMARSHALLED CONTENT: ADD IN NEW ITEMS
 			final ORecord<?> record = (ORecord<?>) e;
 			// ADD IN TEMP LIST
@@ -268,10 +271,22 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
 	}
 
 	public boolean retainAll(final Collection<?> c) {
+		if (hasNewItems()) {
+			final Collection<Object> v = newItems.values();
+			v.retainAll(c);
+			if (newItems.size() == 0)
+				newItems = null;
+		}
 		return delegate.retainAll(c);
 	}
 
 	public boolean removeAll(final Collection<?> c) {
+		if (hasNewItems()) {
+			final Collection<Object> v = newItems.values();
+			v.removeAll(c);
+			if (newItems.size() == 0)
+				newItems = null;
+		}
 		return delegate.removeAll(c);
 	}
 

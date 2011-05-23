@@ -19,12 +19,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.orientechnologies.common.concur.resource.OSharedResource;
+import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 
-public class OClusterMemory extends OSharedResource implements OCluster {
+public class OClusterMemory extends OSharedResourceAbstract implements OCluster {
 	public static final String			TYPE		= "MEMORY";
 
 	private int											id;

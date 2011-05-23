@@ -39,8 +39,7 @@ public class OServerCommandDeleteClass extends OServerCommandAuthenticatedDbAbst
 			if (db.getMetadata().getSchema().getClass(urlParts[2]) == null)
 				throw new IllegalArgumentException("Invalid class '" + urlParts[2] + "'");
 
-			db.getMetadata().getSchema().removeClass(urlParts[2]);
-			db.getMetadata().getSchema().save();
+			db.getMetadata().getSchema().dropClass(urlParts[2]);
 
 			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, null);
 

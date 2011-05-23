@@ -1,6 +1,6 @@
 package com.orientechnologies.common.concur.resource;
 
-public class OSharedResourceExternal extends OSharedResource {
+public class OSharedResourceExternal extends OSharedResourceAbstract implements OSharedResource {
 
 	@Override
 	public void acquireExclusiveLock() {

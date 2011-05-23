@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
-import com.orientechnologies.orient.core.tx.OTransactionEntry;
+import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.distributed.OChannelDistributedProtocol;
@@ -420,7 +420,7 @@ public class ODistributedServerManager extends OServerHandlerAbstract {
 	 * @throws IOException
 	 */
 	@SuppressWarnings("unchecked")
-	public void distributeRequest(final OTransactionEntry iTransactionEntry) throws IOException {
+	public void distributeRequest(final OTransactionRecordEntry iTransactionEntry) throws IOException {
 		final HashMap<ODistributedServerNodeRemote, SYNCH_TYPE> nodeList;
 
 		lock.acquireSharedLock();

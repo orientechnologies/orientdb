@@ -15,7 +15,9 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -26,46 +28,12 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
- * Interface to handle index.
+ * Basic interface to handle index.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public interface OIndex extends Iterable<Entry<Object, Set<OIdentifiable>>> {
-
-	public static final String	CONFIG_TYPE				= "type";
-	public static final String	CONFIG_NAME				= "name";
-	public static final String	CONFIG_AUTOMATIC	= "automatic";
-
-	public String getName();
-
-	/**
-	 * Gets the set of records associated with the passed key.
-	 * 
-	 * @param iKey
-	 *          Key to search
-	 * @return The Record set if found, otherwise an empty Set
-	 */
-	public Set<OIdentifiable> get(Object iKey);
-
-	public boolean contains(Object iKey);
-
-	public OIndex put(final Object iKey, final OIdentifiable iValue);
-
-	public boolean remove(final Object iKey);
-
-	public boolean remove(Object iKey, OIdentifiable iRID);
-
-	public OIndex clear();
-
-	public OIndex rebuild();
-
-	/**
-	 * Populate the index with all the existent records.
-	 */
-	public OIndex rebuild(final OProgressListener iProgressListener);
-
-	public String getType();
+public interface OIndex {
 
 	/**
 	 * Creates the index.
@@ -86,35 +54,65 @@ public interface OIndex extends Iterable<Entry<Object, Set<OIdentifiable>>> {
 	public OIndex create(String iName, final ODatabaseRecord iDatabase, final String iClusterIndexName,
 			final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, final boolean iAutomatic);
 
-	public OIndex load();
-
-	public OIndex delete();
-
-	public OIndex lazySave();
+	public void unload();
 
 	public Iterator<Entry<Object, Set<OIdentifiable>>> iterator();
 
+	/**
+	 * Gets the set of records associated with the passed key.
+	 * 
+	 * @param iKey
+	 *          Key to search
+	 * @return The Record set if found, otherwise an empty Set
+	 */
+	public Collection<OIdentifiable> get(Object iKey);
+
+	public boolean contains(Object iKey);
+
+	public OIndex put(final Object iKey, final OIdentifiable iValue);
+
+	public boolean remove(final Object iKey);
+
+	public boolean remove(Object iKey, OIdentifiable iRID);
+
+	/**
+	 * Removes a value in all the index entries.
+	 * 
+	 * @param iRecord
+	 *          Record to search
+	 * @return Times the record was found, 0 if not found at all
+	 */
+	public int remove(OIdentifiable iRID);
+
+	public OIndex clear();
+
 	public Iterable<Object> keys();
 
-	public ORID getIdentity();
+	public Collection<OIdentifiable> getBetween(Object iRangeFrom, Object iRangeTo);
 
-	public void checkEntry(final OIdentifiable iRecord, final Object iKey);
+	public long getSize();
 
-	public void setCallback(final OIndexCallback iCallback);
+	public OIndex lazySave();
 
-	public OIndex setName(String iName);
+	public OIndex delete();
 
-	public void unload();
+	public String getName();
 
-	public ODocument getConfiguration();
-
-	public OIndex loadFromConfiguration(ODocument iConfig);
-
-	public ODocument updateConfiguration();
+	public String getType();
 
 	public boolean isAutomatic();
 
-	public Set<OIdentifiable> getBetween(Object iRangeFrom, Object iRangeTo);
+	public void setCallback(final OIndexCallback iCallback);
 
-	public long size();
+	public ODocument getConfiguration();
+
+	public ORID getIdentity();
+
+	/**
+	 * Commit changes as atomic.
+	 * 
+	 * @param iEntries
+	 *          Collection of entries to commit
+	 */
+	public void commit(List<ODocument> iEntries);
 }

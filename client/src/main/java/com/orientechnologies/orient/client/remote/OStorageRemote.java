@@ -56,8 +56,8 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
-import com.orientechnologies.orient.core.tx.OTransactionEntry;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
+import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
@@ -119,6 +119,7 @@ public class OStorageRemote extends OStorageAbstract {
 				close();
 
 			if (e instanceof OException)
+				// PASS THROUGH
 				throw (OException) e;
 			else
 				throw new OStorageException("Can't open the remote storage: " + name, e);
@@ -164,9 +165,14 @@ public class OStorageRemote extends OStorageAbstract {
 				n.close();
 			networkPool.clear();
 
+			level2Cache.shutdown();
+
 			Orient.instance().unregisterStorage(this);
 			open = false;
 
+		} catch (OException e) {
+			// PASS THROUGH
+			throw e;
 		} catch (Exception e) {
 			OLogManager.instance().debug(this, "Error on closing remote connection: %s", network);
 		} finally {
@@ -216,6 +222,9 @@ public class OStorageRemote extends OStorageAbstract {
 					endResponse(network);
 				}
 
+			} catch (OException e) {
+				// PASS THROUGH
+				throw e;
 			} catch (Exception e) {
 				handleException("Error on create record in cluster: " + iRid.clusterId, e);
 
@@ -251,7 +260,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 					ORecordInternal<?> record;
 					while (network.readByte() == 2) {
-						record = (ORecordInternal<?>) readRecordFromNetwork(network, iDatabase);
+						record = (ORecordInternal<?>) readIdentifiable(network, iDatabase);
 
 						// PUT IN THE CLIENT LOCAL CACHE
 						iDatabase.getLevel2Cache().pushRecord(record);
@@ -261,6 +270,9 @@ public class OStorageRemote extends OStorageAbstract {
 					endResponse(network);
 				}
 
+			} catch (OException e) {
+				// PASS THROUGH
+				throw e;
 			} catch (Exception e) {
 				handleException("Error on read record #" + iRid, e);
 
@@ -291,6 +303,9 @@ public class OStorageRemote extends OStorageAbstract {
 					endResponse(network);
 				}
 
+			} catch (OException e) {
+				// PASS THROUGH
+				throw e;
 			} catch (Exception e) {
 				handleException("Error on update record #" + iRid, e);
 
@@ -319,6 +334,9 @@ public class OStorageRemote extends OStorageAbstract {
 					endResponse(network);
 				}
 
+			} catch (OException e) {
+				// PASS THROUGH
+				throw e;
 			} catch (Exception e) {
 				handleException("Error on delete record #" + iRid, e);
 
@@ -350,6 +368,9 @@ public class OStorageRemote extends OStorageAbstract {
 					endResponse(network);
 				}
 
+			} catch (OException e) {
+				// PASS THROUGH
+				throw e;
 			} catch (Exception e) {
 				handleException("Error on getting last entry position count in cluster: " + iClusterId, e);
 
@@ -372,6 +393,9 @@ public class OStorageRemote extends OStorageAbstract {
 				} finally {
 					endResponse(network);
 				}
+			} catch (OException e) {
+				// PASS THROUGH
+				throw e;
 			} catch (Exception e) {
 				handleException("Error on read database size", e);
 
@@ -395,6 +419,9 @@ public class OStorageRemote extends OStorageAbstract {
 				} finally {
 					endResponse(network);
 				}
+			} catch (OException e) {
+				// PASS THROUGH
+				throw e;
 			} catch (Exception e) {
 				handleException("Error on read database record count", e);
 
@@ -423,6 +450,9 @@ public class OStorageRemote extends OStorageAbstract {
 				} finally {
 					endResponse(network);
 				}
+			} catch (OException e) {
+				// PASS THROUGH
+				throw e;
 			} catch (Exception e) {
 				handleException("Error on read record count in clusters: " + iClusterIds, e);
 
@@ -450,6 +480,9 @@ public class OStorageRemote extends OStorageAbstract {
 				} finally {
 					endResponse(network);
 				}
+			} catch (OException e) {
+				// PASS THROUGH
+				throw e;
 			} catch (Exception e) {
 				handleException("Error on executing count on class: " + iClassName, e);
 
@@ -495,7 +528,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 						// ASYNCH: READ ONE RECORD AT TIME
 						while ((status = network.readByte()) > 0) {
-							ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) readRecordFromNetwork(network, iCommand.getDatabase());
+							ORecordSchemaAware<?> record = (ORecordSchemaAware<?>) readIdentifiable(network, iCommand.getDatabase());
 							if (record == null)
 								break;
 
@@ -518,7 +551,7 @@ public class OStorageRemote extends OStorageAbstract {
 
 							case 2:
 								// PUT IN THE CLIENT LOCAL CACHE
-								iCommand.getDatabase().getLevel1Cache().pushRecord(record);
+								iCommand.getDatabase().getLevel2Cache().pushRecord(record);
 							}
 						}
 					} else {
@@ -529,14 +562,14 @@ public class OStorageRemote extends OStorageAbstract {
 							break;
 
 						case 'r':
-							result = readRecordFromNetwork(network, iCommand.getDatabase());
+							result = readIdentifiable(network, iCommand.getDatabase());
 							break;
 
 						case 'l':
 							final int tot = network.readInt();
 							final Collection<OIdentifiable> list = new ArrayList<OIdentifiable>();
 							for (int i = 0; i < tot; ++i) {
-								list.add(readRecordFromNetwork(network, iCommand.getDatabase()));
+								list.add(readIdentifiable(network, iCommand.getDatabase()));
 							}
 							result = list;
 							break;
@@ -553,6 +586,9 @@ public class OStorageRemote extends OStorageAbstract {
 					endResponse(network);
 				}
 
+			} catch (OException e) {
+				// PASS THROUGH
+				throw e;
 			} catch (Exception e) {
 				handleException("Error on executing command: " + iCommand, e);
 
@@ -568,26 +604,25 @@ public class OStorageRemote extends OStorageAbstract {
 		checkConnection();
 
 		do {
-
 			try {
 
-				final Set<OTransactionEntry> allEntries = new HashSet<OTransactionEntry>();
+				final Set<OTransactionRecordEntry> allEntries = new HashSet<OTransactionRecordEntry>();
 
 				final OChannelBinaryClient network = beginRequest(OChannelBinaryProtocol.REQUEST_TX_COMMIT);
 				try {
 					network.writeInt(((OTransactionRealAbstract) iTx).getId());
 
-					final List<OTransactionEntry> tmpEntries = new ArrayList<OTransactionEntry>();
+					final List<OTransactionRecordEntry> tmpEntries = new ArrayList<OTransactionRecordEntry>();
 
-					while (iTx.getEntries().iterator().hasNext()) {
-						for (OTransactionEntry txEntry : iTx.getEntries())
+					while (iTx.getRecordEntries().iterator().hasNext()) {
+						for (OTransactionRecordEntry txEntry : iTx.getRecordEntries())
 							if (!allEntries.contains(txEntry))
 								tmpEntries.add(txEntry);
 
-						iTx.clearEntries();
+						iTx.clearRecordEntries();
 
 						if (tmpEntries.size() > 0) {
-							for (OTransactionEntry txEntry : tmpEntries)
+							for (OTransactionRecordEntry txEntry : tmpEntries)
 								commitEntry(network, txEntry);
 
 							allEntries.addAll(tmpEntries);
@@ -595,8 +630,11 @@ public class OStorageRemote extends OStorageAbstract {
 						}
 					}
 
+					// END OF RECORD ENTRIES
 					network.writeByte((byte) 0);
 
+					// SEND INDEX ENTRIES
+					network.writeBytes(iTx.getIndexEntries().toStream());
 				} finally {
 					endRequest(network);
 				}
@@ -609,7 +647,7 @@ public class OStorageRemote extends OStorageAbstract {
 						rid = network.readRID();
 
 						// SEARCH THE RECORD WITH THAT ID TO UPDATE THE VERSION
-						for (OTransactionEntry txEntry : allEntries) {
+						for (OTransactionRecordEntry txEntry : allEntries) {
 							if (txEntry.getRecord().getIdentity().equals(rid)) {
 								txEntry.getRecord().setVersion(network.readInt());
 								break;
@@ -624,6 +662,9 @@ public class OStorageRemote extends OStorageAbstract {
 				OTransactionAbstract.updateCacheFromEntries(this, iTx, allEntries);
 
 				break;
+			} catch (OException e) {
+				// PASS THROUGH
+				throw e;
 			} catch (Exception e) {
 				handleException("Error on commit", e);
 
@@ -698,6 +739,9 @@ public class OStorageRemote extends OStorageAbstract {
 				} finally {
 					endResponse(network);
 				}
+			} catch (OException e) {
+				// PASS THROUGH
+				throw e;
 			} catch (Exception e) {
 				handleException("Error on add new cluster", e);
 
@@ -738,6 +782,9 @@ public class OStorageRemote extends OStorageAbstract {
 					endResponse(network);
 				}
 
+			} catch (OException e) {
+				// PASS THROUGH
+				throw e;
 			} catch (Exception e) {
 				handleException("Error on removing of cluster", e);
 
@@ -770,6 +817,9 @@ public class OStorageRemote extends OStorageAbstract {
 					endResponse(network);
 				}
 
+			} catch (OException e) {
+				// PASS THROUGH
+				throw e;
 			} catch (Exception e) {
 				handleException("Error on add new data segment", e);
 
@@ -973,14 +1023,13 @@ public class OStorageRemote extends OStorageAbstract {
 		}
 	}
 
-	private OIdentifiable readRecordFromNetwork(final OChannelBinaryClient network, final ODatabaseRecord iDatabase)
-			throws IOException {
+	static OIdentifiable readIdentifiable(final OChannelBinaryClient network, final ODatabaseRecord iDatabase) throws IOException {
 		final int classId = network.readShort();
 		if (classId == OChannelBinaryProtocol.RECORD_NULL)
 			return null;
 
 		if (classId == OChannelBinaryProtocol.RECORD_RID) {
-			return new ORecordId(network.readShort(), network.readLong());
+			return network.readRID();
 		} else {
 			final ORecordInternal<?> record = ORecordFactory.newInstance(network.readByte());
 
@@ -1090,8 +1139,8 @@ public class OStorageRemote extends OStorageAbstract {
 		}
 	}
 
-	private void commitEntry(final OChannelBinaryClient iNetwork, final OTransactionEntry txEntry) throws IOException {
-		if (txEntry.status == OTransactionEntry.LOADED)
+	private void commitEntry(final OChannelBinaryClient iNetwork, final OTransactionRecordEntry txEntry) throws IOException {
+		if (txEntry.status == OTransactionRecordEntry.LOADED)
 			// JUMP LOADED OBJECTS
 			return;
 
@@ -1102,17 +1151,17 @@ public class OStorageRemote extends OStorageAbstract {
 		iNetwork.writeByte(txEntry.getRecord().getRecordType());
 
 		switch (txEntry.status) {
-		case OTransactionEntry.CREATED:
+		case OTransactionRecordEntry.CREATED:
 			iNetwork.writeString(txEntry.clusterName);
 			iNetwork.writeBytes(txEntry.getRecord().toStream());
 			break;
 
-		case OTransactionEntry.UPDATED:
+		case OTransactionRecordEntry.UPDATED:
 			iNetwork.writeInt(txEntry.getRecord().getVersion());
 			iNetwork.writeBytes(txEntry.getRecord().toStream());
 			break;
 
-		case OTransactionEntry.DELETED:
+		case OTransactionRecordEntry.DELETED:
 			iNetwork.writeInt(txEntry.getRecord().getVersion());
 			break;
 		}
@@ -1130,7 +1179,7 @@ public class OStorageRemote extends OStorageAbstract {
 				// CONNECT TO THE SERVER
 				final OChannelBinaryClient firstChannel = createNetworkConnection();
 				networkPool.add(firstChannel);
-				serviceThread = new OStorageRemoteServiceThread(new OStorageRemoteThread(this), firstChannel);
+				serviceThread = new OStorageRemoteServiceThread(new OStorageRemoteThread(this, Integer.MIN_VALUE), firstChannel);
 
 				for (int i = 1; i < minPool; ++i)
 					networkPool.add(createNetworkConnection());

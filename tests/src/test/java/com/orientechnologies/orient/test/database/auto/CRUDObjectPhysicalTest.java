@@ -249,6 +249,7 @@ public class CRUDObjectPhysicalTest {
 	@Test(dependsOnMethods = "queryPerFloat")
 	public void queryCross3Levels() {
 		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+		database.getMetadata().getSchema().reload();
 
 		final List<Profile> result = database.query(new OSQLSynchQuery<Profile>(
 				"select from Profile where location.city.country.name = 'Spain'"));
@@ -268,6 +269,7 @@ public class CRUDObjectPhysicalTest {
 	@Test(dependsOnMethods = "queryCross3Levels")
 	public void deleteFirst() {
 		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+		database.getMetadata().getSchema().reload();
 
 		startRecordNumber = database.countClusterElements("Account");
 
@@ -285,6 +287,7 @@ public class CRUDObjectPhysicalTest {
 	@Test
 	public void commandWithPositionalParameters() {
 		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+		database.getMetadata().getSchema().reload();
 
 		final OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>("select from Profile where name = ? and surname = ?");
 		List<Profile> result = database.command(query).execute("Barack", "Obama");
@@ -297,6 +300,7 @@ public class CRUDObjectPhysicalTest {
 	@Test
 	public void queryWithPositionalParameters() {
 		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+		database.getMetadata().getSchema().reload();
 
 		final OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>("select from Profile where name = ? and surname = ?");
 		List<Profile> result = database.query(query, "Barack", "Obama");
@@ -309,6 +313,7 @@ public class CRUDObjectPhysicalTest {
 	@Test
 	public void queryWithRidAsParameters() {
 		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+		database.getMetadata().getSchema().reload();
 
 		Profile profile = (Profile) database.browseClass("Profile").next();
 
@@ -323,6 +328,7 @@ public class CRUDObjectPhysicalTest {
 	@Test
 	public void queryWithRidStringAsParameters() {
 		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+		database.getMetadata().getSchema().reload();
 
 		Profile profile = (Profile) database.browseClass("Profile").next();
 
@@ -343,6 +349,7 @@ public class CRUDObjectPhysicalTest {
 	@Test
 	public void commandWithNamedParameters() {
 		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+		database.getMetadata().getSchema().reload();
 
 		final OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>(
 				"select from Profile where name = :name and surname = :surname");
@@ -360,6 +367,7 @@ public class CRUDObjectPhysicalTest {
 	@Test(expectedExceptions = OQueryParsingException.class)
 	public void commandWithWrongNamedParameters() {
 		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+		database.getMetadata().getSchema().reload();
 
 		final OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>(
 				"select from Profile where name = :name and surname = :surname%");
@@ -377,6 +385,7 @@ public class CRUDObjectPhysicalTest {
 	@Test
 	public void queryWithNamedParameters() {
 		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+		database.getMetadata().getSchema().reload();
 
 		final OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>(
 				"select from Profile where name = :name and surname = :surname");
@@ -394,6 +403,7 @@ public class CRUDObjectPhysicalTest {
 	@Test
 	public void queryWithObjectAsParameter() {
 		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+		database.getMetadata().getSchema().reload();
 
 		final OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>(
 				"select from Profile where name = :name and surname = :surname");
@@ -416,6 +426,7 @@ public class CRUDObjectPhysicalTest {
 	@Test
 	public void queryConcatAttrib() {
 		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+		database.getMetadata().getSchema().reload();
 
 		Assert.assertTrue(database.query(new OSQLSynchQuery<Profile>("select from City where country.@class = 'Country'")).size() > 0);
 		Assert.assertEquals(database.query(new OSQLSynchQuery<Profile>("select from City where country.@class = 'Country22'")).size(),
@@ -427,6 +438,7 @@ public class CRUDObjectPhysicalTest {
 	@Test
 	public void queryPreparredTwice() {
 		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+		database.getMetadata().getSchema().reload();
 
 		final OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>(
 				"select from Profile where name = :name and surname = :surname");
@@ -447,6 +459,7 @@ public class CRUDObjectPhysicalTest {
 	@Test
 	public void commandPreparredTwice() {
 		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+		database.getMetadata().getSchema().reload();
 
 		final OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>(
 				"select from Profile where name = :name and surname = :surname");
@@ -466,6 +479,7 @@ public class CRUDObjectPhysicalTest {
 
 	public void testEmbeddedBinary() {
 		database = ODatabaseObjectPool.global().acquire(url, "admin", "admin");
+		database.getMetadata().getSchema().reload();
 
 		Account a = new Account(0, "Chris", "Martin");
 		a.setThumbnail(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });

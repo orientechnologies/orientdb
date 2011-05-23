@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -43,8 +44,8 @@ import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
-import com.orientechnologies.orient.core.tx.OTransactionEntry;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
+import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 
 /**
  * Memory implementation of storage. This storage works only in memory and has the following features:
@@ -85,7 +86,7 @@ public class OStorageMemory extends OStorageEmbedded {
 			configuration.create();
 
 			open = true;
-			
+
 		} catch (OStorageException e) {
 			close();
 			throw e;
@@ -116,17 +117,6 @@ public class OStorageMemory extends OStorageEmbedded {
 	public void close(final boolean iForce) {
 		final boolean locked = lock.acquireExclusiveLock();
 		try {
-			if (!checkForClose(iForce))
-				return;
-
-			// CLOSE ALL THE CLUSTERS
-			for (OClusterMemory c : clusters)
-				c.close();
-			clusters.clear();
-
-			// CLOSE THE DATA SEGMENT
-			data.close();
-
 			open = false;
 		} finally {
 
@@ -135,7 +125,23 @@ public class OStorageMemory extends OStorageEmbedded {
 	}
 
 	public void delete() {
-		close();
+		final boolean locked = lock.acquireExclusiveLock();
+		try {
+			// CLOSE ALL THE CLUSTERS
+			for (OClusterMemory c : clusters)
+				c.close();
+			clusters.clear();
+
+			// CLOSE THE DATA SEGMENT
+			data.close();
+			level2Cache.shutdown();
+
+			Orient.instance().unregisterStorage(this);
+			open = false;
+		} finally {
+
+			lock.releaseExclusiveLock(locked);
+		}
 	}
 
 	public int addCluster(final String iClusterName, final OStorage.CLUSTER_TYPE iClusterType, final Object... iParameters) {
@@ -235,7 +241,7 @@ public class OStorageMemory extends OStorageEmbedded {
 			// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
 			if (iVersion > -1 && ppos.version != iVersion)
 				throw new OConcurrentModificationException(
-						"Can't update record #"
+						"Can't update record "
 								+ iRid
 								+ " because it was modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
 
@@ -244,7 +250,7 @@ public class OStorageMemory extends OStorageEmbedded {
 			return ++(ppos.version);
 
 		} catch (IOException e) {
-			throw new OStorageException("Error on update record #" + iRid, e);
+			throw new OStorageException("Error on update record " + iRid, e);
 
 		} finally {
 			lock.releaseSharedLock(locked);
@@ -267,7 +273,7 @@ public class OStorageMemory extends OStorageEmbedded {
 			// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
 			if (iVersion > -1 && ppos.version != iVersion)
 				throw new OConcurrentModificationException(
-						"Can't update record #"
+						"Can't update record "
 								+ iRid
 								+ " because it was modified by another user in the meanwhile of current transaction. Use pessimistic locking instead of optimistic or simply re-execute the transaction");
 
@@ -277,7 +283,7 @@ public class OStorageMemory extends OStorageEmbedded {
 			return true;
 
 		} catch (IOException e) {
-			throw new OStorageException("Error on delete record #" + iRid, e);
+			throw new OStorageException("Error on delete record " + iRid, e);
 
 		} finally {
 			lock.releaseSharedLock(locked);
@@ -401,16 +407,16 @@ public class OStorageMemory extends OStorageEmbedded {
 		final boolean locked = lock.acquireSharedLock();
 
 		try {
-			final List<OTransactionEntry> allEntries = new ArrayList<OTransactionEntry>();
-			final List<OTransactionEntry> tmpEntries = new ArrayList<OTransactionEntry>();
+			final List<OTransactionRecordEntry> allEntries = new ArrayList<OTransactionRecordEntry>();
+			final List<OTransactionRecordEntry> tmpEntries = new ArrayList<OTransactionRecordEntry>();
 
-			while (iTx.getEntries().iterator().hasNext()) {
-				for (OTransactionEntry txEntry : iTx.getEntries())
+			while (iTx.getRecordEntries().iterator().hasNext()) {
+				for (OTransactionRecordEntry txEntry : iTx.getRecordEntries())
 					tmpEntries.add(txEntry);
 
-				iTx.clearEntries();
+				iTx.clearRecordEntries();
 
-				for (OTransactionEntry txEntry : tmpEntries)
+				for (OTransactionRecordEntry txEntry : tmpEntries)
 					// COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
 					commitEntry(((OTransactionRealAbstract) iTx).getId(), txEntry);
 
@@ -481,7 +487,7 @@ public class OStorageMemory extends OStorageEmbedded {
 		return true;
 	}
 
-	private void commitEntry(final int iTxId, final OTransactionEntry txEntry) throws IOException {
+	private void commitEntry(final int iTxId, final OTransactionRecordEntry txEntry) throws IOException {
 
 		final ORecordId rid = (ORecordId) txEntry.getRecord().getIdentity();
 
@@ -489,10 +495,10 @@ public class OStorageMemory extends OStorageEmbedded {
 		rid.clusterId = cluster.getId();
 
 		switch (txEntry.status) {
-		case OTransactionEntry.LOADED:
+		case OTransactionRecordEntry.LOADED:
 			break;
 
-		case OTransactionEntry.CREATED:
+		case OTransactionRecordEntry.CREATED:
 			if (rid.isNew()) {
 				// CHECK 2 TIMES TO ASSURE THAT IT'S A CREATE OR AN UPDATE BASED ON RECURSIVE TO-STREAM METHOD
 				final byte[] stream = txEntry.getRecord().toStream();
@@ -506,12 +512,12 @@ public class OStorageMemory extends OStorageEmbedded {
 			}
 			break;
 
-		case OTransactionEntry.UPDATED:
+		case OTransactionRecordEntry.UPDATED:
 			txEntry.getRecord().setVersion(
 					updateRecord(rid, txEntry.getRecord().toStream(), txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType()));
 			break;
 
-		case OTransactionEntry.DELETED:
+		case OTransactionRecordEntry.DELETED:
 			deleteRecord(rid, txEntry.getRecord().getVersion());
 			break;
 		}

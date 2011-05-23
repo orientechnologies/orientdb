@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
-import com.orientechnologies.orient.core.tx.OTransactionEntry;
+import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
 
@@ -160,18 +160,18 @@ public class OStorageLocalTxExecuter {
 	protected void commitAllPendingRecords(final OTransactionRealAbstract iTx) throws IOException {
 		// COPY ALL THE ENTRIES IN SEPARATE COLLECTION SINCE DURING THE COMMIT PHASE SOME NEW ENTRIES COULD BE CREATED AND
 		// CONCURRENT-EXCEPTION MAY OCCURS
-		final Set<OTransactionEntry> allEntries = new HashSet<OTransactionEntry>();
-		final List<OTransactionEntry> tmpEntries = new ArrayList<OTransactionEntry>();
+		final Set<OTransactionRecordEntry> allEntries = new HashSet<OTransactionRecordEntry>();
+		final List<OTransactionRecordEntry> tmpEntries = new ArrayList<OTransactionRecordEntry>();
 
-		while (iTx.getEntries().iterator().hasNext()) {
-			for (OTransactionEntry txEntry : iTx.getEntries())
+		while (iTx.getRecordEntries().iterator().hasNext()) {
+			for (OTransactionRecordEntry txEntry : iTx.getRecordEntries())
 				if (!allEntries.contains(txEntry))
 					tmpEntries.add(txEntry);
 
-			iTx.clearEntries();
+			iTx.clearRecordEntries();
 
 			if (tmpEntries.size() > 0) {
-				for (OTransactionEntry txEntry : tmpEntries)
+				for (OTransactionRecordEntry txEntry : tmpEntries)
 					// COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
 					commitEntry(iTx, txEntry, iTx.isUsingLog());
 
@@ -193,10 +193,10 @@ public class OStorageLocalTxExecuter {
 		// TODO
 	}
 
-	private void commitEntry(final OTransactionRealAbstract iTx, final OTransactionEntry txEntry, final boolean iUseLog)
+	private void commitEntry(final OTransactionRealAbstract iTx, final OTransactionRecordEntry txEntry, final boolean iUseLog)
 			throws IOException {
 
-		if (txEntry.status != OTransactionEntry.DELETED && !txEntry.getRecord().isDirty())
+		if (txEntry.status != OTransactionRecordEntry.DELETED && !txEntry.getRecord().isDirty())
 			return;
 
 		final ORecordId rid = (ORecordId) txEntry.getRecord().getIdentity();
@@ -212,10 +212,10 @@ public class OStorageLocalTxExecuter {
 			((OTxListener) txEntry.getRecord()).onEvent(txEntry, OTxListener.EVENT.BEFORE_COMMIT);
 
 		switch (txEntry.status) {
-		case OTransactionEntry.LOADED:
+		case OTransactionRecordEntry.LOADED:
 			break;
 
-		case OTransactionEntry.CREATED: {
+		case OTransactionRecordEntry.CREATED: {
 			// CHECK 2 TIMES TO ASSURE THAT IT'S A CREATE OR AN UPDATE BASED ON RECURSIVE TO-STREAM METHOD
 			byte[] stream = txEntry.getRecord().toStream();
 
@@ -246,7 +246,7 @@ public class OStorageLocalTxExecuter {
 			break;
 		}
 
-		case OTransactionEntry.UPDATED: {
+		case OTransactionRecordEntry.UPDATED: {
 			byte[] stream = txEntry.getRecord().toStream();
 
 			if (iTx.getDatabase().callbackHooks(ORecordHook.TYPE.BEFORE_UPDATE, txEntry.getRecord()))
@@ -260,7 +260,7 @@ public class OStorageLocalTxExecuter {
 			break;
 		}
 
-		case OTransactionEntry.DELETED: {
+		case OTransactionRecordEntry.DELETED: {
 			iTx.getDatabase().callbackHooks(ORecordHook.TYPE.BEFORE_DELETE, txEntry.getRecord());
 
 			deleteRecord(iTx.getId(), cluster, rid.clusterPosition, txEntry.getRecord().getVersion());

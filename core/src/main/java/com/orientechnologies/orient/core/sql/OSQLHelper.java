@@ -24,9 +24,11 @@ import com.orientechnologies.orient.core.command.OCommandToParse;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerCSVAbstract;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
@@ -179,7 +181,7 @@ public class OSQLHelper {
 			return Byte.parseByte(iValue);
 		else if (t == OType.DOUBLE)
 			return Double.parseDouble(iValue);
-		else if (t == OType.DATE)
+		else if (t == OType.DATE || t == OType.DATETIME)
 			return new Date(Long.parseLong(iValue));
 
 		return null;
@@ -254,5 +256,25 @@ public class OSQLHelper {
 		}
 
 		return null;
+	}
+
+	public static Object getValue(final Object iObject) {
+		if (iObject == null)
+			return null;
+
+		if (iObject instanceof OSQLFilterItem)
+			return ((OSQLFilterItem) iObject).getValue(null);
+
+		return iObject;
+	}
+
+	public static Object getValue(final Object iObject, final ORecordInternal<?> iRecord) {
+		if (iObject == null)
+			return null;
+
+		if (iObject instanceof OSQLFilterItem)
+			return ((OSQLFilterItem) iObject).getValue(iRecord);
+
+		return iObject;
 	}
 }

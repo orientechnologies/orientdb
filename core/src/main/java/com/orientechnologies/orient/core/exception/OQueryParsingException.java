@@ -27,6 +27,10 @@ public class OQueryParsingException extends OException {
 		super(iMessage);
 	}
 
+	public OQueryParsingException(final String iMessage, final Throwable cause) {
+		super(iMessage, cause);
+	}
+
 	public OQueryParsingException(final String iMessage, final String iText, final int iPosition, final Throwable cause) {
 		super(iMessage, cause);
 		text = iText;

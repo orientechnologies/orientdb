@@ -104,6 +104,16 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 		return underlying.rollback();
 	}
 
+	public boolean isMVCC() {
+		checkOpeness();
+		return underlying.isMVCC();
+	}
+
+	public <RET extends ODatabaseRecord> RET setMVCC(final boolean iValue) {
+		checkOpeness();
+		return (RET) underlying.setMVCC(iValue);
+	}
+
 	public OUser getUser() {
 		return underlying.getUser();
 	}

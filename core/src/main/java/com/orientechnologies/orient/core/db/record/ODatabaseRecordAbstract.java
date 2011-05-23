@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -30,7 +31,6 @@ import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -72,6 +72,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	private Set<ORecordHook>										hooks							= new HashSet<ORecordHook>();
 	private boolean															retainRecords			= true;
 	private OLevel1RecordCache									level1Cache;
+	private boolean															mvcc							= true;
+	private ODictionary<ORecordInternal<?>>			dictionary;
 
 	public ODatabaseRecordAbstract(final String iURL, final Class<? extends ORecordInternal<?>> iRecordClass) {
 		super(new ODatabaseRaw(iURL));
@@ -100,20 +102,22 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 			user = getMetadata().getSecurity().getUser(iUserName);
 			if (user == null)
-				throw new OSecurityAccessException(this.getName(), "User '" + iUserName + "' was not found in database: " + getName());
+				throw new OSecurityAccessException(this.getName(), "User or password not valid for database: " + getName());
 
 			if (user.getAccountStatus() != STATUSES.ACTIVE)
 				throw new OSecurityAccessException(this.getName(), "User '" + iUserName + "' is not active");
 
-			registerHook(new OUserTrigger());
-			registerHook(new OPropertyIndexManager());
+			if (getStorage() instanceof OStorageEmbedded) {
+				registerHook(new OUserTrigger());
+				registerHook(new OPropertyIndexManager());
+			}
 
 			if (getStorage() instanceof OStorageEmbedded) {
 
 				if (!user.checkPassword(iUserPassword)) {
 					// WAIT A BIT TO AVOID BRUTE FORCE
 					Thread.sleep(200);
-					throw new OSecurityAccessException(this.getName(), "Password not valid for user: " + iUserName);
+					throw new OSecurityAccessException(this.getName(), "User or password not valid for database: " + getName());
 				}
 			}
 
@@ -141,10 +145,10 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			createRolesAndUsers();
 			user = getMetadata().getSecurity().getUser(OUser.ADMIN);
 
-			// if (getStorage() instanceof OStorageEmbedded) {
-			registerHook(new OUserTrigger());
-			registerHook(new OPropertyIndexManager());
-			// }
+			if (getStorage() instanceof OStorageEmbedded) {
+				registerHook(new OUserTrigger());
+				registerHook(new OPropertyIndexManager());
+			}
 		} catch (Exception e) {
 			throw new ODatabaseException("Can't create database", e);
 		}
@@ -157,6 +161,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 		metadata = null;
 		hooks.clear();
+		dictionary = null;
 
 		user = null;
 		level1Cache.shutdown();
@@ -164,7 +169,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 	public ODictionary<ORecordInternal<?>> getDictionary() {
 		checkOpeness();
-		return metadata.getIndexManager().getDictionary();
+		if (dictionary == null)
+			dictionary = metadata.getIndexManager().getDictionary();
+		return dictionary;
 	}
 
 	public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord) {
@@ -416,7 +423,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			}
 
 			return (RET) iRecord;
-		} catch (ODatabaseException e) {
+		} catch (OException e) {
 			// RE-THROW THE EXCEPTION
 			throw e;
 
@@ -457,7 +464,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				// ALREADY CREATED AND WAITING FOR THE RIGHT UPDATE (WE'RE IN A GRAPH)
 				return;
 
-			if (isNew)
+			if (isNew && rid.clusterId < 0)
 				rid.clusterId = iClusterName != null ? getClusterIdByName(iClusterName) : getDefaultClusterId();
 
 			if (stream != null && stream.length > 0) {
@@ -485,7 +492,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			}
 
 			// GET THE LATEST VERSION. IT COULD CHANGE BECAUSE THE RECORD COULD BE BEEN LINKED FROM OTHERS
-			final int realVersion = iVersion == -1 ? -1 : iRecord.getVersion();
+			final int realVersion = iVersion == -1 || !mvcc ? -1 : iRecord.getVersion();
 
 			// SAVE IT
 			final long result = underlying.save(rid, stream, realVersion, iRecord.getRecordType());
@@ -511,12 +518,10 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				// ADD/UPDATE IT IN CACHE
 				getLevel1Cache().updateRecord(iRecord);
 
-		} catch (ODatabaseException e) {
+		} catch (OException e) {
 			// RE-THROW THE EXCEPTION
 			throw e;
-		} catch (OConcurrentModificationException e) {
-			// RE-THROW THE EXCEPTION
-			throw e;
+
 		} catch (Throwable t) {
 			// WRAP IT AS ODATABASE EXCEPTION
 			throw new ODatabaseException("Error on saving record in cluster #" + iRecord.getIdentity().getClusterId(), t);
@@ -546,11 +551,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			// REMOVE THE RECORD FROM 1 AND 2 LEVEL CACHES
 			getLevel1Cache().deleteRecord(rid);
 
-		} catch (ODatabaseException e) {
-			// RE-THROW THE EXCEPTION
-			throw e;
-
-		} catch (OConcurrentModificationException e) {
+		} catch (OException e) {
 			// RE-THROW THE EXCEPTION
 			throw e;
 
@@ -587,6 +588,15 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 	public OUser getUser() {
 		return user;
+	}
+
+	public boolean isMVCC() {
+		return mvcc;
+	}
+
+	public ODatabaseRecord setMVCC(boolean mvcc) {
+		this.mvcc = mvcc;
+		return this;
 	}
 
 	public <DB extends ODatabaseComplex<?>> DB registerHook(final ORecordHook iHookImpl) {
@@ -650,8 +660,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 		final OClass userClass = metadata.getSchema().createClass("OUser");
 		userClass.createProperty("roles", OType.LINKSET, roleClass);
-
-		metadata.getSchema().save();
 
 		// CREATE ROLES AND USERS
 		final ORole adminRole = metadata.getSecurity().createRole(ORole.ADMIN, ORole.ALLOW_MODES.ALLOW_ALL_BUT);

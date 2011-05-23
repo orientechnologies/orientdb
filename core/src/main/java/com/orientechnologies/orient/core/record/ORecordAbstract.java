@@ -36,7 +36,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	protected ORecordSerializer	_recordFormat;
 	protected boolean						_pinned		= true;
 	protected boolean						_dirty		= true;
-	protected STATUS						_status		= STATUS.NEW;
+	protected STATUS						_status		= STATUS.LOADED;
 	protected ORecordListener		_listener	= null;
 
 	public ORecordAbstract() {
@@ -85,6 +85,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	}
 
 	public boolean detach() {
+		_database = null;
 		return true;
 	}
 
@@ -95,7 +96,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	}
 
 	public ORecordAbstract<T> reset() {
-		_status = STATUS.NEW;
+		_status = STATUS.LOADED;
 
 		setDirty();
 		if (_recordId != null)
@@ -108,7 +109,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 
 	public byte[] toStream() {
 		if (_source == null)
-			_source = _recordFormat.toStream(_database, this);
+			_source = _recordFormat.toStream(_database, this, false);
 
 		invokeListenerEvent(ORecordListener.EVENT.MARSHALL);
 
@@ -191,7 +192,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 
 	@Override
 	public String toString() {
-		return (_recordId.isValid() ? _recordId : "") + "[" + (_source != null ? Arrays.toString(_source) : "") + "] v" + _version;
+		return (_recordId.isValid() ? _recordId : "") + (_source != null ? Arrays.toString(_source) : "[]") + " v" + _version;
 	}
 
 	public int getVersion() {
@@ -238,7 +239,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 	public ORecordInternal<T> reload() {
 		return reload(null);
 	}
-	
+
 	public ORecordInternal<T> reload(final String iFetchPlan) {
 		return reload(null, true);
 	}

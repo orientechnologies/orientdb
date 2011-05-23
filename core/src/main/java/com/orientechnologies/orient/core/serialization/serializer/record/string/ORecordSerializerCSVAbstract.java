@@ -350,7 +350,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 		case EMBEDDED:
 			if (iValue instanceof ODocument) {
 				iOutput.append(OStringSerializerHelper.PARENTHESIS_BEGIN);
-				toString((ODocument) iValue, iOutput, null, iObjHandler, iMarshalledRecords);
+				toString((ODocument) iValue, iOutput, null, iObjHandler, iMarshalledRecords, false);
 				iOutput.append(OStringSerializerHelper.PARENTHESIS_END);
 			} else if (iValue != null)
 				iOutput.append(iValue.toString());
@@ -459,7 +459,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 											}, null, iSaveOnlyDirty);
 
 						iOutput.append(OStringSerializerHelper.PARENTHESIS_BEGIN);
-						toString(record, iOutput, null, iObjHandler, iMarshalledRecords);
+						toString(record, iOutput, null, iObjHandler, iMarshalledRecords, false);
 						iOutput.append(OStringSerializerHelper.PARENTHESIS_END);
 					} else if (o.getValue() instanceof Map<?, ?>) {
 						// SUB MAP
@@ -609,7 +609,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 										}
 									}, null, iSaveOnlyDirty);
 
-				toString(document, iOutput, null, iObjHandler, iMarshalledRecords);
+				toString(document, iOutput, null, iObjHandler, iMarshalledRecords, false);
 			} else {
 				// EMBEDDED LITERALS
 				fieldTypeToString(iOutput, iDatabase, iLinkedType, o);

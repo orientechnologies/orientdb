@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.dictionary;
 
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -27,7 +26,7 @@ public class ODictionaryWrapper extends ODictionary<Object> {
 	private ODatabaseObject	database;
 
 	public ODictionaryWrapper(final ODatabaseObject iDatabase) {
-		super(((ODatabaseRecord) iDatabase.getUnderlying()).getMetadata().getIndexManager().getDictionary().getIndex());
+		super(iDatabase.getDictionary().getIndex());
 		this.database = iDatabase;
 	}
 

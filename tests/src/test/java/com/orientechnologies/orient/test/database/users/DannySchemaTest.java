@@ -30,8 +30,6 @@ public class DannySchemaTest {
 			dependents.createProperty("type", OType.STRING);
 			dependents.createProperty("dependents", OType.EMBEDDEDLIST, master);
 
-			db.getMetadata().getSchema().save();
-
 			db.close();
 
 			db.open("admin", "admin");

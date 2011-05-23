@@ -59,25 +59,24 @@ public class SchemaTest {
 		account.createProperty("birthDate", OType.DATE);
 		account.createProperty("binary", OType.BINARY);
 
-		database.getMetadata().getSchema().createClass("Company").setSuperClass(account);
+		database.getMetadata().getSchema().createClass("Company", account);
 
 		OClass profile = database.getMetadata().getSchema()
 				.createClass("Profile", database.getStorage().addCluster("profile", OStorage.CLUSTER_TYPE.PHYSICAL));
 		profile.createProperty("nick", OType.STRING).setMin("3").setMax("30").createIndex(INDEX_TYPE.UNIQUE);
 		profile.createProperty("name", OType.STRING).setMin("3").setMax("30").createIndex(INDEX_TYPE.NOTUNIQUE);
 		profile.createProperty("surname", OType.STRING).setMin("3").setMax("30");
-		profile.createProperty("registeredOn", OType.DATE).setMin("2010-01-01 00:00:00");
-		profile.createProperty("lastAccessOn", OType.DATE).setMin("2010-01-01 00:00:00");
+		profile.createProperty("registeredOn", OType.DATETIME).setMin("2010-01-01 00:00:00");
+		profile.createProperty("lastAccessOn", OType.DATETIME).setMin("2010-01-01 00:00:00");
 		profile.createProperty("photo", OType.TRANSIENT);
 
 		OClass whiz = database.getMetadata().getSchema().createClass("Whiz");
 		whiz.createProperty("id", OType.INTEGER);
 		whiz.createProperty("account", OType.LINK, profile);
-		whiz.createProperty("date", OType.DATE).setMin("2010-01-01 00:00:00");
+		whiz.createProperty("date", OType.DATE).setMin("2010-01-01");
 		whiz.createProperty("text", OType.STRING).setMandatory(true).setMin("1").setMax("140").createIndex(INDEX_TYPE.FULLTEXT);
 		whiz.createProperty("replyTo", OType.LINK, profile);
 
-		database.getMetadata().getSchema().save();
 		database.close();
 	}
 
@@ -93,8 +92,8 @@ public class SchemaTest {
 		assert schema.getClass("Profile").getProperty("nick").getType() == OType.STRING;
 		assert schema.getClass("Profile").getProperty("name").getType() == OType.STRING;
 		assert schema.getClass("Profile").getProperty("surname").getType() == OType.STRING;
-		assert schema.getClass("Profile").getProperty("registeredOn").getType() == OType.DATE;
-		assert schema.getClass("Profile").getProperty("lastAccessOn").getType() == OType.DATE;
+		assert schema.getClass("Profile").getProperty("registeredOn").getType() == OType.DATETIME;
+		assert schema.getClass("Profile").getProperty("lastAccessOn").getType() == OType.DATETIME;
 
 		assert schema.getClass("Whiz") != null;
 		assert schema.getClass("whiz").getProperty("account").getType() == OType.LINK;
@@ -130,7 +129,7 @@ public class SchemaTest {
 		database = new ODatabaseFlat(url);
 		database.open("admin", "admin");
 
-		for (OClass cls : database.getMetadata().getSchema().classes()) {
+		for (OClass cls : database.getMetadata().getSchema().getClasses()) {
 			assert database.getClusterNameById(cls.getDefaultClusterId()) != null;
 		}
 

@@ -77,7 +77,7 @@ public class CRUDDocumentValidationTest {
 	public void validationMinDate() throws ParseException {
 		record.clear();
 		record.field("account", account);
-		record.field("date", new SimpleDateFormat("dd/MM/yyyy").parse("01/01/1976"));
+		record.field("date", new SimpleDateFormat("dd/MM/yyyy").parse("01/33/1976"));
 		record.field("text", "test");
 		record.save();
 	}

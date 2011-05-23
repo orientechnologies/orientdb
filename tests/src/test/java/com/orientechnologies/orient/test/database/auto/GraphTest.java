@@ -42,16 +42,15 @@ public class GraphTest {
 
 		OClass vehicleClass = database.getMetadata().getSchema().getClass("GraphVehicle");
 		if (vehicleClass != null) {
-			database.getMetadata().getSchema().removeClass("GraphVehicle");
-			database.getMetadata().getSchema().removeClass("GraphCar");
-			database.getMetadata().getSchema().removeClass("GraphMotocycle");
+			database.getMetadata().getSchema().dropClass("GraphCar");
+			database.getMetadata().getSchema().dropClass("GraphMotocycle");
+			database.getMetadata().getSchema().dropClass("GraphVehicle");
 
-			vehicleClass = database.getMetadata().getSchema().createClass("GraphVehicle")
-					.setSuperClass(database.getMetadata().getSchema().getClass(OGraphVertex.class));
+			vehicleClass = database.getMetadata().getSchema()
+					.createClass("GraphVehicle", database.getMetadata().getSchema().getClass(OGraphVertex.class));
 
-			database.getMetadata().getSchema().createClass("GraphCar").setSuperClass(vehicleClass);
-			database.getMetadata().getSchema().createClass("GraphMotocycle").setSuperClass(vehicleClass);
-			database.getMetadata().getSchema().save();
+			database.getMetadata().getSchema().createClass("GraphCar", vehicleClass);
+			database.getMetadata().getSchema().createClass("GraphMotocycle", vehicleClass);
 		}
 
 		int existants = database.query(new OSQLSynchQuery<OGraphVertex>("select from GraphVehicle")).size();

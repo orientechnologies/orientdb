@@ -16,10 +16,10 @@
 package com.orientechnologies.orient.core.cache;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * Per database cache of documents.
@@ -30,16 +30,16 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 public class OLevel2RecordCache extends OAbstractRecordCache {
 
 	@SuppressWarnings("unused")
-	final private ODatabaseRaw	database;
-	private STRATEGY						strategy;
+	final private OStorage	storage;
+	private STRATEGY				strategy;
 
 	public enum STRATEGY {
 		POP_RECORD, COPY_RECORD
 	}
 
-	public OLevel2RecordCache(final ODatabaseRaw iDatabase) {
-		super("storage." + iDatabase.getName(), OGlobalConfiguration.CACHE_LEVEL2_SIZE.getValueAsInteger());
-		database = iDatabase;
+	public OLevel2RecordCache(final OStorage iStorage) {
+		super("storage." + iStorage.getName(), OGlobalConfiguration.CACHE_LEVEL2_SIZE.getValueAsInteger());
+		storage = iStorage;
 		setStrategy(OGlobalConfiguration.CACHE_LEVEL2_STRATEGY.getValueAsInteger());
 	}
 

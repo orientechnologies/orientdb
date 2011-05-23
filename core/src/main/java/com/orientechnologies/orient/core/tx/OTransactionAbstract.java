@@ -33,6 +33,10 @@ public abstract class OTransactionAbstract implements OTransaction {
 		database = iDatabase;
 	}
 
+	public abstract boolean isUsingLog();
+
+	public abstract void setUsingLog(boolean useLog);
+
 	public TXSTATUS getStatus() {
 		return status;
 	}
@@ -47,13 +51,13 @@ public abstract class OTransactionAbstract implements OTransaction {
 	}
 
 	public static void updateCacheFromEntries(final OStorage iStorage, final OTransaction iTx,
-			final Iterable<? extends OTransactionEntry> iEntries) throws IOException {
+			final Iterable<? extends OTransactionRecordEntry> iEntries) throws IOException {
 		final OLevel1RecordCache dbCache = (OLevel1RecordCache) iTx.getDatabase().getLevel1Cache();
 
-		for (OTransactionEntry txEntry : iEntries) {
-			if (txEntry.status == OTransactionEntry.DELETED)
+		for (OTransactionRecordEntry txEntry : iEntries) {
+			if (txEntry.status == OTransactionRecordEntry.DELETED)
 				dbCache.deleteRecord(txEntry.getRecord().getIdentity());
-			else if (txEntry.status == OTransactionEntry.UPDATED || txEntry.status == OTransactionEntry.CREATED)
+			else if (txEntry.status == OTransactionRecordEntry.UPDATED || txEntry.status == OTransactionRecordEntry.CREATED)
 				dbCache.updateRecord(txEntry.getRecord());
 		}
 	}

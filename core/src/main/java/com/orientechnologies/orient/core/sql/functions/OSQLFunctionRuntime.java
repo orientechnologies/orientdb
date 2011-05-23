@@ -68,4 +68,8 @@ public class OSQLFunctionRuntime {
 	public Object getResult() {
 		return function.getResult();
 	}
+
+	public void setResult(final Object iValue) {
+		function.setResult(iValue);
+	}
 }

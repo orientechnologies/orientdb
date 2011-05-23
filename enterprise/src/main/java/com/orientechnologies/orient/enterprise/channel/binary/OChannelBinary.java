@@ -28,8 +28,10 @@ import java.util.List;
 import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -305,30 +307,29 @@ public abstract class OChannelBinary extends OChannel {
 		if (iResult == OChannelBinaryProtocol.RESPONSE_STATUS_OK || iResult == OChannelBinaryProtocol.PUSH_DATA) {
 		} else if (iResult == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
 			StringBuilder buffer = new StringBuilder();
-			String rootClassName = null;
+
+			final List<OPair<String, String>> exceptions = new ArrayList<OPair<String, String>>();
 
 			// EXCEPTION
 			while (readByte() == 1) {
 				final String excClassName = readString();
 				final String excMessage = readString();
-
-				if (rootClassName == null)
-					// FIRST ONE: TAKE AS ROOT CLASS/MSG
-					rootClassName = excClassName;
-				else {
-					// DETAIL: APPEND AS STRING SINCE EXCEPTIONS DON'T ALLOW TO BE REBUILT PROGRAMMATICALLY
-					buffer.append("\n-> ");
-					buffer.append(excClassName);
-					buffer.append(": ");
-				}
-				buffer.append(excMessage);
+				exceptions.add(new OPair<String, String>(excClassName, excMessage));
 			}
 
-			if (rootClassName != null)
-				throw createException(rootClassName, buffer.toString());
-			else {
+			Exception previous = null;
+			for (int i = exceptions.size() - 1; i > -1; --i) {
+				previous = createException(exceptions.get(i).getKey(), exceptions.get(i).getValue(), previous);
+			}
+
+			if (previous != null) {
+				if (previous instanceof RuntimeException)
+					throw (RuntimeException) previous;
+				else
+					throw new ODatabaseException("Generic error, see the underlying cause", previous);
+			} else
 				throw new ONetworkProtocolException("Network response error: " + buffer.toString());
-			}
+
 		} else {
 			// PROTOCOL ERROR
 			// close();
@@ -338,20 +339,33 @@ public abstract class OChannelBinary extends OChannel {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static RuntimeException createException(final String iClassName, final String iMessage) {
+	private static RuntimeException createException(final String iClassName, final String iMessage, final Exception iPrevious) {
 		RuntimeException rootException = null;
 		Constructor<?> c = null;
 		try {
 			final Class<RuntimeException> excClass = (Class<RuntimeException>) Class.forName(iClassName);
-			c = excClass.getConstructor(String.class);
+			if (iPrevious != null) {
+				try {
+					c = excClass.getConstructor(String.class, Throwable.class);
+				} catch (NoSuchMethodException e) {
+					c = excClass.getConstructor(String.class, Exception.class);
+				}
+			}
+
+			if (c == null)
+				c = excClass.getConstructor(String.class);
+
 		} catch (Exception e) {
 			// UNABLE TO REPRODUCE THE SAME SERVER-SIZE EXCEPTION: THROW A STORAGE EXCEPTION
-			rootException = new OStorageException(iMessage, null);
+			rootException = new OStorageException(iMessage, iPrevious);
 		}
 
 		if (c != null)
 			try {
-				rootException = (RuntimeException) c.newInstance(iMessage);
+				if (c.getParameterTypes().length > 1)
+					rootException = (RuntimeException) c.newInstance(iMessage, iPrevious);
+				else
+					rootException = (RuntimeException) c.newInstance(iMessage);
 			} catch (InstantiationException e) {
 			} catch (IllegalAccessException e) {
 			} catch (InvocationTargetException e) {

@@ -152,14 +152,16 @@ public class JSONTest {
 		Assert.assertEquals(((Integer) docMerge2.field("years")).intValue(), 32);
 
 		ODocument docMerge3 = doc1.copy();
+
+		doc2.removeField("years");
 		docMerge3.merge(doc2, false, false);
 
 		Assert.assertTrue(docMerge3.containsField("embeddedList"));
 		Assert.assertTrue(docMerge3.field("embeddedList") instanceof List<?>);
-		Assert.assertEquals(((List<String>) docMerge3.field("embeddedList")).size(), 3);
+		Assert.assertEquals(((List<String>) docMerge3.field("embeddedList")).size(), 2);
 		Assert.assertTrue(((List<String>) docMerge3.field("embeddedList")).get(0) instanceof String);
-		Assert.assertEquals(((Integer) docMerge3.field("salary")).intValue(), 10000);
-		Assert.assertEquals(((Integer) docMerge3.field("years")).intValue(), 16);
+		Assert.assertFalse(docMerge3.containsField("salary"));
+		Assert.assertFalse(docMerge3.containsField("years"));
 	}
 
 	@Test

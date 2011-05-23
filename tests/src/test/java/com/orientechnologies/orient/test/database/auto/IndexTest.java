@@ -24,14 +24,13 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OProperty.INDEX_TYPE;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
 
-@Test(groups = { "index" }, sequential = true)
+@Test(groups = { "index" })
 public class IndexTest {
 	private ODatabaseObjectTx	database;
 	protected long						startRecordNumber;
@@ -59,8 +58,8 @@ public class IndexTest {
 			// IT SHOULD GIVE ERROR ON DUPLICATED KEY
 			Assert.assertTrue(false);
 
-		} catch (ODatabaseException e) {
-			Assert.assertTrue(e.getCause() instanceof OIndexException);
+		} catch (OIndexException e) {
+			Assert.assertTrue(true);
 		}
 		database.close();
 	}
@@ -71,6 +70,8 @@ public class IndexTest {
 
 		final List<Profile> result = database.command(new OSQLSynchQuery<Profile>("select * from Profile where nick = 'Jay'"))
 				.execute();
+
+		Assert.assertFalse(result.isEmpty());
 
 		Profile record;
 		for (int i = 0; i < result.size(); ++i) {
@@ -87,9 +88,8 @@ public class IndexTest {
 	@Test(dependsOnMethods = "testUseOfIndex")
 	public void testChangeOfIndexToNotUnique() {
 		database.open("admin", "admin");
-		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").removeIndex();
+		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").dropIndex();
 		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").createIndex(INDEX_TYPE.NOTUNIQUE);
-		database.getMetadata().getSchema().save();
 		database.close();
 	}
 
@@ -104,26 +104,27 @@ public class IndexTest {
 	}
 
 	@Test(dependsOnMethods = "testDuplicatedIndexOnNotUnique")
+	public void testQueryIndex() {
+		database.open("admin", "admin");
+
+		List<?> result = database.query(new OSQLSynchQuery<Object>("select from index:profile.nick where key = 'Jay'"));
+		Assert.assertTrue(result.size() > 0);
+
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "testQueryIndex")
 	public void testChangeOfIndexToUnique() {
 		database.open("admin", "admin");
 		try {
-			database.getMetadata().getSchema().getClass("Profile").getProperty("nick").removeIndex();
-			database.getMetadata().getSchema().save();
+			database.getMetadata().getSchema().getClass("Profile").getProperty("nick").dropIndex();
 			database.getMetadata().getSchema().getClass("Profile").getProperty("nick").createIndex(INDEX_TYPE.UNIQUE);
 			Assert.assertTrue(false);
 		} catch (OIndexException e) {
+			Assert.assertTrue(true);
 		}
 
 		database.close();
 	}
 
-	@Test(dependsOnMethods = "testChangeOfIndexToUnique")
-	public void testQueryIndex() {
-		database.open("admin", "admin");
-
-		List<?> result = database.query(new OSQLSynchQuery<Object>("select from index:dictionary where key = 'root'"));
-		//Assert.assertTrue(result.size() > 0);
-
-		database.close();
-	}
 }

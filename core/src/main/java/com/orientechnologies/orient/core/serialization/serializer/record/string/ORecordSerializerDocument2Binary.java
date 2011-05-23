@@ -83,6 +83,7 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
 					value = in.readBoolean();
 					break;
 				case DATE:
+				case DATETIME:
 					long date = in.readLong();
 					if (date > -1)
 						value = new Date(date);
@@ -145,7 +146,7 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
 		return iRecord;
 	}
 
-	public byte[] toStream(final ODatabaseRecord iDatabase, final ORecordInternal<?> iRecord) {
+	public byte[] toStream(final ODatabaseRecord iDatabase, final ORecordInternal<?> iRecord, boolean iOnlyDelta) {
 		ODocument record = (ODocument) iRecord;
 
 		ByteArrayOutputStream stream = null;
@@ -178,6 +179,7 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
 						out.writeBoolean((Boolean) value);
 					break;
 				case DATE:
+				case DATETIME:
 					out.writeLong(value != null ? ((Date) value).getTime() : -1);
 					break;
 				case DOUBLE:

@@ -16,20 +16,26 @@
 package com.orientechnologies.orient.core.metadata;
 
 import java.io.IOException;
+import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexManagerImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
+import com.orientechnologies.orient.core.metadata.security.OSecurityProxy;
+import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 public class OMetadata {
 	protected ODatabaseRecord	database;
 	protected int							schemaClusterId;
 
-	protected OSchema					schema;
-	protected OSecurity				security;
+	protected OSchemaProxy		schema;
+	protected OSecurityProxy	security;
 	protected OIndexManager		indexManager;
 
 	public OMetadata(final ODatabaseRecord iDatabase) {
@@ -86,8 +92,19 @@ public class OMetadata {
 	private void init() {
 		schemaClusterId = database.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME);
 
-		schema = new OSchema(database, schemaClusterId);
-		security = new OSecurity(database);
-		indexManager = new OIndexManager(database);
+		schema = new OSchemaProxy(database.getStorage().getResource(OSchema.class.getSimpleName(), new Callable<OSchemaShared>() {
+			public OSchemaShared call() {
+				return new OSchemaShared(schemaClusterId);
+			}
+		}), database);
+
+		security = new OSecurityProxy(database.getStorage().getResource(OSecurity.class.getSimpleName(),
+				new Callable<OSecurityShared>() {
+					public OSecurityShared call() {
+						return new OSecurityShared();
+					}
+				}), database);
+
+		indexManager = new OIndexManagerImpl(database);
 	}
 }

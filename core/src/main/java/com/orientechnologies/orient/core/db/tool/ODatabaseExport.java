@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
@@ -268,8 +268,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 		listener.onMessage("\nExporting schema...");
 
 		writer.beginObject(1, true, "schema");
-		OSchema s = database.getMetadata().getSchema();
-		writer.writeAttribute(2, true, "version", s.getDocument().getVersion());
+		OSchemaProxy s = (OSchemaProxy) database.getMetadata().getSchema();
+		writer.writeAttribute(2, true, "version", s.getVersion());
 
 		if (s.getClasses().size() > 0) {
 			writer.beginCollection(2, true, "classes");
@@ -299,6 +299,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 						writer.writeAttribute(0, false, "name", p.getName());
 						writer.writeAttribute(0, false, "id", p.getId());
 						writer.writeAttribute(0, false, "type", p.getType().toString());
+						writer.writeAttribute(0, false, "mandatory", p.isMandatory());
+						writer.writeAttribute(0, false, "not-null", p.isNotNull());
 						if (p.getLinkedClass() != null)
 							writer.writeAttribute(0, false, "linked-class", p.getLinkedClass().getName());
 						if (p.getLinkedType() != null)

@@ -16,129 +16,40 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
-import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.record.ORecord.STATUS;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
-import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
-public class OSchema extends ODocumentWrapperNoClass {
-	protected Map<String, OClass>	classes									= new HashMap<String, OClass>();
-	private static final int			CURRENT_VERSION_NUMBER	= 4;
+public interface OSchema {
 
-	public OSchema(final ODatabaseRecord iDatabaseOwner, final int schemaClusterId) {
-		super(new ODocument(iDatabaseOwner));
-		registerStandardClasses();
-	}
+	public int countClasses();
 
-	public Collection<OClass> classes() {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ);
-		return Collections.unmodifiableCollection(classes.values());
-	}
+	public OClass createClass(final Class<?> iClass);
 
-	public OClass createClass(final Class<?> iClass) {
-		return createClass(iClass.getSimpleName(), OStorage.CLUSTER_TYPE.PHYSICAL);
-	}
+	public OClass createClass(final Class<?> iClass, final int iDefaultClusterId);
 
-	public OClass createClass(final Class<?> iClass, final int iDefaultClusterId) {
-		return createClass(iClass.getSimpleName(), iDefaultClusterId);
-	}
+	public OClass createClass(final String iClassName);
 
-	public OClass createClass(final String iClassName) {
-		return createClass(iClassName, OStorage.CLUSTER_TYPE.PHYSICAL);
-	}
+	public OClass createClass(final String iClassName, final OClass iSuperClass);
 
-	public OClass createClass(final String iClassName, final OStorage.CLUSTER_TYPE iType) {
-		int clusterId = document.getDatabase().getClusterIdByName(iClassName);
-		if (clusterId == -1) {
-			// CREATE A NEW CLUSTER
-			clusterId = document.getDatabase().getStorage().addCluster(iClassName, iType);
-		}
+	public OClass createClass(final String iClassName, final OClass iSuperClass, final OStorage.CLUSTER_TYPE iType);
 
-		return createClass(iClassName, clusterId);
-	}
+	public OClass createClass(final String iClassName, final int iDefaultClusterId);
 
-	public OClass createClass(final String iClassName, final int iDefaultClusterId) {
-		return createClass(iClassName, new int[] { iDefaultClusterId }, iDefaultClusterId);
-	}
+	public OClass createClass(final String iClassName, final OClass iSuperClass, final int iDefaultClusterId);
 
-	public OClass createClass(final String iClassName, final int[] iClusterIds) {
-		return createClass(iClassName, iClusterIds, -1);
-	}
+	public OClass createClass(final String iClassName, final OClass iSuperClass, final int[] iClusterIds);
 
-	public OClass createClass(final String iClassName, final int[] iClusterIds, final int iDefaultClusterId) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_CREATE);
+	public void dropClass(final String iClassName);
 
-		final String key = iClassName.toLowerCase();
+	public <RET extends ODocumentWrapper> RET reload();
 
-		if (classes.containsKey(key))
-			throw new OSchemaException("Class " + iClassName + " already exists in current database");
+	public boolean existsClass(final String iClassName);
 
-		final OClass cls = new OClass(this, classes.size(), iClassName, iClusterIds, iDefaultClusterId);
-		classes.put(key, cls);
+	public OClass getClassById(final int iClassId);
 
-		if (cls.getShortName() != null)
-			// BIND SHORT NAME TOO
-			classes.put(cls.getShortName().toLowerCase(), cls);
-
-		document.setDirty();
-
-		return cls;
-	}
-
-	public void removeClass(final String iClassName) {
-		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_DELETE);
-
-		final String key = iClassName.toLowerCase();
-
-		if (!classes.containsKey(key))
-			throw new OSchemaException("Class " + iClassName + " was not found in current database");
-
-		classes.remove(key);
-		document.setDirty();
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public <RET extends ODocumentWrapper> RET reload() {
-		super.reload();
-		fromStream();
-		return (RET) this;
-	}
-
-	public boolean existsClass(final String iClassName) {
-		return classes.containsKey(iClassName.toLowerCase());
-	}
-
-	public OClass getClassById(final int iClassId) {
-		if (iClassId == -1)
-			return null;
-
-		for (OClass c : classes.values())
-			if (c.getId() == iClassId)
-				return c;
-
-		throw new OSchemaException("Class #" + iClassId + " was not found in current database");
-	}
-
-	public OClass getClass(final Class<?> iClass) {
-		return getClass(iClass.getSimpleName());
-	}
+	public OClass getClass(final Class<?> iClass);
 
 	/**
 	 * Returns the OClass instance by class name. If the class is not configured and the database has an entity manager with the
@@ -148,143 +59,20 @@ public class OSchema extends ODocumentWrapperNoClass {
 	 *          Name of the class to retrieve
 	 * @return
 	 */
-	public OClass getClass(final String iClassName) {
-		if (iClassName == null)
-			return null;
+	public OClass getClass(final String iClassName);
 
-		OClass cls = classes.get(iClassName.toLowerCase());
+	public Collection<OClass> getClasses();
 
-		if (cls == null) {
-			// CHECK IF THE SCHEMA IS OLD: RELOAD IT
-			// reload();
+	public void create();
 
-			// cls = classes.get(iClassName.toLowerCase());
+	public int getVersion();
 
-			if (cls == null) {
-				// CHECK IF CAN AUTO-CREATE IT
-				final ODatabase ownerDb = document.getDatabase().getDatabaseOwner();
-				if (ownerDb instanceof ODatabaseObjectTx) {
-					final Class<?> javaClass = ((ODatabaseObjectTx) ownerDb).getEntityManager().getEntityClass(iClassName);
-
-					if (javaClass != null) {
-						// AUTO REGISTER THE CLASS AT FIRST USE
-						cls = cascadeCreate(javaClass);
-						save();
-					}
-				}
-			}
-		}
-		return cls;
-	}
-
-	private OClass cascadeCreate(final Class<?> javaClass) {
-		final OClass cls = createClass(javaClass.getSimpleName());
-
-		final Class<?> javaSuperClass = javaClass.getSuperclass();
-		if (javaSuperClass != null && !javaSuperClass.getName().equals("java.lang.Object")) {
-			OClass superClass = classes.get(javaSuperClass.getSimpleName().toLowerCase());
-			if (superClass == null)
-				superClass = cascadeCreate(javaSuperClass);
-			cls.setSuperClass(superClass);
-		}
-
-		return cls;
-	}
+	public ORID getIdentity();
 
 	/**
-	 * Binds ODocument to POJO.
+	 * Do nothing. Starting from 1.0rc2 the schema is auto saved!
+	 * 
+	 * @COMPATIBILITY 1.0rc1
 	 */
-	@Override
-	public void fromStream() {
-		// READ CURRENT SCHEMA VERSION
-		int schemaVersion = (Integer) document.field("schemaVersion");
-		if (schemaVersion != CURRENT_VERSION_NUMBER) {
-			// HANDLE SCHEMA UPGRADE
-			throw new OConfigurationException(
-					"Database schema is different. Please export your old database with the previous verison of OrientDB and reimport it using the current one.");
-		}
-
-		// REGISTER ALL THE CLASSES
-		classes.clear();
-		OClass cls;
-		Collection<ODocument> storedClasses = document.field("classes");
-		for (ODocument c : storedClasses) {
-			c.setDatabase(document.getDatabase());
-			cls = new OClass(this, c);
-			cls.fromStream();
-			classes.put(cls.getName().toLowerCase(), cls);
-
-			if (cls.getShortName() != null)
-				classes.put(cls.getShortName().toLowerCase(), cls);
-		}
-
-		// REBUILD THE INHERITANCE TREE
-		String superClassName;
-		OClass superClass;
-		for (ODocument c : storedClasses) {
-			superClassName = c.field("superClass");
-
-			if (superClassName != null) {
-				// HAS A SUPER CLASS
-				cls = classes.get(((String) c.field("name")).toLowerCase());
-
-				superClass = classes.get(superClassName.toLowerCase());
-
-				if (superClass == null)
-					throw new OConfigurationException("Super class '" + superClassName + "' was declared in class '" + cls.getName()
-							+ "' but was not found in schema. Remove the dependency or create the class to continue.");
-
-				cls.setSuperClass(superClass);
-			}
-		}
-	}
-
-	/**
-	 * Binds POJO to ODocument.
-	 */
-	@Override
-	@OBeforeSerialization
-	public ODocument toStream() {
-		document.setStatus(STATUS.UNMARSHALLING);
-
-		try {
-			document.field("schemaVersion", CURRENT_VERSION_NUMBER);
-
-			Set<ODocument> cc = new HashSet<ODocument>();
-			for (OClass c : classes.values()) {
-				cc.add(c.toStream());
-			}
-			document.field("classes", cc, OType.EMBEDDEDSET);
-
-		} finally {
-			document.setStatus(STATUS.LOADED);
-		}
-
-		return document;
-	}
-
-	private void registerStandardClasses() {
-	}
-
-	public Collection<OClass> getClasses() {
-		return Collections.unmodifiableCollection(classes.values());
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	public OSchema load() {
-		((ORecordId) document.getIdentity()).fromString(document.getDatabase().getStorage().getConfiguration().schemaRecordId);
-		return super.load("*:-1 index:0");
-	}
-
-	public void create() {
-		save(OStorage.CLUSTER_INTERNAL_NAME);
-		document.getDatabase().getStorage().getConfiguration().schemaRecordId = document.getIdentity().toString();
-		document.getDatabase().getStorage().getConfiguration().update();
-	}
-
-	public OSchema setDirty() {
-		document.setDirty();
-		return this;
-	}
+	public <RET extends ODocumentWrapper> RET save();
 }

@@ -336,6 +336,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 				return fromString(iRecord.getDatabase(), iFieldValueAsString);
 
 			case DATE:
+			case DATETIME:
 				if (iFieldValueAsString == null || iFieldValueAsString.equals(""))
 					return null;
 				try {
@@ -359,7 +360,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
 	@Override
 	public StringBuilder toString(final ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat,
-			final OUserObject2RecordHandler iObjHandler, final Set<Integer> iMarshalledRecords) {
+			final OUserObject2RecordHandler iObjHandler, final Set<Integer> iMarshalledRecords, boolean iOnlyDelta) {
 		try {
 			final StringWriter buffer = new StringWriter();
 			final OJSONWriter json = new OJSONWriter(buffer, iFormat);

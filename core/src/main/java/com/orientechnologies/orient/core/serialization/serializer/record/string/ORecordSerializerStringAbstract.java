@@ -41,17 +41,17 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 	private static final int		MAX_INTEGER_DIGITS		= MAX_INTEGER_AS_STRING.length();
 
 	protected abstract StringBuilder toString(final ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat,
-			final OUserObject2RecordHandler iObjHandler, final Set<Integer> iMarshalledRecords);
+			final OUserObject2RecordHandler iObjHandler, final Set<Integer> iMarshalledRecords, boolean iOnlyDelta);
 
 	protected abstract ORecordInternal<?> fromString(final ODatabaseRecord iDatabase, final String iContent,
 			final ORecordInternal<?> iRecord);
 
 	public StringBuilder toString(final ORecordInternal<?> iRecord, final String iFormat) {
-		return toString(iRecord, new StringBuilder(), iFormat, iRecord.getDatabase(), OSerializationThreadLocal.INSTANCE.get());
+		return toString(iRecord, new StringBuilder(), iFormat, iRecord.getDatabase(), OSerializationThreadLocal.INSTANCE.get(), false);
 	}
 
 	public StringBuilder toString(final ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat) {
-		return toString(iRecord, iOutput, iFormat, iRecord.getDatabase(), OSerializationThreadLocal.INSTANCE.get());
+		return toString(iRecord, iOutput, iFormat, iRecord.getDatabase(), OSerializationThreadLocal.INSTANCE.get(), false);
 	}
 
 	public ORecordInternal<?> fromString(final ODatabaseRecord iDatabase, final String iSource) {
@@ -69,12 +69,12 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 		}
 	}
 
-	public byte[] toStream(final ODatabaseRecord iDatabase, final ORecordInternal<?> iRecord) {
+	public byte[] toStream(final ODatabaseRecord iDatabase, final ORecordInternal<?> iRecord, boolean iOnlyDelta) {
 		final long timer = OProfiler.getInstance().startChrono();
 
 		try {
 			return OBinaryProtocol.string2bytes(toString(iRecord, new StringBuilder(), null, iDatabase,
-					OSerializationThreadLocal.INSTANCE.get()).toString());
+					OSerializationThreadLocal.INSTANCE.get(), iOnlyDelta).toString());
 		} finally {
 
 			OProfiler.getInstance().stopChrono("ORecordSerializerStringAbstract.toStream", timer);
@@ -142,6 +142,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 			}
 
 		case DATE:
+		case DATETIME:
 			if (iValue instanceof Date)
 				return iValue;
 			return convertValue((String) iValue, iType);
@@ -246,6 +247,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 			break;
 
 		case DATE:
+		case DATETIME:
 			if (iValue instanceof Date)
 				iBuffer.append(((Date) iValue).getTime());
 			else
@@ -312,6 +314,8 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 							return OType.BYTE;
 						else if (c == 't')
 							return OType.DATE;
+						else if (c == 'm')
+							return OType.DATETIME;
 						else if (c == 's')
 							return OType.SHORT;
 

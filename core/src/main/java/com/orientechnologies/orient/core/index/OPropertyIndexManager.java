@@ -66,7 +66,7 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 		if (indexedProperties != null) {
 			final Set<String> dirtyFields = iRecord.getDirtyFields();
 
-			if (dirtyFields != null && dirtyFields.size() > 0) {
+			if (dirtyFields.size() > 0) {
 				// REMOVE INDEX OF ENTRIES FOR THE OLD VALUES
 				Object originalValue = null;
 				OIndex index;
@@ -90,7 +90,7 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 					if (dirtyFields.contains(propEntry.getKey().getName())) {
 						index = propEntry.getKey().getIndex().getUnderlying();
 
-						// SAVE A COPY TO AVOID PROBLEN ON RECYCLING OF THE RECORD
+						// SAVE A COPY TO AVOID PROBLEM ON RECYCLING OF THE RECORD
 						index.put(propEntry.getValue(), iRecord.placeholder());
 						index.lazySave();
 					}
@@ -115,7 +115,7 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 
 			OIndex index;
 
-			if (dirtyFields != null && dirtyFields.size() > 0) {
+			if (dirtyFields.size() > 0) {
 				// REMOVE INDEX OF ENTRIES FOR THE OLD VALUES
 				for (Entry<OProperty, Object> propEntry : indexedProperties.entrySet()) {
 					if (dirtyFields.contains(propEntry.getKey().getName())) {

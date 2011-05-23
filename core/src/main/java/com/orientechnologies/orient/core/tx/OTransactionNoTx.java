@@ -19,9 +19,13 @@ import java.util.Collection;
 import java.util.List;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.tx.OTransactionIndexEntry.STATUSES;
 
 public class OTransactionNoTx extends OTransactionAbstract {
 	public OTransactionNoTx(final ODatabaseRecordTx iDatabase) {
@@ -40,7 +44,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
 		// invokeRollbackAgainstListeners();
 	}
 
-	public ORecordInternal<?> load(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan) {
+	public ORecordInternal<?> loadRecord(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan) {
 		if (iRid.isNew())
 			return null;
 
@@ -48,39 +52,39 @@ public class OTransactionNoTx extends OTransactionAbstract {
 	}
 
 	/**
-	 * Update the record without checking the version coherence.
+	 * Update the record.
 	 */
-	public void save(final ORecordInternal<?> iContent, final String iClusterName) {
-		database.executeSaveRecord(iContent, iClusterName, -1, iContent.getRecordType());
+	public void saveRecord(final ORecordInternal<?> iContent, final String iClusterName) {
+		database.executeSaveRecord(iContent, iClusterName, iContent.getVersion(), iContent.getRecordType());
 	}
 
 	/**
-	 * Delete the record without checking the version coherence.
+	 * Delete the record.
 	 */
-	public void delete(final ORecordInternal<?> iRecord) {
-		database.executeDeleteRecord(iRecord, -1);
+	public void deleteRecord(final ORecordInternal<?> iRecord) {
+		database.executeDeleteRecord(iRecord, iRecord.getVersion());
 	}
 
-	public Collection<OTransactionEntry> getEntries() {
+	public Collection<OTransactionRecordEntry> getRecordEntries() {
 		return null;
 	}
 
-	public List<OTransactionEntry> getEntriesByClass(String iClassName) {
+	public List<OTransactionRecordEntry> getRecordEntriesByClass(String iClassName) {
 		return null;
 	}
 
-	public List<OTransactionEntry> getEntriesByClusterIds(int[] iIds) {
+	public List<OTransactionRecordEntry> getRecordEntriesByClusterIds(int[] iIds) {
 		return null;
 	}
 
-	public void clearEntries() {
+	public void clearRecordEntries() {
 	}
 
-	public int size() {
+	public int getRecordEntriesSize() {
 		return 0;
 	}
 
-	public ORecordInternal<?> getEntry(ORecordId rid) {
+	public ORecordInternal<?> getRecordEntry(ORecordId rid) {
 		return null;
 	}
 
@@ -89,5 +93,33 @@ public class OTransactionNoTx extends OTransactionAbstract {
 	}
 
 	public void setUsingLog(final boolean useLog) {
+	}
+
+	public ODocument getIndexEntries() {
+		return null;
+	}
+
+	public OTransactionIndexEntry getIndexEntry(final String iIndexName, final Object iKey) {
+		return null;
+	}
+
+	public void addIndexEntry(final OIndex delegate, final String iIndexName, final STATUSES iStatus, final Object iKey,
+			final OIdentifiable iValue) {
+		switch (iStatus) {
+		case CLEAR:
+			delegate.clear();
+			break;
+
+		case PUT:
+			delegate.put(iKey, iValue);
+			break;
+
+		case REMOVE:
+			delegate.remove(iKey, iValue);
+			break;
+		}
+	}
+
+	public void clearIndexEntries() {
 	}
 }

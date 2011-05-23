@@ -21,13 +21,14 @@ import java.util.Map;
 
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 
 /**
  * SQL INSERT command.
@@ -41,6 +42,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 	private static final String	KEYWORD_INTO		= "INTO";
 	private String							className				= null;
 	private String							clusterName			= null;
+	private String							indexName				= null;
 	private List<String>				fieldNames;
 	private Object[]						fieldValues;
 
@@ -66,13 +68,18 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 
 		pos = OSQLHelper.nextWord(text, textUpperCase, pos, word, true);
 		if (pos == -1)
-			throw new OCommandSQLParsingException("Invalid class name", text, pos);
+			throw new OCommandSQLParsingException("Invalid subject name. Expected cluster, class or index", text, pos);
 
 		String subjectName = word.toString();
 
 		if (subjectName.startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX))
-			// CLUSTEr
+			// CLUSTER
 			clusterName = subjectName.substring(OCommandExecutorSQLAbstract.CLUSTER_PREFIX.length());
+
+		else if (subjectName.startsWith(OCommandExecutorSQLAbstract.INDEX_PREFIX))
+			// INDEX
+			indexName = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_PREFIX.length());
+
 		else {
 			// CLASS
 			if (subjectName.startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX))
@@ -97,6 +104,10 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 		OStringSerializerHelper.getParameters(text, beginFields, fieldNames);
 		if (fieldNames.size() == 0)
 			throw new OCommandSQLParsingException("Set of fields is empty. Example: (name, surname)", text, endFields);
+
+		// REMOVE QUOTATION MARKS IF ANY
+		for (int i = 0; i < fieldNames.size(); ++i)
+			fieldNames.set(i, OStringSerializerHelper.removeQuotationMarks(fieldNames.get(i)));
 
 		pos = OSQLHelper.nextWord(text, textUpperCase, endFields + 1, word, true);
 		if (pos == -1 || !word.toString().equals(KEYWORD_VALUES))
@@ -133,25 +144,38 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLAbstract {
 		if (fieldNames == null)
 			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
 
-		// CREATE NEW DOCUMENT
-		ODocument doc = className != null ? new ODocument(database, className) : new ODocument(database);
+		if (indexName != null) {
+			final OIndex index = database.getMetadata().getIndexManager().getIndex(indexName);
+			if (index == null)
+				throw new OCommandExecutionException("Target index '" + indexName + "' not found");
 
-		// BIND VALUES
-		Object v;
-		for (int i = 0; i < fieldNames.size(); ++i) {
-			v = fieldValues[i];
+			// BIND VALUES
+			Object key = null;
+			OIdentifiable value = null;
+			for (int i = 0; i < fieldNames.size(); ++i) {
+				final String fieldName = fieldNames.get(i);
+				if (fieldName.equalsIgnoreCase("KEY"))
+					key = fieldValues[i];
+				else if (fieldName.equalsIgnoreCase("VALUE"))
+					value = (OIdentifiable) fieldValues[i];
+			}
 
-			if (v instanceof OSQLFilterItem)
-				v = ((OSQLFilterItem) v).getValue(doc);
+			index.put(key, value);
+			return null;
+		} else {
+			// CREATE NEW DOCUMENT
+			ODocument doc = className != null ? new ODocument(database, className) : new ODocument(database);
 
-			doc.field(fieldNames.get(i), v);
+			// BIND VALUES
+			for (int i = 0; i < fieldNames.size(); ++i) {
+				doc.field(fieldNames.get(i), OSQLHelper.getValue(fieldValues[i], doc));
+			}
+
+			if (clusterName != null)
+				doc.save(clusterName);
+			else
+				doc.save();
+			return doc;
 		}
-
-		if (clusterName != null)
-			doc.save(clusterName);
-		else
-			doc.save();
-
-		return doc;
 	}
 }

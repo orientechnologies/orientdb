@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.zip.GZIPInputStream;
 
+import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.parser.OStringForwardReader;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -36,9 +37,12 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -54,13 +58,13 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * 
  */
 public class ODatabaseImport extends ODatabaseImpExpAbstract {
-	private Map<OProperty, String>	linkedClasses		= new HashMap<OProperty, String>();
-	private Map<OClass, String>			superClasses		= new HashMap<OClass, String>();
-	private OJSONReader							jsonReader;
-	private OStringForwardReader		reader;
-	private ORecordInternal<?>			record;
-	private List<String>						recordToDelete	= new ArrayList<String>();
-	private Map<OProperty, String>	propertyIndexes	= new HashMap<OProperty, String>();
+	private Map<OPropertyImpl, String>	linkedClasses		= new HashMap<OPropertyImpl, String>();
+	private Map<OClass, String>					superClasses		= new HashMap<OClass, String>();
+	private OJSONReader									jsonReader;
+	private OStringForwardReader				reader;
+	private ORecordInternal<?>					record;
+	private List<String>								recordToDelete	= new ArrayList<String>();
+	private Map<OProperty, String>			propertyIndexes	= new HashMap<OProperty, String>();
 
 	public ODatabaseImport(final ODatabaseDocument database, final String iFileName, final OCommandOutputListener iListener)
 			throws IOException {
@@ -97,6 +101,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 			database.getLevel1Cache().clear();
 			database.getLevel2Cache().setMaxSize(0);
 			database.getLevel2Cache().clear();
+			database.setMVCC(false);
 
 			String tag;
 			while (jsonReader.hasNext() && jsonReader.lastChar() != '}') {
@@ -132,31 +137,33 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 	}
 
 	private void rebuildAutomaticIndexes() {
-		listener.onMessage("\nRebuilding " + propertyIndexes.size() + " indexes...");
+		listener.onMessage("\nRebuilding " + propertyIndexes.size() + " automatic indexes...");
 
 		database.getMetadata().getIndexManager().load();
 
 		for (Entry<OProperty, String> e : propertyIndexes.entrySet()) {
-			e.getKey().setIndex(database.getMetadata().getIndexManager().getIndex(e.getValue()));
-			e.getKey().getIndex().getUnderlying().setCallback(e.getKey().getIndex());
+			final OIndexInternal idx = (OIndexInternal) database.getMetadata().getIndexManager().getIndex(e.getValue());
 
-			// listener.onMessage("\n- Index '" + e.getKey().getIndex().getUnderlying().getName() + "'...");
-			//
-			// e.getKey().getIndex().getUnderlying().rebuild(new OProgressListener() {
-			// public boolean onProgress(Object iTask, long iCounter, float iPercent) {
-			// if (iPercent % 10 == 0)
-			// listener.onMessage(".");
-			// return false;
-			// }
-			//
-			// public void onCompletition(Object iTask, boolean iSucceed) {
-			// }
-			//
-			// public void onBegin(Object iTask, long iTotal) {
-			// }
-			// });
-			//
-			// listener.onMessage("OK (" + e.getKey().getIndex().getUnderlying().getSize() + " records)");
+			((OPropertyImpl) e.getKey()).setIndex(idx);
+			idx.setCallback(e.getKey().getIndex());
+
+			listener.onMessage("\n- Index '" + idx.getName() + "'...");
+
+//			idx.rebuild(new OProgressListener() {
+//				public boolean onProgress(Object iTask, long iCounter, float iPercent) {
+//					if (iPercent % 10 == 0)
+//						listener.onMessage(".");
+//					return false;
+//				}
+//
+//				public void onCompletition(Object iTask, boolean iSucceed) {
+//				}
+//
+//				public void onBegin(Object iTask, long iTotal) {
+//				}
+//			});
+
+			listener.onMessage("OK (" + idx.getSize() + " records)");
 		}
 	}
 
@@ -270,7 +277,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		String classClusterIds;
 		String classSuper = null;
 
-		OClass cls;
+		OClassImpl cls;
 
 		try {
 			do {
@@ -287,13 +294,13 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 				classClusterIds = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"cluster-ids\"")
 						.readString(OJSONReader.NEXT_IN_OBJECT).trim();
 
-				cls = database.getMetadata().getSchema().getClass(className);
+				cls = (OClassImpl) database.getMetadata().getSchema().getClass(className);
 
 				if (cls != null) {
 					if (cls.getDefaultClusterId() != classDefClusterId)
 						cls.setDefaultClusterId(classDefClusterId);
 				} else
-					cls = database.getMetadata().getSchema().createClass(className, classDefClusterId);
+					cls = (OClassImpl) database.getMetadata().getSchema().createClass(className, classDefClusterId);
 
 				if (classId != cls.getId())
 					throw new OSchemaException("Imported class '" + className + "' has id=" + cls.getId() + " different from the original: "
@@ -341,15 +348,13 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
 			// REBUILD ALL THE INHERITANCE
 			for (Map.Entry<OClass, String> entry : superClasses.entrySet()) {
-				entry.getKey().setSuperClass(database.getMetadata().getSchema().getClass(entry.getValue()));
+				((OClassImpl) entry.getKey()).setSuperClass(database.getMetadata().getSchema().getClass(entry.getValue()));
 			}
 
 			// SET ALL THE LINKED CLASSES
-			for (Map.Entry<OProperty, String> entry : linkedClasses.entrySet()) {
+			for (Map.Entry<OPropertyImpl, String> entry : linkedClasses.entrySet()) {
 				entry.getKey().setLinkedClass(database.getMetadata().getSchema().getClass(entry.getValue()));
 			}
-
-			database.getMetadata().getSchema().save();
 
 			listener.onMessage("OK (" + classImported + " classes)");
 
@@ -385,6 +390,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		OType linkedType = null;
 		String indexName = null;
 		String indexType = null;
+		boolean mandatory = false;
+		boolean notNull = false;
 
 		while (jsonReader.lastChar() == ',') {
 			jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT);
@@ -398,6 +405,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 				max = value;
 			else if (attrib.equals("\"linked-class\""))
 				linkedClass = value;
+			else if (attrib.equals("\"mandatory\""))
+				mandatory = Boolean.parseBoolean(value);
+			else if (attrib.equals("\"not-null\""))
+				notNull = Boolean.parseBoolean(value);
 			else if (attrib.equals("\"linked-type\""))
 				linkedType = OType.valueOf(value);
 			else if (attrib.equals("\"index\""))
@@ -406,15 +417,18 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 				indexType = value;
 		}
 
-		OProperty prop = iClass.getProperty(propName);
+		OPropertyImpl prop = (OPropertyImpl) iClass.getProperty(propName);
 		if (prop == null) {
 			// CREATE IT
-			prop = iClass.createProperty(propName, type);
+			prop = (OPropertyImpl) iClass.createProperty(propName, type);
 		} else {
 			if (prop.getId() != id)
 				throw new OSchemaException("Imported property '" + iClass.getName() + "." + propName
 						+ "' has an id different from the original: " + id);
 		}
+
+		prop.setMandatory(mandatory);
+		prop.setNotNull(notNull);
 
 		if (min != null)
 			prop.setMin(min);

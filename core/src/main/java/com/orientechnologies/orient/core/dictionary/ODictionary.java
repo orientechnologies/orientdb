@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.dictionary;
 
-import java.util.Set;
+import java.util.Collection;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -30,14 +30,14 @@ public class ODictionary<T extends Object> {
 	}
 
 	public <RET extends T> RET get(final String iKey) {
-		final Set<OIdentifiable> values = index.get(iKey);
+		final Collection<OIdentifiable> values = index.get(iKey);
 		if (values.isEmpty())
 			return null;
 		return (RET) values.iterator().next();
 	}
 
 	public <RET extends T> RET get(final String iKey, final String iFetchPlan) {
-		final Set<OIdentifiable> values = index.get(iKey);
+		final Collection<OIdentifiable> values = index.get(iKey);
 		if (values.isEmpty())
 			return null;
 		return (RET) ((ODocument) values.iterator().next()).load(iFetchPlan);
@@ -56,7 +56,7 @@ public class ODictionary<T extends Object> {
 	}
 
 	public long size() {
-		return index.size();
+		return index.getSize();
 	}
 
 	public Iterable<Object> keys() {

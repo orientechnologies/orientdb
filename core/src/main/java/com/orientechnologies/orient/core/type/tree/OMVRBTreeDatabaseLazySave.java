@@ -47,7 +47,7 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> {
 	 */
 	@Override
 	public synchronized int commitChanges(final ODatabaseRecord iDatabase) {
-		if (database.getTransaction() instanceof OTransactionOptimistic || maxUpdatesBeforeSave <= 1
+		if (database.getTransaction() instanceof OTransactionOptimistic || maxUpdatesBeforeSave == 0
 				|| (maxUpdatesBeforeSave > 0 && ++updates >= maxUpdatesBeforeSave)) {
 			updates = 0;
 			return lazySave();

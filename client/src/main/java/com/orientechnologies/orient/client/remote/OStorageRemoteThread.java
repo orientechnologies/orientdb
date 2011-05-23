@@ -15,12 +15,15 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
+import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -30,19 +33,26 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 
 /**
  * Wrapper of OStorageRemote that maintains the sessionId. It's bound to the ODatabase and allow to use the shared OStorageRemote.
  */
+@SuppressWarnings("unchecked")
 public class OStorageRemoteThread implements OStorage {
 	private static AtomicInteger	sessionSerialId	= new AtomicInteger(-1);
 
-	private OStorageRemote				delegate;
+	private final OStorageRemote	delegate;
 	private int										sessionId;
 
 	public OStorageRemoteThread(final OStorageRemote iSharedStorage) {
 		delegate = iSharedStorage;
 		sessionId = sessionSerialId.decrementAndGet();
+	}
+
+	public OStorageRemoteThread(final OStorageRemote iSharedStorage, final int iSessionId) {
+		delegate = iSharedStorage;
+		sessionId = iSessionId;
 	}
 
 	public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iOptions) {
@@ -58,7 +68,6 @@ public class OStorageRemoteThread implements OStorage {
 	}
 
 	public void close(boolean iForce) {
-		delegate.setSessionId(sessionId);
 		delegate.setSessionId(sessionId);
 		delegate.close(iForce);
 	}
@@ -271,5 +280,26 @@ public class OStorageRemoteThread implements OStorage {
 	public String getURL() {
 		delegate.setSessionId(sessionId);
 		return delegate.getURL();
+	}
+
+	public void beginResponse(final OChannelBinaryClient iNetwork) throws IOException {
+		delegate.setSessionId(sessionId);
+		delegate.beginResponse(iNetwork);
+	}
+
+	public OLevel2RecordCache getLevel2Cache() {
+		return delegate.getLevel2Cache();
+	}
+
+	public boolean existsResource(final String iName) {
+		return delegate.existsResource(iName);
+	}
+
+	public synchronized <T> T getResource(final String iName, final Callable<T> iCallback) {
+		return (T) delegate.getResource(iName, iCallback);
+	}
+
+	public <T> T removeResource(final String iName) {
+		return (T) delegate.removeResource(iName);
 	}
 }

@@ -15,8 +15,8 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -48,7 +48,6 @@ public class GEOTest {
 		final OClass mapPointClass = database.getMetadata().getSchema().createClass("MapPoint");
 		mapPointClass.createProperty("x", OType.DOUBLE).createIndex(INDEX_TYPE.NOTUNIQUE);
 		mapPointClass.createProperty("y", OType.DOUBLE).createIndex(INDEX_TYPE.NOTUNIQUE);
-		database.getMetadata().getSchema().save();
 
 		final OPropertyIndex xIndex = database.getMetadata().getSchema().getClass("MapPoint").getProperty("x").getIndex();
 		Assert.assertNotNull(xIndex);
@@ -62,7 +61,7 @@ public class GEOTest {
 	@Test(dependsOnMethods = "geoSchema")
 	public void checkGeoIndexes() {
 		database.open("admin", "admin");
-		database.getMetadata().getSchema().reload();
+		database.getMetadata().getIndexManager().load();
 
 		final OPropertyIndex xIndex = database.getMetadata().getSchema().getClass("MapPoint").getProperty("x").getIndex();
 		Assert.assertNotNull(xIndex);
@@ -76,7 +75,7 @@ public class GEOTest {
 	@Test(dependsOnMethods = "checkGeoIndexes")
 	public void queryCreatePoints() {
 		database.open("admin", "admin");
-		database.getMetadata().getSchema().reload();
+		database.getMetadata().getIndexManager().load();
 
 		ODocument point = new ODocument(database);
 
@@ -96,7 +95,7 @@ public class GEOTest {
 	@Test(dependsOnMethods = "queryCreatePoints")
 	public void queryDistance() {
 		database.open("admin", "admin");
-		database.getMetadata().getSchema().reload();
+		database.getMetadata().getIndexManager().load();
 
 		Assert.assertEquals(database.countClass("MapPoint"), 10000);
 
@@ -116,7 +115,7 @@ public class GEOTest {
 	@Test(dependsOnMethods = "queryDistance")
 	public void spatialRange() {
 		database.open("admin", "admin");
-		database.getMetadata().getSchema().reload();
+		database.getMetadata().getIndexManager().load();
 
 		final OPropertyIndex xIndex = database.getMetadata().getSchema().getClass("MapPoint").getProperty("x").getIndex();
 		Assert.assertNotNull(xIndex);
@@ -124,8 +123,8 @@ public class GEOTest {
 		final OPropertyIndex yIndex = database.getMetadata().getSchema().getClass("MapPoint").getProperty("y").getIndex();
 		Assert.assertNotNull(yIndex);
 
-		final Set<OIdentifiable> xResult = xIndex.getUnderlying().getBetween(52.20472, 82.20472);
-		final Set<OIdentifiable> yResult = yIndex.getUnderlying().getBetween(0.14056, 30.14056);
+		final Collection<OIdentifiable> xResult = xIndex.getUnderlying().getBetween(52.20472, 82.20472);
+		final Collection<OIdentifiable> yResult = yIndex.getUnderlying().getBetween(0.14056, 30.14056);
 
 		xResult.retainAll(yResult);
 

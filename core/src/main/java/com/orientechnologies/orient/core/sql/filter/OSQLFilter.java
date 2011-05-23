@@ -65,7 +65,7 @@ public class OSQLFilter extends OCommandToParse {
 
 				final StringBuilder word = new StringBuilder();
 				int newPos = OSQLHelper.nextWord(text, textUpperCase, currentPos, word, true);
-				if (newPos > -1 && word.toString().equals("WHERE")) {
+				if (newPos > -1 && word.toString().equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)) {
 					currentPos = newPos;
 					rootCondition = extractConditions(null);
 				}
@@ -162,7 +162,7 @@ public class OSQLFilter extends OCommandToParse {
 
 					OClass cls = database.getMetadata().getSchema().getClass(subjectName);
 					if (cls == null)
-						throw new OCommandExecutionException("Class '" + subjectName + "' was not found");
+						throw new OCommandExecutionException("Class '" + subjectName + "' was not found in current database");
 
 					targetClasses.put(cls, alias);
 				}

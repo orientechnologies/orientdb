@@ -51,13 +51,13 @@ public class TransactionAtomicTest {
 		record1.value("This is the first version").save();
 
 		// RE-READ THE RECORD
-		record1.load();
+		record1.reload();
 		ORecordFlat record2 = db2.load(record1.getIdentity());
 
 		record2.value("This is the second version").save();
-		record1.value("This is the third version").save();
+		record2.value("This is the third version").save();
 
-		record1 = db1.load(record1.getIdentity());
+		record1.reload(null, true);
 
 		Assert.assertTrue(record1.value().equals("This is the third version"));
 

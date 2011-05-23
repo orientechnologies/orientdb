@@ -229,8 +229,6 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 
 			vertex.createProperty(OGraphDatabase.VERTEX_FIELD_IN_EDGES, OType.LINKSET, edge);
 			vertex.createProperty(OGraphDatabase.VERTEX_FIELD_OUT_EDGES, OType.LINKSET, edge);
-
-			underlying.getMetadata().getSchema().save();
 		} else {
 			// @COMPATIBILITY 0.9.25
 			if (vertex.getProperty(OGraphDatabase.VERTEX_FIELD_OUT_EDGES).getType() == OType.LINKLIST)

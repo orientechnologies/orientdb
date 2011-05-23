@@ -27,7 +27,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Timer;
 
-import com.orientechnologies.common.concur.resource.OSharedResource;
+import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -39,7 +39,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.fs.OMMapManager;
 
-public class Orient extends OSharedResource {
+public class Orient extends OSharedResourceAbstract {
 	public static final String								URL_SYNTAX						= "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
 
 	protected Map<String, OEngine>						engines								= new HashMap<String, OEngine>();

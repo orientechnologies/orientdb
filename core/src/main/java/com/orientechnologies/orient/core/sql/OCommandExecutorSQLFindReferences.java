@@ -144,7 +144,11 @@ public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLPermis
 	}
 
 	private void browseClass(String iClassName, Set<ORID> ids) {
-		OClass clazz = database.getMetadata().getSchema().getClass(iClassName);
+		final OClass clazz = database.getMetadata().getSchema().getClass(iClassName);
+
+		if (clazz == null)
+			throw new OCommandExecutionException("Class '" + iClassName + "' was not found");
+
 		for (int i : clazz.getClusterIds()) {
 			browseCluster(database.getClusterNameById(i), ids);
 		}

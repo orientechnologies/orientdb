@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.tx.OTransactionEntry;
+import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryOutputStream;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -64,7 +64,7 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 	private OChannelBinaryClient									channel;
 	private OContextConfiguration									configuration;
 	private volatile STATUS												status					= STATUS.DISCONNECTED;
-	private List<OTransactionEntry>								bufferedChanges	= new ArrayList<OTransactionEntry>();
+	private List<OTransactionRecordEntry>								bufferedChanges	= new ArrayList<OTransactionRecordEntry>();
 	private int																		clientTxId;
 	private long																	lastHeartBeat		= 0;
 	private static AtomicInteger									serialClientId	= new AtomicInteger(-1);
@@ -151,7 +151,7 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 		lastHeartBeat = System.currentTimeMillis();
 	}
 
-	public void sendRequest(final OTransactionEntry iRequest, final SYNCH_TYPE iRequestType) throws IOException {
+	public void sendRequest(final OTransactionRecordEntry iRequest, final SYNCH_TYPE iRequestType) throws IOException {
 		if (status == STATUS.UNREACHABLE)
 			bufferChange(iRequest);
 		else {
@@ -167,7 +167,7 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 
 			try {
 				switch (iRequest.status) {
-				case OTransactionEntry.CREATED:
+				case OTransactionRecordEntry.CREATED:
 					channel.acquireExclusiveLock();
 					try {
 						channel.writeByte(OChannelBinaryProtocol.REQUEST_RECORD_CREATE);
@@ -205,7 +205,7 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 					}
 					break;
 
-				case OTransactionEntry.UPDATED:
+				case OTransactionRecordEntry.UPDATED:
 					channel.acquireExclusiveLock();
 					try {
 						channel.writeByte(OChannelBinaryProtocol.REQUEST_RECORD_UPDATE);
@@ -245,7 +245,7 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 					}
 					break;
 
-				case OTransactionEntry.DELETED:
+				case OTransactionRecordEntry.DELETED:
 					channel.acquireExclusiveLock();
 					try {
 						channel.writeByte(OChannelBinaryProtocol.REQUEST_RECORD_DELETE);
@@ -294,7 +294,7 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 		}
 	}
 
-	protected void handleError(final OTransactionEntry iRequest, final SYNCH_TYPE iRequestType, Exception e) throws IOException {
+	protected void handleError(final OTransactionRecordEntry iRequest, final SYNCH_TYPE iRequestType, Exception e) throws IOException {
 		manager.handleNodeFailure(this);
 
 		if (iRequestType == SYNCH_TYPE.SYNCHRONOUS) {
@@ -308,7 +308,7 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 			bufferChange(iRequest);
 	}
 
-	protected void bufferChange(final OTransactionEntry iRequest) {
+	protected void bufferChange(final OTransactionRecordEntry iRequest) {
 		synchronized (bufferedChanges) {
 			if (bufferedChanges.size() > manager.serverOutSynchMaxBuffers) {
 				// BUFFER EXCEEDS THE CONFIGURED LIMIT: REMOVE MYSELF AS NODE
@@ -318,7 +318,7 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 			} else {
 				try {
 					// CHECK IF ANOTHER REQUEST FOR THE SAME RECORD ID HAS BEEN ALREADY BUFFERED
-					OTransactionEntry entry;
+					OTransactionRecordEntry entry;
 					for (int i = 0; i < bufferedChanges.size(); ++i) {
 						entry = bufferedChanges.get(i);
 
@@ -523,7 +523,7 @@ public class ODistributedServerNodeRemote implements OCommandOutputListener {
 
 			final long time = System.currentTimeMillis();
 
-			for (OTransactionEntry entry : bufferedChanges) {
+			for (OTransactionRecordEntry entry : bufferedChanges) {
 				sendRequest(entry, SYNCH_TYPE.SYNCHRONOUS);
 			}
 			bufferedChanges.clear();

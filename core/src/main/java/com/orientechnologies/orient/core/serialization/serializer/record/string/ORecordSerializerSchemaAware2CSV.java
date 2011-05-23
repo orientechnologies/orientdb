@@ -19,7 +19,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiValue;
@@ -55,7 +54,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
 	@Override
 	protected StringBuilder toString(ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat,
-			final OUserObject2RecordHandler iObjHandler, final Set<Integer> iMarshalledRecords) {
+			final OUserObject2RecordHandler iObjHandler, final Set<Integer> iMarshalledRecords, final boolean iOnlyDelta) {
 		if (!(iRecord instanceof ODocument))
 			throw new OSerializationException("Can't marshall a record of type " + iRecord.getClass().getSimpleName() + " to CSV");
 
@@ -71,31 +70,32 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
 		final ODatabaseRecord database = record.getDatabase();
 
-		if (record.getSchemaClass() != null) {
+		if (!iOnlyDelta && record.getSchemaClass() != null) {
 			// MARSHALL THE CLASSNAME
 			iOutput.append(record.getSchemaClass().getStreamableName());
 			iOutput.append(OStringSerializerHelper.CLASS_SEPARATOR);
 		}
 
 		OProperty prop;
-		Object fieldValue;
 		OType type;
 		OClass linkedClass;
 		OType linkedType;
 		String fieldClassName;
 		int i = 0;
 
-		// MARSHALL ALL THE CONFIGURED FIELDS
-		for (Entry<String, Object> f : record) {
+		final Set<String> fieldNamesIterator = iOnlyDelta && record.isTrackingChanges() ? record.getDirtyFields() : record.fieldNames();
+
+		// MARSHALL ALL THE FIELDS OR DELTA IF TRACKING IS ENABLED
+		for (String fieldName : fieldNamesIterator) {
+			Object fieldValue = record.rawField(fieldName);
 			if (i > 0)
 				iOutput.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
 			// SEARCH FOR A CONFIGURED PROPERTY
-			prop = record.getSchemaClass() != null ? record.getSchemaClass().getProperty(f.getKey()) : null;
-			fieldValue = f.getValue();
+			prop = record.getSchemaClass() != null ? record.getSchemaClass().getProperty(fieldName) : null;
 			fieldClassName = getClassName(fieldValue);
 
-			type = record.fieldType(f.getKey());
+			type = record.fieldType(fieldName);
 			linkedClass = null;
 			linkedType = null;
 
@@ -207,7 +207,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 					linkedClass = getLinkInfo(database, fieldClassName);
 				} else if (fieldValue instanceof Date) {
 					if (type == null)
-						type = OType.DATE;
+						type = OType.DATETIME;
 				} else if (fieldValue instanceof String)
 					type = OType.STRING;
 				else if (fieldValue instanceof Integer)
@@ -231,10 +231,10 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 			if (type == null)
 				type = OType.EMBEDDED;
 
-			iOutput.append(f.getKey());
+			iOutput.append(fieldName);
 			iOutput.append(FIELD_VALUE_SEPARATOR);
-			fieldToStream((ODocument) iRecord, iRecord.getDatabase(), iOutput, iObjHandler, type, linkedClass, linkedType, f.getKey(),
-					f.getValue(), iMarshalledRecords, true);
+			fieldToStream((ODocument) iRecord, iRecord.getDatabase(), iOutput, iObjHandler, type, linkedClass, linkedType, fieldName,
+					fieldValue, iMarshalledRecords, true);
 
 			i++;
 		}
@@ -289,11 +289,9 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 			ODatabaseObject dbo = (ODatabaseObject) iDatabase.getDatabaseOwner();
 			if (linkedClass == null) {
 				Class<?> entityClass = dbo.getEntityManager().getEntityClass(iFieldClassName);
-				if (entityClass != null) {
+				if (entityClass != null)
 					// REGISTER IT
 					linkedClass = iDatabase.getMetadata().getSchema().createClass(iFieldClassName);
-					iDatabase.getMetadata().getSchema().save();
-				}
 			}
 		}
 
@@ -409,8 +407,6 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 				OLogManager.instance().exception("Error on unmarshalling field '%s'", e, OSerializationException.class, fieldName);
 			}
 		}
-
-		record.unsetDirty();
 
 		return iRecord;
 	}

@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.cache;
 
 import java.util.Collection;
 
-import com.orientechnologies.common.concur.resource.OSharedResource;
+import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  * @author Luca Garulli
  * 
  */
-public abstract class OAbstractRecordCache extends OSharedResource {
+public abstract class OAbstractRecordCache extends OSharedResourceAbstract {
 	protected int						maxSize;
 	protected ORecordCache	entries;
 

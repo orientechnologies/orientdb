@@ -16,6 +16,8 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import java.lang.ref.WeakReference;
+import java.text.DateFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -30,6 +32,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
@@ -42,11 +45,13 @@ import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -152,7 +157,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 *          OClass instance
 	 */
 	public ODocument(final OClass iClass) {
-		super(iClass.getDocument().getDatabase());
+		super(((OClassImpl) iClass).getDocument().getDatabase());
 		setup();
 		_clazz = iClass;
 	}
@@ -205,6 +210,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	}
 
 	public boolean detach() {
+		_database = null;
 		boolean fullyDetached = true;
 
 		if (_fieldValues != null) {
@@ -474,7 +480,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			ODocument linkedRecord = (ODocument) linkedObject;
 			if (linkedRecord.getInternalStatus() == STATUS.NOT_LOADED)
 				// LAZY LOAD IT
-				linkedRecord.load();
+				linkedRecord.reload();
 
 			// CALL MYSELF RECURSIVELY BY CROSSING ALL THE OBJECTS
 			return (RET) linkedRecord.field(iPropertyName.substring(separatorPos + 1));
@@ -507,7 +513,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 
 			if (t == OType.BINARY && value instanceof String)
 				newValue = OBase64Utils.decode((String) value);
-			else if (t == OType.DATE && value instanceof Long)
+			else if ((t == OType.DATE || t == OType.DATE) && value instanceof Long)
 				newValue = (RET) new Date(((Long) value).longValue());
 
 			if (newValue != null) {
@@ -714,6 +720,12 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 * @return
 	 */
 	public ODocument merge(final ODocument iOther, boolean iConflictsOtherWins, boolean iMergeSingleItemsOfMultiValueFields) {
+		iOther.checkForLoading();
+		iOther.checkForFields();
+
+		if (_clazz == null && iOther.getSchemaClass() != null)
+			_clazz = iOther.getSchemaClass();
+
 		return merge(iOther._fieldValues, iConflictsOtherWins, iMergeSingleItemsOfMultiValueFields);
 	}
 
@@ -723,42 +735,51 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 * 
 	 * @param iOther
 	 *          Other ODocument instance to merge
-	 * @param iConflictsOtherWins
-	 *          if true, the other document wins in case of conflicts, otherwise the current document wins
+	 * @param iAddOnlyMode
+	 *          if true, the other document properties will be always added. If false, the missed propertie in the "other" document
+	 *          will be removed by original too
 	 * @param iMergeSingleItemsOfMultiValueFields
 	 * @return
 	 */
-	public ODocument merge(final Map<String, Object> iOther, boolean iConflictsOtherWins, boolean iMergeSingleItemsOfMultiValueFields) {
+	public ODocument merge(final Map<String, Object> iOther, final boolean iAddOnlyMode, boolean iMergeSingleItemsOfMultiValueFields) {
 		checkForLoading();
 		checkForFields();
 
 		for (String f : iOther.keySet()) {
-			if (!containsField(f) || iConflictsOtherWins) {
-				if (iMergeSingleItemsOfMultiValueFields) {
-					Object field = field(f);
-					if (field instanceof Map<?, ?>) {
-						final Map<String, Object> map = (Map<String, Object>) field;
-						final Map<String, Object> otherMap = (Map<String, Object>) iOther.get(f);
+			if (containsField(f) && iMergeSingleItemsOfMultiValueFields) {
+				Object field = field(f);
+				if (field instanceof Map<?, ?>) {
+					final Map<String, Object> map = (Map<String, Object>) field;
+					final Map<String, Object> otherMap = (Map<String, Object>) iOther.get(f);
 
-						for (Entry<String, Object> entry : otherMap.entrySet()) {
-							map.put(entry.getKey(), entry.getValue());
-						}
-						continue;
-					} else if (field instanceof Collection<?>) {
-						final Collection<Object> coll = (Collection<Object>) field;
-						final Collection<Object> otherColl = (Collection<Object>) iOther.get(f);
+					for (Entry<String, Object> entry : otherMap.entrySet()) {
+						map.put(entry.getKey(), entry.getValue());
+					}
+					continue;
+				} else if (field instanceof Collection<?>) {
+					final Collection<Object> coll = (Collection<Object>) field;
+					final Collection<Object> otherColl = (Collection<Object>) iOther.get(f);
 
-						for (Object item : otherColl) {
-							if (!coll.contains(item))
-								coll.add(item);
-						}
-						continue;
+					for (Object item : otherColl) {
+						if (!coll.contains(item))
+							coll.add(item);
 					}
 
+					// JUMP RAW REPLACE
+					continue;
 				}
-
-				field(f, iOther.get(f));
 			}
+
+			// RAW SET/REPLACE
+			field(f, iOther.get(f));
+		}
+
+		if (!iAddOnlyMode) {
+			// REMOVE PROPERTIES NOT FOUND IN OTHER DOC
+			final Set<String> fieldNames = fieldNames();
+			for (String f : fieldNames)
+				if (!iOther.containsKey(f))
+					removeField(f);
 		}
 
 		return this;
@@ -771,7 +792,8 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	 *          Property name to retrieve the original value
 	 */
 	public Set<String> getDirtyFields() {
-		return _fieldOriginalValues != null ? Collections.unmodifiableSet(_fieldOriginalValues.keySet()) : null;
+		return (Set<String>) (_fieldOriginalValues != null ? Collections.unmodifiableSet(_fieldOriginalValues.keySet()) : Collections
+				.emptySet());
 	}
 
 	/**
@@ -785,7 +807,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	}
 
 	/**
-	 * Returns the iterator against the field entries as name and value.
+	 * Returns the iterator against only the changed fields if tracking was enabled
 	 */
 	public Iterator<Entry<String, Object>> iterator() {
 		checkForLoading();
@@ -971,6 +993,21 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			if (!(iValue instanceof String) && !iType.isAssignableFrom(iValue.getClass()))
 				throw new IllegalArgumentException("Property '" + iPropertyName + "' of type '" + iType + "' can't accept value of type: "
 						+ iValue.getClass());
+		} else if (Date.class.isAssignableFrom(iType) && iValue instanceof String && _database != null) {
+			final OStorageConfiguration config = _database.getStorage().getConfiguration();
+
+			DateFormat formatter = config.getDateFormatInstance();
+
+			if (((String) iValue).length() > config.dateFormat.length()) {
+				// ASSUMES YOU'RE USING THE DATE-TIME FORMATTE
+				formatter = config.getDateTimeFormatInstance();
+			}
+
+			try {
+				iValue = formatter.parse((String) iValue);
+			} catch (ParseException pe) {
+				throw new OQueryParsingException("Error on conversion of date '" + iValue + "' using the format: " + formatter.toString());
+			}
 		}
 
 		iValue = OType.convert(iValue, iType);

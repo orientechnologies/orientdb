@@ -49,7 +49,7 @@ public class LocalCreateIndexedDocumentSpeedTest extends OrientMonoThreadTest {
 
 		// REMOVE THE INDEX
 		System.out.println("Remove index...");
-		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").removeIndex();
+		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").dropIndex();
 		System.out.println("Ok");
 
 		database.declareIntent(new OIntentMassiveInsert());

@@ -99,6 +99,13 @@ public class ORecordFlat extends ORecordAbstract<String> implements ORecordStrin
 	}
 
 	@Override
+	public ORecordAbstract<String> fromStream(final byte[] iRecordBuffer) {
+		super.fromStream(iRecordBuffer);
+		value = null;
+		return this;
+	}
+
+	@Override
 	public byte[] toStream() {
 		if (_source == null && value != null)
 			_source = OBinaryProtocol.string2bytes(value);

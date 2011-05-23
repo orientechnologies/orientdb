@@ -15,31 +15,18 @@
  */
 package com.orientechnologies.common.concur.resource;
 
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 /**
- * Shared resource. Sub classes can acquire and release shared and exclusive locks.
+ * Shared resource interface. Implementations can acquire and release shared and exclusive locks.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public abstract class OSharedResource {
-	protected ReadWriteLock	lock	= new ReentrantReadWriteLock();
+public interface OSharedResource {
+	void acquireSharedLock();
 
-	protected void acquireSharedLock() {
-		lock.readLock().lock();
-	}
+	void releaseSharedLock();
 
-	protected void releaseSharedLock() {
-		lock.readLock().unlock();
-	}
+	void acquireExclusiveLock();
 
-	protected void acquireExclusiveLock() {
-		lock.writeLock().lock();
-	}
-
-	protected void releaseExclusiveLock() {
-		lock.writeLock().unlock();
-	}
+	void releaseExclusiveLock();
 }

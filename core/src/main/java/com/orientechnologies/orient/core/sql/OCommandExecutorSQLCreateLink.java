@@ -185,7 +185,7 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 								value = null;
 							else {
 								value = "'" + value + "'";
-								result = database.<OCommandRequest>command(new OSQLSynchQuery<ODocument>(cmd + value)).execute();
+								result = database.<OCommandRequest> command(new OSQLSynchQuery<ODocument>(cmd + value)).execute();
 
 								if (result == null || result.size() == 0)
 									// throw new
@@ -246,22 +246,20 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLPermission
 					// REMOVE THE OLD PROPERTY IF ANY
 					OProperty prop = destClass.getProperty(linkName);
 					if (prop != null)
-						destClass.removeProperty(linkName);
+						destClass.dropProperty(linkName);
 
 					// CREATE THE PROPERTY
 					destClass.createProperty(linkName, multipleRelationship ? OType.LINKLIST : OType.LINK, sourceClass);
-					database.getMetadata().getSchema().save();
 
 				} else {
 
 					// REMOVE THE OLD PROPERTY IF ANY
 					OProperty prop = sourceClass.getProperty(linkName);
 					if (prop != null)
-						sourceClass.removeProperty(linkName);
+						sourceClass.dropProperty(linkName);
 
 					// CREATE THE PROPERTY
 					sourceClass.createProperty(linkName, OType.LINK, destClass);
-					database.getMetadata().getSchema().save();
 				}
 			}
 

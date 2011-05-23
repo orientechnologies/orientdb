@@ -18,9 +18,12 @@ package com.orientechnologies.orient.core.tx;
 import java.util.List;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public interface OTransaction {
 	public enum TXTYPE {
@@ -31,35 +34,38 @@ public interface OTransaction {
 		INVALID, BEGUN, COMMITTING, ROLLBACKING
 	}
 
-	public ORecordInternal<?> load(ORID iRid, ORecordInternal<?> iRecord, String iFetchPlan);
-
-	public void save(ORecordInternal<?> iContent, String iClusterName);
-
-	public void delete(ORecordInternal<?> iRecord);
-
 	public void begin();
 
 	public void commit();
 
 	public void rollback();
 
+	public ODatabaseRecordTx getDatabase();
+
+	public void clearRecordEntries();
+
+	public ORecordInternal<?> loadRecord(ORID iRid, ORecordInternal<?> iRecord, String iFetchPlan);
+
+	public void saveRecord(ORecordInternal<?> iContent, String iClusterName);
+
+	public void deleteRecord(ORecordInternal<?> iRecord);
+
 	public TXSTATUS getStatus();
 
-	public boolean isUsingLog();
+	public Iterable<? extends OTransactionRecordEntry> getRecordEntries();
 
-	public void setUsingLog(boolean useLog);
+	public List<OTransactionRecordEntry> getRecordEntriesByClass(String iClassName);
 
-	public Iterable<? extends OTransactionEntry> getEntries();
+	public List<OTransactionRecordEntry> getRecordEntriesByClusterIds(int[] iIds);
 
-	public List<OTransactionEntry> getEntriesByClass(String iClassName);
+	public int getRecordEntriesSize();
 
-	public List<OTransactionEntry> getEntriesByClusterIds(int[] iIds);
+	public ORecordInternal<?> getRecordEntry(ORecordId rid);
 
-	public void clearEntries();
+	public ODocument getIndexEntries();
 
-	public int size();
+	public void addIndexEntry(OIndex delegate, final String iIndexName, final OTransactionIndexEntry.STATUSES iStatus,
+			final Object iKey, final OIdentifiable iValue);
 
-	public ORecordInternal<?> getEntry(ORecordId rid);
-
-	public ODatabaseRecordTx getDatabase();
+	public void clearIndexEntries();
 }
