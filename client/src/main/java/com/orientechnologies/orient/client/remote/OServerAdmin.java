@@ -94,18 +94,23 @@ public class OServerAdmin {
 		storage.checkConnection();
 
 		try {
-			if (iStorageMode == null)
-				iStorageMode = "csv";
+			if (storage.getName() == null || storage.getName().length() <= 0) {
+				OLogManager.instance().error(this, "Can't create unnamed remote storage check your syntax", OStorageException.class);
+			} else {
+				if (iStorageMode == null)
+					iStorageMode = "csv";
 
-			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_CREATE);
-			try {
-				network.writeString(storage.getName());
-				network.writeString(iStorageMode);
-			} finally {
-				storage.endRequest(network);
+				final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_CREATE);
+				try {
+					network.writeString(storage.getName());
+					network.writeString(iStorageMode);
+				} finally {
+					storage.endRequest(network);
+				}
+
+				storage.getResponse(network);
+
 			}
-
-			storage.getResponse(network);
 
 		} catch (Exception e) {
 			OLogManager.instance().error(this, "Can't create the remote storage: " + storage.getName(), e, OStorageException.class);
