@@ -428,7 +428,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 		sqlCommand("create", iCommandText, "\nCreated index with %d item(s) in %f sec(s).\n");
 
-		out.println("\nIndex created succesfully");
+		out.println("\nIndex created successfully");
 	}
 
 	@ConsoleCommand(description = "Delete the current database")
@@ -447,7 +447,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			currentDatabase = null;
 		}
 
-		out.println("\nDatabase '" + dbName + "' deleted succesfully");
+		out.println("\nDatabase '" + dbName + "' deleted successfully");
 	}
 
 	@ConsoleCommand(description = "Delete the specified database")
@@ -467,7 +467,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			currentDatabase = null;
 		}
 
-		out.println("\nDatabase '" + iDatabaseURL + "' deleted succesfully");
+		out.println("\nDatabase '" + iDatabaseURL + "' deleted successfully");
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Remove an index")
@@ -477,7 +477,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 		sqlCommand("drop", iCommandText, "\nRemoved index %d link(s) in %f sec(s).\n");
 
-		out.println("\nIndex removed succesfully");
+		out.println("\nIndex removed successfully");
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Remove a class from the schema")
@@ -485,7 +485,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			throws IOException {
 		sqlCommand("drop", iCommandText, "\nRemoved class in %f sec(s).\n");
 		currentDatabase.getMetadata().getSchema().reload();
-		out.println("\nClass removed succesfully");
+		out.println("\nClass removed successfully");
 	}
 
 	@ConsoleCommand(splitInWords = false, description = "Remove a property from a class")
@@ -493,7 +493,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			throws IOException {
 		sqlCommand("drop", iCommandText, "\nRemoved class property in %f sec(s).\n");
 
-		out.println("\nClass property removed succesfully");
+		out.println("\nClass property removed successfully");
 	}
 
 	@ConsoleCommand(description = "Browse all the records of a class")
