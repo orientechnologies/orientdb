@@ -15,7 +15,10 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -93,12 +96,30 @@ public class SQLFunctionsTest {
 		database.close();
 	}
 
+	@SuppressWarnings("unchecked")
+	@Test
+	public void queryDistinct() {
+		database.open("admin", "admin");
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select distinct(name) as name from City")).execute();
+
+		Assert.assertTrue(result.size() == 1);
+
+		Set<String> cities = new HashSet<String>();
+		for (Object city : (Collection<Object>) result.get(0).field("name")) {
+			Assert.assertFalse(cities.contains(city.toString()));
+			cities.add(city.toString());
+		}
+
+		database.close();
+	}
+
 	@Test
 	public void queryComposedAggregates() {
 		database.open("admin", "admin");
-		List<ODocument> result = database.command(
-				new OSQLSynchQuery<ODocument>(
-						"select MIN(nr) as min, max(nr) as max, AVG(nr) as average, count(nr) as total from Account")).execute();
+		List<ODocument> result = database
+				.command(
+						new OSQLSynchQuery<ODocument>(
+								"select MIN(nr) as min, max(nr) as max, AVG(nr) as average, count(nr) as total from Account")).execute();
 
 		Assert.assertTrue(result.size() == 1);
 		for (ODocument d : result) {
