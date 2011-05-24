@@ -46,6 +46,9 @@ public class OSQLFunctionSum extends OSQLFunctionMathAbstract {
 				} else if (contextValue instanceof Long) {
 					sum = sum.longValue() + value.longValue();
 
+				} else if (contextValue instanceof Short) {
+					sum = sum.shortValue() + value.shortValue();
+
 				} else if (contextValue instanceof Float) {
 					sum = sum.floatValue() + value.floatValue();
 

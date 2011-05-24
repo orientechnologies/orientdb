@@ -16,7 +16,7 @@
 package com.orientechnologies.orient.core.sql.functions.math;
 
 /**
- * Compute the averahe value for a field. Uses the context to save the last average number. When different Number class are used,
+ * Compute the average value for a field. Uses the context to save the last average number. When different Number class are used,
  * take the class with most precision.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
@@ -48,6 +48,9 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
 
 				} else if (contextValue instanceof Long) {
 					sum = sum.longValue() + value.longValue();
+
+				} else if (contextValue instanceof Short) {
+					sum = sum.shortValue() + value.shortValue();
 
 				} else if (contextValue instanceof Float) {
 					sum = sum.floatValue() + value.floatValue();

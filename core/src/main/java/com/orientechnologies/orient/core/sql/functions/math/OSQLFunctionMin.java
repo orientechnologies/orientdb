@@ -48,6 +48,10 @@ public class OSQLFunctionMin extends OSQLFunctionMathAbstract {
 					if (((Long) contextValue).compareTo((Long) value) > 0)
 						context = value;
 
+				} else if (contextValue instanceof Short) {
+					if (((Short) contextValue).compareTo((Short) value) > 0)
+						context = value;
+
 				} else if (contextValue instanceof Float) {
 					if (((Float) contextValue).compareTo((Float) value) > 0)
 						context = value;
