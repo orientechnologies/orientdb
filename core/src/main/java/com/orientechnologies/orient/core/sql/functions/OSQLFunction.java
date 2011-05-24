@@ -28,7 +28,9 @@ public interface OSQLFunction {
 
 	public Object execute(final Object[] funcParams);
 
-	public boolean aggregateResults();
+	public boolean aggregateResults(Object[] configuredParameters);
+
+	public boolean filterResult();
 
 	public String getName();
 

@@ -22,13 +22,16 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
+import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDifference;
+import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct;
+import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionIntersect;
+import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionUnion;
 import com.orientechnologies.orient.core.sql.functions.geo.OSQLFunctionDistance;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionAverage;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMax;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMin;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionSum;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
-import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionDistinct;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionFormat;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionSysdate;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
@@ -110,6 +113,9 @@ public class OSQLEngine {
 		registerFunction(OSQLFunctionSysdate.NAME, OSQLFunctionSysdate.class);
 		registerFunction(OSQLFunctionCount.NAME, OSQLFunctionCount.class);
 		registerFunction(OSQLFunctionDistinct.NAME, OSQLFunctionDistinct.class);
+		registerFunction(OSQLFunctionUnion.NAME, OSQLFunctionUnion.class);
+		registerFunction(OSQLFunctionIntersect.NAME, OSQLFunctionIntersect.class);
+		registerFunction(OSQLFunctionDifference.NAME, OSQLFunctionDifference.class);
 
 		// MATH FUNCTIONS
 		registerFunction(OSQLFunctionMin.NAME, OSQLFunctionMin.class);

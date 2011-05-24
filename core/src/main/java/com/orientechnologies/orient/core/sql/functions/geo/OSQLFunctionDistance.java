@@ -58,8 +58,4 @@ public class OSQLFunctionDistance extends OSQLFunctionAbstract {
 	public String getSyntax() {
 		return "Syntax error: distance(<field-x>,<field-y>,<x-value>,<y-value>[,<unit>])";
 	}
-
-	public boolean aggregateResults() {
-		return false;
-	}
 }

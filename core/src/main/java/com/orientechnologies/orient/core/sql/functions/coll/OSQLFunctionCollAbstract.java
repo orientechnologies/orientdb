@@ -13,33 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.sql.functions.misc;
+package com.orientechnologies.orient.core.sql.functions.coll;
+
+import java.util.Set;
 
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
 /**
- * Formats content.
+ * Abstract class for collection based functions implementations.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OSQLFunctionFormat extends OSQLFunctionAbstract {
-	public static final String	NAME	= "format";
+public abstract class OSQLFunctionCollAbstract extends OSQLFunctionAbstract {
 
-	public OSQLFunctionFormat() {
-		super(NAME, 2, -1);
+	protected Set<Object>	context;
+
+	public OSQLFunctionCollAbstract(final String iName, final int iMinParams, final int iMaxParams) {
+		super(iName, iMinParams, iMaxParams);
 	}
 
-	public Object execute(final Object[] iParameters) {
-		final Object[] args = new Object[iParameters.length - 1];
-
-		for (int i = 0; i < args.length; ++i)
-			args[i] = iParameters[i + 1];
-
-		return String.format((String) iParameters[0], args);
+	public boolean aggregateResults(final Object[] configuredParameters) {
+		return configuredParameters.length == 1;
 	}
 
-	public String getSyntax() {
-		return "Syntax error: format(<format>, <arg1> [,<argN>]*)";
+	@Override
+	public Object getResult() {
+		return context;
 	}
 }

@@ -51,6 +51,14 @@ public abstract class OSQLFunctionAbstract implements OSQLFunction {
 		return name + "()";
 	}
 
+	public boolean aggregateResults(Object[] configuredParameters) {
+		return false;
+	}
+
+	public boolean filterResult() {
+		return false;
+	}
+
 	public Object getResult() {
 		return null;
 	}

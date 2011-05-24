@@ -43,7 +43,11 @@ public class OSQLFunctionRuntime {
 	}
 
 	public boolean aggregateResults() {
-		return function.aggregateResults();
+		return function.aggregateResults(configuredParameters);
+	}
+
+	public boolean filterResult() {
+		return function.filterResult();
 	}
 
 	/**

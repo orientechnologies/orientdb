@@ -52,7 +52,7 @@ public class OSQLFunctionSysdate extends OSQLFunctionAbstract {
 		}
 	}
 
-	public boolean aggregateResults() {
+	public boolean aggregateResults(final Object[] configuredParameters) {
 		return false;
 	}
 

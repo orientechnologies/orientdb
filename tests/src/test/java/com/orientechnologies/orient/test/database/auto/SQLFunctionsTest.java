@@ -96,19 +96,50 @@ public class SQLFunctionsTest {
 		database.close();
 	}
 
-	@SuppressWarnings("unchecked")
 	@Test
 	public void queryDistinct() {
 		database.open("admin", "admin");
 		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select distinct(name) as name from City")).execute();
 
-		Assert.assertTrue(result.size() == 1);
+		Assert.assertTrue(result.size() > 1);
 
 		Set<String> cities = new HashSet<String>();
-		for (Object city : (Collection<Object>) result.get(0).field("name")) {
+		for (ODocument city : result) {
+			String cityName = (String) city.field("name");
+			Assert.assertFalse(cities.contains(cityName));
+			cities.add(cityName);
+		}
+
+		database.close();
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void queryUnionAsAggregation() {
+		database.open("admin", "admin");
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select union(name) as name from City")).execute();
+
+		Assert.assertTrue(result.size() == 1);
+
+		Collection<Object> citiesFound = (Collection<Object>) result.get(0).field("name");
+		Assert.assertTrue(citiesFound.size() > 1);
+
+		Set<String> cities = new HashSet<String>();
+		for (Object city : citiesFound) {
 			Assert.assertFalse(cities.contains(city.toString()));
 			cities.add(city.toString());
 		}
+
+		database.close();
+	}
+
+	@Test
+	public void queryUnionAsInline() {
+		database.open("admin", "admin");
+		List<ODocument> result = database.command(
+				new OSQLSynchQuery<ODocument>("select union(outEdges, inEdges) as name from OGraphVertex")).execute();
+
+		Assert.assertTrue(result.size() > 1);
 
 		database.close();
 	}
@@ -192,8 +223,11 @@ public class SQLFunctionsTest {
 	@Test(expectedExceptions = OCommandSQLParsingException.class)
 	public void queryUndefinedFunction() {
 		database.open("admin", "admin");
-		database.command(new OSQLSynchQuery<ODocument>("select blaaaa(salary) as max from Account")).execute();
-		database.close();
+		try {
+			database.command(new OSQLSynchQuery<ODocument>("select blaaaa(salary) as max from Account")).execute();
+		} finally {
+			database.close();
+		}
 	}
 
 	@Test

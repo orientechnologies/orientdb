@@ -63,10 +63,6 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
 		return value;
 	}
 
-	public boolean aggregateResults() {
-		return true;
-	}
-
 	public String getSyntax() {
 		return "Syntax error: avg(<field>)";
 	}

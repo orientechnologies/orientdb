@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.sql.functions.misc;
+package com.orientechnologies.orient.core.sql.functions.coll;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -38,22 +38,20 @@ public class OSQLFunctionDistinct extends OSQLFunctionAbstract {
 	public Object execute(final Object[] iParameters) {
 		final Object value = iParameters[0];
 
-		if (value != null)
+		if (value != null && !context.contains(value)) {
 			context.add(value);
+			return value;
+		}
 
-		return value;
+		return null;
 	}
 
-	public boolean aggregateResults() {
+	@Override
+	public boolean filterResult() {
 		return true;
 	}
 
 	public String getSyntax() {
 		return "Syntax error: distinct(<field>)";
-	}
-
-	@Override
-	public Object getResult() {
-		return context;
 	}
 }

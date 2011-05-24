@@ -526,18 +526,26 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 			final ODocument doc = (ODocument) iRecord;
 			final ODocument result = new ODocument(database);
 
+			boolean canExcludeResult = false;
+
 			Object value;
 			for (Entry<String, Object> projection : projections.entrySet()) {
 				if (projection.getValue() instanceof OSQLFilterItemField)
 					value = ((OSQLFilterItemField) projection.getValue()).getValue(doc);
 				else if (projection.getValue() instanceof OSQLFunctionRuntime) {
 					final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection.getValue();
+					canExcludeResult = f.filterResult();
 					value = f.execute(doc);
 				} else
 					value = projection.getValue();
 
-				result.field(projection.getKey(), value);
+				if (value != null)
+					result.field(projection.getKey(), value);
 			}
+
+			if (canExcludeResult && result.fieldValues().length == 0)
+				// RESULT EXCLUDED FOR EMPTY RECORD
+				return;
 
 			if (!anyFunctionAggregates)
 				// INVOKE THE LISTENER
