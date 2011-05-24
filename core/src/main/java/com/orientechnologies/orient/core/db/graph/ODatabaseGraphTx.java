@@ -239,12 +239,12 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 	}
 
 	@Override
-	protected ODocument pojo2Stream(final OGraphElement iPojo, ODocument record) {
+	public ODocument pojo2Stream(final OGraphElement iPojo, ODocument record) {
 		return record;
 	}
 
 	@Override
-	protected Object stream2pojo(ODocument record, final Object iPojo, String iFetchPlan) {
+	public Object stream2pojo(ODocument record, final Object iPojo, String iFetchPlan) {
 		((OGraphElement) iPojo).setDocument(record);
 		return iPojo;
 	}

@@ -63,9 +63,9 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 		iDatabase.setDatabaseOwner(this);
 	}
 
-	protected abstract ODocument pojo2Stream(final T iPojo, final ODocument record);
+	public abstract ODocument pojo2Stream(final T iPojo, final ODocument record);
 
-	protected abstract Object stream2pojo(final ODocument record, final Object iPojo, final String iFetchPlan);
+	public abstract Object stream2pojo(final ODocument record, final Object iPojo, final String iFetchPlan);
 
 	@Override
 	public void close() {

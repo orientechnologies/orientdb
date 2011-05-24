@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.db.ODatabasePojoAbstract;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -67,12 +68,17 @@ public class OLazyObjectMap<TYPE> extends HashMap<String, Object> implements Ser
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public Object put(final String iKey, final Object e) {
 		if (e instanceof ODocument) {
 			converted = false;
 			underlying.put(iKey, e);
 		} else {
-			underlying.put(iKey, database.getRecordByUserObject(e, false));
+			if (database.getRecordByUserObject(e, false) == null) {
+				underlying.put(iKey, database.pojo2Stream((TYPE) e, new ODocument((ODatabaseRecord)database.getUnderlying())));
+			} else {
+				underlying.put(iKey, database.getRecordByUserObject(e, false));
+			}
 		}
 		setDirty();
 		return super.put(iKey, e);

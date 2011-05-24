@@ -542,6 +542,9 @@ public class OObjectSerializerHelper {
 			throw new OTransactionException("Can't involve an object of class '" + pojoClass
 					+ "' in an Optimistic Transaction commit because it doesn't define @Version or @OVersion and therefore can't handle MVCC");
 
+		// SET OBJECT CLASS
+		iRecord.setClassName(schemaClass != null ? schemaClass.getName() : null);
+
 		String fieldName;
 		Object fieldValue;
 

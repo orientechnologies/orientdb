@@ -394,13 +394,13 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 	}
 
 	@Override
-	protected ODocument pojo2Stream(final Object iPojo, final ODocument iRecord) {
+	public ODocument pojo2Stream(final Object iPojo, final ODocument iRecord) {
 		return OObjectSerializerHelper.toStream(iPojo, iRecord, getEntityManager(),
 				getMetadata().getSchema().getClass(iPojo.getClass().getSimpleName()), this, this, saveOnlyDirty);
 	}
 
 	@Override
-	protected Object stream2pojo(ODocument iRecord, final Object iPojo, final String iFetchPlan) {
+	public Object stream2pojo(ODocument iRecord, final Object iPojo, final String iFetchPlan) {
 		if (iRecord.getInternalStatus() == STATUS.NOT_LOADED)
 			iRecord = (ODocument) iRecord.load();
 
