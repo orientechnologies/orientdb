@@ -73,7 +73,7 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
 	 * @return The record if found, otherwise null
 	 */
 	public ORecordInternal<?> findRecord(final ORID iRID) {
-		if (maxSize == 0)
+		if (!enabled)
 			// PRECONDITIONS
 			return null;
 

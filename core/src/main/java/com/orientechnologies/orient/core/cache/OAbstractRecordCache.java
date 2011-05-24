@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  * 
  */
 public abstract class OAbstractRecordCache extends OSharedResourceAbstract {
+	protected boolean				enabled	= true;
 	protected int						maxSize;
 	protected ORecordCache	entries;
 
@@ -55,12 +56,18 @@ public abstract class OAbstractRecordCache extends OSharedResourceAbstract {
 
 	public abstract void pushRecord(ORecordInternal<?> iRecord);
 
+	public void setEnable(final boolean iValue) {
+		enabled = iValue;
+		if (!iValue)
+			entries.clear();
+	}
+
 	public ORecordInternal<?> findRecord(final ORID iRid) {
 		return null;
 	}
 
 	public void updateRecord(final ORecordInternal<?> iRecord) {
-		if (maxSize == 0)
+		if (!enabled)
 			// PRECONDITIONS
 			return;
 
@@ -73,7 +80,7 @@ public abstract class OAbstractRecordCache extends OSharedResourceAbstract {
 	}
 
 	public ORecordInternal<?> freeRecord(final ORID iRID) {
-		if (maxSize == 0)
+		if (!enabled)
 			// PRECONDITIONS
 			return null;
 
@@ -92,7 +99,7 @@ public abstract class OAbstractRecordCache extends OSharedResourceAbstract {
 	 *          List of RIDs as RecordID instances
 	 */
 	public void removeRecords(final Collection<ORID> iRecords) {
-		if (maxSize == 0)
+		if (!enabled)
 			// PRECONDITIONS
 			return;
 
@@ -112,7 +119,7 @@ public abstract class OAbstractRecordCache extends OSharedResourceAbstract {
 	 *          Record to remove
 	 */
 	public void deleteRecord(final ORID iRecord) {
-		if (maxSize == 0)
+		if (!enabled)
 			// PRECONDITIONS
 			return;
 
@@ -125,7 +132,7 @@ public abstract class OAbstractRecordCache extends OSharedResourceAbstract {
 	}
 
 	public boolean existsRecord(final ORID iRID) {
-		if (maxSize == 0)
+		if (!enabled)
 			// PRECONDITIONS
 			return false;
 
@@ -141,7 +148,7 @@ public abstract class OAbstractRecordCache extends OSharedResourceAbstract {
 	 * Clear the entire cache by removing all the entries.
 	 */
 	public void clear() {
-		if (maxSize == 0)
+		if (!enabled)
 			// PRECONDITIONS
 			return;
 

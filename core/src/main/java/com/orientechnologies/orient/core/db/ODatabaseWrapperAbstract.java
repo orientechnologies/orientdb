@@ -84,16 +84,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 		return getStorage().getLevel2Cache();
 	}
 
-	public boolean isUseCache() {
-		checkOpeness();
-		return underlying.isUseCache();
-	}
-
-	public void setUseCache(final boolean useCache) {
-		checkOpeness();
-		underlying.setUseCache(useCache);
-	}
-
 	public boolean isClosed() {
 		return underlying.isClosed();
 	}

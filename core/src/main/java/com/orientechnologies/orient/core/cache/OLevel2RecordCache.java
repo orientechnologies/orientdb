@@ -72,7 +72,7 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
 	 * @return
 	 */
 	protected ORecordInternal<?> retrieveRecord(final ORID iRID) {
-		if (maxSize == 0)
+		if (!enabled)
 			// PRECONDITIONS
 			return null;
 

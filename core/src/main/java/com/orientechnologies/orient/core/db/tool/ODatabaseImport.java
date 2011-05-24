@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.zip.GZIPInputStream;
 
-import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.parser.OStringForwardReader;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -96,11 +95,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
 			jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
 
-			database.setUseCache(false);
-			database.getLevel1Cache().setMaxSize(0);
-			database.getLevel1Cache().clear();
-			database.getLevel2Cache().setMaxSize(0);
-			database.getLevel2Cache().clear();
+			database.getLevel1Cache().setEnable(false);
+			database.getLevel2Cache().setEnable(false);
 			database.setMVCC(false);
 
 			String tag;
@@ -149,19 +145,19 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
 			listener.onMessage("\n- Index '" + idx.getName() + "'...");
 
-//			idx.rebuild(new OProgressListener() {
-//				public boolean onProgress(Object iTask, long iCounter, float iPercent) {
-//					if (iPercent % 10 == 0)
-//						listener.onMessage(".");
-//					return false;
-//				}
-//
-//				public void onCompletition(Object iTask, boolean iSucceed) {
-//				}
-//
-//				public void onBegin(Object iTask, long iTotal) {
-//				}
-//			});
+			// idx.rebuild(new OProgressListener() {
+			// public boolean onProgress(Object iTask, long iCounter, float iPercent) {
+			// if (iPercent % 10 == 0)
+			// listener.onMessage(".");
+			// return false;
+			// }
+			//
+			// public void onCompletition(Object iTask, boolean iSucceed) {
+			// }
+			//
+			// public void onBegin(Object iTask, long iTotal) {
+			// }
+			// });
 
 			listener.onMessage("OK (" + idx.getSize() + " records)");
 		}

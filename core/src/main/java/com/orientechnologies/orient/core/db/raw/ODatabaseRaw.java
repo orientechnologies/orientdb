@@ -28,7 +28,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
@@ -58,8 +57,6 @@ public class ODatabaseRaw implements ODatabase {
 	private final Map<String, Object>			properties	= new HashMap<String, Object>();
 	private final List<ODatabaseListener>	listeners		= new ArrayList<ODatabaseListener>();
 
-	private boolean												useCache;
-
 	public enum STATUS {
 		OPEN, CLOSED
 	}
@@ -71,8 +68,6 @@ public class ODatabaseRaw implements ODatabase {
 
 			// SET DEFAULT PROPERTIES
 			setProperty("fetch-max", 50);
-
-			useCache = OGlobalConfiguration.CACHE_LEVEL2_ENABLED.getValueAsBoolean();
 
 		} catch (Throwable t) {
 			throw new ODatabaseException("Error on opening database '" + iURL + "'", t);
@@ -234,14 +229,6 @@ public class ODatabaseRaw implements ODatabase {
 
 	public OStorage getStorage() {
 		return storage;
-	}
-
-	public boolean isUseCache() {
-		return useCache;
-	}
-
-	public void setUseCache(final boolean useCache) {
-		this.useCache = useCache;
 	}
 
 	public boolean isClosed() {

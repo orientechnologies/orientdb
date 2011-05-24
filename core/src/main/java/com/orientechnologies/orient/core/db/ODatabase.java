@@ -121,21 +121,6 @@ public interface ODatabase {
 	public OLevel2RecordCache getLevel2Cache();
 
 	/**
-	 * Returns is the database instance uses the cache or not.
-	 * 
-	 * @return true if cache is enabled, otherwise false
-	 */
-	public boolean isUseCache();
-
-	/**
-	 * Overwrite caching usage settings.
-	 * 
-	 * @param useCache
-	 *          true to enable the cache, otherwise false
-	 */
-	public void setUseCache(boolean useCache);
-
-	/**
 	 * Returns the default cluster id. If not specified all the new entities will be stored in the default cluster.
 	 * 
 	 * @return The default cluster id

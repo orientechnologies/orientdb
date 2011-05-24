@@ -484,9 +484,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
 				if (!iRecord.isDirty()) {
 					// RECORD SAVED DURING PREVIOUS STREAMING PHASE: THIS HAPPENS FOR CIRCULAR REFERENCED RECORDS
-					if (isUseCache())
-						// ADD/UPDATE IT IN CACHE
-						getLevel1Cache().updateRecord(iRecord);
+					// ADD/UPDATE IT IN CACHE IF IT'S ACTIVE
+					getLevel1Cache().updateRecord(iRecord);
 					return;
 				}
 			}
@@ -514,9 +513,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				// FILLED RECORD
 				iRecord.unsetDirty();
 
-			if (isUseCache())
-				// ADD/UPDATE IT IN CACHE
-				getLevel1Cache().updateRecord(iRecord);
+			// ADD/UPDATE IT IN CACHE IF IT'S ACTIVE
+			getLevel1Cache().updateRecord(iRecord);
 
 		} catch (OException e) {
 			// RE-THROW THE EXCEPTION
