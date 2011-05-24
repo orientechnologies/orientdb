@@ -27,27 +27,24 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
  * 
  */
 public abstract class OQueryOperator {
-	public final String		keyword;
-	public final int			precedence;
-	public final boolean	logical;
-	public final int			expectedRightWords;
+	public final String	keyword;
+	public final int		precedence;
+	public final int		expectedRightWords;
 
 	protected OQueryOperator(final String iKeyword, final int iPrecedence, final boolean iLogical) {
 		keyword = iKeyword;
 		precedence = iPrecedence;
-		logical = iLogical;
 		expectedRightWords = 1;
 	}
 
 	protected OQueryOperator(final String iKeyword, final int iPrecedence, final boolean iLogical, final int iExpectedRightWords) {
 		keyword = iKeyword;
 		precedence = iPrecedence;
-		logical = iLogical;
 		expectedRightWords = iExpectedRightWords;
 	}
 
-	public abstract boolean evaluateRecord(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition,
-			final Object iLeft, final Object iRight);
+	public abstract Object evaluateRecord(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
+			final Object iRight);
 
 	@Override
 	public String toString() {

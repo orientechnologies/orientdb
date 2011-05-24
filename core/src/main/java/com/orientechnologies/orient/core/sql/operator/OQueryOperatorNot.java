@@ -31,7 +31,7 @@ public class OQueryOperatorNot extends OQueryOperator {
 	}
 
 	@Override
-	public boolean evaluateRecord(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
+	public Object evaluateRecord(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight) {
 		if (iLeft == null)
 			return false;

@@ -13,29 +13,51 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.sql.operator;
+package com.orientechnologies.orient.core.sql.operator.math;
 
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 
 /**
- * OR operator.
+ * PLUS "+" operator.
  * 
  * @author Luca Garulli
  * 
  */
-public class OQueryOperatorOr extends OQueryOperator {
+public class OQueryOperatorPlus extends OQueryOperator {
 
-	public OQueryOperatorOr() {
-		super("OR", 3, true);
+	public OQueryOperatorPlus() {
+		super("+", 9, false);
 	}
 
 	@Override
 	public Object evaluateRecord(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight) {
+		if (iRight == null)
+			return iLeft;
 		if (iLeft == null)
-			return false;
-		return (Boolean) iLeft || (Boolean) iRight;
+			return iRight;
 
+		if (iLeft instanceof String)
+			return (String) iLeft + iRight.toString();
+		else if (iRight instanceof String)
+			return iLeft.toString() + (String) iRight;
+		else if (iLeft instanceof Number && iRight instanceof Number) {
+			final Number l = (Number) iLeft;
+			final Number r = (Number) iRight;
+			if (l instanceof Integer)
+				return l.intValue() + r.intValue();
+			else if (l instanceof Long)
+				return l.longValue() + r.longValue();
+			else if (l instanceof Short)
+				return l.shortValue() + r.shortValue();
+			else if (l instanceof Float)
+				return l.floatValue() + r.floatValue();
+			else if (l instanceof Double)
+				return l.doubleValue() + r.doubleValue();
+		}
+
+		return null;
 	}
 }

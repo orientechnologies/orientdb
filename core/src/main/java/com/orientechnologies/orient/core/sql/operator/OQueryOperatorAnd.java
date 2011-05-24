@@ -27,11 +27,11 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 public class OQueryOperatorAnd extends OQueryOperator {
 
 	public OQueryOperatorAnd() {
-		super("AND", 7, true);
+		super("AND", 4, true);
 	}
 
 	@Override
-	public boolean evaluateRecord(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
+	public Object evaluateRecord(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight) {
 		if (iLeft == null)
 			return false;

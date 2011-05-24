@@ -41,7 +41,7 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
 			final Object iLeft, final Object iRight);
 
 	@Override
-	public boolean evaluateRecord(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
+	public Object evaluateRecord(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight) {
 		if (iLeft instanceof OQueryRuntimeValueMulti) {
 			// LEFT = MULTI

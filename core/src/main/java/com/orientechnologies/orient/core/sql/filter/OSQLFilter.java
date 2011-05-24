@@ -185,11 +185,17 @@ public class OSQLFilter extends OCommandToParse {
 
 		final OQueryOperator nextOperator = extractConditionOperator();
 
-		final OSQLFilterCondition parentCondition = new OSQLFilterCondition(currentCondition, nextOperator);
-
-		parentCondition.right = extractConditions(parentCondition);
-
-		return parentCondition;
+		if (nextOperator.precedence > currentCondition.getOperator().precedence) {
+			// SWAP ITEMS
+			final OSQLFilterCondition subCondition = new OSQLFilterCondition(currentCondition.right, nextOperator);
+			currentCondition.right = subCondition;
+			subCondition.right = extractConditions(subCondition);
+			return currentCondition;
+		} else {
+			final OSQLFilterCondition parentCondition = new OSQLFilterCondition(currentCondition, nextOperator);
+			parentCondition.right = extractConditions(parentCondition);
+			return parentCondition;
+		}
 	}
 
 	protected OSQLFilterCondition extractCondition() {

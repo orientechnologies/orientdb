@@ -36,7 +36,7 @@ public abstract class OQueryOperatorEqualityNotNulls extends OQueryOperatorEqual
 	}
 
 	@Override
-	public boolean evaluateRecord(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
+	public Object evaluateRecord(final ORecordInternal<?> iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight) {
 		if (iLeft == null || iRight == null)
 			return false;

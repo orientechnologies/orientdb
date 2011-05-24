@@ -78,6 +78,23 @@ public class SQLSelectTest {
 	}
 
 	@Test
+	public void querySingleAndDoubleQuotes() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where name = 'Giuseppe'"))
+				.execute();
+
+		final int count = result.size();
+		Assert.assertTrue(result.size() != 0);
+
+		result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where name = \"Giuseppe\"")).execute();
+		Assert.assertTrue(result.size() != 0);
+		Assert.assertEquals(result.size(), count);
+
+		database.close();
+	}
+
+	@Test
 	public void queryTwoParentesisConditions() {
 		database.open("admin", "admin");
 
@@ -783,6 +800,45 @@ public class SQLSelectTest {
 
 			Assert.assertTrue(((Integer) record.field("nr")) >= 10 && ((Integer) record.field("nr")) <= 20);
 		}
+
+		database.close();
+	}
+
+	@Test
+	public void queryMathOperators() {
+		database.open("admin", "admin");
+
+		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select * from account where id < 3 + 4")).execute();
+		Assert.assertFalse(result.isEmpty());
+		for (int i = 0; i < result.size(); ++i)
+			Assert.assertTrue(((Integer) result.get(i).field("id")) < 3 + 4);
+
+		result = database.command(new OSQLSynchQuery<ODocument>("select * from account where id < 10 - 3")).execute();
+		Assert.assertFalse(result.isEmpty());
+		for (int i = 0; i < result.size(); ++i)
+			Assert.assertTrue(((Integer) result.get(i).field("id")) < 10 - 3);
+
+		result = database.command(new OSQLSynchQuery<ODocument>("select * from account where id < 3 * 2")).execute();
+		Assert.assertFalse(result.isEmpty());
+		for (int i = 0; i < result.size(); ++i)
+			Assert.assertTrue(((Integer) result.get(i).field("id")) < 3 * 2);
+
+		result = database.command(new OSQLSynchQuery<ODocument>("select * from account where id < 120 / 20")).execute();
+		Assert.assertFalse(result.isEmpty());
+		for (int i = 0; i < result.size(); ++i)
+			Assert.assertTrue(((Integer) result.get(i).field("id")) < 120 / 20);
+
+		result = database.command(new OSQLSynchQuery<ODocument>("select * from account where id < 27 % 10")).execute();
+		Assert.assertFalse(result.isEmpty());
+		for (int i = 0; i < result.size(); ++i)
+			Assert.assertTrue(((Integer) result.get(i).field("id")) < 27 % 10);
+
+		result = database.command(new OSQLSynchQuery<ODocument>("select * from account where id = id * 1")).execute();
+		Assert.assertFalse(result.isEmpty());
+
+		List<ODocument> result2 = database.command(new OSQLSynchQuery<ODocument>("select count(*) as tot from account where id > 0"))
+				.execute();
+		Assert.assertEquals(result.size(), ((Number) result2.get(0).field("tot")).intValue());
 
 		database.close();
 	}

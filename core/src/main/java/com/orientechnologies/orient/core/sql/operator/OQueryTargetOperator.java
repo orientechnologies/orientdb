@@ -41,7 +41,7 @@ public abstract class OQueryTargetOperator extends OQueryOperator {
 	 * At run-time the evaluation per record must return always true since the recordset are filtered at the begin.
 	 */
 	@Override
-	public boolean evaluateRecord(ORecordInternal<?> iRecord, OSQLFilterCondition iCondition, Object iLeft, Object iRight) {
+	public Object evaluateRecord(ORecordInternal<?> iRecord, OSQLFilterCondition iCondition, Object iLeft, Object iRight) {
 		return true;
 	}
 

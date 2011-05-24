@@ -30,11 +30,44 @@ import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionSum;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionFormat;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionSysdate;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorAnd;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContains;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsAll;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsKey;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsText;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsValue;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIs;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorLike;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajor;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNot;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNotEquals;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorOr;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorTraverse;
+import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorDivide;
+import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMinus;
+import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMod;
+import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMultiply;
+import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorPlus;
 
 public class OSQLEngine {
 	private Map<String, OSQLFunction>																	inlineFunctions				= new HashMap<String, OSQLFunction>();
 	private Map<String, Class<? extends OSQLFunction>>								aggregationFunctions	= new HashMap<String, Class<? extends OSQLFunction>>();
 	private Map<String, Class<? extends OCommandExecutorSQLAbstract>>	commands							= new HashMap<String, Class<? extends OCommandExecutorSQLAbstract>>();
+	public static OQueryOperator[]																		RECORD_OPERATORS			= { new OQueryOperatorAnd(),
+			new OQueryOperatorOr(), new OQueryOperatorNotEquals(), new OQueryOperatorNot(), new OQueryOperatorEquals(),
+			new OQueryOperatorMinorEquals(), new OQueryOperatorMinor(), new OQueryOperatorMajorEquals(), new OQueryOperatorContainsAll(),
+			new OQueryOperatorMajor(), new OQueryOperatorLike(), new OQueryOperatorIs(), new OQueryOperatorIn(),
+			new OQueryOperatorContainsKey(), new OQueryOperatorContainsValue(), new OQueryOperatorContainsText(),
+			new OQueryOperatorContains(), new OQueryOperatorContainsText(), new OQueryOperatorTraverse(), new OQueryOperatorBetween(),
+			new OQueryOperatorPlus(), new OQueryOperatorMinus(), new OQueryOperatorMultiply(), new OQueryOperatorDivide(),
+			new OQueryOperatorMod()																														};
 
 	private static final OSQLEngine																		INSTANCE							= new OSQLEngine();
 
