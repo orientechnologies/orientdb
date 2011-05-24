@@ -612,9 +612,14 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 					return this;
 			} else {
 				try {
-					if (iPropertyValue == oldValue)
-						// BOTH NULL: UNCHANGED
+					if (iPropertyValue == oldValue) {
+						if (!(iPropertyValue instanceof ORecordElement))
+							// SAME BUT NOT TRACKABLE: SET THE RECORD AS DIRTY TO BE SURE IT'S SAVED
+							setDirty();
+
+						// SAVE VALUE: UNCHANGED
 						return this;
+					}
 				} catch (Exception e) {
 					OLogManager.instance().warn(this, "Error on checking the value of property %s against the record %s", e, iPropertyName,
 							getIdentity());
