@@ -138,21 +138,25 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 								} else
 									linkedType = OType.EMBEDDED;
 							} else {
-								linkedType = OType.getTypeByClass(firstValue.getClass());
+								if (firstValue instanceof Enum<?>)
+									linkedType = OType.STRING;
+								else {
+									linkedType = OType.getTypeByClass(firstValue.getClass());
 
-								if (linkedType != OType.LINK) {
-									// EMBEDDED FOR SURE SINCE IT CONTAINS JAVA TYPES
-									if (linkedType == null) {
-										linkedType = OType.EMBEDDED;
-										// linkedClass = new OClass(firstValue.getClass());
+									if (linkedType != OType.LINK) {
+										// EMBEDDED FOR SURE SINCE IT CONTAINS JAVA TYPES
+										if (linkedType == null) {
+											linkedType = OType.EMBEDDED;
+											// linkedClass = new OClass(firstValue.getClass());
+										}
 									}
-
-									if (type == null)
-										if (fieldValue instanceof Set<?>)
-											type = OType.EMBEDDEDSET;
-										else
-											type = OType.EMBEDDEDLIST;
 								}
+
+								if (type == null)
+									if (fieldValue instanceof Set<?>)
+										type = OType.EMBEDDEDSET;
+									else
+										type = OType.EMBEDDEDLIST;
 							}
 						}
 					} else if (type == null)
