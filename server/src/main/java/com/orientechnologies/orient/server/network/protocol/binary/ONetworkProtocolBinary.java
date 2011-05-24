@@ -923,17 +923,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	}
 
 	private boolean loadUserFromSchema(final String iUserName, final String iUserPassword) {
-		account = connection.database.getMetadata().getSecurity().getUser(iUserName);
-		if (account == null)
-			throw new OSecurityAccessException(connection.database.getName(), "User or password not valid for database: '"
-					+ connection.database.getName() + "'");
-
-		boolean allow = account.checkPassword(iUserPassword);
-
-		if (!allow)
-			account = null;
-
-		return allow;
+		account = connection.database.getMetadata().getSecurity().authenticate(iUserName, iUserPassword);
+		return true;
 	}
 
 	/**

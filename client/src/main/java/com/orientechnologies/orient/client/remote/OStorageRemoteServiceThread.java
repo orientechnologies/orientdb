@@ -62,7 +62,7 @@ public class OStorageRemoteServiceThread extends OSoftThread {
 			network.endResponse();
 
 		} catch (Exception e) {
-			OLogManager.instance().error(this, "Error in service thread", e);
+			//OLogManager.instance().error(this, "Error in service thread", e);
 		}
 	}
 }

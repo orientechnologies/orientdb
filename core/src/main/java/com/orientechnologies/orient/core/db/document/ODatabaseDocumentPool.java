@@ -38,12 +38,14 @@ public class ODatabaseDocumentPool extends ODatabasePoolBase<ODatabaseDocumentTx
 									iAdditionalArgs[1]);
 						}
 
-						@Override
-						public ODatabaseDocumentTx reuseResource(String iKey, ODatabaseDocumentTx iValue) {
+						public ODatabaseDocumentTx reuseResource(final String iKey, final String[] iAdditionalArgs,
+								final ODatabaseDocumentTx iValue) {
 							((ODatabaseDocumentTxPooled) iValue).reuse(owner);
 							if (iValue.getStorage().isClosed())
 								// STORAGE HAS BEEN CLOSED: REOPEN IT
-								iValue.getStorage().open(iValue.getUser().getName(), iValue.getUser().getPassword(), null);
+								iValue.getStorage().open(iAdditionalArgs[0], iAdditionalArgs[1], null);
+							else
+								iValue.getMetadata().getSecurity().authenticate(iAdditionalArgs[0], iAdditionalArgs[1]);
 							return iValue;
 						}
 					};

@@ -39,4 +39,6 @@ public interface OSecurity {
 	public List<ODocument> getUsers();
 
 	public List<ODocument> getRoles();
+
+	public OUser authenticate(String iUsername, String iUserPassword);
 }

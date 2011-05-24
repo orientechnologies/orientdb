@@ -21,8 +21,11 @@ import com.orientechnologies.common.concur.resource.OSharedResourceExternal;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.metadata.security.OUser.STATUSES;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 
 /**
  * Shared security class. It's shared by all the getDatabase() instances that point to the same storage.
@@ -32,6 +35,38 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
  */
 public class OSecurityShared {
 	private OSharedResourceExternal	lock	= new OSharedResourceExternal();
+
+	public OUser authenticate(final String iUserName, final String iUserPassword) {
+		lock.acquireSharedLock();
+		try {
+
+			final String dbName = getDatabase().getName();
+
+			final OUser user = getUser(iUserName);
+			if (user == null)
+				throw new OSecurityAccessException(dbName, "User or password not valid for database: '" + dbName + "'");
+
+			if (user.getAccountStatus() != STATUSES.ACTIVE)
+				throw new OSecurityAccessException(dbName, "User '" + iUserName + "' is not active");
+
+			if (getDatabase().getStorage() instanceof OStorageEmbedded) {
+				// CHECK USER & PASSWORD
+				if (!user.checkPassword(iUserPassword)) {
+					// WAIT A BIT TO AVOID BRUTE FORCE
+					try {
+						Thread.sleep(200);
+					} catch (InterruptedException e) {
+					}
+					throw new OSecurityAccessException(dbName, "User or password not valid for database: '" + dbName + "'");
+				}
+			}
+
+			return user;
+
+		} finally {
+			lock.releaseSharedLock();
+		}
+	}
 
 	public OUser getUser(final String iUserName) {
 		lock.acquireSharedLock();

@@ -37,12 +37,13 @@ public class OGraphDatabasePool extends ODatabasePoolBase<OGraphDatabase> {
 							return new OGraphDatabasePooled((OGraphDatabasePool) owner, iDatabaseName, iAdditionalArgs[0], iAdditionalArgs[1]);
 						}
 
-						@Override
-						public OGraphDatabase reuseResource(String iKey, OGraphDatabase iValue) {
+						public OGraphDatabase reuseResource(final String iKey, final String[] iAdditionalArgs, final OGraphDatabase iValue) {
 							((OGraphDatabasePooled) iValue).reuse(owner);
 							if (iValue.getStorage().isClosed())
 								// STORAGE HAS BEEN CLOSED: REOPEN IT
-								iValue.getStorage().open(iValue.getUser().getName(), iValue.getUser().getPassword(), null);
+								iValue.getStorage().open(iAdditionalArgs[0], iAdditionalArgs[1], null);
+							else
+								iValue.getMetadata().getSecurity().authenticate(iAdditionalArgs[0], iAdditionalArgs[1]);
 							return iValue;
 						}
 					};

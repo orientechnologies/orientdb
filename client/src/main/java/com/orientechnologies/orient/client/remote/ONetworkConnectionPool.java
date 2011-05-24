@@ -85,7 +85,7 @@ public class ONetworkConnectionPool<CH extends OChannel> implements OResourcePoo
 		pool.returnResource(iChannel);
 	}
 
-	public CH reuseResource(final String iKey, final CH iValue) {
+	public CH reuseResource(final String iKey, final String[] iAdditionalArgs, final CH iValue) {
 		return iValue;
 	}
 

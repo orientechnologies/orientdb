@@ -36,9 +36,13 @@ public class ODatabaseObjectPool extends ODatabasePoolBase<ODatabaseObjectTx> {
 							return new ODatabaseObjectTxPooled((ODatabaseObjectPool) owner, iDatabaseName, iAdditionalArgs[0], iAdditionalArgs[1]);
 						}
 
-						@Override
-						public ODatabaseObjectTx reuseResource(String iKey, ODatabaseObjectTx iValue) {
+						public ODatabaseObjectTx reuseResource(final String iKey, final String[] iAdditionalArgs, final ODatabaseObjectTx iValue) {
 							((ODatabaseObjectTxPooled) iValue).reuse(owner);
+							if (iValue.getStorage().isClosed())
+								// STORAGE HAS BEEN CLOSED: REOPEN IT
+								iValue.getStorage().open(iAdditionalArgs[0], iAdditionalArgs[1], null);
+							else
+								iValue.getMetadata().getSecurity().authenticate(iAdditionalArgs[0], iAdditionalArgs[1]);
 							return iValue;
 						}
 					};
