@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
@@ -160,9 +161,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass {
 	 * com.orientechnologies.orient.core.metadata.schema.OClass, int[])
 	 */
 	public OClass createClass(final String iClassName, final OClass iSuperClass, final int[] iClusterIds) {
-		if (iClusterIds == null || iClusterIds.length == 0)
-			throw new IllegalArgumentException("clusterIds list can't be null or empty");
-
 		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_CREATE);
 
 		final String key = iClassName.toLowerCase();
@@ -180,14 +178,15 @@ public class OSchemaShared extends ODocumentWrapperNoClass {
 				cmd.append(iSuperClass.getName());
 			}
 
-			for (int i = 0; i < iClusterIds.length; ++i) {
-				if (i > 0)
-					cmd.append(',');
-				else
-					cmd.append(' ');
+			if (iClusterIds != null)
+				for (int i = 0; i < iClusterIds.length; ++i) {
+					if (i > 0)
+						cmd.append(',');
+					else
+						cmd.append(' ');
 
-				cmd.append(iClusterIds[i]);
-			}
+					cmd.append(iClusterIds[i]);
+				}
 
 			getDatabase().command(new OCommandSQL(cmd.toString())).execute();
 			reload();
@@ -199,9 +198,10 @@ public class OSchemaShared extends ODocumentWrapperNoClass {
 		}
 	}
 
-	public OClass createClassInternal(final String iClassName, final OClass iSuperClass, final int[] iClusterIds) {
+	public OClass createClassInternal(final String iClassName, final OClass iSuperClass, int[] iClusterIds) {
 		if (iClusterIds == null || iClusterIds.length == 0)
-			throw new IllegalArgumentException("clusterIds list can't be null or empty");
+			// CREATE A NEW CLUSTER
+			iClusterIds = new int[] { getDatabase().getStorage().addCluster(iClassName, CLUSTER_TYPE.PHYSICAL) };
 
 		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_CREATE);
 
