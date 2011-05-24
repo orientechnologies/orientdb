@@ -998,7 +998,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 			if (!(iValue instanceof String) && !iType.isAssignableFrom(iValue.getClass()))
 				throw new IllegalArgumentException("Property '" + iPropertyName + "' of type '" + iType + "' can't accept value of type: "
 						+ iValue.getClass());
-		} else if (Date.class.isAssignableFrom(iType) && iValue instanceof String && _database != null) {
+		} else if (Date.class.isAssignableFrom(iType) && iValue != null && iValue instanceof String && _database != null) {
 			final OStorageConfiguration config = _database.getStorage().getConfiguration();
 
 			DateFormat formatter = config.getDateFormatInstance();
@@ -1010,6 +1010,7 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 
 			try {
 				iValue = formatter.parse((String) iValue);
+				_fieldValues.put(iPropertyName, iValue);
 			} catch (ParseException pe) {
 				throw new OQueryParsingException("Error on conversion of date '" + iValue + "' using the format: " + formatter.toString());
 			}
