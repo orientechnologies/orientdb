@@ -51,31 +51,31 @@ public enum OType {
 	},
 	DATETIME("Datetime", 6, false, true, 8, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Long.class }) {
 	},
-	DATE("Date", 7, false, true, 8, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Long.class }) {
+	STRING("String", 7, false, false, 8, new Class<?>[] { String.class }, new Class<?>[] { String.class }) {
 	},
-	STRING("String", 8, false, false, 8, new Class<?>[] { String.class }, new Class<?>[] { String.class }) {
+	BINARY("Binary", 8, false, false, 8, new Class<?>[] { Array.class }, new Class<?>[] { Array.class }) {
 	},
-	BINARY("Binary", 9, false, false, 8, new Class<?>[] { Array.class }, new Class<?>[] { Array.class }) {
+	EMBEDDED("Embedded", 9, true, false, 8, new Class<?>[] { Object.class }, new Class<?>[] { Object.class }) {
 	},
-	EMBEDDED("Embedded", 10, true, false, 8, new Class<?>[] { Object.class }, new Class<?>[] { Object.class }) {
+	EMBEDDEDLIST("EmbeddedList", 10, true, false, 8, new Class<?>[] { List.class }, new Class<?>[] { Collection.class, Array.class }) {
 	},
-	EMBEDDEDLIST("EmbeddedList", 11, true, false, 8, new Class<?>[] { List.class }, new Class<?>[] { Collection.class, Array.class }) {
+	EMBEDDEDSET("EmbeddedSet", 11, true, false, 8, new Class<?>[] { Set.class }, new Class<?>[] { Collection.class, Array.class }) {
 	},
-	EMBEDDEDSET("EmbeddedSet", 12, true, false, 8, new Class<?>[] { Set.class }, new Class<?>[] { Collection.class, Array.class }) {
+	EMBEDDEDMAP("EmbeddedMap", 12, true, false, 8, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
 	},
-	EMBEDDEDMAP("EmbeddedMap", 13, true, false, 8, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
+	LINK("Link", 13, true, true, 8, new Class<?>[] { Object.class, ORecordId.class }, new Class<?>[] { ORecord.class, ORID.class }) {
 	},
-	LINK("Link", 14, true, true, 8, new Class<?>[] { Object.class, ORecordId.class }, new Class<?>[] { ORecord.class, ORID.class }) {
+	LINKLIST("LinkList", 14, true, false, 8, new Class<?>[] { List.class }, new Class<?>[] { Collection.class, Array.class }) {
 	},
-	LINKLIST("LinkList", 15, true, false, 8, new Class<?>[] { List.class }, new Class<?>[] { Collection.class, Array.class }) {
+	LINKSET("LinkSet", 15, true, false, 8, new Class<?>[] { Set.class }, new Class<?>[] { Collection.class, Array.class }) {
 	},
-	LINKSET("LinkSet", 16, true, false, 8, new Class<?>[] { Set.class }, new Class<?>[] { Collection.class, Array.class }) {
+	LINKMAP("LinkMap", 16, true, false, 8, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
 	},
-	LINKMAP("LinkMap", 17, true, false, 8, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
+	BYTE("Byte", 17, false, true, 1, new Class<?>[] { Byte.class, Byte.TYPE }, new Class<?>[] { Number.class, Character.class }) {
 	},
-	BYTE("Byte", 18, false, true, 1, new Class<?>[] { Byte.class, Byte.TYPE }, new Class<?>[] { Number.class, Character.class }) {
+	TRANSIENT("Transient", 18, false, true, 0, new Class<?>[] {}, new Class<?>[] {}) {
 	},
-	TRANSIENT("Transient", 19, false, true, 0, new Class<?>[] {}, new Class<?>[] {}) {
+	DATE("Date", 19, false, true, 8, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Long.class }) {
 	};
 
 	protected static final OType[]	TYPES	= new OType[] { BOOLEAN, BYTE, INTEGER, SHORT, LONG, FLOAT, DOUBLE, DATE, DATETIME, STRING,
