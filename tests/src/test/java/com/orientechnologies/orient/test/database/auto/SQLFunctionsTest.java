@@ -137,9 +137,13 @@ public class SQLFunctionsTest {
 	public void queryUnionAsInline() {
 		database.open("admin", "admin");
 		List<ODocument> result = database.command(
-				new OSQLSynchQuery<ODocument>("select union(outEdges, inEdges) as name from OGraphVertex")).execute();
+				new OSQLSynchQuery<ODocument>("select union(outEdges, inEdges) as edges from OGraphVertex")).execute();
 
 		Assert.assertTrue(result.size() > 1);
+		for (ODocument d : result) {
+			Assert.assertEquals(d.fieldNames().size(), 1);
+			Assert.assertTrue(d.containsField("edges"));
+		}
 
 		database.close();
 	}
@@ -253,10 +257,6 @@ public class SQLFunctionsTest {
 				final double v2 = ((Number) iParameters[1]).doubleValue();
 
 				return Math.max(v1, v2);
-			}
-
-			public boolean aggregateResults() {
-				return false;
 			}
 		});
 

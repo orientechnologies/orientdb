@@ -68,6 +68,26 @@ public class DateTest {
 	}
 
 	@Test
+	public void testDatePrecision() throws ParseException {
+		database.open("admin", "admin");
+
+		final long begin = System.currentTimeMillis();
+
+		String dateAsString = database.getStorage().getConfiguration().getDateFormatInstance().format(begin);
+
+		ODocument doc = new ODocument(database, "Order");
+		doc.field("context", "testPrecision");
+		doc.field("date", new Date(), OType.DATE);
+		doc.save();
+
+		List<ODocument> result = database.command(
+				new OSQLSynchQuery<ODocument>("select * from Order where date >= ? and context = 'testPrecision'")).execute(dateAsString);
+
+		Assert.assertEquals(result.size(), 1);
+		database.close();
+	}
+
+	@Test
 	public void testDateTypes() throws ParseException {
 		ODocument doc = new ODocument();
 		doc.field("context", "test");

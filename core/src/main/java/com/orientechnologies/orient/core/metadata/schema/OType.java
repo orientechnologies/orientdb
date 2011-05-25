@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -77,8 +78,8 @@ public enum OType {
 	TRANSIENT("Transient", 19, false, true, 0, new Class<?>[] {}, new Class<?>[] {}) {
 	};
 
-	protected static final OType[]	TYPES	= new OType[] { BOOLEAN, BYTE, INTEGER, SHORT, LONG, FLOAT, DOUBLE, DATE, DATETIME, STRING, BINARY,
-			EMBEDDED, EMBEDDEDLIST, EMBEDDEDSET, EMBEDDEDMAP, LINK, LINKLIST, LINKSET, LINKMAP, TRANSIENT };
+	protected static final OType[]	TYPES	= new OType[] { BOOLEAN, BYTE, INTEGER, SHORT, LONG, FLOAT, DOUBLE, DATE, DATETIME, STRING,
+			BINARY, EMBEDDED, EMBEDDEDLIST, EMBEDDEDSET, EMBEDDEDMAP, LINK, LINKLIST, LINKSET, LINKMAP, TRANSIENT };
 
 	protected String								name;
 	protected int										id;
@@ -296,75 +297,79 @@ public enum OType {
 			// COMPATIBLE TYPES: DON'T CONVERT IT
 			return iValue;
 
-		if (iTargetClass == byte[].class) {
-			return OBase64Utils.decode(iValue.toString());
-		} else if (iTargetClass.isEnum()) {
-			if (iValue instanceof Number)
-				return ((Class<Enum>) iTargetClass).getEnumConstants()[((Number) iValue).intValue()];
-			return Enum.valueOf((Class<Enum>) iTargetClass, iValue.toString());
-		} else if (iTargetClass.equals(Byte.TYPE) || iTargetClass.equals(Byte.class)) {
-			if (iValue instanceof Byte)
-				return iValue;
-			else if (iValue instanceof String)
-				return Byte.parseByte((String) iValue);
-			else
-				return ((Number) iValue).byteValue();
+		try {
+			if (iTargetClass == byte[].class) {
+				return OBase64Utils.decode(iValue.toString());
+			} else if (iTargetClass.isEnum()) {
+				if (iValue instanceof Number)
+					return ((Class<Enum>) iTargetClass).getEnumConstants()[((Number) iValue).intValue()];
+				return Enum.valueOf((Class<Enum>) iTargetClass, iValue.toString());
+			} else if (iTargetClass.equals(Byte.TYPE) || iTargetClass.equals(Byte.class)) {
+				if (iValue instanceof Byte)
+					return iValue;
+				else if (iValue instanceof String)
+					return Byte.parseByte((String) iValue);
+				else
+					return ((Number) iValue).byteValue();
 
-		} else if (iTargetClass.equals(Short.TYPE) || iTargetClass.equals(Short.class)) {
-			if (iValue instanceof Short)
-				return iValue;
-			else if (iValue instanceof String)
-				return Short.parseShort((String) iValue);
-			else
-				return ((Number) iValue).shortValue();
+			} else if (iTargetClass.equals(Short.TYPE) || iTargetClass.equals(Short.class)) {
+				if (iValue instanceof Short)
+					return iValue;
+				else if (iValue instanceof String)
+					return Short.parseShort((String) iValue);
+				else
+					return ((Number) iValue).shortValue();
 
-		} else if (iTargetClass.equals(Integer.TYPE) || iTargetClass.equals(Integer.class)) {
-			if (iValue instanceof Integer)
-				return iValue;
-			else if (iValue instanceof String)
-				return Integer.parseInt((String) iValue);
-			else
-				return ((Number) iValue).intValue();
+			} else if (iTargetClass.equals(Integer.TYPE) || iTargetClass.equals(Integer.class)) {
+				if (iValue instanceof Integer)
+					return iValue;
+				else if (iValue instanceof String)
+					return Integer.parseInt((String) iValue);
+				else
+					return ((Number) iValue).intValue();
 
-		} else if (iTargetClass.equals(Long.TYPE) || iTargetClass.equals(Long.class)) {
-			if (iValue instanceof Long)
-				return iValue;
-			else if (iValue instanceof String)
-				return Long.parseLong((String) iValue);
-			else
-				return ((Number) iValue).longValue();
+			} else if (iTargetClass.equals(Long.TYPE) || iTargetClass.equals(Long.class)) {
+				if (iValue instanceof Long)
+					return iValue;
+				else if (iValue instanceof String)
+					return Long.parseLong((String) iValue);
+				else
+					return ((Number) iValue).longValue();
 
-		} else if (iTargetClass.equals(Float.TYPE) || iTargetClass.equals(Float.class)) {
-			if (iValue instanceof Float)
-				return iValue;
-			else if (iValue instanceof String)
-				return Float.parseFloat((String) iValue);
-			else
-				return ((Number) iValue).floatValue();
+			} else if (iTargetClass.equals(Float.TYPE) || iTargetClass.equals(Float.class)) {
+				if (iValue instanceof Float)
+					return iValue;
+				else if (iValue instanceof String)
+					return Float.parseFloat((String) iValue);
+				else
+					return ((Number) iValue).floatValue();
 
-		} else if (iTargetClass.equals(Double.TYPE) || iTargetClass.equals(Double.class)) {
-			if (iValue instanceof Double)
-				return iValue;
-			else if (iValue instanceof String)
-				return Double.parseDouble((String) iValue);
-			else
-				return ((Number) iValue).doubleValue();
+			} else if (iTargetClass.equals(Double.TYPE) || iTargetClass.equals(Double.class)) {
+				if (iValue instanceof Double)
+					return iValue;
+				else if (iValue instanceof String)
+					return Double.parseDouble((String) iValue);
+				else
+					return ((Number) iValue).doubleValue();
 
-		} else if (iTargetClass.equals(Boolean.TYPE) || iTargetClass.equals(Boolean.class)) {
-			if (iValue instanceof Boolean)
-				return ((Boolean) iValue).booleanValue();
-			else if (iValue instanceof String)
-				return Boolean.parseBoolean((String) iValue);
-			else if (iValue instanceof Number)
-				return ((Number) iValue).intValue() != 0;
+			} else if (iTargetClass.equals(Boolean.TYPE) || iTargetClass.equals(Boolean.class)) {
+				if (iValue instanceof Boolean)
+					return ((Boolean) iValue).booleanValue();
+				else if (iValue instanceof String)
+					return Boolean.parseBoolean((String) iValue);
+				else if (iValue instanceof Number)
+					return ((Number) iValue).intValue() != 0;
 
-		} else if (iValue instanceof Collection<?> && Set.class.isAssignableFrom(iTargetClass)) {
-			final Set<Object> set = new HashSet<Object>();
-			set.addAll((Collection<? extends Object>) iValue);
-			return set;
+			} else if (iValue instanceof Collection<?> && Set.class.isAssignableFrom(iTargetClass)) {
+				final Set<Object> set = new HashSet<Object>();
+				set.addAll((Collection<? extends Object>) iValue);
+				return set;
 
-		} else if (iTargetClass.equals(Date.class) && iValue instanceof Number) {
-			return new Date(((Number) iValue).longValue());
+			} else if (iTargetClass.equals(Date.class) && iValue instanceof Number) {
+				return new Date(((Number) iValue).longValue());
+			}
+		} catch (Exception e) {
+			OLogManager.instance().debug(OType.class, "Error in conversion of value '%s' to type '%s'", iValue, iTargetClass);
 		}
 
 		return null;

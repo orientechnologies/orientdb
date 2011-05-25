@@ -46,8 +46,12 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
 		else if (iRight instanceof ORecord<?> && iLeft instanceof ORID)
 			// ORID && RECORD
 			return ((ORecord<?>) iRight).getIdentity().equals(iLeft);
-		else
+		else {
 			// ALL OTHER CASES
-			return iLeft.equals(OType.convert(iRight, iLeft.getClass()));
+			final Object right = OType.convert(iRight, iLeft.getClass());
+			if (right == null)
+				return false;
+			return iLeft.equals(right);
+		}
 	}
 }

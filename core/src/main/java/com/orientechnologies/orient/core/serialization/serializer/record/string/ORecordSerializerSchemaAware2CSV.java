@@ -107,9 +107,46 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
 			} else if (fieldValue != null) {
 				// NOT FOUND: TRY TO DETERMINE THE TYPE FROM ITS CONTENT
-				if (fieldValue.getClass() == byte[].class) {
-					type = OType.BINARY;
-				} else if (fieldValue instanceof Collection<?> || fieldValue.getClass().isArray()) {
+				if (type == null) {
+					if (fieldValue.getClass() == byte[].class)
+						type = OType.BINARY;
+					else if (database != null && fieldValue instanceof ORecord<?>) {
+						if (type == null)
+							// DETERMINE THE FIELD TYPE
+							if (fieldValue instanceof ODocument && ((ODocument) fieldValue).hasOwners())
+								type = OType.EMBEDDED;
+							else
+								type = OType.LINK;
+
+						linkedClass = getLinkInfo(database, fieldClassName);
+					} else if (fieldValue instanceof ORID)
+						// DETERMINE THE FIELD TYPE
+						type = OType.LINK;
+
+					else if (database != null && database.getDatabaseOwner() instanceof ODatabaseObject
+							&& ((ODatabaseObject) database.getDatabaseOwner()).getEntityManager().getEntityClass(fieldClassName) != null) {
+						// DETERMINE THE FIELD TYPE
+						type = OType.LINK;
+						linkedClass = getLinkInfo(database, fieldClassName);
+					} else if (fieldValue instanceof Date)
+						type = OType.DATETIME;
+					else if (fieldValue instanceof String)
+						type = OType.STRING;
+					else if (fieldValue instanceof Integer)
+						type = OType.INTEGER;
+					else if (fieldValue instanceof Long)
+						type = OType.LONG;
+					else if (fieldValue instanceof Float)
+						type = OType.FLOAT;
+					else if (fieldValue instanceof Short)
+						type = OType.SHORT;
+					else if (fieldValue instanceof Byte)
+						type = OType.BYTE;
+					else if (fieldValue instanceof Double)
+						type = OType.DOUBLE;
+				}
+
+				if (fieldValue instanceof Collection<?> || fieldValue.getClass().isArray()) {
 					int size = OMultiValue.getSize(fieldValue);
 
 					if (size > 0) {
@@ -189,43 +226,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 								type = OType.LINKMAP;
 						}
 					}
-				} else if (database != null && fieldValue instanceof ORecord<?>) {
-					if (type == null)
-						// DETERMINE THE FIELD TYPE
-						if (fieldValue instanceof ODocument && ((ODocument) fieldValue).hasOwners())
-							type = OType.EMBEDDED;
-						else
-							type = OType.LINK;
-
-					linkedClass = getLinkInfo(database, fieldClassName);
-				} else if (fieldValue instanceof ORID) {
-					if (type == null)
-						// DETERMINE THE FIELD TYPE
-						type = OType.LINK;
-
-				} else if (database != null && database.getDatabaseOwner() instanceof ODatabaseObject
-						&& ((ODatabaseObject) database.getDatabaseOwner()).getEntityManager().getEntityClass(fieldClassName) != null) {
-					// DETERMINE THE FIELD TYPE
-					if (type == null)
-						type = OType.LINK;
-					linkedClass = getLinkInfo(database, fieldClassName);
-				} else if (fieldValue instanceof Date) {
-					if (type == null)
-						type = OType.DATETIME;
-				} else if (fieldValue instanceof String)
-					type = OType.STRING;
-				else if (fieldValue instanceof Integer)
-					type = OType.INTEGER;
-				else if (fieldValue instanceof Long)
-					type = OType.LONG;
-				else if (fieldValue instanceof Float)
-					type = OType.FLOAT;
-				else if (fieldValue instanceof Short)
-					type = OType.SHORT;
-				else if (fieldValue instanceof Byte)
-					type = OType.BYTE;
-				else if (fieldValue instanceof Double)
-					type = OType.DOUBLE;
+				}
 			}
 
 			if (type == OType.TRANSIENT)

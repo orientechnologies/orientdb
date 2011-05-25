@@ -35,6 +35,9 @@ public class OQueryOperatorMinorEquals extends OQueryOperatorEqualityNotNulls {
 	@SuppressWarnings("unchecked")
 	protected boolean evaluateExpression(final ORecordInternal<?> iRecord, OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight) {
-		return ((Comparable<Object>) iLeft).compareTo(OType.convert(iRight, iLeft.getClass())) <= 0;
+		final Object right = OType.convert(iRight, iLeft.getClass());
+		if (right == null)
+			return false;
+		return ((Comparable<Object>) iLeft).compareTo(right) <= 0;
 	}
 }

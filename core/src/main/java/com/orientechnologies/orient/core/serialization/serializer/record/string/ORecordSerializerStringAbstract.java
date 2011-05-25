@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Set;
 
@@ -247,13 +248,29 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 			break;
 
 		case DATE:
+			if (iValue instanceof Date) {
+				// RESET HOURS, MINUTES, SECONDS AND MILLISECONDS
+				Calendar calendar = Calendar.getInstance();
+				calendar.setTime((Date) iValue);
+				calendar.set(Calendar.HOUR_OF_DAY, 0);
+				calendar.set(Calendar.MINUTE, 0);
+				calendar.set(Calendar.SECOND, 0);
+				calendar.set(Calendar.MILLISECOND, 0);
+
+				iBuffer.append(calendar.getTime().getTime());
+			} else
+				iBuffer.append(iValue);
+			iBuffer.append('a');
+			OProfiler.getInstance().stopChrono("serializer.rec.str.date2string", timer);
+			break;
+
 		case DATETIME:
 			if (iValue instanceof Date)
 				iBuffer.append(((Date) iValue).getTime());
 			else
 				iBuffer.append(iValue);
 			iBuffer.append('t');
-			OProfiler.getInstance().stopChrono("serializer.rec.str.date2string", timer);
+			OProfiler.getInstance().stopChrono("serializer.rec.str.datetime2string", timer);
 			break;
 
 		case LINK:
@@ -312,9 +329,9 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 							return OType.DOUBLE;
 						else if (c == 'b')
 							return OType.BYTE;
-						else if (c == 't')
+						else if (c == 'a')
 							return OType.DATE;
-						else if (c == 'm')
+						else if (c == 't')
 							return OType.DATETIME;
 						else if (c == 's')
 							return OType.SHORT;
@@ -374,7 +391,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 							return new Double(v);
 						else if (c == 'b')
 							return new Byte(v);
-						else if (c == 't')
+						else if (c == 'a' || c == 't')
 							return new Date(Long.parseLong(v));
 						else if (c == 's')
 							return new Short(v);

@@ -44,8 +44,14 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
 		if (values.length != 3)
 			throw new IllegalArgumentException("Found '" + OMultiValue.toString(iRight) + "' while was expected: " + getSyntax());
 
-		return ((Comparable<Object>) iLeft).compareTo(OType.convert(values[0], iLeft.getClass())) >= 0
-				&& ((Comparable<Object>) iLeft).compareTo(OType.convert(values[2], iLeft.getClass())) <= 0;
+		final Object right1 = OType.convert(values[0], iLeft.getClass());
+		if (right1 == null)
+			return false;
+		final Object right2 = OType.convert(values[2], iLeft.getClass());
+		if (right2 == null)
+			return false;
+
+		return ((Comparable<Object>) iLeft).compareTo(right1) >= 0 && ((Comparable<Object>) iLeft).compareTo(right2) <= 0;
 	}
 
 	@Override
