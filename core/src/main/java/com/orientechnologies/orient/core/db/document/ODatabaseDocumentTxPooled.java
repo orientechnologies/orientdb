@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.document;
 
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabasePoolBase;
 import com.orientechnologies.orient.core.db.ODatabasePooled;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -54,7 +55,7 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
 	}
 
 	@Override
-	public ODatabaseDocumentTxPooled create() {
+	public ODatabaseDocumentTxPooled create(final ODatabase.OPTIONS... iOptions) {
 		throw new UnsupportedOperationException(
 				"Database instance was retrieved from a pool. You can't create the database in this way. Please use directly ODatabaseDocumentTx.create()");
 	}

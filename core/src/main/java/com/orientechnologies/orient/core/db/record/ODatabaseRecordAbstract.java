@@ -42,8 +42,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OPropertyIndexManager;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -57,7 +55,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 
 @SuppressWarnings("unchecked")
@@ -115,9 +112,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	}
 
 	@Override
-	public <DB extends ODatabase> DB create() {
+	public <DB extends ODatabase> DB create(final ODatabase.OPTIONS... iOptions) {
 		try {
-			super.create();
+			super.create(iOptions);
 
 			level1Cache.startup();
 
@@ -127,7 +124,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			metadata = new OMetadata(this);
 			metadata.create();
 
-			createRolesAndUsers();
 			user = getMetadata().getSecurity().getUser(OUser.ADMIN);
 
 			if (getStorage() instanceof OStorageEmbedded) {
@@ -633,48 +629,5 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	protected void checkOpeness() {
 		if (isClosed())
 			throw new ODatabaseException("Database is closed");
-	}
-
-	private void createRolesAndUsers() {
-		// CREATE ROLE AND USER SCHEMA CLASSES
-		final OClass roleClass = metadata.getSchema().createClass("ORole");
-		roleClass.createProperty("mode", OType.BYTE);
-		roleClass.createProperty("rules", OType.EMBEDDEDMAP, OType.BYTE);
-
-		final OClass userClass = metadata.getSchema().createClass("OUser");
-		userClass.createProperty("roles", OType.LINKSET, roleClass);
-
-		// CREATE ROLES AND USERS
-		final ORole adminRole = metadata.getSecurity().createRole(ORole.ADMIN, ORole.ALLOW_MODES.ALLOW_ALL_BUT);
-		user = metadata.getSecurity().createUser(OUser.ADMIN, OUser.ADMIN, new String[] { adminRole.getName() });
-
-		final ORole readerRole = metadata.getSecurity().createRole("reader", ORole.ALLOW_MODES.DENY_ALL_BUT);
-		readerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
-		readerRole.addRule(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ);
-		readerRole.addRule(ODatabaseSecurityResources.CLUSTER + "." + OStorage.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
-		readerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".orole", ORole.PERMISSION_READ);
-		readerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".ouser", ORole.PERMISSION_READ);
-		readerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.PERMISSION_READ);
-		readerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.PERMISSION_READ);
-		readerRole.addRule(ODatabaseSecurityResources.QUERY, ORole.PERMISSION_READ);
-		readerRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
-		readerRole.addRule(ODatabaseSecurityResources.RECORD_HOOK, ORole.PERMISSION_READ);
-		readerRole.save();
-		metadata.getSecurity().createUser("reader", "reader", new String[] { readerRole.getName() });
-
-		final ORole writerRole = metadata.getSecurity().createRole("writer", ORole.ALLOW_MODES.DENY_ALL_BUT);
-		writerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
-		writerRole
-				.addRule(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ + ORole.PERMISSION_CREATE + ORole.PERMISSION_UPDATE);
-		writerRole.addRule(ODatabaseSecurityResources.CLUSTER + "." + OStorage.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
-		writerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".orole", ORole.PERMISSION_READ);
-		writerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".ouser", ORole.PERMISSION_READ);
-		writerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.PERMISSION_ALL);
-		writerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.PERMISSION_ALL);
-		writerRole.addRule(ODatabaseSecurityResources.QUERY, ORole.PERMISSION_READ);
-		writerRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_ALL);
-		writerRole.addRule(ODatabaseSecurityResources.RECORD_HOOK, ORole.PERMISSION_ALL);
-		writerRole.save();
-		metadata.getSecurity().createUser("writer", "writer", new String[] { writerRole.getName() });
 	}
 }

@@ -33,6 +33,16 @@ public class OSecurityProxy extends OProxedResource<OSecurityShared> implements 
 		super(iDelegate, iDatabase);
 	}
 
+	public OUser create() {
+		setDatabaseInThreadLocal();
+		return delegate.create();
+	}
+
+	public void load() {
+		setDatabaseInThreadLocal();
+		delegate.load();
+	}
+
 	public OUser authenticate(final String iUsername, final String iUserPassword) {
 		setDatabaseInThreadLocal();
 		return delegate.authenticate(iUsername, iUserPassword);

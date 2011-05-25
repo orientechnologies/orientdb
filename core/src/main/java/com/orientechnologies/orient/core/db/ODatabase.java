@@ -40,6 +40,10 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * 
  */
 public interface ODatabase {
+	public enum OPTIONS {
+		NOSCHEMA
+	}
+
 	/**
 	 * Opens a database using the user and password received as arguments.
 	 * 
@@ -56,7 +60,7 @@ public interface ODatabase {
 	 * 
 	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
-	public <DB extends ODatabase> DB create();
+	public <DB extends ODatabase> DB create(ODatabase.OPTIONS... iOptions);
 
 	/**
 	 * Delete a database.

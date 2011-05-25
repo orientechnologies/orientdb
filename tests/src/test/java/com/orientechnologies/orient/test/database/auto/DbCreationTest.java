@@ -23,7 +23,9 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.object.ODatabaseObjectTx;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
@@ -41,14 +43,26 @@ public class DbCreationTest {
 		OProfiler.getInstance().startRecording();
 	}
 
-	public void testDbCreation() throws IOException {
+	public void testDbCreationNoSecurity() throws IOException {
+		if (url.startsWith(OEngineMemory.NAME))
+			OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(true);
+
+		if (!url.startsWith(OEngineRemote.NAME)) {
+			database = new ODatabaseObjectTx(url);
+			TestUtils.createDatabase(database, url, ODatabase.OPTIONS.NOSCHEMA);
+			TestUtils.deleteDatabase(database);
+		}
+	}
+
+	@Test(dependsOnMethods = { "testDbCreationNoSecurity" })
+	public void testDbCreationDefault() throws IOException {
 		if (url.startsWith(OEngineMemory.NAME))
 			OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(true);
 
 		TestUtils.createDatabase(new ODatabaseObjectTx(url), url);
 	}
 
-	@Test(dependsOnMethods = { "testDbCreation" })
+	@Test(dependsOnMethods = { "testDbCreationDefault" })
 	public void testDbExists() throws IOException {
 		Assert.assertTrue(TestUtils.existsDatabase(new ODatabaseDocumentTx(url)));
 	}

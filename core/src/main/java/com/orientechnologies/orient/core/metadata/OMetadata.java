@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerImpl;
@@ -26,6 +27,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
+import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
 import com.orientechnologies.orient.core.metadata.security.OSecurityProxy;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -35,7 +37,7 @@ public class OMetadata {
 	protected int							schemaClusterId;
 
 	protected OSchemaProxy		schema;
-	protected OSecurityProxy	security;
+	protected OSecurity				security;
 	protected OIndexManager		indexManager;
 
 	public OMetadata(final ODatabaseRecord iDatabase) {
@@ -52,6 +54,7 @@ public class OMetadata {
 				return;
 
 			indexManager.load();
+			security.load();
 			schema.load();
 		} finally {
 			OProfiler.getInstance().stopChrono("OMetadata.load", timer);
@@ -66,6 +69,7 @@ public class OMetadata {
 		try {
 			// CREATE RECORD FOR SCHEMA
 			schema.create();
+			security.create();
 			indexManager.create();
 		} finally {
 
@@ -98,12 +102,16 @@ public class OMetadata {
 			}
 		}), database);
 
-		security = new OSecurityProxy(database.getStorage().getResource(OSecurity.class.getSimpleName(),
-				new Callable<OSecurityShared>() {
-					public OSecurityShared call() {
-						return new OSecurityShared();
-					}
-				}), database);
+		if (database.getProperty(ODatabase.OPTIONS.NOSCHEMA.toString()) != null)
+			// INSTALL NO SECURITY IMPL
+			security = new OSecurityNull();
+		else
+			security = new OSecurityProxy(database.getStorage().getResource(OSecurity.class.getSimpleName(),
+					new Callable<OSecurityShared>() {
+						public OSecurityShared call() {
+							return new OSecurityShared();
+						}
+					}), database);
 
 		indexManager = new OIndexManagerImpl(database);
 	}

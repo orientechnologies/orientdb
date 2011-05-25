@@ -25,21 +25,20 @@ import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.ODatabase.OPTIONS;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 
 public class TestUtils {
-	public static void createDatabase(ODatabase database, final String iURL) throws IOException {
+	public static void createDatabase(ODatabase database, final String iURL, OPTIONS... iOptions) throws IOException {
 		if (iURL.startsWith(OEngineRemote.NAME)) {
 			new OServerAdmin(iURL).connect("root", getServerRootPassword()).createDatabase("local").close();
 		} else {
-			database.create();
+			database.create(iOptions);
 			database.close();
 		}
 	}
 
-	public static void deleteDatabase(final ODatabaseDocumentTx database) throws IOException {
+	public static void deleteDatabase(final ODatabase database) throws IOException {
 		if (database.getStorage() instanceof OStorageRemote) {
 			new OServerAdmin((OStorageRemote) database.getStorage()).connect("root", getServerRootPassword()).deleteDatabase();
 		} else {
@@ -47,7 +46,7 @@ public class TestUtils {
 		}
 	}
 
-	public static boolean existsDatabase(final ODatabaseRecord database) throws IOException {
+	public static boolean existsDatabase(final ODatabase database) throws IOException {
 		if (database.getURL().startsWith("remote")) {
 			return new OServerAdmin(database.getURL()).connect("root", getServerRootPassword()).existsDatabase();
 		} else {

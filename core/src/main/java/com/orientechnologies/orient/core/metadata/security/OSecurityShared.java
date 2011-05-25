@@ -22,9 +22,13 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OUser.STATUSES;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 
 /**
@@ -158,7 +162,59 @@ public class OSecurityShared {
 		}
 	}
 
+	public OUser create() {
+		if (getDatabase().getMetadata().getSchema().getClasses().size() > 0)
+			throw new OSecurityException("Default users and roles already installed");
+
+		// CREATE ROLE AND USER SCHEMA CLASSES
+		final OClass roleClass = getDatabase().getMetadata().getSchema().createClass("ORole");
+		roleClass.createProperty("mode", OType.BYTE);
+		roleClass.createProperty("rules", OType.EMBEDDEDMAP, OType.BYTE);
+
+		final OClass userClass = getDatabase().getMetadata().getSchema().createClass("OUser");
+		userClass.createProperty("roles", OType.LINKSET, roleClass);
+
+		// CREATE ROLES AND USERS
+		final ORole adminRole = createRole(ORole.ADMIN, ORole.ALLOW_MODES.ALLOW_ALL_BUT);
+		final OUser adminUser = createUser(OUser.ADMIN, OUser.ADMIN, new String[] { adminRole.getName() });
+
+		final ORole readerRole = createRole("reader", ORole.ALLOW_MODES.DENY_ALL_BUT);
+		readerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
+		readerRole.addRule(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ);
+		readerRole.addRule(ODatabaseSecurityResources.CLUSTER + "." + OStorage.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
+		readerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".orole", ORole.PERMISSION_READ);
+		readerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".ouser", ORole.PERMISSION_READ);
+		readerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.PERMISSION_READ);
+		readerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.PERMISSION_READ);
+		readerRole.addRule(ODatabaseSecurityResources.QUERY, ORole.PERMISSION_READ);
+		readerRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
+		readerRole.addRule(ODatabaseSecurityResources.RECORD_HOOK, ORole.PERMISSION_READ);
+		readerRole.save();
+		createUser("reader", "reader", new String[] { readerRole.getName() });
+
+		final ORole writerRole = createRole("writer", ORole.ALLOW_MODES.DENY_ALL_BUT);
+		writerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
+		writerRole
+				.addRule(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ + ORole.PERMISSION_CREATE + ORole.PERMISSION_UPDATE);
+		writerRole.addRule(ODatabaseSecurityResources.CLUSTER + "." + OStorage.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
+		writerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".orole", ORole.PERMISSION_READ);
+		writerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".ouser", ORole.PERMISSION_READ);
+		writerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.PERMISSION_ALL);
+		writerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.PERMISSION_ALL);
+		writerRole.addRule(ODatabaseSecurityResources.QUERY, ORole.PERMISSION_READ);
+		writerRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_ALL);
+		writerRole.addRule(ODatabaseSecurityResources.RECORD_HOOK, ORole.PERMISSION_ALL);
+		writerRole.save();
+		createUser("writer", "writer", new String[] { writerRole.getName() });
+
+		return adminUser;
+	}
+
+	public void load() {
+	}
+
 	private ODatabaseRecord getDatabase() {
 		return ODatabaseRecordThreadLocal.INSTANCE.get();
 	}
+
 }

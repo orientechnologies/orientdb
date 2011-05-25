@@ -26,6 +26,12 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public interface OSecurity {
+	public OUser create();
+
+	public void load();
+
+	public OUser authenticate(String iUsername, String iUserPassword);
+
 	public OUser getUser(final String iUserName);
 
 	public OUser createUser(final String iUserName, final String iUserPassword, final String[] iRoles);
@@ -39,6 +45,4 @@ public interface OSecurity {
 	public List<ODocument> getUsers();
 
 	public List<ODocument> getRoles();
-
-	public OUser authenticate(String iUsername, String iUserPassword);
 }

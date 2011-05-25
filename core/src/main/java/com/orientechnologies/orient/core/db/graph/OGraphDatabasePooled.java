@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.graph;
 
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabasePoolBase;
 import com.orientechnologies.orient.core.db.ODatabasePooled;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -54,7 +55,7 @@ public class OGraphDatabasePooled extends OGraphDatabase implements ODatabasePoo
 	}
 
 	@Override
-	public OGraphDatabasePooled create() {
+	public OGraphDatabasePooled create(final ODatabase.OPTIONS... iOptions) {
 		throw new UnsupportedOperationException(
 				"Database instance was retrieved from a pool. You can't create the database in this way. Please use directly ODatabaseDocumentTx.create()");
 	}

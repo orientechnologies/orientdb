@@ -80,7 +80,7 @@ public class OServerAdmin {
 			}
 
 		} catch (Exception e) {
-			OLogManager.instance().error(this, "Can't create the remote storage: " + storage.getName(), e, OStorageException.class);
+			OLogManager.instance().error(this, "Can't connect to the remote server: " + storage.getName(), e, OStorageException.class);
 			storage.close();
 		}
 		return this;

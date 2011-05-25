@@ -452,7 +452,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 	@ConsoleCommand(description = "Delete the specified database")
 	public void dropDatabase(
-			@ConsoleParameter(name = "database-url", description = "The url of the database to create in the format '<mode>:<path>'") String iDatabaseURL,
+			@ConsoleParameter(name = "database-url", description = "The url of the database to drop in the format '<mode>:<path>'") String iDatabaseURL,
 			@ConsoleParameter(name = "user", description = "Server administrator name") String iUserName,
 			@ConsoleParameter(name = "password", description = "Server administrator password") String iUserPassword) throws IOException {
 
