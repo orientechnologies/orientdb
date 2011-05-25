@@ -70,8 +70,8 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <THISDB extends ODatabase> THISDB create(final ODatabase.OPTIONS... iOptions) {
-		super.create(iOptions);
+	public <THISDB extends ODatabase> THISDB create() {
+		super.create();
 		checkForGraphSchema();
 		return (THISDB) this;
 	}

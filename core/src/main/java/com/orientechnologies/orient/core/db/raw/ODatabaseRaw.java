@@ -104,16 +104,10 @@ public class ODatabaseRaw implements ODatabase {
 		return (DB) this;
 	}
 
-	public <DB extends ODatabase> DB create(final ODatabase.OPTIONS... iOptions) {
+	public <DB extends ODatabase> DB create() {
 		try {
 			if (status == STATUS.OPEN)
 				throw new IllegalStateException("Database " + getName() + " is already open");
-
-			if (iOptions != null && iOptions.length > 0) {
-				// SET PROPERTIES BASED ON OPTIONS
-				for (OPTIONS o : iOptions)
-					setProperty(o.toString(), o);
-			}
 
 			if (storage == null)
 				storage = Orient.instance().loadStorage(url);
@@ -321,13 +315,13 @@ public class ODatabaseRaw implements ODatabase {
 
 	public Object setProperty(final String iName, final Object iValue) {
 		if (iValue == null)
-			return properties.remove(iName);
+			return properties.remove(iName.toLowerCase());
 		else
-			return properties.put(iName, iValue);
+			return properties.put(iName.toLowerCase(), iValue);
 	}
 
 	public Object getProperty(final String iName) {
-		return properties.get(iName);
+		return properties.get(iName.toLowerCase());
 	}
 
 	public Iterator<Entry<String, Object>> getProperties() {

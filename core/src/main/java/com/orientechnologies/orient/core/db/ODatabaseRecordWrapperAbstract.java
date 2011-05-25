@@ -45,9 +45,9 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 	}
 
 	@Override
-	public <THISDB extends ODatabase> THISDB create(final ODatabase.OPTIONS... iOptions) {
+	public <THISDB extends ODatabase> THISDB create() {
 		checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_CREATE);
-		return (THISDB) super.create(iOptions);
+		return (THISDB) super.create();
 	}
 
 	@Override

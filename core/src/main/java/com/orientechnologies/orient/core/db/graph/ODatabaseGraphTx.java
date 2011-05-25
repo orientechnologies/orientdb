@@ -56,8 +56,8 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <THISDB extends ODatabase> THISDB create(final ODatabase.OPTIONS... iOptions) {
-		underlying.create(iOptions);
+	public <THISDB extends ODatabase> THISDB create() {
+		underlying.create();
 
 		checkForGraphSchema();
 

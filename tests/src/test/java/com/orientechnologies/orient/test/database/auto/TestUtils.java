@@ -25,15 +25,14 @@ import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabase.OPTIONS;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 
 public class TestUtils {
-	public static void createDatabase(ODatabase database, final String iURL, OPTIONS... iOptions) throws IOException {
+	public static void createDatabase(ODatabase database, final String iURL) throws IOException {
 		if (iURL.startsWith(OEngineRemote.NAME)) {
 			new OServerAdmin(iURL).connect("root", getServerRootPassword()).createDatabase("local").close();
 		} else {
-			database.create(iOptions);
+			database.create();
 			database.close();
 		}
 	}

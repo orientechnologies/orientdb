@@ -45,8 +45,8 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 		return (THISDB) this;
 	}
 
-	public <THISDB extends ODatabase> THISDB create(final ODatabase.OPTIONS... iOptions) {
-		underlying.create(iOptions);
+	public <THISDB extends ODatabase> THISDB create() {
+		underlying.create();
 		return (THISDB) this;
 	}
 

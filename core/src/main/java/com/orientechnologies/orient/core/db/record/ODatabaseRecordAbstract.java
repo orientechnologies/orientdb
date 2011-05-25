@@ -112,9 +112,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	}
 
 	@Override
-	public <DB extends ODatabase> DB create(final ODatabase.OPTIONS... iOptions) {
+	public <DB extends ODatabase> DB create() {
 		try {
-			super.create(iOptions);
+			super.create();
 
 			level1Cache.startup();
 

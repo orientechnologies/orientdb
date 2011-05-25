@@ -41,7 +41,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
  */
 public interface ODatabase {
 	public enum OPTIONS {
-		NOSCHEMA
+		SECURITY
 	}
 
 	/**
@@ -60,7 +60,7 @@ public interface ODatabase {
 	 * 
 	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
-	public <DB extends ODatabase> DB create(ODatabase.OPTIONS... iOptions);
+	public <DB extends ODatabase> DB create();
 
 	/**
 	 * Delete a database.
