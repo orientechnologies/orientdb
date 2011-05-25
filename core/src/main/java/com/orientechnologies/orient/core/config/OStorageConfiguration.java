@@ -45,7 +45,7 @@ public class OStorageConfiguration implements OSerializableStream {
 	public String															localeLanguage	= Locale.getDefault().getLanguage();
 	public String															localeCountry		= Locale.getDefault().getCountry();
 	public String															dateFormat			= "yyyy-MM-dd";
-	public String															dateTimeFormat	= "yyyy-MM-dd hh:mm:ss";
+	public String															dateTimeFormat	= "yyyy-MM-dd HH:mm:ss";
 
 	public OStorageSegmentConfiguration				fileTemplate		= new OStorageSegmentConfiguration();
 

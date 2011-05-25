@@ -1012,7 +1012,9 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 				iValue = formatter.parse((String) iValue);
 				_fieldValues.put(iPropertyName, iValue);
 			} catch (ParseException pe) {
-				throw new OQueryParsingException("Error on conversion of date '" + iValue + "' using the format: " + formatter.toString());
+				final String dateFormat = ((String) iValue).length() > config.dateFormat.length() ? config.dateTimeFormat
+						: config.dateFormat;
+				throw new OQueryParsingException("Error on conversion of date '" + iValue + "' using the format: " + dateFormat);
 			}
 		}
 
