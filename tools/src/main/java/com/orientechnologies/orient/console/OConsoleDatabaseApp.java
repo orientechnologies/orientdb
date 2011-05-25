@@ -438,6 +438,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		final String dbName = currentDatabase.getName();
 
 		if (currentDatabase.getURL().startsWith(OEngineRemote.NAME)) {
+			if (serverAdmin == null) {
+				out.println("\nCan't drop a remote database without connecting to the server with a valid server's user");
+				return;
+			}
+
 			// REMOTE CONNECTION
 			final String dbURL = currentDatabase.getURL().substring(OEngineRemote.NAME.length() + 1);
 			new OServerAdmin(dbURL).connect(currentDatabaseUserName, currentDatabaseUserPassword).deleteDatabase();
