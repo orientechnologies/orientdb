@@ -19,7 +19,6 @@ package com.orientechnologies.orient.server.network.protocol.http.command.post;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
 
@@ -121,7 +120,7 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
 				fileType = headers.get(OHttpUtils.MULTIPART_CONTENT_TYPE);
 
 				final Calendar cal = Calendar.getInstance();
-				final DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy kk:mm");
+				final DateFormat formatter = database.getStorage().getConfiguration().getDateFormatInstance();
 				now = cal.getTimeInMillis();
 
 				writer.beginObject("uploadedFile");
