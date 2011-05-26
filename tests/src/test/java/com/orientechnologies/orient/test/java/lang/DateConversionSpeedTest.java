@@ -21,7 +21,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 public class DateConversionSpeedTest {
-	private static final long	MAX	= 1000000;
+	private static final long	MAX	= 100000000;
 
 	public static final void main(String[] args) throws ParseException {
 
