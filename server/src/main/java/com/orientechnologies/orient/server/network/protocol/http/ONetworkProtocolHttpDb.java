@@ -70,7 +70,6 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 		registerCommand(new OServerCommandGetDocumentByClass());
 		registerCommand(new OServerCommandGetQuery());
 		registerCommand(new OServerCommandGetServer());
-		registerCommand(new OServerCommandGetStaticContent());
 		registerCommand(new OServerCommandGetStorageAllocation());
 		registerCommand(new OServerCommandGetFileDownload());
 

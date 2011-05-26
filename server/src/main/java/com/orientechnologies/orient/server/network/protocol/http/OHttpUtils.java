@@ -32,8 +32,8 @@ public class OHttpUtils {
 	public static final String	METHOD_DELETE												= "DELETE";
 	public static final String	METHOD_POST													= "POST";
 
-	public static final String	CONTENT_LENGTH											= "CONTENT-LENGTH: ";
-	public static final String	CONTENT_TYPE												= "CONTENT-TYPE: ";
+	public static final String	CONTENT_LENGTH											= "Content-Length: ";
+	public static final String	CONTENT_TYPE												= "Content-Type: ";
 
 	public static final String	X_FORWARDED_FOR											= "X-FORWARDED-FOR: ";
 

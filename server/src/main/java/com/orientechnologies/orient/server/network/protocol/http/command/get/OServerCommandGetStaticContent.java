@@ -23,23 +23,50 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
+import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
 
 public class OServerCommandGetStaticContent extends OServerCommandAbstract {
-	private static final String[]										NAMES	= { "GET|www", "GET|studio/", "GET|", "GET|*.htm", "GET|*.html",
-			"GET|*.xml", "GET|*.jpeg", "GET|*.jpg", "GET|*.png", "GET|*.gif", "GET|*.js", "GET|*.css", "GET|*.swf", "GET|favicon.ico",
-			"GET|robots.txt"																	};
+	private static final String[]										DEF_PATTERN				= { "GET|www", "GET|studio/", "GET|", "GET|*.htm",
+			"GET|*.html", "GET|*.xml", "GET|*.jpeg", "GET|*.jpg", "GET|*.png", "GET|*.gif", "GET|*.js", "GET|*.css", "GET|*.swf",
+			"GET|favicon.ico", "GET|robots.txt"													};
 
-	private Map<String, OStaticContentCachedEntry>	cache;
+	private static final String											CONFIG_HTTP_CACHE	= "http.cache:";
+
+	private Map<String, OStaticContentCachedEntry>	cacheContents;
+	private Map<String, String>											cacheHttp					= new HashMap<String, String>();
+	private String																	cacheHttpDefault	= "Cache-Control: max-age=3000";
 	private String																	wwwPath;
+	private final String[]													pattern;
 
 	public OServerCommandGetStaticContent() {
-		super(OGlobalConfiguration.SERVER_CACHE_HTTP_STATIC.getValueAsBoolean());
+		pattern = DEF_PATTERN;
+	}
+
+	public OServerCommandGetStaticContent(final OServerCommandConfiguration iConfiguration) {
+		pattern = iConfiguration.pattern.split(" ");
+
+		// LOAD HTTP CACHE CONFIGURATION
+		for (OServerEntryConfiguration par : iConfiguration.parameters) {
+			if (par.name.startsWith(CONFIG_HTTP_CACHE)) {
+				final String filter = par.name.substring(CONFIG_HTTP_CACHE.length());
+				if (filter.equalsIgnoreCase("default"))
+					cacheHttpDefault = par.value;
+				else if (filter.length() > 0) {
+					final String[] filters = filter.split(" ");
+					for (String f : filters) {
+						cacheHttp.put(f, par.value);
+					}
+				}
+			}
+		}
 	}
 
 	@Override
@@ -50,36 +77,27 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 		if (wwwPath == null)
 			wwwPath = iRequest.configuration.getValueAsString("orientdb.www.path", "src/site");
 
-		if (cache == null && OGlobalConfiguration.SERVER_CACHE_FILE_STATIC.getValueAsBoolean())
+		if (cacheContents == null && OGlobalConfiguration.SERVER_CACHE_FILE_STATIC.getValueAsBoolean())
 			// CREATE THE CACHE IF ENABLED
-			cache = new HashMap<String, OStaticContentCachedEntry>();
+			cacheContents = new HashMap<String, OStaticContentCachedEntry>();
 
 		InputStream is = null;
 		long contentSize = 0;
 		String type = null;
 
 		try {
-			String url;
+			final String url = getResource(iRequest);
 
-			if (OHttpUtils.URL_SEPARATOR.equals(iRequest.url))
-				url = "/www/index.htm";
-			else {
-				int pos = iRequest.url.indexOf('?');
-				if (pos > -1)
-					url = iRequest.url.substring(0, pos);
-				else
-					url = iRequest.url;
-			}
-
+			String filePath;
 			// REPLACE WWW WITH REAL PATH
 			if (url.startsWith("/www"))
-				url = wwwPath + url.substring("/www".length(), url.length());
+				filePath = wwwPath + url.substring("/www".length(), url.length());
 			else
-				url = wwwPath + url;
+				filePath = wwwPath + url;
 
-			if (cache != null) {
-				synchronized (cache) {
-					final OStaticContentCachedEntry cachedEntry = cache.get(url);
+			if (cacheContents != null) {
+				synchronized (cacheContents) {
+					final OStaticContentCachedEntry cachedEntry = cacheContents.get(filePath);
 					if (cachedEntry != null) {
 						is = new ByteArrayInputStream(cachedEntry.content);
 						contentSize = cachedEntry.size;
@@ -89,22 +107,22 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 			}
 
 			if (is == null) {
-				File inputFile = new File(url);
+				File inputFile = new File(filePath);
 				if (!inputFile.exists()) {
-					OLogManager.instance().debug(this, "Static resource not found: %s", url);
+					OLogManager.instance().debug(this, "Static resource not found: %s", filePath);
 
 					sendBinaryContent(iRequest, 404, "File not found", null, null, 0);
 					return false;
 				}
 
 				if (inputFile.isDirectory()) {
-					inputFile = new File(url + "/index.htm");
+					inputFile = new File(filePath + "/index.htm");
 					if (inputFile.exists())
-						url = url + "/index.htm";
+						filePath = url + "/index.htm";
 					else {
 						inputFile = new File(url + "/index.html");
 						if (inputFile.exists())
-							url = url + "/index.html";
+							filePath = url + "/index.html";
 					}
 				}
 
@@ -122,7 +140,7 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 				is = new BufferedInputStream(new FileInputStream(inputFile));
 				contentSize = inputFile.length();
 
-				if (cache != null) {
+				if (cacheContents != null) {
 					// READ THE ENTIRE STREAM AND CACHE IT IN MEMORY
 					final byte[] buffer = new byte[(int) contentSize];
 					for (int i = 0; i < contentSize; ++i)
@@ -133,7 +151,7 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 					cachedEntry.size = contentSize;
 					cachedEntry.type = type;
 
-					cache.put(url, cachedEntry);
+					cacheContents.put(url, cachedEntry);
 
 					is = new ByteArrayInputStream(cachedEntry.content);
 				}
@@ -156,7 +174,7 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 
 	@Override
 	public String[] getNames() {
-		return NAMES;
+		return pattern;
 	}
 
 	/**
@@ -166,4 +184,43 @@ public class OServerCommandGetStaticContent extends OServerCommandAbstract {
 	public boolean beforeExecute(OHttpRequest iRequest) throws IOException {
 		return true;
 	}
+
+	@Override
+	protected void onBeforeResponseHeader(OHttpRequest iRequest) throws IOException {
+		String header = cacheHttpDefault;
+
+		if (cacheHttp.size() > 0) {
+			final String resource = getResource(iRequest);
+
+			// SEARCH IN CACHE IF ANY
+			for (Entry<String, String> entry : cacheHttp.entrySet()) {
+				final int wildcardPos = entry.getKey().indexOf('*');
+				final String partLeft = entry.getKey().substring(0, wildcardPos);
+				final String partRight = entry.getKey().substring(wildcardPos + 1);
+
+				if (resource.startsWith(partLeft) && resource.endsWith(partRight)) {
+					// FOUND
+					header = entry.getValue();
+					break;
+				}
+			}
+		}
+
+		writeLine(iRequest, header);
+	}
+
+	protected String getResource(final OHttpRequest iRequest) {
+		final String url;
+		if (OHttpUtils.URL_SEPARATOR.equals(iRequest.url))
+			url = "/www/index.htm";
+		else {
+			int pos = iRequest.url.indexOf('?');
+			if (pos > -1)
+				url = iRequest.url.substring(0, pos);
+			else
+				url = iRequest.url;
+		}
+		return url;
+	}
+
 }

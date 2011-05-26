@@ -36,17 +36,11 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 public abstract class OServerCommandAbstract implements OServerCommand {
 
 	private static final String	JSON_FORMAT	= "type,indent:2,rid,version,attribSameRow,class";
-	protected final boolean			useCacheHttpHeaders;
 
 	/**
 	 * Default constructor. Disable cache of content at HTTP level
 	 */
 	public OServerCommandAbstract() {
-		useCacheHttpHeaders = false;
-	}
-
-	public OServerCommandAbstract(final boolean iUseCache) {
-		useCacheHttpHeaders = iUseCache;
 	}
 
 	@Override
@@ -94,16 +88,22 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 
 	protected void sendResponseHeaders(final OHttpRequest iRequest, final String iContentType, final boolean iKeepAlive)
 			throws IOException {
-		if (!useCacheHttpHeaders) {
-			writeLine(iRequest, "Cache-Control: no-cache, no-store, max-age=0, must-revalidate");
-			writeLine(iRequest, "Pragma: no-cache");
-		} else
-			writeLine(iRequest, "Cache-Control: max-age=3000");
+		onBeforeResponseHeader(iRequest);
 
 		writeLine(iRequest, "Date: " + new Date());
 		writeLine(iRequest, "Content-Type: " + iContentType);
 		writeLine(iRequest, "Server: " + iRequest.data.serverInfo);
-		writeLine(iRequest, "Connection: " + (iKeepAlive ? "Keep-Alive" : "Close"));
+		writeLine(iRequest, "Connection: " + (iKeepAlive ? "Keep-Alive" : "close"));
+
+		onAfterResponseHeader(iRequest);
+	}
+
+	protected void onBeforeResponseHeader(final OHttpRequest iRequest) throws IOException {
+		// DEFAULT = DON'T CACHE
+		writeLine(iRequest, "Cache-Control: no-cache, no-store, max-age=0, must-revalidate\r\nPragma: no-cache");
+	}
+
+	protected void onAfterResponseHeader(final OHttpRequest iRequest) throws IOException {
 	}
 
 	protected void writeLine(final OHttpRequest iRequest, final String iContent) throws IOException {

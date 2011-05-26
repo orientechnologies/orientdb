@@ -110,6 +110,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
 			if (cmd == null) {
 				// TRY WITH WILDCARD COMMANDS
+				// TODO: OPTIMIZE SEARCH!
 				String partLeft, partRight;
 				for (Entry<String, OServerCommand> entry : wildcardCommands.entrySet()) {
 					final int wildcardPos = entry.getKey().indexOf('*');
