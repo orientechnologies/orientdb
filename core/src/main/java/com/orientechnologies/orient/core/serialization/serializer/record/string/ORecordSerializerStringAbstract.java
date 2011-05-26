@@ -257,7 +257,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 				calendar.set(Calendar.SECOND, 0);
 				calendar.set(Calendar.MILLISECOND, 0);
 
-				iBuffer.append(calendar.getTime().getTime());
+				iBuffer.append(calendar.getTimeInMillis());
 			} else
 				iBuffer.append(iValue);
 			iBuffer.append('a');
