@@ -539,7 +539,8 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 	public <RET> RET field(final String iPropertyName, final Class<?> iType) {
 		RET value = this.<RET> rawField(iPropertyName);
 
-		value = (RET) convertField(iPropertyName, iType, value);
+		if (value != null)
+			value = (RET) convertField(iPropertyName, iType, value);
 
 		return value;
 	}
@@ -635,54 +636,31 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 				iType = prop.getType();
 		}
 
-		if (iType != null)
-			convertField(iPropertyName, iType.getDefaultJavaType(), iPropertyValue);
-
-		if (_status != STATUS.UNMARSHALLING) {
-			setDirty();
-
-			if (knownProperty && _trackingChanges) {
-				// SAVE THE OLD VALUE IN A SEPARATE MAP
-				if (_fieldOriginalValues == null)
-					_fieldOriginalValues = new HashMap<String, Object>();
-
-				// INSERT IT ONLY IF NOT EXISTS TO AVOID LOOSE OF THE ORIGINAL VALUE (FUNDAMENTAL FOR INDEX HOOK)
-				if (!_fieldOriginalValues.containsKey(iPropertyName))
-					_fieldOriginalValues.put(iPropertyName, oldValue);
-			}
-		}
-
-		if (oldValue != null && iType != null) {
-			// DETERMINE THE TYPE FROM THE PREVIOUS CONTENT
-			if (oldValue instanceof ORecord<?> && iPropertyValue instanceof String)
-				// CONVERT TO RECORD-ID
-				iPropertyValue = new ORecordId((String) iPropertyValue);
-			else if (oldValue instanceof Collection<?> && iPropertyValue instanceof String) {
-				// CONVERT TO COLLECTION
-				final List<ODocument> newValue = new ArrayList<ODocument>();
-				final String stringValue = (String) iPropertyValue;
-				iPropertyValue = newValue;
-
-				if (stringValue != null && stringValue.length() > 0) {
-					final String[] items = stringValue.split(",");
-					for (String s : items) {
-						newValue.add(new ODocument(_database, new ORecordId(s)));
-					}
-				}
-			} else if (iPropertyValue instanceof Enum) {
-				// ENUM
-				if (oldValue instanceof Number)
-					iPropertyValue = ((Enum<?>) iPropertyValue).ordinal();
-				else
-					iPropertyValue = iPropertyValue.toString();
-			}
+		if (iPropertyValue == null) {
+			_fieldValues.put(iPropertyName, iPropertyValue);
 		} else {
-			if (iPropertyValue instanceof Enum)
-				// ENUM
+			if (iType != null) {
+				iPropertyValue = convertField(iPropertyName, iType.getDefaultJavaType(), iPropertyValue);
+			} else if (iPropertyValue instanceof Enum) {
 				iPropertyValue = iPropertyValue.toString();
-		}
+			}
 
-		_fieldValues.put(iPropertyName, iPropertyValue);
+			if (_status != STATUS.UNMARSHALLING) {
+				setDirty();
+
+				if (knownProperty && _trackingChanges) {
+					// SAVE THE OLD VALUE IN A SEPARATE MAP
+					if (_fieldOriginalValues == null)
+						_fieldOriginalValues = new HashMap<String, Object>();
+
+					// INSERT IT ONLY IF NOT EXISTS TO AVOID LOOSE OF THE ORIGINAL VALUE (FUNDAMENTAL FOR INDEX HOOK)
+					if (!_fieldOriginalValues.containsKey(iPropertyName))
+						_fieldOriginalValues.put(iPropertyName, oldValue);
+				}
+			}
+
+			_fieldValues.put(iPropertyName, iPropertyValue);
+		}
 
 		return this;
 	}
@@ -947,74 +925,109 @@ public class ODocument extends ORecordVirtualAbstract<Object> implements Iterabl
 		if (iType == null)
 			return (RET) iValue;
 
-		if (iValue instanceof ORID && !ORID.class.equals(iType) && !ORecordId.class.equals(iType)) {
-			// CREATE THE DOCUMENT OBJECT IN LAZY WAY
-			iValue = (RET) new ODocument(_database, (ORID) iValue);
-			_fieldValues.put(iPropertyName, iValue);
-
-		} else if (ORID.class.equals(iType)) {
-			if (iValue instanceof ORecord<?>)
+		if (ORID.class.isAssignableFrom(iType)) {
+			if (iValue instanceof ORID) {
+				return (RET) iValue;
+			} else if (iValue instanceof String) {
+				return (RET) new ORecordId((String) iValue);
+			} else if (iValue instanceof ORecord<?>) {
 				return (RET) ((ORecord<?>) iValue).getIdentity();
-		} else if (Set.class.isAssignableFrom(iType) && !(iValue instanceof Set)) {
-			// CONVERT IT TO SET
-			final Collection<?> newValue;
+			}
+		} else if (ORecord.class.isAssignableFrom(iType)) {
+			if (iValue instanceof ORID || iValue instanceof ORecord<?>) {
+				return (RET) iValue;
+			} else if (iValue instanceof String) {
+				return (RET) new ORecordId((String) iValue);
+			}
+		} else if (Set.class.isAssignableFrom(iType)) {
+			if (!(iValue instanceof Set)) {
+				// CONVERT IT TO SET
+				final Collection<?> newValue;
 
-			if (iValue instanceof ORecordLazyList || iValue instanceof ORecordLazyMap)
-				newValue = new ORecordLazySet(this);
-			else
-				newValue = new OTrackedSet<Object>(this);
+				if (iValue instanceof ORecordLazyList || iValue instanceof ORecordLazyMap)
+					newValue = new ORecordLazySet(this);
+				else
+					newValue = new OTrackedSet<Object>(this);
 
-			if (iValue instanceof Collection<?>)
-				((Collection<Object>) newValue).addAll((Collection<Object>) iValue);
-			else if (iValue instanceof Map)
-				((Collection<Object>) newValue).addAll(((Map<String, Object>) iValue).values());
+				if (iValue instanceof Collection<?>) {
+					((Collection<Object>) newValue).addAll((Collection<Object>) iValue);
+					return (RET) newValue;
+				} else if (iValue instanceof Map) {
+					((Collection<Object>) newValue).addAll(((Map<String, Object>) iValue).values());
+					return (RET) newValue;
+				} else if (iValue instanceof String) {
+					final String stringValue = (String) iValue;
 
-			_fieldValues.put(iPropertyName, newValue);
-			iValue = (RET) newValue;
+					if (stringValue != null && stringValue.length() > 0) {
+						final String[] items = stringValue.split(",");
+						for (String s : items) {
+							((Collection<Object>) newValue).add(s);
+						}
+					}
+					return (RET) newValue;
+				}
+			} else {
+				return (RET) iValue;
+			}
+		} else if (List.class.isAssignableFrom(iType)) {
+			if (!(iValue instanceof List)) {
+				// CONVERT IT TO LIST
+				final Collection<?> newValue;
 
-		} else if (List.class.isAssignableFrom(iType) && !(iValue instanceof List)) {
-			// CONVERT IT TO LIST
-			final Collection<?> newValue;
+				if (iValue instanceof ORecordLazySet || iValue instanceof ORecordLazyMap)
+					newValue = new ORecordLazyList(this);
+				else
+					newValue = new OTrackedList<Object>(this);
 
-			if (iValue instanceof ORecordLazySet || iValue instanceof ORecordLazyMap)
-				newValue = new ORecordLazyList(this);
-			else
-				newValue = new OTrackedList<Object>(this);
+				if (iValue instanceof Collection) {
+					((Collection<Object>) newValue).addAll((Collection<Object>) iValue);
+					return (RET) newValue;
+				} else if (iValue instanceof Map) {
+					((Collection<Object>) newValue).addAll(((Map<String, Object>) iValue).values());
+					return (RET) newValue;
+				} else if (iValue instanceof String) {
+					final String stringValue = (String) iValue;
 
-			if (iValue instanceof Collection)
-				((Collection<Object>) newValue).addAll((Collection<Object>) iValue);
-			else if (iValue instanceof Map)
-				((Collection<Object>) newValue).addAll(((Map<String, Object>) iValue).values());
-
-			_fieldValues.put(iPropertyName, newValue);
-			iValue = (RET) newValue;
+					if (stringValue != null && stringValue.length() > 0) {
+						final String[] items = stringValue.split(",");
+						for (String s : items) {
+							((Collection<Object>) newValue).add(s);
+						}
+					}
+					return (RET) newValue;
+				}
+			} else {
+				return (RET) iValue;
+			}
 		} else if (iValue instanceof Enum) {
 			// ENUM
-			if (iType.isAssignableFrom(Integer.TYPE))
+			if (Number.class.isAssignableFrom(iType))
 				iValue = ((Enum<?>) iValue).ordinal();
 			else
-				iValue = ((Enum<?>) iValue).name();
-
+				iValue = iValue.toString();
 			if (!(iValue instanceof String) && !iType.isAssignableFrom(iValue.getClass()))
 				throw new IllegalArgumentException("Property '" + iPropertyName + "' of type '" + iType + "' can't accept value of type: "
 						+ iValue.getClass());
-		} else if (Date.class.isAssignableFrom(iType) && iValue != null && iValue instanceof String && _database != null) {
-			final OStorageConfiguration config = _database.getStorage().getConfiguration();
+		} else if (Date.class.isAssignableFrom(iType)) {
+			if (iValue instanceof String && _database != null) {
+				final OStorageConfiguration config = _database.getStorage().getConfiguration();
 
-			DateFormat formatter = config.getDateFormatInstance();
+				DateFormat formatter = config.getDateFormatInstance();
 
-			if (((String) iValue).length() > config.dateFormat.length()) {
-				// ASSUMES YOU'RE USING THE DATE-TIME FORMATTE
-				formatter = config.getDateTimeFormatInstance();
-			}
+				if (((String) iValue).length() > config.dateFormat.length()) {
+					// ASSUMES YOU'RE USING THE DATE-TIME FORMATTE
+					formatter = config.getDateTimeFormatInstance();
+				}
 
-			try {
-				iValue = formatter.parse((String) iValue);
-				_fieldValues.put(iPropertyName, iValue);
-			} catch (ParseException pe) {
-				final String dateFormat = ((String) iValue).length() > config.dateFormat.length() ? config.dateTimeFormat
-						: config.dateFormat;
-				throw new OQueryParsingException("Error on conversion of date '" + iValue + "' using the format: " + dateFormat);
+				try {
+					Date newValue = formatter.parse((String) iValue);
+					// _fieldValues.put(iPropertyName, newValue);
+					return (RET) newValue;
+				} catch (ParseException pe) {
+					final String dateFormat = ((String) iValue).length() > config.dateFormat.length() ? config.dateTimeFormat
+							: config.dateFormat;
+					throw new OQueryParsingException("Error on conversion of date '" + iValue + "' using the format: " + dateFormat);
+				}
 			}
 		}
 
