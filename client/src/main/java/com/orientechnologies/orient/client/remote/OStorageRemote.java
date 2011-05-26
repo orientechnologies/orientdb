@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
@@ -263,7 +264,7 @@ public class OStorageRemote extends OStorageAbstract {
 						record = (ORecordInternal<?>) readIdentifiable(network, iDatabase);
 
 						// PUT IN THE CLIENT LOCAL CACHE
-						iDatabase.getLevel2Cache().pushRecord(record);
+						iDatabase.getLevel1Cache().updateRecord(record);
 					}
 					return buffer;
 				} finally {
@@ -547,11 +548,12 @@ public class OStorageRemote extends OStorageAbstract {
 									// ABSORBE ALL THE USER EXCEPTIONS
 									t.printStackTrace();
 								}
+								iCommand.getDatabase().getLevel1Cache().updateRecord(record);
 								break;
 
 							case 2:
 								// PUT IN THE CLIENT LOCAL CACHE
-								iCommand.getDatabase().getLevel2Cache().pushRecord(record);
+								iCommand.getDatabase().getLevel1Cache().updateRecord(record);
 							}
 						}
 					} else {
@@ -563,13 +565,18 @@ public class OStorageRemote extends OStorageAbstract {
 
 						case 'r':
 							result = readIdentifiable(network, iCommand.getDatabase());
+							if (result instanceof ORecord<?>)
+								iCommand.getDatabase().getLevel1Cache().updateRecord((ORecordInternal<?>) result);
 							break;
 
 						case 'l':
 							final int tot = network.readInt();
 							final Collection<OIdentifiable> list = new ArrayList<OIdentifiable>();
 							for (int i = 0; i < tot; ++i) {
-								list.add(readIdentifiable(network, iCommand.getDatabase()));
+								final OIdentifiable resultItem = readIdentifiable(network, iCommand.getDatabase());
+								if (resultItem instanceof ORecord<?>)
+									iCommand.getDatabase().getLevel1Cache().updateRecord((ORecordInternal<?>) resultItem);
+								list.add(resultItem);
 							}
 							result = list;
 							break;

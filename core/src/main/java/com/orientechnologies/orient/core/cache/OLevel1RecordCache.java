@@ -147,6 +147,20 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
 		}
 	}
 
+	/**
+	 * Updates a record in this cache if exists, puts it in the level 2 cache if else.
+	 * 
+	 * @param iRecord
+	 *          : the record to update
+	 */
+	@Override
+	public void updateRecord(final ORecordInternal<?> iRecord) {
+		if (existsRecord(iRecord.getIdentity()))
+			super.updateRecord(iRecord);
+		else
+			level2cache.updateRecord(iRecord);
+	}
+
 	@Override
 	public String toString() {
 		return "DB level1 cache records=" + getSize() + ", maxSize=" + maxSize;

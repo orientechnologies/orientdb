@@ -44,7 +44,7 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
 	}
 
 	public void pushRecord(final ORecordInternal<?> iRecord) {
-		if (maxSize == 0 || iRecord == null || iRecord.isDirty() || iRecord.getIdentity().isNew() || !iRecord.isPinned())
+		if (!enabled || iRecord == null || iRecord.isDirty() || iRecord.getIdentity().isNew() || !iRecord.isPinned())
 			// PRECONDITIONS
 			return;
 
