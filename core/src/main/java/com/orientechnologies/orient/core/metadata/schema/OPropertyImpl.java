@@ -564,16 +564,16 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 		((OSchemaProxy) document.getDatabase().getMetadata().getSchema()).saveInternal();
 	}
 
-	private void checkForDateFormat(final String min) {
+	private void checkForDateFormat(final String iDateAsString) {
 		if (type == OType.DATE) {
 			try {
-				owner.owner.getDocument().getDatabase().getStorage().getConfiguration().getDateFormatInstance().parse(min);
+				owner.owner.getDocument().getDatabase().getStorage().getConfiguration().getDateFormatInstance().parse(iDateAsString);
 			} catch (ParseException e) {
 				throw new OSchemaException("Invalid date format setted", e);
 			}
 		} else if (type == OType.DATETIME) {
 			try {
-				owner.owner.getDocument().getDatabase().getStorage().getConfiguration().getDateTimeFormatInstance().parse(min);
+				owner.owner.getDocument().getDatabase().getStorage().getConfiguration().getDateTimeFormatInstance().parse(iDateAsString);
 			} catch (ParseException e) {
 				throw new OSchemaException("Invalid datetime format setted", e);
 			}
