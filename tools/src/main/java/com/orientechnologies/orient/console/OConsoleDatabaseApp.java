@@ -979,7 +979,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			for (String colName : iColumns) {
 				if (col++ > 0)
 					out.printf("|");
-				out.printf("%-20s", colName.toUpperCase());
+				out.printf("%-20s", colName);
 			}
 			out.printf("\n");
 			printHeaderLine(iColumns);
