@@ -155,6 +155,12 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		return dictionary;
 	}
 
+	public <RET extends ORecordInternal<?>> RET getRecord(final OIdentifiable iIdentifiable) {
+		if (iIdentifiable instanceof ORecord<?>)
+			return (RET) iIdentifiable;
+		return (RET) load(iIdentifiable.getIdentity());
+	}
+
 	public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord) {
 		return (RET) load(iRecord, null);
 	}

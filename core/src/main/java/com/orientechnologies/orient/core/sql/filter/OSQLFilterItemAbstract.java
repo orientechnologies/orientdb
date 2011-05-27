@@ -27,6 +27,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandToParse;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -35,8 +36,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.ORecordFactory;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
@@ -151,7 +150,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 						ioResult = ioResult != null ? ioResult.toString().trim() : null;
 
 					else if (operator == OSQLFilterFieldOperator.ATTRIB.id) {
-						ioResult = getRecordAttribute(iDatabase, (ORecordInternal<?>) ioResult, op.value.get(0));
+						ioResult = getRecordAttribute(iDatabase, (OIdentifiable) ioResult, op.value.get(0));
 
 					} else if (operator == OSQLFilterFieldOperator.FIELD.id) {
 						if (ioResult != null) {
@@ -178,7 +177,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 									if (record.getInternalStatus() == STATUS.NOT_LOADED)
 										record.load();
 
-									ioResult = ioResult != null ? record.field(op.value.get(0)) : null;
+									ioResult = ioResult != null ? record.rawField(op.value.get(0)) : null;
 								} catch (ORecordNotFoundException e) {
 									ioResult = null;
 								}
@@ -276,26 +275,37 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 		return ioResult;
 	}
 
-	protected Object getRecordAttribute(final ODatabaseRecord iDatabase, final ORecordInternal<?> iRecord, String iFieldName) {
+	protected Object getRecordAttribute(final ODatabaseRecord iDatabase, final OIdentifiable iIdentifiable, String iFieldName) {
 		iFieldName = iFieldName.toUpperCase();
 
 		Object result = null;
 
 		if (iFieldName.charAt(0) == '@') {
 			if (iFieldName.equals("@THIS"))
-				result = iRecord;
+				result = iIdentifiable;
+
 			else if (iFieldName.equals("@RID"))
-				result = iRecord.getIdentity();
-			else if (iFieldName.equals("@VERSION"))
-				result = iRecord.getVersion();
-			else if (iFieldName.equals("@CLASS") && iRecord instanceof ORecordSchemaAware<?>)
-				result = ((ORecordSchemaAware<?>) iRecord).getClassName();
-			else if (iFieldName.equals("@TYPE"))
-				result = ORecordFactory.getRecordTypeName(iRecord.getRecordType());
-			else if (iFieldName.equals("@FIELDS") && iRecord instanceof ORecordSchemaAware<?>)
-				result = ((ORecordSchemaAware<?>) iRecord).fieldNames();
+				result = iIdentifiable.getIdentity();
+
+			else if (iFieldName.equals("@VERSION")) {
+				result = iDatabase.getRecord(iIdentifiable).getVersion();
+
+			} else if (iFieldName.equals("@CLASS")) {
+				final ORecord<?> record = iDatabase.getRecord(iIdentifiable);
+				if (record instanceof ODocument)
+					result = ((ODocument) record).getClassName();
+
+			} else if (iFieldName.equals("@TYPE"))
+				result = ORecordFactory.getRecordTypeName(iDatabase.getRecord(iIdentifiable).getRecordType());
+
+			else if (iFieldName.equals("@FIELDS")) {
+				final ORecord<?> record = iDatabase.getRecord(iIdentifiable);
+				if (record instanceof ODocument)
+					result = ((ODocument) record).fieldNames();
+			}
+
 			else if (iFieldName.equals("@SIZE")) {
-				final byte[] stream = iRecord.toStream();
+				final byte[] stream = iDatabase.getRecord(iIdentifiable).toStream();
 				if (stream != null)
 					result = stream.length;
 			}

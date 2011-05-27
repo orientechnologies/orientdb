@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.sql.filter;
 
 import com.orientechnologies.orient.core.command.OCommandToParse;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Represent an object field as value in the query condition.
@@ -34,6 +34,6 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
 		if (name.charAt(0) == '@')
 			return transformValue(iRecord.getDatabase(), getRecordAttribute(iRecord.getDatabase(), iRecord, name));
 		else
-			return transformValue(iRecord.getDatabase(), ((ORecordSchemaAware<?>) iRecord).field(name));
+			return transformValue(iRecord.getDatabase(), ((ODocument) iRecord).rawField(name));
 	}
 }

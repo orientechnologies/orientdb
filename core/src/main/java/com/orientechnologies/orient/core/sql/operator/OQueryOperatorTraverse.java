@@ -116,16 +116,16 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 				if (cfgField.equalsIgnoreCase(OSQLFilterItemFieldAny.FULL_NAME)) {
 					// ANY
 					for (String fieldName : target.fieldNames())
-						if (traverse(iRecord, iRootCondition, iCondition, target.field(fieldName), iLevel + 1, iEvaluatedRecords))
+						if (traverse(iRecord, iRootCondition, iCondition, target.rawField(fieldName), iLevel + 1, iEvaluatedRecords))
 							return true;
 				} else if (cfgField.equalsIgnoreCase(OSQLFilterItemFieldAny.FULL_NAME)) {
 					// ALL
 					for (String fieldName : target.fieldNames())
-						if (!traverse(iRecord, iRootCondition, iCondition, target.field(fieldName), iLevel + 1, iEvaluatedRecords))
+						if (!traverse(iRecord, iRootCondition, iCondition, target.rawField(fieldName), iLevel + 1, iEvaluatedRecords))
 							return false;
 					return true;
 				} else {
-					if (traverse(iRecord, iRootCondition, iCondition, target.field(cfgField), iLevel + 1, iEvaluatedRecords))
+					if (traverse(iRecord, iRootCondition, iCondition, target.rawField(cfgField), iLevel + 1, iEvaluatedRecords))
 						return true;
 				}
 			}

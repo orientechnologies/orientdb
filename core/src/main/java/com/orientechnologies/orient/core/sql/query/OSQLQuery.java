@@ -99,7 +99,7 @@ public abstract class OSQLQuery<T extends Object> extends OQueryAbstract<T> impl
 				final ODocument param = new ODocument();
 				param.fromStream(paramBuffer);
 
-				Map<String, Object> params = param.field("params");
+				Map<String, Object> params = param.rawField("params");
 
 				parameters = new HashMap<Object, Object>();
 				for (Entry<String, Object> p : params.entrySet()) {

@@ -170,6 +170,10 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 		return (RET) underlying.load(iRecordId, iFetchPlan);
 	}
 
+	public <RET extends ORecordInternal<?>> RET getRecord(final OIdentifiable iIdentifiable) {
+		return (RET) underlying.getRecord(iIdentifiable);
+	}
+
 	public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord) {
 		return (RET) underlying.load(iRecord);
 	}

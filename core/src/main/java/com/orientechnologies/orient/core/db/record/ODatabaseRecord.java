@@ -47,6 +47,15 @@ public interface ODatabaseRecord extends ODatabaseComplex<ORecordInternal<?>> {
 	public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass);
 
 	/**
+	 * Returns the record for a OIdentifiable instance. If the argument received already is a ORecord instance, then it's returned as
+	 * is, otherwise a new ORecord is created with the identity received and returned.
+	 * 
+	 * @param iIdentifiable
+	 * @return A ORecord instance
+	 */
+	public <RET extends ORecordInternal<?>> RET getRecord(OIdentifiable iIdentifiable);
+
+	/**
 	 * Loads a record using a fetch plan.
 	 * 
 	 * @param iDocument
