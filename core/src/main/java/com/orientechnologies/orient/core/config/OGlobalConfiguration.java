@@ -197,7 +197,9 @@ public enum OGlobalConfiguration {
 		public void change(final Object iCurrentValue, final Object iNewValue) {
 			OLogManager.instance().setLevel((String) iNewValue, ConsoleHandler.class);
 		}
-	}), LOG_FILE_LEVEL("log.file.level", "File's logging level", String.class, "fine", new OConfigurationChangeCallback() {
+	}),
+
+	LOG_FILE_LEVEL("log.file.level", "File's logging level", String.class, "fine", new OConfigurationChangeCallback() {
 		public void change(final Object iCurrentValue, final Object iNewValue) {
 			OLogManager.instance().setLevel((String) iNewValue, FileHandler.class);
 		}

@@ -24,20 +24,7 @@ public class OLogManager {
 	private static final OLogManager	instance			= new OLogManager();
 	private static final DateFormat		dateFormat		= new SimpleDateFormat("yyyy-MM-dd hh:mm:ss:SSS");
 
-	public OLogManager() {
-		// ASSURE TO HAVE THE ORIENT LOG FORMATTER TO THE CONSOLE EVEN IF NO CONFIGURATION FILE IS TAKEN
-		Logger log = Logger.getLogger("");
-		if (log.getHandlers().length == 0) {
-			// SET DEFAULT LOG FORMATTER
-			Handler h = new ConsoleHandler();
-			h.setFormatter(new OLogFormatter());
-			log.addHandler(h);
-		} else {
-			for (Handler h : log.getHandlers()) {
-				if (h instanceof ConsoleHandler && !h.getFormatter().getClass().equals(OLogFormatter.class))
-					h.setFormatter(new OLogFormatter());
-			}
-		}
+	protected OLogManager() {
 	}
 
 	public void setConsoleLevel(final String iLevel) {
@@ -279,5 +266,21 @@ public class OLogManager {
 		}
 
 		return level;
+	}
+
+	public static void installCustomFormatter() {
+		// ASSURE TO HAVE THE ORIENT LOG FORMATTER TO THE CONSOLE EVEN IF NO CONFIGURATION FILE IS TAKEN
+		final Logger log = Logger.getLogger("");
+		if (log.getHandlers().length == 0) {
+			// SET DEFAULT LOG FORMATTER
+			Handler h = new ConsoleHandler();
+			h.setFormatter(new OLogFormatter());
+			log.addHandler(h);
+		} else {
+			for (Handler h : log.getHandlers()) {
+				if (h instanceof ConsoleHandler && !h.getFormatter().getClass().equals(OLogFormatter.class))
+					h.setFormatter(new OLogFormatter());
+			}
+		}
 	}
 }

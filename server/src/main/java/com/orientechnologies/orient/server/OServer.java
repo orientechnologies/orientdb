@@ -81,6 +81,8 @@ public class OServer {
 			InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
 		defaultSettings();
 
+		OLogManager.installCustomFormatter();
+
 		threadGroup = new ThreadGroup("OrientDB Server");
 
 		// REGISTER THE COMMAND SCRIPT
