@@ -659,6 +659,13 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	}
 
 	private OPropertyImpl addNewProperty(final String iName, final OType iType, final OType iLinkedType, final OClass iLinkedClass) {
+		if (iName == null || iName.length() == 0)
+			throw new OSchemaException("Found property name null");
+
+		final Character wrongCharacter = OSchemaShared.checkNameIfValid(iName);
+		if (wrongCharacter != null)
+			throw new OSchemaException("Found invalid property name. Character '" + wrongCharacter + "' can't be used in property name.");
+
 		final String lowerName = iName.toLowerCase();
 
 		if (properties.containsKey(lowerName))

@@ -53,6 +53,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass {
 	protected Map<String, OClass>		classes									= new HashMap<String, OClass>();
 	private static final int				CURRENT_VERSION_NUMBER	= 4;
 	private OSharedResourceExternal	lock										= new OSharedResourceExternal();
+	private static final char[]			NOT_ALLOWED_CHAR				= { '/', '\\', '|', '.', '-', ' ' };
 
 	public OSchemaShared(final int schemaClusterId) {
 		super(new ODocument());
@@ -199,6 +200,13 @@ public class OSchemaShared extends ODocumentWrapperNoClass {
 	}
 
 	public OClass createClassInternal(final String iClassName, final OClass iSuperClass, int[] iClusterIds) {
+		if (iClassName == null || iClassName.length() == 0)
+			throw new OSchemaException("Found class name null");
+
+		final Character wrongCharacter = checkNameIfValid(iClassName);
+		if (wrongCharacter != null)
+			throw new OSchemaException("Found invalid class name. Character '" + wrongCharacter + "' can't be used in class name.");
+
 		if (iClusterIds == null || iClusterIds.length == 0)
 			// CREATE A NEW CLUSTER
 			iClusterIds = new int[] { getDatabase().getStorage().addCluster(iClassName, CLUSTER_TYPE.PHYSICAL) };
@@ -229,6 +237,14 @@ public class OSchemaShared extends ODocumentWrapperNoClass {
 		} finally {
 			lock.releaseExclusiveLock();
 		}
+	}
+
+	public static Character checkNameIfValid(final String iClassName) {
+		for (char c : iClassName.toCharArray())
+			for (char notAllChar : NOT_ALLOWED_CHAR)
+				if (c == notAllChar)
+					return c;
+		return null;
 	}
 
 	/*
