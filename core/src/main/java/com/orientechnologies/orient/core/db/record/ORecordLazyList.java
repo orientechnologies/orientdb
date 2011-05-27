@@ -401,7 +401,9 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 		else {
 			// CREATE A COPY TO FREE ORIGINAL BUFFER
 			stream = iStream;
+			final int prevModCount = modCount;
 			reset();
+			modCount = prevModCount;
 		}
 
 		contentType = MULTIVALUE_CONTENT_TYPE.ALL_RIDS;
