@@ -72,9 +72,9 @@ public class OStorageRemoteThread implements OStorage {
 		delegate.close(iForce);
 	}
 
-	public boolean removeCluster(final String iClusterName) {
+	public boolean dropCluster(final String iClusterName) {
 		delegate.setSessionId(sessionId);
-		return delegate.removeCluster(iClusterName);
+		return delegate.dropCluster(iClusterName);
 	}
 
 	public int getUsers() {
@@ -207,9 +207,9 @@ public class OStorageRemoteThread implements OStorage {
 		return delegate.addCluster(iClusterName, iClusterType, iArguments);
 	}
 
-	public boolean removeCluster(final int iClusterId) {
+	public boolean dropCluster(final int iClusterId) {
 		delegate.setSessionId(sessionId);
-		return delegate.removeCluster(iClusterId);
+		return delegate.dropCluster(iClusterId);
 	}
 
 	public int addDataSegment(final String iDataSegmentName) {

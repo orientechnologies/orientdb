@@ -226,7 +226,7 @@ public interface ODatabase {
 	 */
 	public int addPhysicalCluster(String iClusterName, String iClusterFileName, int iStartSize);
 
-	public boolean removeCluster(String iClusterName);
+	public boolean dropCluster(String iClusterName);
 
 	/**
 	 * Internal. Adds a data segment where to store record content.

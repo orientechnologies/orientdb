@@ -104,9 +104,9 @@ public interface OStorage extends OSharedContainer {
 	 */
 	public int addCluster(String iClusterName, OStorage.CLUSTER_TYPE iClusterType, Object... iParameters);
 
-	public boolean removeCluster(String iClusterName);
+	public boolean dropCluster(String iClusterName);
 
-	public boolean removeCluster(int iId);
+	public boolean dropCluster(int iId);
 
 	/**
 	 * Add a new data segment in the default segment directory and with filename equals to the cluster name.

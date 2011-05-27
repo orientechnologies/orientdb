@@ -269,6 +269,22 @@ public class OMMapManager {
 		}
 	}
 
+	/**
+	 * Removes the file.
+	 * 
+	 * @throws IOException
+	 */
+	public synchronized static void removeFile(OFile file) throws IOException {
+		final List<OMMapBufferEntry> entries = bufferPoolPerFile.remove(file);
+		if (entries != null) {
+			for (OMMapBufferEntry entry : entries) {
+				bufferPoolLRU.remove(entry);
+				entry.close();
+			}
+			entries.clear();
+		}
+	}
+
 	public synchronized static void shutdown() {
 		for (OMMapBufferEntry entry : new ArrayList<OMMapBufferEntry>(bufferPoolLRU)) {
 			entry.close();

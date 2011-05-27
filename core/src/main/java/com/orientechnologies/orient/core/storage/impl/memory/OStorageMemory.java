@@ -157,13 +157,14 @@ public class OStorageMemory extends OStorageEmbedded {
 		}
 	}
 
-	public boolean removeCluster(final int iClusterId) {
+	public boolean dropCluster(final int iClusterId) {
 		final boolean locked = lock.acquireExclusiveLock();
 		try {
 
 			OCluster c = clusters.get(iClusterId);
 			c.delete();
 			clusters.set(iClusterId, null);
+			getLevel2Cache().freeCluster(iClusterId);
 
 		} catch (IOException e) {
 		} finally {

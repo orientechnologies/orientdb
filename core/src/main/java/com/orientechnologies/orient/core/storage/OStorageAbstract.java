@@ -97,8 +97,8 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 		++version;
 	}
 
-	public boolean removeCluster(final String iClusterName) {
-		return removeCluster(getClusterIdByName(iClusterName));
+	public boolean dropCluster(final String iClusterName) {
+		return dropCluster(getClusterIdByName(iClusterName));
 	}
 
 	protected boolean checkForClose(final boolean iForce) {

@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.fs.OFile;
+import com.orientechnologies.orient.core.storage.fs.OMMapManager;
 
 /**
  * Handle the table to resolve logical address to physical address.<br/>
@@ -96,6 +97,12 @@ public class OClusterLocal extends OMultiFileSegment implements OCluster {
 	@Override
 	public void delete() throws IOException {
 		truncate();
+		for (OFile file : files) {
+			OMMapManager.removeFile(file);
+			file.delete();
+		}
+		files = null;
+		holeSegment.delete();
 	}
 
 	@Override

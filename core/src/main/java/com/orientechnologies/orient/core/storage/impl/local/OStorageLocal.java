@@ -183,7 +183,6 @@ public class OStorageLocal extends OStorageEmbedded {
 						if (clusterConfig.getName().equals(OStorage.CLUSTER_DEFAULT_NAME))
 							defaultClusterId = pos;
 
-
 						clusters[pos].open();
 					}
 				}
@@ -489,7 +488,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		return txManager;
 	}
 
-	public boolean removeCluster(final int iClusterId) {
+	public boolean dropCluster(final int iClusterId) {
 		final boolean locked = lock.acquireExclusiveLock();
 
 		try {
@@ -500,6 +499,8 @@ public class OStorageLocal extends OStorageEmbedded {
 			final OCluster cluster = clusters[iClusterId];
 			if (cluster == null)
 				return false;
+
+			getLevel2Cache().freeCluster(iClusterId);
 
 			cluster.delete();
 

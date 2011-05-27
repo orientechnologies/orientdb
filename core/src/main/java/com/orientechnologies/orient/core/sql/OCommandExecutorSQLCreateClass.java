@@ -93,6 +93,16 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLPermissio
 						clusterIds[i] = Integer.parseInt(clusterIdsAsStrings[i]);
 					}
 				}
+			} else {
+				final int clusterId = database.getStorage().getClusterIdByName(className);
+				if (clusterId > -1) {
+					clusterIds = new int[] { clusterId };
+				}
+			}
+		} else {
+			final int clusterId = database.getStorage().getClusterIdByName(className);
+			if (clusterId > -1) {
+				clusterIds = new int[] { clusterId };
 			}
 		}
 		return this;

@@ -173,8 +173,17 @@ public abstract class OFile {
 
 	public void delete() throws IOException {
 		close();
-		if (osFile != null)
-			osFile.delete();
+		if (osFile != null) {
+			boolean deleted = osFile.delete();
+			while (!deleted) {
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+				}
+				System.gc();
+				deleted = osFile.delete();
+			}
+		}
 	}
 
 	public void lock() throws IOException {

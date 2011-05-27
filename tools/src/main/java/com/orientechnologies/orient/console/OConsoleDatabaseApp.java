@@ -232,19 +232,21 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	}
 
 	@ConsoleCommand(description = "Remove a cluster in the current database. The cluster can be physical or logical")
-	public void removeCluster(
+	public void dropCluster(
 			@ConsoleParameter(name = "cluster-name", description = "The name or the id of the cluster to remove") String iClusterName) {
 		checkCurrentDatabase();
 
-		out.println("Removing cluster [" + iClusterName + "] in database " + currentDatabaseName + "...");
+		out.println("Dropping cluster [" + iClusterName + "] in database " + currentDatabaseName + "...");
 
-		boolean result = currentDatabase.getStorage().removeCluster(iClusterName);
+		boolean result = currentDatabase.getStorage().dropCluster(iClusterName);
 
 		if (!result) {
 			// TRY TO GET AS CLUSTER ID
 			try {
 				int clusterId = Integer.parseInt(iClusterName);
-				result = currentDatabase.getStorage().removeCluster(clusterId);
+				if (clusterId > -1) {
+					result = currentDatabase.getStorage().dropCluster(clusterId);
+				}
 			} catch (Exception e) {
 			}
 		}
@@ -427,7 +429,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		out.println("\nCreating index...");
 
 		sqlCommand("create", iCommandText, "\nCreated index with %d item(s) in %f sec(s).\n");
-
+		updateDatabaseInfo();
 		out.println("\nIndex created successfully");
 	}
 
@@ -481,7 +483,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		out.println("\nRemoving index...");
 
 		sqlCommand("drop", iCommandText, "\nRemoved index %d link(s) in %f sec(s).\n");
-
+		updateDatabaseInfo();
 		out.println("\nIndex removed successfully");
 	}
 
@@ -497,7 +499,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 	public void dropProperty(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText)
 			throws IOException {
 		sqlCommand("drop", iCommandText, "\nRemoved class property in %f sec(s).\n");
-
+		updateDatabaseInfo();
 		out.println("\nClass property removed successfully");
 	}
 

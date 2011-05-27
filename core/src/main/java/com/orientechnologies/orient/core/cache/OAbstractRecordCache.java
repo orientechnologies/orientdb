@@ -92,6 +92,23 @@ public abstract class OAbstractRecordCache extends OSharedResourceAbstract {
 		}
 	}
 
+	public void freeCluster(final int clusterId) {
+		if (!enabled)
+			// PRECONDITIONS
+			return;
+
+		acquireExclusiveLock();
+		try {
+			for (ORID entry : entries.keySet()) {
+				if (entry.getClusterId() == clusterId) {
+					entries.remove(entry);
+				}
+			}
+		} finally {
+			releaseExclusiveLock();
+		}
+	}
+
 	/**
 	 * Remove multiple records from the cache in one shot.
 	 * 

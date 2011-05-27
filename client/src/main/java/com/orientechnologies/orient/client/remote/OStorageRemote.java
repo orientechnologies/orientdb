@@ -756,7 +756,7 @@ public class OStorageRemote extends OStorageAbstract {
 		} while (true);
 	}
 
-	public boolean removeCluster(final int iClusterId) {
+	public boolean dropCluster(final int iClusterId) {
 		checkConnection();
 
 		do {
@@ -781,7 +781,7 @@ public class OStorageRemote extends OStorageAbstract {
 								clustersTypes.remove(entry.getKey());
 								break;
 							}
-
+						getLevel2Cache().freeCluster(iClusterId);
 						return true;
 					}
 					return false;

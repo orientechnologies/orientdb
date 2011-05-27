@@ -437,7 +437,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			final int id = channel.readShort();
 
-			boolean result = connection.database.removeCluster(connection.database.getClusterNameById(id));
+			boolean result = connection.database.dropCluster(connection.database.getClusterNameById(id));
 
 			channel.acquireExclusiveLock();
 			try {

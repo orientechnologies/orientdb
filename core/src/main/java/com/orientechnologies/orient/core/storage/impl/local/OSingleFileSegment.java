@@ -23,6 +23,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
+import com.orientechnologies.orient.core.storage.fs.OMMapManager;
 
 public class OSingleFileSegment extends OSharedResourceAdaptiveLinked {
 	protected OStorageLocal							storage;
@@ -77,8 +78,11 @@ public class OSingleFileSegment extends OSharedResourceAdaptiveLinked {
 	public void delete() throws IOException {
 		acquireExclusiveLock();
 		try {
-			if (file != null)
+			if (file != null) {
 				file.delete();
+				OMMapManager.removeFile(file);
+				file = null;
+			}
 
 		} finally {
 			releaseExclusiveLock();

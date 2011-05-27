@@ -75,9 +75,9 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 	}
 
 	@Override
-	public boolean removeCluster(final String iClusterName) {
+	public boolean dropCluster(final String iClusterName) {
 		checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
-		return super.removeCluster(iClusterName);
+		return super.dropCluster(iClusterName);
 	}
 
 	@Override
