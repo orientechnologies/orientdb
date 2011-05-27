@@ -169,6 +169,8 @@ function ODatabase(databasePath) {
 			}
 			iFetchPlan = '/' + iFetchPlan;
 		}
+		iQuery = this.URLEncode(iQuery);
+		iFetchPlan = this.URLEncode(iFetchPlan);
 		$.ajax({
 			type : "GET",
 			url : urlPrefix + 'query/' + this.encodedDatabaseName + '/sql/'
@@ -201,6 +203,7 @@ function ODatabase(databasePath) {
 		if (iRID && iRID.charAt(0) == '#')
 			iRID = iRID.substring(1);
 
+		iRID = this.URLEncode(iRID);
 		$.ajax({
 			type : "GET",
 			url : urlPrefix + 'document/' + this.encodedDatabaseName + '/'
@@ -267,10 +270,10 @@ function ODatabase(databasePath) {
 		else
 			rid = obj['@rid'];
 
+		rid = this.URLEncode(rid);
 		$.ajax({
 			type : 'DELETE',
-			url : urlPrefix + 'document/' + this.encodedDatabaseName + '/'
-			+ rid,
+			url : urlPrefix + 'document/' + this.encodedDatabaseName + '/' + rid,
 			processData : false,
 			context : this,
 			async : false,
@@ -362,6 +365,7 @@ function ODatabase(databasePath) {
 		if (this.databaseInfo == null) {
 			this.open();
 		}
+		iCommand = this.URLEncode(iCommand);
 		$.ajax({
 			type : "POST",
 			url : urlPrefix + 'command/' + this.encodedDatabaseName + '/sql/'
@@ -624,6 +628,24 @@ function ODatabase(databasePath) {
 			return '#' + rid;
 		}
 	}
+	
+	
+	
+	/*!
+	 * 
+	 * jQuery URL Encoder Decoder Plugin
+	 * 
+	 * http://0061276.netsolhost.com/tony/testurl.html
+	 *
+	 */
+	ODatabase.prototype.URLEncode = function(c){var o='';var x=0;c=c.toString();var r=/(^[a-zA-Z0-9_.]*)/;
+	  while(x<c.length){var m=r.exec(c.substr(x));
+	    if(m!=null && m.length>1 && m[1]!=''){o+=m[1];x+=m[1].length;
+	    }else{if(c[x]==' ')o+='+';else{var d=c.charCodeAt(x);var h=d.toString(16);
+	    o+='%'+(h.length<2?'0':'')+h.toUpperCase();}x++;}}return o;},
+	ODatabase.prototype.URLDecode = function(s){var o=s;var binVal,t;var r=/(%[^%]{2})/;
+	  while((m=r.exec(o))!=null && m.length>1 && m[1]!=''){b=parseInt(m[1].substr(1),16);
+	  t=String.fromCharCode(b);o=o.replace(m[1],t);}return o;}
 
 
 }
