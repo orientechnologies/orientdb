@@ -35,7 +35,12 @@ public class OHttpUtils {
 	public static final String	CONTENT_LENGTH											= "Content-Length: ";
 	public static final String	CONTENT_TYPE												= "Content-Type: ";
 
-	public static final String	X_FORWARDED_FOR											= "X-FORWARDED-FOR: ";
+	public static final String	AUTHORIZATION												= "Authorization";
+	public static final String	AUTHORIZATION_BASIC									= "Basic";
+	public static final String	COOKIE															= "Cookie:";
+	public static final String	OSESSIONID												= "OSESSIONID";
+
+	public static final String	X_FORWARDED_FOR											= "X-Forwarded-For: ";
 
 	public static final String	MULTIPART_CONTENT_DISPOSITION				= "Content-Disposition";
 	public static final String	MULTIPART_CONTENT_TRANSFER_ENCODING	= "Content-Transfer-Encoding";
@@ -44,8 +49,8 @@ public class OHttpUtils {
 	public static final String	MULTIPART_CONTENT_NAME							= "name";
 	public static final String	MULTIPART_CONTENT_TYPE							= "Content-Type";
 
-	public static final String	CONTENT_TYPE_MULTIPART							= "MULTIPART/FORM-DATA";
-	public static final String	BOUNDARY														= "BOUNDARY";
+	public static final String	CONTENT_TYPE_MULTIPART							= "multipart/form-data";
+	public static final String	BOUNDARY														= "boundary";
 
 	public static final String	CONTENT_TEXT_PLAIN									= "text/plain";
 	public static final String	CONTENT_JSON												= "application/json";
