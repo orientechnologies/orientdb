@@ -28,6 +28,7 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -63,7 +64,7 @@ public class OStorageMemory extends OStorageEmbedded {
 	private int													defaultClusterId	= 0;
 
 	public OStorageMemory(final String iURL) {
-		super(iURL, iURL, "rw");
+		super(iURL, OEngineMemory.NAME + ":" + iURL, "rw");
 		configuration = new OStorageConfiguration(this);
 	}
 

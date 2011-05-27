@@ -995,6 +995,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	}
 
 	protected void createDatabase(final ODatabaseDocumentTx iDatabase, String dbUser, String dbPasswd) {
+		if (iDatabase.exists())
+			throw new ODatabaseException("Database '" + iDatabase.getURL() + "' already exists");
+		
 		iDatabase.create();
 		if (dbUser != null) {
 
@@ -1012,10 +1015,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		if (iDatabase.getStorage() instanceof OStorageLocal) {
 			// CLOSE IT BECAUSE IT WILL BE OPEN AT FIRST USE
 			iDatabase.close();
-
-		} else {
-			// SAVE THE DB IN MEMORY
-			OServerMain.server().getMemoryDatabases().put(iDatabase.getName(), iDatabase);
 		}
 
 		connection.rawDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) iDatabase.getUnderlying()).getUnderlying());

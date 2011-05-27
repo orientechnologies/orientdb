@@ -150,7 +150,7 @@ public class Orient extends OSharedResourceAbstract {
 		}
 	}
 
-	public OStorage getStorage(final String iDbName) throws IOException {
+	public OStorage getStorage(final String iDbName) {
 		try {
 			acquireSharedLock();
 

@@ -43,9 +43,10 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.security.OSecurityManager;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 import com.orientechnologies.orient.enterprise.command.script.OCommandScript;
 import com.orientechnologies.orient.server.command.script.OCommandExecutorScript;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
@@ -72,7 +73,7 @@ public class OServer {
 	protected List<OServerHandler>														handlers				= new ArrayList<OServerHandler>();
 	protected Map<String, Class<? extends ONetworkProtocol>>	protocols				= new HashMap<String, Class<? extends ONetworkProtocol>>();
 	protected List<OServerNetworkListener>										listeners				= new ArrayList<OServerNetworkListener>();
-	protected Map<String, ODatabaseRecord>										memoryDatabases	= new HashMap<String, ODatabaseRecord>();
+	protected Map<String, OStorageMemory>											memoryDatabases	= new HashMap<String, OStorageMemory>();
 	protected static ThreadGroup															threadGroup;
 
 	private OrientServer																			managedServer;
@@ -193,6 +194,11 @@ public class OServer {
 	public String getStoragePath(final String iName) {
 		final String name = iName.indexOf(':') > -1 ? iName.substring(iName.indexOf(':') + 1) : iName;
 
+		final OStorage stg = Orient.instance().getStorage(name);
+		if (stg != null)
+			// ALREADY OPEN
+			return stg.getURL();
+
 		// SEARCH IN CONFIGURED PATHS
 		String dbPath = configuration.getStoragePath(name);
 
@@ -256,7 +262,7 @@ public class OServer {
 		configurationLoader.save(configuration);
 	}
 
-	public Map<String, ODatabaseRecord> getMemoryDatabases() {
+	public Map<String, OStorageMemory> getMemoryDatabases() {
 		return memoryDatabases;
 	}
 
