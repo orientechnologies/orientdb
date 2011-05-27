@@ -138,6 +138,10 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 		return underlying.addPhysicalCluster(iClusterName, iClusterName, -1);
 	}
 
+	public boolean removeCluster(final String iClusterName) {
+		return underlying.removeCluster(iClusterName);
+	}
+
 	public int addDataSegment(final String iSegmentName, final String iSegmentFileName) {
 		checkOpeness();
 		return underlying.addDataSegment(iSegmentName, iSegmentFileName);

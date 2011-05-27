@@ -433,11 +433,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		}
 
 		case OChannelBinaryProtocol.REQUEST_DATACLUSTER_REMOVE: {
-			data.commandInfo = "remove cluster";
+			data.commandInfo = "Remove cluster";
 
 			final int id = channel.readShort();
 
-			boolean result = connection.database.getStorage().removeCluster(id);
+			boolean result = connection.database.removeCluster(connection.database.getClusterNameById(id));
 
 			channel.acquireExclusiveLock();
 			try {
@@ -997,7 +997,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	protected void createDatabase(final ODatabaseDocumentTx iDatabase, String dbUser, String dbPasswd) {
 		if (iDatabase.exists())
 			throw new ODatabaseException("Database '" + iDatabase.getURL() + "' already exists");
-		
+
 		iDatabase.create();
 		if (dbUser != null) {
 

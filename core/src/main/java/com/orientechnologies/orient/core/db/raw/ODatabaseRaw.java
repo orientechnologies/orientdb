@@ -272,6 +272,10 @@ public class ODatabaseRaw implements ODatabase {
 		return storage.addCluster(iClusterName, OStorage.CLUSTER_TYPE.PHYSICAL, iClusterFileName, iStartSize);
 	}
 
+	public boolean removeCluster(final String iClusterName) {
+		return storage.removeCluster(iClusterName);
+	}
+
 	public int addDataSegment(final String iSegmentName, final String iSegmentFileName) {
 		return storage.addDataSegment(iSegmentName, iSegmentFileName);
 	}

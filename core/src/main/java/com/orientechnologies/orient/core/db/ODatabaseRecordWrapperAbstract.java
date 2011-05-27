@@ -75,6 +75,12 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 	}
 
 	@Override
+	public boolean removeCluster(final String iClusterName) {
+		checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
+		return super.removeCluster(iClusterName);
+	}
+
+	@Override
 	public int addDataSegment(final String iSegmentName, final String iSegmentFileName) {
 		checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
 		return super.addDataSegment(iSegmentName, iSegmentFileName);
