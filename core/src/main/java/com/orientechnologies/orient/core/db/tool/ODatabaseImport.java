@@ -343,9 +343,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 			} while (jsonReader.lastChar() == ',');
 
 			// REBUILD ALL THE INHERITANCE
-			for (Map.Entry<OClass, String> entry : superClasses.entrySet()) {
-				((OClassImpl) entry.getKey()).setSuperClass(database.getMetadata().getSchema().getClass(entry.getValue()));
-			}
+			for (Map.Entry<OClass, String> entry : superClasses.entrySet())
+				entry.getKey().setSuperClass(database.getMetadata().getSchema().getClass(entry.getValue()));
 
 			// SET ALL THE LINKED CLASSES
 			for (Map.Entry<OPropertyImpl, String> entry : linkedClasses.entrySet()) {

@@ -34,6 +34,8 @@ public interface OClass extends Comparable<OClass> {
 
 	public OClass getSuperClass();
 
+	public OClass setSuperClass(OClass iSuperClass);
+
 	public String getName();
 
 	public String getStreamableName();
