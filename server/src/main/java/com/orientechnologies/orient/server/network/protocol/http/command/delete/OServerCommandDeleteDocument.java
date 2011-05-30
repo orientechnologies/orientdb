@@ -40,12 +40,13 @@ public class OServerCommandDeleteDocument extends OServerCommandDocumentAbstract
 			// PARSE PARAMETERS
 			final int parametersPos = urlParts[2].indexOf('?');
 			final String rid = parametersPos > -1 ? urlParts[2].substring(0, parametersPos) : urlParts[2];
-			final ORecordId recorId = new ORecordId(rid);
+			final ORecordId recordId = new ORecordId(rid);
 
-			if (!recorId.isValid())
+			if (!recordId.isValid())
 				throw new IllegalArgumentException("Invalid Record ID in request: " + urlParts[2]);
 
-			final ODocument doc = new ODocument(db, recorId);
+			final ODocument doc = new ODocument(db, recordId);
+			doc.setVersion(-1);
 			doc.delete();
 
 			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, null);
