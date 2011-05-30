@@ -577,6 +577,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 				currentRecord = connection.database.load(rid);
 				final ODocument doc = (ODocument) currentRecord;
 				doc.merge((ODocument) newRecord, false, false);
+				doc.setVersion(version);
 
 			} else
 				currentRecord = newRecord;
