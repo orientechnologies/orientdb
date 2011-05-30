@@ -73,7 +73,7 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLPermission
 		final String attributeAsString = word.toString();
 
 		try {
-			attribute = OClass.ATTRIBUTES.valueOf(attributeAsString);
+			attribute = OClass.ATTRIBUTES.valueOf(attributeAsString.toUpperCase());
 		} catch (IllegalArgumentException e) {
 			throw new OCommandSQLParsingException("Unknown class's attribute '" + attributeAsString + "'. Supported attributes are: "
 					+ Arrays.toString(OClass.ATTRIBUTES.values()), text, oldPos);

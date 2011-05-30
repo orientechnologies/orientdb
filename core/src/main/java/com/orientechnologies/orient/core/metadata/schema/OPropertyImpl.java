@@ -430,7 +430,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 			setRegexpInternal(stringValue);
 			break;
 		case TYPE:
-			setTypeInternal(OType.valueOf(stringValue));
+			setTypeInternal(OType.valueOf(stringValue.toUpperCase()));
 			break;
 		}
 	}
@@ -464,7 +464,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 			setRegexp(stringValue);
 			break;
 		case TYPE:
-			setType(OType.valueOf(stringValue));
+			setType(OType.valueOf(stringValue.toUpperCase()));
 			break;
 		}
 	}

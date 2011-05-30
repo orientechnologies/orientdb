@@ -82,7 +82,7 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLPermiss
 		final String attributeAsString = word.toString();
 
 		try {
-			attribute = OProperty.ATTRIBUTES.valueOf(attributeAsString);
+			attribute = OProperty.ATTRIBUTES.valueOf(attributeAsString.toUpperCase());
 		} catch (IllegalArgumentException e) {
 			throw new OCommandSQLParsingException("Unknown property's attribute '" + attributeAsString + "'. Supported attributes are: "
 					+ Arrays.toString(OProperty.ATTRIBUTES.values()), text, oldPos);
