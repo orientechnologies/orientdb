@@ -32,6 +32,7 @@ import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
@@ -47,6 +48,8 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseExportException;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
+import com.orientechnologies.orient.core.intent.OIntentMassiveRead;
 import com.orientechnologies.orient.core.iterator.ORecordIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -870,6 +873,41 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 		out.println();
 		out.println(iPropertyName + " = " + iPropertyValue);
+	}
+
+	@ConsoleCommand(description = "Declare an intent")
+	public void declareIntent(
+			@ConsoleParameter(name = "Intent name", description = "name of the intent to execute") final String iIntentName) {
+		checkCurrentDatabase();
+
+		out.println("Declaring intent '" + iIntentName + "'...");
+
+		if (iIntentName.equalsIgnoreCase("massiveinsert"))
+			currentDatabase.declareIntent(new OIntentMassiveInsert());
+		else if (iIntentName.equalsIgnoreCase("massiveread"))
+			currentDatabase.declareIntent(new OIntentMassiveRead());
+		else
+			throw new IllegalArgumentException("Intent '" + iIntentName
+					+ "' not supported. Available ones are: massiveinsert, massiveread");
+
+		out.println("Intent '" + iIntentName + "' setted successfully");
+	}
+
+	@ConsoleCommand(description = "Execute a command against the profiler")
+	public void profiler(
+			@ConsoleParameter(name = "profiler command", description = "command to execute against the profiler") final String iCommandName) {
+		if (iCommandName.equalsIgnoreCase("on")) {
+			OProfiler.getInstance().startRecording();
+			out.println("Profiler is ON now, use 'profiler off' to turn off.");
+		} else if (iCommandName.equalsIgnoreCase("off")) {
+			OProfiler.getInstance().stopRecording();
+			out.println("Profiler is OFF now, use 'profiler on' to turn on.");
+		} else if (iCommandName.equalsIgnoreCase("dump")) {
+			out.println(OProfiler.getInstance().dump());
+		} else if (iCommandName.equalsIgnoreCase("reset")) {
+			OProfiler.getInstance().reset();
+			out.println("Profiler has been resetted");
+		}
 	}
 
 	@ConsoleCommand(description = "Return the value of a configuration value")
