@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecord.STATUS;
@@ -113,14 +114,14 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 			}
 
 			private void optimize(final boolean iHardMode) {
-				OLogManager.instance().warn(this, "Forcing optimization of Index %s (%d items). Found %d entries in memory...", name,
+				OLogManager.instance().debug(this, "Forcing optimization of Index %s (%d items). Found %d entries in memory...", name,
 						map.size(), map.getInMemoryEntries());
 
 				if (iHardMode)
 					map.freeInMemoryResources();
 				final int saved = map.optimize(true);
 
-				OLogManager.instance().warn(this, "Completed! Saved %d and now %d entries reside in memory", saved,
+				OLogManager.instance().debug(this, "Completed! Saved %d and now %d entries reside in memory", saved,
 						map.getInMemoryEntries());
 			}
 		};
@@ -266,7 +267,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 	}
 
 	/**
-	 * Populate the index with all the existent records.
+	 * Populates the index with all the existent records. Uses the massive insert intent to speed up and keep the consumed memory low.
 	 */
 	public OIndexInternal rebuild(final OProgressListener iProgressListener) {
 		Object fieldValue;
@@ -275,6 +276,8 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 		clear();
 
 		acquireExclusiveLock();
+
+		map.getDatabase().declareIntent(new OIntentMassiveInsert());
 
 		try {
 
@@ -319,6 +322,7 @@ public abstract class OIndexMVRBTreeAbstract extends OSharedResourceAbstract imp
 			throw new OIndexException("Error on rebuilding the index for clusters: " + clustersToIndex, e);
 
 		} finally {
+			map.getDatabase().declareIntent(null);
 			releaseExclusiveLock();
 		}
 
