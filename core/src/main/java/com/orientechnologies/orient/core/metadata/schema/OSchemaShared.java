@@ -53,7 +53,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass {
 	protected Map<String, OClass>		classes									= new HashMap<String, OClass>();
 	private static final int				CURRENT_VERSION_NUMBER	= 4;
 	private OSharedResourceExternal	lock										= new OSharedResourceExternal();
-	private static final char[]			NOT_ALLOWED_CHAR				= { '/', '\\', '|', '.', '-', ' ' };
+	private static final char[]			NOT_ALLOWED_CHAR				= { '/', '\\', '|', '.', '-', ' ', '{', '}', '[', ']', '(', ')', ':',
+			';', '#', '*', '+'																	};
 
 	public OSchemaShared(final int schemaClusterId) {
 		super(new ODocument());
@@ -241,9 +242,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass {
 
 	public static Character checkNameIfValid(final String iClassName) {
 		for (char c : iClassName.toCharArray())
-			for (char notAllChar : NOT_ALLOWED_CHAR)
-				if (c == notAllChar)
-					return c;
+			if (!Character.isJavaIdentifierPart(c))
+				return c;
 		return null;
 	}
 
