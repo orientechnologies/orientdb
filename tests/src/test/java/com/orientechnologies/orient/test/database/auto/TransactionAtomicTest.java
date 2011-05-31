@@ -25,8 +25,11 @@ import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 
 @Test(groups = "dictionary")
@@ -63,6 +66,27 @@ public class TransactionAtomicTest {
 
 		db1.close();
 		db2.close();
+	}
+
+	@Test
+	public void testMVCC() throws IOException {
+		ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+		db.open("admin", "admin");
+
+		ODocument doc = new ODocument(db, "Account");
+		doc.field("version", 0);
+		doc.save();
+
+		doc.setDirty();
+		doc.setVersion(1);
+		try {
+			doc.save();
+			Assert.assertTrue(false);
+		} catch (OConcurrentModificationException e) {
+			Assert.assertTrue(true);
+		}
+
+		db.close();
 	}
 
 	@Test(expectedExceptions = OTransactionException.class)

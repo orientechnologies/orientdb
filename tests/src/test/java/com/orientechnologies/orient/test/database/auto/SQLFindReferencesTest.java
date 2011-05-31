@@ -67,9 +67,9 @@ public class SQLFindReferencesTest {
 		if (database.isClosed())
 			database.open("admin", "admin");
 
-		Collection<ORID> result = database.command(new OCommandSQL("find references 19:0 [GraphCar]")).execute();
+		Collection<ORID> result = database.command(new OCommandSQL("find references #19:0 [GraphCar]")).execute();
 
-		Assert.assertTrue(result.size() == 1);
+		Assert.assertEquals(result.size(), 1);
 		Assert.assertTrue(result.iterator().next().toString().equals("#21:0"));
 
 		result = database.command(new OCommandSQL("find references 19:0 [company,cluster:GraphMotocycle]")).execute();
