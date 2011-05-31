@@ -627,6 +627,9 @@ public class OStorageLocal extends OStorageEmbedded {
 		if (iClusterName == null)
 			throw new IllegalArgumentException("Cluster name is null");
 
+		if (iClusterName.length() == 0)
+			throw new IllegalArgumentException("Cluster name is empty");
+
 		if (Character.isDigit(iClusterName.charAt(0)))
 			return Integer.parseInt(iClusterName);
 
