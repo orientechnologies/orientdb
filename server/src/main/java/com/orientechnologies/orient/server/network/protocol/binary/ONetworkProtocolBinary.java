@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
@@ -575,6 +576,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			final ORecordInternal<?> currentRecord;
 			if (newRecord instanceof ODocument) {
 				currentRecord = connection.database.load(rid);
+
+				if (currentRecord == null)
+					throw new ORecordNotFoundException(rid.toString());
+
 				final ODocument doc = (ODocument) currentRecord;
 				doc.merge((ODocument) newRecord, false, false);
 				doc.setVersion(version);
