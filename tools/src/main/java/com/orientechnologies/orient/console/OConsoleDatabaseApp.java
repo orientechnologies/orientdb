@@ -162,14 +162,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 	@ConsoleCommand(aliases = { "close database" }, description = "Disconnect from the current database")
 	public void disconnect() {
-		checkCurrentDatabase();
-
-		out.print("Disconnecting from the database [" + currentDatabaseName + "]...");
-
 		if (serverAdmin != null) {
 			serverAdmin.close();
 			serverAdmin = null;
 		}
+
+		checkCurrentDatabase();
+
+		out.print("Disconnecting from the database [" + currentDatabaseName + "]...");
 
 		currentDatabase.close();
 		currentDatabase = null;
@@ -470,6 +470,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			// REMOTE CONNECTION
 			final String dbURL = iDatabaseURL.substring(OEngineRemote.NAME.length() + 1);
 			new OServerAdmin(dbURL).connect(iUserName, iUserPassword).deleteDatabase();
+			disconnect();
 		} else {
 			// LOCAL CONNECTION
 			currentDatabase = new ODatabaseDocumentTx(iDatabaseURL);

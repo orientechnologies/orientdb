@@ -129,8 +129,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			if (lastClientTxId > -1)
 				connection = OClientConnectionManager.instance().getConnection(lastClientTxId);
-			else
-				connection = OClientConnectionManager.instance().connect(connection.protocol.getChannel().socket, this);
+			else {
+				if (connection == null) {
+					sendShutdown();
+					return;
+				} else
+					connection = OClientConnectionManager.instance().connect(connection.protocol.getChannel().socket, this);
+			}
 
 			++data.totalRequests;
 
@@ -1029,7 +1034,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 	protected ODatabaseDocumentTx getDatabaseInstance(final String iDbName, final String iStorageMode) {
 		final String path;
 
-		if (iStorageMode.equals(OEngineLocal.NAME)) {
+		final OStorage stg = Orient.instance().getStorage(iDbName);
+		if (stg != null)
+			path = stg.getURL();
+		else if (iStorageMode.equals(OEngineLocal.NAME)) {
 			path = iStorageMode + ":${ORIENTDB_HOME}/databases/" + iDbName;
 		} else if (iStorageMode.equals(OEngineMemory.NAME)) {
 			path = iStorageMode + ":" + iDbName;
