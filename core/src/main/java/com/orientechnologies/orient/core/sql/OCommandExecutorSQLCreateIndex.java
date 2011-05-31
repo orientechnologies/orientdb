@@ -19,6 +19,7 @@ import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerImpl;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
@@ -84,6 +85,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 		if (name == null)
 			throw new OCommandExecutionException("Can't execute the command because it hasn't been parsed yet");
 
+		final OIndex idx;
 		if (name.indexOf('.') > -1) {
 			// PROPERTY INDEX
 			final String[] parts = name.split("\\.");
@@ -100,11 +102,15 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLPermissio
 			if (prop == null)
 				throw new IllegalArgumentException("Property '" + fieldName + "' was not found in class '" + cls + "'");
 
-			prop.createIndexInternal(indexType.toUpperCase(), progressListener);
+			idx = prop.createIndexInternal(indexType.toUpperCase(), progressListener).getUnderlying();
 		} else {
-			((OIndexManagerImpl) database.getMetadata().getIndexManager()).createIndexInternal(name, indexType.toUpperCase(), null, null,
-					null, false);
+			idx = ((OIndexManagerImpl) database.getMetadata().getIndexManager()).createIndexInternal(name, indexType.toUpperCase(), null,
+					null, null, false);
 		}
+
+		if (idx != null)
+			return idx.getSize();
+
 		return null;
 	}
 }

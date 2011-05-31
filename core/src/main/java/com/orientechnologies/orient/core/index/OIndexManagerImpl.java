@@ -121,6 +121,9 @@ public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndex
 			OIndexCallback iCallback, final OProgressListener iProgressListener, final boolean iAutomatic) {
 		final OIndex index = OIndexFactory.instance().newInstance(iType);
 		index.setCallback(iCallback);
+
+		reload();
+
 		indexes.put(iName.toLowerCase(), index);
 
 		index.create(iName, getDatabase(), defaultClusterName, iClusterIdsToIndex, iProgressListener, iAutomatic);
@@ -141,6 +144,8 @@ public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndex
 	}
 
 	public OIndexManager dropIndexInternal(final String iIndexName) {
+		reload();
+		
 		final OIndex idx = indexes.remove(iIndexName.toLowerCase());
 		if (idx != null) {
 			idx.delete();
