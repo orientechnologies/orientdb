@@ -184,7 +184,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 						ioRecord.fromStream(recordBuffer.buffer);
 						recordToCheck = ioRecord;
 					} else
-						// GET THE RECORD CACHED
+						// GET THE CACHED RECORD
 						recordToCheck = record;
 
 					if (!iListener.foreach(recordToCheck))

@@ -779,6 +779,7 @@ public class OStorageRemote extends OStorageAbstract {
 							if (entry.getValue() != null && entry.getValue().intValue() == iClusterId) {
 								clustersIds.remove(entry.getKey());
 								clustersTypes.remove(entry.getKey());
+								configuration.clusters.set(iClusterId, null);
 								break;
 							}
 						getLevel2Cache().freeCluster(iClusterId);

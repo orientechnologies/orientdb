@@ -64,7 +64,7 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
 	}
 
 	/**
-	 * Search a record in the cache and if found add in the Database's level-1 cache.
+	 * Search a record in the cache and if found add it in the Database's level-1 cache.
 	 * 
 	 * @param iRID
 	 *          RecordID to search

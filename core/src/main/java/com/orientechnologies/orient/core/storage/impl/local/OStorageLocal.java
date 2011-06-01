@@ -185,6 +185,9 @@ public class OStorageLocal extends OStorageEmbedded {
 
 						clusters[pos].open();
 					}
+				} else {
+					clusters = Arrays.copyOf(clusters, clusters.length +1);
+					clusters[i] = null;
 				}
 			}
 

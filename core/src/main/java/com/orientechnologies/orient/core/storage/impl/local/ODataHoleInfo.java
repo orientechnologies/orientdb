@@ -64,7 +64,7 @@ public class ODataHoleInfo implements Comparable<ODataHoleInfo> {
 
 	@Override
 	public String toString() {
-		return holeOffset + ":" + size + "->" + dataOffset;
+		return holeOffset + ") " + dataOffset + " [" + size + "]";
 	}
 
 	public int compareTo(final ODataHoleInfo o) {
