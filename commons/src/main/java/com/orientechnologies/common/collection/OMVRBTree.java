@@ -459,11 +459,12 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
 			if (lastNode != null) {
 				// SEARCH INSIDE THE NODE
-				for (int i = 1; i < lastNode.getSize(); ++i) {
-					int cmp = cpr.compare(k, lastNode.getKey(i));
+				// TODO: USE THE BINARY SEARCH!!!
+				for (pageIndex = 0; pageIndex < lastNode.getSize(); ++pageIndex) {
+					int cmp = cpr.compare(k, lastNode.getKey(pageIndex));
 					if (cmp == 0) {
 						// FOUND: SET THE INDEX AND RETURN THE NODE
-						lastNode.getValue(i);
+						lastNode.getValue(pageIndex);
 						pageItemFound = true;
 						return lastNode;
 					} else if (cmp < 0)
@@ -2017,20 +2018,22 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	/**
 	 * Returns the next item of the tree.
 	 */
-	public static <K, V> OMVRBTreeEntry<K, V> next(OMVRBTreeEntry<K, V> t) {
+	public static <K, V> OMVRBTreeEntry<K, V> next(final OMVRBTreeEntry<K, V> t) {
 		if (t == null)
 			return null;
 
+		final OMVRBTreeEntry<K, V> succ;
 		if (t.tree.pageIndex < t.getSize() - 1) {
 			// ITERATE INSIDE THE NODE
+			succ = t;
 			t.tree.pageIndex++;
 		} else {
 			// GET THE NEXT NODE
 			t.tree.pageIndex = 0;
-			t = OMVRBTree.successor(t);
+			succ = OMVRBTree.successor(t);
 		}
 
-		return t;
+		return succ;
 	}
 
 	public static <K, V> OMVRBTreeEntry<K, V> predecessor(final OMVRBTreeEntryPosition<K, V> t) {
@@ -2068,19 +2071,25 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	/**
 	 * Returns the previous item of the tree.
 	 */
-	public static <K, V> OMVRBTreeEntry<K, V> previous(OMVRBTreeEntry<K, V> t) {
+	public static <K, V> OMVRBTreeEntry<K, V> previous(final OMVRBTreeEntry<K, V> t) {
 		if (t == null)
 			return null;
 
 		final int index = t.getTree().getPageIndex();
 
+		final OMVRBTreeEntry<K, V> prev;
 		if (index <= 0) {
-			t = predecessor(t);
-			t.tree.pageIndex = t.size - 1;
-		} else
+			prev = predecessor(t);
+			if (prev != null)
+				t.tree.pageIndex = t.size - 1;
+			else
+				t.tree.pageIndex = 0;
+		} else {
+			prev = t;
 			t.tree.pageIndex = index - 1;
+		}
 
-		return t;
+		return prev;
 	}
 
 	/**
