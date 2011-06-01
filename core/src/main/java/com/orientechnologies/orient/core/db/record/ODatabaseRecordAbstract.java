@@ -324,14 +324,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 		if (user != null) {
 			try {
 				final StringBuilder keyBuffer = new StringBuilder();
-				String key;
 
-				keyBuffer.append(iResourceGeneric);
-				keyBuffer.append('.');
-				keyBuffer.append(ODatabaseSecurityResources.ALL);
-
-				user.allow(keyBuffer.toString(), iOperation);
-
+				boolean ruleFound = false;
 				for (Object target : iResourcesSpecific) {
 					if (target != null) {
 						keyBuffer.setLength(0);
@@ -339,13 +333,24 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 						keyBuffer.append('.');
 						keyBuffer.append(target.toString());
 
-						key = keyBuffer.toString();
+						final String key = keyBuffer.toString();
 
 						if (user.isRuleDefined(key)) {
+							ruleFound = true;
 							// RULE DEFINED: CHECK AGAINST IT
 							user.allow(key, iOperation);
 						}
 					}
+				}
+
+				if (!ruleFound) {
+					// CHECK AGAINST GENERIC RULE
+					keyBuffer.setLength(0);
+					keyBuffer.append(iResourceGeneric);
+					keyBuffer.append('.');
+					keyBuffer.append(ODatabaseSecurityResources.ALL);
+
+					user.allow(keyBuffer.toString(), iOperation);
 				}
 
 			} catch (OSecurityAccessException e) {
