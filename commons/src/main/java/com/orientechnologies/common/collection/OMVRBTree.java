@@ -323,6 +323,11 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
 		pageItemFound = false;
 
+		if (size == 0){
+			pageIndex = 0;
+			return iGetContainer ? root : null;
+		}
+
 		// Off-load comparator-based version for sake of performance
 		if (comparator != null)
 			return OMVRBTreeThreadLocal.INSTANCE.push(key, getEntryUsingComparator(key, iGetContainer));
@@ -522,7 +527,14 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		if (p == null)
 			return null;
 
-		return next(p);
+		if (pageItemFound)
+			// MATCH, RETURN THE NEXT ONE
+			return next(p);
+		else if (pageIndex < p.getSize())
+			// NOT MATCHED, POSITION IS ALREADY TO THE NEXT ONE
+			return p;
+
+		return null;
 	}
 
 	/**
