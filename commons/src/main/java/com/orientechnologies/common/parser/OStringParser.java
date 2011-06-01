@@ -90,7 +90,11 @@ public class OStringParser {
 			c = iText.charAt(i);
 
 			if (openBraket == 0 && openGraph == 0 && !escape && c == '\\') {
-				escape = true;
+				if (iText.charAt(i + 1) == 'u') {
+					i = readUnicode(iText, i + 2, buffer);
+				} else {
+					escape = true;
+				}
 				continue;
 			}
 
@@ -218,5 +222,16 @@ public class OStringParser {
 		}
 
 		return iCurrentPosition;
+	}
+
+	public static int readUnicode(String iText, int position, StringBuilder buffer) {
+		// DECODE UNICODE CHAR
+		final StringBuilder buff = new StringBuilder();
+		final int lastPos = position + 4;
+		for (; position < lastPos; ++position)
+			buff.append(iText.charAt(position));
+
+		buffer.append((char) Integer.parseInt(buff.toString(), 16));
+		return position - 1;
 	}
 }

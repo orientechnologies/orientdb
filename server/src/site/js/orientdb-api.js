@@ -235,11 +235,11 @@ function ODatabase(databasePath) {
 		}
 		var url = urlPrefix + 'document/' + this.encodedDatabaseName;
 		if(rid)
-			url += '/' + rid;
+			url += '/' + this.URLEncode(rid);
         $.ajax({
             type : methodType,
             url :url,
-            data : $.toJSON(obj),
+            data :$.toJSON(obj),
             processData : false,
             context : this,
             async : false,
@@ -453,6 +453,8 @@ function ODatabase(databasePath) {
 	}
 
 	ODatabase.prototype.handleResponse = function(iResponse) {
+		if (typeof iResponse != 'object')
+		iResponse = this.URLDecodeU(iResponse);
 		this.setCommandResponse(iResponse);
 		if (iResponse != null)
 			this.setCommandResult(this.transformResponse(iResponse));
@@ -646,6 +648,10 @@ function ODatabase(databasePath) {
 	ODatabase.prototype.URLDecode = function(s){var o=s;var binVal,t;var r=/(%[^%]{2})/;
 	  while((m=r.exec(o))!=null && m.length>1 && m[1]!=''){b=parseInt(m[1].substr(1),16);
 	  t=String.fromCharCode(b);o=o.replace(m[1],t);}return o;}
+	ODatabase.prototype.URLDecodeU = function(s){var o=s;var binVal,t;var r=/(u[^u]{2})/;
+		  while((m=r.exec(o))!=null && m.length>1 && m[1]!=''){b=parseInt(m[1].substr(1),16);
+		  t=String.fromCharCode(b);o=o.replace(m[1],t);}return o;}
 
 
 }
+
