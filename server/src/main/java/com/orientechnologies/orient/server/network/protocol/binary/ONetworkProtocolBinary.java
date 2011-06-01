@@ -963,10 +963,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 	private void writeRecord(final ORecordInternal<?> iRecord) throws IOException {
 		channel.writeShort((short) 0);
-		// channel.writeShort((short) (iRecord instanceof ORecordSchemaAware<?>
-		// && ((ORecordSchemaAware<?>) iRecord).getSchemaClass() != null ? ((ORecordSchemaAware<?>) iRecord).getSchemaClass().getId()
-		// : -1));
-
 		channel.writeByte(iRecord.getRecordType());
 		channel.writeRID(iRecord.getIdentity());
 		channel.writeInt(iRecord.getVersion());
