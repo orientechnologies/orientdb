@@ -33,10 +33,18 @@ public class OObjectSerializerContext implements OObjectSerializer<Object, Objec
 			final ParameterizedType pt = (ParameterizedType) genericType;
 			if (pt.getActualTypeArguments() != null && pt.getActualTypeArguments().length > 1) {
 				final Type[] actualTypes = pt.getActualTypeArguments();
-				if (actualTypes[0] instanceof Class<?>)
+				if (actualTypes[0] instanceof Class<?>) {
 					localSerializers.put((Class<?>) actualTypes[0], serializer);
-				if (actualTypes[1] instanceof Class<?>)
+				}
+				else if (actualTypes[0] instanceof ParameterizedType) {
+					localSerializers.put((Class<?>) ((ParameterizedType) actualTypes[0]).getRawType(), serializer);
+				}
+				if (actualTypes[1] instanceof Class<?>) {
 					dbSerializers.put((Class<?>) actualTypes[1], serializer);
+				}
+				else if (actualTypes[1] instanceof ParameterizedType) {
+					dbSerializers.put((Class<?>) ((ParameterizedType) actualTypes[1]).getRawType(), serializer);
+				}
 			}
 		}
 	}
@@ -47,10 +55,18 @@ public class OObjectSerializerContext implements OObjectSerializer<Object, Objec
 			final ParameterizedType pt = (ParameterizedType) genericType;
 			if (pt.getActualTypeArguments() != null && pt.getActualTypeArguments().length > 1) {
 				final Type[] actualTypes = pt.getActualTypeArguments();
-				if (actualTypes[0] instanceof Class<?>)
+				if (actualTypes[0] instanceof Class<?>) {
 					localSerializers.remove((Class<?>) actualTypes[0]);
-				if (actualTypes[1] instanceof Class<?>)
+				}
+				else if (actualTypes[0] instanceof ParameterizedType) {
+					localSerializers.remove((Class<?>) ((ParameterizedType) actualTypes[0]).getRawType());
+				}
+				if (actualTypes[1] instanceof Class<?>) {
 					dbSerializers.remove((Class<?>) actualTypes[1]);
+				}
+				else if (actualTypes[1] instanceof ParameterizedType) {
+					dbSerializers.remove((Class<?>) ((ParameterizedType) actualTypes[1]).getRawType());
+				}
 			}
 		}
 	}
@@ -58,7 +74,7 @@ public class OObjectSerializerContext implements OObjectSerializer<Object, Objec
 	public Object serializeFieldValue(final Object iPojo, final String iFieldName, Object iFieldValue) {
 		for (Class<?> type : localSerializers.keySet()) {
 			if (type.isInstance(iFieldValue) || (iFieldValue == null && type == Void.class)) {
-				iFieldValue = localSerializers.get(type).serializeFieldValue(iPojo, iFieldName, type.cast(iFieldValue));
+				iFieldValue = localSerializers.get(type).serializeFieldValue(iPojo, iFieldName, iFieldValue);
 				break;
 			}
 		}
@@ -69,7 +85,7 @@ public class OObjectSerializerContext implements OObjectSerializer<Object, Objec
 	public Object unserializeFieldValue(final Object iPojo, final String iFieldName, Object iFieldValue) {
 		for (Class<?> type : dbSerializers.keySet()) {
 			if (type.isInstance(iFieldValue) || (iFieldValue == null && type == Void.class)) {
-				iFieldValue = dbSerializers.get(type).unserializeFieldValue(iPojo, iFieldName, type.cast(iFieldValue));
+				iFieldValue = dbSerializers.get(type).unserializeFieldValue(iPojo, iFieldName, iFieldValue);
 				break;
 			}
 		}
