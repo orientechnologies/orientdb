@@ -1005,6 +1005,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		if (iDatabase.exists())
 			throw new ODatabaseException("Database '" + iDatabase.getURL() + "' already exists");
 
+		for (OStorage stg : Orient.instance().getStorages()) {
+			if (stg.getName().equalsIgnoreCase(iDatabase.getName()) && stg.exists())
+				throw new ODatabaseException("Database '" + iDatabase.getURL() + "' already exists: " + stg);
+		}
+
 		iDatabase.create();
 		if (dbUser != null) {
 

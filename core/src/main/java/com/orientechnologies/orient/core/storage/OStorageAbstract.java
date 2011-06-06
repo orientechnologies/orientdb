@@ -134,4 +134,10 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 
 		return tot;
 	}
+
+	@Override
+	public String toString() {
+		return url != null ? url : "?";
+	}
+
 }
