@@ -96,6 +96,11 @@ public class GraphTest {
 		Assert.assertEquals(lucaNode.getOutEdgeCount(), 3);
 		Assert.assertEquals(lucaNode.getInEdgeCount(), 0);
 
+		lucaNode.unlink(carNode);
+
+		Assert.assertEquals(lucaNode.getOutEdgeCount(), 1);
+		Assert.assertEquals(lucaNode.getInEdgeCount(), 0);
+
 		database.close();
 	}
 }

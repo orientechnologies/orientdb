@@ -16,7 +16,9 @@
 package com.orientechnologies.orient.core.db.graph;
 
 import java.lang.ref.SoftReference;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
@@ -420,15 +422,21 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 			}
 		}
 
+		final List<ODocument> edges2Remove = new ArrayList<ODocument>();
+
 		// REMOVE THE EDGE DOCUMENT
 		ODocument edge = null;
 		Set<ODocument> docs = iSourceVertex.field(OGraphDatabase.VERTEX_FIELD_OUT_EDGES);
 		if (docs != null) {
+			// USE A TEMP ARRAY TO AVOID CONCURRENT MODIFICATION TO THE ITERATOR
 			for (ODocument d : docs)
 				if (d.<ODocument> field(OGraphDatabase.EDGE_FIELD_IN).equals(iTargetVertex)) {
-					docs.remove(d);
+					edges2Remove.add(d);
 					edge = d;
 				}
+
+			for (ODocument d : edges2Remove)
+				docs.remove(d);
 		}
 
 		if (edge == null)
@@ -441,10 +449,14 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 
 		// REMOVE THE EDGE DOCUMENT FROM THE TARGET VERTEX
 		if (docs != null) {
+			edges2Remove.clear();
+
 			for (ODocument d : docs)
-				if (d.<ODocument> field(OGraphDatabase.EDGE_FIELD_IN).equals(iTargetVertex)) {
-					docs.remove(d);
-				}
+				if (d.<ODocument> field(OGraphDatabase.EDGE_FIELD_IN).equals(iTargetVertex))
+					edges2Remove.add(d);
+
+			for (ODocument d : edges2Remove)
+				docs.remove(d);
 		}
 
 		iTargetVertex.setDirty();
