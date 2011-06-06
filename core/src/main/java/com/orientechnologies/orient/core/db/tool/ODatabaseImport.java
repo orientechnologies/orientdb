@@ -223,7 +223,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
 
 		do {
-			final String indexName = jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
+			final String indexName = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
 
 			if (indexName == null || indexName.length() == 0)
 				return;
