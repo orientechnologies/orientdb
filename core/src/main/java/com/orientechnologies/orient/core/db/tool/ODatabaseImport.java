@@ -98,6 +98,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 			database.getLevel1Cache().setEnable(false);
 			database.getLevel2Cache().setEnable(false);
 			database.setMVCC(false);
+			includeSchema = false;
 
 			String tag;
 			while (jsonReader.hasNext() && jsonReader.lastChar() != '}') {
@@ -352,7 +353,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 			}
 
 			listener.onMessage("OK (" + classImported + " classes)");
-
+			includeSchema = true;
 			jsonReader.readNext(OJSONReader.END_OBJECT);
 			jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
 		} catch (Exception e) {
@@ -546,6 +547,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		final String value = jsonReader.readString(OJSONReader.END_OBJECT, true);
 
 		record = ORecordSerializerJSON.INSTANCE.fromString(database, value, record);
+
+		if (includeSchema && record.getIdentity().toString().equals(database.getStorage().getConfiguration().schemaRecordId)) {
+			jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+			return null;
+		}
 
 		// CHECK IF THE CLUSTER IS INCLUDED
 		if (includeClusters != null) {
