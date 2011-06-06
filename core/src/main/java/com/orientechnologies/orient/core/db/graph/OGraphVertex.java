@@ -62,10 +62,6 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 		return (RET) this;
 	}
 
-	public Set<OGraphVertex> traverse(final int iStartLevel, final int iEndLevel) {
-		return null;
-	}
-
 	@Override
 	public OGraphVertex clone() {
 		return new OGraphVertex(database, document);
