@@ -37,7 +37,7 @@ import com.orientechnologies.orient.core.storage.OStorageEmbedded;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OSecurityShared {
+public class OSecurityShared implements OSecurity {
 	private OSharedResourceExternal	lock	= new OSharedResourceExternal();
 
 	public OUser authenticate(final String iUserName, final String iUserPassword) {
