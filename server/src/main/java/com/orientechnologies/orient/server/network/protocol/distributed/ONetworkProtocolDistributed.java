@@ -84,8 +84,8 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 			data.commandInfo = "Open database connection";
 
 			// REOPEN PREVIOUSLY MANAGED DATABASE
-			final String dbName = channel.readString();
-			openDatabase(dbName, channel.readString(), channel.readString());
+			final String dbUrl = channel.readString();
+			openDatabase(dbUrl, channel.readString(), channel.readString());
 
 			ODistributedRequesterThreadLocal.INSTANCE.set(true);
 
@@ -99,7 +99,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 		case OChannelDistributedProtocol.REQUEST_DISTRIBUTED_DB_SHARE_SENDER: {
 			data.commandInfo = "Share the database to a remote server";
 
-			final String dbName = channel.readString();
+			final String dbUrl = channel.readString();
 			final String dbUser = channel.readString();
 			final String dbPassword = channel.readString();
 			final String remoteServerName = channel.readString();
@@ -107,7 +107,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 			checkServerAccess("database.share");
 
-			openDatabase(dbName, dbUser, dbPassword);
+			openDatabase(dbUrl, dbUser, dbPassword);
 
 			final String engineName = connection.database.getStorage() instanceof OStorageLocal ? "local" : "memory";
 
@@ -117,7 +117,7 @@ public class ONetworkProtocolDistributed extends ONetworkProtocolBinary implemen
 
 			sendOk(lastClientTxId);
 
-			manager.addServerInConfiguration(dbName, remoteServerName, engineName, synchronousMode);
+			manager.addServerInConfiguration(dbUrl, remoteServerName, engineName, synchronousMode);
 
 			break;
 		}

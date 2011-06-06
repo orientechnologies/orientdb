@@ -104,6 +104,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			}
 
 			checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
+		} catch (OException e) {
+			close();
+			throw e;
 		} catch (Exception e) {
 			close();
 			throw new ODatabaseException("Can't open database", e);

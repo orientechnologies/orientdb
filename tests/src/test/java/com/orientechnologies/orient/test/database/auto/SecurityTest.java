@@ -22,6 +22,7 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -42,8 +43,8 @@ public class SecurityTest {
 	public void testWrongPassword() throws IOException {
 		try {
 			database.open("reader", "swdsds");
-		} catch (ODatabaseException e) {
-			Assert.assertTrue(e.getCause() instanceof OSecurityAccessException
+		} catch (OException e) {
+			Assert.assertTrue(e instanceof OSecurityAccessException
 					|| e.getCause().toString().indexOf("com.orientechnologies.orient.core.exception.OSecurityAccessException") > -1);
 		}
 	}

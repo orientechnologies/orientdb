@@ -76,7 +76,6 @@ import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.handler.OServerHandlerHelper;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
@@ -232,12 +231,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			data.commandInfo = "Open database";
 
 			String dbURL = channel.readString();
-			String dbName = dbURL.substring(dbURL.lastIndexOf(":") + 1);
 
 			user = channel.readString();
 			passwd = channel.readString();
 
-			openDatabase(dbName, user, passwd);
+			openDatabase(dbURL, user, passwd);
 
 			if (!(connection.database.getStorage() instanceof OStorageEmbedded) && !loadUserFromSchema(user, passwd)) {
 				sendError(lastClientTxId, new OSecurityAccessException(connection.database.getName(),
@@ -572,10 +570,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			final ORecordInternal<?> newRecord = ORecordFactory.newInstance(recordType);
 			newRecord.fill(connection.database, rid, version, buffer);
 
-			if (((OSchemaProxy) connection.database.getMetadata().getSchema()).getIdentity().equals(rid) )
-					//|| ((OIndexManagerImpl) connection.database.getMetadata().getIndexManager()).getDocument().getIdentity().equals(rid)) {
+			if (((OSchemaProxy) connection.database.getMetadata().getSchema()).getIdentity().equals(rid))
+				// || ((OIndexManagerImpl) connection.database.getMetadata().getIndexManager()).getDocument().getIdentity().equals(rid)) {
 				throw new OSecurityAccessException("Can't update internal record " + rid);
-			
 
 			final ORecordInternal<?> currentRecord;
 			if (newRecord instanceof ODocument) {
@@ -985,9 +982,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 		}
 	}
 
-	protected ODatabaseDocumentTx openDatabase(final String dbName, final String iUser, final String iPassword)
+	protected ODatabaseDocumentTx openDatabase(final String iDbUrl, final String iUser, final String iPassword)
 			throws InterruptedException {
-		connection.database = OSharedDocumentDatabase.acquire(dbName, iUser, iPassword);
+		final String path = OServerMain.server().getStoragePath(iDbUrl);
+
+		connection.database = new ODatabaseDocumentTx(path);
 
 		if (connection.database.isClosed())
 			if (connection.database.getStorage() instanceof OStorageMemory)
