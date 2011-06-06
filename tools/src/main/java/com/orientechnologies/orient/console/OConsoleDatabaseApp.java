@@ -476,7 +476,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 		if (iDatabaseURL.startsWith(OEngineRemote.NAME)) {
 			// REMOTE CONNECTION
 			final String dbURL = iDatabaseURL.substring(OEngineRemote.NAME.length() + 1);
-			new OServerAdmin(dbURL).connect(iUserName, iUserPassword).deleteDatabase();
+			serverAdmin = new OServerAdmin(dbURL).connect(iUserName, iUserPassword);
+			serverAdmin.deleteDatabase();
 			disconnect();
 		} else {
 			// LOCAL CONNECTION
