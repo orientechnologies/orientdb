@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
 import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 
@@ -108,9 +109,9 @@ public class OSQLFilterCondition {
 			}
 
 			// RIDS
-			else if (r instanceof ORID && l instanceof String) {
+			else if (r instanceof ORID && l instanceof String && !l.equals(OSQLHelper.NOT_NULL)) {
 				result = new Object[] { new ORecordId((String) l), r };
-			} else if (l instanceof ORID && r instanceof String) {
+			} else if (l instanceof ORID && r instanceof String && !r.equals(OSQLHelper.NOT_NULL)) {
 				result = new Object[] { l, new ORecordId((String) r) };
 			}
 
