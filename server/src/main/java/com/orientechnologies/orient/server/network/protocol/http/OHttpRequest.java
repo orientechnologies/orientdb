@@ -39,6 +39,8 @@ public class OHttpRequest {
 	public String													boundary;
 	public String													databaseName;
 	public boolean												isMultipart;
+	public String													ifMatch;
+
 	public ONetworkProtocolData						data;
 	public ONetworkProtocolHttpAbstract		executor;
 

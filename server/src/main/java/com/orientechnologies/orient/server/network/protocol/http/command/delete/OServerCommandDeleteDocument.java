@@ -46,7 +46,19 @@ public class OServerCommandDeleteDocument extends OServerCommandDocumentAbstract
 				throw new IllegalArgumentException("Invalid Record ID in request: " + urlParts[2]);
 
 			final ODocument doc = new ODocument(db, recordId);
-			doc.setVersion(-1);
+
+			// UNMARSHALL DOCUMENT WITH REQUEST CONTENT
+			if (iRequest.content != null)
+				// GET THE VERSION FROM THE DOCUMENT
+				doc.fromJSON(iRequest.content);
+			else {
+				if (iRequest.ifMatch != null)
+					// USE THE IF-MATCH HTTP HEADER AS VERSION
+					doc.setVersion(Integer.parseInt(iRequest.ifMatch));
+				else
+					// IGNORE THE VERSION
+					doc.setVersion(-1);
+			}
 			doc.delete();
 
 			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, null);

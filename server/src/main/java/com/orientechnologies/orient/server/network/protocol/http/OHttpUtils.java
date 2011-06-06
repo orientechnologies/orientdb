@@ -32,15 +32,15 @@ public class OHttpUtils {
 	public static final String	METHOD_DELETE												= "DELETE";
 	public static final String	METHOD_POST													= "POST";
 
-	public static final String	CONTENT_LENGTH											= "Content-Length: ";
-	public static final String	CONTENT_TYPE												= "Content-Type: ";
+	public static final String	HEADER_CONTENT_LENGTH								= "Content-Length: ";
+	public static final String	HEADER_CONTENT_TYPE									= "Content-Type: ";
+	public static final String	HEADER_COOKIE												= "Cookie: ";
+	public static final String	HEADER_AUTHORIZATION								= "Authorization: ";
+	public static final String	HEADER_IF_MATCH											= "If-Match: ";
+	public static final String	HEADER_X_FORWARDED_FOR							= "X-Forwarded-For: ";
 
-	public static final String	AUTHORIZATION												= "Authorization";
 	public static final String	AUTHORIZATION_BASIC									= "Basic";
-	public static final String	COOKIE															= "Cookie:";
-	public static final String	OSESSIONID												= "OSESSIONID";
-
-	public static final String	X_FORWARDED_FOR											= "X-Forwarded-For: ";
+	public static final String	OSESSIONID													= "OSESSIONID";
 
 	public static final String	MULTIPART_CONTENT_DISPOSITION				= "Content-Disposition";
 	public static final String	MULTIPART_CONTENT_TRANSFER_ENCODING	= "Content-Transfer-Encoding";

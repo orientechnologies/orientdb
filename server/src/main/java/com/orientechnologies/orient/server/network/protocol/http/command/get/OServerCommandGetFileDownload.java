@@ -78,7 +78,7 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
 		sendResponseHeaders(iRequest, iContentType);
 		writeLine(iRequest, "Content-Disposition: attachment; filename=" + iFileName);
 		writeLine(iRequest, "Date: " + new Date());
-		writeLine(iRequest, OHttpUtils.CONTENT_LENGTH + (record.getSize()));
+		writeLine(iRequest, OHttpUtils.HEADER_CONTENT_LENGTH + (record.getSize()));
 		writeLine(iRequest, null);
 
 		record.toOutputStream(iRequest.channel.outStream);

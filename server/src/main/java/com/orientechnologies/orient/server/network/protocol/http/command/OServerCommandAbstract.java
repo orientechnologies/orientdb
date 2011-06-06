@@ -68,7 +68,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 
 		writeLine(iRequest, "Set-Cookie: OSESSIONID=" + sessId + "; Path=/; HttpOnly");
 
-		writeLine(iRequest, OHttpUtils.CONTENT_LENGTH + (empty ? 0 : content.length()));
+		writeLine(iRequest, OHttpUtils.HEADER_CONTENT_LENGTH + (empty ? 0 : content.length()));
 
 		writeLine(iRequest, null);
 
@@ -132,7 +132,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 		sendRecordsContent(iRequest, iRecords, null);
 	}
 
-	protected void sendRecordsContent(final OHttpRequest iRequest, final List<ORecord<?>> iRecords, String iFetchPlan)
+	protected void sendRecordsContent(final OHttpRequest iRequest, final List<ORecord<?>> iRecords, final String iFetchPlan)
 			throws IOException {
 		final StringWriter buffer = new StringWriter();
 		final OJSONWriter json = new OJSONWriter(buffer, JSON_FORMAT);
@@ -144,7 +144,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 			if (first != null && first instanceof ODocument) {
 				ODatabaseRecord db = ((ODocument) first).getDatabase();
 
-				String className = ((ODocument) first).getClassName();
+				final String className = ((ODocument) first).getClassName();
 				exportClassSchema(db, json, db.getMetadata().getSchema().getClass(className));
 			}
 		}
@@ -191,7 +191,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 			final InputStream iContent, final long iSize) throws IOException {
 		sendStatus(iRequest, iCode, iReason);
 		sendResponseHeaders(iRequest, iContentType);
-		writeLine(iRequest, OHttpUtils.CONTENT_LENGTH + (iSize));
+		writeLine(iRequest, OHttpUtils.HEADER_CONTENT_LENGTH + (iSize));
 		writeLine(iRequest, null);
 
 		while (iContent != null && iContent.available() > 0)
