@@ -130,7 +130,8 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 		long tot = 0;
 
 		for (OCluster c : getClusters())
-			tot += c.getEntries();
+			if (c != null)
+				tot += c.getEntries();
 
 		return tot;
 	}
@@ -139,5 +140,4 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 	public String toString() {
 		return url != null ? url : "?";
 	}
-
 }
