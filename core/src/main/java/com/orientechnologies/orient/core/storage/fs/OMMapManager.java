@@ -186,7 +186,10 @@ public class OMMapManager {
 
 						// REMOVE FROM COLLECTIONS
 						it.remove();
-						bufferPoolPerFile.get(entry.file).remove(entry);
+						final List<OMMapBufferEntry> file = bufferPoolPerFile.get(entry.file);
+						file.remove(entry);
+						if (file.isEmpty())
+							bufferPoolPerFile.remove(entry.file);
 
 						entry.buffer = null;
 
@@ -261,7 +264,12 @@ public class OMMapManager {
 			if (entry.file != null && entry.file.isClosed()) {
 				totalMemory -= entry.size;
 
-				bufferPoolPerFile.get(entry.file).remove(entry);
+				final List<OMMapBufferEntry> file = bufferPoolPerFile.get(entry.file);
+				file.remove(entry);
+
+				if (file.isEmpty())
+					bufferPoolPerFile.remove(entry.file);
+
 				it.remove();
 
 				entry.close();
@@ -277,6 +285,8 @@ public class OMMapManager {
 	public synchronized static void removeFile(OFile file) throws IOException {
 		final List<OMMapBufferEntry> entries = bufferPoolPerFile.remove(file);
 		if (entries != null) {
+			bufferPoolPerFile.remove(file);
+
 			for (OMMapBufferEntry entry : entries) {
 				bufferPoolLRU.remove(entry);
 				entry.close();
