@@ -323,18 +323,12 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
 		pageItemFound = false;
 
-		if (size == 0){
+		if (size == 0) {
 			pageIndex = 0;
 			return iGetContainer ? root : null;
 		}
 
-		// Off-load comparator-based version for sake of performance
-		if (comparator != null)
-			return OMVRBTreeThreadLocal.INSTANCE.push(key, getEntryUsingComparator(key, iGetContainer));
-
 		OMVRBTreeEntry<K, V> p = getBestEntryPoint(key);
-
-		// System.out.println("Best entry point for key " + key + " is: "+p);
 
 		checkTreeStructure(p);
 
@@ -354,10 +348,13 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
 				lastNode = p;
 
-				try {
-					beginKey = k.compareTo(p.getFirstKey());
-				} catch (Exception e) {
-				}
+				if (comparator != null)
+					beginKey = comparator.compare((K) key, p.getFirstKey());
+				else
+					try {
+						beginKey = k.compareTo(p.getFirstKey());
+					} catch (Exception e) {
+					}
 
 				if (beginKey == 0) {
 					// EXACT MATCH, YOU'RE VERY LUCKY: RETURN THE FIRST KEY WITHOUT SEARCH INSIDE THE NODE
@@ -367,7 +364,10 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 					return OMVRBTreeThreadLocal.INSTANCE.push(key, p);
 				}
 
-				pageItemComparator = k.compareTo(p.getLastKey());
+				if (comparator != null)
+					pageItemComparator = comparator.compare((K) key, p.getLastKey());
+				else
+					pageItemComparator = k.compareTo(p.getLastKey());
 
 				if (beginKey < 0) {
 					if (pageItemComparator < 0) {
@@ -431,57 +431,6 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
 	public void setListener(final OMVRBTreeEventListener<K, V> listener) {
 		this.listener = listener;
-	}
-
-	/**
-	 * Version of getEntry using comparator. Split off from getEntry for performance. (This is not worth doing for most methods, that
-	 * are less dependent on comparator performance, but is worthwhile here.)
-	 * 
-	 * @param iGetContainer
-	 */
-	final OMVRBTreeEntry<K, V> getEntryUsingComparator(final Object key, final boolean iGetContainer) {
-		K k = (K) key;
-		Comparator<? super K> cpr = comparator;
-		if (cpr != null) {
-			OMVRBTreeEntry<K, V> p = root;
-			OMVRBTreeEntry<K, V> lastNode = null;
-
-			while (p != null) {
-				lastNode = p;
-				int beginKey = cpr.compare(k, p.getFirstKey());
-				if (beginKey < 0)
-					p = p.getLeft();
-				else if (beginKey > 0) {
-					if (cpr.compare(k, p.getLastKey()) > 0)
-						p = p.getRight();
-					else
-						break;
-				} else {
-					pageIndex = 0;
-					return p;
-				}
-			}
-
-			if (lastNode != null) {
-				// SEARCH INSIDE THE NODE
-				// TODO: USE THE BINARY SEARCH!!!
-				for (pageIndex = 0; pageIndex < lastNode.getSize(); ++pageIndex) {
-					int cmp = cpr.compare(k, lastNode.getKey(pageIndex));
-					if (cmp == 0) {
-						// FOUND: SET THE INDEX AND RETURN THE NODE
-						lastNode.getValue(pageIndex);
-						pageItemFound = true;
-						return lastNode;
-					} else if (cmp < 0)
-						break;
-				}
-
-				if (iGetContainer)
-					// RETURN THE CONTAINER NODE ANYWAY
-					return lastNode;
-			}
-		}
-		return null;
 	}
 
 	/**
