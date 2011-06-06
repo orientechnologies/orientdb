@@ -16,26 +16,31 @@
 package com.orientechnologies.orient.server.handler;
 
 import com.orientechnologies.orient.server.OClientConnection;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 
 public abstract class OServerHandlerAbstract implements OServerHandler {
+	public void startup() {
+	}
 
-	@Override
+	public void shutdown() {
+	}
+
+	public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
+	}
+
 	public void onClientConnection(final OClientConnection iConnection) {
 	}
 
-	@Override
 	public void onClientDisconnection(final OClientConnection iConnection) {
 	}
 
-	@Override
 	public void onBeforeClientRequest(final OClientConnection iConnection, final byte iRequestType) {
 	}
 
-	@Override
 	public void onAfterClientRequest(final OClientConnection iConnection, final byte iRequestType) {
 	}
 
-	@Override
 	public void onClientError(final OClientConnection iConnection, final Throwable iThrowable) {
 	}
 }
