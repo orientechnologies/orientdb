@@ -867,13 +867,20 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 		out.println();
 
-		if (prevValue != null)
-			out.println("Previous value was: " + prevValue);
+		if (iPropertyName.equalsIgnoreCase("limit")) {
 
-		properties.put(iPropertyName, iPropertyValue);
+			out.println("ERROR: Limit must be > 0 or = -1 (no limit)");
 
-		out.println();
-		out.println(iPropertyName + " = " + iPropertyValue);
+		} else {
+
+			if (prevValue != null)
+				out.println("Previous value was: " + prevValue);
+
+			properties.put(iPropertyName, iPropertyValue);
+
+			out.println();
+			out.println(iPropertyName + " = " + iPropertyValue);
+		}
 	}
 
 	@ConsoleCommand(description = "Declare an intent")
