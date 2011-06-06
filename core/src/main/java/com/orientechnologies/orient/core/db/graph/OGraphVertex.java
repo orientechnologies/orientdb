@@ -403,10 +403,8 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 			// REMOVE THE EDGE OBJECT
 			if (vertex.outEdges != null && vertex.outEdges.get() != null) {
 				for (OGraphEdge e : vertex.outEdges.get())
-					if (e.getIn().getDocument().equals(iTargetVertex)) {
+					if (e.getIn().getDocument().equals(iTargetVertex))
 						vertex.outEdges.get().remove(e);
-						break;
-					}
 			}
 		}
 
@@ -417,10 +415,8 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 			// REMOVE THE EDGE OBJECT FROM THE TARGET VERTEX
 			if (vertex.inEdges != null && vertex.inEdges.get() != null) {
 				for (OGraphEdge e : vertex.inEdges.get())
-					if (e.getOut().getDocument().equals(iSourceVertex)) {
+					if (e.getOut().getDocument().equals(iSourceVertex))
 						vertex.inEdges.get().remove(e);
-						break;
-					}
 			}
 		}
 
@@ -432,7 +428,6 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 				if (d.<ODocument> field(OGraphDatabase.EDGE_FIELD_IN).equals(iTargetVertex)) {
 					docs.remove(d);
 					edge = d;
-					break;
 				}
 		}
 
@@ -449,7 +444,6 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 			for (ODocument d : docs)
 				if (d.<ODocument> field(OGraphDatabase.EDGE_FIELD_IN).equals(iTargetVertex)) {
 					docs.remove(d);
-					break;
 				}
 		}
 
