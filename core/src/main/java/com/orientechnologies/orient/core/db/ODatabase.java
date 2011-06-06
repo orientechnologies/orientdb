@@ -40,8 +40,16 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * 
  */
 public interface ODatabase {
-	public enum OPTIONS {
+	public static enum OPTIONS {
 		SECURITY
+	}
+
+	public static enum STATUS {
+		OPEN, CLOSED, IMPORTING
+	}
+
+	public static enum ATTRIBUTES {
+		STATUS
 	}
 
 	/**
@@ -87,6 +95,16 @@ public interface ODatabase {
 	 * Closes an opened database.
 	 */
 	public void close();
+
+	/**
+	 * Returns the current status of database.
+	 */
+	public STATUS getStatus();
+
+	/**
+	 * Returns the current status of database.
+	 */
+	public <DB extends ODatabase> DB setStatus(STATUS iStatus);
 
 	/**
 	 * Returns the database name.
@@ -257,6 +275,10 @@ public interface ODatabase {
 	 * Returns an iterator of the property entries
 	 */
 	public Iterator<Map.Entry<String, Object>> getProperties();
+
+	public Object get(ATTRIBUTES iAttribute);
+
+	public <DB extends ODatabase> DB set(ATTRIBUTES attribute, Object iValue);
 
 	/**
 	 * Registers a listener to the database events.

@@ -49,11 +49,11 @@ import com.orientechnologies.orient.core.metadata.security.OUserTrigger;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.query.OQueryAbstract;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 
@@ -379,7 +379,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 				if (record != null) {
 					callbackHooks(TYPE.BEFORE_READ, record);
 
-					if (record.getInternalStatus() == STATUS.NOT_LOADED)
+					if (record.getInternalStatus() == ORecord.STATUS.NOT_LOADED)
 						record.reload();
 
 					callbackHooks(TYPE.AFTER_READ, record);
@@ -406,7 +406,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 			callbackHooks(TYPE.BEFORE_READ, iRecord);
 
 			iRecord.fromStream(recordBuffer.buffer);
-			iRecord.setStatus(STATUS.LOADED);
+			iRecord.setStatus(ORecord.STATUS.LOADED);
 
 			callbackHooks(TYPE.AFTER_READ, iRecord);
 
@@ -574,6 +574,29 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 	public ODatabaseRecord setRetainRecords(boolean retainRecords) {
 		this.retainRecords = retainRecords;
 		return this;
+	}
+
+	public <DB extends ODatabase> DB setStatus(final STATUS status) {
+		final String cmd = String.format("alter database status %s", status.toString());
+		command(new OCommandSQL(cmd)).execute();
+		return (DB) this;
+	}
+
+	public void setStatusInternal(final STATUS status) {
+		underlying.setStatus(status);
+	}
+
+	public void setInternal(final ATTRIBUTES iAttribute, final Object iValue) {
+		if (iAttribute == null)
+			throw new IllegalArgumentException("attribute is null");
+
+		final String stringValue = iValue != null ? iValue.toString() : null;
+
+		switch (iAttribute) {
+		case STATUS:
+			setStatusInternal(STATUS.valueOf(stringValue.toUpperCase()));
+			break;
+		}
 	}
 
 	public OUser getUser() {

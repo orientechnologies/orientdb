@@ -57,10 +57,6 @@ public class ODatabaseRaw implements ODatabase {
 	private final Map<String, Object>			properties	= new HashMap<String, Object>();
 	private final List<ODatabaseListener>	listeners		= new ArrayList<ODatabaseListener>();
 
-	public enum STATUS {
-		OPEN, CLOSED
-	}
-
 	public ODatabaseRaw(final String iURL) {
 		try {
 			url = iURL.replace('\\', '/');
@@ -156,6 +152,15 @@ public class ODatabaseRaw implements ODatabase {
 		} catch (Exception e) {
 			throw new ODatabaseException("Can't delete database", e);
 		}
+	}
+
+	public STATUS getStatus() {
+		return status;
+	}
+
+	public <DB extends ODatabase> DB setStatus(final STATUS status) {
+		this.status = status;
+		return (DB) this;
 	}
 
 	public boolean exists() {
@@ -379,5 +384,32 @@ public class ODatabaseRaw implements ODatabase {
 	@Override
 	public String toString() {
 		return "OrientDB[" + (getStorage() != null ? getStorage().getURL() : "?") + "]";
+	}
+
+	public Object get(final ATTRIBUTES iAttribute) {
+		if (iAttribute == null)
+			throw new IllegalArgumentException("attribute is null");
+
+		switch (iAttribute) {
+		case STATUS:
+			return getStatus();
+		}
+
+		return null;
+	}
+
+	public <DB extends ODatabase> DB set(final ATTRIBUTES iAttribute, final Object iValue) {
+		if (iAttribute == null)
+			throw new IllegalArgumentException("attribute is null");
+
+		final String stringValue = iValue != null ? iValue.toString() : null;
+
+		switch (iAttribute) {
+		case STATUS:
+			setStatus(STATUS.valueOf(stringValue.toUpperCase()));
+			break;
+		}
+
+		return (DB) this;
 	}
 }

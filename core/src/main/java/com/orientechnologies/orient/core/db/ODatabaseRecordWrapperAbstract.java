@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
@@ -198,6 +199,10 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 	public ODatabaseComplex<ORecordInternal<?>> save(final ORecordInternal<?> iRecord) {
 		underlying.save(iRecord);
 		return this;
+	}
+
+	public void setInternal(final ATTRIBUTES attribute, final Object iValue) {
+		underlying.setInternal(attribute, iValue);
 	}
 
 	public boolean isRetainRecords() {

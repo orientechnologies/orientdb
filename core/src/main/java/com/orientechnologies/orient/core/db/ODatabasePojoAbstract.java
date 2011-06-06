@@ -43,7 +43,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecord.STATUS;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelper;
@@ -159,6 +158,10 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 			return;
 
 		record.unsetDirty();
+	}
+
+	public void setInternal(final ATTRIBUTES attribute, final Object iValue) {
+		underlying.setInternal(attribute, iValue);
 	}
 
 	/**
@@ -346,7 +349,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 				if (iRecord.getDatabase() != underlying)
 					iRecord.setDatabase(underlying);
 
-				if (iRecord.getInternalStatus() == STATUS.NOT_LOADED)
+				if (iRecord.getInternalStatus() == ORecord.STATUS.NOT_LOADED)
 					record = (ODocument) record.load();
 
 				pojo = newInstance(record.getClassName());

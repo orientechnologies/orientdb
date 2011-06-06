@@ -62,6 +62,15 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 		underlying.delete();
 	}
 
+	public STATUS getStatus() {
+		return underlying.getStatus();
+	}
+
+	public <THISDB extends ODatabase> THISDB setStatus(final STATUS iStatus) {
+		underlying.setStatus(iStatus);
+		return (THISDB) this;
+	}
+
 	public String getName() {
 		return underlying.getName();
 	}
@@ -162,11 +171,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 		return (DBTYPE) underlying;
 	}
 
-	protected void checkOpeness() {
-		if (isClosed())
-			throw new ODatabaseException("Database is closed. Open it before to use.");
-	}
-
 	public ODatabaseComplex<?> getDatabaseOwner() {
 		return databaseOwner;
 	}
@@ -203,11 +207,24 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 		return underlying.getProperties();
 	}
 
+	public Object get(final ATTRIBUTES iAttribute) {
+		return underlying.get(iAttribute);
+	}
+
+	public <THISDB extends ODatabase> THISDB set(final ATTRIBUTES attribute, final Object iValue) {
+		return (THISDB) underlying.set(attribute, iValue);
+	}
+
 	public void registerListener(final ODatabaseListener iListener) {
 		underlying.registerListener(iListener);
 	}
 
 	public void unregisterListener(final ODatabaseListener iListener) {
 		underlying.unregisterListener(iListener);
+	}
+
+	protected void checkOpeness() {
+		if (isClosed())
+			throw new ODatabaseException("Database is closed. Open it before to use.");
 	}
 }

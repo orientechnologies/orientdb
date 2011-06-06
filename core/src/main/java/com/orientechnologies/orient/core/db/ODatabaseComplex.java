@@ -231,6 +231,8 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
 	 */
 	public <DB extends ODatabase> DB getUnderlying();
 
+	public void setInternal(ATTRIBUTES attribute, Object iValue);
+
 	/**
 	 * Registers a hook to listen all events for Records.
 	 * 

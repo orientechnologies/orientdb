@@ -36,13 +36,13 @@ import com.orientechnologies.orient.core.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.core.iterator.OObjectIteratorMultiCluster;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.record.ORecord.STATUS;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
-import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
+import com.orientechnologies.orient.core.tx.OTransactionRecordEntry;
 
 /**
  * Object Database instance. It's a wrapper to the class ODatabaseDocumentTx but handle the conversion between ODocument instances
@@ -401,7 +401,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 
 	@Override
 	public Object stream2pojo(ODocument iRecord, final Object iPojo, final String iFetchPlan) {
-		if (iRecord.getInternalStatus() == STATUS.NOT_LOADED)
+		if (iRecord.getInternalStatus() == ORecord.STATUS.NOT_LOADED)
 			iRecord = (ODocument) iRecord.load();
 
 		return OObjectSerializerHelper.fromStream(iRecord, iPojo, getEntityManager(), this, iFetchPlan);

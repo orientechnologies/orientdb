@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.hook;
 
+import com.orientechnologies.orient.core.db.ODatabase.STATUS;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -58,6 +59,9 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
 	};
 
 	public boolean onTrigger(final TYPE iType, final ORecord<?> iRecord) {
+		if (iRecord.getDatabase() != null && iRecord.getDatabase().getStatus() != STATUS.OPEN)
+			return false;
+
 		if (!(iRecord instanceof ODocument))
 			return false;
 
