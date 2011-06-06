@@ -51,6 +51,13 @@ public enum OGlobalConfiguration {
 
 	STORAGE_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum timeout in milliseconds to lock a shared record", Integer.class, 5000),
 
+	// CACHE
+	CACHE_LEVEL1_ENABLED("cache.level1.enabled", "Uses the level-1 cache", Boolean.class, true),
+
+	CACHE_LEVEL1_SIZE("cache.level1.size", "Size of the cache that keep the record in memory", Integer.class, -1),
+
+	CACHE_LEVEL2_ENABLED("cache.level2.enabled", "Uses the level-2 cache", Boolean.class, true),
+
 	CACHE_LEVEL2_SIZE("cache.level2.size", "Size of the cache that keep the record in memory", Integer.class, -1),
 
 	CACHE_LEVEL2_STRATEGY("cache.level2.strategy",
@@ -65,10 +72,6 @@ public enum OGlobalConfiguration {
 			}),
 
 	// DATABASE
-	CACHE_LEVEL2_ENABLED("cache.level2.enabled", "Uses the level2 cache", Boolean.class, true),
-
-	CACHE_LEVEL1_SIZE("cache.level1.size", "Size of the cache that keep the record in memory", Integer.class, -1),
-
 	OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database saves only object bound to dirty records", Boolean.class, false),
 
 	// TRANSACTIONS
