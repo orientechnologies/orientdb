@@ -202,7 +202,7 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 			// FILTER THE EXISTENT COLLECTION
 			HashSet<OGraphEdge> filtered = new HashSet<OGraphEdge>();
 			for (OGraphEdge e : temp) {
-				if (iEdgeLabel.equals(e.get(OGraphDatabase.LABEL)))
+				if (iEdgeLabel.equals(e.getLabel()))
 					filtered.add(e);
 			}
 			temp = filtered;
@@ -250,7 +250,7 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 			// FILTER THE EXISTENT COLLECTION
 			HashSet<OGraphEdge> filtered = new HashSet<OGraphEdge>();
 			for (OGraphEdge e : temp) {
-				if (iEdgeLabel.equals(e.get(OGraphDatabase.LABEL)))
+				if (iEdgeLabel.equals(e.getLabel()))
 					filtered.add(e);
 			}
 			temp = filtered;
@@ -317,7 +317,7 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 			return null;
 
 		for (ODocument d : docs) {
-			if (d.<ODocument>field(OGraphDatabase.EDGE_FIELD_IN).equals(iVertexDocument.getDocument()))
+			if (d.<ODocument> field(OGraphDatabase.EDGE_FIELD_IN).equals(iVertexDocument.getDocument()))
 				return d;
 		}
 
@@ -330,7 +330,7 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 			return null;
 
 		for (ODocument d : docs) {
-			if (d.<ODocument>field(OGraphDatabase.EDGE_FIELD_OUT).equals(iVertexDocument.getDocument()))
+			if (d.<ODocument> field(OGraphDatabase.EDGE_FIELD_OUT).equals(iVertexDocument.getDocument()))
 				return d;
 		}
 
@@ -433,7 +433,7 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 		Set<ODocument> docs = iSourceVertex.field(OGraphDatabase.VERTEX_FIELD_OUT_EDGES);
 		if (docs != null) {
 			for (ODocument d : docs)
-				if (d.<ODocument>field(OGraphDatabase.EDGE_FIELD_IN).equals(iTargetVertex)) {
+				if (d.<ODocument> field(OGraphDatabase.EDGE_FIELD_IN).equals(iTargetVertex)) {
 					docs.remove(d);
 					edge = d;
 					break;
@@ -451,7 +451,7 @@ public class OGraphVertex extends OGraphElement implements Cloneable {
 		// REMOVE THE EDGE DOCUMENT FROM THE TARGET VERTEX
 		if (docs != null) {
 			for (ODocument d : docs)
-				if (d.<ODocument>field(OGraphDatabase.EDGE_FIELD_IN).equals(iTargetVertex)) {
+				if (d.<ODocument> field(OGraphDatabase.EDGE_FIELD_IN).equals(iTargetVertex)) {
 					docs.remove(d);
 					break;
 				}

@@ -62,6 +62,14 @@ public abstract class OGraphElement extends ODocumentWrapper implements ORecordL
 		return document.getIdentity();
 	}
 
+	public Object setLabel(final String iLabel) {
+		return document.field(OGraphDatabase.LABEL, iLabel);
+	}
+
+	public String getLabel() {
+		return document.field(OGraphDatabase.LABEL);
+	}
+
 	public Object get(final String iPropertyName) {
 		return document.field(iPropertyName);
 	}
