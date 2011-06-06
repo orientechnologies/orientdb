@@ -49,7 +49,6 @@ import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OIndexManagerImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -573,10 +572,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 			final ORecordInternal<?> newRecord = ORecordFactory.newInstance(recordType);
 			newRecord.fill(connection.database, rid, version, buffer);
 
-			if (((OSchemaProxy) connection.database.getMetadata().getSchema()).getIdentity().equals(rid)
-					|| ((OIndexManagerImpl) connection.database.getMetadata().getIndexManager()).getDocument().getIdentity().equals(rid)) {
+			if (((OSchemaProxy) connection.database.getMetadata().getSchema()).getIdentity().equals(rid) )
+					//|| ((OIndexManagerImpl) connection.database.getMetadata().getIndexManager()).getDocument().getIdentity().equals(rid)) {
 				throw new OSecurityAccessException("Can't update internal record " + rid);
-			}
+			
 
 			final ORecordInternal<?> currentRecord;
 			if (newRecord instanceof ODocument) {

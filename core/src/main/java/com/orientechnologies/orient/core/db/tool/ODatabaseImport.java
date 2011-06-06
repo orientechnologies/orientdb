@@ -64,6 +64,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 	private ORecordInternal<?>					record;
 	private List<String>								recordToDelete	= new ArrayList<String>();
 	private Map<OProperty, String>			propertyIndexes	= new HashMap<OProperty, String>();
+	private boolean											schemaImported	= false;
 
 	public ODatabaseImport(final ODatabaseDocument database, final String iFileName, final OCommandOutputListener iListener)
 			throws IOException {
@@ -98,7 +99,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 			database.getLevel1Cache().setEnable(false);
 			database.getLevel2Cache().setEnable(false);
 			database.setMVCC(false);
-			includeSchema = false;
 
 			String tag;
 			while (jsonReader.hasNext() && jsonReader.lastChar() != '}') {
@@ -353,7 +353,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 			}
 
 			listener.onMessage("OK (" + classImported + " classes)");
-			includeSchema = true;
+			schemaImported = true;
 			jsonReader.readNext(OJSONReader.END_OBJECT);
 			jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
 		} catch (Exception e) {
@@ -548,10 +548,17 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
 		record = ORecordSerializerJSON.INSTANCE.fromString(database, value, record);
 
-		if (includeSchema && record.getIdentity().toString().equals(database.getStorage().getConfiguration().schemaRecordId)) {
+		if (schemaImported && record.getIdentity().toString().equals(database.getStorage().getConfiguration().schemaRecordId)) {
+			// JUMP THE SCHEMA
 			jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
 			return null;
 		}
+//
+//		if (record.getIdentity().toString().equals(database.getStorage().getConfiguration().indexMgrRecordId)) {
+//			// JUMP THE INDEX MANAGER
+//			jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+//			return null;
+//		}
 
 		// CHECK IF THE CLUSTER IS INCLUDED
 		if (includeClusters != null) {
