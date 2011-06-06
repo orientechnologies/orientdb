@@ -211,6 +211,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 		do {
 			final String indexName = jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
 
+			if (indexName == null || indexName.length() == 0)
+				return;
+
 			listener.onMessage("\n- Index '" + indexName + "'...");
 
 			final OIndex index = database.getMetadata().getIndexManager().getIndex(indexName);
@@ -553,12 +556,12 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 			jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
 			return null;
 		}
-//
-//		if (record.getIdentity().toString().equals(database.getStorage().getConfiguration().indexMgrRecordId)) {
-//			// JUMP THE INDEX MANAGER
-//			jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
-//			return null;
-//		}
+		//
+		// if (record.getIdentity().toString().equals(database.getStorage().getConfiguration().indexMgrRecordId)) {
+		// // JUMP THE INDEX MANAGER
+		// jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+		// return null;
+		// }
 
 		// CHECK IF THE CLUSTER IS INCLUDED
 		if (includeClusters != null) {
