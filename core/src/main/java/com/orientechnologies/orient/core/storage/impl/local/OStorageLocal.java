@@ -186,7 +186,7 @@ public class OStorageLocal extends OStorageEmbedded {
 						clusters[pos].open();
 					}
 				} else {
-					clusters = Arrays.copyOf(clusters, clusters.length +1);
+					clusters = Arrays.copyOf(clusters, clusters.length + 1);
 					clusters[i] = null;
 				}
 			}
@@ -559,7 +559,8 @@ public class OStorageLocal extends OStorageEmbedded {
 		final boolean locked = lock.acquireSharedLock();
 
 		try {
-			return new long[] { clusters[iClusterId].getFirstEntryPosition(), clusters[iClusterId].getLastEntryPosition() };
+			return clusters[iClusterId] != null ? new long[] { clusters[iClusterId].getFirstEntryPosition(),
+					clusters[iClusterId].getLastEntryPosition() } : new long[0];
 
 		} catch (IOException e) {
 
@@ -581,7 +582,7 @@ public class OStorageLocal extends OStorageEmbedded {
 		final boolean locked = lock.acquireSharedLock();
 
 		try {
-			return clusters[iClusterId].getEntries();
+			return clusters[iClusterId] != null ? clusters[iClusterId].getEntries() : 0l;
 
 		} finally {
 			lock.releaseSharedLock(locked);
@@ -710,7 +711,8 @@ public class OStorageLocal extends OStorageEmbedded {
 			saveVersion();
 
 			for (OCluster cluster : clusters)
-				cluster.synch();
+				if (cluster != null)
+					cluster.synch();
 
 			for (ODataLocal data : dataSegments)
 				data.synch();
@@ -790,7 +792,7 @@ public class OStorageLocal extends OStorageEmbedded {
 			if (iClusterId >= clusters.length)
 				return null;
 
-			return clusters[iClusterId].getName();
+			return clusters[iClusterId] != null ? clusters[iClusterId].getName() : null;
 
 		} finally {
 			lock.releaseSharedLock(locked);
@@ -1202,7 +1204,8 @@ public class OStorageLocal extends OStorageEmbedded {
 			size += d.getFilledUpTo();
 
 		for (OCluster c : clusters)
-			size += c.getSize();
+			if (c != null)
+				size += c.getSize();
 
 		return size;
 	}
