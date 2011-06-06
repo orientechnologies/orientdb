@@ -22,6 +22,7 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.graph.ODatabaseGraphTx;
+import com.orientechnologies.orient.core.db.graph.OGraphElement;
 import com.orientechnologies.orient.core.db.graph.OGraphVertex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -64,6 +65,36 @@ public class GraphTest {
 		for (OGraphVertex v : result) {
 			Assert.assertTrue(v.getDocument().getSchemaClass().isSubClassOf(vehicleClass));
 		}
+
+		database.close();
+	}
+
+	@Test
+	public void testMultiEdgeWithSameVertex() {
+		database.open("admin", "admin");
+
+		OGraphVertex lucaNode = database.createVertex().set("name", "Luca").set("surname", "Garulli").save();
+		OGraphVertex carNode = database.createVertex("GraphCar").set("brand", "Hyundai").set("model", "Coupe").set("year", 2003).save();
+		OGraphVertex motoNode = database.createVertex("GraphMotocycle").set("brand", "Yamaha").set("model", "X-City 250")
+				.set("year", 2009).save();
+
+		lucaNode.link(carNode).setLabel("drives");
+
+		lucaNode.link(carNode).setLabel("owns");
+		lucaNode.link(motoNode).setLabel("owns");
+		lucaNode.save();
+
+		database.close();
+
+		database.open("admin", "admin");
+
+		List<OGraphElement> result = database.query(new OSQLSynchQuery<OGraphElement>("select from V where name = 'Luca'"));
+		Assert.assertEquals(result.size(), 1);
+
+		lucaNode = (OGraphVertex) result.get(0);
+
+		Assert.assertEquals(lucaNode.getOutEdgeCount(), 3);
+		Assert.assertEquals(lucaNode.getInEdgeCount(), 0);
 
 		database.close();
 	}

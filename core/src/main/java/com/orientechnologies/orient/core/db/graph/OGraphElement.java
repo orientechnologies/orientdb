@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
  * @See {@link ODatabaseDocument}
  * @author Luca Garulli
  */
+@SuppressWarnings("unchecked")
 public abstract class OGraphElement extends ODocumentWrapper implements ORecordListener {
 	protected ODatabaseGraphTx	database;
 
@@ -62,8 +63,9 @@ public abstract class OGraphElement extends ODocumentWrapper implements ORecordL
 		return document.getIdentity();
 	}
 
-	public Object setLabel(final String iLabel) {
-		return document.field(OGraphDatabase.LABEL, iLabel);
+	public <RET extends OGraphElement> RET setLabel(final String iLabel) {
+		document.field(OGraphDatabase.LABEL, iLabel);
+		return (RET) this;
 	}
 
 	public String getLabel() {
@@ -74,7 +76,6 @@ public abstract class OGraphElement extends ODocumentWrapper implements ORecordL
 		return document.field(iPropertyName);
 	}
 
-	@SuppressWarnings("unchecked")
 	public <RET extends OGraphElement> RET set(final String iPropertyName, final Object iPropertyValue) {
 		document.field(iPropertyName, iPropertyValue, null);
 		return (RET) this;
