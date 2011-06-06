@@ -22,9 +22,11 @@ import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
 import com.orientechnologies.common.parser.OStringForwardReader;
@@ -33,6 +35,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -100,6 +103,12 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 			database.getLevel2Cache().setEnable(false);
 			database.setMVCC(false);
 
+			// UNINSTALL ALL THE HOOKS DURING THE IMPORT
+			final Set<ORecordHook> hooks = new HashSet<ORecordHook>(database.getHooks());
+			for (ORecordHook hook : database.getHooks()) {
+				database.unregisterHook(hook);
+			}
+
 			String tag;
 			while (jsonReader.hasNext() && jsonReader.lastChar() != '}') {
 				tag = jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
@@ -118,6 +127,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
 			deleteHoleRecords();
 			rebuildAutomaticIndexes();
+
+			// RE-INSTALL ALL THE HOOKS NOW THE IMPORT IS FINISHED
+			for (ORecordHook hook : hooks) {
+				database.registerHook(hook);
+			}
 
 			listener.onMessage("\n\nDatabase import completed in " + ((System.currentTimeMillis() - time)) + " ms");
 
