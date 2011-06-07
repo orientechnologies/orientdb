@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -1003,6 +1004,12 @@ public class OStorageLocal extends OStorageEmbedded {
 		try {
 			lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.SHARED);
 			try {
+				final long lastPos = iClusterSegment.getLastEntryPosition();
+
+				if (iRid.clusterPosition > lastPos)
+					throw new ORecordNotFoundException("Record " + iRid + " is out cluster size. Valid range for cluster '"
+							+ iClusterSegment.getName() + "' is 0-" + lastPos);
+
 				final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(iRid.clusterPosition, new OPhysicalPosition());
 				if (ppos == null || !checkForRecordValidity(ppos))
 					// DELETED
