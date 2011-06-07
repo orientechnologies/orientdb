@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -457,83 +458,86 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
 			final ORecordId rid = channel.readRID();
 			final String fetchPlanString = channel.readString();
-
-			if (rid.clusterId == 0 && rid.clusterPosition == 0) {
-				// @COMPATIBILITY 0.9.25
-				// SEND THE DB CONFIGURATION INSTEAD SINCE IT WAS ON RECORD 0:0
-				channel.acquireExclusiveLock();
-				try {
-					sendOk(lastClientTxId);
-					channel.writeByte((byte) 1);
-					channel.writeBytes(connection.database.getStorage().getConfiguration().toStream());
-					channel.writeInt(0);
-					channel.writeByte(ORecordBytes.RECORD_TYPE);
-				} finally {
-					channel.releaseExclusiveLock();
-				}
+			if (!OFetchHelper.isFetchPlanValid(fetchPlanString)) {
+				throw new OCommandExecutionException("Fetch plan '" + fetchPlanString + "' is invalid");
 			} else {
-				final ORecordInternal<?> record = connection.database.load(rid);
-
-				// if (rid.equals(((OSchemaImpl) connection.database.getMetadata().getSchema()).getDocument().getIdentity()))
-				// connection.database.getMetadata().getSchema().reload();
-
-				channel.acquireExclusiveLock();
-				try {
-					sendOk(lastClientTxId);
-
-					if (record != null) {
+				if (rid.clusterId == 0 && rid.clusterPosition == 0) {
+					// @COMPATIBILITY 0.9.25
+					// SEND THE DB CONFIGURATION INSTEAD SINCE IT WAS ON RECORD 0:0
+					channel.acquireExclusiveLock();
+					try {
+						sendOk(lastClientTxId);
 						channel.writeByte((byte) 1);
-						channel.writeBytes(record.toStream());
-						channel.writeInt(record.getVersion());
-						channel.writeByte(record.getRecordType());
+						channel.writeBytes(connection.database.getStorage().getConfiguration().toStream());
+						channel.writeInt(0);
+						channel.writeByte(ORecordBytes.RECORD_TYPE);
+					} finally {
+						channel.releaseExclusiveLock();
+					}
+				} else {
+					final ORecordInternal<?> record = connection.database.load(rid);
 
-						if (fetchPlanString.length() > 0) {
-							// BUILD THE SERVER SIDE RECORD TO ACCES TO THE FETCH
-							// PLAN
-							if (record instanceof ODocument) {
-								final Map<String, Integer> fetchPlan = OFetchHelper.buildFetchPlan(fetchPlanString);
+					// if (rid.equals(((OSchemaImpl) connection.database.getMetadata().getSchema()).getDocument().getIdentity()))
+					// connection.database.getMetadata().getSchema().reload();
 
-								final Set<ODocument> recordsToSend = new HashSet<ODocument>();
-								OFetchHelper.fetch((ODocument) record, record, fetchPlan, null, 0, -1, new OFetchListener() {
-									@Override
-									public int size() {
-										return recordsToSend.size();
-									}
+					channel.acquireExclusiveLock();
+					try {
+						sendOk(lastClientTxId);
 
-									// ADD TO THE SET OF OBJECTS TO SEND
-									@Override
-									public Object fetchLinked(final ODocument iRoot, final Object iUserObject, final String iFieldName,
-											final Object iLinked) {
-										if (iLinked instanceof ODocument) {
-											if (((ODocument) iLinked).getIdentity().isValid())
-												return recordsToSend.add((ODocument) iLinked) ? iLinked : null;
-											return null;
-										} else if (iLinked instanceof Collection<?>)
-											return recordsToSend.addAll((Collection<? extends ODocument>) iLinked) ? iLinked : null;
-										else if (iLinked instanceof Map<?, ?>)
-											return recordsToSend.addAll(((Map<String, ? extends ODocument>) iLinked).values()) ? iLinked : null;
-										else
-											throw new IllegalArgumentException("Unrecognized type while fetching records: " + iLinked);
-									}
-								});
+						if (record != null) {
+							channel.writeByte((byte) 1);
+							channel.writeBytes(record.toStream());
+							channel.writeInt(record.getVersion());
+							channel.writeByte(record.getRecordType());
 
-								// SEND RECORDS TO LOAD IN CLIENT CACHE
-								for (ODocument doc : recordsToSend) {
-									if (doc.getIdentity().isValid()) {
-										channel.writeByte((byte) 2); // CLIENT CACHE
-										// RECORD. IT ISN'T PART OF THE RESULT SET
-										writeIdentifiable(doc);
+							if (fetchPlanString.length() > 0) {
+								// BUILD THE SERVER SIDE RECORD TO ACCES TO THE FETCH
+								// PLAN
+								if (record instanceof ODocument) {
+									final Map<String, Integer> fetchPlan = OFetchHelper.buildFetchPlan(fetchPlanString);
+
+									final Set<ODocument> recordsToSend = new HashSet<ODocument>();
+									OFetchHelper.fetch((ODocument) record, record, fetchPlan, null, 0, -1, new OFetchListener() {
+										@Override
+										public int size() {
+											return recordsToSend.size();
+										}
+
+										// ADD TO THE SET OF OBJECTS TO SEND
+										@Override
+										public Object fetchLinked(final ODocument iRoot, final Object iUserObject, final String iFieldName,
+												final Object iLinked) {
+											if (iLinked instanceof ODocument) {
+												if (((ODocument) iLinked).getIdentity().isValid())
+													return recordsToSend.add((ODocument) iLinked) ? iLinked : null;
+												return null;
+											} else if (iLinked instanceof Collection<?>)
+												return recordsToSend.addAll((Collection<? extends ODocument>) iLinked) ? iLinked : null;
+											else if (iLinked instanceof Map<?, ?>)
+												return recordsToSend.addAll(((Map<String, ? extends ODocument>) iLinked).values()) ? iLinked : null;
+											else
+												throw new IllegalArgumentException("Unrecognized type while fetching records: " + iLinked);
+										}
+									});
+
+									// SEND RECORDS TO LOAD IN CLIENT CACHE
+									for (ODocument doc : recordsToSend) {
+										if (doc.getIdentity().isValid()) {
+											channel.writeByte((byte) 2); // CLIENT CACHE
+											// RECORD. IT ISN'T PART OF THE RESULT SET
+											writeIdentifiable(doc);
+										}
 									}
 								}
-							}
 
+							}
 						}
+					} finally {
+						channel.releaseExclusiveLock();
 					}
-				} finally {
-					channel.releaseExclusiveLock();
 				}
+				channel.writeByte((byte) 0); // NO MORE RECORDS
 			}
-			channel.writeByte((byte) 0); // NO MORE RECORDS
 			break;
 		}
 

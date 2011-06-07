@@ -41,12 +41,16 @@ public class OFetchHelper {
 		if (iFetchPlan != null) {
 			// CHECK IF THERE IS SOME FETCH-DEPTH
 			final List<String> planParts = OStringSerializerHelper.split(iFetchPlan, ' ');
-			fetchPlan = new HashMap<String, Integer>();
+			if (planParts.size() > 1) {
+				fetchPlan = new HashMap<String, Integer>();
 
-			List<String> parts;
-			for (String planPart : planParts) {
-				parts = OStringSerializerHelper.split(planPart, ':');
-				fetchPlan.put(parts.get(0), Integer.parseInt(parts.get(1)));
+				List<String> parts;
+				for (String planPart : planParts) {
+					parts = OStringSerializerHelper.split(planPart, ':');
+					fetchPlan.put(parts.get(0), Integer.parseInt(parts.get(1)));
+				}
+			} else {
+				fetchPlan = null;
 			}
 		} else
 			fetchPlan = null;
@@ -133,6 +137,27 @@ public class OFetchHelper {
 			e.printStackTrace();
 			OLogManager.instance().error(null, "Fetching error on record %s", e, iRootRecord.getIdentity());
 		}
+	}
+
+	public static boolean isFetchPlanValid(final String iFetchPlan) {
+
+		if (iFetchPlan != null && iFetchPlan.length() > 0) {
+			// CHECK IF THERE IS SOME FETCH-DEPTH
+			final List<String> planParts = OStringSerializerHelper.split(iFetchPlan, ' ');
+			if (planParts.size() > 1) {
+				for (String planPart : planParts) {
+					final List<String> parts = OStringSerializerHelper.split(planPart, ':');
+					if (parts.size() != 2) {
+						return false;
+					}
+				}
+			} else {
+				return false;
+			}
+		}
+
+		return true;
+
 	}
 
 	private static Integer getDepthLevel(final ODocument doc, final Map<String, Integer> iFetchPlan, final String iFieldName) {
