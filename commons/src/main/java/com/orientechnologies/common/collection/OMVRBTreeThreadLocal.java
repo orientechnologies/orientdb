@@ -16,7 +16,8 @@
 package com.orientechnologies.common.collection;
 
 /**
- * Keeps last search in thread local to be reused by further operations such as PUT. This speeds up work on trees.
+ * Keeps last search in thread local to be reused by further operations such as PUT. This speeds up work on trees. Saves the key,
+ * the node and the position in the node.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 

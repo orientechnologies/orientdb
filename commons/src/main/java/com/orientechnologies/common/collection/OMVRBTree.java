@@ -244,13 +244,13 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		OMVRBTreeEntry<K, V> entry;
 
 		// TRY TO GET LATEST SEARCH
-		// final Object[] threadLocalResult = OMVRBTreeThreadLocal.INSTANCE.search(key);
-		// if (threadLocalResult != null)
-		// // REUSE LAST SEARCH
-		// entry = (OMVRBTreeEntry<K, V>) threadLocalResult[1];
-		// else
-		// SEARCH THE ITEM
-		entry = getEntry(key);
+		final Object[] threadLocalResult = OMVRBTreeThreadLocal.INSTANCE.search(key);
+		if (threadLocalResult != null && pageItemFound) {
+			// REUSE LAST SEARCH
+			entry = (OMVRBTreeEntry<K, V>) threadLocalResult[1];
+		} else
+			// SEARCH THE ITEM
+			entry = getEntry(key);
 		return entry == null ? null : entry.getValue();
 	}
 
