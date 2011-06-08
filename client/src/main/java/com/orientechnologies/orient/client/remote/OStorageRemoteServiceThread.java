@@ -47,10 +47,12 @@ public class OStorageRemoteServiceThread extends OSoftThread {
 			try {
 				storage.beginResponse(network);
 			} catch (IOException ioe) {
+				// EXCEPTION RECEIVED (THE SOCKET HAS BEEN CLOSED?) ASSURE TO UNLOCK THE READ AND EXIT THIS THREAD
 				network.endResponse();
 				sendShutdown();
 				return;
 			}
+
 			final byte request = network.readByte();
 
 			switch (request) {
@@ -64,7 +66,6 @@ public class OStorageRemoteServiceThread extends OSoftThread {
 				break;
 			}
 
-			// NOT IN FINALLY BECAUSE IF THE SOCKET IS KILLED COULD HAVE NOT THE LOCK
 			network.endResponse();
 
 		} catch (Exception e) {
