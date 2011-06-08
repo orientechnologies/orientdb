@@ -56,6 +56,10 @@ public abstract class OAbstractRecordCache extends OSharedResourceAbstract {
 
 	public abstract void pushRecord(ORecordInternal<?> iRecord);
 
+	public boolean isEnabled() {
+		return enabled;
+	}
+
 	public void setEnable(final boolean iValue) {
 		enabled = iValue;
 		if (!iValue)
@@ -262,6 +266,12 @@ public abstract class OAbstractRecordCache extends OSharedResourceAbstract {
 						releaseExclusiveLock();
 					}
 				}
+			}
+		});
+
+		OProfiler.getInstance().registerHookValue(profilerPrefix + ".cache.enabled", new OProfilerHookValue() {
+			public Object getValue() {
+				return enabled;
 			}
 		});
 
