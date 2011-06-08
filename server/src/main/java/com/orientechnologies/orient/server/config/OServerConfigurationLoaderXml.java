@@ -65,15 +65,16 @@ public class OServerConfigurationLoaderXml {
 
 			// AUTO CONFIGURE SYSTEM CONFIGURATION
 			OGlobalConfiguration config;
-			for (OServerEntryConfiguration prop : obj.properties) {
-				try {
-					config = OGlobalConfiguration.findByKey(prop.name);
-					if (config != null) {
-						config.setValue(prop.value);
+			if (obj.properties != null)
+				for (OServerEntryConfiguration prop : obj.properties) {
+					try {
+						config = OGlobalConfiguration.findByKey(prop.name);
+						if (config != null) {
+							config.setValue(prop.value);
+						}
+					} catch (Exception e) {
 					}
-				} catch (Exception e) {
 				}
-			}
 
 			return obj;
 		} catch (Exception e) {
