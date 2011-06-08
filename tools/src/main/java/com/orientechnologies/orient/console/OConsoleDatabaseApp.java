@@ -128,11 +128,17 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 			@ConsoleParameter(name = "url", description = "The url of the remote server or the database to connect in the format '<mode>:<path>'") String iURL,
 			@ConsoleParameter(name = "user", description = "User name") String iUserName,
 			@ConsoleParameter(name = "password", description = "User password") String iUserPassword) throws IOException {
-		if (currentDatabase != null)
+		if (currentDatabase != null){
 			currentDatabase.close();
+			currentDatabase = null;
+			currentDatabaseName = null;
+			currentRecord = null;
+		}
 
-		if (serverAdmin != null)
+		if (serverAdmin != null){
 			serverAdmin.close();
+			serverAdmin = null;
+		}
 
 		currentDatabaseUserName = iUserName;
 		currentDatabaseUserPassword = iUserPassword;
