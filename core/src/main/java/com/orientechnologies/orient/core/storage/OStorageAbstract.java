@@ -28,7 +28,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 	protected final String										mode;
 	protected OStorageConfiguration						configuration;
 	protected String													name;
-	protected long														version	= 0;
+	protected volatile long										version	= 0;
 	protected OLevel2RecordCache							level2Cache;
 
 	protected boolean													open		= false;
