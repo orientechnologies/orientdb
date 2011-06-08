@@ -55,6 +55,7 @@ public class ODataLocal extends OMultiFileSegment {
 	private final String						PROFILER_UPDATE_REUSED_PARTIAL;
 	private final String						PROFILER_UPDATE_NOT_REUSED;
 	private final String						PROFILER_MOVE_RECORD;
+	private final String						PROFILER_HOLE_HANDLE;
 
 	public ODataLocal(final OStorageLocal iStorage, final OStorageDataConfiguration iConfig, final int iId) throws IOException {
 		super(iStorage, iConfig, DEF_EXTENSION, 0);
@@ -67,7 +68,8 @@ public class ODataLocal extends OMultiFileSegment {
 		defragMaxHoleDistance = OGlobalConfiguration.FILE_DEFRAG_HOLE_MAX_DISTANCE.getValueAsInteger();
 		defragStrategy = OGlobalConfiguration.FILE_DEFRAG_STRATEGY.getValueAsInteger();
 
-		PROFILER_HOLE_FIND_CLOSER = "storage." + storage.getName() + ".data.findClosest";
+		PROFILER_HOLE_HANDLE = "storage." + storage.getName() + ".data.handleHole";
+		PROFILER_HOLE_FIND_CLOSER = "storage." + storage.getName() + ".data.findClosestHole";
 		PROFILER_UPDATE_REUSED_ALL = "storage." + storage.getName() + ".data.update.reusedAll";
 		PROFILER_UPDATE_REUSED_PARTIAL = "storage." + storage.getName() + ".data.update.reusedPartial";
 		PROFILER_UPDATE_NOT_REUSED = "storage." + storage.getName() + ".data.update.notReused";
@@ -196,12 +198,12 @@ public class ODataLocal extends OMultiFileSegment {
 				writeRecord(pos, iRid.clusterId, iRid.clusterPosition, iContent);
 
 				// CREATE A HOLE WITH THE DIFFERENCE OF SPACE
-				createHole(iPosition + RECORD_FIX_SIZE + iContent.length, recordSize - iContent.length - RECORD_FIX_SIZE);
+				handleHole(iPosition + RECORD_FIX_SIZE + iContent.length, recordSize - iContent.length - RECORD_FIX_SIZE);
 
 				OProfiler.getInstance().updateCounter(PROFILER_UPDATE_REUSED_PARTIAL, +1);
 			} else {
 				// CREATE A HOLE FOR THE ENTIRE OLD RECORD
-				createHole(iPosition, recordSize);
+				handleHole(iPosition, recordSize);
 
 				// USE A NEW SPACE
 				pos = getFreeSpace(iContent.length + RECORD_FIX_SIZE);
@@ -224,7 +226,7 @@ public class ODataLocal extends OMultiFileSegment {
 			final OFile file = files[(int) pos[0]];
 
 			final int recordSize = file.readInt(pos[1]);
-			createHole(iPosition, recordSize);
+			handleHole(iPosition, recordSize);
 			return recordSize;
 
 		} finally {
@@ -272,7 +274,7 @@ public class ODataLocal extends OMultiFileSegment {
 		return id;
 	}
 
-	public void createHole(final long iRecordOffset, final int iRecordSize) throws IOException {
+	public void handleHole(final long iRecordOffset, final int iRecordSize) throws IOException {
 		acquireExclusiveLock();
 		try {
 			long holePositionOffset = iRecordOffset;
@@ -375,6 +377,8 @@ public class ODataLocal extends OMultiFileSegment {
 			// WRITE NEGATIVE RECORD SIZE TO MARK AS DELETED
 			pos = getRelativePosition(holePositionOffset);
 			files[(int) pos[0]].writeInt(pos[1], holeSize * -1);
+
+			OProfiler.getInstance().stopChrono(PROFILER_HOLE_HANDLE, timer);
 
 		} finally {
 			releaseExclusiveLock();

@@ -64,6 +64,8 @@ public class ODataLocalHole extends OSingleFileSegment {
 	private final String																				PROFILER_DATA_RECYCLED_COMPLETE;
 	private final String																				PROFILER_DATA_RECYCLED_PARTIAL;
 	private final String																				PROFILER_DATA_RECYCLED_NOTFOUND;
+	private final String																				PROFILER_DATA_HOLE_CREATE;
+	private final String																				PROFILER_DATA_HOLE_UPDATE;
 
 	public ODataLocalHole(final OStorageLocal iStorage, final OStorageFileConfiguration iConfig) throws IOException {
 		super(iStorage, iConfig);
@@ -71,6 +73,8 @@ public class ODataLocalHole extends OSingleFileSegment {
 		PROFILER_DATA_RECYCLED_COMPLETE = "storage." + storage.getName() + ".data.recycled.complete";
 		PROFILER_DATA_RECYCLED_PARTIAL = "storage." + storage.getName() + ".data.recycled.partial";
 		PROFILER_DATA_RECYCLED_NOTFOUND = "storage." + storage.getName() + ".data.recycled.notFound";
+		PROFILER_DATA_HOLE_CREATE = "storage." + storage.getName() + ".data.createHole";
+		PROFILER_DATA_HOLE_UPDATE = "storage." + storage.getName() + ".data.updateHole";
 	}
 
 	@Override
@@ -91,6 +95,8 @@ public class ODataLocalHole extends OSingleFileSegment {
 	 * @throws IOException
 	 */
 	public void createHole(final long iRecordOffset, final int iRecordSize) throws IOException {
+		final long timer = OProfiler.getInstance().startChrono();
+
 		// IN MEMORY
 		final int recycledPosition;
 		final ODataHoleInfo hole;
@@ -118,6 +124,8 @@ public class ODataLocalHole extends OSingleFileSegment {
 		final long p = recycledPosition * RECORD_SIZE;
 		file.writeLong(p, iRecordOffset);
 		file.writeInt(p + OConstants.SIZE_LONG, iRecordSize);
+
+		OProfiler.getInstance().stopChrono(PROFILER_DATA_HOLE_CREATE, timer);
 	}
 
 	public ODataHoleInfo getCloserHole(final long iHolePosition, final int iHoleSize, final long iLowerRange, final long iHigherRange) {
@@ -132,11 +140,11 @@ public class ODataLocalHole extends OSingleFileSegment {
 			throw new OStorageException("Found bad order in hole list: " + lowerHole + " is higher than " + higherHole);
 
 		final ODataHoleInfo closestHole;
-		if (lowerHole != null && lowerHole.dataOffset < iLowerRange)
+		if (lowerHole != null && (lowerHole.dataOffset + lowerHole.size < iLowerRange))
 			// OUT OF RANGE: INVALID IT
 			lowerHole = null;
 
-		if (higherHole != null && higherHole.dataOffset > iHigherRange)
+		if (higherHole != null && (higherHole.dataOffset > iHigherRange))
 			// OUT OF RANGE: INVALID IT
 			higherHole = null;
 
@@ -218,6 +226,8 @@ public class ODataLocalHole extends OSingleFileSegment {
 	 * @throws IOException
 	 */
 	public void updateHole(final ODataHoleInfo iHole, final long iNewDataOffset, final int iNewRecordSize) throws IOException {
+		final long timer = OProfiler.getInstance().startChrono();
+
 		final boolean offsetChanged = iNewDataOffset != iHole.dataOffset;
 		final boolean sizeChanged = iNewRecordSize != iHole.size;
 
@@ -243,6 +253,8 @@ public class ODataLocalHole extends OSingleFileSegment {
 			file.writeLong(holePosition, iNewDataOffset);
 		if (sizeChanged)
 			file.writeInt(holePosition + OConstants.SIZE_LONG, iNewRecordSize);
+
+		OProfiler.getInstance().stopChrono(PROFILER_DATA_HOLE_UPDATE, timer);
 	}
 
 	/**

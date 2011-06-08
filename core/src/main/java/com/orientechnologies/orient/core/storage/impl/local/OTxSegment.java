@@ -389,7 +389,7 @@ public class OTxSegment extends OSingleFileSegment {
 			storage.getClusterById(iRid.clusterId).setPhysicalPosition(iRid.clusterPosition, ppos.dataSegment, oldDataOffset, ppos.type);
 
 			// CREATE A HOLE
-			storage.getDataSegment(ppos.dataSegment).createHole(newPosition, newSize);
+			storage.getDataSegment(ppos.dataSegment).handleHole(newPosition, newSize);
 			break;
 
 		case OPERATION_DELETE:
