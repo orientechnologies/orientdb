@@ -174,19 +174,46 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 	public Collection<OProperty> properties() {
 		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ);
 
-		Collection<OProperty> props = new ArrayList<OProperty>();
+		Collection<OProperty> props = null;
 
 		OClassImpl currentClass = this;
 
 		do {
-			if (currentClass.properties != null)
+			if (currentClass.properties != null) {
+				if (props == null)
+					props = new ArrayList<OProperty>();
 				props.addAll(currentClass.properties.values());
+			}
 
 			currentClass = (OClassImpl) currentClass.getSuperClass();
 
 		} while (currentClass != null);
 
-		return props;
+		return (Collection<OProperty>) (props != null ? props : Collections.emptyList());
+	}
+
+	public Collection<OProperty> getIndexedProperties() {
+		document.getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ);
+
+		Collection<OProperty> indexedProps = null;
+
+		OClassImpl currentClass = this;
+
+		do {
+			if (currentClass.properties != null) {
+				for (OProperty p : currentClass.properties.values())
+					if (p.isIndexed()) {
+						if (indexedProps == null)
+							indexedProps = new ArrayList<OProperty>();
+						indexedProps.add(p);
+					}
+			}
+
+			currentClass = (OClassImpl) currentClass.getSuperClass();
+
+		} while (currentClass != null);
+
+		return (Collection<OProperty>) (indexedProps != null ? indexedProps : Collections.emptyList());
 	}
 
 	public OProperty getProperty(final String iPropertyName) {

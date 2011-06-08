@@ -44,6 +44,8 @@ public interface OClass extends Comparable<OClass> {
 
 	public Collection<OProperty> properties();
 
+	public Collection<OProperty> getIndexedProperties();
+
 	public OProperty getProperty(final String iPropertyName);
 
 	public OProperty getProperty(final int iIndex);

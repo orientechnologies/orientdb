@@ -152,7 +152,7 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 			return;
 
 		OPropertyIndex index;
-		for (OProperty prop : cls.properties()) {
+		for (OProperty prop : cls.getIndexedProperties()) {
 			index = prop.getIndex();
 			if (index != null)
 				index.checkEntry(iRecord);
@@ -170,7 +170,7 @@ public class OPropertyIndexManager extends ODocumentHookAbstract {
 
 		Map<OProperty, Object> indexedProperties = null;
 
-		for (OProperty prop : cls.properties()) {
+		for (OProperty prop : cls.getIndexedProperties()) {
 			index = prop.getIndex();
 			if (index != null) {
 				if (prop.getType() == OType.LINK)
