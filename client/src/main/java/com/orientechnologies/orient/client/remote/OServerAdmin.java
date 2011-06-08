@@ -228,7 +228,11 @@ public class OServerAdmin {
 			network.writeString(iConfig.getKey());
 			storage.beginResponse(network);
 
-			return network.readString();
+			try {
+				return network.readString();
+			} finally {
+				storage.endResponse(network);
+			}
 
 		} catch (Exception e) {
 			OLogManager.instance().exception("Can't retrieve the configuration value: " + iConfig.getKey(), e, OStorageException.class);
@@ -244,7 +248,7 @@ public class OServerAdmin {
 			final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_SET);
 			network.writeString(iConfig.getKey());
 			network.writeString(iValue != null ? iValue.toString() : "");
-			storage.beginResponse(network);
+			storage.getResponse(network);
 
 		} catch (Exception e) {
 			OLogManager.instance().exception("Can't set the configuration value: " + iConfig.getKey(), e, OStorageException.class);

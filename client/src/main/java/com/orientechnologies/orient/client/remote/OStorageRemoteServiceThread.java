@@ -15,7 +15,8 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import com.orientechnologies.common.log.OLogManager;
+import java.io.IOException;
+
 import com.orientechnologies.common.thread.OSoftThread;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
@@ -43,8 +44,13 @@ public class OStorageRemoteServiceThread extends OSoftThread {
 	@Override
 	protected void execute() throws Exception {
 		try {
-			storage.beginResponse(network);
-
+			try {
+				storage.beginResponse(network);
+			} catch (IOException ioe) {
+				network.endResponse();
+				sendShutdown();
+				return;
+			}
 			final byte request = network.readByte();
 
 			switch (request) {
@@ -57,12 +63,12 @@ public class OStorageRemoteServiceThread extends OSoftThread {
 				storage.updateClusterConfiguration(network.readBytes());
 				break;
 			}
-			
+
 			// NOT IN FINALLY BECAUSE IF THE SOCKET IS KILLED COULD HAVE NOT THE LOCK
 			network.endResponse();
 
 		} catch (Exception e) {
-			//OLogManager.instance().error(this, "Error in service thread", e);
+			// OLogManager.instance().error(this, "Error in service thread", e);
 		}
 	}
 }
