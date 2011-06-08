@@ -62,7 +62,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	 * 
 	 * @serial
 	 */
-	private final Comparator<? super K>				comparator;
+	protected final Comparator<? super K>			comparator;
 	protected transient OMVRBTreeEntry<K, V>	root								= null;
 
 	/**
@@ -241,7 +241,16 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		if (size == 0)
 			return null;
 
-		OMVRBTreeEntry<K, V> entry = getEntry(key);
+		OMVRBTreeEntry<K, V> entry;
+
+		// TRY TO GET LATEST SEARCH
+		// final Object[] threadLocalResult = OMVRBTreeThreadLocal.INSTANCE.search(key);
+		// if (threadLocalResult != null)
+		// // REUSE LAST SEARCH
+		// entry = (OMVRBTreeEntry<K, V>) threadLocalResult[1];
+		// else
+		// SEARCH THE ITEM
+		entry = getEntry(key);
 		return entry == null ? null : entry.getValue();
 	}
 

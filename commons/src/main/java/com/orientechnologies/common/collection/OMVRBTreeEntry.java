@@ -246,9 +246,12 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V> {
 		if (size == 0)
 			return null;
 
-		// if (((Comparable) getKeyAt(size - 1)).compareTo(iKey) < 0) {
 		// CHECK THE LOWER LIMIT
-		tree.pageItemComparator = iKey.compareTo(getKeyAt(0));
+		if (tree.comparator != null)
+			tree.pageItemComparator = tree.comparator.compare((K) iKey, getKeyAt(0));
+		else
+			tree.pageItemComparator = iKey.compareTo(getKeyAt(0));
+
 		if (tree.pageItemComparator == 0) {
 			// FOUND: SET THE INDEX AND RETURN THE NODE
 			tree.pageItemFound = true;
@@ -262,7 +265,10 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V> {
 
 		} else {
 			// CHECK THE UPPER LIMIT
-			tree.pageItemComparator = iKey.compareTo(getKeyAt(size - 1));
+			if (tree.comparator != null)
+				tree.pageItemComparator = tree.comparator.compare((K) iKey, getKeyAt(size - 1));
+			else
+				tree.pageItemComparator = iKey.compareTo(getKeyAt(size - 1));
 
 			if (tree.pageItemComparator > 0) {
 				// KEY OUT OF LAST ITEM: AVOID SEARCH AND RETURN THE LAST POSITION
@@ -290,12 +296,15 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V> {
 		int i = 0;
 		tree.pageItemComparator = -1;
 		for (; i < size; ++i) {
-			tree.pageItemComparator = ((Comparable<Comparable<? super K>>) getKeyAt(i)).compareTo(iKey);
+			if (tree.comparator != null)
+				tree.pageItemComparator = tree.comparator.compare(getKeyAt(i), (K) iKey);
+			else
+				tree.pageItemComparator = ((Comparable<? super K>) getKeyAt(i)).compareTo((K) iKey);
 
 			if (tree.pageItemComparator == 0) {
 				// FOUND: SET THE INDEX AND RETURN THE NODE
 				tree.pageItemFound = true;
-				value = getValueAt(tree.pageIndex);
+				value = getValueAt(i);
 				break;
 			} else if (tree.pageItemComparator > 0)
 				break;
@@ -322,7 +331,11 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V> {
 		while (low <= high) {
 			mid = (low + high) >>> 1;
 			Comparable<Comparable<? super K>> midVal = (Comparable<Comparable<? super K>>) getKeyAt(mid);
-			tree.pageItemComparator = midVal.compareTo(iKey);
+
+			if (tree.comparator != null)
+				tree.pageItemComparator = tree.comparator.compare((K) midVal, (K) iKey);
+			else
+				tree.pageItemComparator = midVal.compareTo((Comparable<? super K>) iKey);
 
 			if (tree.pageItemComparator == 0) {
 				// FOUND: SET THE INDEX AND RETURN THE NODE
