@@ -410,7 +410,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 		}).setFetchPlan("*:1"));
 
-		if (currentResultSet.size() > 0 && currentResultSet.size() < limit)
+		if (currentResultSet.size() > 0 && (limit == -1 || currentResultSet.size() < limit))
 			printHeaderLine(columns);
 
 		out.println("\n" + currentResultSet.size() + " item(s) found. Query executed in "
@@ -875,10 +875,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
 		out.println();
 
-		if (iPropertyName.equalsIgnoreCase("limit")) {
-
+		if (iPropertyName.equalsIgnoreCase("limit") && (Integer.parseInt(iPropertyValue) == 0 || Integer.parseInt(iPropertyValue) < -1)) {
 			out.println("ERROR: Limit must be > 0 or = -1 (no limit)");
-
 		} else {
 
 			if (prevValue != null)

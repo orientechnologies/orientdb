@@ -152,7 +152,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLAbstract imple
 				}
 			}
 		}
-		if (limit == 0) {
+		if (limit == 0 || limit < -1) {
 			throw new IllegalArgumentException("Limit must be > 0 or = -1 (no limit)");
 		}
 		return this;
