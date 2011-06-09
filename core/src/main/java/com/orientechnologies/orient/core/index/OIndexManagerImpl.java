@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
+@SuppressWarnings("unchecked")
 public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndexManager {
 	public static final String			CONFIG_INDEXES			= "indexes";
 	public static final String			DICTIONARY_NAME			= "dictionary";
@@ -52,7 +53,6 @@ public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndex
 		super(new ODocument(iDatabase));
 	}
 
-	@SuppressWarnings("unchecked")
 	public synchronized OIndexManagerImpl load() {
 		if (getDatabase().getStorage().getConfiguration().indexMgrRecordId == null)
 			// @COMPATIBILITY: CREATE THE INDEX MGR
@@ -79,12 +79,12 @@ public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndex
 
 	@Override
 	public synchronized <RET extends ODocumentWrapper> RET reload() {
-		return super.reload();
+		return (RET) super.reload();
 	}
 
 	@Override
 	public synchronized <RET extends ODocumentWrapper> RET save() {
-		return super.save();
+		return (RET) super.save();
 	}
 
 	public synchronized void create() {
