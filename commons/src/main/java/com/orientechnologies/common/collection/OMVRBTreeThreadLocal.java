@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.common.collection;
 
+import java.util.IdentityHashMap;
+import java.util.Map;
+
 /**
  * Keeps last search in thread local to be reused by further operations such as PUT. This speeds up work on trees. Saves the key,
  * the node and the position in the node.
@@ -23,38 +26,50 @@ package com.orientechnologies.common.collection;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OMVRBTreeThreadLocal extends ThreadLocal<Object[]> {
+public class OMVRBTreeThreadLocal extends ThreadLocal<Map<OMVRBTree<?, ?>, Object[]>> {
 	public static OMVRBTreeThreadLocal	INSTANCE	= new OMVRBTreeThreadLocal();
 
 	@Override
-	protected Object[] initialValue() {
-		return new Object[] { null, null };
+	protected Map<OMVRBTree<?, ?>, Object[]> initialValue() {
+		return new IdentityHashMap<OMVRBTree<?, ?>, Object[]>();
 	}
 
-	public <RET extends OMVRBTreeEntry<?, ?>> RET push(final Object iKey, final OMVRBTreeEntry<?, ?> iValue) {
-		final Object[] value = get();
+	public synchronized <RET extends OMVRBTreeEntry<?, ?>> RET push(final OMVRBTree<?, ?> iTree, final Object iKey,
+			final OMVRBTreeEntry<?, ?> iValue) {
+		final Map<OMVRBTree<?, ?>, Object[]> map = get();
+		Object[] value = map.get(iTree);
+
+		if (value == null) {
+			value = new Object[] { null, null };
+			map.put(iTree, value);
+		}
+
 		value[0] = iKey;
 		value[1] = iValue;
+		// value[2] = iValue.tree.pageIndex;
+		// value[3] = iValue.tree.pageItemFound;
+
 		return (RET) iValue;
 	}
 
-	public Object[] search(final Object key) {
-		final Object[] value = get();
-		if (value != null && value[0] != null && value[0].equals(key))
+	public synchronized Object[] search(final OMVRBTree<?, ?> iTree, final Object iKey) {
+		final Map<OMVRBTree<?, ?>, Object[]> map = get();
+		final Object[] value = map.get(iTree);
+
+		if (value != null && value[0] != null && value[0].equals(iKey))
 			return value;
 		return null;
 	}
 
-	public void reset() {
-		final Object[] value = get();
-		value[0] = null;
-		value[1] = null;
-	}
+	public synchronized void reset(final OMVRBTree<?, ?> iTree) {
+		final Map<OMVRBTree<?, ?>, Object[]> map = get();
+		final Object[] value = map.get(iTree);
 
-	public <RET extends OMVRBTreeEntry<?, ?>> RET getLatest() {
-		final Object[] value = get();
-		if (value != null && value[1] != null)
-			return (RET) value[1];
-		return null;
+		if (value != null) {
+			value[0] = null;
+			value[1] = null;
+			// value[2] = -1;
+			// value[3] = Boolean.FALSE;
+		}
 	}
 }

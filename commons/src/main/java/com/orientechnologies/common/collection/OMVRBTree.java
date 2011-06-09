@@ -241,17 +241,26 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		if (size == 0)
 			return null;
 
-		OMVRBTreeEntry<K, V> entry;
+		OMVRBTreeEntry<K, V> entry = null;
 
-		// TRY TO GET LATEST SEARCH
-		final Object[] threadLocalResult = OMVRBTreeThreadLocal.INSTANCE.search(key);
-		if (threadLocalResult != null && pageItemFound) {
-			// REUSE LAST SEARCH
-			entry = (OMVRBTreeEntry<K, V>) threadLocalResult[1];
-		} else
-			// SEARCH THE ITEM
-			entry = getEntry(key);
-		return entry == null ? null : entry.getValue();
+		final long timer = OProfiler.getInstance().startChrono();
+
+		try {
+			// TRY TO GET LATEST SEARCH
+			final Object[] threadLocalResult = OMVRBTreeThreadLocal.INSTANCE.search(this, key);
+			if (threadLocalResult != null) {
+				// SAME SEARCH OF PREVIOUS ONE: REUSE LAST RESULT?
+				if (pageItemFound)
+					// REUSE LAST RESULT, OTHERWISE THE KEY NOT EXISTS
+					entry = (OMVRBTreeEntry<K, V>) threadLocalResult[1];
+			} else
+				// SEARCH THE ITEM
+				entry = getEntry(key);
+			return entry == null ? null : entry.getValue();
+
+		} finally {
+			OProfiler.getInstance().stopChrono("OMVRBTree.get", timer);
+		}
 	}
 
 	public Comparator<? super K> comparator() {
@@ -318,7 +327,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
 	final OMVRBTreeEntry<K, V> getEntry(final Object key, final boolean iGetContainer) {
 		if (key == null)
-			return OMVRBTreeThreadLocal.INSTANCE.push(null, null);
+			return OMVRBTreeThreadLocal.INSTANCE.push(this, null, null);
 
 		// 1^ CHANCE - TRY TO SEE IF LAST USED NODE IS GOOD: THIS IS VERY COMMON CASE ON INSERTION WITH AN INCREMENTING KEY
 		// OMVRBTreeEntry<K, V> entry = OMVRBTreeThreadLocal.INSTANCE.getLatest();
@@ -342,7 +351,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		checkTreeStructure(p);
 
 		if (p == null)
-			return OMVRBTreeThreadLocal.INSTANCE.push(key, null);
+			return OMVRBTreeThreadLocal.INSTANCE.push(this, key, null);
 
 		OMVRBTreeEntry<K, V> lastNode = p;
 		OMVRBTreeEntry<K, V> prevNode = null;
@@ -370,7 +379,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 					pageIndex = 0;
 					pageItemFound = true;
 					pageItemComparator = 0;
-					return OMVRBTreeThreadLocal.INSTANCE.push(key, p);
+					return OMVRBTreeThreadLocal.INSTANCE.push(this, key, p);
 				}
 
 				if (comparator != null)
@@ -409,7 +418,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 				// SEARCH INSIDE THE NODE
 				final V value = lastNode.search(k);
 
-				OMVRBTreeThreadLocal.INSTANCE.push(key, lastNode);
+				OMVRBTreeThreadLocal.INSTANCE.push(this, key, lastNode);
 
 				if (value != null || iGetContainer)
 					// FOUND: RETURN CURRENT NODE OR AT LEAST THE CONTAINER NODE
@@ -424,7 +433,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 			OProfiler.getInstance().updateStat("[OMVRBTree.getEntry] Steps of search", steps);
 		}
 
-		return OMVRBTreeThreadLocal.INSTANCE.push(key, null);
+		return OMVRBTreeThreadLocal.INSTANCE.push(this, key, null);
 	}
 
 	/**
@@ -543,7 +552,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 			}
 
 			// TRY TO GET LATEST SEARCH
-			final Object[] threadLocalResult = OMVRBTreeThreadLocal.INSTANCE.search(key);
+			final Object[] threadLocalResult = OMVRBTreeThreadLocal.INSTANCE.search(this, key);
 			if (threadLocalResult != null)
 				// REUSE LAST SEARCH
 				parentNode = (OMVRBTreeEntry<K, V>) threadLocalResult[1];
@@ -551,7 +560,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 				// SEARCH THE ITEM
 				parentNode = getEntry(key, true);
 
-			OMVRBTreeThreadLocal.INSTANCE.reset();
+			OMVRBTreeThreadLocal.INSTANCE.reset(this);
 
 			if (pageItemFound)
 				// EXACT MATCH: UPDATE THE VALUE
@@ -621,7 +630,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	@Override
 	public V remove(final Object key) {
 		OMVRBTreeEntry<K, V> p = getEntry(key);
-		OMVRBTreeThreadLocal.INSTANCE.reset();
+		OMVRBTreeThreadLocal.INSTANCE.reset(this);
 		if (p == null)
 			return null;
 
@@ -637,7 +646,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	public void clear() {
 		modCount++;
 		size = 0;
-		OMVRBTreeThreadLocal.INSTANCE.reset();
+		OMVRBTreeThreadLocal.INSTANCE.reset(this);
 		setRoot(null);
 	}
 

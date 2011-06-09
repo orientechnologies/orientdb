@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.record.impl.ORecordBytesLazy;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 
 /**
@@ -139,7 +138,7 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> implement
 		record.reload();
 		record.recycle(this);
 		fromStream(record.toStream());
-		OMVRBTreeThreadLocal.INSTANCE.reset();
+		OMVRBTreeThreadLocal.INSTANCE.reset(this);
 		return this;
 	}
 
