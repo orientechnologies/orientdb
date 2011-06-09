@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndexManager {
@@ -52,7 +53,7 @@ public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndex
 	}
 
 	@SuppressWarnings("unchecked")
-	public OIndexManagerImpl load() {
+	public synchronized OIndexManagerImpl load() {
 		if (getDatabase().getStorage().getConfiguration().indexMgrRecordId == null)
 			// @COMPATIBILITY: CREATE THE INDEX MGR
 			create();
@@ -76,7 +77,17 @@ public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndex
 		return this;
 	}
 
-	public void create() {
+	@Override
+	public synchronized <RET extends ODocumentWrapper> RET reload() {
+		return super.reload();
+	}
+
+	@Override
+	public synchronized <RET extends ODocumentWrapper> RET save() {
+		return super.save();
+	}
+
+	public synchronized void create() {
 		save(OStorage.CLUSTER_INTERNAL_NAME);
 		getDatabase().getStorage().getConfiguration().indexMgrRecordId = document.getIdentity().toString();
 		getDatabase().getStorage().getConfiguration().update();
@@ -84,16 +95,16 @@ public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndex
 		createIndex(DICTIONARY_NAME, OProperty.INDEX_TYPE.DICTIONARY.toString(), null, null, null, false);
 	}
 
-	public Collection<OIndex> getIndexes() {
+	public synchronized Collection<OIndex> getIndexes() {
 		return Collections.unmodifiableCollection(indexes.values());
 	}
 
-	public OIndex getIndex(final String iName) {
+	public synchronized OIndex getIndex(final String iName) {
 		final OIndex index = indexes.get(iName.toLowerCase());
 		return getIndexInstance(index);
 	}
 
-	public OIndex getIndex(final ORID iRID) {
+	public synchronized OIndex getIndex(final ORID iRID) {
 		for (OIndex idx : indexes.values()) {
 			if (idx.getIdentity().equals(iRID)) {
 				return getIndexInstance(idx);
@@ -102,13 +113,13 @@ public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndex
 		return null;
 	}
 
-	public OIndex createIndex(final String iName, final String iType, final int[] iClusterIdsToIndex, OIndexCallback iCallback,
-			final OProgressListener iProgressListener) {
+	public synchronized OIndex createIndex(final String iName, final String iType, final int[] iClusterIdsToIndex,
+			OIndexCallback iCallback, final OProgressListener iProgressListener) {
 		return createIndex(iName, iType, iClusterIdsToIndex, iCallback, iProgressListener, false);
 	}
 
-	public OIndex createIndex(final String iName, final String iType, final int[] iClusterIdsToIndex, OIndexCallback iCallback,
-			final OProgressListener iProgressListener, final boolean iAutomatic) {
+	public synchronized OIndex createIndex(final String iName, final String iType, final int[] iClusterIdsToIndex,
+			OIndexCallback iCallback, final OProgressListener iProgressListener, final boolean iAutomatic) {
 		final String text = String.format(QUERY_CREATE, iName, iType);
 		getDatabase().command(new OCommandSQL(text)).execute();
 
@@ -117,7 +128,7 @@ public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndex
 		return indexes.get(iName.toLowerCase());
 	}
 
-	public OIndex createIndexInternal(final String iName, final String iType, final int[] iClusterIdsToIndex,
+	public synchronized OIndex createIndexInternal(final String iName, final String iType, final int[] iClusterIdsToIndex,
 			OIndexCallback iCallback, final OProgressListener iProgressListener, final boolean iAutomatic) {
 		final OIndex index = OIndexFactory.instance().newInstance(iType);
 		index.setCallback(iCallback);
@@ -133,7 +144,7 @@ public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndex
 		return getIndexInstance(index);
 	}
 
-	public OIndexManager dropIndex(final String iIndexName) {
+	public synchronized OIndexManager dropIndex(final String iIndexName) {
 		final String text = String.format(QUERY_DROP, iIndexName);
 		getDatabase().command(new OCommandSQL(text)).execute();
 
@@ -143,9 +154,9 @@ public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndex
 		return this;
 	}
 
-	public OIndexManager dropIndexInternal(final String iIndexName) {
+	public synchronized OIndexManager dropIndexInternal(final String iIndexName) {
 		reload();
-		
+
 		final OIndex idx = indexes.remove(iIndexName.toLowerCase());
 		if (idx != null) {
 			idx.delete();
@@ -155,13 +166,13 @@ public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndex
 		return this;
 	}
 
-	public OIndexManager setDirty() {
+	public synchronized OIndexManager setDirty() {
 		document.setDirty();
 		return this;
 	}
 
 	@Override
-	protected void fromStream() {
+	protected synchronized void fromStream() {
 		final Collection<ODocument> idxs = document.field(CONFIG_INDEXES);
 
 		if (idxs != null) {
@@ -198,15 +209,15 @@ public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndex
 		return document;
 	}
 
-	public String getDefaultClusterName() {
+	public synchronized String getDefaultClusterName() {
 		return defaultClusterName;
 	}
 
-	public void setDefaultClusterName(String defaultClusterName) {
+	public synchronized void setDefaultClusterName(String defaultClusterName) {
 		this.defaultClusterName = defaultClusterName;
 	}
 
-	public ODictionary<ORecordInternal<?>> getDictionary() {
+	public synchronized ODictionary<ORecordInternal<?>> getDictionary() {
 		return new ODictionary<ORecordInternal<?>>(getIndex(DICTIONARY_NAME));
 	}
 
@@ -226,7 +237,7 @@ public class OIndexManagerImpl extends ODocumentWrapperNoClass implements OIndex
 		lock.releaseExclusiveLock();
 	}
 
-	private OIndex getIndexInstance(final OIndex iIndex) {
+	private synchronized OIndex getIndexInstance(final OIndex iIndex) {
 		if (!(getDatabase().getStorage() instanceof OStorageEmbedded))
 			return new OIndexRemote(getDatabase(), iIndex.getName(), iIndex.getType(), iIndex.getIdentity());
 		return iIndex;
