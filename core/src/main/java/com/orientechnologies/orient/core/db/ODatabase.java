@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 
 /**
  * Generic Database interface. Represents the lower level of the Database providing raw API to access to the raw records.<br/>
@@ -216,6 +217,8 @@ public interface ODatabase {
 	 * @return Total number of entities contained in the specified cluster
 	 */
 	public long countClusterElements(String iClusterName);
+
+	public int addCluster(String iClusterName, CLUSTER_TYPE iType);
 
 	/**
 	 * Adds a logical cluster. Logical clusters don't need separate files since are stored inside a OMVRBTree instance. Access is

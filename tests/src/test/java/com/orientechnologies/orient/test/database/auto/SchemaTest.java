@@ -49,12 +49,12 @@ public class SchemaTest {
 		if (database.getMetadata().getSchema().existsClass("Account"))
 			return;
 
-		database.getStorage().addCluster("csv", OStorage.CLUSTER_TYPE.PHYSICAL);
-		database.getStorage().addCluster("flat", OStorage.CLUSTER_TYPE.PHYSICAL);
-		database.getStorage().addCluster("binary", OStorage.CLUSTER_TYPE.PHYSICAL);
+		database.addCluster("csv", OStorage.CLUSTER_TYPE.PHYSICAL);
+		database.addCluster("flat", OStorage.CLUSTER_TYPE.PHYSICAL);
+		database.addCluster("binary", OStorage.CLUSTER_TYPE.PHYSICAL);
 
 		OClass account = database.getMetadata().getSchema()
-				.createClass("Account", database.getStorage().addCluster("account", OStorage.CLUSTER_TYPE.PHYSICAL));
+				.createClass("Account", database.addCluster("account", OStorage.CLUSTER_TYPE.PHYSICAL));
 		account.createProperty("id", OType.INTEGER);
 		account.createProperty("birthDate", OType.DATE);
 		account.createProperty("binary", OType.BINARY);
@@ -62,7 +62,7 @@ public class SchemaTest {
 		database.getMetadata().getSchema().createClass("Company", account);
 
 		OClass profile = database.getMetadata().getSchema()
-				.createClass("Profile", database.getStorage().addCluster("profile", OStorage.CLUSTER_TYPE.PHYSICAL));
+				.createClass("Profile", database.addCluster("profile", OStorage.CLUSTER_TYPE.PHYSICAL));
 		profile.createProperty("nick", OType.STRING).setMin("3").setMax("30").createIndex(INDEX_TYPE.UNIQUE);
 		profile.createProperty("name", OType.STRING).setMin("3").setMax("30").createIndex(INDEX_TYPE.NOTUNIQUE);
 		profile.createProperty("surname", OType.STRING).setMin("3").setMax("30");

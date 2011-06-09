@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements ODatabase {
@@ -132,9 +133,14 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 		return underlying.getClusterNameById(iClusterId);
 	}
 
-	public int addLogicalCluster(final String iClassName, final int iPhyClusterContainerId) {
+	public int addCluster(final String iClusterName, final CLUSTER_TYPE iType) {
 		checkOpeness();
-		return underlying.addLogicalCluster(iClassName, iPhyClusterContainerId);
+		return underlying.addCluster(iClusterName, iType);
+	}
+
+	public int addLogicalCluster(final String iClusterName, final int iPhyClusterContainerId) {
+		checkOpeness();
+		return underlying.addLogicalCluster(iClusterName, iPhyClusterContainerId);
 	}
 
 	public int addPhysicalCluster(final String iClusterName, final String iClusterFileName, final int iStartSize) {

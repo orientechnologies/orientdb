@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
@@ -33,6 +32,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
@@ -55,6 +55,11 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 	public void delete() {
 		checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_DELETE);
 		super.delete();
+	}
+
+	public int addCluster(final String iClusterName, final CLUSTER_TYPE iType) {
+		checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
+		return super.addCluster(iClusterName, iType);
 	}
 
 	@Override
