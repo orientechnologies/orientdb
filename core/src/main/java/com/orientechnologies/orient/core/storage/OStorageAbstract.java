@@ -31,7 +31,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 	protected volatile long										version	= 0;
 	protected OLevel2RecordCache							level2Cache;
 
-	protected boolean													open		= false;
+	protected volatile boolean								open		= false;
 	protected OSharedResourceAdaptiveExternal	lock		= new OSharedResourceAdaptiveExternal();
 
 	public OStorageAbstract(final String iName, final String iFilePath, final String iMode) {
