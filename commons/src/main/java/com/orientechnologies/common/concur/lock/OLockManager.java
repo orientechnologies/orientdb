@@ -64,13 +64,13 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 				try {
 					if (iLockType == LOCK.SHARED) {
 						if (!lock.readLock().tryLock(iTimeout, TimeUnit.MILLISECONDS))
-							throw new OLockException("Resource " + iResourceId + " is locked");
+							throw new OLockException("Timeout on acquiring resource '" + iResourceId + "' because is locked from another thread");
 					} else {
 						if (!lock.writeLock().tryLock(iTimeout, TimeUnit.MILLISECONDS))
-							throw new OLockException("Resource " + iResourceId + " is locked");
+							throw new OLockException("Timeout on acquiring resource '" + iResourceId + "' because is locked from another thread");
 					}
 				} catch (InterruptedException e) {
-					throw new OLockException("Thread interrupted while waiting for resource " + iResourceId);
+					throw new OLockException("Thread interrupted while waiting for resource '" + iResourceId + "'");
 				}
 			}
 		} catch (RuntimeException e) {
@@ -90,8 +90,8 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 		synchronized (map) {
 			lock = map.get(iResourceId);
 			if (lock == null)
-				throw new OLockException("Error on releasing a non acquired lock by the requester " + iRequester + " on resource: "
-						+ iResourceId);
+				throw new OLockException("Error on releasing a non acquired lock by the requester '" + iRequester
+						+ "' against the resource: '" + iResourceId + "'");
 
 			lock.countLocks--;
 			if (lock.countLocks == 0)
