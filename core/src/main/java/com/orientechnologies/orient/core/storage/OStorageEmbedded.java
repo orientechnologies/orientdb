@@ -83,8 +83,6 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 
 		final long timer = OProfiler.getInstance().startChrono();
 
-		final boolean locked = lock.acquireSharedLock();
-
 		try {
 			OCluster cluster;
 
@@ -115,8 +113,6 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 			OLogManager.instance().error(this, "Error on browsing elements of cluster: " + iClusterId, e);
 
 		} finally {
-			lock.releaseSharedLock(locked);
-
 			OProfiler.getInstance().stopChrono("OStorageLocal.foreach", timer);
 		}
 	}
