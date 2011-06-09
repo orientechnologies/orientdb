@@ -74,6 +74,8 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
 	protected Object													lastSearchKey;
 	protected OMVRBTreeEntry<K, V>						lastSearchNode;
+	protected boolean													lastSearchFound			= false;
+	protected int															lastSearchIndex			= -1;
 
 	public OMVRBTree(final int iSize, final float iLoadFactor) {
 		lastPageSize = iSize;
@@ -253,9 +255,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 			final OMVRBTreeEntry<K, V> node = getLastSearchNodeForSameKey(key);
 			if (node != null) {
 				// SAME SEARCH OF PREVIOUS ONE: REUSE LAST RESULT?
-				if (pageItemFound)
+				if (lastSearchFound)
 					// REUSE LAST RESULT, OTHERWISE THE KEY NOT EXISTS
-					entry = node;
+					return node.getValue(lastSearchIndex);
 			} else
 				// SEARCH THE ITEM
 				entry = getEntry(key);
@@ -557,9 +559,16 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
 			// TRY TO GET LATEST SEARCH
 			parentNode = getLastSearchNodeForSameKey(key);
-			if (parentNode == null)
-				// SEARCH THE ITEM
-				parentNode = getEntry(key, true);
+			if (parentNode != null) {
+				if (lastSearchFound) {
+					// EXACT MATCH: UPDATE THE VALUE
+					pageIndex = lastSearchIndex;
+					return parentNode.setValue(value);
+				}
+			}
+
+			// SEARCH THE ITEM
+			parentNode = getEntry(key, true);
 
 			if (pageItemFound)
 				// EXACT MATCH: UPDATE THE VALUE
@@ -2061,7 +2070,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 		if (index <= 0) {
 			prev = predecessor(t);
 			if (prev != null)
-				t.tree.pageIndex = t.size - 1;
+				t.tree.pageIndex = prev.size - 1;
 			else
 				t.tree.pageIndex = 0;
 		} else {
@@ -2652,6 +2661,8 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 	protected OMVRBTreeEntry<K, V> setLastSearchNode(final Object iKey, final OMVRBTreeEntry<K, V> iNode) {
 		lastSearchKey = iKey;
 		lastSearchNode = iNode;
+		lastSearchFound = iNode != null ? iNode.tree.pageItemFound : false;
+		lastSearchIndex = iNode != null ? iNode.tree.pageIndex : -1;
 		return iNode;
 	}
 }
