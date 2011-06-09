@@ -61,6 +61,8 @@ public interface OSchema {
 	 */
 	public OClass getClass(final String iClassName);
 
+	public OClass getOrCreateClass(final String iClassName);
+
 	public Collection<OClass> getClasses();
 
 	public void create();

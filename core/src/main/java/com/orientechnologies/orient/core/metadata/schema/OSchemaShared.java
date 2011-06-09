@@ -53,8 +53,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass {
 	protected Map<String, OClass>		classes									= new HashMap<String, OClass>();
 	private static final int				CURRENT_VERSION_NUMBER	= 4;
 	private OSharedResourceExternal	lock										= new OSharedResourceExternal();
-	private static final char[]			NOT_ALLOWED_CHAR				= { '/', '\\', '|', '.', '-', ' ', '{', '}', '[', ']', '(', ')', ':',
-			';', '#', '*', '+'																	};
+	private volatile boolean				loaded									= false;
 
 	public OSchemaShared(final int schemaClusterId) {
 		super(new ODocument());
@@ -131,7 +130,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass {
 		int clusterId = getDatabase().getClusterIdByName(iClassName);
 		if (clusterId == -1) {
 			// CREATE A NEW CLUSTER
-			clusterId = getDatabase().getStorage().addCluster(iClassName, iType);
+			clusterId = getDatabase().addCluster(iClassName, iType);
 		}
 
 		return createClass(iClassName, iSuperClass, clusterId);
@@ -154,6 +153,21 @@ public class OSchemaShared extends ODocumentWrapperNoClass {
 	 */
 	public OClass createClass(final String iClassName, final OClass iSuperClass, final int iDefaultClusterId) {
 		return createClass(iClassName, iSuperClass, new int[] { iDefaultClusterId });
+	}
+
+	public OClass getOrCreateClass(final String iClassName) {
+		lock.acquireExclusiveLock();
+		try {
+
+			OClass cls = classes.get(iClassName.toLowerCase());
+			if (cls == null)
+				cls = createClass(iClassName);
+
+			return cls;
+
+		} finally {
+			lock.releaseExclusiveLock();
+		}
 	}
 
 	/*
@@ -210,7 +224,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass {
 
 		if (iClusterIds == null || iClusterIds.length == 0)
 			// CREATE A NEW CLUSTER
-			iClusterIds = new int[] { getDatabase().getStorage().addCluster(iClassName, CLUSTER_TYPE.PHYSICAL) };
+			iClusterIds = new int[] { getDatabase().addCluster(iClassName, CLUSTER_TYPE.PHYSICAL) };
 
 		getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_CREATE);
 
@@ -372,28 +386,30 @@ public class OSchemaShared extends ODocumentWrapperNoClass {
 		if (iClassName == null)
 			return null;
 
-		lock.acquireExclusiveLock();
+		OClass cls;
+
+		lock.acquireSharedLock();
 		try {
 
-			OClass cls = classes.get(iClassName.toLowerCase());
-
-			if (cls == null) {
-				// CHECK IF CAN AUTO-CREATE IT
-				final ODatabase ownerDb = getDatabase().getDatabaseOwner();
-				if (ownerDb instanceof ODatabaseObjectTx) {
-					final Class<?> javaClass = ((ODatabaseObjectTx) ownerDb).getEntityManager().getEntityClass(iClassName);
-
-					if (javaClass != null) {
-						// AUTO REGISTER THE CLASS AT FIRST USE
-						cls = cascadeCreate(javaClass);
-					}
-				}
-			}
-			return cls;
+			cls = classes.get(iClassName.toLowerCase());
 
 		} finally {
-			lock.releaseExclusiveLock();
+			lock.releaseSharedLock();
 		}
+
+		if (cls == null) {
+			// CHECK IF CAN AUTO-CREATE IT
+			final ODatabase ownerDb = getDatabase().getDatabaseOwner();
+			if (ownerDb instanceof ODatabaseObjectTx) {
+				final Class<?> javaClass = ((ODatabaseObjectTx) ownerDb).getEntityManager().getEntityClass(iClassName);
+
+				if (javaClass != null) {
+					// AUTO REGISTER THE CLASS AT FIRST USE
+					cls = cascadeCreate(javaClass);
+				}
+			}
+		}
+		return cls;
 	}
 
 	/**
@@ -484,7 +500,9 @@ public class OSchemaShared extends ODocumentWrapperNoClass {
 		try {
 
 			((ORecordId) document.getIdentity()).fromString(getDatabase().getStorage().getConfiguration().schemaRecordId);
-			return super.load("*:-1 index:0");
+			super.load("*:-1 index:0");
+			loaded = true;
+			return this;
 
 		} finally {
 			lock.releaseExclusiveLock();

@@ -66,6 +66,11 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
 		return delegate.createClass(iClassName);
 	}
 
+	public OClass getOrCreateClass(final String iClassName) {
+		setDatabaseInThreadLocal();
+		return delegate.getOrCreateClass(iClassName);
+	}
+
 	public OClass createClass(final String iClassName, final OClass iSuperClass) {
 		setDatabaseInThreadLocal();
 		return delegate.createClass(iClassName, iSuperClass);
@@ -157,6 +162,7 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
 	}
 
 	public ORID getIdentity() {
+		setDatabaseInThreadLocal();
 		return delegate.getIdentity();
 	}
 }

@@ -102,11 +102,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 			return;
 		}
 
-		setClass(_database.getMetadata().getSchema().getClass(iClassName));
-
-		if (_clazz == null)
-			// CREATE THE CLASS AT THE FLY
-			setClass(_database.getMetadata().getSchema().createClass(iClassName));
+		setClass(_database.getMetadata().getSchema().getOrCreateClass(iClassName));
 	}
 
 	public void setClassNameIfExists(final String iClassName) {
