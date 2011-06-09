@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordBrowsingListener;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "serial" })
 public abstract class ONativeAsynchQuery<T extends ORecordInternal<?>, CTX extends OQueryContextNative<T>> extends
 		ONativeQuery<T, CTX> implements ORecordBrowsingListener {
 	protected OCommandResultListener	resultListener;
