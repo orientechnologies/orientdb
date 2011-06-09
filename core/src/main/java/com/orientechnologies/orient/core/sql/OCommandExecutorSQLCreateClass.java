@@ -91,6 +91,8 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLPermissio
 					clusterIds = new int[clusterIdsAsStrings.length];
 					for (int i = 0; i < clusterIdsAsStrings.length; ++i) {
 						clusterIds[i] = Integer.parseInt(clusterIdsAsStrings[i]);
+						if (database.getStorage().getClusterById(clusterIds[i]) == null)
+							throw new OCommandSQLParsingException("Cluster with id " + clusterIds[i] + " doesn't exists", text, oldPos);
 					}
 				}
 			} else {
